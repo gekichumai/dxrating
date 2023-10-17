@@ -12,10 +12,11 @@
     "tsconfig": "*",
     "turbo": "latest"
   },
-  "name": "dxscore-wizard",
+  "name": "@galvingao/dxrating",
   "packageManager": "yarn@1.22.19",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "scripts/*"
   ]
 }
