@@ -13,8 +13,8 @@
 @font-face {
   font-family: "Torus";
   src:
-    url("fonts/Torus-Regular.woff2") format("woff2"),
-    url("fonts/Torus-Regular.woff") format("woff");
+    url("./assets/fonts/Torus-Regular.woff2") format("woff2"),
+    url("./assets/fonts/Torus-Regular.woff") format("woff");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -23,8 +23,8 @@
 @font-face {
   font-family: "Torus";
   src:
-    url("fonts/Torus-SemiBold.woff2") format("woff2"),
-    url("fonts/Torus-SemiBold.woff") format("woff");
+    url("./assets/fonts/Torus-SemiBold.woff2") format("woff2"),
+    url("./assets/fonts/Torus-SemiBold.woff") format("woff");
   font-weight: 600;
   font-style: normal;
   font-display: swap;

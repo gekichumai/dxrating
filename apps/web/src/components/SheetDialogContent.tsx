@@ -6,17 +6,20 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
+import clsx from "clsx";
 import { FC, useMemo } from "react";
 import { FlattenedSheet } from "../songs";
 import { calculateRating } from "../utils/rating";
 import { DXRank } from "./DXRank";
-import { SheetImage, SheetTitle } from "./SheetCard";
+import { SheetImage, SheetTitle } from "./SheetListItem";
 
 const PRESET_ACHIEVEMENT_RATES = [
   100.5, 100.4999, 100, 99.9999, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50,
 ];
 
-export const SheetDialog: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+export const SheetDialogContent: FC<{ sheet: FlattenedSheet }> = ({
+  sheet,
+}) => {
   const ratings = useMemo(() => {
     return PRESET_ACHIEVEMENT_RATES.map((rate) => ({
       achievementRate: rate,
@@ -69,7 +72,9 @@ export const SheetDialog: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
                 <TableCell component="th" scope="row">
                   <div className="flex items-center font-sans">
                     <DXRank rank={rating.rating.rank} className="h-8" />
-                    <span>{rating.achievementRate.toFixed(4)}%</span>
+                    <span>
+                      <SheetAchievementRate value={rating.achievementRate} />
+                    </span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -92,6 +97,22 @@ export const SheetDialog: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           })}
         </TableBody>
       </Table>
+    </div>
+  );
+};
+
+const SheetAchievementRate: FC<{ value: number }> = ({ value }) => {
+  const integer = Math.floor(value);
+  const decimal = value % 1;
+
+  return (
+    <div className="inline-flex items-center">
+      <span className="font-bold">{integer}</span>
+      <span>.</span>
+      <span className={clsx(decimal === 0 && "text-zinc-4")}>
+        {decimal.toFixed(4).slice(2)}
+      </span>
+      <span>%</span>
     </div>
   );
 };

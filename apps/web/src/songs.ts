@@ -1,3 +1,6 @@
+import Fuse from "fuse.js";
+import { useMemo } from "react";
+import useSWR from "swr";
 import maiData from "./assets/maidata.json";
 
 export interface MaiData {
@@ -172,4 +175,49 @@ export const getFlattenedSheets = async (): Promise<FlattenedSheet[]> => {
       }));
   });
   return flattenedSheets as FlattenedSheet[];
+};
+
+export const useSheets = () => {
+  return useSWR("sheets", getFlattenedSheets);
+};
+
+export const useSheetsFuse = () => {
+  const { data: sheets } = useSheets();
+
+  const fuseInstance = useMemo(() => {
+    return new Fuse(sheets ?? [], {
+      keys: ["searchAcronym"],
+      shouldSort: true,
+    });
+  }, [sheets]);
+
+  return fuseInstance;
+};
+
+export const useFilteredSheets = (searchTerm: string) => {
+  const { data: sheets } = useSheets();
+  const fuseInstance = useSheetsFuse();
+
+  return useMemo(() => {
+    const start = performance.now();
+    const results =
+      searchTerm === ""
+        ? sheets?.map((sheet, i) => ({
+            item: sheet as FlattenedSheet,
+            refIndex: i,
+          })) ?? []
+        : fuseInstance.search(searchTerm);
+    const end = performance.now();
+    console.log(`Fuse search took ${end - start}ms`);
+
+    return {
+      results,
+      elapsed: end - start,
+    };
+  }, [fuseInstance, searchTerm, sheets]);
+};
+
+export const formatSheetToString = (sheet: FlattenedSheet) => {
+  const { title, type, difficulty, internalLevelValue } = sheet;
+  return `${title} [${type} ${difficulty} ${internalLevelValue.toFixed(1)}]`;
 };

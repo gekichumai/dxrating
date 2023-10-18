@@ -7,6 +7,9 @@ import { App } from "./App";
 import "./index.css";
 
 const theme = createTheme({
+  shape: {
+    borderRadius: 12,
+  },
   typography: {
     fontFamily: "Torus, system-ui, Avenir, Helvetica, Arial, sans-serif",
   },
