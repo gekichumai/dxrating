@@ -5,5 +5,16 @@
   "license": "MIT",
   "publishConfig": {
     "access": "public"
+  },
+  "scripts": {
+    "run": "esno index.ts"
+  },
+  "dependencies": {
+    "@enjoyjs/node-mecab": "^0.5.0",
+    "esno": "^0.17.0",
+    "@gekichumai/dxdata": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.6"
   }
 }

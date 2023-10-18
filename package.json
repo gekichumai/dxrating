@@ -12,7 +12,7 @@
     "tsconfig": "*",
     "turbo": "latest"
   },
-  "name": "@galvingao/dxrating",
+  "name": "@gekichumai/dxrating",
   "packageManager": "yarn@1.22.19",
   "workspaces": [
     "apps/*",

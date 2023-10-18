@@ -1,4 +1,6 @@
 import {
+  Alert,
+  AlertTitle,
   Autocomplete,
   Button,
   Card,
@@ -21,6 +23,7 @@ import {
   forwardRef,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { useList, useLocalStorage } from "react-use";
@@ -86,10 +89,13 @@ const RatingCalculatorAddEntryForm: FC<{
   const [achievementRateError, setAchievementRateError] = useState<
     string | null
   >(null);
+  const autocompleteRef = useRef<unknown>(null);
   const resetForm = useCallback(() => {
     setSelectedSheet(null);
     setAchievementRate("");
     setAchievementRateError(null);
+    const autocomplete = autocompleteRef.current as HTMLDivElement;
+    autocomplete.focus();
   }, []);
 
   if (!sheets) return null;
@@ -99,6 +105,7 @@ const RatingCalculatorAddEntryForm: FC<{
       <CardContent className="flex flex-col items-center justify-center gap-2">
         <div className="chunks-horizontal-2 items-start">
           <Autocomplete
+            ref={autocompleteRef}
             fullWidth
             options={sheets}
             getOptionLabel={(sheet) => formatSheetToString(sheet)}
@@ -150,6 +157,15 @@ const RatingCalculatorAddEntryForm: FC<{
                 );
               }
             }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                onSubmit({
+                  sheetId: selectedSheet!.id,
+                  achievementRate: parseFloat(achievementRate),
+                });
+                resetForm();
+              }
+            }}
             fullWidth
             error={!!achievementRateError}
             helperText={achievementRateError}
@@ -164,7 +180,19 @@ const RatingCalculatorAddEntryForm: FC<{
             {selectedSheet && <SheetListItemContent sheet={selectedSheet} />}
           </div>
 
-          <div className="w-full flex justify-end">
+          <div className="w-full flex justify-end items-center gap-2">
+            {selectedSheet && achievementRate && (
+              <div>
+                Rating:{" "}
+                {
+                  calculateRating(
+                    selectedSheet.internalLevelValue,
+                    parseFloat(achievementRate),
+                  ).ratingAwardValue
+                }
+              </div>
+            )}
+
             <Button
               variant="contained"
               disabled={
@@ -216,6 +244,10 @@ export const RatingCalculator = () => {
     };
   });
 
+  // calculatedEntries.sort(
+  //   (a, b) => b.rating.ratingAwardValue - a.rating.ratingAwardValue,
+  // );
+
   return (
     <div className="flex-container w-full">
       <RatingCalculatorAddEntryForm
@@ -232,6 +264,16 @@ export const RatingCalculator = () => {
           } else modifyEntries.push(entry);
         }}
       />
+
+      <Alert severity="info" className="w-full">
+        <AlertTitle>
+          {localStorageEntries?.length
+            ? `Saved ${localStorageEntries.length} records`
+            : "Auto-save"}
+        </AlertTitle>
+        Your entries will be saved automatically to your browser's local storage
+        and will be restored when you return to this page.
+      </Alert>
 
       <Table>
         <TableHead>
@@ -250,7 +292,7 @@ export const RatingCalculator = () => {
           )}
           {calculatedEntries.map((entry) => (
             <TableRow key={entry.sheetId}>
-              <TableCell>
+              <TableCell padding="none">
                 <SheetListItem sheet={entry.sheet} />
               </TableCell>
 
@@ -274,6 +316,17 @@ export const RatingCalculator = () => {
               </TableCell>
             </TableRow>
           ))}
+          {calculatedEntries.length > 0 && (
+            <TableRow>
+              <TableCell colSpan={2}>Total</TableCell>
+              <TableCell>
+                {calculatedEntries.reduce(
+                  (acc, entry) => acc + entry.rating.ratingAwardValue,
+                  0,
+                )}
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </div>

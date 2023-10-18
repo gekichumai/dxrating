@@ -1,5 +1,5 @@
 {
-  "name": "@galvingao/dxrating-web",
+  "name": "@gekichumai/dxrating-web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -24,7 +24,8 @@
     "react-use": "^17.4.0",
     "react-virtuoso": "^4.6.1",
     "swr": "^2.2.4",
-    "vaul": "^0.7.2"
+    "vaul": "^0.7.2",
+    "@gekichumai/dxdata": "*"
   },
   "devDependencies": {
     "@iconify-json/mdi": "^1.1.54",

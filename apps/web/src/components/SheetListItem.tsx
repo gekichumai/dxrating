@@ -1,3 +1,4 @@
+import { DifficultyEnum, TypeEnum } from "@gekichumai/dxdata";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,7 @@ import clsx from "clsx";
 import { FC, HTMLAttributes, memo, useState } from "react";
 import imageTypeDX from "../assets/images/type_dx.png";
 import imageTypeSD from "../assets/images/type_sd.png";
-import { DifficultyEnum, FlattenedSheet, TypeEnum } from "../songs";
+import { FlattenedSheet } from "../songs";
 import { useIsLargeDevice } from "../utils/breakpoints";
 import { SheetDialogContent } from "./SheetDialogContent";
 
@@ -195,7 +196,7 @@ const SheetType: FC<{ type: TypeEnum }> = ({ type }) => {
   );
 };
 
-export const SheetImage: FC<{ name: string; size: "small" | "medium" }> = ({
+export const SheetImage: FC<{ name: string; size?: "small" | "medium" }> = ({
   name,
   size = "medium",
 }) => {
