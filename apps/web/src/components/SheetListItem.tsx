@@ -132,7 +132,7 @@ export const SheetDialog: FC<{
         <Drawer.Content className="bg-zinc-100 flex flex-col rounded-t-[10px] h-[96%] mt-24 fixed bottom-0 left-0 right-0 z-[1]"> */}
       <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-300 my-3" />
       <div className="overflow-auto h-full p-4 pt-0">
-        <SheetDialogContent sheet={sheet} />
+        {open && <SheetDialogContent sheet={sheet} />}
       </div>
       {/* </Drawer.Content> */}
       {/* // </Drawer.Portal> */}

@@ -47,7 +47,7 @@ export const RatingCalculator = () => {
           ),
         };
       }),
-    [entries],
+    [entries, sheets],
   );
 
   if (!sheets) return null;

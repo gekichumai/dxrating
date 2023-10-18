@@ -15,7 +15,7 @@ import useSWR from "swr";
 
 export interface FlattenedSheet {
   id: string;
-  searchAcronyms: string;
+  searchAcronyms: string[];
 
   songId: string;
   category: CategoryEnum;
@@ -56,7 +56,7 @@ export const getFlattenedSheets = async (): Promise<FlattenedSheet[]> => {
         ...song,
         ...sheet,
         id: canonicalId(song, sheet),
-        searchAcronyms: song.searchAcronyms.join(" "),
+        searchAcronyms: song.searchAcronyms,
       }));
   });
   return flattenedSheets as FlattenedSheet[];
