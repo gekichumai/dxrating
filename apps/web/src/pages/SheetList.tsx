@@ -9,7 +9,7 @@ export const SheetList: FC = () => {
   const { results, elapsed } = useFilteredSheets(search);
 
   return (
-    <div className="flex-container">
+    <div className="flex-container pb-global">
       <TextField
         label="Search"
         variant="outlined"

@@ -13,6 +13,11 @@ const theme = createTheme({
   typography: {
     fontFamily: "Torus, system-ui, Avenir, Helvetica, Arial, sans-serif",
   },
+  palette: {
+    primary: {
+      main: "#855cb8",
+    },
+  },
 });
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

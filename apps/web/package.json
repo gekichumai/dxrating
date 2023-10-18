@@ -7,11 +7,16 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:web": "wrangler pages deploy dist",
+    "deploy:ios": "capacitor sync ios"
   },
   "dependencies": {
+    "@capacitor/core": "^5.5.0",
+    "@capacitor/ios": "^5.5.0",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@gekichumai/dxdata": "*",
     "@mui/material": "^5.14.13",
     "@unocss/reset": "^0.56.5",
     "clsx": "^2.0.0",
@@ -24,10 +29,10 @@
     "react-use": "^17.4.0",
     "react-virtuoso": "^4.6.1",
     "swr": "^2.2.4",
-    "vaul": "^0.7.2",
-    "@gekichumai/dxdata": "*"
+    "vaul": "^0.7.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^5.5.0",
     "@iconify-json/mdi": "^1.1.54",
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",

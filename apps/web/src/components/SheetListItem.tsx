@@ -9,8 +9,6 @@ import {
 } from "@mui/material";
 import clsx from "clsx";
 import { FC, HTMLAttributes, memo, useState } from "react";
-import imageTypeDX from "../assets/images/type_dx.png";
-import imageTypeSD from "../assets/images/type_sd.png";
 import { FlattenedSheet } from "../songs";
 import { useIsLargeDevice } from "../utils/breakpoints";
 import { SheetDialogContent } from "./SheetDialogContent";
@@ -174,10 +172,7 @@ const SheetDifficulty: FC<{ difficulty: DifficultyEnum }> = ({
   const difficultyConfig = DIFFICULTIES[difficulty];
   return (
     <span
-      className={clsx(
-        "rounded-full px-2.5 py-1.25 text-sm shadow-[0.0625rem_0.125rem_0_0_#00000040] leading-none translate-y-[-0.0625rem]",
-        difficultyConfig.dark ? "text-white" : "text-black",
-      )}
+      className="rounded-full px-2 text-sm shadow-[0.0625rem_0.125rem_0_0_#0b38714D] leading-relaxed translate-y-[-0.125rem] text-white"
       style={{ backgroundColor: difficultyConfig.color }}
     >
       {difficultyConfig.title}
@@ -186,8 +181,8 @@ const SheetDifficulty: FC<{ difficulty: DifficultyEnum }> = ({
 };
 
 const SHEET_TYPE_IMAGE = {
-  [TypeEnum.DX]: imageTypeDX,
-  [TypeEnum.SD]: imageTypeSD,
+  [TypeEnum.DX]: "https://dxrating-assets.imgg.dev/images/type_dx.png",
+  [TypeEnum.SD]: "https://dxrating-assets.imgg.dev/images/type_sd.png",
 };
 
 const SheetType: FC<{ type: TypeEnum }> = ({ type }) => {
@@ -222,7 +217,7 @@ export const SheetTitle: FC<{
   return (
     <h1
       className={clsx(
-        "flex flex-col md:flex-row md:items-center gap-2",
+        "flex flex-col md:flex-row md:items-center gap-x-2 gap-y-1",
         className,
       )}
     >

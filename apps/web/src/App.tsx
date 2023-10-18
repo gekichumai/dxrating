@@ -1,7 +1,5 @@
 import { Tab, Tabs } from "@mui/material";
 import { useState } from "react";
-import imageBackground from "./assets/images/background.jpg";
-import imageFestivalPlus from "./assets/images/festivalplus.png";
 import { RatingCalculator } from "./pages/RatingCalculator";
 import { SheetList } from "./pages/SheetList";
 
@@ -11,13 +9,13 @@ export const App = () => {
   return (
     <div className="h-full w-full relative">
       <img
-        src={imageBackground}
+        src="https://dxrating-assets.imgg.dev/images/background.jpg"
         className="fixed inset-0 h-full w-full z-[-1] object-cover object-center"
       />
       <div className="h-full w-full">
-        <div className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-8 pb-4 bg-gradient-to-b from-[#c8a8f9] to-[#c8a8f900]">
+        <div className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-8 bg-gradient-to-b from-[#c8a8f9] to-[#c8a8f900]">
           <img
-            src={imageFestivalPlus}
+            src="https://dxrating-assets.imgg.dev/images/festivalplus.png"
             className="aspect-h-269 aspect-w-133 h-32"
           />
           {/* <span className="text-zinc-800 px-2 text-center">
