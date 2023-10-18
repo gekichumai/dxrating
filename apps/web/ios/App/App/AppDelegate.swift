@@ -7,6 +7,50 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // common controllers
+        let root = window?.rootViewController
+        let rootView = root?.view
+        
+        // MARK: Capacitor enhancements on WebView
+        
+        // set background to black to retain visual consistancy
+        rootView?.backgroundColor = UIColor.black
+        
+        // enable bounces since Capacitor seems to disabled it
+        rootView?.scrollView.bounces = true
+        
+        // disable pinch gesture
+        rootView?.scrollView.pinchGestureRecognizer?.isEnabled = false
+        
+        if let options = launchOptions {
+            let notif = options[UIApplication.LaunchOptionsKey.remoteNotification] as? [NSDictionary]
+            print("remote notification launch option", notif ?? "null")
+        }
+        
+        var blurStyle = UIBlurEffect.Style.dark
+        
+        if #available(iOS 13.0, *) {
+            blurStyle = UIBlurEffect.Style.systemMaterial
+        }
+        
+        let blurEffect = UIBlurEffect(style: blurStyle)
+
+        let blurEffectView = UIVisualEffectView(effect: blurEffect)
+        blurEffectView.translatesAutoresizingMaskIntoConstraints = false
+        rootView?.addSubview(blurEffectView)
+
+        guard let leadingAnchor = rootView?.leadingAnchor,
+              let widthAnchor   = rootView?.widthAnchor,
+              let topAnchor     = rootView?.topAnchor,
+              let bottomAnchor  = rootView?.safeAreaLayoutGuide.topAnchor
+        else {
+            return true
+        }
+
+        blurEffectView.leadingAnchor.constraint(equalTo: leadingAnchor).isActive = true
+        blurEffectView.widthAnchor.constraint(equalTo: widthAnchor).isActive = true
+        blurEffectView.topAnchor.constraint(equalTo: topAnchor).isActive = true
+        blurEffectView.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
         // Override point for customization after application launch.
         return true
     }

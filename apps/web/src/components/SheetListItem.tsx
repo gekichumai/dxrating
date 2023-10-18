@@ -115,7 +115,8 @@ export const SheetDialog: FC<{
       onOpen={() => setOpen(true)}
       sx={{
         "& .MuiDrawer-paper": {
-          height: "calc(100% - 4rem)",
+          height:
+            "calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 4rem)",
         },
       }}
       PaperProps={{
@@ -198,8 +199,7 @@ export const SheetImage: FC<{ name: string; size?: "small" | "medium" }> = ({
   return (
     <img
       key={name}
-      src={"https://dp4p6x0xfi5o9.cloudfront.net/maimai/img/cover/" + name}
-      loading="lazy"
+      src={"https://dxrating-assets.imgg.dev/images/cover/" + name}
       className={clsx(
         "bg-slate-100",
         size === "small" ? "h-8 w-8 rounded-sm" : "h-12 w-12 rounded",
