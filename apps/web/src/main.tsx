@@ -2,6 +2,7 @@ import { ThemeProvider, createTheme } from "@mui/material";
 import "@unocss/reset/tailwind-compat.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { Toaster } from "react-hot-toast";
 import "virtual:uno.css";
 import { App } from "./App";
 import "./index.css";
@@ -23,6 +24,15 @@ const theme = createTheme({
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
+      <Toaster
+        toastOptions={{
+          className: "!rounded-full font-bold pr-1 py-2",
+          duration: 5e3,
+          error: {
+            duration: 10e3,
+          },
+        }}
+      />
       <App />
     </ThemeProvider>
   </React.StrictMode>,

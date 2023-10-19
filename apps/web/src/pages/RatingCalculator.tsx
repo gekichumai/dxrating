@@ -2,6 +2,7 @@ import { VersionEnum } from "@gekichumai/dxdata";
 import {
   Alert,
   AlertTitle,
+  Button,
   Chip,
   IconButton,
   Table,
@@ -21,6 +22,7 @@ import {
 } from "@tanstack/react-table";
 import clsx from "clsx";
 import { FC, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { useList, useLocalStorage } from "react-use";
 import { ListActions } from "react-use/lib/useList";
 import IconMdiTrashCan from "~icons/mdi/trash-can";
@@ -197,7 +199,7 @@ export const RatingCalculator = () => {
         }}
       />
 
-      <div className="flex items-start gap-4">
+      <div className="flex flex-col md:flex-row items-start gap-4">
         <Alert severity="info" className="w-full">
           <AlertTitle>Your current rating</AlertTitle>
           <Table className="-ml-2">
@@ -259,15 +261,86 @@ export const RatingCalculator = () => {
             </TableBody>
           </Table>
         </Alert>
-        <Alert severity="info" className="w-full">
-          <AlertTitle>
-            {localStorageEntries?.length
-              ? `Saved ${localStorageEntries.length} records`
-              : "Auto-save"}
-          </AlertTitle>
-          Your entries will be saved automatically to your browser's local
-          storage and will be restored when you return to this page.
-        </Alert>
+
+        <div className="flex flex-col gap-4">
+          <Alert severity="info" className="w-full">
+            <AlertTitle>
+              {localStorageEntries?.length
+                ? `Saved ${localStorageEntries.length} records`
+                : "Auto-save"}
+            </AlertTitle>
+            Your entries will be saved automatically to your browser's local
+            storage and will be restored when you return to this page.
+          </Alert>
+
+          <Alert severity="info" className="w-full">
+            <AlertTitle>Import/Export</AlertTitle>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  const input = document.createElement("input");
+                  input.type = "file";
+                  input.accept = "application/json";
+                  input.onchange = (event) => {
+                    const element = event.target as HTMLInputElement;
+                    if (!element) return;
+
+                    const file = element?.files ? element?.files[0] : undefined;
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      const data = event.target?.result;
+                      if (!data) return;
+                      if (typeof data !== "string") return;
+
+                      const entries = JSON.parse(data);
+                      // basic validation
+                      if (
+                        !Array.isArray(entries) ||
+                        !entries.length ||
+                        !entries[0].sheetId ||
+                        !entries[0].achievementRate
+                      ) {
+                        toast.error("Invalid file format");
+                        return;
+                      }
+
+                      modifyEntries.set(entries);
+
+                      toast.success("Imported " + entries.length + " entries");
+                    };
+                    reader.readAsText(file);
+                  };
+                  input.click();
+                }}
+              >
+                Import
+              </Button>
+
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  const data = JSON.stringify(entries);
+                  const blob = new Blob([data], { type: "application/json" });
+                  const url = URL.createObjectURL(blob);
+                  const name = `dxrating.imgg.dev.export${Date.now()}.json`;
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = name;
+                  a.click();
+                  URL.revokeObjectURL(url);
+
+                  toast.success("Exported as " + name);
+                }}
+              >
+                Export
+              </Button>
+            </div>
+          </Alert>
+        </div>
       </div>
 
       <Table>
