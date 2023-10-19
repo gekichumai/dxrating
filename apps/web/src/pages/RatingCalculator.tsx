@@ -62,7 +62,7 @@ const RatingCalculatorRowActions: FC<{
 };
 
 const DenseTableCell = styled(TableCell)(({ theme }) => ({
-  padding: theme.spacing(0.5, 1),
+  padding: theme.spacing(0.75 + 0.0625, 1),
 }));
 
 export const RatingCalculator = () => {
@@ -184,21 +184,6 @@ export const RatingCalculator = () => {
 
   return (
     <div className="flex-container w-full pb-global">
-      <RatingCalculatorAddEntryForm
-        onSubmit={(entry) => {
-          if (
-            entries.some(
-              (existingEntry) => existingEntry.sheetId === entry.sheetId,
-            )
-          ) {
-            modifyEntries.updateFirst(
-              (existingEntry) => existingEntry.sheetId === entry.sheetId,
-              entry,
-            );
-          } else modifyEntries.push(entry);
-        }}
-      />
-
       <div className="flex flex-col md:flex-row items-start gap-4">
         <Alert severity="info" className="w-full">
           <AlertTitle>Your current rating</AlertTitle>
@@ -262,7 +247,16 @@ export const RatingCalculator = () => {
           </Table>
         </Alert>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 h-full self-stretch">
+          <Alert severity="warning" className="w-full self-stretch h-full">
+            <AlertTitle>Version mismatch</AlertTitle>
+            The current version regarding B15 filtering is based on{" "}
+            <strong>FESTiVAL</strong>, but the internal level data is from{" "}
+            <strong>FESTiVAL PLUS</strong>, causing ratings to be inaccurate for
+            the moment. When the corresponding cabinet (wink) updates to
+            FESTiVAL PLUS, this site will be updated accordingly.
+          </Alert>
+
           <Alert severity="info" className="w-full">
             <AlertTitle>
               {localStorageEntries?.length
@@ -271,12 +265,7 @@ export const RatingCalculator = () => {
             </AlertTitle>
             Your entries will be saved automatically to your browser's local
             storage and will be restored when you return to this page.
-          </Alert>
-
-          <Alert severity="info" className="w-full">
-            <AlertTitle>Import/Export</AlertTitle>
-
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mt-2">
               <Button
                 variant="outlined"
                 onClick={() => {
@@ -342,6 +331,21 @@ export const RatingCalculator = () => {
           </Alert>
         </div>
       </div>
+
+      <RatingCalculatorAddEntryForm
+        onSubmit={(entry) => {
+          if (
+            entries.some(
+              (existingEntry) => existingEntry.sheetId === entry.sheetId,
+            )
+          ) {
+            modifyEntries.updateFirst(
+              (existingEntry) => existingEntry.sheetId === entry.sheetId,
+              entry,
+            );
+          } else modifyEntries.push(entry);
+        }}
+      />
 
       <Table>
         <TableHead>
@@ -414,9 +418,11 @@ export const RatingCalculator = () => {
             </TableRow>
           )}
           {calculatedEntries.length > 0 && (
-            <TableRow>
-              <TableCell colSpan={2}>Total</TableCell>
-              <TableCell>
+            <TableRow className="bg-gray-900">
+              <TableCell colSpan={3} className="!text-white !font-bold !pl-5">
+                Total
+              </TableCell>
+              <TableCell className="!text-white !font-bold">
                 {calculatedEntries.reduce(
                   (acc, entry) => acc + entry.rating.ratingAwardValue,
                   0,
