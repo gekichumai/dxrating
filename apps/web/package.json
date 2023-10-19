@@ -18,6 +18,7 @@
     "@emotion/styled": "^11.11.0",
     "@gekichumai/dxdata": "*",
     "@mui/material": "^5.14.13",
+    "@tanstack/react-table": "^8.10.7",
     "@unocss/reset": "^0.56.5",
     "clsx": "^2.0.0",
     "framer-motion": "^10.16.4",

@@ -43,6 +43,7 @@ export const SheetDialogContent: FC<{ sheet: FlattenedSheet }> = ({
         title={sheet.title}
         difficulty={sheet.difficulty}
         type={sheet.type}
+        version={sheet.version}
         className="text-lg font-bold"
       />
 

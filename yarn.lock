@@ -477,6 +477,7 @@
   "version" "0.0.0"
   dependencies:
     "@capacitor/core" "^5.5.0"
+    "@capacitor/ios" "^5.5.0"
     "@emotion/react" "^11.11.1"
     "@emotion/styled" "^11.11.0"
     "@gekichumai/dxdata" "*"
@@ -1040,6 +1041,18 @@
     "@svgr/babel-preset" "8.1.0"
     "@svgr/hast-util-to-babel-ast" "8.0.0"
     "svg-parser" "^2.0.4"
+
+"@tanstack/react-table@^8.10.7":
+  "integrity" "sha512-bXhjA7xsTcsW8JPTTYlUg/FuBpn8MNjiEPhkNhIGCUR6iRQM2+WEco4OBpvDeVcR9SE+bmWLzdfiY7bCbCSVuA=="
+  "resolved" "https://registry.npmjs.org/@tanstack/react-table/-/react-table-8.10.7.tgz"
+  "version" "8.10.7"
+  dependencies:
+    "@tanstack/table-core" "8.10.7"
+
+"@tanstack/table-core@8.10.7":
+  "integrity" "sha512-KQk5OMg5OH6rmbHZxuNROvdI+hKDIUxANaHlV+dPlNN7ED3qYQ/WkpY2qlXww1SIdeMlkIhpN/2L00rof0fXFw=="
+  "resolved" "https://registry.npmjs.org/@tanstack/table-core/-/table-core-8.10.7.tgz"
+  "version" "8.10.7"
 
 "@types/babel__core@^7.20.2":
   "integrity" "sha512-pNpr1T1xLUc2l3xJKuPtsEky3ybxN3m4fJkknfIpTCTfIZCDW57oAg+EfCgIIp2rvCe0Wn++/FfodDS4YXxBwA=="

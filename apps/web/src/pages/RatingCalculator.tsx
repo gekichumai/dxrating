@@ -1,23 +1,67 @@
+import { VersionEnum } from "@gekichumai/dxdata";
 import {
   Alert,
   AlertTitle,
+  Chip,
   IconButton,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
+  styled,
 } from "@mui/material";
-import { useEffect, useMemo } from "react";
+import {
+  SortingState,
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import clsx from "clsx";
+import { FC, useEffect, useMemo, useState } from "react";
 import { useList, useLocalStorage } from "react-use";
+import { ListActions } from "react-use/lib/useList";
 import IconMdiTrashCan from "~icons/mdi/trash-can";
 import {
   PlayEntry,
   RatingCalculatorAddEntryForm,
 } from "../components/RatingCalculatorAddEntryForm";
 import { SheetListItem } from "../components/SheetListItem";
-import { useSheets } from "../songs";
-import { calculateRating } from "../utils/rating";
+import { FlattenedSheet, useSheets } from "../songs";
+import { Rating, calculateRating } from "../utils/rating";
+
+export interface Entry {
+  sheet: FlattenedSheet;
+  rating: Rating;
+  sheetId: string;
+  achievementRate: number;
+  includedIn: "b15" | "b35" | null;
+}
+
+const columnHelper = createColumnHelper<Entry>();
+
+const RatingCalculatorRowActions: FC<{
+  modifyEntries: ListActions<PlayEntry>;
+  entry: PlayEntry;
+}> = ({ modifyEntries, entry }) => {
+  return (
+    <IconButton
+      onClick={() => {
+        modifyEntries.filter(
+          (existingEntry) => existingEntry.sheetId !== entry.sheetId,
+        );
+      }}
+    >
+      <IconMdiTrashCan />
+    </IconButton>
+  );
+};
+
+const DenseTableCell = styled(TableCell)(({ theme }) => ({
+  padding: theme.spacing(0.5, 1),
+}));
 
 export const RatingCalculator = () => {
   const { data: sheets } = useSheets();
@@ -26,29 +70,113 @@ export const RatingCalculator = () => {
   >("rating-calculator-entries", []);
   const [entries, modifyEntries] = useList<PlayEntry>(localStorageEntries);
 
+  const [sorting, setSorting] = useState<SortingState>([]);
+
   useEffect(() => {
     setLocalStorageEntries(entries);
   }, [entries, setLocalStorageEntries]);
 
-  const calculatedEntries = useMemo(
-    () =>
-      entries.map((entry) => {
-        const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId);
-        if (!sheet) {
-          throw new Error(`Sheet ${entry.sheetId} not found`);
-        }
+  const calculatedEntries = useMemo(() => {
+    const calculated = entries.map((entry) => {
+      const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId);
+      if (!sheet) {
+        throw new Error(`Sheet ${entry.sheetId} not found`);
+      }
 
-        return {
-          ...entry,
-          sheet,
-          rating: calculateRating(
-            sheet.internalLevelValue,
-            entry.achievementRate,
-          ),
-        };
+      return {
+        ...entry,
+        sheet,
+        rating: calculateRating(
+          sheet.internalLevelValue,
+          entry.achievementRate,
+        ),
+      };
+    });
+
+    const currentVersion = VersionEnum.FESTIVAL;
+    const best15OfCurrentVersionSheetIds = calculated
+      .filter((entry) => entry.sheet.version === currentVersion)
+      .sort((a, b) => b.rating.ratingAwardValue - a.rating.ratingAwardValue)
+      .slice(0, 15)
+      .map((entry) => entry.sheetId);
+
+    const best35OfAllOtherVersionSheetIds = calculated
+      .filter((entry) => entry.sheet.version !== currentVersion)
+      .sort((a, b) => b.rating.ratingAwardValue - a.rating.ratingAwardValue)
+      .slice(0, 35)
+      .map((entry) => entry.sheetId);
+
+    return calculated.map((entry) => ({
+      ...entry,
+      includedIn: best15OfCurrentVersionSheetIds.includes(entry.sheetId)
+        ? ("b15" as const)
+        : best35OfAllOtherVersionSheetIds.includes(entry.sheetId)
+        ? ("b35" as const)
+        : null,
+    }));
+  }, [entries, sheets]);
+
+  const columns = useMemo(
+    () => [
+      columnHelper.display({
+        id: "sheet",
+        header: "Sheet",
+        cell: ({ row }) => <SheetListItem sheet={row.original.sheet} />,
+        meta: {
+          cellProps: {
+            padding: "none",
+          },
+        },
       }),
-    [entries, sheets],
+      columnHelper.accessor("includedIn", {
+        id: "includedIn",
+        header: "Included in",
+        cell: ({ row }) => {
+          const includedIn = row.original.includedIn;
+          if (!includedIn) return null;
+
+          return (
+            <Chip
+              label={includedIn.toUpperCase()}
+              color={includedIn === "b15" ? "secondary" : "primary"}
+              size="small"
+              className="tabular-nums w-16"
+            />
+          );
+        },
+      }),
+      columnHelper.accessor("achievementRate", {
+        id: "achievementRate",
+        header: "Achievement Rate",
+        cell: ({ row }) => `${row.original.achievementRate.toFixed(4)}%`,
+      }),
+      columnHelper.accessor("rating.ratingAwardValue", {
+        id: "rating.ratingAwardValue",
+        header: "Rating",
+        cell: ({ row }) => row.original.rating.ratingAwardValue,
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <RatingCalculatorRowActions
+            entry={row.original}
+            modifyEntries={modifyEntries}
+          />
+        ),
+      }),
+    ],
+    [modifyEntries],
   );
+
+  const table = useReactTable({
+    data: calculatedEntries,
+    columns,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
   if (!sheets) return null;
 
@@ -69,57 +197,149 @@ export const RatingCalculator = () => {
         }}
       />
 
-      <Alert severity="info" className="w-full">
-        <AlertTitle>
-          {localStorageEntries?.length
-            ? `Saved ${localStorageEntries.length} records`
-            : "Auto-save"}
-        </AlertTitle>
-        Your entries will be saved automatically to your browser's local storage
-        and will be restored when you return to this page.
-      </Alert>
+      <div className="flex items-start gap-4">
+        <Alert severity="info" className="w-full">
+          <AlertTitle>Your current rating</AlertTitle>
+          <Table className="-ml-2">
+            <TableHead>
+              <TableRow>
+                <DenseTableCell className="w-sm">Item</DenseTableCell>
+                <DenseTableCell>Value</DenseTableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <TableRow>
+                <DenseTableCell className="flex flex-col">
+                  <div className="font-bold text-lg">B15</div>
+                  <div className="text-gray-500">
+                    Best 15 of the current version (FESTiVAL)
+                  </div>
+                </DenseTableCell>
+                <DenseTableCell>
+                  {calculatedEntries
+                    .filter((entry) => entry.includedIn === "b15")
+                    .reduce(
+                      (sum, entry) => sum + entry.rating.ratingAwardValue,
+                      0,
+                    )}
+                </DenseTableCell>
+              </TableRow>
+
+              <TableRow>
+                <DenseTableCell className="flex flex-col">
+                  <div className="font-bold text-lg">B35</div>
+                  <div className="text-gray-500">
+                    Best 35 of plays on all other maps except the current
+                    version (FESTiVAL)
+                  </div>
+                </DenseTableCell>
+                <DenseTableCell>
+                  {calculatedEntries
+                    .filter((entry) => entry.includedIn === "b35")
+                    .reduce(
+                      (sum, entry) => sum + entry.rating.ratingAwardValue,
+                      0,
+                    )}
+                </DenseTableCell>
+              </TableRow>
+
+              <TableRow>
+                <DenseTableCell>
+                  <span className="font-bold">Total</span>
+                </DenseTableCell>
+                <DenseTableCell>
+                  {calculatedEntries
+                    .filter((entry) => entry.includedIn)
+                    .reduce(
+                      (sum, entry) => sum + entry.rating.ratingAwardValue,
+                      0,
+                    )}
+                </DenseTableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </Alert>
+        <Alert severity="info" className="w-full">
+          <AlertTitle>
+            {localStorageEntries?.length
+              ? `Saved ${localStorageEntries.length} records`
+              : "Auto-save"}
+          </AlertTitle>
+          Your entries will be saved automatically to your browser's local
+          storage and will be restored when you return to this page.
+        </Alert>
+      </div>
 
       <Table>
         <TableHead>
-          <TableRow>
-            <TableCell>Sheet</TableCell>
-            <TableCell>Achievement Rate</TableCell>
-            <TableCell>Rating</TableCell>
-            <TableCell>Actions</TableCell>
-          </TableRow>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                return (
+                  <TableCell key={header.id} colSpan={header.colSpan}>
+                    {header.isPlaceholder ? null : (
+                      <div
+                        {...{
+                          className: header.column.getCanSort()
+                            ? "cursor-pointer select-none"
+                            : "",
+                          onClick: header.column.getToggleSortingHandler(),
+                        }}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                        {{
+                          asc: " 🔼",
+                          desc: " 🔽",
+                        }[header.column.getIsSorted() as string] ?? null}
+                      </div>
+                    )}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+          ))}
         </TableHead>
         <TableBody className="tabular-nums">
+          {table.getRowModel().rows.map((row) => {
+            return (
+              <TableRow
+                key={row.id}
+                className={clsx(
+                  {
+                    b35: "bg-red-200",
+                    b15: "bg-green-200",
+                    none: undefined,
+                  }[row.original.includedIn ?? "none"],
+                )}
+              >
+                {row.getVisibleCells().map((cell) => {
+                  return (
+                    <TableCell
+                      key={cell.id}
+                      {...(
+                        cell.column.columnDef.meta as {
+                          cellProps?: Record<string, unknown>;
+                        }
+                      )?.cellProps}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            );
+          })}
           {calculatedEntries.length === 0 && (
             <TableRow>
               <TableCell colSpan={4}>No entries</TableCell>
             </TableRow>
           )}
-          {calculatedEntries.map((entry) => (
-            <TableRow key={entry.sheetId}>
-              <TableCell padding="none">
-                <SheetListItem sheet={entry.sheet} />
-              </TableCell>
-
-              <TableCell>{entry.achievementRate.toFixed(4)}%</TableCell>
-
-              <TableCell>{entry.rating.ratingAwardValue}</TableCell>
-
-              <TableCell>
-                <IconButton
-                  onClick={() => {
-                    modifyEntries.removeAt(
-                      entries.findIndex(
-                        (existingEntry) =>
-                          existingEntry.sheetId === entry.sheetId,
-                      ),
-                    );
-                  }}
-                >
-                  <IconMdiTrashCan />
-                </IconButton>
-              </TableCell>
-            </TableRow>
-          ))}
           {calculatedEntries.length > 0 && (
             <TableRow>
               <TableCell colSpan={2}>Total</TableCell>

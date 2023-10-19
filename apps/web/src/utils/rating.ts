@@ -17,15 +17,17 @@ const SCORE_COEFFICIENT_TABLE: [number, number, string][] = [
   [100.5, 22.4, "sssp"],
 ];
 
-export const calculateRating = (
-  internalLevel: number,
-  achievementRate: number,
-): {
+export interface Rating {
   ratingAwardValue: number;
   coefficient: number;
   rank: string | null;
   index: number;
-} => {
+}
+
+export const calculateRating = (
+  internalLevel: number,
+  achievementRate: number,
+): Rating => {
   for (let i = 0; i < SCORE_COEFFICIENT_TABLE.length; i++) {
     if (
       i === SCORE_COEFFICIENT_TABLE.length - 1 ||

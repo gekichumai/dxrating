@@ -1,4 +1,4 @@
-import { DifficultyEnum, TypeEnum } from "@gekichumai/dxdata";
+import { DifficultyEnum, TypeEnum, VersionEnum } from "@gekichumai/dxdata";
 import {
   Dialog,
   DialogContent,
@@ -58,13 +58,14 @@ export const SheetListItemContent: FC<
     >
       <SheetImage name={sheet.imageName} size={size} />
 
-      <ListItemText>
+      <ListItemText className="ml-2">
         <SheetTitle
           title={sheet.title}
           difficulty={sheet.difficulty}
           type={sheet.type}
+          version={sheet.version}
           className={clsx(
-            "font-bold ml-2",
+            "font-bold",
             size === "small" ? "text-sm" : "text-lg",
           )}
         />
@@ -212,20 +213,27 @@ export const SheetTitle: FC<{
   title: string;
   difficulty: DifficultyEnum;
   type: TypeEnum;
+  version: VersionEnum;
   className?: string;
-}> = ({ title, difficulty, type, className }) => {
+}> = ({ title, difficulty, type, version, className }) => {
   return (
-    <h1
-      className={clsx(
-        "flex flex-col md:flex-row md:items-center gap-x-2 gap-y-1",
-        className,
-      )}
-    >
-      <span>{title}</span>
-      <div className="flex items-center gap-2">
-        <SheetType type={type} />
-        <SheetDifficulty difficulty={difficulty} />
+    <div className="flex flex-col">
+      <h3
+        className={clsx(
+          "flex flex-col md:flex-row md:items-center gap-x-2 gap-y-1",
+          className,
+        )}
+      >
+        <span className="translate-y-[-0.125rem]">{title}</span>
+        <div className="flex items-center gap-2">
+          <SheetType type={type} />
+          <SheetDifficulty difficulty={difficulty} />
+        </div>
+      </h3>
+
+      <div className="text-sm">
+        <span className="font-bold text-zinc-600">{version}</span>
       </div>
-    </h1>
+    </div>
   );
 };
