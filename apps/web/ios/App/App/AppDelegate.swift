@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import CoreSpotlight
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -26,18 +27,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             let notif = options[UIApplication.LaunchOptionsKey.remoteNotification] as? [NSDictionary]
             print("remote notification launch option", notif ?? "null")
         }
-        
-        var blurStyle = UIBlurEffect.Style.dark
-        
-        if #available(iOS 13.0, *) {
-            blurStyle = UIBlurEffect.Style.systemMaterial
-        }
-        
-        let blurEffect = UIBlurEffect(style: blurStyle)
 
-        let blurEffectView = UIVisualEffectView(effect: blurEffect)
-        blurEffectView.translatesAutoresizingMaskIntoConstraints = false
-        rootView?.addSubview(blurEffectView)
+        let topBarColorChunk = UIView()
+        topBarColorChunk.backgroundColor = .init(rgb: 0xC8A8F9)
+        topBarColorChunk.translatesAutoresizingMaskIntoConstraints = false
+        rootView?.addSubview(topBarColorChunk)
 
         guard let leadingAnchor = rootView?.leadingAnchor,
               let widthAnchor   = rootView?.widthAnchor,
@@ -47,11 +41,45 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             return true
         }
 
-        blurEffectView.leadingAnchor.constraint(equalTo: leadingAnchor).isActive = true
-        blurEffectView.widthAnchor.constraint(equalTo: widthAnchor).isActive = true
-        blurEffectView.topAnchor.constraint(equalTo: topAnchor).isActive = true
-        blurEffectView.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
+        topBarColorChunk.leadingAnchor.constraint(equalTo: leadingAnchor).isActive = true
+        topBarColorChunk.widthAnchor.constraint(equalTo: widthAnchor).isActive = true
+        topBarColorChunk.topAnchor.constraint(equalTo: topAnchor).isActive = true
+        topBarColorChunk.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
         // Override point for customization after application launch.
+        
+        DispatchQueue.global(qos: .background).async {
+            if let dxData = AppData.loadDXData() {
+                if #available(iOS 14.0, *) {
+                    var items: [CSSearchableItem] = []
+                    for song in dxData.songs {
+                        let attributeSet = CSSearchableItemAttributeSet(contentType: .item)
+                        attributeSet.title = song.title
+                        attributeSet.displayName = song.title
+                        attributeSet.contentDescription = song.sheets.map({ sheet in
+                            return sheet.formatted()
+                        }).joined(separator: " | ")
+                        attributeSet.alternateNames = song.searchAcronyms
+                        if let thumbnailURL = Bundle.main.url(forResource: song.imageName.replacingOccurrences(of: ".png", with: ""), withExtension: "jpg", subdirectory: "Assets/Covers") {
+                            attributeSet.thumbnailURL = thumbnailURL
+                        } else {
+                            print("unable to find thumbnail for \(song.imageName)")
+                        }
+                        let item = CSSearchableItem(uniqueIdentifier: "\(song.songId)", domainIdentifier: "dev.imgg.gekichumai.dxrating", attributeSet: attributeSet)
+                        items.append(item)
+                    }
+                    CSSearchableIndex.default().indexSearchableItems(items) { error in
+                        if let error = error {
+                            print("Indexing error: \(error.localizedDescription)")
+                        } else {
+                            print("Successfully indexed \(items.count) items.")
+                        }
+                    }
+                } else {
+                    // Fallback on earlier versions
+                }
+            }
+        }
+        
         return true
     }
 

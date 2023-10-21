@@ -261,7 +261,9 @@ export const RatingCalculator = () => {
   >("rating-calculator-entries", []);
   const [entries, modifyEntries] = useList<PlayEntry>(localStorageEntries);
 
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "rating", desc: true },
+  ]);
 
   useEffect(() => {
     setLocalStorageEntries(entries);
@@ -316,6 +318,8 @@ export const RatingCalculator = () => {
             padding: "none",
           },
         },
+        size: 400,
+        minSize: 200,
       }),
       columnHelper.accessor("includedIn", {
         id: "includedIn",
@@ -340,7 +344,7 @@ export const RatingCalculator = () => {
         cell: ({ row }) => `${row.original.achievementRate.toFixed(4)}%`,
       }),
       columnHelper.accessor("rating.ratingAwardValue", {
-        id: "rating.ratingAwardValue",
+        id: "rating",
         header: "Rating",
         cell: ({ row }) => row.original.rating.ratingAwardValue,
       }),
@@ -482,75 +486,79 @@ export const RatingCalculator = () => {
 
       <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
 
-      <Table className="rounded-lg overflow-hidden">
-        <TableHead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableCell
-                    key={header.id}
-                    colSpan={header.colSpan}
-                    className={clsx(
-                      "group bg-gray-900/5 transition",
-                      header.column.getCanSort() &&
-                        "cursor-pointer select-none hover:bg-gray-900/10 active:bg-gray-900/20",
-                    )}
-                    onClick={header.column.getToggleSortingHandler()}
-                  >
-                    {header.isPlaceholder ? null : (
-                      <div>
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                        <IconMdiArrowUp
-                          className={clsx(
-                            "inline-flex ml-1 transition",
-                            {
-                              asc: "rotate-0",
-                              desc: "rotate-180",
-                              none: header.column.getCanSort()
-                                ? "opacity-0 group-hover:opacity-70"
-                                : "opacity-0",
-                            }[
-                              (header.column.getIsSorted() as string) || "none"
-                            ],
+      <div className="max-w-screen w-full overflow-x-auto">
+        <Table className="rounded-lg w-full">
+          <TableHead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableCell
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      className={clsx(
+                        "group bg-gray-900/5 transition",
+                        header.column.getCanSort() &&
+                          "cursor-pointer select-none hover:bg-gray-900/10 active:bg-gray-900/20",
+                      )}
+                      onClick={header.column.getToggleSortingHandler()}
+                      style={{ width: header.getSize() }}
+                    >
+                      {header.isPlaceholder ? null : (
+                        <div>
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
                           )}
-                        />
-                      </div>
-                    )}
-                  </TableCell>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHead>
-        <TableBody className="tabular-nums">
-          {table.getRowModel().rows.map((row) => (
-            <RatingCalculatorTableRow row={row} key={row.id} />
-          ))}
-          {calculatedEntries.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={4}>No entries</TableCell>
-            </TableRow>
-          )}
-          {calculatedEntries.length > 0 && (
-            <TableRow className="bg-gray-900">
-              <TableCell colSpan={3} className="!text-white !font-bold !pl-5">
-                Total
-              </TableCell>
-              <TableCell className="!text-white !font-bold">
-                {calculatedEntries.reduce(
-                  (acc, entry) => acc + entry.rating.ratingAwardValue,
-                  0,
-                )}
-              </TableCell>
-              <TableCell />
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+                          <IconMdiArrowUp
+                            className={clsx(
+                              "inline-flex ml-1 transition",
+                              {
+                                asc: "rotate-0",
+                                desc: "rotate-180",
+                                none: header.column.getCanSort()
+                                  ? "opacity-0 group-hover:opacity-70"
+                                  : "opacity-0",
+                              }[
+                                (header.column.getIsSorted() as string) ||
+                                  "none"
+                              ],
+                            )}
+                          />
+                        </div>
+                      )}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHead>
+          <TableBody className="tabular-nums">
+            {table.getRowModel().rows.map((row) => (
+              <RatingCalculatorTableRow row={row} key={row.id} />
+            ))}
+            {calculatedEntries.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4}>No entries</TableCell>
+              </TableRow>
+            )}
+            {calculatedEntries.length > 0 && (
+              <TableRow className="bg-gray-900">
+                <TableCell colSpan={3} className="!text-white !font-bold !pl-5">
+                  Total
+                </TableCell>
+                <TableCell className="!text-white !font-bold">
+                  {calculatedEntries.reduce(
+                    (acc, entry) => acc + entry.rating.ratingAwardValue,
+                    0,
+                  )}
+                </TableCell>
+                <TableCell />
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
@@ -578,6 +586,7 @@ const RatingCalculatorTableRow: FC<{
                 cellProps?: Record<string, unknown>;
               }
             )?.cellProps}
+            style={{ width: cell.column.getSize() }}
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
           </TableCell>

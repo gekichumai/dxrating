@@ -1,5 +1,6 @@
 import {
   Alert,
+  Button,
   Table,
   TableBody,
   TableCell,
@@ -8,6 +9,7 @@ import {
 } from "@mui/material";
 import clsx from "clsx";
 import { FC, useMemo } from "react";
+import IconMdiYouTube from "~icons/mdi/youtube";
 import { FlattenedSheet } from "../songs";
 import { calculateRating } from "../utils/rating";
 import { DXRank } from "./DXRank";
@@ -53,6 +55,16 @@ export const SheetDialogContent: FC<{ sheet: FlattenedSheet }> = ({
           <span>FESTiVAL PLUS</span>
         </div>
       </Alert>
+
+      <Button
+        startIcon={<IconMdiYouTube />}
+        variant="outlined"
+        href={`https://www.youtube.com/results?search_query=${sheet.title}+${sheet.difficulty}`}
+        target="_blank"
+        className="inline-flex !text-[#ff0000] !b-[#ff0000] !font-bold self-start"
+      >
+        Search on YouTube
+      </Button>
 
       <Table className="tabular-nums !font-mono" size="small">
         <TableHead>

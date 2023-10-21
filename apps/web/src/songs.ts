@@ -111,7 +111,7 @@ export const useFilteredSheets = (searchTerm: string) => {
           })) ?? []
         : fuseInstance.search(searchTerm);
     const end = performance.now();
-    console.log(`Fuse search took ${end - start}ms:`, results);
+    console.log(`Fuse search took ${end - start}ms`);
 
     return {
       results,

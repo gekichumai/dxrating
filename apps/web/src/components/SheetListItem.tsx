@@ -2,6 +2,7 @@ import { DifficultyEnum, TypeEnum, VersionEnum } from "@gekichumai/dxdata";
 import {
   Dialog,
   DialogContent,
+  Grow,
   ListItemButton,
   ListItemSecondaryAction,
   ListItemText,
@@ -99,7 +100,14 @@ export const SheetDialog: FC<{
   const isLargeDevice = useIsLargeDevice();
 
   return isLargeDevice ? (
-    <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
+    <Dialog
+      open={open}
+      onClose={() => setOpen(false)}
+      maxWidth="md"
+      fullWidth
+      TransitionComponent={Grow}
+    >
+      x
       <DialogContent>
         <SheetDialogContent sheet={sheet} />
       </DialogContent>
