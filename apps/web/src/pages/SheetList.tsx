@@ -13,12 +13,8 @@ export const SheetList: FC = () => {
   const filteredResults = useMemo(() => {
     if (showOnlyFestival) {
       return results
-        .filter(
-          (sheet) =>
-            sheet.item.version === VersionEnum.FESTIVAL ||
-            sheet.item.version === VersionEnum.FESTIVALPLUS,
-        )
-        .sort((a, b) => a.item.internalLevelValue - b.item.internalLevelValue);
+        .filter((sheet) => sheet.item.version === VersionEnum.FESTIVALPLUS)
+        .sort((a, b) => b.item.internalLevelValue - a.item.internalLevelValue);
     }
     return results;
   }, [results, showOnlyFestival]);
@@ -40,7 +36,7 @@ export const SheetList: FC = () => {
             onChange={(e) => setShowOnlyFestival(e.target.checked)}
           />
         }
-        label="Filter B15: Show only FESTiVAL/FESTiVAL+ charts and sort by level (ascending)"
+        label="Filter Current B15: Show only FESTiVAL+ charts and sort by level (descending)"
       />
 
       <Alert severity="info" className="text-sm !rounded-full shadow-lg">

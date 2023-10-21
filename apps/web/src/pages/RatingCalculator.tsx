@@ -282,7 +282,7 @@ export const RatingCalculator = () => {
       };
     });
 
-    const currentVersion = VersionEnum.FESTIVAL;
+    const currentVersion = VersionEnum.FESTIVALPLUS;
     const best15OfCurrentVersionSheetIds = calculated
       .filter((entry) => entry.sheet.version === currentVersion)
       .sort((a, b) => b.rating.ratingAwardValue - a.rating.ratingAwardValue)
@@ -400,8 +400,8 @@ export const RatingCalculator = () => {
                 <DenseTableCell className="flex flex-col">
                   <div className="font-bold text-lg">B15</div>
                   <div className="text-gray-500">
-                    Best 15 plays on songs released at current version
-                    (FESTiVAL)
+                    Best 15 plays on songs released at current version (FESTiVAL
+                    PLUS)
                   </div>
                 </DenseTableCell>
                 <DenseTableCell>
@@ -419,7 +419,7 @@ export const RatingCalculator = () => {
                   <div className="font-bold text-lg">B35</div>
                   <div className="text-gray-500">
                     Best 35 plays on all other songs except ones released at
-                    current version (FESTiVAL)
+                    current version (FESTiVAL PLUS)
                   </div>
                 </DenseTableCell>
                 <DenseTableCell>
@@ -450,14 +450,14 @@ export const RatingCalculator = () => {
         </Alert>
 
         <div className="flex flex-col gap-4 h-full self-stretch">
-          <Alert severity="warning" className="w-full self-stretch h-full">
+          {/* <Alert severity="warning" className="w-full self-stretch h-full">
             <AlertTitle>Version mismatch</AlertTitle>
             The current version regarding B15 filtering is based on{" "}
             <strong>FESTiVAL</strong>, but the internal level data is from{" "}
             <strong>FESTiVAL PLUS</strong>, causing ratings to be inaccurate for
             the moment. When the corresponding cabinet (wink) updates to
             FESTiVAL PLUS, this site will be updated accordingly.
-          </Alert>
+          </Alert> */}
 
           <Alert severity="info" className="w-full">
             <AlertTitle>
