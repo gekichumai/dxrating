@@ -270,7 +270,7 @@ export const RatingCalculator = () => {
   const calculatedEntries = useMemo(() => {
     const calculated = entries.map((entry) => {
       const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId);
-      if (!sheet) throw new Error(`Sheet ${entry.sheetId} not found`);
+      if (!sheet) throw new Error(`Chart ${entry.sheetId} not found`);
 
       return {
         ...entry,
@@ -308,8 +308,8 @@ export const RatingCalculator = () => {
   const columns = useMemo(
     () => [
       columnHelper.display({
-        id: "sheet",
-        header: "Sheet",
+        id: "chart",
+        header: "Chart",
         cell: ({ row }) => <SheetListItem sheet={row.original.sheet} />,
         meta: {
           cellProps: {
@@ -400,7 +400,8 @@ export const RatingCalculator = () => {
                 <DenseTableCell className="flex flex-col">
                   <div className="font-bold text-lg">B15</div>
                   <div className="text-gray-500">
-                    Best 15 of the current version (FESTiVAL)
+                    Best 15 plays on songs released at current version
+                    (FESTiVAL)
                   </div>
                 </DenseTableCell>
                 <DenseTableCell>
@@ -417,8 +418,8 @@ export const RatingCalculator = () => {
                 <DenseTableCell className="flex flex-col">
                   <div className="font-bold text-lg">B35</div>
                   <div className="text-gray-500">
-                    Best 35 of plays on all other maps except the current
-                    version (FESTiVAL)
+                    Best 35 plays on all other songs except ones released at
+                    current version (FESTiVAL)
                   </div>
                 </DenseTableCell>
                 <DenseTableCell>

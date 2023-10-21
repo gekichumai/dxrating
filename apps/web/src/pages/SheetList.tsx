@@ -44,8 +44,8 @@ export const SheetList: FC = () => {
       />
 
       <Alert severity="info" className="text-sm !rounded-full shadow-lg">
-        Found {filteredResults.length} results out of {sheets?.length} records
-        in {elapsed.toFixed(1)}ms
+        Found {filteredResults.length} charts out of {sheets?.length} charts in{" "}
+        {elapsed.toFixed(1)}ms
       </Alert>
 
       <SheetListContainer sheets={filteredResults} />

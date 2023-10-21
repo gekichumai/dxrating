@@ -30,7 +30,7 @@ export const App = () => {
             }}
           >
             <Tab
-              label="Search Songs"
+              label="Search Charts"
               classes={{
                 selected: "!text-white",
                 root: "!rounded-full transition z-1 px-1 !py-0 !min-h-2.5rem",
@@ -38,7 +38,7 @@ export const App = () => {
               value="search"
             />
             <Tab
-              label="My Ratings"
+              label="My Rating"
               classes={{
                 selected: "!text-white",
                 root: "!rounded-full transition z-1 px-1 !py-0 !min-h-2.5rem",

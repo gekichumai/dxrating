@@ -92,7 +92,7 @@ export const RatingCalculatorAddEntryForm: FC<{
             options={sheets}
             getOptionLabel={(sheet) => formatSheetToString(sheet)}
             renderInput={(params) => (
-              <TextField {...params} label="Sheet" variant="outlined" />
+              <TextField {...params} label="Chart" variant="outlined" />
             )}
             filterOptions={(_, { inputValue }) => {
               if (!inputValue) return sheets;
