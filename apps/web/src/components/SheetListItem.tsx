@@ -84,11 +84,9 @@ const SheetInternalLevelValue: FC<{ value: number }> = ({ value }) => {
   const decimalPart = value - wholePart;
 
   return (
-    <div className="font-bold tracking-tighter">
-      <span className="text-md text-zinc-600">{wholePart}.</span>
-      <span className={decimalPart === 0 ? "text-md" : "text-xl"}>
-        {decimalPart.toFixed(1).split(".")[1]}
-      </span>
+    <div className="font-bold tracking-tighter tabular-nums">
+      <span className="text-lg text-zinc-600">{wholePart}.</span>
+      <span className="text-xl">{decimalPart.toFixed(1).split(".")[1]}</span>
     </div>
   );
 };
