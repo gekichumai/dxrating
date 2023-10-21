@@ -14,6 +14,7 @@ import {
   ReactElement,
   cloneElement,
   forwardRef,
+  memo,
   useCallback,
   useRef,
   useState,
@@ -60,7 +61,7 @@ const ListboxComponent = forwardRef<HTMLElement>(
 
 export const RatingCalculatorAddEntryForm: FC<{
   onSubmit: (entry: PlayEntry) => void;
-}> = ({ onSubmit }) => {
+}> = memo(({ onSubmit }) => {
   const { data: sheets } = useSheets();
   const fuseInstance = useSheetsFuse();
   const [selectedSheet, setSelectedSheet] = useState<FlattenedSheet | null>(
@@ -197,4 +198,5 @@ export const RatingCalculatorAddEntryForm: FC<{
       </CardContent>
     </Card>
   );
-};
+});
+RatingCalculatorAddEntryForm.displayName = "RatingCalculatorAddEntryForm";

@@ -4,7 +4,16 @@ import {
   AlertTitle,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grow,
   IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
   Table,
   TableBody,
   TableCell,
@@ -13,6 +22,7 @@ import {
   styled,
 } from "@mui/material";
 import {
+  Row,
   SortingState,
   createColumnHelper,
   flexRender,
@@ -21,10 +31,12 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import clsx from "clsx";
-import { FC, useEffect, useMemo, useState } from "react";
+import { FC, useCallback, useEffect, useId, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useList, useLocalStorage } from "react-use";
 import { ListActions } from "react-use/lib/useList";
+import IconMdiArrowUp from "~icons/mdi/arrow-up";
+import IconMdiFile from "~icons/mdi/file";
 import IconMdiTrashCan from "~icons/mdi/trash-can";
 import {
   PlayEntry,
@@ -33,6 +45,7 @@ import {
 import { SheetListItem } from "../components/SheetListItem";
 import { FlattenedSheet, useSheets } from "../songs";
 import { Rating, calculateRating } from "../utils/rating";
+import { ImportFromAquaSQLiteListItem } from "./ImportFromAquaSQLiteButton";
 
 export interface Entry {
   sheet: FlattenedSheet;
@@ -65,6 +78,182 @@ const DenseTableCell = styled(TableCell)(({ theme }) => ({
   padding: theme.spacing(0.75 + 0.0625, 1),
 }));
 
+const ClearButton: FC<{
+  modifyEntries: ListActions<PlayEntry>;
+}> = ({ modifyEntries }) => {
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  return (
+    <>
+      <Dialog
+        TransitionComponent={Grow}
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+      >
+        <DialogTitle>Clear all entries?</DialogTitle>
+        <DialogContent className="w-96">
+          <Alert severity="warning">
+            <AlertTitle>Warning</AlertTitle>
+            This will clear all entries.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              setDialogOpen(false);
+              modifyEntries.clear();
+            }}
+          >
+            Clear
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Button
+        color="error"
+        variant="outlined"
+        onClick={() => {
+          setDialogOpen(true);
+        }}
+      >
+        Clear...
+      </Button>
+    </>
+  );
+};
+
+const ImportFromJSONButtonListItem: FC<{
+  modifyEntries: ListActions<PlayEntry>;
+  onClose: () => void;
+}> = ({ modifyEntries, onClose }) => {
+  return (
+    <MenuItem
+      onClick={() => {
+        onClose();
+
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "application/json";
+        input.onchange = (event) => {
+          const element = event.target as HTMLInputElement;
+          if (!element) return;
+
+          const file = element?.files ? element?.files[0] : undefined;
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const data = event.target?.result;
+            if (!data) return;
+            if (typeof data !== "string") return;
+
+            const entries = JSON.parse(data);
+            // basic validation
+            if (
+              !Array.isArray(entries) ||
+              !entries.length ||
+              !entries[0].sheetId ||
+              !entries[0].achievementRate
+            ) {
+              toast.error("Invalid file format");
+              return;
+            }
+
+            modifyEntries.set(entries);
+
+            toast.success("Imported " + entries.length + " entries");
+          };
+          reader.readAsText(file);
+        };
+        input.click();
+      }}
+    >
+      <ListItemIcon>
+        <IconMdiFile />
+      </ListItemIcon>
+      <ListItemText>Import from JSON...</ListItemText>
+    </MenuItem>
+  );
+};
+
+const ExportToJSONButton: FC<{
+  entries: PlayEntry[];
+}> = ({ entries }) => {
+  return (
+    <Button
+      variant="outlined"
+      onClick={() => {
+        const data = JSON.stringify(entries);
+        const blob = new Blob([data], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const name = `dxrating.imgg.dev.export-${new Date().toISOString()}.json`;
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        toast.success("Exported as " + name);
+      }}
+    >
+      Export
+    </Button>
+  );
+};
+
+const ImportMenu: FC<{
+  modifyEntries: ListActions<PlayEntry>;
+}> = ({ modifyEntries }) => {
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const id = useId();
+
+  return (
+    <>
+      <Button
+        id={`button-${id}`}
+        aria-controls={open ? `menu-${id}` : undefined}
+        aria-haspopup="true"
+        aria-expanded={open ? "true" : undefined}
+        onClick={handleClick}
+        variant="outlined"
+      >
+        Import...
+      </Button>
+
+      <Menu
+        id={`menu-${id}`}
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        MenuListProps={{
+          "aria-labelledby": `button-${id}`,
+        }}
+      >
+        <ImportFromAquaSQLiteListItem
+          modifyEntries={modifyEntries}
+          onClose={handleClose}
+        />
+        <ImportFromJSONButtonListItem
+          modifyEntries={modifyEntries}
+          onClose={handleClose}
+        />
+      </Menu>
+    </>
+  );
+};
+
 export const RatingCalculator = () => {
   const { data: sheets } = useSheets();
   const [localStorageEntries, setLocalStorageEntries] = useLocalStorage<
@@ -81,9 +270,7 @@ export const RatingCalculator = () => {
   const calculatedEntries = useMemo(() => {
     const calculated = entries.map((entry) => {
       const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId);
-      if (!sheet) {
-        throw new Error(`Sheet ${entry.sheetId} not found`);
-      }
+      if (!sheet) throw new Error(`Sheet ${entry.sheetId} not found`);
 
       return {
         ...entry,
@@ -180,6 +367,20 @@ export const RatingCalculator = () => {
     getSortedRowModel: getSortedRowModel(),
   });
 
+  const onSubmit = useCallback(
+    (entry: PlayEntry) => {
+      if (
+        entries.some((existingEntry) => existingEntry.sheetId === entry.sheetId)
+      ) {
+        modifyEntries.updateFirst(
+          (existingEntry) => existingEntry.sheetId === entry.sheetId,
+          entry,
+        );
+      } else modifyEntries.push(entry);
+    },
+    [entries, modifyEntries],
+  );
+
   if (!sheets) return null;
 
   return (
@@ -266,111 +467,56 @@ export const RatingCalculator = () => {
             Your entries will be saved automatically to your browser's local
             storage and will be restored when you return to this page.
             <div className="flex items-center gap-2 mt-2">
-              <Button
-                variant="outlined"
-                onClick={() => {
-                  const input = document.createElement("input");
-                  input.type = "file";
-                  input.accept = "application/json";
-                  input.onchange = (event) => {
-                    const element = event.target as HTMLInputElement;
-                    if (!element) return;
+              <ImportMenu modifyEntries={modifyEntries} />
 
-                    const file = element?.files ? element?.files[0] : undefined;
-                    if (!file) return;
+              <ExportToJSONButton entries={entries} />
 
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                      const data = event.target?.result;
-                      if (!data) return;
-                      if (typeof data !== "string") return;
+              <div className="flex-1" />
 
-                      const entries = JSON.parse(data);
-                      // basic validation
-                      if (
-                        !Array.isArray(entries) ||
-                        !entries.length ||
-                        !entries[0].sheetId ||
-                        !entries[0].achievementRate
-                      ) {
-                        toast.error("Invalid file format");
-                        return;
-                      }
-
-                      modifyEntries.set(entries);
-
-                      toast.success("Imported " + entries.length + " entries");
-                    };
-                    reader.readAsText(file);
-                  };
-                  input.click();
-                }}
-              >
-                Import
-              </Button>
-
-              <Button
-                variant="outlined"
-                onClick={() => {
-                  const data = JSON.stringify(entries);
-                  const blob = new Blob([data], { type: "application/json" });
-                  const url = URL.createObjectURL(blob);
-                  const name = `dxrating.imgg.dev.export${Date.now()}.json`;
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = name;
-                  a.click();
-                  URL.revokeObjectURL(url);
-
-                  toast.success("Exported as " + name);
-                }}
-              >
-                Export
-              </Button>
+              <ClearButton modifyEntries={modifyEntries} />
             </div>
           </Alert>
         </div>
       </div>
 
-      <RatingCalculatorAddEntryForm
-        onSubmit={(entry) => {
-          if (
-            entries.some(
-              (existingEntry) => existingEntry.sheetId === entry.sheetId,
-            )
-          ) {
-            modifyEntries.updateFirst(
-              (existingEntry) => existingEntry.sheetId === entry.sheetId,
-              entry,
-            );
-          } else modifyEntries.push(entry);
-        }}
-      />
+      <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
 
-      <Table>
+      <Table className="rounded-lg overflow-hidden">
         <TableHead>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableCell key={header.id} colSpan={header.colSpan}>
+                  <TableCell
+                    key={header.id}
+                    colSpan={header.colSpan}
+                    className={clsx(
+                      "group bg-gray-900/5 transition",
+                      header.column.getCanSort() &&
+                        "cursor-pointer select-none hover:bg-gray-900/10 active:bg-gray-900/20",
+                    )}
+                    onClick={header.column.getToggleSortingHandler()}
+                  >
                     {header.isPlaceholder ? null : (
-                      <div
-                        {...{
-                          className: header.column.getCanSort()
-                            ? "cursor-pointer select-none"
-                            : "",
-                          onClick: header.column.getToggleSortingHandler(),
-                        }}
-                      >
+                      <div>
                         {flexRender(
                           header.column.columnDef.header,
                           header.getContext(),
                         )}
-                        {{
-                          asc: " 🔼",
-                          desc: " 🔽",
-                        }[header.column.getIsSorted() as string] ?? null}
+                        <IconMdiArrowUp
+                          className={clsx(
+                            "inline-flex ml-1 transition",
+                            {
+                              asc: "rotate-0",
+                              desc: "rotate-180",
+                              none: header.column.getCanSort()
+                                ? "opacity-0 group-hover:opacity-70"
+                                : "opacity-0",
+                            }[
+                              (header.column.getIsSorted() as string) || "none"
+                            ],
+                          )}
+                        />
                       </div>
                     )}
                   </TableCell>
@@ -380,38 +526,9 @@ export const RatingCalculator = () => {
           ))}
         </TableHead>
         <TableBody className="tabular-nums">
-          {table.getRowModel().rows.map((row) => {
-            return (
-              <TableRow
-                key={row.id}
-                className={clsx(
-                  {
-                    b35: "bg-red-200",
-                    b15: "bg-green-200",
-                    none: undefined,
-                  }[row.original.includedIn ?? "none"],
-                )}
-              >
-                {row.getVisibleCells().map((cell) => {
-                  return (
-                    <TableCell
-                      key={cell.id}
-                      {...(
-                        cell.column.columnDef.meta as {
-                          cellProps?: Record<string, unknown>;
-                        }
-                      )?.cellProps}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            );
-          })}
+          {table.getRowModel().rows.map((row) => (
+            <RatingCalculatorTableRow row={row} key={row.id} />
+          ))}
           {calculatedEntries.length === 0 && (
             <TableRow>
               <TableCell colSpan={4}>No entries</TableCell>
@@ -434,5 +551,37 @@ export const RatingCalculator = () => {
         </TableBody>
       </Table>
     </div>
+  );
+};
+
+const RatingCalculatorTableRow: FC<{
+  row: Row<Entry>;
+}> = ({ row }) => {
+  return (
+    <TableRow
+      key={row.id}
+      className={clsx(
+        {
+          b35: "bg-red-200",
+          b15: "bg-green-200",
+          none: undefined,
+        }[row.original.includedIn ?? "none"],
+      )}
+    >
+      {row.getVisibleCells().map((cell) => {
+        return (
+          <TableCell
+            key={cell.id}
+            {...(
+              cell.column.columnDef.meta as {
+                cellProps?: Record<string, unknown>;
+              }
+            )?.cellProps}
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        );
+      })}
+    </TableRow>
   );
 };

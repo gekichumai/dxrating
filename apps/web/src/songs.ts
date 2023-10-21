@@ -18,6 +18,7 @@ export interface FlattenedSheet {
   searchAcronyms: string[];
 
   songId: string;
+  internalId: number;
   category: CategoryEnum;
   title: string;
   artist: string;
@@ -43,8 +44,16 @@ export interface FlattenedSheet {
 
 const ALLOWED_TYPES = ["dx", "std"];
 
-const canonicalId = (song: Song, sheet: Sheet) => {
+export const canonicalId = (song: Song, sheet: Sheet) => {
   return [song.songId, sheet.type, sheet.difficulty].join("__dxrt__");
+};
+
+export const canonicalIdFromParts = (
+  songId: string,
+  type: TypeEnum,
+  difficulty: DifficultyEnum,
+) => {
+  return [songId, type, difficulty].join("__dxrt__");
 };
 
 export const getFlattenedSheets = async (): Promise<FlattenedSheet[]> => {

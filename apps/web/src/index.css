@@ -1,12 +1,7 @@
 :root {
   font-family:
-    Hiragino Maru Gothic Pro,
-    Torus,
-    system-ui,
-    Avenir,
-    Helvetica,
-    Arial,
-    sans-serif;
+    /* Hiragino Maru Gothic Pro, */ Torus, system-ui, Avenir,
+    Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 

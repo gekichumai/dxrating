@@ -58,7 +58,7 @@ export const SheetListItemContent: FC<
     >
       <SheetImage name={sheet.imageName} size={size} />
 
-      <ListItemText className="ml-2">
+      <ListItemText className="ml-2 pr-20">
         <SheetTitle
           title={sheet.title}
           difficulty={sheet.difficulty}
@@ -200,11 +200,16 @@ export const SheetImage: FC<{ name: string; size?: "small" | "medium" }> = ({
   return (
     <img
       key={name}
-      src={"https://dxrating-assets.imgg.dev/images/cover/" + name}
+      src={
+        "https://dxrating-assets.imgg.dev/images/cover/v2/" +
+        name.replace(/\.png$/, ".jpg")
+      }
       className={clsx(
-        "bg-slate-100",
+        "bg-slate-300/50",
         size === "small" ? "h-8 w-8 rounded-sm" : "h-12 w-12 rounded",
       )}
+      alt={name}
+      loading="lazy"
     />
   );
 };
