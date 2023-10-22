@@ -17,6 +17,22 @@ struct Song: Codable {
     let imageName: String
     let searchAcronyms: [String]
     let sheets: [Sheet]
+    
+    static func demo() -> Song {
+        return .init(
+            songId: "LAMIA",
+            title: "LAMIA",
+            imageName: "88c0e851ff75ea8e94e0bdae0997c54d40876e5614de60768a808a0af590ca9d.png",
+            searchAcronyms: [],
+            sheets: [
+                .init(type: "dx", difficulty: "basic", internalLevelValue: 6, version: "FESTiVAL PLUS"),
+                .init(type: "dx", difficulty: "advanced", internalLevelValue: 8, version: "FESTiVAL PLUS"),
+                .init(type: "dx", difficulty: "expert", internalLevelValue: 13, version: "FESTiVAL PLUS"),
+                .init(type: "dx", difficulty: "master", internalLevelValue: 14.7, version: "FESTiVAL PLUS")
+            ]
+        )
+    }
+
 }
 
 struct Sheet: Codable {
@@ -36,10 +52,20 @@ struct Sheet: Codable {
 
 struct AppData {
     static func loadDXData() -> DXData? {
-        guard let url = Bundle.main.url(forResource: "dxdata", withExtension: "json", subdirectory: "Assets") else {
+        var bundle = Bundle.main
+        if bundle.bundleURL.pathExtension == "appex" {
+            // Peel off two directory levels - MY_APP.app/PlugIns/MY_APP_EXTENSION.appex
+            let url = bundle.bundleURL.deletingLastPathComponent().deletingLastPathComponent()
+            if let otherBundle = Bundle(url: url) {
+                bundle = otherBundle
+            }
+        }
+        
+        guard let url = bundle.url(forResource: "dxdata", withExtension: "json", subdirectory: "Assets") else {
             print("Failed to locate dxdata.json in the bundle.")
             return nil
         }
+        
         
         do {
             let data = try Data(contentsOf: url)

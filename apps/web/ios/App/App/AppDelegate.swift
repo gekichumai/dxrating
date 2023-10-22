@@ -63,12 +63,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                             .joined(separator: " | ")
                         attributeSet.identifier = song.songId
                         attributeSet.alternateNames = song.searchAcronyms
+                        if #available(iOS 15.0, *) {
+                            attributeSet.actionIdentifiers = ["STAR_UNSTAR"]
+                        }
                         if let thumbnailURL = Bundle.main.url(forResource: song.imageName.replacingOccurrences(of: ".png", with: ""), withExtension: "jpg", subdirectory: "Assets/Covers") {
                             attributeSet.thumbnailURL = thumbnailURL
                         } else {
                             print("unable to find thumbnail for \(song.imageName)")
                         }
                         let item = CSSearchableItem(uniqueIdentifier: "\(song.songId)", domainIdentifier: "dev.imgg.gekichumai.dxrating", attributeSet: attributeSet)
+                        item.expirationDate = .distantFuture
                         items.append(item)
                     }
                     CSSearchableIndex.default().indexSearchableItems(items) { error in

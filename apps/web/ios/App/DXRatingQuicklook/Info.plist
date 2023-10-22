@@ -4,8 +4,6 @@
 <dict>
 	<key>NSExtension</key>
 	<dict>
-		<key>QLSupportsSearchableItems</key>
-		<true/>
 		<key>NSExtensionAttributes</key>
 		<dict>
 			<key>QLIsDataBasedPreview</key>
@@ -13,7 +11,7 @@
 			<key>QLSupportedContentTypes</key>
 			<array/>
 			<key>QLSupportsSearchableItems</key>
-			<false/>
+			<true/>
 		</dict>
 		<key>NSExtensionMainStoryboard</key>
 		<string>MainInterface</string>

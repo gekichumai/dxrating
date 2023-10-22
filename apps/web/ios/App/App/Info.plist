@@ -2,10 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CoreSpotlightActions</key>
+	<array>
+		<dict>
+			<key>CoreSpotlightActionTitle</key>
+			<string>Star/Un-star Song</string>
+			<key>CoreSpotlightActionSymbolImage</key>
+			<string>star</string>
+			<key>CoreSpotlightActionIdentifier</key>
+			<string>STAR_UNSTAR</string>
+		</dict>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>GCMKit</string>
+	<string>GCMKit</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

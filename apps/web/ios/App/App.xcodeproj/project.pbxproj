@@ -23,7 +23,9 @@
 		B55D70262AE4BDF30047AA8D /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B55D70242AE4BDF30047AA8D /* MainInterface.storyboard */; };
 		B55D702A2AE4BDF30047AA8D /* DXRatingQuicklook.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B55D701C2AE4BDF30047AA8D /* DXRatingQuicklook.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B55D702F2AE4CF430047AA8D /* Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55D660B2AE456250047AA8D /* Data.swift */; };
+		B5A96D3D2AE57DC20060CE7C /* SongDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A96D3C2AE57DC20060CE7C /* SongDetailView.swift */; };
 		B5CA29562AE43F22004F3BA0 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5CA29552AE43F22004F3BA0 /* Extensions.swift */; };
+		B5E581F92AE571140087F6DC /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5CA29552AE43F22004F3BA0 /* Extensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +72,7 @@
 		B55D70222AE4BDF30047AA8D /* PreviewProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewProvider.swift; sourceTree = "<group>"; };
 		B55D70252AE4BDF30047AA8D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
 		B55D70272AE4BDF30047AA8D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B5A96D3C2AE57DC20060CE7C /* SongDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongDetailView.swift; sourceTree = "<group>"; };
 		B5CA29552AE43F22004F3BA0 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -157,6 +160,7 @@
 				B55D70222AE4BDF30047AA8D /* PreviewProvider.swift */,
 				B55D70242AE4BDF30047AA8D /* MainInterface.storyboard */,
 				B55D70272AE4BDF30047AA8D /* Info.plist */,
+				B5A96D3C2AE57DC20060CE7C /* SongDetailView.swift */,
 			);
 			path = DXRatingQuicklook;
 			sourceTree = "<group>";
@@ -318,8 +322,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				B55D70212AE4BDF30047AA8D /* PreviewViewController.swift in Sources */,
+				B5A96D3D2AE57DC20060CE7C /* SongDetailView.swift in Sources */,
 				B55D702F2AE4CF430047AA8D /* Data.swift in Sources */,
 				B55D70232AE4BDF30047AA8D /* PreviewProvider.swift in Sources */,
+				B5E581F92AE571140087F6DC /* Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -529,7 +535,7 @@
 				INFOPLIST_FILE = DXRatingQuicklook/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = DXRatingQuicklook;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
@@ -563,7 +569,7 @@
 				INFOPLIST_FILE = DXRatingQuicklook/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = DXRatingQuicklook;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;

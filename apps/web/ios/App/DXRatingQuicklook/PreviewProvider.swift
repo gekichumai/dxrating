@@ -35,7 +35,7 @@ class PreviewProvider: QLPreviewProvider, QLPreviewingController {
         //You can create a QLPreviewReply in several ways, depending on the format of the data you want to return.
         //To return Data of a supported content type:
         
-        let contentType = UTType.plainText // replace with your data type
+        let contentType = UTType.item // replace with your data type
         
         let reply = QLPreviewReply.init(dataOfContentType: contentType, contentSize: CGSize.init(width: 800, height: 800)) { (replyToUpdate : QLPreviewReply) in
 
