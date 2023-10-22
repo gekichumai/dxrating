@@ -269,7 +269,7 @@ export const RatingCalculator = () => {
     setLocalStorageEntries(entries);
   }, [entries, setLocalStorageEntries]);
 
-  const calculatedEntries = useMemo(() => {
+  const { allEntries, b15Entries, b35Entries } = useMemo(() => {
     const calculated = entries.map((entry) => {
       const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId);
       if (!sheet) throw new Error(`Chart ${entry.sheetId} not found`);
@@ -297,7 +297,7 @@ export const RatingCalculator = () => {
       .slice(0, 35)
       .map((entry) => entry.sheetId);
 
-    return calculated.map((entry) => ({
+    const calculatedEntries = calculated.map((entry) => ({
       ...entry,
       includedIn: best15OfCurrentVersionSheetIds.includes(entry.sheetId)
         ? ("b15" as const)
@@ -305,7 +305,36 @@ export const RatingCalculator = () => {
         ? ("b35" as const)
         : null,
     }));
+
+    return {
+      allEntries: calculatedEntries,
+      b15Entries: calculatedEntries.filter(
+        (entry) => entry.includedIn === "b15",
+      ),
+      b35Entries: calculatedEntries.filter(
+        (entry) => entry.includedIn === "b35",
+      ),
+    };
   }, [entries, sheets]);
+
+  const { b15Average, b35Average } = useMemo(() => {
+    const b15Average =
+      b15Entries.reduce(
+        (acc, entry) => acc + entry.rating.ratingAwardValue,
+        0,
+      ) / b15Entries.length;
+
+    const b35Average =
+      b35Entries.reduce(
+        (acc, entry) => acc + entry.rating.ratingAwardValue,
+        0,
+      ) / b35Entries.length;
+
+    return {
+      b15Average,
+      b35Average,
+    };
+  }, [b15Entries, b35Entries]);
 
   const columns = useMemo(
     () => [
@@ -363,7 +392,7 @@ export const RatingCalculator = () => {
   );
 
   const table = useReactTable({
-    data: calculatedEntries,
+    data: allEntries,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
@@ -396,7 +425,9 @@ export const RatingCalculator = () => {
             <TableHead>
               <TableRow>
                 <DenseTableCell className="w-sm">Item</DenseTableCell>
-                <DenseTableCell>Value</DenseTableCell>
+                <DenseTableCell>Matches</DenseTableCell>
+                <DenseTableCell>Average</DenseTableCell>
+                <DenseTableCell>Total</DenseTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -408,13 +439,14 @@ export const RatingCalculator = () => {
                     PLUS)
                   </div>
                 </DenseTableCell>
+                <DenseTableCell>{b15Entries.length}</DenseTableCell>
+                <DenseTableCell>{b15Average.toFixed(2)}</DenseTableCell>
+
                 <DenseTableCell>
-                  {calculatedEntries
-                    .filter((entry) => entry.includedIn === "b15")
-                    .reduce(
-                      (sum, entry) => sum + entry.rating.ratingAwardValue,
-                      0,
-                    )}
+                  {b15Entries.reduce(
+                    (sum, entry) => sum + entry.rating.ratingAwardValue,
+                    0,
+                  )}
                 </DenseTableCell>
               </TableRow>
 
@@ -426,27 +458,25 @@ export const RatingCalculator = () => {
                     current version (FESTiVAL PLUS)
                   </div>
                 </DenseTableCell>
+                <DenseTableCell>{b35Entries.length}</DenseTableCell>
+                <DenseTableCell>{b35Average.toFixed(2)}</DenseTableCell>
                 <DenseTableCell>
-                  {calculatedEntries
-                    .filter((entry) => entry.includedIn === "b35")
-                    .reduce(
-                      (sum, entry) => sum + entry.rating.ratingAwardValue,
-                      0,
-                    )}
+                  {b35Entries.reduce(
+                    (sum, entry) => sum + entry.rating.ratingAwardValue,
+                    0,
+                  )}
                 </DenseTableCell>
               </TableRow>
 
               <TableRow>
-                <DenseTableCell>
+                <DenseTableCell colSpan={3}>
                   <span className="font-bold">Total</span>
                 </DenseTableCell>
                 <DenseTableCell>
-                  {calculatedEntries
-                    .filter((entry) => entry.includedIn)
-                    .reduce(
-                      (sum, entry) => sum + entry.rating.ratingAwardValue,
-                      0,
-                    )}
+                  {[...b15Entries, ...b35Entries].reduce(
+                    (sum, entry) => sum + entry.rating.ratingAwardValue,
+                    0,
+                  )}
                 </DenseTableCell>
               </TableRow>
             </TableBody>
@@ -537,18 +567,18 @@ export const RatingCalculator = () => {
             {table.getRowModel().rows.map((row) => (
               <RatingCalculatorTableRow row={row} key={row.id} />
             ))}
-            {calculatedEntries.length === 0 && (
+            {allEntries.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4}>No entries</TableCell>
               </TableRow>
             )}
-            {calculatedEntries.length > 0 && (
+            {allEntries.length > 0 && (
               <TableRow className="bg-gray-900">
                 <TableCell colSpan={3} className="!text-white !font-bold !pl-5">
                   Total
                 </TableCell>
                 <TableCell className="!text-white !font-bold">
-                  {calculatedEntries.reduce(
+                  {allEntries.reduce(
                     (acc, entry) => acc + entry.rating.ratingAwardValue,
                     0,
                   )}
