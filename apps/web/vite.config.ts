@@ -10,4 +10,14 @@ export default defineConfig({
     UnoCSS(),
     Icons({ compiler: "jsx", jsx: "react", autoInstall: true }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          lib: ["react", "@mui/material", "react-use", "@tanstack/react-table"],
+          dxdata: ["@gekichumai/dxdata"],
+        },
+      },
+    },
+  },
 });

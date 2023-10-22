@@ -52,12 +52,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 if #available(iOS 14.0, *) {
                     var items: [CSSearchableItem] = []
                     for song in dxData.songs {
+                        let id = "\(song.songId)"
                         let attributeSet = CSSearchableItemAttributeSet(contentType: .item)
                         attributeSet.title = song.title
                         attributeSet.displayName = song.title
-                        attributeSet.contentDescription = song.sheets.map({ sheet in
-                            return sheet.formatted()
-                        }).joined(separator: " | ")
+                        attributeSet.contentDescription = song.sheets
+                            .map({ sheet in
+                                return sheet.formatted()
+                            })
+                            .joined(separator: " | ")
+                        attributeSet.identifier = song.songId
                         attributeSet.alternateNames = song.searchAcronyms
                         if let thumbnailURL = Bundle.main.url(forResource: song.imageName.replacingOccurrences(of: ".png", with: ""), withExtension: "jpg", subdirectory: "Assets/Covers") {
                             attributeSet.thumbnailURL = thumbnailURL
@@ -74,8 +78,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                             print("Successfully indexed \(items.count) items.")
                         }
                     }
-                } else {
-                    // Fallback on earlier versions
                 }
             }
         }

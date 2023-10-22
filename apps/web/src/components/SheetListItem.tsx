@@ -107,7 +107,6 @@ export const SheetDialog: FC<{
       fullWidth
       TransitionComponent={Grow}
     >
-      x
       <DialogContent>
         <SheetDialogContent sheet={sheet} />
       </DialogContent>
@@ -152,25 +151,25 @@ const DIFFICULTIES: Record<
   { title: string; color: string; dark?: boolean }
 > = {
   [DifficultyEnum.Basic]: {
-    title: "Basic",
-    color: "#6abe43",
+    title: "BASIC",
+    color: "#22bb5b",
   },
   [DifficultyEnum.Advanced]: {
-    title: "Advanced",
-    color: "#eeba41",
+    title: "ADVANCED",
+    color: "#fb9c2d",
   },
   [DifficultyEnum.Expert]: {
-    title: "Expert",
-    color: "#eb666a",
+    title: "EXPERT",
+    color: "#f64861",
   },
   [DifficultyEnum.Master]: {
-    title: "Master",
-    color: "#9555d5",
+    title: "MASTER",
+    color: "#9e45e2",
     dark: true,
   },
   [DifficultyEnum.ReMaster]: {
-    title: "Re:Master",
-    color: "#d3acfa",
+    title: "Re:MASTER",
+    color: "#ba67f8",
   },
 };
 

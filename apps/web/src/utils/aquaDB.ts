@@ -146,9 +146,7 @@ const AQUA_GAME_PLAY_LEVEL_TO_DIFFICULTY: { [key: number]: DifficultyEnum } = {
 
 export function readAquaGamePlays(db: sqljs.Database): AquaGamePlay[] {
   const results = db.exec("SELECT * FROM maimai2_user_music_detail");
-  if (!results || results.length === 0) {
-    return [];
-  }
+  if (!results || results.length === 0) return [];
 
   const records = convertQueryExecResultToEntries(
     results[0],
@@ -157,6 +155,6 @@ export function readAquaGamePlays(db: sqljs.Database): AquaGamePlay[] {
   return records.map((record) => ({
     ...record,
     level: AQUA_GAME_PLAY_LEVEL_TO_DIFFICULTY[record.level],
-    type: record.id >= 10000 ? TypeEnum.DX : TypeEnum.SD,
+    type: record.music_id >= 10000 ? TypeEnum.DX : TypeEnum.SD,
   }));
 }

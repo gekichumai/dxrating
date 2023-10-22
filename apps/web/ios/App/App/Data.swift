@@ -34,7 +34,6 @@ struct Sheet: Codable {
     }
 }
 
-
 struct AppData {
     static func loadDXData() -> DXData? {
         guard let url = Bundle.main.url(forResource: "dxdata", withExtension: "json", subdirectory: "Assets") else {
@@ -53,5 +52,4 @@ struct AppData {
             return nil
         }
     }
-
 }
