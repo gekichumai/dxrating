@@ -1,5 +1,4 @@
 import {
-  Alert,
   Button,
   Table,
   TableBody,
@@ -48,13 +47,6 @@ export const SheetDialogContent: FC<{ sheet: FlattenedSheet }> = ({
         version={sheet.version}
         className="text-lg font-bold"
       />
-
-      <Alert severity="info" className="text-sm">
-        <div className="flex items-center gap-1">
-          <span className="font-bold">Target Version:</span>
-          <span>FESTiVAL PLUS</span>
-        </div>
-      </Alert>
 
       <Button
         startIcon={<IconMdiYouTube />}
