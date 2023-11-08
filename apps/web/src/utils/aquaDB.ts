@@ -158,3 +158,320 @@ export function readAquaGamePlays(db: sqljs.Database): AquaGamePlay[] {
     type: record.music_id >= 10000 ? TypeEnum.DX : TypeEnum.SD,
   }));
 }
+
+export interface AquaPlayLogFromDB {
+  id: number;
+  order_id: number;
+  playlog_id: number;
+  version: number;
+  place_id: number;
+  place_name: string;
+  login_date: number;
+  play_date: string;
+  user_play_date: string;
+  type: number;
+  music_id: number;
+  level: number;
+  track_no: number;
+  vs_mode: number;
+  vs_user_name: string;
+  vs_status: number;
+  vs_user_rating: number;
+  vs_user_achievement: number;
+  vs_user_grade_rank: number;
+  vs_rank: number;
+  player_num: number;
+  played_user_id1: number;
+  played_user_name1: string;
+  played_music_level1: number;
+  played_user_id2: number;
+  played_user_name2: string;
+  played_music_level2: number;
+  played_user_id3: number;
+  played_user_name3: string;
+  played_music_level3: number;
+  character_id1: number;
+  character_level1: number;
+  character_awakening1: number;
+  character_id2: number;
+  character_level2: number;
+  character_awakening2: number;
+  character_id3: number;
+  character_level3: number;
+  character_awakening3: number;
+  character_id4: number;
+  character_level4: number;
+  character_awakening4: number;
+  character_id5: number;
+  character_level5: number;
+  character_awakening5: number;
+  achievement: number;
+  deluxscore: number;
+  score_rank: number;
+  max_combo: number;
+  total_combo: number;
+  max_sync: number;
+  total_sync: number;
+  tap_critical_perfect: number;
+  tap_perfect: number;
+  tap_great: number;
+  tap_good: number;
+  tap_miss: number;
+  hold_critical_perfect: number;
+  hold_perfect: number;
+  hold_great: number;
+  hold_good: number;
+  hold_miss: number;
+  slide_critical_perfect: number;
+  slide_perfect: number;
+  slide_great: number;
+  slide_good: number;
+  slide_miss: number;
+  touch_critical_perfect: number;
+  touch_perfect: number;
+  touch_great: number;
+  touch_good: number;
+  touch_miss: number;
+  break_critical_perfect: number;
+  break_perfect: number;
+  break_great: number;
+  break_good: number;
+  break_miss: number;
+  is_tap: number;
+  is_hold: number;
+  is_slide: number;
+  is_touch: number;
+  is_break: number;
+  is_critical_disp: number;
+  is_fast_late_disp: number;
+  fast_count: number;
+  late_count: number;
+  is_achieve_new_record: number;
+  is_deluxscore_new_record: number;
+  combo_status: number;
+  sync_status: number;
+  is_clear: number;
+  before_rating: number;
+  after_rating: number;
+  before_grade: number;
+  after_grade: number;
+  after_grade_rank: number;
+  before_delux_rating: number;
+  after_delux_rating: number;
+  is_play_tutorial: number;
+  is_event_mode: number;
+  is_freedom_mode: number;
+  play_mode: number;
+  is_new_free: number;
+  ext_num1: number;
+  ext_num2: number;
+  user_id: number;
+  trial_play_achievement: number;
+}
+
+interface NoteJudgementResult {
+  have_any: boolean;
+  critical_perfect: number;
+  perfect: number;
+  great: number;
+  good: number;
+  miss: number;
+}
+
+export interface AquaPlayLog {
+  id: number;
+  order_id: number;
+  playlog_id: number;
+  version: number;
+  place_id: number;
+  place_name: string;
+  login_date: Date;
+  play_date: Date;
+  user_play_date: Date;
+  type: TypeEnum;
+  music_id: number;
+  level: DifficultyEnum;
+  track_no: number;
+  vs: {
+    mode: number;
+    user_name: string;
+    status: number;
+    user_rating: number;
+    user_achievement: number;
+    user_grade_rank: number;
+    rank: number;
+  };
+  player_num: number;
+  // played_user_id1: number;
+  // played_user_name1: string;
+  // played_music_level1: number;
+  // played_user_id2: number;
+  // played_user_name2: string;
+  // played_music_level2: number;
+  // played_user_id3: number;
+  // played_user_name3: string;
+  // played_music_level3: number;
+  //
+  // character_id1: number;
+  // character_level1: number;
+  // character_awakening1: number;
+  // character_id2: number;
+  // character_level2: number;
+  // character_awakening2: number;
+  // character_id3: number;
+  // character_level3: number;
+  // character_awakening3: number;
+  // character_id4: number;
+  // character_level4: number;
+  // character_awakening4: number;
+  // character_id5: number;
+  // character_level5: number;
+  // character_awakening5: number;
+  achievement: number;
+  deluxscore: number;
+  score_rank: number;
+  max_combo: number;
+  total_combo: number;
+  max_sync: number;
+  total_sync: number;
+
+  note_judgement_results: {
+    tap: NoteJudgementResult;
+    hold: NoteJudgementResult;
+    slide: NoteJudgementResult;
+    touch: NoteJudgementResult;
+    break: NoteJudgementResult;
+  };
+  is_critical_disp: number;
+  is_fast_late_disp: number;
+  fast_count: number;
+  late_count: number;
+  is_achieve_new_record: number;
+  is_deluxscore_new_record: number;
+  combo_status: number;
+  sync_status: number;
+  is_clear: number;
+  before_rating: number;
+  after_rating: number;
+  before_grade: number;
+  after_grade: number;
+  after_grade_rank: number;
+  before_delux_rating: number;
+  after_delux_rating: number;
+  is_play_tutorial: number;
+  is_event_mode: number;
+  is_freedom_mode: number;
+  play_mode: number;
+  is_new_free: number;
+  // ext_num1: number;
+  // ext_num2: number;
+  user_id: number;
+  // trial_play_achievement: number;
+}
+
+export function readAquaPlayLogs(db: sqljs.Database): AquaPlayLog[] {
+  const results = db.exec("SELECT * FROM maimai2_user_playlog");
+  if (!results || results.length === 0) return [];
+
+  const records = convertQueryExecResultToEntries(
+    results[0],
+  ) as AquaPlayLogFromDB[];
+
+  return records.map((record) => ({
+    id: record.id,
+    order_id: record.order_id,
+    playlog_id: record.playlog_id,
+    version: record.version,
+    place_id: record.place_id,
+    place_name: record.place_name,
+    login_date: new Date(record.login_date * 1000),
+    play_date: new Date(record.play_date),
+    user_play_date: new Date(record.user_play_date),
+    level: AQUA_GAME_PLAY_LEVEL_TO_DIFFICULTY[record.level],
+    type: record.music_id >= 10000 ? TypeEnum.DX : TypeEnum.SD,
+    music_id: record.music_id,
+    track_no: record.track_no,
+    player_num: record.player_num,
+    achievement: record.achievement,
+    deluxscore: record.deluxscore,
+    score_rank: record.score_rank,
+    max_combo: record.max_combo,
+    total_combo: record.total_combo,
+    max_sync: record.max_sync,
+    total_sync: record.total_sync,
+    is_critical_disp: record.is_critical_disp,
+    is_fast_late_disp: record.is_fast_late_disp,
+    fast_count: record.fast_count,
+    late_count: record.late_count,
+    is_achieve_new_record: record.is_achieve_new_record,
+    is_deluxscore_new_record: record.is_deluxscore_new_record,
+    combo_status: record.combo_status,
+    sync_status: record.sync_status,
+    is_clear: record.is_clear,
+    before_rating: record.before_rating,
+    after_rating: record.after_rating,
+    before_grade: record.before_grade,
+    after_grade: record.after_grade,
+    after_grade_rank: record.after_grade_rank,
+    before_delux_rating: record.before_delux_rating,
+    after_delux_rating: record.after_delux_rating,
+    is_play_tutorial: record.is_play_tutorial,
+    is_event_mode: record.is_event_mode,
+    is_freedom_mode: record.is_freedom_mode,
+    play_mode: record.play_mode,
+    is_new_free: record.is_new_free,
+    user_id: record.user_id,
+    vs: {
+      mode: record.vs_mode,
+      user_name: record.vs_user_name,
+      status: record.vs_status,
+      user_rating: record.vs_user_rating,
+      user_achievement: record.vs_user_achievement,
+      user_grade_rank: record.vs_user_grade_rank,
+      rank: record.vs_rank,
+    },
+
+    note_judgement_results: {
+      tap: {
+        have_any: record.is_tap === 1,
+        critical_perfect: record.tap_critical_perfect,
+        perfect: record.tap_perfect,
+        great: record.tap_great,
+        good: record.tap_good,
+        miss: record.tap_miss,
+      },
+      hold: {
+        have_any: record.is_hold === 1,
+        critical_perfect: record.hold_critical_perfect,
+        perfect: record.hold_perfect,
+        great: record.hold_great,
+        good: record.hold_good,
+        miss: record.hold_miss,
+      },
+      slide: {
+        have_any: record.is_slide === 1,
+        critical_perfect: record.slide_critical_perfect,
+        perfect: record.slide_perfect,
+        great: record.slide_great,
+        good: record.slide_good,
+        miss: record.slide_miss,
+      },
+      touch: {
+        have_any: record.is_touch === 1,
+        critical_perfect: record.touch_critical_perfect,
+        perfect: record.touch_perfect,
+        great: record.touch_great,
+        good: record.touch_good,
+        miss: record.touch_miss,
+      },
+      break: {
+        have_any: record.is_break === 1,
+        critical_perfect: record.break_critical_perfect,
+        perfect: record.break_perfect,
+        great: record.break_great,
+        good: record.break_good,
+        miss: record.break_miss,
+      },
+    },
+  }));
+}

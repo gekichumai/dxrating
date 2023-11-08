@@ -11,9 +11,7 @@ const SCORE_COEFFICIENT_TABLE: [number, number, string][] = [
   [98, 20.3, "sp"],
   [99, 20.8, "ss"],
   [99.5, 21.1, "ssp"],
-  [99.9999, 21.4, "ssp"],
   [100, 21.6, "sss"],
-  [100.4999, 22.2, "sss"],
   [100.5, 22.4, "sssp"],
 ];
 

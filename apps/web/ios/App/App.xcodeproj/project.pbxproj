@@ -15,6 +15,7 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
+		B54970E12AECE270006A59D4 /* Torus-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B54970E02AECE270006A59D4 /* Torus-Regular.ttf */; };
 		B55D660C2AE456250047AA8D /* Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55D660B2AE456250047AA8D /* Data.swift */; };
 		B55D70172AE45D9E0047AA8D /* Assets in Resources */ = {isa = PBXBuildFile; fileRef = B55D70162AE45D9E0047AA8D /* Assets */; };
 		B55D701E2AE4BDF30047AA8D /* QuickLook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B55D701D2AE4BDF30047AA8D /* QuickLook.framework */; };
@@ -64,6 +65,7 @@
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
+		B54970E02AECE270006A59D4 /* Torus-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Torus-Regular.ttf"; sourceTree = "<group>"; };
 		B55D660B2AE456250047AA8D /* Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Data.swift; sourceTree = "<group>"; };
 		B55D70162AE45D9E0047AA8D /* Assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Assets; sourceTree = "<group>"; };
 		B55D701C2AE4BDF30047AA8D /* DXRatingQuicklook.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DXRatingQuicklook.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -129,6 +131,7 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				B54970DF2AECE262006A59D4 /* EmbeddedAssets */,
 				B55D70162AE45D9E0047AA8D /* Assets */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
@@ -151,6 +154,14 @@
 				AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */,
 			);
 			name = Pods;
+			sourceTree = "<group>";
+		};
+		B54970DF2AECE262006A59D4 /* EmbeddedAssets */ = {
+			isa = PBXGroup;
+			children = (
+				B54970E02AECE270006A59D4 /* Torus-Regular.ttf */,
+			);
+			path = EmbeddedAssets;
 			sourceTree = "<group>";
 		};
 		B55D701F2AE4BDF30047AA8D /* DXRatingQuicklook */ = {
@@ -251,6 +262,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */,
+				B54970E12AECE270006A59D4 /* Torus-Regular.ttf in Resources */,
 				50B271D11FEDC1A000F3C39B /* public in Resources */,
 				504EC30F1FED79650016851F /* Assets.xcassets in Resources */,
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
@@ -484,6 +496,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = SY8Y8N4TPM;
 				INFOPLIST_FILE = App/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MARKETING_VERSION = 1.0;
@@ -506,6 +519,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = SY8Y8N4TPM;
 				INFOPLIST_FILE = App/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MARKETING_VERSION = 1.0;

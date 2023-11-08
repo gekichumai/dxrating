@@ -18,9 +18,6 @@ export const App = () => {
             src="https://dxrating-assets.imgg.dev/images/festivalplus.png"
             className="aspect-h-269 aspect-w-133 h-32"
           />
-          {/* <span className="text-zinc-800 px-2 text-center">
-            maimai DX Internal Levels
-          </span> */}
           <Tabs
             value={tab}
             onChange={(_, v) => setTab(v)}

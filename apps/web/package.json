@@ -17,6 +17,7 @@
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@gekichumai/dxdata": "*",
+    "@gekichumai/oneshot": "*",
     "@mui/material": "^5.14.13",
     "@tanstack/react-table": "^8.10.7",
     "@unocss/reset": "^0.56.5",
@@ -29,6 +30,7 @@
     "react-hot-toast": "^2.4.1",
     "react-use": "^17.4.0",
     "react-virtuoso": "^4.6.1",
+    "satori": "^0.10.9",
     "sql.js": "^1.8.0",
     "swr": "^2.2.4",
     "vaul": "^0.7.2"

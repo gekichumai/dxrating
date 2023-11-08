@@ -18,15 +18,26 @@ const PRESET_ACHIEVEMENT_RATES = [
   100.5, 100.4999, 100, 99.9999, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50,
 ];
 
-export const SheetDialogContent: FC<{ sheet: FlattenedSheet }> = ({
+export interface SheetDialogContentProps {
+  sheet: FlattenedSheet;
+  currentAchievementRate?: number;
+}
+
+export const SheetDialogContent: FC<SheetDialogContentProps> = ({
   sheet,
+  currentAchievementRate,
 }) => {
   const ratings = useMemo(() => {
-    return PRESET_ACHIEVEMENT_RATES.map((rate) => ({
+    const rates = [...PRESET_ACHIEVEMENT_RATES];
+    if (currentAchievementRate) {
+      rates.push(currentAchievementRate);
+    }
+    rates.sort((a, b) => b - a);
+    return rates.map((rate) => ({
       achievementRate: rate,
       rating: calculateRating(sheet.internalLevelValue, rate),
     }));
-  }, [sheet]);
+  }, [sheet, currentAchievementRate]);
 
   return (
     <div className="flex flex-col gap-2 relative">
@@ -42,6 +53,7 @@ export const SheetDialogContent: FC<{ sheet: FlattenedSheet }> = ({
 
       <SheetTitle
         title={sheet.title}
+        altNames={sheet.searchAcronyms}
         difficulty={sheet.difficulty}
         type={sheet.type}
         version={sheet.version}
@@ -73,9 +85,13 @@ export const SheetDialogContent: FC<{ sheet: FlattenedSheet }> = ({
               <TableRow
                 key={rating.achievementRate}
                 sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                className={clsx(
+                  rating.achievementRate === currentAchievementRate &&
+                    "bg-amber",
+                )}
               >
                 <TableCell component="th" scope="row">
-                  <div className="flex items-center font-sans">
+                  <div className={clsx("flex items-center font-sans")}>
                     <DXRank rank={rating.rating.rank} className="h-8" />
                     <span>
                       <SheetAchievementRate value={rating.achievementRate} />

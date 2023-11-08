@@ -2,18 +2,8 @@ import { VersionEnum } from "@gekichumai/dxdata";
 import {
   Alert,
   AlertTitle,
-  Button,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Grow,
   IconButton,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
   Table,
   TableBody,
   TableCell,
@@ -31,21 +21,22 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import clsx from "clsx";
-import { FC, useCallback, useEffect, useId, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useList, useLocalStorage } from "react-use";
 import { ListActions } from "react-use/lib/useList";
 import IconMdiArrowUp from "~icons/mdi/arrow-up";
-import IconMdiFile from "~icons/mdi/file";
 import IconMdiTrashCan from "~icons/mdi/trash-can";
 import {
   PlayEntry,
   RatingCalculatorAddEntryForm,
 } from "../components/RatingCalculatorAddEntryForm";
 import { SheetListItem } from "../components/SheetListItem";
+import { ClearButton } from "../components/rating/io/ClearButton";
+import { ExportMenu } from "../components/rating/io/ExportMenu";
+import { ImportMenu } from "../components/rating/io/ImportMenu";
+import { RenderMenu } from "../components/rating/io/RenderMenu";
 import { FlattenedSheet, useSheets } from "../songs";
 import { Rating, calculateRating } from "../utils/rating";
-import { ImportFromAquaSQLiteListItem } from "./ImportFromAquaSQLiteButton";
 
 export interface Entry {
   sheet: FlattenedSheet;
@@ -77,182 +68,6 @@ const RatingCalculatorRowActions: FC<{
 const DenseTableCell = styled(TableCell)(({ theme }) => ({
   padding: theme.spacing(0.75 + 0.0625, 1),
 }));
-
-const ClearButton: FC<{
-  modifyEntries: ListActions<PlayEntry>;
-}> = ({ modifyEntries }) => {
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  return (
-    <>
-      <Dialog
-        TransitionComponent={Grow}
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-      >
-        <DialogTitle>Clear all entries?</DialogTitle>
-        <DialogContent className="w-96">
-          <Alert severity="warning">
-            <AlertTitle>Warning</AlertTitle>
-            This will clear all entries.
-          </Alert>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-
-          <Button
-            color="error"
-            variant="contained"
-            onClick={() => {
-              setDialogOpen(false);
-              modifyEntries.clear();
-            }}
-          >
-            Clear
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Button
-        color="error"
-        variant="outlined"
-        onClick={() => {
-          setDialogOpen(true);
-        }}
-      >
-        Clear...
-      </Button>
-    </>
-  );
-};
-
-const ImportFromJSONButtonListItem: FC<{
-  modifyEntries: ListActions<PlayEntry>;
-  onClose: () => void;
-}> = ({ modifyEntries, onClose }) => {
-  return (
-    <MenuItem
-      onClick={() => {
-        onClose();
-
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = "application/json";
-        input.onchange = (event) => {
-          const element = event.target as HTMLInputElement;
-          if (!element) return;
-
-          const file = element?.files ? element?.files[0] : undefined;
-          if (!file) return;
-
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const data = event.target?.result;
-            if (!data) return;
-            if (typeof data !== "string") return;
-
-            const entries = JSON.parse(data);
-            // basic validation
-            if (
-              !Array.isArray(entries) ||
-              !entries.length ||
-              !entries[0].sheetId ||
-              !entries[0].achievementRate
-            ) {
-              toast.error("Invalid file format");
-              return;
-            }
-
-            modifyEntries.set(entries);
-
-            toast.success("Imported " + entries.length + " entries");
-          };
-          reader.readAsText(file);
-        };
-        input.click();
-      }}
-    >
-      <ListItemIcon>
-        <IconMdiFile />
-      </ListItemIcon>
-      <ListItemText>Import from JSON...</ListItemText>
-    </MenuItem>
-  );
-};
-
-const ExportToJSONButton: FC<{
-  entries: PlayEntry[];
-}> = ({ entries }) => {
-  return (
-    <Button
-      variant="outlined"
-      onClick={() => {
-        const data = JSON.stringify(entries);
-        const blob = new Blob([data], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const name = `dxrating.imgg.dev.export-${new Date().toISOString()}.json`;
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = name;
-        a.click();
-        URL.revokeObjectURL(url);
-
-        toast.success("Exported as " + name);
-      }}
-    >
-      Export
-    </Button>
-  );
-};
-
-const ImportMenu: FC<{
-  modifyEntries: ListActions<PlayEntry>;
-}> = ({ modifyEntries }) => {
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const open = Boolean(anchorEl);
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const id = useId();
-
-  return (
-    <>
-      <Button
-        id={`button-${id}`}
-        aria-controls={open ? `menu-${id}` : undefined}
-        aria-haspopup="true"
-        aria-expanded={open ? "true" : undefined}
-        onClick={handleClick}
-        variant="outlined"
-      >
-        Import...
-      </Button>
-
-      <Menu
-        id={`menu-${id}`}
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        MenuListProps={{
-          "aria-labelledby": `button-${id}`,
-        }}
-      >
-        <ImportFromAquaSQLiteListItem
-          modifyEntries={modifyEntries}
-          onClose={handleClose}
-        />
-        <ImportFromJSONButtonListItem
-          modifyEntries={modifyEntries}
-          onClose={handleClose}
-        />
-      </Menu>
-    </>
-  );
-};
 
 export const RatingCalculator = () => {
   const { data: sheets } = useSheets();
@@ -341,7 +156,12 @@ export const RatingCalculator = () => {
       columnHelper.display({
         id: "chart",
         header: "Chart",
-        cell: ({ row }) => <SheetListItem sheet={row.original.sheet} />,
+        cell: ({ row }) => (
+          <SheetListItem
+            sheet={row.original.sheet}
+            currentAchievementRate={row.original.achievementRate}
+          />
+        ),
         meta: {
           cellProps: {
             padding: "none",
@@ -504,7 +324,9 @@ export const RatingCalculator = () => {
             <div className="flex items-center gap-2 mt-2">
               <ImportMenu modifyEntries={modifyEntries} />
 
-              <ExportToJSONButton entries={entries} />
+              <ExportMenu entries={entries} />
+
+              <RenderMenu calculatedEntries={allEntries} />
 
               <div className="flex-1" />
 

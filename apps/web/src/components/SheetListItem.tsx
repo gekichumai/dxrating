@@ -12,18 +12,22 @@ import clsx from "clsx";
 import { FC, HTMLAttributes, memo, useState } from "react";
 import { FlattenedSheet } from "../songs";
 import { useIsLargeDevice } from "../utils/breakpoints";
-import { SheetDialogContent } from "./SheetDialogContent";
+import {
+  SheetDialogContent,
+  SheetDialogContentProps,
+} from "./SheetDialogContent";
 
-export const SheetListItem: FC<{
-  sheet: FlattenedSheet;
-  size?: "small" | "medium";
-}> = memo(({ sheet, size = "medium" }) => {
+export const SheetListItem: FC<
+  {
+    size?: "small" | "medium";
+  } & SheetDialogContentProps
+> = memo(({ size = "medium", ...props }) => {
   const [open, setOpen] = useState(false);
   const isLargeDevice = useIsLargeDevice();
 
   return (
     <>
-      <SheetDialog sheet={sheet} open={open} setOpen={setOpen} />
+      <SheetDialog open={open} setOpen={setOpen} {...props} />
 
       <ListItemButton
         disableGutters={!isLargeDevice}
@@ -36,7 +40,7 @@ export const SheetListItem: FC<{
           borderRadius: 1,
         }}
       >
-        <SheetListItemContent sheet={sheet} size={size} />
+        <SheetListItemContent {...props} size={size} />
       </ListItemButton>
     </>
   );
@@ -92,11 +96,12 @@ const SheetInternalLevelValue: FC<{ value: number }> = ({ value }) => {
   );
 };
 
-export const SheetDialog: FC<{
-  sheet: FlattenedSheet;
-  open: boolean;
-  setOpen: (open: boolean) => void;
-}> = ({ sheet, open, setOpen }) => {
+export const SheetDialog: FC<
+  {
+    open: boolean;
+    setOpen: (open: boolean) => void;
+  } & SheetDialogContentProps
+> = ({ open, setOpen, ...props }) => {
   const isLargeDevice = useIsLargeDevice();
 
   return isLargeDevice ? (
@@ -108,7 +113,7 @@ export const SheetDialog: FC<{
       TransitionComponent={Grow}
     >
       <DialogContent>
-        <SheetDialogContent sheet={sheet} />
+        <SheetDialogContent {...props} />
       </DialogContent>
     </Dialog>
   ) : (
@@ -138,7 +143,7 @@ export const SheetDialog: FC<{
         <Drawer.Content className="bg-zinc-100 flex flex-col rounded-t-[10px] h-[96%] mt-24 fixed bottom-0 left-0 right-0 z-[1]"> */}
       <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-300 my-3" />
       <div className="overflow-auto h-full p-4 pt-0">
-        {open && <SheetDialogContent sheet={sheet} />}
+        {open && <SheetDialogContent {...props} />}
       </div>
       {/* </Drawer.Content> */}
       {/* // </Drawer.Portal> */}
@@ -221,20 +226,28 @@ export const SheetImage: FC<{ name: string; size?: "small" | "medium" }> = ({
 
 export const SheetTitle: FC<{
   title: string;
+  altNames?: string[];
   difficulty: DifficultyEnum;
   type: TypeEnum;
   version: VersionEnum;
   className?: string;
-}> = ({ title, difficulty, type, version, className }) => {
+}> = ({ title, altNames, difficulty, type, version, className }) => {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-1">
       <h3
         className={clsx(
-          "flex flex-col md:flex-row md:items-center gap-x-2 gap-y-1",
+          "flex flex-col md:flex-row md:items-start gap-x-2 gap-y-1",
           className,
         )}
       >
-        <span className="translate-y-[-0.125rem]">{title}</span>
+        <span className="translate-y-[-0.125rem] flex flex-col">
+          <span>{title}</span>
+          {(altNames?.length ?? 0) > 0 && (
+            <span className="text-sm text-slate-600">
+              {altNames?.join("/")}
+            </span>
+          )}
+        </span>
         <div className="flex items-center gap-2">
           <SheetType type={type} />
           <SheetDifficulty difficulty={difficulty} />
@@ -242,7 +255,7 @@ export const SheetTitle: FC<{
       </h3>
 
       <div className="text-sm">
-        <span className="font-bold text-zinc-600">{version}</span>
+        <span className="text-zinc-600">ver. {version}</span>
       </div>
     </div>
   );

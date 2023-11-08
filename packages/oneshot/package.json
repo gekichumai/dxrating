@@ -1,0 +1,14 @@
+{
+  "name": "@gekichumai/oneshot",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.ts",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@resvg/resvg-wasm": "^2.6.0",
+    "satori": "^0.10.9"
+  }
+}

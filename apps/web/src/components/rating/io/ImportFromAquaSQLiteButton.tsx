@@ -19,15 +19,21 @@ import { FC, useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { ListActions } from "react-use/lib/useList";
 import sqljs, { Database } from "sql.js";
-import { PlayEntry } from "../components/RatingCalculatorAddEntryForm";
-import { SheetListItemContent } from "../components/SheetListItem";
-import { FlattenedSheet, canonicalIdFromParts, useSheets } from "../songs";
+import {
+  FlattenedSheet,
+  canonicalIdFromParts,
+  useSheets,
+} from "../../../songs";
 import {
   AquaGamePlay,
+  AquaPlayLog,
   AquaUser,
   readAquaGamePlays,
+  readAquaPlayLogs,
   readAquaUsers,
-} from "../utils/aquaDB";
+} from "../../../utils/aquaDB";
+import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
+import { SheetListItemContent } from "../../SheetListItem";
 
 import IconMdiDatabase from "~icons/mdi/database";
 
@@ -61,7 +67,8 @@ export const ImportFromAquaSQLiteListItem: FC<{
               const fileInput = document.createElement("input");
               fileInput.type = "file";
               fileInput.accept = ".sqlite";
-              fileInput.addEventListener("change", async () => {
+
+              const onChange = async () => {
                 const file = fileInput.files?.[0];
                 if (!file) {
                   return reject("No file selected");
@@ -88,7 +95,14 @@ export const ImportFromAquaSQLiteListItem: FC<{
                   setDb(db);
                   resolve("Database loaded.");
                 };
+                r.onerror = function () {
+                  reject("Failed to load file: " + r.error);
+                };
                 r.readAsArrayBuffer(file);
+              };
+
+              fileInput.addEventListener("change", () => {
+                onChange();
               });
               fileInput.click();
             }),
@@ -112,11 +126,13 @@ export const ImportFromAquaSQLiteListItem: FC<{
 type AquaFilteredMappedEntry = {
   gameplay: AquaGamePlay;
   sheet: FlattenedSheet;
+  playLog: AquaPlayLog;
 };
 
 type AquaFilteredIntermediateEntry = {
   sheet?: FlattenedSheet;
   gameplay: AquaGamePlay;
+  playLog?: AquaPlayLog;
 };
 
 const ImportFromAquaSQLiteDatabaseContent: FC<{
@@ -133,51 +149,10 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
     if (!sheets) return [];
 
     // First, filter and map the entries as before
-    const filteredMappedEntries = readAquaGamePlays(db)
-      .filter((gameplay) => gameplay.user_id === selectedUser.id)
-      .map((entry) => ({
-        gameplay: entry,
-        sheet: sheets.find(
-          (sheet) =>
-            sheet.internalId === entry.music_id &&
-            sheet.difficulty === entry.level &&
-            sheet.type === entry.type,
-        ),
-      })) as AquaFilteredIntermediateEntry[];
+    const { records, warnings } = getUserGamePlays(db, selectedUser, sheets);
+    setWarnings(warnings);
 
-    // Now, find the maximum achievement for each music_id
-    const intermediate = filteredMappedEntries.reduce((acc, entry) => {
-      const existing = acc.find(
-        (e) => e.gameplay.music_id === entry.gameplay.music_id,
-      );
-
-      if (!existing) {
-        acc.push(entry);
-      } else if (existing.gameplay.achievement < entry.gameplay.achievement) {
-        Object.assign(existing, entry);
-      }
-      return acc;
-    }, [] as AquaFilteredIntermediateEntry[]);
-
-    const pendingGamePlayWarnings: AquaGamePlay[] = [];
-    // Finally, filter out entries that don't have a sheet
-    const finalized = intermediate.filter((entry) => {
-      if (entry.sheet === undefined) {
-        console.warn(
-          `[ImportFromAquaSQLiteButton] Failed to find sheet for gameplay: ${JSON.stringify(
-            entry.gameplay,
-          )}`,
-        );
-        pendingGamePlayWarnings.push(entry.gameplay);
-        return false;
-      }
-
-      return true;
-    }) as AquaFilteredMappedEntry[];
-
-    setWarnings(pendingGamePlayWarnings);
-
-    return finalized;
+    return records;
   }, [db, selectedUser, sheets]);
 
   const mode = !selectedUser ? "select-user" : "confirm-import";
@@ -252,13 +227,20 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
 
             <List className="b-1 b-solid b-gray-200 rounded-lg overflow-hidden !p-1 space-y-1">
               {records.map((record) => (
-                <ListItem className="flex flex-col gap-2 w-full bg-gray-2 p-1 rounded-md">
+                <ListItem
+                  className="flex flex-col gap-2 w-full bg-gray-2 p-1 rounded-md"
+                  key={record.gameplay.id}
+                >
                   <div className="w-full">
                     <SheetListItemContent sheet={record.sheet} />
                   </div>
 
-                  <div className="text-right w-full text-sm">
-                    {record.gameplay.achievement / 10000}%
+                  <div className="flex items-center">
+                    <pre>{JSON.stringify(record.playLog, null, 4)}</pre>
+                    <div className="flex-1" />
+                    <div className="text-sm">
+                      {record.gameplay.achievement / 10000}%
+                    </div>
                   </div>
                 </ListItem>
               ))}
@@ -299,3 +281,73 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
     </>
   );
 };
+
+function getUserGamePlays(
+  db: Database,
+  selectedUser: AquaUser,
+  sheets: FlattenedSheet[],
+) {
+  const gameplays = readAquaGamePlays(db);
+  const playLogs = readAquaPlayLogs(db);
+
+  const filteredMappedGameplays = gameplays
+    .filter((gameplay) => gameplay.user_id === selectedUser.id)
+    .map((entry) => ({
+      gameplay: entry,
+      sheet: sheets.find(
+        (sheet) =>
+          sheet.internalId === entry.music_id &&
+          sheet.difficulty === entry.level &&
+          sheet.type === entry.type,
+      ),
+    })) as AquaFilteredIntermediateEntry[];
+
+  // Now, find the maximum achievement for each music_id
+  const intermediate = filteredMappedGameplays
+    .reduce((acc, entry) => {
+      const existing = acc.find(
+        (e) =>
+          e.gameplay.music_id === entry.gameplay.music_id &&
+          e.gameplay.type === entry.gameplay.type &&
+          e.gameplay.level === entry.gameplay.level,
+      );
+
+      if (!existing) {
+        acc.push(entry);
+      } else if (existing.gameplay.achievement < entry.gameplay.achievement) {
+        Object.assign(existing, entry);
+      }
+      return acc;
+    }, [] as AquaFilteredIntermediateEntry[])
+    .map((entry) => ({
+      gameplay: entry.gameplay,
+      sheet: entry.sheet,
+      playLog: playLogs.find(
+        (playLog) =>
+          playLog.music_id === entry.gameplay.music_id &&
+          playLog.type === entry.gameplay.type &&
+          playLog.level === entry.gameplay.level &&
+          playLog.achievement === entry.gameplay.achievement,
+      ),
+    }));
+
+  const warnings: AquaGamePlay[] = [];
+  // Finally, filter out entries that don't have a sheet
+  const records = intermediate.filter((entry) => {
+    if (entry.sheet === undefined) {
+      console.warn(
+        `[ImportFromAquaSQLiteButton] Failed to find sheet for gameplay: `,
+        entry.gameplay,
+      );
+      warnings.push(entry.gameplay);
+      return false;
+    }
+
+    return true;
+  }) as AquaFilteredMappedEntry[];
+
+  return {
+    records,
+    warnings,
+  };
+}
