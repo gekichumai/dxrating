@@ -15,8 +15,8 @@ function quickStringHash(str: string) {
 }
 
 export const OneShotImage: FC<{
-  entries: Entry[];
-}> = ({ entries }) => {
+  calculatedEntries: Entry[];
+}> = ({ calculatedEntries }) => {
   const preload = useSWR(
     "_oneshot_renderer",
     async () => {
@@ -41,11 +41,11 @@ export const OneShotImage: FC<{
   const renderedURL = useSWR<string | null>(
     "_oneshot_rendered_" +
       (preload.data ? "preload" : "no-preload") +
-      quickStringHash(JSON.stringify(entries)),
+      quickStringHash(JSON.stringify(calculatedEntries)),
     async () => {
       if (!preload.data) return null;
 
-      const el = <OneShotImageContent entries={entries} />;
+      const el = <OneShotImageContent calculatedEntries={calculatedEntries} />;
       console.log(el);
       const svg = await satori(el, {
         width: 1200,
@@ -109,3 +109,5 @@ export const OneShotImage: FC<{
     </div>
   );
 };
+
+export default OneShotImage;

@@ -1,11 +1,14 @@
 import { Button, Menu } from "@mui/material";
 import { FC, useId, useState } from "react";
+import { Entry } from "../../../pages/RatingCalculator";
 import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
 import { ExportToJSONMenuItem } from "./ExportToJSONMenuItem";
+import { RenderToOneShotImageMenuItem } from "./RenderToOneShotImageMenuItem";
 
 export const ExportMenu: FC<{
   entries: PlayEntry[];
-}> = ({ entries }) => {
+  calculatedEntries: Entry[];
+}> = ({ entries, calculatedEntries }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -40,6 +43,8 @@ export const ExportMenu: FC<{
         }}
       >
         <ExportToJSONMenuItem entries={entries} />
+
+        <RenderToOneShotImageMenuItem calculatedEntries={calculatedEntries} />
       </Menu>
     </>
   );

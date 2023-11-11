@@ -2,11 +2,19 @@ import { VersionEnum } from "@gekichumai/dxdata";
 import {
   Alert,
   AlertTitle,
+  Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grow,
   IconButton,
+  Paper,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   styled,
@@ -21,9 +29,25 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import clsx from "clsx";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  FC,
+  ForwardedRef,
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useList, useLocalStorage } from "react-use";
 import { ListActions } from "react-use/lib/useList";
+import {
+  ItemProps,
+  ScrollerProps,
+  TableBodyProps,
+  TableComponents,
+  TableProps,
+  TableVirtuoso,
+} from "react-virtuoso";
 import IconMdiArrowUp from "~icons/mdi/arrow-up";
 import IconMdiTrashCan from "~icons/mdi/trash-can";
 import {
@@ -34,7 +58,6 @@ import { SheetListItem } from "../components/SheetListItem";
 import { ClearButton } from "../components/rating/io/ClearButton";
 import { ExportMenu } from "../components/rating/io/ExportMenu";
 import { ImportMenu } from "../components/rating/io/ImportMenu";
-import { RenderMenu } from "../components/rating/io/RenderMenu";
 import { FlattenedSheet, useSheets } from "../songs";
 import { Rating, calculateRating } from "../utils/rating";
 
@@ -52,21 +75,58 @@ const RatingCalculatorRowActions: FC<{
   modifyEntries: ListActions<PlayEntry>;
   entry: PlayEntry;
 }> = ({ modifyEntries, entry }) => {
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleClick = useCallback(() => {
+    modifyEntries.filter(
+      (existingEntry) => existingEntry.sheetId !== entry.sheetId,
+    );
+  }, []);
+
   return (
-    <IconButton
-      onClick={() => {
-        modifyEntries.filter(
-          (existingEntry) => existingEntry.sheetId !== entry.sheetId,
-        );
-      }}
-    >
-      <IconMdiTrashCan />
-    </IconButton>
+    <>
+      <Dialog
+        TransitionComponent={Grow}
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+      >
+        <DialogTitle>Remove entry?</DialogTitle>
+        <DialogContent className="min-w-[20rem]">
+          <Alert severity="warning">
+            <AlertTitle>Warning</AlertTitle>
+            This will remove the entry permanently.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              setDialogOpen(false);
+              handleClick();
+            }}
+          >
+            Clear
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <IconButton size="small" onClick={() => setDialogOpen(true)}>
+        <IconMdiTrashCan />
+      </IconButton>
+    </>
   );
 };
 
 const DenseTableCell = styled(TableCell)(({ theme }) => ({
   padding: theme.spacing(0.75 + 0.0625, 1),
+}));
+
+const TransparentPaper = styled(Paper)(() => ({
+  backgroundColor: "transparent",
+  boxShadow: "none",
 }));
 
 export const RatingCalculator = () => {
@@ -167,35 +227,29 @@ export const RatingCalculator = () => {
             padding: "none",
           },
         },
-        size: 400,
-        minSize: 200,
+        size: 500,
+        minSize: 300,
       }),
       columnHelper.accessor("includedIn", {
         id: "includedIn",
         header: "Included in",
-        cell: ({ row }) => {
-          const includedIn = row.original.includedIn;
-          if (!includedIn) return null;
-
-          return (
-            <Chip
-              label={includedIn.toUpperCase()}
-              color={includedIn === "b15" ? "secondary" : "primary"}
-              size="small"
-              className="tabular-nums w-16"
-            />
-          );
-        },
+        cell: RatingCalculatorIncludedInCell,
+        size: 50,
+        minSize: 100,
       }),
       columnHelper.accessor("achievementRate", {
         id: "achievementRate",
         header: "Achievement Rate",
-        cell: ({ row }) => `${row.original.achievementRate.toFixed(4)}%`,
+        cell: RatingCalculatorAchievementRateCell,
+        size: 100,
+        minSize: 150,
       }),
       columnHelper.accessor("rating.ratingAwardValue", {
         id: "rating",
         header: "Rating",
-        cell: ({ row }) => row.original.rating.ratingAwardValue,
+        cell: RatingCalculatorRatingCell,
+        size: 50,
+        minSize: 100,
       }),
       columnHelper.display({
         id: "actions",
@@ -206,6 +260,8 @@ export const RatingCalculator = () => {
             modifyEntries={modifyEntries}
           />
         ),
+        size: 50,
+        minSize: 100,
       }),
     ],
     [modifyEntries],
@@ -234,6 +290,16 @@ export const RatingCalculator = () => {
     [entries, modifyEntries],
   );
 
+  const TableComponents: TableComponents<Row<Entry>> = useMemo(
+    () => ({
+      Scroller: RatingCalculatorScroller,
+      Table: RatingCalculatorTable,
+      TableHead: TableHead,
+      TableRow: RatingCalculatorTableRow,
+      TableBody: RatingCalculatorTableBody,
+    }),
+    [],
+  );
   if (!sheets) return null;
 
   return (
@@ -313,7 +379,7 @@ export const RatingCalculator = () => {
             FESTiVAL PLUS, this site will be updated accordingly.
           </Alert> */}
 
-          <Alert severity="info" className="w-full">
+          <Alert severity="info" className="w-full overflow-auto">
             <AlertTitle>
               {localStorageEntries?.length
                 ? `Saved ${localStorageEntries.length} records`
@@ -324,9 +390,7 @@ export const RatingCalculator = () => {
             <div className="flex items-center gap-2 mt-2">
               <ImportMenu modifyEntries={modifyEntries} />
 
-              <ExportMenu entries={entries} />
-
-              <RenderMenu calculatedEntries={allEntries} />
+              <ExportMenu entries={entries} calculatedEntries={allEntries} />
 
               <div className="flex-1" />
 
@@ -339,9 +403,14 @@ export const RatingCalculator = () => {
       <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
 
       <div className="max-w-screen w-full overflow-x-auto">
-        <Table className="rounded-lg w-full">
-          <TableHead>
-            {table.getHeaderGroups().map((headerGroup) => (
+        <TableVirtuoso<Row<Entry>>
+          useWindowScroll
+          data={table.getRowModel().rows}
+          className="w-full overflow-y-hidden"
+          increaseViewportBy={1000}
+          components={TableComponents}
+          fixedHeaderContent={() =>
+            table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
@@ -364,13 +433,13 @@ export const RatingCalculator = () => {
                           )}
                           <IconMdiArrowUp
                             className={clsx(
-                              "inline-flex ml-1 transition",
+                              "ml-1 transition",
                               {
-                                asc: "rotate-0",
-                                desc: "rotate-180",
+                                asc: "inline-flex rotate-0",
+                                desc: "inline-flex rotate-180",
                                 none: header.column.getCanSort()
-                                  ? "opacity-0 group-hover:opacity-70"
-                                  : "opacity-0",
+                                  ? "inline-flex opacity-0 group-hover:opacity-70"
+                                  : "hidden",
                               }[
                                 (header.column.getIsSorted() as string) ||
                                   "none"
@@ -383,52 +452,95 @@ export const RatingCalculator = () => {
                   );
                 })}
               </TableRow>
-            ))}
-          </TableHead>
-          <TableBody className="tabular-nums">
-            {table.getRowModel().rows.map((row) => (
-              <RatingCalculatorTableRow row={row} key={row.id} />
-            ))}
-            {allEntries.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4}>No entries</TableCell>
-              </TableRow>
-            )}
-            {allEntries.length > 0 && (
-              <TableRow className="bg-gray-900">
-                <TableCell colSpan={3} className="!text-white !font-bold !pl-5">
-                  Total
-                </TableCell>
-                <TableCell className="!text-white !font-bold">
-                  {allEntries.reduce(
-                    (acc, entry) => acc + entry.rating.ratingAwardValue,
-                    0,
-                  )}
-                </TableCell>
-                <TableCell />
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+            ))
+          }
+          itemContent={(_, row) => (
+            <RatingCalculatorTableRowContent row={row} />
+          )}
+        />
+
+        {allEntries.length === 0 && (
+          <TableCell colSpan={5}>No entries</TableCell>
+        )}
       </div>
     </div>
   );
 };
 
-const RatingCalculatorTableRow: FC<{
+const RatingCalculatorIncludedInCell: FC<{
+  row: Row<Entry>;
+}> = ({ row }) => {
+  const includedIn = row.original.includedIn;
+  if (!includedIn) return null;
+
+  return (
+    <Chip
+      label={includedIn.toUpperCase()}
+      color={includedIn === "b15" ? "secondary" : "primary"}
+      size="small"
+      className="tabular-nums w-16 leading-none"
+    />
+  );
+};
+
+const RatingCalculatorAchievementRateCell: FC<{
+  row: Row<Entry>;
+}> = ({ row }) => (
+  <span className="font-sans tabular-nums">
+    {row.original.achievementRate.toFixed(4)}%
+  </span>
+);
+
+const RatingCalculatorTable: FC<TableProps> = (props: TableProps) => (
+  <Table
+    {...props}
+    className="rounded-lg w-full"
+    style={{ borderCollapse: "separate" }}
+  />
+);
+
+const RatingCalculatorTableBody = forwardRef(
+  (props: TableBodyProps, ref: ForwardedRef<HTMLTableSectionElement>) => (
+    <TableBody {...props} ref={ref} />
+  ),
+);
+
+const RatingCalculatorTableRow: FC<ItemProps<Row<Entry>>> = ({
+  item,
+  ...props
+}) => (
+  <TableRow
+    {...props}
+    className={clsx(
+      "tabular-nums w-full",
+      {
+        b35: "bg-red-200",
+        b15: "bg-green-200",
+        none: undefined,
+      }[item.original.includedIn ?? "none"],
+    )}
+  />
+);
+
+const RatingCalculatorScroller = forwardRef(
+  (props: ScrollerProps, ref: ForwardedRef<HTMLDivElement>) => (
+    <TableContainer component={TransparentPaper} {...props} ref={ref} />
+  ),
+);
+
+const RatingCalculatorRatingCell: FC<{
+  row: Row<Entry>;
+}> = ({ row }) => (
+  <span className="font-sans tabular-nums">
+    {row.original.rating.ratingAwardValue}
+  </span>
+);
+
+const RatingCalculatorTableRowContent: FC<{
   row: Row<Entry>;
 }> = ({ row }) => {
   return (
-    <TableRow
-      key={row.id}
-      className={clsx(
-        {
-          b35: "bg-red-200",
-          b15: "bg-green-200",
-          none: undefined,
-        }[row.original.includedIn ?? "none"],
-      )}
-    >
+    <>
       {row.getVisibleCells().map((cell) => {
         return (
           <TableCell
@@ -444,6 +556,6 @@ const RatingCalculatorTableRow: FC<{
           </TableCell>
         );
       })}
-    </TableRow>
+    </>
   );
 };

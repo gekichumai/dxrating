@@ -15,7 +15,7 @@ import { DXRank } from "./DXRank";
 import { SheetImage, SheetTitle } from "./SheetListItem";
 
 const PRESET_ACHIEVEMENT_RATES = [
-  100.5, 100.4999, 100, 99.9999, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50,
+  100.5, 100, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50, 0,
 ];
 
 export interface SheetDialogContentProps {

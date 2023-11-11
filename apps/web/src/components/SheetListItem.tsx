@@ -233,7 +233,7 @@ export const SheetTitle: FC<{
   className?: string;
 }> = ({ title, altNames, difficulty, type, version, className }) => {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col">
       <h3
         className={clsx(
           "flex flex-col md:flex-row md:items-start gap-x-2 gap-y-1",

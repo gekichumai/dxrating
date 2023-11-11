@@ -25,7 +25,7 @@ export const ClearButton: FC<{
         onClose={() => setDialogOpen(false)}
       >
         <DialogTitle>Clear all entries?</DialogTitle>
-        <DialogContent className="w-96">
+        <DialogContent className="min-w-[20rem]">
           <Alert severity="warning">
             <AlertTitle>Warning</AlertTitle>
             This will clear all entries.

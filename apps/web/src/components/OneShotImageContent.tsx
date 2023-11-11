@@ -2,7 +2,7 @@ import { FC } from "react";
 import { Entry } from "../pages/RatingCalculator";
 
 export const OneShotImageContent: FC<{
-  entries: Entry[];
+  calculatedEntries: Entry[];
 }> = () => {
   return (
     <div tw="flex flex-col w-full h-full items-center justify-center bg-white">
