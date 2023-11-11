@@ -2,15 +2,26 @@ import process from "process";
 
 import { tokenize } from "@enjoyjs/node-mecab";
 import { DXData } from "@gekichumai/dxdata";
+import { uniq } from "lodash";
 import fs from "node:fs/promises";
 
-async function readAliases() {
-  const aliases = await fs.readFile("./aliases.tsv", "utf8");
+async function readAliases1() {
+  const aliases = await fs.readFile("./aliases1.tsv", "utf8");
   const lines = aliases.split("\n");
   const aliasesMap = new Map<string, string[]>();
   for (const line of lines) {
     const segments = line.split("\t");
     aliasesMap.set(segments[0], segments.slice(1));
+  }
+  return aliasesMap;
+}
+
+async function readAliases2() {
+  const aliases = await fs.readFile("./aliases2.json", "utf8");
+  const aliasesMap = new Map<string, string[]>();
+  const aliasesObj = JSON.parse(aliases) as Record<string, { Alias: string[] }>;
+  for (const [key, value] of Object.entries(aliasesObj)) {
+    aliasesMap.set(key, value.Alias);
   }
   return aliasesMap;
 }
@@ -1042,9 +1053,10 @@ function fullWidthToHalfWidth(str: string) {
   });
 }
 
-let ALIAS_MAP: Map<string, string[]>;
+let ALIAS_NAME_MAP: Map<string, string[]>;
+let ALIAS_ID_MAP: Map<string, string[]>;
 
-async function getSearchAcronyms(title: string) {
+async function getSearchAcronyms(title: string, id?: number) {
   const searchAcronyms = containsOnlyAscii(title)
     ? []
     : [
@@ -1078,16 +1090,26 @@ async function getSearchAcronyms(title: string) {
           .join(""),
       ];
 
-  const alias = ALIAS_MAP.get(title);
-  if (alias) {
-    searchAcronyms.push(...alias);
+  const alias1 = ALIAS_NAME_MAP.get(title);
+  if (alias1) {
+    searchAcronyms.push(...alias1);
   }
 
-  return searchAcronyms.filter((acronym) => !!acronym);
+  if (id) {
+    const alias2 = ALIAS_ID_MAP.get(id.toString());
+    if (alias2) {
+      searchAcronyms.push(...alias2);
+    }
+  }
+
+  return uniq(searchAcronyms).filter(
+    (acronym) => !!acronym && acronym !== title
+  );
 }
 
 async function main() {
-  ALIAS_MAP = await readAliases();
+  ALIAS_NAME_MAP = await readAliases1();
+  ALIAS_ID_MAP = await readAliases2();
 
   const dxdata = (await fs
     .readFile("./original.json", "utf-8")
@@ -1098,7 +1120,7 @@ async function main() {
     .map(async (entry) => {
       const title = entry.title;
 
-      const searchAcronyms = await getSearchAcronyms(title);
+      const searchAcronyms = await getSearchAcronyms(title, entry.internalId);
 
       return {
         ...entry,

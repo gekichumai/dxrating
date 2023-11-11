@@ -11,10 +11,11 @@
   },
   "dependencies": {
     "@enjoyjs/node-mecab": "^0.5.0",
-    "esno": "^0.17.0",
-    "@gekichumai/dxdata": "*"
+    "@gekichumai/dxdata": "*",
+    "esno": "^0.17.0"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.201",
     "@types/node": "^20.8.6"
   }
 }

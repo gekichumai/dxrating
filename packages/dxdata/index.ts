@@ -58,6 +58,7 @@ export interface Song {
   isNew: boolean;
   isLocked: boolean;
   sheets: Sheet[];
+  internalId?: number;
 }
 
 export interface Sheet {
