@@ -39,7 +39,7 @@ export const RenderMenu: FC<{
           "aria-labelledby": `button-${id}`,
         }}
       >
-        <RenderToOneShotImageMenuItem entries={calculatedEntries} />
+        <RenderToOneShotImageMenuItem calculatedEntries={calculatedEntries} />
       </Menu>
     </>
   );

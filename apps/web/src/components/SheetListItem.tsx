@@ -241,7 +241,7 @@ export const SheetTitle: FC<{
         )}
       >
         <span className="translate-y-[-0.125rem] flex flex-col">
-          <span>{title}</span>
+          <span className="leading-tight">{title}</span>
           {(altNames?.length ?? 0) > 0 && (
             <span className="text-sm text-slate-600">
               {altNames?.join("/")}

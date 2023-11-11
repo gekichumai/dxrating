@@ -1,5 +1,9 @@
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Button,
+  Chip,
   Table,
   TableBody,
   TableCell,
@@ -8,6 +12,7 @@ import {
 } from "@mui/material";
 import clsx from "clsx";
 import { FC, useMemo } from "react";
+import MdiChevronDown from "~icons/mdi/chevron-down";
 import IconMdiYouTube from "~icons/mdi/youtube";
 import { FlattenedSheet } from "../songs";
 import { calculateRating } from "../utils/rating";
@@ -15,7 +20,7 @@ import { DXRank } from "./DXRank";
 import { SheetImage, SheetTitle } from "./SheetListItem";
 
 const PRESET_ACHIEVEMENT_RATES = [
-  100.5, 100, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50, 0,
+  100.5, 100, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50,
 ];
 
 export interface SheetDialogContentProps {
@@ -29,7 +34,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = ({
 }) => {
   const ratings = useMemo(() => {
     const rates = [...PRESET_ACHIEVEMENT_RATES];
-    if (currentAchievementRate) {
+    if (currentAchievementRate && !rates.includes(currentAchievementRate)) {
       rates.push(currentAchievementRate);
     }
     rates.sort((a, b) => b - a);
@@ -70,54 +75,171 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = ({
         Search on YouTube
       </Button>
 
-      <Table className="tabular-nums !font-mono" size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>Achv</TableCell>
-            <TableCell>Rating</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {ratings.map((rating, i) => {
-            const nextRating = i === ratings.length - 1 ? null : ratings[i + 1];
+      <div>
+        <Accordion className="bg-zinc-100/60" defaultExpanded>
+          <AccordionSummary expandIcon={<MdiChevronDown />}>
+            Song Details
+          </AccordionSummary>
+          <AccordionDetails>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell width="100px">Category</TableCell>
+                  <TableCell width="200px">{sheet.category}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell>BPM</TableCell>
+                  <TableCell>{sheet.bpm}</TableCell>
+                </TableRow>
 
-            return (
-              <TableRow
-                key={rating.achievementRate}
-                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                className={clsx(
-                  rating.achievementRate === currentAchievementRate &&
-                    "bg-amber",
-                )}
+                <TableRow>
+                  <TableCell>Artist</TableCell>
+                  <TableCell>{sheet.artist}</TableCell>
+                </TableRow>
+
+                <TableRow className="bg-gray-1">
+                  <TableCell colSpan={2}>Notes</TableCell>
+                </TableRow>
+
+                <TableRow className="bg-gray-1">
+                  <TableCell className="pl-8">— Tap</TableCell>
+                  <TableCell>{sheet.noteCounts.tap ?? 0}</TableCell>
+                </TableRow>
+
+                <TableRow className="bg-gray-1">
+                  <TableCell className="pl-8">— Hold</TableCell>
+                  <TableCell>{sheet.noteCounts.hold ?? 0}</TableCell>
+                </TableRow>
+
+                <TableRow className="bg-gray-1">
+                  <TableCell className="pl-8">— Slide</TableCell>
+                  <TableCell>{sheet.noteCounts.slide ?? 0}</TableCell>
+                </TableRow>
+
+                <TableRow className="bg-gray-1">
+                  <TableCell className="pl-8">— Touch</TableCell>
+                  <TableCell>{sheet.noteCounts.touch ?? 0}</TableCell>
+                </TableRow>
+
+                <TableRow className="bg-gray-1">
+                  <TableCell className="pl-8">— Break</TableCell>
+                  <TableCell>{sheet.noteCounts.break ?? 0}</TableCell>
+                </TableRow>
+
+                <TableRow className="bg-gray-1">
+                  <TableCell className="pl-8">— Total</TableCell>
+                  <TableCell>
+                    {sheet.noteCounts.total?.toLocaleString("en-US")}
+                  </TableCell>
+                </TableRow>
+
+                <TableRow>
+                  <TableCell>Region Availability</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {Object.entries(sheet.regions).map(
+                        ([region, available]) => (
+                          <Chip
+                            size="small"
+                            key={region}
+                            label={region}
+                            className={clsx(
+                              "uppercase font-mono text-white font-bold select-none",
+                              available ? "!bg-green-500" : "!bg-red-500",
+                            )}
+                          />
+                        ),
+                      )}{" "}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+
+            <div className="mt-4 text-sm text-gray-500">
+              Data from{" "}
+              <a
+                href="https://arcade-songs.zetaraku.dev"
+                rel="noreferrer"
+                target="_blank"
               >
-                <TableCell component="th" scope="row">
-                  <div className={clsx("flex items-center font-sans")}>
-                    <DXRank rank={rating.rating.rank} className="h-8" />
-                    <span>
-                      <SheetAchievementRate value={rating.achievementRate} />
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="relative font-sans">
-                    <span className="font-bold">
-                      {rating.rating.ratingAwardValue}
-                    </span>
+                arcade-songs.zetaraku.dev
+              </a>
+            </div>
+          </AccordionDetails>
+        </Accordion>
 
-                    {nextRating && (
-                      <div className="absolute -bottom-5 -left-1 px-1 text-xs text-gray-500 bg-zinc-100 shadow-[0_0_0_1px_var(--un-shadow-color)] shadow-zinc-300/80 rounded-xs">
-                        ↑ +
-                        {rating.rating.ratingAwardValue -
-                          nextRating.rating.ratingAwardValue}
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+        <Accordion className="bg-zinc-100/60">
+          <AccordionSummary expandIcon={<MdiChevronDown />}>
+            Achievement → Rating
+          </AccordionSummary>
+
+          <AccordionDetails>
+            <Table className="tabular-nums !font-mono" size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell width="100px">Achv</TableCell>
+                  <TableCell width="100px">Rating</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {ratings.map((rating, i) => {
+                  const nextRating =
+                    i === ratings.length - 1 ? null : ratings[i + 1];
+                  const isCurrentAchievementRateRow =
+                    rating.achievementRate === currentAchievementRate;
+
+                  return (
+                    <TableRow
+                      key={rating.achievementRate}
+                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                      className={clsx(
+                        isCurrentAchievementRateRow && "bg-amber",
+                      )}
+                    >
+                      <TableCell component="th" scope="row">
+                        <div className={clsx("flex items-center font-sans")}>
+                          <DXRank rank={rating.rating.rank} className="h-8" />
+                          <SheetAchievementRate
+                            value={rating.achievementRate}
+                          />
+                          {isCurrentAchievementRateRow && (
+                            <Chip
+                              label="Current"
+                              size="small"
+                              className="ml-2"
+                              color="default"
+                            />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="relative font-sans">
+                          <span className="font-bold">
+                            {rating.rating.ratingAwardValue}
+                          </span>
+
+                          {nextRating && (
+                            <div className="absolute -bottom-5 -left-1 px-1 text-xs text-gray-500 bg-zinc-100 shadow-[0_0_0_1px_var(--un-shadow-color)] shadow-zinc-300/80 rounded-xs">
+                              ↑{" "}
+                              <span className="font-bold">
+                                {rating.rating.ratingAwardValue -
+                                  nextRating.rating.ratingAwardValue}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </AccordionDetails>
+        </Accordion>
+      </div>
     </div>
   );
 };
