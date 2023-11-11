@@ -407,7 +407,7 @@ export const RatingCalculator = () => {
 
       <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
 
-      <div className="max-w-screen w-full overflow-x-auto">
+      <div className="max-w-screen w-full overflow-x-auto -mx-4">
         <TableVirtuoso<Row<Entry>>
           useWindowScroll
           data={table.getRowModel().rows}
@@ -499,7 +499,7 @@ const RatingCalculatorAchievementRateCell: FC<{
 const RatingCalculatorTable: FC<TableProps> = (props: TableProps) => (
   <Table
     {...props}
-    className="rounded-lg w-full"
+    className="rounded-lg w-full min-w-2xl"
     style={{ borderCollapse: "separate" }}
   />
 );

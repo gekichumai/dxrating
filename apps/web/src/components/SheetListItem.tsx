@@ -32,7 +32,7 @@ export const SheetListItem: FC<
       <ListItemButton
         disableGutters={!isLargeDevice}
         className={clsx(
-          "w-full b-b-1 b-solid b-gray-200 cursor-pointer transition duration-500",
+          "w-full b-b-1 b-solid b-gray-200 cursor-pointer transition duration-500 !px-4",
           open && "!bg-zinc-300/80",
         )}
         onClick={() => setOpen(true)}
@@ -247,9 +247,18 @@ export const SheetTitle: FC<{
         <span className="translate-y-[-0.125rem] flex flex-col">
           <span className="leading-tight">{title}</span>
           {(altNames?.length ?? 0) > 0 && (
-            <span className="text-sm text-slate-600">
-              {altNames?.join("/")}
-            </span>
+            <div
+              className="overflow-hidden"
+              style={{
+                mask: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 6rem, rgba(0,0,0,0) 100%)",
+                WebkitMask:
+                  "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 6rem, rgba(0,0,0,0) 100%)",
+              }}
+            >
+              <div className="text-sm text-slate-600 max-h-[10rem]">
+                {altNames?.join(" / ")}
+              </div>
+            </div>
           )}
         </span>
         <div className="flex items-center gap-2">
