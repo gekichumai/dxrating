@@ -1055,6 +1055,11 @@ function fullWidthToHalfWidth(str: string) {
 
 let ALIAS_NAME_MAP: Map<string, string[]>;
 let ALIAS_ID_MAP: Map<string, string[]>;
+let ALIAS_NAME_EXTRA_MAP: Record<string, string[]> = {
+  Hainuwele: ["华为", "华为完了"],
+  "ULTRA SYNERGY MATRIX": ["USM", "我来出勤了"],
+  神っぽいな: ["像神一样"],
+};
 
 async function getSearchAcronyms(title: string, id?: number) {
   const searchAcronyms = containsOnlyAscii(title)
@@ -1102,8 +1107,12 @@ async function getSearchAcronyms(title: string, id?: number) {
     }
   }
 
+  if (ALIAS_NAME_EXTRA_MAP[title]) {
+    searchAcronyms.push(...ALIAS_NAME_EXTRA_MAP[title]);
+  }
+
   return uniq(searchAcronyms).filter(
-    (acronym) => !!acronym && acronym !== title
+    (acronym) => !!acronym && acronym.toLowerCase() !== title.toLowerCase()
   );
 }
 
