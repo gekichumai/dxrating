@@ -235,12 +235,8 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
                     <SheetListItemContent sheet={record.sheet} />
                   </div>
 
-                  <div className="flex items-center">
-                    <pre>{JSON.stringify(record.playLog, null, 4)}</pre>
-                    <div className="flex-1" />
-                    <div className="text-sm">
-                      {record.gameplay.achievement / 10000}%
-                    </div>
+                  <div className="text-sm self-end">
+                    {record.gameplay.achievement / 10000}%
                   </div>
                 </ListItem>
               ))}
