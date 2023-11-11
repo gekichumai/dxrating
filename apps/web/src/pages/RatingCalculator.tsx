@@ -145,18 +145,23 @@ export const RatingCalculator = () => {
   }, [entries, setLocalStorageEntries]);
 
   const { allEntries, b15Entries, b35Entries } = useMemo(() => {
-    const calculated = entries.map((entry) => {
+    const calculated = entries.flatMap((entry) => {
       const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId);
-      if (!sheet) throw new Error(`Chart ${entry.sheetId} not found`);
+      if (!sheet) {
+        console.warn(`Chart ${entry.sheetId} not found`);
+        return [];
+      }
 
-      return {
-        ...entry,
-        sheet,
-        rating: calculateRating(
-          sheet.internalLevelValue,
-          entry.achievementRate,
-        ),
-      };
+      return [
+        {
+          ...entry,
+          sheet,
+          rating: calculateRating(
+            sheet.internalLevelValue,
+            entry.achievementRate,
+          ),
+        },
+      ];
     });
 
     const currentVersion = VersionEnum.FESTIVALPLUS;

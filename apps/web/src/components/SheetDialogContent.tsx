@@ -14,6 +14,7 @@ import clsx from "clsx";
 import { FC, useMemo } from "react";
 import MdiChevronDown from "~icons/mdi/chevron-down";
 import IconMdiYouTube from "~icons/mdi/youtube";
+import IconMdiOpenInNew from "~icons/mdi/open-in-new";
 import { FlattenedSheet } from "../songs";
 import { calculateRating } from "../utils/rating";
 import { DXRank } from "./DXRank";
@@ -47,7 +48,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = ({
   return (
     <div className="flex flex-col gap-2 relative">
       <div className="flex items-center">
-        <SheetImage name={sheet.imageName} />
+        <SheetImage name={sheet.imageName} size="large" />
 
         <div className="flex-1" />
 
@@ -81,7 +82,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = ({
             Song Details
           </AccordionSummary>
           <AccordionDetails>
-            <Table size="small">
+            <Table size="small" className="mb-4">
               <TableHead>
                 <TableRow>
                   <TableCell width="100px">Category</TableCell>
@@ -158,7 +159,20 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = ({
               </TableBody>
             </Table>
 
-            <div className="mt-4 text-sm text-gray-500">
+            <Button
+              href={
+                "https://arcade-songs.zetaraku.dev/maimai/song/?id=" +
+                encodeURIComponent(sheet.songId)
+              }
+              target="_blank"
+              variant="outlined"
+              className="!normal-case"
+              startIcon={<IconMdiOpenInNew />}
+            >
+              View Song on arcade-songs.zetaraku.dev
+            </Button>
+
+            <div className="mt-4 text-xs text-gray-500 text-right">
               Data from{" "}
               <a
                 href="https://arcade-songs.zetaraku.dev"
@@ -181,7 +195,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = ({
               <TableHead>
                 <TableRow>
                   <TableCell width="100px">Achv</TableCell>
-                  <TableCell width="100px">Rating</TableCell>
+                  <TableCell width="50px">Rating</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

@@ -1,10 +1,13 @@
 import { Tab, Tabs } from "@mui/material";
-import { useState } from "react";
+import { useLocalStorage } from "react-use";
 import { RatingCalculator } from "./pages/RatingCalculator";
 import { SheetList } from "./pages/SheetList";
 
 export const App = () => {
-  const [tab, setTab] = useState<"search" | "rating">("search");
+  const [tab, setTab] = useLocalStorage<"search" | "rating">(
+    "tab-selection",
+    "search",
+  );
 
   return (
     <div className="h-full w-full relative">
@@ -48,7 +51,7 @@ export const App = () => {
           {
             search: <SheetList />,
             rating: <RatingCalculator />,
-          }[tab]
+          }[tab ?? "search"]
         }
       </div>
     </div>

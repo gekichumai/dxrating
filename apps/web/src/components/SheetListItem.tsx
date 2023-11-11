@@ -203,10 +203,10 @@ const SheetType: FC<{ type: TypeEnum }> = ({ type }) => {
   );
 };
 
-export const SheetImage: FC<{ name: string; size?: "small" | "medium" }> = ({
-  name,
-  size = "medium",
-}) => {
+export const SheetImage: FC<{
+  name: string;
+  size?: "small" | "medium" | "large";
+}> = ({ name, size = "medium" }) => {
   return (
     <img
       key={name}
@@ -216,7 +216,11 @@ export const SheetImage: FC<{ name: string; size?: "small" | "medium" }> = ({
       }
       className={clsx(
         "bg-slate-300/50",
-        size === "small" ? "h-8 w-8 rounded-sm" : "h-12 w-12 rounded",
+        size === "small"
+          ? "h-8 w-8 rounded-sm"
+          : size === "medium"
+          ? "h-12 w-12 rounded"
+          : "h-16 w-16 rounded-lg",
       )}
       alt={name}
       loading="lazy"
