@@ -116,9 +116,16 @@ export const useFilteredSheets = (searchTerm: string) => {
   const { data: sheets } = useSheets();
   const search = useSheetsSearchEngine();
 
+  const defaultResults = useMemo(() => {
+    return (sheets ?? []).slice().sort((a, b) => {
+      return b.internalLevelValue - a.internalLevelValue;
+    });
+  }, [sheets]);
+
   return useMemo(() => {
     const start = performance.now();
-    const results = searchTerm === "" ? sheets ?? [] : search(searchTerm);
+    const results =
+      searchTerm === "" ? defaultResults ?? [] : search(searchTerm);
     const end = performance.now();
     console.log(`Fuse search took ${end - start}ms`);
 
@@ -126,7 +133,7 @@ export const useFilteredSheets = (searchTerm: string) => {
       results,
       elapsed: end - start,
     };
-  }, [search, searchTerm, sheets]);
+  }, [search, searchTerm, defaultResults]);
 };
 
 export const formatSheetToString = (sheet: FlattenedSheet) => {

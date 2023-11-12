@@ -3,7 +3,6 @@ import {
   Alert,
   AlertTitle,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -33,6 +32,7 @@ import {
   FC,
   ForwardedRef,
   forwardRef,
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -488,19 +488,24 @@ export const RatingCalculator = () => {
 
 const RatingCalculatorIncludedInCell: FC<{
   row: Row<Entry>;
-}> = ({ row }) => {
+}> = memo(({ row }) => {
   const includedIn = row.original.includedIn;
   if (!includedIn) return null;
 
   return (
-    <Chip
-      label={includedIn.toUpperCase()}
-      color={includedIn === "b15" ? "secondary" : "primary"}
-      size="small"
-      className="tabular-nums w-16 leading-none"
-    />
+    <div
+      className={clsx(
+        "tabular-nums w-16 leading-none py-1.5 rounded-full text-white text-center shadow select-none",
+        includedIn === "b15" && "bg-amber-500",
+        includedIn === "b35" && "bg-cyan-500",
+      )}
+    >
+      {includedIn.toUpperCase()}
+    </div>
   );
-};
+});
+RatingCalculatorIncludedInCell.displayName =
+  "memo(RatingCalculatorIncludedInCell)";
 
 const RatingCalculatorAchievementRateCell: FC<{
   row: Row<Entry>;
@@ -533,8 +538,8 @@ const RatingCalculatorTableRow: FC<ItemProps<Row<Entry>>> = ({
     className={clsx(
       "tabular-nums w-full",
       {
-        b35: "bg-red-200",
-        b15: "bg-green-200",
+        b15: "bg-amber-200",
+        b35: "bg-cyan-200",
         none: undefined,
       }[item.original.includedIn ?? "none"],
     )}
@@ -557,7 +562,7 @@ const RatingCalculatorRatingCell: FC<{
 
 const RatingCalculatorTableRowContent: FC<{
   row: Row<Entry>;
-}> = ({ row }) => {
+}> = memo(({ row }) => {
   return (
     <>
       {row.getVisibleCells().map((cell) => {
@@ -577,4 +582,6 @@ const RatingCalculatorTableRowContent: FC<{
       })}
     </>
   );
-};
+});
+RatingCalculatorTableRowContent.displayName =
+  "memo(RatingCalculatorTableRowContent)";
