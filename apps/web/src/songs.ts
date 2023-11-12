@@ -75,11 +75,16 @@ export const useSheets = () => {
   return useSWR("sheets", getFlattenedSheets);
 };
 
-export const useSheetsFuse = () => {
+export const useSongs = () => {
+  return useSWR("songs", () => dxdata.songs);
+};
+
+export const useSheetsSearchEngine = () => {
+  const { data: songs } = useSongs();
   const { data: sheets } = useSheets();
 
   const fuseInstance = useMemo(() => {
-    return new Fuse(sheets ?? [], {
+    return new Fuse(songs ?? [], {
       keys: [
         {
           name: "searchAcronyms",
@@ -91,25 +96,29 @@ export const useSheetsFuse = () => {
         },
       ],
       shouldSort: true,
+      threshold: 0.4,
     });
-  }, [sheets]);
+  }, [songs]);
 
-  return fuseInstance;
+  const search = (term: string) => {
+    const results = fuseInstance.search(term);
+    return results.flatMap((result) => {
+      return (
+        sheets?.filter((sheet) => sheet.songId === result.item.songId) ?? []
+      );
+    });
+  };
+
+  return search;
 };
 
 export const useFilteredSheets = (searchTerm: string) => {
   const { data: sheets } = useSheets();
-  const fuseInstance = useSheetsFuse();
+  const search = useSheetsSearchEngine();
 
   return useMemo(() => {
     const start = performance.now();
-    const results =
-      searchTerm === ""
-        ? sheets?.map((sheet, i) => ({
-            item: sheet as FlattenedSheet,
-            refIndex: i,
-          })) ?? []
-        : fuseInstance.search(searchTerm);
+    const results = searchTerm === "" ? sheets ?? [] : search(searchTerm);
     const end = performance.now();
     console.log(`Fuse search took ${end - start}ms`);
 
@@ -117,7 +126,7 @@ export const useFilteredSheets = (searchTerm: string) => {
       results,
       elapsed: end - start,
     };
-  }, [fuseInstance, searchTerm, sheets]);
+  }, [search, searchTerm, sheets]);
 };
 
 export const formatSheetToString = (sheet: FlattenedSheet) => {

@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import Fuse from "fuse.js";
 import { useCallback } from "react";
 import { ItemContent, Virtuoso } from "react-virtuoso";
 import { FlattenedSheet } from "../songs";
@@ -9,15 +8,11 @@ export const SheetListContainer = ({
   sheets,
   listContainerClassName,
 }: {
-  sheets: Fuse.FuseResult<FlattenedSheet>[];
+  sheets: FlattenedSheet[];
   listContainerClassName?: string;
 }) => {
-  const ItemContent = useCallback<
-    ItemContent<Fuse.FuseResult<FlattenedSheet>, unknown>
-  >(
-    (_, sheet: Fuse.FuseResult<FlattenedSheet>) => (
-      <SheetListItem sheet={sheet.item} />
-    ),
+  const ItemContent = useCallback<ItemContent<FlattenedSheet, unknown>>(
+    (_, sheet: FlattenedSheet) => <SheetListItem sheet={sheet} />,
     [],
   );
 

@@ -13,8 +13,8 @@ export const SheetList: FC = () => {
   const filteredResults = useMemo(() => {
     if (showOnlyFestival) {
       return results
-        .filter((sheet) => sheet.item.version === VersionEnum.FESTIVALPLUS)
-        .sort((a, b) => b.item.internalLevelValue - a.item.internalLevelValue);
+        .filter((sheet) => sheet.version === VersionEnum.FESTIVALPLUS)
+        .sort((a, b) => b.internalLevelValue - a.internalLevelValue);
     }
     return results;
   }, [results, showOnlyFestival]);

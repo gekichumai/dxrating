@@ -17,7 +17,6 @@ import {
   memo,
   useCallback,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { Virtuoso } from "react-virtuoso";
@@ -28,7 +27,7 @@ import {
   FlattenedSheet,
   formatSheetToString,
   useSheets,
-  useSheetsFuse,
+  useSheetsSearchEngine,
 } from "../songs";
 import { calculateRating } from "../utils/rating";
 import { SheetListItemContent } from "./SheetListItem";
@@ -66,7 +65,6 @@ export const RatingCalculatorAddEntryForm: FC<{
   onSubmit: (entry: PlayEntry) => void;
 }> = memo(({ onSubmit }) => {
   const { data: sheets } = useSheets();
-  const fuseInstance = useSheetsFuse();
   const [selectedSheet, setSelectedSheet] = useState<FlattenedSheet | null>(
     null,
   );
@@ -74,13 +72,10 @@ export const RatingCalculatorAddEntryForm: FC<{
   const [achievementRateError, setAchievementRateError] = useState<
     string | null
   >(null);
-  const autocompleteRef = useRef<unknown>(null);
   const resetForm = useCallback(() => {
     setSelectedSheet(null);
     setAchievementRate("");
     setAchievementRateError(null);
-    const autocomplete = autocompleteRef.current as HTMLDivElement;
-    autocomplete.focus();
   }, []);
 
   const { entries } = useRatingCalculatorContext();
@@ -139,32 +134,9 @@ export const RatingCalculatorAddEntryForm: FC<{
     <Card className="w-full">
       <CardContent className="flex flex-col items-center justify-center gap-2">
         <div className="chunks-horizontal-2 items-start">
-          <Autocomplete
-            ref={autocompleteRef}
-            fullWidth
-            options={sheets}
-            getOptionLabel={(sheet) => formatSheetToString(sheet)}
-            renderInput={(params) => (
-              <TextField {...params} label="Chart" variant="outlined" />
-            )}
-            filterOptions={(_, { inputValue }) => {
-              if (!inputValue) return sheets;
-              const results = fuseInstance.search(inputValue);
-              return results.map((result) => result.item);
-            }}
-            renderOption={(attributes, option) => (
-              <li {...attributes}>
-                <SheetListItemContent sheet={option} />
-              </li>
-            )}
-            ListboxComponent={ListboxComponent}
-            itemID="id"
+          <RatingCalculatorAddEntryFormAutoComplete
             value={selectedSheet}
-            onChange={(_, value) => {
-              console.log(value);
-              setSelectedSheet(value);
-            }}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
+            onChange={setSelectedSheet}
           />
 
           <TextField
@@ -282,3 +254,49 @@ export const RatingCalculatorAddEntryForm: FC<{
     </Card>
   );
 });
+
+export const RatingCalculatorAddEntryFormAutoComplete: FC<{
+  value: FlattenedSheet | null;
+  onChange: (sheet: FlattenedSheet | null) => void;
+}> = ({ value, onChange }) => {
+  const { data: sheets } = useSheets();
+
+  const search = useSheetsSearchEngine();
+
+  const renderOption = useCallback(
+    (attributes: HTMLAttributes<HTMLLIElement>, option: FlattenedSheet) => (
+      <li {...attributes}>
+        <SheetListItemContent sheet={option} />
+      </li>
+    ),
+    [],
+  );
+  if (!sheets) return null;
+
+  return (
+    <Autocomplete
+      fullWidth
+      options={sheets}
+      getOptionLabel={(sheet) => formatSheetToString(sheet)}
+      renderInput={(params) => (
+        <TextField {...params} label="Chart" variant="outlined" />
+      )}
+      filterOptions={(_, { inputValue }) => {
+        if (!inputValue) return sheets;
+        const start = performance.now();
+        const results = search(inputValue);
+        const end = performance.now();
+        console.log(`Fuse search took ${end - start}ms`);
+        return results;
+      }}
+      renderOption={renderOption}
+      ListboxComponent={ListboxComponent}
+      itemID="id"
+      value={value}
+      onChange={(_, value) => {
+        onChange(value);
+      }}
+      isOptionEqualToValue={(option, value) => option.id === value.id}
+    />
+  );
+};
