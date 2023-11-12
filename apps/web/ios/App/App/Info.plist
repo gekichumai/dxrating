@@ -8,17 +8,6 @@
 	<array>
 		<string>Torus-Regular</string>
 	</array>
-	<key>CoreSpotlightActions</key>
-	<array>
-		<dict>
-			<key>CoreSpotlightActionTitle</key>
-			<string>Star/Un-star Song</string>
-			<key>CoreSpotlightActionSymbolImage</key>
-			<string>star</string>
-			<key>CoreSpotlightActionIdentifier</key>
-			<string>STAR_UNSTAR</string>
-		</dict>
-	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>

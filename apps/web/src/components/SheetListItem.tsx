@@ -246,20 +246,7 @@ export const SheetTitle: FC<{
       >
         <span className="translate-y-[-0.125rem] flex flex-col">
           <span className="leading-tight">{title}</span>
-          {(altNames?.length ?? 0) > 0 && (
-            <div
-              className="overflow-hidden"
-              style={{
-                mask: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 6rem, rgba(0,0,0,0) 100%)",
-                WebkitMask:
-                  "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 6rem, rgba(0,0,0,0) 100%)",
-              }}
-            >
-              <div className="text-sm text-slate-600 max-h-[10rem]">
-                {altNames?.join(" / ")}
-              </div>
-            </div>
-          )}
+          {(altNames?.length ?? 0) > 0 && <SheetAltNames altNames={altNames} />}
         </span>
         <div className="flex items-center gap-2">
           <SheetType type={type} />
@@ -270,6 +257,37 @@ export const SheetTitle: FC<{
       <div className="text-sm">
         <span className="text-zinc-600">ver. {version}</span>
       </div>
+    </div>
+  );
+};
+
+export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const toggleExpanded = () => {
+    setExpanded(!expanded);
+  };
+
+  return (
+    <div
+      className="overflow-hidden"
+      style={{
+        mask: expanded
+          ? ""
+          : "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5rem, rgba(0,0,0,0) 100%)",
+        WebkitMask: expanded
+          ? ""
+          : "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5rem, rgba(0,0,0,0) 100%)",
+      }}
+      onClick={toggleExpanded}
+    >
+      {expanded ? (
+        <div className="text-sm text-slate-600">{altNames?.join(" / ")}</div>
+      ) : (
+        <div className="text-sm text-slate-600 max-h-[7rem]">
+          {altNames?.join(" / ")}
+        </div>
+      )}
     </div>
   );
 };
