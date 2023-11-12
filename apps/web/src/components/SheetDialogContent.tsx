@@ -13,8 +13,8 @@ import {
 import clsx from "clsx";
 import { FC, useMemo } from "react";
 import MdiChevronDown from "~icons/mdi/chevron-down";
-import IconMdiYouTube from "~icons/mdi/youtube";
 import IconMdiOpenInNew from "~icons/mdi/open-in-new";
+import IconMdiYouTube from "~icons/mdi/youtube";
 import { FlattenedSheet } from "../songs";
 import { calculateRating } from "../utils/rating";
 import { DXRank } from "./DXRank";
@@ -169,7 +169,10 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = ({
               className="!normal-case"
               startIcon={<IconMdiOpenInNew />}
             >
-              View Song on arcade-songs.zetaraku.dev
+              <span>View Song on&nbsp;</span>
+              <span className="text-xs tracking-tighter">
+                arcade-songs.zetaraku.dev
+              </span>
             </Button>
 
             <div className="mt-4 text-xs text-gray-500 text-right">
@@ -178,6 +181,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = ({
                 href="https://arcade-songs.zetaraku.dev"
                 rel="noreferrer"
                 target="_blank"
+                className="tracking-tighter"
               >
                 arcade-songs.zetaraku.dev
               </a>

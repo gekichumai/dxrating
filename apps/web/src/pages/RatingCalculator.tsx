@@ -54,10 +54,14 @@ import {
   PlayEntry,
   RatingCalculatorAddEntryForm,
 } from "../components/RatingCalculatorAddEntryForm";
-import { SheetListItem } from "../components/SheetListItem";
+import {
+  SheetListItem,
+  SheetListItemContent,
+} from "../components/SheetListItem";
 import { ClearButton } from "../components/rating/io/ClearButton";
 import { ExportMenu } from "../components/rating/io/ExportMenu";
 import { ImportMenu } from "../components/rating/io/ImportMenu";
+import { RatingCalculatorContext } from "../models/RatingCalculatorContext";
 import { FlattenedSheet, useSheets } from "../songs";
 import { Rating, calculateRating } from "../utils/rating";
 
@@ -75,6 +79,7 @@ const RatingCalculatorRowActions: FC<{
   modifyEntries: ListActions<PlayEntry>;
   entry: PlayEntry;
 }> = ({ modifyEntries, entry }) => {
+  const { data: sheets } = useSheets();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleClick = useCallback(() => {
@@ -83,19 +88,24 @@ const RatingCalculatorRowActions: FC<{
     );
   }, []);
 
+  const sheet = useMemo(
+    () => sheets?.find((sheet) => sheet.id === entry.sheetId),
+    [sheets, entry.sheetId],
+  );
+
   return (
     <>
       <Dialog
         TransitionComponent={Grow}
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
+        classes={{
+          paper: "min-w-[20rem]",
+        }}
       >
-        <DialogTitle>Remove entry?</DialogTitle>
-        <DialogContent className="min-w-[20rem]">
-          <Alert severity="warning">
-            <AlertTitle>Warning</AlertTitle>
-            This will remove the entry permanently.
-          </Alert>
+        <DialogTitle>Remove rating entry?</DialogTitle>
+        <DialogContent>
+          {sheet && <SheetListItemContent sheet={sheet} />}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
@@ -108,7 +118,7 @@ const RatingCalculatorRowActions: FC<{
               handleClick();
             }}
           >
-            Clear
+            Remove
           </Button>
         </DialogActions>
       </Dialog>
@@ -308,74 +318,77 @@ export const RatingCalculator = () => {
   if (!sheets) return null;
 
   return (
-    <div className="flex-container w-full pb-global">
-      <div className="flex flex-col md:flex-row items-start gap-4">
-        <Alert severity="info" className="w-full">
-          <AlertTitle>Your current rating</AlertTitle>
-          <Table className="-ml-2">
-            <TableHead>
-              <TableRow>
-                <DenseTableCell className="w-sm">Item</DenseTableCell>
-                <DenseTableCell>Matches</DenseTableCell>
-                <DenseTableCell>Average</DenseTableCell>
-                <DenseTableCell>Total</DenseTableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              <TableRow>
-                <DenseTableCell className="flex flex-col">
-                  <div className="font-bold text-lg">B15</div>
-                  <div className="text-gray-500">
-                    Best 15 plays on songs released at current version (FESTiVAL
-                    PLUS)
-                  </div>
-                </DenseTableCell>
-                <DenseTableCell>{b15Entries.length}</DenseTableCell>
-                <DenseTableCell>{b15Average.toFixed(2)}</DenseTableCell>
+    <RatingCalculatorContext.Provider
+      value={{ entries: localStorageEntries, modifyEntries }}
+    >
+      <div className="flex-container w-full pb-global">
+        <div className="flex flex-col md:flex-row items-start gap-4">
+          <Alert severity="info" className="w-full">
+            <AlertTitle>Your current rating</AlertTitle>
+            <Table className="-ml-2">
+              <TableHead>
+                <TableRow>
+                  <DenseTableCell className="w-sm">Item</DenseTableCell>
+                  <DenseTableCell>Matches</DenseTableCell>
+                  <DenseTableCell>Average</DenseTableCell>
+                  <DenseTableCell>Total</DenseTableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <DenseTableCell className="flex flex-col">
+                    <div className="font-bold text-lg">B15</div>
+                    <div className="text-gray-500">
+                      Best 15 plays on songs released at current version
+                      (FESTiVAL PLUS)
+                    </div>
+                  </DenseTableCell>
+                  <DenseTableCell>{b15Entries.length}</DenseTableCell>
+                  <DenseTableCell>{b15Average.toFixed(2)}</DenseTableCell>
 
-                <DenseTableCell>
-                  {b15Entries.reduce(
-                    (sum, entry) => sum + entry.rating.ratingAwardValue,
-                    0,
-                  )}
-                </DenseTableCell>
-              </TableRow>
+                  <DenseTableCell>
+                    {b15Entries.reduce(
+                      (sum, entry) => sum + entry.rating.ratingAwardValue,
+                      0,
+                    )}
+                  </DenseTableCell>
+                </TableRow>
 
-              <TableRow>
-                <DenseTableCell className="flex flex-col">
-                  <div className="font-bold text-lg">B35</div>
-                  <div className="text-gray-500">
-                    Best 35 plays on all other songs except ones released at
-                    current version (FESTiVAL PLUS)
-                  </div>
-                </DenseTableCell>
-                <DenseTableCell>{b35Entries.length}</DenseTableCell>
-                <DenseTableCell>{b35Average.toFixed(2)}</DenseTableCell>
-                <DenseTableCell>
-                  {b35Entries.reduce(
-                    (sum, entry) => sum + entry.rating.ratingAwardValue,
-                    0,
-                  )}
-                </DenseTableCell>
-              </TableRow>
+                <TableRow>
+                  <DenseTableCell className="flex flex-col">
+                    <div className="font-bold text-lg">B35</div>
+                    <div className="text-gray-500">
+                      Best 35 plays on all other songs except ones released at
+                      current version (FESTiVAL PLUS)
+                    </div>
+                  </DenseTableCell>
+                  <DenseTableCell>{b35Entries.length}</DenseTableCell>
+                  <DenseTableCell>{b35Average.toFixed(2)}</DenseTableCell>
+                  <DenseTableCell>
+                    {b35Entries.reduce(
+                      (sum, entry) => sum + entry.rating.ratingAwardValue,
+                      0,
+                    )}
+                  </DenseTableCell>
+                </TableRow>
 
-              <TableRow>
-                <DenseTableCell colSpan={3}>
-                  <span className="font-bold">Total</span>
-                </DenseTableCell>
-                <DenseTableCell>
-                  {[...b15Entries, ...b35Entries].reduce(
-                    (sum, entry) => sum + entry.rating.ratingAwardValue,
-                    0,
-                  )}
-                </DenseTableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </Alert>
+                <TableRow>
+                  <DenseTableCell colSpan={3}>
+                    <span className="font-bold">Total</span>
+                  </DenseTableCell>
+                  <DenseTableCell>
+                    {[...b15Entries, ...b35Entries].reduce(
+                      (sum, entry) => sum + entry.rating.ratingAwardValue,
+                      0,
+                    )}
+                  </DenseTableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </Alert>
 
-        <div className="flex flex-col gap-4 h-full self-stretch">
-          {/* <Alert severity="warning" className="w-full self-stretch h-full">
+          <div className="flex flex-col gap-4 h-full self-stretch">
+            {/* <Alert severity="warning" className="w-full self-stretch h-full">
             <AlertTitle>Version mismatch</AlertTitle>
             The current version regarding B15 filtering is based on{" "}
             <strong>FESTiVAL</strong>, but the internal level data is from{" "}
@@ -384,91 +397,92 @@ export const RatingCalculator = () => {
             FESTiVAL PLUS, this site will be updated accordingly.
           </Alert> */}
 
-          <Alert severity="info" className="w-full overflow-auto">
-            <AlertTitle>
-              {localStorageEntries?.length
-                ? `Saved ${localStorageEntries.length} records`
-                : "Auto-save"}
-            </AlertTitle>
-            Your entries will be saved automatically to your browser's local
-            storage and will be restored when you return to this page.
-            <div className="flex items-center gap-2 mt-2">
-              <ImportMenu modifyEntries={modifyEntries} />
+            <Alert severity="info" className="w-full overflow-auto">
+              <AlertTitle>
+                {localStorageEntries?.length
+                  ? `Saved ${localStorageEntries.length} records`
+                  : "Auto-save"}
+              </AlertTitle>
+              Your entries will be saved automatically to your browser's local
+              storage and will be restored when you return to this page.
+              <div className="flex items-center gap-2 mt-2">
+                <ImportMenu modifyEntries={modifyEntries} />
 
-              <ExportMenu entries={entries} calculatedEntries={allEntries} />
+                <ExportMenu entries={entries} calculatedEntries={allEntries} />
 
-              <div className="flex-1" />
+                <div className="flex-1" />
 
-              <ClearButton modifyEntries={modifyEntries} />
-            </div>
-          </Alert>
+                <ClearButton modifyEntries={modifyEntries} />
+              </div>
+            </Alert>
+          </div>
+        </div>
+
+        <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
+
+        <div className="max-w-screen w-full overflow-x-auto -mx-4">
+          <TableVirtuoso<Row<Entry>>
+            useWindowScroll
+            data={table.getRowModel().rows}
+            className="w-full overflow-y-hidden"
+            increaseViewportBy={1000}
+            components={TableComponents}
+            fixedHeaderContent={() =>
+              table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableCell
+                        key={header.id}
+                        colSpan={header.colSpan}
+                        className={clsx(
+                          "group bg-gray-900/5 transition",
+                          header.column.getCanSort() &&
+                            "cursor-pointer select-none hover:bg-gray-900/10 active:bg-gray-900/20",
+                        )}
+                        onClick={header.column.getToggleSortingHandler()}
+                        style={{ width: header.getSize() }}
+                      >
+                        {header.isPlaceholder ? null : (
+                          <div>
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                            <IconMdiArrowUp
+                              className={clsx(
+                                "ml-1 transition",
+                                {
+                                  asc: "inline-flex rotate-0",
+                                  desc: "inline-flex rotate-180",
+                                  none: header.column.getCanSort()
+                                    ? "inline-flex opacity-0 group-hover:opacity-70"
+                                    : "hidden",
+                                }[
+                                  (header.column.getIsSorted() as string) ||
+                                    "none"
+                                ],
+                              )}
+                            />
+                          </div>
+                        )}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))
+            }
+            itemContent={(_, row) => (
+              <RatingCalculatorTableRowContent row={row} />
+            )}
+          />
+
+          {allEntries.length === 0 && (
+            <TableCell colSpan={5}>No entries</TableCell>
+          )}
         </div>
       </div>
-
-      <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
-
-      <div className="max-w-screen w-full overflow-x-auto -mx-4">
-        <TableVirtuoso<Row<Entry>>
-          useWindowScroll
-          data={table.getRowModel().rows}
-          className="w-full overflow-y-hidden"
-          increaseViewportBy={1000}
-          components={TableComponents}
-          fixedHeaderContent={() =>
-            table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableCell
-                      key={header.id}
-                      colSpan={header.colSpan}
-                      className={clsx(
-                        "group bg-gray-900/5 transition",
-                        header.column.getCanSort() &&
-                          "cursor-pointer select-none hover:bg-gray-900/10 active:bg-gray-900/20",
-                      )}
-                      onClick={header.column.getToggleSortingHandler()}
-                      style={{ width: header.getSize() }}
-                    >
-                      {header.isPlaceholder ? null : (
-                        <div>
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                          <IconMdiArrowUp
-                            className={clsx(
-                              "ml-1 transition",
-                              {
-                                asc: "inline-flex rotate-0",
-                                desc: "inline-flex rotate-180",
-                                none: header.column.getCanSort()
-                                  ? "inline-flex opacity-0 group-hover:opacity-70"
-                                  : "hidden",
-                              }[
-                                (header.column.getIsSorted() as string) ||
-                                  "none"
-                              ],
-                            )}
-                          />
-                        </div>
-                      )}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            ))
-          }
-          itemContent={(_, row) => (
-            <RatingCalculatorTableRowContent row={row} />
-          )}
-        />
-
-        {allEntries.length === 0 && (
-          <TableCell colSpan={5}>No entries</TableCell>
-        )}
-      </div>
-    </div>
+    </RatingCalculatorContext.Provider>
   );
 };
 

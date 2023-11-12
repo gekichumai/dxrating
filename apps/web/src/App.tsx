@@ -1,4 +1,5 @@
-import { Tab, Tabs } from "@mui/material";
+import { CircularProgress, Tab, Tabs } from "@mui/material";
+import { useTransition } from "react";
 import { useLocalStorage } from "react-use";
 import { RatingCalculator } from "./pages/RatingCalculator";
 import { SheetList } from "./pages/SheetList";
@@ -8,6 +9,7 @@ export const App = () => {
     "tab-selection",
     "search",
   );
+  const [isPending, startTransition] = useTransition();
 
   return (
     <div className="h-full w-full relative">
@@ -23,7 +25,11 @@ export const App = () => {
           />
           <Tabs
             value={tab}
-            onChange={(_, v) => setTab(v)}
+            onChange={(_, v) => {
+              startTransition(() => {
+                setTab(v);
+              });
+            }}
             classes={{
               root: "rounded-full bg-zinc-900/10 !min-h-2.5rem",
               indicator: "!h-full !rounded-full z-0",
@@ -47,12 +53,14 @@ export const App = () => {
             />
           </Tabs>
         </div>
-        {
+        {isPending ? (
+          <CircularProgress />
+        ) : (
           {
             search: <SheetList />,
             rating: <RatingCalculator />,
           }[tab ?? "search"]
-        }
+        )}
       </div>
     </div>
   );

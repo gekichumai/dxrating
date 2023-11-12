@@ -142,7 +142,7 @@ export const SheetDialog: FC<
         <Drawer.Overlay className="fixed inset-0 bg-black/40" />
         <Drawer.Content className="bg-zinc-100 flex flex-col rounded-t-[10px] h-[96%] mt-24 fixed bottom-0 left-0 right-0 z-[1]"> */}
       <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-300 my-3" />
-      <div className="overflow-auto h-full p-4 pt-0">
+      <div className="overflow-auto h-full p-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
         {open && <SheetDialogContent {...props} />}
       </div>
       {/* </Drawer.Content> */}
@@ -217,10 +217,10 @@ export const SheetImage: FC<{
       className={clsx(
         "bg-slate-300/50",
         size === "small"
-          ? "h-8 w-8 rounded-sm"
+          ? "h-8 w-8 min-w-[2rem] min-h-[2rem] rounded-sm"
           : size === "medium"
-          ? "h-12 w-12 rounded"
-          : "h-16 w-16 rounded-lg",
+          ? "h-12 w-12 min-w-[3rem] min-h-[3rem] rounded"
+          : "h-16 w-16 min-w-[4rem] min-h-[4rem] rounded-lg",
       )}
       alt={name}
       loading="lazy"
