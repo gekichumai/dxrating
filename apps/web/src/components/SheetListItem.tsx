@@ -250,7 +250,7 @@ export const SheetTitle: FC<{
             <SheetAltNames altNames={altNames!} />
           )}
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <SheetType type={type} />
           <SheetDifficulty difficulty={difficulty} />
         </div>
@@ -266,10 +266,6 @@ export const SheetTitle: FC<{
 export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
   const [expanded, setExpanded] = useState(false);
 
-  const toggleExpanded = () => {
-    setExpanded(!expanded);
-  };
-
   return (
     <div
       className="overflow-hidden"
@@ -281,15 +277,20 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
           ? ""
           : "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5rem, rgba(0,0,0,0) 100%)",
       }}
-      onClick={toggleExpanded}
+      onClick={() => setExpanded(true)}
     >
-      {expanded ? (
-        <div className="text-sm text-slate-600">{altNames?.join(" / ")}</div>
-      ) : (
-        <div className="text-sm text-slate-600 max-h-[7rem]">
-          {altNames?.join(" / ")}
-        </div>
-      )}
+      <div
+        className={clsx("text-sm text-slate-600", !expanded && "max-h-[7rem]")}
+      >
+        {altNames?.map((altName, i) => (
+          <span className="inline-block whitespace-pre-line">
+            <span key={i}>{altName}</span>
+            {i < altNames.length - 1 && (
+              <span className="text-slate-400 mx-1 select-none">/</span>
+            )}
+          </span>
+        ))}
+      </div>
     </div>
   );
 };
