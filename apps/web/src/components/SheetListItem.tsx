@@ -246,7 +246,9 @@ export const SheetTitle: FC<{
       >
         <span className="translate-y-[-0.125rem] flex flex-col">
           <span className="leading-tight">{title}</span>
-          {(altNames?.length ?? 0) > 0 && <SheetAltNames altNames={altNames} />}
+          {(altNames?.length ?? 0) > 0 && (
+            <SheetAltNames altNames={altNames!} />
+          )}
         </span>
         <div className="flex items-center gap-2">
           <SheetType type={type} />
