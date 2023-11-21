@@ -20,6 +20,9 @@ PATH+=":$NODE_PATH"
 export PATH
 node -v
 npm -v
+pwd
+cd apps/web
+pwd
 
 # Install dependencies
 npm install
