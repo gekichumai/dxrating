@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -x
+set -x -e
 
 export HOMEBREW_NO_INSTALL_CLEANUP=TRUE
 brew install cocoapods
@@ -24,9 +24,6 @@ pwd
 
 # Install dependencies
 npm install
-
-cd apps/web
-pwd
 
 # build and sync
 npm run build
