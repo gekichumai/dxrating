@@ -1,6 +1,7 @@
 import UIKit
 import Capacitor
 import CoreSpotlight
+import ZIPFoundation
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -48,30 +49,73 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Override point for customization after application launch.
         
         DispatchQueue.global(qos: .background).async {
+            // unzip Assets/Covers.zip into Assets/Covers/...files
+            let coversZip = Bundle.main.url(forResource: "Covers", withExtension: "zip", subdirectory: "Assets")
+            let coversDir = Bundle.main.url(forResource: "Covers", withExtension: nil, subdirectory: "Assets")
+            if let coversZip = coversZip, let coversDir = coversDir {
+                if !FileManager.default.fileExists(atPath: coversDir.path) {
+                    guard let _ = try? FileManager.default.createDirectory(at: coversDir, withIntermediateDirectories: true, attributes: nil) else {
+                        print("unable to create covers directory")
+                        return
+                    }
+                    guard let _ = try? FileManager.default.unzipItem(at: coversZip, to: coversDir) else {
+                        print("unable to unzip covers")
+                        return
+                    }
+                }
+            }
+            
             if let dxData = AppData.loadDXData() {
                 if #available(iOS 14.0, *) {
+                    let explicitSheetTypeOrder = ["dx", "std"]
+                    
                     var items: [CSSearchableItem] = []
                     for song in dxData.songs {
                         let id = "\(song.songId)"
                         let attributeSet = CSSearchableItemAttributeSet(contentType: .item)
+                        let sheetTypes = song.sheets.reduce(into: Set<String>(), { (result, sheet) in
+                            result.insert(sheet.type)
+                        })
+                        // sort sheet types as: "dx", "std", ...rest
+                        let sortedSheetTypes = sheetTypes.sorted { (a, b) -> Bool in
+                            if let aIndex = explicitSheetTypeOrder.firstIndex(of: a) {
+                                if let bIndex = explicitSheetTypeOrder.firstIndex(of: b) {
+                                    return aIndex < bIndex
+                                } else {
+                                    return true
+                                }
+                            } else {
+                                return false
+                            }
+                        }
                         attributeSet.title = song.title
                         attributeSet.displayName = song.title
-                        attributeSet.contentDescription = song.sheets
-                            .map({ sheet in
-                                return sheet.formatted()
+                        attributeSet.contentDescription = sortedSheetTypes
+                            .map({ type in
+                                let content = song.sheets
+                                    .filter({ sheet in
+                                        return sheet.type == type
+                                    })
+                                    .map({ sheet in
+                                        return sheet.formatted()
+                                    })
+                                    .joined(separator: " | ")
+                                
+                                return "\((type == "std" ? "sd" : type).uppercased()): (\(content))"
                             })
                             .joined(separator: " | ")
+                        
                         attributeSet.identifier = song.songId
                         attributeSet.alternateNames = song.searchAcronyms
-                        if #available(iOS 15.0, *) {
-                            attributeSet.actionIdentifiers = ["STAR_UNSTAR"]
-                        }
+//                        if #available(iOS 15.0, *) {
+//                            attributeSet.actionIdentifiers = ["STAR_UNSTAR"]
+//                        }
                         if let thumbnailURL = Bundle.main.url(forResource: song.imageName.replacingOccurrences(of: ".png", with: ""), withExtension: "jpg", subdirectory: "Assets/Covers") {
                             attributeSet.thumbnailURL = thumbnailURL
                         } else {
                             print("unable to find thumbnail for \(song.imageName)")
                         }
-                        let item = CSSearchableItem(uniqueIdentifier: "\(song.songId)", domainIdentifier: "dev.imgg.gekichumai.dxrating", attributeSet: attributeSet)
+                        let item = CSSearchableItem(uniqueIdentifier: id, domainIdentifier: "dev.imgg.gekichumai.dxrating", attributeSet: attributeSet)
                         item.expirationDate = .distantFuture
                         items.append(item)
                     }

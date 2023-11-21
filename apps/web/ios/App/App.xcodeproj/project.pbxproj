@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 48;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -25,6 +25,7 @@
 		B55D702A2AE4BDF30047AA8D /* DXRatingQuicklook.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B55D701C2AE4BDF30047AA8D /* DXRatingQuicklook.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B55D702F2AE4CF430047AA8D /* Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55D660B2AE456250047AA8D /* Data.swift */; };
 		B5A96D3D2AE57DC20060CE7C /* SongDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A96D3C2AE57DC20060CE7C /* SongDetailView.swift */; };
+		B5AD9B982B0D737700813497 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = B5AD9B972B0D737700813497 /* ZIPFoundation */; };
 		B5CA29562AE43F22004F3BA0 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5CA29552AE43F22004F3BA0 /* Extensions.swift */; };
 		B5E581F92AE571140087F6DC /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5CA29552AE43F22004F3BA0 /* Extensions.swift */; };
 /* End PBXBuildFile section */
@@ -85,6 +86,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */,
+				B5AD9B982B0D737700813497 /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -196,6 +198,9 @@
 				B55D70292AE4BDF30047AA8D /* PBXTargetDependency */,
 			);
 			name = App;
+			packageProductDependencies = (
+				B5AD9B972B0D737700813497 /* ZIPFoundation */,
+			);
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
@@ -246,6 +251,9 @@
 				Base,
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
+			packageReferences = (
+				B5AD9B962B0D737700813497 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -481,7 +489,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
-				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -498,7 +507,10 @@
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.2;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = dev.imgg.gekichumai.dxrating;
@@ -521,7 +533,10 @@
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.imgg.gekichumai.dxrating;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -550,7 +565,11 @@
 				INFOPLIST_KEY_CFBundleDisplayName = DXRatingQuicklook;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -584,7 +603,11 @@
 				INFOPLIST_KEY_CFBundleDisplayName = DXRatingQuicklook;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_FAST_MATH = YES;
@@ -628,6 +651,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B5AD9B962B0D737700813497 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.17;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B5AD9B972B0D737700813497 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B5AD9B962B0D737700813497 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 504EC2FC1FED79650016851F /* Project object */;
 }
