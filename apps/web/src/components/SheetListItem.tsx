@@ -290,8 +290,8 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
         className={clsx("text-sm text-slate-600", !expanded && "max-h-[7rem]")}
       >
         {altNames?.map((altName, i) => (
-          <span className="inline-block whitespace-pre-line">
-            <span key={i}>{altName}</span>
+          <span className="inline-block whitespace-pre-line" key={i}>
+            <span>{altName}</span>
             {i < altNames.length - 1 && (
               <span className="text-slate-400 mx-1 select-none">/</span>
             )}
