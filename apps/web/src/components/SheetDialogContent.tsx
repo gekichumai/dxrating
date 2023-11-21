@@ -13,7 +13,9 @@ import {
 import clsx from "clsx";
 import { FC, memo, useMemo } from "react";
 import MdiChevronDown from "~icons/mdi/chevron-down";
+import IconMdiMagnify from "~icons/mdi/magnify";
 import IconMdiOpenInNew from "~icons/mdi/open-in-new";
+import IconMdiSpotify from "~icons/mdi/spotify";
 import IconMdiYouTube from "~icons/mdi/youtube";
 import { FlattenedSheet } from "../songs";
 import { calculateRating } from "../utils/rating";
@@ -64,15 +66,29 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
           className="text-lg font-bold"
         />
 
-        <Button
-          startIcon={<IconMdiYouTube />}
-          variant="outlined"
-          href={`https://www.youtube.com/results?search_query=${sheet.title}+${sheet.difficulty}`}
-          target="_blank"
-          className="inline-flex !text-[#ff0000] !b-[#ff0000] !font-bold self-start"
-        >
-          Search on YouTube
-        </Button>
+        <div className="flex items-center gap-2">
+          <IconMdiMagnify />
+
+          <Button
+            startIcon={<IconMdiYouTube />}
+            variant="outlined"
+            href={`https://www.youtube.com/results?search_query=maimai+${sheet.title}+${sheet.difficulty}`}
+            target="_blank"
+            className="inline-flex !text-[#ff0000] !b-[#ff0000] !font-bold self-start"
+          >
+            YouTube
+          </Button>
+
+          <Button
+            startIcon={<IconMdiSpotify />}
+            variant="outlined"
+            href={`https://open.spotify.com/search/${sheet.title}`}
+            target="_blank"
+            className="inline-flex !text-[#1db954] !b-[#1db954] !font-bold self-start"
+          >
+            Spotify
+          </Button>
+        </div>
 
         <div>
           <Accordion className="bg-zinc-100/60" defaultExpanded>
@@ -94,8 +110,13 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                   </TableRow>
 
                   <TableRow>
-                    <TableCell>Artist</TableCell>
+                    <TableCell>Song Artist</TableCell>
                     <TableCell>{sheet.artist}</TableCell>
+                  </TableRow>
+
+                  <TableRow className="bg-gray-1">
+                    <TableCell>Chart Designer</TableCell>
+                    <TableCell>{sheet.noteDesigner}</TableCell>
                   </TableRow>
 
                   <TableRow className="bg-gray-1">
