@@ -17,6 +17,8 @@ curl "https://nodejs.org/dist/latest-v$NODE_VER.x/node-$VERSION-darwin-$ARCH.tar
 tar -xf "$HOME/Downloads/node.tar.gz"
 NODE_PATH="$PWD/node-$VERSION-darwin-$ARCH/bin"
 PATH+=":$NODE_PATH"
+# add npm bin to path\
+PATH+=":$PWD/node_modules/.bin"
 export PATH
 node -v
 npm -v
@@ -29,3 +31,6 @@ npm install
 npm run build
 
 npm run deploy:ios
+
+cd ..
+pod install
