@@ -21,11 +21,12 @@ export PATH
 node -v
 npm -v
 pwd
-cd apps/web
-pwd
 
 # Install dependencies
 npm install
+
+cd apps/web
+pwd
 
 # build and sync
 npm run build
