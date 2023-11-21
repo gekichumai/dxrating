@@ -36,6 +36,7 @@ import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
 import { SheetListItemContent } from "../../SheetListItem";
 
 import IconMdiDatabase from "~icons/mdi/database";
+import { FadedImage } from "../../FadedImage";
 
 export const ImportFromAquaSQLiteListItem: FC<{
   modifyEntries: ListActions<PlayEntry>;
@@ -178,7 +179,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
                 className="flex gap-2"
               >
                 <ListItemAvatar>
-                  <img
+                  <FadedImage
                     src={
                       `https://dxrating-assets.imgg.dev/assetbundle/icon/ui_icon_` +
                       String(user.icon_id).padStart(6, "0") +

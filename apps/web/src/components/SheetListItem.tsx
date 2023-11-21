@@ -12,6 +12,7 @@ import clsx from "clsx";
 import { FC, HTMLAttributes, memo, useState } from "react";
 import { FlattenedSheet } from "../songs";
 import { useIsLargeDevice } from "../utils/breakpoints";
+import { FadedImage } from "./FadedImage";
 import {
   SheetDialogContent,
   SheetDialogContentProps,
@@ -199,7 +200,12 @@ const SHEET_TYPE_IMAGE = {
 
 const SheetType: FC<{ type: TypeEnum }> = ({ type }) => {
   return (
-    <img src={SHEET_TYPE_IMAGE[type]} className="w-70px h-26px" alt={type} />
+    <img
+      src={SHEET_TYPE_IMAGE[type]}
+      className="w-70px h-26px"
+      alt={type}
+      draggable={false}
+    />
   );
 };
 
@@ -208,20 +214,21 @@ export const SheetImage: FC<{
   size?: "small" | "medium" | "large";
 }> = ({ name, size = "medium" }) => {
   return (
-    <img
+    <FadedImage
       key={name}
       src={
         "https://dxrating-assets.imgg.dev/images/cover/v2/" +
         name.replace(/\.png$/, ".jpg")
       }
       className={clsx(
-        "bg-slate-300/50",
+        "overflow-hidden",
         size === "small"
           ? "h-8 w-8 min-w-[2rem] min-h-[2rem] rounded-sm"
           : size === "medium"
           ? "h-12 w-12 min-w-[3rem] min-h-[3rem] rounded"
           : "h-16 w-16 min-w-[4rem] min-h-[4rem] rounded-lg",
       )}
+      placeholderClassName="bg-slate-300/50"
       alt={name}
       loading="lazy"
     />
