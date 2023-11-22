@@ -1,7 +1,6 @@
 import { CircularProgress, Tab, Tabs } from "@mui/material";
 import { useTransition } from "react";
 import { useLocalStorage } from "react-use";
-import { FadedImage } from "./components/FadedImage";
 import { RatingCalculator } from "./pages/RatingCalculator";
 import { SheetList } from "./pages/SheetList";
 
@@ -20,7 +19,7 @@ export const App = () => {
       />
       <div className="h-full w-full">
         <div className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-8 bg-gradient-linear-[(to_bottom,_#c8a8f9,_#c8a8f9_env(safe-area-inset-top),_#c8a8f900)]">
-          <FadedImage
+          <img
             src="https://dxrating-assets.imgg.dev/images/festivalplus.png"
             className="aspect-h-269 aspect-w-133 h-32"
             draggable={false}

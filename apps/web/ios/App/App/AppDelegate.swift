@@ -51,7 +51,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         DispatchQueue.global(qos: .background).async {
             // unzip Assets/Covers.zip into Assets/Covers/...files
             let coversZip = Bundle.main.url(forResource: "Covers", withExtension: "zip", subdirectory: "Assets")
-            let coversDir = Bundle.main.url(forResource: "Covers", withExtension: nil, subdirectory: "Assets")
+            let coversDir = coversZip?.deletingPathExtension()
             if let coversZip = coversZip, let coversDir = coversDir {
                 if !FileManager.default.fileExists(atPath: coversDir.path) {
                     guard let _ = try? FileManager.default.createDirectory(at: coversDir, withIntermediateDirectories: true, attributes: nil) else {
@@ -62,6 +62,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                         print("unable to unzip covers")
                         return
                     }
+                } else {
+                    print("covers already unzipped")
                 }
             }
             

@@ -278,10 +278,10 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
       className="overflow-hidden"
       style={{
         mask: expanded
-          ? ""
+          ? undefined
           : "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5rem, rgba(0,0,0,0) 100%)",
         WebkitMask: expanded
-          ? ""
+          ? undefined
           : "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5rem, rgba(0,0,0,0) 100%)",
       }}
       onClick={() => setExpanded(true)}
