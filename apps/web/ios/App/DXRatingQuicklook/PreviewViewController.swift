@@ -46,35 +46,23 @@ class PreviewViewController: UIViewController, QLPreviewingController {
             return
         }
         
-        var bundle = Bundle.main
-        if bundle.bundleURL.pathExtension == "appex" {
-            // Peel off two directory levels - MY_APP.app/PlugIns/MY_APP_EXTENSION.appex
-            let url = bundle.bundleURL.deletingLastPathComponent().deletingLastPathComponent()
-            if let otherBundle = Bundle(url: url) {
-                bundle = otherBundle
-            }
-        }
+        let coversDir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.dev.imgg.gekichumai.dxrating.public-shared")?.appendingPathComponent("Covers")
         
-        guard let imageUrl = bundle.url(forResource: song.imageName.replacingOccurrences(of: ".png", with: ""), withExtension: "jpg", subdirectory: "Assets/Covers") else {
+        let resource = song.imageName.replacingOccurrences(of: ".png", with: ".jpg")
+        guard let imageUrl = coversDir?.appendingPathComponent(resource) else {
             handler(AppError.custom(errorDescription: "failed to find image"))
             return
         }
         
-        guard let imageData = try? Data(contentsOf: imageUrl) else {
-            handler(AppError.custom(errorDescription: "failed to load image"))
-            return
-        }
-        
-        guard let uiImage = UIImage(data: imageData) else {
-            handler(AppError.custom(errorDescription: "failed to init image from data"))
-            return
-        }
+        let imageData = try? Data(contentsOf: imageUrl)
+        let uiImage = (imageData != nil) ? UIImage(data: imageData!) : nil
         
         self.coverImage.image = uiImage
         self.coverImage.layer.cornerRadius = 4.0
         self.coverImage.layer.shadowRadius = 12.0
         self.coverImage.layer.shadowOpacity = 1.0
         self.coverImage.layer.shadowColor = CGColor(gray: 1.0, alpha: 0.2)
+        self.coverImage.backgroundColor = .gray
         self.songTitle.text = song.title
 
 //        self.difficultiesContainerView = UIStackView()

@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import SwiftUI
+import CryptoKit
 
 extension UIColor {
     convenience init(red: Int, green: Int, blue: Int) {
@@ -42,6 +43,13 @@ extension AppError: LocalizedError {
         switch self {
         case .custom(let errorDescription): return errorDescription
         }
+    }
+}
+
+extension Data {
+    func sha256() -> String {
+        let hash = SHA256.hash(data: self)
+        return hash.compactMap { String(format: "%02x", $0) }.joined()
     }
 }
 

@@ -28,11 +28,11 @@ struct SongDetailView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ForEach(song.sheets.filter({ $0.internalLevelValue != nil && $0.internalLevelValue != 0 }), id: \.difficulty) { sheet in
+            ForEach(song.sheets, id: \.id) { sheet in
                 HStack {
                     HStack {
                         HStack(spacing: 0) {
-                            Text(sheet.difficulty.uppercased())
+                            Text(sheet.difficultyWithType.uppercased())
                                 .bold()
                                 .foregroundColor(.white)
                                 .monospaced()
@@ -40,7 +40,7 @@ struct SongDetailView: View {
                         }
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .frame(width: 105)
+                            .frame(width: 145)
                             .background(
                                 UIColor(rgb: difficultyToColorDictionary[sheet.difficulty] ?? 0x000000)
                                     .color

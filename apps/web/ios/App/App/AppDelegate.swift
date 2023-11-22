@@ -48,17 +48,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         topBarColorChunk.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
         // Override point for customization after application launch.
         
+        // MARK: Cover.zip expansion & Spotlight indexing
+        
         DispatchQueue.global(qos: .background).async {
+            let lastDXDataSHA256Sum = UserDefaults.standard.string(forKey: "lastDXDataSHA256Sum") ?? ""
+            let dxDataSHA256Sum = AppData.calculateDXDataSha256()
+            
+            if dxDataSHA256Sum == lastDXDataSHA256Sum {
+                print("dxdata.json unchanged. skipping cover uncompression and Spotlight indexing")
+                return
+            }
+            
             // unzip Assets/Covers.zip into Assets/Covers/...files
             let coversZip = Bundle.main.url(forResource: "Covers", withExtension: "zip", subdirectory: "Assets")
-            let coversDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Covers")
-            if let coversZip = coversZip, let coversDir = coversDir {
+            let coversBaseDir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.dev.imgg.gekichumai.dxrating.public-shared")
+            let coversDir = coversBaseDir?.appendingPathComponent("Covers")
+            if let coversZip = coversZip, let coversBaseDir = coversBaseDir, let coversDir = coversDir {
                 if !FileManager.default.fileExists(atPath: coversDir.path) {
-                    guard let _ = try? FileManager.default.createDirectory(at: coversDir, withIntermediateDirectories: true, attributes: nil) else {
-                        print("unable to create covers directory")
-                        return
-                    }
-                    guard let _ = try? FileManager.default.unzipItem(at: coversZip, to: coversDir) else {
+                    guard let _ = try? FileManager.default.unzipItem(at: coversZip, to: coversBaseDir) else {
                         print("unable to unzip covers")
                         return
                     }
@@ -105,14 +112,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                                 
                                 return "\((type == "std" ? "sd" : type).uppercased()): (\(content))"
                             })
-                            .joined(separator: " | ")
+                            .joined(separator: "\n")
                         
                         attributeSet.identifier = song.songId
                         attributeSet.alternateNames = song.searchAcronyms
 //                        if #available(iOS 15.0, *) {
 //                            attributeSet.actionIdentifiers = ["STAR_UNSTAR"]
 //                        }
-                        if let thumbnailURL = Bundle.main.url(forResource: song.imageName.replacingOccurrences(of: ".png", with: ""), withExtension: "jpg", subdirectory: "Assets/Covers") {
+                        let resource = song.imageName.replacingOccurrences(of: ".png", with: ".jpg")
+                        if let thumbnailURL = coversDir?.appendingPathComponent("Covers").appendingPathComponent(resource) {
                             attributeSet.thumbnailURL = thumbnailURL
                         } else {
                             print("unable to find thumbnail for \(song.imageName)")
@@ -130,7 +138,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                     }
                 }
             }
+            
+            UserDefaults.standard.set(dxDataSHA256Sum, forKey: "lastDXDataSHA256Sum")
+            print("finished uncompressing covers and indexing for dxdata with SHA256 \(String(describing: dxDataSHA256Sum))")
         }
+        
+        // MARK: App launched due to Spotlight search handling
+        
         
         return true
     }
@@ -164,6 +178,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
+        if userActivity.activityType == CSSearchableItemActionType {
+            // The activity is a Spotlight search.
+            // Here you can get the unique identifier of the indexed item with the activity's userInfo
+            if let uniqueIdentifier = userActivity.userInfo?[CSSearchableItemActivityIdentifier] as? String {
+                // Handle Spotlight search here. The uniqueIdentifier can be used to display related content in your app.
+                print("App continue with Spotlight userActivity with unique identifier \(uniqueIdentifier)")
+            }
+        }
+        
         // Called when the app was launched with an activity, including Universal Links.
         // Feel free to add additional processing here, but if you want the App API to support
         // tracking app url opens, make sure to keep this call

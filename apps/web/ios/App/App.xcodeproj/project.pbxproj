@@ -76,6 +76,8 @@
 		B55D70252AE4BDF30047AA8D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
 		B55D70272AE4BDF30047AA8D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B5A96D3C2AE57DC20060CE7C /* SongDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongDetailView.swift; sourceTree = "<group>"; };
+		B5AD9B992B0D9C6A00813497 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
+		B5AD9B9A2B0D9E5800813497 /* DXRatingQuicklook.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DXRatingQuicklook.entitlements; sourceTree = "<group>"; };
 		B5CA29552AE43F22004F3BA0 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -133,6 +135,7 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				B5AD9B992B0D9C6A00813497 /* App.entitlements */,
 				B54970DF2AECE262006A59D4 /* EmbeddedAssets */,
 				B55D70162AE45D9E0047AA8D /* Assets */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
@@ -169,6 +172,7 @@
 		B55D701F2AE4BDF30047AA8D /* DXRatingQuicklook */ = {
 			isa = PBXGroup;
 			children = (
+				B5AD9B9A2B0D9E5800813497 /* DXRatingQuicklook.entitlements */,
 				B55D70202AE4BDF30047AA8D /* PreviewViewController.swift */,
 				B55D70222AE4BDF30047AA8D /* PreviewProvider.swift */,
 				B55D70242AE4BDF30047AA8D /* MainInterface.storyboard */,
@@ -510,6 +514,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = SY8Y8N4TPM;
@@ -536,6 +541,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = SY8Y8N4TPM;
@@ -564,6 +570,7 @@
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CODE_SIGN_ENTITLEMENTS = DXRatingQuicklook/DXRatingQuicklook.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = SY8Y8N4TPM;
@@ -602,6 +609,7 @@
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CODE_SIGN_ENTITLEMENTS = DXRatingQuicklook/DXRatingQuicklook.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = SY8Y8N4TPM;

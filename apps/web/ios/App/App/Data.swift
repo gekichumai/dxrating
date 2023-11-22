@@ -11,7 +11,11 @@ struct DXData: Codable {
     let songs: [Song]
 }
 
-struct Song: Codable {
+struct Song: Codable, Identifiable {
+    var id: String {
+        return songId
+    }
+    
     let songId: String
     let title: String
     let imageName: String
@@ -35,23 +39,42 @@ struct Song: Codable {
 
 }
 
-struct Sheet: Codable {
+let omitDifficulties: [String] = [
+    "basic",
+    "advanced"
+]
+
+struct Sheet: Codable, Identifiable {
+    var id: String {
+        return "\(type)-\(difficulty)"
+    }
     let type: String
     let difficulty: String
     let internalLevelValue: Double?
     let version: String?
     
+    var difficultyWithType: String {
+        return "[\((type == "std" ? "sd" : type).uppercased())] \(difficulty)"
+    }
+    
     func formatted() -> String {
-        if let internalLevelValue = internalLevelValue {
-            return self.difficulty.capitalized + " " + String(internalLevelValue)
-        } else {
-            return self.difficulty.capitalized + " N/A"
+        var sections: [String] = []
+        if !omitDifficulties.contains(self.difficulty) {
+            sections.append(self.difficulty.capitalized)
         }
+        
+        if let internalLevelValue = internalLevelValue {
+            sections.append(String(internalLevelValue))
+        } else {
+            sections.append("N/A")
+        }
+        
+        return sections.joined(separator: " ")
     }
 }
 
 struct AppData {
-    static func loadDXData() -> DXData? {
+    static func getDXDataJsonURL() -> URL? {
         var bundle = Bundle.main
         if bundle.bundleURL.pathExtension == "appex" {
             // Peel off two directory levels - MY_APP.app/PlugIns/MY_APP_EXTENSION.appex
@@ -66,6 +89,13 @@ struct AppData {
             return nil
         }
         
+        return url
+    }
+    
+    static func loadDXData() -> DXData? {
+        guard let url = getDXDataJsonURL() else {
+            return nil
+        }
         
         do {
             let data = try Data(contentsOf: url)
@@ -73,6 +103,20 @@ struct AppData {
             let dxData = try decoder.decode(DXData.self, from: data)
             
             return dxData
+        } catch {
+            print("An error occurred: \(error)")
+            return nil
+        }
+    }
+    
+    static func calculateDXDataSha256() -> String? {
+        guard let url = getDXDataJsonURL() else {
+            return nil
+        }
+        
+        do {
+            let data = try Data(contentsOf: url)
+            return data.sha256()
         } catch {
             print("An error occurred: \(error)")
             return nil
