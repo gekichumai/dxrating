@@ -14,8 +14,8 @@ import {
 import clsx from "clsx";
 import { FC, memo, useMemo } from "react";
 import MdiChevronDown from "~icons/mdi/chevron-down";
-import IconMdiSearchWeb from "~icons/mdi/search-web";
 import IconMdiOpenInNew from "~icons/mdi/open-in-new";
+import IconMdiSearchWeb from "~icons/mdi/search-web";
 import IconMdiSpotify from "~icons/mdi/spotify";
 import IconMdiYouTube from "~icons/mdi/youtube";
 import { FlattenedSheet } from "../songs";
@@ -89,7 +89,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
           </IconButton>
 
           <IconButton
-            href={`https://music.apple.com/us/search?term=${sheet.title}`}
+            href={`https://music.apple.com/search?term=${sheet.title}`}
             target="_blank"
             className="inline-flex !text-[#ff2d55] !b-[#ff2d55] !font-bold"
           >
