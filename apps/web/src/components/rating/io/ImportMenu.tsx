@@ -4,6 +4,7 @@ import { ListActions } from "react-use/lib/useList";
 import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
 import { ImportFromAquaSQLiteListItem } from "./ImportFromAquaSQLiteButton";
 import { ImportFromJSONButtonListItem } from "./ImportFromJSONButtonListItem";
+import { ImportFromRemoteListItem } from "./ImportFromRemoteButton";
 
 export const ImportMenu: FC<{
   modifyEntries: ListActions<PlayEntry>;
@@ -41,6 +42,10 @@ export const ImportMenu: FC<{
           "aria-labelledby": `button-${id}`,
         }}
       >
+        <ImportFromRemoteListItem
+          modifyEntries={modifyEntries}
+          onClose={handleClose}
+        />
         <ImportFromAquaSQLiteListItem
           modifyEntries={modifyEntries}
           onClose={handleClose}

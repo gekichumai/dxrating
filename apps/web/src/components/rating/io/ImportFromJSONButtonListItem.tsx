@@ -54,7 +54,9 @@ export const ImportFromJSONButtonListItem: FC<{
       <ListItemIcon>
         <IconMdiFile />
       </ListItemIcon>
-      <ListItemText>Import from JSON...</ListItemText>
+      <ListItemText>
+        Import from <code>dxrating</code> Exported JSON...
+      </ListItemText>
     </MenuItem>
   );
 };

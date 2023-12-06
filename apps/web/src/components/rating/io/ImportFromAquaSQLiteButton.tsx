@@ -90,11 +90,17 @@ export const ImportFromAquaSQLiteListItem: FC<{
                         ")",
                     );
                   }
-
-                  const Uints = new Uint8Array(r.result);
-                  const db = new SQL.Database(Uints);
-                  setDb(db);
-                  resolve("Database loaded.");
+                  try {
+                    console.info("Loaded file: " + file.name, r.result);
+                    const uints = new Uint8Array(r.result);
+                    console.log("Size: " + uints.length);
+                    const db = new SQL.Database(uints);
+                    setDb(db);
+                    resolve("Database loaded.");
+                  } catch (e) {
+                    console.error(e);
+                    reject("Failed to load file: " + e);
+                  }
                 };
                 r.onerror = function () {
                   reject("Failed to load file: " + r.error);
