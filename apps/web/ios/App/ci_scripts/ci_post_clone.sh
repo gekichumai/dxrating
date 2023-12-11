@@ -25,12 +25,12 @@ npm -v
 pwd
 
 # Install dependencies
-npm install
+yarn install
 
 # build and sync
-npm run build
+yarn run build
 
-npm run deploy:ios
+yarn run deploy:ios
 
 cd ..
 pod install
