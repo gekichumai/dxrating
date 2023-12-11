@@ -174,7 +174,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                 </Table>
               ) : (
                 <div className="text-center text-gray-500">
-                  Unavailable for this chart.
+                  No history available
                 </div>
               )}
             </AccordionDetails>
