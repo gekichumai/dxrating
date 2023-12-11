@@ -4,7 +4,6 @@ import { FC, ImgHTMLAttributes, useRef, useState } from "react";
 export const FadedImage: FC<
   ImgHTMLAttributes<HTMLImageElement> & {
     placeholderClassName?: string;
-    draggable?: boolean;
   }
 > = ({ placeholderClassName, draggable, ...props }) => {
   const [loaded, setLoaded] = useState(false);

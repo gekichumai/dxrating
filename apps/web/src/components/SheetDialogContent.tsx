@@ -13,7 +13,8 @@ import {
   TableRow,
 } from "@mui/material";
 import clsx from "clsx";
-import { FC, memo, useMemo } from "react";
+import { motion } from "framer-motion";
+import { FC, memo, useMemo, useState } from "react";
 import MdiChevronDown from "~icons/mdi/chevron-down";
 import IconMdiOpenInNew from "~icons/mdi/open-in-new";
 import IconMdiSearchWeb from "~icons/mdi/search-web";
@@ -22,11 +23,59 @@ import IconMdiYouTube from "~icons/mdi/youtube";
 import { FlattenedSheet } from "../songs";
 import { calculateRating } from "../utils/rating";
 import { DXRank } from "./DXRank";
-import { SheetImage, SheetTitle } from "./SheetListItem";
+import { SheetTitle } from "./SheetListItem";
 
 const PRESET_ACHIEVEMENT_RATES = [
   100.5, 100, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50,
 ];
+
+const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
+  ({ sheet }) => {
+    const [expanded, setExpanded] = useState(false);
+
+    const variants = {
+      collapsed: {
+        height: "4rem",
+        width: "4rem",
+        borderRadius: "0.5rem",
+      },
+      expanded: {
+        height: "55vw",
+        width: "55vw",
+        borderRadius: "1rem",
+      },
+    };
+
+    return (
+      <div className="flex items-center">
+        <motion.img
+          layout
+          src={
+            "https://dxrating-assets.imgg.dev/images/cover/v2/" +
+            sheet.imageName.replace(/\.png$/, ".jpg")
+          }
+          alt={sheet.imageName}
+          className="overflow-hidden rounded-lg bg-slate-300/50"
+          variants={variants}
+          initial="collapsed"
+          animate={expanded ? "expanded" : "collapsed"}
+          transition={{
+            type: "spring",
+            damping: 18,
+            stiffness: 235,
+          }}
+          onClick={() => setExpanded((prev) => !prev)}
+        />
+
+        <div className="flex-1" />
+
+        <div className="text-4xl text-zinc-900/60 leading-none">
+          {sheet.internalLevelValue.toFixed(1)}
+        </div>
+      </div>
+    );
+  },
+);
 
 export interface SheetDialogContentProps {
   sheet: FlattenedSheet;
@@ -59,15 +108,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
 
     return (
       <div className="flex flex-col gap-2 relative">
-        <div className="flex items-center">
-          <SheetImage name={sheet.imageName} size="large" />
-
-          <div className="flex-1" />
-
-          <div className="text-4xl text-zinc-900/60 leading-none">
-            {sheet.internalLevelValue.toFixed(1)}
-          </div>
-        </div>
+        <SheetDialogContentHeader sheet={sheet} />
 
         <SheetTitle
           title={sheet.title}

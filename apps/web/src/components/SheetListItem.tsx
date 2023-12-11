@@ -9,7 +9,7 @@ import {
   SwipeableDrawer,
 } from "@mui/material";
 import clsx from "clsx";
-import { FC, HTMLAttributes, memo, useState } from "react";
+import { FC, HTMLAttributes, ImgHTMLAttributes, memo, useState } from "react";
 import { match } from "ts-pattern";
 import { FlattenedSheet } from "../songs";
 import { useIsLargeDevice } from "../utils/breakpoints";
@@ -210,10 +210,12 @@ const SheetType: FC<{ type: TypeEnum }> = ({ type }) => {
   );
 };
 
-export const SheetImage: FC<{
-  name: string;
-  size?: "small" | "medium" | "large";
-}> = ({ name, size = "medium" }) => {
+export const SheetImage: FC<
+  ImgHTMLAttributes<HTMLImageElement> & {
+    name: string;
+    size?: "small" | "medium" | "large";
+  }
+> = ({ name, size = "medium", ...props }) => {
   return (
     <FadedImage
       key={name}
@@ -232,6 +234,7 @@ export const SheetImage: FC<{
       placeholderClassName="bg-slate-300/50"
       alt={name}
       loading="lazy"
+      {...props}
     />
   );
 };
