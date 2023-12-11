@@ -2,8 +2,10 @@ import process from "process";
 
 import { tokenize } from "@enjoyjs/node-mecab";
 import { DXData } from "@gekichumai/dxdata";
+import "dotenv/config";
 import { uniq } from "lodash";
 import fs from "node:fs/promises";
+import pg from "pg";
 
 async function readAliases1() {
   const aliases = await fs.readFile("./aliases1.tsv", "utf8");
@@ -1116,16 +1118,47 @@ async function getSearchAcronyms(title: string, id?: number) {
   );
 }
 
+export interface MultiverInternalLevelValue {
+  songId: string;
+  type: string;
+  difficulty: string;
+  internalLevel: string;
+  version: string;
+}
+
+async function getAllMultiverInternalLevelValues() {
+  if (!process.env.DATABASE_URL) {
+    console.warn(
+      "DATABASE_URL not set, skipping getAllMultiverInternalLevelValues"
+    );
+    return [];
+  }
+
+  const conn = new pg.Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+  await conn.connect();
+
+  const { rows } = await conn.query<MultiverInternalLevelValue>(
+    `SELECT * FROM "public"."SheetInternalLevels" ORDER BY "songId","type","difficulty","version";`
+  );
+  await conn.end();
+
+  return rows;
+}
+
 async function main() {
   ALIAS_NAME_MAP = await readAliases1();
   ALIAS_ID_MAP = await readAliases2();
+
+  const multiverInternalLevelValues = await getAllMultiverInternalLevelValues();
 
   const dxdata = (await fs
     .readFile("./original.json", "utf-8")
     .then(JSON.parse)) as DXData;
 
   const transformedSongs = dxdata.songs
-    .filter((song) => song.category !== "宴会場")
+    // .filter((song) => song.category !== "宴会場")
     .map(async (entry) => {
       const title = entry.title;
 
@@ -1134,6 +1167,32 @@ async function main() {
       return {
         ...entry,
         searchAcronyms,
+        sheets: entry.sheets.map((sheet) => {
+          const multiverInternalLevelValue = multiverInternalLevelValues
+            .filter(
+              (value) =>
+                value.songId === entry.songId &&
+                value.type === sheet.type &&
+                value.difficulty === sheet.difficulty
+            )
+            .reduce(
+              (acc, value) => {
+                acc[value.version] = parseFloat(value.internalLevel);
+                return acc;
+              },
+              {} as Record<string, number>
+            );
+
+          const haveAnyMultiverInternalLevelValue =
+            Object.keys(multiverInternalLevelValue).length > 0;
+
+          return {
+            ...sheet,
+            multiverInternalLevelValue: haveAnyMultiverInternalLevelValue
+              ? multiverInternalLevelValue
+              : undefined,
+          };
+        }),
       };
     });
 

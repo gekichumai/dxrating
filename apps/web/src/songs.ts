@@ -36,6 +36,7 @@ export interface FlattenedSheet {
   levelValue: number;
   internalLevel: null | string;
   internalLevelValue: number;
+  multiverInternalLevelValue?: Record<VersionEnum, number>;
   noteDesigner: null | string;
   noteCounts: NoteCounts;
   regions: Regions;
