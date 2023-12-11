@@ -38,11 +38,13 @@ const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
         height: "4rem",
         width: "4rem",
         borderRadius: "0.5rem",
+        cursor: "zoom-in",
       },
       expanded: {
-        height: "55vw",
-        width: "55vw",
+        height: "14rem",
+        width: "14rem",
         borderRadius: "1rem",
+        cursor: "zoom-out",
       },
     };
 
