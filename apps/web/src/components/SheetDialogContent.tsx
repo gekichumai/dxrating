@@ -127,7 +127,10 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
           (acc, { version, internalLevelValue }) => {
             // add `delta` field
             let delta: number | undefined;
-            const prev = acc[acc.length - 1];
+            const accReversed = [...acc].reverse();
+            const prev = accReversed.find(
+              (v) => v.internalLevelValue !== undefined,
+            );
             if (
               prev &&
               internalLevelValue !== undefined &&

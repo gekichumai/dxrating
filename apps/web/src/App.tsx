@@ -29,7 +29,7 @@ export const App = () => {
     ${versionTheme.accentColor},
     ${versionTheme.accentColor} env(safe-area-inset-top),
     ${versionTheme.accentColor}00
-  );
+  )
 `,
           }}
         >
