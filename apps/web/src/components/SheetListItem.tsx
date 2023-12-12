@@ -1,4 +1,4 @@
-import { DifficultyEnum, TypeEnum, VersionEnum } from "@gekichumai/dxdata";
+import { DifficultyEnum, TypeEnum } from "@gekichumai/dxdata";
 import {
   Dialog,
   DialogContent,
@@ -67,10 +67,7 @@ export const SheetListItemContent: FC<
 
       <ListItemText className="ml-2 pr-20">
         <SheetTitle
-          title={sheet.title}
-          difficulty={sheet.difficulty}
-          type={sheet.type}
-          version={sheet.version}
+          sheet={sheet}
           className={clsx(
             "font-bold",
             size === "small" ? "text-sm" : "text-lg",
@@ -180,30 +177,67 @@ const DIFFICULTIES: Record<
   },
 };
 
-const SheetDifficulty: FC<{ difficulty: DifficultyEnum }> = ({
+const SheetDifficulty: FC<{ difficulty?: DifficultyEnum }> = ({
   difficulty,
 }) => {
-  const difficultyConfig = DIFFICULTIES[difficulty];
-  return (
+  const difficultyConfig = difficulty ? DIFFICULTIES[difficulty] : undefined;
+  return difficultyConfig ? (
     <span
       className="rounded-full px-2 text-sm shadow-[0.0625rem_0.125rem_0_0_#0b38714D] leading-relaxed translate-y-[-0.125rem] text-white"
       style={{ backgroundColor: difficultyConfig.color }}
     >
       {difficultyConfig.title}
     </span>
-  );
+  ) : null;
 };
 
 const SHEET_TYPE_IMAGE = {
   [TypeEnum.DX]: "https://dxrating-assets.imgg.dev/images/type_dx.png",
-  [TypeEnum.SD]: "https://dxrating-assets.imgg.dev/images/type_sd.png",
+  [TypeEnum.STD]: "https://dxrating-assets.imgg.dev/images/type_sd.png",
+  [TypeEnum.UTAGE]:
+    "https://dxrating-assets.imgg.dev/images/chart-type/type_utage.png",
 };
 
-const SheetType: FC<{ type: TypeEnum }> = ({ type }) => {
+const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({
+  type,
+  difficulty,
+}) => {
+  const isUtage = type === TypeEnum.UTAGE || type === TypeEnum.UTAGE2P;
+
+  if (isUtage) {
+    const isUtage2P = type === TypeEnum.UTAGE2P;
+
+    return (
+      <>
+        <div
+          className="h-26px w-95.875px flex items-center justify-center text-center select-none"
+          style={{
+            background: `url(${
+              SHEET_TYPE_IMAGE[TypeEnum.UTAGE]
+            }) no-repeat center`,
+            backgroundSize: "contain",
+          }}
+        >
+          <span className="text-shadow-[0_0_0.5rem_#FFFFFF99] text-white text-xs">
+            {difficulty.replace(/[【】]/g, "")}
+          </span>
+        </div>
+        {isUtage2P && (
+          <img
+            src="https://dxrating-assets.imgg.dev/images/chart-type/type_utage2p_endadornment.png"
+            className="h-26px w-95.875px ml-[-27px]"
+            alt={type}
+            draggable={false}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <img
       src={SHEET_TYPE_IMAGE[type]}
-      className="w-70px h-26px"
+      className="h-26px w-70px"
       alt={type}
       draggable={false}
     />
@@ -240,13 +274,13 @@ export const SheetImage: FC<
 };
 
 export const SheetTitle: FC<{
-  title: string;
-  altNames?: string[];
-  difficulty: DifficultyEnum;
-  type: TypeEnum;
-  version: VersionEnum;
+  sheet: FlattenedSheet;
+
+  enableAltNames?: boolean;
+
   className?: string;
-}> = ({ title, altNames, difficulty, type, version, className }) => {
+}> = ({ sheet, enableAltNames, className }) => {
+  const { title, searchAcronyms, difficulty, type, version } = sheet;
   return (
     <div className="flex flex-col">
       <h3
@@ -255,14 +289,14 @@ export const SheetTitle: FC<{
           className,
         )}
       >
-        <span className="translate-y-[-0.125rem] flex flex-col">
+        <span className="flex flex-col">
           <span className="leading-tight">{title}</span>
-          {(altNames?.length ?? 0) > 0 && (
-            <SheetAltNames altNames={altNames!} />
+          {enableAltNames && (searchAcronyms?.length ?? 0) > 0 && (
+            <SheetAltNames altNames={searchAcronyms!} />
           )}
         </span>
         <div className="flex items-center gap-2 shrink-0">
-          <SheetType type={type} />
+          <SheetType type={type} difficulty={difficulty} />
           <SheetDifficulty difficulty={difficulty} />
         </div>
       </h3>

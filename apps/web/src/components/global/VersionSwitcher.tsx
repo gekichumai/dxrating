@@ -1,9 +1,12 @@
 import { ListSubheader, MenuItem, Select, styled } from "@mui/material";
 import { FC } from "react";
-import { DXVersion } from "../../models/context/AppContext";
+import {
+  DXVersion,
+  DXVersionToDXDataVersionEnumMap,
+} from "../../models/context/AppContext";
 import { useAppContext } from "../../models/context/useAppContext";
 
-const VERSIONS = ["festival-plus", "buddies"];
+const VERSIONS = Object.keys(DXVersionToDXDataVersionEnumMap) as DXVersion[];
 
 const StyledVersionSelect = styled(Select)(({ theme }) => ({
   "&": {
@@ -20,7 +23,7 @@ const StyledVersionSelect = styled(Select)(({ theme }) => ({
 
 export const VersionSwitcher: FC = () => {
   const { version, setVersion } = useAppContext();
-  const disabled = true;
+  const disabled = false;
 
   return disabled ? (
     <div className="flex justify-center items-center">

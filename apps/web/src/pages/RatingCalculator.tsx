@@ -1,4 +1,3 @@
-import { VersionEnum } from "@gekichumai/dxdata";
 import {
   Alert,
   AlertTitle,
@@ -62,6 +61,8 @@ import { ClearButton } from "../components/rating/io/ClearButton";
 import { ExportMenu } from "../components/rating/io/ExportMenu";
 import { ImportMenu } from "../components/rating/io/ImportMenu";
 import { RatingCalculatorContext } from "../models/RatingCalculatorContext";
+import { DXVersionToDXDataVersionEnumMap } from "../models/context/AppContext";
+import { useAppContext } from "../models/context/useAppContext";
 import { FlattenedSheet, useSheets } from "../songs";
 import { Rating, calculateRating } from "../utils/rating";
 
@@ -140,6 +141,7 @@ const TransparentPaper = styled(Paper)(() => ({
 }));
 
 export const RatingCalculator = () => {
+  const { version } = useAppContext();
   const { data: sheets } = useSheets();
   const [localStorageEntries, setLocalStorageEntries] = useLocalStorage<
     PlayEntry[]
@@ -174,15 +176,23 @@ export const RatingCalculator = () => {
       ];
     });
 
-    const currentVersion = VersionEnum.FESTIVALPLUS;
+    const currentVersion = version;
     const best15OfCurrentVersionSheetIds = calculated
-      .filter((entry) => entry.sheet.version === currentVersion)
+      .filter(
+        (entry) =>
+          entry.sheet.version ===
+          DXVersionToDXDataVersionEnumMap[currentVersion],
+      )
       .sort((a, b) => b.rating.ratingAwardValue - a.rating.ratingAwardValue)
       .slice(0, 15)
       .map((entry) => entry.sheetId);
 
     const best35OfAllOtherVersionSheetIds = calculated
-      .filter((entry) => entry.sheet.version !== currentVersion)
+      .filter(
+        (entry) =>
+          entry.sheet.version !==
+          DXVersionToDXDataVersionEnumMap[currentVersion],
+      )
       .sort((a, b) => b.rating.ratingAwardValue - a.rating.ratingAwardValue)
       .slice(0, 35)
       .map((entry) => entry.sheetId);
@@ -192,8 +202,8 @@ export const RatingCalculator = () => {
       includedIn: best15OfCurrentVersionSheetIds.includes(entry.sheetId)
         ? ("b15" as const)
         : best35OfAllOtherVersionSheetIds.includes(entry.sheetId)
-        ? ("b35" as const)
-        : null,
+          ? ("b35" as const)
+          : null,
     }));
 
     return {
@@ -205,7 +215,7 @@ export const RatingCalculator = () => {
         (entry) => entry.includedIn === "b35",
       ),
     };
-  }, [entries, sheets]);
+  }, [entries, sheets, version]);
 
   const { b15Average, b35Average } = useMemo(() => {
     const b15Average =
@@ -339,8 +349,8 @@ export const RatingCalculator = () => {
                   <DenseTableCell className="flex flex-col">
                     <div className="font-bold text-lg">B15</div>
                     <div className="text-gray-500">
-                      Best 15 plays on songs released at current version
-                      (FESTiVAL PLUS)
+                      Best 15 plays on songs released at current version (
+                      {DXVersionToDXDataVersionEnumMap[version]})
                     </div>
                   </DenseTableCell>
                   <DenseTableCell>{b15Entries.length}</DenseTableCell>
@@ -359,7 +369,8 @@ export const RatingCalculator = () => {
                     <div className="font-bold text-lg">B35</div>
                     <div className="text-gray-500">
                       Best 35 plays on all other songs except ones released at
-                      current version (FESTiVAL PLUS)
+                      current version (
+                      {DXVersionToDXDataVersionEnumMap[version]})
                     </div>
                   </DenseTableCell>
                   <DenseTableCell>{b35Entries.length}</DenseTableCell>
@@ -388,15 +399,6 @@ export const RatingCalculator = () => {
           </Alert>
 
           <div className="flex flex-col gap-4 h-full self-stretch">
-            {/* <Alert severity="warning" className="w-full self-stretch h-full">
-            <AlertTitle>Version mismatch</AlertTitle>
-            The current version regarding B15 filtering is based on{" "}
-            <strong>FESTiVAL</strong>, but the internal level data is from{" "}
-            <strong>FESTiVAL PLUS</strong>, causing ratings to be inaccurate for
-            the moment. When the corresponding cabinet (wink) updates to
-            FESTiVAL PLUS, this site will be updated accordingly.
-          </Alert> */}
-
             <Alert severity="info" className="w-full overflow-auto">
               <AlertTitle>
                 {localStorageEntries?.length

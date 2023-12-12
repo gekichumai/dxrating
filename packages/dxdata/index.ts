@@ -68,6 +68,7 @@ export interface Sheet {
   levelValue: number;
   internalLevel: null | string;
   internalLevelValue: number;
+  multiverInternalLevelValue?: Record<VersionEnum, number>;
   noteDesigner: null | string;
   noteCounts: NoteCounts;
   regions: Regions;
@@ -92,7 +93,9 @@ export interface Regions {
 
 export enum TypeEnum {
   DX = "dx",
-  SD = "std",
+  STD = "std",
+  UTAGE = "utage",
+  UTAGE2P = "utage2p",
 }
 
 export enum VersionEnum {

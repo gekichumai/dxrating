@@ -113,11 +113,8 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
         <SheetDialogContentHeader sheet={sheet} />
 
         <SheetTitle
-          title={sheet.title}
-          altNames={sheet.searchAcronyms}
-          difficulty={sheet.difficulty}
-          type={sheet.type}
-          version={sheet.version}
+          sheet={sheet}
+          enableAltNames
           className="text-lg font-bold"
         />
 

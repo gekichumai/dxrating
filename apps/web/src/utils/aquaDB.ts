@@ -155,7 +155,7 @@ export function readAquaGamePlays(db: sqljs.Database): AquaGamePlay[] {
   return records.map((record) => ({
     ...record,
     level: AQUA_GAME_PLAY_LEVEL_TO_DIFFICULTY[record.level],
-    type: record.music_id >= 10000 ? TypeEnum.DX : TypeEnum.SD,
+    type: record.music_id >= 10000 ? TypeEnum.DX : TypeEnum.STD,
   }));
 }
 
@@ -388,7 +388,7 @@ export function readAquaPlayLogs(db: sqljs.Database): AquaPlayLog[] {
     play_date: new Date(record.play_date),
     user_play_date: new Date(record.user_play_date),
     level: AQUA_GAME_PLAY_LEVEL_TO_DIFFICULTY[record.level],
-    type: record.music_id >= 10000 ? TypeEnum.DX : TypeEnum.SD,
+    type: record.music_id >= 10000 ? TypeEnum.DX : TypeEnum.STD,
     music_id: record.music_id,
     track_no: record.track_no,
     player_num: record.player_num,

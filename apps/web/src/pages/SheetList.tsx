@@ -1,23 +1,28 @@
-import { VersionEnum } from "@gekichumai/dxdata";
 import { Alert, FormControlLabel, Switch, TextField } from "@mui/material";
 import { FC, useMemo, useState } from "react";
 import { SheetListContainer } from "../components/SheetListContainer";
+import { DXVersionToDXDataVersionEnumMap } from "../models/context/AppContext";
+import { useAppContext } from "../models/context/useAppContext";
 import { useFilteredSheets, useSheets } from "../songs";
 
 export const SheetList: FC = () => {
+  const { version } = useAppContext();
   const { data: sheets } = useSheets();
   const [search, setSearch] = useState<string>("");
   const { results, elapsed } = useFilteredSheets(search);
-  const [showOnlyFestival, setShowOnlyFestival] = useState<boolean>(false);
+  const [showOnlyCurrentVersion, setShowOnlyCurrentVersion] =
+    useState<boolean>(false);
 
   const filteredResults = useMemo(() => {
-    if (showOnlyFestival) {
+    if (showOnlyCurrentVersion) {
       return results
-        .filter((sheet) => sheet.version === VersionEnum.FESTIVALPLUS)
+        .filter(
+          (sheet) => sheet.version === DXVersionToDXDataVersionEnumMap[version],
+        )
         .sort((a, b) => b.internalLevelValue - a.internalLevelValue);
     }
     return results;
-  }, [results, showOnlyFestival]);
+  }, [results, showOnlyCurrentVersion, version]);
 
   return (
     <div className="flex-container pb-global">
@@ -32,11 +37,11 @@ export const SheetList: FC = () => {
       <FormControlLabel
         control={
           <Switch
-            checked={showOnlyFestival}
-            onChange={(e) => setShowOnlyFestival(e.target.checked)}
+            checked={showOnlyCurrentVersion}
+            onChange={(e) => setShowOnlyCurrentVersion(e.target.checked)}
           />
         }
-        label="Filter Current B15: Show only FESTiVAL+ charts and sort by level (descending)"
+        label={`Filter Current B15: Show only ${DXVersionToDXDataVersionEnumMap[version]} charts and sort by level (descending)`}
       />
 
       <Alert severity="info" className="text-sm !rounded-full shadow-lg">

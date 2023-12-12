@@ -1,9 +1,15 @@
+import { VersionEnum } from "@gekichumai/dxdata";
 import { FC, PropsWithChildren, createContext, useMemo } from "react";
 import { useLocalStorage } from "react-use";
 
 export type AppContext = AppContextStates & AppContextFns;
 
 export type DXVersion = "festival-plus" | "buddies";
+
+export const DXVersionToDXDataVersionEnumMap: Record<DXVersion, VersionEnum> = {
+  "festival-plus": VersionEnum.FESTIVALPLUS,
+  buddies: VersionEnum.BUDDiES,
+};
 
 export interface AppContextStates {
   version: DXVersion;

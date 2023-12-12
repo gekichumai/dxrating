@@ -1,11 +1,43 @@
 import process from "process";
 
 import { tokenize } from "@enjoyjs/node-mecab";
-import { DXData } from "@gekichumai/dxdata";
+import { DXData, Sheet, TypeEnum } from "@gekichumai/dxdata";
 import "dotenv/config";
 import { uniq } from "lodash";
 import fs from "node:fs/promises";
 import pg from "pg";
+
+// from https://github.com/zetaraku/arcade-songs-fetch/blob/362f2a1b1a1752074951006cedde06948fb0061a/src/maimai/fetch-intl-versions.ts#L16
+const VERSION_ID_MAP = new Map([
+  ["maimai", 0],
+  ["maimai PLUS", 1],
+  ["GreeN", 2],
+  ["GreeN PLUS", 3],
+  ["ORANGE", 4],
+  ["ORANGE PLUS", 5],
+  ["PiNK", 6],
+  ["PiNK PLUS", 7],
+  ["MURASAKi", 8],
+  ["MURASAKi PLUS", 9],
+  ["MiLK", 10],
+  ["MiLK PLUS", 11],
+  ["FiNALE", 12],
+  ["maimaiでらっくす", 13],
+  ["maimaiでらっくす PLUS", 14],
+  ["Splash", 15],
+  ["Splash PLUS", 16],
+  ["UNiVERSE", 17],
+  ["UNiVERSE PLUS", 18],
+  ["FESTiVAL", 19],
+  ["FESTiVAL PLUS", 20],
+  ["BUDDiES", 21],
+  //! add further version here !//
+]);
+
+const isMaimaiSeries = (version: string) => {
+  const versionId = VERSION_ID_MAP.get(version);
+  return versionId !== undefined && versionId <= 12;
+};
 
 async function readAliases1() {
   const aliases = await fs.readFile("./aliases1.tsv", "utf8");
@@ -1158,14 +1190,26 @@ async function main() {
     .then(JSON.parse)) as DXData;
 
   const transformedSongs = dxdata.songs
-    // .filter((song) => song.category !== "宴会場")
+    .filter(
+      // filter out maimai series 宴会場 charts as those has been removed in dx
+      (song) => !(song.category === "宴会場" && isMaimaiSeries(song.version))
+    )
     .map(async (entry) => {
-      const title = entry.title;
+      const searchAcronyms = await getSearchAcronyms(
+        entry.title,
+        entry.internalId
+      );
+      const songOnlyContainsUtage = entry.sheets.every(
+        (v) => v.type === "utage"
+      );
 
-      const searchAcronyms = await getSearchAcronyms(title, entry.internalId);
+      const title = songOnlyContainsUtage
+        ? entry.title.replace(/\[.*\]/g, "")
+        : entry.title;
 
       return {
         ...entry,
+        title,
         searchAcronyms,
         sheets: entry.sheets.map((sheet) => {
           const multiverInternalLevelValue = multiverInternalLevelValues
@@ -1183,15 +1227,19 @@ async function main() {
               {} as Record<string, number>
             );
 
+          const is2pUtage =
+            sheet.type === "utage" && sheet.difficulty.includes("協");
+
           const haveAnyMultiverInternalLevelValue =
             Object.keys(multiverInternalLevelValue).length > 0;
 
           return {
             ...sheet,
+            type: is2pUtage ? TypeEnum.UTAGE2P : sheet.type,
             multiverInternalLevelValue: haveAnyMultiverInternalLevelValue
               ? multiverInternalLevelValue
               : undefined,
-          };
+          } satisfies Sheet;
         }),
       };
     });

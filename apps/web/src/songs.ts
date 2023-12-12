@@ -6,12 +6,15 @@ import {
   Sheet,
   Song,
   TypeEnum,
+  VERSION_ID_MAP,
   VersionEnum,
   dxdata,
 } from "@gekichumai/dxdata";
 import Fuse from "fuse.js";
 import { useMemo } from "react";
 import useSWR from "swr";
+import { DXVersionToDXDataVersionEnumMap } from "./models/context/AppContext";
+import { useAppContext } from "./models/context/useAppContext";
 
 export interface FlattenedSheet {
   id: string;
@@ -43,8 +46,6 @@ export interface FlattenedSheet {
   isSpecial: boolean;
 }
 
-const ALLOWED_TYPES = ["dx", "std"];
-
 export const canonicalId = (song: Song, sheet: Sheet) => {
   return [song.songId, sheet.type, sheet.difficulty].join("__dxrt__");
 };
@@ -57,27 +58,49 @@ export const canonicalIdFromParts = (
   return [songId, type, difficulty].join("__dxrt__");
 };
 
-export const getFlattenedSheets = async (): Promise<FlattenedSheet[]> => {
-  const songs = dxdata.songs as Song[];
+export const getSongs = (maxVersion: VersionEnum): Song[] => {
+  const maxVersionId = VERSION_ID_MAP.get(maxVersion);
+  if (maxVersionId === undefined) {
+    throw new Error(`Invalid version: ${maxVersion}`);
+  }
+
+  return dxdata.songs.filter(
+    (v) =>
+      (VERSION_ID_MAP.get(v.version) ??
+        (console.warn(`Invalid version: ${v.version}`), 0)) <= maxVersionId,
+  );
+};
+
+export const getFlattenedSheets = async (
+  version: VersionEnum,
+): Promise<FlattenedSheet[]> => {
+  const songs = getSongs(version);
   const flattenedSheets = songs.flatMap((song) => {
-    return song.sheets
-      .filter((sheet) => ALLOWED_TYPES.includes(sheet.type))
-      .map((sheet) => ({
-        ...song,
-        ...sheet,
-        id: canonicalId(song, sheet),
-        searchAcronyms: song.searchAcronyms,
-      }));
+    return song.sheets.map((sheet) => ({
+      ...song,
+      ...sheet,
+      id: canonicalId(song, sheet),
+      searchAcronyms: song.searchAcronyms,
+      internalLevelValue: sheet.multiverInternalLevelValue
+        ? sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue
+        : sheet.internalLevelValue,
+    }));
   });
   return flattenedSheets as FlattenedSheet[];
 };
 
 export const useSheets = () => {
-  return useSWR("sheets", getFlattenedSheets);
+  const { version } = useAppContext();
+  return useSWR(`sheets_${version}`, () =>
+    getFlattenedSheets(DXVersionToDXDataVersionEnumMap[version]),
+  );
 };
 
 export const useSongs = () => {
-  return useSWR("songs", () => dxdata.songs);
+  const { version } = useAppContext();
+  return useSWR(`songs_${version}`, () =>
+    getSongs(DXVersionToDXDataVersionEnumMap[version]),
+  );
 };
 
 export const useSheetsSearchEngine = () => {
