@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import clsx from "clsx";
 import { motion } from "framer-motion";
-import { FC, memo, useMemo, useState } from "react";
+import { FC, PropsWithChildren, memo, useMemo, useState } from "react";
 import { match } from "ts-pattern";
 import IconMdiSearchWeb from "~icons/mdi/search-web";
 import IconMdiSpotify from "~icons/mdi/spotify";
@@ -98,6 +98,14 @@ const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
     />
   );
 };
+
+const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
+  <div className="font-lg font-bold">
+    <span className="pb-1 px-1 mb-1 border-b border-solid border-gray-200 tracking-tight">
+      {children}
+    </span>
+  </div>
+);
 
 export interface SheetDialogContentProps {
   sheet: FlattenedSheet;
@@ -187,7 +195,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
         <div className="flex flex-col gap-6 mt-2">
           {!sheet.isTypeUtage && (
             <div className="flex flex-col gap-1">
-              <div className="font-base font-bold">Internal Level History</div>
+              <SectionHeader>Internal Level History</SectionHeader>
               <div className="overflow-x-auto">
                 {multiverInternalLevelValues.filter(
                   (v) => v.internalLevelValue !== undefined,
@@ -213,14 +221,20 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                         {multiverInternalLevelValues.map(
                           ({ internalLevelValue, delta }) => (
                             <TableCell key={internalLevelValue}>
-                              <div className="flex items-center gap-1">
-                                <span className="font-bold tabular-nums">
-                                  {internalLevelValue?.toFixed(1) ?? "-"}
-                                </span>
-                                {delta !== undefined && (
-                                  <DeltaArrow delta={delta} />
-                                )}
-                              </div>
+                              {internalLevelValue === undefined ? (
+                                <div className="text-gray-500 select-none">
+                                  —
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1">
+                                  <span className="font-bold tabular-nums">
+                                    {internalLevelValue?.toFixed(1)}
+                                  </span>
+                                  {delta !== undefined && (
+                                    <DeltaArrow delta={delta} />
+                                  )}
+                                </div>
+                              )}
                             </TableCell>
                           ),
                         )}
@@ -235,7 +249,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
           )}
 
           <div className="flex flex-col gap-1">
-            <div className="font-base font-bold">Details</div>
+            <SectionHeader>Details</SectionHeader>
             <div>
               <Table size="small" className="mb-4">
                 <TableHead>
@@ -355,7 +369,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
 
           {!sheet.isTypeUtage && (
             <div className="flex flex-col gap-1">
-              <div className="font-base font-bold">Achievement → Rating</div>
+              <SectionHeader>Achievement → Rating</SectionHeader>
               <div>
                 <Table className="tabular-nums !font-mono" size="small">
                   <TableHead>
