@@ -24,6 +24,8 @@ node -v
 npm -v
 pwd
 
+npm install -g yarn
+
 # Install dependencies
 yarn install
 
