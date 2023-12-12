@@ -7,7 +7,7 @@ export type AppContext = AppContextStates & AppContextFns;
 export type DXVersion = "festival-plus" | "buddies";
 
 export const DXVersionToDXDataVersionEnumMap: Record<DXVersion, VersionEnum> = {
-  "festival-plus": VersionEnum.FESTIVALPLUS,
+  "festival-plus": VersionEnum.FESTiVALPLUS,
   buddies: VersionEnum.BUDDiES,
 };
 

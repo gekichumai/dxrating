@@ -124,7 +124,10 @@ export const ImportFromAquaSQLiteListItem: FC<{
         <ListItemIcon>
           <IconMdiDatabase />
         </ListItemIcon>
-        <ListItemText>Import from Aqua SQLite...</ListItemText>
+        <ListItemText
+          primary="Import from Aqua SQLite..."
+          secondary="Deprecated"
+        />
       </MenuItem>
     </>
   );

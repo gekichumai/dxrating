@@ -1,11 +1,11 @@
 import { ThemeProvider, createTheme } from "@mui/material";
 import { FC, PropsWithChildren, useMemo } from "react";
-import { useAppContext } from "../../models/context/useAppContext";
+import { useVersionTheme } from "../../utils/useVersionTheme";
 
 export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({
   children,
 }) => {
-  const appContext = useAppContext();
+  const versionTheme = useVersionTheme();
 
   const theme = useMemo(() => {
     return createTheme({
@@ -17,11 +17,11 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({
       },
       palette: {
         primary: {
-          main: appContext.version === "festival-plus" ? "#855cb8" : "#eaa239",
+          main: versionTheme.accentColor,
         },
       },
     });
-  }, [appContext.version]);
+  }, [versionTheme]);
 
   return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
 };

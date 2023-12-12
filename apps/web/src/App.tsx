@@ -4,8 +4,10 @@ import { useLocalStorage } from "react-use";
 import { VersionSwitcher } from "./components/global/VersionSwitcher";
 import { RatingCalculator } from "./pages/RatingCalculator";
 import { SheetList } from "./pages/SheetList";
+import { useVersionTheme } from "./utils/useVersionTheme";
 
 export const App = () => {
+  const versionTheme = useVersionTheme();
   const [tab, setTab] = useLocalStorage<"search" | "rating">(
     "tab-selection",
     "search",
@@ -15,11 +17,22 @@ export const App = () => {
   return (
     <div className="h-full w-full relative">
       <img
-        src="https://dxrating-assets.imgg.dev/images/background.jpg"
+        src={versionTheme.background}
         className="fixed inset-0 h-full w-full z-[-1] object-cover object-center"
       />
       <div className="h-full w-full">
-        <div className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-8 bg-gradient-linear-[(to_bottom,_#c8a8f9,_#c8a8f9_env(safe-area-inset-top),_#c8a8f900)]">
+        <div
+          className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-8"
+          style={{
+            backgroundImage: `linear-gradient(
+    to bottom,
+    ${versionTheme.accentColor},
+    ${versionTheme.accentColor} env(safe-area-inset-top),
+    ${versionTheme.accentColor}00
+  );
+`,
+          }}
+        >
           <VersionSwitcher />
           <Tabs
             value={tab}
@@ -52,7 +65,9 @@ export const App = () => {
           </Tabs>
         </div>
         {isPending ? (
-          <CircularProgress />
+          <div className="flex items-center justify-center h-50% w-full p-6">
+            <CircularProgress size="2rem" disableShrink />
+          </div>
         ) : (
           {
             search: <SheetList />,

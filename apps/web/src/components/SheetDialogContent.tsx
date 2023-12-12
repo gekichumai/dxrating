@@ -1,8 +1,8 @@
-import { MULTIVER_AVAILABLE_VERSIONS, VersionEnum } from "@gekichumai/dxdata";
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
+  MULTIVER_AVAILABLE_VERSIONS,
+  VERSION_SLUG_MAP,
+} from "@gekichumai/dxdata";
+import {
   Button,
   Chip,
   IconButton,
@@ -15,8 +15,7 @@ import {
 import clsx from "clsx";
 import { motion } from "framer-motion";
 import { FC, memo, useMemo, useState } from "react";
-import MdiChevronDown from "~icons/mdi/chevron-down";
-import IconMdiOpenInNew from "~icons/mdi/open-in-new";
+import { match } from "ts-pattern";
 import IconMdiSearchWeb from "~icons/mdi/search-web";
 import IconMdiSpotify from "~icons/mdi/spotify";
 import IconMdiYouTube from "~icons/mdi/youtube";
@@ -79,6 +78,27 @@ const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
   },
 );
 
+const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
+  const direction = match(delta)
+    .when(
+      (d) => d > 0,
+      () => "up",
+    )
+    .when(
+      (d) => d < 0,
+      () => "down",
+    )
+    .otherwise(() => "neutral");
+
+  return (
+    <img
+      src={`https://dxrating-assets.imgg.dev/images/rating-arrow/${direction}.png`}
+      alt=""
+      className="w-6 h-6"
+    />
+  );
+};
+
 export interface SheetDialogContentProps {
   sheet: FlattenedSheet;
   currentAchievementRate?: number;
@@ -102,9 +122,29 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
       () =>
         MULTIVER_AVAILABLE_VERSIONS.map((version) => ({
           version,
-          internalLevelValue:
-            sheet.multiverInternalLevelValue?.[version as VersionEnum],
-        })),
+          internalLevelValue: sheet.multiverInternalLevelValue?.[version],
+        })).reduce(
+          (acc, { version, internalLevelValue }) => {
+            // add `delta` field
+            let delta: number | undefined;
+            const prev = acc[acc.length - 1];
+            if (
+              prev &&
+              internalLevelValue !== undefined &&
+              prev.internalLevelValue !== undefined
+            ) {
+              delta = internalLevelValue - prev.internalLevelValue;
+            }
+
+            acc.push({ version, internalLevelValue, delta });
+            return acc;
+          },
+          [] as {
+            version: string;
+            internalLevelValue?: number;
+            delta?: number;
+          }[],
+        ),
       [sheet],
     );
 
@@ -115,6 +155,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
         <SheetTitle
           sheet={sheet}
           enableAltNames
+          enableClickToCopy
           className="text-lg font-bold"
         />
 
@@ -140,48 +181,59 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
           </IconButton>
         </div>
 
-        <div>
-          <Accordion className="bg-zinc-100/60" defaultExpanded>
-            <AccordionSummary expandIcon={<MdiChevronDown />}>
-              Internal Level History
-            </AccordionSummary>
-            <AccordionDetails className="overflow-x-auto">
-              {multiverInternalLevelValues.filter(
-                (v) => v.internalLevelValue !== undefined,
-              ).length > 1 ? (
-                <Table size="small" className="mb-4">
-                  <TableHead>
-                    <TableRow>
-                      {multiverInternalLevelValues.map(({ version }) => (
-                        <TableCell key={version}>{version}</TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    <TableRow>
-                      {multiverInternalLevelValues.map(
-                        ({ internalLevelValue }) => (
-                          <TableCell key={internalLevelValue}>
-                            {internalLevelValue?.toFixed(1) ?? "-"}
+        <div className="flex flex-col gap-6 mt-2">
+          {!sheet.isTypeUtage && (
+            <div className="flex flex-col gap-1">
+              <div className="font-base font-bold">Internal Level History</div>
+              <div className="overflow-x-auto">
+                {multiverInternalLevelValues.filter(
+                  (v) => v.internalLevelValue !== undefined,
+                ).length > 1 ? (
+                  <Table size="small" className="mb-4">
+                    <TableHead>
+                      <TableRow>
+                        {multiverInternalLevelValues.map(({ version }) => (
+                          <TableCell key={version}>
+                            <img
+                              src={`https://dxrating-assets.imgg.dev/images/version-title/${VERSION_SLUG_MAP.get(
+                                version,
+                              )}.png`}
+                              alt={VERSION_SLUG_MAP.get(version)}
+                              className="h-40.75px w-83px min-w-[83px] -ml-1"
+                            />
                           </TableCell>
-                        ),
-                      )}
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center text-gray-500">
-                  No history available
-                </div>
-              )}
-            </AccordionDetails>
-          </Accordion>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        {multiverInternalLevelValues.map(
+                          ({ internalLevelValue, delta }) => (
+                            <TableCell key={internalLevelValue}>
+                              <div className="flex items-center gap-1">
+                                <span className="font-bold tabular-nums">
+                                  {internalLevelValue?.toFixed(1) ?? "-"}
+                                </span>
+                                {delta !== undefined && (
+                                  <DeltaArrow delta={delta} />
+                                )}
+                              </div>
+                            </TableCell>
+                          ),
+                        )}
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-gray-500">No history available</div>
+                )}
+              </div>
+            </div>
+          )}
 
-          <Accordion className="bg-zinc-100/60" defaultExpanded>
-            <AccordionSummary expandIcon={<MdiChevronDown />}>
-              Song Details
-            </AccordionSummary>
-            <AccordionDetails>
+          <div className="flex flex-col gap-1">
+            <div className="font-base font-bold">Details</div>
+            <div>
               <Table size="small" className="mb-4">
                 <TableHead>
                   <TableRow>
@@ -191,71 +243,75 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                 </TableHead>
                 <TableBody>
                   <TableRow>
-                    <TableCell>BPM</TableCell>
-                    <TableCell>{sheet.bpm}</TableCell>
-                  </TableRow>
-
-                  <TableRow>
                     <TableCell>Song Artist</TableCell>
                     <TableCell>{sheet.artist}</TableCell>
                   </TableRow>
 
-                  <TableRow className="bg-gray-1">
-                    <TableCell>Chart Designer</TableCell>
-                    <TableCell>{sheet.noteDesigner}</TableCell>
-                  </TableRow>
+                  {!sheet.isTypeUtage && (
+                    <>
+                      <TableRow>
+                        <TableCell>BPM</TableCell>
+                        <TableCell>{sheet.bpm}</TableCell>
+                      </TableRow>
 
-                  <TableRow className="bg-gray-1">
-                    <TableCell colSpan={2}>Notes</TableCell>
-                  </TableRow>
+                      <TableRow className="bg-gray-1">
+                        <TableCell>Chart Designer</TableCell>
+                        <TableCell>{sheet.noteDesigner}</TableCell>
+                      </TableRow>
 
-                  <TableRow className="bg-gray-1">
-                    <TableCell className="pl-8">— Tap</TableCell>
-                    <TableCell>{sheet.noteCounts.tap ?? 0}</TableCell>
-                  </TableRow>
+                      <TableRow className="bg-gray-1">
+                        <TableCell colSpan={2}>Notes Statistics</TableCell>
+                      </TableRow>
 
-                  <TableRow className="bg-gray-1">
-                    <TableCell className="pl-8">— Hold</TableCell>
-                    <TableCell>{sheet.noteCounts.hold ?? 0}</TableCell>
-                  </TableRow>
+                      <TableRow className="bg-gray-1">
+                        <TableCell>— Tap</TableCell>
+                        <TableCell>{sheet.noteCounts.tap ?? 0}</TableCell>
+                      </TableRow>
 
-                  <TableRow className="bg-gray-1">
-                    <TableCell className="pl-8">— Slide</TableCell>
-                    <TableCell>{sheet.noteCounts.slide ?? 0}</TableCell>
-                  </TableRow>
+                      <TableRow className="bg-gray-1">
+                        <TableCell>— Hold</TableCell>
+                        <TableCell>{sheet.noteCounts.hold ?? 0}</TableCell>
+                      </TableRow>
 
-                  <TableRow className="bg-gray-1">
-                    <TableCell className="pl-8">— Touch</TableCell>
-                    <TableCell>{sheet.noteCounts.touch ?? 0}</TableCell>
-                  </TableRow>
+                      <TableRow className="bg-gray-1">
+                        <TableCell>— Slide</TableCell>
+                        <TableCell>{sheet.noteCounts.slide ?? 0}</TableCell>
+                      </TableRow>
 
-                  <TableRow className="bg-gray-1">
-                    <TableCell className="pl-8">— Break</TableCell>
-                    <TableCell>{sheet.noteCounts.break ?? 0}</TableCell>
-                  </TableRow>
+                      <TableRow className="bg-gray-1">
+                        <TableCell>— Touch</TableCell>
+                        <TableCell>{sheet.noteCounts.touch ?? 0}</TableCell>
+                      </TableRow>
 
-                  <TableRow className="bg-gray-1">
-                    <TableCell className="pl-8">— Total</TableCell>
-                    <TableCell>
-                      {sheet.noteCounts.total?.toLocaleString("en-US")}
-                    </TableCell>
-                  </TableRow>
+                      <TableRow className="bg-gray-1">
+                        <TableCell>— Break</TableCell>
+                        <TableCell>{sheet.noteCounts.break ?? 0}</TableCell>
+                      </TableRow>
+
+                      <TableRow className="bg-gray-1">
+                        <TableCell>— Total</TableCell>
+                        <TableCell>
+                          {sheet.noteCounts.total?.toLocaleString("en-US")}
+                        </TableCell>
+                      </TableRow>
+                    </>
+                  )}
 
                   <TableRow>
-                    <TableCell>Region Availability</TableCell>
+                    <TableCell>Regional Availability</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {Object.entries(sheet.regions).map(
                           ([region, available]) => (
-                            <Chip
-                              size="small"
+                            <div
                               key={region}
-                              label={region}
                               className={clsx(
-                                "uppercase font-mono text-white font-bold select-none",
-                                available ? "!bg-green-500" : "!bg-red-500",
+                                "uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs",
+                                available ? "!bg-green-500" : "!bg-gray-300",
                               )}
-                            />
+                            >
+                              {region}
+                            </div>
                           ),
                         )}{" "}
                       </div>
@@ -264,7 +320,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                 </TableBody>
               </Table>
 
-              <Button
+              {/* <Button
                 href={
                   "https://arcade-songs.zetaraku.dev/maimai/song/?id=" +
                   encodeURIComponent(sheet.songId)
@@ -278,10 +334,10 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                 <span className="text-xs tracking-tighter">
                   arcade-songs.zetaraku.dev
                 </span>
-              </Button>
+              </Button> */}
 
               <div className="mt-4 text-xs text-gray-500 text-right">
-                Data from{" "}
+                Some data comes from{" "}
                 <a
                   href="https://arcade-songs.zetaraku.dev"
                   rel="noreferrer"
@@ -291,79 +347,83 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                   arcade-songs.zetaraku.dev
                 </a>
               </div>
-            </AccordionDetails>
-          </Accordion>
+            </div>
+          </div>
 
-          <Accordion className="bg-zinc-100/60">
-            <AccordionSummary expandIcon={<MdiChevronDown />}>
-              Achievement → Rating
-            </AccordionSummary>
+          {!sheet.isTypeUtage && (
+            <div className="flex flex-col gap-1">
+              <div className="font-base font-bold">Achievement → Rating</div>
+              <div>
+                <Table className="tabular-nums !font-mono" size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell width="100px">Achv</TableCell>
+                      <TableCell width="50px">Rating</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {ratings.map((rating, i) => {
+                      const nextRating =
+                        i === ratings.length - 1 ? null : ratings[i + 1];
+                      const isCurrentAchievementRateRow =
+                        rating.achievementRate === currentAchievementRate;
 
-            <AccordionDetails>
-              <Table className="tabular-nums !font-mono" size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell width="100px">Achv</TableCell>
-                    <TableCell width="50px">Rating</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {ratings.map((rating, i) => {
-                    const nextRating =
-                      i === ratings.length - 1 ? null : ratings[i + 1];
-                    const isCurrentAchievementRateRow =
-                      rating.achievementRate === currentAchievementRate;
-
-                    return (
-                      <TableRow
-                        key={rating.achievementRate}
-                        sx={{
-                          "&:last-child td, &:last-child th": { border: 0 },
-                        }}
-                        className={clsx(
-                          isCurrentAchievementRateRow && "bg-amber",
-                        )}
-                      >
-                        <TableCell component="th" scope="row">
-                          <div className={clsx("flex items-center font-sans")}>
-                            <DXRank rank={rating.rating.rank} className="h-8" />
-                            <SheetAchievementRate
-                              value={rating.achievementRate}
-                            />
-                            {isCurrentAchievementRateRow && (
-                              <Chip
-                                label="Current"
-                                size="small"
-                                className="ml-2"
-                                color="default"
+                      return (
+                        <TableRow
+                          key={rating.achievementRate}
+                          sx={{
+                            "&:last-child td, &:last-child th": { border: 0 },
+                          }}
+                          className={clsx(
+                            isCurrentAchievementRateRow && "bg-amber",
+                          )}
+                        >
+                          <TableCell component="th" scope="row">
+                            <div
+                              className={clsx("flex items-center font-sans")}
+                            >
+                              <DXRank
+                                rank={rating.rating.rank}
+                                className="h-8"
                               />
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="relative font-sans">
-                            <span className="font-bold">
-                              {rating.rating.ratingAwardValue}
-                            </span>
+                              <SheetAchievementRate
+                                value={rating.achievementRate}
+                              />
+                              {isCurrentAchievementRateRow && (
+                                <Chip
+                                  label="Current"
+                                  size="small"
+                                  className="ml-2"
+                                  color="default"
+                                />
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="relative font-sans">
+                              <span className="font-bold">
+                                {rating.rating.ratingAwardValue}
+                              </span>
 
-                            {nextRating && (
-                              <div className="absolute -bottom-5 -left-1 px-1 text-xs text-gray-500 bg-zinc-100 shadow-[0_0_0_1px_var(--un-shadow-color)] shadow-zinc-300/80 rounded-xs">
-                                ↑{" "}
-                                <span className="font-bold">
-                                  {rating.rating.ratingAwardValue -
-                                    nextRating.rating.ratingAwardValue}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </AccordionDetails>
-          </Accordion>
+                              {nextRating && (
+                                <div className="absolute -bottom-5 -left-1 px-1 text-xs text-gray-500 bg-zinc-100 shadow-[0_0_0_1px_var(--un-shadow-color)] shadow-zinc-300/80 rounded-xs">
+                                  ↑{" "}
+                                  <span className="font-bold">
+                                    {rating.rating.ratingAwardValue -
+                                      nextRating.rating.ratingAwardValue}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

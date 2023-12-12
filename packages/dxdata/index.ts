@@ -100,8 +100,8 @@ export enum TypeEnum {
 
 export enum VersionEnum {
   BUDDiES = "BUDDiES",
-  FESTIVAL = "FESTiVAL",
-  FESTIVALPLUS = "FESTiVAL PLUS",
+  FESTiVAL = "FESTiVAL",
+  FESTiVALPLUS = "FESTiVAL PLUS",
   FiNALE = "FiNALE",
   GreeN = "GreeN",
   GreeNPLUS = "GreeN PLUS",
@@ -119,8 +119,8 @@ export enum VersionEnum {
   PiNKPLUS = "PiNK PLUS",
   Splash = "Splash",
   SplashPLUS = "Splash PLUS",
-  UNIVERSE = "UNiVERSE",
-  UNIVERSEPLUS = "UNiVERSE PLUS",
+  UNiVERSE = "UNiVERSE",
+  UNiVERSEPLUS = "UNiVERSE PLUS",
 }
 
 // from https://github.com/zetaraku/arcade-songs-fetch/blob/362f2a1b1a1752074951006cedde06948fb0061a/src/maimai/fetch-intl-versions.ts#L16
@@ -150,18 +150,44 @@ export const VERSION_ID_MAP = new Map([
   //! add further version here !//
 ]);
 
+export const VERSION_SLUG_MAP = new Map([
+  ["maimai", "maimai"],
+  ["maimai PLUS", "maimai-plus"],
+  ["GreeN", "green"],
+  ["GreeN PLUS", "green-plus"],
+  ["ORANGE", "orange"],
+  ["ORANGE PLUS", "orange-plus"],
+  ["PiNK", "pink"],
+  ["PiNK PLUS", "pink-plus"],
+  ["MURASAKi", "murasaki"],
+  ["MURASAKi PLUS", "murasaki-plus"],
+  ["MiLK", "milk"],
+  ["MiLK PLUS", "milk-plus"],
+  ["FiNALE", "finale"],
+  ["maimaiでらっくす", "maimaidx"],
+  ["maimaiでらっくす PLUS", "maimaidx-plus"],
+  ["Splash", "splash"],
+  ["Splash PLUS", "splash-plus"],
+  ["UNiVERSE", "universe"],
+  ["UNiVERSE PLUS", "universe-plus"],
+  ["FESTiVAL", "festival"],
+  ["FESTiVAL PLUS", "festival-plus"],
+  ["BUDDiES", "buddies"],
+  //! add further version here !//
+]);
+
 export const VERSION_SORT_ORDER = Array.from(VERSION_ID_MAP.entries())
   .sort((a, b) => a[1] - b[1])
   .map((a) => a[0]);
 
 export const MULTIVER_AVAILABLE_MIN_VERSION = VERSION_ID_MAP.get(
-  VersionEnum.UNIVERSEPLUS
+  VersionEnum.UNiVERSEPLUS
 )!;
 
 export const MULTIVER_AVAILABLE_VERSIONS = Array.from(VERSION_ID_MAP.entries())
   .filter((a) => a[1] >= MULTIVER_AVAILABLE_MIN_VERSION)
   .sort((a, b) => a[1] - b[1])
-  .map((a) => a[0]);
+  .map((a) => a[0]) as VersionEnum[];
 
 export interface TypeElement {
   type: TypeEnum;

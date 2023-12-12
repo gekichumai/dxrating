@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import clsx from "clsx";
 import { FC, HTMLAttributes, ImgHTMLAttributes, memo, useState } from "react";
+import toast from "react-hot-toast";
 import { match } from "ts-pattern";
 import { FlattenedSheet } from "../songs";
 import { useIsLargeDevice } from "../utils/breakpoints";
@@ -277,9 +278,10 @@ export const SheetTitle: FC<{
   sheet: FlattenedSheet;
 
   enableAltNames?: boolean;
+  enableClickToCopy?: boolean;
 
   className?: string;
-}> = ({ sheet, enableAltNames, className }) => {
+}> = ({ sheet, enableAltNames, enableClickToCopy, className }) => {
   const { title, searchAcronyms, difficulty, type, version } = sheet;
   return (
     <div className="flex flex-col">
@@ -290,7 +292,20 @@ export const SheetTitle: FC<{
         )}
       >
         <span className="flex flex-col">
-          <span className="leading-tight">{title}</span>
+          <span
+            className="leading-tight cursor-pointer"
+            {...(enableClickToCopy && {
+              onClick: () => {
+                navigator.clipboard.writeText(title);
+                toast.success("Copied title to clipboard", {
+                  id: `copy-sheet-title-${title}`,
+                });
+              },
+              title: "Click to copy",
+            })}
+          >
+            {title}
+          </span>
           {enableAltNames && (searchAcronyms?.length ?? 0) > 0 && (
             <SheetAltNames altNames={searchAcronyms!} />
           )}

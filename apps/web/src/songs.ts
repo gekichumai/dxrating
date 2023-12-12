@@ -44,6 +44,8 @@ export interface FlattenedSheet {
   noteCounts: NoteCounts;
   regions: Regions;
   isSpecial: boolean;
+
+  isTypeUtage: boolean;
 }
 
 export const canonicalId = (song: Song, sheet: Sheet) => {
@@ -81,6 +83,8 @@ export const getFlattenedSheets = async (
       ...sheet,
       id: canonicalId(song, sheet),
       searchAcronyms: song.searchAcronyms,
+      isTypeUtage:
+        sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P,
       internalLevelValue: sheet.multiverInternalLevelValue
         ? sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue
         : sheet.internalLevelValue,

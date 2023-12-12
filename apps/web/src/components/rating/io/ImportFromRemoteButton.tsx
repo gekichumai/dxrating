@@ -203,7 +203,7 @@ export const ImportFromRemoteListItem: FC<{
                   setLastModified(new Date(data.lastModified));
               }),
             {
-              loading: "Loading remote file...",
+              loading: "Loading remote content...",
               success: "Remote content has been loaded.",
               error: "Failed to load remote content.",
             },
@@ -214,7 +214,7 @@ export const ImportFromRemoteListItem: FC<{
           <IconMdiCloudDownload />
         </ListItemIcon>
         <ListItemText
-          primary="Import from Remote Data..."
+          primary="Import from Cloud..."
           secondary="Currently only RhythmROC is supported."
         />
       </MenuItem>
@@ -256,7 +256,7 @@ const ImportFromRemoteContent: FC<{
   return (
     <>
       <DialogTitle className="flex flex-col items-start">
-        <div>Import from Remote Data</div>
+        <div>Import from Cloud</div>
         <div className="text-sm text-gray-500">
           {mode === "select-user"
             ? "Choose the user to import their gameplays from."
@@ -381,9 +381,7 @@ const ImportFromRemoteContent: FC<{
                 })),
               );
 
-              toast.success(
-                `Imported ${records.length} gameplays from Aqua SQLite.`,
-              );
+              toast.success(`Imported ${records.length} gameplays from cloud.`);
 
               onClose?.();
             }}
