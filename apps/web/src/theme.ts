@@ -17,6 +17,6 @@ export const THEME: Record<string, Theme> = {
     background:
       "https://dxrating-assets.imgg.dev/images/background/buddies.jpg",
     logo: "https://dxrating-assets.imgg.dev/images/version-logo/buddies.jpg",
-    accentColor: "#F69F04",
+    accentColor: "#FAAE29",
   },
 };
