@@ -1,6 +1,7 @@
 import { CircularProgress, Tab, Tabs } from "@mui/material";
 import { useTransition } from "react";
 import { useLocalStorage } from "react-use";
+import { About } from "./components/global/About";
 import { VersionSwitcher } from "./components/global/VersionSwitcher";
 import { RatingCalculator } from "./pages/RatingCalculator";
 import { SheetList } from "./pages/SheetList";
@@ -20,7 +21,8 @@ export const App = () => {
         src={versionTheme.background}
         className="fixed inset-0 h-full w-full z-[-1] object-cover object-center"
       />
-      <div className="h-full w-full">
+      <div className="h-full w-full relative">
+        <About />
         <div
           className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-8"
           style={{

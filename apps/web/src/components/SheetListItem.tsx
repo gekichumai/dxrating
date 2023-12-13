@@ -1,12 +1,8 @@
 import { DifficultyEnum, TypeEnum } from "@gekichumai/dxdata";
 import {
-  Dialog,
-  DialogContent,
-  Grow,
   ListItemButton,
   ListItemSecondaryAction,
   ListItemText,
-  SwipeableDrawer,
 } from "@mui/material";
 import clsx from "clsx";
 import { FC, HTMLAttributes, ImgHTMLAttributes, memo, useState } from "react";
@@ -19,6 +15,7 @@ import {
   SheetDialogContent,
   SheetDialogContentProps,
 } from "./SheetDialogContent";
+import { ResponsiveDialog } from "./global/ResponsiveDialog";
 
 export const SheetListItem: FC<
   {
@@ -30,7 +27,9 @@ export const SheetListItem: FC<
 
   return (
     <>
-      <SheetDialog open={open} setOpen={setOpen} {...props} />
+      <ResponsiveDialog open={open} setOpen={setOpen}>
+        <SheetDialogContent {...props} />
+      </ResponsiveDialog>
 
       <ListItemButton
         disableGutters={!isLargeDevice}
@@ -93,61 +92,6 @@ const SheetInternalLevelValue: FC<{ value: number }> = ({ value }) => {
       <span className="text-lg text-zinc-600">{wholePart}.</span>
       <span className="text-xl">{decimalPart.toFixed(1).split(".")[1]}</span>
     </div>
-  );
-};
-
-export const SheetDialog: FC<
-  {
-    open: boolean;
-    setOpen: (open: boolean) => void;
-  } & SheetDialogContentProps
-> = ({ open, setOpen, ...props }) => {
-  const isLargeDevice = useIsLargeDevice();
-
-  return isLargeDevice ? (
-    <Dialog
-      open={open}
-      onClose={() => setOpen(false)}
-      maxWidth="md"
-      fullWidth
-      TransitionComponent={Grow}
-    >
-      <DialogContent>
-        <SheetDialogContent {...props} />
-      </DialogContent>
-    </Dialog>
-  ) : (
-    <SwipeableDrawer
-      disableDiscovery
-      disableSwipeToOpen
-      anchor="bottom"
-      open={open}
-      onClose={() => setOpen(false)}
-      onOpen={() => setOpen(true)}
-      sx={{
-        "& .MuiDrawer-paper": {
-          height:
-            "calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 4rem)",
-        },
-      }}
-      PaperProps={{
-        sx: {
-          "&": {
-            borderRadius: "0.75rem 0.75rem 0 0",
-          },
-        },
-      }}
-    >
-      {/* <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/40" />
-        <Drawer.Content className="bg-zinc-100 flex flex-col rounded-t-[10px] h-[96%] mt-24 fixed bottom-0 left-0 right-0 z-[1]"> */}
-      <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-300 my-3" />
-      <div className="overflow-auto h-full p-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        {open && <SheetDialogContent {...props} />}
-      </div>
-      {/* </Drawer.Content> */}
-      {/* // </Drawer.Portal> */}
-    </SwipeableDrawer>
   );
 };
 

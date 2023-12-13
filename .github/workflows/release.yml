@@ -32,6 +32,21 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
+      
+      # Populate Bundle Information
+      # export const BUNDLE = {
+      #   gitCommit: (import.meta.env.VITE_GIT_COMMIT as string) || "unknown",
+      #   buildNumber: (import.meta.env.VITE_BUILD_NUMBER as string) || "?",
+      #   buildTime:
+      #     (import.meta.env.VITE_BUILD_TIME as string) || "????-??-??T??:??:??+00:00",
+      # };
+      - name: Populate Bundle Information
+        id: bundle-info
+        shell: bash
+        run: |
+          echo "VITE_GIT_COMMIT=$(git rev-parse HEAD)" >> ${GITHUB_ENV}
+          echo "VITE_BUILD_NUMBER=${{ github.run_number }}" >> ${GITHUB_ENV}
+          echo "VITE_BUILD_TIME=$(date --utc +%FT%TZ)" >> ${GITHUB_ENV}
 
       # Run a build step here if your project requires
       # building before publishing to Cloudflare Pages.

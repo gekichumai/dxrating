@@ -41,7 +41,7 @@ export const SheetList: FC = () => {
             onChange={(e) => setShowOnlyCurrentVersion(e.target.checked)}
           />
         }
-        label={`Filter Current B15: Show only ${DXVersionToDXDataVersionEnumMap[version]} charts and sort by level (descending)`}
+        label={`Filter Current B15: Show only ${DXVersionToDXDataVersionEnumMap[version]} charts`}
       />
 
       <Alert severity="info" className="text-sm !rounded-full shadow-lg">

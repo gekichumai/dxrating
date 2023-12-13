@@ -27,7 +27,11 @@ pwd
 npm install -g yarn
 
 # Install dependencies
-yarn install
+yarn install --frozen-lockfile
+
+# populate bundle information
+VITE_GIT_COMMIT=$(git rev-parse HEAD)
+VITE_BUILD_TIME=$(date -u +%FT%TZ)
 
 # build and sync
 yarn run build
