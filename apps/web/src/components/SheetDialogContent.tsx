@@ -1,5 +1,6 @@
 import {
   MULTIVER_AVAILABLE_VERSIONS,
+  VERSION_ID_MAP,
   VERSION_SLUG_MAP,
 } from "@gekichumai/dxdata";
 import {
@@ -14,11 +15,20 @@ import {
 } from "@mui/material";
 import clsx from "clsx";
 import { motion } from "framer-motion";
-import { FC, PropsWithChildren, memo, useMemo, useState } from "react";
+import {
+  FC,
+  PropsWithChildren,
+  memo,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { match } from "ts-pattern";
 import IconMdiSearchWeb from "~icons/mdi/search-web";
 import IconMdiSpotify from "~icons/mdi/spotify";
 import IconMdiYouTube from "~icons/mdi/youtube";
+import { useAppContextDXDataVersion } from "../models/context/useAppContext";
 import { FlattenedSheet } from "../songs";
 import { calculateRating } from "../utils/rating";
 import { DXRank } from "./DXRank";
@@ -126,39 +136,6 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
       }));
     }, [sheet, currentAchievementRate]);
 
-    const multiverInternalLevelValues = useMemo(
-      () =>
-        MULTIVER_AVAILABLE_VERSIONS.map((version) => ({
-          version,
-          internalLevelValue: sheet.multiverInternalLevelValue?.[version],
-        })).reduce(
-          (acc, { version, internalLevelValue }) => {
-            // add `delta` field
-            let delta: number | undefined;
-            const accReversed = [...acc].reverse();
-            const prev = accReversed.find(
-              (v) => v.internalLevelValue !== undefined,
-            );
-            if (
-              prev &&
-              internalLevelValue !== undefined &&
-              prev.internalLevelValue !== undefined
-            ) {
-              delta = internalLevelValue - prev.internalLevelValue;
-            }
-
-            acc.push({ version, internalLevelValue, delta });
-            return acc;
-          },
-          [] as {
-            version: string;
-            internalLevelValue?: number;
-            delta?: number;
-          }[],
-        ),
-      [sheet],
-    );
-
     return (
       <div className="flex flex-col gap-2 relative">
         <SheetDialogContentHeader sheet={sheet} />
@@ -196,55 +173,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
           {!sheet.isTypeUtage && (
             <div className="flex flex-col gap-1">
               <SectionHeader>Internal Level History</SectionHeader>
-              <div className="overflow-x-auto">
-                {multiverInternalLevelValues.filter(
-                  (v) => v.internalLevelValue !== undefined,
-                ).length > 1 ? (
-                  <Table size="small" className="mb-4">
-                    <TableHead>
-                      <TableRow>
-                        {multiverInternalLevelValues.map(({ version }) => (
-                          <TableCell key={version}>
-                            <img
-                              src={`https://dxrating-assets.imgg.dev/images/version-title/${VERSION_SLUG_MAP.get(
-                                version,
-                              )}.png`}
-                              alt={VERSION_SLUG_MAP.get(version)}
-                              className="h-40.75px w-83px min-w-[83px] -ml-1"
-                            />
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      <TableRow>
-                        {multiverInternalLevelValues.map(
-                          ({ internalLevelValue, delta }) => (
-                            <TableCell key={internalLevelValue}>
-                              {internalLevelValue === undefined ? (
-                                <div className="text-gray-500 select-none">
-                                  —
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-1">
-                                  <span className="font-bold tabular-nums">
-                                    {internalLevelValue?.toFixed(1)}
-                                  </span>
-                                  {delta !== undefined && (
-                                    <DeltaArrow delta={delta} />
-                                  )}
-                                </div>
-                              )}
-                            </TableCell>
-                          ),
-                        )}
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="text-gray-500">No history available</div>
-                )}
-              </div>
+              <SheetInternalLevelHistory sheet={sheet} />
             </div>
           )}
 
@@ -460,6 +389,117 @@ const SheetAchievementRate: FC<{ value: number }> = ({ value }) => {
         {decimal.toFixed(4).slice(2)}
       </span>
       <span>%</span>
+    </div>
+  );
+};
+
+const SheetInternalLevelHistory: FC<{
+  sheet: FlattenedSheet;
+}> = ({ sheet }) => {
+  const appVersion = useAppContextDXDataVersion();
+  const scrollableContainer = useRef<HTMLDivElement>(null);
+  const multiverInternalLevelValues = useMemo(
+    () =>
+      MULTIVER_AVAILABLE_VERSIONS.map((version) => ({
+        version,
+        internalLevelValue: sheet.multiverInternalLevelValue?.[version],
+        available:
+          VERSION_ID_MAP.get(version)! >= VERSION_ID_MAP.get(sheet.version)!,
+      })).reduce(
+        (acc, { version, internalLevelValue, ...extra }) => {
+          // add `delta` field
+          let delta: number | undefined;
+          const accReversed = [...acc].reverse();
+          const prev = accReversed.find(
+            (v) => v.internalLevelValue !== undefined,
+          );
+          if (
+            prev &&
+            internalLevelValue !== undefined &&
+            prev.internalLevelValue !== undefined
+          ) {
+            delta = internalLevelValue - prev.internalLevelValue;
+          }
+
+          acc.push({ version, internalLevelValue, delta, ...extra });
+          return acc;
+        },
+        [] as {
+          version: string;
+          internalLevelValue?: number;
+          delta?: number;
+          available: boolean;
+        }[],
+      ),
+    [sheet],
+  );
+
+  useLayoutEffect(() => {
+    if (scrollableContainer.current) {
+      scrollableContainer.current.scrollLeft =
+        scrollableContainer.current.scrollWidth;
+    }
+  }, [multiverInternalLevelValues]);
+
+  return (
+    <div className="overflow-x-auto" ref={scrollableContainer}>
+      {multiverInternalLevelValues.filter(
+        (v) => v.internalLevelValue !== undefined,
+      ).length > 1 ? (
+        <Table size="small" className="mb-4">
+          <TableHead>
+            <TableRow>
+              {multiverInternalLevelValues.map(({ version, available }) => (
+                <TableCell
+                  key={version}
+                  className={clsx(
+                    appVersion === version && "bg-amber-200",
+                    !available && "opacity-50",
+                  )}
+                >
+                  <img
+                    src={`https://dxrating-assets.imgg.dev/images/version-title/${VERSION_SLUG_MAP.get(
+                      version,
+                    )}.png`}
+                    alt={VERSION_SLUG_MAP.get(version)}
+                    className="h-40.75px w-83px min-w-[83px] -ml-1"
+                  />
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            <TableRow>
+              {multiverInternalLevelValues.map(
+                ({ version, internalLevelValue, available, delta }) => (
+                  <TableCell
+                    key={internalLevelValue}
+                    className={clsx(
+                      appVersion === version && "bg-amber-200",
+                      !available && "opacity-50",
+                    )}
+                  >
+                    {internalLevelValue === undefined ? (
+                      <div className="text-gray-500 select-none">
+                        {available ? "—" : "／"}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold tabular-nums">
+                          {internalLevelValue?.toFixed(1)}
+                        </span>
+                        {delta !== undefined && <DeltaArrow delta={delta} />}
+                      </div>
+                    )}
+                  </TableCell>
+                ),
+              )}
+            </TableRow>
+          </TableBody>
+        </Table>
+      ) : (
+        <div className="text-gray-500">No history available</div>
+      )}
     </div>
   );
 };

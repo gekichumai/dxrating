@@ -181,7 +181,7 @@ export const VERSION_SORT_ORDER = Array.from(VERSION_ID_MAP.entries())
   .map((a) => a[0]);
 
 export const MULTIVER_AVAILABLE_MIN_VERSION = VERSION_ID_MAP.get(
-  VersionEnum.UNiVERSEPLUS
+  VersionEnum.MaimaiでらっくすPLUS
 )!;
 
 export const MULTIVER_AVAILABLE_VERSIONS = Array.from(VERSION_ID_MAP.entries())

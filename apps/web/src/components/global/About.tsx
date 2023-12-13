@@ -95,7 +95,7 @@ export const About = () => {
             </AboutLink>
           </ul>
 
-          <div className="flex flex-col items-center mt-16">
+          <div className="flex flex-col items-start mt-24">
             <img
               className="h-12 w-auto"
               src="https://dxrating-assets.imgg.dev/images/version-adornment/buddies.png"
@@ -103,7 +103,7 @@ export const About = () => {
             />
 
             <span className="font-mono text-sm text-gray-400 mt-2">
-              {BUNDLE.gitCommit || "unknown"}
+              {BUNDLE.gitCommit?.slice(0, 7) || "unknown"}
               {BUNDLE.buildNumber !== undefined && (
                 <> (build {BUNDLE.buildNumber})</>
               )}

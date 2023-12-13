@@ -51,6 +51,13 @@ export const VersionSwitcher: FC = () => {
       value={version}
       variant="filled"
       onChange={(e) => setVersion(e.target.value as DXVersion)}
+      renderValue={(value) => (
+        <img
+          src={`https://dxrating-assets.imgg.dev/images/version-logo/${value}.png`}
+          className="h-32 w-auto"
+          draggable={false}
+        />
+      )}
     >
       <ListSubheader>Select DXData Version</ListSubheader>
       {VERSIONS.map((v) => (
@@ -61,7 +68,7 @@ export const VersionSwitcher: FC = () => {
         >
           <img
             src={`https://dxrating-assets.imgg.dev/images/version-logo/${v}.png`}
-            className="h-32 w-auto"
+            className="h-auto w-56"
             draggable={false}
           />
         </MenuItem>

@@ -181,6 +181,7 @@ const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({
 
   return (
     <img
+      key={type}
       src={SHEET_TYPE_IMAGE[type]}
       className="h-26px w-70px"
       alt={type}
