@@ -29,6 +29,8 @@ export const About = () => {
 
   const buildTime = (() => {
     try {
+      if (!BUNDLE.buildTime) throw new Error("No build time");
+
       const date = new Date(BUNDLE.buildTime);
       if (isNaN(date.getTime())) {
         throw new Error("Invalid date");
