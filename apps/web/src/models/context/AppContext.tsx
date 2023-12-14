@@ -1,6 +1,13 @@
 import { VersionEnum } from "@gekichumai/dxdata";
-import { FC, PropsWithChildren, createContext, useMemo } from "react";
+import {
+  FC,
+  PropsWithChildren,
+  createContext,
+  useEffect,
+  useMemo,
+} from "react";
 import { useLocalStorage } from "react-use";
+import { DXRatingPlugin } from "../../utils/capacitor/plugin/wrap";
 
 export type AppContext = AppContextStates & AppContextFns;
 
@@ -40,6 +47,12 @@ export const AppContextProvider: FC<PropsWithChildren<object>> = ({
     }),
     [state, setState],
   );
+
+  useEffect(() => {
+    DXRatingPlugin.userPreferenceDidChanged({
+      version: value.version,
+    });
+  }, [value.version]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

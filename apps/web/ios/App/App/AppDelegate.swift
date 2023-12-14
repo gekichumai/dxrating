@@ -2,11 +2,13 @@ import UIKit
 import Capacitor
 import CoreSpotlight
 import ZIPFoundation
+import Combine
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+    var topBarColorChunk = UIView()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // common controllers
@@ -29,8 +31,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             print("remote notification launch option", notif ?? "null")
         }
 
-        let topBarColorChunk = UIView()
-        topBarColorChunk.backgroundColor = .init(rgb: 0xC8A8F9)
+        topBarColorChunk.backgroundColor = UIColor(named: "accent-festival-plus")
         topBarColorChunk.translatesAutoresizingMaskIntoConstraints = false
         rootView?.addSubview(topBarColorChunk)
 
@@ -143,10 +144,38 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             print("finished uncompressing covers and indexing for dxdata with SHA256 \(String(describing: dxDataSHA256Sum))")
         }
         
-        // MARK: App launched due to Spotlight search handling
+        // MARK: Update App Icon based on AppPreferences
         
+        var cancellables = Set<AnyCancellable>()
+        
+        AppPreferences.shared.$dxVersion
+            .sink { dxVersion in
+                print("dxVersion changed to \(dxVersion)")
+                self.themeShouldUpdate(dxVersion: dxVersion)
+            }
+            .store(in: &cancellables)
         
         return true
+    }
+    
+    func themeShouldUpdate(dxVersion: DXVersion) {
+        if dxVersion == .buddies {
+            self.changeAppIcon(to: "appicon-buddies")
+            UIView.animate(withDuration: 0.3) {
+                self.topBarColorChunk.backgroundColor = UIColor(named: "accent-buddies")
+            }
+        } else {
+            self.changeAppIcon(to: nil)
+            UIView.animate(withDuration: 0.3) {
+                self.topBarColorChunk.backgroundColor = UIColor(named: "accent-festival-plus")
+            }
+        }
+    }
+    
+    func changeAppIcon(to name: String?) {
+        if UIApplication.shared.alternateIconName != name {
+            UIApplication.shared.setAlternateIconName(name)
+        }
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
