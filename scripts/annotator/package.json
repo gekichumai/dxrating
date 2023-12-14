@@ -8,7 +8,7 @@
   },
   "scripts": {
     "update:alias1": "curl -s https://raw.githubusercontent.com/lomotos10/GCM-bot/main/data/aliases/en/chuni.tsv -o ./aliases1.tsv",
-    "update:alias2": "curl -s https://api.yuzuai.xyz/maimaidx/maimaidxalias -o ./aliases2.json",
+    "update:alias2": "curl -s https://api.yuzuai.xyz/maimaidx/maimaidxalias | jq . > ./aliases2.json",
     "update": "npm-run-all update:*",
     "run": "esno index.ts"
   },

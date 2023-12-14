@@ -1236,9 +1236,6 @@ async function main() {
         entry.title,
         entry.internalId
       );
-      const songOnlyContainsUtage = entry.sheets.every(
-        (v) => v.type === "utage"
-      );
 
       return {
         ...entry,
@@ -1269,13 +1266,6 @@ async function main() {
                 (v.comment === "バンドメンバーを集めて挑め！（ヒーロー級）" &&
                   entry.songId === "[協]青春コンプレックス（ヒーロー級）"))
           );
-
-          if (officialUtageSong) {
-            console.debug(
-              `Found official utage song for ${entry.songId}`,
-              officialUtageSong
-            );
-          }
 
           const is2pUtage =
             sheet.type === "utage" && officialUtageSong?.buddy === "○";

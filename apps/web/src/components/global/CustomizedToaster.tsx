@@ -12,7 +12,7 @@ export const CustomizedToaster: FC = () => {
         },
       }}
       containerStyle={{
-        marginTop: "calc(env(safe-area-inset-top) + 2rem)",
+        marginTop: "calc(env(safe-area-inset-top) + 1rem)",
       }}
     />
   );
