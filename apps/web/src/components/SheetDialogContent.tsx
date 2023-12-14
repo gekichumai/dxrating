@@ -19,7 +19,7 @@ import {
   FC,
   PropsWithChildren,
   memo,
-  useLayoutEffect,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -81,7 +81,9 @@ const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
         <div className="flex-1" />
 
         <div className="text-4xl text-zinc-900/60 leading-none">
-          {sheet.internalLevelValue.toFixed(1)}
+          {sheet.isTypeUtage
+            ? sheet.level
+            : sheet.internalLevelValue.toFixed(1)}
         </div>
       </div>
     );
@@ -103,8 +105,9 @@ const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
   return (
     <img
       src={`https://dxrating-assets.imgg.dev/images/rating-arrow/${direction}.png`}
-      alt=""
-      className="w-6 h-6"
+      alt={direction}
+      className="w-6 h-6 touch-callout-none"
+      draggable={false}
     />
   );
 };
@@ -434,10 +437,14 @@ const SheetInternalLevelHistory: FC<{
     [sheet],
   );
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (scrollableContainer.current) {
+      // hide the scrollbar when scrolling to the right
+      scrollableContainer.current.style.overflowX = "hidden";
       scrollableContainer.current.scrollLeft =
         scrollableContainer.current.scrollWidth;
+      // restore the scrollbar
+      scrollableContainer.current.style.overflowX = "auto";
     }
   }, [multiverInternalLevelValues]);
 
@@ -462,7 +469,8 @@ const SheetInternalLevelHistory: FC<{
                       version,
                     )}.png`}
                     alt={VERSION_SLUG_MAP.get(version)}
-                    className="h-40.75px w-83px min-w-[83px] -ml-1"
+                    className="h-40.75px w-83px min-w-[83px] -ml-1 touch-callout-none"
+                    draggable={false}
                   />
                 </TableCell>
               ))}

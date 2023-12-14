@@ -68,7 +68,7 @@ import { Rating, calculateRating } from "../utils/rating";
 
 export interface Entry {
   sheet: FlattenedSheet;
-  rating: Rating;
+  rating: Rating | null;
   sheetId: string;
   achievementRate: number;
   includedIn: "b15" | "b35" | null;
@@ -168,10 +168,9 @@ export const RatingCalculator = () => {
         {
           ...entry,
           sheet,
-          rating: calculateRating(
-            sheet.internalLevelValue,
-            entry.achievementRate,
-          ),
+          rating: sheet.isRatingEligible
+            ? calculateRating(sheet.internalLevelValue, entry.achievementRate)
+            : null,
         },
       ];
     });
@@ -183,7 +182,12 @@ export const RatingCalculator = () => {
           entry.sheet.version ===
           DXVersionToDXDataVersionEnumMap[currentVersion],
       )
-      .sort((a, b) => b.rating.ratingAwardValue - a.rating.ratingAwardValue)
+      // a.rating and b.rating could be null. put them at the end
+      .sort((a, b) => {
+        if (!a.rating) return 1;
+        if (!b.rating) return -1;
+        return b.rating.ratingAwardValue - a.rating.ratingAwardValue;
+      })
       .slice(0, 15)
       .map((entry) => entry.sheetId);
 
@@ -193,7 +197,11 @@ export const RatingCalculator = () => {
           entry.sheet.version !==
           DXVersionToDXDataVersionEnumMap[currentVersion],
       )
-      .sort((a, b) => b.rating.ratingAwardValue - a.rating.ratingAwardValue)
+      .sort((a, b) => {
+        if (!a.rating) return 1;
+        if (!b.rating) return -1;
+        return b.rating.ratingAwardValue - a.rating.ratingAwardValue;
+      })
       .slice(0, 35)
       .map((entry) => entry.sheetId);
 
@@ -220,13 +228,13 @@ export const RatingCalculator = () => {
   const { b15Average, b35Average } = useMemo(() => {
     const b15Average =
       b15Entries.reduce(
-        (acc, entry) => acc + entry.rating.ratingAwardValue,
+        (acc, entry) => acc + (entry.rating?.ratingAwardValue ?? 0),
         0,
       ) / b15Entries.length;
 
     const b35Average =
       b35Entries.reduce(
-        (acc, entry) => acc + entry.rating.ratingAwardValue,
+        (acc, entry) => acc + (entry.rating?.ratingAwardValue ?? 0),
         0,
       ) / b35Entries.length;
 
@@ -275,6 +283,14 @@ export const RatingCalculator = () => {
         cell: RatingCalculatorRatingCell,
         size: 50,
         minSize: 100,
+        sortingFn: (a, b) => {
+          if (!a.original.rating) return -1;
+          if (!b.original.rating) return 1;
+          return (
+            a.original.rating.ratingAwardValue -
+            b.original.rating.ratingAwardValue
+          );
+        },
       }),
       columnHelper.display({
         id: "actions",
@@ -291,6 +307,8 @@ export const RatingCalculator = () => {
     ],
     [modifyEntries],
   );
+
+  console.log({ allEntries, b15Entries, b35Entries });
 
   const table = useReactTable({
     data: allEntries,
@@ -358,7 +376,8 @@ export const RatingCalculator = () => {
 
                   <DenseTableCell>
                     {b15Entries.reduce(
-                      (sum, entry) => sum + entry.rating.ratingAwardValue,
+                      (sum, entry) =>
+                        sum + (entry.rating?.ratingAwardValue ?? 0),
                       0,
                     )}
                   </DenseTableCell>
@@ -377,7 +396,8 @@ export const RatingCalculator = () => {
                   <DenseTableCell>{b35Average.toFixed(2)}</DenseTableCell>
                   <DenseTableCell>
                     {b35Entries.reduce(
-                      (sum, entry) => sum + entry.rating.ratingAwardValue,
+                      (sum, entry) =>
+                        sum + (entry.rating?.ratingAwardValue ?? 0),
                       0,
                     )}
                   </DenseTableCell>
@@ -389,7 +409,8 @@ export const RatingCalculator = () => {
                   </DenseTableCell>
                   <DenseTableCell>
                     {[...b15Entries, ...b35Entries].reduce(
-                      (sum, entry) => sum + entry.rating.ratingAwardValue,
+                      (sum, entry) =>
+                        sum + (entry.rating?.ratingAwardValue ?? 0),
                       0,
                     )}
                   </DenseTableCell>
@@ -558,7 +579,7 @@ const RatingCalculatorRatingCell: FC<{
   row: Row<Entry>;
 }> = ({ row }) => (
   <span className="font-sans tabular-nums">
-    {row.original.rating.ratingAwardValue}
+    {row.original.rating ? row.original.rating.ratingAwardValue : "-"}
   </span>
 );
 

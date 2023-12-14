@@ -27,17 +27,10 @@ export const FadedImage: FC<
         className={clsx(
           "transition-opacity h-full w-full",
           loaded ? "opacity-100" : "opacity-0",
-          !draggable && "select-none",
+          !draggable && "select-none touch-callout-none",
           instantlyLoaded ? "duration-0" : "duration-200",
         )}
         draggable={draggable}
-        style={
-          !draggable
-            ? {
-                WebkitTouchCallout: "none",
-              }
-            : undefined
-        }
       />
     </div>
   );

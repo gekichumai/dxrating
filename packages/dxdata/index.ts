@@ -74,6 +74,7 @@ export interface Sheet {
   regions: Regions;
   isSpecial: boolean;
   version?: VersionEnum;
+  comment?: string;
 }
 
 export interface NoteCounts {

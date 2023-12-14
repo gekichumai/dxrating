@@ -99,9 +99,10 @@ export const About = () => {
 
           <div className="flex flex-col items-start mt-24">
             <img
-              className="h-12 w-auto"
+              className="h-12 w-auto touch-callout-none"
               src="https://dxrating-assets.imgg.dev/images/version-adornment/buddies.png"
-              alt="Buddies"
+              alt="Version"
+              draggable={false}
             />
 
             <span className="font-mono text-sm text-gray-400 mt-2">

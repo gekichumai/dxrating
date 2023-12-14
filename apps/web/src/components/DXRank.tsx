@@ -11,7 +11,11 @@ export const DXRank: FC<{ rank?: string | null; className?: string }> = ({
   const image = `https://dxrating-assets.imgg.dev/images/rank/${slugVersion}/${rank}.png`;
 
   return image ? (
-    <img src={image} className={clsx("aspect-w-128 aspect-h-60", className)} />
+    <img
+      src={image}
+      className={clsx("aspect-w-128 aspect-h-60", className)}
+      draggable={false}
+    />
   ) : (
     <div
       className={clsx(

@@ -8,6 +8,7 @@ import clsx from "clsx";
 import { FC, HTMLAttributes, ImgHTMLAttributes, memo, useState } from "react";
 import toast from "react-hot-toast";
 import { match } from "ts-pattern";
+import MdiComment from "~icons/mdi/comment";
 import { FlattenedSheet } from "../songs";
 import { useIsLargeDevice } from "../utils/breakpoints";
 import { FadedImage } from "./FadedImage";
@@ -76,7 +77,13 @@ export const SheetListItemContent: FC<
       </ListItemText>
 
       <ListItemSecondaryAction>
-        <SheetInternalLevelValue value={sheet.internalLevelValue} />
+        {sheet.isTypeUtage ? (
+          <span className="font-bold tracking-tighter tabular-nums text-lg text-zinc-600">
+            {sheet.level}
+          </span>
+        ) : (
+          <SheetInternalLevelValue value={sheet.internalLevelValue} />
+        )}
       </ListItemSecondaryAction>
     </div>
   );
@@ -170,7 +177,7 @@ const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({
         {isUtage2P && (
           <img
             src="https://dxrating-assets.imgg.dev/images/chart-type/type_utage2p_endadornment.png"
-            className="h-26px w-95.875px ml-[-27px]"
+            className="h-26px w-95.875px ml-[-27px] touch-callout-none"
             alt={type}
             draggable={false}
           />
@@ -183,7 +190,7 @@ const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({
     <img
       key={type}
       src={SHEET_TYPE_IMAGE[type]}
-      className="h-26px w-70px"
+      className="h-26px w-70px touch-callout-none"
       alt={type}
       draggable={false}
     />
@@ -260,6 +267,13 @@ export const SheetTitle: FC<{
           <SheetDifficulty difficulty={difficulty} />
         </div>
       </h3>
+
+      {sheet.isTypeUtage && (
+        <span className="text-sm text-zinc-600 px-1.5 py-0.5 gap-1 bg-amber/75 inline-flex self-start rounded-md">
+          <MdiComment className="h-3 w-3 flex-shrink-0 mt-1.125" />
+          <span>{sheet.comment}</span>
+        </span>
+      )}
 
       <div className="text-sm">
         <span className="text-zinc-600">ver. {version}</span>

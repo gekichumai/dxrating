@@ -1,6 +1,6 @@
 // uno.config.ts
-import { defineConfig, presetUno } from "unocss";
 import { handler } from "@unocss/preset-mini/utils";
+import { defineConfig, presetUno } from "unocss";
 
 export default defineConfig({
   rules: [
@@ -25,6 +25,14 @@ export default defineConfig({
       ([, s]) => ({
         "background-image": `linear-gradient${handler.bracket(s)}`,
       }),
+    ],
+    [
+      "touch-callout-none",
+      {
+        "-webkit-touch-callout": "none",
+        "-ms-touch-action": "none",
+        "touch-action": "none",
+      },
     ],
   ],
   shortcuts: {

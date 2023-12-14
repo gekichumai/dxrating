@@ -19,7 +19,8 @@ export const App = () => {
     <div className="h-full w-full relative">
       <img
         src={versionTheme.background}
-        className="fixed inset-0 h-full w-full z-[-1] object-cover object-center"
+        className="fixed inset-0 h-full w-full z-[-1] object-cover object-center select-none touch-callout-none"
+        draggable={false}
       />
       <div className="h-full w-full relative">
         <About />

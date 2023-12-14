@@ -36,7 +36,7 @@ const VERSION_ID_MAP = new Map([
 
 const isMaimaiSeries = (version: string) => {
   const versionId = VERSION_ID_MAP.get(version);
-  return versionId !== undefined && versionId <= 12;
+  return versionId !== undefined && versionId <= 12; // 12 is the id of FiNALE
 };
 
 async function readAliases1() {
@@ -1179,11 +1179,48 @@ async function getAllMultiverInternalLevelValues() {
   return rows;
 }
 
+export interface MaimaiOfficialSongs {
+  artist: string;
+  catcode:
+    | "maimai"
+    | "POPS＆アニメ"
+    | "ゲーム＆バラエティ"
+    | "niconico＆ボーカロイド"
+    | "東方Project"
+    | "オンゲキ＆CHUNITHM"
+    | "宴会場";
+  image_url: string;
+  release: string;
+  lev_bas?: string;
+  lev_adv?: string;
+  lev_exp?: string;
+  lev_mas?: string;
+  sort: string;
+  title: string;
+  title_kana: string;
+  version: string;
+  lev_remas?: string;
+  dx_lev_bas?: string;
+  dx_lev_adv?: string;
+  dx_lev_exp?: string;
+  dx_lev_mas?: string;
+  date?: string;
+  dx_lev_remas?: string;
+  key?: "○";
+  lev_utage?: string;
+  kanji?: string;
+  comment?: string;
+  buddy?: "○";
+}
+
 async function main() {
   ALIAS_NAME_MAP = await readAliases1();
   ALIAS_ID_MAP = await readAliases2();
 
   const multiverInternalLevelValues = await getAllMultiverInternalLevelValues();
+  const maimaiOfficialSongs = (await fetch(
+    "https://maimai.sega.jp/data/maimai_songs.json"
+  ).then((res) => res.json())) as MaimaiOfficialSongs[];
 
   const dxdata = (await fs
     .readFile("./original.json", "utf-8")
@@ -1203,13 +1240,8 @@ async function main() {
         (v) => v.type === "utage"
       );
 
-      const title = songOnlyContainsUtage
-        ? entry.title.replace(/\[.*\]/g, "")
-        : entry.title;
-
       return {
         ...entry,
-        title,
         searchAcronyms,
         sheets: entry.sheets.map((sheet) => {
           const multiverInternalLevelValue = multiverInternalLevelValues
@@ -1227,8 +1259,26 @@ async function main() {
               {} as Record<string, number>
             );
 
+          const officialUtageSong = maimaiOfficialSongs.find(
+            (v) =>
+              v.title === entry.title &&
+              v.catcode === "宴会場" &&
+              (v.title !== "[協]青春コンプレックス" ||
+                (v.comment === "バンドメンバーを集めて楽しもう！（入門編）" &&
+                  entry.songId === "[協]青春コンプレックス（入門編）") ||
+                (v.comment === "バンドメンバーを集めて挑め！（ヒーロー級）" &&
+                  entry.songId === "[協]青春コンプレックス（ヒーロー級）"))
+          );
+
+          if (officialUtageSong) {
+            console.debug(
+              `Found official utage song for ${entry.songId}`,
+              officialUtageSong
+            );
+          }
+
           const is2pUtage =
-            sheet.type === "utage" && sheet.difficulty.includes("協");
+            sheet.type === "utage" && officialUtageSong?.buddy === "○";
 
           const haveAnyMultiverInternalLevelValue =
             Object.keys(multiverInternalLevelValue).length > 0;
@@ -1239,6 +1289,7 @@ async function main() {
             multiverInternalLevelValue: haveAnyMultiverInternalLevelValue
               ? multiverInternalLevelValue
               : undefined,
+            comment: officialUtageSong?.comment,
           } satisfies Sheet;
         }),
       };

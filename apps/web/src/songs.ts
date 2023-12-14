@@ -1,8 +1,5 @@
 import {
-  CategoryEnum,
   DifficultyEnum,
-  NoteCounts,
-  Regions,
   Sheet,
   Song,
   TypeEnum,
@@ -16,37 +13,12 @@ import useSWR from "swr";
 import { DXVersionToDXDataVersionEnumMap } from "./models/context/AppContext";
 import { useAppContext } from "./models/context/useAppContext";
 
-export interface FlattenedSheet {
-  id: string;
-  searchAcronyms: string[];
-
-  songId: string;
-  internalId: number;
-  category: CategoryEnum;
-  title: string;
-  artist: string;
-  bpm: number | null;
-  imageName: string;
-  version: VersionEnum;
-  releaseDate: string;
-  isNew: boolean;
-  isLocked: boolean;
-  sheets: Sheet[];
-
-  type: TypeEnum;
-  difficulty: DifficultyEnum;
-  level: string;
-  levelValue: number;
-  internalLevel: null | string;
-  internalLevelValue: number;
-  multiverInternalLevelValue?: Record<VersionEnum, number>;
-  noteDesigner: null | string;
-  noteCounts: NoteCounts;
-  regions: Regions;
-  isSpecial: boolean;
-
-  isTypeUtage: boolean;
-}
+export type FlattenedSheet = Song &
+  Sheet & {
+    id: string;
+    isTypeUtage: boolean;
+    isRatingEligible: boolean;
+  };
 
 export const canonicalId = (song: Song, sheet: Sheet) => {
   return [song.songId, sheet.type, sheet.difficulty].join("__dxrt__");
@@ -78,17 +50,22 @@ export const getFlattenedSheets = async (
 ): Promise<FlattenedSheet[]> => {
   const songs = getSongs(version);
   const flattenedSheets = songs.flatMap((song) => {
-    return song.sheets.map((sheet) => ({
-      ...song,
-      ...sheet,
-      id: canonicalId(song, sheet),
-      searchAcronyms: song.searchAcronyms,
-      isTypeUtage:
-        sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P,
-      internalLevelValue: sheet.multiverInternalLevelValue
-        ? sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue
-        : sheet.internalLevelValue,
-    }));
+    return song.sheets.map((sheet) => {
+      const isTypeUtage =
+        sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P;
+      return {
+        ...song,
+        ...sheet,
+        id: canonicalId(song, sheet),
+        searchAcronyms: song.searchAcronyms,
+        isTypeUtage,
+        isRatingEligible: !isTypeUtage,
+        internalLevelValue: sheet.multiverInternalLevelValue
+          ? sheet.multiverInternalLevelValue[version] ??
+            sheet.internalLevelValue
+          : sheet.internalLevelValue,
+      };
+    });
   });
   return flattenedSheets as FlattenedSheet[];
 };
