@@ -30,8 +30,6 @@ export default defineConfig({
       "touch-callout-none",
       {
         "-webkit-touch-callout": "none",
-        "-ms-touch-action": "none",
-        "touch-action": "none",
       },
     ],
   ],
