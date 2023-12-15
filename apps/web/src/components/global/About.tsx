@@ -61,7 +61,7 @@ export const About = () => {
 
           <ul className="flex flex-col gap-1.5">
             <AboutLink
-              href="https://twitter.com/GalvinGao"
+              href="https://github.com/GalvinGao"
               startAdornment={<MdiGithub />}
               label="Author"
             >
@@ -69,7 +69,7 @@ export const About = () => {
             </AboutLink>
 
             <AboutLink
-              href="https://twitter.com/GalvinGao/dxrating"
+              href="https://github.com/GalvinGao/dxrating"
               startAdornment={<MdiGithub />}
               label="Source Code"
             >
