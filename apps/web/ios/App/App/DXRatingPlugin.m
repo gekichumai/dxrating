@@ -1,5 +1,5 @@
 //
-//  PluginBridgeHeader.h
+//  DXRatingPlugin.m
 //  App
 //
 //  Created by Galvin Gao on 12/13/23.

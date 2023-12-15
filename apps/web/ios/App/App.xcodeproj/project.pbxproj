@@ -30,6 +30,7 @@
 		B5AD9B982B0D737700813497 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = B5AD9B972B0D737700813497 /* ZIPFoundation */; };
 		B5CA29562AE43F22004F3BA0 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5CA29552AE43F22004F3BA0 /* Extensions.swift */; };
 		B5E581F92AE571140087F6DC /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5CA29552AE43F22004F3BA0 /* Extensions.swift */; };
+		B5F03CF32B2B979400E32014 /* DXRatingPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = B596F6EE2B2AACC300BB160F /* DXRatingPlugin.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -79,7 +80,7 @@
 		B55D70272AE4BDF30047AA8D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B596F6EA2B2AA58C00BB160F /* DXRatingPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DXRatingPlugin.swift; sourceTree = "<group>"; };
 		B596F6EC2B2AA6A700BB160F /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
-		B596F6EE2B2AACC300BB160F /* PluginBridgeHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PluginBridgeHeader.h; sourceTree = "<group>"; };
+		B596F6EE2B2AACC300BB160F /* DXRatingPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DXRatingPlugin.m; sourceTree = "<group>"; };
 		B5A96D3C2AE57DC20060CE7C /* SongDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongDetailView.swift; sourceTree = "<group>"; };
 		B5AD9B992B0D9C6A00813497 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		B5AD9B9A2B0D9E5800813497 /* DXRatingQuicklook.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DXRatingQuicklook.entitlements; sourceTree = "<group>"; };
@@ -146,7 +147,7 @@
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				B596F6EA2B2AA58C00BB160F /* DXRatingPlugin.swift */,
-				B596F6EE2B2AACC300BB160F /* PluginBridgeHeader.h */,
+				B596F6EE2B2AACC300BB160F /* DXRatingPlugin.m */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -347,6 +348,7 @@
 				B596F6ED2B2AA6A700BB160F /* AppPreferences.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				B55D660C2AE456250047AA8D /* Data.swift in Sources */,
+				B5F03CF32B2B979400E32014 /* DXRatingPlugin.m in Sources */,
 				B596F6EB2B2AA58C00BB160F /* DXRatingPlugin.swift in Sources */,
 				B5CA29562AE43F22004F3BA0 /* Extensions.swift in Sources */,
 			);

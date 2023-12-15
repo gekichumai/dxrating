@@ -45,7 +45,7 @@ export const About = () => {
     <>
       <IconButton
         onClick={() => setExpanded(true)}
-        className="!absolute right-4 top-4"
+        className="!absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] "
       >
         <MdiInformation />
       </IconButton>

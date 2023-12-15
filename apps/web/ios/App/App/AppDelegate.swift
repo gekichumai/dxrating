@@ -9,6 +9,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
     var topBarColorChunk = UIView()
+    
+    private var cancellables = Set<AnyCancellable>()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // common controllers
@@ -31,7 +33,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             print("remote notification launch option", notif ?? "null")
         }
 
-        topBarColorChunk.backgroundColor = UIColor(named: "accent-festival-plus")
         topBarColorChunk.translatesAutoresizingMaskIntoConstraints = false
         rootView?.addSubview(topBarColorChunk)
 
@@ -146,8 +147,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // MARK: Update App Icon based on AppPreferences
         
-        var cancellables = Set<AnyCancellable>()
-        
+        self.themeShouldUpdate(dxVersion: AppPreferences.shared.dxVersion)
         AppPreferences.shared.$dxVersion
             .sink { dxVersion in
                 print("dxVersion changed to \(dxVersion)")
@@ -159,15 +159,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     func themeShouldUpdate(dxVersion: DXVersion) {
-        if dxVersion == .buddies {
-            self.changeAppIcon(to: "appicon-buddies")
-            UIView.animate(withDuration: 0.3) {
-                self.topBarColorChunk.backgroundColor = UIColor(named: "accent-buddies")
-            }
-        } else {
-            self.changeAppIcon(to: nil)
-            UIView.animate(withDuration: 0.3) {
-                self.topBarColorChunk.backgroundColor = UIColor(named: "accent-festival-plus")
+        DispatchQueue.main.async {
+            if dxVersion == .buddies {
+                self.changeAppIcon(to: "appicon-buddies")
+                UIView.animate(withDuration: 0.3) {
+                    self.topBarColorChunk.backgroundColor = UIColor(named: "accent-buddies")
+                    self.topBarColorChunk.layoutIfNeeded()
+                }
+            } else {
+                self.changeAppIcon(to: nil)
+                UIView.animate(withDuration: 0.3) {
+                    self.topBarColorChunk.backgroundColor = UIColor(named: "accent-festival-plus")
+                    self.topBarColorChunk.layoutIfNeeded()
+                }
             }
         }
     }

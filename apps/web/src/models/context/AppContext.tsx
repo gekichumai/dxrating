@@ -49,6 +49,7 @@ export const AppContextProvider: FC<PropsWithChildren<object>> = ({
   );
 
   useEffect(() => {
+    console.info("AppContextProvider: userPreferenceDidChanged", value.version);
     DXRatingPlugin.userPreferenceDidChanged({
       version: value.version,
     });
