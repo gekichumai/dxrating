@@ -102,7 +102,7 @@ const SheetInternalLevelValue: FC<{ value: number }> = ({ value }) => {
   );
 };
 
-const DIFFICULTIES: Record<
+export const DIFFICULTIES: Record<
   DifficultyEnum,
   { title: string; color: string; dark?: boolean }
 > = {
@@ -129,7 +129,7 @@ const DIFFICULTIES: Record<
   },
 };
 
-const SheetDifficulty: FC<{ difficulty?: DifficultyEnum }> = ({
+export const SheetDifficulty: FC<{ difficulty?: DifficultyEnum }> = ({
   difficulty,
 }) => {
   const difficultyConfig = difficulty ? DIFFICULTIES[difficulty] : undefined;

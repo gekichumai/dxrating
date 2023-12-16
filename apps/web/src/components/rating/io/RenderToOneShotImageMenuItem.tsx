@@ -18,7 +18,7 @@ export const RenderToOneShotImageMenuItem: FC<{
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth={false}>
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md">
         <DialogTitle>Export as OneShot Image</DialogTitle>
         <DialogContent>
           <Suspense fallback={<div>Loading...</div>}>
@@ -28,7 +28,6 @@ export const RenderToOneShotImageMenuItem: FC<{
       </Dialog>
 
       <MenuItem
-        disabled={import.meta.env.PROD}
         onClick={() => {
           setOpen(true);
         }}
@@ -36,10 +35,7 @@ export const RenderToOneShotImageMenuItem: FC<{
         <ListItemIcon>
           <IconMdiImage />
         </ListItemIcon>
-        <ListItemText
-          primary="Render as OneShot Image..."
-          secondary="鋭意制作中"
-        />
+        <ListItemText primary="Render as OneShot Image..." secondary="Beta" />
       </MenuItem>
     </>
   );

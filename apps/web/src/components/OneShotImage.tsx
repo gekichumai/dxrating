@@ -1,10 +1,9 @@
 import { OneShotRenderer } from "@gekichumai/oneshot";
-import { Button } from "@mui/material";
+import { Button, CircularProgress } from "@mui/material";
 import { FC } from "react";
 import satori from "satori";
 import useSWR from "swr";
 import { Entry } from "../pages/RatingCalculator";
-import { OneShotImageContent } from "./OneShotImageContent";
 
 function quickStringHash(str: string) {
   let hash = 0;
@@ -23,12 +22,15 @@ export const OneShotImage: FC<{
       const renderer = new OneShotRenderer();
       await renderer.initialize();
 
-      const torusFont = await fetch("/Torus-Regular.ttf").then((res) =>
-        res.arrayBuffer(),
-      );
-      console.log("renderer", renderer);
-
-      return { renderer, torusFont };
+      return {
+        renderer,
+        fontBold: await fetch("/fonts/SourceHanSans-Bold.otf").then((res) =>
+          res.arrayBuffer(),
+        ),
+        fontRegular: await fetch("/fonts/SourceHanSans-Regular.otf").then(
+          (res) => res.arrayBuffer(),
+        ),
+      };
     },
     {
       revalidateOnFocus: false,
@@ -45,21 +47,33 @@ export const OneShotImage: FC<{
     async () => {
       if (!preload.data) return null;
 
+      const { OneShotImageContent } = await import(
+        `./OneShotImageContent?${Date.now()}`
+      );
+
+      console.log("OneShotImageContent", OneShotImageContent);
       const el = <OneShotImageContent calculatedEntries={calculatedEntries} />;
-      console.log(el);
+      console.log("rendering", el);
+
       const svg = await satori(el, {
-        width: 1200,
-        height: 1200,
+        width: 1500,
+        height: 1500,
         fonts: [
           {
-            name: "Torus",
-            data: preload.data.torusFont,
+            name: "SourceHanSans",
+            data: preload.data.fontBold,
+            weight: 700,
+          },
+          {
+            name: "SourceHanSans",
+            data: preload.data.fontRegular,
+            weight: 400,
           },
         ],
         tailwindConfig: {
           theme: {
             fontFamily: {
-              rounded: "Torus",
+              sans: "SourceHanSans, sans-serif",
             },
           },
         },
@@ -75,37 +89,41 @@ export const OneShotImage: FC<{
   );
 
   return (
-    <div className="flex flex-col gap-2">
-      <Button
-        onClick={() => {
-          renderedURL.mutate();
-        }}
-        variant="contained"
-      >
-        Rerender
-      </Button>
-
-      {renderedURL.isLoading ? (
-        <div className="w-600px h-600px bg-gray-100 flex justify-center items-center rounded-md">
-          <div className="text-gray-400">Rendering</div>
-        </div>
-      ) : renderedURL.error ? (
-        <div className="w-600px h-600px bg-gray-100 flex justify-center items-center rounded-md">
-          <div className="text-red-400">{renderedURL.error.message}</div>
-        </div>
-      ) : renderedURL.data ? (
-        <img
-          src={renderedURL.data}
-          alt="oneshot"
-          className="w-600px h-600px bg-gray-100 rounded-md b-1 b-solid b-gray-3"
-        />
-      ) : (
-        <div className="w-600px h-600px bg-gray-100 flex justify-center items-center rounded-md">
-          <div className="text-gray-400">
-            Error: no rendered URL and no error returned
-          </div>
-        </div>
+    <div className="flex flex-col gap-4">
+      {import.meta.env.DEV && (
+        <Button
+          onClick={() => {
+            renderedURL.mutate();
+          }}
+          variant="contained"
+        >
+          Rerender
+        </Button>
       )}
+
+      <div className="max-w-600px aspect-1 bg-gray-100 flex flex-col justify-center items-center b-1 b-solid rounded-md gap-2 overflow-hidden">
+        {renderedURL.isValidating ? (
+          <>
+            <CircularProgress disableShrink />
+            <div className="text-gray-400 px-8">
+              Fetching images & rendering...
+            </div>
+          </>
+        ) : renderedURL.error ? (
+          <div className="text-red-400 p-8 select-none">
+            {renderedURL.error.message}
+          </div>
+        ) : renderedURL.data ? (
+          <img src={renderedURL.data} alt="oneshot" className="w-full h-auto" />
+        ) : (
+          <>
+            <CircularProgress />
+            <div className="text-gray-400 px-8">
+              Fetching resvg renderer & fonts...
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };
