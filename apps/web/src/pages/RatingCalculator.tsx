@@ -61,8 +61,7 @@ import { ClearButton } from "../components/rating/io/ClearButton";
 import { ExportMenu } from "../components/rating/io/ExportMenu";
 import { ImportMenu } from "../components/rating/io/ImportMenu";
 import { RatingCalculatorContext } from "../models/RatingCalculatorContext";
-import { DXVersionToDXDataVersionEnumMap } from "../models/context/AppContext";
-import { useAppContext } from "../models/context/useAppContext";
+import { useAppContextDXDataVersion } from "../models/context/useAppContext";
 import { FlattenedSheet, useSheets } from "../songs";
 import { Rating, calculateRating } from "../utils/rating";
 
@@ -141,7 +140,7 @@ const TransparentPaper = styled(Paper)(() => ({
 }));
 
 export const RatingCalculator = () => {
-  const { version } = useAppContext();
+  const appVersion = useAppContextDXDataVersion();
   const { data: sheets } = useSheets();
   const [localStorageEntries, setLocalStorageEntries] = useLocalStorage<
     PlayEntry[]
@@ -175,13 +174,8 @@ export const RatingCalculator = () => {
       ];
     });
 
-    const currentVersion = version;
     const best15OfCurrentVersionSheetIds = calculated
-      .filter(
-        (entry) =>
-          entry.sheet.version ===
-          DXVersionToDXDataVersionEnumMap[currentVersion],
-      )
+      .filter((entry) => entry.sheet.version === appVersion)
       // a.rating and b.rating could be null. put them at the end
       .sort((a, b) => {
         if (!a.rating) return 1;
@@ -192,11 +186,7 @@ export const RatingCalculator = () => {
       .map((entry) => entry.sheetId);
 
     const best35OfAllOtherVersionSheetIds = calculated
-      .filter(
-        (entry) =>
-          entry.sheet.version !==
-          DXVersionToDXDataVersionEnumMap[currentVersion],
-      )
+      .filter((entry) => entry.sheet.version !== appVersion)
       .sort((a, b) => {
         if (!a.rating) return 1;
         if (!b.rating) return -1;
@@ -223,7 +213,7 @@ export const RatingCalculator = () => {
         (entry) => entry.includedIn === "b35",
       ),
     };
-  }, [entries, sheets, version]);
+  }, [entries, sheets, appVersion]);
 
   const { b15Average, b35Average } = useMemo(() => {
     const b15Average =
@@ -368,7 +358,7 @@ export const RatingCalculator = () => {
                     <div className="font-bold text-lg">B15</div>
                     <div className="text-gray-500">
                       Best 15 plays on songs released at current version (
-                      {DXVersionToDXDataVersionEnumMap[version]})
+                      {appVersion})
                     </div>
                   </DenseTableCell>
                   <DenseTableCell>{b15Entries.length}</DenseTableCell>
@@ -388,8 +378,7 @@ export const RatingCalculator = () => {
                     <div className="font-bold text-lg">B35</div>
                     <div className="text-gray-500">
                       Best 35 plays on all other songs except ones released at
-                      current version (
-                      {DXVersionToDXDataVersionEnumMap[version]})
+                      current version ({appVersion})
                     </div>
                   </DenseTableCell>
                   <DenseTableCell>{b35Entries.length}</DenseTableCell>

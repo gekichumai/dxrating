@@ -1,12 +1,11 @@
 import { Alert, FormControlLabel, Switch, TextField } from "@mui/material";
 import { FC, useMemo, useState } from "react";
 import { SheetListContainer } from "../components/SheetListContainer";
-import { DXVersionToDXDataVersionEnumMap } from "../models/context/AppContext";
-import { useAppContext } from "../models/context/useAppContext";
+import { useAppContextDXDataVersion } from "../models/context/useAppContext";
 import { useFilteredSheets, useSheets } from "../songs";
 
 export const SheetList: FC = () => {
-  const { version } = useAppContext();
+  const appVersion = useAppContextDXDataVersion();
   const { data: sheets } = useSheets();
   const [search, setSearch] = useState<string>("");
   const { results, elapsed } = useFilteredSheets(search);
@@ -16,13 +15,11 @@ export const SheetList: FC = () => {
   const filteredResults = useMemo(() => {
     if (showOnlyCurrentVersion) {
       return results
-        .filter(
-          (sheet) => sheet.version === DXVersionToDXDataVersionEnumMap[version],
-        )
+        .filter((sheet) => sheet.version === appVersion)
         .sort((a, b) => b.internalLevelValue - a.internalLevelValue);
     }
     return results;
-  }, [results, showOnlyCurrentVersion, version]);
+  }, [results, showOnlyCurrentVersion, appVersion]);
 
   return (
     <div className="flex-container pb-global">
@@ -41,7 +38,7 @@ export const SheetList: FC = () => {
             onChange={(e) => setShowOnlyCurrentVersion(e.target.checked)}
           />
         }
-        label={`Filter Current B15: Show only ${DXVersionToDXDataVersionEnumMap[version]} charts`}
+        label={`Filter Current B15: Show only ${appVersion} charts`}
       />
 
       <Alert severity="info" className="text-sm !rounded-full shadow-lg">

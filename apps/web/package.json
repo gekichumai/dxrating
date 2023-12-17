@@ -22,6 +22,7 @@
     "@tanstack/react-table": "^8.10.7",
     "@unocss/reset": "^0.56.5",
     "clsx": "^2.0.0",
+    "date-fns": "^2.30.0",
     "framer-motion": "^10.16.16",
     "fuse.js": "^6.6.2",
     "react": "^18.2.0",

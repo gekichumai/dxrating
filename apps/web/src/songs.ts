@@ -10,8 +10,10 @@ import {
 import Fuse from "fuse.js";
 import { useMemo } from "react";
 import useSWR from "swr";
-import { DXVersionToDXDataVersionEnumMap } from "./models/context/AppContext";
-import { useAppContext } from "./models/context/useAppContext";
+import {
+  useAppContext,
+  useAppContextDXDataVersion,
+} from "./models/context/useAppContext";
 
 export type FlattenedSheet = Song &
   Sheet & {
@@ -72,16 +74,14 @@ export const getFlattenedSheets = async (
 
 export const useSheets = () => {
   const { version } = useAppContext();
-  return useSWR(`sheets_${version}`, () =>
-    getFlattenedSheets(DXVersionToDXDataVersionEnumMap[version]),
-  );
+  const appVersion = useAppContextDXDataVersion();
+  return useSWR(`sheets_${version}`, () => getFlattenedSheets(appVersion));
 };
 
 export const useSongs = () => {
   const { version } = useAppContext();
-  return useSWR(`songs_${version}`, () =>
-    getSongs(DXVersionToDXDataVersionEnumMap[version]),
-  );
+  const appVersion = useAppContextDXDataVersion();
+  return useSWR(`songs_${version}`, () => getSongs(appVersion));
 };
 
 export const useSheetsSearchEngine = () => {

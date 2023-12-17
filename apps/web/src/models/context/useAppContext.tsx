@@ -1,6 +1,6 @@
+import { VERSION_SLUG_MAP } from "@gekichumai/dxdata";
 import { useContext } from "react";
 import { AppContext, DXVersionToDXDataVersionEnumMap } from "./AppContext";
-import { VERSION_SLUG_MAP } from "@gekichumai/dxdata";
 
 export const useAppContext = () => {
   const context = useContext(AppContext);
@@ -16,6 +16,6 @@ export const useAppContextDXDataVersion = () => {
 };
 
 export const useAppContextSlugVersion = () => {
-  const { version } = useAppContext();
-  return VERSION_SLUG_MAP.get(DXVersionToDXDataVersionEnumMap[version])!;
+  const appVersion = useAppContextDXDataVersion();
+  return VERSION_SLUG_MAP.get(appVersion)!;
 };
