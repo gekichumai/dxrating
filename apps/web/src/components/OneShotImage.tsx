@@ -24,12 +24,12 @@ export const OneShotImage: FC<{
 
       return {
         renderer,
-        fontBold: await fetch("/fonts/SourceHanSans-Bold.otf").then((res) =>
-          res.arrayBuffer(),
-        ),
-        fontRegular: await fetch("/fonts/SourceHanSans-Regular.otf").then(
-          (res) => res.arrayBuffer(),
-        ),
+        fontBold: await fetch(
+          "https://dxrating-assets.imgg.dev/fonts/SourceHanSans-Bold.otf",
+        ).then((res) => res.arrayBuffer()),
+        fontRegular: await fetch(
+          "https://dxrating-assets.imgg.dev/fonts/SourceHanSans-Regular.otf",
+        ).then((res) => res.arrayBuffer()),
       };
     },
     {
