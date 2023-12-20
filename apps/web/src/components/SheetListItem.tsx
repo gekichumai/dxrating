@@ -206,10 +206,7 @@ export const SheetImage: FC<
   return (
     <FadedImage
       key={name}
-      src={
-        "https://dxrating-assets.imgg.dev/images/cover/v2/" +
-        name.replace(/\.png$/, ".jpg")
-      }
+      src={"https://dxrating-assets.imgg.dev/images/cover/v2/" + name}
       className={clsx(
         "overflow-hidden",
         match(size)

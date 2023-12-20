@@ -14,8 +14,6 @@ class PreviewViewController: UIViewController, QLPreviewingController {
     @IBOutlet weak var containerView: UIView!
     @IBOutlet weak var songTitle: UILabel!
     
-    var difficultiesContainerView: UIStackView!
-    
     let difficultyToColorDictionary: [String: Int] = [
         "basic": 0x22bb5b,
         "advanced": 0xfb9c2d,
@@ -35,20 +33,20 @@ class PreviewViewController: UIViewController, QLPreviewingController {
     func preparePreviewOfSearchableItem(identifier: String, queryString: String?, completionHandler handler: @escaping (Error?) -> Void) {
         // Perform any setup necessary in order to prepare the view.
         guard let dxdata = AppData.loadDXData() else {
-            handler(AppError.custom(errorDescription: "failed to load DX data"))
+            handler(AppError.custom(errorDescription: "failed to load DXData"))
             return
         }
         
         print("preparePreviewOfSearchableItem: \(identifier); \(String(describing: queryString))")
         
-        guard let song = dxdata.songs.first(where: { $0.songId == identifier }) else {
+        guard let song = dxdata.songs.first(where: { $0.songID == identifier }) else {
             handler(AppError.custom(errorDescription: "failed to find song"))
             return
         }
         
         let coversDir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.dev.imgg.gekichumai.dxrating.public-shared")?.appendingPathComponent("Covers")
         
-        let resource = song.imageName.replacingOccurrences(of: ".png", with: ".jpg")
+        let resource = song.imageName
         guard let imageUrl = coversDir?.appendingPathComponent(resource) else {
             handler(AppError.custom(errorDescription: "failed to find image"))
             return
@@ -64,49 +62,6 @@ class PreviewViewController: UIViewController, QLPreviewingController {
         self.coverImage.layer.shadowColor = CGColor(gray: 1.0, alpha: 0.2)
         self.coverImage.backgroundColor = .gray
         self.songTitle.text = song.title
-
-//        self.difficultiesContainerView = UIStackView()
-//        self.containerView.addSubview(self.difficultiesContainerView)
-        
-//        self.difficultiesContainerView.translatesAutoresizingMaskIntoConstraints = false
-//        self.difficultiesContainerView.topAnchor.constraint(equalToSystemSpacingBelow: self.songTitle.bottomAnchor, multiplier: 1.0).isActive = true
-//        self.difficultiesContainerView.leftAnchor.constraint(equalTo: self.containerView.leftAnchor, constant: 1.0).isActive = true
-//        self.difficultiesContainerView.rightAnchor.constraint(equalTo: self.containerView.rightAnchor, constant: 1.0).isActive = true
-//        self.difficultiesContainerView.axis = .vertical
-//        self.difficultiesContainerView.alignment = .leading
-//        self.difficultiesContainerView.spacing = 4.0
-        
-//        for sheet in song.sheets {
-//            if sheet.internalLevelValue == nil || sheet.internalLevelValue == 0.0 {
-//                continue
-//            }
-//            guard let difficultyHex = self.difficultyToColorDictionary[sheet.difficulty] else {
-//                continue
-//            }
-//            
-//            let containerView = UIStackView()
-//            containerView.spacing = 4.0
-//            containerView.axis = .horizontal
-//            containerView.alignment = .center
-//            containerView.layer.cornerRadius = 4.0
-//            containerView.layer.borderWidth = 1.0
-//            containerView.layer.borderColor = UIColor(rgb: difficultyHex).cgColor
-//            containerView.layoutMargins = .init(top: 4, left: 8, bottom: 4, right: 8)
-//            containerView.layoutMarginsDidChange()
-//            
-//            let difficultyLabel = UILabel()
-//            difficultyLabel.text = sheet.difficulty
-//            difficultyLabel.layoutMargins = .init(top: 4, left: 8, bottom: 4, right: 8)
-//            difficultyLabel.layoutMarginsDidChange()
-//            difficultyLabel.backgroundColor = .init(rgb: difficultyHex)
-//            containerView.addArrangedSubview(difficultyLabel)
-//            
-//            let levelLabel = UILabel()
-//            levelLabel.text = sheet.internalLevelValue?.formatted()
-//            containerView.addArrangedSubview(levelLabel)
-//            
-//            self.difficultiesContainerView.addArrangedSubview(containerView)
-//        }
         
         let hostingController = UIHostingController(rootView: SongDetailView(song: song))
         self.addChild(hostingController)

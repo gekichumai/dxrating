@@ -63,7 +63,7 @@ const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
           layout
           src={
             "https://dxrating-assets.imgg.dev/images/cover/v2/" +
-            sheet.imageName.replace(/\.png$/, ".jpg")
+            sheet.imageName
           }
           alt={sheet.imageName}
           className="overflow-hidden rounded-lg bg-slate-300/50"

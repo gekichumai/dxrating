@@ -47,7 +47,7 @@ struct SongDetailView: View {
                             )
                         
                         HStack {
-                            Text("\((sheet.internalLevelValue ?? 0.0) as NSNumber, formatter: formatter)")
+                            Text("\(sheet.internalLevelValue as NSNumber, formatter: formatter)")
                                 .monospacedDigit()
                             
                             Spacer()

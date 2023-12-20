@@ -62,11 +62,10 @@ export interface Song {
 }
 
 export interface Sheet {
+  songId: string;
   type: TypeEnum;
   difficulty: DifficultyEnum;
   level: string;
-  levelValue: number;
-  internalLevel: null | string;
   internalLevelValue: number;
   multiverInternalLevelValue?: Record<VersionEnum, number>;
   noteDesigner: null | string;

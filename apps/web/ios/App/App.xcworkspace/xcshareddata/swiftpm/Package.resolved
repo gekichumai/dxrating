@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "fuse-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/krisk/fuse-swift.git",
+      "state" : {
+        "revision" : "26ba868691b2d8b7bf2b1322951eb591be70ccca",
+        "version" : "1.4.0"
+      }
+    },
+    {
       "identity" : "zipfoundation",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/weichsel/ZIPFoundation.git",

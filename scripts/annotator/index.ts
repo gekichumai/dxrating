@@ -1,11 +1,17 @@
 import process from "process";
 
 import { tokenize } from "@enjoyjs/node-mecab";
-import { DXData, Sheet, TypeEnum } from "@gekichumai/dxdata";
+import {
+  DifficultyEnum,
+  Sheet,
+  TypeEnum,
+  VersionEnum,
+} from "@gekichumai/dxdata";
 import "dotenv/config";
 import { uniq } from "lodash";
 import fs from "node:fs/promises";
 import pg from "pg";
+import { DXDataOriginal } from "./original";
 
 // from https://github.com/zetaraku/arcade-songs-fetch/blob/362f2a1b1a1752074951006cedde06948fb0061a/src/maimai/fetch-intl-versions.ts#L16
 const VERSION_ID_MAP = new Map([
@@ -1217,15 +1223,20 @@ async function main() {
   ALIAS_NAME_MAP = await readAliases1();
   ALIAS_ID_MAP = await readAliases2();
 
+  console.info("Fetching multiver internal level values...");
   const multiverInternalLevelValues = await getAllMultiverInternalLevelValues();
+
+  console.info("Fetching maimai official songs list...");
   const maimaiOfficialSongs = (await fetch(
     "https://maimai.sega.jp/data/maimai_songs.json"
   ).then((res) => res.json())) as MaimaiOfficialSongs[];
 
+  console.info("Reading original data...");
   const dxdata = (await fs
     .readFile("./original.json", "utf-8")
-    .then(JSON.parse)) as DXData;
+    .then(JSON.parse)) as DXDataOriginal.Root;
 
+  console.info("Transforming songs...");
   const transformedSongs = dxdata.songs
     .filter(
       // filter out maimai series 宴会場 charts as those has been removed in dx
@@ -1240,62 +1251,70 @@ async function main() {
       return {
         ...entry,
         searchAcronyms,
-        sheets: entry.sheets.map((sheet) => {
-          const multiverInternalLevelValue = multiverInternalLevelValues
-            .filter(
-              (value) =>
-                value.songId === entry.songId &&
-                value.type === sheet.type &&
-                value.difficulty === sheet.difficulty
-            )
-            .reduce(
-              (acc, value) => {
-                acc[value.version] = parseFloat(value.internalLevel);
-                return acc;
-              },
-              {} as Record<string, number>
+        imageName: entry.imageName.replace(".png", ".jpg"),
+        sheets: entry.sheets.map(
+          ({ internalLevel: _, levelValue: __, ...sheet }) => {
+            const multiverInternalLevelValue = multiverInternalLevelValues
+              .filter(
+                (value) =>
+                  value.songId === entry.songId &&
+                  value.type === sheet.type &&
+                  value.difficulty === sheet.difficulty
+              )
+              .reduce(
+                (acc, value) => {
+                  acc[value.version] = parseFloat(value.internalLevel);
+                  return acc;
+                },
+                {} as Record<string, number>
+              );
+
+            const officialUtageSong = maimaiOfficialSongs.find(
+              (v) =>
+                v.title === entry.title &&
+                v.catcode === "宴会場" &&
+                (v.title !== "[協]青春コンプレックス" ||
+                  (v.comment === "バンドメンバーを集めて楽しもう！（入門編）" &&
+                    entry.songId === "[協]青春コンプレックス（入門編）") ||
+                  (v.comment === "バンドメンバーを集めて挑め！（ヒーロー級）" &&
+                    entry.songId === "[協]青春コンプレックス（ヒーロー級）"))
             );
 
-          const officialUtageSong = maimaiOfficialSongs.find(
-            (v) =>
-              v.title === entry.title &&
-              v.catcode === "宴会場" &&
-              (v.title !== "[協]青春コンプレックス" ||
-                (v.comment === "バンドメンバーを集めて楽しもう！（入門編）" &&
-                  entry.songId === "[協]青春コンプレックス（入門編）") ||
-                (v.comment === "バンドメンバーを集めて挑め！（ヒーロー級）" &&
-                  entry.songId === "[協]青春コンプレックス（ヒーロー級）"))
-          );
+            const is2pUtage =
+              sheet.type === "utage" && officialUtageSong?.buddy === "○";
 
-          const is2pUtage =
-            sheet.type === "utage" && officialUtageSong?.buddy === "○";
+            const haveAnyMultiverInternalLevelValue =
+              Object.keys(multiverInternalLevelValue).length > 0;
 
-          const haveAnyMultiverInternalLevelValue =
-            Object.keys(multiverInternalLevelValue).length > 0;
-
-          return {
-            ...sheet,
-            type: is2pUtage ? TypeEnum.UTAGE2P : sheet.type,
-            multiverInternalLevelValue: haveAnyMultiverInternalLevelValue
-              ? multiverInternalLevelValue
-              : undefined,
-            comment: officialUtageSong?.comment,
-          } satisfies Sheet;
-        }),
+            return {
+              ...sheet,
+              songId: entry.songId,
+              difficulty: sheet.difficulty as DifficultyEnum,
+              version: sheet.version as VersionEnum,
+              type: is2pUtage ? TypeEnum.UTAGE2P : (sheet.type as TypeEnum),
+              multiverInternalLevelValue: haveAnyMultiverInternalLevelValue
+                ? multiverInternalLevelValue
+                : undefined,
+              comment: officialUtageSong?.comment,
+            } satisfies Sheet;
+          }
+        ),
       };
     });
 
-  await fs.writeFile(
-    "../../packages/dxdata/dxdata.json",
-    JSON.stringify(
-      {
-        ...dxdata,
-        songs: await Promise.all(transformedSongs),
-      },
-      null,
-      4
-    )
+  console.info("Updating data files...");
+
+  const data = JSON.stringify(
+    {
+      ...dxdata,
+      songs: await Promise.all(transformedSongs),
+    },
+    null,
+    4
   );
+
+  await fs.writeFile("../../packages/dxdata/dxdata.json", data);
+  await fs.writeFile("../../apps/web/ios/App/App/Assets/dxdata.json", data);
 }
 
 main()
