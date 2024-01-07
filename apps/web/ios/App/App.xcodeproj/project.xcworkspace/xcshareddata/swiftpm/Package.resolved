@@ -10,6 +10,15 @@
       }
     },
     {
+      "identity" : "swifterswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SwifterSwift/SwifterSwift.git",
+      "state" : {
+        "revision" : "1eab3444fa06a344a35e79540719df956ab4d4ad",
+        "version" : "6.0.0"
+      }
+    },
+    {
       "identity" : "zipfoundation",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/weichsel/ZIPFoundation.git",

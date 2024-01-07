@@ -8,5 +8,6 @@
 #import <Capacitor/Capacitor.h>
 
 CAP_PLUGIN(DXRatingPlugin, "DXRatingPlugin",
-  CAP_PLUGIN_METHOD(userPreferenceDidChanged, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(userPreferenceDidChanged, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(launchInstantOCR, CAPPluginReturnPromise);
 )

@@ -24,6 +24,8 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>DXRating uses your camera to provide instant recognition. Media captured will not be saved.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Torus-Regular</string>

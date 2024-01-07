@@ -3,6 +3,7 @@ import Capacitor
 import CoreSpotlight
 import ZIPFoundation
 import Combine
+import SwiftUI
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {

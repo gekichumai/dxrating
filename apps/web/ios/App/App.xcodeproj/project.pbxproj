@@ -15,6 +15,15 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
+		B51647112B4AB301001DA763 /* SongLevelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A96D3C2AE57DC20060CE7C /* SongLevelView.swift */; };
+		B51647132B4AB58B001DA763 /* SongDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51647122B4AB58B001DA763 /* SongDetailView.swift */; };
+		B51647142B4AB5AA001DA763 /* SongDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51647122B4AB58B001DA763 /* SongDetailView.swift */; };
+		B51647162B4AB7DE001DA763 /* WrappedSongDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51647152B4AB7DE001DA763 /* WrappedSongDetailView.swift */; };
+		B51647172B4AB826001DA763 /* WrappedSongDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51647152B4AB7DE001DA763 /* WrappedSongDetailView.swift */; };
+		B546E73F2B37496C00822B20 /* PreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B546E73C2B37496C00822B20 /* PreviewView.swift */; };
+		B546E7402B37496C00822B20 /* InstantOCRViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B546E73D2B37496C00822B20 /* InstantOCRViewController.swift */; };
+		B546E7452B39B19D00822B20 /* Extension+UIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B546E7442B39B19D00822B20 /* Extension+UIView.swift */; };
+		B546E7482B39B29900822B20 /* SwifterSwift in Frameworks */ = {isa = PBXBuildFile; productRef = B546E7472B39B29900822B20 /* SwifterSwift */; };
 		B54970E12AECE270006A59D4 /* Torus-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B54970E02AECE270006A59D4 /* Torus-Regular.ttf */; };
 		B55D660C2AE456250047AA8D /* Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55D660B2AE456250047AA8D /* Data.swift */; };
 		B55D70172AE45D9E0047AA8D /* Assets in Resources */ = {isa = PBXBuildFile; fileRef = B55D70162AE45D9E0047AA8D /* Assets */; };
@@ -26,7 +35,7 @@
 		B55D702F2AE4CF430047AA8D /* Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55D660B2AE456250047AA8D /* Data.swift */; };
 		B596F6EB2B2AA58C00BB160F /* DXRatingPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = B596F6EA2B2AA58C00BB160F /* DXRatingPlugin.swift */; };
 		B596F6ED2B2AA6A700BB160F /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = B596F6EC2B2AA6A700BB160F /* AppPreferences.swift */; };
-		B5A96D3D2AE57DC20060CE7C /* SongDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A96D3C2AE57DC20060CE7C /* SongDetailView.swift */; };
+		B5A96D3D2AE57DC20060CE7C /* SongLevelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A96D3C2AE57DC20060CE7C /* SongLevelView.swift */; };
 		B5AD9B982B0D737700813497 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = B5AD9B972B0D737700813497 /* ZIPFoundation */; };
 		B5C493032B326F0A005BE53E /* Fuse in Frameworks */ = {isa = PBXBuildFile; productRef = B5C493022B326F0A005BE53E /* Fuse */; };
 		B5C493082B328335005BE53E /* AppData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C493072B328335005BE53E /* AppData.swift */; };
@@ -76,6 +85,11 @@
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
+		B51647122B4AB58B001DA763 /* SongDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongDetailView.swift; sourceTree = "<group>"; };
+		B51647152B4AB7DE001DA763 /* WrappedSongDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrappedSongDetailView.swift; sourceTree = "<group>"; };
+		B546E73C2B37496C00822B20 /* PreviewView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PreviewView.swift; sourceTree = "<group>"; };
+		B546E73D2B37496C00822B20 /* InstantOCRViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InstantOCRViewController.swift; sourceTree = "<group>"; };
+		B546E7442B39B19D00822B20 /* Extension+UIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Extension+UIView.swift"; sourceTree = "<group>"; };
 		B54970E02AECE270006A59D4 /* Torus-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Torus-Regular.ttf"; sourceTree = "<group>"; };
 		B55D660B2AE456250047AA8D /* Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Data.swift; sourceTree = "<group>"; };
 		B55D70162AE45D9E0047AA8D /* Assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Assets; sourceTree = "<group>"; };
@@ -88,7 +102,7 @@
 		B596F6EA2B2AA58C00BB160F /* DXRatingPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DXRatingPlugin.swift; sourceTree = "<group>"; };
 		B596F6EC2B2AA6A700BB160F /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
 		B596F6EE2B2AACC300BB160F /* DXRatingPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DXRatingPlugin.m; sourceTree = "<group>"; };
-		B5A96D3C2AE57DC20060CE7C /* SongDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongDetailView.swift; sourceTree = "<group>"; };
+		B5A96D3C2AE57DC20060CE7C /* SongLevelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongLevelView.swift; sourceTree = "<group>"; };
 		B5AD9B992B0D9C6A00813497 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		B5AD9B9A2B0D9E5800813497 /* DXRatingQuicklook.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DXRatingQuicklook.entitlements; sourceTree = "<group>"; };
 		B5C493072B328335005BE53E /* AppData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppData.swift; sourceTree = "<group>"; };
@@ -106,6 +120,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B5C493032B326F0A005BE53E /* Fuse in Frameworks */,
+				B546E7482B39B29900822B20 /* SwifterSwift in Frameworks */,
 				A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */,
 				B5AD9B982B0D737700813497 /* ZIPFoundation in Frameworks */,
 			);
@@ -154,11 +169,13 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				B546E73B2B37494B00822B20 /* InstantOCR */,
 				B5AD9B992B0D9C6A00813497 /* App.entitlements */,
 				B54970DF2AECE262006A59D4 /* EmbeddedAssets */,
 				B55D70162AE45D9E0047AA8D /* Assets */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
+				B546E7442B39B19D00822B20 /* Extension+UIView.swift */,
 				B5C4930E2B335428005BE53E /* AppDelegate+Theme.swift */,
 				B5C4930C2B3353BB005BE53E /* AppDelegate+OnDXDataChange.swift */,
 				B5C493102B3354C8005BE53E /* AppDelegate+Route.swift */,
@@ -188,6 +205,15 @@
 			name = Pods;
 			sourceTree = "<group>";
 		};
+		B546E73B2B37494B00822B20 /* InstantOCR */ = {
+			isa = PBXGroup;
+			children = (
+				B546E73D2B37496C00822B20 /* InstantOCRViewController.swift */,
+				B546E73C2B37496C00822B20 /* PreviewView.swift */,
+			);
+			path = InstantOCR;
+			sourceTree = "<group>";
+		};
 		B54970DF2AECE262006A59D4 /* EmbeddedAssets */ = {
 			isa = PBXGroup;
 			children = (
@@ -204,7 +230,9 @@
 				B55D70222AE4BDF30047AA8D /* PreviewProvider.swift */,
 				B55D70242AE4BDF30047AA8D /* MainInterface.storyboard */,
 				B55D70272AE4BDF30047AA8D /* Info.plist */,
-				B5A96D3C2AE57DC20060CE7C /* SongDetailView.swift */,
+				B5A96D3C2AE57DC20060CE7C /* SongLevelView.swift */,
+				B51647122B4AB58B001DA763 /* SongDetailView.swift */,
+				B51647152B4AB7DE001DA763 /* WrappedSongDetailView.swift */,
 			);
 			path = DXRatingQuicklook;
 			sourceTree = "<group>";
@@ -232,6 +260,7 @@
 			packageProductDependencies = (
 				B5AD9B972B0D737700813497 /* ZIPFoundation */,
 				B5C493022B326F0A005BE53E /* Fuse */,
+				B546E7472B39B29900822B20 /* SwifterSwift */,
 			);
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
@@ -287,6 +316,7 @@
 			packageReferences = (
 				B5AD9B962B0D737700813497 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 				B5C493012B326F09005BE53E /* XCRemoteSwiftPackageReference "fuse-swift" */,
+				B546E7462B39B29900822B20 /* XCRemoteSwiftPackageReference "SwifterSwift" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
@@ -365,14 +395,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B546E7452B39B19D00822B20 /* Extension+UIView.swift in Sources */,
+				B51647112B4AB301001DA763 /* SongLevelView.swift in Sources */,
 				B596F6ED2B2AA6A700BB160F /* AppPreferences.swift in Sources */,
 				B5C493152B33553A005BE53E /* AppIdentifier.swift in Sources */,
+				B51647142B4AB5AA001DA763 /* SongDetailView.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				B5C4930F2B335428005BE53E /* AppDelegate+Theme.swift in Sources */,
 				B55D660C2AE456250047AA8D /* Data.swift in Sources */,
+				B546E73F2B37496C00822B20 /* PreviewView.swift in Sources */,
 				B5C493112B3354C8005BE53E /* AppDelegate+Route.swift in Sources */,
 				B5F03CF32B2B979400E32014 /* DXRatingPlugin.m in Sources */,
+				B546E7402B37496C00822B20 /* InstantOCRViewController.swift in Sources */,
 				B596F6EB2B2AA58C00BB160F /* DXRatingPlugin.swift in Sources */,
+				B51647172B4AB826001DA763 /* WrappedSongDetailView.swift in Sources */,
 				B5CA29562AE43F22004F3BA0 /* Extensions.swift in Sources */,
 				B5C4930D2B3353BB005BE53E /* AppDelegate+OnDXDataChange.swift in Sources */,
 				B5C493082B328335005BE53E /* AppData.swift in Sources */,
@@ -383,11 +419,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B51647132B4AB58B001DA763 /* SongDetailView.swift in Sources */,
 				B55D70212AE4BDF30047AA8D /* PreviewViewController.swift in Sources */,
-				B5A96D3D2AE57DC20060CE7C /* SongDetailView.swift in Sources */,
+				B5A96D3D2AE57DC20060CE7C /* SongLevelView.swift in Sources */,
 				B55D702F2AE4CF430047AA8D /* Data.swift in Sources */,
 				B55D70232AE4BDF30047AA8D /* PreviewProvider.swift in Sources */,
 				B5E581F92AE571140087F6DC /* Extensions.swift in Sources */,
+				B51647162B4AB7DE001DA763 /* WrappedSongDetailView.swift in Sources */,
 				B5C493092B3283AA005BE53E /* AppData.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -559,12 +597,12 @@
 				DEVELOPMENT_TEAM = SY8Y8N4TPM;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = dev.imgg.gekichumai.dxrating;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -587,12 +625,12 @@
 				DEVELOPMENT_TEAM = SY8Y8N4TPM;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.imgg.gekichumai.dxrating;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
@@ -710,6 +748,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		B546E7462B39B29900822B20 /* XCRemoteSwiftPackageReference "SwifterSwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SwifterSwift/SwifterSwift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.0.0;
+			};
+		};
 		B5AD9B962B0D737700813497 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
@@ -729,6 +775,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		B546E7472B39B29900822B20 /* SwifterSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B546E7462B39B29900822B20 /* XCRemoteSwiftPackageReference "SwifterSwift" */;
+			productName = SwifterSwift;
+		};
 		B5AD9B972B0D737700813497 /* ZIPFoundation */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = B5AD9B962B0D737700813497 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;

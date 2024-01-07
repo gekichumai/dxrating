@@ -284,7 +284,10 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
 
   return (
     <div
-      className="overflow-hidden"
+      className={clsx(
+        "text-sm text-slate-600 overflow-hidden",
+        !expanded && "max-h-[7rem]",
+      )}
       style={{
         mask: expanded
           ? undefined
@@ -295,18 +298,14 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
       }}
       onClick={() => setExpanded(true)}
     >
-      <div
-        className={clsx("text-sm text-slate-600", !expanded && "max-h-[7rem]")}
-      >
-        {altNames?.map((altName, i) => (
-          <span className="inline-block whitespace-pre-line" key={i}>
-            <span>{altName}</span>
-            {i < altNames.length - 1 && (
-              <span className="text-slate-400 mx-1 select-none">/</span>
-            )}
-          </span>
-        ))}
-      </div>
+      {altNames?.map((altName, i) => (
+        <span className="inline-block whitespace-pre-line" key={i}>
+          <span>{altName}</span>
+          {i < altNames.length - 1 && (
+            <span className="text-slate-400 mx-1 select-none">/</span>
+          )}
+        </span>
+      ))}
     </div>
   );
 };

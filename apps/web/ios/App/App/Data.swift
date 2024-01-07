@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 struct DXData: Codable {
     let songs: [Song]
@@ -91,6 +92,20 @@ struct Song: Codable, Identifiable {
         case internalID = "internalId"
     }
     
+    var coverImage: UIImage? {
+        let coversDir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.dev.imgg.gekichumai.dxrating.public-shared")?.appendingPathComponent("Covers")
+        
+        let resource = self.imageName
+        guard let imageUrl = coversDir?.appendingPathComponent(resource) else {
+            return nil
+        }
+        
+        let imageData = try? Data(contentsOf: imageUrl)
+        let uiImage = (imageData != nil) ? UIImage(data: imageData!) : nil
+        
+        return uiImage
+    }
+    
     #if DEBUG
     static func demo() -> Song {
         return .init(
@@ -152,6 +167,20 @@ struct Song: Codable, Identifiable {
                     difficulty: "master",
                     level: "14+",
                     internalLevelValue: 14.7,
+                    noteDesigner: "project_raputa",
+                    noteCounts: .init(tap: nil, hold: nil, slide: nil, touch: nil, noteCountsBreak: nil, total: nil),
+                    regions: .init(jp: true, intl: false, cn: false),
+                    isSpecial: false,
+                    version: .buddies,
+                    songID: "raputa",
+                    multiverInternalLevelValue: nil,
+                    comment: nil
+                ),
+                .init(
+                    type: .dx,
+                    difficulty: "remaster",
+                    level: "14+",
+                    internalLevelValue: 14.9,
                     noteDesigner: "project_raputa",
                     noteCounts: .init(tap: nil, hold: nil, slide: nil, touch: nil, noteCountsBreak: nil, total: nil),
                     regions: .init(jp: true, intl: false, cn: false),

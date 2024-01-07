@@ -28,4 +28,13 @@ public class DXRatingPlugin: CAPPlugin {
         
         return call.resolve()
     }
+    
+    @objc func launchInstantOCR(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            let vc = InstantOCRViewController()
+            self.bridge?.viewController?.present(vc, animated: true)
+        }
+        
+        return call.resolve()
+    }
 }

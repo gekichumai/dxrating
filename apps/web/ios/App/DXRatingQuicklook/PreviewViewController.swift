@@ -63,7 +63,7 @@ class PreviewViewController: UIViewController, QLPreviewingController {
         self.coverImage.backgroundColor = .gray
         self.songTitle.text = song.title
         
-        let hostingController = UIHostingController(rootView: SongDetailView(song: song))
+        let hostingController = UIHostingController(rootView: SongLevelView(song: song))
         self.addChild(hostingController)
         let hostingControllerView = hostingController.view!
         hostingControllerView.translatesAutoresizingMaskIntoConstraints = false
