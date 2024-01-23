@@ -9,12 +9,13 @@ import SwiftUI
 
 struct SongLevelView: View {
     let song: Song
+    let hideBasicAdvanced: Bool = false
     
     let difficultyToColorDictionary: [String: Int] = [
         "basic": 0x22bb5b,
         "advanced": 0xfb9c2d,
         "expert": 0xf64861,
-        "master": 0x9e45e2,
+        "master": 0x9e45e2, 
         "remaster": 0xba67f8
     ]
     
@@ -29,47 +30,42 @@ struct SongLevelView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             ForEach(song.sheets, id: \.id) { sheet in
-                HStack {
-                    HStack {
+                HStack(spacing: 0) {
+                    HStack(spacing: 0) {
                         HStack(spacing: 0) {
                             Text(sheet.type.rawValue.uppercased())
-                                .font(.system(.caption, design: .rounded))
+                                .font(.system(.title3, design: .rounded))
                                 .bold()
                                 .foregroundColor(.white)
-                                .frame(width: 26)
+//                                .frame(width: 26)
                                 
                             
                             // vertical divider
                             Rectangle()
-                                .frame(width: 1, height: 12)
+                            // half frame height
+                                .frame(width: 1, height: 24)
                                 .foregroundColor(.white)
                                 .opacity(0.5)
                                 .padding(.horizontal, 8)
                             
                             Text(sheet.difficulty.uppercased())
-                                .font(.system(.caption, design: .rounded))
+                                .font(.system(.body, design: .rounded))
                                 .bold()
                                 .foregroundColor(.white)
                             Spacer()
                         }
                             .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .frame(width: 145)
+                            .padding(.vertical, 8)
+//                            .frame(width: 135)
+                        // fill vertically
+                            .frame(maxWidth: .infinity)
                             .background(
                                 UIColor(rgb: difficultyToColorDictionary[sheet.difficulty] ?? 0x000000)
                                     .color
                             )
                         
-                        HStack {
-                            Text("\(sheet.internalLevelValue as NSNumber, formatter: formatter)")
-                                .font(.system(.caption, design: .monospaced))
-                                .bold()
-                                .foregroundColor(.black)
-                            
-                            Spacer()
-                        }
-                            .frame(width: 45)
-                            .padding(.trailing, 8)
+                        DecimalNumberView(value: sheet.internalLevelValue)
+                            .padding(.horizontal, 8)
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 4))
                     .overlay(
@@ -77,17 +73,15 @@ struct SongLevelView: View {
                                         .stroke(UIColor(rgb: difficultyToColorDictionary[sheet.difficulty] ?? 0x000000)
                                             .color, lineWidth: 2)
                     )
-                    
-                    Spacer()
                 }
             }
-            
-            Spacer()
         }
-        .padding(.horizontal, 8)
     }
 }
 
-#Preview {
+@available(iOS 17.0, *)
+#Preview(traits: .sizeThatFitsLayout) {
     SongLevelView(song: .demo())
+        .padding()
+        .previewLayout(.sizeThatFits)
 }

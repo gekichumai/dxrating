@@ -15,7 +15,7 @@ import SwiftUI
 class InstantOCRViewController: UIViewController {
 	// MARK: - UI objects
     var previewView = PreviewView()
-    var detailViewState = WrappedSongDetailViewState()
+    var detailViewState = WrappedSongDetailViewState(song: nil)
     var cutoutView = UIView()
     var closeButtonView = UIButton(type: .close)
     
@@ -57,6 +57,8 @@ class InstantOCRViewController: UIViewController {
     var customWords: [String] = []
     
     var dxdata: DXData!
+    
+//    var supportedInterfaceOrientations: UIInterfaceOrientationMask = .portrait
     
 	// MARK: - View controller methods
 	
@@ -208,7 +210,7 @@ class InstantOCRViewController: UIViewController {
 		// buffer width to height. When the UI is rotated to portrait, keep the
 		// vertical size the same (in buffer pixels). Also try to keep the
 		// horizontal size the same up to a maximum ratio.
-		let desiredHeightRatio = 0.14
+		let desiredHeightRatio = 0.12
 		let desiredWidthRatio = 0.6
 		let maxPortraitWidth = 0.8
 		
@@ -323,19 +325,6 @@ class InstantOCRViewController: UIViewController {
 		
 		captureSession.startRunning()
 	}
-	
-	// MARK: - UI drawing and interaction
-	
-	func showString(string: String) {
-		// Stop the camera synchronously to stop receiving buffers.
-        // Then update the number view asynchronously.
-        self.search(keyword: string) { stringPreview, song in
-            DispatchQueue.main.async {
-//                self.labelView.text = stringPreview
-                self.detailViewState.song = song
-            }
-        }
-	}
 }
 
 // MARK: - Search
@@ -367,7 +356,7 @@ extension InstantOCRViewController: AVCaptureVideoDataOutputSampleBufferDelegate
     
     // The Vision recognition handler.
     func recognizeTextHandler(request: VNRequest, error: Error?) {
-        var strings = [String]()
+        var recognizedText = ""
         
         guard let results = request.results as? [VNRecognizedTextObservation] else {
             return
@@ -377,29 +366,14 @@ extension InstantOCRViewController: AVCaptureVideoDataOutputSampleBufferDelegate
         
         for visionResult in results {
             guard let candidate = visionResult.topCandidates(maximumCandidates).first else { continue }
-            strings.append(candidate.string)
-//            // Draw red boxes around any detected text and green boxes around
-//            // any detected phone numbers. The phone number may be a substring
-//            // of the visionResult. If it's a substring, draw a green box around
-//            // the number and a red box around the full string. If the number
-//            // covers the full result, only draw the green box.
-//            var numberIsSubstring = true
-            
-//            let (range, number) = candidate.string
-            // The number might not cover full visionResult. Extract the bounding
-            // box of the substring.
-//            if let box = try? candidate.boundingBox(for: candidate.)?.boundingBox {
-//                numbers.append(candidate.string)
-//                greenBoxes.append(box)
-////                numberIsSubstring = !(range.lowerBound == candidate.string.startIndex && range.upperBound == candidate.string.endIndex)
-//            }
-//            redBoxes.append(visionResult.boundingBox)
+            recognizedText.append(candidate.string)
         }
         
-        // Log any found numbers.
-//        numberTracker.logFrame(strings: numbers)
-        
-        showString(string: strings.joined())
+        self.search(keyword: recognizedText) { stringPreview, song in
+            DispatchQueue.main.async {
+                self.detailViewState.song = song
+            }
+        }
     }
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {

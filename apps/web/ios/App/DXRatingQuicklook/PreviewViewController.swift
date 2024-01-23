@@ -10,9 +10,7 @@ import QuickLook
 import SwiftUI
 
 class PreviewViewController: UIViewController, QLPreviewingController {
-    @IBOutlet weak var coverImage: UIImageView!
     @IBOutlet weak var containerView: UIView!
-    @IBOutlet weak var songTitle: UILabel!
     
     let difficultyToColorDictionary: [String: Int] = [
         "basic": 0x22bb5b,
@@ -44,32 +42,14 @@ class PreviewViewController: UIViewController, QLPreviewingController {
             return
         }
         
-        let coversDir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.dev.imgg.gekichumai.dxrating.public-shared")?.appendingPathComponent("Covers")
-        
-        let resource = song.imageName
-        guard let imageUrl = coversDir?.appendingPathComponent(resource) else {
-            handler(AppError.custom(errorDescription: "failed to find image"))
-            return
-        }
-        
-        let imageData = try? Data(contentsOf: imageUrl)
-        let uiImage = (imageData != nil) ? UIImage(data: imageData!) : nil
-        
-        self.coverImage.image = uiImage
-        self.coverImage.layer.cornerRadius = 4.0
-        self.coverImage.layer.shadowRadius = 12.0
-        self.coverImage.layer.shadowOpacity = 1.0
-        self.coverImage.layer.shadowColor = CGColor(gray: 1.0, alpha: 0.2)
-        self.coverImage.backgroundColor = .gray
-        self.songTitle.text = song.title
-        
-        let hostingController = UIHostingController(rootView: SongLevelView(song: song))
+        let state = WrappedSongDetailViewState(song: song)
+        let hostingController = UIHostingController(rootView: WrappedSongDetailView(state: state))
         self.addChild(hostingController)
         let hostingControllerView = hostingController.view!
         hostingControllerView.translatesAutoresizingMaskIntoConstraints = false
         self.containerView.addSubview(hostingControllerView)
         NSLayoutConstraint.activate([
-            hostingControllerView.topAnchor.constraint(equalTo: self.songTitle.bottomAnchor, constant: 16.0),
+            hostingControllerView.topAnchor.constraint(equalTo: self.containerView.topAnchor),
             hostingControllerView.leftAnchor.constraint(equalTo: self.containerView.leftAnchor),
             hostingControllerView.rightAnchor.constraint(equalTo: self.containerView.rightAnchor),
             hostingControllerView.bottomAnchor.constraint(equalTo: self.containerView.bottomAnchor),

@@ -8,14 +8,13 @@
 import SwiftUI
 
 struct WrappedSongDetailView: View {
-    @StateObject var state = WrappedSongDetailViewState()
+    @StateObject var state = WrappedSongDetailViewState(song: nil)
     
     var body: some View {
         Group {
             if (self.state.song != nil) {
                 SongDetailView(song: self.state.song!)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 16)
+                    .environment(\.colorScheme, .light)
                     .background(Color.white)
                     .cornerRadius(8)
             } else {
@@ -56,8 +55,18 @@ struct WrappedSongDetailView: View {
 
 final class WrappedSongDetailViewState: ObservableObject {
     @Published var song: Song? = nil
+    
+    init(song: Song?) {
+        self.song = song
+    }
 }
 
-#Preview {
+@available(iOS 17.0, *)
+#Preview("empty", traits: .sizeThatFitsLayout) {
     WrappedSongDetailView()
+}
+
+@available(iOS 17.0, *)
+#Preview("exists", traits: .sizeThatFitsLayout) {
+    WrappedSongDetailView(state: WrappedSongDetailViewState(song: .demo()))
 }
