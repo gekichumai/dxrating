@@ -1,5 +1,6 @@
 import { dxdata } from "@gekichumai/dxdata";
 import { IconButton } from "@mui/material";
+import { intlFormatDistance } from "date-fns";
 import { FC, PropsWithChildren, ReactNode, useMemo, useState } from "react";
 import MdiGithub from "~icons/mdi/github";
 import MdiInformation from "~icons/mdi/information";
@@ -7,7 +8,6 @@ import MdiTwitter from "~icons/mdi/twitter";
 import MdiWeb from "~icons/mdi/web";
 import { BUNDLE } from "../../utils/bundle";
 import { ResponsiveDialog } from "./ResponsiveDialog";
-import { intlFormatDistance } from "date-fns";
 
 const AboutLink: FC<
   PropsWithChildren<{ href: string; startAdornment?: ReactNode; label: string }>
@@ -110,6 +110,14 @@ export const About = () => {
               label="Chart Metadata"
             >
               arcade-songs.zetaraku.dev
+            </AboutLink>
+
+            <AboutLink
+              href="https://github.com/Yuri-YuzuChaN/maimaiDX"
+              startAdornment={<MdiGithub />}
+              label="FESTiVAL+ Background"
+            >
+              Yuri-YuzuChaN/maimaiDX
             </AboutLink>
           </ul>
 
