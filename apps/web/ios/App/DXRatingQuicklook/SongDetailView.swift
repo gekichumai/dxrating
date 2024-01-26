@@ -42,7 +42,9 @@ struct SongDetailView: View {
     }
 }
 
+#if DEBUG
 @available(iOS 17.0, *)
 #Preview(traits: .sizeThatFitsLayout) {
     SongDetailView(song: .demo())
 }
+#endif

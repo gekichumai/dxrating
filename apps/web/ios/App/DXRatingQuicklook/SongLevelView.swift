@@ -79,9 +79,11 @@ struct SongLevelView: View {
     }
 }
 
+#if DEBUG
 @available(iOS 17.0, *)
 #Preview(traits: .sizeThatFitsLayout) {
     SongLevelView(song: .demo())
         .padding()
         .previewLayout(.sizeThatFits)
 }
+#endif

@@ -61,6 +61,7 @@ final class WrappedSongDetailViewState: ObservableObject {
     }
 }
 
+#if DEBUG
 @available(iOS 17.0, *)
 #Preview("empty", traits: .sizeThatFitsLayout) {
     WrappedSongDetailView()
@@ -70,3 +71,4 @@ final class WrappedSongDetailViewState: ObservableObject {
 #Preview("exists", traits: .sizeThatFitsLayout) {
     WrappedSongDetailView(state: WrappedSongDetailViewState(song: .demo()))
 }
+#endif
