@@ -249,9 +249,9 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
           className="text-lg font-bold"
         />
 
-        <div className="flex flex-wrap gap-1">
+        {/* <div className="flex flex-wrap gap-1">
           <SheetTags sheet={sheet} />
-        </div>
+        </div> */}
 
         <div className="flex items-center">
           <IconMdiSearchWeb className="mr-2" />
