@@ -41,7 +41,7 @@ export const VersionSwitcher: FC = () => {
   return disabled ? (
     <div className="flex justify-center items-center">
       <img
-        src={`https://dxrating-assets.imgg.dev/images/version-logo/${version}.png`}
+        src={`https://shama.dxrating.net/images/version-logo/${version}.png`}
         className="h-32 w-auto touch-callout-none"
         draggable={false}
       />
@@ -53,7 +53,7 @@ export const VersionSwitcher: FC = () => {
       onChange={(e) => setVersion(e.target.value as DXVersion)}
       renderValue={(value) => (
         <img
-          src={`https://dxrating-assets.imgg.dev/images/version-logo/${value}.png`}
+          src={`https://shama.dxrating.net/images/version-logo/${value}.png`}
           className="h-32 w-auto touch-callout-none"
           draggable={false}
         />
@@ -67,7 +67,7 @@ export const VersionSwitcher: FC = () => {
           className="flex justify-center items-center"
         >
           <img
-            src={`https://dxrating-assets.imgg.dev/images/version-logo/${v}.png`}
+            src={`https://shama.dxrating.net/images/version-logo/${v}.png`}
             className="h-auto w-56 touch-callout-none"
             draggable={false}
           />

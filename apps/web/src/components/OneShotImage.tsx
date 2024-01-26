@@ -25,10 +25,10 @@ export const OneShotImage: FC<{
       return {
         renderer,
         fontBold: await fetch(
-          "https://dxrating-assets.imgg.dev/fonts/SourceHanSans-Bold.otf",
+          "https://shama.dxrating.net/fonts/SourceHanSans-Bold.otf",
         ).then((res) => res.arrayBuffer()),
         fontRegular: await fetch(
-          "https://dxrating-assets.imgg.dev/fonts/SourceHanSans-Regular.otf",
+          "https://shama.dxrating.net/fonts/SourceHanSans-Regular.otf",
         ).then((res) => res.arrayBuffer()),
       };
     },

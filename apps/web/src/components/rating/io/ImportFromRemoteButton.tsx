@@ -280,7 +280,7 @@ const ImportFromRemoteContent: FC<{
                 <ListItemAvatar>
                   <FadedImage
                     src={
-                      `https://dxrating-assets.imgg.dev/assetbundle/icon/ui_icon_` +
+                      `https://shama.dxrating.net/assetbundle/icon/ui_icon_` +
                       String(user.iconId).padStart(6, "0") +
                       `.png`
                     }

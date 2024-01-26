@@ -9,7 +9,7 @@ export class OneShotRenderer {
     );
 
     const font = await fetch(
-      "https://dxrating-assets.imgg.dev/fonts/Torus-Regular.woff2"
+      "https://shama.dxrating.net/fonts/Torus-Regular.woff2"
     );
     if (!font.ok) return;
 

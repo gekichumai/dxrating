@@ -144,10 +144,10 @@ export const SheetDifficulty: FC<{ difficulty?: DifficultyEnum }> = ({
 };
 
 const SHEET_TYPE_IMAGE = {
-  [TypeEnum.DX]: "https://dxrating-assets.imgg.dev/images/type_dx.png",
-  [TypeEnum.STD]: "https://dxrating-assets.imgg.dev/images/type_sd.png",
+  [TypeEnum.DX]: "https://shama.dxrating.net/images/type_dx.png",
+  [TypeEnum.STD]: "https://shama.dxrating.net/images/type_sd.png",
   [TypeEnum.UTAGE]:
-    "https://dxrating-assets.imgg.dev/images/chart-type/type_utage.png",
+    "https://shama.dxrating.net/images/chart-type/type_utage.png",
 };
 
 const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({
@@ -176,7 +176,7 @@ const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({
         </div>
         {isUtage2P && (
           <img
-            src="https://dxrating-assets.imgg.dev/images/chart-type/type_utage2p_endadornment.png"
+            src="https://shama.dxrating.net/images/chart-type/type_utage2p_endadornment.png"
             className="h-26px w-95.875px ml-[-27px] touch-callout-none"
             alt={type}
             draggable={false}
@@ -206,7 +206,7 @@ export const SheetImage: FC<
   return (
     <FadedImage
       key={name}
-      src={"https://dxrating-assets.imgg.dev/images/cover/v2/" + name}
+      src={"https://shama.dxrating.net/images/cover/v2/" + name}
       className={clsx(
         "overflow-hidden",
         match(size)

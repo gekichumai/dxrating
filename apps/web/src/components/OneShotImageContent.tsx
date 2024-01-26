@@ -39,7 +39,7 @@ export const OneShotImageContent: FC<{
             <img
               tw="w-[92px] h-[92px] rounded-md flex-shrink-0 mr-4"
               src={
-                "https://dxrating-assets.imgg.dev/images/cover/v2/" +
+                "https://shama.dxrating.net/images/cover/v2/" +
                 entry.sheet.imageName
               }
               width={32}

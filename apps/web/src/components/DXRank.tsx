@@ -8,7 +8,7 @@ export const DXRank: FC<{ rank?: string | null; className?: string }> = ({
 }) => {
   const slugVersion = useAppContextSlugVersion();
 
-  const image = `https://dxrating-assets.imgg.dev/images/rank/${slugVersion}/${rank}.png`;
+  const image = `https://shama.dxrating.net/images/rank/${slugVersion}/${rank}.png`;
 
   return image ? (
     <img

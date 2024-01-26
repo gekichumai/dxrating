@@ -61,10 +61,7 @@ const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
       <div className="flex items-center">
         <motion.img
           layout
-          src={
-            "https://dxrating-assets.imgg.dev/images/cover/v2/" +
-            sheet.imageName
-          }
+          src={"https://shama.dxrating.net/images/cover/v2/" + sheet.imageName}
           alt={sheet.imageName}
           className="overflow-hidden rounded-lg bg-slate-300/50"
           variants={variants}
@@ -104,7 +101,7 @@ const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
 
   return (
     <img
-      src={`https://dxrating-assets.imgg.dev/images/rating-arrow/${direction}.png`}
+      src={`https://shama.dxrating.net/images/rating-arrow/${direction}.png`}
       alt={direction}
       className="w-6 h-6 touch-callout-none"
       draggable={false}
@@ -469,7 +466,7 @@ const SheetInternalLevelHistory: FC<{
                   )}
                 >
                   <img
-                    src={`https://dxrating-assets.imgg.dev/images/version-title/${VERSION_SLUG_MAP.get(
+                    src={`https://shama.dxrating.net/images/version-title/${VERSION_SLUG_MAP.get(
                       version,
                     )}.png`}
                     alt={VERSION_SLUG_MAP.get(version)}

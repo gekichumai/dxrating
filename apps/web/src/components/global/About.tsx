@@ -116,7 +116,7 @@ export const About = () => {
           <div className="flex flex-col items-start mt-24 gap-1">
             <img
               className="h-12 w-auto touch-callout-none mb-2"
-              src="https://dxrating-assets.imgg.dev/images/version-adornment/buddies.png"
+              src="https://shama.dxrating.net/images/version-adornment/buddies.png"
               alt="Version"
               draggable={false}
             />
