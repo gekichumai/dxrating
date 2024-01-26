@@ -3,6 +3,7 @@ import { useTransition } from "react";
 import { useLocalStorage } from "react-use";
 import { About } from "./components/global/About";
 import { VersionSwitcher } from "./components/global/VersionSwitcher";
+import { WebpSupportedImage } from "./components/global/WebpSupportedImage";
 import { RatingCalculator } from "./pages/RatingCalculator";
 import { SheetList } from "./pages/SheetList";
 import { useVersionTheme } from "./utils/useVersionTheme";
@@ -17,11 +18,13 @@ export const App = () => {
 
   return (
     <div className="h-full w-full relative">
-      <img
-        src={versionTheme.background}
+      <WebpSupportedImage
+        src={versionTheme.logo}
+        alt="background"
         className="fixed inset-0 h-full w-full z-[-1] object-cover object-center select-none touch-callout-none"
         draggable={false}
       />
+
       <div className="h-full w-full relative">
         <About />
         <div

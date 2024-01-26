@@ -6,6 +6,7 @@ import {
 } from "../../models/context/AppContext";
 import { useAppContext } from "../../models/context/useAppContext";
 import { useVersionTheme } from "../../utils/useVersionTheme";
+import { WebpSupportedImage } from "./WebpSupportedImage";
 
 const VERSIONS = Object.keys(DXVersionToDXDataVersionEnumMap) as DXVersion[];
 
@@ -25,7 +26,6 @@ const StyledVersionSelect = styled(Select)(({ theme }) => ({
 export const VersionSwitcher: FC = () => {
   const { version, setVersion } = useAppContext();
   const versionTheme = useVersionTheme();
-  const disabled = false;
 
   useEffect(() => {
     document.body.style.backgroundColor = versionTheme.accentColor;
@@ -38,21 +38,13 @@ export const VersionSwitcher: FC = () => {
     }
   }, [versionTheme]);
 
-  return disabled ? (
-    <div className="flex justify-center items-center">
-      <img
-        src={`https://shama.dxrating.net/images/version-logo/${version}.png`}
-        className="h-32 w-auto touch-callout-none"
-        draggable={false}
-      />
-    </div>
-  ) : (
+  return (
     <StyledVersionSelect
       value={version}
       variant="filled"
       onChange={(e) => setVersion(e.target.value as DXVersion)}
       renderValue={(value) => (
-        <img
+        <WebpSupportedImage
           src={`https://shama.dxrating.net/images/version-logo/${value}.png`}
           className="h-32 w-auto touch-callout-none"
           draggable={false}
@@ -66,7 +58,7 @@ export const VersionSwitcher: FC = () => {
           key={v}
           className="flex justify-center items-center"
         >
-          <img
+          <WebpSupportedImage
             src={`https://shama.dxrating.net/images/version-logo/${v}.png`}
             className="h-auto w-56 touch-callout-none"
             draggable={false}
