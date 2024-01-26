@@ -36837,12 +36837,12 @@
           "internalLevelValue": 2,
           "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 87,
+            "hold": 9,
+            "slide": 4,
+            "touch": 8,
+            "break": 5,
+            "total": 113
           },
           "regions": {
             "jp": true,
@@ -36861,12 +36861,12 @@
           "internalLevelValue": 7,
           "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 214,
+            "hold": 18,
+            "slide": 9,
+            "touch": 11,
+            "break": 8,
+            "total": 260
           },
           "regions": {
             "jp": true,
@@ -36883,7 +36883,7 @@
           "levelValue": 9,
           "internalLevel": null,
           "internalLevelValue": 9,
-          "noteDesigner": null,
+          "noteDesigner": "Luxizhel",
           "noteCounts": {
             "tap": 224,
             "hold": 15,
@@ -36907,7 +36907,7 @@
           "levelValue": 12.7,
           "internalLevel": "12.8",
           "internalLevelValue": 12.8,
-          "noteDesigner": null,
+          "noteDesigner": "鳩ホルダー",
           "noteCounts": {
             "tap": 303,
             "hold": 43,
@@ -153754,12 +153754,12 @@
           "internalLevelValue": 13.8,
           "noteDesigner": "Jack",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 651,
+            "hold": 15,
+            "slide": 93,
+            "touch": 74,
+            "break": 80,
+            "total": 913
           },
           "regions": {
             "jp": true,
@@ -154226,7 +154226,7 @@
       "version": "BUDDiES",
       "releaseDate": "2023-11-10",
       "isNew": false,
-      "isLocked": true,
+      "isLocked": false,
       "sheets": [
         {
           "type": "dx",
@@ -154261,12 +154261,12 @@
           "internalLevelValue": 7.7,
           "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 262,
+            "hold": 23,
+            "slide": 6,
+            "touch": 27,
+            "break": 10,
+            "total": 328
           },
           "regions": {
             "jp": true,
@@ -154337,7 +154337,7 @@
       "version": "BUDDiES",
       "releaseDate": "2023-11-10",
       "isNew": false,
-      "isLocked": true,
+      "isLocked": false,
       "sheets": [
         {
           "type": "dx",
@@ -154396,12 +154396,12 @@
           "internalLevelValue": 12.5,
           "noteDesigner": "サファ太",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 453,
+            "hold": 79,
+            "slide": 61,
+            "touch": 15,
+            "break": 87,
+            "total": 695
           },
           "regions": {
             "jp": true,
@@ -154420,12 +154420,12 @@
           "internalLevelValue": 14.4,
           "noteDesigner": "じゃこレモン",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 749,
+            "hold": 57,
+            "slide": 116,
+            "touch": 67,
+            "break": 75,
+            "total": 1064
           },
           "regions": {
             "jp": true,
@@ -154725,7 +154725,7 @@
           "levelValue": 10,
           "internalLevel": null,
           "internalLevelValue": 10,
-          "noteDesigner": null,
+          "noteDesigner": "みぞれヤナギ",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -154749,13 +154749,13 @@
           "levelValue": 13,
           "internalLevel": "13.6",
           "internalLevelValue": 13.6,
-          "noteDesigner": null,
+          "noteDesigner": "Luxizhel",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
+            "tap": 518,
+            "hold": 91,
+            "slide": 88,
+            "touch": 41,
+            "break": 46,
             "total": 784
           },
           "regions": {
@@ -154945,7 +154945,7 @@
           "levelValue": 12.7,
           "internalLevel": "12.8",
           "internalLevelValue": 12.8,
-          "noteDesigner": null,
+          "noteDesigner": "はっぴー",
           "noteCounts": {
             "tap": 571,
             "hold": 160,
@@ -154969,7 +154969,7 @@
           "levelValue": 14,
           "internalLevel": "14.6",
           "internalLevelValue": 14.6,
-          "noteDesigner": null,
+          "noteDesigner": "ロシェ@ペンギン",
           "noteCounts": {
             "tap": 883,
             "hold": 93,
@@ -156247,7 +156247,7 @@
       "imageName": "15e89ff7086150bd13708ea6150a5f264e5ac1c7918f596ab852b0f3f2a0f7c7.png",
       "version": "BUDDiES",
       "releaseDate": "2024-01-11",
-      "isNew": true,
+      "isNew": false,
       "isLocked": false,
       "sheets": [
         {
@@ -156257,7 +156257,7 @@
           "levelValue": 3,
           "internalLevel": null,
           "internalLevelValue": 3,
-          "noteDesigner": null,
+          "noteDesigner": "-",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -156281,7 +156281,7 @@
           "levelValue": 6,
           "internalLevel": null,
           "internalLevelValue": 6,
-          "noteDesigner": null,
+          "noteDesigner": "-",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -156331,12 +156331,12 @@
           "internalLevelValue": 13,
           "noteDesigner": null,
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 505,
+            "hold": 37,
+            "slide": 93,
+            "touch": 16,
+            "break": 13,
+            "total": 664
           },
           "regions": {
             "jp": true,
@@ -156357,7 +156357,7 @@
       "imageName": "f20101217f714194d9973b603c07a13b4dcf7d39648842d20d334a546c3e3f55.png",
       "version": "BUDDiES",
       "releaseDate": "2024-01-11",
-      "isNew": true,
+      "isNew": false,
       "isLocked": false,
       "sheets": [
         {
@@ -156367,7 +156367,7 @@
           "levelValue": 3,
           "internalLevel": null,
           "internalLevelValue": 3,
-          "noteDesigner": null,
+          "noteDesigner": "-",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -156391,7 +156391,7 @@
           "levelValue": 7,
           "internalLevel": null,
           "internalLevelValue": 7,
-          "noteDesigner": null,
+          "noteDesigner": "-",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -156467,6 +156467,446 @@
       "imageName": "7cb366f1bc007173af960303405073154a2aaa134527ddbba54ed8a289b4e53a.png",
       "version": "BUDDiES",
       "releaseDate": "2024-01-11",
+      "isNew": false,
+      "isLocked": false,
+      "sheets": [
+        {
+          "type": "dx",
+          "difficulty": "basic",
+          "level": "3",
+          "levelValue": 3,
+          "internalLevel": null,
+          "internalLevelValue": 3,
+          "noteDesigner": "-",
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "advanced",
+          "level": "6",
+          "levelValue": 6,
+          "internalLevel": null,
+          "internalLevelValue": 6,
+          "noteDesigner": "-",
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "expert",
+          "level": "10",
+          "levelValue": 10,
+          "internalLevel": null,
+          "internalLevelValue": 10,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "master",
+          "level": "12+",
+          "levelValue": 12.7,
+          "internalLevel": "12.8",
+          "internalLevelValue": 12.8,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        }
+      ]
+    },
+    {
+      "songId": "ずんだもんの朝食　〜目覚ましずんラップ〜",
+      "category": "niconico＆ボーカロイド",
+      "title": "ずんだもんの朝食　〜目覚ましずんラップ〜",
+      "artist": "ひらうみ",
+      "bpm": null,
+      "imageName": "585e5bfd86f6823e371d7077a3308137f9daaae70b23587fb55b054e5da9b7f7.png",
+      "version": "BUDDiES",
+      "releaseDate": "2024-01-26",
+      "isNew": true,
+      "isLocked": false,
+      "sheets": [
+        {
+          "type": "dx",
+          "difficulty": "basic",
+          "level": "3",
+          "levelValue": 3,
+          "internalLevel": null,
+          "internalLevelValue": 3,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": true,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "advanced",
+          "level": "8",
+          "levelValue": 8,
+          "internalLevel": null,
+          "internalLevelValue": 8,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": true,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "expert",
+          "level": "10+",
+          "levelValue": 10.7,
+          "internalLevel": "10.8",
+          "internalLevelValue": 10.8,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": true,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "master",
+          "level": "13",
+          "levelValue": 13,
+          "internalLevel": "13.2",
+          "internalLevelValue": 13.2,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": true,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        }
+      ]
+    },
+    {
+      "songId": "あなたは世界の終わりにずんだを食べるのだ",
+      "category": "niconico＆ボーカロイド",
+      "title": "あなたは世界の終わりにずんだを食べるのだ",
+      "artist": "なみぐる",
+      "bpm": null,
+      "imageName": "aa4f74e41932b4f956759633d1549fa6a523552512d49000e87d695d488b8ef1.png",
+      "version": "BUDDiES",
+      "releaseDate": "2024-01-26",
+      "isNew": true,
+      "isLocked": false,
+      "sheets": [
+        {
+          "type": "dx",
+          "difficulty": "basic",
+          "level": "2",
+          "levelValue": 2,
+          "internalLevel": null,
+          "internalLevelValue": 2,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": true,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "advanced",
+          "level": "6",
+          "levelValue": 6,
+          "internalLevel": null,
+          "internalLevelValue": 6,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": true,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "expert",
+          "level": "9+",
+          "levelValue": 9.7,
+          "internalLevel": null,
+          "internalLevelValue": 9.7,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": true,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "master",
+          "level": "12+",
+          "levelValue": 12.7,
+          "internalLevel": "12.9",
+          "internalLevelValue": 12.9,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": true,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        }
+      ]
+    },
+    {
+      "songId": "HUMANBORG",
+      "category": "POPS＆アニメ",
+      "title": "HUMANBORG",
+      "artist": "SARUKANI",
+      "bpm": null,
+      "imageName": "df9216ba4f5891ef6e22439ea6c10403e0f094f60dcc5a633287ea3e95f7f0fc.png",
+      "version": "BUDDiES",
+      "releaseDate": "2024-01-26",
+      "isNew": true,
+      "isLocked": false,
+      "sheets": [
+        {
+          "type": "dx",
+          "difficulty": "basic",
+          "level": "4",
+          "levelValue": 4,
+          "internalLevel": null,
+          "internalLevelValue": 4,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "advanced",
+          "level": "7",
+          "levelValue": 7,
+          "internalLevel": null,
+          "internalLevelValue": 7,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "expert",
+          "level": "12",
+          "levelValue": 12,
+          "internalLevel": "12.0",
+          "internalLevelValue": 12,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "master",
+          "level": "13+",
+          "levelValue": 13.7,
+          "internalLevel": "13.8",
+          "internalLevelValue": 13.8,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        }
+      ]
+    },
+    {
+      "songId": "ULTRA POWER",
+      "category": "POPS＆アニメ",
+      "title": "ULTRA POWER",
+      "artist": "SARUKANI",
+      "bpm": null,
+      "imageName": "415a4a5ce2dc484567d87c25e1513a52cdaf90fdbd0d3c33ad0c6e9d558894b6.png",
+      "version": "BUDDiES",
+      "releaseDate": "2024-01-26",
       "isNew": true,
       "isLocked": false,
       "sheets": [
@@ -156521,10 +156961,10 @@
         {
           "type": "dx",
           "difficulty": "expert",
-          "level": "10",
-          "levelValue": 10,
+          "level": "11",
+          "levelValue": 11,
           "internalLevel": null,
-          "internalLevelValue": 10,
+          "internalLevelValue": 11,
           "noteDesigner": null,
           "noteCounts": {
             "tap": null,
@@ -156545,10 +156985,10 @@
         {
           "type": "dx",
           "difficulty": "master",
-          "level": "12+",
-          "levelValue": 12.7,
-          "internalLevel": "12.8",
-          "internalLevelValue": 12.8,
+          "level": "13",
+          "levelValue": 13,
+          "internalLevel": "13.5",
+          "internalLevelValue": 13.5,
           "noteDesigner": null,
           "noteCounts": {
             "tap": null,
@@ -156744,5 +157184,5 @@
       "name": "中国版 (舞萌DX)"
     }
   ],
-  "updateTime": "2024-01-18T11:24:32.996Z"
+  "updateTime": "2024-01-26T11:51:18.139Z"
 }
