@@ -17,7 +17,7 @@ export const OneShotImage: FC<{
   calculatedEntries: Entry[];
 }> = ({ calculatedEntries }) => {
   const preload = useSWR(
-    "_oneshot_renderer",
+    "oneshot:renderer",
     async () => {
       const renderer = new OneShotRenderer();
       await renderer.initialize();
@@ -41,7 +41,7 @@ export const OneShotImage: FC<{
   );
 
   const renderedURL = useSWR<string | null>(
-    "_oneshot_rendered_" +
+    "oneshot:rendered:" +
       (preload.data ? "preload" : "no-preload") +
       quickStringHash(JSON.stringify(calculatedEntries)),
     async () => {

@@ -65,7 +65,12 @@ export namespace DXDataOriginal {
     isNew: boolean;
     isLocked: boolean;
     sheets: Sheet[];
-    internalId?: number;
+    internalId?: InternalID;
+  }
+
+  export interface InternalID {
+    std?: number;
+    dx?: number;
   }
 
   export interface Sheet {

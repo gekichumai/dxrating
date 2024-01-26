@@ -302,7 +302,8 @@ function getUserGamePlays(
       gameplay: entry,
       sheet: sheets.find(
         (sheet) =>
-          sheet.internalId === entry.music_id &&
+          (sheet.internalId?.std === entry.music_id ||
+            sheet.internalId?.dx === entry.music_id) &&
           sheet.difficulty === entry.level &&
           sheet.type === entry.type,
       ),

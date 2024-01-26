@@ -75,13 +75,15 @@ export const getFlattenedSheets = async (
 export const useSheets = () => {
   const { version } = useAppContext();
   const appVersion = useAppContextDXDataVersion();
-  return useSWR(`sheets_${version}`, () => getFlattenedSheets(appVersion));
+  return useSWR(`dxdata:sheets:${version}`, () =>
+    getFlattenedSheets(appVersion),
+  );
 };
 
 export const useSongs = () => {
   const { version } = useAppContext();
   const appVersion = useAppContextDXDataVersion();
-  return useSWR(`songs_${version}`, () => getSongs(appVersion));
+  return useSWR(`dxdata:songs:${version}`, () => getSongs(appVersion));
 };
 
 export const useSheetsSearchEngine = () => {

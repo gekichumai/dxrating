@@ -419,7 +419,8 @@ function getUserGamePlays(
     gameplay: entry,
     sheet: sheets.find(
       (sheet) =>
-        sheet.internalId === entry.musicId &&
+        (sheet.internalId?.std === entry.musicId ||
+          sheet.internalId?.dx === entry.musicId) &&
         sheet.difficulty === REMOTE_GAME_PLAY_LEVEL_TO_DIFFICULTY[entry.level],
     ),
   }));

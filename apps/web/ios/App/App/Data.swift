@@ -84,7 +84,7 @@ struct Song: Codable, Identifiable {
     let isNew, isLocked: Bool
     let sheets: [Sheet]
     let searchAcronyms: [String]
-    let internalID: Int?
+    let internalID: InternalID?
 
     enum CodingKeys: String, CodingKey {
         case songID = "songId"
@@ -196,6 +196,10 @@ struct Song: Codable, Identifiable {
         )
     }
     #endif
+}
+
+struct InternalID: Codable, Equatable, Sendable {
+    let std, dx: Int?
 }
 
 let omitDifficulties: [String] = [

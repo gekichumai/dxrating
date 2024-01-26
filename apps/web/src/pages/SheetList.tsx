@@ -39,16 +39,14 @@ export const SheetList: FC = () => {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {
-        <Button
-          onClick={() => DXRatingPlugin.launchInstantOCR()}
-          className="mt-2 rounded-full text-white"
-          variant="contained"
-          startIcon={<IconMdiOcr />}
-        >
-          Launch OCR
-        </Button>
-      }
+      <Button
+        onClick={() => DXRatingPlugin.launchInstantOCR()}
+        className="mt-2 rounded-full text-white"
+        variant="contained"
+        startIcon={<IconMdiOcr />}
+      >
+        Launch OCR
+      </Button>
 
       <FormControlLabel
         control={

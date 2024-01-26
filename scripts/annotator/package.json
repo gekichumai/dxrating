@@ -7,9 +7,6 @@
     "access": "public"
   },
   "scripts": {
-    "update:alias1": "curl -s https://raw.githubusercontent.com/lomotos10/GCM-bot/main/data/aliases/en/chuni.tsv -o ./aliases1.tsv",
-    "update:alias2": "curl -s https://api.yuzuai.xyz/maimaidx/maimaidxalias | jq . > ./aliases2.json",
-    "update": "npm-run-all update:*",
     "run": "esno index.ts"
   },
   "dependencies": {
@@ -18,9 +15,11 @@
     "dotenv": "^16.3.1",
     "esno": "^0.17.0",
     "fuse.js": "^7.0.0",
+    "he": "^1.2.0",
     "pg": "^8.11.3"
   },
   "devDependencies": {
+    "@types/he": "^1.2.3",
     "@types/lodash": "^4.14.201",
     "@types/node": "^20.8.6",
     "@types/pg": "^8.10.9",

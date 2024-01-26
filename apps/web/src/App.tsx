@@ -57,7 +57,7 @@ export const App = () => {
               label="Search Charts"
               classes={{
                 selected: "!text-white",
-                root: "!rounded-full transition-colors z-1 px-1 !py-0 !min-h-2.5rem",
+                root: "!rounded-full transition-colors z-1 !py-0 !min-h-2.5rem",
               }}
               value="search"
             />
@@ -65,7 +65,7 @@ export const App = () => {
               label="My Rating"
               classes={{
                 selected: "!text-white",
-                root: "!rounded-full transition-colors z-1 px-1 !py-0 !min-h-2.5rem",
+                root: "!rounded-full transition-colors z-1 !py-0 !min-h-2.5rem",
               }}
               value="rating"
             />

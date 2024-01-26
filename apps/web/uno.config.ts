@@ -1,6 +1,7 @@
 // uno.config.ts
 import { handler } from "@unocss/preset-mini/utils";
-import { defineConfig, presetUno } from "unocss";
+import presetWind from "@unocss/preset-wind";
+import { defineConfig } from "unocss";
 
 export default defineConfig({
   rules: [
@@ -39,5 +40,9 @@ export default defineConfig({
     "chunks-horizontal-2":
       "flex flex-col md:flex-row items-center justify-center gap-2 w-full",
   },
-  presets: [presetUno()],
+  presets: [
+    presetWind({
+      important: "body",
+    }),
+  ],
 });
