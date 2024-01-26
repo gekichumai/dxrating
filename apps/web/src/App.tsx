@@ -19,7 +19,7 @@ export const App = () => {
   return (
     <div className="h-full w-full relative">
       <WebpSupportedImage
-        src={versionTheme.logo}
+        src={versionTheme.background}
         alt="background"
         className="fixed inset-0 h-full w-full z-[-1] object-cover object-center select-none touch-callout-none"
         draggable={false}
