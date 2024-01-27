@@ -19,5 +19,6 @@ export default defineConfig({
         },
       },
     },
+    sourcemap: process.env.VITE_BUILD_PLATFORM === "web",
   },
 });

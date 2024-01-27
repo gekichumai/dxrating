@@ -115,7 +115,7 @@ export const About = () => {
             <AboutLink
               href="https://github.com/Yuri-YuzuChaN/maimaiDX"
               startAdornment={<MdiGithub />}
-              label="FESTiVAL+ Background"
+              label="FESTiVAL+  Background"
             >
               Yuri-YuzuChaN/maimaiDX
             </AboutLink>

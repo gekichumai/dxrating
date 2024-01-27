@@ -35,7 +35,7 @@ export const SheetListItem: FC<
       <ListItemButton
         disableGutters={!isLargeDevice}
         className={clsx(
-          "w-full cursor-pointer transition duration-500 !px-4",
+          "w-full cursor-pointer transition duration-500 hover:duration-100 !px-4",
           open && "!bg-zinc-300/80",
         )}
         onClick={() => setOpen(true)}

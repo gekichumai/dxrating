@@ -11,6 +11,7 @@ import { SheetListContainer } from "../components/SheetListContainer";
 import { useAppContextDXDataVersion } from "../models/context/useAppContext";
 import { useFilteredSheets, useSheets } from "../songs";
 import { DXRatingPlugin } from "../utils/capacitor/plugin/wrap";
+import { isBuildPlatformApp } from "../utils/env";
 
 export const SheetList: FC = () => {
   const appVersion = useAppContextDXDataVersion();
@@ -39,14 +40,16 @@ export const SheetList: FC = () => {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      <Button
-        onClick={() => DXRatingPlugin.launchInstantOCR()}
-        className="mt-2 rounded-full text-white"
-        variant="contained"
-        startIcon={<IconMdiOcr />}
-      >
-        Launch OCR
-      </Button>
+      {isBuildPlatformApp && (
+        <Button
+          onClick={() => DXRatingPlugin.launchInstantOCR()}
+          className="mt-2 rounded-full text-white"
+          variant="contained"
+          startIcon={<IconMdiOcr />}
+        >
+          Launch OCR
+        </Button>
+      )}
 
       <FormControlLabel
         control={
