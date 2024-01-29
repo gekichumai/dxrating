@@ -24,6 +24,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { match } from "ts-pattern";
 import IconMdiSearchWeb from "~icons/mdi/search-web";
 import IconMdiSpotify from "~icons/mdi/spotify";
@@ -58,31 +59,38 @@ const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
     };
 
     return (
-      <div className="flex items-center">
-        <motion.img
-          layout
-          src={"https://shama.dxrating.net/images/cover/v2/" + sheet.imageName}
-          alt={sheet.imageName}
-          className="overflow-hidden rounded-lg bg-slate-300/50"
-          variants={variants}
-          initial="collapsed"
-          animate={expanded ? "expanded" : "collapsed"}
-          transition={{
-            type: "spring",
-            damping: 18,
-            stiffness: 235,
-          }}
-          onClick={() => setExpanded((prev) => !prev)}
-        />
-
-        <div className="flex-1" />
-
-        <div className="text-4xl text-zinc-900/60 leading-none">
-          {sheet.isTypeUtage
-            ? sheet.level
-            : sheet.internalLevelValue.toFixed(1)}
+      <>
+        <div className="flex items-center">
+          <div className="text-xs text-gray-400">{sheet.internalId}</div>
         </div>
-      </div>
+        <div className="flex items-center">
+          <motion.img
+            layout
+            src={
+              "https://shama.dxrating.net/images/cover/v2/" + sheet.imageName
+            }
+            alt={sheet.imageName}
+            className="overflow-hidden rounded-lg bg-slate-300/50"
+            variants={variants}
+            initial="collapsed"
+            animate={expanded ? "expanded" : "collapsed"}
+            transition={{
+              type: "spring",
+              damping: 18,
+              stiffness: 235,
+            }}
+            onClick={() => setExpanded((prev) => !prev)}
+          />
+
+          <div className="flex-1" />
+
+          <div className="text-4xl text-zinc-900/60 leading-none">
+            {sheet.isTypeUtage
+              ? sheet.level
+              : sheet.internalLevelValue.toFixed(1)}
+          </div>
+        </div>
+      </>
     );
   },
 );
@@ -124,6 +132,7 @@ export interface SheetDialogContentProps {
 
 export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
   ({ sheet, currentAchievementRate }) => {
+    const { t } = useTranslation(["sheet"]);
     const ratings = useMemo(() => {
       const rates = [...PRESET_ACHIEVEMENT_RATES];
       if (currentAchievementRate && !rates.includes(currentAchievementRate)) {
@@ -176,70 +185,90 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
         <div className="flex flex-col gap-6 mt-2">
           {!sheet.isTypeUtage && (
             <div className="flex flex-col gap-1">
-              <SectionHeader>Internal Level History</SectionHeader>
+              <SectionHeader>
+                {t("sheet:internal-level-history.title")}
+              </SectionHeader>
               <SheetInternalLevelHistory sheet={sheet} />
             </div>
           )}
 
           <div className="flex flex-col gap-1">
-            <SectionHeader>Details</SectionHeader>
+            <SectionHeader>{t("sheet:details.title")}</SectionHeader>
             <div>
               <Table size="small" className="mb-4">
                 <TableHead>
                   <TableRow>
-                    <TableCell width="100px">Category</TableCell>
+                    <TableCell width="100px">
+                      {t("sheet:details.category")}
+                    </TableCell>
                     <TableCell width="200px">{sheet.category}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   <TableRow>
-                    <TableCell>Song Artist</TableCell>
+                    <TableCell>{t("sheet:details.song-artist")}</TableCell>
                     <TableCell>{sheet.artist}</TableCell>
                   </TableRow>
 
                   {!sheet.isTypeUtage && (
                     <>
                       <TableRow>
-                        <TableCell>BPM</TableCell>
+                        <TableCell>{t("sheet:details.bpm")}</TableCell>
                         <TableCell>{sheet.bpm}</TableCell>
                       </TableRow>
 
                       <TableRow className="bg-gray-1">
-                        <TableCell>Chart Designer</TableCell>
+                        <TableCell>
+                          {t("sheet:details.chart-designer")}
+                        </TableCell>
                         <TableCell>{sheet.noteDesigner}</TableCell>
                       </TableRow>
 
                       <TableRow className="bg-gray-1">
-                        <TableCell colSpan={2}>Notes Statistics</TableCell>
+                        <TableCell colSpan={2}>
+                          {t("sheet:details.notes-statistics.title")}
+                        </TableCell>
                       </TableRow>
 
                       <TableRow className="bg-gray-1">
-                        <TableCell>— Tap</TableCell>
+                        <TableCell>
+                          — {t("sheet:details.notes-statistics.tap")}
+                        </TableCell>
                         <TableCell>{sheet.noteCounts.tap ?? 0}</TableCell>
                       </TableRow>
 
                       <TableRow className="bg-gray-1">
-                        <TableCell>— Hold</TableCell>
+                        <TableCell>
+                          — {t("sheet:details.notes-statistics.hold")}
+                        </TableCell>
                         <TableCell>{sheet.noteCounts.hold ?? 0}</TableCell>
                       </TableRow>
 
                       <TableRow className="bg-gray-1">
-                        <TableCell>— Slide</TableCell>
+                        <TableCell>
+                          — {t("sheet:details.notes-statistics.slide")}
+                        </TableCell>
                         <TableCell>{sheet.noteCounts.slide ?? 0}</TableCell>
                       </TableRow>
 
                       <TableRow className="bg-gray-1">
-                        <TableCell>— Touch</TableCell>
+                        <TableCell>
+                          — {t("sheet:details.notes-statistics.touch")}
+                        </TableCell>
                         <TableCell>{sheet.noteCounts.touch ?? 0}</TableCell>
                       </TableRow>
 
                       <TableRow className="bg-gray-1">
-                        <TableCell>— Break</TableCell>
+                        <TableCell>
+                          — {t("sheet:details.notes-statistics.break")}
+                        </TableCell>
                         <TableCell>{sheet.noteCounts.break ?? 0}</TableCell>
                       </TableRow>
 
                       <TableRow className="bg-gray-1">
-                        <TableCell>— Total</TableCell>
+                        <TableCell>
+                          — {t("sheet:details.notes-statistics.total")}
+                        </TableCell>
                         <TableCell>
                           {sheet.noteCounts.total?.toLocaleString("en-US")}
                         </TableCell>
@@ -248,7 +277,9 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                   )}
 
                   <TableRow>
-                    <TableCell>Regional Availability</TableCell>
+                    <TableCell>
+                      {t("sheet:details.regional-availability")}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {Object.entries(sheet.regions).map(
@@ -270,45 +301,53 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                 </TableBody>
               </Table>
 
-              {/* <Button
-                href={
-                  "https://arcade-songs.zetaraku.dev/maimai/song/?id=" +
-                  encodeURIComponent(sheet.songId)
-                }
-                target="_blank"
-                variant="outlined"
-                className="!normal-case"
-                startIcon={<IconMdiOpenInNew />}
-              >
-                <span>View Song on&nbsp;</span>
-                <span className="text-xs tracking-tighter">
-                  arcade-songs.zetaraku.dev
-                </span>
-              </Button> */}
-
               <div className="mt-4 text-xs text-gray-500 text-right">
-                Some data comes from{" "}
-                <a
-                  href="https://arcade-songs.zetaraku.dev"
-                  rel="noreferrer"
-                  target="_blank"
-                  className="tracking-tighter"
-                >
-                  arcade-songs.zetaraku.dev
-                </a>
+                {/* {t("sheet:details.credits", {
+                  link: (
+                    <a
+                      href="https://arcade-songs.zetaraku.dev"
+                      rel="noreferrer"
+                      target="_blank"
+                      className="tracking-tighter"
+                    >
+                      arcade-songs.zetaraku.dev
+                    </a>
+                  ),
+                })} */}
+                <Trans
+                  i18nKey="sheet:details.credits"
+                  components={{
+                    link: (
+                      <a
+                        href="https://arcade-songs.zetaraku.dev"
+                        rel="noreferrer"
+                        target="_blank"
+                        className="tracking-tighter"
+                      >
+                        arcade-songs.zetaraku.dev
+                      </a>
+                    ),
+                  }}
+                />
               </div>
             </div>
           </div>
 
           {!sheet.isTypeUtage && (
             <div className="flex flex-col gap-1">
-              <SectionHeader>Achievement → Rating</SectionHeader>
+              <SectionHeader>
+                {t("sheet:details.achievement-to-rating.title")}
+              </SectionHeader>
               <div>
                 <Table className="tabular-nums !font-mono" size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell width="100px">Achv</TableCell>
-                      <TableCell width="50px">Rating</TableCell>
+                      <TableCell width="100px">
+                        {t("sheet:details.achievement-to-rating.achievement")}
+                      </TableCell>
+                      <TableCell width="50px">
+                        {t("sheet:details.achievement-to-rating.rating")}
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -400,6 +439,7 @@ const SheetAchievementRate: FC<{ value: number }> = ({ value }) => {
 const SheetInternalLevelHistory: FC<{
   sheet: FlattenedSheet;
 }> = ({ sheet }) => {
+  const { t } = useTranslation(["sheet"]);
   const appVersion = useAppContextDXDataVersion();
   const scrollableContainer = useRef<HTMLDivElement>(null);
   const multiverInternalLevelValues = useMemo(
@@ -507,7 +547,9 @@ const SheetInternalLevelHistory: FC<{
           </TableBody>
         </Table>
       ) : (
-        <div className="text-gray-500 px-1">No history available</div>
+        <div className="text-gray-500 px-1">
+          {t("sheet:internal-level-history.empty")}
+        </div>
       )}
     </div>
   );

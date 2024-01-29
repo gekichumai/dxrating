@@ -1,0 +1,50 @@
+{
+  "root": {
+    "pages": {
+      "search": {
+        "title": "搜索谱面"
+      },
+      "rating": {
+        "title": "计算评分"
+      }
+    }
+  },
+  "settings": {
+    "version": {
+      "select": "选择数据版本"
+    }
+  },
+  "sheet": {
+    "search": "搜索",
+    "ocr": "启动 OCR",
+    "filter-current-version": "过滤当前版本 B15：仅显示来自 {{version}} 的谱面",
+    "search-summary": "找到 {{found}} 份谱面 / 总计 {{total}} 份 (耗时 {{elapsed}}ms)",
+    "details": {
+      "achievement-to-rating": {
+        "achievement": "完成率",
+        "rating": "得分",
+        "title": "完成率→得分"
+      },
+      "bpm": "BPM",
+      "category": "类别",
+      "chart-designer": "制谱",
+      "credits": "部分数据来自 <link />",
+      "notes-statistics": {
+        "break": "绝赞 (Break)",
+        "hold": "Hold",
+        "slide": "Slide",
+        "tap": "Tap",
+        "title": "音符统计",
+        "total": "总计",
+        "touch": "Touch"
+      },
+      "regional-availability": "区域可用性",
+      "song-artist": "作曲",
+      "title": "详细信息"
+    },
+    "internal-level-history": {
+      "empty": "无可用历史记录",
+      "title": "谱面定数历史"
+    }
+  }
+}
