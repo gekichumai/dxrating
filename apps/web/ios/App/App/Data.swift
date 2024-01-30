@@ -84,12 +84,10 @@ struct Song: Codable, Identifiable {
     let isNew, isLocked: Bool
     let sheets: [Sheet]
     let searchAcronyms: [String]
-    let internalID: InternalID?
 
     enum CodingKeys: String, CodingKey {
         case songID = "songId"
         case category, title, artist, bpm, imageName, version, releaseDate, isNew, isLocked, sheets, searchAcronyms
-        case internalID = "internalId"
     }
     
     var coverImage: UIImage? {
@@ -130,9 +128,9 @@ struct Song: Codable, Identifiable {
                     regions: .init(jp: true, intl: false, cn: false),
                     isSpecial: false,
                     version: .buddies,
-                    songID: "raputa",
                     multiverInternalLevelValue: nil,
-                    comment: nil
+                    comment: nil,
+                    internalID: nil
                 ),
                 .init(
                     type: .dx,
@@ -144,9 +142,9 @@ struct Song: Codable, Identifiable {
                     regions: .init(jp: true, intl: false, cn: false),
                     isSpecial: false,
                     version: .buddies,
-                    songID: "raputa",
                     multiverInternalLevelValue: nil,
-                    comment: nil
+                    comment: nil,
+                    internalID: nil
                 ),
                 .init(
                     type: .dx,
@@ -158,9 +156,9 @@ struct Song: Codable, Identifiable {
                     regions: .init(jp: true, intl: false, cn: false),
                     isSpecial: false,
                     version: .buddies,
-                    songID: "raputa",
                     multiverInternalLevelValue: nil,
-                    comment: nil
+                    comment: nil,
+                    internalID: nil
                 ),
                 .init(
                     type: .dx,
@@ -172,9 +170,9 @@ struct Song: Codable, Identifiable {
                     regions: .init(jp: true, intl: false, cn: false),
                     isSpecial: false,
                     version: .buddies,
-                    songID: "raputa",
                     multiverInternalLevelValue: nil,
-                    comment: nil
+                    comment: nil,
+                    internalID: nil
                 ),
                 .init(
                     type: .dx,
@@ -186,20 +184,15 @@ struct Song: Codable, Identifiable {
                     regions: .init(jp: true, intl: false, cn: false),
                     isSpecial: false,
                     version: .buddies,
-                    songID: "raputa",
                     multiverInternalLevelValue: nil,
-                    comment: nil
+                    comment: nil,
+                    internalID: nil
                 )
             ],
-            searchAcronyms: [],
-            internalID: nil
+            searchAcronyms: []
         )
     }
     #endif
-}
-
-struct InternalID: Codable, Equatable, Sendable {
-    let std, dx: Int?
 }
 
 let omitDifficulties: [String] = [
@@ -221,9 +214,9 @@ struct Sheet: Codable, Identifiable {
     let regions: Regions
     let isSpecial: Bool
     let version: VersionEnum?
-    let songID: String
     let multiverInternalLevelValue: [String: Double]?
     let comment: String?
+    let internalID: Int?
     
     var difficultyWithType: String {
         return "[\(type.rawValue.uppercased())] \(difficulty)"
@@ -231,8 +224,8 @@ struct Sheet: Codable, Identifiable {
     
     enum CodingKeys: String, CodingKey {
         case type, difficulty, level, internalLevelValue, noteDesigner, noteCounts, regions, isSpecial, version
-        case songID = "songId"
         case multiverInternalLevelValue, comment
+        case internalID = "internalId"
     }
     
     func formatted() -> String {
