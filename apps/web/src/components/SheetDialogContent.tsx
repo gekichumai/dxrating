@@ -175,7 +175,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
 
     return (
       <div className="flex flex-col gap-2 relative">
-        <SheetDialogContentHeader sheet={sheet} />
+        {/* <SheetDialogContentHeader sheet={sheet} /> */}
 
         <SheetTitle
           sheet={sheet}
