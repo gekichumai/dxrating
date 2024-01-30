@@ -11,7 +11,8 @@
   },
   "settings": {
     "version": {
-      "select": "Select DXData Version"
+      "select": "Select DXData Version",
+      "info": "Different data versions correspond to different internal level values ​​and different song visibilities."
     }
   },
   "sheet": {
@@ -45,6 +46,24 @@
         "achievement": "Achv.",
         "rating": "Rating"
       }
+    }
+  },
+  "about": {
+    "title": "About",
+    "author": "Author",
+    "source-code": "Source Code",
+    "internal-level-value": "Internal Level Value",
+    "chart-metadata": "Chart Metadata",
+    "fesplus-background": "FESTiVAL+ Background",
+    "version": {
+      "commit": "commit",
+      "build": "build",
+      "build-time": "built at",
+      "upstream-data-update-time": "upstream data version"
+    },
+    "aliases": {
+      "yuri-yuzuchan-maimaidx": "Song Aliases (Chinese)",
+      "lomotos10-gcmbot": "Song Aliases (English, Korean, Romaji)"
     }
   }
 }

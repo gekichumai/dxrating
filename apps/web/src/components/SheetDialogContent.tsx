@@ -28,6 +28,8 @@ import { Trans, useTranslation } from "react-i18next";
 import { match } from "ts-pattern";
 import IconMdiSearchWeb from "~icons/mdi/search-web";
 import IconMdiSpotify from "~icons/mdi/spotify";
+import MdiStar from "~icons/mdi/star";
+import MdiStarOutline from "~icons/mdi/star-outline";
 import IconMdiYouTube from "~icons/mdi/youtube";
 import { useAppContextDXDataVersion } from "../models/context/useAppContext";
 import { FlattenedSheet } from "../songs";
@@ -41,6 +43,7 @@ const PRESET_ACHIEVEMENT_RATES = [
 
 const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
   ({ sheet }) => {
+    const [favored, setFavored] = useState(false);
     const [expanded, setExpanded] = useState(false);
 
     const variants = {
@@ -59,9 +62,34 @@ const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
     };
 
     return (
-      <>
-        <div className="flex items-center">
-          <div className="text-xs text-gray-400">{sheet.internalId}</div>
+      <div className="flex flex-col">
+        <div className="flex items-start">
+          <div className="text-xs text-gray-400">#{sheet.internalId}</div>
+
+          <div className="flex-1" />
+
+          <IconButton size="small" onClick={() => setFavored((prev) => !prev)}>
+            <motion.div
+              layout
+              variants={{
+                favored: { rotate: 360 / 5 },
+                unfavored: { rotate: 0 },
+              }}
+              initial={favored ? "favored" : "unfavored"}
+              animate={favored ? "favored" : "unfavored"}
+              transition={{
+                type: "spring",
+                damping: 18,
+                stiffness: 235,
+              }}
+            >
+              {favored ? (
+                <MdiStar className="text-yellow-500" />
+              ) : (
+                <MdiStarOutline />
+              )}
+            </motion.div>
+          </IconButton>
         </div>
         <div className="flex items-center">
           <motion.img
@@ -90,7 +118,7 @@ const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
               : sheet.internalLevelValue.toFixed(1)}
           </div>
         </div>
-      </>
+      </div>
     );
   },
 );

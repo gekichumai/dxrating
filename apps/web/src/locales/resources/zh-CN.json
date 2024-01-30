@@ -11,7 +11,8 @@
   },
   "settings": {
     "version": {
-      "select": "选择数据版本"
+      "select": "选择数据版本",
+      "info": "不同的数据版本对应了不同的谱面定数与乐曲可见性"
     }
   },
   "sheet": {
@@ -45,6 +46,24 @@
     "internal-level-history": {
       "empty": "无可用历史记录",
       "title": "谱面定数历史"
+    }
+  },
+  "about": {
+    "title": "关于本站",
+    "author": "作者",
+    "chart-metadata": "谱面元数据",
+    "fesplus-background": "FESTiVAL+ 版本背景图",
+    "internal-level-value": "谱面定数",
+    "source-code": "源代码",
+    "version": {
+      "build": "构建序",
+      "build-time": "构建于",
+      "commit": "commit",
+      "upstream-data-update-time": "上游数据版本"
+    },
+    "aliases": {
+      "yuri-yuzuchan-maimaidx": "乐曲别名 (中文)",
+      "lomotos10-gcmbot": "乐曲别名 (英文、韩文与罗马音)"
     }
   }
 }

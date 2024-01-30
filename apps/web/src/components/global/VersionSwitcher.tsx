@@ -74,9 +74,13 @@ export const VersionSwitcher: FC = () => {
           />
         </MenuItem>
       ))}
-      <ListItem className="flex justify-center items-center">
-        <MdiInformation className="mr-2" />
-        {t("settings:version.info")}
+      <ListItem className="flex justify-center items-center text-sm">
+        <div className="flex justify-center items-start max-w-[18rem] text-gray-500">
+          <MdiInformation className="mr-2 shrink-0 mt-0.5" />
+          <span className="whitespace-normal">
+            {t("settings:version.info")}
+          </span>
+        </div>
       </ListItem>
     </StyledVersionSelect>
   );
