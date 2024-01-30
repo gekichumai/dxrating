@@ -65,15 +65,10 @@ export namespace DXDataOriginal {
     isNew: boolean;
     isLocked: boolean;
     sheets: Sheet[];
-    internalId?: InternalID;
-  }
-
-  export interface InternalID {
-    std?: number;
-    dx?: number;
   }
 
   export interface Sheet {
+    internalId?: number;
     type: TypeEnum;
     difficulty: DifficultyEnum;
     level: string;

@@ -1,0 +1,51 @@
+{
+  "root": {
+    "pages": {
+      "search": {
+        "title": "譜面検索"
+      },
+      "rating": {
+        "title": "レーテイング計算"
+      }
+    }
+  },
+  "settings": {
+    "version": {
+      "select": "データバージョンを選択",
+      "info": "異なるデータバージョンは、異なる内部レベル値と異なる曲の可視性に対応します。"
+    }
+  },
+  "sheet": {
+    "search": "検索",
+    "ocr": "OCRをスタート",
+    "details": {
+      "achievement-to-rating": {
+        "achievement": "達成率",
+        "rating": "レーティング",
+        "title": "達成率→レーティング"
+      },
+      "bpm": "BPM",
+      "category": "カテゴリー",
+      "chart-designer": "譜面デザイナー",
+      "credits": "一部のデータは <link /> から取得されています",
+      "notes-statistics": {
+        "break": "ブレイク",
+        "hold": "ホールド",
+        "slide": "スライド",
+        "tap": "タップ",
+        "title": "ノーツの統計",
+        "total": "合計",
+        "touch": "タッチ"
+      },
+      "regional-availability": "地域ごとの可用性",
+      "song-artist": "ソングアーティスト",
+      "title": "詳細"
+    },
+    "filter-current-version": "現在稼働バージョンのB15: {{version}} 譜面のみを表示",
+    "internal-level-history": {
+      "empty": "利用可能な履歴はありません",
+      "title": "譜面定数履歴"
+    },
+    "search-summary": "{{total}} / {{found}} 譜面 ({{elapsed}}ミリ秒)"
+  }
+}

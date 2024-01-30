@@ -6,6 +6,7 @@ import {
   TextField,
 } from "@mui/material";
 import { FC, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import IconMdiOcr from "~icons/mdi/ocr";
 import { SheetListContainer } from "../components/SheetListContainer";
 import { useAppContextDXDataVersion } from "../models/context/useAppContext";
@@ -14,6 +15,7 @@ import { DXRatingPlugin } from "../utils/capacitor/plugin/wrap";
 import { isBuildPlatformApp } from "../utils/env";
 
 export const SheetList: FC = () => {
+  const { t } = useTranslation(["sheet"]);
   const appVersion = useAppContextDXDataVersion();
   const { data: sheets } = useSheets();
   const [search, setSearch] = useState<string>("");
@@ -33,7 +35,7 @@ export const SheetList: FC = () => {
   return (
     <div className="flex-container pb-global">
       <TextField
-        label="Search"
+        label={t("sheet:search")}
         variant="outlined"
         value={search}
         fullWidth
@@ -47,7 +49,7 @@ export const SheetList: FC = () => {
           variant="contained"
           startIcon={<IconMdiOcr />}
         >
-          Launch OCR
+          {t("sheet:ocr")}
         </Button>
       )}
 
@@ -58,12 +60,18 @@ export const SheetList: FC = () => {
             onChange={(e) => setShowOnlyCurrentVersion(e.target.checked)}
           />
         }
-        label={`Filter Current B15: Show only ${appVersion} charts`}
+        // label={`Filter Current B15: Show only ${appVersion} charts`}
+        label={t("sheet:filter-current-version", { version: appVersion })}
       />
 
       <Alert severity="info" className="text-sm !rounded-full shadow-lg">
-        Found {filteredResults.length} charts out of {sheets?.length} charts in{" "}
-        {elapsed.toFixed(1)}ms
+        {/* Found {filteredResults.length} charts out of {sheets?.length} charts in{" "}
+        {elapsed.toFixed(1)}ms */}
+        {t("sheet:search-summary", {
+          found: filteredResults.length,
+          total: sheets?.length,
+          elapsed: elapsed.toFixed(1),
+        })}
       </Alert>
 
       <SheetListContainer sheets={filteredResults} />

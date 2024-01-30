@@ -1,20 +1,27 @@
 import { CircularProgress, Tab, Tabs } from "@mui/material";
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "react-use";
-import { About } from "./components/global/About";
+
 import { VersionSwitcher } from "./components/global/VersionSwitcher";
 import { WebpSupportedImage } from "./components/global/WebpSupportedImage";
+import { TopBar } from "./components/layout/TopBar";
 import { RatingCalculator } from "./pages/RatingCalculator";
 import { SheetList } from "./pages/SheetList";
 import { useVersionTheme } from "./utils/useVersionTheme";
 
 export const App = () => {
+  const { t, i18n } = useTranslation(["root"]);
   const versionTheme = useVersionTheme();
   const [tab, setTab] = useLocalStorage<"search" | "rating">(
     "tab-selection",
     "search",
   );
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    console.info("[i18n] Language detected as " + i18n.language);
+  }, [i18n.language]);
 
   return (
     <div className="h-full w-full relative">
@@ -26,13 +33,9 @@ export const App = () => {
       />
 
       <div className="h-full w-full relative">
-        <About />
+        <TopBar />
         <div
-          className="absolute h-128 -top-128 w-full left-0 right-0 z-100"
-          style={{ background: versionTheme.accentColor }}
-        ></div>
-        <div
-          className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-8"
+          className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-4 pb-4"
           style={{
             backgroundImage: `linear-gradient(
     to bottom,
@@ -57,7 +60,7 @@ export const App = () => {
             }}
           >
             <Tab
-              label="Search Charts"
+              label={t("root:pages.search.title")}
               classes={{
                 selected: "!text-white",
                 root: "!rounded-full transition-colors z-1 !py-0 !min-h-2.5rem",
@@ -65,7 +68,7 @@ export const App = () => {
               value="search"
             />
             <Tab
-              label="My Rating"
+              label={t("root:pages.rating.title")}
               classes={{
                 selected: "!text-white",
                 root: "!rounded-full transition-colors z-1 !py-0 !min-h-2.5rem",

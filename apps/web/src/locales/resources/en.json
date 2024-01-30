@@ -1,0 +1,73 @@
+{
+  "root": {
+    "pages": {
+      "search": {
+        "title": "Search Charts"
+      },
+      "rating": {
+        "title": "My Rating"
+      }
+    },
+    "share": {
+      "copy-succeeded": "Copied to clipboard",
+      "copy-content": "{link}"
+    }
+  },
+  "settings": {
+    "version": {
+      "select": "Select DXData Version",
+      "info": "Different data versions correspond to different internal level values ​​and different song visibilities."
+    }
+  },
+  "sheet": {
+    "filter-current-version": "Filter Current B15: Show only {{version}} charts",
+    "search-summary": "Found {{found}} charts out of {{total}} charts in {{elapsed}}ms",
+    "search": "Search",
+    "ocr": "Launch OCR",
+    "internal-level-history": {
+      "title": "Internal Level History",
+      "empty": "No history available"
+    },
+    "details": {
+      "title": "Details",
+      "category": "Category",
+      "song-artist": "Song Artist",
+      "bpm": "BPM",
+      "chart-designer": "Chart Designer",
+      "notes-statistics": {
+        "title": "Notes Statistics",
+        "tap": "Tap",
+        "hold": "Hold",
+        "slide": "Slide",
+        "touch": "Touch",
+        "break": "Break",
+        "total": "Total"
+      },
+      "regional-availability": "Regional Availability",
+      "credits": "Some data comes from <link />",
+      "achievement-to-rating": {
+        "title": "Achievement → Rating",
+        "achievement": "Achv.",
+        "rating": "Rating"
+      }
+    }
+  },
+  "about": {
+    "title": "About",
+    "author": "Author",
+    "source-code": "Source Code",
+    "internal-level-value": "Internal Level Value",
+    "chart-metadata": "Chart Metadata",
+    "fesplus-background": "FESTiVAL+ Background",
+    "version": {
+      "commit": "commit",
+      "build": "build",
+      "build-time": "built at",
+      "upstream-data-update-time": "upstream data version"
+    },
+    "aliases": {
+      "yuri-yuzuchan-maimaidx": "Song Aliases (Chinese)",
+      "lomotos10-gcmbot": "Song Aliases (English, Korean, Romaji)"
+    }
+  }
+}

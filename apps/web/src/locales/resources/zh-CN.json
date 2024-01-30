@@ -1,0 +1,73 @@
+{
+  "root": {
+    "pages": {
+      "search": {
+        "title": "搜索谱面"
+      },
+      "rating": {
+        "title": "计算评分"
+      }
+    },
+    "share": {
+      "copy-content": "{link}",
+      "copy-succeeded": "已拷贝至剪贴板"
+    }
+  },
+  "settings": {
+    "version": {
+      "select": "选择数据版本",
+      "info": "不同的数据版本对应了不同的谱面定数与乐曲可见性"
+    }
+  },
+  "sheet": {
+    "search": "搜索",
+    "ocr": "启动 OCR",
+    "filter-current-version": "过滤当前版本 B15：仅显示来自 {{version}} 的谱面",
+    "search-summary": "找到 {{found}} 份谱面 / 总计 {{total}} 份 (耗时 {{elapsed}}ms)",
+    "details": {
+      "achievement-to-rating": {
+        "achievement": "完成率",
+        "rating": "得分",
+        "title": "完成率→得分"
+      },
+      "bpm": "BPM",
+      "category": "类别",
+      "chart-designer": "制谱",
+      "credits": "部分数据来自 <link />",
+      "notes-statistics": {
+        "break": "绝赞 (Break)",
+        "hold": "Hold",
+        "slide": "Slide",
+        "tap": "Tap",
+        "title": "音符统计",
+        "total": "总计",
+        "touch": "Touch"
+      },
+      "regional-availability": "区域可用性",
+      "song-artist": "作曲",
+      "title": "详细信息"
+    },
+    "internal-level-history": {
+      "empty": "无可用历史记录",
+      "title": "谱面定数历史"
+    }
+  },
+  "about": {
+    "title": "关于本站",
+    "author": "作者",
+    "chart-metadata": "谱面元数据",
+    "fesplus-background": "FESTiVAL+ 版本背景图",
+    "internal-level-value": "谱面定数",
+    "source-code": "源代码",
+    "version": {
+      "build": "构建序",
+      "build-time": "构建于",
+      "commit": "commit",
+      "upstream-data-update-time": "上游数据版本"
+    },
+    "aliases": {
+      "yuri-yuzuchan-maimaidx": "乐曲别名 (中文)",
+      "lomotos10-gcmbot": "乐曲别名 (英文、韩文与罗马音)"
+    }
+  }
+}

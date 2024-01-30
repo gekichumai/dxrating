@@ -168,6 +168,36 @@ export interface MaimaiOfficialSongs {
   buddy?: "○";
 }
 
+function checkSongsInternalId(
+  songs: {
+    songId: string;
+    version: DXDataOriginal.VersionEnum;
+    sheets: {
+      internalId?: number;
+      difficulty: DifficultyEnum;
+      type: TypeEnum;
+    }[];
+  }[]
+) {
+  const songsWithMissingInternalIdSheets = songs
+    .map((song) => ({
+      ...song,
+      sheets: song.sheets.filter((sheet) => !sheet.internalId),
+    }))
+    .filter((song) => song.sheets.length > 0);
+
+  for (const song of songsWithMissingInternalIdSheets) {
+    console.warn(`Song [${song.version}] ${song.songId} missing internalId`);
+    for (const sheet of song.sheets) {
+      console.warn(`  — Sheet ${sheet.type.toUpperCase()} ${sheet.difficulty}`);
+    }
+  }
+
+  console.warn(
+    `Total ${songsWithMissingInternalIdSheets.length} songs missing internalId out of ${songs.length} songs`
+  );
+}
+
 async function main() {
   ALIAS_NAME_MAP = await readAliases1();
   ALIAS_ID_MAP = await readAliases2();
@@ -192,10 +222,13 @@ async function main() {
       (song) => !(song.category === "宴会場" && isMaimaiSeries(song.version))
     )
     .map(async (entry) => {
-      const searchAcronyms = await Promise.all([
-        getSearchAcronyms(entry.title, entry.internalId?.std),
-        getSearchAcronyms(entry.title, entry.internalId?.dx),
-      ]).then((acronyms) => uniq(flatten(acronyms)));
+      const searchAcronyms = await Promise.all(
+        uniq(entry.sheets.map((sheet) => sheet.internalId)).map(
+          (internalId) => {
+            return getSearchAcronyms(entry.title, internalId);
+          }
+        )
+      ).then((acronyms) => uniq(flatten(acronyms)));
 
       return {
         ...entry,
@@ -237,7 +270,6 @@ async function main() {
 
             return {
               ...sheet,
-              songId: entry.songId,
               difficulty: sheet.difficulty as DifficultyEnum,
               version: sheet.version as VersionEnum,
               type: is2pUtage ? TypeEnum.UTAGE2P : (sheet.type as TypeEnum),
@@ -251,12 +283,15 @@ async function main() {
       };
     });
 
+  const songs = await Promise.all(transformedSongs);
+  checkSongsInternalId(songs);
+
   console.info("Updating data files...");
 
   const data = JSON.stringify(
     {
       ...dxdata,
-      songs: await Promise.all(transformedSongs),
+      songs,
     },
     null,
     4

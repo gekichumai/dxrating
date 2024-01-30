@@ -58,16 +58,10 @@ export interface Song {
   isNew: boolean;
   isLocked: boolean;
   sheets: Sheet[];
-  internalId?: InternalID;
-}
-
-export interface InternalID {
-  std?: number;
-  dx?: number;
 }
 
 export interface Sheet {
-  songId: string;
+  internalId?: number;
   type: TypeEnum;
   difficulty: DifficultyEnum;
   level: string;

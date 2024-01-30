@@ -1,5 +1,13 @@
-import { ListSubheader, MenuItem, Select, styled } from "@mui/material";
+import {
+  ListItem,
+  ListSubheader,
+  MenuItem,
+  Select,
+  styled,
+} from "@mui/material";
 import { FC, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import MdiInformation from "~icons/mdi/information";
 import {
   DXVersion,
   DXVersionToDXDataVersionEnumMap,
@@ -24,6 +32,7 @@ const StyledVersionSelect = styled(Select)(({ theme }) => ({
 }));
 
 export const VersionSwitcher: FC = () => {
+  const { t } = useTranslation(["settings"]);
   const { version, setVersion } = useAppContext();
   const versionTheme = useVersionTheme();
 
@@ -51,7 +60,7 @@ export const VersionSwitcher: FC = () => {
         />
       )}
     >
-      <ListSubheader>Select DXData Version</ListSubheader>
+      <ListSubheader>{t("settings:version.select")}</ListSubheader>
       {VERSIONS.map((v) => (
         <MenuItem
           value={v}
@@ -65,6 +74,14 @@ export const VersionSwitcher: FC = () => {
           />
         </MenuItem>
       ))}
+      <ListItem className="flex justify-center items-center text-sm">
+        <div className="flex justify-center items-start max-w-[18rem] text-gray-500">
+          <MdiInformation className="mr-2 shrink-0 mt-0.5" />
+          <span className="whitespace-normal">
+            {t("settings:version.info")}
+          </span>
+        </div>
+      </ListItem>
     </StyledVersionSelect>
   );
 };
