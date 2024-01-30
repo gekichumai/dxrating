@@ -41,7 +41,7 @@
       "song-artist": "ソングアーティスト",
       "title": "詳細"
     },
-    "filter-current-version": "現在稼动バージョンのB15: {{version}} 譜面のみを表示",
+    "filter-current-version": "現在稼働バージョンのB15: {{version}} 譜面のみを表示",
     "internal-level-history": {
       "empty": "利用可能な履歴はありません",
       "title": "譜面定数履歴"
