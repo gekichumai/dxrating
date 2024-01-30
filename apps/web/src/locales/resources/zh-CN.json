@@ -7,6 +7,10 @@
       "rating": {
         "title": "计算评分"
       }
+    },
+    "share": {
+      "copy-content": "{link}",
+      "copy-succeeded": "已拷贝至剪贴板"
     }
   },
   "settings": {

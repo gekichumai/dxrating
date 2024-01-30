@@ -7,6 +7,10 @@
       "rating": {
         "title": "My Rating"
       }
+    },
+    "share": {
+      "copy-succeeded": "Copied to clipboard",
+      "copy-content": "{link}"
     }
   },
   "settings": {

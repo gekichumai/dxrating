@@ -38,10 +38,7 @@ export const LocaleSelector = () => {
 
   return (
     <>
-      <IconButton
-        onClick={(e) => setAnchorEl(e.currentTarget)}
-        className="!absolute right-16 top-[calc(env(safe-area-inset-top)+1rem)] "
-      >
+      <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
         <MdiTranslate />
       </IconButton>
 

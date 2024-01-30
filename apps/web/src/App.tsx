@@ -2,10 +2,10 @@ import { CircularProgress, Tab, Tabs } from "@mui/material";
 import { useEffect, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "react-use";
-import { About } from "./components/global/About";
-import { LocaleSelector } from "./components/global/LocaleSelector";
+
 import { VersionSwitcher } from "./components/global/VersionSwitcher";
 import { WebpSupportedImage } from "./components/global/WebpSupportedImage";
+import { TopBar } from "./components/layout/TopBar";
 import { RatingCalculator } from "./pages/RatingCalculator";
 import { SheetList } from "./pages/SheetList";
 import { useVersionTheme } from "./utils/useVersionTheme";
@@ -33,16 +33,9 @@ export const App = () => {
       />
 
       <div className="h-full w-full relative">
-        <About />
-        <LocaleSelector />
+        <TopBar />
         <div
-          className="absolute h-128 -top-128 w-full left-0 right-0 z-100"
-          style={{ background: versionTheme.accentColor }}
-        >
-          LocaleSelector
-        </div>
-        <div
-          className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-[calc(env(safe-area-inset-top)+2rem)] pb-8"
+          className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-4 pb-4"
           style={{
             backgroundImage: `linear-gradient(
     to bottom,
