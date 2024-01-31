@@ -1,6 +1,10 @@
 name: Publish to Cloudflare Pages
 
-on: [push]
+on:
+  push:
+    # trigger on version tag push
+    tags:
+      - "v*"
 
 jobs:
   publish:
@@ -19,27 +23,29 @@ jobs:
         with:
           node-version: 20
 
-      - name: Get npm cache directory
-        id: npm-cache-dir
-        shell: bash
-        run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
 
-      # npm cache
       - uses: actions/cache@v3
-        id: npm-cache # use this to check for `cache-hit` ==> if: steps.npm-cache.outputs.cache-hit != 'true'
+        id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
         with:
-          path: ${{ steps.npm-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
-            ${{ runner.os }}-node-
+            ${{ runner.os }}-yarn-
+      
+      - name: Get Metadata
+        id: git-meta
+        shell: bash
+        run: |
+          export TRUNCATED_GITHUB_SHA=$(echo ${{ github.sha }} | cut -c1-7);
+          export VERSION=${GITHUB_REF/refs\/tags\//};
+          echo "minisha=$TRUNCATED_GITHUB_SHA" >> $GITHUB_OUTPUT;
+          echo "version=$VERSION" >> $GITHUB_OUTPUT;
+          echo "versionlabel=$VERSION+$TRUNCATED_GITHUB_SHA" >> $GITHUB_OUTPUT;
       
       # Populate Bundle Information
-      # export const BUNDLE = {
-      #   gitCommit: (import.meta.env.VITE_GIT_COMMIT as string) || "unknown",
-      #   buildNumber: (import.meta.env.VITE_BUILD_NUMBER as string) || "?",
-      #   buildTime:
-      #     (import.meta.env.VITE_BUILD_TIME as string) || "????-??-??T??:??:??+00:00",
-      # };
       - name: Populate Bundle Information
         id: bundle-info
         shell: bash

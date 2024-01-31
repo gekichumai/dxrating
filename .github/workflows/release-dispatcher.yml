@@ -1,0 +1,47 @@
+name: Release Dispatcher
+
+on:
+  # trigger on push to main branch
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: tagger-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tagger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: "main"
+
+      # git tag the release, then push it
+      # The tag name is `v` followed by a semver version number, in which is calculated by incrementing the patch
+      # version of the latest tag. If no tag exists, the version is 0.0.1
+      - name: Tag Release
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.PAT_FOR_RELEASE_DISPATCHER }}
+          script: |
+            const { Octokit } = require("@octokit/rest");
+            const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+            const { data: tags } = await octokit.repos.listTags({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const latestTag = tags[0];
+            const latestVersion = latestTag ? latestTag.name.replace("v", "") : "0.0.0";
+            const [major, minor, patch] = latestVersion.split(".").map((v) => parseInt(v));
+            const newVersion = `${major}.${minor}.${patch + 1}`;
+            const newTag = `v${newVersion}`;
+            await octokit.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${newTag}`,
+              sha: context.sha,
+            });
+            console.log(`Created tag ${newTag}`);
+          

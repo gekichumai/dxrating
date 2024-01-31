@@ -34,7 +34,7 @@ VITE_GIT_COMMIT=$(git rev-parse HEAD)
 VITE_BUILD_TIME=$(date -u +%FT%TZ)
 
 # build and sync
-yarn run build
+yarn run build:app
 
 yarn run deploy:ios
 
