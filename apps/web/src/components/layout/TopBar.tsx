@@ -2,6 +2,7 @@ import { IconButton } from "@mui/material";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import MdiShareVariant from "~icons/mdi/share-variant";
+import { BUNDLE } from "../../utils/bundle";
 import { useVersionTheme } from "../../utils/useVersionTheme";
 import { About } from "../global/About";
 import { LocaleSelector } from "../global/LocaleSelector";
@@ -16,7 +17,9 @@ export const TopBar = () => {
           <div className="text-lg font-bold text-black/70 leading-none">
             DXRating.net
           </div>
-          <div className="text-xs text-black/50 leading-none">v1.0.28</div>
+          <div className="text-xs text-black/50 leading-none">
+            {BUNDLE.version ?? "unknown"}
+          </div>
         </div>
 
         <IconButton
