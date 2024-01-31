@@ -1,13 +1,10 @@
-import { IconButton } from "@mui/material";
 import { motion } from "framer-motion";
 import { FC, memo, useState } from "react";
-import MdiStar from "~icons/mdi/star";
-import MdiStarOutline from "~icons/mdi/star-outline";
 import { FlattenedSheet } from "../../songs";
 
 export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
   ({ sheet }) => {
-    const [favored, setFavored] = useState(false);
+    // const [favored, setFavored] = useState(false);
     const [expanded, setExpanded] = useState(false);
 
     const variants = {
@@ -32,7 +29,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
 
           <div className="flex-1" />
 
-          <IconButton size="small" onClick={() => setFavored((prev) => !prev)}>
+          {/* <IconButton size="small" onClick={() => setFavored((prev) => !prev)}>
             <motion.div
               layout
               variants={{
@@ -53,7 +50,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
                 <MdiStarOutline />
               )}
             </motion.div>
-          </IconButton>
+          </IconButton> */}
         </div>
         <div className="flex items-center">
           <motion.img

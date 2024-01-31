@@ -25,6 +25,7 @@ import { FlattenedSheet } from "../../songs";
 import { calculateRating } from "../../utils/rating";
 import { DXRank } from "../DXRank";
 import { SheetTitle } from "../SheetListItem";
+import { SheetDialogContentHeader } from "./SheetDialogContentHeader";
 
 const PRESET_ACHIEVEMENT_RATES = [
   100.5, 100, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50,
@@ -82,7 +83,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
 
     return (
       <div className="flex flex-col gap-2 relative">
-        {/* <SheetDialogContentHeader sheet={sheet} /> */}
+        <SheetDialogContentHeader sheet={sheet} />
 
         <SheetTitle
           sheet={sheet}
