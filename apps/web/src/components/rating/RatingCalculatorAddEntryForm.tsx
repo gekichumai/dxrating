@@ -22,15 +22,15 @@ import {
 import { Virtuoso } from "react-virtuoso";
 import IconMdiReplace from "~icons/mdi/find-replace";
 import IconMdiPlus from "~icons/mdi/plus";
-import { useRatingCalculatorContext } from "../models/RatingCalculatorContext";
+import { useRatingCalculatorContext } from "../../models/RatingCalculatorContext";
 import {
   FlattenedSheet,
   formatSheetToString,
   useSheets,
   useSheetsSearchEngine,
-} from "../songs";
-import { calculateRating } from "../utils/rating";
-import { SheetListItemContent } from "./SheetListItem";
+} from "../../songs";
+import { calculateRating } from "../../utils/rating";
+import { SheetListItemContent } from "../SheetListItem";
 
 export interface PlayEntry {
   sheetId: string;

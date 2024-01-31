@@ -11,12 +11,12 @@ import { match } from "ts-pattern";
 import MdiComment from "~icons/mdi/comment";
 import { FlattenedSheet } from "../songs";
 import { useIsLargeDevice } from "../utils/breakpoints";
-import { FadedImage } from "./FadedImage";
+import { FadedImage } from "./global/FadedImage";
+import { ResponsiveDialog } from "./global/ResponsiveDialog";
 import {
   SheetDialogContent,
   SheetDialogContentProps,
-} from "./SheetDialogContent";
-import { ResponsiveDialog } from "./global/ResponsiveDialog";
+} from "./sheet/SheetDialogContent";
 
 export const SheetListItem: FC<
   {

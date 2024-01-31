@@ -32,11 +32,11 @@ import {
   readAquaPlayLogs,
   readAquaUsers,
 } from "../../../utils/aquaDB";
-import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
+import { PlayEntry } from "../RatingCalculatorAddEntryForm";
 import { SheetListItemContent } from "../../SheetListItem";
 
 import IconMdiDatabase from "~icons/mdi/database";
-import { FadedImage } from "../../FadedImage";
+import { FadedImage } from "../../global/FadedImage";
 
 export const ImportFromAquaSQLiteListItem: FC<{
   modifyEntries: ListActions<PlayEntry>;

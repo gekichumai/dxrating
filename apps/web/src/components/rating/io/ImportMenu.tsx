@@ -1,7 +1,7 @@
 import { Button, Menu } from "@mui/material";
 import { FC, useId, useState } from "react";
 import { ListActions } from "react-use/lib/useList";
-import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
+import { PlayEntry } from "../RatingCalculatorAddEntryForm";
 import { ImportFromAquaSQLiteListItem } from "./ImportFromAquaSQLiteButton";
 import { ImportFromJSONButtonListItem } from "./ImportFromJSONButtonListItem";
 import { ImportFromRemoteListItem } from "./ImportFromRemoteButton";

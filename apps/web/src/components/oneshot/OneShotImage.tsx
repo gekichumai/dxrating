@@ -3,7 +3,7 @@ import { Button, CircularProgress } from "@mui/material";
 import { FC } from "react";
 import satori from "satori";
 import useSWR from "swr";
-import { Entry } from "../pages/RatingCalculator";
+import { Entry } from "../../pages/RatingCalculator";
 
 function quickStringHash(str: string) {
   let hash = 0;

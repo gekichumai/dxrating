@@ -52,7 +52,7 @@ import IconMdiTrashCan from "~icons/mdi/trash-can";
 import {
   PlayEntry,
   RatingCalculatorAddEntryForm,
-} from "../components/RatingCalculatorAddEntryForm";
+} from "../components/rating/RatingCalculatorAddEntryForm";
 import {
   SheetListItem,
   SheetListItemContent,

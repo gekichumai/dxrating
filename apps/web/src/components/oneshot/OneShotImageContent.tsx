@@ -1,8 +1,8 @@
 import clsx from "clsx";
 import { FC } from "react";
 import { match } from "ts-pattern";
-import { Entry } from "../pages/RatingCalculator";
-import { DIFFICULTIES } from "./SheetListItem";
+import { Entry } from "../../pages/RatingCalculator";
+import { DIFFICULTIES } from "../SheetListItem";
 
 export const OneShotImageContent: FC<{
   calculatedEntries: Entry[];

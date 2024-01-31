@@ -23,13 +23,13 @@ import {
   canonicalIdFromParts,
   useSheets,
 } from "../../../songs";
-import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
+import { PlayEntry } from "../RatingCalculatorAddEntryForm";
 import { SheetListItemContent } from "../../SheetListItem";
 
 import { DifficultyEnum } from "@gekichumai/dxdata";
 import clsx from "clsx";
 import IconMdiCloudDownload from "~icons/mdi/cloud-download";
-import { FadedImage } from "../../FadedImage";
+import { FadedImage } from "../../global/FadedImage";
 
 export interface RemoteData {
   rating_records: RatingRecord[];

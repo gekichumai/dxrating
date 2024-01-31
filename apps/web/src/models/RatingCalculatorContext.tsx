@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 import { ListActions } from "react-use/lib/useList";
-import { PlayEntry } from "../components/RatingCalculatorAddEntryForm";
+import { PlayEntry } from "../components/rating/RatingCalculatorAddEntryForm";
 
 export interface RatingCalculatorContext {
   entries?: PlayEntry[];

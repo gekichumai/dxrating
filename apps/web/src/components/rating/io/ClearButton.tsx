@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { FC, useState } from "react";
 import { ListActions } from "react-use/lib/useList";
-import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
+import { PlayEntry } from "../RatingCalculatorAddEntryForm";
 
 export const ClearButton: FC<{
   modifyEntries: ListActions<PlayEntry>;

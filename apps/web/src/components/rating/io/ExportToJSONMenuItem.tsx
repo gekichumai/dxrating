@@ -2,7 +2,7 @@ import { ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import { FC } from "react";
 import toast from "react-hot-toast";
 import IconMdiFile from "~icons/mdi/file";
-import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
+import { PlayEntry } from "../RatingCalculatorAddEntryForm";
 
 export const ExportToJSONMenuItem: FC<{
   entries: PlayEntry[];

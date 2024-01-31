@@ -1,7 +1,7 @@
 import { Button, Menu } from "@mui/material";
 import { FC, useId, useState } from "react";
 import { Entry } from "../../../pages/RatingCalculator";
-import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
+import { PlayEntry } from "../RatingCalculatorAddEntryForm";
 import { ExportToJSONMenuItem } from "./ExportToJSONMenuItem";
 import { RenderToOneShotImageMenuItem } from "./RenderToOneShotImageMenuItem";
 

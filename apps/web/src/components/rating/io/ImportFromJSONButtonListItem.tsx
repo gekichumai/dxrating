@@ -3,7 +3,7 @@ import { FC } from "react";
 import toast from "react-hot-toast";
 import { ListActions } from "react-use/lib/useList";
 import IconMdiFile from "~icons/mdi/file";
-import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
+import { PlayEntry } from "../RatingCalculatorAddEntryForm";
 
 export const ImportFromJSONButtonListItem: FC<{
   modifyEntries: ListActions<PlayEntry>;

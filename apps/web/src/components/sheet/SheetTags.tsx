@@ -4,9 +4,9 @@ import { FC } from "react";
 import useSWR from "swr";
 import IconMdiTag from "~icons/mdi/tag";
 import IconMdiTagPlus from "~icons/mdi/tag-plus";
-import { supabase } from "../models/supabase";
-import { FlattenedSheet } from "../songs";
-import { MotionButtonBase, MotionTooltip } from "../utils/motion";
+import { supabase } from "../../models/supabase";
+import { FlattenedSheet } from "../../songs";
+import { MotionButtonBase, MotionTooltip } from "../../utils/motion";
 
 export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const id = `${sheet.songId}:${sheet.type}`;
