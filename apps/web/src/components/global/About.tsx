@@ -10,20 +10,29 @@ import MdiWeb from "~icons/mdi/web";
 import { BUNDLE } from "../../utils/bundle";
 import { ResponsiveDialog } from "./ResponsiveDialog";
 
+const ExternalLink: FC<PropsWithChildren<{ href: string }>> = ({
+  href,
+  children,
+}) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-500"
+  >
+    {children}
+  </a>
+);
+
 const AboutLink: FC<
   PropsWithChildren<{ href: string; startAdornment?: ReactNode; label: string }>
 > = ({ href, startAdornment, label, children }) => (
   <li className="flex md:flex-row flex-col gap-1">
     <span className="font-bold mr-2">{label}</span>
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-500"
-    >
+    <ExternalLink href={href}>
       {startAdornment}
       {children}
-    </a>
+    </ExternalLink>
   </li>
 );
 
@@ -88,11 +97,11 @@ export const About = () => {
             </AboutLink>
 
             <AboutLink
-              href="https://github.com/GalvinGao/dxrating"
+              href="https://github.com/gekichumai/dxrating"
               startAdornment={<MdiGithub />}
               label={t("about:source-code")}
             >
-              GalvinGao/dxrating
+              gekichumai/dxrating
             </AboutLink>
 
             <AboutLink
@@ -146,7 +155,18 @@ export const About = () => {
 
             <AboutAttribute
               label={t("about:version.commit")}
-              value={BUNDLE.gitCommit?.slice(0, 7) || "unknown"}
+              // value={BUNDLE.gitCommit?.slice(0, 7) || "unknown"}
+              value={
+                BUNDLE.gitCommit ? (
+                  <ExternalLink
+                    href={`https://github.com/gekichumai/dxrating/commit/${BUNDLE.gitCommit}`}
+                  >
+                    {BUNDLE.gitCommit?.slice(0, 7) || "unknown"}
+                  </ExternalLink>
+                ) : (
+                  "unknown"
+                )
+              }
             />
 
             {BUNDLE.buildNumber !== undefined && (

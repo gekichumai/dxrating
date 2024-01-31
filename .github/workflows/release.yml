@@ -50,7 +50,7 @@ jobs:
         id: bundle-info
         shell: bash
         run: |
-          echo "VITE_GIT_COMMIT=${{ steps.git-meta.outputs.minisha }}" >> ${GITHUB_ENV}
+          echo "VITE_GIT_COMMIT=${{ github.sha }}" >> ${GITHUB_ENV}
           echo "VITE_VERSION=${{ steps.git-meta.outputs.version }}" >> ${GITHUB_ENV}
           echo "VITE_BUILD_NUMBER=${{ github.run_number }}" >> ${GITHUB_ENV}
           echo "VITE_BUILD_TIME=$(date --utc +%FT%TZ)" >> ${GITHUB_ENV}
