@@ -9,7 +9,7 @@
       }
     },
     "share": {
-      "copy-content": "{link}",
+      "copy-content": "{{ link }}",
       "copy-succeeded": "已拷贝至剪贴板"
     }
   },

@@ -10,7 +10,7 @@
     },
     "share": {
       "copy-succeeded": "Copied to clipboard",
-      "copy-content": "{link}"
+      "copy-content": "{{ link }}"
     }
   },
   "settings": {
