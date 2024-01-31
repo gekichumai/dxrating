@@ -26,9 +26,7 @@ jobs:
         with:
           github-token: ${{ secrets.PAT_FOR_RELEASE_DISPATCHER }}
           script: |
-            const { Octokit } = require("@octokit/rest");
-            const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-            const { data: tags } = await octokit.repos.listTags({
+            const { data: tags } = await github.rest.repos.listTags({
               owner: context.repo.owner,
               repo: context.repo.repo,
             });
@@ -37,7 +35,7 @@ jobs:
             const [major, minor, patch] = latestVersion.split(".").map((v) => parseInt(v));
             const newVersion = `${major}.${minor}.${patch + 1}`;
             const newTag = `v${newVersion}`;
-            await octokit.git.createRef({
+            await github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: `refs/tags/${newTag}`,
