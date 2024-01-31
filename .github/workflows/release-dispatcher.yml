@@ -42,4 +42,3 @@ jobs:
               sha: context.sha,
             });
             console.log(`Created tag ${newTag}`);
-          
