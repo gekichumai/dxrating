@@ -69,3 +69,4 @@ jobs:
           directory: apps/web/dist
           # Optional: Enable this if you want to have GitHub Deployments triggered
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
