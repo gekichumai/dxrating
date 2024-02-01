@@ -13,9 +13,23 @@ export const ResponsiveDialog: FC<
   const isLargeDevice = useIsLargeDevice();
   const [internalOpen, setInternalOpen] = useState(false);
 
+  // drawerOpen sets itself to true after internalOpen = true on the next render,
+  // and sets itself to false immediately after internalOpen = false
+  const [_drawerOpen, _setDrawerOpen] = useState(false);
+  useEffect(() => {
+    if (internalOpen) {
+      _setDrawerOpen(true);
+    } else {
+      _setDrawerOpen(false);
+    }
+  }, [internalOpen]);
+  const drawerOpen = _drawerOpen && open;
+
   useEffect(() => {
     if (open) {
-      setInternalOpen(true);
+      setTimeout(() => {
+        setInternalOpen(true);
+      }, 0);
     } else {
       const timeout = setTimeout(() => {
         setInternalOpen(false);
@@ -45,7 +59,7 @@ export const ResponsiveDialog: FC<
           disableDiscovery
           disableSwipeToOpen
           anchor="bottom"
-          open={open}
+          open={drawerOpen}
           onClose={() => setOpen(false)}
           onOpen={() => setOpen(true)}
           sx={{
