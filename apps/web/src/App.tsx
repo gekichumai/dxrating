@@ -25,7 +25,7 @@ export const App = () => {
   }, [i18n.language]);
 
   return (
-    <div className="h-full w-full relative">
+    <div className="h-full w-full relative" {...{ "vaul-drawer-wrapper": "" }}>
       <WebpSupportedImage
         src={versionTheme.background}
         alt="background"

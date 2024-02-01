@@ -45,7 +45,7 @@
     "sql.js": "^1.8.0",
     "swr": "^2.2.4",
     "ts-pattern": "^5.0.5",
-    "vaul": "^0.7.2"
+    "vaul": "^0.8.9"
   },
   "devDependencies": {
     "@capacitor/cli": "^5.5.0",

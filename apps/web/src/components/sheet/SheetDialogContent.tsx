@@ -14,7 +14,15 @@ import {
   TableRow,
 } from "@mui/material";
 import clsx from "clsx";
-import { FC, PropsWithChildren, memo, useEffect, useMemo, useRef } from "react";
+import {
+  FC,
+  PropsWithChildren,
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { match } from "ts-pattern";
 import IconMdiSearchWeb from "~icons/mdi/search-web";
@@ -25,6 +33,7 @@ import { FlattenedSheet } from "../../songs";
 import { calculateRating } from "../../utils/rating";
 import { DXRank } from "../DXRank";
 import { SheetTitle } from "../SheetListItem";
+import { ResponsiveDialog } from "../global/ResponsiveDialog";
 import { SheetDialogContentHeader } from "./SheetDialogContentHeader";
 
 const PRESET_ACHIEVEMENT_RATES = [
@@ -81,6 +90,8 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
       }));
     }, [sheet, currentAchievementRate]);
 
+    const [openNext, setOpenNext] = useState(false);
+
     return (
       <div className="flex flex-col gap-2 relative">
         <SheetDialogContentHeader sheet={sheet} />
@@ -118,6 +129,15 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
           </IconButton>
         </div>
 
+        <Button variant="contained" onClick={() => setOpenNext(true)}>
+          Open Next
+        </Button>
+        {openNext && (
+          <ResponsiveDialog open={openNext} setOpen={setOpenNext}>
+            <SheetDialogContent sheet={sheet} />
+          </ResponsiveDialog>
+        )}
+
         <div className="flex flex-col gap-6 mt-2">
           {!sheet.isTypeUtage && (
             <div className="flex flex-col gap-1">
@@ -127,7 +147,6 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
               <SheetInternalLevelHistory sheet={sheet} />
             </div>
           )}
-
           <div className="flex flex-col gap-1">
             <SectionHeader>{t("sheet:details.title")}</SectionHeader>
             <div>
@@ -268,7 +287,6 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
               </div>
             </div>
           </div>
-
           {!sheet.isTypeUtage && (
             <div className="flex flex-col gap-1">
               <SectionHeader>
@@ -349,6 +367,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
               </div>
             </div>
           )}
+          B
         </div>
       </div>
     );
