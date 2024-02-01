@@ -39,3 +39,9 @@ body,
   height: 100%;
   width: 100%;
 }
+
+.h-full-lvh {
+  height: 100%;
+  height: 100vh;
+  height: 100lvh; /* fallback for browsers that do not support lvh */
+}

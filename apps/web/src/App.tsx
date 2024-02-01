@@ -3,6 +3,7 @@ import { useEffect, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "react-use";
 
+import { OverscrollBackgroundFiller } from "./components/global/OverscrollBackgroundFiller";
 import { VersionSwitcher } from "./components/global/VersionSwitcher";
 import { WebpSupportedImage } from "./components/global/WebpSupportedImage";
 import { TopBar } from "./components/layout/TopBar";
@@ -28,11 +29,12 @@ export const App = () => {
       <WebpSupportedImage
         src={versionTheme.background}
         alt="background"
-        className="fixed inset-0 h-full w-full z-[-1] object-cover object-center select-none touch-callout-none"
+        className="fixed inset-0 h-full-lvh w-full z-[-1] object-cover object-center select-none touch-callout-none"
         draggable={false}
       />
 
       <div className="h-full w-full relative">
+        <OverscrollBackgroundFiller />
         <TopBar />
         <div
           className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-4 pb-4"
