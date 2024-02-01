@@ -21,10 +21,10 @@ struct DecimalNumberView: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 0) {
             Text(wholePart + ".")
+                .tracking(-1)
                 .font(.system(.body, design: .monospaced))
                 .fontWeight(.semibold)
                 .opacity(0.8)
-                .tracking(-1)
             
             Text(decimalPart)
                 .font(.system(.title2, design: .monospaced))

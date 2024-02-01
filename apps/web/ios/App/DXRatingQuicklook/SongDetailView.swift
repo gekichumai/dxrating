@@ -23,9 +23,9 @@ struct SongDetailView: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(song.title)
+                    .tracking(-0.5)
                     .font(.title)
                     .bold()
-                    .tracking(-0.5)
                 
                 Text(song.artist)
                     .font(.subheadline)
