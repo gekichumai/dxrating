@@ -14,15 +14,7 @@ import {
   TableRow,
 } from "@mui/material";
 import clsx from "clsx";
-import {
-  FC,
-  PropsWithChildren,
-  memo,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { FC, PropsWithChildren, memo, useEffect, useMemo, useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { match } from "ts-pattern";
 import IconMdiSearchWeb from "~icons/mdi/search-web";
@@ -33,7 +25,6 @@ import { FlattenedSheet } from "../../songs";
 import { calculateRating } from "../../utils/rating";
 import { DXRank } from "../DXRank";
 import { SheetTitle } from "../SheetListItem";
-import { ResponsiveDialog } from "../global/ResponsiveDialog";
 import { SheetDialogContentHeader } from "./SheetDialogContentHeader";
 
 const PRESET_ACHIEVEMENT_RATES = [
@@ -90,8 +81,6 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
       }));
     }, [sheet, currentAchievementRate]);
 
-    const [openNext, setOpenNext] = useState(false);
-
     return (
       <div className="flex flex-col gap-2 relative">
         <SheetDialogContentHeader sheet={sheet} />
@@ -128,15 +117,6 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
             <IconMdiSpotify className="h-6 w-6" />
           </IconButton>
         </div>
-
-        <Button variant="contained" onClick={() => setOpenNext(true)}>
-          Open Next
-        </Button>
-        {openNext && (
-          <ResponsiveDialog open={openNext} setOpen={setOpenNext}>
-            <SheetDialogContent sheet={sheet} />
-          </ResponsiveDialog>
-        )}
 
         <div className="flex flex-col gap-6 mt-2">
           {!sheet.isTypeUtage && (
@@ -477,7 +457,7 @@ const SheetInternalLevelHistory: FC<{
               {multiverInternalLevelValues.map(
                 ({ version, internalLevelValue, available, delta }) => (
                   <TableCell
-                    key={internalLevelValue}
+                    key={version}
                     className={clsx(
                       appVersion === version && "bg-amber-200",
                       !available && "opacity-50",
