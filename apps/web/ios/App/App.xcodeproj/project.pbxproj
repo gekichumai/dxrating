@@ -29,6 +29,7 @@
 		B51DFD0D2B6C091F00C416CA /* SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51DFD0A2B6C08B300C416CA /* SwiftUI.swift */; };
 		B51DFD122B6C0A3600C416CA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B51DFD112B6C0A3600C416CA /* Assets.xcassets */; };
 		B51DFD152B6C0A7900C416CA /* public in Resources */ = {isa = PBXBuildFile; fileRef = B51DFD142B6C0A7900C416CA /* public */; };
+		B51DFD162B6C0E6200C416CA /* AppIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C493142B33553A005BE53E /* AppIdentifier.swift */; };
 		B546E73F2B37496C00822B20 /* PreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B546E73C2B37496C00822B20 /* PreviewView.swift */; };
 		B546E7402B37496C00822B20 /* InstantOCRViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B546E73D2B37496C00822B20 /* InstantOCRViewController.swift */; };
 		B546E7452B39B19D00822B20 /* Extension+UIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B546E7442B39B19D00822B20 /* Extension+UIView.swift */; };
@@ -179,6 +180,7 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				B51DFD172B6C0E7200C416CA /* View */,
 				B51DFD132B6C0A5B00C416CA /* Meta */,
 				B51DFD102B6C0A2000C416CA /* Capacitor */,
 				B51DFD0E2B6C0A0100C416CA /* Extension */,
@@ -250,6 +252,17 @@
 			name = Meta;
 			sourceTree = "<group>";
 		};
+		B51DFD172B6C0E7200C416CA /* View */ = {
+			isa = PBXGroup;
+			children = (
+				B51647122B4AB58B001DA763 /* SongDetailView.swift */,
+				B51647152B4AB7DE001DA763 /* WrappedSongDetailView.swift */,
+				B51647182B513413001DA763 /* DecimalNumberView.swift */,
+				B5A96D3C2AE57DC20060CE7C /* SongLevelView.swift */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
 		B546E73B2B37494B00822B20 /* InstantOCR */ = {
 			isa = PBXGroup;
 			children = (
@@ -274,10 +287,6 @@
 				B55D70202AE4BDF30047AA8D /* PreviewViewController.swift */,
 				B55D70272AE4BDF30047AA8D /* Info.plist */,
 				B516471B2B51419B001DA763 /* MainInterface.storyboard */,
-				B5A96D3C2AE57DC20060CE7C /* SongLevelView.swift */,
-				B51647182B513413001DA763 /* DecimalNumberView.swift */,
-				B51647122B4AB58B001DA763 /* SongDetailView.swift */,
-				B51647152B4AB7DE001DA763 /* WrappedSongDetailView.swift */,
 			);
 			path = DXRatingQuicklook;
 			sourceTree = "<group>";
@@ -470,6 +479,7 @@
 			files = (
 				B51647132B4AB58B001DA763 /* SongDetailView.swift in Sources */,
 				B55D70212AE4BDF30047AA8D /* PreviewViewController.swift in Sources */,
+				B51DFD162B6C0E6200C416CA /* AppIdentifier.swift in Sources */,
 				B51DFD062B6A5F9100C416CA /* Extension+SwiftUI.swift in Sources */,
 				B5A96D3D2AE57DC20060CE7C /* SongLevelView.swift in Sources */,
 				B55D702F2AE4CF430047AA8D /* DXData.swift in Sources */,
