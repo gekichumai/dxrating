@@ -46,6 +46,6 @@
       "empty": "利用可能な履歴はありません",
       "title": "譜面定数履歴"
     },
-    "search-summary": "{{total}} / {{found}} 譜面 ({{elapsed}}ミリ秒)"
+    "search-summary": "{{found}} / {{total}} 譜面 ({{elapsed}}ミリ秒)"
   }
 }
