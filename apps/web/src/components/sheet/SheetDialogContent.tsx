@@ -347,7 +347,6 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
               </div>
             </div>
           )}
-          B
         </div>
       </div>
     );

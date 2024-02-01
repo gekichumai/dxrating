@@ -44,8 +44,7 @@
     "satori": "^0.10.9",
     "sql.js": "^1.8.0",
     "swr": "^2.2.4",
-    "ts-pattern": "^5.0.5",
-    "vaul": "^0.8.9"
+    "ts-pattern": "^5.0.5"
   },
   "devDependencies": {
     "@capacitor/cli": "^5.5.0",

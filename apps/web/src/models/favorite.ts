@@ -3,7 +3,7 @@ import { useLocalStorage } from "react-use";
 
 export const useSheetFavoriteState = (id: string): [boolean, () => void] => {
   const [storageValue, setStorageValue] = useLocalStorage<string[]>(
-    "favorites",
+    "favorite-sheets",
     [] as const,
   );
   const [isFavorite, setIsFavorite] = useState(
