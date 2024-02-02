@@ -259,7 +259,7 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
   return (
     <div
       className={clsx(
-        "text-sm text-slate-600 overflow-hidden",
+        "text-sm text-slate-600 overflow-hidden mb-1",
         !expanded && "max-h-[7rem]",
       )}
       style={{

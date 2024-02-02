@@ -84,112 +84,114 @@ export const About = () => {
         open={expanded}
         setOpen={(opened) => setExpanded(opened)}
       >
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold">{t("about:title")}</h1>
+        {() => (
+          <div className="flex flex-col gap-2">
+            <h1 className="text-2xl font-bold">{t("about:title")}</h1>
 
-          <ul className="flex flex-col gap-1.5">
-            <AboutLink
-              href="https://github.com/GalvinGao"
-              startAdornment={<MdiGithub />}
-              label={t("about:author")}
-            >
-              @GalvinGao
-            </AboutLink>
+            <ul className="flex flex-col gap-1.5">
+              <AboutLink
+                href="https://github.com/GalvinGao"
+                startAdornment={<MdiGithub />}
+                label={t("about:author")}
+              >
+                @GalvinGao
+              </AboutLink>
 
-            <AboutLink
-              href="https://github.com/gekichumai/dxrating"
-              startAdornment={<MdiGithub />}
-              label={t("about:source-code")}
-            >
-              gekichumai/dxrating
-            </AboutLink>
+              <AboutLink
+                href="https://github.com/gekichumai/dxrating"
+                startAdornment={<MdiGithub />}
+                label={t("about:source-code")}
+              >
+                gekichumai/dxrating
+              </AboutLink>
 
-            <AboutLink
-              href="https://twitter.com/maiLv_Chihooooo"
-              startAdornment={<MdiTwitter />}
-              label={t("about:internal-level-value")}
-            >
-              maimai譜面定数ちほー🏖☀️ (@maiLv_Chihooooo)
-            </AboutLink>
+              <AboutLink
+                href="https://twitter.com/maiLv_Chihooooo"
+                startAdornment={<MdiTwitter />}
+                label={t("about:internal-level-value")}
+              >
+                maimai譜面定数ちほー🏖☀️ (@maiLv_Chihooooo)
+              </AboutLink>
 
-            <AboutLink
-              href="https://arcade-songs.zetaraku.dev/maimai/about/"
-              startAdornment={<MdiWeb />}
-              label={t("about:chart-metadata")}
-            >
-              arcade-songs.zetaraku.dev
-            </AboutLink>
+              <AboutLink
+                href="https://arcade-songs.zetaraku.dev/maimai/about/"
+                startAdornment={<MdiWeb />}
+                label={t("about:chart-metadata")}
+              >
+                arcade-songs.zetaraku.dev
+              </AboutLink>
 
-            <AboutLink
-              href="https://github.com/Yuri-YuzuChaN/maimaiDX"
-              startAdornment={<MdiGithub />}
-              label={t("about:fesplus-background")}
-            >
-              Yuri-YuzuChaN/maimaiDX
-            </AboutLink>
+              <AboutLink
+                href="https://github.com/Yuri-YuzuChaN/maimaiDX"
+                startAdornment={<MdiGithub />}
+                label={t("about:fesplus-background")}
+              >
+                Yuri-YuzuChaN/maimaiDX
+              </AboutLink>
 
-            <AboutLink
-              href="https://github.com/Yuri-YuzuChaN/maimaiDX"
-              startAdornment={<MdiGithub />}
-              label={t("about:aliases.yuri-yuzuchan-maimaidx")}
-            >
-              Yuri-YuzuChaN/maimaiDX (via API)
-            </AboutLink>
+              <AboutLink
+                href="https://github.com/Yuri-YuzuChaN/maimaiDX"
+                startAdornment={<MdiGithub />}
+                label={t("about:aliases.yuri-yuzuchan-maimaidx")}
+              >
+                Yuri-YuzuChaN/maimaiDX (via API)
+              </AboutLink>
 
-            <AboutLink
-              href="https://github.com/lomotos10/GCM-bot"
-              startAdornment={<MdiGithub />}
-              label={t("about:aliases.lomotos10-gcmbot")}
-            >
-              lomotos10/GCM-bot
-            </AboutLink>
-          </ul>
+              <AboutLink
+                href="https://github.com/lomotos10/GCM-bot"
+                startAdornment={<MdiGithub />}
+                label={t("about:aliases.lomotos10-gcmbot")}
+              >
+                lomotos10/GCM-bot
+              </AboutLink>
+            </ul>
 
-          <div className="flex flex-col items-start mt-24 gap-1">
-            <img
-              className="h-12 w-auto touch-callout-none mb-2"
-              src="https://shama.dxrating.net/images/version-adornment/buddies.png"
-              alt="Version"
-              draggable={false}
-            />
+            <div className="flex flex-col items-start mt-24 gap-1">
+              <img
+                className="h-12 w-auto touch-callout-none mb-2"
+                src="https://shama.dxrating.net/images/version-adornment/buddies.png"
+                alt="Version"
+                draggable={false}
+              />
 
-            <AboutAttribute
-              label={t("about:version.commit")}
-              // value={BUNDLE.gitCommit?.slice(0, 7) || "unknown"}
-              value={
-                BUNDLE.gitCommit ? (
-                  <ExternalLink
-                    href={`https://github.com/gekichumai/dxrating/commit/${BUNDLE.gitCommit}`}
-                  >
-                    {BUNDLE.gitCommit?.slice(0, 7) || "unknown"}
-                  </ExternalLink>
-                ) : (
-                  "unknown"
-                )
-              }
-            />
+              <AboutAttribute
+                label={t("about:version.commit")}
+                // value={BUNDLE.gitCommit?.slice(0, 7) || "unknown"}
+                value={
+                  BUNDLE.gitCommit ? (
+                    <ExternalLink
+                      href={`https://github.com/gekichumai/dxrating/commit/${BUNDLE.gitCommit}`}
+                    >
+                      {BUNDLE.gitCommit?.slice(0, 7) || "unknown"}
+                    </ExternalLink>
+                  ) : (
+                    "unknown"
+                  )
+                }
+              />
 
-            {BUNDLE.buildNumber !== undefined && (
-              <>
-                {" "}
-                <AboutAttribute
-                  label={t("about:version.build")}
-                  value={"#" + BUNDLE.buildNumber}
-                />
-              </>
-            )}
+              {BUNDLE.buildNumber !== undefined && (
+                <>
+                  {" "}
+                  <AboutAttribute
+                    label={t("about:version.build")}
+                    value={"#" + BUNDLE.buildNumber}
+                  />
+                </>
+              )}
 
-            <AboutAttribute
-              label={t("about:version.build-time")}
-              value={buildTime}
-            />
+              <AboutAttribute
+                label={t("about:version.build-time")}
+                value={buildTime}
+              />
 
-            <AboutAttribute
-              label={t("about:version.upstream-data-update-time")}
-              value={updateTime}
-            />
+              <AboutAttribute
+                label={t("about:version.upstream-data-update-time")}
+                value={updateTime}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </ResponsiveDialog>
     </>
   );

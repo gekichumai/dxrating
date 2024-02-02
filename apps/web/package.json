@@ -30,6 +30,7 @@
     "@unocss/reset": "^0.58.4",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
+    "dayjs": "^1.11.10",
     "framer-motion": "^10.16.16",
     "fuse.js": "^6.6.2",
     "i18next": "^23.7.20",

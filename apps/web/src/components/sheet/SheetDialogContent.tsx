@@ -68,7 +68,7 @@ export interface SheetDialogContentProps {
 
 export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
   ({ sheet, currentAchievementRate }) => {
-    const { t } = useTranslation(["sheet"]);
+    const { t, i18n } = useTranslation(["sheet"]);
     const ratings = useMemo(() => {
       const rates = [...PRESET_ACHIEVEMENT_RATES];
       if (currentAchievementRate && !rates.includes(currentAchievementRate)) {
@@ -80,6 +80,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
         rating: calculateRating(sheet.internalLevelValue, rate),
       }));
     }, [sheet, currentAchievementRate]);
+    const releaseDate = new Date(sheet.releaseDate + "T09:00:00+09:00");
 
     return (
       <div className="flex flex-col gap-2 relative">
@@ -91,6 +92,24 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
           enableClickToCopy
           className="text-lg font-bold"
         />
+
+        <div className="text-sm -mt-2">
+          <div className="text-zinc-600">
+            {t("sheet:release-date", {
+              absoluteDate: releaseDate.toLocaleString(i18n.language, {
+                dateStyle: "medium",
+              }),
+              relativeDate: new Intl.RelativeTimeFormat(i18n.language, {
+                numeric: "auto",
+              }).format(
+                Math.floor(
+                  (releaseDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+                ),
+                "day",
+              ),
+            })}
+          </div>
+        </div>
 
         {/* <div className="flex flex-wrap gap-1">
           <SheetTags sheet={sheet} />
@@ -237,24 +256,14 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
               </Table>
 
               <div className="mt-4 text-xs text-gray-500 text-right">
-                {/* {t("sheet:details.credits", {
-                  link: (
-                    <a
-                      href="https://arcade-songs.zetaraku.dev"
-                      rel="noreferrer"
-                      target="_blank"
-                      className="tracking-tighter"
-                    >
-                      arcade-songs.zetaraku.dev
-                    </a>
-                  ),
-                })} */}
                 <Trans
                   i18nKey="sheet:details.credits"
                   components={{
                     link: (
                       <a
-                        href="https://arcade-songs.zetaraku.dev"
+                        href={`https://arcade-songs.zetaraku.dev/maimai/song/?id=${encodeURIComponent(
+                          sheet.songId,
+                        )}`}
                         rel="noreferrer"
                         target="_blank"
                         className="tracking-tighter"

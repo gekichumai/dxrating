@@ -60,13 +60,10 @@ export const SheetList: FC = () => {
             onChange={(e) => setShowOnlyCurrentVersion(e.target.checked)}
           />
         }
-        // label={`Filter Current B15: Show only ${appVersion} charts`}
         label={t("sheet:filter-current-version", { version: appVersion })}
       />
 
       <Alert severity="info" className="text-sm !rounded-full shadow-lg">
-        {/* Found {filteredResults.length} charts out of {sheets?.length} charts in{" "}
-        {elapsed.toFixed(1)}ms */}
         {t("sheet:search-summary", {
           found: filteredResults.length,
           total: sheets?.length,

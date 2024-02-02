@@ -50,7 +50,8 @@
     "internal-level-history": {
       "empty": "无可用历史记录",
       "title": "谱面定数历史"
-    }
+    },
+    "release-date": "追加日 {{absoluteDate}} ({{relativeDate}})"
   },
   "about": {
     "title": "关于本站",

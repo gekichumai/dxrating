@@ -30,7 +30,7 @@
     },
     "details": {
       "title": "Details",
-      "category": "Category",
+      "category": "Genre",
       "song-artist": "Song Artist",
       "bpm": "BPM",
       "chart-designer": "Chart Designer",
@@ -50,7 +50,8 @@
         "achievement": "Achv.",
         "rating": "Rating"
       }
-    }
+    },
+    "release-date": "Released {{absoluteDate}} ({{relativeDate}})"
   },
   "about": {
     "title": "About",
