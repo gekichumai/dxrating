@@ -9,6 +9,7 @@ import { FC, HTMLAttributes, ImgHTMLAttributes, memo, useState } from "react";
 import toast from "react-hot-toast";
 import { match } from "ts-pattern";
 import MdiComment from "~icons/mdi/comment";
+import { DIFFICULTIES } from "../models/difficulties";
 import { FlattenedSheet } from "../songs";
 import { useIsLargeDevice } from "../utils/breakpoints";
 import { FadedImage } from "./global/FadedImage";
@@ -100,33 +101,6 @@ const SheetInternalLevelValue: FC<{ value: number }> = ({ value }) => {
       <span className="text-xl">{decimalPart.toFixed(1).split(".")[1]}</span>
     </div>
   );
-};
-
-export const DIFFICULTIES: Record<
-  DifficultyEnum,
-  { title: string; color: string; dark?: boolean }
-> = {
-  [DifficultyEnum.Basic]: {
-    title: "BASIC",
-    color: "#22bb5b",
-  },
-  [DifficultyEnum.Advanced]: {
-    title: "ADVANCED",
-    color: "#fb9c2d",
-  },
-  [DifficultyEnum.Expert]: {
-    title: "EXPERT",
-    color: "#f64861",
-  },
-  [DifficultyEnum.Master]: {
-    title: "MASTER",
-    color: "#9e45e2",
-    dark: true,
-  },
-  [DifficultyEnum.ReMaster]: {
-    title: "Re:MASTER",
-    color: "#ba67f8",
-  },
 };
 
 export const SheetDifficulty: FC<{ difficulty?: DifficultyEnum }> = ({
