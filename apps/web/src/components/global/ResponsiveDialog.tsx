@@ -1,15 +1,14 @@
 import { Dialog, DialogContent, Grow, SwipeableDrawer } from "@mui/material";
-import { FC, PropsWithChildren } from "react";
+import { FC, PropsWithChildren, ReactNode } from "react";
 import { useIsLargeDevice } from "../../utils/breakpoints";
 
 import { useEffect, useState } from "react";
 
-export const ResponsiveDialog: FC<
-  PropsWithChildren<{
-    open: boolean;
-    setOpen: (open: boolean) => void;
-  }>
-> = ({ open, setOpen, children }) => {
+export const ResponsiveDialog: FC<{
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  children?: () => ReactNode;
+}> = ({ open, setOpen, children }) => {
   const isLargeDevice = useIsLargeDevice();
   const [internalOpen, setInternalOpen] = useState(false);
 
@@ -48,7 +47,7 @@ export const ResponsiveDialog: FC<
           fullWidth
           TransitionComponent={Grow}
         >
-          <DialogContent>{children}</DialogContent>
+          <DialogContent>{children?.()}</DialogContent>
         </Dialog>
       )}
     </>
@@ -78,7 +77,7 @@ export const ResponsiveDialog: FC<
         >
           <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-300 my-3" />
           <div className="overflow-auto h-full p-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-            {children}
+            {children?.()}
           </div>
         </SwipeableDrawer>
       )}
