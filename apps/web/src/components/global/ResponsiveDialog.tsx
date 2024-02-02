@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, Grow, SwipeableDrawer } from "@mui/material";
-import { FC, PropsWithChildren, ReactNode } from "react";
+import { FC, ReactNode } from "react";
 import { useIsLargeDevice } from "../../utils/breakpoints";
 
 import { useEffect, useState } from "react";
