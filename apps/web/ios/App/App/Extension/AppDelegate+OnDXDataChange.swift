@@ -21,11 +21,10 @@ extension AppDelegate {
             
             // unzip Assets/Covers.zip into Assets/Covers/...files
             let coversZip = Bundle.main.url(forResource: "Covers", withExtension: "zip", subdirectory: "Assets")
-            let coversBaseDir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppIdentifier.assetsAppGroup)
-            let coversDir = coversBaseDir?.appendingPathComponent("Covers")
-            if let coversZip = coversZip, let coversBaseDir = coversBaseDir, let coversDir = coversDir {
+            let coversDir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppIdentifier.assetsAppGroup)?.appendingPathComponent("Covers")
+            if let coversZip = coversZip, let coversDir = coversDir {
                 if !FileManager.default.fileExists(atPath: coversDir.path) {
-                    guard let _ = try? FileManager.default.unzipItem(at: coversZip, to: coversBaseDir) else {
+                    guard let _ = try? FileManager.default.unzipItem(at: coversZip, to: coversDir) else {
                         print("unable to unzip covers")
                         return
                     }

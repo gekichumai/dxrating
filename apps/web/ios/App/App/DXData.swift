@@ -91,7 +91,7 @@ struct Song: Codable, Identifiable {
     }
     
     var coverImage: UIImage? {
-        let coversDir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.dev.imgg.gekichumai.dxrating.public-shared")?.appendingPathComponent("Covers")
+        let coversDir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppIdentifier.assetsAppGroup)?.appendingPathComponent("Covers")
         
         let resource = self.imageName
         guard let imageUrl = coversDir?.appendingPathComponent(resource) else {
