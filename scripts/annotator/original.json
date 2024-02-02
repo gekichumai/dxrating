@@ -34,7 +34,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "ORANGE PLUS"
+          "version": "ORANGE PLUS",
+          "internalId": 356
         },
         {
           "type": "std",
@@ -58,7 +59,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "ORANGE PLUS"
+          "version": "ORANGE PLUS",
+          "internalId": 356
         },
         {
           "type": "std",
@@ -82,7 +84,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "ORANGE PLUS"
+          "version": "ORANGE PLUS",
+          "internalId": 356
         },
         {
           "type": "std",
@@ -106,7 +109,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "ORANGE PLUS"
+          "version": "ORANGE PLUS",
+          "internalId": 356
         }
       ]
     },
@@ -364,7 +368,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "maimaiでらっくす PLUS"
+          "version": "maimaiでらっくす PLUS",
+          "internalId": 10615
         },
         {
           "type": "dx",
@@ -388,7 +393,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "maimaiでらっくす PLUS"
+          "version": "maimaiでらっくす PLUS",
+          "internalId": 10615
         },
         {
           "type": "dx",
@@ -412,7 +418,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "maimaiでらっくす PLUS"
+          "version": "maimaiでらっくす PLUS",
+          "internalId": 10615
         },
         {
           "type": "dx",
@@ -436,7 +443,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "maimaiでらっくす PLUS"
+          "version": "maimaiでらっくす PLUS",
+          "internalId": 10615
         },
         {
           "type": "std",
@@ -460,7 +468,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "MURASAKi PLUS"
+          "version": "MURASAKi PLUS",
+          "internalId": 615
         },
         {
           "type": "std",
@@ -484,7 +493,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "MURASAKi PLUS"
+          "version": "MURASAKi PLUS",
+          "internalId": 615
         },
         {
           "type": "std",
@@ -508,7 +518,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "MURASAKi PLUS"
+          "version": "MURASAKi PLUS",
+          "internalId": 615
         },
         {
           "type": "std",
@@ -532,7 +543,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "MURASAKi PLUS"
+          "version": "MURASAKi PLUS",
+          "internalId": 615
         }
       ]
     },
@@ -1796,7 +1808,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "maimaiでらっくす PLUS"
+          "version": "maimaiでらっくす PLUS",
+          "internalId": 11144
         },
         {
           "type": "dx",
@@ -1820,7 +1833,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "maimaiでらっくす PLUS"
+          "version": "maimaiでらっくす PLUS",
+          "internalId": 11144
         },
         {
           "type": "dx",
@@ -1844,7 +1858,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "maimaiでらっくす PLUS"
+          "version": "maimaiでらっくす PLUS",
+          "internalId": 11144
         },
         {
           "type": "dx",
@@ -1868,7 +1883,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "maimaiでらっくす PLUS"
+          "version": "maimaiでらっくす PLUS",
+          "internalId": 11144
         }
       ]
     },
@@ -2016,7 +2032,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11178
         },
         {
           "type": "dx",
@@ -2040,7 +2057,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11178
         },
         {
           "type": "dx",
@@ -2064,7 +2082,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11178
         },
         {
           "type": "dx",
@@ -2088,7 +2107,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11178
         }
       ]
     },
@@ -2126,7 +2146,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11179
         },
         {
           "type": "dx",
@@ -2150,7 +2171,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11179
         },
         {
           "type": "dx",
@@ -2174,7 +2196,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11179
         },
         {
           "type": "dx",
@@ -2198,7 +2221,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11179
         }
       ]
     },
@@ -2236,7 +2260,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11180
         },
         {
           "type": "dx",
@@ -2260,7 +2285,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11180
         },
         {
           "type": "dx",
@@ -2284,7 +2310,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11180
         },
         {
           "type": "dx",
@@ -2308,7 +2335,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11180
         },
         {
           "type": "dx",
@@ -2332,7 +2360,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11180
         }
       ]
     },
@@ -2370,7 +2399,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11182
         },
         {
           "type": "dx",
@@ -2394,7 +2424,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11182
         },
         {
           "type": "dx",
@@ -2418,7 +2449,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11182
         },
         {
           "type": "dx",
@@ -2442,7 +2474,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11182
         }
       ]
     },
@@ -2480,7 +2513,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11217
         },
         {
           "type": "dx",
@@ -2504,7 +2538,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11217
         },
         {
           "type": "dx",
@@ -2528,7 +2563,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11217
         },
         {
           "type": "dx",
@@ -2552,7 +2588,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11217
         }
       ]
     },
@@ -28920,7 +28957,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "maimai PLUS"
+          "version": "maimai PLUS",
+          "internalId": 131
         }
       ]
     },
@@ -37451,7 +37489,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 10185
         },
         {
           "type": "std",
@@ -49438,7 +49477,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 10242
         },
         {
           "type": "dx",
@@ -49462,7 +49502,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 10242
         },
         {
           "type": "dx",
@@ -49486,7 +49527,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 10242
         },
         {
           "type": "dx",
@@ -49510,7 +49552,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 10242
         },
         {
           "type": "std",
@@ -63666,7 +63709,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 10535
         },
         {
           "type": "dx",
@@ -63690,7 +63734,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 10535
         },
         {
           "type": "dx",
@@ -63714,7 +63759,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 10535
         },
         {
           "type": "dx",
@@ -63738,7 +63784,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 10535
         },
         {
           "type": "std",
@@ -94020,7 +94067,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "maimaiでらっくす"
+          "version": "maimaiでらっくす",
+          "internalId": 11009
         }
       ]
     },
@@ -94956,7 +95004,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "maimaiでらっくす"
+          "version": "maimaiでらっくす",
+          "internalId": 11010
         }
       ]
     },
@@ -96943,7 +96992,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "maimaiでらっくす"
+          "version": "maimaiでらっくす",
+          "internalId": 11015
         }
       ]
     },
@@ -109721,7 +109771,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash"
+          "version": "Splash",
+          "internalId": 11177
         }
       ]
     },
@@ -118598,7 +118649,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "Splash PLUS"
+          "version": "Splash PLUS",
+          "internalId": 11232
         }
       ]
     },
@@ -156411,7 +156463,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11613
         },
         {
           "type": "dx",
@@ -156435,7 +156488,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11613
         },
         {
           "type": "dx",
@@ -156459,7 +156513,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11613
         },
         {
           "type": "dx",
@@ -156522,7 +156577,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11614
         },
         {
           "type": "dx",
@@ -156546,7 +156602,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11614
         },
         {
           "type": "dx",
@@ -156570,7 +156627,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11614
         },
         {
           "type": "dx",
@@ -157747,7 +157805,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11640
         },
         {
           "type": "dx",
@@ -157771,7 +157830,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11640
         },
         {
           "type": "dx",
@@ -157795,7 +157855,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11640
         },
         {
           "type": "dx",
@@ -157858,7 +157919,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11641
         },
         {
           "type": "dx",
@@ -157882,7 +157944,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11641
         },
         {
           "type": "dx",
@@ -157906,7 +157969,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11641
         },
         {
           "type": "dx",
@@ -157969,7 +158033,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11642
         },
         {
           "type": "dx",
@@ -157993,7 +158058,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11642
         },
         {
           "type": "dx",
@@ -158017,7 +158083,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11642
         },
         {
           "type": "dx",
@@ -158080,7 +158147,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11643
         },
         {
           "type": "dx",
@@ -158104,7 +158172,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11643
         },
         {
           "type": "dx",
@@ -158128,7 +158197,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11643
         },
         {
           "type": "dx",
@@ -158191,7 +158261,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11567
         },
         {
           "type": "dx",
@@ -158215,7 +158286,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11567
         },
         {
           "type": "dx",
@@ -158239,7 +158311,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11567
         },
         {
           "type": "dx",
@@ -158263,7 +158336,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11567
         }
       ]
     },
@@ -158301,7 +158375,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11644
         },
         {
           "type": "dx",
@@ -158325,7 +158400,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11644
         },
         {
           "type": "dx",
@@ -158349,7 +158425,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11644
         },
         {
           "type": "dx",
@@ -158373,7 +158450,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11644
         }
       ]
     },
@@ -158483,7 +158561,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11645
         }
       ]
     },
@@ -158631,7 +158710,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 19202
         },
         {
           "type": "dx",
@@ -158655,7 +158735,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 19202
         },
         {
           "type": "dx",
@@ -158679,7 +158760,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 19202
         },
         {
           "type": "dx",
@@ -158703,7 +158785,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 19202
         }
       ]
     },
@@ -158813,7 +158896,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11647
         }
       ]
     },
@@ -158851,7 +158935,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11648
         },
         {
           "type": "dx",
@@ -158875,7 +158960,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11648
         },
         {
           "type": "dx",
@@ -158899,7 +158985,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11648
         },
         {
           "type": "dx",
@@ -158923,7 +159010,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 11648
         }
       ]
     },
@@ -158961,7 +159049,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 19200
         },
         {
           "type": "dx",
@@ -158985,7 +159074,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 19200
         },
         {
           "type": "dx",
@@ -159009,7 +159099,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 19200
         },
         {
           "type": "dx",
@@ -159033,7 +159124,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 19200
         }
       ]
     },
@@ -159071,7 +159163,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 19201
         },
         {
           "type": "dx",
@@ -159095,7 +159188,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 19201
         },
         {
           "type": "dx",
@@ -159119,7 +159213,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 19201
         },
         {
           "type": "dx",
@@ -159143,7 +159238,8 @@
             "cn": false
           },
           "isSpecial": false,
-          "version": "BUDDiES"
+          "version": "BUDDiES",
+          "internalId": 19201
         }
       ]
     },
@@ -160816,8 +160912,8 @@
           "difficulty": "master",
           "level": "14",
           "levelValue": 14,
-          "internalLevel": null,
-          "internalLevelValue": 14,
+          "internalLevel": "14.2",
+          "internalLevelValue": 14.2,
           "noteDesigner": null,
           "noteCounts": {
             "tap": null,
@@ -160926,8 +161022,8 @@
           "difficulty": "master",
           "level": "13+",
           "levelValue": 13.7,
-          "internalLevel": null,
-          "internalLevelValue": 13.7,
+          "internalLevel": "13.9",
+          "internalLevelValue": 13.9,
           "noteDesigner": null,
           "noteCounts": {
             "tap": null,
@@ -161036,8 +161132,8 @@
           "difficulty": "master",
           "level": "13+",
           "levelValue": 13.7,
-          "internalLevel": null,
-          "internalLevelValue": 13.7,
+          "internalLevel": "13.9",
+          "internalLevelValue": 13.9,
           "noteDesigner": null,
           "noteCounts": {
             "tap": null,
@@ -161343,5 +161439,5 @@
       "name": "中国版 (舞萌DX)"
     }
   ],
-  "updateTime": "2024-02-02T01:31:47.604Z"
+  "updateTime": "2024-02-02T10:52:14.995Z"
 }
