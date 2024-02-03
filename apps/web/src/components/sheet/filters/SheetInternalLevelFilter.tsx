@@ -1,4 +1,5 @@
 import { ClickAwayListener, TextField, TextFieldProps } from "@mui/material";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   FC,
   TouchEventHandler,
@@ -64,7 +65,7 @@ const SheetFilterInternalLevelValueInputLongPressSlider = ({
     if (!containerRef.current) return;
     if (e.touches.length !== 1) return;
     const { top, height } = containerRef.current.getBoundingClientRect();
-    const padding = 8 + 10; // each side; padding + half size of text mark
+    const padding = 16 + 10; // each side; padding + half size of text mark
     const offset = e.touches[0].clientY - top;
     const mappedOffset = mapRange(
       offset,
@@ -98,7 +99,7 @@ const SheetFilterInternalLevelValueInputLongPressSlider = ({
     <ClickAwayListener onClickAway={() => setIsPressed(false)}>
       <div className="relative select-none">
         <div
-          className="cursor-row-resize bg-white/50 rounded-full shadow px-2 py-4 touch-none"
+          className="cursor-row-resize bg-white/50 rounded-full shadow px-2 touch-none flex items-center h-14 active:bg-white/100 transition duration-75"
           onTouchStart={() => {
             setIsPressed(true);
           }}
@@ -107,30 +108,33 @@ const SheetFilterInternalLevelValueInputLongPressSlider = ({
         >
           <MdiGestureSwipeVertical fontSize="1rem" />
         </div>
-        {isPressed && (
-          <div
-            className="absolute top-0 -left-0.5 w-10 h-[50svh] -translate-y-1/2 flex flex-col items-center justify-between bg-gray-200 px-2 py-2 shadow rounded-full z-10"
-            ref={containerRef}
-            onTouchMove={onPointerMove}
-            onTouchEnd={() => setIsPressed(false)}
-          >
-            {inclusiveWholeNumbers.map((i) => (
-              <div key={i} className="text-sm text-black/50 font-mono">
-                {i}
-              </div>
-            ))}
-            {value !== undefined && value >= min && value <= max && (
-              <div
-                className="h-8 w-8 rounded-full bg-gray-500 text-white flex items-center justify-center absolute left-0 text-xs left-1"
-                style={{
-                  top: `${indicatorPosition}px`,
-                }}
-              >
-                {value}
-              </div>
-            )}
-          </div>
-        )}
+        <AnimatePresence>
+          {isPressed && (
+            <motion.div
+              className="absolute top-7 -left-0.5 w-10 h-[50svh] flex flex-col items-center justify-between bg-gray-200 px-2 py-4 shadow rounded-full z-10"
+              ref={containerRef}
+              initial={{ opacity: 0, scaleY: 0.5, y: "-50%" }}
+              animate={{ opacity: 1, scaleY: 1, y: "-50%" }}
+              exit={{ opacity: 0, scaleY: 0.5, y: "-50%" }}
+            >
+              {inclusiveWholeNumbers.map((i) => (
+                <div key={i} className="text-sm text-black/50 font-mono">
+                  {i}
+                </div>
+              ))}
+              {value !== undefined && value >= min && value <= max && (
+                <div
+                  className="h-8 w-8 rounded-full bg-gray-600/80 text-white flex items-center justify-center absolute left-0 text-xs left-1"
+                  style={{
+                    top: `${indicatorPosition}px`,
+                  }}
+                >
+                  {value}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </ClickAwayListener>
   );
