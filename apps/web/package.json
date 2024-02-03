@@ -17,7 +17,7 @@
   "dependencies": {
     "@capacitor/core": "^5.5.0",
     "@capacitor/ios": "^5.5.0",
-    "@emotion/react": "^11.11.1",
+    "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
     "@gekichumai/dxdata": "*",
     "@gekichumai/oneshot": "*",
@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^5.5.0",
+    "@hookform/devtools": "^4.3.1",
     "@iconify-json/mdi": "^1.1.54",
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
