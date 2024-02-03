@@ -1,37 +1,43 @@
-import {
-  Alert,
-  Button,
-  FormControlLabel,
-  Switch,
-  TextField,
-} from "@mui/material";
+import { Alert, Button, TextField } from "@mui/material";
 import { FC, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import IconMdiOcr from "~icons/mdi/ocr";
 import { SheetListContainer } from "../components/SheetListContainer";
-import { SheetSortFilter } from "../components/sheet/SheetSortFilter";
-import { useAppContextDXDataVersion } from "../models/context/useAppContext";
-import { useFilteredSheets, useSheets } from "../songs";
+import {
+  SheetSortFilter,
+  SheetSortFilterForm,
+} from "../components/sheet/SheetSortFilter";
+import { FlattenedSheet, useFilteredSheets, useSheets } from "../songs";
 import { DXRatingPlugin } from "../utils/capacitor/plugin/wrap";
 import { isBuildPlatformApp } from "../utils/env";
 
 export const SheetList: FC = () => {
   const { t } = useTranslation(["sheet"]);
-  const appVersion = useAppContextDXDataVersion();
   const { data: sheets } = useSheets();
   const [search, setSearch] = useState<string>("");
-  const { results, elapsed } = useFilteredSheets(search);
-  const [showOnlyCurrentVersion, setShowOnlyCurrentVersion] =
-    useState<boolean>(false);
+  const { results, elapsed: searchElapsed } = useFilteredSheets(search);
+  const [sortFilterOptions, setSortFilterOptions] =
+    useState<SheetSortFilterForm | null>(null);
 
-  const filteredResults = useMemo(() => {
-    if (showOnlyCurrentVersion) {
-      return results
-        .filter((sheet) => sheet.version === appVersion)
-        .sort((a, b) => b.internalLevelValue - a.internalLevelValue);
+  const { filteredResults, elapsed: filteringElapsed } = useMemo(() => {
+    const startTime = performance.now();
+    let filteredResults: FlattenedSheet[] = results;
+    if (sortFilterOptions) {
+      filteredResults = results.filter((sheet) => {
+        if (sortFilterOptions.internalLevelValue) {
+          const { gte, lte } = sortFilterOptions.internalLevelValue;
+          return (
+            sheet.internalLevelValue >= gte && sheet.internalLevelValue <= lte
+          );
+        }
+        return true;
+      });
     }
-    return results;
-  }, [results, showOnlyCurrentVersion, appVersion]);
+    return {
+      filteredResults,
+      elapsed: performance.now() - startTime,
+    };
+  }, [results, sortFilterOptions]);
 
   return (
     <div className="flex-container pb-global">
@@ -54,23 +60,13 @@ export const SheetList: FC = () => {
         </Button>
       )}
 
-      <FormControlLabel
-        control={
-          <Switch
-            checked={showOnlyCurrentVersion}
-            onChange={(e) => setShowOnlyCurrentVersion(e.target.checked)}
-          />
-        }
-        label={t("sheet:filter-current-version", { version: appVersion })}
-      />
-
-      <SheetSortFilter />
+      <SheetSortFilter onChange={(v) => setSortFilterOptions(v)} />
 
       <Alert severity="info" className="text-sm !rounded-full shadow-lg">
         {t("sheet:search-summary", {
           found: filteredResults.length,
           total: sheets?.length,
-          elapsed: elapsed.toFixed(1),
+          elapsed: (searchElapsed + filteringElapsed).toFixed(1),
         })}
       </Alert>
 

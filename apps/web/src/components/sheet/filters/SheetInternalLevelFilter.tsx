@@ -1,7 +1,7 @@
 import { ClickAwayListener, TextField, TextFieldProps } from "@mui/material";
 import {
   FC,
-  PointerEventHandler,
+  TouchEventHandler,
   useEffect,
   useMemo,
   useRef,
@@ -14,6 +14,7 @@ import {
   useController,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { useLockBodyScroll } from "react-use";
 import MdiGestureSwipeVertical from "~icons/mdi/gesture-swipe-vertical";
 import { SheetSortFilterForm } from "../SheetSortFilter";
 import { useControllerRulePresets } from "./useControllerRulePresets";
@@ -44,6 +45,7 @@ const SheetFilterInternalLevelValueInputLongPressSlider = ({
   const inclusiveWholeNumbers = Array.from({ length: max - min + 1 }).map(
     (_, i) => min + i,
   );
+  useLockBodyScroll(isPressed);
 
   useEffect(() => {
     document.body.style.userSelect = isPressed ? "none" : "";
@@ -56,11 +58,14 @@ const SheetFilterInternalLevelValueInputLongPressSlider = ({
 
   const valuePercentage = ((value ?? 0) - min) / (max - min);
 
-  const onPointerMove: PointerEventHandler<HTMLDivElement> = (e) => {
+  const onPointerMove: TouchEventHandler<HTMLDivElement> = (e) => {
+    console.log("onPointerMove");
+    if (!isPressed) return;
     if (!containerRef.current) return;
+    if (e.touches.length !== 1) return;
     const { top, height } = containerRef.current.getBoundingClientRect();
     const padding = 8 + 10; // each side; padding + half size of text mark
-    const offset = e.clientY - top;
+    const offset = e.touches[0].clientY - top;
     const mappedOffset = mapRange(
       offset,
       0,
@@ -91,27 +96,30 @@ const SheetFilterInternalLevelValueInputLongPressSlider = ({
 
   return (
     <ClickAwayListener onClickAway={() => setIsPressed(false)}>
-      <div className="relative">
+      <div className="relative select-none">
         <div
-          className="cursor-row-resize bg-white/50 rounded-full shadow px-2 py-4"
-          onPointerDown={() => setIsPressed(true)}
-          onPointerUp={() => setIsPressed(false)}
+          className="cursor-row-resize bg-white/50 rounded-full shadow px-2 py-4 touch-none"
+          onTouchStart={() => {
+            setIsPressed(true);
+          }}
+          onTouchMove={onPointerMove}
+          onTouchEnd={() => setIsPressed(false)}
         >
           <MdiGestureSwipeVertical fontSize="1rem" />
         </div>
         {isPressed && (
           <div
-            className="absolute top-0 -left-0.5 w-10 h-[50svh] -translate-y-1/2 flex flex-col items-center justify-between bg-gray-200 px-2 py-2 shadow rounded-full z-10 select-none"
+            className="absolute top-0 -left-0.5 w-10 h-[50svh] -translate-y-1/2 flex flex-col items-center justify-between bg-gray-200 px-2 py-2 shadow rounded-full z-10"
             ref={containerRef}
-            onPointerMove={onPointerMove}
-            onPointerUp={() => setIsPressed(false)}
+            onTouchMove={onPointerMove}
+            onTouchEnd={() => setIsPressed(false)}
           >
             {inclusiveWholeNumbers.map((i) => (
               <div key={i} className="text-sm text-black/50 font-mono">
                 {i}
               </div>
             ))}
-            {value && (
+            {value !== undefined && value >= min && value <= max && (
               <div
                 className="h-8 w-8 rounded-full bg-gray-500 text-white flex items-center justify-center absolute left-0 text-xs left-1"
                 style={{
@@ -172,7 +180,7 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
       <SheetFilterInternalLevelValueInputLongPressSlider
         value={value}
         onChange={onChange}
-        min={5}
+        min={9}
         max={15}
       />
     </div>
@@ -193,7 +201,7 @@ export const SheetInternalLevelFilter: FC<{
   );
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-col gap-2">
       <SheetFilterInternalLevelValueInput
         label={t("sheet:filter.internal-level-value.min")}
         name="internalLevelValue.gte"
@@ -202,7 +210,7 @@ export const SheetInternalLevelFilter: FC<{
           rules: internalLevelValueBoundRules,
         }}
         TextFieldProps={{
-          className: "w-60",
+          className: "w-80",
         }}
       />
       <SheetFilterInternalLevelValueInput
@@ -213,7 +221,7 @@ export const SheetInternalLevelFilter: FC<{
           rules: internalLevelValueBoundRules,
         }}
         TextFieldProps={{
-          className: "w-60",
+          className: "w-80",
         }}
       />
     </div>
