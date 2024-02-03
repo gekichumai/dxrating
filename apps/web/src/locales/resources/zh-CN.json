@@ -51,7 +51,13 @@
       "empty": "无可用历史记录",
       "title": "谱面定数历史"
     },
-    "release-date": "追加日 {{absoluteDate}} ({{relativeDate}})"
+    "release-date": "追加日 {{absoluteDate}} ({{relativeDate}})",
+    "filter": {
+      "internal-level-value": {
+        "min": "内部定数 (大于或等于)",
+        "max": "内部定数 (小于或等于)"
+      }
+    }
   },
   "about": {
     "title": "关于本站",

@@ -9,6 +9,7 @@ import { FC, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import IconMdiOcr from "~icons/mdi/ocr";
 import { SheetListContainer } from "../components/SheetListContainer";
+import { SheetSortFilter } from "../components/sheet/SheetSortFilter";
 import { useAppContextDXDataVersion } from "../models/context/useAppContext";
 import { useFilteredSheets, useSheets } from "../songs";
 import { DXRatingPlugin } from "../utils/capacitor/plugin/wrap";
@@ -62,6 +63,8 @@ export const SheetList: FC = () => {
         }
         label={t("sheet:filter-current-version", { version: appVersion })}
       />
+
+      <SheetSortFilter />
 
       <Alert severity="info" className="text-sm !rounded-full shadow-lg">
         {t("sheet:search-summary", {

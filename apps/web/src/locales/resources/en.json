@@ -51,7 +51,13 @@
         "rating": "Rating"
       }
     },
-    "release-date": "Released {{absoluteDate}} ({{relativeDate}})"
+    "release-date": "Released {{absoluteDate}} ({{relativeDate}})",
+    "filter": {
+      "internal-level-value": {
+        "min": "Internal Level Value (Greater than or equal to)",
+        "max": "Internal Level Value (Less than or equal to)"
+      }
+    }
   },
   "about": {
     "title": "About",
@@ -69,6 +75,16 @@
     "aliases": {
       "yuri-yuzuchan-maimaidx": "Song Aliases (Chinese)",
       "lomotos10-gcmbot": "Song Aliases (English, Korean, Romaji)"
+    }
+  },
+  "form": {
+    "validation": {
+      "min": {
+        "message": "\"{fieldName}\" must be greater than or equal to {value}"
+      },
+      "max": {
+        "message": "\"{fieldName}\" must be less than or equal to {value}"
+      }
     }
   }
 }
