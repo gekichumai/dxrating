@@ -9,15 +9,15 @@ import SwiftUI
 
 struct DecimalNumberView: View {
     let value: Double
-    
+
     private var wholePart: String {
         return String(Int(value))
     }
-    
+
     private var decimalPart: String {
         return String(Int(((value - Double(Int(value))) * 10).rounded()))
     }
-    
+
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 0) {
             Text(wholePart + ".")
@@ -25,7 +25,7 @@ struct DecimalNumberView: View {
                 .font(.system(.body, design: .monospaced))
                 .fontWeight(.semibold)
                 .opacity(0.8)
-            
+
             Text(decimalPart)
                 .font(.system(.title2, design: .monospaced))
                 .fontWeight(.bold)

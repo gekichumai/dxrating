@@ -5,20 +5,20 @@
 //  Created by Galvin Gao on 10/21/23.
 //
 
-import Foundation
-import UIKit
-import SwiftUI
 import CryptoKit
+import Foundation
+import SwiftUI
+import UIKit
 
 extension UIColor {
     convenience init(red: Int, green: Int, blue: Int) {
         assert(red >= 0 && red <= 255, "Invalid red component")
         assert(green >= 0 && green <= 255, "Invalid green component")
         assert(blue >= 0 && blue <= 255, "Invalid blue component")
-        
+
         self.init(red: CGFloat(red) / 255.0, green: CGFloat(green) / 255.0, blue: CGFloat(blue) / 255.0, alpha: 1.0)
     }
-    
+
     convenience init(rgb: Int) {
         self.init(
             red: (rgb >> 16) & 0xFF,
@@ -26,7 +26,7 @@ extension UIColor {
             blue: rgb & 0xFF
         )
     }
-    
+
     var color: Color {
         return Color(self)
     }
@@ -34,14 +34,14 @@ extension UIColor {
 
 enum AppError {
     case custom(errorDescription: String?)
-    
-    class Enums { }
+
+    class Enums {}
 }
 
 extension AppError: LocalizedError {
     var errorDescription: String? {
         switch self {
-        case .custom(let errorDescription): return errorDescription
+        case let .custom(errorDescription): return errorDescription
         }
     }
 }
@@ -52,4 +52,3 @@ extension Data {
         return hash.compactMap { String(format: "%02x", $0) }.joined()
     }
 }
-

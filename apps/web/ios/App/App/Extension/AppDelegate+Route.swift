@@ -8,7 +8,5 @@
 import Foundation
 
 extension AppDelegate {
-    func navigate(to songId: String) {
-        
-    }
+    func navigate(to _: String) {}
 }

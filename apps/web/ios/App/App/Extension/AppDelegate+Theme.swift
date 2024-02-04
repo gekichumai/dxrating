@@ -10,7 +10,7 @@ import UIKit
 
 extension AppDelegate {
     func setupThemeListeners() {
-        self.themeShouldUpdate(dxVersion: AppPreferences.shared.dxVersion)
+        themeShouldUpdate(dxVersion: AppPreferences.shared.dxVersion)
         AppPreferences.shared.$dxVersion
             .sink { dxVersion in
                 print("dxVersion changed to \(dxVersion)")
@@ -18,29 +18,29 @@ extension AppDelegate {
             }
             .store(in: &cancellables)
     }
-    
+
     func setupRootView() {
         let root = window?.rootViewController
         let rootView = root?.view
-        
+
         // MARK: Capacitor enhancements on WebView
-        
+
         // set background to black to retain visual consistancy
         rootView?.backgroundColor = UIColor.black
-        
+
         // enable bounces since Capacitor seems to disabled it
         rootView?.scrollView.bounces = true
-        
+
         // disable pinch gesture
         rootView?.scrollView.pinchGestureRecognizer?.isEnabled = false
-        
+
         topBarColorChunk.translatesAutoresizingMaskIntoConstraints = false
         rootView?.addSubview(topBarColorChunk)
 
         guard let leadingAnchor = rootView?.leadingAnchor,
-              let widthAnchor   = rootView?.widthAnchor,
-              let topAnchor     = rootView?.topAnchor,
-              let bottomAnchor  = rootView?.safeAreaLayoutGuide.topAnchor
+              let widthAnchor = rootView?.widthAnchor,
+              let topAnchor = rootView?.topAnchor,
+              let bottomAnchor = rootView?.safeAreaLayoutGuide.topAnchor
         else {
             return
         }
@@ -50,7 +50,7 @@ extension AppDelegate {
         topBarColorChunk.topAnchor.constraint(equalTo: topAnchor).isActive = true
         topBarColorChunk.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
     }
-    
+
     func themeShouldUpdate(dxVersion: DXVersion) {
         DispatchQueue.main.async {
             if dxVersion == .buddies {
@@ -68,7 +68,7 @@ extension AppDelegate {
             }
         }
     }
-    
+
     func changeAppIcon(to name: String?) {
         if UIApplication.shared.alternateIconName != name {
             UIApplication.shared.setAlternateIconName(name)
