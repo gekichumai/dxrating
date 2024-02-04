@@ -82,24 +82,24 @@ export const SheetInternalLevelFilter: FC<{
     <div className="flex flex-col gap-2">
       <SheetFilterInternalLevelValueInput
         label={t("sheet:filter.internal-level-value.min")}
-        name="internalLevelValue.gte"
+        name="filters.internalLevelValue.min"
         control={control}
         controllerProps={{
           rules: internalLevelValueBoundRules,
         }}
         TextFieldProps={{
-          className: "w-80",
+          className: "w-40",
         }}
       />
       <SheetFilterInternalLevelValueInput
         label={t("sheet:filter.internal-level-value.max")}
-        name="internalLevelValue.lte"
+        name="filters.internalLevelValue.max"
         control={control}
         controllerProps={{
           rules: internalLevelValueBoundRules,
         }}
         TextFieldProps={{
-          className: "w-80",
+          className: "w-40",
         }}
       />
     </div>

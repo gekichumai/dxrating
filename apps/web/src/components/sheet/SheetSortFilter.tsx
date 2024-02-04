@@ -1,12 +1,15 @@
 import { DevTool } from "@hookform/devtools";
+import { Paper } from "@mui/material";
 import { FC, useEffect } from "react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { SheetInternalLevelFilter } from "./filters/SheetInternalLevelFilter";
 
 export interface SheetSortFilterForm {
-  internalLevelValue?: {
-    gte: number;
-    lte: number;
+  filters: {
+    internalLevelValue?: {
+      min: number;
+      max: number;
+    };
   };
 }
 
@@ -16,9 +19,11 @@ export const SheetSortFilter: FC<{
   const methods = useForm<SheetSortFilterForm>({
     mode: "onChange",
     defaultValues: {
-      internalLevelValue: {
-        gte: 0.0,
-        lte: 15.0,
+      filters: {
+        internalLevelValue: {
+          min: 1.0,
+          max: 15.0,
+        },
       },
     },
   });
@@ -38,7 +43,9 @@ const SheetSortFilterFormListener: FC<{
 
   useEffect(() => {
     watch((data) => {
-      onChange?.(data);
+      if (data.filters) {
+        onChange?.(data);
+      }
     });
   }, [onChange, watch]);
 
@@ -49,9 +56,9 @@ const SheetSortFilterForm = () => {
   const { control } = useFormContext<SheetSortFilterForm>();
 
   return (
-    <div className="flex gap-2">
+    <Paper className="flex w-full p-4">
       {import.meta.env.DEV && <DevTool control={control} />}
       <SheetInternalLevelFilter control={control} />
-    </div>
+    </Paper>
   );
 };

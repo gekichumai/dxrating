@@ -24,10 +24,10 @@ export const SheetList: FC = () => {
     let filteredResults: FlattenedSheet[] = results;
     if (sortFilterOptions) {
       filteredResults = results.filter((sheet) => {
-        if (sortFilterOptions.internalLevelValue) {
-          const { gte, lte } = sortFilterOptions.internalLevelValue;
+        if (sortFilterOptions.filters.internalLevelValue) {
+          const { min, max } = sortFilterOptions.filters.internalLevelValue;
           return (
-            sheet.internalLevelValue >= gte && sheet.internalLevelValue <= lte
+            sheet.internalLevelValue >= min && sheet.internalLevelValue <= max
           );
         }
         return true;

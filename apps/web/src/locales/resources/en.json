@@ -54,8 +54,8 @@
     "release-date": "Released {{absoluteDate}} ({{relativeDate}})",
     "filter": {
       "internal-level-value": {
-        "min": "Internal Level Value (Greater than or equal to)",
-        "max": "Internal Level Value (Less than or equal to)"
+        "min": "Level (min, inclusive)",
+        "max": "Level (max, inclusive)"
       }
     }
   },
