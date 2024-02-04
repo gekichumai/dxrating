@@ -1,9 +1,9 @@
 import en from "./resources/en.json";
 import ja from "./resources/ja.json";
-import zhCN from "./resources/zh-CN.json";
+import zhHans from "./resources/zh-Hans.json";
 
 export const i18nResources = {
   en,
   ja,
-  "zh-CN": zhCN,
+  "zh-Hans": zhHans,
 };

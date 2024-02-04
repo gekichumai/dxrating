@@ -29,7 +29,7 @@ const LocaleSelectorItem: FC<
 const LOCALES = [
   { value: "en", label: "English" },
   { value: "ja", label: "日本語" },
-  { value: "zh-CN", label: "简体中文" },
+  { value: "zh-Hans", label: "简体中文" },
 ] as const;
 
 export const LocaleSelector = () => {

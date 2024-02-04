@@ -96,10 +96,32 @@ i18n
         "sessionStorage",
         "navigator",
       ],
+      lookupQuerystring: "locale",
       lookupLocalStorage: "dxrating-locale",
       lookupSessionStorage: "dxrating-locale",
       lookupCookie: "dxrating-locale",
       caches: ["localStorage"],
+      convertDetectedLanguage(lng) {
+        if (["en", "ja", "zh-Hans", "zh-Hant"].includes(lng)) {
+          // Use the exact language code
+          return lng;
+        }
+        if (lng === "zh-CN") {
+          // Fallback to simplified Chinese
+          return "zh-Hans";
+        }
+        if (
+          ["zh-TW", "zh-HK", "zh-MO", "zh-SG"].some((v) => lng.startsWith(v))
+        ) {
+          // Fallback to traditional Chinese
+          return "zh-Hant";
+        }
+        if (lng.startsWith("zh")) {
+          // Fallback to simplified Chinese
+          return "zh-Hans";
+        }
+        return "en";
+      },
     }),
   )
   .init({
