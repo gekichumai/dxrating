@@ -48,7 +48,11 @@ export const LocaleSelector = () => {
         onClose={() => setAnchorEl(null)}
       >
         {LOCALES.map(({ value, label }) => (
-          <LocaleSelectorItem locale={value} selected={i18n.language === value}>
+          <LocaleSelectorItem
+            locale={value}
+            selected={i18n.language === value}
+            key={value}
+          >
             {label}
           </LocaleSelectorItem>
         ))}

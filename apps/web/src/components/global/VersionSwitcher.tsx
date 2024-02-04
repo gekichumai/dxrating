@@ -5,7 +5,7 @@ import {
   Select,
   styled,
 } from "@mui/material";
-import { FC, useEffect } from "react";
+import { FC } from "react";
 import { useTranslation } from "react-i18next";
 import MdiInformation from "~icons/mdi/information";
 import {
@@ -13,7 +13,6 @@ import {
   DXVersionToDXDataVersionEnumMap,
 } from "../../models/context/AppContext";
 import { useAppContext } from "../../models/context/useAppContext";
-import { useVersionTheme } from "../../utils/useVersionTheme";
 import { WebpSupportedImage } from "./WebpSupportedImage";
 
 const VERSIONS = Object.keys(DXVersionToDXDataVersionEnumMap) as DXVersion[];
@@ -34,18 +33,6 @@ const StyledVersionSelect = styled(Select)(({ theme }) => ({
 export const VersionSwitcher: FC = () => {
   const { t } = useTranslation(["settings"]);
   const { version, setVersion } = useAppContext();
-  const versionTheme = useVersionTheme();
-
-  useEffect(() => {
-    document.body.style.backgroundColor = versionTheme.accentColor;
-
-    const themeColorMeta = document.querySelector(
-      'meta[name="theme-color"]',
-    ) as HTMLMetaElement;
-    if (themeColorMeta) {
-      themeColorMeta.content = versionTheme.accentColor;
-    }
-  }, [versionTheme]);
 
   return (
     <StyledVersionSelect

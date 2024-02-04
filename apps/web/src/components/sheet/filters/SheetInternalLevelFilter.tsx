@@ -34,6 +34,13 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
     ...controllerProps,
   });
 
+  const formattedValue = useMemo(() => {
+    if (typeof value === "number") {
+      return value.toFixed(1);
+    }
+    return undefined;
+  }, [value]);
+
   return (
     <div className="flex items-start gap-2">
       <TextField
@@ -44,11 +51,25 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
         helperText={error?.message}
         // react-hook-form registers
         {...{
-          onChange,
+          onChange: (e) => {
+            onChange(parseFloat(e.target.value));
+          },
           onBlur,
-          value,
+          value: formattedValue,
+        }}
+        inputProps={{
+          min: 0,
+          step: 0.1,
         }}
         inputRef={ref}
+        onWheel={(e) => {
+          const target = e.target as HTMLElement;
+          // Prevent the input value change
+          target.blur();
+
+          // Prevent the page/container scrolling
+          e.stopPropagation();
+        }}
         // rest props
         {...TextFieldProps}
       />

@@ -14,6 +14,7 @@ import { initReactI18next } from "react-i18next";
 import { i18nResources } from "./locales/locales";
 
 import * as Sentry from "@sentry/react";
+import { SideEffector } from "./components/global/SideEffector";
 
 if (import.meta.env.PROD) {
   Sentry.init({
@@ -137,6 +138,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AppContextProvider>
       <VersionCustomizedThemeProvider>
+        <SideEffector />
         <CustomizedToaster />
         <App />
       </VersionCustomizedThemeProvider>
