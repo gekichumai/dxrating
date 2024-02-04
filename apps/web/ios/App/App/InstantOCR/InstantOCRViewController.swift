@@ -7,6 +7,7 @@
 
 import AVFoundation
 import Fuse
+import SnapKit
 import SwifterSwift
 import SwiftUI
 import UIKit
@@ -73,61 +74,44 @@ class InstantOCRViewController: UIViewController {
 
         view.addSubview(previewView)
         previewView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            previewView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            previewView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            previewView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            previewView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-        ])
+        previewView.snp.makeConstraints { make in
+            make.centerX.equalTo(view.snp.centerX)
+            make.centerY.equalTo(view.snp.centerY)
+            make.top.equalTo(view.snp.top)
+            make.leading.equalTo(view.snp.leading)
+        }
 
         view.addSubview(cutoutView)
         cutoutView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            cutoutView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            cutoutView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            cutoutView.topAnchor.constraint(equalTo: view.topAnchor),
-            cutoutView.leftAnchor.constraint(equalTo: view.leftAnchor),
-        ])
-
-//        self.view.addSubview(self.labelView)
-//        self.labelView.translatesAutoresizingMaskIntoConstraints = false
-//        NSLayoutConstraint.activate([
-//            self.labelView.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
-//            self.labelView.centerYAnchor.constraint(equalTo: self.view.centerYAnchor, constant: 64.0),
-//            self.labelView.topAnchor.constraint(equalTo: self.view.centerYAnchor, constant: 64.0),
-//            self.labelView.heightAnchor.constraint(equalToConstant: 64.0),
-//            self.labelView.leadingAnchor.constraint(equalTo: self.cutoutView.leadingAnchor, constant: 48.0),
-//            self.labelView.trailingAnchor.constraint(equalTo: self.cutoutView.trailingAnchor, constant: -48.0)
-//        ])
-//        self.labelView.backgroundColor = .white
-//        self.labelView.textColor = .black
-//        self.labelView.numberOfLines = 14
-//        self.labelView.minimumScaleFactor = 0.5
-//        self.labelView.font = .monospacedSystemFont(ofSize: 15, weight: .regular)
-//        self.labelView.addPadding(.init(inset: 8.0))
+        cutoutView.snp.makeConstraints { make in
+            make.centerX.equalTo(view.snp.centerX)
+            make.centerY.equalTo(view.snp.centerY)
+            make.top.equalTo(view.snp.top)
+            make.leading.equalTo(view.snp.leading)
+        }
 
         // present the detail view
-        let detailVC = UIHostingController(rootView: WrappedSongDetailView(state: detailViewState))
+        let detailVC = UIHostingController(rootView: WrappedSongDetailView(state: self.detailViewState))
         addChild(detailVC)
         view.addSubview(detailVC.view)
         detailVC.view.translatesAutoresizingMaskIntoConstraints = false
         detailVC.view.backgroundColor = .clear
-        NSLayoutConstraint.activate([
-            detailVC.view.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            detailVC.view.topAnchor.constraint(equalTo: view.centerYAnchor, constant: -64.0),
-            detailVC.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            detailVC.view.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32.0),
-            detailVC.view.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32.0),
-        ])
+        detailVC.view.snp.makeConstraints { make in
+            make.centerX.equalTo(view.snp.centerX)
+            make.top.equalTo(view.snp.centerY).offset(-64.0)
+            make.bottom.equalTo(view.snp.bottom)
+            make.leading.equalTo(view.snp.leading).offset(32.0)
+            make.trailing.equalTo(view.snp.trailing).offset(-32.0)
+        }
 
         view.addSubview(closeButtonView)
         closeButtonView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            closeButtonView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24.0),
-            closeButtonView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24.0),
-            closeButtonView.widthAnchor.constraint(equalToConstant: 32.0),
-            closeButtonView.heightAnchor.constraint(equalToConstant: 32.0),
-        ])
+        closeButtonView.snp.makeConstraints { make in
+            make.top.equalTo(view.safeAreaLayoutGuide.snp.top).offset(24.0)
+            make.trailing.equalTo(view.snp.trailing).offset(-24.0)
+            make.width.equalTo(32.0)
+            make.height.equalTo(32.0)
+        }
         closeButtonView.setImage(UIImage(systemName: "xmark"), for: .normal)
         closeButtonView.tintColor = .white
         closeButtonView.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)

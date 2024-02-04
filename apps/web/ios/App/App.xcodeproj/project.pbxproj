@@ -55,6 +55,7 @@
 		B5CA29562AE43F22004F3BA0 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5CA29552AE43F22004F3BA0 /* Extensions.swift */; };
 		B5E581F92AE571140087F6DC /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5CA29552AE43F22004F3BA0 /* Extensions.swift */; };
 		B5F03CF32B2B979400E32014 /* DXRatingPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = B596F6EE2B2AACC300BB160F /* DXRatingPlugin.m */; };
+		B5F3B0142B6F844F0053C177 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = B5F3B0132B6F844F0053C177 /* SnapKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -134,6 +135,7 @@
 				B546E7482B39B29900822B20 /* SwifterSwift in Frameworks */,
 				A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */,
 				B5AD9B982B0D737700813497 /* ZIPFoundation in Frameworks */,
+				B5F3B0142B6F844F0053C177 /* SnapKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -315,6 +317,7 @@
 				B5AD9B972B0D737700813497 /* ZIPFoundation */,
 				B5C493022B326F0A005BE53E /* Fuse */,
 				B546E7472B39B29900822B20 /* SwifterSwift */,
+				B5F3B0132B6F844F0053C177 /* SnapKit */,
 			);
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
@@ -371,6 +374,7 @@
 				B5AD9B962B0D737700813497 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 				B5C493012B326F09005BE53E /* XCRemoteSwiftPackageReference "fuse-swift" */,
 				B546E7462B39B29900822B20 /* XCRemoteSwiftPackageReference "SwifterSwift" */,
+				B5F3B0122B6F83F20053C177 /* XCRemoteSwiftPackageReference "SnapKit" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
@@ -826,6 +830,14 @@
 				minimumVersion = 1.4.0;
 			};
 		};
+		B5F3B0122B6F83F20053C177 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SnapKit/SnapKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.7.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -843,6 +855,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = B5C493012B326F09005BE53E /* XCRemoteSwiftPackageReference "fuse-swift" */;
 			productName = Fuse;
+		};
+		B5F3B0132B6F844F0053C177 /* SnapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B5F3B0122B6F83F20053C177 /* XCRemoteSwiftPackageReference "SnapKit" */;
+			productName = SnapKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

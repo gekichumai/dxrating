@@ -8,6 +8,7 @@
 import QuickLook
 import SwiftUI
 import UIKit
+import SnapKit
 
 class PreviewViewController: UIViewController, QLPreviewingController {
     @IBOutlet var containerView: UIView!
@@ -48,12 +49,9 @@ class PreviewViewController: UIViewController, QLPreviewingController {
         let hostingControllerView = hostingController.view!
         hostingControllerView.translatesAutoresizingMaskIntoConstraints = false
         containerView.addSubview(hostingControllerView)
-        NSLayoutConstraint.activate([
-            hostingControllerView.topAnchor.constraint(equalTo: containerView.topAnchor),
-            hostingControllerView.leftAnchor.constraint(equalTo: containerView.leftAnchor),
-            hostingControllerView.rightAnchor.constraint(equalTo: containerView.rightAnchor),
-            hostingControllerView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
-        ])
+        hostingControllerView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
         hostingController.didMove(toParent: self)
 
         // Call the completion handler so Quick Look knows that the preview is fully loaded.

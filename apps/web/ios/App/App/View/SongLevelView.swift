@@ -66,11 +66,15 @@ struct SongLevelView: View {
                         DecimalNumberView(value: sheet.internalLevelValue)
                             .padding(.horizontal, 8)
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 4)
+                    )
                     .overlay(
                         RoundedRectangle(cornerRadius: 4)
-                            .stroke(UIColor(rgb: difficultyToColorDictionary[sheet.difficulty] ?? 0x000000)
-                                .color, lineWidth: 2)
+                            .stroke(
+                                UIColor(rgb: difficultyToColorDictionary[sheet.difficulty] ?? 0x000000)
+                                    .color, lineWidth: 2
+                            )
                     )
                 }
             }
