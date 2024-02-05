@@ -9,13 +9,17 @@ const SideEffectorThemeMeta: FC = () => {
 
     document.body.style.backgroundColor = versionTheme.accentColor;
 
-    document
+    document.head
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute("content", versionTheme.accentColor);
 
     document.head
-      .querySelector('link[rel="icon"]')
-      ?.setAttribute("href", versionTheme.favicon);
+      .querySelector('meta[name="msapplication-TileColor"]')
+      ?.setAttribute("content", versionTheme.accentColor);
+
+    document.head
+      .querySelector('meta[rel="mask-icon"]')
+      ?.setAttribute("color", versionTheme.accentColor);
   }, [versionTheme]);
 
   return null;
