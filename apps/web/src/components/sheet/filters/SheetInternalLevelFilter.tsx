@@ -9,7 +9,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { TouchDeviceGuard } from "../../global/TouchDeviceGuard";
 import { SheetSortFilterForm } from "../SheetSortFilter";
-import { SheetFilterInternalLevelValueInputLongPressSlider } from "./SheetFilterInternalLevelValueInputLongPressSlider";
+import { SheetFilterInternalLevelInputLongPressSlider } from "./SheetFilterLevelInputLongPressSlider";
+import { SheetFilterSection } from "./SheetFilterSection";
 import { useControllerRulePresets } from "./useControllerRulePresets";
 
 const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
@@ -75,7 +76,7 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
       />
 
       <TouchDeviceGuard renderOnlyOn="touch">
-        <SheetFilterInternalLevelValueInputLongPressSlider
+        <SheetFilterInternalLevelInputLongPressSlider
           value={value as number}
           onChange={onChange}
           min={9}
@@ -100,7 +101,7 @@ export const SheetInternalLevelFilter: FC<{
   );
 
   return (
-    <div className="flex flex-col gap-2">
+    <SheetFilterSection title={t("sheet:filter.internal-level-value.title")}>
       <SheetFilterInternalLevelValueInput
         label={t("sheet:filter.internal-level-value.min")}
         name="filters.internalLevelValue.min"
@@ -123,6 +124,6 @@ export const SheetInternalLevelFilter: FC<{
           className: "w-40",
         }}
       />
-    </div>
+    </SheetFilterSection>
   );
 };

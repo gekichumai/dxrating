@@ -55,7 +55,8 @@
     "filter": {
       "internal-level-value": {
         "min": "Level (min, inclusive)",
-        "max": "Level (max, inclusive)"
+        "max": "Level (max, inclusive)",
+        "title": "Level"
       }
     }
   },

@@ -54,8 +54,9 @@
     "release-date": "追加日 {{absoluteDate}} ({{relativeDate}})",
     "filter": {
       "internal-level-value": {
-        "min": "内部定数 (大于或等于)",
-        "max": "内部定数 (小于或等于)"
+        "min": "定数 (大于或等于)",
+        "max": "定数 (小于或等于)",
+        "title": "定数"
       }
     }
   },

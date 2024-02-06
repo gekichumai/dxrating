@@ -1,11 +1,14 @@
+import { VersionEnum } from "@gekichumai/dxdata";
 import { DevTool } from "@hookform/devtools";
 import { Paper } from "@mui/material";
 import { FC, useEffect } from "react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { SheetInternalLevelFilter } from "./filters/SheetInternalLevelFilter";
+import { SheetVersionFilter } from "./filters/SheetVersionFilter";
 
 export interface SheetSortFilterForm {
   filters: {
+    versions: VersionEnum[];
     internalLevelValue?: {
       min: number;
       max: number;
@@ -20,6 +23,7 @@ export const SheetSortFilter: FC<{
     mode: "onChange",
     defaultValues: {
       filters: {
+        versions: Object.values(VersionEnum),
         internalLevelValue: {
           min: 1.0,
           max: 15.0,
@@ -56,9 +60,15 @@ const SheetSortFilterForm = () => {
   const { control } = useFormContext<SheetSortFilterForm>();
 
   return (
-    <Paper className="flex w-full p-4">
+    <>
       {import.meta.env.DEV && <DevTool control={control} />}
-      <SheetInternalLevelFilter control={control} />
-    </Paper>
+      <Paper className="p-4 w-full flex flex-col gap-4">
+        <div className="text-xl font-bold tracking-tight">Filters</div>
+        <div className="grid grid-cols-2 gap-2">
+          <SheetVersionFilter control={control} />
+          <SheetInternalLevelFilter control={control} />
+        </div>
+      </Paper>
+    </>
   );
 };

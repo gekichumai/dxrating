@@ -11,6 +11,11 @@ import { FlattenedSheet, useFilteredSheets, useSheets } from "../songs";
 import { DXRatingPlugin } from "../utils/capacitor/plugin/wrap";
 import { isBuildPlatformApp } from "../utils/env";
 
+const chainEvery =
+  <T,>(...fns: ((arg: T) => boolean | undefined)[]) =>
+  (arg: T) =>
+    fns.every((fn) => fn(arg));
+
 export const SheetList: FC = () => {
   const { t } = useTranslation(["sheet"]);
   const { data: sheets } = useSheets();
@@ -24,13 +29,20 @@ export const SheetList: FC = () => {
     let filteredResults: FlattenedSheet[] = results;
     if (sortFilterOptions) {
       filteredResults = results.filter((sheet) => {
-        if (sortFilterOptions.filters.internalLevelValue) {
-          const { min, max } = sortFilterOptions.filters.internalLevelValue;
-          return (
-            sheet.internalLevelValue >= min && sheet.internalLevelValue <= max
-          );
-        }
-        return true;
+        return chainEvery<FlattenedSheet>(
+          (v) => {
+            if (sortFilterOptions.filters.internalLevelValue) {
+              const { min, max } = sortFilterOptions.filters.internalLevelValue;
+              return v.internalLevelValue >= min && v.internalLevelValue <= max;
+            }
+          },
+          (v) => {
+            if (sortFilterOptions.filters.versions) {
+              const versions = sortFilterOptions.filters.versions;
+              return versions.includes(v.version);
+            }
+          },
+        )(sheet);
       });
     }
     return {
