@@ -160139,7 +160139,7 @@
       "category": "niconico＆ボーカロイド",
       "title": "アイディスマイル",
       "artist": "とあ / MEIKO / 25時、ナイトコードで。「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
-      "bpm": null,
+      "bpm": 171,
       "imageName": "f20101217f714194d9973b603c07a13b4dcf7d39648842d20d334a546c3e3f55.png",
       "version": "BUDDiES",
       "releaseDate": "2024-01-11",
@@ -160201,14 +160201,14 @@
           "levelValue": 9.7,
           "internalLevel": null,
           "internalLevelValue": 9.7,
-          "noteDesigner": null,
+          "noteDesigner": "Luxizhel",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 217,
+            "hold": 38,
+            "slide": 30,
+            "touch": 22,
+            "break": 11,
+            "total": 318
           },
           "regions": {
             "jp": true,
@@ -160225,13 +160225,13 @@
           "levelValue": 12.7,
           "internalLevel": "12.8",
           "internalLevelValue": 12.8,
-          "noteDesigner": null,
+          "noteDesigner": "りんご Full Set",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
+            "tap": 282,
+            "hold": 75,
+            "slide": 68,
+            "touch": 67,
+            "break": 18,
             "total": 510
           },
           "regions": {
@@ -160799,7 +160799,7 @@
       "category": "maimai",
       "title": "The Great Banquet",
       "artist": "Iris",
-      "bpm": null,
+      "bpm": 170,
       "imageName": "4354fc3099928a1b30cbce2a0bf4bfc73631de47d05c6f1164de5421e26dd37e.png",
       "version": "BUDDiES",
       "releaseDate": "2024-02-02",
@@ -160861,14 +160861,14 @@
           "levelValue": 11,
           "internalLevel": null,
           "internalLevelValue": 11,
-          "noteDesigner": null,
+          "noteDesigner": "サファ太",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 338,
+            "hold": 75,
+            "slide": 50,
+            "touch": 12,
+            "break": 43,
+            "total": 518
           },
           "regions": {
             "jp": true,
@@ -160885,14 +160885,14 @@
           "levelValue": 14,
           "internalLevel": "14.2",
           "internalLevelValue": 14.2,
-          "noteDesigner": null,
+          "noteDesigner": "Luxizhel",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 715,
+            "hold": 52,
+            "slide": 131,
+            "touch": 10,
+            "break": 45,
+            "total": 953
           },
           "regions": {
             "jp": true,
@@ -160909,7 +160909,7 @@
       "category": "maimai",
       "title": "Redemption",
       "artist": "XinG、10lulu",
-      "bpm": null,
+      "bpm": 175,
       "imageName": "4d6061278a091301ecb92efb4c19f1467d9a4b40de554575064c1313d9685d3c.png",
       "version": "BUDDiES",
       "releaseDate": "2024-02-02",
@@ -160971,14 +160971,14 @@
           "levelValue": 11.7,
           "internalLevel": null,
           "internalLevelValue": 11.7,
-          "noteDesigner": null,
+          "noteDesigner": "鳩ホルダー",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 320,
+            "hold": 50,
+            "slide": 48,
+            "touch": 26,
+            "break": 15,
+            "total": 459
           },
           "regions": {
             "jp": true,
@@ -160995,14 +160995,14 @@
           "levelValue": 13.7,
           "internalLevel": "13.9",
           "internalLevelValue": 13.9,
-          "noteDesigner": null,
+          "noteDesigner": "はっぴー",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 686,
+            "hold": 6,
+            "slide": 49,
+            "touch": 36,
+            "break": 36,
+            "total": 813
           },
           "regions": {
             "jp": true,
@@ -161019,7 +161019,7 @@
       "category": "maimai",
       "title": "Ether Second",
       "artist": "Akira Complex",
-      "bpm": null,
+      "bpm": 150,
       "imageName": "2707888eb33ce6db6f29361a89ff465524e7e63902ba0821ee0c61838fe0ee09.png",
       "version": "BUDDiES",
       "releaseDate": "2024-02-02",
@@ -161081,14 +161081,14 @@
           "levelValue": 11.7,
           "internalLevel": null,
           "internalLevelValue": 11.7,
-          "noteDesigner": null,
+          "noteDesigner": "はっぴー",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 337,
+            "hold": 82,
+            "slide": 55,
+            "touch": 42,
+            "break": 3,
+            "total": 519
           },
           "regions": {
             "jp": true,
@@ -161105,14 +161105,14 @@
           "levelValue": 13.7,
           "internalLevel": "13.9",
           "internalLevelValue": 13.9,
-          "noteDesigner": null,
+          "noteDesigner": "サファ太",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 636,
+            "hold": 75,
+            "slide": 59,
+            "touch": 24,
+            "break": 61,
+            "total": 855
           },
           "regions": {
             "jp": true,
@@ -161129,7 +161129,7 @@
       "category": "maimai",
       "title": "Straight into the lights",
       "artist": "Cosmograph",
-      "bpm": null,
+      "bpm": 90,
       "imageName": "8fc940a2fcffd56224e372b2a57888e84ca295c43609dad8a185b14227caf2a8.png",
       "version": "BUDDiES",
       "releaseDate": "2024-02-02",
@@ -161198,7 +161198,7 @@
             "slide": null,
             "touch": null,
             "break": null,
-            "total": null
+            "total": 522
           },
           "regions": {
             "jp": true,
@@ -161215,14 +161215,14 @@
           "levelValue": 14.7,
           "internalLevel": null,
           "internalLevelValue": 14.7,
-          "noteDesigner": null,
+          "noteDesigner": "Jack",
           "noteCounts": {
             "tap": null,
             "hold": null,
             "slide": null,
             "touch": null,
             "break": null,
-            "total": null
+            "total": 1111
           },
           "regions": {
             "jp": true,
@@ -161410,5 +161410,5 @@
       "name": "中国版 (舞萌DX)"
     }
   ],
-  "updateTime": "2024-02-02T10:52:14.995Z"
+  "updateTime": "2024-02-06T17:17:01.806Z"
 }
