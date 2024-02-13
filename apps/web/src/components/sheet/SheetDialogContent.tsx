@@ -5,6 +5,7 @@ import {
 } from "@gekichumai/dxdata";
 import {
   Button,
+  ButtonGroup,
   Chip,
   IconButton,
   Table,
@@ -129,15 +130,25 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
             YouTube
           </Button>
 
-          <Button
-            startIcon={<RiBilibiliFill />}
-            variant="outlined"
-            href={`https://search.bilibili.com/all?keyword=${sheet.title}+${sheet.difficulty}`}
-            target="_blank"
-            className="inline-flex !text-[#00A1D6] !b-[#00A1D6] !hover:bg-[#00A1D609] font-bold mr-1"
-          >
-            Bilibili
-          </Button>
+          <div className="inline-flex !text-[#00A1D6] !b-[#00A1D6] b-solid b-1 mr-1 rounded-xl items-center">
+            <RiBilibiliFill className="ml-2.5" />
+            <ButtonGroup>
+              <Button
+                href={`bilibili://search?keyword=${sheet.title}%20${sheet.difficulty}`}
+                target="_blank"
+                className="!rounded-none !text-[#00A1D6] !hover:bg-[#00A1D609] font-bold !b-none"
+              >
+                App
+              </Button>
+              <Button
+                href={`https://search.bilibili.com/all?keyword=maimai%20${sheet.title}%20${sheet.difficulty}`}
+                target="_blank"
+                className="!rounded-none !text-[#00A1D6] !hover:bg-[#00A1D609] font-bold !b-none"
+              >
+                Web
+              </Button>
+            </ButtonGroup>
+          </div>
 
           <IconButton
             href={`https://open.spotify.com/search/${sheet.title}`}

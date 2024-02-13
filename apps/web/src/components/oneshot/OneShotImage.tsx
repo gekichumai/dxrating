@@ -4,6 +4,7 @@ import { FC } from "react";
 import satori from "satori";
 import useSWR from "swr";
 import { Entry } from "../../pages/RatingCalculator";
+import { OneShotImageContent } from "./OneShotImageContent";
 
 function quickStringHash(str: string) {
   let hash = 0;
@@ -46,8 +47,6 @@ export const OneShotImage: FC<{
       quickStringHash(JSON.stringify(calculatedEntries)),
     async () => {
       if (!preload.data) return null;
-
-      const { OneShotImageContent } = await import(`./OneShotImageContent`);
 
       console.log("OneShotImageContent", OneShotImageContent);
       const el = <OneShotImageContent calculatedEntries={calculatedEntries} />;
