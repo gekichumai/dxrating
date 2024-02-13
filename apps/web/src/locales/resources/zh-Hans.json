@@ -60,7 +60,11 @@
         "title": "定数"
       },
       "version": {
-        "title": "追加版本"
+        "title": "追加版本",
+        "gesture-hint": {
+          "tap": "切换",
+          "tap-hold": "仅选择"
+        }
       }
     },
     "sort": {
