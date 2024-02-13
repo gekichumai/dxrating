@@ -13,8 +13,8 @@ import { AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import MdiAdd from "~icons/mdi/add";
 import MdiClose from "~icons/mdi/close";
-import { MotionButton } from "../../utils/motion";
 import { SheetDetailsContext } from "../../models/context/SheetDetailsContext";
+import { MotionButton } from "../../utils/motion";
 
 const SortPredicateTransformer = {
   to: (value: string) => {
@@ -41,9 +41,9 @@ export const SheetSortSelect: FC<{
 
   const addSortButtonVariants = useMemo(
     () => ({
-      initial: { scale: 0 },
-      animate: { scale: 1 },
-      exit: { scale: 0 },
+      initial: { opacity: 0 },
+      animate: { scale: 1, opacity: 1 },
+      exit: { scale: 0, opacity: 0 },
     }),
     [],
   );

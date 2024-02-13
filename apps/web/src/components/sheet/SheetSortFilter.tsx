@@ -15,7 +15,6 @@ import { FC, useContext, useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import MdiBeta from "~icons/mdi/beta";
-import MdiTrashCan from "~icons/mdi/trash-can";
 import { SheetDetailsContext } from "../../models/context/SheetDetailsContext";
 import { FlattenedSheet } from "../../songs";
 import { SheetSortSelect } from "./SheetSortSelect";
@@ -149,8 +148,8 @@ const SheetSortFilterFormReset: FC<{
       <Button
         variant="outlined"
         color="error"
-        startIcon={<MdiTrashCan />}
         onClick={() => setOpenDialog(true)}
+        size="small"
       >
         {t("sheet:sort-and-filter.reset")}
       </Button>
@@ -187,8 +186,10 @@ const SheetSortFilterForm = () => {
 
         <div className="p-2 w-full flex flex-col gap-4">
           <div className="p-2 flex flex-col gap-4">
-            <div className="text-xl font-bold tracking-tight">
-              {t("sheet:filter.title")}
+            <div className="text-xl font-bold tracking-tighter">
+              <span className="whitespace-nowrap">
+                {t("sheet:filter.title")}
+              </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <SheetVersionFilter control={control} />
@@ -202,8 +203,8 @@ const SheetSortFilterForm = () => {
               queryActive && "bg-gray-200 pointer-events-none saturation-0",
             )}
           >
-            <div className="text-xl font-bold tracking-tight flex items-center">
-              <span>{t("sheet:sort.title")}</span>
+            <div className="text-xl font-bold tracking-tighter flex items-center">
+              <span className="whitespace-nowrap">{t("sheet:sort.title")}</span>
               {queryActive && (
                 <div className="px-1.5 py-0.5 rounded-full bg-gray-300 text-xs ml-2">
                   {t("sheet:sort.temporarily-disabled")}

@@ -109,5 +109,11 @@
         "message": "“{{fieldName}}”必须大于或等于 {{value}}"
       }
     }
+  },
+  "global": {
+    "gesture-hint": {
+      "tap": "点按",
+      "tap-hold": "长按"
+    }
   }
 }

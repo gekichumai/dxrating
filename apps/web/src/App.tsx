@@ -57,15 +57,15 @@ export const App = () => {
               });
             }}
             classes={{
-              root: "rounded-full bg-zinc-900/10 !min-h-2.5rem",
-              indicator: "!h-full !rounded-full z-0",
+              root: "rounded-xl bg-zinc-900/10 !min-h-2.5rem",
+              indicator: "!h-full !rounded-lg z-0",
             }}
           >
             <Tab
               label={t("root:pages.search.title")}
               classes={{
                 selected: "!text-white",
-                root: "!rounded-full transition-colors z-1 !py-0 !min-h-2.5rem",
+                root: "!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem",
               }}
               value="search"
             />
@@ -73,7 +73,7 @@ export const App = () => {
               label={t("root:pages.rating.title")}
               classes={{
                 selected: "!text-white",
-                root: "!rounded-full transition-colors z-1 !py-0 !min-h-2.5rem",
+                root: "!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem",
               }}
               value="rating"
             />

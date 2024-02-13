@@ -109,5 +109,11 @@
         "message": "「{{fieldName}}」は {{value}} 以上である必要があります"
       }
     }
+  },
+  "global": {
+    "gesture-hint": {
+      "tap": "タップ",
+      "tap-hold": "ホールド"
+    }
   }
 }

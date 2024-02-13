@@ -4,6 +4,7 @@ import { FC, useMemo } from "react";
 import { Control, useController } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useLongPress } from "use-long-press";
+import { GestureHint } from "../../global/GestureHint";
 import { SheetSortFilterForm } from "../SheetSortFilter";
 import { SheetFilterSection } from "./SheetFilterSection";
 
@@ -25,11 +26,12 @@ const SheetVersionFilterInputVersion = ({
   });
 
   return (
-    <ButtonBase {...bind()} className="rounded-full overflow-hidden">
+    <ButtonBase {...bind()} className="rounded-lg overflow-hidden">
       <Chip
         label={version.replace(" PLUS", "+")}
         color={selected ? "primary" : "default"}
         size="small"
+        className="!rounded-lg"
       />
     </ButtonBase>
   );
@@ -83,7 +85,7 @@ const SheetVersionFilterInput = ({
 export const SheetVersionFilter: FC<{
   control: Control<SheetSortFilterForm>;
 }> = ({ control }) => {
-  const { t } = useTranslation(["sheet"]);
+  const { t } = useTranslation(["sheet", "global"]);
   const {
     field: { onChange, value },
   } = useController<SheetSortFilterForm, "filters.versions">({
@@ -92,7 +94,22 @@ export const SheetVersionFilter: FC<{
   });
 
   return (
-    <SheetFilterSection title={t("sheet:filter.version.title")}>
+    <SheetFilterSection
+      title={
+        <>
+          <div>{t("sheet:filter.version.title")}</div>
+          <div className="flex-1" />
+          <GestureHint
+            gesture="tap"
+            description={t("sheet:filter.version.gesture-hint.tap")}
+          />
+          <GestureHint
+            gesture="tap-hold"
+            description={t("sheet:filter.version.gesture-hint.tap-hold")}
+          />
+        </>
+      }
+    >
       <SheetVersionFilterInput value={value} onChange={onChange} />
     </SheetFilterSection>
   );

@@ -60,7 +60,11 @@
         "title": "Level"
       },
       "version": {
-        "title": "Added Version"
+        "title": "Added Version",
+        "gesture-hint": {
+          "tap": "Toggle",
+          "tap-hold": "Exclusive"
+        }
       }
     },
     "sort": {
@@ -108,6 +112,12 @@
       "max": {
         "message": "\"{{fieldName}}\" must be less than or equal to {{value}}"
       }
+    }
+  },
+  "global": {
+    "gesture-hint": {
+      "tap": "Tap",
+      "tap-hold": "Hold"
     }
   }
 }

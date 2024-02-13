@@ -141,7 +141,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                 App
               </Button>
               <Button
-                href={`https://search.bilibili.com/all?keyword=maimai%20${sheet.title}%20${sheet.difficulty}`}
+                href={`https://search.bilibili.com/all?keyword=${sheet.title}%20${sheet.difficulty}`}
                 target="_blank"
                 className="!rounded-none !text-[#00A1D6] !hover:bg-[#00A1D609] font-bold !b-none"
               >
