@@ -7,6 +7,10 @@
       "rating": {
         "title": "レーテイング計算"
       }
+    },
+    "share": {
+      "copy-content": "{{ link }}",
+      "copy-succeeded": "クリップボードにコピーされました"
     }
   },
   "settings": {
@@ -49,12 +53,56 @@
     "search-summary": "{{found}} / {{total}} 譜面 ({{elapsed}}ミリ秒)",
     "release-date": "追加日 {{absoluteDate}} ({{relativeDate}})",
     "filter": {
+      "title": "フィルタ",
+      "internal-level-value": {
+        "min": "譜面定数 (min, inclusive)",
+        "max": "譜面定数 (max, inclusive)",
+        "title": "譜面定数"
+      },
       "version": {
         "title": "追加バージョン"
       }
     },
     "sort": {
-      "add": "並べ替えを追加"
+      "title": "並べ替え",
+      "add": "並べ替えを追加",
+      "predicate": "述語#{{index}}",
+      "release-date": {
+        "asc": "発売日（旧→新）",
+        "desc": "発売日（新→旧）"
+      },
+      "internal-level-value": {
+        "asc": "レベル（低→高）",
+        "desc": "レベル（高→低）"
+      }
+    }
+  },
+  "about": {
+    "title": "当サイトについて",
+    "author": "著者",
+    "source-code": "ソースコード",
+    "internal-level-value": "譜面定数",
+    "chart-metadata": "譜面メタデータ",
+    "fesplus-background": "FESTiVAL+の背景",
+    "version": {
+      "commit": "commit",
+      "build": "ビルド",
+      "build-time": "ビルド時間",
+      "upstream-data-update-time": "アップストリームデータバージョン"
+    },
+    "aliases": {
+      "yuri-yuzuchan-maimaidx": "楽曲別名 (中国語)",
+      "lomotos10-gcmbot": "楽曲別名 (英語、韓国語、ローマ字)"
+    }
+  },
+  "form": {
+    "validation": {
+      "max": {
+        "message": "「{{fieldName}}」は {{value}} 以下である必要があります"
+      },
+      "min": {
+        "message": "「{{fieldName}}」は {{value}} 以上である必要があります"
+      }
     }
   }
 }

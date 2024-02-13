@@ -1,6 +1,8 @@
 import {
+  Button,
   ButtonBase,
   ButtonBaseProps,
+  ButtonProps,
   Chip,
   ChipProps,
   Tooltip,
@@ -12,6 +14,12 @@ import { ForwardedRef, forwardRef } from "react";
 export const MotionButtonBase = motion(
   forwardRef((props: ButtonBaseProps, ref: ForwardedRef<HTMLButtonElement>) => (
     <ButtonBase ref={ref} {...props} />
+  )),
+);
+
+export const MotionButton = motion(
+  forwardRef((props: ButtonProps, ref: ForwardedRef<HTMLButtonElement>) => (
+    <Button ref={ref} {...props} />
   )),
 );
 

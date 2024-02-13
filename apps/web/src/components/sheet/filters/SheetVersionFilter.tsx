@@ -28,9 +28,9 @@ const SheetVersionFilterInputVersion = ({
   return (
     <ButtonBase {...bindings} className="rounded-full overflow-hidden">
       <Chip
-        label={version}
+        label={version.replace(" PLUS", "+")}
         color={selected ? "primary" : "default"}
-        className="border-solid border-gray-800"
+        size="small"
       />
     </ButtonBase>
   );

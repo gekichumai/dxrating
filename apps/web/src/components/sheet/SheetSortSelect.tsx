@@ -1,18 +1,19 @@
 import {
-  Button,
   FormControl,
   IconButton,
   InputLabel,
   MenuItem,
   Select,
 } from "@mui/material";
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import { Control, Controller, useFieldArray } from "react-hook-form";
 import { SheetSortFilterForm, SortPredicate } from "./SheetSortFilter";
 
+import { AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import MdiAdd from "~icons/mdi/add";
 import MdiClose from "~icons/mdi/close";
+import { MotionButton } from "../../utils/motion";
 
 const SortPredicateTransformer = {
   to: (value: string) => {
@@ -36,6 +37,15 @@ export const SheetSortSelect: FC<{
     name: "sorts",
   });
 
+  const addSortButtonVariants = useMemo(
+    () => ({
+      initial: { scale: 0 },
+      animate: { scale: 1 },
+      exit: { scale: 0 },
+    }),
+    [],
+  );
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       {fields.map((field, index) => (
@@ -58,38 +68,47 @@ export const SheetSortSelect: FC<{
                 size="small"
                 {...(index > 0 && {
                   endAdornment: (
-                    <IconButton onClick={() => remove(index)}>
+                    <IconButton size="small" onClick={() => remove(index)}>
                       <MdiClose />
                     </IconButton>
                   ),
                 })}
               >
-                <MenuItem value="internalLevelValue_asc">
-                  {t("sheet:sort.internal-level-value.asc")}
-                </MenuItem>
-                <MenuItem value="internalLevelValue_desc">
-                  {t("sheet:sort.internal-level-value.desc")}
+                <MenuItem value="releaseDate_desc">
+                  {t("sheet:sort.release-date.desc")}
                 </MenuItem>
                 <MenuItem value="releaseDate_asc">
                   {t("sheet:sort.release-date.asc")}
                 </MenuItem>
-                <MenuItem value="releaseDate_desc">
-                  {t("sheet:sort.release-date.desc")}
+                <MenuItem value="internalLevelValue_desc">
+                  {t("sheet:sort.internal-level-value.desc")}
+                </MenuItem>
+                <MenuItem value="internalLevelValue_asc">
+                  {t("sheet:sort.internal-level-value.asc")}
                 </MenuItem>
               </Select>
             </FormControl>
           )}
         />
       ))}
-      <Button
-        onClick={() =>
-          append({ descriptor: "internalLevelValue", direction: "asc" })
-        }
-        startIcon={<MdiAdd />}
-        variant="contained"
-      >
-        {t("sheet:sort.add")}
-      </Button>
+      <AnimatePresence mode="popLayout">
+        {fields.length <= 5 && (
+          <MotionButton
+            layout
+            onClick={() =>
+              append({ descriptor: "internalLevelValue", direction: "desc" })
+            }
+            startIcon={<MdiAdd />}
+            variant="contained"
+            variants={addSortButtonVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            {t("sheet:sort.add")}
+          </MotionButton>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

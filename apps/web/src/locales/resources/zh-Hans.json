@@ -53,6 +53,7 @@
     },
     "release-date": "追加日 {{absoluteDate}} ({{relativeDate}})",
     "filter": {
+      "title": "筛选",
       "internal-level-value": {
         "min": "定数 (大于或等于)",
         "max": "定数 (小于或等于)",
@@ -63,7 +64,21 @@
       }
     },
     "sort": {
-      "add": "添加排序规则"
+      "title": "排序",
+      "add": "添加排序规则",
+      "predicate": "规则 #{{index}}",
+      "internal-level-value": {
+        "asc": "谱面定数 (低→高)",
+        "desc": "谱面定数 (高→低)"
+      },
+      "release-date": {
+        "asc": "追加日期 (旧→新)",
+        "desc": "追加日期 (新→旧)"
+      }
+    },
+    "sort-and-filter": {
+      "title": "筛选与排序",
+      "reset": "重置..."
     }
   },
   "about": {
@@ -82,6 +97,16 @@
     "aliases": {
       "yuri-yuzuchan-maimaidx": "乐曲别名 (中文)",
       "lomotos10-gcmbot": "乐曲别名 (英文、韩文与罗马音)"
+    }
+  },
+  "form": {
+    "validation": {
+      "max": {
+        "message": "“{{fieldName}}”必须小于或等于 {{value}}"
+      },
+      "min": {
+        "message": "“{{fieldName}}”必须大于或等于 {{value}}"
+      }
     }
   }
 }
