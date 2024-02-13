@@ -30,8 +30,9 @@ npm install -g yarn
 yarn install --frozen-lockfile
 
 # populate bundle information
-VITE_GIT_COMMIT=$(git rev-parse HEAD)
-VITE_BUILD_TIME=$(date -u +%FT%TZ)
+export VITE_GIT_COMMIT=$(git rev-parse HEAD)
+export VITE_BUILD_TIME=$(date -u +%FT%TZ)
+export VITE_VERSION=$(git describe --tags --always)
 
 # build and sync
 yarn run build:app
