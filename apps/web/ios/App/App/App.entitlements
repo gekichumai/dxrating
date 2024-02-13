@@ -6,6 +6,8 @@
 	<array>
 		<string>webcredentials:dxrating.imgg.dev</string>
 		<string>applinks:dxrating.imgg.dev</string>
+		<string>webcredentials:dxrating.net</string>
+		<string>applinks:dxrating.net</string>
 	</array>
 	<key>com.apple.security.application-groups</key>
 	<array>

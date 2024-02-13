@@ -12,7 +12,9 @@ export const SheetListContainer = ({
   listContainerClassName?: string;
 }) => {
   const ItemContent = useCallback<ItemContent<FlattenedSheet, unknown>>(
-    (_, sheet: FlattenedSheet) => <SheetListItem sheet={sheet} />,
+    (_, sheet: FlattenedSheet) => (
+      <SheetListItem key={sheet.id} sheet={sheet} />
+    ),
     [],
   );
 
@@ -22,7 +24,7 @@ export const SheetListContainer = ({
         useWindowScroll
         data={sheets}
         itemContent={ItemContent}
-        className="w-full"
+        className="w-full min-h-[100lvh]"
         increaseViewportBy={500}
       />
     </div>

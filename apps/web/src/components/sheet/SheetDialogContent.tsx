@@ -20,6 +20,7 @@ import { match } from "ts-pattern";
 import IconMdiSearchWeb from "~icons/mdi/search-web";
 import IconMdiSpotify from "~icons/mdi/spotify";
 import IconMdiYouTube from "~icons/mdi/youtube";
+import RiBilibiliFill from "~icons/ri/bilibili-fill";
 import { useAppContextDXDataVersion } from "../../models/context/useAppContext";
 import { FlattenedSheet } from "../../songs";
 import { calculateRating } from "../../utils/rating";
@@ -123,15 +124,25 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
             variant="outlined"
             href={`https://www.youtube.com/results?search_query=maimai+${sheet.title}+${sheet.difficulty}`}
             target="_blank"
-            className="inline-flex !text-[#ff0000] !b-[#ff0000] !font-bold !mr-1"
+            className="inline-flex !text-[#ff0000] !b-[#ff0000] !hover:bg-[#ff000009] font-bold mr-2"
           >
             YouTube
+          </Button>
+
+          <Button
+            startIcon={<RiBilibiliFill />}
+            variant="outlined"
+            href={`https://search.bilibili.com/all?keyword=${sheet.title}+${sheet.difficulty}`}
+            target="_blank"
+            className="inline-flex !text-[#00A1D6] !b-[#00A1D6] !hover:bg-[#00A1D609] font-bold mr-1"
+          >
+            Bilibili
           </Button>
 
           <IconButton
             href={`https://open.spotify.com/search/${sheet.title}`}
             target="_blank"
-            className="inline-flex !text-[#1db954] !b-[#1db954] !font-bold"
+            className="inline-flex !text-[#1db954] !b-[#1db954] !hover:bg-[#1db95409] font-bold"
           >
             <IconMdiSpotify className="h-6 w-6" />
           </IconButton>

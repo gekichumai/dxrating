@@ -43,7 +43,7 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
   }, [value]);
 
   return (
-    <div className="flex items-start gap-2">
+    <div className="flex items-center gap-2 w-full md:w-auto">
       <TextField
         label={label}
         variant="filled"
@@ -74,6 +74,10 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
         // rest props
         {...TextFieldProps}
       />
+
+      <TouchDeviceGuard renderOnlyOn="touch">
+        <div className="block md:hidden h-px w-full flex-1 bg-gray-300 mx-2" />
+      </TouchDeviceGuard>
 
       <TouchDeviceGuard renderOnlyOn="touch">
         <SheetFilterInternalLevelInputLongPressSlider
@@ -110,7 +114,7 @@ export const SheetInternalLevelFilter: FC<{
           rules: internalLevelValueBoundRules,
         }}
         TextFieldProps={{
-          className: "w-40",
+          className: "md:max-w-36",
         }}
       />
       <SheetFilterInternalLevelValueInput
@@ -121,7 +125,7 @@ export const SheetInternalLevelFilter: FC<{
           rules: internalLevelValueBoundRules,
         }}
         TextFieldProps={{
-          className: "w-40",
+          className: "md:max-w-36",
         }}
       />
     </SheetFilterSection>

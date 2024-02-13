@@ -1,6 +1,13 @@
 import { ClickAwayListener } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
-import { TouchEventHandler, useEffect, useMemo, useRef, useState } from "react";
+import {
+  TouchEventHandler,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useLockBodyScroll } from "react-use";
 import MdiGestureSwipeVertical from "~icons/mdi/gesture-swipe-vertical";
 import { mapRange } from "../../../utils/mapRange";
@@ -18,42 +25,44 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPressed, setIsPressed] = useState(false);
-  const inclusiveWholeNumbers = Array.from({ length: max - min + 1 }).map(
-    (_, i) => min + i,
+  const inclusiveWholeNumbers = useMemo(
+    () => Array.from({ length: max - min + 1 }).map((_, i) => min + i),
+    [min, max],
   );
   useLockBodyScroll(isPressed);
 
   useEffect(() => {
     document.body.style.userSelect = isPressed ? "none" : "";
-    // document.body.style.overflow = isPressed ? "hidden" : "";
     return () => {
       document.body.style.userSelect = "";
-      // document.body.style.overflow = "";
     };
   }, [isPressed]);
 
   const valuePercentage = ((value ?? 0) - min) / (max - min);
 
-  const onPointerMove: TouchEventHandler<HTMLDivElement> = (e) => {
-    if (!isPressed) return;
-    if (!containerRef.current) return;
-    if (e.touches.length !== 1) return;
-    const { top, height } = containerRef.current.getBoundingClientRect();
-    const padding = 16 + 10; // each side; padding + half size of text mark
-    const offset = e.touches[0].clientY - top;
-    const mappedOffset = mapRange(
-      offset,
-      0,
-      height,
-      -padding,
-      height - padding,
-    );
-    const percentageFromTop = mappedOffset / (height - padding * 2);
-    const unroundedValue = (max - min) * percentageFromTop + min;
-    const unclampedValue = Math.round(unroundedValue * 10) / 10;
-    const value = Math.max(min, Math.min(max, unclampedValue));
-    onChange(value);
-  };
+  const onPointerMove: TouchEventHandler<HTMLDivElement> = useCallback(
+    (e) => {
+      if (!isPressed) return;
+      if (!containerRef.current) return;
+      if (e.touches.length !== 1) return;
+      const { top, height } = containerRef.current.getBoundingClientRect();
+      const padding = 16 + 10; // each side; padding + half size of text mark
+      const offset = e.touches[0].clientY - top;
+      const mappedOffset = mapRange(
+        offset,
+        0,
+        height,
+        -padding,
+        height - padding,
+      );
+      const percentageFromTop = mappedOffset / (height - padding * 2);
+      const unroundedValue = (max - min) * percentageFromTop + min;
+      const unclampedValue = Math.round(unroundedValue * 10) / 10;
+      const value = Math.max(min, Math.min(max, unclampedValue));
+      onChange(value);
+    },
+    [isPressed, containerRef, min, max, onChange],
+  );
 
   const indicatorPosition = useMemo(() => {
     if (!containerRef.current) return 0;

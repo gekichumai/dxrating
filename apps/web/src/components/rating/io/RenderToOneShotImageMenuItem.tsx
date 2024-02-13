@@ -31,11 +31,15 @@ export const RenderToOneShotImageMenuItem: FC<{
         onClick={() => {
           setOpen(true);
         }}
+        disabled
       >
         <ListItemIcon>
           <IconMdiImage />
         </ListItemIcon>
-        <ListItemText primary="Render as OneShot Image..." secondary="Beta" />
+        <ListItemText
+          primary="Render as OneShot Image..."
+          secondary="Coming soon"
+        />
       </MenuItem>
     </>
   );

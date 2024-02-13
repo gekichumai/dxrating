@@ -47,9 +47,7 @@ export const OneShotImage: FC<{
     async () => {
       if (!preload.data) return null;
 
-      const { OneShotImageContent } = await import(
-        `./OneShotImageContent?${Date.now()}`
-      );
+      const { OneShotImageContent } = await import(`./OneShotImageContent`);
 
       console.log("OneShotImageContent", OneShotImageContent);
       const el = <OneShotImageContent calculatedEntries={calculatedEntries} />;

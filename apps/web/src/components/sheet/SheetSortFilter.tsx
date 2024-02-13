@@ -163,12 +163,12 @@ const SheetSortFilterForm = () => {
   return (
     <>
       {import.meta.env.DEV && <DevTool control={control} />}
-      <Paper className="w-full flex flex-col overflow-hidden">
-        <div className="px-4 py-2 w-full flex items-center bg-gray-100">
-          <div className="text-xl font-bold tracking-tight">
+      <Paper className="w-full flex flex-col">
+        <div className="px-4 py-2 w-full flex items-center bg-gray-100 rounded-t-xl">
+          <div className="text-xl font-bold tracking-tight leading-none">
             {t("sheet:sort-and-filter.title")}
           </div>
-          <div className="bg-gray-200 border border-solid border-gray-300 rounded-full px-2 py-1 text-xs ml-2 flex items-center gap-1 select-none">
+          <div className="bg-gray-200 border border-solid border-gray-300 rounded-full px-2 py-1 text-xs ml-2 flex items-center gap-1 select-none leading-none">
             <MdiBeta />
             <span>Beta</span>
           </div>
@@ -181,6 +181,7 @@ const SheetSortFilterForm = () => {
             }}
           />
         </div>
+
         <div className="p-4 w-full flex flex-col gap-4">
           <div className="flex flex-col gap-4">
             <div className="text-xl font-bold tracking-tight">

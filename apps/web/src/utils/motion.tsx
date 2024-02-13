@@ -5,6 +5,10 @@ import {
   ButtonProps,
   Chip,
   ChipProps,
+  FormControl,
+  FormControlProps,
+  Paper,
+  PaperProps,
   Tooltip,
   TooltipProps,
 } from "@mui/material";
@@ -32,5 +36,17 @@ export const MotionTooltip = motion(
 export const MotionChip = motion(
   forwardRef((props: ChipProps, ref: ForwardedRef<HTMLDivElement>) => (
     <Chip ref={ref} {...props} />
+  )),
+);
+
+export const MotionPaper = motion(
+  forwardRef((props: PaperProps, ref: ForwardedRef<HTMLDivElement>) => (
+    <Paper ref={ref} {...props} />
+  )),
+);
+
+export const MotionFormControl = motion(
+  forwardRef((props: FormControlProps, ref: ForwardedRef<HTMLDivElement>) => (
+    <FormControl ref={ref} {...props} />
   )),
 );
