@@ -57,6 +57,21 @@
         "min": "Level (min, inclusive)",
         "max": "Level (max, inclusive)",
         "title": "Level"
+      },
+      "version": {
+        "title": "Added Version"
+      }
+    },
+    "sort": {
+      "add": "Add Sort",
+      "predicate": "Predicate #{{index}}",
+      "release-date": {
+        "desc": "Release Date (New → Old)",
+        "asc": "Release Date (Old → New)"
+      },
+      "internal-level-value": {
+        "desc": "Level (High → Low)",
+        "asc": "Level (Low → High)"
       }
     }
   },

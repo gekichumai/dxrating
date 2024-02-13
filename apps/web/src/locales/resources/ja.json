@@ -47,6 +47,14 @@
       "title": "譜面定数履歴"
     },
     "search-summary": "{{found}} / {{total}} 譜面 ({{elapsed}}ミリ秒)",
-    "release-date": "追加日 {{absoluteDate}} ({{relativeDate}})"
+    "release-date": "追加日 {{absoluteDate}} ({{relativeDate}})",
+    "filter": {
+      "version": {
+        "title": "追加バージョン"
+      }
+    },
+    "sort": {
+      "add": "並べ替えを追加"
+    }
   }
 }

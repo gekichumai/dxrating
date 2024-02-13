@@ -26,27 +26,51 @@ export const SheetList: FC = () => {
 
   const { filteredResults, elapsed: filteringElapsed } = useMemo(() => {
     const startTime = performance.now();
-    let filteredResults: FlattenedSheet[] = results;
+    let sortFilteredResults: FlattenedSheet[] = results;
     if (sortFilterOptions) {
-      filteredResults = results.filter((sheet) => {
-        return chainEvery<FlattenedSheet>(
-          (v) => {
-            if (sortFilterOptions.filters.internalLevelValue) {
-              const { min, max } = sortFilterOptions.filters.internalLevelValue;
-              return v.internalLevelValue >= min && v.internalLevelValue <= max;
+      sortFilteredResults = results
+        .filter((sheet) => {
+          return chainEvery<FlattenedSheet>(
+            (v) => {
+              if (sortFilterOptions.filters.internalLevelValue) {
+                const { min, max } =
+                  sortFilterOptions.filters.internalLevelValue;
+                return (
+                  v.internalLevelValue >= min && v.internalLevelValue <= max
+                );
+              }
+            },
+            (v) => {
+              if (sortFilterOptions.filters.versions) {
+                const versions = sortFilterOptions.filters.versions;
+                return versions.includes(v.version);
+              }
+            },
+          )(sheet);
+        })
+        .sort((a, b) => {
+          return sortFilterOptions.sorts.reduce((acc, sort) => {
+            if (acc !== 0) {
+              return acc;
             }
-          },
-          (v) => {
-            if (sortFilterOptions.filters.versions) {
-              const versions = sortFilterOptions.filters.versions;
-              return versions.includes(v.version);
+            const aValue = a[sort.descriptor];
+            const bValue = b[sort.descriptor];
+            if (aValue == null || bValue == null) {
+              // ==: null or undefined
+              return 0;
             }
-          },
-        )(sheet);
-      });
+            if (aValue < bValue) {
+              return sort.direction === "asc" ? -1 : 1;
+            }
+            if (aValue > bValue) {
+              return sort.direction === "asc" ? 1 : -1;
+            }
+            return 0;
+          }, 0);
+        });
     }
     return {
-      filteredResults,
+      filteredResults: sortFilteredResults,
       elapsed: performance.now() - startTime,
     };
   }, [results, sortFilterOptions]);

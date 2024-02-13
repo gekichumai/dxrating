@@ -56,6 +56,7 @@
 		B5E581F92AE571140087F6DC /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5CA29552AE43F22004F3BA0 /* Extensions.swift */; };
 		B5F03CF32B2B979400E32014 /* DXRatingPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = B596F6EE2B2AACC300BB160F /* DXRatingPlugin.m */; };
 		B5F3B0142B6F844F0053C177 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = B5F3B0132B6F844F0053C177 /* SnapKit */; };
+		B5FBAA822B7886910076BA45 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = B5FBAA812B7886910076BA45 /* SnapKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -78,6 +79,16 @@
 				B55D702A2AE4BDF30047AA8D /* DXRatingQuicklook.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B5FBAA802B7886720076BA45 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -144,6 +155,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B55D701E2AE4BDF30047AA8D /* QuickLook.framework in Frameworks */,
+				B5FBAA822B7886910076BA45 /* SnapKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -306,6 +318,7 @@
 				504EC3021FED79650016851F /* Resources */,
 				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
 				B55D702B2AE4BDF30047AA8D /* Embed Foundation Extensions */,
+				B5FBAA802B7886720076BA45 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -336,6 +349,9 @@
 			dependencies = (
 			);
 			name = DXRatingQuicklook;
+			packageProductDependencies = (
+				B5FBAA812B7886910076BA45 /* SnapKit */,
+			);
 			productName = DXRatingQuicklook;
 			productReference = B55D701C2AE4BDF30047AA8D /* DXRatingQuicklook.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -857,6 +873,11 @@
 			productName = Fuse;
 		};
 		B5F3B0132B6F844F0053C177 /* SnapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B5F3B0122B6F83F20053C177 /* XCRemoteSwiftPackageReference "SnapKit" */;
+			productName = SnapKit;
+		};
+		B5FBAA812B7886910076BA45 /* SnapKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = B5F3B0122B6F83F20053C177 /* XCRemoteSwiftPackageReference "SnapKit" */;
 			productName = SnapKit;

@@ -25,17 +25,16 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
 
   useEffect(() => {
     document.body.style.userSelect = isPressed ? "none" : "";
-    document.body.style.overflow = isPressed ? "hidden" : "";
+    // document.body.style.overflow = isPressed ? "hidden" : "";
     return () => {
       document.body.style.userSelect = "";
-      document.body.style.overflow = "";
+      // document.body.style.overflow = "";
     };
   }, [isPressed]);
 
   const valuePercentage = ((value ?? 0) - min) / (max - min);
 
   const onPointerMove: TouchEventHandler<HTMLDivElement> = (e) => {
-    console.log("onPointerMove");
     if (!isPressed) return;
     if (!containerRef.current) return;
     if (e.touches.length !== 1) return;

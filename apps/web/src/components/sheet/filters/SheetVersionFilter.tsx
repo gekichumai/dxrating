@@ -1,39 +1,38 @@
-import { VERSION_ID_MAP, VersionEnum } from "@gekichumai/dxdata";
-import { Chip } from "@mui/material";
+import { VERSION_IDS, VersionEnum } from "@gekichumai/dxdata";
+import { ButtonBase, Chip } from "@mui/material";
 import { FC, useEffect, useMemo } from "react";
 import { Control, useController } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useLongPress, useSet } from "react-use";
+import { useSet } from "react-use";
+import { useLongPress } from "../../../utils/useLongPress";
 import { SheetSortFilterForm } from "../SheetSortFilter";
 import { SheetFilterSection } from "./SheetFilterSection";
 
 const SheetVersionFilterInputVersion = ({
   version,
   selected,
-  onChange,
+  onToggle,
   onOnly,
 }: {
   version: VersionEnum;
   selected: boolean;
-  onChange: (selected: boolean) => void;
+  onToggle: () => void;
   onOnly: () => void;
 }) => {
-  const bind = useLongPress(
-    () => {
-      onOnly();
-    },
-    { isPreventDefault: true, delay: 500 },
-  );
+  const bindings = useLongPress({
+    delay: 300,
+    onLongPress: onOnly,
+    onClick: onToggle,
+  });
 
   return (
-    <Chip
-      label={version}
-      onClick={() => {
-        onChange(!selected);
-      }}
-      color={selected ? "primary" : "default"}
-      {...bind}
-    />
+    <ButtonBase {...bindings} className="rounded-full overflow-hidden">
+      <Chip
+        label={version}
+        color={selected ? "primary" : "default"}
+        className="border-solid border-gray-800"
+      />
+    </ButtonBase>
   );
 };
 
@@ -53,7 +52,7 @@ const SheetVersionFilterInput = ({
 
   const allEnums = useMemo(
     () =>
-      (Array.from(VERSION_ID_MAP.keys()) as VersionEnum[]).map((k) => ({
+      VERSION_IDS.map((k) => ({
         id: k,
         selected: has(k),
       })),
@@ -63,43 +62,31 @@ const SheetVersionFilterInput = ({
   return (
     <div className="flex flex-wrap gap-2">
       {allEnums.map((e) => (
-        // <Chip
-        //   key={e.id}
-        //   label={e.id}
-        //   onClick={() => {
-        //     if (e.selected) {
-        //       remove(e.id as VersionEnum);
-        //     } else {
-        //       add(e.id as VersionEnum);
-        //     }
-        //   }}
-        //   color={e.selected ? "primary" : "default"}
-        // />
         <SheetVersionFilterInputVersion
           key={e.id}
           version={e.id}
           selected={e.selected}
-          onChange={(selected) => {
-            if (selected) {
-              add(e.id as VersionEnum);
+          onToggle={() => {
+            const toggled = !e.selected;
+
+            if (toggled) {
+              add(e.id);
             } else {
-              if (Array.from(set.keys()).length === 1) {
+              if (set.size === 1) {
                 reset();
               } else {
-                remove(e.id as VersionEnum);
+                remove(e.id);
               }
             }
           }}
           onOnly={() => {
-            (Array.from(VERSION_ID_MAP.keys()) as VersionEnum[]).forEach(
-              (k) => {
-                if (k === e.id) {
-                  add(k);
-                } else {
-                  remove(k);
-                }
-              },
-            );
+            VERSION_IDS.forEach((k) => {
+              if (k === e.id) {
+                add(k);
+              } else {
+                remove(k);
+              }
+            });
           }}
         />
       ))}
@@ -113,7 +100,7 @@ export const SheetVersionFilter: FC<{
   const { t } = useTranslation(["sheet"]);
   const {
     field: { onChange, value },
-  } = useController<SheetSortFilterForm>({
+  } = useController<SheetSortFilterForm, "filters.versions">({
     control,
     name: "filters.versions",
   });

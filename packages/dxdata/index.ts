@@ -149,6 +149,8 @@ export const VERSION_ID_MAP = new Map([
   //! add further version here !//
 ]);
 
+export const VERSION_IDS = Array.from(VERSION_ID_MAP.keys()) as VersionEnum[];
+
 export const VERSION_SLUG_MAP = new Map([
   ["maimai", "maimai"],
   ["maimai PLUS", "maimai-plus"],

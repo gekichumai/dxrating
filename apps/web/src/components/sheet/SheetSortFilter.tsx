@@ -3,8 +3,15 @@ import { DevTool } from "@hookform/devtools";
 import { Paper } from "@mui/material";
 import { FC, useEffect } from "react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
+import { FlattenedSheet } from "../../songs";
+import { SheetSortSelect } from "./SheetSortSelect";
 import { SheetInternalLevelFilter } from "./filters/SheetInternalLevelFilter";
 import { SheetVersionFilter } from "./filters/SheetVersionFilter";
+
+export interface SortPredicate {
+  descriptor: keyof FlattenedSheet;
+  direction: "asc" | "desc";
+}
 
 export interface SheetSortFilterForm {
   filters: {
@@ -14,6 +21,7 @@ export interface SheetSortFilterForm {
       max: number;
     };
   };
+  sorts: SortPredicate[];
 }
 
 export const SheetSortFilter: FC<{
@@ -29,6 +37,12 @@ export const SheetSortFilter: FC<{
           max: 15.0,
         },
       },
+      sorts: [
+        {
+          descriptor: "releaseDate",
+          direction: "desc",
+        },
+      ],
     },
   });
 
@@ -48,7 +62,8 @@ const SheetSortFilterFormListener: FC<{
   useEffect(() => {
     watch((data) => {
       if (data.filters) {
-        onChange?.(data);
+        // @eslint-disable-next-line
+        onChange?.(data as any);
       }
     });
   }, [onChange, watch]);
@@ -63,10 +78,17 @@ const SheetSortFilterForm = () => {
     <>
       {import.meta.env.DEV && <DevTool control={control} />}
       <Paper className="p-4 w-full flex flex-col gap-4">
-        <div className="text-xl font-bold tracking-tight">Filters</div>
-        <div className="grid grid-cols-2 gap-2">
-          <SheetVersionFilter control={control} />
-          <SheetInternalLevelFilter control={control} />
+        <div className="flex flex-col gap-4">
+          <div className="text-xl font-bold tracking-tight">Filters</div>
+          <div className="grid grid-cols-2 gap-2">
+            <SheetVersionFilter control={control} />
+            <SheetInternalLevelFilter control={control} />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div className="text-xl font-bold tracking-tight">Sort</div>
+          <SheetSortSelect control={control} />
         </div>
       </Paper>
     </>

@@ -1,6 +1,8 @@
 import {
   ButtonBase,
   ButtonBaseProps,
+  Chip,
+  ChipProps,
   Tooltip,
   TooltipProps,
 } from "@mui/material";
@@ -16,5 +18,11 @@ export const MotionButtonBase = motion(
 export const MotionTooltip = motion(
   forwardRef((props: TooltipProps, ref: ForwardedRef<HTMLDivElement>) => (
     <Tooltip ref={ref} {...props} />
+  )),
+);
+
+export const MotionChip = motion(
+  forwardRef((props: ChipProps, ref: ForwardedRef<HTMLDivElement>) => (
+    <Chip ref={ref} {...props} />
   )),
 );
