@@ -255,7 +255,7 @@ async function main() {
       // filter out maimai series 宴会場 charts as those has been removed in dx
       (song) => !(song.category === "宴会場" && isMaimaiSeries(song.version))
     )
-    .map(async (entry) => {
+    .map(async ({ releaseDate: entryReleaseDate, ...entry }) => {
       const searchAcronyms = await Promise.all(
         uniq(entry.sheets.map((sheet) => sheet.internalId)).map(
           (internalId) => {
@@ -314,7 +314,7 @@ async function main() {
                 return sheetExtra.releaseDate;
               }
 
-              return entry.releaseDate;
+              return entryReleaseDate;
             })();
 
             return {
