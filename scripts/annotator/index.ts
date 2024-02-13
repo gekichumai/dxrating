@@ -113,6 +113,13 @@ export interface MultiverInternalLevelValue {
   version: string;
 }
 
+export interface SheetExtras {
+  songId: string;
+  type: string;
+  difficulty: string;
+  releaseDate: Date;
+}
+
 async function getAllMultiverInternalLevelValues() {
   if (!process.env.DATABASE_URL) {
     console.warn(
@@ -132,6 +139,30 @@ async function getAllMultiverInternalLevelValues() {
   await conn.end();
 
   return rows;
+}
+
+async function getAllSheetSpecificReleaseDates() {
+  if (!process.env.DATABASE_URL) {
+    console.warn(
+      "DATABASE_URL not set, skipping getAllSheetSpecificReleaseDates"
+    );
+    return [];
+  }
+
+  const conn = new pg.Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+  await conn.connect();
+
+  const { rows } = await conn.query<SheetExtras>(
+    `SELECT "songId", "type", "difficulty", "releaseDate" FROM "public"."SheetExtras" WHERE "releaseDate" IS NOT NULL`
+  );
+  await conn.end();
+
+  return rows.map((row) => ({
+    ...row,
+    releaseDate: row.releaseDate.toISOString().split("T")[0],
+  }));
 }
 
 export interface MaimaiOfficialSongs {
@@ -205,6 +236,9 @@ async function main() {
   console.info("Fetching multiver internal level values...");
   const multiverInternalLevelValues = await getAllMultiverInternalLevelValues();
 
+  console.info("Fetching overridden sheet-specific release dates...");
+  const sheetSpecificReleaseDates = await getAllSheetSpecificReleaseDates();
+
   console.info("Fetching maimai official songs list...");
   const maimaiOfficialSongs = (await fetch(
     "https://maimai.sega.jp/data/maimai_songs.json"
@@ -268,6 +302,21 @@ async function main() {
             const haveAnyMultiverInternalLevelValue =
               Object.keys(multiverInternalLevelValue).length > 0;
 
+            const releaseDate = (() => {
+              const sheetExtra = sheetSpecificReleaseDates.find(
+                (v) =>
+                  v.songId === entry.songId &&
+                  v.type === sheet.type &&
+                  v.difficulty === sheet.difficulty
+              );
+
+              if (sheetExtra) {
+                return sheetExtra.releaseDate;
+              }
+
+              return entry.releaseDate;
+            })();
+
             return {
               ...sheet,
               difficulty: sheet.difficulty as DifficultyEnum,
@@ -277,6 +326,7 @@ async function main() {
                 ? multiverInternalLevelValue
                 : undefined,
               comment: officialUtageSong?.comment,
+              releaseDate,
             } satisfies Sheet;
           }
         ),

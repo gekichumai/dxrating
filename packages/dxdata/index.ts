@@ -54,7 +54,6 @@ export interface Song {
   bpm: number | null;
   imageName: string;
   version: VersionEnum;
-  releaseDate: string;
   isNew: boolean;
   isLocked: boolean;
   sheets: Sheet[];
@@ -63,6 +62,7 @@ export interface Song {
 export interface Sheet {
   internalId?: number;
   type: TypeEnum;
+  releaseDate: string;
   difficulty: DifficultyEnum;
   level: string;
   internalLevelValue: number;
