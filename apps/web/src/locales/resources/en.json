@@ -103,6 +103,10 @@
     "aliases": {
       "yuri-yuzuchan-maimaidx": "Song Aliases (Chinese)",
       "lomotos10-gcmbot": "Song Aliases (English, Korean, Romaji)"
+    },
+    "disclaimer": {
+      "title": "Disclaimer",
+      "content": "DXRating is not affiliated with any game company. Any assets used in this website are for non-commercial purposes only, and all rights belong to their respective owners. This website is not responsible for any loss or damage caused by the use of the information provided. If you have any questions or suggestions, you are welcome to contact the author."
     }
   },
   "form": {

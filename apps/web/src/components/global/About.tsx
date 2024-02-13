@@ -154,6 +154,20 @@ export const About = () => {
               </AboutLink>
             </ul>
 
+            <div className="flex flex-col items-start mt-8 gap-1">
+              <h5 className="text-base text-gray-7">
+                {t("about:disclaimer.title")}
+              </h5>
+
+              <div className="text-sm text-gray-6">
+                {t("about:disclaimer.content")
+                  .split("\n")
+                  .map((line, i) => (
+                    <p key={i}>{line}</p>
+                  ))}
+              </div>
+            </div>
+
             <div className="flex flex-col items-start mt-24 gap-1">
               <img
                 className="h-12 w-auto touch-callout-none mb-2"
