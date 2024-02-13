@@ -92,6 +92,7 @@
     "source-code": "Source Code",
     "internal-level-value": "Internal Level Value",
     "chart-metadata": "Chart Metadata",
+    "chart-metadata-extended": "Chart Metadata (Extended)",
     "fesplus-background": "FESTiVAL+ Background",
     "version": {
       "commit": "commit",

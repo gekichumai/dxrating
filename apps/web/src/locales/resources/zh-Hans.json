@@ -90,6 +90,7 @@
     "title": "关于本站",
     "author": "作者",
     "chart-metadata": "谱面元数据",
+    "chart-metadata-extended": "谱面元数据 (扩展)",
     "fesplus-background": "FESTiVAL+ 版本背景图",
     "internal-level-value": "谱面定数",
     "source-code": "源代码",

@@ -122,6 +122,14 @@ export const About = () => {
               </AboutLink>
 
               <AboutLink
+                href="https://gamerch.com/maimai/"
+                startAdornment={<MdiWeb />}
+                label={t("about:chart-metadata-extended")}
+              >
+                gamerch.com/maimai
+              </AboutLink>
+
+              <AboutLink
                 href="https://github.com/Yuri-YuzuChaN/maimaiDX"
                 startAdornment={<MdiGithub />}
                 label={t("about:fesplus-background")}

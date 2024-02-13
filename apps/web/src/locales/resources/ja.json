@@ -88,6 +88,7 @@
     "source-code": "ソースコード",
     "internal-level-value": "譜面定数",
     "chart-metadata": "譜面メタデータ",
+    "chart-metadata-extended": "譜面メタデータ (拡張)",
     "fesplus-background": "FESTiVAL+の背景",
     "version": {
       "commit": "commit",
