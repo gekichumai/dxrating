@@ -76,7 +76,7 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
       />
 
       <TouchDeviceGuard renderOnlyOn="touch">
-        <div className="block md:hidden h-px w-full flex-1 bg-gray-300 mx-2" />
+        <div className="block md:hidden h-px w-full flex-1 bg-gray-300 mx-2 select-none" />
       </TouchDeviceGuard>
 
       <TouchDeviceGuard renderOnlyOn="touch">

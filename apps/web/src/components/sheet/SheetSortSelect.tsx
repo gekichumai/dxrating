@@ -5,7 +5,7 @@ import {
   MenuItem,
   Select,
 } from "@mui/material";
-import { FC, useMemo } from "react";
+import { FC, useContext, useMemo } from "react";
 import { Control, Controller, useFieldArray } from "react-hook-form";
 import { SheetSortFilterForm, SortPredicate } from "./SheetSortFilter";
 
@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import MdiAdd from "~icons/mdi/add";
 import MdiClose from "~icons/mdi/close";
 import { MotionButton } from "../../utils/motion";
+import { SheetDetailsContext } from "../../models/context/SheetDetailsContext";
 
 const SortPredicateTransformer = {
   to: (value: string) => {
@@ -31,6 +32,7 @@ const SortPredicateTransformer = {
 export const SheetSortSelect: FC<{
   control: Control<SheetSortFilterForm>;
 }> = ({ control }) => {
+  const { queryActive } = useContext(SheetDetailsContext);
   const { t } = useTranslation(["sheet"]);
   const { fields, append, remove } = useFieldArray<SheetSortFilterForm>({
     control,
@@ -65,6 +67,7 @@ export const SheetSortSelect: FC<{
                 onChange={(e) => {
                   field.onChange(SortPredicateTransformer.to(e.target.value));
                 }}
+                disabled={queryActive}
                 size="small"
                 {...(index > 0 && {
                   endAdornment: (
@@ -104,6 +107,7 @@ export const SheetSortSelect: FC<{
             initial="initial"
             animate="animate"
             exit="exit"
+            disabled={queryActive}
           >
             {t("sheet:sort.add")}
           </MotionButton>

@@ -74,7 +74,8 @@
       "internal-level-value": {
         "asc": "Level (Low → High)",
         "desc": "Level (High → Low)"
-      }
+      },
+      "temporarily-disabled": "Temporarily disabled due to active search query."
     },
     "sort-and-filter": {
       "title": "Filter & Sort",

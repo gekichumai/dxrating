@@ -74,7 +74,12 @@
       "internal-level-value": {
         "asc": "レベル（低→高）",
         "desc": "レベル（高→低）"
-      }
+      },
+      "temporarily-disabled": "検索クエリがアクティブなため、一時的に無効になっています"
+    },
+    "sort-and-filter": {
+      "reset": "リセット...",
+      "title": "並べ替えとフィルタ"
     }
   },
   "about": {

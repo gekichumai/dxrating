@@ -1,5 +1,5 @@
 import { Alert, Button, TextField } from "@mui/material";
-import { FC, useMemo, useState } from "react";
+import { FC, useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import IconMdiOcr from "~icons/mdi/ocr";
 import { SheetListContainer } from "../components/SheetListContainer";
@@ -7,6 +7,10 @@ import {
   SheetSortFilter,
   SheetSortFilterForm,
 } from "../components/sheet/SheetSortFilter";
+import {
+  SheetDetailsContext,
+  SheetDetailsContextProvider,
+} from "../models/context/SheetDetailsContext";
 import { FlattenedSheet, useFilteredSheets, useSheets } from "../songs";
 import { DXRatingPlugin } from "../utils/capacitor/plugin/wrap";
 import { isBuildPlatformApp } from "../utils/env";
@@ -16,11 +20,12 @@ const chainEvery =
   (arg: T) =>
     fns.every((fn) => fn(arg));
 
-export const SheetList: FC = () => {
+const SheetListInner: FC = () => {
   const { t } = useTranslation(["sheet"]);
   const { data: sheets } = useSheets();
-  const [search, setSearch] = useState<string>("");
-  const { results, elapsed: searchElapsed } = useFilteredSheets(search);
+  const { setQueryActive } = useContext(SheetDetailsContext);
+  const [query, setQuery] = useState("");
+  const { results, elapsed: searchElapsed } = useFilteredSheets(query);
   const [sortFilterOptions, setSortFilterOptions] =
     useState<SheetSortFilterForm | null>(null);
 
@@ -28,27 +33,24 @@ export const SheetList: FC = () => {
     const startTime = performance.now();
     let sortFilteredResults: FlattenedSheet[] = results;
     if (sortFilterOptions) {
-      sortFilteredResults = results
-        .filter((sheet) => {
-          return chainEvery<FlattenedSheet>(
-            (v) => {
-              if (sortFilterOptions.filters.internalLevelValue) {
-                const { min, max } =
-                  sortFilterOptions.filters.internalLevelValue;
-                return (
-                  v.internalLevelValue >= min && v.internalLevelValue <= max
-                );
-              }
-            },
-            (v) => {
-              if (sortFilterOptions.filters.versions) {
-                const versions = sortFilterOptions.filters.versions;
-                return versions.includes(v.version);
-              }
-            },
-          )(sheet);
-        })
-        .sort((a, b) => {
+      sortFilteredResults = results.filter((sheet) => {
+        return chainEvery<FlattenedSheet>(
+          (v) => {
+            if (sortFilterOptions.filters.internalLevelValue) {
+              const { min, max } = sortFilterOptions.filters.internalLevelValue;
+              return v.internalLevelValue >= min && v.internalLevelValue <= max;
+            }
+          },
+          (v) => {
+            if (sortFilterOptions.filters.versions) {
+              const versions = sortFilterOptions.filters.versions;
+              return versions.includes(v.version);
+            }
+          },
+        )(sheet);
+      });
+      if (!query) {
+        sortFilteredResults.sort((a, b) => {
           return sortFilterOptions.sorts.reduce((acc, sort) => {
             if (acc !== 0) {
               return acc;
@@ -68,21 +70,25 @@ export const SheetList: FC = () => {
             return 0;
           }, 0);
         });
+      }
     }
     return {
       filteredResults: sortFilteredResults,
       elapsed: performance.now() - startTime,
     };
-  }, [results, sortFilterOptions]);
+  }, [results, sortFilterOptions, query]);
 
   return (
     <div className="flex-container pb-global">
       <TextField
         label={t("sheet:search")}
         variant="outlined"
-        value={search}
+        value={query}
         fullWidth
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setQueryActive(!!e.target.value);
+        }}
       />
 
       {isBuildPlatformApp && (
@@ -108,5 +114,13 @@ export const SheetList: FC = () => {
 
       <SheetListContainer sheets={filteredResults} />
     </div>
+  );
+};
+
+export const SheetList: FC = () => {
+  return (
+    <SheetDetailsContextProvider>
+      <SheetListInner />
+    </SheetDetailsContextProvider>
   );
 };

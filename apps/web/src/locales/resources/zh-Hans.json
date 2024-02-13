@@ -23,7 +23,7 @@
     "search": "搜索",
     "ocr": "启动 OCR",
     "filter-current-version": "过滤当前版本 B15：仅显示来自 {{version}} 的谱面",
-    "search-summary": "找到 {{found}} 份谱面 / 总计 {{total}} 份 (耗时 {{elapsed}}ms)",
+    "search-summary": "匹配到 {{found}} 份谱面 / 总计 {{total}} 份 (耗时 {{elapsed}}ms)",
     "details": {
       "achievement-to-rating": {
         "achievement": "完成率",
@@ -74,7 +74,8 @@
       "release-date": {
         "asc": "追加日期 (旧→新)",
         "desc": "追加日期 (新→旧)"
-      }
+      },
+      "temporarily-disabled": "暂时停用：活跃的搜索查询"
     },
     "sort-and-filter": {
       "title": "筛选与排序",

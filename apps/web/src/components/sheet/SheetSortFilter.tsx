@@ -10,11 +10,13 @@ import {
   Grow,
   Paper,
 } from "@mui/material";
-import { FC, useEffect, useMemo, useState } from "react";
+import clsx from "clsx";
+import { FC, useContext, useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import MdiBeta from "~icons/mdi/beta";
 import MdiTrashCan from "~icons/mdi/trash-can";
+import { SheetDetailsContext } from "../../models/context/SheetDetailsContext";
 import { FlattenedSheet } from "../../songs";
 import { SheetSortSelect } from "./SheetSortSelect";
 import { SheetInternalLevelFilter } from "./filters/SheetInternalLevelFilter";
@@ -158,6 +160,7 @@ const SheetSortFilterFormReset: FC<{
 
 const SheetSortFilterForm = () => {
   const { t } = useTranslation(["sheet"]);
+  const { queryActive } = useContext(SheetDetailsContext);
   const { control, reset } = useFormContext<SheetSortFilterForm>();
 
   return (
@@ -182,8 +185,8 @@ const SheetSortFilterForm = () => {
           />
         </div>
 
-        <div className="p-4 w-full flex flex-col gap-4">
-          <div className="flex flex-col gap-4">
+        <div className="p-2 w-full flex flex-col gap-4">
+          <div className="p-2 flex flex-col gap-4">
             <div className="text-xl font-bold tracking-tight">
               {t("sheet:filter.title")}
             </div>
@@ -193,9 +196,19 @@ const SheetSortFilterForm = () => {
             </div>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="text-xl font-bold tracking-tight">
-              {t("sheet:sort.title")}
+          <div
+            className={clsx(
+              "p-2 flex flex-col gap-4 rounded-lg",
+              queryActive && "bg-gray-200 pointer-events-none saturation-0",
+            )}
+          >
+            <div className="text-xl font-bold tracking-tight flex items-center">
+              <span>{t("sheet:sort.title")}</span>
+              {queryActive && (
+                <div className="px-1.5 py-0.5 rounded-full bg-gray-300 text-xs ml-2">
+                  {t("sheet:sort.temporarily-disabled")}
+                </div>
+              )}
             </div>
             <SheetSortSelect control={control} />
           </div>
