@@ -1,10 +1,9 @@
 import { VERSION_IDS, VersionEnum } from "@gekichumai/dxdata";
 import { ButtonBase, Chip } from "@mui/material";
-import { FC, useEffect, useMemo } from "react";
+import { FC, useMemo } from "react";
 import { Control, useController } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useSet } from "react-use";
-import { useLongPress } from "../../../utils/useLongPress";
+import { useLongPress } from "use-long-press";
 import { SheetSortFilterForm } from "../SheetSortFilter";
 import { SheetFilterSection } from "./SheetFilterSection";
 
@@ -19,14 +18,14 @@ const SheetVersionFilterInputVersion = ({
   onToggle: () => void;
   onOnly: () => void;
 }) => {
-  const bindings = useLongPress({
-    delay: 300,
-    onLongPress: onOnly,
-    onClick: onToggle,
+  const bind = useLongPress(onOnly, {
+    threshold: 300,
+    onCancel: onToggle,
+    captureEvent: true,
   });
 
   return (
-    <ButtonBase {...bindings} className="rounded-full overflow-hidden">
+    <ButtonBase {...bind()} className="rounded-full overflow-hidden">
       <Chip
         label={version.replace(" PLUS", "+")}
         color={selected ? "primary" : "default"}
@@ -43,20 +42,13 @@ const SheetVersionFilterInput = ({
   value: VersionEnum[];
   onChange: (value: VersionEnum[]) => void;
 }) => {
-  const [set, { add, remove, has, reset }] = useSet<VersionEnum>(
-    new Set(value),
-  );
-  useEffect(() => {
-    onChange(Array.from(set));
-  }, [set, onChange]);
-
   const allEnums = useMemo(
     () =>
       VERSION_IDS.map((k) => ({
         id: k,
-        selected: has(k),
+        selected: value.includes(k),
       })),
-    [has],
+    [value],
   );
 
   return (
@@ -70,23 +62,17 @@ const SheetVersionFilterInput = ({
             const toggled = !e.selected;
 
             if (toggled) {
-              add(e.id);
+              onChange([...value, e.id]);
             } else {
-              if (set.size === 1) {
-                reset();
+              if (value.length === 1) {
+                onChange([...VERSION_IDS]);
               } else {
-                remove(e.id);
+                onChange(value.filter((k) => k !== e.id));
               }
             }
           }}
           onOnly={() => {
-            VERSION_IDS.forEach((k) => {
-              if (k === e.id) {
-                add(k);
-              } else {
-                remove(k);
-              }
-            });
+            onChange([e.id]);
           }}
         />
       ))}
