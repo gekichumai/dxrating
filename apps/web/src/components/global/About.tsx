@@ -48,6 +48,7 @@ const AboutAttribute: FC<
 );
 
 const useTime = (time?: string) => {
+  const { i18n } = useTranslation();
   return useMemo(() => {
     try {
       if (!time) throw new Error("useTime: time is undefined");
@@ -57,14 +58,14 @@ const useTime = (time?: string) => {
         throw new Error("Invalid date");
       }
 
-      const dateString = date.toLocaleString();
+      const dateString = date.toLocaleString(i18n.language);
       const relativeTime = intlFormatDistance(date, new Date());
 
       return `${dateString} (${relativeTime})`;
     } catch {
       return "unknown";
     }
-  }, [time]);
+  }, [time, i18n.language]);
 };
 
 export const About = () => {
