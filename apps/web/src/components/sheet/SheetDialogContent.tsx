@@ -200,55 +200,59 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                         <TableCell>{sheet.noteDesigner}</TableCell>
                       </TableRow>
 
-                      <TableRow className="bg-gray-1">
-                        <TableCell colSpan={2}>
-                          {t("sheet:details.notes-statistics.title")}
-                        </TableCell>
-                      </TableRow>
+                      {(sheet.noteCounts.tap ?? 0) > 0 && (
+                        <>
+                          <TableRow className="bg-gray-1">
+                            <TableCell colSpan={2}>
+                              {t("sheet:details.notes-statistics.title")}
+                            </TableCell>
+                          </TableRow>
 
-                      <TableRow className="bg-gray-1">
-                        <TableCell>
-                          — {t("sheet:details.notes-statistics.tap")}
-                        </TableCell>
-                        <TableCell>{sheet.noteCounts.tap ?? 0}</TableCell>
-                      </TableRow>
+                          <TableRow className="bg-gray-1">
+                            <TableCell>
+                              — {t("sheet:details.notes-statistics.tap")}
+                            </TableCell>
+                            <TableCell>{sheet.noteCounts.tap ?? 0}</TableCell>
+                          </TableRow>
 
-                      <TableRow className="bg-gray-1">
-                        <TableCell>
-                          — {t("sheet:details.notes-statistics.hold")}
-                        </TableCell>
-                        <TableCell>{sheet.noteCounts.hold ?? 0}</TableCell>
-                      </TableRow>
+                          <TableRow className="bg-gray-1">
+                            <TableCell>
+                              — {t("sheet:details.notes-statistics.hold")}
+                            </TableCell>
+                            <TableCell>{sheet.noteCounts.hold ?? 0}</TableCell>
+                          </TableRow>
 
-                      <TableRow className="bg-gray-1">
-                        <TableCell>
-                          — {t("sheet:details.notes-statistics.slide")}
-                        </TableCell>
-                        <TableCell>{sheet.noteCounts.slide ?? 0}</TableCell>
-                      </TableRow>
+                          <TableRow className="bg-gray-1">
+                            <TableCell>
+                              — {t("sheet:details.notes-statistics.slide")}
+                            </TableCell>
+                            <TableCell>{sheet.noteCounts.slide ?? 0}</TableCell>
+                          </TableRow>
 
-                      <TableRow className="bg-gray-1">
-                        <TableCell>
-                          — {t("sheet:details.notes-statistics.touch")}
-                        </TableCell>
-                        <TableCell>{sheet.noteCounts.touch ?? 0}</TableCell>
-                      </TableRow>
+                          <TableRow className="bg-gray-1">
+                            <TableCell>
+                              — {t("sheet:details.notes-statistics.touch")}
+                            </TableCell>
+                            <TableCell>{sheet.noteCounts.touch ?? 0}</TableCell>
+                          </TableRow>
 
-                      <TableRow className="bg-gray-1">
-                        <TableCell>
-                          — {t("sheet:details.notes-statistics.break")}
-                        </TableCell>
-                        <TableCell>{sheet.noteCounts.break ?? 0}</TableCell>
-                      </TableRow>
+                          <TableRow className="bg-gray-1">
+                            <TableCell>
+                              — {t("sheet:details.notes-statistics.break")}
+                            </TableCell>
+                            <TableCell>{sheet.noteCounts.break ?? 0}</TableCell>
+                          </TableRow>
 
-                      <TableRow className="bg-gray-1">
-                        <TableCell>
-                          — {t("sheet:details.notes-statistics.total")}
-                        </TableCell>
-                        <TableCell>
-                          {sheet.noteCounts.total?.toLocaleString("en-US")}
-                        </TableCell>
-                      </TableRow>
+                          <TableRow className="bg-gray-1">
+                            <TableCell>
+                              — {t("sheet:details.notes-statistics.total")}
+                            </TableCell>
+                            <TableCell>
+                              {sheet.noteCounts.total?.toLocaleString("en-US")}
+                            </TableCell>
+                          </TableRow>
+                        </>
+                      )}
                     </>
                   )}
 
