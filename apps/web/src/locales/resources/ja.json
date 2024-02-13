@@ -72,8 +72,8 @@
       "add": "並べ替えを追加",
       "predicate": "述語#{{index}}",
       "release-date": {
-        "asc": "発売日（旧→新）",
-        "desc": "発売日（新→旧）"
+        "asc": "追加日（旧→新）",
+        "desc": "追加日（新→旧）"
       },
       "internal-level-value": {
         "asc": "レベル（低→高）",

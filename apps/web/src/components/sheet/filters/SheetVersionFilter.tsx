@@ -3,7 +3,7 @@ import { ButtonBase, Chip } from "@mui/material";
 import { FC, useMemo } from "react";
 import { Control, useController } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useLongPress } from "use-long-press";
+import { LongPressCallbackReason, useLongPress } from "use-long-press";
 import { GestureHint } from "../../global/GestureHint";
 import { SheetSortFilterForm } from "../SheetSortFilter";
 import { SheetFilterSection } from "./SheetFilterSection";
@@ -21,8 +21,13 @@ const SheetVersionFilterInputVersion = ({
 }) => {
   const bind = useLongPress(onOnly, {
     threshold: 300,
-    onCancel: onToggle,
     captureEvent: true,
+    cancelOnMovement: true,
+    onCancel: (_, meta) => {
+      if (meta.reason === LongPressCallbackReason.CancelledByRelease) {
+        onToggle();
+      }
+    },
   });
 
   return (
