@@ -53,13 +53,13 @@ import {
   PlayEntry,
   RatingCalculatorAddEntryForm,
 } from "../components/rating/RatingCalculatorAddEntryForm";
-import {
-  SheetListItem,
-  SheetListItemContent,
-} from "../components/SheetListItem";
 import { ClearButton } from "../components/rating/io/ClearButton";
 import { ExportMenu } from "../components/rating/io/ExportMenu";
 import { ImportMenu } from "../components/rating/io/ImportMenu";
+import {
+  SheetListItem,
+  SheetListItemContent,
+} from "../components/sheet/SheetListItem";
 import { RatingCalculatorContext } from "../models/RatingCalculatorContext";
 import { useAppContextDXDataVersion } from "../models/context/useAppContext";
 import { FlattenedSheet, useSheets } from "../songs";

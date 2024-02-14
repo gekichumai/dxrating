@@ -4,8 +4,8 @@ import { useTranslation } from "react-i18next";
 import MdiShareVariant from "~icons/mdi/share-variant";
 import { BUNDLE } from "../../utils/bundle";
 import { useVersionTheme } from "../../utils/useVersionTheme";
-import { About } from "../global/About";
-import { LocaleSelector } from "../global/LocaleSelector";
+import { About } from "../topbar/About";
+import { LocaleSelector } from "../topbar/LocaleSelector";
 
 export const TopBar = () => {
   const { t } = useTranslation(["root"]);

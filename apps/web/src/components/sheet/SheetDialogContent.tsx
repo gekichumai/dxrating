@@ -25,9 +25,9 @@ import RiBilibiliFill from "~icons/ri/bilibili-fill";
 import { useAppContextDXDataVersion } from "../../models/context/useAppContext";
 import { FlattenedSheet } from "../../songs";
 import { calculateRating } from "../../utils/rating";
-import { DXRank } from "../DXRank";
-import { SheetTitle } from "../SheetListItem";
+import { DXRank } from "../global/DXRank";
 import { SheetDialogContentHeader } from "./SheetDialogContentHeader";
+import { SheetTitle } from "./SheetListItem";
 
 const PRESET_ACHIEVEMENT_RATES = [
   100.5, 100, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50,

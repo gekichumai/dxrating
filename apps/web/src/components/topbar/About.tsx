@@ -8,7 +8,7 @@ import MdiInformation from "~icons/mdi/information";
 import MdiTwitter from "~icons/mdi/twitter";
 import MdiWeb from "~icons/mdi/web";
 import { BUNDLE } from "../../utils/bundle";
-import { ResponsiveDialog } from "./ResponsiveDialog";
+import { ResponsiveDialog } from "../global/ResponsiveDialog";
 
 const ExternalLink: FC<PropsWithChildren<{ href: string }>> = ({
   href,

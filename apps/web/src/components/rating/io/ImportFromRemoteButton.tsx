@@ -23,8 +23,8 @@ import {
   canonicalIdFromParts,
   useSheets,
 } from "../../../songs";
+import { SheetListItemContent } from "../../sheet/SheetListItem";
 import { PlayEntry } from "../RatingCalculatorAddEntryForm";
-import { SheetListItemContent } from "../../SheetListItem";
 
 import { DifficultyEnum } from "@gekichumai/dxdata";
 import clsx from "clsx";

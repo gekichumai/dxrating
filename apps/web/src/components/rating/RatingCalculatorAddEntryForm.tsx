@@ -30,7 +30,7 @@ import {
   useSheetsSearchEngine,
 } from "../../songs";
 import { calculateRating } from "../../utils/rating";
-import { SheetListItemContent } from "../SheetListItem";
+import { SheetListItemContent } from "../sheet/SheetListItem";
 
 export interface PlayEntry {
   sheetId: string;
