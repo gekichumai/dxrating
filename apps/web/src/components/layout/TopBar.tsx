@@ -6,6 +6,7 @@ import { BUNDLE } from "../../utils/bundle";
 import { useVersionTheme } from "../../utils/useVersionTheme";
 import { About } from "../topbar/About";
 import { LocaleSelector } from "../topbar/LocaleSelector";
+import { UserChip } from "../topbar/UserChip";
 
 export const TopBar = () => {
   const { t } = useTranslation(["root"]);
@@ -43,6 +44,7 @@ export const TopBar = () => {
 
         <LocaleSelector />
         <About />
+        <UserChip />
       </div>
     </div>
   );
