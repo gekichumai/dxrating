@@ -221,6 +221,7 @@ const SheetTagsAddDialog: FC<{
                             }
                           />
                         }
+                        arrow
                       >
                         <Chip
                           key={tag.id}
@@ -324,6 +325,7 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             title={
               <Markdown content={localizeMessage(tag.localized_description)} />
             }
+            arrow
           >
             <Chip
               key={tag.id}
