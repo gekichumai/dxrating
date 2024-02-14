@@ -89,7 +89,7 @@
       "add": {
         "button": "添加",
         "title": "添加标签",
-        "toast-failed": "添加标签失败：{{error}}",
+        "toast-failed": "添加标签失败：{{error}}。请检查是否已登录。",
         "toast-success": "已添加成功"
       }
     }

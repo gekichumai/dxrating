@@ -130,7 +130,7 @@ const SheetTagsAddDialog: FC<{
   const addTag = async (tagId: number) => {
     setPending(true);
     try {
-      await supabase
+      const result = await supabase
         .from("tag_songs")
         .upsert({
           song_id: sheet.songId,
@@ -141,6 +141,9 @@ const SheetTagsAddDialog: FC<{
         .eq("song_id", sheet.songId)
         .eq("sheet_type", sheet.type)
         .eq("sheet_difficulty", sheet.difficulty);
+      if (result.error) {
+        throw result.error;
+      }
 
       toast.success(t("sheet:tags.add.toast-success"), {
         id: `tag-add-success:${tagId}`,
@@ -262,7 +265,9 @@ const SheetTagsAddButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         layout
         layoutId={`sheet-tags:${sheet.id}`}
         className="h-6 border-1 border-solid border-gray-200 rounded-lg flex items-center justify-center px-2 cursor-pointer bg-gray-100 hover:bg-gray-200 hover:border-gray-300 active:bg-gray-300 active:border-gray-400 transition"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setOpen(true);
+        }}
       >
         <IconMdiTagPlus className="h-4 w-4" />
 
