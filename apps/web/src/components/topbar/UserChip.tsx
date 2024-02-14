@@ -156,6 +156,8 @@ export const UpdatePasswordMenuItem: FC = () => {
 };
 
 export const UserChip: FC = () => {
+  const DISABLE_EXPLICIT_AUTH = true;
+
   const [pending, setPending] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const { t } = useTranslation(["auth"]);
@@ -175,16 +177,11 @@ export const UserChip: FC = () => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setPending(false);
       if (session) {
         setOpen(null);
-      }
-      if (event === "INITIAL_SESSION") {
-        toast.success(t("auth:login.toast-success"), {
-          id: "login-success",
-        });
       }
     });
 
@@ -193,6 +190,12 @@ export const UserChip: FC = () => {
 
   useEffect(() => {
     console.debug("[Auth] session changed to", session);
+
+    if (session) {
+      toast.success(t("auth:login.toast-success"), {
+        id: "login-success",
+      });
+    }
   }, [session]);
 
   const logout = async () => {
@@ -246,27 +249,29 @@ export const UserChip: FC = () => {
         </MenuItem>
       </Menu>
 
-      {pending ? (
+      {!DISABLE_EXPLICIT_AUTH && pending ? (
         <div className="p-2 text-[1.5rem]">
           <div className="h-[1.2em] w-[1.2em] px-[0.1em] -mt-[0.1em] text-black/54">
             <CircularProgress disableShrink size="1em" color="inherit" />
           </div>
         </div>
       ) : (
-        <IconButton
-          onClick={(e) => {
-            setOpen(session ? "profile" : "auth");
-            if (session) {
-              setProfileMenuAnchorEl(e.currentTarget);
-            }
-          }}
-        >
-          {session ? (
-            <ProfileImage email={session.user.email} size="1.2em" />
-          ) : (
-            <MdiLogin />
-          )}
-        </IconButton>
+        session && (
+          <IconButton
+            onClick={(e) => {
+              setOpen(session ? "profile" : "auth");
+              if (session) {
+                setProfileMenuAnchorEl(e.currentTarget);
+              }
+            }}
+          >
+            {session ? (
+              <ProfileImage email={session.user.email} size="1.2em" />
+            ) : (
+              <MdiLogin />
+            )}
+          </IconButton>
+        )
       )}
     </>
   );
