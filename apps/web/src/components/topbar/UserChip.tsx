@@ -12,7 +12,7 @@ import { Session, User } from "@supabase/supabase-js";
 import { FC, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { useAsync } from "react-use";
+import { useAsync, useSearchParam } from "react-use";
 import MdiAccountKey from "~icons/mdi/account-key";
 import MdiLogin from "~icons/mdi/login";
 import MdiLogout from "~icons/mdi/logout";
@@ -156,7 +156,7 @@ export const UpdatePasswordMenuItem: FC = () => {
 };
 
 export const UserChip: FC = () => {
-  const DISABLE_EXPLICIT_AUTH = true;
+  const DISABLE_EXPLICIT_AUTH = useSearchParam("enableAuth") !== "true";
 
   const [pending, setPending] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
@@ -256,7 +256,7 @@ export const UserChip: FC = () => {
           </div>
         </div>
       ) : (
-        session && (
+        (!DISABLE_EXPLICIT_AUTH || session) && (
           <IconButton
             onClick={(e) => {
               setOpen(session ? "profile" : "auth");
