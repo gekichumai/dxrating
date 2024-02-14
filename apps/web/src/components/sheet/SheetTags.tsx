@@ -255,7 +255,6 @@ const SheetTagsAddButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         open={open}
         onClose={() => setOpen(false)}
         TransitionComponent={Grow}
-        disableEscapeKeyDown
       >
         <SheetTagsAddDialog sheet={sheet} />
       </Dialog>
