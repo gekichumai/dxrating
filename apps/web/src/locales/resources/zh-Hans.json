@@ -84,6 +84,14 @@
     "sort-and-filter": {
       "title": "筛选与排序",
       "reset": "重置..."
+    },
+    "tags": {
+      "add": {
+        "button": "添加",
+        "title": "添加标签",
+        "toast-failed": "添加标签失败：{{error}}",
+        "toast-success": "已添加成功"
+      }
     }
   },
   "about": {
@@ -123,6 +131,20 @@
     "gesture-hint": {
       "tap": "点按",
       "tap-hold": "长按"
+    }
+  },
+  "auth": {
+    "login": {
+      "label": "登录",
+      "toast-success": "登录成功"
+    },
+    "logout": {
+      "label": "登出",
+      "toast-success": "已登出"
+    },
+    "update-password": {
+      "label": "重设密码",
+      "toast-success": "已重设密码"
     }
   }
 }

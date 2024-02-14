@@ -84,6 +84,14 @@
     "sort-and-filter": {
       "reset": "リセット...",
       "title": "並べ替えとフィルタ"
+    },
+    "tags": {
+      "add": {
+        "button": "追加",
+        "title": "タグを追加する",
+        "toast-failed": "タグを追加できませんでした: {{error}}",
+        "toast-success": "タグが追加されました"
+      }
     }
   },
   "about": {
@@ -123,6 +131,20 @@
     "gesture-hint": {
       "tap": "タップ",
       "tap-hold": "ホールド"
+    }
+  },
+  "auth": {
+    "login": {
+      "label": "ログイン",
+      "toast-success": "ログインされました"
+    },
+    "logout": {
+      "label": "ログアウト",
+      "toast-success": "ログアウトされました"
+    },
+    "update-password": {
+      "label": "パスワードを更新する",
+      "toast-success": "パスワードが更新されました"
     }
   }
 }

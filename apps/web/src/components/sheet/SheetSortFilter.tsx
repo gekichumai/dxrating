@@ -170,7 +170,7 @@ const SheetSortFilterForm = () => {
           <div className="text-xl font-bold tracking-tight leading-none">
             {t("sheet:sort-and-filter.title")}
           </div>
-          <div className="bg-gray-200 border border-solid border-gray-300 rounded-full px-2 py-1 text-xs ml-2 flex items-center gap-1 select-none leading-none">
+          <div className="bg-gray-200 rounded-full px-2 py-1 text-xs ml-2 flex items-center gap-1 select-none leading-none">
             <MdiBeta />
             <span>Beta</span>
           </div>

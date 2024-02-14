@@ -18,7 +18,7 @@ const SideEffectorThemeMeta: FC = () => {
       ?.setAttribute("content", versionTheme.accentColor);
 
     document.head
-      .querySelector('meta[rel="mask-icon"]')
+      .querySelector('link[rel="mask-icon"]')
       ?.setAttribute("color", versionTheme.accentColor);
   }, [versionTheme]);
 

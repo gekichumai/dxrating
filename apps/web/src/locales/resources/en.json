@@ -84,6 +84,14 @@
     "sort-and-filter": {
       "title": "Filter & Sort",
       "reset": "Reset..."
+    },
+    "tags": {
+      "add": {
+        "title": "Add a Tag",
+        "button": "Add",
+        "toast-success": "Tag added successfully",
+        "toast-failed": "Failed to add tag: {{error}}"
+      }
     }
   },
   "about": {
@@ -123,6 +131,20 @@
     "gesture-hint": {
       "tap": "Tap",
       "tap-hold": "Hold"
+    }
+  },
+  "auth": {
+    "update-password": {
+      "label": "Update Password",
+      "toast-success": "Successfully updated password."
+    },
+    "logout": {
+      "label": "Logout",
+      "toast-success": "Successfully logged out."
+    },
+    "login": {
+      "label": "Login",
+      "toast-success": "Successfully logged in."
     }
   }
 }

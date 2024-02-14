@@ -7,19 +7,23 @@ import {
   MenuItem,
 } from "@mui/material";
 import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { ThemeSupa, ViewType } from "@supabase/auth-ui-shared";
 import { Session, User } from "@supabase/supabase-js";
 import { FC, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useAsync } from "react-use";
+import MdiAccountKey from "~icons/mdi/account-key";
 import MdiLogin from "~icons/mdi/login";
 import MdiLogout from "~icons/mdi/logout";
 import { supabase } from "../../models/supabase";
 import { useVersionTheme } from "../../utils/useVersionTheme";
+import { Logo } from "../global/Logo";
 import { ResponsiveDialog } from "../global/ResponsiveDialog";
 
-const ThemedAuth = () => {
-  const { t } = useTranslation(["auth"]);
+const ThemedAuth: FC<{
+  view?: ViewType;
+}> = ({ view = "sign_in" }) => {
   const theme = useVersionTheme();
   return (
     <Auth
@@ -61,9 +65,7 @@ const ThemedAuth = () => {
       }}
       providers={["github"]}
       magicLink
-      localization={{
-        variables: {},
-      }}
+      view={view}
     />
   );
 };
@@ -93,7 +95,7 @@ const Profile: FC<{
       <ProfileImage email={user.email} />
       <div className="flex flex-col gap-1 mb-2 mt-1">
         <div className="text-lg font-bold">{user.email}</div>
-        <div className="text-xs text-slate-500">
+        <div className="text-xs text-slate-500 tracking-tighter">
           #<span className="font-mono">{user.id}</span>
         </div>
       </div>
@@ -130,9 +132,36 @@ const ProfileImage: FC<{
   );
 };
 
+export const UpdatePasswordMenuItem: FC = () => {
+  const { t } = useTranslation(["auth"]);
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <ResponsiveDialog open={open} setOpen={(opened) => setOpen(opened)}>
+        {() => <ThemedAuth view="update_password" />}
+      </ResponsiveDialog>
+
+      <MenuItem
+        onClick={() => {
+          setOpen(true);
+        }}
+      >
+        <ListItemIcon>
+          <MdiAccountKey />
+        </ListItemIcon>
+        <ListItemText>{t("auth:update-password.label")}</ListItemText>
+      </MenuItem>
+    </>
+  );
+};
+
 export const UserChip: FC = () => {
   const [pending, setPending] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
+  const { t } = useTranslation(["auth"]);
+  const [open, setOpen] = useState<"auth" | "profile" | null>(null);
+  const [profileMenuAnchorEl, setProfileMenuAnchorEl] =
+    useState<HTMLElement | null>(null);
 
   useEffect(() => {
     supabase.auth
@@ -146,56 +175,74 @@ export const UserChip: FC = () => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setPending(false);
+      if (session) {
+        setOpen(null);
+      }
+      if (event === "INITIAL_SESSION") {
+        toast.success(t("auth:login.toast-success"), {
+          id: "login-success",
+        });
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, [setSession]);
+  }, [t]);
 
   useEffect(() => {
-    console.debug("Session changed to", session);
+    console.debug("[Auth] session changed to", session);
   }, [session]);
 
   const logout = async () => {
     setPending(true);
     await supabase.auth.signOut();
+    toast.success(t("auth:logout.toast-success"), {
+      id: "logout-success",
+    });
   };
-  const { t } = useTranslation(["auth"]);
 
-  const [open, setOpen] = useState<"auth" | "profile" | null>(null);
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   return (
     <>
       <ResponsiveDialog
         open={open === "auth"}
         setOpen={(opened) => setOpen(opened ? "auth" : null)}
       >
-        {() => <>{!session && <ThemedAuth />}</>}
+        {() => (
+          <>
+            <div className="flex flex-col items-start justify-center gap-1">
+              <Logo />
+              <span className="text-sm text-gray-5">Authentication</span>
+              <div className="h-px w-full bg-gray-2 mb-1.5 mt-4" />
+            </div>
+            <ThemedAuth />
+          </>
+        )}
       </ResponsiveDialog>
 
       <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
+        anchorEl={profileMenuAnchorEl}
+        open={Boolean(profileMenuAnchorEl)}
         onClose={() => {
           setOpen(null);
-          setAnchorEl(null);
+          setProfileMenuAnchorEl(null);
         }}
       >
         {session && <Profile user={session.user} />}
+        <UpdatePasswordMenuItem />
         <MenuItem
           onClick={() => {
             logout();
             setOpen(null);
-            setAnchorEl(null);
+            setProfileMenuAnchorEl(null);
           }}
           color="error"
         >
           <ListItemIcon>
             <MdiLogout />
           </ListItemIcon>
-          <ListItemText>{t("auth:logout")}</ListItemText>
+          <ListItemText>{t("auth:logout.label")}</ListItemText>
         </MenuItem>
       </Menu>
 
@@ -210,7 +257,7 @@ export const UserChip: FC = () => {
           onClick={(e) => {
             setOpen(session ? "profile" : "auth");
             if (session) {
-              setAnchorEl(e.currentTarget);
+              setProfileMenuAnchorEl(e.currentTarget);
             }
           }}
         >

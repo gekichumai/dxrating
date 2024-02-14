@@ -6,28 +6,52 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
+      tag_groups: {
+        Row: {
+          color: string
+          created_at: string
+          id: number
+          localized_name: Json
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          id?: number
+          localized_name: Json
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: number
+          localized_name?: Json
+        }
+        Relationships: []
+      }
       tag_songs: {
         Row: {
           created_at: string
           id: number
-          sheet_type: string
+          sheet_difficulty: Database["public"]["Enums"]["sheet_difficulty"]
+          sheet_type: Database["public"]["Enums"]["sheet_type"]
           song_id: string
           tag_id: number
         }
         Insert: {
           created_at?: string
           id?: number
-          sheet_type: string
+          sheet_difficulty: Database["public"]["Enums"]["sheet_difficulty"]
+          sheet_type: Database["public"]["Enums"]["sheet_type"]
           song_id: string
           tag_id: number
         }
         Update: {
           created_at?: string
           id?: number
-          sheet_type?: string
+          sheet_difficulty?: Database["public"]["Enums"]["sheet_difficulty"]
+          sheet_type?: Database["public"]["Enums"]["sheet_type"]
           song_id?: string
           tag_id?: number
         }
@@ -45,6 +69,7 @@ export interface Database {
         Row: {
           created_at: string
           created_by: string
+          group_id: number
           id: number
           localized_description: Json
           localized_name: Json
@@ -52,6 +77,7 @@ export interface Database {
         Insert: {
           created_at?: string
           created_by: string
+          group_id: number
           id?: number
           localized_description?: Json
           localized_name?: Json
@@ -59,11 +85,19 @@ export interface Database {
         Update: {
           created_at?: string
           created_by?: string
+          group_id?: number
           id?: number
           localized_description?: Json
           localized_name?: Json
         }
         Relationships: [
+          {
+            foreignKeyName: "public_tags_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "tag_groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tags_created_by_fkey"
             columns: ["created_by"]
@@ -81,7 +115,8 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      sheet_difficulty: "basic" | "advanced" | "expert" | "master" | "remaster"
+      sheet_type: "std" | "dx"
     }
     CompositeTypes: {
       [_ in never]: never

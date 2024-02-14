@@ -37,6 +37,7 @@
     "fuse.js": "^6.6.2",
     "i18next": "^23.7.20",
     "i18next-browser-languagedetector": "^7.2.0",
+    "marked": "^12.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.50.0",
