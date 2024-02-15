@@ -1,65 +1,17 @@
 import { Chip, Dialog, Grow } from "@mui/material";
-import { PostgrestSingleResponse } from "@supabase/supabase-js";
-import { AnimatePresence, motion } from "framer-motion";
-import { marked } from "marked";
-import { FC, useMemo, useState } from "react";
+import { FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import useSWR from "swr";
-import IconMdiTag from "~icons/mdi/tag";
 import IconMdiTagPlus from "~icons/mdi/tag-plus";
-import { supabase } from "../../models/supabase";
-import { FlattenedSheet } from "../../songs";
-import { formatErrorMessage } from "../../utils/formatErrorMessage";
-import { MotionButtonBase, MotionTooltip } from "../../utils/motion";
-import { useLocalizedMessageTranslation } from "../../utils/useLocalizedMessageTranslation";
-import { SheetListItemContent } from "./SheetListItem";
-
-const useSheetTags = (sheet: FlattenedSheet) => {
-  const { data, ...rest } = useSWR(`supabase:tags:${sheet.id}`, async () =>
-    supabase
-      .from("tag_songs")
-      .select(
-        "tag:tags(id, localized_name, localized_description, group:tag_groups(id, localized_name, color))",
-      )
-      .eq("song_id", sheet.songId)
-      .eq("sheet_type", sheet.type)
-      .eq("sheet_difficulty", sheet.difficulty)
-      .order("id", { ascending: true, referencedTable: "tag" }),
-  );
-  const assumedData = data as
-    | PostgrestSingleResponse<
-        {
-          tag: {
-            id: number;
-            localized_name: Record<string, string>;
-            localized_description: Record<string, string>;
-            group: {
-              id: number;
-              localized_name: Record<string, string>;
-              color: string;
-            } | null;
-          };
-        }[]
-      >
-    | undefined;
-  return useMemo(() => {
-    return {
-      data: assumedData?.data?.map(({ tag }) => tag),
-      ...rest,
-    };
-  }, [data]);
-};
-
-const Markdown = ({ content }: { content?: string }) => {
-  return (
-    <div
-      dangerouslySetInnerHTML={{
-        __html: marked(content ?? ""),
-      }}
-    />
-  );
-};
+import { supabase } from "../../../models/supabase";
+import { FlattenedSheet } from "../../../songs";
+import { formatErrorMessage } from "../../../utils/formatErrorMessage";
+import { MotionButtonBase, MotionTooltip } from "../../../utils/motion";
+import { useLocalizedMessageTranslation } from "../../../utils/useLocalizedMessageTranslation";
+import { Markdown } from "../../global/Markdown";
+import { SheetListItemContent } from "../SheetListItem";
+import { useSheetTags } from "./useSheetTags";
 
 const SheetTagsAddDialog: FC<{
   sheet: FlattenedSheet;
@@ -246,7 +198,9 @@ const SheetTagsAddDialog: FC<{
   );
 };
 
-const SheetTagsAddButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+export const SheetTagsAddButton: FC<{ sheet: FlattenedSheet }> = ({
+  sheet,
+}) => {
   const { t } = useTranslation(["sheet"]);
   const [open, setOpen] = useState(false);
 
@@ -274,85 +228,5 @@ const SheetTagsAddButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         <span className="ml-1 text-xs">{t("sheet:tags.add.button")}</span>
       </MotionButtonBase>
     </>
-  );
-};
-
-export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const localizeMessage = useLocalizedMessageTranslation();
-  const { data, isLoading } = useSheetTags(sheet);
-
-  const inner = () => {
-    if (isLoading || !data) {
-      return (
-        <MotionButtonBase
-          key="pending"
-          layout
-          layoutId={`sheet-tags:${sheet.id}`}
-          className="h-6 w-16 bg-gray-200 rounded-lg animate-pulse"
-          disabled
-        />
-      );
-    }
-
-    if (data.length === 0) {
-      return <SheetTagsAddButton sheet={sheet} />;
-    }
-
-    return (
-      <>
-        {data?.map((tag) => (
-          <MotionTooltip
-            {...{
-              exit: {
-                scale: 0.9,
-                opacity: 0,
-              },
-              initial: {
-                scale: 0,
-                opacity: 0,
-              },
-              animate: {
-                scale: 1,
-                opacity: 1,
-              },
-              transition: {
-                type: "spring",
-                stiffness: 500,
-                damping: 30,
-              },
-            }}
-            key={tag.id}
-            title={
-              <Markdown content={localizeMessage(tag.localized_description)} />
-            }
-            arrow
-          >
-            <Chip
-              key={tag.id}
-              label={localizeMessage(tag.localized_name)}
-              size="small"
-              className="cursor-help px-0.5"
-              style={{
-                backgroundColor: tag.group?.color,
-              }}
-            />
-          </MotionTooltip>
-        ))}
-
-        <SheetTagsAddButton sheet={sheet} />
-      </>
-    );
-  };
-
-  return (
-    <div className="flex items-center gap-1">
-      <div className="flex flex-1 items-center gap-1">
-        <IconMdiTag className="mr-1" />
-      </div>
-
-      <motion.div layoutRoot className="flex flex-wrap gap-1">
-        <AnimatePresence mode="popLayout">{inner()}</AnimatePresence>
-      </motion.div>
-    </div>
   );
 };

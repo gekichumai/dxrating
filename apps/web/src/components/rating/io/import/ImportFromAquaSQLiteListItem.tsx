@@ -23,7 +23,7 @@ import {
   FlattenedSheet,
   canonicalIdFromParts,
   useSheets,
-} from "../../../songs";
+} from "../../../../songs";
 import {
   AquaGamePlay,
   AquaPlayLog,
@@ -31,12 +31,12 @@ import {
   readAquaGamePlays,
   readAquaPlayLogs,
   readAquaUsers,
-} from "../../../utils/aquaDB";
-import { SheetListItemContent } from "../../sheet/SheetListItem";
-import { PlayEntry } from "../RatingCalculatorAddEntryForm";
+} from "../../../../utils/aquaDB";
+import { SheetListItemContent } from "../../../sheet/SheetListItem";
+import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
 
 import IconMdiDatabase from "~icons/mdi/database";
-import { FadedImage } from "../../global/FadedImage";
+import { FadedImage } from "../../../global/FadedImage";
 
 export const ImportFromAquaSQLiteListItem: FC<{
   modifyEntries: ListActions<PlayEntry>;

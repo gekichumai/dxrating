@@ -8,10 +8,10 @@ import {
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { TouchDeviceGuard } from "../../global/TouchDeviceGuard";
+import { useControllerRulePresets } from "../../global/form/useControllerRulePresets";
 import { SheetSortFilterForm } from "../SheetSortFilter";
 import { SheetFilterInternalLevelInputLongPressSlider } from "./SheetFilterLevelInputLongPressSlider";
 import { SheetFilterSection } from "./SheetFilterSection";
-import { useControllerRulePresets } from "./useControllerRulePresets";
 
 const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
   label,

@@ -5,9 +5,9 @@ import MdiShareVariant from "~icons/mdi/share-variant";
 import { BUNDLE } from "../../utils/bundle";
 import { useVersionTheme } from "../../utils/useVersionTheme";
 import { Logo } from "../global/Logo";
-import { About } from "../topbar/About";
-import { LocaleSelector } from "../topbar/LocaleSelector";
-import { UserChip } from "../topbar/UserChip";
+import { LocaleSelector } from "../global/preferences/LocaleSelector";
+import { UserChip } from "../global/preferences/UserChip";
+import { About } from "../global/site-meta/About";
 
 export const TopBar = () => {
   const { t } = useTranslation(["root"]);

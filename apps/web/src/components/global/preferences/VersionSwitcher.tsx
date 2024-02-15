@@ -11,9 +11,9 @@ import MdiInformation from "~icons/mdi/information";
 import {
   DXVersion,
   DXVersionToDXDataVersionEnumMap,
-} from "../../models/context/AppContext";
-import { useAppContext } from "../../models/context/useAppContext";
-import { WebpSupportedImage } from "./WebpSupportedImage";
+} from "../../../models/context/AppContext";
+import { useAppContext } from "../../../models/context/useAppContext";
+import { WebpSupportedImage } from "../WebpSupportedImage";
 
 const VERSIONS = Object.keys(DXVersionToDXDataVersionEnumMap) as DXVersion[];
 

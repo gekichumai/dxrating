@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "react-use";
 
 import { OverscrollBackgroundFiller } from "./components/global/OverscrollBackgroundFiller";
-import { VersionSwitcher } from "./components/global/VersionSwitcher";
+import { VersionSwitcher } from "./components/global/preferences/VersionSwitcher";
 import { WebpSupportedImage } from "./components/global/WebpSupportedImage";
 import { TopBar } from "./components/layout/TopBar";
 import { RatingCalculator } from "./pages/RatingCalculator";

@@ -8,9 +8,9 @@ import {
 } from "@mui/material";
 import { FC, Suspense, lazy, useState } from "react";
 import IconMdiImage from "~icons/mdi/image";
-import { Entry } from "../../../pages/RatingCalculator";
+import { Entry } from "../../../../pages/RatingCalculator";
 
-const OneShotImage = lazy(() => import("../../oneshot/OneShotImage"));
+const OneShotImage = lazy(() => import("../../../oneshot/OneShotImage"));
 
 export const RenderToOneShotImageMenuItem: FC<{
   calculatedEntries: Entry[];

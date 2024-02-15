@@ -22,14 +22,14 @@ import {
   FlattenedSheet,
   canonicalIdFromParts,
   useSheets,
-} from "../../../songs";
-import { SheetListItemContent } from "../../sheet/SheetListItem";
-import { PlayEntry } from "../RatingCalculatorAddEntryForm";
+} from "../../../../songs";
+import { SheetListItemContent } from "../../../sheet/SheetListItem";
+import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
 
 import { DifficultyEnum } from "@gekichumai/dxdata";
 import clsx from "clsx";
 import IconMdiCloudDownload from "~icons/mdi/cloud-download";
-import { FadedImage } from "../../global/FadedImage";
+import { FadedImage } from "../../../global/FadedImage";
 
 export interface RemoteData {
   rating_records: RatingRecord[];

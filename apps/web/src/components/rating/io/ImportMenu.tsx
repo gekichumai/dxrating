@@ -2,9 +2,9 @@ import { Button, Menu } from "@mui/material";
 import { FC, useId, useState } from "react";
 import { ListActions } from "react-use/lib/useList";
 import { PlayEntry } from "../RatingCalculatorAddEntryForm";
-import { ImportFromAquaSQLiteListItem } from "./ImportFromAquaSQLiteButton";
-import { ImportFromJSONButtonListItem } from "./ImportFromJSONButtonListItem";
-import { ImportFromRemoteListItem } from "./ImportFromRemoteButton";
+import { ImportFromAquaSQLiteListItem } from "./import/ImportFromAquaSQLiteListItem";
+import { ImportFromJSONButtonListItem } from "./import/ImportFromJSONButtonListItem";
+import { ImportFromRemoteListItem } from "./import/ImportFromRemoteListItem";
 
 export const ImportMenu: FC<{
   modifyEntries: ListActions<PlayEntry>;
