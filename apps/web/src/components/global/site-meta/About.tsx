@@ -1,4 +1,4 @@
-import { dxdata } from "@gekichumai/dxdata";
+import { dxdataUpdateTime } from "@gekichumai/dxdata";
 import { IconButton } from "@mui/material";
 import { intlFormatDistance } from "date-fns";
 import { FC, PropsWithChildren, ReactNode, useMemo, useState } from "react";
@@ -73,7 +73,7 @@ export const About = () => {
   const [expanded, setExpanded] = useState(false);
 
   const buildTime = useTime(BUNDLE.buildTime);
-  const updateTime = useTime(dxdata.updateTime);
+  const updateTime = useTime(dxdataUpdateTime);
 
   return (
     <>

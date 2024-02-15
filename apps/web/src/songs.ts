@@ -91,20 +91,28 @@ export const useSheetsSearchEngine = () => {
   const { data: sheets } = useSheets();
 
   const fuseInstance = useMemo(() => {
-    return new Fuse(songs ?? [], {
-      keys: [
-        {
-          name: "searchAcronyms",
-          weight: 2,
-        },
-        {
-          name: "title",
-          weight: 1,
-        },
-      ],
-      shouldSort: true,
-      threshold: 0.4,
-    });
+    return new Fuse(
+      songs?.map((song) => ({
+        ...song,
+        searchAcronyms: song.searchAcronyms.filter(
+          (acronym) => acronym.length < 50,
+        ),
+      })) ?? [],
+      {
+        keys: [
+          {
+            name: "searchAcronyms",
+            weight: 2,
+          },
+          {
+            name: "title",
+            weight: 1,
+          },
+        ],
+        shouldSort: true,
+        threshold: 0.4,
+      },
+    );
   }, [songs]);
 
   const search = (term: string) => {
