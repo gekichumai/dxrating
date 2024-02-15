@@ -88,6 +88,7 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
           }}
           onTouchMove={onPointerMove}
           onTouchEnd={() => setIsPressed(false)}
+          tabIndex={-1}
         >
           <MdiGestureSwipeVertical fontSize="1rem" />
         </div>

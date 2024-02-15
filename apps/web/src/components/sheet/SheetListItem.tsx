@@ -13,7 +13,7 @@ import { DIFFICULTIES } from "../../models/difficulties";
 import { FlattenedSheet } from "../../songs";
 import { useIsLargeDevice } from "../../utils/breakpoints";
 import { FadedImage } from "../global/FadedImage";
-import { ResponsiveDialog } from "../global/ResponsiveDialog";
+import { NestedDrawer } from "../global/nested-drawer/NestedDrawer";
 import {
   SheetDialogContent,
   SheetDialogContentProps,
@@ -29,9 +29,13 @@ export const SheetListItem: FC<
 
   return (
     <>
-      <ResponsiveDialog open={open} setOpen={setOpen}>
+      <NestedDrawer
+        open={open}
+        onClose={() => setOpen(false)}
+        header={props.sheet.title}
+      >
         {() => <SheetDialogContent {...props} />}
-      </ResponsiveDialog>
+      </NestedDrawer>
 
       <ListItemButton
         disableGutters={!isLargeDevice}

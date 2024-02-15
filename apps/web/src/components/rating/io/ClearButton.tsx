@@ -54,7 +54,7 @@ export const ClearButton: FC<{
           setDialogOpen(true);
         }}
       >
-        Clear...
+        Clear
       </Button>
     </>
   );

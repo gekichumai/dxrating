@@ -17,7 +17,9 @@ export const GestureHint: FC<{
   return (
     <div className="px-1.5 py-0.5 rounded-full bg-gray-1 text-xs ml-1 inline-flex items-center gap-1 text-gray-6 select-none">
       <GestureIcon />
-      <span>{t("global:gesture-hint." + gesture)}</span>
+      <span className="tracking-[-0.1em]">
+        {t("global:gesture-hint." + gesture)}
+      </span>
       <div className="bg-gray-3 w-px h-3" />
       <span>{description}</span>
     </div>
