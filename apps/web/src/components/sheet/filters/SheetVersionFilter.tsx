@@ -31,7 +31,16 @@ const SheetVersionFilterInputVersion = ({
   });
 
   return (
-    <ButtonBase {...bind()} className="rounded-lg overflow-hidden">
+    <ButtonBase
+      {...bind()}
+      className="rounded-lg overflow-hidden"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          onToggle();
+        }
+      }}
+      focusRipple
+    >
       <Chip
         label={version.replace(" PLUS", "+")}
         color={selected ? "primary" : "default"}
