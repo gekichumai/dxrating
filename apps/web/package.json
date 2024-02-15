@@ -45,7 +45,6 @@
     "react-i18next": "^14.0.1",
     "react-use": "^17.4.0",
     "react-virtuoso": "^4.6.1",
-    "satori": "^0.10.9",
     "sql.js": "^1.8.0",
     "swr": "^2.2.4",
     "ts-pattern": "^5.0.5",

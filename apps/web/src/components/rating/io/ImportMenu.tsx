@@ -42,7 +42,7 @@ export const ImportMenu: FC<{
           "aria-labelledby": `button-${id}`,
         }}
       >
-        <ImportFromRemoteListItem
+        <ImportFromJSONButtonListItem
           modifyEntries={modifyEntries}
           onClose={handleClose}
         />
@@ -50,7 +50,7 @@ export const ImportMenu: FC<{
           modifyEntries={modifyEntries}
           onClose={handleClose}
         />
-        <ImportFromJSONButtonListItem
+        <ImportFromRemoteListItem
           modifyEntries={modifyEntries}
           onClose={handleClose}
         />
