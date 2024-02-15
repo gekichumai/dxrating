@@ -33,29 +33,39 @@ export type Database = {
       tag_songs: {
         Row: {
           created_at: string
+          created_by: string | null
           id: number
-          sheet_difficulty: Database["public"]["Enums"]["sheet_difficulty"]
+          sheet_difficulty: string
           sheet_type: Database["public"]["Enums"]["sheet_type"]
           song_id: string
           tag_id: number
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           id?: number
-          sheet_difficulty: Database["public"]["Enums"]["sheet_difficulty"]
+          sheet_difficulty: string
           sheet_type: Database["public"]["Enums"]["sheet_type"]
           song_id: string
           tag_id: number
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           id?: number
-          sheet_difficulty?: Database["public"]["Enums"]["sheet_difficulty"]
+          sheet_difficulty?: string
           sheet_type?: Database["public"]["Enums"]["sheet_type"]
           song_id?: string
           tag_id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "public_tag_songs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tag_songs_tag_id_fkey"
             columns: ["tag_id"]
@@ -116,7 +126,7 @@ export type Database = {
     }
     Enums: {
       sheet_difficulty: "basic" | "advanced" | "expert" | "master" | "remaster"
-      sheet_type: "std" | "dx"
+      sheet_type: "std" | "dx" | "utage" | "utage2p"
     }
     CompositeTypes: {
       [_ in never]: never
