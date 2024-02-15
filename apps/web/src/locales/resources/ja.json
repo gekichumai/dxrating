@@ -55,15 +55,15 @@
     "filter": {
       "title": "フィルタ",
       "internal-level-value": {
-        "min": "譜面定数 (min, inclusive)",
-        "max": "譜面定数 (max, inclusive)",
+        "min": "min",
+        "max": "max",
         "title": "譜面定数"
       },
       "version": {
         "title": "追加バージョン",
         "gesture-hint": {
           "tap": "トグル",
-          "tap-hold": "◯のみ"
+          "tap-hold": "のみ"
         }
       }
     },
@@ -82,7 +82,7 @@
       "temporarily-disabled": "検索クエリがアクティブなため、一時的に無効になっています"
     },
     "sort-and-filter": {
-      "reset": "リセット...",
+      "reset": "リセット",
       "title": "並べ替えとフィルタ"
     },
     "tags": {

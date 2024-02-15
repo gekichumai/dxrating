@@ -55,15 +55,15 @@
     "filter": {
       "title": "筛选",
       "internal-level-value": {
-        "min": "定数 (大于或等于)",
-        "max": "定数 (小于或等于)",
+        "min": "下限",
+        "max": "上限",
         "title": "定数"
       },
       "version": {
         "title": "追加版本",
         "gesture-hint": {
           "tap": "切换",
-          "tap-hold": "仅选择"
+          "tap-hold": "单选"
         }
       }
     },
@@ -83,7 +83,7 @@
     },
     "sort-and-filter": {
       "title": "筛选与排序",
-      "reset": "重置..."
+      "reset": "重置"
     },
     "tags": {
       "add": {

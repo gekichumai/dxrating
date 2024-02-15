@@ -55,15 +55,15 @@
     "filter": {
       "title": "Filter",
       "internal-level-value": {
-        "min": "Level (min, inclusive)",
-        "max": "Level (max, inclusive)",
+        "min": "Min",
+        "max": "Max",
         "title": "Level"
       },
       "version": {
-        "title": "Added Version",
+        "title": "Version",
         "gesture-hint": {
           "tap": "Toggle",
-          "tap-hold": "Exclusive"
+          "tap-hold": "Select"
         }
       }
     },
@@ -83,7 +83,7 @@
     },
     "sort-and-filter": {
       "title": "Filter & Sort",
-      "reset": "Reset..."
+      "reset": "Reset"
     },
     "tags": {
       "add": {
