@@ -64,7 +64,7 @@ export const App = () => {
             <Tab
               label={t("root:pages.search.title")}
               classes={{
-                selected: "!text-white",
+                selected: "!text-black/90",
                 root: "!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem",
               }}
               value="search"
@@ -72,7 +72,7 @@ export const App = () => {
             <Tab
               label={t("root:pages.rating.title")}
               classes={{
-                selected: "!text-white",
+                selected: "!text-black/90",
                 root: "!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem",
               }}
               value="rating"

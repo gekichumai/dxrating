@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "publishConfig": {
-    "access": "public"
+    "access": "restricted"
   },
   "scripts": {
     "run": "esno index.ts"

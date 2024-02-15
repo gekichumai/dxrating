@@ -63,7 +63,7 @@
         "title": "追加バージョン",
         "gesture-hint": {
           "tap": "トグル",
-          "tap-hold": "エクスクルーシブ"
+          "tap-hold": "◯のみ"
         }
       }
     },

@@ -94,7 +94,7 @@ const SheetListInner: FC = () => {
       {isBuildPlatformApp && (
         <Button
           onClick={() => DXRatingPlugin.launchInstantOCR()}
-          className="mt-2 rounded-full text-white"
+          className="mt-2 rounded-full"
           variant="contained"
           startIcon={<IconMdiOcr />}
         >
