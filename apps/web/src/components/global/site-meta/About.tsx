@@ -1,8 +1,9 @@
 import { dxdataUpdateTime } from "@gekichumai/dxdata";
 import { IconButton } from "@mui/material";
+import clsx from "clsx";
 import { intlFormatDistance } from "date-fns";
 import { FC, PropsWithChildren, ReactNode, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import MdiGithub from "~icons/mdi/github";
 import MdiInformation from "~icons/mdi/information";
 import MdiTwitter from "~icons/mdi/twitter";
@@ -10,15 +11,17 @@ import MdiWeb from "~icons/mdi/web";
 import { BUNDLE } from "../../../utils/bundle";
 import { ResponsiveDialog } from "../ResponsiveDialog";
 
-const ExternalLink: FC<PropsWithChildren<{ href: string }>> = ({
-  href,
-  children,
-}) => (
+const ExternalLink: FC<
+  PropsWithChildren<{ href: string; className?: string }>
+> = ({ href, children, className }) => (
   <a
     href={href}
     target="_blank"
     rel="noopener noreferrer"
-    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-500"
+    className={clsx(
+      "inline-flex items-center gap-1 text-blue-600 hover:text-blue-500",
+      className,
+    )}
   >
     {children}
   </a>
@@ -157,6 +160,38 @@ export const About = () => {
 
             <div className="flex flex-col items-start mt-8 gap-1">
               <h5 className="text-base text-gray-7">
+                {t("about:donate.title")}
+              </h5>
+
+              <div className="text-sm text-gray-6">
+                <Trans
+                  i18nKey="about:donate.content"
+                  components={{
+                    afdian: (
+                      <ExternalLink
+                        href="https://afdian.net/a/dxrating"
+                        className="translate-y-0.75 items-center"
+                      >
+                        <MdiWeb />
+                        <span>{t("about:donate.afdian")}</span>
+                      </ExternalLink>
+                    ),
+                    paypal: (
+                      <ExternalLink
+                        href="https://paypal.me/yiyanggao"
+                        className="translate-y-0.75 items-center"
+                      >
+                        <MdiWeb />
+                        <span>{t("about:donate.paypal")}</span>
+                      </ExternalLink>
+                    ),
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col items-start mt-24 gap-1">
+              <h5 className="text-base text-gray-7">
                 {t("about:disclaimer.title")}
               </h5>
 
@@ -169,7 +204,7 @@ export const About = () => {
               </div>
             </div>
 
-            <div className="flex flex-col items-start mt-24 gap-1">
+            <div className="flex flex-col items-start mt-8 gap-1">
               <img
                 className="h-12 w-auto touch-callout-none mb-2"
                 src="https://shama.dxrating.net/images/version-adornment/buddies.png"
