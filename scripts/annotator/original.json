@@ -49510,7 +49510,7 @@
           "levelValue": 11,
           "internalLevel": null,
           "internalLevelValue": 11,
-          "noteDesigner": null,
+          "noteDesigner": "みそかつ侍",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -63742,7 +63742,7 @@
           "levelValue": 9,
           "internalLevel": null,
           "internalLevelValue": 9,
-          "noteDesigner": null,
+          "noteDesigner": "サファ太",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -63767,14 +63767,14 @@
           "levelValue": 12.7,
           "internalLevel": "12.7",
           "internalLevelValue": 12.7,
-          "noteDesigner": null,
+          "noteDesigner": "はっぴー",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 258,
+            "hold": 36,
+            "slide": 75,
+            "touch": 42,
+            "break": 15,
+            "total": 426
           },
           "regions": {
             "jp": true,
@@ -94052,12 +94052,12 @@
           "internalLevelValue": 13.3,
           "noteDesigner": "Jack",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 529,
+            "hold": 31,
+            "slide": 109,
+            "touch": 47,
+            "break": 17,
+            "total": 733
           },
           "regions": {
             "jp": true,
@@ -104933,120 +104933,6 @@
           "isSpecial": false,
           "version": "maimaiでらっくす PLUS",
           "internalId": 11102
-        }
-      ]
-    },
-    {
-      "songId": "渦状銀河のシンフォニエッタ",
-      "category": "maimai",
-      "title": "渦状銀河のシンフォニエッタ",
-      "artist": "山本真央樹",
-      "bpm": 238,
-      "imageName": "1cf8ab2e8f094a454cd5c69c9ff6d2ef7e99770b0be8148158b3982450401396.png",
-      "version": "maimaiでらっくす PLUS",
-      "releaseDate": "2020-08-07",
-      "isNew": false,
-      "isLocked": false,
-      "sheets": [
-        {
-          "type": "dx",
-          "difficulty": "basic",
-          "level": "3",
-          "levelValue": 3,
-          "internalLevel": null,
-          "internalLevelValue": 3,
-          "noteDesigner": "-",
-          "noteCounts": {
-            "tap": 101,
-            "hold": 15,
-            "slide": 7,
-            "touch": 18,
-            "break": 10,
-            "total": 151
-          },
-          "regions": {
-            "jp": true,
-            "intl": true,
-            "cn": true
-          },
-          "isSpecial": false,
-          "version": "maimaiでらっくす PLUS",
-          "internalId": 11103
-        },
-        {
-          "type": "dx",
-          "difficulty": "advanced",
-          "level": "8",
-          "levelValue": 8,
-          "internalLevel": null,
-          "internalLevelValue": 8,
-          "noteDesigner": "-",
-          "noteCounts": {
-            "tap": 247,
-            "hold": 39,
-            "slide": 30,
-            "touch": 56,
-            "break": 13,
-            "total": 385
-          },
-          "regions": {
-            "jp": true,
-            "intl": true,
-            "cn": true
-          },
-          "isSpecial": false,
-          "version": "maimaiでらっくす PLUS",
-          "internalId": 11103
-        },
-        {
-          "type": "dx",
-          "difficulty": "expert",
-          "level": "11+",
-          "levelValue": 11.7,
-          "internalLevel": null,
-          "internalLevelValue": 11.7,
-          "noteDesigner": "華火職人",
-          "noteCounts": {
-            "tap": 385,
-            "hold": 78,
-            "slide": 46,
-            "touch": 9,
-            "break": 40,
-            "total": 558
-          },
-          "regions": {
-            "jp": true,
-            "intl": true,
-            "cn": true
-          },
-          "isSpecial": false,
-          "version": "maimaiでらっくす PLUS",
-          "internalId": 11103
-        },
-        {
-          "type": "dx",
-          "difficulty": "master",
-          "level": "14",
-          "levelValue": 14,
-          "internalLevel": "14.6",
-          "internalLevelValue": 14.6,
-          "noteDesigner": "ぴちネコ",
-          "noteCounts": {
-            "tap": 801,
-            "hold": 87,
-            "slide": 66,
-            "touch": 238,
-            "break": 22,
-            "total": 1214
-          },
-          "regions": {
-            "jp": true,
-            "intl": true,
-            "cn": true
-          },
-          "isSpecial": false,
-          "version": "maimaiでらっくす PLUS",
-          "internalId": 11103
         }
       ]
     },
@@ -118634,12 +118520,12 @@
           "internalLevelValue": 13.7,
           "noteDesigner": "鳩ホルダー",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 499,
+            "hold": 84,
+            "slide": 74,
+            "touch": 85,
+            "break": 17,
+            "total": 759
           },
           "regions": {
             "jp": true,
@@ -156473,12 +156359,12 @@
           "internalLevelValue": 7,
           "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 242,
+            "hold": 18,
+            "slide": 8,
+            "touch": 27,
+            "break": 10,
+            "total": 305
           },
           "regions": {
             "jp": true,
@@ -156566,7 +156452,7 @@
             "hold": 10,
             "slide": 7,
             "touch": 18,
-            "break": 8,
+            "break": 7,
             "total": 135
           },
           "regions": {
@@ -156587,12 +156473,12 @@
           "internalLevelValue": 6,
           "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 232,
+            "hold": 12,
+            "slide": 14,
+            "touch": 27,
+            "break": 8,
+            "total": 293
           },
           "regions": {
             "jp": true,
@@ -156685,7 +156571,7 @@
           },
           "regions": {
             "jp": true,
-            "intl": false,
+            "intl": true,
             "cn": false
           },
           "isSpecial": false,
@@ -156709,7 +156595,7 @@
           },
           "regions": {
             "jp": true,
-            "intl": false,
+            "intl": true,
             "cn": false
           },
           "isSpecial": false,
@@ -156733,7 +156619,7 @@
           },
           "regions": {
             "jp": true,
-            "intl": false,
+            "intl": true,
             "cn": false
           },
           "isSpecial": false,
@@ -156757,7 +156643,7 @@
           },
           "regions": {
             "jp": true,
-            "intl": false,
+            "intl": true,
             "cn": false
           },
           "isSpecial": false,
@@ -156905,7 +156791,7 @@
           },
           "regions": {
             "jp": true,
-            "intl": false,
+            "intl": true,
             "cn": false
           },
           "isSpecial": false,
@@ -156929,7 +156815,7 @@
           },
           "regions": {
             "jp": true,
-            "intl": false,
+            "intl": true,
             "cn": false
           },
           "isSpecial": false,
@@ -156953,7 +156839,7 @@
           },
           "regions": {
             "jp": true,
-            "intl": false,
+            "intl": true,
             "cn": false
           },
           "isSpecial": false,
@@ -156977,7 +156863,7 @@
           },
           "regions": {
             "jp": true,
-            "intl": false,
+            "intl": true,
             "cn": false
           },
           "isSpecial": false,
@@ -157015,7 +156901,7 @@
           },
           "regions": {
             "jp": true,
-            "intl": false,
+            "intl": true,
             "cn": false
           },
           "isSpecial": false,
@@ -157039,7 +156925,7 @@
           },
           "regions": {
             "jp": true,
-            "intl": false,
+            "intl": true,
             "cn": false
           },
           "isSpecial": false,
@@ -157063,7 +156949,7 @@
           },
           "regions": {
             "jp": true,
-            "intl": false,
+            "intl": true,
             "cn": false
           },
           "isSpecial": false,
@@ -157087,7 +156973,7 @@
           },
           "regions": {
             "jp": true,
-            "intl": false,
+            "intl": true,
             "cn": false
           },
           "isSpecial": false,
@@ -157299,12 +157185,12 @@
           "internalLevelValue": 13.4,
           "noteDesigner": "鳩ホルダー",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 498,
+            "hold": 86,
+            "slide": 112,
+            "touch": 58,
+            "break": 46,
+            "total": 800
           },
           "regions": {
             "jp": true,
@@ -157629,7 +157515,7 @@
           "internalLevelValue": 14.4,
           "noteDesigner": "Luxizhel",
           "noteCounts": {
-            "tap": 686,
+            "tap": 666,
             "hold": 36,
             "slide": 104,
             "touch": 59,
@@ -158221,7 +158107,7 @@
       "category": "ゲーム＆バラエティ",
       "title": "I’m Here (feat. Merry Kirk-Holmes)",
       "artist": "大谷智哉「ソニックフロンティア」",
-      "bpm": null,
+      "bpm": 187,
       "imageName": "cf773337fa56248fcd3cf33b3a8cd3ff651404e31fe0398dade7aee4dbe98332.png",
       "version": "BUDDiES",
       "releaseDate": "2023-11-24",
@@ -158316,7 +158202,7 @@
             "hold": 32,
             "slide": 118,
             "touch": 12,
-            "break": 32,
+            "break": 41,
             "total": 741
           },
           "regions": {
@@ -158335,7 +158221,7 @@
       "category": "POPS＆アニメ",
       "title": "story",
       "artist": "前島麻由",
-      "bpm": null,
+      "bpm": 220,
       "imageName": "1f75b9e9d4ac42af8aa21dc22b33a1ab3986624a58d893aad387e538599c4433.png",
       "version": "BUDDiES",
       "releaseDate": "2023-11-24",
@@ -158449,7 +158335,7 @@
       "category": "niconico＆ボーカロイド",
       "title": "トンデモワンダーズ",
       "artist": "sasakure.UK",
-      "bpm": null,
+      "bpm": 172,
       "imageName": "f9e5374049dbcc9cc14b2c45606e8c9a720113c8561cc8954a6649c21c596e64.png",
       "version": "BUDDiES",
       "releaseDate": "2023-12-09",
@@ -158647,11 +158533,11 @@
           "internalLevelValue": 13.8,
           "noteDesigner": "Jack",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
+            "tap": 726,
+            "hold": 132,
+            "slide": 41,
+            "touch": 17,
+            "break": 24,
             "total": 940
           },
           "regions": {
@@ -158779,7 +158665,7 @@
       "category": "ゲーム＆バラエティ",
       "title": "ozma",
       "artist": "TJ.hangneil",
-      "bpm": null,
+      "bpm": 220,
       "imageName": "09d7f5f785dda38aa642d4ca8a47413cdda4cc6973aa0fbdc1183e370a0ed09e.png",
       "version": "BUDDiES",
       "releaseDate": "2023-12-09",
@@ -158841,13 +158727,13 @@
           "levelValue": 12.7,
           "internalLevel": "12.9",
           "internalLevelValue": 12.9,
-          "noteDesigner": null,
+          "noteDesigner": "Jack",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
+            "tap": 413,
+            "hold": 89,
+            "slide": 46,
+            "touch": 55,
+            "break": 20,
             "total": 623
           },
           "regions": {
@@ -158865,13 +158751,13 @@
           "levelValue": 13.7,
           "internalLevel": "13.9",
           "internalLevelValue": 13.9,
-          "noteDesigner": null,
+          "noteDesigner": "サファ太",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
+            "tap": 482,
+            "hold": 131,
+            "slide": 80,
+            "touch": 61,
+            "break": 38,
             "total": 792
           },
           "regions": {
@@ -158951,7 +158837,7 @@
           "levelValue": 12,
           "internalLevel": "12.5",
           "internalLevelValue": 12.5,
-          "noteDesigner": null,
+          "noteDesigner": "鳩ホルダー",
           "noteCounts": {
             "tap": 142,
             "hold": 113,
@@ -158975,7 +158861,7 @@
           "levelValue": 13.7,
           "internalLevel": "13.7",
           "internalLevelValue": 13.7,
-          "noteDesigner": null,
+          "noteDesigner": "アマリリス",
           "noteCounts": {
             "tap": 677,
             "hold": 66,
@@ -159219,7 +159105,7 @@
       "category": "maimai",
       "title": "フェイクフェイス・フェイルセイフ",
       "artist": "カラスヤサボウ feat. もるでお",
-      "bpm": null,
+      "bpm": 202,
       "imageName": "a2a06d7c0d4ecfbdd06d518fd67fb0fe9ab6c97cfa3874c40ff7c30d8afaf770.png",
       "version": "BUDDiES",
       "releaseDate": "2023-12-22",
@@ -159281,7 +159167,7 @@
           "levelValue": 11.7,
           "internalLevel": null,
           "internalLevelValue": 11.7,
-          "noteDesigner": null,
+          "noteDesigner": "きょむりん",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -159305,7 +159191,7 @@
           "levelValue": 13.7,
           "internalLevel": "13.8",
           "internalLevelValue": 13.8,
-          "noteDesigner": null,
+          "noteDesigner": "Jack",
           "noteCounts": {
             "tap": 640,
             "hold": 35,
@@ -159329,7 +159215,7 @@
       "category": "maimai",
       "title": "ふらふらふら、",
       "artist": "アオワイファイ feat.犀羅",
-      "bpm": null,
+      "bpm": 125,
       "imageName": "bd8802f2a38fa2add97de3ebc4990b1777995cdc7c87ca9addcb24dd77f64e33.png",
       "version": "BUDDiES",
       "releaseDate": "2023-12-22",
@@ -159391,14 +159277,14 @@
           "levelValue": 11,
           "internalLevel": null,
           "internalLevelValue": 11,
-          "noteDesigner": null,
+          "noteDesigner": "Luxizhel",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 354,
+            "hold": 43,
+            "slide": 42,
+            "touch": 10,
+            "break": 19,
+            "total": 468
           },
           "regions": {
             "jp": true,
@@ -159415,14 +159301,14 @@
           "levelValue": 13.7,
           "internalLevel": "13.8",
           "internalLevelValue": 13.8,
-          "noteDesigner": null,
+          "noteDesigner": "はっぴー",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 625,
+            "hold": 17,
+            "slide": 114,
+            "touch": 29,
+            "break": 20,
+            "total": 805
           },
           "regions": {
             "jp": true,
@@ -159439,7 +159325,7 @@
       "category": "maimai",
       "title": "シックスプラン",
       "artist": "針原翼（はりーP）feat. はく",
-      "bpm": null,
+      "bpm": 120,
       "imageName": "a665d5c6848e3f008647340b6bb87270795845609a803a919494f2d74da19630.png",
       "version": "BUDDiES",
       "releaseDate": "2023-12-22",
@@ -159501,7 +159387,7 @@
           "levelValue": 9,
           "internalLevel": null,
           "internalLevelValue": 9,
-          "noteDesigner": null,
+          "noteDesigner": "サファ太",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -159525,13 +159411,13 @@
           "levelValue": 13,
           "internalLevel": "13.2",
           "internalLevelValue": 13.2,
-          "noteDesigner": null,
+          "noteDesigner": "みそかつ侍",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
+            "tap": 447,
+            "hold": 28,
+            "slide": 92,
+            "touch": 29,
+            "break": 36,
             "total": 632
           },
           "regions": {
@@ -159549,7 +159435,7 @@
       "category": "maimai",
       "title": "フタタビ",
       "artist": "KAZE Lab",
-      "bpm": null,
+      "bpm": 136,
       "imageName": "2273fbf6a95bceee310bf34b1b0080e599403a622c854fe3402a1b06c7f2ae01.png",
       "version": "BUDDiES",
       "releaseDate": "2023-12-22",
@@ -159611,14 +159497,14 @@
           "levelValue": 11,
           "internalLevel": null,
           "internalLevelValue": 11,
-          "noteDesigner": null,
+          "noteDesigner": "鳩ホルダー",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 306,
+            "hold": 35,
+            "slide": 59,
+            "touch": 30,
+            "break": 20,
+            "total": 450
           },
           "regions": {
             "jp": true,
@@ -159635,13 +159521,13 @@
           "levelValue": 13,
           "internalLevel": "13.4",
           "internalLevelValue": 13.4,
-          "noteDesigner": null,
+          "noteDesigner": "Luxizhel",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
+            "tap": 573,
+            "hold": 24,
+            "slide": 97,
+            "touch": 11,
+            "break": 27,
             "total": 732
           },
           "regions": {
@@ -160029,7 +159915,7 @@
       "category": "niconico＆ボーカロイド",
       "title": "RAD DOGS",
       "artist": "八王子P / 初音ミク / Vivid BAD SQUAD「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
-      "bpm": null,
+      "bpm": 140,
       "imageName": "15e89ff7086150bd13708ea6150a5f264e5ac1c7918f596ab852b0f3f2a0f7c7.png",
       "version": "BUDDiES",
       "releaseDate": "2024-01-11",
@@ -160091,14 +159977,14 @@
           "levelValue": 10,
           "internalLevel": null,
           "internalLevelValue": 10,
-          "noteDesigner": null,
+          "noteDesigner": "鳩ホルダー",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 280,
+            "hold": 58,
+            "slide": 29,
+            "touch": 7,
+            "break": 30,
+            "total": 404
           },
           "regions": {
             "jp": true,
@@ -160115,7 +160001,7 @@
           "levelValue": 13,
           "internalLevel": "13.0",
           "internalLevelValue": 13,
-          "noteDesigner": null,
+          "noteDesigner": "Luxizhel",
           "noteCounts": {
             "tap": 505,
             "hold": 37,
@@ -160249,7 +160135,7 @@
       "category": "niconico＆ボーカロイド",
       "title": "にっこり^^調査隊のテーマ",
       "artist": "ワンダフル☆オポチュニティ！ / 初音ミク / ワンダーランズ×ショウタイム「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
-      "bpm": null,
+      "bpm": 180,
       "imageName": "7cb366f1bc007173af960303405073154a2aaa134527ddbba54ed8a289b4e53a.png",
       "version": "BUDDiES",
       "releaseDate": "2024-01-11",
@@ -160311,14 +160197,14 @@
           "levelValue": 10,
           "internalLevel": null,
           "internalLevelValue": 10,
-          "noteDesigner": null,
+          "noteDesigner": "サファ太",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 354,
+            "hold": 46,
+            "slide": 29,
+            "touch": 9,
+            "break": 50,
+            "total": 488
           },
           "regions": {
             "jp": true,
@@ -160335,13 +160221,13 @@
           "levelValue": 12.7,
           "internalLevel": "12.8",
           "internalLevelValue": 12.8,
-          "noteDesigner": null,
+          "noteDesigner": "はっぴー",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
+            "tap": 345,
+            "hold": 110,
+            "slide": 109,
+            "touch": 67,
+            "break": 78,
             "total": 709
           },
           "regions": {
@@ -160705,12 +160591,12 @@
           "internalLevelValue": 3,
           "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 139,
+            "hold": 15,
+            "slide": 4,
+            "touch": 7,
+            "break": 16,
+            "total": 181
           },
           "regions": {
             "jp": true,
@@ -160729,12 +160615,12 @@
           "internalLevelValue": 6,
           "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 225,
+            "hold": 19,
+            "slide": 6,
+            "touch": 30,
+            "break": 10,
+            "total": 290
           },
           "regions": {
             "jp": true,
@@ -160795,6 +160681,216 @@
       ]
     },
     {
+      "songId": "渦状銀河のシンフォニエッタ",
+      "category": "maimai",
+      "title": "渦状銀河のシンフォニエッタ",
+      "artist": "山本真央樹",
+      "bpm": 238,
+      "imageName": "1cf8ab2e8f094a454cd5c69c9ff6d2ef7e99770b0be8148158b3982450401396.png",
+      "version": "BUDDiES",
+      "releaseDate": "2020-08-07",
+      "isNew": true,
+      "isLocked": false,
+      "sheets": [
+        {
+          "type": "dx",
+          "difficulty": "basic",
+          "level": "3",
+          "levelValue": 3,
+          "internalLevel": null,
+          "internalLevelValue": 3,
+          "noteDesigner": "-",
+          "noteCounts": {
+            "tap": 101,
+            "hold": 15,
+            "slide": 7,
+            "touch": 18,
+            "break": 10,
+            "total": 151
+          },
+          "regions": {
+            "jp": true,
+            "intl": true,
+            "cn": true
+          },
+          "isSpecial": false,
+          "version": "maimaiでらっくす PLUS",
+          "internalId": 11103
+        },
+        {
+          "type": "dx",
+          "difficulty": "advanced",
+          "level": "8",
+          "levelValue": 8,
+          "internalLevel": null,
+          "internalLevelValue": 8,
+          "noteDesigner": "-",
+          "noteCounts": {
+            "tap": 247,
+            "hold": 39,
+            "slide": 30,
+            "touch": 56,
+            "break": 13,
+            "total": 385
+          },
+          "regions": {
+            "jp": true,
+            "intl": true,
+            "cn": true
+          },
+          "isSpecial": false,
+          "version": "maimaiでらっくす PLUS",
+          "internalId": 11103
+        },
+        {
+          "type": "dx",
+          "difficulty": "expert",
+          "level": "11+",
+          "levelValue": 11.7,
+          "internalLevel": null,
+          "internalLevelValue": 11.7,
+          "noteDesigner": "華火職人",
+          "noteCounts": {
+            "tap": 385,
+            "hold": 78,
+            "slide": 46,
+            "touch": 9,
+            "break": 40,
+            "total": 558
+          },
+          "regions": {
+            "jp": true,
+            "intl": true,
+            "cn": true
+          },
+          "isSpecial": false,
+          "version": "maimaiでらっくす PLUS",
+          "internalId": 11103
+        },
+        {
+          "type": "dx",
+          "difficulty": "master",
+          "level": "14",
+          "levelValue": 14,
+          "internalLevel": "14.6",
+          "internalLevelValue": 14.6,
+          "noteDesigner": "ぴちネコ",
+          "noteCounts": {
+            "tap": 801,
+            "hold": 87,
+            "slide": 66,
+            "touch": 238,
+            "break": 22,
+            "total": 1214
+          },
+          "regions": {
+            "jp": true,
+            "intl": true,
+            "cn": true
+          },
+          "isSpecial": false,
+          "version": "maimaiでらっくす PLUS",
+          "internalId": 11103
+        },
+        {
+          "type": "std",
+          "difficulty": "basic",
+          "level": "5",
+          "levelValue": 5,
+          "internalLevel": null,
+          "internalLevelValue": 5,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "std",
+          "difficulty": "advanced",
+          "level": "9",
+          "levelValue": 9,
+          "internalLevel": null,
+          "internalLevelValue": 9,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "std",
+          "difficulty": "expert",
+          "level": "12+",
+          "levelValue": 12.7,
+          "internalLevel": null,
+          "internalLevelValue": 12.7,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "std",
+          "difficulty": "master",
+          "level": "14",
+          "levelValue": 14,
+          "internalLevel": null,
+          "internalLevelValue": 14,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        }
+      ]
+    },
+    {
       "songId": "The Great Banquet",
       "category": "maimai",
       "title": "The Great Banquet",
@@ -160803,7 +160899,7 @@
       "imageName": "4354fc3099928a1b30cbce2a0bf4bfc73631de47d05c6f1164de5421e26dd37e.png",
       "version": "BUDDiES",
       "releaseDate": "2024-02-02",
-      "isNew": true,
+      "isNew": false,
       "isLocked": true,
       "sheets": [
         {
@@ -160815,12 +160911,12 @@
           "internalLevelValue": 4,
           "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 205,
+            "hold": 15,
+            "slide": 7,
+            "touch": 11,
+            "break": 8,
+            "total": 246
           },
           "regions": {
             "jp": true,
@@ -160839,12 +160935,12 @@
           "internalLevelValue": 8,
           "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 306,
+            "hold": 29,
+            "slide": 2,
+            "touch": 28,
+            "break": 6,
+            "total": 371
           },
           "regions": {
             "jp": true,
@@ -160913,7 +161009,7 @@
       "imageName": "4d6061278a091301ecb92efb4c19f1467d9a4b40de554575064c1313d9685d3c.png",
       "version": "BUDDiES",
       "releaseDate": "2024-02-02",
-      "isNew": true,
+      "isNew": false,
       "isLocked": true,
       "sheets": [
         {
@@ -160925,12 +161021,12 @@
           "internalLevelValue": 4,
           "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 132,
+            "hold": 9,
+            "slide": 10,
+            "touch": 24,
+            "break": 6,
+            "total": 181
           },
           "regions": {
             "jp": true,
@@ -160949,12 +161045,12 @@
           "internalLevelValue": 7.7,
           "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 244,
+            "hold": 29,
+            "slide": 9,
+            "touch": 30,
+            "break": 10,
+            "total": 322
           },
           "regions": {
             "jp": true,
@@ -161023,7 +161119,7 @@
       "imageName": "2707888eb33ce6db6f29361a89ff465524e7e63902ba0821ee0c61838fe0ee09.png",
       "version": "BUDDiES",
       "releaseDate": "2024-02-02",
-      "isNew": true,
+      "isNew": false,
       "isLocked": true,
       "sheets": [
         {
@@ -161035,12 +161131,12 @@
           "internalLevelValue": 4,
           "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 138,
+            "hold": 22,
+            "slide": 4,
+            "touch": 8,
+            "break": 6,
+            "total": 178
           },
           "regions": {
             "jp": true,
@@ -161059,12 +161155,12 @@
           "internalLevelValue": 7.7,
           "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 242,
+            "hold": 18,
+            "slide": 6,
+            "touch": 30,
+            "break": 4,
+            "total": 300
           },
           "regions": {
             "jp": true,
@@ -161133,7 +161229,7 @@
       "imageName": "8fc940a2fcffd56224e372b2a57888e84ca295c43609dad8a185b14227caf2a8.png",
       "version": "BUDDiES",
       "releaseDate": "2024-02-02",
-      "isNew": true,
+      "isNew": false,
       "isLocked": true,
       "sheets": [
         {
@@ -161191,13 +161287,13 @@
           "levelValue": 12,
           "internalLevel": null,
           "internalLevelValue": 12,
-          "noteDesigner": null,
+          "noteDesigner": "サファ太",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
+            "tap": 310,
+            "hold": 81,
+            "slide": 40,
+            "touch": 40,
+            "break": 51,
             "total": 522
           },
           "regions": {
@@ -161217,12 +161313,452 @@
           "internalLevelValue": 14.7,
           "noteDesigner": "Jack",
           "noteCounts": {
+            "tap": 777,
+            "hold": 62,
+            "slide": 85,
+            "touch": 121,
+            "break": 64,
+            "total": 1111
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        }
+      ]
+    },
+    {
+      "songId": "ジェヘナ",
+      "category": "niconico＆ボーカロイド",
+      "title": "ジェヘナ",
+      "artist": "wotaku",
+      "bpm": null,
+      "imageName": "dfbce1f2050046e0ac47872ce5d911e77b30e987b828150225c187c3dfa5272c.png",
+      "version": "BUDDiES",
+      "releaseDate": "2024-02-16",
+      "isNew": true,
+      "isLocked": false,
+      "sheets": [
+        {
+          "type": "dx",
+          "difficulty": "basic",
+          "level": "2",
+          "levelValue": 2,
+          "internalLevel": null,
+          "internalLevelValue": 2,
+          "noteDesigner": null,
+          "noteCounts": {
             "tap": null,
             "hold": null,
             "slide": null,
             "touch": null,
             "break": null,
-            "total": 1111
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "advanced",
+          "level": "6",
+          "levelValue": 6,
+          "internalLevel": null,
+          "internalLevelValue": 6,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "expert",
+          "level": "9+",
+          "levelValue": 9.7,
+          "internalLevel": null,
+          "internalLevelValue": 9.7,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "master",
+          "level": "13",
+          "levelValue": 13,
+          "internalLevel": null,
+          "internalLevelValue": 13,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        }
+      ]
+    },
+    {
+      "songId": "ツギハギスタッカート",
+      "category": "niconico＆ボーカロイド",
+      "title": "ツギハギスタッカート",
+      "artist": "とあ",
+      "bpm": null,
+      "imageName": "13c1e24f58a49d0ee3655da022554a74c57a6b66a45618d2a0868dc7369ab8d4.png",
+      "version": "BUDDiES",
+      "releaseDate": "2024-02-16",
+      "isNew": true,
+      "isLocked": false,
+      "sheets": [
+        {
+          "type": "dx",
+          "difficulty": "basic",
+          "level": "1",
+          "levelValue": 1,
+          "internalLevel": null,
+          "internalLevelValue": 1,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "advanced",
+          "level": "6",
+          "levelValue": 6,
+          "internalLevel": null,
+          "internalLevelValue": 6,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "expert",
+          "level": "9",
+          "levelValue": 9,
+          "internalLevel": null,
+          "internalLevelValue": 9,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "master",
+          "level": "12+",
+          "levelValue": 12.7,
+          "internalLevel": null,
+          "internalLevelValue": 12.7,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        }
+      ]
+    },
+    {
+      "songId": "HANIPAGANDA",
+      "category": "東方Project",
+      "title": "HANIPAGANDA",
+      "artist": "暁Records",
+      "bpm": null,
+      "imageName": "8ed763dfe0fff00c8bfb7834363731f91408ef7e445a07a798b952aa8638fbd1.png",
+      "version": "BUDDiES",
+      "releaseDate": "2024-02-16",
+      "isNew": true,
+      "isLocked": false,
+      "sheets": [
+        {
+          "type": "dx",
+          "difficulty": "basic",
+          "level": "4",
+          "levelValue": 4,
+          "internalLevel": null,
+          "internalLevelValue": 4,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "advanced",
+          "level": "7",
+          "levelValue": 7,
+          "internalLevel": null,
+          "internalLevelValue": 7,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "expert",
+          "level": "11+",
+          "levelValue": 11.7,
+          "internalLevel": null,
+          "internalLevelValue": 11.7,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "master",
+          "level": "13",
+          "levelValue": 13,
+          "internalLevel": "13.6",
+          "internalLevelValue": 13.6,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        }
+      ]
+    },
+    {
+      "songId": "Rush-Hour",
+      "category": "ゲーム＆バラエティ",
+      "title": "Rush-Hour",
+      "artist": "litmus*",
+      "bpm": null,
+      "imageName": "87754d363b458fd6cf6f4a2b4d95fcb0e25e2f498df10bd8ac0eb88317eb6eb6.png",
+      "version": "BUDDiES",
+      "releaseDate": "2024-02-16",
+      "isNew": true,
+      "isLocked": false,
+      "sheets": [
+        {
+          "type": "dx",
+          "difficulty": "basic",
+          "level": "4",
+          "levelValue": 4,
+          "internalLevel": null,
+          "internalLevelValue": 4,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "advanced",
+          "level": "8+",
+          "levelValue": 8.7,
+          "internalLevel": null,
+          "internalLevelValue": 8.7,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "expert",
+          "level": "12",
+          "levelValue": 12,
+          "internalLevel": null,
+          "internalLevelValue": 12,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
+          },
+          "regions": {
+            "jp": true,
+            "intl": false,
+            "cn": false
+          },
+          "isSpecial": false,
+          "version": "BUDDiES"
+        },
+        {
+          "type": "dx",
+          "difficulty": "master",
+          "level": "13+",
+          "levelValue": 13.7,
+          "internalLevel": "13.8",
+          "internalLevelValue": 13.8,
+          "noteDesigner": null,
+          "noteCounts": {
+            "tap": null,
+            "hold": null,
+            "slide": null,
+            "touch": null,
+            "break": null,
+            "total": null
           },
           "regions": {
             "jp": true,
@@ -161410,5 +161946,5 @@
       "name": "中国版 (舞萌DX)"
     }
   ],
-  "updateTime": "2024-02-06T17:17:01.806Z"
+  "updateTime": "2024-02-16T03:09:00.087Z"
 }
