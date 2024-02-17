@@ -86,6 +86,4 @@ jobs:
         with:
           version: latest
 
-      - run: cd apps/web
-
       - run: supabase functions deploy --project-ref $PROJECT_ID
