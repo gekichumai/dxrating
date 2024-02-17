@@ -153,7 +153,7 @@ async function handleJP({ segaID, segaIDPassword }: AuthParams) {
     }),
   });
   await session.fetch(URLS.JP.LOGIN_AIMELIST);
-  const recordPageResponse = await session.fetch(URLS.INTL.RECORD_PAGE);
+  const recordPageResponse = await session.fetch(URLS.JP.RECORD_PAGE);
   const recordPageText = await recordPageResponse.text();
   const recordPage = new DOMParser().parseFromString(
     recordPageText,
@@ -216,9 +216,9 @@ async function handle(req: Request) {
   }
 
   if (region === "intl") {
-    await handleINTL({ segaID, segaIDPassword });
+    return await handleINTL({ segaID, segaIDPassword });
   } else if (region === "jp") {
-    await handleJP({ segaID, segaIDPassword });
+    return await handleJP({ segaID, segaIDPassword });
   } else {
     throw new Error("unsupported region");
   }
