@@ -15,6 +15,7 @@
     "gen:supabase": "supabase gen types typescript --project-id lbtpnmdffuimikksrvns > src/models/supabase.types.ts"
   },
   "dependencies": {
+    "@capacitor/android": "^5.7.0",
     "@capacitor/core": "^5.5.0",
     "@capacitor/ios": "^5.5.0",
     "@emotion/react": "^11.11.3",

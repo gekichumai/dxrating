@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DXRating</string>
+    <string name="title_activity_main">DXRating</string>
+    <string name="package_name">dev.imgg.gekichumai.dxrating</string>
+    <string name="custom_url_scheme">dev.imgg.gekichumai.dxrating</string>
+</resources>
