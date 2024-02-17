@@ -2,6 +2,7 @@ import {
   Cookie,
   getSetCookies,
 } from "https://deno.land/std@0.216.0/http/cookie.ts";
+import { URLS } from "./URLS.ts";
 
 const COMMON_HEADERS = {
   Accept:
@@ -47,7 +48,7 @@ export class Session {
 
   async fetch(url: string, init?: RequestInit) {
     const requestURL = new URL(url);
-    const cookies = this.getCookies(new URL(url).hostname);
+    const cookies = this.getCookies(requestURL.hostname);
     const initHeaders = {
       ...init?.headers,
       Referer: `${requestURL.protocol}//${requestURL.hostname}`,
@@ -61,7 +62,17 @@ export class Session {
     const mergedInit = { redirect: "manual" as const, ...init, headers };
 
     const res = await fetch(url, mergedInit);
-    this.setCookie(new URL(url).hostname, res.headers);
+    this.setCookie(requestURL.hostname, res.headers);
+
+    if (
+      res.status === 302 &&
+      URLS.CHECKLIST.ERROR.includes(res.headers.get("location") ?? "")
+    ) {
+      throw new Error(
+        "unknown error occurred: response redirects to error page"
+      );
+    }
+
     return res;
   }
 }

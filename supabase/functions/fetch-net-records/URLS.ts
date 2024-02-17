@@ -14,4 +14,11 @@ export const URLS = {
     HOMEPAGE: "https://maimaidx.jp/maimai-mobile/home/",
     RECORD_PAGE: "https://maimaidx.jp/maimai-mobile/record",
   },
+
+  CHECKLIST: {
+    ERROR: [
+      "https://maimaidx-eng.com/maimai-mobile/error/",
+      "https://maimaidx.jp/maimai-mobile/error/",
+    ],
+  },
 };
