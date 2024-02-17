@@ -215,24 +215,58 @@ export const RatingCalculator = () => {
     };
   }, [entries, sheets, appVersion]);
 
-  const { b15Average, b35Average } = useMemo(() => {
-    const b15Average =
-      b15Entries.reduce(
-        (acc, entry) => acc + (entry.rating?.ratingAwardValue ?? 0),
-        0,
-      ) / b15Entries.length;
+  const { b15Average, b35Average, b15Min, b35Min, b15Max, b35Max } =
+    useMemo(() => {
+      const eligibleRatingEntriesB15 = b15Entries.filter(
+        (entry) => entry.rating,
+      );
+      const eligibleRatingEntriesB35 = b35Entries.filter(
+        (entry) => entry.rating,
+      );
 
-    const b35Average =
-      b35Entries.reduce(
-        (acc, entry) => acc + (entry.rating?.ratingAwardValue ?? 0),
-        0,
-      ) / b35Entries.length;
+      const b15Average =
+        eligibleRatingEntriesB15.reduce(
+          (acc, entry) => acc + entry.rating!.ratingAwardValue,
+          0,
+        ) / b15Entries.length;
 
-    return {
-      b15Average,
-      b35Average,
-    };
-  }, [b15Entries, b35Entries]);
+      const b35Average =
+        eligibleRatingEntriesB35.reduce(
+          (acc, entry) => acc + entry.rating!.ratingAwardValue,
+          0,
+        ) / b35Entries.length;
+
+      const b15Min = Math.min(
+        ...eligibleRatingEntriesB15.map(
+          (entry) => entry.rating!.ratingAwardValue,
+        ),
+      );
+      const b35Min = Math.min(
+        ...eligibleRatingEntriesB35.map(
+          (entry) => entry.rating!.ratingAwardValue,
+        ),
+      );
+
+      const b15Max = Math.max(
+        ...eligibleRatingEntriesB15.map(
+          (entry) => entry.rating!.ratingAwardValue,
+        ),
+      );
+      const b35Max = Math.max(
+        ...eligibleRatingEntriesB35.map(
+          (entry) => entry.rating!.ratingAwardValue,
+        ),
+      );
+
+      return {
+        b15Average,
+        b35Average,
+        b15Min,
+        b35Min,
+        b15Max,
+        b35Max,
+      };
+    }, [b15Entries, b35Entries]);
 
   const columns = useMemo(
     () => [
@@ -343,12 +377,12 @@ export const RatingCalculator = () => {
         <div className="flex flex-col md:flex-row items-start gap-4">
           <Alert severity="info" className="w-full">
             <AlertTitle>Your current rating</AlertTitle>
-            <Table className="-ml-2">
+            <Table className="-ml-2 w-full">
               <TableHead>
                 <TableRow>
                   <DenseTableCell className="w-sm">Item</DenseTableCell>
                   <DenseTableCell>Matches</DenseTableCell>
-                  <DenseTableCell>Average</DenseTableCell>
+                  <DenseTableCell>Statistics</DenseTableCell>
                   <DenseTableCell>Total</DenseTableCell>
                 </TableRow>
               </TableHead>
@@ -362,7 +396,19 @@ export const RatingCalculator = () => {
                     </div>
                   </DenseTableCell>
                   <DenseTableCell>{b15Entries.length}</DenseTableCell>
-                  <DenseTableCell>{b15Average.toFixed(2)}</DenseTableCell>
+                  <DenseTableCell>
+                    {b15Entries.length > 0 ? (
+                      <div className="flex flex-col items-start">
+                        <span className="whitespace-nowrap">
+                          Avg: {b15Average.toFixed(2)}
+                        </span>
+                        <span className="whitespace-nowrap">Min: {b15Min}</span>
+                        <span className="whitespace-nowrap">Max: {b15Max}</span>
+                      </div>
+                    ) : (
+                      "—"
+                    )}
+                  </DenseTableCell>
 
                   <DenseTableCell>
                     {b15Entries.reduce(
@@ -382,7 +428,19 @@ export const RatingCalculator = () => {
                     </div>
                   </DenseTableCell>
                   <DenseTableCell>{b35Entries.length}</DenseTableCell>
-                  <DenseTableCell>{b35Average.toFixed(2)}</DenseTableCell>
+                  <DenseTableCell>
+                    {b35Entries.length > 0 ? (
+                      <div className="flex flex-col items-start">
+                        <span className="whitespace-nowrap">
+                          Avg: {b35Average.toFixed(2)}
+                        </span>
+                        <span className="whitespace-nowrap">Min: {b35Min}</span>
+                        <span className="whitespace-nowrap">Max: {b35Max}</span>
+                      </div>
+                    ) : (
+                      "—"
+                    )}
+                  </DenseTableCell>
                   <DenseTableCell>
                     {b35Entries.reduce(
                       (sum, entry) =>
@@ -490,7 +548,9 @@ export const RatingCalculator = () => {
           />
 
           {allEntries.length === 0 && (
-            <TableCell colSpan={5}>No entries</TableCell>
+            <div className="w-full text-sm py-8 px-4 text-center">
+              No entries
+            </div>
           )}
         </div>
       </div>
