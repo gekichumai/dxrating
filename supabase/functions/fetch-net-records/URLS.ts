@@ -7,8 +7,11 @@ export const URLS = {
   },
   JP: {
     LOGIN_PAGE: "https://maimaidx.jp/maimai-mobile/",
-    LOGIN_ENDPOINT: "https://lng-tgk-aime-gw.am-all.net/common_auth/login/sid/",
-    LOGIN_AIMELIST: "https://maimaidx.jp/maimai-mobile/aimeList/submit/?idx=0",
+    LOGIN_ENDPOINT: "https://maimaidx.jp/maimai-mobile/submit/",
+    LOGIN_AIMELIST: "https://maimaidx.jp/maimai-mobile/aimeList/",
+    LOGIN_AIMELIST_SUBMIT:
+      "https://maimaidx.jp/maimai-mobile/aimeList/submit/?idx=0",
+    HOMEPAGE: "https://maimaidx.jp/maimai-mobile/home/",
     RECORD_PAGE: "https://maimaidx.jp/maimai-mobile/record",
   },
 };

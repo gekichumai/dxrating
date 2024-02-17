@@ -1,4 +1,7 @@
-import { getSetCookies } from "https://deno.land/std@0.216.0/http/cookie.ts";
+import {
+  Cookie,
+  getSetCookies,
+} from "https://deno.land/std@0.216.0/http/cookie.ts";
 
 const COMMON_HEADERS = {
   Accept:
@@ -18,13 +21,17 @@ const COMMON_HEADERS = {
 };
 
 export class Session {
-  #cookies = new Map<string, string[]>();
+  #cookies = new Map<string, Cookie[]>();
 
   setCookie(hostname: string, headers: Headers) {
     const existingCookies = this.#cookies.get(hostname) ?? [];
 
     for (const cookie of getSetCookies(headers)) {
-      existingCookies.push(`${cookie.name}=${cookie.value}`);
+      const exist = existingCookies.findIndex((e) => e.name === cookie.name);
+      if (exist >= 0) {
+        existingCookies.splice(exist, 1);
+      }
+      existingCookies.push(cookie);
     }
 
     this.#cookies.set(hostname, existingCookies);
@@ -43,17 +50,18 @@ export class Session {
     const cookies = this.getCookies(new URL(url).hostname);
     const initHeaders = {
       ...init?.headers,
-      Referer: `${requestURL.protocol}://${requestURL.hostname}`,
+      Referer: `${requestURL.protocol}//${requestURL.hostname}`,
       ...COMMON_HEADERS,
     };
     const headers = new Headers(initHeaders);
-    headers.set("Cookie", cookies.join("; "));
+    headers.set(
+      "Cookie",
+      cookies.map((c) => `${c.name}=${c.value}`).join("; ")
+    );
     const mergedInit = { redirect: "manual" as const, ...init, headers };
 
-    console.debug("fetching", url, mergedInit);
     const res = await fetch(url, mergedInit);
     this.setCookie(new URL(url).hostname, res.headers);
-    console.debug("  fetched", res.status, res.headers);
     return res;
   }
 }

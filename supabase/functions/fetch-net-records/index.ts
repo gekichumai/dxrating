@@ -140,19 +140,21 @@ async function handleJP({ segaID, segaIDPassword }: AuthParams) {
     ?.attributes.getNamedItem("value")?.value;
   if (!loginPageToken) throw new Error("unable to fetch token");
 
-  await session.fetch(URLS.INTL.LOGIN_ENDPOINT, {
+  await session.fetch(URLS.JP.LOGIN_ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
-      sid: segaID,
+      segaId: segaID,
       password: segaIDPassword,
-      retention: "1",
+      save_cookie: "on",
       token: loginPageToken,
     }),
   });
   await session.fetch(URLS.JP.LOGIN_AIMELIST);
+  await session.fetch(URLS.JP.LOGIN_AIMELIST_SUBMIT);
+  await session.fetch(URLS.JP.HOMEPAGE);
   const recordPageResponse = await session.fetch(URLS.JP.RECORD_PAGE);
   const recordPageText = await recordPageResponse.text();
   const recordPage = new DOMParser().parseFromString(
