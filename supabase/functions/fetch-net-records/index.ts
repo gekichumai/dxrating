@@ -127,11 +127,11 @@ function parseNode(record: Node) {
 }
 
 interface AuthParams {
-  segaID: string;
-  segaIDPassword: string;
+  id: string;
+  password: string;
 }
 
-async function handleJP({ segaID, segaIDPassword }: AuthParams) {
+async function handleJP({ id, password }: AuthParams) {
   const session = new Session();
   const loginPageText = await (await session.fetch(URLS.JP.LOGIN_PAGE)).text();
   const loginPage = new DOMParser().parseFromString(loginPageText, "text/html");
@@ -146,8 +146,8 @@ async function handleJP({ segaID, segaIDPassword }: AuthParams) {
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
-      segaId: segaID,
-      password: segaIDPassword,
+      segaId: id,
+      password: password,
       save_cookie: "on",
       token: loginPageToken,
     }),
@@ -172,7 +172,7 @@ async function handleJP({ segaID, segaIDPassword }: AuthParams) {
   };
 }
 
-async function handleINTL({ segaID, segaIDPassword }: AuthParams) {
+async function handleINTL({ id, password }: AuthParams) {
   const session = new Session();
   await session.fetch(URLS.INTL.LOGIN_PAGE);
   const redirectURL = (
@@ -182,8 +182,8 @@ async function handleINTL({ segaID, segaIDPassword }: AuthParams) {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
-        sid: segaID,
-        password: segaIDPassword,
+        sid: id,
+        password: password,
         retention: "1",
       }),
     })
@@ -210,17 +210,17 @@ async function handleINTL({ segaID, segaIDPassword }: AuthParams) {
 }
 
 async function handle(req: Request) {
-  const { segaID, segaIDPassword, region } = await req.json();
-  if (!segaID || !segaIDPassword) {
+  const { id, password, region } = await req.json();
+  if (!id || !password) {
     throw new Error(
-      "segaID and segaIDPassword are required parameters but has not been provided."
+      "`id` and `password` are required parameters but has not been provided"
     );
   }
 
   if (region === "intl") {
-    return await handleINTL({ segaID, segaIDPassword });
+    return await handleINTL({ id, password });
   } else if (region === "jp") {
-    return await handleJP({ segaID, segaIDPassword });
+    return await handleJP({ id, password });
   } else {
     throw new Error("unsupported region");
   }
