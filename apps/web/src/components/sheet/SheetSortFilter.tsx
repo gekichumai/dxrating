@@ -19,6 +19,7 @@ import { SheetDetailsContext } from "../../models/context/SheetDetailsContext";
 import { FlattenedSheet } from "../../songs";
 import { SheetSortSelect } from "./SheetSortSelect";
 import { SheetInternalLevelFilter } from "./filters/SheetInternalLevelFilter";
+import { SheetTagFilter } from "./filters/SheetTagFilter";
 import { SheetVersionFilter } from "./filters/SheetVersionFilter";
 export interface SortPredicate {
   descriptor: keyof FlattenedSheet;
@@ -32,6 +33,7 @@ export interface SheetSortFilterForm {
       min: number;
       max: number;
     };
+    tags: number[];
   };
   sorts: SortPredicate[];
 }
@@ -43,6 +45,7 @@ export const getDefaultSheetSortFilterForm = (): SheetSortFilterForm => ({
       min: 1.0,
       max: 15.0,
     },
+    tags: [],
   },
   sorts: [
     {
@@ -51,6 +54,16 @@ export const getDefaultSheetSortFilterForm = (): SheetSortFilterForm => ({
     },
   ],
 });
+
+export const applySheetSortFilterFormPatches = (
+  alreadySaved: SheetSortFilterForm,
+): SheetSortFilterForm => {
+  if (alreadySaved.filters.tags === undefined) {
+    alreadySaved.filters.tags = [];
+  }
+
+  return alreadySaved;
+};
 
 export const SheetSortFilter: FC<{
   onChange?: (form: SheetSortFilterForm) => void;
@@ -61,7 +74,9 @@ export const SheetSortFilter: FC<{
     );
     if (alreadySaved) {
       try {
-        return JSON.parse(alreadySaved) as SheetSortFilterForm;
+        return applySheetSortFilterFormPatches(
+          JSON.parse(alreadySaved) as SheetSortFilterForm,
+        );
       } catch (e) {
         console.warn("Failed to parse saved sort filter", e);
       }
@@ -191,8 +206,9 @@ const SheetSortFilterForm = () => {
                 {t("sheet:filter.title")}
               </span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <SheetVersionFilter control={control} />
+              <SheetTagFilter control={control} />
               <SheetInternalLevelFilter control={control} />
             </div>
           </div>

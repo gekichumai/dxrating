@@ -243,17 +243,12 @@ serve(async (req) => {
 
   try {
     const data = await handle(req);
-    return new Response(JSON.stringify(data), {
-      headers: { "Content-Type": "application/json" },
-    });
+    return Response.json(data);
   } catch (e) {
     let message = "An unknown error occurred";
     if (e instanceof Error) {
       message = e.message;
     }
-    return new Response(JSON.stringify({ message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return Response.json({ message }, { status: 500 });
   }
 });

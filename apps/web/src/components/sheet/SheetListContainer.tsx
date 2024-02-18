@@ -19,13 +19,14 @@ export const SheetListContainer = ({
   );
 
   return (
-    <div className={clsx("rounded w-full", listContainerClassName)}>
+    <div className={clsx("w-full", listContainerClassName)}>
       <Virtuoso
         useWindowScroll
         data={sheets}
         itemContent={ItemContent}
         className="w-full min-h-[100lvh]"
         increaseViewportBy={500}
+        initialItemCount={Math.min(sheets.length, 20)}
       />
     </div>
   );

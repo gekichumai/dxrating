@@ -20,9 +20,13 @@ const chainEvery =
   (arg: T) =>
     fns.every((fn) => fn(arg));
 
+const skeletonWidths = Array.from({ length: 20 }).map(
+  () => Math.random() * 6.0 + 5.5,
+);
+
 const SheetListInner: FC = () => {
   const { t } = useTranslation(["sheet"]);
-  const { data: sheets } = useSheets();
+  const { data: sheets, isLoading } = useSheets();
   const { setQueryActive } = useContext(SheetDetailsContext);
   const [query, setQuery] = useState("");
   const { results, elapsed: searchElapsed } = useFilteredSheets(query);
@@ -39,12 +43,24 @@ const SheetListInner: FC = () => {
             if (sortFilterOptions.filters.internalLevelValue) {
               const { min, max } = sortFilterOptions.filters.internalLevelValue;
               return v.internalLevelValue >= min && v.internalLevelValue <= max;
+            } else {
+              return true;
             }
           },
           (v) => {
             if (sortFilterOptions.filters.versions) {
               const versions = sortFilterOptions.filters.versions;
               return versions.includes(v.version);
+            } else {
+              return true;
+            }
+          },
+          (v) => {
+            if (sortFilterOptions.filters.tags.length) {
+              const tags = sortFilterOptions.filters.tags;
+              return tags.every((tag) => v.tags.includes(tag));
+            } else {
+              return true;
             }
           },
         )(sheet);
@@ -106,13 +122,41 @@ const SheetListInner: FC = () => {
 
       <Alert severity="info" className="text-sm !rounded-full shadow-lg">
         {t("sheet:search-summary", {
-          found: filteredResults.length,
-          total: sheets?.length,
+          found: isLoading ? "..." : filteredResults.length,
+          total: isLoading ? "..." : sheets?.length,
           elapsed: (searchElapsed + filteringElapsed).toFixed(1),
         })}
       </Alert>
 
-      <SheetListContainer sheets={filteredResults} />
+      {isLoading ? (
+        <div className="flex flex-col w-full">
+          {skeletonWidths.map((width, i) => (
+            <div
+              className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] px-5 py-2"
+              key={i}
+              style={{
+                animationDelay: `${i * 40}ms`,
+              }}
+            >
+              <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] rounded bg-slate-6/50"></div>
+              <div className="flex flex-col gap-1">
+                <div
+                  className="bg-slate-5/50 h-5 mb-1"
+                  style={{ width: `${width}rem` }}
+                >
+                  &nbsp;
+                </div>
+                <div className="w-24 bg-slate-3/50 h-3">&nbsp;</div>
+              </div>
+
+              <div className="flex-1" />
+              <div className="w-10 bg-slate-5/50 h-6 mr-2">&nbsp;</div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <SheetListContainer sheets={filteredResults} />
+      )}
     </div>
   );
 };

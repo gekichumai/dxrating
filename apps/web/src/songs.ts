@@ -14,12 +14,14 @@ import {
   useAppContext,
   useAppContextDXDataVersion,
 } from "./models/context/useAppContext";
+import { supabase } from "./models/supabase";
 
 export type FlattenedSheet = Song &
   Sheet & {
     id: string;
     isTypeUtage: boolean;
     isRatingEligible: boolean;
+    tags: number[];
   };
 
 export const canonicalId = (song: Song, sheet: Sheet) => {
@@ -75,9 +77,38 @@ export const getFlattenedSheets = async (
 export const useSheets = () => {
   const { version } = useAppContext();
   const appVersion = useAppContextDXDataVersion();
-  return useSWR(`dxdata:sheets:${version}`, () =>
-    getFlattenedSheets(appVersion),
-  );
+  return useSWR(`dxdata:sheets:${version}`, async () => {
+    const [relations, sheets] = await Promise.all([
+      supabase
+        .from("tag_songs")
+        .select("song_id, sheet_type, sheet_difficulty, tag_id"),
+      getFlattenedSheets(appVersion),
+    ]);
+
+    if (!relations.data) {
+      return sheets.map((sheet) => ({
+        ...sheet,
+        tags: [],
+      }));
+    }
+
+    const map = new Map<string, number[]>();
+    for (const relation of relations.data) {
+      const canonical = canonicalIdFromParts(
+        relation.song_id,
+        relation.sheet_type,
+        relation.sheet_difficulty,
+      );
+      const tags = map.get(canonical) ?? [];
+      tags.push(relation.tag_id);
+      map.set(canonical, tags);
+    }
+
+    return sheets.map((sheet) => ({
+      ...sheet,
+      tags: map.get(sheet.id) ?? [],
+    }));
+  });
 };
 
 export const useSongs = () => {

@@ -65,6 +65,9 @@
           "tap": "Toggle",
           "tap-hold": "Select"
         }
+      },
+      "tags": {
+        "title": "Tags"
       }
     },
     "sort": {
