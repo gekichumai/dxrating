@@ -47,8 +47,7 @@ function parseNode(record: Node) {
   const typeIcon = el
     .querySelector(".playlog_music_kind_icon")
     ?.attributes.getNamedItem("src");
-  // match music_("std"|"dx").png
-  const type = typeIcon?.value.match(/music_(std|dx)\.png/)?.[1];
+  const type = typeIcon?.value.match(/music_(standard|dx)\.png/)?.[1];
 
   const difficultyIcon = el
     .querySelector(".playlog_diff")
@@ -68,6 +67,7 @@ function parseNode(record: Node) {
     }) as [number, number];
 
   if (dxScorePair.length !== 2) {
+    console.warn("[parseNode] invalid dx score pair:", dxScorePair);
     return [] as const;
   }
 
@@ -81,7 +81,13 @@ function parseNode(record: Node) {
     "$1-$2-$3T$4:$5:00+09:00"
   );
 
-  if (!songId || !type || !difficulty || !achievementRate) {
+  if (!songId || !type || !difficulty) {
+    console.warn(
+      "[parseNode] missing required fields:",
+      songId,
+      type,
+      difficulty
+    );
     return [] as const;
   }
 
@@ -93,6 +99,10 @@ function parseNode(record: Node) {
     const el = flagImage as Element;
     const src = el.attributes.getNamedItem("src")?.value;
     if (!src) {
+      console.warn(
+        "[parseNode] missing src attribute on flag image",
+        el.innerHTML
+      );
       continue;
     }
     const flag = (Object.keys(flagMatchers) as Flag[]).find((key) =>

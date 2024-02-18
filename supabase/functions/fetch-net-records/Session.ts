@@ -7,7 +7,7 @@ import { URLS } from "./URLS.ts";
 const COMMON_HEADERS = {
   Accept:
     "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-  "Accept-Language": "ja,en-US;q=0.9,en;q=0.8,zh;q=0.7",
+  "Accept-Language": "ja;q=0.9,en;q=0.8",
   DNT: "1",
   "User-Agent":
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
@@ -60,10 +60,10 @@ export class Session {
       cookies.map((c) => `${c.name}=${c.value}`).join("; ")
     );
     const mergedInit = {
-      redirect: "manual" as const,
+      redirect: "manual",
       ...init,
       headers,
-    };
+    } satisfies RequestInit;
 
     const res = await fetch(url, mergedInit);
     this.setCookie(requestURL.hostname, res.headers);
