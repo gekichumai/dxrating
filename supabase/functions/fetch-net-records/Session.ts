@@ -21,13 +21,8 @@ const COMMON_HEADERS = {
   "sec-ch-ua-platform": '"macOS"',
 };
 
-const caCert = await Deno.readTextFile("./gsrsaovsslca2018.pem");
-
 export class Session {
   #cookies = new Map<string, Cookie[]>();
-  #agent = Deno.createHttpClient({
-    caCerts: [caCert],
-  });
 
   setCookie(hostname: string, headers: Headers) {
     const existingCookies = this.#cookies.get(hostname) ?? [];
@@ -68,7 +63,6 @@ export class Session {
       redirect: "manual" as const,
       ...init,
       headers,
-      client: this.#agent,
     };
 
     const res = await fetch(url, mergedInit);
