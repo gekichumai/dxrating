@@ -1,13 +1,15 @@
-name: Release Dispatcher
+name: Dispatch New Release
 
 on:
   # trigger on push to main branch
   push:
     branches:
       - main
+    paths-ignore:
+      - 'supabase/**'
 
 concurrency:
-  group: tagger-${{ github.ref }}
+  group: release-dispatcher-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
