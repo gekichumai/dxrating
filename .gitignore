@@ -16,6 +16,7 @@ build
 # misc
 .DS_Store
 *.pem
+!supabase/functions/fetch-net-records/gsrsaovsslca2018.pem
 
 # debug
 npm-debug.log*
