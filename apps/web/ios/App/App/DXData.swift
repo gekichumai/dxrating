@@ -80,14 +80,13 @@ struct Song: Codable, Identifiable {
     let bpm: Int?
     let imageName: String
     let version: VersionEnum
-    let releaseDate: String
     let isNew, isLocked: Bool
     let sheets: [Sheet]
     let searchAcronyms: [String]
 
     enum CodingKeys: String, CodingKey {
         case songID = "songId"
-        case category, title, artist, bpm, imageName, version, releaseDate, isNew, isLocked, sheets, searchAcronyms
+        case category, title, artist, bpm, imageName, version, isNew, isLocked, sheets, searchAcronyms
     }
 
     var coverImage: UIImage? {
@@ -114,7 +113,6 @@ struct Song: Codable, Identifiable {
                 bpm: 339,
                 imageName: "7a1e5ffd34a526f8fe79f16e7435fc57da813aa53f0b5d773e34fce202122651.png",
                 version: .buddies,
-                releaseDate: "2023-12-09",
                 isNew: true,
                 isLocked: true,
                 sheets: [
@@ -126,6 +124,7 @@ struct Song: Codable, Identifiable {
                         noteDesigner: "-",
                         noteCounts: .init(tap: nil, hold: nil, slide: nil, touch: nil, noteCountsBreak: nil, total: nil),
                         regions: .init(jp: true, intl: false, cn: false),
+                        releaseDate: "2023-12-09",
                         isSpecial: false,
                         version: .buddies,
                         multiverInternalLevelValue: nil,
@@ -140,6 +139,7 @@ struct Song: Codable, Identifiable {
                         noteDesigner: "-",
                         noteCounts: .init(tap: nil, hold: nil, slide: nil, touch: nil, noteCountsBreak: nil, total: nil),
                         regions: .init(jp: true, intl: false, cn: false),
+                        releaseDate: "2023-12-09",
                         isSpecial: false,
                         version: .buddies,
                         multiverInternalLevelValue: nil,
@@ -154,6 +154,7 @@ struct Song: Codable, Identifiable {
                         noteDesigner: "佑",
                         noteCounts: .init(tap: nil, hold: nil, slide: nil, touch: nil, noteCountsBreak: nil, total: nil),
                         regions: .init(jp: true, intl: false, cn: false),
+                        releaseDate: "2023-12-09",
                         isSpecial: false,
                         version: .buddies,
                         multiverInternalLevelValue: nil,
@@ -168,6 +169,7 @@ struct Song: Codable, Identifiable {
                         noteDesigner: "project_raputa",
                         noteCounts: .init(tap: nil, hold: nil, slide: nil, touch: nil, noteCountsBreak: nil, total: nil),
                         regions: .init(jp: true, intl: false, cn: false),
+                        releaseDate: "2023-12-09",
                         isSpecial: false,
                         version: .buddies,
                         multiverInternalLevelValue: nil,
@@ -182,6 +184,7 @@ struct Song: Codable, Identifiable {
                         noteDesigner: "project_raputa",
                         noteCounts: .init(tap: nil, hold: nil, slide: nil, touch: nil, noteCountsBreak: nil, total: nil),
                         regions: .init(jp: true, intl: false, cn: false),
+                        releaseDate: "2023-12-09",
                         isSpecial: false,
                         version: .buddies,
                         multiverInternalLevelValue: nil,
@@ -212,6 +215,7 @@ struct Sheet: Codable, Identifiable {
     let noteDesigner: String?
     let noteCounts: NoteCounts
     let regions: Regions
+    let releaseDate: String
     let isSpecial: Bool
     let version: VersionEnum?
     let multiverInternalLevelValue: [String: Double]?
@@ -223,7 +227,7 @@ struct Sheet: Codable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case type, difficulty, level, internalLevelValue, noteDesigner, noteCounts, regions, isSpecial, version
+        case type, difficulty, level, internalLevelValue, noteDesigner, noteCounts, regions, releaseDate, isSpecial, version
         case multiverInternalLevelValue, comment
         case internalID = "internalId"
     }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2D4999FDD1274ED5B7BB7FBC /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 0061E0BA3B7541949C1F3BB3 /* Sentry */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
@@ -41,6 +42,10 @@
 		B55D70212AE4BDF30047AA8D /* PreviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55D70202AE4BDF30047AA8D /* PreviewViewController.swift */; };
 		B55D702A2AE4BDF30047AA8D /* DXRatingQuicklook.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B55D701C2AE4BDF30047AA8D /* DXRatingQuicklook.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B55D702F2AE4CF430047AA8D /* DXData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55D660B2AE456250047AA8D /* DXData.swift */; };
+		B560F4062B826B2B00BB1476 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		B560F4072B826B2B00BB1476 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 0061E0BA3B7541949C1F3BB3 /* Sentry */; };
+		B560F4092B826C5400BB1476 /* SentrySwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = B560F4082B826C5400BB1476 /* SentrySwiftUI */; };
+		B560F40B2B826C8600BB1476 /* SentrySwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = B560F40A2B826C8600BB1476 /* SentrySwiftUI */; };
 		B596F6EB2B2AA58C00BB160F /* DXRatingPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = B596F6EA2B2AA58C00BB160F /* DXRatingPlugin.swift */; };
 		B596F6ED2B2AA6A700BB160F /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = B596F6EC2B2AA6A700BB160F /* AppPreferences.swift */; };
 		B5A96D3D2AE57DC20060CE7C /* SongLevelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5A96D3C2AE57DC20060CE7C /* SongLevelView.swift */; };
@@ -142,11 +147,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B560F4072B826B2B00BB1476 /* Sentry in Frameworks */,
 				B5C493032B326F0A005BE53E /* Fuse in Frameworks */,
 				B546E7482B39B29900822B20 /* SwifterSwift in Frameworks */,
 				A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */,
 				B5AD9B982B0D737700813497 /* ZIPFoundation in Frameworks */,
+				B560F4092B826C5400BB1476 /* SentrySwiftUI in Frameworks */,
 				B5F3B0142B6F844F0053C177 /* SnapKit in Frameworks */,
+				B560F4062B826B2B00BB1476 /* (null) in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -155,7 +163,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				B55D701E2AE4BDF30047AA8D /* QuickLook.framework in Frameworks */,
+				B560F40B2B826C8600BB1476 /* SentrySwiftUI in Frameworks */,
 				B5FBAA822B7886910076BA45 /* SnapKit in Frameworks */,
+				2D4999FDD1274ED5B7BB7FBC /* Sentry in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -319,6 +329,7 @@
 				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
 				B55D702B2AE4BDF30047AA8D /* Embed Foundation Extensions */,
 				B5FBAA802B7886720076BA45 /* Embed Frameworks */,
+				BCA5E55835BC4519871426A8 /* Upload Debug Symbols to Sentry */,
 			);
 			buildRules = (
 			);
@@ -331,6 +342,8 @@
 				B5C493022B326F0A005BE53E /* Fuse */,
 				B546E7472B39B29900822B20 /* SwifterSwift */,
 				B5F3B0132B6F844F0053C177 /* SnapKit */,
+				0061E0BA3B7541949C1F3BB3 /* Sentry */,
+				B560F4082B826C5400BB1476 /* SentrySwiftUI */,
 			);
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
@@ -351,6 +364,7 @@
 			name = DXRatingQuicklook;
 			packageProductDependencies = (
 				B5FBAA812B7886910076BA45 /* SnapKit */,
+				B560F40A2B826C8600BB1476 /* SentrySwiftUI */,
 			);
 			productName = DXRatingQuicklook;
 			productReference = B55D701C2AE4BDF30047AA8D /* DXRatingQuicklook.appex */;
@@ -391,6 +405,7 @@
 				B5C493012B326F09005BE53E /* XCRemoteSwiftPackageReference "fuse-swift" */,
 				B546E7462B39B29900822B20 /* XCRemoteSwiftPackageReference "SwifterSwift" */,
 				B5F3B0122B6F83F20053C177 /* XCRemoteSwiftPackageReference "SnapKit" */,
+				1D3741609D7C43B8BF9B5495 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
@@ -461,6 +476,21 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-App/Pods-App-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		BCA5E55835BC4519871426A8 /* Upload Debug Symbols to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
+			);
+			name = "Upload Debug Symbols to Sentry";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script is responsable to upload debug symbols and source context for Sentry.\nif which sentry-cli >/dev/null; then\nexport SENTRY_ORG=gekichumai\nexport SENTRY_PROJECT=dxrating-ios\nERROR=$(sentry-cli debug-files upload --include-sources \"$DWARF_DSYM_FOLDER_PATH\" 2>&1 >/dev/null)\nif [ ! $? -eq 0 ]; then\necho \"warning: sentry-cli - $ERROR\"\nfi\nelse\necho \"warning: sentry-cli not installed, download from https://github.com/getsentry/sentry-cli/releases\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -670,6 +700,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = SY8Y8N4TPM;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
@@ -697,6 +728,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = SY8Y8N4TPM;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
@@ -820,6 +852,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		1D3741609D7C43B8BF9B5495 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa/";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
 		B546E7462B39B29900822B20 /* XCRemoteSwiftPackageReference "SwifterSwift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SwifterSwift/SwifterSwift.git";
@@ -855,10 +895,24 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		0061E0BA3B7541949C1F3BB3 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1D3741609D7C43B8BF9B5495 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
+		};
 		B546E7472B39B29900822B20 /* SwifterSwift */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = B546E7462B39B29900822B20 /* XCRemoteSwiftPackageReference "SwifterSwift" */;
 			productName = SwifterSwift;
+		};
+		B560F4082B826C5400BB1476 /* SentrySwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SentrySwiftUI;
+		};
+		B560F40A2B826C8600BB1476 /* SentrySwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1D3741609D7C43B8BF9B5495 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = SentrySwiftUI;
 		};
 		B5AD9B972B0D737700813497 /* ZIPFoundation */ = {
 			isa = XCSwiftPackageProductDependency;

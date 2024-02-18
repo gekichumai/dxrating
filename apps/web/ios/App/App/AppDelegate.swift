@@ -4,6 +4,7 @@ import CoreSpotlight
 import SwiftUI
 import UIKit
 import ZIPFoundation
+import Sentry
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -27,6 +28,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // MARK: Update App Icon based on AppPreferences
 
         setupThemeListeners()
+        
+        SentrySDK.start { options in
+            options.dsn = "https://1e929f3c3b929a213436e3c4dff57140@o4506648698683392.ingest.sentry.io/4506648709627904"
+            options.tracesSampleRate = 0.01 // tracing must be enabled for profiling
+            options.profilesSampleRate = 0.01 // see also `profilesSampler` if you need custom sampling logic
+        }
 
         return true
     }

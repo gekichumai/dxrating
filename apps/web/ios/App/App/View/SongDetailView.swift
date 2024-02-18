@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SentrySwiftUI
 
 struct SongDetailView: View {
     let song: Song
@@ -38,7 +39,7 @@ struct SongDetailView: View {
             }
 
             Spacer()
-        }
+        }.sentryTrace("SongDetailView")
     }
 }
 
