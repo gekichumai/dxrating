@@ -7,6 +7,9 @@ on:
       - main
     paths-ignore:
       - 'supabase/**'
+      - '.github/**'
+      - 'README.md'
+      - 'scripts/**'
 
 concurrency:
   group: release-dispatcher-${{ github.ref }}
