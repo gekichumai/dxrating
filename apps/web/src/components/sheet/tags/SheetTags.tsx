@@ -4,6 +4,7 @@ import { FC, useMemo } from "react";
 import IconMdiTag from "~icons/mdi/tag";
 import { FlattenedSheet } from "../../../songs";
 import { MotionButtonBase, MotionTooltip } from "../../../utils/motion";
+import { zoomTransitions } from "../../../utils/motionConstants";
 import { useLocalizedMessageTranslation } from "../../../utils/useLocalizedMessageTranslation";
 import { Markdown } from "../../global/Markdown";
 import { SheetTagsAddButton } from "./SheetTagsAddButton";
@@ -21,9 +22,7 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     if (isLoading || !data) {
       return (
         <MotionButtonBase
-          key="pending"
-          layout
-          layoutId={`sheet-tags:${sheet.id}`}
+          {...zoomTransitions}
           className="h-6 w-16 bg-gray-200 rounded-lg animate-pulse"
           disabled
         />

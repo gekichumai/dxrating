@@ -8,6 +8,7 @@ import { supabase } from "../../../models/supabase";
 import { FlattenedSheet } from "../../../songs";
 import { formatErrorMessage } from "../../../utils/formatErrorMessage";
 import { MotionButtonBase, MotionTooltip } from "../../../utils/motion";
+import { zoomTransitions } from "../../../utils/motionConstants";
 import { useLocalizedMessageTranslation } from "../../../utils/useLocalizedMessageTranslation";
 import { Markdown } from "../../global/Markdown";
 import { SheetListItemContent } from "../SheetListItem";
@@ -20,7 +21,7 @@ const SheetTagsAddDialog: FC<{
   const [pending, setPending] = useState(false);
   const localizeMessage = useLocalizedMessageTranslation();
   const { data: tagGroups, isLoading: loadingTags } = useSWR(
-    "supabase:tags",
+    "supabase:tag_grouped",
     async () => {
       const { data } = await supabase
         .from("tags")
@@ -149,22 +150,7 @@ const SheetTagsAddDialog: FC<{
 
                     return (
                       <MotionTooltip
-                        {...{
-                          exit: {
-                            scale: 0.9,
-                          },
-                          initial: {
-                            scale: 0,
-                          },
-                          animate: {
-                            scale: 1,
-                          },
-                          transition: {
-                            type: "spring",
-                            stiffness: 500,
-                            damping: 30,
-                          },
-                        }}
+                        {...zoomTransitions}
                         key={tag.id}
                         title={
                           <Markdown
@@ -215,9 +201,7 @@ export const SheetTagsAddButton: FC<{ sheet: FlattenedSheet }> = ({
       </Dialog>
 
       <MotionButtonBase
-        key="add"
-        layout
-        layoutId={`sheet-tags:${sheet.id}`}
+        {...zoomTransitions}
         className="h-6 border-1 border-solid border-gray-200 rounded-lg flex items-center justify-center px-2 cursor-pointer bg-gray-100 hover:bg-gray-200 hover:border-gray-300 active:bg-gray-300 active:border-gray-400 transition"
         onClick={() => {
           setOpen(true);
