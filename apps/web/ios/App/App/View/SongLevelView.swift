@@ -29,7 +29,7 @@ struct SongLevelView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ForEach(song.sheets, id: \.id) { sheet in
+            ForEach(song.sheets.reversed(), id: \.id) { sheet in
                 HStack(spacing: 0) {
                     HStack(spacing: 0) {
                         HStack(spacing: 0) {
