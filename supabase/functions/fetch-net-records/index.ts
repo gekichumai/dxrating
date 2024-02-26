@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.175.0/http/server.ts";
 import {
   DOMParser,
   Element,
@@ -7,6 +7,28 @@ import {
 } from "https://deno.land/x/deno_dom@v0.1.45/deno-dom-wasm.ts";
 import { Session } from "./Session.ts";
 import { URLS } from "./URLS.ts";
+
+console.info(`Function "fetch-net-records" up and running!`);
+console.info(`Deno version: ${JSON.stringify(Deno.version)}`);
+console.info(`Deno env: ${JSON.stringify(Deno.env)}`);
+async function listPermissions() {
+  const permissions = [
+    "read",
+    "write",
+    "net",
+    "env",
+    "run",
+    "hrtime",
+    "sys",
+    "ffi",
+  ] as const;
+
+  for (const permission of permissions) {
+    const status = await Deno.permissions.query({ name: permission });
+    console.log(`  - Deno permission ${permission}: ${status.state}`);
+  }
+}
+listPermissions();
 
 type Flag =
   | "fullCombo"
