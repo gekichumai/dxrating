@@ -96977,12 +96977,12 @@
           "internalLevelValue": 14,
           "noteDesigner": "サファ太",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 538,
+            "hold": 94,
+            "slide": 112,
+            "touch": 76,
+            "break": 108,
+            "total": 928
           },
           "regions": {
             "jp": true,
@@ -102153,8 +102153,8 @@
           "difficulty": "master",
           "level": "12+",
           "levelValue": 12.7,
-          "internalLevel": null,
-          "internalLevelValue": 12.7,
+          "internalLevel": "12.8",
+          "internalLevelValue": 12.8,
           "noteDesigner": "はっぴー",
           "noteCounts": {
             "tap": 500,
@@ -109642,12 +109642,12 @@
           "internalLevelValue": 13.7,
           "noteDesigner": "Luxizhel",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 698,
+            "hold": 32,
+            "slide": 126,
+            "touch": 87,
+            "break": 56,
+            "total": 999
           },
           "regions": {
             "jp": true,
@@ -160799,7 +160799,7 @@
           "levelValue": 5,
           "internalLevel": null,
           "internalLevelValue": 5,
-          "noteDesigner": null,
+          "noteDesigner": "-",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -160823,7 +160823,7 @@
           "levelValue": 9,
           "internalLevel": null,
           "internalLevelValue": 9,
-          "noteDesigner": null,
+          "noteDesigner": "-",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -160845,9 +160845,9 @@
           "difficulty": "expert",
           "level": "12+",
           "levelValue": 12.7,
-          "internalLevel": null,
+          "internalLevel": "12.7",
           "internalLevelValue": 12.7,
-          "noteDesigner": null,
+          "noteDesigner": "はっぴー",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -160869,16 +160869,16 @@
           "difficulty": "master",
           "level": "14",
           "levelValue": 14,
-          "internalLevel": null,
-          "internalLevelValue": 14,
-          "noteDesigner": null,
+          "internalLevel": "14.3",
+          "internalLevelValue": 14.3,
+          "noteDesigner": "Luxizhel",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
+            "tap": 680,
+            "hold": 71,
+            "slide": 159,
             "touch": null,
-            "break": null,
-            "total": null
+            "break": 21,
+            "total": 931
           },
           "regions": {
             "jp": true,
@@ -161285,8 +161285,8 @@
           "difficulty": "expert",
           "level": "12",
           "levelValue": 12,
-          "internalLevel": null,
-          "internalLevelValue": 12,
+          "internalLevel": "12.5",
+          "internalLevelValue": 12.5,
           "noteDesigner": "サファ太",
           "noteCounts": {
             "tap": 310,
@@ -161309,8 +161309,8 @@
           "difficulty": "master",
           "level": "14+",
           "levelValue": 14.7,
-          "internalLevel": null,
-          "internalLevelValue": 14.7,
+          "internalLevel": "14.8",
+          "internalLevelValue": 14.8,
           "noteDesigner": "Jack",
           "noteCounts": {
             "tap": 777,
@@ -161335,7 +161335,7 @@
       "category": "niconico＆ボーカロイド",
       "title": "ジェヘナ",
       "artist": "wotaku",
-      "bpm": null,
+      "bpm": 128,
       "imageName": "dfbce1f2050046e0ac47872ce5d911e77b30e987b828150225c187c3dfa5272c.png",
       "version": "BUDDiES",
       "releaseDate": "2024-02-16",
@@ -161349,14 +161349,14 @@
           "levelValue": 2,
           "internalLevel": null,
           "internalLevelValue": 2,
-          "noteDesigner": null,
+          "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 79,
+            "hold": 15,
+            "slide": 4,
+            "touch": 12,
+            "break": 5,
+            "total": 115
           },
           "regions": {
             "jp": true,
@@ -161373,14 +161373,14 @@
           "levelValue": 6,
           "internalLevel": null,
           "internalLevelValue": 6,
-          "noteDesigner": null,
+          "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 236,
+            "hold": 20,
+            "slide": 6,
+            "touch": 28,
+            "break": 6,
+            "total": 296
           },
           "regions": {
             "jp": true,
@@ -161397,14 +161397,14 @@
           "levelValue": 9.7,
           "internalLevel": null,
           "internalLevelValue": 9.7,
-          "noteDesigner": null,
+          "noteDesigner": "はっぴー",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 313,
+            "hold": 70,
+            "slide": 44,
+            "touch": 8,
+            "break": 10,
+            "total": 445
           },
           "regions": {
             "jp": true,
@@ -161419,16 +161419,16 @@
           "difficulty": "master",
           "level": "13",
           "levelValue": 13,
-          "internalLevel": null,
-          "internalLevelValue": 13,
-          "noteDesigner": null,
+          "internalLevel": "13.3",
+          "internalLevelValue": 13.3,
+          "noteDesigner": "みそかつ侍",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 635,
+            "hold": 54,
+            "slide": 65,
+            "touch": 18,
+            "break": 41,
+            "total": 813
           },
           "regions": {
             "jp": true,
@@ -161445,7 +161445,7 @@
       "category": "niconico＆ボーカロイド",
       "title": "ツギハギスタッカート",
       "artist": "とあ",
-      "bpm": null,
+      "bpm": 139,
       "imageName": "13c1e24f58a49d0ee3655da022554a74c57a6b66a45618d2a0868dc7369ab8d4.png",
       "version": "BUDDiES",
       "releaseDate": "2024-02-16",
@@ -161459,7 +161459,7 @@
           "levelValue": 1,
           "internalLevel": null,
           "internalLevelValue": 1,
-          "noteDesigner": null,
+          "noteDesigner": "-",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -161483,7 +161483,7 @@
           "levelValue": 6,
           "internalLevel": null,
           "internalLevelValue": 6,
-          "noteDesigner": null,
+          "noteDesigner": "-",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -161507,14 +161507,14 @@
           "levelValue": 9,
           "internalLevel": null,
           "internalLevelValue": 9,
-          "noteDesigner": null,
+          "noteDesigner": "りんご Full Set",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 287,
+            "hold": 75,
+            "slide": 37,
+            "touch": 14,
+            "break": 12,
+            "total": 425
           },
           "regions": {
             "jp": true,
@@ -161529,16 +161529,16 @@
           "difficulty": "master",
           "level": "12+",
           "levelValue": 12.7,
-          "internalLevel": null,
+          "internalLevel": "12.7",
           "internalLevelValue": 12.7,
-          "noteDesigner": null,
+          "noteDesigner": "アマリリス",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 375,
+            "hold": 49,
+            "slide": 67,
+            "touch": 101,
+            "break": 7,
+            "total": 599
           },
           "regions": {
             "jp": true,
@@ -161555,7 +161555,7 @@
       "category": "東方Project",
       "title": "HANIPAGANDA",
       "artist": "暁Records",
-      "bpm": null,
+      "bpm": 181,
       "imageName": "8ed763dfe0fff00c8bfb7834363731f91408ef7e445a07a798b952aa8638fbd1.png",
       "version": "BUDDiES",
       "releaseDate": "2024-02-16",
@@ -161569,7 +161569,7 @@
           "levelValue": 4,
           "internalLevel": null,
           "internalLevelValue": 4,
-          "noteDesigner": null,
+          "noteDesigner": "-",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -161593,7 +161593,7 @@
           "levelValue": 7,
           "internalLevel": null,
           "internalLevelValue": 7,
-          "noteDesigner": null,
+          "noteDesigner": "-",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -161617,14 +161617,14 @@
           "levelValue": 11.7,
           "internalLevel": null,
           "internalLevelValue": 11.7,
-          "noteDesigner": null,
+          "noteDesigner": "鳩ホルダー",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 353,
+            "hold": 63,
+            "slide": 30,
+            "touch": 30,
+            "break": 32,
+            "total": 508
           },
           "regions": {
             "jp": true,
@@ -161641,14 +161641,14 @@
           "levelValue": 13,
           "internalLevel": "13.6",
           "internalLevelValue": 13.6,
-          "noteDesigner": null,
+          "noteDesigner": "サファ太",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 557,
+            "hold": 85,
+            "slide": 92,
+            "touch": 26,
+            "break": 82,
+            "total": 842
           },
           "regions": {
             "jp": true,
@@ -161665,7 +161665,7 @@
       "category": "ゲーム＆バラエティ",
       "title": "Rush-Hour",
       "artist": "litmus*",
-      "bpm": null,
+      "bpm": 224,
       "imageName": "87754d363b458fd6cf6f4a2b4d95fcb0e25e2f498df10bd8ac0eb88317eb6eb6.png",
       "version": "BUDDiES",
       "releaseDate": "2024-02-16",
@@ -161679,14 +161679,14 @@
           "levelValue": 4,
           "internalLevel": null,
           "internalLevelValue": 4,
-          "noteDesigner": null,
+          "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 142,
+            "hold": 23,
+            "slide": 4,
+            "touch": 16,
+            "break": 2,
+            "total": 187
           },
           "regions": {
             "jp": true,
@@ -161703,14 +161703,14 @@
           "levelValue": 8.7,
           "internalLevel": null,
           "internalLevelValue": 8.7,
-          "noteDesigner": null,
+          "noteDesigner": "-",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 305,
+            "hold": 31,
+            "slide": 6,
+            "touch": 12,
+            "break": 6,
+            "total": 360
           },
           "regions": {
             "jp": true,
@@ -161725,16 +161725,16 @@
           "difficulty": "expert",
           "level": "12",
           "levelValue": 12,
-          "internalLevel": null,
-          "internalLevelValue": 12,
-          "noteDesigner": null,
+          "internalLevel": "12.5",
+          "internalLevelValue": 12.5,
+          "noteDesigner": "サファ太",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 392,
+            "hold": 48,
+            "slide": 37,
+            "touch": 56,
+            "break": 58,
+            "total": 591
           },
           "regions": {
             "jp": true,
@@ -161751,14 +161751,14 @@
           "levelValue": 13.7,
           "internalLevel": "13.8",
           "internalLevelValue": 13.8,
-          "noteDesigner": null,
+          "noteDesigner": "鳩ホルダー",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 578,
+            "hold": 83,
+            "slide": 106,
+            "touch": 95,
+            "break": 32,
+            "total": 894
           },
           "regions": {
             "jp": true,
@@ -161946,5 +161946,5 @@
       "name": "中国版 (舞萌DX)"
     }
   ],
-  "updateTime": "2024-02-16T03:09:00.087Z"
+  "updateTime": "2024-02-23T15:47:59.314Z"
 }
