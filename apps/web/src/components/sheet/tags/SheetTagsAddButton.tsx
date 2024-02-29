@@ -14,6 +14,9 @@ import { Markdown } from "../../global/Markdown";
 import { SheetListItemContent } from "../SheetListItem";
 import { useSheetTags } from "./useSheetTags";
 
+import clsx from "clsx";
+import { deriveColor } from "../../../utils/color";
+
 const SheetTagsAddDialog: FC<{
   sheet: FlattenedSheet;
 }> = ({ sheet }) => {
@@ -160,15 +163,31 @@ const SheetTagsAddDialog: FC<{
                           />
                         }
                         arrow
+                        slotProps={{
+                          popper: {
+                            modifiers: [
+                              {
+                                name: "offset",
+                                options: {
+                                  offset: [0, -8],
+                                },
+                              },
+                            ],
+                          },
+                        }}
                       >
                         <Chip
                           key={tag.id}
                           label={localizeMessage(tag.localized_name)}
                           onClick={() => addTag(tag.id)}
                           disabled={pending || exists}
-                          className="rounded-lg"
+                          className={clsx(
+                            "rounded-lg border border-solid",
+                            pending && "animate-pulse -animate-delay-1000",
+                          )}
                           style={{
                             backgroundColor: tag.group.color,
+                            borderColor: deriveColor(tag.group.color, "border"),
                           }}
                         />
                       </MotionTooltip>

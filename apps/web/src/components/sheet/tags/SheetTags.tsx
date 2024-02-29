@@ -61,6 +61,18 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
               <Markdown content={localizeMessage(tag.localized_description)} />
             }
             arrow
+            slotProps={{
+              popper: {
+                modifiers: [
+                  {
+                    name: "offset",
+                    options: {
+                      offset: [0, -8],
+                    },
+                  },
+                ],
+              },
+            }}
           >
             <Chip
               key={tag.id}

@@ -32,6 +32,7 @@
     "@unocss/preset-wind": "^0.58.4",
     "@unocss/reset": "^0.58.4",
     "clsx": "^2.0.0",
+    "colorjs.io": "^0.4.5",
     "date-fns": "^2.30.0",
     "dayjs": "^1.11.10",
     "framer-motion": "^10.16.16",
