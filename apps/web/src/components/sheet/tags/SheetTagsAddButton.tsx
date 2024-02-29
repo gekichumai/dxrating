@@ -201,7 +201,7 @@ export const SheetTagsAddButton: FC<{ sheet: FlattenedSheet }> = ({
       </Dialog>
 
       <MotionButtonBase
-        {...zoomTransitions}
+        // {...zoomTransitions}
         className="h-6 border-1 border-solid border-gray-200 rounded-lg flex items-center justify-center px-2 cursor-pointer bg-gray-100 hover:bg-gray-200 hover:border-gray-300 active:bg-gray-300 active:border-gray-400 transition"
         onClick={() => {
           setOpen(true);
