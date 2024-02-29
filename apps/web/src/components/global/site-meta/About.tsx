@@ -1,8 +1,7 @@
 import { dxdataUpdateTime } from "@gekichumai/dxdata";
 import { IconButton } from "@mui/material";
 import clsx from "clsx";
-import { intlFormatDistance } from "date-fns";
-import { FC, PropsWithChildren, ReactNode, useMemo, useState } from "react";
+import { FC, PropsWithChildren, ReactNode, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import MdiGithub from "~icons/mdi/github";
 import MdiInformation from "~icons/mdi/information";
@@ -10,6 +9,7 @@ import MdiTwitter from "~icons/mdi/twitter";
 import MdiWeb from "~icons/mdi/web";
 import { BUNDLE } from "../../../utils/bundle";
 import { ResponsiveDialog } from "../ResponsiveDialog";
+import { useTime } from "../../../utils/useTime";
 
 const ExternalLink: FC<
   PropsWithChildren<{ href: string; className?: string }>
@@ -49,27 +49,6 @@ const AboutAttribute: FC<
     <span className="text-sm tracking-tight text-gray-600">{value}</span>
   </li>
 );
-
-const useTime = (time?: string) => {
-  const { i18n } = useTranslation();
-  return useMemo(() => {
-    try {
-      if (!time) throw new Error("useTime: time is undefined");
-
-      const date = new Date(time);
-      if (isNaN(date.getTime())) {
-        throw new Error("Invalid date");
-      }
-
-      const dateString = date.toLocaleString(i18n.language);
-      const relativeTime = intlFormatDistance(date, new Date());
-
-      return `${dateString} (${relativeTime})`;
-    } catch {
-      return "unknown";
-    }
-  }, [time, i18n.language]);
-};
 
 export const About = () => {
   const { t } = useTranslation(["about"]);
