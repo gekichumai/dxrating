@@ -79,6 +79,8 @@ let ALIAS_NAME_EXTRA_MAP: Record<string, string[]> = {
   Hainuwele: ["华为", "华为完了"],
   "ULTRA SYNERGY MATRIX": ["USM", "我来出勤了"],
   神っぽいな: ["像神一样"],
+  "Straight into the lights": ["中出光", "直入光"],
+  系ぎて: ["白丝", "ysk泡温泉", "俩舞神越级"],
 };
 
 async function getSearchAcronyms(title: string, id?: number) {

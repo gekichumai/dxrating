@@ -69,7 +69,7 @@ function parseNode(record: Node) {
   const typeIcon = el
     .querySelector(".playlog_music_kind_icon")
     ?.attributes.getNamedItem("src");
-  const type = typeIcon?.value.match(/music_(standard|dx)\.png/)?.[1];
+  let type = typeIcon?.value.match(/music_(standard|dx)\.png/)?.[1];
 
   const difficultyIcon = el
     .querySelector(".playlog_diff")
@@ -102,6 +102,11 @@ function parseNode(record: Node) {
     /(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})/,
     "$1-$2-$3T$4:$5:00+09:00"
   );
+
+  // overrides
+  if (difficulty === "utage") {
+    type = "utage";
+  }
 
   if (!songId || !type || !difficulty) {
     console.warn(

@@ -160847,7 +160847,7 @@
           "levelValue": 12.7,
           "internalLevel": "12.7",
           "internalLevelValue": 12.7,
-          "noteDesigner": "はっぴー",
+          "noteDesigner": "Luxizhel",
           "noteCounts": {
             "tap": null,
             "hold": null,
@@ -160871,7 +160871,7 @@
           "levelValue": 14,
           "internalLevel": "14.3",
           "internalLevelValue": 14.3,
-          "noteDesigner": "Luxizhel",
+          "noteDesigner": "はっぴー",
           "noteCounts": {
             "tap": 680,
             "hold": 71,
@@ -162126,7 +162126,7 @@
             "slide": null,
             "touch": null,
             "break": null,
-            "total": null
+            "total": 344
           },
           "regions": {
             "jp": true,
@@ -162150,7 +162150,7 @@
             "slide": null,
             "touch": null,
             "break": null,
-            "total": null
+            "total": 539
           },
           "regions": {
             "jp": true,
@@ -162169,12 +162169,12 @@
           "internalLevelValue": 13.8,
           "noteDesigner": "Luxizhel",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 525,
+            "hold": 43,
+            "slide": 82,
+            "touch": 53,
+            "break": 39,
+            "total": 742
           },
           "regions": {
             "jp": true,
@@ -162193,12 +162193,12 @@
           "internalLevelValue": 14.8,
           "noteDesigner": "maimai TEAM DX",
           "noteCounts": {
-            "tap": null,
-            "hold": null,
-            "slide": null,
-            "touch": null,
-            "break": null,
-            "total": null
+            "tap": 862,
+            "hold": 59,
+            "slide": 73,
+            "touch": 118,
+            "break": 88,
+            "total": 1200
           },
           "regions": {
             "jp": true,
@@ -162558,5 +162558,5 @@
       "name": "中国版 (舞萌DX)"
     }
   ],
-  "updateTime": "2024-02-29T15:10:54.080Z"
+  "updateTime": "2024-03-01T13:48:11.718Z"
 }
