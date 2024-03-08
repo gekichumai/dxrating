@@ -17,6 +17,8 @@ concurrency:
 
 jobs:
   tagger:
+    # if the push commit message contains [skip ci], skip ci
+    if: contains(github.event.commits[0].message, '[skip ci]') == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
