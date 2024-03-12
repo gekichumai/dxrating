@@ -7,6 +7,31 @@
 
 import Foundation
 
+class CachedAppData {
+    static let shared = CachedAppData()
+
+    private var dxData: DXData?
+    private var dxDataSHA256Sum: String?
+
+    private init() {
+        dxData = AppData.loadDXData()
+        dxDataSHA256Sum = AppData.calculateDXDataSha256()
+    }
+
+    func getDXData() -> DXData? {
+        return dxData
+    }
+
+    func getDXDataSHA256Sum() -> String? {
+        return dxDataSHA256Sum
+    }
+
+    func update() {
+        dxData = AppData.loadDXData()
+        dxDataSHA256Sum = AppData.calculateDXDataSha256()
+    }
+}
+
 enum AppData {
     static func getDXDataJsonURL() -> URL? {
         var bundle = Bundle.main

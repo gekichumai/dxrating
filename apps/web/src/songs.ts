@@ -16,6 +16,8 @@ import {
 } from "./models/context/useAppContext";
 import { supabase } from "./models/supabase";
 
+const CANONICAL_ID_PARTS_SEPARATOR = "__dxrt__";
+
 export type FlattenedSheet = Song &
   Sheet & {
     id: string;
@@ -25,7 +27,9 @@ export type FlattenedSheet = Song &
   };
 
 export const canonicalId = (song: Song, sheet: Sheet) => {
-  return [song.songId, sheet.type, sheet.difficulty].join("__dxrt__");
+  return [song.songId, sheet.type, sheet.difficulty].join(
+    CANONICAL_ID_PARTS_SEPARATOR,
+  );
 };
 
 export const canonicalIdFromParts = (
@@ -33,7 +37,7 @@ export const canonicalIdFromParts = (
   type: TypeEnum,
   difficulty: DifficultyEnum,
 ) => {
-  return [songId, type, difficulty].join("__dxrt__");
+  return [songId, type, difficulty].join(CANONICAL_ID_PARTS_SEPARATOR);
 };
 
 export const getSongs = (maxVersion: VersionEnum): Song[] => {
@@ -42,10 +46,13 @@ export const getSongs = (maxVersion: VersionEnum): Song[] => {
     throw new Error(`Invalid version: ${maxVersion}`);
   }
 
-  return dxdata.songs.filter(
-    (v) =>
-      (VERSION_ID_MAP.get(v.version) ??
-        (console.warn(`Invalid version: ${v.version}`), 0)) <= maxVersionId,
+  return dxdata.songs.filter((v) =>
+    v.sheets.some(
+      (sheet) =>
+        (VERSION_ID_MAP.get(sheet.version) ??
+          (console.warn(`Invalid version: ${sheet.version}`), 0)) <=
+        maxVersionId,
+    ),
   );
 };
 

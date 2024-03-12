@@ -55,7 +55,6 @@ export interface Song {
   artist: string;
   bpm: number | null;
   imageName: string;
-  version: VersionEnum;
   isNew: boolean;
   isLocked: boolean;
   sheets: Sheet[];
@@ -73,7 +72,7 @@ export interface Sheet {
   noteCounts: NoteCounts;
   regions: Regions;
   isSpecial: boolean;
-  version?: VersionEnum;
+  version: VersionEnum;
   comment?: string;
 }
 

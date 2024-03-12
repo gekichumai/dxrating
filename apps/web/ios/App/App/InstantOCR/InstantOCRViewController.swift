@@ -118,7 +118,7 @@ class InstantOCRViewController: UIViewController {
         
         request = VNRecognizeTextRequest(completionHandler: recognizeTextHandler)
         
-        dxdata = AppData.loadDXData()
+        dxdata = CachedAppData.shared.getDXData()
         customWords = dxdata.songs.map { song in
             song.title
         }

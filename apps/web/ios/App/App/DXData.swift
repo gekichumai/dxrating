@@ -79,14 +79,13 @@ struct Song: Codable, Identifiable {
     let title, artist: String
     let bpm: Int?
     let imageName: String
-    let version: VersionEnum
     let isNew, isLocked: Bool
     let sheets: [Sheet]
     let searchAcronyms: [String]
 
     enum CodingKeys: String, CodingKey {
         case songID = "songId"
-        case category, title, artist, bpm, imageName, version, isNew, isLocked, sheets, searchAcronyms
+        case category, title, artist, bpm, imageName, isNew, isLocked, sheets, searchAcronyms
     }
 
     var coverImage: UIImage? {
@@ -112,7 +111,6 @@ struct Song: Codable, Identifiable {
                 artist: "sasakure.UK × TJ.hangneil",
                 bpm: 339,
                 imageName: "7a1e5ffd34a526f8fe79f16e7435fc57da813aa53f0b5d773e34fce202122651.png",
-                version: .buddies,
                 isNew: true,
                 isLocked: true,
                 sheets: [
@@ -217,7 +215,7 @@ struct Sheet: Codable, Identifiable {
     let regions: Regions
     let releaseDate: String
     let isSpecial: Bool
-    let version: VersionEnum?
+    let version: VersionEnum
     let multiverInternalLevelValue: [String: Double]?
     let comment: String?
     let internalID: Int?

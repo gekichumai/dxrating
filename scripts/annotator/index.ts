@@ -204,8 +204,8 @@ export interface MaimaiOfficialSongs {
 function checkSongsInternalId(
   songs: {
     songId: string;
-    version: DXDataOriginal.VersionEnum;
     sheets: {
+      version: DXDataOriginal.VersionEnum;
       internalId?: number;
       difficulty: DifficultyEnum;
       type: TypeEnum;
@@ -220,9 +220,11 @@ function checkSongsInternalId(
     .filter((song) => song.sheets.length > 0);
 
   for (const song of songsWithMissingInternalIdSheets) {
-    console.warn(`Song [${song.version}] ${song.songId} missing internalId`);
+    console.warn(`Song ${song.songId} missing internalId`);
     for (const sheet of song.sheets) {
-      console.warn(`  — Sheet ${sheet.type.toUpperCase()} ${sheet.difficulty}`);
+      console.warn(
+        `  — Sheet [${sheet.type.toUpperCase()}] (${sheet.version}) ${sheet.difficulty}`
+      );
     }
   }
 
@@ -257,83 +259,91 @@ async function main() {
       // filter out maimai series 宴会場 charts as those has been removed in dx
       (song) => !(song.category === "宴会場" && isMaimaiSeries(song.version))
     )
-    .map(async ({ releaseDate: entryReleaseDate, ...entry }) => {
-      const searchAcronyms = await Promise.all(
-        uniq(entry.sheets.map((sheet) => sheet.internalId)).map(
-          (internalId) => {
-            return getSearchAcronyms(entry.title, internalId);
-          }
-        )
-      ).then((acronyms) => uniq(flatten(acronyms)));
+    .map(
+      async ({
+        version: songVersion,
+        releaseDate: entryReleaseDate,
+        ...entry
+      }) => {
+        const searchAcronyms = await Promise.all(
+          uniq(entry.sheets.map((sheet) => sheet.internalId)).map(
+            (internalId) => {
+              return getSearchAcronyms(entry.title, internalId);
+            }
+          )
+        ).then((acronyms) => uniq(flatten(acronyms)));
 
-      return {
-        ...entry,
-        searchAcronyms,
-        imageName: entry.imageName.replace(".png", ".jpg"),
-        sheets: entry.sheets.map(
-          ({ internalLevel: _, levelValue: __, ...sheet }) => {
-            const multiverInternalLevelValue = multiverInternalLevelValues
-              .filter(
-                (value) =>
-                  value.songId === entry.songId &&
-                  value.type === sheet.type &&
-                  value.difficulty === sheet.difficulty
-              )
-              .reduce(
-                (acc, value) => {
-                  acc[value.version] = parseFloat(value.internalLevel);
-                  return acc;
-                },
-                {} as Record<string, number>
-              );
+        return {
+          ...entry,
+          searchAcronyms,
+          imageName: entry.imageName.replace(".png", ".jpg"),
+          sheets: entry.sheets.map(
+            ({ internalLevel: _, levelValue: __, ...sheet }) => {
+              const multiverInternalLevelValue = multiverInternalLevelValues
+                .filter(
+                  (value) =>
+                    value.songId === entry.songId &&
+                    value.type === sheet.type &&
+                    value.difficulty === sheet.difficulty
+                )
+                .reduce(
+                  (acc, value) => {
+                    acc[value.version] = parseFloat(value.internalLevel);
+                    return acc;
+                  },
+                  {} as Record<string, number>
+                );
 
-            const officialUtageSong = maimaiOfficialSongs.find(
-              (v) =>
-                v.title === entry.title &&
-                v.catcode === "宴会場" &&
-                (v.title !== "[協]青春コンプレックス" ||
-                  (v.comment === "バンドメンバーを集めて楽しもう！（入門編）" &&
-                    entry.songId === "[協]青春コンプレックス（入門編）") ||
-                  (v.comment === "バンドメンバーを集めて挑め！（ヒーロー級）" &&
-                    entry.songId === "[協]青春コンプレックス（ヒーロー級）"))
-            );
-
-            const is2pUtage =
-              sheet.type === "utage" && officialUtageSong?.buddy === "○";
-
-            const haveAnyMultiverInternalLevelValue =
-              Object.keys(multiverInternalLevelValue).length > 0;
-
-            const releaseDate = (() => {
-              const sheetExtra = sheetSpecificReleaseDates.find(
+              const officialUtageSong = maimaiOfficialSongs.find(
                 (v) =>
-                  v.songId === entry.songId &&
-                  v.type === sheet.type &&
-                  v.difficulty === sheet.difficulty
+                  v.title === entry.title &&
+                  v.catcode === "宴会場" &&
+                  (v.title !== "[協]青春コンプレックス" ||
+                    (v.comment ===
+                      "バンドメンバーを集めて楽しもう！（入門編）" &&
+                      entry.songId === "[協]青春コンプレックス（入門編）") ||
+                    (v.comment ===
+                      "バンドメンバーを集めて挑め！（ヒーロー級）" &&
+                      entry.songId === "[協]青春コンプレックス（ヒーロー級）"))
               );
 
-              if (sheetExtra) {
-                return sheetExtra.releaseDate;
-              }
+              const is2pUtage =
+                sheet.type === "utage" && officialUtageSong?.buddy === "○";
 
-              return entryReleaseDate;
-            })();
+              const haveAnyMultiverInternalLevelValue =
+                Object.keys(multiverInternalLevelValue).length > 0;
 
-            return {
-              ...sheet,
-              difficulty: sheet.difficulty as DifficultyEnum,
-              version: sheet.version as VersionEnum,
-              type: is2pUtage ? TypeEnum.UTAGE2P : (sheet.type as TypeEnum),
-              multiverInternalLevelValue: haveAnyMultiverInternalLevelValue
-                ? multiverInternalLevelValue
-                : undefined,
-              comment: officialUtageSong?.comment,
-              releaseDate,
-            } satisfies Sheet;
-          }
-        ),
-      };
-    });
+              const releaseDate = (() => {
+                const sheetExtra = sheetSpecificReleaseDates.find(
+                  (v) =>
+                    v.songId === entry.songId &&
+                    v.type === sheet.type &&
+                    v.difficulty === sheet.difficulty
+                );
+
+                if (sheetExtra) {
+                  return sheetExtra.releaseDate;
+                }
+
+                return entryReleaseDate;
+              })();
+
+              return {
+                ...sheet,
+                difficulty: sheet.difficulty as DifficultyEnum,
+                version: (sheet.version ?? songVersion) as VersionEnum,
+                type: is2pUtage ? TypeEnum.UTAGE2P : (sheet.type as TypeEnum),
+                multiverInternalLevelValue: haveAnyMultiverInternalLevelValue
+                  ? multiverInternalLevelValue
+                  : undefined,
+                comment: officialUtageSong?.comment,
+                releaseDate,
+              } satisfies Sheet;
+            }
+          ),
+        };
+      }
+    );
 
   const songs = await Promise.all(transformedSongs);
   checkSongsInternalId(songs);

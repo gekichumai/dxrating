@@ -31,7 +31,7 @@ class PreviewViewController: UIViewController, QLPreviewingController {
      */
     func preparePreviewOfSearchableItem(identifier: String, queryString: String?, completionHandler handler: @escaping (Error?) -> Void) {
         // Perform any setup necessary in order to prepare the view.
-        guard let dxdata = AppData.loadDXData() else {
+        guard let dxdata = CachedAppData.shared.getDXData() else {
             handler(AppError.custom(errorDescription: "failed to load DXData"))
             return
         }

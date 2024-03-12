@@ -12,7 +12,7 @@ extension AppDelegate {
     func initializeDXData() {
         DispatchQueue.global(qos: .background).async {
             let lastDXDataSHA256Sum = UserDefaults.standard.string(forKey: "lastDXDataSHA256Sum") ?? ""
-            let dxDataSHA256Sum = AppData.calculateDXDataSha256()
+            let dxDataSHA256Sum = CachedAppData.shared.getDXDataSHA256Sum()
 
             if dxDataSHA256Sum == lastDXDataSHA256Sum {
                 print("dxdata.json unchanged. skipping cover uncompression and Spotlight indexing")
@@ -33,7 +33,7 @@ extension AppDelegate {
                 }
             }
 
-            if let dxData = AppData.loadDXData() {
+            if let dxData = CachedAppData.shared.getDXData() {
                 if #available(iOS 14.0, *) {
                     let explicitSheetTypeOrder: [TypeEnum] = [.utage2P, .utage, .dx, .std]
 
