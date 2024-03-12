@@ -1,7 +1,7 @@
 import { CircularProgress, Tab, Tabs } from "@mui/material";
-import { useEffect, useTransition } from "react";
+import { useCallback, useEffect, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocalStorage } from "react-use";
+import { useEffectOnce, useLocalStorage } from "react-use";
 
 import { OverscrollBackgroundFiller } from "./components/global/OverscrollBackgroundFiller";
 import { VersionSwitcher } from "./components/global/preferences/VersionSwitcher";
@@ -23,6 +23,44 @@ export const App = () => {
   useEffect(() => {
     console.info("[i18n] Language detected as " + i18n.language);
   }, [i18n.language]);
+
+  const userInteractedSetTab = useCallback(
+    (newTab: "search" | "rating") => {
+      startTransition(() => {
+        setTab(newTab);
+
+        window.history.pushState(
+          {},
+          "",
+          `/${newTab}${window.location.search}${window.location.hash}`,
+        );
+      });
+    },
+    [setTab, startTransition],
+  );
+
+  const updateTabFromPath = useCallback(() => {
+    const url = new URL(window.location.href);
+    const tab = url.pathname.slice(1) as "search" | "rating";
+    if (["search", "rating"].includes(tab)) {
+      setTab(tab);
+    }
+  }, [setTab]);
+
+  useEffectOnce(() => {
+    updateTabFromPath();
+  });
+
+  useEffect(() => {
+    const ln = () => {
+      updateTabFromPath();
+    };
+    window.addEventListener("popstate", ln);
+
+    return () => {
+      window.removeEventListener("popstate", ln);
+    };
+  }, [updateTabFromPath]);
 
   return (
     <div className="h-full w-full relative">
@@ -52,9 +90,7 @@ export const App = () => {
           <Tabs
             value={tab}
             onChange={(_, v) => {
-              startTransition(() => {
-                setTab(v);
-              });
+              userInteractedSetTab(v);
             }}
             classes={{
               root: "rounded-xl bg-zinc-900/10 !min-h-2.5rem",
