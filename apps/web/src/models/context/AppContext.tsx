@@ -11,11 +11,12 @@ import { DXRatingPlugin } from "../../utils/capacitor/plugin/wrap";
 
 export type AppContext = AppContextStates & AppContextFns;
 
-export type DXVersion = "festival-plus" | "buddies";
+export type DXVersion = "festival-plus" | "buddies" | "buddies-plus";
 
 export const DXVersionToDXDataVersionEnumMap: Record<DXVersion, VersionEnum> = {
   "festival-plus": VersionEnum.FESTiVALPLUS,
   buddies: VersionEnum.BUDDiES,
+  "buddies-plus": VersionEnum.BUDDiESPLUS,
 };
 
 export interface AppContextStates {
@@ -23,7 +24,7 @@ export interface AppContextStates {
 }
 
 export interface AppContextFns {
-  setVersion: (version: "festival-plus" | "buddies") => void;
+  setVersion: (version: DXVersion) => void;
 }
 
 export const AppContext = createContext<AppContext>({

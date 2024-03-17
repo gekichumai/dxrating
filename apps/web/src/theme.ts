@@ -5,9 +5,10 @@ export interface Theme {
   logo: string;
   favicon: string;
   accentColor: string;
+  disabled?: boolean;
 }
 
-export const THEME: Record<string, Theme> = {
+export const VERSION_THEME: Record<string, Theme> = {
   [VersionEnum.FESTiVALPLUS]: {
     background:
       "https://shama.dxrating.net/images/background/festival-plus.jpg",
@@ -20,5 +21,12 @@ export const THEME: Record<string, Theme> = {
     logo: "https://shama.dxrating.net/images/version-logo/buddies.png",
     favicon: "https://shama.dxrating.net/favicon/buddies-1024x.jpg",
     accentColor: "#FAAE29",
+  },
+  [VersionEnum.BUDDiESPLUS]: {
+    background: "https://shama.dxrating.net/images/background/buddies.jpg",
+    logo: "https://shama.dxrating.net/images/version-logo/buddies-plus.png",
+    favicon: "https://shama.dxrating.net/favicon/buddies-1024x.jpg",
+    accentColor: "#FAAE29",
+    disabled: true,
   },
 };

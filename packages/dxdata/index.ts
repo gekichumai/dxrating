@@ -100,6 +100,7 @@ export enum TypeEnum {
 
 export enum VersionEnum {
   BUDDiES = "BUDDiES",
+  BUDDiESPLUS = "BUDDiES PLUS",
   FESTiVAL = "FESTiVAL",
   FESTiVALPLUS = "FESTiVAL PLUS",
   FiNALE = "FiNALE",
@@ -175,6 +176,7 @@ export const VERSION_SLUG_MAP = new Map([
   ["FESTiVAL", "festival"],
   ["FESTiVAL PLUS", "festival-plus"],
   ["BUDDiES", "buddies"],
+  ["BUDDiES PLUS", "buddies-plus"],
   //! add further version here !//
 ]);
 

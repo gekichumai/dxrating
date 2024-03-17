@@ -13,9 +13,11 @@ import {
   DXVersionToDXDataVersionEnumMap,
 } from "../../../models/context/AppContext";
 import { useAppContext } from "../../../models/context/useAppContext";
+import { VERSION_THEME } from "../../../theme";
 import { WebpSupportedImage } from "../WebpSupportedImage";
+import clsx from "clsx";
 
-const VERSIONS = Object.keys(DXVersionToDXDataVersionEnumMap) as DXVersion[];
+const VERSIONS = Object.entries(DXVersionToDXDataVersionEnumMap);
 
 const StyledVersionSelect = styled(Select)(({ theme }) => ({
   "&": {
@@ -48,21 +50,29 @@ export const VersionSwitcher: FC = () => {
       )}
     >
       <ListSubheader>{t("settings:version.select")}</ListSubheader>
-      {VERSIONS.map((v) => (
+      {VERSIONS.map(([dxVersion, versionEnum], i) => (
         <MenuItem
-          value={v}
-          key={v}
-          className="flex justify-center items-center"
+          value={dxVersion}
+          key={dxVersion}
+          className={clsx(
+            "flex items-center gap-8 border-b border-solid border-gray-200",
+            i === 0 && "border-t",
+          )}
+          disabled={VERSION_THEME[versionEnum]?.disabled ?? false}
         >
           <WebpSupportedImage
-            src={`https://shama.dxrating.net/images/version-logo/${v}.png`}
-            className="h-auto w-56 touch-callout-none"
+            src={`https://shama.dxrating.net/images/version-logo/${dxVersion}.png`}
+            className="h-20 touch-callout-none object-contain w-42"
             draggable={false}
           />
+
+          {/* <div className="flex-1" /> */}
+
+          <div className="mr-2 opacity-70">{versionEnum}</div>
         </MenuItem>
       ))}
       <ListItem className="flex justify-center items-center text-sm">
-        <div className="flex justify-center items-start max-w-[18rem] text-gray-500">
+        <div className="flex justify-center items-start max-w-[19rem] text-gray-500">
           <MdiInformation className="mr-2 shrink-0 mt-0.5" />
           <span className="whitespace-normal">
             {t("settings:version.info")}
