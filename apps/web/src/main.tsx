@@ -14,6 +14,7 @@ import { initReactI18next } from "react-i18next";
 import { i18nResources } from "./locales/locales";
 
 import * as Sentry from "@sentry/react";
+import { Geiger } from "react-geiger";
 import { SideEffector } from "./components/global/SideEffector";
 
 if (import.meta.env.PROD) {
@@ -140,7 +141,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <VersionCustomizedThemeProvider>
         <SideEffector />
         <CustomizedToaster />
-        <App />
+        <Geiger renderTimeThreshold={10}>
+          <App />
+        </Geiger>
       </VersionCustomizedThemeProvider>
     </AppContextProvider>
   </React.StrictMode>,

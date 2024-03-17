@@ -61,14 +61,52 @@ async function readAliases1() {
 }
 
 async function readAliases2() {
-  const aliases = await (
-    await fetch("https://api.yuzuai.xyz/maimaidx/maimaidxalias")
-  ).json();
+  const res = await fetch("https://api.yuzuai.xyz/maimaidx/maimaidxalias");
+  if (
+    !res.ok ||
+    res.status !== 200 ||
+    res.headers.get("Content-Type") !== "application/json"
+  ) {
+    console.warn("Failed to fetch maimaidxalias, skipping");
+    return new Map<string, string[]>();
+  }
+  const aliases = await res.json();
   const aliasesMap = new Map<string, string[]>();
   const aliasesObj = aliases as Record<string, { Alias: string[] }>;
   for (const [key, value] of Object.entries(aliasesObj)) {
     const cleanedAliases = value.Alias.map((alias) => he.decode(alias));
     aliasesMap.set(key, cleanedAliases);
+  }
+  return aliasesMap;
+}
+
+async function readAliases3() {
+  const aliases = JSON.parse(await fs.readFile("./aliases3.json", "utf-8"));
+  const aliasesMap = new Map<string, string[]>();
+  const aliasesObj = aliases as Record<string, string[]>;
+  for (const [key, value] of Object.entries(aliasesObj)) {
+    aliasesMap.set(key, value);
+  }
+  return aliasesMap;
+}
+
+async function readAliases4() {
+  const res = await fetch("https://maimai.lxns.net/api/v0/maimai/alias/list");
+  if (
+    !res.ok ||
+    res.status !== 200 ||
+    res.headers.get("Content-Type") !== "application/json"
+  ) {
+    console.warn("Failed to fetch maimai.lxns.net, skipping");
+    return new Map<string, string[]>();
+  }
+  const aliases = (await res.json()) as {
+    aliases: { song_id: string; aliases: string[] }[];
+  };
+  const aliasesMap = new Map<string, string[]>();
+
+  for (const { song_id, aliases: songAliases } of aliases.aliases) {
+    aliasesMap.set(song_id, songAliases);
   }
   return aliasesMap;
 }
@@ -102,9 +140,11 @@ async function getSearchAcronyms(title: string, id?: number) {
     searchAcronyms.push(...ALIAS_NAME_EXTRA_MAP[title]);
   }
 
-  return uniq(searchAcronyms).filter(
+  const filtered = uniq(searchAcronyms).filter(
     (acronym) => !!acronym && acronym.toLowerCase() !== title.toLowerCase()
   );
+  filtered.sort((a, b) => a.localeCompare(b));
+  return filtered;
 }
 
 export interface MultiverInternalLevelValue {
@@ -233,9 +273,26 @@ function checkSongsInternalId(
   );
 }
 
+function mergedAliasIdMap(
+  ...aliasMaps: Map<string, string[]>[]
+): Map<string, string[]> {
+  const merged = new Map<string, string[]>();
+
+  for (const aliasMap of aliasMaps) {
+    for (const [key, value] of aliasMap) {
+      const mergedValue = merged.get(key) ?? [];
+      merged.set(key, [...mergedValue, ...value]);
+    }
+  }
+
+  return merged;
+}
+
 async function main() {
   ALIAS_NAME_MAP = await readAliases1();
-  ALIAS_ID_MAP = await readAliases2();
+  ALIAS_ID_MAP = mergedAliasIdMap(
+    ...(await Promise.all([readAliases2(), readAliases3(), readAliases4()]))
+  );
 
   console.info("Fetching multiver internal level values...");
   const multiverInternalLevelValues = await getAllMultiverInternalLevelValues();

@@ -4875,6 +4875,11 @@ react-dom@^18.2.0:
     loose-envify "^1.1.0"
     scheduler "^0.23.0"
 
+react-geiger@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/react-geiger/-/react-geiger-1.1.0.tgz#0d07c35a40860f1d03914d0523b1a9f1f545aa29"
+  integrity sha512-Zi5MGdrDaVevzVrmhrGld0449LNvJugvKplzM/OXn8zbcX/9rJOmxAtNwCTNu8o/gJzkcN730fsw4YCF4CkhEw==
+
 react-hook-form@^7.50.0:
   version "7.50.0"
   resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-7.50.0.tgz#379802d85c7b78e0056229c53607946d34f99a36"
