@@ -1,5 +1,5 @@
 import { TextField, TextFieldProps } from "@mui/material";
-import { ForwardedRef, forwardRef, useState } from "react";
+import { ForwardedRef, forwardRef, useEffect, useState } from "react";
 
 const fixedDecimalPrecision = (value: number, precision: number) =>
   parseFloat(value.toFixed(precision));
@@ -31,6 +31,9 @@ export const FloatValueInputField = forwardRef(
     const [internalInputValue, setInternalInputValue] = useState(
       value.toFixed(1).toString(),
     );
+    useEffect(() => {
+      setInternalInputValue(value.toFixed(1).toString());
+    }, [value]);
 
     return (
       <TextField

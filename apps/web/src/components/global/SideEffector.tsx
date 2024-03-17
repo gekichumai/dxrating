@@ -5,7 +5,7 @@ import { useVersionTheme } from "../../utils/useVersionTheme";
 const SideEffectorThemeMeta: FC = () => {
   const versionTheme = useVersionTheme();
   useEffect(() => {
-    console.info("[theme] Theme changed to " + versionTheme);
+    console.info("[theme] Theme changed to", versionTheme);
 
     document.body.style.backgroundColor = versionTheme.accentColor;
 
