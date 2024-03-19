@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.175.0/http/server.ts";
-import { load } from "https://deno.land/std@0.203.0/dotenv/mod.ts";
 import { Pool } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
 import {
   Generated,
@@ -9,8 +8,6 @@ import {
   PostgresQueryCompiler,
 } from "https://esm.sh/kysely@0.23.4";
 import { PostgresDriver } from "./DenoPostgresDriver.ts";
-
-await load({ export: true });
 
 console.log(`Function "sheet-details" up and running!`);
 
