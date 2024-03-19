@@ -39,17 +39,7 @@ interface Database {
 }
 
 // Create a database pool with one connection.
-const pool = new Pool(
-  {
-    tls: { caCertificates: [Deno.env.get("DB_SSL_CERT")!] },
-    database: "postgres",
-    hostname: Deno.env.get("DB_HOSTNAME"),
-    user: Deno.env.get("DB_USERNAME"),
-    port: 5432,
-    password: Deno.env.get("DB_PASSWORD"),
-  },
-  1
-);
+const pool = new Pool(Deno.env.get("SUPABASE_DB_URL")!, 1);
 
 // You'd create one of these when you start your app.
 const db = new Kysely<Database>({
@@ -106,11 +96,12 @@ serve(async (_req) => {
     );
 
     // Return the response with the correct content type header
-    return new Response(body, {
-      headers: { "content-type": "application/json" },
-    });
+    return Response.json(body);
   } catch (err) {
     console.error(err);
     return new Response(String(err?.message ?? err), { status: 500 });
+  } finally {
+    // Close the pool
+    await pool.end();
   }
 });
