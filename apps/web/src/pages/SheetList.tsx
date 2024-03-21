@@ -24,6 +24,10 @@ const skeletonWidths = Array.from({ length: 20 }).map(
   () => Math.random() * 6.0 + 5.5,
 );
 
+const SORT_DESCRIPTOR_MAPPING = {
+  releaseDate: "releaseDateTimestamp" as const,
+};
+
 const SheetListInner: FC = () => {
   const { t } = useTranslation(["sheet"]);
   const { data: sheets, isLoading } = useSheets();
@@ -66,17 +70,36 @@ const SheetListInner: FC = () => {
         )(sheet);
       });
       if (!query) {
-        sortFilteredResults.sort((a, b) => {
-          return sortFilterOptions.sorts.reduce((acc, sort) => {
+        sortFilteredResults.sort((a, b) =>
+          sortFilterOptions.sorts.reduce((acc, sort) => {
             if (acc !== 0) {
               return acc;
             }
-            const aValue = a[sort.descriptor];
-            const bValue = b[sort.descriptor];
-            if (aValue == null || bValue == null) {
-              // ==: null or undefined
-              return 0;
+            const descriptor =
+              SORT_DESCRIPTOR_MAPPING[
+                sort.descriptor as keyof typeof SORT_DESCRIPTOR_MAPPING
+              ] ?? sort.descriptor;
+            const aValue = a[descriptor];
+            const bValue = b[descriptor];
+
+            if (
+              a.songId === "言ノ葉カルマ" ||
+              a.songId === "エスオーエス" ||
+              b.songId === "言ノ葉カルマ" ||
+              b.songId === "エスオーエス"
+            ) {
+              console.log(a, b, aValue, bValue);
             }
+
+            // null or undefined goes to the end
+            if (aValue == null && bValue == null) {
+              return 0;
+            } else if (aValue == null) {
+              return -1;
+            } else if (bValue == null) {
+              return -1;
+            }
+
             if (aValue < bValue) {
               return sort.direction === "asc" ? -1 : 1;
             }
@@ -84,8 +107,8 @@ const SheetListInner: FC = () => {
               return sort.direction === "asc" ? 1 : -1;
             }
             return 0;
-          }, 0);
-        });
+          }, 0),
+        );
       }
     }
     return {

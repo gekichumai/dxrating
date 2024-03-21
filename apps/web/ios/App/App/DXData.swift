@@ -25,6 +25,7 @@ enum TypeEnum: String, Codable, Equatable, Sendable {
 
 enum VersionEnum: String, Codable, Equatable, Sendable {
     case buddies = "BUDDiES"
+    case buddiesplus = "BUDDiES PLUS"
     case festival = "FESTiVAL"
     case festivalplus = "FESTiVAL PLUS"
     case finale = "FiNALE"
@@ -213,7 +214,7 @@ struct Sheet: Codable, Identifiable {
     let noteDesigner: String?
     let noteCounts: NoteCounts
     let regions: Regions
-    let releaseDate: String
+    let releaseDate: String?
     let isSpecial: Bool
     let version: VersionEnum
     let multiverInternalLevelValue: [String: Double]?

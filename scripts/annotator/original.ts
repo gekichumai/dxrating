@@ -61,7 +61,7 @@ export namespace DXDataOriginal {
     bpm: number | null;
     imageName: string;
     version: VersionEnum;
-    releaseDate: string;
+    releaseDate?: string;
     isNew: boolean;
     isLocked: boolean;
     sheets: Sheet[];
@@ -121,7 +121,8 @@ export namespace DXDataOriginal {
     | "UNiVERSE PLUS"
     | "FESTiVAL"
     | "FESTiVAL PLUS"
-    | "BUDDiES";
+    | "BUDDiES"
+    | "BUDDiES PLUS";
 
   export interface TypeElement {
     type: TypeEnum;

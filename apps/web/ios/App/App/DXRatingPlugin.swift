@@ -11,6 +11,7 @@ import Foundation
 enum DXVersion: String {
     case festivalPlus = "festival-plus"
     case buddies
+    case buddiesPlus = "buddies-plus"
 }
 
 @objc(DXRatingPlugin)

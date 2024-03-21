@@ -27,6 +27,5 @@ export const VERSION_THEME: Record<string, Theme> = {
     logo: "https://shama.dxrating.net/images/version-logo/buddies-plus.png",
     favicon: "https://shama.dxrating.net/favicon/buddies-1024x.jpg",
     accentColor: "#FAAE29",
-    disabled: true,
   },
 };

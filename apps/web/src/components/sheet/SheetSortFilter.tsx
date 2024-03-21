@@ -62,6 +62,16 @@ export const applySheetSortFilterFormPatches = (
     alreadySaved.filters.tags = [];
   }
 
+  // if (alreadySaved.filters.difficulties === undefined) {
+  //   alreadySaved.filters.difficulties = [
+  //     DifficultyEnum.Basic,
+  //     DifficultyEnum.Advanced,
+  //     DifficultyEnum.Expert,
+  //     DifficultyEnum.Master,
+  //     DifficultyEnum.ReMaster,
+  //   ];
+  // }
+
   return alreadySaved;
 };
 

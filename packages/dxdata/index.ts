@@ -19,13 +19,13 @@ export interface CategoryElement {
 }
 
 export enum CategoryEnum {
-  Maimai = "maimai",
-  Niconicoボーカロイド = "niconico＆ボーカロイド",
   Popsアニメ = "POPS＆アニメ",
-  オンゲキChunithm = "オンゲキ＆CHUNITHM",
-  ゲームバラエティ = "ゲーム＆バラエティ",
-  宴会場 = "宴会場",
+  Niconicoボーカロイド = "niconico＆ボーカロイド",
   東方Project = "東方Project",
+  ゲームバラエティ = "ゲーム＆バラエティ",
+  Maimai = "maimai",
+  オンゲキChunithm = "オンゲキ＆CHUNITHM",
+  宴会場 = "宴会場",
 }
 
 export interface DifficultyElement {
@@ -35,8 +35,8 @@ export interface DifficultyElement {
 }
 
 export enum DifficultyEnum {
-  Advanced = "advanced",
   Basic = "basic",
+  Advanced = "advanced",
   Expert = "expert",
   Master = "master",
   ReMaster = "remaster",
@@ -63,7 +63,7 @@ export interface Song {
 export interface Sheet {
   internalId?: number;
   type: TypeEnum;
-  releaseDate: string;
+  releaseDate?: string;
   difficulty: DifficultyEnum;
   level: string;
   internalLevelValue: number;
@@ -148,6 +148,7 @@ export const VERSION_ID_MAP = new Map([
   ["FESTiVAL", 19],
   ["FESTiVAL PLUS", 20],
   ["BUDDiES", 21],
+  ["BUDDiES PLUS", 22],
   //! add further version here !//
 ]);
 

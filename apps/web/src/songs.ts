@@ -24,6 +24,7 @@ export type FlattenedSheet = Song &
     isTypeUtage: boolean;
     isRatingEligible: boolean;
     tags: number[];
+    releaseDateTimestamp: number;
   };
 
 export const canonicalId = (song: Song, sheet: Sheet) => {
@@ -71,6 +72,9 @@ export const getFlattenedSheets = async (
         searchAcronyms: song.searchAcronyms,
         isTypeUtage,
         isRatingEligible: !isTypeUtage,
+        releaseDateTimestamp: sheet.releaseDate
+          ? new Date(sheet.releaseDate + "T06:00:00+09:00").valueOf()
+          : null,
         internalLevelValue: sheet.multiverInternalLevelValue
           ? sheet.multiverInternalLevelValue[version] ??
             sheet.internalLevelValue
@@ -170,15 +174,12 @@ export const useFilteredSheets = (searchTerm: string) => {
   const search = useSheetsSearchEngine();
 
   const defaultResults = useMemo(() => {
-    return (sheets ?? []).slice().sort((a, b) => {
-      return b.internalLevelValue - a.internalLevelValue;
-    });
+    return (sheets ?? []).slice();
   }, [sheets]);
 
   return useMemo(() => {
     const start = performance.now();
-    const results =
-      searchTerm === "" ? defaultResults ?? [] : search(searchTerm);
+    const results = searchTerm === "" ? defaultResults : search(searchTerm);
     const end = performance.now();
     console.log(`Fuse search took ${end - start}ms`);
 

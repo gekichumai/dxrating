@@ -37,6 +37,7 @@ const VERSION_ID_MAP = new Map([
   ["FESTiVAL", 19],
   ["FESTiVAL PLUS", 20],
   ["BUDDiES", 21],
+  ["BUDDiES PLUS", 22],
   //! add further version here !//
 ]);
 
@@ -159,7 +160,7 @@ export interface SheetExtras {
   songId: string;
   type: string;
   difficulty: string;
-  releaseDate: Date;
+  releaseDate?: Date;
 }
 
 async function getAllMultiverInternalLevelValues() {
@@ -203,7 +204,7 @@ async function getAllSheetSpecificReleaseDates() {
 
   return rows.map((row) => ({
     ...row,
-    releaseDate: row.releaseDate.toISOString().split("T")[0],
+    releaseDate: row.releaseDate?.toISOString().split("T")[0],
   }));
 }
 

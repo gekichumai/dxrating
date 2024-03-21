@@ -83,7 +83,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
         rating: calculateRating(sheet.internalLevelValue, rate),
       }));
     }, [sheet, currentAchievementRate]);
-    const releaseDate = new Date(sheet.releaseDate + "T09:00:00+09:00");
+    const releaseDate = new Date(sheet.releaseDateTimestamp);
 
     return (
       <div className="flex flex-col gap-2 relative">
@@ -98,19 +98,21 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
 
         <div className="text-sm -mt-2">
           <div className="text-zinc-600">
-            {t("sheet:release-date", {
-              absoluteDate: releaseDate.toLocaleString(i18n.language, {
-                dateStyle: "medium",
-              }),
-              relativeDate: new Intl.RelativeTimeFormat(i18n.language, {
-                numeric: "auto",
-              }).format(
-                Math.floor(
-                  (releaseDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+            {sheet.releaseDate &&
+              t("sheet:release-date", {
+                absoluteDate: releaseDate.toLocaleString(i18n.language, {
+                  dateStyle: "medium",
+                }),
+                relativeDate: new Intl.RelativeTimeFormat(i18n.language, {
+                  numeric: "auto",
+                }).format(
+                  Math.floor(
+                    (releaseDate.getTime() - Date.now()) /
+                      (1000 * 60 * 60 * 24),
+                  ),
+                  "day",
                 ),
-                "day",
-              ),
-            })}
+              })}
           </div>
         </div>
 

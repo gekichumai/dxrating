@@ -1,10 +1,9 @@
-import { VERSION_IDS, VERSION_ID_MAP, VersionEnum } from "@gekichumai/dxdata";
+import { VERSION_IDS, VersionEnum } from "@gekichumai/dxdata";
 import { ButtonBase, Chip } from "@mui/material";
 import { FC, useMemo } from "react";
 import { Control, useController } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { LongPressCallbackReason, useLongPress } from "use-long-press";
-import { useAppContextDXDataVersion } from "../../../models/context/useAppContext";
 import { GestureHint } from "../../global/GestureHint";
 import { SheetSortFilterForm } from "../SheetSortFilter";
 import { SheetFilterSection } from "./SheetFilterSection";
@@ -59,18 +58,13 @@ const SheetVersionFilterInput = ({
   value: VersionEnum[];
   onChange: (value: VersionEnum[]) => void;
 }) => {
-  const appVersion = useAppContextDXDataVersion();
   const allEnums = useMemo(
     () =>
       VERSION_IDS.map((k) => ({
         id: k,
         selected: value.includes(k),
-      })).filter(
-        (v) =>
-          (VERSION_ID_MAP.get(v.id) ?? 0) <=
-          (VERSION_ID_MAP.get(appVersion) ?? 0),
-      ),
-    [value, appVersion],
+      })),
+    [value],
   );
 
   return (
