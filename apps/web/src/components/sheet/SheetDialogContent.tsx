@@ -126,7 +126,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
           <Button
             startIcon={<IconMdiYouTube />}
             variant="outlined"
-            href={`https://www.youtube.com/results?search_query=maimai+${sheet.title}+${sheet.difficulty}`}
+            href={`https://www.youtube.com/results?search_query=maimai+${sheet.title.replace(/#/g, "%23")}+${sheet.difficulty}`}
             target="_blank"
             className="inline-flex !text-[#ff0000] !b-[#ff0000] !hover:bg-[#ff000009] font-bold mr-2"
           >
@@ -137,14 +137,14 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
             <RiBilibiliFill className="ml-2.5" />
             <ButtonGroup>
               <Button
-                href={`bilibili://search?keyword=${sheet.title}%20${sheet.difficulty}`}
+                href={`bilibili://search?keyword=${sheet.title.replace(/#/g, "%23")}%20${sheet.difficulty}`}
                 target="_blank"
                 className="!rounded-none !text-[#00A1D6] !hover:bg-[#00A1D609] font-bold !b-none"
               >
                 App
               </Button>
               <Button
-                href={`https://search.bilibili.com/all?keyword=${sheet.title}%20${sheet.difficulty}`}
+                href={`https://search.bilibili.com/all?keyword=${sheet.title.replace(/#/g, "%23")}%20${sheet.difficulty}`}
                 target="_blank"
                 className="!rounded-none !text-[#00A1D6] !hover:bg-[#00A1D609] font-bold !b-none"
               >
@@ -154,7 +154,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
           </div>
 
           <IconButton
-            href={`https://open.spotify.com/search/${sheet.title}`}
+            href={`https://open.spotify.com/search/${sheet.title.replace(/#/g, "%23")}`}
             target="_blank"
             className="inline-flex !text-[#1db954] !b-[#1db954] !hover:bg-[#1db95409] font-bold"
           >
