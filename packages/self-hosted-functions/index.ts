@@ -22,6 +22,14 @@ functionsPrefix.post("/fetch-net-records/v0", async (ctx) => {
   return handler(ctx);
 });
 
+router.get("/", (ctx) => {
+  ctx.body = {
+    message: "みるく is up and running! 🥛",
+    _self:
+      "https://github.com/gekichumai/dxrating/tree/main/packages/self-hosted-functions",
+  };
+});
+
 app.use(bodyParser({ enableTypes: ["json"] }));
 app.use(router.routes());
 app.use(router.allowedMethods());
