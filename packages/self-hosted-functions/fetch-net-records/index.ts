@@ -1,34 +1,7 @@
-import { serve } from "https://deno.land/std@0.175.0/http/server.ts";
-import {
-  DOMParser,
-  Element,
-  Node,
-  NodeType,
-} from "https://deno.land/x/deno_dom@v0.1.45/deno-dom-wasm.ts";
-import { Session } from "./Session.ts";
-import { URLS } from "./URLS.ts";
-
-console.info(`Function "fetch-net-records" up and running!`);
-console.info(`Deno version: ${JSON.stringify(Deno.version)}`);
-console.info(`Deno env: ${JSON.stringify(Deno.env)}`);
-async function listPermissions() {
-  const permissions = [
-    "read",
-    "write",
-    "net",
-    "env",
-    "run",
-    "hrtime",
-    "sys",
-    "ffi",
-  ] as const;
-
-  for (const permission of permissions) {
-    const status = await Deno.permissions.query({ name: permission });
-    console.log(`  - Deno permission ${permission}: ${status.state}`);
-  }
-}
-listPermissions();
+import { ParameterizedContext } from "koa";
+import { DOMParser } from "xmldom-qsa";
+import { Session } from "./Session";
+import { URLS } from "./URLS";
 
 type Flag =
   | "fullCombo"
@@ -53,14 +26,14 @@ const flagMatchers: Record<Flag, string> = {
   "fullSyncDX+": "fsdplus.png",
 };
 
-function parseNode(record: Node) {
-  if (record.nodeType !== NodeType.ELEMENT_NODE) return [] as const;
+function parseNode(record: Element) {
+  if (record.nodeType !== Node.ELEMENT_NODE) return [] as const;
   const el = record as Element;
 
-  const songId = el.querySelector(".basic_block.break")?.textContent.trim();
+  const songId = el.querySelector(".basic_block.break")?.textContent?.trim();
   const achievementRateString = el
     .querySelector(".playlog_achievement_txt")
-    ?.textContent.trim();
+    ?.textContent?.trim();
 
   const achievementRate = parseInt(
     achievementRateString?.replace("%", "").replace(".", "") ?? ""
@@ -77,7 +50,7 @@ function parseNode(record: Node) {
   const difficulty = difficultyIcon?.value.match(/diff_(.*)\.png/)?.[1];
 
   const dxScorePair = (
-    el.querySelector(".playlog_score_block")?.textContent.trim() ?? ""
+    el.querySelector(".playlog_score_block")?.textContent?.trim() ?? ""
   )
     .split(" / ")
     .flatMap((el) => {
@@ -94,11 +67,11 @@ function parseNode(record: Node) {
   }
 
   const subtitles = el.querySelectorAll(".sub_title .v_b");
-  const trackString = subtitles[0].textContent;
+  const trackString = subtitles[0].textContent ?? "";
   const track = parseInt(trackString.replace("TRACK", "").trim(), 10);
 
-  const playedAtString = subtitles[1].textContent.trim();
-  const playedAt = playedAtString.replace(
+  const playedAtString = subtitles[1].textContent?.trim();
+  const playedAt = playedAtString?.replace(
     /(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})/,
     "$1-$2-$3T$4:$5:00+09:00"
   );
@@ -121,8 +94,8 @@ function parseNode(record: Node) {
   const flags: Flag[] = [];
 
   const flagImages = el.querySelectorAll(".playlog_result_innerblock img.f_l");
-  for (const flagImage of flagImages) {
-    if (flagImage.nodeType !== NodeType.ELEMENT_NODE) return [] as const;
+  for (const flagImage of Array.from(flagImages)) {
+    if (flagImage.nodeType !== Node.ELEMENT_NODE) return [] as const;
     const el = flagImage as Element;
     const src = el.attributes.getNamedItem("src")?.value;
     if (!src) {
@@ -168,9 +141,17 @@ interface AuthParams {
   password: string;
 }
 
-async function handleJP({ id, password }: AuthParams) {
+async function handleJP(
+  ctx: ParameterizedContext,
+  { id, password }: AuthParams
+) {
   const session = new Session();
   const loginPageText = await (await session.fetch(URLS.JP.LOGIN_PAGE)).text();
+  if (URLS.CHECKLIST.MAINTENANCE.some((m) => loginPageText.includes(m))) {
+    throw new Error(
+      "NET service is currently under maintenance. Please try again later."
+    );
+  }
   const loginPage = new DOMParser().parseFromString(loginPageText, "text/html");
   const loginPageToken = loginPage
     ?.querySelector('input[name="token"]')
@@ -204,14 +185,18 @@ async function handleJP({ id, password }: AuthParams) {
   const records = recordPage.querySelectorAll(".wrapper > div.p_10");
   const parsedRecords = Array.from(records).flatMap(parseNode);
 
-  return {
+  ctx.body = {
     records: parsedRecords,
   };
 }
 
-async function handleINTL({ id, password }: AuthParams) {
+async function handleINTL(
+  ctx: ParameterizedContext,
+  { id, password }: AuthParams
+) {
   const session = new Session();
   await session.fetch(URLS.INTL.LOGIN_PAGE);
+
   const redirectURL = (
     await session.fetch(URLS.INTL.LOGIN_ENDPOINT, {
       method: "POST",
@@ -231,6 +216,11 @@ async function handleINTL({ id, password }: AuthParams) {
   await session.fetch(redirectURL);
   const recordPageResponse = await session.fetch(URLS.INTL.RECORD_PAGE);
   const recordPageText = await recordPageResponse.text();
+  if (URLS.CHECKLIST.MAINTENANCE.some((m) => recordPageText.includes(m))) {
+    throw new Error(
+      "NET service is currently under maintenance. Please try again later."
+    );
+  }
   const recordPage = new DOMParser().parseFromString(
     recordPageText,
     "text/html"
@@ -241,41 +231,29 @@ async function handleINTL({ id, password }: AuthParams) {
   const records = recordPage.querySelectorAll(".wrapper > div.p_10");
   const parsedRecords = Array.from(records).flatMap(parseNode);
 
-  return {
+  ctx.body = {
     records: parsedRecords,
   };
 }
 
-async function handle(req: Request) {
-  const { id, password, region } = await req.json();
+export async function handler(ctx: ParameterizedContext) {
+  const { id, password, region } = (ctx.request.body as any) ?? {};
   if (!id || !password) {
-    throw new Error(
-      "`id` and `password` are required parameters but has not been provided"
-    );
+    ctx.status = 400;
+    ctx.body = {
+      error:
+        "`id` and `password` are required parameters but has not been provided",
+    };
   }
 
   if (region === "intl") {
-    return await handleINTL({ id, password });
+    await handleINTL(ctx, { id, password });
   } else if (region === "jp") {
-    return await handleJP({ id, password });
+    await handleJP(ctx, { id, password });
   } else {
-    throw new Error("unsupported region");
+    ctx.status = 400;
+    ctx.body = {
+      error: "unsupported region: `region` must be either `intl` or `jp`",
+    };
   }
 }
-
-serve(async (req) => {
-  if (req.method !== "POST") {
-    return new Response(null, { status: 405 });
-  }
-
-  try {
-    const data = await handle(req);
-    return Response.json(data);
-  } catch (e) {
-    let message = "An unknown error occurred";
-    if (e instanceof Error) {
-      message = e.message;
-    }
-    return Response.json({ message }, { status: 500 });
-  }
-});
