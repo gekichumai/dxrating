@@ -5,10 +5,9 @@ import { handler } from "./fetch-net-records";
 const app = new Koa();
 const router = new Router();
 
-const functionsPrefix = router.prefix("/functions");
-functionsPrefix.use(async (ctx, next) => {
+router.use(async (ctx, next) => {
   try {
-    await next();
+    return await next();
   } catch (err) {
     console.error(err);
     ctx.status = 500;
@@ -18,17 +17,15 @@ functionsPrefix.use(async (ctx, next) => {
   }
 });
 
-functionsPrefix.post("/fetch-net-records/v0", async (ctx) => {
-  return handler(ctx);
-});
-
-router.get("/", (ctx) => {
+router.get("/", async (ctx) => {
   ctx.body = {
     message: "みるく is up and running! 🥛",
     _self:
       "https://github.com/gekichumai/dxrating/tree/main/packages/self-hosted-functions",
   };
 });
+
+router.post("/functions/fetch-net-records/v0", handler);
 
 app.use(bodyParser({ enableTypes: ["json"] }));
 app.use(router.routes());
