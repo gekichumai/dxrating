@@ -10,6 +10,7 @@ on:
       - '.github/**'
       - 'README.md'
       - 'scripts/**'
+      - 'packages/self-hosted-functions/**'
 
 concurrency:
   group: release-dispatcher-${{ github.ref }}
