@@ -1,6 +1,8 @@
 import { DifficultyEnum, TypeEnum } from "@gekichumai/dxdata";
 import {
   Button,
+  Checkbox,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -25,8 +27,14 @@ import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
 interface AchievementRecord {
   sheet: {
     songId: string;
-    type: string;
-    difficulty: string;
+    type: "standard" | "dx" | "utage";
+    difficulty:
+      | "basic"
+      | "advanced"
+      | "expert"
+      | "master"
+      | "remaster"
+      | "utage";
   };
   achievement: {
     rate: number;
@@ -111,7 +119,7 @@ const ImportFromNETRecordsDialogContent: FC<{
   const [region, setRegion] = useState<"intl" | "jp">("intl");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(true);
   const { data: sheets } = useSheets();
 
   useEffect(() => {
@@ -153,14 +161,23 @@ const ImportFromNETRecordsDialogContent: FC<{
         musicRecords: MusicRecord[];
       };
       const entries = data.musicRecords
+        .filter((entry) => {
+          return entry.sheet.difficulty !== "utage";
+        })
         .map((record) => {
           return {
             sheetId: canonicalIdFromParts(
               record.sheet.songId,
-              record.sheet.type as TypeEnum,
+              (
+                {
+                  standard: TypeEnum.STD,
+                  dx: TypeEnum.DX,
+                  utage: TypeEnum.UTAGE,
+                } as const
+              )[record.sheet.type],
               record.sheet.difficulty as DifficultyEnum,
             ),
-            achievementRate: record.achievement.rate,
+            achievementRate: record.achievement.rate / 10000,
           };
         })
         .filter((entry) => {
@@ -187,7 +204,7 @@ const ImportFromNETRecordsDialogContent: FC<{
     <>
       <DialogTitle>Import from maimaidx.jp or maimaidx-eng.com</DialogTitle>
       <DialogContent>
-        <DialogContentText>
+        <DialogContentText className="flex flex-col items-start gap-2 py-2">
           <FormControl>
             <TextField
               label="Region"
@@ -200,38 +217,58 @@ const ImportFromNETRecordsDialogContent: FC<{
               <MenuItem value="intl">International</MenuItem>
               <MenuItem value="jp">Japan</MenuItem>
             </TextField>
+          </FormControl>
+
+          <FormControl>
             <TextField
               label="Your Sega ID"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
             />
+          </FormControl>
+
+          <FormControl>
             <TextField
               label="Your Sega ID Password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
-            <FormControlLabel
-              control={
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={(event) => setRemember(event.target.checked)}
-                />
-              }
-              label="Remember"
-            />
           </FormControl>
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={remember}
+                onChange={(event) => setRemember(event.target.checked)}
+              />
+            }
+            label="Remember Credentials"
+          />
+
+          <div className="text-sm text-gray-500">
+            Your credentials will be used to communicate with the official
+            maimai NET service to import your records. They will not be stored
+            on our servers.
+          </div>
         </DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button
           onClick={handleImport}
-          disabled={!username || !password}
+          disabled={!username || !password || busy}
           variant="contained"
         >
-          {busy ? "Importing..." : "Import"}
+          {busy ? (
+            <div className="flex gap-2 items-center">
+              <CircularProgress size="1rem" className="text-gray-5" />
+
+              <span className="text-gray-5">Importing...</span>
+            </div>
+          ) : (
+            "Import"
+          )}
         </Button>
       </DialogActions>
     </>
