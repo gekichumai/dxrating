@@ -14,6 +14,8 @@ type Flag =
   | "fullSyncDX"
   | "fullSyncDX+";
 
+const NODE_ELEMENT_NODE = 1;
+
 const flagMatchers: Record<Flag, string> = {
   fullCombo: "fc.png",
   "fullCombo+": "fcplus.png",
@@ -27,7 +29,7 @@ const flagMatchers: Record<Flag, string> = {
 };
 
 function parseNode(record: Element) {
-  if (record.nodeType !== Node.ELEMENT_NODE) return [] as const;
+  if (record.nodeType !== NODE_ELEMENT_NODE) return [] as const;
   const el = record as Element;
 
   const songId = el.querySelector(".basic_block.break")?.textContent?.trim();
@@ -95,7 +97,7 @@ function parseNode(record: Element) {
 
   const flagImages = el.querySelectorAll(".playlog_result_innerblock img.f_l");
   for (const flagImage of Array.from(flagImages)) {
-    if (flagImage.nodeType !== Node.ELEMENT_NODE) return [] as const;
+    if (flagImage.nodeType !== NODE_ELEMENT_NODE) return [] as const;
     const el = flagImage as Element;
     const src = el.attributes.getNamedItem("src")?.value;
     if (!src) {

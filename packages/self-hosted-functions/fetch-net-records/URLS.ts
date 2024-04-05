@@ -20,6 +20,6 @@ export const URLS = {
       "https://maimaidx-eng.com/maimai-mobile/error/",
       "https://maimaidx.jp/maimai-mobile/error/",
     ],
-    MAINTENANCE: ["メンテナンス", "maintenance"],
+    MAINTENANCE: ["メンテナンス中", "maintenance"],
   },
 };
