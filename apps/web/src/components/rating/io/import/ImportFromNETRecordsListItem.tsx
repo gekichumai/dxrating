@@ -119,7 +119,7 @@ const ImportFromNETRecordsDialogContent: FC<{
   const [region, setRegion] = useState<"intl" | "jp">("intl");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(true);
+  const [busy, setBusy] = useState(false);
   const { data: sheets } = useSheets();
 
   useEffect(() => {
