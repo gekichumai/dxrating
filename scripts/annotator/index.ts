@@ -62,7 +62,7 @@ async function readAliases1() {
 }
 
 async function readAliases2() {
-  const res = await fetch("https://api.yuzuai.xyz/maimaidx/maimaidxalias");
+  const res = await fetch("https://api.yuzuchan.moe/maimaidx/maimaidxalias");
   if (
     !res.ok ||
     res.status !== 200 ||
@@ -71,7 +71,7 @@ async function readAliases2() {
     console.warn("Failed to fetch maimaidxalias, skipping");
     return new Map<string, string[]>();
   }
-  const aliases = await res.json();
+  const aliases = (await res.json()).content;
   const aliasesMap = new Map<string, string[]>();
   const aliasesObj = aliases as Record<string, { Alias: string[] }>;
   for (const [key, value] of Object.entries(aliasesObj)) {
@@ -141,7 +141,11 @@ async function getSearchAcronyms(title: string, id?: number) {
     searchAcronyms.push(...ALIAS_NAME_EXTRA_MAP[title]);
   }
 
-  const filtered = uniq(searchAcronyms).filter(
+  // remove zero-width space like characters
+
+  const filtered = uniq(
+    searchAcronyms.map((acronym) => acronym.replace(/\u200B/g, ""))
+  ).filter(
     (acronym) => !!acronym && acronym.toLowerCase() !== title.toLowerCase()
   );
   filtered.sort((a, b) => a.localeCompare(b));
