@@ -202,7 +202,7 @@ const ImportFromNETRecordsDialogContent: FC<{
 
   return (
     <>
-      <DialogTitle>Import from maimaidx.jp or maimaidx-eng.com</DialogTitle>
+      <DialogTitle>Import from NET</DialogTitle>
       <DialogContent>
         <DialogContentText className="flex flex-col items-start gap-2 py-2">
           <FormControl>
@@ -214,8 +214,20 @@ const ImportFromNETRecordsDialogContent: FC<{
                 setRegion(event.target.value as "intl" | "jp")
               }
             >
-              <MenuItem value="intl">International</MenuItem>
-              <MenuItem value="jp">Japan</MenuItem>
+              <MenuItem value="intl">
+                <span>
+                  <span>International </span>
+                  <span className="text-gray-4 text-sm">
+                    (maimaidx-eng.com)
+                  </span>
+                </span>
+              </MenuItem>
+              <MenuItem value="jp">
+                <span>
+                  <span>Japan </span>
+                  <span className="text-gray-4 text-sm">(maimaidx.jp)</span>
+                </span>
+              </MenuItem>
             </TextField>
           </FormControl>
 
