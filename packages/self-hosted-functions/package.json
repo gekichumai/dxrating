@@ -8,6 +8,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@koa/cors": "^5.0.0",
     "cookie": "^0.6.0",
     "koa": "^2.15.2",
     "koa-bodyparser": "^4.4.1",

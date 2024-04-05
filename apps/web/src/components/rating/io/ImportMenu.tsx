@@ -1,9 +1,10 @@
-import { Button, Menu } from "@mui/material";
+import { Button, Divider, Menu } from "@mui/material";
 import { FC, useId, useState } from "react";
 import { ListActions } from "react-use/lib/useList";
 import { PlayEntry } from "../RatingCalculatorAddEntryForm";
 import { ImportFromAquaSQLiteListItem } from "./import/ImportFromAquaSQLiteListItem";
 import { ImportFromJSONButtonListItem } from "./import/ImportFromJSONButtonListItem";
+import { ImportFromNETRecordsListItem } from "./import/ImportFromNETRecordsListItem";
 import { ImportFromRemoteListItem } from "./import/ImportFromRemoteListItem";
 
 export const ImportMenu: FC<{
@@ -42,6 +43,12 @@ export const ImportMenu: FC<{
           "aria-labelledby": `button-${id}`,
         }}
       >
+        <ImportFromNETRecordsListItem
+          modifyEntries={modifyEntries}
+          onClose={handleClose}
+        />
+
+        <Divider />
         <ImportFromJSONButtonListItem
           modifyEntries={modifyEntries}
           onClose={handleClose}
