@@ -1,9 +1,11 @@
 import { ParameterizedContext } from "koa";
-import { DOMParser } from "xmldom-qsa";
 import { Session } from "./Session";
 import { URLS } from "./URLS";
+import { parseMusicRecordNode } from "./parseMusicRecordNode";
+import { parseRecentRecordNode } from "./parseRecentRecordNode";
+import { AchievementRecord } from "./record";
 
-type Flag =
+export type Flag =
   | "fullCombo"
   | "fullCombo+"
   | "allPerfect"
@@ -14,128 +16,13 @@ type Flag =
   | "fullSyncDX"
   | "fullSyncDX+";
 
-const NODE_ELEMENT_NODE = 1;
+export const NODE_ELEMENT_NODE = 1;
 
-const flagMatchers: Record<Flag, string> = {
-  fullCombo: "fc.png",
-  "fullCombo+": "fcplus.png",
-  allPerfect: "ap.png",
-  "allPerfect+": "applus.png",
-  syncPlay: "sync.png",
-  fullSync: "fs.png",
-  "fullSync+": "fsplus.png",
-  fullSyncDX: "fsd.png",
-  "fullSyncDX+": "fsdplus.png",
-};
-
-function parseNode(record: Element) {
-  if (record.nodeType !== NODE_ELEMENT_NODE) return [] as const;
-  const el = record as Element;
-
-  const songId = el.querySelector(".basic_block.break")?.textContent?.trim();
-  const achievementRateString = el
-    .querySelector(".playlog_achievement_txt")
-    ?.textContent?.trim();
-
-  const achievementRate = parseInt(
-    achievementRateString?.replace("%", "").replace(".", "") ?? ""
+function musicRecordURLs(base: string): string[] {
+  const difficulties = [0, 1, 2, 3, 4, 10];
+  return difficulties.map(
+    (difficulty) => `${base}?genre=99&diff=${difficulty}`
   );
-
-  const typeIcon = el
-    .querySelector(".playlog_music_kind_icon")
-    ?.attributes.getNamedItem("src");
-  let type = typeIcon?.value.match(/music_(standard|dx)\.png/)?.[1];
-
-  const difficultyIcon = el
-    .querySelector(".playlog_diff")
-    ?.attributes.getNamedItem("src");
-  const difficulty = difficultyIcon?.value.match(/diff_(.*)\.png/)?.[1];
-
-  const dxScorePair = (
-    el.querySelector(".playlog_score_block")?.textContent?.trim() ?? ""
-  )
-    .split(" / ")
-    .flatMap((el) => {
-      try {
-        return [parseInt(el.replace(",", ""))];
-      } catch (_e) {
-        return [] as const;
-      }
-    }) as [number, number];
-
-  if (dxScorePair.length !== 2) {
-    console.warn("[parseNode] invalid dx score pair:", dxScorePair);
-    return [] as const;
-  }
-
-  const subtitles = el.querySelectorAll(".sub_title .v_b");
-  const trackString = subtitles[0].textContent ?? "";
-  const track = parseInt(trackString.replace("TRACK", "").trim(), 10);
-
-  const playedAtString = subtitles[1].textContent?.trim();
-  const playedAt = playedAtString?.replace(
-    /(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})/,
-    "$1-$2-$3T$4:$5:00+09:00"
-  );
-
-  // overrides
-  if (difficulty === "utage") {
-    type = "utage";
-  }
-
-  if (!songId || !type || !difficulty) {
-    console.warn(
-      "[parseNode] missing required fields:",
-      songId,
-      type,
-      difficulty
-    );
-    return [] as const;
-  }
-
-  const flags: Flag[] = [];
-
-  const flagImages = el.querySelectorAll(".playlog_result_innerblock img.f_l");
-  for (const flagImage of Array.from(flagImages)) {
-    if (flagImage.nodeType !== NODE_ELEMENT_NODE) return [] as const;
-    const el = flagImage as Element;
-    const src = el.attributes.getNamedItem("src")?.value;
-    if (!src) {
-      console.warn(
-        "[parseNode] missing src attribute on flag image",
-        el.innerHTML
-      );
-      continue;
-    }
-    const flag = (Object.keys(flagMatchers) as Flag[]).find((key) =>
-      src.includes(flagMatchers[key])
-    ) as Flag | undefined;
-    if (flag) {
-      flags.push(flag);
-    }
-  }
-
-  return [
-    {
-      play: {
-        track,
-        timestamp: playedAt,
-      },
-      sheet: {
-        songId,
-        type,
-        difficulty,
-      },
-      achievement: {
-        rate: achievementRate,
-        dxScore: {
-          achieved: dxScorePair[0],
-          total: dxScorePair[1],
-        },
-        flags,
-      },
-    },
-  ];
 }
 
 interface AuthParams {
@@ -147,14 +34,9 @@ async function handleJP(
   ctx: ParameterizedContext,
   { id, password }: AuthParams
 ) {
+  // auth
   const session = new Session();
-  const loginPageText = await (await session.fetch(URLS.JP.LOGIN_PAGE)).text();
-  if (URLS.CHECKLIST.MAINTENANCE.some((m) => loginPageText.includes(m))) {
-    throw new Error(
-      "NET service is currently under maintenance. Please try again later."
-    );
-  }
-  const loginPage = new DOMParser().parseFromString(loginPageText, "text/html");
+  const loginPage = await session.fetchAsDOM(URLS.JP.LOGIN_PAGE);
   const loginPageToken = loginPage
     ?.querySelector('input[name="token"]')
     ?.attributes.getNamedItem("value")?.value;
@@ -175,20 +57,35 @@ async function handleJP(
   await session.fetch(URLS.JP.LOGIN_AIMELIST);
   await session.fetch(URLS.JP.LOGIN_AIMELIST_SUBMIT);
   await session.fetch(URLS.JP.HOMEPAGE);
-  const recordPageResponse = await session.fetch(URLS.JP.RECORD_PAGE);
-  const recordPageText = await recordPageResponse.text();
-  const recordPage = new DOMParser().parseFromString(
-    recordPageText,
-    "text/html"
-  );
-  if (!recordPage) {
+
+  // fetch data
+  // fetch recent records
+  const recentRecordPage = await session.fetchAsDOM(URLS.JP.RECORD_RECENT_PAGE);
+  if (!recentRecordPage) {
     throw new Error("internal server error: failed to parse record page");
   }
-  const records = recordPage.querySelectorAll(".wrapper > div.p_10");
-  const parsedRecords = Array.from(records).flatMap(parseNode);
+  const recentRecords = Array.from(
+    recentRecordPage.querySelectorAll(".wrapper > div.p_10")
+  ).flatMap(parseRecentRecordNode);
+  // fetch music records
+  const musicRecords: AchievementRecord[] = [];
+  for (const url of musicRecordURLs(URLS.JP.RECORD_MUSICS_PAGE)) {
+    const musicRecordsPage = await session.fetchAsDOM(url);
+    if (!musicRecordsPage) {
+      throw new Error(
+        "internal server error: failed to parse music records page"
+      );
+    }
+    musicRecords.push(
+      ...Array.from(
+        musicRecordsPage.querySelectorAll(".w_450.m_15.p_r.f_0")
+      ).flatMap(parseMusicRecordNode)
+    );
+  }
 
   ctx.body = {
-    records: parsedRecords,
+    recentRecords,
+    musicRecords,
   };
 }
 
@@ -196,6 +93,7 @@ async function handleINTL(
   ctx: ParameterizedContext,
   { id, password }: AuthParams
 ) {
+  // auth
   const session = new Session();
   await session.fetch(URLS.INTL.LOGIN_PAGE);
 
@@ -216,25 +114,38 @@ async function handleINTL(
     throw new Error("invalid credentials: empty redirectURL");
   }
   await session.fetch(redirectURL);
-  const recordPageResponse = await session.fetch(URLS.INTL.RECORD_PAGE);
-  const recordPageText = await recordPageResponse.text();
-  if (URLS.CHECKLIST.MAINTENANCE.some((m) => recordPageText.includes(m))) {
-    throw new Error(
-      "NET service is currently under maintenance. Please try again later."
-    );
-  }
-  const recordPage = new DOMParser().parseFromString(
-    recordPageText,
-    "text/html"
+
+  // fetch data
+  // fetch recent records
+  const recentRecordsPage = await session.fetchAsDOM(
+    URLS.INTL.RECORD_RECENT_PAGE
   );
-  if (!recordPage) {
+  if (!recentRecordsPage) {
     throw new Error("internal server error: failed to parse record page");
   }
-  const records = recordPage.querySelectorAll(".wrapper > div.p_10");
-  const parsedRecords = Array.from(records).flatMap(parseNode);
+  const recentRecords = Array.from(
+    recentRecordsPage.querySelectorAll(".wrapper > div.p_10")
+  ).flatMap(parseRecentRecordNode);
+  // fetch music records
+
+  const musicRecords: AchievementRecord[] = [];
+  for (const url of musicRecordURLs(URLS.INTL.RECORD_MUSICS_PAGE)) {
+    const musicRecordsPage = await session.fetchAsDOM(url);
+    if (!musicRecordsPage) {
+      throw new Error(
+        "internal server error: failed to parse music records page"
+      );
+    }
+    musicRecords.push(
+      ...Array.from(
+        musicRecordsPage.querySelectorAll(".w_450.m_15.p_r.f_0")
+      ).flatMap(parseMusicRecordNode)
+    );
+  }
 
   ctx.body = {
-    records: parsedRecords,
+    recentRecords,
+    musicRecords,
   };
 }
 

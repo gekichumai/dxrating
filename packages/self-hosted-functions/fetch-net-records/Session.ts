@@ -1,5 +1,6 @@
 import cookie from "cookie";
 import tls from "tls";
+import { DOMParser } from "xmldom-qsa";
 import { URLS } from "./URLS";
 
 import { Agent, Headers, RequestInit, fetch } from "undici";
@@ -121,5 +122,16 @@ export class Session {
     }
 
     return res;
+  }
+
+  async fetchAsDOM(url: string, init?: RequestInit) {
+    const res = await this.fetch(url, init);
+    const text = await res.text();
+    if (URLS.CHECKLIST.MAINTENANCE.includes(text)) {
+      throw new Error(
+        "NET maintenance is currently ongoing. Please try again later."
+      );
+    }
+    return new DOMParser().parseFromString(text, "text/html");
   }
 }
