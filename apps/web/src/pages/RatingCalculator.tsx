@@ -6,9 +6,11 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   Grow,
   IconButton,
   Paper,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -141,6 +143,7 @@ const TransparentPaper = styled(Paper)(() => ({
 export const RatingCalculator = () => {
   const { modifyEntries } = useRatingCalculatorContext();
   const { data: sheets } = useSheets();
+  const [showOnlyB50, setShowOnlyB50] = useState(false);
 
   const [sorting, setSorting] = useState<SortingState>([
     { id: "rating", desc: true },
@@ -220,8 +223,14 @@ export const RatingCalculator = () => {
     [modifyEntries],
   );
 
+  const data = useMemo(() => {
+    return showOnlyB50
+      ? allEntries.filter((entry) => entry.includedIn)
+      : allEntries;
+  }, [allEntries, showOnlyB50]);
+
   const table = useReactTable({
-    data: allEntries,
+    data,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
@@ -282,6 +291,27 @@ export const RatingCalculator = () => {
               <div className="flex-1" />
 
               <ClearButton modifyEntries={modifyEntries} />
+            </div>
+          </Alert>
+
+          <Alert
+            severity="info"
+            className="w-full"
+            classes={{
+              message: "overflow-unset",
+            }}
+          >
+            <AlertTitle>Quick Actions</AlertTitle>
+            <div className="flex items-center gap-2 mt-2">
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={showOnlyB50}
+                    onChange={() => setShowOnlyB50((prev) => !prev)}
+                  />
+                }
+                label="Show only B50 entries"
+              />
             </div>
           </Alert>
         </div>

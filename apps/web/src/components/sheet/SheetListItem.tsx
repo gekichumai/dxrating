@@ -233,7 +233,7 @@ export const SheetTitle: FC<SheetTitleProps> = ({
   sheet,
   enableAltNames,
   enableClickToCopy,
-  enableVersion,
+  enableVersion = true,
   className,
 }) => {
   const { title, searchAcronyms, difficulty, type, version } = sheet;

@@ -47,7 +47,7 @@ const SideEffectorAutoImportRating: FC = () => {
     if (localStorage.getItem("rating-auto-import-from-net") === "true") {
       importFromNETRecords(sheets, modifyEntries);
     }
-  }, [sheets]);
+  }, [!!sheets]);
 
   return null;
 };
