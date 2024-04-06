@@ -15,10 +15,10 @@ export async function v0Handler(ctx: Koa.Context) {
 
   await client.login(authParams);
 
-  const recent = await client.fetchRecentRecords();
-  const music = await client.fetchMusicRecords();
+  const recentRecords = await client.fetchRecentRecords();
+  const musicRecords = await client.fetchMusicRecords();
 
-  ctx.body = { recent, music };
+  ctx.body = { recentRecords, musicRecords };
 }
 
 export async function v1Handler(ctx: Koa.Context) {
