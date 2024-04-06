@@ -2,11 +2,10 @@ import { ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import { FC } from "react";
 import toast from "react-hot-toast";
 import IconMdiFile from "~icons/mdi/file";
-import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
+import { useRatingCalculatorContext } from "../../../../models/RatingCalculatorContext";
 
-export const ExportToJSONMenuItem: FC<{
-  entries: PlayEntry[];
-}> = ({ entries }) => {
+export const ExportToJSONMenuItem: FC = () => {
+  const { entries } = useRatingCalculatorContext();
   return (
     <MenuItem
       onClick={() => {

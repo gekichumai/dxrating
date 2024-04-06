@@ -63,6 +63,126 @@ import { useAppContextDXDataVersion } from "../models/context/useAppContext";
 import { FlattenedSheet, useSheets } from "../songs";
 import { Rating, calculateRating } from "../utils/rating";
 
+export const useRatingEntries = () => {
+  const appVersion = useAppContextDXDataVersion();
+  const { entries } = useRatingCalculatorContext();
+  const { data: sheets } = useSheets();
+
+  const {
+    allEntries: all,
+    b15Entries: b15,
+    b35Entries: b35,
+  } = useMemo(() => {
+    const calculated = entries.flatMap((entry) => {
+      const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId);
+      if (!sheet) {
+        console.warn(`Chart ${entry.sheetId} not found`);
+        return [];
+      }
+
+      return [
+        {
+          ...entry,
+          sheet,
+          rating: sheet.isRatingEligible
+            ? calculateRating(sheet.internalLevelValue, entry.achievementRate)
+            : null,
+        },
+      ];
+    });
+
+    const best15OfCurrentVersionSheetIds = calculated
+      .filter((entry) => entry.sheet.version === appVersion)
+      // a.rating and b.rating could be null. put them at the end
+      .sort((a, b) => {
+        if (!a.rating) return 1;
+        if (!b.rating) return -1;
+        return b.rating.ratingAwardValue - a.rating.ratingAwardValue;
+      })
+      .slice(0, 15)
+      .map((entry) => entry.sheetId);
+
+    const best35OfAllOtherVersionSheetIds = calculated
+      .filter((entry) => entry.sheet.version !== appVersion)
+      .sort((a, b) => {
+        if (!a.rating) return 1;
+        if (!b.rating) return -1;
+        return b.rating.ratingAwardValue - a.rating.ratingAwardValue;
+      })
+      .slice(0, 35)
+      .map((entry) => entry.sheetId);
+
+    const calculatedEntries = calculated.map((entry) => ({
+      ...entry,
+      includedIn: best15OfCurrentVersionSheetIds.includes(entry.sheetId)
+        ? ("b15" as const)
+        : best35OfAllOtherVersionSheetIds.includes(entry.sheetId)
+          ? ("b35" as const)
+          : null,
+    }));
+
+    return {
+      allEntries: calculatedEntries,
+      b15Entries: calculatedEntries.filter(
+        (entry) => entry.includedIn === "b15",
+      ),
+      b35Entries: calculatedEntries.filter(
+        (entry) => entry.includedIn === "b35",
+      ),
+    };
+  }, [entries, sheets, appVersion]);
+
+  const statistics = useMemo(() => {
+    const eligibleRatingEntriesB15 = b15.filter((entry) => entry.rating);
+    const eligibleRatingEntriesB35 = b35.filter((entry) => entry.rating);
+
+    const b15Average =
+      eligibleRatingEntriesB15.reduce(
+        (acc, entry) => acc + entry.rating!.ratingAwardValue,
+        0,
+      ) / b15.length;
+
+    const b35Average =
+      eligibleRatingEntriesB35.reduce(
+        (acc, entry) => acc + entry.rating!.ratingAwardValue,
+        0,
+      ) / b35.length;
+
+    const b15Min = Math.min(
+      ...eligibleRatingEntriesB15.map(
+        (entry) => entry.rating!.ratingAwardValue,
+      ),
+    );
+    const b35Min = Math.min(
+      ...eligibleRatingEntriesB35.map(
+        (entry) => entry.rating!.ratingAwardValue,
+      ),
+    );
+
+    const b15Max = Math.max(
+      ...eligibleRatingEntriesB15.map(
+        (entry) => entry.rating!.ratingAwardValue,
+      ),
+    );
+    const b35Max = Math.max(
+      ...eligibleRatingEntriesB35.map(
+        (entry) => entry.rating!.ratingAwardValue,
+      ),
+    );
+
+    return {
+      b15Average,
+      b35Average,
+      b15Min,
+      b35Min,
+      b15Max,
+      b35Max,
+    };
+  }, [b15, b35]);
+
+  return { entries: { all, b15, b35 }, statistics };
+};
+
 export interface Entry {
   sheet: FlattenedSheet;
   rating: Rating | null;
@@ -137,127 +257,20 @@ const TransparentPaper = styled(Paper)(() => ({
   boxShadow: "none",
 }));
 
+type RatingCalculatorEntry = PlayEntry & {
+  sheet: FlattenedSheet;
+  rating: Rating | null;
+};
+
 export const RatingCalculator = () => {
-  const { entries, modifyEntries } = useRatingCalculatorContext();
-  const appVersion = useAppContextDXDataVersion();
+  const { modifyEntries } = useRatingCalculatorContext();
   const { data: sheets } = useSheets();
 
   const [sorting, setSorting] = useState<SortingState>([
     { id: "rating", desc: true },
   ]);
 
-  const { allEntries, b15Entries, b35Entries } = useMemo(() => {
-    const calculated = entries.flatMap((entry) => {
-      const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId);
-      if (!sheet) {
-        console.warn(`Chart ${entry.sheetId} not found`);
-        return [];
-      }
-
-      return [
-        {
-          ...entry,
-          sheet,
-          rating: sheet.isRatingEligible
-            ? calculateRating(sheet.internalLevelValue, entry.achievementRate)
-            : null,
-        },
-      ];
-    });
-
-    const best15OfCurrentVersionSheetIds = calculated
-      .filter((entry) => entry.sheet.version === appVersion)
-      // a.rating and b.rating could be null. put them at the end
-      .sort((a, b) => {
-        if (!a.rating) return 1;
-        if (!b.rating) return -1;
-        return b.rating.ratingAwardValue - a.rating.ratingAwardValue;
-      })
-      .slice(0, 15)
-      .map((entry) => entry.sheetId);
-
-    const best35OfAllOtherVersionSheetIds = calculated
-      .filter((entry) => entry.sheet.version !== appVersion)
-      .sort((a, b) => {
-        if (!a.rating) return 1;
-        if (!b.rating) return -1;
-        return b.rating.ratingAwardValue - a.rating.ratingAwardValue;
-      })
-      .slice(0, 35)
-      .map((entry) => entry.sheetId);
-
-    const calculatedEntries = calculated.map((entry) => ({
-      ...entry,
-      includedIn: best15OfCurrentVersionSheetIds.includes(entry.sheetId)
-        ? ("b15" as const)
-        : best35OfAllOtherVersionSheetIds.includes(entry.sheetId)
-          ? ("b35" as const)
-          : null,
-    }));
-
-    return {
-      allEntries: calculatedEntries,
-      b15Entries: calculatedEntries.filter(
-        (entry) => entry.includedIn === "b15",
-      ),
-      b35Entries: calculatedEntries.filter(
-        (entry) => entry.includedIn === "b35",
-      ),
-    };
-  }, [entries, sheets, appVersion]);
-
-  const { b15Average, b35Average, b15Min, b35Min, b15Max, b35Max } =
-    useMemo(() => {
-      const eligibleRatingEntriesB15 = b15Entries.filter(
-        (entry) => entry.rating,
-      );
-      const eligibleRatingEntriesB35 = b35Entries.filter(
-        (entry) => entry.rating,
-      );
-
-      const b15Average =
-        eligibleRatingEntriesB15.reduce(
-          (acc, entry) => acc + entry.rating!.ratingAwardValue,
-          0,
-        ) / b15Entries.length;
-
-      const b35Average =
-        eligibleRatingEntriesB35.reduce(
-          (acc, entry) => acc + entry.rating!.ratingAwardValue,
-          0,
-        ) / b35Entries.length;
-
-      const b15Min = Math.min(
-        ...eligibleRatingEntriesB15.map(
-          (entry) => entry.rating!.ratingAwardValue,
-        ),
-      );
-      const b35Min = Math.min(
-        ...eligibleRatingEntriesB35.map(
-          (entry) => entry.rating!.ratingAwardValue,
-        ),
-      );
-
-      const b15Max = Math.max(
-        ...eligibleRatingEntriesB15.map(
-          (entry) => entry.rating!.ratingAwardValue,
-        ),
-      );
-      const b35Max = Math.max(
-        ...eligibleRatingEntriesB35.map(
-          (entry) => entry.rating!.ratingAwardValue,
-        ),
-      );
-
-      return {
-        b15Average,
-        b35Average,
-        b15Min,
-        b35Min,
-        b15Max,
-        b35Max,
-      };
-    }, [b15Entries, b35Entries]);
+  const { entries, statistics } = useRatingEntries();
 
   const columns = useMemo(
     () => [
@@ -280,7 +293,7 @@ export const RatingCalculator = () => {
       }),
       columnHelper.accessor("includedIn", {
         id: "includedIn",
-        header: "Included in",
+        header: "Incl. In",
         cell: RatingCalculatorIncludedInCell,
         size: 50,
         minSize: 100,
@@ -323,10 +336,8 @@ export const RatingCalculator = () => {
     [modifyEntries],
   );
 
-  console.log({ allEntries, b15Entries, b35Entries });
-
   const table = useReactTable({
-    data: allEntries,
+    data: entries.all,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
@@ -337,7 +348,9 @@ export const RatingCalculator = () => {
   const onSubmit = useCallback(
     (entry: PlayEntry) => {
       if (
-        entries.some((existingEntry) => existingEntry.sheetId === entry.sheetId)
+        entries.all.some(
+          (existingEntry) => existingEntry.sheetId === entry.sheetId,
+        )
       ) {
         modifyEntries.updateFirst(
           (existingEntry) => existingEntry.sheetId === entry.sheetId,
@@ -365,97 +378,18 @@ export const RatingCalculator = () => {
       <div className="flex flex-col md:flex-row items-start gap-4">
         <Alert severity="info" className="w-full">
           <AlertTitle>Your current rating</AlertTitle>
-          <Table className="-ml-2 w-full">
-            <TableHead>
-              <TableRow>
-                <DenseTableCell className="w-sm">Item</DenseTableCell>
-                <DenseTableCell>Matches</DenseTableCell>
-                <DenseTableCell>Statistics</DenseTableCell>
-                <DenseTableCell>Total</DenseTableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              <TableRow>
-                <DenseTableCell className="flex flex-col">
-                  <div className="font-bold text-lg">B15</div>
-                  <div className="text-gray-500">
-                    Best 15 plays on songs released at current version (
-                    {appVersion})
-                  </div>
-                </DenseTableCell>
-                <DenseTableCell>{b15Entries.length}</DenseTableCell>
-                <DenseTableCell>
-                  {b15Entries.length > 0 ? (
-                    <div className="flex flex-col items-start">
-                      <span className="whitespace-nowrap">
-                        Avg: {b15Average.toFixed(2)}
-                      </span>
-                      <span className="whitespace-nowrap">Min: {b15Min}</span>
-                      <span className="whitespace-nowrap">Max: {b15Max}</span>
-                    </div>
-                  ) : (
-                    "—"
-                  )}
-                </DenseTableCell>
-
-                <DenseTableCell>
-                  {b15Entries.reduce(
-                    (sum, entry) => sum + (entry.rating?.ratingAwardValue ?? 0),
-                    0,
-                  )}
-                </DenseTableCell>
-              </TableRow>
-
-              <TableRow>
-                <DenseTableCell className="flex flex-col">
-                  <div className="font-bold text-lg">B35</div>
-                  <div className="text-gray-500">
-                    Best 35 plays on all other songs except ones released at
-                    current version ({appVersion})
-                  </div>
-                </DenseTableCell>
-                <DenseTableCell>{b35Entries.length}</DenseTableCell>
-                <DenseTableCell>
-                  {b35Entries.length > 0 ? (
-                    <div className="flex flex-col items-start">
-                      <span className="whitespace-nowrap">
-                        Avg: {b35Average.toFixed(2)}
-                      </span>
-                      <span className="whitespace-nowrap">Min: {b35Min}</span>
-                      <span className="whitespace-nowrap">Max: {b35Max}</span>
-                    </div>
-                  ) : (
-                    "—"
-                  )}
-                </DenseTableCell>
-                <DenseTableCell>
-                  {b35Entries.reduce(
-                    (sum, entry) => sum + (entry.rating?.ratingAwardValue ?? 0),
-                    0,
-                  )}
-                </DenseTableCell>
-              </TableRow>
-
-              <TableRow>
-                <DenseTableCell colSpan={3}>
-                  <span className="font-bold">Total</span>
-                </DenseTableCell>
-                <DenseTableCell>
-                  {[...b15Entries, ...b35Entries].reduce(
-                    (sum, entry) => sum + (entry.rating?.ratingAwardValue ?? 0),
-                    0,
-                  )}
-                </DenseTableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          <RatingCalculatorStatisticsTable
+            b15Entries={entries.b15}
+            b35Entries={entries.b35}
+            statistics={statistics}
+          />
         </Alert>
 
         <div className="flex flex-col gap-4 h-full self-stretch">
           <Alert severity="info" className="w-full overflow-auto">
             <AlertTitle>
-              {entries?.length
-                ? `Saved ${entries.length} records`
+              {entries.all?.length
+                ? `Saved ${entries.all.length} records`
                 : "Auto-save"}
             </AlertTitle>
             Your entries will be saved automatically to your browser's local
@@ -463,7 +397,7 @@ export const RatingCalculator = () => {
             <div className="flex items-center gap-2 mt-2">
               <ImportMenu modifyEntries={modifyEntries} />
 
-              <ExportMenu entries={entries} calculatedEntries={allEntries} />
+              <ExportMenu />
 
               <div className="flex-1" />
 
@@ -493,7 +427,7 @@ export const RatingCalculator = () => {
                       className={clsx(
                         "group bg-gray-900/5 transition",
                         header.column.getCanSort() &&
-                          "cursor-pointer select-none hover:bg-gray-900/10 active:bg-gray-900/20",
+                          "cursor-pointer select-none hover:bg-gray-900/10 active:bg-gray-900/20 leading-tight py-4",
                       )}
                       onClick={header.column.getToggleSortingHandler()}
                       style={{ width: header.getSize() }}
@@ -532,7 +466,7 @@ export const RatingCalculator = () => {
           )}
         />
 
-        {allEntries.length === 0 && (
+        {entries.all.length === 0 && (
           <div className="w-full text-sm py-8 px-4 text-center">No entries</div>
         )}
       </div>
@@ -549,7 +483,7 @@ const RatingCalculatorIncludedInCell: FC<{
   return (
     <div
       className={clsx(
-        "tabular-nums w-16 leading-none py-1.5 rounded-full text-white text-center shadow select-none",
+        "tabular-nums w-12 leading-none py-1.5 rounded-full text-white text-center shadow select-none",
         includedIn === "b15" && "bg-amber-500",
         includedIn === "b35" && "bg-cyan-500",
       )}
@@ -572,6 +506,7 @@ const RatingCalculatorAchievementRateCell: FC<{
 const RatingCalculatorTable: FC<TableProps> = (props: TableProps) => (
   <Table
     {...props}
+    size="small"
     className="rounded-lg w-full min-w-2xl"
     style={{ borderCollapse: "separate" }}
   />
@@ -639,3 +574,98 @@ const RatingCalculatorTableRowContent: FC<{
 });
 RatingCalculatorTableRowContent.displayName =
   "memo(RatingCalculatorTableRowContent)";
+
+export const RatingCalculatorStatisticsTable: FC<{
+  b15Entries: RatingCalculatorEntry[];
+  b35Entries: RatingCalculatorEntry[];
+  statistics: 
+}> = ({ b15Entries, b35Entries, statistics }) => {
+  const appVersion = useAppContextDXDataVersion();
+  const { b15Average, b35Average, b15Min, b35Min, b15Max, b35Max } = statistics;
+
+  return (
+    <Table size="small" className="-ml-2 w-full">
+      <TableHead>
+        <TableRow>
+          <DenseTableCell className="w-sm">Item</DenseTableCell>
+          <DenseTableCell>Matches</DenseTableCell>
+          <DenseTableCell>Statistics</DenseTableCell>
+          <DenseTableCell>Total</DenseTableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        <TableRow>
+          <DenseTableCell className="flex flex-col">
+            <div className="font-bold text-lg">B15</div>
+            <div className="text-gray-500">
+              Best 15 plays on songs released at current version ({appVersion})
+            </div>
+          </DenseTableCell>
+          <DenseTableCell>{b15Entries.length}</DenseTableCell>
+          <DenseTableCell>
+            {b15Entries.length > 0 ? (
+              <div className="flex flex-col items-start">
+                <span className="whitespace-nowrap">
+                  Avg: {b15Average.toFixed(2)}
+                </span>
+                <span className="whitespace-nowrap">Min: {b15Min}</span>
+                <span className="whitespace-nowrap">Max: {b15Max}</span>
+              </div>
+            ) : (
+              "—"
+            )}
+          </DenseTableCell>
+
+          <DenseTableCell>
+            {b15Entries.reduce(
+              (sum, entry) => sum + (entry.rating?.ratingAwardValue ?? 0),
+              0,
+            )}
+          </DenseTableCell>
+        </TableRow>
+
+        <TableRow>
+          <DenseTableCell className="flex flex-col">
+            <div className="font-bold text-lg">B35</div>
+            <div className="text-gray-500">
+              Best 35 plays on all other songs except ones released at current
+              version ({appVersion})
+            </div>
+          </DenseTableCell>
+          <DenseTableCell>{b35Entries.length}</DenseTableCell>
+          <DenseTableCell>
+            {b35Entries.length > 0 ? (
+              <div className="flex flex-col items-start">
+                <span className="whitespace-nowrap">
+                  Avg: {b35Average.toFixed(2)}
+                </span>
+                <span className="whitespace-nowrap">Min: {b35Min}</span>
+                <span className="whitespace-nowrap">Max: {b35Max}</span>
+              </div>
+            ) : (
+              "—"
+            )}
+          </DenseTableCell>
+          <DenseTableCell>
+            {b35Entries.reduce(
+              (sum, entry) => sum + (entry.rating?.ratingAwardValue ?? 0),
+              0,
+            )}
+          </DenseTableCell>
+        </TableRow>
+
+        <TableRow>
+          <DenseTableCell colSpan={3}>
+            <span className="font-bold">Total</span>
+          </DenseTableCell>
+          <DenseTableCell>
+            {[...b15Entries, ...b35Entries].reduce(
+              (sum, entry) => sum + (entry.rating?.ratingAwardValue ?? 0),
+              0,
+            )}
+          </DenseTableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
+  );
+};
