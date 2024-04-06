@@ -29,7 +29,7 @@ router.get("/", async (ctx) => {
 });
 
 const verificationAuthParams: Koa.Middleware = async (ctx, next) => {
-  const region = ctx.params.region ?? ctx.body.region;
+  const region = ctx.params.region ?? (ctx.request.body as any)?.region;
   const { id, password } = (ctx.request.body as any) ?? {};
   if (!id || !password) {
     ctx.status = 400;
