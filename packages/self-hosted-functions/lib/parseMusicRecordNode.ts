@@ -1,5 +1,5 @@
-import { Flag, NODE_ELEMENT_NODE } from ".";
-import { MusicRecord } from "./record";
+import { NODE_ELEMENT_NODE } from "./client";
+import { Flag, MusicRecord } from "./record";
 
 const MUSIC_RECORD_FLAG_MATCHERS: Record<Flag, string> = {
   fullCombo: "fc.png",
@@ -54,17 +54,17 @@ export function parseMusicRecordNode(record: Element): MusicRecord[] {
     }) as [number, number];
 
   if (dxScorePair.length !== 2) {
-    console.warn("[parseNode] invalid dx score pair:", dxScorePair);
+    // console.warn("[parseNode] invalid dx score pair:", dxScorePair);
     return [] as const;
   }
 
   if (!songId || !type || !difficulty) {
-    console.warn(
-      "[parseNode] missing required fields:",
-      songId,
-      type,
-      difficulty
-    );
+    // console.warn(
+    //   "[parseNode] missing required fields:",
+    //   songId,
+    //   type,
+    //   difficulty
+    // );
     return [] as const;
   }
 

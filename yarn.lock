@@ -1609,7 +1609,7 @@
   dependencies:
     "@types/koa" "*"
 
-"@types/koa@*", "@types/koa@^2.15.0":
+"@types/koa@*", "@types/koa@^2.0.48", "@types/koa@^2.15.0":
   version "2.15.0"
   resolved "https://registry.yarnpkg.com/@types/koa/-/koa-2.15.0.tgz#eca43d76f527c803b491731f95df575636e7b6f2"
   integrity sha512-7QFsywoE5URbuVnG3loe03QXuGajrnotr3gQkXcEBShORai23MePfFYdhz90FEtBBpkyIYQbVD+evKtloCgX3g==
@@ -1622,6 +1622,13 @@
     "@types/keygrip" "*"
     "@types/koa-compose" "*"
     "@types/node" "*"
+
+"@types/koa__cors@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@types/koa__cors/-/koa__cors-5.0.0.tgz#74567a045b599266e2cd3940cef96cedecc2ef1f"
+  integrity sha512-LCk/n25Obq5qlernGOK/2LUwa/2YJb2lxHUkkvYFDOpLXlVI6tKcdfCHRBQnOY4LwH6el5WOLs6PD/a8Uzau6g==
+  dependencies:
+    "@types/koa" "*"
 
 "@types/lodash@^4.14.168", "@types/lodash@^4.14.201":
   version "4.14.202"
@@ -4495,6 +4502,13 @@ koa-convert@^2.0.0:
   dependencies:
     co "^4.6.0"
     koa-compose "^4.1.0"
+
+koa-event-stream@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/koa-event-stream/-/koa-event-stream-1.0.3.tgz#81f19a4b5b366e0ae3315c732caa1698e8e100af"
+  integrity sha512-QKhK8cAaW9P04oFx3qFB49L1UddUoOw65QmKa6JtRnY6Mp+3yRnkwVFFr4l1fiAAKFBJpE2b+/43nySuFmZtiw==
+  dependencies:
+    "@types/koa" "^2.0.48"
 
 koa-router@^12.0.1:
   version "12.0.1"

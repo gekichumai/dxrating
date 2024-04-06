@@ -1,8 +1,10 @@
 import cors from "@koa/cors";
 import Koa from "koa";
 import bodyParser from "koa-bodyparser";
+import KoaSSE from "koa-event-stream";
 import Router from "koa-router";
-import { handler } from "./fetch-net-records";
+import { v0Handler, v1Handler } from "./functions/fetch-net-records";
+import { AuthParams } from "./lib/client";
 const app = new Koa();
 const router = new Router();
 
@@ -26,7 +28,44 @@ router.get("/", async (ctx) => {
   };
 });
 
-router.post("/functions/fetch-net-records/v0", handler);
+const verificationAuthParams: Koa.Middleware = async (ctx, next) => {
+  const region = ctx.params.region ?? ctx.body.region;
+  const { id, password } = (ctx.request.body as any) ?? {};
+  if (!id || !password) {
+    ctx.status = 400;
+    ctx.body = {
+      error:
+        "`id` and `password` are required parameters but has not been provided",
+    };
+    return;
+  }
+
+  const authParams = { id, password } as AuthParams;
+
+  if (region !== "jp" && region !== "intl") {
+    ctx.status = 400;
+    ctx.body = {
+      error: "unsupported region: `region` must be either `intl` or `jp`",
+    };
+    return;
+  }
+
+  ctx.state.authParams = authParams;
+  ctx.state.region = region;
+  await next();
+};
+
+router.post(
+  "/functions/fetch-net-records/v0",
+  verificationAuthParams,
+  v0Handler
+);
+router.post(
+  "/functions/fetch-net-records/v1/:region",
+  KoaSSE(),
+  verificationAuthParams,
+  v1Handler
+);
 
 app.use(cors());
 app.use(bodyParser({ enableTypes: ["json"] }));

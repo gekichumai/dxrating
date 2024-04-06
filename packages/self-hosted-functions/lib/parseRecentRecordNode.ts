@@ -1,5 +1,5 @@
-import { Flag, NODE_ELEMENT_NODE } from ".";
-import { RecentRecord } from "./record";
+import { Flag, RecentRecord } from "./record";
+import { NODE_ELEMENT_NODE } from "./client";
 
 const RECENT_RECORD_FLAG_MATCHERS: Record<Flag, string> = {
   fullCombo: "fc.png",

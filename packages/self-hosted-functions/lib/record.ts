@@ -1,4 +1,13 @@
-import { Flag } from ".";
+export type Flag =
+  | "fullCombo"
+  | "fullCombo+"
+  | "allPerfect"
+  | "allPerfect+"
+  | "syncPlay"
+  | "fullSync"
+  | "fullSync+"
+  | "fullSyncDX"
+  | "fullSyncDX+";
 
 export interface AchievementRecord {
   sheet: {
