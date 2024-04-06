@@ -9,21 +9,23 @@ import {
   DialogTitle,
   FormControl,
   FormControlLabel,
+  LinearProgress,
   ListItemIcon,
   ListItemText,
   MenuItem,
   TextField,
 } from "@mui/material";
 import { FC, useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import { useLocalStorage } from "react-use";
 import { ListActions } from "react-use/lib/useList";
 import IconMdiConnection from "~icons/mdi/connection";
 import IconMdiNewBox from "~icons/mdi/new-box";
 import { useSheets } from "../../../../songs";
-import { formatErrorMessage } from "../../../../utils/formatErrorMessage";
 import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
-import { importFromNETRecords } from "./importFromNETRecords";
+import {
+  FetchNetRecordProgressState,
+  importFromNETRecords,
+} from "./importFromNETRecords";
 
 interface AchievementRecord {
   sheet: {
@@ -112,6 +114,11 @@ export const ImportFromNETRecordsListItem: FC<{
   );
 };
 
+interface ImportFromNETRecordsProgress {
+  state: FetchNetRecordProgressState | "error";
+  progress: number;
+}
+
 const ImportFromNETRecordsDialogContent: FC<{
   modifyEntries: ListActions<PlayEntry>;
   onClose: () => void;
@@ -125,6 +132,9 @@ const ImportFromNETRecordsDialogContent: FC<{
     false,
   );
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<ImportFromNETRecordsProgress | null>(
+    null,
+  );
   const { data: sheets } = useSheets();
 
   useEffect(() => {
@@ -151,11 +161,15 @@ const ImportFromNETRecordsDialogContent: FC<{
   const handleImport = async () => {
     setBusy(true);
     try {
-      await importFromNETRecords(sheets!, modifyEntries);
+      await importFromNETRecords(sheets!, modifyEntries, (state, progress) => {
+        setProgress({ state, progress });
+      });
       onClose();
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to import records: " + formatErrorMessage(error));
+    } catch (e) {
+      setProgress((progress) => ({
+        state: "error",
+        progress: progress?.progress ?? 0,
+      }));
     } finally {
       setBusy(false);
     }
@@ -250,16 +264,35 @@ const ImportFromNETRecordsDialogContent: FC<{
             }
             label={
               <div className="flex flex-col">
-                <span>Auto-import</span>
+                <span>Auto-import on App Start</span>
                 <span className="text-xs text-gray-500">
-                  Automatically start importing records from NET on page load.
-                  Requires "Remember Credentials" to be enabled.
+                  Automatically start importing records from NET when you open
+                  DXRating. Requires "Remember Credentials" to be enabled.
                 </span>
               </div>
             }
           />
 
           <div className="h-px w-full bg-gray-200 my-2" />
+
+          {progress && (
+            <>
+              <div className="flex flex-col gap-1 w-full items-center">
+                <LinearProgress
+                  variant="determinate"
+                  value={progress.progress * 100}
+                  color={progress.state === "error" ? "error" : "primary"}
+                  className="w-full rounded-full max-w-md"
+                />
+                <span className="font-bold mt-1">Importing...</span>
+                <span className="text-gray-500 font-mono text-sm">
+                  [ {progress.state} ]
+                </span>
+              </div>
+
+              <div className="h-px w-full bg-gray-200 my-2" />
+            </>
+          )}
 
           <div className="text-sm text-gray-500 [&>p]:mb-1">
             <p className="font-bold">
@@ -310,7 +343,12 @@ const ImportFromNETRecordsDialogContent: FC<{
               <span className="text-gray-5">Importing...</span>
             </div>
           ) : autoImport ? (
-            "Re-import Now"
+            <div className="flex flex-col gap-1 items-start py-1">
+              <span className="leading-none">Re-import Now</span>
+              <span className="text-xs text-black/50 leading-none">
+                (auto-import enabled)
+              </span>
+            </div>
           ) : (
             "Import Once"
           )}

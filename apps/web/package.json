@@ -22,6 +22,7 @@
     "@emotion/styled": "^11.11.0",
     "@gekichumai/dxdata": "*",
     "@gekichumai/oneshot": "*",
+    "@microsoft/fetch-event-source": "^2.0.1",
     "@mui/material": "^5.14.13",
     "@sentry/react": "^7.98.0",
     "@supabase/auth-ui-react": "^0.4.7",

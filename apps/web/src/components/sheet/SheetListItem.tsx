@@ -19,76 +19,98 @@ import {
   SheetDialogContentProps,
 } from "./SheetDialogContent";
 
-export const SheetListItem: FC<
-  {
-    size?: "small" | "medium";
-  } & SheetDialogContentProps
-> = memo(({ size = "medium", ...props }) => {
-  const [open, setOpen] = useState(false);
-  const isLargeDevice = useIsLargeDevice();
+export const SheetListItem: FC<{
+  size?: "small" | "medium";
+  sheet: FlattenedSheet;
 
-  return (
-    <>
-      <ResponsiveDialog open={open} setOpen={setOpen}>
-        {() => <SheetDialogContent {...props} />}
-      </ResponsiveDialog>
+  SheetListItemContentProps?: Omit<SheetListItemContentProps, "sheet">;
+  SheetDialogContentProps?: Omit<SheetDialogContentProps, "sheet">;
+}> = memo(
+  ({
+    size = "medium",
+    sheet,
+    SheetListItemContentProps,
+    SheetDialogContentProps,
+  }) => {
+    const [open, setOpen] = useState(false);
+    const isLargeDevice = useIsLargeDevice();
 
-      <ListItemButton
-        disableGutters={!isLargeDevice}
-        className={clsx(
-          "w-full cursor-pointer transition duration-500 hover:duration-25 !px-4",
-          open && "!bg-zinc-300/80",
-        )}
-        onClick={() => setOpen(true)}
-        sx={{
-          borderRadius: 1,
-        }}
-      >
-        <SheetListItemContent {...props} size={size} />
-      </ListItemButton>
-    </>
-  );
-});
+    return (
+      <>
+        <ResponsiveDialog open={open} setOpen={setOpen}>
+          {() => (
+            <SheetDialogContent sheet={sheet} {...SheetDialogContentProps} />
+          )}
+        </ResponsiveDialog>
+
+        <ListItemButton
+          disableGutters={!isLargeDevice}
+          className={clsx(
+            "w-full cursor-pointer transition duration-500 hover:duration-25 !px-4",
+            open && "!bg-zinc-300/80",
+          )}
+          onClick={() => setOpen(true)}
+          sx={{
+            borderRadius: 1,
+          }}
+        >
+          <SheetListItemContent
+            sheet={sheet}
+            size={size}
+            {...SheetListItemContentProps}
+          />
+        </ListItemButton>
+      </>
+    );
+  },
+);
 SheetListItem.displayName = "SheetListItem";
 
-export const SheetListItemContent: FC<
-  {
-    sheet: FlattenedSheet;
-    size?: "small" | "medium";
-  } & HTMLAttributes<HTMLDivElement>
-> = memo(({ sheet, size = "medium", className, ...rest }) => {
-  return (
-    <div
-      className={clsx(
-        "flex items-center w-full p-1 gap-2 tabular-nums relative",
-        className,
-      )}
-      {...rest}
-    >
-      <SheetImage name={sheet.imageName} size={size} />
+export interface SheetListItemContentProps
+  extends HTMLAttributes<HTMLDivElement> {
+  sheet: FlattenedSheet;
 
-      <ListItemText className="ml-2 pr-20">
-        <SheetTitle
-          sheet={sheet}
-          className={clsx(
-            "font-bold",
-            size === "small" ? "text-sm" : "text-lg",
-          )}
-        />
-      </ListItemText>
+  size?: "small" | "medium";
+  SheetTitleProps?: Omit<SheetTitleProps, "sheet">;
+}
 
-      <ListItemSecondaryAction>
-        {sheet.isTypeUtage ? (
-          <span className="font-bold tracking-tighter tabular-nums text-lg text-zinc-600">
-            {sheet.level}
-          </span>
-        ) : (
-          <SheetInternalLevelValue value={sheet.internalLevelValue} />
+export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
+  ({ sheet, size = "medium", className, SheetTitleProps, ...rest }) => {
+    return (
+      <div
+        className={clsx(
+          "flex items-center w-full p-1 gap-2 tabular-nums relative",
+          className,
         )}
-      </ListItemSecondaryAction>
-    </div>
-  );
-});
+        {...rest}
+      >
+        <SheetImage name={sheet.imageName} size={size} />
+
+        <ListItemText className="ml-2 pr-20">
+          <SheetTitle
+            {...SheetTitleProps}
+            sheet={sheet}
+            className={clsx(
+              "font-bold",
+              size === "small" ? "text-sm" : "text-lg",
+              SheetTitleProps?.className,
+            )}
+          />
+        </ListItemText>
+
+        <ListItemSecondaryAction>
+          {sheet.isTypeUtage ? (
+            <span className="font-bold tracking-tighter tabular-nums text-lg text-zinc-600">
+              {sheet.level}
+            </span>
+          ) : (
+            <SheetInternalLevelValue value={sheet.internalLevelValue} />
+          )}
+        </ListItemSecondaryAction>
+      </div>
+    );
+  },
+);
 SheetListItem.displayName = "SheetListItem";
 
 const SheetInternalLevelValue: FC<{ value: number }> = ({ value }) => {
@@ -197,14 +219,23 @@ export const SheetImage: FC<
   );
 };
 
-export const SheetTitle: FC<{
+export interface SheetTitleProps {
   sheet: FlattenedSheet;
 
   enableAltNames?: boolean;
   enableClickToCopy?: boolean;
+  enableVersion?: boolean;
 
   className?: string;
-}> = ({ sheet, enableAltNames, enableClickToCopy, className }) => {
+}
+
+export const SheetTitle: FC<SheetTitleProps> = ({
+  sheet,
+  enableAltNames,
+  enableClickToCopy,
+  enableVersion,
+  className,
+}) => {
   const { title, searchAcronyms, difficulty, type, version } = sheet;
   return (
     <div className="flex flex-col">
@@ -246,9 +277,11 @@ export const SheetTitle: FC<{
         </span>
       )}
 
-      <div className="text-sm">
-        <span className="text-zinc-600">ver. {version}</span>
-      </div>
+      {enableVersion && (
+        <div className="text-sm">
+          <span className="text-zinc-600">ver. {version}</span>
+        </div>
+      )}
     </div>
   );
 };

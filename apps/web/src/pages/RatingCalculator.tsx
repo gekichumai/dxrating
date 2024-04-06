@@ -156,7 +156,15 @@ export const RatingCalculator = () => {
         cell: ({ row }) => (
           <SheetListItem
             sheet={row.original.sheet}
-            currentAchievementRate={row.original.achievementRate}
+            SheetDialogContentProps={{
+              currentAchievementRate: row.original.achievementRate,
+            }}
+            SheetListItemContentProps={{
+              SheetTitleProps: {
+                enableVersion: false,
+                className: "flex-col",
+              },
+            }}
           />
         ),
         meta: {

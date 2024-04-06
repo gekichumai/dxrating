@@ -6,9 +6,98 @@ import { formatErrorMessage } from "../../../../utils/formatErrorMessage";
 import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
 import { MusicRecord, RecentRecord } from "./ImportFromNETRecordsListItem";
 
+import { fetchEventSource } from "@microsoft/fetch-event-source";
+
+export type FetchNetRecordProgressState =
+  | "ready"
+  | "auth:in-progress"
+  | "auth:succeeded"
+  | "fetch:recent:in-progress"
+  | "fetch:recent:completed"
+  | "fetch:music:in-progress:basic"
+  | "fetch:music:in-progress:advanced"
+  | "fetch:music:in-progress:expert"
+  | "fetch:music:in-progress:master"
+  | "fetch:music:in-progress:remaster"
+  | "fetch:music:in-progress:utage"
+  | "fetch:music:completed";
+
+const FETCH_STATE_PROGRESS: Record<FetchNetRecordProgressState, number> = {
+  ready: 0.01,
+  "auth:in-progress": 0.08,
+  "auth:succeeded": 0.2,
+  "fetch:recent:in-progress": 0.2,
+  "fetch:recent:completed": 0.3,
+  "fetch:music:in-progress:basic": 0.4,
+  "fetch:music:in-progress:advanced": 0.5,
+  "fetch:music:in-progress:expert": 0.6,
+  "fetch:music:in-progress:master": 0.7,
+  "fetch:music:in-progress:remaster": 0.8,
+  "fetch:music:in-progress:utage": 0.9,
+  "fetch:music:completed": 1,
+};
+
+interface AuthParams {
+  region: "jp" | "intl";
+  username: string;
+  password: string;
+}
+
+const fetchNetRecords = async (
+  authParams: AuthParams,
+  onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
+): Promise<{ musicRecords: MusicRecord[]; recentRecords: RecentRecord[] }> => {
+  const { region, username, password } = authParams;
+
+  return new Promise((resolve, reject) => {
+    fetchEventSource(
+      "https://miruku.dxrating.net/functions/fetch-net-records/v1/" + region,
+      {
+        method: "POST",
+        body: JSON.stringify({ id: username, password }),
+        openWhenHidden: true,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        onmessage: (message) => {
+          const event = message.event as "progress" | "data" | "error";
+          if (event === "progress") {
+            const state = message.data as FetchNetRecordProgressState;
+            onProgress?.(state, FETCH_STATE_PROGRESS[state]);
+          } else if (event === "data") {
+            const data = JSON.parse(message.data) as {
+              musicRecords: MusicRecord[];
+              recentRecords: RecentRecord[];
+            };
+            resolve(data);
+          } else if (event === "error") {
+            reject(new Error(JSON.parse(message.data).error));
+          } else {
+            console.warn("Unknown event", message);
+          }
+        },
+        onerror: (ev) => {
+          reject(new Error(ev));
+          throw new Error(ev);
+        },
+        async onopen(response) {
+          if (response.ok) {
+            onProgress?.("ready", FETCH_STATE_PROGRESS.ready);
+            return; // everything's good
+          }
+
+          // if the server responds with an error, DO NOT retry
+          throw new Error(await response.text());
+        },
+      },
+    );
+  });
+};
+
 export const importFromNETRecords = async (
   sheets: FlattenedSheet[],
   modifyEntries: ListActions<PlayEntry>,
+  onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
 ) => {
   const toastId = toast.loading("Importing records from NET...");
   try {
@@ -22,20 +111,10 @@ export const importFromNETRecords = async (
     }
     const parsed = JSON.parse(stored);
     const { region, username, password } = parsed;
-    const response = await fetch(
-      "https://miruku.dxrating.net/functions/fetch-net-records/v0",
-      {
-        method: "POST",
-        body: JSON.stringify({ region, id: username, password }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
+    const data = await fetchNetRecords(
+      { region, username, password },
+      onProgress,
     );
-    const data = (await response.json()) as {
-      recentRecords: RecentRecord[];
-      musicRecords: MusicRecord[];
-    };
     const entries = data.musicRecords
       .filter((entry) => {
         return entry.sheet.difficulty !== "utage";
