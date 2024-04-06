@@ -24,6 +24,9 @@ export const URLS = {
       "https://maimaidx-eng.com/maimai-mobile/error/",
       "https://maimaidx.jp/maimai-mobile/error/",
     ],
-    MAINTENANCE: ["定期メンテナンス中です", "maintenance"],
+    MAINTENANCE: [
+      "定期メンテナンス中です",
+      "Sorry, servers are under maintenance.",
+    ],
   },
 };

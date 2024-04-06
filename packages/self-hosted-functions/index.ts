@@ -28,26 +28,21 @@ router.get("/", async (ctx) => {
   };
 });
 
-const verificationAuthParams: Koa.Middleware = async (ctx, next) => {
+const verifyParams: Koa.Middleware = async (ctx, next) => {
   const region = ctx.params.region ?? (ctx.request.body as any)?.region;
   const { id, password } = (ctx.request.body as any) ?? {};
   if (!id || !password) {
-    ctx.status = 400;
-    ctx.body = {
-      error:
-        "`id` and `password` are required parameters but has not been provided",
-    };
-    return;
+    throw new Error(
+      "`id` and `password` are required parameters but has not been provided"
+    );
   }
 
   const authParams = { id, password } as AuthParams;
 
   if (region !== "jp" && region !== "intl") {
-    ctx.status = 400;
-    ctx.body = {
-      error: "unsupported region: `region` must be either `intl` or `jp`",
-    };
-    return;
+    throw new Error(
+      "unsupported region: `region` must be either `intl` or `jp`"
+    );
   }
 
   ctx.state.authParams = authParams;
@@ -55,15 +50,24 @@ const verificationAuthParams: Koa.Middleware = async (ctx, next) => {
   await next();
 };
 
-router.post(
-  "/functions/fetch-net-records/v0",
-  verificationAuthParams,
-  v0Handler
-);
+router.post("/functions/fetch-net-records/v0", verifyParams, v0Handler);
 router.post(
   "/functions/fetch-net-records/v1/:region",
   KoaSSE(),
-  verificationAuthParams,
+  async (ctx: Koa.Context, next) => {
+    try {
+      await next();
+    } catch (err) {
+      ctx.sse?.send({
+        event: "error",
+        data: {
+          error: err instanceof Error ? err.message : "internal server error",
+        },
+      });
+      ctx.sse?.end();
+    }
+  },
+  verifyParams,
   v1Handler
 );
 

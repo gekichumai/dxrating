@@ -137,7 +137,13 @@ export class Client {
     this.#cookies.delete(hostname);
   }
 
-  async fetch(url: string, init?: RequestInit) {
+  async fetch(
+    url: string,
+    init?: RequestInit & {
+      // check if the response is a maintenance page. this will consume the response body as text.
+      checkMaintenance?: boolean;
+    }
+  ) {
     const requestURL = new URL(url);
     const cookies = this.getCookies(requestURL.hostname);
     const initHeaders = {
@@ -167,6 +173,10 @@ export class Client {
         "unknown error occurred: response redirects to error page"
       );
     }
+    if (init?.checkMaintenance) {
+      const text = await res.text();
+      this._checkMaintenance(text);
+    }
 
     return res;
   }
@@ -174,12 +184,16 @@ export class Client {
   async fetchAsDOM(url: string, init?: RequestInit) {
     const res = await this.fetch(url, init);
     const text = await res.text();
-    if (URLS.CHECKLIST.MAINTENANCE.includes(text)) {
+    this._checkMaintenance(text);
+    return new DOMParser().parseFromString(text, "text/html");
+  }
+
+  private _checkMaintenance(text: string) {
+    if (URLS.CHECKLIST.MAINTENANCE.some((m) => text.includes(m))) {
       throw new Error(
         "NET maintenance is currently ongoing. Please try again later."
       );
     }
-    return new DOMParser().parseFromString(text, "text/html");
   }
 }
 
@@ -276,7 +290,10 @@ export class MaimaiNETIntlClient extends Client {
     if (!redirectURL) {
       throw new Error("invalid credentials: empty redirectURL");
     }
-    await this.fetch(redirectURL);
+
+    await this.fetch(redirectURL, {
+      checkMaintenance: true,
+    });
 
     this.onUpdate?.("auth:succeeded");
   }
