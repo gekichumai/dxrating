@@ -5,10 +5,12 @@ export const CustomizedToaster: FC = () => {
   return (
     <Toaster
       toastOptions={{
-        className: "!rounded-full font-bold pr-1 pb-2",
-        duration: 5e3,
+        className: "font-bold pr-1 py-2 rounded-xl",
         error: {
           duration: 10e3,
+        },
+        success: {
+          duration: 5e3,
         },
       }}
       containerStyle={{

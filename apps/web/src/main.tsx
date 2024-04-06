@@ -16,6 +16,7 @@ import { i18nResources } from "./locales/locales";
 import * as Sentry from "@sentry/react";
 import { Geiger } from "react-geiger";
 import { SideEffector } from "./components/global/SideEffector";
+import { RatingCalculatorContextProvider } from "./models/RatingCalculatorContext";
 
 if (import.meta.env.PROD) {
   Sentry.init({
@@ -139,11 +140,13 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AppContextProvider>
       <VersionCustomizedThemeProvider>
-        <SideEffector />
-        <CustomizedToaster />
-        <Geiger renderTimeThreshold={10}>
-          <App />
-        </Geiger>
+        <RatingCalculatorContextProvider>
+          <SideEffector />
+          <CustomizedToaster />
+          <Geiger renderTimeThreshold={10}>
+            <App />
+          </Geiger>
+        </RatingCalculatorContextProvider>
       </VersionCustomizedThemeProvider>
     </AppContextProvider>
   </React.StrictMode>,

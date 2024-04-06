@@ -1,5 +1,8 @@
 import { FC, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useRatingCalculatorContext } from "../../models/RatingCalculatorContext";
+import { useSheets } from "../../songs";
+import { importFromNETRecords } from "../../utils/importFromNETRecords";
 import { useVersionTheme } from "../../utils/useVersionTheme";
 
 const SideEffectorThemeMeta: FC = () => {
@@ -35,11 +38,26 @@ const SideEffectorLocaleMeta: FC = () => {
   return null;
 };
 
+const SideEffectorAutoImportRating: FC = () => {
+  const { data: sheets } = useSheets();
+  const { modifyEntries } = useRatingCalculatorContext();
+
+  useEffect(() => {
+    if (!sheets) return;
+    if (localStorage.getItem("rating-auto-import-from-net") === "true") {
+      importFromNETRecords(sheets, modifyEntries);
+    }
+  }, [sheets]);
+
+  return null;
+};
+
 export const SideEffector: FC = () => {
   return (
     <>
       <SideEffectorThemeMeta />
       <SideEffectorLocaleMeta />
+      <SideEffectorAutoImportRating />
     </>
   );
 };

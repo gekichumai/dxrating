@@ -1,4 +1,3 @@
-import { DifficultyEnum, TypeEnum } from "@gekichumai/dxdata";
 import {
   Button,
   Checkbox,
@@ -17,11 +16,13 @@ import {
 } from "@mui/material";
 import { FC, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useLocalStorage } from "react-use";
 import { ListActions } from "react-use/lib/useList";
 import IconMdiConnection from "~icons/mdi/connection";
 import IconMdiNewBox from "~icons/mdi/new-box";
-import { canonicalIdFromParts, useSheets } from "../../../../songs";
+import { useSheets } from "../../../../songs";
 import { formatErrorMessage } from "../../../../utils/formatErrorMessage";
+import { importFromNETRecords } from "../../../../utils/importFromNETRecords";
 import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
 
 interface AchievementRecord {
@@ -119,6 +120,10 @@ const ImportFromNETRecordsDialogContent: FC<{
   const [region, setRegion] = useState<"intl" | "jp">("intl");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [autoImport, setAutoImport] = useLocalStorage(
+    "rating-auto-import-from-net",
+    false,
+  );
   const [busy, setBusy] = useState(false);
   const { data: sheets } = useSheets();
 
@@ -146,51 +151,7 @@ const ImportFromNETRecordsDialogContent: FC<{
   const handleImport = async () => {
     setBusy(true);
     try {
-      const response = await fetch(
-        "https://miruku.dxrating.net/functions/fetch-net-records/v0",
-        {
-          method: "POST",
-          body: JSON.stringify({ region, id: username, password }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
-      const data = (await response.json()) as {
-        recentRecords: RecentRecord[];
-        musicRecords: MusicRecord[];
-      };
-      const entries = data.musicRecords
-        .filter((entry) => {
-          return entry.sheet.difficulty !== "utage";
-        })
-        .map((record) => {
-          return {
-            sheetId: canonicalIdFromParts(
-              record.sheet.songId,
-              (
-                {
-                  standard: TypeEnum.STD,
-                  dx: TypeEnum.DX,
-                  utage: TypeEnum.UTAGE,
-                } as const
-              )[record.sheet.type],
-              record.sheet.difficulty as DifficultyEnum,
-            ),
-            achievementRate: record.achievement.rate / 10000,
-          };
-        })
-        .filter((entry) => {
-          const exists = sheets?.find((sheet) => sheet.id === entry.sheetId);
-          if (!exists) {
-            console.warn(
-              "[ImportFromNETRecordsDialogContent] sheet not found",
-              entry,
-            );
-          }
-          return exists;
-        });
-      modifyEntries.set(entries);
+      await importFromNETRecords(sheets!, modifyEntries);
       onClose();
     } catch (error) {
       console.error(error);
@@ -236,6 +197,12 @@ const ImportFromNETRecordsDialogContent: FC<{
               label="Your Sega ID"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
+              autoComplete="off"
+              autoCapitalize="none"
+              inputProps={{
+                "data-sentry-ignore": true,
+                "data-1p-ignore": true,
+              }}
             />
           </FormControl>
 
@@ -245,6 +212,11 @@ const ImportFromNETRecordsDialogContent: FC<{
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              autoComplete="off"
+              inputProps={{
+                "data-sentry-ignore": true,
+                "data-1p-ignore": true,
+              }}
             />
           </FormControl>
 
@@ -252,21 +224,80 @@ const ImportFromNETRecordsDialogContent: FC<{
             control={
               <Checkbox
                 checked={remember}
-                onChange={(event) => setRemember(event.target.checked)}
+                onChange={(event) => {
+                  setRemember(event.target.checked);
+                  if (!event.target.checked) setAutoImport(false);
+                }}
               />
             }
-            label="Remember Credentials"
+            label={
+              <div className="flex flex-col">
+                <span>Remember Credentials</span>
+                <span className="text-xs text-gray-500">
+                  Your credentials will be stored locally in your browser.
+                </span>
+              </div>
+            }
           />
 
-          <div className="text-sm text-gray-500">
-            Your credentials will be used to communicate with the official
-            maimai NET service to import your records. They will not be stored
-            on our servers.
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={autoImport}
+                onChange={(event) => setAutoImport(event.target.checked)}
+                disabled={!remember}
+              />
+            }
+            label={
+              <div className="flex flex-col">
+                <span>Auto-import</span>
+                <span className="text-xs text-gray-500">
+                  Automatically start importing records from NET on page load.
+                  Requires "Remember Credentials" to be enabled.
+                </span>
+              </div>
+            }
+          />
+
+          <div className="h-px w-full bg-gray-200 my-2" />
+
+          <div className="text-sm text-gray-500 [&>p]:mb-1">
+            <p className="font-bold">
+              Your credentials will not be stored, logged, or shared, and are
+              only used for the duration of this import process. If you wish,
+              you may{" "}
+              <a
+                href="https://github.com/gekichumai/dxrating/tree/main/packages/self-hosted-functions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                inspect the source code
+              </a>
+              .
+            </p>
+
+            <p>
+              We are also in the progress of employing the{" "}
+              <a
+                href="https://slsa.dev/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                SLSA framework
+              </a>
+              , including reproducible builds and signed container images to
+              help users determine the authenticity of the code running on our
+              server. Moreover, if demand arises, we will support connecting to
+              self-hosted instances of the NET import service so you can run it
+              on your own infra.
+            </p>
           </div>
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>Close</Button>
         <Button
           onClick={handleImport}
           disabled={!username || !password || busy}
@@ -278,8 +309,10 @@ const ImportFromNETRecordsDialogContent: FC<{
 
               <span className="text-gray-5">Importing...</span>
             </div>
+          ) : autoImport ? (
+            "Re-import Now"
           ) : (
-            "Import"
+            "Import Once"
           )}
         </Button>
       </DialogActions>
