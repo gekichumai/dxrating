@@ -2,8 +2,8 @@ import { FC, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useRatingCalculatorContext } from "../../models/RatingCalculatorContext";
 import { useSheets } from "../../songs";
-import { importFromNETRecords } from "../../utils/importFromNETRecords";
 import { useVersionTheme } from "../../utils/useVersionTheme";
+import { importFromNETRecords } from "../rating/io/import/importFromNETRecords";
 
 const SideEffectorThemeMeta: FC = () => {
   const versionTheme = useVersionTheme();

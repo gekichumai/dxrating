@@ -22,8 +22,8 @@ import IconMdiConnection from "~icons/mdi/connection";
 import IconMdiNewBox from "~icons/mdi/new-box";
 import { useSheets } from "../../../../songs";
 import { formatErrorMessage } from "../../../../utils/formatErrorMessage";
-import { importFromNETRecords } from "../../../../utils/importFromNETRecords";
 import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
+import { importFromNETRecords } from "./importFromNETRecords";
 
 interface AchievementRecord {
   sheet: {

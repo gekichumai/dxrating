@@ -1,13 +1,10 @@
 import { DifficultyEnum, TypeEnum } from "@gekichumai/dxdata";
 import toast from "react-hot-toast";
 import { ListActions } from "react-use/lib/useList";
-import { PlayEntry } from "../components/rating/RatingCalculatorAddEntryForm";
-import {
-  MusicRecord,
-  RecentRecord,
-} from "../components/rating/io/import/ImportFromNETRecordsListItem";
-import { FlattenedSheet, canonicalIdFromParts } from "../songs";
-import { formatErrorMessage } from "./formatErrorMessage";
+import { FlattenedSheet, canonicalIdFromParts } from "../../../../songs";
+import { formatErrorMessage } from "../../../../utils/formatErrorMessage";
+import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
+import { MusicRecord, RecentRecord } from "./ImportFromNETRecordsListItem";
 
 export const importFromNETRecords = async (
   sheets: FlattenedSheet[],

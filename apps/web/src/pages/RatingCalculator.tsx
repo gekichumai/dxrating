@@ -54,6 +54,7 @@ import {
 import { ClearButton } from "../components/rating/io/ClearButton";
 import { ExportMenu } from "../components/rating/io/ExportMenu";
 import { ImportMenu } from "../components/rating/io/ImportMenu";
+import { useRatingEntries } from "../components/rating/useRatingEntries";
 import {
   SheetListItem,
   SheetListItemContent,
@@ -61,127 +62,7 @@ import {
 import { useRatingCalculatorContext } from "../models/RatingCalculatorContext";
 import { useAppContextDXDataVersion } from "../models/context/useAppContext";
 import { FlattenedSheet, useSheets } from "../songs";
-import { Rating, calculateRating } from "../utils/rating";
-
-export const useRatingEntries = () => {
-  const appVersion = useAppContextDXDataVersion();
-  const { entries } = useRatingCalculatorContext();
-  const { data: sheets } = useSheets();
-
-  const {
-    allEntries: all,
-    b15Entries: b15,
-    b35Entries: b35,
-  } = useMemo(() => {
-    const calculated = entries.flatMap((entry) => {
-      const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId);
-      if (!sheet) {
-        console.warn(`Chart ${entry.sheetId} not found`);
-        return [];
-      }
-
-      return [
-        {
-          ...entry,
-          sheet,
-          rating: sheet.isRatingEligible
-            ? calculateRating(sheet.internalLevelValue, entry.achievementRate)
-            : null,
-        },
-      ];
-    });
-
-    const best15OfCurrentVersionSheetIds = calculated
-      .filter((entry) => entry.sheet.version === appVersion)
-      // a.rating and b.rating could be null. put them at the end
-      .sort((a, b) => {
-        if (!a.rating) return 1;
-        if (!b.rating) return -1;
-        return b.rating.ratingAwardValue - a.rating.ratingAwardValue;
-      })
-      .slice(0, 15)
-      .map((entry) => entry.sheetId);
-
-    const best35OfAllOtherVersionSheetIds = calculated
-      .filter((entry) => entry.sheet.version !== appVersion)
-      .sort((a, b) => {
-        if (!a.rating) return 1;
-        if (!b.rating) return -1;
-        return b.rating.ratingAwardValue - a.rating.ratingAwardValue;
-      })
-      .slice(0, 35)
-      .map((entry) => entry.sheetId);
-
-    const calculatedEntries = calculated.map((entry) => ({
-      ...entry,
-      includedIn: best15OfCurrentVersionSheetIds.includes(entry.sheetId)
-        ? ("b15" as const)
-        : best35OfAllOtherVersionSheetIds.includes(entry.sheetId)
-          ? ("b35" as const)
-          : null,
-    }));
-
-    return {
-      allEntries: calculatedEntries,
-      b15Entries: calculatedEntries.filter(
-        (entry) => entry.includedIn === "b15",
-      ),
-      b35Entries: calculatedEntries.filter(
-        (entry) => entry.includedIn === "b35",
-      ),
-    };
-  }, [entries, sheets, appVersion]);
-
-  const statistics = useMemo(() => {
-    const eligibleRatingEntriesB15 = b15.filter((entry) => entry.rating);
-    const eligibleRatingEntriesB35 = b35.filter((entry) => entry.rating);
-
-    const b15Average =
-      eligibleRatingEntriesB15.reduce(
-        (acc, entry) => acc + entry.rating!.ratingAwardValue,
-        0,
-      ) / b15.length;
-
-    const b35Average =
-      eligibleRatingEntriesB35.reduce(
-        (acc, entry) => acc + entry.rating!.ratingAwardValue,
-        0,
-      ) / b35.length;
-
-    const b15Min = Math.min(
-      ...eligibleRatingEntriesB15.map(
-        (entry) => entry.rating!.ratingAwardValue,
-      ),
-    );
-    const b35Min = Math.min(
-      ...eligibleRatingEntriesB35.map(
-        (entry) => entry.rating!.ratingAwardValue,
-      ),
-    );
-
-    const b15Max = Math.max(
-      ...eligibleRatingEntriesB15.map(
-        (entry) => entry.rating!.ratingAwardValue,
-      ),
-    );
-    const b35Max = Math.max(
-      ...eligibleRatingEntriesB35.map(
-        (entry) => entry.rating!.ratingAwardValue,
-      ),
-    );
-
-    return {
-      b15Average,
-      b35Average,
-      b15Min,
-      b35Min,
-      b15Max,
-      b35Max,
-    };
-  }, [b15, b35]);
-
-  return { entries: { all, b15, b35 }, statistics };
-};
+import { Rating } from "../utils/rating";
 
 export interface Entry {
   sheet: FlattenedSheet;
@@ -257,11 +138,6 @@ const TransparentPaper = styled(Paper)(() => ({
   boxShadow: "none",
 }));
 
-type RatingCalculatorEntry = PlayEntry & {
-  sheet: FlattenedSheet;
-  rating: Rating | null;
-};
-
 export const RatingCalculator = () => {
   const { modifyEntries } = useRatingCalculatorContext();
   const { data: sheets } = useSheets();
@@ -270,7 +146,7 @@ export const RatingCalculator = () => {
     { id: "rating", desc: true },
   ]);
 
-  const { entries, statistics } = useRatingEntries();
+  const { allEntries } = useRatingEntries();
 
   const columns = useMemo(
     () => [
@@ -337,7 +213,7 @@ export const RatingCalculator = () => {
   );
 
   const table = useReactTable({
-    data: entries.all,
+    data: allEntries,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
@@ -348,7 +224,7 @@ export const RatingCalculator = () => {
   const onSubmit = useCallback(
     (entry: PlayEntry) => {
       if (
-        entries.all.some(
+        allEntries.some(
           (existingEntry) => existingEntry.sheetId === entry.sheetId,
         )
       ) {
@@ -358,7 +234,7 @@ export const RatingCalculator = () => {
         );
       } else modifyEntries.push(entry);
     },
-    [entries, modifyEntries],
+    [allEntries, modifyEntries],
   );
 
   const TableComponents: TableComponents<Row<Entry>> = useMemo(
@@ -378,18 +254,14 @@ export const RatingCalculator = () => {
       <div className="flex flex-col md:flex-row items-start gap-4">
         <Alert severity="info" className="w-full">
           <AlertTitle>Your current rating</AlertTitle>
-          <RatingCalculatorStatisticsTable
-            b15Entries={entries.b15}
-            b35Entries={entries.b35}
-            statistics={statistics}
-          />
+          <RatingCalculatorStatisticsTable />
         </Alert>
 
         <div className="flex flex-col gap-4 h-full self-stretch">
           <Alert severity="info" className="w-full overflow-auto">
             <AlertTitle>
-              {entries.all?.length
-                ? `Saved ${entries.all.length} records`
+              {allEntries?.length
+                ? `Saved ${allEntries.length} records`
                 : "Auto-save"}
             </AlertTitle>
             Your entries will be saved automatically to your browser's local
@@ -466,7 +338,7 @@ export const RatingCalculator = () => {
           )}
         />
 
-        {entries.all.length === 0 && (
+        {allEntries.length === 0 && (
           <div className="w-full text-sm py-8 px-4 text-center">No entries</div>
         )}
       </div>
@@ -575,11 +447,8 @@ const RatingCalculatorTableRowContent: FC<{
 RatingCalculatorTableRowContent.displayName =
   "memo(RatingCalculatorTableRowContent)";
 
-export const RatingCalculatorStatisticsTable: FC<{
-  b15Entries: RatingCalculatorEntry[];
-  b35Entries: RatingCalculatorEntry[];
-  statistics: 
-}> = ({ b15Entries, b35Entries, statistics }) => {
+export const RatingCalculatorStatisticsTable: FC = () => {
+  const { b35Entries, b15Entries, statistics } = useRatingEntries();
   const appVersion = useAppContextDXDataVersion();
   const { b15Average, b35Average, b15Min, b35Min, b15Max, b35Max } = statistics;
 
