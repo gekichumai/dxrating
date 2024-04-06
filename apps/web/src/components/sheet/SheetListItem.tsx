@@ -3,6 +3,7 @@ import {
   ListItemButton,
   ListItemSecondaryAction,
   ListItemText,
+  ListItemTextProps,
 } from "@mui/material";
 import clsx from "clsx";
 import { FC, HTMLAttributes, ImgHTMLAttributes, memo, useState } from "react";
@@ -71,11 +72,21 @@ export interface SheetListItemContentProps
   sheet: FlattenedSheet;
 
   size?: "small" | "medium";
+  enableSheetImage?: boolean;
   SheetTitleProps?: Omit<SheetTitleProps, "sheet">;
+  ListItemTextProps?: ListItemTextProps;
 }
 
 export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
-  ({ sheet, size = "medium", className, SheetTitleProps, ...rest }) => {
+  ({
+    sheet,
+    size = "medium",
+    className,
+    enableSheetImage = true,
+    SheetTitleProps,
+    ListItemTextProps,
+    ...rest
+  }) => {
     return (
       <div
         className={clsx(
@@ -84,9 +95,12 @@ export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
         )}
         {...rest}
       >
-        <SheetImage name={sheet.imageName} size={size} />
+        {enableSheetImage && <SheetImage name={sheet.imageName} size={size} />}
 
-        <ListItemText className="ml-2 pr-20">
+        <ListItemText
+          {...ListItemTextProps}
+          className={clsx("ml-2 pr-12", ListItemTextProps?.className)}
+        >
           <SheetTitle
             {...SheetTitleProps}
             sheet={sheet}
@@ -260,15 +274,18 @@ export const SheetTitle: FC<SheetTitleProps> = ({
           >
             {title}
           </span>
-          {enableAltNames && (searchAcronyms?.length ?? 0) > 0 && (
-            <SheetAltNames altNames={searchAcronyms!} />
-          )}
         </span>
         <div className="flex items-center gap-2 shrink-0">
           <SheetType type={type} difficulty={difficulty} />
           <SheetDifficulty difficulty={difficulty} />
         </div>
       </h3>
+
+      <div className="w-full font-bold">
+        {enableAltNames && (searchAcronyms?.length ?? 0) > 0 && (
+          <SheetAltNames altNames={searchAcronyms!} />
+        )}
+      </div>
 
       {sheet.isTypeUtage && (
         <span className="text-sm text-zinc-600 px-1.5 py-0.5 gap-1 bg-amber/75 inline-flex self-start rounded-md">

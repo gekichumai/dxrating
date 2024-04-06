@@ -49,6 +49,7 @@ import {
 } from "react-virtuoso";
 import IconMdiArrowUp from "~icons/mdi/arrow-up";
 import IconMdiTrashCan from "~icons/mdi/trash-can";
+import { BetaBadge } from "../components/global/BetaBadge";
 import {
   PlayEntry,
   RatingCalculatorAddEntryForm,
@@ -144,6 +145,7 @@ export const RatingCalculator = () => {
   const { modifyEntries } = useRatingCalculatorContext();
   const { data: sheets } = useSheets();
   const [showOnlyB50, setShowOnlyB50] = useState(false);
+  const [compactMode, setCompactMode] = useState(false);
 
   const [sorting, setSorting] = useState<SortingState>([
     { id: "rating", desc: true },
@@ -163,9 +165,13 @@ export const RatingCalculator = () => {
               currentAchievementRate: row.original.achievementRate,
             }}
             SheetListItemContentProps={{
+              enableSheetImage: !compactMode,
               SheetTitleProps: {
                 enableVersion: false,
                 className: "flex-col",
+              },
+              ListItemTextProps: {
+                className: clsx("!my-0", compactMode ? "!ml-0" : "!ml-1"),
               },
             }}
           />
@@ -175,8 +181,8 @@ export const RatingCalculator = () => {
             padding: "none",
           },
         },
-        size: 500,
-        minSize: 300,
+        size: 700,
+        minSize: 400,
       }),
       columnHelper.accessor("includedIn", {
         id: "includedIn",
@@ -220,7 +226,7 @@ export const RatingCalculator = () => {
         minSize: 100,
       }),
     ],
-    [modifyEntries],
+    [modifyEntries, compactMode],
   );
 
   const data = useMemo(() => {
@@ -262,7 +268,7 @@ export const RatingCalculator = () => {
       TableRow: RatingCalculatorTableRow,
       TableBody: RatingCalculatorTableBody,
     }),
-    [],
+    [compactMode],
   );
   if (!sheets) return null;
 
@@ -302,7 +308,7 @@ export const RatingCalculator = () => {
             }}
           >
             <AlertTitle>Quick Actions</AlertTitle>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex flex-col items-start gap-1 mt-2">
               <FormControlLabel
                 control={
                   <Switch
@@ -311,6 +317,20 @@ export const RatingCalculator = () => {
                   />
                 }
                 label="Show only B50 entries"
+              />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={compactMode}
+                    onChange={() => setCompactMode((prev) => !prev)}
+                  />
+                }
+                label={
+                  <div className="flex items-center gap-1 leading-none">
+                    Compact Mode <BetaBadge />
+                  </div>
+                }
               />
             </div>
           </Alert>
@@ -324,7 +344,7 @@ export const RatingCalculator = () => {
           useWindowScroll
           data={table.getRowModel().rows}
           className="w-full overflow-y-hidden"
-          increaseViewportBy={1000}
+          increaseViewportBy={2000}
           components={TableComponents}
           fixedHeaderContent={() =>
             table.getHeaderGroups().map((headerGroup) => (
@@ -461,7 +481,7 @@ const RatingCalculatorRatingCell: FC<{
 
 const RatingCalculatorTableRowContent: FC<{
   row: Row<Entry>;
-}> = memo(({ row }) => {
+}> = ({ row }) => {
   return (
     <>
       {row.getVisibleCells().map((cell) => {
@@ -481,9 +501,7 @@ const RatingCalculatorTableRowContent: FC<{
       })}
     </>
   );
-});
-RatingCalculatorTableRowContent.displayName =
-  "memo(RatingCalculatorTableRowContent)";
+};
 
 export const RatingCalculatorStatisticsTable: FC = () => {
   const { b35Entries, b15Entries, statistics } = useRatingEntries();

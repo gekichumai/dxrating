@@ -14,9 +14,9 @@ import clsx from "clsx";
 import { FC, useContext, useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import MdiBeta from "~icons/mdi/beta";
 import { SheetDetailsContext } from "../../models/context/SheetDetailsContext";
 import { FlattenedSheet } from "../../songs";
+import { BetaBadge } from "../global/BetaBadge";
 import { SheetSortSelect } from "./SheetSortSelect";
 import { SheetInternalLevelFilter } from "./filters/SheetInternalLevelFilter";
 import { SheetTagFilter } from "./filters/SheetTagFilter";
@@ -195,12 +195,8 @@ const SheetSortFilterForm = () => {
           <div className="text-xl font-bold tracking-tight leading-none">
             {t("sheet:sort-and-filter.title")}
           </div>
-          <div className="bg-gray-200 rounded-full px-2 py-1 text-xs ml-2 flex items-center gap-1 select-none leading-none">
-            <MdiBeta />
-            <span>Beta</span>
-          </div>
+          <BetaBadge className="ml-2" />
           <div className="flex-1" />
-
           <SheetSortFilterFormReset
             onReset={() => {
               reset(getDefaultSheetSortFilterForm());
