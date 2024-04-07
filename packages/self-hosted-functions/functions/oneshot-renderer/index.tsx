@@ -349,10 +349,6 @@ export const handler = async (ctx: Koa.Context) => {
     },
   });
 
-  await new Promise((resolve) => {
-    setTimeout(resolve, 10000);
-  });
-
   if (ctx.query.pixelated) {
     const resvg = new Resvg(svg, {
       languages: ["en", "ja"],
