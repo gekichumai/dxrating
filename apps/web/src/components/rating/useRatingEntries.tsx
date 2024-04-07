@@ -5,7 +5,7 @@ import { Entry } from "../../pages/RatingCalculator";
 import { FlattenedSheet, useSheets } from "../../songs";
 import { Rating, calculateRating } from "../../utils/rating";
 
-type RatingCalculatorEntry = Entry & {
+export type RatingCalculatorEntry = Entry & {
   sheet: FlattenedSheet;
   rating: Rating | null;
 };

@@ -1,6 +1,7 @@
-import { Button, Menu } from "@mui/material";
+import { Button, Divider, Menu } from "@mui/material";
 import { FC, useId, useState } from "react";
 import { ExportToJSONMenuItem } from "./export/ExportToJSONMenuItem";
+import { RenderToOneShotImageMenuItem } from "./export/RenderToOneShotImageMenuItem";
 
 export const ExportMenu: FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -36,9 +37,11 @@ export const ExportMenu: FC = () => {
           "aria-labelledby": `button-${id}`,
         }}
       >
-        <ExportToJSONMenuItem />
+        <RenderToOneShotImageMenuItem />
 
-        {/* <RenderToOneShotImageMenuItem calculatedEntries={calculatedEntries} /> */}
+        <Divider />
+
+        <ExportToJSONMenuItem />
       </Menu>
     </>
   );
