@@ -175,7 +175,11 @@ export class Client {
     const res = await this.fetch(url, init);
     const text = await res.text();
     this.checkMaintenance(text);
-    return new DOMParser().parseFromString(text, "text/html");
+    return new DOMParser({
+      errorHandler: () => {
+        // ignore errors
+      },
+    }).parseFromString(text, "text/html");
   }
 
   checkMaintenance(text: string) {
@@ -297,10 +301,11 @@ export class MaimaiNETIntlClient extends Client {
         "https://lng-tgk-aime-gw.am-all.net/common_auth/login"
       )
     ) {
-      const textDom = new DOMParser().parseFromString(
-        redirectDestinationText,
-        "text/html"
-      );
+      const textDom = new DOMParser({
+        errorHandler: () => {
+          // ignore errors
+        },
+      }).parseFromString(redirectDestinationText, "text/html");
       const errorString =
         textDom.querySelector("#error")?.textContent?.trim() ??
         "failed to login";
