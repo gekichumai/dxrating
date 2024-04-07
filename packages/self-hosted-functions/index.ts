@@ -3,7 +3,11 @@ import Koa from "koa";
 import bodyParser from "koa-bodyparser";
 import KoaSSE from "koa-event-stream";
 import Router from "koa-router";
-import { v0Handler, v1Handler } from "./functions/fetch-net-records";
+import {
+  v0Handler as fetchNetRecordsV0Handler,
+  v1Handler as fetchNetRecordsV1Handler,
+} from "./functions/fetch-net-records";
+import { handler as oneshotRendererHandler } from "./functions/oneshot-renderer";
 import { AuthParams } from "./lib/client";
 const app = new Koa();
 const router = new Router();
@@ -50,13 +54,22 @@ const verifyParams: Koa.Middleware = async (ctx, next) => {
   return next();
 };
 
-router.post("/functions/fetch-net-records/v0", verifyParams, v0Handler);
+router.post(
+  "/functions/fetch-net-records/v0",
+  verifyParams,
+  fetchNetRecordsV0Handler
+);
 router.post(
   "/functions/fetch-net-records/v1/:region",
   KoaSSE(),
   verifyParams,
-  v1Handler
+  fetchNetRecordsV1Handler
 );
+
+router.post("/functions/render-oneshot/v0", oneshotRendererHandler);
+if (process.env.DEV === "true") {
+  router.get("/functions/render-oneshot/v0/demo", oneshotRendererHandler);
+}
 
 app.use(cors());
 app.use(bodyParser({ enableTypes: ["json"] }));
