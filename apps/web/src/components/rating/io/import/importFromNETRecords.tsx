@@ -46,7 +46,7 @@ interface AuthParams {
 const fetchNetRecords = async (
   authParams: AuthParams,
   onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
-): Promise<{ musicRecords: MusicRecord[]; recentRecords: RecentRecord[] }> => {
+): Promise<{ music: MusicRecord[]; recent: RecentRecord[] }> => {
   const { region, username, password } = authParams;
 
   return new Promise((resolve, reject) => {
@@ -60,14 +60,21 @@ const fetchNetRecords = async (
           "Content-Type": "application/json",
         },
         onmessage: (message) => {
-          const event = message.event as "progress" | "data" | "error";
+          const event = message.event as "progress" | "data" | "error" | "";
+          if (!event) {
+            return;
+          }
+
           if (event === "progress") {
-            const state = message.data as FetchNetRecordProgressState;
+            console.log("progress", message);
+            const { state } = JSON.parse(message.data) as {
+              state: FetchNetRecordProgressState;
+            };
             onProgress?.(state, FETCH_STATE_PROGRESS[state]);
           } else if (event === "data") {
             const data = JSON.parse(message.data) as {
-              musicRecords: MusicRecord[];
-              recentRecords: RecentRecord[];
+              music: MusicRecord[];
+              recent: RecentRecord[];
             };
             resolve(data);
           } else if (event === "error") {
@@ -115,7 +122,7 @@ export const importFromNETRecords = async (
       { region, username, password },
       onProgress,
     );
-    const entries = data.musicRecords
+    const entries = data.music
       .filter((entry) => {
         return entry.sheet.difficulty !== "utage";
       })
@@ -147,7 +154,7 @@ export const importFromNETRecords = async (
       });
     modifyEntries.set(entries);
 
-    const lastRecord = data.recentRecords.at(0);
+    const lastRecord = data.recent.at(0);
     toast.success(
       <div className="flex flex-col">
         <span>

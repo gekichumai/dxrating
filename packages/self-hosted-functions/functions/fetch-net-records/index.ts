@@ -28,16 +28,26 @@ export async function v1Handler(ctx: Koa.Context) {
     ctx.sse?.send({ event: "progress", data: { state } });
   };
 
-  const client = {
-    jp: new MaimaiNETJpClient(onProgress),
-    intl: new MaimaiNETIntlClient(onProgress),
-  }[region as "jp" | "intl"];
+  try {
+    const client = {
+      jp: new MaimaiNETJpClient(onProgress),
+      intl: new MaimaiNETIntlClient(onProgress),
+    }[region as "jp" | "intl"];
 
-  await client.login(authParams);
+    await client.login(authParams);
 
-  const recent = await client.fetchRecentRecords();
-  const music = await client.fetchMusicRecords();
+    const recent = await client.fetchRecentRecords();
+    const music = await client.fetchMusicRecords();
 
-  ctx.sse?.send({ event: "data", data: { recent, music } });
-  ctx.sse?.end();
+    ctx.sse?.send({ event: "data", data: { recent, music } });
+    ctx.sse?.end();
+  } catch (err) {
+    ctx.sse?.send({
+      event: "error",
+      data: {
+        error: err instanceof Error ? err.message : "internal server error",
+      },
+    });
+    ctx.sse?.end();
+  }
 }

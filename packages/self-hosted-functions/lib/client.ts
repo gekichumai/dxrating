@@ -137,13 +137,7 @@ export class Client {
     this.#cookies.delete(hostname);
   }
 
-  async fetch(
-    url: string,
-    init?: RequestInit & {
-      // check if the response is a maintenance page. this will consume the response body as text.
-      checkMaintenance?: boolean;
-    }
-  ) {
+  async fetch(url: string, init?: RequestInit) {
     const requestURL = new URL(url);
     const cookies = this.getCookies(requestURL.hostname);
     const initHeaders = {
@@ -173,10 +167,6 @@ export class Client {
         "unknown error occurred: response redirects to error page"
       );
     }
-    if (init?.checkMaintenance) {
-      const text = await res.text();
-      this._checkMaintenance(text);
-    }
 
     return res;
   }
@@ -184,11 +174,11 @@ export class Client {
   async fetchAsDOM(url: string, init?: RequestInit) {
     const res = await this.fetch(url, init);
     const text = await res.text();
-    this._checkMaintenance(text);
+    this.checkMaintenance(text);
     return new DOMParser().parseFromString(text, "text/html");
   }
 
-  private _checkMaintenance(text: string) {
+  checkMaintenance(text: string) {
     if (URLS.CHECKLIST.MAINTENANCE.some((m) => text.includes(m))) {
       throw new Error(
         "NET maintenance is currently ongoing. Please try again later."
@@ -211,7 +201,7 @@ export class MaimaiNETJpClient extends Client {
       ?.attributes.getNamedItem("value")?.value;
     if (!loginPageToken) throw new Error("unable to fetch token");
 
-    await this.fetch(URLS.JP.LOGIN_ENDPOINT, {
+    const login = await this.fetch(URLS.JP.LOGIN_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -223,6 +213,10 @@ export class MaimaiNETJpClient extends Client {
         token: loginPageToken,
       }),
     });
+    if (URLS.CHECKLIST.ERROR.includes(login.headers.get("location") ?? "")) {
+      throw new Error("invalid credentials: failed to login");
+    }
+
     await this.fetch(URLS.JP.LOGIN_AIMELIST);
     await this.fetch(URLS.JP.LOGIN_AIMELIST_SUBMIT);
     await this.fetch(URLS.JP.HOMEPAGE);
@@ -272,6 +266,8 @@ export class MaimaiNETIntlClient extends Client {
   }
 
   async login({ id, password }: AuthParams) {
+    this.onUpdate?.("auth:in-progress");
+
     await this.fetch(URLS.INTL.LOGIN_PAGE);
 
     const redirectURL = (
@@ -291,9 +287,25 @@ export class MaimaiNETIntlClient extends Client {
       throw new Error("invalid credentials: empty redirectURL");
     }
 
-    await this.fetch(redirectURL, {
-      checkMaintenance: true,
-    });
+    const redirectDestinationResponse = await this.fetch(redirectURL);
+
+    const redirectDestinationText = await redirectDestinationResponse.text();
+    this.checkMaintenance(redirectDestinationText);
+
+    if (
+      redirectURL.startsWith(
+        "https://lng-tgk-aime-gw.am-all.net/common_auth/login"
+      )
+    ) {
+      const textDom = new DOMParser().parseFromString(
+        redirectDestinationText,
+        "text/html"
+      );
+      const errorString =
+        textDom.querySelector("#error")?.textContent?.trim() ??
+        "failed to login";
+      throw new Error("invalid credentials: " + errorString);
+    }
 
     this.onUpdate?.("auth:succeeded");
   }

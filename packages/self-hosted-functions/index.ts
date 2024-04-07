@@ -47,26 +47,13 @@ const verifyParams: Koa.Middleware = async (ctx, next) => {
 
   ctx.state.authParams = authParams;
   ctx.state.region = region;
-  await next();
+  return next();
 };
 
 router.post("/functions/fetch-net-records/v0", verifyParams, v0Handler);
 router.post(
   "/functions/fetch-net-records/v1/:region",
   KoaSSE(),
-  async (ctx: Koa.Context, next) => {
-    try {
-      await next();
-    } catch (err) {
-      ctx.sse?.send({
-        event: "error",
-        data: {
-          error: err instanceof Error ? err.message : "internal server error",
-        },
-      });
-      ctx.sse?.end();
-    }
-  },
   verifyParams,
   v1Handler
 );
