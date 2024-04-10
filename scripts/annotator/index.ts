@@ -296,7 +296,7 @@ function mergedAliasIdMap(
 async function main() {
   ALIAS_NAME_MAP = await readAliases1();
   ALIAS_ID_MAP = mergedAliasIdMap(
-    ...(await Promise.all([readAliases2(), readAliases3(), readAliases4()]))
+    ...(await Promise.all([readAliases2(), readAliases4()]))
   );
 
   console.info("Fetching multiver internal level values...");

@@ -3,7 +3,6 @@ import {
   Sheet,
   Song,
   TypeEnum,
-  VERSION_ID_MAP,
   VersionEnum,
   dxdata,
 } from "@gekichumai/dxdata";
@@ -41,26 +40,14 @@ export const canonicalIdFromParts = (
   return [songId, type, difficulty].join(CANONICAL_ID_PARTS_SEPARATOR);
 };
 
-export const getSongs = (maxVersion: VersionEnum): Song[] => {
-  const maxVersionId = VERSION_ID_MAP.get(maxVersion);
-  if (maxVersionId === undefined) {
-    throw new Error(`Invalid version: ${maxVersion}`);
-  }
-
-  return dxdata.songs.filter((v) =>
-    v.sheets.some(
-      (sheet) =>
-        (VERSION_ID_MAP.get(sheet.version) ??
-          (console.warn(`Invalid version: ${sheet.version}`), 0)) <=
-        maxVersionId,
-    ),
-  );
+export const getSongs = (): Song[] => {
+  return dxdata.songs;
 };
 
 export const getFlattenedSheets = async (
   version: VersionEnum,
 ): Promise<FlattenedSheet[]> => {
-  const songs = getSongs(version);
+  const songs = getSongs();
   const flattenedSheets = songs.flatMap((song) => {
     return song.sheets.map((sheet) => {
       const isTypeUtage =
@@ -124,8 +111,7 @@ export const useSheets = () => {
 
 export const useSongs = () => {
   const { version } = useAppContext();
-  const appVersion = useAppContextDXDataVersion();
-  return useSWR(`dxdata:songs:${version}`, () => getSongs(appVersion));
+  return useSWR(`dxdata:songs:${version}`, () => getSongs());
 };
 
 export const useSheetsSearchEngine = () => {
