@@ -148,7 +148,6 @@ async function getSearchAcronyms(title: string, id?: number) {
   ).filter(
     (acronym) => !!acronym && acronym.toLowerCase() !== title.toLowerCase()
   );
-  filtered.sort((a, b) => a.localeCompare(b));
   return filtered;
 }
 
@@ -334,6 +333,7 @@ async function main() {
             }
           )
         ).then((acronyms) => uniq(flatten(acronyms)));
+        searchAcronyms.sort((a, b) => a.localeCompare(b));
 
         return {
           ...entry,
