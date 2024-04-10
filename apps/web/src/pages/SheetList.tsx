@@ -1,3 +1,4 @@
+import { VERSION_ID_MAP } from "@gekichumai/dxdata";
 import { Alert, Button, TextField } from "@mui/material";
 import { FC, useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -11,6 +12,7 @@ import {
   SheetDetailsContext,
   SheetDetailsContextProvider,
 } from "../models/context/SheetDetailsContext";
+import { useAppContextDXDataVersion } from "../models/context/useAppContext";
 import { FlattenedSheet, useFilteredSheets, useSheets } from "../songs";
 import { DXRatingPlugin } from "../utils/capacitor/plugin/wrap";
 import { isBuildPlatformApp } from "../utils/env";
@@ -32,6 +34,7 @@ const SheetListInner: FC = () => {
   const { t } = useTranslation(["sheet"]);
   const { data: sheets, isLoading } = useSheets();
   const { setQueryActive } = useContext(SheetDetailsContext);
+  const version = useAppContextDXDataVersion();
   const [query, setQuery] = useState("");
   const { results, elapsed: searchElapsed } = useFilteredSheets(query);
   const [sortFilterOptions, setSortFilterOptions] =
@@ -53,7 +56,13 @@ const SheetListInner: FC = () => {
           },
           (v) => {
             if (sortFilterOptions.filters.versions) {
-              const versions = sortFilterOptions.filters.versions;
+              const currentVersionId = VERSION_ID_MAP.get(version) ?? 0;
+              const validVersions = Array.from(VERSION_ID_MAP.entries())
+                .filter(([, id]) => id <= currentVersionId)
+                .map(([v]) => v);
+              const versions = sortFilterOptions.filters.versions.filter((v) =>
+                validVersions.includes(v),
+              );
               return versions.includes(v.version);
             } else {
               return true;
@@ -115,7 +124,7 @@ const SheetListInner: FC = () => {
       filteredResults: sortFilteredResults,
       elapsed: performance.now() - startTime,
     };
-  }, [results, sortFilterOptions, query]);
+  }, [results, sortFilterOptions, query, version]);
 
   return (
     <div className="flex-container pb-global">
