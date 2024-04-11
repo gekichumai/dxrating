@@ -73,10 +73,13 @@ async function readAliases2() {
   }
   const aliases = (await res.json()).content;
   const aliasesMap = new Map<string, string[]>();
-  const aliasesObj = aliases as Record<string, { Alias: string[] }>;
-  for (const [key, value] of Object.entries(aliasesObj)) {
+  const aliasesObj = aliases as Record<
+    string,
+    { Name: string; Alias: string[] }
+  >;
+  for (const [, value] of Object.entries(aliasesObj)) {
     const cleanedAliases = value.Alias.map((alias) => he.decode(alias));
-    aliasesMap.set(key, cleanedAliases);
+    aliasesMap.set(value.Name, cleanedAliases);
   }
   return aliasesMap;
 }
@@ -277,10 +280,10 @@ function checkSongsInternalId(
   );
 }
 
-function mergedAliasIdMap(
-  ...aliasMaps: Map<string, string[]>[]
-): Map<string, string[]> {
-  const merged = new Map<string, string[]>();
+function mergedAliasIdMap<T>(
+  ...aliasMaps: Map<T, string[]>[]
+): Map<T, string[]> {
+  const merged = new Map<T, string[]>();
 
   for (const aliasMap of aliasMaps) {
     for (const [key, value] of aliasMap) {
@@ -293,9 +296,11 @@ function mergedAliasIdMap(
 }
 
 async function main() {
-  ALIAS_NAME_MAP = await readAliases1();
+  ALIAS_NAME_MAP = mergedAliasIdMap(
+    ...(await Promise.all([readAliases1(), readAliases2()]))
+  );
   ALIAS_ID_MAP = mergedAliasIdMap(
-    ...(await Promise.all([readAliases2(), readAliases4()]))
+    ...(await Promise.all([readAliases3(), readAliases4()]))
   );
 
   console.info("Fetching multiver internal level values...");
