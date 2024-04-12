@@ -13,7 +13,7 @@ import {
   useAppContext,
   useAppContextDXDataVersion,
 } from "./models/context/useAppContext";
-import { supabase } from "./models/supabase";
+import { useCombinedTags } from "./models/useCombinedTags";
 
 const CANONICAL_ID_PARTS_SEPARATOR = "__dxrt__";
 
@@ -75,38 +75,37 @@ export const getFlattenedSheets = async (
 export const useSheets = () => {
   const { version } = useAppContext();
   const appVersion = useAppContextDXDataVersion();
-  return useSWR(`dxdata::sheets::${version}`, async () => {
-    const [relations, sheets] = await Promise.all([
-      supabase
-        .from("tag_songs")
-        .select("song_id, sheet_type, sheet_difficulty, tag_id"),
-      getFlattenedSheets(appVersion),
-    ]);
+  const { data: combinedTags, isLoading } = useCombinedTags();
+  return useSWR(
+    `dxdata::sheets::${version}?${isLoading}?${Boolean(combinedTags)}`,
+    async () => {
+      const sheets = await getFlattenedSheets(appVersion);
 
-    if (!relations.data) {
+      if (!combinedTags) {
+        return sheets.map((sheet) => ({
+          ...sheet,
+          tags: [],
+        }));
+      }
+
+      const map = new Map<string, number[]>();
+      for (const relation of combinedTags.tagSongs) {
+        const canonical = canonicalIdFromParts(
+          relation.song_id,
+          relation.sheet_type as TypeEnum,
+          relation.sheet_difficulty as DifficultyEnum,
+        );
+        const tags = map.get(canonical) ?? [];
+        tags.push(relation.tag_id);
+        map.set(canonical, tags);
+      }
+
       return sheets.map((sheet) => ({
         ...sheet,
-        tags: [],
+        tags: map.get(sheet.id) ?? [],
       }));
-    }
-
-    const map = new Map<string, number[]>();
-    for (const relation of relations.data) {
-      const canonical = canonicalIdFromParts(
-        relation.song_id,
-        relation.sheet_type as TypeEnum,
-        relation.sheet_difficulty as DifficultyEnum,
-      );
-      const tags = map.get(canonical) ?? [];
-      tags.push(relation.tag_id);
-      map.set(canonical, tags);
-    }
-
-    return sheets.map((sheet) => ({
-      ...sheet,
-      tags: map.get(sheet.id) ?? [],
-    }));
-  });
+    },
+  );
 };
 
 export const useSongs = () => {

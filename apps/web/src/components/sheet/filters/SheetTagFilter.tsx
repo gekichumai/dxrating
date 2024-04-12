@@ -3,9 +3,8 @@ import clsx from "clsx";
 import { FC, ReactNode } from "react";
 import { Control, useController } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import useSWR from "swr";
 import { LongPressCallbackReason, useLongPress } from "use-long-press";
-import { supabase } from "../../../models/supabase";
+import { useCombinedTags } from "../../../models/useCombinedTags";
 import { useSheets } from "../../../songs";
 import { useLocalizedMessageTranslation } from "../../../utils/useLocalizedMessageTranslation";
 import { SheetSortFilterForm } from "../SheetSortFilter";
@@ -82,12 +81,8 @@ const SheetTagFilterInput = ({
   value: number[];
   onChange: (value: number[]) => void;
 }) => {
-  const { data: tags, isLoading } = useSWR("supabase::tags", async () => {
-    const { data } = await supabase
-      .from("tags")
-      .select("id, localized_name, localized_description");
-    return data;
-  });
+  const { data: combinedTags, isLoading } = useCombinedTags();
+  const tags = combinedTags?.tags;
   const { data: sheets } = useSheets();
   const localizeMessage = useLocalizedMessageTranslation();
 

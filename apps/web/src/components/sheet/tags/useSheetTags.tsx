@@ -1,28 +1,27 @@
 import { useMemo } from "react";
-import useSWR from "swr";
-import { supabase } from "../../../models/supabase";
 import { FlattenedSheet } from "../../../songs";
 
 import compact from "lodash-es/compact";
+import { useCombinedTags } from "../../../models/useCombinedTags";
 
 export const useSheetTags = (sheet: FlattenedSheet) => {
-  const { data, ...rest } = useSWR(`supabase::tags::${sheet.id}`, async () =>
-    supabase
-      .from("tag_songs")
-      .select(
-        "tag:tags(id, localized_name, localized_description, group:tag_groups(id, localized_name, color))",
+  const response = useCombinedTags();
+  const { data: combinedTags, ...rest } = response;
+  const sheetTags = compact(
+    combinedTags?.tagSongs
+      .filter(
+        (tagSong) =>
+          tagSong.song_id === sheet.songId &&
+          tagSong.sheet_type === sheet.type &&
+          tagSong.sheet_difficulty === sheet.difficulty,
       )
-      .eq("song_id", sheet.songId)
-      .eq("sheet_type", sheet.type)
-      .eq("sheet_difficulty", sheet.difficulty)
-      .order("id", { ascending: true, referencedTable: "tag" }),
+      .map(({ tag_id }) => combinedTags.tags.find((tag) => tag.id === tag_id)),
   );
-  const mappedData = data?.data?.map(({ tag }) => tag);
 
   return useMemo(() => {
     return {
-      data: compact(mappedData),
+      data: sheetTags,
       ...rest,
     };
-  }, [data]);
+  }, [response]);
 };
