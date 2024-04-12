@@ -62,17 +62,21 @@ const db = new Kysely<Database>({
 serve(async (_req) => {
   try {
     // Run a query
-    const [tagGroups, tagSongs] = await Promise.all([
+    const [tags, tagGroups, tagSongs] = await Promise.all([
+      db
+        .selectFrom("tags")
+        .select([
+          "tags.id",
+          "tags.localized_name",
+          "tags.localized_description",
+        ])
+        .execute(),
       db
         .selectFrom("tag_groups")
-        .leftJoin("tags", "tags.group_id", "tag_groups.id")
         .select([
           "tag_groups.id",
           "tag_groups.localized_name",
           "tag_groups.color",
-          "tags.id",
-          "tags.localized_name",
-          "tags.localized_description",
         ])
         .execute(),
       db
@@ -84,6 +88,7 @@ serve(async (_req) => {
     // Encode the result as pretty printed JSON
     const body = JSON.stringify(
       {
+        tags,
         tagGroups,
         tagSongs,
       },
