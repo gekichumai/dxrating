@@ -22,6 +22,9 @@ interface UseRatingEntriesStatistics {
   b35Min: number;
   b15Max: number;
   b35Max: number;
+  b15Sum: number;
+  b35Sum: number;
+  b50Sum: number;
 }
 
 export const useRatingEntries = (): UseRatingEntriesReturn => {
@@ -127,6 +130,17 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
       ),
     );
 
+    const b15Sum = eligibleRatingEntriesB15.reduce(
+      (acc, entry) => acc + entry.rating!.ratingAwardValue,
+      0,
+    );
+    const b35Sum = eligibleRatingEntriesB35.reduce(
+      (acc, entry) => acc + entry.rating!.ratingAwardValue,
+      0,
+    );
+
+    const b50Sum = b15Sum + b35Sum;
+
     return {
       b15Average,
       b35Average,
@@ -134,6 +148,9 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
       b35Min,
       b15Max,
       b35Max,
+      b15Sum,
+      b35Sum,
+      b50Sum,
     };
   }, [b15Entries, b35Entries]);
 

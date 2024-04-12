@@ -1,17 +1,15 @@
 import {
+  Button,
   CircularProgress,
   Dialog,
   DialogContent,
   DialogContentText,
   DialogTitle,
-  ListItemIcon,
-  ListItemText,
-  MenuItem,
+  Grow,
 } from "@mui/material";
 import { FC, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import IconMdiImage from "~icons/mdi/image";
-import IconMdiNewBox from "~icons/mdi/new-box";
 import { useRatingCalculatorContext } from "../../../../models/RatingCalculatorContext";
 import { useAppContextDXDataVersion } from "../../../../models/context/useAppContext";
 
@@ -144,27 +142,26 @@ const RenderToOneShotImageDialogContent = () => {
   );
 };
 
-export const RenderToOneShotImageMenuItem: FC = () => {
+export const RenderToOneShotImageButton: FC = () => {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <MenuItem onClick={() => setOpen(true)}>
-        <ListItemIcon>
-          <IconMdiImage />
-        </ListItemIcon>
-        <ListItemText
-          primary="Render as OneShot Image..."
-          secondary={
-            <div className="flex items-center gap-1">
-              <IconMdiNewBox />
-              <span>Experimental</span>
-            </div>
-          }
-        />
-      </MenuItem>
+      <Button
+        onClick={() => setOpen(true)}
+        variant="contained"
+        color="primary"
+        startIcon={<IconMdiImage />}
+      >
+        Render as OneShot Image
+      </Button>
 
-      <Dialog open={open} onClose={() => setOpen(false)}>
+      <Dialog
+        TransitionComponent={Grow}
+        maxWidth="md"
+        open={open}
+        onClose={() => setOpen(false)}
+      >
         <RenderToOneShotImageDialogContent />
       </Dialog>
     </>

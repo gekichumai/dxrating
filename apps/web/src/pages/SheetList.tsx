@@ -1,8 +1,9 @@
 import { VERSION_ID_MAP } from "@gekichumai/dxdata";
-import { Alert, Button, IconButton, TextField } from "@mui/material";
+import { Button, IconButton, TextField } from "@mui/material";
 import { FC, useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import IconMdiClose from "~icons/mdi/close";
+import MdiIconInfo from "~icons/mdi/information";
 import IconMdiOcr from "~icons/mdi/ocr";
 import { SheetListContainer } from "../components/sheet/SheetListContainer";
 import {
@@ -166,13 +167,28 @@ const SheetListInner: FC = () => {
 
       <SheetSortFilter onChange={(v) => setSortFilterOptions(v)} />
 
-      <Alert severity="info" className="text-sm !rounded-full shadow-lg">
-        {t("sheet:search-summary", {
-          found: isLoading ? "..." : filteredResults.length,
-          total: isLoading ? "..." : sheets?.length,
-          elapsed: (searchElapsed + filteringElapsed).toFixed(1),
-        })}
-      </Alert>
+      <div className="text-sm rounded-full shadow-lg px-4 py-2 bg-blue-200 relative overflow-hidden select-none font-bold">
+        <div
+          className="absolute -inset-4 bg-blue-900/20 -skew-x-8 translate-x-4 transition-width"
+          style={{
+            width:
+              (filteredResults.length /
+                (sheets?.length ?? filteredResults.length)) *
+                100 +
+              "%",
+          }}
+        />
+        <div className="relative z-1 flex items-center gap-2">
+          <MdiIconInfo className="text-blue-900" />
+          <div className="text-blue-900">
+            {t("sheet:search-summary", {
+              found: isLoading ? "..." : filteredResults.length,
+              total: isLoading ? "..." : sheets?.length,
+              elapsed: (searchElapsed + filteringElapsed).toFixed(1),
+            })}
+          </div>
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="flex flex-col w-full">

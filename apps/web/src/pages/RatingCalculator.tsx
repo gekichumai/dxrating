@@ -57,13 +57,13 @@ import {
 import { ClearButton } from "../components/rating/io/ClearButton";
 import { ExportMenu } from "../components/rating/io/ExportMenu";
 import { ImportMenu } from "../components/rating/io/ImportMenu";
+import { RenderToOneShotImageButton } from "../components/rating/io/export/RenderToOneShotImageButton";
 import { useRatingEntries } from "../components/rating/useRatingEntries";
 import {
   SheetListItem,
   SheetListItemContent,
 } from "../components/sheet/SheetListItem";
 import { useRatingCalculatorContext } from "../models/RatingCalculatorContext";
-import { useAppContextDXDataVersion } from "../models/context/useAppContext";
 import { FlattenedSheet, useSheets } from "../songs";
 import { Rating } from "../utils/rating";
 
@@ -274,21 +274,31 @@ export const RatingCalculator = () => {
 
   return (
     <div className="flex-container w-full pb-global">
-      <div className="flex flex-col md:flex-row items-start gap-4">
-        <Alert severity="info" className="w-full">
-          <AlertTitle>Your current rating</AlertTitle>
+      <div className="flex flex-col md:flex-row items-start gap-4 w-full">
+        <Alert icon={false} severity="info" className="w-full px-4 py-2">
+          <AlertTitle className="font-bold">Rating Breakdown</AlertTitle>
           <RatingCalculatorStatisticsTable />
         </Alert>
 
         <div className="flex flex-col gap-4 h-full self-stretch">
-          <Alert severity="info" className="w-full overflow-auto">
-            <AlertTitle>
+          <Alert
+            icon={false}
+            severity="info"
+            className="w-full overflow-auto px-4 py-2"
+            classes={{
+              message: "w-full",
+            }}
+          >
+            <AlertTitle className="font-bold">
               {allEntries?.length
                 ? `Saved ${allEntries.length} records`
                 : "Auto-save"}
             </AlertTitle>
-            Your entries will be saved automatically to your browser's local
-            storage and will be restored when you return to this page.
+
+            <div className="mt-2">
+              <RenderToOneShotImageButton />
+            </div>
+
             <div className="flex items-center gap-2 mt-2">
               <ImportMenu modifyEntries={modifyEntries} />
 
@@ -301,14 +311,15 @@ export const RatingCalculator = () => {
           </Alert>
 
           <Alert
+            icon={false}
             severity="info"
-            className="w-full"
+            className="w-full px-4 py-2"
             classes={{
               message: "overflow-unset",
             }}
           >
-            <AlertTitle>Quick Actions</AlertTitle>
-            <div className="flex flex-col items-start gap-1 mt-2">
+            <AlertTitle className="font-bold">Quick Actions</AlertTitle>
+            <div className="flex flex-col items-start mt-2">
               <FormControlLabel
                 control={
                   <Switch
@@ -503,94 +514,129 @@ const RatingCalculatorTableRowContent: FC<{
   );
 };
 
+const RatingCalculatorStatisticsFactItem: FC<{
+  size: "lg" | "md";
+  label: string;
+  value: number | string;
+  className?: string;
+}> = ({ size, label, value, className }) => (
+  <div className={clsx("flex flex-col items-start gap-2", className)}>
+    <div
+      className={clsx(
+        "font-sans tabular-nums !leading-none -mt-1.5 tracking-tight",
+        {
+          "text-4xl": size === "lg",
+          "text-3xl": size === "md",
+        },
+      )}
+    >
+      {value}
+    </div>
+    <div className="text-sm font-semibold leading-none text-gray-600 -mt-1">
+      {label}
+    </div>
+  </div>
+);
+
 export const RatingCalculatorStatisticsTable: FC = () => {
   const { b35Entries, b15Entries, statistics } = useRatingEntries();
-  const appVersion = useAppContextDXDataVersion();
-  const { b15Average, b35Average, b15Min, b35Min, b15Max, b35Max } = statistics;
+  const {
+    b15Average,
+    b35Average,
+    b15Min,
+    b35Min,
+    b15Max,
+    b35Max,
+    b15Sum,
+    b35Sum,
+    b50Sum,
+  } = statistics;
 
   return (
-    <Table size="small" className="-ml-2 w-full">
-      <TableHead>
-        <TableRow>
-          <DenseTableCell className="w-sm">Item</DenseTableCell>
-          <DenseTableCell>Matches</DenseTableCell>
-          <DenseTableCell>Statistics</DenseTableCell>
-          <DenseTableCell>Total</DenseTableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        <TableRow>
-          <DenseTableCell className="flex flex-col">
-            <div className="font-bold text-lg">B15</div>
-            <div className="text-gray-500">
-              Best 15 plays on songs released at current version ({appVersion})
-            </div>
-          </DenseTableCell>
-          <DenseTableCell>{b15Entries.length}</DenseTableCell>
-          <DenseTableCell>
-            {b15Entries.length > 0 ? (
-              <div className="flex flex-col items-start">
-                <span className="whitespace-nowrap">
-                  Avg: {b15Average.toFixed(2)}
-                </span>
-                <span className="whitespace-nowrap">Min: {b15Min}</span>
-                <span className="whitespace-nowrap">Max: {b15Max}</span>
-              </div>
-            ) : (
-              "—"
-            )}
-          </DenseTableCell>
+    <div className="flex flex-col justify-center gap-4 text-black py-2">
+      <RatingCalculatorStatisticsFactItem
+        size="lg"
+        label="Total"
+        value={b50Sum}
+      />
 
-          <DenseTableCell>
-            {b15Entries.reduce(
-              (sum, entry) => sum + (entry.rating?.ratingAwardValue ?? 0),
-              0,
-            )}
-          </DenseTableCell>
-        </TableRow>
+      <div className="flex flex-col items-start gap-2">
+        <div className="flex items-baseline gap-1 leading-none">
+          <span className="text-lg font-semibold">Best 15</span>
+          <span className="text-sm text-gray-500">
+            (Entries {b15Entries.length}/15)
+          </span>
+        </div>
 
-        <TableRow>
-          <DenseTableCell className="flex flex-col">
-            <div className="font-bold text-lg">B35</div>
-            <div className="text-gray-500">
-              Best 35 plays on all other songs except ones released at current
-              version ({appVersion})
-            </div>
-          </DenseTableCell>
-          <DenseTableCell>{b35Entries.length}</DenseTableCell>
-          <DenseTableCell>
-            {b35Entries.length > 0 ? (
-              <div className="flex flex-col items-start">
-                <span className="whitespace-nowrap">
-                  Avg: {b35Average.toFixed(2)}
-                </span>
-                <span className="whitespace-nowrap">Min: {b35Min}</span>
-                <span className="whitespace-nowrap">Max: {b35Max}</span>
-              </div>
-            ) : (
-              "—"
-            )}
-          </DenseTableCell>
-          <DenseTableCell>
-            {b35Entries.reduce(
-              (sum, entry) => sum + (entry.rating?.ratingAwardValue ?? 0),
-              0,
-            )}
-          </DenseTableCell>
-        </TableRow>
+        <div className="flex items-center w-full">
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label="Subtotal"
+            value={b15Sum}
+            className="w-24"
+          />
 
-        <TableRow>
-          <DenseTableCell colSpan={3}>
-            <span className="font-bold">Total</span>
-          </DenseTableCell>
-          <DenseTableCell>
-            {[...b15Entries, ...b35Entries].reduce(
-              (sum, entry) => sum + (entry.rating?.ratingAwardValue ?? 0),
-              0,
-            )}
-          </DenseTableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
+          <div className="h-12 w-px shrink-0 bg-gray-300 ml-2 mr-4" />
+
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label="Min"
+            value={b15Min.toFixed(0)}
+            className="w-16"
+          />
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label="Avg"
+            value={b15Average.toFixed(0)}
+            className="w-16"
+          />
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label="Max"
+            value={b15Max.toFixed(0)}
+            className="w-16"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col items-start gap-2">
+        <div className="flex items-baseline gap-1 leading-none">
+          <span className="text-lg font-semibold">Best 35</span>
+          <span className="text-sm text-gray-500">
+            (Entries {b35Entries.length}/35)
+          </span>
+        </div>
+
+        <div className="flex items-center w-full">
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label="Subtotal"
+            value={b35Sum}
+            className="w-24"
+          />
+
+          <div className="h-12 w-px shrink-0 bg-gray-300 ml-2 mr-4" />
+
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label="Min"
+            value={b35Min.toFixed(0)}
+            className="w-16"
+          />
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label="Avg"
+            value={b35Average.toFixed(0)}
+            className="w-16"
+          />
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label="Max"
+            value={b35Max.toFixed(0)}
+            className="w-16"
+          />
+        </div>
+      </div>
+    </div>
   );
 };
