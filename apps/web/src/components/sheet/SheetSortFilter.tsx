@@ -2,6 +2,8 @@ import { VersionEnum } from "@gekichumai/dxdata";
 import { DevTool } from "@hookform/devtools";
 import {
   Button,
+  ButtonBase,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -10,17 +12,26 @@ import {
   Grow,
   Paper,
 } from "@mui/material";
+import * as Collapsible from "@radix-ui/react-collapsible";
 import clsx from "clsx";
-import { FC, useContext, useEffect, useMemo, useState } from "react";
+import {
+  FC,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import MdiChevronDownIcon from "~icons/mdi/chevron-down";
 import { SheetDetailsContext } from "../../models/context/SheetDetailsContext";
 import { FlattenedSheet } from "../../songs";
-import { BetaBadge } from "../global/BetaBadge";
 import { SheetSortSelect } from "./SheetSortSelect";
 import { SheetInternalLevelFilter } from "./filters/SheetInternalLevelFilter";
 import { SheetTagFilter } from "./filters/SheetTagFilter";
 import { SheetVersionFilter } from "./filters/SheetVersionFilter";
+
 export interface SortPredicate {
   descriptor: keyof FlattenedSheet;
   direction: "asc" | "desc";
@@ -186,17 +197,13 @@ const SheetSortFilterForm = () => {
   const { t } = useTranslation(["sheet"]);
   const { queryActive } = useContext(SheetDetailsContext);
   const { control, reset } = useFormContext<SheetSortFilterForm>();
+  const [expanded, setExpanded] = useState(false);
+  const [pending, startTransition] = useTransition();
 
-  return (
-    <>
-      {import.meta.env.DEV && <DevTool control={control} />}
-      <Paper className="w-full flex flex-col">
-        <div className="px-4 py-2 w-full flex items-center bg-gray-100 rounded-t-xl">
-          <div className="text-xl font-bold tracking-tight leading-none">
-            {t("sheet:sort-and-filter.title")}
-          </div>
-          <BetaBadge className="ml-2" />
-          <div className="flex-1" />
+  const collapsibleInner = (
+    <div className="p-2 w-full flex flex-col gap-4">
+      <div className="m-2 flex flex-col gap-4">
+        <div className="flex">
           <SheetSortFilterFormReset
             onReset={() => {
               reset(getDefaultSheetSortFilterForm());
@@ -205,38 +212,77 @@ const SheetSortFilterForm = () => {
           />
         </div>
 
-        <div className="p-2 w-full flex flex-col gap-4">
-          <div className="p-2 flex flex-col gap-4">
-            <div className="text-xl font-bold tracking-tighter">
-              <span className="whitespace-nowrap">
-                {t("sheet:filter.title")}
-              </span>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <SheetVersionFilter control={control} />
-              <SheetTagFilter control={control} />
-              <SheetInternalLevelFilter control={control} />
-            </div>
-          </div>
-
-          <div
-            className={clsx(
-              "p-2 flex flex-col gap-4 rounded-lg",
-              queryActive && "bg-gray-200 pointer-events-none saturation-0",
-            )}
-          >
-            <div className="text-xl font-bold tracking-tighter flex items-center">
-              <span className="whitespace-nowrap">{t("sheet:sort.title")}</span>
-              {queryActive && (
-                <div className="px-1.5 py-0.5 rounded-full bg-gray-300 text-xs ml-2">
-                  {t("sheet:sort.temporarily-disabled")}
-                </div>
-              )}
-            </div>
-            <SheetSortSelect control={control} />
-          </div>
+        <div className="text-xl font-bold tracking-tighter">
+          <span className="whitespace-nowrap">{t("sheet:filter.title")}</span>
         </div>
-      </Paper>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SheetVersionFilter control={control} />
+          <SheetTagFilter control={control} />
+          <SheetInternalLevelFilter control={control} />
+        </div>
+      </div>
+
+      <div
+        className={clsx(
+          "p-2 flex flex-col gap-4 rounded-lg",
+          queryActive &&
+            "bg-gray-200 pointer-events-none saturation-0 shadow-[inset_0_1px_8px] shadow-gray-300",
+        )}
+      >
+        <div className="text-xl font-bold tracking-tighter flex items-center">
+          <div className="whitespace-nowrap leading-none">
+            {t("sheet:sort.title")}
+          </div>
+          {queryActive && (
+            <div className="px-1.5 py-1 rounded-md bg-gray-200 text-xs ml-2 leading-tight tracking-tight text-gray-600 shadow-[0_1px_8px] shadow-gray-300">
+              {t("sheet:sort.temporarily-disabled")}
+            </div>
+          )}
+        </div>
+        <SheetSortSelect control={control} />
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {import.meta.env.DEV && <DevTool control={control} />}
+      <Collapsible.Root
+        open={expanded}
+        onOpenChange={(expanded) =>
+          startTransition(() => setExpanded(expanded))
+        }
+        className="w-full"
+      >
+        <Paper className="w-full flex flex-col overflow-hidden">
+          <Collapsible.Trigger asChild>
+            <ButtonBase
+              className={clsx(
+                "px-4 py-3 w-full flex items-center transition duration-300",
+                expanded ? "bg-gray-200" : "bg-gray-100",
+              )}
+            >
+              <div className="text-xl font-bold tracking-tight leading-none">
+                {t("sheet:sort-and-filter.title")}
+              </div>
+              {pending && (
+                <CircularProgress disableShrink className="ml-2 !h-4 !w-4" />
+              )}
+              <div className="flex-1" />
+              <MdiChevronDownIcon
+                className={clsx(
+                  "w-6 h-6 transition-transform",
+                  expanded && "transform rotate-180",
+                )}
+              />
+            </ButtonBase>
+          </Collapsible.Trigger>
+
+          <Collapsible.Content className="radix__collapsible-content">
+            {collapsibleInner}
+          </Collapsible.Content>
+        </Paper>
+      </Collapsible.Root>
     </>
   );
 };

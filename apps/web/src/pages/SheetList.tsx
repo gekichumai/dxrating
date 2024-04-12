@@ -1,7 +1,8 @@
 import { VERSION_ID_MAP } from "@gekichumai/dxdata";
-import { Alert, Button, TextField } from "@mui/material";
+import { Alert, Button, IconButton, TextField } from "@mui/material";
 import { FC, useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import IconMdiClose from "~icons/mdi/close";
 import IconMdiOcr from "~icons/mdi/ocr";
 import { SheetListContainer } from "../components/sheet/SheetListContainer";
 import {
@@ -136,6 +137,19 @@ const SheetListInner: FC = () => {
         onChange={(e) => {
           setQuery(e.target.value);
           setQueryActive(!!e.target.value);
+        }}
+        InputProps={{
+          endAdornment: query && (
+            <IconButton
+              onClick={() => {
+                setQuery("");
+                setQueryActive(false);
+              }}
+              size="small"
+            >
+              <IconMdiClose />
+            </IconButton>
+          ),
         }}
       />
 

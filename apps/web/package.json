@@ -24,6 +24,7 @@
     "@gekichumai/oneshot": "*",
     "@microsoft/fetch-event-source": "^2.0.1",
     "@mui/material": "^5.14.13",
+    "@radix-ui/react-collapsible": "^1.0.3",
     "@sentry/react": "^7.98.0",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",

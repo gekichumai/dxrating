@@ -45,3 +45,40 @@ body,
   height: 100vh;
   height: 100lvh; /* fallback for browsers that do not support lvh */
 }
+
+.radix__collapsible-content {
+  overflow: hidden;
+  transform-origin: center 0.5rem;
+}
+.radix__collapsible-content[data-state="open"] {
+  animation: slideDown 275ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+.radix__collapsible-content[data-state="closed"] {
+  animation: slideUp 275ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+@keyframes slideDown {
+  from {
+    height: 0;
+    transform: scale(0.9);
+    opacity: 0.5;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    height: var(--radix-collapsible-content-height);
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    transform: scale(0.9);
+    opacity: 0.5;
+  }
+}

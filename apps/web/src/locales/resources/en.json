@@ -21,7 +21,7 @@
   },
   "sheet": {
     "filter-current-version": "Filter Current B15: Show only {{version}} charts",
-    "search-summary": "Found {{found}} charts out of {{total}} charts in {{elapsed}}ms",
+    "search-summary": "{{found}} / {{total}} charts ({{elapsed}}ms)",
     "search": "Search",
     "ocr": "Launch OCR",
     "internal-level-history": {
