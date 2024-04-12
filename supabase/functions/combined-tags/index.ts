@@ -59,14 +59,34 @@ const db = new Kysely<Database>({
   },
 });
 
+const ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "https://dxrating.net",
+  "https://dxrating.imgg.dev",
+  "capacitor://localhost",
+];
+
 serve(async (_req) => {
   // cors
   if (_req.method === "OPTIONS") {
+    if (!_req.headers.has("Origin")) {
+      return new Response(null, { status: 400 });
+    }
+    if (!ALLOWED_ORIGINS.includes(_req.headers.get("Origin")!)) {
+      return new Response(
+        JSON.stringify({
+          error: "Origin is not allowed",
+        }),
+        { status: 403 }
+      );
+    }
     return new Response(null, {
       headers: {
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": _req.headers.get("Origin")!,
         "Access-Control-Allow-Methods": "GET",
-        "Access-Control-Allow-Headers": "Content-Type, X-Client-Info",
+        "Access-Control-Allow-Headers":
+          "Authorization, Apikey, Content-Type, X-Client-Info",
+        "Access-Control-Allow-Credentials": "true",
         "Access-Control-Max-Age": "86400",
       },
     });
