@@ -101,7 +101,11 @@ serve(async (_req) => {
     );
 
     // Return the response with the correct content type header
-    return Response.json(body);
+    return Response.ok(body, {
+      headers: {
+        "content-type": "application/json; charset=UTF-8",
+      },
+    });
   } catch (err) {
     console.error(err);
     return new Response(String(err?.message ?? err), { status: 500 });
