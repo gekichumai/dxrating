@@ -13,7 +13,6 @@ import Koa from "koa";
 import satori, { Font } from "satori";
 import { match } from "ts-pattern";
 import { Rating, calculateRating } from "./calculateRating";
-import { demo } from "./demo";
 
 const ASSETS_BASE_DIR = process.env.ASSETS_BASE_DIR;
 
@@ -100,7 +99,15 @@ export const VERSION_THEME: Record<string, any> = {
   },
 };
 
-const renderCell = async (entry: RenderData) => {
+const renderCell = async (entry?: RenderData) => {
+  if (!entry) {
+    return (
+      <div key="empty" tw="w-1/5 p-[2px] flex h-[96px]">
+        <div tw="h-full w-full rounded-lg" />
+      </div>
+    );
+  }
+
   const coverImage = (
     await fs.readFile(
       ASSETS_BASE_DIR + "/images/cover/v2/" + entry.sheet.imageName
@@ -191,6 +198,10 @@ const renderCell = async (entry: RenderData) => {
   );
 };
 
+const padArray = <T,>(arr: T[], len: number, fill?: T): (T | undefined)[] => {
+  return arr.concat(Array(len).fill(fill)).slice(0, len);
+};
+
 const renderContent = async ({
   data,
   version,
@@ -215,11 +226,15 @@ const renderContent = async ({
         backgroundSize: "1500px 1800px",
       }}
     >
-      {await Promise.all(data.b35.map(async (entry) => renderCell(entry)))}
+      {await Promise.all(
+        padArray(data.b35, 35).map(async (entry) => renderCell(entry))
+      )}
 
       <div tw="w-full h-[1px] bg-black/20 my-[6px]" />
 
-      {await Promise.all(data.b15.map(async (entry) => renderCell(entry)))}
+      {await Promise.all(
+        padArray(data.b15, 15).map(async (entry) => renderCell(entry))
+      )}
 
       <div tw="w-full flex items-center justify-center h-[27px] pt-1">
         <div tw="flex items-center justify-center bg-black/40 rounded-t-lg text-[12px] text-white px-3 pt-1 pb-2 font-bold leading-none">
@@ -328,7 +343,7 @@ const getData = (
 export const handler = async (ctx: Koa.Context) => {
   const body = ctx.query.demo
     ? {
-        entries: demo,
+        entries: [],
         version: VersionEnum.BUDDiES,
       }
     : (ctx.request.body as any);
