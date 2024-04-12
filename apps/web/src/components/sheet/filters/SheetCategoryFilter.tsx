@@ -1,4 +1,4 @@
-import { CategoryEnum, VERSION_IDS, VersionEnum } from "@gekichumai/dxdata";
+import { CategoryEnum } from "@gekichumai/dxdata";
 import { ButtonBase, Chip } from "@mui/material";
 import { FC, useMemo } from "react";
 import { Control, useController } from "react-hook-form";
