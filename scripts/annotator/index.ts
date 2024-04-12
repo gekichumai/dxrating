@@ -329,6 +329,7 @@ async function main() {
       async ({
         version: songVersion,
         releaseDate: entryReleaseDate,
+        comment: _,
         ...entry
       }) => {
         const searchAcronyms = await Promise.all(

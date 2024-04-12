@@ -64,6 +64,7 @@ export namespace DXDataOriginal {
     releaseDate?: string;
     isNew: boolean;
     isLocked: boolean;
+    comment: string | null;
     sheets: Sheet[];
   }
 
