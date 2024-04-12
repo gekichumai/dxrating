@@ -60,6 +60,18 @@ const db = new Kysely<Database>({
 });
 
 serve(async (_req) => {
+  // cors
+  if (_req.method === "OPTIONS") {
+    return new Response(null, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Max-Age": "86400",
+      },
+    });
+  }
+
   try {
     // Run a query
     const [tags, tagGroups, tagSongs] = await Promise.all([
