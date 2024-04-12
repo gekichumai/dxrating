@@ -68,27 +68,29 @@ const ALLOWED_ORIGINS = [
 
 serve(async (_req) => {
   // cors
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": _req.headers.get("Origin") ?? "*",
+    "Access-Control-Allow-Methods": "GET",
+    "Access-Control-Allow-Headers":
+      "Authorization, Apikey, Content-Type, X-Client-Info",
+    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Max-Age": "86400",
+  };
+  if (!_req.headers.has("Origin")) {
+    return new Response(null, { status: 400 });
+  }
+  if (!ALLOWED_ORIGINS.includes(_req.headers.get("Origin")!)) {
+    return new Response(
+      JSON.stringify({
+        error: "Origin is not allowed",
+      }),
+      { status: 403 }
+    );
+  }
+
   if (_req.method === "OPTIONS") {
-    if (!_req.headers.has("Origin")) {
-      return new Response(null, { status: 400 });
-    }
-    if (!ALLOWED_ORIGINS.includes(_req.headers.get("Origin")!)) {
-      return new Response(
-        JSON.stringify({
-          error: "Origin is not allowed",
-        }),
-        { status: 403 }
-      );
-    }
     return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": _req.headers.get("Origin")!,
-        "Access-Control-Allow-Methods": "GET",
-        "Access-Control-Allow-Headers":
-          "Authorization, Apikey, Content-Type, X-Client-Info",
-        "Access-Control-Allow-Credentials": "true",
-        "Access-Control-Max-Age": "86400",
-      },
+      headers: corsHeaders,
     });
   }
 
@@ -134,11 +136,17 @@ serve(async (_req) => {
 
     // Return the response with the correct content type header
     return new Response(body, {
-      headers: { "content-type": "application/json; charset=utf-8" },
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        ...corsHeaders,
+      },
     });
   } catch (err) {
     console.error(err);
-    return new Response(String(err?.message ?? err), { status: 500 });
+    return Response.json(
+      { error: err.message },
+      { status: 500, headers: corsHeaders }
+    );
   } finally {
     // Close the pool
     await pool.end();
