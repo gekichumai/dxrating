@@ -35,7 +35,7 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
     return (
       <>
-        {data?.map((tag) => (
+        {data.map((tag) => (
           <MotionTooltip
             {...{
               exit: {

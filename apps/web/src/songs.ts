@@ -75,7 +75,7 @@ export const getFlattenedSheets = async (
 export const useSheets = () => {
   const { version } = useAppContext();
   const appVersion = useAppContextDXDataVersion();
-  return useSWR(`dxdata:sheets:${version}`, async () => {
+  return useSWR(`dxdata::sheets::${version}`, async () => {
     const [relations, sheets] = await Promise.all([
       supabase
         .from("tag_songs")
@@ -94,8 +94,8 @@ export const useSheets = () => {
     for (const relation of relations.data) {
       const canonical = canonicalIdFromParts(
         relation.song_id,
-        relation.sheet_type,
-        relation.sheet_difficulty,
+        relation.sheet_type as TypeEnum,
+        relation.sheet_difficulty as DifficultyEnum,
       );
       const tags = map.get(canonical) ?? [];
       tags.push(relation.tag_id);
@@ -111,7 +111,7 @@ export const useSheets = () => {
 
 export const useSongs = () => {
   const { version } = useAppContext();
-  return useSWR(`dxdata:songs:${version}`, () => getSongs());
+  return useSWR(`dxdata::songs::${version}`, () => getSongs());
 };
 
 export const useSheetsSearchEngine = () => {

@@ -1,11 +1,12 @@
-import { PostgrestSingleResponse } from "@supabase/supabase-js";
 import { useMemo } from "react";
 import useSWR from "swr";
 import { supabase } from "../../../models/supabase";
 import { FlattenedSheet } from "../../../songs";
 
+import compact from "lodash-es/compact";
+
 export const useSheetTags = (sheet: FlattenedSheet) => {
-  const { data, ...rest } = useSWR(`supabase:tags:${sheet.id}`, async () =>
+  const { data, ...rest } = useSWR(`supabase::tags::${sheet.id}`, async () =>
     supabase
       .from("tag_songs")
       .select(
@@ -16,25 +17,11 @@ export const useSheetTags = (sheet: FlattenedSheet) => {
       .eq("sheet_difficulty", sheet.difficulty)
       .order("id", { ascending: true, referencedTable: "tag" }),
   );
-  const assumedData = data as
-    | PostgrestSingleResponse<
-        {
-          tag: {
-            id: number;
-            localized_name: Record<string, string>;
-            localized_description: Record<string, string>;
-            group: {
-              id: number;
-              localized_name: Record<string, string>;
-              color: string;
-            } | null;
-          };
-        }[]
-      >
-    | undefined;
+  const mappedData = data?.data?.map(({ tag }) => tag);
+
   return useMemo(() => {
     return {
-      data: assumedData?.data?.map(({ tag }) => tag),
+      data: compact(mappedData),
       ...rest,
     };
   }, [data]);

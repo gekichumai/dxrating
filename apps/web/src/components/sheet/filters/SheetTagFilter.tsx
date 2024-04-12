@@ -82,7 +82,7 @@ const SheetTagFilterInput = ({
   value: number[];
   onChange: (value: number[]) => void;
 }) => {
-  const { data: tags, isLoading } = useSWR("supabase:tags", async () => {
+  const { data: tags, isLoading } = useSWR("supabase::tags", async () => {
     const { data } = await supabase
       .from("tags")
       .select("id, localized_name, localized_description");

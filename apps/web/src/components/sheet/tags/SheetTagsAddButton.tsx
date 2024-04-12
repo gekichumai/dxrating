@@ -24,7 +24,7 @@ const SheetTagsAddDialog: FC<{
   const [pending, setPending] = useState(false);
   const localizeMessage = useLocalizedMessageTranslation();
   const { data: tagGroups, isLoading: loadingTags } = useSWR(
-    "supabase:tag_grouped",
+    "supabase::tag_grouped",
     async () => {
       const { data } = await supabase
         .from("tags")
@@ -33,24 +33,11 @@ const SheetTagsAddDialog: FC<{
         )
         .order("id", { ascending: true });
 
-      const assumedData = data as
-        | {
-            id: number;
-            localized_name: Record<string, string>;
-            localized_description: Record<string, string>;
-            group: {
-              id: number;
-              localized_name: Record<string, string>;
-              color: string;
-            };
-          }[]
-        | null;
-
-      if (!assumedData) {
+      if (!data) {
         return null;
       }
 
-      const grouped = assumedData.reduce(
+      const grouped = data.reduce(
         (acc, tag) => {
           if (!tag.group?.id) {
             return acc;
@@ -66,7 +53,7 @@ const SheetTagsAddDialog: FC<{
 
           return acc;
         },
-        {} as Record<number, typeof assumedData>,
+        {} as Record<number, typeof data>,
       );
 
       return Object.entries(grouped).map(([, tags]) => ({
@@ -140,10 +127,10 @@ const SheetTagsAddDialog: FC<{
         ) : (
           <div className="flex flex-col gap-2">
             {tagGroups?.map(({ group, tags }) => (
-              <div key={group.id} className="flex gap-1 items-center">
+              <div key={group?.id} className="flex gap-1 items-center">
                 <div className="flex items-center">
                   <div className="text-base py-1 whitespace-nowrap">
-                    {localizeMessage(group.localized_name)}
+                    {localizeMessage(group?.localized_name)}
                   </div>
                   <div className="w-px h-7 bg-gray-2 shrink-0 ml-2" />
                 </div>
@@ -157,9 +144,7 @@ const SheetTagsAddDialog: FC<{
                         key={tag.id}
                         title={
                           <Markdown
-                            content={
-                              localizeMessage(tag.localized_description) ?? ""
-                            }
+                            content={localizeMessage(tag.localized_description)}
                           />
                         }
                         arrow
@@ -186,8 +171,11 @@ const SheetTagsAddDialog: FC<{
                             pending && "animate-pulse -animate-delay-1000",
                           )}
                           style={{
-                            backgroundColor: tag.group.color,
-                            borderColor: deriveColor(tag.group.color, "border"),
+                            backgroundColor: tag.group?.color,
+                            borderColor: deriveColor(
+                              tag.group?.color ?? "#000",
+                              "border",
+                            ),
                           }}
                         />
                       </MotionTooltip>

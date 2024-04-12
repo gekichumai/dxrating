@@ -49,7 +49,7 @@ const RenderToOneShotImageDialogContent = () => {
   const { entries } = useRatingCalculatorContext();
   const version = useAppContextDXDataVersion();
   const { data, isValidating, error } = useSWR(
-    `miruku:///functions/oneshot-renderer/v0?pixelated=1&data=${JSON.stringify(
+    `miruku::functions/oneshot-renderer/v0?pixelated=1&data=${JSON.stringify(
       entries,
     )}&version=${version}`,
     async () => {
