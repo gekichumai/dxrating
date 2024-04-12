@@ -1,4 +1,4 @@
-import { VersionEnum } from "@gekichumai/dxdata";
+import { CategoryEnum, VersionEnum } from "@gekichumai/dxdata";
 import { DevTool } from "@hookform/devtools";
 import {
   Button,
@@ -28,6 +28,7 @@ import MdiChevronDownIcon from "~icons/mdi/chevron-down";
 import { SheetDetailsContext } from "../../models/context/SheetDetailsContext";
 import { FlattenedSheet } from "../../songs";
 import { SheetSortSelect } from "./SheetSortSelect";
+import { SheetCategoryFilter } from "./filters/SheetCategoryFilter";
 import { SheetInternalLevelFilter } from "./filters/SheetInternalLevelFilter";
 import { SheetTagFilter } from "./filters/SheetTagFilter";
 import { SheetVersionFilter } from "./filters/SheetVersionFilter";
@@ -45,6 +46,7 @@ export interface SheetSortFilterForm {
       max: number;
     };
     tags: number[];
+    categories: CategoryEnum[];
   };
   sorts: SortPredicate[];
 }
@@ -57,6 +59,7 @@ export const getDefaultSheetSortFilterForm = (): SheetSortFilterForm => ({
       max: 15.0,
     },
     tags: [],
+    categories: Object.values(CategoryEnum),
   },
   sorts: [
     {
@@ -71,6 +74,9 @@ export const applySheetSortFilterFormPatches = (
 ): SheetSortFilterForm => {
   if (alreadySaved.filters.tags === undefined) {
     alreadySaved.filters.tags = [];
+  }
+  if (alreadySaved.filters.categories === undefined) {
+    alreadySaved.filters.categories = Object.values(CategoryEnum);
   }
 
   // if (alreadySaved.filters.difficulties === undefined) {
@@ -216,6 +222,7 @@ const SheetSortFilterForm = () => {
           <span className="whitespace-nowrap">{t("sheet:filter.title")}</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SheetCategoryFilter control={control} />
           <SheetVersionFilter control={control} />
           <SheetTagFilter control={control} />
           <SheetInternalLevelFilter control={control} />

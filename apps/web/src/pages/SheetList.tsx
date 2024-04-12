@@ -46,6 +46,10 @@ const SheetListInner: FC = () => {
     const startTime = performance.now();
     let sortFilteredResults: FlattenedSheet[] = results;
     if (sortFilterOptions) {
+      const currentVersionId = VERSION_ID_MAP.get(version) ?? 0;
+      const validVersions = Array.from(VERSION_ID_MAP.entries())
+        .filter(([, id]) => id <= currentVersionId)
+        .map(([v]) => v);
       sortFilteredResults = results.filter((sheet) => {
         return chainEvery<FlattenedSheet>(
           (v) => {
@@ -58,10 +62,6 @@ const SheetListInner: FC = () => {
           },
           (v) => {
             if (sortFilterOptions.filters.versions) {
-              const currentVersionId = VERSION_ID_MAP.get(version) ?? 0;
-              const validVersions = Array.from(VERSION_ID_MAP.entries())
-                .filter(([, id]) => id <= currentVersionId)
-                .map(([v]) => v);
               const versions = sortFilterOptions.filters.versions.filter((v) =>
                 validVersions.includes(v),
               );
@@ -74,6 +74,17 @@ const SheetListInner: FC = () => {
             if (sortFilterOptions.filters.tags.length) {
               const tags = sortFilterOptions.filters.tags;
               return tags.every((tag) => v.tags.includes(tag));
+            } else {
+              return true;
+            }
+          },
+
+          (v) => {
+            if (sortFilterOptions.filters.categories) {
+              const categories = sortFilterOptions.filters.categories;
+              return categories.some((category) =>
+                v.category.includes(category),
+              );
             } else {
               return true;
             }
@@ -92,15 +103,6 @@ const SheetListInner: FC = () => {
               ] ?? sort.descriptor;
             const aValue = a[descriptor];
             const bValue = b[descriptor];
-
-            if (
-              a.songId === "言ノ葉カルマ" ||
-              a.songId === "エスオーエス" ||
-              b.songId === "言ノ葉カルマ" ||
-              b.songId === "エスオーエス"
-            ) {
-              console.log(a, b, aValue, bValue);
-            }
 
             // null or undefined goes to the end
             if (aValue == null && bValue == null) {
@@ -165,7 +167,11 @@ const SheetListInner: FC = () => {
         </Button>
       )}
 
-      <SheetSortFilter onChange={(v) => setSortFilterOptions(v)} />
+      <SheetSortFilter
+        onChange={(v) => {
+          setSortFilterOptions(v);
+        }}
+      />
 
       <div className="text-sm rounded-full shadow-lg px-4 py-2 bg-blue-200 relative overflow-hidden select-none font-bold">
         <div

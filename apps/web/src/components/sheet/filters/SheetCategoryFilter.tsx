@@ -1,4 +1,4 @@
-import { VERSION_IDS, VersionEnum } from "@gekichumai/dxdata";
+import { CategoryEnum, VERSION_IDS, VersionEnum } from "@gekichumai/dxdata";
 import { ButtonBase, Chip } from "@mui/material";
 import { FC, useMemo } from "react";
 import { Control, useController } from "react-hook-form";
@@ -8,13 +8,13 @@ import { GestureHint } from "../../global/GestureHint";
 import { SheetSortFilterForm } from "../SheetSortFilter";
 import { SheetFilterSection } from "./SheetFilterSection";
 
-const SheetVersionFilterInputVersion = ({
-  version,
+const SheetCategoryFilterInputCategory = ({
+  category,
   selected,
   onToggle,
   onOnly,
 }: {
-  version: VersionEnum;
+  category: CategoryEnum;
   selected: boolean;
   onToggle: () => void;
   onOnly: () => void;
@@ -42,7 +42,7 @@ const SheetVersionFilterInputVersion = ({
       focusRipple
     >
       <Chip
-        label={version.replace(" PLUS", "+")}
+        label={category}
         color={selected ? "primary" : "default"}
         size="small"
         className="!rounded-lg"
@@ -51,18 +51,20 @@ const SheetVersionFilterInputVersion = ({
   );
 };
 
-const SheetVersionFilterInput = ({
+const CATEGORY_ENUMS = Object.values(CategoryEnum);
+
+const SheetCategoryFilterInput = ({
   value,
   onChange,
 }: {
-  value: VersionEnum[];
-  onChange: (value: VersionEnum[]) => void;
+  value: CategoryEnum[];
+  onChange: (value: CategoryEnum[]) => void;
 }) => {
   const allEnums = useMemo(
     () =>
-      VERSION_IDS.map((k) => ({
-        id: k,
-        selected: value.includes(k),
+      Object.values(CategoryEnum).map((v) => ({
+        id: v,
+        selected: value.includes(v),
       })),
     [value],
   );
@@ -70,9 +72,9 @@ const SheetVersionFilterInput = ({
   return (
     <div className="flex flex-wrap gap-2">
       {allEnums.map((e) => (
-        <SheetVersionFilterInputVersion
+        <SheetCategoryFilterInputCategory
           key={e.id}
-          version={e.id}
+          category={e.id}
           selected={e.selected}
           onToggle={() => {
             const toggled = !e.selected;
@@ -81,7 +83,7 @@ const SheetVersionFilterInput = ({
               onChange([...value, e.id]);
             } else {
               if (value.length === 1) {
-                onChange([...VERSION_IDS]);
+                onChange([...CATEGORY_ENUMS]);
               } else {
                 onChange(value.filter((k) => k !== e.id));
               }
@@ -96,22 +98,22 @@ const SheetVersionFilterInput = ({
   );
 };
 
-export const SheetVersionFilter: FC<{
+export const SheetCategoryFilter: FC<{
   control: Control<SheetSortFilterForm>;
 }> = ({ control }) => {
   const { t } = useTranslation(["sheet", "global"]);
   const {
     field: { onChange, value },
-  } = useController<SheetSortFilterForm, "filters.versions">({
+  } = useController<SheetSortFilterForm, "filters.categories">({
     control,
-    name: "filters.versions",
+    name: "filters.categories",
   });
 
   return (
     <SheetFilterSection
       title={
         <>
-          <div>{t("sheet:filter.version.title")}</div>
+          <div>{t("sheet:filter.category.title")}</div>
           <div className="flex-1" />
           <GestureHint
             gesture="tap"
@@ -124,7 +126,7 @@ export const SheetVersionFilter: FC<{
         </>
       }
     >
-      <SheetVersionFilterInput value={value} onChange={onChange} />
+      <SheetCategoryFilterInput value={value} onChange={onChange} />
     </SheetFilterSection>
   );
 };

@@ -68,6 +68,9 @@
       },
       "tags": {
         "title": "Tags"
+      },
+      "category": {
+        "title": "Genre"
       }
     },
     "sort": {
