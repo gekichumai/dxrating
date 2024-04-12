@@ -34,6 +34,11 @@ export default defineConfig({
       },
     ],
   ],
+  theme: {
+    fontFamily: {
+      mono: '"IBM Plex Mono", "JetBrains Mono", Menlo, Consolas, Courier, monospace',
+    },
+  },
   shortcuts: {
     "flex-container":
       "flex flex-col items-center justify-center py-4 gap-4 max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]",

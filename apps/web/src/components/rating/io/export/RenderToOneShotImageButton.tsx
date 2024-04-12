@@ -87,14 +87,14 @@ const RenderToOneShotImageDialogContent = () => {
             <div className="flex flex-col relative">
               <div className="aspect-[3/2] w-full bg-gray-300 rounded-md animate-pulse" />
 
-              <div className="absolute inset-0 flex flex-col gap-2 items-center justify-center p-4">
+              <div className="absolute inset-0 flex flex-col gap-1 items-center justify-center p-4">
                 <CircularProgress />
 
                 <div className="text-lg font-bold tracking-tight">
                   Rendering...
                 </div>
 
-                <div className="text-base font-bold tabular-nums tracking-tight">
+                <div className="text-base font-bold tabular-nums tracking-tight font-mono">
                   {elapsedTime
                     ? `${(elapsedTime / 1000).toFixed(1)}s`
                     : "Calculating..."}

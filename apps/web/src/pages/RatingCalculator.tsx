@@ -132,10 +132,6 @@ const RatingCalculatorRowActions: FC<{
   );
 };
 
-const DenseTableCell = styled(TableCell)(({ theme }) => ({
-  padding: theme.spacing(0.75 + 0.0625, 1),
-}));
-
 const TransparentPaper = styled(Paper)(() => ({
   backgroundColor: "transparent",
   boxShadow: "none",
@@ -424,7 +420,7 @@ const RatingCalculatorIncludedInCell: FC<{
   return (
     <div
       className={clsx(
-        "tabular-nums w-12 leading-none py-1.5 rounded-full text-white text-center shadow select-none",
+        "tabular-nums font-mono tracking-tighter w-12 leading-none py-1.5 rounded-full text-white text-center shadow select-none",
         includedIn === "b15" && "bg-amber-500",
         includedIn === "b35" && "bg-cyan-500",
       )}
@@ -439,7 +435,7 @@ RatingCalculatorIncludedInCell.displayName =
 const RatingCalculatorAchievementRateCell: FC<{
   row: Row<Entry>;
 }> = ({ row }) => (
-  <span className="font-sans tabular-nums">
+  <span className="font-sans tracking-wide tabular-nums">
     {row.original.achievementRate.toFixed(4)}%
   </span>
 );
@@ -523,7 +519,7 @@ const RatingCalculatorStatisticsFactItem: FC<{
   <div className={clsx("flex flex-col items-start gap-2", className)}>
     <div
       className={clsx(
-        "font-sans tabular-nums !leading-none -mt-1.5 tracking-tight",
+        "font-mono tabular-nums !leading-none -mt-1.5 tracking-tight",
         {
           "text-4xl": size === "lg",
           "text-3xl": size === "md",

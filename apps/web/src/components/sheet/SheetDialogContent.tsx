@@ -311,7 +311,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                 {t("sheet:details.achievement-to-rating.title")}
               </SectionHeader>
               <div>
-                <Table className="tabular-nums !font-mono" size="small">
+                <Table className="tabular-nums" size="small">
                   <TableHead>
                     <TableRow>
                       <TableCell width="100px">

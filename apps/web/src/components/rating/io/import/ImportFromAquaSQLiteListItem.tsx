@@ -200,7 +200,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
                 </ListItemAvatar>
                 <ListItemText className="flex flex-col">
                   <div>{user.user_name}</div>
-                  <div className="tabular-nums">
+                  <div className="tabular-nums font-mono">
                     Rating {user.highest_rating}
                   </div>
                 </ListItemText>
