@@ -53,7 +53,7 @@ extension AppDelegate {
 
     func themeShouldUpdate(dxVersion: DXVersion) {
         DispatchQueue.main.async {
-            if dxVersion == .buddies {
+            if dxVersion == .buddies || dxVersion == .buddiesPlus {
                 self.changeAppIcon(to: "appicon-buddies")
                 UIView.animate(withDuration: 0.3) {
                     self.topBarColorChunk.backgroundColor = UIColor(named: "accent-buddies")

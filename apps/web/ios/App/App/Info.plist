@@ -54,7 +54,7 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
-	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>DXRating needs your permission to save images to your Photo Library.</string>
 </dict>
 </plist>
