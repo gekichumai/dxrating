@@ -1,4 +1,4 @@
-import { FC, useEffect } from "react";
+import { FC, memo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useRatingCalculatorContext } from "../../models/RatingCalculatorContext";
 import { useSheets } from "../../songs";
@@ -52,7 +52,7 @@ const SideEffectorAutoImportRating: FC = () => {
   return null;
 };
 
-export const SideEffector: FC = () => {
+export const SideEffector: FC = memo(() => {
   return (
     <>
       <SideEffectorThemeMeta />
@@ -60,4 +60,4 @@ export const SideEffector: FC = () => {
       <SideEffectorAutoImportRating />
     </>
   );
-};
+});

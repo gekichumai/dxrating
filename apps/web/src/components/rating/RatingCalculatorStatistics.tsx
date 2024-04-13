@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import * as d3 from "d3";
-import { motion, useSpring } from "framer-motion";
+import { motion } from "framer-motion";
 import compact from "lodash-es/compact";
 import {
   FC,
@@ -338,21 +338,22 @@ const RatingCalculatorStatisticsDetails = forwardRef<
 });
 
 export const RatingCalculatorStatistics: FC = () => {
+  const firstHeightSet = useRef(false);
   const [tab, setTab] = useState<"overview" | "details">("overview");
   const [containerRef, containerRect] = useMeasure<HTMLDivElement>();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [firstItemRef, firstItemRect] = useMeasure<HTMLDivElement>();
   const [lastItemRef, lastItemRect] = useMeasure<HTMLDivElement>();
 
-  const height = useSpring(containerRect.height, {
-    damping: 30,
-    stiffness: 250,
-  });
+  const [containerRectHeight, setContainerRectHeight] = useState(
+    containerRect.height,
+  );
 
   useEffect(() => {
     const listener = () => {
       const scrollX = scrollContainerRef.current?.scrollLeft ?? 0;
       const scrollPercentage = scrollX / containerRect.width;
+      console.log(scrollPercentage, scrollX, containerRect.width);
 
       if (scrollPercentage < 0.01) {
         setTab("overview");
@@ -377,20 +378,27 @@ export const RatingCalculatorStatistics: FC = () => {
   }, [containerRect, firstItemRect, lastItemRect]);
 
   useEffect(() => {
-    height.set(
-      (tab === "overview" ? firstItemRect.height : lastItemRect.height) + 10,
-    );
+    if (!firstHeightSet.current) {
+      setContainerRectHeight(firstItemRect.height + 10);
+      firstHeightSet.current = true;
+    } else {
+      setContainerRectHeight(
+        (tab === "overview" ? firstItemRect.height : lastItemRect.height) + 10,
+      );
+    }
   }, [tab, firstItemRect, lastItemRect]);
 
   return (
     <div className="w-full" ref={containerRef}>
       <motion.div
         ref={scrollContainerRef}
-        className="flex items-start overflow-x-auto overflow-y-hidden w-full py-1 snap-x snap-mandatory"
+        className={clsx(
+          "flex items-start overflow-x-auto overflow-y-hidden w-full py-1 will-change-height transition-height duration-300",
+          containerRect.width && "snap-x snap-mandatory",
+        )}
         style={{
           width: containerRect.width,
-          height,
-          willChange: "height",
+          height: containerRectHeight,
         }}
       >
         <RatingCalculatorStatisticsOverview
