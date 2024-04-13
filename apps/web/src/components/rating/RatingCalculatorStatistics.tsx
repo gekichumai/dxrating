@@ -13,6 +13,7 @@ import {
 } from "react";
 import { useMeasure } from "react-use";
 import IconMdiGestureSwipeLeft from "~icons/mdi/gesture-swipe-left";
+import { deriveColor } from "../../utils/color";
 import { makeId } from "../../utils/random";
 import { useVersionTheme } from "../../utils/useVersionTheme";
 import { useRatingEntries } from "./useRatingEntries";
@@ -200,7 +201,7 @@ const Histogram: FC<{
 
     // snap xDomain to the interval of ticks, calculated from the min, max and ticksIntervalRatio values
     const xDomain = [
-      Math.floor(min / ticksIntervalRatio) * ticksIntervalRatio,
+      (Math.floor(min / ticksIntervalRatio) - 1) * ticksIntervalRatio,
       (Math.ceil(max / ticksIntervalRatio) + 1) * ticksIntervalRatio,
     ];
 
@@ -250,7 +251,10 @@ const Histogram: FC<{
       .data(bins)
       .join("rect")
       .attr("class", "bar1")
-      .attr("x", (d) => x(d.x0 ?? 0))
+      .attr(
+        "x",
+        (d) => x(d.x0 ?? 0) - Math.max(0, x(d.x1 ?? 0) - x(d.x0 ?? 0) - 1) / 2,
+      )
       .attr("y", (d) => y(d.y1))
       .attr("width", (d) => Math.max(0, x(d.x1 ?? 0) - x(d.x0 ?? 0) - 1))
       .attr("height", (d) => Math.max(0, height - y(d.y1)))
@@ -262,7 +266,10 @@ const Histogram: FC<{
       .data(bins)
       .join("rect")
       .attr("class", "bar2")
-      .attr("x", (d) => x(d.x0 ?? 0))
+      .attr(
+        "x",
+        (d) => x(d.x0 ?? 0) - Math.max(0, x(d.x1 ?? 0) - x(d.x0 ?? 0) - 1) / 2,
+      )
       .attr("y", (d) => y(d.y2))
       .attr("width", (d) => Math.max(0, x(d.x1 ?? 0) - x(d.x0 ?? 0) - 1))
       .attr("height", (d) => Math.max(0, y(d.y1) - y(d.y2)))
@@ -274,7 +281,12 @@ const Histogram: FC<{
       .data(bins)
       .join("text")
       .attr("class", "label")
-      .attr("x", (d) => x((d.x1 + d.x0) / 2))
+      .attr(
+        "x",
+        (d) =>
+          x((d.x1 + d.x0) / 2) -
+          Math.max(0, x(d.x1 ?? 0) - x(d.x0 ?? 0) - 1) / 2,
+      )
       .attr("y", (d) => y(d.y2) - 5)
       .text((d) => (d.y2 === 0 ? "" : d.y2))
       .style("text-anchor", "middle")
@@ -286,21 +298,29 @@ const Histogram: FC<{
         .append("line")
         .attr("x1", x(avg))
         .attr("x2", x(avg))
-        .attr("y1", y(0))
-        .attr("y2", y(d3.max(bins, (d) => d.y2) ?? 0))
+        .attr("y1", y(0) + 6)
+        .attr("y2", -10000)
         .attr("stroke", color)
-        .attr("stroke-dasharray", "4");
+        .attr("stroke-dasharray", "2");
       svg
         .append("text")
         .attr("x", x(avg))
         .attr("y", y(0))
         .text(text)
         .style("font-size", "12px")
-        .attr("transform", `rotate(-90, ${x(avg)}, ${y(0)}), translate(2, -1)`);
+        .attr("transform", `rotate(-90, ${x(avg)}, ${y(0)}), translate(2, -2)`);
     };
 
-    drawAverageLine(b15Avg, `B15 AVG: ${b15Avg.toFixed(2)}`, "#3b82f6");
-    drawAverageLine(b35Avg, `B35 AVG: ${b35Avg.toFixed(2)}`, theme.accentColor);
+    drawAverageLine(
+      b15Avg,
+      `B15 AVG: ${b15Avg.toFixed(2)}`,
+      deriveColor("#3b82f6", "overlay"),
+    );
+    drawAverageLine(
+      b35Avg,
+      `B35 AVG: ${b35Avg.toFixed(2)}`,
+      deriveColor(theme.accentColor, "overlay"),
+    );
   };
 
   useEffect(() => {
@@ -339,6 +359,10 @@ const RatingCalculatorStatisticsDetails = forwardRef<
         b35Values={compact(b35Entries.map((i) => i.rating?.ratingAwardValue))}
         b15Values={compact(b15Entries.map((i) => i.rating?.ratingAwardValue))}
       />
+      <span className="text-gray-500 text-xs text-center select-none">
+        Histogram buckets are visualized in shape of (min, max] to better
+        represent the data distribution.
+      </span>
     </div>
   );
 });
