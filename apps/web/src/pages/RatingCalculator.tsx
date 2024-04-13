@@ -47,7 +47,7 @@ import {
   TableProps,
   TableVirtuoso,
 } from "react-virtuoso";
-import IconMdiArrowUp from "~icons/mdi/arrow-up";
+import IconMdiArrowDown from "~icons/mdi/arrow-down";
 import IconMdiTrashCan from "~icons/mdi/trash-can";
 import { BetaBadge } from "../components/global/BetaBadge";
 import {
@@ -145,6 +145,7 @@ export const RatingCalculator = () => {
   const [compactMode, setCompactMode] = useState(false);
 
   const [sorting, setSorting] = useState<SortingState>([
+    { id: "includedIn", desc: true },
     { id: "rating", desc: true },
   ]);
 
@@ -237,6 +238,7 @@ export const RatingCalculator = () => {
     columns,
     state: { sorting },
     onSortingChange: setSorting,
+    isMultiSortEvent: () => true,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
@@ -261,7 +263,8 @@ export const RatingCalculator = () => {
     () => ({
       Scroller: RatingCalculatorScroller,
       Table: RatingCalculatorTable,
-      TableHead: TableHead,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      TableHead: TableHead as any,
       TableRow: RatingCalculatorTableRow,
       TableBody: RatingCalculatorTableBody,
     }),
@@ -381,21 +384,35 @@ export const RatingCalculator = () => {
                             header.column.columnDef.header,
                             header.getContext(),
                           )}
-                          <IconMdiArrowUp
+                          <div
                             className={clsx(
-                              "ml-1 transition",
-                              {
-                                asc: "inline-flex rotate-0",
-                                desc: "inline-flex rotate-180",
-                                none: header.column.getCanSort()
-                                  ? "inline-flex opacity-0 group-hover:opacity-70"
-                                  : "hidden",
-                              }[
-                                (header.column.getIsSorted() as string) ||
-                                  "none"
-                              ],
+                              "inline-flex items-center overflow-hidden relative",
+                              header.column.getIsSorted() &&
+                                "bg-gray-900/50 text-gray-100 rounded-full",
                             )}
-                          />
+                          >
+                            <IconMdiArrowDown
+                              className={clsx(
+                                "ml-1 transition mr-0.5",
+                                {
+                                  asc: "inline-flex rotate-180",
+                                  desc: "inline-flex rotate-0",
+                                  none: header.column.getCanSort()
+                                    ? "inline-flex opacity-0 group-hover:opacity-70"
+                                    : "hidden",
+                                }[
+                                  (header.column.getIsSorted() as string) ||
+                                    "none"
+                                ],
+                              )}
+                            />
+                            {header.column.getIsSorted() &&
+                              sorting.length > 1 && (
+                                <div className="inline-flex items-center justify-center text-sm px-2 font-bold bg-gray-9/50">
+                                  {header.column.getSortIndex() + 1}
+                                </div>
+                              )}
+                          </div>
                         </div>
                       )}
                     </TableCell>

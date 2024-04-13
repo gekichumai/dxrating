@@ -36,7 +36,7 @@ export const ImportFromJSONButtonListItem: FC<{
               !Array.isArray(entries) ||
               !entries.length ||
               !entries[0].sheetId ||
-              !entries[0].achievementRate
+              entries[0].achievementRate === undefined
             ) {
               toast.error("Invalid file format");
               return;
