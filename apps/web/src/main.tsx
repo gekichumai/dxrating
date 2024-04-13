@@ -17,10 +17,13 @@ import * as Sentry from "@sentry/react";
 import { Geiger } from "react-geiger";
 import { SideEffector } from "./components/global/SideEffector";
 import { RatingCalculatorContextProvider } from "./models/RatingCalculatorContext";
+import { BUNDLE } from "./utils/bundle";
 
 if (import.meta.env.PROD) {
   Sentry.init({
     dsn: "https://1e929f3c3b929a213436e3c4dff57140@o4506648698683392.ingest.sentry.io/4506648709627904",
+    tunnel: "https://derrakuma.dxrating.net/functions/v1/science-tunnel",
+    release: "dxrating@" + (BUNDLE.version ?? "unknown"),
     integrations: [
       new Sentry.BrowserTracing({
         // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
@@ -28,6 +31,7 @@ if (import.meta.env.PROD) {
           "localhost",
           /^https?:\/\/.*\.dxrating\.net/,
           /^https?:\/\/dxrating\.net/,
+          /^https?:\/\/dxrating\.imgg\.dev/,
         ],
       }),
     ],
