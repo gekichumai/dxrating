@@ -4,19 +4,24 @@ import { useTranslation } from "react-i18next";
 import { useEffectOnce, useLocalStorage } from "react-use";
 
 import { OverscrollBackgroundFiller } from "./components/global/OverscrollBackgroundFiller";
-import { VersionSwitcher } from "./components/global/preferences/VersionSwitcher";
 import { WebpSupportedImage } from "./components/global/WebpSupportedImage";
+import { VersionRegionSwitcher } from "./components/global/preferences/VersionRegionSwitcher";
 import { TopBar } from "./components/layout/TopBar";
 import { RatingCalculator } from "./pages/RatingCalculator";
 import { SheetList } from "./pages/SheetList";
 import { useVersionTheme } from "./utils/useVersionTheme";
 
+const APP_TABS_VALUES = ["search", "rating"] as const;
+type AppTabsValuesType = (typeof APP_TABS_VALUES)[number];
+
+const DEFAULT_TAB = "search" as AppTabsValuesType;
+
 export const App = () => {
   const { t, i18n } = useTranslation(["root"]);
   const versionTheme = useVersionTheme();
-  const [tab, setTab] = useLocalStorage<"search" | "rating">(
+  const [tab, setTab] = useLocalStorage<AppTabsValuesType>(
     "tab-selection",
-    "search",
+    DEFAULT_TAB,
   );
   const [isPending, startTransition] = useTransition();
 
@@ -25,7 +30,7 @@ export const App = () => {
   }, [i18n.language]);
 
   const userInteractedSetTab = useCallback(
-    (newTab: "search" | "rating") => {
+    (newTab: AppTabsValuesType) => {
       startTransition(() => {
         setTab(newTab);
 
@@ -41,8 +46,8 @@ export const App = () => {
 
   const updateTabFromPath = useCallback(() => {
     const url = new URL(window.location.href);
-    const tab = url.pathname.slice(1) as "search" | "rating";
-    if (["search", "rating"].includes(tab)) {
+    const tab = url.pathname.slice(1) as AppTabsValuesType;
+    if (APP_TABS_VALUES.includes(tab)) {
       setTab(tab);
     }
   }, [setTab]);
@@ -86,7 +91,7 @@ export const App = () => {
 `,
           }}
         >
-          <VersionSwitcher />
+          <VersionRegionSwitcher />
           <Tabs
             value={tab}
             onChange={(_, v) => {
@@ -97,22 +102,17 @@ export const App = () => {
               indicator: "!h-full !rounded-lg z-0",
             }}
           >
-            <Tab
-              label={t("root:pages.search.title")}
-              classes={{
-                selected: "!text-black/90",
-                root: "!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem",
-              }}
-              value="search"
-            />
-            <Tab
-              label={t("root:pages.rating.title")}
-              classes={{
-                selected: "!text-black/90",
-                root: "!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem",
-              }}
-              value="rating"
-            />
+            {APP_TABS_VALUES.map((v) => (
+              <Tab
+                key={v}
+                label={t(`root:pages.${v}.title`)}
+                classes={{
+                  selected: "!text-black/90 font-bold",
+                  root: "!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem",
+                }}
+                value={v}
+              />
+            ))}
           </Tabs>
         </div>
         {isPending ? (
@@ -122,8 +122,9 @@ export const App = () => {
         ) : (
           {
             search: <SheetList />,
+            // recent: <RecentPage />,
             rating: <RatingCalculator />,
-          }[tab ?? "search"]
+          }[tab ?? DEFAULT_TAB]
         )}
       </div>
     </div>

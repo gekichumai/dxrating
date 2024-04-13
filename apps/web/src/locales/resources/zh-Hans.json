@@ -14,9 +14,17 @@
     }
   },
   "settings": {
-    "version": {
-      "select": "选择数据版本",
-      "info": "不同的数据版本对应了不同的谱面定数与乐曲可见性"
+    "region": {
+      "title": "服务器：{{region}}",
+      "jp": "日服",
+      "intl": "国际服",
+      "cn": "国服",
+      "_generic": "通用"
+    },
+    "version-and-region": {
+      "select": "选择 DXData 数据版本与服务器",
+      "select-generic": "或，仅选择 DXData 数据版本并使用「通用」服务器",
+      "info": "不同的数据版本与服务器对应了不同的谱面定数与乐曲可见性"
     }
   },
   "sheet": {
@@ -70,7 +78,7 @@
         "title": "标签"
       },
       "category": {
-        "title": "樂曲種類"
+        "title": "乐曲种类"
       }
     },
     "sort": {
@@ -95,7 +103,7 @@
       "add": {
         "button": "添加",
         "title": "添加标签",
-        "toast-failed": "添加标签失败：{{error}}。请检查是否已登录。",
+        "toast-failed": "添加标签失败：{{error}}；请检查是否已登录",
         "toast-success": "已添加成功"
       }
     }
@@ -125,7 +133,8 @@
     "donate": {
       "afdian": "爱发电",
       "title": "捐助",
-      "content": "感谢使用 DXRating！如果 DXRating 可以在 maimai 生涯中帮助到你的话，开发者会很开心的！DXRating 全站将一直会非商业化运营并将仅依靠捐款（和站长为爱发电QAQ）存活下去。如果 DXRating 有帮助到你的话，还请考虑通过 <afdian /> 或 <paypal /> 请开发者出一次勤——"
+      "content": "感谢使用 DXRating！如果 DXRating 可以在 maimai 生涯中帮助到你的话，开发者会很开心的！DXRating 全站将一直会非商业化运营并将仅依靠捐款（和站长为爱发电QAQ）存活下去。如果 DXRating 有帮助到你的话，还请考虑通过 <afdian /> 或 <paypal /> 请开发者出一次勤——",
+      "paypal": "贝宝"
     }
   },
   "form": {

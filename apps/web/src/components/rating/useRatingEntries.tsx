@@ -1,6 +1,11 @@
+import { VERSION_ID_MAP, VersionEnum } from "@gekichumai/dxdata";
 import { useMemo } from "react";
 import { useRatingCalculatorContext } from "../../models/RatingCalculatorContext";
-import { useAppContextDXDataVersion } from "../../models/context/useAppContext";
+import { Region } from "../../models/context/AppContext";
+import {
+  useAppContext,
+  useAppContextDXDataVersion,
+} from "../../models/context/useAppContext";
 import { Entry } from "../../pages/RatingCalculator";
 import { FlattenedSheet, useSheets } from "../../songs";
 import { Rating, calculateRating } from "../../utils/rating";
@@ -27,8 +32,24 @@ interface UseRatingEntriesStatistics {
   b50Sum: number;
 }
 
+const filterB15 = (
+  sheet: FlattenedSheet,
+  appVersion: VersionEnum,
+  region: Region,
+) => {
+  if (region === "_generic") return sheet.version === appVersion;
+
+  const appVersionId = VERSION_ID_MAP.get(appVersion);
+  const sheetVersionId = VERSION_ID_MAP.get(sheet.version);
+  if (appVersionId !== undefined && sheetVersionId !== undefined) {
+    return sheetVersionId >= appVersionId && sheet.regions[region];
+  }
+  return false;
+};
+
 export const useRatingEntries = (): UseRatingEntriesReturn => {
   const appVersion = useAppContextDXDataVersion();
+  const { region } = useAppContext();
   const { entries } = useRatingCalculatorContext();
   const { data: sheets } = useSheets();
 
@@ -52,7 +73,7 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
     });
 
     const best15OfCurrentVersionSheetIds = calculated
-      .filter((entry) => entry.sheet.version === appVersion)
+      .filter((entry) => filterB15(entry.sheet, appVersion, region))
       // a.rating and b.rating could be null. put them at the end
       .sort((a, b) => {
         if (!a.rating) return 1;
@@ -63,7 +84,7 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
       .map((entry) => entry.sheetId);
 
     const best35OfAllOtherVersionSheetIds = calculated
-      .filter((entry) => entry.sheet.version !== appVersion)
+      .filter((entry) => !filterB15(entry.sheet, appVersion, region))
       .sort((a, b) => {
         if (!a.rating) return 1;
         if (!b.rating) return -1;
@@ -90,7 +111,7 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
         (entry) => entry.includedIn === "b35",
       ),
     };
-  }, [entries, sheets, appVersion]);
+  }, [entries, sheets, appVersion, region]);
 
   const statistics = useMemo(() => {
     const eligibleRatingEntriesB15 = b15Entries.filter((entry) => entry.rating);

@@ -14,9 +14,17 @@
     }
   },
   "settings": {
-    "version": {
-      "select": "選擇數據版本",
-      "info": "不同的數據版本對應了不同的譜面定數與樂曲可見性"
+    "region": {
+      "title": "伺服器：{{region}}",
+      "jp": "日本",
+      "intl": "國際",
+      "cn": "中國",
+      "_generic": "通用"
+    },
+    "version-and-region": {
+      "select": "選擇 DXData 版本與伺服器",
+      "select-generic": "或，僅選擇 DXData 數據版本並使用「通用」伺服器",
+      "info": "不同的數據版本與伺服器對應不同的內部等級值、歌曲可見度和評級資格。"
     }
   },
   "sheet": {
@@ -125,7 +133,8 @@
     "donate": {
       "afdian": "愛發電",
       "title": "捐助",
-      "content": "感謝使用 DXRating！如果 DXRating 可以在 maimai 生涯中幫助到你的話，開發者會很開心的！DXRating 全站將一直會非商業化運營並將僅依靠捐款（和站長為愛發電QAQ）存活下去。如果 DXRating 有幫助到你的話，還請考慮通過 <afdian /> 或 <paypal /> 請開發者出一次勤——"
+      "content": "感謝使用 DXRating！如果 DXRating 可以在 maimai 生涯中幫助到你的話，開發者會很開心的！DXRating 全站將一直會非商業化運營並將僅依靠捐款（和站長為愛發電QAQ）存活下去。如果 DXRating 有幫助到你的話，還請考慮通過 <afdian /> 或 <paypal /> 請開發者出一次勤——",
+      "paypal": "貝寶"
     }
   },
   "form": {

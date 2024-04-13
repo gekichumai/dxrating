@@ -14,9 +14,17 @@
     }
   },
   "settings": {
-    "version": {
-      "select": "Select DXData Version",
-      "info": "Different data versions correspond to different internal level values ​​and different song visibilities."
+    "version-and-region": {
+      "select": "Select DXData Version and Region",
+      "select-generic": "Or, select a DXData Version and use the \"Generic\" region",
+      "info": "Different data versions and regions correspond to different internal level values, song visibilities and rating eligibilities."
+    },
+    "region": {
+      "title": "Region: {{region}}",
+      "jp": "Japan",
+      "intl": "International",
+      "cn": "China",
+      "_generic": "Generic"
     }
   },
   "sheet": {
