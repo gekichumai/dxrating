@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import { useMeasure } from "react-use";
+import IconMdiGestureSwipeLeft from "~icons/mdi/gesture-swipe-left";
 import { makeId } from "../../utils/random";
 import { useVersionTheme } from "../../utils/useVersionTheme";
 import { useRatingEntries } from "./useRatingEntries";
@@ -397,7 +398,7 @@ export const RatingCalculatorStatistics: FC = () => {
       <motion.div
         ref={scrollContainerRef}
         className={clsx(
-          "flex items-start overflow-x-auto overflow-y-hidden w-full py-1 will-change-height transition-height duration-300",
+          "flex items-start overflow-x-auto overflow-y-hidden w-full py-1 will-change-height transition-height duration-300 relative",
           containerRect.width && "snap-x snap-mandatory",
         )}
         style={{
@@ -405,6 +406,10 @@ export const RatingCalculatorStatistics: FC = () => {
           height: containerRectHeight,
         }}
       >
+        <div className="flex gap-1 items-center absolute top-2 right-0 rounded-full bg-blue-100 text-gray-500 px-2 py-1 font-bold select-none">
+          <IconMdiGestureSwipeLeft className="w-3 h-3" />
+          <div className="leading-none text-xs">Histogram Available</div>
+        </div>
         <RatingCalculatorStatisticsOverview
           ref={firstItemRef}
           className="shrink-0 snap-end overflow-hidden"
