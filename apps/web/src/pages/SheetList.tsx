@@ -1,5 +1,6 @@
 import { VERSION_ID_MAP } from "@gekichumai/dxdata";
 import { Button, IconButton, TextField } from "@mui/material";
+import * as Sentry from "@sentry/react";
 import { FC, useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import IconMdiClose from "~icons/mdi/close";
@@ -32,7 +33,7 @@ const SORT_DESCRIPTOR_MAPPING = {
   releaseDate: "releaseDateTimestamp" as const,
 };
 
-const SheetListInner: FC = () => {
+const _SheetListInner: FC = () => {
   const { t } = useTranslation(["sheet"]);
   const { data: sheets, isLoading } = useSheets();
   const { setQueryActive } = useContext(SheetDetailsContext);
@@ -228,6 +229,8 @@ const SheetListInner: FC = () => {
     </div>
   );
 };
+
+const SheetListInner = Sentry.withProfiler(_SheetListInner);
 
 export const SheetList: FC = () => {
   return (

@@ -36,7 +36,7 @@ if (import.meta.env.PROD) {
       }),
     ],
     // Performance Monitoring
-    tracesSampleRate: 0.1,
+    tracesSampleRate: 0.2,
     ignoreErrors: [
       /// START: https://gist.github.com/Chocksy/e9b2cdd4afc2aadc7989762c4b8b495a
       "top.GLOBALS",
@@ -87,6 +87,7 @@ if (import.meta.env.PROD) {
       /webappstoolbarba\.texthelp\.com\//i,
       /metrics\.itunes\.apple\.com\.edgesuite\.net\//i,
     ],
+    ignoreTransactions: ["clarity.ms/collect"],
   });
 } else {
   console.log("Not in production, skipping Sentry initialization");
