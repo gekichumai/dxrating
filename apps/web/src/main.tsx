@@ -14,9 +14,11 @@ import { initReactI18next } from "react-i18next";
 import { i18nResources } from "./locales/locales";
 
 import * as Sentry from "@sentry/react";
+import { SupabaseIntegration } from "@supabase/sentry-js-integration";
 import { Geiger } from "react-geiger";
 import { SideEffector } from "./components/global/SideEffector";
 import { RatingCalculatorContextProvider } from "./models/RatingCalculatorContext";
+import { supabase } from "./models/supabase";
 import { BUNDLE } from "./utils/bundle";
 
 if (import.meta.env.PROD) {
@@ -33,6 +35,11 @@ if (import.meta.env.PROD) {
           /^https?:\/\/dxrating\.net/,
           /^https?:\/\/dxrating\.imgg\.dev/,
         ],
+      }),
+      new SupabaseIntegration(supabase, {
+        tracing: true,
+        breadcrumbs: true,
+        errors: true,
       }),
     ],
     // Performance Monitoring

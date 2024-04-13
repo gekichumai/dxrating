@@ -29,6 +29,7 @@
     "@sentry/vite-plugin": "^2.16.1",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
+    "@supabase/sentry-js-integration": "^0.1.0",
     "@supabase/supabase-js": "^2.42.3",
     "@tanstack/react-table": "^8.10.7",
     "@unocss/preset-mini": "^0.58.4",
