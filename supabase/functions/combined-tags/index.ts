@@ -99,19 +99,11 @@ serve(async (_req) => {
     const [tags, tagGroups, tagSongs] = await Promise.all([
       db
         .selectFrom("tags")
-        .select([
-          "tags.id",
-          "tags.localized_name",
-          "tags.localized_description",
-        ])
+        .select(["id", "localized_name", "localized_description"])
         .execute(),
       db
         .selectFrom("tag_groups")
-        .select([
-          "tag_groups.id",
-          "tag_groups.localized_name",
-          "tag_groups.color",
-        ])
+        .select(["id", "localized_name", "color", "group_id"])
         .execute(),
       db
         .selectFrom("tag_songs")
