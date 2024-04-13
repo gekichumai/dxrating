@@ -62,6 +62,8 @@ jobs:
       # building before publishing to Cloudflare Pages.
       - name: Build
         run: yarn install && yarn run build
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
       - name: Publish to Cloudflare Pages
         uses: cloudflare/pages-action@v1
