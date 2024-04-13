@@ -36,7 +36,7 @@ if (import.meta.env.PROD) {
       }),
     ],
     // Performance Monitoring
-    tracesSampleRate: 0.01,
+    tracesSampleRate: 0.1,
     ignoreErrors: [
       /// START: https://gist.github.com/Chocksy/e9b2cdd4afc2aadc7989762c4b8b495a
       "top.GLOBALS",

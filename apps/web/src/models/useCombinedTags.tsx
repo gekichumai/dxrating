@@ -25,6 +25,7 @@ export interface Tag {
   id: number;
   localized_name: Json;
   localized_description: Json;
+  group_id: number;
 }
 
 export const useCombinedTags = () => {

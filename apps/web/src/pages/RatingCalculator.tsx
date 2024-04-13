@@ -54,6 +54,7 @@ import {
   PlayEntry,
   RatingCalculatorAddEntryForm,
 } from "../components/rating/RatingCalculatorAddEntryForm";
+import { RatingCalculatorStatistics } from "../components/rating/RatingCalculatorStatistics";
 import { ClearButton } from "../components/rating/io/ClearButton";
 import { ExportMenu } from "../components/rating/io/ExportMenu";
 import { ImportMenu } from "../components/rating/io/ImportMenu";
@@ -271,9 +272,14 @@ export const RatingCalculator = () => {
   return (
     <div className="flex-container w-full pb-global">
       <div className="flex flex-col md:flex-row items-start gap-4 w-full">
-        <Alert icon={false} severity="info" className="w-full px-4 py-2">
+        <Alert
+          icon={false}
+          severity="info"
+          className="w-full px-4 py-2"
+          classes={{ message: "w-full" }}
+        >
           <AlertTitle className="font-bold">Rating Breakdown</AlertTitle>
-          <RatingCalculatorStatisticsTable />
+          <RatingCalculatorStatistics />
         </Alert>
 
         <div className="flex flex-col gap-4 h-full self-stretch">
@@ -507,132 +513,5 @@ const RatingCalculatorTableRowContent: FC<{
         );
       })}
     </>
-  );
-};
-
-const RatingCalculatorStatisticsFactItem: FC<{
-  size: "lg" | "md";
-  label: string;
-  value: number | string;
-  className?: string;
-}> = ({ size, label, value, className }) => (
-  <div className={clsx("flex flex-col items-start gap-2", className)}>
-    <div
-      className={clsx(
-        "font-mono tabular-nums !leading-none -mt-1.5 tracking-tight",
-        {
-          "text-4xl": size === "lg",
-          "text-3xl": size === "md",
-        },
-      )}
-    >
-      {value}
-    </div>
-    <div className="text-sm font-semibold leading-none text-gray-600 -mt-1">
-      {label}
-    </div>
-  </div>
-);
-
-export const RatingCalculatorStatisticsTable: FC = () => {
-  const { b35Entries, b15Entries, statistics } = useRatingEntries();
-  const {
-    b15Average,
-    b35Average,
-    b15Min,
-    b35Min,
-    b15Max,
-    b35Max,
-    b15Sum,
-    b35Sum,
-    b50Sum,
-  } = statistics;
-
-  return (
-    <div className="flex flex-col justify-center gap-4 text-black py-2">
-      <RatingCalculatorStatisticsFactItem
-        size="lg"
-        label="Total"
-        value={b50Sum}
-      />
-
-      <div className="flex flex-col items-start gap-2">
-        <div className="flex items-baseline gap-1 leading-none">
-          <span className="text-lg font-semibold">Best 15</span>
-          <span className="text-sm text-gray-500">
-            (Entries {b15Entries.length}/15)
-          </span>
-        </div>
-
-        <div className="flex items-center w-full">
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Subtotal"
-            value={b15Sum}
-            className="w-24"
-          />
-
-          <div className="h-12 w-px shrink-0 bg-gray-300 ml-2 mr-4" />
-
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Min"
-            value={b15Min.toFixed(0)}
-            className="w-16"
-          />
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Avg"
-            value={b15Average.toFixed(0)}
-            className="w-16"
-          />
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Max"
-            value={b15Max.toFixed(0)}
-            className="w-16"
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col items-start gap-2">
-        <div className="flex items-baseline gap-1 leading-none">
-          <span className="text-lg font-semibold">Best 35</span>
-          <span className="text-sm text-gray-500">
-            (Entries {b35Entries.length}/35)
-          </span>
-        </div>
-
-        <div className="flex items-center w-full">
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Subtotal"
-            value={b35Sum}
-            className="w-24"
-          />
-
-          <div className="h-12 w-px shrink-0 bg-gray-300 ml-2 mr-4" />
-
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Min"
-            value={b35Min.toFixed(0)}
-            className="w-16"
-          />
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Avg"
-            value={b35Average.toFixed(0)}
-            className="w-16"
-          />
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Max"
-            value={b35Max.toFixed(0)}
-            className="w-16"
-          />
-        </div>
-      </div>
-    </div>
   );
 };

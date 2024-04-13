@@ -189,6 +189,5 @@ export const importFromNETRecords = async (
         formatErrorMessage(error),
       { id: toastId },
     );
-    throw error;
   }
 };
