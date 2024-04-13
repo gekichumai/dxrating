@@ -167,8 +167,9 @@ const RatingCalculatorStatisticsOverview: FC<RatingCalculatorStatisticsOverviewP
   );
 
 const Histogram: FC<{
-  values: number[];
-}> = ({ values }) => {
+  b15Values: number[];
+  b35Values: number[];
+}> = ({ b15Values, b35Values }) => {
   const theme = useVersionTheme();
   const [containerRef, containerRect] = useMeasure<HTMLDivElement>();
   const id = useRef(makeId(12)).current;
@@ -179,7 +180,10 @@ const Histogram: FC<{
       width = containerRect.width - margin.left - margin.right,
       height = 300 - margin.top - margin.bottom;
 
-    const avg = d3.mean(values) ?? 0;
+    const b15Avg = d3.mean(b15Values) ?? 0;
+    const b35Avg = d3.mean(b35Values) ?? 0;
+
+    const ticksIntervalRatio = width > 500 ? 1 : 2;
 
     // append the svg object to the body of the page
     const svg = d3
@@ -190,98 +194,107 @@ const Histogram: FC<{
       .append("g")
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-    const min = d3.min(values) ?? 0;
-    const max = d3.max(values) ?? 0;
+    const min = Math.min(d3.min(b15Values) ?? 0, d3.min(b35Values) ?? 0) ?? 0;
+    const max = Math.max(d3.max(b15Values) ?? 0, d3.max(b35Values) ?? 0) ?? 0;
+
+    // snap xDomain to the interval of ticks, calculated from the min, max and ticksIntervalRatio values
+    const xDomain = [
+      Math.floor(min / ticksIntervalRatio) * ticksIntervalRatio,
+      (Math.ceil(max / ticksIntervalRatio) + 1) * ticksIntervalRatio,
+    ];
 
     // X axis: scale and draw:
-    const x = d3
-      .scaleLinear()
-      .domain([min, max + 1])
-      .range([0, width]);
+    const x = d3.scaleLinear().domain(xDomain).range([0, width]);
     svg
       .append("g")
       .attr("transform", `translate(0, ${height})`)
-      .call(d3.axisBottom(x).ticks((max - min) / 3));
+      .call(d3.axisBottom(x).ticks((max - min) / ticksIntervalRatio));
 
-    // set the parameters for the histogram
+    // Create the histogram bins for both datasets
     const histogram = d3
       .histogram()
       .value(function (d) {
         return d;
-      }) // I need to give the vector of value
-      .domain(x.domain() as [number, number]) // then the domain of the graphic
-      .thresholds(x.ticks(max - min)); // then the numbers of bins
+      })
+      .domain(x.domain() as [number, number])
+      .thresholds(x.ticks((max - min) / ticksIntervalRatio));
 
-    // And apply this function to data to get the bins
-    const bins = histogram(values) as d3.Bin<number, number>[];
+    const bins1 = histogram(b15Values);
+    const bins2 = histogram(b35Values);
+
+    // Prepare bins for stacking
+    const bins = bins1.map((bin, i) => ({
+      x0: bin?.x0 ?? 0,
+      x1: bin?.x1 ?? 0,
+      y1: bin?.length ?? 0, // Count for b15Values
+      y2: (bin?.length ?? 0) + (bins2[i]?.length ?? 0), // Stack count of b35Values on top of b15Values
+    }));
 
     // Y axis: scale and draw:
-    const y = d3.scaleLinear().range([height, 0]);
-    y.domain([0, d3.max(bins, (d) => d.length) ?? 0]); // d3.hist has to be called before the Y axis obviously
+    const y = d3
+      .scaleLinear()
+      .range([height, 0])
+      .domain([0, d3.max(bins, (d) => d.y2) ?? 0]); // Use the max of y2 to include stacked height
+
     svg.append("g").call(d3.axisLeft(y));
 
-    // append the bar rectangles to the svg element, and put label of values of each bar on top
+    // Draw bars for b15Values
     svg
-      .selectAll("rect")
+      .selectAll(".bar1")
       .data(bins)
       .join("rect")
-      .attr("x", 0.5)
-      .attr("y", -1)
-      .attr("transform", function (d) {
-        return `translate(${x(d.x0 ?? 0)}, ${y(d.length) + 1.5})`;
-      })
-      .attr("width", function (d) {
-        return Math.max(0, x(d.x1 ?? 0) - x(d.x0 ?? 0) - 1); // Ensure width is not negative
-      })
-      .attr("height", function (d) {
-        return Math.max(0, height - y(d.length) - 1);
-      })
-      .style("fill", function (d) {
-        if ((d.x0 ?? 0) < avg) {
-          return "#3b82f6";
-        } else {
-          return theme.accentColor;
-        }
-      });
+      .attr("class", "bar1")
+      .attr("x", (d) => x(d.x0 ?? 0))
+      .attr("y", (d) => y(d.y1))
+      .attr("width", (d) => Math.max(0, x(d.x1 ?? 0) - x(d.x0 ?? 0) - 1))
+      .attr("height", (d) => Math.max(0, height - y(d.y1)))
+      .style("fill", "#3b82f6");
 
-    // Adding labels on top of each bar
+    // Draw bars for b35Values stacked on top of b15Values
+    svg
+      .selectAll(".bar2")
+      .data(bins)
+      .join("rect")
+      .attr("class", "bar2")
+      .attr("x", (d) => x(d.x0 ?? 0))
+      .attr("y", (d) => y(d.y2))
+      .attr("width", (d) => Math.max(0, x(d.x1 ?? 0) - x(d.x0 ?? 0) - 1))
+      .attr("height", (d) => Math.max(0, y(d.y1) - y(d.y2)))
+      .style("fill", theme.accentColor);
+
+    // Add labels on the top center of the bars
     svg
       .selectAll(".label")
       .data(bins)
       .join("text")
       .attr("class", "label")
-      .attr("x", function (d) {
-        return x(d.x0 ?? 0) + (x(d.x1 ?? 0) - x(d.x0 ?? 0)) / 2; // Center label within each bar
-      })
-      .attr("y", function (d) {
-        return y(d.length) - 5; // Adjust the position to be a bit above the bar
-      })
-      .text(function (d) {
-        if (d.length === 0) {
-          return "";
-        }
-        return d.length; // The text is the count of elements in the bin
-      })
-      .attr("text-anchor", "middle") // Center the text horizontally
-      .style("font-size", "12px")
-      .style("fill", "black");
+      .attr("x", (d) => x((d.x1 + d.x0) / 2))
+      .attr("y", (d) => y(d.y2) - 5)
+      .text((d) => (d.y2 === 0 ? "" : d.y2))
+      .style("text-anchor", "middle")
+      .style("font-size", "12px");
 
-    // Append a vertical line to highlight the separation
-    svg
-      .append("line")
-      .attr("x1", x(avg))
-      .attr("x2", x(avg))
-      .attr("y1", y(0))
-      .attr("y2", y(1600))
-      .attr("stroke", "grey")
-      .attr("stroke-dasharray", "4");
-    svg
-      .append("text")
-      .attr("x", x(avg))
-      .attr("y", y(0))
-      .text("avg: " + avg.toFixed(2))
-      .style("font-size", "12px")
-      .attr("transform", `rotate(-90, ${x(avg)}, ${y(0)}), translate(2, -1)`);
+    // Append a vertical line to highlight the average
+    const drawAverageLine = (avg: number, text: string, color: string) => {
+      svg
+        .append("line")
+        .attr("x1", x(avg))
+        .attr("x2", x(avg))
+        .attr("y1", y(0))
+        .attr("y2", y(d3.max(bins, (d) => d.y2) ?? 0))
+        .attr("stroke", color)
+        .attr("stroke-dasharray", "4");
+      svg
+        .append("text")
+        .attr("x", x(avg))
+        .attr("y", y(0))
+        .text(text)
+        .style("font-size", "12px")
+        .attr("transform", `rotate(-90, ${x(avg)}, ${y(0)}), translate(2, -1)`);
+    };
+
+    drawAverageLine(b15Avg, `B15 AVG: ${b15Avg.toFixed(2)}`, "#3b82f6");
+    drawAverageLine(b35Avg, `B35 AVG: ${b35Avg.toFixed(2)}`, theme.accentColor);
   };
 
   useEffect(() => {
@@ -292,11 +305,10 @@ const Histogram: FC<{
         .selectAll("*")
         .remove();
     };
-  }, [id, containerRect, values]);
+  }, [id, containerRect, b15Values, b35Values]);
 
   return (
     <div className="flex flex-col gap-2" ref={containerRef}>
-      <div className="text-lg font-semibold leading-none">Histogram</div>
       <div className="relative w-full select-none" id={id} />
     </div>
   );
@@ -318,9 +330,8 @@ const RatingCalculatorStatisticsDetails = forwardRef<
       {...rest}
     >
       <Histogram
-        values={compact(
-          [...b35Entries, ...b15Entries].map((i) => i.rating?.ratingAwardValue),
-        )}
+        b35Values={compact(b35Entries.map((i) => i.rating?.ratingAwardValue))}
+        b15Values={compact(b15Entries.map((i) => i.rating?.ratingAwardValue))}
       />
     </div>
   );
