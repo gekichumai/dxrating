@@ -261,7 +261,7 @@ const SheetSortFilterForm = () => {
         }
         className="w-full"
       >
-        <Paper className="w-full flex flex-col">
+        <Paper className="w-full flex flex-col overflow-hidden">
           <Collapsible.Trigger asChild>
             <ButtonBase
               className={clsx(
