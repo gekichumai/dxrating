@@ -374,6 +374,7 @@ export const RatingCalculatorStatistics: FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [firstItemRef, firstItemRect] = useMeasure<HTMLDivElement>();
   const [lastItemRef, lastItemRect] = useMeasure<HTMLDivElement>();
+  const { statistics } = useRatingEntries();
 
   const [containerRectHeight, setContainerRectHeight] = useState(
     containerRect.height,
@@ -417,23 +418,28 @@ export const RatingCalculatorStatistics: FC = () => {
     }
   }, [tab, firstItemRect, lastItemRect]);
 
+  const secondPageAvailable = statistics.b50Sum > 0;
+
   return (
     <div className="w-full" ref={containerRef}>
       <motion.div
         ref={scrollContainerRef}
         className={clsx(
-          "flex items-start overflow-x-auto overflow-y-hidden w-full py-1 will-change-height transition-height duration-300 relative",
+          "flex items-start overflow-y-hidden w-full py-1 will-change-height transition-height duration-300 relative",
           containerRect.width && "snap-x snap-mandatory",
+          secondPageAvailable ? "overflow-x-auto" : "overflow-x-hidden",
         )}
         style={{
           width: containerRect.width,
           height: containerRectHeight,
         }}
       >
-        <div className="flex gap-1 items-center absolute top-2 right-0 rounded-full bg-blue-100 text-zinc-500 px-2 py-1 font-bold select-none">
-          <IconMdiGestureSwipeLeft className="w-3 h-3" />
-          <div className="leading-none text-xs">Histogram Available</div>
-        </div>
+        {secondPageAvailable && (
+          <div className="flex gap-1 items-center absolute top-2 right-0 rounded-full bg-blue-100 text-zinc-500 px-2 py-1 font-bold select-none">
+            <IconMdiGestureSwipeLeft className="w-3 h-3" />
+            <div className="leading-none text-xs">Histogram Available</div>
+          </div>
+        )}
         <RatingCalculatorStatisticsOverview
           ref={firstItemRef}
           className="shrink-0 snap-end overflow-hidden"
