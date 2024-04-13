@@ -37,7 +37,7 @@ jobs:
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-yarn-
-      
+
       - name: Get Metadata
         id: git-meta
         shell: bash
@@ -47,7 +47,7 @@ jobs:
           echo "minisha=$TRUNCATED_GITHUB_SHA" >> $GITHUB_OUTPUT;
           echo "version=$VERSION" >> $GITHUB_OUTPUT;
           echo "versionlabel=$VERSION+$TRUNCATED_GITHUB_SHA" >> $GITHUB_OUTPUT;
-      
+
       # Populate Bundle Information
       - name: Populate Bundle Information
         id: bundle-info

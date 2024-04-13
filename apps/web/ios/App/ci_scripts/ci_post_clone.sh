@@ -31,6 +31,7 @@ yarn install --frozen-lockfile
 
 # populate bundle information
 export VITE_GIT_COMMIT=$(git rev-parse HEAD)
+export VITE_BUILD_NUMBER=$CI_BUILD_NUMBER
 export VITE_BUILD_TIME=$(date -u +%FT%TZ)
 export VITE_VERSION=$(git describe --tags --always)
 

@@ -11,8 +11,8 @@ export default defineConfig({
     UnoCSS(),
     Icons({ compiler: "jsx", jsx: "react", autoInstall: true }),
     sentryVitePlugin({
-      org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT,
+      org: "gekichumai",
+      project: "dxrating",
 
       // Auth tokens can be obtained from https://sentry.io/orgredirect/organizations/:orgslug/settings/auth-tokens/
       authToken: process.env.SENTRY_AUTH_TOKEN,
@@ -28,6 +28,6 @@ export default defineConfig({
         },
       },
     },
-    sourcemap: process.env.VITE_BUILD_PLATFORM === "web",
+    sourcemap: true,
   },
 });
