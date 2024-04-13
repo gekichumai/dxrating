@@ -1,4 +1,5 @@
 {
+  "originHash" : "ce2639e47ed5e7ca9a4d7669b113cec190c043e77764fe615f4d8ab99e7e4cc7",
   "pins" : [
     {
       "identity" : "fuse-swift",
@@ -14,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/getsentry/sentry-cocoa/",
       "state" : {
-        "revision" : "b847a202a517a90763e8fd0656d8028aeee7b78d",
-        "version" : "8.20.0"
+        "revision" : "ef4fec9dfb8dd5027b09a4a5c9362feafd118e1a",
+        "version" : "8.24.0"
       }
     },
     {
@@ -46,5 +47,5 @@
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

@@ -127,6 +127,7 @@
 		B55D701D2AE4BDF30047AA8D /* QuickLook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLook.framework; path = System/Library/Frameworks/QuickLook.framework; sourceTree = SDKROOT; };
 		B55D70202AE4BDF30047AA8D /* PreviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewViewController.swift; sourceTree = "<group>"; };
 		B55D70272AE4BDF30047AA8D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B57061A62BCA695E005BD640 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		B596F6EA2B2AA58C00BB160F /* DXRatingPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DXRatingPlugin.swift; sourceTree = "<group>"; };
 		B596F6EC2B2AA6A700BB160F /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
 		B596F6EE2B2AACC300BB160F /* DXRatingPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DXRatingPlugin.m; sourceTree = "<group>"; };
@@ -272,6 +273,7 @@
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
 				B5AD9B992B0D9C6A00813497 /* App.entitlements */,
+				B57061A62BCA695E005BD640 /* PrivacyInfo.xcprivacy */,
 			);
 			name = Meta;
 			sourceTree = "<group>";
@@ -857,7 +859,7 @@
 			repositoryURL = "https://github.com/getsentry/sentry-cocoa/";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 8.0.0;
+				minimumVersion = 8.21.0;
 			};
 		};
 		B546E7462B39B29900822B20 /* XCRemoteSwiftPackageReference "SwifterSwift" */ = {
