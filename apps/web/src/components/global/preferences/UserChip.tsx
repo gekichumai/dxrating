@@ -216,7 +216,7 @@ export const UserChip: FC = () => {
           <>
             <div className="flex flex-col items-start justify-center gap-1">
               <Logo />
-              <span className="text-sm text-gray-5">Authentication</span>
+              <span className="text-sm text-zinc-5">Authentication</span>
               <div className="h-px w-full bg-gray-2 mb-1.5 mt-4" />
             </div>
             <ThemedAuth />

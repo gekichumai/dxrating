@@ -192,7 +192,7 @@ const ImportFromNETRecordsDialogContent: FC<{
               <MenuItem value="intl">
                 <span>
                   <span>International </span>
-                  <span className="text-gray-4 text-sm">
+                  <span className="text-zinc-4 text-sm">
                     (maimaidx-eng.com)
                   </span>
                 </span>
@@ -200,7 +200,7 @@ const ImportFromNETRecordsDialogContent: FC<{
               <MenuItem value="jp">
                 <span>
                   <span>Japan </span>
-                  <span className="text-gray-4 text-sm">(maimaidx.jp)</span>
+                  <span className="text-zinc-4 text-sm">(maimaidx.jp)</span>
                 </span>
               </MenuItem>
             </TextField>
@@ -247,7 +247,7 @@ const ImportFromNETRecordsDialogContent: FC<{
             label={
               <div className="flex flex-col">
                 <span>Remember Credentials</span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-zinc-500">
                   Your credentials will be stored locally in your browser.
                 </span>
               </div>
@@ -265,7 +265,7 @@ const ImportFromNETRecordsDialogContent: FC<{
             label={
               <div className="flex flex-col">
                 <span>Auto-import on App Start</span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-zinc-500">
                   Automatically start importing records from NET when you open
                   DXRating. Requires "Remember Credentials" to be enabled.
                 </span>
@@ -285,7 +285,7 @@ const ImportFromNETRecordsDialogContent: FC<{
                   className="w-full rounded-full max-w-md"
                 />
                 <span className="font-bold mt-1">Importing...</span>
-                <span className="text-gray-500 font-mono text-sm">
+                <span className="text-zinc-500 font-mono text-sm">
                   [ {progress.state} ]
                 </span>
               </div>
@@ -294,7 +294,7 @@ const ImportFromNETRecordsDialogContent: FC<{
             </>
           )}
 
-          <div className="text-sm text-gray-500 [&>p]:mb-1">
+          <div className="text-sm text-zinc-500 [&>p]:mb-1">
             <p className="font-bold">
               Your credentials will not be stored, logged, or shared, and are
               only used for the duration of this import process. If you wish,
@@ -338,9 +338,9 @@ const ImportFromNETRecordsDialogContent: FC<{
         >
           {busy ? (
             <div className="flex gap-2 items-center">
-              <CircularProgress size="1rem" className="text-gray-5" />
+              <CircularProgress size="1rem" className="text-zinc-5" />
 
-              <span className="text-gray-5">Importing...</span>
+              <span className="text-zinc-5">Importing...</span>
             </div>
           ) : autoImport ? (
             <div className="flex flex-col gap-1 items-start py-1">

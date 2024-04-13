@@ -36,7 +36,7 @@ const RatingCalculatorStatisticsFactItem: FC<{
     >
       {value}
     </div>
-    <div className="text-sm font-semibold leading-none text-gray-600 -mt-1">
+    <div className="text-sm font-semibold leading-none text-zinc-600 -mt-1">
       {label}
     </div>
   </div>
@@ -90,7 +90,7 @@ const RatingCalculatorStatisticsOverview = forwardRef<
       <div className="flex flex-col items-start gap-2">
         <div className="flex items-baseline gap-1 leading-none">
           <span className="text-lg font-semibold">Best 15</span>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-zinc-500">
             (Entries {b15Entries.length}/15)
           </span>
         </div>
@@ -129,7 +129,7 @@ const RatingCalculatorStatisticsOverview = forwardRef<
       <div className="flex flex-col items-start gap-2">
         <div className="flex items-baseline gap-1 leading-none">
           <span className="text-lg font-semibold">Best 35</span>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-zinc-500">
             (Entries {b35Entries.length}/35)
           </span>
         </div>
@@ -359,7 +359,7 @@ const RatingCalculatorStatisticsDetails = forwardRef<
         b35Values={compact(b35Entries.map((i) => i.rating?.ratingAwardValue))}
         b15Values={compact(b15Entries.map((i) => i.rating?.ratingAwardValue))}
       />
-      <span className="text-gray-500 text-xs text-center select-none">
+      <span className="text-zinc-500 text-xs text-center select-none">
         Histogram buckets are visualized in shape of (min, max] to better
         represent the data distribution.
       </span>
@@ -430,7 +430,7 @@ export const RatingCalculatorStatistics: FC = () => {
           height: containerRectHeight,
         }}
       >
-        <div className="flex gap-1 items-center absolute top-2 right-0 rounded-full bg-blue-100 text-gray-500 px-2 py-1 font-bold select-none">
+        <div className="flex gap-1 items-center absolute top-2 right-0 rounded-full bg-blue-100 text-zinc-500 px-2 py-1 font-bold select-none">
           <IconMdiGestureSwipeLeft className="w-3 h-3" />
           <div className="leading-none text-xs">Histogram Available</div>
         </div>

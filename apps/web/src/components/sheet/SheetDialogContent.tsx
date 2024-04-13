@@ -284,7 +284,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                 </TableBody>
               </Table>
 
-              <div className="mt-4 text-xs text-gray-500 text-right">
+              <div className="mt-4 text-xs text-zinc-500 text-right">
                 <Trans
                   i18nKey="sheet:details.credits"
                   components={{
@@ -367,7 +367,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                               </span>
 
                               {nextRating && (
-                                <div className="absolute -bottom-5 -left-1 px-1 text-xs text-gray-500 bg-zinc-100 shadow-[0_0_0_1px_var(--un-shadow-color)] shadow-zinc-300/80 rounded-xs">
+                                <div className="absolute -bottom-5 -left-1 px-1 text-xs text-zinc-500 bg-zinc-100 shadow-[0_0_0_1px_var(--un-shadow-color)] shadow-zinc-300/80 rounded-xs">
                                   ↑{" "}
                                   <span className="font-bold">
                                     {rating.rating.ratingAwardValue -
@@ -509,7 +509,7 @@ const SheetInternalLevelHistory: FC<{
                     )}
                   >
                     {internalLevelValue === undefined ? (
-                      <div className="text-gray-500 select-none">
+                      <div className="text-zinc-500 select-none">
                         {available ? "—" : "／"}
                       </div>
                     ) : (
@@ -527,7 +527,7 @@ const SheetInternalLevelHistory: FC<{
           </TableBody>
         </Table>
       ) : (
-        <div className="text-gray-500 px-1">
+        <div className="text-zinc-500 px-1">
           {t("sheet:internal-level-history.empty")}
         </div>
       )}

@@ -163,16 +163,16 @@ export const importFromNETRecords = async (
         </span>
         {lastRecord && (
           <>
-            <span className="text-sm text-gray-500">Latest Play</span>
-            <span className="text-xs text-gray-500">
+            <span className="text-sm text-zinc-500">Latest Play</span>
+            <span className="text-xs text-zinc-500">
               {lastRecord.sheet.songId} [{lastRecord.sheet.type}]
             </span>
             {lastRecord.play.timestamp && (
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-zinc-500">
                 Date: {new Date(lastRecord.play.timestamp).toLocaleString()}
               </span>
             )}
-            {/* <span className="text-xs text-gray-500">
+            {/* <span className="text-xs text-zinc-500">
                       Rating:
                     </span> */}
           </>

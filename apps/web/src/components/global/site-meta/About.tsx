@@ -8,8 +8,8 @@ import MdiInformation from "~icons/mdi/information";
 import MdiTwitter from "~icons/mdi/twitter";
 import MdiWeb from "~icons/mdi/web";
 import { BUNDLE } from "../../../utils/bundle";
-import { ResponsiveDialog } from "../ResponsiveDialog";
 import { useTime } from "../../../utils/useTime";
+import { ResponsiveDialog } from "../ResponsiveDialog";
 
 const ExternalLink: FC<
   PropsWithChildren<{ href: string; className?: string }>
@@ -43,10 +43,10 @@ const AboutAttribute: FC<
   PropsWithChildren<{ label: ReactNode; value: ReactNode }>
 > = ({ label, value }) => (
   <li className="flex flex-col items-start font-mono">
-    <span className="font-bold text-xs scale-75 origin-left-bottom text-gray-400">
+    <span className="font-bold text-xs scale-75 origin-left-bottom text-zinc-400">
       {label}
     </span>
-    <span className="text-sm tracking-tight text-gray-600">{value}</span>
+    <span className="text-sm tracking-tight text-zinc-600">{value}</span>
   </li>
 );
 
@@ -138,11 +138,11 @@ export const About = () => {
             </ul>
 
             <div className="flex flex-col items-start mt-8 gap-1">
-              <h5 className="text-base text-gray-7">
+              <h5 className="text-base text-zinc-7">
                 {t("about:donate.title")}
               </h5>
 
-              <div className="text-sm text-gray-6">
+              <div className="text-sm text-zinc-6">
                 <Trans
                   i18nKey="about:donate.content"
                   components={{
@@ -170,11 +170,11 @@ export const About = () => {
             </div>
 
             <div className="flex flex-col items-start mt-24 gap-1">
-              <h5 className="text-base text-gray-7">
+              <h5 className="text-base text-zinc-7">
                 {t("about:disclaimer.title")}
               </h5>
 
-              <div className="text-sm text-gray-6">
+              <div className="text-sm text-zinc-6">
                 {t("about:disclaimer.content")
                   .split("\n")
                   .map((line, i) => (

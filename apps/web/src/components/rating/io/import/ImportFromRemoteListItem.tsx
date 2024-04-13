@@ -257,12 +257,12 @@ const ImportFromRemoteContent: FC<{
     <>
       <DialogTitle className="flex flex-col items-start">
         <div>Import from Cloud</div>
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-zinc-500">
           {mode === "select-user"
             ? "Choose the user to import their gameplays from."
             : "Confirm importing the selected user's gameplays."}
         </div>
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-zinc-500">
           Last updated:{" "}
           {lastModified ? lastModified.toLocaleString() : "Unknown"}
         </div>

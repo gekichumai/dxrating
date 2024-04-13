@@ -126,7 +126,7 @@ const RenderToOneShotImageDialogContent = () => {
             />
           )}
 
-          <div className="text-gray-500 mt-4 flex flex-col gap-1">
+          <div className="text-zinc-500 mt-4 flex flex-col gap-1">
             <div className="text-sm font-bold">
               Long-press or right-click the image to save it to your device.
             </div>

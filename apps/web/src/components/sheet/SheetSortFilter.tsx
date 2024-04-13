@@ -241,7 +241,7 @@ const SheetSortFilterForm = () => {
             {t("sheet:sort.title")}
           </div>
           {queryActive && (
-            <div className="px-1.5 py-1 rounded-md bg-gray-200 text-xs ml-2 leading-tight tracking-tight text-gray-600 shadow-[0_1px_8px] shadow-gray-300">
+            <div className="px-1.5 py-1 rounded-md bg-gray-200 text-xs ml-2 leading-tight tracking-tight text-zinc-600 shadow-[0_1px_8px] shadow-gray-300">
               {t("sheet:sort.temporarily-disabled")}
             </div>
           )}
@@ -265,8 +265,8 @@ const SheetSortFilterForm = () => {
           <Collapsible.Trigger asChild>
             <ButtonBase
               className={clsx(
-                "px-4 py-3 w-full flex items-center transition duration-300",
-                expanded ? "bg-gray-200" : "bg-gray-100",
+                "px-4 w-full flex items-center transition-all duration-300",
+                expanded ? "bg-gray-200 py-4" : "bg-gray-100 py-3",
               )}
             >
               <div className="text-xl font-bold tracking-tight leading-none">

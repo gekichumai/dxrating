@@ -388,7 +388,7 @@ export const RatingCalculator = () => {
                             className={clsx(
                               "inline-flex items-center overflow-hidden relative",
                               header.column.getIsSorted() &&
-                                "bg-gray-900/50 text-gray-100 rounded-full",
+                                "bg-gray-900/50 text-zinc-100 rounded-full",
                             )}
                           >
                             <IconMdiArrowDown

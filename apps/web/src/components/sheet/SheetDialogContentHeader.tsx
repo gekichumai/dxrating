@@ -29,7 +29,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
     return (
       <div className="flex flex-col">
         <div className="flex items-start">
-          <div className="text-xs text-gray-400">
+          <div className="text-xs text-zinc-400">
             #{sheet.internalId ?? "?"}
           </div>
 
