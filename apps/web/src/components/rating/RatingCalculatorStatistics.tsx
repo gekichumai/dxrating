@@ -176,7 +176,7 @@ const Histogram: FC<{
 
   const draw = () => {
     // set the dimensions and margins of the graph
-    const margin = { top: 20, right: 10, bottom: 20, left: 20 },
+    const margin = { top: 20, right: 10, bottom: 20, left: 25 },
       width = containerRect.width - margin.left - margin.right,
       height = 300 - margin.top - margin.bottom;
 
@@ -213,9 +213,6 @@ const Histogram: FC<{
     // Create the histogram bins for both datasets
     const histogram = d3
       .histogram()
-      .value(function (d) {
-        return d;
-      })
       .domain(x.domain() as [number, number])
       .thresholds(x.ticks((max - min) / ticksIntervalRatio));
 
@@ -235,8 +232,16 @@ const Histogram: FC<{
       .scaleLinear()
       .range([height, 0])
       .domain([0, d3.max(bins, (d) => d.y2) ?? 0]); // Use the max of y2 to include stacked height
-
-    svg.append("g").call(d3.axisLeft(y));
+    svg.append("g").call(
+      d3.axisLeft(y).tickFormat((d) => {
+        if (typeof d !== "number") return "";
+        if (d % 1 == 0) {
+          return (d as number).toFixed(0);
+        } else {
+          return "";
+        }
+      }),
+    );
 
     // Draw bars for b15Values
     svg
@@ -353,7 +358,6 @@ export const RatingCalculatorStatistics: FC = () => {
     const listener = () => {
       const scrollX = scrollContainerRef.current?.scrollLeft ?? 0;
       const scrollPercentage = scrollX / containerRect.width;
-      console.log(scrollPercentage, scrollX, containerRect.width);
 
       if (scrollPercentage < 0.01) {
         setTab("overview");
@@ -403,12 +407,12 @@ export const RatingCalculatorStatistics: FC = () => {
       >
         <RatingCalculatorStatisticsOverview
           ref={firstItemRef}
-          className="shrink-0 snap-end"
+          className="shrink-0 snap-end overflow-hidden"
           style={{ width: containerRect.width }}
         />
         <RatingCalculatorStatisticsDetails
           ref={lastItemRef}
-          className="shrink-0 snap-end"
+          className="shrink-0 snap-end overflow-hidden"
           style={{ width: containerRect.width }}
         />
       </motion.div>
