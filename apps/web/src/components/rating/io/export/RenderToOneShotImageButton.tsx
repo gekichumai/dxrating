@@ -12,6 +12,10 @@ import useSWR from "swr";
 import IconMdiImage from "~icons/mdi/image";
 import { useRatingCalculatorContext } from "../../../../models/RatingCalculatorContext";
 import { useAppContextDXDataVersion } from "../../../../models/context/useAppContext";
+import {
+  RatingCalculatorEntry,
+  useRatingEntries,
+} from "../../useRatingEntries";
 
 const useElapsedTime = (isLoading: boolean) => {
   const startTime = useRef<number | null>(null);
@@ -43,12 +47,20 @@ const useElapsedTime = (isLoading: boolean) => {
   return elapsedTime;
 };
 
+const mapCalculatedEntries = (entry: RatingCalculatorEntry) => {
+  return {
+    sheetId: entry.sheet.id,
+    achievementRate: entry.achievementRate,
+  };
+};
+
 const RenderToOneShotImageDialogContent = () => {
-  const { entries } = useRatingCalculatorContext();
+  const { b15Entries, b35Entries, allEntries } = useRatingEntries();
   const version = useAppContextDXDataVersion();
+
   const { data, isValidating, error } = useSWR(
-    `miruku::functions/oneshot-renderer/v0?pixelated=1&data=${JSON.stringify(
-      entries,
+    `miruku::functions/oneshot-renderer?data=${JSON.stringify(
+      allEntries,
     )}&version=${version}`,
     async () => {
       const response = await fetch(
@@ -60,7 +72,10 @@ const RenderToOneShotImageDialogContent = () => {
           },
           body: JSON.stringify({
             version,
-            entries,
+            calculatedEntries: {
+              b15: b15Entries.map(mapCalculatedEntries),
+              b35: b35Entries.map(mapCalculatedEntries),
+            },
           }),
         },
       );
