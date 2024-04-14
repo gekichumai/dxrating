@@ -101,33 +101,57 @@ type FlattenedSheet = Song &
     releaseDateTimestamp: number;
   };
 
-const getData = (
+const enrichEntries = (
+  entries: { sheetId: string; achievementRate: number }[],
+  version: VersionEnum
+) => {
+  return entries.flatMap((entry) => {
+    const sheet = flattenedSheets.get(version)?.get(entry.sheetId);
+    if (!sheet) {
+      return [];
+    }
+    return [
+      {
+        sheet,
+        achievementRate: entry.achievementRate,
+        rating: sheet
+          ? calculateRating(
+              sheet.internalLevelValue ?? 0,
+              entry.achievementRate
+            )
+          : undefined,
+      },
+    ];
+  });
+};
+
+const prepareCalculatedEntries = (
+  calculatedEntries: {
+    b15: { sheetId: string; achievementRate: number }[];
+    b35: { sheetId: string; achievementRate: number }[];
+  },
+  version: VersionEnum
+): { b15: RenderData[]; b35: RenderData[] } => {
+  return {
+    b15: enrichEntries(calculatedEntries.b15, version).filter(
+      (entry) => entry.sheet && entry.rating
+    ) as RenderData[],
+    b35: enrichEntries(calculatedEntries.b35, version).filter(
+      (entry) => entry.sheet && entry.rating
+    ) as RenderData[],
+  };
+};
+
+const calculateEntries = (
   entries: {
     sheetId: string;
     achievementRate: number;
   }[],
   version: VersionEnum
 ): { b15: RenderData[]; b35: RenderData[] } => {
-  const mapped = entries
-    .flatMap((entry) => {
-      const sheet = flattenedSheets.get(version)?.get(entry.sheetId);
-      if (!sheet) {
-        return [];
-      }
-      return [
-        {
-          sheet,
-          achievementRate: entry.achievementRate,
-          rating: sheet
-            ? calculateRating(
-                sheet.internalLevelValue ?? 0,
-                entry.achievementRate
-              )
-            : undefined,
-        },
-      ];
-    })
-    .filter((entry) => entry.sheet && entry.rating) as RenderData[];
+  const mapped = enrichEntries(entries, version).filter(
+    (entry) => entry.sheet && entry.rating
+  ) as RenderData[];
 
   const b15 = mapped
     .filter((entry) => entry.sheet.version === version)
@@ -197,7 +221,9 @@ export const handler = async (ctx: Koa.Context) => {
   timer.stop("font");
 
   timer.start("calc");
-  const data = getData(body.entries, version);
+  const data = body.calculatedEntries
+    ? prepareCalculatedEntries(body.calculatedEntries, version)
+    : calculateEntries(body.entries, version);
   timer.stop("calc");
 
   timer.start("jsx");
