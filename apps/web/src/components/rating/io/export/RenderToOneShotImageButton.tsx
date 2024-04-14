@@ -85,7 +85,7 @@ const RenderToOneShotImageDialogContent = () => {
         <DialogContentText>
           {isValidating ? (
             <div className="flex flex-col relative">
-              <div className="aspect-[3/2] w-full bg-gray-300 rounded-md animate-pulse" />
+              <div className="aspect-[1500/1100] w-full bg-gray-300 rounded-md animate-pulse" />
 
               <div className="absolute inset-0 flex flex-col gap-1 items-center justify-center p-4">
                 <CircularProgress />
