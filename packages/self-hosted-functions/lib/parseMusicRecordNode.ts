@@ -33,14 +33,18 @@ export function parseMusicRecordNode(record: Element): MusicRecord[] {
 
   (() => {
     if (
-      el.querySelector(".music_kind_icon_dx")?.className?.includes("_btn_on")
+      el
+        .querySelector(".music_kind_icon_dx")
+        ?.attributes.getNamedItem("class")
+        ?.value.includes("_btn_on")
     ) {
       type = "dx";
     }
     if (
       el
         .querySelector(".music_kind_icon_standard")
-        ?.className?.includes("_btn_on")
+        ?.attributes.getNamedItem("class")
+        ?.value.includes("_btn_on")
     ) {
       type = "standard";
     }
