@@ -7,6 +7,9 @@ import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
 import { MusicRecord, RecentRecord } from "./ImportFromNETRecordsListItem";
 
 import { fetchEventSource } from "@microsoft/fetch-event-source";
+import { CircularProgress } from "@mui/material";
+import IconMdiCheck from "~icons/mdi/check";
+import IconMdiClose from "~icons/mdi/close";
 
 export type FetchNetRecordProgressState =
   | "ready"
@@ -66,7 +69,6 @@ const fetchNetRecords = async (
           }
 
           if (event === "progress") {
-            console.log("progress", message);
             const { state } = JSON.parse(message.data) as {
               state: FetchNetRecordProgressState;
             };
@@ -106,7 +108,9 @@ export const importFromNETRecords = async (
   modifyEntries: ListActions<PlayEntry>,
   onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
 ) => {
-  const toastId = toast.loading("Importing records from NET...");
+  const toastId = toast.loading("Importing records from NET...", {
+    icon: <CircularProgress size="1rem" thickness={5} />,
+  });
   try {
     const stored = localStorage.getItem("import-net-records");
     if (!stored) {
@@ -120,7 +124,28 @@ export const importFromNETRecords = async (
     const { region, username, password } = parsed;
     const data = await fetchNetRecords(
       { region, username, password },
-      onProgress,
+      (state, progress) => {
+        onProgress?.(state, progress);
+        toast.loading(
+          <div className="flex flex-col items-start min-w-[16rem]">
+            <div className="font-bold">Importing records from NET...</div>
+            <div className="font-mono text-xs font-light text-zinc-500">
+              {state}
+            </div>
+          </div>,
+          {
+            id: toastId,
+            icon: (
+              <CircularProgress
+                variant="determinate"
+                value={progress * 100}
+                size="1rem"
+                thickness={5}
+              />
+            ),
+          },
+        );
+      },
     );
     const entries = data.music
       .filter((entry) => {
@@ -180,14 +205,19 @@ export const importFromNETRecords = async (
       </div>,
       {
         id: toastId,
-        duration: 30000,
+        icon: <IconMdiCheck className="h-4 w-4 text-green-5" />,
+        duration: 20000,
       },
     );
   } catch (error) {
     toast.error(
       "Error occurred while importing records from NET: " +
         formatErrorMessage(error),
-      { id: toastId },
+      {
+        id: toastId,
+        icon: <IconMdiClose className="h-4 w-4 text-red-5" />,
+        duration: 20000,
+      },
     );
   }
 };

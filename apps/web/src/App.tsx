@@ -1,5 +1,5 @@
 import { CircularProgress, Tab, Tabs } from "@mui/material";
-import { useCallback, useEffect, useTransition } from "react";
+import { Suspense, useCallback, useEffect, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useEffectOnce, useLocalStorage } from "react-use";
 
@@ -15,6 +15,12 @@ const APP_TABS_VALUES = ["search", "rating"] as const;
 type AppTabsValuesType = (typeof APP_TABS_VALUES)[number];
 
 const DEFAULT_TAB = "search" as AppTabsValuesType;
+
+const fallbackElement = (
+  <div className="flex items-center justify-center h-50% w-full p-6">
+    <CircularProgress size="2rem" disableShrink />
+  </div>
+);
 
 export const App = () => {
   const { t, i18n } = useTranslation(["root"]);
@@ -115,17 +121,15 @@ export const App = () => {
             ))}
           </Tabs>
         </div>
-        {isPending ? (
-          <div className="flex items-center justify-center h-50% w-full p-6">
-            <CircularProgress size="2rem" disableShrink />
-          </div>
-        ) : (
-          {
-            search: <SheetList />,
-            // recent: <RecentPage />,
-            rating: <RatingCalculator />,
-          }[tab ?? DEFAULT_TAB]
-        )}
+        <Suspense fallback={fallbackElement}>
+          {isPending
+            ? fallbackElement
+            : {
+                search: <SheetList />,
+                // recent: <RecentPage />,
+                rating: <RatingCalculator />,
+              }[tab ?? DEFAULT_TAB]}
+        </Suspense>
       </div>
     </div>
   );

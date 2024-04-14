@@ -75,9 +75,12 @@ export const getFlattenedSheets = async (
 export const useSheets = () => {
   const { version } = useAppContext();
   const appVersion = useAppContextDXDataVersion();
-  const { data: combinedTags, isLoading } = useCombinedTags();
+  const { data: combinedTags, isLoading: loadingCombinedTags } =
+    useCombinedTags();
   return useSWR(
-    isLoading ? false : `dxdata::sheets::${version}?${Boolean(combinedTags)}`,
+    loadingCombinedTags
+      ? false
+      : `dxdata::sheets::${version}?${Boolean(combinedTags)}`,
     async () => {
       const sheets = await getFlattenedSheets(appVersion);
 
@@ -105,6 +108,7 @@ export const useSheets = () => {
         tags: map.get(sheet.id) ?? [],
       }));
     },
+    { suspense: false },
   );
 };
 

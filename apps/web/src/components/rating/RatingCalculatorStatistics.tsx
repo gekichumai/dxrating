@@ -234,6 +234,7 @@ const Histogram: FC<{
       .scaleLinear()
       .range([height, 0])
       .domain([0, d3.max(bins, (d) => d.y2) ?? 0]); // Use the max of y2 to include stacked height
+
     svg.append("g").call(
       d3.axisLeft(y).tickFormat((d) => {
         if (typeof d !== "number") return "";
@@ -255,7 +256,7 @@ const Histogram: FC<{
         "x",
         (d) => x(d.x0 ?? 0) - Math.max(0, x(d.x1 ?? 0) - x(d.x0 ?? 0) - 1) / 2,
       )
-      .attr("y", (d) => y(d.y1))
+      .attr("y", (d) => y(d.y1) - 0.5)
       .attr("width", (d) => Math.max(0, x(d.x1 ?? 0) - x(d.x0 ?? 0) - 1))
       .attr("height", (d) => Math.max(0, height - y(d.y1)))
       .style("fill", "#3b82f6");
@@ -270,7 +271,7 @@ const Histogram: FC<{
         "x",
         (d) => x(d.x0 ?? 0) - Math.max(0, x(d.x1 ?? 0) - x(d.x0 ?? 0) - 1) / 2,
       )
-      .attr("y", (d) => y(d.y2))
+      .attr("y", (d) => y(d.y2) - 0.5)
       .attr("width", (d) => Math.max(0, x(d.x1 ?? 0) - x(d.x0 ?? 0) - 1))
       .attr("height", (d) => Math.max(0, y(d.y1) - y(d.y2)))
       .style("fill", theme.accentColor);

@@ -75,6 +75,7 @@ export const applySheetSortFilterFormPatches = (
   if (alreadySaved.filters.tags === undefined) {
     alreadySaved.filters.tags = [];
   }
+
   if (alreadySaved.filters.categories === undefined) {
     alreadySaved.filters.categories = Object.values(CategoryEnum);
   }
@@ -120,7 +121,7 @@ export const SheetSortFilter: FC<{
   return (
     <FormProvider {...methods}>
       <SheetSortFilterFormListener onChange={onChange} />
-      <SheetSortFilterForm />
+      <SheetSortFilterFormContent />
     </FormProvider>
   );
 };
@@ -199,7 +200,7 @@ const SheetSortFilterFormReset: FC<{
   );
 };
 
-const SheetSortFilterForm = () => {
+const SheetSortFilterFormContent = () => {
   const { t } = useTranslation(["sheet"]);
   const { queryActive } = useContext(SheetDetailsContext);
   const { control, reset } = useFormContext<SheetSortFilterForm>();

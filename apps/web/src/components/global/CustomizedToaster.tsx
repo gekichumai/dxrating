@@ -1,5 +1,7 @@
+import { IconButton } from "@mui/material";
 import { FC } from "react";
-import { Toaster } from "react-hot-toast";
+import toast, { ToastBar, Toaster } from "react-hot-toast";
+import IconMdiClose from "~icons/mdi/close";
 
 export const CustomizedToaster: FC = () => {
   return (
@@ -16,6 +18,22 @@ export const CustomizedToaster: FC = () => {
       containerStyle={{
         marginTop: "calc(env(safe-area-inset-top) + 1rem)",
       }}
-    />
+    >
+      {(t) => (
+        <ToastBar toast={t}>
+          {({ icon, message }) => (
+            <>
+              {icon}
+              {message}
+              {t.type !== "loading" && (
+                <IconButton size="small" onClick={() => toast.dismiss(t.id)}>
+                  <IconMdiClose />
+                </IconButton>
+              )}
+            </>
+          )}
+        </ToastBar>
+      )}
+    </Toaster>
   );
 };

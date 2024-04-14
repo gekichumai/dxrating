@@ -106,7 +106,7 @@ const Profile: FC<{
 const ProfileImage: FC<{
   email?: string;
   size?: string;
-}> = ({ email, size = "1.5rem" }) => {
+}> = ({ email, size = "2rem" }) => {
   const gravatarEmailHash = useAsync(async () => {
     const e = email?.trim().toLowerCase();
     if (!e) return "";
@@ -115,7 +115,7 @@ const ProfileImage: FC<{
 
   return gravatarEmailHash.loading ? (
     <div
-      className="shrink-0 rounded-full bg-gray-4"
+      className="shrink-0 rounded-full bg-gray-4 shadow"
       style={{ width: size, height: size }}
     />
   ) : (
@@ -123,7 +123,7 @@ const ProfileImage: FC<{
       src={`https://gravatar.com/avatar/${gravatarEmailHash.value}?s=48&d=identicon`}
       srcSet={`https://gravatar.com/avatar/${gravatarEmailHash.value}?s=96&d=identicon 2x`}
       alt="Gravatar"
-      className="shrink-0 rounded-full bg-gray-4"
+      className="shrink-0 rounded-full bg-gray-4 shadow"
       style={{
         width: size,
         height: size,

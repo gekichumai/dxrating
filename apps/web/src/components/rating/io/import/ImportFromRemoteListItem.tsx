@@ -290,7 +290,7 @@ const ImportFromRemoteContent: FC<{
                 </ListItemAvatar>
                 <ListItemText className="flex flex-col">
                   <div>{user.userName}</div>
-                  <div className={clsx("tabular-nums font-mono leading-none")}>
+                  <div className={clsx("tabular-nums leading-none")}>
                     Rating{" "}
                     <span
                       className={clsx(

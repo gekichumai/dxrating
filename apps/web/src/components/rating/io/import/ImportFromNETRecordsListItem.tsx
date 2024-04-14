@@ -310,7 +310,7 @@ const ImportFromNETRecordsDialogContent: FC<{
               .
             </p>
 
-            <p>
+            <p className="text-xs text-zinc-4">
               We are also in the progress of employing the{" "}
               <a
                 href="https://slsa.dev/"

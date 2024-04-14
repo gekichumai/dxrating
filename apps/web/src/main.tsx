@@ -17,7 +17,6 @@ import * as Sentry from "@sentry/react";
 import { browserTracingIntegration } from "@sentry/react";
 import { SupabaseIntegration } from "@supabase/sentry-js-integration";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Geiger } from "react-geiger";
 import { SideEffector } from "./components/global/SideEffector";
 import { RatingCalculatorContextProvider } from "./models/RatingCalculatorContext";
 import { BUNDLE } from "./utils/bundle";
@@ -78,6 +77,7 @@ Sentry.init({
     "vivoNewsDetailPage",
     "removeAD",
     "ucbrowser",
+    "__gCrWeb",
     /// END
   ],
   denyUrls: [
@@ -156,9 +156,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <RatingCalculatorContextProvider>
           <SideEffector />
           <CustomizedToaster />
-          <Geiger renderTimeThreshold={10}>
-            <App />
-          </Geiger>
+          <App />
         </RatingCalculatorContextProvider>
       </VersionCustomizedThemeProvider>
     </AppContextProvider>

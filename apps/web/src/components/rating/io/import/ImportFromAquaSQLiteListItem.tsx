@@ -36,6 +36,7 @@ import { SheetListItemContent } from "../../../sheet/SheetListItem";
 import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
 
 import IconMdiDatabase from "~icons/mdi/database";
+import { formatErrorMessage } from "../../../../utils/formatErrorMessage";
 import { FadedImage } from "../../../global/FadedImage";
 
 export const ImportFromAquaSQLiteListItem: FC<{
@@ -111,6 +112,9 @@ export const ImportFromAquaSQLiteListItem: FC<{
               fileInput.addEventListener("change", () => {
                 onChange();
               });
+              fileInput.addEventListener("cancel", () => {
+                reject("User cancelled file selection");
+              });
               fileInput.click();
             }),
             {
@@ -150,7 +154,18 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
   modifyEntries: ListActions<PlayEntry>;
   onClose?: () => void;
 }> = ({ db, modifyEntries, onClose }) => {
-  const users = useMemo(() => readAquaUsers(db), [db]);
+  const users = useMemo(() => {
+    try {
+      return readAquaUsers(db);
+    } catch (e) {
+      toast.error(
+        "Failed to read users from Aqua SQLite database: " +
+          formatErrorMessage(e),
+      );
+      console.error("Failed to read users from Aqua SQLite database", e);
+      return [];
+    }
+  }, [db]);
   const [selectedUser, setSelectedUser] = useState<AquaUser | null>(null);
   const { data: sheets } = useSheets();
   const [warnings, setWarnings] = useState<AquaGamePlay[]>([]);

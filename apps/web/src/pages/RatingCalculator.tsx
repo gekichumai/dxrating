@@ -278,14 +278,14 @@ export const RatingCalculator = () => {
         <Alert
           icon={false}
           severity="info"
-          className="w-full px-4 py-2"
+          className="px-4 py-2 w-full md:w-2/3"
           classes={{ message: "w-full" }}
         >
           <AlertTitle className="font-bold">Rating Breakdown</AlertTitle>
           <RatingCalculatorStatistics />
         </Alert>
 
-        <div className="flex flex-col gap-4 h-full self-stretch">
+        <div className="flex flex-col gap-4 h-full self-stretch w-full md:w-1/3">
           <Alert
             icon={false}
             severity="info"
