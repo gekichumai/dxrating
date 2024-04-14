@@ -29,11 +29,17 @@ export interface Tag {
 }
 
 export const useCombinedTags = () => {
-  return useSWR("supabase::functions::combined-tags", async () => {
-    const { data, error } = await supabase.functions.invoke("combined-tags");
-    if (error) {
-      throw error;
-    }
-    return data as CombinedTags;
-  });
+  return useSWR(
+    "supabase::functions::combined-tags",
+    async () => {
+      const { data, error } = await supabase.functions.invoke("combined-tags");
+      if (error) {
+        throw error;
+      }
+      return data as CombinedTags;
+    },
+    {
+      focusThrottleInterval: 1000 * 60 * 60,
+    },
+  );
 };
