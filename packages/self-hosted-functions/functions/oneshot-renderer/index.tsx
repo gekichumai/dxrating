@@ -132,7 +132,7 @@ const prepareCalculatedEntries = (
   },
   version: VersionEnum
 ): { b15: RenderData[]; b35: RenderData[] } => {
-  return {
+  const prepared = {
     b15: enrichEntries(calculatedEntries.b15, version).filter(
       (entry) => entry.sheet && entry.rating
     ) as RenderData[],
@@ -140,6 +140,16 @@ const prepareCalculatedEntries = (
       (entry) => entry.sheet && entry.rating
     ) as RenderData[],
   };
+
+  prepared.b15.sort((a, b) => {
+    return b.rating.ratingAwardValue - a.rating.ratingAwardValue;
+  });
+
+  prepared.b35.sort((a, b) => {
+    return b.rating.ratingAwardValue - a.rating.ratingAwardValue;
+  });
+
+  return prepared;
 };
 
 const calculateEntries = (
