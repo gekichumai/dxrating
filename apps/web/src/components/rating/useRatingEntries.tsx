@@ -57,7 +57,6 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
     const calculated = entries.flatMap((entry) => {
       const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId);
       if (!sheet) {
-        console.warn(`Chart ${entry.sheetId} not found`);
         return [];
       }
 

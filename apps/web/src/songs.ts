@@ -77,7 +77,7 @@ export const useSheets = () => {
   const appVersion = useAppContextDXDataVersion();
   const { data: combinedTags, isLoading } = useCombinedTags();
   return useSWR(
-    `dxdata::sheets::${version}?${isLoading}?${Boolean(combinedTags)}`,
+    isLoading ? false : `dxdata::sheets::${version}?${Boolean(combinedTags)}`,
     async () => {
       const sheets = await getFlattenedSheets(appVersion);
 
