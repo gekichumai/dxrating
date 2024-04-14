@@ -31,6 +31,15 @@ export function parseMusicRecordNode(record: Element): MusicRecord[] {
     ?.attributes.getNamedItem("src");
   let type = typeIcon?.value.match(/music_(standard|dx)\.png/)?.[1];
 
+  (() => {
+    if (el.querySelector(".music_kind_icon_dx")) {
+      type = "dx";
+    }
+    if (el.querySelector(".music_kind_icon_standard")) {
+      type = "standard";
+    }
+  })();
+
   const difficultyIcon = el
     .querySelector(".h_20.f_l")
     ?.attributes.getNamedItem("src");
