@@ -32,10 +32,16 @@ export function parseMusicRecordNode(record: Element): MusicRecord[] {
   let type = typeIcon?.value.match(/music_(standard|dx)\.png/)?.[1];
 
   (() => {
-    if (el.querySelector(".music_master_btn_on.music_kind_icon_dx")) {
+    if (
+      el.querySelector(".music_kind_icon_dx")?.className.includes("_btn_on")
+    ) {
       type = "dx";
     }
-    if (el.querySelector(".music_master_btn_on.music_kind_icon_standard")) {
+    if (
+      el
+        .querySelector(".music_kind_icon_standard")
+        ?.className.includes("_btn_on")
+    ) {
       type = "standard";
     }
   })();
