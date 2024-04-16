@@ -21,7 +21,6 @@
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
     "@gekichumai/dxdata": "*",
-    "@gekichumai/oneshot": "*",
     "@microsoft/fetch-event-source": "^2.0.1",
     "@mui/material": "^5.14.13",
     "@radix-ui/react-collapsible": "^1.0.3",
