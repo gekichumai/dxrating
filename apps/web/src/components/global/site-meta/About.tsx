@@ -73,14 +73,6 @@ export const About = () => {
 
             <ul className="flex flex-col gap-1.5">
               <AboutLink
-                href="https://github.com/GalvinGao"
-                startAdornment={<MdiGithub />}
-                label={t("about:author")}
-              >
-                @GalvinGao
-              </AboutLink>
-
-              <AboutLink
                 href="https://github.com/gekichumai/dxrating"
                 startAdornment={<MdiGithub />}
                 label={t("about:source-code")}
