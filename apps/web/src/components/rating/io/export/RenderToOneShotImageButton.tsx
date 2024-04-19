@@ -10,7 +10,6 @@ import {
 import { FC, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import IconMdiImage from "~icons/mdi/image";
-import { useRatingCalculatorContext } from "../../../../models/RatingCalculatorContext";
 import { useAppContextDXDataVersion } from "../../../../models/context/useAppContext";
 import {
   RatingCalculatorEntry,
