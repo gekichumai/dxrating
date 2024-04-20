@@ -1,6 +1,6 @@
 import { FC, memo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useRatingCalculatorContext } from "../../models/RatingCalculatorContext";
+import { useRatingCalculatorContext } from "../../models/context/RatingCalculatorContext";
 import { useSheets } from "../../songs";
 import { useVersionTheme } from "../../utils/useVersionTheme";
 import { importFromNETRecords } from "../rating/io/import/importFromNETRecords";

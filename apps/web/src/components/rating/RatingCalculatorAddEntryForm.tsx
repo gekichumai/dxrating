@@ -22,7 +22,7 @@ import {
 import { Virtuoso } from "react-virtuoso";
 import IconMdiReplace from "~icons/mdi/find-replace";
 import IconMdiPlus from "~icons/mdi/plus";
-import { useRatingCalculatorContext } from "../../models/RatingCalculatorContext";
+import { useRatingCalculatorContext } from "../../models/context/RatingCalculatorContext";
 import {
   FlattenedSheet,
   formatSheetToString,

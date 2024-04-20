@@ -18,7 +18,7 @@ import { browserTracingIntegration } from "@sentry/react";
 import { SupabaseIntegration } from "@supabase/sentry-js-integration";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { SideEffector } from "./components/global/SideEffector";
-import { RatingCalculatorContextProvider } from "./models/RatingCalculatorContext";
+import { RatingCalculatorContextProvider } from "./models/context/RatingCalculatorContext";
 import { BUNDLE } from "./utils/bundle";
 
 Sentry.init({

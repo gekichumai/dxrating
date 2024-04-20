@@ -7,7 +7,7 @@ import {
 } from "react";
 import { useList, useLocalStorage } from "react-use";
 import { ListActions } from "react-use/lib/useList";
-import { PlayEntry } from "../components/rating/RatingCalculatorAddEntryForm";
+import { PlayEntry } from "../../components/rating/RatingCalculatorAddEntryForm";
 
 export interface RatingCalculatorContext {
   entries: PlayEntry[];

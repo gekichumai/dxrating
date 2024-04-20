@@ -1,6 +1,6 @@
 import { VERSION_ID_MAP, VersionEnum } from "@gekichumai/dxdata";
 import { useMemo } from "react";
-import { useRatingCalculatorContext } from "../../models/RatingCalculatorContext";
+import { useRatingCalculatorContext } from "../../models/context/RatingCalculatorContext";
 import { Region } from "../../models/context/AppContext";
 import {
   useAppContext,

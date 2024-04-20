@@ -64,7 +64,7 @@ import {
   SheetListItem,
   SheetListItemContent,
 } from "../components/sheet/SheetListItem";
-import { useRatingCalculatorContext } from "../models/RatingCalculatorContext";
+import { useRatingCalculatorContext } from "../models/context/RatingCalculatorContext";
 import { FlattenedSheet, useSheets } from "../songs";
 import { Rating } from "../utils/rating";
 

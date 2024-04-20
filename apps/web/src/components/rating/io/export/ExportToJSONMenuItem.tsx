@@ -2,7 +2,7 @@ import { ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import { FC } from "react";
 import toast from "react-hot-toast";
 import IconMdiFile from "~icons/mdi/file";
-import { useRatingCalculatorContext } from "../../../../models/RatingCalculatorContext";
+import { useRatingCalculatorContext } from "../../../../models/context/RatingCalculatorContext";
 import {
   RatingCalculatorEntry,
   useRatingEntries,
