@@ -1,8 +1,9 @@
+import compact from "lodash-es/compact";
 import { useMemo } from "react";
+
+import { useCombinedTags } from "../../../models/useCombinedTags";
 import { FlattenedSheet } from "../../../songs";
 
-import compact from "lodash-es/compact";
-import { useCombinedTags } from "../../../models/useCombinedTags";
 
 export const useSheetTags = (sheet: FlattenedSheet) => {
   const response = useCombinedTags();

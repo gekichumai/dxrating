@@ -20,8 +20,7 @@ import {
   useState,
 } from "react";
 import { Virtuoso } from "react-virtuoso";
-import IconMdiReplace from "~icons/mdi/find-replace";
-import IconMdiPlus from "~icons/mdi/plus";
+
 import { useRatingCalculatorContext } from "../../models/context/RatingCalculatorContext";
 import {
   FlattenedSheet,
@@ -31,6 +30,9 @@ import {
 } from "../../songs";
 import { calculateRating } from "../../utils/rating";
 import { SheetListItemContent } from "../sheet/SheetListItem";
+
+import IconMdiReplace from "~icons/mdi/find-replace";
+import IconMdiPlus from "~icons/mdi/plus";
 
 export interface PlayEntry {
   sheetId: string;

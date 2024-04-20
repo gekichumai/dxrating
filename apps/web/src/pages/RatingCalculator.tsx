@@ -47,18 +47,17 @@ import {
   TableProps,
   TableVirtuoso,
 } from "react-virtuoso";
-import IconMdiArrowDown from "~icons/mdi/arrow-down";
-import IconMdiTrashCan from "~icons/mdi/trash-can";
+
 import { BetaBadge } from "../components/global/BetaBadge";
+import { ClearButton } from "../components/rating/io/ClearButton";
+import { RenderToOneShotImageButton } from "../components/rating/io/export/RenderToOneShotImageButton";
+import { ExportMenu } from "../components/rating/io/ExportMenu";
+import { ImportMenu } from "../components/rating/io/ImportMenu";
 import {
   PlayEntry,
   RatingCalculatorAddEntryForm,
 } from "../components/rating/RatingCalculatorAddEntryForm";
 import { RatingCalculatorStatistics } from "../components/rating/RatingCalculatorStatistics";
-import { ClearButton } from "../components/rating/io/ClearButton";
-import { ExportMenu } from "../components/rating/io/ExportMenu";
-import { ImportMenu } from "../components/rating/io/ImportMenu";
-import { RenderToOneShotImageButton } from "../components/rating/io/export/RenderToOneShotImageButton";
 import { useRatingEntries } from "../components/rating/useRatingEntries";
 import {
   SheetListItem,
@@ -67,6 +66,9 @@ import {
 import { useRatingCalculatorContext } from "../models/context/RatingCalculatorContext";
 import { FlattenedSheet, useSheets } from "../songs";
 import { Rating } from "../utils/rating";
+
+import IconMdiArrowDown from "~icons/mdi/arrow-down";
+import IconMdiTrashCan from "~icons/mdi/trash-can";
 
 export interface Entry {
   sheet: FlattenedSheet;

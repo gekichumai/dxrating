@@ -9,16 +9,19 @@ import clsx from "clsx";
 import { FC, HTMLAttributes, ImgHTMLAttributes, memo, useState } from "react";
 import toast from "react-hot-toast";
 import { match } from "ts-pattern";
-import MdiComment from "~icons/mdi/comment";
+
 import { DIFFICULTIES } from "../../models/difficulties";
 import { FlattenedSheet } from "../../songs";
 import { useIsLargeDevice } from "../../utils/breakpoints";
 import { FadedImage } from "../global/FadedImage";
 import { ResponsiveDialog } from "../global/ResponsiveDialog";
+
 import {
   SheetDialogContent,
   SheetDialogContentProps,
 } from "./SheetDialogContent";
+
+import MdiComment from "~icons/mdi/comment";
 
 export const SheetListItem: FC<{
   size?: "small" | "medium";

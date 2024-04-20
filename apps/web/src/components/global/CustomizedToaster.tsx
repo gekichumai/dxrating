@@ -1,6 +1,7 @@
 import { IconButton } from "@mui/material";
 import { FC } from "react";
 import toast, { ToastBar, Toaster } from "react-hot-toast";
+
 import IconMdiClose from "~icons/mdi/close";
 
 export const CustomizedToaster: FC = () => {

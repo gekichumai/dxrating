@@ -7,9 +7,11 @@ import {
   useController,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { TouchDeviceGuard } from "../../global/TouchDeviceGuard";
+
 import { useControllerRulePresets } from "../../global/form/useControllerRulePresets";
+import { TouchDeviceGuard } from "../../global/TouchDeviceGuard";
 import { SheetSortFilterForm } from "../SheetSortFilter";
+
 import { FloatValueInputField } from "./FloatValueInputField";
 import { SheetFilterInternalLevelInputLongPressSlider } from "./SheetFilterLevelInputLongPressSlider";
 import { SheetFilterSection } from "./SheetFilterSection";

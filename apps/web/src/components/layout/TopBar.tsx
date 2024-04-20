@@ -1,7 +1,7 @@
 import { IconButton } from "@mui/material";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import MdiShareVariant from "~icons/mdi/share-variant";
+
 import { BUNDLE } from "../../utils/bundle";
 import { useTime } from "../../utils/useTime";
 import { useVersionTheme } from "../../utils/useVersionTheme";
@@ -9,6 +9,8 @@ import { Logo } from "../global/Logo";
 import { LocaleSelector } from "../global/preferences/LocaleSelector";
 import { UserChip } from "../global/preferences/UserChip";
 import { About } from "../global/site-meta/About";
+
+import MdiShareVariant from "~icons/mdi/share-variant";
 
 export const TopBar = () => {
   const updateTime = useTime(BUNDLE.buildTime, "short");

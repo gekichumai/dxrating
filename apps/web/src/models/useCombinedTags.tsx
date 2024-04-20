@@ -1,4 +1,5 @@
 import useSWR from "swr";
+
 import { supabase } from "./supabase";
 import { Json } from "./supabase.types";
 

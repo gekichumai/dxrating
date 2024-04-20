@@ -1,21 +1,23 @@
 import { Chip, Dialog, Grow } from "@mui/material";
+import clsx from "clsx";
 import { FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import useSWR from "swr";
-import IconMdiTagPlus from "~icons/mdi/tag-plus";
+
 import { supabase } from "../../../models/supabase";
 import { FlattenedSheet } from "../../../songs";
+import { deriveColor } from "../../../utils/color";
 import { formatErrorMessage } from "../../../utils/formatErrorMessage";
 import { MotionButtonBase, MotionTooltip } from "../../../utils/motion";
 import { zoomTransitions } from "../../../utils/motionConstants";
 import { useLocalizedMessageTranslation } from "../../../utils/useLocalizedMessageTranslation";
 import { Markdown } from "../../global/Markdown";
 import { SheetListItemContent } from "../SheetListItem";
+
 import { useSheetTags } from "./useSheetTags";
 
-import clsx from "clsx";
-import { deriveColor } from "../../../utils/color";
+import IconMdiTagPlus from "~icons/mdi/tag-plus";
 
 const SheetTagsAddDialog: FC<{
   sheet: FlattenedSheet;

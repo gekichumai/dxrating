@@ -1,23 +1,22 @@
-import "@unocss/reset/tailwind-compat.css";
-import LanguageDetector from "i18next-browser-languagedetector";
-import React from "react";
-import ReactDOM from "react-dom/client";
-import "virtual:uno.css";
-import { App } from "./App";
-import { CustomizedToaster } from "./components/global/CustomizedToaster";
-import { VersionCustomizedThemeProvider } from "./components/layout/VersionCustomizedThemeProvider";
-import "./index.css";
-import { AppContextProvider } from "./models/context/AppContext";
-
-import i18n from "i18next";
-import { initReactI18next } from "react-i18next";
-import { i18nResources } from "./locales/locales";
-
 import * as Sentry from "@sentry/react";
 import { browserTracingIntegration } from "@sentry/react";
 import { SupabaseIntegration } from "@supabase/sentry-js-integration";
 import { SupabaseClient } from "@supabase/supabase-js";
+import "@unocss/reset/tailwind-compat.css";
+import i18n from "i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { initReactI18next } from "react-i18next";
+import "virtual:uno.css";
+import "./index.css";
+
+import { App } from "./App";
+import { CustomizedToaster } from "./components/global/CustomizedToaster";
 import { SideEffector } from "./components/global/SideEffector";
+import { VersionCustomizedThemeProvider } from "./components/layout/VersionCustomizedThemeProvider";
+import { i18nResources } from "./locales/locales";
+import { AppContextProvider } from "./models/context/AppContext";
 import { RatingCalculatorContextProvider } from "./models/context/RatingCalculatorContext";
 import { BUNDLE } from "./utils/bundle";
 

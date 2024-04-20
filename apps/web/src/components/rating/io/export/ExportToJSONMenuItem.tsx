@@ -1,12 +1,14 @@
 import { ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import { FC } from "react";
 import toast from "react-hot-toast";
-import IconMdiFile from "~icons/mdi/file";
+
 import { useRatingCalculatorContext } from "../../../../models/context/RatingCalculatorContext";
 import {
   RatingCalculatorEntry,
   useRatingEntries,
 } from "../../useRatingEntries";
+
+import IconMdiFile from "~icons/mdi/file";
 
 const saveAsJsonFile = (data: string) => {
   const blob = new Blob([data], { type: "application/json" });

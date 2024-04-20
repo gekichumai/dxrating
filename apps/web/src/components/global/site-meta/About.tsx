@@ -3,13 +3,15 @@ import { IconButton } from "@mui/material";
 import clsx from "clsx";
 import { FC, PropsWithChildren, ReactNode, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+
+import { BUNDLE } from "../../../utils/bundle";
+import { useTime } from "../../../utils/useTime";
+import { ResponsiveDialog } from "../ResponsiveDialog";
+
 import MdiGithub from "~icons/mdi/github";
 import MdiInformation from "~icons/mdi/information";
 import MdiTwitter from "~icons/mdi/twitter";
 import MdiWeb from "~icons/mdi/web";
-import { BUNDLE } from "../../../utils/bundle";
-import { useTime } from "../../../utils/useTime";
-import { ResponsiveDialog } from "../ResponsiveDialog";
 
 const ExternalLink: FC<
   PropsWithChildren<{ href: string; className?: string }>

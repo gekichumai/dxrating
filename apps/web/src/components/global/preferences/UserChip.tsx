@@ -13,13 +13,15 @@ import { FC, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useAsync, useSearchParam } from "react-use";
-import MdiAccountKey from "~icons/mdi/account-key";
-import MdiLogin from "~icons/mdi/login";
-import MdiLogout from "~icons/mdi/logout";
+
 import { supabase } from "../../../models/supabase";
 import { useVersionTheme } from "../../../utils/useVersionTheme";
 import { Logo } from "../Logo";
 import { ResponsiveDialog } from "../ResponsiveDialog";
+
+import MdiAccountKey from "~icons/mdi/account-key";
+import MdiLogin from "~icons/mdi/login";
+import MdiLogout from "~icons/mdi/logout";
 
 const ThemedAuth: FC<{
   view?: ViewType;

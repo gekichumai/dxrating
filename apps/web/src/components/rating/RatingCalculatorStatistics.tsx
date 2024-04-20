@@ -12,11 +12,14 @@ import {
   useState,
 } from "react";
 import { useMeasure } from "react-use";
-import IconMdiGestureSwipeLeft from "~icons/mdi/gesture-swipe-left";
+
 import { deriveColor } from "../../utils/color";
 import { makeId } from "../../utils/random";
 import { useVersionTheme } from "../../utils/useVersionTheme";
+
 import { useRatingEntries } from "./useRatingEntries";
+
+import IconMdiGestureSwipeLeft from "~icons/mdi/gesture-swipe-left";
 
 const RatingCalculatorStatisticsFactItem: FC<{
   size: "lg" | "md";

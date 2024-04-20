@@ -9,6 +9,7 @@ import {
 import Fuse from "fuse.js";
 import { useMemo } from "react";
 import useSWR from "swr";
+
 import {
   useAppContext,
   useAppContextDXDataVersion,

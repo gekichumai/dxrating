@@ -1,4 +1,5 @@
 import clsx from "clsx";
+
 import MdiBeta from "~icons/mdi/beta";
 
 export const BetaBadge = ({ className }: { className?: string }) => (

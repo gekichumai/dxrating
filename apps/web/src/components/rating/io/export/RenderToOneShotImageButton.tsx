@@ -9,12 +9,14 @@ import {
 } from "@mui/material";
 import { FC, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
-import IconMdiImage from "~icons/mdi/image";
+
 import { useAppContextDXDataVersion } from "../../../../models/context/useAppContext";
 import {
   RatingCalculatorEntry,
   useRatingEntries,
 } from "../../useRatingEntries";
+
+import IconMdiImage from "~icons/mdi/image";
 
 const useElapsedTime = (isLoading: boolean) => {
   const startTime = useRef<number | null>(null);

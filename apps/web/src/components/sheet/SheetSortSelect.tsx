@@ -5,16 +5,20 @@ import {
   MenuItem,
   Select,
 } from "@mui/material";
+import { AnimatePresence } from "framer-motion";
 import { FC, useContext, useMemo } from "react";
 import { Control, Controller, useFieldArray } from "react-hook-form";
-import { SheetSortFilterForm, SortPredicate } from "./SheetSortFilter";
-
-import { AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import MdiAdd from "~icons/mdi/add";
-import MdiClose from "~icons/mdi/close";
+
 import { SheetDetailsContext } from "../../models/context/SheetDetailsContext";
 import { MotionButton } from "../../utils/motion";
+
+import { SheetSortFilterForm, SortPredicate } from "./SheetSortFilter";
+
+
+import MdiAdd from "~icons/mdi/add";
+import MdiClose from "~icons/mdi/close";
+
 
 const SortPredicateTransformer = {
   to: (value: string) => {

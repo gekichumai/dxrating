@@ -9,8 +9,10 @@ import {
   useState,
 } from "react";
 import { useLockBodyScroll } from "react-use";
-import MdiGestureSwipeVertical from "~icons/mdi/gesture-swipe-vertical";
+
 import { mapRange } from "../../../utils/mapRange";
+
+import MdiGestureSwipeVertical from "~icons/mdi/gesture-swipe-vertical";
 
 export const SheetFilterInternalLevelInputLongPressSlider = ({
   value,

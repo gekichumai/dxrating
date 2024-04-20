@@ -18,17 +18,20 @@ import clsx from "clsx";
 import { FC, PropsWithChildren, memo, useEffect, useMemo, useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { match } from "ts-pattern";
-import IconMdiSearchWeb from "~icons/mdi/search-web";
-import IconMdiSpotify from "~icons/mdi/spotify";
-import IconMdiYouTube from "~icons/mdi/youtube";
-import RiBilibiliFill from "~icons/ri/bilibili-fill";
+
 import { useAppContextDXDataVersion } from "../../models/context/useAppContext";
 import { FlattenedSheet } from "../../songs";
 import { calculateRating } from "../../utils/rating";
 import { DXRank } from "../global/DXRank";
+
 import { SheetDialogContentHeader } from "./SheetDialogContentHeader";
 import { SheetTitle } from "./SheetListItem";
 import { SheetTags } from "./tags/SheetTags";
+
+import IconMdiSearchWeb from "~icons/mdi/search-web";
+import IconMdiSpotify from "~icons/mdi/spotify";
+import IconMdiYouTube from "~icons/mdi/youtube";
+import RiBilibiliFill from "~icons/ri/bilibili-fill";
 
 const PRESET_ACHIEVEMENT_RATES = [
   100.5, 100, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50,

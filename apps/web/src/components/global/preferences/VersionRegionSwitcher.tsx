@@ -9,7 +9,7 @@ import {
 import clsx from "clsx";
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
-import MdiInformation from "~icons/mdi/information";
+
 import {
   DXVersion,
   DXVersionToDXDataVersionEnumMap,
@@ -18,6 +18,8 @@ import {
 import { useAppContext } from "../../../models/context/useAppContext";
 import { useVersionTheme } from "../../../utils/useVersionTheme";
 import { WebpSupportedImage } from "../WebpSupportedImage";
+
+import MdiInformation from "~icons/mdi/information";
 
 const fromMergedVersionRegionId = (id: string) => {
   const [version, region] = id.split("__") as [DXVersion, Region];

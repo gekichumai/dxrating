@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { FC } from "react";
+
 import { useAppContextSlugVersion } from "../../models/context/useAppContext";
 
 export const DXRank: FC<{ rank?: string | null; className?: string }> = ({

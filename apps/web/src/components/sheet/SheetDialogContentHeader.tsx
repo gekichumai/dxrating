@@ -1,10 +1,12 @@
 import { IconButton } from "@mui/material";
 import { motion } from "framer-motion";
 import { FC, memo, useState } from "react";
-import MdiStar from "~icons/mdi/star";
-import MdiStarOutline from "~icons/mdi/star-outline";
+
 import { useSheetFavoriteState } from "../../models/favorite";
 import { FlattenedSheet } from "../../songs";
+
+import MdiStar from "~icons/mdi/star";
+import MdiStarOutline from "~icons/mdi/star-outline";
 
 export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
   ({ sheet }) => {

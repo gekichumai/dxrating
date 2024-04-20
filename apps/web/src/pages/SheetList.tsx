@@ -3,9 +3,7 @@ import { Button, IconButton, TextField } from "@mui/material";
 import * as Sentry from "@sentry/react";
 import { FC, useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import IconMdiClose from "~icons/mdi/close";
-import MdiIconInfo from "~icons/mdi/information";
-import IconMdiOcr from "~icons/mdi/ocr";
+
 import { SheetListContainer } from "../components/sheet/SheetListContainer";
 import {
   SheetSortFilter,
@@ -19,6 +17,10 @@ import { useAppContextDXDataVersion } from "../models/context/useAppContext";
 import { FlattenedSheet, useFilteredSheets, useSheets } from "../songs";
 import { DXRatingPlugin } from "../utils/capacitor/plugin/wrap";
 import { isBuildPlatformApp } from "../utils/env";
+
+import IconMdiClose from "~icons/mdi/close";
+import MdiIconInfo from "~icons/mdi/information";
+import IconMdiOcr from "~icons/mdi/ocr";
 
 const chainEvery =
   <T,>(...fns: ((arg: T) => boolean | undefined)[]) =>

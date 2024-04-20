@@ -24,14 +24,17 @@ import {
 } from "react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import MdiChevronDownIcon from "~icons/mdi/chevron-down";
+
 import { SheetDetailsContext } from "../../models/context/SheetDetailsContext";
 import { FlattenedSheet } from "../../songs";
-import { SheetSortSelect } from "./SheetSortSelect";
+
 import { SheetCategoryFilter } from "./filters/SheetCategoryFilter";
 import { SheetInternalLevelFilter } from "./filters/SheetInternalLevelFilter";
 import { SheetTagFilter } from "./filters/SheetTagFilter";
 import { SheetVersionFilter } from "./filters/SheetVersionFilter";
+import { SheetSortSelect } from "./SheetSortSelect";
+
+import MdiChevronDownIcon from "~icons/mdi/chevron-down";
 
 export interface SortPredicate {
   descriptor: keyof FlattenedSheet;

@@ -18,14 +18,17 @@ import {
 import { FC, useEffect, useState } from "react";
 import { useLocalStorage } from "react-use";
 import { ListActions } from "react-use/lib/useList";
-import IconMdiConnection from "~icons/mdi/connection";
-import IconMdiNewBox from "~icons/mdi/new-box";
+
 import { useSheets } from "../../../../songs";
 import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
+
 import {
   FetchNetRecordProgressState,
   importFromNETRecords,
 } from "./importFromNETRecords";
+
+import IconMdiConnection from "~icons/mdi/connection";
+import IconMdiNewBox from "~icons/mdi/new-box";
 
 interface AchievementRecord {
   sheet: {

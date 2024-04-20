@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
+
 import { Json } from "../models/supabase.types";
 
 // isAssumedRecord omits deep checks of the object's values but rather

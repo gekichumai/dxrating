@@ -1,14 +1,17 @@
 import { Chip } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
 import { FC, useMemo } from "react";
-import IconMdiTag from "~icons/mdi/tag";
+
 import { FlattenedSheet } from "../../../songs";
 import { MotionButtonBase, MotionTooltip } from "../../../utils/motion";
 import { zoomTransitions } from "../../../utils/motionConstants";
 import { useLocalizedMessageTranslation } from "../../../utils/useLocalizedMessageTranslation";
 import { Markdown } from "../../global/Markdown";
+
 import { SheetTagsAddButton } from "./SheetTagsAddButton";
 import { useSheetTags } from "./useSheetTags";
+
+import IconMdiTag from "~icons/mdi/tag";
 
 export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const localizeMessage = useLocalizedMessageTranslation();

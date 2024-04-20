@@ -7,6 +7,7 @@ import {
   useMemo,
 } from "react";
 import { useLocalStorage } from "react-use";
+
 import { DXRatingPlugin } from "../../utils/capacitor/plugin/wrap";
 
 export type AppContext = AppContextStates & AppContextFns;
