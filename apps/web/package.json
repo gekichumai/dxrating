@@ -10,6 +10,7 @@
     "build:app": "cross-env-shell VITE_BUILD_PLATFORM=app \"yarn build:base && rm -rf dist/js/*.map && cap copy\"",
     "build:web": "cross-env-shell VITE_BUILD_PLATFORM=web \"yarn build:base && echo 'Artifacts built under dist/'\"",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix",
     "preview": "vite preview",
     "deploy:ios": "cap sync ios",
     "gen:supabase": "supabase gen types typescript --project-id lbtpnmdffuimikksrvns > src/models/supabase.types.ts"
@@ -77,6 +78,8 @@
     "@vitejs/plugin-react": "^4.0.3",
     "cross-env": "^7.0.3",
     "eslint": "^8.45.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
     "i18next-pseudo": "^2.2.1",
