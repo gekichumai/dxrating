@@ -5,6 +5,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import "@unocss/reset/tailwind-compat.css";
 import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
+import posthog from "posthog-js";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { initReactI18next } from "react-i18next";
@@ -19,6 +20,11 @@ import { i18nResources } from "./locales/locales";
 import { AppContextProvider } from "./models/context/AppContext";
 import { RatingCalculatorContextProvider } from "./models/context/RatingCalculatorContext";
 import { BUNDLE } from "./utils/bundle";
+
+posthog.init("phc_Hw7FM2D1vSwummp0D3O13Z6biV6udw5bKIcq4BJQxH7", {
+  api_host: "https://razu.dxrating.net",
+  ui_host: "https://app.posthog.com",
+});
 
 Sentry.init({
   dsn: "https://1e929f3c3b929a213436e3c4dff57140@o4506648698683392.ingest.sentry.io/4506648709627904",
@@ -97,7 +103,6 @@ Sentry.init({
     /webappstoolbarba\.texthelp\.com\//i,
     /metrics\.itunes\.apple\.com\.edgesuite\.net\//i,
   ],
-  ignoreTransactions: ["clarity.ms/collect"],
 });
 
 i18n

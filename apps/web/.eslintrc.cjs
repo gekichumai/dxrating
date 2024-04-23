@@ -10,7 +10,11 @@ module.exports = {
   ],
   ignorePatterns: ["dist", ".eslintrc.cjs"],
   parser: "@typescript-eslint/parser",
-  plugins: ["react-refresh"],
+  parserOptions: {
+    project: "./tsconfig.json",
+    tsconfigRootDir: "./",
+  },
+  plugins: ["react-refresh", "@typescript-eslint", "import"],
   rules: {
     "react-refresh/only-export-components": [
       "warn",
@@ -52,6 +56,12 @@ module.exports = {
   settings: {
     "import/resolver": {
       typescript: {}, // this loads <rootdir>/tsconfig.json to eslint
+    },
+    "import/resolver": {
+      alias: {
+        extensions: [".ts", ".tsx"],
+        map: [["@/", "./src"]],
+      },
     },
   },
 };

@@ -20,7 +20,11 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["unplugin-icons/types/react"]
+    "types": ["unplugin-icons/types/react"],
+
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src", "src/types.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
