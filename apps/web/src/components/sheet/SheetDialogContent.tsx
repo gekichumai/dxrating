@@ -284,6 +284,20 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                       </div>
                     </TableCell>
                   </TableRow>
+
+                  <TableRow>
+                    <TableCell>{t("sheet:details.unlock-required")}</TableCell>
+                    <TableCell>
+                      <div
+                        className={clsx(
+                          "uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs inline-flex",
+                          sheet.isLocked ? "!bg-yellow-500" : "!bg-gray-500",
+                        )}
+                      >
+                        {sheet.isLocked ? "LOCKED" : "AVAILABLE"}
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
 

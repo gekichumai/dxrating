@@ -57,7 +57,8 @@
         "title": "Achievement → Rating",
         "achievement": "Achv.",
         "rating": "Rating"
-      }
+      },
+      "unlock-required": "Unlock Required"
     },
     "release-date": "Released {{absoluteDate}} ({{relativeDate}})",
     "filter": {
