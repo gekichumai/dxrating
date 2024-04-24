@@ -1,4 +1,4 @@
-import { DifficultyEnum, TypeEnum } from "@gekichumai/dxdata";
+import { DifficultyEnum, Regions, TypeEnum } from "@gekichumai/dxdata";
 import {
   ListItemButton,
   ListItemSecondaryAction,
@@ -10,6 +10,7 @@ import { FC, HTMLAttributes, ImgHTMLAttributes, memo, useState } from "react";
 import toast from "react-hot-toast";
 import { match } from "ts-pattern";
 
+import { useAppContext } from "../../models/context/useAppContext";
 import { DIFFICULTIES } from "../../models/difficulties";
 import { FlattenedSheet } from "../../songs";
 import { useIsLargeDevice } from "../../utils/breakpoints";
@@ -23,6 +24,8 @@ import {
 } from "./SheetDialogContent";
 
 import MdiComment from "~icons/mdi/comment";
+import MdiLock from "~icons/mdi/lock";
+import MdiTrashCan from "~icons/mdi/trash-can";
 
 export const SheetListItem: FC<{
   size?: "small" | "medium";
@@ -143,15 +146,30 @@ const SheetInternalLevelValue: FC<{ value: number }> = ({ value }) => {
   );
 };
 
-export const SheetDifficulty: FC<{ difficulty?: DifficultyEnum }> = ({
-  difficulty,
-}) => {
+export const SheetDifficulty: FC<{
+  difficulty?: DifficultyEnum;
+  regions?: Regions;
+  isLocked?: boolean;
+}> = ({ difficulty, regions, isLocked }) => {
   const difficultyConfig = difficulty ? DIFFICULTIES[difficulty] : undefined;
+  const allUnavailable = Object.values(regions ?? {}).every((v) => !v);
   return difficultyConfig ? (
     <span
-      className="rounded-full px-2 text-sm shadow-[0.0625rem_0.125rem_0_0_#0b38714D] leading-relaxed translate-y-[-0.125rem] text-white"
+      className="rounded-full px-2 text-sm shadow-[0.0625rem_0.125rem_0_0_#0b38714D] leading-relaxed translate-y-[-0.125rem] text-white inline-flex items-center"
       style={{ backgroundColor: difficultyConfig.color }}
     >
+      {allUnavailable && (
+        <MdiTrashCan
+          className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-white rounded-full"
+          style={{ color: difficultyConfig.color }}
+        />
+      )}
+      {isLocked && (
+        <MdiLock
+          className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-white rounded-full"
+          style={{ color: difficultyConfig.color }}
+        />
+      )}
       {difficultyConfig.title}
     </span>
   ) : null;
@@ -287,7 +305,11 @@ export const SheetTitle: FC<SheetTitleProps> = ({
         </span>
         <div className="flex items-center gap-2 shrink-0">
           <SheetType type={type} difficulty={difficulty} />
-          <SheetDifficulty difficulty={difficulty} />
+          <SheetDifficulty
+            difficulty={difficulty}
+            regions={sheet.regions}
+            isLocked={sheet.isLocked}
+          />
         </div>
       </h3>
 
