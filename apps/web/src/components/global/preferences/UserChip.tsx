@@ -1,6 +1,9 @@
 import {
   Button,
   CircularProgress,
+  Dialog,
+  DialogContent,
+  Grow,
   IconButton,
   ListItemIcon,
   ListItemText,
@@ -156,9 +159,19 @@ export const UpdatePasswordMenuItem: FC = () => {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <ResponsiveDialog open={open} setOpen={(opened) => setOpen(opened)}>
-        {() => <ThemedAuth view="update_password" />}
-      </ResponsiveDialog>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        TransitionComponent={Grow}
+        maxWidth="md"
+        classes={{
+          paper: "w-full",
+        }}
+      >
+        <DialogContent>
+          <ThemedAuth view="update_password" />
+        </DialogContent>
+      </Dialog>
 
       <MenuItem
         onClick={() => {
@@ -214,39 +227,45 @@ export const UpdateDisplayNameMenuItem: FC = () => {
 
   return (
     <>
-      <ResponsiveDialog open={open} setOpen={(opened) => setOpen(opened)}>
-        {() => (
-          <>
-            <div className="flex flex-col items-start justify-center gap-1">
-              <Logo />
-              <span className="text-sm text-zinc-5">Profile</span>
-              <div className="h-px w-full bg-gray-2 my-4" />
-            </div>
-            <div className="flex flex-col gap-4">
-              <TextField
-                label={t("auth:update-display-name.label")}
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-              />
-              <Button
-                onClick={handleUpdate}
-                disabled={
-                  displayName === profile?.display_name ||
-                  displayName.trim() === ""
-                }
-                variant="contained"
-                className="h-10"
-              >
-                {updateState.loading ? (
-                  <CircularProgress size="1.25rem" className="my-1" />
-                ) : (
-                  "Submit"
-                )}
-              </Button>
-            </div>
-          </>
-        )}
-      </ResponsiveDialog>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        TransitionComponent={Grow}
+        maxWidth="md"
+        classes={{
+          paper: "w-full",
+        }}
+      >
+        <DialogContent>
+          <div className="flex flex-col items-start justify-center gap-1">
+            <Logo />
+            <span className="text-sm text-zinc-5">Profile</span>
+            <div className="h-px w-full bg-gray-2 my-4" />
+          </div>
+          <div className="flex flex-col gap-4">
+            <TextField
+              label={t("auth:update-display-name.label")}
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+            />
+            <Button
+              onClick={handleUpdate}
+              disabled={
+                displayName === profile?.display_name ||
+                displayName.trim() === ""
+              }
+              variant="contained"
+              className="h-10"
+            >
+              {updateState.loading ? (
+                <CircularProgress size="1.25rem" className="my-1" />
+              ) : (
+                "Submit"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <MenuItem
         onClick={() => {
