@@ -130,6 +130,7 @@ serve(async (_req) => {
     return new Response(body, {
       headers: {
         "content-type": "application/json; charset=utf-8",
+        "cache-control": "public, max-age=3600", // Cache for 1 hour
         ...corsHeaders,
       },
     });

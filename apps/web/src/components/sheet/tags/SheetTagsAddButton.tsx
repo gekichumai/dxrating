@@ -5,9 +5,11 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import useSWR from "swr";
 
+import { useAuth } from "../../../models/context/AuthContext";
 import { supabase } from "../../../models/supabase";
 import { FlattenedSheet } from "../../../songs";
 import { deriveColor } from "../../../utils/color";
+import { isBuildPlatformApp } from "../../../utils/env";
 import { formatErrorMessage } from "../../../utils/formatErrorMessage";
 import { MotionButtonBase, MotionTooltip } from "../../../utils/motion";
 import { zoomTransitions } from "../../../utils/motionConstants";
@@ -25,6 +27,8 @@ const SheetTagsAddDialog: FC<{
   const { t } = useTranslation(["sheet"]);
   const [pending, setPending] = useState(false);
   const localizeMessage = useLocalizedMessageTranslation();
+  const { session } = useAuth();
+
   const { data: tagGroups, isLoading: loadingTags } = useSWR(
     "supabase::tag_grouped",
     async () => {
@@ -109,7 +113,7 @@ const SheetTagsAddDialog: FC<{
   };
 
   return (
-    <div className="flex flex-col gap-2 p-4">
+    <div className="flex flex-col gap-2 p-4 relative">
       <div className="text-lg font-bold">{t("sheet:tags.add.title")}</div>
       <div className="text-lg">
         <SheetListItemContent sheet={sheet} />
@@ -189,6 +193,20 @@ const SheetTagsAddDialog: FC<{
           </div>
         )}
       </div>
+
+      {!session && (
+        <div className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8">
+          {isBuildPlatformApp ? (
+            <div className="text-center font-bold">
+              Adding tags is currently unavailable in the app.
+            </div>
+          ) : (
+            <div className="text-center font-bold">
+              Login or Register an account to add tags.
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

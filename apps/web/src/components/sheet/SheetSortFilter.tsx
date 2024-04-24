@@ -24,6 +24,7 @@ import {
 } from "react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { useEffectOnce } from "react-use";
 
 import { SheetDetailsContext } from "../../models/context/SheetDetailsContext";
 import { FlattenedSheet } from "../../songs";
@@ -119,6 +120,10 @@ export const SheetSortFilter: FC<{
   const methods = useForm<SheetSortFilterForm>({
     mode: "onChange",
     defaultValues,
+  });
+
+  useEffectOnce(() => {
+    onChange?.(methods.getValues());
   });
 
   return (

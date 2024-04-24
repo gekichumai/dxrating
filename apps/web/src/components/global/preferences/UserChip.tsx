@@ -1,24 +1,30 @@
 import {
+  Button,
   CircularProgress,
   IconButton,
   ListItemIcon,
   ListItemText,
   Menu,
   MenuItem,
+  TextField,
 } from "@mui/material";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa, ViewType } from "@supabase/auth-ui-shared";
-import { Session, User } from "@supabase/supabase-js";
-import { FC, useEffect, useState } from "react";
+import clsx from "clsx";
+import { FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { useAsync, useSearchParam } from "react-use";
+import { useAsync, useAsyncFn } from "react-use";
+import { useSWRConfig } from "swr";
 
+import { useAuth } from "../../../models/context/AuthContext";
 import { supabase } from "../../../models/supabase";
+import { isBuildPlatformApp } from "../../../utils/env";
 import { useVersionTheme } from "../../../utils/useVersionTheme";
 import { Logo } from "../Logo";
 import { ResponsiveDialog } from "../ResponsiveDialog";
 
+import MdiAccountCheck from "~icons/mdi/account-check";
 import MdiAccountKey from "~icons/mdi/account-key";
 import MdiLogin from "~icons/mdi/login";
 import MdiLogout from "~icons/mdi/logout";
@@ -90,15 +96,24 @@ async function sha256(message: string) {
 }
 
 const Profile: FC<{
-  user: User;
-}> = ({ user }) => {
+  id: string;
+  email: string;
+  displayName?: string;
+}> = ({ id, email, displayName }) => {
   return (
     <div className="flex items-center gap-4 px-4">
-      <ProfileImage email={user.email} />
+      <ProfileImage email={email} />
       <div className="flex flex-col gap-1 mb-2 mt-1">
-        <div className="text-lg font-bold">{user.email}</div>
-        <div className="text-xs text-slate-500 tracking-tighter">
-          #<span className="font-mono">{user.id}</span>
+        <div
+          className={clsx(
+            "text-lg font-bold",
+            !displayName && "text-zinc-500 -skew-x-10",
+          )}
+        >
+          {displayName ?? email}
+        </div>
+        <div className="text-xs text-zinc-500 tracking-tighter">
+          #<span className="font-mono">{id}</span>
         </div>
       </div>
     </div>
@@ -117,9 +132,11 @@ const ProfileImage: FC<{
 
   return gravatarEmailHash.loading ? (
     <div
-      className="shrink-0 rounded-full bg-gray-4 shadow"
+      className="shrink-0 rounded-full flex items-center justify-center"
       style={{ width: size, height: size }}
-    />
+    >
+      <MdiAccountCheck />
+    </div>
   ) : (
     <img
       src={`https://gravatar.com/avatar/${gravatarEmailHash.value}?s=48&d=identicon`}
@@ -157,51 +174,104 @@ export const UpdatePasswordMenuItem: FC = () => {
   );
 };
 
-export const UserChip: FC = () => {
-  const DISABLE_EXPLICIT_AUTH = useSearchParam("enableAuth") !== "true";
+export const UpdateDisplayNameMenuItem: FC = () => {
+  const { t } = useTranslation(["auth"]);
+  const [open, setOpen] = useState(false);
+  const { mutate } = useSWRConfig();
+  const { session, profile } = useAuth();
+  const [displayName, setDisplayName] = useState(
+    () => profile?.display_name ?? "",
+  );
 
-  const [pending, setPending] = useState(true);
-  const [session, setSession] = useState<Session | null>(null);
+  const [updateState, handleUpdate] = useAsyncFn(async () => {
+    if (!session) {
+      toast.error("You must be signed in to update your display name.");
+      return;
+    }
+
+    await supabase
+      .from("profiles")
+      .upsert({
+        id: session.user.id,
+        display_name: displayName,
+      })
+      .then((res) => {
+        if (res.error) {
+          toast.error(
+            `Failed to update your profile name: ${res.error.message}`,
+          );
+          return;
+        }
+        mutate("supabase::profile::" + session.user.id);
+        toast.success(
+          'Your profile name has been successfully updated to "' +
+            displayName +
+            '".',
+        );
+        setOpen(false);
+      });
+  }, [displayName, session]);
+
+  return (
+    <>
+      <ResponsiveDialog open={open} setOpen={(opened) => setOpen(opened)}>
+        {() => (
+          <>
+            <div className="flex flex-col items-start justify-center gap-1">
+              <Logo />
+              <span className="text-sm text-zinc-5">Profile</span>
+              <div className="h-px w-full bg-gray-2 my-4" />
+            </div>
+            <div className="flex flex-col gap-4">
+              <TextField
+                label={t("auth:update-display-name.label")}
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+              />
+              <Button
+                onClick={handleUpdate}
+                disabled={
+                  displayName === profile?.display_name ||
+                  displayName.trim() === ""
+                }
+                variant="contained"
+                className="h-10"
+              >
+                {updateState.loading ? (
+                  <CircularProgress size="1.25rem" className="my-1" />
+                ) : (
+                  "Submit"
+                )}
+              </Button>
+            </div>
+          </>
+        )}
+      </ResponsiveDialog>
+
+      <MenuItem
+        onClick={() => {
+          setOpen(true);
+        }}
+      >
+        <ListItemIcon>
+          <MdiAccountCheck />
+        </ListItemIcon>
+        <ListItemText>{t("auth:update-display-name.label")}</ListItemText>
+      </MenuItem>
+    </>
+  );
+};
+
+export const UserChip: FC = () => {
+  const DISABLE_EXPLICIT_AUTH = isBuildPlatformApp;
+
   const { t } = useTranslation(["auth"]);
   const [open, setOpen] = useState<"auth" | "profile" | null>(null);
+  const { session, profile, pending } = useAuth();
   const [profileMenuAnchorEl, setProfileMenuAnchorEl] =
     useState<HTMLElement | null>(null);
 
-  useEffect(() => {
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        setSession(session);
-      })
-      .finally(() => {
-        setPending(false);
-      });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setPending(false);
-      if (session) {
-        setOpen(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [t]);
-
-  useEffect(() => {
-    console.debug("[Auth] session changed to", session);
-
-    if (session) {
-      toast.success(t("auth:login.toast-success"), {
-        id: "login-success",
-      });
-    }
-  }, [session]);
-
   const logout = async () => {
-    setPending(true);
     await supabase.auth.signOut();
     toast.success(t("auth:logout.toast-success"), {
       id: "logout-success",
@@ -234,7 +304,14 @@ export const UserChip: FC = () => {
           setProfileMenuAnchorEl(null);
         }}
       >
-        {session && <Profile user={session.user} />}
+        {session && (
+          <Profile
+            id={session.user.id}
+            email={session.user.email ?? "(no email)"}
+            displayName={profile?.display_name}
+          />
+        )}
+        <UpdateDisplayNameMenuItem />
         <UpdatePasswordMenuItem />
         <MenuItem
           onClick={() => {

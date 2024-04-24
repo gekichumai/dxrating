@@ -10,7 +10,6 @@ import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
 
 import { MusicRecord, RecentRecord } from "./ImportFromNETRecordsListItem";
 
-
 import IconMdiCheck from "~icons/mdi/check";
 import IconMdiClose from "~icons/mdi/close";
 
@@ -26,7 +25,8 @@ export type FetchNetRecordProgressState =
   | "fetch:music:in-progress:master"
   | "fetch:music:in-progress:remaster"
   | "fetch:music:in-progress:utage"
-  | "fetch:music:completed";
+  | "fetch:music:completed"
+  | "concluded";
 
 const FETCH_STATE_PROGRESS: Record<FetchNetRecordProgressState, number> = {
   ready: 0.01,
@@ -41,6 +41,7 @@ const FETCH_STATE_PROGRESS: Record<FetchNetRecordProgressState, number> = {
   "fetch:music:in-progress:remaster": 0.8,
   "fetch:music:in-progress:utage": 0.9,
   "fetch:music:completed": 1,
+  concluded: 1,
 };
 
 interface AuthParams {

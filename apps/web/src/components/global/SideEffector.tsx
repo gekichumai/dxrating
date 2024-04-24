@@ -1,5 +1,7 @@
 import { FC, memo, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { useEffectOnce } from "react-use";
 
 import { useRatingCalculatorContext } from "../../models/context/RatingCalculatorContext";
 import { useSheets } from "../../songs";
@@ -53,9 +55,27 @@ const SideEffectorAutoImportRating: FC = () => {
   return null;
 };
 
+const SideEffectorImportNotice: FC = () => {
+  useEffectOnce(() => {
+    const migrated = localStorage.getItem("dxrating-migrated");
+    if (migrated) {
+      toast.success(
+        "Successfully migrated your data from dxrating.imgg.dev. Please use dxrating.net from now on.",
+        {
+          duration: 60e3,
+        },
+      );
+      localStorage.removeItem("dxrating-migrated");
+    }
+  });
+
+  return null;
+};
+
 export const SideEffector: FC = memo(() => {
   return (
     <>
+      <SideEffectorImportNotice />
       <SideEffectorThemeMeta />
       <SideEffectorLocaleMeta />
       <SideEffectorAutoImportRating />

@@ -1,11 +1,11 @@
 import clsx from "clsx";
-import { FC, ImgHTMLAttributes, useRef, useState } from "react";
+import { FC, ImgHTMLAttributes, memo, useRef, useState } from "react";
 
 export const FadedImage: FC<
   ImgHTMLAttributes<HTMLImageElement> & {
     placeholderClassName?: string;
   }
-> = ({ placeholderClassName, draggable, ...props }) => {
+> = memo(({ placeholderClassName, draggable, ...props }) => {
   const [loaded, setLoaded] = useState(false);
   const [instantlyLoaded, setInstantlyLoaded] = useState(false);
   const firstMountAt = useRef(Date.now());
@@ -34,4 +34,4 @@ export const FadedImage: FC<
       />
     </div>
   );
-};
+});

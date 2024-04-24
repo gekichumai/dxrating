@@ -165,6 +165,9 @@
     "login": {
       "label": "Login",
       "toast-success": "Successfully logged in."
+    },
+    "update-display-name": {
+      "label": "Update Profile Name"
     }
   }
 }

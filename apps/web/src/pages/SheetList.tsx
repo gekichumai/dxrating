@@ -37,7 +37,7 @@ const SORT_DESCRIPTOR_MAPPING = {
 
 const _SheetListInner: FC = () => {
   const { t } = useTranslation(["sheet"]);
-  const { data: sheets, isLoading } = useSheets();
+  const { data: sheets, isLoading } = useSheets({ acceptsPartialData: true });
   const { setQueryActive } = useContext(SheetDetailsContext);
   const version = useAppContextDXDataVersion();
   const [query, setQuery] = useState("");

@@ -1,3 +1,5 @@
+import "./utils/migrateDomain"; // This is a side effect import
+
 import * as Sentry from "@sentry/react";
 import { browserTracingIntegration } from "@sentry/react";
 import { SupabaseIntegration } from "@supabase/sentry-js-integration";
@@ -18,6 +20,7 @@ import { SideEffector } from "./components/global/SideEffector";
 import { VersionCustomizedThemeProvider } from "./components/layout/VersionCustomizedThemeProvider";
 import { i18nResources } from "./locales/locales";
 import { AppContextProvider } from "./models/context/AppContext";
+import { AuthContextProvider } from "./models/context/AuthContext";
 import { RatingCalculatorContextProvider } from "./models/context/RatingCalculatorContext";
 import { BUNDLE } from "./utils/bundle";
 
@@ -158,9 +161,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <AppContextProvider>
       <VersionCustomizedThemeProvider>
         <RatingCalculatorContextProvider>
-          <SideEffector />
-          <CustomizedToaster />
-          <App />
+          <AuthContextProvider>
+            <SideEffector />
+            <CustomizedToaster />
+            <App />
+          </AuthContextProvider>
         </RatingCalculatorContextProvider>
       </VersionCustomizedThemeProvider>
     </AppContextProvider>

@@ -7,6 +7,7 @@ import {
   dxdata,
 } from "@gekichumai/dxdata";
 import Fuse from "fuse.js";
+import uniq from "lodash-es/uniq";
 import { useMemo } from "react";
 import useSWR from "swr";
 
@@ -15,6 +16,7 @@ import {
   useAppContextDXDataVersion,
 } from "./models/context/useAppContext";
 import { useCombinedTags } from "./models/useCombinedTags";
+import { useServerAliases } from "./models/useServerAliases";
 
 const CANONICAL_ID_PARTS_SEPARATOR = "__dxrt__";
 
@@ -73,15 +75,21 @@ export const getFlattenedSheets = async (
   return flattenedSheets as FlattenedSheet[];
 };
 
-export const useSheets = () => {
-  const { version } = useAppContext();
+export const useSheets = ({ acceptsPartialData = false } = {}) => {
   const appVersion = useAppContextDXDataVersion();
   const { data: combinedTags, isLoading: loadingCombinedTags } =
     useCombinedTags();
+  const { data: serverAliases, isLoading: loadingServerAliases } =
+    useServerAliases();
+  const key = `dxdata::sheets?${new URLSearchParams({
+    version: appVersion,
+    loadingCombinedTags: String(loadingCombinedTags),
+    loadingServerAliases: String(loadingServerAliases),
+  }).toString()}`;
   return useSWR(
-    loadingCombinedTags
-      ? false
-      : `dxdata::sheets::${version}?${Boolean(combinedTags)}`,
+    acceptsPartialData
+      ? key
+      : !(loadingCombinedTags || loadingServerAliases) && key,
     async () => {
       const sheets = await getFlattenedSheets(appVersion);
 
@@ -104,10 +112,30 @@ export const useSheets = () => {
         map.set(canonical, tags);
       }
 
-      return sheets.map((sheet) => ({
-        ...sheet,
-        tags: map.get(sheet.id) ?? [],
-      }));
+      if (!serverAliases) {
+        return sheets.map((sheet) => ({
+          ...sheet,
+          tags: map.get(sheet.id) ?? [],
+        }));
+      }
+
+      const aliasMap = new Map<string, string[]>();
+      for (const alias of serverAliases) {
+        const aliases = aliasMap.get(alias.song_id) ?? [];
+        aliases.push(alias.name);
+        aliasMap.set(alias.song_id, aliases);
+      }
+
+      return sheets.map((sheet) => {
+        return {
+          ...sheet,
+          tags: map.get(sheet.id) ?? [],
+          searchAcronyms: uniq([
+            ...sheet.searchAcronyms,
+            ...(aliasMap.get(sheet.songId) ?? []),
+          ]),
+        };
+      });
     },
     { suspense: false },
   );
@@ -120,15 +148,19 @@ export const useSongs = () => {
 
 export const useSheetsSearchEngine = () => {
   const { data: songs } = useSongs();
-  const { data: sheets } = useSheets();
+  const { data: sheets } = useSheets({ acceptsPartialData: true });
+  const { data: serverAliases } = useServerAliases();
 
   const fuseInstance = useMemo(() => {
     return new Fuse(
       songs?.map((song) => ({
         ...song,
-        searchAcronyms: song.searchAcronyms.filter(
-          (acronym) => acronym.length < 50,
-        ),
+        searchAcronyms: [
+          ...song.searchAcronyms.filter((acronym) => acronym.length < 50),
+          ...(serverAliases
+            ?.filter((alias) => alias.song_id === song.songId)
+            .map((alias) => alias.name) ?? []),
+        ],
       })) ?? [],
       {
         keys: [
@@ -145,7 +177,7 @@ export const useSheetsSearchEngine = () => {
         threshold: 0.4,
       },
     );
-  }, [songs]);
+  }, [songs, serverAliases]);
 
   const search = (term: string) => {
     const results = fuseInstance.search(term);
@@ -160,7 +192,7 @@ export const useSheetsSearchEngine = () => {
 };
 
 export const useFilteredSheets = (searchTerm: string) => {
-  const { data: sheets } = useSheets();
+  const { data: sheets } = useSheets({ acceptsPartialData: true });
   const search = useSheetsSearchEngine();
 
   const defaultResults = useMemo(() => {

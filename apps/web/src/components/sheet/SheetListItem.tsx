@@ -16,6 +16,7 @@ import { useIsLargeDevice } from "../../utils/breakpoints";
 import { FadedImage } from "../global/FadedImage";
 import { ResponsiveDialog } from "../global/ResponsiveDialog";
 
+import { AddSheetAltNameButton } from "./AddSheetAltNameButton";
 import {
   SheetDialogContent,
   SheetDialogContentProps,
@@ -215,26 +216,32 @@ export const SheetImage: FC<
     name: string;
     size?: "small" | "medium" | "large";
   }
-> = ({ name, size = "medium", ...props }) => {
-  return (
-    <FadedImage
-      key={name}
-      src={"https://shama.dxrating.net/images/cover/v2/" + name}
-      className={clsx(
-        "overflow-hidden",
-        match(size)
-          .with("small", () => "h-8 w-8 min-w-[2rem] min-h-[2rem] rounded-sm")
-          .with("medium", () => "h-12 w-12 min-w-[3rem] min-h-[3rem] rounded")
-          .with("large", () => "h-16 w-16 min-w-[4rem] min-h-[4rem] rounded-lg")
-          .exhaustive(),
-      )}
-      placeholderClassName="bg-slate-300/50"
-      alt={name}
-      loading="lazy"
-      {...props}
-    />
-  );
-};
+> = memo(
+  ({ name, size = "medium", ...props }) => {
+    return (
+      <FadedImage
+        key={name}
+        src={"https://shama.dxrating.net/images/cover/v2/" + name}
+        className={clsx(
+          "overflow-hidden",
+          match(size)
+            .with("small", () => "h-8 w-8 min-w-[2rem] min-h-[2rem] rounded-sm")
+            .with("medium", () => "h-12 w-12 min-w-[3rem] min-h-[3rem] rounded")
+            .with(
+              "large",
+              () => "h-16 w-16 min-w-[4rem] min-h-[4rem] rounded-lg",
+            )
+            .exhaustive(),
+        )}
+        placeholderClassName="bg-slate-300/50"
+        alt={name}
+        loading="lazy"
+        {...props}
+      />
+    );
+  },
+  (prev, next) => prev.name === next.name && prev.size === next.size,
+);
 
 export interface SheetTitleProps {
   sheet: FlattenedSheet;
@@ -284,11 +291,14 @@ export const SheetTitle: FC<SheetTitleProps> = ({
         </div>
       </h3>
 
-      <div className="w-full font-bold">
-        {enableAltNames && (searchAcronyms?.length ?? 0) > 0 && (
-          <SheetAltNames altNames={searchAcronyms!} />
-        )}
-      </div>
+      {enableAltNames && (
+        <div className="w-full font-bold flex flex-col">
+          {(searchAcronyms?.length ?? 0) > 0 && (
+            <SheetAltNames altNames={searchAcronyms!} />
+          )}
+          <AddSheetAltNameButton sheet={sheet} />
+        </div>
+      )}
 
       {sheet.isTypeUtage && (
         <span className="text-sm text-zinc-600 px-1.5 py-0.5 gap-1 bg-amber/75 inline-flex self-start rounded-md">
@@ -312,7 +322,7 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
   return (
     <div
       className={clsx(
-        "text-sm text-slate-600 overflow-hidden mb-1",
+        "text-sm text-slate-600 overflow-hidden",
         !expanded && "max-h-[7rem]",
       )}
       style={{
