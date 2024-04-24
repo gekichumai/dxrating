@@ -33,6 +33,4 @@ const migrateDomain = () => {
   }
 };
 
-if (window.location.search.includes("dxrating-migrate-localstorage-enabled")) {
-  migrateDomain();
-}
+migrateDomain();
