@@ -9,7 +9,6 @@ const migrateDomain = () => {
     const newUrl = new URL(window.location.href);
     newUrl.hostname = "dxrating.net";
     newUrl.searchParams.set("dxrating-migrate-localstorage", packed);
-    alert(newUrl.href);
     localStorage.clear();
     window.location.href = newUrl.href;
   } else {
