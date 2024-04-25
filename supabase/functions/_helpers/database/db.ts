@@ -33,6 +33,11 @@ interface Database {
     sheet_difficulty: string;
     created_by: string;
   };
+  profiles: {
+    id: Generated<bigint>;
+    created_at: Date;
+    display_name: string;
+  };
   comments: {
     id: Generated<bigint>;
     created_at: Date;
