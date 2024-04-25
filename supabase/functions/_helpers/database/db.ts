@@ -51,7 +51,7 @@ interface Database {
 }
 
 // Create a database pool with one connection.
-const pool = new Pool(Deno.env.get("SUPABASE_DB_URL")!, 1);
+const pool = new Pool(Deno.env.get("SUPABASE_DB_URL")!, 1, true);
 
 // You'd create one of these when you start your app.
 export const db = new Kysely<Database>({
