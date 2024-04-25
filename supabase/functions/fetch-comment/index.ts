@@ -31,16 +31,16 @@ serve(async (_req) => {
 
     //
 
-
     const comments = await db
       .selectFrom("comments")
-        .select(["id", "parent_id", "content"])
-        .leftJoin("profiles", "profiles.id", "comments.created_by")
-        .where("song_id", "=", songId)
-        .where("sheet_type", "=", sheetType)
-        .where("sheet_difficulty", "=", sheetDifficulty)
-        .orderBy("created_at", "desc")
-        .execute();
+      .leftJoin("profiles", "profiles.id", "comments.created_by")
+      .select(["id", "parent_id", "created_at", "content", "profiles.display_name"])
+      .where("song_id", "=", songId)
+      .where("sheet_type", "=", sheetType)
+      .where("sheet_difficulty", "=", sheetDifficulty)
+      .orderBy("created_at", "desc")
+      .execute();
+
 
     return new Response(JSON.stringify(comments, bigintEncoder), {
       headers: {
