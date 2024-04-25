@@ -12,14 +12,9 @@ serve(async (_req) => {
   }
 
   try {
-    const { songId, sheetType, sheetDifficulty } =
-      await _req.json();
+    const { songId, sheetType, sheetDifficulty } = await _req.json();
 
-    if (
-      songId == null ||
-      sheetType == null ||
-      sheetDifficulty == null ||
-    ) {
+    if (songId == null || sheetType == null || sheetDifficulty == null) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
         {
@@ -34,13 +29,18 @@ serve(async (_req) => {
     const comments = await db
       .selectFrom("comments")
       .leftJoin("profiles", "profiles.id", "comments.created_by")
-      .select(["id", "parent_id", "created_at", "content", "profiles.display_name"])
+      .select([
+        "id",
+        "parent_id",
+        "created_at",
+        "content",
+        "profiles.display_name",
+      ])
       .where("song_id", "=", songId)
       .where("sheet_type", "=", sheetType)
       .where("sheet_difficulty", "=", sheetDifficulty)
       .orderBy("created_at", "desc")
       .execute();
-
 
     return new Response(JSON.stringify(comments, bigintEncoder), {
       headers: {
