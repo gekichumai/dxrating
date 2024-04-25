@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.175.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { cors } from "../_helpers/cors.ts";
 import { db } from "../_helpers/database/db.ts";
+import { bigintEncoder } from "../_helpers/json.ts";
 
 serve(async (_req) => {
   let corsHeaders: Record<string, string>;
@@ -81,7 +82,7 @@ serve(async (_req) => {
       .returning(["id", "created_at"])
       .executeTakeFirst();
 
-    return new Response(JSON.stringify(comment), {
+    return new Response(JSON.stringify(comment, bigintEncoder), {
       headers: {
         "content-type": "application/json; charset=utf-8",
         ...corsHeaders,

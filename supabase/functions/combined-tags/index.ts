@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.175.0/http/server.ts";
-import { db } from "../_helpers/database/db.ts";
 import { cors } from "../_helpers/cors.ts";
+import { db } from "../_helpers/database/db.ts";
+import { bigintEncoder } from "../_helpers/json.ts";
 
 serve(async (_req) => {
   let corsHeaders: Record<string, string>;
@@ -34,12 +35,7 @@ serve(async (_req) => {
         tagGroups,
         tagSongs,
       },
-      (_, value) =>
-        typeof value === "bigint"
-          ? value > Number.MAX_SAFE_INTEGER
-            ? value.toString()
-            : Number(value)
-          : value
+      bigintEncoder
     );
 
     // Return the response with the correct content type header
