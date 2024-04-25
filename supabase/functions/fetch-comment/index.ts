@@ -30,10 +30,10 @@ serve(async (_req) => {
       .selectFrom("comments")
       .leftJoin("profiles", "profiles.id", "comments.created_by")
       .select([
-        "id",
-        "parent_id",
-        "created_at",
-        "content",
+        "comments.id",
+        "comments.parent_id",
+        "comments.created_at",
+        "comments.content",
         "profiles.display_name",
       ])
       .where("song_id", "=", songId)
