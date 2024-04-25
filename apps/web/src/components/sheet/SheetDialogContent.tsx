@@ -160,10 +160,10 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       </div>
 
       {isLoadingComments ? (
-        Array.from({ length: 3 }).map((_, i) => (
+        Array.from({ length: 1 }).map((_, i) => (
           <div
             key={i}
-            className="flex flex-col gap-1 bg-zinc-3 rounded-lg h-16 animate-pulse"
+            className="flex flex-col gap-1 bg-zinc-2 rounded-lg h-16 animate-pulse"
           />
         ))
       ) : (
@@ -190,7 +190,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             </div>
           ))}
           {comments?.length === 0 && (
-            <div className="flex flex-col gap-1 bg-zinc-3 rounded-lg p-4 items-center text-zinc-5">
+            <div className="flex flex-col gap-1 bg-zinc-2 rounded-lg p-4 items-center text-zinc-5">
               There are no comments yet.
             </div>
           )}
