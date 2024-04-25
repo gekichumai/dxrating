@@ -10,7 +10,6 @@ import { FC, HTMLAttributes, ImgHTMLAttributes, memo, useState } from "react";
 import toast from "react-hot-toast";
 import { match } from "ts-pattern";
 
-import { useAppContext } from "../../models/context/useAppContext";
 import { DIFFICULTIES } from "../../models/difficulties";
 import { FlattenedSheet } from "../../songs";
 import { useIsLargeDevice } from "../../utils/breakpoints";
