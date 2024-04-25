@@ -45,7 +45,7 @@ export const AuthContextProvider: FC<PropsWithChildren<object>> = ({
         .from("profiles")
         .select("display_name")
         .eq("id", signedIn ? session?.user.id : "")
-        .single();
+        .maybeSingle();
       return res.data;
     },
   );
