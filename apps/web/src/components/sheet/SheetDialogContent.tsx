@@ -32,6 +32,7 @@ import { useAsyncFn } from "react-use";
 import useSWR from "swr";
 import { match } from "ts-pattern";
 
+import { useAuth } from "../../models/context/AuthContext";
 import { useAppContextDXDataVersion } from "../../models/context/useAppContext";
 import { supabase } from "../../models/supabase";
 import { FlattenedSheet } from "../../songs";
@@ -82,6 +83,7 @@ const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
 );
 
 const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+  const { session } = useAuth();
   const [content, setContent] = useState<string>("");
   const {
     data: comments,
@@ -140,24 +142,26 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-2 mt-1">
-        <TextField
-          className="flex-grow"
-          placeholder="Leave a comment..."
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          minRows={1}
-          maxRows={3}
-          multiline
-        />
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={!content || submitting}
-        >
-          {submitting ? <CircularProgress size={24} /> : "Submit"}
-        </Button>
-      </div>
+      {session && (
+        <div className="flex gap-2 mt-1">
+          <TextField
+            className="flex-grow"
+            placeholder="Leave a comment..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            minRows={1}
+            maxRows={3}
+            multiline
+          />
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={!content || submitting}
+          >
+            {submitting ? <CircularProgress size={24} /> : "Submit"}
+          </Button>
+        </div>
+      )}
 
       {isLoadingComments ? (
         Array.from({ length: 1 }).map((_, i) => (
@@ -192,6 +196,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           {comments?.length === 0 && (
             <div className="flex flex-col gap-1 bg-zinc-2 rounded-lg p-4 items-center text-zinc-5">
               There are no comments yet.
+              {!session && " Sign in or create an account to leave one."}
             </div>
           )}
         </div>
