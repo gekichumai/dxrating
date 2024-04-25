@@ -60,6 +60,13 @@ serve(async (_req) => {
     );
     const { data } = await supabaseClient.auth.getUser();
     const user = data.user;
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Not authenticated" }), {
+        status: 401,
+        headers: corsHeaders,
+      });
+    }
+
     const comment = await db
       .insertInto("comments")
       .values({
