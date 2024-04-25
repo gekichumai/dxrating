@@ -7,19 +7,33 @@ import {
   Button,
   ButtonGroup,
   Chip,
+  CircularProgress,
   IconButton,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
+  TextField,
 } from "@mui/material";
 import clsx from "clsx";
-import { FC, PropsWithChildren, memo, useEffect, useMemo, useRef } from "react";
+import {
+  FC,
+  PropsWithChildren,
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
+import { useAsyncFn } from "react-use";
+import useSWR from "swr";
 import { match } from "ts-pattern";
 
 import { useAppContextDXDataVersion } from "../../models/context/useAppContext";
+import { supabase } from "../../models/supabase";
 import { FlattenedSheet } from "../../songs";
 import { calculateRating } from "../../utils/rating";
 import { DXRank } from "../global/DXRank";
@@ -66,6 +80,125 @@ const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
     </span>
   </div>
 );
+
+const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+  const [content, setContent] = useState<string>("");
+  const {
+    data: comments,
+    isLoading: isLoadingComments,
+    mutate,
+  } = useSWR(
+    "supabase::comments?" +
+      new URLSearchParams({
+        songId: sheet.songId,
+        sheetType: sheet.type,
+        sheetDifficulty: sheet.difficulty,
+      }).toString(),
+    async () => {
+      const { data, error } = await supabase.functions.invoke<
+        {
+          id: number;
+          parent_id: number | null;
+          content: string;
+          created_at: string;
+          display_name: string | null;
+        }[]
+      >("fetch-comment", {
+        body: JSON.stringify({
+          songId: sheet.songId,
+          sheetType: sheet.type,
+          sheetDifficulty: sheet.difficulty,
+        }),
+      });
+
+      if (error) {
+        throw error;
+      }
+      return data;
+    },
+  );
+
+  const [{ loading: submitting }, handleSubmit] = useAsyncFn(async () => {
+    const payload = {
+      songId: sheet.songId,
+      sheetType: sheet.type,
+      sheetDifficulty: sheet.difficulty,
+      content,
+    };
+    const { error } = await supabase.functions.invoke<{
+      id: string;
+      created_at: string;
+    }>("create-comment", {
+      body: JSON.stringify(payload),
+    });
+    if (error) {
+      toast.error("Failed to submit comment: " + error);
+    }
+    mutate();
+    setContent("");
+  }, [sheet, content]);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-2 mt-1">
+        <TextField
+          className="flex-grow"
+          placeholder="Leave a comment..."
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          minRows={1}
+          maxRows={3}
+          multiline
+        />
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={!content || submitting}
+        >
+          {submitting ? <CircularProgress size={24} /> : "Submit"}
+        </Button>
+      </div>
+
+      {isLoadingComments ? (
+        Array.from({ length: 3 }).map((_, i) => (
+          <div
+            key={i}
+            className="flex flex-col gap-1 bg-zinc-3 rounded-lg h-16 animate-pulse"
+          />
+        ))
+      ) : (
+        <div className="flex flex-col gap-2">
+          {comments?.map((comment) => (
+            <div
+              key={comment.id}
+              className="flex flex-col gap-1 bg-zinc-1 rounded-lg px-4 py-2"
+            >
+              <div className="text-zinc-500 flex items-center">
+                <div className="text-sm font-bold">
+                  {comment.display_name ?? "*Somebody*"}
+                </div>
+
+                <div className="text-xs ml-auto">
+                  {new Date(comment.created_at).toLocaleString()}
+                </div>
+              </div>
+              <div>
+                {comment.content.split("\n").map((line, i) => (
+                  <p key={i}>{line ?? " "}</p>
+                ))}
+              </div>
+            </div>
+          ))}
+          {comments?.length === 0 && (
+            <div className="flex flex-col gap-1 bg-zinc-3 rounded-lg p-4 items-center text-zinc-5">
+              There are no comments yet.
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export interface SheetDialogContentProps {
   sheet: FlattenedSheet;
@@ -174,6 +307,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
               <SheetInternalLevelHistory sheet={sheet} />
             </div>
           )}
+
           <div className="flex flex-col gap-1">
             <SectionHeader>{t("sheet:details.title")}</SectionHeader>
             <div>
@@ -322,6 +456,12 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
               </div>
             </div>
           </div>
+
+          <div className="flex flex-col gap-1">
+            <SectionHeader>Comments</SectionHeader>
+            <SheetComments sheet={sheet} />
+          </div>
+
           {!sheet.isTypeUtage && (
             <div className="flex flex-col gap-1">
               <SectionHeader>

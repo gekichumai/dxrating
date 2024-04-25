@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      comments: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: number
+          parent_id: number | null
+          sheet_difficulty: string
+          sheet_type: Database["public"]["Enums"]["sheet_type"]
+          song_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: number
+          parent_id?: number | null
+          sheet_difficulty: string
+          sheet_type: Database["public"]["Enums"]["sheet_type"]
+          song_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: number
+          parent_id?: number | null
+          sheet_difficulty?: string
+          sheet_type?: Database["public"]["Enums"]["sheet_type"]
+          song_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
