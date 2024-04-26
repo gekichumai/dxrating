@@ -39,9 +39,10 @@ Sentry.init({
       // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
       tracePropagationTargets: [
         "localhost",
-        /^https?:\/\/.*\.dxrating\.net/,
+        /^\//,
         /^https?:\/\/dxrating\.net/,
-        /^https?:\/\/dxrating\.imgg\.dev/,
+        /^https?:\/\/derrakuma\.dxrating\.net/,
+        /^https?:\/\/miruku\.dxrating\.net/,
       ],
       shouldCreateSpanForRequest: (url) => {
         return !url.startsWith(`${import.meta.env.VITE_SUPABASE_URL}/rest`);
