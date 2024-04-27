@@ -205,29 +205,6 @@ const FactItem = ({
   );
 };
 
-const calculateFitSize = (
-  assetWidth: number,
-  assetHeight: number,
-  containerWidth: number,
-  containerHeight: number
-): { width: number; height: number } => {
-  // Calculate the scale ratios for width and height
-  const widthRatio = containerWidth / assetWidth;
-  const heightRatio = containerHeight / assetHeight;
-
-  // Choose the larger ratio so the asset completely covers the container
-  const scale = Math.max(widthRatio, heightRatio);
-
-  // Calculate the scaled dimensions
-  const scaledWidth = assetWidth * scale;
-  const scaledHeight = assetHeight * scale;
-
-  return {
-    width: scaledWidth,
-    height: scaledHeight,
-  };
-};
-
 export const BottomLabel: FC<
   PropsWithChildren<{
     first?: boolean;
@@ -283,7 +260,7 @@ export const renderContent = async ({
     : "";
 
   return (
-    <div tw="font-sans text-lg leading-none flex flex-wrap px-1 pt-1 h-full">
+    <div tw="font-sans text-lg leading-none flex h-full">
       <img
         tw="absolute inset-0 w-full h-full"
         // @ts-expect-error
@@ -293,37 +270,40 @@ export const renderContent = async ({
           objectFit: "cover",
         }}
       />
-      <div tw="h-[100px] w-full flex pt-[2px] pb-1 px-[2px]">
-        <div tw="overflow-hidden w-full h-full flex items-center">
-          <div tw="flex items-end justify-start py-4 px-6 rounded-lg w-full bg-black/80 text-white">
-            <FactItem
-              value={b50Sum.toFixed(0)}
-              label="Total"
-              size="lg"
-              tw="mr-6"
-            />
 
-            <FactItem value={b15Sum.toFixed(0)} label="B15" tw="mr-4" />
-            <FactItem value={b35Sum.toFixed(0)} label="B35" />
+      <div tw="w-full h-full px-1 pt-1 flex flex-wrap">
+        <div tw="h-[100px] w-full flex pt-[2px] pb-1 px-[2px]">
+          <div tw="overflow-hidden w-full h-full flex items-center">
+            <div tw="flex items-end justify-start py-4 px-6 rounded-lg w-full bg-black/80 text-white">
+              <FactItem
+                value={b50Sum.toFixed(0)}
+                label="Total"
+                size="lg"
+                tw="mr-6"
+              />
+
+              <FactItem value={b15Sum.toFixed(0)} label="B15" tw="mr-4" />
+              <FactItem value={b35Sum.toFixed(0)} label="B35" />
+            </div>
           </div>
         </div>
-      </div>
 
-      {await Promise.all(padArray(data.b35, 35).map(renderCell))}
+        {await Promise.all(padArray(data.b35, 35).map(renderCell))}
 
-      <div tw="w-full h-[1px] bg-black/20 my-[6px]" />
+        <div tw="w-full h-[1px] bg-black/20 my-[6px]" />
 
-      {await Promise.all(padArray(data.b15, 15).map(renderCell))}
+        {await Promise.all(padArray(data.b15, 15).map(renderCell))}
 
-      <div tw="w-full flex items-center justify-center h-[27px] pt-1">
-        <BottomLabel first>Rendered by DXRating.net</BottomLabel>
+        <div tw="w-full flex items-center justify-center h-[27px] pt-1">
+          <BottomLabel first>Rendered by DXRating.net</BottomLabel>
 
-        <BottomLabel>Renderer Revision {gitVersion.slice(0, 7)}</BottomLabel>
+          <BottomLabel>Renderer Revision {gitVersion.slice(0, 7)}</BottomLabel>
 
-        <BottomLabel>
-          ver. {version}
-          {formattedRegionSuffix}
-        </BottomLabel>
+          <BottomLabel>
+            ver. {version}
+            {formattedRegionSuffix}
+          </BottomLabel>
+        </div>
       </div>
     </div>
   );
