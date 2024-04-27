@@ -48,6 +48,9 @@ export const AuthContextProvider: FC<PropsWithChildren<object>> = ({
         .maybeSingle();
       return res.data;
     },
+    {
+      focusThrottleInterval: 1000 * 60 * 60,
+    },
   );
 
   useEffect(() => {

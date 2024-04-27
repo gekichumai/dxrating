@@ -10,7 +10,10 @@ import {
 import { FC, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 
-import { useAppContextDXDataVersion } from "../../../../models/context/useAppContext";
+import {
+  useAppContext,
+  useAppContextDXDataVersion,
+} from "../../../../models/context/useAppContext";
 import {
   RatingCalculatorEntry,
   useRatingEntries,
@@ -58,11 +61,12 @@ const mapCalculatedEntries = (entry: RatingCalculatorEntry) => {
 const RenderToOneShotImageDialogContent = () => {
   const { b15Entries, b35Entries, allEntries } = useRatingEntries();
   const version = useAppContextDXDataVersion();
+  const { region } = useAppContext();
 
   const { data, isValidating, error } = useSWR(
     `miruku::functions/oneshot-renderer?data=${JSON.stringify(
       allEntries,
-    )}&version=${version}`,
+    )}&version=${version}&region=${region}`,
     async () => {
       const response = await fetch(
         "https://miruku.dxrating.net/functions/render-oneshot/v0?pixelated=1",
@@ -73,6 +77,7 @@ const RenderToOneShotImageDialogContent = () => {
           },
           body: JSON.stringify({
             version,
+            region,
             calculatedEntries: {
               b15: b15Entries.map(mapCalculatedEntries),
               b35: b35Entries.map(mapCalculatedEntries),
