@@ -1,4 +1,5 @@
 import { CircularProgress, Tab, Tabs } from "@mui/material";
+import { usePostHog } from "posthog-js/react";
 import { Suspense, useCallback, useEffect, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useEffectOnce, useLocalStorage } from "react-use";
@@ -23,6 +24,7 @@ const fallbackElement = (
 );
 
 export const App = () => {
+  const posthog = usePostHog();
   const { t, i18n } = useTranslation(["root"]);
   const versionTheme = useVersionTheme();
   const [tab, setTab] = useLocalStorage<AppTabsValuesType>(
@@ -30,6 +32,10 @@ export const App = () => {
     DEFAULT_TAB,
   );
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    posthog?.capture("tab_switched", { tab });
+  }, [tab]);
 
   useEffect(() => {
     console.info("[i18n] Language detected as " + i18n.language);

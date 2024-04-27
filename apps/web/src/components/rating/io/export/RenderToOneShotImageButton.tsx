@@ -7,6 +7,7 @@ import {
   DialogTitle,
   Grow,
 } from "@mui/material";
+import { usePostHog } from "posthog-js/react";
 import { FC, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 
@@ -59,6 +60,7 @@ const mapCalculatedEntries = (entry: RatingCalculatorEntry) => {
 };
 
 const RenderToOneShotImageDialogContent = () => {
+  const posthog = usePostHog();
   const { b15Entries, b35Entries, allEntries } = useRatingEntries();
   const version = useAppContextDXDataVersion();
   const { region } = useAppContext();
@@ -68,6 +70,7 @@ const RenderToOneShotImageDialogContent = () => {
       allEntries,
     )}&version=${version}&region=${region}`,
     async () => {
+      const from = Date.now();
       const response = await fetch(
         "https://miruku.dxrating.net/functions/render-oneshot/v0?pixelated=1",
         {
@@ -86,6 +89,11 @@ const RenderToOneShotImageDialogContent = () => {
         },
       );
       const blob = await response.blob();
+
+      posthog?.capture("oneshot_rendered", {
+        duration_seconds: Date.now() - from,
+      });
+
       return URL.createObjectURL(blob);
     },
     {
@@ -164,12 +172,16 @@ const RenderToOneShotImageDialogContent = () => {
 };
 
 export const RenderToOneShotImageButton: FC = () => {
+  const posthog = usePostHog();
   const [open, setOpen] = useState(false);
 
   return (
     <>
       <Button
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setOpen(true);
+          posthog?.capture("oneshot_render_button_clicked");
+        }}
         variant="contained"
         color="primary"
         startIcon={<IconMdiImage />}

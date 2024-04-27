@@ -1,6 +1,7 @@
 import { DifficultyEnum, TypeEnum } from "@gekichumai/dxdata";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { CircularProgress } from "@mui/material";
+import posthog from "posthog-js";
 import toast from "react-hot-toast";
 import { ListActions } from "react-use/lib/useList";
 
@@ -112,6 +113,8 @@ export const importFromNETRecords = async (
   modifyEntries: ListActions<PlayEntry>,
   onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
 ) => {
+  posthog?.capture("netimport_started");
+
   const toastId = toast.loading("Importing records from NET...", {
     icon: <CircularProgress size="1rem" thickness={5} />,
   });
@@ -213,6 +216,11 @@ export const importFromNETRecords = async (
         duration: 20000,
       },
     );
+
+    posthog?.capture("netimport_succeeded", {
+      region,
+      count: entries.length,
+    });
   } catch (error) {
     toast.error(
       "Error occurred while importing records from NET: " +

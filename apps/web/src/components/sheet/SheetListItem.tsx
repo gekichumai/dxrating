@@ -6,6 +6,7 @@ import {
   ListItemTextProps,
 } from "@mui/material";
 import clsx from "clsx";
+import { usePostHog } from "posthog-js/react";
 import { FC, HTMLAttributes, ImgHTMLAttributes, memo, useState } from "react";
 import toast from "react-hot-toast";
 import { match } from "ts-pattern";
@@ -39,6 +40,7 @@ export const SheetListItem: FC<{
     SheetListItemContentProps,
     SheetDialogContentProps,
   }) => {
+    const posthog = usePostHog();
     const [open, setOpen] = useState(false);
     const isLargeDevice = useIsLargeDevice();
 
@@ -56,7 +58,14 @@ export const SheetListItem: FC<{
             "w-full cursor-pointer transition duration-500 hover:duration-25 !px-4",
             open && "!bg-zinc-300/80",
           )}
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setOpen(true);
+            posthog?.capture("sheet_content_viewed", {
+              song_id: sheet.songId,
+              sheet_type: sheet.type,
+              sheet_difficulty: sheet.difficulty,
+            });
+          }}
           sx={{
             borderRadius: 1,
           }}

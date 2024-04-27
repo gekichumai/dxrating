@@ -8,6 +8,7 @@ import "@unocss/reset/tailwind-compat.css";
 import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import posthog from "posthog-js";
+import { PostHogProvider } from "posthog-js/react";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { initReactI18next } from "react-i18next";
@@ -163,9 +164,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <VersionCustomizedThemeProvider>
         <RatingCalculatorContextProvider>
           <AuthContextProvider>
-            <SideEffector />
-            <CustomizedToaster />
-            <App />
+            <PostHogProvider client={posthog}>
+              <SideEffector />
+              <CustomizedToaster />
+              <App />
+            </PostHogProvider>
           </AuthContextProvider>
         </RatingCalculatorContextProvider>
       </VersionCustomizedThemeProvider>
