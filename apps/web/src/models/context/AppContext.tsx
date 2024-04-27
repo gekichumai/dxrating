@@ -32,8 +32,8 @@ export interface AppContextFns {
 }
 
 export const AppContext = createContext<AppContext>({
-  version: "festival-plus",
-  region: "jp",
+  version: "buddies",
+  region: "_generic",
   setVersionAndRegion: () => {
     throw new Error("AppContext not initialized");
   },
@@ -41,8 +41,8 @@ export const AppContext = createContext<AppContext>({
 
 function getDefaultAppContext(): AppContextStates {
   return {
-    version: "festival-plus",
-    region: "jp",
+    version: "buddies",
+    region: "_generic",
   };
 }
 
