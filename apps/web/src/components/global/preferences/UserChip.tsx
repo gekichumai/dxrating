@@ -247,6 +247,7 @@ export const UpdateDisplayNameMenuItem: FC = () => {
               label={t("auth:update-display-name.label")}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
+              data-attr="update-display-name"
             />
             <Button
               onClick={handleUpdate}

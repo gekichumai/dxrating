@@ -180,6 +180,7 @@ export const RatingCalculatorAddEntryForm: FC<{
               endAdornment: "%",
               type: "number",
             }}
+            data-attr="manual-rating-add-achievement-rate"
           />
         </div>
         <div className="chunks-horizontal-2">
@@ -247,6 +248,7 @@ export const RatingCalculatorAddEntryForm: FC<{
                   <IconMdiPlus fontSize="inherit" />
                 )
               }
+              data-attr="manual-rating-add-submit"
             >
               {replacing ? `Replace (+${replacing.diff})` : "Add"}
             </Button>
@@ -299,6 +301,7 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
         onChange(value);
       }}
       isOptionEqualToValue={(option, value) => option.id === value.id}
+      data-attr="manual-rating-add-sheet"
     />
   );
 };

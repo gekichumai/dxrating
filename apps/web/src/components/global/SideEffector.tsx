@@ -1,8 +1,10 @@
+import { usePostHog } from "posthog-js/react";
 import { FC, memo, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useEffectOnce } from "react-use";
 
+import { useAuth } from "../../models/context/AuthContext";
 import { useRatingCalculatorContext } from "../../models/context/RatingCalculatorContext";
 import { useSheets } from "../../songs";
 import { useVersionTheme } from "../../utils/useVersionTheme";
@@ -72,6 +74,23 @@ const SideEffectorImportNotice: FC = () => {
   return null;
 };
 
+const SideEffectorAuth: FC = () => {
+  const { session } = useAuth();
+  const posthog = usePostHog();
+
+  useEffect(() => {
+    if (session) {
+      posthog?.identify(session?.user.id, {
+        email: session?.user.email,
+      });
+    } else {
+      posthog?.reset();
+    }
+  }, [session]);
+
+  return null;
+};
+
 export const SideEffector: FC = memo(() => {
   return (
     <>
@@ -79,6 +98,7 @@ export const SideEffector: FC = memo(() => {
       <SideEffectorThemeMeta />
       <SideEffectorLocaleMeta />
       <SideEffectorAutoImportRating />
+      <SideEffectorAuth />
     </>
   );
 });

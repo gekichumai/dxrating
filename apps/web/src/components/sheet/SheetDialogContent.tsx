@@ -152,6 +152,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             minRows={1}
             maxRows={3}
             multiline
+            data-attr="comment-input"
           />
           <Button
             variant="contained"

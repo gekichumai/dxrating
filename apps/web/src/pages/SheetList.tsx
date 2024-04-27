@@ -157,6 +157,7 @@ const _SheetListInner: FC = () => {
             </IconButton>
           ),
         }}
+        data-attr="sheet-search"
       />
 
       {isBuildPlatformApp && (

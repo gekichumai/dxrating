@@ -77,6 +77,8 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
               stiffness: 235,
             }}
             onClick={() => setExpanded((prev) => !prev)}
+            role="button"
+            data-attr="sheet-image"
           />
 
           <div className="flex-1" />

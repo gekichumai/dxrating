@@ -86,6 +86,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({
                   handleAddAltName();
                 }
               }}
+              data-attr="add-alias-input"
             />
 
             <Button
