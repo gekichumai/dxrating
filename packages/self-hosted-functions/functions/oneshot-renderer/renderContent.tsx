@@ -2,7 +2,8 @@ import { DifficultyEnum, TypeEnum, VersionEnum } from "@gekichumai/dxdata";
 import { execSync } from "child_process";
 import clsx from "clsx";
 import fs from "fs/promises";
-import { ASSETS_BASE_DIR, ONESHOT_HEIGHT, ONESHOT_WIDTH, RenderData } from ".";
+import { FC, PropsWithChildren } from "react";
+import { ASSETS_BASE_DIR, Region, RenderData } from ".";
 
 interface VersionTheme {
   background: string;
@@ -38,7 +39,7 @@ export const VERSION_THEME: Record<string, VersionTheme> = {
 
 const DIFFICULTIES: Record<
   DifficultyEnum,
-  { title: string; color: string; dark?: boolean }
+  { title: string; color: string; inverted?: boolean }
 > = {
   [DifficultyEnum.Basic]: {
     title: "BASIC",
@@ -55,11 +56,11 @@ const DIFFICULTIES: Record<
   [DifficultyEnum.Master]: {
     title: "MASTER",
     color: "#9e45e2",
-    dark: true,
   },
   [DifficultyEnum.ReMaster]: {
     title: "Re:MASTER",
-    color: "#ba67f8",
+    color: "#951BEF",
+    inverted: true,
   },
 };
 
@@ -72,31 +73,36 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
     );
   }
 
-  const coverImage = (
-    await fs.readFile(
-      ASSETS_BASE_DIR + "/images/cover/v2/" + entry.sheet.imageName
-    )
-  ).buffer;
-
-  const typeImage = (
-    await fs.readFile(
+  const [coverImage, typeImage] = await Promise.all([
+    fs.readFile(ASSETS_BASE_DIR + "/images/cover/v2/" + entry.sheet.imageName),
+    fs.readFile(
       ASSETS_BASE_DIR +
         `/images/type_${entry.sheet.type === TypeEnum.STD ? "sd" : entry.sheet.type}.png`
-    )
-  ).buffer;
+    ),
+  ]);
+
+  const theme = DIFFICULTIES[entry.sheet.difficulty];
+
+  const backgroundColor = theme.inverted ? "#EBCFFF" : theme.color;
+  const foregroundColor = theme.inverted ? theme.color : "#fff";
+  const shadowColor = theme.inverted
+    ? "rgba(255,255,255,0.5)"
+    : "rgba(0,0,0,0.5)";
+  const adornmentColor = theme.inverted ? "#000000a0" : "#ffffffa0";
 
   return (
     <div key={entry.sheet.id} tw="w-1/5 p-[2px] flex h-[96px]">
       <div
-        tw="h-full w-full rounded-lg flex items-center justify-start p-2 text-white"
+        tw="h-full w-full rounded-lg flex items-center justify-start p-2"
         style={{
-          backgroundColor: DIFFICULTIES[entry.sheet.difficulty].color,
+          background: `linear-gradient(135deg, ${backgroundColor}, ${backgroundColor}cc)`,
+          color: foregroundColor,
         }}
       >
         <img
           // ignore the ts error here
           // @ts-expect-error
-          src={coverImage}
+          src={coverImage.buffer}
           alt={entry.sheet.imageName}
           tw="h-[76px] w-[76px] rounded-sm mr-2"
         />
@@ -107,7 +113,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
             style={{
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-              textShadow: "0 0 2px rgba(0,0,0,0.5)",
+              textShadow: "0 0 2px " + shadowColor,
               lineHeight: "16px",
               fontSize: (() => {
                 const length = entry.sheet.title.length;
@@ -124,9 +130,9 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
           <div tw="text-sm leading-none mt-1 flex items-center">
             {/* ignore the ts error here
                         @ts-expect-error */}
-            <img src={typeImage} alt="" tw="h-[20px] mr-1" />
+            <img src={typeImage.buffer} alt="" tw="h-[20px] mr-1" />
             <span
-              tw="text-[10px] bg-black/50 rounded-full px-[6px] py-[3px] mb-[2px] leading-none font-bold mr-1 flex items-center"
+              tw="text-[10px] bg-black/50 rounded-full px-[6px] py-[3px] mb-[2px] leading-none font-bold mr-1 flex items-center text-white"
               style={{
                 boxShadow: "1px 1px 0 rgba(0,0,0,0.35)",
               }}
@@ -139,7 +145,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
             </span>
           </div>
 
-          <div tw="flex items-center text-[14px] bg-black/50 rounded-full leading-none pl-[8px] pr-[2px] py-[2px] font-bold mt-1">
+          <div tw="flex items-center text-[14px] bg-black/50 rounded-full leading-none pl-[8px] pr-[2px] py-[2px] font-bold mt-1 text-white">
             <span tw="text-sm leading-none">
               {entry.achievementRate.toFixed(4)}%
             </span>
@@ -154,7 +160,10 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
           </div>
         </div>
 
-        <div tw="absolute bottom-2 right-2 text-[9px] text-white/75 font-bold leading-none">
+        <div
+          tw="absolute bottom-2 right-2 text-[9px] font-bold leading-none"
+          style={{ color: adornmentColor }}
+        >
           {"#" + (i + 1)}
         </div>
       </div>
@@ -219,21 +228,39 @@ const calculateFitSize = (
   };
 };
 
+export const BottomLabel: FC<
+  PropsWithChildren<{
+    first?: boolean;
+  }>
+> = ({ first, children }) => {
+  return (
+    <div
+      tw={clsx(
+        "flex items-center justify-center bg-black/40 rounded-t-lg text-[12px] text-white px-3 pt-1 pb-2 font-bold leading-none",
+        !first && "ml-1"
+      )}
+    >
+      {children}
+    </div>
+  );
+};
+
 export const renderContent = async ({
   data,
   version,
+  region,
 }: {
   data: {
     b15: RenderData[];
     b35: RenderData[];
   };
   version: VersionEnum;
+  region?: Region;
 }) => {
   const theme = VERSION_THEME[version];
 
-  const backgroundBase64 = (
-    await fs.readFile(ASSETS_BASE_DIR + theme.background)
-  ).toString("base64");
+  const background = (await fs.readFile(ASSETS_BASE_DIR + theme.background))
+    .buffer;
 
   const b50Sum = [...data.b15, ...data.b35].reduce(
     (acc, cur) => acc + cur.rating.ratingAwardValue,
@@ -249,22 +276,23 @@ export const renderContent = async ({
     0
   );
 
-  const fitSize = calculateFitSize(
-    theme.backgroundSize[0],
-    theme.backgroundSize[1],
-    ONESHOT_WIDTH,
-    ONESHOT_HEIGHT
-  );
+  const formattedRegionSuffix = region
+    ? region === "_generic"
+      ? " (Generic)"
+      : ` (${region.toUpperCase()})`
+    : "";
 
   return (
-    <div
-      tw="font-sans text-lg leading-none flex flex-wrap px-1 pt-1 h-full"
-      style={{
-        backgroundImage: `url("data:image/jpeg;base64,${backgroundBase64}")`,
-        backgroundSize: `${fitSize.width}px ${fitSize.height}px`,
-        backgroundRepeat: "no-repeat",
-      }}
-    >
+    <div tw="font-sans text-lg leading-none flex flex-wrap px-1 pt-1 h-full">
+      <img
+        tw="absolute inset-0 w-full h-full"
+        // @ts-expect-error
+        src={background}
+        alt=""
+        style={{
+          objectFit: "cover",
+        }}
+      />
       <div tw="h-[100px] w-full flex pt-[2px] pb-1 px-[2px]">
         <div tw="overflow-hidden w-full h-full flex items-center">
           <div tw="flex items-end justify-start py-4 px-6 rounded-lg w-full bg-black/80 text-white">
@@ -288,17 +316,14 @@ export const renderContent = async ({
       {await Promise.all(padArray(data.b15, 15).map(renderCell))}
 
       <div tw="w-full flex items-center justify-center h-[27px] pt-1">
-        <div tw="flex items-center justify-center bg-black/40 rounded-t-lg text-[12px] text-white px-3 pt-1 pb-2 font-bold leading-none">
-          Rendered by DXRating.net
-        </div>
+        <BottomLabel first>Rendered by DXRating.net</BottomLabel>
 
-        <div tw="flex items-center justify-center bg-black/40 rounded-t-lg text-[12px] text-white px-3 pt-1 pb-2 font-bold leading-none ml-1">
-          Renderer Revision {gitVersion.slice(0, 7)}
-        </div>
+        <BottomLabel>Renderer Revision {gitVersion.slice(0, 7)}</BottomLabel>
 
-        <div tw="flex items-center justify-center bg-black/40 rounded-t-lg text-[12px] text-white px-3 pt-1 pb-2 font-bold leading-none ml-1">
+        <BottomLabel>
           ver. {version}
-        </div>
+          {formattedRegionSuffix}
+        </BottomLabel>
       </div>
     </div>
   );

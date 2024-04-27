@@ -12,6 +12,8 @@ export const ONESHOT_WIDTH = 1500;
 
 export const ASSETS_BASE_DIR = process.env.ASSETS_BASE_DIR;
 
+export type Region = "jp" | "intl" | "cn" | "_generic";
+
 // declare a new attribute `tw` for JSX elements
 declare module "react" {
   interface HTMLAttributes<T> extends DOMAttributes<T> {
@@ -69,25 +71,49 @@ const getFlattenedSheetsMap = () => {
 const flattenedSheets = getFlattenedSheetsMap();
 
 const fetchFontPack = async (): Promise<Font[]> => {
-  const fonts = await Promise.all([
-    fs.readFile(ASSETS_BASE_DIR + "/fonts/SourceHanSans-Regular.otf"),
-    fs.readFile(ASSETS_BASE_DIR + "/fonts/SourceHanSans-Bold.otf"),
-  ]);
-  if (!fonts[0] || !fonts[1]) return [];
-  return [
+  const fontConfig = [
+    // {
+    //   file: "SourceHanSansJP-Regular.otf",
+    //   weight: 400 as const,
+    // },
     {
-      name: "Torus",
-      data: fonts[0],
-      weight: 400,
-      style: "normal",
+      file: "SourceHanSansJP-Bold.otf",
+      weight: 700 as const,
     },
     {
-      name: "Torus",
-      data: fonts[1],
-      weight: 700,
-      style: "normal",
+      file: "SourceHanSansJP-Medium.otf",
+      weight: 500 as const,
     },
   ];
+  const fonts = await Promise.all(
+    fontConfig.map(async (font) =>
+      fs.readFile(ASSETS_BASE_DIR + "/fonts/" + font.file)
+    )
+  );
+  if (!fonts.every((font) => font instanceof Buffer)) {
+    console.error("Failed to load at least one font");
+    return [];
+  }
+  // return [
+  //   {
+  //     name: "Source Han Sans",
+  //     data: fonts[0],
+  //     weight: 400,
+  //     style: "normal",
+  //   },
+  //   {
+  //     name: "Source Han Sans",
+  //     data: fonts[1],
+  //     weight: 700,
+  //     style: "normal",
+  //   },
+  // ];
+  return fontConfig.map((font, i) => ({
+    name: "Source Han Sans",
+    data: fonts[i],
+    weight: font.weight,
+    style: "normal",
+  }));
 };
 
 let cachedFonts: Font[] | null = null;
@@ -217,9 +243,11 @@ export const handler = async (ctx: Koa.Context) => {
     ? {
         entries: demo,
         version: VersionEnum.BUDDiES,
+        region: "intl",
       }
     : (ctx.request.body as any);
   const version = body.version as VersionEnum;
+  const region = body.region as Region;
 
   const timer = createServerTimingTimer();
 
@@ -237,7 +265,7 @@ export const handler = async (ctx: Koa.Context) => {
   timer.stop("calc");
 
   timer.start("jsx");
-  const content = await renderContent({ data, version });
+  const content = await renderContent({ data, version, region });
   timer.stop("jsx");
 
   timer.start("satori");
