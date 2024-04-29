@@ -41,6 +41,7 @@ export const useCombinedTags = () => {
     },
     {
       focusThrottleInterval: 1000 * 60 * 60,
+      suspense: false,
     },
   );
 };

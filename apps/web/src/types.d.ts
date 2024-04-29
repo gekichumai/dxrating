@@ -6,3 +6,9 @@ declare module "react" {
     tw?: string;
   }
 }
+
+declare global {
+  interface Document {
+    startViewTransition(cb: () => Promise<void> | void): ViewTransition;
+  }
+}

@@ -16,6 +16,7 @@ import {
   Region,
 } from "../../../models/context/AppContext";
 import { useAppContext } from "../../../models/context/useAppContext";
+import { startViewTransition } from "../../../utils/startViewTransition";
 import { useVersionTheme } from "../../../utils/useVersionTheme";
 import { WebpSupportedImage } from "../WebpSupportedImage";
 
@@ -83,7 +84,9 @@ export const VersionRegionSwitcher: FC = () => {
       variant="filled"
       onChange={(e) => {
         const { version, region } = fromMergedVersionRegionId(e.target.value);
-        setVersionAndRegion(version, region);
+        startViewTransition(() => {
+          setVersionAndRegion(version, region);
+        });
       }}
       renderValue={(value) => (
         <div className="flex flex-col gap-0.5">

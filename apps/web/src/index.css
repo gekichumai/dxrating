@@ -82,3 +82,91 @@ body,
     opacity: 0.5;
   }
 }
+
+@media (prefers-reduced-motion) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+::view-transition-old(*),
+::view-transition-new(*) {
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(*),
+::view-transition-new(*) {
+  backface-visibility: hidden;
+}
+
+@keyframes view-transition-exit {
+  0% {
+    opacity: 1;
+    transform: translate(0px, 0px) scale(1) rotateX(0deg) rotateY(0deg)
+      rotateZ(0deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(0px, 0px) scale(1) rotateX(0deg) rotateY(0deg)
+      rotateZ(0deg);
+  }
+}
+
+::view-transition-old(root) {
+  animation-name: view-transition-exit;
+  animation-duration: 0.1s;
+  animation-delay: 0s;
+  animation-timing-function: cubic-bezier(0.27, 0, 0.51, 1);
+  animation-fill-mode: both;
+}
+
+@property --view-transition-wipe-offset {
+  syntax: "<number>";
+  initial-value: 0;
+  inherits: false;
+}
+
+@keyframes view-transition-enter {
+  0% {
+    opacity: 1;
+    transform: translate(0px, 0px) scale(1) rotateX(0deg) rotateY(0deg)
+      rotateZ(0deg);
+    --view-transition-wipe-offset: 0;
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(0px, 0px) scale(1) rotateX(0deg) rotateY(0deg)
+      rotateZ(0deg);
+    --view-transition-wipe-offset: 1;
+  }
+}
+
+::view-transition-new(root) {
+  animation-name: view-transition-enter;
+  animation-duration: 0.3s;
+  animation-delay: 0s;
+  animation-timing-function: cubic-bezier(0.27, 0, 0.51, 1);
+  animation-fill-mode: both;
+  mask-image: linear-gradient(
+    180deg,
+    black
+      calc(
+        calc(0% - 100%) +
+          calc(calc(100% + 100%) * var(--view-transition-wipe-offset))
+      ),
+    transparent calc(calc(100% + 100%) * var(--view-transition-wipe-offset))
+  );
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    black
+      calc(
+        calc(0% - 100%) +
+          calc(calc(100% + 100%) * var(--view-transition-wipe-offset))
+      ),
+    transparent calc(calc(100% + 100%) * var(--view-transition-wipe-offset))
+  );
+}

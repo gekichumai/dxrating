@@ -2,7 +2,8 @@ import { CircularProgress, Tab, Tabs } from "@mui/material";
 import { usePostHog } from "posthog-js/react";
 import { Suspense, useCallback, useEffect, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { useEffectOnce, useLocalStorage } from "react-use";
+import { useEffectOnce } from "react-use";
+import { Route, Router, useLocation, useRoute } from "wouter";
 
 import { OverscrollBackgroundFiller } from "./components/global/OverscrollBackgroundFiller";
 import { VersionRegionSwitcher } from "./components/global/preferences/VersionRegionSwitcher";
@@ -11,11 +12,10 @@ import { TopBar } from "./components/layout/TopBar";
 import { RatingCalculator } from "./pages/RatingCalculator";
 import { SheetList } from "./pages/SheetList";
 import { useVersionTheme } from "./utils/useVersionTheme";
+import { startViewTransition } from "./utils/startViewTransition";
 
 const APP_TABS_VALUES = ["search", "rating"] as const;
 type AppTabsValuesType = (typeof APP_TABS_VALUES)[number];
-
-const DEFAULT_TAB = "search" as AppTabsValuesType;
 
 const fallbackElement = (
   <div className="flex items-center justify-center h-50% w-full p-6">
@@ -23,61 +23,50 @@ const fallbackElement = (
   </div>
 );
 
-export const App = () => {
+const useAppTab = () => {
   const posthog = usePostHog();
-  const { t, i18n } = useTranslation(["root"]);
-  const versionTheme = useVersionTheme();
-  const [tab, setTab] = useLocalStorage<AppTabsValuesType>(
-    "tab-selection",
-    DEFAULT_TAB,
-  );
-  const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    posthog?.capture("tab_switched", { tab });
-  }, [tab]);
-
-  useEffect(() => {
-    console.info("[i18n] Language detected as " + i18n.language);
-  }, [i18n.language]);
+  const [, setLocation] = useLocation();
+  const [, locationTabMatch] = useRoute("/*");
+  const [, startTransition] = useTransition();
 
   const userInteractedSetTab = useCallback(
     (newTab: AppTabsValuesType) => {
       startTransition(() => {
-        setTab(newTab);
+        startViewTransition(() => {
+          setLocation(
+            `/${newTab}${window.location.search}${window.location.hash}`,
+          );
+        });
 
-        window.history.pushState(
-          {},
-          "",
-          `/${newTab}${window.location.search}${window.location.hash}`,
-        );
+        localStorage.setItem("tab-selection", JSON.stringify(newTab));
       });
     },
-    [setTab, startTransition],
+    [setLocation],
   );
 
-  const updateTabFromPath = useCallback(() => {
-    const url = new URL(window.location.href);
-    const tab = url.pathname.slice(1) as AppTabsValuesType;
-    if (APP_TABS_VALUES.includes(tab)) {
-      setTab(tab);
-    }
-  }, [setTab]);
-
   useEffectOnce(() => {
-    updateTabFromPath();
+    const tab = JSON.parse(localStorage.getItem("tab-selection") ?? "null");
+    if (tab && location.pathname === "/")
+      setLocation(`/${tab}${window.location.search}${window.location.hash}`);
   });
 
-  useEffect(() => {
-    const ln = () => {
-      updateTabFromPath();
-    };
-    window.addEventListener("popstate", ln);
+  const tab = APP_TABS_VALUES.includes(
+    locationTabMatch?.["*"] as AppTabsValuesType,
+  )
+    ? (locationTabMatch?.["*"] as AppTabsValuesType)
+    : "search";
 
-    return () => {
-      window.removeEventListener("popstate", ln);
-    };
-  }, [updateTabFromPath]);
+  useEffect(() => {
+    posthog?.capture("tab_switched", { tab });
+  }, [posthog, tab]);
+
+  return [tab, userInteractedSetTab] as const;
+};
+
+export const App = () => {
+  const [tab, setTab] = useAppTab();
+  const { t } = useTranslation(["root"]);
+  const versionTheme = useVersionTheme();
 
   return (
     <div className="h-full w-full relative">
@@ -107,7 +96,7 @@ export const App = () => {
           <Tabs
             value={tab}
             onChange={(_, v) => {
-              userInteractedSetTab(v);
+              setTab(v);
             }}
             classes={{
               root: "rounded-xl bg-zinc-900/10 !min-h-2.5rem",
@@ -128,13 +117,15 @@ export const App = () => {
           </Tabs>
         </div>
         <Suspense fallback={fallbackElement}>
-          {isPending
-            ? fallbackElement
-            : {
-                search: <SheetList />,
-                // recent: <RecentPage />,
-                rating: <RatingCalculator />,
-              }[tab ?? DEFAULT_TAB]}
+          <Router>
+            <Route path="/search">
+              <SheetList />
+            </Route>
+
+            <Route path="/rating">
+              <RatingCalculator />
+            </Route>
+          </Router>
         </Suspense>
       </div>
     </div>
