@@ -5,7 +5,6 @@ import compact from "lodash-es/compact";
 import {
   FC,
   HTMLAttributes,
-  Ref,
   forwardRef,
   useEffect,
   useRef,
@@ -55,7 +54,6 @@ const formatNumber = (value: number) => {
 interface RatingCalculatorStatisticsOverviewProps {
   className?: string;
   style?: React.CSSProperties;
-  ref?: Ref<HTMLDivElement>;
 }
 
 const RatingCalculatorStatisticsOverview = forwardRef<

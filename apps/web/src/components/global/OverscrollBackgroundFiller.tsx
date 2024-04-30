@@ -6,7 +6,6 @@ const HEIGHT = 16 * 4;
 const DETECT_HEIGHT = 16 * 16;
 
 export const OverscrollBackgroundFiller = () => {
-  // const scroll = useWindowScroll();
   const ref = useRef<HTMLDivElement>(null);
   const versionTheme = useVersionTheme();
 

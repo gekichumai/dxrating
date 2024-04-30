@@ -50,7 +50,7 @@ const ListboxComponent = forwardRef<HTMLElement>(
       <ul {...rest} className={clsx("!py-0", rest.className)}>
         <Virtuoso
           scrollerRef={ref as (ref: HTMLElement | Window | null) => void}
-          style={{ height: "20rem" }}
+          style={{ height: "30rem" }}
           data={data}
           itemContent={(index, child) => {
             return cloneElement(child, { index });
