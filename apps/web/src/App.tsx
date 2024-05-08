@@ -45,7 +45,7 @@ const useAppTab = () => {
   );
 
   useEffectOnce(() => {
-    const tab = JSON.parse(localStorage.getItem("tab-selection") ?? "null");
+    const tab = JSON.parse(localStorage.getItem("tab-selection") ?? `"${APP_TABS_VALUES[0]}"`);
     if (tab && location.pathname === "/")
       setLocation(`/${tab}${window.location.search}${window.location.hash}`);
   });
