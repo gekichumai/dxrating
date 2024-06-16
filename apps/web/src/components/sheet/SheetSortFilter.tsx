@@ -1,4 +1,4 @@
-import { CategoryEnum, VersionEnum } from "@gekichumai/dxdata";
+import { CategoryEnum, DifficultyEnum, VersionEnum } from "@gekichumai/dxdata";
 import { DevTool } from "@hookform/devtools";
 import {
   Button,
@@ -34,6 +34,7 @@ import { SheetInternalLevelFilter } from "./filters/SheetInternalLevelFilter";
 import { SheetTagFilter } from "./filters/SheetTagFilter";
 import { SheetVersionFilter } from "./filters/SheetVersionFilter";
 import { SheetSortSelect } from "./SheetSortSelect";
+import { SheetDifficultyFilter } from "./filters/SheetDifficultyFilter";
 
 import MdiChevronDownIcon from "~icons/mdi/chevron-down";
 
@@ -51,6 +52,7 @@ export interface SheetSortFilterForm {
     };
     tags: number[];
     categories: CategoryEnum[];
+    difficulties: DifficultyEnum[];
   };
   sorts: SortPredicate[];
 }
@@ -64,6 +66,7 @@ export const getDefaultSheetSortFilterForm = (): SheetSortFilterForm => ({
     },
     tags: [],
     categories: Object.values(CategoryEnum),
+    difficulties: Object.values(DifficultyEnum),
   },
   sorts: [
     {
@@ -235,6 +238,7 @@ const SheetSortFilterFormContent = () => {
           <SheetVersionFilter control={control} />
           <SheetTagFilter control={control} />
           <SheetInternalLevelFilter control={control} />
+          <SheetDifficultyFilter control={control} />
         </div>
       </div>
 

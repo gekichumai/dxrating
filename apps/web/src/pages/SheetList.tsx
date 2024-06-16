@@ -81,7 +81,6 @@ const _SheetListInner: FC = () => {
               return true;
             }
           },
-
           (v) => {
             if (sortFilterOptions.filters.categories) {
               const categories = sortFilterOptions.filters.categories;
@@ -92,6 +91,16 @@ const _SheetListInner: FC = () => {
               return true;
             }
           },
+          (v) => {
+            if (sortFilterOptions.filters.difficulties) {
+              const difficulties = sortFilterOptions.filters.difficulties;
+              return difficulties.some((difficulty) =>
+                v.difficulty.includes(difficulty),
+              );
+            } else {
+              return true;
+            }
+          }
         )(sheet);
       });
       if (!query) {

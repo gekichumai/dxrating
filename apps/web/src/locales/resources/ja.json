@@ -79,6 +79,13 @@
       },
       "category": {
         "title": "ジャンル"
+      },
+      "difficulty": {
+        "title": "難易度",
+        "gesture-hint": {
+          "tap": "トグル",
+          "tap-hold": "のみ"
+        }
       }
     },
     "sort": {

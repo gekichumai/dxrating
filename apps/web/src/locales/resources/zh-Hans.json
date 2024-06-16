@@ -79,6 +79,13 @@
       },
       "category": {
         "title": "乐曲种类"
+      },
+      "difficulty": {
+        "title": "难度",
+        "gesture-hint": {
+          "tap": "切换",
+          "tap-hold": "单选"
+        }
       }
     },
     "sort": {

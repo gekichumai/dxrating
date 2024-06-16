@@ -80,6 +80,13 @@
       },
       "category": {
         "title": "Genre"
+      },
+      "difficulty": {
+        "title": "Difficulty",
+        "gesture-hint": {
+          "tap": "Toggle",
+          "tap-hold": "Select"
+        }
       }
     },
     "sort": {

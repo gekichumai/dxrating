@@ -79,6 +79,13 @@
       },
       "category": {
         "title": "類型"
+      },
+      "difficulty": {
+        "title": "難度",
+        "gesture-hint": {
+          "tap": "切換",
+          "tap-hold": "單選"
+        }
       }
     },
     "sort": {
