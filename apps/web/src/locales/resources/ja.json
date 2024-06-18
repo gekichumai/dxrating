@@ -1,0 +1,164 @@
+{
+  "root": {
+    "pages": {
+      "search": {
+        "title": "譜面検索"
+      },
+      "rating": {
+        "title": "レーテイング計算"
+      }
+    },
+    "share": {
+      "copy-content": "{{ link }}",
+      "copy-succeeded": "クリップボードにコピーされました"
+    }
+  },
+  "settings": {
+    "region": {
+      "title": "地域：{{region}}",
+      "jp": "日本",
+      "intl": "International",
+      "cn": "中国",
+      "_generic": "汎用"
+    },
+    "version-and-region": {
+      "info": "異なるデータバージョンと地域は、異なる内部レベル値と異なる曲の可視性に対応します",
+      "select": "データバージョンと地域を選択",
+      "select-generic": "または、データバージョンを選択し、「汎用」リージョンを使用する"
+    }
+  },
+  "sheet": {
+    "search": "検索",
+    "ocr": "OCRをスタート",
+    "details": {
+      "achievement-to-rating": {
+        "achievement": "達成率",
+        "rating": "レーティング",
+        "title": "達成率→レーティング"
+      },
+      "bpm": "BPM",
+      "category": "カテゴリー",
+      "chart-designer": "譜面デザイナー",
+      "credits": "一部のデータは <link /> から取得されています",
+      "notes-statistics": {
+        "break": "ブレイク",
+        "hold": "ホールド",
+        "slide": "スライド",
+        "tap": "タップ",
+        "title": "ノーツの統計",
+        "total": "合計",
+        "touch": "タッチ"
+      },
+      "regional-availability": "地域ごとの可用性",
+      "song-artist": "ソングアーティスト",
+      "title": "詳細"
+    },
+    "filter-current-version": "現在稼働バージョンのB15: {{version}} 譜面のみを表示",
+    "internal-level-history": {
+      "empty": "利用可能な履歴はありません",
+      "title": "譜面定数履歴"
+    },
+    "search-summary": "{{found}} / {{total}} 譜面 ({{elapsed}}ミリ秒)",
+    "release-date": "追加日 {{absoluteDate}} ({{relativeDate}})",
+    "filter": {
+      "title": "フィルタ",
+      "internal-level-value": {
+        "min": "min",
+        "max": "max",
+        "title": "譜面定数"
+      },
+      "version": {
+        "title": "追加バージョン",
+        "gesture-hint": {
+          "tap": "トグル",
+          "tap-hold": "のみ"
+        }
+      },
+      "tags": {
+        "title": "タグ"
+      },
+      "category": {
+        "title": "ジャンル"
+      }
+    },
+    "sort": {
+      "title": "並べ替え",
+      "add": "並べ替えを追加",
+      "predicate": "述語#{{index}}",
+      "release-date": {
+        "asc": "追加日（旧→新）",
+        "desc": "追加日（新→旧）"
+      },
+      "internal-level-value": {
+        "asc": "レベル（低→高）",
+        "desc": "レベル（高→低）"
+      },
+      "temporarily-disabled": "検索クエリがアクティブなため、一時的に無効になっています"
+    },
+    "sort-and-filter": {
+      "reset": "リセット",
+      "title": "並べ替えとフィルタ"
+    },
+    "tags": {
+      "add": {
+        "button": "追加",
+        "title": "タグを追加する",
+        "toast-failed": "タグを追加できませんでした: {{error}}",
+        "toast-success": "タグが追加されました"
+      }
+    }
+  },
+  "about": {
+    "title": "当サイトについて",
+    "author": "著者",
+    "source-code": "ソースコード",
+    "internal-level-value": "譜面定数",
+    "chart-metadata": "譜面メタデータ",
+    "chart-metadata-extended": "譜面メタデータ (拡張)",
+    "fesplus-background": "FESTiVAL+の背景",
+    "version": {
+      "commit": "commit",
+      "build": "ビルド",
+      "build-time": "ビルド時間",
+      "upstream-data-update-time": "アップストリームデータバージョン"
+    },
+    "aliases": {
+      "yuri-yuzuchan-maimaidx": "楽曲別名 (中国語)",
+      "lomotos10-gcmbot": "楽曲別名 (英語、韓国語、ローマ字)"
+    },
+    "disclaimer": {
+      "title": "免責事項",
+      "content": "DXRating はどのゲーム会社とも提携していません。本サイトは素材の権利を所有しておらず、全ての権利はセガを含む権利所有者に帰属します。本サイトは研究を目的としたファンメイドのデータベースであり、セガとは関係ありません。当サイトは、掲載されている情報の利用により生じたいかなる損失・損害についても責任を負いません。ご質問やご提案がございましたら、著者までご連絡ください。"
+    }
+  },
+  "form": {
+    "validation": {
+      "max": {
+        "message": "「{{fieldName}}」は {{value}} 以下である必要があります"
+      },
+      "min": {
+        "message": "「{{fieldName}}」は {{value}} 以上である必要があります"
+      }
+    }
+  },
+  "global": {
+    "gesture-hint": {
+      "tap": "タップ",
+      "tap-hold": "ホールド"
+    }
+  },
+  "auth": {
+    "login": {
+      "label": "ログイン",
+      "toast-success": "ログインされました"
+    },
+    "logout": {
+      "label": "ログアウト",
+      "toast-success": "ログアウトされました"
+    },
+    "update-password": {
+      "label": "パスワードを更新する",
+      "toast-success": "パスワードが更新されました"
+    }
+  }
+}

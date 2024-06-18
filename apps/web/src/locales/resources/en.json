@@ -1,0 +1,173 @@
+{
+  "root": {
+    "pages": {
+      "search": {
+        "title": "Search Charts"
+      },
+      "rating": {
+        "title": "My Rating"
+      }
+    },
+    "share": {
+      "copy-succeeded": "Copied to clipboard",
+      "copy-content": "{{ link }}"
+    }
+  },
+  "settings": {
+    "version-and-region": {
+      "select": "Select DXData Version and Region",
+      "select-generic": "Or, select a DXData Version and use the \"Generic\" region",
+      "info": "Different data versions and regions correspond to different internal level values, song visibilities and rating eligibilities."
+    },
+    "region": {
+      "title": "Region: {{region}}",
+      "jp": "Japan",
+      "intl": "International",
+      "cn": "China",
+      "_generic": "Generic"
+    }
+  },
+  "sheet": {
+    "filter-current-version": "Filter Current B15: Show only {{version}} charts",
+    "search-summary": "{{found}} / {{total}} charts ({{elapsed}}ms)",
+    "search": "Search",
+    "ocr": "Launch OCR",
+    "internal-level-history": {
+      "title": "Internal Level History",
+      "empty": "No history available"
+    },
+    "details": {
+      "title": "Details",
+      "category": "Genre",
+      "song-artist": "Song Artist",
+      "bpm": "BPM",
+      "chart-designer": "Chart Designer",
+      "notes-statistics": {
+        "title": "Notes Statistics",
+        "tap": "Tap",
+        "hold": "Hold",
+        "slide": "Slide",
+        "touch": "Touch",
+        "break": "Break",
+        "total": "Total"
+      },
+      "regional-availability": "Regional Availability",
+      "credits": "Some data comes from <link />",
+      "achievement-to-rating": {
+        "title": "Achievement → Rating",
+        "achievement": "Achv.",
+        "rating": "Rating"
+      },
+      "unlock-required": "Unlock Required"
+    },
+    "release-date": "Released {{absoluteDate}} ({{relativeDate}})",
+    "filter": {
+      "title": "Filter",
+      "internal-level-value": {
+        "min": "Min",
+        "max": "Max",
+        "title": "Level"
+      },
+      "version": {
+        "title": "Version",
+        "gesture-hint": {
+          "tap": "Toggle",
+          "tap-hold": "Select"
+        }
+      },
+      "tags": {
+        "title": "Tags"
+      },
+      "category": {
+        "title": "Genre"
+      }
+    },
+    "sort": {
+      "title": "Sort",
+      "add": "Add Sort",
+      "predicate": "Predicate #{{index}}",
+      "release-date": {
+        "asc": "Release Date (Old → New)",
+        "desc": "Release Date (New → Old)"
+      },
+      "internal-level-value": {
+        "asc": "Level (Low → High)",
+        "desc": "Level (High → Low)"
+      },
+      "temporarily-disabled": "Temporarily disabled due to active search query."
+    },
+    "sort-and-filter": {
+      "title": "Filter & Sort",
+      "reset": "Reset"
+    },
+    "tags": {
+      "add": {
+        "title": "Add a Tag",
+        "button": "Add",
+        "toast-success": "Tag added successfully",
+        "toast-failed": "Failed to add tag: {{error}}"
+      }
+    }
+  },
+  "about": {
+    "title": "About",
+    "author": "Author",
+    "source-code": "Source Code",
+    "internal-level-value": "Internal Level Value",
+    "chart-metadata": "Chart Metadata",
+    "chart-metadata-extended": "Chart Metadata (Extended)",
+    "fesplus-background": "FESTiVAL+ Background",
+    "version": {
+      "commit": "commit",
+      "build": "build",
+      "build-time": "built at",
+      "upstream-data-update-time": "upstream data version"
+    },
+    "aliases": {
+      "yuri-yuzuchan-maimaidx": "Song Aliases (Chinese)",
+      "lomotos10-gcmbot": "Song Aliases (English, Korean, Romaji)"
+    },
+    "disclaimer": {
+      "title": "Disclaimer",
+      "content": "DXRating is not affiliated with any game company. Any assets used in this website are for non-commercial purposes only, and all rights belong to their respective owners. This website is not responsible for any loss or damage caused by the use of the information provided. If you have any questions or suggestions, you are welcome to contact the author."
+    },
+    "donate": {
+      "title": "Donate",
+      "content": "I would be so grateful if DXRating could help you out in any way! DXRating will always be completely free and will run purely on donations. If you find DXRating to be useful, please consider supporting me via <afdian />!",
+      "afdian": "Afdian"
+    }
+  },
+  "form": {
+    "validation": {
+      "min": {
+        "message": "\"{{fieldName}}\" must be greater than or equal to {{value}}"
+      },
+      "max": {
+        "message": "\"{{fieldName}}\" must be less than or equal to {{value}}"
+      }
+    }
+  },
+  "global": {
+    "gesture-hint": {
+      "tap": "Tap",
+      "tap-hold": "Hold"
+    }
+  },
+  "auth": {
+    "update-password": {
+      "label": "Update Password",
+      "toast-success": "Successfully updated password."
+    },
+    "logout": {
+      "label": "Logout",
+      "toast-success": "Successfully logged out."
+    },
+    "login": {
+      "label": "Login",
+      "toast-success": "Successfully logged in."
+    },
+    "update-display-name": {
+      "label": "Update Profile Name"
+    }
+  }
+}
