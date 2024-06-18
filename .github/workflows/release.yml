@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    # trigger on version tag push
+    tags:
+      - "v*"
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    name: Publish to Cloudflare Pages
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Get Metadata
+        id: git-meta
+        shell: bash
+        run: |
+          export TRUNCATED_GITHUB_SHA=$(echo ${{ github.sha }} | cut -c1-7);
+          export VERSION=${GITHUB_REF/refs\/tags\//};
+          echo "minisha=$TRUNCATED_GITHUB_SHA" >> $GITHUB_OUTPUT;
+          echo "version=$VERSION" >> $GITHUB_OUTPUT;
+          echo "versionlabel=$VERSION+$TRUNCATED_GITHUB_SHA" >> $GITHUB_OUTPUT;
+
+      # Populate Bundle Information
+      - name: Populate Bundle Information
+        id: bundle-info
+        shell: bash
+        run: |
+          echo "VITE_GIT_COMMIT=${{ github.sha }}" >> ${GITHUB_ENV}
+          echo "VITE_VERSION=${{ steps.git-meta.outputs.version }}" >> ${GITHUB_ENV}
+          echo "VITE_BUILD_NUMBER=${{ github.run_number }}" >> ${GITHUB_ENV}
+          echo "VITE_BUILD_TIME=$(date --utc +%FT%TZ)" >> ${GITHUB_ENV}
+
+      # Run a build step here if your project requires
+      # building before publishing to Cloudflare Pages.
+      - name: Build
+        run: yarn install && yarn run build
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: dxrating
+          directory: apps/web/dist
+          # Optional: Enable this if you want to have GitHub Deployments triggered
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          branch: main

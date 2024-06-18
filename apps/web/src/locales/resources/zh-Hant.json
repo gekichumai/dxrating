@@ -1,0 +1,169 @@
+{
+  "root": {
+    "pages": {
+      "search": {
+        "title": "搜尋譜面"
+      },
+      "rating": {
+        "title": "計算評分"
+      }
+    },
+    "share": {
+      "copy-content": "{{ link }}",
+      "copy-succeeded": "已複製至剪貼簿"
+    }
+  },
+  "settings": {
+    "region": {
+      "title": "伺服器：{{region}}",
+      "jp": "日本",
+      "intl": "國際",
+      "cn": "中國",
+      "_generic": "通用"
+    },
+    "version-and-region": {
+      "select": "選擇 DXData 版本與伺服器",
+      "select-generic": "或，僅選擇 DXData 數據版本並使用「通用」伺服器",
+      "info": "不同的數據版本與伺服器對應不同的內部等級值、歌曲可見度和評級資格。"
+    }
+  },
+  "sheet": {
+    "search": "搜尋",
+    "ocr": "啟動 OCR",
+    "filter-current-version": "過濾當前版本 B15：僅顯示來自 {{version}} 的譜面",
+    "search-summary": "匹配到 {{found}} 份譜面 / 總計 {{total}} 份 (耗時 {{elapsed}}ms)",
+    "details": {
+      "achievement-to-rating": {
+        "achievement": "完成率",
+        "rating": "得分",
+        "title": "完成率→得分"
+      },
+      "bpm": "BPM",
+      "category": "類別",
+      "chart-designer": "製譜",
+      "credits": "部分數據來自 <link />",
+      "notes-statistics": {
+        "break": "Break",
+        "hold": "Hold",
+        "slide": "Slide",
+        "tap": "Tap",
+        "title": "音符統計",
+        "total": "總計",
+        "touch": "Touch"
+      },
+      "regional-availability": "區域可用性",
+      "song-artist": "作曲",
+      "title": "詳細資訊"
+    },
+    "internal-level-history": {
+      "empty": "無可用歷史紀錄",
+      "title": "譜面定數歷史"
+    },
+    "release-date": "追加日 {{absoluteDate}} ({{relativeDate}})",
+    "filter": {
+      "title": "篩選",
+      "internal-level-value": {
+        "min": "下限",
+        "max": "上限",
+        "title": "定數"
+      },
+      "version": {
+        "title": "追加版本",
+        "gesture-hint": {
+          "tap": "切換",
+          "tap-hold": "單選"
+        }
+      },
+      "tags": {
+        "title": "標籤"
+      },
+      "category": {
+        "title": "類型"
+      }
+    },
+    "sort": {
+      "title": "排序",
+      "add": "添加排序規則",
+      "predicate": "規則 #{{index}}",
+      "internal-level-value": {
+        "asc": "譜面定數 (低→高)",
+        "desc": "譜面定數 (高→低)"
+      },
+      "release-date": {
+        "asc": "追加日期 (舊→新)",
+        "desc": "追加日期 (新→舊)"
+      },
+      "temporarily-disabled": "暫時停用：活躍的搜尋查詢"
+    },
+    "sort-and-filter": {
+      "title": "篩選與排序",
+      "reset": "重置"
+    },
+    "tags": {
+      "add": {
+        "button": "添加",
+        "title": "添加標籤",
+        "toast-failed": "添加標籤失敗：{{error}}。請檢查是否已登錄。",
+        "toast-success": "已添加成功"
+      }
+    }
+  },
+  "about": {
+    "title": "關於本站",
+    "author": "作者",
+    "chart-metadata": "譜面元數據",
+    "chart-metadata-extended": "譜面元數據 (擴展)",
+    "fesplus-background": "FESTiVAL+ 版本背景圖",
+    "internal-level-value": "譜面定數",
+    "source-code": "源代碼",
+    "version": {
+      "build": "構建序",
+      "build-time": "構建於",
+      "commit": "commit",
+      "upstream-data-update-time": "上游數據版本"
+    },
+    "aliases": {
+      "yuri-yuzuchan-maimaidx": "樂曲別名 (中文)",
+      "lomotos10-gcmbot": "樂曲別名 (英文、韓文與羅馬音)"
+    },
+    "disclaimer": {
+      "title": "免責聲明",
+      "content": "DXRating 不隸屬於任何遊戲公司。本站使用的任何資產僅供非商業用途，所有權利均屬於其各自所有者。本站對因使用所提供的信息而造成的任何損失或損害不承擔任何責任。如果您有任何疑問或建議，歡迎聯繫本站作者。"
+    },
+    "donate": {
+      "afdian": "愛發電",
+      "title": "捐助",
+      "content": "感謝使用 DXRating！如果 DXRating 可以在 maimai 生涯中幫助到你的話，開發者會很開心的！DXRating 全站將一直會非商業化運營並將僅依靠捐款（和站長為愛發電QAQ）存活下去。如果 DXRating 有幫助到你的話，還請考慮通過 <afdian /> 請開發者出一次勤——"
+    }
+  },
+  "form": {
+    "validation": {
+      "max": {
+        "message": "“{{fieldName}}”必須小於或等於 {{value}}"
+      },
+      "min": {
+        "message": "“{{fieldName}}”必須大於或等於 {{value}}"
+      }
+    }
+  },
+  "global": {
+    "gesture-hint": {
+      "tap": "點按",
+      "tap-hold": "長按"
+    }
+  },
+  "auth": {
+    "login": {
+      "label": "登錄",
+      "toast-success": "登錄成功"
+    },
+    "logout": {
+      "label": "登出",
+      "toast-success": "已登出"
+    },
+    "update-password": {
+      "label": "重設密碼",
+      "toast-success": "已重設密碼"
+    }
+  }
+}
