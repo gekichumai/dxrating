@@ -57,6 +57,7 @@ const _SheetListInner: FC = () => {
         .map(([v]) => v);
       sortFilteredResults = results.filter((sheet) => {
         return chainEvery<FlattenedSheet>(
+          (v) => !!v,
           (v) => {
             if (sortFilterOptions.filters.internalLevelValue) {
               const { min, max } = sortFilterOptions.filters.internalLevelValue;
