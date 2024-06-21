@@ -11,8 +11,8 @@ import { WebpSupportedImage } from "./components/global/WebpSupportedImage";
 import { TopBar } from "./components/layout/TopBar";
 import { RatingCalculator } from "./pages/RatingCalculator";
 import { SheetList } from "./pages/SheetList";
-import { useVersionTheme } from "./utils/useVersionTheme";
 import { startViewTransition } from "./utils/startViewTransition";
+import { useVersionTheme } from "./utils/useVersionTheme";
 
 const APP_TABS_VALUES = ["search", "rating"] as const;
 type AppTabsValuesType = (typeof APP_TABS_VALUES)[number];
@@ -33,9 +33,7 @@ const useAppTab = () => {
     (newTab: AppTabsValuesType) => {
       startTransition(() => {
         startViewTransition(() => {
-          setLocation(
-            `/${newTab}${window.location.search}${window.location.hash}`,
-          );
+          setLocation(`/${newTab}`);
         });
 
         localStorage.setItem("tab-selection", JSON.stringify(newTab));
@@ -45,7 +43,9 @@ const useAppTab = () => {
   );
 
   useEffectOnce(() => {
-    const tab = JSON.parse(localStorage.getItem("tab-selection") ?? `"${APP_TABS_VALUES[0]}"`);
+    const tab = JSON.parse(
+      localStorage.getItem("tab-selection") ?? `"${APP_TABS_VALUES[0]}"`,
+    );
     if (tab && location.pathname === "/")
       setLocation(`/${tab}${window.location.search}${window.location.hash}`);
   });

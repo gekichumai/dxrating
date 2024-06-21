@@ -3,6 +3,7 @@ import { Button, IconButton, TextField } from "@mui/material";
 import * as Sentry from "@sentry/react";
 import { FC, useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParam } from "react-use";
 
 import { SheetListContainer } from "../components/sheet/SheetListContainer";
 import {
@@ -40,7 +41,8 @@ const _SheetListInner: FC = () => {
   const { data: sheets, isLoading } = useSheets({ acceptsPartialData: true });
   const { setQueryActive } = useContext(SheetDetailsContext);
   const version = useAppContextDXDataVersion();
-  const [query, setQuery] = useState("");
+  const queryParam = useSearchParam("q");
+  const [query, setQuery] = useState<string>(queryParam ?? "");
   const { results, elapsed: searchElapsed } = useFilteredSheets(query);
   const [sortFilterOptions, setSortFilterOptions] =
     useState<SheetSortFilterForm | null>(null);
