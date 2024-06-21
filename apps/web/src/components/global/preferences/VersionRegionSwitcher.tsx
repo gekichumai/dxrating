@@ -47,7 +47,7 @@ const VERSION_REGIONS: VersionRegion[] = [
     region: "intl" as const,
   },
   {
-    dxVersion: "festival-plus" as const,
+    dxVersion: "buddies" as const,
     region: "cn" as const,
   },
 ].map(({ dxVersion, region }) => ({
