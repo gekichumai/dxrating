@@ -14,9 +14,8 @@ export const SheetListContainer = ({
   listContainerClassName?: string;
 }) => {
   const ItemContent = useCallback<ItemContent<FlattenedSheet, unknown>>(
-    (_, sheet: FlattenedSheet) => (
-      <SheetListItem key={sheet.id} sheet={sheet} />
-    ),
+    (_, sheet: FlattenedSheet) =>
+      sheet ? <SheetListItem key={sheet.id} sheet={sheet} /> : null,
     [],
   );
 
