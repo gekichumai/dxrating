@@ -47,9 +47,24 @@ const SideEffectorAutoImportRating: FC = () => {
 
   useEffect(() => {
     if (!sheets) return;
-    if (localStorage.getItem("rating-auto-import-from-net") === "true") {
-      importFromNETRecords(sheets, modifyEntries);
-    }
+    const mode = (() => {
+      try {
+        const mode = localStorage.getItem("rating-auto-import-from-net");
+        if (!mode) return "disabled";
+
+        const parsed = JSON.parse(mode);
+        if (parsed === "merge") return "merge";
+        if (parsed === "replace") return "replace";
+        if (parsed === true) return "replace";
+        return "disabled";
+      } catch {
+        return "disabled";
+      }
+    })() as "merge" | "replace" | "disabled";
+
+    if (mode === "disabled") return;
+
+    importFromNETRecords(sheets, modifyEntries, mode);
   }, [!!sheets]);
 
   return null;

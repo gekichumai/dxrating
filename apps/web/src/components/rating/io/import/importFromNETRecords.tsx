@@ -1,6 +1,7 @@
 import { DifficultyEnum, TypeEnum } from "@gekichumai/dxdata";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { CircularProgress } from "@mui/material";
+import cloneDeep from "lodash-es/cloneDeep";
 import posthog from "posthog-js";
 import toast from "react-hot-toast";
 import { ListActions } from "react-use/lib/useList";
@@ -111,6 +112,7 @@ const fetchNetRecords = async (
 export const importFromNETRecords = async (
   sheets: FlattenedSheet[],
   modifyEntries: ListActions<PlayEntry>,
+  mode: "merge" | "replace",
   onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
 ) => {
   posthog?.capture("netimport_started");
@@ -184,7 +186,27 @@ export const importFromNETRecords = async (
         }
         return exists;
       });
-    modifyEntries.set(entries);
+
+    if (mode === "replace") {
+      modifyEntries.set(entries);
+    } else if (mode === "merge") {
+      modifyEntries.set((prev) => {
+        const cloned = cloneDeep(prev);
+        entries.forEach((entry) => {
+          const existingIdx = cloned.findIndex(
+            (item) => item.sheetId === entry.sheetId,
+          );
+          if (!existingIdx) {
+            cloned.push(entry);
+          } else {
+            if (cloned[existingIdx].achievementRate < entry.achievementRate) {
+              cloned[existingIdx].achievementRate = entry.achievementRate;
+            }
+          }
+        });
+        return cloned;
+      });
+    }
 
     const lastRecord = data.recent.at(0);
     toast.success(

@@ -9,12 +9,16 @@ import {
   DialogTitle,
   FormControl,
   FormControlLabel,
+  FormLabel,
   LinearProgress,
   ListItemIcon,
   ListItemText,
   MenuItem,
+  Radio,
+  RadioGroup,
   TextField,
 } from "@mui/material";
+import clsx from "clsx";
 import { FC, useEffect, useState } from "react";
 import { useLocalStorage } from "react-use";
 import { ListActions } from "react-use/lib/useList";
@@ -122,6 +126,8 @@ interface ImportFromNETRecordsProgress {
   progress: number;
 }
 
+export type AutoImportMode = boolean | "replace" | "merge";
+
 const ImportFromNETRecordsDialogContent: FC<{
   modifyEntries: ListActions<PlayEntry>;
   onClose: () => void;
@@ -130,7 +136,7 @@ const ImportFromNETRecordsDialogContent: FC<{
   const [region, setRegion] = useState<"intl" | "jp">("intl");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [autoImport, setAutoImport] = useLocalStorage(
+  const [autoImport, setAutoImport] = useLocalStorage<AutoImportMode>(
     "rating-auto-import-from-net",
     false,
   );
@@ -138,6 +144,7 @@ const ImportFromNETRecordsDialogContent: FC<{
   const [progress, setProgress] = useState<ImportFromNETRecordsProgress | null>(
     null,
   );
+  const mappedAutoImport = autoImport === true ? "replace" : autoImport; // Legacy support
   const { data: sheets } = useSheets();
 
   useEffect(() => {
@@ -164,9 +171,14 @@ const ImportFromNETRecordsDialogContent: FC<{
   const handleImport = async () => {
     setBusy(true);
     try {
-      await importFromNETRecords(sheets!, modifyEntries, (state, progress) => {
-        setProgress({ state, progress });
-      });
+      await importFromNETRecords(
+        sheets!,
+        modifyEntries,
+        mappedAutoImport || "replace",
+        (state, progress) => {
+          setProgress({ state, progress });
+        },
+      );
       onClose();
     } catch (e) {
       setProgress((progress) => ({
@@ -257,15 +269,8 @@ const ImportFromNETRecordsDialogContent: FC<{
             }
           />
 
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={autoImport}
-                onChange={(event) => setAutoImport(event.target.checked)}
-                disabled={!remember}
-              />
-            }
-            label={
+          <FormControl>
+            <FormLabel id="auto-import-label">
               <div className="flex flex-col">
                 <span>Auto-import on App Start</span>
                 <span className="text-xs text-zinc-500">
@@ -273,8 +278,55 @@ const ImportFromNETRecordsDialogContent: FC<{
                   DXRating. Requires "Remember Credentials" to be enabled.
                 </span>
               </div>
-            }
-          />
+            </FormLabel>
+            <RadioGroup
+              aria-labelledby="auto-import-label"
+              value={mappedAutoImport}
+              onChange={(event) =>
+                setAutoImport(event.target.value as AutoImportMode)
+              }
+            >
+              {[
+                {
+                  value: false,
+                  title: "Disabled",
+                },
+                {
+                  value: "replace",
+                  title: "Replace",
+                  subtitle: "Replaces all records",
+                },
+                {
+                  value: "merge",
+                  title: "Merge",
+                  subtitle:
+                    "Overwrites record if higher, adds record if missing",
+                },
+              ].map(({ value, title, subtitle }) => (
+                <FormControlLabel
+                  key={value.toString()}
+                  value={value}
+                  control={<Radio size="small" />}
+                  disabled={!remember}
+                  label={
+                    <div className="flex flex-col gap-1">
+                      <span className="leading-none">{title}</span>
+                      {subtitle && (
+                        <span
+                          className={clsx(
+                            "text-xs",
+                            !remember ? "text-zinc-400" : "text-zinc-500",
+                          )}
+                        >
+                          {subtitle}
+                        </span>
+                      )}
+                    </div>
+                  }
+                />
+              ))}
+            </RadioGroup>
+          </FormControl>
 
           <div className="h-px w-full bg-gray-200 my-2" />
 
