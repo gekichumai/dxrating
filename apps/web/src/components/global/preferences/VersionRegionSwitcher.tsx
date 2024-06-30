@@ -7,6 +7,7 @@ import {
   styled,
 } from "@mui/material";
 import clsx from "clsx";
+import uniqBy from "lodash-es/uniqBy";
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -141,29 +142,31 @@ export const VersionRegionSwitcher: FC = () => {
       <ListSubheader className="leading-normal py-4">
         {t("settings:version-and-region.select-generic")}
       </ListSubheader>
-      {VERSION_REGIONS.map(({ id, dxVersion, versionEnum }, i) => (
-        <MenuItem
-          value={`${dxVersion}__${"_generic"}`}
-          key={id}
-          className={clsx(
-            "flex items-center gap-4 border-b border-solid border-gray-200",
-            i === 0 && "border-t",
-          )}
-        >
-          <WebpSupportedImage
-            src={`https://shama.dxrating.net/images/version-logo/${dxVersion}.png`}
-            className="h-12 touch-callout-none object-contain w-20"
-            draggable={false}
-          />
+      {uniqBy(VERSION_REGIONS, (versionRegion) => versionRegion.dxVersion).map(
+        ({ id, dxVersion, versionEnum }, i) => (
+          <MenuItem
+            value={`${dxVersion}__${"_generic"}`}
+            key={id}
+            className={clsx(
+              "flex items-center gap-4 border-b border-solid border-gray-200",
+              i === 0 && "border-t",
+            )}
+          >
+            <WebpSupportedImage
+              src={`https://shama.dxrating.net/images/version-logo/${dxVersion}.png`}
+              className="h-12 touch-callout-none object-contain w-20"
+              draggable={false}
+            />
 
-          <div className="mr-2 opacity-70 flex flex-col items-start">
-            <span>{versionEnum}</span>
-            <span className="uppercase text-xs">
-              {t(`settings:region._generic`)}
-            </span>
-          </div>
-        </MenuItem>
-      ))}
+            <div className="mr-2 opacity-70 flex flex-col items-start">
+              <span>{versionEnum}</span>
+              <span className="uppercase text-xs">
+                {t(`settings:region._generic`)}
+              </span>
+            </div>
+          </MenuItem>
+        ),
+      )}
       <ListItem className="flex justify-center items-center text-sm">
         <div className="flex justify-center items-start max-w-[22rem] text-zinc-500">
           <MdiInformation className="mr-2 shrink-0 mt-0.5" />

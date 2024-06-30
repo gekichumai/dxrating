@@ -43,7 +43,22 @@ const filterB15 = (
   const appVersionId = VERSION_ID_MAP.get(appVersion);
   const sheetVersionId = VERSION_ID_MAP.get(sheet.version);
   if (appVersionId !== undefined && sheetVersionId !== undefined) {
-    return sheetVersionId >= appVersionId && sheet.regions[region];
+    return sheetVersionId === appVersionId && sheet.regions[region];
+  }
+  return false;
+};
+
+const filterB35Extra = (
+  sheet: FlattenedSheet,
+  appVersion: VersionEnum,
+  region: Region,
+) => {
+  if (region === "_generic") return sheet.version !== appVersion;
+
+  const appVersionId = VERSION_ID_MAP.get(appVersion);
+  const sheetVersionId = VERSION_ID_MAP.get(sheet.version);
+  if (appVersionId !== undefined && sheetVersionId !== undefined) {
+    return sheetVersionId < appVersionId && sheet.regions[region];
   }
   return false;
 };
@@ -84,7 +99,11 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
       .map((entry) => entry.sheetId);
 
     const best35OfAllOtherVersionSheetIds = calculated
-      .filter((entry) => !filterB15(entry.sheet, appVersion, region))
+      .filter(
+        (entry) =>
+          !filterB15(entry.sheet, appVersion, region) &&
+          filterB35Extra(entry.sheet, appVersion, region),
+      )
       .sort((a, b) => {
         if (!a.rating) return 1;
         if (!b.rating) return -1;
