@@ -193,15 +193,11 @@ export const importFromNETRecords = async (
       modifyEntries.set((prev) => {
         const cloned = cloneDeep(prev);
         entries.forEach((entry) => {
-          const existingIdx = cloned.findIndex(
-            (item) => item.sheetId === entry.sheetId,
-          );
-          if (!existingIdx) {
+          const existed = cloned.find((item) => item.sheetId === entry.sheetId);
+          if (!existed) {
             cloned.push(entry);
-          } else {
-            if (cloned[existingIdx].achievementRate < entry.achievementRate) {
-              cloned[existingIdx].achievementRate = entry.achievementRate;
-            }
+          } else if (entry.achievementRate > existed.achievementRate) {
+            existed.achievementRate = entry.achievementRate;
           }
         });
         return cloned;
