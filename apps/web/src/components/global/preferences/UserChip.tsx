@@ -64,8 +64,8 @@ const ThemedAuth: FC<{
               inputBorderRadius: "12px",
             },
             colors: {
-              brand: theme.accentColor + "99",
-              brandAccent: theme.accentColor,
+              brand: theme.accentColor.hex + "99",
+              brandAccent: theme.accentColor.hex,
               brandButtonText: "black",
             },
             borderWidths: {

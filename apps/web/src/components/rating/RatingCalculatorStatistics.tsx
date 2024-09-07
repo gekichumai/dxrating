@@ -275,7 +275,7 @@ const Histogram: FC<{
       .attr("y", (d) => y(d.y2) - 0.5)
       .attr("width", (d) => Math.max(0, x(d.x1 ?? 0) - x(d.x0 ?? 0) - 1))
       .attr("height", (d) => Math.max(0, y(d.y1) - y(d.y2)))
-      .style("fill", theme.accentColor);
+      .style("fill", theme.accentColor.hex);
 
     // Add labels on the top center of the bars
     svg
@@ -321,7 +321,7 @@ const Histogram: FC<{
     drawAverageLine(
       b35Avg,
       `B35 AVG: ${b35Avg.toFixed(2)}`,
-      deriveColor(theme.accentColor, "overlay"),
+      deriveColor(theme.accentColor.hex, "overlay"),
     );
   };
 

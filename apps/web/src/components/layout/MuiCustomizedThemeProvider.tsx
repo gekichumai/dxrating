@@ -18,7 +18,7 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({
       },
       palette: {
         primary: {
-          main: versionTheme.accentColor,
+          main: versionTheme.accentColor.hex,
         },
       },
     });

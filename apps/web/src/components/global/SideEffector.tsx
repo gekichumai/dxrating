@@ -13,19 +13,19 @@ const SideEffectorThemeMeta: FC = () => {
   useEffect(() => {
     console.info("[theme] Theme changed to", versionTheme);
 
-    document.body.style.backgroundColor = versionTheme.accentColor;
+    document.body.style.backgroundColor = versionTheme.accentColor.hex;
 
     document.head
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", versionTheme.accentColor);
+      ?.setAttribute("content", versionTheme.accentColor.hex);
 
     document.head
       .querySelector('meta[name="msapplication-TileColor"]')
-      ?.setAttribute("content", versionTheme.accentColor);
+      ?.setAttribute("content", versionTheme.accentColor.hex);
 
     document.head
       .querySelector('link[rel="mask-icon"]')
-      ?.setAttribute("color", versionTheme.accentColor);
+      ?.setAttribute("color", versionTheme.accentColor.hex);
   }, [versionTheme]);
 
   return null;

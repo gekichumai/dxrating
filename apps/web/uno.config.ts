@@ -1,7 +1,25 @@
 // uno.config.ts
+import { DEFAULT_THEME } from "@mantine/core";
 import { handler } from "@unocss/preset-mini/utils";
 import presetWind from "@unocss/preset-wind";
+import Color from "colorjs.io";
 import { defineConfig } from "unocss";
+
+function generateColorsFromMantine() {
+  const colors = {};
+  for (const [key, value] of Object.entries(DEFAULT_THEME.colors)) {
+    colors[key] = value.reduce(
+      (acc, color, index) => {
+        const c = new Color(color);
+        const [r, g, b] = c.srgb;
+        acc[`${index * 100}`] = `rgb(${r * 255} ${g * 255} ${b * 255})`;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+  }
+  return colors;
+}
 
 export default defineConfig({
   rules: [
@@ -39,6 +57,17 @@ export default defineConfig({
       mono: '"IBM Plex Mono", "JetBrains Mono", Menlo, Consolas, Courier, monospace',
     },
   },
+  extendTheme: (theme) => {
+    return {
+      ...theme,
+      colors: {
+        // shallow merge
+        ...theme.colors,
+        ...generateColorsFromMantine(),
+      },
+    };
+  },
+
   shortcuts: {
     "flex-container":
       "flex flex-col items-center justify-center py-4 gap-4 max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]",

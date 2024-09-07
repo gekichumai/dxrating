@@ -16,12 +16,16 @@ import "./index.css";
 import { App } from "./App";
 import { CustomizedToaster } from "./components/global/CustomizedToaster";
 import { SideEffector } from "./components/global/SideEffector";
-import { VersionCustomizedThemeProvider } from "./components/layout/VersionCustomizedThemeProvider";
+import { VersionCustomizedThemeProvider } from "./components/layout/MuiCustomizedThemeProvider";
 import { i18nResources } from "./locales/locales";
 import { AppContextProvider } from "./models/context/AppContext";
 import { AuthContextProvider } from "./models/context/AuthContext";
 import { RatingCalculatorContextProvider } from "./models/context/RatingCalculatorContext";
 import { BUNDLE } from "./utils/bundle";
+
+import "@mantine/core/styles.css";
+
+import { MantineCustomizedThemeProvider } from "./components/layout/MantineCustomizedThemeProvider";
 
 posthog.init("phc_Hw7FM2D1vSwummp0D3O13Z6biV6udw5bKIcq4BJQxH7", {
   api_host: "https://razu.dxrating.net",
@@ -159,17 +163,19 @@ i18n
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AppContextProvider>
-      <VersionCustomizedThemeProvider>
-        <RatingCalculatorContextProvider>
-          <AuthContextProvider>
-            <PostHogProvider client={posthog}>
-              <SideEffector />
-              <CustomizedToaster />
-              <App />
-            </PostHogProvider>
-          </AuthContextProvider>
-        </RatingCalculatorContextProvider>
-      </VersionCustomizedThemeProvider>
+      <MantineCustomizedThemeProvider>
+        <VersionCustomizedThemeProvider>
+          <RatingCalculatorContextProvider>
+            <AuthContextProvider>
+              <PostHogProvider client={posthog}>
+                <SideEffector />
+                <CustomizedToaster />
+                <App />
+              </PostHogProvider>
+            </AuthContextProvider>
+          </RatingCalculatorContextProvider>
+        </VersionCustomizedThemeProvider>
+      </MantineCustomizedThemeProvider>
     </AppContextProvider>
   </React.StrictMode>,
 );

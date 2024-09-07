@@ -100,7 +100,7 @@ export const VersionRegionSwitcher: FC = () => {
           <div
             className="text-center text-sm tracking-wide font-bold rounded-full leading-none py-1.5 px-3 border border-solid border-zinc-9/10 self-center text-zinc-6"
             style={{
-              background: theme.accentColor + "33",
+              background: theme.accentColor.hex + "33",
             }}
           >
             {t("settings:region.title", {

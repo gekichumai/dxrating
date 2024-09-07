@@ -28,7 +28,7 @@ export const OverscrollBackgroundFiller = () => {
       className="fixed top-0 left-0 right-0 w-full h-full pointer-events-none"
       style={{
         height: 0,
-        background: versionTheme.accentColor,
+        background: versionTheme.accentColor.hex,
       }}
     />
   );

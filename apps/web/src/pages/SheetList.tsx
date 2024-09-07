@@ -1,5 +1,6 @@
 import { VERSION_ID_MAP } from "@gekichumai/dxdata";
-import { Button, IconButton, TextField } from "@mui/material";
+import { ActionIcon, TextInput } from "@mantine/core";
+import { Button } from "@mui/material";
 import * as Sentry from "@sentry/react";
 import { FC, useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,6 +22,7 @@ import { isBuildPlatformApp } from "../utils/env";
 
 import IconMdiClose from "~icons/mdi/close";
 import MdiIconInfo from "~icons/mdi/information";
+import IconMdiMagnify from "~icons/mdi/magnify";
 import IconMdiOcr from "~icons/mdi/ocr";
 
 const chainEvery =
@@ -137,29 +139,30 @@ const _SheetListInner: FC = () => {
   }, [results, sortFilterOptions, query, version]);
 
   return (
-    <div className="flex-container pb-global">
-      <TextField
+    <div className="flex flex-col gap-2 w-full">
+      <TextInput
         label={t("sheet:search")}
-        variant="outlined"
         value={query}
-        fullWidth
         onChange={(e) => {
           setQuery(e.target.value);
           setQueryActive(!!e.target.value);
         }}
-        InputProps={{
-          endAdornment: query && (
-            <IconButton
+        size="lg"
+        leftSection={<IconMdiMagnify className="size-5" />}
+        rightSection={
+          query && (
+            <ActionIcon
               onClick={() => {
                 setQuery("");
                 setQueryActive(false);
               }}
-              size="small"
+              size="sm"
+              radius="xl"
             >
               <IconMdiClose />
-            </IconButton>
-          ),
-        }}
+            </ActionIcon>
+          )
+        }
         data-attr="sheet-search"
       />
 
