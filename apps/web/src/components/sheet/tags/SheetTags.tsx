@@ -26,7 +26,7 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       return (
         <MotionButtonBase
           {...zoomTransitions}
-          className="h-6 w-16 bg-gray-200 rounded-lg animate-pulse"
+          className="h-6 w-16 bg-gray-2 rounded-lg animate-pulse"
           disabled
         />
       );

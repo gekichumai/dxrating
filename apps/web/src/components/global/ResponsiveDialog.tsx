@@ -74,7 +74,7 @@ export const ResponsiveDialog: FC<{
             },
           }}
         >
-          <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-300 my-3" />
+          <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-3 my-3" />
           <div className="overflow-auto h-full p-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
             {children?.()}
           </div>

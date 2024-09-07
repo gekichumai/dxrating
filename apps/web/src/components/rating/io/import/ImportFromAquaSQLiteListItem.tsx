@@ -187,7 +187,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
     <>
       <DialogTitle className="flex flex-col items-start">
         <div>Import from Aqua SQLite</div>
-        <div className="text-sm text-zinc-500">
+        <div className="text-sm text-zinc-5">
           {mode === "select-user"
             ? "Choose the user to import their gameplays from."
             : "Confirm importing the selected user's gameplays."}
@@ -196,7 +196,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
 
       <DialogContent>
         {mode === "select-user" ? (
-          <List className="b-1 b-solid b-gray-200 rounded-lg !py-0 overflow-hidden">
+          <List className="b-1 b-solid b-gray-2 rounded-lg !py-0 overflow-hidden">
             {users.flatMap((user, i) => [
               <ListItemButton
                 key={user.id}
@@ -211,7 +211,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
                       `.png`
                     }
                     alt={`Icon ${String(user.icon_id).padStart(6, "0")}`}
-                    className="w-16 h-16 rounded-md bg-gray-400"
+                    className="w-16 h-16 rounded-md bg-gray-4"
                   />
                 </ListItemAvatar>
                 <ListItemText className="flex flex-col">
@@ -251,7 +251,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
               </Alert>
             )}
 
-            <List className="b-1 b-solid b-gray-200 rounded-lg overflow-hidden !p-1 space-y-1">
+            <List className="b-1 b-solid b-gray-2 rounded-lg overflow-hidden !p-1 space-y-1">
               {records.map((record) => (
                 <ListItem
                   className="flex flex-col gap-2 w-full bg-gray-2 p-1 rounded-md"

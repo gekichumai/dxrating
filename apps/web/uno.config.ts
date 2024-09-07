@@ -12,7 +12,7 @@ function generateColorsFromMantine() {
       (acc, color, index) => {
         const c = new Color(color);
         const [r, g, b] = c.srgb;
-        acc[`${index * 100}`] = `rgb(${r * 255} ${g * 255} ${b * 255})`;
+        acc[`${index}`] = `rgb(${r * 255} ${g * 255} ${b * 255})`;
         return acc;
       },
       {} as Record<string, string>,

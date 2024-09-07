@@ -49,15 +49,15 @@ import {
 } from "react-virtuoso";
 
 import { BetaBadge } from "../components/global/BetaBadge";
-import { ClearButton } from "../components/rating/io/ClearButton";
-import { RenderToOneShotImageButton } from "../components/rating/io/export/RenderToOneShotImageButton";
-import { ExportMenu } from "../components/rating/io/ExportMenu";
-import { ImportMenu } from "../components/rating/io/ImportMenu";
 import {
   PlayEntry,
   RatingCalculatorAddEntryForm,
 } from "../components/rating/RatingCalculatorAddEntryForm";
 import { RatingCalculatorStatistics } from "../components/rating/RatingCalculatorStatistics";
+import { ClearButton } from "../components/rating/io/ClearButton";
+import { ExportMenu } from "../components/rating/io/ExportMenu";
+import { ImportMenu } from "../components/rating/io/ImportMenu";
+import { RenderToOneShotImageButton } from "../components/rating/io/export/RenderToOneShotImageButton";
 import { useRatingEntries } from "../components/rating/useRatingEntries";
 import {
   SheetListItem,
@@ -373,9 +373,9 @@ export const RatingCalculator = () => {
                       key={header.id}
                       colSpan={header.colSpan}
                       className={clsx(
-                        "group bg-gray-900/5 transition",
+                        "group bg-gray-9/5 transition",
                         header.column.getCanSort() &&
-                          "cursor-pointer select-none hover:bg-gray-900/10 active:bg-gray-900/20 leading-tight py-4",
+                          "cursor-pointer select-none hover:bg-gray-9/10 active:bg-gray-9/20 leading-tight py-4",
                       )}
                       onClick={header.column.getToggleSortingHandler()}
                       style={{ width: header.getSize() }}
@@ -390,7 +390,7 @@ export const RatingCalculator = () => {
                             className={clsx(
                               "inline-flex items-center overflow-hidden relative",
                               header.column.getIsSorted() &&
-                                "bg-gray-900/50 text-zinc-100 rounded-full",
+                                "bg-gray-9/50 text-zinc-1 rounded-full",
                             )}
                           >
                             <IconMdiArrowDown
@@ -446,8 +446,8 @@ const RatingCalculatorIncludedInCell: FC<{
     <div
       className={clsx(
         "tabular-nums font-mono tracking-tighter w-12 leading-none py-1.5 rounded-full text-white text-center shadow select-none",
-        includedIn === "b15" && "bg-amber-500",
-        includedIn === "b35" && "bg-cyan-500",
+        includedIn === "b15" && "bg-amber-5",
+        includedIn === "b35" && "bg-cyan-5",
       )}
     >
       {includedIn.toUpperCase()}
@@ -489,8 +489,8 @@ const RatingCalculatorTableRow: FC<ItemProps<Row<Entry>>> = ({
     className={clsx(
       "tabular-nums w-full",
       {
-        b15: "bg-amber-200",
-        b35: "bg-cyan-200",
+        b15: "bg-amber-2",
+        b35: "bg-cyan-2",
         none: undefined,
       }[item.original.includedIn ?? "none"],
     )}

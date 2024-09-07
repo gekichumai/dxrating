@@ -56,7 +56,7 @@ export const SheetListItem: FC<{
           disableGutters={!isLargeDevice}
           className={clsx(
             "w-full cursor-pointer transition duration-500 hover:duration-25 !px-4",
-            open && "!bg-zinc-300/80",
+            open && "!bg-zinc-3/80",
           )}
           onClick={() => {
             setOpen(true);
@@ -129,7 +129,7 @@ export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
 
         <ListItemSecondaryAction>
           {sheet.isTypeUtage ? (
-            <span className="font-bold tracking-tighter tabular-nums text-lg text-zinc-600">
+            <span className="font-bold tracking-tighter tabular-nums text-lg text-zinc-6">
               {sheet.level}
             </span>
           ) : (
@@ -148,7 +148,7 @@ const SheetInternalLevelValue: FC<{ value: number }> = ({ value }) => {
 
   return (
     <div className="font-bold tracking-tighter tabular-nums">
-      <span className="text-lg text-zinc-600">{wholePart}.</span>
+      <span className="text-lg text-zinc-6">{wholePart}.</span>
       <span className="text-xl">{decimalPart.toFixed(1).split(".")[1]}</span>
     </div>
   );
@@ -259,7 +259,7 @@ export const SheetImage: FC<
             )
             .exhaustive(),
         )}
-        placeholderClassName="bg-slate-300/50"
+        placeholderClassName="bg-slate-3/50"
         alt={name}
         loading="lazy"
         {...props}
@@ -331,7 +331,7 @@ export const SheetTitle: FC<SheetTitleProps> = ({
       )}
 
       {sheet.isTypeUtage && (
-        <span className="text-sm text-zinc-600 px-1.5 py-0.5 gap-1 bg-amber/75 inline-flex self-start rounded-md">
+        <span className="text-sm text-zinc-6 px-1.5 py-0.5 gap-1 bg-amber/75 inline-flex self-start rounded-md">
           <MdiComment className="h-3 w-3 flex-shrink-0 mt-1.125" />
           <span>{sheet.comment}</span>
         </span>
@@ -339,7 +339,7 @@ export const SheetTitle: FC<SheetTitleProps> = ({
 
       {enableVersion && (
         <div className="text-sm">
-          <span className="text-zinc-600">ver. {version}</span>
+          <span className="text-zinc-6">ver. {version}</span>
         </div>
       )}
     </div>
@@ -352,7 +352,7 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
   return (
     <div
       className={clsx(
-        "text-sm text-slate-600 overflow-hidden",
+        "text-sm text-slate-6 overflow-hidden",
         !expanded && "max-h-[7rem]",
       )}
       style={{
@@ -369,7 +369,7 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
         <span className="inline-block whitespace-pre-line" key={i}>
           <span>{altName}</span>
           {i < altNames.length - 1 && (
-            <span className="text-slate-400 mx-1 select-none">/</span>
+            <span className="text-slate-4 mx-1 select-none">/</span>
           )}
         </span>
       ))}

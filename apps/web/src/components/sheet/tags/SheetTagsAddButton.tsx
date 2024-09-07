@@ -195,7 +195,7 @@ const SheetTagsAddDialog: FC<{
       </div>
 
       {!session && (
-        <div className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8">
+        <div className="text-gray-5 absolute inset-0 flex items-center justify-center bg-gray-1 bg-opacity-80 p-8">
           {isBuildPlatformApp ? (
             <div className="text-center font-bold">
               Adding tags is currently unavailable in the app.
@@ -229,7 +229,7 @@ export const SheetTagsAddButton: FC<{ sheet: FlattenedSheet }> = ({
 
       <MotionButtonBase
         // {...zoomTransitions}
-        className="h-6 border-1 border-solid border-gray-200 rounded-lg flex items-center justify-center px-2 cursor-pointer bg-gray-100 hover:bg-gray-200 hover:border-gray-300 active:bg-gray-300 active:border-gray-400 transition"
+        className="h-6 border-1 border-solid border-gray-2 rounded-lg flex items-center justify-center px-2 cursor-pointer bg-gray-1 hover:bg-gray-2 hover:border-gray-3 active:bg-gray-3 active:border-gray-4 transition"
         onClick={() => {
           setOpen(true);
         }}

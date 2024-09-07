@@ -242,7 +242,7 @@ const SheetSortFilterFormContent = () => {
         className={clsx(
           "p-2 flex flex-col gap-4 rounded-lg",
           queryActive &&
-            "bg-gray-200 pointer-events-none saturation-0 shadow-[inset_0_1px_8px] shadow-gray-300",
+            "bg-gray-2 pointer-events-none saturation-0 shadow-[inset_0_1px_8px] shadow-gray-3",
         )}
       >
         <div className="text-xl font-bold tracking-tighter flex items-center">
@@ -250,7 +250,7 @@ const SheetSortFilterFormContent = () => {
             {t("sheet:sort.title")}
           </div>
           {queryActive && (
-            <div className="px-1.5 py-1 rounded-md bg-gray-200 text-xs ml-2 leading-tight tracking-tight text-zinc-600 shadow-[0_1px_8px] shadow-gray-300">
+            <div className="px-1.5 py-1 rounded-md bg-gray-2 text-xs ml-2 leading-tight tracking-tight text-zinc-6 shadow-[0_1px_8px] shadow-gray-3">
               {t("sheet:sort.temporarily-disabled")}
             </div>
           )}
@@ -275,7 +275,7 @@ const SheetSortFilterFormContent = () => {
             <ButtonBase
               className={clsx(
                 "px-4 w-full flex items-center transition-all duration-300",
-                expanded ? "bg-gray-200 py-4" : "bg-gray-100 py-3",
+                expanded ? "bg-gray-2 py-4" : "bg-gray-1 py-3",
               )}
             >
               <div className="text-xl font-bold tracking-tight leading-none">

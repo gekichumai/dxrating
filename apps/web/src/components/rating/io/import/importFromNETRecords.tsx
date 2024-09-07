@@ -138,7 +138,7 @@ export const importFromNETRecords = async (
         toast.loading(
           <div className="flex flex-col items-start min-w-[16rem]">
             <div className="font-bold">Importing records from NET...</div>
-            <div className="font-mono text-xs font-light text-zinc-500">
+            <div className="font-mono text-xs font-light text-zinc-5">
               {state}
             </div>
           </div>,
@@ -213,16 +213,16 @@ export const importFromNETRecords = async (
         </span>
         {lastRecord && (
           <>
-            <span className="text-sm text-zinc-500">Latest Play</span>
-            <span className="text-xs text-zinc-500">
+            <span className="text-sm text-zinc-5">Latest Play</span>
+            <span className="text-xs text-zinc-5">
               {lastRecord.sheet.songId} [{lastRecord.sheet.type}]
             </span>
             {lastRecord.play.timestamp && (
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-zinc-5">
                 Date: {new Date(lastRecord.play.timestamp).toLocaleString()}
               </span>
             )}
-            {/* <span className="text-xs text-zinc-500">
+            {/* <span className="text-xs text-zinc-5">
                       Rating:
                     </span> */}
           </>

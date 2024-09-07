@@ -110,12 +110,12 @@ const Profile: FC<{
         <div
           className={clsx(
             "text-lg font-bold",
-            !displayName && "text-zinc-500 -skew-x-10",
+            !displayName && "text-zinc-5 -skew-x-10",
           )}
         >
           {displayName ?? email}
         </div>
-        <div className="text-xs text-zinc-500 tracking-tighter">
+        <div className="text-xs text-zinc-5 tracking-tighter">
           #<span className="font-mono">{id}</span>
         </div>
       </div>

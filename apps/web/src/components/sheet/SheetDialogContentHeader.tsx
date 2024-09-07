@@ -31,9 +31,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
     return (
       <div className="flex flex-col">
         <div className="flex items-start">
-          <div className="text-xs text-zinc-400">
-            #{sheet.internalId ?? "?"}
-          </div>
+          <div className="text-xs text-zinc-4">#{sheet.internalId ?? "?"}</div>
 
           <div className="flex-1" />
 
@@ -53,7 +51,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
               }}
             >
               {favored ? (
-                <MdiStar className="text-yellow-500" />
+                <MdiStar className="text-yellow-5" />
               ) : (
                 <MdiStarOutline />
               )}
@@ -67,7 +65,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
               "https://shama.dxrating.net/images/cover/v2/" + sheet.imageName
             }
             alt={sheet.imageName}
-            className="overflow-hidden rounded-lg bg-slate-300/50"
+            className="overflow-hidden rounded-lg bg-slate-3/50"
             variants={variants}
             initial="collapsed"
             animate={expanded ? "expanded" : "collapsed"}
@@ -83,7 +81,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
 
           <div className="flex-1" />
 
-          <div className="text-4xl text-zinc-900/60 leading-none">
+          <div className="text-4xl text-zinc-9/60 leading-none">
             {sheet.isTypeUtage
               ? sheet.level
               : sheet.internalLevelValue.toFixed(1)}

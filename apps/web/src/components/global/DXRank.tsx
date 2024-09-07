@@ -19,10 +19,7 @@ export const DXRank: FC<{ rank?: string | null; className?: string }> = ({
     />
   ) : (
     <div
-      className={clsx(
-        "aspect-w-128 aspect-h-60 bg-gray-200 rounded",
-        className,
-      )}
+      className={clsx("aspect-w-128 aspect-h-60 bg-gray-2 rounded", className)}
     />
   );
 };

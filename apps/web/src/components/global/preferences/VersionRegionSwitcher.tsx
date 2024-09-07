@@ -120,7 +120,7 @@ export const VersionRegionSwitcher: FC = () => {
           value={id}
           key={id}
           className={clsx(
-            "flex items-center gap-8 border-b border-solid border-gray-200",
+            "flex items-center gap-8 border-b border-solid border-gray-2",
             i === 0 && "border-t",
           )}
         >
@@ -148,7 +148,7 @@ export const VersionRegionSwitcher: FC = () => {
             value={`${dxVersion}__${"_generic"}`}
             key={id}
             className={clsx(
-              "flex items-center gap-4 border-b border-solid border-gray-200",
+              "flex items-center gap-4 border-b border-solid border-gray-2",
               i === 0 && "border-t",
             )}
           >
@@ -168,7 +168,7 @@ export const VersionRegionSwitcher: FC = () => {
         ),
       )}
       <ListItem className="flex justify-center items-center text-sm">
-        <div className="flex justify-center items-start max-w-[22rem] text-zinc-500">
+        <div className="flex justify-center items-start max-w-[22rem] text-zinc-5">
           <MdiInformation className="mr-2 shrink-0 mt-0.5" />
           <span className="whitespace-normal">
             {t("settings:version-and-region.info")}

@@ -114,7 +114,7 @@ const RenderToOneShotImageDialogContent = () => {
         <DialogContentText>
           {isValidating ? (
             <div className="flex flex-col relative">
-              <div className="aspect-[1500/1100] w-full bg-gray-300 rounded-md animate-pulse" />
+              <div className="aspect-[1500/1100] w-full bg-gray-3 rounded-md animate-pulse" />
 
               <div className="absolute inset-0 flex flex-col gap-1 items-center justify-center p-4">
                 <CircularProgress />
@@ -136,7 +136,7 @@ const RenderToOneShotImageDialogContent = () => {
               </div>
             </div>
           ) : error ? (
-            <div className="text-red-500">
+            <div className="text-red-5">
               An error occurred while rendering the image: {error.message}
             </div>
           ) : (
@@ -155,7 +155,7 @@ const RenderToOneShotImageDialogContent = () => {
             />
           )}
 
-          <div className="text-zinc-500 mt-4 flex flex-col gap-1">
+          <div className="text-zinc-5 mt-4 flex flex-col gap-1">
             <div className="text-sm font-bold">
               Long-press or right-click the image to save it to your device.
             </div>

@@ -97,7 +97,7 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
         <AnimatePresence>
           {isPressed && (
             <motion.div
-              className="absolute top-7 left-0 w-10 h-[50svh] flex flex-col items-center justify-between bg-gray-200 px-2 py-4 shadow rounded-full z-10"
+              className="absolute top-7 left-0 w-10 h-[50svh] flex flex-col items-center justify-between bg-gray-2 px-2 py-4 shadow rounded-full z-10"
               ref={containerRef}
               initial={{ opacity: 0, scaleY: 0.5, y: "-50%" }}
               animate={{ opacity: 1, scaleY: 1, y: "-50%" }}
@@ -110,7 +110,7 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
               ))}
               {value !== undefined && value >= min && value <= max && (
                 <div
-                  className="h-8 w-8 rounded-full bg-gray-600/80 text-white flex items-center justify-center absolute left-0 text-xs left-1"
+                  className="h-8 w-8 rounded-full bg-gray-6/80 text-white flex items-center justify-center absolute left-0 text-xs left-1"
                   style={{
                     top: `${indicatorPosition}px`,
                   }}

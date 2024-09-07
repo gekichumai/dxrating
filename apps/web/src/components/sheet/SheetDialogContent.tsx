@@ -76,7 +76,7 @@ const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
 
 const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
   <div className="font-lg font-bold">
-    <span className="pb-1 px-1 mb-1 border-b border-solid border-gray-200 tracking-tight">
+    <span className="pb-1 px-1 mb-1 border-b border-solid border-gray-2 tracking-tight">
       {children}
     </span>
   </div>
@@ -178,7 +178,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
               key={comment.id}
               className="flex flex-col gap-1 bg-zinc-1 rounded-lg px-4 py-2"
             >
-              <div className="text-zinc-500 flex items-center">
+              <div className="text-zinc-5 flex items-center">
                 <div className="text-sm font-bold">
                   {comment.display_name ?? "*Somebody*"}
                 </div>
@@ -239,7 +239,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
         />
 
         <div className="text-sm -mt-2">
-          <div className="text-zinc-600">
+          <div className="text-zinc-6">
             {sheet.releaseDate &&
               t("sheet:release-date", {
                 absoluteDate: releaseDate.toLocaleString(i18n.language, {
@@ -422,7 +422,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                               key={region}
                               className={clsx(
                                 "uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs",
-                                available ? "!bg-green-500" : "!bg-gray-300",
+                                available ? "!bg-green-5" : "!bg-gray-3",
                               )}
                             >
                               {region}
@@ -439,7 +439,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                       <div
                         className={clsx(
                           "uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs inline-flex",
-                          sheet.isLocked ? "!bg-yellow-500" : "!bg-gray-500",
+                          sheet.isLocked ? "!bg-yellow-5" : "!bg-gray-5",
                         )}
                       >
                         {sheet.isLocked ? "LOCKED" : "AVAILABLE"}
@@ -449,7 +449,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                 </TableBody>
               </Table>
 
-              <div className="mt-4 text-xs text-zinc-500 text-right">
+              <div className="mt-4 text-xs text-zinc-5 text-right">
                 <Trans
                   i18nKey="sheet:details.credits"
                   components={{
@@ -538,7 +538,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
                               </span>
 
                               {nextRating && (
-                                <div className="absolute -bottom-5 -left-1 px-1 text-xs text-zinc-500 bg-zinc-100 shadow-[0_0_0_1px_var(--un-shadow-color)] shadow-zinc-300/80 rounded-xs">
+                                <div className="absolute -bottom-5 -left-1 px-1 text-xs text-zinc-5 bg-zinc-1 shadow-[0_0_0_1px_var(--un-shadow-color)] shadow-zinc-3/80 rounded-xs">
                                   ↑{" "}
                                   <span className="font-bold">
                                     {rating.rating.ratingAwardValue -
@@ -652,7 +652,7 @@ const SheetInternalLevelHistory: FC<{
                 <TableCell
                   key={version}
                   className={clsx(
-                    appVersion === version && "bg-amber-200",
+                    appVersion === version && "bg-amber-2",
                     !available && "opacity-50",
                   )}
                 >
@@ -675,12 +675,12 @@ const SheetInternalLevelHistory: FC<{
                   <TableCell
                     key={version}
                     className={clsx(
-                      appVersion === version && "bg-amber-200",
+                      appVersion === version && "bg-amber-2",
                       !available && "opacity-50",
                     )}
                   >
                     {internalLevelValue === undefined ? (
-                      <div className="text-zinc-500 select-none">
+                      <div className="text-zinc-5 select-none">
                         {available ? "—" : "／"}
                       </div>
                     ) : (
@@ -698,7 +698,7 @@ const SheetInternalLevelHistory: FC<{
           </TableBody>
         </Table>
       ) : (
-        <div className="text-zinc-500 px-1">
+        <div className="text-zinc-5 px-1">
           {t("sheet:internal-level-history.empty")}
         </div>
       )}

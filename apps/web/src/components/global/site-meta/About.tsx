@@ -21,7 +21,7 @@ const ExternalLink: FC<
     target="_blank"
     rel="noopener noreferrer"
     className={clsx(
-      "inline-flex items-center gap-1 text-blue-600 hover:text-blue-500",
+      "inline-flex items-center gap-1 text-blue-6 hover:text-blue-5",
       className,
     )}
   >
@@ -45,10 +45,10 @@ const AboutAttribute: FC<
   PropsWithChildren<{ label: ReactNode; value: ReactNode }>
 > = ({ label, value }) => (
   <li className="flex flex-col items-start font-mono">
-    <span className="font-bold text-xs scale-75 origin-left-bottom text-zinc-400">
+    <span className="font-bold text-xs scale-75 origin-left-bottom text-zinc-4">
       {label}
     </span>
-    <span className="text-sm tracking-tight text-zinc-600">{value}</span>
+    <span className="text-sm tracking-tight text-zinc-6">{value}</span>
   </li>
 );
 

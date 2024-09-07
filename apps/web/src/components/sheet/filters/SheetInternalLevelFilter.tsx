@@ -3,8 +3,8 @@ import { FC, useMemo } from "react";
 import {
   Control,
   FieldPath,
-  UseControllerProps,
   useController,
+  UseControllerProps,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
@@ -56,7 +56,7 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
       />
 
       <TouchDeviceGuard renderOnlyOn="touch">
-        <div className="block md:hidden h-px w-full flex-1 bg-gray-300 mx-2 select-none" />
+        <div className="block md:hidden h-px w-full flex-1 bg-gray-3 mx-2 select-none" />
       </TouchDeviceGuard>
 
       <TouchDeviceGuard renderOnlyOn="touch">

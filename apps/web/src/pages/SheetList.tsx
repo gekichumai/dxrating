@@ -183,9 +183,9 @@ const _SheetListInner: FC = () => {
         }}
       />
 
-      <div className="text-sm rounded-full shadow-lg px-4 py-2 bg-blue-200 relative overflow-hidden select-none font-bold">
+      <div className="text-sm rounded-full shadow-lg px-4 py-2 bg-blue-2 relative overflow-hidden select-none font-bold">
         <div
-          className="absolute -inset-4 bg-blue-900/20 -skew-x-8 translate-x-4 transition-width"
+          className="absolute -inset-4 bg-blue-9/20 -skew-x-8 translate-x-4 transition-width"
           style={{
             width:
               (filteredResults.length /
@@ -195,8 +195,8 @@ const _SheetListInner: FC = () => {
           }}
         />
         <div className="relative z-1 flex items-center gap-2">
-          <MdiIconInfo className="text-blue-900" />
-          <div className="text-blue-900">
+          <MdiIconInfo className="text-blue-9" />
+          <div className="text-blue-9">
             {t("sheet:search-summary", {
               found: isLoading ? "..." : filteredResults.length,
               total: isLoading ? "..." : sheets?.length,

@@ -262,7 +262,7 @@ const ImportFromNETRecordsDialogContent: FC<{
             label={
               <div className="flex flex-col">
                 <span>Remember Credentials</span>
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-zinc-5">
                   Your credentials will be stored locally in your browser.
                 </span>
               </div>
@@ -273,7 +273,7 @@ const ImportFromNETRecordsDialogContent: FC<{
             <FormLabel id="auto-import-label">
               <div className="flex flex-col">
                 <span>Auto-import on App Start</span>
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-zinc-5">
                   Automatically start importing records from NET when you open
                   DXRating. Requires "Remember Credentials" to be enabled.
                 </span>
@@ -315,7 +315,7 @@ const ImportFromNETRecordsDialogContent: FC<{
                         <span
                           className={clsx(
                             "text-xs",
-                            !remember ? "text-zinc-400" : "text-zinc-500",
+                            !remember ? "text-zinc-4" : "text-zinc-5",
                           )}
                         >
                           {subtitle}
@@ -328,7 +328,7 @@ const ImportFromNETRecordsDialogContent: FC<{
             </RadioGroup>
           </FormControl>
 
-          <div className="h-px w-full bg-gray-200 my-2" />
+          <div className="h-px w-full bg-gray-2 my-2" />
 
           {progress && (
             <>
@@ -340,16 +340,16 @@ const ImportFromNETRecordsDialogContent: FC<{
                   className="w-full rounded-full max-w-md"
                 />
                 <span className="font-bold mt-1">Importing...</span>
-                <span className="text-zinc-500 font-mono text-sm">
+                <span className="text-zinc-5 font-mono text-sm">
                   [ {progress.state} ]
                 </span>
               </div>
 
-              <div className="h-px w-full bg-gray-200 my-2" />
+              <div className="h-px w-full bg-gray-2 my-2" />
             </>
           )}
 
-          <div className="text-sm text-zinc-500 [&>p]:mb-1">
+          <div className="text-sm text-zinc-5 [&>p]:mb-1">
             <p className="font-bold">
               Your credentials will not be stored, logged, or shared, and are
               only used for the duration of this import process. If you wish,
