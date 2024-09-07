@@ -1,10 +1,10 @@
+import { ActionIcon } from "@mantine/core";
 import {
   Button,
   CircularProgress,
   Dialog,
   DialogContent,
   Grow,
-  IconButton,
   ListItemIcon,
   ListItemText,
   Menu,
@@ -59,9 +59,9 @@ const ThemedAuth: FC<{
                 "Torus, system-ui, Avenir, Helvetica, Arial, sans-serif",
             },
             radii: {
-              borderRadiusButton: "12px",
-              buttonBorderRadius: "12px",
-              inputBorderRadius: "12px",
+              borderRadiusButton: "8px",
+              buttonBorderRadius: "8px",
+              inputBorderRadius: "8px",
             },
             colors: {
               brand: theme.accentColor.hex + "99",
@@ -349,14 +349,12 @@ export const UserChip: FC = () => {
       </Menu>
 
       {!DISABLE_EXPLICIT_AUTH && pending ? (
-        <div className="p-2 text-[1.5rem]">
-          <div className="h-[1.2em] w-[1.2em] px-[0.1em] -mt-[0.1em] text-black/54">
-            <CircularProgress disableShrink size="1em" color="inherit" />
-          </div>
-        </div>
+        <ActionIcon disabled>
+          <CircularProgress disableShrink size="1em" color="inherit" />
+        </ActionIcon>
       ) : (
         (!DISABLE_EXPLICIT_AUTH || session) && (
-          <IconButton
+          <ActionIcon
             onClick={(e) => {
               setOpen(session ? "profile" : "auth");
               if (session) {
@@ -369,7 +367,7 @@ export const UserChip: FC = () => {
             ) : (
               <MdiLogin />
             )}
-          </IconButton>
+          </ActionIcon>
         )
       )}
     </>

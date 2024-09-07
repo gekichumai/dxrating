@@ -17,16 +17,18 @@ export const NavigationItems: FC = () => {
     <>
       <VersionRegionSwitcher />
 
-      {APP_TABS_VALUES.map((link) => (
-        <Link
-          className={classes.link}
-          data-active={location === `/${link}` || undefined}
-          key={link}
-          href={`/${link}`}
-        >
-          {t(`root:pages.${link}.title`)}
-        </Link>
-      ))}
+      <div className="flex flex-col">
+        {APP_TABS_VALUES.map((link) => (
+          <Link
+            className={classes.link}
+            data-active={location === `/${link}` || undefined}
+            key={link}
+            href={`/${link}`}
+          >
+            {t(`root:pages.${link}.title`)}
+          </Link>
+        ))}
+      </div>
     </>
   );
 };

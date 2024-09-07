@@ -1,4 +1,4 @@
-import { IconButton } from "@mui/material";
+import { ActionIcon } from "@mantine/core";
 import { motion } from "framer-motion";
 import { FC, memo, useState } from "react";
 
@@ -35,7 +35,11 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
 
           <div className="flex-1" />
 
-          <IconButton size="small" onClick={() => toggleFavored()}>
+          <ActionIcon
+            size="small"
+            variant="subtle"
+            onClick={() => toggleFavored()}
+          >
             <motion.div
               layout
               variants={{
@@ -56,7 +60,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(
                 <MdiStarOutline />
               )}
             </motion.div>
-          </IconButton>
+          </ActionIcon>
         </div>
         <div className="flex items-center">
           <motion.img

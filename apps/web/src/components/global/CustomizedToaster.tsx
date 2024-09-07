@@ -8,7 +8,7 @@ export const CustomizedToaster: FC = () => {
   return (
     <Toaster
       toastOptions={{
-        className: "font-bold pr-1 py-2 rounded-xl",
+        className: "font-bold pr-1 py-2 rounded-lg",
         error: {
           duration: 10e3,
         },

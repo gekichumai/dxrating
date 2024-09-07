@@ -2,7 +2,7 @@ import { AppShell, Burger } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { CircularProgress } from "@mui/material";
 import { Suspense } from "react";
-import { Route, Router } from "wouter";
+import { Redirect, Route, Router } from "wouter";
 
 import { WebpSupportedImage } from "./components/global/WebpSupportedImage";
 import { NavigationItems } from "./components/layout/NavigationItems";
@@ -40,22 +40,29 @@ export const App = () => {
 
       <AppShell.Header
         style={{
-          background: versionTheme.accentColor.hex,
+          background: `${versionTheme.accentColor.hex}99`,
         }}
-        className="flex items-center px-4 gap-2"
+        className="flex items-center px-4 gap-2 backdrop-blur-xl"
       >
         <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
 
         <TopBar />
       </AppShell.Header>
 
-      <AppShell.Navbar p="md" className="backdrop-blur-lg bg-">
+      <AppShell.Navbar
+        p="md"
+        className="backdrop-blur-lg bg-background/50 gap-2"
+      >
         <NavigationItems />
       </AppShell.Navbar>
 
       <AppShell.Main>
         <Suspense fallback={fallbackElement}>
           <Router>
+            <Route path="/">
+              <Redirect to="/search" />
+            </Route>
+
             <Route path="/search">
               <SheetList />
             </Route>

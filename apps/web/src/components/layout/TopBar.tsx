@@ -45,7 +45,7 @@ export const TopBar = () => {
 
       <div className="flex-1" />
 
-      <div className="flex items-center">
+      <div className="flex items-center gap-1">
         <LocaleSelector />
         <About />
         <UserChip />

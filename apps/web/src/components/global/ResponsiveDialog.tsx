@@ -1,4 +1,5 @@
-import { Dialog, DialogContent, Grow, SwipeableDrawer } from "@mui/material";
+import { Modal } from "@mantine/core";
+import { SwipeableDrawer } from "@mui/material";
 import { FC, ReactNode, useEffect, useState } from "react";
 
 import { useIsLargeDevice } from "../../utils/breakpoints";
@@ -37,49 +38,47 @@ export const ResponsiveDialog: FC<{
   }, [open]);
 
   return isLargeDevice ? (
-    <>
-      {internalOpen && (
-        <Dialog
-          open={open}
-          onClose={() => setOpen(false)}
-          maxWidth="md"
-          fullWidth
-          TransitionComponent={Grow}
-        >
-          <DialogContent>{children?.()}</DialogContent>
-        </Dialog>
-      )}
-    </>
+    <Modal
+      opened={open}
+      onClose={() => setOpen(false)}
+      size="lg"
+      withCloseButton={false}
+      overlayProps={{
+        backgroundOpacity: 0.55,
+        blur: 5,
+      }}
+      centered
+    >
+      {children?.()}
+    </Modal>
   ) : (
-    <>
-      {internalOpen && (
-        <SwipeableDrawer
-          disableDiscovery
-          disableSwipeToOpen
-          anchor="bottom"
-          open={drawerOpen}
-          onClose={() => setOpen(false)}
-          onOpen={() => setOpen(true)}
-          sx={{
-            "& .MuiDrawer-paper": {
-              height:
-                "calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 4rem)",
+    internalOpen && (
+      <SwipeableDrawer
+        disableDiscovery
+        disableSwipeToOpen
+        anchor="bottom"
+        open={drawerOpen}
+        onClose={() => setOpen(false)}
+        onOpen={() => setOpen(true)}
+        sx={{
+          "& .MuiDrawer-paper": {
+            height:
+              "calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 4rem)",
+          },
+        }}
+        PaperProps={{
+          sx: {
+            "&": {
+              borderRadius: "0.75rem 0.75rem 0 0",
             },
-          }}
-          PaperProps={{
-            sx: {
-              "&": {
-                borderRadius: "0.75rem 0.75rem 0 0",
-              },
-            },
-          }}
-        >
-          <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-3 my-3" />
-          <div className="overflow-auto h-full p-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-            {children?.()}
-          </div>
-        </SwipeableDrawer>
-      )}
-    </>
+          },
+        }}
+      >
+        <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-3 my-3" />
+        <div className="overflow-auto h-full p-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+          {children?.()}
+        </div>
+      </SwipeableDrawer>
+    )
   );
 };

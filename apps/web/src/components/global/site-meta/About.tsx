@@ -1,5 +1,5 @@
 import { dxdataUpdateTime } from "@gekichumai/dxdata";
-import { IconButton } from "@mui/material";
+import { ActionIcon } from "@mantine/core";
 import clsx from "clsx";
 import { FC, PropsWithChildren, ReactNode, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -61,9 +61,9 @@ export const About = () => {
 
   return (
     <>
-      <IconButton onClick={() => setExpanded(true)}>
+      <ActionIcon onClick={() => setExpanded(true)}>
         <MdiInformation />
-      </IconButton>
+      </ActionIcon>
 
       <ResponsiveDialog
         open={expanded}

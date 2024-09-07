@@ -20,7 +20,6 @@ export const MantineCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({
           xl: "20px",
         },
         primaryColor: versionTheme.accentColor.mantine,
-        respectReducedMotion: true,
       }),
     [versionTheme],
   );

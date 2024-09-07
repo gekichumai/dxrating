@@ -1,11 +1,5 @@
-import {
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-} from "@mui/material";
-import { FC, PropsWithChildren, useState } from "react";
+import { ActionIcon, Menu } from "@mantine/core";
+import { FC, PropsWithChildren } from "react";
 import { useTranslation } from "react-i18next";
 
 import { startViewTransition } from "../../../utils/startViewTransition";
@@ -18,21 +12,18 @@ const LocaleSelectorItem: FC<
 > = ({ locale, selected, children }) => {
   const { i18n } = useTranslation();
   return (
-    <MenuItem
-      selected={selected}
+    <Menu.Item
       onClick={() => {
         startViewTransition(() => {
           i18n.changeLanguage(locale);
         });
       }}
+      leftSection={
+        selected ? <MdiCheck className="size-4" /> : <div className="w-4" />
+      }
     >
-      {selected && (
-        <ListItemIcon>
-          <MdiCheck />
-        </ListItemIcon>
-      )}
-      {selected ? children : <ListItemText inset>{children}</ListItemText>}
-    </MenuItem>
+      {children}
+    </Menu.Item>
   );
 };
 
@@ -45,19 +36,15 @@ const LOCALES = [
 
 export const LocaleSelector = () => {
   const { i18n } = useTranslation();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   return (
-    <>
-      <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-        <MdiTranslate />
-      </IconButton>
-
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={() => setAnchorEl(null)}
-      >
+    <Menu shadow="md" width={140}>
+      <Menu.Target>
+        <ActionIcon>
+          <MdiTranslate />
+        </ActionIcon>
+      </Menu.Target>
+      <Menu.Dropdown>
         {LOCALES.map(({ value, label }) => (
           <LocaleSelectorItem
             locale={value}
@@ -67,7 +54,7 @@ export const LocaleSelector = () => {
             {label}
           </LocaleSelectorItem>
         ))}
-      </Menu>
-    </>
+      </Menu.Dropdown>
+    </Menu>
   );
 };

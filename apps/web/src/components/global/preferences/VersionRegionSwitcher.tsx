@@ -60,7 +60,7 @@ const VERSION_REGIONS: VersionRegion[] = [
 
 const StyledSelect = styled(Select<string>)(({ theme }) => ({
   "&": {
-    borderRadius: 12,
+    borderRadius: 8,
     overflow: "hidden",
   },
   "& .MuiPaper-root": {

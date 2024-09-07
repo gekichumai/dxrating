@@ -29,7 +29,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: "https://shama.dxrating.net/favicon/buddies-1024x.jpg",
     accentColor: {
       hex: "#FAAE29",
-      mantine: "orange",
+      mantine: "yellow",
     },
   },
   [VersionEnum.BUDDiESPLUS]: {
@@ -38,7 +38,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: "https://shama.dxrating.net/favicon/buddies-1024x.jpg",
     accentColor: {
       hex: "#FAAE29",
-      mantine: "orange",
+      mantine: "yellow",
     },
   },
 };

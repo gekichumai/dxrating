@@ -64,13 +64,19 @@ export default defineConfig({
         // shallow merge
         ...theme.colors,
         ...generateColorsFromMantine(),
+        foreground: {
+          DEFAULT: "rgb(0 0 0)",
+        },
+        background: {
+          DEFAULT: "rgb(255 255 255)",
+        },
       },
     };
   },
 
   shortcuts: {
     "flex-container":
-      "flex flex-col items-center justify-center py-4 gap-4 max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]",
+      "flex flex-col items-center justify-center gap-4 max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left))] pr-[calc(env(safe-area-inset-right))]",
     "chunks-horizontal-2":
       "flex flex-col md:flex-row items-center justify-center gap-2 w-full",
   },

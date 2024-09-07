@@ -1,10 +1,4 @@
-import {
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-} from "@mui/material";
+import { CloseButton, Select } from "@mantine/core";
 import { AnimatePresence } from "framer-motion";
 import { FC, useContext, useMemo } from "react";
 import { Control, Controller, useFieldArray } from "react-hook-form";
@@ -15,10 +9,7 @@ import { MotionButton } from "../../utils/motion";
 
 import { SheetSortFilterForm, SortPredicate } from "./SheetSortFilter";
 
-
 import MdiAdd from "~icons/mdi/add";
-import MdiClose from "~icons/mdi/close";
-
 
 const SortPredicateTransformer = {
   to: (value: string) => {
@@ -53,53 +44,54 @@ export const SheetSortSelect: FC<{
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-end gap-1">
       {fields.map((field, index) => (
         <Controller
           name={`sorts.${index}`}
           key={field.id}
           render={({ field }) => (
-            <FormControl>
-              <InputLabel id={`sorts.${index}.label`}>
-                {t(`sheet:sort.predicate`, { index: index + 1 })}
-              </InputLabel>
-              <Select
-                label={t(`sheet:sort.predicate`, { index: index + 1 })}
-                labelId={`sorts.${index}.label`}
-                id={`sorts.${index}`}
-                value={SortPredicateTransformer.from(field.value)}
-                onChange={(e) => {
-                  field.onChange(SortPredicateTransformer.to(e.target.value));
-                }}
-                disabled={queryActive}
-                size="small"
-                {...(index > 0 && {
-                  endAdornment: (
-                    <IconButton size="small" onClick={() => remove(index)}>
-                      <MdiClose />
-                    </IconButton>
-                  ),
-                })}
-              >
-                <MenuItem value="releaseDate_desc">
-                  {t("sheet:sort.release-date.desc")}
-                </MenuItem>
-                <MenuItem value="releaseDate_asc">
-                  {t("sheet:sort.release-date.asc")}
-                </MenuItem>
-                <MenuItem value="internalLevelValue_desc">
-                  {t("sheet:sort.internal-level-value.desc")}
-                </MenuItem>
-                <MenuItem value="internalLevelValue_asc">
-                  {t("sheet:sort.internal-level-value.asc")}
-                </MenuItem>
-              </Select>
-            </FormControl>
+            <Select
+              label={t(`sheet:sort.predicate`, { index: index + 1 })}
+              value={SortPredicateTransformer.from(field.value)}
+              onChange={(e) => {
+                if (e === null) return;
+                field.onChange(SortPredicateTransformer.to(e));
+              }}
+              disabled={queryActive}
+              {...(index > 0 && {
+                rightSection: (
+                  <CloseButton size="sm" onClick={() => remove(index)} />
+                ),
+                rightSectionPointerEvents: "auto",
+              })}
+              comboboxProps={{
+                width: 240,
+              }}
+              checkIconPosition="right"
+              data={[
+                {
+                  label: t("sheet:sort.release-date.desc"),
+                  value: "releaseDate_desc",
+                },
+                {
+                  label: t("sheet:sort.release-date.asc"),
+                  value: "releaseDate_asc",
+                },
+                {
+                  label: t("sheet:sort.internal-level-value.desc"),
+                  value: "internalLevelValue_desc",
+                },
+                {
+                  label: t("sheet:sort.internal-level-value.asc"),
+                  value: "internalLevelValue_asc",
+                },
+              ]}
+            />
           )}
         />
       ))}
       <AnimatePresence mode="popLayout">
-        {fields.length <= 5 && (
+        {fields.length <= 3 && (
           <MotionButton
             layout
             onClick={() =>

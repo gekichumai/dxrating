@@ -11,7 +11,7 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({
   const theme = useMemo(() => {
     return createTheme({
       shape: {
-        borderRadius: 12,
+        borderRadius: 8,
       },
       typography: {
         fontFamily: "Torus, system-ui, Avenir, Helvetica, Arial, sans-serif",

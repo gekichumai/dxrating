@@ -1,5 +1,5 @@
 import { VERSION_ID_MAP } from "@gekichumai/dxdata";
-import { ActionIcon, TextInput } from "@mantine/core";
+import { CloseButton, TextInput } from "@mantine/core";
 import { Button } from "@mui/material";
 import * as Sentry from "@sentry/react";
 import { FC, useContext, useMemo, useState } from "react";
@@ -20,7 +20,6 @@ import { FlattenedSheet, useFilteredSheets, useSheets } from "../songs";
 import { DXRatingPlugin } from "../utils/capacitor/plugin/wrap";
 import { isBuildPlatformApp } from "../utils/env";
 
-import IconMdiClose from "~icons/mdi/close";
 import MdiIconInfo from "~icons/mdi/information";
 import IconMdiMagnify from "~icons/mdi/magnify";
 import IconMdiOcr from "~icons/mdi/ocr";
@@ -139,7 +138,7 @@ const _SheetListInner: FC = () => {
   }, [results, sortFilterOptions, query, version]);
 
   return (
-    <div className="flex flex-col gap-2 w-full">
+    <div className="flex-container w-full">
       <TextInput
         label={t("sheet:search")}
         value={query}
@@ -148,19 +147,18 @@ const _SheetListInner: FC = () => {
           setQueryActive(!!e.target.value);
         }}
         size="lg"
+        className="w-full"
         leftSection={<IconMdiMagnify className="size-5" />}
         rightSection={
           query && (
-            <ActionIcon
+            <CloseButton
               onClick={() => {
                 setQuery("");
                 setQueryActive(false);
               }}
               size="sm"
               radius="xl"
-            >
-              <IconMdiClose />
-            </ActionIcon>
+            />
           )
         }
         data-attr="sheet-search"
@@ -183,7 +181,7 @@ const _SheetListInner: FC = () => {
         }}
       />
 
-      <div className="text-sm rounded-full shadow-lg px-4 py-2 bg-blue-2 relative overflow-hidden select-none font-bold">
+      <div className="text-sm rounded-full shadow-lg px-4 py-3 bg-blue-2 relative overflow-hidden select-none font-bold">
         <div
           className="absolute -inset-4 bg-blue-9/20 -skew-x-8 translate-x-4 transition-width"
           style={{
@@ -194,9 +192,9 @@ const _SheetListInner: FC = () => {
               "%",
           }}
         />
-        <div className="relative z-1 flex items-center gap-2">
+        <div className="relative z-1 flex items-center gap-1">
           <MdiIconInfo className="text-blue-9" />
-          <div className="text-blue-9">
+          <div className="text-blue-9 leading-none">
             {t("sheet:search-summary", {
               found: isLoading ? "..." : filteredResults.length,
               total: isLoading ? "..." : sheets?.length,

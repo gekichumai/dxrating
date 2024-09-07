@@ -277,7 +277,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(
             YouTube
           </Button>
 
-          <div className="inline-flex !text-[#00A1D6] !b-[#00A1D6] b-solid b-1 mr-1 rounded-xl items-center">
+          <div className="inline-flex !text-[#00A1D6] !b-[#00A1D6] b-solid b-1 mr-1 rounded-lg items-center">
             <RiBilibiliFill className="ml-2.5" />
             <ButtonGroup>
               <Button
