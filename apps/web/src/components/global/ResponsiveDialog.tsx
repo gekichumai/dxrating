@@ -43,11 +43,6 @@ export const ResponsiveDialog: FC<{
       onClose={() => setOpen(false)}
       size="lg"
       withCloseButton={false}
-      overlayProps={{
-        backgroundOpacity: 0.55,
-        blur: 5,
-      }}
-      centered
     >
       {children?.()}
     </Modal>

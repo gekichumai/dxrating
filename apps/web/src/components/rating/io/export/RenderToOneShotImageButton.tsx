@@ -1,12 +1,6 @@
-import {
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Grow,
-} from "@mui/material";
+import { Button, Modal } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { CircularProgress } from "@mui/material";
 import { usePostHog } from "posthog-js/react";
 import { FC, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
@@ -106,97 +100,85 @@ const RenderToOneShotImageDialogContent = () => {
 
   return (
     <>
-      <DialogTitle className="text-lg font-bold pb-0">
-        Render as OneShot Image
-      </DialogTitle>
+      {isValidating ? (
+        <div className="flex flex-col relative">
+          <div className="aspect-[1500/1100] w-full bg-gray-3 rounded-md animate-pulse" />
 
-      <DialogContent classes={{ root: "!pt-4" }}>
-        <DialogContentText>
-          {isValidating ? (
-            <div className="flex flex-col relative">
-              <div className="aspect-[1500/1100] w-full bg-gray-3 rounded-md animate-pulse" />
+          <div className="absolute inset-0 flex flex-col gap-1 items-center justify-center p-4">
+            <CircularProgress />
 
-              <div className="absolute inset-0 flex flex-col gap-1 items-center justify-center p-4">
-                <CircularProgress />
+            <div className="text-lg font-bold tracking-tight">Rendering...</div>
 
-                <div className="text-lg font-bold tracking-tight">
-                  Rendering...
-                </div>
-
-                <div className="text-base font-bold tabular-nums tracking-tight font-mono">
-                  {elapsedTime
-                    ? `${(elapsedTime / 1000).toFixed(1)}s`
-                    : "Calculating..."}
-                </div>
-
-                <div className="text-sm">
-                  This may take a while depending on the current server load;
-                  typically rendering will finish within 10 seconds.
-                </div>
-              </div>
+            <div className="text-base font-bold tabular-nums tracking-tight font-mono">
+              {elapsedTime
+                ? `${(elapsedTime / 1000).toFixed(1)}s`
+                : "Calculating..."}
             </div>
-          ) : error ? (
-            <div className="text-red-5">
-              An error occurred while rendering the image: {error.message}
+
+            <div className="text-sm">
+              This may take a while depending on the current server load;
+              typically rendering will finish within 10 seconds.
             </div>
-          ) : (
-            <img
-              src={data}
-              alt="OneShot Image"
-              className="shadow rounded-md"
-              style={{
-                boxShadow: `0 0 8px hsl(0deg 0% 0% / 0.25),
+          </div>
+        </div>
+      ) : error ? (
+        <div className="text-red-5">
+          An error occurred while rendering the image: {error.message}
+        </div>
+      ) : (
+        <img
+          src={data}
+          alt="OneShot Image"
+          className="shadow rounded-md"
+          style={{
+            boxShadow: `0 0 8px hsl(0deg 0% 0% / 0.25),
                 0 1px 1px hsl(0deg 0% 0% / 0.075),
       0 2px 2px hsl(0deg 0% 0% / 0.075),
       0 4px 4px hsl(0deg 0% 0% / 0.075),
       0 8px 8px hsl(0deg 0% 0% / 0.075),
       0 16px 16px hsl(0deg 0% 0% / 0.075)`,
-              }}
-            />
-          )}
+          }}
+        />
+      )}
 
-          <div className="text-zinc-5 mt-4 flex flex-col gap-1">
-            <div className="text-sm font-bold">
-              Long-press or right-click the image to save it to your device.
-            </div>
+      <div className="text-zinc-5 mt-4 flex flex-col gap-1">
+        <div className="text-sm font-bold">
+          Long-press or right-click the image to save it to your device.
+        </div>
 
-            <div className="text-xs">
-              This feature is in beta and may not work as expected. Please feel
-              free to report any issues or feedback to the developer :D
-            </div>
-          </div>
-        </DialogContentText>
-      </DialogContent>
+        <div className="text-xs">
+          This feature is in beta and may not work as expected. Please feel free
+          to report any issues or feedback to the developer :D
+        </div>
+      </div>
     </>
   );
 };
 
 export const RenderToOneShotImageButton: FC = () => {
   const posthog = usePostHog();
-  const [open, setOpen] = useState(false);
+  const [opened, { open, close }] = useDisclosure();
 
   return (
     <>
       <Button
         onClick={() => {
-          setOpen(true);
+          open();
           posthog?.capture("oneshot_render_button_clicked");
         }}
-        variant="contained"
-        color="primary"
-        startIcon={<IconMdiImage />}
+        leftSection={<IconMdiImage />}
       >
         Render as OneShot Image
       </Button>
 
-      <Dialog
-        TransitionComponent={Grow}
-        maxWidth="md"
-        open={open}
-        onClose={() => setOpen(false)}
+      <Modal
+        size="lg"
+        opened={opened}
+        onClose={close}
+        title="Render as OneShot Image"
       >
         <RenderToOneShotImageDialogContent />
-      </Dialog>
+      </Modal>
     </>
   );
 };

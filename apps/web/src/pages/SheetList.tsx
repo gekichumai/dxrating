@@ -140,7 +140,6 @@ const _SheetListInner: FC = () => {
   return (
     <div className="flex-container w-full">
       <TextInput
-        label={t("sheet:search")}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -148,6 +147,7 @@ const _SheetListInner: FC = () => {
         }}
         size="lg"
         className="w-full"
+        placeholder="Search"
         leftSection={<IconMdiMagnify className="size-5" />}
         rightSection={
           query && (
@@ -156,7 +156,6 @@ const _SheetListInner: FC = () => {
                 setQuery("");
                 setQueryActive(false);
               }}
-              size="sm"
               radius="xl"
             />
           )
@@ -192,7 +191,7 @@ const _SheetListInner: FC = () => {
               "%",
           }}
         />
-        <div className="relative z-1 flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <MdiIconInfo className="text-blue-9" />
           <div className="text-blue-9 leading-none">
             {t("sheet:search-summary", {

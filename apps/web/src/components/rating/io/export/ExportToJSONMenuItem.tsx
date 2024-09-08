@@ -1,4 +1,4 @@
-import { ListItemIcon, ListItemText, MenuItem } from "@mui/material";
+import { Menu } from "@mantine/core";
 import { FC } from "react";
 import toast from "react-hot-toast";
 
@@ -28,18 +28,16 @@ export const ExportToJSONMenuItem: FC = () => {
   const { b15Entries, b35Entries } = useRatingEntries();
   return (
     <>
-      <MenuItem
+      <Menu.Item
         onClick={() => {
           saveAsJsonFile(JSON.stringify(entries));
         }}
+        leftSection={<IconMdiFile />}
       >
-        <ListItemIcon>
-          <IconMdiFile />
-        </ListItemIcon>
-        <ListItemText>Export JSON (All Records)</ListItemText>
-      </MenuItem>
+        Export JSON (All Records)
+      </Menu.Item>
 
-      <MenuItem
+      <Menu.Item
         onClick={() => {
           const preprocess = (entry: RatingCalculatorEntry) => ({
             sheetId: entry.sheetId,
@@ -52,12 +50,10 @@ export const ExportToJSONMenuItem: FC = () => {
           ]);
           saveAsJsonFile(data);
         }}
+        leftSection={<IconMdiFile />}
       >
-        <ListItemIcon>
-          <IconMdiFile />
-        </ListItemIcon>
-        <ListItemText>Export JSON (Only B50 Records)</ListItemText>
-      </MenuItem>
+        Export JSON (Only B50 Records)
+      </Menu.Item>
     </>
   );
 };

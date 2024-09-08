@@ -1,8 +1,8 @@
+import { Menu, Modal } from "@mantine/core";
 import {
   Alert,
   AlertTitle,
   Button,
-  Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
@@ -11,9 +11,7 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemButton,
-  ListItemIcon,
   ListItemText,
-  MenuItem,
 } from "@mui/material";
 import { FC, useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -53,16 +51,16 @@ export const ImportFromAquaSQLiteListItem: FC<{
   return (
     <>
       {db && (
-        <Dialog open={true} onClose={handleClose}>
+        <Modal opened onClose={handleClose}>
           <ImportFromAquaSQLiteDatabaseContent
             db={db}
             modifyEntries={modifyEntries}
             onClose={handleClose}
           />
-        </Dialog>
+        </Modal>
       )}
 
-      <MenuItem
+      <Menu.Item
         color="primary"
         onClick={() => {
           toast.promise(
@@ -125,15 +123,13 @@ export const ImportFromAquaSQLiteListItem: FC<{
             },
           );
         }}
+        leftSection={<IconMdiDatabase />}
       >
-        <ListItemIcon>
-          <IconMdiDatabase />
-        </ListItemIcon>
         <ListItemText
           primary="Import from Aqua SQLite..."
           secondary="Deprecated"
         />
-      </MenuItem>
+      </Menu.Item>
     </>
   );
 };

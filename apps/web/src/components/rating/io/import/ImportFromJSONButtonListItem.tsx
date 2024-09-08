@@ -1,4 +1,4 @@
-import { ListItemIcon, ListItemText, MenuItem } from "@mui/material";
+import { Menu } from "@mantine/core";
 import { FC } from "react";
 import toast from "react-hot-toast";
 import { ListActions } from "react-use/lib/useList";
@@ -12,7 +12,7 @@ export const ImportFromJSONButtonListItem: FC<{
   onClose: () => void;
 }> = ({ modifyEntries, onClose }) => {
   return (
-    <MenuItem
+    <Menu.Item
       onClick={() => {
         onClose();
 
@@ -52,13 +52,9 @@ export const ImportFromJSONButtonListItem: FC<{
         };
         input.click();
       }}
+      leftSection={<IconMdiFile />}
     >
-      <ListItemIcon>
-        <IconMdiFile />
-      </ListItemIcon>
-      <ListItemText>
-        Import from <code>dxrating</code> Exported JSON...
-      </ListItemText>
-    </MenuItem>
+      Import from <code>dxrating</code> Exported JSON...
+    </Menu.Item>
   );
 };

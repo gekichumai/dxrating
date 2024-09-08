@@ -1,4 +1,4 @@
-import { createTheme, MantineProvider } from "@mantine/core";
+import { createTheme, MantineProvider, Modal } from "@mantine/core";
 import { FC, PropsWithChildren, useMemo } from "react";
 
 import { useVersionTheme } from "../../utils/useVersionTheme";
@@ -20,6 +20,20 @@ export const MantineCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({
           xl: "20px",
         },
         primaryColor: versionTheme.accentColor.mantine,
+        components: {
+          Modal: Modal.extend({
+            defaultProps: {
+              overlayProps: {
+                backgroundOpacity: 0.55,
+                blur: 5,
+              },
+              transitionProps: {
+                transition: "pop",
+              },
+              centered: true,
+            },
+          }),
+        },
       }),
     [versionTheme],
   );

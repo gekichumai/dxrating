@@ -1,17 +1,14 @@
+import { Menu, Modal } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import {
   Button,
   Checkbox,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
   DialogContentText,
-  DialogTitle,
   FormControl,
   FormControlLabel,
   FormLabel,
   LinearProgress,
-  ListItemIcon,
   ListItemText,
   MenuItem,
   Radio,
@@ -77,31 +74,29 @@ export const ImportFromNETRecordsListItem: FC<{
   modifyEntries: ListActions<PlayEntry>;
   onClose: () => void;
 }> = ({ modifyEntries, onClose }) => {
-  const [open, setOpen] = useState(false);
+  const [opened, { open, close }] = useDisclosure();
   const handleClose = () => {
-    setOpen(false);
+    close();
     onClose();
   };
 
   return (
     <>
-      {open && (
-        <Dialog open={open} onClose={handleClose}>
-          <ImportFromNETRecordsDialogContent
-            modifyEntries={modifyEntries}
-            onClose={handleClose}
-          />
-        </Dialog>
-      )}
-      <MenuItem
-        className="max-w-xl"
+      <Modal opened={opened} onClose={handleClose} title="Import from NET">
+        <ImportFromNETRecordsDialogContent
+          modifyEntries={modifyEntries}
+          onClose={handleClose}
+        />
+      </Modal>
+
+      <Menu.Item
+        className="flex flex-col items-start"
         onClick={() => {
-          setOpen(true);
+          open();
         }}
+        leftSection={<IconMdiConnection />}
+        closeMenuOnClick={false}
       >
-        <ListItemIcon>
-          <IconMdiConnection />
-        </ListItemIcon>
         <ListItemText
           primary={<>Import from maimai NET...</>}
           secondary={
@@ -115,8 +110,11 @@ export const ImportFromNETRecordsListItem: FC<{
               </div>
             </div>
           }
+          classes={{
+            root: "p-0",
+          }}
         />
-      </MenuItem>
+      </Menu.Item>
     </>
   );
 };
@@ -192,199 +190,191 @@ const ImportFromNETRecordsDialogContent: FC<{
 
   return (
     <>
-      <DialogTitle>Import from NET</DialogTitle>
-      <DialogContent>
-        <DialogContentText className="flex flex-col items-start gap-2 py-2">
-          <FormControl>
-            <TextField
-              label="Region"
-              select
-              value={region}
-              onChange={(event) =>
-                setRegion(event.target.value as "intl" | "jp")
-              }
-            >
-              <MenuItem value="intl">
-                <span>
-                  <span>International </span>
-                  <span className="text-zinc-4 text-sm">
-                    (maimaidx-eng.com)
-                  </span>
-                </span>
-              </MenuItem>
-              <MenuItem value="jp">
-                <span>
-                  <span>Japan </span>
-                  <span className="text-zinc-4 text-sm">(maimaidx.jp)</span>
-                </span>
-              </MenuItem>
-            </TextField>
-          </FormControl>
+      <DialogContentText className="flex flex-col items-start gap-2 py-2">
+        <FormControl>
+          <TextField
+            label="Region"
+            select
+            value={region}
+            onChange={(event) => setRegion(event.target.value as "intl" | "jp")}
+          >
+            <MenuItem value="intl">
+              <span>
+                <span>International </span>
+                <span className="text-zinc-4 text-sm">(maimaidx-eng.com)</span>
+              </span>
+            </MenuItem>
+            <MenuItem value="jp">
+              <span>
+                <span>Japan </span>
+                <span className="text-zinc-4 text-sm">(maimaidx.jp)</span>
+              </span>
+            </MenuItem>
+          </TextField>
+        </FormControl>
 
-          <FormControl>
-            <TextField
-              label="Your Sega ID"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              autoComplete="off"
-              autoCapitalize="none"
-              inputProps={{
-                "data-sentry-ignore": true,
-                "data-1p-ignore": true,
-              }}
-            />
-          </FormControl>
-
-          <FormControl>
-            <TextField
-              label="Your Sega ID Password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="off"
-              inputProps={{
-                "data-sentry-ignore": true,
-                "data-1p-ignore": true,
-              }}
-            />
-          </FormControl>
-
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={remember}
-                onChange={(event) => {
-                  setRemember(event.target.checked);
-                  if (!event.target.checked) setAutoImport(false);
-                }}
-              />
-            }
-            label={
-              <div className="flex flex-col">
-                <span>Remember Credentials</span>
-                <span className="text-xs text-zinc-5">
-                  Your credentials will be stored locally in your browser.
-                </span>
-              </div>
-            }
+        <FormControl>
+          <TextField
+            label="Your Sega ID"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            autoComplete="off"
+            autoCapitalize="none"
+            inputProps={{
+              "data-sentry-ignore": true,
+              "data-1p-ignore": true,
+            }}
           />
+        </FormControl>
 
-          <FormControl>
-            <FormLabel id="auto-import-label">
-              <div className="flex flex-col">
-                <span>Auto-import on App Start</span>
-                <span className="text-xs text-zinc-5">
-                  Automatically start importing records from NET when you open
-                  DXRating. Requires "Remember Credentials" to be enabled.
-                </span>
-              </div>
-            </FormLabel>
-            <RadioGroup
-              aria-labelledby="auto-import-label"
-              value={mappedAutoImport}
-              onChange={(event) =>
-                setAutoImport(event.target.value as AutoImportMode)
-              }
+        <FormControl>
+          <TextField
+            label="Your Sega ID Password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="off"
+            inputProps={{
+              "data-sentry-ignore": true,
+              "data-1p-ignore": true,
+            }}
+          />
+        </FormControl>
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={remember}
+              onChange={(event) => {
+                setRemember(event.target.checked);
+                if (!event.target.checked) setAutoImport(false);
+              }}
+            />
+          }
+          label={
+            <div className="flex flex-col">
+              <span>Remember Credentials</span>
+              <span className="text-xs text-zinc-5">
+                Your credentials will be stored locally in your browser.
+              </span>
+            </div>
+          }
+        />
+
+        <FormControl>
+          <FormLabel id="auto-import-label">
+            <div className="flex flex-col">
+              <span>Auto-import on App Start</span>
+              <span className="text-xs text-zinc-5">
+                Automatically start importing records from NET when you open
+                DXRating. Requires "Remember Credentials" to be enabled.
+              </span>
+            </div>
+          </FormLabel>
+          <RadioGroup
+            aria-labelledby="auto-import-label"
+            value={mappedAutoImport}
+            onChange={(event) =>
+              setAutoImport(event.target.value as AutoImportMode)
+            }
+          >
+            {[
+              {
+                value: false,
+                title: "Disabled",
+              },
+              {
+                value: "replace",
+                title: "Replace",
+                subtitle: "Replaces all records",
+              },
+              {
+                value: "merge",
+                title: "Merge",
+                subtitle: "Overwrites record if higher, adds record if missing",
+              },
+            ].map(({ value, title, subtitle }) => (
+              <FormControlLabel
+                key={value.toString()}
+                value={value}
+                control={<Radio size="small" />}
+                disabled={!remember}
+                label={
+                  <div className="flex flex-col gap-1">
+                    <span className="leading-none">{title}</span>
+                    {subtitle && (
+                      <span
+                        className={clsx(
+                          "text-xs",
+                          !remember ? "text-zinc-4" : "text-zinc-5",
+                        )}
+                      >
+                        {subtitle}
+                      </span>
+                    )}
+                  </div>
+                }
+              />
+            ))}
+          </RadioGroup>
+        </FormControl>
+
+        <div className="h-px w-full bg-gray-2 my-2" />
+
+        {progress && (
+          <>
+            <div className="flex flex-col gap-1 w-full items-center">
+              <LinearProgress
+                variant="determinate"
+                value={progress.progress * 100}
+                color={progress.state === "error" ? "error" : "primary"}
+                className="w-full rounded-full max-w-md"
+              />
+              <span className="font-bold mt-1">Importing...</span>
+              <span className="text-zinc-5 font-mono text-sm">
+                [ {progress.state} ]
+              </span>
+            </div>
+
+            <div className="h-px w-full bg-gray-2 my-2" />
+          </>
+        )}
+
+        <div className="text-sm text-zinc-5 [&>p]:mb-1">
+          <p className="font-bold">
+            Your credentials will not be stored, logged, or shared, and are only
+            used for the duration of this import process. If you wish, you may{" "}
+            <a
+              href="https://github.com/gekichumai/dxrating/tree/main/packages/self-hosted-functions"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
             >
-              {[
-                {
-                  value: false,
-                  title: "Disabled",
-                },
-                {
-                  value: "replace",
-                  title: "Replace",
-                  subtitle: "Replaces all records",
-                },
-                {
-                  value: "merge",
-                  title: "Merge",
-                  subtitle:
-                    "Overwrites record if higher, adds record if missing",
-                },
-              ].map(({ value, title, subtitle }) => (
-                <FormControlLabel
-                  key={value.toString()}
-                  value={value}
-                  control={<Radio size="small" />}
-                  disabled={!remember}
-                  label={
-                    <div className="flex flex-col gap-1">
-                      <span className="leading-none">{title}</span>
-                      {subtitle && (
-                        <span
-                          className={clsx(
-                            "text-xs",
-                            !remember ? "text-zinc-4" : "text-zinc-5",
-                          )}
-                        >
-                          {subtitle}
-                        </span>
-                      )}
-                    </div>
-                  }
-                />
-              ))}
-            </RadioGroup>
-          </FormControl>
+              inspect the source code
+            </a>
+            .
+          </p>
 
-          <div className="h-px w-full bg-gray-2 my-2" />
+          <p className="text-xs text-zinc-4">
+            We are also in the progress of employing the{" "}
+            <a
+              href="https://slsa.dev/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              SLSA framework
+            </a>
+            , including reproducible builds and signed container images to help
+            users determine the authenticity of the code running on our server.
+            Moreover, if demand arises, we will support connecting to
+            self-hosted instances of the NET import service so you can run it on
+            your own infra.
+          </p>
+        </div>
+      </DialogContentText>
 
-          {progress && (
-            <>
-              <div className="flex flex-col gap-1 w-full items-center">
-                <LinearProgress
-                  variant="determinate"
-                  value={progress.progress * 100}
-                  color={progress.state === "error" ? "error" : "primary"}
-                  className="w-full rounded-full max-w-md"
-                />
-                <span className="font-bold mt-1">Importing...</span>
-                <span className="text-zinc-5 font-mono text-sm">
-                  [ {progress.state} ]
-                </span>
-              </div>
-
-              <div className="h-px w-full bg-gray-2 my-2" />
-            </>
-          )}
-
-          <div className="text-sm text-zinc-5 [&>p]:mb-1">
-            <p className="font-bold">
-              Your credentials will not be stored, logged, or shared, and are
-              only used for the duration of this import process. If you wish,
-              you may{" "}
-              <a
-                href="https://github.com/gekichumai/dxrating/tree/main/packages/self-hosted-functions"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
-                inspect the source code
-              </a>
-              .
-            </p>
-
-            <p className="text-xs text-zinc-4">
-              We are also in the progress of employing the{" "}
-              <a
-                href="https://slsa.dev/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
-                SLSA framework
-              </a>
-              , including reproducible builds and signed container images to
-              help users determine the authenticity of the code running on our
-              server. Moreover, if demand arises, we will support connecting to
-              self-hosted instances of the NET import service so you can run it
-              on your own infra.
-            </p>
-          </div>
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
+      <div className="flex items-center justify-end">
         <Button onClick={onClose}>Close</Button>
         <Button
           onClick={handleImport}
@@ -408,7 +398,7 @@ const ImportFromNETRecordsDialogContent: FC<{
             "Import Once"
           )}
         </Button>
-      </DialogActions>
+      </div>
     </>
   );
 };

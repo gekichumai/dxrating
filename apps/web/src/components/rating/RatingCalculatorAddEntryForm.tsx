@@ -1,10 +1,5 @@
-import {
-  Autocomplete,
-  Button,
-  Card,
-  CardContent,
-  TextField,
-} from "@mui/material";
+import { Button } from "@mantine/core";
+import { Autocomplete, Card, CardContent, TextField } from "@mui/material";
 import clsx from "clsx";
 import {
   ComponentType,
@@ -228,7 +223,6 @@ export const RatingCalculatorAddEntryForm: FC<{
             )}
 
             <Button
-              variant="contained"
               disabled={
                 !selectedSheet ||
                 !!achievementRateError ||
@@ -241,7 +235,7 @@ export const RatingCalculatorAddEntryForm: FC<{
                 });
                 resetForm();
               }}
-              startIcon={
+              leftSection={
                 replacing ? (
                   <IconMdiReplace fontSize="inherit" />
                 ) : (

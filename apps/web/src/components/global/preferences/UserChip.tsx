@@ -1,6 +1,5 @@
-import { ActionIcon } from "@mantine/core";
+import { ActionIcon, Button, TextInput } from "@mantine/core";
 import {
-  Button,
   CircularProgress,
   Dialog,
   DialogContent,
@@ -9,7 +8,6 @@ import {
   ListItemText,
   Menu,
   MenuItem,
-  TextField,
 } from "@mui/material";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa, ViewType } from "@supabase/auth-ui-shared";
@@ -243,7 +241,7 @@ export const UpdateDisplayNameMenuItem: FC = () => {
             <div className="h-px w-full bg-gray-2 my-4" />
           </div>
           <div className="flex flex-col gap-4">
-            <TextField
+            <TextInput
               label={t("auth:update-display-name.label")}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
@@ -255,14 +253,10 @@ export const UpdateDisplayNameMenuItem: FC = () => {
                 displayName === profile?.display_name ||
                 displayName.trim() === ""
               }
-              variant="contained"
               className="h-10"
+              loading={updateState.loading}
             >
-              {updateState.loading ? (
-                <CircularProgress size="1.25rem" className="my-1" />
-              ) : (
-                "Submit"
-              )}
+              Submit
             </Button>
           </div>
         </DialogContent>
