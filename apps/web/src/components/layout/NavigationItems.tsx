@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "wouter";
@@ -20,7 +21,10 @@ export const NavigationItems: FC = () => {
       <div className="flex flex-col">
         {APP_TABS_VALUES.map((link) => (
           <Link
-            className={classes.link}
+            className={clsx(
+              classes.link,
+              location === `/${link}` ? "font-bold" : "font-medium",
+            )}
             data-active={location === `/${link}` || undefined}
             key={link}
             href={`/${link}`}

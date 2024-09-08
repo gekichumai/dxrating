@@ -6,7 +6,6 @@
   color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-1));
   padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
   border-radius: var(--mantine-radius-sm);
-  font-weight: 500;
 
   @mixin hover {
     background-color: light-dark(
