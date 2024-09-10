@@ -1,4 +1,4 @@
-import { IconButton } from "@mui/material";
+import { ActionIcon } from "@mantine/core";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 
@@ -25,9 +25,11 @@ export const TopBar = () => {
           </div>
         </div>
 
-        <IconButton
+        <ActionIcon
           size="small"
           className="ml-2"
+          variant="transparent"
+          color="dark"
           onClick={() => {
             navigator.clipboard.writeText(
               t("root:share.copy-content", {
@@ -40,7 +42,7 @@ export const TopBar = () => {
           }}
         >
           <MdiShareVariant />
-        </IconButton>
+        </ActionIcon>
       </div>
 
       <div className="flex-1" />

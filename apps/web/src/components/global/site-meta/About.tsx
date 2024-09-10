@@ -142,7 +142,7 @@ export const About = () => {
                   components={{
                     afdian: (
                       <ExternalLink
-                        href="https://afdian.net/a/dxrating"
+                        href="https://afdian.com/a/dxrating"
                         className="translate-y-0.75 items-center"
                       >
                         <MdiWeb />
@@ -154,7 +154,7 @@ export const About = () => {
               </div>
             </div>
 
-            <div className="flex flex-col items-start mt-24 gap-1">
+            <div className="flex flex-col items-start mt-8 gap-1">
               <h5 className="text-base text-zinc-7">
                 {t("about:disclaimer.title")}
               </h5>

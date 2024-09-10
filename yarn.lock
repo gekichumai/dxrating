@@ -1111,7 +1111,7 @@
   dependencies:
     vary "^1.1.2"
 
-"@mantine/core@^7.12.2":
+"@mantine/core@7.12.2":
   version "7.12.2"
   resolved "https://registry.yarnpkg.com/@mantine/core/-/core-7.12.2.tgz#d8fb7969a62dd5367331b141e053c4b2989c677a"
   integrity sha512-FrMHOKq4s3CiPIxqZ9xnVX7H4PEGNmbtHMvWO/0YlfPgoV0Er/N/DNJOFW1ys4WSnidPTayYeB41riyxxGOpRQ==
@@ -1123,17 +1123,17 @@
     react-textarea-autosize "8.5.3"
     type-fest "^4.12.0"
 
-"@mantine/hooks@^7.12.2":
+"@mantine/hooks@7.12.2":
   version "7.12.2"
   resolved "https://registry.yarnpkg.com/@mantine/hooks/-/hooks-7.12.2.tgz#f8e6a8345bb0892d8d1f5d1dc544a568572b79f4"
   integrity sha512-dVMw8jpM0hAzc8e7/GNvzkk9N0RN/m+PKycETB3H6lJGuXJJSRR4wzzgQKpEhHwPccktDpvb4rkukKDq2jA8Fg==
 
-"@mantine/modals@^7.12.2":
+"@mantine/modals@7.12.2":
   version "7.12.2"
   resolved "https://registry.yarnpkg.com/@mantine/modals/-/modals-7.12.2.tgz#4b0f641204c86f2ea1a572cc94249463b9756753"
   integrity sha512-ffnu9MtUHceoaLlhrwq+J+eojidEPkq3m2Rrt5HfcZv3vAP8RtqPnTfgk99WOB3vyCtdu8r4I9P3ckuYtPRtAg==
 
-"@mantine/notifications@^7.12.2":
+"@mantine/notifications@7.12.2":
   version "7.12.2"
   resolved "https://registry.yarnpkg.com/@mantine/notifications/-/notifications-7.12.2.tgz#531a6a3f23adc579b0a8f322ccf42b1789327698"
   integrity sha512-gTvLHkoAZ42v5bZxibP9A50djp5ndEwumVhHSa7mxQ8oSS23tt3It/6hOqH7M+9kHY0a8s+viMiflUzTByA9qg==

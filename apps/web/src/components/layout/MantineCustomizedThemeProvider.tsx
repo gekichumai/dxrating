@@ -34,6 +34,7 @@ export const MantineCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({
             },
           }),
         },
+        autoContrast: true,
       }),
     [versionTheme],
   );

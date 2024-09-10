@@ -1,12 +1,5 @@
 import { VersionEnum } from "@gekichumai/dxdata";
-import {
-  ListItem,
-  ListSubheader,
-  MenuItem,
-  Select,
-  styled,
-} from "@mui/material";
-import clsx from "clsx";
+import { CheckIcon, Select } from "@mantine/core";
 import uniqBy from "lodash-es/uniqBy";
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -20,8 +13,6 @@ import { useAppContext } from "../../../models/context/useAppContext";
 import { startViewTransition } from "../../../utils/startViewTransition";
 import { useVersionTheme } from "../../../utils/useVersionTheme";
 import { WebpSupportedImage } from "../WebpSupportedImage";
-
-import MdiInformation from "~icons/mdi/information";
 
 const fromMergedVersionRegionId = (id: string) => {
   const [version, region] = id.split("__") as [DXVersion, Region];
@@ -58,123 +49,83 @@ const VERSION_REGIONS: VersionRegion[] = [
   region,
 }));
 
-const StyledSelect = styled(Select<string>)(({ theme }) => ({
-  "&": {
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  "& .MuiPaper-root": {
-    maxWidth: "19rem",
-  },
-  "& .MuiSelect-select": {
-    padding: theme.spacing(1, 2),
-  },
-  "&:before": {
-    display: "none",
-  },
-}));
-
-export const VersionRegionSwitcher: FC = () => {
-  const { t } = useTranslation(["settings"]);
+const Option = ({
+  value,
+  label,
+  checked,
+}: {
+  value: string;
+  label: string;
+  checked?: boolean;
+}) => {
   const theme = useVersionTheme();
-  const { version, region, setVersionAndRegion } = useAppContext();
+  const { t } = useTranslation(["settings"]);
 
   return (
-    <StyledSelect
+    <div className="flex items-center gap-1.5 w-full">
+      <WebpSupportedImage
+        src={`https://shama.dxrating.net/images/version-logo/${fromMergedVersionRegionId(value).version}.png`}
+        className="w-16 touch-callout-none"
+        draggable={false}
+      />
+
+      <div className="flex flex-col items-start justify-center gap-0.5">
+        <div className="text-sm leading-none">
+          {t(`settings:region.${fromMergedVersionRegionId(value).region}`)}
+        </div>
+
+        <div
+          className="font-bold text-gray-5 leading-none"
+          style={{ color: theme.accentColor.hex }}
+        >
+          {label}
+        </div>
+      </div>
+      <div className="flex-1" />
+      {checked && <CheckIcon className="size-3 opacity-70" />}
+    </div>
+  );
+};
+
+export const VersionRegionSwitcher: FC = () => {
+  const { version, region, setVersionAndRegion } = useAppContext();
+  const { t } = useTranslation(["settings"]);
+
+  return (
+    <Select
       value={toMergedVersionRegionId(version, region)}
       variant="filled"
-      onChange={(e) => {
-        const { version, region } = fromMergedVersionRegionId(e.target.value);
+      maxDropdownHeight={400}
+      onChange={(v) => {
+        if (v === null) return;
+        const { version, region } = fromMergedVersionRegionId(v);
         startViewTransition(() => {
           setVersionAndRegion(version, region);
         });
       }}
-      renderValue={(value) => (
-        <div className="flex flex-col gap-0.5">
-          <WebpSupportedImage
-            src={`https://shama.dxrating.net/images/version-logo/${fromMergedVersionRegionId(value).version}.png`}
-            className="h-32 w-auto touch-callout-none"
-            draggable={false}
-          />
-
-          <div
-            className="text-center text-sm tracking-wide font-bold rounded-full leading-none py-1.5 px-3 border border-solid border-zinc-9/10 self-center text-zinc-6"
-            style={{
-              background: theme.accentColor.hex + "33",
-            }}
-          >
-            {t("settings:region.title", {
-              region: t(
-                `settings:region.${fromMergedVersionRegionId(value).region}`,
-              ),
-            })}
-          </div>
-        </div>
+      allowDeselect={false}
+      renderOption={({ option, checked }) => (
+        <Option value={option.value} label={option.label} checked={checked} />
       )}
-    >
-      <ListSubheader className="leading-normal py-4">
-        {t("settings:version-and-region.select")}
-      </ListSubheader>
-      {VERSION_REGIONS.map(({ id, dxVersion, versionEnum, region }, i) => (
-        <MenuItem
-          value={id}
-          key={id}
-          className={clsx(
-            "flex items-center gap-8 border-b border-solid border-gray-2",
-            i === 0 && "border-t",
-          )}
-        >
-          <WebpSupportedImage
-            src={`https://shama.dxrating.net/images/version-logo/${dxVersion}.png`}
-            className="h-16 touch-callout-none object-contain w-25"
-            draggable={false}
-          />
-
-          <div className="mr-2 opacity-70 flex flex-col items-start">
-            <span>{versionEnum}</span>
-            <span className="uppercase font-bold text-lg">
-              {t(`settings:region.${region}`)}
-            </span>
-          </div>
-        </MenuItem>
-      ))}
-
-      <ListSubheader className="leading-normal py-4">
-        {t("settings:version-and-region.select-generic")}
-      </ListSubheader>
-      {uniqBy(VERSION_REGIONS, (versionRegion) => versionRegion.dxVersion).map(
-        ({ id, dxVersion, versionEnum }, i) => (
-          <MenuItem
-            value={`${dxVersion}__${"_generic"}`}
-            key={id}
-            className={clsx(
-              "flex items-center gap-4 border-b border-solid border-gray-2",
-              i === 0 && "border-t",
-            )}
-          >
-            <WebpSupportedImage
-              src={`https://shama.dxrating.net/images/version-logo/${dxVersion}.png`}
-              className="h-12 touch-callout-none object-contain w-20"
-              draggable={false}
-            />
-
-            <div className="mr-2 opacity-70 flex flex-col items-start">
-              <span>{versionEnum}</span>
-              <span className="uppercase text-xs">
-                {t(`settings:region._generic`)}
-              </span>
-            </div>
-          </MenuItem>
-        ),
-      )}
-      <ListItem className="flex justify-center items-center text-sm">
-        <div className="flex justify-center items-start max-w-[22rem] text-zinc-5">
-          <MdiInformation className="mr-2 shrink-0 mt-0.5" />
-          <span className="whitespace-normal">
-            {t("settings:version-and-region.info")}
-          </span>
-        </div>
-      </ListItem>
-    </StyledSelect>
+      data={[
+        {
+          group: t("settings:version-and-region.select"),
+          items: VERSION_REGIONS.map((v) => ({
+            value: toMergedVersionRegionId(v.dxVersion, v.region),
+            label: v.versionEnum,
+          })),
+        },
+        {
+          group: t("settings:version-and-region.select-generic"),
+          items: uniqBy(
+            VERSION_REGIONS,
+            (versionRegion) => versionRegion.dxVersion,
+          ).map((v) => ({
+            value: toMergedVersionRegionId(v.dxVersion, "_generic"),
+            label: v.versionEnum,
+          })),
+        },
+      ]}
+    />
   );
 };

@@ -16,6 +16,7 @@ import "./index.css";
 import { App } from "./App";
 import { CustomizedToaster } from "./components/global/CustomizedToaster";
 import { SideEffector } from "./components/global/SideEffector";
+import { MantineCustomizedThemeProvider } from "./components/layout/MantineCustomizedThemeProvider";
 import { VersionCustomizedThemeProvider } from "./components/layout/MuiCustomizedThemeProvider";
 import { i18nResources } from "./locales/locales";
 import { AppContextProvider } from "./models/context/AppContext";
@@ -23,9 +24,9 @@ import { AuthContextProvider } from "./models/context/AuthContext";
 import { RatingCalculatorContextProvider } from "./models/context/RatingCalculatorContext";
 import { BUNDLE } from "./utils/bundle";
 
-import "@mantine/core/styles.css";
+import { ModalsProvider } from "@mantine/modals";
 
-import { MantineCustomizedThemeProvider } from "./components/layout/MantineCustomizedThemeProvider";
+import "@mantine/core/styles.css";
 
 posthog.init("phc_Hw7FM2D1vSwummp0D3O13Z6biV6udw5bKIcq4BJQxH7", {
   api_host: "https://razu.dxrating.net",
@@ -165,15 +166,17 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <AppContextProvider>
       <MantineCustomizedThemeProvider>
         <VersionCustomizedThemeProvider>
-          <RatingCalculatorContextProvider>
-            <AuthContextProvider>
-              <PostHogProvider client={posthog}>
-                <SideEffector />
-                <CustomizedToaster />
-                <App />
-              </PostHogProvider>
-            </AuthContextProvider>
-          </RatingCalculatorContextProvider>
+          <ModalsProvider>
+            <RatingCalculatorContextProvider>
+              <AuthContextProvider>
+                <PostHogProvider client={posthog}>
+                  <SideEffector />
+                  <CustomizedToaster />
+                  <App />
+                </PostHogProvider>
+              </AuthContextProvider>
+            </RatingCalculatorContextProvider>
+          </ModalsProvider>
         </VersionCustomizedThemeProvider>
       </MantineCustomizedThemeProvider>
     </AppContextProvider>

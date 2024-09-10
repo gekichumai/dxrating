@@ -1,31 +1,20 @@
+import { ActionIcon, Paper, Switch, Title } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import {
-  Alert,
-  AlertTitle,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControlLabel,
-  Grow,
-  IconButton,
-  Paper,
-  Switch,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  styled,
 } from "@mui/material";
 import {
-  Row,
-  SortingState,
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
+  Row,
+  SortingState,
   useReactTable,
 } from "@tanstack/react-table";
 import clsx from "clsx";
@@ -48,16 +37,15 @@ import {
   TableVirtuoso,
 } from "react-virtuoso";
 
-import { BetaBadge } from "../components/global/BetaBadge";
+import { ClearButton } from "../components/rating/io/ClearButton";
+import { RenderToOneShotImageButton } from "../components/rating/io/export/RenderToOneShotImageButton";
+import { ExportMenu } from "../components/rating/io/ExportMenu";
+import { ImportMenu } from "../components/rating/io/ImportMenu";
 import {
   PlayEntry,
   RatingCalculatorAddEntryForm,
 } from "../components/rating/RatingCalculatorAddEntryForm";
 import { RatingCalculatorStatistics } from "../components/rating/RatingCalculatorStatistics";
-import { ClearButton } from "../components/rating/io/ClearButton";
-import { ExportMenu } from "../components/rating/io/ExportMenu";
-import { ImportMenu } from "../components/rating/io/ImportMenu";
-import { RenderToOneShotImageButton } from "../components/rating/io/export/RenderToOneShotImageButton";
 import { useRatingEntries } from "../components/rating/useRatingEntries";
 import {
   SheetListItem,
@@ -85,7 +73,6 @@ const RatingCalculatorRowActions: FC<{
   entry: PlayEntry;
 }> = ({ modifyEntries, entry }) => {
   const { data: sheets } = useSheets();
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleClick = useCallback(() => {
     modifyEntries.filter(
@@ -99,46 +86,23 @@ const RatingCalculatorRowActions: FC<{
   );
 
   return (
-    <>
-      <Dialog
-        TransitionComponent={Grow}
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        classes={{
-          paper: "min-w-[20rem]",
-        }}
-      >
-        <DialogTitle>Remove rating entry?</DialogTitle>
-        <DialogContent>
-          {sheet && <SheetListItemContent sheet={sheet} />}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-
-          <Button
-            color="error"
-            variant="contained"
-            onClick={() => {
-              setDialogOpen(false);
-              handleClick();
-            }}
-          >
-            Remove
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <IconButton size="small" onClick={() => setDialogOpen(true)}>
-        <IconMdiTrashCan />
-      </IconButton>
-    </>
+    <ActionIcon
+      variant="subtle"
+      color="gray"
+      onClick={() => {
+        modals.openConfirmModal({
+          title: "Remove rating entry?",
+          children: <SheetListItemContent sheet={sheet!} />,
+          labels: { confirm: "Remove", cancel: "Cancel" },
+          onCancel: () => console.log("Cancel"),
+          onConfirm: () => handleClick(),
+        });
+      }}
+    >
+      <IconMdiTrashCan />
+    </ActionIcon>
   );
 };
-
-const TransparentPaper = styled(Paper)(() => ({
-  backgroundColor: "transparent",
-  boxShadow: "none",
-}));
 
 export const RatingCalculator = () => {
   const { modifyEntries } = useRatingCalculatorContext();
@@ -277,81 +241,47 @@ export const RatingCalculator = () => {
   return (
     <div className="flex-container w-full pb-global">
       <div className="flex flex-col md:flex-row items-start gap-4 w-full">
-        <Alert
-          icon={false}
-          severity="info"
-          className="px-4 py-2 w-full md:w-2/3"
-          classes={{ message: "w-full" }}
-        >
-          <AlertTitle className="font-bold">Rating Breakdown</AlertTitle>
+        <Paper className="p-4 w-full md:w-2/3">
+          <Title order={4}>Rating Breakdown</Title>
           <RatingCalculatorStatistics />
-        </Alert>
+        </Paper>
 
         <div className="flex flex-col gap-4 h-full self-stretch w-full md:w-1/3">
-          <Alert
-            icon={false}
-            severity="info"
-            className="w-full overflow-auto px-4 py-2"
-            classes={{
-              message: "w-full",
-            }}
-          >
-            <AlertTitle className="font-bold">
+          <Paper className="p-4 w-full flex flex-col items-start gap-2 flex-1">
+            <Title order={4}>
               {allEntries?.length
                 ? `Saved ${allEntries.length} records`
                 : "Auto-save"}
-            </AlertTitle>
+            </Title>
 
-            <div className="mt-2">
-              <RenderToOneShotImageButton />
-            </div>
+            <RenderToOneShotImageButton />
 
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2">
               <ImportMenu modifyEntries={modifyEntries} />
 
               <ExportMenu />
-
-              <div className="flex-1" />
-
-              <ClearButton modifyEntries={modifyEntries} />
             </div>
-          </Alert>
 
-          <Alert
-            icon={false}
-            severity="info"
-            className="w-full px-4 py-2"
-            classes={{
-              message: "overflow-unset",
-            }}
-          >
-            <AlertTitle className="font-bold">Quick Actions</AlertTitle>
-            <div className="flex flex-col items-start mt-2">
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={showOnlyB50}
-                    onChange={() => setShowOnlyB50((prev) => !prev)}
-                  />
-                }
+            <ClearButton modifyEntries={modifyEntries} />
+          </Paper>
+
+          <Paper className="p-4 w-full flex flex-col items-start gap-2 flex-1">
+            <Title order={4}>Quick Actions</Title>
+            <div className="flex flex-col items-start gap-1">
+              <Switch
                 label="Show only B50 entries"
+                checked={showOnlyB50}
+                onChange={() => setShowOnlyB50((prev) => !prev)}
               />
 
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={compactMode}
-                    onChange={() => setCompactMode((prev) => !prev)}
-                  />
-                }
-                label={
-                  <div className="flex items-center gap-1 leading-none">
-                    Compact Mode <BetaBadge />
-                  </div>
-                }
+              <Switch
+                label="Compact Mode"
+                description="[Beta] Reduces the size of table cells"
+                checked={compactMode}
+                onChange={() => setCompactMode((prev) => !prev)}
               />
             </div>
-          </Alert>
+          </Paper>
         </div>
       </div>
 
@@ -499,7 +429,7 @@ const RatingCalculatorTableRow: FC<ItemProps<Row<Entry>>> = ({
 
 const RatingCalculatorScroller = forwardRef(
   (props: ScrollerProps, ref: ForwardedRef<HTMLDivElement>) => (
-    <TableContainer component={TransparentPaper} {...props} ref={ref} />
+    <TableContainer component={Paper} {...props} ref={ref} />
   ),
 );
 
