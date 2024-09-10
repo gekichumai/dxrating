@@ -27,13 +27,14 @@ export const TopBar = () => {
 
         <IconButton
           size="small"
-          className="ml-2"
+          // new discord branding color
+          className="ml-2 bg-[#5865F2] hover:bg-[#5865F2] text-white"
           LinkComponent="a"
           href="https://discord.gg/8CFgUPxyrU"
           target="_blank"
           rel="noopener"
         >
-          <DiscordLogo />
+          <DiscordLogo className="size-4 m-0.5" />
         </IconButton>
 
         <div className="flex-1" />
