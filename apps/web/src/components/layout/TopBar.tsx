@@ -1,5 +1,4 @@
 import { IconButton } from "@mui/material";
-import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 
 import { BUNDLE } from "../../utils/bundle";
@@ -10,7 +9,7 @@ import { LocaleSelector } from "../global/preferences/LocaleSelector";
 import { UserChip } from "../global/preferences/UserChip";
 import { About } from "../global/site-meta/About";
 
-import MdiShareVariant from "~icons/mdi/share-variant";
+import DiscordLogo from "~icons/simple-icons/discord";
 
 export const TopBar = () => {
   const updateTime = useTime(BUNDLE.buildTime, "short");
@@ -29,18 +28,12 @@ export const TopBar = () => {
         <IconButton
           size="small"
           className="ml-2"
-          onClick={() => {
-            navigator.clipboard.writeText(
-              t("root:share.copy-content", {
-                link: window.location.href,
-              }),
-            );
-            toast.success(t("root:share.copy-succeeded"), {
-              id: "copy-page-link",
-            });
-          }}
+          LinkComponent="a"
+          href="https://discord.gg/8CFgUPxyrU"
+          target="_blank"
+          rel="noopener"
         >
-          <MdiShareVariant />
+          <DiscordLogo />
         </IconButton>
 
         <div className="flex-1" />
