@@ -73,28 +73,95 @@ export const getDefaultSheetSortFilterForm = (): SheetSortFilterForm => ({
   ],
 });
 
-export const applySheetSortFilterFormPatches = (
-  alreadySaved: SheetSortFilterForm,
+const CURRENT_SCHEMA_VERSION = 1;
+
+type SchemaFilterFormVersionZero = SheetSortFilterForm;
+const isSchemaFilterFormVersionZero = (
+  v: unknown,
+): v is SchemaFilterFormVersionZero => {
+  if (typeof v !== "object" || v === null) {
+    return false;
+  }
+
+  if (typeof (v as SchemaFilterFormVersionZero).filters !== "object") {
+    return false;
+  }
+
+  if (typeof (v as SchemaFilterFormVersionZero).sorts !== "object") {
+    return false;
+  }
+
+  return true;
+};
+type SchemaFilterFormVersionOne = { version: 1; payload: SheetSortFilterForm };
+const isSchemaFilterFormVersionOne = (
+  v: unknown,
+): v is SchemaFilterFormVersionOne => {
+  if (typeof v !== "object" || v === null) {
+    return false;
+  }
+
+  if ((v as SchemaFilterFormVersionOne).version !== 1) {
+    return false;
+  }
+
+  if (typeof (v as SchemaFilterFormVersionOne).payload !== "object") {
+    return false;
+  }
+
+  return true;
+};
+
+const migrations: Record<number, any> = {
+  1: (v: SchemaFilterFormVersionZero): SheetSortFilterForm => {
+    return {
+      ...v,
+      filters: {
+        ...v.filters,
+        versions: Object.values(VersionEnum),
+      },
+    };
+  },
+};
+
+export const validateAndMigrate = (
+  alreadySaved: unknown,
 ): SheetSortFilterForm => {
-  if (alreadySaved.filters.tags === undefined) {
-    alreadySaved.filters.tags = [];
+  if (typeof alreadySaved !== "object") {
+    throw new Error("Invalid saved sort filter");
+  }
+  const { version, payload } = (() => {
+    if (isSchemaFilterFormVersionZero(alreadySaved)) {
+      return {
+        version: 0,
+        payload: alreadySaved,
+      };
+    }
+
+    if (isSchemaFilterFormVersionOne(alreadySaved)) {
+      return alreadySaved;
+    }
+
+    throw new Error("Invalid saved sort filter");
+  })();
+
+  if (payload.filters.tags === undefined) {
+    payload.filters.tags = [];
   }
 
-  if (alreadySaved.filters.categories === undefined) {
-    alreadySaved.filters.categories = Object.values(CategoryEnum);
+  if (payload.filters.categories === undefined) {
+    payload.filters.categories = Object.values(CategoryEnum);
   }
 
-  // if (alreadySaved.filters.difficulties === undefined) {
-  //   alreadySaved.filters.difficulties = [
-  //     DifficultyEnum.Basic,
-  //     DifficultyEnum.Advanced,
-  //     DifficultyEnum.Expert,
-  //     DifficultyEnum.Master,
-  //     DifficultyEnum.ReMaster,
-  //   ];
-  // }
+  // apply migrations
+  let migrated = payload;
+  for (let i = version + 1; i <= CURRENT_SCHEMA_VERSION; i++) {
+    if (migrations[i]) {
+      migrated = migrations[i](migrated);
+    }
+  }
 
-  return alreadySaved;
+  return migrated;
 };
 
 export const SheetSortFilter: FC<{
@@ -106,9 +173,7 @@ export const SheetSortFilter: FC<{
     );
     if (alreadySaved) {
       try {
-        return applySheetSortFilterFormPatches(
-          JSON.parse(alreadySaved) as SheetSortFilterForm,
-        );
+        return validateAndMigrate(JSON.parse(alreadySaved));
       } catch (e) {
         console.warn("Failed to parse saved sort filter", e);
       }
@@ -147,7 +212,10 @@ const SheetSortFilterFormListener: FC<{
 
         window.localStorage.setItem(
           "dxrating-sheet-sort-filter",
-          JSON.stringify(data),
+          JSON.stringify({
+            version: CURRENT_SCHEMA_VERSION,
+            payload: data,
+          }),
         );
       }
     });

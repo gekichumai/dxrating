@@ -245,7 +245,7 @@ export const importFromNETRecords = async (
         formatErrorMessage(error),
       {
         id: toastId,
-        icon: <IconMdiClose className="h-4 w-4 text-red-5" />,
+        icon: <IconMdiClose className="h-4 w-4 text-red-5 shrink-0" />,
         duration: 20000,
       },
     );

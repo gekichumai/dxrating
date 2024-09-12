@@ -35,6 +35,13 @@ export const VERSION_THEME: Record<string, VersionTheme> = {
     accentColor: "#FAAE29",
     backgroundSize: [2000, 2400],
   },
+  [VersionEnum.PRiSM]: {
+    background: "/images/background/prism.jpg",
+    logo: "/images/version-logo/prism.png",
+    favicon: "/favicon/prism-1024x.jpg",
+    accentColor: "#A7CCF8",
+    backgroundSize: [2000, 2400],
+  },
 };
 
 const DIFFICULTIES: Record<

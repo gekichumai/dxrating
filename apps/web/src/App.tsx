@@ -108,7 +108,7 @@ export const App = () => {
                 key={v}
                 label={t(`root:pages.${v}.title`)}
                 classes={{
-                  selected: "!text-black/90 font-bold",
+                  selected: "!text-white font-bold text-shadow-md",
                   root: "!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem",
                 }}
                 value={v}

@@ -8,7 +8,7 @@ export const useVersionTheme = () => {
   const { version } = useAppContext();
   const theme =
     VERSION_THEME[DXVersionToDXDataVersionEnumMap[version]] ??
-    VERSION_THEME[VersionEnum.BUDDiES];
+    VERSION_THEME[VersionEnum.PRiSM];
 
   return theme;
 };
