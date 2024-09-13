@@ -142,7 +142,7 @@ export const About = () => {
                   components={{
                     afdian: (
                       <ExternalLink
-                        href="https://afdian.net/a/dxrating"
+                        href="https://afdian.com/a/dxrating"
                         className="translate-y-0.75 items-center"
                       >
                         <MdiWeb />

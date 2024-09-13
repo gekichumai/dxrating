@@ -14,7 +14,7 @@
     "turbo": "latest"
   },
   "name": "@gekichumai/dxrating",
-  "packageManager": "yarn@1.22.19",
+  "packageManager": "yarn@4.4.1",
   "workspaces": [
     "apps/*",
     "packages/*",

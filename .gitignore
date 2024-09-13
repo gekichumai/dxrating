@@ -34,3 +34,14 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+.rollup.cache/*
+out/*
+
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions

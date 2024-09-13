@@ -39,7 +39,7 @@ export const VERSION_THEME: Record<string, VersionTheme> = {
     background: "/images/background/prism.jpg",
     logo: "/images/version-logo/prism.png",
     favicon: "/favicon/prism-1024x.jpg",
-    accentColor: "#A7CCF8",
+    accentColor: "#6368C7",
     backgroundSize: [2000, 2400],
   },
 };
