@@ -7,7 +7,6 @@ on:
       - main
     paths-ignore:
       - 'supabase/**'
-      - '.github/**'
       - 'README.md'
       - 'scripts/**'
       - 'packages/self-hosted-functions/**'
