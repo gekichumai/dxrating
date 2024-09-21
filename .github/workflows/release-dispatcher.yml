@@ -7,9 +7,9 @@ on:
       - main
     paths-ignore:
       - 'supabase/**'
-      - '.github/**'
       - 'README.md'
       - 'scripts/**'
+      - 'packages/self-hosted-functions/**'
 
 concurrency:
   group: release-dispatcher-${{ github.ref }}
@@ -17,6 +17,8 @@ concurrency:
 
 jobs:
   tagger:
+    # if the push commit message contains [skip ci], skip ci
+    if: contains(github.event.commits[0].message, '[skip ci]') == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

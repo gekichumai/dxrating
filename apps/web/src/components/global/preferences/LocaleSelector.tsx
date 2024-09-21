@@ -7,6 +7,9 @@ import {
 } from "@mui/material";
 import { FC, PropsWithChildren, useState } from "react";
 import { useTranslation } from "react-i18next";
+
+import { startViewTransition } from "../../../utils/startViewTransition";
+
 import MdiCheck from "~icons/mdi/check";
 import MdiTranslate from "~icons/mdi/translate";
 
@@ -15,7 +18,14 @@ const LocaleSelectorItem: FC<
 > = ({ locale, selected, children }) => {
   const { i18n } = useTranslation();
   return (
-    <MenuItem selected={selected} onClick={() => i18n.changeLanguage(locale)}>
+    <MenuItem
+      selected={selected}
+      onClick={() => {
+        startViewTransition(() => {
+          i18n.changeLanguage(locale);
+        });
+      }}
+    >
       {selected && (
         <ListItemIcon>
           <MdiCheck />
@@ -30,6 +40,7 @@ const LOCALES = [
   { value: "en", label: "English" },
   { value: "ja", label: "日本語" },
   { value: "zh-Hans", label: "简体中文" },
+  { value: "zh-Hant", label: "繁體中文" },
 ] as const;
 
 export const LocaleSelector = () => {

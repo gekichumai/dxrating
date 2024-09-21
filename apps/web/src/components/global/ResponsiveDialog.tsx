@@ -1,8 +1,7 @@
 import { Dialog, DialogContent, Grow, SwipeableDrawer } from "@mui/material";
-import { FC, ReactNode } from "react";
-import { useIsLargeDevice } from "../../utils/breakpoints";
+import { FC, ReactNode, useEffect, useState } from "react";
 
-import { useEffect, useState } from "react";
+import { useIsLargeDevice } from "../../utils/breakpoints";
 
 export const ResponsiveDialog: FC<{
   open: boolean;

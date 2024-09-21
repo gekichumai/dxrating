@@ -1,15 +1,17 @@
 import { dxdataUpdateTime } from "@gekichumai/dxdata";
 import { IconButton } from "@mui/material";
 import clsx from "clsx";
-import { intlFormatDistance } from "date-fns";
-import { FC, PropsWithChildren, ReactNode, useMemo, useState } from "react";
+import { FC, PropsWithChildren, ReactNode, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+
+import { BUNDLE } from "../../../utils/bundle";
+import { useTime } from "../../../utils/useTime";
+import { ResponsiveDialog } from "../ResponsiveDialog";
+
 import MdiGithub from "~icons/mdi/github";
 import MdiInformation from "~icons/mdi/information";
 import MdiTwitter from "~icons/mdi/twitter";
 import MdiWeb from "~icons/mdi/web";
-import { BUNDLE } from "../../../utils/bundle";
-import { ResponsiveDialog } from "../ResponsiveDialog";
 
 const ExternalLink: FC<
   PropsWithChildren<{ href: string; className?: string }>
@@ -43,33 +45,12 @@ const AboutAttribute: FC<
   PropsWithChildren<{ label: ReactNode; value: ReactNode }>
 > = ({ label, value }) => (
   <li className="flex flex-col items-start font-mono">
-    <span className="font-bold text-xs scale-75 origin-left-bottom text-gray-400">
+    <span className="font-bold text-xs scale-75 origin-left-bottom text-zinc-400">
       {label}
     </span>
-    <span className="text-sm tracking-tight text-gray-600">{value}</span>
+    <span className="text-sm tracking-tight text-zinc-600">{value}</span>
   </li>
 );
-
-const useTime = (time?: string) => {
-  const { i18n } = useTranslation();
-  return useMemo(() => {
-    try {
-      if (!time) throw new Error("useTime: time is undefined");
-
-      const date = new Date(time);
-      if (isNaN(date.getTime())) {
-        throw new Error("Invalid date");
-      }
-
-      const dateString = date.toLocaleString(i18n.language);
-      const relativeTime = intlFormatDistance(date, new Date());
-
-      return `${dateString} (${relativeTime})`;
-    } catch {
-      return "unknown";
-    }
-  }, [time, i18n.language]);
-};
 
 export const About = () => {
   const { t } = useTranslation(["about"]);
@@ -93,14 +74,6 @@ export const About = () => {
             <h1 className="text-2xl font-bold">{t("about:title")}</h1>
 
             <ul className="flex flex-col gap-1.5">
-              <AboutLink
-                href="https://github.com/GalvinGao"
-                startAdornment={<MdiGithub />}
-                label={t("about:author")}
-              >
-                @GalvinGao
-              </AboutLink>
-
               <AboutLink
                 href="https://github.com/gekichumai/dxrating"
                 startAdornment={<MdiGithub />}
@@ -159,30 +132,21 @@ export const About = () => {
             </ul>
 
             <div className="flex flex-col items-start mt-8 gap-1">
-              <h5 className="text-base text-gray-7">
+              <h5 className="text-base text-zinc-7">
                 {t("about:donate.title")}
               </h5>
 
-              <div className="text-sm text-gray-6">
+              <div className="text-sm text-zinc-6">
                 <Trans
                   i18nKey="about:donate.content"
                   components={{
                     afdian: (
                       <ExternalLink
-                        href="https://afdian.net/a/dxrating"
+                        href="https://afdian.com/a/dxrating"
                         className="translate-y-0.75 items-center"
                       >
                         <MdiWeb />
                         <span>{t("about:donate.afdian")}</span>
-                      </ExternalLink>
-                    ),
-                    paypal: (
-                      <ExternalLink
-                        href="https://paypal.me/yiyanggao"
-                        className="translate-y-0.75 items-center"
-                      >
-                        <MdiWeb />
-                        <span>{t("about:donate.paypal")}</span>
                       </ExternalLink>
                     ),
                   }}
@@ -191,11 +155,11 @@ export const About = () => {
             </div>
 
             <div className="flex flex-col items-start mt-24 gap-1">
-              <h5 className="text-base text-gray-7">
+              <h5 className="text-base text-zinc-7">
                 {t("about:disclaimer.title")}
               </h5>
 
-              <div className="text-sm text-gray-6">
+              <div className="text-sm text-zinc-6">
                 {t("about:disclaimer.content")
                   .split("\n")
                   .map((line, i) => (

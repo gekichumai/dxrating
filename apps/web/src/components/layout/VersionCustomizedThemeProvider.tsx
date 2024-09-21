@@ -1,5 +1,6 @@
 import { ThemeProvider, createTheme } from "@mui/material";
 import { FC, PropsWithChildren, useMemo } from "react";
+
 import { useVersionTheme } from "../../utils/useVersionTheme";
 
 export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({
