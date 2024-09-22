@@ -5,6 +5,7 @@ import { PlayEntry } from "../RatingCalculatorAddEntryForm";
 import { ImportFromAquaSQLiteListItem } from "./import/ImportFromAquaSQLiteListItem";
 import { ImportFromJSONButtonListItem } from "./import/ImportFromJSONButtonListItem";
 import { ImportFromRemoteListItem } from "./import/ImportFromRemoteListItem";
+import { ImportFromDivingFishButtonListItem } from "./import/ImportFromDivingFishButtonListItem";
 
 export const ImportMenu: FC<{
   modifyEntries: ListActions<PlayEntry>;
@@ -51,6 +52,10 @@ export const ImportMenu: FC<{
           onClose={handleClose}
         />
         <ImportFromRemoteListItem
+          modifyEntries={modifyEntries}
+          onClose={handleClose}
+        />
+        <ImportFromDivingFishButtonListItem
           modifyEntries={modifyEntries}
           onClose={handleClose}
         />

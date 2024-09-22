@@ -35,6 +35,8 @@ import { SheetListItemContent } from "../sheet/SheetListItem";
 export interface PlayEntry {
   sheetId: string;
   achievementRate: number;
+  forceB15?: boolean;
+  forceB35?: boolean;
 }
 
 const ListboxComponent = forwardRef<HTMLElement>(

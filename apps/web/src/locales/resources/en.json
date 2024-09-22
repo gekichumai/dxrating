@@ -154,6 +154,14 @@
     "login": {
       "label": "Login",
       "toast-success": "Successfully logged in."
+    },
+    "update-display-name": {
+      "label": "Update Profile Name"
+    },
+    "update-diving-fish-profile": {
+      "label": "Update Diving Fish Profile",
+      "diving-fish-name": "diving-fish-name",
+      "diving-fish-qq": "diving-fish-qq"
     }
   }
 }
