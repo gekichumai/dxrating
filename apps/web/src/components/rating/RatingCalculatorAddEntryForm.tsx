@@ -37,6 +37,8 @@ import IconMdiPlus from "~icons/mdi/plus";
 export interface PlayEntry {
   sheetId: string;
   achievementRate: number;
+  forceB15?: boolean;
+  forceB35?: boolean;
 }
 
 const ListboxComponent = forwardRef<HTMLElement>(
