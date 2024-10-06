@@ -1413,6 +1413,7 @@ __metadata:
     eslint-plugin-import: "npm:^2.31.0"
     eslint-plugin-react-hooks: "npm:^4.6.2"
     eslint-plugin-react-refresh: "npm:^0.4.12"
+    esno: "npm:^4.8.0"
     framer-motion: "npm:^10.18.0"
     fuse.js: "npm:^6.6.2"
     i18next: "npm:^23.15.2"
