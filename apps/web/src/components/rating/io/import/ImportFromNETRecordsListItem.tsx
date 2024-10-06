@@ -144,7 +144,12 @@ const ImportFromNETRecordsDialogContent: FC<{
   const [progress, setProgress] = useState<ImportFromNETRecordsProgress | null>(
     null,
   );
-  const mappedAutoImport = autoImport === true ? "replace" : autoImport; // Legacy support
+  const mappedAutoImport =
+    autoImport === true
+      ? "replace"
+      : (autoImport as unknown) === "false"
+        ? false
+        : autoImport; // Legacy support
   const { data: sheets } = useSheets();
 
   useEffect(() => {
@@ -288,7 +293,7 @@ const ImportFromNETRecordsDialogContent: FC<{
             >
               {[
                 {
-                  value: false,
+                  value: "false",
                   title: "Disabled",
                 },
                 {

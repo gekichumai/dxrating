@@ -187,6 +187,8 @@ export const importFromNETRecords = async (
         return exists;
       });
 
+    console.log(entries, mode);
+
     if (mode === "replace") {
       modifyEntries.set(entries);
     } else if (mode === "merge") {
