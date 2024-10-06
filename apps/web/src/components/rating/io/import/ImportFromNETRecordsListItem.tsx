@@ -405,7 +405,7 @@ const ImportFromNETRecordsDialogContent: FC<{
           ) : autoImport ? (
             <div className="flex flex-col gap-1 items-start py-1">
               <span className="leading-none">Re-import Now</span>
-              <span className="text-xs text-black/50 leading-none">
+              <span className="text-xs opacity-50 leading-none">
                 (auto-import enabled)
               </span>
             </div>
