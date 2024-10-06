@@ -8,10 +8,10 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
-    "eslint": "^8.48.0",
-    "prettier": "^3.0.3",
+    "eslint": "^8.57.1",
+    "prettier": "^3.3.3",
     "tsconfig": "*",
-    "turbo": "^2.1.2"
+    "turbo": "^2.1.3"
   },
   "name": "@gekichumai/dxrating",
   "packageManager": "yarn@4.4.1",
