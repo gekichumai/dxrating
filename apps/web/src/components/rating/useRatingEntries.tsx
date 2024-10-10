@@ -114,9 +114,9 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
 
     const calculatedEntries = calculated.map((entry) => ({
       ...entry,
-      includedIn: best15OfCurrentVersionSheetIds.includes(entry.sheetId)
+      includedIn: best15OfCurrentVersionSheetIds.includes(entry.sheetId) || entry.forceB15
         ? ("b15" as const)
-        : best35OfAllOtherVersionSheetIds.includes(entry.sheetId)
+        : best35OfAllOtherVersionSheetIds.includes(entry.sheetId) || entry.forceB35
           ? ("b35" as const)
           : null,
     }));
