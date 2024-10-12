@@ -25,6 +25,13 @@
       "select": "选择 DXData 数据版本与服务器",
       "select-generic": "或，仅选择 DXData 数据版本并使用「通用」服务器",
       "info": "不同的数据版本与服务器对应了不同的谱面定数与乐曲可见性"
+    },
+    "import-provider": {
+      "diving-fish": {
+        "title": "水鱼查分器",
+        "username": "水鱼查分器的用户名",
+        "qq": "绑定到水鱼查分器的 QQ"
+      }
     }
   },
   "sheet": {

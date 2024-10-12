@@ -25,6 +25,13 @@
       "intl": "International",
       "cn": "China",
       "_generic": "Generic"
+    },
+    "import-provider": {
+      "diving-fish": {
+        "title": "diving-fish",
+        "username": "Username of diving-fish",
+        "qq": "QQ binded to diving-fish"
+      }
     }
   },
   "sheet": {
@@ -168,11 +175,6 @@
     },
     "update-display-name": {
       "label": "Update Profile Name"
-    },
-    "update-diving-fish-profile": {
-      "label": "Update Diving Fish Profile",
-      "diving-fish-name": "diving-fish-name",
-      "diving-fish-qq": "diving-fish-qq"
     }
   }
 }

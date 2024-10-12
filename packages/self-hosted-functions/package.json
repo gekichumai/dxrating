@@ -24,9 +24,9 @@
   "devDependencies": {
     "@types/cookie": "^0.6.0",
     "@types/koa": "^2.15.0",
-    "@types/koa__cors": "^5.0.0",
     "@types/koa-bodyparser": "^4.3.12",
     "@types/koa-router": "^7.4.8",
+    "@types/koa__cors": "^5.0.0",
     "esno": "^4.8.0",
     "nodemon": "^3.1.7"
   }

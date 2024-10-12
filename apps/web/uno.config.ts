@@ -1,7 +1,9 @@
 // uno.config.ts
 import { handler } from "@unocss/preset-mini/utils";
 import presetWind from "@unocss/preset-wind";
-import { defineConfig } from "unocss";
+import { defineConfig, presetUno } from "unocss";
+import presetAnimations from "unocss-preset-animations";
+import { presetShadcn } from "unocss-preset-shadcn";
 
 export default defineConfig({
   rules: [
@@ -49,5 +51,20 @@ export default defineConfig({
     presetWind({
       important: "body",
     }),
+    presetUno(),
+    presetAnimations(),
+    presetShadcn({
+      color: "zinc",
+    }),
   ],
+  content: {
+    pipeline: {
+      include: [
+        // the default
+        /\.(vue|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/,
+        // include js/ts files
+        "(components|src)/**/*.{js,ts}",
+      ],
+    },
+  },
 });

@@ -34,11 +34,17 @@ import { SheetListItemContent } from "../sheet/SheetListItem";
 import IconMdiReplace from "~icons/mdi/find-replace";
 import IconMdiPlus from "~icons/mdi/plus";
 
+export interface PlayEntryProviderConfig {
+  divingFish?: {
+    ratingEligibility: "b15" | "b35" | null;
+  };
+}
+
 export interface PlayEntry {
   sheetId: string;
   achievementRate: number;
-  forceB15?: boolean;
-  forceB35?: boolean;
+
+  providerConfig?: PlayEntryProviderConfig;
 }
 
 const ListboxComponent = forwardRef<HTMLElement>(

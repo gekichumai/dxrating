@@ -1,3 +1,5 @@
+import path from "path";
+
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import react from "@vitejs/plugin-react";
 import UnoCSS from "unocss/vite";
@@ -29,5 +31,10 @@ export default defineConfig({
       },
     },
     sourcemap: true,
+  },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
   },
 });

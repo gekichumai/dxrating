@@ -282,85 +282,6 @@ export const UpdateDisplayNameMenuItem: FC = () => {
   );
 };
 
-export const UpdateDivingFishProfileItem: FC = () => {
-  const { t } = useTranslation(["auth"]);
-  const [open, setOpen] = useState(false);
-  const { divingFishProfile, session } = useAuth();
-  const [divingFishName, setDivingFishName] = useState(
-    () => divingFishProfile?.diving_fish_name ?? "",
-  );
-  const [divingFishQQ, setDivingFishQQ] = useState(
-    () => divingFishProfile?.diving_fish_qq ?? "",
-  );
-  return (
-    <>
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        TransitionComponent={Grow}
-        maxWidth="md"
-        classes={{
-          paper: "w-full",
-        }}
-      >
-        <DialogContent>
-          <div className="flex flex-col items-start justify-center gap-1">
-            <Logo />
-            <span className="text-sm text-zinc-5">Diving-Fish Profile</span>
-            <div className="h-px w-full bg-gray-2 my-4" />
-          </div>
-          <div className="flex flex-col gap-4">
-            <span className="text-sm text-zinc-5">以下两者选填其一即可</span>
-            <TextField
-              label={t("auth:update-diving-fish-profile.diving-fish-name")}
-              value={divingFishName}
-              disabled={divingFishQQ !== ""}
-              onChange={(e) => setDivingFishName(e.target.value)}
-              data-attr="update-diving-fish-profile.diving-fish-name"
-            />
-            <TextField
-              label={t("auth:update-diving-fish-profile.diving-fish-qq")}
-              value={divingFishQQ}
-              disabled={divingFishName !== ""}
-              onChange={(e) => setDivingFishQQ(e.target.value)}
-              data-attr="update-diving-fish-profile.diving-fish-qq"
-            />
-            <div className="h-px w-full bg-gray-2 my-4" />
-            <Button
-              onClick={() => {
-                const divingFishProfileNameKey = `${session?.user.id}::diving_fish_name`;
-                const divingFishProfileQQKey = `${session?.user.id}::diving_fish_qq`;
-                localStorage.setItem(divingFishProfileNameKey, divingFishName);
-                localStorage.setItem(divingFishProfileQQKey, divingFishQQ);
-                toast.success("Diving-Fish Profile has been successfully updated.");
-                setOpen(false);
-              }}
-              disabled={
-                divingFishQQ !== "" && divingFishName !== ""
-              }
-              variant="contained"
-              className="h-10"
-            >
-              Submit
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <MenuItem
-        onClick={() => {
-          setOpen(true);
-        }}
-      >
-        <ListItemIcon>
-          <MdiAccountCheck />
-        </ListItemIcon>
-        <ListItemText>{t("auth:update-diving-fish-profile.label")}</ListItemText>
-      </MenuItem>
-    </>
-  );
-}
-
 export const UserChip: FC = () => {
   const DISABLE_EXPLICIT_AUTH = isBuildPlatformApp;
 
@@ -411,7 +332,6 @@ export const UserChip: FC = () => {
           />
         )}
         <UpdateDisplayNameMenuItem />
-        <UpdateDivingFishProfileItem />
         <UpdatePasswordMenuItem />
         <MenuItem
           onClick={() => {

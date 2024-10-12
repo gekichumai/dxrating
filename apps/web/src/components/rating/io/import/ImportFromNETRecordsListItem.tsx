@@ -30,9 +30,9 @@ import {
   FetchNetRecordProgressState,
   importFromNETRecords,
 } from "./importFromNETRecords";
+import { ImportRegionSupportTag } from "./ImportRegionSupportTag";
 
 import IconMdiConnection from "~icons/mdi/connection";
-import IconMdiNewBox from "~icons/mdi/new-box";
 
 interface AchievementRecord {
   sheet: {
@@ -103,16 +103,11 @@ export const ImportFromNETRecordsListItem: FC<{
           <IconMdiConnection />
         </ListItemIcon>
         <ListItemText
-          primary={<>Import from maimai NET...</>}
+          primary={<>Import from official maimai NET...</>}
           secondary={
-            <div className="whitespace-pre-line flex flex-col items-start gap-1">
-              <div>
-                <IconMdiNewBox className="flex-inline" /> Requires Sega ID.
-              </div>
-              <div>
-                Imports your records directly from the official NET service.
-                Supports both JP and INTL servers.
-              </div>
+            <div className="flex gap-1">
+              <ImportRegionSupportTag region="intl" />
+              <ImportRegionSupportTag region="jp" />
             </div>
           }
         />

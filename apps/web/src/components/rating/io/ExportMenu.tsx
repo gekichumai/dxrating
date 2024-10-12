@@ -36,6 +36,7 @@ export const ExportMenu: FC = () => {
         MenuListProps={{
           "aria-labelledby": `button-${id}`,
         }}
+        variant="menu"
       >
         <ExportToJSONMenuItem />
       </Menu>

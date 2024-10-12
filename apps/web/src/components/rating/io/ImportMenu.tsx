@@ -5,9 +5,9 @@ import { ListActions } from "react-use/lib/useList";
 import { PlayEntry } from "../RatingCalculatorAddEntryForm";
 
 import { ImportFromAquaSQLiteListItem } from "./import/ImportFromAquaSQLiteListItem";
+import { ImportFromDivingFishButtonListItem } from "./import/ImportFromDivingFishButtonListItem";
 import { ImportFromJSONButtonListItem } from "./import/ImportFromJSONButtonListItem";
 import { ImportFromNETRecordsListItem } from "./import/ImportFromNETRecordsListItem";
-import { ImportFromDivingFishButtonListItem } from "./import/ImportFromDivingFishButtonListItem";
 
 export const ImportMenu: FC<{
   modifyEntries: ListActions<PlayEntry>;
@@ -43,23 +43,27 @@ export const ImportMenu: FC<{
         onClose={handleClose}
         MenuListProps={{
           "aria-labelledby": `button-${id}`,
+          disabledItemsFocusable: true,
         }}
+        variant="menu"
+        disableAutoFocusItem
       >
         <ImportFromNETRecordsListItem
           modifyEntries={modifyEntries}
           onClose={handleClose}
         />
+        <ImportFromDivingFishButtonListItem
+          modifyEntries={modifyEntries}
+          onClose={handleClose}
+        />
 
         <Divider />
+
         <ImportFromJSONButtonListItem
           modifyEntries={modifyEntries}
           onClose={handleClose}
         />
         <ImportFromAquaSQLiteListItem
-          modifyEntries={modifyEntries}
-          onClose={handleClose}
-        />
-        <ImportFromDivingFishButtonListItem
           modifyEntries={modifyEntries}
           onClose={handleClose}
         />

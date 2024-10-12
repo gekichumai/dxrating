@@ -114,11 +114,16 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
 
     const calculatedEntries = calculated.map((entry) => ({
       ...entry,
-      includedIn: best15OfCurrentVersionSheetIds.includes(entry.sheetId) || entry.forceB15
-        ? ("b15" as const)
-        : best35OfAllOtherVersionSheetIds.includes(entry.sheetId) || entry.forceB35
-          ? ("b35" as const)
-          : null,
+      includedIn:
+        best15OfCurrentVersionSheetIds.includes(entry.sheetId) ||
+        (region === "cn" &&
+          entry.providerConfig?.divingFish?.ratingEligibility === "b15")
+          ? ("b15" as const)
+          : best35OfAllOtherVersionSheetIds.includes(entry.sheetId) ||
+              (region === "cn" &&
+                entry.providerConfig?.divingFish?.ratingEligibility === "b35")
+            ? ("b35" as const)
+            : null,
     }));
 
     return {

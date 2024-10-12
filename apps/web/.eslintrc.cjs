@@ -20,12 +20,6 @@ module.exports = {
       "warn",
       { allowConstantExport: true },
     ],
-    "import/no-unresolved": [
-      "error",
-      {
-        ignore: ["^~icons.*", "virtual:.*"],
-      },
-    ],
     "import/no-named-as-default": "off",
     "import/order": [
       "error",
