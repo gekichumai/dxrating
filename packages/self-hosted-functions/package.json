@@ -16,7 +16,7 @@
     "koa-bodyparser": "^4.4.1",
     "koa-event-stream": "^1.0.3",
     "koa-router": "^12.0.1",
-    "satori": "0.10.13",
+    "satori": "0.10.14",
     "ts-pattern": "^5.4.0",
     "undici": "^6.19.8",
     "xmldom-qsa": "^1.1.3"
