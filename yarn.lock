@@ -1377,6 +1377,7 @@ __metadata:
     "@gekichumai/dxdata": "npm:*"
     "@hookform/devtools": "npm:^4.3.1"
     "@iconify-json/carbon": "npm:^1.2.3"
+    "@iconify-json/material-symbols": "npm:^1.2.4"
     "@iconify-json/mdi": "npm:^1.2.1"
     "@iconify-json/ri": "npm:^1.2.1"
     "@iconify-json/simple-icons": "npm:^1.2.7"
@@ -1512,6 +1513,15 @@ __metadata:
   dependencies:
     "@iconify/types": "npm:*"
   checksum: 10c0/e19d87e654e8e5ba2e826e7b0ebf1af25df75fced714ac90e77f3ebd22dfff5004813a46249f6057b607e2f23e67b8ab6331a7d76da1c1bfd9cc48978b54ffc8
+  languageName: node
+  linkType: hard
+
+"@iconify-json/material-symbols@npm:^1.2.4":
+  version: 1.2.4
+  resolution: "@iconify-json/material-symbols@npm:1.2.4"
+  dependencies:
+    "@iconify/types": "npm:*"
+  checksum: 10c0/56b7d0e300c52a7778655293ae56cd549b32d151c7a2ec3517b7a1891c2622bf03f4260cb513485ec5dd9f8e5e462e087e7accbcb9a918911b2df2e37de491f6
   languageName: node
   linkType: hard
 

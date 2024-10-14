@@ -23,6 +23,7 @@ import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
 
 import { ImportRegionSupportTag } from "./ImportRegionSupportTag";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import CarbonFish from "~icons/carbon/fish";
+import AlertIcon from "~icons/material-symbols/warning";
 
 const levelLabel = ["basic", "advanced", "expert", "master", "remaster"];
 
@@ -207,6 +209,14 @@ export const ImportDivingFishDialogContent: FC<{
           </div>
         </DialogTitle>
       </DialogHeader>
+
+      <Alert variant="destructive" className="font-bold">
+        <AlertIcon className="h-4 w-4" />
+        <AlertTitle>Heads up!</AlertTitle>
+        <AlertDescription>
+          Your existing entries will be overwritten with the imported ones.
+        </AlertDescription>
+      </Alert>
 
       <TextField
         fullWidth
