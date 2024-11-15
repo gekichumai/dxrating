@@ -296,7 +296,7 @@ export const handler = async (ctx: Koa.Context) => {
       languages: ["en", "ja"],
       shapeRendering: 2,
       textRendering: 2,
-      imageRendering: 1,
+      imageRendering: 0,
       fitTo: {
         mode: "width",
         value: width,
