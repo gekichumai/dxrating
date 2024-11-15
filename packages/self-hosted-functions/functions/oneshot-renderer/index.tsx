@@ -285,6 +285,13 @@ export const handler = async (ctx: Koa.Context) => {
 
   if (ctx.query.pixelated) {
     timer.start("resvg_init");
+    let width =
+      typeof ctx.query.width === "string"
+        ? parseInt(ctx.query.width)
+        : ONESHOT_WIDTH * 2;
+    if (Number.isNaN(width) || !Number.isFinite(width) || width < 1 || width > 3000) {
+      width = ONESHOT_WIDTH * 2;
+    }
     const resvg = new Resvg(svg, {
       languages: ["en", "ja"],
       shapeRendering: 2,
@@ -292,7 +299,7 @@ export const handler = async (ctx: Koa.Context) => {
       imageRendering: 1,
       fitTo: {
         mode: "width",
-        value: 3000,
+        value: width,
       },
       dpi: 600,
     });
