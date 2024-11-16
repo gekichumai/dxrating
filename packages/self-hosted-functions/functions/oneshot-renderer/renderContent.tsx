@@ -1,75 +1,72 @@
-import { DifficultyEnum, TypeEnum, VersionEnum } from "@gekichumai/dxdata";
-import { execSync } from "child_process";
-import clsx from "clsx";
-import fs from "fs/promises";
-import { FC, PropsWithChildren } from "react";
-import { ASSETS_BASE_DIR, Region, RenderData } from ".";
+import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
+import { execSync } from 'child_process'
+import clsx from 'clsx'
+import fs from 'fs/promises'
+import { FC, PropsWithChildren } from 'react'
+import { ASSETS_BASE_DIR, Region, RenderData } from '.'
 
 interface VersionTheme {
-  background: string;
-  logo: string;
-  favicon: string;
-  accentColor: string;
-  backgroundSize: [number, number];
+  background: string
+  logo: string
+  favicon: string
+  accentColor: string
+  backgroundSize: [number, number]
 }
 
 export const VERSION_THEME: Record<string, VersionTheme> = {
   [VersionEnum.FESTiVALPLUS]: {
-    background: "/images/background/festival-plus.jpg",
-    logo: "/images/version-logo/festival-plus.png",
-    favicon: "/favicon/festival-plus-1024x.jpg",
-    accentColor: "#c8a8f9",
+    background: '/images/background/festival-plus.jpg',
+    logo: '/images/version-logo/festival-plus.png',
+    favicon: '/favicon/festival-plus-1024x.jpg',
+    accentColor: '#c8a8f9',
     backgroundSize: [2200, 2400],
   },
   [VersionEnum.BUDDiES]: {
-    background: "/images/background/buddies.jpg",
-    logo: "/images/version-logo/buddies.png",
-    favicon: "/favicon/buddies-1024x.jpg",
-    accentColor: "#FAAE29",
+    background: '/images/background/buddies.jpg',
+    logo: '/images/version-logo/buddies.png',
+    favicon: '/favicon/buddies-1024x.jpg',
+    accentColor: '#FAAE29',
     backgroundSize: [2000, 2400],
   },
   [VersionEnum.BUDDiESPLUS]: {
-    background: "/images/background/buddies.jpg",
-    logo: "/images/version-logo/buddies-plus.png",
-    favicon: "/favicon/buddies-1024x.jpg",
-    accentColor: "#FAAE29",
+    background: '/images/background/buddies.jpg',
+    logo: '/images/version-logo/buddies-plus.png',
+    favicon: '/favicon/buddies-1024x.jpg',
+    accentColor: '#FAAE29',
     backgroundSize: [2000, 2400],
   },
   [VersionEnum.PRiSM]: {
-    background: "/images/background/prism.jpg",
-    logo: "/images/version-logo/prism.png",
-    favicon: "/favicon/prism-1024x.jpg",
-    accentColor: "#6368C7",
+    background: '/images/background/prism.jpg',
+    logo: '/images/version-logo/prism.png',
+    favicon: '/favicon/prism-1024x.jpg',
+    accentColor: '#6368C7',
     backgroundSize: [2000, 2400],
   },
-};
+}
 
-const DIFFICULTIES: Record<
-  DifficultyEnum,
-  { title: string; color: string; inverted?: boolean }
-> = {
+const DIFFICULTIES: Record<DifficultyEnum, { title: string; color: string; inverted?: boolean }> = {
   [DifficultyEnum.Basic]: {
-    title: "BASIC",
-    color: "#22bb5b",
+    title: 'BASIC',
+    color: '#22bb5b',
   },
   [DifficultyEnum.Advanced]: {
-    title: "ADVANCED",
-    color: "#fb9c2d",
+    title: 'ADVANCED',
+    color: '#fb9c2d',
   },
   [DifficultyEnum.Expert]: {
-    title: "EXPERT",
-    color: "#f64861",
+    title: 'EXPERT',
+    color: '#f64861',
   },
   [DifficultyEnum.Master]: {
-    title: "MASTER",
-    color: "#9e45e2",
+    title: 'MASTER',
+    color: '#9e45e2',
   },
   [DifficultyEnum.ReMaster]: {
-    title: "Re:MASTER",
-    color: "#951BEF",
+    title: 'Re:MASTER',
+    color: '#951BEF',
     inverted: true,
   },
-};
+}
 
 const renderCell = async (entry: RenderData | undefined, i: number) => {
   if (!entry) {
@@ -77,33 +74,34 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
       <div key="empty" tw="w-1/5 p-[2px] flex h-[96px]">
         <div tw="h-full w-full rounded-lg" />
       </div>
-    );
+    )
   }
 
   const [coverImage, typeImage] = await Promise.all([
-    fs.readFile(ASSETS_BASE_DIR + "/images/cover/v2/" + entry.sheet.imageName),
+    fs.readFile(
+      ASSETS_BASE_DIR + '/images/cover/v2/' + entry.sheet.imageName.replace('.png', '.webp')
+    ),
     fs.readFile(
       ASSETS_BASE_DIR +
-        `/images/type_${entry.sheet.type === TypeEnum.STD ? "sd" : entry.sheet.type}.png`
+        `/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`
     ),
-  ]);
+  ])
 
-  const theme = DIFFICULTIES[entry.sheet.difficulty];
+  const theme = DIFFICULTIES[entry.sheet.difficulty]
 
-  const backgroundColor = theme.inverted ? "#EBCFFF" : theme.color;
-  const foregroundColor = theme.inverted ? theme.color : "#fff";
-  const shadowColor = theme.inverted
-    ? "rgba(255,255,255,0.5)"
-    : "rgba(0,0,0,0.5)";
-  const adornmentColor = theme.inverted ? "#000000a0" : "#ffffffa0";
+  const backgroundColor = theme.inverted ? '#EBCFFF' : theme.color
+  const foregroundColor = theme.inverted ? theme.color : '#fff'
+  const shadowColor = theme.inverted ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'
+  const adornmentColor = theme.inverted ? '#000000a0' : '#ffffffa0'
 
   return (
     <div key={entry.sheet.id} tw="w-1/5 p-[2px] flex h-[96px]">
       <div
-        tw="h-full w-full rounded-lg flex items-center justify-start p-2"
+        tw="h-full w-full rounded-lg flex items-center justify-start p-2 relative"
         style={{
           background: `linear-gradient(135deg, ${backgroundColor}, ${backgroundColor}cc)`,
           color: foregroundColor,
+          boxShadow: '0 0 3px 0 rgba(0,0,0,0.5)',
         }}
       >
         <img
@@ -113,21 +111,21 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
           alt={entry.sheet.imageName}
           tw="h-[76px] w-[76px] rounded-sm mr-2"
         />
-        <div tw="flex flex-col items-start relative">
+        <div tw="flex flex-col items-start justify-center relative h-full">
           <span
             tw="overflow-hidden font-bold w-[200px]"
             lang="ja"
             style={{
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              textShadow: "0 0 2px " + shadowColor,
-              lineHeight: "16px",
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              textShadow: '0 0 2px ' + shadowColor,
+              lineHeight: '16px',
               fontSize: (() => {
-                const length = entry.sheet.title.length;
-                if (length <= 5) return "16px";
-                if (length <= 10) return "15px";
-                if (length <= 15) return "14px";
-                return "13px";
+                const length = entry.sheet.title.length
+                if (length <= 5) return '15px'
+                if (length <= 10) return '14.5px'
+                if (length <= 15) return '14px'
+                return '13px'
               })(),
             }}
           >
@@ -141,7 +139,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
             <span
               tw="text-[10px] bg-black/50 rounded-full px-[6px] py-[3px] mb-[2px] leading-none font-bold mr-1 flex items-center text-white"
               style={{
-                boxShadow: "1px 1px 0 rgba(0,0,0,0.35)",
+                boxShadow: '1px 1px 0 rgba(0,0,0,0.35)',
               }}
             >
               <span>{DIFFICULTIES[entry.sheet.difficulty].title}</span>
@@ -153,12 +151,10 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
           </div>
 
           <div tw="flex items-center text-[14px] bg-black/50 rounded-full leading-none pl-[8px] pr-[2px] py-[2px] font-bold mt-1 text-white">
-            <span tw="text-sm leading-none">
-              {entry.achievementRate.toFixed(4)}%
-            </span>
+            <span tw="text-sm leading-none">{entry.achievementRate.toFixed(4)}%</span>
 
             <span tw="text-sm leading-none ml-1 font-normal opacity-80">
-              {entry.rating.rank?.replace("p", "+")?.toUpperCase()}
+              {entry.rating.rank?.replace('p', '+')?.toUpperCase()}
             </span>
 
             <span tw="text-[12px] leading-none bg-black/50 rounded-full leading-none px-[6px] py-[2px] font-bold ml-1">
@@ -171,63 +167,58 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
           tw="absolute bottom-2 right-2 text-[9px] font-bold leading-none"
           style={{ color: adornmentColor }}
         >
-          {"#" + (i + 1)}
+          {'#' + (i + 1)}
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const padArray = <T,>(arr: T[], len: number, fill?: T): (T | undefined)[] => {
-  return arr.concat(Array(len).fill(fill)).slice(0, len);
-};
+  return arr.concat(Array(len).fill(fill)).slice(0, len)
+}
 
-const gitVersion = execSync("git rev-parse HEAD").toString().trim();
+const gitVersion = execSync('git rev-parse HEAD').toString().trim()
 
 const FactItem = ({
   value,
   label,
-  size = "sm",
+  size = 'sm',
   tw,
 }: {
-  value: string;
-  label: string;
-  size?: "sm" | "lg";
-  tw?: string;
+  value: string
+  label: string
+  size?: 'sm' | 'lg'
+  tw?: string
 }) => {
   return (
-    <div tw={clsx("flex flex-col items-start justify-center", tw)}>
+    <div tw={clsx('flex flex-col items-start justify-center', tw)}>
       <div
-        tw={clsx(
-          "leading-none font-semibold",
-          size === "sm" ? "text-2xl mb-[2px]" : "text-3xl"
-        )}
+        tw={clsx('leading-none font-semibold', size === 'sm' ? 'text-2xl mb-[2px]' : 'text-3xl')}
       >
         {value}
       </div>
-      <div tw={clsx("leading-none", size === "sm" ? "text-sm" : "text-base")}>
-        {label}
-      </div>
+      <div tw={clsx('leading-none', size === 'sm' ? 'text-sm' : 'text-base')}>{label}</div>
     </div>
-  );
-};
+  )
+}
 
 export const BottomLabel: FC<
   PropsWithChildren<{
-    first?: boolean;
+    first?: boolean
   }>
 > = ({ first, children }) => {
   return (
     <div
       tw={clsx(
-        "flex items-center justify-center bg-black/40 rounded-t-lg text-[12px] text-white px-3 pt-1 pb-2 font-bold leading-none",
-        !first && "ml-1"
+        'flex items-center justify-center bg-black/40 rounded-t-lg text-[12px] text-white px-3 pt-1 pb-2 font-bold leading-none',
+        !first && 'ml-1'
       )}
     >
       {children}
     </div>
-  );
-};
+  )
+}
 
 export const renderContent = async ({
   data,
@@ -235,36 +226,29 @@ export const renderContent = async ({
   region,
 }: {
   data: {
-    b15: RenderData[];
-    b35: RenderData[];
-  };
-  version: VersionEnum;
-  region?: Region;
+    b15: RenderData[]
+    b35: RenderData[]
+  }
+  version: VersionEnum
+  region?: Region
 }) => {
-  const theme = VERSION_THEME[version];
+  const theme = VERSION_THEME[version]
 
-  const background = (await fs.readFile(ASSETS_BASE_DIR + theme.background))
-    .buffer;
+  const background = (await fs.readFile(ASSETS_BASE_DIR + theme.background)).buffer
 
   const b50Sum = [...data.b15, ...data.b35].reduce(
     (acc, cur) => acc + cur.rating.ratingAwardValue,
     0
-  );
+  )
 
-  const b15Sum = data.b15.reduce(
-    (acc, cur) => acc + cur.rating.ratingAwardValue,
-    0
-  );
-  const b35Sum = data.b35.reduce(
-    (acc, cur) => acc + cur.rating.ratingAwardValue,
-    0
-  );
+  const b15Sum = data.b15.reduce((acc, cur) => acc + cur.rating.ratingAwardValue, 0)
+  const b35Sum = data.b35.reduce((acc, cur) => acc + cur.rating.ratingAwardValue, 0)
 
   const formattedRegionSuffix = region
-    ? region === "_generic"
-      ? " (Generic)"
+    ? region === '_generic'
+      ? ' (Generic)'
       : ` (${region.toUpperCase()})`
-    : "";
+    : ''
 
   return (
     <div tw="font-sans text-lg leading-none flex h-full">
@@ -274,7 +258,7 @@ export const renderContent = async ({
         src={background}
         alt=""
         style={{
-          objectFit: "cover",
+          objectFit: 'cover',
         }}
       />
 
@@ -282,12 +266,7 @@ export const renderContent = async ({
         <div tw="h-[100px] w-full flex pt-[2px] pb-1 px-[2px]">
           <div tw="overflow-hidden w-full h-full flex items-center">
             <div tw="flex items-end justify-start py-4 px-6 rounded-lg w-full bg-black/80 text-white">
-              <FactItem
-                value={b50Sum.toFixed(0)}
-                label="Total"
-                size="lg"
-                tw="mr-6"
-              />
+              <FactItem value={b50Sum.toFixed(0)} label="Total" size="lg" tw="mr-6" />
 
               <FactItem value={b15Sum.toFixed(0)} label="B15" tw="mr-4" />
               <FactItem value={b35Sum.toFixed(0)} label="B35" />
@@ -313,5 +292,5 @@ export const renderContent = async ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

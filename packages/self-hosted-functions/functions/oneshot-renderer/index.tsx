@@ -242,8 +242,8 @@ export const handler = async (ctx: Koa.Context) => {
   const body = ctx.query.demo
     ? {
         entries: demo,
-        version: VersionEnum.BUDDiES,
-        region: "intl",
+        version: VersionEnum.PRiSM,
+        region: "jp",
       }
     : (ctx.request.body as any);
   const version = body.version as VersionEnum;
