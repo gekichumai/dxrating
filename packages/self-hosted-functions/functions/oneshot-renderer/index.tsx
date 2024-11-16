@@ -18,11 +18,14 @@ export type Region = 'jp' | 'intl' | 'cn' | '_generic'
 
 type PlayEntry = {
   sheetId: string
+  sheetOverrides?: {
+    internalLevelValue?: number
+  }
   achievementRate: number
   playCount?: number
   allPerfectPlusCount?: number
   achievementAccuracy?: 'fc' | 'fcp' | 'ap' | 'app'
-  achievementSync?: 'sp' | 'fsp' | 'fsd' | 'fsdp'
+  achievementSync?: 'sp' | 'fs' | 'fsp' | 'fsd' | 'fsdp'
   achievementDXScore?: {
     achieved: number
     total: number
@@ -148,7 +151,8 @@ const enrichEntries = (entries: PlayEntry[], version: VersionEnum) => {
       entry.achievementRate > 101 ||
       (entry.achievementAccuracy &&
         !['fc', 'fcp', 'ap', 'app'].includes(entry.achievementAccuracy)) ||
-      (entry.achievementSync && !['sp', 'fsp', 'fsd', 'fsdp'].includes(entry.achievementSync)) ||
+      (entry.achievementSync &&
+        !['sp', 'fs', 'fsp', 'fsd', 'fsdp'].includes(entry.achievementSync)) ||
       (entry.playCount && (typeof entry.playCount !== 'number' || entry.playCount < 0)) ||
       (entry.allPerfectPlusCount &&
         (typeof entry.allPerfectPlusCount !== 'number' || entry.allPerfectPlusCount < 0)) ||
@@ -170,7 +174,10 @@ const enrichEntries = (entries: PlayEntry[], version: VersionEnum) => {
         ...entry,
         sheet,
         rating: sheet
-          ? calculateRating(sheet.internalLevelValue ?? 0, entry.achievementRate)
+          ? calculateRating(
+              entry.sheetOverrides?.internalLevelValue ?? sheet.internalLevelValue ?? 0,
+              entry.achievementRate
+            )
           : undefined,
         dxScore: entry.achievementDXScore
           ? {
