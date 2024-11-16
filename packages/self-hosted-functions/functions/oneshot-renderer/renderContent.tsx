@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import fs from 'fs/promises'
 import { FC, PropsWithChildren } from 'react'
 import { ASSETS_BASE_DIR, Region, RenderData } from '.'
+import { maskGradientStepsEaseOutCirc } from './bezier'
 
 interface VersionTheme {
   background: string
@@ -71,7 +72,7 @@ const DIFFICULTIES: Record<DifficultyEnum, { title: string; color: string; inver
 const renderCell = async (entry: RenderData | undefined, i: number) => {
   if (!entry) {
     return (
-      <div key="empty" tw="w-1/5 p-[2px] flex h-[96px]">
+      <div key="empty" tw="w-1/5 p-[4px] flex h-[116px]">
         <div tw="h-full w-full rounded-lg" />
       </div>
     )
@@ -95,9 +96,9 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
   const adornmentColor = theme.inverted ? '#000000a0' : '#ffffffa0'
 
   return (
-    <div key={entry.sheet.id} tw="w-1/5 p-[2px] flex h-[96px]">
+    <div key={entry.sheet.id} tw="w-1/5 p-[4px] flex h-[116px]">
       <div
-        tw="h-full w-full rounded-lg flex items-center justify-start p-2 relative"
+        tw="h-full w-full rounded-lg flex items-start justify-start p-[10px] relative overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${backgroundColor}, ${backgroundColor}cc)`,
           color: foregroundColor,
@@ -109,9 +110,13 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
           // @ts-expect-error
           src={coverImage.buffer}
           alt={entry.sheet.imageName}
-          tw="h-[76px] w-[76px] rounded-sm mr-2"
+          tw="h-[108px] w-[108px] absolute top-0 right-[-1px]"
+          style={{
+            maskImage: `linear-gradient(to right, rgba(255,255,255,0) 0%, ${maskGradientStepsEaseOutCirc})`,
+            maskRepeat: 'no-repeat',
+          }}
         />
-        <div tw="flex flex-col items-start justify-center relative h-full">
+        <div tw="flex flex-col items-start justify-start relative h-full mr-[54px]">
           <span
             tw="overflow-hidden font-bold w-[200px]"
             lang="ja"
@@ -153,8 +158,11 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
           <div tw="flex items-center text-[14px] bg-black/50 rounded-full leading-none pl-[8px] pr-[2px] py-[2px] font-bold mt-1 text-white">
             <span tw="text-sm leading-none">{entry.achievementRate.toFixed(4)}%</span>
 
-            <span tw="text-sm leading-none ml-1 font-normal opacity-80">
-              {entry.rating.rank?.replace('p', '+')?.toUpperCase()}
+            <span tw="leading-none font-normal ml-1 opacity-80 flex items-center">
+              <span tw="text-sm leading-none">
+                {entry.rating.rank?.replace('p', '')?.toUpperCase()}
+              </span>
+              {entry.rating.rank?.includes('p') && <span tw="text-[15px] leading-none">+</span>}
             </span>
 
             <span tw="text-[12px] leading-none bg-black/50 rounded-full leading-none px-[6px] py-[2px] font-bold ml-1">
@@ -259,18 +267,17 @@ export const renderContent = async ({
         alt=""
         style={{
           objectFit: 'cover',
+          objectPosition: 'center',
         }}
       />
 
       <div tw="w-full h-full px-1 pt-1 flex flex-wrap">
-        <div tw="h-[100px] w-full flex pt-[2px] pb-1 px-[2px]">
-          <div tw="overflow-hidden w-full h-full flex items-center">
-            <div tw="flex items-end justify-start py-4 px-6 rounded-lg w-full bg-black/80 text-white">
-              <FactItem value={b50Sum.toFixed(0)} label="Total" size="lg" tw="mr-6" />
+        <div tw="h-[100px] w-full flex pt-[2px] pb-1 px-[4px]">
+          <div tw="flex items-end justify-start py-4 px-6 rounded-lg w-full bg-black/80 text-white h-full">
+            <FactItem value={b50Sum.toFixed(0)} label="Total" size="lg" tw="mr-6" />
 
-              <FactItem value={b15Sum.toFixed(0)} label="B15" tw="mr-4" />
-              <FactItem value={b35Sum.toFixed(0)} label="B35" />
-            </div>
+            <FactItem value={b15Sum.toFixed(0)} label="B15" tw="mr-4" />
+            <FactItem value={b35Sum.toFixed(0)} label="B35" />
           </div>
         </div>
 

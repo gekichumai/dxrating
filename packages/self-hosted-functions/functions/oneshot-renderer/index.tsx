@@ -1,42 +1,40 @@
-import { Sheet, Song, VersionEnum, dxdata } from "@gekichumai/dxdata";
-import { Resvg } from "@resvg/resvg-js";
-import fs from "fs/promises";
-import Koa from "koa";
-import satori, { Font } from "satori";
-import { Rating, calculateRating } from "./calculateRating";
-import { demo } from "./demo";
-import { renderContent } from "./renderContent";
+import { Sheet, Song, VersionEnum, dxdata } from '@gekichumai/dxdata'
+import { Resvg } from '@resvg/resvg-js'
+import fs from 'fs/promises'
+import Koa from 'koa'
+import satori, { Font } from 'satori'
+import { Rating, calculateRating } from './calculateRating'
+import { demo } from './demo'
+import { renderContent } from './renderContent'
 
-export const ONESHOT_HEIGHT = 1100;
-export const ONESHOT_WIDTH = 1500;
+export const ONESHOT_HEIGHT = 1300
+export const ONESHOT_WIDTH = 1500
 
-export const ASSETS_BASE_DIR = process.env.ASSETS_BASE_DIR;
+export const ASSETS_BASE_DIR = process.env.ASSETS_BASE_DIR
 
-export type Region = "jp" | "intl" | "cn" | "_generic";
+export type Region = 'jp' | 'intl' | 'cn' | '_generic'
 
 // declare a new attribute `tw` for JSX elements
-declare module "react" {
+declare module 'react' {
   interface HTMLAttributes<T> extends DOMAttributes<T> {
-    tw?: string;
+    tw?: string
   }
 }
 
 export interface RenderData {
-  sheet: FlattenedSheet;
-  achievementRate: number;
-  rating: Rating;
+  sheet: FlattenedSheet
+  achievementRate: number
+  rating: Rating
 }
-const CANONICAL_ID_PARTS_SEPARATOR = "__dxrt__";
+const CANONICAL_ID_PARTS_SEPARATOR = '__dxrt__'
 
 const canonicalId = (song: Song, sheet: Sheet) => {
-  return [song.songId, sheet.type, sheet.difficulty].join(
-    CANONICAL_ID_PARTS_SEPARATOR
-  );
-};
+  return [song.songId, sheet.type, sheet.difficulty].join(CANONICAL_ID_PARTS_SEPARATOR)
+}
 
 const getFlattenedSheetsMap = () => {
   const calcFlattenedSheets = (version: VersionEnum): FlattenedSheet[] => {
-    const songs = dxdata.songs;
+    const songs = dxdata.songs
     const flattenedSheets = songs.flatMap((song) => {
       return song.sheets.map((sheet) => {
         return {
@@ -44,31 +42,27 @@ const getFlattenedSheetsMap = () => {
           ...sheet,
           id: canonicalId(song, sheet),
           internalLevelValue: sheet.multiverInternalLevelValue
-            ? sheet.multiverInternalLevelValue[version] ??
-              sheet.internalLevelValue
+            ? (sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue)
             : sheet.internalLevelValue,
-        };
-      });
-    });
-    return flattenedSheets as FlattenedSheet[];
-  };
-
-  let cachedFlattenedSheets: Map<
-    VersionEnum,
-    Map<string, FlattenedSheet>
-  > = new Map();
-  for (const version of Object.values(VersionEnum)) {
-    const calc = calcFlattenedSheets(version);
-    const map = new Map<string, FlattenedSheet>();
-    for (const sheet of calc) {
-      map.set(sheet.id, sheet);
-    }
-    cachedFlattenedSheets.set(version, map);
+        }
+      })
+    })
+    return flattenedSheets as FlattenedSheet[]
   }
-  return cachedFlattenedSheets;
-};
 
-const flattenedSheets = getFlattenedSheetsMap();
+  let cachedFlattenedSheets: Map<VersionEnum, Map<string, FlattenedSheet>> = new Map()
+  for (const version of Object.values(VersionEnum)) {
+    const calc = calcFlattenedSheets(version)
+    const map = new Map<string, FlattenedSheet>()
+    for (const sheet of calc) {
+      map.set(sheet.id, sheet)
+    }
+    cachedFlattenedSheets.set(version, map)
+  }
+  return cachedFlattenedSheets
+}
+
+const flattenedSheets = getFlattenedSheetsMap()
 
 const fetchFontPack = async (): Promise<Font[]> => {
   const fontConfig = [
@@ -77,22 +71,20 @@ const fetchFontPack = async (): Promise<Font[]> => {
     //   weight: 400 as const,
     // },
     {
-      file: "SourceHanSansJP-Bold.otf",
+      file: 'SourceHanSansJP-Bold.otf',
       weight: 700 as const,
     },
     {
-      file: "SourceHanSansJP-Medium.otf",
+      file: 'SourceHanSansJP-Medium.otf',
       weight: 500 as const,
     },
-  ];
+  ]
   const fonts = await Promise.all(
-    fontConfig.map(async (font) =>
-      fs.readFile(ASSETS_BASE_DIR + "/fonts/" + font.file)
-    )
-  );
+    fontConfig.map(async (font) => fs.readFile(ASSETS_BASE_DIR + '/fonts/' + font.file))
+  )
   if (!fonts.every((font) => font instanceof Buffer)) {
-    console.error("Failed to load at least one font");
-    return [];
+    console.error('Failed to load at least one font')
+    return []
   }
   // return [
   //   {
@@ -109,52 +101,49 @@ const fetchFontPack = async (): Promise<Font[]> => {
   //   },
   // ];
   return fontConfig.map((font, i) => ({
-    name: "Source Han Sans",
+    name: 'Source Han Sans',
     data: fonts[i],
     weight: font.weight,
-    style: "normal",
-  }));
-};
+    style: 'normal',
+  }))
+}
 
-let cachedFonts: Font[] | null = null;
+let cachedFonts: Font[] | null = null
 
 type FlattenedSheet = Song &
   Sheet & {
-    id: string;
-    isTypeUtage: boolean;
-    isRatingEligible: boolean;
-    tags: number[];
-    releaseDateTimestamp: number;
-  };
+    id: string
+    isTypeUtage: boolean
+    isRatingEligible: boolean
+    tags: number[]
+    releaseDateTimestamp: number
+  }
 
 const enrichEntries = (
   entries: { sheetId: string; achievementRate: number }[],
   version: VersionEnum
 ) => {
   return entries.flatMap((entry) => {
-    const sheet = flattenedSheets.get(version)?.get(entry.sheetId);
+    const sheet = flattenedSheets.get(version)?.get(entry.sheetId)
     if (!sheet) {
-      return [];
+      return []
     }
     return [
       {
         sheet,
         achievementRate: entry.achievementRate,
         rating: sheet
-          ? calculateRating(
-              sheet.internalLevelValue ?? 0,
-              entry.achievementRate
-            )
+          ? calculateRating(sheet.internalLevelValue ?? 0, entry.achievementRate)
           : undefined,
       },
-    ];
-  });
-};
+    ]
+  })
+}
 
 const prepareCalculatedEntries = (
   calculatedEntries: {
-    b15: { sheetId: string; achievementRate: number }[];
-    b35: { sheetId: string; achievementRate: number }[];
+    b15: { sheetId: string; achievementRate: number }[]
+    b35: { sheetId: string; achievementRate: number }[]
   },
   version: VersionEnum
 ): { b15: RenderData[]; b35: RenderData[] } => {
@@ -165,110 +154,110 @@ const prepareCalculatedEntries = (
     b35: enrichEntries(calculatedEntries.b35, version).filter(
       (entry) => entry.sheet && entry.rating
     ) as RenderData[],
-  };
+  }
 
   prepared.b15.sort((a, b) => {
-    return b.rating.ratingAwardValue - a.rating.ratingAwardValue;
-  });
+    return b.rating.ratingAwardValue - a.rating.ratingAwardValue
+  })
 
   prepared.b35.sort((a, b) => {
-    return b.rating.ratingAwardValue - a.rating.ratingAwardValue;
-  });
+    return b.rating.ratingAwardValue - a.rating.ratingAwardValue
+  })
 
-  return prepared;
-};
+  return prepared
+}
 
 const calculateEntries = (
   entries: {
-    sheetId: string;
-    achievementRate: number;
+    sheetId: string
+    achievementRate: number
   }[],
   version: VersionEnum
 ): { b15: RenderData[]; b35: RenderData[] } => {
   const mapped = enrichEntries(entries, version).filter(
     (entry) => entry.sheet && entry.rating
-  ) as RenderData[];
+  ) as RenderData[]
 
   const b15 = mapped
     .filter((entry) => entry.sheet.version === version)
     .sort((a, b) => b.rating.ratingAwardValue - a.rating.ratingAwardValue)
-    .slice(0, 15);
+    .slice(0, 15)
 
   const b35 = mapped
     .filter((entry) => entry.sheet.version !== version)
     .sort((a, b) => b.rating.ratingAwardValue - a.rating.ratingAwardValue)
-    .slice(0, 35);
+    .slice(0, 35)
 
   b15.sort((a, b) => {
-    return b.rating.ratingAwardValue - a.rating.ratingAwardValue;
-  });
+    return b.rating.ratingAwardValue - a.rating.ratingAwardValue
+  })
 
   b35.sort((a, b) => {
-    return b.rating.ratingAwardValue - a.rating.ratingAwardValue;
-  });
+    return b.rating.ratingAwardValue - a.rating.ratingAwardValue
+  })
   return {
     b15,
     b35,
-  };
-};
+  }
+}
 
 interface ServerTimingTimerObservation {
-  name: string;
-  duration: number;
+  name: string
+  duration: number
 }
 
 const createServerTimingTimer = () => {
-  const observations: ServerTimingTimerObservation[] = [];
+  const observations: ServerTimingTimerObservation[] = []
   return {
     start: (name: string) => {
       observations.push({
         name,
         duration: Date.now(),
-      });
+      })
     },
     stop: (name: string) => {
-      const obs = observations.find((o) => o.name === name);
+      const obs = observations.find((o) => o.name === name)
       if (obs) {
-        obs.duration = Date.now() - obs.duration;
+        obs.duration = Date.now() - obs.duration
       }
     },
     get: () => {
-      return observations.map((obs) => `${obs.name};dur=${obs.duration}`);
+      return observations.map((obs) => `${obs.name};dur=${obs.duration}`)
     },
-  };
-};
+  }
+}
 
 export const handler = async (ctx: Koa.Context) => {
   const body = ctx.query.demo
     ? {
         entries: demo,
         version: VersionEnum.PRiSM,
-        region: "jp",
+        region: 'jp',
       }
-    : (ctx.request.body as any);
-  const version = body.version as VersionEnum;
-  const region = body.region as Region;
+    : (ctx.request.body as any)
+  const version = body.version as VersionEnum
+  const region = body.region as Region
 
-  const timer = createServerTimingTimer();
+  const timer = createServerTimingTimer()
 
-  timer.start("font");
+  timer.start('font')
   if (!cachedFonts) {
-    cachedFonts = await fetchFontPack();
+    cachedFonts = await fetchFontPack()
   }
-  const fonts = cachedFonts;
-  timer.stop("font");
+  const fonts = cachedFonts
+  timer.stop('font')
 
-  timer.start("calc");
+  timer.start('calc')
   const data = body.calculatedEntries
     ? prepareCalculatedEntries(body.calculatedEntries, version)
-    : calculateEntries(body.entries, version);
-  timer.stop("calc");
+    : calculateEntries(body.entries, version)
+  timer.stop('calc')
 
-  timer.start("jsx");
-  const content = await renderContent({ data, version, region });
-  timer.stop("jsx");
+  timer.start('jsx')
+  const content = await renderContent({ data, version, region })
+  timer.stop('jsx')
 
-  timer.start("satori");
+  timer.start('satori')
   const svg = await satori(content, {
     width: ONESHOT_WIDTH,
     height: ONESHOT_HEIGHT,
@@ -276,51 +265,48 @@ export const handler = async (ctx: Koa.Context) => {
     tailwindConfig: {
       theme: {
         fontFamily: {
-          sans: "Source Han Sans, sans-serif",
+          sans: 'Source Han Sans, sans-serif',
         },
       },
     },
-  });
-  timer.stop("satori");
+  })
+  timer.stop('satori')
 
   if (ctx.query.pixelated) {
-    timer.start("resvg_init");
-    let width =
-      typeof ctx.query.width === "string"
-        ? parseInt(ctx.query.width)
-        : ONESHOT_WIDTH * 2;
+    timer.start('resvg_init')
+    let width = typeof ctx.query.width === 'string' ? parseInt(ctx.query.width) : ONESHOT_WIDTH * 2
     if (Number.isNaN(width) || !Number.isFinite(width) || width < 1 || width > 3000) {
-      width = ONESHOT_WIDTH * 2;
+      width = ONESHOT_WIDTH * 2
     }
     const resvg = new Resvg(svg, {
-      languages: ["en", "ja"],
+      languages: ['en', 'ja'],
       shapeRendering: 2,
       textRendering: 2,
       imageRendering: 0,
       fitTo: {
-        mode: "width",
+        mode: 'width',
         value: width,
       },
       dpi: 600,
-    });
-    timer.stop("resvg_init");
+    })
+    timer.stop('resvg_init')
 
-    timer.start("resvg_render");
-    const pngData = resvg.render();
-    timer.stop("resvg_render");
+    timer.start('resvg_render')
+    const pngData = resvg.render()
+    timer.stop('resvg_render')
 
-    timer.start("resvg_as_png");
-    const pngBuffer = pngData.asPng();
-    timer.stop("resvg_as_png");
+    timer.start('resvg_as_png')
+    const pngBuffer = pngData.asPng()
+    timer.stop('resvg_as_png')
 
-    ctx.set("Server-Timing", timer.get().join(", "));
+    ctx.set('Server-Timing', timer.get().join(', '))
 
-    ctx.type = "image/png";
-    ctx.body = pngBuffer;
-    return;
+    ctx.type = 'image/png'
+    ctx.body = pngBuffer
+    return
   }
 
-  ctx.set("Server-Timing", timer.get().join(", "));
-  ctx.body = svg;
-  ctx.type = "image/svg+xml";
-};
+  ctx.set('Server-Timing', timer.get().join(', '))
+  ctx.body = svg
+  ctx.type = 'image/svg+xml'
+}
