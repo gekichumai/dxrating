@@ -47,6 +47,8 @@ export interface RenderData extends PlayEntry {
     total: number
     stars: number
   }
+  playCount: number
+  allPerfectPlusCount: number
 }
 const CANONICAL_ID_PARTS_SEPARATOR = '__dxrt__'
 
@@ -189,6 +191,8 @@ const enrichEntries = (entries: PlayEntry[], version: VersionEnum) => {
               ),
             }
           : undefined,
+        playCount: entry.playCount ?? 0,
+        allPerfectPlusCount: entry.allPerfectPlusCount ?? 0,
       },
     ]
   })
