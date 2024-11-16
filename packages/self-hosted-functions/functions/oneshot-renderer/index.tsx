@@ -174,7 +174,10 @@ const enrichEntries = (entries: PlayEntry[], version: VersionEnum) => {
     return [
       {
         ...entry,
-        sheet,
+        sheet: {
+          ...sheet,
+          internalLevelValue: entry.sheetOverrides?.internalLevelValue ?? sheet.internalLevelValue,
+        },
         rating: sheet
           ? calculateRating(
               entry.sheetOverrides?.internalLevelValue ?? sheet.internalLevelValue ?? 0,
