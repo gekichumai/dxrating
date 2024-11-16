@@ -205,7 +205,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
           </div>
 
           <div tw="flex items-center text-[13px] leading-none font-bold">
-            {(entry.playCount || entry.newRecordCount) && (
+            {(entry.playCount || entry.allPerfectPlusCount) && (
               <span tw="leading-none bg-black/50 rounded-full leading-none px-[6px] py-[2px] text-white mr-1 flex items-center">
                 {entry.playCount && (
                   <div tw="flex items-center">
@@ -213,13 +213,13 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
                     <span tw="font-bold ml-0.5 text-[12px]">{entry.playCount}</span>
                   </div>
                 )}
-                {entry.playCount && entry.newRecordCount && (
+                {entry.playCount && entry.allPerfectPlusCount && (
                   <span tw="w-[1px] h-[10px] bg-white/40 ml-0.5 mr-[3px]" />
                 )}
-                {entry.newRecordCount && (
+                {entry.allPerfectPlusCount && (
                   <div tw="flex items-center">
-                    <span tw="opacity-40 text-[7px] tracking-tighter">NRC</span>
-                    <span tw="font-bold ml-0.5 text-[12px]">{entry.newRecordCount}</span>
+                    <span tw="opacity-40 text-[7px] tracking-tighter">AP+</span>
+                    <span tw="font-bold ml-0.5 text-[12px]">{entry.allPerfectPlusCount}</span>
                   </div>
                 )}
               </span>

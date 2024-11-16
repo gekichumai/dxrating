@@ -20,7 +20,7 @@ type PlayEntry = {
   sheetId: string
   achievementRate: number
   playCount?: number
-  newRecordCount?: number
+  allPerfectPlusCount?: number
   achievementAccuracy?: 'fc' | 'fcp' | 'ap' | 'app'
   achievementSync?: 'sp' | 'fsp' | 'fsd' | 'fsdp'
   achievementDXScore?: {
@@ -150,6 +150,8 @@ const enrichEntries = (entries: PlayEntry[], version: VersionEnum) => {
         !['fc', 'fcp', 'ap', 'app'].includes(entry.achievementAccuracy)) ||
       (entry.achievementSync && !['sp', 'fsp', 'fsd', 'fsdp'].includes(entry.achievementSync)) ||
       (entry.playCount && (typeof entry.playCount !== 'number' || entry.playCount < 0)) ||
+      (entry.allPerfectPlusCount &&
+        (typeof entry.allPerfectPlusCount !== 'number' || entry.allPerfectPlusCount < 0)) ||
       (entry.achievementDXScore &&
         (typeof entry.achievementDXScore.achieved !== 'number' ||
           typeof entry.achievementDXScore.total !== 'number' ||
