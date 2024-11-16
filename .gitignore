@@ -45,3 +45,5 @@ out/*
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+packages/self-hosted-functions/functions/oneshot-renderer/precalculate-demo.json
