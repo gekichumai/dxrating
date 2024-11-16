@@ -3,6 +3,8 @@ import { Resvg } from '@resvg/resvg-js'
 import fs from 'fs/promises'
 import Koa from 'koa'
 import satori, { Font } from 'satori'
+import sharp from 'sharp'
+import { calculateDXScoreStars } from './calculateDXScore'
 import { Rating, calculateRating } from './calculateRating'
 import { demo } from './demo'
 import { renderContent } from './renderContent'
@@ -14,6 +16,19 @@ export const ASSETS_BASE_DIR = process.env.ASSETS_BASE_DIR
 
 export type Region = 'jp' | 'intl' | 'cn' | '_generic'
 
+type PlayEntry = {
+  sheetId: string
+  achievementRate: number
+  playCount?: number
+  newRecordCount?: number
+  achievementAccuracy?: 'fc' | 'fcp' | 'ap' | 'app'
+  achievementSync?: 'sp' | 'fsp' | 'fsd' | 'fsdp'
+  achievementDXScore?: {
+    achieved: number
+    total: number
+  }
+}
+
 // declare a new attribute `tw` for JSX elements
 declare module 'react' {
   interface HTMLAttributes<T> extends DOMAttributes<T> {
@@ -21,10 +36,14 @@ declare module 'react' {
   }
 }
 
-export interface RenderData {
+export interface RenderData extends PlayEntry {
   sheet: FlattenedSheet
-  achievementRate: number
   rating: Rating
+  dxScore?: {
+    achieved: number
+    total: number
+    stars: number
+  }
 }
 const CANONICAL_ID_PARTS_SEPARATOR = '__dxrt__'
 
@@ -119,21 +138,47 @@ type FlattenedSheet = Song &
     releaseDateTimestamp: number
   }
 
-const enrichEntries = (
-  entries: { sheetId: string; achievementRate: number }[],
-  version: VersionEnum
-) => {
+const enrichEntries = (entries: PlayEntry[], version: VersionEnum) => {
   return entries.flatMap((entry) => {
+    // check data validity
+    if (
+      !entry.sheetId ||
+      typeof entry.achievementRate !== 'number' ||
+      entry.achievementRate < 0 ||
+      entry.achievementRate > 101 ||
+      (entry.achievementAccuracy &&
+        !['fc', 'fcp', 'ap', 'app'].includes(entry.achievementAccuracy)) ||
+      (entry.achievementSync && !['sp', 'fsp', 'fsd', 'fsdp'].includes(entry.achievementSync)) ||
+      (entry.playCount && (typeof entry.playCount !== 'number' || entry.playCount < 0)) ||
+      (entry.achievementDXScore &&
+        (typeof entry.achievementDXScore.achieved !== 'number' ||
+          typeof entry.achievementDXScore.total !== 'number' ||
+          entry.achievementDXScore.achieved < 0 ||
+          entry.achievementDXScore.total < 0))
+    ) {
+      return []
+    }
+
     const sheet = flattenedSheets.get(version)?.get(entry.sheetId)
     if (!sheet) {
       return []
     }
     return [
       {
+        ...entry,
         sheet,
-        achievementRate: entry.achievementRate,
         rating: sheet
           ? calculateRating(sheet.internalLevelValue ?? 0, entry.achievementRate)
+          : undefined,
+        dxScore: entry.achievementDXScore
+          ? {
+              achieved: entry.achievementDXScore.achieved,
+              total: entry.achievementDXScore.total,
+              stars: calculateDXScoreStars(
+                entry.achievementDXScore.achieved,
+                entry.achievementDXScore.total
+              ),
+            }
           : undefined,
       },
     ]
@@ -142,8 +187,8 @@ const enrichEntries = (
 
 const prepareCalculatedEntries = (
   calculatedEntries: {
-    b15: { sheetId: string; achievementRate: number }[]
-    b35: { sheetId: string; achievementRate: number }[]
+    b15: PlayEntry[]
+    b35: PlayEntry[]
   },
   version: VersionEnum
 ): { b15: RenderData[]; b35: RenderData[] } => {
@@ -168,10 +213,7 @@ const prepareCalculatedEntries = (
 }
 
 const calculateEntries = (
-  entries: {
-    sheetId: string
-    achievementRate: number
-  }[],
+  entries: PlayEntry[],
   version: VersionEnum
 ): { b15: RenderData[]; b35: RenderData[] } => {
   const mapped = enrichEntries(entries, version).filter(
@@ -274,10 +316,6 @@ export const handler = async (ctx: Koa.Context) => {
 
   if (ctx.query.pixelated) {
     timer.start('resvg_init')
-    let width = typeof ctx.query.width === 'string' ? parseInt(ctx.query.width) : ONESHOT_WIDTH * 2
-    if (Number.isNaN(width) || !Number.isFinite(width) || width < 1 || width > 3000) {
-      width = ONESHOT_WIDTH * 2
-    }
     const resvg = new Resvg(svg, {
       languages: ['en', 'ja'],
       shapeRendering: 2,
@@ -285,9 +323,8 @@ export const handler = async (ctx: Koa.Context) => {
       imageRendering: 0,
       fitTo: {
         mode: 'width',
-        value: width,
+        value: ONESHOT_WIDTH * 2,
       },
-      dpi: 600,
     })
     timer.stop('resvg_init')
 
@@ -299,10 +336,33 @@ export const handler = async (ctx: Koa.Context) => {
     const pngBuffer = pngData.asPng()
     timer.stop('resvg_as_png')
 
+    let width = typeof ctx.query.width === 'string' ? parseInt(ctx.query.width) : ONESHOT_WIDTH * 2
+    if (Number.isNaN(width) || !Number.isFinite(width) || width < 1 || width > 3000) {
+      width = ONESHOT_WIDTH * 2
+    }
+
+    timer.start('result_buffer')
+    const { buffer, type } = await (async () => {
+      let s = sharp(pngBuffer)
+      if (width !== ONESHOT_WIDTH * 2) {
+        s = s.resize({ width })
+      }
+
+      if (ctx.query.format === 'png') {
+        return { buffer: await s.png().toBuffer(), type: 'image/png' }
+      }
+
+      return {
+        buffer: await s.jpeg({ quality: 90, progressive: true }).toBuffer(),
+        type: 'image/jpeg',
+      }
+    })()
+    timer.stop('result_buffer')
+
     ctx.set('Server-Timing', timer.get().join(', '))
 
-    ctx.type = 'image/png'
-    ctx.body = pngBuffer
+    ctx.type = type
+    ctx.body = buffer
     return
   }
 

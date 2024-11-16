@@ -4,7 +4,6 @@ import clsx from 'clsx'
 import fs from 'fs/promises'
 import { FC, PropsWithChildren } from 'react'
 import { ASSETS_BASE_DIR, Region, RenderData } from '.'
-import { maskGradientStepsEaseOutCirc } from './bezier'
 
 interface VersionTheme {
   background: string
@@ -69,6 +68,13 @@ const DIFFICULTIES: Record<DifficultyEnum, { title: string; color: string; inver
   },
 }
 
+const estimateTitleCharacterLength = (title: string) => {
+  // assume english characters as 1 and japanese characters as 2
+  const englishCount = (title.match(/[A-Za-z]/g) || []).length
+  const nonEnglishCount = title.length - englishCount
+  return englishCount + nonEnglishCount * 2
+}
+
 const renderCell = async (entry: RenderData | undefined, i: number) => {
   if (!entry) {
     return (
@@ -78,7 +84,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
     )
   }
 
-  const [coverImage, typeImage] = await Promise.all([
+  const [coverImage, typeImage, accuracyImage, syncImage] = await Promise.all([
     fs.readFile(
       ASSETS_BASE_DIR + '/images/cover/v2/' + entry.sheet.imageName.replace('.png', '.webp')
     ),
@@ -86,95 +92,175 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
       ASSETS_BASE_DIR +
         `/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`
     ),
+    fs.readFile(
+      ASSETS_BASE_DIR + `/images/play-achievement/${entry.achievementAccuracy ?? 'blank'}.png`
+    ),
+    fs.readFile(
+      ASSETS_BASE_DIR + `/images/play-achievement/${entry.achievementSync ?? 'blank'}.png`
+    ),
   ])
 
   const theme = DIFFICULTIES[entry.sheet.difficulty]
 
   const backgroundColor = theme.inverted ? '#EBCFFF' : theme.color
   const foregroundColor = theme.inverted ? theme.color : '#fff'
-  const shadowColor = theme.inverted ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'
-  const adornmentColor = theme.inverted ? '#000000a0' : '#ffffffa0'
+  const shadowColor = theme.inverted ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)'
+
+  const starImageFile = (() => {
+    if (!entry.dxScore) return null
+    switch (entry.dxScore.stars) {
+      case 5:
+        return ASSETS_BASE_DIR + '/images/dxscore-star/3.png'
+      case 4:
+      case 3:
+        return ASSETS_BASE_DIR + '/images/dxscore-star/2.png'
+      case 2:
+      case 1:
+        return ASSETS_BASE_DIR + '/images/dxscore-star/1.png'
+    }
+  })()
+  const starImage = starImageFile && (await fs.readFile(starImageFile)).buffer
 
   return (
     <div key={entry.sheet.id} tw="w-1/5 p-[4px] flex h-[116px]">
       <div
         tw="h-full w-full rounded-lg flex items-start justify-start p-[10px] relative overflow-hidden"
         style={{
-          background: `linear-gradient(135deg, ${backgroundColor}, ${backgroundColor}cc)`,
+          background: `linear-gradient(135deg, ${backgroundColor}, ${backgroundColor} 65%, ${backgroundColor}88)`,
           color: foregroundColor,
           boxShadow: '0 0 3px 0 rgba(0,0,0,0.5)',
         }}
       >
         <img
-          // ignore the ts error here
           // @ts-expect-error
           src={coverImage.buffer}
           alt={entry.sheet.imageName}
           tw="h-[108px] w-[108px] absolute top-0 right-[-1px]"
           style={{
-            maskImage: `linear-gradient(to right, rgba(255,255,255,0) 0%, ${maskGradientStepsEaseOutCirc})`,
+            maskImage: `linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 10%, rgba(255,255,255,1) 100%)`,
             maskRepeat: 'no-repeat',
           }}
         />
-        <div tw="flex flex-col items-start justify-start relative h-full mr-[54px]">
+        <div tw="flex flex-col items-start justify-between relative h-full mr-[54px]">
           <span
-            tw="overflow-hidden font-bold w-[200px]"
+            tw="overflow-hidden font-bold w-[180px] h-[19px]"
             lang="ja"
             style={{
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               textShadow: '0 0 2px ' + shadowColor,
-              lineHeight: '16px',
+              lineHeight: '15px',
               fontSize: (() => {
-                const length = entry.sheet.title.length
-                if (length <= 5) return '15px'
-                if (length <= 10) return '14.5px'
-                if (length <= 15) return '14px'
-                return '13px'
+                const length = estimateTitleCharacterLength(entry.sheet.title)
+                if (length <= 14) return '15px'
+                if (length <= 17) return '14.5px'
+                if (length <= 20) return '14px'
+                if (length <= 23) return '13.5px'
+                if (length <= 26) return '13px'
+                return '12.5px'
               })(),
             }}
           >
             {entry.sheet.title}
           </span>
 
-          <div tw="text-sm leading-none mt-1 flex items-center">
-            {/* ignore the ts error here
-                        @ts-expect-error */}
-            <img src={typeImage.buffer} alt="" tw="h-[20px] mr-1" />
+          <div tw="text-sm leading-none flex items-center">
+            <img
+              // @ts-expect-error
+              src={typeImage.buffer}
+              alt=""
+              tw="h-[20px] mr-1"
+              style={{ filter: 'saturate(0.75) brightness(0.95) contrast(0.9)' }}
+            />
             <span
-              tw="text-[10px] bg-black/50 rounded-full px-[6px] py-[3px] mb-[2px] leading-none font-bold mr-1 flex items-center text-white"
+              tw="text-[10px] bg-black/35 rounded-full px-[6px] py-[2px] mb-[2px] leading-none mr-1 flex items-center text-white"
               style={{
-                boxShadow: '1px 1px 0 rgba(0,0,0,0.35)',
+                boxShadow: '0 0 0 1px rgba(0,0,0,0.42)',
               }}
             >
-              <span>{DIFFICULTIES[entry.sheet.difficulty].title}</span>
+              <span tw="opacity-80">{DIFFICULTIES[entry.sheet.difficulty].title}</span>
 
-              <div tw="w-[1px] h-[10px] bg-white/40 mx-1" />
-
-              <span>{entry.sheet.internalLevelValue.toFixed(1)}</span>
+              <span tw="font-bold ml-0.5">{entry.sheet.internalLevelValue.toFixed(1)}</span>
             </span>
           </div>
 
-          <div tw="flex items-center text-[14px] bg-black/50 rounded-full leading-none pl-[8px] pr-[2px] py-[2px] font-bold mt-1 text-white">
-            <span tw="text-sm leading-none">{entry.achievementRate.toFixed(4)}%</span>
+          <div tw="flex items-center text-[13px] leading-none font-bold">
+            <span tw="text-[12px] leading-none bg-black/50 rounded-full leading-none px-[6px] py-[2px] font-bold text-white">
+              {entry.rating.ratingAwardValue}
+            </span>
 
-            <span tw="leading-none font-normal ml-1 opacity-80 flex items-center">
+            <span tw="text-sm leading-none ml-1" style={{ textShadow: '0 0 2px ' + shadowColor }}>
+              {entry.achievementRate.toFixed(4)}%
+            </span>
+
+            <span
+              tw="leading-none font-normal ml-1 opacity-80 flex items-center"
+              style={{ textShadow: '0 0 2px ' + shadowColor }}
+            >
               <span tw="text-sm leading-none">
                 {entry.rating.rank?.replace('p', '')?.toUpperCase()}
               </span>
               {entry.rating.rank?.includes('p') && <span tw="text-[15px] leading-none">+</span>}
             </span>
+          </div>
 
-            <span tw="text-[12px] leading-none bg-black/50 rounded-full leading-none px-[6px] py-[2px] font-bold ml-1">
-              {entry.rating.ratingAwardValue}
-            </span>
+          <div tw="flex items-center text-[13px] leading-none font-bold">
+            {(entry.playCount || entry.newRecordCount) && (
+              <span tw="leading-none bg-black/50 rounded-full leading-none px-[6px] py-[2px] text-white mr-1 flex items-center">
+                {entry.playCount && (
+                  <div tw="flex items-center">
+                    <span tw="opacity-40 text-[9px] tracking-tighter">PC</span>
+                    <span tw="font-bold ml-0.5 text-[12px]">{entry.playCount}</span>
+                  </div>
+                )}
+                {entry.playCount && entry.newRecordCount && (
+                  <span tw="w-[1px] h-[10px] bg-white/40 ml-0.5 mr-[3px]" />
+                )}
+                {entry.newRecordCount && (
+                  <div tw="flex items-center">
+                    <span tw="opacity-40 text-[7px] tracking-tighter">NRC</span>
+                    <span tw="font-bold ml-0.5 text-[12px]">{entry.newRecordCount}</span>
+                  </div>
+                )}
+              </span>
+            )}
+
+            <img
+              // @ts-expect-error
+              src={accuracyImage.buffer}
+              alt=""
+              tw={`h-[22px] w-[22px] -ml-0.5 ${entry.achievementAccuracy ? '' : 'opacity-80'}`}
+            />
+
+            <img
+              // @ts-expect-error
+              src={syncImage.buffer}
+              alt=""
+              tw={`h-[22px] w-[22px] ${entry.achievementSync ? '' : 'opacity-80'}`}
+            />
+
+            {entry.dxScore && (
+              <div tw="flex flex-col items-start leading-none leading-none ml-1 relative">
+                <span tw="text-[9px] leading-none" style={{ textShadow: `0 0 1px ${shadowColor}` }}>
+                  {entry.dxScore.achieved} / {entry.dxScore.total}
+                </span>
+
+                <div tw="flex items-center -mt-[1px]">
+                  {starImage ? (
+                    Array.from({ length: entry.dxScore.stars }).map((_, i) => (
+                      // @ts-expect-error
+                      <img key={i} src={starImage} alt="" tw="h-[12px] w-[12px] -ml-0.5" />
+                    ))
+                  ) : (
+                    <div tw="h-[12px] w-[12px] -ml-0.5" />
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        <div
-          tw="absolute bottom-2 right-2 text-[9px] font-bold leading-none"
-          style={{ color: adornmentColor }}
-        >
+        <div tw="absolute bottom-1 right-1 text-[9px] font-bold leading-none flex rounded-md justify-center w-[24px] py-[2px] bg-black/50 text-white">
           {'#' + (i + 1)}
         </div>
       </div>
