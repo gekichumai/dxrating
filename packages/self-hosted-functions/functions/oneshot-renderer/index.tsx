@@ -302,6 +302,7 @@ export const handler = async (ctx: Koa.Context) => {
   const data = body.calculatedEntries
     ? prepareCalculatedEntries(body.calculatedEntries, version)
     : calculateEntries(body.entries, version)
+  console.log('received data', JSON.stringify(data))
   timer.stop('calc')
 
   timer.start('jsx')
