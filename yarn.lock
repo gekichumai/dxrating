@@ -1412,6 +1412,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^6.21.0"
     "@typescript-eslint/parser": "npm:^6.21.0"
     "@unocss/preset-mini": "npm:^0.58.9"
+    "@unocss/preset-typography": "npm:^0.64.1"
     "@unocss/preset-wind": "npm:^0.58.9"
     "@unocss/reset": "npm:^0.58.9"
     "@vitejs/plugin-react": "npm:^4.3.2"
@@ -4153,6 +4154,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@unocss/core@npm:0.64.1, @unocss/core@npm:^0.64.1":
+  version: 0.64.1
+  resolution: "@unocss/core@npm:0.64.1"
+  checksum: 10c0/ff8ac20b84ddc8e948f1f9b41ff4e02a0c449da8c4d598302051e96c38b15f5aa9e054cb21fc0c77c8b904c87dff443bdf60cb2994a9bf94b5163ef74fb3dad5
+  languageName: node
+  linkType: hard
+
 "@unocss/extractor-arbitrary-variants@npm:0.58.9":
   version: 0.58.9
   resolution: "@unocss/extractor-arbitrary-variants@npm:0.58.9"
@@ -4168,6 +4176,15 @@ __metadata:
   dependencies:
     "@unocss/core": "npm:0.63.4"
   checksum: 10c0/84dfc50a740c3f2d88a44bc389eac08ba2423348b65dc3687106170f5234a6808dd7714abfd66e1804320e0769650c2e56e2e16d9b9e772958c5fa8edd84a1f8
+  languageName: node
+  linkType: hard
+
+"@unocss/extractor-arbitrary-variants@npm:0.64.1":
+  version: 0.64.1
+  resolution: "@unocss/extractor-arbitrary-variants@npm:0.64.1"
+  dependencies:
+    "@unocss/core": "npm:0.64.1"
+  checksum: 10c0/32976cf84935ed15ae252fdce1f9f49014c57b242c53c27b4ff9030fc17f1006e927263de4eb5dece380a4a36f6c4cf59f57a0079521f4a49c6ef82241088c84
   languageName: node
   linkType: hard
 
@@ -4241,6 +4258,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@unocss/preset-mini@npm:0.64.1":
+  version: 0.64.1
+  resolution: "@unocss/preset-mini@npm:0.64.1"
+  dependencies:
+    "@unocss/core": "npm:0.64.1"
+    "@unocss/extractor-arbitrary-variants": "npm:0.64.1"
+    "@unocss/rule-utils": "npm:0.64.1"
+  checksum: 10c0/63599ee56a2897806ef4b64f183e8c54d43d12cb827ab69b9233124cc1423f41d176ee316147e04b3747be42880fbd4c0a259e17e7a5b2d743328bd5a9da7360
+  languageName: node
+  linkType: hard
+
 "@unocss/preset-tagify@npm:0.63.4":
   version: 0.63.4
   resolution: "@unocss/preset-tagify@npm:0.63.4"
@@ -4257,6 +4285,16 @@ __metadata:
     "@unocss/core": "npm:0.63.4"
     "@unocss/preset-mini": "npm:0.63.4"
   checksum: 10c0/30709333994089b4462b7d4d20dfdaebf79af4475af77f7650f7145dd41727956c9fa5f5e1a1c30b950064d48c15999c4d00fb1365b2d1fd700ba992673b75f7
+  languageName: node
+  linkType: hard
+
+"@unocss/preset-typography@npm:^0.64.1":
+  version: 0.64.1
+  resolution: "@unocss/preset-typography@npm:0.64.1"
+  dependencies:
+    "@unocss/core": "npm:0.64.1"
+    "@unocss/preset-mini": "npm:0.64.1"
+  checksum: 10c0/f9337b57c87cc79cb544ea41e1e27037dc9543abe6c368fe1faebe7e369370bc8acbbe1aa2076181574e52df75aa379f34b280b17035a1e4c1c5ef6d73fefa26
   languageName: node
   linkType: hard
 
@@ -4335,6 +4373,16 @@ __metadata:
     "@unocss/core": "npm:^0.63.4"
     magic-string: "npm:^0.30.11"
   checksum: 10c0/8be7395ba4c3fcfc905bb67a1e8aea8e245fac3767574c9a2f725c9f03318aa57960dee1b9b863b43f564dbf63451bf48a3ed57e8a8186ce3f726739059bb731
+  languageName: node
+  linkType: hard
+
+"@unocss/rule-utils@npm:0.64.1":
+  version: 0.64.1
+  resolution: "@unocss/rule-utils@npm:0.64.1"
+  dependencies:
+    "@unocss/core": "npm:^0.64.1"
+    magic-string: "npm:^0.30.12"
+  checksum: 10c0/7f459868094e8e5a787f0354e51c2f77d87cba0c13dd91269bd7e710344fc76b7d50a29cb6fe76401395e85cc974f59b20fbf7eb0142b433c04768085f04d70c
   languageName: node
   linkType: hard
 
@@ -8959,6 +9007,15 @@ __metadata:
   dependencies:
     "@jridgewell/sourcemap-codec": "npm:^1.5.0"
   checksum: 10c0/b9eb370773d0bd90ca11a848753409d8e5309b1ad56d2a1aa49d6649da710a6d2fe7237ad1a643c5a5d3800de2b9946ed9690acdfc00e6cc1aeafff3ab1752c4
+  languageName: node
+  linkType: hard
+
+"magic-string@npm:^0.30.12":
+  version: 0.30.13
+  resolution: "magic-string@npm:0.30.13"
+  dependencies:
+    "@jridgewell/sourcemap-codec": "npm:^1.5.0"
+  checksum: 10c0/a275faeca1564c545019b4742c38a42ca80226c8c9e0805c32d1a1cc58b0e6ff7bbd914ed885fd10043858a7da0f732cb8f49c8975c3ecebde9cad4b57db5115
   languageName: node
   linkType: hard
 
