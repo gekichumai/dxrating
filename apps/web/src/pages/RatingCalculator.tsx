@@ -10,6 +10,7 @@ import {
   Grow,
   IconButton,
   Paper,
+  styled,
   Switch,
   Table,
   TableBody,
@@ -17,17 +18,18 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  styled,
 } from '@mui/material'
 import {
-  Row,
-  SortingState,
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
+  Row,
+  SortingState,
   useReactTable,
 } from '@tanstack/react-table'
+import IconMdiArrowDown from '~icons/mdi/arrow-down'
+import IconMdiTrashCan from '~icons/mdi/trash-can'
 import clsx from 'clsx'
 import { FC, ForwardedRef, forwardRef, memo, useCallback, useMemo, useState } from 'react'
 import { ListActions } from 'react-use/lib/useList'
@@ -39,7 +41,6 @@ import {
   TableProps,
   TableVirtuoso,
 } from 'react-virtuoso'
-
 import { BetaBadge } from '../components/global/BetaBadge'
 import { ClearButton } from '../components/rating/io/ClearButton'
 import { RenderToOneShotImageButton } from '../components/rating/io/export/RenderToOneShotImageButton'
@@ -55,9 +56,6 @@ import { SheetListItem, SheetListItemContent } from '../components/sheet/SheetLi
 import { useRatingCalculatorContext } from '../models/context/RatingCalculatorContext'
 import { FlattenedSheet, useSheets } from '../songs'
 import { Rating } from '../utils/rating'
-
-import IconMdiArrowDown from '~icons/mdi/arrow-down'
-import IconMdiTrashCan from '~icons/mdi/trash-can'
 
 export interface Entry {
   sheet: FlattenedSheet

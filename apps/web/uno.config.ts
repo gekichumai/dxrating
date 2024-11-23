@@ -1,10 +1,10 @@
 // uno.config.ts
 import { handler } from '@unocss/preset-mini/utils'
+import presetTypography from '@unocss/preset-typography'
 import presetWind from '@unocss/preset-wind'
 import { defineConfig, presetUno } from 'unocss'
 import presetAnimations from 'unocss-preset-animations'
 import { presetShadcn } from 'unocss-preset-shadcn'
-import presetTypography from '@unocss/preset-typography'
 
 export default defineConfig({
   rules: [

@@ -1,0 +1,5 @@
+ios/
+android/
+dist/
+node_modules/
+.turbo/

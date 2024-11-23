@@ -6,77 +6,69 @@ import {
   DialogContentText,
   DialogTitle,
   Grow,
-} from "@mui/material";
-import { usePostHog } from "posthog-js/react";
-import { FC, useEffect, useRef, useState } from "react";
-import useSWR from "swr";
-
-import {
-  useAppContext,
-  useAppContextDXDataVersion,
-} from "../../../../models/context/useAppContext";
-import {
-  RatingCalculatorEntry,
-  useRatingEntries,
-} from "../../useRatingEntries";
-
-import IconMdiImage from "~icons/mdi/image";
+} from '@mui/material'
+import IconMdiImage from '~icons/mdi/image'
+import { usePostHog } from 'posthog-js/react'
+import { FC, useEffect, useRef, useState } from 'react'
+import useSWR from 'swr'
+import { useAppContext, useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
+import { RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
 
 const useElapsedTime = (isLoading: boolean) => {
-  const startTime = useRef<number | null>(null);
-  const [elapsedTime, setElapsedTime] = useState<number | null>(null);
-  const timer = useRef<number | null>(null);
+  const startTime = useRef<number | null>(null)
+  const [elapsedTime, setElapsedTime] = useState<number | null>(null)
+  const timer = useRef<number | null>(null)
 
   useEffect(() => {
     if (isLoading) {
-      startTime.current = Date.now();
-      setElapsedTime(null);
+      startTime.current = Date.now()
+      setElapsedTime(null)
       timer.current = window.setInterval(() => {
         if (startTime.current) {
-          setElapsedTime(Date.now() - startTime.current);
+          setElapsedTime(Date.now() - startTime.current)
         }
-      }, 1 / 60);
+      }, 1 / 60)
     } else {
       if (timer.current !== null) {
-        clearTimeout(timer.current);
+        clearTimeout(timer.current)
       }
     }
 
     return () => {
       if (timer.current !== null) {
-        clearTimeout(timer.current);
+        clearTimeout(timer.current)
       }
-    };
-  }, [isLoading]);
+    }
+  }, [isLoading])
 
-  return elapsedTime;
-};
+  return elapsedTime
+}
 
 const mapCalculatedEntries = (entry: RatingCalculatorEntry) => {
   return {
     sheetId: entry.sheet.id,
     achievementRate: entry.achievementRate,
-  };
-};
+  }
+}
 
 const RenderToOneShotImageDialogContent = () => {
-  const posthog = usePostHog();
-  const { b15Entries, b35Entries, allEntries } = useRatingEntries();
-  const version = useAppContextDXDataVersion();
-  const { region } = useAppContext();
+  const posthog = usePostHog()
+  const { b15Entries, b35Entries, allEntries } = useRatingEntries()
+  const version = useAppContextDXDataVersion()
+  const { region } = useAppContext()
 
   const { data, isValidating, error } = useSWR(
     `miruku::functions/oneshot-renderer?data=${JSON.stringify(
-      allEntries,
+      allEntries
     )}&version=${version}&region=${region}`,
     async () => {
-      const from = Date.now();
+      const from = Date.now()
       const response = await fetch(
-        "https://miruku.dxrating.net/functions/render-oneshot/v0?pixelated=1",
+        'https://miruku.dxrating.net/functions/render-oneshot/v0?pixelated=1',
         {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             version,
@@ -86,31 +78,29 @@ const RenderToOneShotImageDialogContent = () => {
               b35: b35Entries.map(mapCalculatedEntries),
             },
           }),
-        },
-      );
-      const blob = await response.blob();
+        }
+      )
+      const blob = await response.blob()
 
-      posthog?.capture("oneshot_rendered", {
+      posthog?.capture('oneshot_rendered', {
         duration_seconds: Date.now() - from,
-      });
+      })
 
-      return URL.createObjectURL(blob);
+      return URL.createObjectURL(blob)
     },
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
       revalidateIfStale: false,
-    },
-  );
-  const elapsedTime = useElapsedTime(isValidating);
+    }
+  )
+  const elapsedTime = useElapsedTime(isValidating)
 
   return (
     <>
-      <DialogTitle className="text-lg font-bold pb-0">
-        Render as OneShot Image
-      </DialogTitle>
+      <DialogTitle className="text-lg font-bold pb-0">Render as OneShot Image</DialogTitle>
 
-      <DialogContent classes={{ root: "!pt-4" }}>
+      <DialogContent classes={{ root: '!pt-4' }}>
         <DialogContentText>
           {isValidating ? (
             <div className="flex flex-col relative">
@@ -119,19 +109,15 @@ const RenderToOneShotImageDialogContent = () => {
               <div className="absolute inset-0 flex flex-col gap-1 items-center justify-center p-4">
                 <CircularProgress />
 
-                <div className="text-lg font-bold tracking-tight">
-                  Rendering...
-                </div>
+                <div className="text-lg font-bold tracking-tight">Rendering...</div>
 
                 <div className="text-base font-bold tabular-nums tracking-tight font-mono">
-                  {elapsedTime
-                    ? `${(elapsedTime / 1000).toFixed(1)}s`
-                    : "Calculating..."}
+                  {elapsedTime ? `${(elapsedTime / 1000).toFixed(1)}s` : 'Calculating...'}
                 </div>
 
                 <div className="text-sm">
-                  This may take a while depending on the current server load;
-                  typically rendering will finish within 10 seconds.
+                  This may take a while depending on the current server load; typically rendering
+                  will finish within 10 seconds.
                 </div>
               </div>
             </div>
@@ -161,26 +147,26 @@ const RenderToOneShotImageDialogContent = () => {
             </div>
 
             <div className="text-xs">
-              This feature is in beta and may not work as expected. Please feel
-              free to report any issues or feedback to the developer :D
+              This feature is in beta and may not work as expected. Please feel free to report any
+              issues or feedback to the developer :D
             </div>
           </div>
         </DialogContentText>
       </DialogContent>
     </>
-  );
-};
+  )
+}
 
 export const RenderToOneShotImageButton: FC = () => {
-  const posthog = usePostHog();
-  const [open, setOpen] = useState(false);
+  const posthog = usePostHog()
+  const [open, setOpen] = useState(false)
 
   return (
     <>
       <Button
         onClick={() => {
-          setOpen(true);
-          posthog?.capture("oneshot_render_button_clicked");
+          setOpen(true)
+          posthog?.capture('oneshot_render_button_clicked')
         }}
         variant="contained"
         color="primary"
@@ -189,14 +175,9 @@ export const RenderToOneShotImageButton: FC = () => {
         Render as OneShot Image
       </Button>
 
-      <Dialog
-        TransitionComponent={Grow}
-        maxWidth="md"
-        open={open}
-        onClose={() => setOpen(false)}
-      >
+      <Dialog TransitionComponent={Grow} maxWidth="md" open={open} onClose={() => setOpen(false)}>
         <RenderToOneShotImageDialogContent />
       </Dialog>
     </>
-  );
-};
+  )
+}

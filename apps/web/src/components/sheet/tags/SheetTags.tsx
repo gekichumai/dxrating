@@ -1,25 +1,22 @@
-import { Chip } from "@mui/material";
-import { AnimatePresence, motion } from "framer-motion";
-import { FC, useMemo } from "react";
-
-import { FlattenedSheet } from "../../../songs";
-import { MotionButtonBase, MotionTooltip } from "../../../utils/motion";
-import { zoomTransitions } from "../../../utils/motionConstants";
-import { useLocalizedMessageTranslation } from "../../../utils/useLocalizedMessageTranslation";
-import { Markdown } from "../../global/Markdown";
-
-import { SheetTagsAddButton } from "./SheetTagsAddButton";
-import { useSheetTags } from "./useSheetTags";
-
-import IconMdiTag from "~icons/mdi/tag";
+import { Chip } from '@mui/material'
+import IconMdiTag from '~icons/mdi/tag'
+import { AnimatePresence, motion } from 'framer-motion'
+import { FC, useMemo } from 'react'
+import { FlattenedSheet } from '../../../songs'
+import { MotionButtonBase, MotionTooltip } from '../../../utils/motion'
+import { zoomTransitions } from '../../../utils/motionConstants'
+import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
+import { Markdown } from '../../global/Markdown'
+import { SheetTagsAddButton } from './SheetTagsAddButton'
+import { useSheetTags } from './useSheetTags'
 
 export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const localizeMessage = useLocalizedMessageTranslation();
-  const { data, isLoading } = useSheetTags(sheet);
+  const localizeMessage = useLocalizedMessageTranslation()
+  const { data, isLoading } = useSheetTags(sheet)
 
   const addButton = useMemo(() => {
-    return <SheetTagsAddButton key="add-button" sheet={sheet} />;
-  }, [sheet]);
+    return <SheetTagsAddButton key="add-button" sheet={sheet} />
+  }, [sheet])
 
   const inner = () => {
     if (isLoading || !data) {
@@ -29,11 +26,11 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           className="h-6 w-16 bg-gray-200 rounded-lg animate-pulse"
           disabled
         />
-      );
+      )
     }
 
     if (data.length === 0) {
-      return <>{addButton}</>;
+      return <>{addButton}</>
     }
 
     return (
@@ -54,21 +51,19 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
                 opacity: 1,
               },
               transition: {
-                type: "spring",
+                type: 'spring',
                 stiffness: 500,
                 damping: 30,
               },
             }}
             key={tag.id}
-            title={
-              <Markdown content={localizeMessage(tag.localized_description)} />
-            }
+            title={<Markdown content={localizeMessage(tag.localized_description)} />}
             arrow
             slotProps={{
               popper: {
                 modifiers: [
                   {
-                    name: "offset",
+                    name: 'offset',
                     options: {
                       offset: [0, -8],
                     },
@@ -91,8 +86,8 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
         {addButton}
       </>
-    );
-  };
+    )
+  }
 
   return (
     <div className="flex items-center gap-1">
@@ -104,5 +99,5 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         <AnimatePresence mode="popLayout">{inner()}</AnimatePresence>
       </motion.div>
     </div>
-  );
-};
+  )
+}

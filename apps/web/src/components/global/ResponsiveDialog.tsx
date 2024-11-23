@@ -1,40 +1,39 @@
-import { Dialog, DialogContent, Grow, SwipeableDrawer } from "@mui/material";
-import { FC, ReactNode, useEffect, useState } from "react";
-
-import { useIsLargeDevice } from "../../utils/breakpoints";
+import { Dialog, DialogContent, Grow, SwipeableDrawer } from '@mui/material'
+import { FC, ReactNode, useEffect, useState } from 'react'
+import { useIsLargeDevice } from '../../utils/breakpoints'
 
 export const ResponsiveDialog: FC<{
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  children?: () => ReactNode;
+  open: boolean
+  setOpen: (open: boolean) => void
+  children?: () => ReactNode
 }> = ({ open, setOpen, children }) => {
-  const isLargeDevice = useIsLargeDevice();
-  const [internalOpen, setInternalOpen] = useState(false);
+  const isLargeDevice = useIsLargeDevice()
+  const [internalOpen, setInternalOpen] = useState(false)
 
   // drawerOpen sets itself to true after internalOpen = true on the next render,
   // and sets itself to false immediately after internalOpen = false
-  const [_drawerOpen, _setDrawerOpen] = useState(false);
+  const [_drawerOpen, _setDrawerOpen] = useState(false)
   useEffect(() => {
     if (internalOpen) {
-      _setDrawerOpen(true);
+      _setDrawerOpen(true)
     } else {
-      _setDrawerOpen(false);
+      _setDrawerOpen(false)
     }
-  }, [internalOpen]);
-  const drawerOpen = _drawerOpen && open;
+  }, [internalOpen])
+  const drawerOpen = _drawerOpen && open
 
   useEffect(() => {
     if (open) {
       setTimeout(() => {
-        setInternalOpen(true);
-      }, 0);
+        setInternalOpen(true)
+      }, 0)
     } else {
       const timeout = setTimeout(() => {
-        setInternalOpen(false);
-      }, 1000); // Adjust the delay time as needed
-      return () => clearTimeout(timeout);
+        setInternalOpen(false)
+      }, 1000) // Adjust the delay time as needed
+      return () => clearTimeout(timeout)
     }
-  }, [open]);
+  }, [open])
 
   return isLargeDevice ? (
     <>
@@ -61,15 +60,14 @@ export const ResponsiveDialog: FC<{
           onClose={() => setOpen(false)}
           onOpen={() => setOpen(true)}
           sx={{
-            "& .MuiDrawer-paper": {
-              height:
-                "calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 4rem)",
+            '& .MuiDrawer-paper': {
+              height: 'calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 4rem)',
             },
           }}
           PaperProps={{
             sx: {
-              "&": {
-                borderRadius: "0.75rem 0.75rem 0 0",
+              '&': {
+                borderRadius: '0.75rem 0.75rem 0 0',
               },
             },
           }}
@@ -81,5 +79,5 @@ export const ResponsiveDialog: FC<{
         </SwipeableDrawer>
       )}
     </>
-  );
-};
+  )
+}

@@ -17,86 +17,71 @@ import {
   Radio,
   RadioGroup,
   TextField,
-} from "@mui/material";
-import clsx from "clsx";
-import { FC, useEffect, useState } from "react";
-import { useLocalStorage } from "react-use";
-import { ListActions } from "react-use/lib/useList";
-
-import { useSheets } from "../../../../songs";
-import { PlayEntry } from "../../RatingCalculatorAddEntryForm";
-
-import {
-  FetchNetRecordProgressState,
-  importFromNETRecords,
-} from "./importFromNETRecords";
-import { ImportRegionSupportTag } from "./ImportRegionSupportTag";
-
-import IconMdiConnection from "~icons/mdi/connection";
+} from '@mui/material'
+import IconMdiConnection from '~icons/mdi/connection'
+import clsx from 'clsx'
+import { FC, useEffect, useState } from 'react'
+import { useLocalStorage } from 'react-use'
+import { ListActions } from 'react-use/lib/useList'
+import { useSheets } from '../../../../songs'
+import { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import { FetchNetRecordProgressState, importFromNETRecords } from './importFromNETRecords'
+import { ImportRegionSupportTag } from './ImportRegionSupportTag'
 
 interface AchievementRecord {
   sheet: {
-    songId: string;
-    type: "standard" | "dx" | "utage";
-    difficulty:
-      | "basic"
-      | "advanced"
-      | "expert"
-      | "master"
-      | "remaster"
-      | "utage";
-  };
+    songId: string
+    type: 'standard' | 'dx' | 'utage'
+    difficulty: 'basic' | 'advanced' | 'expert' | 'master' | 'remaster' | 'utage'
+  }
   achievement: {
-    rate: number;
+    rate: number
     dxScore: {
-      achieved: number;
-      total: number;
-    };
+      achieved: number
+      total: number
+    }
     flags:
-      | "fullCombo"
-      | "fullCombo+"
-      | "allPerfect"
-      | "allPerfect+"
-      | "syncPlay"
-      | "fullSync"
-      | "fullSync+"
-      | "fullSyncDX"
-      | "fullSyncDX+"[];
-  };
+      | 'fullCombo'
+      | 'fullCombo+'
+      | 'allPerfect'
+      | 'allPerfect+'
+      | 'syncPlay'
+      | 'fullSync'
+      | 'fullSync+'
+      | 'fullSyncDX'
+      | 'fullSyncDX+'[]
+  }
 }
 
-export type MusicRecord = AchievementRecord;
+export type MusicRecord = AchievementRecord
 export type RecentRecord = AchievementRecord & {
   play: {
-    track: number;
-    timestamp?: string;
-  };
-};
+    track: number
+    timestamp?: string
+  }
+}
 
 export const ImportFromNETRecordsListItem: FC<{
-  modifyEntries: ListActions<PlayEntry>;
-  onClose: () => void;
+  modifyEntries: ListActions<PlayEntry>
+  onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
   const handleClose = () => {
-    setOpen(false);
-    onClose();
-  };
+    setOpen(false)
+    onClose()
+  }
 
   return (
     <>
       {open && (
         <Dialog open={open} onClose={handleClose}>
-          <ImportFromNETRecordsDialogContent
-            modifyEntries={modifyEntries}
-            onClose={handleClose}
-          />
+          <ImportFromNETRecordsDialogContent modifyEntries={modifyEntries} onClose={handleClose} />
         </Dialog>
       )}
       <MenuItem
         className="max-w-xl"
         onClick={() => {
-          setOpen(true);
+          setOpen(true)
         }}
       >
         <ListItemIcon>
@@ -113,82 +98,73 @@ export const ImportFromNETRecordsListItem: FC<{
         />
       </MenuItem>
     </>
-  );
-};
-
-interface ImportFromNETRecordsProgress {
-  state: FetchNetRecordProgressState | "error";
-  progress: number;
+  )
 }
 
-export type AutoImportMode = boolean | "replace" | "merge";
+interface ImportFromNETRecordsProgress {
+  state: FetchNetRecordProgressState | 'error'
+  progress: number
+}
+
+export type AutoImportMode = boolean | 'replace' | 'merge'
 
 const ImportFromNETRecordsDialogContent: FC<{
-  modifyEntries: ListActions<PlayEntry>;
-  onClose: () => void;
+  modifyEntries: ListActions<PlayEntry>
+  onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
-  const [remember, setRemember] = useState(false);
-  const [region, setRegion] = useState<"intl" | "jp">("intl");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false)
+  const [region, setRegion] = useState<'intl' | 'jp'>('intl')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [autoImport, setAutoImport] = useLocalStorage<AutoImportMode>(
-    "rating-auto-import-from-net",
-    false,
-  );
-  const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState<ImportFromNETRecordsProgress | null>(
-    null,
-  );
+    'rating-auto-import-from-net',
+    false
+  )
+  const [busy, setBusy] = useState(false)
+  const [progress, setProgress] = useState<ImportFromNETRecordsProgress | null>(null)
   const mappedAutoImport =
-    autoImport === true
-      ? "replace"
-      : (autoImport as unknown) === "false"
-        ? false
-        : autoImport; // Legacy support
-  const { data: sheets } = useSheets();
+    autoImport === true ? 'replace' : (autoImport as unknown) === 'false' ? false : autoImport // Legacy support
+  const { data: sheets } = useSheets()
 
   useEffect(() => {
-    const stored = localStorage.getItem("import-net-records");
-    if (!stored) return;
-    const { region, username, password } = JSON.parse(stored);
-    setRegion(region);
-    setUsername(username);
-    setPassword(password);
-    setRemember(true);
-  }, []);
+    const stored = localStorage.getItem('import-net-records')
+    if (!stored) return
+    const { region, username, password } = JSON.parse(stored)
+    setRegion(region)
+    setUsername(username)
+    setPassword(password)
+    setRemember(true)
+  }, [])
 
   useEffect(() => {
     if (!remember) {
-      localStorage.removeItem("import-net-records");
+      localStorage.removeItem('import-net-records')
     } else {
-      localStorage.setItem(
-        "import-net-records",
-        JSON.stringify({ region, username, password }),
-      );
+      localStorage.setItem('import-net-records', JSON.stringify({ region, username, password }))
     }
-  }, [remember, region, username, password]);
+  }, [remember, region, username, password])
 
   const handleImport = async () => {
-    setBusy(true);
+    setBusy(true)
     try {
       await importFromNETRecords(
         sheets!,
         modifyEntries,
-        mappedAutoImport || "replace",
+        mappedAutoImport || 'replace',
         (state, progress) => {
-          setProgress({ state, progress });
-        },
-      );
-      onClose();
+          setProgress({ state, progress })
+        }
+      )
+      onClose()
     } catch (e) {
       setProgress((progress) => ({
-        state: "error",
+        state: 'error',
         progress: progress?.progress ?? 0,
-      }));
+      }))
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
-  };
+  }
 
   return (
     <>
@@ -200,16 +176,12 @@ const ImportFromNETRecordsDialogContent: FC<{
               label="Region"
               select
               value={region}
-              onChange={(event) =>
-                setRegion(event.target.value as "intl" | "jp")
-              }
+              onChange={(event) => setRegion(event.target.value as 'intl' | 'jp')}
             >
               <MenuItem value="intl">
                 <span>
                   <span>International </span>
-                  <span className="text-zinc-4 text-sm">
-                    (maimaidx-eng.com)
-                  </span>
+                  <span className="text-zinc-4 text-sm">(maimaidx-eng.com)</span>
                 </span>
               </MenuItem>
               <MenuItem value="jp">
@@ -229,8 +201,8 @@ const ImportFromNETRecordsDialogContent: FC<{
               autoComplete="off"
               autoCapitalize="none"
               inputProps={{
-                "data-sentry-ignore": true,
-                "data-1p-ignore": true,
+                'data-sentry-ignore': true,
+                'data-1p-ignore': true,
               }}
             />
           </FormControl>
@@ -243,8 +215,8 @@ const ImportFromNETRecordsDialogContent: FC<{
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="off"
               inputProps={{
-                "data-sentry-ignore": true,
-                "data-1p-ignore": true,
+                'data-sentry-ignore': true,
+                'data-1p-ignore': true,
               }}
             />
           </FormControl>
@@ -254,8 +226,8 @@ const ImportFromNETRecordsDialogContent: FC<{
               <Checkbox
                 checked={remember}
                 onChange={(event) => {
-                  setRemember(event.target.checked);
-                  if (!event.target.checked) setAutoImport(false);
+                  setRemember(event.target.checked)
+                  if (!event.target.checked) setAutoImport(false)
                 }}
               />
             }
@@ -274,33 +246,30 @@ const ImportFromNETRecordsDialogContent: FC<{
               <div className="flex flex-col">
                 <span>Auto-import on App Start</span>
                 <span className="text-xs text-zinc-500">
-                  Automatically start importing records from NET when you open
-                  DXRating. Requires "Remember Credentials" to be enabled.
+                  Automatically start importing records from NET when you open DXRating. Requires
+                  "Remember Credentials" to be enabled.
                 </span>
               </div>
             </FormLabel>
             <RadioGroup
               aria-labelledby="auto-import-label"
               value={mappedAutoImport}
-              onChange={(event) =>
-                setAutoImport(event.target.value as AutoImportMode)
-              }
+              onChange={(event) => setAutoImport(event.target.value as AutoImportMode)}
             >
               {[
                 {
-                  value: "false",
-                  title: "Disabled",
+                  value: 'false',
+                  title: 'Disabled',
                 },
                 {
-                  value: "replace",
-                  title: "Replace",
-                  subtitle: "Replaces all records",
+                  value: 'replace',
+                  title: 'Replace',
+                  subtitle: 'Replaces all records',
                 },
                 {
-                  value: "merge",
-                  title: "Merge",
-                  subtitle:
-                    "Overwrites record if higher, adds record if missing",
+                  value: 'merge',
+                  title: 'Merge',
+                  subtitle: 'Overwrites record if higher, adds record if missing',
                 },
               ].map(({ value, title, subtitle }) => (
                 <FormControlLabel
@@ -313,10 +282,7 @@ const ImportFromNETRecordsDialogContent: FC<{
                       <span className="leading-none">{title}</span>
                       {subtitle && (
                         <span
-                          className={clsx(
-                            "text-xs",
-                            !remember ? "text-zinc-400" : "text-zinc-500",
-                          )}
+                          className={clsx('text-xs', !remember ? 'text-zinc-400' : 'text-zinc-500')}
                         >
                           {subtitle}
                         </span>
@@ -336,13 +302,11 @@ const ImportFromNETRecordsDialogContent: FC<{
                 <LinearProgress
                   variant="determinate"
                   value={progress.progress * 100}
-                  color={progress.state === "error" ? "error" : "primary"}
+                  color={progress.state === 'error' ? 'error' : 'primary'}
                   className="w-full rounded-full max-w-md"
                 />
                 <span className="font-bold mt-1">Importing...</span>
-                <span className="text-zinc-500 font-mono text-sm">
-                  [ {progress.state} ]
-                </span>
+                <span className="text-zinc-500 font-mono text-sm">[ {progress.state} ]</span>
               </div>
 
               <div className="h-px w-full bg-gray-200 my-2" />
@@ -351,9 +315,8 @@ const ImportFromNETRecordsDialogContent: FC<{
 
           <div className="text-sm text-zinc-500 [&>p]:mb-1">
             <p className="font-bold">
-              Your credentials will not be stored, logged, or shared, and are
-              only used for the duration of this import process. If you wish,
-              you may{" "}
+              Your credentials will not be stored, logged, or shared, and are only used for the
+              duration of this import process. If you wish, you may{' '}
               <a
                 href="https://github.com/gekichumai/dxrating/tree/main/packages/self-hosted-functions"
                 target="_blank"
@@ -366,7 +329,7 @@ const ImportFromNETRecordsDialogContent: FC<{
             </p>
 
             <p className="text-xs text-zinc-4">
-              We are also in the progress of employing the{" "}
+              We are also in the progress of employing the{' '}
               <a
                 href="https://slsa.dev/"
                 target="_blank"
@@ -375,11 +338,10 @@ const ImportFromNETRecordsDialogContent: FC<{
               >
                 SLSA framework
               </a>
-              , including reproducible builds and signed container images to
-              help users determine the authenticity of the code running on our
-              server. Moreover, if demand arises, we will support connecting to
-              self-hosted instances of the NET import service so you can run it
-              on your own infra.
+              , including reproducible builds and signed container images to help users determine
+              the authenticity of the code running on our server. Moreover, if demand arises, we
+              will support connecting to self-hosted instances of the NET import service so you can
+              run it on your own infra.
             </p>
           </div>
         </DialogContentText>
@@ -400,15 +362,13 @@ const ImportFromNETRecordsDialogContent: FC<{
           ) : autoImport ? (
             <div className="flex flex-col gap-1 items-start py-1">
               <span className="leading-none">Re-import Now</span>
-              <span className="text-xs opacity-50 leading-none">
-                (auto-import enabled)
-              </span>
+              <span className="text-xs opacity-50 leading-none">(auto-import enabled)</span>
             </div>
           ) : (
-            "Import Once"
+            'Import Once'
           )}
         </Button>
       </DialogActions>
     </>
-  );
-};
+  )
+}

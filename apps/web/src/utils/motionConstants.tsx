@@ -9,8 +9,8 @@ export const zoomTransitions = {
     scale: 1,
   },
   transition: {
-    type: "spring",
+    type: 'spring',
     stiffness: 500,
     damping: 30,
   },
-};
+}

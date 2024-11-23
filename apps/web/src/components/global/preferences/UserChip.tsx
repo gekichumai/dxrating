@@ -19,18 +19,16 @@ import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useAsync, useAsyncFn } from 'react-use'
 import { useSWRConfig } from 'swr'
-
+import MdiAccountCheck from '~icons/mdi/account-check'
+import MdiAccountKey from '~icons/mdi/account-key'
+import MdiLogin from '~icons/mdi/login'
+import MdiLogout from '~icons/mdi/logout'
 import { useAuth } from '../../../models/context/AuthContext'
 import { supabase } from '../../../models/supabase'
 import { isBuildPlatformApp } from '../../../utils/env'
 import { useVersionTheme } from '../../../utils/useVersionTheme'
 import { Logo } from '../Logo'
 import { ResponsiveDialog } from '../ResponsiveDialog'
-
-import MdiAccountCheck from '~icons/mdi/account-check'
-import MdiAccountKey from '~icons/mdi/account-key'
-import MdiLogin from '~icons/mdi/login'
-import MdiLogout from '~icons/mdi/logout'
 
 const ThemedAuth: FC<{
   view?: ViewType

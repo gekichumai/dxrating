@@ -5,24 +5,21 @@ import {
   ListItemText,
   ListItemTextProps,
 } from '@mui/material'
+import MdiComment from '~icons/mdi/comment'
+import MdiLock from '~icons/mdi/lock'
+import MdiTrashCan from '~icons/mdi/trash-can'
 import clsx from 'clsx'
 import { usePostHog } from 'posthog-js/react'
 import { FC, HTMLAttributes, ImgHTMLAttributes, memo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { match } from 'ts-pattern'
-
 import { DIFFICULTIES } from '../../models/difficulties'
 import { FlattenedSheet } from '../../songs'
 import { useIsLargeDevice } from '../../utils/breakpoints'
 import { FadedImage } from '../global/FadedImage'
 import { ResponsiveDialog } from '../global/ResponsiveDialog'
-
 import { AddSheetAltNameButton } from './AddSheetAltNameButton'
 import { SheetDialogContent, SheetDialogContentProps } from './SheetDialogContent'
-
-import MdiComment from '~icons/mdi/comment'
-import MdiLock from '~icons/mdi/lock'
-import MdiTrashCan from '~icons/mdi/trash-can'
 
 export const SheetListItem: FC<{
   size?: 'small' | 'medium'

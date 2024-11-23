@@ -1,10 +1,10 @@
+import { PrivacyPolicy } from '@/pages/PrivacyPolicy'
 import { CircularProgress, Tab, Tabs } from '@mui/material'
 import { usePostHog } from 'posthog-js/react'
 import { FC, Suspense, useCallback, useEffect, useTransition } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useEffectOnce } from 'react-use'
 import { Route, Router, useLocation, useRoute } from 'wouter'
-
 import { OverscrollBackgroundFiller } from './components/global/OverscrollBackgroundFiller'
 import { VersionRegionSwitcher } from './components/global/preferences/VersionRegionSwitcher'
 import { WebpSupportedImage } from './components/global/WebpSupportedImage'
@@ -13,8 +13,6 @@ import { RatingCalculator } from './pages/RatingCalculator'
 import { SheetList } from './pages/SheetList'
 import { startViewTransition } from './utils/startViewTransition'
 import { useVersionTheme } from './utils/useVersionTheme'
-
-import { PrivacyPolicy } from '@/pages/PrivacyPolicy'
 
 const APP_TABS_VALUES = ['search', 'rating'] as const
 type AppTabsValuesType = (typeof APP_TABS_VALUES)[number]

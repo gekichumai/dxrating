@@ -1,47 +1,36 @@
-import {
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-} from "@mui/material";
-import { AnimatePresence } from "framer-motion";
-import { FC, useContext, useMemo } from "react";
-import { Control, Controller, useFieldArray } from "react-hook-form";
-import { useTranslation } from "react-i18next";
-
-import { SheetDetailsContext } from "../../models/context/SheetDetailsContext";
-import { MotionButton } from "../../utils/motion";
-
-import { SheetSortFilterForm, SortPredicate } from "./SheetSortFilter";
-
-
-import MdiAdd from "~icons/mdi/add";
-import MdiClose from "~icons/mdi/close";
-
+import { FormControl, IconButton, InputLabel, MenuItem, Select } from '@mui/material'
+import MdiAdd from '~icons/mdi/add'
+import MdiClose from '~icons/mdi/close'
+import { AnimatePresence } from 'framer-motion'
+import { FC, useContext, useMemo } from 'react'
+import { Control, Controller, useFieldArray } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
+import { SheetDetailsContext } from '../../models/context/SheetDetailsContext'
+import { MotionButton } from '../../utils/motion'
+import { SheetSortFilterForm, SortPredicate } from './SheetSortFilter'
 
 const SortPredicateTransformer = {
   to: (value: string) => {
-    const [descriptor, direction] = value.split("_");
+    const [descriptor, direction] = value.split('_')
     return {
       descriptor,
       direction,
-    } as SortPredicate;
+    } as SortPredicate
   },
   from: (value: SortPredicate) => {
-    return `${value.descriptor}_${value.direction}`;
+    return `${value.descriptor}_${value.direction}`
   },
-};
+}
 
 export const SheetSortSelect: FC<{
-  control: Control<SheetSortFilterForm>;
+  control: Control<SheetSortFilterForm>
 }> = ({ control }) => {
-  const { queryActive } = useContext(SheetDetailsContext);
-  const { t } = useTranslation(["sheet"]);
+  const { queryActive } = useContext(SheetDetailsContext)
+  const { t } = useTranslation(['sheet'])
   const { fields, append, remove } = useFieldArray<SheetSortFilterForm>({
     control,
-    name: "sorts",
-  });
+    name: 'sorts',
+  })
 
   const addSortButtonVariants = useMemo(
     () => ({
@@ -49,8 +38,8 @@ export const SheetSortSelect: FC<{
       animate: { scale: 1, opacity: 1 },
       exit: { scale: 0, opacity: 0 },
     }),
-    [],
-  );
+    []
+  )
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -69,7 +58,7 @@ export const SheetSortSelect: FC<{
                 id={`sorts.${index}`}
                 value={SortPredicateTransformer.from(field.value)}
                 onChange={(e) => {
-                  field.onChange(SortPredicateTransformer.to(e.target.value));
+                  field.onChange(SortPredicateTransformer.to(e.target.value))
                 }}
                 disabled={queryActive}
                 size="small"
@@ -81,17 +70,13 @@ export const SheetSortSelect: FC<{
                   ),
                 })}
               >
-                <MenuItem value="releaseDate_desc">
-                  {t("sheet:sort.release-date.desc")}
-                </MenuItem>
-                <MenuItem value="releaseDate_asc">
-                  {t("sheet:sort.release-date.asc")}
-                </MenuItem>
+                <MenuItem value="releaseDate_desc">{t('sheet:sort.release-date.desc')}</MenuItem>
+                <MenuItem value="releaseDate_asc">{t('sheet:sort.release-date.asc')}</MenuItem>
                 <MenuItem value="internalLevelValue_desc">
-                  {t("sheet:sort.internal-level-value.desc")}
+                  {t('sheet:sort.internal-level-value.desc')}
                 </MenuItem>
                 <MenuItem value="internalLevelValue_asc">
-                  {t("sheet:sort.internal-level-value.asc")}
+                  {t('sheet:sort.internal-level-value.asc')}
                 </MenuItem>
               </Select>
             </FormControl>
@@ -102,9 +87,7 @@ export const SheetSortSelect: FC<{
         {fields.length <= 5 && (
           <MotionButton
             layout
-            onClick={() =>
-              append({ descriptor: "internalLevelValue", direction: "desc" })
-            }
+            onClick={() => append({ descriptor: 'internalLevelValue', direction: 'desc' })}
             startIcon={<MdiAdd />}
             variant="contained"
             variants={addSortButtonVariants}
@@ -113,10 +96,10 @@ export const SheetSortSelect: FC<{
             exit="exit"
             disabled={queryActive}
           >
-            {t("sheet:sort.add")}
+            {t('sheet:sort.add')}
           </MotionButton>
         )}
       </AnimatePresence>
     </div>
-  );
-};
+  )
+}

@@ -1,8 +1,8 @@
-import { FC, ReactNode } from "react";
+import { FC, ReactNode } from 'react'
 
 export const SheetFilterSection: FC<{
-  title: ReactNode;
-  children: ReactNode;
+  title: ReactNode
+  children: ReactNode
 }> = ({ title, children }) => {
   return (
     <div className="flex flex-col gap-2">
@@ -11,5 +11,5 @@ export const SheetFilterSection: FC<{
       </h3>
       <div className="w-full flex flex-col md:flex-row gap-2">{children}</div>
     </div>
-  );
-};
+  )
+}

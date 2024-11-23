@@ -1,32 +1,27 @@
-import { Button, Dialog, Grow, TextField } from "@mui/material";
-import { FC, useState } from "react";
-import toast from "react-hot-toast";
-import { useAsyncFn } from "react-use";
+import { Button, Dialog, Grow, TextField } from '@mui/material'
+import IconMdiPlus from '~icons/mdi/plus'
+import { FC, useState } from 'react'
+import toast from 'react-hot-toast'
+import { useAsyncFn } from 'react-use'
+import { useAuth } from '../../models/context/AuthContext'
+import { supabase } from '../../models/supabase'
+import { useServerAliases } from '../../models/useServerAliases'
+import { FlattenedSheet } from '../../songs'
+import { isBuildPlatformApp } from '../../utils/env'
+import { MotionButtonBase } from '../../utils/motion'
+import { SheetListItemContent } from './SheetListItem'
 
-import { useAuth } from "../../models/context/AuthContext";
-import { supabase } from "../../models/supabase";
-import { useServerAliases } from "../../models/useServerAliases";
-import { FlattenedSheet } from "../../songs";
-import { isBuildPlatformApp } from "../../utils/env";
-import { MotionButtonBase } from "../../utils/motion";
+export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+  const [open, setOpen] = useState(false)
+  const { session } = useAuth()
 
-import { SheetListItemContent } from "./SheetListItem";
-
-import IconMdiPlus from "~icons/mdi/plus";
-
-export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({
-  sheet,
-}) => {
-  const [open, setOpen] = useState(false);
-  const { session } = useAuth();
-
-  const [newAltName, setNewAltName] = useState("");
-  const { mutate } = useServerAliases();
+  const [newAltName, setNewAltName] = useState('')
+  const { mutate } = useServerAliases()
 
   const [{ loading }, handleAddAltName] = useAsyncFn(async () => {
-    if (!session) return;
+    if (!session) return
     await supabase
-      .from("song_aliases")
+      .from('song_aliases')
       .insert([
         {
           song_id: sheet.songId,
@@ -36,23 +31,23 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({
       .select()
       .then((res) => {
         if (res.error) {
-          toast.error("Failed to add alias: " + res.error.message);
-          return;
+          toast.error('Failed to add alias: ' + res.error.message)
+          return
         }
 
-        toast.success("Added alias: " + newAltName.trim());
-        setOpen(false);
-        setNewAltName("");
-      });
-    mutate();
-  }, [newAltName, sheet.songId, mutate]);
+        toast.success('Added alias: ' + newAltName.trim())
+        setOpen(false)
+        setNewAltName('')
+      })
+    mutate()
+  }, [newAltName, sheet.songId, mutate])
 
   return (
     <>
       <MotionButtonBase
         className="h-6 border-1 border-solid border-gray-200 rounded-lg inline-flex self-start items-center justify-center px-2 cursor-pointer bg-gray-100 hover:bg-gray-200 hover:border-gray-300 active:bg-gray-300 active:border-gray-400 transition mt-2"
         onClick={() => {
-          setOpen(true);
+          setOpen(true)
         }}
       >
         <IconMdiPlus className="h-4 w-4" />
@@ -66,7 +61,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({
         TransitionComponent={Grow}
         maxWidth="md"
         classes={{
-          paper: "w-full",
+          paper: 'w-full',
         }}
       >
         <div className="flex flex-col gap-2 p-4 relative w-full">
@@ -82,8 +77,8 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({
               value={newAltName}
               onChange={(e) => setNewAltName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleAddAltName();
+                if (e.key === 'Enter') {
+                  handleAddAltName()
                 }
               }}
               data-attr="add-alias-input"
@@ -102,7 +97,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({
               }
               type="submit"
             >
-              {loading ? "Adding..." : "Add Alias"}
+              {loading ? 'Adding...' : 'Add Alias'}
             </Button>
           </div>
 
@@ -122,5 +117,5 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({
         </div>
       </Dialog>
     </>
-  );
-};
+  )
+}

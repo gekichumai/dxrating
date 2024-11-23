@@ -1,120 +1,108 @@
-import { Chip, Dialog, Grow } from "@mui/material";
-import clsx from "clsx";
-import { FC, useState } from "react";
-import toast from "react-hot-toast";
-import { useTranslation } from "react-i18next";
-import useSWR from "swr";
-
-import { useAuth } from "../../../models/context/AuthContext";
-import { supabase } from "../../../models/supabase";
-import { FlattenedSheet } from "../../../songs";
-import { deriveColor } from "../../../utils/color";
-import { isBuildPlatformApp } from "../../../utils/env";
-import { formatErrorMessage } from "../../../utils/formatErrorMessage";
-import { MotionButtonBase, MotionTooltip } from "../../../utils/motion";
-import { zoomTransitions } from "../../../utils/motionConstants";
-import { useLocalizedMessageTranslation } from "../../../utils/useLocalizedMessageTranslation";
-import { Markdown } from "../../global/Markdown";
-import { SheetListItemContent } from "../SheetListItem";
-
-import { useSheetTags } from "./useSheetTags";
-
-import IconMdiTagPlus from "~icons/mdi/tag-plus";
+import { Chip, Dialog, Grow } from '@mui/material'
+import IconMdiTagPlus from '~icons/mdi/tag-plus'
+import clsx from 'clsx'
+import { FC, useState } from 'react'
+import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
+import useSWR from 'swr'
+import { useAuth } from '../../../models/context/AuthContext'
+import { supabase } from '../../../models/supabase'
+import { FlattenedSheet } from '../../../songs'
+import { deriveColor } from '../../../utils/color'
+import { isBuildPlatformApp } from '../../../utils/env'
+import { formatErrorMessage } from '../../../utils/formatErrorMessage'
+import { MotionButtonBase, MotionTooltip } from '../../../utils/motion'
+import { zoomTransitions } from '../../../utils/motionConstants'
+import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
+import { Markdown } from '../../global/Markdown'
+import { SheetListItemContent } from '../SheetListItem'
+import { useSheetTags } from './useSheetTags'
 
 const SheetTagsAddDialog: FC<{
-  sheet: FlattenedSheet;
+  sheet: FlattenedSheet
 }> = ({ sheet }) => {
-  const { t } = useTranslation(["sheet"]);
-  const [pending, setPending] = useState(false);
-  const localizeMessage = useLocalizedMessageTranslation();
-  const { session } = useAuth();
+  const { t } = useTranslation(['sheet'])
+  const [pending, setPending] = useState(false)
+  const localizeMessage = useLocalizedMessageTranslation()
+  const { session } = useAuth()
 
-  const { data: tagGroups, isLoading: loadingTags } = useSWR(
-    "supabase::tag_grouped",
-    async () => {
-      const { data } = await supabase
-        .from("tags")
-        .select(
-          "id, localized_name, localized_description, group:tag_groups(id, localized_name, color)",
-        )
-        .order("id", { ascending: true });
+  const { data: tagGroups, isLoading: loadingTags } = useSWR('supabase::tag_grouped', async () => {
+    const { data } = await supabase
+      .from('tags')
+      .select(
+        'id, localized_name, localized_description, group:tag_groups(id, localized_name, color)'
+      )
+      .order('id', { ascending: true })
 
-      if (!data) {
-        return null;
+    if (!data) {
+      return null
+    }
+
+    const grouped = data.reduce((acc, tag) => {
+      if (!tag.group?.id) {
+        return acc
       }
 
-      const grouped = data.reduce(
-        (acc, tag) => {
-          if (!tag.group?.id) {
-            return acc;
-          }
+      if (!acc[tag.group.id]) {
+        acc[tag.group.id] = []
+      }
 
-          if (!acc[tag.group.id]) {
-            acc[tag.group.id] = [];
-          }
+      if (acc[tag.group.id]) {
+        acc[tag.group.id].push(tag)
+      }
 
-          if (acc[tag.group.id]) {
-            acc[tag.group.id].push(tag);
-          }
+      return acc
+    }, {} as Record<number, typeof data>)
 
-          return acc;
-        },
-        {} as Record<number, typeof data>,
-      );
-
-      return Object.entries(grouped).map(([, tags]) => ({
-        group: tags[0].group,
-        tags,
-      }));
-    },
-  );
+    return Object.entries(grouped).map(([, tags]) => ({
+      group: tags[0].group,
+      tags,
+    }))
+  })
   const {
     data: existingTags,
     isLoading: loadingExistingTags,
     mutate: mutateExistingTags,
-  } = useSheetTags(sheet);
+  } = useSheetTags(sheet)
 
-  const existingTagsIDList = existingTags?.map(({ id }) => id) ?? [];
+  const existingTagsIDList = existingTags?.map(({ id }) => id) ?? []
 
   const addTag = async (tagId: number) => {
-    setPending(true);
+    setPending(true)
     try {
       const result = await supabase
-        .from("tag_songs")
+        .from('tag_songs')
         .upsert({
           song_id: sheet.songId,
           sheet_type: sheet.type,
           sheet_difficulty: sheet.difficulty,
           tag_id: tagId,
         })
-        .eq("song_id", sheet.songId)
-        .eq("sheet_type", sheet.type)
-        .eq("sheet_difficulty", sheet.difficulty);
+        .eq('song_id', sheet.songId)
+        .eq('sheet_type', sheet.type)
+        .eq('sheet_difficulty', sheet.difficulty)
       if (result.error) {
-        throw result.error;
+        throw result.error
       }
 
-      toast.success(t("sheet:tags.add.toast-success"), {
+      toast.success(t('sheet:tags.add.toast-success'), {
         id: `tag-add-success:${tagId}`,
-      });
-      mutateExistingTags();
+      })
+      mutateExistingTags()
     } catch (error) {
-      console.error("Failed to add tag", error);
+      console.error('Failed to add tag', error)
 
-      toast.error(
-        t("sheet:tags.add.toast-failed", { error: formatErrorMessage(error) }),
-        {
-          id: `tag-add-failed:${tagId}`,
-        },
-      );
+      toast.error(t('sheet:tags.add.toast-failed', { error: formatErrorMessage(error) }), {
+        id: `tag-add-failed:${tagId}`,
+      })
     } finally {
-      setPending(false);
+      setPending(false)
     }
-  };
+  }
 
   return (
     <div className="flex flex-col gap-2 p-4 relative">
-      <div className="text-lg font-bold">{t("sheet:tags.add.title")}</div>
+      <div className="text-lg font-bold">{t('sheet:tags.add.title')}</div>
       <div className="text-lg">
         <SheetListItemContent sheet={sheet} />
       </div>
@@ -123,12 +111,7 @@ const SheetTagsAddDialog: FC<{
       <div className="flex flex-wrap gap-2">
         {loadingTags || loadingExistingTags ? (
           Array.from({ length: 5 }).map((_, i) => (
-            <Chip
-              key={i}
-              color="primary"
-              disabled
-              className="rounded-lg animate-pulse w-16"
-            />
+            <Chip key={i} color="primary" disabled className="rounded-lg animate-pulse w-16" />
           ))
         ) : (
           <div className="flex flex-col gap-2">
@@ -142,23 +125,19 @@ const SheetTagsAddDialog: FC<{
                 </div>
                 <div className="flex flex-wrap gap-1 grow ml-2">
                   {tags.map((tag) => {
-                    const exists = existingTagsIDList.includes(tag.id);
+                    const exists = existingTagsIDList.includes(tag.id)
 
                     return (
                       <MotionTooltip
                         {...zoomTransitions}
                         key={tag.id}
-                        title={
-                          <Markdown
-                            content={localizeMessage(tag.localized_description)}
-                          />
-                        }
+                        title={<Markdown content={localizeMessage(tag.localized_description)} />}
                         arrow
                         slotProps={{
                           popper: {
                             modifiers: [
                               {
-                                name: "offset",
+                                name: 'offset',
                                 options: {
                                   offset: [0, -8],
                                 },
@@ -173,19 +152,16 @@ const SheetTagsAddDialog: FC<{
                           onClick={() => addTag(tag.id)}
                           disabled={pending || exists}
                           className={clsx(
-                            "rounded-lg border border-solid",
-                            pending && "animate-pulse -animate-delay-1000",
+                            'rounded-lg border border-solid',
+                            pending && 'animate-pulse -animate-delay-1000'
                           )}
                           style={{
                             backgroundColor: tag.group?.color,
-                            borderColor: deriveColor(
-                              tag.group?.color ?? "#000",
-                              "border",
-                            ),
+                            borderColor: deriveColor(tag.group?.color ?? '#000', 'border'),
                           }}
                         />
                       </MotionTooltip>
-                    );
+                    )
                   })}
                 </div>
               </div>
@@ -201,29 +177,21 @@ const SheetTagsAddDialog: FC<{
               Adding tags is currently unavailable in the app.
             </div>
           ) : (
-            <div className="text-center font-bold">
-              Login or Register an account to add tags.
-            </div>
+            <div className="text-center font-bold">Login or Register an account to add tags.</div>
           )}
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export const SheetTagsAddButton: FC<{ sheet: FlattenedSheet }> = ({
-  sheet,
-}) => {
-  const { t } = useTranslation(["sheet"]);
-  const [open, setOpen] = useState(false);
+export const SheetTagsAddButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+  const { t } = useTranslation(['sheet'])
+  const [open, setOpen] = useState(false)
 
   return (
     <>
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        TransitionComponent={Grow}
-      >
+      <Dialog open={open} onClose={() => setOpen(false)} TransitionComponent={Grow}>
         <SheetTagsAddDialog sheet={sheet} />
       </Dialog>
 
@@ -231,13 +199,13 @@ export const SheetTagsAddButton: FC<{ sheet: FlattenedSheet }> = ({
         // {...zoomTransitions}
         className="h-6 border-1 border-solid border-gray-200 rounded-lg flex items-center justify-center px-2 cursor-pointer bg-gray-100 hover:bg-gray-200 hover:border-gray-300 active:bg-gray-300 active:border-gray-400 transition"
         onClick={() => {
-          setOpen(true);
+          setOpen(true)
         }}
       >
         <IconMdiTagPlus className="h-4 w-4" />
 
-        <span className="ml-1 text-xs">{t("sheet:tags.add.button")}</span>
+        <span className="ml-1 text-xs">{t('sheet:tags.add.button')}</span>
       </MotionButtonBase>
     </>
-  );
-};
+  )
+}

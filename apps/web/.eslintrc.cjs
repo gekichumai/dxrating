@@ -2,60 +2,17 @@ module.exports = {
   root: true,
   env: { browser: true, es2020: true },
   extends: [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:react-hooks/recommended",
-    "plugin:import/recommended",
-    "plugin:import/typescript",
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:react-hooks/recommended',
   ],
-  ignorePatterns: ["dist", ".eslintrc.cjs"],
-  parser: "@typescript-eslint/parser",
-  parserOptions: {
-    project: "./tsconfig.json",
-    tsconfigRootDir: "./",
-  },
-  plugins: ["react-refresh", "@typescript-eslint", "import"],
+  ignorePatterns: ['dist', '.eslintrc.cjs'],
+  parser: '@typescript-eslint/parser',
+  plugins: ['react-refresh'],
   rules: {
-    "react-refresh/only-export-components": [
-      "warn",
-      { allowConstantExport: true },
-    ],
-    "import/no-named-as-default": "off",
-    "import/order": [
-      "error",
-      {
-        "newlines-between": "always",
-        groups: [
-          "builtin",
-          "external",
-          "internal",
-          "parent",
-          "sibling",
-          "index",
-        ],
-        pathGroups: [
-          {
-            pattern: "~/**",
-            group: "internal",
-          },
-        ],
-        pathGroupsExcludedImportTypes: ["builtin"],
-        alphabetize: {
-          order: "asc",
-          caseInsensitive: true,
-        },
-      },
-    ],
+    semi: ['error', 'never'],
+    '@typescript-eslint/no-unused-vars': ['warn'],
+    '@typescript-eslint/no-explicit-any': ['error'],
+    'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
   },
-  settings: {
-    "import/resolver": {
-      typescript: {}, // this loads <rootdir>/tsconfig.json to eslint
-    },
-    "import/resolver": {
-      alias: {
-        extensions: [".ts", ".tsx"],
-        map: [["@/", "./src"]],
-      },
-    },
-  },
-};
+}

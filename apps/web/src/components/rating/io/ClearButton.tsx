@@ -7,24 +7,19 @@ import {
   DialogContent,
   DialogTitle,
   Grow,
-} from "@mui/material";
-import { FC, useState } from "react";
-import { ListActions } from "react-use/lib/useList";
-
-import { PlayEntry } from "../RatingCalculatorAddEntryForm";
+} from '@mui/material'
+import { FC, useState } from 'react'
+import { ListActions } from 'react-use/lib/useList'
+import { PlayEntry } from '../RatingCalculatorAddEntryForm'
 
 export const ClearButton: FC<{
-  modifyEntries: ListActions<PlayEntry>;
+  modifyEntries: ListActions<PlayEntry>
 }> = ({ modifyEntries }) => {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   return (
     <>
-      <Dialog
-        TransitionComponent={Grow}
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-      >
+      <Dialog TransitionComponent={Grow} open={dialogOpen} onClose={() => setDialogOpen(false)}>
         <DialogTitle>Clear all entries?</DialogTitle>
         <DialogContent className="min-w-[20rem]">
           <Alert severity="warning">
@@ -39,8 +34,8 @@ export const ClearButton: FC<{
             color="error"
             variant="contained"
             onClick={() => {
-              setDialogOpen(false);
-              modifyEntries.clear();
+              setDialogOpen(false)
+              modifyEntries.clear()
             }}
           >
             Clear
@@ -52,11 +47,11 @@ export const ClearButton: FC<{
         color="error"
         variant="outlined"
         onClick={() => {
-          setDialogOpen(true);
+          setDialogOpen(true)
         }}
       >
         Clear
       </Button>
     </>
-  );
-};
+  )
+}

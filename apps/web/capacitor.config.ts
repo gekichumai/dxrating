@@ -1,12 +1,12 @@
-import { CapacitorConfig } from "@capacitor/cli";
+import { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: "net.dxrating",
-  appName: "DXRating",
-  webDir: "dist",
+  appId: 'net.dxrating',
+  appName: 'DXRating',
+  webDir: 'dist',
   server: {
-    androidScheme: "https",
+    androidScheme: 'https',
   },
-};
+}
 
-export default config;
+export default config

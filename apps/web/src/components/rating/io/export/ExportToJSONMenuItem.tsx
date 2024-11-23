@@ -1,36 +1,31 @@
-import { ListItemIcon, ListItemText, MenuItem } from "@mui/material";
-import { FC } from "react";
-import toast from "react-hot-toast";
-
-import { useRatingCalculatorContext } from "../../../../models/context/RatingCalculatorContext";
-import {
-  RatingCalculatorEntry,
-  useRatingEntries,
-} from "../../useRatingEntries";
-
-import IconMdiFile from "~icons/mdi/file";
+import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
+import IconMdiFile from '~icons/mdi/file'
+import { FC } from 'react'
+import toast from 'react-hot-toast'
+import { useRatingCalculatorContext } from '../../../../models/context/RatingCalculatorContext'
+import { RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
 
 const saveAsJsonFile = (data: string) => {
-  const blob = new Blob([data], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const name = `dxrating.export-${new Date().toISOString()}.json`;
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(url);
+  const blob = new Blob([data], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const name = `dxrating.export-${new Date().toISOString()}.json`
+  const a = document.createElement('a')
+  a.href = url
+  a.download = name
+  a.click()
+  URL.revokeObjectURL(url)
 
-  toast.success("Exported as " + name);
-};
+  toast.success('Exported as ' + name)
+}
 
 export const ExportToJSONMenuItem: FC = () => {
-  const { entries } = useRatingCalculatorContext();
-  const { b15Entries, b35Entries } = useRatingEntries();
+  const { entries } = useRatingCalculatorContext()
+  const { b15Entries, b35Entries } = useRatingEntries()
   return (
     <>
       <MenuItem
         onClick={() => {
-          saveAsJsonFile(JSON.stringify(entries));
+          saveAsJsonFile(JSON.stringify(entries))
         }}
       >
         <ListItemIcon>
@@ -44,13 +39,13 @@ export const ExportToJSONMenuItem: FC = () => {
           const preprocess = (entry: RatingCalculatorEntry) => ({
             sheetId: entry.sheetId,
             achievementRate: entry.achievementRate,
-          });
+          })
 
           const data = JSON.stringify([
             ...b35Entries.map(preprocess),
             ...b15Entries.map(preprocess),
-          ]);
-          saveAsJsonFile(data);
+          ])
+          saveAsJsonFile(data)
         }}
       >
         <ListItemIcon>
@@ -59,5 +54,5 @@ export const ExportToJSONMenuItem: FC = () => {
         <ListItemText>Export JSON (Only B50 Records)</ListItemText>
       </MenuItem>
     </>
-  );
-};
+  )
+}

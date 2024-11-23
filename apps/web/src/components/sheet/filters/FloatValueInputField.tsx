@@ -1,8 +1,8 @@
-import { TextField, TextFieldProps } from "@mui/material";
-import { ForwardedRef, forwardRef, useEffect, useState } from "react";
+import { TextField, TextFieldProps } from '@mui/material'
+import { ForwardedRef, forwardRef, useEffect, useState } from 'react'
 
 const fixedDecimalPrecision = (value: number, precision: number) =>
-  parseFloat(value.toFixed(precision));
+  parseFloat(value.toFixed(precision))
 
 export const FloatValueInputField = forwardRef(
   (
@@ -12,28 +12,20 @@ export const FloatValueInputField = forwardRef(
       value,
       TextFieldProps,
     }: {
-      onChange: (value: number) => void;
-      onBlur?: TextFieldProps["onBlur"];
-      value: number;
+      onChange: (value: number) => void
+      onBlur?: TextFieldProps['onBlur']
+      value: number
       TextFieldProps?: Omit<
         TextFieldProps,
-        | "value"
-        | "onChange"
-        | "type"
-        | "inputProps"
-        | "inputRef"
-        | "onWheel"
-        | "onBlur"
-      >;
+        'value' | 'onChange' | 'type' | 'inputProps' | 'inputRef' | 'onWheel' | 'onBlur'
+      >
     },
-    ref: ForwardedRef<HTMLInputElement>,
+    ref: ForwardedRef<HTMLInputElement>
   ) => {
-    const [internalInputValue, setInternalInputValue] = useState(
-      value.toFixed(1).toString(),
-    );
+    const [internalInputValue, setInternalInputValue] = useState(value.toFixed(1).toString())
     useEffect(() => {
-      setInternalInputValue(value.toFixed(1).toString());
-    }, [value]);
+      setInternalInputValue(value.toFixed(1).toString())
+    }, [value])
 
     return (
       <TextField
@@ -44,40 +36,40 @@ export const FloatValueInputField = forwardRef(
         }}
         value={internalInputValue}
         onChange={(e) => {
-          setInternalInputValue(e.target.value);
+          setInternalInputValue(e.target.value)
         }}
         onBlur={(e) => {
-          const newValue = parseFloat(internalInputValue);
+          const newValue = parseFloat(internalInputValue)
           if (!Number.isNaN(newValue)) {
-            const adjustedValue = fixedDecimalPrecision(newValue, 1);
-            onChange(adjustedValue);
-            setInternalInputValue(adjustedValue.toFixed(1).toString());
+            const adjustedValue = fixedDecimalPrecision(newValue, 1)
+            onChange(adjustedValue)
+            setInternalInputValue(adjustedValue.toFixed(1).toString())
           } else {
             // Reset the input value to the current value
-            setInternalInputValue(value.toFixed(1).toString());
+            setInternalInputValue(value.toFixed(1).toString())
           }
 
           // Trigger the onBlur event
-          onBlur?.(e);
+          onBlur?.(e)
 
           // Actually blur the input
           setTimeout(() => {
-            const target = e.target as HTMLElement;
-            target.blur();
-          }, 0);
+            const target = e.target as HTMLElement
+            target.blur()
+          }, 0)
         }}
         onWheel={(e) => {
-          const target = e.target as HTMLElement;
+          const target = e.target as HTMLElement
           // Prevent the input value change
-          target.blur();
+          target.blur()
 
           // Prevent the page/container scrolling
-          e.stopPropagation();
+          e.stopPropagation()
         }}
         inputRef={ref}
         // rest props
         {...TextFieldProps}
       />
-    );
-  },
-);
+    )
+  }
+)

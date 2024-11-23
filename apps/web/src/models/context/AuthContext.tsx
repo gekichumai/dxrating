@@ -1,88 +1,78 @@
-import { Session } from "@supabase/supabase-js";
-import {
-  FC,
-  PropsWithChildren,
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
-import toast from "react-hot-toast";
-import { useTranslation } from "react-i18next";
-import { useFirstMountState } from "react-use";
-import useSWR from "swr";
-
-import { supabase } from "../supabase";
+import { Session } from '@supabase/supabase-js'
+import { createContext, FC, PropsWithChildren, useContext, useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
+import { useFirstMountState } from 'react-use'
+import useSWR from 'swr'
+import { supabase } from '../supabase'
 
 export interface Profile {
-  display_name: string;
+  display_name: string
 }
 
 interface AuthContext {
-  session: Session | null;
-  profile: Profile | null;
-  pending: boolean;
+  session: Session | null
+  profile: Profile | null
+  pending: boolean
 }
 
 const AuthContext_ = createContext({
   session: null,
   profile: null,
   pending: true,
-} as AuthContext);
+} as AuthContext)
 
-export const AuthContextProvider: FC<PropsWithChildren<object>> = ({
-  children,
-}) => {
-  const { t } = useTranslation(["auth"]);
-  const [session, setSession] = useState<Session | null>(null);
+export const AuthContextProvider: FC<PropsWithChildren<object>> = ({ children }) => {
+  const { t } = useTranslation(['auth'])
+  const [session, setSession] = useState<Session | null>(null)
 
-  const [sessionPending, setSessionPending] = useState(true);
-  const firstMount = useFirstMountState();
-  const signedIn = !!session?.user.id;
+  const [sessionPending, setSessionPending] = useState(true)
+  const firstMount = useFirstMountState()
+  const signedIn = !!session?.user.id
   const { data: profile, isLoading: profilePending } = useSWR(
-    session ? "supabase::profile::" + session?.user.id : false,
+    session ? 'supabase::profile::' + session?.user.id : false,
     async () => {
       const res = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", signedIn ? session?.user.id : "")
-        .maybeSingle();
-      return res.data;
+        .from('profiles')
+        .select('display_name')
+        .eq('id', signedIn ? session?.user.id : '')
+        .maybeSingle()
+      return res.data
     },
     {
       focusThrottleInterval: 1000 * 60 * 60,
-    },
-  );
+    }
+  )
 
   useEffect(() => {
     supabase.auth
       .getSession()
       .then(({ data: { session } }) => {
-        setSession(session);
+        setSession(session)
       })
       .finally(() => {
-        setSessionPending(false);
-      });
+        setSessionPending(false)
+      })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setSessionPending(false);
-    });
+      setSession(session)
+      setSessionPending(false)
+    })
 
-    return () => subscription.unsubscribe();
-  }, [t]);
+    return () => subscription.unsubscribe()
+  }, [t])
 
   useEffect(() => {
-    console.debug("[Auth] session changed to", session);
+    console.debug('[Auth] session changed to', session)
 
     if (signedIn && !firstMount) {
-      toast.success(t("auth:login.toast-success"), {
-        id: "login-success",
-      });
+      toast.success(t('auth:login.toast-success'), {
+        id: 'login-success',
+      })
     }
-  }, [signedIn]);
+  }, [signedIn])
 
   return (
     <AuthContext_.Provider
@@ -94,9 +84,9 @@ export const AuthContextProvider: FC<PropsWithChildren<object>> = ({
     >
       {children}
     </AuthContext_.Provider>
-  );
-};
+  )
+}
 
 export const useAuth = () => {
-  return useContext(AuthContext_);
-};
+  return useContext(AuthContext_)
+}
