@@ -10,32 +10,32 @@ import {
   Menu,
   MenuItem,
   TextField,
-} from "@mui/material";
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa, ViewType } from "@supabase/auth-ui-shared";
-import clsx from "clsx";
-import { FC, useState } from "react";
-import toast from "react-hot-toast";
-import { useTranslation } from "react-i18next";
-import { useAsync, useAsyncFn } from "react-use";
-import { useSWRConfig } from "swr";
+} from '@mui/material'
+import { Auth } from '@supabase/auth-ui-react'
+import { ThemeSupa, ViewType } from '@supabase/auth-ui-shared'
+import clsx from 'clsx'
+import { FC, useState } from 'react'
+import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
+import { useAsync, useAsyncFn } from 'react-use'
+import { useSWRConfig } from 'swr'
 
-import { useAuth } from "../../../models/context/AuthContext";
-import { supabase } from "../../../models/supabase";
-import { isBuildPlatformApp } from "../../../utils/env";
-import { useVersionTheme } from "../../../utils/useVersionTheme";
-import { Logo } from "../Logo";
-import { ResponsiveDialog } from "../ResponsiveDialog";
+import { useAuth } from '../../../models/context/AuthContext'
+import { supabase } from '../../../models/supabase'
+import { isBuildPlatformApp } from '../../../utils/env'
+import { useVersionTheme } from '../../../utils/useVersionTheme'
+import { Logo } from '../Logo'
+import { ResponsiveDialog } from '../ResponsiveDialog'
 
-import MdiAccountCheck from "~icons/mdi/account-check";
-import MdiAccountKey from "~icons/mdi/account-key";
-import MdiLogin from "~icons/mdi/login";
-import MdiLogout from "~icons/mdi/logout";
+import MdiAccountCheck from '~icons/mdi/account-check'
+import MdiAccountKey from '~icons/mdi/account-key'
+import MdiLogin from '~icons/mdi/login'
+import MdiLogout from '~icons/mdi/logout'
 
 const ThemedAuth: FC<{
-  view?: ViewType;
-}> = ({ view = "sign_in" }) => {
-  const theme = useVersionTheme();
+  view?: ViewType
+}> = ({ view = 'sign_in' }) => {
+  const theme = useVersionTheme()
   return (
     <Auth
       supabaseClient={supabase}
@@ -44,75 +44,64 @@ const ThemedAuth: FC<{
         variables: {
           default: {
             fontSizes: {
-              baseBodySize: "16px",
-              baseButtonSize: "16px",
-              baseInputSize: "16px",
+              baseBodySize: '16px',
+              baseButtonSize: '16px',
+              baseInputSize: '16px',
             },
             fonts: {
-              bodyFontFamily:
-                "Torus, system-ui, Avenir, Helvetica, Arial, sans-serif",
-              buttonFontFamily:
-                "Torus, system-ui, Avenir, Helvetica, Arial, sans-serif",
-              inputFontFamily:
-                "Torus, system-ui, Avenir, Helvetica, Arial, sans-serif",
-              labelFontFamily:
-                "Torus, system-ui, Avenir, Helvetica, Arial, sans-serif",
+              bodyFontFamily: 'Torus, system-ui, Avenir, Helvetica, Arial, sans-serif',
+              buttonFontFamily: 'Torus, system-ui, Avenir, Helvetica, Arial, sans-serif',
+              inputFontFamily: 'Torus, system-ui, Avenir, Helvetica, Arial, sans-serif',
+              labelFontFamily: 'Torus, system-ui, Avenir, Helvetica, Arial, sans-serif',
             },
             radii: {
-              borderRadiusButton: "12px",
-              buttonBorderRadius: "12px",
-              inputBorderRadius: "12px",
+              borderRadiusButton: '12px',
+              buttonBorderRadius: '12px',
+              inputBorderRadius: '12px',
             },
             colors: {
-              brand: theme.accentColor + "99",
+              brand: theme.accentColor + '99',
               brandAccent: theme.accentColor,
-              brandButtonText: "black",
+              brandButtonText: 'black',
             },
             borderWidths: {
-              inputBorderWidth: "2px",
+              inputBorderWidth: '2px',
             },
           },
         },
       }}
-      providers={["github"]}
+      providers={['github', 'google']}
       magicLink
       view={view}
     />
-  );
-};
+  )
+}
 
 async function sha256(message: string) {
   // encode as UTF-8
-  const msgBuffer = new TextEncoder().encode(message);
+  const msgBuffer = new TextEncoder().encode(message)
 
   // hash the message
-  const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer)
 
   // convert ArrayBuffer to Array
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
 
   // convert bytes to hex string
-  const hashHex = hashArray
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  return hashHex;
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+  return hashHex
 }
 
 const Profile: FC<{
-  id: string;
-  email: string;
-  displayName?: string;
+  id: string
+  email: string
+  displayName?: string
 }> = ({ id, email, displayName }) => {
   return (
     <div className="flex items-center gap-4 px-4">
       <ProfileImage email={email} />
       <div className="flex flex-col gap-1 mb-2 mt-1">
-        <div
-          className={clsx(
-            "text-lg font-bold",
-            !displayName && "text-zinc-500 -skew-x-10",
-          )}
-        >
+        <div className={clsx('text-lg font-bold', !displayName && 'text-zinc-500 -skew-x-10')}>
           {displayName ?? email}
         </div>
         <div className="text-xs text-zinc-500 tracking-tighter">
@@ -120,18 +109,18 @@ const Profile: FC<{
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const ProfileImage: FC<{
-  email?: string;
-  size?: string;
-}> = ({ email, size = "2rem" }) => {
+  email?: string
+  size?: string
+}> = ({ email, size = '2rem' }) => {
   const gravatarEmailHash = useAsync(async () => {
-    const e = email?.trim().toLowerCase();
-    if (!e) return "";
-    return await sha256(e);
-  }, [email]);
+    const e = email?.trim().toLowerCase()
+    if (!e) return ''
+    return await sha256(e)
+  }, [email])
 
   return gravatarEmailHash.loading ? (
     <div
@@ -151,12 +140,12 @@ const ProfileImage: FC<{
         height: size,
       }}
     />
-  );
-};
+  )
+}
 
 export const UpdatePasswordMenuItem: FC = () => {
-  const { t } = useTranslation(["auth"]);
-  const [open, setOpen] = useState(false);
+  const { t } = useTranslation(['auth'])
+  const [open, setOpen] = useState(false)
   return (
     <>
       <Dialog
@@ -165,7 +154,7 @@ export const UpdatePasswordMenuItem: FC = () => {
         TransitionComponent={Grow}
         maxWidth="md"
         classes={{
-          paper: "w-full",
+          paper: 'w-full',
         }}
       >
         <DialogContent>
@@ -175,55 +164,47 @@ export const UpdatePasswordMenuItem: FC = () => {
 
       <MenuItem
         onClick={() => {
-          setOpen(true);
+          setOpen(true)
         }}
       >
         <ListItemIcon>
           <MdiAccountKey />
         </ListItemIcon>
-        <ListItemText>{t("auth:update-password.label")}</ListItemText>
+        <ListItemText>{t('auth:update-password.label')}</ListItemText>
       </MenuItem>
     </>
-  );
-};
+  )
+}
 
 export const UpdateDisplayNameMenuItem: FC = () => {
-  const { t } = useTranslation(["auth"]);
-  const [open, setOpen] = useState(false);
-  const { mutate } = useSWRConfig();
-  const { session, profile } = useAuth();
-  const [displayName, setDisplayName] = useState(
-    () => profile?.display_name ?? "",
-  );
+  const { t } = useTranslation(['auth'])
+  const [open, setOpen] = useState(false)
+  const { mutate } = useSWRConfig()
+  const { session, profile } = useAuth()
+  const [displayName, setDisplayName] = useState(() => profile?.display_name ?? '')
 
   const [updateState, handleUpdate] = useAsyncFn(async () => {
     if (!session) {
-      toast.error("You must be signed in to update your display name.");
-      return;
+      toast.error('You must be signed in to update your display name.')
+      return
     }
 
     await supabase
-      .from("profiles")
+      .from('profiles')
       .upsert({
         id: session.user.id,
         display_name: displayName,
       })
       .then((res) => {
         if (res.error) {
-          toast.error(
-            `Failed to update your profile name: ${res.error.message}`,
-          );
-          return;
+          toast.error(`Failed to update your profile name: ${res.error.message}`)
+          return
         }
-        mutate("supabase::profile::" + session.user.id);
-        toast.success(
-          'Your profile name has been successfully updated to "' +
-            displayName +
-            '".',
-        );
-        setOpen(false);
-      });
-  }, [displayName, session]);
+        mutate('supabase::profile::' + session.user.id)
+        toast.success('Your profile name has been successfully updated to "' + displayName + '".')
+        setOpen(false)
+      })
+  }, [displayName, session])
 
   return (
     <>
@@ -233,7 +214,7 @@ export const UpdateDisplayNameMenuItem: FC = () => {
         TransitionComponent={Grow}
         maxWidth="md"
         classes={{
-          paper: "w-full",
+          paper: 'w-full',
         }}
       >
         <DialogContent>
@@ -244,24 +225,21 @@ export const UpdateDisplayNameMenuItem: FC = () => {
           </div>
           <div className="flex flex-col gap-4">
             <TextField
-              label={t("auth:update-display-name.label")}
+              label={t('auth:update-display-name.label')}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               data-attr="update-display-name"
             />
             <Button
               onClick={handleUpdate}
-              disabled={
-                displayName === profile?.display_name ||
-                displayName.trim() === ""
-              }
+              disabled={displayName === profile?.display_name || displayName.trim() === ''}
               variant="contained"
               className="h-10"
             >
               {updateState.loading ? (
                 <CircularProgress size="1.25rem" className="my-1" />
               ) : (
-                "Submit"
+                'Submit'
               )}
             </Button>
           </div>
@@ -270,39 +248,38 @@ export const UpdateDisplayNameMenuItem: FC = () => {
 
       <MenuItem
         onClick={() => {
-          setOpen(true);
+          setOpen(true)
         }}
       >
         <ListItemIcon>
           <MdiAccountCheck />
         </ListItemIcon>
-        <ListItemText>{t("auth:update-display-name.label")}</ListItemText>
+        <ListItemText>{t('auth:update-display-name.label')}</ListItemText>
       </MenuItem>
     </>
-  );
-};
+  )
+}
 
 export const UserChip: FC = () => {
-  const DISABLE_EXPLICIT_AUTH = isBuildPlatformApp;
+  const DISABLE_EXPLICIT_AUTH = isBuildPlatformApp
 
-  const { t } = useTranslation(["auth"]);
-  const [open, setOpen] = useState<"auth" | "profile" | null>(null);
-  const { session, profile, pending } = useAuth();
-  const [profileMenuAnchorEl, setProfileMenuAnchorEl] =
-    useState<HTMLElement | null>(null);
+  const { t } = useTranslation(['auth'])
+  const [open, setOpen] = useState<'auth' | 'profile' | null>(null)
+  const { session, profile, pending } = useAuth()
+  const [profileMenuAnchorEl, setProfileMenuAnchorEl] = useState<HTMLElement | null>(null)
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    toast.success(t("auth:logout.toast-success"), {
-      id: "logout-success",
-    });
-  };
+    await supabase.auth.signOut()
+    toast.success(t('auth:logout.toast-success'), {
+      id: 'logout-success',
+    })
+  }
 
   return (
     <>
       <ResponsiveDialog
-        open={open === "auth"}
-        setOpen={(opened) => setOpen(opened ? "auth" : null)}
+        open={open === 'auth'}
+        setOpen={(opened) => setOpen(opened ? 'auth' : null)}
       >
         {() => (
           <>
@@ -320,14 +297,14 @@ export const UserChip: FC = () => {
         anchorEl={profileMenuAnchorEl}
         open={Boolean(profileMenuAnchorEl)}
         onClose={() => {
-          setOpen(null);
-          setProfileMenuAnchorEl(null);
+          setOpen(null)
+          setProfileMenuAnchorEl(null)
         }}
       >
         {session && (
           <Profile
             id={session.user.id}
-            email={session.user.email ?? "(no email)"}
+            email={session.user.email ?? '(no email)'}
             displayName={profile?.display_name}
           />
         )}
@@ -335,16 +312,16 @@ export const UserChip: FC = () => {
         <UpdatePasswordMenuItem />
         <MenuItem
           onClick={() => {
-            logout();
-            setOpen(null);
-            setProfileMenuAnchorEl(null);
+            logout()
+            setOpen(null)
+            setProfileMenuAnchorEl(null)
           }}
           color="error"
         >
           <ListItemIcon>
             <MdiLogout />
           </ListItemIcon>
-          <ListItemText>{t("auth:logout.label")}</ListItemText>
+          <ListItemText>{t('auth:logout.label')}</ListItemText>
         </MenuItem>
       </Menu>
 
@@ -358,20 +335,16 @@ export const UserChip: FC = () => {
         (!DISABLE_EXPLICIT_AUTH || session) && (
           <IconButton
             onClick={(e) => {
-              setOpen(session ? "profile" : "auth");
+              setOpen(session ? 'profile' : 'auth')
               if (session) {
-                setProfileMenuAnchorEl(e.currentTarget);
+                setProfileMenuAnchorEl(e.currentTarget)
               }
             }}
           >
-            {session ? (
-              <ProfileImage email={session.user.email} size="1.2em" />
-            ) : (
-              <MdiLogin />
-            )}
+            {session ? <ProfileImage email={session.user.email} size="1.2em" /> : <MdiLogin />}
           </IconButton>
         )
       )}
     </>
-  );
-};
+  )
+}
