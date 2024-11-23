@@ -85,9 +85,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
   }
 
   const [coverImage, typeImage, accuracyImage, syncImage] = await Promise.all([
-    fs.readFile(
-      ASSETS_BASE_DIR + '/images/cover/v2/' + entry.sheet.imageName.replace('.png', '.webp')
-    ),
+    fs.readFile(ASSETS_BASE_DIR + '/images/cover/v2/' + entry.sheet.imageName + '.webp'),
     fs.readFile(
       ASSETS_BASE_DIR +
         `/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`
