@@ -336,7 +336,7 @@ export const renderContent = async ({
   const icon = (
     await fs.readFile(
       ASSETS_BASE_DIR +
-        `/assetbundle/region-${region === 'cn' ? 'cn' : 'jp'}/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`
+        `/assetbundle/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`
     )
   ).buffer
 
