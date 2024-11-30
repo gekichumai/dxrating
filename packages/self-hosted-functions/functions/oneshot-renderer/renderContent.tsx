@@ -372,11 +372,11 @@ export const renderContent = async ({
           {playerCollection && (
             <div tw="flex items-center justify-start p-3 rounded-lg w-[589px] bg-black/80 text-white h-full mr-[8px]">
               {/* @ts-expect-error */}
-              <img src={icon} tw="h-[70px] w-[70px] rounded-md bg-gray-500 mr-3"></img>
+              <img src={icon} tw="h-[70px] w-[70px] rounded-md bg-gray-500 mr-3" alt=""></img>
 
               {playerCollection?.name && (
                 <div
-                  tw="font-seurat text-black bg-white/90 rounded-md p-2 px-3 text-4xl flex items-center justify-center mr-6 border-2 border-solid border-white h-[58px]"
+                  tw="font-seurat text-black bg-white rounded-md p-2 px-3 text-4xl flex items-center justify-center mr-6 border-2 border-solid border-white h-[58px]"
                   style={{
                     boxShadow: '0 0 4px 0 rgba(255,255,255,.5)',
                   }}
