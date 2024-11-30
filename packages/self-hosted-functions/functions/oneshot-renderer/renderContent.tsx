@@ -3,7 +3,7 @@ import { execSync } from 'child_process'
 import clsx from 'clsx'
 import fs from 'fs/promises'
 import { FC, PropsWithChildren } from 'react'
-import { ASSETS_BASE_DIR, Region, RenderData } from '.'
+import { ASSETS_BASE_DIR, PlayerCollection, Region, RenderData } from '.'
 
 interface VersionTheme {
   background: string
@@ -78,14 +78,14 @@ const estimateTitleCharacterLength = (title: string) => {
 const renderCell = async (entry: RenderData | undefined, i: number) => {
   if (!entry) {
     return (
-      <div key="empty" tw="w-1/5 p-[4px] flex h-[116px]">
+      <div key={`empty${i}`} tw="w-1/5 p-[4px] flex h-[116px]">
         <div tw="h-full w-full rounded-lg" />
       </div>
     )
   }
 
   const [coverImage, typeImage, accuracyImage, syncImage] = await Promise.all([
-    fs.readFile(ASSETS_BASE_DIR + '/images/cover/v2/' + entry.sheet.imageName + '.webp'),
+    fs.readFile(ASSETS_BASE_DIR + '/images/cover/v2/' + entry.sheet.imageName + '.jpg'),
     fs.readFile(
       ASSETS_BASE_DIR +
         `/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`
@@ -139,6 +139,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
             maskRepeat: 'no-repeat',
           }}
         />
+
         <div tw="flex flex-col items-start justify-between relative h-full mr-[54px]">
           <span
             tw="overflow-hidden font-bold w-[180px] h-[19px]"
@@ -284,9 +285,12 @@ const FactItem = ({
   tw?: string
 }) => {
   return (
-    <div tw={clsx('flex flex-col items-start justify-center', tw)}>
+    <div tw={clsx('flex flex-col items-end justify-center', tw)}>
       <div
-        tw={clsx('leading-none font-semibold', size === 'sm' ? 'text-2xl mb-[2px]' : 'text-3xl')}
+        tw={clsx(
+          'leading-none font-bold font-seurat',
+          size === 'sm' ? 'text-2xl mb-[3px]' : 'text-3xl'
+        )}
       >
         {value}
       </div>
@@ -316,6 +320,7 @@ export const renderContent = async ({
   data,
   version,
   region,
+  playerCollection,
 }: {
   data: {
     b15: RenderData[]
@@ -323,10 +328,17 @@ export const renderContent = async ({
   }
   version: VersionEnum
   region?: Region
+  playerCollection?: PlayerCollection
 }) => {
   const theme = VERSION_THEME[version]
 
   const background = (await fs.readFile(ASSETS_BASE_DIR + theme.background)).buffer
+  const icon = (
+    await fs.readFile(
+      ASSETS_BASE_DIR +
+        `/assetbundle/region-${region === 'cn' ? 'cn' : 'jp'}/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`
+    )
+  ).buffer
 
   const b50Sum = [...data.b15, ...data.b35].reduce(
     (acc, cur) => acc + cur.rating.ratingAwardValue,
@@ -357,7 +369,25 @@ export const renderContent = async ({
 
       <div tw="w-full h-full px-1 pt-1 flex flex-wrap">
         <div tw="h-[100px] w-full flex pt-[2px] pb-1 px-[4px]">
-          <div tw="flex items-end justify-start py-4 px-6 rounded-lg w-full bg-black/80 text-white h-full">
+          {playerCollection && (
+            <div tw="flex items-center justify-start p-3 rounded-lg w-[589px] bg-black/80 text-white h-full mr-[8px]">
+              {/* @ts-expect-error */}
+              <img src={icon} tw="h-[70px] w-[70px] rounded-md bg-gray-500 mr-3"></img>
+
+              {playerCollection?.name && (
+                <div
+                  tw="font-seurat text-black bg-white/90 rounded-md p-2 px-3 text-4xl flex items-center justify-center mr-6 border-2 border-solid border-white h-[58px]"
+                  style={{
+                    boxShadow: '0 0 4px 0 rgba(255,255,255,.5)',
+                  }}
+                >
+                  {playerCollection?.name}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div tw="flex items-center justify-start py-4 px-6 rounded-lg bg-black/80 text-white h-full grow">
             <FactItem value={b50Sum.toFixed(0)} label="Total" size="lg" tw="mr-6" />
 
             <FactItem value={b15Sum.toFixed(0)} label="B15" tw="mr-4" />

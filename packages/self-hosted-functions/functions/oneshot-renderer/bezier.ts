@@ -44,4 +44,3 @@ function createMaskGradientSteps(points: number[]) {
 
 const bezierPoints = generateGradientPoints(20, 0, 1, 0, 1)
 export const maskGradientStepsEaseOutCirc = createMaskGradientSteps(bezierPoints)
-console.log(maskGradientStepsEaseOutCirc)

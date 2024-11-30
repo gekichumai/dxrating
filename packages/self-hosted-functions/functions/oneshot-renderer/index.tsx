@@ -16,6 +16,11 @@ export const ASSETS_BASE_DIR = process.env.ASSETS_BASE_DIR
 
 export type Region = 'jp' | 'intl' | 'cn' | '_generic'
 
+export type PlayerCollection = {
+  name: string
+  icon: number
+}
+
 type PlayEntry = {
   sheetId: string
   sheetOverrides?: {
@@ -90,17 +95,30 @@ const flattenedSheets = getFlattenedSheetsMap()
 
 const fetchFontPack = async (): Promise<Font[]> => {
   const fontConfig = [
-    // {
-    //   file: "SourceHanSansJP-Regular.otf",
-    //   weight: 400 as const,
-    // },
     {
-      file: 'SourceHanSansJP-Bold.otf',
-      weight: 700 as const,
+      name: 'NewRodinProDB',
+      file: 'NewRodinProDB.otf',
+      weight: 400 as const,
     },
     {
+      name: 'SeuratProDB',
+      file: 'SeuratProDB.otf',
+      weight: 400 as const,
+    },
+    {
+      name: 'Source Han Sans',
+      file: 'SourceHanSansJP-Regular.otf',
+      weight: 400 as const,
+    },
+    {
+      name: 'Source Han Sans',
       file: 'SourceHanSansJP-Medium.otf',
       weight: 500 as const,
+    },
+    {
+      name: 'Source Han Sans',
+      file: 'SourceHanSansJP-Bold.otf',
+      weight: 700 as const,
     },
   ]
   const fonts = await Promise.all(
@@ -110,22 +128,8 @@ const fetchFontPack = async (): Promise<Font[]> => {
     console.error('Failed to load at least one font')
     return []
   }
-  // return [
-  //   {
-  //     name: "Source Han Sans",
-  //     data: fonts[0],
-  //     weight: 400,
-  //     style: "normal",
-  //   },
-  //   {
-  //     name: "Source Han Sans",
-  //     data: fonts[1],
-  //     weight: 700,
-  //     style: "normal",
-  //   },
-  // ];
   return fontConfig.map((font, i) => ({
-    name: 'Source Han Sans',
+    name: font.name,
     data: fonts[i],
     weight: font.weight,
     style: 'normal',
@@ -291,10 +295,15 @@ export const handler = async (ctx: Koa.Context) => {
         entries: demo,
         version: VersionEnum.PRiSM,
         region: 'jp',
+        playerCollection: {
+          name: 'お友達',
+          icon: 0,
+        },
       }
     : (ctx.request.body as any)
   const version = body.version as VersionEnum
   const region = body.region as Region
+  const playerCollection = body.playerCollection as PlayerCollection | undefined
 
   const timer = createServerTimingTimer()
 
@@ -309,11 +318,10 @@ export const handler = async (ctx: Koa.Context) => {
   const data = body.calculatedEntries
     ? prepareCalculatedEntries(body.calculatedEntries, version)
     : calculateEntries(body.entries, version)
-  console.log('received data', JSON.stringify(data))
   timer.stop('calc')
 
   timer.start('jsx')
-  const content = await renderContent({ data, version, region })
+  const content = await renderContent({ data, version, region, playerCollection })
   timer.stop('jsx')
 
   timer.start('satori')
@@ -325,6 +333,8 @@ export const handler = async (ctx: Koa.Context) => {
       theme: {
         fontFamily: {
           sans: 'Source Han Sans, sans-serif',
+          newrodin: 'NewRodinProDB, sans-serif',
+          seurat: 'SeuratProDB, sans-serif',
         },
       },
     },
