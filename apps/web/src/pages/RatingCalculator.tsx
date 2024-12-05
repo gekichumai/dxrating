@@ -28,8 +28,6 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import IconMdiArrowDown from '~icons/mdi/arrow-down'
-import IconMdiTrashCan from '~icons/mdi/trash-can'
 import clsx from 'clsx'
 import { FC, ForwardedRef, forwardRef, memo, useCallback, useMemo, useState } from 'react'
 import { ListActions } from 'react-use/lib/useList'
@@ -41,6 +39,8 @@ import {
   TableProps,
   TableVirtuoso,
 } from 'react-virtuoso'
+import IconMdiArrowDown from '~icons/mdi/arrow-down'
+import IconMdiTrashCan from '~icons/mdi/trash-can'
 import { BetaBadge } from '../components/global/BetaBadge'
 import { ClearButton } from '../components/rating/io/ClearButton'
 import { RenderToOneShotImageButton } from '../components/rating/io/export/RenderToOneShotImageButton'
@@ -446,7 +446,7 @@ function RatingCalculatorTableContent({
       className="w-full overflow-y-hidden"
       increaseViewportBy={2000}
       overscan={10}
-      // components={TableComponents}
+      components={TableComponents}
       fixedHeaderContent={() =>
         table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id}>
