@@ -5,14 +5,14 @@ import {
   ListItemText,
   ListItemTextProps,
 } from '@mui/material'
-import MdiComment from '~icons/mdi/comment'
-import MdiLock from '~icons/mdi/lock'
-import MdiTrashCan from '~icons/mdi/trash-can'
 import clsx from 'clsx'
 import { usePostHog } from 'posthog-js/react'
 import { FC, HTMLAttributes, ImgHTMLAttributes, memo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { match } from 'ts-pattern'
+import MdiComment from '~icons/mdi/comment'
+import MdiLock from '~icons/mdi/lock'
+import MdiTrashCan from '~icons/mdi/trash-can'
 import { DIFFICULTIES } from '../../models/difficulties'
 import { FlattenedSheet } from '../../songs'
 import { useIsLargeDevice } from '../../utils/breakpoints'
@@ -325,7 +325,31 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
     >
       {altNames?.map((altName, i) => (
         <span className="inline-block whitespace-pre-line" key={i}>
-          <span>{altName}</span>
+          <span
+            className="cursor-pointer"
+            onClick={() => {
+              if (altName.length > 50) {
+                const sanitizedAltName = altName.trim()
+                navigator.clipboard.writeText(`${sanitizedAltName}是什么歌`)
+                toast.success(`Copied ${sanitizedAltName}是什么歌 to clipboard`, {
+                  id: `copy-sheet-alt-name-${altName}`,
+                })
+              } else {
+                const sanitizedAltName = altName
+                  .trim()
+                  .replace(
+                    /[\s|\n|，|。|！|@|；|《|》|？|：|【|】|（|）|、|·|~|!|#|%|&|*|(|)|{|}|\\[|\\]|\\|]/g,
+                    '-'
+                  )
+                navigator.clipboard.writeText(`https://${sanitizedAltName}.是什么歌.com`)
+                toast.success(`Copied ${sanitizedAltName}.是什么歌.com to clipboard`, {
+                  id: `copy-sheet-alt-name-${altName}`,
+                })
+              }
+            }}
+          >
+            {altName}
+          </span>
           {i < altNames.length - 1 && <span className="text-slate-400 mx-1 select-none">/</span>}
         </span>
       ))}
