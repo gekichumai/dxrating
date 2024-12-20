@@ -12,10 +12,6 @@ import {
   TableRow,
   TextField,
 } from '@mui/material'
-import IconMdiSearchWeb from '~icons/mdi/search-web'
-import IconMdiSpotify from '~icons/mdi/spotify'
-import IconMdiYouTube from '~icons/mdi/youtube'
-import RiBilibiliFill from '~icons/ri/bilibili-fill'
 import clsx from 'clsx'
 import { FC, memo, PropsWithChildren, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -23,11 +19,16 @@ import { Trans, useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
 import useSWR from 'swr'
 import { match } from 'ts-pattern'
+import IconMdiSearchWeb from '~icons/mdi/search-web'
+import IconMdiSpotify from '~icons/mdi/spotify'
+import IconMdiYouTube from '~icons/mdi/youtube'
+import RiBilibiliFill from '~icons/ri/bilibili-fill'
 import { useAuth } from '../../models/context/AuthContext'
 import { useAppContextDXDataVersion } from '../../models/context/useAppContext'
 import { supabase } from '../../models/supabase'
 import { FlattenedSheet } from '../../songs'
 import { calculateRating } from '../../utils/rating'
+import { calculateScoreTable } from '../../utils/scores'
 import { DXRank } from '../global/DXRank'
 import { SheetDialogContentHeader } from './SheetDialogContentHeader'
 import { SheetTitle } from './SheetListItem'
@@ -174,6 +175,66 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         </div>
       )}
     </div>
+  )
+}
+
+const ScoreTable: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+  const scoreTable = useMemo(() => {
+    return calculateScoreTable(sheet.noteCounts)
+  }, [sheet.noteCounts])
+
+  if (!scoreTable)
+    return <div className="text-zinc-500 px-1">Score table is not available for this chart.</div>
+
+  const noteTypes = [
+    { key: 'tap' as const, label: 'TAP', count: sheet.noteCounts.tap },
+    { key: 'hold' as const, label: 'HOLD', count: sheet.noteCounts.hold },
+    { key: 'slide' as const, label: 'SLIDE', count: sheet.noteCounts.slide },
+    { key: 'touch' as const, label: 'TOUCH', count: sheet.noteCounts.touch },
+    { key: 'break' as const, label: 'BREAK', count: sheet.noteCounts.break },
+  ].filter(({ count }) => count !== null && count > 0)
+
+  const judgements = [
+    { key: 'criticalPerfect' as const, label: 'Critical Perfect' },
+    { key: 'perfect' as const, label: 'Perfect' },
+    { key: 'perfect2nd' as const, label: 'Perfect -2' },
+    { key: 'great' as const, label: 'Great' },
+    { key: 'great2nd' as const, label: 'Great -2' },
+    { key: 'great3rd' as const, label: 'Great -3' },
+    { key: 'good' as const, label: 'Good' },
+    { key: 'miss' as const, label: 'Miss' },
+  ]
+
+  return (
+    <Table size="small">
+      <TableHead>
+        <TableRow>
+          <TableCell>Note Type</TableCell>
+          {judgements.map(({ label }) => (
+            <TableCell key={label} align="right">
+              {label}
+            </TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {noteTypes.map(({ key, label, count }) => (
+          <TableRow key={key}>
+            <TableCell component="th" scope="row">
+              <div className="flex items-center gap-2">
+                <span>{label}</span>
+                <span className="text-zinc-500">({count})</span>
+              </div>
+            </TableCell>
+            {judgements.map(({ key: judgementKey }) => (
+              <TableCell key={judgementKey} align="right" className="tabular-nums">
+                {scoreTable[key][judgementKey].toFixed(4)}
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   )
 }
 

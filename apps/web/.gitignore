@@ -27,4 +27,3 @@ dist-ssr
 .env.sentry-build-plugin
 
 android/
-ios/
