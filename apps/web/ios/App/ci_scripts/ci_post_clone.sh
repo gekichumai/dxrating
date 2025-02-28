@@ -5,7 +5,7 @@ set -x -e
 export HOMEBREW_NO_INSTALL_CLEANUP=TRUE
 brew install cocoapods
 # have to add node yourself link to this issue https://stackoverflow.com/questions/73462672/xcode-cloud-suddenly-failing-to-link-node-and-install-dependencies
-NODE_VER=20
+NODE_VER=22
 VERSION=$(curl -s https://nodejs.org/dist/latest-v$NODE_VER.x/ | sed -nE 's|.*>node-(.*)\.pkg</a>.*|\1|p')
 if [[ "$(arch)" == "arm64" ]]; then
   ARCH="arm64"
@@ -24,7 +24,7 @@ node -v
 npm -v
 pwd
 
-npm install -g yarn
+corepack enable
 
 # Install dependencies
 yarn install --frozen-lockfile
