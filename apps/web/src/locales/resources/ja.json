@@ -17,14 +17,14 @@
     "region": {
       "title": "地域：{{region}}",
       "jp": "日本",
-      "intl": "International",
+      "intl": "インタナショナル",
       "cn": "中国",
-      "_generic": "汎用"
+      "_generic": "通用"
     },
     "version-and-region": {
-      "info": "異なるデータバージョンと地域は、異なる内部レベル値と異なる曲の可視性に対応します",
-      "select": "データバージョンと地域を選択",
-      "select-generic": "または、データバージョンを選択し、「汎用」リージョンを使用する"
+      "info": "異なるバージョンと地域を選ぶと、配信されている楽曲と内部定数を表示されます",
+      "select": "バージョンと地域を選択ください",
+      "select-generic": "まだ、バージョンのみを選んでください"
     }
   },
   "sheet": {
@@ -49,7 +49,7 @@
         "total": "合計",
         "touch": "タッチ"
       },
-      "regional-availability": "地域ごとの可用性",
+      "regional-availability": "配信地域",
       "song-artist": "ソングアーティスト",
       "title": "詳細"
     },
@@ -59,7 +59,7 @@
       "title": "譜面定数履歴"
     },
     "search-summary": "{{found}} / {{total}} 譜面 ({{elapsed}}ミリ秒)",
-    "release-date": "追加日 {{absoluteDate}} ({{relativeDate}})",
+    "release-date": "配信日 {{absoluteDate}} ({{relativeDate}})",
     "filter": {
       "title": "フィルタ",
       "internal-level-value": {
@@ -68,7 +68,7 @@
         "title": "譜面定数"
       },
       "version": {
-        "title": "追加バージョン",
+        "title": "実装バージョン",
         "gesture-hint": {
           "tap": "トグル",
           "tap-hold": "のみ"
@@ -86,18 +86,18 @@
       "add": "並べ替えを追加",
       "predicate": "述語#{{index}}",
       "release-date": {
-        "asc": "追加日（旧→新）",
-        "desc": "追加日（新→旧）"
+        "asc": "配信日（旧→新）",
+        "desc": "配信日（新→旧）"
       },
       "internal-level-value": {
         "asc": "レベル（低→高）",
         "desc": "レベル（高→低）"
       },
-      "temporarily-disabled": "検索クエリがアクティブなため、一時的に無効になっています"
+      "temporarily-disabled": "検索キーワードが入力されため、一時的に無効となります"
     },
     "sort-and-filter": {
       "reset": "リセット",
-      "title": "並べ替えとフィルタ"
+      "title": "フィルタと並べ替え"
     },
     "tags": {
       "add": {
@@ -128,16 +128,16 @@
     },
     "disclaimer": {
       "title": "免責事項",
-      "content": "DXRating はどのゲーム会社とも提携していません。本サイトは素材の権利を所有しておらず、全ての権利はセガを含む権利所有者に帰属します。本サイトは研究を目的としたファンメイドのデータベースであり、セガとは関係ありません。当サイトは、掲載されている情報の利用により生じたいかなる損失・損害についても責任を負いません。ご質問やご提案がございましたら、著者までご連絡ください。"
+      "content": "『DXRating』 はどのゲーム会社とも提携していません。本サイトは素材の権利を所有しておらず、全ての権利が株式会社SEGAを含む該当する権利所有者に帰属します。本サイトは研究を目的としたファンメイドのデータベースであり、株式会社SEGAとは一切関係ありません。当サイトは、掲載されている情報の利用により生じたいかなる損失、損害についても責任を負いかねます。ご不明点がございましたら、当サイト作者までご連絡ください。"
     }
   },
   "form": {
     "validation": {
       "max": {
-        "message": "「{{fieldName}}」は {{value}} 以下である必要があります"
+        "message": "有効な定数を入力してください (>{{value}})"
       },
       "min": {
-        "message": "「{{fieldName}}」は {{value}} 以上である必要があります"
+        "message": "有効な定数を入力してください (<{{value}})"
       }
     }
   },
