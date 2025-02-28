@@ -18,13 +18,13 @@
       "title": "伺服器：{{region}}",
       "jp": "日本",
       "intl": "國際",
-      "cn": "中國",
+      "cn": "中國大陸",
       "_generic": "通用"
     },
     "version-and-region": {
-      "select": "選擇 DXData 版本與伺服器",
-      "select-generic": "或，僅選擇 DXData 數據版本並使用「通用」伺服器",
-      "info": "不同的數據版本與伺服器對應不同的內部等級值、歌曲可見度和評級資格。"
+      "select": "選擇 DXData 數據版本與伺服器",
+      "select-generic": "或僅選擇 DXData 數據版本",
+      "info": "不同的數據版本與服務器對應了不同的樂曲與譜面定數可見性"
     }
   },
   "sheet": {
@@ -51,7 +51,7 @@
         "total": "總計",
         "touch": "Touch"
       },
-      "regional-availability": "區域可用性",
+      "regional-availability": "可遊玩地區",
       "song-artist": "作曲",
       "title": "詳細資訊"
     },
@@ -59,7 +59,7 @@
       "empty": "無可用歷史紀錄",
       "title": "譜面定數歷史"
     },
-    "release-date": "追加日 {{absoluteDate}} ({{relativeDate}})",
+    "release-date": "樂曲上線日 {{absoluteDate}} ({{relativeDate}})",
     "filter": {
       "title": "篩選",
       "internal-level-value": {
@@ -68,7 +68,7 @@
         "title": "定數"
       },
       "version": {
-        "title": "追加版本",
+        "title": "樂曲上線版本",
         "gesture-hint": {
           "tap": "切換",
           "tap-hold": "單選"
@@ -78,7 +78,7 @@
         "title": "標籤"
       },
       "category": {
-        "title": "類型"
+        "title": "樂曲類型"
       }
     },
     "sort": {
@@ -93,7 +93,7 @@
         "asc": "追加日期 (舊→新)",
         "desc": "追加日期 (新→舊)"
       },
-      "temporarily-disabled": "暫時停用：活躍的搜尋查詢"
+      "temporarily-disabled": "搜索關鍵詞已輸入，排序功能暫時關閉"
     },
     "sort-and-filter": {
       "title": "篩選與排序",
@@ -139,10 +139,10 @@
   "form": {
     "validation": {
       "max": {
-        "message": "“{{fieldName}}”必須小於或等於 {{value}}"
+        "message": "有效的定數必須小於或等於 {{value}}"
       },
       "min": {
-        "message": "“{{fieldName}}”必須大於或等於 {{value}}"
+        "message": "有效的定數必須大於或等於 {{value}}"
       }
     }
   },
