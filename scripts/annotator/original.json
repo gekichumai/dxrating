@@ -143272,7 +143272,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -143299,7 +143299,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -143326,7 +143326,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -143353,7 +143353,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -144010,7 +144010,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -144037,7 +144037,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -144064,7 +144064,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -144091,7 +144091,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -144133,7 +144133,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -144160,7 +144160,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -144187,7 +144187,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -144214,7 +144214,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -146332,7 +146332,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -146359,7 +146359,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -146386,7 +146386,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -146413,7 +146413,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -146455,7 +146455,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -146482,7 +146482,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -146509,7 +146509,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -146536,7 +146536,7 @@
 					},
 					"regions": {
 						"jp": true,
-						"intl": true,
+						"intl": false,
 						"cn": true
 					},
 					"regionOverrides": {
@@ -194376,7 +194376,7 @@
 			"imageName": "72198c7643a18b3957bf77a46e8069235475de81e5af1f708699b88c684e0b90.png",
 			"version": "PRiSM",
 			"releaseDate": "2025-02-14",
-			"isNew": true,
+			"isNew": false,
 			"isLocked": false,
 			"comment": null,
 			"sheets": [
@@ -194499,7 +194499,7 @@
 			"imageName": "a10abf04b8975cd640b6b5218137c09c64fb1d64c97e75d9bcd9ffe013251067.png",
 			"version": "PRiSM",
 			"releaseDate": "2025-02-14",
-			"isNew": true,
+			"isNew": false,
 			"isLocked": false,
 			"comment": null,
 			"sheets": [
@@ -194622,7 +194622,7 @@
 			"imageName": "ff4a13d313aed35911ae2f7608233cc75430bf12c4b3c9d819e117351edb635e.png",
 			"version": "PRiSM",
 			"releaseDate": "2025-02-14",
-			"isNew": true,
+			"isNew": false,
 			"isLocked": true,
 			"comment": null,
 			"sheets": [
@@ -194733,6 +194733,502 @@
 					},
 					"isSpecial": false,
 					"version": "PRiSM"
+				}
+			]
+		},
+		{
+			"songId": "Flashback",
+			"category": "maimai",
+			"title": "Flashback",
+			"artist": "RiraN",
+			"bpm": 160,
+			"imageName": "acc92d51780a20ab55927e358d7f4c63536d2bc40b7f6a8347032f09dd6d5f6d.png",
+			"version": "PRiSM",
+			"releaseDate": "2025-02-27",
+			"isNew": true,
+			"isLocked": true,
+			"comment": null,
+			"sheets": [
+				{
+					"type": "dx",
+					"difficulty": "basic",
+					"level": "4",
+					"levelValue": 4,
+					"internalLevel": null,
+					"internalLevelValue": 4,
+					"noteDesigner": "-",
+					"noteCounts": {
+						"tap": 175,
+						"hold": 14,
+						"slide": 4,
+						"touch": 8,
+						"break": 8,
+						"total": 209
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {}
+					},
+					"isSpecial": false,
+					"version": "PRiSM"
+				},
+				{
+					"type": "dx",
+					"difficulty": "advanced",
+					"level": "7+",
+					"levelValue": 7.6,
+					"internalLevel": null,
+					"internalLevelValue": 7.6,
+					"noteDesigner": "-",
+					"noteCounts": {
+						"tap": 263,
+						"hold": 20,
+						"slide": 6,
+						"touch": 29,
+						"break": 5,
+						"total": 323
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {}
+					},
+					"isSpecial": false,
+					"version": "PRiSM"
+				},
+				{
+					"type": "dx",
+					"difficulty": "expert",
+					"level": "11",
+					"levelValue": 11,
+					"internalLevel": null,
+					"internalLevelValue": 11,
+					"noteDesigner": "サファ太",
+					"noteCounts": {
+						"tap": 276,
+						"hold": 49,
+						"slide": 45,
+						"touch": 35,
+						"break": 110,
+						"total": 515
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {}
+					},
+					"isSpecial": false,
+					"version": "PRiSM"
+				},
+				{
+					"type": "dx",
+					"difficulty": "master",
+					"level": "13+",
+					"levelValue": 13.6,
+					"internalLevel": "13.9",
+					"internalLevelValue": 13.9,
+					"noteDesigner": "Luxizhel",
+					"noteCounts": {
+						"tap": 599,
+						"hold": 44,
+						"slide": 79,
+						"touch": 59,
+						"break": 32,
+						"total": 813
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {}
+					},
+					"isSpecial": false,
+					"version": "PRiSM"
+				}
+			]
+		},
+		{
+			"songId": "Colorfull:Encounter",
+			"category": "maimai",
+			"title": "Colorfull:Encounter",
+			"artist": "Reku Mochizuki",
+			"bpm": 185,
+			"imageName": "93cf633b227bbb2c1b9366b2708f50c3aeadd7ed8c4b9a34e5ef4cdd25773b43.png",
+			"version": "PRiSM",
+			"releaseDate": "2025-02-27",
+			"isNew": true,
+			"isLocked": true,
+			"comment": null,
+			"sheets": [
+				{
+					"type": "dx",
+					"difficulty": "basic",
+					"level": "5",
+					"levelValue": 5,
+					"internalLevel": null,
+					"internalLevelValue": 5,
+					"noteDesigner": "-",
+					"noteCounts": {
+						"tap": 151,
+						"hold": 14,
+						"slide": 4,
+						"touch": 24,
+						"break": 9,
+						"total": 202
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {}
+					},
+					"isSpecial": false,
+					"version": "PRiSM"
+				},
+				{
+					"type": "dx",
+					"difficulty": "advanced",
+					"level": "7+",
+					"levelValue": 7.6,
+					"internalLevel": null,
+					"internalLevelValue": 7.6,
+					"noteDesigner": "-",
+					"noteCounts": {
+						"tap": 247,
+						"hold": 18,
+						"slide": 9,
+						"touch": 26,
+						"break": 5,
+						"total": 305
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {}
+					},
+					"isSpecial": false,
+					"version": "PRiSM"
+				},
+				{
+					"type": "dx",
+					"difficulty": "expert",
+					"level": "11+",
+					"levelValue": 11.6,
+					"internalLevel": null,
+					"internalLevelValue": 11.6,
+					"noteDesigner": "はっぴー",
+					"noteCounts": {
+						"tap": 433,
+						"hold": 36,
+						"slide": 39,
+						"touch": 9,
+						"break": 9,
+						"total": 526
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {}
+					},
+					"isSpecial": false,
+					"version": "PRiSM"
+				},
+				{
+					"type": "dx",
+					"difficulty": "master",
+					"level": "13+",
+					"levelValue": 13.6,
+					"internalLevel": null,
+					"internalLevelValue": 13.6,
+					"noteDesigner": "鳩ホルダー",
+					"noteCounts": {
+						"tap": 533,
+						"hold": 53,
+						"slide": 86,
+						"touch": 30,
+						"break": 23,
+						"total": 725
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {}
+					},
+					"isSpecial": false,
+					"version": "PRiSM"
+				}
+			]
+		},
+		{
+			"songId": "雨露霜雪",
+			"category": "maimai",
+			"title": "雨露霜雪",
+			"artist": "かねこちはる vs t+pazolite",
+			"bpm": 250,
+			"imageName": "5c64b0d4e8582058ba116c03f19eb8797f919daed107fceb5c4fb1fcf426302e.png",
+			"version": "PRiSM",
+			"releaseDate": "2025-02-27",
+			"isNew": true,
+			"isLocked": true,
+			"comment": null,
+			"sheets": [
+				{
+					"type": "dx",
+					"difficulty": "basic",
+					"level": "6",
+					"levelValue": 6,
+					"internalLevel": null,
+					"internalLevelValue": 6,
+					"noteDesigner": "-",
+					"noteCounts": {
+						"tap": 281,
+						"hold": 12,
+						"slide": 6,
+						"touch": 27,
+						"break": 11,
+						"total": 337
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {}
+					},
+					"isSpecial": false,
+					"version": "PRiSM"
+				},
+				{
+					"type": "dx",
+					"difficulty": "advanced",
+					"level": "9",
+					"levelValue": 9,
+					"internalLevel": null,
+					"internalLevelValue": 9,
+					"noteDesigner": "-",
+					"noteCounts": {
+						"tap": 479,
+						"hold": 24,
+						"slide": 10,
+						"touch": 14,
+						"break": 5,
+						"total": 532
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {}
+					},
+					"isSpecial": false,
+					"version": "PRiSM"
+				},
+				{
+					"type": "dx",
+					"difficulty": "expert",
+					"level": "13",
+					"levelValue": 13,
+					"internalLevel": null,
+					"internalLevelValue": 13,
+					"noteDesigner": null,
+					"noteCounts": {
+						"tap": 705,
+						"hold": 54,
+						"slide": 42,
+						"touch": 48,
+						"break": 66,
+						"total": 915
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {}
+					},
+					"isSpecial": false,
+					"version": "PRiSM"
+				},
+				{
+					"type": "dx",
+					"difficulty": "master",
+					"level": "14+",
+					"levelValue": 14.6,
+					"internalLevel": null,
+					"internalLevelValue": 14.6,
+					"noteDesigner": null,
+					"noteCounts": {
+						"tap": 744,
+						"hold": 95,
+						"slide": 102,
+						"touch": 124,
+						"break": 146,
+						"total": 1211
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {}
+					},
+					"isSpecial": false,
+					"version": "PRiSM"
+				}
+			]
+		},
+		{
+			"songId": "宙天",
+			"category": "maimai",
+			"title": "宙天",
+			"artist": "t+pazolite vs かねこちはる",
+			"bpm": 125,
+			"imageName": "8210d983a3fb31ce543248857a382d89df7db570caf68fdde3c6706d39ec9277.png",
+			"version": "PRiSM",
+			"releaseDate": "2025-02-27",
+			"isNew": true,
+			"isLocked": true,
+			"comment": null,
+			"sheets": [
+				{
+					"type": "dx",
+					"difficulty": "basic",
+					"level": "6",
+					"levelValue": 6,
+					"internalLevel": null,
+					"internalLevelValue": 6,
+					"noteDesigner": "-",
+					"noteCounts": {
+						"tap": null,
+						"hold": null,
+						"slide": null,
+						"touch": null,
+						"break": null,
+						"total": null
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {
+							"version": "PRiSM"
+						}
+					},
+					"isSpecial": false
+				},
+				{
+					"type": "dx",
+					"difficulty": "advanced",
+					"level": "8+",
+					"levelValue": 8.6,
+					"internalLevel": null,
+					"internalLevelValue": 8.6,
+					"noteDesigner": "-",
+					"noteCounts": {
+						"tap": null,
+						"hold": null,
+						"slide": null,
+						"touch": null,
+						"break": null,
+						"total": null
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {
+							"version": "PRiSM"
+						}
+					},
+					"isSpecial": false
+				},
+				{
+					"type": "dx",
+					"difficulty": "expert",
+					"level": "13",
+					"levelValue": 13,
+					"internalLevel": null,
+					"internalLevelValue": 13,
+					"noteDesigner": null,
+					"noteCounts": {
+						"tap": null,
+						"hold": null,
+						"slide": null,
+						"touch": null,
+						"break": null,
+						"total": null
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {
+							"version": "PRiSM"
+						}
+					},
+					"isSpecial": false
+				},
+				{
+					"type": "dx",
+					"difficulty": "master",
+					"level": "14+",
+					"levelValue": 14.6,
+					"internalLevel": null,
+					"internalLevelValue": 14.6,
+					"noteDesigner": "BELiZHEL vs  Safari",
+					"noteCounts": {
+						"tap": 725,
+						"hold": 55,
+						"slide": 89,
+						"touch": 82,
+						"break": 107,
+						"total": 1058
+					},
+					"regions": {
+						"jp": true,
+						"intl": true,
+						"cn": false
+					},
+					"regionOverrides": {
+						"intl": {
+							"version": "PRiSM"
+						}
+					},
+					"isSpecial": false
 				}
 			]
 		}
@@ -194920,5 +195416,5 @@
 			"name": "中国版 (舞萌DX)"
 		}
 	],
-	"updateTime": "2025-02-21T03:43:22.904Z"
+	"updateTime": "2025-02-27T14:04:09.682Z"
 }
