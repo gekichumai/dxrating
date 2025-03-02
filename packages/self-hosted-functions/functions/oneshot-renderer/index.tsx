@@ -121,7 +121,7 @@ const fetchFontPack = async (): Promise<Font[]> => {
       weight: 700 as const,
     },
   ]
-  const fonts = await Promise.all(fontConfig.map(async (font) => fs.readFile(ASSETS_BASE_DIR + '/fonts/' + font.file)))
+  const fonts = await Promise.all(fontConfig.map(async (font) => fs.readFile(`${ASSETS_BASE_DIR}/fonts/${font.file}`)))
   if (!fonts.every((font) => font instanceof Buffer)) {
     console.error('Failed to load at least one font')
     return []

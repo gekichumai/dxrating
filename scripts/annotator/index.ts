@@ -1,4 +1,4 @@
-import process from 'process'
+import process from 'node:process'
 
 import { type DifficultyEnum, type Sheet, TypeEnum, type VersionEnum } from '@gekichumai/dxdata'
 import 'dotenv/config'

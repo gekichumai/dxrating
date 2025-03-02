@@ -275,7 +275,7 @@ export class MaimaiNETIntlClient extends Client {
         },
       }).parseFromString(redirectDestinationText, 'text/html')
       const errorString = textDom.querySelector('#error')?.textContent?.trim() ?? 'failed to login'
-      throw new Error('invalid credentials: ' + errorString)
+      throw new Error(`invalid credentials: ${errorString}`)
     }
 
     this.onUpdate?.('auth:succeeded')

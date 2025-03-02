@@ -1,7 +1,7 @@
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
-import { execSync } from 'child_process'
 import clsx from 'clsx'
-import fs from 'fs/promises'
+import { execSync } from 'node:child_process'
+import fs from 'node:fs/promises'
 import type { FC, PropsWithChildren } from 'react'
 import { ASSETS_BASE_DIR, type PlayerCollection, type Region, type RenderData } from '.'
 
@@ -85,10 +85,10 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
   }
 
   const [coverImage, typeImage, accuracyImage, syncImage] = await Promise.all([
-    fs.readFile(ASSETS_BASE_DIR + '/images/cover/v2/' + entry.sheet.imageName + '.jpg'),
-    fs.readFile(ASSETS_BASE_DIR + `/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`),
-    fs.readFile(ASSETS_BASE_DIR + `/images/play-achievement/${entry.achievementAccuracy ?? 'blank'}.png`),
-    fs.readFile(ASSETS_BASE_DIR + `/images/play-achievement/${entry.achievementSync ?? 'blank'}.png`),
+    fs.readFile(`${ASSETS_BASE_DIR}/images/cover/v2/${entry.sheet.imageName}.jpg`),
+    fs.readFile(`${ASSETS_BASE_DIR}/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`),
+    fs.readFile(`${ASSETS_BASE_DIR}/images/play-achievement/${entry.achievementAccuracy ?? 'blank'}.png`),
+    fs.readFile(`${ASSETS_BASE_DIR}/images/play-achievement/${entry.achievementSync ?? 'blank'}.png`),
   ])
 
   const theme = DIFFICULTIES[entry.sheet.difficulty]
@@ -101,13 +101,13 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
     if (!entry.dxScore) return null
     switch (entry.dxScore.stars) {
       case 5:
-        return ASSETS_BASE_DIR + '/images/dxscore-star/3.png'
+        return `${ASSETS_BASE_DIR}/images/dxscore-star/3.png`
       case 4:
       case 3:
-        return ASSETS_BASE_DIR + '/images/dxscore-star/2.png'
+        return `${ASSETS_BASE_DIR}/images/dxscore-star/2.png`
       case 2:
       case 1:
-        return ASSETS_BASE_DIR + '/images/dxscore-star/1.png'
+        return `${ASSETS_BASE_DIR}/images/dxscore-star/1.png`
     }
   })()
   const starImage = starImageFile && (await fs.readFile(starImageFile)).buffer
@@ -128,7 +128,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
           alt={entry.sheet.imageName}
           tw="h-[108px] w-[108px] absolute top-0 right-[-1px]"
           style={{
-            maskImage: `linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 10%, rgba(255,255,255,1) 100%)`,
+            maskImage: 'linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 10%, rgba(255,255,255,1) 100%)',
             maskRepeat: 'no-repeat',
           }}
         />
@@ -140,7 +140,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
             style={{
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
-              textShadow: '0 0 2px ' + shadowColor,
+              textShadow: `0 0 2px ${shadowColor}`,
               lineHeight: '15px',
               fontSize: (() => {
                 const length = estimateTitleCharacterLength(entry.sheet.title)
@@ -181,13 +181,13 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
               {entry.rating.ratingAwardValue}
             </span>
 
-            <span tw="text-sm leading-none ml-1" style={{ textShadow: '0 0 2px ' + shadowColor }}>
+            <span tw="text-sm leading-none ml-1" style={{ textShadow: `0 0 2px ${shadowColor}` }}>
               {entry.achievementRate.toFixed(4)}%
             </span>
 
             <span
               tw="leading-none font-normal ml-1 opacity-80 flex items-center"
-              style={{ textShadow: '0 0 2px ' + shadowColor }}
+              style={{ textShadow: `0 0 2px ${shadowColor}` }}
             >
               <span tw="text-sm leading-none">{entry.rating.rank?.replace('p', '')?.toUpperCase()}</span>
               {entry.rating.rank?.includes('p') && <span tw="text-[15px] leading-none">+</span>}
@@ -239,6 +239,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
                   {starImage ? (
                     Array.from({ length: entry.dxScore.stars }).map((_, i) => (
                       // @ts-expect-error
+                      // biome-ignore lint/suspicious/noArrayIndexKey: index is stable
                       <img key={i} src={starImage} alt="" tw="h-[12px] w-[12px] -ml-0.5" />
                     ))
                   ) : (
@@ -251,7 +252,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
         </div>
 
         <div tw="absolute bottom-1 right-1 text-[9px] font-bold leading-none flex rounded-md justify-center w-[24px] py-[2px] bg-black/50 text-white">
-          {'#' + (i + 1)}
+          {`#${i + 1}`}
         </div>
       </div>
     </div>
@@ -321,7 +322,7 @@ export const renderContent = async ({
   const background = (await fs.readFile(ASSETS_BASE_DIR + theme.background)).buffer
   const icon = (
     await fs.readFile(
-      ASSETS_BASE_DIR + `/assetbundle/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`,
+      `${ASSETS_BASE_DIR}/assetbundle/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`,
     )
   ).buffer
 
@@ -350,7 +351,7 @@ export const renderContent = async ({
           {playerCollection && (
             <div tw="flex items-center justify-start p-3 rounded-lg w-[589px] bg-black/80 text-white h-full mr-[8px]">
               {/* @ts-expect-error */}
-              <img src={icon} tw="h-[70px] w-[70px] rounded-md bg-gray-500 mr-3" alt=""></img>
+              <img src={icon} tw="h-[70px] w-[70px] rounded-md bg-gray-500 mr-3" alt="" />
 
               {playerCollection?.name && (
                 <div

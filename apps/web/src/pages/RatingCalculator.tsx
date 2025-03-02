@@ -10,7 +10,6 @@ import {
   Grow,
   IconButton,
   Paper,
-  styled,
   Switch,
   Table,
   TableBody,
@@ -18,14 +17,15 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  styled,
 } from '@mui/material'
 import {
+  type Row,
+  type SortingState,
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
-  type Row,
-  type SortingState,
   useReactTable,
 } from '@tanstack/react-table'
 import clsx from 'clsx'
@@ -35,12 +35,12 @@ import { type ItemProps, type ScrollerProps, type TableBodyProps, type TableComp
 import IconMdiArrowDown from '~icons/mdi/arrow-down'
 import IconMdiTrashCan from '~icons/mdi/trash-can'
 import { BetaBadge } from '../components/global/BetaBadge'
-import { ClearButton } from '../components/rating/io/ClearButton'
-import { RenderToOneShotImageButton } from '../components/rating/io/export/RenderToOneShotImageButton'
-import { ExportMenu } from '../components/rating/io/ExportMenu'
-import { ImportMenu } from '../components/rating/io/ImportMenu'
 import { type PlayEntry, RatingCalculatorAddEntryForm } from '../components/rating/RatingCalculatorAddEntryForm'
 import { RatingCalculatorStatistics } from '../components/rating/RatingCalculatorStatistics'
+import { ClearButton } from '../components/rating/io/ClearButton'
+import { ExportMenu } from '../components/rating/io/ExportMenu'
+import { ImportMenu } from '../components/rating/io/ImportMenu'
+import { RenderToOneShotImageButton } from '../components/rating/io/export/RenderToOneShotImageButton'
 import { useRatingEntries } from '../components/rating/useRatingEntries'
 import { SheetListItem, SheetListItemContent } from '../components/sheet/SheetListItem'
 import { useRatingCalculatorContext } from '../models/context/RatingCalculatorContext'
