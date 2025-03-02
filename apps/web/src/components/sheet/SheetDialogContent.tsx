@@ -558,6 +558,7 @@ const SheetInternalLevelHistory: FC<{
         (acc, { version, internalLevelValue, ...extra }) => {
           // add `delta` field
           let delta: number | undefined
+          // biome-ignore lint/performance/noAccumulatingSpread: it is fine here since we don't really have a lot of versions
           const accReversed = [...acc].reverse()
           const prev = accReversed.find((v) => v.internalLevelValue !== undefined)
           if (prev && internalLevelValue !== undefined && prev.internalLevelValue !== undefined) {

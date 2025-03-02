@@ -105,7 +105,7 @@ class PostgresConnection implements DatabaseConnection {
           numUpdatedOrDeletedRows: numAffectedRows,
           numAffectedRows,
           rows: result.rows ?? [],
-        } as any
+        }
       }
 
       return {
