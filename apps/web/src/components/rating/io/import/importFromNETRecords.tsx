@@ -1,13 +1,13 @@
 import { type DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import { CircularProgress } from '@mui/material'
-import IconMdiCheck from '~icons/mdi/check'
-import IconMdiClose from '~icons/mdi/close'
 import cloneDeep from 'lodash-es/cloneDeep'
 import posthog from 'posthog-js'
 import toast from 'react-hot-toast'
 import type { ListActions } from 'react-use/lib/useList'
-import { canonicalIdFromParts, type FlattenedSheet } from '../../../../songs'
+import IconMdiCheck from '~icons/mdi/check'
+import IconMdiClose from '~icons/mdi/close'
+import { type FlattenedSheet, canonicalIdFromParts } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
@@ -56,7 +56,7 @@ const fetchNetRecords = async (
   const { region, username, password } = authParams
 
   return new Promise((resolve, reject) => {
-    fetchEventSource('https://miruku.dxrating.net/functions/fetch-net-records/v1/' + region, {
+    fetchEventSource(`https://miruku.dxrating.net/functions/fetch-net-records/v1/${region}`, {
       method: 'POST',
       body: JSON.stringify({ id: username, password }),
       openWhenHidden: true,
@@ -172,14 +172,14 @@ export const importFromNETRecords = async (
     } else if (mode === 'merge') {
       modifyEntries.set((prev) => {
         const cloned = cloneDeep(prev)
-        entries.forEach((entry) => {
+        for (const entry of entries) {
           const existed = cloned.find((item) => item.sheetId === entry.sheetId)
           if (!existed) {
             cloned.push(entry)
           } else if (entry.achievementRate > existed.achievementRate) {
             existed.achievementRate = entry.achievementRate
           }
-        })
+        }
         return cloned
       })
     }
@@ -219,7 +219,7 @@ export const importFromNETRecords = async (
       count: entries.length,
     })
   } catch (error) {
-    toast.error('Error occurred while importing records from NET: ' + formatErrorMessage(error), {
+    toast.error(`Error occurred while importing records from NET: ${formatErrorMessage(error)}`, {
       id: toastId,
       icon: <IconMdiClose className="h-4 w-4 text-red-5 shrink-0" />,
       duration: 20000,

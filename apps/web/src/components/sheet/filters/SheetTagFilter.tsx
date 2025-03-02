@@ -90,6 +90,7 @@ const SheetTagFilterInput = ({
       {isLoading &&
         Array.from({ length: 8 }).map((_, i) => (
           <SheetTagFilterInputTag
+            // biome-ignore lint/suspicious/noArrayIndexKey: index is stable
             key={i}
             label={<div className="w-8">&nbsp;</div>}
             count="--"

@@ -15,7 +15,8 @@
         "useSelfClosingElements": "warn"
       },
       "a11y": {
-        "useAltText": "off"
+        "useAltText": "off",
+        "useKeyWithClickEvents": "off"
       }
     }
   },

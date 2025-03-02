@@ -44,7 +44,7 @@ export const ImportFromJSONButtonListItem: FC<{
 
             modifyEntries.set(entries)
 
-            toast.success('Imported ' + entries.length + ' entries')
+            toast.success(`Imported ${entries.length} entries`)
           }
           reader.readAsText(file)
         }

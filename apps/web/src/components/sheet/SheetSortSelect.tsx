@@ -1,10 +1,10 @@
 import { FormControl, IconButton, InputLabel, MenuItem, Select } from '@mui/material'
-import MdiAdd from '~icons/mdi/add'
-import MdiClose from '~icons/mdi/close'
 import { AnimatePresence } from 'framer-motion'
 import { type FC, useContext, useMemo } from 'react'
 import { type Control, Controller, useFieldArray } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
+import MdiAdd from '~icons/mdi/add'
+import MdiClose from '~icons/mdi/close'
 import { SheetDetailsContext } from '../../models/context/SheetDetailsContext'
 import { MotionButton } from '../../utils/motion'
 import type { SheetSortFilterForm, SortPredicate } from './SheetSortFilter'
@@ -49,9 +49,9 @@ export const SheetSortSelect: FC<{
           key={field.id}
           render={({ field }) => (
             <FormControl>
-              <InputLabel id={`sorts.${index}.label`}>{t(`sheet:sort.predicate`, { index: index + 1 })}</InputLabel>
+              <InputLabel id={`sorts.${index}.label`}>{t('sheet:sort.predicate', { index: index + 1 })}</InputLabel>
               <Select
-                label={t(`sheet:sort.predicate`, { index: index + 1 })}
+                label={t('sheet:sort.predicate', { index: index + 1 })}
                 labelId={`sorts.${index}.label`}
                 id={`sorts.${index}`}
                 value={SortPredicateTransformer.from(field.value)}

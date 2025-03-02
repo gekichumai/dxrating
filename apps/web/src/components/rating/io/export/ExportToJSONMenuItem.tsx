@@ -1,7 +1,7 @@
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
-import IconMdiFile from '~icons/mdi/file'
 import type { FC } from 'react'
 import toast from 'react-hot-toast'
+import IconMdiFile from '~icons/mdi/file'
 import { useRatingCalculatorContext } from '../../../../models/context/RatingCalculatorContext'
 import { type RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
 
@@ -15,7 +15,7 @@ const saveAsJsonFile = (data: string) => {
   a.click()
   URL.revokeObjectURL(url)
 
-  toast.success('Exported as ' + name)
+  toast.success(`Exported as ${name}`)
 }
 
 export const ExportToJSONMenuItem: FC = () => {

@@ -15,12 +15,12 @@ import {
   ListItemText,
   MenuItem,
 } from '@mui/material'
-import IconMdiDatabase from '~icons/mdi/database'
 import { type FC, useCallback, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import type { ListActions } from 'react-use/lib/useList'
 import sqljs, { type Database } from 'sql.js'
-import { canonicalIdFromParts, type FlattenedSheet, useSheets } from '../../../../songs'
+import IconMdiDatabase from '~icons/mdi/database'
+import { type FlattenedSheet, canonicalIdFromParts, useSheets } from '../../../../songs'
 import {
   type AquaGamePlay,
   type AquaPlayLog,
@@ -77,25 +77,23 @@ export const ImportFromAquaSQLiteListItem: FC<{
                 r.onload = () => {
                   if (r.result === null || typeof r.result === 'string') {
                     return reject(
-                      'Failed to load file: unknown error: no result received from FileReader (typeof: ' +
-                        typeof r.result +
-                        ')',
+                      `Failed to load file: unknown error: no result received from FileReader (typeof: ${typeof r.result})`,
                     )
                   }
                   try {
-                    console.info('Loaded file: ' + file.name, r.result)
+                    console.info(`Loaded file: ${file.name}`, r.result)
                     const uints = new Uint8Array(r.result)
-                    console.log('Size: ' + uints.length)
+                    console.log(`Size: ${uints.length}`)
                     const db = new SQL.Database(uints)
                     setDb(db)
                     resolve('Database loaded.')
                   } catch (e) {
                     console.error(e)
-                    reject('Failed to load file: ' + e)
+                    reject(`Failed to load file: ${e}`)
                   }
                 }
                 r.onerror = () => {
-                  reject('Failed to load file: ' + r.error)
+                  reject(`Failed to load file: ${r.error}`)
                 }
                 r.readAsArrayBuffer(file)
               }

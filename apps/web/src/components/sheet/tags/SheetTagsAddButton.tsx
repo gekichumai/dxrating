@@ -108,6 +108,7 @@ const SheetTagsAddDialog: FC<{
       <div className="flex flex-wrap gap-2">
         {loadingTags || loadingExistingTags ? (
           Array.from({ length: 5 }).map((_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: index is stable
             <Chip key={i} color="primary" disabled className="rounded-lg animate-pulse w-16" />
           ))
         ) : (

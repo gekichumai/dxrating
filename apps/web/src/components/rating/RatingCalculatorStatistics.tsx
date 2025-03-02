@@ -1,10 +1,10 @@
-import IconMdiGestureSwipeLeft from '~icons/mdi/gesture-swipe-left'
 import clsx from 'clsx'
 import * as d3 from 'd3'
 import { motion } from 'framer-motion'
 import compact from 'lodash-es/compact'
-import { type FC, forwardRef, type HTMLAttributes, useEffect, useRef, useState } from 'react'
+import { type FC, type HTMLAttributes, forwardRef, useEffect, useRef, useState } from 'react'
 import { useMeasure } from 'react-use'
+import IconMdiGestureSwipeLeft from '~icons/mdi/gesture-swipe-left'
 import { deriveColor } from '../../utils/color'
 import { makeId } from '../../utils/random'
 import { useVersionTheme } from '../../utils/useVersionTheme'
@@ -117,9 +117,9 @@ const Histogram: FC<{
 
   const draw = () => {
     // set the dimensions and margins of the graph
-    const margin = { top: 20, right: 10, bottom: 20, left: 25 },
-      width = containerRect.width - margin.left - margin.right,
-      height = 300 - margin.top - margin.bottom
+    const margin = { top: 20, right: 10, bottom: 20, left: 25 }
+    const width = containerRect.width - margin.left - margin.right
+    const height = 300 - margin.top - margin.bottom
 
     const b15Avg = d3.mean(b15Values) ?? 0
     const b35Avg = d3.mean(b35Values) ?? 0
@@ -128,7 +128,7 @@ const Histogram: FC<{
 
     // append the svg object to the body of the page
     const svg = d3
-      .select('#' + id)
+      .select(`#${id}`)
       .append('svg')
       .attr('width', width + margin.left + margin.right)
       .attr('height', height + margin.top + margin.bottom)
@@ -177,11 +177,10 @@ const Histogram: FC<{
     svg.append('g').call(
       d3.axisLeft(y).tickFormat((d) => {
         if (typeof d !== 'number') return ''
-        if (d % 1 == 0) {
+        if (d % 1 === 0) {
           return (d as number).toFixed(0)
-        } else {
-          return ''
         }
+        return ''
       }),
     )
 
@@ -248,7 +247,7 @@ const Histogram: FC<{
     draw()
 
     return () => {
-      d3.select('#' + id)
+      d3.select(`#${id}`)
         .selectAll('*')
         .remove()
     }

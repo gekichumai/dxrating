@@ -1,8 +1,8 @@
 import { Button, Dialog, Grow, TextField } from '@mui/material'
-import IconMdiPlus from '~icons/mdi/plus'
 import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAsyncFn } from 'react-use'
+import IconMdiPlus from '~icons/mdi/plus'
 import { useAuth } from '../../models/context/AuthContext'
 import { supabase } from '../../models/supabase'
 import { useServerAliases } from '../../models/useServerAliases'
@@ -31,11 +31,11 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
       .select()
       .then((res) => {
         if (res.error) {
-          toast.error('Failed to add alias: ' + res.error.message)
+          toast.error(`Failed to add alias: ${res.error.message}`)
           return
         }
 
-        toast.success('Added alias: ' + newAltName.trim())
+        toast.success(`Added alias: ${newAltName.trim()}`)
         setOpen(false)
         setNewAltName('')
       })

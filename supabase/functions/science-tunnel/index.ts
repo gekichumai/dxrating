@@ -25,7 +25,7 @@ serve(async (req) => {
     const envelope = await req.text()
     const piece = envelope.split('\n')[0]
     const header = JSON.parse(piece)
-    const dsn = new URL(header['dsn'])
+    const dsn = new URL(header.dsn)
     const project_id = dsn.pathname?.replace('/', '')
 
     if (dsn.hostname !== SENTRY_HOST) {

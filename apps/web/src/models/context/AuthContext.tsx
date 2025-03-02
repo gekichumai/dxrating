@@ -1,5 +1,5 @@
 import type { Session } from '@supabase/supabase-js'
-import { createContext, type FC, type PropsWithChildren, useContext, useEffect, useState } from 'react'
+import { type FC, type PropsWithChildren, createContext, useContext, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useFirstMountState } from 'react-use'
@@ -30,7 +30,7 @@ export const AuthContextProvider: FC<PropsWithChildren<object>> = ({ children })
   const firstMount = useFirstMountState()
   const signedIn = !!session?.user.id
   const { data: profile, isLoading: profilePending } = useSWR(
-    session ? 'supabase::profile::' + session?.user.id : false,
+    session ? `supabase::profile::${session?.user.id}` : false,
     async () => {
       const res = await supabase
         .from('profiles')

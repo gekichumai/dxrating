@@ -16,9 +16,8 @@ export const deriveColor = (color: string, type: 'border' | 'text' | 'overlay') 
     .with('text', () => {
       if (c.luminance > 0.5) {
         return 'black'
-      } else {
-        return 'white'
       }
+      return 'white'
     })
     .exhaustive()
 }

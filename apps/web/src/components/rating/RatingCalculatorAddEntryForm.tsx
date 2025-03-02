@@ -99,7 +99,7 @@ export const RatingCalculatorAddEntryForm: FC<{
     }
     try {
       const parsed = Number.parseFloat(value!)
-      if (isNaN(parsed)) {
+      if (Number.isNaN(parsed)) {
         setAchievementRateError('Invalid number')
       } else if (parsed < 0 || parsed > 101) {
         setAchievementRateError('Must be between 0% and 101%')

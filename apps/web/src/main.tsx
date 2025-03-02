@@ -11,11 +11,11 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { initReactI18next } from 'react-i18next'
 import 'virtual:uno.css'
-import './index.css'
 import { App } from './App'
 import { CustomizedToaster } from './components/global/CustomizedToaster'
 import { SideEffector } from './components/global/SideEffector'
 import { VersionCustomizedThemeProvider } from './components/layout/VersionCustomizedThemeProvider'
+import './index.css'
 import { i18nResources } from './locales/locales'
 import { AppContextProvider } from './models/context/AppContext'
 import { AuthContextProvider } from './models/context/AuthContext'
@@ -30,7 +30,7 @@ posthog.init('phc_Hw7FM2D1vSwummp0D3O13Z6biV6udw5bKIcq4BJQxH7', {
 Sentry.init({
   dsn: 'https://1e929f3c3b929a213436e3c4dff57140@o4506648698683392.ingest.sentry.io/4506648709627904',
   tunnel: 'https://derrakuma.dxrating.net/functions/v1/science-tunnel',
-  release: 'dxrating@' + (BUNDLE.version ?? 'unknown'),
+  release: `dxrating@${BUNDLE.version ?? 'unknown'}`,
   enabled: import.meta.env.PROD,
   integrations: [
     browserTracingIntegration({

@@ -58,7 +58,7 @@ const ThemedAuth: FC<{
               inputBorderRadius: '12px',
             },
             colors: {
-              brand: theme.accentColor + '99',
+              brand: `${theme.accentColor}99`,
               brandAccent: theme.accentColor,
               brandButtonText: 'black',
             },
@@ -195,8 +195,8 @@ export const UpdateDisplayNameMenuItem: FC = () => {
           toast.error(`Failed to update your profile name: ${res.error.message}`)
           return
         }
-        mutate('supabase::profile::' + session.user.id)
-        toast.success('Your profile name has been successfully updated to "' + displayName + '".')
+        mutate(`supabase::profile::${session.user.id}`)
+        toast.success(`Your profile name has been successfully updated to "${displayName}".`)
         setOpen(false)
       })
   }, [displayName, session])

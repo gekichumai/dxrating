@@ -1,12 +1,12 @@
 import { dxdataUpdateTime } from '@gekichumai/dxdata'
 import { IconButton } from '@mui/material'
+import clsx from 'clsx'
+import { type FC, type PropsWithChildren, type ReactNode, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import MdiGithub from '~icons/mdi/github'
 import MdiInformation from '~icons/mdi/information'
 import MdiTwitter from '~icons/mdi/twitter'
 import MdiWeb from '~icons/mdi/web'
-import clsx from 'clsx'
-import { type FC, type PropsWithChildren, type ReactNode, useState } from 'react'
-import { Trans, useTranslation } from 'react-i18next'
 import { BUNDLE } from '../../../utils/bundle'
 import { useTime } from '../../../utils/useTime'
 import { ResponsiveDialog } from '../ResponsiveDialog'
@@ -144,8 +144,8 @@ export const About = () => {
               <div className="text-sm text-zinc-6">
                 {t('about:disclaimer.content')
                   .split('\n')
-                  .map((line, i) => (
-                    <p key={i}>{line}</p>
+                  .map((line) => (
+                    <p key={line}>{line}</p>
                   ))}
               </div>
             </div>
@@ -175,7 +175,7 @@ export const About = () => {
               {BUNDLE.buildNumber !== undefined && (
                 <>
                   {' '}
-                  <AboutAttribute label={t('about:version.build')} value={'#' + BUNDLE.buildNumber} />
+                  <AboutAttribute label={t('about:version.build')} value={`#${BUNDLE.buildNumber}`} />
                 </>
               )}
 

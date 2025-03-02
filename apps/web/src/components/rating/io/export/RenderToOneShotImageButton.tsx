@@ -1,8 +1,8 @@
 import { Button, CircularProgress, Dialog, DialogContent, DialogContentText, DialogTitle, Grow } from '@mui/material'
-import IconMdiImage from '~icons/mdi/image'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useEffect, useRef, useState } from 'react'
 import useSWR from 'swr'
+import IconMdiImage from '~icons/mdi/image'
 import { useAppContext, useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import { type RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
 
@@ -113,7 +113,7 @@ const RenderToOneShotImageDialogContent = () => {
           ) : (
             <img
               src={data}
-              alt="OneShot Image"
+              alt="OneShot"
               className="shadow rounded-md"
               style={{
                 boxShadow: `0 0 8px hsl(0deg 0% 0% / 0.25),

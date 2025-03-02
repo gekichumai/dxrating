@@ -29,7 +29,7 @@ const SideEffectorThemeMeta: FC = () => {
 const SideEffectorLocaleMeta: FC = () => {
   const { i18n } = useTranslation()
   useEffect(() => {
-    console.info('[i18n] Language detected as ' + i18n.language)
+    console.info(`[i18n] Language detected as ${i18n.language}`)
     document.documentElement.lang = i18n.language
   }, [i18n.language])
 
