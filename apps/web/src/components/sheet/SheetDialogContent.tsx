@@ -13,7 +13,7 @@ import {
   TextField,
 } from '@mui/material'
 import clsx from 'clsx'
-import { type FC, memo, type PropsWithChildren, useEffect, useMemo, useRef, useState } from 'react'
+import { type FC, type PropsWithChildren, memo, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Trans, useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
@@ -72,12 +72,11 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     isLoading: isLoadingComments,
     mutate,
   } = useSWR(
-    'supabase::comments?' +
-      new URLSearchParams({
-        songId: sheet.songId,
-        sheetType: sheet.type,
-        sheetDifficulty: sheet.difficulty,
-      }).toString(),
+    `supabase::comments?${new URLSearchParams({
+      songId: sheet.songId,
+      sheetType: sheet.type,
+      sheetDifficulty: sheet.difficulty,
+    }).toString()}`,
     async () => {
       const { data, error } = await supabase.functions.invoke<
         {
@@ -116,7 +115,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       body: JSON.stringify(payload),
     })
     if (error) {
-      toast.error('Failed to submit comment: ' + error)
+      toast.error(`Failed to submit comment: ${error.message}`)
     }
     mutate()
     setContent('')
@@ -144,6 +143,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
       {isLoadingComments ? (
         Array.from({ length: 1 }).map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: index is stable
           <div key={i} className="flex flex-col gap-1 bg-zinc-2 rounded-lg h-16 animate-pulse" />
         ))
       ) : (
@@ -157,7 +157,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
               </div>
               <div>
                 {comment.content.split('\n').map((line, i) => (
-                  <p key={i}>{line ?? ' '}</p>
+                  <p key={line}>{line ?? ' '}</p>
                 ))}
               </div>
             </div>

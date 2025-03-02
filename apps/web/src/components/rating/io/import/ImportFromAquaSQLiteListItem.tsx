@@ -144,7 +144,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
     try {
       return readAquaUsers(db)
     } catch (e) {
-      toast.error('Failed to read users from Aqua SQLite database: ' + formatErrorMessage(e))
+      toast.error(`Failed to read users from Aqua SQLite database: ${formatErrorMessage(e)}`)
       console.error('Failed to read users from Aqua SQLite database', e)
       return []
     }
@@ -183,11 +183,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
               <ListItemButton key={user.id} onClick={() => setSelectedUser(user)} className="flex gap-2">
                 <ListItemAvatar>
                   <FadedImage
-                    src={
-                      `https://shama.dxrating.net/assetbundle/icon/ui_icon_` +
-                      String(user.icon_id).padStart(6, '0') +
-                      `.png`
-                    }
+                    src={`https://shama.dxrating.net/assetbundle/icon/ui_icon_${String(user.icon_id).padStart(6, '0')}.png`}
                     alt={`Icon ${String(user.icon_id).padStart(6, '0')}`}
                     className="w-16 h-16 rounded-md bg-gray-400"
                   />
@@ -312,7 +308,7 @@ function getUserGamePlays(db: Database, selectedUser: AquaUser, sheets: Flattene
   // Finally, filter out entries that don't have a sheet
   const records = intermediate.filter((entry) => {
     if (entry.sheet === undefined) {
-      console.warn(`[ImportFromAquaSQLiteButton] Failed to find sheet for gameplay: `, entry.gameplay)
+      console.warn('[ImportFromAquaSQLiteButton] Failed to find sheet for gameplay: ', entry.gameplay)
       warnings.push(entry.gameplay)
       return false
     }

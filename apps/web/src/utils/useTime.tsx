@@ -9,7 +9,7 @@ export const useTime = (time?: string, length: 'short' | 'normal' = 'normal') =>
       if (!time) throw new Error('useTime: time is undefined')
 
       const date = new Date(time)
-      if (isNaN(date.getTime())) {
+      if (Number.isNaN(date.getTime())) {
         throw new Error('Invalid date')
       }
 

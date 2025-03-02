@@ -1,5 +1,5 @@
 import cookie from 'cookie'
-import tls from 'tls'
+import tls from 'node:tls'
 import { DOMParser } from 'xmldom-qsa'
 import { URLS } from './URLS'
 
@@ -182,10 +182,6 @@ export class Client {
 }
 
 export class MaimaiNETJpClient extends Client {
-  constructor(cb?: StateUpdateCallback) {
-    super(cb)
-  }
-
   async login({ id, password }: AuthParams) {
     this.onUpdate?.('auth:in-progress')
 
@@ -245,10 +241,6 @@ export class MaimaiNETJpClient extends Client {
 }
 
 export class MaimaiNETIntlClient extends Client {
-  constructor(cb?: StateUpdateCallback) {
-    super(cb)
-  }
-
   async login({ id, password }: AuthParams) {
     this.onUpdate?.('auth:in-progress')
 

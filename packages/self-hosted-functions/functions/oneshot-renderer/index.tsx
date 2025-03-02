@@ -1,7 +1,7 @@
 import { type Sheet, type Song, VersionEnum, dxdata } from '@gekichumai/dxdata'
 import { Resvg } from '@resvg/resvg-js'
-import fs from 'fs/promises'
 import type Koa from 'koa'
+import fs from 'node:fs/promises'
 import satori, { type Font } from 'satori'
 import sharp from 'sharp'
 import { calculateDXScoreStars } from './calculateDXScore'

@@ -42,7 +42,7 @@ export const getFlattenedSheets = async (version: VersionEnum): Promise<Flattene
         searchAcronyms: song.searchAcronyms,
         isTypeUtage,
         isRatingEligible: !isTypeUtage,
-        releaseDateTimestamp: sheet.releaseDate ? new Date(sheet.releaseDate + 'T06:00:00+09:00').valueOf() : null,
+        releaseDateTimestamp: sheet.releaseDate ? new Date(`${sheet.releaseDate}T06:00:00+09:00`).valueOf() : null,
         internalLevelValue: sheet.multiverInternalLevelValue
           ? (sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue)
           : sheet.internalLevelValue,

@@ -128,7 +128,7 @@ class PostgresConnection implements DatabaseConnection {
     }
 
     // stream not available
-    return null
+    yield null
   }
 
   [PRIVATE_RELEASE_METHOD](): void {

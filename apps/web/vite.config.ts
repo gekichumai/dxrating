@@ -1,6 +1,6 @@
-import path from 'path'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
 import react from '@vitejs/plugin-react'
+import path from 'node:path'
 import UnoCSS from 'unocss/vite'
 import Icons from 'unplugin-icons/vite'
 import { defineConfig } from 'vite'

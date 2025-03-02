@@ -1,12 +1,12 @@
 import { VERSION_ID_MAP } from '@gekichumai/dxdata'
 import { Button, IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/react'
-import IconMdiClose from '~icons/mdi/close'
-import MdiIconInfo from '~icons/mdi/information'
-import IconMdiOcr from '~icons/mdi/ocr'
 import { type FC, useContext, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParam } from 'react-use'
+import IconMdiClose from '~icons/mdi/close'
+import MdiIconInfo from '~icons/mdi/information'
+import IconMdiOcr from '~icons/mdi/ocr'
 import { SheetListContainer } from '../components/sheet/SheetListContainer'
 import { SheetSortFilter, type SheetSortFilterForm } from '../components/sheet/SheetSortFilter'
 import { SheetDetailsContext, SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
@@ -51,34 +51,30 @@ const _SheetListInner: FC = () => {
             if (sortFilterOptions.filters.internalLevelValue) {
               const { min, max } = sortFilterOptions.filters.internalLevelValue
               return v.internalLevelValue >= min && v.internalLevelValue <= max
-            } else {
-              return true
             }
+            return true
           },
           (v) => {
             if (sortFilterOptions.filters.versions) {
               const versions = sortFilterOptions.filters.versions.filter((v) => validVersions.includes(v))
               return versions.includes(v.version)
-            } else {
-              return true
             }
+            return true
           },
           (v) => {
             if (sortFilterOptions.filters.tags.length) {
               const tags = sortFilterOptions.filters.tags
               return tags.every((tag) => v.tags.includes(tag))
-            } else {
-              return true
             }
+              return true
           },
 
           (v) => {
             if (sortFilterOptions.filters.categories) {
               const categories = sortFilterOptions.filters.categories
               return categories.some((category) => v.category.includes(category))
-            } else {
-              return true
             }
+            return true
           },
         )(sheet)
       })
@@ -96,10 +92,12 @@ const _SheetListInner: FC = () => {
             // null or undefined goes to the end
             if (aValue == null && bValue == null) {
               return 0
-            } else if (aValue == null) {
+            }
+            if (aValue == null) {
               return -1
-            } else if (bValue == null) {
-              return -1
+            }
+            if (bValue == null) {
+              return 1
             }
 
             if (aValue < bValue) {
@@ -167,7 +165,7 @@ const _SheetListInner: FC = () => {
         <div
           className="absolute -inset-4 bg-blue-900/20 -skew-x-8 translate-x-4 transition-width"
           style={{
-            width: (filteredResults.length / (sheets?.length ?? filteredResults.length)) * 100 + '%',
+            width: `${(filteredResults.length / (sheets?.length ?? filteredResults.length)) * 100}%`,
           }}
         />
         <div className="relative z-1 flex items-center gap-2">
@@ -187,12 +185,13 @@ const _SheetListInner: FC = () => {
           {skeletonWidths.map((width, i) => (
             <div
               className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] px-5 py-2"
+              // biome-ignore lint/suspicious/noArrayIndexKey: index is stable
               key={i}
               style={{
                 animationDelay: `${i * 40}ms`,
               }}
             >
-              <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] rounded bg-slate-6/50"></div>
+              <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] rounded bg-slate-6/50" />
               <div className="flex flex-col gap-1">
                 <div className="bg-slate-5/50 h-5 mb-1" style={{ width: `${width}rem` }}>
                   &nbsp;

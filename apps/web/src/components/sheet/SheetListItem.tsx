@@ -295,7 +295,7 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
       onClick={() => setExpanded(true)}
     >
       {altNames?.map((altName, i) => (
-        <span className="inline-block whitespace-pre-line" key={i}>
+        <span className="inline-block whitespace-pre-line" key={altName}>
           <span
             className="cursor-pointer"
             onClick={() => {
