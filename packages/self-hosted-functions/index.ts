@@ -3,14 +3,24 @@ import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
 import KoaSSE from 'koa-event-stream'
 import Router from 'koa-router'
+import { z } from 'zod'
 import {
   v0Handler as fetchNetRecordsV0Handler,
   v1Handler as fetchNetRecordsV1Handler,
 } from './functions/fetch-net-records'
 import { handler as oneshotRendererHandler } from './functions/oneshot-renderer'
 import type { AuthParams } from './lib/client'
+
 const app = new Koa()
 const router = new Router()
+
+const authParamsSchema = z.object({
+  id: z.string().min(1),
+  password: z.string().min(1),
+  region: z.enum(['jp', 'intl']),
+})
+
+type AuthParamsWithRegion = z.infer<typeof authParamsSchema>
 
 router.use(async (ctx, next) => {
   try {
@@ -32,21 +42,40 @@ router.get('/', async (ctx) => {
 })
 
 const verifyParams: Koa.Middleware = async (ctx, next) => {
-  const region = ctx.params.region ?? (ctx.request.body as any)?.region
-  const { id, password } = (ctx.request.body as any) ?? {}
-  if (!id || !password) {
-    throw new Error('`id` and `password` are required parameters but has not been provided')
+  try {
+    // Create a partial schema for the request body
+    const requestBodySchema = z.object({
+      id: z.string().optional(),
+      password: z.string().optional(),
+      region: z.string().optional(),
+    })
+
+    const body = requestBodySchema.parse(ctx.request.body)
+    const region = ctx.params.region ?? body.region
+
+    const result = authParamsSchema.parse({
+      id: body.id,
+      password: body.password,
+      region,
+    })
+
+    ctx.state.authParams = {
+      id: result.id,
+      password: result.password,
+    } as AuthParams
+    ctx.state.region = result.region
+    return next()
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      ctx.status = 400
+      ctx.body = {
+        error: 'Invalid parameters',
+        details: err.errors,
+      }
+      return
+    }
+    throw err
   }
-
-  const authParams = { id, password } as AuthParams
-
-  if (region !== 'jp' && region !== 'intl') {
-    throw new Error('unsupported region: `region` must be either `intl` or `jp`')
-  }
-
-  ctx.state.authParams = authParams
-  ctx.state.region = region
-  return next()
 }
 
 router.post('/functions/fetch-net-records/v0', verifyParams, fetchNetRecordsV0Handler)

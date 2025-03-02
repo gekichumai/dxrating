@@ -387,7 +387,7 @@ function RatingCalculatorTableContent({
     () => ({
       Scroller: RatingCalculatorScroller,
       Table: RatingCalculatorTable,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: it is sort of impossible to type this
       TableHead: TableHead as any,
       TableRow: RatingCalculatorTableRow,
       TableBody: RatingCalculatorTableBody,
