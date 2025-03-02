@@ -4,13 +4,10 @@
     "preinstall": "node -e \"if(process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('Use yarn instead of npm for this project')\"",
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
     "format": "biome format --write ."
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "eslint": "^8.57.1",
-    "prettier": "^3.3.3",
     "tsconfig": "*",
     "turbo": "^2.1.3"
   },

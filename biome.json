@@ -33,6 +33,16 @@
     }
   },
   "files": {
-    "ignore": ["dist/**/*", "**/package.json", "**/node_modules/**/*", "**/tsconfig*", "scripts/annotator/*.json", "apps/web/ios/**/*", "apps/web/android/**/*"]
+    "ignore": [
+      "**/dist/**/*",
+      "**/.turbo/**/*",
+      "**/package.json",
+      "**/node_modules/**/*",
+      "**/tsconfig*",
+      "scripts/annotator/*.json",
+      "apps/web/ios/**/*",
+      "apps/web/android/**/*",
+      "packages/dxdata/dxdata.json"
+    ]
   }
 }

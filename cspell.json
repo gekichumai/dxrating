@@ -1,20 +1,20 @@
 {
-    "words": [
-        "assetbundle",
-        "chara",
-        "Chunithm",
-        "deno",
-        "denoland",
-        "dxdata",
-        "dxrating",
-        "gameplays",
-        "gekichumai",
-        "maimaidx",
-        "Niconico",
-        "oneshot",
-        "posthog",
-        "supabase",
-        "udemae",
-        "UTAGE"
-    ]
+  "words": [
+    "assetbundle",
+    "chara",
+    "Chunithm",
+    "deno",
+    "denoland",
+    "dxdata",
+    "dxrating",
+    "gameplays",
+    "gekichumai",
+    "maimaidx",
+    "Niconico",
+    "oneshot",
+    "posthog",
+    "supabase",
+    "udemae",
+    "UTAGE"
+  ]
 }

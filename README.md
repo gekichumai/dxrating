@@ -33,16 +33,7 @@
 
 ### Source-related Tools
 
-- `packages/eslint-config-custom`: a package that provides custom ESLint configuration
 - `packages/tsconfig`: a package that provides custom TypeScript configuration
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
 
 ### Build
 
