@@ -5,9 +5,10 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "biome format --write ."
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "eslint": "^8.57.1",
     "prettier": "^3.3.3",
     "tsconfig": "*",
