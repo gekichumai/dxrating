@@ -20,12 +20,12 @@ import {
 } from '@mui/material'
 import IconMdiConnection from '~icons/mdi/connection'
 import clsx from 'clsx'
-import { FC, useEffect, useState } from 'react'
+import { type FC, useEffect, useState } from 'react'
 import { useLocalStorage } from 'react-use'
-import { ListActions } from 'react-use/lib/useList'
+import type { ListActions } from 'react-use/lib/useList'
 import { useSheets } from '../../../../songs'
-import { PlayEntry } from '../../RatingCalculatorAddEntryForm'
-import { FetchNetRecordProgressState, importFromNETRecords } from './importFromNETRecords'
+import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import { type FetchNetRecordProgressState, importFromNETRecords } from './importFromNETRecords'
 import { ImportRegionSupportTag } from './ImportRegionSupportTag'
 
 interface AchievementRecord {
@@ -116,14 +116,10 @@ const ImportFromNETRecordsDialogContent: FC<{
   const [region, setRegion] = useState<'intl' | 'jp'>('intl')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [autoImport, setAutoImport] = useLocalStorage<AutoImportMode>(
-    'rating-auto-import-from-net',
-    false
-  )
+  const [autoImport, setAutoImport] = useLocalStorage<AutoImportMode>('rating-auto-import-from-net', false)
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState<ImportFromNETRecordsProgress | null>(null)
-  const mappedAutoImport =
-    autoImport === true ? 'replace' : (autoImport as unknown) === 'false' ? false : autoImport // Legacy support
+  const mappedAutoImport = autoImport === true ? 'replace' : (autoImport as unknown) === 'false' ? false : autoImport // Legacy support
   const { data: sheets } = useSheets()
 
   useEffect(() => {
@@ -147,14 +143,9 @@ const ImportFromNETRecordsDialogContent: FC<{
   const handleImport = async () => {
     setBusy(true)
     try {
-      await importFromNETRecords(
-        sheets!,
-        modifyEntries,
-        mappedAutoImport || 'replace',
-        (state, progress) => {
-          setProgress({ state, progress })
-        }
-      )
+      await importFromNETRecords(sheets!, modifyEntries, mappedAutoImport || 'replace', (state, progress) => {
+        setProgress({ state, progress })
+      })
       onClose()
     } catch (e) {
       setProgress((progress) => ({
@@ -234,9 +225,7 @@ const ImportFromNETRecordsDialogContent: FC<{
             label={
               <div className="flex flex-col">
                 <span>Remember Credentials</span>
-                <span className="text-xs text-zinc-500">
-                  Your credentials will be stored locally in your browser.
-                </span>
+                <span className="text-xs text-zinc-500">Your credentials will be stored locally in your browser.</span>
               </div>
             }
           />
@@ -246,8 +235,8 @@ const ImportFromNETRecordsDialogContent: FC<{
               <div className="flex flex-col">
                 <span>Auto-import on App Start</span>
                 <span className="text-xs text-zinc-500">
-                  Automatically start importing records from NET when you open DXRating. Requires
-                  "Remember Credentials" to be enabled.
+                  Automatically start importing records from NET when you open DXRating. Requires "Remember Credentials"
+                  to be enabled.
                 </span>
               </div>
             </FormLabel>
@@ -281,9 +270,7 @@ const ImportFromNETRecordsDialogContent: FC<{
                     <div className="flex flex-col gap-1">
                       <span className="leading-none">{title}</span>
                       {subtitle && (
-                        <span
-                          className={clsx('text-xs', !remember ? 'text-zinc-400' : 'text-zinc-500')}
-                        >
+                        <span className={clsx('text-xs', !remember ? 'text-zinc-400' : 'text-zinc-500')}>
                           {subtitle}
                         </span>
                       )}
@@ -315,8 +302,8 @@ const ImportFromNETRecordsDialogContent: FC<{
 
           <div className="text-sm text-zinc-500 [&>p]:mb-1">
             <p className="font-bold">
-              Your credentials will not be stored, logged, or shared, and are only used for the
-              duration of this import process. If you wish, you may{' '}
+              Your credentials will not be stored, logged, or shared, and are only used for the duration of this import
+              process. If you wish, you may{' '}
               <a
                 href="https://github.com/gekichumai/dxrating/tree/main/packages/self-hosted-functions"
                 target="_blank"
@@ -330,29 +317,19 @@ const ImportFromNETRecordsDialogContent: FC<{
 
             <p className="text-xs text-zinc-4">
               We are also in the progress of employing the{' '}
-              <a
-                href="https://slsa.dev/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
+              <a href="https://slsa.dev/" target="_blank" rel="noopener noreferrer" className="underline">
                 SLSA framework
               </a>
-              , including reproducible builds and signed container images to help users determine
-              the authenticity of the code running on our server. Moreover, if demand arises, we
-              will support connecting to self-hosted instances of the NET import service so you can
-              run it on your own infra.
+              , including reproducible builds and signed container images to help users determine the authenticity of
+              the code running on our server. Moreover, if demand arises, we will support connecting to self-hosted
+              instances of the NET import service so you can run it on your own infra.
             </p>
           </div>
         </DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Close</Button>
-        <Button
-          onClick={handleImport}
-          disabled={!username || !password || busy}
-          variant="contained"
-        >
+        <Button onClick={handleImport} disabled={!username || !password || busy} variant="contained">
           {busy ? (
             <div className="flex gap-2 items-center">
               <CircularProgress size="1rem" className="text-zinc-5" />

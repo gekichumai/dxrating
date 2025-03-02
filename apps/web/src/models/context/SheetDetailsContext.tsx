@@ -1,4 +1,4 @@
-import { createContext, FC, PropsWithChildren, useState } from 'react'
+import { createContext, type FC, type PropsWithChildren, useState } from 'react'
 
 export interface SheetDetailsContext {
   queryActive: boolean
@@ -14,9 +14,5 @@ export const SheetDetailsContext = createContext<SheetDetailsContext>({
 
 export const SheetDetailsContextProvider: FC<PropsWithChildren<object>> = ({ children }) => {
   const [queryActive, setQueryActive] = useState(false)
-  return (
-    <SheetDetailsContext.Provider value={{ queryActive, setQueryActive }}>
-      {children}
-    </SheetDetailsContext.Provider>
-  )
+  return <SheetDetailsContext.Provider value={{ queryActive, setQueryActive }}>{children}</SheetDetailsContext.Provider>
 }

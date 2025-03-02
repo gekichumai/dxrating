@@ -1,9 +1,6 @@
 import { DifficultyEnum } from '@gekichumai/dxdata'
 
-export const DIFFICULTIES: Record<
-  DifficultyEnum,
-  { title: string; color: string; dark?: boolean }
-> = {
+export const DIFFICULTIES: Record<DifficultyEnum, { title: string; color: string; dark?: boolean }> = {
   [DifficultyEnum.Basic]: {
     title: 'BASIC',
     color: '#22bb5b',

@@ -1,7 +1,7 @@
-import { createContext, FC, PropsWithChildren, useContext, useEffect } from 'react'
+import { createContext, type FC, type PropsWithChildren, useContext, useEffect } from 'react'
 import { useList, useLocalStorage } from 'react-use'
-import { ListActions } from 'react-use/lib/useList'
-import { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
+import type { ListActions } from 'react-use/lib/useList'
+import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
 
 export interface RatingCalculatorContext {
   entries: PlayEntry[]
@@ -14,10 +14,7 @@ export const RatingCalculatorContext = createContext<RatingCalculatorContext>({
 })
 
 export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({ children }) => {
-  const [localStorageEntries, setLocalStorageEntries] = useLocalStorage<PlayEntry[]>(
-    'rating-calculator-entries',
-    []
-  )
+  const [localStorageEntries, setLocalStorageEntries] = useLocalStorage<PlayEntry[]>('rating-calculator-entries', [])
   const [entries, modifyEntries] = useList<PlayEntry>(localStorageEntries)
 
   useEffect(() => {
@@ -25,9 +22,7 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
   }, [entries, setLocalStorageEntries])
 
   return (
-    <RatingCalculatorContext.Provider value={{ entries, modifyEntries }}>
-      {children}
-    </RatingCalculatorContext.Provider>
+    <RatingCalculatorContext.Provider value={{ entries, modifyEntries }}>{children}</RatingCalculatorContext.Provider>
   )
 }
 

@@ -1,30 +1,17 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
-import {
-  Button,
-  CircularProgress,
-  ListItemIcon,
-  ListItemText,
-  MenuItem,
-  TextField,
-} from '@mui/material'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import { Button, CircularProgress, ListItemIcon, ListItemText, MenuItem, TextField } from '@mui/material'
 import CarbonFish from '~icons/carbon/fish'
 import AlertIcon from '~icons/material-symbols/warning'
-import { FC, useMemo, useState } from 'react'
+import { type FC, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useLocalStorage } from 'react-use'
-import { ListActions } from 'react-use/lib/useList'
-import { canonicalIdFromParts, FlattenedSheet, useSheets } from '../../../../songs'
+import type { ListActions } from 'react-use/lib/useList'
+import { canonicalIdFromParts, type FlattenedSheet, useSheets } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
-import { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { ImportRegionSupportTag } from './ImportRegionSupportTag'
 
 const levelLabel = ['basic', 'advanced', 'expert', 'master', 'remaster']
@@ -75,7 +62,7 @@ export interface Chart {
 const fetchDivingFish = async (
   sheets: FlattenedSheet[],
   divingFishProfile: DivingFishProfile | null,
-  modifyEntries: ListActions<PlayEntry>
+  modifyEntries: ListActions<PlayEntry>,
 ) => {
   const toastId = toast.loading('Importing from diving-fish...')
   try {
@@ -109,7 +96,7 @@ const fetchDivingFish = async (
         sheetId: canonicalIdFromParts(
           item.title,
           (item.type.toLowerCase() === 'sd' ? 'std' : item.type.toLowerCase()) as TypeEnum,
-          levelLabel[item.level_index] as DifficultyEnum
+          levelLabel[item.level_index] as DifficultyEnum,
         ),
         achievementRate: item.achievements,
       }
@@ -125,7 +112,7 @@ const fetchDivingFish = async (
             },
           },
         }
-      })
+      }),
     )
     entries.push(
       ...data.charts.sd.map((item: Chart) => {
@@ -137,7 +124,7 @@ const fetchDivingFish = async (
             },
           },
         }
-      })
+      }),
     )
     modifyEntries.set(
       entries.filter((entry) => {
@@ -146,7 +133,7 @@ const fetchDivingFish = async (
           console.warn(`No sheet found for ${entry.sheetId}`)
         }
         return found
-      })
+      }),
     )
     toast.success(`Successfully imported ${entries.length} records from diving-fish.`, {
       id: toastId,
@@ -155,11 +142,11 @@ const fetchDivingFish = async (
     console.error('There was a problem with the fetch operation:', error)
     toast.error(
       `An error occurred while importing records from diving-fish. Are you sure the username or QQ binded is correct? ${formatErrorMessage(
-        error
+        error,
       )}`,
       {
         id: toastId,
-      }
+      },
     )
   }
 }
@@ -171,10 +158,7 @@ export const ImportDivingFishDialogContent: FC<{
   const { data: sheets } = useSheets()
   const [busy, setBusy] = useState(false)
   const { t } = useTranslation(['settings'])
-  const [divingFishConfig, setDivingFishConfig] = useLocalStorage<DivingFishProfile | null>(
-    'diving-fish-profile',
-    null
-  )
+  const [divingFishConfig, setDivingFishConfig] = useLocalStorage<DivingFishProfile | null>('diving-fish-profile', null)
 
   const invalidReason = useMemo(() => {
     if (!divingFishConfig) return 'missing' as const
@@ -189,8 +173,8 @@ export const ImportDivingFishDialogContent: FC<{
         <DialogTitle className="flex flex-col items-start gap-2">
           <div>Import from diving-fish</div>
           <div className="text-sm text-zinc-5">
-            Choose one of the following two options and fill in the corresponding field. Your
-            settings will be saved in your browser.
+            Choose one of the following two options and fill in the corresponding field. Your settings will be saved in
+            your browser.
           </div>
         </DialogTitle>
       </DialogHeader>
@@ -198,9 +182,7 @@ export const ImportDivingFishDialogContent: FC<{
       <Alert variant="destructive" className="font-bold">
         <AlertIcon className="h-4 w-4" />
         <AlertTitle>Heads up!</AlertTitle>
-        <AlertDescription>
-          Your existing entries will be overwritten with the imported ones.
-        </AlertDescription>
+        <AlertDescription>Your existing entries will be overwritten with the imported ones.</AlertDescription>
       </Alert>
 
       <TextField
@@ -281,9 +263,7 @@ export const ImportDivingFishDialogContent: FC<{
             <div className="flex flex-col gap-1 items-end py-1">
               <span className="leading-none">Import</span>
               <span className="text-xs opacity-50 leading-none">
-                {invalidReason === 'missing'
-                  ? 'Missing profile info'
-                  : 'Only one of the two fields should be filled'}
+                {invalidReason === 'missing' ? 'Missing profile info' : 'Only one of the two fields should be filled'}
               </span>
             </div>
           ) : (

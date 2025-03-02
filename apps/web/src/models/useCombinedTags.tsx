@@ -1,6 +1,6 @@
 import useSWR from 'swr'
 import { supabase } from './supabase'
-import { Json } from './supabase.types'
+import type { Json } from './supabase.types'
 
 export interface CombinedTags {
   tags: Tag[]
@@ -41,6 +41,6 @@ export const useCombinedTags = () => {
     {
       focusThrottleInterval: 1000 * 60 * 60,
       suspense: false,
-    }
+    },
   )
 }

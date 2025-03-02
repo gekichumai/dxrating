@@ -1,11 +1,11 @@
-import { VERSION_ID_MAP, VersionEnum } from '@gekichumai/dxdata'
+import { VERSION_ID_MAP, type VersionEnum } from '@gekichumai/dxdata'
 import { useMemo } from 'react'
-import { Region } from '../../models/context/AppContext'
+import type { Region } from '../../models/context/AppContext'
 import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
 import { useAppContext, useAppContextDXDataVersion } from '../../models/context/useAppContext'
-import { Entry } from '../../pages/RatingCalculator'
-import { FlattenedSheet, useSheets } from '../../songs'
-import { calculateRating, Rating } from '../../utils/rating'
+import type { Entry } from '../../pages/RatingCalculator'
+import { type FlattenedSheet, useSheets } from '../../songs'
+import { calculateRating, type Rating } from '../../utils/rating'
 
 export type RatingCalculatorEntry = Entry & {
   sheet: FlattenedSheet
@@ -68,9 +68,7 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
         {
           ...entry,
           sheet,
-          rating: sheet.isRatingEligible
-            ? calculateRating(sheet.internalLevelValue, entry.achievementRate)
-            : null,
+          rating: sheet.isRatingEligible ? calculateRating(sheet.internalLevelValue, entry.achievementRate) : null,
         },
       ]
     })
@@ -87,11 +85,7 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
       .map((entry) => entry.sheetId)
 
     const best35OfAllOtherVersionSheetIds = calculated
-      .filter(
-        (entry) =>
-          !filterB15(entry.sheet, appVersion, region) &&
-          filterB35Extra(entry.sheet, appVersion, region)
-      )
+      .filter((entry) => !filterB15(entry.sheet, appVersion, region) && filterB35Extra(entry.sheet, appVersion, region))
       .sort((a, b) => {
         if (!a.rating) return 1
         if (!b.rating) return -1
@@ -107,9 +101,9 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
         (region === 'cn' && entry.providerConfig?.divingFish?.ratingEligibility === 'b15')
           ? ('b15' as const)
           : best35OfAllOtherVersionSheetIds.includes(entry.sheetId) ||
-            (region === 'cn' && entry.providerConfig?.divingFish?.ratingEligibility === 'b35')
-          ? ('b35' as const)
-          : null,
+              (region === 'cn' && entry.providerConfig?.divingFish?.ratingEligibility === 'b35')
+            ? ('b35' as const)
+            : null,
     }))
 
     return {
@@ -124,35 +118,19 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
     const eligibleRatingEntriesB35 = b35Entries.filter((entry) => entry.rating)
 
     const b15Average =
-      eligibleRatingEntriesB15.reduce((acc, entry) => acc + entry.rating!.ratingAwardValue, 0) /
-      b15Entries.length
+      eligibleRatingEntriesB15.reduce((acc, entry) => acc + entry.rating!.ratingAwardValue, 0) / b15Entries.length
 
     const b35Average =
-      eligibleRatingEntriesB35.reduce((acc, entry) => acc + entry.rating!.ratingAwardValue, 0) /
-      b35Entries.length
+      eligibleRatingEntriesB35.reduce((acc, entry) => acc + entry.rating!.ratingAwardValue, 0) / b35Entries.length
 
-    const b15Min = Math.min(
-      ...eligibleRatingEntriesB15.map((entry) => entry.rating!.ratingAwardValue)
-    )
-    const b35Min = Math.min(
-      ...eligibleRatingEntriesB35.map((entry) => entry.rating!.ratingAwardValue)
-    )
+    const b15Min = Math.min(...eligibleRatingEntriesB15.map((entry) => entry.rating!.ratingAwardValue))
+    const b35Min = Math.min(...eligibleRatingEntriesB35.map((entry) => entry.rating!.ratingAwardValue))
 
-    const b15Max = Math.max(
-      ...eligibleRatingEntriesB15.map((entry) => entry.rating!.ratingAwardValue)
-    )
-    const b35Max = Math.max(
-      ...eligibleRatingEntriesB35.map((entry) => entry.rating!.ratingAwardValue)
-    )
+    const b15Max = Math.max(...eligibleRatingEntriesB15.map((entry) => entry.rating!.ratingAwardValue))
+    const b35Max = Math.max(...eligibleRatingEntriesB35.map((entry) => entry.rating!.ratingAwardValue))
 
-    const b15Sum = eligibleRatingEntriesB15.reduce(
-      (acc, entry) => acc + entry.rating!.ratingAwardValue,
-      0
-    )
-    const b35Sum = eligibleRatingEntriesB35.reduce(
-      (acc, entry) => acc + entry.rating!.ratingAwardValue,
-      0
-    )
+    const b15Sum = eligibleRatingEntriesB15.reduce((acc, entry) => acc + entry.rating!.ratingAwardValue, 0)
+    const b35Sum = eligibleRatingEntriesB35.reduce((acc, entry) => acc + entry.rating!.ratingAwardValue, 0)
 
     const b50Sum = b15Sum + b35Sum
 

@@ -1,5 +1,5 @@
 import { usePostHog } from 'posthog-js/react'
-import { FC, memo, useEffect } from 'react'
+import { type FC, memo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../models/context/AuthContext'
 import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
@@ -14,17 +14,13 @@ const SideEffectorThemeMeta: FC = () => {
 
     document.body.style.backgroundColor = versionTheme.accentColor
 
-    document.head
-      .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', versionTheme.accentColor)
+    document.head.querySelector('meta[name="theme-color"]')?.setAttribute('content', versionTheme.accentColor)
 
     document.head
       .querySelector('meta[name="msapplication-TileColor"]')
       ?.setAttribute('content', versionTheme.accentColor)
 
-    document.head
-      .querySelector('link[rel="mask-icon"]')
-      ?.setAttribute('color', versionTheme.accentColor)
+    document.head.querySelector('link[rel="mask-icon"]')?.setAttribute('color', versionTheme.accentColor)
   }, [versionTheme])
 
   return null

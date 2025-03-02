@@ -12,9 +12,9 @@ import {
   TextField,
 } from '@mui/material'
 import { Auth } from '@supabase/auth-ui-react'
-import { ThemeSupa, ViewType } from '@supabase/auth-ui-shared'
+import { ThemeSupa, type ViewType } from '@supabase/auth-ui-shared'
 import clsx from 'clsx'
-import { FC, useState } from 'react'
+import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useAsync, useAsyncFn } from 'react-use'
@@ -121,10 +121,7 @@ const ProfileImage: FC<{
   }, [email])
 
   return gravatarEmailHash.loading ? (
-    <div
-      className="shrink-0 rounded-full flex items-center justify-center"
-      style={{ width: size, height: size }}
-    >
+    <div className="shrink-0 rounded-full flex items-center justify-center" style={{ width: size, height: size }}>
       <MdiAccountCheck />
     </div>
   ) : (
@@ -234,11 +231,7 @@ export const UpdateDisplayNameMenuItem: FC = () => {
               variant="contained"
               className="h-10"
             >
-              {updateState.loading ? (
-                <CircularProgress size="1.25rem" className="my-1" />
-              ) : (
-                'Submit'
-              )}
+              {updateState.loading ? <CircularProgress size="1.25rem" className="my-1" /> : 'Submit'}
             </Button>
           </div>
         </DialogContent>
@@ -275,10 +268,7 @@ export const UserChip: FC = () => {
 
   return (
     <>
-      <ResponsiveDialog
-        open={open === 'auth'}
-        setOpen={(opened) => setOpen(opened ? 'auth' : null)}
-      >
+      <ResponsiveDialog open={open === 'auth'} setOpen={(opened) => setOpen(opened ? 'auth' : null)}>
         {() => (
           <>
             <div className="flex flex-col items-start justify-center gap-1">

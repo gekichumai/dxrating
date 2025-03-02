@@ -5,7 +5,7 @@ export const BetaBadge = ({ className }: { className?: string }) => (
   <div
     className={clsx(
       'bg-gray-200 rounded-full px-2 py-1 text-xs flex items-center gap-1 select-none leading-none',
-      className
+      className,
     )}
   >
     <MdiBeta />

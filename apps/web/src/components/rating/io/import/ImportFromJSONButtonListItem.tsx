@@ -1,9 +1,9 @@
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
 import IconMdiFile from '~icons/mdi/file'
-import { FC } from 'react'
+import type { FC } from 'react'
 import toast from 'react-hot-toast'
-import { ListActions } from 'react-use/lib/useList'
-import { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import type { ListActions } from 'react-use/lib/useList'
+import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 
 export const ImportFromJSONButtonListItem: FC<{
   modifyEntries: ListActions<PlayEntry>

@@ -8,7 +8,7 @@ import {
   v1Handler as fetchNetRecordsV1Handler,
 } from './functions/fetch-net-records'
 import { handler as oneshotRendererHandler } from './functions/oneshot-renderer'
-import { AuthParams } from './lib/client'
+import type { AuthParams } from './lib/client'
 const app = new Koa()
 const router = new Router()
 
@@ -50,12 +50,7 @@ const verifyParams: Koa.Middleware = async (ctx, next) => {
 }
 
 router.post('/functions/fetch-net-records/v0', verifyParams, fetchNetRecordsV0Handler)
-router.post(
-  '/functions/fetch-net-records/v1/:region',
-  KoaSSE(),
-  verifyParams,
-  fetchNetRecordsV1Handler
-)
+router.post('/functions/fetch-net-records/v1/:region', KoaSSE(), verifyParams, fetchNetRecordsV1Handler)
 
 router.post('/functions/render-oneshot/v0', oneshotRendererHandler)
 if (process.env.DEV === 'true') {

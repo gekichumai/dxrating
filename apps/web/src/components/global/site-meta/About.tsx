@@ -5,17 +5,13 @@ import MdiInformation from '~icons/mdi/information'
 import MdiTwitter from '~icons/mdi/twitter'
 import MdiWeb from '~icons/mdi/web'
 import clsx from 'clsx'
-import { FC, PropsWithChildren, ReactNode, useState } from 'react'
+import { type FC, type PropsWithChildren, type ReactNode, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { BUNDLE } from '../../../utils/bundle'
 import { useTime } from '../../../utils/useTime'
 import { ResponsiveDialog } from '../ResponsiveDialog'
 
-const ExternalLink: FC<PropsWithChildren<{ href: string; className?: string }>> = ({
-  href,
-  children,
-  className,
-}) => (
+const ExternalLink: FC<PropsWithChildren<{ href: string; className?: string }>> = ({ href, children, className }) => (
   <a
     href={href}
     target="_blank"
@@ -26,9 +22,12 @@ const ExternalLink: FC<PropsWithChildren<{ href: string; className?: string }>> 
   </a>
 )
 
-const AboutLink: FC<
-  PropsWithChildren<{ href: string; startAdornment?: ReactNode; label: string }>
-> = ({ href, startAdornment, label, children }) => (
+const AboutLink: FC<PropsWithChildren<{ href: string; startAdornment?: ReactNode; label: string }>> = ({
+  href,
+  startAdornment,
+  label,
+  children,
+}) => (
   <li className="flex md:flex-row flex-col gap-1">
     <span className="font-bold mr-2">{label}</span>
     <ExternalLink href={href}>
@@ -38,10 +37,7 @@ const AboutLink: FC<
   </li>
 )
 
-const AboutAttribute: FC<PropsWithChildren<{ label: ReactNode; value: ReactNode }>> = ({
-  label,
-  value,
-}) => (
+const AboutAttribute: FC<PropsWithChildren<{ label: ReactNode; value: ReactNode }>> = ({ label, value }) => (
   <li className="flex flex-col items-start font-mono">
     <span className="font-bold text-xs scale-75 origin-left-bottom text-zinc-400">{label}</span>
     <span className="text-sm tracking-tight text-zinc-600">{value}</span>
@@ -132,10 +128,7 @@ export const About = () => {
                   i18nKey="about:donate.content"
                   components={{
                     afdian: (
-                      <ExternalLink
-                        href="https://afdian.com/a/dxrating"
-                        className="translate-y-0.75 items-center"
-                      >
+                      <ExternalLink href="https://afdian.com/a/dxrating" className="translate-y-0.75 items-center">
                         <MdiWeb />
                         <span>{t('about:donate.afdian')}</span>
                       </ExternalLink>
@@ -170,9 +163,7 @@ export const About = () => {
                 // value={BUNDLE.gitCommit?.slice(0, 7) || "unknown"}
                 value={
                   BUNDLE.gitCommit ? (
-                    <ExternalLink
-                      href={`https://github.com/gekichumai/dxrating/commit/${BUNDLE.gitCommit}`}
-                    >
+                    <ExternalLink href={`https://github.com/gekichumai/dxrating/commit/${BUNDLE.gitCommit}`}>
                       {BUNDLE.gitCommit?.slice(0, 7) || 'unknown'}
                     </ExternalLink>
                   ) : (
@@ -184,19 +175,13 @@ export const About = () => {
               {BUNDLE.buildNumber !== undefined && (
                 <>
                   {' '}
-                  <AboutAttribute
-                    label={t('about:version.build')}
-                    value={'#' + BUNDLE.buildNumber}
-                  />
+                  <AboutAttribute label={t('about:version.build')} value={'#' + BUNDLE.buildNumber} />
                 </>
               )}
 
               <AboutAttribute label={t('about:version.build-time')} value={buildTime} />
 
-              <AboutAttribute
-                label={t('about:version.upstream-data-update-time')}
-                value={updateTime}
-              />
+              <AboutAttribute label={t('about:version.upstream-data-update-time')} value={updateTime} />
             </div>
           </div>
         )}

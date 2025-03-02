@@ -1,12 +1,12 @@
 import { Button, Dialog, Grow, TextField } from '@mui/material'
 import IconMdiPlus from '~icons/mdi/plus'
-import { FC, useState } from 'react'
+import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAsyncFn } from 'react-use'
 import { useAuth } from '../../models/context/AuthContext'
 import { supabase } from '../../models/supabase'
 import { useServerAliases } from '../../models/useServerAliases'
-import { FlattenedSheet } from '../../songs'
+import type { FlattenedSheet } from '../../songs'
 import { isBuildPlatformApp } from '../../utils/env'
 import { MotionButtonBase } from '../../utils/motion'
 import { SheetListItemContent } from './SheetListItem'
@@ -89,12 +89,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
               color="primary"
               onClick={handleAddAltName}
               startIcon={<IconMdiPlus />}
-              disabled={
-                newAltName.trim().length === 0 ||
-                newAltName.trim().length > 100 ||
-                !session ||
-                loading
-              }
+              disabled={newAltName.trim().length === 0 || newAltName.trim().length > 100 || !session || loading}
               type="submit"
             >
               {loading ? 'Adding...' : 'Add Alias'}
@@ -104,13 +99,9 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
           {!session && (
             <div className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8 z-1">
               {isBuildPlatformApp ? (
-                <div className="text-center font-bold">
-                  Adding alias is currently unavailable in the app.
-                </div>
+                <div className="text-center font-bold">Adding alias is currently unavailable in the app.</div>
               ) : (
-                <div className="text-center font-bold">
-                  Login or Register an account to add an alias.
-                </div>
+                <div className="text-center font-bold">Login or Register an account to add an alias.</div>
               )}
             </div>
           )}

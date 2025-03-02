@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { useCallback } from 'react'
-import { ItemContent, Virtuoso } from 'react-virtuoso'
-import { FlattenedSheet } from '../../songs'
+import { type ItemContent, Virtuoso } from 'react-virtuoso'
+import type { FlattenedSheet } from '../../songs'
 import { SheetListItem } from './SheetListItem'
 
 export const SheetListContainer = ({
@@ -13,7 +13,7 @@ export const SheetListContainer = ({
 }) => {
   const ItemContent = useCallback<ItemContent<FlattenedSheet, unknown>>(
     (_, sheet: FlattenedSheet) => (sheet ? <SheetListItem key={sheet.id} sheet={sheet} /> : null),
-    []
+    [],
   )
 
   return (

@@ -11,9 +11,7 @@ export const OverscrollBackgroundFiller = () => {
   useEffect(() => {
     const onScroll = () => {
       if (ref.current) {
-        ref.current.style.height = `${
-          window.scrollY < DETECT_HEIGHT ? -window.scrollY + HEIGHT : 0
-        }px`
+        ref.current.style.height = `${window.scrollY < DETECT_HEIGHT ? -window.scrollY + HEIGHT : 0}px`
       }
     }
 

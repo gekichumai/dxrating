@@ -1,4 +1,4 @@
-import { ImgHTMLAttributes } from 'react'
+import type { ImgHTMLAttributes } from 'react'
 
 const changeToWebp = (src: string) => {
   const lastDotIndex = src.lastIndexOf('.')

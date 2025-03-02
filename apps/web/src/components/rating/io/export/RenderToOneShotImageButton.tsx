@@ -1,18 +1,10 @@
-import {
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Grow,
-} from '@mui/material'
+import { Button, CircularProgress, Dialog, DialogContent, DialogContentText, DialogTitle, Grow } from '@mui/material'
 import IconMdiImage from '~icons/mdi/image'
 import { usePostHog } from 'posthog-js/react'
-import { FC, useEffect, useRef, useState } from 'react'
+import { type FC, useEffect, useRef, useState } from 'react'
 import useSWR from 'swr'
 import { useAppContext, useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
-import { RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
+import { type RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
 
 const useElapsedTime = (isLoading: boolean) => {
   const startTime = useRef<number | null>(null)
@@ -58,28 +50,23 @@ const RenderToOneShotImageDialogContent = () => {
   const { region } = useAppContext()
 
   const { data, isValidating, error } = useSWR(
-    `miruku::functions/oneshot-renderer?data=${JSON.stringify(
-      allEntries
-    )}&version=${version}&region=${region}`,
+    `miruku::functions/oneshot-renderer?data=${JSON.stringify(allEntries)}&version=${version}&region=${region}`,
     async () => {
       const from = Date.now()
-      const response = await fetch(
-        'https://miruku.dxrating.net/functions/render-oneshot/v0?pixelated=1',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+      const response = await fetch('https://miruku.dxrating.net/functions/render-oneshot/v0?pixelated=1', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          version,
+          region,
+          calculatedEntries: {
+            b15: b15Entries.map(mapCalculatedEntries),
+            b35: b35Entries.map(mapCalculatedEntries),
           },
-          body: JSON.stringify({
-            version,
-            region,
-            calculatedEntries: {
-              b15: b15Entries.map(mapCalculatedEntries),
-              b35: b35Entries.map(mapCalculatedEntries),
-            },
-          }),
-        }
-      )
+        }),
+      })
       const blob = await response.blob()
 
       posthog?.capture('oneshot_rendered', {
@@ -92,7 +79,7 @@ const RenderToOneShotImageDialogContent = () => {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
       revalidateIfStale: false,
-    }
+    },
   )
   const elapsedTime = useElapsedTime(isValidating)
 
@@ -116,15 +103,13 @@ const RenderToOneShotImageDialogContent = () => {
                 </div>
 
                 <div className="text-sm">
-                  This may take a while depending on the current server load; typically rendering
-                  will finish within 10 seconds.
+                  This may take a while depending on the current server load; typically rendering will finish within 10
+                  seconds.
                 </div>
               </div>
             </div>
           ) : error ? (
-            <div className="text-red-500">
-              An error occurred while rendering the image: {error.message}
-            </div>
+            <div className="text-red-500">An error occurred while rendering the image: {error.message}</div>
           ) : (
             <img
               src={data}
@@ -142,13 +127,11 @@ const RenderToOneShotImageDialogContent = () => {
           )}
 
           <div className="text-zinc-500 mt-4 flex flex-col gap-1">
-            <div className="text-sm font-bold">
-              Long-press or right-click the image to save it to your device.
-            </div>
+            <div className="text-sm font-bold">Long-press or right-click the image to save it to your device.</div>
 
             <div className="text-xs">
-              This feature is in beta and may not work as expected. Please feel free to report any
-              issues or feedback to the developer :D
+              This feature is in beta and may not work as expected. Please feel free to report any issues or feedback to
+              the developer :D
             </div>
           </div>
         </DialogContentText>

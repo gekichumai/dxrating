@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calculateScoreTable, NoteCounts } from './scores'
+import { calculateScoreTable, type NoteCounts } from './scores'
 
 describe('calculateScoreTable', () => {
   it('should calculate score table for 系さて ReMaster pattern', () => {

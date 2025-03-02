@@ -1,4 +1,4 @@
-import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import { type DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import { CircularProgress } from '@mui/material'
 import IconMdiCheck from '~icons/mdi/check'
@@ -6,11 +6,11 @@ import IconMdiClose from '~icons/mdi/close'
 import cloneDeep from 'lodash-es/cloneDeep'
 import posthog from 'posthog-js'
 import toast from 'react-hot-toast'
-import { ListActions } from 'react-use/lib/useList'
-import { canonicalIdFromParts, FlattenedSheet } from '../../../../songs'
+import type { ListActions } from 'react-use/lib/useList'
+import { canonicalIdFromParts, type FlattenedSheet } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
-import { PlayEntry } from '../../RatingCalculatorAddEntryForm'
-import { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
+import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
 
 export type FetchNetRecordProgressState =
   | 'ready'
@@ -51,7 +51,7 @@ interface AuthParams {
 
 const fetchNetRecords = async (
   authParams: AuthParams,
-  onProgress?: (state: FetchNetRecordProgressState, progress: number) => void
+  onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
 ): Promise<{ music: MusicRecord[]; recent: RecentRecord[] }> => {
   const { region, username, password } = authParams
 
@@ -107,7 +107,7 @@ export const importFromNETRecords = async (
   sheets: FlattenedSheet[],
   modifyEntries: ListActions<PlayEntry>,
   mode: 'merge' | 'replace',
-  onProgress?: (state: FetchNetRecordProgressState, progress: number) => void
+  onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
 ) => {
   posthog?.capture('netimport_started')
 
@@ -133,15 +133,8 @@ export const importFromNETRecords = async (
         </div>,
         {
           id: toastId,
-          icon: (
-            <CircularProgress
-              variant="determinate"
-              value={progress * 100}
-              size="1rem"
-              thickness={5}
-            />
-          ),
-        }
+          icon: <CircularProgress variant="determinate" value={progress * 100} size="1rem" thickness={5} />,
+        },
       )
     })
     const entries = data.music
@@ -159,7 +152,7 @@ export const importFromNETRecords = async (
                 utage: TypeEnum.UTAGE,
               } as const
             )[record.sheet.type],
-            record.sheet.difficulty as DifficultyEnum
+            record.sheet.difficulty as DifficultyEnum,
           ),
           achievementRate: record.achievement.rate / 10000,
         }
@@ -218,7 +211,7 @@ export const importFromNETRecords = async (
         id: toastId,
         icon: <IconMdiCheck className="h-4 w-4 text-green-5" />,
         duration: 20000,
-      }
+      },
     )
 
     posthog?.capture('netimport_succeeded', {

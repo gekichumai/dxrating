@@ -56,9 +56,7 @@
 }
 
 :root {
-  font-family:
-    /* Hiragino Maru Gothic Pro, */ Torus, system-ui, Avenir, Helvetica, Arial,
-    sans-serif;
+  /* Hiragino Maru Gothic Pro, */ font-family: Torus, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -76,18 +74,18 @@
 }
 
 @font-face {
-  font-family: 'Torus';
-  src: url('https://shama.dxrating.net/fonts/Torus-Regular.woff2') format('woff2'),
-    url('https://shama.dxrating.net/fonts/Torus-Regular.woff') format('woff');
+  font-family: "Torus";
+  src: url("https://shama.dxrating.net/fonts/Torus-Regular.woff2") format("woff2"),
+    url("https://shama.dxrating.net/fonts/Torus-Regular.woff") format("woff");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Torus';
-  src: url('https://shama.dxrating.net/fonts/Torus-SemiBold.woff2') format('woff2'),
-    url('https://shama.dxrating.net/fonts/Torus-SemiBold.woff') format('woff');
+  font-family: "Torus";
+  src: url("https://shama.dxrating.net/fonts/Torus-SemiBold.woff2") format("woff2"),
+    url("https://shama.dxrating.net/fonts/Torus-SemiBold.woff") format("woff");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
@@ -113,11 +111,11 @@ body,
   transform-origin: center 0.5rem;
 }
 
-.radix__collapsible-content[data-state='open'] {
+.radix__collapsible-content[data-state="open"] {
   animation: slideDown 275ms cubic-bezier(0.33, 1, 0.68, 1);
 }
 
-.radix__collapsible-content[data-state='closed'] {
+.radix__collapsible-content[data-state="closed"] {
   animation: slideUp 275ms cubic-bezier(0.33, 1, 0.68, 1);
 }
 
@@ -188,7 +186,7 @@ body,
 }
 
 @property --view-transition-wipe-offset {
-  syntax: '<number>';
+  syntax: "<number>";
   initial-value: 0;
   inherits: false;
 }

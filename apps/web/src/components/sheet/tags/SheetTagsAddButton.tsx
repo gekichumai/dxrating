@@ -1,13 +1,13 @@
 import { Chip, Dialog, Grow } from '@mui/material'
 import IconMdiTagPlus from '~icons/mdi/tag-plus'
 import clsx from 'clsx'
-import { FC, useState } from 'react'
+import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
 import { useAuth } from '../../../models/context/AuthContext'
 import { supabase } from '../../../models/supabase'
-import { FlattenedSheet } from '../../../songs'
+import type { FlattenedSheet } from '../../../songs'
 import { deriveColor } from '../../../utils/color'
 import { isBuildPlatformApp } from '../../../utils/env'
 import { formatErrorMessage } from '../../../utils/formatErrorMessage'
@@ -29,41 +29,38 @@ const SheetTagsAddDialog: FC<{
   const { data: tagGroups, isLoading: loadingTags } = useSWR('supabase::tag_grouped', async () => {
     const { data } = await supabase
       .from('tags')
-      .select(
-        'id, localized_name, localized_description, group:tag_groups(id, localized_name, color)'
-      )
+      .select('id, localized_name, localized_description, group:tag_groups(id, localized_name, color)')
       .order('id', { ascending: true })
 
     if (!data) {
       return null
     }
 
-    const grouped = data.reduce((acc, tag) => {
-      if (!tag.group?.id) {
+    const grouped = data.reduce(
+      (acc, tag) => {
+        if (!tag.group?.id) {
+          return acc
+        }
+
+        if (!acc[tag.group.id]) {
+          acc[tag.group.id] = []
+        }
+
+        if (acc[tag.group.id]) {
+          acc[tag.group.id].push(tag)
+        }
+
         return acc
-      }
-
-      if (!acc[tag.group.id]) {
-        acc[tag.group.id] = []
-      }
-
-      if (acc[tag.group.id]) {
-        acc[tag.group.id].push(tag)
-      }
-
-      return acc
-    }, {} as Record<number, typeof data>)
+      },
+      {} as Record<number, typeof data>,
+    )
 
     return Object.entries(grouped).map(([, tags]) => ({
       group: tags[0].group,
       tags,
     }))
   })
-  const {
-    data: existingTags,
-    isLoading: loadingExistingTags,
-    mutate: mutateExistingTags,
-  } = useSheetTags(sheet)
+  const { data: existingTags, isLoading: loadingExistingTags, mutate: mutateExistingTags } = useSheetTags(sheet)
 
   const existingTagsIDList = existingTags?.map(({ id }) => id) ?? []
 
@@ -118,9 +115,7 @@ const SheetTagsAddDialog: FC<{
             {tagGroups?.map(({ group, tags }) => (
               <div key={group?.id} className="flex gap-1 items-center">
                 <div className="flex items-center">
-                  <div className="text-base py-1 whitespace-nowrap">
-                    {localizeMessage(group?.localized_name)}
-                  </div>
+                  <div className="text-base py-1 whitespace-nowrap">{localizeMessage(group?.localized_name)}</div>
                   <div className="w-px h-7 bg-gray-2 shrink-0 ml-2" />
                 </div>
                 <div className="flex flex-wrap gap-1 grow ml-2">
@@ -153,7 +148,7 @@ const SheetTagsAddDialog: FC<{
                           disabled={pending || exists}
                           className={clsx(
                             'rounded-lg border border-solid',
-                            pending && 'animate-pulse -animate-delay-1000'
+                            pending && 'animate-pulse -animate-delay-1000',
                           )}
                           style={{
                             backgroundColor: tag.group?.color,
@@ -173,9 +168,7 @@ const SheetTagsAddDialog: FC<{
       {!session && (
         <div className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8">
           {isBuildPlatformApp ? (
-            <div className="text-center font-bold">
-              Adding tags is currently unavailable in the app.
-            </div>
+            <div className="text-center font-bold">Adding tags is currently unavailable in the app.</div>
           ) : (
             <div className="text-center font-bold">Login or Register an account to add tags.</div>
           )}

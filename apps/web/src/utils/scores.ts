@@ -74,11 +74,7 @@ export function calculateScoreTable(noteCounts: NoteCounts): CalculatedScoreTabl
     slide: calcScore(DEFAULT_SCORE_RATE, SlideScore, noteCounts.slide * SlideScore[7]),
     touch: calcScore(DEFAULT_SCORE_RATE, TapScore, (noteCounts.touch ?? 0) * TapScore[7]),
     break: calcScore(DEFAULT_SCORE_RATE, BreakScore, noteCounts.break * BreakScore[7]),
-    breakBonus: calcScore(
-      BREAK_BONUS_SCORE_RATE,
-      BreakBonusScore,
-      noteCounts.break * BreakBonusScore[7]
-    ),
+    breakBonus: calcScore(BREAK_BONUS_SCORE_RATE, BreakBonusScore, noteCounts.break * BreakBonusScore[7]),
     count: noteCounts.total,
   }
 

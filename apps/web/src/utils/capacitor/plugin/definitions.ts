@@ -1,4 +1,4 @@
-import { DXVersion } from '../../../models/context/AppContext'
+import type { DXVersion } from '../../../models/context/AppContext'
 
 export interface DXRatingPlugin {
   userPreferenceDidChanged: (options: UserPreferenceDidChangedOptions) => Promise<void>

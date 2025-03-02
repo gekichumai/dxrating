@@ -9,12 +9,12 @@ export const useControllerRulePresets = () => {
         ({
           value,
           message: t('form:validation.min.message', { fieldName, value }),
-        } as const),
+        }) as const,
       max: (fieldName: string, value: number) =>
         ({
           value,
           message: t('form:validation.max.message', { fieldName, value }),
-        } as const),
+        }) as const,
     }
   }, [t])
 }

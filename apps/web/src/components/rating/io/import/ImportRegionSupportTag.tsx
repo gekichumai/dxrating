@@ -1,5 +1,5 @@
-import { FC } from 'react'
-import { Region } from '../../../../models/context/AppContext'
+import type { FC } from 'react'
+import type { Region } from '../../../../models/context/AppContext'
 
 export const ImportRegionSupportTag: FC<{
   region: Region

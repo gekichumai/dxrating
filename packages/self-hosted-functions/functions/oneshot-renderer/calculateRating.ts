@@ -33,15 +33,10 @@ export interface Rating {
 
 export const calculateRating = (internalLevel: number, achievementRate: number): Rating => {
   for (let i = 0; i < SCORE_COEFFICIENT_TABLE.length; i++) {
-    if (
-      i === SCORE_COEFFICIENT_TABLE.length - 1 ||
-      achievementRate < SCORE_COEFFICIENT_TABLE[i + 1][0]
-    ) {
+    if (i === SCORE_COEFFICIENT_TABLE.length - 1 || achievementRate < SCORE_COEFFICIENT_TABLE[i + 1][0]) {
       const coefficient = SCORE_COEFFICIENT_TABLE[i][1]
       return {
-        ratingAwardValue: Math.floor(
-          (coefficient * internalLevel * Math.min(100.5, achievementRate)) / 100
-        ),
+        ratingAwardValue: Math.floor((coefficient * internalLevel * Math.min(100.5, achievementRate)) / 100),
         coefficient,
         rank: SCORE_COEFFICIENT_TABLE[i][2],
         index: i,

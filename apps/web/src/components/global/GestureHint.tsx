@@ -1,6 +1,6 @@
 import MdiGestureTap from '~icons/mdi/gesture-tap'
 import MdiGestureTapHold from '~icons/mdi/gesture-tap-hold'
-import { FC, ReactNode } from 'react'
+import type { FC, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 const GESTURE_ICON = {

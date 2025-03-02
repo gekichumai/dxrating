@@ -1,5 +1,5 @@
 import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
-import sqljs from 'sql.js'
+import type sqljs from 'sql.js'
 
 export function convertQueryExecResultToEntries<T>(result: sqljs.QueryExecResult): T[] {
   const columns = result.columns

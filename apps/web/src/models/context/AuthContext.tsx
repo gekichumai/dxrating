@@ -1,5 +1,5 @@
-import { Session } from '@supabase/supabase-js'
-import { createContext, FC, PropsWithChildren, useContext, useEffect, useState } from 'react'
+import type { Session } from '@supabase/supabase-js'
+import { createContext, type FC, type PropsWithChildren, useContext, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useFirstMountState } from 'react-use'
@@ -41,7 +41,7 @@ export const AuthContextProvider: FC<PropsWithChildren<object>> = ({ children })
     },
     {
       focusThrottleInterval: 1000 * 60 * 60,
-    }
+    },
   )
 
   useEffect(() => {

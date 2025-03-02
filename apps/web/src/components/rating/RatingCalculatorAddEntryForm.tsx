@@ -4,20 +4,20 @@ import IconMdiPlus from '~icons/mdi/plus'
 import clsx from 'clsx'
 import {
   cloneElement,
-  ComponentType,
-  FC,
+  type ComponentType,
+  type FC,
   forwardRef,
-  HTMLAttributes,
+  type HTMLAttributes,
   memo,
-  PropsWithChildren,
-  ReactElement,
+  type PropsWithChildren,
+  type ReactElement,
   useCallback,
   useMemo,
   useState,
 } from 'react'
 import { Virtuoso } from 'react-virtuoso'
 import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
-import { FlattenedSheet, formatSheetToString, useSheets, useSheetsSearchEngine } from '../../songs'
+import { type FlattenedSheet, formatSheetToString, useSheets, useSheetsSearchEngine } from '../../songs'
 import { calculateRating } from '../../utils/rating'
 import { SheetListItemContent } from '../sheet/SheetListItem'
 
@@ -52,7 +52,7 @@ const ListboxComponent = forwardRef<HTMLElement>(
         />
       </ul>
     )
-  }
+  },
 ) as ComponentType<HTMLAttributes<HTMLElement>>
 
 export const RatingCalculatorAddEntryForm: FC<{
@@ -76,14 +76,8 @@ export const RatingCalculatorAddEntryForm: FC<{
   const replacing = useMemo(() => {
     try {
       if (found && achievementRate) {
-        const newRating = calculateRating(
-          selectedSheet!.internalLevelValue,
-          parseFloat(achievementRate)
-        )
-        const currentRating = calculateRating(
-          selectedSheet!.internalLevelValue,
-          found.achievementRate
-        )
+        const newRating = calculateRating(selectedSheet!.internalLevelValue, Number.parseFloat(achievementRate))
+        const currentRating = calculateRating(selectedSheet!.internalLevelValue, found.achievementRate)
         const diff = newRating.ratingAwardValue - currentRating.ratingAwardValue
         if (diff <= 0) return null
         return {
@@ -104,7 +98,7 @@ export const RatingCalculatorAddEntryForm: FC<{
       setAchievementRateError('Required')
     }
     try {
-      const parsed = parseFloat(value!)
+      const parsed = Number.parseFloat(value!)
       if (isNaN(parsed)) {
         setAchievementRateError('Invalid number')
       } else if (parsed < 0 || parsed > 101) {
@@ -123,10 +117,7 @@ export const RatingCalculatorAddEntryForm: FC<{
     <Card className="w-full">
       <CardContent className="flex flex-col items-center justify-center gap-2">
         <div className="chunks-horizontal-2 items-start">
-          <RatingCalculatorAddEntryFormAutoComplete
-            value={selectedSheet}
-            onChange={setSelectedSheet}
-          />
+          <RatingCalculatorAddEntryFormAutoComplete value={selectedSheet} onChange={setSelectedSheet} />
 
           <TextField
             className="md:basis-24rem"
@@ -142,7 +133,7 @@ export const RatingCalculatorAddEntryForm: FC<{
               if (e.key === 'Enter') {
                 onSubmit({
                   sheetId: selectedSheet!.id,
-                  achievementRate: parseFloat(achievementRate),
+                  achievementRate: Number.parseFloat(achievementRate),
                 })
                 resetForm()
               }
@@ -181,10 +172,7 @@ export const RatingCalculatorAddEntryForm: FC<{
                 {found && (
                   <div>
                     Current Rating:{' '}
-                    {
-                      calculateRating(selectedSheet.internalLevelValue, found.achievementRate)
-                        .ratingAwardValue
-                    }
+                    {calculateRating(selectedSheet.internalLevelValue, found.achievementRate).ratingAwardValue}
                   </div>
                 )}
                 {replacing ? (
@@ -198,12 +186,7 @@ export const RatingCalculatorAddEntryForm: FC<{
                   achievementRate && (
                     <div className="flex flex-col items-center gap-1">
                       Rating:{' '}
-                      {
-                        calculateRating(
-                          selectedSheet.internalLevelValue,
-                          parseFloat(achievementRate)
-                        ).ratingAwardValue
-                      }
+                      {calculateRating(selectedSheet.internalLevelValue, Number.parseFloat(achievementRate)).ratingAwardValue}
                     </div>
                   )
                 )}
@@ -216,17 +199,11 @@ export const RatingCalculatorAddEntryForm: FC<{
               onClick={() => {
                 onSubmit({
                   sheetId: selectedSheet!.id,
-                  achievementRate: parseFloat(achievementRate),
+                  achievementRate: Number.parseFloat(achievementRate),
                 })
                 resetForm()
               }}
-              startIcon={
-                replacing ? (
-                  <IconMdiReplace fontSize="inherit" />
-                ) : (
-                  <IconMdiPlus fontSize="inherit" />
-                )
-              }
+              startIcon={replacing ? <IconMdiReplace fontSize="inherit" /> : <IconMdiPlus fontSize="inherit" />}
               data-attr="manual-rating-add-submit"
             >
               {replacing ? `Replace (+${replacing.diff})` : 'Add'}
@@ -252,7 +229,7 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
         <SheetListItemContent sheet={option} />
       </li>
     ),
-    []
+    [],
   )
   if (!sheets) return null
 

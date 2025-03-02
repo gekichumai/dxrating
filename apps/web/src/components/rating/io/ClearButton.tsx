@@ -1,16 +1,7 @@
-import {
-  Alert,
-  AlertTitle,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Grow,
-} from '@mui/material'
-import { FC, useState } from 'react'
-import { ListActions } from 'react-use/lib/useList'
-import { PlayEntry } from '../RatingCalculatorAddEntryForm'
+import { Alert, AlertTitle, Button, Dialog, DialogActions, DialogContent, DialogTitle, Grow } from '@mui/material'
+import { type FC, useState } from 'react'
+import type { ListActions } from 'react-use/lib/useList'
+import type { PlayEntry } from '../RatingCalculatorAddEntryForm'
 
 export const ClearButton: FC<{
   modifyEntries: ListActions<PlayEntry>

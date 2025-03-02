@@ -2,8 +2,8 @@ import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { execSync } from 'child_process'
 import clsx from 'clsx'
 import fs from 'fs/promises'
-import { FC, PropsWithChildren } from 'react'
-import { ASSETS_BASE_DIR, PlayerCollection, Region, RenderData } from '.'
+import type { FC, PropsWithChildren } from 'react'
+import { ASSETS_BASE_DIR, type PlayerCollection, type Region, type RenderData } from '.'
 
 interface VersionTheme {
   background: string
@@ -86,16 +86,9 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
 
   const [coverImage, typeImage, accuracyImage, syncImage] = await Promise.all([
     fs.readFile(ASSETS_BASE_DIR + '/images/cover/v2/' + entry.sheet.imageName + '.jpg'),
-    fs.readFile(
-      ASSETS_BASE_DIR +
-        `/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`
-    ),
-    fs.readFile(
-      ASSETS_BASE_DIR + `/images/play-achievement/${entry.achievementAccuracy ?? 'blank'}.png`
-    ),
-    fs.readFile(
-      ASSETS_BASE_DIR + `/images/play-achievement/${entry.achievementSync ?? 'blank'}.png`
-    ),
+    fs.readFile(ASSETS_BASE_DIR + `/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`),
+    fs.readFile(ASSETS_BASE_DIR + `/images/play-achievement/${entry.achievementAccuracy ?? 'blank'}.png`),
+    fs.readFile(ASSETS_BASE_DIR + `/images/play-achievement/${entry.achievementSync ?? 'blank'}.png`),
   ])
 
   const theme = DIFFICULTIES[entry.sheet.difficulty]
@@ -196,9 +189,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
               tw="leading-none font-normal ml-1 opacity-80 flex items-center"
               style={{ textShadow: '0 0 2px ' + shadowColor }}
             >
-              <span tw="text-sm leading-none">
-                {entry.rating.rank?.replace('p', '')?.toUpperCase()}
-              </span>
+              <span tw="text-sm leading-none">{entry.rating.rank?.replace('p', '')?.toUpperCase()}</span>
               {entry.rating.rank?.includes('p') && <span tw="text-[15px] leading-none">+</span>}
             </span>
           </div>
@@ -286,12 +277,7 @@ const FactItem = ({
 }) => {
   return (
     <div tw={clsx('flex flex-col items-end justify-center', tw)}>
-      <div
-        tw={clsx(
-          'leading-none font-bold font-seurat',
-          size === 'sm' ? 'text-2xl mb-[3px]' : 'text-3xl'
-        )}
-      >
+      <div tw={clsx('leading-none font-bold font-seurat', size === 'sm' ? 'text-2xl mb-[3px]' : 'text-3xl')}>
         {value}
       </div>
       <div tw={clsx('leading-none', size === 'sm' ? 'text-sm' : 'text-base')}>{label}</div>
@@ -308,7 +294,7 @@ export const BottomLabel: FC<
     <div
       tw={clsx(
         'flex items-center justify-center bg-black/40 rounded-t-lg text-[12px] text-white px-3 pt-1 pb-2 font-bold leading-none',
-        !first && 'ml-1'
+        !first && 'ml-1',
       )}
     >
       {children}
@@ -335,24 +321,16 @@ export const renderContent = async ({
   const background = (await fs.readFile(ASSETS_BASE_DIR + theme.background)).buffer
   const icon = (
     await fs.readFile(
-      ASSETS_BASE_DIR +
-        `/assetbundle/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`
+      ASSETS_BASE_DIR + `/assetbundle/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`,
     )
   ).buffer
 
-  const b50Sum = [...data.b15, ...data.b35].reduce(
-    (acc, cur) => acc + cur.rating.ratingAwardValue,
-    0
-  )
+  const b50Sum = [...data.b15, ...data.b35].reduce((acc, cur) => acc + cur.rating.ratingAwardValue, 0)
 
   const b15Sum = data.b15.reduce((acc, cur) => acc + cur.rating.ratingAwardValue, 0)
   const b35Sum = data.b35.reduce((acc, cur) => acc + cur.rating.ratingAwardValue, 0)
 
-  const formattedRegionSuffix = region
-    ? region === '_generic'
-      ? ' (Generic)'
-      : ` (${region.toUpperCase()})`
-    : ''
+  const formattedRegionSuffix = region ? (region === '_generic' ? ' (Generic)' : ` (${region.toUpperCase()})`) : ''
 
   return (
     <div tw="font-sans text-lg leading-none flex h-full">

@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, Grow, SwipeableDrawer } from '@mui/material'
-import { FC, ReactNode, useEffect, useState } from 'react'
+import { type FC, type ReactNode, useEffect, useState } from 'react'
 import { useIsLargeDevice } from '../../utils/breakpoints'
 
 export const ResponsiveDialog: FC<{
@@ -38,13 +38,7 @@ export const ResponsiveDialog: FC<{
   return isLargeDevice ? (
     <>
       {internalOpen && (
-        <Dialog
-          open={open}
-          onClose={() => setOpen(false)}
-          maxWidth="md"
-          fullWidth
-          TransitionComponent={Grow}
-        >
+        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth TransitionComponent={Grow}>
           <DialogContent>{children?.()}</DialogContent>
         </Dialog>
       )}

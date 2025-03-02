@@ -2,12 +2,12 @@ import { FormControl, IconButton, InputLabel, MenuItem, Select } from '@mui/mate
 import MdiAdd from '~icons/mdi/add'
 import MdiClose from '~icons/mdi/close'
 import { AnimatePresence } from 'framer-motion'
-import { FC, useContext, useMemo } from 'react'
-import { Control, Controller, useFieldArray } from 'react-hook-form'
+import { type FC, useContext, useMemo } from 'react'
+import { type Control, Controller, useFieldArray } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { SheetDetailsContext } from '../../models/context/SheetDetailsContext'
 import { MotionButton } from '../../utils/motion'
-import { SheetSortFilterForm, SortPredicate } from './SheetSortFilter'
+import type { SheetSortFilterForm, SortPredicate } from './SheetSortFilter'
 
 const SortPredicateTransformer = {
   to: (value: string) => {
@@ -38,7 +38,7 @@ export const SheetSortSelect: FC<{
       animate: { scale: 1, opacity: 1 },
       exit: { scale: 0, opacity: 0 },
     }),
-    []
+    [],
   )
 
   return (
@@ -49,9 +49,7 @@ export const SheetSortSelect: FC<{
           key={field.id}
           render={({ field }) => (
             <FormControl>
-              <InputLabel id={`sorts.${index}.label`}>
-                {t(`sheet:sort.predicate`, { index: index + 1 })}
-              </InputLabel>
+              <InputLabel id={`sorts.${index}.label`}>{t(`sheet:sort.predicate`, { index: index + 1 })}</InputLabel>
               <Select
                 label={t(`sheet:sort.predicate`, { index: index + 1 })}
                 labelId={`sorts.${index}.label`}
@@ -72,12 +70,8 @@ export const SheetSortSelect: FC<{
               >
                 <MenuItem value="releaseDate_desc">{t('sheet:sort.release-date.desc')}</MenuItem>
                 <MenuItem value="releaseDate_asc">{t('sheet:sort.release-date.asc')}</MenuItem>
-                <MenuItem value="internalLevelValue_desc">
-                  {t('sheet:sort.internal-level-value.desc')}
-                </MenuItem>
-                <MenuItem value="internalLevelValue_asc">
-                  {t('sheet:sort.internal-level-value.asc')}
-                </MenuItem>
+                <MenuItem value="internalLevelValue_desc">{t('sheet:sort.internal-level-value.desc')}</MenuItem>
+                <MenuItem value="internalLevelValue_asc">{t('sheet:sort.internal-level-value.asc')}</MenuItem>
               </Select>
             </FormControl>
           )}

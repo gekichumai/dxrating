@@ -4,17 +4,14 @@ import * as Sentry from '@sentry/react'
 import IconMdiClose from '~icons/mdi/close'
 import MdiIconInfo from '~icons/mdi/information'
 import IconMdiOcr from '~icons/mdi/ocr'
-import { FC, useContext, useMemo, useState } from 'react'
+import { type FC, useContext, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParam } from 'react-use'
 import { SheetListContainer } from '../components/sheet/SheetListContainer'
-import { SheetSortFilter, SheetSortFilterForm } from '../components/sheet/SheetSortFilter'
-import {
-  SheetDetailsContext,
-  SheetDetailsContextProvider,
-} from '../models/context/SheetDetailsContext'
+import { SheetSortFilter, type SheetSortFilterForm } from '../components/sheet/SheetSortFilter'
+import { SheetDetailsContext, SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
-import { FlattenedSheet, useFilteredSheets, useSheets } from '../songs'
+import { type FlattenedSheet, useFilteredSheets, useSheets } from '../songs'
 import { DXRatingPlugin } from '../utils/capacitor/plugin/wrap'
 import { isBuildPlatformApp } from '../utils/env'
 
@@ -60,9 +57,7 @@ const _SheetListInner: FC = () => {
           },
           (v) => {
             if (sortFilterOptions.filters.versions) {
-              const versions = sortFilterOptions.filters.versions.filter((v) =>
-                validVersions.includes(v)
-              )
+              const versions = sortFilterOptions.filters.versions.filter((v) => validVersions.includes(v))
               return versions.includes(v.version)
             } else {
               return true
@@ -84,7 +79,7 @@ const _SheetListInner: FC = () => {
             } else {
               return true
             }
-          }
+          },
         )(sheet)
       })
       if (!query) {
@@ -94,8 +89,7 @@ const _SheetListInner: FC = () => {
               return acc
             }
             const descriptor =
-              SORT_DESCRIPTOR_MAPPING[sort.descriptor as keyof typeof SORT_DESCRIPTOR_MAPPING] ??
-              sort.descriptor
+              SORT_DESCRIPTOR_MAPPING[sort.descriptor as keyof typeof SORT_DESCRIPTOR_MAPPING] ?? sort.descriptor
             const aValue = a[descriptor]
             const bValue = b[descriptor]
 
@@ -115,7 +109,7 @@ const _SheetListInner: FC = () => {
               return sort.direction === 'asc' ? 1 : -1
             }
             return 0
-          }, 0)
+          }, 0),
         )
       }
     }
@@ -173,8 +167,7 @@ const _SheetListInner: FC = () => {
         <div
           className="absolute -inset-4 bg-blue-900/20 -skew-x-8 translate-x-4 transition-width"
           style={{
-            width:
-              (filteredResults.length / (sheets?.length ?? filteredResults.length)) * 100 + '%',
+            width: (filteredResults.length / (sheets?.length ?? filteredResults.length)) * 100 + '%',
           }}
         />
         <div className="relative z-1 flex items-center gap-2">

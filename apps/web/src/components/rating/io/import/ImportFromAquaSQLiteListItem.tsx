@@ -16,15 +16,15 @@ import {
   MenuItem,
 } from '@mui/material'
 import IconMdiDatabase from '~icons/mdi/database'
-import { FC, useCallback, useMemo, useState } from 'react'
+import { type FC, useCallback, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { ListActions } from 'react-use/lib/useList'
-import sqljs, { Database } from 'sql.js'
-import { canonicalIdFromParts, FlattenedSheet, useSheets } from '../../../../songs'
+import type { ListActions } from 'react-use/lib/useList'
+import sqljs, { type Database } from 'sql.js'
+import { canonicalIdFromParts, type FlattenedSheet, useSheets } from '../../../../songs'
 import {
-  AquaGamePlay,
-  AquaPlayLog,
-  AquaUser,
+  type AquaGamePlay,
+  type AquaPlayLog,
+  type AquaUser,
   readAquaGamePlays,
   readAquaPlayLogs,
   readAquaUsers,
@@ -32,7 +32,7 @@ import {
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { FadedImage } from '../../../global/FadedImage'
 import { SheetListItemContent } from '../../../sheet/SheetListItem'
-import { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 
 export const ImportFromAquaSQLiteListItem: FC<{
   modifyEntries: ListActions<PlayEntry>
@@ -48,11 +48,7 @@ export const ImportFromAquaSQLiteListItem: FC<{
     <>
       {db && (
         <Dialog open={true} onClose={handleClose}>
-          <ImportFromAquaSQLiteDatabaseContent
-            db={db}
-            modifyEntries={modifyEntries}
-            onClose={handleClose}
-          />
+          <ImportFromAquaSQLiteDatabaseContent db={db} modifyEntries={modifyEntries} onClose={handleClose} />
         </Dialog>
       )}
 
@@ -78,12 +74,12 @@ export const ImportFromAquaSQLiteListItem: FC<{
                 })
 
                 const r = new FileReader()
-                r.onload = function () {
+                r.onload = () => {
                   if (r.result === null || typeof r.result === 'string') {
                     return reject(
                       'Failed to load file: unknown error: no result received from FileReader (typeof: ' +
                         typeof r.result +
-                        ')'
+                        ')',
                     )
                   }
                   try {
@@ -98,7 +94,7 @@ export const ImportFromAquaSQLiteListItem: FC<{
                     reject('Failed to load file: ' + e)
                   }
                 }
-                r.onerror = function () {
+                r.onerror = () => {
                   reject('Failed to load file: ' + r.error)
                 }
                 r.readAsArrayBuffer(file)
@@ -116,7 +112,7 @@ export const ImportFromAquaSQLiteListItem: FC<{
               loading: 'Loading database...',
               success: 'Database has been loaded.',
               error: 'Failed to load database.',
-            }
+            },
           )
         }}
       >
@@ -186,11 +182,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
         {mode === 'select-user' ? (
           <List className="b-1 b-solid b-gray-200 rounded-lg !py-0 overflow-hidden">
             {users.flatMap((user, i) => [
-              <ListItemButton
-                key={user.id}
-                onClick={() => setSelectedUser(user)}
-                className="flex gap-2"
-              >
+              <ListItemButton key={user.id} onClick={() => setSelectedUser(user)} className="flex gap-2">
                 <ListItemAvatar>
                   <FadedImage
                     src={
@@ -236,10 +228,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
 
             <List className="b-1 b-solid b-gray-200 rounded-lg overflow-hidden !p-1 space-y-1">
               {records.map((record) => (
-                <ListItem
-                  className="flex flex-col gap-2 w-full bg-gray-2 p-1 rounded-md"
-                  key={record.gameplay.id}
-                >
+                <ListItem className="flex flex-col gap-2 w-full bg-gray-2 p-1 rounded-md" key={record.gameplay.id}>
                   <div className="w-full">
                     <SheetListItemContent sheet={record.sheet} />
                   </div>
@@ -261,13 +250,9 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
             onClick={() => {
               modifyEntries.set(
                 records.map((record) => ({
-                  sheetId: canonicalIdFromParts(
-                    record.sheet.songId,
-                    record.sheet.type,
-                    record.sheet.difficulty
-                  ),
+                  sheetId: canonicalIdFromParts(record.sheet.songId, record.sheet.type, record.sheet.difficulty),
                   achievementRate: record.gameplay.achievement / 10000,
-                }))
+                })),
               )
 
               toast.success(`Imported ${records.length} gameplays from Aqua SQLite.`)
@@ -292,10 +277,7 @@ function getUserGamePlays(db: Database, selectedUser: AquaUser, sheets: Flattene
     .map((entry) => ({
       gameplay: entry,
       sheet: sheets.find(
-        (sheet) =>
-          sheet.internalId === entry.music_id &&
-          sheet.difficulty === entry.level &&
-          sheet.type === entry.type
+        (sheet) => sheet.internalId === entry.music_id && sheet.difficulty === entry.level && sheet.type === entry.type,
       ),
     })) as AquaFilteredIntermediateEntry[]
 
@@ -306,7 +288,7 @@ function getUserGamePlays(db: Database, selectedUser: AquaUser, sheets: Flattene
         (e) =>
           e.gameplay.music_id === entry.gameplay.music_id &&
           e.gameplay.type === entry.gameplay.type &&
-          e.gameplay.level === entry.gameplay.level
+          e.gameplay.level === entry.gameplay.level,
       )
 
       if (!existing) {
@@ -324,7 +306,7 @@ function getUserGamePlays(db: Database, selectedUser: AquaUser, sheets: Flattene
           playLog.music_id === entry.gameplay.music_id &&
           playLog.type === entry.gameplay.type &&
           playLog.level === entry.gameplay.level &&
-          playLog.achievement === entry.gameplay.achievement
+          playLog.achievement === entry.gameplay.achievement,
       ),
     }))
 
@@ -332,10 +314,7 @@ function getUserGamePlays(db: Database, selectedUser: AquaUser, sheets: Flattene
   // Finally, filter out entries that don't have a sheet
   const records = intermediate.filter((entry) => {
     if (entry.sheet === undefined) {
-      console.warn(
-        `[ImportFromAquaSQLiteButton] Failed to find sheet for gameplay: `,
-        entry.gameplay
-      )
+      console.warn(`[ImportFromAquaSQLiteButton] Failed to find sheet for gameplay: `, entry.gameplay)
       warnings.push(entry.gameplay)
       return false
     }

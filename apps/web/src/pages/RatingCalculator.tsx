@@ -24,21 +24,14 @@ import {
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
-  Row,
-  SortingState,
+  type Row,
+  type SortingState,
   useReactTable,
 } from '@tanstack/react-table'
 import clsx from 'clsx'
-import { FC, ForwardedRef, forwardRef, memo, useCallback, useMemo, useState } from 'react'
-import { ListActions } from 'react-use/lib/useList'
-import {
-  ItemProps,
-  ScrollerProps,
-  TableBodyProps,
-  TableComponents,
-  TableProps,
-  TableVirtuoso,
-} from 'react-virtuoso'
+import { type FC, type ForwardedRef, forwardRef, memo, useCallback, useMemo, useState } from 'react'
+import type { ListActions } from 'react-use/lib/useList'
+import { type ItemProps, type ScrollerProps, type TableBodyProps, type TableComponents, type TableProps, TableVirtuoso } from 'react-virtuoso'
 import IconMdiArrowDown from '~icons/mdi/arrow-down'
 import IconMdiTrashCan from '~icons/mdi/trash-can'
 import { BetaBadge } from '../components/global/BetaBadge'
@@ -46,16 +39,13 @@ import { ClearButton } from '../components/rating/io/ClearButton'
 import { RenderToOneShotImageButton } from '../components/rating/io/export/RenderToOneShotImageButton'
 import { ExportMenu } from '../components/rating/io/ExportMenu'
 import { ImportMenu } from '../components/rating/io/ImportMenu'
-import {
-  PlayEntry,
-  RatingCalculatorAddEntryForm,
-} from '../components/rating/RatingCalculatorAddEntryForm'
+import { type PlayEntry, RatingCalculatorAddEntryForm } from '../components/rating/RatingCalculatorAddEntryForm'
 import { RatingCalculatorStatistics } from '../components/rating/RatingCalculatorStatistics'
 import { useRatingEntries } from '../components/rating/useRatingEntries'
 import { SheetListItem, SheetListItemContent } from '../components/sheet/SheetListItem'
 import { useRatingCalculatorContext } from '../models/context/RatingCalculatorContext'
-import { FlattenedSheet, useSheets } from '../songs'
-import { Rating } from '../utils/rating'
+import { type FlattenedSheet, useSheets } from '../songs'
+import type { Rating } from '../utils/rating'
 
 export interface Entry {
   sheet: FlattenedSheet
@@ -78,10 +68,7 @@ const RatingCalculatorRowActions: FC<{
     modifyEntries.filter((existingEntry) => existingEntry.sheetId !== entry.sheetId)
   }, [])
 
-  const sheet = useMemo(
-    () => sheets?.find((sheet) => sheet.id === entry.sheetId),
-    [sheets, entry.sheetId]
-  )
+  const sheet = useMemo(() => sheets?.find((sheet) => sheet.id === entry.sheetId), [sheets, entry.sheetId])
 
   return (
     <>
@@ -137,7 +124,7 @@ export const RatingCalculator = () => {
         modifyEntries.updateFirst((existingEntry) => existingEntry.sheetId === entry.sheetId, entry)
       } else modifyEntries.push(entry)
     },
-    [allEntries, modifyEntries]
+    [allEntries, modifyEntries],
   )
 
   if (!sheets) return null
@@ -145,12 +132,7 @@ export const RatingCalculator = () => {
   return (
     <div className="flex-container w-full pb-global">
       <div className="flex flex-col md:flex-row items-start gap-4 w-full">
-        <Alert
-          icon={false}
-          severity="info"
-          className="px-4 py-2 w-full md:w-2/3"
-          classes={{ message: 'w-full' }}
-        >
+        <Alert icon={false} severity="info" className="px-4 py-2 w-full md:w-2/3" classes={{ message: 'w-full' }}>
           <AlertTitle className="font-bold">Rating Breakdown</AlertTitle>
           <RatingCalculatorStatistics />
         </Alert>
@@ -194,16 +176,12 @@ export const RatingCalculator = () => {
             <AlertTitle className="font-bold">Quick Actions</AlertTitle>
             <div className="flex flex-col items-start mt-2">
               <FormControlLabel
-                control={
-                  <Switch checked={showOnlyB50} onChange={() => setShowOnlyB50((prev) => !prev)} />
-                }
+                control={<Switch checked={showOnlyB50} onChange={() => setShowOnlyB50((prev) => !prev)} />}
                 label="Show only B50 entries"
               />
 
               <FormControlLabel
-                control={
-                  <Switch checked={compactMode} onChange={() => setCompactMode((prev) => !prev)} />
-                }
+                control={<Switch checked={compactMode} onChange={() => setCompactMode((prev) => !prev)} />}
                 label={
                   <div className="flex items-center gap-1 leading-none">
                     Compact Mode <BetaBadge />
@@ -220,9 +198,7 @@ export const RatingCalculator = () => {
       <div className="max-w-screen w-full overflow-x-auto -mx-4">
         <RatingCalculatorTableContent compactMode={compactMode} showOnlyB50={showOnlyB50} />
 
-        {allEntries.length === 0 && (
-          <div className="w-full text-sm py-8 px-4 text-center">No entries</div>
-        )}
+        {allEntries.length === 0 && <div className="w-full text-sm py-8 px-4 text-center">No entries</div>}
       </div>
     </div>
   )
@@ -239,7 +215,7 @@ const RatingCalculatorIncludedInCell: FC<{
       className={clsx(
         'tabular-nums font-mono tracking-tighter w-12 leading-none py-1.5 rounded-full text-white text-center shadow select-none',
         includedIn === 'b15' && 'bg-amber-500',
-        includedIn === 'b35' && 'bg-cyan-500'
+        includedIn === 'b35' && 'bg-cyan-500',
       )}
     >
       {includedIn.toUpperCase()}
@@ -251,25 +227,16 @@ RatingCalculatorIncludedInCell.displayName = 'memo(RatingCalculatorIncludedInCel
 const RatingCalculatorAchievementRateCell: FC<{
   row: Row<Entry>
 }> = ({ row }) => (
-  <span className="font-sans tracking-wide tabular-nums">
-    {row.original.achievementRate.toFixed(4)}%
-  </span>
+  <span className="font-sans tracking-wide tabular-nums">{row.original.achievementRate.toFixed(4)}%</span>
 )
 
 const RatingCalculatorTable: FC<TableProps> = (props: TableProps) => (
-  <Table
-    {...props}
-    size="small"
-    className="rounded-lg w-full min-w-2xl"
-    style={{ borderCollapse: 'separate' }}
-  />
+  <Table {...props} size="small" className="rounded-lg w-full min-w-2xl" style={{ borderCollapse: 'separate' }} />
 )
 
-const RatingCalculatorTableBody = forwardRef(
-  (props: TableBodyProps, ref: ForwardedRef<HTMLTableSectionElement>) => (
-    <TableBody {...props} ref={ref} />
-  )
-)
+const RatingCalculatorTableBody = forwardRef((props: TableBodyProps, ref: ForwardedRef<HTMLTableSectionElement>) => (
+  <TableBody {...props} ref={ref} />
+))
 
 const RatingCalculatorTableRow: FC<ItemProps<Row<Entry>>> = ({ item, ...props }) => (
   <TableRow
@@ -280,23 +247,19 @@ const RatingCalculatorTableRow: FC<ItemProps<Row<Entry>>> = ({ item, ...props })
         b15: 'bg-amber-200',
         b35: 'bg-cyan-200',
         none: undefined,
-      }[item.original.includedIn ?? 'none']
+      }[item.original.includedIn ?? 'none'],
     )}
   />
 )
 
-const RatingCalculatorScroller = forwardRef(
-  (props: ScrollerProps, ref: ForwardedRef<HTMLDivElement>) => (
-    <TableContainer component={TransparentPaper} {...props} ref={ref} />
-  )
-)
+const RatingCalculatorScroller = forwardRef((props: ScrollerProps, ref: ForwardedRef<HTMLDivElement>) => (
+  <TableContainer component={TransparentPaper} {...props} ref={ref} />
+))
 
 const RatingCalculatorRatingCell: FC<{
   row: Row<Entry>
 }> = ({ row }) => (
-  <span className="font-sans tabular-nums">
-    {row.original.rating ? row.original.rating.ratingAwardValue : '-'}
-  </span>
+  <span className="font-sans tabular-nums">{row.original.rating ? row.original.rating.ratingAwardValue : '-'}</span>
 )
 
 const RatingCalculatorTableRowContent: FC<{
@@ -398,14 +361,12 @@ function RatingCalculatorTableContent({
       columnHelper.display({
         id: 'actions',
         header: 'Actions',
-        cell: ({ row }) => (
-          <RatingCalculatorRowActions entry={row.original} modifyEntries={modifyEntries} />
-        ),
+        cell: ({ row }) => <RatingCalculatorRowActions entry={row.original} modifyEntries={modifyEntries} />,
         size: 50,
         minSize: 100,
       }),
     ],
-    [modifyEntries, compactMode]
+    [modifyEntries, compactMode],
   )
 
   const data = useMemo(() => {
@@ -431,12 +392,12 @@ function RatingCalculatorTableContent({
       TableRow: RatingCalculatorTableRow,
       TableBody: RatingCalculatorTableBody,
     }),
-    [compactMode]
+    [compactMode],
   )
 
   const getItemContent = useCallback(
     (index: number) => <RatingCalculatorTableRowContent row={table.getRowModel().rows[index]} />,
-    [table]
+    [table],
   )
 
   return (
@@ -458,7 +419,7 @@ function RatingCalculatorTableContent({
                   className={clsx(
                     'group bg-gray-900/5 transition',
                     header.column.getCanSort() &&
-                      'cursor-pointer select-none hover:bg-gray-900/10 active:bg-gray-900/20 leading-tight py-4'
+                      'cursor-pointer select-none hover:bg-gray-900/10 active:bg-gray-900/20 leading-tight py-4',
                   )}
                   onClick={header.column.getToggleSortingHandler()}
                   style={{ width: header.getSize() }}
@@ -469,7 +430,7 @@ function RatingCalculatorTableContent({
                       <div
                         className={clsx(
                           'inline-flex items-center overflow-hidden relative',
-                          header.column.getIsSorted() && 'bg-gray-900/50 text-zinc-100 rounded-full'
+                          header.column.getIsSorted() && 'bg-gray-900/50 text-zinc-100 rounded-full',
                         )}
                       >
                         <IconMdiArrowDown
@@ -481,7 +442,7 @@ function RatingCalculatorTableContent({
                               none: header.column.getCanSort()
                                 ? 'inline-flex opacity-0 group-hover:opacity-70'
                                 : 'hidden',
-                            }[(header.column.getIsSorted() as string) || 'none']
+                            }[(header.column.getIsSorted() as string) || 'none'],
                           )}
                         />
                         {header.column.getIsSorted() && sorting.length > 1 && (

@@ -1,11 +1,11 @@
-import { Sheet, Song, VersionEnum, dxdata } from '@gekichumai/dxdata'
+import { type Sheet, type Song, VersionEnum, dxdata } from '@gekichumai/dxdata'
 import { Resvg } from '@resvg/resvg-js'
 import fs from 'fs/promises'
-import Koa from 'koa'
-import satori, { Font } from 'satori'
+import type Koa from 'koa'
+import satori, { type Font } from 'satori'
 import sharp from 'sharp'
 import { calculateDXScoreStars } from './calculateDXScore'
-import { Rating, calculateRating } from './calculateRating'
+import { type Rating, calculateRating } from './calculateRating'
 import { demo } from './demo'
 import { renderContent } from './renderContent'
 
@@ -79,7 +79,7 @@ const getFlattenedSheetsMap = () => {
     return flattenedSheets as FlattenedSheet[]
   }
 
-  let cachedFlattenedSheets: Map<VersionEnum, Map<string, FlattenedSheet>> = new Map()
+  const cachedFlattenedSheets: Map<VersionEnum, Map<string, FlattenedSheet>> = new Map()
   for (const version of Object.values(VersionEnum)) {
     const calc = calcFlattenedSheets(version)
     const map = new Map<string, FlattenedSheet>()
@@ -121,9 +121,7 @@ const fetchFontPack = async (): Promise<Font[]> => {
       weight: 700 as const,
     },
   ]
-  const fonts = await Promise.all(
-    fontConfig.map(async (font) => fs.readFile(ASSETS_BASE_DIR + '/fonts/' + font.file))
-  )
+  const fonts = await Promise.all(fontConfig.map(async (font) => fs.readFile(ASSETS_BASE_DIR + '/fonts/' + font.file)))
   if (!fonts.every((font) => font instanceof Buffer)) {
     console.error('Failed to load at least one font')
     return []
@@ -155,13 +153,10 @@ const enrichEntries = (entries: PlayEntry[], version: VersionEnum) => {
       typeof entry.achievementRate !== 'number' ||
       entry.achievementRate < 0 ||
       entry.achievementRate > 101 ||
-      (entry.achievementAccuracy &&
-        !['fc', 'fcp', 'ap', 'app'].includes(entry.achievementAccuracy)) ||
-      (entry.achievementSync &&
-        !['sp', 'fs', 'fsp', 'fsd', 'fsdp'].includes(entry.achievementSync)) ||
+      (entry.achievementAccuracy && !['fc', 'fcp', 'ap', 'app'].includes(entry.achievementAccuracy)) ||
+      (entry.achievementSync && !['sp', 'fs', 'fsp', 'fsd', 'fsdp'].includes(entry.achievementSync)) ||
       (entry.playCount && (typeof entry.playCount !== 'number' || entry.playCount < 0)) ||
-      (entry.allPerfectPlusCount &&
-        (typeof entry.allPerfectPlusCount !== 'number' || entry.allPerfectPlusCount < 0)) ||
+      (entry.allPerfectPlusCount && (typeof entry.allPerfectPlusCount !== 'number' || entry.allPerfectPlusCount < 0)) ||
       (entry.achievementDXScore &&
         (typeof entry.achievementDXScore.achieved !== 'number' ||
           typeof entry.achievementDXScore.total !== 'number' ||
@@ -185,17 +180,14 @@ const enrichEntries = (entries: PlayEntry[], version: VersionEnum) => {
         rating: sheet
           ? calculateRating(
               entry.sheetOverrides?.internalLevelValue ?? sheet.internalLevelValue ?? 0,
-              entry.achievementRate
+              entry.achievementRate,
             )
           : undefined,
         dxScore: entry.achievementDXScore
           ? {
               achieved: entry.achievementDXScore.achieved,
               total: entry.achievementDXScore.total,
-              stars: calculateDXScoreStars(
-                entry.achievementDXScore.achieved,
-                entry.achievementDXScore.total
-              ),
+              stars: calculateDXScoreStars(entry.achievementDXScore.achieved, entry.achievementDXScore.total),
             }
           : undefined,
         playCount: entry.playCount ?? 0,
@@ -210,15 +202,11 @@ const prepareCalculatedEntries = (
     b15: PlayEntry[]
     b35: PlayEntry[]
   },
-  version: VersionEnum
+  version: VersionEnum,
 ): { b15: RenderData[]; b35: RenderData[] } => {
   const prepared = {
-    b15: enrichEntries(calculatedEntries.b15, version).filter(
-      (entry) => entry.sheet && entry.rating
-    ) as RenderData[],
-    b35: enrichEntries(calculatedEntries.b35, version).filter(
-      (entry) => entry.sheet && entry.rating
-    ) as RenderData[],
+    b15: enrichEntries(calculatedEntries.b15, version).filter((entry) => entry.sheet && entry.rating) as RenderData[],
+    b35: enrichEntries(calculatedEntries.b35, version).filter((entry) => entry.sheet && entry.rating) as RenderData[],
   }
 
   prepared.b15.sort((a, b) => {
@@ -232,13 +220,8 @@ const prepareCalculatedEntries = (
   return prepared
 }
 
-const calculateEntries = (
-  entries: PlayEntry[],
-  version: VersionEnum
-): { b15: RenderData[]; b35: RenderData[] } => {
-  const mapped = enrichEntries(entries, version).filter(
-    (entry) => entry.sheet && entry.rating
-  ) as RenderData[]
+const calculateEntries = (entries: PlayEntry[], version: VersionEnum): { b15: RenderData[]; b35: RenderData[] } => {
+  const mapped = enrichEntries(entries, version).filter((entry) => entry.sheet && entry.rating) as RenderData[]
 
   const b15 = mapped
     .filter((entry) => entry.sheet.version === version)
@@ -363,7 +346,7 @@ export const handler = async (ctx: Koa.Context) => {
     const pngBuffer = pngData.asPng()
     timer.stop('resvg_as_png')
 
-    let width = typeof ctx.query.width === 'string' ? parseInt(ctx.query.width) : ONESHOT_WIDTH * 2
+    let width = typeof ctx.query.width === 'string' ? Number.parseInt(ctx.query.width) : ONESHOT_WIDTH * 2
     if (Number.isNaN(width) || !Number.isFinite(width) || width < 1 || width > 3000) {
       width = ONESHOT_WIDTH * 2
     }

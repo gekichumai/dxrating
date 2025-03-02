@@ -136,7 +136,7 @@ i18n
         }
         return 'en'
       },
-    })
+    }),
   )
   .init({
     resources: i18nResources,
@@ -162,5 +162,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         </RatingCalculatorContextProvider>
       </VersionCustomizedThemeProvider>
     </AppContextProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 )

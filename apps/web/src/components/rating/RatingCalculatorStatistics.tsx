@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import * as d3 from 'd3'
 import { motion } from 'framer-motion'
 import compact from 'lodash-es/compact'
-import { FC, forwardRef, HTMLAttributes, useEffect, useRef, useState } from 'react'
+import { type FC, forwardRef, type HTMLAttributes, useEffect, useRef, useState } from 'react'
 import { useMeasure } from 'react-use'
 import { deriveColor } from '../../utils/color'
 import { makeId } from '../../utils/random'
@@ -41,98 +41,71 @@ interface RatingCalculatorStatisticsOverviewProps {
   style?: React.CSSProperties
 }
 
-const RatingCalculatorStatisticsOverview = forwardRef<
-  HTMLDivElement,
-  RatingCalculatorStatisticsOverviewProps
->(({ className, style }, ref) => {
-  const { b35Entries, b15Entries, statistics } = useRatingEntries()
-  const { b15Average, b35Average, b15Min, b35Min, b15Max, b35Max, b15Sum, b35Sum, b50Sum } =
-    statistics
+const RatingCalculatorStatisticsOverview = forwardRef<HTMLDivElement, RatingCalculatorStatisticsOverviewProps>(
+  ({ className, style }, ref) => {
+    const { b35Entries, b15Entries, statistics } = useRatingEntries()
+    const { b15Average, b35Average, b15Min, b35Min, b15Max, b35Max, b15Sum, b35Sum, b50Sum } = statistics
 
-  return (
-    <div
-      ref={ref}
-      className={clsx('flex flex-col justify-center gap-4 text-black py-2 w-full', className)}
-      style={style}
-    >
-      <RatingCalculatorStatisticsFactItem size="lg" label="Total" value={b50Sum} />
+    return (
+      <div
+        ref={ref}
+        className={clsx('flex flex-col justify-center gap-4 text-black py-2 w-full', className)}
+        style={style}
+      >
+        <RatingCalculatorStatisticsFactItem size="lg" label="Total" value={b50Sum} />
 
-      <div className="flex flex-col items-start gap-2">
-        <div className="flex items-baseline gap-1 leading-none">
-          <span className="text-lg font-semibold">Best 15</span>
-          <span className="text-sm text-zinc-500">(Entries {b15Entries.length}/15)</span>
+        <div className="flex flex-col items-start gap-2">
+          <div className="flex items-baseline gap-1 leading-none">
+            <span className="text-lg font-semibold">Best 15</span>
+            <span className="text-sm text-zinc-500">(Entries {b15Entries.length}/15)</span>
+          </div>
+
+          <div className="flex items-center w-full">
+            <RatingCalculatorStatisticsFactItem
+              size="md"
+              label="Subtotal"
+              value={formatNumber(b15Sum)}
+              className="w-24"
+            />
+
+            <div className="h-12 w-px shrink-0 bg-gray-300 ml-2 mr-4" />
+
+            <RatingCalculatorStatisticsFactItem size="md" label="Min" value={formatNumber(b15Min)} className="w-16" />
+            <RatingCalculatorStatisticsFactItem
+              size="md"
+              label="Avg"
+              value={formatNumber(b15Average)}
+              className="w-16"
+            />
+            <RatingCalculatorStatisticsFactItem size="md" label="Max" value={formatNumber(b15Max)} className="w-16" />
+          </div>
         </div>
 
-        <div className="flex items-center w-full">
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Subtotal"
-            value={formatNumber(b15Sum)}
-            className="w-24"
-          />
+        <div className="flex flex-col items-start gap-2">
+          <div className="flex items-baseline gap-1 leading-none">
+            <span className="text-lg font-semibold">Best 35</span>
+            <span className="text-sm text-zinc-500">(Entries {b35Entries.length}/35)</span>
+          </div>
 
-          <div className="h-12 w-px shrink-0 bg-gray-300 ml-2 mr-4" />
+          <div className="flex items-center w-full">
+            <RatingCalculatorStatisticsFactItem size="md" label="Subtotal" value={b35Sum} className="w-24" />
 
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Min"
-            value={formatNumber(b15Min)}
-            className="w-16"
-          />
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Avg"
-            value={formatNumber(b15Average)}
-            className="w-16"
-          />
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Max"
-            value={formatNumber(b15Max)}
-            className="w-16"
-          />
-        </div>
-      </div>
+            <div className="h-12 w-px shrink-0 bg-gray-300 ml-2 mr-4" />
 
-      <div className="flex flex-col items-start gap-2">
-        <div className="flex items-baseline gap-1 leading-none">
-          <span className="text-lg font-semibold">Best 35</span>
-          <span className="text-sm text-zinc-500">(Entries {b35Entries.length}/35)</span>
-        </div>
-
-        <div className="flex items-center w-full">
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Subtotal"
-            value={b35Sum}
-            className="w-24"
-          />
-
-          <div className="h-12 w-px shrink-0 bg-gray-300 ml-2 mr-4" />
-
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Min"
-            value={formatNumber(b35Min)}
-            className="w-16"
-          />
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Avg"
-            value={formatNumber(b35Average)}
-            className="w-16"
-          />
-          <RatingCalculatorStatisticsFactItem
-            size="md"
-            label="Max"
-            value={formatNumber(b35Max)}
-            className="w-16"
-          />
+            <RatingCalculatorStatisticsFactItem size="md" label="Min" value={formatNumber(b35Min)} className="w-16" />
+            <RatingCalculatorStatisticsFactItem
+              size="md"
+              label="Avg"
+              value={formatNumber(b35Average)}
+              className="w-16"
+            />
+            <RatingCalculatorStatisticsFactItem size="md" label="Max" value={formatNumber(b35Max)} className="w-16" />
+          </div>
         </div>
       </div>
-    </div>
-  )
-})
+    )
+  },
+)
 
 const Histogram: FC<{
   b15Values: number[]
@@ -209,7 +182,7 @@ const Histogram: FC<{
         } else {
           return ''
         }
-      })
+      }),
     )
 
     // Draw bars for b15Values
@@ -268,11 +241,7 @@ const Histogram: FC<{
     }
 
     drawAverageLine(b15Avg, `B15 AVG: ${b15Avg.toFixed(2)}`, deriveColor('#3b82f6', 'overlay'))
-    drawAverageLine(
-      b35Avg,
-      `B35 AVG: ${b35Avg.toFixed(2)}`,
-      deriveColor(theme.accentColor, 'overlay')
-    )
+    drawAverageLine(b35Avg, `B35 AVG: ${b35Avg.toFixed(2)}`, deriveColor(theme.accentColor, 'overlay'))
   }
 
   useEffect(() => {
@@ -292,29 +261,23 @@ const Histogram: FC<{
   )
 }
 
-const RatingCalculatorStatisticsDetails = forwardRef<
-  HTMLDivElement,
-  HTMLAttributes<HTMLDivElement>
->(({ className, ...rest }, ref) => {
-  const { b35Entries, b15Entries } = useRatingEntries()
+const RatingCalculatorStatisticsDetails = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...rest }, ref) => {
+    const { b35Entries, b15Entries } = useRatingEntries()
 
-  return (
-    <div
-      ref={ref}
-      className={clsx('flex flex-col justify-center gap-4 text-black w-full', className)}
-      {...rest}
-    >
-      <Histogram
-        b35Values={compact(b35Entries.map((i) => i.rating?.ratingAwardValue))}
-        b15Values={compact(b15Entries.map((i) => i.rating?.ratingAwardValue))}
-      />
-      <span className="text-zinc-500 text-xs text-center select-none">
-        Histogram buckets are visualized in shape of (min, max] to better represent the data
-        distribution.
-      </span>
-    </div>
-  )
-})
+    return (
+      <div ref={ref} className={clsx('flex flex-col justify-center gap-4 text-black w-full', className)} {...rest}>
+        <Histogram
+          b35Values={compact(b35Entries.map((i) => i.rating?.ratingAwardValue))}
+          b15Values={compact(b15Entries.map((i) => i.rating?.ratingAwardValue))}
+        />
+        <span className="text-zinc-500 text-xs text-center select-none">
+          Histogram buckets are visualized in shape of (min, max] to better represent the data distribution.
+        </span>
+      </div>
+    )
+  },
+)
 
 export const RatingCalculatorStatistics: FC = () => {
   const firstHeightSet = useRef(false)
@@ -372,7 +335,7 @@ export const RatingCalculatorStatistics: FC = () => {
         className={clsx(
           'flex items-start overflow-y-hidden w-full py-1 will-change-height transition-height duration-300 relative',
           containerRect.width && 'snap-x snap-mandatory',
-          secondPageAvailable ? 'overflow-x-auto' : 'overflow-x-hidden'
+          secondPageAvailable ? 'overflow-x-auto' : 'overflow-x-hidden',
         )}
         style={{
           width: containerRect.width,

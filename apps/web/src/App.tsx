@@ -1,7 +1,7 @@
 import { PrivacyPolicy } from '@/pages/PrivacyPolicy'
 import { CircularProgress, Tab, Tabs } from '@mui/material'
 import { usePostHog } from 'posthog-js/react'
-import { FC, Suspense, useCallback, useEffect, useTransition } from 'react'
+import { type FC, Suspense, useCallback, useEffect, useTransition } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useEffectOnce } from 'react-use'
 import { Route, Router, useLocation, useRoute } from 'wouter'
@@ -39,13 +39,12 @@ const useAppTab = () => {
         localStorage.setItem('tab-selection', JSON.stringify(newTab))
       })
     },
-    [setLocation]
+    [setLocation],
   )
 
   useEffectOnce(() => {
     const tab = JSON.parse(localStorage.getItem('tab-selection') ?? `"${APP_TABS_VALUES[0]}"`)
-    if (tab && location.pathname === '/')
-      setLocation(`/${tab}${window.location.search}${window.location.hash}`)
+    if (tab && location.pathname === '/') setLocation(`/${tab}${window.location.search}${window.location.hash}`)
   })
 
   const tab = APP_TABS_VALUES.includes(locationTabMatch?.['*'] as AppTabsValuesType)

@@ -1,8 +1,8 @@
 import { Chip } from '@mui/material'
 import IconMdiTag from '~icons/mdi/tag'
 import { AnimatePresence, motion } from 'framer-motion'
-import { FC, useMemo } from 'react'
-import { FlattenedSheet } from '../../../songs'
+import { type FC, useMemo } from 'react'
+import type { FlattenedSheet } from '../../../songs'
 import { MotionButtonBase, MotionTooltip } from '../../../utils/motion'
 import { zoomTransitions } from '../../../utils/motionConstants'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
@@ -21,11 +21,7 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const inner = () => {
     if (isLoading || !data) {
       return (
-        <MotionButtonBase
-          {...zoomTransitions}
-          className="h-6 w-16 bg-gray-200 rounded-lg animate-pulse"
-          disabled
-        />
+        <MotionButtonBase {...zoomTransitions} className="h-6 w-16 bg-gray-200 rounded-lg animate-pulse" disabled />
       )
     }
 

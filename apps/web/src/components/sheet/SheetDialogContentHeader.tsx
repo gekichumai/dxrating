@@ -2,9 +2,9 @@ import { IconButton } from '@mui/material'
 import MdiStar from '~icons/mdi/star'
 import MdiStarOutline from '~icons/mdi/star-outline'
 import { motion } from 'framer-motion'
-import { FC, memo, useState } from 'react'
+import { type FC, memo, useState } from 'react'
 import { useSheetFavoriteState } from '../../models/favorite'
-import { FlattenedSheet } from '../../songs'
+import type { FlattenedSheet } from '../../songs'
 
 export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ sheet }) => {
   const [favored, toggleFavored] = useSheetFavoriteState(sheet.id)

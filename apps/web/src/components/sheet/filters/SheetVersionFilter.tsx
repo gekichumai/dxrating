@@ -1,12 +1,12 @@
-import { VERSION_ID_MAP, VERSION_IDS, VersionEnum } from '@gekichumai/dxdata'
+import { VERSION_ID_MAP, VERSION_IDS, type VersionEnum } from '@gekichumai/dxdata'
 import { ButtonBase, Chip } from '@mui/material'
-import { FC, useMemo } from 'react'
-import { Control, useController } from 'react-hook-form'
+import { type FC, useMemo } from 'react'
+import { type Control, useController } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { LongPressCallbackReason, useLongPress } from 'use-long-press'
 import { useAppContextDXDataVersion } from '../../../models/context/useAppContext'
 import { GestureHint } from '../../global/GestureHint'
-import { SheetSortFilterForm } from '../SheetSortFilter'
+import type { SheetSortFilterForm } from '../SheetSortFilter'
 import { SheetFilterSection } from './SheetFilterSection'
 
 const SheetVersionFilterInputVersion = ({
@@ -66,7 +66,7 @@ const SheetVersionFilterInput = ({
         id: k,
         selected: value.includes(k),
       })).filter((v) => (VERSION_ID_MAP.get(v.id) ?? 0) <= (VERSION_ID_MAP.get(appVersion) ?? 0)),
-    [value, appVersion]
+    [value, appVersion],
   )
 
   return (
@@ -116,10 +116,7 @@ export const SheetVersionFilter: FC<{
           <div>{t('sheet:filter.version.title')}</div>
           <div className="flex-1" />
           <GestureHint gesture="tap" description={t('sheet:filter.version.gesture-hint.tap')} />
-          <GestureHint
-            gesture="tap-hold"
-            description={t('sheet:filter.version.gesture-hint.tap-hold')}
-          />
+          <GestureHint gesture="tap-hold" description={t('sheet:filter.version.gesture-hint.tap-hold')} />
         </>
       }
     >

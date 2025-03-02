@@ -13,6 +13,6 @@ export const useServerAliases = () => {
     },
     {
       focusThrottleInterval: 1000 * 60 * 60,
-    }
+    },
   )
 }

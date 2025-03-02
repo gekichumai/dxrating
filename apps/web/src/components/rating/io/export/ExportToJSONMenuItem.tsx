@@ -1,9 +1,9 @@
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
 import IconMdiFile from '~icons/mdi/file'
-import { FC } from 'react'
+import type { FC } from 'react'
 import toast from 'react-hot-toast'
 import { useRatingCalculatorContext } from '../../../../models/context/RatingCalculatorContext'
-import { RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
+import { type RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
 
 const saveAsJsonFile = (data: string) => {
   const blob = new Blob([data], { type: 'application/json' })
@@ -41,10 +41,7 @@ export const ExportToJSONMenuItem: FC = () => {
             achievementRate: entry.achievementRate,
           })
 
-          const data = JSON.stringify([
-            ...b35Entries.map(preprocess),
-            ...b15Entries.map(preprocess),
-          ])
+          const data = JSON.stringify([...b35Entries.map(preprocess), ...b15Entries.map(preprocess)])
           saveAsJsonFile(data)
         }}
       >

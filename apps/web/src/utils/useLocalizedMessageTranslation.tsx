@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Json } from '../models/supabase.types'
+import type { Json } from '../models/supabase.types'
 
 // isAssumedRecord omits deep checks of the object's values but rather
 // only checks if the value is an object and not null.
@@ -33,6 +33,6 @@ export const useLocalizedMessageTranslation = () => {
 
       return message[Object.keys(message)[0]] ?? null
     },
-    [i18n.language, i18n.options.fallbackLng]
+    [i18n.language, i18n.options.fallbackLng],
   )
 }

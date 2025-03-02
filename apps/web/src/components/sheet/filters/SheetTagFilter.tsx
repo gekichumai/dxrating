@@ -1,13 +1,13 @@
 import { ButtonBase, Chip } from '@mui/material'
 import clsx from 'clsx'
-import { FC, ReactNode } from 'react'
-import { Control, useController } from 'react-hook-form'
+import type { FC, ReactNode } from 'react'
+import { type Control, useController } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { LongPressCallbackReason, useLongPress } from 'use-long-press'
 import { useCombinedTags } from '../../../models/useCombinedTags'
 import { useSheets } from '../../../songs'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
-import { SheetSortFilterForm } from '../SheetSortFilter'
+import type { SheetSortFilterForm } from '../SheetSortFilter'
 import { SheetFilterSection } from './SheetFilterSection'
 
 const SheetTagFilterInputTag = ({
@@ -41,10 +41,7 @@ const SheetTagFilterInputTag = ({
   return (
     <ButtonBase
       {...bind()}
-      className={clsx(
-        'rounded-lg overflow-hidden',
-        skeleton && 'pointer-events-none animate-pulse'
-      )}
+      className={clsx('rounded-lg overflow-hidden', skeleton && 'pointer-events-none animate-pulse')}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           onToggle()
@@ -56,10 +53,7 @@ const SheetTagFilterInputTag = ({
         label={label}
         color={selected ? 'primary' : 'default'}
         size="small"
-        className={clsx(
-          '!rounded-l-lg !rounded-r-none transition leading-none',
-          !anySelected && 'opacity-50'
-        )}
+        className={clsx('!rounded-l-lg !rounded-r-none transition leading-none', !anySelected && 'opacity-50')}
       />
       <Chip
         label={count}
@@ -67,7 +61,7 @@ const SheetTagFilterInputTag = ({
         size="small"
         className={clsx(
           '!rounded-r-lg !rounded-l-none transition leading-none !bg-gray-3',
-          !anySelected && 'opacity-50'
+          !anySelected && 'opacity-50',
         )}
       />
     </ButtonBase>

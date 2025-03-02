@@ -1,7 +1,7 @@
 import { ClickAwayListener } from '@mui/material'
 import MdiGestureSwipeVertical from '~icons/mdi/gesture-swipe-vertical'
 import { AnimatePresence, motion } from 'framer-motion'
-import { TouchEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type TouchEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLockBodyScroll } from 'react-use'
 import { mapRange } from '../../../utils/mapRange'
 
@@ -18,10 +18,7 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState(false)
-  const inclusiveWholeNumbers = useMemo(
-    () => Array.from({ length: max - min + 1 }).map((_, i) => min + i),
-    [min, max]
-  )
+  const inclusiveWholeNumbers = useMemo(() => Array.from({ length: max - min + 1 }).map((_, i) => min + i), [min, max])
   useLockBodyScroll(isPressed)
 
   useEffect(() => {
@@ -48,7 +45,7 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
       const value = Math.max(min, Math.min(max, unclampedValue))
       onChange(value)
     },
-    [isPressed, containerRef, min, max, onChange]
+    [isPressed, containerRef, min, max, onChange],
   )
 
   const indicatorPosition = useMemo(() => {
@@ -56,13 +53,7 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
     const { height } = containerRef.current.getBoundingClientRect()
     const padding = 8 // each side
     const indicatorHeight = 32
-    return mapRange(
-      valuePercentage * height,
-      0,
-      height,
-      padding,
-      height - padding - indicatorHeight
-    )
+    return mapRange(valuePercentage * height, 0, height, padding, height - padding - indicatorHeight)
   }, [containerRef, valuePercentage])
 
   return (

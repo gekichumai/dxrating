@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { FC, ImgHTMLAttributes, memo, useRef, useState } from 'react'
+import { type FC, type ImgHTMLAttributes, memo, useRef, useState } from 'react'
 
 export const FadedImage: FC<
   ImgHTMLAttributes<HTMLImageElement> & {
@@ -28,7 +28,7 @@ export const FadedImage: FC<
           'transition-opacity h-full w-full',
           loaded ? 'opacity-100' : 'opacity-0',
           !draggable && 'select-none touch-callout-none',
-          instantlyLoaded ? 'duration-0' : 'duration-200'
+          instantlyLoaded ? 'duration-0' : 'duration-200',
         )}
         draggable={draggable}
       />

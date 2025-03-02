@@ -1,25 +1,20 @@
-import { DifficultyEnum, Regions, TypeEnum } from '@gekichumai/dxdata'
-import {
-  ListItemButton,
-  ListItemSecondaryAction,
-  ListItemText,
-  ListItemTextProps,
-} from '@mui/material'
+import { type DifficultyEnum, type Regions, TypeEnum } from '@gekichumai/dxdata'
+import { ListItemButton, ListItemSecondaryAction, ListItemText, type ListItemTextProps } from '@mui/material'
 import clsx from 'clsx'
 import { usePostHog } from 'posthog-js/react'
-import { FC, HTMLAttributes, ImgHTMLAttributes, memo, useState } from 'react'
+import { type FC, type HTMLAttributes, type ImgHTMLAttributes, memo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { match } from 'ts-pattern'
 import MdiComment from '~icons/mdi/comment'
 import MdiLock from '~icons/mdi/lock'
 import MdiTrashCan from '~icons/mdi/trash-can'
 import { DIFFICULTIES } from '../../models/difficulties'
-import { FlattenedSheet } from '../../songs'
+import type { FlattenedSheet } from '../../songs'
 import { useIsLargeDevice } from '../../utils/breakpoints'
 import { FadedImage } from '../global/FadedImage'
 import { ResponsiveDialog } from '../global/ResponsiveDialog'
 import { AddSheetAltNameButton } from './AddSheetAltNameButton'
-import { SheetDialogContent, SheetDialogContentProps } from './SheetDialogContent'
+import { SheetDialogContent, type SheetDialogContentProps } from './SheetDialogContent'
 
 export const SheetListItem: FC<{
   size?: 'small' | 'medium'
@@ -42,7 +37,7 @@ export const SheetListItem: FC<{
         disableGutters={!isLargeDevice}
         className={clsx(
           'w-full cursor-pointer transition duration-500 hover:duration-25 !px-4',
-          open && '!bg-zinc-300/80'
+          open && '!bg-zinc-300/80',
         )}
         onClick={() => {
           setOpen(true)
@@ -73,49 +68,29 @@ export interface SheetListItemContentProps extends HTMLAttributes<HTMLDivElement
 }
 
 export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
-  ({
-    sheet,
-    size = 'medium',
-    className,
-    enableSheetImage = true,
-    SheetTitleProps,
-    ListItemTextProps,
-    ...rest
-  }) => {
+  ({ sheet, size = 'medium', className, enableSheetImage = true, SheetTitleProps, ListItemTextProps, ...rest }) => {
     return (
-      <div
-        className={clsx('flex items-center w-full p-1 gap-2 tabular-nums relative', className)}
-        {...rest}
-      >
+      <div className={clsx('flex items-center w-full p-1 gap-2 tabular-nums relative', className)} {...rest}>
         {enableSheetImage && <SheetImage name={sheet.imageName} size={size} />}
 
-        <ListItemText
-          {...ListItemTextProps}
-          className={clsx('ml-2 pr-12', ListItemTextProps?.className)}
-        >
+        <ListItemText {...ListItemTextProps} className={clsx('ml-2 pr-12', ListItemTextProps?.className)}>
           <SheetTitle
             {...SheetTitleProps}
             sheet={sheet}
-            className={clsx(
-              'font-bold',
-              size === 'small' ? 'text-sm' : 'text-lg',
-              SheetTitleProps?.className
-            )}
+            className={clsx('font-bold', size === 'small' ? 'text-sm' : 'text-lg', SheetTitleProps?.className)}
           />
         </ListItemText>
 
         <ListItemSecondaryAction>
           {sheet.isTypeUtage ? (
-            <span className="font-bold tracking-tighter tabular-nums text-lg text-zinc-600">
-              {sheet.level}
-            </span>
+            <span className="font-bold tracking-tighter tabular-nums text-lg text-zinc-600">{sheet.level}</span>
           ) : (
             <SheetInternalLevelValue value={sheet.internalLevelValue} />
           )}
         </ListItemSecondaryAction>
       </div>
     )
-  }
+  },
 )
 SheetListItem.displayName = 'SheetListItem'
 
@@ -225,7 +200,7 @@ export const SheetImage: FC<
             .with('small', () => 'h-8 w-8 min-w-[2rem] min-h-[2rem] rounded-sm')
             .with('medium', () => 'h-12 w-12 min-w-[3rem] min-h-[3rem] rounded')
             .with('large', () => 'h-16 w-16 min-w-[4rem] min-h-[4rem] rounded-lg')
-            .exhaustive()
+            .exhaustive(),
         )}
         placeholderClassName="bg-slate-300/50"
         alt={name}
@@ -234,7 +209,7 @@ export const SheetImage: FC<
       />
     )
   },
-  (prev, next) => prev.name === next.name && prev.size === next.size
+  (prev, next) => prev.name === next.name && prev.size === next.size,
 )
 
 export interface SheetTitleProps {
@@ -276,11 +251,7 @@ export const SheetTitle: FC<SheetTitleProps> = ({
         </span>
         <div className="flex items-center gap-2 shrink-0">
           <SheetType type={type} difficulty={difficulty} />
-          <SheetDifficulty
-            difficulty={difficulty}
-            regions={sheet.regions}
-            isLocked={sheet.isLocked}
-          />
+          <SheetDifficulty difficulty={difficulty} regions={sheet.regions} isLocked={sheet.isLocked} />
         </div>
       </h3>
 
@@ -337,10 +308,7 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
               } else {
                 const sanitizedAltName = altName
                   .trim()
-                  .replace(
-                    /[\s|\n|，|。|！|@|；|《|》|？|：|【|】|（|）|、|·|~|!|#|%|&|*|(|)|{|}|\\[|\\]|\\|]/g,
-                    '-'
-                  )
+                  .replace(/[\s|\n|，|。|！|@|；|《|》|？|：|【|】|（|）|、|·|~|!|#|%|&|*|(|)|{|}|\\[|\\]|\\|]/g, '-')
                 navigator.clipboard.writeText(`https://${sanitizedAltName}.是什么歌.com`)
                 toast.success(`Copied ${sanitizedAltName}.是什么歌.com to clipboard`, {
                   id: `copy-sheet-alt-name-${altName}`,

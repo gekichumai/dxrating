@@ -1,5 +1,5 @@
 import { VersionEnum } from '@gekichumai/dxdata'
-import { createContext, FC, PropsWithChildren, useEffect, useMemo } from 'react'
+import { createContext, type FC, type PropsWithChildren, useEffect, useMemo } from 'react'
 import { useLocalStorage } from 'react-use'
 import { DXRatingPlugin } from '../../utils/capacitor/plugin/wrap'
 
@@ -50,7 +50,7 @@ export const AppContextProvider: FC<PropsWithChildren<object>> = ({ children }) 
       region: state!.region ?? 'jp',
       setVersionAndRegion: (version, region) => setState({ version, region }),
     }),
-    [state, setState]
+    [state, setState],
   )
 
   useEffect(() => {

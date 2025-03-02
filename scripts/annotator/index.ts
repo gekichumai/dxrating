@@ -1,12 +1,12 @@
 import process from 'process'
 
-import { DifficultyEnum, Sheet, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
+import { type DifficultyEnum, type Sheet, TypeEnum, type VersionEnum } from '@gekichumai/dxdata'
 import 'dotenv/config'
 import he from 'he'
 import { flatten, uniq } from 'lodash'
 import fs from 'node:fs/promises'
 import pg from 'pg'
-import { DXDataOriginal } from './original'
+import type { DXDataOriginal } from './original'
 
 // from https://github.com/zetaraku/arcade-songs-fetch/blob/362f2a1b1a1752074951006cedde06948fb0061a/src/maimai/fetch-intl-versions.ts#L16
 const VERSION_ID_MAP = new Map([
@@ -43,9 +43,7 @@ const isMaimaiSeries = (version: string) => {
 
 async function readAliases1() {
   const aliases = await (
-    await fetch(
-      'https://raw.githubusercontent.com/lomotos10/GCM-bot/main/data/aliases/en/chuni.tsv'
-    )
+    await fetch('https://raw.githubusercontent.com/lomotos10/GCM-bot/main/data/aliases/en/chuni.tsv')
   ).text()
   const lines = aliases.split('\n')
   const aliasesMap = new Map<string, string[]>()
@@ -101,7 +99,7 @@ async function readAliases4() {
 
 let ALIAS_NAME_MAP: Map<string, string[]>
 let ALIAS_ID_MAP: Map<string, string[]>
-let ALIAS_NAME_EXTRA_MAP: Record<string, string[]> = {
+const ALIAS_NAME_EXTRA_MAP: Record<string, string[]> = {
   Hainuwele: ['华为', '华为完了'],
   'ULTRA SYNERGY MATRIX': ['USM', '我来出勤了'],
   神っぽいな: ['像神一样'],
@@ -131,7 +129,7 @@ async function getSearchAcronyms(title: string, id?: number) {
   // remove zero-width space like characters
 
   const filtered = uniq(searchAcronyms.map((acronym) => acronym.replace(/\u200B/g, ''))).filter(
-    (acronym) => !!acronym && acronym.toLowerCase() !== title.toLowerCase()
+    (acronym) => !!acronym && acronym.toLowerCase() !== title.toLowerCase(),
   )
   return filtered
 }
@@ -163,7 +161,7 @@ async function getAllMultiverInternalLevelValues() {
   await conn.connect()
 
   const { rows } = await conn.query<MultiverInternalLevelValue>(
-    `SELECT * FROM "public"."SheetInternalLevels" ORDER BY "songId","type","difficulty","version";`
+    `SELECT * FROM "public"."SheetInternalLevels" ORDER BY "songId","type","difficulty","version";`,
   )
   await conn.end()
 
@@ -182,7 +180,7 @@ async function getAllSheetSpecificReleaseDates() {
   await conn.connect()
 
   const { rows } = await conn.query<SheetExtras>(
-    `SELECT "songId", "type", "difficulty", "releaseDate" FROM "public"."SheetExtras" WHERE "releaseDate" IS NOT NULL`
+    `SELECT "songId", "type", "difficulty", "releaseDate" FROM "public"."SheetExtras" WHERE "releaseDate" IS NOT NULL`,
   )
   await conn.end()
 
@@ -235,7 +233,7 @@ function checkSongsInternalId(
       difficulty: DifficultyEnum
       type: TypeEnum
     }[]
-  }[]
+  }[],
 ) {
   const songsWithMissingInternalIdSheets = songs
     .map((song) => ({
@@ -251,9 +249,7 @@ function checkSongsInternalId(
     }
   }
 
-  console.warn(
-    `Total ${songsWithMissingInternalIdSheets.length} songs missing internalId out of ${songs.length} songs`
-  )
+  console.warn(`Total ${songsWithMissingInternalIdSheets.length} songs missing internalId out of ${songs.length} songs`)
 }
 
 function mergedAliasIdMap<T>(...aliasMaps: Map<T, string[]>[]): Map<T, string[]> {
@@ -280,26 +276,24 @@ async function main() {
   const sheetSpecificReleaseDates = await getAllSheetSpecificReleaseDates()
 
   console.info('Fetching maimai official songs list...')
-  const maimaiOfficialSongs = (await fetch('https://maimai.sega.jp/data/maimai_songs.json').then(
-    (res) => res.json()
+  const maimaiOfficialSongs = (await fetch('https://maimai.sega.jp/data/maimai_songs.json').then((res) =>
+    res.json(),
   )) as MaimaiOfficialSongs[]
 
   console.info('Reading original data...')
-  const dxdata = (await fs
-    .readFile('./original.json', 'utf-8')
-    .then(JSON.parse)) as DXDataOriginal.Root
+  const dxdata = (await fs.readFile('./original.json', 'utf-8').then(JSON.parse)) as DXDataOriginal.Root
 
   console.info('Transforming songs...')
   const transformedSongs = dxdata.songs
     .filter(
       // filter out maimai series 宴会場 charts as those has been removed in dx
-      (song) => !(song.category === '宴会場' && isMaimaiSeries(song.version))
+      (song) => !(song.category === '宴会場' && isMaimaiSeries(song.version)),
     )
     .map(async ({ version: songVersion, releaseDate: entryReleaseDate, comment: _, ...entry }) => {
       const searchAcronyms = await Promise.all(
         uniq(entry.sheets.map((sheet) => sheet.internalId)).map((internalId) => {
           return getSearchAcronyms(entry.title, internalId)
-        })
+        }),
       ).then((acronyms) => uniq(flatten(acronyms)))
       searchAcronyms.sort((a, b) => a.localeCompare(b))
 
@@ -311,16 +305,14 @@ async function main() {
           const multiverInternalLevelValue = multiverInternalLevelValues
             .filter(
               (value) =>
-                value.songId === entry.songId &&
-                value.type === sheet.type &&
-                value.difficulty === sheet.difficulty
+                value.songId === entry.songId && value.type === sheet.type && value.difficulty === sheet.difficulty,
             )
             .reduce(
               (acc, value) => {
-                acc[value.version] = parseFloat(value.internalLevel)
+                acc[value.version] = Number.parseFloat(value.internalLevel)
                 return acc
               },
-              {} as Record<string, number>
+              {} as Record<string, number>,
             )
 
           const officialUtageSong = maimaiOfficialSongs.find(
@@ -331,20 +323,16 @@ async function main() {
                 (v.comment === 'バンドメンバーを集めて楽しもう！（入門編）' &&
                   entry.songId === '[協]青春コンプレックス（入門編）') ||
                 (v.comment === 'バンドメンバーを集めて挑め！（ヒーロー級）' &&
-                  entry.songId === '[協]青春コンプレックス（ヒーロー級）'))
+                  entry.songId === '[協]青春コンプレックス（ヒーロー級）')),
           )
 
           const is2pUtage = sheet.type === 'utage' && officialUtageSong?.buddy === '○'
 
-          const haveAnyMultiverInternalLevelValue =
-            Object.keys(multiverInternalLevelValue).length > 0
+          const haveAnyMultiverInternalLevelValue = Object.keys(multiverInternalLevelValue).length > 0
 
           const releaseDate = (() => {
             const sheetExtra = sheetSpecificReleaseDates.find(
-              (v) =>
-                v.songId === entry.songId &&
-                v.type === sheet.type &&
-                v.difficulty === sheet.difficulty
+              (v) => v.songId === entry.songId && v.type === sheet.type && v.difficulty === sheet.difficulty,
             )
 
             if (sheetExtra) {
@@ -359,9 +347,7 @@ async function main() {
             difficulty: sheet.difficulty as DifficultyEnum,
             version: (sheet.version ?? songVersion) as VersionEnum,
             type: is2pUtage ? TypeEnum.UTAGE2P : (sheet.type as TypeEnum),
-            multiverInternalLevelValue: haveAnyMultiverInternalLevelValue
-              ? multiverInternalLevelValue
-              : undefined,
+            multiverInternalLevelValue: haveAnyMultiverInternalLevelValue ? multiverInternalLevelValue : undefined,
             comment: officialUtageSong?.comment,
             releaseDate,
           } satisfies Sheet
@@ -380,7 +366,7 @@ async function main() {
       songs,
     },
     null,
-    4
+    4,
   )
 
   await fs.writeFile('../../packages/dxdata/dxdata.json', data)

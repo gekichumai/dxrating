@@ -1,7 +1,7 @@
 import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material'
 import MdiCheck from '~icons/mdi/check'
 import MdiTranslate from '~icons/mdi/translate'
-import { FC, PropsWithChildren, useState } from 'react'
+import { type FC, type PropsWithChildren, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { startViewTransition } from '../../../utils/startViewTransition'
 

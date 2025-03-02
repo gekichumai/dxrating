@@ -1,11 +1,11 @@
 import { CategoryEnum } from '@gekichumai/dxdata'
 import { ButtonBase, Chip } from '@mui/material'
-import { FC, useMemo } from 'react'
-import { Control, useController } from 'react-hook-form'
+import { type FC, useMemo } from 'react'
+import { type Control, useController } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { LongPressCallbackReason, useLongPress } from 'use-long-press'
 import { GestureHint } from '../../global/GestureHint'
-import { SheetSortFilterForm } from '../SheetSortFilter'
+import type { SheetSortFilterForm } from '../SheetSortFilter'
 import { SheetFilterSection } from './SheetFilterSection'
 
 const SheetCategoryFilterInputCategory = ({
@@ -41,12 +41,7 @@ const SheetCategoryFilterInputCategory = ({
       }}
       focusRipple
     >
-      <Chip
-        label={category}
-        color={selected ? 'primary' : 'default'}
-        size="small"
-        className="!rounded-lg"
-      />
+      <Chip label={category} color={selected ? 'primary' : 'default'} size="small" className="!rounded-lg" />
     </ButtonBase>
   )
 }
@@ -66,7 +61,7 @@ const SheetCategoryFilterInput = ({
         id: v,
         selected: value.includes(v),
       })),
-    [value]
+    [value],
   )
 
   return (
@@ -116,10 +111,7 @@ export const SheetCategoryFilter: FC<{
           <div>{t('sheet:filter.category.title')}</div>
           <div className="flex-1" />
           <GestureHint gesture="tap" description={t('sheet:filter.version.gesture-hint.tap')} />
-          <GestureHint
-            gesture="tap-hold"
-            description={t('sheet:filter.version.gesture-hint.tap-hold')}
-          />
+          <GestureHint gesture="tap-hold" description={t('sheet:filter.version.gesture-hint.tap-hold')} />
         </>
       }
     >

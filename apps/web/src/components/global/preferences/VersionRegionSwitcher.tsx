@@ -1,15 +1,11 @@
-import { VersionEnum } from '@gekichumai/dxdata'
+import type { VersionEnum } from '@gekichumai/dxdata'
 import { ListItem, ListSubheader, MenuItem, Select, styled } from '@mui/material'
 import MdiInformation from '~icons/mdi/information'
 import clsx from 'clsx'
 import uniqBy from 'lodash-es/uniqBy'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  DXVersion,
-  DXVersionToDXDataVersionEnumMap,
-  Region,
-} from '../../../models/context/AppContext'
+import { type DXVersion, DXVersionToDXDataVersionEnumMap, type Region } from '../../../models/context/AppContext'
 import { useAppContext } from '../../../models/context/useAppContext'
 import { startViewTransition } from '../../../utils/startViewTransition'
 import { useVersionTheme } from '../../../utils/useVersionTheme'
@@ -83,9 +79,7 @@ export const VersionRegionSwitcher: FC = () => {
       renderValue={(value) => (
         <div className="flex flex-col gap-0.5">
           <WebpSupportedImage
-            src={`https://shama.dxrating.net/images/version-logo/${
-              fromMergedVersionRegionId(value).version
-            }.png`}
+            src={`https://shama.dxrating.net/images/version-logo/${fromMergedVersionRegionId(value).version}.png`}
             className="h-32 w-auto touch-callout-none"
             draggable={false}
           />
@@ -103,17 +97,12 @@ export const VersionRegionSwitcher: FC = () => {
         </div>
       )}
     >
-      <ListSubheader className="leading-normal py-4">
-        {t('settings:version-and-region.select')}
-      </ListSubheader>
+      <ListSubheader className="leading-normal py-4">{t('settings:version-and-region.select')}</ListSubheader>
       {VERSION_REGIONS.map(({ id, dxVersion, versionEnum, region }, i) => (
         <MenuItem
           value={id}
           key={id}
-          className={clsx(
-            'flex items-center gap-8 border-b border-solid border-gray-200',
-            i === 0 && 'border-t'
-          )}
+          className={clsx('flex items-center gap-8 border-b border-solid border-gray-200', i === 0 && 'border-t')}
         >
           <WebpSupportedImage
             src={`https://shama.dxrating.net/images/version-logo/${dxVersion}.png`}
@@ -128,32 +117,25 @@ export const VersionRegionSwitcher: FC = () => {
         </MenuItem>
       ))}
 
-      <ListSubheader className="leading-normal py-4">
-        {t('settings:version-and-region.select-generic')}
-      </ListSubheader>
-      {uniqBy(VERSION_REGIONS, (versionRegion) => versionRegion.dxVersion).map(
-        ({ id, dxVersion, versionEnum }, i) => (
-          <MenuItem
-            value={`${dxVersion}__${'_generic'}`}
-            key={id}
-            className={clsx(
-              'flex items-center gap-4 border-b border-solid border-gray-200',
-              i === 0 && 'border-t'
-            )}
-          >
-            <WebpSupportedImage
-              src={`https://shama.dxrating.net/images/version-logo/${dxVersion}.png`}
-              className="h-12 touch-callout-none object-contain w-20"
-              draggable={false}
-            />
+      <ListSubheader className="leading-normal py-4">{t('settings:version-and-region.select-generic')}</ListSubheader>
+      {uniqBy(VERSION_REGIONS, (versionRegion) => versionRegion.dxVersion).map(({ id, dxVersion, versionEnum }, i) => (
+        <MenuItem
+          value={`${dxVersion}__${'_generic'}`}
+          key={id}
+          className={clsx('flex items-center gap-4 border-b border-solid border-gray-200', i === 0 && 'border-t')}
+        >
+          <WebpSupportedImage
+            src={`https://shama.dxrating.net/images/version-logo/${dxVersion}.png`}
+            className="h-12 touch-callout-none object-contain w-20"
+            draggable={false}
+          />
 
-            <div className="mr-2 opacity-70 flex flex-col items-start">
-              <span>{versionEnum}</span>
-              <span className="uppercase text-xs">{t(`settings:region._generic`)}</span>
-            </div>
-          </MenuItem>
-        )
-      )}
+          <div className="mr-2 opacity-70 flex flex-col items-start">
+            <span>{versionEnum}</span>
+            <span className="uppercase text-xs">{t(`settings:region._generic`)}</span>
+          </div>
+        </MenuItem>
+      ))}
       <ListItem className="flex justify-center items-center text-sm">
         <div className="flex justify-center items-start max-w-[22rem] text-zinc-500">
           <MdiInformation className="mr-2 shrink-0 mt-0.5" />

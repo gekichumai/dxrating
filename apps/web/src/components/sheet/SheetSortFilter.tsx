@@ -15,12 +15,12 @@ import {
 import * as Collapsible from '@radix-ui/react-collapsible'
 import MdiChevronDownIcon from '~icons/mdi/chevron-down'
 import clsx from 'clsx'
-import { FC, useContext, useEffect, useMemo, useState, useTransition } from 'react'
+import { type FC, useContext, useEffect, useMemo, useState, useTransition } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { useEffectOnce } from 'react-use'
 import { SheetDetailsContext } from '../../models/context/SheetDetailsContext'
-import { FlattenedSheet } from '../../songs'
+import type { FlattenedSheet } from '../../songs'
 import { SheetCategoryFilter } from './filters/SheetCategoryFilter'
 import { SheetInternalLevelFilter } from './filters/SheetInternalLevelFilter'
 import { SheetTagFilter } from './filters/SheetTagFilter'
@@ -198,7 +198,7 @@ const SheetSortFilterFormListener: FC<{
           JSON.stringify({
             version: CURRENT_SCHEMA_VERSION,
             payload: data,
-          })
+          }),
         )
       }
     })
@@ -218,9 +218,7 @@ const SheetSortFilterFormReset: FC<{
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} TransitionComponent={Grow}>
         <DialogTitle>Reset Sort and Filter Settings</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Are you sure you want to reset the sort and filter settings?
-          </DialogContentText>
+          <DialogContentText>Are you sure you want to reset the sort and filter settings?</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button
@@ -283,8 +281,7 @@ const SheetSortFilterFormContent = () => {
       <div
         className={clsx(
           'p-2 flex flex-col gap-4 rounded-lg',
-          queryActive &&
-            'bg-gray-200 pointer-events-none saturation-0 shadow-[inset_0_1px_8px] shadow-gray-300'
+          queryActive && 'bg-gray-200 pointer-events-none saturation-0 shadow-[inset_0_1px_8px] shadow-gray-300',
         )}
       >
         <div className="text-xl font-bold tracking-tighter flex items-center">
@@ -313,12 +310,10 @@ const SheetSortFilterFormContent = () => {
             <ButtonBase
               className={clsx(
                 'px-4 w-full flex items-center transition-all duration-300',
-                expanded ? 'bg-gray-200 py-4' : 'bg-gray-100 py-3'
+                expanded ? 'bg-gray-200 py-4' : 'bg-gray-100 py-3',
               )}
             >
-              <div className="text-xl font-bold tracking-tight leading-none">
-                {t('sheet:sort-and-filter.title')}
-              </div>
+              <div className="text-xl font-bold tracking-tight leading-none">{t('sheet:sort-and-filter.title')}</div>
               {pending && <CircularProgress disableShrink className="ml-2 !h-4 !w-4" />}
               <div className="flex-1" />
               <MdiChevronDownIcon
@@ -327,9 +322,7 @@ const SheetSortFilterFormContent = () => {
             </ButtonBase>
           </Collapsible.Trigger>
 
-          <Collapsible.Content className="radix__collapsible-content">
-            {collapsibleInner}
-          </Collapsible.Content>
+          <Collapsible.Content className="radix__collapsible-content">{collapsibleInner}</Collapsible.Content>
         </Paper>
       </Collapsible.Root>
     </>

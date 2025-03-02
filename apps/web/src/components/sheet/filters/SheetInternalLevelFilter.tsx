@@ -1,10 +1,10 @@
-import { TextFieldProps } from '@mui/material'
-import { FC, useMemo } from 'react'
-import { Control, FieldPath, useController, UseControllerProps } from 'react-hook-form'
+import type { TextFieldProps } from '@mui/material'
+import { type FC, useMemo } from 'react'
+import { type Control, type FieldPath, useController, type UseControllerProps } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { useControllerRulePresets } from '../../global/form/useControllerRulePresets'
 import { TouchDeviceGuard } from '../../global/TouchDeviceGuard'
-import { SheetSortFilterForm } from '../SheetSortFilter'
+import type { SheetSortFilterForm } from '../SheetSortFilter'
 import { FloatValueInputField } from './FloatValueInputField'
 import { SheetFilterInternalLevelInputLongPressSlider } from './SheetFilterLevelInputLongPressSlider'
 import { SheetFilterSection } from './SheetFilterSection'
@@ -53,12 +53,7 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
       </TouchDeviceGuard>
 
       <TouchDeviceGuard renderOnlyOn="touch">
-        <SheetFilterInternalLevelInputLongPressSlider
-          value={value as number}
-          onChange={onChange}
-          min={9}
-          max={15}
-        />
+        <SheetFilterInternalLevelInputLongPressSlider value={value as number} onChange={onChange} min={9} max={15} />
       </TouchDeviceGuard>
     </div>
   )
@@ -74,7 +69,7 @@ export const SheetInternalLevelFilter: FC<{
       min: rulePresets.min(t('sheet:filter.internal-level-value.min'), 0),
       max: rulePresets.max(t('sheet:filter.internal-level-value.max'), 15),
     }),
-    [rulePresets, t]
+    [rulePresets, t],
   )
 
   return (

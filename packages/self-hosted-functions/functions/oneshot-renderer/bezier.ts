@@ -13,13 +13,7 @@ export function cubicBezier(t: number, p0: number, p1: number, p2: number, p3: n
   return p
 }
 
-export function generateGradientPoints(
-  numPoints: number,
-  p0: number,
-  p1: number,
-  p2: number,
-  p3: number
-) {
+export function generateGradientPoints(numPoints: number, p0: number, p1: number, p2: number, p3: number) {
   const points = []
   for (let i = 0; i <= numPoints; i++) {
     const t = i / numPoints

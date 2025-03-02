@@ -7,21 +7,20 @@ export const PrivacyPolicy = () => {
 
         <h2>Introduction</h2>
         <p>
-          This Privacy Policy explains how we collect, use, process, and disclose your information
-          when you use our service.
+          This Privacy Policy explains how we collect, use, process, and disclose your information when you use our
+          service.
         </p>
 
         <h2>Information We Collect</h2>
         <p>We collect information in the following ways:</p>
         <ul>
           <li>
-            <strong>Information you provide to us directly:</strong> Information that you submit
-            through our service, including registration information, profile information, and any
-            other information you choose to provide.
+            <strong>Information you provide to us directly:</strong> Information that you submit through our service,
+            including registration information, profile information, and any other information you choose to provide.
           </li>
           <li>
-            <strong>Usage Information:</strong> We collect information about your interactions with
-            our service using PostHog analytics, including:
+            <strong>Usage Information:</strong> We collect information about your interactions with our service using
+            PostHog analytics, including:
             <ul>
               <li>Pages you visit</li>
               <li>Features you use</li>
@@ -44,31 +43,29 @@ export const PrivacyPolicy = () => {
 
         <h2>Data Storage</h2>
         <p>
-          We use Supabase as our database provider. Your data is stored securely and processed in
-          accordance with their security standards and practices. For more information about
-          Supabase's security practices, you can visit their security documentation.
+          We use Supabase as our database provider. Your data is stored securely and processed in accordance with their
+          security standards and practices. For more information about Supabase's security practices, you can visit
+          their security documentation.
         </p>
 
         <h2>Analytics</h2>
         <p>
-          We use PostHog, an open-source analytics platform, to understand how our service is used.
-          PostHog collects anonymous usage data that helps us improve our service. You can learn
-          more about PostHog's privacy practices on their website.
+          We use PostHog, an open-source analytics platform, to understand how our service is used. PostHog collects
+          anonymous usage data that helps us improve our service. You can learn more about PostHog's privacy practices
+          on their website.
         </p>
 
         <h2>Cookies and Tracking</h2>
         <p>
-          We use cookies and similar tracking technologies to track activity on our service and hold
-          certain information. You can instruct your browser to refuse all cookies or to indicate
-          when a cookie is being sent.
+          We use cookies and similar tracking technologies to track activity on our service and hold certain
+          information. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent.
         </p>
 
         <h2>Data Retention</h2>
         <p>
-          We will retain your information only for as long as necessary to fulfill the purposes
-          outlined in this Privacy Policy. We will retain and use your information to the extent
-          necessary to comply with our legal obligations, resolve disputes, and enforce our
-          policies.
+          We will retain your information only for as long as necessary to fulfill the purposes outlined in this Privacy
+          Policy. We will retain and use your information to the extent necessary to comply with our legal obligations,
+          resolve disputes, and enforce our policies.
         </p>
 
         <h2>Your Rights</h2>
@@ -84,8 +81,8 @@ export const PrivacyPolicy = () => {
 
         <h2>Changes to This Privacy Policy</h2>
         <p>
-          We may update our Privacy Policy from time to time. We will notify you of any changes by
-          posting the new Privacy Policy on this page and updating the "Last updated" date.
+          We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new
+          Privacy Policy on this page and updating the "Last updated" date.
         </p>
       </article>
     </div>
