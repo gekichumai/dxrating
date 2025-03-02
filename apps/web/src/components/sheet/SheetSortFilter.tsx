@@ -13,19 +13,19 @@ import {
   Paper,
 } from '@mui/material'
 import * as Collapsible from '@radix-ui/react-collapsible'
-import MdiChevronDownIcon from '~icons/mdi/chevron-down'
 import clsx from 'clsx'
 import { type FC, useContext, useEffect, useMemo, useState, useTransition } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { useEffectOnce } from 'react-use'
+import MdiChevronDownIcon from '~icons/mdi/chevron-down'
 import { SheetDetailsContext } from '../../models/context/SheetDetailsContext'
 import type { FlattenedSheet } from '../../songs'
+import { SheetSortSelect } from './SheetSortSelect'
 import { SheetCategoryFilter } from './filters/SheetCategoryFilter'
 import { SheetInternalLevelFilter } from './filters/SheetInternalLevelFilter'
 import { SheetTagFilter } from './filters/SheetTagFilter'
 import { SheetVersionFilter } from './filters/SheetVersionFilter'
-import { SheetSortSelect } from './SheetSortSelect'
 
 export interface SortPredicate {
   descriptor: keyof FlattenedSheet
@@ -99,7 +99,7 @@ const isSchemaFilterFormVersionOne = (v: unknown): v is SchemaFilterFormVersionO
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const migrations: Record<number, any> = {
+const migrations = {
   1: (v: SchemaFilterFormVersionZero): SheetSortFilterForm => {
     return {
       ...v,
@@ -141,8 +141,8 @@ export const validateAndMigrate = (alreadySaved: unknown): SheetSortFilterForm =
   // apply migrations
   let migrated = payload
   for (let i = version + 1; i <= CURRENT_SCHEMA_VERSION; i++) {
-    if (migrations[i]) {
-      migrated = migrations[i](migrated)
+    if (migrations[i as keyof typeof migrations]) {
+      migrated = migrations[i as keyof typeof migrations](migrated)
     }
   }
 
@@ -190,8 +190,7 @@ const SheetSortFilterFormListener: FC<{
   useEffect(() => {
     watch((data) => {
       if (data.filters || data.sorts) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onChange?.(data as any)
+        onChange?.(data as SheetSortFilterForm)
 
         window.localStorage.setItem(
           'dxrating-sheet-sort-filter',

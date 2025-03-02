@@ -2,8 +2,8 @@ export const demo = [
   {
     sheetId: '系ぎて__dxrt__dx__dxrt__expert',
     achievementRate: 100.2,
-    achievementAccuracy: 'fc',
-    achievementSync: 'sp',
+    achievementAccuracy: 'fc' as const,
+    achievementSync: 'sp' as const,
     playCount: 5,
 
     achievementDXScore: {
@@ -14,8 +14,8 @@ export const demo = [
   {
     sheetId: 'Λzure Vixen__dxrt__dx__dxrt__expert',
     achievementRate: 100.5,
-    achievementAccuracy: 'fcp',
-    achievementSync: 'fsp',
+    achievementAccuracy: 'fcp' as const,
+    achievementSync: 'fsp' as const,
     playCount: 2,
     achievementDXScore: {
       achieved: 970,
@@ -25,8 +25,8 @@ export const demo = [
   {
     sheetId: 'INTERNET OVERDOSE__dxrt__dx__dxrt__master',
     achievementRate: 100.6,
-    achievementAccuracy: 'ap',
-    achievementSync: 'fsd',
+    achievementAccuracy: 'ap' as const,
+    achievementSync: 'fsd' as const,
     playCount: 3,
     achievementDXScore: {
       achieved: 2123,
@@ -36,8 +36,8 @@ export const demo = [
   {
     sheetId: '偉大なる悪魔は実は大天使パトラちゃん様なのだ！__dxrt__dx__dxrt__master',
     achievementRate: 100.0,
-    achievementAccuracy: 'app',
-    achievementSync: 'fsdp',
+    achievementAccuracy: 'app' as const,
+    achievementSync: 'fsdp' as const,
     playCount: 4,
     achievementDXScore: {
       achieved: 1234,

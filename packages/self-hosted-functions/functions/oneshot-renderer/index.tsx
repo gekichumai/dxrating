@@ -4,6 +4,7 @@ import type Koa from 'koa'
 import fs from 'node:fs/promises'
 import satori, { type Font } from 'satori'
 import sharp from 'sharp'
+import { z } from 'zod'
 import { calculateDXScoreStars } from './calculateDXScore'
 import { type Rating, calculateRating } from './calculateRating'
 import { demo } from './demo'
@@ -21,21 +22,47 @@ export type PlayerCollection = {
   icon: number
 }
 
-type PlayEntry = {
-  sheetId: string
-  sheetOverrides?: {
-    internalLevelValue?: number
-  }
-  achievementRate: number
-  playCount?: number
-  allPerfectPlusCount?: number
-  achievementAccuracy?: 'fc' | 'fcp' | 'ap' | 'app'
-  achievementSync?: 'sp' | 'fs' | 'fsp' | 'fsd' | 'fsdp'
-  achievementDXScore?: {
-    achieved: number
-    total: number
-  }
-}
+const playEntrySchema = z.object({
+  sheetId: z.string(),
+  sheetOverrides: z
+    .object({
+      internalLevelValue: z.number().optional(),
+    })
+    .optional(),
+  achievementRate: z.number().min(0).max(101),
+  playCount: z.number().min(0).optional(),
+  allPerfectPlusCount: z.number().min(0).optional(),
+  achievementAccuracy: z.enum(['fc', 'fcp', 'ap', 'app']).optional(),
+  achievementSync: z.enum(['sp', 'fs', 'fsp', 'fsd', 'fsdp']).optional(),
+  achievementDXScore: z
+    .object({
+      achieved: z.number(),
+      total: z.number(),
+    })
+    .optional(),
+})
+
+type PlayEntry = z.infer<typeof playEntrySchema>
+
+const requestBodySchema = z.object({
+  entries: z.array(playEntrySchema),
+  version: z.nativeEnum(VersionEnum),
+  region: z.enum(['jp', 'intl', 'cn', '_generic']),
+  playerCollection: z
+    .object({
+      name: z.string(),
+      icon: z.number(),
+    })
+    .optional(),
+  calculatedEntries: z
+    .object({
+      b15: z.array(playEntrySchema),
+      b35: z.array(playEntrySchema),
+    })
+    .optional(),
+})
+
+type RequestBody = z.infer<typeof requestBodySchema>
 
 // declare a new attribute `tw` for JSX elements
 declare module 'react' {
@@ -277,16 +304,18 @@ export const handler = async (ctx: Koa.Context) => {
     ? {
         entries: demo,
         version: VersionEnum.PRiSM,
-        region: 'jp',
+        region: 'jp' as const,
         playerCollection: {
           name: 'お友達',
           icon: 0,
         },
-      }
-    : (ctx.request.body as any)
-  const version = body.version as VersionEnum
-  const region = body.region as Region
-  const playerCollection = body.playerCollection as PlayerCollection | undefined
+        calculatedEntries: undefined,
+      } as const
+    : requestBodySchema.parse(ctx.request.body)
+
+  const version = body.version
+  const region = body.region
+  const playerCollection = body.playerCollection
 
   const timer = createServerTimingTimer()
 

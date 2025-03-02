@@ -20,7 +20,8 @@
     "sharp": "^0.33.5",
     "ts-pattern": "^5.4.0",
     "undici": "^6.20.0",
-    "xmldom-qsa": "^1.1.3"
+    "xmldom-qsa": "^1.1.3",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/cookie": "^0.6.0",
