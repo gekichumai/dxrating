@@ -45,7 +45,7 @@ const playEntrySchema = z.object({
 type PlayEntry = z.infer<typeof playEntrySchema>
 
 const requestBodySchema = z.object({
-  entries: z.array(playEntrySchema),
+  entries: z.array(playEntrySchema).optional(),
   version: z.nativeEnum(VersionEnum),
   region: z.enum(['jp', 'intl', 'cn', '_generic']),
   playerCollection: z
@@ -61,8 +61,6 @@ const requestBodySchema = z.object({
     })
     .optional(),
 })
-
-type RequestBody = z.infer<typeof requestBodySchema>
 
 // declare a new attribute `tw` for JSX elements
 declare module 'react' {
@@ -301,7 +299,7 @@ const createServerTimingTimer = () => {
 
 export const handler = async (ctx: Koa.Context) => {
   const body = ctx.query.demo
-    ? {
+    ? ({
         entries: demo,
         version: VersionEnum.PRiSM,
         region: 'jp' as const,
@@ -310,7 +308,7 @@ export const handler = async (ctx: Koa.Context) => {
           icon: 0,
         },
         calculatedEntries: undefined,
-      } as const
+      } as const)
     : requestBodySchema.parse(ctx.request.body)
 
   const version = body.version
@@ -329,7 +327,7 @@ export const handler = async (ctx: Koa.Context) => {
   timer.start('calc')
   const data = body.calculatedEntries
     ? prepareCalculatedEntries(body.calculatedEntries, version)
-    : calculateEntries(body.entries, version)
+    : calculateEntries(body.entries ?? [], version)
   timer.stop('calc')
 
   timer.start('jsx')
