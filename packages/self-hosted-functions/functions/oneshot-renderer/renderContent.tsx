@@ -42,6 +42,13 @@ export const VERSION_THEME: Record<string, VersionTheme> = {
     accentColor: '#6368C7',
     backgroundSize: [2000, 2400],
   },
+  [VersionEnum.PRiSMPLUS]: {
+    background: '/images/background/prism-plus.jpg',
+    logo: '/images/version-logo/prism-plus.png',
+    favicon: '/favicon/prism-1024x.jpg',
+    accentColor: '#6368C7',
+    backgroundSize: [2000, 2400],
+  },
 }
 
 const DIFFICULTIES: Record<DifficultyEnum, { title: string; color: string; inverted?: boolean }> = {
@@ -128,7 +135,8 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
           alt={entry.sheet.imageName}
           tw="h-[108px] w-[108px] absolute top-0 right-[-1px]"
           style={{
-            maskImage: 'linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 10%, rgba(255,255,255,1) 100%)',
+            maskImage:
+              'linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 10%, rgba(255,255,255,1) 100%)',
             maskRepeat: 'no-repeat',
           }}
         />

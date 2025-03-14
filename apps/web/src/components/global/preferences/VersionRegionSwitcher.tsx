@@ -27,11 +27,11 @@ interface VersionRegion {
 
 const VERSION_REGIONS: VersionRegion[] = [
   {
-    dxVersion: 'prism' as const,
+    dxVersion: 'prism-plus' as const,
     region: 'jp' as const,
   },
   {
-    dxVersion: 'buddies-plus' as const,
+    dxVersion: 'prism' as const,
     region: 'intl' as const,
   },
   {

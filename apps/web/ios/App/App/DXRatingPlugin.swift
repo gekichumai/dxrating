@@ -13,6 +13,7 @@ enum DXVersion: String {
   case buddies
   case buddiesPlus = "buddies-plus"
   case prism
+  case prismPlus = "prism-plus"
 }
 
 extension DXVersion {
@@ -25,6 +26,8 @@ extension DXVersion {
     case .buddiesPlus:
       return "buddies"
     case .prism:
+      fallthrough
+    case .prismPlus:
       return "prism"
     default:
       return "prism"

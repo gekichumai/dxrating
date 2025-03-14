@@ -27,6 +27,7 @@ enum VersionEnum: String, Codable, Equatable, Sendable {
   case buddies = "BUDDiES"
   case buddiesplus = "BUDDiES PLUS"
   case prism = "PRiSM"
+  case prismPlus = "PRiSM PLUS"
   case festival = "FESTiVAL"
   case festivalplus = "FESTiVAL PLUS"
   case finale = "FiNALE"

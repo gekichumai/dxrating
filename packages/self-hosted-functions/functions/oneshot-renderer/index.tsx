@@ -301,7 +301,7 @@ export const handler = async (ctx: Koa.Context) => {
   const body = ctx.query.demo
     ? ({
         entries: demo,
-        version: VersionEnum.PRiSM,
+        version: VersionEnum.PRiSMPLUS,
         region: 'jp' as const,
         playerCollection: {
           name: 'お友達',

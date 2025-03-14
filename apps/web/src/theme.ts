@@ -45,4 +45,13 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: 'https://shama.dxrating.net/favicon/prism-1024x.jpg',
     accentColor: '#6368C7',
   },
+  [VersionEnum.PRiSMPLUS]: {
+    background: {
+      at1x: 'https://shama.dxrating.net/images/background/prism-plus.jpg',
+      at2x: 'https://shama.dxrating.net/images/background/prism-plus@2x.jpg',
+    },
+    logo: 'https://shama.dxrating.net/images/version-logo/prism-plus.png',
+    favicon: 'https://shama.dxrating.net/favicon/prism-1024x.jpg',
+    accentColor: '#6368C7',
+  },
 }

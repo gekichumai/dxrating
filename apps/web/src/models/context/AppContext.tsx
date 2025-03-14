@@ -5,7 +5,7 @@ import { DXRatingPlugin } from '../../utils/capacitor/plugin/wrap'
 
 export type AppContext = AppContextStates & AppContextFns
 
-export type DXVersion = 'festival-plus' | 'buddies' | 'buddies-plus' | 'prism'
+export type DXVersion = 'festival-plus' | 'buddies' | 'buddies-plus' | 'prism' | 'prism-plus'
 
 export type Region = 'jp' | 'intl' | 'cn' | '_generic'
 
@@ -14,6 +14,7 @@ export const DXVersionToDXDataVersionEnumMap: Record<DXVersion, VersionEnum> = {
   buddies: VersionEnum.BUDDiES,
   'buddies-plus': VersionEnum.BUDDiESPLUS,
   prism: VersionEnum.PRiSM,
+  'prism-plus': VersionEnum.PRiSMPLUS,
 }
 
 export interface AppContextStates {
@@ -26,7 +27,7 @@ export interface AppContextFns {
 }
 
 export const AppContext = createContext<AppContext>({
-  version: 'prism',
+  version: 'prism-plus',
   region: '_generic',
   setVersionAndRegion: () => {
     throw new Error('AppContext not initialized')
@@ -35,7 +36,7 @@ export const AppContext = createContext<AppContext>({
 
 function getDefaultAppContext(): AppContextStates {
   return {
-    version: 'prism',
+    version: 'prism-plus',
     region: '_generic',
   }
 }
