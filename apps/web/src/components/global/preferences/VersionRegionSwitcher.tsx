@@ -25,7 +25,7 @@ interface VersionRegion {
   region: Region
 }
 
-const VERSION_REGIONS: VersionRegion[] = [
+const VERSION_SPECIFIC_REGIONS: VersionRegion[] = [
   {
     dxVersion: 'prism-plus' as const,
     region: 'jp' as const,
@@ -35,7 +35,7 @@ const VERSION_REGIONS: VersionRegion[] = [
     region: 'intl' as const,
   },
   {
-    dxVersion: 'buddies' as const,
+    dxVersion: 'buddies-plus' as const,
     region: 'cn' as const,
   },
 ].map(({ dxVersion, region }) => ({
@@ -43,6 +43,26 @@ const VERSION_REGIONS: VersionRegion[] = [
   versionEnum: DXVersionToDXDataVersionEnumMap[dxVersion],
   dxVersion,
   region,
+}))
+
+const VERSION_GENERIC_REGIONS: VersionRegion[] = [
+  {
+    dxVersion: 'prism-plus' as const,
+  },
+  {
+    dxVersion: 'prism' as const,
+  },
+  {
+    dxVersion: 'buddies-plus' as const,
+  },
+  {
+    dxVersion: 'buddies' as const,
+  },
+].map(({ dxVersion }) => ({
+  id: `${dxVersion}__${'_generic'}`,
+  versionEnum: DXVersionToDXDataVersionEnumMap[dxVersion],
+  dxVersion,
+  region: '_generic' as const,
 }))
 
 const StyledSelect = styled(Select<string>)(({ theme }) => ({
@@ -98,7 +118,7 @@ export const VersionRegionSwitcher: FC = () => {
       )}
     >
       <ListSubheader className="leading-normal py-4">{t('settings:version-and-region.select')}</ListSubheader>
-      {VERSION_REGIONS.map(({ id, dxVersion, versionEnum, region }, i) => (
+      {VERSION_SPECIFIC_REGIONS.map(({ id, dxVersion, versionEnum, region }, i) => (
         <MenuItem
           value={id}
           key={id}
@@ -118,24 +138,26 @@ export const VersionRegionSwitcher: FC = () => {
       ))}
 
       <ListSubheader className="leading-normal py-4">{t('settings:version-and-region.select-generic')}</ListSubheader>
-      {uniqBy(VERSION_REGIONS, (versionRegion) => versionRegion.dxVersion).map(({ id, dxVersion, versionEnum }, i) => (
-        <MenuItem
-          value={`${dxVersion}__${'_generic'}`}
-          key={id}
-          className={clsx('flex items-center gap-4 border-b border-solid border-gray-200', i === 0 && 'border-t')}
-        >
-          <WebpSupportedImage
-            src={`https://shama.dxrating.net/images/version-logo/${dxVersion}.png`}
-            className="h-12 touch-callout-none object-contain w-20"
-            draggable={false}
-          />
+      {uniqBy(VERSION_GENERIC_REGIONS, (versionRegion) => versionRegion.dxVersion).map(
+        ({ id, dxVersion, versionEnum }, i) => (
+          <MenuItem
+            value={id}
+            key={id}
+            className={clsx('flex items-center gap-4 border-b border-solid border-gray-200', i === 0 && 'border-t')}
+          >
+            <WebpSupportedImage
+              src={`https://shama.dxrating.net/images/version-logo/${dxVersion}.png`}
+              className="h-12 touch-callout-none object-contain w-20"
+              draggable={false}
+            />
 
-          <div className="mr-2 opacity-70 flex flex-col items-start">
-            <span>{versionEnum}</span>
-            <span className="uppercase text-xs">{t('settings:region._generic')}</span>
-          </div>
-        </MenuItem>
-      ))}
+            <div className="mr-2 opacity-70 flex flex-col items-start">
+              <span>{versionEnum}</span>
+              <span className="uppercase text-xs">{t('settings:region._generic')}</span>
+            </div>
+          </MenuItem>
+        ),
+      )}
       <ListItem className="flex justify-center items-center text-sm">
         <div className="flex justify-center items-start max-w-[22rem] text-zinc-500">
           <MdiInformation className="mr-2 shrink-0 mt-0.5" />
