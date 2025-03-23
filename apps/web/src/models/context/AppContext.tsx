@@ -3,7 +3,7 @@ import { createContext, type FC, type PropsWithChildren, useEffect, useMemo } fr
 import { useLocalStorage } from 'react-use'
 import { DXRatingPlugin } from '../../utils/capacitor/plugin/wrap'
 
-export type AppContext = AppContextStates & AppContextFns
+type AppContext = AppContextStates & AppContextFns
 
 export type DXVersion = 'festival-plus' | 'buddies' | 'buddies-plus' | 'prism' | 'prism-plus'
 
@@ -22,7 +22,7 @@ export interface AppContextStates {
   region: Region
 }
 
-export interface AppContextFns {
+interface AppContextFns {
   setVersionAndRegion: (version: DXVersion, region: Region) => void
 }
 
@@ -37,7 +37,7 @@ export const AppContext = createContext<AppContext>({
 function getDefaultAppContext(): AppContextStates {
   return {
     version: 'prism-plus',
-    region: '_generic',
+    region: 'jp',
   }
 }
 

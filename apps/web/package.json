@@ -34,6 +34,8 @@
     "@supabase/sentry-js-integration": "^0.1.0",
     "@supabase/supabase-js": "^2.45.4",
     "@tanstack/react-table": "^8.20.5",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.2.0",
     "@unocss/preset-mini": "^0.58.9",
     "@unocss/preset-wind": "^0.58.9",
     "@unocss/reset": "^0.58.9",
@@ -45,6 +47,7 @@
     "dayjs": "^1.11.13",
     "framer-motion": "^10.18.0",
     "fuse.js": "^6.6.2",
+    "happy-dom": "^17.4.4",
     "i18next": "^23.15.2",
     "i18next-browser-languagedetector": "^7.2.1",
     "lodash-es": "^4.17.21",
@@ -96,6 +99,6 @@
     "unocss-preset-shadcn": "^0.3.1",
     "unplugin-icons": "^0.19.3",
     "vite": "^4.5.5",
-    "vitest": "^2.1.8"
+    "vitest": "^3.0.9"
   }
 }
