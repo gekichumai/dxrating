@@ -29,7 +29,7 @@ describe('AppContext', () => {
     })
 
     expect(result.current.version).toBe('prism-plus')
-    expect(result.current.region).toBe('_generic')
+    expect(result.current.region).toBe('jp')
   })
 
   it('should load values from localStorage if they exist', () => {
@@ -75,6 +75,6 @@ describe('AppContext', () => {
     })
 
     expect(result.current.version).toBe('prism-plus')
-    expect(result.current.region).toBe('_generic')
+    expect(result.current.region).toBe('jp')
   })
 })
