@@ -1,0 +1,24 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
+
+Contact: mailto:security@dxrating.net
+Expires: 2029-01-01T00:00:00Z
+Encryption: https://keys.openpgp.org/vks/v1/by-fingerprint/2A13C8148A3DE89903079D9FE17343FCBF53F33F
+Preferred-Languages: en, ja, zh
+Canonical: https://dxrating.net/.well-known/security.txt
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEKhPIFIo96JkDB52f4XND/L9T8z8FAmfuyWkACgkQ4XND/L9T
+8z94lQ/+LkLQSSamRgtTZpC2uek6dgg8GBVz0NvRDdH5fHU9E6FNrXKXHMkWhzm0
+DzSPywjB3kCKGnMCnoo288/ElbBx6Z5v5UnlpsLmpuvy7NDxCaNcN9iJ5rN87Vl4
+W0CTk2sGSPp2HIEeYy+3S6/bya6od7g1hnoclPuZLS3WSPNlnlZJvhGDZwnyU/Fb
+PkvUQ0T0Ra7EqR3Slx7lz96p+BJhnX12PaqblfAuHO/FhFO+j2SsvQz7yofudYQd
+k5ikXAWzh908FBlgTAKQHeklx4dYTCi/e5Lr+dLsMpL7bgLqxmwk08Zv/riOgC6R
+7BFKfDBpLjyg9uJRoa5L5NsdBU4OfJmXzbFmPpy/eWZUX+AnNW90lEbV9kpv0W1d
+iXWD7zKZ8nQ1hW9NvI/blB/ueoORQKbLSAXNyni1izUPhwE1oB+Go0MwUxRVUT6q
+VJT7UxCddyJgxYRJjiKrvUM/ZwdT1jYZeaApD2KTZ8wRK75d0mS6VfRg5XcIENy1
+cdQANiJN8HilldJRLNzvvcy41OgMCBYR8OCi5EGsydOXZtW/EPD8YRf2AxnijKf7
+HSpclMk2hws3RNBonHEUyIRxRjqfRqh2DuO7MhDOQero5TJiVNGBU2bYgVG88nye
+4voBSzAQt9GMpHSi+76ZdAs1PzhObll+utI2ok0VKn0uiKbWL7M=
+=GJnT
+-----END PGP SIGNATURE-----
