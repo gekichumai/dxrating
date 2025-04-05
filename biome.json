@@ -43,7 +43,8 @@
       "scripts/annotator/*.json",
       "apps/web/ios/**/*",
       "apps/web/android/**/*",
-      "packages/dxdata/dxdata.json"
+      "packages/dxdata/dxdata.json",
+      "apps/server/**"
     ]
   }
 }

@@ -1998,7 +1998,6 @@ __metadata:
     dotenv: "npm:^16.4.7"
     globals: "npm:^15.15.0"
     jest: "npm:^29.7.0"
-    nestjs-supabase-auth: "npm:^1.0.9"
     passport: "npm:^0.7.0"
     passport-jwt: "npm:^4.0.1"
     reflect-metadata: "npm:^0.2.2"
@@ -13089,13 +13088,6 @@ __metadata:
   version: 2.6.2
   resolution: "neo-async@npm:2.6.2"
   checksum: 10c0/c2f5a604a54a8ec5438a342e1f356dff4bc33ccccdb6dc668d94fe8e5eccfc9d2c2eea6064b0967a767ba63b33763f51ccf2cd2441b461a7322656c1f06b3f5d
-  languageName: node
-  linkType: hard
-
-"nestjs-supabase-auth@npm:^1.0.9":
-  version: 1.0.9
-  resolution: "nestjs-supabase-auth@npm:1.0.9"
-  checksum: 10c0/8e3f431af5b28f195ffabadc3530b9937613535dbf558e457204f378dc4a5325abc2ef34a95a44a025e50a57863ed8f5c08c4d125435e3bcac82fe4bfa8ef687
   languageName: node
   linkType: hard
 

@@ -7,6 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
+    "dev": "nest start --debug --watch",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -24,7 +25,6 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.12",
     "dotenv": "^16.4.7",
-    "nestjs-supabase-auth": "^1.0.9",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
