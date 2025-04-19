@@ -1,3 +1,5 @@
+import { useRatingEntries } from '@/components/rating/useRatingEntries'
+import { useAppContext } from '@/models/context/useAppContext'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, memo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -82,6 +84,25 @@ const SideEffectorAuth: FC = () => {
   return null
 }
 
+const SideEffectorAnalytics: FC = () => {
+  const { version, region } = useAppContext()
+  const { i18n } = useTranslation()
+  const posthog = usePostHog()
+  const { statistics, allEntries } = useRatingEntries()
+
+  useEffect(() => {
+    posthog?.setPersonProperties({
+      version: version,
+      region: region,
+      language: i18n.language,
+      rating: statistics.b50Sum,
+      entries: allEntries.length,
+    })
+  }, [version, region, i18n.language, statistics, allEntries])
+
+  return null
+}
+
 export const SideEffector: FC = memo(() => {
   return (
     <>
@@ -89,6 +110,7 @@ export const SideEffector: FC = memo(() => {
       <SideEffectorLocaleMeta />
       <SideEffectorAutoImportRating />
       <SideEffectorAuth />
+      <SideEffectorAnalytics />
     </>
   )
 })

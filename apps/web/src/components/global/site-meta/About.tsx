@@ -1,6 +1,7 @@
 import { dxdataUpdateTime } from '@gekichumai/dxdata'
 import { IconButton } from '@mui/material'
 import clsx from 'clsx'
+import { usePostHog } from 'posthog-js/react'
 import { type FC, type PropsWithChildren, type ReactNode, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import MdiGithub from '~icons/mdi/github'
@@ -50,10 +51,16 @@ export const About = () => {
 
   const buildTime = useTime(BUNDLE.buildTime)
   const updateTime = useTime(dxdataUpdateTime)
+  const posthog = usePostHog()
 
   return (
     <>
-      <IconButton onClick={() => setExpanded(true)}>
+      <IconButton
+        onClick={() => {
+          setExpanded(true)
+          posthog?.capture('about_dialog_opened')
+        }}
+      >
         <MdiInformation />
       </IconButton>
 
