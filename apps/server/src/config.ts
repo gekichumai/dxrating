@@ -8,6 +8,7 @@ const envSchema = z.object({
     .enum(['development', 'production', 'test'])
     .default('development'),
   PORT: z.number().default(3000),
+  DATABASE_URL: z.string(),
   SUPABASE_URL: z.string(),
   SUPABASE_KEY: z.string(),
   SUPABASE_JWT_SECRET: z.string(),
