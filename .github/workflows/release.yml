@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           yarn install
-          yarn run build
+          yarn run build:web --filter=@gekichumai/dxrating-web...
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
