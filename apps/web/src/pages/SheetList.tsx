@@ -1,6 +1,7 @@
 import { VERSION_ID_MAP } from '@gekichumai/dxdata'
 import { Button, IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/react'
+import { usePostHog } from 'posthog-js/react'
 import { type FC, useContext, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParam } from 'react-use'
@@ -27,6 +28,7 @@ const SORT_DESCRIPTOR_MAPPING = {
 }
 
 const _SheetListInner: FC = () => {
+  const posthog = usePostHog()
   const { t } = useTranslation(['sheet'])
   const { data: sheets, isLoading } = useSheets({ acceptsPartialData: true })
   const { setQueryActive } = useContext(SheetDetailsContext)
@@ -66,7 +68,7 @@ const _SheetListInner: FC = () => {
               const tags = sortFilterOptions.filters.tags
               return tags.every((tag) => v.tags.includes(tag))
             }
-              return true
+            return true
           },
 
           (v) => {
@@ -134,6 +136,7 @@ const _SheetListInner: FC = () => {
               onClick={() => {
                 setQuery('')
                 setQueryActive(false)
+                posthog?.capture('sheet_search_clear_button_clicked')
               }}
               size="small"
             >
@@ -146,7 +149,10 @@ const _SheetListInner: FC = () => {
 
       {isBuildPlatformApp && (
         <Button
-          onClick={() => DXRatingPlugin.launchInstantOCR()}
+          onClick={() => {
+            DXRatingPlugin.launchInstantOCR()
+            posthog?.capture('sheet_ocr_button_clicked')
+          }}
           className="mt-2 rounded-full"
           variant="contained"
           startIcon={<IconMdiOcr />}

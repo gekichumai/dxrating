@@ -29,9 +29,17 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import clsx from 'clsx'
+import { usePostHog } from 'posthog-js/react'
 import { type FC, type ForwardedRef, forwardRef, memo, useCallback, useMemo, useState } from 'react'
 import type { ListActions } from 'react-use/lib/useList'
-import { type ItemProps, type ScrollerProps, type TableBodyProps, type TableComponents, type TableProps, TableVirtuoso } from 'react-virtuoso'
+import {
+  type ItemProps,
+  type ScrollerProps,
+  type TableBodyProps,
+  type TableComponents,
+  type TableProps,
+  TableVirtuoso,
+} from 'react-virtuoso'
 import IconMdiArrowDown from '~icons/mdi/arrow-down'
 import IconMdiTrashCan from '~icons/mdi/trash-can'
 import { BetaBadge } from '../components/global/BetaBadge'
@@ -63,6 +71,7 @@ const RatingCalculatorRowActions: FC<{
 }> = ({ modifyEntries, entry }) => {
   const { data: sheets } = useSheets()
   const [dialogOpen, setDialogOpen] = useState(false)
+  const posthog = usePostHog()
 
   const handleClick = useCallback(() => {
     modifyEntries.filter((existingEntry) => existingEntry.sheetId !== entry.sheetId)
@@ -91,6 +100,7 @@ const RatingCalculatorRowActions: FC<{
             onClick={() => {
               setDialogOpen(false)
               handleClick()
+              posthog?.capture('rating_calculator_remove_entry_button_clicked')
             }}
           >
             Remove

@@ -1,14 +1,16 @@
 import { IconButton } from '@mui/material'
+import { motion } from 'framer-motion'
+import { usePostHog } from 'posthog-js/react'
+import { type FC, memo, useState } from 'react'
 import MdiStar from '~icons/mdi/star'
 import MdiStarOutline from '~icons/mdi/star-outline'
-import { motion } from 'framer-motion'
-import { type FC, memo, useState } from 'react'
 import { useSheetFavoriteState } from '../../models/favorite'
 import type { FlattenedSheet } from '../../songs'
 
 export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ sheet }) => {
   const [favored, toggleFavored] = useSheetFavoriteState(sheet.id)
   const [expanded, setExpanded] = useState(false)
+  const posthog = usePostHog()
 
   const variants = {
     collapsed: {
@@ -32,7 +34,15 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ s
 
         <div className="flex-1" />
 
-        <IconButton size="small" onClick={() => toggleFavored()}>
+        <IconButton
+          size="small"
+          onClick={() => {
+            const newFavored = toggleFavored()
+            posthog?.capture('sheet_favorite_button_clicked', {
+              favored: newFavored,
+            })
+          }}
+        >
           <motion.div
             layout
             variants={{

@@ -1,4 +1,5 @@
 import { Button, Dialog, Grow, TextField } from '@mui/material'
+import { usePostHog } from 'posthog-js/react'
 import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAsyncFn } from 'react-use'
@@ -14,6 +15,7 @@ import { SheetListItemContent } from './SheetListItem'
 export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const [open, setOpen] = useState(false)
   const { session } = useAuth()
+  const posthog = usePostHog()
 
   const [newAltName, setNewAltName] = useState('')
   const { mutate } = useServerAliases()
@@ -48,6 +50,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
         className="h-6 border-1 border-solid border-gray-200 rounded-lg inline-flex self-start items-center justify-center px-2 cursor-pointer bg-gray-100 hover:bg-gray-200 hover:border-gray-300 active:bg-gray-300 active:border-gray-400 transition mt-2"
         onClick={() => {
           setOpen(true)
+          posthog?.capture('add_sheet_alt_name_button_clicked')
         }}
       >
         <IconMdiPlus className="h-4 w-4" />

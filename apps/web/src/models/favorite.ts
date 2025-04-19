@@ -12,6 +12,8 @@ export const useSheetFavoriteState = (id: string): [boolean, () => void] => {
       setStorageValue([...(storageValue ?? []), id])
     }
     setIsFavorite(!isFavorite)
+
+    return !isFavorite
   }
 
   return [isFavorite, toggleFavorite]

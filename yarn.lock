@@ -2266,7 +2266,7 @@ __metadata:
     lodash-es: "npm:^4.17.21"
     lucide-react: "npm:^0.483.0"
     marked: "npm:^14.1.4"
-    posthog-js: "npm:^1.232.4"
+    posthog-js: "npm:^1.236.2"
     react: "npm:^18.3.1"
     react-dom: "npm:^18.3.1"
     react-geiger: "npm:^1.2.1"
@@ -14507,9 +14507,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"posthog-js@npm:^1.232.4":
-  version: 1.232.4
-  resolution: "posthog-js@npm:1.232.4"
+"posthog-js@npm:^1.236.2":
+  version: 1.236.2
+  resolution: "posthog-js@npm:1.236.2"
   dependencies:
     core-js: "npm:^3.38.1"
     fflate: "npm:^0.4.8"
@@ -14523,7 +14523,7 @@ __metadata:
       optional: true
     rrweb-snapshot:
       optional: true
-  checksum: 10c0/eeb9496ade9fcce2df93b43bb9f4371bc1e808a3a734bbe76975d25a9345875d7803bc2825962d12942d6cef359038e9f209c523a4eae29e877202e1bc9b315a
+  checksum: 10c0/b425637978876f5f7647f60eb73ee539563f4647f60ac30ece1e201915b66faf2583617161db12aec2a0356c804d39261b4a66673dfc1bb40c7e0bd2dfc18b9d
   languageName: node
   linkType: hard
 
