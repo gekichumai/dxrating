@@ -84,7 +84,7 @@ export const ImportFromMMBLExportListItem: FC<{
       <ListItemIcon>
         <MdiClipboardText />
       </ListItemIcon>
-      <ListItemText>Import from MMBL Export...</ListItemText>
+      <ListItemText>Import from MMBL exported data (clipboard)...</ListItemText>
     </MenuItem>
   )
 }
