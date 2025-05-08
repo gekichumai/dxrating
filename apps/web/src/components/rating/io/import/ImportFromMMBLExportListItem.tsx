@@ -63,7 +63,7 @@ export const ImportFromMMBLExportListItem: FC<{
               ([, song]) => song.name === songName
             )
 
-            if (!songEntry || songEntry[1].ver === '24000') continue
+            if (!songEntry) continue
 
             const type = chartType === 'DX' ? '__dxrt__dx__dxrt__' : '__dxrt__std__dxrt__'
             const sheetId = `${songName}${type}${difficulty.toLowerCase()}`
