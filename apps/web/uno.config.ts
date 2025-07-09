@@ -38,6 +38,17 @@ export default defineConfig({
     fontFamily: {
       mono: '"IBM Plex Mono", "JetBrains Mono", Menlo, Consolas, Courier, monospace',
     },
+    breakpoints: {
+      '3xs': '320px',   // Very small phones
+      '2xs': '375px',   // Small phones
+      'xs': '480px',    // Large phones
+      'sm': '640px',    // Small tablets
+      'md': '768px',    // Tablets
+      'lg': '1024px',   // Small laptops
+      'xl': '1280px',   // Laptops
+      '2xl': '1536px',  // Large screens
+      '3xl': '1920px',  // Very large screens
+    }
   },
   shortcuts: {
     'flex-container':

@@ -99,10 +99,10 @@ export enum TypeEnum {
 }
 
 export enum VersionEnum {
-  BUDDiES = 'BUDDiES',
-  BUDDiESPLUS = 'BUDDiES PLUS',
-  PRiSM = 'PRiSM',
-  PRiSMPLUS = 'PRiSM PLUS',
+  BUDDiES = 'BUDDiES', // 2023.9
+  BUDDiESPLUS = 'BUDDiES PLUS', // 2024.3
+  PRiSM = 'PRiSM', // 2024.9
+  PRiSMPLUS = 'PRiSM PLUS', // 2025.3~
   FESTiVAL = 'FESTiVAL',
   FESTiVALPLUS = 'FESTiVAL PLUS',
   FiNALE = 'FiNALE',
