@@ -4,6 +4,9 @@
   "main": "index.ts",
   "private": true,
   "license": "MIT",
+  "scripts": {
+    "dev": "esno index.ts"
+  },
   "publishConfig": {
     "access": "public"
   },

@@ -1,5 +1,5 @@
 import type { Flag, RecentRecord } from './record'
-import { NODE_ELEMENT_NODE } from './client'
+import { NODE_ELEMENT_NODE, NODE_TEXT_NODE } from './client'
 
 const RECENT_RECORD_FLAG_MATCHERS: Record<Flag, string> = {
   fullCombo: 'fc.png',
@@ -17,7 +17,15 @@ export function parseRecentRecordNode(record: Element): RecentRecord[] {
   if (record.nodeType !== NODE_ELEMENT_NODE) return [] as const
   const el = record as Element
 
-  const songId = el.querySelector('.basic_block.break')?.textContent?.trim()
+  // Extract only the direct text content of the element, excluding child elements like the level icon
+  const songIdElement = el.querySelector('.basic_block.break')
+  const songId = songIdElement ? 
+    Array.from(songIdElement.childNodes)
+      .filter(node => node.nodeType === NODE_TEXT_NODE)
+      .map(node => node.textContent?.trim())
+      .join('')
+      .trim() : undefined
+  
   const achievementRateString = el.querySelector('.playlog_achievement_txt')?.textContent?.trim()
 
   const achievementRate = Number.parseInt(achievementRateString?.replace('%', '').replace('.', '') ?? '')

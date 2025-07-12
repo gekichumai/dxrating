@@ -14,6 +14,7 @@ export interface AuthParams {
 }
 
 export const NODE_ELEMENT_NODE = 1
+export const NODE_TEXT_NODE = 3
 
 function musicRecordURLs(base: string) {
   const difficulties = [
