@@ -173,34 +173,34 @@
       "toast-success": "已重设密码"
     }
   },
-  "breakdown": {
-    "title": "评分详情"
-  },
-  "auto-save": {
-    "title": "自动保存",
-    "saved-records": "已保存 {{count}} 条记录"
-  },
-  "quick-actions": {
-    "title": "快捷操作",
-    "show-only-b50": "仅显示 B50",
-    "compact-mode": "紧凑模式"
-  },
-  "table": {
-    "no-entries": "暂无记录",
-    "headers": {
-      "chart": "谱面",
-      "included-in": "收录于",
-      "achievement-rate": "完成率",
-      "rating": "评分",
-      "actions": "操作"
-    },
-    "remove-dialog": {
-      "title": "删除记录？",
-      "cancel": "取消",
-      "remove": "删除"
-    }
-  },
   "rating-calculator": {
+    "breakdown": {
+      "title": "评分详情"
+    },
+    "auto-save": {
+      "title": "自动保存",
+      "saved-records": "已保存 {{count}} 条记录"
+    },
+    "quick-actions": {
+      "title": "快捷操作",
+      "show-only-b50": "仅显示 B50",
+      "compact-mode": "紧凑模式"
+    },
+    "table": {
+      "no-entries": "暂无记录",
+      "headers": {
+        "chart": "谱面",
+        "included-in": "收录于",
+        "achievement-rate": "完成率",
+        "rating": "评分",
+        "actions": "操作"
+      },
+      "remove-dialog": {
+        "title": "删除记录？",
+        "cancel": "取消",
+        "remove": "删除"
+      }
+    },
     "statistics": {
       "total": "总计",
       "best-15": "最佳15",
@@ -228,17 +228,69 @@
     "io": {
       "export": {
         "button": "导出...",
-        "to-json": "导出为JSON"
+        "to-json": "Export to JSON",
+        "oneshot-image": {
+          "button": "Render as OneShot Image",
+          "dialog": {
+            "title": "Render as OneShot Image",
+            "loading": {
+              "title": "Rendering...",
+              "calculating": "Calculating...",
+              "message": "This may take a while depending on the current server load; typically rendering will finish within 10 seconds."
+            },
+            "error": "An error occurred while rendering the image: {{message}}",
+            "save-instruction": "Long-press or right-click the image to save it to your device.",
+            "beta-notice": "This feature is in beta and may not work as expected. Please feel free to report any issues or feedback to the developer :D"
+          }
+        }
       },
       "import": {
-        "button": "导入..."
+        "button": "导入...",
+        "diving-fish": {
+          "title": "从水鱼查分器导入...",
+          "description": "选择以下两个选项之一并填写相应的字段。您的设置将保存在您的浏览器中。",
+          "loading": "从水鱼查分器导入中...",
+          "success": "成功从水鱼查分器导入 {{count}} 条记录。",
+          "error": "从水鱼查分器导入记录时发生错误。您确定绑定的用户名或 QQ 正确吗？{{error}}",
+          "invalid-profile": "请输入您的水鱼查分器配置",
+          "no-sheets": "未找到谱面",
+          "warning": {
+            "title": "注意！",
+            "description": "您的现有记录将被导入的记录覆盖。"
+          },
+          "or": "或",
+          "close": "关闭",
+          "import": "导入",
+          "importing": "导入中...",
+          "missing-profile-info": "请输入您的水鱼查分器配置",
+          "only-one-of-the-two-fields-should-be-filled": "请仅填写一个字段"
+        },
+        "aqua-dx": {
+          "title": "从 AquaDX 导出的 JSON 导入...",
+          "success": "成功导入 {{count}} 条记录"
+        },
+        "aqua-sqlite": {
+          "title": "从 Aqua SQLite 数据库导入...",
+          "success": "成功导入 {{count}} 条记录",
+          "error": "导入失败: {{error}}"
+        },
+        "json": {
+          "title": "从 DXRating 导出的 JSON 导入...",
+          "success": "成功导入 {{count}} 条记录",
+          "error": "导入失败: {{error}}"
+        },
+        "net-records": {
+          "title": "从 maimai NET 导入...",
+          "success": "成功导入 {{count}} 条记录",
+          "error": "导入失败: {{error}}"
+        }
       },
       "clear": {
         "button": "清空",
         "dialog": {
           "title": "清空所有记录？",
-          "warning": "警告",
-          "message": "此操作将清空所有记录。",
+          "warning": "注意！",
+          "message": "这将清空所有记录。",
           "cancel": "取消",
           "confirm": "清空"
         }

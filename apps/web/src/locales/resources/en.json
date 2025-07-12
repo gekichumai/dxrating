@@ -232,10 +232,59 @@
     "io": {
       "export": {
         "button": "Export...",
-        "to-json": "Export to JSON"
+        "to-json": "Export to JSON",
+        "oneshot-image": {
+          "button": "Render as OneShot Image",
+          "dialog": {
+            "title": "Render as OneShot Image",
+            "loading": {
+              "title": "Rendering...",
+              "calculating": "Calculating...",
+              "message": "This may take a while depending on the current server load; typically rendering will finish within 10 seconds."
+            },
+            "error": "An error occurred while rendering the image: {{message}}",
+            "save-instruction": "Long-press or right-click the image to save it to your device.",
+            "beta-notice": "This feature is in beta and may not work as expected. Please feel free to report any issues or feedback to the developer :D"
+          }
+        }
       },
       "import": {
-        "button": "Import..."
+        "button": "Import...",
+        "diving-fish": {
+          "title": "Import from diving-fish...",
+          "description": "Choose one of the following two options and fill in the corresponding field. Your settings will be saved in your browser.",
+          "loading": "Importing from diving-fish...",
+          "success": "Successfully imported {{count}} records from diving-fish.",
+          "error": "An error occurred while importing records from diving-fish. Are you sure the username or QQ binded is correct? {{error}}",
+          "invalid-profile": "Please enter your Diving-Fish profile",
+          "no-sheets": "No sheets found",
+          "warning": {
+            "title": "Heads up!",
+            "description": "Your existing entries will be overwritten with the imported ones."
+          },
+          "or": "OR",
+          "close": "Close",
+          "import": "Import"
+        },
+        "aqua-dx": {
+          "title": "Import from AquaDX Exported JSON...",
+          "success": "Imported {{count}} entries"
+        },
+        "aqua-sqlite": {
+          "title": "Import from Aqua SQLite Database...",
+          "success": "Imported {{count}} entries",
+          "error": "Failed to import: {{error}}"
+        },
+        "json": {
+          "title": "Import from DXRating JSON...",
+          "success": "Imported {{count}} entries",
+          "error": "Failed to import: {{error}}"
+        },
+        "net-records": {
+          "title": "Import from NET Records...",
+          "success": "Imported {{count}} entries",
+          "error": "Failed to import: {{error}}"
+        }
       },
       "clear": {
         "button": "Clear",

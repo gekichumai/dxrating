@@ -1,18 +1,18 @@
+import { ImportRegionSupportTag } from '@/components/rating/io/import/ImportRegionSupportTag'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { Button, CircularProgress, ListItemIcon, ListItemText, MenuItem, TextField } from '@mui/material'
-import CarbonFish from '~icons/carbon/fish'
-import AlertIcon from '~icons/material-symbols/warning'
 import { type FC, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useLocalStorage } from 'react-use'
 import type { ListActions } from 'react-use/lib/useList'
+import CarbonFish from '~icons/carbon/fish'
+import AlertIcon from '~icons/material-symbols/warning'
 import { canonicalIdFromParts, type FlattenedSheet, useSheets } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
-import { ImportRegionSupportTag } from './ImportRegionSupportTag'
 
 const levelLabel = ['basic', 'advanced', 'expert', 'master', 'remaster']
 
@@ -64,7 +64,8 @@ const fetchDivingFish = async (
   divingFishProfile: DivingFishProfile | null,
   modifyEntries: ListActions<PlayEntry>,
 ) => {
-  const toastId = toast.loading('Importing from diving-fish...')
+  const { t } = useTranslation(['rating-calculator'])
+  const toastId = toast.loading(t('rating-calculator:io.import.diving-fish.loading'))
   try {
     const body: DivingFishRequestBody = {
       b50: 1,
@@ -135,19 +136,14 @@ const fetchDivingFish = async (
         return found
       }),
     )
-    toast.success(`Successfully imported ${entries.length} records from diving-fish.`, {
+    toast.success(t('rating-calculator:io.import.diving-fish.success', { count: entries.length }), {
       id: toastId,
     })
   } catch (error) {
     console.error('There was a problem with the fetch operation:', error)
-    toast.error(
-      `An error occurred while importing records from diving-fish. Are you sure the username or QQ binded is correct? ${formatErrorMessage(
-        error,
-      )}`,
-      {
-        id: toastId,
-      },
-    )
+    toast.error(t('rating-calculator:io.import.diving-fish.error', { error: formatErrorMessage(error) }), {
+      id: toastId,
+    })
   }
 }
 
@@ -157,7 +153,7 @@ export const ImportDivingFishDialogContent: FC<{
 }> = ({ modifyEntries, onClose }) => {
   const { data: sheets } = useSheets({ acceptsPartialData: true })
   const [busy, setBusy] = useState(false)
-  const { t } = useTranslation(['settings'])
+  const { t } = useTranslation(['rating-calculator'])
   const [divingFishConfig, setDivingFishConfig] = useLocalStorage<DivingFishProfile | null>('diving-fish-profile', null)
 
   const invalidReason = useMemo(() => {
@@ -171,18 +167,15 @@ export const ImportDivingFishDialogContent: FC<{
     <DialogContent className="flex flex-col items-start gap-2">
       <DialogHeader className="mb-2">
         <DialogTitle className="flex flex-col items-start gap-2">
-          <div>Import from diving-fish</div>
-          <div className="text-sm text-zinc-5">
-            Choose one of the following two options and fill in the corresponding field. Your settings will be saved in
-            your browser.
-          </div>
+          <div>{t('rating-calculator:io.import.diving-fish.title')}</div>
+          <div className="text-sm text-zinc-5">{t('rating-calculator:io.import.diving-fish.description')}</div>
         </DialogTitle>
       </DialogHeader>
 
       <Alert variant="destructive" className="font-bold">
         <AlertIcon className="h-4 w-4" />
-        <AlertTitle>Heads up!</AlertTitle>
-        <AlertDescription>Your existing entries will be overwritten with the imported ones.</AlertDescription>
+        <AlertTitle>{t('rating-calculator:io.import.diving-fish.warning.title')}</AlertTitle>
+        <AlertDescription>{t('rating-calculator:io.import.diving-fish.warning.description')}</AlertDescription>
       </Alert>
 
       <TextField
@@ -203,7 +196,7 @@ export const ImportDivingFishDialogContent: FC<{
 
       <div className="w-full flex items-center gap-2 select-none">
         <div className="h-px w-full bg-zinc-200" />
-        <span className="text-sm text-zinc-5">OR</span>
+        <span className="text-sm text-zinc-5">{t('rating-calculator:io.import.diving-fish.or')}</span>
         <div className="h-px w-full bg-zinc-200" />
       </div>
 
@@ -231,17 +224,17 @@ export const ImportDivingFishDialogContent: FC<{
       )}
 
       <DialogFooter className="flex items-center justify-end w-full">
-        <Button onClick={onClose}>Close</Button>
+        <Button onClick={onClose}>{t('rating-calculator:io.import.diving-fish.close')}</Button>
         <Button
           onClick={async () => {
             setBusy(true)
             try {
               if (invalidReason) {
-                toast.error('Please enter your Diving-Fish profile')
+                toast.error(t('rating-calculator:io.import.diving-fish.invalid-profile'))
                 return
               }
               if (!sheets) {
-                toast.error('No sheets found')
+                toast.error(t('rating-calculator:io.import.diving-fish.no-sheets'))
                 return
               }
               await fetchDivingFish(sheets, divingFishConfig!, modifyEntries)
@@ -257,17 +250,19 @@ export const ImportDivingFishDialogContent: FC<{
             <div className="flex gap-2 items-center">
               <CircularProgress size="1rem" className="text-zinc-5" />
 
-              <span className="text-zinc-5">Importing...</span>
+              <span className="text-zinc-5">{t('rating-calculator:io.import.diving-fish.importing')}</span>
             </div>
           ) : invalidReason ? (
             <div className="flex flex-col gap-1 items-end py-1">
-              <span className="leading-none">Import</span>
+              <span className="leading-none">{t('rating-calculator:io.import.diving-fish.import')}</span>
               <span className="text-xs opacity-50 leading-none">
-                {invalidReason === 'missing' ? 'Missing profile info' : 'Only one of the two fields should be filled'}
+                {invalidReason === 'missing'
+                  ? t('rating-calculator:io.import.diving-fish.missing-profile-info')
+                  : t('rating-calculator:io.import.diving-fish.only-one-of-the-two-fields-should-be-filled')}
               </span>
             </div>
           ) : (
-            'Import'
+            t('rating-calculator:io.import.diving-fish.import')
           )}
         </Button>
       </DialogFooter>
@@ -279,7 +274,9 @@ export const ImportFromDivingFishButtonListItem: FC<{
   modifyEntries: ListActions<PlayEntry>
   onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
+  const { t } = useTranslation(['rating-calculator'])
   const [open, setOpen] = useState(false)
+
   const handleClose = () => {
     setOpen(false)
     onClose()
@@ -287,10 +284,6 @@ export const ImportFromDivingFishButtonListItem: FC<{
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <ImportDivingFishDialogContent modifyEntries={modifyEntries} onClose={handleClose} />
-      </Dialog>
-
       <MenuItem
         onClick={() => {
           setOpen(true)
@@ -300,7 +293,7 @@ export const ImportFromDivingFishButtonListItem: FC<{
           <CarbonFish />
         </ListItemIcon>
         <ListItemText
-          primary={<>Import from diving-fish...</>}
+          primary={t('rating-calculator:io.import.diving-fish.title')}
           secondary={
             <div className="flex gap-1">
               <ImportRegionSupportTag region="cn" />
@@ -308,6 +301,10 @@ export const ImportFromDivingFishButtonListItem: FC<{
           }
         />
       </MenuItem>
+
+      <Dialog onOpenChange={setOpen} open={open}>
+        <ImportDivingFishDialogContent modifyEntries={modifyEntries} onClose={handleClose} />
+      </Dialog>
     </>
   )
 }

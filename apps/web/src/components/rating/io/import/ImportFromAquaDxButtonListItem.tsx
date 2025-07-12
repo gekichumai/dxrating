@@ -1,18 +1,20 @@
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
-import MdiEarthArrowDown from '~icons/mdi/earth-arrow-down'
 import type { FC } from 'react'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
+import MdiEarthArrowDown from '~icons/mdi/earth-arrow-down'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 
 export const ImportFromAquaDxButtonListItem: FC<{
   modifyEntries: ListActions<PlayEntry>
   onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
+  const { t } = useTranslation(['rating-calculator'])
   const difficulty = ['basic', 'expert', 'master', 'remaster']
 
   const parseAchievement = (achievement: number): number => {
-    return isNaN(achievement) ? 0 : achievement / 10000
+    return Number.isNaN(achievement) ? 0 : achievement / 10000
   }
 
   return (
@@ -37,15 +39,11 @@ export const ImportFromAquaDxButtonListItem: FC<{
             if (typeof data !== 'string') return
 
             const musicIdMapJson = await import('@/assets/music-id-map.json')
-            const musicIdMap: { [key: string]: { name: string; ver: string } } =
-              musicIdMapJson.default
+            const musicIdMap: { [key: string]: { name: string; ver: string } } = musicIdMapJson.default
 
             const aquaExportData = JSON.parse(data)
-            let entries: PlayEntry[] = []
-            if (
-              Array.isArray(aquaExportData?.userMusicDetailList) &&
-              aquaExportData.userMusicDetailList.length > 0
-            ) {
+            const entries: PlayEntry[] = []
+            if (Array.isArray(aquaExportData?.userMusicDetailList) && aquaExportData.userMusicDetailList.length > 0) {
               for (const musicDetail of aquaExportData.userMusicDetailList) {
                 const musicId = musicDetail.musicId
                 const song = musicIdMap[musicId]
@@ -56,12 +54,12 @@ export const ImportFromAquaDxButtonListItem: FC<{
                 const musicName = `${song.name}${type}${difficulty[musicDetail.level - 1]}`
                 entries.push({
                   sheetId: musicName,
-                  achievementRate: parseAchievement(musicDetail.achievement)
+                  achievementRate: parseAchievement(musicDetail.achievement),
                 })
               }
             }
             modifyEntries.set(entries)
-            toast.success(`Imported ${entries.length} entries`)
+            toast.success(t('rating-calculator:io.import.aqua-dx.success', { count: entries.length }))
           }
           reader.readAsText(file)
         }
@@ -71,7 +69,7 @@ export const ImportFromAquaDxButtonListItem: FC<{
       <ListItemIcon>
         <MdiEarthArrowDown />
       </ListItemIcon>
-      <ListItemText>Import from AquaDX Exported JSON...</ListItemText>
+      <ListItemText>{t('rating-calculator:io.import.aqua-dx.title')}</ListItemText>
     </MenuItem>
   )
 }

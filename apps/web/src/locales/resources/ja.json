@@ -166,34 +166,34 @@
       "toast-success": "パスワードが更新されました"
     }
   },
-  "breakdown": {
-    "title": "レーティング内訳"
-  },
-  "auto-save": {
-    "title": "自動保存",
-    "saved-records": "{{count}}件の記録を保存しました"
-  },
-  "quick-actions": {
-    "title": "クイックアクション",
-    "show-only-b50": "B50のみを表示",
-    "compact-mode": "コンパクトモード"
-  },
-  "table": {
-    "no-entries": "記録がありません",
-    "headers": {
-      "chart": "譜面",
-      "included-in": "収録",
-      "achievement-rate": "達成率",
-      "rating": "レーティング",
-      "actions": "操作"
-    },
-    "remove-dialog": {
-      "title": "記録を削除しますか？",
-      "cancel": "キャンセル",
-      "remove": "削除"
-    }
-  },
   "rating-calculator": {
+    "breakdown": {
+      "title": "レーティング内訳"
+    },
+    "auto-save": {
+      "title": "自動保存",
+      "saved-records": "{{count}}件の記録を保存しました"
+    },
+    "quick-actions": {
+      "title": "クイックアクション",
+      "show-only-b50": "B50のみを表示",
+      "compact-mode": "コンパクトモード"
+    },
+    "table": {
+      "no-entries": "記録がありません",
+      "headers": {
+        "chart": "譜面",
+        "included-in": "収録",
+        "achievement-rate": "達成率",
+        "rating": "レーティング",
+        "actions": "操作"
+      },
+      "remove-dialog": {
+        "title": "記録を削除しますか？",
+        "cancel": "キャンセル",
+        "remove": "削除"
+      }
+    },
     "statistics": {
       "total": "合計",
       "best-15": "ベスト15",

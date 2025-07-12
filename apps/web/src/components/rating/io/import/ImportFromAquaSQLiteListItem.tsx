@@ -17,6 +17,7 @@ import {
 } from '@mui/material'
 import { type FC, useCallback, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
 import sqljs, { type Database } from 'sql.js'
 import IconMdiDatabase from '~icons/mdi/database'
@@ -38,6 +39,7 @@ export const ImportFromAquaSQLiteListItem: FC<{
   modifyEntries: ListActions<PlayEntry>
   onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
+  const { t } = useTranslation(['rating-calculator'])
   const [db, setDb] = useState<Database | null>(null)
   const handleClose = useCallback(() => {
     setDb(null)
@@ -68,8 +70,6 @@ export const ImportFromAquaSQLiteListItem: FC<{
                 }
 
                 const SQL = await sqljs({
-                  // Required to load the wasm binary asynchronously. Of course, you can host it wherever you want
-                  // You can omit locateFile completely when running in node
                   locateFile: (file) => `https://sql.js.org/dist/${file}`,
                 })
 
@@ -117,7 +117,7 @@ export const ImportFromAquaSQLiteListItem: FC<{
         <ListItemIcon>
           <IconMdiDatabase />
         </ListItemIcon>
-        <ListItemText primary="Import from Aqua SQLite..." secondary="Deprecated" />
+        <ListItemText primary={t('rating-calculator:io.import.aqua-sqlite.title')} secondary="Deprecated" />
       </MenuItem>
     </>
   )

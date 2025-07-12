@@ -1,6 +1,7 @@
 import { Button, CircularProgress, Dialog, DialogContent, DialogContentText, DialogTitle, Grow } from '@mui/material'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
 import IconMdiImage from '~icons/mdi/image'
 import { useAppContext, useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
@@ -44,6 +45,7 @@ const mapCalculatedEntries = (entry: RatingCalculatorEntry) => {
 }
 
 const RenderToOneShotImageDialogContent = () => {
+  const { t } = useTranslation(['rating-calculator'])
   const posthog = usePostHog()
   const { b15Entries, b35Entries, allEntries } = useRatingEntries()
   const version = useAppContextDXDataVersion()
@@ -85,7 +87,9 @@ const RenderToOneShotImageDialogContent = () => {
 
   return (
     <>
-      <DialogTitle className="text-lg font-bold pb-0">Render as OneShot Image</DialogTitle>
+      <DialogTitle className="text-lg font-bold pb-0">
+        {t('rating-calculator:io.export.oneshot-image.dialog.title')}
+      </DialogTitle>
 
       <DialogContent classes={{ root: '!pt-4' }}>
         <DialogContentText>
@@ -96,20 +100,23 @@ const RenderToOneShotImageDialogContent = () => {
               <div className="absolute inset-0 flex flex-col gap-1 items-center justify-center p-4">
                 <CircularProgress />
 
-                <div className="text-lg font-bold tracking-tight">Rendering...</div>
+                <div className="text-lg font-bold tracking-tight">
+                  {t('rating-calculator:io.export.oneshot-image.dialog.loading.title')}
+                </div>
 
                 <div className="text-base font-bold tabular-nums tracking-tight font-mono">
-                  {elapsedTime ? `${(elapsedTime / 1000).toFixed(1)}s` : 'Calculating...'}
+                  {elapsedTime
+                    ? `${(elapsedTime / 1000).toFixed(1)}s`
+                    : t('rating-calculator:io.export.oneshot-image.dialog.loading.calculating')}
                 </div>
 
-                <div className="text-sm">
-                  This may take a while depending on the current server load; typically rendering will finish within 10
-                  seconds.
-                </div>
+                <div className="text-sm">{t('rating-calculator:io.export.oneshot-image.dialog.loading.message')}</div>
               </div>
             </div>
           ) : error ? (
-            <div className="text-red-500">An error occurred while rendering the image: {error.message}</div>
+            <div className="text-red-500">
+              {t('rating-calculator:io.export.oneshot-image.dialog.error', { message: error.message })}
+            </div>
           ) : (
             <img
               src={data}
@@ -127,12 +134,11 @@ const RenderToOneShotImageDialogContent = () => {
           )}
 
           <div className="text-zinc-500 mt-4 flex flex-col gap-1">
-            <div className="text-sm font-bold">Long-press or right-click the image to save it to your device.</div>
-
-            <div className="text-xs">
-              This feature is in beta and may not work as expected. Please feel free to report any issues or feedback to
-              the developer :D
+            <div className="text-sm font-bold">
+              {t('rating-calculator:io.export.oneshot-image.dialog.save-instruction')}
             </div>
+
+            <div className="text-xs">{t('rating-calculator:io.export.oneshot-image.dialog.beta-notice')}</div>
           </div>
         </DialogContentText>
       </DialogContent>
@@ -141,6 +147,7 @@ const RenderToOneShotImageDialogContent = () => {
 }
 
 export const RenderToOneShotImageButton: FC = () => {
+  const { t } = useTranslation()
   const posthog = usePostHog()
   const [open, setOpen] = useState(false)
 
@@ -155,7 +162,7 @@ export const RenderToOneShotImageButton: FC = () => {
         color="primary"
         startIcon={<IconMdiImage />}
       >
-        Render as OneShot Image
+        {t('rating-calculator:io.export.oneshot-image.button')}
       </Button>
 
       <Dialog TransitionComponent={Grow} maxWidth="md" open={open} onClose={() => setOpen(false)}>

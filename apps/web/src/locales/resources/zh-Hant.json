@@ -166,34 +166,34 @@
       "toast-success": "已重設密碼"
     }
   },
-  "breakdown": {
-    "title": "評分詳情"
-  },
-  "auto-save": {
-    "title": "自動儲存",
-    "saved-records": "已儲存 {{count}} 條記錄"
-  },
-  "quick-actions": {
-    "title": "快捷操作",
-    "show-only-b50": "僅顯示 B50",
-    "compact-mode": "緊湊模式"
-  },
-  "table": {
-    "no-entries": "暫無記錄",
-    "headers": {
-      "chart": "譜面",
-      "included-in": "收錄於",
-      "achievement-rate": "完成率",
-      "rating": "評分",
-      "actions": "操作"
-    },
-    "remove-dialog": {
-      "title": "刪除記錄？",
-      "cancel": "取消",
-      "remove": "刪除"
-    }
-  },
   "rating-calculator": {
+    "breakdown": {
+      "title": "評分詳情"
+    },
+    "auto-save": {
+      "title": "自動儲存",
+      "saved-records": "已儲存 {{count}} 條記錄"
+    },
+    "quick-actions": {
+      "title": "快捷操作",
+      "show-only-b50": "僅顯示 B50",
+      "compact-mode": "緊湊模式"
+    },
+    "table": {
+      "no-entries": "暫無記錄",
+      "headers": {
+        "chart": "譜面",
+        "included-in": "收錄於",
+        "achievement-rate": "完成率",
+        "rating": "評分",
+        "actions": "操作"
+      },
+      "remove-dialog": {
+        "title": "刪除記錄？",
+        "cancel": "取消",
+        "remove": "刪除"
+      }
+    },
     "statistics": {
       "total": "總計",
       "best-15": "最佳15",
