@@ -25,6 +25,13 @@
       "select": "選擇 DXData 數據版本與伺服器",
       "select-generic": "或僅選擇 DXData 數據版本",
       "info": "不同的數據版本與服務器對應了不同的樂曲與譜面定數可見性"
+    },
+    "import-provider": {
+      "diving-fish": {
+        "qq": "",
+        "title": "",
+        "username": ""
+      }
     }
   },
   "sheet": {
@@ -53,7 +60,8 @@
       },
       "regional-availability": "可遊玩地區",
       "song-artist": "作曲",
-      "title": "詳細資訊"
+      "title": "詳細資訊",
+      "unlock-required": ""
     },
     "internal-level-history": {
       "empty": "無可用歷史紀錄",
@@ -164,6 +172,9 @@
     "update-password": {
       "label": "重設密碼",
       "toast-success": "已重設密碼"
+    },
+    "update-display-name": {
+      "label": ""
     }
   },
   "rating-calculator": {
@@ -256,7 +267,10 @@
           },
           "or": "或",
           "close": "關閉",
-          "import": "匯入"
+          "import": "匯入",
+          "importing": "",
+          "missing-profile-info": "",
+          "only-one-of-the-two-fields-should-be-filled": ""
         },
         "net-records": {
           "title": "從 NET 匯入...",
@@ -317,6 +331,20 @@
               "importing": "匯入中..."
             }
           }
+        },
+        "aqua-dx": {
+          "success": "",
+          "title": ""
+        },
+        "aqua-sqlite": {
+          "error": "",
+          "success": "",
+          "title": ""
+        },
+        "json": {
+          "error": "",
+          "success": "",
+          "title": ""
         }
       },
       "clear": {

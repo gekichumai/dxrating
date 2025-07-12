@@ -25,6 +25,13 @@
       "info": "異なるバージョンと地域を選ぶと、配信されている楽曲と内部定数を表示されます",
       "select": "バージョンと地域を選択ください",
       "select-generic": "まだ、バージョンのみを選んでください"
+    },
+    "import-provider": {
+      "diving-fish": {
+        "qq": "",
+        "title": "",
+        "username": ""
+      }
     }
   },
   "sheet": {
@@ -51,7 +58,8 @@
       },
       "regional-availability": "配信地域",
       "song-artist": "ソングアーティスト",
-      "title": "詳細"
+      "title": "詳細",
+      "unlock-required": ""
     },
     "filter-current-version": "現在稼働バージョンのB15: {{version}} 譜面のみを表示",
     "internal-level-history": {
@@ -164,6 +172,9 @@
     "update-password": {
       "label": "パスワードを更新する",
       "toast-success": "パスワードが更新されました"
+    },
+    "update-display-name": {
+      "label": ""
     }
   },
   "rating-calculator": {
@@ -256,7 +267,10 @@
           },
           "or": "または",
           "close": "閉じる",
-          "import": "インポート"
+          "import": "インポート",
+          "importing": "インポート中...",
+          "missing-profile-info": "Diving-Fishプロフィールを入力してください",
+          "only-one-of-the-two-fields-should-be-filled": "Diving-Fishプロフィールを入力してください"
         },
         "aqua-dx": {
           "title": "AquaDX JSONからインポート...",
@@ -275,7 +289,62 @@
         "net-records": {
           "title": "NETからインポート...",
           "success": "{{count}}件のエントリーをインポートしました",
-          "error": "インポートに失敗しました：{{error}}"
+          "error": "インポートに失敗しました：{{error}}",
+          "dialog": {
+            "actions": {
+              "close": "閉じる",
+              "import-once": "1度だけインポート",
+              "importing": "インポート中...",
+              "reimport": {
+                "description": "既存のエントリーはインポートされたものに上書きされます。",
+                "title": "再インポート"
+              }
+            },
+            "auto-import": {
+              "description": "インポートされたエントリーは、既存のエントリーに追加されます。",
+              "label": "自動インポート",
+              "options": {
+                "disabled": {
+                  "title": "無効"
+                },
+                "merge": {
+                  "description": "既存のエントリーはインポートされたものに追加されます。",
+                  "title": "追加"
+                },
+                "replace": {
+                  "description": "既存のエントリーはインポートされたものに上書きされます。",
+                  "title": "上書き"
+                }
+              }
+            },
+            "region": {
+              "intl": {
+                "domain": "(maimaidx-eng.com)",
+                "name": "インタナショナル"
+              },
+              "jp": {
+                "domain": "(maimaidx.jp)",
+                "name": "日本"
+              },
+              "label": "地域"
+            },
+            "remember-credentials": {
+              "description": "次回以降のインポートに使用するため、ログイン情報を保存します。",
+              "label": "ログイン情報を保存"
+            },
+            "security-notice": {
+              "credentials": "ログイン情報は、DXRatingのサーバーに送信されます。",
+              "slsa": {
+                "description": "DXRatingのサーバーは、SLSA Level 1のセキュリティ要件を満たしています。",
+                "framework": "SLSA",
+                "text": "DXRatingのサーバーは、SLSA Level 1のセキュリティ要件を満たしています。"
+              },
+              "source-code": "DXRatingのソースコードは、GitHubで公開されています。"
+            },
+            "sega-id": "セガID",
+            "sega-password": "セガIDパスワード",
+            "title": "NETからインポート"
+          }
         }
       },
       "clear": {
