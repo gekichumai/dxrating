@@ -165,5 +165,77 @@
       "label": "重設密碼",
       "toast-success": "已重設密碼"
     }
+  },
+  "breakdown": {
+    "title": "評分詳情"
+  },
+  "auto-save": {
+    "title": "自動儲存",
+    "saved-records": "已儲存 {{count}} 條記錄"
+  },
+  "quick-actions": {
+    "title": "快捷操作",
+    "show-only-b50": "僅顯示 B50",
+    "compact-mode": "緊湊模式"
+  },
+  "table": {
+    "no-entries": "暫無記錄",
+    "headers": {
+      "chart": "譜面",
+      "included-in": "收錄於",
+      "achievement-rate": "完成率",
+      "rating": "評分",
+      "actions": "操作"
+    },
+    "remove-dialog": {
+      "title": "刪除記錄？",
+      "cancel": "取消",
+      "remove": "刪除"
+    }
+  },
+  "rating-calculator": {
+    "statistics": {
+      "total": "總計",
+      "best-15": "最佳15",
+      "best-35": "最佳35",
+      "entries": "記錄 {{current}}/{{total}}",
+      "subtotal": "小計",
+      "min": "最小",
+      "avg": "平均",
+      "max": "最大"
+    },
+    "add-entry": {
+      "chart": "譜面",
+      "achievement-rate": "完成率",
+      "validation": {
+        "required": "必填項",
+        "invalid-number": "無效數值",
+        "range": "必須在0%至101%之間"
+      },
+      "current-rating": "當前評分",
+      "new-rating": "新評分",
+      "rating": "評分",
+      "replace": "更新 (+{{diff}})",
+      "add": "添加"
+    },
+    "io": {
+      "export": {
+        "button": "匯出...",
+        "to-json": "匯出為JSON"
+      },
+      "import": {
+        "button": "匯入..."
+      },
+      "clear": {
+        "button": "清空",
+        "dialog": {
+          "title": "清空所有記錄？",
+          "warning": "警告",
+          "message": "此操作將清空所有記錄。",
+          "cancel": "取消",
+          "confirm": "清空"
+        }
+      }
+    }
   }
 }

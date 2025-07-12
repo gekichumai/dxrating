@@ -1,6 +1,4 @@
 import { Autocomplete, Button, Card, CardContent, TextField } from '@mui/material'
-import IconMdiReplace from '~icons/mdi/find-replace'
-import IconMdiPlus from '~icons/mdi/plus'
 import clsx from 'clsx'
 import {
   cloneElement,
@@ -15,7 +13,10 @@ import {
   useMemo,
   useState,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Virtuoso } from 'react-virtuoso'
+import IconMdiReplace from '~icons/mdi/find-replace'
+import IconMdiPlus from '~icons/mdi/plus'
 import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
 import { type FlattenedSheet, formatSheetToString, useSheets, useSheetsSearchEngine } from '../../songs'
 import { calculateRating } from '../../utils/rating'
@@ -58,10 +59,11 @@ const ListboxComponent = forwardRef<HTMLElement>(
 export const RatingCalculatorAddEntryForm: FC<{
   onSubmit: (entry: PlayEntry) => void
 }> = memo(({ onSubmit }) => {
-  const { data: sheets } = useSheets()
+  const { data: sheets } = useSheets({ acceptsPartialData: true })
   const [selectedSheet, setSelectedSheet] = useState<FlattenedSheet | null>(null)
   const [achievementRate, setAchievementRate] = useState<string>('')
   const [achievementRateError, setAchievementRateError] = useState<string | null>(null)
+  const { t } = useTranslation(['rating-calculator'])
   const resetForm = useCallback(() => {
     setSelectedSheet(null)
     setAchievementRate('')
@@ -93,23 +95,28 @@ export const RatingCalculatorAddEntryForm: FC<{
     return null
   }, [selectedSheet, achievementRate, found])
 
-  const validate = useCallback((value: string) => {
-    if (!value) {
-      setAchievementRateError('Required')
-    }
-    try {
-      const parsed = Number.parseFloat(value!)
-      if (Number.isNaN(parsed)) {
-        setAchievementRateError('Invalid number')
-      } else if (parsed < 0 || parsed > 101) {
-        setAchievementRateError('Must be between 0% and 101%')
-      } else {
-        setAchievementRateError(null)
+  const validate = useCallback(
+    (value: string) => {
+      if (!value) {
+        setAchievementRateError(t('rating-calculator:add-entry.validation.required'))
       }
-    } catch (e) {
-      setAchievementRateError(`Invalid number: ${(e as Error).message}`)
-    }
-  }, [])
+      try {
+        const parsed = Number.parseFloat(value!)
+        if (Number.isNaN(parsed)) {
+          setAchievementRateError(t('rating-calculator:add-entry.validation.invalid-number'))
+        } else if (parsed < 0 || parsed > 101) {
+          setAchievementRateError(t('rating-calculator:add-entry.validation.range'))
+        } else {
+          setAchievementRateError(null)
+        }
+      } catch (e) {
+        setAchievementRateError(
+          `${t('rating-calculator:add-entry.validation.invalid-number')}: ${(e as Error).message}`,
+        )
+      }
+    },
+    [t],
+  )
 
   if (!sheets) return null
 
@@ -121,7 +128,7 @@ export const RatingCalculatorAddEntryForm: FC<{
 
           <TextField
             className="md:basis-24rem"
-            label="Achievement Rate"
+            label={t('rating-calculator:add-entry.achievement-rate')}
             variant="outlined"
             value={achievementRate}
             onChange={(e) => {
@@ -171,13 +178,15 @@ export const RatingCalculatorAddEntryForm: FC<{
               <div className="flex flex-col items-start gap-0.5">
                 {found && (
                   <div>
-                    Current Rating:{' '}
+                    {t('rating-calculator:add-entry.current-rating')}:{' '}
                     {calculateRating(selectedSheet.internalLevelValue, found.achievementRate).ratingAwardValue}
                   </div>
                 )}
                 {replacing ? (
                   <div className="flex flex-col items-start font-bold">
-                    <div>New Rating: {replacing.newRating.ratingAwardValue}</div>
+                    <div>
+                      {t('rating-calculator:add-entry.new-rating')}: {replacing.newRating.ratingAwardValue}
+                    </div>
                     <div className="text-sm bg-amber-3 b-2 border-solid border-amber-4 text-black px-1.5 rounded inline-flex">
                       +{replacing.diff}
                     </div>
@@ -185,8 +194,11 @@ export const RatingCalculatorAddEntryForm: FC<{
                 ) : (
                   achievementRate && (
                     <div className="flex flex-col items-center gap-1">
-                      Rating:{' '}
-                      {calculateRating(selectedSheet.internalLevelValue, Number.parseFloat(achievementRate)).ratingAwardValue}
+                      {t('rating-calculator:add-entry.rating')}:{' '}
+                      {
+                        calculateRating(selectedSheet.internalLevelValue, Number.parseFloat(achievementRate))
+                          .ratingAwardValue
+                      }
                     </div>
                   )
                 )}
@@ -206,7 +218,9 @@ export const RatingCalculatorAddEntryForm: FC<{
               startIcon={replacing ? <IconMdiReplace fontSize="inherit" /> : <IconMdiPlus fontSize="inherit" />}
               data-attr="manual-rating-add-submit"
             >
-              {replacing ? `Replace (+${replacing.diff})` : 'Add'}
+              {replacing
+                ? t('rating-calculator:add-entry.replace', { diff: replacing.diff })
+                : t('rating-calculator:add-entry.add')}
             </Button>
           </div>
         </div>
@@ -219,7 +233,8 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
   value: FlattenedSheet | null
   onChange: (sheet: FlattenedSheet | null) => void
 }> = ({ value, onChange }) => {
-  const { data: sheets } = useSheets()
+  const { data: sheets } = useSheets({ acceptsPartialData: true })
+  const { t } = useTranslation(['rating-calculator'])
 
   const search = useSheetsSearchEngine()
 
@@ -238,7 +253,9 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
       fullWidth
       options={sheets}
       getOptionLabel={(sheet) => formatSheetToString(sheet)}
-      renderInput={(params) => <TextField {...params} label="Chart" variant="outlined" />}
+      renderInput={(params) => (
+        <TextField {...params} label={t('rating-calculator:add-entry.chart')} variant="outlined" />
+      )}
       filterOptions={(_, { inputValue }) => {
         if (!inputValue) return sheets
         const start = performance.now()
@@ -249,13 +266,9 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
       }}
       renderOption={renderOption}
       ListboxComponent={ListboxComponent}
-      itemID="id"
       value={value}
-      onChange={(_, value) => {
-        onChange(value)
-      }}
-      isOptionEqualToValue={(option, value) => option.id === value.id}
-      data-attr="manual-rating-add-sheet"
+      onChange={(_, newValue) => onChange(newValue)}
+      data-attr="manual-rating-add-chart"
     />
   )
 }

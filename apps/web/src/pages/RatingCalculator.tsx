@@ -70,10 +70,10 @@ const RatingCalculatorRowActions: FC<{
   modifyEntries: ListActions<PlayEntry>
   entry: PlayEntry
 }> = ({ modifyEntries, entry }) => {
-  const { data: sheets } = useSheets()
+  const { data: sheets } = useSheets({ acceptsPartialData: true })
   const [dialogOpen, setDialogOpen] = useState(false)
   const posthog = usePostHog()
-  const { t } = useTranslation()
+  const { t } = useTranslation(['rating-calculator'])
 
   const handleClick = useCallback(() => {
     modifyEntries.filter((existingEntry) => existingEntry.sheetId !== entry.sheetId)
@@ -124,7 +124,7 @@ const TransparentPaper = styled(Paper)(() => ({
 
 export const RatingCalculator = () => {
   const { modifyEntries } = useRatingCalculatorContext()
-  const { data: sheets } = useSheets()
+  const { data: sheets } = useSheets({ acceptsPartialData: true })
   const [showOnlyB50, setShowOnlyB50] = useState(false)
   const [compactMode, setCompactMode] = useState(false)
   const { t } = useTranslation(['rating-calculator'])

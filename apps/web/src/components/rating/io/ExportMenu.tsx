@@ -1,10 +1,12 @@
 import { Button, Menu } from '@mui/material'
 import { type FC, useId, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ExportToJSONMenuItem } from './export/ExportToJSONMenuItem'
 
 export const ExportMenu: FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const open = Boolean(anchorEl)
+  const { t } = useTranslation(['rating-calculator'])
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget)
   }
@@ -24,7 +26,7 @@ export const ExportMenu: FC = () => {
         onClick={handleClick}
         variant="outlined"
       >
-        Export...
+        {t('rating-calculator:io.export.button')}
       </Button>
 
       <Menu

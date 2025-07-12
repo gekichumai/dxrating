@@ -39,7 +39,7 @@ const SideEffectorLocaleMeta: FC = () => {
 }
 
 const SideEffectorAutoImportRating: FC = () => {
-  const { data: sheets } = useSheets()
+  const { data: sheets } = useSheets({ acceptsPartialData: true })
   const { modifyEntries } = useRatingCalculatorContext()
 
   useEffect(() => {

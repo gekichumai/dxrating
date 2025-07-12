@@ -1,18 +1,20 @@
 import { Button, Divider, Menu } from '@mui/material'
 import { type FC, useId, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
 import type { PlayEntry } from '../RatingCalculatorAddEntryForm'
+import { ImportFromAquaDxButtonListItem } from './import/ImportFromAquaDxButtonListItem.tsx'
 import { ImportFromAquaSQLiteListItem } from './import/ImportFromAquaSQLiteListItem'
 import { ImportFromDivingFishButtonListItem } from './import/ImportFromDivingFishButtonListItem'
 import { ImportFromJSONButtonListItem } from './import/ImportFromJSONButtonListItem'
 import { ImportFromNETRecordsListItem } from './import/ImportFromNETRecordsListItem'
-import {ImportFromAquaDxButtonListItem} from "./import/ImportFromAquaDxButtonListItem.tsx";
 
 export const ImportMenu: FC<{
   modifyEntries: ListActions<PlayEntry>
 }> = ({ modifyEntries }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const open = Boolean(anchorEl)
+  const { t } = useTranslation(['rating-calculator'])
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget)
   }
@@ -32,7 +34,7 @@ export const ImportMenu: FC<{
         onClick={handleClick}
         variant="outlined"
       >
-        Import...
+        {t('rating-calculator:io.import.button')}
       </Button>
 
       <Menu

@@ -172,5 +172,77 @@
       "label": "重设密码",
       "toast-success": "已重设密码"
     }
+  },
+  "breakdown": {
+    "title": "评分详情"
+  },
+  "auto-save": {
+    "title": "自动保存",
+    "saved-records": "已保存 {{count}} 条记录"
+  },
+  "quick-actions": {
+    "title": "快捷操作",
+    "show-only-b50": "仅显示 B50",
+    "compact-mode": "紧凑模式"
+  },
+  "table": {
+    "no-entries": "暂无记录",
+    "headers": {
+      "chart": "谱面",
+      "included-in": "收录于",
+      "achievement-rate": "完成率",
+      "rating": "评分",
+      "actions": "操作"
+    },
+    "remove-dialog": {
+      "title": "删除记录？",
+      "cancel": "取消",
+      "remove": "删除"
+    }
+  },
+  "rating-calculator": {
+    "statistics": {
+      "total": "总计",
+      "best-15": "最佳15",
+      "best-35": "最佳35",
+      "entries": "记录 {{current}}/{{total}}",
+      "subtotal": "小计",
+      "min": "最小",
+      "avg": "平均",
+      "max": "最大"
+    },
+    "add-entry": {
+      "chart": "谱面",
+      "achievement-rate": "完成率",
+      "validation": {
+        "required": "必填项",
+        "invalid-number": "无效数值",
+        "range": "必须在0%至101%之间"
+      },
+      "current-rating": "当前评分",
+      "new-rating": "新评分",
+      "rating": "评分",
+      "replace": "更新 (+{{diff}})",
+      "add": "添加"
+    },
+    "io": {
+      "export": {
+        "button": "导出...",
+        "to-json": "导出为JSON"
+      },
+      "import": {
+        "button": "导入..."
+      },
+      "clear": {
+        "button": "清空",
+        "dialog": {
+          "title": "清空所有记录？",
+          "warning": "警告",
+          "message": "此操作将清空所有记录。",
+          "cancel": "取消",
+          "confirm": "清空"
+        }
+      }
+    }
   }
 }

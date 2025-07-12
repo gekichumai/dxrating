@@ -55,7 +55,7 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
   const appVersion = useAppContextDXDataVersion()
   const { region } = useAppContext()
   const { entries } = useRatingCalculatorContext()
-  const { data: sheets } = useSheets()
+  const { data: sheets } = useSheets({ acceptsPartialData: true })
 
   const { allEntries, b15Entries, b35Entries } = useMemo(() => {
     const calculated = entries.flatMap((entry) => {

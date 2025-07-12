@@ -3,6 +3,7 @@ import * as d3 from 'd3'
 import { motion } from 'framer-motion'
 import compact from 'lodash-es/compact'
 import { type FC, type HTMLAttributes, forwardRef, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMeasure } from 'react-use'
 import IconMdiGestureSwipeLeft from '~icons/mdi/gesture-swipe-left'
 import { deriveColor } from '../../utils/color'
@@ -45,6 +46,7 @@ const RatingCalculatorStatisticsOverview = forwardRef<HTMLDivElement, RatingCalc
   ({ className, style }, ref) => {
     const { b35Entries, b15Entries, statistics } = useRatingEntries()
     const { b15Average, b35Average, b15Min, b35Min, b15Max, b35Max, b15Sum, b35Sum, b50Sum } = statistics
+    const { t } = useTranslation(['rating-calculator'])
 
     return (
       <div
@@ -52,54 +54,83 @@ const RatingCalculatorStatisticsOverview = forwardRef<HTMLDivElement, RatingCalc
         className={clsx('flex flex-col justify-center gap-4 text-black py-2 w-full', className)}
         style={style}
       >
-        <RatingCalculatorStatisticsFactItem size="lg" label="Total" value={b50Sum} />
+        <RatingCalculatorStatisticsFactItem size="lg" label={t('rating-calculator:statistics.total')} value={b50Sum} />
 
         <div className="flex flex-col items-start gap-2">
           <div className="flex items-baseline gap-1 leading-none">
-            <span className="text-lg font-semibold">Best 15</span>
-            <span className="text-sm text-zinc-500">(Entries {b15Entries.length}/15)</span>
+            <span className="text-lg font-semibold">{t('rating-calculator:statistics.best-15')}</span>
+            <span className="text-sm text-zinc-500">
+              {t('rating-calculator:statistics.entries', { current: b15Entries.length, total: 15 })}
+            </span>
           </div>
 
           <div className="flex items-center w-full">
             <RatingCalculatorStatisticsFactItem
               size="md"
-              label="Subtotal"
+              label={t('rating-calculator:statistics.subtotal')}
               value={formatNumber(b15Sum)}
               className="w-24"
             />
 
             <div className="h-12 w-px shrink-0 bg-gray-300 ml-2 mr-4" />
 
-            <RatingCalculatorStatisticsFactItem size="md" label="Min" value={formatNumber(b15Min)} className="w-16" />
             <RatingCalculatorStatisticsFactItem
               size="md"
-              label="Avg"
+              label={t('rating-calculator:statistics.min')}
+              value={formatNumber(b15Min)}
+              className="w-16"
+            />
+            <RatingCalculatorStatisticsFactItem
+              size="md"
+              label={t('rating-calculator:statistics.avg')}
               value={formatNumber(b15Average)}
               className="w-16"
             />
-            <RatingCalculatorStatisticsFactItem size="md" label="Max" value={formatNumber(b15Max)} className="w-16" />
+            <RatingCalculatorStatisticsFactItem
+              size="md"
+              label={t('rating-calculator:statistics.max')}
+              value={formatNumber(b15Max)}
+              className="w-16"
+            />
           </div>
         </div>
 
         <div className="flex flex-col items-start gap-2">
           <div className="flex items-baseline gap-1 leading-none">
-            <span className="text-lg font-semibold">Best 35</span>
-            <span className="text-sm text-zinc-500">(Entries {b35Entries.length}/35)</span>
+            <span className="text-lg font-semibold">{t('rating-calculator:statistics.best-35')}</span>
+            <span className="text-sm text-zinc-500">
+              {t('rating-calculator:statistics.entries', { current: b35Entries.length, total: 35 })}
+            </span>
           </div>
 
           <div className="flex items-center w-full">
-            <RatingCalculatorStatisticsFactItem size="md" label="Subtotal" value={b35Sum} className="w-24" />
+            <RatingCalculatorStatisticsFactItem
+              size="md"
+              label={t('rating-calculator:statistics.subtotal')}
+              value={b35Sum}
+              className="w-24"
+            />
 
             <div className="h-12 w-px shrink-0 bg-gray-300 ml-2 mr-4" />
 
-            <RatingCalculatorStatisticsFactItem size="md" label="Min" value={formatNumber(b35Min)} className="w-16" />
             <RatingCalculatorStatisticsFactItem
               size="md"
-              label="Avg"
+              label={t('rating-calculator:statistics.min')}
+              value={formatNumber(b35Min)}
+              className="w-16"
+            />
+            <RatingCalculatorStatisticsFactItem
+              size="md"
+              label={t('rating-calculator:statistics.avg')}
               value={formatNumber(b35Average)}
               className="w-16"
             />
-            <RatingCalculatorStatisticsFactItem size="md" label="Max" value={formatNumber(b35Max)} className="w-16" />
+            <RatingCalculatorStatisticsFactItem
+              size="md"
+              label={t('rating-calculator:statistics.max')}
+              value={formatNumber(b35Max)}
+              className="w-16"
+            />
           </div>
         </div>
       </div>
@@ -247,9 +278,7 @@ const Histogram: FC<{
     draw()
 
     return () => {
-      d3.select(`#${id}`)
-        .selectAll('*')
-        .remove()
+      d3.select(`#${id}`).selectAll('*').remove()
     }
   }, [id, containerRect, b15Values, b35Values])
 

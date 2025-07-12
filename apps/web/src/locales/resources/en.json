@@ -204,6 +204,49 @@
         "cancel": "Cancel",
         "remove": "Remove"
       }
+    },
+    "statistics": {
+      "total": "Total",
+      "best-15": "Best 15",
+      "best-35": "Best 35",
+      "entries": "Entries {{current}}/{{total}}",
+      "subtotal": "Subtotal",
+      "min": "Min",
+      "avg": "Avg",
+      "max": "Max"
+    },
+    "add-entry": {
+      "chart": "Chart",
+      "achievement-rate": "Achievement Rate",
+      "validation": {
+        "required": "Required",
+        "invalid-number": "Invalid number",
+        "range": "Must be between 0% and 101%"
+      },
+      "current-rating": "Current Rating",
+      "new-rating": "New Rating",
+      "rating": "Rating",
+      "replace": "Replace (+{{diff}})",
+      "add": "Add"
+    },
+    "io": {
+      "export": {
+        "button": "Export...",
+        "to-json": "Export to JSON"
+      },
+      "import": {
+        "button": "Import..."
+      },
+      "clear": {
+        "button": "Clear",
+        "dialog": {
+          "title": "Clear all entries?",
+          "warning": "Warning",
+          "message": "This will clear all entries.",
+          "cancel": "Cancel",
+          "confirm": "Clear"
+        }
+      }
     }
   }
 }

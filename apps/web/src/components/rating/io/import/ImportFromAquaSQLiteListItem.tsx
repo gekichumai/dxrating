@@ -150,7 +150,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
     }
   }, [db])
   const [selectedUser, setSelectedUser] = useState<AquaUser | null>(null)
-  const { data: sheets } = useSheets()
+  const { data: sheets } = useSheets({ acceptsPartialData: true })
   const [warnings, setWarnings] = useState<AquaGamePlay[]>([])
   const records = useMemo(() => {
     if (!selectedUser) return []

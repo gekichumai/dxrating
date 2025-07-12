@@ -155,7 +155,7 @@ export const ImportDivingFishDialogContent: FC<{
   modifyEntries: ListActions<PlayEntry>
   onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
-  const { data: sheets } = useSheets()
+  const { data: sheets } = useSheets({ acceptsPartialData: true })
   const [busy, setBusy] = useState(false)
   const { t } = useTranslation(['settings'])
   const [divingFishConfig, setDivingFishConfig] = useLocalStorage<DivingFishProfile | null>('diving-fish-profile', null)

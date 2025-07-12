@@ -120,7 +120,7 @@ const ImportFromNETRecordsDialogContent: FC<{
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState<ImportFromNETRecordsProgress | null>(null)
   const mappedAutoImport = autoImport === true ? 'replace' : (autoImport as unknown) === 'false' ? false : autoImport // Legacy support
-  const { data: sheets } = useSheets()
+  const { data: sheets } = useSheets({ acceptsPartialData: true })
 
   useEffect(() => {
     const stored = localStorage.getItem('import-net-records')
