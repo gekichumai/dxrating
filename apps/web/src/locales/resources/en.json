@@ -176,5 +176,34 @@
     "update-display-name": {
       "label": "Update Profile Name"
     }
+  },
+  "rating-calculator": {
+    "breakdown": {
+      "title": "Rating Breakdown"
+    },
+    "auto-save": {
+      "title": "Auto-save",
+      "saved-records": "Saved {{count}} records"
+    },
+    "quick-actions": {
+      "title": "Quick Actions",
+      "show-only-b50": "Show only B50 entries",
+      "compact-mode": "Compact Mode"
+    },
+    "table": {
+      "no-entries": "No entries",
+      "headers": {
+        "chart": "Chart",
+        "included-in": "Incl. In",
+        "achievement-rate": "Achievement Rate",
+        "rating": "Rating",
+        "actions": "Actions"
+      },
+      "remove-dialog": {
+        "title": "Remove rating entry?",
+        "cancel": "Cancel",
+        "remove": "Remove"
+      }
+    }
   }
 }

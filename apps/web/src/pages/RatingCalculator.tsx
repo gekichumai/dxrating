@@ -31,6 +31,7 @@ import {
 import clsx from 'clsx'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, type ForwardedRef, forwardRef, memo, useCallback, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
 import {
   type ItemProps,
@@ -72,6 +73,7 @@ const RatingCalculatorRowActions: FC<{
   const { data: sheets } = useSheets()
   const [dialogOpen, setDialogOpen] = useState(false)
   const posthog = usePostHog()
+  const { t } = useTranslation()
 
   const handleClick = useCallback(() => {
     modifyEntries.filter((existingEntry) => existingEntry.sheetId !== entry.sheetId)
@@ -89,10 +91,10 @@ const RatingCalculatorRowActions: FC<{
           paper: 'min-w-[20rem]',
         }}
       >
-        <DialogTitle>Remove rating entry?</DialogTitle>
+        <DialogTitle>{t('rating-calculator:table.remove-dialog.title')}</DialogTitle>
         <DialogContent>{sheet && <SheetListItemContent sheet={sheet} />}</DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setDialogOpen(false)}>{t('rating-calculator:table.remove-dialog.cancel')}</Button>
 
           <Button
             color="error"
@@ -103,7 +105,7 @@ const RatingCalculatorRowActions: FC<{
               posthog?.capture('rating_calculator_remove_entry_button_clicked')
             }}
           >
-            Remove
+            {t('rating-calculator:table.remove-dialog.remove')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -125,6 +127,7 @@ export const RatingCalculator = () => {
   const { data: sheets } = useSheets()
   const [showOnlyB50, setShowOnlyB50] = useState(false)
   const [compactMode, setCompactMode] = useState(false)
+  const { t } = useTranslation(['rating-calculator'])
 
   const { allEntries } = useRatingEntries()
 
@@ -143,7 +146,7 @@ export const RatingCalculator = () => {
     <div className="flex-container w-full pb-global">
       <div className="flex flex-col md:flex-row items-start gap-4 w-full">
         <Alert icon={false} severity="info" className="px-4 py-2 w-full md:w-2/3" classes={{ message: 'w-full' }}>
-          <AlertTitle className="font-bold">Rating Breakdown</AlertTitle>
+          <AlertTitle className="font-bold">{t('rating-calculator:breakdown.title')}</AlertTitle>
           <RatingCalculatorStatistics />
         </Alert>
 
@@ -157,7 +160,9 @@ export const RatingCalculator = () => {
             }}
           >
             <AlertTitle className="font-bold">
-              {allEntries?.length ? `Saved ${allEntries.length} records` : 'Auto-save'}
+              {allEntries?.length
+                ? t('rating-calculator:auto-save.saved-records', { count: allEntries.length })
+                : t('rating-calculator:auto-save.title')}
             </AlertTitle>
 
             <div className="mt-2">
@@ -183,18 +188,18 @@ export const RatingCalculator = () => {
               message: 'overflow-unset',
             }}
           >
-            <AlertTitle className="font-bold">Quick Actions</AlertTitle>
+            <AlertTitle className="font-bold">{t('rating-calculator:quick-actions.title')}</AlertTitle>
             <div className="flex flex-col items-start mt-2">
               <FormControlLabel
                 control={<Switch checked={showOnlyB50} onChange={() => setShowOnlyB50((prev) => !prev)} />}
-                label="Show only B50 entries"
+                label={t('rating-calculator:quick-actions.show-only-b50')}
               />
 
               <FormControlLabel
                 control={<Switch checked={compactMode} onChange={() => setCompactMode((prev) => !prev)} />}
                 label={
                   <div className="flex items-center gap-1 leading-none">
-                    Compact Mode <BetaBadge />
+                    {t('rating-calculator:quick-actions.compact-mode')} <BetaBadge />
                   </div>
                 }
               />
@@ -208,7 +213,9 @@ export const RatingCalculator = () => {
       <div className="max-w-screen w-full overflow-x-auto -mx-4">
         <RatingCalculatorTableContent compactMode={compactMode} showOnlyB50={showOnlyB50} />
 
-        {allEntries.length === 0 && <div className="w-full text-sm py-8 px-4 text-center">No entries</div>}
+        {allEntries.length === 0 && (
+          <div className="w-full text-sm py-8 px-4 text-center">{t('rating-calculator:table.no-entries')}</div>
+        )}
       </div>
     </div>
   )
@@ -305,6 +312,7 @@ function RatingCalculatorTableContent({
 }) {
   const { allEntries } = useRatingEntries()
   const { modifyEntries } = useRatingCalculatorContext()
+  const { t } = useTranslation(['rating-calculator'])
 
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'includedIn', desc: true },
@@ -315,7 +323,7 @@ function RatingCalculatorTableContent({
     () => [
       columnHelper.display({
         id: 'chart',
-        header: 'Chart',
+        header: t('rating-calculator:table.headers.chart'),
         cell: ({ row }) => (
           <SheetListItem
             sheet={row.original.sheet}
@@ -344,21 +352,21 @@ function RatingCalculatorTableContent({
       }),
       columnHelper.accessor('includedIn', {
         id: 'includedIn',
-        header: 'Incl. In',
+        header: t('rating-calculator:table.headers.included-in'),
         cell: RatingCalculatorIncludedInCell,
         size: 50,
         minSize: 100,
       }),
       columnHelper.accessor('achievementRate', {
         id: 'achievementRate',
-        header: 'Achievement Rate',
+        header: t('rating-calculator:table.headers.achievement-rate'),
         cell: RatingCalculatorAchievementRateCell,
         size: 100,
         minSize: 150,
       }),
       columnHelper.accessor('rating.ratingAwardValue', {
         id: 'rating',
-        header: 'Rating',
+        header: t('rating-calculator:table.headers.rating'),
         cell: RatingCalculatorRatingCell,
         size: 50,
         minSize: 100,
@@ -370,13 +378,13 @@ function RatingCalculatorTableContent({
       }),
       columnHelper.display({
         id: 'actions',
-        header: 'Actions',
+        header: t('rating-calculator:table.headers.actions'),
         cell: ({ row }) => <RatingCalculatorRowActions entry={row.original} modifyEntries={modifyEntries} />,
         size: 50,
         minSize: 100,
       }),
     ],
-    [modifyEntries, compactMode],
+    [modifyEntries, compactMode, t],
   )
 
   const data = useMemo(() => {
