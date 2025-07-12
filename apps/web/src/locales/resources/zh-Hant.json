@@ -224,78 +224,48 @@
         "to-json": {
           "all-records": "匯出為 JSON (所有記錄)",
           "b50-records": "匯出為 JSON (僅 B50 記錄)"
+        },
+        "oneshot-image": {
+          "button": "渲染為 B50 圖片...",
+          "dialog": {
+            "title": "渲染為 B50 圖片...",
+            "loading": {
+              "title": "渲染中...",
+              "calculating": "計算中...",
+              "message": "這可能需要一段時間，具體取決於當前伺服器負載；通常來說，渲染將在 10 秒內完成。"
+            },
+            "error": "渲染圖片時發生錯誤：{{message}}",
+            "save-instruction": "長按或右鍵點擊圖片以儲存到您的裝置。",
+            "beta-notice": "此功能處於測試階段，可能無法正常運作。請隨時向開發者回報任何問題或反饋 :D"
+          }
         }
       },
       "import": {
         "button": "匯入...",
         "diving-fish": {
-          "title": "從 maimai NET 匯入...",
-          "success": "已匯入 {{count}} 條記錄",
-          "error": "匯入失敗：{{error}}",
-          "dialog": {
-            "title": "從 NET 匯入",
-            "sega-id": "SEGA 帳號",
-            "sega-password": "SEGA 帳號密碼",
-            "region": {
-              "label": "地區",
-              "intl": {
-                "name": "國際版",
-                "domain": "(maimaidx-eng.com)"
-              },
-              "jp": {
-                "name": "日本",
-                "domain": "(maimaidx.jp)"
-              }
-            },
-            "remember-credentials": {
-              "label": "記住登入資訊",
-              "description": "登入資訊將儲存在瀏覽器本地。"
-            },
-            "auto-import": {
-              "label": "啟動時自動匯入",
-              "description": "開啟 DXRating 時自動從 NET 匯入記錄。需要啟用「記住登入資訊」。",
-              "options": {
-                "disabled": {
-                  "title": "停用"
-                },
-                "replace": {
-                  "title": "替換",
-                  "description": "替換所有記錄"
-                },
-                "merge": {
-                  "title": "合併",
-                  "description": "更高分數覆蓋，缺失記錄新增"
-                }
-              }
-            },
-            "security-notice": {
-              "credentials": "您的登入資訊不會被儲存、記錄或分享，僅在匯入過程中使用。如有需要，您可以",
-              "source-code": "查看原始碼",
-              "slsa": {
-                "text": "我們正在採用",
-                "framework": "SLSA 框架",
-                "description": "，包括可重現建置和簽名容器映像，以幫助使用者確認伺服器上執行程式碼的真實性。此外，如果需求足夠，我們將支援連接到自行託管的 NET 匯入服務執行個體，讓您可以在自己的基礎設施上執行。"
-              }
-            },
-            "actions": {
-              "close": "關閉",
-              "import-once": "匯入一次",
-              "reimport": {
-                "title": "重新匯入",
-                "description": "(已啟用自動匯入)"
-              },
-              "importing": "匯入中..."
-            }
-          }
+          "title": "從水魚查分器匯入...",
+          "description": "請選擇以下兩個選項之一並填寫對應欄位。您的設定將儲存在瀏覽器中。",
+          "loading": "正在從水魚查分器匯入...",
+          "success": "已從水魚查分器匯入 {{count}} 條記錄",
+          "error": "從水魚查分器匯入記錄時發生錯誤。請確認用戶名或綁定的 QQ 是否正確？{{error}}",
+          "invalid-profile": "請輸入您的水魚查分器資料",
+          "no-sheets": "未找到譜面",
+          "warning": {
+            "title": "注意！",
+            "description": "您現有的記錄將被匯入的記錄覆蓋。"
+          },
+          "or": "或",
+          "close": "關閉",
+          "import": "匯入"
         },
         "net-records": {
-          "title": "從 maimai NET 匯入...",
+          "title": "從 NET 匯入...",
           "success": "已匯入 {{count}} 條記錄",
           "error": "匯入失敗：{{error}}",
           "dialog": {
             "title": "從 NET 匯入",
-            "sega-id": "SEGA 帳號",
-            "sega-password": "SEGA 帳號密碼",
+            "sega-id": "您的世嘉 ID",
+            "sega-password": "您的世嘉 ID 密碼",
             "region": {
               "label": "地區",
               "intl": {
@@ -308,12 +278,12 @@
               }
             },
             "remember-credentials": {
-              "label": "記住登入資訊",
-              "description": "登入資訊將儲存在瀏覽器本地。"
+              "label": "記住憑據",
+              "description": "您的憑據將儲存在瀏覽器本地。"
             },
             "auto-import": {
-              "label": "啟動時自動匯入",
-              "description": "開啟 DXRating 時自動從 NET 匯入記錄。需要啟用「記住登入資訊」。",
+              "label": "應用程式啟動時自動匯入",
+              "description": "開啟 DXRating 時自動從 NET 匯入記錄。需要啟用「記住憑據」。",
               "options": {
                 "disabled": {
                   "title": "停用"
@@ -324,24 +294,24 @@
                 },
                 "merge": {
                   "title": "合併",
-                  "description": "更高分數覆蓋，缺失記錄新增"
+                  "description": "如果更高則覆蓋，如果缺失則添加"
                 }
               }
             },
             "security-notice": {
-              "credentials": "您的登入資訊不會被儲存、記錄或分享，僅在匯入過程中使用。如有需要，您可以",
-              "source-code": "查看原始碼",
+              "credentials": "您的憑據不會被儲存、記錄或共享，僅在匯入過程中使用。如果您願意，您可以",
+              "source-code": "檢查原始碼",
               "slsa": {
-                "text": "我們正在採用",
+                "text": "我們也正在採用",
                 "framework": "SLSA 框架",
-                "description": "，包括可重現建置和簽名容器映像，以幫助使用者確認伺服器上執行程式碼的真實性。此外，如果需求足夠，我們將支援連接到自行託管的 NET 匯入服務執行個體，讓您可以在自己的基礎設施上執行。"
+                "description": "，包括可重現構建和簽名容器映像，以幫助用戶確定伺服器上運行的程式碼的真實性。此外，如果需求出現，我們將支援連接到自託管的 NET 匯入服務實例，這樣您就可以在自己的基礎設施上運行它。"
               }
             },
             "actions": {
               "close": "關閉",
               "import-once": "匯入一次",
               "reimport": {
-                "title": "重新匯入",
+                "title": "立即重新匯入",
                 "description": "(已啟用自動匯入)"
               },
               "importing": "匯入中..."

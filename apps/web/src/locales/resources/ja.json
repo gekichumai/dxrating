@@ -224,77 +224,66 @@
         "to-json": {
           "all-records": "JSONにエクスポート (全ての記録)",
           "b50-records": "JSONにエクスポート (B50のみ)"
+        },
+        "oneshot-image": {
+          "button": "ワンショット画像として出力...",
+          "dialog": {
+            "title": "ワンショット画像として出力...",
+            "loading": {
+              "title": "出力中...",
+              "calculating": "計算中...",
+              "message": "サーバーの負荷状況によって時間がかかる場合があります。通常は10秒以内に完了します。"
+            },
+            "error": "画像の出力中にエラーが発生しました：{{message}}",
+            "save-instruction": "画像を長押しまたは右クリックして、デバイスに保存してください。",
+            "beta-notice": "この機能はベータ版であり、予期せぬ動作をする可能性があります。問題や改善点がありましたら、開発者までご報告ください :D"
+          }
         }
       },
       "import": {
         "button": "インポート...",
         "diving-fish": {
-          "title": "maimai NETからインポート...",
+          "title": "diving-fishからインポート...",
+          "description": "以下の2つのオプションから1つを選択し、対応するフィールドを入力してください。設定はブラウザに保存されます。",
+          "loading": "diving-fishからインポート中...",
           "success": "{{count}}件のレコードをインポートしました",
-          "error": "インポートに失敗しました：{{error}}",
-          "dialog": {
-            "title": "NETからインポート",
-            "sega-id": "SEGAアカウントID",
-            "sega-password": "SEGAアカウントパスワード",
-            "region": {
-              "label": "リージョン",
-              "intl": {
-                "name": "インターナショナル",
-                "domain": "(maimaidx-eng.com)"
-              },
-              "jp": {
-                "name": "日本",
-                "domain": "(maimaidx.jp)"
-              }
-            },
-            "remember-credentials": {
-              "label": "認証情報を保存",
-              "description": "認証情報はブラウザのローカルストレージに保存されます。"
-            },
-            "auto-import": {
-              "label": "アプリ起動時に自動インポート",
-              "description": "DXRatingを開くと自動的にNETからレコードをインポートします。「認証情報を保存」を有効にする必要があります。",
-              "options": {
-                "disabled": {
-                  "title": "無効"
-                },
-                "replace": {
-                  "title": "置き換え",
-                  "description": "全てのレコードを置き換えます"
-                },
-                "merge": {
-                  "title": "マージ",
-                  "description": "より高いスコアで上書き、存在しないレコードを追加"
-                }
-              }
-            },
-            "security-notice": {
-              "credentials": "認証情報は保存、ログ記録、共有されることはなく、インポート処理中のみ使用されます。必要に応じて",
-              "source-code": "ソースコードを確認",
-              "slsa": {
-                "text": "また、私たちは",
-                "framework": "SLSAフレームワーク",
-                "description": "を採用し、再現可能なビルドと署名付きコンテナイメージを通じて、サーバー上で実行されるコードの信頼性を確保しています。さらに、需要があれば、NETインポートサービスのセルフホストインスタンスへの接続もサポートする予定です。"
-              }
-            },
-            "actions": {
-              "close": "閉じる",
-              "import-once": "一度だけインポート",
-              "reimport": {
-                "title": "再インポート",
-                "description": "(自動インポート有効)"
-              },
-              "importing": "インポート中..."
-            }
-          }
+          "error": "インポートに失敗しました：ユーザー名またはQQが正しいか確認してください。{{error}}",
+          "invalid-profile": "Diving-Fishプロフィールを入力してください",
+          "no-sheets": "譜面が見つかりませんでした",
+          "warning": {
+            "title": "注意！",
+            "description": "既存のエントリーはインポートされたものに上書きされます。"
+          },
+          "or": "または",
+          "close": "閉じる",
+          "import": "インポート"
+        },
+        "aqua-dx": {
+          "title": "AquaDX JSONからインポート...",
+          "success": "{{count}}件のエントリーをインポートしました"
+        },
+        "aqua-sqlite": {
+          "title": "Aqua SQLiteデータベースからインポート...",
+          "success": "{{count}}件のエントリーをインポートしました",
+          "error": "インポートに失敗しました：{{error}}"
+        },
+        "json": {
+          "title": "DXRating JSONからインポート...",
+          "success": "{{count}}件のエントリーをインポートしました",
+          "error": "インポートに失敗しました：{{error}}"
+        },
+        "net-records": {
+          "title": "NETからインポート...",
+          "success": "{{count}}件のエントリーをインポートしました",
+          "error": "インポートに失敗しました：{{error}}"
         }
       },
       "clear": {
         "button": "クリア",
         "dialog": {
-          "title": "全ての記録を削除しますか？",
+          "title": "全てのエントリーをクリアしますか？",
           "warning": "警告",
-          "message": "全ての記録が削除されます。",
+          "message": "全てのエントリーがクリアされます。",
           "cancel": "キャンセル",
           "confirm": "クリア"
         }

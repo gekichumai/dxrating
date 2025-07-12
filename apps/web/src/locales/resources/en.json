@@ -267,7 +267,10 @@
           },
           "or": "OR",
           "close": "Close",
-          "import": "Import"
+          "import": "Import",
+          "importing": "Importing...",
+          "missing-profile-info": "Please enter your Diving-Fish profile",
+          "only-one-of-the-two-fields-should-be-filled": "Please enter your Diving-Fish profile"
         },
         "aqua-dx": {
           "title": "Import from AquaDX Exported JSON...",
