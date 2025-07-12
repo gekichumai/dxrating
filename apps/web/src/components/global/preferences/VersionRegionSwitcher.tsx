@@ -10,6 +10,7 @@ import { useAppContext } from '../../../models/context/useAppContext'
 import { startViewTransition } from '../../../utils/startViewTransition'
 import { useVersionTheme } from '../../../utils/useVersionTheme'
 import { WebpSupportedImage } from '../WebpSupportedImage'
+import assetpack from '@/utils/assetpack.json'
 
 const fromMergedVersionRegionId = (id: string) => {
   const [version, region] = id.split('__') as [DXVersion, Region]
@@ -99,7 +100,7 @@ export const VersionRegionSwitcher: FC = () => {
       renderValue={(value) => (
         <div className="flex flex-col gap-0.5">
           <WebpSupportedImage
-            src={`https://shama.dxrating.net/images/version-logo/${fromMergedVersionRegionId(value).version}.png`}
+            assetpackKey={`/images/version-logo/${fromMergedVersionRegionId(value).version}.webp`}
             className="h-32 w-auto touch-callout-none"
             draggable={false}
           />
@@ -125,7 +126,7 @@ export const VersionRegionSwitcher: FC = () => {
           className={clsx('flex items-center gap-8 border-b border-solid border-gray-200', i === 0 && 'border-t')}
         >
           <WebpSupportedImage
-            src={`https://shama.dxrating.net/images/version-logo/${dxVersion}.png`}
+            assetpackKey={`/images/version-logo/${dxVersion}.webp`}
             className="h-16 touch-callout-none object-contain w-25"
             draggable={false}
           />
@@ -146,7 +147,7 @@ export const VersionRegionSwitcher: FC = () => {
             className={clsx('flex items-center gap-4 border-b border-solid border-gray-200', i === 0 && 'border-t')}
           >
             <WebpSupportedImage
-              src={`https://shama.dxrating.net/images/version-logo/${dxVersion}.png`}
+              assetpackKey={`/images/version-logo/${dxVersion}.webp`}
               className="h-12 touch-callout-none object-contain w-20"
               draggable={false}
             />

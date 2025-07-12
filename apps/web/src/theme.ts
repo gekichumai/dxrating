@@ -1,12 +1,14 @@
+import type { Asset } from '@/assetpack.gen'
 import { VersionEnum } from '@gekichumai/dxdata'
+import assetpack from '@/utils/assetpack.json'
 
 export interface Theme {
   background: {
-    at1x: string
-    at2x?: string
+    at1x: Asset
+    at2x?: Asset
   }
-  logo: string
-  favicon: string
+  logo: Asset
+  favicon: Asset
   accentColor: string
   disabled?: boolean
 }
@@ -14,44 +16,44 @@ export interface Theme {
 export const VERSION_THEME: Record<string, Theme> = {
   [VersionEnum.FESTiVALPLUS]: {
     background: {
-      at1x: 'https://shama.dxrating.net/images/background/festival-plus.jpg',
+      at1x: assetpack['/images/background/festival-plus.webp'],
     },
-    logo: 'https://shama.dxrating.net/images/version-logo/festival-plus.png',
-    favicon: 'https://shama.dxrating.net/favicon/festival-plus-1024x.jpg',
+    logo: assetpack['/images/version-logo/festival-plus.webp'],
+    favicon: assetpack['/favicon/festival-plus-1024x.jpg'],
     accentColor: '#c8a8f9',
   },
   [VersionEnum.BUDDiES]: {
     background: {
-      at1x: 'https://shama.dxrating.net/images/background/buddies.jpg',
+      at1x: assetpack['/images/background/buddies.webp'],
     },
-    logo: 'https://shama.dxrating.net/images/version-logo/buddies.png',
-    favicon: 'https://shama.dxrating.net/favicon/buddies-1024x.jpg',
+    logo: assetpack['/images/version-logo/buddies.webp'],
+    favicon: assetpack['/favicon/buddies-1024x.jpg'],
     accentColor: '#FAAE29',
   },
   [VersionEnum.BUDDiESPLUS]: {
     background: {
-      at1x: 'https://shama.dxrating.net/images/background/buddies.jpg',
+      at1x: assetpack['/images/background/buddies.webp'],
     },
-    logo: 'https://shama.dxrating.net/images/version-logo/buddies-plus.png',
-    favicon: 'https://shama.dxrating.net/favicon/buddies-1024x.jpg',
+    logo: assetpack['/images/version-logo/buddies-plus.webp'],
+    favicon: assetpack['/favicon/buddies-1024x.jpg'],
     accentColor: '#FAAE29',
   },
   [VersionEnum.PRiSM]: {
     background: {
-      at1x: 'https://shama.dxrating.net/images/background/prism.jpg',
-      at2x: 'https://shama.dxrating.net/images/background/prism@2x.jpg',
+      at1x: assetpack['/images/background/prism.webp'],
+      at2x: assetpack['/images/background/prism@2x.webp'],
     },
-    logo: 'https://shama.dxrating.net/images/version-logo/prism.png',
-    favicon: 'https://shama.dxrating.net/favicon/prism-1024x.jpg',
+    logo: assetpack['/images/version-logo/prism.webp'],
+    favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#6368C7',
   },
   [VersionEnum.PRiSMPLUS]: {
     background: {
-      at1x: 'https://shama.dxrating.net/images/background/prism-plus.jpg',
-      at2x: 'https://shama.dxrating.net/images/background/prism-plus@2x.jpg',
+      at1x: assetpack['/images/background/prism-plus.webp'],
+      at2x: assetpack['/images/background/prism-plus@2x.webp'],
     },
-    logo: 'https://shama.dxrating.net/images/version-logo/prism-plus.png',
-    favicon: 'https://shama.dxrating.net/favicon/prism-1024x.jpg',
+    logo: assetpack['/images/version-logo/prism-plus.webp'],
+    favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#6368C7',
   },
 }

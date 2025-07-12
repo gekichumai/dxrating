@@ -1,0 +1,142 @@
+{
+  "/images/version-logo/buddies-plus.webp": {
+    "name": "buddies-plus",
+    "width": 945,
+    "height": 506,
+    "size": 65004,
+    "path": "/images/version-logo/buddies-plus.webp"
+  },
+  "/images/version-logo/buddies.webp": {
+    "name": "buddies",
+    "width": 774,
+    "height": 456,
+    "size": 79228,
+    "path": "/images/version-logo/buddies.webp"
+  },
+  "/images/version-logo/festival-plus.webp": {
+    "name": "festival-plus",
+    "width": 538,
+    "height": 266,
+    "size": 53028,
+    "path": "/images/version-logo/festival-plus.webp"
+  },
+  "/images/version-logo/prism-plus.webp": {
+    "name": "prism-plus",
+    "width": 645,
+    "height": 257,
+    "size": 56212,
+    "path": "/images/version-logo/prism-plus.webp"
+  },
+  "/images/version-logo/prism.webp": {
+    "name": "prism",
+    "width": 580,
+    "height": 276,
+    "size": 53976,
+    "path": "/images/version-logo/prism.webp"
+  },
+  "/images/background/buddies.jpg": {
+    "name": "buddies",
+    "width": 2000,
+    "height": 2400,
+    "size": 194675,
+    "path": "/images/background/buddies.jpg"
+  },
+  "/images/background/festival-plus.jpg": {
+    "name": "festival-plus",
+    "width": 2200,
+    "height": 2400,
+    "size": 175299,
+    "path": "/images/background/festival-plus.jpg"
+  },
+  "/images/background/prism-plus.jpg": {
+    "name": "prism-plus",
+    "width": 2000,
+    "height": 2400,
+    "size": 385637,
+    "path": "/images/background/prism-plus.jpg"
+  },
+  "/images/background/prism-plus@2x.jpg": {
+    "name": "prism-plus@2x",
+    "width": 4000,
+    "height": 4800,
+    "size": 940914,
+    "path": "/images/background/prism-plus@2x.jpg"
+  },
+  "/images/background/prism.jpg": {
+    "name": "prism",
+    "width": 2000,
+    "height": 2400,
+    "size": 222280,
+    "path": "/images/background/prism.jpg"
+  },
+  "/images/background/prism@2x.jpg": {
+    "name": "prism@2x",
+    "width": 4000,
+    "height": 4800,
+    "size": 879581,
+    "path": "/images/background/prism@2x.jpg"
+  },
+  "/images/background/buddies.webp": {
+    "name": "buddies",
+    "width": 2000,
+    "height": 2400,
+    "size": 86382,
+    "path": "/images/background/buddies.webp"
+  },
+  "/images/background/festival-plus.webp": {
+    "name": "festival-plus",
+    "width": 2200,
+    "height": 2400,
+    "size": 67838,
+    "path": "/images/background/festival-plus.webp"
+  },
+  "/images/background/prism-plus.webp": {
+    "name": "prism-plus",
+    "width": 2000,
+    "height": 2400,
+    "size": 114538,
+    "path": "/images/background/prism-plus.webp"
+  },
+  "/images/background/prism-plus@2x.webp": {
+    "name": "prism-plus@2x",
+    "width": 4000,
+    "height": 4800,
+    "size": 296344,
+    "path": "/images/background/prism-plus@2x.webp"
+  },
+  "/images/background/prism.webp": {
+    "name": "prism",
+    "width": 2000,
+    "height": 2400,
+    "size": 201012,
+    "path": "/images/background/prism.webp"
+  },
+  "/images/background/prism@2x.webp": {
+    "name": "prism@2x",
+    "width": 4000,
+    "height": 4800,
+    "size": 682512,
+    "path": "/images/background/prism@2x.webp"
+  },
+  "/favicon/buddies-1024x.jpg": {
+    "name": "buddies-1024x",
+    "width": 1024,
+    "height": 1024,
+    "size": 360783,
+    "path": "/favicon/buddies-1024x.jpg"
+  },
+  "/favicon/festival-plus-1024x.jpg": {
+    "name": "festival-plus-1024x",
+    "width": 1024,
+    "height": 1024,
+    "size": 323679,
+    "path": "/favicon/festival-plus-1024x.jpg"
+  },
+  "/favicon/prism-1024x.jpg": {
+    "name": "prism-1024x",
+    "width": 1024,
+    "height": 1024,
+    "size": 332841,
+    "path": "/favicon/prism-1024x.jpg"
+  }
+}
