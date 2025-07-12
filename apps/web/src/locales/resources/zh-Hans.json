@@ -304,7 +304,7 @@
             },
             "auto-import": {
               "label": "应用启动时自动导入",
-              "description": "打开 DXRating 时自动从 NET 导入记录。需要启用"记住凭据"。",
+              "description": "打开 DXRating 时自动从 NET 导入记录。需要启用“记住凭据”。",
               "options": {
                 "disabled": {
                   "title": "禁用"

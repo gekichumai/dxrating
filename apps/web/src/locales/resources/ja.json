@@ -333,13 +333,8 @@
               "label": "ログイン情報を保存"
             },
             "security-notice": {
-              "credentials": "ログイン情報は、DXRatingのサーバーに送信されます。",
-              "slsa": {
-                "description": "DXRatingのサーバーは、SLSA Level 1のセキュリティ要件を満たしています。",
-                "framework": "SLSA",
-                "text": "DXRatingのサーバーは、SLSA Level 1のセキュリティ要件を満たしています。"
-              },
-              "source-code": "DXRatingのソースコードは、GitHubで公開されています。"
+              "credentials": "あなたのログイン情報は保存されず、記録されず、共有されません。インポートプロセスの間のみ使用されます。ご希望であれば、",
+              "source-code": "ソースコードを確認することができます"
             },
             "sega-id": "セガID",
             "sega-password": "セガIDパスワード",
