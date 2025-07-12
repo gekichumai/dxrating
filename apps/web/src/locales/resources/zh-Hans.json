@@ -228,19 +228,22 @@
     "io": {
       "export": {
         "button": "导出...",
-        "to-json": "Export to JSON",
+        "to-json": {
+          "all-records": "导出为 JSON (所有记录)",
+          "b50-records": "导出为 JSON (仅 B50 记录)"
+        },
         "oneshot-image": {
-          "button": "Render as OneShot Image",
+          "button": "渲染 B50 图片...",
           "dialog": {
-            "title": "Render as OneShot Image",
+            "title": "渲染 B50 图片...",
             "loading": {
-              "title": "Rendering...",
-              "calculating": "Calculating...",
-              "message": "This may take a while depending on the current server load; typically rendering will finish within 10 seconds."
+              "title": "渲染中...",
+              "calculating": "计算中...",
+              "message": "这可能需要一段时间，具体取决于当前服务器负载；通常来说，渲染将在 10 秒内完成。"
             },
-            "error": "An error occurred while rendering the image: {{message}}",
-            "save-instruction": "Long-press or right-click the image to save it to your device.",
-            "beta-notice": "This feature is in beta and may not work as expected. Please feel free to report any issues or feedback to the developer :D"
+            "error": "渲染图片时发生错误: {{message}}",
+            "save-instruction": "长按或右键点击图片以保存到您的设备。",
+            "beta-notice": "此功能处于测试阶段，可能无法正常工作。请随时向开发者报告任何问题或反馈 :D"
           }
         }
       },
@@ -281,8 +284,63 @@
         },
         "net-records": {
           "title": "从 maimai NET 导入...",
-          "success": "成功导入 {{count}} 条记录",
-          "error": "导入失败: {{error}}"
+          "success": "已导入 {{count}} 条记录",
+          "error": "导入失败：{{error}}",
+          "dialog": {
+            "title": "从 NET 导入",
+            "sega-id": "SEGA 账号",
+            "sega-password": "SEGA 账号密码",
+            "region": {
+              "label": "地区",
+              "intl": {
+                "name": "国际版",
+                "domain": "(maimaidx-eng.com)"
+              },
+              "jp": {
+                "name": "日本",
+                "domain": "(maimaidx.jp)"
+              }
+            },
+            "remember-credentials": {
+              "label": "记住登录信息",
+              "description": "登录信息将保存在浏览器本地。"
+            },
+            "auto-import": {
+              "label": "启动时自动导入",
+              "description": "打开 DXRating 时自动从 NET 导入记录。需要启用“记住登录信息”。",
+              "options": {
+                "disabled": {
+                  "title": "禁用"
+                },
+                "replace": {
+                  "title": "替换",
+                  "description": "替换所有记录"
+                },
+                "merge": {
+                  "title": "合并",
+                  "description": "更高分数覆盖，缺失记录添加"
+                }
+              }
+            },
+            "security-notice": {
+              "credentials": "您的登录信息不会被保存、记录或分享，仅在导入过程中使用。如有需要，您可以",
+              "source-code": "查看源代码",
+              "slsa": {
+                "text": "我们正在采用",
+                "framework": "SLSA 框架",
+                "description": "，包括可重现构建和签名容器镜像，以帮助用户确认服务器上运行代码的真实性。此外，如果需求足够，我们将支持连接到自托管的 NET 导入服务实例，让您可以在自己的基础设施上运行。"
+              }
+            },
+            "actions": {
+              "close": "关闭",
+              "import-once": "导入一次",
+              "reimport": {
+                "title": "重新导入",
+                "description": "(已启用自动导入)"
+              },
+              "importing": "导入中..."
+            }
+          }
         }
       },
       "clear": {

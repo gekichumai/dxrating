@@ -1,6 +1,7 @@
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
 import type { FC } from 'react'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import IconMdiFile from '~icons/mdi/file'
 import { useRatingCalculatorContext } from '../../../../models/context/RatingCalculatorContext'
 import { type RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
@@ -21,6 +22,8 @@ const saveAsJsonFile = (data: string) => {
 export const ExportToJSONMenuItem: FC = () => {
   const { entries } = useRatingCalculatorContext()
   const { b15Entries, b35Entries } = useRatingEntries()
+  const { t } = useTranslation(['rating-calculator'])
+
   return (
     <>
       <MenuItem
@@ -31,7 +34,7 @@ export const ExportToJSONMenuItem: FC = () => {
         <ListItemIcon>
           <IconMdiFile />
         </ListItemIcon>
-        <ListItemText>Export JSON (All Records)</ListItemText>
+        <ListItemText>{t('rating-calculator:io.export.to-json.all-records')}</ListItemText>
       </MenuItem>
 
       <MenuItem
@@ -48,7 +51,7 @@ export const ExportToJSONMenuItem: FC = () => {
         <ListItemIcon>
           <IconMdiFile />
         </ListItemIcon>
-        <ListItemText>Export JSON (Only B50 Records)</ListItemText>
+        <ListItemText>{t('rating-calculator:io.export.to-json.b50-records')}</ListItemText>
       </MenuItem>
     </>
   )

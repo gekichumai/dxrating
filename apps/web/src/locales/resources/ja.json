@@ -221,10 +221,73 @@
     "io": {
       "export": {
         "button": "エクスポート...",
-        "to-json": "JSONにエクスポート"
+        "to-json": {
+          "all-records": "JSONにエクスポート (全ての記録)",
+          "b50-records": "JSONにエクスポート (B50のみ)"
+        }
       },
       "import": {
-        "button": "インポート..."
+        "button": "インポート...",
+        "diving-fish": {
+          "title": "maimai NETからインポート...",
+          "success": "{{count}}件のレコードをインポートしました",
+          "error": "インポートに失敗しました：{{error}}",
+          "dialog": {
+            "title": "NETからインポート",
+            "sega-id": "SEGAアカウントID",
+            "sega-password": "SEGAアカウントパスワード",
+            "region": {
+              "label": "リージョン",
+              "intl": {
+                "name": "インターナショナル",
+                "domain": "(maimaidx-eng.com)"
+              },
+              "jp": {
+                "name": "日本",
+                "domain": "(maimaidx.jp)"
+              }
+            },
+            "remember-credentials": {
+              "label": "認証情報を保存",
+              "description": "認証情報はブラウザのローカルストレージに保存されます。"
+            },
+            "auto-import": {
+              "label": "アプリ起動時に自動インポート",
+              "description": "DXRatingを開くと自動的にNETからレコードをインポートします。「認証情報を保存」を有効にする必要があります。",
+              "options": {
+                "disabled": {
+                  "title": "無効"
+                },
+                "replace": {
+                  "title": "置き換え",
+                  "description": "全てのレコードを置き換えます"
+                },
+                "merge": {
+                  "title": "マージ",
+                  "description": "より高いスコアで上書き、存在しないレコードを追加"
+                }
+              }
+            },
+            "security-notice": {
+              "credentials": "認証情報は保存、ログ記録、共有されることはなく、インポート処理中のみ使用されます。必要に応じて",
+              "source-code": "ソースコードを確認",
+              "slsa": {
+                "text": "また、私たちは",
+                "framework": "SLSAフレームワーク",
+                "description": "を採用し、再現可能なビルドと署名付きコンテナイメージを通じて、サーバー上で実行されるコードの信頼性を確保しています。さらに、需要があれば、NETインポートサービスのセルフホストインスタンスへの接続もサポートする予定です。"
+              }
+            },
+            "actions": {
+              "close": "閉じる",
+              "import-once": "一度だけインポート",
+              "reimport": {
+                "title": "再インポート",
+                "description": "(自動インポート有効)"
+              },
+              "importing": "インポート中..."
+            }
+          }
+        }
       },
       "clear": {
         "button": "クリア",

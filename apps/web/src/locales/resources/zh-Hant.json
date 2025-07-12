@@ -221,10 +221,133 @@
     "io": {
       "export": {
         "button": "匯出...",
-        "to-json": "匯出為JSON"
+        "to-json": {
+          "all-records": "匯出為 JSON (所有記錄)",
+          "b50-records": "匯出為 JSON (僅 B50 記錄)"
+        }
       },
       "import": {
-        "button": "匯入..."
+        "button": "匯入...",
+        "diving-fish": {
+          "title": "從 maimai NET 匯入...",
+          "success": "已匯入 {{count}} 條記錄",
+          "error": "匯入失敗：{{error}}",
+          "dialog": {
+            "title": "從 NET 匯入",
+            "sega-id": "SEGA 帳號",
+            "sega-password": "SEGA 帳號密碼",
+            "region": {
+              "label": "地區",
+              "intl": {
+                "name": "國際版",
+                "domain": "(maimaidx-eng.com)"
+              },
+              "jp": {
+                "name": "日本",
+                "domain": "(maimaidx.jp)"
+              }
+            },
+            "remember-credentials": {
+              "label": "記住登入資訊",
+              "description": "登入資訊將儲存在瀏覽器本地。"
+            },
+            "auto-import": {
+              "label": "啟動時自動匯入",
+              "description": "開啟 DXRating 時自動從 NET 匯入記錄。需要啟用「記住登入資訊」。",
+              "options": {
+                "disabled": {
+                  "title": "停用"
+                },
+                "replace": {
+                  "title": "替換",
+                  "description": "替換所有記錄"
+                },
+                "merge": {
+                  "title": "合併",
+                  "description": "更高分數覆蓋，缺失記錄新增"
+                }
+              }
+            },
+            "security-notice": {
+              "credentials": "您的登入資訊不會被儲存、記錄或分享，僅在匯入過程中使用。如有需要，您可以",
+              "source-code": "查看原始碼",
+              "slsa": {
+                "text": "我們正在採用",
+                "framework": "SLSA 框架",
+                "description": "，包括可重現建置和簽名容器映像，以幫助使用者確認伺服器上執行程式碼的真實性。此外，如果需求足夠，我們將支援連接到自行託管的 NET 匯入服務執行個體，讓您可以在自己的基礎設施上執行。"
+              }
+            },
+            "actions": {
+              "close": "關閉",
+              "import-once": "匯入一次",
+              "reimport": {
+                "title": "重新匯入",
+                "description": "(已啟用自動匯入)"
+              },
+              "importing": "匯入中..."
+            }
+          }
+        },
+        "net-records": {
+          "title": "從 maimai NET 匯入...",
+          "success": "已匯入 {{count}} 條記錄",
+          "error": "匯入失敗：{{error}}",
+          "dialog": {
+            "title": "從 NET 匯入",
+            "sega-id": "SEGA 帳號",
+            "sega-password": "SEGA 帳號密碼",
+            "region": {
+              "label": "地區",
+              "intl": {
+                "name": "國際版",
+                "domain": "(maimaidx-eng.com)"
+              },
+              "jp": {
+                "name": "日本",
+                "domain": "(maimaidx.jp)"
+              }
+            },
+            "remember-credentials": {
+              "label": "記住登入資訊",
+              "description": "登入資訊將儲存在瀏覽器本地。"
+            },
+            "auto-import": {
+              "label": "啟動時自動匯入",
+              "description": "開啟 DXRating 時自動從 NET 匯入記錄。需要啟用「記住登入資訊」。",
+              "options": {
+                "disabled": {
+                  "title": "停用"
+                },
+                "replace": {
+                  "title": "替換",
+                  "description": "替換所有記錄"
+                },
+                "merge": {
+                  "title": "合併",
+                  "description": "更高分數覆蓋，缺失記錄新增"
+                }
+              }
+            },
+            "security-notice": {
+              "credentials": "您的登入資訊不會被儲存、記錄或分享，僅在匯入過程中使用。如有需要，您可以",
+              "source-code": "查看原始碼",
+              "slsa": {
+                "text": "我們正在採用",
+                "framework": "SLSA 框架",
+                "description": "，包括可重現建置和簽名容器映像，以幫助使用者確認伺服器上執行程式碼的真實性。此外，如果需求足夠，我們將支援連接到自行託管的 NET 匯入服務執行個體，讓您可以在自己的基礎設施上執行。"
+              }
+            },
+            "actions": {
+              "close": "關閉",
+              "import-once": "匯入一次",
+              "reimport": {
+                "title": "重新匯入",
+                "description": "(已啟用自動匯入)"
+              },
+              "importing": "匯入中..."
+            }
+          }
+        }
       },
       "clear": {
         "button": "清空",

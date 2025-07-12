@@ -232,7 +232,10 @@
     "io": {
       "export": {
         "button": "Export...",
-        "to-json": "Export to JSON",
+        "to-json": {
+          "all-records": "Export to JSON (All Records)",
+          "b50-records": "Export to JSON (Only B50 Records)"
+        },
         "oneshot-image": {
           "button": "Render as OneShot Image",
           "dialog": {
@@ -283,7 +286,62 @@
         "net-records": {
           "title": "Import from NET Records...",
           "success": "Imported {{count}} entries",
-          "error": "Failed to import: {{error}}"
+          "error": "Failed to import: {{error}}",
+          "dialog": {
+            "title": "Import from NET",
+            "sega-id": "Your Sega ID",
+            "sega-password": "Your Sega ID Password",
+            "region": {
+              "label": "Region",
+              "intl": {
+                "name": "International",
+                "domain": "(maimaidx-eng.com)"
+              },
+              "jp": {
+                "name": "Japan",
+                "domain": "(maimaidx.jp)"
+              }
+            },
+            "remember-credentials": {
+              "label": "Remember Credentials",
+              "description": "Your credentials will be stored locally in your browser."
+            },
+            "auto-import": {
+              "label": "Auto-import on App Start",
+              "description": "Automatically start importing records from NET when you open DXRating. Requires \"Remember Credentials\" to be enabled.",
+              "options": {
+                "disabled": {
+                  "title": "Disabled"
+                },
+                "replace": {
+                  "title": "Replace",
+                  "description": "Replaces all records"
+                },
+                "merge": {
+                  "title": "Merge",
+                  "description": "Overwrites record if higher, adds record if missing"
+                }
+              }
+            },
+            "security-notice": {
+              "credentials": "Your credentials will not be stored, logged, or shared, and are only used for the duration of this import process. If you wish, you may",
+              "source-code": "inspect the source code",
+              "slsa": {
+                "text": "We are also in the progress of employing the",
+                "framework": "SLSA framework",
+                "description": ", including reproducible builds and signed container images to help users determine the authenticity of the code running on our server. Moreover, if demand arises, we will support connecting to self-hosted instances of the NET import service so you can run it on your own infra."
+              }
+            },
+            "actions": {
+              "close": "Close",
+              "import-once": "Import Once",
+              "reimport": {
+                "title": "Re-import Now",
+                "description": "(auto-import enabled)"
+              },
+              "importing": "Importing..."
+            }
+          }
         }
       },
       "clear": {
