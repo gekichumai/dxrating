@@ -15,12 +15,11 @@ const WHITELIST_GLOB = [
 ]
 
 export interface Asset {
-  name: string
   width: number
   height: number
-  size: number
   path: string
 }
+
 
 async function main() {
   console.log(`🔍 Searching for assets in: ${assetsDir}`)
@@ -76,14 +75,11 @@ async function main() {
     // Convert absolute path to relative public URL path
     const relativePath = path.relative(assetsDir, file)
     const publicPath = `/${relativePath.replace(/\\/g, '/')}`
-    const category = path.dirname(publicPath).replace(/\//g, '_').replace(/^_images_/, '')
 
     // Use the path as the key
     assetsData[publicPath] = {
-      name,
       width: exif.ImageWidth,
       height: exif.ImageHeight,
-      size: stats.size,
       path: publicPath,
     }
   }
@@ -98,7 +94,7 @@ async function main() {
   
   // Log processed files for verification
   for (const [path, asset] of Object.entries(assetsData)) {
-    console.log(`   ${asset.name} (${asset.width}×${asset.height}) → ${path}`)
+    console.log(`   ${asset.path} (${asset.width}×${asset.height}) → ${path}`)
   }
 }
 

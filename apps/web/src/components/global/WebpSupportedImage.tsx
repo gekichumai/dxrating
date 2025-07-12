@@ -24,7 +24,7 @@ const toCdnUrl = (path: string) => {
 }
 
 export const WebpSupportedImage = (
-  props: Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> &
+  props: Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'onLoad'> &
     (
       | {
           assetpackKey?: string
@@ -53,7 +53,7 @@ export const WebpSupportedImage = (
   })()
   if (!source) throw new Error('No source provided')
 
-  const rest = omit(props, ['assetpackKey', 'src']) as Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'>
+  const rest = omit(props, ['assetpackKey', 'src']) as Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'onLoad'>
 
   const dpr = window.devicePixelRatio
   if (dpr > 1 && source.at2x) {
