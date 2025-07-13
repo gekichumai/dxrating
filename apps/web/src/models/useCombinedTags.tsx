@@ -40,6 +40,10 @@ export const useCombinedTags = () => {
     },
     {
       focusThrottleInterval: 1000 * 60 * 60,
+      revalidateOnFocus: false, // Disable revalidation on window focus
+      revalidateOnReconnect: false, // Disable revalidation on network reconnection
+      revalidateIfStale: false, // Don't revalidate if data exists but is stale
+      dedupingInterval: 1000 * 60 * 60, // Dedupe requests within 1 hour
       suspense: false,
     },
   )
