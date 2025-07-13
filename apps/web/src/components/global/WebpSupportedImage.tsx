@@ -24,8 +24,9 @@ const toCdnUrl = (path: string) => {
 }
 
 export const WebpSupportedImage = (
-  props: Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'onLoad'> &
-    (
+  props: Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'onLoad'> & {
+    objectFit?: 'contain' | 'cover'
+  } & (
       | {
           assetpackKey?: string
         }
@@ -62,7 +63,17 @@ export const WebpSupportedImage = (
       <picture>
         <source type={srcToMimeType(webp)} srcSet={toCdnUrl(webp)} />
         <source type={srcToMimeType(source.at2x.path)} srcSet={toCdnUrl(source.at2x.path)} />
-        <img src={toCdnUrl(source.at2x.path)} height={source.at2x.height} width={source.at2x.width} {...rest} />
+        <img
+          src={toCdnUrl(source.at2x.path)}
+          height={source.at2x.height}
+          width={source.at2x.width}
+          {...rest}
+          style={{
+            aspectRatio: `${source.at2x.width} / ${source.at2x.height}`,
+            objectFit: props.objectFit,
+            ...rest.style,
+          }}
+        />
       </picture>
     )
   }
@@ -73,7 +84,17 @@ export const WebpSupportedImage = (
     <picture>
       <source type={srcToMimeType(webp)} srcSet={toCdnUrl(webp)} />
       <source type={srcToMimeType(source.at1x.path)} srcSet={toCdnUrl(source.at1x.path)} />
-      <img src={toCdnUrl(source.at1x.path)} height={source.at1x.height} width={source.at1x.width} {...rest} />
+      <img
+        src={toCdnUrl(source.at1x.path)}
+        height={source.at1x.height}
+        width={source.at1x.width}
+        {...rest}
+        style={{
+          aspectRatio: `${source.at1x.width} / ${source.at1x.height}`,
+          objectFit: props.objectFit,
+          ...rest.style,
+        }}
+      />
     </picture>
   )
 }

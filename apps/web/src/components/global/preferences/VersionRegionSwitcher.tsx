@@ -100,6 +100,7 @@ export const VersionRegionSwitcher: FC = () => {
       renderValue={(value) => (
         <div className="flex flex-col gap-0.5">
           <WebpSupportedImage
+            objectFit="contain"
             assetpackKey={`/images/version-logo/${fromMergedVersionRegionId(value).version}.webp`}
             className="h-32 w-auto touch-callout-none"
             draggable={false}
@@ -126,6 +127,7 @@ export const VersionRegionSwitcher: FC = () => {
           className={clsx('flex items-center gap-8 border-b border-solid border-gray-200', i === 0 && 'border-t')}
         >
           <WebpSupportedImage
+            objectFit="contain"
             assetpackKey={`/images/version-logo/${dxVersion}.webp`}
             className="h-16 touch-callout-none object-contain w-25"
             draggable={false}
@@ -147,6 +149,7 @@ export const VersionRegionSwitcher: FC = () => {
             className={clsx('flex items-center gap-4 border-b border-solid border-gray-200', i === 0 && 'border-t')}
           >
             <WebpSupportedImage
+              objectFit="contain"
               assetpackKey={`/images/version-logo/${dxVersion}.webp`}
               className="h-12 touch-callout-none object-contain w-20"
               draggable={false}
