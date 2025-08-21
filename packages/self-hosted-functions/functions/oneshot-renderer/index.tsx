@@ -5,6 +5,7 @@ import fs from 'node:fs/promises'
 import satori, { type Font } from 'satori'
 import sharp from 'sharp'
 import { z } from 'zod'
+import { type Scope, Sentry } from '../../lib/sentry'
 import { calculateDXScoreStars } from './calculateDXScore'
 import { type Rating, calculateRating } from './calculateRating'
 import { demo } from './demo'
@@ -298,112 +299,216 @@ const createServerTimingTimer = () => {
 }
 
 export const handler = async (ctx: Koa.Context) => {
-  const body = ctx.query.demo
-    ? ({
-        entries: demo,
-        version: VersionEnum.PRiSMPLUS,
-        region: 'jp' as const,
-        playerCollection: {
-          name: 'お友達',
-          icon: 0,
-        },
-        calculatedEntries: undefined,
-      } as const)
-    : requestBodySchema.parse(ctx.request.body)
-
-  const version = body.version
-  const region = body.region
-  const playerCollection = body.playerCollection
-
-  const timer = createServerTimingTimer()
-
-  timer.start('font')
-  if (!cachedFonts) {
-    cachedFonts = await fetchFontPack()
-  }
-  const fonts = cachedFonts
-  timer.stop('font')
-
-  timer.start('calc')
-  const data = body.calculatedEntries
-    ? prepareCalculatedEntries(body.calculatedEntries, version)
-    : calculateEntries(body.entries ?? [], version)
-  timer.stop('calc')
-
-  timer.start('jsx')
-  const content = await renderContent({ data, version, region, playerCollection })
-  timer.stop('jsx')
-
-  timer.start('satori')
-  const svg = await satori(content, {
-    width: ONESHOT_WIDTH,
-    height: ONESHOT_HEIGHT,
-    fonts,
-    tailwindConfig: {
-      theme: {
-        fontFamily: {
-          sans: 'Source Han Sans, sans-serif',
-          newrodin: 'NewRodinProDB, sans-serif',
-          seurat: 'SeuratProDB, sans-serif',
-        },
+  return await Sentry.startSpan({ name: 'renderOneshot', op: 'function' }, async () => {
+    Sentry.addBreadcrumb({
+      message: 'Starting oneshot render',
+      category: 'init',
+      data: {
+        demo: !!ctx.query.demo,
+        pixelated: !!ctx.query.pixelated,
+        format: ctx.query.format || 'svg',
       },
-    },
-  })
-  timer.stop('satori')
+      level: 'info',
+    })
 
-  if (ctx.query.pixelated) {
-    timer.start('resvg_init')
-    const resvg = new Resvg(svg, {
-      languages: ['en', 'ja'],
-      shapeRendering: 2,
-      textRendering: 2,
-      imageRendering: 0,
-      fitTo: {
-        mode: 'width',
-        value: ONESHOT_WIDTH * 2,
+    const body = ctx.query.demo
+      ? ({
+          entries: demo,
+          version: VersionEnum.PRiSMPLUS,
+          region: 'jp' as const,
+          playerCollection: {
+            name: 'お友達',
+            icon: 0,
+          },
+          calculatedEntries: undefined,
+        } as const)
+      : requestBodySchema.parse(ctx.request.body)
+
+    const version = body.version
+    const region = body.region
+    const playerCollection = body.playerCollection
+
+    Sentry.addBreadcrumb({
+      message: 'Parsed request body',
+      category: 'validation',
+      data: {
+        version,
+        region,
+        hasPlayerCollection: !!playerCollection,
+        entryCount: body.entries?.length || 0,
+        hasCalculatedEntries: !!body.calculatedEntries,
+      },
+      level: 'info',
+    })
+
+    const timer = createServerTimingTimer()
+
+    timer.start('font')
+    Sentry.addBreadcrumb({
+      message: 'Loading fonts',
+      category: 'resource',
+      level: 'info',
+    })
+    if (!cachedFonts) {
+      cachedFonts = await fetchFontPack()
+    }
+    const fonts = cachedFonts
+    timer.stop('font')
+
+    timer.start('calc')
+    Sentry.addBreadcrumb({
+      message: 'Calculating entries',
+      category: 'processing',
+      level: 'info',
+    })
+    const data = body.calculatedEntries
+      ? prepareCalculatedEntries(body.calculatedEntries, version)
+      : calculateEntries(body.entries ?? [], version)
+    timer.stop('calc')
+
+    Sentry.addBreadcrumb({
+      message: 'Entries calculated',
+      category: 'success',
+      data: {
+        b15Count: data.b15.length,
+        b35Count: data.b35.length,
+      },
+      level: 'info',
+    })
+
+    timer.start('jsx')
+    Sentry.addBreadcrumb({
+      message: 'Rendering JSX content',
+      category: 'render',
+      level: 'info',
+    })
+    const content = await renderContent({ data, version, region, playerCollection })
+    timer.stop('jsx')
+
+    timer.start('satori')
+    Sentry.addBreadcrumb({
+      message: 'Converting JSX to SVG',
+      category: 'render',
+      level: 'info',
+    })
+    const svg = await satori(content, {
+      width: ONESHOT_WIDTH,
+      height: ONESHOT_HEIGHT,
+      fonts,
+      tailwindConfig: {
+        theme: {
+          fontFamily: {
+            sans: 'Source Han Sans, sans-serif',
+            newrodin: 'NewRodinProDB, sans-serif',
+            seurat: 'SeuratProDB, sans-serif',
+          },
+        },
       },
     })
-    timer.stop('resvg_init')
+    timer.stop('satori')
 
-    timer.start('resvg_render')
-    const pngData = resvg.render()
-    timer.stop('resvg_render')
+    if (ctx.query.pixelated) {
+      Sentry.addBreadcrumb({
+        message: 'Starting pixelated rendering',
+        category: 'render',
+        level: 'info',
+      })
 
-    timer.start('resvg_as_png')
-    const pngBuffer = pngData.asPng()
-    timer.stop('resvg_as_png')
+      timer.start('resvg_init')
+      const resvg = new Resvg(svg, {
+        languages: ['en', 'ja'],
+        shapeRendering: 2,
+        textRendering: 2,
+        imageRendering: 0,
+        fitTo: {
+          mode: 'width',
+          value: ONESHOT_WIDTH * 2,
+        },
+      })
+      timer.stop('resvg_init')
 
-    let width = typeof ctx.query.width === 'string' ? Number.parseInt(ctx.query.width) : ONESHOT_WIDTH * 2
-    if (Number.isNaN(width) || !Number.isFinite(width) || width < 1 || width > 3000) {
-      width = ONESHOT_WIDTH * 2
+      timer.start('resvg_render')
+      const pngData = resvg.render()
+      timer.stop('resvg_render')
+
+      timer.start('resvg_as_png')
+      const pngBuffer = pngData.asPng()
+      timer.stop('resvg_as_png')
+
+      let width = typeof ctx.query.width === 'string' ? Number.parseInt(ctx.query.width) : ONESHOT_WIDTH * 2
+      if (Number.isNaN(width) || !Number.isFinite(width) || width < 1 || width > 3000) {
+        width = ONESHOT_WIDTH * 2
+      }
+
+      timer.start('result_buffer')
+      Sentry.addBreadcrumb({
+        message: 'Processing final image',
+        category: 'render',
+        data: { width, format: ctx.query.format },
+        level: 'info',
+      })
+      const { buffer, type } = await (async () => {
+        let s = sharp(pngBuffer)
+        if (width !== ONESHOT_WIDTH * 2) {
+          s = s.resize({ width })
+        }
+
+        if (ctx.query.format === 'png') {
+          return { buffer: await s.png().toBuffer(), type: 'image/png' }
+        }
+
+        return {
+          buffer: await s.jpeg({ quality: 90, progressive: true }).toBuffer(),
+          type: 'image/jpeg',
+        }
+      })()
+      timer.stop('result_buffer')
+
+      Sentry.addBreadcrumb({
+        message: 'Successfully rendered pixelated image',
+        category: 'success',
+        data: {
+          type,
+          bufferSize: buffer.length,
+          width,
+        },
+        level: 'info',
+      })
+
+      ctx.set('Server-Timing', timer.get().join(', '))
+
+      ctx.type = type
+      ctx.body = buffer
+      return
     }
 
-    timer.start('result_buffer')
-    const { buffer, type } = await (async () => {
-      let s = sharp(pngBuffer)
-      if (width !== ONESHOT_WIDTH * 2) {
-        s = s.resize({ width })
-      }
-
-      if (ctx.query.format === 'png') {
-        return { buffer: await s.png().toBuffer(), type: 'image/png' }
-      }
-
-      return {
-        buffer: await s.jpeg({ quality: 90, progressive: true }).toBuffer(),
-        type: 'image/jpeg',
-      }
-    })()
-    timer.stop('result_buffer')
+    Sentry.addBreadcrumb({
+      message: 'Successfully rendered SVG',
+      category: 'success',
+      data: {
+        svgSize: svg.length,
+      },
+      level: 'info',
+    })
 
     ctx.set('Server-Timing', timer.get().join(', '))
-
-    ctx.type = type
-    ctx.body = buffer
-    return
-  }
-
-  ctx.set('Server-Timing', timer.get().join(', '))
-  ctx.body = svg
-  ctx.type = 'image/svg+xml'
+    try {
+      ctx.body = svg
+      ctx.type = 'image/svg+xml'
+    } catch (error) {
+      if (error instanceof Error) {
+        Sentry.withScope((scope: Scope) => {
+          scope.setContext('function', { name: 'renderOneshot' })
+          scope.setContext('parameters', {
+            demo: !!ctx.query.demo,
+            pixelated: !!ctx.query.pixelated,
+            format: ctx.query.format,
+            width: ctx.query.width,
+          })
+          Sentry.captureException(error)
+        })
+      }
+      throw error
+    }
+  })
 }

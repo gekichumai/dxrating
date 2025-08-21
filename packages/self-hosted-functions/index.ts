@@ -1,3 +1,7 @@
+// Initialize Sentry first, before any other imports
+import { initSentry } from './lib/sentry'
+initSentry()
+
 import cors from '@koa/cors'
 import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
@@ -8,8 +12,10 @@ import {
   v0Handler as fetchNetRecordsV0Handler,
   v1Handler as fetchNetRecordsV1Handler,
 } from './functions/fetch-net-records'
+import { fetchPlayerByQQ, fetchScoresByFriendCode } from './functions/fetch-lxns-data'
 import { handler as oneshotRendererHandler } from './functions/oneshot-renderer'
 import type { AuthParams } from './lib/client'
+import { Sentry } from './lib/sentry'
 
 const app = new Koa()
 const router = new Router()
@@ -20,19 +26,7 @@ const authParamsSchema = z.object({
   region: z.enum(['jp', 'intl']),
 })
 
-type AuthParamsWithRegion = z.infer<typeof authParamsSchema>
-
-router.use(async (ctx, next) => {
-  try {
-    return await next()
-  } catch (err) {
-    console.error(err)
-    ctx.status = 500
-    ctx.body = {
-      error: err instanceof Error ? err.message : 'internal server error',
-    }
-  }
-})
+Sentry.setupKoaErrorHandler(app);
 
 router.get('/', async (ctx) => {
   ctx.body = {
@@ -80,6 +74,10 @@ const verifyParams: Koa.Middleware = async (ctx, next) => {
 
 router.post('/functions/fetch-net-records/v0', verifyParams, fetchNetRecordsV0Handler)
 router.post('/functions/fetch-net-records/v1/:region', KoaSSE(), verifyParams, fetchNetRecordsV1Handler)
+
+// LXNS API routes
+router.get('/functions/fetch-lxns-data/player/qq/:qq', fetchPlayerByQQ)
+router.get('/functions/fetch-lxns-data/player/:friendCode/scores', fetchScoresByFriendCode)
 
 router.post('/functions/render-oneshot/v0', oneshotRendererHandler)
 if (process.env.DEV === 'true') {

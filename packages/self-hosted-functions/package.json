@@ -13,6 +13,8 @@
   "dependencies": {
     "@koa/cors": "^5.0.0",
     "@resvg/resvg-js": "^2.6.2",
+    "@sentry/integrations": "^7.119.1",
+    "@sentry/node": "^10.5.0",
     "clsx": "^2.1.1",
     "cookie": "^0.6.0",
     "koa": "^2.16.0",
