@@ -1,5 +1,6 @@
 import { Button, IconButton } from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import MdiFeedback from '~icons/mdi/feedback'
 import MdiGift from '~icons/mdi/gift'
 import DiscordLogo from '~icons/simple-icons/discord'
 import { BUNDLE } from '../../utils/bundle'
@@ -25,8 +26,8 @@ export const TopBar = () => {
           </div>
         </div>
 
-        <div className='flex gap-2 flex-1 flex-col 2xs:flex-row items-stretch gap-2'>
-          <div className='flex flex-row items-center gap-2 sm:items-center flex-1'>
+        <div className="flex gap-2 flex-1 flex-col 2xs:flex-row items-stretch gap-2">
+          <div className="flex flex-row items-center gap-2 sm:items-center flex-1">
             <IconButton
               size="small"
               // new discord branding color
@@ -37,6 +38,18 @@ export const TopBar = () => {
               rel="noopener"
             >
               <DiscordLogo className="size-4" />
+            </IconButton>
+
+            <IconButton
+              size="small"
+              // feedback board color
+              className="bg-orange-500 hover:bg-orange-600 border-1 border-solid border-black/20 text-white shadow size-10"
+              LinkComponent="a"
+              href="https://dxrating.userjot.com/"
+              target="_blank"
+              rel="noopener"
+            >
+              <MdiFeedback className="size-4" />
             </IconButton>
 
             <Button
@@ -52,7 +65,7 @@ export const TopBar = () => {
             </Button>
           </div>
 
-          <div className='flex'>
+          <div className="flex">
             <LocaleSelector />
             <About />
             <UserChip />
