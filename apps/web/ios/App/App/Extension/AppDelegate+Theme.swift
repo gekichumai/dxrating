@@ -53,7 +53,22 @@ extension AppDelegate {
 
   func themeShouldUpdate(dxVersion: DXVersion) {
     DispatchQueue.main.async {
-      self.changeAppIcon(to: dxVersion == .festivalPlus ? nil : "appicon-\(dxVersion.theme)")
+      let toIcon: String = "prism"
+      switch dxVersion {
+      case .prismPlus:
+        toIcon = "prism"
+      case .prism:
+        toIcon = "prism"
+      case .buddiesPlus:
+        toIcon = "prism"
+      case .buddies:
+        toIcon = "buddies"
+      case .festivalPlus:
+        toIcon = "festival-plus"
+      @unknown default:
+        toIcon = "prism"
+      }
+      self.changeAppIcon(to: "appicon-\(toIcon)")
       UIView.animate(withDuration: 0.3) {
         self.topBarColorChunk.backgroundColor = UIColor(named: "accent-\(dxVersion.theme)")
         self.topBarColorChunk.layoutIfNeeded()
