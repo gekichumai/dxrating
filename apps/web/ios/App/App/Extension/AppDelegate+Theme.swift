@@ -53,7 +53,7 @@ extension AppDelegate {
 
   func themeShouldUpdate(dxVersion: DXVersion) {
     DispatchQueue.main.async {
-      let toIcon: String = "prism"
+      var toIcon: String = "prism"
       switch dxVersion {
       case .prismPlus:
         toIcon = "prism"
