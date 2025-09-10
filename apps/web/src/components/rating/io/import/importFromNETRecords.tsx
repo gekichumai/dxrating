@@ -117,9 +117,12 @@ export const importFromNETRecords = async (
   try {
     const stored = localStorage.getItem('import-net-records')
     if (!stored) {
-      toast.error('Error occurred while importing records from NET: No credentials stored.', {
-        id: toastId,
-      })
+      toast.error(
+        'Error occurred while importing records from NET: No credentials stored. Please head to Rating Calculator - Import - Import from NET and set your Sega ID and password to continue.',
+        {
+          id: toastId,
+        },
+      )
       throw new Error('No credentials stored.')
     }
     const parsed = JSON.parse(stored)
