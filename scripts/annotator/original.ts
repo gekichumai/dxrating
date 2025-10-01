@@ -124,6 +124,11 @@ export namespace DXDataOriginal {
     | 'FESTiVAL PLUS'
     | 'BUDDiES'
     | 'BUDDiES PLUS'
+    | 'BUDDiES'
+    | 'BUDDiES PLUS'
+    | 'PRiSM'
+    | 'PRiSM PLUS'
+    | 'CiRCLE'
 
   export interface TypeElement {
     type: TypeEnum
