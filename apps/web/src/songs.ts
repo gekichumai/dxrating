@@ -147,7 +147,33 @@ export const useSheetsSearchEngine = () => {
     )
   }, [songs, serverAliases])
 
+  const sheetsByInternalId = useMemo(() => {
+    const map = new Map<number, FlattenedSheet[]>()
+
+    for (const sheet of sheets ?? []) {
+      if (sheet.internalId === undefined) {
+        continue
+      }
+
+      const existing = map.get(sheet.internalId) ?? []
+      existing.push(sheet)
+      map.set(sheet.internalId, existing)
+    }
+
+    return map
+  }, [sheets])
+
   const search = (term: string) => {
+    const trimmedTerm = term.trim()
+
+    if (/^\d+$/.test(trimmedTerm)) {
+      const targetInternalId = Number.parseInt(trimmedTerm, 10)
+
+      if (!Number.isNaN(targetInternalId)) {
+        return sheetsByInternalId.get(targetInternalId) ?? []
+      }
+    }
+
     const results = fuseInstance.search(term)
     return results.flatMap((result) => {
       return sheets?.filter((sheet) => sheet.songId === result.item.songId) ?? []
