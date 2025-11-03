@@ -33,6 +33,9 @@ const VERSION_ID_MAP = new Map([
   ['FESTiVAL PLUS', 20],
   ['BUDDiES', 21],
   ['BUDDiES PLUS', 22],
+  ['PRiSM', 23],
+  ['PRiSM PLUS', 24],
+  ['CiRCLE', 25],
   //! add further version here !//
 ])
 

@@ -5,7 +5,7 @@ import { DXRatingPlugin } from '../../utils/capacitor/plugin/wrap'
 
 type AppContext = AppContextStates & AppContextFns
 
-export type DXVersion = 'festival-plus' | 'buddies' | 'buddies-plus' | 'prism' | 'prism-plus'
+export type DXVersion = 'festival-plus' | 'buddies' | 'buddies-plus' | 'prism' | 'prism-plus' | 'circle'
 
 export type Region = 'jp' | 'intl' | 'cn' | '_generic'
 
@@ -15,6 +15,7 @@ export const DXVersionToDXDataVersionEnumMap: Record<DXVersion, VersionEnum> = {
   'buddies-plus': VersionEnum.BUDDiESPLUS,
   prism: VersionEnum.PRiSM,
   'prism-plus': VersionEnum.PRiSMPLUS,
+  circle: VersionEnum.CiRCLE,
 }
 
 export interface AppContextStates {

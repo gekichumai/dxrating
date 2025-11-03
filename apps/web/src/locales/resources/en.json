@@ -31,6 +31,11 @@
         "title": "diving-fish",
         "username": "Username of diving-fish",
         "qq": "QQ binded to diving-fish"
+      },
+      "lxns": {
+        "title": "LXNS",
+        "friend-code": "Friend Code",
+        "qq": "QQ"
       }
     }
   },
@@ -345,6 +350,25 @@
               "importing": "Importing..."
             }
           }
+        },
+        "lxns": {
+          "title": "Import from LXNS",
+          "description": "Import your scores from LXNS (maimai.lxns.net)",
+          "warning": {
+            "title": "Warning",
+            "description": "This will import your scores from LXNS. Please make sure you have the correct friend code or QQ."
+          },
+          "or": "OR",
+          "close": "Close",
+          "import": "Import",
+          "loading": "Importing from LXNS...",
+          "success": "Successfully imported {{count}} entries from LXNS",
+          "error": "Failed to import from LXNS: {{error}}",
+          "invalid-profile": "Invalid LXNS profile",
+          "missing-profile-info": "Please fill in either friend code or QQ",
+          "only-one-of-the-two-fields-should-be-filled": "Please fill in only one of the two fields",
+          "no-sheets": "No sheets available",
+          "importing": "Importing..."
         }
       },
       "clear": {

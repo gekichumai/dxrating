@@ -24,12 +24,6 @@ enum TypeEnum: String, Codable, Equatable, Sendable {
 }
 
 enum VersionEnum: String, Codable, Equatable, Sendable {
-  case buddies = "BUDDiES"
-  case buddiesplus = "BUDDiES PLUS"
-  case prism = "PRiSM"
-  case prismPlus = "PRiSM PLUS"
-  case festival = "FESTiVAL"
-  case festivalplus = "FESTiVAL PLUS"
   case finale = "FiNALE"
   case green = "GreeN"
   case greenplus = "GreeN PLUS"
@@ -49,6 +43,13 @@ enum VersionEnum: String, Codable, Equatable, Sendable {
   case splashplus = "Splash PLUS"
   case universe = "UNiVERSE"
   case universeplus = "UNiVERSE PLUS"
+  case festival = "FESTiVAL"
+  case festivalplus = "FESTiVAL PLUS"
+  case buddies = "BUDDiES"
+  case buddiesplus = "BUDDiES PLUS"
+  case prism = "PRiSM"
+  case prismPlus = "PRiSM PLUS"
+  case circle = "CiRCLE"
 }
 
 enum CategoryEnum: String, Codable, Equatable, Sendable {
