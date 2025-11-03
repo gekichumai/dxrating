@@ -1,4 +1,4 @@
-import { VERSION_ID_MAP, type VersionEnum } from '@gekichumai/dxdata'
+import { VERSION_ID_MAP, VersionEnum } from '@gekichumai/dxdata'
 import { useMemo } from 'react'
 import type { Region } from '../../models/context/AppContext'
 import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
@@ -29,24 +29,36 @@ interface UseRatingEntriesStatistics {
   b50Sum: number
 }
 
-const filterB15 = (sheet: FlattenedSheet, appVersion: VersionEnum, region: Region) => {
+const filterEligibleB15Entries = (sheet: FlattenedSheet, appVersion: VersionEnum, region: Region) => {
   if (region === '_generic') return sheet.version === appVersion
 
   const appVersionId = VERSION_ID_MAP.get(appVersion)
   const sheetVersionId = VERSION_ID_MAP.get(sheet.version)
   if (appVersionId !== undefined && sheetVersionId !== undefined) {
-    return sheetVersionId === appVersionId && sheet.regions[region]
+    const useCircleB15 = appVersionId >= VERSION_ID_MAP.get(VersionEnum.CiRCLE)!
+    const sheetIsAvailableInRegion = sheet.regions[region]
+    if (useCircleB15) {
+      return sheetIsAvailableInRegion && (appVersionId === sheetVersionId || appVersionId === sheetVersionId + 1)
+    }
+
+    return sheetIsAvailableInRegion && appVersionId === sheetVersionId // only consider a B15 match if sheet version equals to app version, and sheet is available in the app region
   }
   return false
 }
 
-const filterB35Extra = (sheet: FlattenedSheet, appVersion: VersionEnum, region: Region) => {
+const filterB35EligibleEntries = (sheet: FlattenedSheet, appVersion: VersionEnum, region: Region) => {
   if (region === '_generic') return sheet.version !== appVersion
 
   const appVersionId = VERSION_ID_MAP.get(appVersion)
   const sheetVersionId = VERSION_ID_MAP.get(sheet.version)
   if (appVersionId !== undefined && sheetVersionId !== undefined) {
-    return sheetVersionId < appVersionId && sheet.regions[region]
+    const useCircleB15 = appVersionId >= VERSION_ID_MAP.get(VersionEnum.CiRCLE)!
+    const sheetIsAvailableInRegion = sheet.regions[region]
+    if (useCircleB15) {
+      return sheetIsAvailableInRegion && appVersionId > sheetVersionId + 1
+    }
+
+    return sheetIsAvailableInRegion && appVersionId > sheetVersionId // only consider a B35 match if app version is greater than sheet version, and sheet is available in the app region
   }
   return false
 }
@@ -74,7 +86,7 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
     })
 
     const best15OfCurrentVersionSheetIds = calculated
-      .filter((entry) => filterB15(entry.sheet, appVersion, region))
+      .filter((entry) => filterEligibleB15Entries(entry.sheet, appVersion, region))
       // a.rating and b.rating could be null. put them at the end
       .sort((a, b) => {
         if (!a.rating) return 1
@@ -85,7 +97,7 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
       .map((entry) => entry.sheetId)
 
     const best35OfAllOtherVersionSheetIds = calculated
-      .filter((entry) => !filterB15(entry.sheet, appVersion, region) && filterB35Extra(entry.sheet, appVersion, region))
+      .filter((entry) => filterB35EligibleEntries(entry.sheet, appVersion, region))
       .sort((a, b) => {
         if (!a.rating) return 1
         if (!b.rating) return -1
@@ -93,6 +105,9 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
       })
       .slice(0, 35)
       .map((entry) => entry.sheetId)
+
+    console.log('best15OfCurrentVersionSheetIds', best15OfCurrentVersionSheetIds)
+    console.log('best35OfAllOtherVersionSheetIds', best35OfAllOtherVersionSheetIds)
 
     const calculatedEntries = calculated.map((entry) => ({
       ...entry,
