@@ -28,8 +28,8 @@ interface AppContextFns {
 }
 
 export const AppContext = createContext<AppContext>({
-  version: 'prism-plus',
-  region: '_generic',
+  version: 'circle',
+  region: 'jp',
   setVersionAndRegion: () => {
     throw new Error('AppContext not initialized')
   },
@@ -37,7 +37,7 @@ export const AppContext = createContext<AppContext>({
 
 function getDefaultAppContext(): AppContextStates {
   return {
-    version: 'prism-plus',
+    version: 'circle',
     region: 'jp',
   }
 }

@@ -58,11 +58,10 @@ export const VERSION_THEME: Record<string, Theme> = {
   },
   [VersionEnum.CiRCLE]: {
     background: {
-      at1x: assetpack['/images/background/prism-plus.webp'],
-      at2x: assetpack['/images/background/prism-plus@2x.webp'],
+      at1x: assetpack['/images/background/circle.webp'],
     },
-    logo: assetpack['/images/version-logo/prism-plus.webp'],
+    logo: assetpack['/images/version-logo/circle.webp'],
     favicon: assetpack['/favicon/prism-1024x.jpg'],
-    accentColor: '#6368C7',
+    accentColor: '#FF4799',
   },
 }

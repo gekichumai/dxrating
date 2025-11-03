@@ -50,11 +50,11 @@ export const VERSION_THEME: Record<string, VersionTheme> = {
     backgroundSize: [2000, 2400],
   },
   [VersionEnum.CiRCLE]: {
-    background: '/images/background/prism-plus.jpg',
-    logo: '/images/version-logo/prism-plus.png',
+    background: '/images/background/circle.jpg',
+    logo: '/images/version-logo/circle.png',
     favicon: '/favicon/prism-1024x.jpg',
-    accentColor: '#6368C7',
-    backgroundSize: [2000, 2400],
+    accentColor: '#FF4799',
+    backgroundSize: [1500, 1500],
   },
 }
 

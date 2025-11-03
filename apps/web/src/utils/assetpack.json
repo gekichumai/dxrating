@@ -9,6 +9,11 @@
     "height": 456,
     "path": "/images/version-logo/buddies.webp"
   },
+  "/images/version-logo/circle.webp": {
+    "width": 757,
+    "height": 361,
+    "path": "/images/version-logo/circle.webp"
+  },
   "/images/version-logo/festival-plus.webp": {
     "width": 538,
     "height": 266,
@@ -28,6 +33,11 @@
     "width": 2000,
     "height": 2400,
     "path": "/images/background/buddies.jpg"
+  },
+  "/images/background/circle.jpg": {
+    "width": 3000,
+    "height": 3000,
+    "path": "/images/background/circle.jpg"
   },
   "/images/background/festival-plus.jpg": {
     "width": 2200,
@@ -58,6 +68,11 @@
     "width": 2000,
     "height": 2400,
     "path": "/images/background/buddies.webp"
+  },
+  "/images/background/circle.webp": {
+    "width": 3000,
+    "height": 3000,
+    "path": "/images/background/circle.webp"
   },
   "/images/background/festival-plus.webp": {
     "width": 2200,
