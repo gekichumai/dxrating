@@ -166,18 +166,28 @@ export const useSheetsSearchEngine = () => {
   const search = (term: string) => {
     const trimmedTerm = term.trim()
 
+    // Get Fuse search results (alias/title matches)
+    const fuseResults = fuseInstance.search(trimmedTerm).flatMap((result) => {
+      return sheets?.filter((sheet) => sheet.songId === result.item.songId) ?? []
+    })
+
+    // Check for exact Music ID match
+    let internalIdResults: FlattenedSheet[] = []
     if (/^\d+$/.test(trimmedTerm)) {
       const targetInternalId = Number.parseInt(trimmedTerm, 10)
-
       if (!Number.isNaN(targetInternalId)) {
-        return sheetsByInternalId.get(targetInternalId) ?? []
+        internalIdResults = sheetsByInternalId.get(targetInternalId) ?? []
       }
     }
 
-    const results = fuseInstance.search(term)
-    return results.flatMap((result) => {
-      return sheets?.filter((sheet) => sheet.songId === result.item.songId) ?? []
-    })
+    // If exact Music ID match exists, put it at the top, followed by other results
+    if (internalIdResults.length > 0) {
+      const internalIdSet = new Set(internalIdResults.map((sheet) => sheet.id))
+      const filteredFuseResults = fuseResults.filter((sheet) => !internalIdSet.has(sheet.id))
+      return [...internalIdResults, ...filteredFuseResults]
+    }
+
+    return fuseResults
   }
 
   return search
