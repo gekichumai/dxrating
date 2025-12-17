@@ -13,6 +13,7 @@ import AlertIcon from '~icons/material-symbols/warning'
 import { canonicalIdFromParts, type FlattenedSheet, useSheets } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import { TFunction } from 'i18next'
 
 const levelLabel = ['basic', 'advanced', 'expert', 'master', 'remaster']
 
@@ -63,8 +64,8 @@ const fetchDivingFish = async (
   sheets: FlattenedSheet[],
   divingFishProfile: DivingFishProfile | null,
   modifyEntries: ListActions<PlayEntry>,
+  t: TFunction,
 ) => {
-  const { t } = useTranslation(['rating-calculator'])
   const toastId = toast.loading(t('rating-calculator:io.import.diving-fish.loading'))
   try {
     const body: DivingFishRequestBody = {
@@ -237,7 +238,7 @@ export const ImportDivingFishDialogContent: FC<{
                 toast.error(t('rating-calculator:io.import.diving-fish.no-sheets'))
                 return
               }
-              await fetchDivingFish(sheets, divingFishConfig!, modifyEntries)
+              await fetchDivingFish(sheets, divingFishConfig!, modifyEntries,t)
               onClose()
             } finally {
               setBusy(false)
