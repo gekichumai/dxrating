@@ -26,7 +26,7 @@ CREATE TABLE "song_aliases" (
 CREATE TABLE "tag_groups" (
 	"id" bigserial PRIMARY KEY NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"localized_name" text NOT NULL,
+	"localized_name" jsonb NOT NULL,
 	"color" text NOT NULL
 );
 --> statement-breakpoint

@@ -1,5 +1,5 @@
 {
-  "id": "dc9bd6e4-1baf-48df-b804-1f823146068f",
+  "id": "374449f0-b590-4843-a2db-f32ad961569c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -175,7 +175,7 @@
         },
         "localized_name": {
           "name": "localized_name",
-          "type": "text",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": true
         },
