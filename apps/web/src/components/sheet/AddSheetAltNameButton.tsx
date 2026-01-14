@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { useAsyncFn } from 'react-use'
 import IconMdiPlus from '~icons/mdi/plus'
 import { authClient } from '../../lib/auth-client'
-import { orpc } from '../../lib/orpc'
+import { apiClient as client } from '../../lib/orpc'
 import { useServerAliases } from '../../models/useServerAliases'
 import type { FlattenedSheet } from '../../songs'
 import { isBuildPlatformApp } from '../../utils/env'
@@ -24,19 +24,19 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
 
   const [{ loading }, handleAddAltName] = useAsyncFn(async () => {
     if (!session) return
-    
+
     try {
-        await orpc.aliases.create({
-            songId: sheet.songId,
-            name: newAltName.trim()
-        })
-        
-        toast.success(`Added alias: ${newAltName.trim()}`)
-        setOpen(false)
-        setNewAltName('')
-        mutate() // Trigger revalidation
+      await client.aliases.create({
+        songId: sheet.songId,
+        name: newAltName.trim(),
+      })
+
+      toast.success(`Added alias: ${newAltName.trim()}`)
+      setOpen(false)
+      setNewAltName('')
+      mutate() // Trigger revalidation
     } catch (e: any) {
-        toast.error(`Failed to add alias: ${formatErrorMessage(e)}`)
+      toast.error(`Failed to add alias: ${formatErrorMessage(e)}`)
     }
   }, [newAltName, sheet.songId, mutate])
 

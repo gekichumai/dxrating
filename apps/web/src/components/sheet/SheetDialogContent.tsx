@@ -1,16 +1,16 @@
 import { MULTIVER_AVAILABLE_VERSIONS, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@gekichumai/dxdata'
 import {
-    Button,
-    ButtonGroup,
-    Chip,
-    CircularProgress,
-    IconButton,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    TextField,
+  Button,
+  ButtonGroup,
+  Chip,
+  CircularProgress,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TextField,
 } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, type PropsWithChildren, memo, useEffect, useMemo, useRef, useState } from 'react'
@@ -23,7 +23,7 @@ import IconMdiSpotify from '~icons/mdi/spotify'
 import IconMdiYouTube from '~icons/mdi/youtube'
 import RiBilibiliFill from '~icons/ri/bilibili-fill'
 import { authClient } from '../../lib/auth-client'
-import { orpc } from '../../lib/orpc'
+import { apiClient as client } from '../../lib/orpc'
 import { useAppContextDXDataVersion } from '../../models/context/useAppContext'
 import type { FlattenedSheet } from '../../songs'
 import { calculateRating } from '../../utils/rating'
@@ -75,18 +75,18 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     ['comments.list', sheet.songId, sheet.type, sheet.difficulty],
     // Fetcher
     async () => {
-      const data = await orpc.comments.list({
-          songId: sheet.songId,
-          sheetType: sheet.type,
-          sheetDifficulty: sheet.difficulty
+      const data = await client.comments.list({
+        songId: sheet.songId,
+        sheetType: sheet.type,
+        sheetDifficulty: sheet.difficulty,
       })
       // Map to UI expected format if needed
       // Backend returns: CommentWithProfileSchema (id, parent_id, created_at, content, display_name)
       // UI expects: { id, parent_id, content, created_at, display_name }
       // Dates: created_at: Date | string. UI: new Date(comment.created_at).
-      return data.map(c => ({
-          ...c,
-          created_at: c.created_at.toString()
+      return data.map((c) => ({
+        ...c,
+        created_at: c.created_at.toString(),
       }))
     },
   )
@@ -98,8 +98,8 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       sheetDifficulty: sheet.difficulty,
       content,
     }
-    await orpc.comments.create(payload) // Logic handles auth and parentId
-    
+    await client.comments.create(payload) // Logic handles auth and parentId
+
     mutate()
     setContent('')
   }, [sheet, content])

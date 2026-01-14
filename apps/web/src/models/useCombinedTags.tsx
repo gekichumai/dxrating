@@ -1,7 +1,7 @@
 import useSWR from 'swr'
-import { z } from 'zod'
+import type { z } from 'zod'
 import type { TagsListResponseSchema } from '../lib/contract'
-import { orpc } from '../lib/orpc'
+import { apiClient as client } from '../lib/orpc'
 
 export type CombinedTags = z.infer<typeof TagsListResponseSchema>
 export type Tag = CombinedTags['tags'][number]
@@ -12,7 +12,7 @@ export const useCombinedTags = () => {
   return useSWR(
     'tags.list',
     async () => {
-      return await orpc.tags.list() as CombinedTags
+      return (await client.tags.list()) as CombinedTags
     },
     {
       focusThrottleInterval: 1000 * 60 * 60,

@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
 import IconMdiTagPlus from '~icons/mdi/tag-plus'
 import { authClient } from '../../../lib/auth-client'
-import { orpc } from '../../../lib/orpc'
+import { apiClient as client } from '../../../lib/orpc'
 import type { FlattenedSheet } from '../../../songs'
 import { deriveColor } from '../../../utils/color'
 import { isBuildPlatformApp } from '../../../utils/env'
@@ -29,43 +29,45 @@ const SheetTagsAddDialog: FC<{
 
   const { data: tagGroups, isLoading: loadingTags } = useSWR('tags.grouped', async () => {
     // We can reuse useCombinedTags or call orpc
-    const { tags, tagGroups } = await orpc.tags.list()
+    const { tags, tagGroups } = await client.tags.list()
 
     // Grouping logic adapted for clean data
     const groupMap = new Map()
-    tagGroups.forEach(g => groupMap.set(g.id, { ...g, tags: [] }))
-    
+    tagGroups.forEach((g) => groupMap.set(g.id, { ...g, tags: [] }))
+
     // Fallback for tags without group?
     // Current logic groups by group_id.
-    
+
     // Perform mapping
     const grouped: any[] = []
-    
+
     // Actually the UI expects { group: TagGroup, tags: Tag[] }[]
-    
+
     // Map groups
-    const result = tagGroups.map(g => ({
-        group: {
-            id: g.id,
-            localized_name: JSON.parse(g.localized_name), // Backend returns stringified JSON? 
-            // In contract: localized_name: z.string().
-            // In DB: localized_name: Record<string, string>.
-            // Drizzle returns what DB has.
-            // If DB column is JSONB/JSON, Drizzle usually parses it if configured or returns object.
-            // My Schema says `text`. So it IS stringified if inserted as string.
-            // Supabase client returns JSON object.
-            // My backend returns string?
-            // Let's assume JSON.parse is needed if it's text.
-            color: g.color
-        },
-        tags: tags.filter(t => t.group_id === g.id).map(t => ({
-            ...t,
-            localized_name: JSON.parse(t.localized_name) as any,
-            localized_description: JSON.parse(t.localized_description) as any,
-            group: g // UI might need this nested reference
-        }))
+    const result = tagGroups.map((g) => ({
+      group: {
+        id: g.id,
+        localized_name: JSON.parse(g.localized_name), // Backend returns stringified JSON?
+        // In contract: localized_name: z.string().
+        // In DB: localized_name: Record<string, string>.
+        // Drizzle returns what DB has.
+        // If DB column is JSONB/JSON, Drizzle usually parses it if configured or returns object.
+        // My Schema says `text`. So it IS stringified if inserted as string.
+        // Supabase client returns JSON object.
+        // My backend returns string?
+        // Let's assume JSON.parse is needed if it's text.
+        color: g.color,
+      },
+      tags: tags
+        .filter((t) => t.group_id === g.id)
+        .map((t) => ({
+          ...t,
+          localized_name: JSON.parse(t.localized_name) as any,
+          localized_description: JSON.parse(t.localized_description) as any,
+          group: g, // UI might need this nested reference
+        })),
     }))
-    
+
     return result
   })
   const { data: existingTags, isLoading: loadingExistingTags, mutate: mutateExistingTags } = useSheetTags(sheet)
@@ -75,11 +77,11 @@ const SheetTagsAddDialog: FC<{
   const addTag = async (tagId: number) => {
     setPending(true)
     try {
-      await orpc.tags.attach({
-          songId: sheet.songId,
-          sheetType: sheet.type,
-          sheetDifficulty: sheet.difficulty,
-          tagId: tagId
+      await client.tags.attach({
+        songId: sheet.songId,
+        sheetType: sheet.type,
+        sheetDifficulty: sheet.difficulty,
+        tagId: tagId,
       })
 
       toast.success(t('sheet:tags.add.toast-success'), {

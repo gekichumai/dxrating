@@ -10,8 +10,8 @@ const link = new OpenAPILink(appContract, {
   fetch: (r, i) => fetch(r, { ...i, credentials: 'include' }),
 })
 
-export const client: JsonifiedClient<ContractRouterClient<typeof appContract>> = createORPCClient(link)
+export const apiClient: JsonifiedClient<ContractRouterClient<typeof appContract>> = createORPCClient(link)
 
-export const orpc = createTanstackQueryUtils(client)
+export const orpc = createTanstackQueryUtils(apiClient)
 
-export type RouterOutputs = InferClientOutputs<typeof client>
+export type RouterOutputs = InferClientOutputs<typeof apiClient>

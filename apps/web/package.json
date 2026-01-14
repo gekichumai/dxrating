@@ -17,6 +17,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@better-auth/passkey": "^1.4.12",
     "@capacitor/android": "^5.7.8",
     "@capacitor/core": "^5.7.8",
     "@capacitor/ios": "^5.7.8",

@@ -1514,6 +1514,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@gekichumai/dxrating-web@workspace:apps/web"
   dependencies:
+    "@better-auth/passkey": "npm:^1.4.12"
     "@capacitor/android": "npm:^5.7.8"
     "@capacitor/cli": "npm:^5.7.8"
     "@capacitor/core": "npm:^5.7.8"
