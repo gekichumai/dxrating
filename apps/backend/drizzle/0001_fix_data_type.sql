@@ -1,0 +1,1 @@
+ALTER TABLE "tag_groups" ALTER COLUMN "localized_name" SET DATA TYPE jsonb;
