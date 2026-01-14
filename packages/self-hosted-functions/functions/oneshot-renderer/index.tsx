@@ -322,7 +322,7 @@ export const handler = async (ctx: Koa.Context) => {
           },
           calculatedEntries: undefined,
         } as const)
-      : requestBodySchema.parse(ctx.request.body)
+      : requestBodySchema.parse((ctx.request as any).body)
 
     const version = body.version
     const region = body.region

@@ -95,12 +95,12 @@ export async function fetchPlayerByQQ(ctx: Koa.Context) {
       data: { qq: ctx.params.qq },
       level: 'info',
     })
-    
+
     const result = qqParamSchema.safeParse({ qq: ctx.params.qq })
 
     if (!result.success) {
       ctx.status = 400
-      ctx.body = { error: 'QQ parameter is required', details: result.error.errors }
+      ctx.body = { error: 'QQ parameter is required', details: (result.error as any).errors }
       return
     }
 
@@ -111,7 +111,7 @@ export async function fetchPlayerByQQ(ctx: Koa.Context) {
       level: 'info',
     })
     const data = await fetchPlayerDataByQQ(result.data.qq)
-    
+
     Sentry.addBreadcrumb({
       message: 'Successfully fetched player data',
       category: 'success',
@@ -135,7 +135,7 @@ export async function fetchPlayerByQQ(ctx: Koa.Context) {
 
       if (error instanceof z.ZodError) {
         ctx.status = 500
-        ctx.body = { error: 'Invalid response format from LXNS API', details: error.errors }
+        ctx.body = { error: 'Invalid response format from LXNS API', details: (error as any).errors }
         return
       }
 
@@ -162,12 +162,12 @@ export async function fetchScoresByFriendCode(ctx: Koa.Context) {
       data: { friendCode: ctx.params.friendCode },
       level: 'info',
     })
-    
+
     const result = friendCodeParamSchema.safeParse({ friendCode: ctx.params.friendCode })
 
     if (!result.success) {
       ctx.status = 400
-      ctx.body = { error: 'Friend code parameter is required', details: result.error.errors }
+      ctx.body = { error: 'Friend code parameter is required', details: (result.error as any).errors }
       return
     }
 
@@ -178,7 +178,7 @@ export async function fetchScoresByFriendCode(ctx: Koa.Context) {
       level: 'info',
     })
     const data = await fetchPlayerScoresByFriendCode(result.data.friendCode)
-    
+
     Sentry.addBreadcrumb({
       message: 'Successfully fetched scores',
       category: 'success',
@@ -202,7 +202,7 @@ export async function fetchScoresByFriendCode(ctx: Koa.Context) {
 
       if (error instanceof z.ZodError) {
         ctx.status = 500
-        ctx.body = { error: 'Invalid response format from LXNS API', details: error.errors }
+        ctx.body = { error: 'Invalid response format from LXNS API', details: (error as any).errors }
         return
       }
 

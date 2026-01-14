@@ -1,15 +1,11 @@
 import useSWR from 'swr'
-import { supabase } from './supabase'
+import { orpc } from '../lib/orpc'
 
 export const useServerAliases = () => {
   return useSWR(
-    'supabase::sheet-aliases',
+    'aliases.list',
     async () => {
-      const aliases = await supabase.from('song_aliases').select('song_id, name')
-      if (aliases.error) {
-        throw aliases.error
-      }
-      return aliases.data
+      return await orpc.aliases.list()
     },
     {
       focusThrottleInterval: 1000 * 60 * 60,

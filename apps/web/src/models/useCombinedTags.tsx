@@ -1,42 +1,18 @@
 import useSWR from 'swr'
-import { supabase } from './supabase'
-import type { Json } from './supabase.types'
+import { z } from 'zod'
+import type { TagsListResponseSchema } from '../lib/contract'
+import { orpc } from '../lib/orpc'
 
-export interface CombinedTags {
-  tags: Tag[]
-  tagGroups: TagGroup[]
-  tagSongs: TagSong[]
-}
-
-export interface TagGroup {
-  id: number
-  localized_name: Json
-  color: string
-}
-
-export interface TagSong {
-  song_id: string
-  sheet_type: string
-  sheet_difficulty: string
-  tag_id: number
-}
-
-export interface Tag {
-  id: number
-  localized_name: Json
-  localized_description: Json
-  group_id: number
-}
+export type CombinedTags = z.infer<typeof TagsListResponseSchema>
+export type Tag = CombinedTags['tags'][number]
+export type TagGroup = CombinedTags['tagGroups'][number]
+export type TagSong = CombinedTags['tagSongs'][number]
 
 export const useCombinedTags = () => {
   return useSWR(
-    'supabase::functions::combined-tags',
+    'tags.list',
     async () => {
-      const { data, error } = await supabase.functions.invoke('combined-tags')
-      if (error) {
-        throw error
-      }
-      return data as CombinedTags
+      return await orpc.tags.list() as CombinedTags
     },
     {
       focusThrottleInterval: 1000 * 60 * 60,

@@ -26,7 +26,7 @@ const authParamsSchema = z.object({
   region: z.enum(['jp', 'intl']),
 })
 
-Sentry.setupKoaErrorHandler(app);
+Sentry.setupKoaErrorHandler(app)
 
 router.get('/', async (ctx) => {
   ctx.body = {
@@ -44,7 +44,7 @@ const verifyParams: Koa.Middleware = async (ctx, next) => {
       region: z.string().optional(),
     })
 
-    const body = requestBodySchema.parse(ctx.request.body)
+    const body = requestBodySchema.parse((ctx.request as any).body)
     const region = ctx.params.region ?? body.region
 
     const result = authParamsSchema.parse({
@@ -64,7 +64,7 @@ const verifyParams: Koa.Middleware = async (ctx, next) => {
       ctx.status = 400
       ctx.body = {
         error: 'Invalid parameters',
-        details: err.errors,
+        details: (err as any).errors,
       }
       return
     }
@@ -72,16 +72,21 @@ const verifyParams: Koa.Middleware = async (ctx, next) => {
   }
 }
 
-router.post('/functions/fetch-net-records/v0', verifyParams, fetchNetRecordsV0Handler)
-router.post('/functions/fetch-net-records/v1/:region', KoaSSE(), verifyParams, fetchNetRecordsV1Handler)
+router.post('/functions/fetch-net-records/v0', verifyParams as any, fetchNetRecordsV0Handler as any)
+router.post(
+  '/functions/fetch-net-records/v1/:region',
+  KoaSSE() as any,
+  verifyParams as any,
+  fetchNetRecordsV1Handler as any,
+)
 
 // LXNS API routes
-router.get('/functions/fetch-lxns-data/player/qq/:qq', fetchPlayerByQQ)
-router.get('/functions/fetch-lxns-data/player/:friendCode/scores', fetchScoresByFriendCode)
+router.get('/functions/fetch-lxns-data/player/qq/:qq', fetchPlayerByQQ as any)
+router.get('/functions/fetch-lxns-data/player/:friendCode/scores', fetchScoresByFriendCode as any)
 
-router.post('/functions/render-oneshot/v0', oneshotRendererHandler)
+router.post('/functions/render-oneshot/v0', oneshotRendererHandler as any)
 if (process.env.DEV === 'true') {
-  router.get('/functions/render-oneshot/v0/demo', oneshotRendererHandler)
+  router.get('/functions/render-oneshot/v0/demo', oneshotRendererHandler as any)
 }
 
 app.use(cors())
