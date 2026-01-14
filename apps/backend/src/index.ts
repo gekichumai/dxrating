@@ -2,8 +2,8 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { auth } from './auth'
-import { appRouter } from './router'
-import { z } from 'zod'
+import { OpenAPIGenerator } from '@orpc/openapi'
+import { appContract } from './contract'
 
 const app = new Hono()
 
@@ -26,32 +26,6 @@ app.use(
 app.on(['POST', 'GET'], '/api/auth/**', (c) => {
   return auth.handler(c.req.raw)
 })
-
-// oRPC
-import { RPCHandler } from '@orpc/server/fetch'
-
-const orpcHandler = new RPCHandler(appRouter)
-
-// Mount oRPC
-app.use('/api/*', async (c) => {
-  // Need to pass prefix if router is mounted at subpath?
-  // Using standard handle
-  const res = await orpcHandler.handle(c.req.raw, {
-    context: async () => {
-      const session = await auth.api.getSession({
-        headers: c.req.raw.headers,
-      })
-      return {
-        user: session?.user,
-      }
-    },
-  })
-  return res
-})
-
-// OpenAPI
-import { OpenAPIGenerator } from '@orpc/openapi'
-import { appContract } from './contract'
 
 const openAPIGenerator = new OpenAPIGenerator()
 

@@ -1,16 +1,17 @@
-
-import { createORPCClient } from '@orpc/client'
+import { createORPCClient, type InferClientOutputs } from '@orpc/client'
+import type { ContractRouterClient } from '@orpc/contract'
+import type { JsonifiedClient } from '@orpc/openapi-client'
+import { OpenAPILink } from '@orpc/openapi-client/fetch'
+import { createTanstackQueryUtils } from '@orpc/tanstack-query'
 import { appContract } from './contract'
-import { authClient } from './auth-client'
 
-export const orpc = createORPCClient(appContract, {
-  baseURL: import.meta.env.VITE_BACKEND_URL + '/api',
-  fetch: async (url, init) => {
-    // Add auth headers or handle credentials if needed
-    // BetterAuth cookies should handle session automatically if same-origin or CORS configured correctly
-    return fetch(url, {
-        ...init,
-        credentials: 'include' // Important for sharing cookies
-    })
-  }
+const link = new OpenAPILink(appContract, {
+  url: `${import.meta.env.VITE_BACKEND_URL}/api`,
+  fetch: (r, i) => fetch(r, { ...i, credentials: 'include' }),
 })
+
+export const client: JsonifiedClient<ContractRouterClient<typeof appContract>> = createORPCClient(link)
+
+export const orpc = createTanstackQueryUtils(client)
+
+export type RouterOutputs = InferClientOutputs<typeof client>
