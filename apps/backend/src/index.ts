@@ -1,9 +1,12 @@
-import { serve } from '@hono/node-server'
+import { initSentry } from './lib/functions/sentry'
+initSentry()
+
+import { serve as nodeServe } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { auth } from './auth'
-import { OpenAPIGenerator } from '@orpc/openapi'
-import { appContract } from './contract'
+
+import { config } from './config'
 
 const app = new Hono()
 
@@ -12,7 +15,26 @@ app.use(
   '*',
   cors({
     origin: (origin) => {
-      return origin // Allow all origins for dev simplicity, or check strict list
+      // Allow local development
+      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        return origin
+      }
+
+      // Allow production domain
+      if (origin === 'https://dxrating.net') {
+        return origin
+      }
+
+      // Allow Capacitor apps
+      if (origin.startsWith('capacitor://')) {
+        return origin
+      }
+
+      // Block other origins by not returning them (or handle as needed)
+      // For now, consistent with "return origin" usually meaning "allow",
+      // returning undefined/null typically blocks in some middleware,
+      // but Hono cors "origin" option expects string | (origin: string) => string | undefined | null
+      return null
     },
     allowHeaders: ['Content-Type', 'Authorization'],
     allowMethods: ['POST', 'GET', 'OPTIONS'],
@@ -27,22 +49,94 @@ app.on(['POST', 'GET'], '/api/auth/**', (c) => {
   return auth.handler(c.req.raw)
 })
 
-const openAPIGenerator = new OpenAPIGenerator()
+// Functions
+import { handler as oneshotRenderer } from './services/functions/oneshot-renderer/index'
+app.post('/functions/render-oneshot/v0', oneshotRenderer)
 
-const openAPISpec = openAPIGenerator.generate(appContract)
+// oRPC
+import { appRouter } from './router'
+import { OpenAPIHandler } from '@orpc/openapi/fetch'
+import { OpenAPIGenerator } from '@orpc/openapi'
+import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
+import { RequestHeadersPlugin, ResponseHeadersPlugin } from '@orpc/server/plugins'
 
-app.get('/doc/openapi.json', (c) => {
-  return c.json(openAPISpec)
+// oRPC OpenAPI handler
+const openAPIHandler = new OpenAPIHandler(appRouter, {
+  plugins: [new RequestHeadersPlugin(), new ResponseHeadersPlugin()],
 })
 
-import { config } from './config'
+// oRPC OpenAPI generator for spec
+const openAPIGenerator = new OpenAPIGenerator({
+  schemaConverters: [new ZodToJsonSchemaConverter()],
+})
 
-// ... imports ...
+app.get('/robots.txt', (c) => c.text('User-agent: *\\nDisallow: /'))
+
+app.all('/api/v1/*', async (c) => {
+  const session = await auth.api.getSession({ headers: c.req.raw.headers })
+  const { response } = await openAPIHandler.handle(c.req.raw, {
+    prefix: '/api/v1',
+    context: { user: session?.user },
+  })
+
+  return response ?? c.notFound()
+})
+
+app.get('/spec.json', async (c) => {
+  const spec = await openAPIGenerator.generate(appRouter, {
+    info: {
+      title: 'Maimai DX Rating API',
+      version: '1.0.0',
+      description: 'API for Maimai DX Rating',
+    },
+    servers: [{ url: '/api/v1' }],
+    security: [{ bearerAuth: [] }],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+        },
+      },
+    },
+  })
+  return c.json(spec)
+})
+
+// Serve Scalar API documentation
+app.get('/docs', (c) => {
+  const html = `
+    <!doctype html>
+    <html>
+      <head>
+        <title>Maimai DX Rating API</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="robots" content="noindex, nofollow" />
+      </head>
+      <body>
+        <div id="app"></div>
+        <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+        <script>
+          Scalar.createApiReference('#app', {
+            url: '/spec.json',
+            authentication: {
+              securitySchemes: {
+                bearerAuth: {},
+              },
+            },
+          })
+        </script>
+      </body>
+    </html>
+  `
+  return c.html(html)
+})
 
 const port = config.port
 console.log(`Server is running on port ${port}`)
 
-serve({
+nodeServe({
   fetch: app.fetch,
   port,
 })

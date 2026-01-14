@@ -1,5 +1,44 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
+import { LxnsPlayerResponseSchema, LxnsScoreResponseSchema } from './services/functions/fetch-lxns-data'
+
+const AchievementRecordSchema = z.object({
+  sheet: z.object({
+    songId: z.string(),
+    type: z.string(),
+    difficulty: z.string(),
+  }),
+  achievement: z.object({
+    rate: z.number(),
+    dxScore: z.object({
+      achieved: z.number(),
+      total: z.number(),
+    }),
+    flags: z.array(
+      z.enum([
+        'fullCombo',
+        'fullCombo+',
+        'allPerfect',
+        'allPerfect+',
+        'syncPlay',
+        'fullSync',
+        'fullSync+',
+        'fullSyncDX',
+        'fullSyncDX+',
+      ]),
+    ),
+  }),
+})
+
+const MusicRecordSchema = AchievementRecordSchema
+const RecentRecordSchema = AchievementRecordSchema.and(
+  z.object({
+    play: z.object({
+      track: z.number(),
+      timestamp: z.string().optional(),
+    }),
+  }),
+)
 
 // Define schemas matching the database/logic requirements
 export const TagSchema = z.object({
@@ -140,5 +179,44 @@ export const appContract = oc.router({
       })
       .input(CreateAliasInputSchema)
       .output(z.object({ id: z.number() })),
+  },
+  maimai: {
+    fetchRecords: oc
+      .route({
+        method: 'POST',
+        path: '/maimai/fetch-records',
+        summary: 'Fetch records from MaimaiNET',
+      })
+      .input(
+        z.object({
+          id: z.string(),
+          password: z.string(),
+          region: z.enum(['jp', 'intl']),
+        }),
+      )
+      .output(
+        z.object({
+          recentRecords: z.array(RecentRecordSchema),
+          musicRecords: z.array(MusicRecordSchema),
+        }),
+      ),
+  },
+  lxns: {
+    getPlayer: oc
+      .route({
+        method: 'GET',
+        path: '/lxns/player',
+        summary: 'Get player data from LXNS',
+      })
+      .input(z.object({ qq: z.string() }))
+      .output(LxnsPlayerResponseSchema),
+    getScores: oc
+      .route({
+        method: 'GET',
+        path: '/lxns/scores',
+        summary: 'Get scores from LXNS',
+      })
+      .input(z.object({ friendCode: z.string() }))
+      .output(LxnsScoreResponseSchema),
   },
 })

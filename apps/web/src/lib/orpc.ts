@@ -6,7 +6,7 @@ import { createTanstackQueryUtils } from '@orpc/tanstack-query'
 import { appContract } from './contract'
 
 const link = new OpenAPILink(appContract, {
-  url: `${import.meta.env.VITE_BACKEND_URL}/api`,
+  url: `${import.meta.env.VITE_BACKEND_URL}/api/v1`,
   fetch: (r, i) => fetch(r, { ...i, credentials: 'include' }),
 })
 

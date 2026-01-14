@@ -113,7 +113,7 @@ export class Client {
   }
 
   setCookie(hostname: string, headers: Headers) {
-    const existingCookies = this.#cookies.get(hostname) ?? []
+    const existingCookies: Cookie[] = this.#cookies.get(hostname) ?? []
 
     for (const cookieString of headers.getSetCookie()) {
       const c = cookie.parse(cookieString)
@@ -124,7 +124,7 @@ export class Client {
       if (exist >= 0) {
         existingCookies.splice(exist, 1)
       }
-      existingCookies.push({ name, value })
+      existingCookies.push({ name, value: value ?? '' })
     }
 
     this.#cookies.set(hostname, existingCookies)

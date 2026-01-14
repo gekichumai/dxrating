@@ -1,11 +1,11 @@
 import { type Sheet, type Song, VersionEnum, dxdata } from '@gekichumai/dxdata'
 import { Resvg } from '@resvg/resvg-js'
-import type Koa from 'koa'
+import type { Context } from 'hono'
 import fs from 'node:fs/promises'
 import satori, { type Font } from 'satori'
 import sharp from 'sharp'
 import { z } from 'zod'
-import { type Scope, Sentry } from '../../lib/sentry'
+import { type Scope, Sentry } from '../../../lib/functions/sentry'
 import { calculateDXScoreStars } from './calculateDXScore'
 import { type Rating, calculateRating } from './calculateRating'
 import { demo } from './demo'
@@ -23,7 +23,7 @@ export type PlayerCollection = {
   icon: number
 }
 
-const playEntrySchema = z.object({
+export const playEntrySchema = z.object({
   sheetId: z.string(),
   sheetOverrides: z
     .object({
@@ -43,9 +43,9 @@ const playEntrySchema = z.object({
     .optional(),
 })
 
-type PlayEntry = z.infer<typeof playEntrySchema>
+export type PlayEntry = z.infer<typeof playEntrySchema>
 
-const requestBodySchema = z.object({
+export const requestBodySchema = z.object({
   entries: z.array(playEntrySchema).optional(),
   version: z.nativeEnum(VersionEnum),
   region: z.enum(['jp', 'intl', 'cn', '_generic']),
@@ -65,7 +65,7 @@ const requestBodySchema = z.object({
 
 // declare a new attribute `tw` for JSX elements
 declare module 'react' {
-  interface HTMLAttributes<T> extends DOMAttributes<T> {
+  interface HTMLAttributes<T> {
     tw?: string
   }
 }
@@ -298,20 +298,25 @@ const createServerTimingTimer = () => {
   }
 }
 
-export const handler = async (ctx: Koa.Context) => {
+export const handler = async (c: Context): Promise<Response> => {
   return await Sentry.startSpan({ name: 'renderOneshot', op: 'function' }, async () => {
+    const queryDemo = c.req.query('demo')
+    const queryPixelated = c.req.query('pixelated')
+    const queryFormat = c.req.query('format')
+    const queryWidth = c.req.query('width')
+
     Sentry.addBreadcrumb({
       message: 'Starting oneshot render',
       category: 'init',
       data: {
-        demo: !!ctx.query.demo,
-        pixelated: !!ctx.query.pixelated,
-        format: ctx.query.format || 'svg',
+        demo: !!queryDemo,
+        pixelated: !!queryPixelated,
+        format: queryFormat || 'svg',
       },
       level: 'info',
     })
 
-    const body = ctx.query.demo
+    const body = queryDemo
       ? ({
           entries: demo,
           version: VersionEnum.PRiSMPLUS,
@@ -322,7 +327,7 @@ export const handler = async (ctx: Koa.Context) => {
           },
           calculatedEntries: undefined,
         } as const)
-      : requestBodySchema.parse((ctx.request as any).body)
+      : requestBodySchema.parse(await c.req.json())
 
     const version = body.version
     const region = body.region
@@ -407,7 +412,7 @@ export const handler = async (ctx: Koa.Context) => {
     })
     timer.stop('satori')
 
-    if (ctx.query.pixelated) {
+    if (queryPixelated) {
       Sentry.addBreadcrumb({
         message: 'Starting pixelated rendering',
         category: 'render',
@@ -435,7 +440,7 @@ export const handler = async (ctx: Koa.Context) => {
       const pngBuffer = pngData.asPng()
       timer.stop('resvg_as_png')
 
-      let width = typeof ctx.query.width === 'string' ? Number.parseInt(ctx.query.width) : ONESHOT_WIDTH * 2
+      let width = typeof queryWidth === 'string' ? Number.parseInt(queryWidth) : ONESHOT_WIDTH * 2
       if (Number.isNaN(width) || !Number.isFinite(width) || width < 1 || width > 3000) {
         width = ONESHOT_WIDTH * 2
       }
@@ -444,7 +449,7 @@ export const handler = async (ctx: Koa.Context) => {
       Sentry.addBreadcrumb({
         message: 'Processing final image',
         category: 'render',
-        data: { width, format: ctx.query.format },
+        data: { width, format: queryFormat },
         level: 'info',
       })
       const { buffer, type } = await (async () => {
@@ -453,7 +458,7 @@ export const handler = async (ctx: Koa.Context) => {
           s = s.resize({ width })
         }
 
-        if (ctx.query.format === 'png') {
+        if (queryFormat === 'png') {
           return { buffer: await s.png().toBuffer(), type: 'image/png' }
         }
 
@@ -475,11 +480,9 @@ export const handler = async (ctx: Koa.Context) => {
         level: 'info',
       })
 
-      ctx.set('Server-Timing', timer.get().join(', '))
-
-      ctx.type = type
-      ctx.body = buffer
-      return
+      c.header('Server-Timing', timer.get().join(', '))
+      c.header('Content-Type', type)
+      return c.body(buffer as any)
     }
 
     Sentry.addBreadcrumb({
@@ -491,19 +494,19 @@ export const handler = async (ctx: Koa.Context) => {
       level: 'info',
     })
 
-    ctx.set('Server-Timing', timer.get().join(', '))
+    c.header('Server-Timing', timer.get().join(', '))
+    c.header('Content-Type', 'image/svg+xml')
     try {
-      ctx.body = svg
-      ctx.type = 'image/svg+xml'
+      return c.body(svg)
     } catch (error) {
       if (error instanceof Error) {
         Sentry.withScope((scope: Scope) => {
           scope.setContext('function', { name: 'renderOneshot' })
           scope.setContext('parameters', {
-            demo: !!ctx.query.demo,
-            pixelated: !!ctx.query.pixelated,
-            format: ctx.query.format,
-            width: ctx.query.width,
+            demo: !!queryDemo,
+            pixelated: !!queryPixelated,
+            format: queryFormat,
+            width: queryWidth,
           })
           Sentry.captureException(error)
         })

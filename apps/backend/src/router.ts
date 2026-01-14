@@ -181,9 +181,38 @@ const aliasesHandler = {
   }),
 }
 
+import { MaimaiNETJpClient, MaimaiNETIntlClient } from './lib/functions/client'
+import { fetchPlayerDataByQQ, fetchPlayerScoresByFriendCode } from './services/functions/fetch-lxns-data/index'
+
+const maimaiHandler = {
+  fetchRecords: os.maimai.fetchRecords.handler(async ({ input }) => {
+    const { id, password, region } = input
+    const client = {
+      jp: new MaimaiNETJpClient(),
+      intl: new MaimaiNETIntlClient(),
+    }[region]
+
+    await client.login({ id, password })
+    const [recentRecords, musicRecords] = await Promise.all([client.fetchRecentRecords(), client.fetchMusicRecords()])
+
+    return { recentRecords, musicRecords }
+  }),
+}
+
+const lxnsHandler = {
+  getPlayer: os.lxns.getPlayer.handler(async ({ input }) => {
+    return await fetchPlayerDataByQQ(input.qq)
+  }),
+  getScores: os.lxns.getScores.handler(async ({ input }) => {
+    return await fetchPlayerScoresByFriendCode(input.friendCode)
+  }),
+}
+
 export const appRouter = os.router({
   tags: tagsHandler,
   comments: commentsHandler,
   monitoring: monitoringHandler,
   aliases: aliasesHandler,
+  maimai: maimaiHandler,
+  lxns: lxnsHandler,
 })

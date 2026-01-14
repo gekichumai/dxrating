@@ -1,6 +1,6 @@
-import type Koa from 'koa'
+import type { Context } from 'hono'
 import { z } from 'zod'
-import { Sentry, type Scope } from '../../lib/sentry'
+import { Sentry, type Scope } from '../../../lib/functions/sentry'
 
 // Zod schemas for response validation
 const FCTypeSchema = z.enum(['app', 'ap', 'fcp', 'fc']).nullable()
@@ -9,7 +9,7 @@ const RateTypeSchema = z.enum(['sssp', 'sss', 'ssp', 'ss', 'sp', 's', 'aaa', 'aa
 const SongTypeSchema = z.enum(['standard', 'dx', 'utage'])
 const LevelIndexSchema = z.number().int().min(0).max(4)
 
-const LxnsPlayerResponseSchema = z.object({
+export const LxnsPlayerResponseSchema = z.object({
   name: z.string(),
   rating: z.number().int(),
   friend_code: z.number().int(),
@@ -18,7 +18,7 @@ const LxnsPlayerResponseSchema = z.object({
   star: z.number().int(),
 })
 
-const LxnsScoreResponseSchema = z
+export const LxnsScoreResponseSchema = z
   .object({
     id: z.number().int(),
     song_name: z.string(),
@@ -62,7 +62,7 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout 
 /**
  * Fetch player data from LXNS API by QQ
  */
-async function fetchPlayerDataByQQ(qq: string): Promise<LxnsPlayerResponse> {
+export async function fetchPlayerDataByQQ(qq: string): Promise<LxnsPlayerResponse> {
   const response = await fetchWithTimeout(`${LXNS_API_BASE}/player/qq/${qq}`)
 
   if (!response.ok) {
@@ -76,7 +76,7 @@ async function fetchPlayerDataByQQ(qq: string): Promise<LxnsPlayerResponse> {
 /**
  * Fetch player scores from LXNS API by friend code
  */
-async function fetchPlayerScoresByFriendCode(friendCode: string): Promise<LxnsScoreResponse> {
+export async function fetchPlayerScoresByFriendCode(friendCode: string): Promise<LxnsScoreResponse> {
   const response = await fetchWithTimeout(`${LXNS_API_BASE}/player/${friendCode}/scores`)
 
   if (!response.ok) {
@@ -87,21 +87,20 @@ async function fetchPlayerScoresByFriendCode(friendCode: string): Promise<LxnsSc
   return LxnsScoreResponseSchema.parse(data)
 }
 
-export async function fetchPlayerByQQ(ctx: Koa.Context) {
+export async function fetchPlayerByQQ(c: Context) {
   return await Sentry.startSpan({ name: 'fetchPlayerByQQ', op: 'function' }, async () => {
+    const qq = c.req.param('qq')
     Sentry.addBreadcrumb({
       message: 'Validating QQ parameter',
       category: 'validation',
-      data: { qq: ctx.params.qq },
+      data: { qq },
       level: 'info',
     })
 
-    const result = qqParamSchema.safeParse({ qq: ctx.params.qq })
+    const result = qqParamSchema.safeParse({ qq })
 
     if (!result.success) {
-      ctx.status = 400
-      ctx.body = { error: 'QQ parameter is required', details: (result.error as any).errors }
-      return
+      return c.json({ error: 'QQ parameter is required', details: (result.error as any).errors }, 400)
     }
 
     Sentry.addBreadcrumb({
@@ -110,16 +109,18 @@ export async function fetchPlayerByQQ(ctx: Koa.Context) {
       data: { qq: result.data.qq },
       level: 'info',
     })
-    const data = await fetchPlayerDataByQQ(result.data.qq)
 
-    Sentry.addBreadcrumb({
-      message: 'Successfully fetched player data',
-      category: 'success',
-      data: { playerId: data.friend_code },
-      level: 'info',
-    })
     try {
-      ctx.body = data
+      const data = await fetchPlayerDataByQQ(result.data.qq)
+
+      Sentry.addBreadcrumb({
+        message: 'Successfully fetched player data',
+        category: 'success',
+        data: { playerId: data.friend_code },
+        level: 'info',
+      })
+
+      return c.json(data)
     } catch (error) {
       console.error('Error fetching player data by QQ:', error)
 
@@ -127,48 +128,44 @@ export async function fetchPlayerByQQ(ctx: Koa.Context) {
       if (error instanceof Error && !error.message.includes('QQ parameter is required')) {
         Sentry.withScope((scope: Scope) => {
           scope.setContext('function', { name: 'fetchPlayerByQQ' })
-          scope.setContext('parameters', { qq: ctx.params.qq })
+          scope.setContext('parameters', { qq })
           scope.setContext('apiEndpoint', { name: 'LXNS player by QQ' })
           Sentry.captureException(error)
         })
       }
 
       if (error instanceof z.ZodError) {
-        ctx.status = 500
-        ctx.body = { error: 'Invalid response format from LXNS API', details: (error as any).errors }
-        return
+        return c.json({ error: 'Invalid response format from LXNS API', details: (error as any).errors }, 500)
       }
 
       if (error instanceof DOMException && error.name === 'AbortError') {
-        ctx.status = 504
-        ctx.body = { error: 'Request timeout' }
-        return
+        return c.json({ error: 'Request timeout' }, 504)
       }
 
-      ctx.status =
+      const status =
         error instanceof Error && error.message.includes('Failed to fetch')
           ? Number.parseInt(error.message.split(' ').pop() || '500')
           : 500
-      ctx.body = { error: error instanceof Error ? error.message : 'Internal server error' }
+
+      return c.json({ error: error instanceof Error ? error.message : 'Internal server error' }, status as any)
     }
   })
 }
 
-export async function fetchScoresByFriendCode(ctx: Koa.Context) {
+export async function fetchScoresByFriendCode(c: Context) {
   return await Sentry.startSpan({ name: 'fetchScoresByFriendCode', op: 'function' }, async () => {
+    const friendCode = c.req.param('friendCode')
     Sentry.addBreadcrumb({
       message: 'Validating friend code parameter',
       category: 'validation',
-      data: { friendCode: ctx.params.friendCode },
+      data: { friendCode },
       level: 'info',
     })
 
-    const result = friendCodeParamSchema.safeParse({ friendCode: ctx.params.friendCode })
+    const result = friendCodeParamSchema.safeParse({ friendCode })
 
     if (!result.success) {
-      ctx.status = 400
-      ctx.body = { error: 'Friend code parameter is required', details: (result.error as any).errors }
-      return
+      return c.json({ error: 'Friend code parameter is required', details: (result.error as any).errors }, 400)
     }
 
     Sentry.addBreadcrumb({
@@ -177,16 +174,18 @@ export async function fetchScoresByFriendCode(ctx: Koa.Context) {
       data: { friendCode: result.data.friendCode },
       level: 'info',
     })
-    const data = await fetchPlayerScoresByFriendCode(result.data.friendCode)
 
-    Sentry.addBreadcrumb({
-      message: 'Successfully fetched scores',
-      category: 'success',
-      data: { scoresCount: data.length },
-      level: 'info',
-    })
     try {
-      ctx.body = data
+      const data = await fetchPlayerScoresByFriendCode(result.data.friendCode)
+
+      Sentry.addBreadcrumb({
+        message: 'Successfully fetched scores',
+        category: 'success',
+        data: { scoresCount: data.length },
+        level: 'info',
+      })
+
+      return c.json(data)
     } catch (error) {
       console.error('Error fetching scores by friend code:', error)
 
@@ -194,29 +193,26 @@ export async function fetchScoresByFriendCode(ctx: Koa.Context) {
       if (error instanceof Error && !error.message.includes('Friend code parameter is required')) {
         Sentry.withScope((scope: Scope) => {
           scope.setContext('function', { name: 'fetchScoresByFriendCode' })
-          scope.setContext('parameters', { friendCode: ctx.params.friendCode })
+          scope.setContext('parameters', { friendCode })
           scope.setContext('apiEndpoint', { name: 'LXNS scores by friend code' })
           Sentry.captureException(error)
         })
       }
 
       if (error instanceof z.ZodError) {
-        ctx.status = 500
-        ctx.body = { error: 'Invalid response format from LXNS API', details: (error as any).errors }
-        return
+        return c.json({ error: 'Invalid response format from LXNS API', details: (error as any).errors }, 500)
       }
 
       if (error instanceof DOMException && error.name === 'AbortError') {
-        ctx.status = 504
-        ctx.body = { error: 'Request timeout' }
-        return
+        return c.json({ error: 'Request timeout' }, 504)
       }
 
-      ctx.status =
+      const status =
         error instanceof Error && error.message.includes('Failed to fetch')
           ? Number.parseInt(error.message.split(' ').pop() || '500')
           : 500
-      ctx.body = { error: error instanceof Error ? error.message : 'Internal server error' }
+
+      return c.json({ error: error instanceof Error ? error.message : 'Internal server error' }, status as any)
     }
   })
 }
