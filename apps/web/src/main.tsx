@@ -1,7 +1,5 @@
 import * as Sentry from '@sentry/react'
 import { browserTracingIntegration } from '@sentry/react'
-import { SupabaseIntegration } from '@supabase/sentry-js-integration'
-import { SupabaseClient } from '@supabase/supabase-js'
 import '@unocss/reset/tailwind-compat.css'
 import i18n from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
@@ -18,7 +16,6 @@ import { VersionCustomizedThemeProvider } from './components/layout/VersionCusto
 import './index.css'
 import { i18nResources } from './locales/locales'
 import { AppContextProvider } from './models/context/AppContext'
-import { AuthContextProvider } from './models/context/AuthContext'
 import { RatingCalculatorContextProvider } from './models/context/RatingCalculatorContext'
 import { BUNDLE } from './utils/bundle'
 
@@ -43,13 +40,8 @@ Sentry.init({
         /^https?:\/\/miruku\.dxrating\.net/,
       ],
       shouldCreateSpanForRequest: (url) => {
-        return !url.startsWith(`${import.meta.env.VITE_SUPABASE_URL}/rest`)
+        return !url.includes(`supabase`)
       },
-    }),
-    new SupabaseIntegration(SupabaseClient, {
-      tracing: true,
-      breadcrumbs: true,
-      errors: true,
     }),
   ],
   // Performance Monitoring
@@ -152,13 +144,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <AppContextProvider>
       <VersionCustomizedThemeProvider>
         <RatingCalculatorContextProvider>
-          <AuthContextProvider>
             <PostHogProvider client={posthog}>
               <SideEffector />
               <CustomizedToaster />
               <App />
             </PostHogProvider>
-          </AuthContextProvider>
         </RatingCalculatorContextProvider>
       </VersionCustomizedThemeProvider>
     </AppContextProvider>
