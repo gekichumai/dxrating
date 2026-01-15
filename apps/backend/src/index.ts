@@ -85,9 +85,9 @@ app.all('/api/v1/*', async (c) => {
 app.get('/spec.json', async (c) => {
   const spec = await openAPIGenerator.generate(appRouter, {
     info: {
-      title: 'Maimai DX Rating API',
+      title: 'DXRating API',
       version: '1.0.0',
-      description: 'API for Maimai DX Rating',
+      description: 'OpenAPI for DXRating.net',
     },
     servers: [{ url: '/api/v1' }],
     security: [{ bearerAuth: [] }],
@@ -109,7 +109,7 @@ app.get('/docs', (c) => {
     <!doctype html>
     <html>
       <head>
-        <title>Maimai DX Rating API</title>
+        <title>DXRating API</title>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="robots" content="noindex, nofollow" />
