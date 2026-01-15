@@ -8,6 +8,7 @@ import { ImportFromAquaSQLiteListItem } from './import/ImportFromAquaSQLiteListI
 import { ImportFromDivingFishButtonListItem } from './import/ImportFromDivingFishButtonListItem'
 import { ImportFromJSONButtonListItem } from './import/ImportFromJSONButtonListItem'
 import { ImportFromLxnsButtonListItem } from './import/ImportFromLxnsButtonListItem'
+import { ImportFromMuNetButtonListItem } from './import/ImportFromMuNetButtonListItem'
 import { ImportFromNETRecordsListItem } from './import/ImportFromNETRecordsListItem'
 
 export const ImportMenu: FC<{
@@ -58,6 +59,7 @@ export const ImportMenu: FC<{
 
         <ImportFromJSONButtonListItem modifyEntries={modifyEntries} onClose={handleClose} />
         <ImportFromAquaDxButtonListItem modifyEntries={modifyEntries} onClose={handleClose} />
+        <ImportFromMuNetButtonListItem modifyEntries={modifyEntries} onClose={handleClose} />
         <ImportFromAquaSQLiteListItem modifyEntries={modifyEntries} onClose={handleClose} />
       </Menu>
     </>
