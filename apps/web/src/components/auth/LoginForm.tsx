@@ -63,21 +63,40 @@ export const LoginForm = () => {
   return (
     <Box className="flex flex-col gap-4 w-full p-4">
       <Typography variant="h6">{isSignUp ? "Sign Up" : "Sign In"}</Typography>
-      
+
       {error && <Alert severity="error">{error}</Alert>}
 
-      <TextField 
-        label="Email" 
-        value={email} 
-        onChange={e => setEmail(e.target.value)} 
-        fullWidth 
+      <Button
+        variant="outlined"
+        startIcon={<MdiGoogle />}
+        onClick={() => handleSocial('google')}
+        disabled={loading}
+      >
+        Continue with Google
+      </Button>
+      <Button
+        variant="outlined"
+        startIcon={<MdiGithub />}
+        onClick={() => handleSocial('github')}
+        disabled={loading}
+      >
+        Continue with GitHub
+      </Button>
+
+      <Divider>OR</Divider>
+
+      <TextField
+        label="Email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        fullWidth
       />
-      <TextField 
-        label="Password" 
-        type="password" 
-        value={password} 
-        onChange={e => setPassword(e.target.value)} 
-        fullWidth 
+      <TextField
+        label="Password"
+        type="password"
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+        fullWidth
       />
 
       <Button variant="contained" onClick={handleSubmit} disabled={loading}>
@@ -88,27 +107,11 @@ export const LoginForm = () => {
         {isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up"}
       </Button>
 
-      <Divider>OR</Divider>
-
-      <Button 
-        variant="outlined" 
-        startIcon={<MdiGoogle />} 
-        onClick={() => handleSocial('google')}
-      >
-        Continue with Google
-      </Button>
-      <Button 
-        variant="outlined" 
-        startIcon={<MdiGithub />} 
-        onClick={() => handleSocial('github')}
-      >
-        Continue with GitHub
-      </Button>
-
       <Button
         variant="outlined"
         startIcon={<IconMdiFingerprint />}
         onClick={handlePasskey}
+        disabled={loading}
       >
         Sign in with Passkey
       </Button>
