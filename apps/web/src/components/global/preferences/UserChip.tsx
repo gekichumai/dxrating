@@ -105,7 +105,7 @@ export const UpdateDisplayNameMenuItem: FC = () => {
         toast.error(`Failed to update profile: ${error.message}`)
         return
     }
-    
+
     toast.success(`Your profile name has been successfully updated to "${displayName}".`)
     setOpen(false)
   }, [displayName, user])

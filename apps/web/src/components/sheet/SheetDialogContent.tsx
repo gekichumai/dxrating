@@ -22,8 +22,8 @@ import IconMdiSearchWeb from '~icons/mdi/search-web'
 import IconMdiSpotify from '~icons/mdi/spotify'
 import IconMdiYouTube from '~icons/mdi/youtube'
 import RiBilibiliFill from '~icons/ri/bilibili-fill'
-import { authClient } from '../../lib/auth-client'
 import { apiClient as client } from '../../lib/orpc'
+import { useAuth } from '../../hooks/useAuth'
 import { useAppContextDXDataVersion } from '../../models/context/useAppContext'
 import type { FlattenedSheet } from '../../songs'
 import { calculateRating } from '../../utils/rating'
@@ -63,8 +63,7 @@ const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
 )
 
 const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { data: sessionData } = authClient.useSession()
-  const session = sessionData?.session
+  const { session, ensureAuthenticated, LoginDialog } = useAuth()
   const [content, setContent] = useState<string>('')
   const {
     data: comments,
@@ -92,6 +91,9 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   )
 
   const [{ loading: submitting }, handleSubmit] = useAsyncFn(async () => {
+    const isAuthenticated = await ensureAuthenticated()
+    if (!isAuthenticated) return
+
     const payload = {
       songId: sheet.songId,
       sheetType: sheet.type,
@@ -102,27 +104,28 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
     mutate()
     setContent('')
-  }, [sheet, content])
+  }, [sheet, content, ensureAuthenticated])
 
   return (
     <div className="flex flex-col gap-2">
-      {session && (
-        <div className="flex gap-2 mt-1">
-          <TextField
-            className="flex-grow"
-            placeholder="Leave a comment..."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            minRows={1}
-            maxRows={3}
-            multiline
-            data-attr="comment-input"
-          />
-          <Button variant="contained" onClick={handleSubmit} disabled={!content || submitting}>
-            {submitting ? <CircularProgress size={24} /> : 'Submit'}
-          </Button>
-        </div>
-      )}
+      <LoginDialog />
+
+      <div className="flex gap-2 mt-1">
+        <TextField
+          className="flex-grow"
+          placeholder="Leave a comment..."
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          minRows={1}
+          maxRows={3}
+          multiline
+          data-attr="comment-input"
+          disabled={!session}
+        />
+        <Button variant="contained" onClick={handleSubmit} disabled={!content || submitting}>
+          {submitting ? <CircularProgress size={24} /> : 'Submit'}
+        </Button>
+      </div>
 
       {isLoadingComments ? (
         Array.from({ length: 1 }).map((_, i) => (
