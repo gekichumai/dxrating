@@ -56,7 +56,7 @@ const fetchNetRecords = async (
   const { region, username, password } = authParams
 
   return new Promise((resolve, reject) => {
-    fetchEventSource(`https://miruku.dxrating.net/functions/fetch-net-records/v1/${region}`, {
+    fetchEventSource(`https://dxrating-functions.galvin.workers.dev/functions/fetch-net-records/v1/${region}`, {
       method: 'POST',
       body: JSON.stringify({ id: username, password }),
       openWhenHidden: true,
