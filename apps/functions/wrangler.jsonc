@@ -1,17 +1,8 @@
 {
+  "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "dxrating-functions",
   "main": "src/index.ts",
   "compatibility_date": "2026-02-12",
-  "vars": {
-    "NODE_ENV": "production"
-  },
-  "env": {
-    "dev": {
-      "vars": {
-        "NODE_ENV": "development"
-      }
-    }
-  },
   "observability": {
     "enabled": false,
     "head_sampling_rate": 1,
@@ -19,12 +10,12 @@
       "enabled": true,
       "head_sampling_rate": 1,
       "persist": true,
-      "invocation_logs": true
+      "invocation_logs": true,
     },
     "traces": {
       "enabled": false,
       "persist": true,
-      "head_sampling_rate": 1
-    }
-  }
+      "head_sampling_rate": 1,
+    },
+  },
 }
