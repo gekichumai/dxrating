@@ -231,88 +231,88 @@
     },
     "io": {
       "export": {
-        "button": "エクスポート...",
+        "button": "書き出し...",
         "to-json": {
-          "all-records": "JSONにエクスポート (全ての記録)",
-          "b50-records": "JSONにエクスポート (B50のみ)"
+          "all-records": "JSONに書き出し (全ての記録)",
+          "b50-records": "JSONに書き出し (B50のみ)"
         },
         "oneshot-image": {
-          "button": "ワンショット画像として出力...",
+          "button": "ワンショット画像として書き出し...",
           "dialog": {
-            "title": "ワンショット画像として出力...",
+            "title": "ワンショット画像として書き出し...",
             "loading": {
-              "title": "出力中...",
+              "title": "書き出し中...",
               "calculating": "計算中...",
               "message": "サーバーの負荷状況によって時間がかかる場合があります。通常は10秒以内に完了します。"
             },
-            "error": "画像の出力中にエラーが発生しました：{{message}}",
+            "error": "画像の書き出し中にエラーが発生しました：{{message}}",
             "save-instruction": "画像を長押しまたは右クリックして、デバイスに保存してください。",
             "beta-notice": "この機能はベータ版であり、予期せぬ動作をする可能性があります。問題や改善点がありましたら、開発者までご報告ください :D"
           }
         }
       },
       "import": {
-        "button": "インポート...",
+        "button": "読み込み...",
         "diving-fish": {
-          "title": "diving-fishからインポート...",
+          "title": "diving-fishから読み込み...",
           "description": "以下の2つのオプションから1つを選択し、対応するフィールドを入力してください。設定はブラウザに保存されます。",
-          "loading": "diving-fishからインポート中...",
-          "success": "{{count}}件のレコードをインポートしました",
-          "error": "インポートに失敗しました：ユーザー名またはQQが正しいか確認してください。{{error}}",
+          "loading": "diving-fishから読み込み中...",
+          "success": "{{count}}件のレコードを読み込みしました",
+          "error": "読み込みに失敗しました：ユーザー名またはQQが正しいか確認してください。{{error}}",
           "invalid-profile": "Diving-Fishプロフィールを入力してください",
           "no-sheets": "譜面が見つかりませんでした",
           "warning": {
             "title": "注意！",
-            "description": "既存のエントリーはインポートされたものに上書きされます。"
+            "description": "既存のエントリーは読み込みされたものに上書きされます。"
           },
           "or": "または",
           "close": "閉じる",
-          "import": "インポート",
-          "importing": "インポート中...",
+          "import": "読み込み",
+          "importing": "読み込み中...",
           "missing-profile-info": "Diving-Fishプロフィールを入力してください",
           "only-one-of-the-two-fields-should-be-filled": "Diving-Fishプロフィールを入力してください"
         },
         "aqua-dx": {
-          "title": "AquaDX JSONからインポート...",
-          "success": "{{count}}件のエントリーをインポートしました"
+          "title": "AquaDX JSONから読み込み...",
+          "success": "{{count}}件のエントリーを読み込みしました"
         },
         "aqua-sqlite": {
-          "title": "Aqua SQLiteデータベースからインポート...",
-          "success": "{{count}}件のエントリーをインポートしました",
-          "error": "インポートに失敗しました：{{error}}"
+          "title": "Aqua SQLiteデータベースから読み込み...",
+          "success": "{{count}}件のエントリーを読み込みしました",
+          "error": "読み込みに失敗しました：{{error}}"
         },
         "json": {
-          "title": "DXRating JSONからインポート...",
-          "success": "{{count}}件のエントリーをインポートしました",
-          "error": "インポートに失敗しました：{{error}}"
+          "title": "DXRating JSONから読み込み...",
+          "success": "{{count}}件のエントリーを読み込みしました",
+          "error": "読み込みに失敗しました：{{error}}"
         },
         "net-records": {
-          "title": "NETからインポート...",
-          "success": "{{count}}件のエントリーをインポートしました",
-          "error": "インポートに失敗しました：{{error}}",
+          "title": "NETから読み込み...",
+          "success": "{{count}}件のエントリーを読み込みしました",
+          "error": "読み込みに失敗しました：{{error}}",
           "dialog": {
             "actions": {
               "close": "閉じる",
-              "import-once": "1度だけインポート",
-              "importing": "インポート中...",
+              "import-once": "1度だけ読み込み",
+              "importing": "読み込み中...",
               "reimport": {
-                "description": "既存のエントリーはインポートされたものに上書きされます。",
-                "title": "再インポート"
+                "description": "既存のエントリーは読み込みされたものに上書きされます。",
+                "title": "再読み込み"
               }
             },
             "auto-import": {
-              "description": "インポートされたエントリーは、既存のエントリーに追加されます。",
-              "label": "自動インポート",
+              "description": "読み込みされたエントリーは、既存のエントリーに追加されます。",
+              "label": "自動読み込み",
               "options": {
                 "disabled": {
                   "title": "無効"
                 },
                 "merge": {
-                  "description": "既存のエントリーはインポートされたものに追加されます。",
+                  "description": "既存のエントリーは読み込みされたものに追加されます。",
                   "title": "追加"
                 },
                 "replace": {
-                  "description": "既存のエントリーはインポートされたものに上書きされます。",
+                  "description": "既存のエントリーは読み込みされたものに上書きされます。",
                   "title": "上書き"
                 }
               }
@@ -333,12 +333,12 @@
               "description": "認証情報はブラウザにローカルで保存されます。"
             },
             "security-notice": {
-              "credentials": "あなたのログイン情報は保存されず、記録されず、共有されません。インポートプロセスの間のみ使用されます。ご希望であれば、",
+              "credentials": "あなたのログイン情報は保存されず、記録されず、共有されません。読み込みプロセスの間のみ使用されます。ご希望であれば、",
               "source-code": "ソースコードを確認することができます"
             },
             "sega-id": "セガID",
             "sega-password": "セガIDパスワード",
-            "title": "NETからインポート"
+            "title": "NETから読み込み"
           }
         }
       },
