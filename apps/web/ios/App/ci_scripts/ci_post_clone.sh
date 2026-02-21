@@ -17,14 +17,13 @@ curl "https://nodejs.org/dist/latest-v$NODE_VER.x/node-$VERSION-darwin-$ARCH.tar
 tar -xf "$HOME/Downloads/node.tar.gz"
 NODE_PATH="$PWD/node-$VERSION-darwin-$ARCH/bin"
 PATH+=":$NODE_PATH"
-# add npm bin to path\
-PATH+=":$PWD/node_modules/.bin"
+# add npm bin to path
 export PATH
 node -v
-npm -v
 pwd
 
 corepack enable
+pnpm -v
 
 # Install dependencies
 pnpm install --frozen-lockfile
