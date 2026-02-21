@@ -24,10 +24,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: ".node-version"
 
-      - name: Enable Corepack
-        run: corepack enable
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
 
       - name: Get Metadata
         id: git-meta
@@ -54,8 +54,8 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          yarn install
-          yarn run build:web --filter=@gekichumai/dxrating-web...
+          pnpm install --frozen-lockfile
+          pnpm --filter=@gekichumai/dxrating-web... run build:web
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
