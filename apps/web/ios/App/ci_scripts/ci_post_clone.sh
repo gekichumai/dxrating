@@ -35,9 +35,9 @@ export VITE_BUILD_TIME=$(date -u +%FT%TZ)
 export VITE_VERSION=$(git describe --tags --always)
 
 # build and sync
-pnpm run build:app
+pnpm --filter=@gekichumai/dxrating-web run build:app
 
-pnpm run deploy:ios
+pnpm --filter=@gekichumai/dxrating-web run deploy:ios
 
 cd ..
 pod install
