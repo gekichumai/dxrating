@@ -13,10 +13,6 @@
   "name": "@gekichumai/dxrating",
   "packageManager": "pnpm@10.30.3",
   "pnpm": {
-    "overrides": {
-      "@types/react": "^18.3.19",
-      "@types/react-dom": "^18.3.5"
-    },
     "onlyBuiltDependencies": [
       "@biomejs/biome",
       "@sentry/cli",

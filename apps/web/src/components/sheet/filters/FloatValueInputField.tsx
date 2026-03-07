@@ -1,26 +1,21 @@
 import { TextField, type TextFieldProps } from '@mui/material'
-import { type ForwardedRef, forwardRef, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const fixedDecimalPrecision = (value: number, precision: number) => Number.parseFloat(value.toFixed(precision))
 
-export const FloatValueInputField = forwardRef(
-  (
-    {
-      onChange,
-      onBlur,
-      value,
-      TextFieldProps,
-    }: {
-      onChange: (value: number) => void
-      onBlur?: TextFieldProps['onBlur']
-      value: number
-      TextFieldProps?: Omit<
-        TextFieldProps,
-        'value' | 'onChange' | 'type' | 'inputProps' | 'inputRef' | 'onWheel' | 'onBlur'
-      >
-    },
-    ref: ForwardedRef<HTMLInputElement>,
-  ) => {
+export function FloatValueInputField({
+  onChange,
+  onBlur,
+  value,
+  TextFieldProps,
+  ref,
+}: {
+  onChange: (value: number) => void
+  onBlur?: TextFieldProps['onBlur']
+  value: number
+  TextFieldProps?: Omit<TextFieldProps, 'value' | 'onChange' | 'type' | 'inputProps' | 'inputRef' | 'onWheel' | 'onBlur'>
+  ref?: React.Ref<HTMLInputElement>
+}) {
     const [internalInputValue, setInternalInputValue] = useState(value.toFixed(1).toString())
     useEffect(() => {
       setInternalInputValue(value.toFixed(1).toString())
@@ -70,5 +65,4 @@ export const FloatValueInputField = forwardRef(
         {...TextFieldProps}
       />
     )
-  },
-)
+  }

@@ -13,28 +13,27 @@ import {
   type TooltipProps,
 } from '@mui/material'
 import { motion } from 'framer-motion'
-import { type ForwardedRef, forwardRef } from 'react'
 
 export const MotionButtonBase = motion(
-  forwardRef((props: ButtonBaseProps, ref: ForwardedRef<HTMLButtonElement>) => <ButtonBase ref={ref} {...props} />),
+  (props: ButtonBaseProps & { ref?: React.Ref<HTMLButtonElement> }) => <ButtonBase {...props} />,
 )
 
 export const MotionButton = motion(
-  forwardRef((props: ButtonProps, ref: ForwardedRef<HTMLButtonElement>) => <Button ref={ref} {...props} />),
+  (props: ButtonProps & { ref?: React.Ref<HTMLButtonElement> }) => <Button {...props} />,
 )
 
 export const MotionTooltip = motion(
-  forwardRef((props: TooltipProps, ref: ForwardedRef<HTMLDivElement>) => <Tooltip ref={ref} {...props} />),
+  (props: TooltipProps & { ref?: React.Ref<HTMLDivElement> }) => <Tooltip {...props} />,
 )
 
 export const MotionChip = motion(
-  forwardRef((props: ChipProps, ref: ForwardedRef<HTMLDivElement>) => <Chip ref={ref} {...props} />),
+  (props: ChipProps & { ref?: React.Ref<HTMLDivElement> }) => <Chip {...props} />,
 )
 
 export const MotionPaper = motion(
-  forwardRef((props: PaperProps, ref: ForwardedRef<HTMLDivElement>) => <Paper ref={ref} {...props} />),
+  (props: PaperProps & { ref?: React.Ref<HTMLDivElement> }) => <Paper {...props} />,
 )
 
 export const MotionFormControl = motion(
-  forwardRef((props: FormControlProps, ref: ForwardedRef<HTMLDivElement>) => <FormControl ref={ref} {...props} />),
+  (props: FormControlProps & { ref?: React.Ref<HTMLDivElement> }) => <FormControl {...props} />,
 )

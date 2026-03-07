@@ -31,18 +31,17 @@ Sentry.init({
   enabled: import.meta.env.PROD,
   integrations: [
     browserTracingIntegration({
-      // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-      tracePropagationTargets: [
-        'localhost',
-        /^\//,
-        /^https?:\/\/dxrating\.net/,
-        /^https?:\/\/derrakuma\.dxrating\.net/,
-        /^https?:\/\/miruku\.dxrating\.net/,
-      ],
       shouldCreateSpanForRequest: (url) => {
         return !url.includes(`supabase`)
       },
     }),
+  ],
+  tracePropagationTargets: [
+    'localhost',
+    /^\//,
+    /^https?:\/\/dxrating\.net/,
+    /^https?:\/\/derrakuma\.dxrating\.net/,
+    /^https?:\/\/miruku\.dxrating\.net/,
   ],
   // Performance Monitoring
   tracesSampleRate: 0.2,

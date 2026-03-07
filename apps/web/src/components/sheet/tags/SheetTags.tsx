@@ -47,7 +47,7 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
                 opacity: 1,
               },
               transition: {
-                type: 'spring',
+                type: 'spring' as const,
                 stiffness: 500,
                 damping: 30,
               },
