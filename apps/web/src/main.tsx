@@ -144,11 +144,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <AppContextProvider>
       <VersionCustomizedThemeProvider>
         <RatingCalculatorContextProvider>
-            <PostHogProvider client={posthog}>
-              <SideEffector />
-              <CustomizedToaster />
-              <App />
-            </PostHogProvider>
+          <PostHogProvider client={posthog}>
+            <SideEffector />
+            <CustomizedToaster />
+            <App />
+          </PostHogProvider>
         </RatingCalculatorContextProvider>
       </VersionCustomizedThemeProvider>
     </AppContextProvider>

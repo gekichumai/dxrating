@@ -25,11 +25,6 @@ app.use(
         return origin
       }
 
-      // Allow Capacitor apps
-      if (origin.startsWith('capacitor://')) {
-        return origin
-      }
-
       // Block other origins by not returning them (or handle as needed)
       // For now, consistent with "return origin" usually meaning "allow",
       // returning undefined/null typically blocks in some middleware,
