@@ -281,6 +281,11 @@
           "title": "Import from AquaDX Exported JSON...",
           "success": "Imported {{count}} entries"
         },
+        "mu-net": {
+          "title": "Import from MuNET Exported JSON...",
+          "success": "Imported {{count}} entries",
+          "error": "Failed to import: {{error}}"
+        },
         "aqua-sqlite": {
           "title": "Import from Aqua SQLite Database...",
           "success": "Imported {{count}} entries",

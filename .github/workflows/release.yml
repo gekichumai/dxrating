@@ -21,14 +21,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install pnpm
+      - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'pnpm'
+          node-version-file: ".node-version"
+          cache: "pnpm"
 
       - name: Get Metadata
         id: git-meta
@@ -56,7 +56,7 @@ jobs:
         shell: bash
         run: |
           pnpm install --frozen-lockfile
-          pnpm run build --filter=@gekichumai/dxrating-web...
+          pnpm --filter=@gekichumai/dxrating-web... run build
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
