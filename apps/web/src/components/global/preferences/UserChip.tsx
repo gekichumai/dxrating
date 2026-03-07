@@ -20,7 +20,6 @@ import MdiAccountCheck from '~icons/mdi/account-check'
 import MdiLogin from '~icons/mdi/login'
 import MdiLogout from '~icons/mdi/logout'
 import { authClient } from '../../../lib/auth-client'
-import { isBuildPlatformApp } from '../../../utils/env'
 import { LoginForm } from '../../auth/LoginForm'
 import { Logo } from '../Logo'
 import { ResponsiveDialog } from '../ResponsiveDialog'
@@ -161,8 +160,6 @@ export const UpdateDisplayNameMenuItem: FC = () => {
 }
 
 export const UserChip: FC = () => {
-  const DISABLE_EXPLICIT_AUTH = isBuildPlatformApp
-
   const { t } = useTranslation(['auth'])
   const [open, setOpen] = useState<'auth' | 'profile' | null>(null)
   const { data: sessionData, isPending: pending } = authClient.useSession()
@@ -218,25 +215,23 @@ export const UserChip: FC = () => {
         </MenuItem>
       </Menu>
 
-      {!DISABLE_EXPLICIT_AUTH && pending ? (
+      {pending ? (
         <div className="p-2 text-[1.5rem]">
           <div className="h-[1.2em] w-[1.2em] px-[0.1em] -mt-[0.1em] text-black/54">
             <CircularProgress disableShrink size="1em" color="inherit" />
           </div>
         </div>
       ) : (
-        (!DISABLE_EXPLICIT_AUTH || session) && (
-          <IconButton
-            onClick={(e) => {
-              setOpen(session ? 'profile' : 'auth')
-              if (session) {
-                setProfileMenuAnchorEl(e.currentTarget)
-              }
-            }}
-          >
-            {session ? <ProfileImage email={user?.email} image={user?.image} size="1.2em" /> : <MdiLogin />}
-          </IconButton>
-        )
+        <IconButton
+          onClick={(e) => {
+            setOpen(session ? 'profile' : 'auth')
+            if (session) {
+              setProfileMenuAnchorEl(e.currentTarget)
+            }
+          }}
+        >
+          {session ? <ProfileImage email={user?.email} image={user?.image} size="1.2em" /> : <MdiLogin />}
+        </IconButton>
       )}
     </>
   )

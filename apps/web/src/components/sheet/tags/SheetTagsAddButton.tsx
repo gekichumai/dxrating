@@ -9,7 +9,6 @@ import { authClient } from '../../../lib/auth-client'
 import { apiClient as client } from '../../../lib/orpc'
 import type { FlattenedSheet } from '../../../songs'
 import { deriveColor } from '../../../utils/color'
-import { isBuildPlatformApp } from '../../../utils/env'
 import { formatErrorMessage } from '../../../utils/formatErrorMessage'
 import { MotionButtonBase, MotionTooltip } from '../../../utils/motion'
 import { zoomTransitions } from '../../../utils/motionConstants'
@@ -170,11 +169,7 @@ const SheetTagsAddDialog: FC<{
 
       {!session && (
         <div className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8">
-          {isBuildPlatformApp ? (
-            <div className="text-center font-bold">Adding tags is currently unavailable in the app.</div>
-          ) : (
-            <div className="text-center font-bold">Login or Register an account to add tags.</div>
-          )}
+          <div className="text-center font-bold">Login or Register an account to add tags.</div>
         </div>
       )}
     </div>

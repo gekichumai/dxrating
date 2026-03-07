@@ -8,7 +8,6 @@ import { authClient } from '../../lib/auth-client'
 import { apiClient as client } from '../../lib/orpc'
 import { useServerAliases } from '../../models/useServerAliases'
 import type { FlattenedSheet } from '../../songs'
-import { isBuildPlatformApp } from '../../utils/env'
 import { formatErrorMessage } from '../../utils/formatErrorMessage'
 import { MotionButtonBase } from '../../utils/motion'
 import { SheetListItemContent } from './SheetListItem'
@@ -97,11 +96,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
 
           {!session && (
             <div className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8 z-1">
-              {isBuildPlatformApp ? (
-                <div className="text-center font-bold">Adding alias is currently unavailable in the app.</div>
-              ) : (
-                <div className="text-center font-bold">Login or Register an account to add an alias.</div>
-              )}
+              <div className="text-center font-bold">Login or Register an account to add an alias.</div>
             </div>
           )}
         </div>
