@@ -137,7 +137,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
         }}
       >
         <img
-          // @ts-expect-error
+          // @ts-expect-error satori expects buffer for img src
           src={coverImage.buffer}
           alt={entry.sheet.imageName}
           tw="h-[108px] w-[108px] absolute top-0 right-[-1px]"
@@ -173,7 +173,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
 
           <div tw="text-sm leading-none flex items-center">
             <img
-              // @ts-expect-error
+              // @ts-expect-error satori expects buffer for img src
               src={typeImage.buffer}
               alt=""
               tw="h-[20px] mr-1"
@@ -231,14 +231,14 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
             )}
 
             <img
-              // @ts-expect-error
+              // @ts-expect-error satori expects buffer for img src
               src={accuracyImage.buffer}
               alt=""
               tw={`h-[22px] w-[22px] -ml-0.5 ${entry.achievementAccuracy ? '' : 'opacity-80'}`}
             />
 
             <img
-              // @ts-expect-error
+              // @ts-expect-error satori expects buffer for img src
               src={syncImage.buffer}
               alt=""
               tw={`h-[22px] w-[22px] ${entry.achievementSync ? '' : 'opacity-80'}`}
@@ -253,7 +253,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
                 <div tw="flex items-center -mt-[1px]">
                   {starImage ? (
                     Array.from({ length: entry.dxScore.stars }).map((_, i) => (
-                      // @ts-expect-error
+                      // @ts-expect-error satori expects buffer for img src
                       // biome-ignore lint/suspicious/noArrayIndexKey: index is stable
                       <img key={i} src={starImage} alt="" tw="h-[12px] w-[12px] -ml-0.5" />
                     ))
@@ -352,7 +352,7 @@ export const renderContent = async ({
     <div tw="font-sans text-lg leading-none flex h-full">
       <img
         tw="absolute inset-0 w-full h-full"
-        // @ts-expect-error
+        // @ts-expect-error satori expects buffer for img src
         src={background}
         alt=""
         style={{
@@ -365,7 +365,7 @@ export const renderContent = async ({
         <div tw="h-[100px] w-full flex pt-[2px] pb-1 px-[4px]">
           {playerCollection && (
             <div tw="flex items-center justify-start p-3 rounded-lg w-[589px] bg-black/80 text-white h-full mr-[8px]">
-              {/* @ts-expect-error */}
+              {/* @ts-expect-error satori expects buffer for img src */}
               <img src={icon} tw="h-[70px] w-[70px] rounded-md bg-gray-500 mr-3" alt="" />
 
               {playerCollection?.name && (

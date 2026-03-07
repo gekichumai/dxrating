@@ -47,7 +47,7 @@ export function parseMusicRecordNode(record: Element): MusicRecord[] {
     .flatMap((el) => {
       try {
         return [Number.parseInt(el.replace(',', ''))]
-      } catch (_e) {
+      } catch {
         return [] as const
       }
     }) as [number, number]

@@ -1,4 +1,5 @@
 import type { Context } from 'hono'
+import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import { z } from 'zod'
 import { Sentry, type Scope } from '../../../lib/functions/sentry'
 
@@ -100,7 +101,7 @@ export async function fetchPlayerByQQ(c: Context) {
     const result = qqParamSchema.safeParse({ qq })
 
     if (!result.success) {
-      return c.json({ error: 'QQ parameter is required', details: (result.error as any).errors }, 400)
+      return c.json({ error: 'QQ parameter is required', details: result.error.issues }, 400)
     }
 
     Sentry.addBreadcrumb({
@@ -135,7 +136,7 @@ export async function fetchPlayerByQQ(c: Context) {
       }
 
       if (error instanceof z.ZodError) {
-        return c.json({ error: 'Invalid response format from LXNS API', details: (error as any).errors }, 500)
+        return c.json({ error: 'Invalid response format from LXNS API', details: error.issues }, 500)
       }
 
       if (error instanceof DOMException && error.name === 'AbortError') {
@@ -147,7 +148,7 @@ export async function fetchPlayerByQQ(c: Context) {
           ? Number.parseInt(error.message.split(' ').pop() || '500')
           : 500
 
-      return c.json({ error: error instanceof Error ? error.message : 'Internal server error' }, status as any)
+      return c.json({ error: error instanceof Error ? error.message : 'Internal server error' }, status as ContentfulStatusCode)
     }
   })
 }
@@ -165,7 +166,7 @@ export async function fetchScoresByFriendCode(c: Context) {
     const result = friendCodeParamSchema.safeParse({ friendCode })
 
     if (!result.success) {
-      return c.json({ error: 'Friend code parameter is required', details: (result.error as any).errors }, 400)
+      return c.json({ error: 'Friend code parameter is required', details: result.error.issues }, 400)
     }
 
     Sentry.addBreadcrumb({
@@ -200,7 +201,7 @@ export async function fetchScoresByFriendCode(c: Context) {
       }
 
       if (error instanceof z.ZodError) {
-        return c.json({ error: 'Invalid response format from LXNS API', details: (error as any).errors }, 500)
+        return c.json({ error: 'Invalid response format from LXNS API', details: error.issues }, 500)
       }
 
       if (error instanceof DOMException && error.name === 'AbortError') {
@@ -212,7 +213,7 @@ export async function fetchScoresByFriendCode(c: Context) {
           ? Number.parseInt(error.message.split(' ').pop() || '500')
           : 500
 
-      return c.json({ error: error instanceof Error ? error.message : 'Internal server error' }, status as any)
+      return c.json({ error: error instanceof Error ? error.message : 'Internal server error' }, status as ContentfulStatusCode)
     }
   })
 }

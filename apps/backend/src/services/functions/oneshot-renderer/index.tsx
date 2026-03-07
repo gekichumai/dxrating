@@ -65,6 +65,7 @@ export const requestBodySchema = z.object({
 
 // declare a new attribute `tw` for JSX elements
 declare module 'react' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface HTMLAttributes<T> {
     tw?: string
   }
@@ -482,7 +483,7 @@ export const handler = async (c: Context): Promise<Response> => {
 
       c.header('Server-Timing', timer.get().join(', '))
       c.header('Content-Type', type)
-      return c.body(buffer as any)
+      return c.body(buffer.buffer as ArrayBuffer)
     }
 
     Sentry.addBreadcrumb({
