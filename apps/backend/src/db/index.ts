@@ -4,7 +4,7 @@ import * as schema from './schema'
 import * as authSchema from './auth-schema'
 import { config } from '../config'
 
-const pool = new Pool({
+export const pool = new Pool({
   connectionString: config.databaseUrl,
 })
 
