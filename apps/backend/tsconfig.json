@@ -11,6 +11,8 @@
         ],
         "outDir": "./dist",
         "baseUrl": ".",
+        "declaration": false,
+        "declarationMap": false,
         "noEmit": false,
         "jsx": "react-jsx"
     },

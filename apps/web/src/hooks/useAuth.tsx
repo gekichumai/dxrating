@@ -50,7 +50,7 @@ export const useAuth = () => {
 
   return {
     session,
-    user: session?.user,
+    user: sessionData?.user,
     isAuthenticated: !!session,
     ensureAuthenticated,
     openLoginDialog,

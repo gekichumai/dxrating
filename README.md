@@ -40,7 +40,7 @@ To build all apps and packages, run the following command:
 
 ```bash
 cd dxrating
-yarn build
+pnpm build
 ```
 
 ### Develop
@@ -49,7 +49,7 @@ To develop all apps and packages, run the following command:
 
 ```bash
 cd dxrating
-yarn dev
+pnpm dev
 ```
 
 ## Useful Links

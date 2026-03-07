@@ -1,21 +1,29 @@
 {
   "private": true,
   "scripts": {
-    "preinstall": "node -e \"if(process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('Use yarn instead of npm for this project')\"",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "format": "biome format --write ."
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "tsconfig": "*",
+    "tsconfig": "workspace:*",
     "turbo": "^2.4.4"
   },
   "name": "@gekichumai/dxrating",
-  "packageManager": "yarn@4.4.1",
-  "workspaces": [
-    "apps/*",
-    "packages/*",
-    "scripts/*"
-  ]
+  "packageManager": "pnpm@10.30.3",
+  "pnpm": {
+    "overrides": {
+      "@types/react": "^18.3.19",
+      "@types/react-dom": "^18.3.5"
+    },
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "@sentry/cli",
+      "core-js",
+      "esbuild",
+      "protobufjs",
+      "sharp"
+    ]
+  }
 }

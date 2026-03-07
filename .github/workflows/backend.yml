@@ -30,23 +30,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: 'apps/backend/.node-version'
-          cache: 'yarn'
-
-      - name: Enable Corepack
-        run: corepack enable
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
 
       - name: Lint backend
-        run: yarn workspace @gekichumai/backend lint
+        run: pnpm --filter @gekichumai/backend lint
 
       - name: Build backend
-        run: yarn workspace @gekichumai/backend build
+        run: pnpm --filter @gekichumai/backend build
 
   docker-build:
     runs-on: ubuntu-latest

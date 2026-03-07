@@ -15,7 +15,7 @@
     "@better-auth/passkey": "^1.4.12",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@gekichumai/dxdata": "*",
+    "@gekichumai/dxdata": "workspace:*",
     "@microsoft/fetch-event-source": "^2.0.1",
     "@mui/material": "^5.17.1",
     "@orpc/client": "^1.13.2",

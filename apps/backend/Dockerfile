@@ -12,14 +12,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgif-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Enable Corepack and set yarn version
-RUN corepack enable && corepack prepare yarn@4.4.1 --activate
+# Enable Corepack and set pnpm version
+RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
 
 WORKDIR /app
 
 # Copy root workspace files
-COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn ./.yarn
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 
 # Copy workspace package.json files
 COPY packages/tsconfig/package.json ./packages/tsconfig/
@@ -27,7 +26,7 @@ COPY packages/dxdata/package.json ./packages/dxdata/
 COPY apps/backend/package.json ./apps/backend/
 
 # Install dependencies
-RUN yarn install --immutable
+RUN pnpm install --frozen-lockfile
 
 # Copy workspace source files
 COPY packages/tsconfig ./packages/tsconfig
@@ -36,7 +35,7 @@ COPY apps/backend ./apps/backend
 
 # Build the backend
 WORKDIR /app/apps/backend
-RUN yarn build
+RUN pnpm build
 
 # Production stage
 FROM node:25-bookworm-slim AS runner
@@ -50,14 +49,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgif7 \
     && rm -rf /var/lib/apt/lists/*
 
-# Enable Corepack and set yarn version
-RUN corepack enable && corepack prepare yarn@4.4.1 --activate
+# Enable Corepack and set pnpm version
+RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
 
 WORKDIR /app
 
 # Copy root workspace files
-COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn ./.yarn
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 
 # Copy workspace package.json files
 COPY packages/tsconfig/package.json ./packages/tsconfig/
@@ -65,7 +63,7 @@ COPY packages/dxdata/package.json ./packages/dxdata/
 COPY apps/backend/package.json ./apps/backend/
 
 # Install production dependencies only
-RUN yarn workspaces focus @gekichumai/backend --production
+RUN pnpm install --filter @gekichumai/backend --prod --frozen-lockfile
 
 # Copy built application from builder
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
