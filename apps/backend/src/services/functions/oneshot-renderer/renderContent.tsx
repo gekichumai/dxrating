@@ -254,7 +254,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
                   {starImage ? (
                     Array.from({ length: entry.dxScore.stars }).map((_, i) => (
                       // @ts-expect-error satori expects buffer for img src
-                      // biome-ignore lint/suspicious/noArrayIndexKey: index is stable
+                      // oxlint-disable-next-line react/no-array-index-key -- index is stable
                       <img key={i} src={starImage} alt="" tw="h-[12px] w-[12px] -ml-0.5" />
                     ))
                   ) : (

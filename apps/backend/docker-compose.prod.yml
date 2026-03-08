@@ -6,7 +6,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dxrating"]
+      test: ['CMD-SHELL', 'pg_isready -U dxrating']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -17,7 +17,7 @@ services:
       context: ../..
       dockerfile: apps/backend/Dockerfile
     expose:
-      - "3000"
+      - '3000'
     env_file:
       - .env.production
     depends_on:

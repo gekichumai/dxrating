@@ -43,8 +43,8 @@ export const PrivacyPolicy = () => {
 
         <h2>Data Storage</h2>
         <p>
-          We use a secure database provider. Your data is stored securely and processed in accordance with
-          security standards and practices.
+          We use a secure database provider. Your data is stored securely and processed in accordance with security
+          standards and practices.
         </p>
 
         <h2>Analytics</h2>

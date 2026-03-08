@@ -1,22 +1,18 @@
 {
-    "extends": "../../packages/tsconfig/base.json",
-    "compilerOptions": {
-        "target": "ESNext",
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
-        "strict": true,
-        "skipLibCheck": true,
-        "types": [
-            "node"
-        ],
-        "outDir": "./dist",
-        "baseUrl": ".",
-        "declaration": false,
-        "declarationMap": false,
-        "noEmit": false,
-        "jsx": "react-jsx"
-    },
-    "include": [
-        "src/**/*"
-    ]
+  "extends": "../../packages/tsconfig/base.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": false,
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*"]
 }

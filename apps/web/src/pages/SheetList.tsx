@@ -174,7 +174,7 @@ const _SheetListInner: FC = () => {
           {skeletonWidths.map((width, i) => (
             <div
               className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] px-5 py-2"
-              // biome-ignore lint/suspicious/noArrayIndexKey: index is stable
+              // oxlint-disable-next-line react/no-array-index-key -- index is stable
               key={i}
               style={{
                 animationDelay: `${i * 40}ms`,

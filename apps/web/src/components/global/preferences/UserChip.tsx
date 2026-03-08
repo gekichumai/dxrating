@@ -1,15 +1,15 @@
 import {
-    Button,
-    CircularProgress,
-    Dialog,
-    DialogContent,
-    Grow,
-    IconButton,
-    ListItemIcon,
-    ListItemText,
-    Menu,
-    MenuItem,
-    TextField,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  Grow,
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  TextField,
 } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, useState } from 'react'
@@ -64,7 +64,9 @@ const ProfileImage: FC<{
     return await sha256(e)
   }, [email])
 
-  const src = image || (gravatarEmailHash.value ? `https://gravatar.com/avatar/${gravatarEmailHash.value}?s=96&d=identicon` : undefined)
+  const src =
+    image ||
+    (gravatarEmailHash.value ? `https://gravatar.com/avatar/${gravatarEmailHash.value}?s=96&d=identicon` : undefined)
 
   return !src && gravatarEmailHash.loading ? (
     <div className="shrink-0 rounded-full flex items-center justify-center" style={{ width: size, height: size }}>
@@ -97,12 +99,12 @@ export const UpdateDisplayNameMenuItem: FC = () => {
     }
 
     const { error } = await authClient.updateUser({
-        name: displayName
+      name: displayName,
     })
 
     if (error) {
-        toast.error(`Failed to update profile: ${error.message}`)
-        return
+      toast.error(`Failed to update profile: ${error.message}`)
+      return
     }
 
     toast.success(`Your profile name has been successfully updated to "${displayName}".`)
@@ -177,9 +179,7 @@ export const UserChip: FC = () => {
   return (
     <>
       <ResponsiveDialog open={open === 'auth'} setOpen={(opened) => setOpen(opened ? 'auth' : null)}>
-        {() => (
-           <LoginForm />
-        )}
+        {() => <LoginForm />}
       </ResponsiveDialog>
 
       <Menu
@@ -190,14 +190,7 @@ export const UserChip: FC = () => {
           setProfileMenuAnchorEl(null)
         }}
       >
-        {user && (
-          <Profile
-            id={user.id}
-            email={user.email}
-            displayName={user.name}
-            image={user.image}
-          />
-        )}
+        {user && <Profile id={user.id} email={user.email} displayName={user.name} image={user.image} />}
         <UpdateDisplayNameMenuItem />
         {/* UpdatePasswordMenuItem removed for now, or implement using authClient.changePassword */}
         <MenuItem

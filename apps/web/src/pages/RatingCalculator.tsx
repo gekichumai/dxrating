@@ -303,13 +303,7 @@ const RatingCalculatorTableRowContent: FC<{
   )
 }
 
-function RatingCalculatorTableContent({
-  compactMode,
-  showOnlyB50,
-}: {
-  compactMode: boolean
-  showOnlyB50: boolean
-}) {
+function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMode: boolean; showOnlyB50: boolean }) {
   const { allEntries } = useRatingEntries()
   const { modifyEntries } = useRatingCalculatorContext()
   const { t } = useTranslation(['rating-calculator'])
@@ -406,7 +400,7 @@ function RatingCalculatorTableContent({
       ({
         Scroller: RatingCalculatorScroller,
         Table: RatingCalculatorTable,
-        // biome-ignore lint/suspicious/noExplicitAny: it is sort of impossible to type this
+        // oxlint-disable-next-line @typescript-eslint/no-explicit-any -- it is sort of impossible to type this
         TableHead: TableHead as any,
         TableRow: RatingCalculatorTableRow,
         TableBody: RatingCalculatorTableBody,

@@ -1,0 +1,27 @@
+{
+  "rules": {
+    "no-non-null-assertion": "off",
+    "no-shadow": "off",
+    "react-hooks/exhaustive-deps": "off",
+    "react/react-in-jsx-scope": "off",
+    "jsx-a11y/alt-text": "off",
+    "jsx-a11y/click-events-have-key-events": "off",
+    "import/no-named-as-default": "off",
+    "import/no-named-as-default-member": "off",
+    "import/no-unassigned-import": "off"
+  },
+  "categories": {
+    "correctness": "warn",
+    "suspicious": "warn"
+  },
+  "plugins": ["react", "typescript", "jsx-a11y", "import"],
+  "ignorePatterns": [
+    "dist",
+    ".turbo",
+    "node_modules",
+    "scripts/annotator/*.json",
+    "apps/web/ios",
+    "apps/web/android",
+    "apps/server"
+  ]
+}

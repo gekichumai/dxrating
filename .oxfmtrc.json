@@ -1,0 +1,9 @@
+{
+  "printWidth": 120,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "ignorePatterns": ["dist", ".turbo", "node_modules", "packages/dxdata/dxdata.json", "scripts/annotator/*.json"]
+}

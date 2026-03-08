@@ -98,7 +98,7 @@ const isSchemaFilterFormVersionOne = (v: unknown): v is SchemaFilterFormVersionO
   return true
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// oxlint-disable-next-line @typescript-eslint/no-explicit-any
 const migrations = {
   1: (v: SchemaFilterFormVersionZero): SheetSortFilterForm => {
     return {

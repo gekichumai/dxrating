@@ -68,13 +68,7 @@ const SheetTagFilterInputTag = ({
   )
 }
 
-const SheetTagFilterInput = ({
-  value,
-  onChange,
-}: {
-  value: number[]
-  onChange: (value: number[]) => void
-}) => {
+const SheetTagFilterInput = ({ value, onChange }: { value: number[]; onChange: (value: number[]) => void }) => {
   const { data: combinedTags, isLoading } = useCombinedTags()
   const tags = combinedTags?.tags
   const { data: sheets } = useSheets()
@@ -90,7 +84,7 @@ const SheetTagFilterInput = ({
       {isLoading &&
         Array.from({ length: 8 }).map((_, i) => (
           <SheetTagFilterInputTag
-            // biome-ignore lint/suspicious/noArrayIndexKey: index is stable
+            // oxlint-disable-next-line react/no-array-index-key -- index is stable
             key={i}
             label={<div className="w-8">&nbsp;</div>}
             count="--"

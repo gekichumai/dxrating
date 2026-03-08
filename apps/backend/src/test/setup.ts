@@ -44,10 +44,7 @@ export async function setupTestServer() {
         try {
           await migrationsPool.query(trimmed)
         } catch (e: unknown) {
-          if (
-            e instanceof Error &&
-            (e.message.includes('already exists') || e.message.includes('duplicate key'))
-          ) {
+          if (e instanceof Error && (e.message.includes('already exists') || e.message.includes('duplicate key'))) {
             continue
           }
           throw e

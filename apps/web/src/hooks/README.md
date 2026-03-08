@@ -31,9 +31,7 @@ const MyComponent = () => {
   return (
     <div>
       <LoginDialog />
-      <button onClick={handleProtectedAction}>
-        Protected Action
-      </button>
+      <button onClick={handleProtectedAction}>Protected Action</button>
       {isAuthenticated && <p>Welcome, {session.user.name}!</p>}
     </div>
   )
@@ -87,11 +85,7 @@ const SheetComments = ({ sheet }) => {
   return (
     <div>
       <LoginDialog />
-      <TextField
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        disabled={!session}
-      />
+      <TextField value={content} onChange={(e) => setContent(e.target.value)} disabled={!session} />
       <Button onClick={handleSubmit}>Submit</Button>
     </div>
   )

@@ -15,7 +15,7 @@ export default defineConfig({
       name: 'strip-import-attributes',
       enforce: 'pre',
       transform(code, _id) {
-        if (code.includes("with {")) {
+        if (code.includes('with {')) {
           return { code: code.replace(/\s+with\s+\{[^}]*\}/g, ''), map: null }
         }
       },

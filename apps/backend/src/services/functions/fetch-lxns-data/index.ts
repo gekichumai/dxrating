@@ -148,7 +148,10 @@ export async function fetchPlayerByQQ(c: Context) {
           ? Number.parseInt(error.message.split(' ').pop() || '500')
           : 500
 
-      return c.json({ error: error instanceof Error ? error.message : 'Internal server error' }, status as ContentfulStatusCode)
+      return c.json(
+        { error: error instanceof Error ? error.message : 'Internal server error' },
+        status as ContentfulStatusCode,
+      )
     }
   })
 }
@@ -213,7 +216,10 @@ export async function fetchScoresByFriendCode(c: Context) {
           ? Number.parseInt(error.message.split(' ').pop() || '500')
           : 500
 
-      return c.json({ error: error instanceof Error ? error.message : 'Internal server error' }, status as ContentfulStatusCode)
+      return c.json(
+        { error: error instanceof Error ? error.message : 'Internal server error' },
+        status as ContentfulStatusCode,
+      )
     }
   })
 }

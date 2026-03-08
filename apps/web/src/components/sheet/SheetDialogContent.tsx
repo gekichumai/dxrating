@@ -129,7 +129,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
       {isLoadingComments ? (
         Array.from({ length: 1 }).map((_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: index is stable
+          // oxlint-disable-next-line react/no-array-index-key -- index is stable
           <div key={i} className="flex flex-col gap-1 bg-zinc-2 rounded-lg h-16 animate-pulse" />
         ))
       ) : (
@@ -485,7 +485,7 @@ const SheetInternalLevelHistory: FC<{
         (acc, { version, internalLevelValue, ...extra }) => {
           // add `delta` field
           let delta: number | undefined
-          // biome-ignore lint/performance/noAccumulatingSpread: it is fine here since we don't really have a lot of versions
+          // accumulating spread is fine here since we don't really have a lot of versions
           const accReversed = [...acc].reverse()
           const prev = accReversed.find((v) => v.internalLevelValue !== undefined)
           if (prev && internalLevelValue !== undefined && prev.internalLevelValue !== undefined) {

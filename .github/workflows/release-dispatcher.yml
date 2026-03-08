@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: "main"
+          ref: 'main'
 
       # git tag the release, then push it
       # The tag name is `v` followed by a semver version number, in which is calculated by incrementing the patch

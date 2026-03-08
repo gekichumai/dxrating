@@ -1,12 +1,4 @@
-import {
-  pgTable,
-  text,
-  timestamp,
-  bigserial,
-  bigint,
-  type AnyPgColumn,
-  jsonb,
-} from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, bigserial, bigint, type AnyPgColumn, jsonb } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 import { user } from './auth-schema.js'
 

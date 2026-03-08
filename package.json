@@ -1,16 +1,20 @@
 {
+  "name": "@gekichumai/dxrating",
   "private": true,
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "format": "biome format --write ."
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix ."
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
+    "oxfmt": "^0.36.0",
+    "oxlint": "^1.51.0",
     "tsconfig": "workspace:*",
     "turbo": "^2.4.4"
   },
-  "name": "@gekichumai/dxrating",
   "packageManager": "pnpm@10.30.3",
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -19,7 +23,6 @@
       "sharp"
     ],
     "ignoredBuiltDependencies": [
-      "@biomejs/biome",
       "core-js",
       "protobufjs",
       "workerd"

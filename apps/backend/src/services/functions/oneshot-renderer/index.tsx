@@ -65,7 +65,7 @@ export const requestBodySchema = z.object({
 
 // declare a new attribute `tw` for JSX elements
 declare module 'react' {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // oxlint-disable-next-line @typescript-eslint/no-unused-vars
   interface HTMLAttributes<T> {
     tw?: string
   }

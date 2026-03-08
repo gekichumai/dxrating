@@ -31,19 +31,20 @@ export function initSentry() {
       const error = hint.originalException
       if (error instanceof Error) {
         // Skip validation errors as they're user input issues, not bugs
-        if (error.message.includes('Invalid parameters') || 
-            error.message.includes('QQ parameter is required') ||
-            error.message.includes('Friend code parameter is required')) {
+        if (
+          error.message.includes('Invalid parameters') ||
+          error.message.includes('QQ parameter is required') ||
+          error.message.includes('Friend code parameter is required')
+        ) {
           return null
         }
-        
+
         // Skip authentication errors as they're user credential issues
-        if (error.message.includes('invalid credentials') ||
-            error.message.includes('Failed to fetch')) {
+        if (error.message.includes('invalid credentials') || error.message.includes('Failed to fetch')) {
           return null
         }
       }
-      
+
       return event
     },
     // Configure which transactions to capture

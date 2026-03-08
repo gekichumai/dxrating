@@ -44,98 +44,98 @@ interface RatingCalculatorStatisticsOverviewProps {
 }
 
 function RatingCalculatorStatisticsOverview({ className, style, ref }: RatingCalculatorStatisticsOverviewProps) {
-    const { b35Entries, b15Entries, statistics } = useRatingEntries()
-    const { b15Average, b35Average, b15Min, b35Min, b15Max, b35Max, b15Sum, b35Sum, b50Sum } = statistics
-    const { t } = useTranslation(['rating-calculator'])
+  const { b35Entries, b15Entries, statistics } = useRatingEntries()
+  const { b15Average, b35Average, b15Min, b35Min, b15Max, b35Max, b15Sum, b35Sum, b50Sum } = statistics
+  const { t } = useTranslation(['rating-calculator'])
 
-    return (
-      <div
-        ref={ref}
-        className={clsx('flex flex-col justify-center gap-4 text-black py-2 w-full', className)}
-        style={style}
-      >
-        <RatingCalculatorStatisticsFactItem size="lg" label={t('rating-calculator:statistics.total')} value={b50Sum} />
+  return (
+    <div
+      ref={ref}
+      className={clsx('flex flex-col justify-center gap-4 text-black py-2 w-full', className)}
+      style={style}
+    >
+      <RatingCalculatorStatisticsFactItem size="lg" label={t('rating-calculator:statistics.total')} value={b50Sum} />
 
-        <div className="flex flex-col items-start gap-2">
-          <div className="flex items-baseline gap-1 leading-none">
-            <span className="text-lg font-semibold">{t('rating-calculator:statistics.best-15')}</span>
-            <span className="text-sm text-zinc-500">
-              {t('rating-calculator:statistics.entries', { current: b15Entries.length, total: 15 })}
-            </span>
-          </div>
-
-          <div className="flex items-center w-full">
-            <RatingCalculatorStatisticsFactItem
-              size="md"
-              label={t('rating-calculator:statistics.subtotal')}
-              value={formatNumber(b15Sum)}
-              className="w-24"
-            />
-
-            <div className="h-12 w-px shrink-0 bg-gray-300 ml-2 mr-4" />
-
-            <RatingCalculatorStatisticsFactItem
-              size="md"
-              label={t('rating-calculator:statistics.min')}
-              value={formatNumber(b15Min)}
-              className="w-16"
-            />
-            <RatingCalculatorStatisticsFactItem
-              size="md"
-              label={t('rating-calculator:statistics.avg')}
-              value={formatNumber(b15Average)}
-              className="w-16"
-            />
-            <RatingCalculatorStatisticsFactItem
-              size="md"
-              label={t('rating-calculator:statistics.max')}
-              value={formatNumber(b15Max)}
-              className="w-16"
-            />
-          </div>
+      <div className="flex flex-col items-start gap-2">
+        <div className="flex items-baseline gap-1 leading-none">
+          <span className="text-lg font-semibold">{t('rating-calculator:statistics.best-15')}</span>
+          <span className="text-sm text-zinc-500">
+            {t('rating-calculator:statistics.entries', { current: b15Entries.length, total: 15 })}
+          </span>
         </div>
 
-        <div className="flex flex-col items-start gap-2">
-          <div className="flex items-baseline gap-1 leading-none">
-            <span className="text-lg font-semibold">{t('rating-calculator:statistics.best-35')}</span>
-            <span className="text-sm text-zinc-500">
-              {t('rating-calculator:statistics.entries', { current: b35Entries.length, total: 35 })}
-            </span>
-          </div>
+        <div className="flex items-center w-full">
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label={t('rating-calculator:statistics.subtotal')}
+            value={formatNumber(b15Sum)}
+            className="w-24"
+          />
 
-          <div className="flex items-center w-full">
-            <RatingCalculatorStatisticsFactItem
-              size="md"
-              label={t('rating-calculator:statistics.subtotal')}
-              value={b35Sum}
-              className="w-24"
-            />
+          <div className="h-12 w-px shrink-0 bg-gray-300 ml-2 mr-4" />
 
-            <div className="h-12 w-px shrink-0 bg-gray-300 ml-2 mr-4" />
-
-            <RatingCalculatorStatisticsFactItem
-              size="md"
-              label={t('rating-calculator:statistics.min')}
-              value={formatNumber(b35Min)}
-              className="w-16"
-            />
-            <RatingCalculatorStatisticsFactItem
-              size="md"
-              label={t('rating-calculator:statistics.avg')}
-              value={formatNumber(b35Average)}
-              className="w-16"
-            />
-            <RatingCalculatorStatisticsFactItem
-              size="md"
-              label={t('rating-calculator:statistics.max')}
-              value={formatNumber(b35Max)}
-              className="w-16"
-            />
-          </div>
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label={t('rating-calculator:statistics.min')}
+            value={formatNumber(b15Min)}
+            className="w-16"
+          />
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label={t('rating-calculator:statistics.avg')}
+            value={formatNumber(b15Average)}
+            className="w-16"
+          />
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label={t('rating-calculator:statistics.max')}
+            value={formatNumber(b15Max)}
+            className="w-16"
+          />
         </div>
       </div>
-    )
-  }
+
+      <div className="flex flex-col items-start gap-2">
+        <div className="flex items-baseline gap-1 leading-none">
+          <span className="text-lg font-semibold">{t('rating-calculator:statistics.best-35')}</span>
+          <span className="text-sm text-zinc-500">
+            {t('rating-calculator:statistics.entries', { current: b35Entries.length, total: 35 })}
+          </span>
+        </div>
+
+        <div className="flex items-center w-full">
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label={t('rating-calculator:statistics.subtotal')}
+            value={b35Sum}
+            className="w-24"
+          />
+
+          <div className="h-12 w-px shrink-0 bg-gray-300 ml-2 mr-4" />
+
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label={t('rating-calculator:statistics.min')}
+            value={formatNumber(b35Min)}
+            className="w-16"
+          />
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label={t('rating-calculator:statistics.avg')}
+            value={formatNumber(b35Average)}
+            className="w-16"
+          />
+          <RatingCalculatorStatisticsFactItem
+            size="md"
+            label={t('rating-calculator:statistics.max')}
+            value={formatNumber(b35Max)}
+            className="w-16"
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const Histogram: FC<{
   b15Values: number[]

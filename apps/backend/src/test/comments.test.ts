@@ -22,9 +22,7 @@ describe('Comments API', () => {
   })
 
   it('GET /api/v1/comments returns empty for unknown sheet', async () => {
-    const res = await fetch(
-      `${getBaseUrl()}/api/v1/comments?songId=nonexistent&sheetType=dx&sheetDifficulty=master`,
-    )
+    const res = await fetch(`${getBaseUrl()}/api/v1/comments?songId=nonexistent&sheetType=dx&sheetDifficulty=master`)
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body).toEqual([])
@@ -66,9 +64,7 @@ describe('Comments API', () => {
     expect(created.created_at).toBeDefined()
 
     // List comments
-    const listRes = await fetch(
-      `${getBaseUrl()}/api/v1/comments?songId=test-song&sheetType=dx&sheetDifficulty=master`,
-    )
+    const listRes = await fetch(`${getBaseUrl()}/api/v1/comments?songId=test-song&sheetType=dx&sheetDifficulty=master`)
     expect(listRes.status).toBe(200)
     const comments = await listRes.json()
     expect(comments.length).toBe(1)
@@ -108,9 +104,7 @@ describe('Comments API', () => {
     expect(replyRes.status).toBe(200)
 
     // List and verify threading
-    const listRes = await fetch(
-      `${getBaseUrl()}/api/v1/comments?songId=song-1&sheetType=dx&sheetDifficulty=master`,
-    )
+    const listRes = await fetch(`${getBaseUrl()}/api/v1/comments?songId=song-1&sheetType=dx&sheetDifficulty=master`)
     const comments = await listRes.json()
     expect(comments.length).toBe(2)
     const reply = comments.find((c: { content: string }) => c.content === 'Reply comment')

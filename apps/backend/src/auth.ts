@@ -23,11 +23,7 @@ export const auth = betterAuth({
   advanced: {
     cookiePrefix: 'dxrating',
   },
-  trustedOrigins: [
-    'https://dxrating.net',
-    'http://localhost:5173',
-    'http://localhost:5174',
-  ],
+  trustedOrigins: ['https://dxrating.net', 'http://localhost:5173', 'http://localhost:5174'],
   socialProviders: {
     google: {
       clientId: config.auth.google.clientId!,

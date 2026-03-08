@@ -1,7 +1,7 @@
-import { useState } from "react"
-import { Dialog, DialogContent, DialogTitle } from "@mui/material"
-import { authClient } from "../lib/auth-client"
-import { LoginForm } from "../components/auth/LoginForm"
+import { useState } from 'react'
+import { Dialog, DialogContent, DialogTitle } from '@mui/material'
+import { authClient } from '../lib/auth-client'
+import { LoginForm } from '../components/auth/LoginForm'
 
 interface EnsureAuthenticatedOptions {
   throwOnError?: boolean
@@ -22,9 +22,7 @@ export const useAuth = () => {
    * @param options.throwOnError - If true, throws an error when user is not authenticated. Default: false
    * @returns Promise that resolves to true if authenticated, false otherwise
    */
-  const ensureAuthenticated = async (
-    options: EnsureAuthenticatedOptions = {}
-  ): Promise<boolean> => {
+  const ensureAuthenticated = async (options: EnsureAuthenticatedOptions = {}): Promise<boolean> => {
     const { throwOnError = false } = options
 
     if (session) {
@@ -32,7 +30,7 @@ export const useAuth = () => {
     }
 
     if (throwOnError) {
-      throw new Error("Authentication required")
+      throw new Error('Authentication required')
     }
 
     openLoginDialog()

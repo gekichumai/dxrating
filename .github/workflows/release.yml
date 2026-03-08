@@ -4,7 +4,7 @@ on:
   push:
     # trigger on version tag push
     tags:
-      - "v*"
+      - 'v*'
 
 concurrency:
   group: release-${{ github.ref }}
@@ -27,8 +27,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: ".node-version"
-          cache: "pnpm"
+          node-version-file: '.node-version'
+          cache: 'pnpm'
 
       - name: Get Metadata
         id: git-meta

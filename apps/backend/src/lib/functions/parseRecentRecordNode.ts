@@ -19,13 +19,14 @@ export function parseRecentRecordNode(record: Element): RecentRecord[] {
 
   // Extract only the direct text content of the element, excluding child elements like the level icon
   const songIdElement = el.querySelector('.basic_block.break')
-  const songId = songIdElement ? 
-    Array.from(songIdElement.childNodes)
-      .filter(node => node.nodeType === NODE_TEXT_NODE)
-      .map(node => node.textContent?.trim())
-      .join('')
-      .trim() : undefined
-  
+  const songId = songIdElement
+    ? Array.from(songIdElement.childNodes)
+        .filter((node) => node.nodeType === NODE_TEXT_NODE)
+        .map((node) => node.textContent?.trim())
+        .join('')
+        .trim()
+    : undefined
+
   const achievementRateString = el.querySelector('.playlog_achievement_txt')?.textContent?.trim()
 
   const achievementRate = Number.parseInt(achievementRateString?.replace('%', '').replace('.', '') ?? '')

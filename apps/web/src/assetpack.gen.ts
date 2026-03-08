@@ -11,7 +11,7 @@ const WHITELIST_GLOB = [
   'images/version-logo/*.webp',
   'images/background/*.jpg',
   'images/background/*.webp',
-  'favicon/*.jpg'
+  'favicon/*.jpg',
 ]
 
 export interface Asset {
@@ -19,7 +19,6 @@ export interface Asset {
   height: number
   path: string
 }
-
 
 async function main() {
   console.log(`🔍 Searching for assets in: ${assetsDir}`)
@@ -40,10 +39,7 @@ async function main() {
   if (files.size === 0) {
     console.log('⚠️  No files found to process. Creating empty assets.json...')
 
-    await fs.writeFile(
-      path.join(process.cwd(), './src/utils/assetpack.json'), 
-      JSON.stringify({}, null, 2)
-    )
+    await fs.writeFile(path.join(process.cwd(), './src/utils/assetpack.json'), JSON.stringify({}, null, 2))
     console.log('✅ Created empty assets.json')
     return
   }
@@ -52,17 +48,21 @@ async function main() {
 
   for (const file of files) {
     const r = await new Promise<string>((resolve, reject) => {
-      return childProcess.exec(`/usr/bin/env exiftool -j '${file}'`, {
-        cwd: process.cwd(),
-      }, (error, stdout, stderr) => {
-        if (error) {
-          return reject(error)
-        }
+      return childProcess.exec(
+        `/usr/bin/env exiftool -j '${file}'`,
+        {
+          cwd: process.cwd(),
+        },
+        (error, stdout, stderr) => {
+          if (error) {
+            return reject(error)
+          }
 
-        resolve(stdout)
-      })
+          resolve(stdout)
+        },
+      )
     })
-    
+
     const [exif] = JSON.parse(r) as Array<{
       ImageWidth: number
       ImageHeight: number
@@ -85,13 +85,10 @@ async function main() {
   }
 
   // Write the JSON file to the public directory so it can be fetched by the browser
-  await fs.writeFile(
-    path.join(process.cwd(), './src/utils/assetpack.json'), 
-    JSON.stringify(assetsData, null, 2)
-  )
-  
+  await fs.writeFile(path.join(process.cwd(), './src/utils/assetpack.json'), JSON.stringify(assetsData, null, 2))
+
   console.log(`✅ Generated assets.json with ${Object.keys(assetsData).length} assets`)
-  
+
   // Log processed files for verification
   for (const [path, asset] of Object.entries(assetsData)) {
     console.log(`   ${asset.path} (${asset.width}×${asset.height}) → ${path}`)
