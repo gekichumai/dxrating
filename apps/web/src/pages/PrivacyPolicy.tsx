@@ -43,9 +43,8 @@ export const PrivacyPolicy = () => {
 
         <h2>Data Storage</h2>
         <p>
-          We use Supabase as our database provider. Your data is stored securely and processed in accordance with their
-          security standards and practices. For more information about Supabase's security practices, you can visit
-          their security documentation.
+          We use a secure database provider. Your data is stored securely and processed in accordance with
+          security standards and practices.
         </p>
 
         <h2>Analytics</h2>

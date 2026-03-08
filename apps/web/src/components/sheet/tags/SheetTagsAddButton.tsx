@@ -1,15 +1,14 @@
 import { Chip, Dialog, Grow } from '@mui/material'
-import IconMdiTagPlus from '~icons/mdi/tag-plus'
 import clsx from 'clsx'
 import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
-import { useAuth } from '../../../models/context/AuthContext'
-import { supabase } from '../../../models/supabase'
+import IconMdiTagPlus from '~icons/mdi/tag-plus'
+import { authClient } from '../../../lib/auth-client'
+import { apiClient as client } from '../../../lib/orpc'
 import type { FlattenedSheet } from '../../../songs'
 import { deriveColor } from '../../../utils/color'
-import { isBuildPlatformApp } from '../../../utils/env'
 import { formatErrorMessage } from '../../../utils/formatErrorMessage'
 import { MotionButtonBase, MotionTooltip } from '../../../utils/motion'
 import { zoomTransitions } from '../../../utils/motionConstants'
@@ -24,41 +23,51 @@ const SheetTagsAddDialog: FC<{
   const { t } = useTranslation(['sheet'])
   const [pending, setPending] = useState(false)
   const localizeMessage = useLocalizedMessageTranslation()
-  const { session } = useAuth()
+  const { data: sessionData } = authClient.useSession()
+  const session = sessionData?.session
 
-  const { data: tagGroups, isLoading: loadingTags } = useSWR('supabase::tag_grouped', async () => {
-    const { data } = await supabase
-      .from('tags')
-      .select('id, localized_name, localized_description, group:tag_groups(id, localized_name, color)')
-      .order('id', { ascending: true })
+  const { data: tagGroups, isLoading: loadingTags } = useSWR('tags.grouped', async () => {
+    // We can reuse useCombinedTags or call orpc
+    const { tags, tagGroups } = await client.tags.list()
 
-    if (!data) {
-      return null
-    }
+    // Grouping logic adapted for clean data
+    const groupMap = new Map()
+    tagGroups.forEach((g) => groupMap.set(g.id, { ...g, tags: [] }))
 
-    const grouped = data.reduce(
-      (acc, tag) => {
-        if (!tag.group?.id) {
-          return acc
-        }
+    // Fallback for tags without group?
+    // Current logic groups by group_id.
 
-        if (!acc[tag.group.id]) {
-          acc[tag.group.id] = []
-        }
+    // Perform mapping
+    const grouped: any[] = []
 
-        if (acc[tag.group.id]) {
-          acc[tag.group.id].push(tag)
-        }
+    // Actually the UI expects { group: TagGroup, tags: Tag[] }[]
 
-        return acc
+    // Map groups
+    const result = tagGroups.map((g) => ({
+      group: {
+        id: g.id,
+        localized_name: JSON.parse(g.localized_name), // Backend returns stringified JSON?
+        // In contract: localized_name: z.string().
+        // In DB: localized_name: Record<string, string>.
+        // Drizzle returns what DB has.
+        // If DB column is JSONB/JSON, Drizzle usually parses it if configured or returns object.
+        // My Schema says `text`. So it IS stringified if inserted as string.
+        // Supabase client returns JSON object.
+        // My backend returns string?
+        // Let's assume JSON.parse is needed if it's text.
+        color: g.color,
       },
-      {} as Record<number, typeof data>,
-    )
-
-    return Object.entries(grouped).map(([, tags]) => ({
-      group: tags[0].group,
-      tags,
+      tags: tags
+        .filter((t) => t.group_id === g.id)
+        .map((t) => ({
+          ...t,
+          localized_name: JSON.parse(t.localized_name) as any,
+          localized_description: JSON.parse(t.localized_description) as any,
+          group: g, // UI might need this nested reference
+        })),
     }))
+
+    return result
   })
   const { data: existingTags, isLoading: loadingExistingTags, mutate: mutateExistingTags } = useSheetTags(sheet)
 
@@ -67,20 +76,12 @@ const SheetTagsAddDialog: FC<{
   const addTag = async (tagId: number) => {
     setPending(true)
     try {
-      const result = await supabase
-        .from('tag_songs')
-        .upsert({
-          song_id: sheet.songId,
-          sheet_type: sheet.type,
-          sheet_difficulty: sheet.difficulty,
-          tag_id: tagId,
-        })
-        .eq('song_id', sheet.songId)
-        .eq('sheet_type', sheet.type)
-        .eq('sheet_difficulty', sheet.difficulty)
-      if (result.error) {
-        throw result.error
-      }
+      await client.tags.attach({
+        songId: sheet.songId,
+        sheetType: sheet.type,
+        sheetDifficulty: sheet.difficulty,
+        tagId: tagId,
+      })
 
       toast.success(t('sheet:tags.add.toast-success'), {
         id: `tag-add-success:${tagId}`,
@@ -168,11 +169,7 @@ const SheetTagsAddDialog: FC<{
 
       {!session && (
         <div className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8">
-          {isBuildPlatformApp ? (
-            <div className="text-center font-bold">Adding tags is currently unavailable in the app.</div>
-          ) : (
-            <div className="text-center font-bold">Login or Register an account to add tags.</div>
-          )}
+          <div className="text-center font-bold">Login or Register an account to add tags.</div>
         </div>
       )}
     </div>

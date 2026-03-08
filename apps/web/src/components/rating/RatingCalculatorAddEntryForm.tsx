@@ -4,7 +4,6 @@ import {
   cloneElement,
   type ComponentType,
   type FC,
-  forwardRef,
   type HTMLAttributes,
   memo,
   type PropsWithChildren,
@@ -35,26 +34,28 @@ export interface PlayEntry {
   providerConfig?: PlayEntryProviderConfig
 }
 
-const ListboxComponent = forwardRef<HTMLElement>(
-  ({ children, ...rest }: PropsWithChildren<HTMLAttributes<HTMLUListElement>>, ref) => {
-    const data = children as ReactElement[]
+const ListboxComponent = (({
+  children,
+  ref,
+  ...rest
+}: PropsWithChildren<HTMLAttributes<HTMLUListElement>> & { ref?: React.Ref<HTMLElement> }) => {
+  const data = children as ReactElement<any>[]
 
-    return (
-      <ul {...rest} className={clsx('!py-0', rest.className)}>
-        <Virtuoso
-          scrollerRef={ref as (ref: HTMLElement | Window | null) => void}
-          style={{ height: '30rem' }}
-          data={data}
-          itemContent={(index, child) => {
-            return cloneElement(child, { index })
-          }}
-          increaseViewportBy={500}
-          role="listbox"
-        />
-      </ul>
-    )
-  },
-) as ComponentType<HTMLAttributes<HTMLElement>>
+  return (
+    <ul {...rest} className={clsx('!py-0', rest.className)}>
+      <Virtuoso
+        scrollerRef={ref as (ref: HTMLElement | Window | null) => void}
+        style={{ height: '30rem' }}
+        data={data}
+        itemContent={(index, child) => {
+          return cloneElement(child, { index })
+        }}
+        increaseViewportBy={500}
+        role="listbox"
+      />
+    </ul>
+  )
+}) as ComponentType<HTMLAttributes<HTMLElement>>
 
 export const RatingCalculatorAddEntryForm: FC<{
   onSubmit: (entry: PlayEntry) => void

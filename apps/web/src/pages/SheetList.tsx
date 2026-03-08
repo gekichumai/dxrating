@@ -1,5 +1,5 @@
 import { VERSION_ID_MAP } from '@gekichumai/dxdata'
-import { Button, IconButton, TextField } from '@mui/material'
+import { IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/react'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useContext, useMemo, useState } from 'react'
@@ -7,14 +7,11 @@ import { useTranslation } from 'react-i18next'
 import { useSearchParam } from 'react-use'
 import IconMdiClose from '~icons/mdi/close'
 import MdiIconInfo from '~icons/mdi/information'
-import IconMdiOcr from '~icons/mdi/ocr'
 import { SheetListContainer } from '../components/sheet/SheetListContainer'
 import { SheetSortFilter, type SheetSortFilterForm } from '../components/sheet/SheetSortFilter'
 import { SheetDetailsContext, SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { type FlattenedSheet, useFilteredSheets, useSheets } from '../songs'
-import { DXRatingPlugin } from '../utils/capacitor/plugin/wrap'
-import { isBuildPlatformApp } from '../utils/env'
 
 const chainEvery =
   <T,>(...fns: ((arg: T) => boolean | undefined)[]) =>
@@ -146,20 +143,6 @@ const _SheetListInner: FC = () => {
         }}
         data-attr="sheet-search"
       />
-
-      {isBuildPlatformApp && (
-        <Button
-          onClick={() => {
-            DXRatingPlugin.launchInstantOCR()
-            posthog?.capture('sheet_ocr_button_clicked')
-          }}
-          className="mt-2 rounded-full"
-          variant="contained"
-          startIcon={<IconMdiOcr />}
-        >
-          {t('sheet:ocr')}
-        </Button>
-      )}
 
       <SheetSortFilter
         onChange={(v) => {

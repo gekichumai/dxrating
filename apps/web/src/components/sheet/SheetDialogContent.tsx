@@ -14,7 +14,6 @@ import {
 } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, type PropsWithChildren, memo, useEffect, useMemo, useRef, useState } from 'react'
-import toast from 'react-hot-toast'
 import { Trans, useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
 import useSWR from 'swr'
@@ -23,9 +22,9 @@ import IconMdiSearchWeb from '~icons/mdi/search-web'
 import IconMdiSpotify from '~icons/mdi/spotify'
 import IconMdiYouTube from '~icons/mdi/youtube'
 import RiBilibiliFill from '~icons/ri/bilibili-fill'
-import { useAuth } from '../../models/context/AuthContext'
+import { apiClient as client } from '../../lib/orpc'
+import { useAuth } from '../../hooks/useAuth'
 import { useAppContextDXDataVersion } from '../../models/context/useAppContext'
-import { supabase } from '../../models/supabase'
 import type { FlattenedSheet } from '../../songs'
 import { calculateRating } from '../../utils/rating'
 import { DXRank } from '../global/DXRank'
@@ -64,81 +63,69 @@ const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
 )
 
 const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { session } = useAuth()
+  const { session, ensureAuthenticated, LoginDialog } = useAuth()
   const [content, setContent] = useState<string>('')
   const {
     data: comments,
     isLoading: isLoadingComments,
     mutate,
   } = useSWR(
-    `supabase::comments?${new URLSearchParams({
-      songId: sheet.songId,
-      sheetType: sheet.type,
-      sheetDifficulty: sheet.difficulty,
-    }).toString()}`,
+    // Key
+    ['comments.list', sheet.songId, sheet.type, sheet.difficulty],
+    // Fetcher
     async () => {
-      const { data, error } = await supabase.functions.invoke<
-        {
-          id: number
-          parent_id: number | null
-          content: string
-          created_at: string
-          display_name: string | null
-        }[]
-      >('fetch-comment', {
-        body: JSON.stringify({
-          songId: sheet.songId,
-          sheetType: sheet.type,
-          sheetDifficulty: sheet.difficulty,
-        }),
+      const data = await client.comments.list({
+        songId: sheet.songId,
+        sheetType: sheet.type,
+        sheetDifficulty: sheet.difficulty,
       })
-
-      if (error) {
-        throw error
-      }
-      return data
+      // Map to UI expected format if needed
+      // Backend returns: CommentWithProfileSchema (id, parent_id, created_at, content, display_name)
+      // UI expects: { id, parent_id, content, created_at, display_name }
+      // Dates: created_at: Date | string. UI: new Date(comment.created_at).
+      return data.map((c) => ({
+        ...c,
+        created_at: c.created_at.toString(),
+      }))
     },
   )
 
   const [{ loading: submitting }, handleSubmit] = useAsyncFn(async () => {
+    const isAuthenticated = await ensureAuthenticated()
+    if (!isAuthenticated) return
+
     const payload = {
       songId: sheet.songId,
       sheetType: sheet.type,
       sheetDifficulty: sheet.difficulty,
       content,
     }
-    const { error } = await supabase.functions.invoke<{
-      id: string
-      created_at: string
-    }>('create-comment', {
-      body: JSON.stringify(payload),
-    })
-    if (error) {
-      toast.error(`Failed to submit comment: ${error.message}`)
-    }
+    await client.comments.create(payload) // Logic handles auth and parentId
+
     mutate()
     setContent('')
-  }, [sheet, content])
+  }, [sheet, content, ensureAuthenticated])
 
   return (
     <div className="flex flex-col gap-2">
-      {session && (
-        <div className="flex gap-2 mt-1">
-          <TextField
-            className="flex-grow"
-            placeholder="Leave a comment..."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            minRows={1}
-            maxRows={3}
-            multiline
-            data-attr="comment-input"
-          />
-          <Button variant="contained" onClick={handleSubmit} disabled={!content || submitting}>
-            {submitting ? <CircularProgress size={24} /> : 'Submit'}
-          </Button>
-        </div>
-      )}
+      <LoginDialog />
+
+      <div className="flex gap-2 mt-1">
+        <TextField
+          className="flex-grow"
+          placeholder="Leave a comment..."
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          minRows={1}
+          maxRows={3}
+          multiline
+          data-attr="comment-input"
+          disabled={!session}
+        />
+        <Button variant="contained" onClick={handleSubmit} disabled={!content || submitting}>
+          {submitting ? <CircularProgress size={24} /> : 'Submit'}
+        </Button>
+      </div>
 
       {isLoadingComments ? (
         Array.from({ length: 1 }).map((_, i) => (

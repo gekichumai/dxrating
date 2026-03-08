@@ -1,9 +1,9 @@
 import { useRatingEntries } from '@/components/rating/useRatingEntries'
+import { authClient } from '@/lib/auth-client'
 import { useAppContext } from '@/models/context/useAppContext'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, memo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../../models/context/AuthContext'
 import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
 import { useSheets } from '../../songs'
 import { useVersionTheme } from '../../utils/useVersionTheme'
@@ -68,18 +68,18 @@ const SideEffectorAutoImportRating: FC = () => {
 }
 
 const SideEffectorAuth: FC = () => {
-  const { session } = useAuth()
+  const { data } = authClient.useSession()
   const posthog = usePostHog()
 
   useEffect(() => {
-    if (session) {
-      posthog?.identify(session?.user.id, {
-        email: session?.user.email,
+    if (data) {
+      posthog?.identify(data.user.id, {
+        email: data.user.email,
       })
     } else {
       posthog?.reset()
     }
-  }, [session])
+  }, [data?.user.id])
 
   return null
 }
