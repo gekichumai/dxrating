@@ -401,15 +401,16 @@ function RatingCalculatorTableContent({
     getSortedRowModel: getSortedRowModel(),
   })
 
-  const TableComponents: TableComponents<Row<Entry>> = useMemo(
-    () => ({
-      Scroller: RatingCalculatorScroller,
-      Table: RatingCalculatorTable,
-      // biome-ignore lint/suspicious/noExplicitAny: it is sort of impossible to type this
-      TableHead: TableHead as any,
-      TableRow: RatingCalculatorTableRow,
-      TableBody: RatingCalculatorTableBody,
-    }),
+  const TableComponents = useMemo(
+    () =>
+      ({
+        Scroller: RatingCalculatorScroller,
+        Table: RatingCalculatorTable,
+        // biome-ignore lint/suspicious/noExplicitAny: it is sort of impossible to type this
+        TableHead: TableHead as any,
+        TableRow: RatingCalculatorTableRow,
+        TableBody: RatingCalculatorTableBody,
+      }) as TableComponents<Row<Entry>>,
     [compactMode],
   )
 

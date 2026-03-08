@@ -8,6 +8,18 @@ import { defineConfig } from 'vite'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    // Strip `with { type: 'json' }` import attributes before esbuild sees them.
+    // esbuild 0.18 (Vite 4) doesn't support import attributes, but Vite handles
+    // JSON imports natively so the attribute isn't needed for the frontend build.
+    {
+      name: 'strip-import-attributes',
+      enforce: 'pre',
+      transform(code, _id) {
+        if (code.includes("with {")) {
+          return { code: code.replace(/\s+with\s+\{[^}]*\}/g, ''), map: null }
+        }
+      },
+    },
     react(),
     UnoCSS(),
     Icons({ compiler: 'jsx', jsx: 'react', autoInstall: true }),
