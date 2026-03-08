@@ -278,7 +278,12 @@ const padArray = <T,>(arr: T[], len: number, fill?: T): (T | undefined)[] => {
   return arr.concat(Array(len).fill(fill)).slice(0, len)
 }
 
-const gitVersion = execSync('git rev-parse HEAD').toString().trim()
+let gitVersion = 'unknown'
+try {
+  gitVersion = execSync('git rev-parse HEAD').toString().trim()
+} catch {
+  // git not available in production Docker image
+}
 
 const FactItem = ({
   value,
