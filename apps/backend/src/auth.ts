@@ -1,3 +1,4 @@
+import * as bcrypt from 'bcrypt'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from './db/index.js'
@@ -19,6 +20,10 @@ export const auth = betterAuth({
   baseURL: config.auth.url,
   emailAndPassword: {
     enabled: true,
+    password: {
+      hash: async (password) => bcrypt.hash(password, 10),
+      verify: async ({ hash, password }) => bcrypt.compare(password, hash),
+    },
   },
   advanced: {
     cookiePrefix: 'dxrating',
