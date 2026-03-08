@@ -56,7 +56,7 @@ jobs:
         shell: bash
         run: |
           pnpm install --frozen-lockfile
-          pnpm --filter=@gekichumai/dxrating-web... run build:web
+          pnpm --filter=@gekichumai/dxrating-web... run build
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 

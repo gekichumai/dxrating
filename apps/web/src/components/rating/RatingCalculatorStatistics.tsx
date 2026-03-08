@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import * as d3 from 'd3'
 import { motion } from 'framer-motion'
 import compact from 'lodash-es/compact'
-import { type FC, type HTMLAttributes, forwardRef, useEffect, useRef, useState } from 'react'
+import { type FC, type HTMLAttributes, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMeasure } from 'react-use'
 import IconMdiGestureSwipeLeft from '~icons/mdi/gesture-swipe-left'
@@ -40,10 +40,10 @@ const formatNumber = (value: number) => {
 interface RatingCalculatorStatisticsOverviewProps {
   className?: string
   style?: React.CSSProperties
+  ref?: React.Ref<HTMLDivElement>
 }
 
-const RatingCalculatorStatisticsOverview = forwardRef<HTMLDivElement, RatingCalculatorStatisticsOverviewProps>(
-  ({ className, style }, ref) => {
+function RatingCalculatorStatisticsOverview({ className, style, ref }: RatingCalculatorStatisticsOverviewProps) {
     const { b35Entries, b15Entries, statistics } = useRatingEntries()
     const { b15Average, b35Average, b15Min, b35Min, b15Max, b35Max, b15Sum, b35Sum, b50Sum } = statistics
     const { t } = useTranslation(['rating-calculator'])
@@ -135,8 +135,7 @@ const RatingCalculatorStatisticsOverview = forwardRef<HTMLDivElement, RatingCalc
         </div>
       </div>
     )
-  },
-)
+  }
 
 const Histogram: FC<{
   b15Values: number[]
@@ -289,23 +288,25 @@ const Histogram: FC<{
   )
 }
 
-const RatingCalculatorStatisticsDetails = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...rest }, ref) => {
-    const { b35Entries, b15Entries } = useRatingEntries()
+function RatingCalculatorStatisticsDetails({
+  className,
+  ref,
+  ...rest
+}: HTMLAttributes<HTMLDivElement> & { ref?: React.Ref<HTMLDivElement> }) {
+  const { b35Entries, b15Entries } = useRatingEntries()
 
-    return (
-      <div ref={ref} className={clsx('flex flex-col justify-center gap-4 text-black w-full', className)} {...rest}>
-        <Histogram
-          b35Values={compact(b35Entries.map((i) => i.rating?.ratingAwardValue))}
-          b15Values={compact(b15Entries.map((i) => i.rating?.ratingAwardValue))}
-        />
-        <span className="text-zinc-500 text-xs text-center select-none">
-          Histogram buckets are visualized in shape of (min, max] to better represent the data distribution.
-        </span>
-      </div>
-    )
-  },
-)
+  return (
+    <div ref={ref} className={clsx('flex flex-col justify-center gap-4 text-black w-full', className)} {...rest}>
+      <Histogram
+        b35Values={compact(b35Entries.map((i) => i.rating?.ratingAwardValue))}
+        b15Values={compact(b15Entries.map((i) => i.rating?.ratingAwardValue))}
+      />
+      <span className="text-zinc-500 text-xs text-center select-none">
+        Histogram buckets are visualized in shape of (min, max] to better represent the data distribution.
+      </span>
+    </div>
+  )
+}
 
 export const RatingCalculatorStatistics: FC = () => {
   const firstHeightSet = useRef(false)

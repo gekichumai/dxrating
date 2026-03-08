@@ -1,7 +1,5 @@
 import * as Sentry from '@sentry/react'
 import { browserTracingIntegration } from '@sentry/react'
-import { SupabaseIntegration } from '@supabase/sentry-js-integration'
-import { SupabaseClient } from '@supabase/supabase-js'
 import '@unocss/reset/tailwind-compat.css'
 import i18n from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
@@ -18,7 +16,6 @@ import { VersionCustomizedThemeProvider } from './components/layout/VersionCusto
 import './index.css'
 import { i18nResources } from './locales/locales'
 import { AppContextProvider } from './models/context/AppContext'
-import { AuthContextProvider } from './models/context/AuthContext'
 import { RatingCalculatorContextProvider } from './models/context/RatingCalculatorContext'
 import { BUNDLE } from './utils/bundle'
 
@@ -34,23 +31,17 @@ Sentry.init({
   enabled: import.meta.env.PROD,
   integrations: [
     browserTracingIntegration({
-      // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-      tracePropagationTargets: [
-        'localhost',
-        /^\//,
-        /^https?:\/\/dxrating\.net/,
-        /^https?:\/\/derrakuma\.dxrating\.net/,
-        /^https?:\/\/miruku\.dxrating\.net/,
-      ],
       shouldCreateSpanForRequest: (url) => {
-        return !url.startsWith(`${import.meta.env.VITE_SUPABASE_URL}/rest`)
+        return !url.includes(`supabase`)
       },
     }),
-    new SupabaseIntegration(SupabaseClient, {
-      tracing: true,
-      breadcrumbs: true,
-      errors: true,
-    }),
+  ],
+  tracePropagationTargets: [
+    'localhost',
+    /^\//,
+    /^https?:\/\/dxrating\.net/,
+    /^https?:\/\/derrakuma\.dxrating\.net/,
+    /^https?:\/\/miruku\.dxrating\.net/,
   ],
   // Performance Monitoring
   tracesSampleRate: 0.2,
@@ -152,13 +143,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <AppContextProvider>
       <VersionCustomizedThemeProvider>
         <RatingCalculatorContextProvider>
-          <AuthContextProvider>
-            <PostHogProvider client={posthog}>
-              <SideEffector />
-              <CustomizedToaster />
-              <App />
-            </PostHogProvider>
-          </AuthContextProvider>
+          <PostHogProvider client={posthog}>
+            <SideEffector />
+            <CustomizedToaster />
+            <App />
+          </PostHogProvider>
         </RatingCalculatorContextProvider>
       </VersionCustomizedThemeProvider>
     </AppContextProvider>

@@ -30,7 +30,7 @@ import {
 } from '@tanstack/react-table'
 import clsx from 'clsx'
 import { usePostHog } from 'posthog-js/react'
-import { type FC, type ForwardedRef, forwardRef, memo, useCallback, useMemo, useState } from 'react'
+import { type FC, memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
 import {
@@ -251,9 +251,9 @@ const RatingCalculatorTable: FC<TableProps> = (props: TableProps) => (
   <Table {...props} size="small" className="rounded-lg w-full min-w-2xl" style={{ borderCollapse: 'separate' }} />
 )
 
-const RatingCalculatorTableBody = forwardRef((props: TableBodyProps, ref: ForwardedRef<HTMLTableSectionElement>) => (
-  <TableBody {...props} ref={ref} />
-))
+function RatingCalculatorTableBody({ ref, ...props }: TableBodyProps & { ref?: React.Ref<HTMLTableSectionElement> }) {
+  return <TableBody {...props} ref={ref} />
+}
 
 const RatingCalculatorTableRow: FC<ItemProps<Row<Entry>>> = ({ item, ...props }) => (
   <TableRow
@@ -269,9 +269,9 @@ const RatingCalculatorTableRow: FC<ItemProps<Row<Entry>>> = ({ item, ...props })
   />
 )
 
-const RatingCalculatorScroller = forwardRef((props: ScrollerProps, ref: ForwardedRef<HTMLDivElement>) => (
-  <TableContainer component={TransparentPaper} {...props} ref={ref} />
-))
+function RatingCalculatorScroller({ ref, ...props }: ScrollerProps & { ref?: React.Ref<HTMLDivElement> }) {
+  return <TableContainer component={TransparentPaper} {...props} ref={ref} />
+}
 
 const RatingCalculatorRatingCell: FC<{
   row: Row<Entry>
