@@ -1,7 +1,13 @@
 import { Hono } from 'hono'
+import { createMiddleware } from 'hono/factory'
 import { cors } from 'hono/cors'
+import { z } from 'zod'
 import { auth } from './auth'
 import { handler as oneshotRenderer } from './services/functions/oneshot-renderer/index'
+import {
+  v0Handler as fetchNetRecordsV0Handler,
+  v1Handler as fetchNetRecordsV1Handler,
+} from './services/functions/fetch-net-records/index'
 import { appRouter } from './router'
 import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { OpenAPIGenerator } from '@orpc/openapi'
@@ -43,7 +49,30 @@ app.on(['POST', 'GET'], '/api/auth/**', (c) => {
   return auth.handler(c.req.raw)
 })
 
+// Middleware: validate auth params for fetch-net-records
+const authParamsSchema = z.object({
+  id: z.string().min(1),
+  password: z.string().min(1),
+  region: z.enum(['jp', 'intl']),
+})
+
+const verifyParams = createMiddleware(async (c, next) => {
+  const body = await c.req.json()
+  const region = c.req.param('region') ?? body.region
+
+  const result = authParamsSchema.safeParse({ id: body.id, password: body.password, region })
+  if (!result.success) {
+    return c.json({ error: 'Invalid parameters', details: result.error.issues }, 400)
+  }
+
+  c.set('authParams', { id: result.data.id, password: result.data.password })
+  c.set('region', result.data.region)
+  return next()
+})
+
 // Functions
+app.post('/functions/fetch-net-records/v0', verifyParams, fetchNetRecordsV0Handler)
+app.post('/functions/fetch-net-records/v1/:region', verifyParams, fetchNetRecordsV1Handler)
 app.post('/functions/render-oneshot/v0', oneshotRenderer)
 
 // oRPC OpenAPI handler
