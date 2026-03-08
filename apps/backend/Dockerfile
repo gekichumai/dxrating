@@ -35,7 +35,7 @@ COPY apps/backend ./apps/backend
 
 # Build the backend
 WORKDIR /app/apps/backend
-RUN pnpm build
+RUN NODE_OPTIONS="--max-old-space-size=1536" pnpm build
 
 # Production stage
 FROM node:25-bookworm-slim AS runner
