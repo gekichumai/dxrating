@@ -80,5 +80,5 @@ EXPOSE 3000
 # Set environment variable
 ENV NODE_ENV=production
 
-# Start the application
-CMD ["node", "dist/index.js"]
+# Start the application (--experimental-transform-types needed for dxdata's TypeScript enums)
+CMD ["node", "--experimental-transform-types", "dist/index.js"]
