@@ -1,11 +1,11 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { db } from './db'
-import * as schema from './db/schema'
-import * as authSchema from './db/auth-schema'
+import { db } from './db/index.js'
+import * as schema from './db/schema.js'
+import * as authSchema from './db/auth-schema.js'
 import { openAPI, oneTap } from 'better-auth/plugins'
 import { passkey } from '@better-auth/passkey'
-import { config } from './config'
+import { config } from './config.js'
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {

@@ -2,13 +2,13 @@ import { Hono } from 'hono'
 import { createMiddleware } from 'hono/factory'
 import { cors } from 'hono/cors'
 import { z } from 'zod'
-import { auth } from './auth'
-import { handler as oneshotRenderer } from './services/functions/oneshot-renderer/index'
+import { auth } from './auth.js'
+import { handler as oneshotRenderer } from './services/functions/oneshot-renderer/index.js'
 import {
   v0Handler as fetchNetRecordsV0Handler,
   v1Handler as fetchNetRecordsV1Handler,
-} from './services/functions/fetch-net-records/index'
-import { appRouter } from './router'
+} from './services/functions/fetch-net-records/index.js'
+import { appRouter } from './router.js'
 import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'

@@ -7,7 +7,7 @@ import {
   signIn,
   extractSessionCookie,
   cleanDatabase,
-} from './setup'
+} from './setup.js'
 
 describe('Authentication', () => {
   beforeAll(async () => {

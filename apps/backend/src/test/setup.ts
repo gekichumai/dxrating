@@ -4,8 +4,8 @@
 import * as path from 'node:path'
 import { serve } from '@hono/node-server'
 import type { ServerType } from '@hono/node-server'
-import { app } from '../app'
-import { pool as appPool } from '../db'
+import { app } from '../app.js'
+import { pool as appPool } from '../db/index.js'
 import pg from 'pg'
 import fs from 'node:fs/promises'
 

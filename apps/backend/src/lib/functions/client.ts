@@ -1,12 +1,12 @@
 import cookie from 'cookie'
 import tls from 'node:tls'
 import { DOMParser } from 'xmldom-qsa'
-import { URLS } from './URLS'
+import { URLS } from './URLS.js'
 
 import { Agent, Headers, type RequestInit, fetch } from 'undici'
-import { parseMusicRecordNode } from './parseMusicRecordNode'
-import { parseRecentRecordNode } from './parseRecentRecordNode'
-import type { AchievementRecord } from './record'
+import { parseMusicRecordNode } from './parseMusicRecordNode.js'
+import { parseRecentRecordNode } from './parseRecentRecordNode.js'
+import type { AchievementRecord } from './record.js'
 
 export interface AuthParams {
   id: string

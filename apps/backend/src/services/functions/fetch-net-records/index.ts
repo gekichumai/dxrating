@@ -1,7 +1,7 @@
 import type { Context } from 'hono'
 import { streamSSE } from 'hono/streaming'
-import { MaimaiNETIntlClient, MaimaiNETJpClient, type StateUpdateCallback } from '../../../lib/functions/client'
-import { Sentry, type Scope } from '../../../lib/functions/sentry'
+import { MaimaiNETIntlClient, MaimaiNETJpClient, type StateUpdateCallback } from '../../../lib/functions/client.js'
+import { Sentry, type Scope } from '../../../lib/functions/sentry.js'
 
 export async function v0Handler(c: Context) {
   return await Sentry.startSpan({ name: 'fetchNetRecords_v0', op: 'function' }, async () => {

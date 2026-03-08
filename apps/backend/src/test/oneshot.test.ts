@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { setupTestServer, teardownTestServer, getBaseUrl } from './setup'
+import { setupTestServer, teardownTestServer, getBaseUrl } from './setup.js'
 
 describe('Oneshot Renderer', () => {
   beforeAll(async () => {

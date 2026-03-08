@@ -1,5 +1,5 @@
-import type { Flag, RecentRecord } from './record'
-import { NODE_ELEMENT_NODE, NODE_TEXT_NODE } from './client'
+import type { Flag, RecentRecord } from './record.js'
+import { NODE_ELEMENT_NODE, NODE_TEXT_NODE } from './client.js'
 
 const RECENT_RECORD_FLAG_MATCHERS: Record<Flag, string> = {
   fullCombo: 'fc.png',

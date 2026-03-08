@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
-import { LxnsPlayerResponseSchema, LxnsScoreResponseSchema } from './services/functions/fetch-lxns-data'
+import { LxnsPlayerResponseSchema, LxnsScoreResponseSchema } from './services/functions/fetch-lxns-data/index.js'
 
 const AchievementRecordSchema = z.object({
   sheet: z.object({

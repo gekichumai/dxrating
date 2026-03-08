@@ -1,9 +1,9 @@
 import { implement } from '@orpc/server'
-import { appContract } from './contract'
-import { db } from './db'
-import { tags, tagGroups, tagSongs, comments, profiles, songAliases } from './db/schema'
+import { appContract } from './contract.js'
+import { db } from './db/index.js'
+import { tags, tagGroups, tagSongs, comments, profiles, songAliases } from './db/schema.js'
 import { eq, and, desc, sql } from 'drizzle-orm'
-import type { auth } from './auth'
+import type { auth } from './auth.js'
 
 type Context = {
   user?: typeof auth.$Infer.Session.user
@@ -181,8 +181,8 @@ const aliasesHandler = {
   }),
 }
 
-import { MaimaiNETJpClient, MaimaiNETIntlClient } from './lib/functions/client'
-import { fetchPlayerDataByQQ, fetchPlayerScoresByFriendCode } from './services/functions/fetch-lxns-data/index'
+import { MaimaiNETJpClient, MaimaiNETIntlClient } from './lib/functions/client.js'
+import { fetchPlayerDataByQQ, fetchPlayerScoresByFriendCode } from './services/functions/fetch-lxns-data/index.js'
 
 const maimaiHandler = {
   fetchRecords: os.maimai.fetchRecords.handler(async ({ input }) => {

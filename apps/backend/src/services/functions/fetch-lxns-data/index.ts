@@ -1,7 +1,7 @@
 import type { Context } from 'hono'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import { z } from 'zod'
-import { Sentry, type Scope } from '../../../lib/functions/sentry'
+import { Sentry, type Scope } from '../../../lib/functions/sentry.js'
 
 // Zod schemas for response validation
 const FCTypeSchema = z.enum(['app', 'ap', 'fcp', 'fc']).nullable()

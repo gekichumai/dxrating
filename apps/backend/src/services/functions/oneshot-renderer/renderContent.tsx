@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import { execSync } from 'node:child_process'
 import fs from 'node:fs/promises'
 import type { FC, PropsWithChildren } from 'react'
-import { ASSETS_BASE_DIR, type PlayerCollection, type Region, type RenderData } from '.'
+import { ASSETS_BASE_DIR, type PlayerCollection, type Region, type RenderData } from './index.js'
 
 interface VersionTheme {
   background: string

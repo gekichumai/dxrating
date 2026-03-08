@@ -8,7 +8,7 @@ import {
   extractSessionCookie,
   authenticatedFetch,
   cleanDatabase,
-} from './setup'
+} from './setup.js'
 
 describe('Aliases API', () => {
   beforeAll(async () => {

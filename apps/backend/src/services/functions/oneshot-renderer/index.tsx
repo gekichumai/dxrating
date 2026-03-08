@@ -5,11 +5,11 @@ import fs from 'node:fs/promises'
 import satori, { type Font } from 'satori'
 import sharp from 'sharp'
 import { z } from 'zod'
-import { type Scope, Sentry } from '../../../lib/functions/sentry'
-import { calculateDXScoreStars } from './calculateDXScore'
-import { type Rating, calculateRating } from './calculateRating'
-import { demo } from './demo'
-import { renderContent } from './renderContent'
+import { type Scope, Sentry } from '../../../lib/functions/sentry.js'
+import { calculateDXScoreStars } from './calculateDXScore.js'
+import { type Rating, calculateRating } from './calculateRating.js'
+import { demo } from './demo.js'
+import { renderContent } from './renderContent.js'
 
 export const ONESHOT_HEIGHT = 1300
 export const ONESHOT_WIDTH = 1500
