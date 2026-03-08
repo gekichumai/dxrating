@@ -1,4 +1,6 @@
+import * as Sentry from '@sentry/node'
 import { Hono } from 'hono'
+import { HTTPException } from 'hono/http-exception'
 import { createMiddleware } from 'hono/factory'
 import { cors } from 'hono/cors'
 import { z } from 'zod'
@@ -15,6 +17,15 @@ import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
 import { RequestHeadersPlugin, ResponseHeadersPlugin } from '@orpc/server/plugins'
 
 const app = new Hono()
+
+// Sentry error handler
+app.onError((err, c) => {
+  Sentry.captureException(err)
+  if (err instanceof HTTPException) {
+    return err.getResponse()
+  }
+  return c.json({ error: 'Internal server error' }, 500)
+})
 
 // CORS
 app.use(
