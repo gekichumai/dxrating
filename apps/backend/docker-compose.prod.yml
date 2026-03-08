@@ -31,6 +31,7 @@ services:
       - traefik.enable=true
       - traefik.http.routers.dxrating-backend.rule=PathPrefix(`/`)
       - traefik.http.routers.dxrating-backend.entrypoints=http
+      - traefik.http.routers.dxrating-backend.priority=1
       - traefik.http.services.dxrating-backend.loadbalancer.server.port=3000
       - traefik.docker.network=coolify
 
