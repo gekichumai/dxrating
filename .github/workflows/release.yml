@@ -50,8 +50,6 @@ jobs:
           echo "VITE_BUILD_NUMBER=${{ github.run_number }}" >> ${GITHUB_ENV}
           echo "VITE_BUILD_TIME=$(date --utc +%FT%TZ)" >> ${GITHUB_ENV}
 
-      # Run a build step here if your project requires
-      # building before publishing to Cloudflare Pages.
       - name: Build
         shell: bash
         run: |
@@ -59,14 +57,11 @@ jobs:
           pnpm --filter=@gekichumai/dxrating-web... run build
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          VITE_BACKEND_URL: https://miruku.dxrating.net
+          VITE_BETTER_AUTH_URL: https://miruku.dxrating.net
 
-      - name: Publish to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: dxrating
-          directory: apps/web/dist
-          # Optional: Enable this if you want to have GitHub Deployments triggered
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          branch: main
+      - name: Deploy to Cloudflare Pages
+        run: npx wrangler pages deploy apps/web/dist --project-name=dxrating --branch=main --commit-dirty=true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
