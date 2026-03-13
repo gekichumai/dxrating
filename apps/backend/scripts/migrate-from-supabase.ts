@@ -139,7 +139,15 @@ async function migrateIdentities(users: Array<{ id: string; encrypted_password: 
         `INSERT INTO account (id, account_id, provider_id, user_id, password, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (id) DO NOTHING`,
-        [accountId, identityAccountId, providerId, identity.user_id, password, identity.created_at, identity.updated_at],
+        [
+          accountId,
+          identityAccountId,
+          providerId,
+          identity.user_id,
+          password,
+          identity.created_at,
+          identity.updated_at,
+        ],
       )
     }
 
@@ -228,7 +236,16 @@ async function migrateApplicationData() {
         `INSERT INTO comments (id, created_at, created_by, song_id, sheet_type, sheet_difficulty, parent_id, content)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          ON CONFLICT (id) DO NOTHING`,
-        [row.id, row.created_at, row.created_by, row.song_id, row.sheet_type, row.sheet_difficulty, row.parent_id, row.content],
+        [
+          row.id,
+          row.created_at,
+          row.created_by,
+          row.song_id,
+          row.sheet_type,
+          row.sheet_difficulty,
+          row.parent_id,
+          row.content,
+        ],
       )
     }
     console.log(`  Migrated ${comments.length} comments`)

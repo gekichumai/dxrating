@@ -51,6 +51,7 @@ src/
 ## API Routes
 
 ### oRPC (`/api/v1/*`)
+
 - `GET /tags` — List tags, groups, and song associations
 - `POST /tags/attach` — Attach tag to song sheet (auth required)
 - `POST /comments` — Create comment (auth required)
@@ -63,6 +64,7 @@ src/
 - `GET /lxns/scores` — Get LXNS player scores
 
 ### Direct Routes
+
 - `GET /health` — Health check
 - `POST|GET /api/auth/**` — Better Auth endpoints
 - `POST /functions/fetch-net-records/v0` — Fetch NET records (JSON)
@@ -74,10 +76,12 @@ src/
 ## Environment Variables
 
 Required:
+
 - `DATABASE_URL` — PostgreSQL connection string
 - `BETTER_AUTH_SECRET` — Auth secret key
 
 Optional:
+
 - `PORT` (default: 3000)
 - `NODE_ENV` (default: development)
 - `BETTER_AUTH_URL` (default: http://localhost:3000)
@@ -90,6 +94,7 @@ Optional:
 ## Deployment
 
 Deployed on Coolify with Docker Compose (`docker-compose.prod.yml`):
+
 - Multi-stage Dockerfile (builder → runner)
 - Traefik reverse proxy via external `coolify` network
 - PostgreSQL 16 with persistent volume
@@ -97,6 +102,7 @@ Deployed on Coolify with Docker Compose (`docker-compose.prod.yml`):
 ### Coolify Integration
 
 When working on Coolify deployment or integration, use context7 to query the Coolify documentation:
+
 - **Library ID**: `coollabsio/coolify-docs`
 - Coolify deploys via Docker Compose with Traefik labels for routing
 - Webhook-based deployments triggered via `GET` to webhook URL with `Authorization: Bearer <token>`
