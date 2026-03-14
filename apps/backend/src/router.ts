@@ -3,16 +3,22 @@ import { appContract } from './contract.js'
 import { db } from './db/index.js'
 import { tags, tagGroups, tagSongs, comments, profiles, songAliases } from './db/schema.js'
 import { eq, and, desc } from 'drizzle-orm'
+import Keyv from 'keyv'
 import type { auth } from './auth.js'
 
 type Context = {
   user?: typeof auth.$Infer.Session.user
 }
 
+const cache = new Keyv({ ttl: 30 * 60 * 1000 }) // 30 minute TTL
+
 const os = implement(appContract)
 
 const tagsHandler = {
   list: os.tags.list.handler(async () => {
+    const cached = await cache.get('tags:list')
+    if (cached) return cached
+
     const [allTags, allGroups, allTagSongs] = await Promise.all([
       db
         .select({
@@ -39,11 +45,13 @@ const tagsHandler = {
         .from(tagSongs),
     ])
 
-    return {
+    const result = {
       tags: allTags,
       tagGroups: allGroups,
       tagSongs: allTagSongs,
     }
+    await cache.set('tags:list', result)
+    return result
   }),
   attach: os.tags.attach.handler(async ({ input, context }) => {
     const user = (context as Context).user
@@ -74,6 +82,7 @@ const tagsHandler = {
       })
       .returning({ id: tagSongs.id })
 
+    await cache.delete('tags:list')
     return res[0]
   }),
 }
@@ -157,12 +166,18 @@ const monitoringHandler = {
 
 const aliasesHandler = {
   list: os.aliases.list.handler(async () => {
-    return await db
+    const cached = await cache.get('aliases:list')
+    if (cached) return cached
+
+    const result = await db
       .select({
         song_id: songAliases.song_id,
         name: songAliases.name,
       })
       .from(songAliases)
+
+    await cache.set('aliases:list', result)
+    return result
   }),
   create: os.aliases.create.handler(async ({ input, context }) => {
     const user = (context as Context).user
@@ -177,6 +192,7 @@ const aliasesHandler = {
       })
       .returning({ id: songAliases.id })
 
+    await cache.delete('aliases:list')
     return res[0]
   }),
 }
