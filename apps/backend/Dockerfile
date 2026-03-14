@@ -80,5 +80,9 @@ EXPOSE 3000
 # Set environment variable
 ENV NODE_ENV=production
 
+# Copy entrypoint script
+COPY apps/backend/docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x docker-entrypoint.sh
+
 # Start the application (--experimental-transform-types needed for dxdata's TypeScript enums)
-CMD ["node", "--experimental-transform-types", "dist/index.js"]
+CMD ["./docker-entrypoint.sh"]

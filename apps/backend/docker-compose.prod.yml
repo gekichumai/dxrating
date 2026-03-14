@@ -13,9 +13,7 @@ services:
     restart: unless-stopped
 
   backend:
-    build:
-      context: ../..
-      dockerfile: apps/backend/Dockerfile
+    image: ghcr.io/gekichumai/dxrating/backend:${BACKEND_IMAGE_TAG:-latest}
     expose:
       - '3000'
     env_file:

@@ -95,7 +95,8 @@ jobs:
 
   docker-build:
     runs-on: ubuntu-latest
-    needs: lint-and-build
+    needs: [lint-and-build, integration-test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     name: Build Docker Image
     permissions:
       contents: read
@@ -122,29 +123,35 @@ jobs:
             type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      # Uncomment the following steps to push to GitHub Container Registry
-      # - name: Login to GitHub Container Registry
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: ghcr.io
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./apps/backend/Dockerfile
-          # push: ${{ github.event_name != 'pull_request' }}
-          push: false
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
-      # Optional: Add additional deployment steps here
-      # - name: Deploy to production
-      #   if: github.ref == 'refs/heads/main'
-      #   run: |
-      #     echo "Add deployment commands here"
+  deploy:
+    runs-on: ubuntu-latest
+    needs: docker-build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    name: Deploy to Coolify
+    steps:
+      - name: Trigger Coolify deployment
+        run: |
+          curl --request GET "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
+            --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            --header "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
+            --header "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
+            --fail --silent --show-error
