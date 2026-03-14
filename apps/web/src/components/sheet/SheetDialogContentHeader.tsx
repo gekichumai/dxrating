@@ -2,6 +2,7 @@ import { IconButton } from '@mui/material'
 import { motion } from 'framer-motion'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, memo, useState } from 'react'
+import MdiImageRemove from '~icons/mdi/image-remove'
 import MdiStar from '~icons/mdi/star'
 import MdiStarOutline from '~icons/mdi/star-outline'
 import { useSheetFavoriteState } from '../../models/favorite'
@@ -10,6 +11,7 @@ import type { FlattenedSheet } from '../../songs'
 export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ sheet }) => {
   const [favored, toggleFavored] = useSheetFavoriteState(sheet.id)
   const [expanded, setExpanded] = useState(false)
+  const [imgError, setImgError] = useState(false)
   const posthog = usePostHog()
 
   const variants = {
@@ -62,23 +64,44 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ s
         </IconButton>
       </div>
       <div className="flex items-center">
-        <motion.img
-          layout
-          src={`https://shama.dxrating.net/images/cover/v2/${sheet.imageName}.jpg`}
-          alt={sheet.imageName}
-          className="overflow-hidden rounded-lg bg-slate-300/50"
-          variants={variants}
-          initial="collapsed"
-          animate={expanded ? 'expanded' : 'collapsed'}
-          transition={{
-            type: 'spring',
-            damping: 18,
-            stiffness: 235,
-          }}
-          onClick={() => setExpanded((prev) => !prev)}
-          role="button"
-          data-attr="sheet-image"
-        />
+        {imgError ? (
+          <motion.div
+            layout
+            className="overflow-hidden rounded-lg bg-slate-300/50 flex items-center justify-center"
+            variants={variants}
+            initial="collapsed"
+            animate={expanded ? 'expanded' : 'collapsed'}
+            transition={{
+              type: 'spring',
+              damping: 18,
+              stiffness: 235,
+            }}
+            onClick={() => setExpanded((prev) => !prev)}
+            role="button"
+            data-attr="sheet-image"
+          >
+            <MdiImageRemove className="text-zinc-400 text-2xl" />
+          </motion.div>
+        ) : (
+          <motion.img
+            layout
+            src={`https://shama.dxrating.net/images/cover/v2/${sheet.imageName}.jpg`}
+            alt={sheet.imageName}
+            className="overflow-hidden rounded-lg bg-slate-300/50"
+            variants={variants}
+            initial="collapsed"
+            animate={expanded ? 'expanded' : 'collapsed'}
+            transition={{
+              type: 'spring',
+              damping: 18,
+              stiffness: 235,
+            }}
+            onClick={() => setExpanded((prev) => !prev)}
+            onError={() => setImgError(true)}
+            role="button"
+            data-attr="sheet-image"
+          />
+        )}
 
         <div className="flex-1" />
 

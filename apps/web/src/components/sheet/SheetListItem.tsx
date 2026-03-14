@@ -3,6 +3,7 @@ import { ListItemButton, ListItemSecondaryAction, ListItemText, type ListItemTex
 import clsx from 'clsx'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, type HTMLAttributes, type ImgHTMLAttributes, memo, useState } from 'react'
+import { useWebHaptics } from 'web-haptics/react'
 import toast from 'react-hot-toast'
 import { match } from 'ts-pattern'
 import MdiComment from '~icons/mdi/comment'
@@ -24,6 +25,7 @@ export const SheetListItem: FC<{
   SheetDialogContentProps?: Omit<SheetDialogContentProps, 'sheet'>
 }> = memo(({ size = 'medium', sheet, SheetListItemContentProps, SheetDialogContentProps }) => {
   const posthog = usePostHog()
+  const haptic = useWebHaptics()
   const [open, setOpen] = useState(false)
   const isLargeDevice = useIsLargeDevice()
 
@@ -41,6 +43,7 @@ export const SheetListItem: FC<{
         )}
         onClick={() => {
           setOpen(true)
+          haptic.trigger('medium')
           posthog?.capture('sheet_content_viewed', {
             song_id: sheet.songId,
             sheet_type: sheet.type,

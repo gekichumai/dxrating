@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import type { ListActions } from 'react-use/lib/useList'
 import IconMdiCheck from '~icons/mdi/check'
 import IconMdiClose from '~icons/mdi/close'
+import { WebHaptics } from 'web-haptics'
 import { type FlattenedSheet, canonicalIdFromParts } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
@@ -103,6 +104,8 @@ const fetchNetRecords = async (
   })
 }
 
+const haptics = new WebHaptics()
+
 export const importFromNETRecords = async (
   sheets: FlattenedSheet[],
   modifyEntries: ListActions<PlayEntry>,
@@ -188,6 +191,7 @@ export const importFromNETRecords = async (
     }
 
     const lastRecord = data.recent.at(0)
+    haptics.trigger('success')
     toast.success(
       <div className="flex flex-col">
         <span>

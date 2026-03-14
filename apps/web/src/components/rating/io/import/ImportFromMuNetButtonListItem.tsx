@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
 import { z } from 'zod'
 import MdiEarthArrowDown from '~icons/mdi/earth-arrow-down'
+import { useWebHaptics } from 'web-haptics/react'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 
 const MuNetUserMusicDetailSchema = z.object({
@@ -24,6 +25,7 @@ export const ImportFromMuNetButtonListItem: FC<{
   onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
+  const haptic = useWebHaptics()
   const difficulty = ['basic', 'advanced', 'expert', 'master', 'remaster']
 
   const parseAchievement = (achievement: number): number => {
@@ -105,6 +107,7 @@ export const ImportFromMuNetButtonListItem: FC<{
                 }
               }
               modifyEntries.set(entries)
+              haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.mu-net.success', { count: entries.length }))
             } catch (error) {
               console.error(error)

@@ -178,7 +178,7 @@ export const UserChip: FC = () => {
 
   return (
     <>
-      <ResponsiveDialog open={open === 'auth'} setOpen={(opened) => setOpen(opened ? 'auth' : null)}>
+      <ResponsiveDialog open={open === 'auth'} setOpen={(opened) => setOpen(opened ? 'auth' : null)} maxWidth="xs">
         {() => <LoginForm />}
       </ResponsiveDialog>
 

@@ -1,3 +1,4 @@
+import type { Breakpoint } from '@mui/material'
 import { Dialog, DialogContent, Grow, SwipeableDrawer } from '@mui/material'
 import { type FC, type ReactNode, useEffect, useState } from 'react'
 import { useIsLargeDevice } from '../../utils/breakpoints'
@@ -5,8 +6,9 @@ import { useIsLargeDevice } from '../../utils/breakpoints'
 export const ResponsiveDialog: FC<{
   open: boolean
   setOpen: (open: boolean) => void
+  maxWidth?: Breakpoint
   children?: () => ReactNode
-}> = ({ open, setOpen, children }) => {
+}> = ({ open, setOpen, maxWidth = 'md', children }) => {
   const isLargeDevice = useIsLargeDevice()
   const [internalOpen, setInternalOpen] = useState(false)
 
@@ -38,7 +40,7 @@ export const ResponsiveDialog: FC<{
   return isLargeDevice ? (
     <>
       {internalOpen && (
-        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth TransitionComponent={Grow}>
+        <Dialog open={open} onClose={() => setOpen(false)} maxWidth={maxWidth} fullWidth TransitionComponent={Grow}>
           <DialogContent>{children?.()}</DialogContent>
         </Dialog>
       )}

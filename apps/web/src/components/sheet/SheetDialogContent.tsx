@@ -63,6 +63,7 @@ const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
 )
 
 const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+  const { t } = useTranslation(['auth'])
   const { session, ensureAuthenticated, openLoginDialog, LoginDialog } = useAuth()
   const [content, setContent] = useState<string>('')
   const {
@@ -135,7 +136,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             tabIndex={0}
           >
             <span className="font-bold text-sm text-zinc-600 underline underline-offset-2">
-              Login or Register to comment
+              {t('auth:form.login-or-register-to-comment')}
             </span>
           </div>
         )}

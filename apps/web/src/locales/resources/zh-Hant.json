@@ -175,6 +175,27 @@
     },
     "update-display-name": {
       "label": ""
+    },
+    "sign-up": {
+      "label": "註冊",
+      "title": "建立帳戶",
+      "toast-success": "帳戶已建立，請登錄。"
+    },
+    "form": {
+      "title": "登錄",
+      "subtitle": "歡迎回來！請登錄以繼續",
+      "continue-with-github": "透過 GitHub 登錄",
+      "continue-with-google": "透過 Google 登錄",
+      "or": "或",
+      "email": "電子郵件",
+      "password": "密碼",
+      "continue": "繼續",
+      "sign-in-with-passkey": "使用通行金鑰登錄",
+      "has-account": "已有帳戶？登錄",
+      "no-account": "還沒有帳戶？註冊",
+      "error-generic": "發生錯誤",
+      "error-passkey": "通行金鑰登錄失敗",
+      "login-or-register-to-comment": "登錄或註冊以發表評論"
     }
   },
   "rating-calculator": {

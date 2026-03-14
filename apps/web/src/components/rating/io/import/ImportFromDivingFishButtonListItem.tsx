@@ -12,7 +12,10 @@ import CarbonFish from '~icons/carbon/fish'
 import AlertIcon from '~icons/material-symbols/warning'
 import { canonicalIdFromParts, type FlattenedSheet, useSheets } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
+import { WebHaptics } from 'web-haptics'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+
+const haptics = new WebHaptics()
 
 const levelLabel = ['basic', 'advanced', 'expert', 'master', 'remaster']
 
@@ -136,6 +139,7 @@ const fetchDivingFish = async (
         return found
       }),
     )
+    haptics.trigger('success')
     toast.success(t('rating-calculator:io.import.diving-fish.success', { count: entries.length }), {
       id: toastId,
     })

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogTitle } from '@mui/material'
+import { Dialog, DialogContent } from '@mui/material'
 import { authClient } from '../lib/auth-client'
 import { LoginForm } from '../components/auth/LoginForm'
 
@@ -38,8 +38,7 @@ export const useAuth = () => {
   }
 
   const LoginDialog = () => (
-    <Dialog open={isLoginDialogOpen} onClose={closeLoginDialog} maxWidth="sm" fullWidth>
-      <DialogTitle>Sign in to continue</DialogTitle>
+    <Dialog open={isLoginDialogOpen} onClose={closeLoginDialog} maxWidth="xs" fullWidth>
       <DialogContent>
         <LoginForm />
       </DialogContent>

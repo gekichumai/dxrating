@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
 import MdiEarthArrowDown from '~icons/mdi/earth-arrow-down'
+import { useWebHaptics } from 'web-haptics/react'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 
 export const ImportFromAquaDxButtonListItem: FC<{
@@ -11,6 +12,7 @@ export const ImportFromAquaDxButtonListItem: FC<{
   onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
+  const haptic = useWebHaptics()
   const difficulty = ['basic', 'expert', 'master', 'remaster']
 
   const parseAchievement = (achievement: number): number => {
@@ -59,6 +61,7 @@ export const ImportFromAquaDxButtonListItem: FC<{
               }
             }
             modifyEntries.set(entries)
+            haptic.trigger('success')
             toast.success(t('rating-calculator:io.import.aqua-dx.success', { count: entries.length }))
           }
           reader.readAsText(file)

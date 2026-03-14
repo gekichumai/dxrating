@@ -13,6 +13,7 @@ import CarbonCloud from '~icons/carbon/cloud'
 import AlertIcon from '~icons/material-symbols/warning'
 import { canonicalIdFromParts, type FlattenedSheet, useSheets } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
+import { WebHaptics } from 'web-haptics'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 
 interface LxnsProfile {
@@ -42,6 +43,8 @@ interface LxnsScoreResponse {
   type: string
   // ... other fields
 }
+
+const haptics = new WebHaptics()
 
 const difficultyMap: Record<number, DifficultyEnum> = {
   0: DifficultyEnum.Basic,
@@ -121,6 +124,7 @@ const fetchLxnsData = async (
       }),
     )
 
+    haptics.trigger('success')
     toast.success(t('rating-calculator:io.import.lxns.success', { count: entries.length }), {
       id: toastId,
     })

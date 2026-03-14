@@ -175,6 +175,27 @@
     },
     "update-display-name": {
       "label": ""
+    },
+    "sign-up": {
+      "label": "新規登録",
+      "title": "アカウントを作成",
+      "toast-success": "アカウントが作成されました。ログインしてください。"
+    },
+    "form": {
+      "title": "ログイン",
+      "subtitle": "ようこそ！ログインして続けてください",
+      "continue-with-github": "GitHubでログイン",
+      "continue-with-google": "Googleでログイン",
+      "or": "または",
+      "email": "メールアドレス",
+      "password": "パスワード",
+      "continue": "続ける",
+      "sign-in-with-passkey": "パスキーでログイン",
+      "has-account": "アカウントをお持ちですか？ログイン",
+      "no-account": "アカウントをお持ちでないですか？新規登録",
+      "error-generic": "エラーが発生しました",
+      "error-passkey": "パスキーでのログインに失敗しました",
+      "login-or-register-to-comment": "ログインまたは新規登録してコメントする"
     }
   },
   "rating-calculator": {

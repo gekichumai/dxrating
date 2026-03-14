@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
 import MdiJson from '~icons/mdi/code-json'
+import { useWebHaptics } from 'web-haptics/react'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 
@@ -12,6 +13,7 @@ export const ImportFromJSONButtonListItem: FC<{
   onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
+  const haptic = useWebHaptics()
 
   return (
     <MenuItem
@@ -37,6 +39,7 @@ export const ImportFromJSONButtonListItem: FC<{
             try {
               const entries = JSON.parse(data)
               modifyEntries.set(entries)
+              haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.json.success', { count: entries.length }))
             } catch (error) {
               toast.error(t('rating-calculator:io.import.json.error', { error: formatErrorMessage(error) }))

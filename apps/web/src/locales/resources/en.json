@@ -180,6 +180,27 @@
     },
     "update-display-name": {
       "label": "Update Profile Name"
+    },
+    "sign-up": {
+      "label": "Sign Up",
+      "title": "Create your account",
+      "toast-success": "Account created! You can now sign in."
+    },
+    "form": {
+      "title": "Sign in",
+      "subtitle": "Welcome! Please sign in to continue",
+      "continue-with-github": "Continue with GitHub",
+      "continue-with-google": "Continue with Google",
+      "or": "or",
+      "email": "Email",
+      "password": "Password",
+      "continue": "Continue",
+      "sign-in-with-passkey": "Sign in with Passkey",
+      "has-account": "Already have an account? Sign In",
+      "no-account": "Don't have an account? Sign up",
+      "error-generic": "An error occurred",
+      "error-passkey": "Failed to sign in with Passkey",
+      "login-or-register-to-comment": "Login or Register to comment"
     }
   },
   "rating-calculator": {

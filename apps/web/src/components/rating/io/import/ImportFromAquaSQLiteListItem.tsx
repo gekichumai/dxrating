@@ -33,6 +33,7 @@ import {
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { FadedImage } from '../../../global/FadedImage'
 import { SheetListItemContent } from '../../../sheet/SheetListItem'
+import { useWebHaptics } from 'web-haptics/react'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 
 export const ImportFromAquaSQLiteListItem: FC<{
@@ -140,6 +141,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
   modifyEntries: ListActions<PlayEntry>
   onClose?: () => void
 }> = ({ db, modifyEntries, onClose }) => {
+  const haptic = useWebHaptics()
   const users = useMemo(() => {
     try {
       return readAquaUsers(db)
@@ -249,6 +251,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
                 })),
               )
 
+              haptic.trigger('success')
               toast.success(`Imported ${records.length} gameplays from Aqua SQLite.`)
 
               onClose?.()
