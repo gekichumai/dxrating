@@ -116,7 +116,8 @@ app.get('/spec.json', async (c) => {
     info: {
       title: 'DXRating API',
       version: '1.0.0',
-      description: 'OpenAPI for DXRating.net',
+      description:
+        '> **Public Beta**: This API is in public beta and may not be finalized before the end of May 2026. Breaking changes are expected.\n\nOpenAPI for DXRating.net',
     },
     servers: [{ url: '/api/v1' }],
     security: [{ bearerAuth: [] }],
