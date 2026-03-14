@@ -125,6 +125,7 @@ export const appContract = oc.router({
         method: 'GET',
         path: '/tags',
         summary: 'List all tags, groups, and song associations',
+        tags: ['Tags'],
       })
       .output(TagsListResponseSchema),
     attach: oc
@@ -132,6 +133,7 @@ export const appContract = oc.router({
         method: 'POST',
         path: '/tags/attach',
         summary: 'Attach a tag to a song',
+        tags: ['Tags'],
       })
       .input(TagSongAttachSchema)
       .output(z.object({ id: z.number() })),
@@ -142,6 +144,7 @@ export const appContract = oc.router({
         method: 'POST',
         path: '/comments',
         summary: 'Create a new comment',
+        tags: ['Comments'],
       })
       .input(CreateCommentInputSchema)
       .output(CommentSchema),
@@ -150,6 +153,7 @@ export const appContract = oc.router({
         method: 'GET',
         path: '/comments',
         summary: 'List comments for a specific song sheet',
+        tags: ['Comments'],
       })
       .input(FetchCommentsInputSchema)
       .output(z.array(CommentWithProfileSchema)),
@@ -160,6 +164,7 @@ export const appContract = oc.router({
         method: 'POST',
         path: '/monitoring/tunnel',
         summary: 'Sentry tunnel',
+        tags: ['internal'],
       })
       .input(MonitoringTunnelInputSchema)
       .output(z.void()),
@@ -170,6 +175,7 @@ export const appContract = oc.router({
         method: 'GET',
         path: '/aliases',
         summary: 'List all song aliases',
+        tags: ['Aliases'],
       })
       .output(
         z.array(
@@ -184,6 +190,7 @@ export const appContract = oc.router({
         method: 'POST',
         path: '/aliases',
         summary: 'Create a new song alias',
+        tags: ['Aliases'],
       })
       .input(CreateAliasInputSchema)
       .output(z.object({ id: z.number() })),
@@ -192,8 +199,9 @@ export const appContract = oc.router({
     fetchRecords: oc
       .route({
         method: 'POST',
-        path: '/maimai/fetch-records',
+        path: '/io/import/maimai-net',
         summary: 'Fetch records from MaimaiNET',
+        tags: ['Import'],
       })
       .input(
         z.object({
@@ -213,16 +221,18 @@ export const appContract = oc.router({
     getPlayer: oc
       .route({
         method: 'GET',
-        path: '/lxns/player',
+        path: '/io/import/lxns/player',
         summary: 'Get player data from LXNS',
+        tags: ['Import'],
       })
       .input(z.object({ qq: z.string() }))
       .output(LxnsPlayerResponseSchema),
     getScores: oc
       .route({
         method: 'GET',
-        path: '/lxns/scores',
+        path: '/io/import/lxns/scores',
         summary: 'Get scores from LXNS',
+        tags: ['Import'],
       })
       .input(z.object({ friendCode: z.string() }))
       .output(LxnsScoreResponseSchema),

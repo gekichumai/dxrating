@@ -52,6 +52,9 @@ app.use(
   }),
 )
 
+// Root redirect to docs
+app.get('/', (c) => c.redirect('/docs'))
+
 // Health endpoint
 app.get('/health', (c) => c.json({ status: 'ok' }))
 
@@ -125,6 +128,7 @@ app.get('/spec.json', async (c) => {
         },
       },
     },
+    filter: ({ contract }) => !contract['~orpc'].route.tags?.includes('internal'),
   })
   return c.json(spec)
 })
