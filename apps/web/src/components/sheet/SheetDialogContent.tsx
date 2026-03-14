@@ -63,7 +63,7 @@ const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
 )
 
 const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { session, ensureAuthenticated, LoginDialog } = useAuth()
+  const { session, ensureAuthenticated, openLoginDialog, LoginDialog } = useAuth()
   const [content, setContent] = useState<string>('')
   const {
     data: comments,
@@ -110,7 +110,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     <div className="flex flex-col gap-2">
       <LoginDialog />
 
-      <div className="flex gap-2 mt-1">
+      <div className="flex gap-2 mt-1 relative">
         <TextField
           className="flex-grow"
           placeholder="Leave a comment..."
@@ -125,6 +125,20 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         <Button variant="contained" onClick={handleSubmit} disabled={!content || submitting}>
           {submitting ? <CircularProgress size={24} /> : 'Submit'}
         </Button>
+
+        {!session && (
+          <div
+            className="absolute inset-0 flex items-center justify-center bg-white/80 rounded cursor-pointer z-1"
+            onClick={openLoginDialog}
+            onKeyDown={(e) => e.key === 'Enter' && openLoginDialog()}
+            role="button"
+            tabIndex={0}
+          >
+            <span className="font-bold text-sm text-zinc-600 underline underline-offset-2">
+              Login or Register to comment
+            </span>
+          </div>
+        )}
       </div>
 
       {isLoadingComments ? (
