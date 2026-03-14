@@ -42,6 +42,7 @@ export const LoginForm = () => {
     setLoading(true)
     await authClient.signIn.social({
       provider,
+      callbackURL: window.location.href,
     })
     // No setLoading(false) because it redirects
   }
