@@ -1,17 +1,25 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 
+/**
+ * A localized string is an object mapping language codes to translated strings.
+ * Supported language codes: "en", "ja", "zh-Hans", "zh-Hant"
+ */
+export const LocalizedStringSchema = z
+  .record(z.string(), z.string())
+  .describe('Localized string. Keys are language codes: "en", "ja", "zh-Hans", "zh-Hant"')
+
 // Define schemas matching the database/logic requirements
 export const TagSchema = z.object({
   id: z.number(),
-  localized_name: z.string(),
-  localized_description: z.string(),
+  localized_name: LocalizedStringSchema,
+  localized_description: LocalizedStringSchema,
   group_id: z.number().nullable(),
 })
 
 export const TagGroupSchema = z.object({
   id: z.number(),
-  localized_name: z.string(),
+  localized_name: LocalizedStringSchema,
   color: z.string(),
 })
 

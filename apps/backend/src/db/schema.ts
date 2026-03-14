@@ -1,13 +1,13 @@
 import { pgTable, text, timestamp, bigserial, bigint, type AnyPgColumn, jsonb } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
-import { user } from './auth-schema.js'
+import { user } from './auth-schema'
 
 // --- Application Tables ---
 
 export const tagGroups = pgTable('tag_groups', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   created_at: timestamp('created_at').defaultNow().notNull(),
-  localized_name: jsonb('localized_name').notNull(),
+  localized_name: jsonb('localized_name').$type<Record<string, string>>().notNull(),
   color: text('color').notNull(),
 })
 
@@ -17,8 +17,8 @@ export const tags = pgTable('tags', {
   created_by: text('created_by')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  localized_name: text('localized_name').notNull(),
-  localized_description: text('localized_description').notNull(),
+  localized_name: jsonb('localized_name').$type<Record<string, string>>().notNull(),
+  localized_description: jsonb('localized_description').$type<Record<string, string>>().notNull(),
   group_id: bigint('group_id', { mode: 'number' }).references(() => tagGroups.id),
 })
 

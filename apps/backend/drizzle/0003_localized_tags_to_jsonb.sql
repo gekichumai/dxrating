@@ -1,0 +1,2 @@
+ALTER TABLE "tags" ALTER COLUMN "localized_name" SET DATA TYPE jsonb USING "localized_name"::jsonb;--> statement-breakpoint
+ALTER TABLE "tags" ALTER COLUMN "localized_description" SET DATA TYPE jsonb USING "localized_description"::jsonb;

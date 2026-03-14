@@ -27,47 +27,17 @@ const SheetTagsAddDialog: FC<{
   const session = sessionData?.session
 
   const { data: tagGroups, isLoading: loadingTags } = useSWR('tags.grouped', async () => {
-    // We can reuse useCombinedTags or call orpc
     const { tags, tagGroups } = await client.tags.list()
 
-    // Grouping logic adapted for clean data
-    const groupMap = new Map()
-    tagGroups.forEach((g) => groupMap.set(g.id, { ...g, tags: [] }))
-
-    // Fallback for tags without group?
-    // Current logic groups by group_id.
-
-    // Perform mapping
-    const grouped: any[] = []
-
-    // Actually the UI expects { group: TagGroup, tags: Tag[] }[]
-
-    // Map groups
-    const result = tagGroups.map((g) => ({
-      group: {
-        id: g.id,
-        localized_name: JSON.parse(g.localized_name), // Backend returns stringified JSON?
-        // In contract: localized_name: z.string().
-        // In DB: localized_name: Record<string, string>.
-        // Drizzle returns what DB has.
-        // If DB column is JSONB/JSON, Drizzle usually parses it if configured or returns object.
-        // My Schema says `text`. So it IS stringified if inserted as string.
-        // Supabase client returns JSON object.
-        // My backend returns string?
-        // Let's assume JSON.parse is needed if it's text.
-        color: g.color,
-      },
+    return tagGroups.map((g) => ({
+      group: g,
       tags: tags
         .filter((t) => t.group_id === g.id)
         .map((t) => ({
           ...t,
-          localized_name: JSON.parse(t.localized_name) as any,
-          localized_description: JSON.parse(t.localized_description) as any,
-          group: g, // UI might need this nested reference
+          group: g,
         })),
     }))
-
-    return result
   })
   const { data: existingTags, isLoading: loadingExistingTags, mutate: mutateExistingTags } = useSheetTags(sheet)
 

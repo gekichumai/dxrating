@@ -2,7 +2,7 @@ import { implement } from '@orpc/server'
 import { appContract } from './contract.js'
 import { db } from './db/index.js'
 import { tags, tagGroups, tagSongs, comments, profiles, songAliases } from './db/schema.js'
-import { eq, and, desc, sql } from 'drizzle-orm'
+import { eq, and, desc } from 'drizzle-orm'
 import type { auth } from './auth.js'
 
 type Context = {
@@ -25,7 +25,7 @@ const tagsHandler = {
       db
         .select({
           id: tagGroups.id,
-          localized_name: sql<string>`${tagGroups.localized_name}::text`,
+          localized_name: tagGroups.localized_name,
           color: tagGroups.color,
         })
         .from(tagGroups),

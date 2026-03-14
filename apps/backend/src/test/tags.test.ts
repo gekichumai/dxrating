@@ -69,7 +69,7 @@ describe('Tags API', () => {
 
     const tagRes = await pool.query(
       `INSERT INTO tags (created_by, localized_name, localized_description, group_id) VALUES ($1, $2, $3, $4) RETURNING id`,
-      [userId, 'Test Tag', 'A test tag', groupId],
+      [userId, JSON.stringify({ en: 'Test Tag' }), JSON.stringify({ en: 'A test tag' }), groupId],
     )
     const tagId = Number(tagRes.rows[0].id)
     await pool.end()
@@ -116,7 +116,7 @@ describe('Tags API', () => {
     const groupRes = await pool.query(`SELECT id FROM tag_groups LIMIT 1`)
     const tagRes = await pool.query(
       `INSERT INTO tags (created_by, localized_name, localized_description, group_id) VALUES ($1, $2, $3, $4) RETURNING id`,
-      [session.user.id, 'Tag', 'Desc', groupRes.rows[0].id],
+      [session.user.id, JSON.stringify({ en: 'Tag' }), JSON.stringify({ en: 'Desc' }), groupRes.rows[0].id],
     )
     await pool.end()
 
