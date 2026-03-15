@@ -60,6 +60,9 @@ export async function v0Handler(c: Context) {
           scope.setContext('function', { name: 'fetchNetRecords_v0' })
           scope.setContext('parameters', { region })
           scope.setContext('endpoint', { name: 'MaimaiNET' })
+          if (error.message.includes('response redirects to error page')) {
+            scope.setFingerprint(['net-error-redirect'])
+          }
           Sentry.captureException(error)
         })
       }
@@ -137,6 +140,9 @@ export async function v1Handler(c: Context) {
             scope.setContext('function', { name: 'fetchNetRecords_v1' })
             scope.setContext('parameters', { region })
             scope.setContext('endpoint', { name: 'MaimaiNET (SSE)' })
+            if (err.message.includes('response redirects to error page')) {
+              scope.setFingerprint(['net-error-redirect'])
+            }
             Sentry.captureException(err)
           })
         }
