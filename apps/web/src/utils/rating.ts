@@ -1,4 +1,4 @@
-const SCORE_COEFFICIENT_TABLE: [number, number, string][] = [
+export const SCORE_COEFFICIENT_TABLE: [number, number, string][] = [
   [0, 0, 'd'],
   [10, 1.6, 'd'],
   [20, 3.2, 'd'],
@@ -29,6 +29,52 @@ export interface Rating {
   coefficient: number
   rank: string | null
   index: number
+}
+
+export interface RatingEntry {
+  id: string
+  internalLevel: number
+  achievementRate: number
+}
+
+export interface RatedEntry extends RatingEntry {
+  rating: Rating
+}
+
+export interface B50Result {
+  b15: RatedEntry[]
+  b35: RatedEntry[]
+  b50Rating: number
+}
+
+/**
+ * Calculate the B50 rating from a list of entries.
+ * @param currentVersionIds - Set of song IDs belonging to the current version (for B15 eligibility)
+ * @param entries - List of entries with minimal data needed for rating calculation
+ */
+export const calculateB50 = (currentVersionIds: Set<string>, entries: RatingEntry[]): B50Result => {
+  const rated: RatedEntry[] = entries.map((entry) => ({
+    ...entry,
+    rating: calculateRating(entry.internalLevel, entry.achievementRate),
+  }))
+
+  const byRatingDesc = (a: RatedEntry, b: RatedEntry) => b.rating.ratingAwardValue - a.rating.ratingAwardValue
+
+  const b15 = rated
+    .filter((e) => currentVersionIds.has(e.id))
+    .sort(byRatingDesc)
+    .slice(0, 15)
+
+  const b35 = rated
+    .filter((e) => !currentVersionIds.has(e.id))
+    .sort(byRatingDesc)
+    .slice(0, 35)
+
+  const b50Rating =
+    b15.reduce((sum, e) => sum + e.rating.ratingAwardValue, 0) +
+    b35.reduce((sum, e) => sum + e.rating.ratingAwardValue, 0)
+
+  return { b15, b35, b50Rating }
 }
 
 export const calculateRating = (internalLevel: number, achievementRate: number): Rating => {
