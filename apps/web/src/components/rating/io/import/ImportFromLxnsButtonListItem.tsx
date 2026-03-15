@@ -25,7 +25,7 @@ import AlertIcon from '~icons/material-symbols/warning'
 import { canonicalIdFromParts, type FlattenedSheet, useSheets } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { WebHaptics } from 'web-haptics'
-import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import type { ComboFlag, PlayEntry, SyncFlag } from '../../RatingCalculatorAddEntryForm'
 
 interface LxnsProfile {
   friendCode?: string
@@ -42,8 +42,8 @@ interface LxnsPlayerResponse {
 interface LxnsScoreResponse {
   achievements: number
   ds: number
-  fc: string
-  fs: string
+  fc: ComboFlag
+  fs: SyncFlag
   level: string
   level_index: number
   level_label: string
@@ -117,6 +117,8 @@ const fetchLxnsData = async (
           difficultyMap[score.level_index],
         ),
         achievementRate: score.achievements,
+        comboFlag: score.fc,
+        syncFlag: score.fs,
         providerConfig: {
           lxns: {
             friendCode,

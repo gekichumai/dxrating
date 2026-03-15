@@ -11,7 +11,7 @@ import IconMdiClose from '~icons/mdi/close'
 import { WebHaptics } from 'web-haptics'
 import { type FlattenedSheet, canonicalIdFromParts } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
-import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import type { ComboFlag, PlayEntry, SyncFlag } from '../../RatingCalculatorAddEntryForm'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
 
 export type FetchNetRecordProgressState =
@@ -105,6 +105,35 @@ const fetchNetRecords = async (
   })
 }
 
+const NET_COMBO_FLAG_MAP: Record<string, ComboFlag> = {
+  fullCombo: 'fc',
+  'fullCombo+': 'fcp',
+  allPerfect: 'ap',
+  'allPerfect+': 'app',
+}
+
+const NET_SYNC_FLAG_MAP: Record<string, SyncFlag> = {
+  syncPlay: 'sync',
+  fullSync: 'fs',
+  'fullSync+': 'fsp',
+  fullSyncDX: 'fsd',
+  'fullSyncDX+': 'fsdp',
+}
+
+function extractComboFlag(flags: string[]): ComboFlag {
+  for (const flag of flags) {
+    if (flag in NET_COMBO_FLAG_MAP) return NET_COMBO_FLAG_MAP[flag]
+  }
+  return null
+}
+
+function extractSyncFlag(flags: string[]): SyncFlag {
+  for (const flag of flags) {
+    if (flag in NET_SYNC_FLAG_MAP) return NET_SYNC_FLAG_MAP[flag]
+  }
+  return null
+}
+
 const haptics = new WebHaptics()
 
 export const importFromNETRecords = async (
@@ -150,6 +179,7 @@ export const importFromNETRecords = async (
         return entry.sheet.difficulty !== 'utage'
       })
       .map((record) => {
+        const flags = Array.isArray(record.achievement.flags) ? record.achievement.flags : []
         return {
           sheetId: canonicalIdFromParts(
             record.sheet.songId,
@@ -163,6 +193,8 @@ export const importFromNETRecords = async (
             record.sheet.difficulty as DifficultyEnum,
           ),
           achievementRate: record.achievement.rate / 10000,
+          comboFlag: extractComboFlag(flags),
+          syncFlag: extractSyncFlag(flags),
         }
       })
       .filter((entry) => {
@@ -186,6 +218,8 @@ export const importFromNETRecords = async (
             cloned.push(entry)
           } else if (entry.achievementRate > existed.achievementRate) {
             existed.achievementRate = entry.achievementRate
+            existed.comboFlag = entry.comboFlag
+            existed.syncFlag = entry.syncFlag
           }
         }
         return cloned

@@ -24,7 +24,7 @@ import AlertIcon from '~icons/material-symbols/warning'
 import { canonicalIdFromParts, type FlattenedSheet, useSheets } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { WebHaptics } from 'web-haptics'
-import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import type { ComboFlag, PlayEntry, SyncFlag } from '../../RatingCalculatorAddEntryForm'
 
 const haptics = new WebHaptics()
 
@@ -61,8 +61,8 @@ export interface Chart {
   achievements: number
   ds: number
   dxScore: number
-  fc: string
-  fs: string
+  fc: ComboFlag
+  fs: SyncFlag
   level: string
   level_index: number
   level_label: string
@@ -114,6 +114,8 @@ const fetchDivingFish = async (
           levelLabel[item.level_index] as DifficultyEnum,
         ),
         achievementRate: item.achievements,
+        comboFlag: item.fc || null,
+        syncFlag: item.fs || null,
       }
     }
 

@@ -4,8 +4,14 @@ import { z } from 'zod'
 import { Sentry, type Scope } from '../../../lib/functions/sentry.js'
 
 // Zod schemas for response validation
-const FCTypeSchema = z.enum(['app', 'ap', 'fcp', 'fc']).nullable()
-const FSTypeSchema = z.enum(['fsdp', 'fsd', 'fsp', 'fs', 'sync']).nullable()
+const FCTypeSchema = z.preprocess(
+  (v) => (v === '' ? null : v),
+  z.enum(['app', 'ap', 'fcp', 'fc']).nullable(),
+)
+const FSTypeSchema = z.preprocess(
+  (v) => (v === '' ? null : v),
+  z.enum(['fsdp', 'fsd', 'fsp', 'fs', 'sync']).nullable(),
+)
 const RateTypeSchema = z.enum(['sssp', 'sss', 'ssp', 'ss', 'sp', 's', 'aaa', 'aa', 'a', 'bbb', 'bb', 'b', 'c', 'd'])
 const SongTypeSchema = z.enum(['standard', 'dx', 'utage'])
 const LevelIndexSchema = z.number().int().min(0).max(4)

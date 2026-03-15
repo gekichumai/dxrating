@@ -27,9 +27,14 @@ export interface PlayEntryProviderConfig {
   }
 }
 
+export type ComboFlag = 'fc' | 'fcp' | 'ap' | 'app' | null
+export type SyncFlag = 'fs' | 'fsp' | 'fsd' | 'fsdp' | 'sync' | null
+
 export interface PlayEntry {
   sheetId: string
   achievementRate: number
+  comboFlag?: ComboFlag
+  syncFlag?: SyncFlag
 
   providerConfig?: PlayEntryProviderConfig
 }
