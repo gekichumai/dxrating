@@ -1,6 +1,5 @@
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import clsx from 'clsx'
-import { execSync } from 'node:child_process'
 import type { FC, PropsWithChildren } from 'react'
 import { fetchAsset } from './assetFetcher.js'
 import { type PlayerCollection, type Region, type RenderData } from './index.js'
@@ -278,12 +277,7 @@ const padArray = <T,>(arr: T[], len: number, fill?: T): (T | undefined)[] => {
   return arr.concat(Array(len).fill(fill)).slice(0, len)
 }
 
-let gitVersion = 'unknown'
-try {
-  gitVersion = execSync('git rev-parse HEAD').toString().trim()
-} catch {
-  // git not available in production Docker image
-}
+const gitVersion = process.env.GIT_COMMIT ?? 'unknown'
 
 const FactItem = ({
   value,

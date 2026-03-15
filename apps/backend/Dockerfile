@@ -78,8 +78,10 @@ WORKDIR /app/apps/backend
 # Expose port
 EXPOSE 3000
 
-# Set environment variable
+# Set environment variables
+ARG GIT_COMMIT=unknown
 ENV NODE_ENV=production
+ENV GIT_COMMIT=${GIT_COMMIT}
 
 # Copy entrypoint script
 COPY apps/backend/docker-entrypoint.sh ./docker-entrypoint.sh
