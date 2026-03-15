@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
 import IconMdiTagPlus from '~icons/mdi/tag-plus'
-import { authClient } from '../../../lib/auth-client'
+import { useAuth } from '../../../hooks/useAuth'
 import { apiClient as client } from '../../../lib/orpc'
 import type { FlattenedSheet } from '../../../songs'
 import { deriveColor } from '../../../utils/color'
@@ -23,8 +23,7 @@ const SheetTagsAddDialog: FC<{
   const { t } = useTranslation(['sheet'])
   const [pending, setPending] = useState(false)
   const localizeMessage = useLocalizedMessageTranslation()
-  const { data: sessionData } = authClient.useSession()
-  const session = sessionData?.session
+  const { session, openLoginDialog, LoginDialog } = useAuth()
 
   const { data: tagGroups, isLoading: loadingTags } = useSWR('tags.grouped', async () => {
     const { tags, tagGroups } = await client.tags.list()
@@ -70,6 +69,7 @@ const SheetTagsAddDialog: FC<{
 
   return (
     <div className="flex flex-col gap-2 p-4 relative">
+      <LoginDialog />
       <div className="text-lg font-bold">{t('sheet:tags.add.title')}</div>
       <div className="text-lg">
         <SheetListItemContent sheet={sheet} />
@@ -138,8 +138,16 @@ const SheetTagsAddDialog: FC<{
       </div>
 
       {!session && (
-        <div className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8">
-          <div className="text-center font-bold">{t('sheet:tags.add.login-required')}</div>
+        <div
+          className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8 cursor-pointer"
+          onClick={openLoginDialog}
+          onKeyDown={(e) => e.key === 'Enter' && openLoginDialog()}
+          role="button"
+          tabIndex={0}
+        >
+          <span className="text-center font-bold text-sm text-zinc-600 underline underline-offset-2">
+            {t('sheet:tags.add.login-required')}
+          </span>
         </div>
       )}
     </div>
