@@ -1,8 +1,19 @@
 import { ImportRegionSupportTag } from '@/components/rating/io/import/ImportRegionSupportTag'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
-import { Button, CircularProgress, ListItemIcon, ListItemText, MenuItem, TextField } from '@mui/material'
+import {
+  Alert,
+  AlertTitle,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  ListItemIcon,
+  ListItemText,
+  MenuItem,
+  TextField,
+} from '@mui/material'
 import { type FC, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
@@ -168,66 +179,62 @@ export const ImportDivingFishDialogContent: FC<{
   }, [divingFishConfig])
 
   return (
-    <DialogContent className="flex flex-col items-start gap-2">
-      <DialogHeader className="mb-2">
-        <DialogTitle className="flex flex-col items-start gap-2">
-          <div>{t('rating-calculator:io.import.diving-fish.title')}</div>
-          <div className="text-sm text-zinc-5">{t('rating-calculator:io.import.diving-fish.description')}</div>
-        </DialogTitle>
-      </DialogHeader>
+    <>
+      <DialogTitle>{t('rating-calculator:io.import.diving-fish.title')}</DialogTitle>
+      <DialogContent className="flex flex-col items-start gap-2">
+        <div className="text-sm text-zinc-5 mb-2">{t('rating-calculator:io.import.diving-fish.description')}</div>
 
-      <Alert variant="destructive" className="font-bold">
-        <AlertIcon className="h-4 w-4" />
-        <AlertTitle>{t('rating-calculator:io.import.diving-fish.warning.title')}</AlertTitle>
-        <AlertDescription>{t('rating-calculator:io.import.diving-fish.warning.description')}</AlertDescription>
-      </Alert>
+        <Alert severity="error" icon={<AlertIcon />} className="font-bold w-full">
+          <AlertTitle>{t('rating-calculator:io.import.diving-fish.warning.title')}</AlertTitle>
+          {t('rating-calculator:io.import.diving-fish.warning.description')}
+        </Alert>
 
-      <TextField
-        fullWidth
-        label={t('settings:import-provider.diving-fish.username')}
-        value={divingFishConfig?.username ?? ''}
-        onChange={(e) => {
-          setDivingFishConfig({
-            ...divingFishConfig,
-            username: e.target.value,
-          })
-        }}
-        data-attr="diving-fish-profile.username"
-        autoComplete="off"
-        autoCapitalize="off"
-        autoCorrect="off"
-      />
+        <TextField
+          fullWidth
+          label={t('settings:import-provider.diving-fish.username')}
+          value={divingFishConfig?.username ?? ''}
+          onChange={(e) => {
+            setDivingFishConfig({
+              ...divingFishConfig,
+              username: e.target.value,
+            })
+          }}
+          data-attr="diving-fish-profile.username"
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+        />
 
-      <div className="w-full flex items-center gap-2 select-none">
-        <div className="h-px w-full bg-zinc-200" />
-        <span className="text-sm text-zinc-5">{t('rating-calculator:io.import.diving-fish.or')}</span>
-        <div className="h-px w-full bg-zinc-200" />
-      </div>
-
-      <TextField
-        fullWidth
-        label={t('settings:import-provider.diving-fish.qq')}
-        value={divingFishConfig?.qq ?? ''}
-        onChange={(e) => {
-          setDivingFishConfig({
-            ...divingFishConfig,
-            qq: e.target.value,
-          })
-        }}
-        data-attr="diving-fish-profile.qq"
-        autoComplete="off"
-        autoCapitalize="off"
-        autoCorrect="off"
-        className="mb-2"
-      />
-
-      {busy && (
-        <div className="w-full flex justify-center items-center py-4 bg-white/70 rounded absolute inset-0 z-100 backdrop-blur-sm">
-          <CircularProgress size="1rem" className="text-zinc-5" />
+        <div className="w-full flex items-center gap-2 select-none">
+          <div className="h-px w-full bg-zinc-200" />
+          <span className="text-sm text-zinc-5">{t('rating-calculator:io.import.diving-fish.or')}</span>
+          <div className="h-px w-full bg-zinc-200" />
         </div>
-      )}
 
-      <DialogFooter className="flex items-center justify-end w-full">
+        <TextField
+          fullWidth
+          label={t('settings:import-provider.diving-fish.qq')}
+          value={divingFishConfig?.qq ?? ''}
+          onChange={(e) => {
+            setDivingFishConfig({
+              ...divingFishConfig,
+              qq: e.target.value,
+            })
+          }}
+          data-attr="diving-fish-profile.qq"
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+        />
+
+        {busy && (
+          <div className="w-full flex justify-center items-center py-4 bg-white/70 rounded absolute inset-0 z-100 backdrop-blur-sm">
+            <CircularProgress size="1rem" />
+          </div>
+        )}
+      </DialogContent>
+
+      <DialogActions>
         <Button onClick={onClose}>{t('rating-calculator:io.import.diving-fish.close')}</Button>
         <Button
           onClick={async () => {
@@ -252,9 +259,8 @@ export const ImportDivingFishDialogContent: FC<{
         >
           {busy ? (
             <div className="flex gap-2 items-center">
-              <CircularProgress size="1rem" className="text-zinc-5" />
-
-              <span className="text-zinc-5">{t('rating-calculator:io.import.diving-fish.importing')}</span>
+              <CircularProgress size="1rem" />
+              <span>{t('rating-calculator:io.import.diving-fish.importing')}</span>
             </div>
           ) : invalidReason ? (
             <div className="flex flex-col gap-1 items-end py-1">
@@ -269,8 +275,8 @@ export const ImportDivingFishDialogContent: FC<{
             t('rating-calculator:io.import.diving-fish.import')
           )}
         </Button>
-      </DialogFooter>
-    </DialogContent>
+      </DialogActions>
+    </>
   )
 }
 
@@ -306,7 +312,7 @@ export const ImportFromDivingFishButtonListItem: FC<{
         />
       </MenuItem>
 
-      <Dialog onOpenChange={setOpen} open={open}>
+      <Dialog onClose={handleClose} open={open}>
         <ImportDivingFishDialogContent modifyEntries={modifyEntries} onClose={handleClose} />
       </Dialog>
     </>
