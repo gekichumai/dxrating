@@ -136,12 +136,19 @@ function extractSyncFlag(flags: string[]): SyncFlag {
 
 const haptics = new WebHaptics()
 
+let importInFlight = false
+
 export const importFromNETRecords = async (
   sheets: FlattenedSheet[],
   modifyEntries: ListActions<PlayEntry>,
   mode: 'merge' | 'replace',
   onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
 ) => {
+  if (importInFlight) {
+    console.warn('[importFromNETRecords] Import already in progress, skipping duplicate call')
+    return
+  }
+  importInFlight = true
   posthog?.capture('netimport_started')
 
   const t = i18n.t.bind(i18n)
@@ -267,5 +274,7 @@ export const importFromNETRecords = async (
       icon: <IconMdiClose className="h-4 w-4 text-red-5 shrink-0" />,
       duration: 20000,
     })
+  } finally {
+    importInFlight = false
   }
 }
