@@ -14,9 +14,6 @@ import { renderContent } from './renderContent.js'
 export const ONESHOT_HEIGHT = 1300
 export const ONESHOT_WIDTH = 1500
 
-export const ASSETS_LOCAL_CACHE_DIR = process.env.ASSETS_LOCAL_CACHE_DIR
-export const ASSETS_REMOTE_URL = process.env.ASSETS_REMOTE_URL || 'https://shama.dxrating.net'
-
 export type Region = 'jp' | 'intl' | 'cn' | '_generic'
 
 export type PlayerCollection = {
