@@ -258,7 +258,8 @@
       "headers": {
         "chart": "Chart",
         "included-in": "Incl. In",
-        "flags": "Flags",
+        "combo": "Combo",
+        "sync": "Sync",
         "achievement-rate": "Achievement Rate",
         "rating": "Rating",
         "actions": "Actions"

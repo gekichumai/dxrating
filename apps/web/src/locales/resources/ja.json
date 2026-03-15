@@ -253,7 +253,8 @@
       "headers": {
         "chart": "譜面",
         "included-in": "収録",
-        "flags": "フラグ",
+        "combo": "コンボ",
+        "sync": "シンク",
         "achievement-rate": "達成率",
         "rating": "レーティング",
         "actions": "操作"

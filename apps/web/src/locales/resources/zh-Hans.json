@@ -252,7 +252,8 @@
       "headers": {
         "chart": "谱面",
         "included-in": "收录于",
-        "flags": "标记",
+        "combo": "连击",
+        "sync": "同步",
         "achievement-rate": "完成率",
         "rating": "评分",
         "actions": "操作"

@@ -248,49 +248,47 @@ const RatingCalculatorIncludedInCell: FC<{
 })
 RatingCalculatorIncludedInCell.displayName = 'memo(RatingCalculatorIncludedInCell)'
 
-const COMBO_FLAG_CONFIG: Record<NonNullable<ComboFlag>, { label: string; color: string }> = {
-  fc: { label: 'FC', color: '#22bb5b' },
-  fcp: { label: 'FC+', color: '#169b48' },
-  ap: { label: 'AP', color: '#f5c31a' },
-  app: { label: 'AP+', color: '#e5a800' },
+const COMBO_FLAG_CONFIG: Record<NonNullable<ComboFlag>, { label: string; color: string; rank: number }> = {
+  fc: { label: 'FC', color: '#22bb5b', rank: 1 },
+  fcp: { label: 'FC+', color: '#169b48', rank: 2 },
+  ap: { label: 'AP', color: '#f5c31a', rank: 3 },
+  app: { label: 'AP+', color: '#e5a800', rank: 4 },
 }
 
-const SYNC_FLAG_CONFIG: Record<NonNullable<SyncFlag>, { label: string; color: string }> = {
-  sync: { label: 'SYNC', color: '#64b5f6' },
-  fs: { label: 'FS', color: '#42a5f5' },
-  fsp: { label: 'FS+', color: '#1e88e5' },
-  fsd: { label: 'FSD', color: '#e040fb' },
-  fsdp: { label: 'FSD+', color: '#c51dd4' },
+const SYNC_FLAG_CONFIG: Record<NonNullable<SyncFlag>, { label: string; color: string; rank: number }> = {
+  sync: { label: 'SYNC', color: '#64b5f6', rank: 1 },
+  fs: { label: 'FS', color: '#42a5f5', rank: 2 },
+  fsp: { label: 'FS+', color: '#1e88e5', rank: 3 },
+  fsd: { label: 'FSD', color: '#e040fb', rank: 4 },
+  fsdp: { label: 'FSD+', color: '#c51dd4', rank: 5 },
 }
 
-const RatingCalculatorFlagsCell: FC<{
+const FlagPill: FC<{ label: string; color: string }> = ({ label, color }) => (
+  <span
+    className="rounded-full px-2 text-xs leading-relaxed text-white shadow-[0.0625rem_0.125rem_0_0_#0b38714D] select-none"
+    style={{ backgroundColor: color }}
+  >
+    {label}
+  </span>
+)
+
+const RatingCalculatorComboFlagCell: FC<{
   row: Row<Entry>
 }> = memo(({ row }) => {
-  const { comboFlag, syncFlag } = row.original
-  if (!comboFlag && !syncFlag) return null
-
-  return (
-    <div className="flex gap-1 flex-wrap">
-      {comboFlag && (
-        <span
-          className="rounded-full px-2 text-xs leading-relaxed text-white shadow-[0.0625rem_0.125rem_0_0_#0b38714D] select-none"
-          style={{ backgroundColor: COMBO_FLAG_CONFIG[comboFlag].color }}
-        >
-          {COMBO_FLAG_CONFIG[comboFlag].label}
-        </span>
-      )}
-      {syncFlag && (
-        <span
-          className="rounded-full px-2 text-xs leading-relaxed text-white shadow-[0.0625rem_0.125rem_0_0_#0b38714D] select-none"
-          style={{ backgroundColor: SYNC_FLAG_CONFIG[syncFlag].color }}
-        >
-          {SYNC_FLAG_CONFIG[syncFlag].label}
-        </span>
-      )}
-    </div>
-  )
+  const { comboFlag } = row.original
+  if (!comboFlag) return null
+  return <FlagPill label={COMBO_FLAG_CONFIG[comboFlag].label} color={COMBO_FLAG_CONFIG[comboFlag].color} />
 })
-RatingCalculatorFlagsCell.displayName = 'memo(RatingCalculatorFlagsCell)'
+RatingCalculatorComboFlagCell.displayName = 'memo(RatingCalculatorComboFlagCell)'
+
+const RatingCalculatorSyncFlagCell: FC<{
+  row: Row<Entry>
+}> = memo(({ row }) => {
+  const { syncFlag } = row.original
+  if (!syncFlag) return null
+  return <FlagPill label={SYNC_FLAG_CONFIG[syncFlag].label} color={SYNC_FLAG_CONFIG[syncFlag].color} />
+})
+RatingCalculatorSyncFlagCell.displayName = 'memo(RatingCalculatorSyncFlagCell)'
 
 const RatingCalculatorAchievementRateCell: FC<{
   row: Row<Entry>
@@ -402,12 +400,29 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
         size: 50,
         minSize: 100,
       }),
-      columnHelper.display({
-        id: 'flags',
-        header: t('rating-calculator:table.headers.flags'),
-        cell: RatingCalculatorFlagsCell,
-        size: 80,
-        minSize: 80,
+      columnHelper.accessor('comboFlag', {
+        id: 'comboFlag',
+        header: t('rating-calculator:table.headers.combo'),
+        cell: RatingCalculatorComboFlagCell,
+        size: 50,
+        minSize: 50,
+        sortingFn: (a, b) => {
+          const rankA = a.original.comboFlag ? COMBO_FLAG_CONFIG[a.original.comboFlag].rank : 0
+          const rankB = b.original.comboFlag ? COMBO_FLAG_CONFIG[b.original.comboFlag].rank : 0
+          return rankA - rankB
+        },
+      }),
+      columnHelper.accessor('syncFlag', {
+        id: 'syncFlag',
+        header: t('rating-calculator:table.headers.sync'),
+        cell: RatingCalculatorSyncFlagCell,
+        size: 50,
+        minSize: 50,
+        sortingFn: (a, b) => {
+          const rankA = a.original.syncFlag ? SYNC_FLAG_CONFIG[a.original.syncFlag].rank : 0
+          const rankB = b.original.syncFlag ? SYNC_FLAG_CONFIG[b.original.syncFlag].rank : 0
+          return rankA - rankB
+        },
       }),
       columnHelper.accessor('achievementRate', {
         id: 'achievementRate',
@@ -488,7 +503,7 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
                   key={header.id}
                   colSpan={header.colSpan}
                   className={clsx(
-                    'group bg-gray-900/5 transition',
+                    'group bg-gray-900/5 transition whitespace-nowrap',
                     header.column.getCanSort() &&
                       'cursor-pointer select-none hover:bg-gray-900/10 active:bg-gray-900/20 leading-tight py-4',
                   )}
