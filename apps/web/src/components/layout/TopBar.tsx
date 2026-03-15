@@ -1,5 +1,5 @@
 import { IconButton } from '@mui/material'
-import MdiFeedback from '~icons/mdi/feedback'
+import MdiGithub from '~icons/mdi/github'
 import DiscordLogo from '~icons/simple-icons/discord'
 import { BUNDLE } from '../../utils/bundle'
 import { useTime } from '../../utils/useTime'
@@ -39,14 +39,13 @@ export const TopBar = () => {
 
             <IconButton
               size="small"
-              // feedback board color
-              className="bg-orange-500 hover:bg-orange-600 border-1 border-solid border-black/20 text-white shadow size-10"
+              className="bg-zinc-800 hover:bg-zinc-700 border-1 border-solid border-black/20 text-white shadow size-10"
               LinkComponent="a"
-              href="https://dxrating.userjot.com/"
+              href="https://github.com/gekichumai/dxrating"
               target="_blank"
               rel="noopener"
             >
-              <MdiFeedback className="size-4" />
+              <MdiGithub className="size-4" />
             </IconButton>
 
           </div>

@@ -1,4 +1,8 @@
 {
-  "setup": ["yarn install"],
+  "setup": [
+    "cp \"$SUPERSET_ROOT_PATH/.env.local\" .env.local",
+    "cp \"$SUPERSET_ROOT_PATH/apps/backend/.env.local\" apps/backend/.env.local",
+    "pnpm install"
+  ],
   "teardown": []
 }

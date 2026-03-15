@@ -126,7 +126,7 @@ export const appContract = oc.router({
         path: '/tags',
         summary: 'List all tags, groups, and song associations',
         tags: ['Tags'],
-        spec: { security: [] },
+        spec: (spec) => ({ ...spec, security: [] }),
       })
       .output(TagsListResponseSchema),
     attach: oc
@@ -155,7 +155,7 @@ export const appContract = oc.router({
         path: '/comments',
         summary: 'List comments for a specific song sheet',
         tags: ['Comments'],
-        spec: { security: [] },
+        spec: (spec) => ({ ...spec, security: [] }),
       })
       .input(FetchCommentsInputSchema)
       .output(z.array(CommentWithProfileSchema)),
@@ -178,7 +178,7 @@ export const appContract = oc.router({
         path: '/aliases',
         summary: 'List all song aliases',
         tags: ['Aliases'],
-        spec: { security: [] },
+        spec: (spec) => ({ ...spec, security: [] }),
       })
       .output(
         z.array(
