@@ -112,8 +112,33 @@
         "button": "追加",
         "title": "タグを追加する",
         "toast-failed": "タグを追加できませんでした: {{error}}",
-        "toast-success": "タグが追加されました"
+        "toast-success": "タグが追加されました",
+        "login-required": "タグを追加するにはログインまたは新規登録してください。"
       }
+    },
+    "copy-title": {
+      "toast-success": "タイトルをクリップボードにコピーしました",
+      "tooltip": "クリックしてコピー"
+    },
+    "copy-alt-name": {
+      "toast-success": "{{content}} をクリップボードにコピーしました"
+    },
+    "aliases": {
+      "add-new": "別名を追加",
+      "dialog-title": "別名を追加する",
+      "input-label": "別名を入力",
+      "adding": "追加中...",
+      "add-button": "追加する",
+      "toast-success": "別名を追加しました：{{name}}",
+      "toast-failed": "別名の追加に失敗しました：{{error}}",
+      "login-required": "別名を追加するにはログインまたは新規登録してください。"
+    },
+    "comments": {
+      "title": "コメント",
+      "placeholder": "コメントを入力...",
+      "anonymous": "*名無し*",
+      "empty": "まだコメントはありません。",
+      "sign-in-to-comment": "コメントするにはログインまたは新規登録してください。"
     }
   },
   "about": {
@@ -158,7 +183,16 @@
     "gesture-hint": {
       "tap": "タップ",
       "tap-hold": "ホールド"
-    }
+    },
+    "beta": "ベータ",
+    "submit": "送信",
+    "back": "戻る",
+    "profile": "プロフィール",
+    "deprecated": "非推奨",
+    "warnings": "警告",
+    "current": "現在",
+    "locked": "ロック中",
+    "available": "利用可能"
   },
   "auth": {
     "login": {
@@ -174,7 +208,10 @@
       "toast-success": "パスワードが更新されました"
     },
     "update-display-name": {
-      "label": ""
+      "label": "表示名を更新",
+      "sign-in-required": "表示名を更新するにはログインが必要です。",
+      "toast-failed": "プロフィールの更新に失敗しました：{{error}}",
+      "toast-success": "表示名が「{{name}}」に更新されました。"
     },
     "sign-up": {
       "label": "新規登録",
@@ -234,7 +271,11 @@
       "subtotal": "小計",
       "min": "最小",
       "avg": "平均",
-      "max": "最大"
+      "max": "最大",
+      "histogram-hint": "ヒストグラムのバケットは (最小, 最大] の形式で表示されます。",
+      "histogram-available": "ヒストグラム利用可能",
+      "b15-avg": "B15 平均: {{value}}",
+      "b35-avg": "B35 平均: {{value}}"
     },
     "add-entry": {
       "chart": "譜面",
@@ -257,6 +298,7 @@
           "all-records": "JSONに書き出し (全ての記録)",
           "b50-records": "JSONに書き出し (B50のみ)"
         },
+        "toast-success": "{{name}} としてエクスポートしました",
         "oneshot-image": {
           "button": "ワンショット画像として書き出し...",
           "dialog": {
@@ -300,7 +342,16 @@
         "aqua-sqlite": {
           "title": "Aqua SQLiteデータベースから読み込み...",
           "success": "{{count}}件のエントリーを読み込みしました",
-          "error": "読み込みに失敗しました：{{error}}"
+          "error": "読み込みに失敗しました：{{error}}",
+          "loading-db": "データベース読み込み中...",
+          "loaded-db": "データベースを読み込みました。",
+          "load-db-failed": "データベースの読み込みに失敗しました。",
+          "read-users-failed": "Aqua SQLiteデータベースからのユーザー読み込みに失敗しました：{{error}}",
+          "dialog-title": "Aqua SQLiteから読み込み",
+          "select-user": "ゲームプレイを読み込むユーザーを選択してください。",
+          "confirm-import": "選択したユーザーのゲームプレイの読み込みを確認してください。",
+          "sheet-not-found": "ゲームプレイに対応する譜面が見つかりませんでした：",
+          "import-action": "読み込み"
         },
         "json": {
           "title": "DXRating JSONから読み込み...",
@@ -311,6 +362,11 @@
           "title": "NETから読み込み...",
           "success": "{{count}}件のエントリーを読み込みしました",
           "error": "読み込みに失敗しました：{{error}}",
+          "importing": "NETからレコードを読み込み中...",
+          "no-credentials": "NETからの読み込みエラー：認証情報が保存されていません。レーティング計算 - 読み込み - NETから読み込みで、セガIDとパスワードを設定してください。",
+          "imported": "{{region}} NETから{{count}}件のレコードを読み込みました。",
+          "latest-play": "最新のプレイ",
+          "date": "日付：{{date}}",
           "dialog": {
             "actions": {
               "close": "閉じる",

@@ -117,8 +117,33 @@
         "title": "Add a Tag",
         "button": "Add",
         "toast-success": "Tag added successfully",
-        "toast-failed": "Failed to add tag: {{error}}"
+        "toast-failed": "Failed to add tag: {{error}}",
+        "login-required": "Login or Register an account to add tags."
       }
+    },
+    "copy-title": {
+      "toast-success": "Copied title to clipboard",
+      "tooltip": "Click to copy"
+    },
+    "copy-alt-name": {
+      "toast-success": "Copied {{content}} to clipboard"
+    },
+    "aliases": {
+      "add-new": "Add New Alias",
+      "dialog-title": "Add an Alias",
+      "input-label": "Add alias",
+      "adding": "Adding...",
+      "add-button": "Add Alias",
+      "toast-success": "Added alias: {{name}}",
+      "toast-failed": "Failed to add alias: {{error}}",
+      "login-required": "Login or Register an account to add an alias."
+    },
+    "comments": {
+      "title": "Comments",
+      "placeholder": "Leave a comment...",
+      "anonymous": "*Somebody*",
+      "empty": "There are no comments yet.",
+      "sign-in-to-comment": "Sign in or create an account to leave one."
     }
   },
   "about": {
@@ -163,7 +188,16 @@
     "gesture-hint": {
       "tap": "Tap",
       "tap-hold": "Hold"
-    }
+    },
+    "beta": "Beta",
+    "submit": "Submit",
+    "back": "Back",
+    "profile": "Profile",
+    "deprecated": "Deprecated",
+    "warnings": "Warnings",
+    "current": "Current",
+    "locked": "LOCKED",
+    "available": "AVAILABLE"
   },
   "auth": {
     "update-password": {
@@ -179,7 +213,10 @@
       "toast-success": "Successfully logged in."
     },
     "update-display-name": {
-      "label": "Update Profile Name"
+      "label": "Update Profile Name",
+      "sign-in-required": "You must be signed in to update your display name.",
+      "toast-failed": "Failed to update profile: {{error}}",
+      "toast-success": "Your profile name has been successfully updated to \"{{name}}\"."
     },
     "sign-up": {
       "label": "Sign Up",
@@ -239,7 +276,11 @@
       "subtotal": "Subtotal",
       "min": "Min",
       "avg": "Avg",
-      "max": "Max"
+      "max": "Max",
+      "histogram-hint": "Histogram buckets are visualized in shape of (min, max] to better represent the data distribution.",
+      "histogram-available": "Histogram Available",
+      "b15-avg": "B15 AVG: {{value}}",
+      "b35-avg": "B35 AVG: {{value}}"
     },
     "add-entry": {
       "chart": "Chart",
@@ -262,6 +303,7 @@
           "all-records": "Export to JSON (All Records)",
           "b50-records": "Export to JSON (Only B50 Records)"
         },
+        "toast-success": "Exported as {{name}}",
         "oneshot-image": {
           "button": "Render as OneShot Image",
           "dialog": {
@@ -310,7 +352,16 @@
         "aqua-sqlite": {
           "title": "Import from Aqua SQLite Database...",
           "success": "Imported {{count}} entries",
-          "error": "Failed to import: {{error}}"
+          "error": "Failed to import: {{error}}",
+          "loading-db": "Loading database...",
+          "loaded-db": "Database has been loaded.",
+          "load-db-failed": "Failed to load database.",
+          "read-users-failed": "Failed to read users from Aqua SQLite database: {{error}}",
+          "dialog-title": "Import from Aqua SQLite",
+          "select-user": "Choose the user to import their gameplays from.",
+          "confirm-import": "Confirm importing the selected user's gameplays.",
+          "sheet-not-found": "Failed to find sheet for a gameplay with:",
+          "import-action": "Import"
         },
         "json": {
           "title": "Import from DXRating JSON...",
@@ -321,6 +372,11 @@
           "title": "Import from NET Records...",
           "success": "Imported {{count}} entries",
           "error": "Failed to import: {{error}}",
+          "importing": "Importing records from NET...",
+          "no-credentials": "Error occurred while importing records from NET: No credentials stored. Please head to Rating Calculator - Import - Import from NET and set your Sega ID and password to continue.",
+          "imported": "Imported {{count}} records from {{region}} NET.",
+          "latest-play": "Latest Play",
+          "date": "Date: {{date}}",
           "dialog": {
             "title": "Import from NET",
             "sega-id": "Your Sega ID",

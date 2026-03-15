@@ -139,7 +139,7 @@ const SheetTagsAddDialog: FC<{
 
       {!session && (
         <div className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8">
-          <div className="text-center font-bold">Login or Register an account to add tags.</div>
+          <div className="text-center font-bold">{t('sheet:tags.add.login-required')}</div>
         </div>
       )}
     </div>

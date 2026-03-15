@@ -112,8 +112,33 @@
         "button": "添加",
         "title": "添加標籤",
         "toast-failed": "添加標籤失敗：{{error}}。請檢查是否已登錄。",
-        "toast-success": "已添加成功"
+        "toast-success": "已添加成功",
+        "login-required": "請登錄或註冊以添加標籤。"
       }
+    },
+    "copy-title": {
+      "toast-success": "已複製標題至剪貼簿",
+      "tooltip": "點擊複製"
+    },
+    "copy-alt-name": {
+      "toast-success": "已複製 {{content}} 至剪貼簿"
+    },
+    "aliases": {
+      "add-new": "添加新別名",
+      "dialog-title": "添加別名",
+      "input-label": "輸入別名",
+      "adding": "添加中...",
+      "add-button": "添加",
+      "toast-success": "已添加別名：{{name}}",
+      "toast-failed": "添加別名失敗：{{error}}",
+      "login-required": "請登錄或註冊以添加別名。"
+    },
+    "comments": {
+      "title": "評論",
+      "placeholder": "發表評論...",
+      "anonymous": "*匿名用戶*",
+      "empty": "暫無評論。",
+      "sign-in-to-comment": "登錄或註冊以發表評論。"
     }
   },
   "about": {
@@ -158,7 +183,16 @@
     "gesture-hint": {
       "tap": "點按",
       "tap-hold": "長按"
-    }
+    },
+    "beta": "測試版",
+    "submit": "提交",
+    "back": "返回",
+    "profile": "個人資料",
+    "deprecated": "已棄用",
+    "warnings": "警告",
+    "current": "當前",
+    "locked": "需解鎖",
+    "available": "可用"
   },
   "auth": {
     "login": {
@@ -174,7 +208,10 @@
       "toast-success": "已重設密碼"
     },
     "update-display-name": {
-      "label": ""
+      "label": "修改顯示名稱",
+      "sign-in-required": "更新顯示名稱前請先登錄。",
+      "toast-failed": "更新個人資料失敗：{{error}}",
+      "toast-success": "您的顯示名稱已成功更新為「{{name}}」。"
     },
     "sign-up": {
       "label": "註冊",
@@ -234,7 +271,11 @@
       "subtotal": "小計",
       "min": "最小",
       "avg": "平均",
-      "max": "最大"
+      "max": "最大",
+      "histogram-hint": "直方圖的分組以 (最小值, 最大值] 的形式展示，以更好地呈現數據分佈。",
+      "histogram-available": "可查看直方圖",
+      "b15-avg": "B15 均值：{{value}}",
+      "b35-avg": "B35 均值：{{value}}"
     },
     "add-entry": {
       "chart": "譜面",
@@ -257,6 +298,7 @@
           "all-records": "匯出為 JSON (所有記錄)",
           "b50-records": "匯出為 JSON (僅 B50 記錄)"
         },
+        "toast-success": "已匯出為 {{name}}",
         "oneshot-image": {
           "button": "渲染為 B50 圖片...",
           "dialog": {
@@ -297,6 +339,11 @@
           "title": "從 NET 匯入...",
           "success": "已匯入 {{count}} 條記錄",
           "error": "匯入失敗：{{error}}",
+          "importing": "正在從 NET 匯入記錄...",
+          "no-credentials": "從 NET 匯入記錄時出錯：未儲存憑據。請前往評分計算 - 匯入 - 從 NET 匯入並設定您的世嘉 ID 和密碼。",
+          "imported": "已從 {{region}} NET 匯入 {{count}} 條記錄。",
+          "latest-play": "最近遊玩",
+          "date": "日期：{{date}}",
           "dialog": {
             "title": "從 NET 匯入",
             "sega-id": "您的世嘉 ID",
@@ -358,9 +405,18 @@
           "title": ""
         },
         "aqua-sqlite": {
-          "error": "",
-          "success": "",
-          "title": ""
+          "title": "從 Aqua SQLite 資料庫匯入...",
+          "success": "成功匯入 {{count}} 條記錄",
+          "error": "匯入失敗：{{error}}",
+          "loading-db": "正在載入資料庫...",
+          "loaded-db": "資料庫已載入。",
+          "load-db-failed": "資料庫載入失敗。",
+          "read-users-failed": "從 Aqua SQLite 資料庫讀取用戶失敗：{{error}}",
+          "dialog-title": "從 Aqua SQLite 匯入",
+          "select-user": "選擇要匯入遊玩記錄的用戶。",
+          "confirm-import": "確認匯入所選用戶的遊玩記錄。",
+          "sheet-not-found": "未能找到遊玩記錄對應的譜面：",
+          "import-action": "匯入"
         },
         "json": {
           "error": "",

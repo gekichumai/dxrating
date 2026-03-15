@@ -2,6 +2,7 @@ import { Button, Dialog, Grow, TextField } from '@mui/material'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
 import IconMdiPlus from '~icons/mdi/plus'
 import { authClient } from '../../lib/auth-client'
@@ -13,6 +14,7 @@ import { MotionButtonBase } from '../../utils/motion'
 import { SheetListItemContent } from './SheetListItem'
 
 export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+  const { t } = useTranslation(['sheet'])
   const [open, setOpen] = useState(false)
   const { data: sessionData } = authClient.useSession()
   const session = sessionData?.session
@@ -30,12 +32,12 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
         name: newAltName.trim(),
       })
 
-      toast.success(`Added alias: ${newAltName.trim()}`)
+      toast.success(t('sheet:aliases.toast-success', { name: newAltName.trim() }))
       setOpen(false)
       setNewAltName('')
       mutate() // Trigger revalidation
     } catch (e: any) {
-      toast.error(`Failed to add alias: ${formatErrorMessage(e)}`)
+      toast.error(t('sheet:aliases.toast-failed', { error: formatErrorMessage(e) }))
     }
   }, [newAltName, sheet.songId, mutate])
 
@@ -50,7 +52,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
       >
         <IconMdiPlus className="h-4 w-4" />
 
-        <span className="ml-1 text-xs">Add New Alias</span>
+        <span className="ml-1 text-xs">{t('sheet:aliases.add-new')}</span>
       </MotionButtonBase>
 
       <Dialog
@@ -63,14 +65,14 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
         }}
       >
         <div className="flex flex-col gap-2 p-4 relative w-full">
-          <div className="text-lg font-bold">Add an Alias</div>
+          <div className="text-lg font-bold">{t('sheet:aliases.dialog-title')}</div>
           <div className="text-lg">
             <SheetListItemContent sheet={sheet} />
           </div>
 
           <div className="flex flex-col gap-2">
             <TextField
-              label="Add alias"
+              label={t('sheet:aliases.input-label')}
               variant="outlined"
               value={newAltName}
               onChange={(e) => setNewAltName(e.target.value)}
@@ -90,13 +92,13 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
               disabled={newAltName.trim().length === 0 || newAltName.trim().length > 100 || !session || loading}
               type="submit"
             >
-              {loading ? 'Adding...' : 'Add Alias'}
+              {loading ? t('sheet:aliases.adding') : t('sheet:aliases.add-button')}
             </Button>
           </div>
 
           {!session && (
             <div className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8 z-1">
-              <div className="text-center font-bold">Login or Register an account to add an alias.</div>
+              <div className="text-center font-bold">{t('sheet:aliases.login-required')}</div>
             </div>
           )}
         </div>

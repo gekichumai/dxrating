@@ -6,7 +6,7 @@ import IconMdiFile from '~icons/mdi/file'
 import { useRatingCalculatorContext } from '../../../../models/context/RatingCalculatorContext'
 import { type RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
 
-const saveAsJsonFile = (data: string) => {
+const saveAsJsonFile = (data: string, t: (key: string, opts?: Record<string, string>) => string) => {
   const blob = new Blob([data], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const name = `dxrating.export-${new Date().toISOString()}.json`
@@ -16,7 +16,7 @@ const saveAsJsonFile = (data: string) => {
   a.click()
   URL.revokeObjectURL(url)
 
-  toast.success(`Exported as ${name}`)
+  toast.success(t('rating-calculator:io.export.toast-success', { name }))
 }
 
 export const ExportToJSONMenuItem: FC = () => {
@@ -28,7 +28,7 @@ export const ExportToJSONMenuItem: FC = () => {
     <>
       <MenuItem
         onClick={() => {
-          saveAsJsonFile(JSON.stringify(entries))
+          saveAsJsonFile(JSON.stringify(entries), t)
         }}
       >
         <ListItemIcon>
@@ -45,7 +45,7 @@ export const ExportToJSONMenuItem: FC = () => {
           })
 
           const data = JSON.stringify([...b35Entries.map(preprocess), ...b15Entries.map(preprocess)])
-          saveAsJsonFile(data)
+          saveAsJsonFile(data, t)
         }}
       >
         <ListItemIcon>

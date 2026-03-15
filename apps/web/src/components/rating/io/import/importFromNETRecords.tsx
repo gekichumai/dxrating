@@ -2,6 +2,7 @@ import { type DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import { CircularProgress } from '@mui/material'
 import cloneDeep from 'lodash-es/cloneDeep'
+import i18n from 'i18next'
 import posthog from 'posthog-js'
 import toast from 'react-hot-toast'
 import type { ListActions } from 'react-use/lib/useList'
@@ -114,14 +115,15 @@ export const importFromNETRecords = async (
 ) => {
   posthog?.capture('netimport_started')
 
-  const toastId = toast.loading('Importing records from NET...', {
+  const t = i18n.t.bind(i18n)
+  const toastId = toast.loading(t('rating-calculator:io.import.net-records.importing'), {
     icon: <CircularProgress size="1rem" thickness={5} />,
   })
   try {
     const stored = localStorage.getItem('import-net-records')
     if (!stored) {
       toast.error(
-        'Error occurred while importing records from NET: No credentials stored. Please head to Rating Calculator - Import - Import from NET and set your Sega ID and password to continue.',
+        t('rating-calculator:io.import.net-records.no-credentials'),
         {
           id: toastId,
         },
@@ -134,7 +136,7 @@ export const importFromNETRecords = async (
       onProgress?.(state, progress)
       toast.loading(
         <div className="flex flex-col items-start min-w-[16rem]">
-          <div className="font-bold">Importing records from NET...</div>
+          <div className="font-bold">{t('rating-calculator:io.import.net-records.importing')}</div>
           <div className="font-mono text-xs font-light text-zinc-500">{state}</div>
         </div>,
         {
@@ -195,17 +197,17 @@ export const importFromNETRecords = async (
     toast.success(
       <div className="flex flex-col">
         <span>
-          Imported {entries.length} records from {String(region).toUpperCase()} NET.
+          {t('rating-calculator:io.import.net-records.imported', { count: entries.length, region: String(region).toUpperCase() })}
         </span>
         {lastRecord && (
           <>
-            <span className="text-sm text-zinc-500">Latest Play</span>
+            <span className="text-sm text-zinc-500">{t('rating-calculator:io.import.net-records.latest-play')}</span>
             <span className="text-xs text-zinc-500">
               {lastRecord.sheet.songId} [{lastRecord.sheet.type}]
             </span>
             {lastRecord.play.timestamp && (
               <span className="text-xs text-zinc-500">
-                Date: {new Date(lastRecord.play.timestamp).toLocaleString()}
+                {t('rating-calculator:io.import.net-records.date', { date: new Date(lastRecord.play.timestamp).toLocaleString() })}
               </span>
             )}
             {/* <span className="text-xs text-zinc-500">
@@ -226,7 +228,7 @@ export const importFromNETRecords = async (
       count: entries.length,
     })
   } catch (error) {
-    toast.error(`Error occurred while importing records from NET: ${formatErrorMessage(error)}`, {
+    toast.error(t('rating-calculator:io.import.net-records.error', { error: formatErrorMessage(error) }), {
       id: toastId,
       icon: <IconMdiClose className="h-4 w-4 text-red-5 shrink-0" />,
       duration: 20000,

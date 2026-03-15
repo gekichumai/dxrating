@@ -3,6 +3,7 @@ import { ListItemButton, ListItemSecondaryAction, ListItemText, type ListItemTex
 import clsx from 'clsx'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, type HTMLAttributes, type ImgHTMLAttributes, memo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useWebHaptics } from 'web-haptics/react'
 import toast from 'react-hot-toast'
 import { match } from 'ts-pattern'
@@ -232,6 +233,7 @@ export const SheetTitle: FC<SheetTitleProps> = ({
   enableVersion = true,
   className,
 }) => {
+  const { t } = useTranslation(['sheet'])
   const { title, searchAcronyms, difficulty, type, version } = sheet
   return (
     <div className="flex flex-col">
@@ -242,11 +244,11 @@ export const SheetTitle: FC<SheetTitleProps> = ({
             {...(enableClickToCopy && {
               onClick: () => {
                 navigator.clipboard.writeText(title)
-                toast.success('Copied title to clipboard', {
+                toast.success(t('sheet:copy-title.toast-success'), {
                   id: `copy-sheet-title-${title}`,
                 })
               },
-              title: 'Click to copy',
+              title: t('sheet:copy-title.tooltip'),
             })}
           >
             {title}
@@ -282,6 +284,7 @@ export const SheetTitle: FC<SheetTitleProps> = ({
 }
 
 export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
+  const { t } = useTranslation(['sheet'])
   const [expanded, setExpanded] = useState(false)
 
   return (
@@ -305,7 +308,7 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
               if (altName.length > 50) {
                 const sanitizedAltName = altName.trim()
                 navigator.clipboard.writeText(`${sanitizedAltName}是什么歌`)
-                toast.success(`Copied ${sanitizedAltName}是什么歌 to clipboard`, {
+                toast.success(t('sheet:copy-alt-name.toast-success', { content: `${sanitizedAltName}是什么歌` }), {
                   id: `copy-sheet-alt-name-${altName}`,
                 })
               } else {
@@ -313,7 +316,7 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
                   .trim()
                   .replace(/[\s|\n|，|。|！|@|；|《|》|？|：|【|】|（|）|、|·|~|!|#|%|&|*|(|)|{|}|\\[|\\]|\\|]/g, '-')
                 navigator.clipboard.writeText(`https://${sanitizedAltName}.是什么歌.com`)
-                toast.success(`Copied ${sanitizedAltName}.是什么歌.com to clipboard`, {
+                toast.success(t('sheet:copy-alt-name.toast-success', { content: `${sanitizedAltName}.是什么歌.com` }), {
                   id: `copy-sheet-alt-name-${altName}`,
                 })
               }

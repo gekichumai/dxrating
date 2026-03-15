@@ -40,7 +40,7 @@ export const ImportFromAquaSQLiteListItem: FC<{
   modifyEntries: ListActions<PlayEntry>
   onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const { t } = useTranslation(['rating-calculator', 'global'])
   const [db, setDb] = useState<Database | null>(null)
   const handleClose = useCallback(() => {
     setDb(null)
@@ -108,9 +108,9 @@ export const ImportFromAquaSQLiteListItem: FC<{
               fileInput.click()
             }),
             {
-              loading: 'Loading database...',
-              success: 'Database has been loaded.',
-              error: 'Failed to load database.',
+              loading: t('rating-calculator:io.import.aqua-sqlite.loading-db'),
+              success: t('rating-calculator:io.import.aqua-sqlite.loaded-db'),
+              error: t('rating-calculator:io.import.aqua-sqlite.load-db-failed'),
             },
           )
         }}
@@ -118,7 +118,7 @@ export const ImportFromAquaSQLiteListItem: FC<{
         <ListItemIcon>
           <IconMdiDatabase />
         </ListItemIcon>
-        <ListItemText primary={t('rating-calculator:io.import.aqua-sqlite.title')} secondary="Deprecated" />
+        <ListItemText primary={t('rating-calculator:io.import.aqua-sqlite.title')} secondary={t('global:deprecated')} />
       </MenuItem>
     </>
   )
@@ -141,12 +141,13 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
   modifyEntries: ListActions<PlayEntry>
   onClose?: () => void
 }> = ({ db, modifyEntries, onClose }) => {
+  const { t } = useTranslation(['rating-calculator', 'global'])
   const haptic = useWebHaptics()
   const users = useMemo(() => {
     try {
       return readAquaUsers(db)
     } catch (e) {
-      toast.error(`Failed to read users from Aqua SQLite database: ${formatErrorMessage(e)}`)
+      toast.error(t('rating-calculator:io.import.aqua-sqlite.read-users-failed', { error: formatErrorMessage(e) }))
       console.error('Failed to read users from Aqua SQLite database', e)
       return []
     }
@@ -170,11 +171,11 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
   return (
     <>
       <DialogTitle className="flex flex-col items-start">
-        <div>Import from Aqua SQLite</div>
+        <div>{t('rating-calculator:io.import.aqua-sqlite.dialog-title')}</div>
         <div className="text-sm text-zinc-500">
           {mode === 'select-user'
-            ? 'Choose the user to import their gameplays from.'
-            : "Confirm importing the selected user's gameplays."}
+            ? t('rating-calculator:io.import.aqua-sqlite.select-user')
+            : t('rating-calculator:io.import.aqua-sqlite.confirm-import')}
         </div>
       </DialogTitle>
 
@@ -203,12 +204,12 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
           <div className="flex flex-col">
             {warnings.length > 0 && (
               <Alert severity="warning" className="mb-4">
-                <AlertTitle>Warnings</AlertTitle>
+                <AlertTitle>{t('global:warnings')}</AlertTitle>
 
                 <ul className="list-disc list-inside">
                   {warnings.map((warning) => (
                     <li key={warning.id}>
-                      Failed to find sheet for a gameplay with:{' '}
+                      {t('rating-calculator:io.import.aqua-sqlite.sheet-not-found')}{' '}
                       <code className="bg-gray-2 px-1 py-0.5 rounded-sm b-1 b-solid b-gray-3">
                         music_id={warning.music_id} [{warning.type}, {warning.level}]
                       </code>
@@ -239,7 +240,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
 
       {mode === 'confirm-import' && (
         <DialogActions>
-          <Button onClick={() => setSelectedUser(null)}>Back</Button>
+          <Button onClick={() => setSelectedUser(null)}>{t('global:back')}</Button>
           <Button
             color="primary"
             variant="contained"
@@ -252,12 +253,12 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
               )
 
               haptic.trigger('success')
-              toast.success(`Imported ${records.length} gameplays from Aqua SQLite.`)
+              toast.success(t('rating-calculator:io.import.aqua-sqlite.success', { count: records.length }))
 
               onClose?.()
             }}
           >
-            Import
+            {t('rating-calculator:io.import.aqua-sqlite.import-action')}
           </Button>
         </DialogActions>
       )}

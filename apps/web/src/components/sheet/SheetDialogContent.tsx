@@ -63,7 +63,7 @@ const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
 )
 
 const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { t } = useTranslation(['auth'])
+  const { t } = useTranslation(['auth', 'sheet', 'global'])
   const { session, ensureAuthenticated, openLoginDialog, LoginDialog } = useAuth()
   const [content, setContent] = useState<string>('')
   const {
@@ -114,7 +114,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       <div className="flex gap-2 mt-1 relative">
         <TextField
           className="flex-grow"
-          placeholder="Leave a comment..."
+          placeholder={t('sheet:comments.placeholder')}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           minRows={1}
@@ -124,7 +124,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           disabled={!session}
         />
         <Button variant="contained" onClick={handleSubmit} disabled={!content || submitting}>
-          {submitting ? <CircularProgress size={24} /> : 'Submit'}
+          {submitting ? <CircularProgress size={24} /> : t('global:submit')}
         </Button>
 
         {!session && (
@@ -152,7 +152,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           {comments?.map((comment) => (
             <div key={comment.id} className="flex flex-col gap-1 bg-zinc-1 rounded-lg px-4 py-2">
               <div className="text-zinc-500 flex items-center">
-                <div className="text-sm font-bold">{comment.display_name ?? '*Somebody*'}</div>
+                <div className="text-sm font-bold">{comment.display_name ?? t('sheet:comments.anonymous')}</div>
 
                 <div className="text-xs ml-auto">{new Date(comment.created_at).toLocaleString()}</div>
               </div>
@@ -165,8 +165,8 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           ))}
           {comments?.length === 0 && (
             <div className="flex flex-col gap-1 bg-zinc-2 rounded-lg p-4 items-center text-zinc-5">
-              There are no comments yet.
-              {!session && ' Sign in or create an account to leave one.'}
+              {t('sheet:comments.empty')}
+              {!session && ` ${t('sheet:comments.sign-in-to-comment')}`}
             </div>
           )}
         </div>
@@ -181,7 +181,7 @@ export interface SheetDialogContentProps {
 }
 
 export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, currentAchievementRate }) => {
-  const { t, i18n } = useTranslation(['sheet'])
+  const { t, i18n } = useTranslation(['sheet', 'global'])
   const ratings = useMemo(() => {
     const rates = [...PRESET_ACHIEVEMENT_RATES]
     if (currentAchievementRate && !rates.includes(currentAchievementRate)) {
@@ -369,7 +369,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                         sheet.isLocked ? '!bg-yellow-500' : '!bg-gray-500',
                       )}
                     >
-                      {sheet.isLocked ? 'LOCKED' : 'AVAILABLE'}
+                      {sheet.isLocked ? t('global:locked') : t('global:available')}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -397,7 +397,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
         </div>
 
         <div className="flex flex-col gap-1">
-          <SectionHeader>Comments</SectionHeader>
+          <SectionHeader>{t('sheet:comments.title')}</SectionHeader>
           <SheetComments sheet={sheet} />
         </div>
 
@@ -430,7 +430,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                             <DXRank rank={rating.rating.rank} className="h-8" />
                             <SheetAchievementRate value={rating.achievementRate} />
                             {isCurrentAchievementRateRow && (
-                              <Chip label="Current" size="small" className="ml-2" color="default" />
+                              <Chip label={t('global:current')} size="small" className="ml-2" color="default" />
                             )}
                           </div>
                         </TableCell>

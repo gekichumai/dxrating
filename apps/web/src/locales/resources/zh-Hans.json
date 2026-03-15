@@ -111,8 +111,33 @@
         "button": "添加",
         "title": "添加标签",
         "toast-failed": "添加标签失败：{{error}}；请检查是否已登录",
-        "toast-success": "已添加成功"
+        "toast-success": "已添加成功",
+        "login-required": "请登录或注册以添加标签。"
       }
+    },
+    "copy-title": {
+      "toast-success": "已复制标题至剪贴板",
+      "tooltip": "点击复制"
+    },
+    "copy-alt-name": {
+      "toast-success": "已复制 {{content}} 至剪贴板"
+    },
+    "aliases": {
+      "add-new": "添加新别名",
+      "dialog-title": "添加别名",
+      "input-label": "输入别名",
+      "adding": "添加中...",
+      "add-button": "添加",
+      "toast-success": "已添加别名：{{name}}",
+      "toast-failed": "添加别名失败：{{error}}",
+      "login-required": "请登录或注册以添加别名。"
+    },
+    "comments": {
+      "title": "评论",
+      "placeholder": "发表评论...",
+      "anonymous": "*匿名用户*",
+      "empty": "暂无评论。",
+      "sign-in-to-comment": "登录或注册以发表评论。"
     }
   },
   "about": {
@@ -157,7 +182,16 @@
     "gesture-hint": {
       "tap": "点按",
       "tap-hold": "长按"
-    }
+    },
+    "beta": "测试版",
+    "submit": "提交",
+    "back": "返回",
+    "profile": "个人资料",
+    "deprecated": "已弃用",
+    "warnings": "警告",
+    "current": "当前",
+    "locked": "需解锁",
+    "available": "可用"
   },
   "auth": {
     "login": {
@@ -171,6 +205,12 @@
     "update-password": {
       "label": "重设密码",
       "toast-success": "已重设密码"
+    },
+    "update-display-name": {
+      "label": "修改显示名称",
+      "sign-in-required": "更新显示名称前请先登录。",
+      "toast-failed": "更新个人资料失败：{{error}}",
+      "toast-success": "您的显示名称已成功更新为「{{name}}」。"
     },
     "sign-up": {
       "label": "注册",
@@ -230,7 +270,11 @@
       "subtotal": "小计",
       "min": "最小",
       "avg": "平均",
-      "max": "最大"
+      "max": "最大",
+      "histogram-hint": "直方图的分组以 (最小值, 最大值] 的形式展示，以更好地呈现数据分布。",
+      "histogram-available": "可查看直方图",
+      "b15-avg": "B15 均值：{{value}}",
+      "b35-avg": "B35 均值：{{value}}"
     },
     "add-entry": {
       "chart": "谱面",
@@ -253,6 +297,7 @@
           "all-records": "导出为 JSON (所有记录)",
           "b50-records": "导出为 JSON (仅 B50 记录)"
         },
+        "toast-success": "已导出为 {{name}}",
         "oneshot-image": {
           "button": "渲染为 B50 图片...",
           "dialog": {
@@ -293,7 +338,16 @@
         "aqua-sqlite": {
           "title": "从 Aqua SQLite 数据库导入...",
           "success": "成功导入 {{count}} 条记录",
-          "error": "导入失败: {{error}}"
+          "error": "导入失败: {{error}}",
+          "loading-db": "正在加载数据库...",
+          "loaded-db": "数据库已加载。",
+          "load-db-failed": "数据库加载失败。",
+          "read-users-failed": "从 Aqua SQLite 数据库读取用户失败：{{error}}",
+          "dialog-title": "从 Aqua SQLite 导入",
+          "select-user": "选择要导入游玩记录的用户。",
+          "confirm-import": "确认导入所选用户的游玩记录。",
+          "sheet-not-found": "未能找到游玩记录对应的谱面：",
+          "import-action": "导入"
         },
         "json": {
           "title": "从 DXRating 导出的 JSON 导入...",
@@ -304,6 +358,11 @@
           "title": "从 NET 导入...",
           "success": "已导入 {{count}} 条记录",
           "error": "导入失败：{{error}}",
+          "importing": "正在从 NET 导入记录...",
+          "no-credentials": "从 NET 导入记录时出错：未保存凭据。请前往评分计算 - 导入 - 从 NET 导入并设置您的世嘉 ID 和密码。",
+          "imported": "已从 {{region}} NET 导入 {{count}} 条记录。",
+          "latest-play": "最近游玩",
+          "date": "日期：{{date}}",
           "dialog": {
             "title": "从 NET 导入",
             "sega-id": "您的世嘉 ID",

@@ -141,6 +141,7 @@ const Histogram: FC<{
   b15Values: number[]
   b35Values: number[]
 }> = ({ b15Values, b35Values }) => {
+  const { t } = useTranslation(['rating-calculator'])
   const theme = useVersionTheme()
   const [containerRef, containerRect] = useMeasure<HTMLDivElement>()
   const id = useRef(makeId(12)).current
@@ -269,8 +270,8 @@ const Histogram: FC<{
         .attr('transform', `rotate(-90, ${x(avg)}, ${y(0)}), translate(2, -2)`)
     }
 
-    drawAverageLine(b15Avg, `B15 AVG: ${b15Avg.toFixed(2)}`, deriveColor('#3b82f6', 'overlay'))
-    drawAverageLine(b35Avg, `B35 AVG: ${b35Avg.toFixed(2)}`, deriveColor(theme.accentColor, 'overlay'))
+    drawAverageLine(b15Avg, t('rating-calculator:statistics.b15-avg', { value: b15Avg.toFixed(2) }), deriveColor('#3b82f6', 'overlay'))
+    drawAverageLine(b35Avg, t('rating-calculator:statistics.b35-avg', { value: b35Avg.toFixed(2) }), deriveColor(theme.accentColor, 'overlay'))
   }
 
   useEffect(() => {
@@ -293,6 +294,7 @@ function RatingCalculatorStatisticsDetails({
   ref,
   ...rest
 }: HTMLAttributes<HTMLDivElement> & { ref?: React.Ref<HTMLDivElement> }) {
+  const { t } = useTranslation(['rating-calculator'])
   const { b35Entries, b15Entries } = useRatingEntries()
 
   return (
@@ -302,13 +304,14 @@ function RatingCalculatorStatisticsDetails({
         b15Values={compact(b15Entries.map((i) => i.rating?.ratingAwardValue))}
       />
       <span className="text-zinc-500 text-xs text-center select-none">
-        Histogram buckets are visualized in shape of (min, max] to better represent the data distribution.
+        {t('rating-calculator:statistics.histogram-hint')}
       </span>
     </div>
   )
 }
 
 export const RatingCalculatorStatistics: FC = () => {
+  const { t } = useTranslation(['rating-calculator'])
   const firstHeightSet = useRef(false)
   const [tab, setTab] = useState<'overview' | 'details'>('overview')
   const [containerRef, containerRect] = useMeasure<HTMLDivElement>()
@@ -374,7 +377,7 @@ export const RatingCalculatorStatistics: FC = () => {
         {secondPageAvailable && (
           <div className="flex gap-1 items-center absolute top-2 right-0 rounded-full bg-blue-100 text-zinc-500 px-2 py-1 font-bold select-none">
             <IconMdiGestureSwipeLeft className="w-3 h-3" />
-            <div className="leading-none text-xs">Histogram Available</div>
+            <div className="leading-none text-xs">{t('rating-calculator:statistics.histogram-available')}</div>
           </div>
         )}
         <RatingCalculatorStatisticsOverview

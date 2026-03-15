@@ -86,7 +86,7 @@ const ProfileImage: FC<{
 }
 
 export const UpdateDisplayNameMenuItem: FC = () => {
-  const { t } = useTranslation(['auth'])
+  const { t } = useTranslation(['auth', 'global'])
   const [open, setOpen] = useState(false)
   const { data: sessionData } = authClient.useSession()
   const user = sessionData?.user
@@ -94,7 +94,7 @@ export const UpdateDisplayNameMenuItem: FC = () => {
 
   const [updateState, handleUpdate] = useAsyncFn(async () => {
     if (!user) {
-      toast.error('You must be signed in to update your display name.')
+      toast.error(t('auth:update-display-name.sign-in-required'))
       return
     }
 
@@ -103,11 +103,11 @@ export const UpdateDisplayNameMenuItem: FC = () => {
     })
 
     if (error) {
-      toast.error(`Failed to update profile: ${error.message}`)
+      toast.error(t('auth:update-display-name.toast-failed', { error: error.message }))
       return
     }
 
-    toast.success(`Your profile name has been successfully updated to "${displayName}".`)
+    toast.success(t('auth:update-display-name.toast-success', { name: displayName }))
     setOpen(false)
   }, [displayName, user])
 
@@ -125,7 +125,7 @@ export const UpdateDisplayNameMenuItem: FC = () => {
         <DialogContent>
           <div className="flex flex-col items-start justify-center gap-1">
             <Logo />
-            <span className="text-sm text-zinc-5">Profile</span>
+            <span className="text-sm text-zinc-5">{t('global:profile')}</span>
             <div className="h-px w-full bg-gray-2 my-4" />
           </div>
           <div className="flex flex-col gap-4">
@@ -141,7 +141,7 @@ export const UpdateDisplayNameMenuItem: FC = () => {
               variant="contained"
               className="h-10"
             >
-              {updateState.loading ? <CircularProgress size="1.25rem" className="my-1" /> : 'Submit'}
+              {updateState.loading ? <CircularProgress size="1.25rem" className="my-1" /> : t('global:submit')}
             </Button>
           </div>
         </DialogContent>
@@ -162,7 +162,7 @@ export const UpdateDisplayNameMenuItem: FC = () => {
 }
 
 export const UserChip: FC = () => {
-  const { t } = useTranslation(['auth'])
+  const { t } = useTranslation(['auth', 'global'])
   const [open, setOpen] = useState<'auth' | 'profile' | null>(null)
   const { data: sessionData, isPending: pending } = authClient.useSession()
   const session = sessionData?.session
