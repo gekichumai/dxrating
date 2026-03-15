@@ -18,7 +18,7 @@ import IconMdiReplace from '~icons/mdi/find-replace'
 import IconMdiPlus from '~icons/mdi/plus'
 import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
 import { type FlattenedSheet, formatSheetToString, useSheets, useSheetsSearchEngine } from '../../songs'
-import { calculateRating } from '../../utils/rating'
+import { calculateRating, type ComboFlag } from '../../utils/rating'
 import { SheetListItemContent } from '../sheet/SheetListItem'
 
 export interface PlayEntryProviderConfig {
