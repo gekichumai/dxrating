@@ -1,7 +1,5 @@
-import { Button, IconButton } from '@mui/material'
-import { useTranslation } from 'react-i18next'
+import { IconButton } from '@mui/material'
 import MdiFeedback from '~icons/mdi/feedback'
-import MdiGift from '~icons/mdi/gift'
 import DiscordLogo from '~icons/simple-icons/discord'
 import { BUNDLE } from '../../utils/bundle'
 import { useTime } from '../../utils/useTime'
@@ -12,7 +10,6 @@ import { UserChip } from '../global/preferences/UserChip'
 import { About } from '../global/site-meta/About'
 
 export const TopBar = () => {
-  const { t } = useTranslation()
   const updateTime = useTime(BUNDLE.buildTime, 'short')
   const versionTheme = useVersionTheme()
 
@@ -52,17 +49,6 @@ export const TopBar = () => {
               <MdiFeedback className="size-4" />
             </IconButton>
 
-            <Button
-              size="small"
-              className="bg-cyan-500 hover:bg-cyan-600 border-1 border-solid border-white/20 text-white rounded-full px-3.5 shadow whitespace-nowrap h-10 shrink-0 sm:grow-0 grow sm:max-w-64"
-              LinkComponent="a"
-              href="https://afdian.com/a/dxrating"
-              target="_blank"
-              rel="noopener"
-              startIcon={<MdiGift className="size-4" />}
-            >
-              {t('about:donate.title')}
-            </Button>
           </div>
 
           <div className="flex">

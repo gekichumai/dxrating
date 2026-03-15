@@ -3,7 +3,7 @@ import { IconButton } from '@mui/material'
 import clsx from 'clsx'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, type PropsWithChildren, type ReactNode, useState } from 'react'
-import { Trans, useTranslation } from 'react-i18next'
+import { useTranslation } from 'react-i18next'
 import MdiGithub from '~icons/mdi/github'
 import MdiInformation from '~icons/mdi/information'
 import MdiTwitter from '~icons/mdi/twitter'
@@ -126,24 +126,6 @@ export const About = () => {
                 lomotos10/GCM-bot
               </AboutLink>
             </ul>
-
-            <div className="flex flex-col items-start mt-8 gap-1">
-              <h5 className="text-base text-zinc-7">{t('about:donate.title')}</h5>
-
-              <div className="text-sm text-zinc-6">
-                <Trans
-                  i18nKey="about:donate.content"
-                  components={{
-                    afdian: (
-                      <ExternalLink href="https://afdian.com/a/dxrating" className="translate-y-0.75 items-center">
-                        <MdiWeb />
-                        <span>{t('about:donate.afdian')}</span>
-                      </ExternalLink>
-                    ),
-                  }}
-                />
-              </div>
-            </div>
 
             <div className="flex flex-col items-start mt-24 gap-1">
               <h5 className="text-base text-zinc-7">{t('about:disclaimer.title')}</h5>
