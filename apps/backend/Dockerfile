@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgif-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Enable pnpm via corepack (faster than npm install -g)
-RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
+# Install pnpm
+RUN npm install -g pnpm@10.30.3
 
 WORKDIR /app
 
@@ -50,8 +50,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Enable pnpm via corepack (faster than npm install -g)
-RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
+# Install pnpm
+RUN npm install -g pnpm@10.30.3
 
 WORKDIR /app
 
