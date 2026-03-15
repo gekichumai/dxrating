@@ -6,10 +6,16 @@ export type { Scope }
 
 // Initialize Sentry configuration
 export function initSentry() {
+  const environment = process.env.NODE_ENV || 'development'
+
+  if (environment !== 'production') {
+    console.log(`Sentry disabled in ${environment} environment`)
+    return
+  }
+
   const dsn =
     process.env.SENTRY_DSN ||
     'https://e5561152e48961e6e43918588a750ebb@o4506648698683392.ingest.us.sentry.io/4511009913765888'
-  const environment = process.env.NODE_ENV || 'development'
   const release = process.env.SENTRY_RELEASE || 'unknown'
 
   Sentry.init({
