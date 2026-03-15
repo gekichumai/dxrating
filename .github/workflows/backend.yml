@@ -147,7 +147,7 @@ jobs:
           build-args: |
             GIT_COMMIT=${{ github.sha }}
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/backend:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/backend:buildcache,mode=max
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/backend:buildcache,mode=max,compression=zstd
           platforms: linux/amd64
 
   deploy:

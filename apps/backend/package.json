@@ -1,11 +1,12 @@
 {
   "name": "@gekichumai/backend",
-  "version": "0.0.0",
+  "version": "1.6.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
+    "build:bundle": "esbuild src/index.ts src/migrate.ts --bundle --outdir=dist --platform=node --target=node25 --format=esm --packages=external --jsx=automatic",
     "start": "node dist/index.js",
     "lint": "oxlint .",
     "test": "vitest run",
@@ -50,6 +51,7 @@
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
     "drizzle-kit": "^0.31.8",
+    "esbuild": "^0.27.4",
     "tsx": "^4.19.2",
     "typescript": "catalog:",
     "vitest": "catalog:"

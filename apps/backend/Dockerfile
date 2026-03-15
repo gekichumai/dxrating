@@ -33,9 +33,9 @@ COPY packages/tsconfig ./packages/tsconfig
 COPY packages/dxdata ./packages/dxdata
 COPY apps/backend ./apps/backend
 
-# Build the backend
+# Bundle the backend with esbuild (fast transpilation, type-checking done in CI)
 WORKDIR /app/apps/backend
-RUN NODE_OPTIONS="--max-old-space-size=1536" pnpm build
+RUN pnpm build:bundle
 
 # Production stage
 FROM node:25-bookworm-slim AS runner
