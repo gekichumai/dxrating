@@ -4,7 +4,6 @@ import presetTypography from '@unocss/preset-typography'
 import presetWind from '@unocss/preset-wind'
 import { defineConfig, presetUno } from 'unocss'
 import presetAnimations from 'unocss-preset-animations'
-import { presetShadcn } from 'unocss-preset-shadcn'
 
 export default defineConfig({
   rules: [
@@ -61,9 +60,6 @@ export default defineConfig({
     }),
     presetUno(),
     presetAnimations(),
-    presetShadcn({
-      color: 'zinc',
-    }),
     presetTypography(),
   ],
   content: {
