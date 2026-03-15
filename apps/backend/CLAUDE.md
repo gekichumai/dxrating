@@ -88,7 +88,8 @@ Optional:
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth
 - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` — GitHub OAuth
 - `SENTRY_DSN`, `SENTRY_RELEASE` — Sentry config
-- `ASSETS_BASE_DIR` — Font assets for oneshot renderer
+- `ASSETS_LOCAL_CACHE_DIR` — Local disk cache directory for oneshot renderer assets
+- `ASSETS_REMOTE_URL` — Remote asset server URL (default: `https://shama.dxrating.net`)
 - `VAULT_SECRET_PATH` — Optional vault secrets file
 
 ## Deployment

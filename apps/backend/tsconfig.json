@@ -12,7 +12,9 @@
     "declaration": false,
     "declarationMap": false,
     "noEmit": false,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "incremental": true,
+    "tsBuildInfoFile": "./.tsbuildinfo"
   },
   "include": ["src/**/*"]
 }

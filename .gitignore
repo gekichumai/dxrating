@@ -28,6 +28,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# typescript incremental
+*.tsbuildinfo
+
 # turbo
 .turbo
 

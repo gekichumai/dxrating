@@ -1,9 +1,9 @@
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import clsx from 'clsx'
 import { execSync } from 'node:child_process'
-import fs from 'node:fs/promises'
 import type { FC, PropsWithChildren } from 'react'
-import { ASSETS_BASE_DIR, type PlayerCollection, type Region, type RenderData } from './index.js'
+import { fetchAsset } from './assetFetcher.js'
+import { type PlayerCollection, type Region, type RenderData } from './index.js'
 
 interface VersionTheme {
   background: string
@@ -99,10 +99,10 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
   }
 
   const [coverImage, typeImage, accuracyImage, syncImage] = await Promise.all([
-    fs.readFile(`${ASSETS_BASE_DIR}/images/cover/v2/${entry.sheet.imageName}.jpg`),
-    fs.readFile(`${ASSETS_BASE_DIR}/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`),
-    fs.readFile(`${ASSETS_BASE_DIR}/images/play-achievement/${entry.achievementAccuracy ?? 'blank'}.png`),
-    fs.readFile(`${ASSETS_BASE_DIR}/images/play-achievement/${entry.achievementSync ?? 'blank'}.png`),
+    fetchAsset(`/images/cover/v2/${entry.sheet.imageName}.jpg`),
+    fetchAsset(`/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`),
+    fetchAsset(`/images/play-achievement/${entry.achievementAccuracy ?? 'blank'}.png`),
+    fetchAsset(`/images/play-achievement/${entry.achievementSync ?? 'blank'}.png`),
   ])
 
   const theme = DIFFICULTIES[entry.sheet.difficulty]
@@ -111,20 +111,20 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
   const foregroundColor = theme.inverted ? theme.color : '#fff'
   const shadowColor = theme.inverted ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)'
 
-  const starImageFile = (() => {
+  const starImagePath = (() => {
     if (!entry.dxScore) return null
     switch (entry.dxScore.stars) {
       case 5:
-        return `${ASSETS_BASE_DIR}/images/dxscore-star/3.png`
+        return '/images/dxscore-star/3.png'
       case 4:
       case 3:
-        return `${ASSETS_BASE_DIR}/images/dxscore-star/2.png`
+        return '/images/dxscore-star/2.png'
       case 2:
       case 1:
-        return `${ASSETS_BASE_DIR}/images/dxscore-star/1.png`
+        return '/images/dxscore-star/1.png'
     }
   })()
-  const starImage = starImageFile && (await fs.readFile(starImageFile)).buffer
+  const starImage = starImagePath && (await fetchAsset(starImagePath)).buffer
 
   return (
     <div key={entry.sheet.id} tw="w-1/5 p-[4px] flex h-[116px]">
@@ -339,10 +339,10 @@ export const renderContent = async ({
 }) => {
   const theme = VERSION_THEME[version]
 
-  const background = (await fs.readFile(ASSETS_BASE_DIR + theme.background)).buffer
+  const background = (await fetchAsset(theme.background)).buffer
   const icon = (
-    await fs.readFile(
-      `${ASSETS_BASE_DIR}/assetbundle/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`,
+    await fetchAsset(
+      `/assetbundle/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`,
     )
   ).buffer
 

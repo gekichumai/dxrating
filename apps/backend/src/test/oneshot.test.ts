@@ -13,7 +13,7 @@ describe('Oneshot Renderer', () => {
     const res = await fetch(`${getBaseUrl()}/functions/render-oneshot/v0?demo=1`, {
       method: 'POST',
     })
-    // The renderer depends on font files (ASSETS_BASE_DIR).
+    // The renderer depends on font files (ASSETS_LOCAL_CACHE_DIR).
     // In test env without fonts, it may fail. We verify the endpoint is reachable.
     if (res.status === 200) {
       const contentType = res.headers.get('content-type') ?? ''

@@ -1,11 +1,11 @@
 import { type Sheet, type Song, VersionEnum, dxdata } from '@gekichumai/dxdata'
 import { Resvg } from '@resvg/resvg-js'
 import type { Context } from 'hono'
-import fs from 'node:fs/promises'
 import satori, { type Font } from 'satori'
 import sharp from 'sharp'
 import { z } from 'zod'
 import { type Scope, Sentry } from '../../../lib/functions/sentry.js'
+import { fetchAsset } from './assetFetcher.js'
 import { calculateDXScoreStars } from './calculateDXScore.js'
 import { type Rating, calculateRating } from './calculateRating.js'
 import { demo } from './demo.js'
@@ -14,7 +14,8 @@ import { renderContent } from './renderContent.js'
 export const ONESHOT_HEIGHT = 1300
 export const ONESHOT_WIDTH = 1500
 
-export const ASSETS_BASE_DIR = process.env.ASSETS_BASE_DIR
+export const ASSETS_LOCAL_CACHE_DIR = process.env.ASSETS_LOCAL_CACHE_DIR
+export const ASSETS_REMOTE_URL = process.env.ASSETS_REMOTE_URL || 'https://shama.dxrating.net'
 
 export type Region = 'jp' | 'intl' | 'cn' | '_generic'
 
@@ -148,7 +149,7 @@ const fetchFontPack = async (): Promise<Font[]> => {
       weight: 700 as const,
     },
   ]
-  const fonts = await Promise.all(fontConfig.map(async (font) => fs.readFile(`${ASSETS_BASE_DIR}/fonts/${font.file}`)))
+  const fonts = await Promise.all(fontConfig.map(async (font) => fetchAsset(`/fonts/${font.file}`)))
   if (!fonts.every((font) => font instanceof Buffer)) {
     console.error('Failed to load at least one font')
     return []
