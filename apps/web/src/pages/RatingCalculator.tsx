@@ -44,7 +44,12 @@ import {
 import IconMdiArrowDown from '~icons/mdi/arrow-down'
 import IconMdiTrashCan from '~icons/mdi/trash-can'
 import { BetaBadge } from '../components/global/BetaBadge'
-import { type PlayEntry, RatingCalculatorAddEntryForm } from '../components/rating/RatingCalculatorAddEntryForm'
+import {
+  type ComboFlag,
+  type PlayEntry,
+  RatingCalculatorAddEntryForm,
+  type SyncFlag,
+} from '../components/rating/RatingCalculatorAddEntryForm'
 import { RatingCalculatorStatistics } from '../components/rating/RatingCalculatorStatistics'
 import { ClearButton } from '../components/rating/io/ClearButton'
 import { ExportMenu } from '../components/rating/io/ExportMenu'
@@ -61,6 +66,8 @@ export interface Entry {
   rating: Rating | null
   sheetId: string
   achievementRate: number
+  comboFlag?: ComboFlag
+  syncFlag?: SyncFlag
   includedIn: 'b15' | 'b35' | null
 }
 
@@ -241,6 +248,50 @@ const RatingCalculatorIncludedInCell: FC<{
 })
 RatingCalculatorIncludedInCell.displayName = 'memo(RatingCalculatorIncludedInCell)'
 
+const COMBO_FLAG_CONFIG: Record<NonNullable<ComboFlag>, { label: string; color: string }> = {
+  fc: { label: 'FC', color: '#22bb5b' },
+  fcp: { label: 'FC+', color: '#169b48' },
+  ap: { label: 'AP', color: '#f5c31a' },
+  app: { label: 'AP+', color: '#e5a800' },
+}
+
+const SYNC_FLAG_CONFIG: Record<NonNullable<SyncFlag>, { label: string; color: string }> = {
+  sync: { label: 'SYNC', color: '#64b5f6' },
+  fs: { label: 'FS', color: '#42a5f5' },
+  fsp: { label: 'FS+', color: '#1e88e5' },
+  fsd: { label: 'FSD', color: '#e040fb' },
+  fsdp: { label: 'FSD+', color: '#c51dd4' },
+}
+
+const RatingCalculatorFlagsCell: FC<{
+  row: Row<Entry>
+}> = memo(({ row }) => {
+  const { comboFlag, syncFlag } = row.original
+  if (!comboFlag && !syncFlag) return null
+
+  return (
+    <div className="flex gap-1 flex-wrap">
+      {comboFlag && (
+        <span
+          className="rounded-full px-2 text-xs leading-relaxed text-white shadow-[0.0625rem_0.125rem_0_0_#0b38714D] select-none"
+          style={{ backgroundColor: COMBO_FLAG_CONFIG[comboFlag].color }}
+        >
+          {COMBO_FLAG_CONFIG[comboFlag].label}
+        </span>
+      )}
+      {syncFlag && (
+        <span
+          className="rounded-full px-2 text-xs leading-relaxed text-white shadow-[0.0625rem_0.125rem_0_0_#0b38714D] select-none"
+          style={{ backgroundColor: SYNC_FLAG_CONFIG[syncFlag].color }}
+        >
+          {SYNC_FLAG_CONFIG[syncFlag].label}
+        </span>
+      )}
+    </div>
+  )
+})
+RatingCalculatorFlagsCell.displayName = 'memo(RatingCalculatorFlagsCell)'
+
 const RatingCalculatorAchievementRateCell: FC<{
   row: Row<Entry>
 }> = ({ row }) => (
@@ -350,6 +401,13 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
         cell: RatingCalculatorIncludedInCell,
         size: 50,
         minSize: 100,
+      }),
+      columnHelper.display({
+        id: 'flags',
+        header: t('rating-calculator:table.headers.flags'),
+        cell: RatingCalculatorFlagsCell,
+        size: 80,
+        minSize: 80,
       }),
       columnHelper.accessor('achievementRate', {
         id: 'achievementRate',

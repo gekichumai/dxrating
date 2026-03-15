@@ -253,6 +253,7 @@
       "headers": {
         "chart": "譜面",
         "included-in": "收錄於",
+        "flags": "標記",
         "achievement-rate": "完成率",
         "rating": "評分",
         "actions": "操作"

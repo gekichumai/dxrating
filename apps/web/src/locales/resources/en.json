@@ -258,6 +258,7 @@
       "headers": {
         "chart": "Chart",
         "included-in": "Incl. In",
+        "flags": "Flags",
         "achievement-rate": "Achievement Rate",
         "rating": "Rating",
         "actions": "Actions"
