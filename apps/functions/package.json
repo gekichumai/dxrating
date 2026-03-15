@@ -9,13 +9,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "hono": "^4.6.0",
+    "hono": "catalog:",
     "linkedom": "^0.18.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260214.0",
-    "typescript": "^5.9.3",
+    "typescript": "catalog:",
     "wrangler": "^4.65.0"
   }
 }

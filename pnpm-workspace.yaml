@@ -2,3 +2,24 @@ packages:
   - 'apps/*'
   - 'packages/*'
   - 'scripts/*'
+
+catalog:
+  # Shared runtime dependencies
+  "@better-auth/passkey": "^1.4.12"
+  "@orpc/contract": "^1.13.4"
+  "@types/react": "^19.2.8"
+  better-auth: "^1.4.11"
+  clsx: "^2.1.1"
+  dotenv: "^16.4.7"
+  esno: "^4.8.0"
+  fuse.js: "^7.1.0"
+  hono: "^4.6.14"
+  pg: "^8.20.0"
+  react: "^19.2.3"
+  ts-pattern: "^5.9.0"
+
+  # Shared dev dependencies
+  "@types/node": "^22.13.11"
+  "@types/pg": "^8.18.0"
+  typescript: "^5.9.3"
+  vitest: "^3.2.1"

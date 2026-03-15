@@ -4,6 +4,57 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@better-auth/passkey':
+      specifier: ^1.4.12
+      version: 1.5.4
+    '@orpc/contract':
+      specifier: ^1.13.4
+      version: 1.13.6
+    '@types/node':
+      specifier: ^22.13.11
+      version: 22.19.11
+    '@types/pg':
+      specifier: ^8.18.0
+      version: 8.18.0
+    '@types/react':
+      specifier: ^19.2.8
+      version: 19.2.14
+    better-auth:
+      specifier: ^1.4.11
+      version: 1.5.4
+    clsx:
+      specifier: ^2.1.1
+      version: 2.1.1
+    dotenv:
+      specifier: ^16.4.7
+      version: 16.6.1
+    esno:
+      specifier: ^4.8.0
+      version: 4.8.0
+    fuse.js:
+      specifier: ^7.1.0
+      version: 7.1.0
+    hono:
+      specifier: ^4.6.14
+      version: 4.12.0
+    pg:
+      specifier: ^8.20.0
+      version: 8.20.0
+    react:
+      specifier: ^19.2.3
+      version: 19.2.4
+    ts-pattern:
+      specifier: ^5.9.0
+      version: 5.9.0
+    typescript:
+      specifier: ^5.9.3
+      version: 5.9.3
+    vitest:
+      specifier: ^3.2.1
+      version: 3.2.4
+
 importers:
 
   .:
@@ -24,8 +75,8 @@ importers:
   apps/backend:
     dependencies:
       '@better-auth/passkey':
-        specifier: ^1.4.12
-        version: 1.5.4(0c7e9f9c9b51bc592448ffbf1c9efb0d)
+        specifier: 'catalog:'
+        version: 1.5.4(034ca2194ef1f89611359e0215ccbdb9)
       '@gekichumai/dxdata':
         specifier: workspace:*
         version: link:../../packages/dxdata
@@ -33,7 +84,7 @@ importers:
         specifier: ^1.13.7
         version: 1.19.11(hono@4.12.0)
       '@orpc/contract':
-        specifier: ^1.13.4
+        specifier: 'catalog:'
         version: 1.13.6(@opentelemetry/api@1.9.0)
       '@orpc/openapi':
         specifier: ^1.13.4
@@ -57,40 +108,40 @@ importers:
         specifier: ^13.2.3
         version: 13.2.3
       '@types/react':
-        specifier: ^19.2.8
+        specifier: 'catalog:'
         version: 19.2.14
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
       better-auth:
-        specifier: ^1.4.11
-        version: 1.5.4(@cloudflare/workers-types@4.20260228.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(drizzle-kit@0.31.9)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260228.0)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(@types/sql.js@1.4.9)(kysely@0.28.11)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.8)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(sql.js@1.14.0))(mongodb@7.1.0)(mysql2@3.15.3)(pg@8.20.0)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(solid-js@1.9.11)(vitest@3.2.4(@types/node@22.19.11)(happy-dom@17.6.3)(jiti@2.6.1)(tsx@4.21.0))(vue@3.5.28(typescript@5.9.3))
+        specifier: 'catalog:'
+        version: 1.5.4(@cloudflare/workers-types@4.20260228.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(drizzle-kit@0.31.9)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260228.0)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(@types/sql.js@1.4.9)(kysely@0.28.11)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.8)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(sql.js@1.14.0))(mongodb@7.1.0)(mysql2@3.15.3)(pg@8.20.0)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(solid-js@1.9.11)(vitest@3.2.4)(vue@3.5.28(typescript@5.9.3))
       clsx:
-        specifier: ^2.1.1
+        specifier: 'catalog:'
         version: 2.1.1
       cookie:
         specifier: ^1.1.1
         version: 1.1.1
       dotenv:
-        specifier: ^16.4.7
+        specifier: 'catalog:'
         version: 16.6.1
       drizzle-orm:
         specifier: ^0.45.1
         version: 0.45.1(@cloudflare/workers-types@4.20260228.0)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(@types/sql.js@1.4.9)(kysely@0.28.11)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.8)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(sql.js@1.14.0)
       hono:
-        specifier: ^4.6.14
+        specifier: 'catalog:'
         version: 4.12.0
       keyv:
         specifier: ^5.6.0
         version: 5.6.0
       pg:
-        specifier: ^8.20.0
+        specifier: 'catalog:'
         version: 8.20.0
       postgres:
         specifier: ^3.4.8
         version: 3.4.8
       react:
-        specifier: ^19.2.3
+        specifier: 'catalog:'
         version: 19.2.4
       satori:
         specifier: ^0.18.3
@@ -99,7 +150,7 @@ importers:
         specifier: ^0.34.5
         version: 0.34.5
       ts-pattern:
-        specifier: ^5.9.0
+        specifier: 'catalog:'
         version: 5.9.0
       undici:
         specifier: ^7.18.2
@@ -118,10 +169,10 @@ importers:
         specifier: ^0.6.0
         version: 0.6.0
       '@types/node':
-        specifier: ^22.10.2
+        specifier: 'catalog:'
         version: 22.19.11
       '@types/pg':
-        specifier: ^8.18.0
+        specifier: 'catalog:'
         version: 8.18.0
       drizzle-kit:
         specifier: ^0.31.8
@@ -130,16 +181,16 @@ importers:
         specifier: ^4.19.2
         version: 4.21.0
       typescript:
-        specifier: ^5.7.2
+        specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: ^3.2.1
+        specifier: 'catalog:'
         version: 3.2.4(@types/node@22.19.11)(@vitest/ui@2.1.9)(happy-dom@17.6.3)(jiti@2.6.1)(tsx@4.21.0)
 
   apps/functions:
     dependencies:
       hono:
-        specifier: ^4.6.0
+        specifier: 'catalog:'
         version: 4.12.0
       linkedom:
         specifier: ^0.18.0
@@ -152,7 +203,7 @@ importers:
         specifier: ^4.20260214.0
         version: 4.20260228.0
       typescript:
-        specifier: ^5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
       wrangler:
         specifier: ^4.65.0
@@ -161,8 +212,8 @@ importers:
   apps/web:
     dependencies:
       '@better-auth/passkey':
-        specifier: ^1.4.12
-        version: 1.5.4(0c7e9f9c9b51bc592448ffbf1c9efb0d)
+        specifier: 'catalog:'
+        version: 1.5.4(034ca2194ef1f89611359e0215ccbdb9)
       '@emotion/react':
         specifier: ^11.14.0
         version: 11.14.0(@types/react@19.2.14)(react@19.2.4)
@@ -182,7 +233,7 @@ importers:
         specifier: ^1.13.2
         version: 1.13.6(@opentelemetry/api@1.9.0)
       '@orpc/contract':
-        specifier: ^1.13.4
+        specifier: 'catalog:'
         version: 1.13.6(@opentelemetry/api@1.9.0)
       '@orpc/openapi-client':
         specifier: ^1.13.4
@@ -227,13 +278,13 @@ importers:
         specifier: ^0.58.9
         version: 0.58.9
       better-auth:
-        specifier: ^1.4.11
-        version: 1.5.4(@cloudflare/workers-types@4.20260228.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(drizzle-kit@0.31.9)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260228.0)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(@types/sql.js@1.4.9)(kysely@0.28.11)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.8)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(sql.js@1.14.0))(mongodb@7.1.0)(mysql2@3.15.3)(pg@8.20.0)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(solid-js@1.9.11)(vitest@3.2.4(@types/node@22.19.11)(happy-dom@17.6.3)(jiti@2.6.1)(tsx@4.21.0))(vue@3.5.28(typescript@5.9.3))
+        specifier: 'catalog:'
+        version: 1.5.4(@cloudflare/workers-types@4.20260228.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(drizzle-kit@0.31.9)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260228.0)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(@types/sql.js@1.4.9)(kysely@0.28.11)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.8)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(sql.js@1.14.0))(mongodb@7.1.0)(mysql2@3.15.3)(pg@8.20.0)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(solid-js@1.9.11)(vitest@3.2.4)(vue@3.5.28(typescript@5.9.3))
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
       clsx:
-        specifier: ^2.1.1
+        specifier: 'catalog:'
         version: 2.1.1
       colorjs.io:
         specifier: ^0.5.2
@@ -251,7 +302,7 @@ importers:
         specifier: ^12.35.1
         version: 12.35.1(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       fuse.js:
-        specifier: ^7.1.0
+        specifier: 'catalog:'
         version: 7.1.0
       happy-dom:
         specifier: ^17.4.4
@@ -275,7 +326,7 @@ importers:
         specifier: ^1.236.2
         version: 1.352.0
       react:
-        specifier: ^19.0.0
+        specifier: 'catalog:'
         version: 19.2.4
       react-dom:
         specifier: ^19.0.0
@@ -308,7 +359,7 @@ importers:
         specifier: ^2.6.0
         version: 2.6.1
       ts-pattern:
-        specifier: ^5.6.2
+        specifier: 'catalog:'
         version: 5.9.0
       type-fest:
         specifier: ^4.37.0
@@ -357,10 +408,10 @@ importers:
         specifier: ^4.17.12
         version: 4.17.12
       '@types/node':
-        specifier: ^22.13.11
+        specifier: 'catalog:'
         version: 22.19.11
       '@types/react':
-        specifier: ^19.0.0
+        specifier: 'catalog:'
         version: 19.2.14
       '@types/react-dom':
         specifier: ^19.0.0
@@ -378,7 +429,7 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(vitest@3.2.4)
       esno:
-        specifier: ^4.8.0
+        specifier: 'catalog:'
         version: 4.8.0
       i18next-pseudo:
         specifier: ^2.2.1
@@ -387,7 +438,7 @@ importers:
         specifier: ^0.1.28
         version: 0.1.28(@types/react@19.2.14)(react@19.2.4)
       typescript:
-        specifier: ^5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
       unocss:
         specifier: ^0.63.6
@@ -405,7 +456,7 @@ importers:
         specifier: ^4.5.9
         version: 4.5.14(@types/node@22.19.11)
       vitest:
-        specifier: ^3.0.9
+        specifier: 'catalog:'
         version: 3.2.4(@types/node@22.19.11)(@vitest/ui@2.1.9)(happy-dom@17.6.3)(jiti@2.6.1)(tsx@4.21.0)
 
   packages/dxdata: {}
@@ -421,20 +472,20 @@ importers:
         specifier: workspace:*
         version: link:../../packages/dxdata
       dotenv:
-        specifier: ^16.4.7
+        specifier: 'catalog:'
         version: 16.6.1
       esno:
-        specifier: ^4.8.0
+        specifier: 'catalog:'
         version: 4.8.0
       fuse.js:
-        specifier: ^7.1.0
+        specifier: 'catalog:'
         version: 7.1.0
       he:
         specifier: ^1.2.0
         version: 1.2.0
       pg:
-        specifier: ^8.14.1
-        version: 8.18.0
+        specifier: 'catalog:'
+        version: 8.20.0
     devDependencies:
       '@types/he':
         specifier: ^1.2.3
@@ -443,11 +494,11 @@ importers:
         specifier: ^4.17.16
         version: 4.17.23
       '@types/node':
-        specifier: ^22.13.11
+        specifier: 'catalog:'
         version: 22.19.11
       '@types/pg':
-        specifier: ^8.11.11
-        version: 8.16.0
+        specifier: 'catalog:'
+        version: 8.18.0
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
@@ -3269,9 +3320,6 @@ packages:
   '@types/pg@8.15.6':
     resolution: {integrity: sha512-NoaMtzhxOrubeL/7UZuNTrejB4MPAJ0RpxZqXQf2qXuVlTPuG6Y8p4u9dKRaue4yjmC7ZhzVO2/Yyyn25znrPQ==}
 
-  '@types/pg@8.16.0':
-    resolution: {integrity: sha512-RmhMd/wD+CF8Dfo+cVIy3RR5cl8CyfXQ0tGgW6XBL8L4LM/UTEbNXYRbLwU6w+CgrKBNbrQWt4FUtTfaU5jSYQ==}
-
   '@types/pg@8.18.0':
     resolution: {integrity: sha512-gT+oueVQkqnj6ajGJXblFR4iavIXWsGAFCk3dP4Kki5+a9R4NMt0JARdk6s8cUKcfUoqP5dAtDSLU8xYUTFV+Q==}
 
@@ -5280,20 +5328,12 @@ packages:
   pg-cloudflare@1.3.0:
     resolution: {integrity: sha512-6lswVVSztmHiRtD6I8hw4qP/nDm1EJbKMRhf3HCYaqud7frGysPv7FYJ5noZQdhQtN2xJnimfMtvQq21pdbzyQ==}
 
-  pg-connection-string@2.11.0:
-    resolution: {integrity: sha512-kecgoJwhOpxYU21rZjULrmrBJ698U2RxXofKVzOn5UDj61BPj/qMb7diYUR1nLScCDbrztQFl1TaQZT0t1EtzQ==}
-
   pg-connection-string@2.12.0:
     resolution: {integrity: sha512-U7qg+bpswf3Cs5xLzRqbXbQl85ng0mfSV/J0nnA31MCLgvEaAo7CIhmeyrmJpOr7o+zm0rXK+hNnT5l9RHkCkQ==}
 
   pg-int8@1.0.1:
     resolution: {integrity: sha512-WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw==}
     engines: {node: '>=4.0.0'}
-
-  pg-pool@3.11.0:
-    resolution: {integrity: sha512-MJYfvHwtGp870aeusDh+hg9apvOe2zmpZJpyt+BMtzUWlVqbhFmMK6bOBXLBUPd7iRtIF9fZplDc7KrPN3PN7w==}
-    peerDependencies:
-      pg: '>=8.0'
 
   pg-pool@3.13.0:
     resolution: {integrity: sha512-gB+R+Xud1gLFuRD/QgOIgGOBE2KCQPaPwkzBBGC9oG69pHTkhQeIuejVIk3/cnDyX39av2AxomQiyPT13WKHQA==}
@@ -5309,15 +5349,6 @@ packages:
   pg-types@2.2.0:
     resolution: {integrity: sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA==}
     engines: {node: '>=4'}
-
-  pg@8.18.0:
-    resolution: {integrity: sha512-xqrUDL1b9MbkydY/s+VZ6v+xiMUmOUk7SS9d/1kpyQxoJ6U9AO1oIJyUWVZojbfe5Cc/oluutcgFG4L9RDP1iQ==}
-    engines: {node: '>= 16.0.0'}
-    peerDependencies:
-      pg-native: '>=3.0.1'
-    peerDependenciesMeta:
-      pg-native:
-        optional: true
 
   pg@8.20.0:
     resolution: {integrity: sha512-ldhMxz2r8fl/6QkXnBD3CR9/xg694oT6DZQ2s6c/RI28OjtSOpxnPrUCGOBJ46RCUxcWdx3p6kw/xnDHjKvaRA==}
@@ -6692,14 +6723,14 @@ snapshots:
       '@better-auth/utils': 0.3.1
       mongodb: 7.1.0
 
-  '@better-auth/passkey@1.5.4(0c7e9f9c9b51bc592448ffbf1c9efb0d)':
+  '@better-auth/passkey@1.5.4(034ca2194ef1f89611359e0215ccbdb9)':
     dependencies:
       '@better-auth/core': 1.5.4(@better-auth/utils@0.3.1)(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260228.0)(better-call@1.3.2(zod@4.3.6))(jose@6.2.0)(kysely@0.28.11)(nanostores@1.1.1)
       '@better-auth/utils': 0.3.1
       '@better-fetch/fetch': 1.1.21
       '@simplewebauthn/browser': 13.2.2
       '@simplewebauthn/server': 13.2.3
-      better-auth: 1.5.4(@cloudflare/workers-types@4.20260228.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(drizzle-kit@0.31.9)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260228.0)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(@types/sql.js@1.4.9)(kysely@0.28.11)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.8)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(sql.js@1.14.0))(mongodb@7.1.0)(mysql2@3.15.3)(pg@8.20.0)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(solid-js@1.9.11)(vitest@3.2.4(@types/node@22.19.11)(happy-dom@17.6.3)(jiti@2.6.1)(tsx@4.21.0))(vue@3.5.28(typescript@5.9.3))
+      better-auth: 1.5.4(@cloudflare/workers-types@4.20260228.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(drizzle-kit@0.31.9)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260228.0)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(@types/sql.js@1.4.9)(kysely@0.28.11)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.8)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(sql.js@1.14.0))(mongodb@7.1.0)(mysql2@3.15.3)(pg@8.20.0)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(solid-js@1.9.11)(vitest@3.2.4)(vue@3.5.28(typescript@5.9.3))
       better-call: 1.3.2(zod@4.3.6)
       nanostores: 1.1.1
       zod: 4.3.6
@@ -9097,12 +9128,6 @@ snapshots:
       pg-protocol: 1.11.0
       pg-types: 2.2.0
 
-  '@types/pg@8.16.0':
-    dependencies:
-      '@types/node': 22.19.11
-      pg-protocol: 1.11.0
-      pg-types: 2.2.0
-
   '@types/pg@8.18.0':
     dependencies:
       '@types/node': 22.19.11
@@ -9559,7 +9584,7 @@ snapshots:
       node-addon-api: 8.6.0
       node-gyp-build: 4.8.4
 
-  better-auth@1.5.4(@cloudflare/workers-types@4.20260228.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(drizzle-kit@0.31.9)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260228.0)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(@types/sql.js@1.4.9)(kysely@0.28.11)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.8)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(sql.js@1.14.0))(mongodb@7.1.0)(mysql2@3.15.3)(pg@8.20.0)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(solid-js@1.9.11)(vitest@3.2.4(@types/node@22.19.11)(happy-dom@17.6.3)(jiti@2.6.1)(tsx@4.21.0))(vue@3.5.28(typescript@5.9.3)):
+  better-auth@1.5.4(@cloudflare/workers-types@4.20260228.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(drizzle-kit@0.31.9)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260228.0)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(@types/sql.js@1.4.9)(kysely@0.28.11)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.8)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(sql.js@1.14.0))(mongodb@7.1.0)(mysql2@3.15.3)(pg@8.20.0)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(solid-js@1.9.11)(vitest@3.2.4)(vue@3.5.28(typescript@5.9.3)):
     dependencies:
       '@better-auth/core': 1.5.4(@better-auth/utils@0.3.1)(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260228.0)(better-call@1.3.2(zod@4.3.6))(jose@6.2.0)(kysely@0.28.11)(nanostores@1.1.1)
       '@better-auth/drizzle-adapter': 1.5.4(@better-auth/core@1.5.4(@better-auth/utils@0.3.1)(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260228.0)(better-call@1.3.2(zod@4.3.6))(jose@6.2.0)(kysely@0.28.11)(nanostores@1.1.1))(@better-auth/utils@0.3.1)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260228.0)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(@types/sql.js@1.4.9)(kysely@0.28.11)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.8)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(sql.js@1.14.0))
@@ -11276,15 +11301,9 @@ snapshots:
   pg-cloudflare@1.3.0:
     optional: true
 
-  pg-connection-string@2.11.0: {}
-
   pg-connection-string@2.12.0: {}
 
   pg-int8@1.0.1: {}
-
-  pg-pool@3.11.0(pg@8.18.0):
-    dependencies:
-      pg: 8.18.0
 
   pg-pool@3.13.0(pg@8.20.0):
     dependencies:
@@ -11301,16 +11320,6 @@ snapshots:
       postgres-bytea: 1.0.1
       postgres-date: 1.0.7
       postgres-interval: 1.2.0
-
-  pg@8.18.0:
-    dependencies:
-      pg-connection-string: 2.11.0
-      pg-pool: 3.11.0(pg@8.18.0)
-      pg-protocol: 1.11.0
-      pg-types: 2.2.0
-      pgpass: 1.0.5
-    optionalDependencies:
-      pg-cloudflare: 1.3.0
 
   pg@8.20.0:
     dependencies:
