@@ -39,6 +39,14 @@ jobs:
           node-version-file: '.node-version'
           cache: 'pnpm'
 
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -46,7 +54,7 @@ jobs:
         run: pnpm --filter @gekichumai/backend lint
 
       - name: Build backend
-        run: pnpm --filter @gekichumai/backend build
+        run: pnpm turbo run build --filter=@gekichumai/backend
 
   integration-test:
     runs-on: ubuntu-latest
@@ -94,7 +102,6 @@ jobs:
 
   docker-build:
     runs-on: ubuntu-latest
-    needs: [lint-and-build, integration-test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     name: Build Docker Image
     permissions:
@@ -137,13 +144,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/backend:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/backend:buildcache,mode=max
           platforms: linux/amd64
 
   deploy:
     runs-on: ubuntu-latest
-    needs: docker-build
+    needs: [lint-and-build, integration-test, docker-build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     name: Deploy to Coolify
     steps:

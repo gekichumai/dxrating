@@ -30,6 +30,14 @@ jobs:
           node-version-file: '.node-version'
           cache: 'pnpm'
 
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
       - name: Get Metadata
         id: git-meta
         shell: bash
@@ -50,18 +58,19 @@ jobs:
           echo "VITE_BUILD_NUMBER=${{ github.run_number }}" >> ${GITHUB_ENV}
           echo "VITE_BUILD_TIME=$(date --utc +%FT%TZ)" >> ${GITHUB_ENV}
 
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Build
         shell: bash
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm --filter=@gekichumai/dxrating-web... run build
+        run: pnpm turbo run build --filter=@gekichumai/dxrating-web...
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           VITE_BACKEND_URL: https://miruku.dxrating.net
           VITE_BETTER_AUTH_URL: https://miruku.dxrating.net
 
       - name: Deploy to Cloudflare Pages
-        run: npx wrangler pages deploy apps/web/dist --project-name=dxrating --branch=main --commit-dirty=true
+        run: pnpm dlx wrangler pages deploy apps/web/dist --project-name=dxrating --branch=main --commit-dirty=true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

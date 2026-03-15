@@ -1,0 +1,11 @@
+# Ignore everything by default
+*
+
+# Only include what the backend Dockerfile needs
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!.npmrc
+!packages/tsconfig/
+!packages/dxdata/
+!apps/backend/
