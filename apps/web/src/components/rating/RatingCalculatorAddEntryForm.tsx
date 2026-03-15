@@ -27,7 +27,7 @@ export interface PlayEntryProviderConfig {
   }
 }
 
-export type ComboFlag = 'fc' | 'fcp' | 'ap' | 'app' | null
+export type { ComboFlag } from '../../utils/rating'
 export type SyncFlag = 'fs' | 'fsp' | 'fsd' | 'fsdp' | 'sync' | null
 
 export interface PlayEntry {

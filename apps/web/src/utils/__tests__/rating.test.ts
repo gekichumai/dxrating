@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calculateB50, calculateRating, type RatingEntry, SCORE_COEFFICIENT_TABLE } from '../rating'
+import { calculateB50, calculateRating, type ComboFlag, type RatingEntry, SCORE_COEFFICIENT_TABLE } from '../rating'
 
 describe('calculateRating', () => {
   describe('rank thresholds', () => {
@@ -195,6 +195,44 @@ describe('calculateRating', () => {
   })
 })
 
+describe('AP/AP+ bonus', () => {
+  it('AP grants +1 rating bonus', () => {
+    const without = calculateRating(14.0, 100.5)
+    const withAp = calculateRating(14.0, 100.5, 'ap')
+    expect(withAp.ratingAwardValue).toBe(without.ratingAwardValue + 1)
+  })
+
+  it('AP+ grants +1 rating bonus', () => {
+    const without = calculateRating(14.0, 100.5)
+    const withApp = calculateRating(14.0, 100.5, 'app')
+    expect(withApp.ratingAwardValue).toBe(without.ratingAwardValue + 1)
+  })
+
+  it.each([null, 'fc', 'fcp'] as ComboFlag[])('comboFlag %s does NOT grant bonus', (flag) => {
+    const without = calculateRating(14.0, 100.5)
+    const withFlag = calculateRating(14.0, 100.5, flag)
+    expect(withFlag.ratingAwardValue).toBe(without.ratingAwardValue)
+  })
+
+  it('undefined comboFlag does NOT grant bonus', () => {
+    const without = calculateRating(14.0, 100.5)
+    const withUndefined = calculateRating(14.0, 100.5, undefined)
+    expect(withUndefined.ratingAwardValue).toBe(without.ratingAwardValue)
+  })
+
+  it('AP bonus applies after floor truncation', () => {
+    // floor(22.4 × 14.0 × 100.5 / 100) = floor(315.168) = 315, +1 = 316
+    const result = calculateRating(14.0, 100.5, 'ap')
+    expect(result.ratingAwardValue).toBe(316)
+  })
+
+  it('AP bonus applies even at 0% achievement', () => {
+    const result = calculateRating(14.0, 0, 'ap')
+    // base is 0, +1 = 1
+    expect(result.ratingAwardValue).toBe(1)
+  })
+})
+
 describe('calculateB50', () => {
   const currentVersionIds = new Set(['song-a', 'song-b', 'song-c'])
 
@@ -280,5 +318,15 @@ describe('calculateB50', () => {
     const result = calculateB50(new Set(), entries)
     expect(result.b15).toHaveLength(0)
     expect(result.b35).toHaveLength(2)
+  })
+
+  it('includes AP bonus in b50 rating total', () => {
+    const entries: RatingEntry[] = [
+      { id: 'song-a', internalLevel: 14.0, achievementRate: 100.5, comboFlag: 'ap' }, // b15: 315 + 1 = 316
+      { id: 'old-1', internalLevel: 13.0, achievementRate: 100.5, comboFlag: 'app' }, // b35: 292 + 1 = 293
+    ]
+
+    const result = calculateB50(currentVersionIds, entries)
+    expect(result.b50Rating).toBe(316 + 293)
   })
 })

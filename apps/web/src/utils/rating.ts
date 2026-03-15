@@ -35,6 +35,7 @@ export interface RatingEntry {
   id: string
   internalLevel: number
   achievementRate: number
+  comboFlag?: ComboFlag
 }
 
 export interface RatedEntry extends RatingEntry {
@@ -55,7 +56,7 @@ export interface B50Result {
 export const calculateB50 = (currentVersionIds: Set<string>, entries: RatingEntry[]): B50Result => {
   const rated: RatedEntry[] = entries.map((entry) => ({
     ...entry,
-    rating: calculateRating(entry.internalLevel, entry.achievementRate),
+    rating: calculateRating(entry.internalLevel, entry.achievementRate, entry.comboFlag),
   }))
 
   const byRatingDesc = (a: RatedEntry, b: RatedEntry) => b.rating.ratingAwardValue - a.rating.ratingAwardValue
@@ -77,12 +78,15 @@ export const calculateB50 = (currentVersionIds: Set<string>, entries: RatingEntr
   return { b15, b35, b50Rating }
 }
 
-export const calculateRating = (internalLevel: number, achievementRate: number): Rating => {
+export type ComboFlag = 'fc' | 'fcp' | 'ap' | 'app' | null
+
+export const calculateRating = (internalLevel: number, achievementRate: number, comboFlag?: ComboFlag): Rating => {
   for (let i = 0; i < SCORE_COEFFICIENT_TABLE.length; i++) {
     if (i === SCORE_COEFFICIENT_TABLE.length - 1 || achievementRate < SCORE_COEFFICIENT_TABLE[i + 1][0]) {
       const coefficient = SCORE_COEFFICIENT_TABLE[i][1]
+      const apBonus = comboFlag === 'ap' || comboFlag === 'app' ? 1 : 0
       return {
-        ratingAwardValue: Math.floor((coefficient * internalLevel * Math.min(100.5, achievementRate)) / 100),
+        ratingAwardValue: Math.floor((coefficient * internalLevel * Math.min(100.5, achievementRate)) / 100) + apBonus,
         coefficient,
         rank: SCORE_COEFFICIENT_TABLE[i][2],
         index: i,
