@@ -14,7 +14,7 @@
     "noEmit": false,
     "jsx": "react-jsx",
     "incremental": true,
-    "tsBuildInfoFile": "./.tsbuildinfo"
+    "tsBuildInfoFile": "./node_modules/.cache/.tsbuildinfo"
   },
   "include": ["src/**/*"]
 }
