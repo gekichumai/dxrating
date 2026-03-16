@@ -20,6 +20,9 @@ const app = new Hono()
 
 // Sentry error handler
 app.onError((err, c) => {
+  if (err instanceof z.ZodError) {
+    return c.json({ error: 'Validation error', details: err.issues }, 400)
+  }
   Sentry.captureException(err)
   if (err instanceof HTTPException) {
     return err.getResponse()
