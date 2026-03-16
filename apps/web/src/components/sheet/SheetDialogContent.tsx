@@ -15,8 +15,8 @@ import {
 import clsx from 'clsx'
 import { type FC, type PropsWithChildren, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAsyncFn } from 'react-use'
-import useSWR from 'swr'
 import { match } from 'ts-pattern'
 import IconMdiSearchWeb from '~icons/mdi/search-web'
 import IconMdiSpotify from '~icons/mdi/spotify'
@@ -66,30 +66,25 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const { t } = useTranslation(['auth', 'sheet', 'global'])
   const { session, ensureAuthenticated, openLoginDialog, LoginDialog } = useAuth()
   const [content, setContent] = useState<string>('')
+  const queryClient = useQueryClient()
+  const commentsQueryKey = ['comments.list', sheet.songId, sheet.type, sheet.difficulty]
   const {
     data: comments,
     isLoading: isLoadingComments,
-    mutate,
-  } = useSWR(
-    // Key
-    ['comments.list', sheet.songId, sheet.type, sheet.difficulty],
-    // Fetcher
-    async () => {
+  } = useQuery({
+    queryKey: commentsQueryKey,
+    queryFn: async () => {
       const data = await client.comments.list({
         songId: sheet.songId,
         sheetType: sheet.type,
         sheetDifficulty: sheet.difficulty,
       })
-      // Map to UI expected format if needed
-      // Backend returns: CommentWithProfileSchema (id, parent_id, created_at, content, display_name)
-      // UI expects: { id, parent_id, content, created_at, display_name }
-      // Dates: created_at: Date | string. UI: new Date(comment.created_at).
       return data.map((c) => ({
         ...c,
         created_at: c.created_at.toString(),
       }))
     },
-  )
+  })
 
   const [{ loading: submitting }, handleSubmit] = useAsyncFn(async () => {
     const isAuthenticated = await ensureAuthenticated()
@@ -103,7 +98,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     }
     await client.comments.create(payload) // Logic handles auth and parentId
 
-    mutate()
+    queryClient.invalidateQueries({ queryKey: commentsQueryKey })
     setContent('')
   }, [sheet, content, ensureAuthenticated])
 

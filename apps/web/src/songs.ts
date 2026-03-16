@@ -1,8 +1,8 @@
 import { type DifficultyEnum, type Sheet, type Song, TypeEnum, type VersionEnum, dxdata } from '@gekichumai/dxdata'
+import { useQuery } from '@tanstack/react-query'
 import Fuse from 'fuse.js'
 import uniq from 'lodash-es/uniq'
 import { useMemo } from 'react'
-import useSWR from 'swr'
 import { useAppContext, useAppContextDXDataVersion } from './models/context/useAppContext'
 import { useCombinedTags } from './models/useCombinedTags'
 import { useServerAliases } from './models/useServerAliases'
@@ -56,14 +56,10 @@ export const useSheets = ({ acceptsPartialData = false } = {}) => {
   const appVersion = useAppContextDXDataVersion()
   const { data: combinedTags, isLoading: loadingCombinedTags } = useCombinedTags()
   const { data: serverAliases, isLoading: loadingServerAliases } = useServerAliases()
-  const key = `dxdata::sheets?${new URLSearchParams({
-    version: appVersion,
-    loadingCombinedTags: String(loadingCombinedTags),
-    loadingServerAliases: String(loadingServerAliases),
-  }).toString()}`
-  return useSWR(
-    acceptsPartialData ? key : !(loadingCombinedTags || loadingServerAliases) && key,
-    async () => {
+  const enabled = acceptsPartialData || !(loadingCombinedTags || loadingServerAliases)
+  return useQuery({
+    queryKey: ['dxdata', 'sheets', appVersion, loadingCombinedTags, loadingServerAliases],
+    queryFn: async () => {
       const sheets = await getFlattenedSheets(appVersion)
 
       if (!combinedTags) {
@@ -107,13 +103,16 @@ export const useSheets = ({ acceptsPartialData = false } = {}) => {
         }
       })
     },
-    { suspense: false },
-  )
+    enabled,
+  })
 }
 
 export const useSongs = () => {
   const { version } = useAppContext()
-  return useSWR(`dxdata::songs::${version}`, () => getSongs())
+  return useQuery({
+    queryKey: ['dxdata', 'songs', version],
+    queryFn: () => getSongs(),
+  })
 }
 
 export const useSheetsSearchEngine = () => {

@@ -28,7 +28,7 @@ describe('AppContext', () => {
       wrapper: AppContextProvider,
     })
 
-    expect(result.current.version).toBe('prism-plus')
+    expect(result.current.version).toBe('circle')
     expect(result.current.region).toBe('jp')
   })
 
@@ -74,7 +74,7 @@ describe('AppContext', () => {
       wrapper: AppContextProvider,
     })
 
-    expect(result.current.version).toBe('prism-plus')
+    expect(result.current.version).toBe('circle')
     expect(result.current.region).toBe('jp')
   })
 })

@@ -1,5 +1,6 @@
 import { type DifficultyEnum, type Regions, TypeEnum } from '@gekichumai/dxdata'
 import { ListItemButton, ListItemSecondaryAction, ListItemText, type ListItemTextProps } from '@mui/material'
+import { Link } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, type HTMLAttributes, type ImgHTMLAttributes, memo, useState } from 'react'
@@ -13,6 +14,7 @@ import MdiTrashCan from '~icons/mdi/trash-can'
 import { DIFFICULTIES } from '../../models/difficulties'
 import type { FlattenedSheet } from '../../songs'
 import { useIsLargeDevice } from '../../utils/breakpoints'
+import { getSongPath } from '../../utils/sheet-id'
 import { FadedImage } from '../global/FadedImage'
 import { ResponsiveDialog } from '../global/ResponsiveDialog'
 import { AddSheetAltNameButton } from './AddSheetAltNameButton'
@@ -21,14 +23,45 @@ import { SheetDialogContent, type SheetDialogContentProps } from './SheetDialogC
 export const SheetListItem: FC<{
   size?: 'small' | 'medium'
   sheet: FlattenedSheet
+  /** When true, navigates to /sheet/$id instead of opening a dialog */
+  navigateToDetail?: boolean
 
   SheetListItemContentProps?: Omit<SheetListItemContentProps, 'sheet'>
   SheetDialogContentProps?: Omit<SheetDialogContentProps, 'sheet'>
-}> = memo(({ size = 'medium', sheet, SheetListItemContentProps, SheetDialogContentProps }) => {
+}> = memo(({ size = 'medium', sheet, navigateToDetail, SheetListItemContentProps, SheetDialogContentProps }) => {
   const posthog = usePostHog()
   const haptic = useWebHaptics()
   const [open, setOpen] = useState(false)
   const isLargeDevice = useIsLargeDevice()
+
+  const handleClick = () => {
+    haptic.trigger('medium')
+    posthog?.capture('sheet_content_viewed', {
+      song_id: sheet.songId,
+      sheet_type: sheet.type,
+      sheet_difficulty: sheet.difficulty,
+    })
+  }
+
+  if (navigateToDetail) {
+    const songPath = getSongPath(sheet)
+    return (
+      <Link
+        to="/sheet/$id"
+        params={{ id: songPath }}
+        className="no-underline text-inherit"
+        onClick={handleClick}
+      >
+        <ListItemButton
+          disableGutters={!isLargeDevice}
+          className="w-full cursor-pointer transition duration-500 hover:duration-25 !px-4"
+          sx={{ borderRadius: 1 }}
+        >
+          <SheetListItemContent sheet={sheet} size={size} {...SheetListItemContentProps} />
+        </ListItemButton>
+      </Link>
+    )
+  }
 
   return (
     <>
@@ -44,12 +77,7 @@ export const SheetListItem: FC<{
         )}
         onClick={() => {
           setOpen(true)
-          haptic.trigger('medium')
-          posthog?.capture('sheet_content_viewed', {
-            song_id: sheet.songId,
-            sheet_type: sheet.type,
-            sheet_difficulty: sheet.difficulty,
-          })
+          handleClick()
         }}
         sx={{
           borderRadius: 1,

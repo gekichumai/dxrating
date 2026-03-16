@@ -4,7 +4,6 @@ import * as Sentry from '@sentry/react'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useContext, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParam } from 'react-use'
 import IconMdiClose from '~icons/mdi/close'
 import MdiIconInfo from '~icons/mdi/information'
 import { SheetListContainer } from '../components/sheet/SheetListContainer'
@@ -30,7 +29,8 @@ const _SheetListInner: FC = () => {
   const { data: sheets, isLoading } = useSheets({ acceptsPartialData: true })
   const { setQueryActive } = useContext(SheetDetailsContext)
   const version = useAppContextDXDataVersion()
-  const queryParam = useSearchParam('q')
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+  const queryParam = searchParams?.get('q')
   const [query, setQuery] = useState<string>(queryParam ?? '')
   const { results, elapsed: searchElapsed } = useFilteredSheets(query)
   const [sortFilterOptions, setSortFilterOptions] = useState<SheetSortFilterForm | null>(null)
