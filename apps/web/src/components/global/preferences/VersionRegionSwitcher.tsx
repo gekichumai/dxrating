@@ -32,7 +32,7 @@ const VERSION_SPECIFIC_REGIONS: VersionRegion[] = [
     region: 'jp' as const,
   },
   {
-    dxVersion: 'prism-plus' as const,
+    dxVersion: 'circle' as const,
     region: 'intl' as const,
   },
   {
