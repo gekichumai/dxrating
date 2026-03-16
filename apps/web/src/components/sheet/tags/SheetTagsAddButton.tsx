@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import useSWR from 'swr'
+import { useQuery } from '@tanstack/react-query'
 import IconMdiTagPlus from '~icons/mdi/tag-plus'
 import { useAuth } from '../../../hooks/useAuth'
 import { apiClient as client } from '../../../lib/orpc'
@@ -25,20 +25,23 @@ const SheetTagsAddDialog: FC<{
   const localizeMessage = useLocalizedMessageTranslation()
   const { session, openLoginDialog, LoginDialog } = useAuth()
 
-  const { data: tagGroups, isLoading: loadingTags } = useSWR('tags.grouped', async () => {
-    const { tags, tagGroups } = await client.tags.list()
+  const { data: tagGroups, isLoading: loadingTags } = useQuery({
+    queryKey: ['tags.grouped'],
+    queryFn: async () => {
+      const { tags, tagGroups } = await client.tags.list()
 
-    return tagGroups.map((g) => ({
-      group: g,
-      tags: tags
-        .filter((t) => t.group_id === g.id)
-        .map((t) => ({
-          ...t,
-          group: g,
-        })),
-    }))
+      return tagGroups.map((g) => ({
+        group: g,
+        tags: tags
+          .filter((t) => t.group_id === g.id)
+          .map((t) => ({
+            ...t,
+            group: g,
+          })),
+      }))
+    },
   })
-  const { data: existingTags, isLoading: loadingExistingTags, mutate: mutateExistingTags } = useSheetTags(sheet)
+  const { data: existingTags, isLoading: loadingExistingTags, refetch: refetchExistingTags } = useSheetTags(sheet)
 
   const existingTagsIDList = existingTags?.map(({ id }) => id) ?? []
 
@@ -55,7 +58,7 @@ const SheetTagsAddDialog: FC<{
       toast.success(t('sheet:tags.add.toast-success'), {
         id: `tag-add-success:${tagId}`,
       })
-      mutateExistingTags()
+      refetchExistingTags()
     } catch (error) {
       console.error('Failed to add tag', error)
 

@@ -1,4 +1,4 @@
-import useSWR from 'swr'
+import { useQuery } from '@tanstack/react-query'
 import type { z } from 'zod'
 import type { TagsListResponseSchema } from '../lib/contract'
 import { apiClient as client } from '../lib/orpc'
@@ -9,18 +9,14 @@ export type TagGroup = CombinedTags['tagGroups'][number]
 export type TagSong = CombinedTags['tagSongs'][number]
 
 export const useCombinedTags = () => {
-  return useSWR(
-    'tags.list',
-    async () => {
+  return useQuery({
+    queryKey: ['tags.list'],
+    queryFn: async () => {
       return (await client.tags.list()) as CombinedTags
     },
-    {
-      focusThrottleInterval: 1000 * 60 * 60,
-      revalidateOnFocus: false, // Disable revalidation on window focus
-      revalidateOnReconnect: false, // Disable revalidation on network reconnection
-      revalidateIfStale: false, // Don't revalidate if data exists but is stale
-      dedupingInterval: 1000 * 60 * 60, // Dedupe requests within 1 hour
-      suspense: false,
-    },
-  )
+    staleTime: 1000 * 60 * 60,
+    gcTime: 1000 * 60 * 60,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  })
 }

@@ -153,6 +153,7 @@ export const SheetSortFilter: FC<{
   onChange?: (form: SheetSortFilterForm) => void
 }> = ({ onChange }) => {
   const defaultValues = useMemo(() => {
+    if (typeof window === 'undefined') return getDefaultSheetSortFilterForm()
     const alreadySaved = window.localStorage.getItem('dxrating-sheet-sort-filter')
     if (alreadySaved) {
       try {

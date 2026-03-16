@@ -2,7 +2,7 @@ import { Button, CircularProgress, Dialog, DialogContent, DialogContentText, Dia
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import useSWR from 'swr'
+import { useQuery } from '@tanstack/react-query'
 import IconMdiImage from '~icons/mdi/image'
 import { useAppContext, useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import { type RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
@@ -51,9 +51,9 @@ const RenderToOneShotImageDialogContent = () => {
   const version = useAppContextDXDataVersion()
   const { region } = useAppContext()
 
-  const { data, isValidating, error } = useSWR(
-    `miruku::functions/oneshot-renderer?data=${JSON.stringify(allEntries)}&version=${version}&region=${region}`,
-    async () => {
+  const { data, isFetching: isValidating, error } = useQuery({
+    queryKey: ['miruku', 'oneshot-renderer', JSON.stringify(allEntries), version, region],
+    queryFn: async () => {
       const from = Date.now()
       const response = await fetch('https://miruku.dxrating.net/functions/render-oneshot/v0?pixelated=1', {
         method: 'POST',
@@ -77,12 +77,10 @@ const RenderToOneShotImageDialogContent = () => {
 
       return URL.createObjectURL(blob)
     },
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      revalidateIfStale: false,
-    },
-  )
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  })
   const elapsedTime = useElapsedTime(isValidating)
 
   return (

@@ -12,7 +12,7 @@ export const SheetListContainer = ({
   listContainerClassName?: string
 }) => {
   const ItemContent = useCallback<ItemContent<FlattenedSheet, unknown>>(
-    (_, sheet: FlattenedSheet) => (sheet ? <SheetListItem key={sheet.id} sheet={sheet} /> : null),
+    (_, sheet: FlattenedSheet) => (sheet ? <SheetListItem key={sheet.id} sheet={sheet} navigateToDetail /> : null),
     [],
   )
 
@@ -24,7 +24,7 @@ export const SheetListContainer = ({
         itemContent={ItemContent}
         className="w-full min-h-[100lvh]"
         increaseViewportBy={500}
-        initialItemCount={Math.min(sheets.length, 20)}
+        initialItemCount={Math.min(sheets.length, typeof window === 'undefined' ? 50 : 20)}
       />
     </div>
   )

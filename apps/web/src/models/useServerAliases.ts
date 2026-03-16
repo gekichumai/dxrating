@@ -1,14 +1,13 @@
-import useSWR from 'swr'
+import { useQuery } from '@tanstack/react-query'
 import { apiClient as client } from '../lib/orpc'
 
 export const useServerAliases = () => {
-  return useSWR(
-    'aliases.list',
-    async () => {
+  return useQuery({
+    queryKey: ['aliases.list'],
+    queryFn: async () => {
       return await client.aliases.list()
     },
-    {
-      focusThrottleInterval: 1000 * 60 * 60,
-    },
-  )
+    staleTime: 1000 * 60 * 60,
+    refetchOnWindowFocus: false,
+  })
 }
