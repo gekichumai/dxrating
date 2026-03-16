@@ -80,7 +80,9 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
         {
           ...entry,
           sheet,
-          rating: sheet.isRatingEligible ? calculateRating(sheet.internalLevelValue, entry.achievementRate, entry.comboFlag) : null,
+          rating: sheet.isRatingEligible
+            ? calculateRating(sheet.internalLevelValue, entry.achievementRate, entry.comboFlag)
+            : null,
         },
       ]
     })

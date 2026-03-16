@@ -47,7 +47,6 @@ export const TopBar = () => {
             >
               <MdiGithub className="size-4" />
             </IconButton>
-
           </div>
 
           <div className="flex">

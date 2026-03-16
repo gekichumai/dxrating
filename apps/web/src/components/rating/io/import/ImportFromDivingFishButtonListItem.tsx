@@ -209,7 +209,9 @@ export const ImportDivingFishDialogContent: FC<{
 
         <div className="w-full flex items-center gap-2 select-none">
           <div className="h-px w-full bg-zinc-200" />
-          <span className="text-sm text-zinc-5 whitespace-nowrap">{t('rating-calculator:io.import.diving-fish.or')}</span>
+          <span className="text-sm text-zinc-5 whitespace-nowrap">
+            {t('rating-calculator:io.import.diving-fish.or')}
+          </span>
           <div className="h-px w-full bg-zinc-200" />
         </div>
 

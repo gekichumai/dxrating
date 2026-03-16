@@ -5,5 +5,17 @@
   "semi": false,
   "singleQuote": true,
   "trailingComma": "all",
-  "ignorePatterns": ["dist", ".turbo", "node_modules", "packages/dxdata/dxdata.json", "scripts/annotator/*.json"]
+  "ignorePatterns": [
+    "dist",
+    ".turbo",
+    "node_modules",
+    "packages/dxdata/dxdata.json",
+    "scripts/annotator/*.json",
+    "apps/backend/drizzle",
+    ".github",
+    ".superset",
+    "*.md",
+    "*.yaml",
+    "*.yml"
+  ]
 }

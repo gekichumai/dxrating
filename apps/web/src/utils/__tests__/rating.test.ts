@@ -25,11 +25,14 @@ describe('calculateRating', () => {
       { rate: 99.5, expectedRank: 'ssp', expectedCoeff: 21.1 },
       { rate: 100, expectedRank: 'sss', expectedCoeff: 21.6 },
       { rate: 100.5, expectedRank: 'sssp', expectedCoeff: 22.4 },
-    ])('achievement rate $rate → rank $expectedRank (coeff $expectedCoeff)', ({ rate, expectedRank, expectedCoeff }) => {
-      const result = calculateRating(13.0, rate)
-      expect(result.rank).toBe(expectedRank)
-      expect(result.coefficient).toBe(expectedCoeff)
-    })
+    ])(
+      'achievement rate $rate → rank $expectedRank (coeff $expectedCoeff)',
+      ({ rate, expectedRank, expectedCoeff }) => {
+        const result = calculateRating(13.0, rate)
+        expect(result.rank).toBe(expectedRank)
+        expect(result.coefficient).toBe(expectedCoeff)
+      },
+    )
   })
 
   describe('formula: floor(coefficient × internalLevel × min(100.5, rate) / 100)', () => {

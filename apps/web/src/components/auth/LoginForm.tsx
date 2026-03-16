@@ -139,7 +139,11 @@ export const LoginForm = () => {
       </Button>
 
       <div className="text-center text-sm text-zinc-500 mt-1">
-        <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="text-blue-600 hover:underline cursor-pointer bg-transparent border-none text-sm">
+        <button
+          type="button"
+          onClick={() => setIsSignUp(!isSignUp)}
+          className="text-blue-600 hover:underline cursor-pointer bg-transparent border-none text-sm"
+        >
           {isSignUp ? t('auth:form.has-account') : t('auth:form.no-account')}
         </button>
       </div>

@@ -270,8 +270,16 @@ const Histogram: FC<{
         .attr('transform', `rotate(-90, ${x(avg)}, ${y(0)}), translate(2, -2)`)
     }
 
-    drawAverageLine(b15Avg, t('rating-calculator:statistics.b15-avg', { value: b15Avg.toFixed(2) }), deriveColor('#3b82f6', 'overlay'))
-    drawAverageLine(b35Avg, t('rating-calculator:statistics.b35-avg', { value: b35Avg.toFixed(2) }), deriveColor(theme.accentColor, 'overlay'))
+    drawAverageLine(
+      b15Avg,
+      t('rating-calculator:statistics.b15-avg', { value: b15Avg.toFixed(2) }),
+      deriveColor('#3b82f6', 'overlay'),
+    )
+    drawAverageLine(
+      b35Avg,
+      t('rating-calculator:statistics.b35-avg', { value: b35Avg.toFixed(2) }),
+      deriveColor(theme.accentColor, 'overlay'),
+    )
   }
 
   useEffect(() => {

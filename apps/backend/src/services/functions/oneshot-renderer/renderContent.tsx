@@ -335,9 +335,7 @@ export const renderContent = async ({
 
   const background = (await fetchAsset(theme.background)).buffer
   const icon = (
-    await fetchAsset(
-      `/assetbundle/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`,
-    )
+    await fetchAsset(`/assetbundle/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`)
   ).buffer
 
   const b50Sum = [...data.b15, ...data.b35].reduce((acc, cur) => acc + cur.rating.ratingAwardValue, 0)

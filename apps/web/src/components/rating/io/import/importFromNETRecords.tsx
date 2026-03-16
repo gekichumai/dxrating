@@ -158,12 +158,9 @@ export const importFromNETRecords = async (
   try {
     const stored = localStorage.getItem('import-net-records')
     if (!stored) {
-      toast.error(
-        t('rating-calculator:io.import.net-records.no-credentials'),
-        {
-          id: toastId,
-        },
-      )
+      toast.error(t('rating-calculator:io.import.net-records.no-credentials'), {
+        id: toastId,
+      })
       throw new Error('No credentials stored.')
     }
     const parsed = JSON.parse(stored)
@@ -238,7 +235,10 @@ export const importFromNETRecords = async (
     toast.success(
       <div className="flex flex-col">
         <span>
-          {t('rating-calculator:io.import.net-records.imported', { count: entries.length, region: String(region).toUpperCase() })}
+          {t('rating-calculator:io.import.net-records.imported', {
+            count: entries.length,
+            region: String(region).toUpperCase(),
+          })}
         </span>
         {lastRecord && (
           <>
@@ -248,7 +248,9 @@ export const importFromNETRecords = async (
             </span>
             {lastRecord.play.timestamp && (
               <span className="text-xs text-zinc-500">
-                {t('rating-calculator:io.import.net-records.date', { date: new Date(lastRecord.play.timestamp).toLocaleString() })}
+                {t('rating-calculator:io.import.net-records.date', {
+                  date: new Date(lastRecord.play.timestamp).toLocaleString(),
+                })}
               </span>
             )}
             {/* <span className="text-xs text-zinc-500">
