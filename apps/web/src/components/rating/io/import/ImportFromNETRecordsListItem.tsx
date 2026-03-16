@@ -315,7 +315,7 @@ const ImportFromNETRecordsDialogContent: FC<{
             <p className="font-bold">
               {t('rating-calculator:io.import.net-records.dialog.security-notice.credentials')}{' '}
               <a
-                href="https://github.com/gekichumai/dxrating/tree/main/packages/self-hosted-functions"
+                href="https://github.com/gekichumai/dxrating/tree/main/apps/backend"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline"
