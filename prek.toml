@@ -1,0 +1,16 @@
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "oxfmt"
+name = "oxfmt"
+language = "system"
+entry = "pnpm oxfmt --check"
+files = "\\.(js|jsx|ts|tsx)$"
+
+[[repos.hooks]]
+id = "oxlint"
+name = "oxlint"
+language = "system"
+entry = "pnpm oxlint"
+files = "\\.(js|jsx|ts|tsx)$"
