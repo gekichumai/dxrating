@@ -109,10 +109,6 @@ export const TagSongAttachSchema = z.object({
   tagId: z.number(),
 })
 
-export const MonitoringTunnelInputSchema = z.object({
-  envelope: z.string(),
-})
-
 export const CreateAliasInputSchema = z.object({
   songId: z.string(),
   name: z.string(),
@@ -159,17 +155,6 @@ export const appContract = oc.router({
       })
       .input(FetchCommentsInputSchema)
       .output(z.array(CommentWithProfileSchema)),
-  },
-  monitoring: {
-    tunnel: oc
-      .route({
-        method: 'POST',
-        path: '/monitoring/tunnel',
-        summary: 'Sentry tunnel',
-        tags: ['internal'],
-      })
-      .input(MonitoringTunnelInputSchema)
-      .output(z.void()),
   },
   aliases: {
     list: oc

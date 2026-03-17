@@ -60,10 +60,13 @@ app.use(
 )
 
 // Request logging
-app.use('*', evlog({
-  drain,
-  exclude: ['/health', '/robots.txt', '/docs', '/spec.json', '/'],
-}) as unknown as MiddlewareHandler)
+app.use(
+  '*',
+  evlog({
+    drain,
+    exclude: ['/health', '/robots.txt', '/docs', '/spec.json', '/'],
+  }) as unknown as MiddlewareHandler,
+)
 
 // Root redirect to docs
 app.get('/', (c) => c.redirect('/docs'))
@@ -95,6 +98,42 @@ const verifyParams = createMiddleware(async (c, next) => {
   c.set('authParams', { id: result.data.id, password: result.data.password })
   c.set('region', result.data.region)
   return next()
+})
+
+// Sentry tunnel — accepts raw envelope body, proxies as-is
+const SENTRY_HOST = 'o4506648698683392.ingest.sentry.io'
+const SENTRY_PROJECT_IDS = ['4506648709627904']
+const MAX_TUNNEL_BODY_SIZE = 20 * 1024 * 1024 // 20 MB
+
+app.post('/api/v1/monitoring/tunnel', async (c) => {
+  const contentLength = Number(c.req.header('content-length') ?? 0)
+  if (contentLength > MAX_TUNNEL_BODY_SIZE) {
+    return c.json({ error: 'Payload too large' }, 413)
+  }
+
+  const envelope = await c.req.text()
+  if (Buffer.byteLength(envelope) > MAX_TUNNEL_BODY_SIZE) {
+    return c.json({ error: 'Payload too large' }, 413)
+  }
+
+  try {
+    const header = JSON.parse(envelope.split('\n')[0])
+    const dsn = new URL(header.dsn)
+    const projectId = dsn.pathname.replace('/', '')
+
+    if (dsn.hostname !== SENTRY_HOST || !SENTRY_PROJECT_IDS.includes(projectId)) {
+      return c.json({ error: 'Invalid Sentry DSN' }, 400)
+    }
+
+    await fetch(`https://${SENTRY_HOST}/api/${projectId}/envelope/`, {
+      method: 'POST',
+      body: envelope,
+    })
+  } catch {
+    // silently discard malformed envelopes
+  }
+
+  return c.body(null, 200)
 })
 
 // Functions

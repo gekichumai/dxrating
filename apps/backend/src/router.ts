@@ -139,31 +139,6 @@ const commentsHandler = {
   }),
 }
 
-const monitoringHandler = {
-  tunnel: os.monitoring.tunnel.handler(async ({ input }) => {
-    const envelope = input.envelope
-    // ... (rest of implementation)
-    const piece = envelope.split('\n')[0]
-    const header = JSON.parse(piece)
-    const dsn = new URL(header.dsn)
-    const project_id = dsn.pathname?.replace('/', '') // Fix potential missing pathname issue? null check
-
-    const SENTRY_HOST = 'o4506648698683392.ingest.sentry.io'
-    const SENTRY_PROJECT_IDS = ['4506648709627904']
-
-    if (dsn.hostname !== SENTRY_HOST) {
-      throw new Error(`Invalid sentry hostname: ${dsn.hostname}`)
-    }
-
-    if (!project_id || !SENTRY_PROJECT_IDS.includes(project_id)) {
-      throw new Error(`Invalid sentry project id: ${project_id}`)
-    }
-
-    const upstream_sentry_url = `https://${SENTRY_HOST}/api/${project_id}/envelope/`
-    await fetch(upstream_sentry_url, { method: 'POST', body: envelope })
-  }),
-}
-
 const aliasesHandler = {
   list: os.aliases.list.handler(async () => {
     const cached = await cache.get('aliases:list')
@@ -227,7 +202,6 @@ const lxnsHandler = {
 export const appRouter = os.router({
   tags: tagsHandler,
   comments: commentsHandler,
-  monitoring: monitoringHandler,
   aliases: aliasesHandler,
   maimai: maimaiHandler,
   lxns: lxnsHandler,
