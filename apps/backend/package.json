@@ -33,6 +33,7 @@
     "cookie": "^1.1.1",
     "dotenv": "catalog:",
     "drizzle-orm": "^0.45.1",
+    "evlog": "^2.8.0",
     "hono": "catalog:",
     "keyv": "^5.6.0",
     "pg": "catalog:",

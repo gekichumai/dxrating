@@ -1,6 +1,7 @@
 import { initSentry } from './lib/functions/sentry.js'
 initSentry()
 
+import './logger.js'
 import { serve as nodeServe } from '@hono/node-server'
 import { app } from './app.js'
 import { config } from './config.js'

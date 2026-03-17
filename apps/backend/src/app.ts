@@ -10,19 +10,23 @@ import {
   v0Handler as fetchNetRecordsV0Handler,
   v1Handler as fetchNetRecordsV1Handler,
 } from './services/functions/fetch-net-records/index.js'
+import { evlog, type EvlogVariables } from 'evlog/hono'
+import type { MiddlewareHandler } from 'hono'
+import { drain } from './logger.js'
 import { appRouter } from './router.js'
 import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
 import { RequestHeadersPlugin, ResponseHeadersPlugin } from '@orpc/server/plugins'
 
-const app = new Hono()
+const app = new Hono<EvlogVariables>()
 
-// Sentry error handler
+// Error handler
 app.onError((err, c) => {
   if (err instanceof z.ZodError) {
     return c.json({ error: 'Validation error', details: err.issues }, 400)
   }
+  c.get('log')?.error(err)
   Sentry.captureException(err)
   if (err instanceof HTTPException) {
     return err.getResponse()
@@ -54,6 +58,12 @@ app.use(
     credentials: true,
   }),
 )
+
+// Request logging
+app.use('*', evlog({
+  drain,
+  exclude: ['/health', '/robots.txt', '/docs', '/spec.json', '/'],
+}) as unknown as MiddlewareHandler)
 
 // Root redirect to docs
 app.get('/', (c) => c.redirect('/docs'))

@@ -13,7 +13,7 @@ catalog:
   dotenv: "^16.4.7"
   esno: "^4.8.0"
   fuse.js: "^7.1.0"
-  hono: "^4.6.14"
+  hono: "^4.12.5"
   pg: "^8.20.0"
   react: "^19.2.3"
   ts-pattern: "^5.9.0"
