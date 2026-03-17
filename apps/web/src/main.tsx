@@ -26,23 +26,15 @@ posthog.init('phc_Hw7FM2D1vSwummp0D3O13Z6biV6udw5bKIcq4BJQxH7', {
 
 Sentry.init({
   dsn: 'https://1e929f3c3b929a213436e3c4dff57140@o4506648698683392.ingest.sentry.io/4506648709627904',
-  tunnel: 'https://derrakuma.dxrating.net/functions/v1/science-tunnel',
+  tunnel: `${import.meta.env.VITE_BACKEND_URL}/api/v1/monitoring/tunnel`,
   release: `dxrating@${BUNDLE.version ?? 'unknown'}`,
   enabled: import.meta.env.PROD,
   integrations: [
     browserTracingIntegration({
-      shouldCreateSpanForRequest: (url) => {
-        return !url.includes(`supabase`)
-      },
+      shouldCreateSpanForRequest: () => true,
     }),
   ],
-  tracePropagationTargets: [
-    'localhost',
-    /^\//,
-    /^https?:\/\/dxrating\.net/,
-    /^https?:\/\/derrakuma\.dxrating\.net/,
-    /^https?:\/\/miruku\.dxrating\.net/,
-  ],
+  tracePropagationTargets: ['localhost', /^\//, /^https?:\/\/dxrating\.net/, /^https?:\/\/miruku\.dxrating\.net/],
   // Performance Monitoring
   tracesSampleRate: 0.2,
   ignoreErrors: [
