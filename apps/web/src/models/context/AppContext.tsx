@@ -4,7 +4,7 @@ import { useLocalStorage } from 'react-use'
 
 type AppContext = AppContextStates & AppContextFns
 
-export type DXVersion = 'festival-plus' | 'buddies' | 'buddies-plus' | 'prism' | 'prism-plus' | 'circle'
+export type DXVersion = 'festival-plus' | 'buddies' | 'buddies-plus' | 'prism' | 'prism-plus' | 'circle' | 'circle-plus'
 
 export type Region = 'jp' | 'intl' | 'cn' | '_generic'
 
@@ -15,6 +15,7 @@ export const DXVersionToDXDataVersionEnumMap: Record<DXVersion, VersionEnum> = {
   prism: VersionEnum.PRiSM,
   'prism-plus': VersionEnum.PRiSMPLUS,
   circle: VersionEnum.CiRCLE,
+  'circle-plus': VersionEnum.CiRCLEPLUS,
 }
 
 export interface AppContextStates {
@@ -27,7 +28,7 @@ interface AppContextFns {
 }
 
 export const AppContext = createContext<AppContext>({
-  version: 'circle',
+  version: 'circle-plus',
   region: 'jp',
   setVersionAndRegion: () => {
     throw new Error('AppContext not initialized')
@@ -36,7 +37,7 @@ export const AppContext = createContext<AppContext>({
 
 function getDefaultAppContext(): AppContextStates {
   return {
-    version: 'circle',
+    version: 'circle-plus',
     region: 'jp',
   }
 }

@@ -9,6 +9,11 @@
     "height": 456,
     "path": "/images/version-logo/buddies.webp"
   },
+  "/images/version-logo/circle-plus.webp": {
+    "width": 655,
+    "height": 392,
+    "path": "/images/version-logo/circle-plus.webp"
+  },
   "/images/version-logo/circle.webp": {
     "width": 757,
     "height": 361,
@@ -33,6 +38,11 @@
     "width": 2000,
     "height": 2400,
     "path": "/images/background/buddies.jpg"
+  },
+  "/images/background/circle-plus.jpg": {
+    "width": 2760,
+    "height": 2760,
+    "path": "/images/background/circle-plus.jpg"
   },
   "/images/background/circle.jpg": {
     "width": 3000,
@@ -68,6 +78,11 @@
     "width": 2000,
     "height": 2400,
     "path": "/images/background/buddies.webp"
+  },
+  "/images/background/circle-plus.webp": {
+    "width": 2760,
+    "height": 2760,
+    "path": "/images/background/circle-plus.webp"
   },
   "/images/background/circle.webp": {
     "width": 3000,

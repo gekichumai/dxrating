@@ -104,6 +104,7 @@ export enum VersionEnum {
   PRiSM = 'PRiSM', // 2024.9
   PRiSMPLUS = 'PRiSM PLUS', // 2025.3
   CiRCLE = 'CiRCLE', // 2025.9
+  CiRCLEPLUS = 'CiRCLE PLUS', // 2026.3
   FESTiVAL = 'FESTiVAL',
   FESTiVALPLUS = 'FESTiVAL PLUS',
   FiNALE = 'FiNALE',
@@ -155,6 +156,7 @@ export const VERSION_ID_MAP = new Map([
   ['PRiSM', 23],
   ['PRiSM PLUS', 24],
   ['CiRCLE', 25],
+  ['CiRCLE PLUS', 26],
   //! add further version here !//
 ])
 
@@ -187,6 +189,7 @@ export const VERSION_SLUG_MAP = new Map([
   ['PRiSM', 'prism'],
   ['PRiSM PLUS', 'prism-plus'],
   ['CiRCLE', 'circle'],
+  ['CiRCLE PLUS', 'circle-plus'],
   //! add further version here !//
 ])
 

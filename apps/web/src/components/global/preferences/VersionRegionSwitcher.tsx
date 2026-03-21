@@ -10,7 +10,6 @@ import { useAppContext } from '../../../models/context/useAppContext'
 import { startViewTransition } from '../../../utils/startViewTransition'
 import { useVersionTheme } from '../../../utils/useVersionTheme'
 import { WebpSupportedImage } from '../WebpSupportedImage'
-import assetpack from '@/utils/assetpack.json'
 
 const fromMergedVersionRegionId = (id: string) => {
   const [version, region] = id.split('__') as [DXVersion, Region]
@@ -28,7 +27,7 @@ interface VersionRegion {
 
 const VERSION_SPECIFIC_REGIONS: VersionRegion[] = [
   {
-    dxVersion: 'circle' as const,
+    dxVersion: 'circle-plus' as const,
     region: 'jp' as const,
   },
   {
@@ -48,6 +47,9 @@ const VERSION_SPECIFIC_REGIONS: VersionRegion[] = [
 
 const VERSION_GENERIC_REGIONS: VersionRegion[] = [
   {
+    dxVersion: 'circle-plus' as const,
+  },
+  {
     dxVersion: 'circle' as const,
   },
   {
@@ -55,12 +57,6 @@ const VERSION_GENERIC_REGIONS: VersionRegion[] = [
   },
   {
     dxVersion: 'prism' as const,
-  },
-  {
-    dxVersion: 'buddies-plus' as const,
-  },
-  {
-    dxVersion: 'buddies' as const,
   },
 ].map(({ dxVersion }) => ({
   id: `${dxVersion}__${'_generic'}`,

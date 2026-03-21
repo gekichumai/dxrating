@@ -64,4 +64,12 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#FF4799',
   },
+  [VersionEnum.CiRCLEPLUS]: {
+    background: {
+      at1x: assetpack['/images/background/circle-plus.webp'],
+    },
+    logo: assetpack['/images/version-logo/circle-plus.webp'],
+    favicon: assetpack['/favicon/prism-1024x.jpg'],
+    accentColor: '#FF4799',
+  },
 }

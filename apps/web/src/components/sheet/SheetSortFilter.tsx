@@ -1,4 +1,4 @@
-import { CategoryEnum, VersionEnum } from '@gekichumai/dxdata'
+import { CategoryEnum, VERSION_SORT_ORDER, VersionEnum } from '@gekichumai/dxdata'
 import { DevTool } from '@hookform/devtools'
 import {
   Button,
@@ -153,6 +153,16 @@ export const SheetSortFilter: FC<{
   onChange?: (form: SheetSortFilterForm) => void
 }> = ({ onChange }) => {
   const defaultValues = useMemo(() => {
+    const LATEST_VERSION_KEY = 'dxrating-known-latest-game-version'
+    const currentLatest = VERSION_SORT_ORDER[VERSION_SORT_ORDER.length - 1]
+    const storedLatest = window.localStorage.getItem(LATEST_VERSION_KEY)
+
+    if (storedLatest !== currentLatest) {
+      window.localStorage.removeItem('dxrating-sheet-sort-filter')
+      window.localStorage.setItem(LATEST_VERSION_KEY, currentLatest)
+      return getDefaultSheetSortFilterForm()
+    }
+
     const alreadySaved = window.localStorage.getItem('dxrating-sheet-sort-filter')
     if (alreadySaved) {
       try {

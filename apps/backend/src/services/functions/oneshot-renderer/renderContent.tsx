@@ -55,6 +55,13 @@ export const VERSION_THEME: Record<string, VersionTheme> = {
     accentColor: '#FF4799',
     backgroundSize: [1500, 1500],
   },
+  [VersionEnum.CiRCLEPLUS]: {
+    background: '/images/background/circle-plus.jpg',
+    logo: '/images/version-logo/circle-plus.png',
+    favicon: '/favicon/prism-1024x.jpg',
+    accentColor: '#FF4799',
+    backgroundSize: [1500, 1500],
+  },
 }
 
 const DIFFICULTIES: Record<DifficultyEnum, { title: string; color: string; inverted?: boolean }> = {
