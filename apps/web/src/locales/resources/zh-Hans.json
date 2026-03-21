@@ -393,6 +393,10 @@
           "imported": "已从 {{region}} NET 导入 {{count}} 条记录。",
           "latest-play": "最近游玩",
           "date": "日期：{{date}}",
+          "cached": {
+            "title": "正在使用缓存的游玩记录",
+            "description": "{{minutes}} 分钟前已更新。为减少对 maimai NET 的访问，15 分钟内的记录将被复用。"
+          },
           "dialog": {
             "title": "从 NET 导入",
             "sega-id": "您的世嘉 ID",

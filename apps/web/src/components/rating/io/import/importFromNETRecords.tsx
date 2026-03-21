@@ -136,6 +136,9 @@ function extractSyncFlag(flags: string[]): SyncFlag {
 
 const haptics = new WebHaptics()
 
+export const NET_IMPORT_LAST_SUCCESS_KEY = 'net-import-last-success'
+export const NET_IMPORT_COOLDOWN_MS = 15 * 60 * 1000 // 15 minutes
+
 let importInFlight = false
 
 export const importFromNETRecords = async (
@@ -265,6 +268,8 @@ export const importFromNETRecords = async (
         duration: 20000,
       },
     )
+
+    localStorage.setItem(NET_IMPORT_LAST_SUCCESS_KEY, Date.now().toString())
 
     posthog?.capture('netimport_succeeded', {
       region,

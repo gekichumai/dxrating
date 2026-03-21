@@ -407,6 +407,10 @@
           "imported": "Imported {{count}} records from {{region}} NET.",
           "latest-play": "Latest Play",
           "date": "Date: {{date}}",
+          "cached": {
+            "title": "Using cached play records",
+            "description": "Last updated {{minutes}} min ago. To reduce load on maimai NET, records are reused within 15 minutes."
+          },
           "dialog": {
             "title": "Import from NET",
             "sega-id": "Your Sega ID",

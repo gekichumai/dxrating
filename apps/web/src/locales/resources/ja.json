@@ -397,6 +397,10 @@
           "imported": "{{region}} NETから{{count}}件のレコードを読み込みました。",
           "latest-play": "最新のプレイ",
           "date": "日付：{{date}}",
+          "cached": {
+            "title": "キャッシュされたプレイ記録を使用中",
+            "description": "{{minutes}}分前に更新済み。maimai NETへの負荷軽減のため、15分以内の記録は再利用されます。"
+          },
           "dialog": {
             "actions": {
               "close": "閉じる",
