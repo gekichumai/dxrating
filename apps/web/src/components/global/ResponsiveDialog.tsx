@@ -7,8 +7,9 @@ export const ResponsiveDialog: FC<{
   open: boolean
   setOpen: (open: boolean) => void
   maxWidth?: Breakpoint
+  disableClose?: boolean
   children?: () => ReactNode
-}> = ({ open, setOpen, maxWidth = 'md', children }) => {
+}> = ({ open, setOpen, maxWidth = 'md', disableClose, children }) => {
   const isLargeDevice = useIsLargeDevice()
   const [internalOpen, setInternalOpen] = useState(false)
 
@@ -40,7 +41,13 @@ export const ResponsiveDialog: FC<{
   return isLargeDevice ? (
     <>
       {internalOpen && (
-        <Dialog open={open} onClose={() => setOpen(false)} maxWidth={maxWidth} fullWidth TransitionComponent={Grow}>
+        <Dialog
+          open={open}
+          onClose={() => !disableClose && setOpen(false)}
+          maxWidth={maxWidth}
+          fullWidth
+          TransitionComponent={Grow}
+        >
           <DialogContent>{children?.()}</DialogContent>
         </Dialog>
       )}
@@ -53,7 +60,7 @@ export const ResponsiveDialog: FC<{
           disableSwipeToOpen
           anchor="bottom"
           open={drawerOpen}
-          onClose={() => setOpen(false)}
+          onClose={() => !disableClose && setOpen(false)}
           onOpen={() => setOpen(true)}
           sx={{
             '& .MuiDrawer-paper': {

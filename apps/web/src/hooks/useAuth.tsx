@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Dialog, DialogContent } from '@mui/material'
 import { authClient } from '../lib/auth-client'
 import { LoginForm } from '../components/auth/LoginForm'
@@ -9,11 +9,13 @@ interface EnsureAuthenticatedOptions {
 
 export const useAuth = () => {
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
+  const [authPending, setAuthPending] = useState(false)
   const { data: sessionData } = authClient.useSession()
   const session = sessionData?.session
 
   const openLoginDialog = () => setIsLoginDialogOpen(true)
   const closeLoginDialog = () => setIsLoginDialogOpen(false)
+  const handlePendingChange = useCallback((p: boolean) => setAuthPending(p), [])
 
   /**
    * Ensures the user is authenticated before proceeding.
@@ -38,9 +40,9 @@ export const useAuth = () => {
   }
 
   const LoginDialog = () => (
-    <Dialog open={isLoginDialogOpen} onClose={closeLoginDialog} maxWidth="xs" fullWidth>
+    <Dialog open={isLoginDialogOpen} onClose={() => !authPending && closeLoginDialog()} maxWidth="xs" fullWidth>
       <DialogContent>
-        <LoginForm />
+        <LoginForm onPendingChange={handlePendingChange} />
       </DialogContent>
     </Dialog>
   )

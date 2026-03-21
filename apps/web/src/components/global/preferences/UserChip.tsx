@@ -1,5 +1,5 @@
 import { CircularProgress, IconButton } from '@mui/material'
-import { type FC, useState } from 'react'
+import { type FC, useCallback, useState } from 'react'
 import { useAsync } from 'react-use'
 import MdiAccountCheck from '~icons/mdi/account-check'
 import MdiLogin from '~icons/mdi/login'
@@ -50,14 +50,21 @@ export const ProfileImage: FC<{
 
 export const UserChip: FC = () => {
   const [open, setOpen] = useState<'auth' | 'profile' | null>(null)
+  const [authPending, setAuthPending] = useState(false)
   const { data: sessionData, isPending: pending } = authClient.useSession()
   const session = sessionData?.session
   const user = sessionData?.user
+  const handlePendingChange = useCallback((p: boolean) => setAuthPending(p), [])
 
   return (
     <>
-      <ResponsiveDialog open={open === 'auth'} setOpen={(opened) => setOpen(opened ? 'auth' : null)} maxWidth="xs">
-        {() => <LoginForm />}
+      <ResponsiveDialog
+        open={open === 'auth'}
+        setOpen={(opened) => setOpen(opened ? 'auth' : null)}
+        maxWidth="xs"
+        disableClose={authPending}
+      >
+        {() => <LoginForm onPendingChange={handlePendingChange} />}
       </ResponsiveDialog>
 
       <UserProfileModal open={open === 'profile'} onClose={() => setOpen(null)} />

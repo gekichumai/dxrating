@@ -26,15 +26,22 @@ const slideVariants = {
   }),
 }
 
-export const LoginForm = () => {
+type AuthProvider = 'google' | 'github' | 'passkey' | 'email'
+
+export const LoginForm = ({ onPendingChange }: { onPendingChange?: (pending: boolean) => void }) => {
   const { t } = useTranslation(['auth'])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const haptic = useWebHaptics()
-  const [loading, setLoading] = useState(false)
+  const [pendingProvider, setPendingProvider] = useState<AuthProvider | null>(null)
+  const loading = pendingProvider !== null
   const [isSignUp, setIsSignUp] = useState(false)
   const [direction, setDirection] = useState(1)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    onPendingChange?.(loading)
+  }, [loading, onPendingChange])
 
   const innerRef = useRef<HTMLDivElement>(null)
   const [contentHeight, setContentHeight] = useState<number | undefined>(undefined)
@@ -50,7 +57,7 @@ export const LoginForm = () => {
   }, [])
 
   const handleSubmit = async () => {
-    setLoading(true)
+    setPendingProvider('email')
     setError(null)
     try {
       if (isSignUp) {
@@ -73,21 +80,21 @@ export const LoginForm = () => {
       haptic.trigger('error')
       setError(e.message || t('auth:form.error-generic'))
     } finally {
-      setLoading(false)
+      setPendingProvider(null)
     }
   }
 
   const handleSocial = async (provider: 'google' | 'github') => {
-    setLoading(true)
+    setPendingProvider(provider)
     await authClient.signIn.social({
       provider,
       callbackURL: window.location.href,
     })
-    // No setLoading(false) because it redirects
+    // No setPendingProvider(null) because it redirects
   }
 
   const handlePasskey = async () => {
-    setLoading(true)
+    setPendingProvider('passkey')
     try {
       const { error } = await authClient.signIn.passkey()
       if (error) throw error
@@ -97,7 +104,7 @@ export const LoginForm = () => {
       haptic.trigger('error')
       setError(e.message || t('auth:form.error-passkey'))
     } finally {
-      setLoading(false)
+      setPendingProvider(null)
     }
   }
 
@@ -137,7 +144,13 @@ export const LoginForm = () => {
               <div className="flex flex-col gap-2">
                 <Button
                   variant="outlined"
-                  startIcon={<IconLogosGithub className="w-5 h-5" />}
+                  startIcon={
+                    pendingProvider === 'github' ? (
+                      <CircularProgress size={20} />
+                    ) : (
+                      <IconLogosGithub className="w-5 h-5" />
+                    )
+                  }
                   onClick={() => handleSocial('github')}
                   disabled={loading}
                   className="!py-2.5 !text-sm !normal-case"
@@ -147,7 +160,13 @@ export const LoginForm = () => {
                 </Button>
                 <Button
                   variant="outlined"
-                  startIcon={<IconLogosGoogle className="w-5 h-5" />}
+                  startIcon={
+                    pendingProvider === 'google' ? (
+                      <CircularProgress size={20} />
+                    ) : (
+                      <IconLogosGoogle className="w-5 h-5" />
+                    )
+                  }
                   onClick={() => handleSocial('google')}
                   disabled={loading}
                   className="!py-2.5 !text-sm !normal-case"
@@ -158,7 +177,13 @@ export const LoginForm = () => {
                 {!isSignUp && (
                   <Button
                     variant="outlined"
-                    startIcon={<IconPasskey className="text-lg" />}
+                    startIcon={
+                      pendingProvider === 'passkey' ? (
+                        <CircularProgress size={18} />
+                      ) : (
+                        <IconPasskey className="text-lg" />
+                      )
+                    }
                     onClick={handlePasskey}
                     disabled={loading}
                     className="!py-2 !text-sm !normal-case"
@@ -178,6 +203,7 @@ export const LoginForm = () => {
                   label={t('auth:form.email')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
                   fullWidth
                   size="small"
                 />
@@ -186,6 +212,7 @@ export const LoginForm = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
                   fullWidth
                   size="small"
                 />
@@ -205,7 +232,14 @@ export const LoginForm = () => {
         </div>
       </motion.div>
 
-      <Button variant="text" onClick={toggleView} className="!mt-2 !text-sm !normal-case" fullWidth size="small">
+      <Button
+        variant="text"
+        onClick={toggleView}
+        disabled={loading}
+        className="!mt-2 !text-sm !normal-case"
+        fullWidth
+        size="small"
+      >
         {isSignUp ? t('auth:form.has-account') : t('auth:form.no-account')}
       </Button>
     </div>
