@@ -28,7 +28,7 @@ export const auth = betterAuth({
   advanced: {
     cookiePrefix: 'dxrating',
     ipAddress: {
-      ipAddressHeaders: ['cf-connecting-ip', 'x-forwarded-for'],
+      ipAddressHeaders: ['cf-connecting-ip'],
     },
   },
   trustedOrigins: ['https://dxrating.net', 'http://localhost:5173', 'http://localhost:5174'],
