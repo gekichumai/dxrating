@@ -20,6 +20,8 @@ catalog:
 
   # Shared dev dependencies
   "@types/node": "^22.13.11"
+  "@vitejs/plugin-react": "^6.0.1"
+  vite: "^8.0.1"
   "@types/pg": "^8.18.0"
   typescript: "^5.9.3"
   vitest: "^3.2.1"

@@ -8,18 +8,6 @@ import { defineConfig } from 'vite'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    // Strip `with { type: 'json' }` import attributes before esbuild sees them.
-    // esbuild 0.18 (Vite 4) doesn't support import attributes, but Vite handles
-    // JSON imports natively so the attribute isn't needed for the frontend build.
-    {
-      name: 'strip-import-attributes',
-      enforce: 'pre',
-      transform(code, _id) {
-        if (code.includes('with {')) {
-          return { code: code.replace(/\s+with\s+\{[^}]*\}/g, ''), map: null }
-        }
-      },
-    },
     react(),
     UnoCSS(),
     Icons({ compiler: 'jsx', jsx: 'react', autoInstall: true }),
@@ -33,11 +21,21 @@ export default defineConfig({
     }),
   ],
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks: {
-          lib: ['react', '@mui/material', 'react-use', '@tanstack/react-table'],
-          dxdata: ['@gekichumai/dxdata'],
+        manualChunks(id) {
+          if (
+            id.includes('/react/') ||
+            id.includes('/react-dom/') ||
+            id.includes('/@mui/material/') ||
+            id.includes('/react-use/') ||
+            id.includes('/@tanstack/react-table/')
+          ) {
+            return 'lib'
+          }
+          if (id.includes('/@gekichumai/dxdata/') || id.includes('/packages/dxdata/')) {
+            return 'dxdata'
+          }
         },
       },
     },
