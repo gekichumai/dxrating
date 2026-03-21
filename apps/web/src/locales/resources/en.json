@@ -233,6 +233,39 @@
       "error-generic": "An error occurred",
       "error-passkey": "Failed to sign in with Passkey",
       "login-or-register-to-comment": "Login or Register to comment"
+    },
+    "user-profile": {
+      "title": "Account",
+      "profile": "Profile",
+      "security": "Security",
+      "display-name": "Display name",
+      "email": "Email address",
+      "save": "Save",
+      "password": {
+        "title": "Password",
+        "current": "Current password",
+        "new": "New password",
+        "confirm": "Confirm new password",
+        "mismatch": "Passwords do not match",
+        "save": "Change password",
+        "success": "Password changed successfully",
+        "error": "Failed to change password: {{error}}"
+      },
+      "passkeys": {
+        "title": "Passkeys",
+        "add": "Add passkey",
+        "delete": "Remove",
+        "empty": "No passkeys registered",
+        "added": "Passkey added successfully",
+        "deleted": "Passkey removed",
+        "error": "Failed: {{error}}"
+      },
+      "devices": {
+        "title": "Active devices",
+        "current": "This device",
+        "revoke": "Sign out",
+        "revoked": "Device signed out"
+      }
     }
   },
   "rating-calculator": {

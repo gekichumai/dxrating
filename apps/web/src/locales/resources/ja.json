@@ -228,6 +228,39 @@
       "error-generic": "エラーが発生しました",
       "error-passkey": "パスキーでのログインに失敗しました",
       "login-or-register-to-comment": "ログインまたは新規登録してコメントする"
+    },
+    "user-profile": {
+      "title": "アカウント",
+      "profile": "プロフィール",
+      "security": "セキュリティ",
+      "display-name": "表示名",
+      "email": "メールアドレス",
+      "save": "保存",
+      "password": {
+        "title": "パスワード",
+        "current": "現在のパスワード",
+        "new": "新しいパスワード",
+        "confirm": "新しいパスワード（確認）",
+        "mismatch": "パスワードが一致しません",
+        "save": "パスワードを変更",
+        "success": "パスワードが変更されました",
+        "error": "パスワードの変更に失敗しました：{{error}}"
+      },
+      "passkeys": {
+        "title": "パスキー",
+        "add": "パスキーを追加",
+        "delete": "削除",
+        "empty": "パスキーが登録されていません",
+        "added": "パスキーが追加されました",
+        "deleted": "パスキーが削除されました",
+        "error": "失敗しました：{{error}}"
+      },
+      "devices": {
+        "title": "アクティブなデバイス",
+        "current": "このデバイス",
+        "revoke": "ログアウト",
+        "revoked": "デバイスからログアウトしました"
+      }
     }
   },
   "rating-calculator": {

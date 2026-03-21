@@ -227,6 +227,39 @@
       "error-generic": "发生错误",
       "error-passkey": "通行密钥登录失败",
       "login-or-register-to-comment": "登录或注册以发表评论"
+    },
+    "user-profile": {
+      "title": "账户",
+      "profile": "个人资料",
+      "security": "安全",
+      "display-name": "显示名称",
+      "email": "邮箱地址",
+      "save": "保存",
+      "password": {
+        "title": "密码",
+        "current": "当前密码",
+        "new": "新密码",
+        "confirm": "确认新密码",
+        "mismatch": "密码不一致",
+        "save": "修改密码",
+        "success": "密码修改成功",
+        "error": "密码修改失败：{{error}}"
+      },
+      "passkeys": {
+        "title": "通行密钥",
+        "add": "添加通行密钥",
+        "delete": "移除",
+        "empty": "暂无通行密钥",
+        "added": "通行密钥已添加",
+        "deleted": "通行密钥已移除",
+        "error": "操作失败：{{error}}"
+      },
+      "devices": {
+        "title": "活跃设备",
+        "current": "当前设备",
+        "revoke": "退出登录",
+        "revoked": "已退出该设备"
+      }
     }
   },
   "rating-calculator": {

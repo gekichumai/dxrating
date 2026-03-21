@@ -228,6 +228,39 @@
       "error-generic": "發生錯誤",
       "error-passkey": "通行金鑰登錄失敗",
       "login-or-register-to-comment": "登錄或註冊以發表評論"
+    },
+    "user-profile": {
+      "title": "帳戶",
+      "profile": "個人資料",
+      "security": "安全",
+      "display-name": "顯示名稱",
+      "email": "電子郵件地址",
+      "save": "儲存",
+      "password": {
+        "title": "密碼",
+        "current": "目前密碼",
+        "new": "新密碼",
+        "confirm": "確認新密碼",
+        "mismatch": "密碼不一致",
+        "save": "變更密碼",
+        "success": "密碼已變更",
+        "error": "密碼變更失敗：{{error}}"
+      },
+      "passkeys": {
+        "title": "通行金鑰",
+        "add": "新增通行金鑰",
+        "delete": "移除",
+        "empty": "尚無通行金鑰",
+        "added": "通行金鑰已新增",
+        "deleted": "通行金鑰已移除",
+        "error": "操作失敗：{{error}}"
+      },
+      "devices": {
+        "title": "活躍裝置",
+        "current": "目前裝置",
+        "revoke": "登出",
+        "revoked": "已登出該裝置"
+      }
     }
   },
   "rating-calculator": {
