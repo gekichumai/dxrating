@@ -63,6 +63,7 @@ export const UserChip: FC = () => {
         setOpen={(opened) => setOpen(opened ? 'auth' : null)}
         maxWidth="xs"
         disableClose={authPending}
+        drawerHeight="65vh"
       >
         {() => <LoginForm onPendingChange={handlePendingChange} />}
       </ResponsiveDialog>

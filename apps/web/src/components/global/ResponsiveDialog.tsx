@@ -8,8 +8,9 @@ export const ResponsiveDialog: FC<{
   setOpen: (open: boolean) => void
   maxWidth?: Breakpoint
   disableClose?: boolean
+  drawerHeight?: string
   children?: () => ReactNode
-}> = ({ open, setOpen, maxWidth = 'md', disableClose, children }) => {
+}> = ({ open, setOpen, maxWidth = 'md', disableClose, drawerHeight, children }) => {
   const isLargeDevice = useIsLargeDevice()
   const [internalOpen, setInternalOpen] = useState(false)
 
@@ -64,7 +65,7 @@ export const ResponsiveDialog: FC<{
           onOpen={() => setOpen(true)}
           sx={{
             '& .MuiDrawer-paper': {
-              height: 'calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 4rem)',
+              height: drawerHeight ?? 'calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 4rem)',
             },
           }}
           PaperProps={{
