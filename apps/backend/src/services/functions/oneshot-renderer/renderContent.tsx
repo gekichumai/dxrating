@@ -1,7 +1,7 @@
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import clsx from 'clsx'
 import type { FC, PropsWithChildren } from 'react'
-import { fetchAsset } from './assetFetcher.js'
+import { fetchImageAsset } from './assetFetcher.js'
 import { type PlayerCollection, type Region, type RenderData } from './index.js'
 
 interface VersionTheme {
@@ -98,10 +98,10 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
   }
 
   const [coverImage, typeImage, accuracyImage, syncImage] = await Promise.all([
-    fetchAsset(`/images/cover/v2/${entry.sheet.imageName}.jpg`),
-    fetchAsset(`/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`),
-    fetchAsset(`/images/play-achievement/${entry.achievementAccuracy ?? 'blank'}.png`),
-    fetchAsset(`/images/play-achievement/${entry.achievementSync ?? 'blank'}.png`),
+    fetchImageAsset(`/images/cover/v2/${entry.sheet.imageName}.jpg`),
+    fetchImageAsset(`/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`),
+    fetchImageAsset(`/images/play-achievement/${entry.achievementAccuracy ?? 'blank'}.png`),
+    fetchImageAsset(`/images/play-achievement/${entry.achievementSync ?? 'blank'}.png`),
   ])
 
   const theme = DIFFICULTIES[entry.sheet.difficulty]
@@ -123,7 +123,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
         return '/images/dxscore-star/1.png'
     }
   })()
-  const starImage = starImagePath && (await fetchAsset(starImagePath)).buffer
+  const starImage = starImagePath && (await fetchImageAsset(starImagePath)).buffer
 
   return (
     <div key={entry.sheet.id} tw="w-1/5 p-[4px] flex h-[116px]">
@@ -333,9 +333,9 @@ export const renderContent = async ({
 }) => {
   const theme = VERSION_THEME[version]
 
-  const background = (await fetchAsset(theme.background)).buffer
+  const background = (await fetchImageAsset(theme.background)).buffer
   const icon = (
-    await fetchAsset(`/assetbundle/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`)
+    await fetchImageAsset(`/assetbundle/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`)
   ).buffer
 
   const b50Sum = [...data.b15, ...data.b35].reduce((acc, cur) => acc + cur.rating.ratingAwardValue, 0)
