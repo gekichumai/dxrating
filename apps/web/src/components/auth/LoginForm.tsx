@@ -28,7 +28,13 @@ const slideVariants = {
 
 type AuthProvider = 'google' | 'github' | 'passkey' | 'email'
 
-export const LoginForm = ({ onPendingChange }: { onPendingChange?: (pending: boolean) => void }) => {
+export const LoginForm = ({
+  onPendingChange,
+  onSuccess,
+}: {
+  onPendingChange?: (pending: boolean) => void
+  onSuccess?: () => void
+}) => {
   const { t } = useTranslation(['auth'])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -75,6 +81,7 @@ export const LoginForm = ({ onPendingChange }: { onPendingChange?: (pending: boo
         if (error) throw error
         haptic.trigger('success')
         toast.success(t('auth:login.toast-success'))
+        onSuccess?.()
       }
     } catch (e: any) {
       haptic.trigger('error')
@@ -100,6 +107,7 @@ export const LoginForm = ({ onPendingChange }: { onPendingChange?: (pending: boo
       if (error) throw error
       haptic.trigger('success')
       toast.success(t('auth:login.toast-success'))
+      onSuccess?.()
     } catch (e: any) {
       haptic.trigger('error')
       setError(e.message || t('auth:form.error-passkey'))
