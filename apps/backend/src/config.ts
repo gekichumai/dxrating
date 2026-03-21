@@ -26,6 +26,8 @@ const envSchema = z.object({
   // === Authentication (BetterAuth) ===
   BETTER_AUTH_SECRET: z.string(),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'), // Adjust default if needed
+  PASSKEY_RP_ID: z.string().optional(),
+  PASSKEY_ORIGIN: z.string().url().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GITHUB_CLIENT_ID: z.string().optional(),
@@ -41,6 +43,10 @@ export const config = {
   auth: {
     secret: env.BETTER_AUTH_SECRET,
     url: env.BETTER_AUTH_URL,
+    passkey: {
+      rpID: env.PASSKEY_RP_ID,
+      origin: env.PASSKEY_ORIGIN,
+    },
     google: {
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,

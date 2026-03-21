@@ -42,5 +42,13 @@ export const auth = betterAuth({
     },
   },
   // Add other providers if needed
-  plugins: [openAPI(), passkey(), oneTap()],
+  plugins: [
+    openAPI(),
+    passkey({
+      rpID: config.auth.passkey.rpID,
+      rpName: 'DXRating',
+      origin: config.auth.passkey.origin,
+    }),
+    oneTap(),
+  ],
 })
