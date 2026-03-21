@@ -23,15 +23,21 @@ const app = new Hono<EvlogVariables>()
 
 // Error handler
 app.onError((err, c) => {
+  const log = c.get('log')
+  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+
   if (err instanceof z.ZodError) {
-    return c.json({ error: 'Validation error', details: err.issues }, 400)
+    return c.json({ error: 'Validation error', details: err.issues, requestId }, 400)
   }
-  c.get('log')?.error(err)
-  Sentry.captureException(err)
+
+  log?.error(err)
+  Sentry.captureException(err, { tags: { requestId } })
+
   if (err instanceof HTTPException) {
     return err.getResponse()
   }
-  return c.json({ error: 'Internal server error' }, 500)
+
+  return c.json({ error: 'Internal server error', requestId }, 500)
 })
 
 // CORS
@@ -53,7 +59,7 @@ app.use(
     },
     allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage'],
     allowMethods: ['POST', 'GET', 'OPTIONS'],
-    exposeHeaders: ['Content-Length'],
+    exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],
     maxAge: 600,
     credentials: true,
   }),
@@ -67,6 +73,16 @@ app.use(
     exclude: ['/health', '/robots.txt', '/docs', '/spec.json', '/'],
   }) as unknown as MiddlewareHandler,
 )
+
+// Set X-DXRating-Request-ID response header
+app.use('*', async (c, next) => {
+  await next()
+  const log = c.get('log')
+  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+  if (requestId) {
+    c.header('X-DXRating-Request-ID', requestId)
+  }
+})
 
 // Root redirect to docs
 app.get('/', (c) => c.redirect('/docs'))
@@ -154,13 +170,35 @@ const openAPIGenerator = new OpenAPIGenerator({
 app.get('/robots.txt', (c) => c.text('User-agent: *\\nDisallow: /'))
 
 app.all('/api/v1/*', async (c) => {
-  const session = await auth.api.getSession({ headers: c.req.raw.headers })
-  const { response } = await openAPIHandler.handle(c.req.raw, {
-    prefix: '/api/v1',
-    context: { user: session?.user },
-  })
+  const log = c.get('log')
+  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
 
-  return response ?? c.notFound()
+  try {
+    const session = await auth.api.getSession({ headers: c.req.raw.headers })
+    const { response } = await openAPIHandler.handle(c.req.raw, {
+      prefix: '/api/v1',
+      context: { user: session?.user },
+    })
+
+    if (!response) return c.notFound()
+
+    // If oRPC returned a 5xx, log it as an error so we get visibility
+    if (response.status >= 500) {
+      const body = await response.clone().text()
+      log?.error(new Error(`oRPC ${response.status}: ${body}`))
+      Sentry.captureMessage(`oRPC ${response.status}`, {
+        level: 'error',
+        tags: { requestId },
+        extra: { responseBody: body },
+      })
+    }
+
+    return response
+  } catch (err) {
+    log?.error(err instanceof Error ? err : new Error(String(err)))
+    Sentry.captureException(err, { tags: { requestId } })
+    return c.json({ error: 'Internal server error', requestId }, 500)
+  }
 })
 
 app.get('/spec.json', async (c) => {
