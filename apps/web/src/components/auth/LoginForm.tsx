@@ -1,12 +1,30 @@
 import { Alert, Button, CircularProgress, Divider, TextField } from '@mui/material'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useWebHaptics } from 'web-haptics/react'
 import toast from 'react-hot-toast'
-import IconMdiFingerprint from '~icons/mdi/fingerprint'
+import { AnimatePresence, motion } from 'framer-motion'
+import IconPasskey from '~icons/material-symbols/passkey'
 import IconLogosGithub from '~icons/logos/github-icon'
 import IconLogosGoogle from '~icons/logos/google-icon'
 import { authClient } from '../../lib/auth-client'
+
+const TRANSITION = { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const }
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 80 : -80,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction > 0 ? -80 : 80,
+    opacity: 0,
+  }),
+}
 
 export const LoginForm = () => {
   const { t } = useTranslation(['auth'])
@@ -15,7 +33,21 @@ export const LoginForm = () => {
   const haptic = useWebHaptics()
   const [loading, setLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
+  const [direction, setDirection] = useState(1)
   const [error, setError] = useState<string | null>(null)
+
+  const innerRef = useRef<HTMLDivElement>(null)
+  const [contentHeight, setContentHeight] = useState<number | undefined>(undefined)
+
+  useEffect(() => {
+    const el = innerRef.current
+    if (!el) return
+    const observer = new ResizeObserver(([entry]) => {
+      setContentHeight(entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   const handleSubmit = async () => {
     setLoading(true)
@@ -69,84 +101,113 @@ export const LoginForm = () => {
     }
   }
 
+  const toggleView = () => {
+    setDirection(isSignUp ? -1 : 1)
+    setIsSignUp(!isSignUp)
+    setError(null)
+  }
+
   return (
-    <div className="flex flex-col gap-3 w-full">
-      <div className="text-center mb-1">
-        <div className="text-xl font-bold">{isSignUp ? t('auth:sign-up.title') : t('auth:form.title')}</div>
-        <div className="text-sm text-zinc-500 mt-1">{t('auth:form.subtitle')}</div>
-      </div>
-
-      {error && <Alert severity="error">{error}</Alert>}
-
-      <div className="flex flex-col gap-2">
-        <Button
-          variant="outlined"
-          startIcon={<IconLogosGithub className="w-5 h-5" />}
-          onClick={() => handleSocial('github')}
-          disabled={loading}
-          className="!py-2.5 !text-sm !normal-case"
-          fullWidth
-        >
-          {t('auth:form.continue-with-github')}
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<IconLogosGoogle className="w-5 h-5" />}
-          onClick={() => handleSocial('google')}
-          disabled={loading}
-          className="!py-2.5 !text-sm !normal-case"
-          fullWidth
-        >
-          {t('auth:form.continue-with-google')}
-        </Button>
-      </div>
-
-      <Divider className="!my-1">
-        <span className="text-xs text-zinc-400">{t('auth:form.or')}</span>
-      </Divider>
-
-      <div className="flex flex-col gap-2">
-        <TextField
-          label={t('auth:form.email')}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          fullWidth
-          size="small"
-        />
-        <TextField
-          label={t('auth:form.password')}
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          fullWidth
-          size="small"
-        />
-      </div>
-
-      <Button variant="contained" onClick={handleSubmit} disabled={loading} className="!py-2.5" fullWidth>
-        {loading ? <CircularProgress size={20} /> : isSignUp ? t('auth:sign-up.label') : t('auth:form.continue')}
-      </Button>
-
-      <Button
-        variant="outlined"
-        startIcon={<IconMdiFingerprint className="text-lg" />}
-        onClick={handlePasskey}
-        disabled={loading}
-        className="!py-2 !text-sm !normal-case"
-        fullWidth
+    <div className="w-full">
+      <motion.div
+        initial={false}
+        animate={{ height: contentHeight ?? 'auto' }}
+        transition={TRANSITION}
+        className="overflow-hidden -m-4"
       >
-        {t('auth:form.sign-in-with-passkey')}
-      </Button>
+        <div ref={innerRef} className="relative p-4">
+          <AnimatePresence mode="popLayout" custom={direction} initial={false}>
+            <motion.div
+              key={isSignUp ? 'register' : 'login'}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={TRANSITION}
+              className="flex flex-col gap-3"
+            >
+              <div className="text-center mb-1">
+                <div className="text-xl font-bold">{isSignUp ? t('auth:sign-up.title') : t('auth:form.title')}</div>
+                <div className="text-sm text-zinc-500 mt-1">{t('auth:form.subtitle')}</div>
+              </div>
 
-      <div className="text-center text-sm text-zinc-500 mt-1">
-        <button
-          type="button"
-          onClick={() => setIsSignUp(!isSignUp)}
-          className="text-blue-600 hover:underline cursor-pointer bg-transparent border-none text-sm"
-        >
-          {isSignUp ? t('auth:form.has-account') : t('auth:form.no-account')}
-        </button>
-      </div>
+              {error && <Alert severity="error">{error}</Alert>}
+
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="outlined"
+                  startIcon={<IconLogosGithub className="w-5 h-5" />}
+                  onClick={() => handleSocial('github')}
+                  disabled={loading}
+                  className="!py-2.5 !text-sm !normal-case"
+                  fullWidth
+                >
+                  {t('auth:form.continue-with-github')}
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<IconLogosGoogle className="w-5 h-5" />}
+                  onClick={() => handleSocial('google')}
+                  disabled={loading}
+                  className="!py-2.5 !text-sm !normal-case"
+                  fullWidth
+                >
+                  {t('auth:form.continue-with-google')}
+                </Button>
+                {!isSignUp && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<IconPasskey className="text-lg" />}
+                    onClick={handlePasskey}
+                    disabled={loading}
+                    className="!py-2 !text-sm !normal-case"
+                    fullWidth
+                  >
+                    {t('auth:form.sign-in-with-passkey')}
+                  </Button>
+                )}
+              </div>
+
+              <Divider className="!my-1">
+                <span className="text-xs text-zinc-400">{t('auth:form.or')}</span>
+              </Divider>
+
+              <div className="flex flex-col gap-2">
+                <TextField
+                  label={t('auth:form.email')}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  fullWidth
+                  size="small"
+                />
+                <TextField
+                  label={t('auth:form.password')}
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  fullWidth
+                  size="small"
+                />
+              </div>
+
+              <Button variant="contained" onClick={handleSubmit} disabled={loading} className="!py-2.5" fullWidth>
+                {loading ? (
+                  <CircularProgress size={20} />
+                ) : isSignUp ? (
+                  t('auth:sign-up.label')
+                ) : (
+                  t('auth:form.continue')
+                )}
+              </Button>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </motion.div>
+
+      <Button variant="text" onClick={toggleView} className="!mt-2 !text-sm !normal-case" fullWidth size="small">
+        {isSignUp ? t('auth:form.has-account') : t('auth:form.no-account')}
+      </Button>
     </div>
   )
 }
