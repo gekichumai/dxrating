@@ -1,6 +1,11 @@
 import type { Context } from 'hono'
 import { streamSSE } from 'hono/streaming'
-import { MaimaiNETIntlClient, MaimaiNETJpClient, type StateUpdateCallback } from '../../../lib/functions/client.js'
+import {
+  MaimaiNETIntlClient,
+  MaimaiNETJpClient,
+  NetImportError,
+  type StateUpdateCallback,
+} from '../../../lib/functions/client.js'
 import { Sentry, type Scope } from '../../../lib/functions/sentry.js'
 
 export async function v0Handler(c: Context) {
@@ -150,6 +155,7 @@ export async function v1Handler(c: Context) {
         await stream.writeSSE({
           event: 'error',
           data: JSON.stringify({
+            code: err instanceof NetImportError ? err.code : 'UNKNOWN_ERROR',
             error: err instanceof Error ? err.message : 'internal server error',
           }),
         })

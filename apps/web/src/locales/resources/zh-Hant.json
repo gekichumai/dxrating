@@ -370,7 +370,7 @@
           "success": "已匯入 {{count}} 條記錄",
           "error": "匯入失敗：{{error}}",
           "importing": "正在從 NET 匯入記錄...",
-          "no-credentials": "從 NET 匯入記錄時出錯：未儲存憑據。請前往評分計算 - 匯入 - 從 NET 匯入並設定您的世嘉 ID 和密碼。",
+          "no-credentials": "從 NET 匯入記錄時出錯：未儲存憑據。請前往評分計算 - 匯入 - 從 NET 匯入並設定您的 SEGA ID 和密碼。",
           "imported": "已從 {{region}} NET 匯入 {{count}} 條記錄。",
           "latest-play": "最近遊玩",
           "date": "日期：{{date}}",
@@ -378,10 +378,17 @@
             "title": "正在使用快取的遊玩記錄",
             "description": "{{minutes}} 分鐘前已更新。為減少對 maimai NET 的存取，15 分鐘內的記錄將被複用。"
           },
+          "errors": {
+            "maintenance": "maimai NET 目前正在維護中，請稍後再試。",
+            "invalid-credentials": "登錄失敗，請檢查您的 SEGA ID 和密碼。",
+            "unknown": "發生了意外錯誤，請重試。",
+            "internal": "取得記錄時發生伺服器錯誤，請重試。",
+            "token": "無法連線至 maimai NET，請稍後再試。"
+          },
           "dialog": {
             "title": "從 NET 匯入",
-            "sega-id": "您的世嘉 ID",
-            "sega-password": "您的世嘉 ID 密碼",
+            "sega-id": "您的 SEGA ID",
+            "sega-password": "您的 SEGA ID 密碼",
             "region": {
               "label": "地區",
               "intl": {

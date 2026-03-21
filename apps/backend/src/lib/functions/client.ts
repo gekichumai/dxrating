@@ -13,6 +13,23 @@ export interface AuthParams {
   password: string
 }
 
+export type NetImportErrorCode =
+  | 'NET_MAINTENANCE'
+  | 'INVALID_CREDENTIALS'
+  | 'UNKNOWN_ERROR'
+  | 'INTERNAL_ERROR'
+  | 'TOKEN_ERROR'
+
+export class NetImportError extends Error {
+  code: NetImportErrorCode
+
+  constructor(code: NetImportErrorCode, message?: string) {
+    super(message ?? code)
+    this.name = 'NetImportError'
+    this.code = code
+  }
+}
+
 export const NODE_ELEMENT_NODE = 1
 export const NODE_TEXT_NODE = 3
 
@@ -158,7 +175,7 @@ export class Client {
     this.setCookie(requestURL.hostname, res.headers)
 
     if (res.status === 302 && URLS.CHECKLIST.ERROR.includes(res.headers.get('location') ?? '')) {
-      throw new Error('unknown error occurred: response redirects to error page')
+      throw new NetImportError('UNKNOWN_ERROR', 'response redirects to error page')
     }
 
     return res
@@ -177,7 +194,7 @@ export class Client {
 
   checkMaintenance(text: string) {
     if (URLS.CHECKLIST.MAINTENANCE.some((m) => text.includes(m))) {
-      throw new Error('NET maintenance is currently ongoing. Please try again later.')
+      throw new NetImportError('NET_MAINTENANCE')
     }
   }
 }
@@ -188,7 +205,7 @@ export class MaimaiNETJpClient extends Client {
 
     const loginPage = await this.fetchAsDOM(URLS.JP.LOGIN_PAGE)
     const loginPageToken = loginPage?.querySelector('input[name="token"]')?.attributes.getNamedItem('value')?.value
-    if (!loginPageToken) throw new Error('unable to fetch token')
+    if (!loginPageToken) throw new NetImportError('TOKEN_ERROR')
 
     const login = await this.fetch(URLS.JP.LOGIN_ENDPOINT, {
       method: 'POST',
@@ -203,7 +220,7 @@ export class MaimaiNETJpClient extends Client {
       }),
     })
     if (URLS.CHECKLIST.ERROR.includes(login.headers.get('location') ?? '')) {
-      throw new Error('invalid credentials: failed to login')
+      throw new NetImportError('INVALID_CREDENTIALS')
     }
 
     await this.fetch(URLS.JP.LOGIN_AIMELIST)
@@ -217,7 +234,7 @@ export class MaimaiNETJpClient extends Client {
     this.onUpdate?.('fetch:recent:in-progress')
     const recentRecordsPage = await this.fetchAsDOM(URLS.JP.RECORD_RECENT_PAGE)
     if (!recentRecordsPage) {
-      throw new Error('internal server error: failed to parse record page')
+      throw new NetImportError('INTERNAL_ERROR', 'failed to parse record page')
     }
     const records = Array.from(recentRecordsPage.querySelectorAll('.wrapper > div.p_10')).flatMap(parseRecentRecordNode)
     this.onUpdate?.('fetch:recent:completed')
@@ -229,7 +246,7 @@ export class MaimaiNETJpClient extends Client {
     for (const { url, fetchState } of musicRecordURLs(URLS.JP.RECORD_MUSICS_PAGE)) {
       const musicRecordsPage = await this.fetchAsDOM(url)
       if (!musicRecordsPage) {
-        throw new Error('internal server error: failed to parse music records page')
+        throw new NetImportError('INTERNAL_ERROR', 'failed to parse music records page')
       }
       musicRecords.push(
         ...Array.from(musicRecordsPage.querySelectorAll('.w_450.m_15.p_r.f_0')).flatMap(parseMusicRecordNode),
@@ -261,7 +278,7 @@ export class MaimaiNETIntlClient extends Client {
       })
     ).headers.get('location')
     if (!redirectURL) {
-      throw new Error('invalid credentials: empty redirectURL')
+      throw new NetImportError('INVALID_CREDENTIALS')
     }
 
     const redirectDestinationResponse = await this.fetch(redirectURL)
@@ -275,8 +292,8 @@ export class MaimaiNETIntlClient extends Client {
           // ignore errors
         },
       }).parseFromString(redirectDestinationText, 'text/html')
-      const errorString = textDom.querySelector('#error')?.textContent?.trim() ?? 'failed to login'
-      throw new Error(`invalid credentials: ${errorString}`)
+      const errorString = textDom.querySelector('#error')?.textContent?.trim() ?? undefined
+      throw new NetImportError('INVALID_CREDENTIALS', errorString)
     }
 
     this.onUpdate?.('auth:succeeded')
@@ -287,7 +304,7 @@ export class MaimaiNETIntlClient extends Client {
 
     const recentRecordsPage = await this.fetchAsDOM(URLS.INTL.RECORD_RECENT_PAGE)
     if (!recentRecordsPage) {
-      throw new Error('internal server error: failed to parse record page')
+      throw new NetImportError('INTERNAL_ERROR', 'failed to parse record page')
     }
     const records = Array.from(recentRecordsPage.querySelectorAll('.wrapper > div.p_10')).flatMap(parseRecentRecordNode)
 
@@ -300,7 +317,7 @@ export class MaimaiNETIntlClient extends Client {
     for (const { url, fetchState } of musicRecordURLs(URLS.INTL.RECORD_MUSICS_PAGE)) {
       const musicRecordsPage = await this.fetchAsDOM(url)
       if (!musicRecordsPage) {
-        throw new Error('internal server error: failed to parse music records page')
+        throw new NetImportError('INTERNAL_ERROR', 'failed to parse music records page')
       }
       musicRecords.push(
         ...Array.from(musicRecordsPage.querySelectorAll('.w_450.m_15.p_r.f_0')).flatMap(parseMusicRecordNode),

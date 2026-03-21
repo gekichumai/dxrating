@@ -14,6 +14,24 @@ import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import type { ComboFlag, PlayEntry, SyncFlag } from '../../RatingCalculatorAddEntryForm'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
 
+type NetImportErrorCode = 'NET_MAINTENANCE' | 'INVALID_CREDENTIALS' | 'UNKNOWN_ERROR' | 'INTERNAL_ERROR' | 'TOKEN_ERROR'
+
+const ERROR_CODE_I18N: Record<NetImportErrorCode, string> = {
+  NET_MAINTENANCE: 'rating-calculator:io.import.net-records.errors.maintenance',
+  INVALID_CREDENTIALS: 'rating-calculator:io.import.net-records.errors.invalid-credentials',
+  UNKNOWN_ERROR: 'rating-calculator:io.import.net-records.errors.unknown',
+  INTERNAL_ERROR: 'rating-calculator:io.import.net-records.errors.internal',
+  TOKEN_ERROR: 'rating-calculator:io.import.net-records.errors.token',
+}
+
+class NetImportError extends Error {
+  code: NetImportErrorCode
+  constructor(code: NetImportErrorCode, message?: string) {
+    super(message ?? code)
+    this.code = code
+  }
+}
+
 export type FetchNetRecordProgressState =
   | 'ready'
   | 'auth:in-progress'
@@ -83,7 +101,12 @@ const fetchNetRecords = async (
           }
           resolve(data)
         } else if (event === 'error') {
-          reject(new Error(JSON.parse(message.data).error))
+          const parsed = JSON.parse(message.data) as { code?: string; error?: string }
+          if (parsed.code && parsed.code in ERROR_CODE_I18N) {
+            reject(new NetImportError(parsed.code as NetImportErrorCode, parsed.error))
+          } else {
+            reject(new Error(parsed.error ?? 'unknown error'))
+          }
         } else {
           console.warn('Unknown event', message)
         }
@@ -276,7 +299,11 @@ export const importFromNETRecords = async (
       count: entries.length,
     })
   } catch (error) {
-    toast.error(t('rating-calculator:io.import.net-records.error', { error: formatErrorMessage(error) }), {
+    const errorMessage =
+      error instanceof NetImportError
+        ? t(ERROR_CODE_I18N[error.code])
+        : t('rating-calculator:io.import.net-records.error', { error: formatErrorMessage(error) })
+    toast.error(errorMessage, {
       id: toastId,
       icon: <IconMdiClose className="h-4 w-4 text-red-5 shrink-0" />,
       duration: 20000,

@@ -393,13 +393,20 @@
           "success": "{{count}}件のエントリーを読み込みしました",
           "error": "読み込みに失敗しました：{{error}}",
           "importing": "NETからレコードを読み込み中...",
-          "no-credentials": "NETからの読み込みエラー：認証情報が保存されていません。レーティング計算 - 読み込み - NETから読み込みで、セガIDとパスワードを設定してください。",
+          "no-credentials": "NETからの読み込みエラー：認証情報が保存されていません。レーティング計算 - 読み込み - NETから読み込みで、SEGA IDとパスワードを設定してください。",
           "imported": "{{region}} NETから{{count}}件のレコードを読み込みました。",
           "latest-play": "最新のプレイ",
           "date": "日付：{{date}}",
           "cached": {
             "title": "キャッシュされたプレイ記録を使用中",
             "description": "{{minutes}}分前に更新済み。maimai NETへの負荷軽減のため、15分以内の記録は再利用されます。"
+          },
+          "errors": {
+            "maintenance": "maimai NETは現在メンテナンス中です。しばらくしてからもう一度お試しください。",
+            "invalid-credentials": "ログインに失敗しました。SEGA IDとパスワードをご確認ください。",
+            "unknown": "予期しないエラーが発生しました。もう一度お試しください。",
+            "internal": "レコードの取得中にサーバーエラーが発生しました。もう一度お試しください。",
+            "token": "maimai NETへの接続に失敗しました。しばらくしてからもう一度お試しください。"
           },
           "dialog": {
             "actions": {
@@ -447,8 +454,8 @@
               "credentials": "あなたのログイン情報は保存されず、記録されず、共有されません。読み込みプロセスの間のみ使用されます。ご希望であれば、",
               "source-code": "ソースコードを確認することができます"
             },
-            "sega-id": "セガID",
-            "sega-password": "セガIDパスワード",
+            "sega-id": "SEGA ID",
+            "sega-password": "SEGA ID パスワード",
             "title": "NETから読み込み"
           }
         }

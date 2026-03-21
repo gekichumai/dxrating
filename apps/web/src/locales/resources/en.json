@@ -411,6 +411,13 @@
             "title": "Using cached play records",
             "description": "Last updated {{minutes}} min ago. To reduce load on maimai NET, records are reused within 15 minutes."
           },
+          "errors": {
+            "maintenance": "maimai NET is currently under maintenance. Please try again later.",
+            "invalid-credentials": "Login failed. Please check your SEGA ID and password.",
+            "unknown": "An unexpected error occurred. Please try again.",
+            "internal": "A server error occurred while fetching records. Please try again.",
+            "token": "Failed to connect to maimai NET. Please try again later."
+          },
           "dialog": {
             "title": "Import from NET",
             "sega-id": "Your Sega ID",
