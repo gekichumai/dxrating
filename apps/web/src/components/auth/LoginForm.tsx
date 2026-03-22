@@ -96,6 +96,7 @@ export const LoginForm = ({
     await authClient.signIn.social({
       provider,
       callbackURL: window.location.href,
+      errorCallbackURL: window.location.href,
     })
     // No setPendingProvider(null) because it redirects
   }

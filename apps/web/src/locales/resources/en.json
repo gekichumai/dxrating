@@ -288,7 +288,13 @@
         "confirm-disconnect-description": "You will no longer be able to sign in with this account."
       },
       "confirm-cancel": "Cancel",
-      "confirm-ok": "Confirm"
+      "confirm-ok": "Confirm",
+      "oauth-error": {
+        "email_doesn't_match": "Cannot link this account because the email address doesn't match your account email.",
+        "unable_to_link_account": "Unable to link this account. The provider may not be verified.",
+        "account_already_linked_to_different_user": "This account is already linked to a different user.",
+        "default": "An authentication error occurred: {{error}}"
+      }
     }
   },
   "rating-calculator": {

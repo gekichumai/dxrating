@@ -283,7 +283,13 @@
         "confirm-disconnect-description": "このアカウントではログインできなくなります。"
       },
       "confirm-cancel": "キャンセル",
-      "confirm-ok": "確認"
+      "confirm-ok": "確認",
+      "oauth-error": {
+        "email_doesn't_match": "メールアドレスが一致しないため、このアカウントを連携できません。",
+        "unable_to_link_account": "このアカウントを連携できません。プロバイダーが検証されていない可能性があります。",
+        "account_already_linked_to_different_user": "このアカウントは既に別のユーザーに連携されています。",
+        "default": "認証エラーが発生しました：{{error}}"
+      }
     }
   },
   "rating-calculator": {

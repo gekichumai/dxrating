@@ -283,7 +283,13 @@
         "confirm-disconnect-description": "解除後將無法使用此帳戶登錄。"
       },
       "confirm-cancel": "取消",
-      "confirm-ok": "確認"
+      "confirm-ok": "確認",
+      "oauth-error": {
+        "email_doesn't_match": "無法連結此帳戶，因為電子郵件地址與您的帳戶不符。",
+        "unable_to_link_account": "無法連結此帳戶。該提供商可能未經驗證。",
+        "account_already_linked_to_different_user": "此帳戶已連結到其他使用者。",
+        "default": "驗證錯誤：{{error}}"
+      }
     }
   },
   "rating-calculator": {

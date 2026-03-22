@@ -2,6 +2,7 @@ import { PrivacyPolicy } from '@/pages/PrivacyPolicy'
 import { CircularProgress, Tab, Tabs } from '@mui/material'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, Suspense, useCallback, useEffect, useTransition } from 'react'
+import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useEffectOnce } from 'react-use'
 import { Route, Router, useLocation, useRoute } from 'wouter'
@@ -112,6 +113,24 @@ const RootLayout: FC = () => {
 
 export const App = () => {
   const versionTheme = useVersionTheme()
+  const { t } = useTranslation(['auth'])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const error = params.get('error')
+    if (!error) return
+
+    const key = `auth:oauth-error.${error}` as const
+    const message = t(key, { defaultValue: '' })
+    toast.error(message || t('auth:oauth-error.default', { error }), { id: 'oauth-error' })
+
+    params.delete('error')
+    params.delete('error_description')
+    const cleanURL = params.toString()
+      ? `${window.location.pathname}?${params.toString()}${window.location.hash}`
+      : `${window.location.pathname}${window.location.hash}`
+    window.history.replaceState({}, '', cleanURL)
+  }, [t])
 
   return (
     <div className="h-full w-full relative">

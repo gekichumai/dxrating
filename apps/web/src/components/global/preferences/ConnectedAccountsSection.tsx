@@ -57,6 +57,7 @@ export const ConnectedAccountsSection: FC = () => {
     await authClient.linkSocial({
       provider,
       callbackURL: window.location.href,
+      errorCallbackURL: window.location.href,
     })
     // Redirects away, no cleanup needed
   }

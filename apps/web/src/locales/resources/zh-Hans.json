@@ -282,7 +282,13 @@
         "confirm-disconnect-description": "解除后将无法使用此账户登录。"
       },
       "confirm-cancel": "取消",
-      "confirm-ok": "确认"
+      "confirm-ok": "确认",
+      "oauth-error": {
+        "email_doesn't_match": "无法关联此账户，因为电子邮件地址与您的账户不匹配。",
+        "unable_to_link_account": "无法关联此账户。该提供商可能未经验证。",
+        "account_already_linked_to_different_user": "此账户已关联到其他用户。",
+        "default": "身份验证出错：{{error}}"
+      }
     }
   },
   "rating-calculator": {
