@@ -60,10 +60,11 @@ jobs:
       - name: Deploy to Cloudflare Pages
         id: deploy
         run: |
-          DEPLOYMENT_URL=$(pnpm dlx wrangler pages deploy apps/web/dist \
+          DEPLOY_OUTPUT=$(pnpm dlx wrangler pages deploy apps/web/dist \
             --project-name=dxrating \
             --branch="${{ github.head_ref }}" \
-            --commit-dirty=true 2>&1 | tee /dev/stderr | grep -oP 'https://[^\s]+\.pages\.dev')
+            --commit-dirty=true 2>&1 | tee /dev/stderr)
+          DEPLOYMENT_URL=$(echo "$DEPLOY_OUTPUT" | grep -oP 'https://[^\s]+\.pages\.dev' | tail -1)
           echo "url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
