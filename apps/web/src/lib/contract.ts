@@ -149,4 +149,51 @@ export const appContract = oc.router({
       )
       .output(z.object({ id: z.number() })),
   },
+  lxns: {
+    authorize: oc
+      .route({
+        method: 'POST',
+        path: '/io/import/lxns/authorize',
+        summary: 'Get LXNS OAuth authorization URL',
+      })
+      .output(z.object({ url: z.string() })),
+    status: oc
+      .route({
+        method: 'GET',
+        path: '/io/import/lxns/status',
+        summary: 'Check LXNS OAuth connection status',
+      })
+      .output(z.object({ connected: z.boolean() })),
+    start: oc
+      .route({
+        method: 'POST',
+        path: '/io/import/lxns/start',
+        summary: 'Import scores from LXNS using stored OAuth token',
+      })
+      .output(
+        z.object({
+          scores: z.array(
+            z.object({
+              id: z.number(),
+              songName: z.string(),
+              level: z.string(),
+              levelIndex: z.number(),
+              achievements: z.number(),
+              fc: z.string().nullable(),
+              fs: z.string().nullable(),
+              type: z.string(),
+              dxScore: z.number().optional(),
+            }),
+          ),
+          count: z.number(),
+        }),
+      ),
+    disconnect: oc
+      .route({
+        method: 'POST',
+        path: '/io/import/lxns/disconnect',
+        summary: 'Disconnect LXNS account',
+      })
+      .output(z.object({ success: z.boolean() })),
+  },
 })

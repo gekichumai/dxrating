@@ -14,6 +14,8 @@ import { evlog, type EvlogVariables } from 'evlog/hono'
 import type { MiddlewareHandler } from 'hono'
 import { drain } from './logger.js'
 import { appRouter } from './router.js'
+import { exchangeCodeForTokens } from './services/lxns/index.js'
+import { config } from './config.js'
 import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
@@ -57,7 +59,7 @@ app.use(
 
       return null
     },
-    allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage'],
+    allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response'],
     allowMethods: ['POST', 'GET', 'OPTIONS'],
     exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],
     maxAge: 600,
@@ -156,6 +158,29 @@ app.post('/api/v1/monitoring/tunnel', async (c) => {
 app.post('/functions/fetch-net-records/v0', verifyParams, fetchNetRecordsV0Handler)
 app.post('/functions/fetch-net-records/v1/:region', verifyParams, fetchNetRecordsV1Handler)
 app.post('/functions/render-oneshot/v0', oneshotRenderer)
+
+// LXNS OAuth callback (direct Hono route — must be before oRPC catch-all since it redirects)
+app.get('/api/v1/io/import/lxns/oauth_callback', async (c) => {
+  const code = c.req.query('code')
+  const state = c.req.query('state')
+  const error = c.req.query('error')
+
+  const frontendCallback = `${config.frontendUrl}/io/import/lxns/oauth_callback`
+
+  if (error || !code || !state) {
+    const msg = error || 'missing_params'
+    return c.redirect(`${frontendCallback}?status=error&error=${encodeURIComponent(msg)}`)
+  }
+
+  try {
+    await exchangeCodeForTokens(code, state)
+    return c.redirect(`${frontendCallback}?status=success`)
+  } catch (err) {
+    const log = c.get('log')
+    log?.error(err instanceof Error ? err : new Error(String(err)))
+    return c.redirect(`${frontendCallback}?status=error&error=exchange_failed`)
+  }
+})
 
 // oRPC OpenAPI handler
 const openAPIHandler = new OpenAPIHandler(appRouter, {

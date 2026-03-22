@@ -399,6 +399,28 @@
           "missing-profile-info": "Diving-Fishプロフィールを入力してください",
           "only-one-of-the-two-fields-should-be-filled": "Diving-Fishプロフィールを入力してください"
         },
+        "lxns": {
+          "title": "LXNSから読み込み（落雪カフェ）",
+          "login-required": "ログインが必要です",
+          "description": "OAuthでLXNS (maimai.lxns.net) アカウントを接続し、スコアを読み込みます。",
+          "connect": "LXNSに接続",
+          "connecting": "LXNSにリダイレクト中...",
+          "connected": "LXNSアカウントが接続されています。",
+          "import": "読み込み開始",
+          "importing": "読み込み中...",
+          "disconnect": "接続解除",
+          "disconnect-confirm": "LXNSアカウントの接続を解除しますか？いつでも再接続できます。",
+          "disconnected": "LXNSアカウントの接続を解除しました。",
+          "success": "LXNSから{{count}}件のエントリーを読み込みました。",
+          "error": "LXNSからの読み込みに失敗しました：{{error}}",
+          "reconnect-required": "LXNSの接続が期限切れです。再接続してください。",
+          "close": "閉じる",
+          "callback": {
+            "success": "LXNSへの接続に成功しました！スコアを読み込めます。",
+            "error": "LXNSへの接続に失敗しました：{{error}}",
+            "redirecting": "レーティング計算機に戻ります..."
+          }
+        },
         "aqua-dx": {
           "title": "AquaDX JSONから読み込み...",
           "success": "{{count}}件のエントリーを読み込みしました"

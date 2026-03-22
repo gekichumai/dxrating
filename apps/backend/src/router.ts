@@ -173,6 +173,7 @@ const aliasesHandler = {
 }
 
 import { MaimaiNETJpClient, MaimaiNETIntlClient } from './lib/functions/client.js'
+import * as lxnsService from './services/lxns/index.js'
 
 const maimaiHandler = {
   fetchRecords: os.maimai.fetchRecords.handler(async ({ input }) => {
@@ -189,9 +190,47 @@ const maimaiHandler = {
   }),
 }
 
+const lxnsHandler = {
+  authorize: os.lxns.authorize.handler(async ({ context }) => {
+    const user = (context as Context).user
+    if (!user) throw new Error('Unauthorized')
+    const url = await lxnsService.generateAuthorizationUrl(user.id)
+    return { url }
+  }),
+  status: os.lxns.status.handler(async ({ context }) => {
+    const user = (context as Context).user
+    if (!user) throw new Error('Unauthorized')
+    return await lxnsService.getConnectionStatus(user.id)
+  }),
+  start: os.lxns.start.handler(async ({ context }) => {
+    const user = (context as Context).user
+    if (!user) throw new Error('Unauthorized')
+    const rawScores = await lxnsService.fetchPlayerScores(user.id)
+    const scores = rawScores.map((s) => ({
+      id: s.id,
+      songName: s.song_name,
+      level: s.level,
+      levelIndex: s.level_index,
+      achievements: s.achievements,
+      fc: s.fc,
+      fs: s.fs,
+      type: s.type,
+      dxScore: s.dx_score,
+    }))
+    return { scores, count: scores.length }
+  }),
+  disconnect: os.lxns.disconnect.handler(async ({ context }) => {
+    const user = (context as Context).user
+    if (!user) throw new Error('Unauthorized')
+    await lxnsService.disconnect(user.id)
+    return { success: true }
+  }),
+}
+
 export const appRouter = os.router({
   tags: tagsHandler,
   comments: commentsHandler,
   aliases: aliasesHandler,
   maimai: maimaiHandler,
+  lxns: lxnsHandler,
 })

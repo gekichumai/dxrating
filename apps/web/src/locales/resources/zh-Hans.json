@@ -395,6 +395,28 @@
           "close": "关闭",
           "import": "导入"
         },
+        "lxns": {
+          "title": "从落雪咖啡屋导入",
+          "login-required": "请先登录",
+          "description": "通过 OAuth 连接您的落雪咖啡屋 (maimai.lxns.net) 账户以导入成绩。",
+          "connect": "连接落雪咖啡屋",
+          "connecting": "正在跳转到落雪咖啡屋...",
+          "connected": "已连接落雪咖啡屋账户。",
+          "import": "立即导入",
+          "importing": "导入中...",
+          "disconnect": "断开连接",
+          "disconnect-confirm": "确定断开落雪咖啡屋账户？您可以随时重新连接。",
+          "disconnected": "已断开落雪咖啡屋账户。",
+          "success": "已从落雪咖啡屋导入 {{count}} 条记录。",
+          "error": "从落雪咖啡屋导入失败：{{error}}",
+          "reconnect-required": "落雪咖啡屋连接已过期，请重新连接。",
+          "close": "关闭",
+          "callback": {
+            "success": "已成功连接落雪咖啡屋！您现在可以导入成绩了。",
+            "error": "连接落雪咖啡屋失败：{{error}}",
+            "redirecting": "正在返回评分计算器..."
+          }
+        },
         "aqua-dx": {
           "title": "从 AquaDX 导出的 JSON 导入...",
           "success": "成功导入 {{count}} 条记录"

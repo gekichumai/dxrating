@@ -35,6 +35,13 @@ const envSchema = z.object({
 
   // Cloudflare Turnstile (CAPTCHA)
   TURNSTILE_SECRET_KEY: z.string().optional(),
+
+  // LXNS OAuth (maimai.lxns.net)
+  LXNS_CLIENT_ID: z.string().optional(),
+  LXNS_CLIENT_SECRET: z.string().optional(),
+
+  // Frontend URL (used for OAuth redirects)
+  FRONTEND_URL: z.string().url().default('http://localhost:5173'),
 })
 
 const env = envSchema.parse(process.env)
@@ -62,4 +69,9 @@ export const config = {
       secretKey: env.TURNSTILE_SECRET_KEY,
     },
   },
+  lxns: {
+    clientId: env.LXNS_CLIENT_ID,
+    clientSecret: env.LXNS_CLIENT_SECRET,
+  },
+  frontendUrl: env.FRONTEND_URL,
 } as const

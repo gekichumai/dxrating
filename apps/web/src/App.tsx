@@ -1,3 +1,4 @@
+import { LxnsOauthCallback } from '@/pages/LxnsOauthCallback'
 import { PrivacyPolicy } from '@/pages/PrivacyPolicy'
 import { CircularProgress, Tab, Tabs } from '@mui/material'
 import { usePostHog } from 'posthog-js/react'
@@ -152,6 +153,10 @@ export const App = () => {
 
             <Route path="/rating">
               <RatingCalculator />
+            </Route>
+
+            <Route path="/io/import/lxns/oauth_callback">
+              <LxnsOauthCallback />
             </Route>
 
             <Route path="/privacy-policy">

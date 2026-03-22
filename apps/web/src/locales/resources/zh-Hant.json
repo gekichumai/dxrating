@@ -475,6 +475,28 @@
             }
           }
         },
+        "lxns": {
+          "title": "從落雪咖啡屋匯入",
+          "login-required": "請先登入",
+          "description": "透過 OAuth 連接您的落雪咖啡屋 (maimai.lxns.net) 帳戶以匯入成績。",
+          "connect": "連接落雪咖啡屋",
+          "connecting": "正在跳轉至落雪咖啡屋...",
+          "connected": "已連接落雪咖啡屋帳戶。",
+          "import": "立即匯入",
+          "importing": "匯入中...",
+          "disconnect": "中斷連接",
+          "disconnect-confirm": "確定中斷落雪咖啡屋帳戶？您可以隨時重新連接。",
+          "disconnected": "已中斷落雪咖啡屋帳戶。",
+          "success": "已從落雪咖啡屋匯入 {{count}} 筆記錄。",
+          "error": "從落雪咖啡屋匯入失敗：{{error}}",
+          "reconnect-required": "落雪咖啡屋連接已過期，請重新連接。",
+          "close": "關閉",
+          "callback": {
+            "success": "已成功連接落雪咖啡屋！您現在可以匯入成績了。",
+            "error": "連接落雪咖啡屋失敗：{{error}}",
+            "redirecting": "正在返回評分計算器..."
+          }
+        },
         "aqua-dx": {
           "success": "",
           "title": ""

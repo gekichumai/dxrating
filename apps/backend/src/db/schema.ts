@@ -65,6 +65,29 @@ export const songAliases = pgTable('song_aliases', {
   created_by: text('created_by').references(() => user.id, { onDelete: 'set null' }),
 })
 
+// --- LXNS OAuth Tables ---
+
+export const lxnsOauthStates = pgTable('lxns_oauth_states', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  state: text('state').notNull().unique(),
+  user_id: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+})
+
+export const lxnsOauthTokens = pgTable('lxns_oauth_tokens', {
+  user_id: text('user_id')
+    .primaryKey()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  access_token: text('access_token').notNull(),
+  refresh_token: text('refresh_token').notNull(),
+  expires_at: timestamp('expires_at').notNull(),
+  scope: text('scope').notNull(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
+})
+
 // --- Relations ---
 
 export const tagGroupsRelations = relations(tagGroups, ({ many }) => ({
@@ -123,10 +146,25 @@ export const songAliasesRelations = relations(songAliases, ({ one }) => ({
   }),
 }))
 
+export const lxnsOauthStatesRelations = relations(lxnsOauthStates, ({ one }) => ({
+  user: one(user, {
+    fields: [lxnsOauthStates.user_id],
+    references: [user.id],
+  }),
+}))
+
+export const lxnsOauthTokensRelations = relations(lxnsOauthTokens, ({ one }) => ({
+  user: one(user, {
+    fields: [lxnsOauthTokens.user_id],
+    references: [user.id],
+  }),
+}))
+
 export const userExtraRelations = relations(user, ({ one, many }) => ({
   profile: one(profiles),
   tags: many(tags),
   tagSongs: many(tagSongs),
   comments: many(comments),
   songAliases: many(songAliases),
+  lxnsOauthToken: one(lxnsOauthTokens),
 }))

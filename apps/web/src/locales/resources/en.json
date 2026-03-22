@@ -399,6 +399,28 @@
           "missing-profile-info": "Please enter your Diving-Fish profile",
           "only-one-of-the-two-fields-should-be-filled": "Please enter your Diving-Fish profile"
         },
+        "lxns": {
+          "title": "Import from LXNS (落雪咖啡屋)",
+          "login-required": "Login required",
+          "description": "Connect your LXNS (maimai.lxns.net) account via OAuth to import your scores.",
+          "connect": "Connect to LXNS",
+          "connecting": "Redirecting to LXNS...",
+          "connected": "Your LXNS account is connected.",
+          "import": "Import Now",
+          "importing": "Importing...",
+          "disconnect": "Disconnect",
+          "disconnect-confirm": "Disconnect your LXNS account? You can reconnect at any time.",
+          "disconnected": "LXNS account disconnected.",
+          "success": "Imported {{count}} entries from LXNS.",
+          "error": "Failed to import from LXNS: {{error}}",
+          "reconnect-required": "Your LXNS connection has expired. Please reconnect.",
+          "close": "Close",
+          "callback": {
+            "success": "Successfully connected to LXNS! You can now import your scores.",
+            "error": "Failed to connect to LXNS: {{error}}",
+            "redirecting": "Returning to rating calculator..."
+          }
+        },
         "aqua-dx": {
           "title": "Import from AquaDX Exported JSON...",
           "success": "Imported {{count}} entries"
