@@ -201,7 +201,9 @@
     },
     "logout": {
       "label": "Logout",
-      "toast-success": "Successfully logged out."
+      "toast-success": "Successfully logged out.",
+      "confirm-title": "Sign out",
+      "confirm-description": "Are you sure you want to sign out?"
     },
     "login": {
       "label": "Login",
@@ -258,14 +260,20 @@
         "empty": "No passkeys registered",
         "added": "Passkey added successfully",
         "deleted": "Passkey removed",
-        "error": "Failed: {{error}}"
+        "error": "Failed: {{error}}",
+        "confirm-delete-title": "Remove passkey",
+        "confirm-delete-description": "This passkey will no longer be able to sign in to your account."
       },
       "devices": {
         "title": "Active devices",
         "current": "This device",
         "revoke": "Sign out",
-        "revoked": "Device signed out"
-      }
+        "revoked": "Device signed out",
+        "confirm-revoke-title": "Sign out device",
+        "confirm-revoke-description": "This will end the session on that device."
+      },
+      "confirm-cancel": "Cancel",
+      "confirm-ok": "Confirm"
     }
   },
   "rating-calculator": {

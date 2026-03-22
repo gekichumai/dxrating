@@ -196,7 +196,9 @@
     },
     "logout": {
       "label": "登出",
-      "toast-success": "已登出"
+      "toast-success": "已登出",
+      "confirm-title": "登出",
+      "confirm-description": "確定要登出嗎？"
     },
     "update-password": {
       "label": "重設密碼",
@@ -253,14 +255,20 @@
         "empty": "尚無通行金鑰",
         "added": "通行金鑰已新增",
         "deleted": "通行金鑰已移除",
-        "error": "操作失敗：{{error}}"
+        "error": "操作失敗：{{error}}",
+        "confirm-delete-title": "移除通行金鑰",
+        "confirm-delete-description": "移除後將無法使用此通行金鑰登錄。"
       },
       "devices": {
         "title": "活躍裝置",
         "current": "目前裝置",
         "revoke": "登出",
-        "revoked": "已登出該裝置"
-      }
+        "revoked": "已登出該裝置",
+        "confirm-revoke-title": "登出裝置",
+        "confirm-revoke-description": "該裝置上的工作階段將被終止。"
+      },
+      "confirm-cancel": "取消",
+      "confirm-ok": "確認"
     }
   },
   "rating-calculator": {

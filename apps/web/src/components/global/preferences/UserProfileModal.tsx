@@ -10,6 +10,7 @@ import IconMdiLogout from '~icons/mdi/logout'
 import IconMdiShield from '~icons/mdi/shield-outline'
 import { authClient } from '../../../lib/auth-client'
 import { useIsLargeDevice } from '../../../utils/breakpoints'
+import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 import { ProfileSection } from './ProfileSection'
 import { SecuritySection } from './SecuritySection'
 
@@ -28,6 +29,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const [direction, setDirection] = useState(0)
   const isLargeDevice = useIsLargeDevice()
   const { data: sessionData } = authClient.useSession()
+  const confirmLogout = useConfirmDialog()
 
   const handleSectionChange = (section: Section) => {
     const currentIdx = SECTIONS.findIndex((s) => s.key === activeSection)
@@ -37,6 +39,8 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   const handleLogout = async () => {
+    const confirmed = await confirmLogout.confirm()
+    if (!confirmed) return
     await authClient.signOut()
     toast.success(t('auth:logout.toast-success'), { id: 'logout-success' })
     onClose()
@@ -112,6 +116,16 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
 
   return (
     <>
+      <ConfirmDialog
+        open={confirmLogout.open}
+        title={t('auth:logout.confirm-title')}
+        description={t('auth:logout.confirm-description')}
+        confirmLabel={t('auth:user-profile.confirm-ok')}
+        cancelLabel={t('auth:user-profile.confirm-cancel')}
+        onConfirm={confirmLogout.onConfirm}
+        onCancel={confirmLogout.onCancel}
+      />
+
       {/* Close button */}
       <IconButton onClick={onClose} className="!absolute !top-2 !right-2 !z-10" size="small">
         <IconMdiClose className="text-lg" />

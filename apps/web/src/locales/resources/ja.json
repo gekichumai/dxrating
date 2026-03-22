@@ -196,7 +196,9 @@
     },
     "logout": {
       "label": "ログアウト",
-      "toast-success": "ログアウトされました"
+      "toast-success": "ログアウトされました",
+      "confirm-title": "ログアウト",
+      "confirm-description": "ログアウトしてもよろしいですか？"
     },
     "update-password": {
       "label": "パスワードを更新する",
@@ -253,14 +255,20 @@
         "empty": "パスキーが登録されていません",
         "added": "パスキーが追加されました",
         "deleted": "パスキーが削除されました",
-        "error": "失敗しました：{{error}}"
+        "error": "失敗しました：{{error}}",
+        "confirm-delete-title": "パスキーを削除",
+        "confirm-delete-description": "このパスキーではアカウントにログインできなくなります。"
       },
       "devices": {
         "title": "アクティブなデバイス",
         "current": "このデバイス",
         "revoke": "ログアウト",
-        "revoked": "デバイスからログアウトしました"
-      }
+        "revoked": "デバイスからログアウトしました",
+        "confirm-revoke-title": "デバイスをログアウト",
+        "confirm-revoke-description": "このデバイスのセッションが終了します。"
+      },
+      "confirm-cancel": "キャンセル",
+      "confirm-ok": "確認"
     }
   },
   "rating-calculator": {

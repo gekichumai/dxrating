@@ -195,7 +195,9 @@
     },
     "logout": {
       "label": "登出",
-      "toast-success": "已登出"
+      "toast-success": "已登出",
+      "confirm-title": "登出",
+      "confirm-description": "确定要登出吗？"
     },
     "update-password": {
       "label": "重设密码",
@@ -252,14 +254,20 @@
         "empty": "暂无通行密钥",
         "added": "通行密钥已添加",
         "deleted": "通行密钥已移除",
-        "error": "操作失败：{{error}}"
+        "error": "操作失败：{{error}}",
+        "confirm-delete-title": "移除通行密钥",
+        "confirm-delete-description": "移除后将无法使用此通行密钥登录。"
       },
       "devices": {
         "title": "活跃设备",
         "current": "当前设备",
         "revoke": "退出登录",
-        "revoked": "已退出该设备"
-      }
+        "revoked": "已退出该设备",
+        "confirm-revoke-title": "退出设备登录",
+        "confirm-revoke-description": "该设备上的会话将被终止。"
+      },
+      "confirm-cancel": "取消",
+      "confirm-ok": "确认"
     }
   },
   "rating-calculator": {

@@ -187,7 +187,7 @@ export const LoginForm = ({
                     variant="outlined"
                     startIcon={
                       pendingProvider === 'passkey' ? (
-                        <CircularProgress size={18} />
+                        <CircularProgress size={20} />
                       ) : (
                         <IconPasskey className="text-lg" />
                       )

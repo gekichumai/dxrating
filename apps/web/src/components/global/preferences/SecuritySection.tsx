@@ -10,6 +10,7 @@ import IconMdiDevices from '~icons/mdi/devices'
 import IconMdiLock from '~icons/mdi/lock-outline'
 import IconPasskey from '~icons/material-symbols/passkey'
 import { authClient } from '../../../lib/auth-client'
+import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 
 // -- Password Subsection --
 
@@ -146,6 +147,7 @@ const PasskeysSubsection: FC = () => {
   const { t } = useTranslation(['auth'])
   const [passkeys, setPasskeys] = useState<PasskeyItem[]>([])
   const [loading, setLoading] = useState(true)
+  const confirmDelete = useConfirmDialog()
 
   const fetchPasskeys = useCallback(async () => {
     setLoading(true)
@@ -177,6 +179,8 @@ const PasskeysSubsection: FC = () => {
   }, [fetchPasskeys])
 
   const handleDelete = async (id: string) => {
+    const confirmed = await confirmDelete.confirm()
+    if (!confirmed) return
     try {
       await authClient.passkey.deletePasskey({ id })
       toast.success(t('auth:user-profile.passkeys.deleted'))
@@ -188,6 +192,16 @@ const PasskeysSubsection: FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
+      <ConfirmDialog
+        open={confirmDelete.open}
+        title={t('auth:user-profile.passkeys.confirm-delete-title')}
+        description={t('auth:user-profile.passkeys.confirm-delete-description')}
+        confirmLabel={t('auth:user-profile.confirm-ok')}
+        cancelLabel={t('auth:user-profile.confirm-cancel')}
+        onConfirm={confirmDelete.onConfirm}
+        onCancel={confirmDelete.onCancel}
+      />
+
       <div className="flex items-center gap-2">
         <IconPasskey className="text-lg text-zinc-500" />
         <h2 className="text-base font-semibold m-0">{t('auth:user-profile.passkeys.title')}</h2>
@@ -262,6 +276,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string }> = ({ currentSessio
   const { t } = useTranslation(['auth'])
   const [sessions, setSessions] = useState<SessionItem[]>([])
   const [loading, setLoading] = useState(true)
+  const confirmRevoke = useConfirmDialog()
 
   const fetchSessions = useCallback(async () => {
     setLoading(true)
@@ -280,6 +295,8 @@ const DevicesSubsection: FC<{ currentSessionToken?: string }> = ({ currentSessio
   }, [fetchSessions])
 
   const handleRevoke = async (token: string) => {
+    const confirmed = await confirmRevoke.confirm()
+    if (!confirmed) return
     try {
       await authClient.revokeSession({ token })
       toast.success(t('auth:user-profile.devices.revoked'))
@@ -291,6 +308,16 @@ const DevicesSubsection: FC<{ currentSessionToken?: string }> = ({ currentSessio
 
   return (
     <div className="flex flex-col gap-4">
+      <ConfirmDialog
+        open={confirmRevoke.open}
+        title={t('auth:user-profile.devices.confirm-revoke-title')}
+        description={t('auth:user-profile.devices.confirm-revoke-description')}
+        confirmLabel={t('auth:user-profile.confirm-ok')}
+        cancelLabel={t('auth:user-profile.confirm-cancel')}
+        onConfirm={confirmRevoke.onConfirm}
+        onCancel={confirmRevoke.onCancel}
+      />
+
       <div className="flex items-center gap-2">
         <IconMdiDevices className="text-lg text-zinc-500" />
         <h2 className="text-base font-semibold m-0">{t('auth:user-profile.devices.title')}</h2>
