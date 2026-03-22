@@ -5,6 +5,7 @@ import i18n from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { initReactI18next } from 'react-i18next'
@@ -130,18 +131,22 @@ i18n
     },
   })
 
+const queryClient = new QueryClient()
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <AppContextProvider>
-      <VersionCustomizedThemeProvider>
-        <RatingCalculatorContextProvider>
-          <PostHogProvider client={posthog}>
-            <SideEffector />
-            <CustomizedToaster />
-            <App />
-          </PostHogProvider>
-        </RatingCalculatorContextProvider>
-      </VersionCustomizedThemeProvider>
-    </AppContextProvider>
+    <QueryClientProvider client={queryClient}>
+      <AppContextProvider>
+        <VersionCustomizedThemeProvider>
+          <RatingCalculatorContextProvider>
+            <PostHogProvider client={posthog}>
+              <SideEffector />
+              <CustomizedToaster />
+              <App />
+            </PostHogProvider>
+          </RatingCalculatorContextProvider>
+        </VersionCustomizedThemeProvider>
+      </AppContextProvider>
+    </QueryClientProvider>
   </React.StrictMode>,
 )

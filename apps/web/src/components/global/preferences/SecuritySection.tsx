@@ -1,14 +1,15 @@
 import { Button, Chip, CircularProgress, IconButton, TextField } from '@mui/material'
-import { type FC, useCallback, useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
 import IconMdiDelete from '~icons/mdi/delete-outline'
-import IconMdiKey from '~icons/mdi/key'
 import IconMdiPlus from '~icons/mdi/plus'
 import IconMdiDevices from '~icons/mdi/devices'
 import IconMdiLock from '~icons/mdi/lock-outline'
 import IconPasskey from '~icons/material-symbols/passkey'
+import aaguidData from '../../../data/passkey-aaguids.json'
 import { authClient } from '../../../lib/auth-client'
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 
@@ -90,49 +91,13 @@ const PasswordSubsection: FC = () => {
 
 // -- Passkeys Subsection --
 
-// Common AAGUID → authenticator name mapping
-// See https://github.com/passkeydeveloper/passkey-authenticator-aaguids
-const AAGUID_MAP: Record<string, string> = {
-  // Apple
-  'fbfc3007-154e-4ecc-8c0b-6e020557d7bd': 'iCloud Keychain',
-  '00000000-0000-0000-0000-000000000000': 'iCloud Keychain',
-  // 1Password
-  'bada5566-a7aa-401f-bd96-45619a55120d': '1Password',
-  'd548826e-79b4-db40-a3d8-11116f7e8349': '1Password',
-  // Bitwarden
-  'aaguidof-bw00-pass-key0-000000000000': 'Bitwarden',
-  // Google Password Manager
-  'ea9b8d66-4d01-1d21-3ce4-b6b48cb575d4': 'Google Password Manager',
-  // Dashlane
-  '531126d6-e717-415c-9320-3d9aa6981239': 'Dashlane',
-  // Windows Hello
-  '6028b017-b1d4-4c02-b4b3-afcdafc96bb2': 'Windows Hello',
-  '08987058-cadc-4b81-b6e1-30de50dcbe96': 'Windows Hello',
-  '9ddd1817-af5a-4672-a2b9-3e3dd95000a7': 'Windows Hello',
-  // YubiKey
-  'cb69481e-8ff7-4039-93ec-0a2729a154a8': 'YubiKey 5',
-  'ee882879-721c-4913-9775-3dfcce97072a': 'YubiKey 5',
-  'fa2b99dc-9e39-4257-8f92-4a30d23c4118': 'YubiKey 5 FIPS',
-  '73bb0cd4-e502-49b8-9c6f-b59445bf720b': 'YubiKey 5 FIPS',
-  'c5ef55ff-ad9a-4b9f-b580-adebafe026d0': 'YubiKey 5Ci FIPS',
-  '2fc0579f-8113-47ea-b116-bb5a8db9202a': 'YubiKey 5 NFC',
-  'b92c3f9a-c014-4056-887f-140a2501163b': 'Security Key by Yubico',
-  'f8a011f3-8c0a-4d15-8006-17111f9edc7d': 'Security Key by Yubico',
-  '6d44ba9b-f6ec-2e49-b930-0c8fe920cb73': 'Security Key by Yubico',
-  // Samsung
-  '53414d53-554e-4700-0000-000000000000': 'Samsung Pass',
-  // Chromium / Chrome
-  'adce0002-35bc-c60a-648b-0b25f1f05503': 'Chrome on Mac',
-}
+// AAGUID database from https://github.com/passkeydeveloper/passkey-authenticator-aaguids
+const aaguids = aaguidData as Record<string, { name: string; icon?: string }>
 
-function getPasskeyDisplayName(passkey: PasskeyItem): string {
-  if (passkey.name) return passkey.name
-  if (passkey.aaguid) {
-    const known = AAGUID_MAP[passkey.aaguid]
-    if (known) return known
-  }
-  if (passkey.deviceType === 'singleDevice') return 'Security Key'
-  return 'Passkey'
+function getPasskeyInfo(passkey: PasskeyItem): { name: string; icon?: string } {
+  const entry = passkey.aaguid ? aaguids[passkey.aaguid] : undefined
+  const name = passkey.name || entry?.name || (passkey.deviceType === 'singleDevice' ? 'Security Key' : 'Passkey')
+  return { name, icon: entry?.icon }
 }
 
 interface PasskeyItem {
@@ -145,38 +110,28 @@ interface PasskeyItem {
 
 const PasskeysSubsection: FC = () => {
   const { t } = useTranslation(['auth'])
-  const [passkeys, setPasskeys] = useState<PasskeyItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const confirmDelete = useConfirmDialog()
 
-  const fetchPasskeys = useCallback(async () => {
-    setLoading(true)
-    try {
+  const { data: passkeys = [], isLoading: loading } = useQuery({
+    queryKey: ['passkeys'],
+    queryFn: async () => {
       const res = await authClient.passkey.listUserPasskeys()
-      if (res.data) {
-        setPasskeys(res.data)
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchPasskeys()
-  }, [fetchPasskeys])
+      return (res.data ?? []) as PasskeyItem[]
+    },
+  })
 
   const [addState, handleAdd] = useAsyncFn(async () => {
     const res = await authClient.passkey.addPasskey()
     if (res.error) {
-      // User cancelled the WebAuthn ceremony or other error
       if (res.error.message) {
         toast.error(t('auth:user-profile.passkeys.error', { error: res.error.message }))
       }
       return
     }
     toast.success(t('auth:user-profile.passkeys.added'))
-    fetchPasskeys()
-  }, [fetchPasskeys])
+    queryClient.invalidateQueries({ queryKey: ['passkeys'] })
+  }, [queryClient])
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirmDelete.confirm()
@@ -184,7 +139,7 @@ const PasskeysSubsection: FC = () => {
     try {
       await authClient.passkey.deletePasskey({ id })
       toast.success(t('auth:user-profile.passkeys.deleted'))
-      setPasskeys((prev) => prev.filter((p) => p.id !== id))
+      queryClient.invalidateQueries({ queryKey: ['passkeys'] })
     } catch (e: any) {
       toast.error(t('auth:user-profile.passkeys.error', { error: e.message }))
     }
@@ -215,18 +170,25 @@ const PasskeysSubsection: FC = () => {
         <p className="text-sm text-zinc-500 m-0">{t('auth:user-profile.passkeys.empty')}</p>
       ) : (
         <div className="flex flex-col gap-2">
-          {passkeys.map((pk) => (
-            <div key={pk.id} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-              <IconMdiKey className="text-lg text-zinc-400 shrink-0" />
-              <div className="flex flex-col flex-1 min-w-0">
-                <span className="text-sm font-medium truncate">{getPasskeyDisplayName(pk)}</span>
-                <span className="text-xs text-zinc-400">{new Date(pk.createdAt).toLocaleDateString()}</span>
+          {passkeys.map((pk) => {
+            const info = getPasskeyInfo(pk)
+            return (
+              <div key={pk.id} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
+                {info.icon ? (
+                  <img src={info.icon} alt="" className="size-5 shrink-0" />
+                ) : (
+                  <IconPasskey className="text-lg text-zinc-400 shrink-0" />
+                )}
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="text-sm font-medium truncate">{info.name}</span>
+                  <span className="text-xs text-zinc-400">{new Date(pk.createdAt).toLocaleDateString()}</span>
+                </div>
+                <IconButton size="small" onClick={() => handleDelete(pk.id)} className="!text-red-500">
+                  <IconMdiDelete className="text-lg" />
+                </IconButton>
               </div>
-              <IconButton size="small" onClick={() => handleDelete(pk.id)} className="!text-red-500">
-                <IconMdiDelete className="text-lg" />
-              </IconButton>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
@@ -274,25 +236,16 @@ function parseUserAgent(ua?: string | null): string {
 
 const DevicesSubsection: FC<{ currentSessionToken?: string }> = ({ currentSessionToken }) => {
   const { t } = useTranslation(['auth'])
-  const [sessions, setSessions] = useState<SessionItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const confirmRevoke = useConfirmDialog()
 
-  const fetchSessions = useCallback(async () => {
-    setLoading(true)
-    try {
+  const { data: sessions = [], isLoading: loading } = useQuery({
+    queryKey: ['sessions'],
+    queryFn: async () => {
       const res = await authClient.listSessions()
-      if (res.data) {
-        setSessions(res.data as SessionItem[])
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchSessions()
-  }, [fetchSessions])
+      return (res.data ?? []) as SessionItem[]
+    },
+  })
 
   const handleRevoke = async (token: string) => {
     const confirmed = await confirmRevoke.confirm()
@@ -300,7 +253,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string }> = ({ currentSessio
     try {
       await authClient.revokeSession({ token })
       toast.success(t('auth:user-profile.devices.revoked'))
-      setSessions((prev) => prev.filter((s) => s.token !== token))
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
     } catch (e: any) {
       toast.error(e.message)
     }
