@@ -32,6 +32,9 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
+
+  // Cloudflare Turnstile (CAPTCHA)
+  TURNSTILE_SECRET_KEY: z.string().optional(),
 })
 
 const env = envSchema.parse(process.env)
@@ -54,6 +57,9 @@ export const config = {
     github: {
       clientId: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
+    },
+    turnstile: {
+      secretKey: env.TURNSTILE_SECRET_KEY,
     },
   },
 } as const

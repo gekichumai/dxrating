@@ -232,6 +232,7 @@
       "no-account": "还没有账户？注册",
       "error-generic": "发生错误",
       "error-passkey": "通行密钥登录失败",
+      "last-used": "上次使用",
       "login-or-register-to-comment": "登录或注册以发表评论"
     },
     "user-profile": {

@@ -4,7 +4,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from './db/index.js'
 import * as schema from './db/schema.js'
 import * as authSchema from './db/auth-schema.js'
-import { openAPI, oneTap, haveIBeenPwned } from 'better-auth/plugins'
+import { openAPI, oneTap, haveIBeenPwned, captcha, lastLoginMethod } from 'better-auth/plugins'
 import { passkey } from '@better-auth/passkey'
 import { i18n } from '@better-auth/i18n'
 import { config } from './config.js'
@@ -54,7 +54,18 @@ export const auth = betterAuth({
       origin: config.auth.passkey.origin,
     }),
     oneTap(),
+    lastLoginMethod({
+      cookieName: 'dxrating.last_used_login_method',
+    }),
     haveIBeenPwned(),
+    ...(config.auth.turnstile.secretKey
+      ? [
+          captcha({
+            provider: 'cloudflare-turnstile',
+            secretKey: config.auth.turnstile.secretKey,
+          }),
+        ]
+      : []),
     i18n({
       defaultLocale: 'en',
       detection: ['header'],

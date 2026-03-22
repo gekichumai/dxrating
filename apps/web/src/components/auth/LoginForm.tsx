@@ -1,13 +1,16 @@
-import { Alert, Button, CircularProgress, Divider, TextField } from '@mui/material'
+import { Alert, Button, Chip, CircularProgress, Divider, TextField } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useWebHaptics } from 'web-haptics/react'
 import toast from 'react-hot-toast'
 import { AnimatePresence, motion } from 'framer-motion'
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import IconPasskey from '~icons/material-symbols/passkey'
 import IconLogosGithub from '~icons/logos/github-icon'
 import IconLogosGoogle from '~icons/logos/google-icon'
 import { authClient } from '../../lib/auth-client'
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
 
 const TRANSITION = { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const }
 
@@ -44,6 +47,10 @@ export const LoginForm = ({
   const [isSignUp, setIsSignUp] = useState(false)
   const [direction, setDirection] = useState(1)
   const [error, setError] = useState<string | null>(null)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const turnstileRef = useRef<TurnstileInstance>(null)
+  const lastUsedMethod = authClient.getLastUsedLoginMethod() as AuthProvider | null
+  const isLastUsed = (provider: AuthProvider) => lastUsedMethod === provider
 
   useEffect(() => {
     onPendingChange?.(loading)
@@ -62,6 +69,8 @@ export const LoginForm = ({
     return () => observer.disconnect()
   }, [])
 
+  const captchaHeaders = turnstileToken ? { 'x-captcha-response': turnstileToken } : undefined
+
   const handleSubmit = async () => {
     setPendingProvider('email')
     setError(null)
@@ -71,13 +80,18 @@ export const LoginForm = ({
           email,
           password,
           name: email.split('@')[0], // Default name
+          fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
         })
         if (error) throw error
         haptic.trigger('success')
         toast.success(t('auth:sign-up.toast-success'))
         setIsSignUp(false)
       } else {
-        const { error } = await authClient.signIn.email({ email, password })
+        const { error } = await authClient.signIn.email({
+          email,
+          password,
+          fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
+        })
         if (error) throw error
         haptic.trigger('success')
         toast.success(t('auth:login.toast-success'))
@@ -88,6 +102,8 @@ export const LoginForm = ({
       setError(e.message || t('auth:form.error-generic'))
     } finally {
       setPendingProvider(null)
+      turnstileRef.current?.reset()
+      setTurnstileToken(null)
     }
   }
 
@@ -152,13 +168,23 @@ export const LoginForm = ({
 
               <div className="flex flex-col gap-2">
                 <Button
-                  variant="outlined"
+                  variant={isLastUsed('github') ? 'contained' : 'outlined'}
                   startIcon={
                     pendingProvider === 'github' ? (
                       <CircularProgress size={20} />
                     ) : (
                       <IconLogosGithub className="w-5 h-5" />
                     )
+                  }
+                  endIcon={
+                    isLastUsed('github') ? (
+                      <Chip
+                        label={t('auth:form.last-used')}
+                        size="small"
+                        color="primary"
+                        className="!h-5 !text-[0.65rem]"
+                      />
+                    ) : undefined
                   }
                   onClick={() => handleSocial('github')}
                   disabled={loading}
@@ -168,13 +194,23 @@ export const LoginForm = ({
                   {t('auth:form.continue-with-github')}
                 </Button>
                 <Button
-                  variant="outlined"
+                  variant={isLastUsed('google') ? 'contained' : 'outlined'}
                   startIcon={
                     pendingProvider === 'google' ? (
                       <CircularProgress size={20} />
                     ) : (
                       <IconLogosGoogle className="w-5 h-5" />
                     )
+                  }
+                  endIcon={
+                    isLastUsed('google') ? (
+                      <Chip
+                        label={t('auth:form.last-used')}
+                        size="small"
+                        color="primary"
+                        className="!h-5 !text-[0.65rem]"
+                      />
+                    ) : undefined
                   }
                   onClick={() => handleSocial('google')}
                   disabled={loading}
@@ -185,13 +221,23 @@ export const LoginForm = ({
                 </Button>
                 {!isSignUp && (
                   <Button
-                    variant="outlined"
+                    variant={isLastUsed('passkey') ? 'contained' : 'outlined'}
                     startIcon={
                       pendingProvider === 'passkey' ? (
                         <CircularProgress size={20} />
                       ) : (
                         <IconPasskey className="text-lg" />
                       )
+                    }
+                    endIcon={
+                      isLastUsed('passkey') ? (
+                        <Chip
+                          label={t('auth:form.last-used')}
+                          size="small"
+                          color="primary"
+                          className="!h-5 !text-[0.65rem]"
+                        />
+                      ) : undefined
                     }
                     onClick={handlePasskey}
                     disabled={loading}
@@ -204,7 +250,16 @@ export const LoginForm = ({
               </div>
 
               <Divider className="!my-1">
-                <span className="text-xs text-zinc-400">{t('auth:form.or')}</span>
+                {isLastUsed('email') ? (
+                  <Chip
+                    label={t('auth:form.last-used')}
+                    size="small"
+                    color="primary"
+                    className="!h-5 !text-[0.65rem]"
+                  />
+                ) : (
+                  <span className="text-xs text-zinc-400">{t('auth:form.or')}</span>
+                )}
               </Divider>
 
               <div className="flex flex-col gap-2">
@@ -227,7 +282,23 @@ export const LoginForm = ({
                 />
               </div>
 
-              <Button variant="contained" onClick={handleSubmit} disabled={loading} className="!py-2.5" fullWidth>
+              {TURNSTILE_SITE_KEY && (
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onSuccess={setTurnstileToken}
+                  onExpire={() => setTurnstileToken(null)}
+                  options={{ size: 'flexible' }}
+                />
+              )}
+
+              <Button
+                variant="contained"
+                onClick={handleSubmit}
+                disabled={loading || (!!TURNSTILE_SITE_KEY && !turnstileToken)}
+                className="!py-2.5"
+                fullWidth
+              >
                 {loading ? (
                   <CircularProgress size={20} />
                 ) : isSignUp ? (

@@ -233,6 +233,7 @@
       "no-account": "アカウントをお持ちでないですか？新規登録へ",
       "error-generic": "エラーが発生しました",
       "error-passkey": "パスキーでのログインに失敗しました",
+      "last-used": "前回使用",
       "login-or-register-to-comment": "ログインまたは新規登録してコメントする"
     },
     "user-profile": {

@@ -233,6 +233,7 @@
       "no-account": "還沒有帳戶？註冊",
       "error-generic": "發生錯誤",
       "error-passkey": "通行金鑰登錄失敗",
+      "last-used": "上次使用",
       "login-or-register-to-comment": "登錄或註冊以發表評論"
     },
     "user-profile": {

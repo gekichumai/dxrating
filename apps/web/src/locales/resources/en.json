@@ -233,6 +233,7 @@
       "no-account": "Don't have an account? Sign up",
       "error-generic": "An error occurred",
       "error-passkey": "Failed to sign in with Passkey",
+      "last-used": "Last used",
       "login-or-register-to-comment": "Login or Register to comment"
     },
     "user-profile": {
