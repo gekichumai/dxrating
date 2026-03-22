@@ -1,0 +1,84 @@
+name: Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+      pull-requests: write
+    name: Deploy Preview
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
+      - name: Populate Bundle Information
+        shell: bash
+        run: |
+          echo "VITE_GIT_COMMIT=${{ github.event.pull_request.head.sha }}" >> ${GITHUB_ENV}
+          echo "VITE_VERSION=pr-${{ github.event.pull_request.number }}" >> ${GITHUB_ENV}
+          echo "VITE_BUILD_NUMBER=${{ github.run_number }}" >> ${GITHUB_ENV}
+          echo "VITE_BUILD_TIME=$(date --utc +%FT%TZ)" >> ${GITHUB_ENV}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        shell: bash
+        run: pnpm turbo run build --filter=@gekichumai/dxrating-web...
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          VITE_BACKEND_URL: https://miruku.dxrating.net
+          VITE_BETTER_AUTH_URL: https://miruku.dxrating.net
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        run: |
+          DEPLOYMENT_URL=$(pnpm dlx wrangler pages deploy apps/web/dist \
+            --project-name=dxrating \
+            --branch="${{ github.head_ref }}" \
+            --commit-dirty=true 2>&1 | tee /dev/stderr | grep -oP 'https://[^\s]+\.pages\.dev')
+          echo "url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Comment PR with preview URL
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: preview-deploy
+          message: |
+            ### Preview Deployment
+
+            | Name | Link |
+            |------|------|
+            | Latest commit | ${{ github.event.pull_request.head.sha }} |
+            | Preview URL | ${{ steps.deploy.outputs.url }} |
+
+            > Built and deployed to Cloudflare Pages.
