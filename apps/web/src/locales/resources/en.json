@@ -272,6 +272,21 @@
         "confirm-revoke-title": "Sign out device",
         "confirm-revoke-description": "This will end the session on that device."
       },
+      "accounts": {
+        "title": "Connected Accounts",
+        "description": "Manage your connected sign-in methods.",
+        "google": "Google",
+        "github": "GitHub",
+        "email-password": "Email & Password",
+        "connected": "Connected",
+        "not-connected": "Not connected",
+        "connect": "Connect",
+        "disconnect": "Disconnect",
+        "disconnected": "Account disconnected",
+        "error": "Failed: {{error}}",
+        "confirm-disconnect-title": "Disconnect account",
+        "confirm-disconnect-description": "You will no longer be able to sign in with this account."
+      },
       "confirm-cancel": "Cancel",
       "confirm-ok": "Confirm"
     }

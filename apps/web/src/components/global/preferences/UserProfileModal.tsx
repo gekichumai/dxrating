@@ -7,17 +7,20 @@ import toast from 'react-hot-toast'
 import IconMdiAccount from '~icons/mdi/account-outline'
 import IconMdiClose from '~icons/mdi/close'
 import IconMdiLogout from '~icons/mdi/logout'
+import IconMdiLinkVariant from '~icons/mdi/link-variant'
 import IconMdiShield from '~icons/mdi/shield-outline'
 import { authClient } from '../../../lib/auth-client'
 import { useIsLargeDevice } from '../../../utils/breakpoints'
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
+import { ConnectedAccountsSection } from './ConnectedAccountsSection'
 import { ProfileSection } from './ProfileSection'
 import { SecuritySection } from './SecuritySection'
 
-type Section = 'profile' | 'security'
+type Section = 'profile' | 'accounts' | 'security'
 
 const SECTIONS: { key: Section; icon: FC<{ className?: string }>; labelKey: string }[] = [
   { key: 'profile', icon: IconMdiAccount, labelKey: 'auth:user-profile.profile' },
+  { key: 'accounts', icon: IconMdiLinkVariant, labelKey: 'auth:user-profile.accounts.title' },
   { key: 'security', icon: IconMdiShield, labelKey: 'auth:user-profile.security' },
 ]
 
@@ -108,6 +111,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
           transition={TRANSITION}
         >
           {activeSection === 'profile' && <ProfileSection />}
+          {activeSection === 'accounts' && <ConnectedAccountsSection />}
           {activeSection === 'security' && <SecuritySection currentSessionToken={sessionData?.session?.token} />}
         </motion.div>
       </AnimatePresence>
