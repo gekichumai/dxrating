@@ -98,8 +98,8 @@ i18n
       lookupQuerystring: 'locale',
       lookupLocalStorage: 'dxrating-locale',
       lookupSessionStorage: 'dxrating-locale',
-      lookupCookie: 'dxrating-locale',
-      caches: ['localStorage'],
+      lookupCookie: 'dxrating.locale',
+      caches: ['localStorage', 'cookie'],
       convertDetectedLanguage(lng) {
         if (['en', 'ja', 'zh-Hans', 'zh-Hant'].includes(lng)) {
           // Use the exact language code
