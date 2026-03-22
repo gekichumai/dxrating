@@ -267,6 +267,21 @@
         "confirm-revoke-title": "デバイスをログアウト",
         "confirm-revoke-description": "このデバイスのセッションが終了します。"
       },
+      "accounts": {
+        "title": "連携アカウント",
+        "description": "ログイン方法の管理",
+        "google": "Google",
+        "github": "GitHub",
+        "email-password": "メール & パスワード",
+        "connected": "連携済み",
+        "not-connected": "未連携",
+        "connect": "連携",
+        "disconnect": "解除",
+        "disconnected": "アカウントの連携を解除しました",
+        "error": "失敗しました：{{error}}",
+        "confirm-disconnect-title": "連携を解除",
+        "confirm-disconnect-description": "このアカウントではログインできなくなります。"
+      },
       "confirm-cancel": "キャンセル",
       "confirm-ok": "確認"
     }

@@ -267,6 +267,21 @@
         "confirm-revoke-title": "登出裝置",
         "confirm-revoke-description": "該裝置上的工作階段將被終止。"
       },
+      "accounts": {
+        "title": "連結帳戶",
+        "description": "管理您的登錄方式。",
+        "google": "Google",
+        "github": "GitHub",
+        "email-password": "電子郵件與密碼",
+        "connected": "已連結",
+        "not-connected": "未連結",
+        "connect": "連結",
+        "disconnect": "解除",
+        "disconnected": "已解除連結",
+        "error": "操作失敗：{{error}}",
+        "confirm-disconnect-title": "解除連結",
+        "confirm-disconnect-description": "解除後將無法使用此帳戶登錄。"
+      },
       "confirm-cancel": "取消",
       "confirm-ok": "確認"
     }

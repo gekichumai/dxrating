@@ -266,6 +266,21 @@
         "confirm-revoke-title": "退出设备登录",
         "confirm-revoke-description": "该设备上的会话将被终止。"
       },
+      "accounts": {
+        "title": "关联账户",
+        "description": "管理您的登录方式。",
+        "google": "Google",
+        "github": "GitHub",
+        "email-password": "邮箱和密码",
+        "connected": "已关联",
+        "not-connected": "未关联",
+        "connect": "关联",
+        "disconnect": "解除",
+        "disconnected": "已解除关联",
+        "error": "操作失败：{{error}}",
+        "confirm-disconnect-title": "解除关联",
+        "confirm-disconnect-description": "解除后将无法使用此账户登录。"
+      },
       "confirm-cancel": "取消",
       "confirm-ok": "确认"
     }
