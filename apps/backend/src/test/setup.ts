@@ -33,7 +33,13 @@ export async function setupTestServer() {
   // 2. Run migration SQL files
   const migrationsPool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
   const migrationDir = path.resolve(__dirname, '../../drizzle')
-  const migrationFiles = ['0000_init.sql', '0001_add_better_auth.sql', '0002_add_relations.sql']
+  const migrationFiles = [
+    '0000_init.sql',
+    '0001_add_better_auth.sql',
+    '0002_add_relations.sql',
+    '0003_localized_tags_to_jsonb.sql',
+    '0004_add_lxns_oauth.sql',
+  ]
 
   for (const file of migrationFiles) {
     const sql = await fs.readFile(path.join(migrationDir, file), 'utf-8')
@@ -125,6 +131,8 @@ export async function cleanDatabase() {
   await pool.query('DELETE FROM tag_groups')
   await pool.query('DELETE FROM comments')
   await pool.query('DELETE FROM song_aliases')
+  await pool.query('DELETE FROM lxns_oauth_states')
+  await pool.query('DELETE FROM lxns_oauth_tokens')
   await pool.query('DELETE FROM profiles')
   await pool.query('DELETE FROM passkey')
   await pool.query('DELETE FROM session')

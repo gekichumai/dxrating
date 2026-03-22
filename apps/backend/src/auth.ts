@@ -57,7 +57,7 @@ export const auth = betterAuth({
     lastLoginMethod({
       cookieName: 'dxrating.last_used_login_method',
     }),
-    haveIBeenPwned(),
+    ...(config.nodeEnv !== 'test' ? [haveIBeenPwned()] : []),
     ...(config.auth.turnstile.secretKey
       ? [
           captcha({
