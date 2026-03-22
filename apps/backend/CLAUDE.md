@@ -43,7 +43,7 @@ src/
 ├── lib/
 │   └── functions/    # MaimaiNET clients (JP/Intl), Sentry setup
 ├── services/
-│   └── functions/    # Oneshot renderer, fetch-net-records, LXNS data
+│   └── functions/    # Oneshot renderer, fetch-net-records
 ├── routes/           # (Currently empty, routes are in app.ts/router.ts)
 └── test/
 ```
@@ -60,8 +60,6 @@ src/
 - `POST /aliases` — Create song alias (auth required)
 - `POST /monitoring/tunnel` — Sentry error tunnel
 - `POST /maimai/fetch-records` — Fetch MaimaiNET records
-- `GET /lxns/player` — Get LXNS player data
-- `GET /lxns/scores` — Get LXNS player scores
 
 ### Direct Routes
 

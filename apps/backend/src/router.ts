@@ -173,7 +173,6 @@ const aliasesHandler = {
 }
 
 import { MaimaiNETJpClient, MaimaiNETIntlClient } from './lib/functions/client.js'
-import { fetchPlayerDataByQQ, fetchPlayerScoresByFriendCode } from './services/functions/fetch-lxns-data/index.js'
 
 const maimaiHandler = {
   fetchRecords: os.maimai.fetchRecords.handler(async ({ input }) => {
@@ -190,19 +189,9 @@ const maimaiHandler = {
   }),
 }
 
-const lxnsHandler = {
-  getPlayer: os.lxns.getPlayer.handler(async ({ input }) => {
-    return await fetchPlayerDataByQQ(input.qq)
-  }),
-  getScores: os.lxns.getScores.handler(async ({ input }) => {
-    return await fetchPlayerScoresByFriendCode(input.friendCode)
-  }),
-}
-
 export const appRouter = os.router({
   tags: tagsHandler,
   comments: commentsHandler,
   aliases: aliasesHandler,
   maimai: maimaiHandler,
-  lxns: lxnsHandler,
 })

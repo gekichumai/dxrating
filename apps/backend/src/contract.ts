@@ -1,6 +1,5 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
-import { LxnsPlayerResponseSchema, LxnsScoreResponseSchema } from './services/functions/fetch-lxns-data/index.js'
 
 const AchievementRecordSchema = z.object({
   sheet: z.object({
@@ -204,25 +203,5 @@ export const appContract = oc.router({
           musicRecords: z.array(MusicRecordSchema),
         }),
       ),
-  },
-  lxns: {
-    getPlayer: oc
-      .route({
-        method: 'GET',
-        path: '/io/import/lxns/player',
-        summary: 'Get player data from LXNS',
-        tags: ['Import'],
-      })
-      .input(z.object({ qq: z.string() }))
-      .output(LxnsPlayerResponseSchema),
-    getScores: oc
-      .route({
-        method: 'GET',
-        path: '/io/import/lxns/scores',
-        summary: 'Get scores from LXNS',
-        tags: ['Import'],
-      })
-      .input(z.object({ friendCode: z.string() }))
-      .output(LxnsScoreResponseSchema),
   },
 })

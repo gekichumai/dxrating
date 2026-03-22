@@ -69,7 +69,7 @@ packages/
 - `src/auth.ts` — Better Auth config (email/password, Google/GitHub OAuth, passkeys)
 - `src/db/schema.ts` — Drizzle app tables (tags, comments, profiles, song_aliases)
 - `src/db/auth-schema.ts` — Better Auth tables
-- `src/services/functions/` — Oneshot renderer, MaimaiNET scraper, LXNS integration
+- `src/services/functions/` — Oneshot renderer, MaimaiNET scraper
 
 ### Web Key Patterns
 - **Styling**: UnoCSS (Tailwind-compatible) + MUI 5 + shadcn/ui via Radix primitives
