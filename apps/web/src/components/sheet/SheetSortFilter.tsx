@@ -23,6 +23,7 @@ import { SheetDetailsContext } from '../../models/context/SheetDetailsContext'
 import type { FlattenedSheet } from '../../songs'
 import { SheetSortSelect } from './SheetSortSelect'
 import { SheetCategoryFilter } from './filters/SheetCategoryFilter'
+import { SheetFavoritesFilter } from './filters/SheetFavoritesFilter'
 import { SheetInternalLevelFilter } from './filters/SheetInternalLevelFilter'
 import { SheetTagFilter } from './filters/SheetTagFilter'
 import { SheetVersionFilter } from './filters/SheetVersionFilter'
@@ -41,6 +42,7 @@ export interface SheetSortFilterForm {
     }
     tags: number[]
     categories: CategoryEnum[]
+    favoritesOnly: boolean
   }
   sorts: SortPredicate[]
 }
@@ -54,6 +56,7 @@ export const getDefaultSheetSortFilterForm = (): SheetSortFilterForm => ({
     },
     tags: [],
     categories: Object.values(CategoryEnum),
+    favoritesOnly: false,
   },
   sorts: [
     {
@@ -136,6 +139,10 @@ export const validateAndMigrate = (alreadySaved: unknown): SheetSortFilterForm =
 
   if (payload.filters.categories === undefined) {
     payload.filters.categories = Object.values(CategoryEnum)
+  }
+
+  if (payload.filters.favoritesOnly === undefined) {
+    payload.filters.favoritesOnly = false
   }
 
   // apply migrations
@@ -284,6 +291,7 @@ const SheetSortFilterFormContent = () => {
           <SheetVersionFilter control={control} />
           <SheetTagFilter control={control} />
           <SheetInternalLevelFilter control={control} />
+          <SheetFavoritesFilter control={control} />
         </div>
       </div>
 

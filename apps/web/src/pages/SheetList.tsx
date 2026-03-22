@@ -43,6 +43,9 @@ const _SheetListInner: FC = () => {
       const validVersions = Array.from(VERSION_ID_MAP.entries())
         .filter(([, id]) => id <= currentVersionId)
         .map(([v]) => v)
+      const favoriteSheetIds = sortFilterOptions.filters.favoritesOnly
+        ? new Set<string>(JSON.parse(localStorage.getItem('favorite-sheets') ?? '[]'))
+        : null
       sortFilteredResults = results.filter((sheet) => {
         return chainEvery<FlattenedSheet>(
           (v) => !!v,
@@ -72,6 +75,13 @@ const _SheetListInner: FC = () => {
             if (sortFilterOptions.filters.categories) {
               const categories = sortFilterOptions.filters.categories
               return categories.some((category) => v.category.includes(category))
+            }
+            return true
+          },
+
+          (v) => {
+            if (favoriteSheetIds) {
+              return favoriteSheetIds.has(v.id)
             }
             return true
           },

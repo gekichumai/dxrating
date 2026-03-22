@@ -87,6 +87,10 @@
       },
       "category": {
         "title": "ジャンル"
+      },
+      "favorites": {
+        "title": "お気に入り",
+        "only": "お気に入りのみ"
       }
     },
     "sort": {

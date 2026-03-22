@@ -87,6 +87,10 @@
       },
       "category": {
         "title": "樂曲類型"
+      },
+      "favorites": {
+        "title": "收藏",
+        "only": "僅顯示收藏"
       }
     },
     "sort": {
