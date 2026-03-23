@@ -153,3 +153,5 @@ If you find a vulnerability in the repository, please email the organization own
 This project is made possible by the following contributors. Contributions are always welcome!
 
 [![Contributors](https://contrib.rocks/image?repo=gekichumai/dxrating)](https://github.com/gekichumai/dxrating/graphs/contributors)
+
+![Alt](https://repobeats.axiom.co/api/embed/e1e839b6d5dca7b87ff9827a2347e8a6a19f2229.svg "Repobeats analytics image")

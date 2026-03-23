@@ -60,22 +60,33 @@ export async function getBuildInfo(): Promise<BuildInfo> {
 async function resolveImageDigest(commit: string): Promise<string | null> {
   const shortSha = commit.substring(0, 7)
   const tag = `sha-${shortSha}`
+  const token = await getGhcrToken()
+  if (!token) return null
 
-  // Get an anonymous pull token from GHCR
-  const tokenRes = await fetch(`https://ghcr.io/token?scope=repository:${GHCR_IMAGE}:pull`)
-  if (!tokenRes.ok) return null
-  const { token } = (await tokenRes.json()) as { token: string }
-
-  // Fetch the manifest to get the digest from the response header
+  // Fetch the manifest — may be an OCI image index (when attestations are attached)
+  // or a plain image manifest. Accept both formats.
   const manifestRes = await fetch(`https://ghcr.io/v2/${GHCR_IMAGE}/manifests/${tag}`, {
     headers: {
       Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.manifest.v1+json',
+      Accept: [
+        'application/vnd.oci.image.index.v1+json',
+        'application/vnd.docker.distribution.manifest.list.v2+json',
+        'application/vnd.docker.distribution.manifest.v2+json',
+        'application/vnd.oci.image.manifest.v1+json',
+      ].join(', '),
     },
   })
   if (!manifestRes.ok) return null
 
+  // The digest of the top-level manifest (index or image) is what attestations reference
   return manifestRes.headers.get('docker-content-digest')
+}
+
+async function getGhcrToken(): Promise<string | null> {
+  const res = await fetch(`https://ghcr.io/token?scope=repository:${GHCR_IMAGE}:pull`)
+  if (!res.ok) return null
+  const { token } = (await res.json()) as { token: string }
+  return token
 }
 
 async function fetchAttestation(imageDigest: string): Promise<unknown> {
