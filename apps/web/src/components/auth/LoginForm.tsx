@@ -288,7 +288,8 @@ export const LoginForm = ({
                   siteKey={TURNSTILE_SITE_KEY}
                   onSuccess={setTurnstileToken}
                   onExpire={() => setTurnstileToken(null)}
-                  options={{ size: 'flexible' }}
+                  options={{ size: 'flexible', theme: 'light' }}
+                  style={{ borderRadius: 12, overflow: 'hidden' }}
                 />
               )}
 
