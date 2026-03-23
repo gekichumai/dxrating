@@ -20,6 +20,7 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
 import { RequestHeadersPlugin, ResponseHeadersPlugin } from '@orpc/server/plugins'
+import { onError } from '@orpc/server'
 
 const app = new Hono<EvlogVariables>()
 
@@ -185,6 +186,15 @@ app.get('/api/v1/io/import/lxns/oauth_callback', async (c) => {
 // oRPC OpenAPI handler
 const openAPIHandler = new OpenAPIHandler(appRouter, {
   plugins: [new RequestHeadersPlugin(), new ResponseHeadersPlugin()],
+  clientInterceptors: [
+    onError((error, { path }) => {
+      const procedureName = path.join('.')
+      console.error(`[oRPC] ${procedureName} failed:`, error)
+      Sentry.captureException(error, {
+        tags: { 'orpc.procedure': procedureName },
+      })
+    }),
+  ],
 })
 
 // oRPC OpenAPI generator for spec
@@ -206,18 +216,6 @@ app.all('/api/v1/*', async (c) => {
     })
 
     if (!response) return c.notFound()
-
-    // If oRPC returned a 5xx, log it as an error so we get visibility
-    if (response.status >= 500) {
-      const body = await response.clone().text()
-      log?.error(new Error(`oRPC ${response.status}: ${body}`))
-      Sentry.captureMessage(`oRPC ${response.status}`, {
-        level: 'error',
-        tags: { requestId },
-        extra: { responseBody: body },
-      })
-    }
-
     return response
   } catch (err) {
     log?.error(err instanceof Error ? err : new Error(String(err)))

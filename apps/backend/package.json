@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "build:bundle": "esbuild src/index.ts src/migrate.ts --bundle --outdir=dist --platform=node --target=node25 --format=esm --packages=external --jsx=automatic",
+    "build:bundle": "esbuild src/index.ts src/migrate.ts --bundle --outdir=dist --platform=node --target=node25 --format=esm --packages=external --jsx=automatic --sourcemap",
     "start": "node dist/index.js",
     "lint": "oxlint .",
     "test": "vitest run",

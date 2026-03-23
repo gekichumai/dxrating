@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
 echo "Running database migrations..."
-node --experimental-transform-types dist/migrate.js
+node --enable-source-maps --experimental-transform-types dist/migrate.js
 echo "Starting server..."
-exec node --experimental-transform-types dist/index.js
+exec node --enable-source-maps --experimental-transform-types dist/index.js
