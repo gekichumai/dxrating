@@ -89,7 +89,7 @@ export async function exchangeCodeForTokens(code: string, state: string): Promis
     throw new Error(`LXNS token exchange failed: ${response.status} ${text}`)
   }
 
-  const tokenData = LxnsTokenResponseSchema.parse(await response.json())
+  const tokenData = LxnsTokenResponseSchema.parse(unwrapLxnsResponse(await response.json()))
 
   const now = new Date()
   const expiresAt = new Date(now.getTime() + tokenData.expires_in * 1000)
@@ -146,7 +146,7 @@ async function refreshAccessToken(userId: string): Promise<string> {
     throw new Error('LXNS connection expired. Please reconnect your account.')
   }
 
-  const tokenData = LxnsTokenResponseSchema.parse(await response.json())
+  const tokenData = LxnsTokenResponseSchema.parse(unwrapLxnsResponse(await response.json()))
 
   const now = new Date()
   const expiresAt = new Date(now.getTime() + tokenData.expires_in * 1000)
@@ -194,7 +194,7 @@ export async function fetchPlayerScores(userId: string) {
     throw new Error(`LXNS API error: ${response.status} ${text}`)
   }
 
-  const data = await response.json()
+  const data = unwrapLxnsResponse(await response.json())
   return LxnsScoresResponseSchema.parse(data)
 }
 
@@ -208,6 +208,23 @@ export async function getConnectionStatus(userId: string): Promise<{ connected: 
 
 export async function disconnect(userId: string): Promise<void> {
   await db.delete(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId))
+}
+
+// --- LXNS Response Envelope ---
+
+const LxnsEnvelopeSchema = z.object({
+  success: z.boolean(),
+  code: z.number(),
+  message: z.string().optional(),
+  data: z.unknown(),
+})
+
+function unwrapLxnsResponse(json: unknown): unknown {
+  const envelope = LxnsEnvelopeSchema.parse(json)
+  if (!envelope.success) {
+    throw new Error(`LXNS API error (${envelope.code}): ${envelope.message || 'Unknown error'}`)
+  }
+  return envelope.data
 }
 
 // --- Zod Schemas ---
