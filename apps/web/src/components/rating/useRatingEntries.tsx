@@ -1,4 +1,5 @@
 import { VERSION_ID_MAP, VersionEnum } from '@gekichumai/dxdata'
+import * as Sentry from '@sentry/react'
 import { useMemo } from 'react'
 import type { Region } from '../../models/context/AppContext'
 import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
@@ -70,6 +71,7 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
   const { data: sheets } = useSheets({ acceptsPartialData: true })
 
   const { allEntries, b15Entries, b35Entries } = useMemo(() => {
+    const computeStart = performance.now()
     const calculated = entries.flatMap((entry) => {
       const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId)
       if (!sheet) {
@@ -122,6 +124,11 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
             ? ('b35' as const)
             : null,
     }))
+
+    Sentry.metrics.distribution('rating_calculation.duration', performance.now() - computeStart, {
+      unit: 'millisecond',
+      attributes: { entry_count: String(entries.length) },
+    })
 
     return {
       allEntries: calculatedEntries,

@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node'
 import { implement } from '@orpc/server'
 import { appContract } from './contract.js'
 import { db } from './db/index.js'
@@ -17,7 +18,11 @@ const os = implement(appContract)
 const tagsHandler = {
   list: os.tags.list.handler(async () => {
     const cached = await cache.get('tags:list')
-    if (cached) return cached
+    if (cached) {
+      Sentry.metrics.count('cache.hit', 1, { attributes: { key: 'tags:list' } })
+      return cached
+    }
+    Sentry.metrics.count('cache.miss', 1, { attributes: { key: 'tags:list' } })
 
     const [allTags, allGroups, allTagSongs] = await Promise.all([
       db
@@ -142,7 +147,11 @@ const commentsHandler = {
 const aliasesHandler = {
   list: os.aliases.list.handler(async () => {
     const cached = await cache.get('aliases:list')
-    if (cached) return cached
+    if (cached) {
+      Sentry.metrics.count('cache.hit', 1, { attributes: { key: 'aliases:list' } })
+      return cached
+    }
+    Sentry.metrics.count('cache.miss', 1, { attributes: { key: 'aliases:list' } })
 
     const result = await db
       .select({
@@ -205,7 +214,11 @@ const lxnsHandler = {
   start: os.lxns.start.handler(async ({ context }) => {
     const user = (context as Context).user
     if (!user) throw new Error('Unauthorized')
+    const fetchStart = performance.now()
     const rawScores = await lxnsService.fetchPlayerScores(user.id)
+    Sentry.metrics.distribution('lxns_fetch.duration', performance.now() - fetchStart, {
+      unit: 'millisecond',
+    })
     const scores = rawScores.map((s) => ({
       id: s.id,
       songName: s.song_name,
@@ -217,6 +230,7 @@ const lxnsHandler = {
       type: s.type,
       dxScore: s.dx_score,
     }))
+    Sentry.metrics.distribution('lxns_fetch.scores', scores.length, { unit: 'none' })
     return { scores, count: scores.length }
   }),
   disconnect: os.lxns.disconnect.handler(async ({ context }) => {

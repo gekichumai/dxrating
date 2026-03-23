@@ -23,9 +23,12 @@ export function initSentry() {
     environment,
     release,
     sendDefaultPii: true,
+    enableLogs: true,
     integrations: [
       // HTTP integration for tracking HTTP requests
       Sentry.httpIntegration(),
+      // Send console.log, console.warn, and console.error calls as logs to Sentry
+      Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
     ],
     // Performance monitoring
     tracesSampleRate: environment === 'production' ? 0.1 : 1.0,

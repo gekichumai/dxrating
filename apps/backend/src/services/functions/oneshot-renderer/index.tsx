@@ -479,19 +479,32 @@ export const handler = async (c: Context): Promise<Response> => {
         level: 'info',
       })
 
+      // Emit Sentry metrics for each render stage
+      for (const obs of timer.get()) {
+        const match = obs.match(/^(\w+);dur=(\d+)$/)
+        if (match) {
+          Sentry.metrics.distribution(`oneshot_render.stage.${match[1]}`, Number(match[2]), {
+            unit: 'millisecond',
+            attributes: { format: queryFormat || 'jpeg' },
+          })
+        }
+      }
+
       c.header('Server-Timing', timer.get().join(', '))
       c.header('Content-Type', type)
       return c.body(buffer.buffer as ArrayBuffer)
     }
 
-    Sentry.addBreadcrumb({
-      message: 'Successfully rendered SVG',
-      category: 'success',
-      data: {
-        svgSize: svg.length,
-      },
-      level: 'info',
-    })
+    // Emit Sentry metrics for SVG render stages
+    for (const obs of timer.get()) {
+      const match = obs.match(/^(\w+);dur=(\d+)$/)
+      if (match) {
+        Sentry.metrics.distribution(`oneshot_render.stage.${match[1]}`, Number(match[2]), {
+          unit: 'millisecond',
+          attributes: { format: 'svg' },
+        })
+      }
+    }
 
     c.header('Server-Timing', timer.get().join(', '))
     c.header('Content-Type', 'image/svg+xml')

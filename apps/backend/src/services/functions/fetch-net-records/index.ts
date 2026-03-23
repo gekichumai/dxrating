@@ -92,6 +92,7 @@ export async function v1Handler(c: Context) {
     }
 
     await Sentry.startSpan({ name: 'fetchNetRecords_v1', op: 'function' }, async () => {
+      const fetchStart = performance.now()
       try {
         Sentry.addBreadcrumb({
           message: 'Starting SSE fetch NET records',
@@ -137,9 +138,25 @@ export async function v1Handler(c: Context) {
           level: 'info',
         })
 
+        Sentry.metrics.distribution('net_fetch.duration', performance.now() - fetchStart, {
+          unit: 'millisecond',
+          attributes: { region },
+        })
+        Sentry.metrics.distribution('net_fetch.music_records', music.length, {
+          unit: 'none',
+          attributes: { region },
+        })
+        Sentry.metrics.distribution('net_fetch.recent_records', recent.length, {
+          unit: 'none',
+          attributes: { region },
+        })
+
         await stream.writeSSE({ event: 'progress', data: JSON.stringify({ state: 'concluded' }) })
         await stream.writeSSE({ event: 'data', data: JSON.stringify({ recent, music }) })
       } catch (err) {
+        Sentry.metrics.count('net_fetch.failure', 1, {
+          attributes: { region, error_code: err instanceof NetImportError ? err.code : 'unknown' },
+        })
         if (err instanceof Error) {
           Sentry.withScope((scope: Scope) => {
             scope.setContext('function', { name: 'fetchNetRecords_v1' })

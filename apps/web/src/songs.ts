@@ -1,4 +1,5 @@
 import { type DifficultyEnum, type Sheet, type Song, TypeEnum, type VersionEnum, dxdata } from '@gekichumai/dxdata'
+import * as Sentry from '@sentry/react'
 import Fuse from 'fuse.js'
 import uniq from 'lodash-es/uniq'
 import { useMemo } from 'react'
@@ -205,12 +206,16 @@ export const useFilteredSheets = (searchTerm: string) => {
   return useMemo(() => {
     const start = performance.now()
     const results = searchTerm === '' ? defaultResults : search(searchTerm)
-    const end = performance.now()
-    console.log(`Fuse search took ${end - start}ms`)
+    const elapsed = performance.now() - start
+
+    Sentry.metrics.distribution('sheet_search.duration', elapsed, {
+      unit: 'millisecond',
+      attributes: { has_query: String(searchTerm !== '') },
+    })
 
     return {
       results,
-      elapsed: end - start,
+      elapsed,
     }
   }, [search, searchTerm, defaultResults])
 }

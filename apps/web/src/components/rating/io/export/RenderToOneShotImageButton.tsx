@@ -1,4 +1,5 @@
 import { Button, CircularProgress, Dialog, DialogContent, DialogContentText, DialogTitle, Grow } from '@mui/material'
+import * as Sentry from '@sentry/react'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -71,8 +72,12 @@ const RenderToOneShotImageDialogContent = () => {
       })
       const blob = await response.blob()
 
+      const duration = Date.now() - from
       posthog?.capture('oneshot_rendered', {
-        duration_seconds: Date.now() - from,
+        duration_seconds: duration,
+      })
+      Sentry.metrics.distribution('oneshot_render.duration', duration, {
+        unit: 'millisecond',
       })
 
       return URL.createObjectURL(blob)

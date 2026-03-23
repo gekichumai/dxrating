@@ -1,6 +1,7 @@
 import { type DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import { CircularProgress } from '@mui/material'
+import * as Sentry from '@sentry/react'
 import cloneDeep from 'lodash-es/cloneDeep'
 import i18n from 'i18next'
 import posthog from 'posthog-js'
@@ -176,6 +177,7 @@ export const importFromNETRecords = async (
   }
   importInFlight = true
   posthog?.capture('netimport_started')
+  const importStart = performance.now()
 
   const t = i18n.t.bind(i18n)
   const toastId = toast.loading(t('rating-calculator:io.import.net-records.importing'), {
@@ -298,7 +300,20 @@ export const importFromNETRecords = async (
       region,
       count: entries.length,
     })
+
+    Sentry.metrics.distribution('net_import.duration', performance.now() - importStart, {
+      unit: 'millisecond',
+      attributes: { region, mode },
+    })
+    Sentry.metrics.distribution('net_import.entries', entries.length, {
+      unit: 'none',
+      attributes: { region, mode },
+    })
   } catch (error) {
+    Sentry.metrics.count('net_import.failure', 1, {
+      attributes: { error_code: error instanceof NetImportError ? error.code : 'unknown' },
+    })
+
     const errorMessage =
       error instanceof NetImportError
         ? t(ERROR_CODE_I18N[error.code])

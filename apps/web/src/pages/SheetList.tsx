@@ -120,9 +120,15 @@ const _SheetListInner: FC = () => {
         )
       }
     }
+    const elapsed = performance.now() - startTime
+    Sentry.metrics.distribution('sheet_filter.duration', elapsed, {
+      unit: 'millisecond',
+      attributes: { has_query: String(!!query), has_filters: String(!!sortFilterOptions) },
+    })
+
     return {
       filteredResults: sortFilteredResults,
-      elapsed: performance.now() - startTime,
+      elapsed,
     }
   }, [results, sortFilterOptions, query, version])
 

@@ -17,6 +17,7 @@ import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
 import CarbonCloud from '~icons/carbon/cloud'
+import * as Sentry from '@sentry/react'
 import { canonicalIdFromParts, useSheets } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { useAuth } from '../../../../hooks/useAuth'
@@ -71,6 +72,7 @@ const LxnsImportDialogContent: FC<{
 
   const handleImport = async () => {
     setState('importing')
+    const importStart = performance.now()
     try {
       const result = await apiClient.lxns.start()
 
@@ -97,8 +99,14 @@ const LxnsImportDialogContent: FC<{
       modifyEntries.set(entries)
       haptics.trigger('success')
       toast.success(t('rating-calculator:io.import.lxns.success', { count: entries.length }))
+
+      Sentry.metrics.distribution('lxns_import.duration', performance.now() - importStart, {
+        unit: 'millisecond',
+      })
+      Sentry.metrics.distribution('lxns_import.entries', entries.length, { unit: 'none' })
       onClose()
     } catch (error) {
+      Sentry.metrics.count('lxns_import.failure', 1)
       const msg = String(formatErrorMessage(error))
       if (msg.includes('expired') || msg.includes('reconnect') || msg.includes('authorize')) {
         toast.error(t('rating-calculator:io.import.lxns.reconnect-required'))
