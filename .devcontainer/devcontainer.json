@@ -1,0 +1,53 @@
+{
+  "name": "DXRating",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/dxrating",
+  "remoteUser": "node",
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+
+  "forwardPorts": [3000, 5173, 5432],
+  "portsAttributes": {
+    "3000": { "label": "Backend API", "onAutoForward": "notify" },
+    "5173": { "label": "Web Frontend", "onAutoForward": "openBrowser" },
+    "5432": { "label": "PostgreSQL", "onAutoForward": "silent" }
+  },
+
+  "postCreateCommand": "pnpm install && cp -n apps/backend/.env.example apps/backend/.env.local || true",
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "unocss.root": "apps/web",
+        "i18n-ally.localesPaths": ["apps/web/src/locales/resources"],
+        "i18n-ally.keystyle": "nested",
+        "i18n-ally.sourceLanguage": "en"
+      },
+      "extensions": [
+        "antfu.unocss",
+        "lokalise.i18n-ally",
+        "streetsidesoftware.code-spell-checker",
+        "bradlc.vscode-tailwindcss",
+        "ms-azuretools.vscode-docker",
+        "EditorConfig.EditorConfig",
+        "eamodio.gitlens"
+      ]
+    },
+    "codespaces": {
+      "openFiles": ["CLAUDE.md"]
+    }
+  },
+
+  "remoteEnv": {
+    "CI": "true",
+    "DATABASE_URL": "postgres://postgres:postgres@db:5432/dxrating",
+    "BETTER_AUTH_SECRET": "devcontainer_secret_1234567890",
+    "BETTER_AUTH_URL": "http://localhost:3000",
+    "FRONTEND_URL": "http://localhost:5173"
+  }
+}
