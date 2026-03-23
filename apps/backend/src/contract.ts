@@ -113,6 +113,17 @@ export const CreateAliasInputSchema = z.object({
   name: z.string(),
 })
 
+export const TrendingResultSchema = z.object({
+  songId: z.string(),
+  count: z.number(),
+})
+
+export const TrendingResponseSchema = z.object({
+  results: z.array(TrendingResultSchema),
+  dateFrom: z.string(),
+  dateTo: z.string(),
+})
+
 export const appContract = oc.router({
   tags: {
     list: oc
@@ -203,6 +214,17 @@ export const appContract = oc.router({
           musicRecords: z.array(MusicRecordSchema),
         }),
       ),
+  },
+  analytics: {
+    trending: oc
+      .route({
+        method: 'GET',
+        path: '/analytics/trending',
+        summary: 'Get trending sheets based on view counts',
+        tags: ['Analytics'],
+        spec: (spec) => ({ ...spec, security: [] }),
+      })
+      .output(TrendingResponseSchema),
   },
   lxns: {
     authorize: oc

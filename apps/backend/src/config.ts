@@ -42,6 +42,10 @@ const envSchema = z.object({
 
   // Frontend URL (used for OAuth redirects)
   FRONTEND_URL: z.string().url().default('http://localhost:5173'),
+
+  // PostHog (for analytics API queries)
+  POSTHOG_PROJECT_ID: z.string().optional(),
+  POSTHOG_API_KEY: z.string().optional(),
 })
 
 const env = envSchema.parse(process.env)
@@ -74,4 +78,8 @@ export const config = {
     clientSecret: env.LXNS_CLIENT_SECRET,
   },
   frontendUrl: env.FRONTEND_URL,
+  posthog: {
+    projectId: env.POSTHOG_PROJECT_ID,
+    apiKey: env.POSTHOG_API_KEY,
+  },
 } as const

@@ -6,6 +6,7 @@ import { tags, tagGroups, tagSongs, comments, profiles, songAliases } from './db
 import { eq, and, desc } from 'drizzle-orm'
 import Keyv from 'keyv'
 import type { auth } from './auth.js'
+import { config } from './config.js'
 
 type Context = {
   user?: typeof auth.$Infer.Session.user
@@ -184,6 +185,72 @@ const aliasesHandler = {
 import { MaimaiNETJpClient, MaimaiNETIntlClient } from './lib/functions/client.js'
 import * as lxnsService from './services/lxns/index.js'
 
+const analyticsHandler = {
+  trending: os.analytics.trending.handler(async () => {
+    const cacheKey = 'analytics:trending'
+    const cached = await cache.get(cacheKey)
+    if (cached) {
+      Sentry.metrics.count('cache.hit', 1, { attributes: { key: cacheKey } })
+      return cached
+    }
+    Sentry.metrics.count('cache.miss', 1, { attributes: { key: cacheKey } })
+
+    const { projectId, apiKey } = config.posthog
+    if (!projectId || !apiKey) {
+      return { results: [], dateFrom: '', dateTo: '' }
+    }
+
+    const response = await fetch(`https://us.posthog.com/api/projects/${projectId}/query/`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: {
+          kind: 'TrendsQuery',
+          series: [{ kind: 'EventsNode', event: 'sheet_content_viewed', math: 'total' }],
+          breakdownFilter: { breakdowns: [{ property: 'song_id', type: 'event' }] },
+          dateRange: { date_from: '-7d' },
+          interval: 'day',
+          filterTestAccounts: true,
+        },
+      }),
+    })
+
+    if (!response.ok) {
+      Sentry.captureException(new Error(`PostHog query failed: ${response.status}`))
+      return { results: [], dateFrom: '', dateTo: '' }
+    }
+
+    const data = await response.json()
+    const series = data.results ?? []
+
+    const songCounts = new Map<string, number>()
+    for (const s of series) {
+      const songId = s.breakdown_value
+      if (typeof songId !== 'string' || !songId) continue
+      const total = (s.count as number) ?? 0
+      songCounts.set(songId, (songCounts.get(songId) ?? 0) + total)
+    }
+
+    const results = [...songCounts.entries()]
+      .map(([songId, count]) => ({ songId, count }))
+      .sort((a, b) => b.count - a.count)
+
+    const now = new Date()
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const result = {
+      results,
+      dateFrom: weekAgo.toISOString().split('T')[0],
+      dateTo: now.toISOString().split('T')[0],
+    }
+
+    await cache.set(cacheKey, result, 60 * 60 * 1000) // 1 hour TTL
+    return result
+  }),
+}
+
 const maimaiHandler = {
   fetchRecords: os.maimai.fetchRecords.handler(async ({ input }) => {
     const { id, password, region } = input
@@ -245,6 +312,7 @@ export const appRouter = os.router({
   tags: tagsHandler,
   comments: commentsHandler,
   aliases: aliasesHandler,
+  analytics: analyticsHandler,
   maimai: maimaiHandler,
   lxns: lxnsHandler,
 })

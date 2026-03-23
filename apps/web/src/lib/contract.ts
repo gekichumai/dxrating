@@ -70,6 +70,17 @@ export const CommentWithProfileSchema = z.object({
   display_name: z.string().nullable(),
 })
 
+export const TrendingResultSchema = z.object({
+  songId: z.string(),
+  count: z.number(),
+})
+
+export const TrendingResponseSchema = z.object({
+  results: z.array(TrendingResultSchema),
+  dateFrom: z.string(),
+  dateTo: z.string(),
+})
+
 export const appContract = oc.router({
   tags: {
     list: oc
@@ -148,6 +159,15 @@ export const appContract = oc.router({
         }),
       )
       .output(z.object({ id: z.number() })),
+  },
+  analytics: {
+    trending: oc
+      .route({
+        method: 'GET',
+        path: '/analytics/trending',
+        summary: 'Get trending sheets based on view counts',
+      })
+      .output(TrendingResponseSchema),
   },
   lxns: {
     authorize: oc
