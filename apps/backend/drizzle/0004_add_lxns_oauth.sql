@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS "lxns_oauth_states" (
+CREATE TABLE "lxns_oauth_states" (
 	"id" bigserial PRIMARY KEY NOT NULL,
 	"state" text NOT NULL,
 	"user_id" text NOT NULL,
@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS "lxns_oauth_states" (
 	CONSTRAINT "lxns_oauth_states_state_unique" UNIQUE("state")
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "lxns_oauth_tokens" (
+CREATE TABLE "lxns_oauth_tokens" (
 	"user_id" text PRIMARY KEY NOT NULL,
 	"access_token" text NOT NULL,
 	"refresh_token" text NOT NULL,
