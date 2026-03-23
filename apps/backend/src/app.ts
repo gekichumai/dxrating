@@ -73,7 +73,7 @@ app.use(
   '*',
   evlog({
     drain,
-    exclude: ['/health', '/version', '/robots.txt', '/docs', '/spec.json', '/'],
+    exclude: ['/health', '/version', '/robots.txt', '/docs', '/spec.json', '/', '/api/v1/monitoring/tunnel'],
   }) as unknown as MiddlewareHandler,
 )
 
