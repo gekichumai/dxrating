@@ -73,7 +73,7 @@ app.use(
   '*',
   evlog({
     drain,
-    exclude: ['/health', '/robots.txt', '/docs', '/spec.json', '/'],
+    exclude: ['/health', '/version', '/robots.txt', '/docs', '/spec.json', '/'],
   }) as unknown as MiddlewareHandler,
 )
 
@@ -92,6 +92,12 @@ app.get('/', (c) => c.redirect('/docs'))
 
 // Health endpoint
 app.get('/health', (c) => c.json({ status: 'ok' }))
+
+// Build provenance endpoint
+app.get('/version', async (c) => {
+  const { getBuildInfo } = await import('./version.js')
+  return c.json(await getBuildInfo())
+})
 
 // BetterAuth
 app.on(['POST', 'GET'], '/api/auth/**', (c) => {

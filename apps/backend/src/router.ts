@@ -224,19 +224,19 @@ const analyticsHandler = {
     }
 
     const data = await response.json()
-    const series = data.results ?? []
+
+    const series = (data.results as Array<Record<string, unknown>>).flat()
 
     const songCounts = new Map<string, number>()
     for (const s of series) {
-      const songId = s.breakdown_value
-      if (typeof songId !== 'string' || !songId) continue
-      const total = (s.count as number) ?? 0
+      if (!s.breakdown_value) continue
+      const songId = String(s.breakdown_value)
+      if (songId === '$$_posthog_breakdown_other_$$') continue
+      const total = (s.aggregated_value as number) ?? 0
       songCounts.set(songId, (songCounts.get(songId) ?? 0) + total)
     }
 
-    const results = [...songCounts.entries()]
-      .map(([songId, count]) => ({ songId, count }))
-      .sort((a, b) => b.count - a.count)
+    const results = [...songCounts.entries()].sort((a, b) => b[1] - a[1]).map(([songId]) => ({ songId }))
 
     const now = new Date()
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)

@@ -72,7 +72,6 @@ export const CommentWithProfileSchema = z.object({
 
 export const TrendingResultSchema = z.object({
   songId: z.string(),
-  count: z.number(),
 })
 
 export const TrendingResponseSchema = z.object({

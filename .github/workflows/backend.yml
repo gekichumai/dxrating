@@ -107,13 +107,25 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Compute build metadata
+        id: build-meta
+        run: |
+          echo "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "version=${LATEST_TAG}" >> "$GITHUB_OUTPUT"
+          echo "source_date_epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Extract metadata
         id: meta
@@ -137,6 +149,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
+        id: push
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -146,9 +159,21 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             GIT_COMMIT=${{ github.sha }}
+            BUILD_URL=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            REPO_URL=${{ github.server_url }}/${{ github.repository }}
+            BUILT_AT=${{ steps.build-meta.outputs.built_at }}
+            VERSION=${{ steps.build-meta.outputs.version }}
+            SOURCE_DATE_EPOCH=${{ steps.build-meta.outputs.source_date_epoch }}
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/backend:buildcache
           cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/backend:buildcache,mode=max,compression=zstd
           platforms: linux/amd64
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/${{ github.repository }}/backend
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
 
   deploy:
     runs-on: ubuntu-latest

@@ -38,4 +38,14 @@ describe('Health & Basic Endpoints', () => {
     const html = await res.text()
     expect(html).toContain('DXRating API')
   })
+
+  it('GET /version returns build metadata', async () => {
+    const res = await fetch(`${getBaseUrl()}/version`)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body).toHaveProperty('commit')
+    expect(body).toHaveProperty('version')
+    expect(body).toHaveProperty('builtAt')
+    expect(body).toHaveProperty('attestation')
+  })
 })
