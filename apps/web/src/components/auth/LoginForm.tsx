@@ -1,13 +1,13 @@
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { Alert, Button, Chip, CircularProgress, Divider, TextField } from '@mui/material'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useWebHaptics } from 'web-haptics/react'
-import toast from 'react-hot-toast'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
-import IconPasskey from '~icons/material-symbols/passkey'
 import IconLogosGithub from '~icons/logos/github-icon'
 import IconLogosGoogle from '~icons/logos/google-icon'
+import IconPasskey from '~icons/material-symbols/passkey'
 import { authClient } from '../../lib/auth-client'
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
@@ -226,7 +226,7 @@ export const LoginForm = ({
                       pendingProvider === 'passkey' ? (
                         <CircularProgress size={20} />
                       ) : (
-                        <IconPasskey className="text-lg" />
+                        <IconPasskey className="size-5" />
                       )
                     }
                     endIcon={
@@ -241,7 +241,7 @@ export const LoginForm = ({
                     }
                     onClick={handlePasskey}
                     disabled={loading}
-                    className="!py-2 !text-sm !normal-case"
+                    className="!py-2.5 !text-sm !normal-case"
                     fullWidth
                   >
                     {t('auth:form.sign-in-with-passkey')}
@@ -288,7 +288,7 @@ export const LoginForm = ({
                   siteKey={TURNSTILE_SITE_KEY}
                   onSuccess={setTurnstileToken}
                   onExpire={() => setTurnstileToken(null)}
-                  options={{ size: 'flexible', theme: 'light' }}
+                  options={{ size: 'flexible', theme: 'light', appearance: 'interaction-only' }}
                   style={{ borderRadius: 12, overflow: 'hidden' }}
                 />
               )}
