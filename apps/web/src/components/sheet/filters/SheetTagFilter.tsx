@@ -4,8 +4,11 @@ import type { FC, ReactNode } from 'react'
 import { type Control, useController } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { LongPressCallbackReason, useLongPress } from 'use-long-press'
+import { Markdown } from '../../global/Markdown'
 import { useCombinedTags } from '../../../models/useCombinedTags'
 import { useSheets } from '../../../songs'
+import { MotionTooltip } from '../../../utils/motion'
+import { zoomTransitions } from '../../../utils/motionConstants'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
 import type { SheetSortFilterForm } from '../SheetSortFilter'
 import { SheetFilterSection } from './SheetFilterSection'
@@ -96,29 +99,40 @@ const SheetTagFilterInput = ({ value, onChange }: { value: number[]; onChange: (
           />
         ))}
       {tagsWithCount?.map((e) => (
-        <SheetTagFilterInputTag
+        <MotionTooltip
+          {...zoomTransitions}
           key={e.id}
-          label={localizeMessage(e.localized_name)}
-          count={e.count ?? '--'}
-          selected={value.includes(e.id)}
-          anySelected={value.length > 0}
-          onToggle={() => {
-            const toggled = !value.includes(e.id)
+          title={<Markdown content={localizeMessage(e.localized_description)} />}
+          arrow
+          slotProps={{
+            popper: { modifiers: [{ name: 'offset', options: { offset: [0, -8] } }] },
+          }}
+        >
+          <span>
+            <SheetTagFilterInputTag
+              label={localizeMessage(e.localized_name)}
+              count={e.count ?? '--'}
+              selected={value.includes(e.id)}
+              anySelected={value.length > 0}
+              onToggle={() => {
+                const toggled = !value.includes(e.id)
 
-            if (toggled) {
-              onChange([...value, e.id])
-            } else {
-              if (value.length === 1) {
-                onChange([])
-              } else {
-                onChange(value.filter((k) => k !== e.id))
-              }
-            }
-          }}
-          onOnly={() => {
-            onChange([e.id])
-          }}
-        />
+                if (toggled) {
+                  onChange([...value, e.id])
+                } else {
+                  if (value.length === 1) {
+                    onChange([])
+                  } else {
+                    onChange(value.filter((k) => k !== e.id))
+                  }
+                }
+              }}
+              onOnly={() => {
+                onChange([e.id])
+              }}
+            />
+          </span>
+        </MotionTooltip>
       ))}
     </div>
   )

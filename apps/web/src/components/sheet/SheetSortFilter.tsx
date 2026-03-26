@@ -287,10 +287,10 @@ const SheetSortFilterFormContent = () => {
           <span className="whitespace-nowrap">{t('sheet:filter.title')}</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SheetCategoryFilter control={control} />
-          <SheetVersionFilter control={control} />
           <SheetTagFilter control={control} />
           <SheetInternalLevelFilter control={control} />
+          <SheetVersionFilter control={control} />
+          <SheetCategoryFilter control={control} />
           <SheetFavoritesFilter control={control} />
         </div>
       </div>
