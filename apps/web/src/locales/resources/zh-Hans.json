@@ -233,7 +233,13 @@
       "error-generic": "发生错误",
       "error-passkey": "通行密钥登录失败",
       "last-used": "上次使用",
-      "login-or-register-to-comment": "登录或注册以发表评论"
+      "login-or-register-to-comment": "登录或注册以发表评论",
+      "validation": {
+        "email-required": "请输入邮箱地址",
+        "email-invalid": "请输入有效的邮箱地址",
+        "password-required": "请输入密码",
+        "password-min-length": "密码长度至少为8个字符"
+      }
     },
     "user-profile": {
       "title": "账户",

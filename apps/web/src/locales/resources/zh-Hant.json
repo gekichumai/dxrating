@@ -234,7 +234,13 @@
       "error-generic": "發生錯誤",
       "error-passkey": "通行金鑰登錄失敗",
       "last-used": "上次使用",
-      "login-or-register-to-comment": "登錄或註冊以發表評論"
+      "login-or-register-to-comment": "登錄或註冊以發表評論",
+      "validation": {
+        "email-required": "請輸入電子郵件地址",
+        "email-invalid": "請輸入有效的電子郵件地址",
+        "password-required": "請輸入密碼",
+        "password-min-length": "密碼長度至少為8個字元"
+      }
     },
     "user-profile": {
       "title": "帳戶",

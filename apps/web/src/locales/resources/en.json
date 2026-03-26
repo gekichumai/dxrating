@@ -234,7 +234,13 @@
       "error-generic": "An error occurred",
       "error-passkey": "Failed to sign in with Passkey",
       "last-used": "Last used",
-      "login-or-register-to-comment": "Login or Register to comment"
+      "login-or-register-to-comment": "Login or Register to comment",
+      "validation": {
+        "email-required": "Email is required",
+        "email-invalid": "Please enter a valid email address",
+        "password-required": "Password is required",
+        "password-min-length": "Password must be at least 8 characters"
+      }
     },
     "user-profile": {
       "title": "Account",

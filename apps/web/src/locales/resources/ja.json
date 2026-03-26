@@ -234,7 +234,13 @@
       "error-generic": "エラーが発生しました",
       "error-passkey": "パスキーでのログインに失敗しました",
       "last-used": "前回使用",
-      "login-or-register-to-comment": "ログインまたは新規登録してコメントする"
+      "login-or-register-to-comment": "ログインまたは新規登録してコメントする",
+      "validation": {
+        "email-required": "メールアドレスを入力してください",
+        "email-invalid": "有効なメールアドレスを入力してください",
+        "password-required": "パスワードを入力してください",
+        "password-min-length": "パスワードは8文字以上で入力してください"
+      }
     },
     "user-profile": {
       "title": "アカウント",

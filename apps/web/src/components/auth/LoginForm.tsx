@@ -2,6 +2,7 @@ import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { Alert, Button, Chip, CircularProgress, Divider, TextField } from '@mui/material'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
+import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useWebHaptics } from 'web-haptics/react'
@@ -29,6 +30,11 @@ const slideVariants = {
   }),
 }
 
+interface LoginFormValues {
+  email: string
+  password: string
+}
+
 type AuthProvider = 'google' | 'github' | 'passkey' | 'email'
 
 export const LoginForm = ({
@@ -39,8 +45,14 @@ export const LoginForm = ({
   onSuccess?: () => void
 }) => {
   const { t } = useTranslation(['auth'])
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    formState: { errors, isValid },
+  } = useForm<LoginFormValues>({
+    mode: 'onChange',
+    defaultValues: { email: '', password: '' },
+  })
   const haptic = useWebHaptics()
   const [pendingProvider, setPendingProvider] = useState<AuthProvider | null>(null)
   const loading = pendingProvider !== null
@@ -70,16 +82,19 @@ export const LoginForm = ({
   }, [])
 
   const captchaHeaders = turnstileToken ? { 'x-captcha-response': turnstileToken } : undefined
+  const waitingForTurnstile = !!TURNSTILE_SITE_KEY && !turnstileToken
+  const buttonLoading = loading || (isValid && waitingForTurnstile)
+  const buttonDisabled = loading || !isValid || waitingForTurnstile
 
-  const handleSubmit = async () => {
+  const onSubmit = async (data: LoginFormValues) => {
     setPendingProvider('email')
     setError(null)
     try {
       if (isSignUp) {
         const { error } = await authClient.signUp.email({
-          email,
-          password,
-          name: email.split('@')[0], // Default name
+          email: data.email,
+          password: data.password,
+          name: data.email.split('@')[0], // Default name
           fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
         })
         if (error) throw error
@@ -88,8 +103,8 @@ export const LoginForm = ({
         setIsSignUp(false)
       } else {
         const { error } = await authClient.signIn.email({
-          email,
-          password,
+          email: data.email,
+          password: data.password,
           fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
         })
         if (error) throw error
@@ -264,18 +279,32 @@ export const LoginForm = ({
 
               <div className="flex flex-col gap-2">
                 <TextField
+                  {...register('email', {
+                    required: t('auth:form.validation.email-required'),
+                    pattern: {
+                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                      message: t('auth:form.validation.email-invalid'),
+                    },
+                  })}
                   label={t('auth:form.email')}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
                   disabled={loading}
                   fullWidth
                   size="small"
                 />
                 <TextField
+                  {...register('password', {
+                    required: t('auth:form.validation.password-required'),
+                    minLength: {
+                      value: 8,
+                      message: t('auth:form.validation.password-min-length'),
+                    },
+                  })}
                   label={t('auth:form.password')}
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  error={!!errors.password}
+                  helperText={errors.password?.message}
                   disabled={loading}
                   fullWidth
                   size="small"
@@ -295,12 +324,12 @@ export const LoginForm = ({
 
               <Button
                 variant="contained"
-                onClick={handleSubmit}
-                disabled={loading || (!!TURNSTILE_SITE_KEY && !turnstileToken)}
+                onClick={handleFormSubmit(onSubmit)}
+                disabled={buttonDisabled}
                 className="!py-2.5"
                 fullWidth
               >
-                {loading ? (
+                {buttonLoading ? (
                   <CircularProgress size={20} />
                 ) : isSignUp ? (
                   t('auth:sign-up.label')
