@@ -2,7 +2,7 @@ import { IconButton } from '@mui/material'
 import MdiGithub from '~icons/mdi/github'
 import DiscordLogo from '~icons/simple-icons/discord'
 import { BUNDLE } from '../../utils/bundle'
-import { useTime } from '../../utils/useTime'
+import { RelativeTime } from '../../utils/useTime'
 import { useVersionTheme } from '../../utils/useVersionTheme'
 import { Logo } from '../global/Logo'
 import { LocaleSelector } from '../global/preferences/LocaleSelector'
@@ -10,7 +10,6 @@ import { UserChip } from '../global/preferences/UserChip'
 import { About } from '../global/site-meta/About'
 
 export const TopBar = () => {
-  const updateTime = useTime(BUNDLE.buildTime, 'short')
   const versionTheme = useVersionTheme()
 
   return (
@@ -19,7 +18,7 @@ export const TopBar = () => {
         <div className="flex flex-col items-start justify-center gap-1 select-none relative">
           <Logo />
           <div className="text-xs text-black/50 leading-none">
-            {BUNDLE.version ?? 'unknown'} ({updateTime})
+            {BUNDLE.version ?? 'unknown'} (<RelativeTime time={BUNDLE.buildTime} length="short" />)
           </div>
         </div>
 

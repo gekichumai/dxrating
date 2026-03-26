@@ -1,9 +1,19 @@
 import { intlFormatDistance } from 'date-fns'
-import { useMemo } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
+function useMinuteTick() {
+  const [tick, setTick] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 60_000)
+    return () => clearInterval(id)
+  }, [])
+  return tick
+}
 
 export const useTime = (time?: string, length: 'short' | 'normal' = 'normal') => {
   const { i18n } = useTranslation()
+  const tick = useMinuteTick()
   return useMemo(() => {
     try {
       if (!time) throw new Error('useTime: time is undefined')
@@ -23,5 +33,11 @@ export const useTime = (time?: string, length: 'short' | 'normal' = 'normal') =>
     } catch {
       return 'unknown'
     }
-  }, [time, i18n.language])
+  }, [time, i18n.language, tick])
 }
+
+/** Self-refreshing relative time display. Rerenders only itself once per minute. */
+export const RelativeTime = memo(({ time, length }: { time?: string; length?: 'short' | 'normal' }) => {
+  const formatted = useTime(time, length)
+  return <>{formatted}</>
+})
