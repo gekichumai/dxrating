@@ -6,6 +6,7 @@ import type { FlattenedSheet } from '../../../songs'
 export const useSheetTags = (sheet: FlattenedSheet) => {
   const response = useCombinedTags()
   const { data: combinedTags, ...rest } = response
+  const groupOrder = combinedTags?.tagGroups.map((g) => g.id) ?? []
   const sheetTags = compact(
     combinedTags?.tagSongs
       .filter(
@@ -19,7 +20,11 @@ export const useSheetTags = (sheet: FlattenedSheet) => {
         ...tag,
         group: combinedTags.tagGroups.find((group) => group.id === tag?.group_id),
       })),
-  )
+  ).sort((a, b) => {
+    const aIdx = groupOrder.indexOf(a.group_id ?? -1)
+    const bIdx = groupOrder.indexOf(b.group_id ?? -1)
+    return aIdx - bIdx
+  })
 
   return useMemo(() => {
     return {
