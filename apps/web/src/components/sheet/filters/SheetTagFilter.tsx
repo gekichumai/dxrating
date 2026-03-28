@@ -74,6 +74,7 @@ const SheetTagFilterInputTag = ({
 const SheetTagFilterInput = ({ value, onChange }: { value: number[]; onChange: (value: number[]) => void }) => {
   const { data: combinedTags, isLoading } = useCombinedTags()
   const tags = combinedTags?.tags
+  const tagGroups = combinedTags?.tagGroups
   const { data: sheets } = useSheets()
   const localizeMessage = useLocalizedMessageTranslation()
 
@@ -82,10 +83,52 @@ const SheetTagFilterInput = ({ value, onChange }: { value: number[]; onChange: (
     count: sheets?.filter((sheet) => sheet.tags.includes(tag.id)).length,
   }))
 
-  return (
-    <div className="flex flex-wrap gap-2">
-      {isLoading &&
-        Array.from({ length: 8 }).map((_, i) => (
+  const groupedTags = tagGroups?.map((group) => ({
+    ...group,
+    tags: tagsWithCount?.filter((tag) => tag.group_id === group.id) ?? [],
+  }))
+
+  const renderTag = (e: NonNullable<typeof tagsWithCount>[number]) => (
+    <MotionTooltip
+      {...zoomTransitions}
+      key={e.id}
+      title={<Markdown content={localizeMessage(e.localized_description)} />}
+      arrow
+      slotProps={{
+        popper: { modifiers: [{ name: 'offset', options: { offset: [0, -8] } }] },
+      }}
+    >
+      <span>
+        <SheetTagFilterInputTag
+          label={localizeMessage(e.localized_name)}
+          count={e.count ?? '--'}
+          selected={value.includes(e.id)}
+          anySelected={value.length > 0}
+          onToggle={() => {
+            const toggled = !value.includes(e.id)
+
+            if (toggled) {
+              onChange([...value, e.id])
+            } else {
+              if (value.length === 1) {
+                onChange([])
+              } else {
+                onChange(value.filter((k) => k !== e.id))
+              }
+            }
+          }}
+          onOnly={() => {
+            onChange([e.id])
+          }}
+        />
+      </span>
+    </MotionTooltip>
+  )
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        {Array.from({ length: 8 }).map((_, i) => (
           <SheetTagFilterInputTag
             // oxlint-disable-next-line react/no-array-index-key -- index is stable
             key={i}
@@ -98,41 +141,22 @@ const SheetTagFilterInput = ({ value, onChange }: { value: number[]; onChange: (
             onOnly={() => {}}
           />
         ))}
-      {tagsWithCount?.map((e) => (
-        <MotionTooltip
-          {...zoomTransitions}
-          key={e.id}
-          title={<Markdown content={localizeMessage(e.localized_description)} />}
-          arrow
-          slotProps={{
-            popper: { modifiers: [{ name: 'offset', options: { offset: [0, -8] } }] },
-          }}
-        >
-          <span>
-            <SheetTagFilterInputTag
-              label={localizeMessage(e.localized_name)}
-              count={e.count ?? '--'}
-              selected={value.includes(e.id)}
-              anySelected={value.length > 0}
-              onToggle={() => {
-                const toggled = !value.includes(e.id)
+      </div>
+    )
+  }
 
-                if (toggled) {
-                  onChange([...value, e.id])
-                } else {
-                  if (value.length === 1) {
-                    onChange([])
-                  } else {
-                    onChange(value.filter((k) => k !== e.id))
-                  }
-                }
-              }}
-              onOnly={() => {
-                onChange([e.id])
-              }}
-            />
-          </span>
-        </MotionTooltip>
+  return (
+    <div className="flex flex-col gap-3">
+      {groupedTags?.map((group) => (
+        <div key={group.id} className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: group.color }} />
+            <span className="text-xs font-medium text-zinc-500 tracking-tight">
+              {localizeMessage(group.localized_name)}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">{group.tags.map(renderTag)}</div>
+        </div>
       ))}
     </div>
   )
