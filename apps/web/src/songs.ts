@@ -62,6 +62,7 @@ export const useSheets = ({ acceptsPartialData = false } = {}) => {
     loadingCombinedTags: String(loadingCombinedTags),
     loadingServerAliases: String(loadingServerAliases),
     aliasCount: String(serverAliases?.length ?? 0),
+    tagSongsCount: String(combinedTags?.tagSongs.length ?? 0),
   }).toString()}`
   return useSWR(
     acceptsPartialData ? key : !(loadingCombinedTags || loadingServerAliases) && key,
