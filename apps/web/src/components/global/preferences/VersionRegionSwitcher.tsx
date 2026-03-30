@@ -1,6 +1,7 @@
 import type { VersionEnum } from '@gekichumai/dxdata'
 import { ListItem, ListSubheader, MenuItem, Select, styled } from '@mui/material'
 import clsx from 'clsx'
+import uniqBy from 'lodash-es/uniqBy'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import MdiInformation from '~icons/mdi/information'
@@ -42,6 +43,26 @@ const VERSION_SPECIFIC_REGIONS: VersionRegion[] = [
   versionEnum: DXVersionToDXDataVersionEnumMap[dxVersion],
   dxVersion,
   region,
+}))
+
+const VERSION_GENERIC_REGIONS: VersionRegion[] = [
+  {
+    dxVersion: 'circle-plus' as const,
+  },
+  {
+    dxVersion: 'circle' as const,
+  },
+  {
+    dxVersion: 'prism-plus' as const,
+  },
+  {
+    dxVersion: 'prism' as const,
+  },
+].map(({ dxVersion }) => ({
+  id: `${dxVersion}__${'_generic'}`,
+  versionEnum: DXVersionToDXDataVersionEnumMap[dxVersion],
+  dxVersion,
+  region: '_generic' as const,
 }))
 
 const StyledSelect = styled(Select<string>)(({ theme }) => ({
@@ -117,6 +138,29 @@ export const VersionRegionSwitcher: FC = () => {
           </div>
         </MenuItem>
       ))}
+
+      <ListSubheader className="leading-normal py-4">{t('settings:version-and-region.select-generic')}</ListSubheader>
+      {uniqBy(VERSION_GENERIC_REGIONS, (versionRegion) => versionRegion.dxVersion).map(
+        ({ id, dxVersion, versionEnum }, i) => (
+          <MenuItem
+            value={id}
+            key={id}
+            className={clsx('flex items-center gap-4 border-b border-solid border-gray-200', i === 0 && 'border-t')}
+          >
+            <WebpSupportedImage
+              objectFit="contain"
+              assetpackKey={`/images/version-logo/${dxVersion}.webp`}
+              className="h-12 touch-callout-none object-contain w-20"
+              draggable={false}
+            />
+
+            <div className="mr-2 opacity-70 flex flex-col items-start">
+              <span>{versionEnum}</span>
+              <span className="uppercase text-xs">{t('settings:region._generic')}</span>
+            </div>
+          </MenuItem>
+        ),
+      )}
       <ListItem className="flex justify-center items-center text-sm">
         <div className="flex justify-center items-start max-w-[22rem] text-zinc-500">
           <MdiInformation className="mr-2 shrink-0 mt-0.5" />
