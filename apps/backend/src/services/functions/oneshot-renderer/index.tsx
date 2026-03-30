@@ -1,5 +1,6 @@
+import { createHash } from 'node:crypto'
 import { type Sheet, type Song, VersionEnum, dxdata } from '@gekichumai/dxdata'
-import { Resvg } from '@resvg/resvg-js'
+import { renderAsync } from '@resvg/resvg-js'
 import type { Context } from 'hono'
 import satori, { type Font } from 'satori'
 import sharp from 'sharp'
@@ -13,6 +14,12 @@ import { renderContent } from './renderContent.js'
 
 export const ONESHOT_HEIGHT = 1300
 export const ONESHOT_WIDTH = 1500
+
+// LRU-ish render cache: stores rendered JPEG/PNG buffers keyed by content hash.
+// Bounded to 32 entries; oldest evicted when full.
+const RENDER_CACHE_MAX = 32
+const RENDER_CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+const renderCache = new Map<string, { buffer: ArrayBuffer; type: string; expiresAt: number }>()
 
 export type Region = 'jp' | 'intl' | 'cn' | '_generic'
 
@@ -345,6 +352,130 @@ export const handler = async (c: Context): Promise<Response> => {
       level: 'info',
     })
 
+    // Check render cache (only for rasterized output — SVG is fast already)
+    if (queryPixelated) {
+      const cacheKey = createHash('sha256')
+        .update(JSON.stringify({ body, queryFormat: queryFormat ?? null, queryWidth: queryWidth ?? null }))
+        .digest('hex')
+
+      const cached = renderCache.get(cacheKey)
+      if (cached && cached.expiresAt > Date.now()) {
+        c.header('Server-Timing', 'cache;desc="hit"')
+        c.header('Content-Type', cached.type)
+        c.header('X-Cache', 'HIT')
+        return c.body(cached.buffer)
+      }
+
+      // Store in cache after rendering — we pass cacheKey through closure
+      const originalHandler = async () => {
+        const timer = createServerTimingTimer()
+
+        timer.start('font')
+        Sentry.addBreadcrumb({ message: 'Loading fonts', category: 'resource', level: 'info' })
+        if (!cachedFonts) cachedFonts = await fetchFontPack()
+        const fonts = cachedFonts
+        timer.stop('font')
+
+        timer.start('calc')
+        Sentry.addBreadcrumb({ message: 'Calculating entries', category: 'processing', level: 'info' })
+        const data = body.calculatedEntries
+          ? prepareCalculatedEntries(body.calculatedEntries, version)
+          : calculateEntries(body.entries ?? [], version)
+        timer.stop('calc')
+
+        timer.start('jsx')
+        Sentry.addBreadcrumb({ message: 'Rendering JSX content', category: 'render', level: 'info' })
+        const content = await renderContent({ data, version, region, playerCollection })
+        timer.stop('jsx')
+
+        timer.start('satori')
+        Sentry.addBreadcrumb({ message: 'Converting JSX to SVG', category: 'render', level: 'info' })
+        const svg = await satori(content, {
+          width: ONESHOT_WIDTH,
+          height: ONESHOT_HEIGHT,
+          fonts,
+          tailwindConfig: {
+            theme: {
+              fontFamily: {
+                sans: 'Source Han Sans, sans-serif',
+                newrodin: 'NewRodinProDB, sans-serif',
+                seurat: 'SeuratProDB, sans-serif',
+              },
+            },
+          },
+        })
+        timer.stop('satori')
+
+        let width = typeof queryWidth === 'string' ? Number.parseInt(queryWidth) : ONESHOT_WIDTH
+        if (Number.isNaN(width) || !Number.isFinite(width) || width < 1 || width > 3000) {
+          width = ONESHOT_WIDTH
+        }
+
+        timer.start('resvg')
+        const renderedImage = await renderAsync(svg, {
+          languages: ['en', 'ja'],
+          shapeRendering: 2,
+          textRendering: 2,
+          imageRendering: 0,
+          fitTo: { mode: 'width', value: width },
+        })
+        timer.stop('resvg')
+
+        timer.start('result_buffer')
+        Sentry.addBreadcrumb({
+          message: 'Processing final image',
+          category: 'render',
+          data: { width, format: queryFormat },
+          level: 'info',
+        })
+        const { buffer, type } = await (async () => {
+          const s = sharp(renderedImage.pixels, {
+            raw: { width: renderedImage.width, height: renderedImage.height, channels: 4 },
+          })
+
+          if (queryFormat === 'png') {
+            return { buffer: await s.png().toBuffer(), type: 'image/png' }
+          }
+
+          return {
+            buffer: await s.jpeg({ quality: 90, progressive: true }).toBuffer(),
+            type: 'image/jpeg',
+          }
+        })()
+        timer.stop('result_buffer')
+
+        Sentry.addBreadcrumb({
+          message: 'Successfully rendered pixelated image',
+          category: 'success',
+          data: { type, bufferSize: buffer.length, width },
+          level: 'info',
+        })
+
+        for (const obs of timer.get()) {
+          const match = obs.match(/^(\w+);dur=(\d+)$/)
+          if (match) {
+            Sentry.metrics.distribution(`oneshot_render.stage.${match[1]}`, Number(match[2]), {
+              unit: 'millisecond',
+              attributes: { format: queryFormat || 'jpeg' },
+            })
+          }
+        }
+
+        const arrayBuffer = buffer.buffer as ArrayBuffer
+        // Store in render cache
+        renderCache.set(cacheKey, { buffer: arrayBuffer, type, expiresAt: Date.now() + RENDER_CACHE_TTL_MS })
+        if (renderCache.size > RENDER_CACHE_MAX) {
+          renderCache.delete(renderCache.keys().next().value as string)
+        }
+
+        c.header('Server-Timing', timer.get().join(', '))
+        c.header('Content-Type', type)
+        c.header('X-Cache', 'MISS')
+        return c.body(arrayBuffer)
+      }
+      return originalHandler()
+    }
+
     const timer = createServerTimingTimer()
 
     timer.start('font')
@@ -410,90 +541,6 @@ export const handler = async (c: Context): Promise<Response> => {
       },
     })
     timer.stop('satori')
-
-    if (queryPixelated) {
-      Sentry.addBreadcrumb({
-        message: 'Starting pixelated rendering',
-        category: 'render',
-        level: 'info',
-      })
-
-      timer.start('resvg_init')
-      const resvg = new Resvg(svg, {
-        languages: ['en', 'ja'],
-        shapeRendering: 2,
-        textRendering: 2,
-        imageRendering: 0,
-        fitTo: {
-          mode: 'width',
-          value: ONESHOT_WIDTH * 2,
-        },
-      })
-      timer.stop('resvg_init')
-
-      timer.start('resvg_render')
-      const pngData = resvg.render()
-      timer.stop('resvg_render')
-
-      timer.start('resvg_as_png')
-      const pngBuffer = pngData.asPng()
-      timer.stop('resvg_as_png')
-
-      let width = typeof queryWidth === 'string' ? Number.parseInt(queryWidth) : ONESHOT_WIDTH * 2
-      if (Number.isNaN(width) || !Number.isFinite(width) || width < 1 || width > 3000) {
-        width = ONESHOT_WIDTH * 2
-      }
-
-      timer.start('result_buffer')
-      Sentry.addBreadcrumb({
-        message: 'Processing final image',
-        category: 'render',
-        data: { width, format: queryFormat },
-        level: 'info',
-      })
-      const { buffer, type } = await (async () => {
-        let s = sharp(pngBuffer)
-        if (width !== ONESHOT_WIDTH * 2) {
-          s = s.resize({ width })
-        }
-
-        if (queryFormat === 'png') {
-          return { buffer: await s.png().toBuffer(), type: 'image/png' }
-        }
-
-        return {
-          buffer: await s.jpeg({ quality: 90, progressive: true }).toBuffer(),
-          type: 'image/jpeg',
-        }
-      })()
-      timer.stop('result_buffer')
-
-      Sentry.addBreadcrumb({
-        message: 'Successfully rendered pixelated image',
-        category: 'success',
-        data: {
-          type,
-          bufferSize: buffer.length,
-          width,
-        },
-        level: 'info',
-      })
-
-      // Emit Sentry metrics for each render stage
-      for (const obs of timer.get()) {
-        const match = obs.match(/^(\w+);dur=(\d+)$/)
-        if (match) {
-          Sentry.metrics.distribution(`oneshot_render.stage.${match[1]}`, Number(match[2]), {
-            unit: 'millisecond',
-            attributes: { format: queryFormat || 'jpeg' },
-          })
-        }
-      }
-
-      c.header('Server-Timing', timer.get().join(', '))
-      c.header('Content-Type', type)
-      return c.body(buffer.buffer as ArrayBuffer)
-    }
 
     // Emit Sentry metrics for SVG render stages
     for (const obs of timer.get()) {

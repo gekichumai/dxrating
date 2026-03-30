@@ -7,6 +7,8 @@ import { Sentry } from '../../../lib/functions/sentry.js'
 const getCacheDir = () => process.env.ASSETS_LOCAL_CACHE_DIR || path.join(os.tmpdir(), 'dxrating-assets')
 const getRemoteUrl = () => process.env.ASSETS_REMOTE_URL || 'https://shama.dxrating.net'
 
+const memoryCache = new Map<string, Buffer>()
+
 let fallbackImageBuffer: Buffer | undefined
 
 async function getFallbackImage(): Promise<Buffer> {
@@ -38,11 +40,16 @@ export async function fetchImageAsset(relativePath: string): Promise<Buffer> {
  * If not found locally, fetches from the remote asset server and caches to disk.
  */
 export async function fetchAsset(relativePath: string): Promise<Buffer> {
+  const memoryCached = memoryCache.get(relativePath)
+  if (memoryCached) return memoryCached
+
   const localPath = path.join(getCacheDir(), relativePath)
 
   // Try local disk first
   try {
-    return await fs.readFile(localPath)
+    const buffer = await fs.readFile(localPath)
+    memoryCache.set(relativePath, buffer)
+    return buffer
   } catch {
     // Not cached locally, fetch from remote
   }
@@ -54,6 +61,7 @@ export async function fetchAsset(relativePath: string): Promise<Buffer> {
   }
 
   const buffer = Buffer.from(await response.arrayBuffer())
+  memoryCache.set(relativePath, buffer)
 
   // Cache to disk (best-effort, don't block on errors)
   try {
