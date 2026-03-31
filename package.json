@@ -25,7 +25,10 @@
     ],
     "ignoredBuiltDependencies": [
       "core-js",
+      "prisma",
+      "@prisma/engines",
       "protobufjs",
+      "react-grab",
       "workerd"
     ]
   }
