@@ -55,6 +55,11 @@ catalogs:
       specifier: ^3.2.1
       version: 3.2.4
 
+overrides:
+  happy-dom: '>=20.0.2'
+  flatted: '>=3.4.2'
+  effect: '>=3.20.0'
+
 importers:
 
   .:
@@ -76,7 +81,7 @@ importers:
     dependencies:
       '@better-auth/i18n':
         specifier: ^1.5.6
-        version: 1.5.6(@better-auth/core@1.5.6(@better-auth/utils@0.3.1)(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260228.0)(@opentelemetry/api@1.9.0)(better-call@1.3.2(zod@4.3.6))(jose@6.2.0)(kysely@0.28.14)(nanostores@1.1.1))(better-auth@1.5.6(aa7c3148759b4f0c736d11258d3d279e))
+        version: 1.5.6(@better-auth/core@1.5.6(@better-auth/utils@0.3.1)(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260228.0)(@opentelemetry/api@1.9.0)(better-call@1.3.2(zod@4.3.6))(jose@6.2.0)(kysely@0.28.14)(nanostores@1.1.1))(better-auth@1.5.6(86adcaeabc767c95a3decf3eca11dd0c))
       '@better-auth/passkey':
         specifier: 'catalog:'
         version: 1.5.6(af3fcc4285b4829b7bf3955d07fe3313)
@@ -194,7 +199,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/node@22.19.11)(@vitest/ui@2.1.9)(happy-dom@17.6.3)(jiti@2.6.1)(tsx@4.21.0)
+        version: 3.2.4(@types/node@22.19.11)(@vitest/ui@2.1.9)(happy-dom@20.8.8)(jiti@2.6.1)(tsx@4.21.0)
 
   apps/web:
     dependencies:
@@ -289,8 +294,8 @@ importers:
         specifier: 'catalog:'
         version: 7.1.0
       happy-dom:
-        specifier: ^17.4.4
-        version: 17.6.3
+        specifier: '>=20.0.2'
+        version: 20.8.8
       i18next:
         specifier: ^23.16.8
         version: 23.16.8
@@ -435,7 +440,7 @@ importers:
         version: 4.5.14(@types/node@22.19.11)
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/node@22.19.11)(@vitest/ui@2.1.9)(happy-dom@17.6.3)(jiti@2.6.1)(tsx@4.21.0)
+        version: 3.2.4(@types/node@22.19.11)(@vitest/ui@2.1.9)(happy-dom@20.8.8)(jiti@2.6.1)(tsx@4.21.0)
 
   packages/dxdata: {}
 
@@ -3220,8 +3225,14 @@ packages:
   '@types/webidl-conversions@7.0.3':
     resolution: {integrity: sha512-CiJJvcRtIgzadHCYXw7dqEnMNRjhGZlYK05Mj9OyktqV8uVT8fD2BFOB7S1uwBE3Kj2Z+4UyPmFw/Ixgw/LAlA==}
 
+  '@types/whatwg-mimetype@3.0.2':
+    resolution: {integrity: sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA==}
+
   '@types/whatwg-url@13.0.0':
     resolution: {integrity: sha512-N8WXpbE6Wgri7KUSvrmQcqrMllKZ9uxkYWMt+mCSGwNc0Hsw9VQTW7ApqI4XNrx6/SaM2QQJCzMPDEXE058s+Q==}
+
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
   '@unocss/astro@0.63.6':
     resolution: {integrity: sha512-5Fjlv6dpQo6o2PUAcEv8p24G8rn8Op79xLFofq2V+iA/Q32G9/UsxTLOpj+yc+q0YdJrFfDCT2X/3pvVY8Db5g==}
@@ -4116,8 +4127,8 @@ packages:
   duplexer@0.1.2:
     resolution: {integrity: sha512-jtD6YG370ZCIi/9GTaJKQxWTZD045+4R4hTk/x1UyoqadyJ9x9CgSi1RlVDQF8U2sxLLSnFkCaMihqljHIWgMg==}
 
-  effect@3.18.4:
-    resolution: {integrity: sha512-b1LXQJLe9D11wfnOKAk3PKxuqYshQ0Heez+y5pnkd3jLj1yx9QhM72zZ9uUrOQyNvrs2GZZd/3maL0ZV18YuDA==}
+  effect@3.21.0:
+    resolution: {integrity: sha512-PPN80qRokCd1f015IANNhrwOnLO7GrrMQfk4/lnZRE/8j7UPWrNNjPV0uBrZutI/nHzernbW+J0hdqQysHiSnQ==}
 
   electron-to-chromium@1.5.302:
     resolution: {integrity: sha512-sM6HAN2LyK82IyPBpznDRqlTQAtuSaO+ShzFiWTvoMJLHyZ+Y39r8VMfHzwbU8MVBzQ4Wdn85+wlZl2TLGIlwg==}
@@ -4328,8 +4339,8 @@ packages:
     resolution: {integrity: sha512-78/PXT1wlLLDgTzDs7sjq9hzz0vXD+zn+7wypEe4fXQxCmdmqfGsEPQxmiCSQI3ajFV91bVSsvNtrJRiW6nGng==}
     engines: {node: '>=10'}
 
-  flatted@3.3.3:
-    resolution: {integrity: sha512-GX+ysw4PBCz0PzosHDepZGANEuFCMLrnRTiEy9McGjmkCQYwRq4A/X786G/fjM/+OjsWSU1ZrY5qyARZmO/uwg==}
+  flatted@3.4.2:
+    resolution: {integrity: sha512-PjDse7RzhcPkIJwy5t7KPWQSZ9cAbzQXcafsetQoD7sOJRQlGikNbx7yZp2OotDnJyrDcbyRq3Ttb18iYOqkxA==}
 
   for-each@0.3.5:
     resolution: {integrity: sha512-dKx12eRCVIzqCxFGplyFKJMPvLEWgmNtUrpTiJIR5u97zEhRG8ySrtboPHZXx7daLxQVrl643cTzbab2tkQjxg==}
@@ -4458,8 +4469,8 @@ packages:
     resolution: {integrity: sha512-ax7ZYomf6jqPTQ4+XCpUGyXKHk5WweS+e05MBO4/y3WJ5RkmPXNKvX+bx1behVILVwr6JSQvZAku021CHPXG3Q==}
     engines: {node: '>=10'}
 
-  happy-dom@17.6.3:
-    resolution: {integrity: sha512-UVIHeVhxmxedbWPCfgS55Jg2rDfwf2BCKeylcPSqazLz5w3Kri7Q4xdBJubsr/+VUzFLh0VjIvh13RaDA2/Xug==}
+  happy-dom@20.8.8:
+    resolution: {integrity: sha512-5/F8wxkNxYtsN0bXfMwIyNLZ9WYsoOYPbmoluqVJqv8KBUbcyKZawJ7uYK4WTX8IHBLYv+VXIwfeNDPy1oKMwQ==}
     engines: {node: '>=20.0.0'}
 
   has-bigints@1.1.0:
@@ -6120,7 +6131,7 @@ packages:
       '@types/node': ^18.0.0 || ^20.0.0 || >=22.0.0
       '@vitest/browser': 3.2.4
       '@vitest/ui': 3.2.4
-      happy-dom: '*'
+      happy-dom: '>=20.0.2'
       jsdom: '*'
     peerDependenciesMeta:
       '@edge-runtime/vm':
@@ -6443,7 +6454,7 @@ snapshots:
     optionalDependencies:
       drizzle-orm: 0.45.1(@cloudflare/workers-types@4.20260228.0)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(@types/sql.js@1.4.9)(kysely@0.28.14)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.8)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(sql.js@1.14.0)
 
-  '@better-auth/i18n@1.5.6(@better-auth/core@1.5.6(@better-auth/utils@0.3.1)(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260228.0)(@opentelemetry/api@1.9.0)(better-call@1.3.2(zod@4.3.6))(jose@6.2.0)(kysely@0.28.14)(nanostores@1.1.1))(better-auth@1.5.6(aa7c3148759b4f0c736d11258d3d279e))':
+  '@better-auth/i18n@1.5.6(@better-auth/core@1.5.6(@better-auth/utils@0.3.1)(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260228.0)(@opentelemetry/api@1.9.0)(better-call@1.3.2(zod@4.3.6))(jose@6.2.0)(kysely@0.28.14)(nanostores@1.1.1))(better-auth@1.5.6(86adcaeabc767c95a3decf3eca11dd0c))':
     dependencies:
       '@better-auth/core': 1.5.6(@better-auth/utils@0.3.1)(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260228.0)(@opentelemetry/api@1.9.0)(better-call@1.3.2(zod@4.3.6))(jose@6.2.0)(kysely@0.28.14)(nanostores@1.1.1)
       better-auth: 1.5.6(@cloudflare/workers-types@4.20260228.0)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(drizzle-kit@0.31.9)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260228.0)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(@types/sql.js@1.4.9)(kysely@0.28.14)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.8)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(sql.js@1.14.0))(mongodb@7.1.0)(mysql2@3.15.3)(pg@8.20.0)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(solid-js@1.9.11)(vitest@3.2.4)(vue@3.5.28(typescript@5.9.3))
@@ -7944,7 +7955,7 @@ snapshots:
     dependencies:
       c12: 3.1.0
       deepmerge-ts: 7.1.5
-      effect: 3.18.4
+      effect: 3.21.0
       empathic: 2.0.0
     transitivePeerDependencies:
       - magicast
@@ -8820,10 +8831,16 @@ snapshots:
   '@types/webidl-conversions@7.0.3':
     optional: true
 
+  '@types/whatwg-mimetype@3.0.2': {}
+
   '@types/whatwg-url@13.0.0':
     dependencies:
       '@types/webidl-conversions': 7.0.3
     optional: true
+
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 22.19.11
 
   '@unocss/astro@0.63.6(rollup@4.58.0)(typescript@5.9.3)(vite@4.5.14(@types/node@22.19.11))':
     dependencies:
@@ -9079,12 +9096,12 @@ snapshots:
     dependencies:
       '@vitest/utils': 2.1.9
       fflate: 0.8.2
-      flatted: 3.3.3
+      flatted: 3.4.2
       pathe: 1.1.2
       sirv: 3.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 1.2.0
-      vitest: 3.2.4(@types/node@22.19.11)(@vitest/ui@2.1.9)(happy-dom@17.6.3)(jiti@2.6.1)(tsx@4.21.0)
+      vitest: 3.2.4(@types/node@22.19.11)(@vitest/ui@2.1.9)(happy-dom@20.8.8)(jiti@2.6.1)(tsx@4.21.0)
 
   '@vitest/utils@2.1.9':
     dependencies:
@@ -9266,7 +9283,7 @@ snapshots:
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
       solid-js: 1.9.11
-      vitest: 3.2.4(@types/node@22.19.11)(@vitest/ui@2.1.9)(happy-dom@17.6.3)(jiti@2.6.1)(tsx@4.21.0)
+      vitest: 3.2.4(@types/node@22.19.11)(@vitest/ui@2.1.9)(happy-dom@20.8.8)(jiti@2.6.1)(tsx@4.21.0)
       vue: 3.5.28(typescript@5.9.3)
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
@@ -9788,7 +9805,7 @@ snapshots:
 
   duplexer@0.1.2: {}
 
-  effect@3.18.4:
+  effect@3.21.0:
     dependencies:
       '@standard-schema/spec': 1.1.0
       fast-check: 3.23.2
@@ -10087,7 +10104,7 @@ snapshots:
       locate-path: 6.0.0
       path-exists: 4.0.0
 
-  flatted@3.3.3: {}
+  flatted@3.4.2: {}
 
   for-each@0.3.5:
     dependencies:
@@ -10221,10 +10238,17 @@ snapshots:
     dependencies:
       duplexer: 0.1.2
 
-  happy-dom@17.6.3:
+  happy-dom@20.8.8:
     dependencies:
-      webidl-conversions: 7.0.0
+      '@types/node': 22.19.11
+      '@types/whatwg-mimetype': 3.0.2
+      '@types/ws': 8.18.1
+      entities: 7.0.1
       whatwg-mimetype: 3.0.0
+      ws: 8.19.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   has-bigints@1.1.0: {}
 
@@ -11916,7 +11940,7 @@ snapshots:
       jiti: 2.6.1
       tsx: 4.21.0
 
-  vitest@3.2.4(@types/node@22.19.11)(@vitest/ui@2.1.9)(happy-dom@17.6.3)(jiti@2.6.1)(tsx@4.21.0):
+  vitest@3.2.4(@types/node@22.19.11)(@vitest/ui@2.1.9)(happy-dom@20.8.8)(jiti@2.6.1)(tsx@4.21.0):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.4
@@ -11944,7 +11968,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.19.11
       '@vitest/ui': 2.1.9(vitest@3.2.4)
-      happy-dom: 17.6.3
+      happy-dom: 20.8.8
     transitivePeerDependencies:
       - jiti
       - less
@@ -11987,7 +12011,8 @@ snapshots:
 
   webidl-conversions@3.0.1: {}
 
-  webidl-conversions@7.0.0: {}
+  webidl-conversions@7.0.0:
+    optional: true
 
   webpack-sources@3.3.4: {}
 
@@ -12071,8 +12096,7 @@ snapshots:
       regexparam: 3.0.0
       use-sync-external-store: 1.6.0(react@19.2.4)
 
-  ws@8.19.0:
-    optional: true
+  ws@8.19.0: {}
 
   xmldom-qsa@1.1.3: {}
 
