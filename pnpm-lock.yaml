@@ -385,23 +385,23 @@ importers:
         specifier: ^4.3.3
         version: 4.4.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@iconify-json/carbon':
-        specifier: ^1.2.8
-        version: 1.2.18
+        specifier: ^1.2.20
+        version: 1.2.20
       '@iconify-json/logos':
-        specifier: ^1.2.10
-        version: 1.2.10
+        specifier: ^1.2.11
+        version: 1.2.11
       '@iconify-json/material-symbols':
-        specifier: ^1.2.17
-        version: 1.2.56
+        specifier: ^1.2.65
+        version: 1.2.65
       '@iconify-json/mdi':
         specifier: ^1.2.3
         version: 1.2.3
       '@iconify-json/ri':
-        specifier: ^1.2.5
+        specifier: ^1.2.10
         version: 1.2.10
       '@iconify-json/simple-icons':
-        specifier: ^1.2.29
-        version: 1.2.71
+        specifier: ^1.2.76
+        version: 1.2.76
       '@svgr/core':
         specifier: ^8.1.0
         version: 8.1.0(typescript@5.9.3)
@@ -454,7 +454,7 @@ importers:
         specifier: ^1.1.1
         version: 1.3.0(unocss@0.63.6(postcss@8.5.6)(rollup@4.58.0)(typescript@5.9.3)(vite@4.5.14(@types/node@22.19.11)))
       unplugin-icons:
-        specifier: ^22.1.0
+        specifier: ^22.5.0
         version: 22.5.0(@svgr/core@8.1.0(typescript@5.9.3))(@vue/compiler-sfc@3.5.28)
       vite:
         specifier: ^4.5.9
@@ -1420,14 +1420,14 @@ packages:
       react: ^16.8.0 || ^17 || ^18 || ^19
       react-dom: ^16.8.0 || ^17 || ^18 || ^19
 
-  '@iconify-json/carbon@1.2.18':
-    resolution: {integrity: sha512-Grb13E6r/RqTEV4Sqd/BQR2FUt57U2WLuticJ5H8JbTdHLop1LmdePu3EJJA3Xi8DcWRbD6OnC133hKfOwlgtg==}
+  '@iconify-json/carbon@1.2.20':
+    resolution: {integrity: sha512-wqyxKEbIRdzGdfCAwQqn8iSfO6jx0m1toZAAQdx1NFjxd6iFl1YY4eKI1woWt7XOxs7s7phMW530kDD867JZGw==}
 
-  '@iconify-json/logos@1.2.10':
-    resolution: {integrity: sha512-qxaXKJ6fu8jzTMPQdHtNxlfx6tBQ0jXRbHZIYy5Ilh8Lx9US9FsAdzZWUR8MXV8PnWTKGDFO4ZZee9VwerCyMA==}
+  '@iconify-json/logos@1.2.11':
+    resolution: {integrity: sha512-fOo4pGEatuyuCFNL+cwquYMa2Im0oJHRHV7lt/Qqs5Ode/lPImHCQcfTtPzZj7qYMPb/h8YHN3TG54uEowrjNQ==}
 
-  '@iconify-json/material-symbols@1.2.56':
-    resolution: {integrity: sha512-pd2xlJ/9Ld/uo8cHjqNKGv4+piPEWajfslqheEyNMfZl/oBq5C/zVKo4Xx33/saYp4IYBp6BXReimynRdRk8LA==}
+  '@iconify-json/material-symbols@1.2.65':
+    resolution: {integrity: sha512-0kGO7z+yuWjn4de2gAz1hrOpDHN1rvnb1Lr3YnkmZr/pJ9bfLSv2bRXQo/nKx6oODXKcoYuFLcLvg2xPxMq5Pg==}
 
   '@iconify-json/mdi@1.2.3':
     resolution: {integrity: sha512-O3cLwbDOK7NNDf2ihaQOH5F9JglnulNDFV7WprU2dSoZu3h3cWH//h74uQAB87brHmvFVxIOkuBX2sZSzYhScg==}
@@ -1435,8 +1435,8 @@ packages:
   '@iconify-json/ri@1.2.10':
     resolution: {integrity: sha512-WWMhoncVVM+Xmu9T5fgu2lhYRrKTEWhKk3Com0KiM111EeEsRLiASjpsFKnC/SrB6covhUp95r2mH8tGxhgd5Q==}
 
-  '@iconify-json/simple-icons@1.2.71':
-    resolution: {integrity: sha512-rNoDFbq1fAYiEexBvrw613/xiUOPEu5MKVV/X8lI64AgdTzLQUUemr9f9fplxUMPoxCBP2rWzlhOEeTHk/Sf0Q==}
+  '@iconify-json/simple-icons@1.2.76':
+    resolution: {integrity: sha512-lLRlA8yaf+1L5VCPRvR9lynoSklsddKHEylchmZJKdj/q2xVQ1ZAEJ8SCQlv9cbgtMefnlyM98U+8Si2aoFZPA==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -5827,10 +5827,6 @@ packages:
   tinyexec@0.3.2:
     resolution: {integrity: sha512-KQQR9yN7R5+OSwaK0XQoj22pwHoTlgYqmUscPYoknOoWCWfj/5/ABTMRi69FrKU5ffPVh5QcFikpWJI/P1ocHA==}
 
-  tinyexec@1.0.2:
-    resolution: {integrity: sha512-W/KYk+NFhkmsYpuHq5JykngiOCnxeVL8v8dFnqxSD8qEEdRfXk1SDM6JzNqcERbcGYj9tMrDQBYV9cjgnunFIg==}
-    engines: {node: '>=18'}
-
   tinyexec@1.0.4:
     resolution: {integrity: sha512-u9r3uZC0bdpGOXtlxUIdwf9pkmvhqJdrVCH9fapQtgy/OeTTMZ1nqH7agtvEfmGui6e1XxjcdrlxvxJvc3sMqw==}
     engines: {node: '>=18'}
@@ -6321,7 +6317,7 @@ snapshots:
   '@antfu/install-pkg@1.1.0':
     dependencies:
       package-manager-detector: 1.6.0
-      tinyexec: 1.0.2
+      tinyexec: 1.0.4
 
   '@antfu/ni@0.23.2': {}
 
@@ -6990,15 +6986,15 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@iconify-json/carbon@1.2.18':
+  '@iconify-json/carbon@1.2.20':
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify-json/logos@1.2.10':
+  '@iconify-json/logos@1.2.11':
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify-json/material-symbols@1.2.56':
+  '@iconify-json/material-symbols@1.2.65':
     dependencies:
       '@iconify/types': 2.0.0
 
@@ -7010,7 +7006,7 @@ snapshots:
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify-json/simple-icons@1.2.71':
+  '@iconify-json/simple-icons@1.2.76':
     dependencies:
       '@iconify/types': 2.0.0
 
@@ -11677,10 +11673,7 @@ snapshots:
 
   tinyexec@0.3.2: {}
 
-  tinyexec@1.0.2: {}
-
-  tinyexec@1.0.4:
-    optional: true
+  tinyexec@1.0.4: {}
 
   tinyglobby@0.2.15:
     dependencies:
