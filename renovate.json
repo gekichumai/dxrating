@@ -1,6 +1,89 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base"],
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":separateMajorReleases",
+    "group:allNonMajor"
+  ],
   "baseBranches": ["main"],
-  "prConcurrentLimit": 5
+  "prConcurrentLimit": 5,
+  "labels": ["dependencies"],
+  "rangeStrategy": "bump",
+  "packageRules": [
+    {
+      "description": "oRPC packages",
+      "groupName": "orpc",
+      "matchPackageNames": ["@orpc/**"]
+    },
+    {
+      "description": "Better Auth packages",
+      "groupName": "better-auth",
+      "matchPackageNames": ["better-auth", "@better-auth/**"]
+    },
+    {
+      "description": "Sentry packages",
+      "groupName": "sentry",
+      "matchPackageNames": ["@sentry/**"]
+    },
+    {
+      "description": "MUI packages",
+      "groupName": "mui",
+      "matchPackageNames": ["@mui/**", "@emotion/**"]
+    },
+    {
+      "description": "UnoCSS packages",
+      "groupName": "unocss",
+      "matchPackageNames": ["unocss", "@unocss/**", "unocss-preset-*"]
+    },
+    {
+      "description": "React packages",
+      "groupName": "react",
+      "matchPackageNames": ["react", "react-dom", "@types/react", "@types/react-dom"]
+    },
+    {
+      "description": "TanStack packages",
+      "groupName": "tanstack",
+      "matchPackageNames": ["@tanstack/**"]
+    },
+    {
+      "description": "i18next packages",
+      "groupName": "i18next",
+      "matchPackageNames": ["i18next", "i18next-*", "react-i18next"]
+    },
+    {
+      "description": "Testing packages",
+      "groupName": "testing",
+      "matchPackageNames": ["vitest", "@vitest/**", "@testing-library/**", "happy-dom"]
+    },
+    {
+      "description": "Iconify packages",
+      "groupName": "iconify",
+      "matchPackageNames": ["@iconify-json/**", "unplugin-icons"]
+    },
+    {
+      "description": "Drizzle packages",
+      "groupName": "drizzle",
+      "matchPackageNames": ["drizzle-orm", "drizzle-kit", "drizzle-zod"]
+    },
+    {
+      "description": "PostHog — keep current per SDK doctor guidance",
+      "groupName": "posthog",
+      "matchPackageNames": ["posthog-js"],
+      "automerge": true
+    },
+    {
+      "description": "Auto-merge lint/format tooling",
+      "groupName": "lint-format",
+      "matchPackageNames": ["oxlint", "oxfmt", "typescript"],
+      "automerge": true
+    },
+    {
+      "description": "Auto-merge type definition packages",
+      "groupName": "types",
+      "matchPackageNames": ["@types/**"],
+      "excludePackageNames": ["@types/react", "@types/react-dom"],
+      "automerge": true
+    }
+  ]
 }
