@@ -1,6 +1,6 @@
 # Build stage
 # Pin digest for reproducibility — update periodically
-FROM node:25-bookworm-slim@sha256:44bcbf493408a824104e74976ae5539f596c46cbe75ed0423a137552a555e2de AS builder
+FROM node:25-bookworm-slim@sha256:435f3537a088a01fd208bb629a4b69c28d85deb9a60af8a710cafc3befd6e3be AS builder
 
 # Reproducibility: SOURCE_DATE_EPOCH makes timestamps deterministic
 ARG SOURCE_DATE_EPOCH=0
@@ -44,7 +44,7 @@ WORKDIR /app/apps/backend
 RUN pnpm build:bundle
 
 # Production stage
-FROM node:25-bookworm-slim@sha256:44bcbf493408a824104e74976ae5539f596c46cbe75ed0423a137552a555e2de AS runner
+FROM node:25-bookworm-slim@sha256:435f3537a088a01fd208bb629a4b69c28d85deb9a60af8a710cafc3befd6e3be AS runner
 
 # Install runtime dependencies for sharp and other native modules
 RUN apt-get update && apt-get install -y --no-install-recommends \
