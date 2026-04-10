@@ -5,12 +5,14 @@
     ":semanticCommits",
     ":separateMajorReleases",
     "group:allNonMajor",
-    ":dependencyDashboard"
+    ":dependencyDashboard",
+    "abandonments:recommended"
   ],
   "baseBranches": ["main"],
   "prConcurrentLimit": 5,
   "labels": ["dependencies"],
   "rangeStrategy": "bump",
+  "minimumReleaseAge": "5 days",
   "packageRules": [
     {
       "description": "oRPC packages",
