@@ -7,7 +7,9 @@
     "group:allNonMajor",
     ":dependencyDashboard"
   ],
-  "baseBranches": ["main"],
+  "baseBranchPatterns": [
+    "main"
+  ],
   "prConcurrentLimit": 5,
   "labels": ["dependencies"],
   "rangeStrategy": "bump",
@@ -82,8 +84,7 @@
     {
       "description": "Auto-merge type definition packages",
       "groupName": "types",
-      "matchPackageNames": ["@types/**"],
-      "excludePackageNames": ["@types/react", "@types/react-dom"],
+      "matchPackageNames": ["@types/**", "!@types/react", "!@types/react-dom"],
       "automerge": true
     }
   ]
