@@ -5,12 +5,12 @@ export const deriveColor = (color: string, type: 'border' | 'text' | 'overlay') 
   const c = new Color(color)
   return match(type)
     .with('border', () => {
-      c.lch.l -= 5
+      c.lch.l = (c.lch.l ?? 0) - 5
       return c.display()
     })
     .with('overlay', () => {
-      c.lch.l -= 20
-      c.lch.c += 10
+      c.lch.l = (c.lch.l ?? 0) - 20
+      c.lch.c = (c.lch.c ?? 0) + 10
       return c.display()
     })
     .with('text', () => {
