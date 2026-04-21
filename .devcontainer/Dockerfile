@@ -1,4 +1,4 @@
-FROM node:25-bookworm
+FROM node:25.9.0-bookworm
 
 # Install common dev tools and native build dependencies for sharp, canvas, bcrypt
 RUN apt-get update && apt-get install -y --no-install-recommends \
