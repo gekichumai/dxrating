@@ -10,8 +10,8 @@
     "lint:fix": "oxlint --fix ."
   },
   "devDependencies": {
-    "oxfmt": "^0.36.0",
-    "oxlint": "^1.51.0",
+    "oxfmt": "^0.45.0",
+    "oxlint": "^1.60.0",
     "tsconfig": "workspace:*",
     "turbo": "^2.4.4"
   },
