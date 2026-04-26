@@ -144,6 +144,18 @@
       "sign-in-to-comment": "登录或注册以发表评论。"
     }
   },
+  "song": {
+    "not-found": {
+      "title": "未找到歌曲",
+      "description": "您要查找的歌曲不存在。",
+      "back-to-search": "返回搜索"
+    },
+    "type": {
+      "dx": "DX",
+      "std": "STD",
+      "utage": "UTAGE"
+    }
+  },
   "about": {
     "title": "关于本站",
     "author": "作者",
