@@ -1,5 +1,6 @@
 import { LxnsOauthCallback } from '@/pages/LxnsOauthCallback'
 import { PrivacyPolicy } from '@/pages/PrivacyPolicy'
+import { SongPage } from './pages/SongPage'
 import { CircularProgress, Tab, Tabs } from '@mui/material'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, Suspense, useCallback, useEffect, useTransition } from 'react'
@@ -68,6 +69,8 @@ const RootLayout: FC = () => {
 
   if (location === '/privacy-policy') return null
 
+  const isSongPage = location.startsWith('/song/')
+
   return (
     <>
       <OverscrollBackgroundFiller />
@@ -85,28 +88,30 @@ const RootLayout: FC = () => {
         }}
       >
         <VersionRegionSwitcher />
-        <Tabs
-          value={tab}
-          onChange={(_, v) => {
-            setTab(v)
-          }}
-          classes={{
-            root: 'rounded-xl bg-zinc-900/10 !min-h-2.5rem',
-            indicator: '!h-full !rounded-lg z-0',
-          }}
-        >
-          {APP_TABS_VALUES.map((v) => (
-            <Tab
-              key={v}
-              label={t(`root:pages.${v}.title`)}
-              classes={{
-                selected: '!text-white font-bold text-shadow-md',
-                root: '!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem',
-              }}
-              value={v}
-            />
-          ))}
-        </Tabs>
+        {!isSongPage && (
+          <Tabs
+            value={tab}
+            onChange={(_, v) => {
+              setTab(v)
+            }}
+            classes={{
+              root: 'rounded-xl bg-zinc-900/10 !min-h-2.5rem',
+              indicator: '!h-full !rounded-lg z-0',
+            }}
+          >
+            {APP_TABS_VALUES.map((v) => (
+              <Tab
+                key={v}
+                label={t(`root:pages.${v}.title`)}
+                classes={{
+                  selected: '!text-white font-bold text-shadow-md',
+                  root: '!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem',
+                }}
+                value={v}
+              />
+            ))}
+          </Tabs>
+        )}
       </div>
     </>
   )
@@ -161,6 +166,10 @@ export const App = () => {
 
             <Route path="/privacy-policy">
               <PrivacyPolicy />
+            </Route>
+
+            <Route path="/song/:songId">
+              <SongPage />
             </Route>
           </Router>
         </Suspense>
