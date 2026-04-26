@@ -393,7 +393,7 @@
           "success": "Successfully imported {{count}} records from diving-fish.",
           "error": "An error occurred while importing records from diving-fish. Are you sure the username or QQ binded is correct? {{error}}",
           "invalid-profile": "Please enter your Diving-Fish profile",
-          "no-sheets": "No sheets found",
+          "no-sheets": "No charts found",
           "warning": {
             "title": "Heads up!",
             "description": "Your existing entries will be overwritten with the imported ones."
@@ -447,7 +447,7 @@
           "dialog-title": "Import from Aqua SQLite",
           "select-user": "Choose the user to import their gameplays from.",
           "confirm-import": "Confirm importing the selected user's gameplays.",
-          "sheet-not-found": "Failed to find sheet for a gameplay with:",
+          "sheet-not-found": "Failed to find chart for a gameplay with:",
           "import-action": "Import"
         },
         "json": {
