@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/react'
 import { browserTracingIntegration } from '@sentry/react'
+import { createHead, UnheadProvider } from '@unhead/react/client'
 import '@unocss/reset/tailwind-compat.css'
 import i18n from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
@@ -132,21 +133,24 @@ i18n
   })
 
 const queryClient = new QueryClient()
+const head = createHead()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <AppContextProvider>
-        <VersionCustomizedThemeProvider>
-          <RatingCalculatorContextProvider>
-            <PostHogProvider client={posthog}>
-              <SideEffector />
-              <CustomizedToaster />
-              <App />
-            </PostHogProvider>
-          </RatingCalculatorContextProvider>
-        </VersionCustomizedThemeProvider>
-      </AppContextProvider>
-    </QueryClientProvider>
+    <UnheadProvider head={head}>
+      <QueryClientProvider client={queryClient}>
+        <AppContextProvider>
+          <VersionCustomizedThemeProvider>
+            <RatingCalculatorContextProvider>
+              <PostHogProvider client={posthog}>
+                <SideEffector />
+                <CustomizedToaster />
+                <App />
+              </PostHogProvider>
+            </RatingCalculatorContextProvider>
+          </VersionCustomizedThemeProvider>
+        </AppContextProvider>
+      </QueryClientProvider>
+    </UnheadProvider>
   </React.StrictMode>,
 )
