@@ -36,13 +36,10 @@ export const SheetListItem: FC<{
         {() => <SheetDialogContent sheet={sheet} {...SheetDialogContentProps} />}
       </ResponsiveDialog>
 
-      <ListItemButton
-        disableGutters={!isLargeDevice}
-        className={clsx(
-          'w-full cursor-pointer transition duration-500 hover:duration-25 !px-4',
-          open && '!bg-zinc-300/80',
-        )}
-        onClick={() => {
+      <a
+        href={`/song/${encodeURIComponent(sheet.songId)}`}
+        onClick={(e) => {
+          e.preventDefault()
           setOpen(true)
           haptic.trigger('medium')
           posthog?.capture('sheet_content_viewed', {
@@ -51,12 +48,20 @@ export const SheetListItem: FC<{
             sheet_difficulty: sheet.difficulty,
           })
         }}
-        sx={{
-          borderRadius: 1,
-        }}
+        className="no-underline text-inherit"
       >
-        <SheetListItemContent sheet={sheet} size={size} {...SheetListItemContentProps} />
-      </ListItemButton>
+        <ListItemButton
+          disableGutters={!isLargeDevice}
+          className={clsx(
+            'w-full cursor-pointer transition duration-500 hover:duration-25 !px-4',
+            open && '!bg-zinc-300/80',
+          )}
+          sx={{ borderRadius: 1 }}
+          component="div"
+        >
+          <SheetListItemContent sheet={sheet} size={size} {...SheetListItemContentProps} />
+        </ListItemButton>
+      </a>
     </>
   )
 })
