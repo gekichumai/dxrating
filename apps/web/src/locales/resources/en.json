@@ -145,6 +145,18 @@
       "sign-in-to-comment": "Sign in or create an account to leave one."
     }
   },
+  "song": {
+    "not-found": {
+      "title": "Song Not Found",
+      "description": "The song you're looking for doesn't exist.",
+      "back-to-search": "Back to Search"
+    },
+    "type": {
+      "dx": "DX",
+      "std": "STD",
+      "utage": "UTAGE"
+    }
+  },
   "about": {
     "title": "About",
     "author": "Author",

@@ -145,6 +145,18 @@
       "sign-in-to-comment": "コメントするにはログインまたは新規登録してください。"
     }
   },
+  "song": {
+    "not-found": {
+      "title": "楽曲が見つかりません",
+      "description": "お探しの楽曲は存在しません。",
+      "back-to-search": "検索に戻る"
+    },
+    "type": {
+      "dx": "DX",
+      "std": "STD",
+      "utage": "UTAGE"
+    }
+  },
   "about": {
     "title": "当サイトについて",
     "author": "著者",
