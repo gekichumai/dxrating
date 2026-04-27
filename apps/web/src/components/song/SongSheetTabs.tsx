@@ -1,40 +1,28 @@
-import { DifficultyEnum, type Sheet, TypeEnum } from '@gekichumai/dxdata'
+import { type DifficultyEnum, type Sheet, TypeEnum } from '@gekichumai/dxdata'
 import { Tab, Tabs } from '@mui/material'
 import { type FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DIFFICULTIES } from '../../models/difficulties'
-
-const TYPE_ORDER = [TypeEnum.DX, TypeEnum.STD, TypeEnum.UTAGE, TypeEnum.UTAGE2P] as const
-
-const DIFFICULTY_ORDER = [
-  DifficultyEnum.ReMaster,
-  DifficultyEnum.Master,
-  DifficultyEnum.Expert,
-  DifficultyEnum.Advanced,
-  DifficultyEnum.Basic,
-] as const
+import { DIFFICULTY_ORDER, TYPE_ORDER } from '../../models/constants'
 
 export interface SongSheetTabsProps {
   sheets: Sheet[]
-  activeType: string
-  activeDifficulty: string
-  onTypeChange: (type: string) => void
-  onDifficultyChange: (difficulty: string) => void
+  availableTypes: readonly TypeEnum[]
+  activeType: TypeEnum
+  activeDifficulty: DifficultyEnum
+  onTypeChange: (type: TypeEnum) => void
+  onDifficultyChange: (difficulty: DifficultyEnum) => void
 }
 
 export const SongSheetTabs: FC<SongSheetTabsProps> = ({
   sheets,
+  availableTypes,
   activeType,
   activeDifficulty,
   onTypeChange,
   onDifficultyChange,
 }) => {
   const { t } = useTranslation(['song'])
-
-  const availableTypes = useMemo(() => {
-    const typeSet = new Set(sheets.map((s) => s.type))
-    return TYPE_ORDER.filter((type) => typeSet.has(type))
-  }, [sheets])
 
   const difficultiesForActiveType = useMemo(() => {
     const diffSet = new Set(sheets.filter((s) => s.type === activeType).map((s) => s.difficulty))

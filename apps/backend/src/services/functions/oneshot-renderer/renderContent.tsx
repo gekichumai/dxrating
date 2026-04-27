@@ -52,14 +52,14 @@ export const VERSION_THEME: Record<string, VersionTheme> = {
     background: '/images/background/circle.jpg',
     logo: '/images/version-logo/circle.png',
     favicon: '/favicon/prism-1024x.jpg',
-    accentColor: '#FF4799',
+    accentColor: '#EF67A4',
     backgroundSize: [1500, 1500],
   },
   [VersionEnum.CiRCLEPLUS]: {
     background: '/images/background/circle-plus.jpg',
     logo: '/images/version-logo/circle-plus.png',
     favicon: '/favicon/prism-1024x.jpg',
-    accentColor: '#FF4799',
+    accentColor: '#EF67A4',
     backgroundSize: [1500, 1500],
   },
 }
