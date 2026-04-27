@@ -69,7 +69,7 @@ const RootLayout: FC = () => {
 
   if (location === '/privacy-policy') return null
 
-  const isSongPage = location.startsWith('/song/')
+  const isSongPage = location.startsWith('/songs/')
 
   return (
     <>
@@ -168,7 +168,7 @@ export const App = () => {
               <PrivacyPolicy />
             </Route>
 
-            <Route path="/song/:songId">
+            <Route path="/songs/:songId">
               <SongPage />
             </Route>
           </Router>

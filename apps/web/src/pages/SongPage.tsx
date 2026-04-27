@@ -1,32 +1,20 @@
 import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
-import { Button } from '@mui/material'
+import { Button, IconButton } from '@mui/material'
 import { type FC, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRoute } from 'wouter'
-import { useSongHead } from '../hooks/useUnhead'
+import MdiArrowLeft from '~icons/mdi/arrow-left'
+import { useSongHead } from '../hooks/useSongHead'
+import { DIFFICULTY_ORDER, TYPE_ORDER, getHighestDifficulty } from '../models/constants'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { type FlattenedSheet, canonicalId } from '../songs'
 import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
 
-const TYPE_ORDER = [TypeEnum.DX, TypeEnum.STD, TypeEnum.UTAGE, TypeEnum.UTAGE2P] as const
-const DIFFICULTY_ORDER = [
-  DifficultyEnum.ReMaster,
-  DifficultyEnum.Master,
-  DifficultyEnum.Expert,
-  DifficultyEnum.Advanced,
-  DifficultyEnum.Basic,
-] as const
-
-function getHighestDifficulty(sheets: { difficulty: DifficultyEnum }[]): DifficultyEnum {
-  const diffSet = new Set(sheets.map((s) => s.difficulty))
-  return DIFFICULTY_ORDER.find((d) => diffSet.has(d)) ?? DifficultyEnum.Master
-}
-
 export const SongPage: FC = () => {
   const { t } = useTranslation(['song'])
-  const [, params] = useRoute('/song/:songId')
+  const [, params] = useRoute('/songs/:songId')
   const songId = params?.songId
   const appVersion = useAppContextDXDataVersion()
 
@@ -59,19 +47,28 @@ export const SongPage: FC = () => {
     return TYPE_ORDER.filter((type) => typeSet.has(type))
   }, [flattenedSheets])
 
-  const [activeType, setActiveType] = useState<string>(() => availableTypes[0] ?? TypeEnum.DX)
-  const [activeDifficulty, setActiveDifficulty] = useState<string>(() => {
-    const sheetsOfType = flattenedSheets.filter((s) => s.type === (availableTypes[0] ?? TypeEnum.DX))
+  const [activeType, setActiveType] = useState<TypeEnum>(() => {
+    const qType = new URLSearchParams(window.location.search).get('type') as TypeEnum | null
+    if (qType && availableTypes.includes(qType)) return qType
+    return availableTypes[0] ?? TypeEnum.DX
+  })
+  const [activeDifficulty, setActiveDifficulty] = useState<DifficultyEnum>(() => {
+    const qParams = new URLSearchParams(window.location.search)
+    const qType = qParams.get('type') as TypeEnum | null
+    const qDiff = qParams.get('difficulty') as DifficultyEnum | null
+    const effectiveType = qType && availableTypes.includes(qType) ? qType : (availableTypes[0] ?? TypeEnum.DX)
+    const sheetsOfType = flattenedSheets.filter((s) => s.type === effectiveType)
+    const availableDiffs = new Set(sheetsOfType.map((s) => s.difficulty))
+    if (qDiff && availableDiffs.has(qDiff)) return qDiff
     return getHighestDifficulty(sheetsOfType)
   })
 
-  const handleTypeChange = (newType: string) => {
+  const handleTypeChange = (newType: TypeEnum) => {
     setActiveType(newType)
     const sheetsOfType = flattenedSheets.filter((s) => s.type === newType)
     setActiveDifficulty(getHighestDifficulty(sheetsOfType))
   }
 
-  // Head meta tags (song-level, don't change with tabs)
   useSongHead({
     title: song?.title ?? '',
     artist: song?.artist ?? '',
@@ -94,22 +91,37 @@ export const SongPage: FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
+      <a
+        href="/"
+        onClick={(e) => {
+          if (window.history.length > 1 && document.referrer.startsWith(window.location.origin)) {
+            e.preventDefault()
+            window.history.back()
+          }
+        }}
+        className="self-start -ml-2 no-underline text-inherit"
+      >
+        <IconButton component="span" size="small">
+          <MdiArrowLeft />
+        </IconButton>
+      </a>
+
       <SongHeader song={song} />
 
       <SongSheetTabs
         sheets={song.sheets}
+        availableTypes={availableTypes}
         activeType={activeType}
         activeDifficulty={activeDifficulty}
         onTypeChange={handleTypeChange}
         onDifficultyChange={setActiveDifficulty}
       />
 
-      {/* All sheet panels render for SEO; only active one is visible */}
       {flattenedSheets.map((sheet) => {
         const isActive = sheet.type === activeType && sheet.difficulty === activeDifficulty
         return (
           <div key={sheet.id} style={isActive ? undefined : { display: 'none' }} aria-hidden={!isActive}>
-            <SongSheetContent sheet={sheet} />
+            <SongSheetContent sheet={sheet} isActive={isActive} />
           </div>
         )
       })}

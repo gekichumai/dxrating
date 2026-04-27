@@ -8,9 +8,7 @@
     ":dependencyDashboard",
     "abandonments:recommended"
   ],
-  "baseBranchPatterns": [
-    "main"
-  ],
+  "baseBranchPatterns": ["main"],
   "prConcurrentLimit": 5,
   "labels": ["dependencies"],
   "rangeStrategy": "bump",

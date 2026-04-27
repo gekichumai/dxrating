@@ -37,8 +37,9 @@ export const SheetListItem: FC<{
       </ResponsiveDialog>
 
       <a
-        href={`/song/${encodeURIComponent(sheet.songId)}`}
+        href={`/songs/${encodeURIComponent(sheet.songId)}?type=${encodeURIComponent(sheet.type)}&difficulty=${encodeURIComponent(sheet.difficulty)}`}
         onClick={(e) => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return
           e.preventDefault()
           setOpen(true)
           haptic.trigger('medium')
