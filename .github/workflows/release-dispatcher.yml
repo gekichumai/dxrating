@@ -27,7 +27,7 @@ jobs:
       # The tag name is `v` followed by a semver version number, in which is calculated by incrementing the patch
       # version of the latest tag. If no tag exists, the version is 0.0.1
       - name: Tag Release
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.PAT_FOR_RELEASE_DISPATCHER }}
           script: |
