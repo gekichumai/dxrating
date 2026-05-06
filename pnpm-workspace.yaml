@@ -5,14 +5,14 @@ packages:
 
 catalog:
   '@better-auth/passkey': ^1.5.6
-  '@orpc/client': ^1.13.13
-  '@orpc/contract': ^1.13.13
-  '@orpc/openapi': ^1.13.13
-  '@orpc/openapi-client': ^1.13.13
-  '@orpc/react': ^1.13.13
-  '@orpc/server': ^1.13.13
-  '@orpc/tanstack-query': ^1.13.13
-  '@orpc/zod': ^1.13.13
+  '@orpc/client': ^1.14.0
+  '@orpc/contract': ^1.14.0
+  '@orpc/openapi': ^1.14.0
+  '@orpc/openapi-client': ^1.14.0
+  '@orpc/react': ^1.14.0
+  '@orpc/server': ^1.14.0
+  '@orpc/tanstack-query': ^1.14.0
+  '@orpc/zod': ^1.14.0
   '@types/node': ^22.19.17
   '@types/pg': ^8.20.0
   '@types/react': ^19.2.8
