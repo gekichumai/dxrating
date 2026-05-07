@@ -21,7 +21,7 @@ catalog:
   dotenv: ^16.6.1
   esno: ^4.8.0
   fuse.js: ^7.3.0
-  hono: ^4.12.14
+  hono: ^4.12.16
   pg: ^8.20.0
   react: ^19.2.3
   ts-pattern: ^5.9.0
