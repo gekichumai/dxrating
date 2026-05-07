@@ -21,51 +21,61 @@ import { SheetDialogContent, type SheetDialogContentProps } from './SheetDialogC
 export const SheetListItem: FC<{
   size?: 'small' | 'medium'
   sheet: FlattenedSheet
+  dialogOpen?: boolean
+  onDialogOpenChange?: (open: boolean) => void
 
   SheetListItemContentProps?: Omit<SheetListItemContentProps, 'sheet'>
   SheetDialogContentProps?: Omit<SheetDialogContentProps, 'sheet'>
-}> = memo(({ size = 'medium', sheet, SheetListItemContentProps, SheetDialogContentProps }) => {
-  const posthog = usePostHog()
-  const haptic = useWebHaptics()
-  const [open, setOpen] = useState(false)
-  const isLargeDevice = useIsLargeDevice()
+}> = memo(
+  ({ size = 'medium', sheet, dialogOpen, onDialogOpenChange, SheetListItemContentProps, SheetDialogContentProps }) => {
+    const posthog = usePostHog()
+    const haptic = useWebHaptics()
+    const [internalOpen, setInternalOpen] = useState(false)
+    const isLargeDevice = useIsLargeDevice()
 
-  return (
-    <>
-      <ResponsiveDialog open={open} setOpen={setOpen}>
-        {() => <SheetDialogContent sheet={sheet} {...SheetDialogContentProps} />}
-      </ResponsiveDialog>
+    const isControlled = dialogOpen !== undefined
+    const open = isControlled ? dialogOpen : internalOpen
+    const setOpen = isControlled ? (v: boolean) => onDialogOpenChange?.(v) : setInternalOpen
 
-      <a
-        href={`/songs/${encodeURIComponent(sheet.songId)}?type=${encodeURIComponent(sheet.type)}&difficulty=${encodeURIComponent(sheet.difficulty)}`}
-        onClick={(e) => {
-          if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return
-          e.preventDefault()
-          setOpen(true)
-          haptic.trigger('medium')
-          posthog?.capture('sheet_content_viewed', {
-            song_id: sheet.songId,
-            sheet_type: sheet.type,
-            sheet_difficulty: sheet.difficulty,
-          })
-        }}
-        className="no-underline text-inherit"
-      >
-        <ListItemButton
-          disableGutters={!isLargeDevice}
-          className={clsx(
-            'w-full cursor-pointer transition duration-500 hover:duration-25 !px-4',
-            open && '!bg-zinc-300/80',
-          )}
-          sx={{ borderRadius: 1 }}
-          component="div"
+    return (
+      <>
+        {!isControlled && (
+          <ResponsiveDialog open={open} setOpen={setOpen}>
+            {() => <SheetDialogContent sheet={sheet} {...SheetDialogContentProps} />}
+          </ResponsiveDialog>
+        )}
+
+        <a
+          href={`/songs/${encodeURIComponent(sheet.songId)}?type=${encodeURIComponent(sheet.type)}&difficulty=${encodeURIComponent(sheet.difficulty)}`}
+          onClick={(e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return
+            e.preventDefault()
+            setOpen(true)
+            haptic.trigger('medium')
+            posthog?.capture('sheet_content_viewed', {
+              song_id: sheet.songId,
+              sheet_type: sheet.type,
+              sheet_difficulty: sheet.difficulty,
+            })
+          }}
+          className="no-underline text-inherit"
         >
-          <SheetListItemContent sheet={sheet} size={size} {...SheetListItemContentProps} />
-        </ListItemButton>
-      </a>
-    </>
-  )
-})
+          <ListItemButton
+            disableGutters={!isLargeDevice}
+            className={clsx(
+              'w-full cursor-pointer transition duration-500 hover:duration-25 !px-4',
+              open && '!bg-zinc-300/80',
+            )}
+            sx={{ borderRadius: 1 }}
+            component="div"
+          >
+            <SheetListItemContent sheet={sheet} size={size} {...SheetListItemContentProps} />
+          </ListItemButton>
+        </a>
+      </>
+    )
+  },
+)
 SheetListItem.displayName = 'SheetListItem'
 
 export interface SheetListItemContentProps extends HTMLAttributes<HTMLDivElement> {
