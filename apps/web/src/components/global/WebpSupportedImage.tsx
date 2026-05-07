@@ -56,7 +56,7 @@ export const WebpSupportedImage = (
 
   const rest = omit(props, ['assetpackKey', 'src']) as Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'onLoad'>
 
-  const dpr = window.devicePixelRatio
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio : 1
   if (dpr > 1 && source.at2x) {
     const webp = changeToWebp(source.at2x.path)
     return (

@@ -27,3 +27,9 @@ dist-ssr
 .env.sentry-build-plugin
 
 android/
+
+# Nitro build output
+.output/
+
+# Auto-generated route tree
+src/routeTree.gen.ts
