@@ -493,15 +493,6 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
               </div>
             </div>
           )}
-
-          {import.meta.env.DEV && (
-            <div className="flex flex-col gap-1">
-              <SectionHeader>{t('sheet:details.debug.title')}</SectionHeader>
-              <div>
-                <pre className="text-xs">{JSON.stringify(sheet, null, 2)}</pre>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     )
