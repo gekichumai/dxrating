@@ -19,7 +19,7 @@ jobs:
     if: contains(github.event.commits[0].message, '[skip ci]') == false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           ref: 'main'
 
