@@ -173,7 +173,12 @@ export const SheetSortFilter: FC<{
     const alreadySaved = window.localStorage.getItem('dxrating-sheet-sort-filter')
     if (alreadySaved) {
       try {
-        return validateAndMigrate(JSON.parse(alreadySaved))
+        const parsed = JSON.parse(alreadySaved)
+        if (typeof parsed.expiresAt !== 'number' || parsed.expiresAt < Date.now()) {
+          window.localStorage.removeItem('dxrating-sheet-sort-filter')
+          return getDefaultSheetSortFilterForm()
+        }
+        return validateAndMigrate(parsed)
       } catch (e) {
         console.warn('Failed to parse saved sort filter', e)
       }
@@ -199,6 +204,8 @@ export const SheetSortFilter: FC<{
   )
 }
 
+const SHEET_SORT_FILTER_TTL = 5 * 60 * 1000 // 5 minutes
+
 const SheetSortFilterFormListener: FC<{
   onChange?: (form: SheetSortFilterForm) => void
 }> = ({ onChange }) => {
@@ -214,6 +221,7 @@ const SheetSortFilterFormListener: FC<{
           JSON.stringify({
             version: CURRENT_SCHEMA_VERSION,
             payload: data,
+            expiresAt: Date.now() + SHEET_SORT_FILTER_TTL,
           }),
         )
       }
