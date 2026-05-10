@@ -2,10 +2,11 @@ import clsx from 'clsx'
 import { type FC, type ImgHTMLAttributes, memo, useRef, useState } from 'react'
 
 export const FadedImage: FC<
-  ImgHTMLAttributes<HTMLImageElement> & {
+  Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt'> & {
+    alt: string
     placeholderClassName?: string
   }
-> = memo(({ placeholderClassName, draggable, ...props }) => {
+> = memo(({ placeholderClassName, draggable, alt, ...props }) => {
   const [loaded, setLoaded] = useState(false)
   const [instantlyLoaded, setInstantlyLoaded] = useState(false)
   const firstMountAt = useRef(Date.now())
@@ -23,6 +24,7 @@ export const FadedImage: FC<
     <div className={clsx('relative', props.className, placeholderClassName)}>
       <img
         {...props}
+        alt={alt}
         onLoad={onLoad}
         className={clsx(
           'transition-opacity h-full w-full',

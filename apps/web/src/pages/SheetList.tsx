@@ -24,7 +24,7 @@ const SORT_DESCRIPTOR_MAPPING = {
   releaseDate: 'releaseDateTimestamp' as const,
 }
 
-const _SheetListInner: FC = () => {
+const SheetListInnerContent: FC = () => {
   const posthog = usePostHog()
   const { t } = useTranslation(['sheet'])
   const { data: sheets, isLoading } = useSheets({ acceptsPartialData: true })
@@ -216,7 +216,7 @@ const _SheetListInner: FC = () => {
   )
 }
 
-const SheetListInner = Sentry.withProfiler(_SheetListInner)
+const SheetListInner = Sentry.withProfiler(SheetListInnerContent)
 
 export const SheetList: FC = () => {
   return (

@@ -1,6 +1,6 @@
 import { Button, Chip, CircularProgress, IconButton, TextField } from '@mui/material'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { type FC, useState } from 'react'
+import { type FC, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
@@ -108,6 +108,16 @@ interface PasskeyItem {
   deviceType?: string | null
 }
 
+const PasskeyCreatedDate: FC<{ createdAt: Date }> = ({ createdAt }) => {
+  const [formattedDate, setFormattedDate] = useState('')
+
+  useEffect(() => {
+    setFormattedDate(new Date(createdAt).toLocaleDateString())
+  }, [createdAt])
+
+  return <span className="text-xs text-zinc-400">{formattedDate}</span>
+}
+
 const PasskeysSubsection: FC = () => {
   const { t } = useTranslation(['auth'])
   const queryClient = useQueryClient()
@@ -181,7 +191,7 @@ const PasskeysSubsection: FC = () => {
                 )}
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className="text-sm font-medium truncate">{info.name}</span>
-                  <span className="text-xs text-zinc-400">{new Date(pk.createdAt).toLocaleDateString()}</span>
+                  <PasskeyCreatedDate createdAt={pk.createdAt} />
                 </div>
                 <IconButton size="small" onClick={() => handleDelete(pk.id)} className="!text-red-500">
                   <IconMdiDelete className="text-lg" />

@@ -101,6 +101,7 @@ export const VersionRegionSwitcher: FC = () => {
           <WebpSupportedImage
             objectFit="contain"
             assetpackKey={`/images/version-logo/${fromMergedVersionRegionId(value).version}.webp`}
+            alt={`${fromMergedVersionRegionId(value).version} logo`}
             className="h-32 w-auto touch-callout-none"
             draggable={false}
           />
@@ -128,6 +129,7 @@ export const VersionRegionSwitcher: FC = () => {
           <WebpSupportedImage
             objectFit="contain"
             assetpackKey={`/images/version-logo/${dxVersion}.webp`}
+            alt={`${versionEnum} logo`}
             className="h-16 touch-callout-none object-contain w-25"
             draggable={false}
           />
@@ -150,6 +152,7 @@ export const VersionRegionSwitcher: FC = () => {
             <WebpSupportedImage
               objectFit="contain"
               assetpackKey={`/images/version-logo/${dxVersion}.webp`}
+              alt={`${versionEnum} logo`}
               className="h-12 touch-callout-none object-contain w-20"
               draggable={false}
             />

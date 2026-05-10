@@ -264,11 +264,7 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
       )}
       filterOptions={(_, { inputValue }) => {
         if (!inputValue) return sheets
-        const start = performance.now()
-        const results = search(inputValue)
-        const end = performance.now()
-        console.log(`Fuse search took ${end - start}ms`)
-        return results
+        return search(inputValue)
       }}
       renderOption={renderOption}
       ListboxComponent={ListboxComponent}

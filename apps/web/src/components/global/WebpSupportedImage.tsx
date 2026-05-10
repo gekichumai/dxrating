@@ -24,7 +24,8 @@ const toCdnUrl = (path: string) => {
 }
 
 export const WebpSupportedImage = (
-  props: Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'onLoad'> & {
+  props: Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'onLoad' | 'alt'> & {
+    alt: string
     objectFit?: 'contain' | 'cover'
   } & (
       | {
@@ -54,7 +55,11 @@ export const WebpSupportedImage = (
   })()
   if (!source) throw new Error('No source provided')
 
-  const rest = omit(props, ['assetpackKey', 'src']) as Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'onLoad'>
+  const { alt } = props
+  const rest = omit(props, ['assetpackKey', 'src', 'alt']) as Omit<
+    ImgHTMLAttributes<HTMLImageElement>,
+    'src' | 'onLoad'
+  >
 
   const dpr = window.devicePixelRatio
   if (dpr > 1 && source.at2x) {
@@ -65,6 +70,7 @@ export const WebpSupportedImage = (
         <source type={srcToMimeType(source.at2x.path)} srcSet={toCdnUrl(source.at2x.path)} />
         <img
           src={toCdnUrl(source.at2x.path)}
+          alt={alt}
           height={source.at2x.height}
           width={source.at2x.width}
           {...rest}
@@ -86,6 +92,7 @@ export const WebpSupportedImage = (
       <source type={srcToMimeType(source.at1x.path)} srcSet={toCdnUrl(source.at1x.path)} />
       <img
         src={toCdnUrl(source.at1x.path)}
+        alt={alt}
         height={source.at1x.height}
         width={source.at1x.width}
         {...rest}

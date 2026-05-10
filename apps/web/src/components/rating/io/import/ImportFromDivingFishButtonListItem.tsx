@@ -41,6 +41,12 @@ type DivingFishRequestBody = {
   qq?: string
 }
 
+type DivingFishImportMessages = {
+  loading: string
+  success: (count: number) => string
+  error: (error: string) => string
+}
+
 export interface DivingFishResponseBody {
   additional_rating: number
   charts: Charts
@@ -77,9 +83,9 @@ const fetchDivingFish = async (
   sheets: FlattenedSheet[],
   divingFishProfile: DivingFishProfile | null,
   modifyEntries: ListActions<PlayEntry>,
+  messages: DivingFishImportMessages,
 ) => {
-  const { t } = useTranslation(['rating-calculator'])
-  const toastId = toast.loading(t('rating-calculator:io.import.diving-fish.loading'))
+  const toastId = toast.loading(messages.loading)
   try {
     const body: DivingFishRequestBody = {
       b50: 1,
@@ -153,12 +159,12 @@ const fetchDivingFish = async (
       }),
     )
     haptics.trigger('success')
-    toast.success(t('rating-calculator:io.import.diving-fish.success', { count: entries.length }), {
+    toast.success(messages.success(entries.length), {
       id: toastId,
     })
   } catch (error) {
     console.error('There was a problem with the fetch operation:', error)
-    toast.error(t('rating-calculator:io.import.diving-fish.error', { error: formatErrorMessage(error) }), {
+    toast.error(messages.error(String(formatErrorMessage(error))), {
       id: toastId,
     })
   }
@@ -252,7 +258,11 @@ export const ImportDivingFishDialogContent: FC<{
                 toast.error(t('rating-calculator:io.import.diving-fish.no-sheets'))
                 return
               }
-              await fetchDivingFish(sheets, divingFishConfig!, modifyEntries)
+              await fetchDivingFish(sheets, divingFishConfig!, modifyEntries, {
+                loading: t('rating-calculator:io.import.diving-fish.loading'),
+                success: (count) => t('rating-calculator:io.import.diving-fish.success', { count }),
+                error: (error) => t('rating-calculator:io.import.diving-fish.error', { error }),
+              })
               onClose()
             } finally {
               setBusy(false)

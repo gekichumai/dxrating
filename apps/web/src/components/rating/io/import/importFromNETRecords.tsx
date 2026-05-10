@@ -259,6 +259,7 @@ export const importFromNETRecords = async (
     }
 
     const lastRecord = data.recent.at(0)
+    const lastRecordPlayedAt = lastRecord?.play.timestamp ? new Date(lastRecord.play.timestamp).toLocaleString() : null
     haptics.trigger('success')
     toast.success(
       <div className="flex flex-col">
@@ -274,10 +275,10 @@ export const importFromNETRecords = async (
             <span className="text-xs text-zinc-500">
               {lastRecord.sheet.songId} [{lastRecord.sheet.type}]
             </span>
-            {lastRecord.play.timestamp && (
+            {lastRecordPlayedAt && (
               <span className="text-xs text-zinc-500">
                 {t('rating-calculator:io.import.net-records.date', {
-                  date: new Date(lastRecord.play.timestamp).toLocaleString(),
+                  date: lastRecordPlayedAt,
                 })}
               </span>
             )}
