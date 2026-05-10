@@ -91,6 +91,13 @@
       "favorites": {
         "title": "Favorites",
         "only": "Favorites only"
+      },
+      "difficulty": {
+        "title": "Difficulty",
+        "gesture-hint": {
+          "tap": "Toggle",
+          "tap-hold": "Select"
+        }
       }
     },
     "sort": {

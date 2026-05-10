@@ -80,6 +80,14 @@ const _SheetListInner: FC = () => {
           },
 
           (v) => {
+            if (sortFilterOptions.filters.difficulties) {
+              const difficulties = sortFilterOptions.filters.difficulties
+              return difficulties.some((difficulty) => v.difficulty === difficulty)
+            }
+            return true
+          },
+
+          (v) => {
             if (favoriteSheetIds) {
               return favoriteSheetIds.has(v.id)
             }

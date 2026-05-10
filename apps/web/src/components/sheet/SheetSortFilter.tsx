@@ -1,4 +1,4 @@
-import { CategoryEnum, VERSION_SORT_ORDER, VersionEnum } from '@gekichumai/dxdata'
+import { CategoryEnum, DifficultyEnum, VERSION_SORT_ORDER, VersionEnum } from '@gekichumai/dxdata'
 import { DevTool } from '@hookform/devtools'
 import {
   Button,
@@ -24,6 +24,7 @@ import type { FlattenedSheet } from '../../songs'
 import { SheetSortSelect } from './SheetSortSelect'
 import { SheetCategoryFilter } from './filters/SheetCategoryFilter'
 import { SheetFavoritesFilter } from './filters/SheetFavoritesFilter'
+import { SheetDifficultyFilter } from './filters/SheetDifficultyFilter'
 import { SheetInternalLevelFilter } from './filters/SheetInternalLevelFilter'
 import { SheetTagFilter } from './filters/SheetTagFilter'
 import { SheetVersionFilter } from './filters/SheetVersionFilter'
@@ -42,6 +43,7 @@ export interface SheetSortFilterForm {
     }
     tags: number[]
     categories: CategoryEnum[]
+    difficulties: DifficultyEnum[]
     favoritesOnly: boolean
   }
   sorts: SortPredicate[]
@@ -56,6 +58,7 @@ export const getDefaultSheetSortFilterForm = (): SheetSortFilterForm => ({
     },
     tags: [],
     categories: Object.values(CategoryEnum),
+    difficulties: Object.values(DifficultyEnum),
     favoritesOnly: false,
   },
   sorts: [
@@ -143,6 +146,10 @@ export const validateAndMigrate = (alreadySaved: unknown): SheetSortFilterForm =
 
   if (payload.filters.favoritesOnly === undefined) {
     payload.filters.favoritesOnly = false
+  }
+
+  if (payload.filters.difficulties === undefined) {
+    payload.filters.difficulties = Object.values(DifficultyEnum)
   }
 
   // apply migrations
@@ -289,8 +296,9 @@ const SheetSortFilterFormContent = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SheetTagFilter control={control} />
           <SheetInternalLevelFilter control={control} />
-          <SheetVersionFilter control={control} />
           <SheetCategoryFilter control={control} />
+          <SheetDifficultyFilter control={control} />
+          <SheetVersionFilter control={control} />
           <SheetFavoritesFilter control={control} />
         </div>
       </div>
