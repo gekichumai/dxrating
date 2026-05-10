@@ -90,6 +90,13 @@
       "favorites": {
         "title": "收藏",
         "only": "仅显示收藏"
+      },
+      "difficulty": {
+        "title": "难度",
+        "gesture-hint": {
+          "tap": "切换",
+          "tap-hold": "单选"
+        }
       }
     },
     "sort": {
