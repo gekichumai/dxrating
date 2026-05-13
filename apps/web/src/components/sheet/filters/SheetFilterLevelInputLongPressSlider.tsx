@@ -1,7 +1,7 @@
 import { ClickAwayListener } from '@mui/material'
 import MdiGestureSwipeVertical from '~icons/mdi/gesture-swipe-vertical'
 import { AnimatePresence, motion } from 'framer-motion'
-import { type TouchEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLockBodyScroll } from 'react-use'
 import { mapRange } from '../../../utils/mapRange'
 
@@ -30,23 +30,26 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
 
   const valuePercentage = ((value ?? 0) - min) / (max - min)
 
-  const onPointerMove: TouchEventHandler<HTMLDivElement> = useCallback(
-    (e) => {
-      if (!isPressed) return
-      if (!containerRef.current) return
-      if (e.touches.length !== 1) return
-      const { top, height } = containerRef.current.getBoundingClientRect()
-      const padding = 16 + 10 // each side; padding + half size of text mark
-      const offset = e.touches[0].clientY - top
-      const mappedOffset = mapRange(offset, 0, height, -padding, height - padding)
-      const percentageFromTop = mappedOffset / (height - padding * 2)
-      const unroundedValue = (max - min) * percentageFromTop + min
-      const unclampedValue = Math.round(unroundedValue * 10) / 10
-      const value = Math.max(min, Math.min(max, unclampedValue))
-      onChange(value)
-    },
-    [isPressed, containerRef, min, max, onChange],
-  )
+  const onPointerMove = (e: PointerEvent) => {
+    if (!isPressed) return
+    if (!containerRef.current) return
+    const { top, height } = containerRef.current.getBoundingClientRect()
+    const padding = 16 + 10 // each side; padding + half size of text mark
+    const offset = e.clientY - top
+    const mappedOffset = mapRange(offset, 0, height, -padding, height - padding)
+    const percentageFromTop = mappedOffset / (height - padding * 2)
+    const unroundedValue = (max - min) * percentageFromTop + min
+    const unclampedValue = Math.round(unroundedValue * 10) / 10
+    const value = Math.max(min, Math.min(max, unclampedValue))
+    onChange(value)
+  }
+
+  useEffect(() => {
+    document.addEventListener('pointermove', onPointerMove)
+    return () => {
+      document.removeEventListener('pointermove', onPointerMove)
+    }
+  }, [isPressed, containerRef, min, max, onChange])
 
   const indicatorPosition = useMemo(() => {
     if (!containerRef.current) return 0
@@ -57,15 +60,17 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
   }, [containerRef, valuePercentage])
 
   return (
-    <ClickAwayListener onClickAway={() => setIsPressed(false)}>
+    <ClickAwayListener mouseEvent="onMouseUp" onClickAway={() => setIsPressed(false)}>
       <div className="relative select-none">
         <div
           className="cursor-row-resize bg-white/50 rounded-full shadow touch-none flex items-center justify-center h-14 w-10 active:bg-white/100 transition duration-75"
           onTouchStart={() => {
             setIsPressed(true)
           }}
-          onTouchMove={onPointerMove}
           onTouchEnd={() => setIsPressed(false)}
+          onMouseDown={() => {
+            setIsPressed(true)
+          }}
           tabIndex={-1}
         >
           <MdiGestureSwipeVertical fontSize="1rem" />
@@ -78,6 +83,7 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
               initial={{ opacity: 0, scaleY: 0.5, y: '-50%' }}
               animate={{ opacity: 1, scaleY: 1, y: '-50%' }}
               exit={{ opacity: 0, scaleY: 0.5, y: '-50%' }}
+              onMouseUp={() => setIsPressed(false)}
             >
               {inclusiveWholeNumbers.map((i) => (
                 <div key={i} className="text-sm text-black/50 font-mono">
