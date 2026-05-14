@@ -1,7 +1,7 @@
 import { ClickAwayListener } from '@mui/material'
 import MdiGestureSwipeVertical from '~icons/mdi/gesture-swipe-vertical'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { type TouchEvent, type TouchEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLockBodyScroll } from 'react-use'
 import { mapRange } from '../../../utils/mapRange'
 
@@ -30,12 +30,14 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
 
   const valuePercentage = ((value ?? 0) - min) / (max - min)
 
-  const onPointerMove = (e: PointerEvent) => {
+  const onPointerMove = (e: MouseEvent | TouchEvent<HTMLDivElement>) => {
     if (!isPressed) return
     if (!containerRef.current) return
+    if ('touches' in e && e.touches.length !== 1) return
+
     const { top, height } = containerRef.current.getBoundingClientRect()
     const padding = 16 + 10 // each side; padding + half size of text mark
-    const offset = e.clientY - top
+    const offset = ('touches' in e ? e.touches[0] : e).clientY - top
     const mappedOffset = mapRange(offset, 0, height, -padding, height - padding)
     const percentageFromTop = mappedOffset / (height - padding * 2)
     const unroundedValue = (max - min) * percentageFromTop + min
@@ -45,11 +47,19 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
   }
 
   useEffect(() => {
-    document.addEventListener('pointermove', onPointerMove)
+    document.addEventListener('mousemove', onPointerMove)
     return () => {
-      document.removeEventListener('pointermove', onPointerMove)
+      document.removeEventListener('mousemove', onPointerMove)
     }
   }, [isPressed, containerRef, min, max, onChange])
+
+  const onTouchMove: TouchEventHandler<HTMLDivElement> = useCallback(onPointerMove, [
+    isPressed,
+    containerRef,
+    min,
+    max,
+    onChange,
+  ])
 
   const indicatorPosition = useMemo(() => {
     if (!containerRef.current) return 0
@@ -67,6 +77,7 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
           onTouchStart={() => {
             setIsPressed(true)
           }}
+          onTouchMove={onTouchMove}
           onTouchEnd={() => setIsPressed(false)}
           onMouseDown={() => {
             setIsPressed(true)
