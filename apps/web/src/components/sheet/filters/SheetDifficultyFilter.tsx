@@ -1,5 +1,5 @@
 import { DifficultyEnum } from '@gekichumai/dxdata'
-import { ButtonBase, Chip } from '@mui/material'
+import { ButtonBase, Chip, Button } from '@mui/material'
 import { type FC, useMemo } from 'react'
 import { type Control, useController } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -7,6 +7,7 @@ import { LongPressCallbackReason, useLongPress } from 'use-long-press'
 import { GestureHint } from '../../global/GestureHint'
 import type { SheetSortFilterForm } from '../SheetSortFilter'
 import { SheetFilterSection } from './SheetFilterSection'
+import MdiRestore from '~icons/mdi/restore'
 
 const DIFFICULTIES = {
   [DifficultyEnum.Basic]: 'BASIC',
@@ -108,7 +109,8 @@ const SheetDifficultyFilterInput = ({
 
 export const SheetDifficultyFilter: FC<{
   control: Control<SheetSortFilterForm>
-}> = ({ control }) => {
+  reset: () => void
+}> = ({ control, reset }) => {
   const { t } = useTranslation(['sheet', 'global'])
   const {
     field: { onChange, value },
@@ -116,7 +118,6 @@ export const SheetDifficultyFilter: FC<{
     control,
     name: 'filters.difficulties',
   })
-
   return (
     <SheetFilterSection
       title={
@@ -125,6 +126,15 @@ export const SheetDifficultyFilter: FC<{
           <div className="flex-1" />
           <GestureHint gesture="tap" description={t('sheet:filter.difficulty.gesture-hint.tap')} />
           <GestureHint gesture="tap-hold" description={t('sheet:filter.difficulty.gesture-hint.tap-hold')} />
+          <Button
+            sx={{ minWidth: 'auto', p: 1 }}
+            className="px-1 py-1 ml-1 text-xs inline-flex"
+            color="error"
+            variant="outlined"
+            onClick={reset}
+          >
+            <MdiRestore />
+          </Button>
         </>
       }
     >
