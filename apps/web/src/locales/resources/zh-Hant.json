@@ -118,11 +118,12 @@
       "title": "篩選與排序",
       "reset": {
         "dialog": {
-          "title": "重置篩選與排序設定",
+          "title": "重設全部篩選與排序設定",
+          "message": "您真的要重設全部篩選與排序設定嗎？",
           "cancel": "取消",
           "confirm": "確定"
         },
-        "button": "重置全部"
+        "button": "重設全部"
       }
     },
     "tags": {
