@@ -117,7 +117,7 @@
       "title": "筛选与排序",
       "reset": {
         "dialog": {
-          "title": "重置筛选与排序设置",
+          "title": "重置全部筛选与排序设置",
           "message": "您确定要重置筛选与排序设置吗？",
           "cancel": "取消",
           "confirm": "确定"
