@@ -1,4 +1,4 @@
-import { Button, ButtonBase, Chip } from '@mui/material'
+import { ButtonBase, Chip } from '@mui/material'
 import clsx from 'clsx'
 import type { FC, ReactNode } from 'react'
 import { type Control, useController } from 'react-hook-form'
@@ -12,7 +12,6 @@ import { zoomTransitions } from '../../../utils/motionConstants'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
 import type { SheetSortFilterForm } from '../SheetSortFilter'
 import { SheetFilterSection } from './SheetFilterSection'
-import MdiRestore from '~icons/mdi/restore'
 
 const SheetTagFilterInputTag = ({
   label,
@@ -176,23 +175,7 @@ export const SheetTagFilter: FC<{
   })
 
   return (
-    <SheetFilterSection
-      title={
-        <>
-          {t('sheet:filter.tags.title')}
-          <div className="flex-1" />
-          <Button
-            sx={{ minWidth: 'auto', p: 1 }}
-            className="px-1 py-1 text-xs inline-flex"
-            color="error"
-            variant="outlined"
-            onClick={reset}
-          >
-            <MdiRestore />
-          </Button>
-        </>
-      }
-    >
+    <SheetFilterSection titleLeft={t('sheet:filter.tags.title')} reset={reset}>
       <SheetTagFilterInput value={value} onChange={onChange} />
     </SheetFilterSection>
   )
