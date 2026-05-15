@@ -282,9 +282,16 @@ const SheetSortFilterFormReset: FC<{
 const SheetSortFilterFormContent = () => {
   const { t } = useTranslation(['sheet'])
   const { queryActive } = useContext(SheetDetailsContext)
-  const { control, reset } = useFormContext<SheetSortFilterForm>()
+  const { control, setValue, reset } = useFormContext<SheetSortFilterForm>()
   const [expanded, setExpanded] = useState(false)
   const [pending, startTransition] = useTransition()
+
+  const resetByFilter = (...filters: (keyof SheetSortFilterForm['filters'])[]) => {
+    const defaultForm = getDefaultSheetSortFilterForm()
+    for (const filter of filters) {
+      setValue(`filters.${filter}`, defaultForm.filters[filter])
+    }
+  }
 
   const collapsibleInner = (
     <div className="p-2 w-full flex flex-col gap-4">
@@ -302,12 +309,12 @@ const SheetSortFilterFormContent = () => {
           <span className="whitespace-nowrap">{t('sheet:filter.title')}</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SheetTagFilter control={control} />
-          <SheetInternalLevelFilter control={control} />
-          <SheetCategoryFilter control={control} />
-          <SheetDifficultyFilter control={control} />
-          <SheetVersionFilter control={control} />
-          <SheetFavoritesFilter control={control} />
+          <SheetTagFilter control={control} reset={() => resetByFilter('tags')} />
+          <SheetInternalLevelFilter control={control} reset={() => resetByFilter('internalLevelValue')} />
+          <SheetCategoryFilter control={control} reset={() => resetByFilter('categories')} />
+          <SheetDifficultyFilter control={control} reset={() => resetByFilter('difficulties')} />
+          <SheetVersionFilter control={control} reset={() => resetByFilter('versions')} />
+          <SheetFavoritesFilter control={control} reset={() => resetByFilter('favoritesOnly')} />
         </div>
       </div>
 
