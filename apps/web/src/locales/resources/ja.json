@@ -115,8 +115,16 @@
       "temporarily-disabled": "検索キーワードが入力されため、一時的に無効となります"
     },
     "sort-and-filter": {
-      "reset": "リセット",
-      "title": "フィルタと並べ替え"
+      "title": "フィルタと並べ替え",
+      "reset": {
+        "dialog": {
+          "title": "フィルタと並べ替え設定をリセット",
+          "message": "フィルタと並べ替え設定をリセットしてもよろしいですか？",
+          "cancel": "キャンセル",
+          "confirm": "リセット"
+        },
+        "button": "リセット"
+      }
     },
     "tags": {
       "add": {

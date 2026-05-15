@@ -116,7 +116,14 @@
     },
     "sort-and-filter": {
       "title": "篩選與排序",
-      "reset": "重置"
+      "reset": {
+        "dialog": {
+          "title": "重置篩選與排序設定",
+          "cancel": "取消",
+          "confirm": "確定"
+        },
+        "button": "重置"
+      }
     },
     "tags": {
       "add": {
