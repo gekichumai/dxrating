@@ -1,4 +1,4 @@
-import { Button, type TextFieldProps } from '@mui/material'
+import type { TextFieldProps } from '@mui/material'
 import { type FC, useMemo } from 'react'
 import { type Control, type FieldPath, useController, type UseControllerProps } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -8,7 +8,6 @@ import type { SheetSortFilterForm } from '../SheetSortFilter'
 import { FloatValueInputField } from './FloatValueInputField'
 import { SheetFilterInternalLevelInputLongPressSlider } from './SheetFilterLevelInputLongPressSlider'
 import { SheetFilterSection } from './SheetFilterSection'
-import MdiRestore from '~icons/mdi/restore'
 
 const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
   label,
@@ -75,23 +74,7 @@ export const SheetInternalLevelFilter: FC<{
   )
 
   return (
-    <SheetFilterSection
-      title={
-        <>
-          {t('sheet:filter.internal-level-value.title')}
-          <div className="flex-1" />
-          <Button
-            sx={{ minWidth: 'auto', p: 1 }}
-            className="px-1 py-1 text-xs inline-flex"
-            color="error"
-            variant="outlined"
-            onClick={reset}
-          >
-            <MdiRestore />
-          </Button>
-        </>
-      }
-    >
+    <SheetFilterSection titleLeft={t('sheet:filter.internal-level-value.title')} reset={reset}>
       <SheetFilterInternalLevelValueInput
         label={t('sheet:filter.internal-level-value.min')}
         name="filters.internalLevelValue.min"

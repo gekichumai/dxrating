@@ -1,5 +1,5 @@
 import { VERSION_ID_MAP, VERSION_IDS, type VersionEnum } from '@gekichumai/dxdata'
-import { Button, ButtonBase, Chip } from '@mui/material'
+import { ButtonBase, Chip } from '@mui/material'
 import { type FC, useMemo } from 'react'
 import { type Control, useController } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -8,7 +8,6 @@ import { useAppContextDXDataVersion } from '../../../models/context/useAppContex
 import { GestureHint } from '../../global/GestureHint'
 import type { SheetSortFilterForm } from '../SheetSortFilter'
 import { SheetFilterSection } from './SheetFilterSection'
-import MdiRestore from '~icons/mdi/restore'
 
 const SheetVersionFilterInputVersion = ({
   version,
@@ -113,23 +112,14 @@ export const SheetVersionFilter: FC<{
 
   return (
     <SheetFilterSection
-      title={
+      titleLeft={t('sheet:filter.version.title')}
+      titleRight={
         <>
-          <div>{t('sheet:filter.version.title')}</div>
-          <div className="flex-1" />
           <GestureHint gesture="tap" description={t('sheet:filter.version.gesture-hint.tap')} />
           <GestureHint gesture="tap-hold" description={t('sheet:filter.version.gesture-hint.tap-hold')} />
-          <Button
-            sx={{ minWidth: 'auto', p: 1 }}
-            className="px-1 py-1 ml-1 text-xs inline-flex"
-            color="error"
-            variant="outlined"
-            onClick={reset}
-          >
-            <MdiRestore />
-          </Button>
         </>
       }
+      reset={reset}
     >
       <SheetVersionFilterInput value={value} onChange={onChange} />
     </SheetFilterSection>
