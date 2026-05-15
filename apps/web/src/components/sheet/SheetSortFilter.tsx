@@ -247,9 +247,9 @@ const SheetSortFilterFormReset: FC<{
   return (
     <>
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} TransitionComponent={Grow}>
-        <DialogTitle>Reset Sort and Filter Settings</DialogTitle>
+        <DialogTitle>{t('sheet:sort-and-filter.reset.dialog.title')}</DialogTitle>
         <DialogContent>
-          <DialogContentText>Are you sure you want to reset the sort and filter settings?</DialogContentText>
+          <DialogContentText>{t('sheet:sort-and-filter.reset.dialog.message')}</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button
@@ -257,7 +257,7 @@ const SheetSortFilterFormReset: FC<{
               setOpenDialog(false)
             }}
           >
-            Cancel
+            {t('sheet:sort-and-filter.reset.dialog.cancel')}
           </Button>
           <Button
             variant="contained"
@@ -267,13 +267,13 @@ const SheetSortFilterFormReset: FC<{
               onReset()
             }}
           >
-            Reset
+            {t('sheet:sort-and-filter.reset.dialog.confirm')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Button variant="outlined" color="error" onClick={() => setOpenDialog(true)} size="small">
-        {t('sheet:sort-and-filter.reset')}
+        {t('sheet:sort-and-filter.reset.button')}
       </Button>
     </>
   )
