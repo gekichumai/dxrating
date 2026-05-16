@@ -1,7 +1,8 @@
-import i18n from 'i18next'
+import i18n, { createInstance } from 'i18next'
 import type { InitOptions, Module, Services } from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import { i18nResources } from '@/locales/locales'
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type SupportedLocale } from './locale'
 
 let initialized = false
 
@@ -32,12 +33,30 @@ export function initI18n(languageDetector?: Module, detectionOptions?: object) {
   }
 
   i18n.use(initReactI18next).init({
-    resources: i18nResources,
-    fallbackLng: 'en',
-    lng: 'en',
+    ...getI18nInitOptions(DEFAULT_LOCALE),
     detection: detectionOptions,
+  })
+}
+
+export function getI18nInitOptions(lng: SupportedLocale): InitOptions {
+  return {
+    resources: i18nResources,
+    fallbackLng: DEFAULT_LOCALE,
+    supportedLngs: [...SUPPORTED_LOCALES],
+    nonExplicitSupportedLngs: true,
+    lng,
     interpolation: {
       escapeValue: false,
     },
+  }
+}
+
+export function createServerI18n(locale: SupportedLocale) {
+  const instance = createInstance()
+  instance.use(initReactI18next).init({
+    ...getI18nInitOptions(locale),
+    initImmediate: false,
   })
+
+  return instance
 }
