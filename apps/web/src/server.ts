@@ -8,6 +8,7 @@ import { createServerEntry, type ServerEntry } from '@tanstack/react-start/serve
 import { BUNDLE } from './utils/bundle'
 import { createServerI18n } from './setup/init-i18n'
 import { appendVaryHeader, detectServerLocale } from './setup/locale'
+import { finishServerTimingSpan, setServerTimingHeader, startServerTimingSpan } from './setup/server-timing'
 
 Sentry.init({
   dsn: 'https://9346c04036724f129e00a750c8ab9415@o4506648698683392.ingest.us.sentry.io/4511398317064192',
@@ -17,22 +18,26 @@ Sentry.init({
 })
 
 const startHandler = createStartHandler(async ({ request, router, responseHeaders }) => {
+  const ssrTiming = startServerTimingSpan('ssr')
+  const setupTiming = startServerTimingSpan('ssr_setup')
   const locale = detectServerLocale(request)
+  const serverI18n = createServerI18n(locale)
 
   responseHeaders.set('Content-Language', locale)
   appendVaryHeader(responseHeaders, 'Cookie')
   appendVaryHeader(responseHeaders, 'Accept-Language')
 
-  return renderRouterToStream({
+  const setupMetric = finishServerTimingSpan(setupTiming)
+  const response = await renderRouterToStream({
     request,
     router,
     responseHeaders,
-    children: createElement(
-      I18nextProvider,
-      { i18n: createServerI18n(locale) },
-      createElement(StartServer, { router }),
-    ),
+    children: createElement(I18nextProvider, { i18n: serverI18n }, createElement(StartServer, { router })),
   })
+
+  setServerTimingHeader(response.headers, [setupMetric, finishServerTimingSpan(ssrTiming)])
+
+  return response
 })
 
 const requestHandler: ServerEntry = wrapFetchWithSentry({
