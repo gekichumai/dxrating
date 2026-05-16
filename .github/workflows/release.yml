@@ -15,7 +15,7 @@ jobs:
     permissions:
       contents: read
       deployments: write
-    name: Publish to Cloudflare Pages
+    name: Publish to Cloudflare Workers
 
     steps:
       - name: Checkout
@@ -69,8 +69,8 @@ jobs:
           VITE_BACKEND_URL: https://miruku.dxrating.net
           VITE_BETTER_AUTH_URL: https://miruku.dxrating.net
 
-      - name: Deploy to Cloudflare Pages
-        run: pnpm dlx wrangler pages deploy apps/web/dist --project-name=dxrating --branch=main --commit-dirty=true
+      - name: Deploy to Cloudflare Workers
+        run: pnpm --filter @gekichumai/dxrating-web exec wrangler deploy --config=dist/server/wrangler.json --name=dxrating
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

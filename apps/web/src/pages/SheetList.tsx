@@ -1,17 +1,21 @@
-import { VERSION_ID_MAP } from '@gekichumai/dxdata'
+import { type DifficultyEnum, TypeEnum, VERSION_ID_MAP, dxdata } from '@gekichumai/dxdata'
 import { IconButton, TextField } from '@mui/material'
-import * as Sentry from '@sentry/react'
+import * as Sentry from '@sentry/tanstackstart-react'
+import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { usePostHog } from 'posthog-js/react'
-import { type FC, useContext, useMemo, useState } from 'react'
+import { type FC, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParam } from 'react-use'
 import IconMdiClose from '~icons/mdi/close'
 import MdiIconInfo from '~icons/mdi/information'
+import { ResponsiveDialog } from '../components/global/ResponsiveDialog'
+import { SheetDialogContent } from '../components/sheet/SheetDialogContent'
 import { SheetListContainer } from '../components/sheet/SheetListContainer'
 import { SheetSortFilter, type SheetSortFilterForm } from '../components/sheet/SheetSortFilter'
 import { SheetDetailsContext, SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
-import { type FlattenedSheet, useFilteredSheets, useSheets } from '../songs'
+import { type FlattenedSheet, canonicalIdFromParts, useFilteredSheets, useSheets } from '../songs'
+
+const searchRouteApi = getRouteApi('/search')
 
 const chainEvery =
   <T,>(...fns: ((arg: T) => boolean | undefined)[]) =>
@@ -30,10 +34,90 @@ const _SheetListInner: FC = () => {
   const { data: sheets, isLoading } = useSheets({ acceptsPartialData: true })
   const { setQueryActive } = useContext(SheetDetailsContext)
   const version = useAppContextDXDataVersion()
-  const queryParam = useSearchParam('q')
-  const [query, setQuery] = useState<string>(queryParam ?? '')
-  const { results, elapsed: searchElapsed } = useFilteredSheets(query)
   const [sortFilterOptions, setSortFilterOptions] = useState<SheetSortFilterForm | null>(null)
+  const navigate = useNavigate()
+
+  const search = searchRouteApi.useSearch()
+  const [query, setQuery] = useState<string>(search.q ?? '')
+  const { results, elapsed: searchElapsed } = useFilteredSheets(query)
+
+  useEffect(() => {
+    const nextQuery = search.q ?? ''
+    setQuery(nextQuery)
+    setQueryActive(!!nextQuery)
+  }, [search.q, setQueryActive])
+
+  const updateQuery = useCallback(
+    (nextQuery: string) => {
+      setQuery(nextQuery)
+      setQueryActive(!!nextQuery)
+      navigate({
+        to: '/search',
+        search: (prev: Record<string, unknown>) => ({
+          ...prev,
+          q: nextQuery || undefined,
+        }),
+        replace: true,
+        resetScroll: false,
+      })
+    },
+    [navigate, setQueryActive],
+  )
+
+  const activeSheet = useMemo<FlattenedSheet | null>(() => {
+    const { songId, type, difficulty } = search
+    if (!songId || !type || !difficulty) return null
+    const song = dxdata.songs.find((s) => s.songId === songId)
+    if (!song) return null
+    const sheet = song.sheets.find((s) => s.type === type && s.difficulty === difficulty)
+    if (!sheet) return null
+    const isTypeUtage = sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P
+    return {
+      ...song,
+      ...sheet,
+      id: canonicalIdFromParts(songId, type as TypeEnum, difficulty as DifficultyEnum),
+      searchAcronyms: song.searchAcronyms,
+      isTypeUtage,
+      isRatingEligible: !isTypeUtage,
+      releaseDateTimestamp: sheet.releaseDate ? new Date(`${sheet.releaseDate}T06:00:00+09:00`).valueOf() : 0,
+      internalLevelValue: sheet.multiverInternalLevelValue
+        ? (sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue)
+        : sheet.internalLevelValue,
+    } as FlattenedSheet
+  }, [search, version])
+  const activeSheetId = activeSheet?.id ?? null
+
+  const handleSheetDialogChange = useCallback(
+    (sheet: FlattenedSheet | null) => {
+      if (sheet) {
+        navigate({
+          to: '/search',
+          search: (prev: Record<string, unknown>) => ({
+            ...prev,
+            songId: sheet.songId,
+            type: sheet.type,
+            difficulty: sheet.difficulty,
+          }),
+          mask: {
+            to: '/songs/$songId',
+            params: { songId: sheet.songId },
+            search: { type: sheet.type, difficulty: sheet.difficulty },
+          },
+          resetScroll: false,
+        })
+      } else {
+        navigate({
+          to: '/search',
+          search: (prev: Record<string, unknown>) => {
+            const { songId: _, type: __, difficulty: ___, ...rest } = prev
+            return rest
+          },
+          resetScroll: false,
+        })
+      }
+    },
+    [navigate],
+  )
 
   const { filteredResults, elapsed: filteringElapsed } = useMemo(() => {
     const startTime = performance.now()
@@ -142,21 +226,28 @@ const _SheetListInner: FC = () => {
 
   return (
     <div className="flex-container pb-global">
+      <ResponsiveDialog
+        open={!!activeSheet}
+        setOpen={(open) => {
+          if (!open) handleSheetDialogChange(null)
+        }}
+      >
+        {() => activeSheet && <SheetDialogContent sheet={activeSheet} />}
+      </ResponsiveDialog>
+
       <TextField
         label={t('sheet:search')}
         variant="outlined"
         value={query}
         fullWidth
         onChange={(e) => {
-          setQuery(e.target.value)
-          setQueryActive(!!e.target.value)
+          updateQuery(e.target.value)
         }}
         InputProps={{
           endAdornment: query && (
             <IconButton
               onClick={() => {
-                setQuery('')
-                setQueryActive(false)
+                updateQuery('')
                 posthog?.capture('sheet_search_clear_button_clicked')
               }}
               size="small"
@@ -218,13 +309,17 @@ const _SheetListInner: FC = () => {
           ))}
         </div>
       ) : (
-        <SheetListContainer sheets={filteredResults} />
+        <SheetListContainer
+          sheets={filteredResults}
+          activeSheetId={activeSheetId}
+          onSheetDialogChange={handleSheetDialogChange}
+        />
       )}
     </div>
   )
 }
 
-const SheetListInner = Sentry.withProfiler(_SheetListInner)
+const SheetListInner = _SheetListInner
 
 export const SheetList: FC = () => {
   return (

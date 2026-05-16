@@ -2,20 +2,21 @@ import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
 import { Button, IconButton } from '@mui/material'
 import { type FC, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRoute } from 'wouter'
+import { getRouteApi } from '@tanstack/react-router'
 import MdiArrowLeft from '~icons/mdi/arrow-left'
-import { useSongHead } from '../hooks/useSongHead'
-import { DIFFICULTY_ORDER, TYPE_ORDER, getHighestDifficulty } from '../models/constants'
+import { TYPE_ORDER, getHighestDifficulty } from '../models/constants'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { type FlattenedSheet, canonicalId } from '../songs'
 import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
 
+const routeApi = getRouteApi('/songs/$songId')
+
 export const SongPage: FC = () => {
   const { t } = useTranslation(['song'])
-  const [, params] = useRoute('/songs/:songId')
-  const songId = params?.songId
+  const { songId } = routeApi.useParams()
+  const search = routeApi.useSearch()
   const appVersion = useAppContextDXDataVersion()
 
   const song = useMemo(() => {
@@ -48,14 +49,13 @@ export const SongPage: FC = () => {
   }, [flattenedSheets])
 
   const [activeType, setActiveType] = useState<TypeEnum>(() => {
-    const qType = new URLSearchParams(window.location.search).get('type') as TypeEnum | null
+    const qType = (search.type ?? null) as TypeEnum | null
     if (qType && availableTypes.includes(qType)) return qType
     return availableTypes[0] ?? TypeEnum.DX
   })
   const [activeDifficulty, setActiveDifficulty] = useState<DifficultyEnum>(() => {
-    const qParams = new URLSearchParams(window.location.search)
-    const qType = qParams.get('type') as TypeEnum | null
-    const qDiff = qParams.get('difficulty') as DifficultyEnum | null
+    const qType = (search.type ?? null) as TypeEnum | null
+    const qDiff = (search.difficulty ?? null) as DifficultyEnum | null
     const effectiveType = qType && availableTypes.includes(qType) ? qType : (availableTypes[0] ?? TypeEnum.DX)
     const sheetsOfType = flattenedSheets.filter((s) => s.type === effectiveType)
     const availableDiffs = new Set(sheetsOfType.map((s) => s.difficulty))
@@ -68,14 +68,6 @@ export const SongPage: FC = () => {
     const sheetsOfType = flattenedSheets.filter((s) => s.type === newType)
     setActiveDifficulty(getHighestDifficulty(sheetsOfType))
   }
-
-  useSongHead({
-    title: song?.title ?? '',
-    artist: song?.artist ?? '',
-    category: song?.category ?? '',
-    songId: songId ?? '',
-    imageName: song?.imageName ?? '',
-  })
 
   if (!song) {
     return (
