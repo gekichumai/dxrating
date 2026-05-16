@@ -1,6 +1,6 @@
 import { Button, Chip, CircularProgress, IconButton, TextField } from '@mui/material'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { type FC, useEffect, useState } from 'react'
+import { type FC, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
@@ -109,11 +109,7 @@ interface PasskeyItem {
 }
 
 const PasskeyCreatedDate: FC<{ createdAt: Date }> = ({ createdAt }) => {
-  const [formattedDate, setFormattedDate] = useState('')
-
-  useEffect(() => {
-    setFormattedDate(new Date(createdAt).toLocaleDateString())
-  }, [createdAt])
+  const formattedDate = useMemo(() => new Date(createdAt).toLocaleDateString(), [createdAt])
 
   return <span className="text-xs text-zinc-400">{formattedDate}</span>
 }
