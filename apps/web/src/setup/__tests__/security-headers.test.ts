@@ -23,6 +23,10 @@ describe('security report headers', () => {
     const imageSources = getDirectiveSources(policy, 'img-src')
     const connectSources = getDirectiveSources(policy, 'connect-src')
 
+    expect(headers['X-Frame-Options']).toBe('DENY')
+    expect(headers['X-Content-Type-Options']).toBe('nosniff')
+    expect(headers['Referrer-Policy']).toBe('strict-origin-when-cross-origin')
+    expect(headers['Permissions-Policy']).toBe('geolocation=(), camera=(), microphone=()')
     expect(policy).toContain("default-src 'self'")
     expect(policy).not.toContain('*.')
     expect(scriptSources).toContain('https://razu.dxrating.net')
