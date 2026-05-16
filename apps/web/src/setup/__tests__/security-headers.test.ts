@@ -6,6 +6,11 @@ import {
   buildSecurityReportHeaders,
 } from '../security-headers'
 
+const getDirectiveSources = (policy: string, directive: string) => {
+  const entry = policy.split('; ').find((item) => item.startsWith(`${directive} `))
+  return entry?.split(' ').slice(1) ?? []
+}
+
 describe('security report headers', () => {
   it('builds Sentry CSP headers in report-only mode', () => {
     expect(SENTRY_SECURITY_REPORT_ENDPOINT).toBe(
@@ -14,9 +19,13 @@ describe('security report headers', () => {
 
     const headers = buildSecurityReportHeaders()
     const policy = headers['Content-Security-Policy-Report-Only']
+    const scriptSources = getDirectiveSources(policy, 'script-src')
+    const imageSources = getDirectiveSources(policy, 'img-src')
 
     expect(policy).toContain("default-src 'self'")
-    expect(policy).toContain('https://gravatar.com')
+    expect(scriptSources).toContain('https://razu.dxrating.net')
+    expect(imageSources).toContain('https://gravatar.com')
+    expect(imageSources).toContain('https://avatars.githubusercontent.com')
     expect(policy).toContain(`report-uri ${SENTRY_SECURITY_REPORT_ENDPOINT}`)
     expect(policy).toContain(`report-to ${SECURITY_REPORT_ENDPOINT_GROUP}`)
     expect(headers).not.toHaveProperty('Content-Security-Policy')
