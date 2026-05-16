@@ -56,34 +56,18 @@ export const WebpSupportedImage = (
 
   const rest = omit(props, ['assetpackKey', 'src']) as Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'onLoad'>
 
-  const dpr = window.devicePixelRatio
-  if (dpr > 1 && source.at2x) {
-    const webp = changeToWebp(source.at2x.path)
-    return (
-      <picture>
-        <source type={srcToMimeType(webp)} srcSet={toCdnUrl(webp)} />
-        <source type={srcToMimeType(source.at2x.path)} srcSet={toCdnUrl(source.at2x.path)} />
-        <img
-          src={toCdnUrl(source.at2x.path)}
-          height={source.at2x.height}
-          width={source.at2x.width}
-          {...rest}
-          style={{
-            aspectRatio: `${source.at2x.width} / ${source.at2x.height}`,
-            objectFit: props.objectFit,
-            ...rest.style,
-          }}
-        />
-      </picture>
-    )
-  }
-
   const webp = changeToWebp(source.at1x.path)
+  const webpSrcSet = source.at2x
+    ? `${toCdnUrl(webp)} 1x, ${toCdnUrl(changeToWebp(source.at2x.path))} 2x`
+    : toCdnUrl(webp)
+  const originalSrcSet = source.at2x
+    ? `${toCdnUrl(source.at1x.path)} 1x, ${toCdnUrl(source.at2x.path)} 2x`
+    : toCdnUrl(source.at1x.path)
 
   return (
     <picture>
-      <source type={srcToMimeType(webp)} srcSet={toCdnUrl(webp)} />
-      <source type={srcToMimeType(source.at1x.path)} srcSet={toCdnUrl(source.at1x.path)} />
+      <source type={srcToMimeType(webp)} srcSet={webpSrcSet} />
+      <source type={srcToMimeType(source.at1x.path)} srcSet={originalSrcSet} />
       <img
         src={toCdnUrl(source.at1x.path)}
         height={source.at1x.height}

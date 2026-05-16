@@ -2,7 +2,7 @@ name: Preview
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, closed]
 
 concurrency:
   group: preview-${{ github.event.pull_request.number }}
@@ -10,6 +10,7 @@ concurrency:
 
 jobs:
   deploy-preview:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -57,14 +58,15 @@ jobs:
           VITE_BACKEND_URL: https://miruku.dxrating.net
           VITE_BETTER_AUTH_URL: https://miruku.dxrating.net
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare Workers
         id: deploy
         run: |
-          DEPLOY_OUTPUT=$(pnpm dlx wrangler pages deploy apps/web/dist \
-            --project-name=dxrating \
-            --branch="${{ github.head_ref }}" \
-            --commit-dirty=true 2>&1 | tee /dev/stderr)
-          DEPLOYMENT_URL=$(echo "$DEPLOY_OUTPUT" | grep -oP 'https://[^\s]+\.pages\.dev' | tail -1)
+          set -euo pipefail
+          DEPLOY_OUTPUT=$(pnpm --filter @gekichumai/dxrating-web exec wrangler deploy \
+            --config=dist/server/wrangler.json \
+            --name="dxrating-pr-${{ github.event.pull_request.number }}" 2>&1 | tee /dev/stderr)
+          DEPLOYMENT_URL=$(echo "$DEPLOY_OUTPUT" | grep -Eo 'https://[^[:space:]]+\.workers\.dev' | tail -1)
+          test -n "$DEPLOYMENT_URL"
           echo "url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -82,4 +84,29 @@ jobs:
             | Latest commit | ${{ github.event.pull_request.head.sha }} |
             | Preview URL | ${{ steps.deploy.outputs.url }} |
 
-            > Built and deployed to Cloudflare Pages.
+            > Built and deployed to Cloudflare Workers.
+
+  delete-preview:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    name: Delete Preview
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+
+      - name: Delete Cloudflare Worker preview
+        run: pnpm dlx wrangler delete --name="dxrating-pr-${{ github.event.pull_request.number }}" --force
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

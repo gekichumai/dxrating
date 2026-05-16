@@ -1,5 +1,5 @@
 import { type DifficultyEnum, type Sheet, type Song, TypeEnum, type VersionEnum, dxdata } from '@gekichumai/dxdata'
-import * as Sentry from '@sentry/react'
+import * as Sentry from '@sentry/tanstackstart-react'
 import Fuse from 'fuse.js'
 import uniq from 'lodash-es/uniq'
 import { useMemo } from 'react'

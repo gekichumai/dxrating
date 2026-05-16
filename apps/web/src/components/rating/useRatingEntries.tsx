@@ -1,5 +1,5 @@
 import { VERSION_ID_MAP, VersionEnum } from '@gekichumai/dxdata'
-import * as Sentry from '@sentry/react'
+import * as Sentry from '@sentry/tanstackstart-react'
 import { useMemo } from 'react'
 import type { Region } from '../../models/context/AppContext'
 import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'

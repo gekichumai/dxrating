@@ -1,5 +1,5 @@
 import { Button, CircularProgress, Dialog, DialogContent, DialogContentText, DialogTitle, Grow } from '@mui/material'
-import * as Sentry from '@sentry/react'
+import * as Sentry from '@sentry/tanstackstart-react'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
