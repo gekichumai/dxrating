@@ -19,6 +19,7 @@ const CSP_DIRECTIVES = [
       "'unsafe-eval'",
       "'wasm-unsafe-eval'",
       'https://challenges.cloudflare.com',
+      'https://razu.dxrating.net',
       'https://sql.js.org',
     ],
   ],
@@ -26,7 +27,15 @@ const CSP_DIRECTIVES = [
   ['font-src', ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://shama.dxrating.net']],
   [
     'img-src',
-    ["'self'", 'data:', 'blob:', 'https://shama.dxrating.net', 'https://gravatar.com', 'https://*.gravatar.com'],
+    [
+      "'self'",
+      'data:',
+      'blob:',
+      'https://shama.dxrating.net',
+      'https://gravatar.com',
+      'https://*.gravatar.com',
+      'https://avatars.githubusercontent.com',
+    ],
   ],
   [
     'connect-src',
