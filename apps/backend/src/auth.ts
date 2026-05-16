@@ -8,13 +8,10 @@ import { openAPI, oneTap, haveIBeenPwned, captcha, lastLoginMethod } from 'bette
 import { passkey } from '@better-auth/passkey'
 import { i18n } from '@better-auth/i18n'
 import { config } from './config.js'
-import { resolveCrossSubDomainCookieOptions } from './auth-cookies.js'
 
-const crossSubDomainCookies = resolveCrossSubDomainCookieOptions({
-  configuredDomain: config.auth.cookieDomain,
-  authURL: config.auth.url,
-  frontendURL: config.frontendUrl,
-})
+const crossSubDomainCookies = config.auth.cookieDomain
+  ? { enabled: true as const, domain: config.auth.cookieDomain }
+  : undefined
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
