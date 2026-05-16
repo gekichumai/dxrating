@@ -1,5 +1,5 @@
 export const SENTRY_SECURITY_REPORT_ENDPOINT =
-  'https://o4506648698683392.ingest.us.sentry.io/api/4506648709627904/security/?sentry_key=1e929f3c3b929a213436e3c4dff57140'
+  'https://o4506648698683392.ingest.us.sentry.io/api/4511398317064192/security/?sentry_key=9346c04036724f129e00a750c8ab9415'
 
 export const SECURITY_REPORT_ENDPOINT_GROUP = 'csp-endpoint'
 

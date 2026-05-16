@@ -126,8 +126,8 @@ const verifyParams = createMiddleware(async (c, next) => {
 })
 
 // Sentry tunnel — accepts raw envelope body, proxies as-is
-const SENTRY_HOST = 'o4506648698683392.ingest.sentry.io'
-const SENTRY_PROJECT_IDS = ['4506648709627904']
+const SENTRY_HOST = 'o4506648698683392.ingest.us.sentry.io'
+const SENTRY_PROJECT_IDS = ['4511398317064192']
 const MAX_TUNNEL_BODY_SIZE = 20 * 1024 * 1024 // 20 MB
 
 app.post('/api/v1/monitoring/tunnel', async (c) => {

@@ -8,6 +8,10 @@ import {
 
 describe('security report headers', () => {
   it('builds Sentry CSP headers in report-only mode', () => {
+    expect(SENTRY_SECURITY_REPORT_ENDPOINT).toBe(
+      'https://o4506648698683392.ingest.us.sentry.io/api/4511398317064192/security/?sentry_key=9346c04036724f129e00a750c8ab9415',
+    )
+
     const headers = buildSecurityReportHeaders()
     const policy = headers['Content-Security-Policy-Report-Only']
 

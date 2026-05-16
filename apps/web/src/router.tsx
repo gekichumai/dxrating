@@ -14,7 +14,7 @@ export function getRouter() {
 
   if (!router.isServer) {
     Sentry.init({
-      dsn: 'https://1e929f3c3b929a213436e3c4dff57140@o4506648698683392.ingest.sentry.io/4506648709627904',
+      dsn: 'https://9346c04036724f129e00a750c8ab9415@o4506648698683392.ingest.us.sentry.io/4511398317064192',
       tunnel: `${import.meta.env.VITE_BACKEND_URL}/api/v1/monitoring/tunnel`,
       release: `dxrating@${BUNDLE.version ?? 'unknown'}`,
       enabled: import.meta.env.PROD,
