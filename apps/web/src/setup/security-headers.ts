@@ -65,6 +65,10 @@ function buildContentSecurityPolicyReportOnlyHeader() {
 
 export function buildSecurityReportHeaders() {
   return {
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'geolocation=(), camera=(), microphone=()',
     'Content-Security-Policy-Report-Only': buildContentSecurityPolicyReportOnlyHeader(),
     'Report-To': JSON.stringify({
       group: SECURITY_REPORT_ENDPOINT_GROUP,
