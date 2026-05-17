@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
 import IconMdiImage from '~icons/mdi/image'
 import { useAppContext, useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
-import { type RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
+import { useRatingEntries } from '../../useRatingEntries'
+import { mapCalculatedEntryForOneShot } from './oneshotPayload'
 
 const useElapsedTime = (isLoading: boolean) => {
   const startTime = useRef<number | null>(null)
@@ -38,13 +39,6 @@ const useElapsedTime = (isLoading: boolean) => {
   return elapsedTime
 }
 
-const mapCalculatedEntries = (entry: RatingCalculatorEntry) => {
-  return {
-    sheetId: entry.sheet.id,
-    achievementRate: entry.achievementRate,
-  }
-}
-
 const RenderToOneShotImageDialogContent = () => {
   const { t } = useTranslation(['rating-calculator'])
   const posthog = usePostHog()
@@ -65,8 +59,8 @@ const RenderToOneShotImageDialogContent = () => {
           version,
           region,
           calculatedEntries: {
-            b15: b15Entries.map(mapCalculatedEntries),
-            b35: b35Entries.map(mapCalculatedEntries),
+            b15: b15Entries.map(mapCalculatedEntryForOneShot),
+            b35: b35Entries.map(mapCalculatedEntryForOneShot),
           },
         }),
       })
