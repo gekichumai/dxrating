@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
-import { type Sheet, type Song, VersionEnum, dxdata } from '@gekichumai/dxdata'
+import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
+import { getDxdataSongCatalog, type VersionedSheet } from '@gekichumai/maimai-domain'
 import { renderAsync } from '@resvg/resvg-js'
 import type { Context } from 'hono'
 import satori, { type Font } from 'satori'
@@ -87,43 +88,6 @@ export interface RenderData extends PlayEntry {
   playCount: number
   allPerfectPlusCount: number
 }
-const CANONICAL_ID_PARTS_SEPARATOR = '__dxrt__'
-
-const canonicalId = (song: Song, sheet: Sheet) => {
-  return [song.songId, sheet.type, sheet.difficulty].join(CANONICAL_ID_PARTS_SEPARATOR)
-}
-
-const getFlattenedSheetsMap = () => {
-  const calcFlattenedSheets = (version: VersionEnum): FlattenedSheet[] => {
-    const songs = dxdata.songs
-    const flattenedSheets = songs.flatMap((song) => {
-      return song.sheets.map((sheet) => {
-        return {
-          ...song,
-          ...sheet,
-          id: canonicalId(song, sheet),
-          internalLevelValue: sheet.multiverInternalLevelValue
-            ? (sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue)
-            : sheet.internalLevelValue,
-        }
-      })
-    })
-    return flattenedSheets as FlattenedSheet[]
-  }
-
-  const cachedFlattenedSheets: Map<VersionEnum, Map<string, FlattenedSheet>> = new Map()
-  for (const version of Object.values(VersionEnum)) {
-    const calc = calcFlattenedSheets(version)
-    const map = new Map<string, FlattenedSheet>()
-    for (const sheet of calc) {
-      map.set(sheet.id, sheet)
-    }
-    cachedFlattenedSheets.set(version, map)
-  }
-  return cachedFlattenedSheets
-}
-
-const flattenedSheets = getFlattenedSheetsMap()
 
 const fetchFontPack = async (): Promise<Font[]> => {
   const fontConfig = [
@@ -168,14 +132,28 @@ const fetchFontPack = async (): Promise<Font[]> => {
 
 let cachedFonts: Font[] | null = null
 
-type FlattenedSheet = Song &
-  Sheet & {
-    id: string
-    isTypeUtage: boolean
-    isRatingEligible: boolean
-    tags: number[]
-    releaseDateTimestamp: number
-  }
+type FlattenedSheet = VersionedSheet & {
+  type: TypeEnum.DX | TypeEnum.STD
+  difficulty: DifficultyEnum
+  isTypeUtage: false
+  isRatingEligible: true
+}
+
+const RENDERABLE_DIFFICULTIES = new Set<string>(Object.values(DifficultyEnum))
+
+export const isRenderableRatingSheet = (sheet: VersionedSheet): sheet is FlattenedSheet => {
+  return (
+    sheet.isRatingEligible &&
+    !sheet.isTypeUtage &&
+    (sheet.type === TypeEnum.DX || sheet.type === TypeEnum.STD) &&
+    RENDERABLE_DIFFICULTIES.has(sheet.difficulty)
+  )
+}
+
+const getFlattenedSheet = (version: VersionEnum, sheetId: string): FlattenedSheet | null => {
+  const sheet = getDxdataSongCatalog(version).getById(sheetId)
+  return sheet && isRenderableRatingSheet(sheet) ? sheet : null
+}
 
 const enrichEntries = (entries: PlayEntry[], version: VersionEnum) => {
   return entries.flatMap((entry) => {
@@ -198,7 +176,7 @@ const enrichEntries = (entries: PlayEntry[], version: VersionEnum) => {
       return []
     }
 
-    const sheet = flattenedSheets.get(version)?.get(entry.sheetId)
+    const sheet = getFlattenedSheet(version, entry.sheetId)
     if (!sheet) {
       return []
     }
