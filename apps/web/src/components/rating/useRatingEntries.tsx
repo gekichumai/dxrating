@@ -110,9 +110,6 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
       .slice(0, 35)
       .map((entry) => entry.sheetId)
 
-    console.log('best15OfCurrentVersionSheetIds', best15OfCurrentVersionSheetIds)
-    console.log('best35OfAllOtherVersionSheetIds', best35OfAllOtherVersionSheetIds)
-
     const calculatedEntries = calculated.map((entry) => ({
       ...entry,
       includedIn:

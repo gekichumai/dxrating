@@ -139,6 +139,10 @@
       "toast-success": "已複製標題至剪貼簿",
       "tooltip": "點擊複製"
     },
+    "copy-link": {
+      "toast-success": "已複製連結至剪貼簿",
+      "tooltip": "複製連結"
+    },
     "copy-alt-name": {
       "toast-success": "已複製 {{content}} 至剪貼簿"
     },

@@ -2,13 +2,18 @@ import { IconButton } from '@mui/material'
 import { motion } from 'framer-motion'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, memo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import toast from 'react-hot-toast'
 import MdiImageRemove from '~icons/mdi/image-remove'
+import MdiLinkVariant from '~icons/mdi/link-variant'
 import MdiStar from '~icons/mdi/star'
 import MdiStarOutline from '~icons/mdi/star-outline'
 import { useSheetFavoriteState } from '../../models/favorite'
 import type { FlattenedSheet } from '../../songs'
+import { buildSheetLink } from './sheetLinks'
 
 export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ sheet }) => {
+  const { t } = useTranslation(['sheet'])
   const [favored, toggleFavored] = useSheetFavoriteState(sheet.id)
   const [expanded, setExpanded] = useState(false)
   const [imgError, setImgError] = useState(false)
@@ -35,6 +40,25 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ s
         <div className="text-xs text-zinc-400">#{sheet.internalId ?? '?'}</div>
 
         <div className="flex-1" />
+
+        <IconButton
+          size="small"
+          onClick={() => {
+            navigator.clipboard.writeText(buildSheetLink(sheet))
+            toast.success(t('sheet:copy-link.toast-success'), {
+              id: `copy-sheet-link-${sheet.id}`,
+            })
+            posthog?.capture('sheet_link_copied', {
+              song_id: sheet.songId,
+              sheet_type: sheet.type,
+              sheet_difficulty: sheet.difficulty,
+            })
+          }}
+          title={t('sheet:copy-link.tooltip')}
+          aria-label={t('sheet:copy-link.tooltip')}
+        >
+          <MdiLinkVariant />
+        </IconButton>
 
         <IconButton
           size="small"

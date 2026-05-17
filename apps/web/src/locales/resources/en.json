@@ -139,6 +139,10 @@
       "toast-success": "Copied title to clipboard",
       "tooltip": "Click to copy"
     },
+    "copy-link": {
+      "toast-success": "Copied link to clipboard",
+      "tooltip": "Copy link"
+    },
     "copy-alt-name": {
       "toast-success": "Copied {{content}} to clipboard"
     },

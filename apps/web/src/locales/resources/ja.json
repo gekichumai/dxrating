@@ -139,6 +139,10 @@
       "toast-success": "タイトルをクリップボードにコピーしました",
       "tooltip": "クリックしてコピー"
     },
+    "copy-link": {
+      "toast-success": "リンクをクリップボードにコピーしました",
+      "tooltip": "リンクをコピー"
+    },
     "copy-alt-name": {
       "toast-success": "{{content}} をクリップボードにコピーしました"
     },
