@@ -179,7 +179,9 @@ export function normalizeDivingFishRows(catalog: SongCatalog, rows: DivingFishRo
       const achievement = validateAchievement('diving-fish', row, row.achievements, 1)
       if ('warning' in achievement) return achievement
 
-      const sheet = catalog.resolveReference({ kind: 'title', title: row.title, type, difficulty })
+      const sheet =
+        catalog.resolveReference({ kind: 'internal-id', internalId: row.song_id, type, difficulty }) ??
+        catalog.resolveReference({ kind: 'title', title: row.title, type, difficulty })
       if (!sheet) {
         return missing('diving-fish', row, 'sheet-not-found', `No sheet found for ${row.title} (${type}/${difficulty})`)
       }

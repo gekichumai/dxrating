@@ -486,6 +486,9 @@ importers:
         specifier: workspace:*
         version: link:../dxdata
     devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.17
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

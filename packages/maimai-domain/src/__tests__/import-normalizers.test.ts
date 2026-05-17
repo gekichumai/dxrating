@@ -301,6 +301,46 @@ describe('Rating Import normalizers', () => {
     expect(result.entries[0]!.source?.best50Bucket).toBe('b15')
   })
 
+  it('resolves Diving Fish ambiguous titles by provider song id before title fallback', () => {
+    const ambiguousCatalog = buildSongCatalog(
+      {
+        ...data,
+        songs: [
+          {
+            ...data.songs[0]!,
+            songId: 'link-original',
+            title: 'Link',
+            sheets: [{ ...data.songs[0]!.sheets[0]!, internalId: 383, type: TypeEnum.STD }],
+          },
+          {
+            ...data.songs[0]!,
+            songId: 'link-cover',
+            title: 'Link',
+            sheets: [{ ...data.songs[0]!.sheets[0]!, internalId: 384, type: TypeEnum.STD }],
+          },
+        ],
+      },
+      VersionEnum.CiRCLEPLUS,
+    )
+
+    const result = normalizeDivingFishRows(ambiguousCatalog, [
+      {
+        bucket: 'b35',
+        achievements: 100.5,
+        fc: null,
+        fs: null,
+        level_index: 3,
+        title: 'Link',
+        type: 'SD',
+        song_id: 383,
+      },
+    ])
+
+    expect(result.entries).toHaveLength(1)
+    expect(result.entries[0]!.identity.songId).toBe('link-original')
+    expect(result.warnings).toHaveLength(0)
+  })
+
   it('normalizes AquaDX rows through provider music id maps', () => {
     const result = normalizeAquaDxRows(catalog, [{ musicId: '99999', level: 3, achievement: 1005000 }], {
       '99999': { name: 'Song A' },

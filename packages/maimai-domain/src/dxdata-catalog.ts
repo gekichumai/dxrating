@@ -1,5 +1,5 @@
 import { dxdata, type VersionEnum } from '@gekichumai/dxdata'
-import { buildSongCatalog, createSongCatalog, type SongCatalog } from './song-catalog.js'
+import { buildSongCatalog, createSongCatalog, type SongCatalog } from './song-catalog.ts'
 import type { VersionedSheet } from './types.js'
 
 const cache = new Map<VersionEnum, SongCatalog>()

@@ -1,5 +1,5 @@
 import { TypeEnum, type DXData, type Song, type VersionEnum } from '@gekichumai/dxdata'
-import { formatSheetIdentity, parseSheetIdentity } from './sheet-identity.js'
+import { formatSheetIdentity, parseSheetIdentity } from './sheet-identity.ts'
 import type { ProviderSheetReference, SheetDifficulty, SheetIdentity, VersionedSheet } from './types.js'
 
 export interface SongCatalog {
