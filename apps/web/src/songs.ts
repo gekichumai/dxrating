@@ -1,4 +1,5 @@
 import { type DifficultyEnum, type Sheet, type Song, TypeEnum, type VersionEnum, dxdata } from '@gekichumai/dxdata'
+import { formatSheetIdentity, getDxdataSongCatalog, type VersionedSheet } from '@gekichumai/maimai-domain'
 import * as Sentry from '@sentry/tanstackstart-react'
 import Fuse from 'fuse.js'
 import uniq from 'lodash-es/uniq'
@@ -8,23 +9,22 @@ import { useAppContext, useAppContextDXDataVersion } from './models/context/useA
 import { useCombinedTags } from './models/useCombinedTags'
 import { useServerAliases } from './models/useServerAliases'
 
-const CANONICAL_ID_PARTS_SEPARATOR = '__dxrt__'
-
-export type FlattenedSheet = Song &
-  Sheet & {
-    id: string
-    isTypeUtage: boolean
-    isRatingEligible: boolean
-    tags: number[]
-    releaseDateTimestamp: number
-  }
+export type FlattenedSheet = VersionedSheet & {
+  difficulty: DifficultyEnum
+  releaseDateTimestamp: number
+  tags: number[]
+}
 
 export const canonicalId = (song: Song, sheet: Sheet) => {
-  return [song.songId, sheet.type, sheet.difficulty].join(CANONICAL_ID_PARTS_SEPARATOR)
+  return formatSheetIdentity({
+    songId: song.songId,
+    type: sheet.type,
+    difficulty: sheet.difficulty,
+  })
 }
 
 export const canonicalIdFromParts = (songId: string, type: TypeEnum, difficulty: DifficultyEnum) => {
-  return [songId, type, difficulty].join(CANONICAL_ID_PARTS_SEPARATOR)
+  return formatSheetIdentity({ songId, type, difficulty })
 }
 
 export const getSongs = (): Song[] => {
@@ -32,25 +32,12 @@ export const getSongs = (): Song[] => {
 }
 
 export const getFlattenedSheets = async (version: VersionEnum): Promise<FlattenedSheet[]> => {
-  const songs = getSongs()
-  const flattenedSheets = songs.flatMap((song) => {
-    return song.sheets.map((sheet) => {
-      const isTypeUtage = sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P
-      return {
-        ...song,
-        ...sheet,
-        id: canonicalId(song, sheet),
-        searchAcronyms: song.searchAcronyms,
-        isTypeUtage,
-        isRatingEligible: !isTypeUtage,
-        releaseDateTimestamp: sheet.releaseDate ? new Date(`${sheet.releaseDate}T06:00:00+09:00`).valueOf() : null,
-        internalLevelValue: sheet.multiverInternalLevelValue
-          ? (sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue)
-          : sheet.internalLevelValue,
-      }
-    })
-  })
-  return flattenedSheets as FlattenedSheet[]
+  return getDxdataSongCatalog(version).sheets.map((sheet) => ({
+    ...sheet,
+    difficulty: sheet.difficulty as DifficultyEnum,
+    releaseDateTimestamp: sheet.releaseDateTimestamp as number,
+    tags: [],
+  }))
 }
 
 export const useSheets = ({ acceptsPartialData = false } = {}) => {
