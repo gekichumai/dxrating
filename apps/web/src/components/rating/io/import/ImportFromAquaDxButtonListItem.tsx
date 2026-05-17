@@ -1,3 +1,4 @@
+import { getDxdataSongCatalog, normalizeAquaDxRows, type ProviderMusicIdMap } from '@gekichumai/maimai-domain'
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
 import type { FC } from 'react'
 import toast from 'react-hot-toast'
@@ -5,7 +6,15 @@ import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
 import MdiEarthArrowDown from '~icons/mdi/earth-arrow-down'
 import { useWebHaptics } from 'web-haptics/react'
+import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import { importResultToPlayEntries } from './importResultToPlayEntries'
+
+type AquaDxExportMusicDetail = {
+  musicId: string | number
+  level: number
+  achievement: number
+}
 
 export const ImportFromAquaDxButtonListItem: FC<{
   modifyEntries: ListActions<PlayEntry>
@@ -13,11 +22,7 @@ export const ImportFromAquaDxButtonListItem: FC<{
 }> = ({ modifyEntries, onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
   const haptic = useWebHaptics()
-  const difficulty = ['basic', 'expert', 'master', 'remaster']
-
-  const parseAchievement = (achievement: number): number => {
-    return Number.isNaN(achievement) ? 0 : achievement / 10000
-  }
+  const appVersion = useAppContextDXDataVersion()
 
   return (
     <MenuItem
@@ -41,25 +46,22 @@ export const ImportFromAquaDxButtonListItem: FC<{
             if (typeof data !== 'string') return
 
             const musicIdMapJson = await import('@/assets/music-id-map.json')
-            const musicIdMap: { [key: string]: { name: string; ver: string } } = musicIdMapJson.default
+            const musicIdMap = musicIdMapJson.default as ProviderMusicIdMap
 
             const aquaExportData = JSON.parse(data)
-            const entries: PlayEntry[] = []
-            if (Array.isArray(aquaExportData?.userMusicDetailList) && aquaExportData.userMusicDetailList.length > 0) {
-              for (const musicDetail of aquaExportData.userMusicDetailList) {
-                const musicId = musicDetail.musicId
-                const song = musicIdMap[musicId]
-                if (!song || song.ver === '24000') {
-                  continue
-                }
-                const type = musicId > '10000' ? '__dxrt__dx__dxrt__' : '__dxrt__std__dxrt__'
-                const musicName = `${song.name}${type}${difficulty[musicDetail.level - 1]}`
-                entries.push({
-                  sheetId: musicName,
-                  achievementRate: parseAchievement(musicDetail.achievement),
-                })
-              }
+            const rows = Array.isArray(aquaExportData?.userMusicDetailList)
+              ? aquaExportData.userMusicDetailList.map((musicDetail: AquaDxExportMusicDetail) => ({
+                  musicId: musicDetail.musicId,
+                  level: musicDetail.level,
+                  achievement: musicDetail.achievement,
+                }))
+              : []
+            const importResult = normalizeAquaDxRows(getDxdataSongCatalog(appVersion), rows, musicIdMap)
+            const entries = importResultToPlayEntries(importResult)
+            for (const warning of importResult.warnings) {
+              console.warn('[ImportFromAquaDxButtonListItem]', warning.message, warning.row)
             }
+
             modifyEntries.set(entries)
             haptic.trigger('success')
             toast.success(t('rating-calculator:io.import.aqua-dx.success', { count: entries.length }))

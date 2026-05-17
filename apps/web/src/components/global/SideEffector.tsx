@@ -1,6 +1,6 @@
 import { useRatingEntries } from '@/components/rating/useRatingEntries'
 import { authClient } from '@/lib/auth-client'
-import { useAppContext } from '@/models/context/useAppContext'
+import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, memo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -48,6 +48,7 @@ const SideEffectorAutoImportRating: FC = () => {
   const { data: sheets } = useSheets({ acceptsPartialData: true })
   const { modifyEntries } = useRatingCalculatorContext()
   const { t } = useTranslation()
+  const appVersion = useAppContextDXDataVersion()
 
   useEffect(() => {
     if (!sheets) return
@@ -91,8 +92,8 @@ const SideEffectorAutoImportRating: FC = () => {
       }
     }
 
-    importFromNETRecords(sheets, modifyEntries, mode)
-  }, [!!sheets])
+    importFromNETRecords(sheets, appVersion, modifyEntries, mode)
+  }, [!!sheets, appVersion])
 
   return null
 }
