@@ -1,7 +1,7 @@
 import { type DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import { CircularProgress } from '@mui/material'
-import * as Sentry from '@sentry/react'
+import * as Sentry from '@sentry/tanstackstart-react'
 import cloneDeep from 'lodash-es/cloneDeep'
 import i18n from 'i18next'
 import posthog from 'posthog-js'

@@ -61,7 +61,8 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
 
 export const SheetInternalLevelFilter: FC<{
   control: Control<SheetSortFilterForm>
-}> = ({ control }) => {
+  reset: () => void
+}> = ({ control, reset }) => {
   const { t } = useTranslation(['sheet'])
   const rulePresets = useControllerRulePresets()
   const internalLevelValueBoundRules = useMemo(
@@ -73,7 +74,7 @@ export const SheetInternalLevelFilter: FC<{
   )
 
   return (
-    <SheetFilterSection title={t('sheet:filter.internal-level-value.title')}>
+    <SheetFilterSection titleLeft={t('sheet:filter.internal-level-value.title')} reset={reset}>
       <SheetFilterInternalLevelValueInput
         label={t('sheet:filter.internal-level-value.min')}
         name="filters.internalLevelValue.min"

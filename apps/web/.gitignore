@@ -27,3 +27,12 @@ dist-ssr
 .env.sentry-build-plugin
 
 android/
+
+# Nitro build output
+.output/
+
+# Cloudflare Vite plugin deploy metadata
+.wrangler/
+
+# Auto-generated route tree
+src/routeTree.gen.ts

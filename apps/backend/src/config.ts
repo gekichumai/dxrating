@@ -48,6 +48,23 @@ const envSchema = z.object({
   POSTHOG_API_KEY: z.string().optional(),
 })
 
+export const deriveCrossSubDomainCookieDomain = ({
+  authURL,
+  frontendURL,
+}: {
+  authURL: string
+  frontendURL: string
+}) => {
+  const authHost = new URL(authURL).hostname
+  const frontendHost = new URL(frontendURL).hostname
+
+  if (authHost === frontendHost || !authHost.endsWith(`.${frontendHost}`)) {
+    return undefined
+  }
+
+  return frontendHost
+}
+
 const env = envSchema.parse(process.env)
 
 export const config = {
@@ -57,6 +74,10 @@ export const config = {
   auth: {
     secret: env.BETTER_AUTH_SECRET,
     url: env.BETTER_AUTH_URL,
+    cookieDomain: deriveCrossSubDomainCookieDomain({
+      authURL: env.BETTER_AUTH_URL,
+      frontendURL: env.FRONTEND_URL,
+    }),
     passkey: {
       rpID: env.PASSKEY_RP_ID,
       origin: env.PASSKEY_ORIGIN,

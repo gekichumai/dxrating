@@ -9,6 +9,10 @@ import { passkey } from '@better-auth/passkey'
 import { i18n } from '@better-auth/i18n'
 import { config } from './config.js'
 
+const crossSubDomainCookies = config.auth.cookieDomain
+  ? { enabled: true as const, domain: config.auth.cookieDomain }
+  : undefined
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg', // or "mysql", "sqlite"
@@ -28,6 +32,7 @@ export const auth = betterAuth({
   },
   advanced: {
     cookiePrefix: 'dxrating',
+    ...(crossSubDomainCookies ? { crossSubDomainCookies } : {}),
     ipAddress: {
       ipAddressHeaders: ['cf-connecting-ip'],
     },

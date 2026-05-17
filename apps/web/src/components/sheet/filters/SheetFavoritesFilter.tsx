@@ -9,7 +9,8 @@ import { SheetFilterSection } from './SheetFilterSection'
 
 export const SheetFavoritesFilter: FC<{
   control: Control<SheetSortFilterForm>
-}> = ({ control }) => {
+  reset: () => void
+}> = ({ control, reset }) => {
   const { t } = useTranslation(['sheet'])
   const {
     field: { onChange, value },
@@ -19,7 +20,7 @@ export const SheetFavoritesFilter: FC<{
   })
 
   return (
-    <SheetFilterSection title={t('sheet:filter.favorites.title')}>
+    <SheetFilterSection titleLeft={t('sheet:filter.favorites.title')} reset={reset}>
       <Chip
         icon={value ? <MdiStar className="!text-amber-500" /> : <MdiStarOutline />}
         label={t('sheet:filter.favorites.only')}

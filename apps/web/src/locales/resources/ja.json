@@ -91,6 +91,13 @@
       "favorites": {
         "title": "お気に入り",
         "only": "お気に入りのみ"
+      },
+      "difficulty": {
+        "title": "難易度",
+        "gesture-hint": {
+          "tap": "トグル",
+          "tap-hold": "のみ"
+        }
       }
     },
     "sort": {
@@ -108,8 +115,16 @@
       "temporarily-disabled": "検索キーワードが入力されため、一時的に無効となります"
     },
     "sort-and-filter": {
-      "reset": "リセット",
-      "title": "フィルタと並べ替え"
+      "title": "フィルタと並べ替え",
+      "reset": {
+        "dialog": {
+          "title": "すべてのフィルタと並べ替え設定をリセット",
+          "message": "すべてのフィルタと並べ替え設定をリセットしてもよろしいですか？",
+          "cancel": "キャンセル",
+          "confirm": "リセット"
+        },
+        "button": "すべてリセット"
+      }
     },
     "tags": {
       "add": {
@@ -123,6 +138,10 @@
     "copy-title": {
       "toast-success": "タイトルをクリップボードにコピーしました",
       "tooltip": "クリックしてコピー"
+    },
+    "copy-link": {
+      "toast-success": "リンクをクリップボードにコピーしました",
+      "tooltip": "リンクをコピー"
     },
     "copy-alt-name": {
       "toast-success": "{{content}} をクリップボードにコピーしました"

@@ -91,6 +91,13 @@
       "favorites": {
         "title": "Favorites",
         "only": "Favorites only"
+      },
+      "difficulty": {
+        "title": "Difficulty",
+        "gesture-hint": {
+          "tap": "Toggle",
+          "tap-hold": "Select"
+        }
       }
     },
     "sort": {
@@ -109,7 +116,15 @@
     },
     "sort-and-filter": {
       "title": "Filter & Sort",
-      "reset": "Reset"
+      "reset": {
+        "dialog": {
+          "title": "Reset All Sort and Filter Settings",
+          "message": "Are you sure you want to reset all sort and filter settings?",
+          "cancel": "Cancel",
+          "confirm": "Reset"
+        },
+        "button": "Reset All"
+      }
     },
     "tags": {
       "add": {
@@ -123,6 +138,10 @@
     "copy-title": {
       "toast-success": "Copied title to clipboard",
       "tooltip": "Click to copy"
+    },
+    "copy-link": {
+      "toast-success": "Copied link to clipboard",
+      "tooltip": "Copy link"
     },
     "copy-alt-name": {
       "toast-success": "Copied {{content}} to clipboard"

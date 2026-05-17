@@ -15,6 +15,12 @@
   "minimumReleaseAge": "5 days",
   "packageRules": [
     {
+      "description": "GitHub Actions",
+      "groupName": "github-actions",
+      "groupSlug": "github-actions",
+      "matchManagers": ["github-actions"]
+    },
+    {
       "description": "oRPC packages",
       "groupName": "orpc",
       "matchPackageNames": ["@orpc/**"]

@@ -164,7 +164,8 @@ const SheetTagFilterInput = ({ value, onChange }: { value: number[]; onChange: (
 
 export const SheetTagFilter: FC<{
   control: Control<SheetSortFilterForm>
-}> = ({ control }) => {
+  reset: () => void
+}> = ({ control, reset }) => {
   const { t } = useTranslation(['sheet', 'global'])
   const {
     field: { onChange, value },
@@ -174,7 +175,7 @@ export const SheetTagFilter: FC<{
   })
 
   return (
-    <SheetFilterSection title={t('sheet:filter.tags.title')}>
+    <SheetFilterSection titleLeft={t('sheet:filter.tags.title')} reset={reset}>
       <SheetTagFilterInput value={value} onChange={onChange} />
     </SheetFilterSection>
   )

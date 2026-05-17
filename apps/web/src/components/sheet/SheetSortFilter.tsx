@@ -1,4 +1,4 @@
-import { CategoryEnum, VERSION_SORT_ORDER, VersionEnum } from '@gekichumai/dxdata'
+import { CategoryEnum, DifficultyEnum, VERSION_SORT_ORDER, VersionEnum } from '@gekichumai/dxdata'
 import { DevTool } from '@hookform/devtools'
 import {
   Button,
@@ -24,6 +24,7 @@ import type { FlattenedSheet } from '../../songs'
 import { SheetSortSelect } from './SheetSortSelect'
 import { SheetCategoryFilter } from './filters/SheetCategoryFilter'
 import { SheetFavoritesFilter } from './filters/SheetFavoritesFilter'
+import { SheetDifficultyFilter } from './filters/SheetDifficultyFilter'
 import { SheetInternalLevelFilter } from './filters/SheetInternalLevelFilter'
 import { SheetTagFilter } from './filters/SheetTagFilter'
 import { SheetVersionFilter } from './filters/SheetVersionFilter'
@@ -42,6 +43,7 @@ export interface SheetSortFilterForm {
     }
     tags: number[]
     categories: CategoryEnum[]
+    difficulties: DifficultyEnum[]
     favoritesOnly: boolean
   }
   sorts: SortPredicate[]
@@ -56,6 +58,7 @@ export const getDefaultSheetSortFilterForm = (): SheetSortFilterForm => ({
     },
     tags: [],
     categories: Object.values(CategoryEnum),
+    difficulties: Object.values(DifficultyEnum),
     favoritesOnly: false,
   },
   sorts: [
@@ -145,6 +148,10 @@ export const validateAndMigrate = (alreadySaved: unknown): SheetSortFilterForm =
     payload.filters.favoritesOnly = false
   }
 
+  if (payload.filters.difficulties === undefined) {
+    payload.filters.difficulties = Object.values(DifficultyEnum)
+  }
+
   // apply migrations
   let migrated = payload
   for (let i = version + 1; i <= CURRENT_SCHEMA_VERSION; i++) {
@@ -173,7 +180,12 @@ export const SheetSortFilter: FC<{
     const alreadySaved = window.localStorage.getItem('dxrating-sheet-sort-filter')
     if (alreadySaved) {
       try {
-        return validateAndMigrate(JSON.parse(alreadySaved))
+        const parsed = JSON.parse(alreadySaved)
+        if (typeof parsed.expiresAt !== 'number' || parsed.expiresAt < Date.now()) {
+          window.localStorage.removeItem('dxrating-sheet-sort-filter')
+          return getDefaultSheetSortFilterForm()
+        }
+        return validateAndMigrate(parsed)
       } catch (e) {
         console.warn('Failed to parse saved sort filter', e)
       }
@@ -199,6 +211,8 @@ export const SheetSortFilter: FC<{
   )
 }
 
+const SHEET_SORT_FILTER_TTL = 5 * 60 * 1000 // 5 minutes
+
 const SheetSortFilterFormListener: FC<{
   onChange?: (form: SheetSortFilterForm) => void
 }> = ({ onChange }) => {
@@ -214,6 +228,7 @@ const SheetSortFilterFormListener: FC<{
           JSON.stringify({
             version: CURRENT_SCHEMA_VERSION,
             payload: data,
+            expiresAt: Date.now() + SHEET_SORT_FILTER_TTL,
           }),
         )
       }
@@ -232,9 +247,9 @@ const SheetSortFilterFormReset: FC<{
   return (
     <>
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} TransitionComponent={Grow}>
-        <DialogTitle>Reset Sort and Filter Settings</DialogTitle>
+        <DialogTitle>{t('sheet:sort-and-filter.reset.dialog.title')}</DialogTitle>
         <DialogContent>
-          <DialogContentText>Are you sure you want to reset the sort and filter settings?</DialogContentText>
+          <DialogContentText>{t('sheet:sort-and-filter.reset.dialog.message')}</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button
@@ -242,7 +257,7 @@ const SheetSortFilterFormReset: FC<{
               setOpenDialog(false)
             }}
           >
-            Cancel
+            {t('sheet:sort-and-filter.reset.dialog.cancel')}
           </Button>
           <Button
             variant="contained"
@@ -252,13 +267,13 @@ const SheetSortFilterFormReset: FC<{
               onReset()
             }}
           >
-            Reset
+            {t('sheet:sort-and-filter.reset.dialog.confirm')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Button variant="outlined" color="error" onClick={() => setOpenDialog(true)} size="small">
-        {t('sheet:sort-and-filter.reset')}
+        {t('sheet:sort-and-filter.reset.button')}
       </Button>
     </>
   )
@@ -267,9 +282,16 @@ const SheetSortFilterFormReset: FC<{
 const SheetSortFilterFormContent = () => {
   const { t } = useTranslation(['sheet'])
   const { queryActive } = useContext(SheetDetailsContext)
-  const { control, reset } = useFormContext<SheetSortFilterForm>()
+  const { control, setValue, reset } = useFormContext<SheetSortFilterForm>()
   const [expanded, setExpanded] = useState(false)
   const [pending, startTransition] = useTransition()
+
+  const resetByFilter = (...filters: (keyof SheetSortFilterForm['filters'])[]) => {
+    const defaultForm = getDefaultSheetSortFilterForm()
+    for (const filter of filters) {
+      setValue(`filters.${filter}`, defaultForm.filters[filter])
+    }
+  }
 
   const collapsibleInner = (
     <div className="p-2 w-full flex flex-col gap-4">
@@ -287,11 +309,12 @@ const SheetSortFilterFormContent = () => {
           <span className="whitespace-nowrap">{t('sheet:filter.title')}</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SheetTagFilter control={control} />
-          <SheetInternalLevelFilter control={control} />
-          <SheetVersionFilter control={control} />
-          <SheetCategoryFilter control={control} />
-          <SheetFavoritesFilter control={control} />
+          <SheetTagFilter control={control} reset={() => resetByFilter('tags')} />
+          <SheetInternalLevelFilter control={control} reset={() => resetByFilter('internalLevelValue')} />
+          <SheetCategoryFilter control={control} reset={() => resetByFilter('categories')} />
+          <SheetDifficultyFilter control={control} reset={() => resetByFilter('difficulties')} />
+          <SheetVersionFilter control={control} reset={() => resetByFilter('versions')} />
+          <SheetFavoritesFilter control={control} reset={() => resetByFilter('favoritesOnly')} />
         </div>
       </div>
 

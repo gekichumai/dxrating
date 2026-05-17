@@ -91,6 +91,13 @@
       "favorites": {
         "title": "收藏",
         "only": "僅顯示收藏"
+      },
+      "difficulty": {
+        "title": "難度",
+        "gesture-hint": {
+          "tap": "切換",
+          "tap-hold": "單選"
+        }
       }
     },
     "sort": {
@@ -109,7 +116,15 @@
     },
     "sort-and-filter": {
       "title": "篩選與排序",
-      "reset": "重置"
+      "reset": {
+        "dialog": {
+          "title": "重設全部篩選與排序設定",
+          "message": "您真的要重設全部篩選與排序設定嗎？",
+          "cancel": "取消",
+          "confirm": "確定"
+        },
+        "button": "重設全部"
+      }
     },
     "tags": {
       "add": {
@@ -123,6 +138,10 @@
     "copy-title": {
       "toast-success": "已複製標題至剪貼簿",
       "tooltip": "點擊複製"
+    },
+    "copy-link": {
+      "toast-success": "已複製連結至剪貼簿",
+      "tooltip": "複製連結"
     },
     "copy-alt-name": {
       "toast-success": "已複製 {{content}} 至剪貼簿"

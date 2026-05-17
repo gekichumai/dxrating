@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppContextProvider, type AppContextStates } from '../AppContext'
 import { useAppContext } from '../useAppContext'
@@ -28,11 +28,11 @@ describe('AppContext', () => {
       wrapper: AppContextProvider,
     })
 
-    expect(result.current.version).toBe('prism-plus')
+    expect(result.current.version).toBe('circle-plus')
     expect(result.current.region).toBe('jp')
   })
 
-  it('should load values from localStorage if they exist', () => {
+  it('should load values from localStorage if they exist', async () => {
     const storedState: AppContextStates = {
       version: 'buddies',
       region: 'jp',
@@ -43,8 +43,10 @@ describe('AppContext', () => {
       wrapper: AppContextProvider,
     })
 
-    expect(result.current.version).toBe('buddies')
-    expect(result.current.region).toBe('jp')
+    await waitFor(() => {
+      expect(result.current.version).toBe('buddies')
+      expect(result.current.region).toBe('jp')
+    })
   })
 
   it('should update localStorage when values change', () => {
@@ -67,6 +69,24 @@ describe('AppContext', () => {
     )
   })
 
+  it('should keep in-memory state when localStorage writes fail', () => {
+    mockLocalStorage.getItem.mockReturnValue(null)
+    mockLocalStorage.setItem.mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+
+    const { result } = renderHook(() => useAppContext(), {
+      wrapper: AppContextProvider,
+    })
+
+    act(() => {
+      result.current.setVersionAndRegion('prism', 'intl')
+    })
+
+    expect(result.current.version).toBe('prism')
+    expect(result.current.region).toBe('intl')
+  })
+
   it('should handle malformed localStorage data', () => {
     mockLocalStorage.getItem.mockReturnValue('invalid json')
 
@@ -74,7 +94,7 @@ describe('AppContext', () => {
       wrapper: AppContextProvider,
     })
 
-    expect(result.current.version).toBe('prism-plus')
+    expect(result.current.version).toBe('circle-plus')
     expect(result.current.region).toBe('jp')
   })
 })

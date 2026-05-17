@@ -264,19 +264,24 @@ export class MaimaiNETIntlClient extends Client {
 
     await this.fetch(URLS.INTL.LOGIN_PAGE)
 
-    const redirectURL = (
-      await this.fetch(URLS.INTL.LOGIN_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          sid: id,
-          password,
-          retention: '1',
-        }),
-      })
-    ).headers.get('location')
+    const loginResponse = await this.fetch(URLS.INTL.LOGIN_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        sid: id,
+        password,
+        retention: '1',
+      }),
+    })
+    if (loginResponse.status !== 302) {
+      throw new NetImportError(
+        'INTERNAL_ERROR',
+        `unexpected login response status: ${loginResponse.status} ${URLS.INTL.LOGIN_ENDPOINT}`,
+      )
+    }
+    const redirectURL = loginResponse.headers.get('location')
     if (!redirectURL) {
       throw new NetImportError('INVALID_CREDENTIALS')
     }

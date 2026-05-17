@@ -126,8 +126,10 @@ const verifyParams = createMiddleware(async (c, next) => {
 })
 
 // Sentry tunnel — accepts raw envelope body, proxies as-is
-const SENTRY_HOST = 'o4506648698683392.ingest.sentry.io'
-const SENTRY_PROJECT_IDS = ['4506648709627904']
+const SENTRY_ALLOWED_DSN_TARGETS = new Set([
+  'o4506648698683392.ingest.sentry.io/4506648709627904',
+  'o4506648698683392.ingest.us.sentry.io/4511398317064192',
+])
 const MAX_TUNNEL_BODY_SIZE = 20 * 1024 * 1024 // 20 MB
 
 app.post('/api/v1/monitoring/tunnel', async (c) => {
@@ -145,12 +147,13 @@ app.post('/api/v1/monitoring/tunnel', async (c) => {
     const header = JSON.parse(envelope.split('\n')[0])
     const dsn = new URL(header.dsn)
     const projectId = dsn.pathname.replace('/', '')
+    const sentryTarget = `${dsn.hostname}/${projectId}`
 
-    if (dsn.hostname !== SENTRY_HOST || !SENTRY_PROJECT_IDS.includes(projectId)) {
+    if (!SENTRY_ALLOWED_DSN_TARGETS.has(sentryTarget)) {
       return c.json({ error: 'Invalid Sentry DSN' }, 400)
     }
 
-    await fetch(`https://${SENTRY_HOST}/api/${projectId}/envelope/`, {
+    await fetch(`https://${dsn.hostname}/api/${projectId}/envelope/`, {
       method: 'POST',
       body: envelope,
     })
@@ -260,7 +263,7 @@ app.get('/docs', (c) => {
     <html>
       <head>
         <title>DXRating API</title>
-        <meta charset="utf-8" />
+        <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="robots" content="noindex, nofollow" />
       </head>

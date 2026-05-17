@@ -100,7 +100,8 @@ const SheetVersionFilterInput = ({
 
 export const SheetVersionFilter: FC<{
   control: Control<SheetSortFilterForm>
-}> = ({ control }) => {
+  reset: () => void
+}> = ({ control, reset }) => {
   const { t } = useTranslation(['sheet', 'global'])
   const {
     field: { onChange, value },
@@ -111,14 +112,14 @@ export const SheetVersionFilter: FC<{
 
   return (
     <SheetFilterSection
-      title={
+      titleLeft={t('sheet:filter.version.title')}
+      titleRight={
         <>
-          <div>{t('sheet:filter.version.title')}</div>
-          <div className="flex-1" />
           <GestureHint gesture="tap" description={t('sheet:filter.version.gesture-hint.tap')} />
           <GestureHint gesture="tap-hold" description={t('sheet:filter.version.gesture-hint.tap-hold')} />
         </>
       }
+      reset={reset}
     >
       <SheetVersionFilterInput value={value} onChange={onChange} />
     </SheetFilterSection>

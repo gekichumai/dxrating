@@ -2,7 +2,7 @@ export const URLS = {
   INTL: {
     LOGIN_PAGE:
       'https://lng-tgk-aime-gw.am-all.net/common_auth/login?site_id=maimaidxex&redirect_url=https://maimaidx-eng.com/maimai-mobile/&back_url=https://maimai.sega.com/',
-    LOGIN_ENDPOINT: 'https://lng-tgk-aime-gw.am-all.net/common_auth/login/sid/',
+    LOGIN_ENDPOINT: 'https://lng-tgk-aime-gw.am-all.net/common_auth/login/sid',
     RECORD_RECENT_PAGE: 'https://maimaidx-eng.com/maimai-mobile/record',
     RECORD_MUSICS_PAGE: 'https://maimaidx-eng.com/maimai-mobile/record/musicGenre/search/',
   },
