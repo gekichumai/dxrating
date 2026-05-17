@@ -194,7 +194,9 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
                 <ul className="list-disc list-inside">
                   {warnings.map((warning, index) => (
                     <li key={`${warning.code}-${index}`}>
-                      {t('rating-calculator:io.import.aqua-sqlite.sheet-not-found')}{' '}
+                      {warning.code === 'sheet-not-found'
+                        ? t('rating-calculator:io.import.aqua-sqlite.sheet-not-found')
+                        : warning.message}{' '}
                       <code className="bg-gray-2 px-1 py-0.5 rounded-sm b-1 b-solid b-gray-3">
                         {formatAquaWarningRow(warning)}
                       </code>
