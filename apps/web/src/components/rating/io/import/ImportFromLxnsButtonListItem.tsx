@@ -1,6 +1,5 @@
 import { ImportRegionSupportTag } from '@/components/rating/io/import/ImportRegionSupportTag'
-import { DifficultyEnum } from '@gekichumai/dxdata'
-import type { TypeEnum } from '@gekichumai/dxdata'
+import { getDxdataSongCatalog, normalizeLxnsScores } from '@gekichumai/maimai-domain'
 import {
   Button,
   CircularProgress,
@@ -18,22 +17,15 @@ import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
 import CarbonCloud from '~icons/carbon/cloud'
 import * as Sentry from '@sentry/tanstackstart-react'
-import { canonicalIdFromParts, useSheets } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { useAuth } from '../../../../hooks/useAuth'
 import { apiClient } from '../../../../lib/orpc'
+import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import { WebHaptics } from 'web-haptics'
-import type { ComboFlag, PlayEntry, SyncFlag } from '../../RatingCalculatorAddEntryForm'
+import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import { importResultToPlayEntries } from './importResultToPlayEntries'
 
 const haptics = new WebHaptics()
-
-const difficultyMap: Record<number, DifficultyEnum> = {
-  0: DifficultyEnum.Basic,
-  1: DifficultyEnum.Advanced,
-  2: DifficultyEnum.Expert,
-  3: DifficultyEnum.Master,
-  4: DifficultyEnum.ReMaster,
-}
 
 type ConnectionState = 'loading' | 'not-connected' | 'connected' | 'connecting' | 'importing' | 'error'
 
@@ -42,7 +34,7 @@ const LxnsImportDialogContent: FC<{
   onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
-  const { data: sheets } = useSheets({ acceptsPartialData: true })
+  const appVersion = useAppContextDXDataVersion()
   const [state, setState] = useState<ConnectionState>('loading')
 
   const checkStatus = useCallback(async () => {
@@ -76,25 +68,11 @@ const LxnsImportDialogContent: FC<{
     try {
       const result = await apiClient.lxns.start()
 
-      const entries: PlayEntry[] = result.scores
-        .filter((s) => s.type !== 'utage')
-        .map((score) => ({
-          sheetId: canonicalIdFromParts(
-            score.songName,
-            (score.type === 'standard' ? 'std' : score.type) as TypeEnum,
-            difficultyMap[score.levelIndex],
-          ),
-          achievementRate: score.achievements,
-          comboFlag: (score.fc || null) as ComboFlag,
-          syncFlag: (score.fs || null) as SyncFlag,
-        }))
-        .filter((entry) => {
-          const found = sheets?.find((sheet) => sheet.id === entry.sheetId)
-          if (!found) {
-            console.warn(`No sheet found for ${entry.sheetId}`)
-          }
-          return found
-        })
+      const importResult = normalizeLxnsScores(getDxdataSongCatalog(appVersion), result.scores)
+      const entries = importResultToPlayEntries(importResult)
+      for (const warning of importResult.warnings) {
+        console.warn('[ImportFromLxnsButtonListItem]', warning.message, warning.row)
+      }
 
       modifyEntries.set(entries)
       haptics.trigger('success')

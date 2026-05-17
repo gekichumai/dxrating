@@ -1,3 +1,4 @@
+import { getDxdataSongCatalog, normalizeAquaSqliteRows, type ImportWarning } from '@gekichumai/maimai-domain'
 import {
   Alert,
   AlertTitle,
@@ -21,20 +22,15 @@ import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
 import sqljs, { type Database } from 'sql.js'
 import IconMdiDatabase from '~icons/mdi/database'
-import { type FlattenedSheet, canonicalIdFromParts, useSheets } from '../../../../songs'
-import {
-  type AquaGamePlay,
-  type AquaPlayLog,
-  type AquaUser,
-  readAquaGamePlays,
-  readAquaPlayLogs,
-  readAquaUsers,
-} from '../../../../utils/aquaDB'
+import { type FlattenedSheet, useSheets } from '../../../../songs'
+import { type AquaUser, readAquaGamePlays, readAquaUsers } from '../../../../utils/aquaDB'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
+import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import { FadedImage } from '../../../global/FadedImage'
 import { SheetListItemContent } from '../../../sheet/SheetListItem'
 import { useWebHaptics } from 'web-haptics/react'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import { importResultToPlayEntries } from './importResultToPlayEntries'
 
 export const ImportFromAquaSQLiteListItem: FC<{
   modifyEntries: ListActions<PlayEntry>
@@ -125,15 +121,8 @@ export const ImportFromAquaSQLiteListItem: FC<{
 }
 
 type AquaFilteredMappedEntry = {
-  gameplay: AquaGamePlay
+  entry: PlayEntry
   sheet: FlattenedSheet
-  playLog: AquaPlayLog
-}
-
-type AquaFilteredIntermediateEntry = {
-  sheet?: FlattenedSheet
-  gameplay: AquaGamePlay
-  playLog?: AquaPlayLog
 }
 
 const ImportFromAquaSQLiteDatabaseContent: FC<{
@@ -154,17 +143,13 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
   }, [db])
   const [selectedUser, setSelectedUser] = useState<AquaUser | null>(null)
   const { data: sheets } = useSheets({ acceptsPartialData: true })
-  const [warnings, setWarnings] = useState<AquaGamePlay[]>([])
-  const records = useMemo(() => {
-    if (!selectedUser) return []
-    if (!sheets) return []
+  const appVersion = useAppContextDXDataVersion()
+  const { records, warnings } = useMemo(() => {
+    if (!selectedUser) return { records: [], warnings: [] }
+    if (!sheets) return { records: [], warnings: [] }
 
-    // First, filter and map the entries as before
-    const { records, warnings } = getUserGamePlays(db, selectedUser, sheets)
-    setWarnings(warnings)
-
-    return records
-  }, [db, selectedUser, sheets])
+    return getUserGamePlays(db, selectedUser, sheets, appVersion)
+  }, [appVersion, db, selectedUser, sheets])
 
   const mode = !selectedUser ? 'select-user' : 'confirm-import'
 
@@ -207,15 +192,11 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
                 <AlertTitle>{t('global:warnings')}</AlertTitle>
 
                 <ul className="list-disc list-inside">
-                  {warnings.map((warning) => (
-                    <li key={warning.id}>
+                  {warnings.map((warning, index) => (
+                    <li key={`${warning.code}-${index}`}>
                       {t('rating-calculator:io.import.aqua-sqlite.sheet-not-found')}{' '}
                       <code className="bg-gray-2 px-1 py-0.5 rounded-sm b-1 b-solid b-gray-3">
-                        music_id={warning.music_id} [{warning.type}, {warning.level}]
-                      </code>
-                      ,{' '}
-                      <code className="bg-gray-2 px-1 py-0.5 rounded-sm b-1 b-solid b-gray-3">
-                        achievement={warning.achievement}
+                        {formatAquaWarningRow(warning)}
                       </code>
                     </li>
                   ))}
@@ -225,12 +206,12 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
 
             <List className="b-1 b-solid b-gray-200 rounded-lg overflow-hidden !p-1 space-y-1">
               {records.map((record) => (
-                <ListItem className="flex flex-col gap-2 w-full bg-gray-2 p-1 rounded-md" key={record.gameplay.id}>
+                <ListItem className="flex flex-col gap-2 w-full bg-gray-2 p-1 rounded-md" key={record.entry.sheetId}>
                   <div className="w-full">
                     <SheetListItemContent sheet={record.sheet} />
                   </div>
 
-                  <div className="text-sm self-end">{record.gameplay.achievement / 10000}%</div>
+                  <div className="text-sm self-end">{record.entry.achievementRate}%</div>
                 </ListItem>
               ))}
             </List>
@@ -245,12 +226,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
             color="primary"
             variant="contained"
             onClick={() => {
-              modifyEntries.set(
-                records.map((record) => ({
-                  sheetId: canonicalIdFromParts(record.sheet.songId, record.sheet.type, record.sheet.difficulty),
-                  achievementRate: record.gameplay.achievement / 10000,
-                })),
-              )
+              modifyEntries.set(records.map((record) => record.entry))
 
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.aqua-sqlite.success', { count: records.length }))
@@ -266,62 +242,46 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
   )
 }
 
-function getUserGamePlays(db: Database, selectedUser: AquaUser, sheets: FlattenedSheet[]) {
+function getUserGamePlays(
+  db: Database,
+  selectedUser: AquaUser,
+  sheets: FlattenedSheet[],
+  appVersion: Parameters<typeof getDxdataSongCatalog>[0],
+) {
   const gameplays = readAquaGamePlays(db)
-  const playLogs = readAquaPlayLogs(db)
+  const importResult = normalizeAquaSqliteRows(getDxdataSongCatalog(appVersion), {
+    selectedUserId: selectedUser.id,
+    gameplays,
+  })
+  const entries = importResultToPlayEntries(importResult)
+  for (const warning of importResult.warnings) {
+    console.warn('[ImportFromAquaSQLiteButton]', warning.message, warning.row)
+  }
 
-  const filteredMappedGameplays = gameplays
-    .filter((gameplay) => gameplay.user_id === selectedUser.id)
-    .map((entry) => ({
-      gameplay: entry,
-      sheet: sheets.find(
-        (sheet) => sheet.internalId === entry.music_id && sheet.difficulty === entry.level && sheet.type === entry.type,
-      ),
-    })) as AquaFilteredIntermediateEntry[]
-
-  // Now, find the maximum achievement for each music_id
-  const intermediate = filteredMappedGameplays
-    .reduce((acc, entry) => {
-      const existing = acc.find(
-        (e) =>
-          e.gameplay.music_id === entry.gameplay.music_id &&
-          e.gameplay.type === entry.gameplay.type &&
-          e.gameplay.level === entry.gameplay.level,
-      )
-
-      if (!existing) {
-        acc.push(entry)
-      } else if (existing.gameplay.achievement < entry.gameplay.achievement) {
-        Object.assign(existing, entry)
-      }
-      return acc
-    }, [] as AquaFilteredIntermediateEntry[])
-    .map((entry) => ({
-      gameplay: entry.gameplay,
-      sheet: entry.sheet,
-      playLog: playLogs.find(
-        (playLog) =>
-          playLog.music_id === entry.gameplay.music_id &&
-          playLog.type === entry.gameplay.type &&
-          playLog.level === entry.gameplay.level &&
-          playLog.achievement === entry.gameplay.achievement,
-      ),
-    }))
-
-  const warnings: AquaGamePlay[] = []
-  // Finally, filter out entries that don't have a sheet
-  const records = intermediate.filter((entry) => {
-    if (entry.sheet === undefined) {
-      console.warn('[ImportFromAquaSQLiteButton] Failed to find sheet for gameplay: ', entry.gameplay)
-      warnings.push(entry.gameplay)
-      return false
+  const records = entries.flatMap((entry): AquaFilteredMappedEntry[] => {
+    const sheet = sheets.find((sheet) => sheet.id === entry.sheetId)
+    if (!sheet) {
+      console.warn('[ImportFromAquaSQLiteButton] Failed to find normalized sheet: ', entry)
+      return []
     }
 
-    return true
-  }) as AquaFilteredMappedEntry[]
+    return [{ entry, sheet }]
+  })
 
   return {
     records,
-    warnings,
+    warnings: importResult.warnings,
   }
+}
+
+function formatAquaWarningRow(warning: ImportWarning): string {
+  if (typeof warning.row !== 'object' || warning.row === null) return warning.message
+
+  const row = warning.row as Record<string, unknown>
+  return [
+    `code=${warning.code}`,
+    `music_id=${String(row.music_id)}`,
+    `[${String(row.type)}, ${String(row.level)}]`,
+    `achievement=${String(row.achievement)}`,
+  ].join(' ')
 }

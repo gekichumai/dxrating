@@ -1,5 +1,6 @@
 import { ImportRegionSupportTag } from '@/components/rating/io/import/ImportRegionSupportTag'
-import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import type { VersionEnum } from '@gekichumai/dxdata'
+import { getDxdataSongCatalog, normalizeDivingFishRows } from '@gekichumai/maimai-domain'
 import {
   Alert,
   AlertTitle,
@@ -21,14 +22,13 @@ import { useLocalStorage } from 'react-use'
 import type { ListActions } from 'react-use/lib/useList'
 import CarbonFish from '~icons/carbon/fish'
 import AlertIcon from '~icons/material-symbols/warning'
-import { canonicalIdFromParts, type FlattenedSheet, useSheets } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
+import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import { WebHaptics } from 'web-haptics'
 import type { ComboFlag, PlayEntry, SyncFlag } from '../../RatingCalculatorAddEntryForm'
+import { importResultToPlayEntries } from './importResultToPlayEntries'
 
 const haptics = new WebHaptics()
-
-const levelLabel = ['basic', 'advanced', 'expert', 'master', 'remaster']
 
 interface DivingFishProfile {
   username?: string
@@ -74,7 +74,7 @@ export interface Chart {
 }
 
 const fetchDivingFish = async (
-  sheets: FlattenedSheet[],
+  appVersion: VersionEnum,
   divingFishProfile: DivingFishProfile | null,
   modifyEntries: ListActions<PlayEntry>,
 ) => {
@@ -104,54 +104,16 @@ const fetchDivingFish = async (
     }
 
     const data = (await response.json()) as DivingFishResponseBody
-    const entries: PlayEntry[] = []
-
-    const mapChart = (item: Chart) => {
-      return {
-        sheetId: canonicalIdFromParts(
-          item.title,
-          (item.type.toLowerCase() === 'sd' ? 'std' : item.type.toLowerCase()) as TypeEnum,
-          levelLabel[item.level_index] as DifficultyEnum,
-        ),
-        achievementRate: item.achievements,
-        comboFlag: item.fc || null,
-        syncFlag: item.fs || null,
-      }
+    const importResult = normalizeDivingFishRows(getDxdataSongCatalog(appVersion), [
+      ...data.charts.dx.map((row) => ({ ...row, bucket: 'b15' as const })),
+      ...data.charts.sd.map((row) => ({ ...row, bucket: 'b35' as const })),
+    ])
+    const entries = importResultToPlayEntries(importResult)
+    for (const warning of importResult.warnings) {
+      console.warn('[ImportFromDivingFishButtonListItem]', warning.message, warning.row)
     }
 
-    entries.push(
-      ...data.charts.dx.map((item: Chart) => {
-        return {
-          ...mapChart(item),
-          providerConfig: {
-            divingFish: {
-              ratingEligibility: 'b15' as const,
-            },
-          },
-        }
-      }),
-    )
-    entries.push(
-      ...data.charts.sd.map((item: Chart) => {
-        return {
-          ...mapChart(item),
-          providerConfig: {
-            divingFish: {
-              ratingEligibility: 'b35' as const,
-            },
-          },
-        }
-      }),
-    )
-    modifyEntries.set(
-      entries.filter((entry) => {
-        const found = sheets.find((sheet) => sheet.id === entry.sheetId)
-        if (!found) {
-          console.warn(`No sheet found for ${entry.sheetId}`)
-        }
-        return found
-      }),
-    )
+    modifyEntries.set(entries)
     haptics.trigger('success')
     toast.success(t('rating-calculator:io.import.diving-fish.success', { count: entries.length }), {
       id: toastId,
@@ -168,7 +130,7 @@ export const ImportDivingFishDialogContent: FC<{
   modifyEntries: ListActions<PlayEntry>
   onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
-  const { data: sheets } = useSheets({ acceptsPartialData: true })
+  const appVersion = useAppContextDXDataVersion()
   const [busy, setBusy] = useState(false)
   const { t } = useTranslation(['rating-calculator'])
   const [divingFishConfig, setDivingFishConfig] = useLocalStorage<DivingFishProfile | null>('diving-fish-profile', null)
@@ -248,11 +210,7 @@ export const ImportDivingFishDialogContent: FC<{
                 toast.error(t('rating-calculator:io.import.diving-fish.invalid-profile'))
                 return
               }
-              if (!sheets) {
-                toast.error(t('rating-calculator:io.import.diving-fish.no-sheets'))
-                return
-              }
-              await fetchDivingFish(sheets, divingFishConfig!, modifyEntries)
+              await fetchDivingFish(appVersion, divingFishConfig!, modifyEntries)
               onClose()
             } finally {
               setBusy(false)
