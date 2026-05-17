@@ -25,7 +25,6 @@ import { useLocalStorage } from 'react-use'
 import type { ListActions } from 'react-use/lib/useList'
 import IconMdiConnection from '~icons/mdi/connection'
 import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
-import { useSheets } from '../../../../songs'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { type FetchNetRecordProgressState, importFromNETRecords } from './importFromNETRecords'
 import { ImportRegionSupportTag } from './ImportRegionSupportTag'
@@ -116,7 +115,6 @@ const ImportFromNETRecordsDialogContent: FC<{
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState<ImportFromNETRecordsProgress | null>(null)
   const mappedAutoImport = autoImport === true ? 'replace' : (autoImport as unknown) === 'false' ? false : autoImport // Legacy support
-  const { data: sheets } = useSheets({ acceptsPartialData: true })
   const appVersion = useAppContextDXDataVersion()
 
   useEffect(() => {
@@ -140,15 +138,9 @@ const ImportFromNETRecordsDialogContent: FC<{
   const handleImport = async () => {
     setBusy(true)
     try {
-      await importFromNETRecords(
-        sheets!,
-        appVersion,
-        modifyEntries,
-        mappedAutoImport || 'replace',
-        (state, progress) => {
-          setProgress({ state, progress })
-        },
-      )
+      await importFromNETRecords(appVersion, modifyEntries, mappedAutoImport || 'replace', (state, progress) => {
+        setProgress({ state, progress })
+      })
       onClose()
     } catch {
       setProgress((progress) => ({

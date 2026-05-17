@@ -11,7 +11,6 @@ import type { ListActions } from 'react-use/lib/useList'
 import IconMdiCheck from '~icons/mdi/check'
 import IconMdiClose from '~icons/mdi/close'
 import { WebHaptics } from 'web-haptics'
-import type { FlattenedSheet } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
@@ -139,13 +138,11 @@ export const NET_IMPORT_COOLDOWN_MS = 15 * 60 * 1000 // 15 minutes
 let importInFlight = false
 
 export const importFromNETRecords = async (
-  sheets: FlattenedSheet[],
   appVersion: VersionEnum,
   modifyEntries: ListActions<PlayEntry>,
   mode: 'merge' | 'replace',
   onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
 ) => {
-  void sheets
   if (importInFlight) {
     console.warn('[importFromNETRecords] Import already in progress, skipping duplicate call')
     return
