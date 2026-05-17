@@ -99,9 +99,8 @@ const _SheetListInner: FC = () => {
             difficulty: sheet.difficulty,
           }),
           mask: {
-            to: '/songs/$songId',
-            params: { songId: sheet.songId },
-            search: { type: sheet.type, difficulty: sheet.difficulty },
+            to: '/$songId/$type/$difficulty',
+            params: { songId: sheet.songId, type: sheet.type, difficulty: sheet.difficulty },
           },
           resetScroll: false,
         })

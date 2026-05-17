@@ -1,11 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { dxdata } from '@gekichumai/dxdata'
+import { type DifficultyEnum, type TypeEnum, dxdata } from '@gekichumai/dxdata'
+import { buildSheetPath } from '@/components/sheet/sheetLinks'
 
 const BASE_URL = 'https://dxrating.net'
 
 type SitemapSong = {
   songId: string
   sheets?: {
+    type: TypeEnum
+    difficulty: DifficultyEnum
     releaseDate?: string
   }[]
 }
@@ -20,19 +23,25 @@ const escapeXml = (value: string) =>
 
 const urlLoc = (path: string) => escapeXml(`${BASE_URL}${path}`)
 
-const latestReleaseDate = (song: SitemapSong) =>
-  song.sheets?.reduce((latest, sheet) => {
-    if (!sheet.releaseDate) return latest
-    return sheet.releaseDate > latest ? sheet.releaseDate : latest
-  }, '') ?? ''
-
 export function buildSitemap(songs: SitemapSong[]) {
-  const songEntries = [...songs]
-    .sort((a, b) => latestReleaseDate(b).localeCompare(latestReleaseDate(a)))
+  const sheetEntries = songs
+    .flatMap((song) =>
+      (song.sheets ?? []).map((sheet) => ({
+        songId: song.songId,
+        sheet,
+      })),
+    )
+    .sort((a, b) => (b.sheet.releaseDate ?? '').localeCompare(a.sheet.releaseDate ?? ''))
     .map(
-      (song) => `
+      ({ songId, sheet }) => `
   <url>
-    <loc>${urlLoc(`/songs/${encodeURIComponent(song.songId)}`)}</loc>
+    <loc>${urlLoc(
+      buildSheetPath({
+        songId,
+        type: sheet.type,
+        difficulty: sheet.difficulty,
+      }),
+    )}</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>`,
@@ -55,7 +64,7 @@ export function buildSitemap(songs: SitemapSong[]) {
     <loc>${urlLoc('/rating')}</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>${songEntries}
+  </url>${sheetEntries}
 </urlset>`
 }
 

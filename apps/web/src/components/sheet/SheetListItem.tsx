@@ -17,6 +17,7 @@ import { FadedImage } from '../global/FadedImage'
 import { ResponsiveDialog } from '../global/ResponsiveDialog'
 import { AddSheetAltNameButton } from './AddSheetAltNameButton'
 import { SheetDialogContent, type SheetDialogContentProps } from './SheetDialogContent'
+import { buildSheetPath } from './sheetLinks'
 
 export const SheetListItem: FC<{
   size?: 'small' | 'medium'
@@ -46,7 +47,7 @@ export const SheetListItem: FC<{
         )}
 
         <a
-          href={`/songs/${encodeURIComponent(sheet.songId)}?type=${encodeURIComponent(sheet.type)}&difficulty=${encodeURIComponent(sheet.difficulty)}`}
+          href={buildSheetPath(sheet)}
           onClick={(e) => {
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return
             e.preventDefault()

@@ -13,6 +13,6 @@ describe('buildSheetLink', () => {
         },
         'https://dxrating.net',
       ),
-    ).toBe('https://dxrating.net/songs/song%20100%25?type=dx&difficulty=master')
+    ).toBe('https://dxrating.net/song%20100%25/dx/master')
   })
 })

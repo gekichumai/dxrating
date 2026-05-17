@@ -1,76 +1,69 @@
-import { createFileRoute, notFound } from '@tanstack/react-router'
-import { dxdata } from '@gekichumai/dxdata'
-import { SongPage } from '@/pages/SongPage'
+import { type Song, TypeEnum, dxdata } from '@gekichumai/dxdata'
+import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
+import { TYPE_ORDER, getHighestDifficulty } from '@/models/constants'
 
 type SongSearchParams = {
   type?: string
   difficulty?: string
 }
 
+export const LEGACY_SONG_ROUTE_REDIRECT_STATUS_CODE = 308
+
+const getDefaultSheetParams = (song: Song) => {
+  const availableTypes = TYPE_ORDER.filter((type) => song.sheets.some((sheet) => sheet.type === type))
+  const type = availableTypes[0] ?? TypeEnum.DX
+  const difficulty = getHighestDifficulty(song.sheets.filter((sheet) => sheet.type === type))
+  return { type, difficulty }
+}
+
+const getLegacySheetParams = (song: Song, requestedType?: string, requestedDifficulty?: string) => {
+  const matchingSheet = song.sheets.find(
+    (sheet) => sheet.type === requestedType && sheet.difficulty === requestedDifficulty,
+  )
+  if (matchingSheet) {
+    return {
+      type: matchingSheet.type,
+      difficulty: matchingSheet.difficulty,
+    }
+  }
+
+  const requestedTypeSheets = song.sheets.filter((sheet) => sheet.type === requestedType)
+  if (requestedTypeSheets.length > 0) {
+    return {
+      type: requestedType as TypeEnum,
+      difficulty: getHighestDifficulty(requestedTypeSheets),
+    }
+  }
+
+  return getDefaultSheetParams(song)
+}
+
+export const resolveLegacySongRouteRedirect = (song: Song, requestedType?: string, requestedDifficulty?: string) => {
+  const { type, difficulty } = getLegacySheetParams(song, requestedType, requestedDifficulty)
+  return {
+    to: '/$songId/$type/$difficulty' as const,
+    params: {
+      songId: song.songId,
+      type,
+      difficulty,
+    },
+    statusCode: LEGACY_SONG_ROUTE_REDIRECT_STATUS_CODE,
+    replace: true,
+  }
+}
+
 export const Route = createFileRoute('/songs/$songId')({
   ssr: true,
-  loader: ({ params }) => {
-    const song = dxdata.songs.find((s) => s.songId === params.songId)
-    if (!song) {
-      throw notFound()
-    }
-    return { song }
-  },
-  head: ({ loaderData }) => {
-    const song = loaderData?.song
-    if (!song) {
-      return {
-        meta: [{ title: 'Song Not Found — DXRating' }],
-      }
-    }
-
-    const pageTitle = `${song.title} — DXRating`
-    const description = `${song.title} by ${song.artist} · ${song.category} — View chart details, internal levels, and note counts on DXRating.`
-    const image = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
-    const url = `https://dxrating.net/songs/${encodeURIComponent(song.songId)}`
-
-    return {
-      meta: [
-        { title: pageTitle },
-        { name: 'description', content: description },
-        { property: 'og:title', content: pageTitle },
-        { property: 'og:description', content: description },
-        { property: 'og:image', content: image },
-        { property: 'og:url', content: url },
-        { property: 'og:type', content: 'website' },
-        { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: pageTitle },
-        { name: 'twitter:description', content: description },
-        { name: 'twitter:image', content: image },
-      ],
-      links: [{ rel: 'canonical', href: url }],
-      scripts: [
-        {
-          type: 'application/ld+json',
-          children: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'MusicComposition',
-            name: song.title,
-            composer: {
-              '@type': 'Person',
-              name: song.artist,
-            },
-            image,
-            url,
-            genre: song.category,
-            isPartOf: {
-              '@type': 'WebSite',
-              name: 'DXRating',
-              url: 'https://dxrating.net',
-            },
-          }),
-        },
-      ],
-    }
-  },
   validateSearch: (search: Record<string, unknown>): SongSearchParams => ({
     type: typeof search.type === 'string' ? search.type : undefined,
     difficulty: typeof search.difficulty === 'string' ? search.difficulty : undefined,
   }),
-  component: SongPage,
+  beforeLoad: ({ params, search }) => {
+    const song = dxdata.songs.find((s) => s.songId === params.songId)
+    if (!song) {
+      throw notFound()
+    }
+
+    throw redirect(resolveLegacySongRouteRedirect(song, search.type, search.difficulty))
+  },
 })

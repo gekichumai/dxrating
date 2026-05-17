@@ -1,3 +1,4 @@
+import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
 import { buildSitemap } from '../sitemap[.]xml'
 
@@ -6,32 +7,36 @@ describe('buildSitemap', () => {
     const sitemap = buildSitemap([
       {
         songId: '1/3の純情な感情 & <test>',
+        sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Master }],
       },
     ])
 
     expect(sitemap).toContain(
-      '<loc>https://dxrating.net/songs/1%2F3%E3%81%AE%E7%B4%94%E6%83%85%E3%81%AA%E6%84%9F%E6%83%85%20%26%20%3Ctest%3E</loc>',
+      '<loc>https://dxrating.net/1%2F3%E3%81%AE%E7%B4%94%E6%83%85%E3%81%AA%E6%84%9F%E6%83%85%20%26%20%3Ctest%3E/dx/master</loc>',
     )
-    expect(sitemap).not.toContain('<loc>https://dxrating.net/songs/1/3の純情な感情 & <test></loc>')
+    expect(sitemap).not.toContain('<loc>https://dxrating.net/1/3の純情な感情 & <test>/dx/master</loc>')
   })
 
-  it('sorts song URLs by latest sheet release date descending', () => {
+  it('sorts sheet URLs by release date descending', () => {
     const sitemap = buildSitemap([
       {
         songId: 'old',
-        sheets: [{ releaseDate: '2015-07-16' }],
+        sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Master, releaseDate: '2015-07-16' }],
       },
       {
         songId: 'recent',
-        sheets: [{ releaseDate: '2026-05-01' }],
+        sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Expert, releaseDate: '2026-05-01' }],
       },
       {
         songId: 'mixed',
-        sheets: [{ releaseDate: '2019-01-01' }, { releaseDate: '2026-05-10' }],
+        sheets: [
+          { type: TypeEnum.DX, difficulty: DifficultyEnum.Basic, releaseDate: '2019-01-01' },
+          { type: TypeEnum.STD, difficulty: DifficultyEnum.Master, releaseDate: '2026-05-10' },
+        ],
       },
     ])
 
-    expect(sitemap.indexOf('/songs/mixed')).toBeLessThan(sitemap.indexOf('/songs/recent'))
-    expect(sitemap.indexOf('/songs/recent')).toBeLessThan(sitemap.indexOf('/songs/old'))
+    expect(sitemap.indexOf('/mixed/std/master')).toBeLessThan(sitemap.indexOf('/recent/dx/expert'))
+    expect(sitemap.indexOf('/recent/dx/expert')).toBeLessThan(sitemap.indexOf('/old/dx/master'))
   })
 })
