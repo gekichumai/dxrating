@@ -213,10 +213,10 @@ function isB15Sheet(sheetVersion: Version, appVersion: Version, region: Region):
 }
 
 function isB35Sheet(sheetVersion: Version, appVersion: Version, region: Region): boolean {
+  if (region === '_generic') return sheetVersion !== appVersion
   const appVersionId = VERSION_ID_MAP.get(appVersion)
   const sheetVersionId = VERSION_ID_MAP.get(sheetVersion)
   if (appVersionId === undefined || sheetVersionId === undefined) return false
-  if (region === '_generic') return appVersionId > sheetVersionId
   const useCircleB15 = appVersionId >= VERSION_ID_MAP.get(VersionEnum.CiRCLE)!
   return useCircleB15 ? appVersionId > sheetVersionId + 1 : appVersionId > sheetVersionId
 }

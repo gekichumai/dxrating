@@ -303,7 +303,7 @@ describe('Best 50', () => {
     expect(result.statistics).toMatchObject({ b15Sum: 584, b35Sum: 292, b50Sum: 876 })
   })
 
-  it('excludes future-version sheets from generic B35 calculations', () => {
+  it('keeps non-current sheets in generic B35 calculations', () => {
     const catalog = buildSongCatalog(makeData(), VersionEnum.CiRCLE)
     const result = calculateBest50({
       catalog,
@@ -317,8 +317,8 @@ describe('Best 50', () => {
     })
 
     expect(result.b15.map((e) => e.entry.identity.songId)).toEqual(['previous'])
-    expect(result.b35.map((e) => e.entry.identity.songId)).toEqual(['old'])
-    expect(result.allEntries.find((e) => e.entry.identity.songId === 'current')?.bucket).toBeNull()
+    expect(result.b35.map((e) => e.entry.identity.songId)).toEqual(['current', 'old'])
+    expect(result.allEntries.find((e) => e.entry.identity.songId === 'current')?.bucket).toBe('b35')
   })
 
   it('honors provider-supplied Best 50 Bucket hints for cn region', () => {
