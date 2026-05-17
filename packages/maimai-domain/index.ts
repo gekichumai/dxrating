@@ -1,5 +1,6 @@
 export * from './src/best50.js'
 export * from './src/dxdata-catalog.js'
+export * from './src/import-normalizers.js'
 export * from './src/sheet-identity.js'
 export { buildSongCatalog, getSheetIdentityFromId } from './src/song-catalog.js'
 export type { ParsedCatalogSheetId, SongCatalog } from './src/song-catalog.js'
