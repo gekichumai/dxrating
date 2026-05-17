@@ -18,6 +18,7 @@
     "@better-auth/i18n": "^1.5.6",
     "@better-auth/passkey": "catalog:",
     "@gekichumai/dxdata": "workspace:*",
+    "@gekichumai/maimai-domain": "workspace:*",
     "@hono/node-server": "^1.19.14",
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
