@@ -2,21 +2,38 @@ import type { DifficultyEnum, Sheet, Song, TypeEnum } from '@gekichumai/dxdata'
 
 export type Region = 'jp' | 'intl' | 'cn' | '_generic'
 
-export interface SheetIdentity {
-  songId: string
-  type: TypeEnum
+export type UtageDifficultyLabel = `【${string}】`
+export type SheetDifficulty = DifficultyEnum | UtageDifficultyLabel
+export type StandardSheetType = TypeEnum.DX | TypeEnum.STD
+export type UtageSheetType = TypeEnum.UTAGE | TypeEnum.UTAGE2P
+
+export interface StandardSheetTypeDifficulty {
+  type: StandardSheetType
   difficulty: DifficultyEnum
+}
+
+export interface UtageSheetTypeDifficulty {
+  type: UtageSheetType
+  difficulty: DifficultyEnum | UtageDifficultyLabel
+}
+
+export type SheetTypeDifficulty = StandardSheetTypeDifficulty | UtageSheetTypeDifficulty
+
+export type SheetIdentity = SheetTypeDifficulty & {
+  songId: string
 }
 
 export type ProviderSheetReference =
   | { kind: 'identity'; identity: SheetIdentity }
-  | { kind: 'title'; title: string; type: TypeEnum; difficulty: DifficultyEnum }
-  | { kind: 'internal-id'; internalId: number; type: TypeEnum; difficulty: DifficultyEnum }
-  | { kind: 'provider-music-id'; musicId: string | number; difficulty: DifficultyEnum; map: ProviderMusicIdMap }
+  | ({ kind: 'title'; title: string } & SheetTypeDifficulty)
+  | ({ kind: 'internal-id'; internalId: number } & SheetTypeDifficulty)
+  | { kind: 'provider-music-id'; musicId: string | number; difficulty: DifficultyEnum; map?: ProviderMusicIdMap }
 
 export type ProviderMusicIdMap = Record<string, { name: string; ver?: string }>
 
-export interface VersionedSheet extends Song, Sheet {
+export interface VersionedSheet extends Omit<Song, 'sheets'>, Omit<Sheet, 'difficulty'> {
+  sheets: Sheet[]
+  difficulty: SheetDifficulty
   id: string
   identity: SheetIdentity
   isTypeUtage: boolean
