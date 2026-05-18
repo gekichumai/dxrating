@@ -1,6 +1,7 @@
 import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
 import { Hono } from 'hono'
 import { describe, expect, it, vi } from 'vitest'
+import { app } from '../app.js'
 import {
   createChartOgImageHandler,
   formatInternalLevelLabelParts,
@@ -20,6 +21,29 @@ const sheet = song.sheets.find(
 if (!sheet) throw new Error('Expected fixture song to include selected sheet')
 
 describe('chart OG image handler', () => {
+  it('serves chart images from the API v1 endpoint format', async () => {
+    const res = await app.request(
+      `/api/v1/songs/${encodeURIComponent(song.songId)}/${sheet.type}/${sheet.difficulty}/og-image`,
+    )
+
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('image/png')
+    expect(res.headers.get('cache-control')).toContain('public')
+    expect(res.headers.get('content-disposition')).toBe(
+      'inline; filename="chart-og.png"; filename*=utf-8\'\'chart-og.png',
+    )
+    expect(res.headers.get('etag')).toMatch(/^"sha256-[a-f0-9]{64}"$/)
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff')
+    expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(0)
+  })
+
+  it('keeps the internal chart image endpoint out of the OpenAPI spec', async () => {
+    const res = await app.request('/spec.json')
+    const spec = await res.json()
+
+    expect(spec.paths).not.toHaveProperty('/songs/{songId}/{type}/{difficulty}/og-image')
+  })
+
   it('resolves chart data and returns a cacheable PNG response', async () => {
     const image = new Uint8Array([137, 80, 78, 71])
     const renderImage = vi.fn(async () => image)
@@ -31,6 +55,11 @@ describe('chart OG image handler', () => {
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toBe('image/png')
     expect(res.headers.get('cache-control')).toContain('public')
+    expect(res.headers.get('content-disposition')).toBe(
+      'inline; filename="chart-og.png"; filename*=utf-8\'\'chart-og.png',
+    )
+    expect(res.headers.get('etag')).toBe('"sha256-0f4636c78f65d3639ece5a064b5ae753e3408614a14fb18ab4d7540d2c248543"')
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff')
     expect(await res.arrayBuffer()).toEqual(image.buffer)
     expect(renderImage).toHaveBeenCalledWith(
       expect.objectContaining({

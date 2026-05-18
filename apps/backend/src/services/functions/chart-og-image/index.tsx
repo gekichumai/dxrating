@@ -2,6 +2,7 @@ import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
 import type { NoteCounts } from '@gekichumai/dxdata'
 import { ImageResponse } from '@takumi-rs/image-response'
 import type { Handler } from 'hono'
+import { createHash } from 'node:crypto'
 import type { CSSProperties, ReactNode } from 'react'
 import { fetchAsset, fetchImageAsset } from '../oneshot-renderer/assetFetcher.js'
 
@@ -10,7 +11,9 @@ export const CHART_OG_IMAGE_HEIGHT = 630
 const ASSET_ORIGIN = 'https://shama.dxrating.net'
 const FRONTEND_ORIGIN = 'https://dxrating.net'
 
-const CACHE_CONTROL = 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800'
+export const CHART_OG_IMAGE_CACHE_CONTROL = 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800'
+const CHART_OG_IMAGE_CONTENT_TYPE = 'image/png'
+const CHART_OG_IMAGE_CONTENT_DISPOSITION = 'inline; filename="chart-og.png"; filename*=utf-8\'\'chart-og.png'
 
 type DifficultyDisplay = {
   title: string
@@ -56,6 +59,11 @@ export type ChartOgImageData = {
 }
 
 export type RenderChartOgImage = (data: ChartOgImageData) => Promise<ArrayBuffer | Uint8Array>
+
+export type ChartOgImageOutput = {
+  headers: Record<string, string>
+  body: Blob
+}
 
 export function buildChartOgDetailUrl(songId: string, type: string, difficulty: string) {
   return `${FRONTEND_ORIGIN}/songs/${encodeURIComponent(songId)}/${encodeURIComponent(type)}/${encodeURIComponent(difficulty)}`
@@ -110,19 +118,42 @@ export function createChartOgImageHandler(renderImage: RenderChartOgImage = rend
     const difficulty = c.req.param('difficulty')
     if (!songId || !type || !difficulty) return c.text('Chart not found', 404)
 
-    const data = resolveChartOgImageData(songId, type, difficulty)
-    if (!data) return c.text('Chart not found', 404)
+    const output = await renderChartOgImageOutput({ songId, type, difficulty }, renderImage)
+    if (!output) return c.text('Chart not found', 404)
 
-    const image = await renderImage(data)
-    const body = toArrayBuffer(image)
-    return new Response(body, {
+    return new Response(output.body, {
       headers: {
-        'Cache-Control': CACHE_CONTROL,
-        'Content-Length': String(image.byteLength),
-        'Content-Type': 'image/png',
+        ...output.headers,
+        'Content-Length': String(output.body.size),
       },
     })
   }
+}
+
+export async function renderChartOgImageOutput(
+  input: { songId: string; type: string; difficulty: string },
+  renderImage: RenderChartOgImage = renderChartOgImage,
+): Promise<ChartOgImageOutput | null> {
+  const data = resolveChartOgImageData(input.songId, input.type, input.difficulty)
+  if (!data) return null
+
+  const image = await renderImage(data)
+  const body = toArrayBuffer(image)
+
+  return {
+    headers: {
+      'Cache-Control': CHART_OG_IMAGE_CACHE_CONTROL,
+      'Content-Disposition': CHART_OG_IMAGE_CONTENT_DISPOSITION,
+      'Content-Type': CHART_OG_IMAGE_CONTENT_TYPE,
+      ETag: createChartOgImageEtag(body),
+      'X-Content-Type-Options': 'nosniff',
+    },
+    body: new Blob([body], { type: CHART_OG_IMAGE_CONTENT_TYPE }),
+  }
+}
+
+function createChartOgImageEtag(image: ArrayBuffer) {
+  return `"sha256-${createHash('sha256').update(Buffer.from(image)).digest('hex')}"`
 }
 
 function toArrayBuffer(image: ArrayBuffer | Uint8Array): ArrayBuffer {

@@ -11,7 +11,7 @@ describe('chart OG metadata helpers', () => {
         difficulty: DifficultyEnum.Master,
       }),
     ).toBe(
-      'https://miruku.dxrating.net/functions/render-chart-og/v0/1%2F3%E3%81%AE%E7%B4%94%E6%83%85%E3%81%AA%E6%84%9F%E6%83%85%20%26%20%3Ctest%3E/dx/master',
+      'https://miruku.dxrating.net/api/v1/songs/1%2F3%E3%81%AE%E7%B4%94%E6%83%85%E3%81%AA%E6%84%9F%E6%83%85%20%26%20%3Ctest%3E/dx/master/og-image',
     )
   })
 
