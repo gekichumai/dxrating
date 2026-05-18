@@ -30,36 +30,31 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
 
   const valuePercentage = ((value ?? 0) - min) / (max - min)
 
-  const onPointerMove = (e: MouseEvent | TouchEvent<HTMLDivElement>) => {
-    if (!isPressed) return
-    if (!containerRef.current) return
-    if ('touches' in e && e.touches.length !== 1) return
+  const onPointerMove = useCallback(
+    (e: MouseEvent | TouchEvent<HTMLDivElement>) => {
+      if (!isPressed) return
+      if (!containerRef.current) return
+      if ('touches' in e && e.touches.length !== 1) return
 
-    const { top, height } = containerRef.current.getBoundingClientRect()
-    const padding = 16 + 10 // each side; padding + half size of text mark
-    const offset = ('touches' in e ? e.touches[0] : e).clientY - top
-    const mappedOffset = mapRange(offset, 0, height, -padding, height - padding)
-    const percentageFromTop = mappedOffset / (height - padding * 2)
-    const unroundedValue = (max - min) * percentageFromTop + min
-    const unclampedValue = Math.round(unroundedValue * 10) / 10
-    const value = Math.max(min, Math.min(max, unclampedValue))
-    onChange(value)
-  }
+      const { top, height } = containerRef.current.getBoundingClientRect()
+      const padding = 16 + 10 // each side; padding + half size of text mark
+      const offset = ('touches' in e ? e.touches[0] : e).clientY - top
+      const mappedOffset = mapRange(offset, 0, height, -padding, height - padding)
+      const percentageFromTop = mappedOffset / (height - padding * 2)
+      const unroundedValue = (max - min) * percentageFromTop + min
+      const unclampedValue = Math.round(unroundedValue * 10) / 10
+      const value = Math.max(min, Math.min(max, unclampedValue))
+      onChange(value)
+    },
+    [isPressed, containerRef, min, max, onChange],
+  )
 
   useEffect(() => {
     document.addEventListener('mousemove', onPointerMove)
     return () => {
       document.removeEventListener('mousemove', onPointerMove)
     }
-  }, [isPressed, containerRef, min, max, onChange])
-
-  const onTouchMove: TouchEventHandler<HTMLDivElement> = useCallback(onPointerMove, [
-    isPressed,
-    containerRef,
-    min,
-    max,
-    onChange,
-  ])
+  }, [onPointerMove])
 
   const indicatorPosition = useMemo(() => {
     if (!containerRef.current) return 0
@@ -77,7 +72,7 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
           onTouchStart={() => {
             setIsPressed(true)
           }}
-          onTouchMove={onTouchMove}
+          onTouchMove={onPointerMove}
           onTouchEnd={() => setIsPressed(false)}
           onMouseDown={() => {
             setIsPressed(true)
