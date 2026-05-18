@@ -12,7 +12,7 @@ export function buildChartOgImageUrl({
   type: TypeEnum | string
   difficulty: DifficultyEnum | string
 }) {
-  return `${CHART_OG_IMAGE_ORIGIN}/functions/render-chart-og/v0/${encodeURIComponent(songId)}/${encodeURIComponent(type)}/${encodeURIComponent(difficulty)}`
+  return `${CHART_OG_IMAGE_ORIGIN}/api/v1/songs/${encodeURIComponent(songId)}/${encodeURIComponent(type)}/${encodeURIComponent(difficulty)}/og-image`
 }
 
 export function buildChartOgImageAlt({
