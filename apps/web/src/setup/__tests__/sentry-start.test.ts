@@ -6,10 +6,11 @@ describe('TanStack Start Sentry integration', () => {
   it('registers Sentry before local request and function middleware', () => {
     const options = buildStartOptions()
 
-    expect(options.requestMiddleware).toHaveLength(2)
+    expect(options.requestMiddleware).toHaveLength(3)
     expect(options.functionMiddleware).toHaveLength(1)
     expect(options.requestMiddleware[0]).toBe(sentryGlobalRequestMiddleware)
     expect(options.requestMiddleware[1]).not.toBe(sentryGlobalRequestMiddleware)
+    expect(options.requestMiddleware[2]).not.toBe(sentryGlobalRequestMiddleware)
     expect(options.functionMiddleware[0]).toBe(sentryGlobalFunctionMiddleware)
   })
 })

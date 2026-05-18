@@ -2,11 +2,19 @@
   "root": {
     "pages": {
       "search": {
-        "title": "譜面検索"
+        "title": "譜面検索",
+        "seo-title": "譜面検索",
+        "seo-description": "maimai DX の譜面を、楽曲名、アーティスト、難易度から検索できます。譜面定数、ノーツ数、詳しい譜面情報も確認できます。"
       },
       "rating": {
-        "title": "レーテイング計算"
+        "title": "レーテイング計算",
+        "seo-title": "レーティング計算",
+        "seo-description": "maimai DX のレーティング記録、Best 50、達成率、スコア詳細を DXRating で計算・管理できます。"
       }
+    },
+    "seo": {
+      "description": "DXRating は maimai DX Rating の分析ツールです。譜面詳細などの機能も提供しています。",
+      "keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating 分析, ゲキチュウマイ, maimaiでらっくす, 譜面情報, レーティング計算, maimai wiki"
     },
     "share": {
       "copy-content": "{{ link }}",
@@ -174,6 +182,9 @@
       "dx": "でらっくす",
       "std": "スタンダード",
       "utage": "宴"
+    },
+    "seo": {
+      "description": "{{title}} / {{artist}} - {{sheetLabel}} の譜面詳細、譜面定数、ノーツ数 - DXRating。"
     }
   },
   "about": {
