@@ -53,8 +53,12 @@ app.use(
         return origin
       }
 
-      // Allow production domain and Cloudflare Pages previews
-      if (origin === 'https://dxrating.net' || origin.endsWith('.dxrating.pages.dev')) {
+      // Allow production domain and preview deployments
+      if (
+        origin === 'https://dxrating.net' ||
+        origin.endsWith('.dxrating.pages.dev') ||
+        origin.endsWith('.galvin.workers.dev')
+      ) {
         return origin
       }
 
