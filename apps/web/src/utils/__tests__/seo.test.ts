@@ -56,6 +56,12 @@ describe('SEO localization', () => {
     expect(seo.title).toBe('Test Song [標準 MASTER] - DXRating')
     expect(seo.description).toBe('Test Song / Test Artist - 標準 MASTER 譜面詳情、譜面定數與音符數 - DXRating。')
     expect(seo.meta).toContainEqual({ property: 'og:title', content: seo.title })
+    expect(seo.meta).toContainEqual({
+      property: 'og:image',
+      content: 'https://miruku.dxrating.net/functions/render-chart-og/v0/test-song/std/master',
+    })
+    expect(seo.meta).toContainEqual({ property: 'og:image:type', content: 'image/png' })
+    expect(seo.meta).toContainEqual({ name: 'twitter:image:alt', content: seo.socialImageAlt })
     expect(seo.meta).toContainEqual({ name: 'twitter:description', content: seo.description })
   })
 })

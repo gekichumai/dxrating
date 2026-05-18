@@ -4,6 +4,7 @@ import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 import { createServerI18n } from '@/setup/init-i18n'
 import { buildSheetLink } from '@/components/sheet/sheetLinks'
 import { getSheetPageTitle, getSheetTitleLabel } from '@/components/song/sheetDisplay'
+import { buildChartOgImageAlt, buildChartOgImageUrl } from '@/routes/-chart-og-meta'
 
 type SeoMeta =
   | { title: string }
@@ -161,6 +162,17 @@ export function buildSongSheetSeo(
     sheetLabel,
   })
   const image = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
+  const socialImage = buildChartOgImageUrl({
+    songId: song.songId,
+    type: sheet.type,
+    difficulty: sheet.difficulty,
+  })
+  const socialImageAlt = buildChartOgImageAlt({
+    title: song.title,
+    artist: song.artist,
+    type: sheet.type,
+    difficulty: sheet.difficulty,
+  })
   const url = buildSheetLink(
     {
       songId: song.songId,
@@ -175,20 +187,28 @@ export function buildSongSheetSeo(
     sheetLabel,
     description,
     image,
+    socialImage,
+    socialImageAlt,
     url,
     meta: [
       { title },
       { name: 'description', content: description },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
-      { property: 'og:image', content: image },
+      { property: 'og:image', content: socialImage },
+      { property: 'og:image:secure_url', content: socialImage },
+      { property: 'og:image:type', content: 'image/png' },
+      { property: 'og:image:width', content: '1200' },
+      { property: 'og:image:height', content: '630' },
+      { property: 'og:image:alt', content: socialImageAlt },
       { property: 'og:url', content: url },
       { property: 'og:type', content: 'website' },
       { property: 'og:locale', content: OG_LOCALES[locale] },
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
-      { name: 'twitter:image', content: image },
+      { name: 'twitter:image', content: socialImage },
+      { name: 'twitter:image:alt', content: socialImageAlt },
     ] satisfies SeoMeta[],
     links: [{ rel: 'canonical', href: url }],
   }
