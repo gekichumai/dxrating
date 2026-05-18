@@ -26,6 +26,7 @@ const queryClient = new QueryClient()
 
 const APP_TABS_VALUES = ['search', 'rating'] as const
 type AppTabsValuesType = (typeof APP_TABS_VALUES)[number]
+const SONG_DETAIL_ROUTE_ID = '/songs/$songId/$type/$difficulty'
 
 const fallbackElement = (
   <div className="flex items-center justify-center h-50% w-full p-6">
@@ -34,14 +35,14 @@ const fallbackElement = (
 )
 
 export const Route = createRootRoute({
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
       { charSet: 'utf-8' },
       {
         name: 'viewport',
         content: 'width=device-width, initial-scale=1.0, viewport-fit=cover',
       },
-      { title: 'DXRating' },
+      ...(matches.some((match) => String(match.routeId) === SONG_DETAIL_ROUTE_ID) ? [] : [{ title: 'DXRating' }]),
       {
         name: 'description',
         content: 'DXRating is a maimai DX Rating analyzer, along with other features like chart details and more.',

@@ -3,7 +3,8 @@ import { Tab, Tabs } from '@mui/material'
 import { type FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DIFFICULTIES } from '../../models/difficulties'
-import { DIFFICULTY_ORDER, TYPE_ORDER } from '../../models/constants'
+import { DIFFICULTY_ORDER } from '../../models/constants'
+import { SHEET_TYPE_TAB_IMAGES } from './sheetDisplay'
 
 export interface SongSheetTabsProps {
   sheets: Sheet[]
@@ -12,6 +13,17 @@ export interface SongSheetTabsProps {
   activeDifficulty: DifficultyEnum
   onTypeChange: (type: TypeEnum) => void
   onDifficultyChange: (difficulty: DifficultyEnum) => void
+}
+
+const renderTypeTabLabel = (type: TypeEnum, label: string) => {
+  const image = SHEET_TYPE_TAB_IMAGES[type]
+  if (!image) return <span>{label}</span>
+
+  return (
+    <span className="inline-flex h-6 min-w-18 items-center justify-center px-1">
+      <img src={image} alt={label} className="h-22px max-w-70px object-contain touch-callout-none" draggable={false} />
+    </span>
+  )
 }
 
 export const SongSheetTabs: FC<SongSheetTabsProps> = ({
@@ -41,17 +53,20 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
           indicator: '!h-full !rounded-lg z-0',
         }}
       >
-        {availableTypes.map((type) => (
-          <Tab
-            key={type}
-            value={type}
-            label={t(`song:type.${type === TypeEnum.UTAGE2P ? 'utage' : type}`)}
-            classes={{
-              selected: '!text-white font-bold',
-              root: '!rounded-lg z-1 !py-0 !min-h-2.25rem !h-2.25rem !text-sm',
-            }}
-          />
-        ))}
+        {availableTypes.map((type) => {
+          const label = t(`song:type.${type === TypeEnum.UTAGE2P ? 'utage' : type}`)
+          return (
+            <Tab
+              key={type}
+              value={type}
+              label={renderTypeTabLabel(type, label)}
+              classes={{
+                selected: '!text-white font-bold',
+                root: '!rounded-lg z-1 !py-0 !min-h-2.25rem !h-2.25rem !text-sm',
+              }}
+            />
+          )
+        })}
       </Tabs>
 
       <Tabs

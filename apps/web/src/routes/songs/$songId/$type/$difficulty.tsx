@@ -1,6 +1,7 @@
 import { dxdata } from '@gekichumai/dxdata'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { buildSheetLink } from '@/components/sheet/sheetLinks'
+import { getSheetPageTitle, getSheetTitleLabel } from '@/components/song/sheetDisplay'
 import { SongPage } from '@/pages/SongPage'
 
 export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
@@ -27,8 +28,9 @@ export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
       }
     }
 
-    const pageTitle = `${song.title} [${sheet.type} ${sheet.difficulty}] - DXRating`
-    const description = `${song.title} by ${song.artist} - ${sheet.type} ${sheet.difficulty} chart details, internal levels, and note counts on DXRating.`
+    const sheetLabel = getSheetTitleLabel(sheet)
+    const pageTitle = getSheetPageTitle(song, sheet)
+    const description = `${song.title} by ${song.artist} - ${sheetLabel} chart details, internal levels, and note counts on DXRating.`
     const image = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
     const url = buildSheetLink(
       {
@@ -41,7 +43,6 @@ export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
 
     return {
       meta: [
-        { title: pageTitle },
         { name: 'description', content: description },
         { property: 'og:title', content: pageTitle },
         { property: 'og:description', content: description },

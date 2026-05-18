@@ -11,6 +11,7 @@ import { type FlattenedSheet, canonicalId, getSearchAcronymsWithServerAliases } 
 import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
+import { getSheetPageTitle } from '../components/song/sheetDisplay'
 
 const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 
@@ -68,6 +69,7 @@ export const SongPage: FC = () => {
     (sheet) => sheet.type === activeType && sheet.difficulty === activeDifficulty,
   )
   const headerSheet = activeSheet ?? flattenedSheets[0]
+  const pageTitle = song && activeSheet ? getSheetPageTitle(song, activeSheet) : undefined
 
   const handleTypeChange = (newType: TypeEnum) => {
     const sheetsOfType = flattenedSheets.filter((s) => s.type === newType)
@@ -106,6 +108,7 @@ export const SongPage: FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
+      {pageTitle && <title>{pageTitle}</title>}
       <a
         href="/"
         onClick={(e) => {

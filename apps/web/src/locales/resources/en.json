@@ -172,8 +172,8 @@
     },
     "type": {
       "dx": "DX",
-      "std": "STD",
-      "utage": "UTAGE"
+      "std": "Standard",
+      "utage": "Utage"
     }
   },
   "about": {
