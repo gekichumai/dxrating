@@ -21,7 +21,6 @@ import { buildAlternateLinks } from '@/utils/alternateLinks'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import appCss from '@/index.css?url'
-import unoResetCss from '@unocss/reset/tailwind-compat.css?url'
 import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
@@ -64,8 +63,28 @@ export const Route = createRootRoute({
         },
       ],
       links: [
-        { rel: 'stylesheet', href: unoResetCss },
+        { rel: 'preconnect', href: 'https://shama.dxrating.net' },
         { rel: 'stylesheet', href: appCss },
+        {
+          rel: 'preload',
+          as: 'font',
+          type: 'font/woff2',
+          href: 'https://shama.dxrating.net/fonts/Torus-Regular.woff2',
+          crossOrigin: 'anonymous',
+        },
+        {
+          rel: 'preload',
+          as: 'font',
+          type: 'font/woff2',
+          href: 'https://shama.dxrating.net/fonts/Torus-SemiBold.woff2',
+          crossOrigin: 'anonymous',
+        },
+        {
+          rel: 'preload',
+          as: 'image',
+          href: 'https://shama.dxrating.net/images/version-logo/circle-plus.webp',
+          fetchPriority: 'high',
+        },
         ...buildAlternateLinks({
           pathname: matches[matches.length - 1]?.pathname ?? '/',
           search: matches[matches.length - 1]?.search,

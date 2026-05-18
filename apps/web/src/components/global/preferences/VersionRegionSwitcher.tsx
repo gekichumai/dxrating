@@ -18,6 +18,8 @@ const fromMergedVersionRegionId = (id: string) => {
 
 const toMergedVersionRegionId = (version: DXVersion, region: Region) => `${version}__${region}`
 
+const getVersionEnum = (version: DXVersion) => DXVersionToDXDataVersionEnumMap[version]
+
 interface VersionRegion {
   id: string
   versionEnum: VersionEnum
@@ -85,11 +87,18 @@ export const VersionRegionSwitcher: FC = () => {
   const { t } = useTranslation(['settings'])
   const theme = useVersionTheme()
   const { version, region, setVersionAndRegion } = useAppContext()
+  const selectLabel = t('settings:version-and-region.select')
 
   return (
     <StyledSelect
       value={toMergedVersionRegionId(version, region)}
       variant="filled"
+      SelectDisplayProps={{
+        'aria-label': selectLabel,
+      }}
+      inputProps={{
+        'aria-label': selectLabel,
+      }}
       onChange={(e) => {
         const { version, region } = fromMergedVersionRegionId(e.target.value)
         startViewTransition(() => {
@@ -102,6 +111,10 @@ export const VersionRegionSwitcher: FC = () => {
             objectFit="contain"
             assetpackKey={`/images/version-logo/${fromMergedVersionRegionId(value).version}.webp`}
             className="h-32 w-auto touch-callout-none"
+            alt={t('settings:version-and-region.logo-alt', {
+              version: getVersionEnum(fromMergedVersionRegionId(value).version),
+            })}
+            fetchPriority="high"
             draggable={false}
           />
 
@@ -129,6 +142,7 @@ export const VersionRegionSwitcher: FC = () => {
             objectFit="contain"
             assetpackKey={`/images/version-logo/${dxVersion}.webp`}
             className="h-16 touch-callout-none object-contain w-25"
+            alt={t('settings:version-and-region.logo-alt', { version: versionEnum })}
             draggable={false}
           />
 
@@ -151,6 +165,7 @@ export const VersionRegionSwitcher: FC = () => {
               objectFit="contain"
               assetpackKey={`/images/version-logo/${dxVersion}.webp`}
               className="h-12 touch-callout-none object-contain w-20"
+              alt={t('settings:version-and-region.logo-alt', { version: versionEnum })}
               draggable={false}
             />
 

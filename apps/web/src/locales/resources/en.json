@@ -19,13 +19,21 @@
     "share": {
       "copy-succeeded": "Copied to clipboard",
       "copy-content": "{{ link }}"
+    },
+    "external-links": {
+      "discord": "Join the DXRating Discord server",
+      "github": "Open DXRating on GitHub"
     }
   },
   "settings": {
     "version-and-region": {
       "select": "Select DXData Version and Region",
       "select-generic": "Or, select a DXData Version and use the \"Generic\" region",
-      "info": "Different data versions and regions correspond to different internal level values, song visibilities and rating eligibilities."
+      "info": "Different data versions and regions correspond to different internal level values, song visibilities and rating eligibilities.",
+      "logo-alt": "maimai DX {{version}} logo"
+    },
+    "language": {
+      "select": "Select language"
     },
     "region": {
       "title": "Region: {{region}}",
@@ -189,6 +197,7 @@
   },
   "about": {
     "title": "About",
+    "open": "About DXRating",
     "author": "Author",
     "source-code": "Source Code",
     "internal-level-value": "Internal Level Value",
@@ -283,6 +292,10 @@
         "password-required": "Password is required",
         "password-min-length": "Password must be at least 8 characters"
       }
+    },
+    "user-menu": {
+      "sign-in": "Sign in to DXRating",
+      "open-profile": "Open account menu"
     },
     "user-profile": {
       "title": "Account",

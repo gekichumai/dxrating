@@ -54,7 +54,10 @@ export const WebpSupportedImage = (
   })()
   if (!source) throw new Error('No source provided')
 
-  const rest = omit(props, ['assetpackKey', 'src']) as Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'onLoad'>
+  const rest = omit(props, ['assetpackKey', 'objectFit', 'src']) as Omit<
+    ImgHTMLAttributes<HTMLImageElement>,
+    'src' | 'onLoad'
+  >
 
   const webp = changeToWebp(source.at1x.path)
   const webpSrcSet = source.at2x

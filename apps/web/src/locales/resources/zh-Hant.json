@@ -19,6 +19,10 @@
     "share": {
       "copy-content": "{{ link }}",
       "copy-succeeded": "已複製至剪貼簿"
+    },
+    "external-links": {
+      "discord": "加入 DXRating Discord 伺服器",
+      "github": "在 GitHub 開啟 DXRating"
     }
   },
   "settings": {
@@ -32,7 +36,11 @@
     "version-and-region": {
       "select": "選擇 DXData 數據版本與伺服器",
       "select-generic": "或僅選擇 DXData 數據版本",
-      "info": "不同的數據版本與服務器對應了不同的樂曲與譜面定數可見性"
+      "info": "不同的數據版本與服務器對應了不同的樂曲與譜面定數可見性",
+      "logo-alt": "maimai DX {{version}} 標誌"
+    },
+    "language": {
+      "select": "選擇語言"
     },
     "import-provider": {
       "diving-fish": {
@@ -189,6 +197,7 @@
   },
   "about": {
     "title": "關於本站",
+    "open": "關於 DXRating",
     "author": "作者",
     "chart-metadata": "譜面元數據",
     "chart-metadata-extended": "譜面元數據 (擴展)",
@@ -283,6 +292,10 @@
         "password-required": "請輸入密碼",
         "password-min-length": "密碼長度至少為8個字元"
       }
+    },
+    "user-menu": {
+      "sign-in": "登錄 DXRating",
+      "open-profile": "開啟帳戶選單"
     },
     "user-profile": {
       "title": "帳戶",

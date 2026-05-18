@@ -1,4 +1,5 @@
 import { IconButton } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import MdiGithub from '~icons/mdi/github'
 import DiscordLogo from '~icons/simple-icons/discord'
 import { BUNDLE } from '../../utils/bundle'
@@ -11,13 +12,14 @@ import { About } from '../global/site-meta/About'
 
 export const TopBar = () => {
   const versionTheme = useVersionTheme()
+  const { t } = useTranslation(['root'])
 
   return (
     <div style={{ background: versionTheme.accentColor }}>
       <div className="flex items-center pt-[calc(env(safe-area-inset-top)+1rem)] max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] flex-col sm:flex-row items-stretch sm:items-center gap-y-4 gap-x-2">
         <div className="flex flex-col items-start justify-center gap-1 select-none relative">
           <Logo />
-          <div className="text-xs text-black/50 leading-none">
+          <div className="text-xs text-black/75 leading-none">
             {BUNDLE.version ?? 'unknown'} (<RelativeTime time={BUNDLE.buildTime} length="short" />)
           </div>
         </div>
@@ -32,6 +34,8 @@ export const TopBar = () => {
               href="https://discord.gg/8CFgUPxyrU"
               target="_blank"
               rel="noopener"
+              aria-label={t('root:external-links.discord')}
+              title={t('root:external-links.discord')}
             >
               <DiscordLogo className="size-4" />
             </IconButton>
@@ -43,6 +47,8 @@ export const TopBar = () => {
               href="https://github.com/gekichumai/dxrating"
               target="_blank"
               rel="noopener"
+              aria-label={t('root:external-links.github')}
+              title={t('root:external-links.github')}
             >
               <MdiGithub className="size-4" />
             </IconButton>
