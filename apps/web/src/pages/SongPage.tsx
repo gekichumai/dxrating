@@ -35,10 +35,16 @@ export const SongPage: FC = () => {
     if (!song) return []
     return song.sheets.map((sheet) => {
       const isTypeUtage = sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P
+      const identity = {
+        songId: song.songId,
+        type: sheet.type,
+        difficulty: sheet.difficulty,
+      }
       return {
         ...song,
         ...sheet,
         id: canonicalId(song, sheet),
+        identity,
         searchAcronyms,
         isTypeUtage,
         isRatingEligible: !isTypeUtage,
