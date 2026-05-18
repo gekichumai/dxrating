@@ -14,6 +14,7 @@ import { SheetSortFilter, type SheetSortFilterForm } from '../components/sheet/S
 import { SheetDetailsContext, SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { type FlattenedSheet, canonicalIdFromParts, useFilteredSheets, useSheets } from '../songs'
+import { sheetMatchesDifficultyFilter } from './sheetDifficultyFilter'
 
 const searchRouteApi = getRouteApi('/search')
 
@@ -162,13 +163,7 @@ const _SheetListInner: FC = () => {
             return true
           },
 
-          (v) => {
-            if (sortFilterOptions.filters.difficulties) {
-              const difficulties = sortFilterOptions.filters.difficulties
-              return difficulties.some((difficulty) => v.difficulty === difficulty)
-            }
-            return true
-          },
+          (v) => sheetMatchesDifficultyFilter(v, sortFilterOptions.filters.difficulties),
 
           (v) => {
             if (favoriteSheetIds) {
