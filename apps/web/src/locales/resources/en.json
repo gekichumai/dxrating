@@ -2,11 +2,19 @@
   "root": {
     "pages": {
       "search": {
-        "title": "Search Charts"
+        "title": "Search Charts",
+        "seo-title": "Charts & Songs",
+        "seo-description": "Browse all maimai DX charts by song title, artist, or difficulty. View internal levels, note counts, and detailed chart information."
       },
       "rating": {
-        "title": "My Rating"
+        "title": "My Rating",
+        "seo-title": "Rating Calculator",
+        "seo-description": "Calculate and manage your maimai DX rating records, Best 50 entries, achievements, and score details on DXRating."
       }
+    },
+    "seo": {
+      "description": "DXRating is a maimai DX Rating analyzer, along with other features like chart details and more.",
+      "keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating analyzer, gekichumai, maimai derakkusu, chart details, rating calculator, maimai wiki"
     },
     "share": {
       "copy-succeeded": "Copied to clipboard",
@@ -174,6 +182,9 @@
       "dx": "DX",
       "std": "Standard",
       "utage": "Utage"
+    },
+    "seo": {
+      "description": "{{title}} by {{artist}} - {{sheetLabel}} chart details, internal levels, and note counts on DXRating."
     }
   },
   "about": {

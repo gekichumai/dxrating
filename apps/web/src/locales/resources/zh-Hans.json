@@ -2,11 +2,19 @@
   "root": {
     "pages": {
       "search": {
-        "title": "搜索谱面"
+        "title": "搜索谱面",
+        "seo-title": "搜索谱面",
+        "seo-description": "按歌曲名、艺术家或难度浏览所有 maimai DX 谱面，查看谱面定数、音符数和详细谱面信息。"
       },
       "rating": {
-        "title": "计算评分"
+        "title": "计算评分",
+        "seo-title": "评分计算器",
+        "seo-description": "在 DXRating 计算和管理你的 maimai DX Rating 记录、Best 50、达成率和分数详情。"
       }
+    },
+    "seo": {
+      "description": "DXRating 是 maimai DX Rating 分析工具，也提供谱面详情等功能。",
+      "keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating 分析工具, 中二节奏, 舞萌, 舞萌DX, 谱面详情, 评分计算器, maimai wiki"
     },
     "share": {
       "copy-content": "{{ link }}",
@@ -173,6 +181,9 @@
       "dx": "DX",
       "std": "标准",
       "utage": "宴"
+    },
+    "seo": {
+      "description": "{{title}} / {{artist}} - {{sheetLabel}} 谱面详情、谱面定数与音符数 - DXRating。"
     }
   },
   "about": {

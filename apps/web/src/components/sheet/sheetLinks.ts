@@ -1,6 +1,10 @@
-import type { FlattenedSheet } from '../../songs'
+import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 
-type SheetLinkTarget = Pick<FlattenedSheet, 'songId' | 'type' | 'difficulty'>
+type SheetLinkTarget = {
+  songId: string
+  type: TypeEnum
+  difficulty: DifficultyEnum | string
+}
 
 export const buildSheetPath = (sheet: SheetLinkTarget): string =>
   `/songs/${encodeURIComponent(sheet.songId)}/${encodeURIComponent(sheet.type)}/${encodeURIComponent(sheet.difficulty)}`

@@ -1,8 +1,8 @@
 import { dxdata } from '@gekichumai/dxdata'
 import { createFileRoute, notFound } from '@tanstack/react-router'
-import { buildSheetLink } from '@/components/sheet/sheetLinks'
-import { getSheetPageTitle, getSheetTitleLabel } from '@/components/song/sheetDisplay'
 import { SongPage } from '@/pages/SongPage'
+import { buildSongSheetSeo, formatSeoTitle, resolveSeoLocale } from '@/utils/seo'
+import { createServerI18n } from '@/setup/init-i18n'
 
 export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
   ssr: true,
@@ -19,42 +19,21 @@ export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
 
     return { song, sheet }
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, match, matches }) => {
+    const locale = resolveSeoLocale([match, ...matches])
     const song = loaderData?.song
     const sheet = loaderData?.sheet
     if (!song || !sheet) {
       return {
-        meta: [{ title: 'Song Not Found - DXRating' }],
+        meta: [{ title: formatSeoTitle(createServerI18n(locale).t('song:not-found.title')) }],
       }
     }
 
-    const sheetLabel = getSheetTitleLabel(sheet)
-    const pageTitle = getSheetPageTitle(song, sheet)
-    const description = `${song.title} by ${song.artist} - ${sheetLabel} chart details, internal levels, and note counts on DXRating.`
-    const image = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
-    const url = buildSheetLink(
-      {
-        songId: song.songId,
-        type: sheet.type,
-        difficulty: sheet.difficulty,
-      },
-      'https://dxrating.net',
-    )
+    const seo = buildSongSheetSeo(song, sheet, locale)
 
     return {
-      meta: [
-        { name: 'description', content: description },
-        { property: 'og:title', content: pageTitle },
-        { property: 'og:description', content: description },
-        { property: 'og:image', content: image },
-        { property: 'og:url', content: url },
-        { property: 'og:type', content: 'website' },
-        { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: pageTitle },
-        { name: 'twitter:description', content: description },
-        { name: 'twitter:image', content: image },
-      ],
-      links: [{ rel: 'canonical', href: url }],
+      meta: seo.meta,
+      links: seo.links,
       scripts: [
         {
           type: 'application/ld+json',
@@ -66,9 +45,10 @@ export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
               '@type': 'Person',
               name: song.artist,
             },
-            image,
-            url,
+            image: seo.image,
+            url: seo.url,
             genre: song.category,
+            inLanguage: locale,
             isPartOf: {
               '@type': 'WebSite',
               name: 'DXRating',
