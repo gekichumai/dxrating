@@ -31,6 +31,21 @@ export const getSongs = (): Song[] => {
   return dxdata.songs
 }
 
+export interface ServerAlias {
+  song_id: string
+  name: string
+}
+
+export const getSearchAcronymsWithServerAliases = (
+  song: Pick<Song, 'songId' | 'searchAcronyms'>,
+  serverAliases?: readonly ServerAlias[] | null,
+) => {
+  return uniq([
+    ...song.searchAcronyms,
+    ...(serverAliases?.filter((alias) => alias.song_id === song.songId).map((alias) => alias.name) ?? []),
+  ])
+}
+
 export const getFlattenedSheets = async (version: VersionEnum): Promise<FlattenedSheet[]> => {
   const songs = getSongs()
   const flattenedSheets = songs.flatMap((song) => {
@@ -128,10 +143,13 @@ export const useSheetsSearchEngine = () => {
     return new Fuse(
       songs?.map((song) => ({
         ...song,
-        searchAcronyms: [
-          ...song.searchAcronyms.filter((acronym) => acronym.length < 70),
-          ...(serverAliases?.filter((alias) => alias.song_id === song.songId).map((alias) => alias.name) ?? []),
-        ],
+        searchAcronyms: getSearchAcronymsWithServerAliases(
+          {
+            songId: song.songId,
+            searchAcronyms: song.searchAcronyms.filter((acronym) => acronym.length < 70),
+          },
+          serverAliases,
+        ),
       })) ?? [],
       {
         keys: [

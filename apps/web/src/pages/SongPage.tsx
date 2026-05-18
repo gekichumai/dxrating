@@ -6,7 +6,8 @@ import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import MdiArrowLeft from '~icons/mdi/arrow-left'
 import { TYPE_ORDER, getHighestDifficulty } from '../models/constants'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
-import { type FlattenedSheet, canonicalId } from '../songs'
+import { useServerAliases } from '../models/useServerAliases'
+import { type FlattenedSheet, canonicalId, getSearchAcronymsWithServerAliases } from '../songs'
 import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
@@ -18,11 +19,17 @@ export const SongPage: FC = () => {
   const { songId, type, difficulty } = routeApi.useParams()
   const navigate = useNavigate()
   const appVersion = useAppContextDXDataVersion()
+  const { data: serverAliases } = useServerAliases()
 
   const song = useMemo(() => {
     if (!songId) return null
     return dxdata.songs.find((s) => s.songId === songId) ?? null
   }, [songId])
+
+  const searchAcronyms = useMemo(() => {
+    if (!song) return []
+    return getSearchAcronymsWithServerAliases(song, serverAliases)
+  }, [song, serverAliases])
 
   const flattenedSheets = useMemo<FlattenedSheet[]>(() => {
     if (!song) return []
@@ -32,16 +39,17 @@ export const SongPage: FC = () => {
         ...song,
         ...sheet,
         id: canonicalId(song, sheet),
-        searchAcronyms: song.searchAcronyms,
+        searchAcronyms,
         isTypeUtage,
         isRatingEligible: !isTypeUtage,
+        tags: [],
         releaseDateTimestamp: sheet.releaseDate ? new Date(`${sheet.releaseDate}T06:00:00+09:00`).valueOf() : 0,
         internalLevelValue: sheet.multiverInternalLevelValue
           ? (sheet.multiverInternalLevelValue[appVersion] ?? sheet.internalLevelValue)
           : sheet.internalLevelValue,
       } as FlattenedSheet
     })
-  }, [song, appVersion])
+  }, [song, searchAcronyms, appVersion])
 
   const availableTypes = useMemo(() => {
     const typeSet = new Set(flattenedSheets.map((s) => s.type))
@@ -50,6 +58,10 @@ export const SongPage: FC = () => {
 
   const activeType = type as TypeEnum
   const activeDifficulty = difficulty as DifficultyEnum
+  const activeSheet = flattenedSheets.find(
+    (sheet) => sheet.type === activeType && sheet.difficulty === activeDifficulty,
+  )
+  const headerSheet = activeSheet ?? flattenedSheets[0]
 
   const handleTypeChange = (newType: TypeEnum) => {
     const sheetsOfType = flattenedSheets.filter((s) => s.type === newType)
@@ -103,7 +115,7 @@ export const SongPage: FC = () => {
         </IconButton>
       </a>
 
-      <SongHeader song={song} />
+      {headerSheet && <SongHeader sheet={headerSheet} />}
 
       <SongSheetTabs
         sheets={song.sheets}
