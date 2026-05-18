@@ -17,6 +17,7 @@ import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCusto
 import { AppContextProvider } from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
 import { startViewTransition } from '@/utils/startViewTransition'
+import { buildAlternateLinks } from '@/utils/alternateLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import appCss from '@/index.css?url'
 import unoResetCss from '@unocss/reset/tailwind-compat.css?url'
@@ -81,10 +82,10 @@ export const Route = createRootRoute({
     links: [
       { rel: 'stylesheet', href: unoResetCss },
       { rel: 'stylesheet', href: appCss },
-      { rel: 'alternate', hrefLang: 'en', href: 'https://dxrating.net/?locale=en' },
-      { rel: 'alternate', hrefLang: 'ja', href: 'https://dxrating.net/?locale=ja' },
-      { rel: 'alternate', hrefLang: 'zh-Hans', href: 'https://dxrating.net/?locale=zh-Hans' },
-      { rel: 'alternate', hrefLang: 'zh-Hant', href: 'https://dxrating.net/?locale=zh-Hant' },
+      ...buildAlternateLinks({
+        pathname: matches[matches.length - 1]?.pathname ?? '/',
+        search: matches[matches.length - 1]?.search,
+      }),
       {
         rel: 'prefetch',
         href: 'https://shama.dxrating.net/images/version-logo/buddies.webp',
