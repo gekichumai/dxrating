@@ -28,6 +28,7 @@
     "@scalar/hono-api-reference": "^0.10.8",
     "@sentry/node": "^10.34.0",
     "@simplewebauthn/server": "^13.3.0",
+    "@takumi-rs/image-response": "1.1.2",
     "@types/react": "catalog:",
     "bcrypt": "^6.0.0",
     "better-auth": "catalog:",

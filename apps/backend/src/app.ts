@@ -5,6 +5,7 @@ import { createMiddleware } from 'hono/factory'
 import { cors } from 'hono/cors'
 import { z } from 'zod'
 import { auth } from './auth.js'
+import { handler as chartOgImageRenderer } from './services/functions/chart-og-image/index.js'
 import { handler as oneshotRenderer } from './services/functions/oneshot-renderer/index.js'
 import {
   v0Handler as fetchNetRecordsV0Handler,
@@ -168,6 +169,7 @@ app.post('/api/v1/monitoring/tunnel', async (c) => {
 app.post('/functions/fetch-net-records/v0', verifyParams, fetchNetRecordsV0Handler)
 app.post('/functions/fetch-net-records/v1/:region', verifyParams, fetchNetRecordsV1Handler)
 app.post('/functions/render-oneshot/v0', oneshotRenderer)
+app.get('/functions/render-chart-og/v0/:songId/:type/:difficulty', chartOgImageRenderer)
 
 // LXNS OAuth callback (direct Hono route — must be before oRPC catch-all since it redirects)
 app.get('/api/v1/io/import/lxns/oauth_callback', async (c) => {
