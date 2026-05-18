@@ -11,7 +11,7 @@ import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
 
-const routeApi = getRouteApi('/$songId/$type/$difficulty')
+const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 
 export const SongPage: FC = () => {
   const { t } = useTranslation(['song'])
@@ -54,7 +54,7 @@ export const SongPage: FC = () => {
   const handleTypeChange = (newType: TypeEnum) => {
     const sheetsOfType = flattenedSheets.filter((s) => s.type === newType)
     navigate({
-      to: '/$songId/$type/$difficulty',
+      to: '/songs/$songId/$type/$difficulty',
       params: {
         songId,
         type: newType,
@@ -65,7 +65,7 @@ export const SongPage: FC = () => {
 
   const handleDifficultyChange = (newDifficulty: DifficultyEnum) => {
     navigate({
-      to: '/$songId/$type/$difficulty',
+      to: '/songs/$songId/$type/$difficulty',
       params: {
         songId,
         type: activeType,

@@ -41,7 +41,7 @@ const getLegacySheetParams = (song: Song, requestedType?: string, requestedDiffi
 export const resolveLegacySongRouteRedirect = (song: Song, requestedType?: string, requestedDifficulty?: string) => {
   const { type, difficulty } = getLegacySheetParams(song, requestedType, requestedDifficulty)
   return {
-    to: '/$songId/$type/$difficulty' as const,
+    to: '/songs/$songId/$type/$difficulty' as const,
     params: {
       songId: song.songId,
       type,
@@ -52,7 +52,7 @@ export const resolveLegacySongRouteRedirect = (song: Song, requestedType?: strin
   }
 }
 
-export const Route = createFileRoute('/songs/$songId')({
+export const Route = createFileRoute('/songs_/$songId')({
   ssr: true,
   validateSearch: (search: Record<string, unknown>): SongSearchParams => ({
     type: typeof search.type === 'string' ? search.type : undefined,
