@@ -17,6 +17,7 @@ const LocaleSelectorItem: FC<PropsWithChildren<{ locale: SupportedLocale; select
 
   return (
     <MenuItem
+      lang={locale}
       selected={selected}
       onClick={() => {
         startViewTransition(() => {

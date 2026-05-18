@@ -12,6 +12,7 @@ import { zoomTransitions } from '../../../utils/motionConstants'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
 import type { SheetSortFilterForm } from '../SheetSortFilter'
 import { SheetFilterSection } from './SheetFilterSection'
+import { GestureHint } from '@/components/global/GestureHint'
 
 const SheetTagFilterInputTag = ({
   label,
@@ -175,7 +176,16 @@ export const SheetTagFilter: FC<{
   })
 
   return (
-    <SheetFilterSection titleLeft={t('sheet:filter.tags.title')} reset={reset}>
+    <SheetFilterSection
+      titleLeft={t('sheet:filter.tags.title')}
+      titleRight={
+        <>
+          <GestureHint gesture="tap" description={t('sheet:filter.difficulty.gesture-hint.tap')} />
+          <GestureHint gesture="tap-hold" description={t('sheet:filter.difficulty.gesture-hint.tap-hold')} />
+        </>
+      }
+      reset={reset}
+    >
       <SheetTagFilterInput value={value} onChange={onChange} />
     </SheetFilterSection>
   )

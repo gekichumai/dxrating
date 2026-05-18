@@ -24,7 +24,7 @@ export function buildChartOgImageAlt({
   title: string
   artist: string
   type: TypeEnum
-  difficulty: DifficultyEnum
+  difficulty: DifficultyEnum | string
 }) {
   return `${title} by ${artist} - ${getSheetTitleLabel({ type, difficulty })} chart on DXRating`
 }
