@@ -1,6 +1,7 @@
 import { CategoryEnum, DifficultyEnum, TypeEnum, type Song } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
-import { LEGACY_SONG_ROUTE_REDIRECT_STATUS_CODE, resolveLegacySongRouteRedirect } from '../songs/$songId'
+import { LEGACY_SHEET_PATH_REDIRECT_STATUS_CODE, resolveLegacySheetPathRedirect } from '../$songId/$type/$difficulty'
+import { LEGACY_SONG_ROUTE_REDIRECT_STATUS_CODE, resolveLegacySongRouteRedirect } from '../songs_.$songId'
 
 const song = {
   songId: 'song-1',
@@ -41,7 +42,7 @@ const song = {
 describe('resolveLegacySongRouteRedirect', () => {
   it('permanently redirects old query URLs to the matching path route', () => {
     expect(resolveLegacySongRouteRedirect(song, TypeEnum.STD, DifficultyEnum.Master)).toEqual({
-      to: '/$songId/$type/$difficulty',
+      to: '/songs/$songId/$type/$difficulty',
       params: {
         songId: 'song-1',
         type: TypeEnum.STD,
@@ -62,5 +63,21 @@ describe('resolveLegacySongRouteRedirect', () => {
       },
       statusCode: 308,
     })
+  })
+})
+
+describe('resolveLegacySheetPathRedirect', () => {
+  it('permanently redirects old root-level sheet URLs to the songs route', () => {
+    expect(resolveLegacySheetPathRedirect('song-1', TypeEnum.STD, DifficultyEnum.Master)).toEqual({
+      to: '/songs/$songId/$type/$difficulty',
+      params: {
+        songId: 'song-1',
+        type: TypeEnum.STD,
+        difficulty: DifficultyEnum.Master,
+      },
+      statusCode: LEGACY_SHEET_PATH_REDIRECT_STATUS_CODE,
+      replace: true,
+    })
+    expect(LEGACY_SHEET_PATH_REDIRECT_STATUS_CODE).toBe(308)
   })
 })

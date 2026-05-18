@@ -3,7 +3,7 @@ import type { FlattenedSheet } from '../../songs'
 type SheetLinkTarget = Pick<FlattenedSheet, 'songId' | 'type' | 'difficulty'>
 
 export const buildSheetPath = (sheet: SheetLinkTarget): string =>
-  `/${encodeURIComponent(sheet.songId)}/${encodeURIComponent(sheet.type)}/${encodeURIComponent(sheet.difficulty)}`
+  `/songs/${encodeURIComponent(sheet.songId)}/${encodeURIComponent(sheet.type)}/${encodeURIComponent(sheet.difficulty)}`
 
 export const buildSheetLink = (
   sheet: SheetLinkTarget,
