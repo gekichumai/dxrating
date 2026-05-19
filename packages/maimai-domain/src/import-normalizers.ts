@@ -1,4 +1,5 @@
 import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import { match } from 'ts-pattern'
 import type { SongCatalog } from './song-catalog.js'
 import type {
   Best50Bucket,
@@ -86,7 +87,7 @@ export function normalizeLxnsScores(catalog: SongCatalog, rows: LxnsScoreRow[]):
       const difficulty = LEVEL_INDEX_TO_DIFFICULTY[row.levelIndex]
       if (!difficulty) return missing('lxns', row, 'invalid-difficulty', `Unknown LXNS level index: ${row.levelIndex}`)
 
-      const type = row.type === 'standard' ? TypeEnum.STD : row.type === 'dx' ? TypeEnum.DX : null
+      const type = normalizeStandardDxType(row.type)
       if (!type) return missing('lxns', row, 'invalid-type', `Unknown LXNS chart type: ${row.type}`)
 
       const achievement = validateAchievement('lxns', row, row.achievements, 1)
@@ -119,7 +120,7 @@ export interface MaimaiNetRecordRow {
 export function normalizeMaimaiNetRecords(catalog: SongCatalog, rows: MaimaiNetRecordRow[]): RatingImportResult {
   return finalizeImport(
     rows.map((row) => {
-      const type = row.sheet.type === 'standard' ? TypeEnum.STD : row.sheet.type === 'dx' ? TypeEnum.DX : null
+      const type = normalizeStandardDxType(row.sheet.type)
       const difficulty = Object.values(DifficultyEnum).includes(row.sheet.difficulty as DifficultyEnum)
         ? (row.sheet.difficulty as DifficultyEnum)
         : null
@@ -170,7 +171,7 @@ export function normalizeDivingFishRows(catalog: SongCatalog, rows: DivingFishRo
   return finalizeImport(
     rows.map((row) => {
       const difficulty = LEVEL_INDEX_TO_DIFFICULTY[row.level_index]
-      const type = row.type.toLowerCase() === 'sd' ? TypeEnum.STD : row.type.toLowerCase() === 'dx' ? TypeEnum.DX : null
+      const type = normalizeDivingFishType(row.type)
       if (!difficulty) {
         return missing('diving-fish', row, 'invalid-difficulty', `Unknown Diving Fish level index: ${row.level_index}`)
       }
@@ -442,6 +443,22 @@ function normalizeAquaComboStatus(value: number | string | null): ComboFlag {
 function normalizeAquaSyncStatus(value: number | string | null): SyncFlag {
   if (typeof value === 'number') return AQUA_SYNC_STATUS_TO_FLAG[value] ?? null
   return normalizeSync(value)
+}
+
+function normalizeStandardDxType(value: string): TypeEnum.STD | TypeEnum.DX | null {
+  return match(value)
+    .returnType<TypeEnum.STD | TypeEnum.DX | null>()
+    .with('standard', () => TypeEnum.STD)
+    .with('dx', () => TypeEnum.DX)
+    .otherwise(() => null)
+}
+
+function normalizeDivingFishType(value: string): TypeEnum.STD | TypeEnum.DX | null {
+  return match(value.toLowerCase())
+    .returnType<TypeEnum.STD | TypeEnum.DX | null>()
+    .with('sd', () => TypeEnum.STD)
+    .with('dx', () => TypeEnum.DX)
+    .otherwise(() => null)
 }
 
 function extractNetCombo(flags: string[]): ComboFlag {

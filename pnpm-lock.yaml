@@ -488,6 +488,9 @@ importers:
       '@gekichumai/dxdata':
         specifier: workspace:*
         version: link:../dxdata
+      ts-pattern:
+        specifier: 'catalog:'
+        version: 5.9.0
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
