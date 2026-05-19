@@ -23,6 +23,7 @@ import { type FC, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocalStorage } from 'react-use'
 import type { ListActions } from 'react-use/lib/useList'
+import { match } from 'ts-pattern'
 import IconMdiConnection from '~icons/mdi/connection'
 import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
@@ -114,7 +115,10 @@ const ImportFromNETRecordsDialogContent: FC<{
   const [autoImport, setAutoImport] = useLocalStorage<AutoImportMode>('rating-auto-import-from-net', false)
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState<ImportFromNETRecordsProgress | null>(null)
-  const mappedAutoImport = autoImport === true ? 'replace' : (autoImport as unknown) === 'false' ? false : autoImport // Legacy support
+  const mappedAutoImport = match(autoImport as AutoImportMode | 'false')
+    .with(true, () => 'replace' as const)
+    .with('false', () => false as const)
+    .otherwise((value) => value)
   const appVersion = useAppContextDXDataVersion()
 
   useEffect(() => {

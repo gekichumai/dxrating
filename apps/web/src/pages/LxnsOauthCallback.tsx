@@ -3,6 +3,7 @@ import { Button, CircularProgress } from '@mui/material'
 import { type FC, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import { match } from 'ts-pattern'
 import IconCheck from '~icons/material-symbols/check-circle-outline'
 import IconError from '~icons/material-symbols/error-outline'
 
@@ -10,8 +11,10 @@ export const LxnsOauthCallback: FC = () => {
   const { t } = useTranslation(['rating-calculator'])
   const navigate = useNavigate()
   const params = new URLSearchParams(window.location.search)
-  const initialStatus =
-    params.get('status') === 'success' ? 'success' : params.get('status') === 'error' ? 'error' : 'loading'
+  const initialStatus = match(params.get('status'))
+    .with('success', () => 'success' as const)
+    .with('error', () => 'error' as const)
+    .otherwise(() => 'loading' as const)
   const initialError = params.get('error') || 'unknown'
 
   const [status] = useState<'loading' | 'success' | 'error'>(initialStatus)

@@ -1,4 +1,5 @@
 import { VERSION_ID_MAP, VersionEnum, type VersionEnum as Version } from '@gekichumai/dxdata'
+import { match } from 'ts-pattern'
 import type { SongCatalog } from './song-catalog.js'
 import type { Best50Bucket, ComboFlag, RatingEntry, Region, VersionedSheet } from './types.js'
 
@@ -155,11 +156,7 @@ export function calculateBest50({
       entry: entry.entry,
       sheet: entry.sheet,
       rating: entry.rating,
-      bucket: b15Ids.has(entry.entry.sheetId)
-        ? ('b15' as const)
-        : b35Ids.has(entry.entry.sheetId)
-          ? ('b35' as const)
-          : null,
+      bucket: getSelectedBucket(b15Ids.has(entry.entry.sheetId), b35Ids.has(entry.entry.sheetId)),
     }),
   )
   const b15 = allEntries.filter((entry) => entry.bucket === 'b15').sort(byRatingDesc)
@@ -180,6 +177,13 @@ function getEntryBucket(
   if (isB15Sheet(entry.sheet.version, appVersion, region)) return 'b15'
   if (isB35Sheet(entry.sheet.version, appVersion, region)) return 'b35'
   return null
+}
+
+function getSelectedBucket(inB15: boolean, inB35: boolean): Best50Bucket | null {
+  return match({ inB15, inB35 })
+    .with({ inB15: true }, () => 'b15' as const)
+    .with({ inB35: true }, () => 'b35' as const)
+    .otherwise(() => null)
 }
 
 function getAuthoritativeBest50Hint(

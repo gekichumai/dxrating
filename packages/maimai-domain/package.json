@@ -10,7 +10,8 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@gekichumai/dxdata": "workspace:*"
+    "@gekichumai/dxdata": "workspace:*",
+    "ts-pattern": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",
