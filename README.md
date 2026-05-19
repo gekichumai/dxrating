@@ -65,7 +65,7 @@ scripts/
 
 ## Prerequisites
 
-- **Node.js** 25+
+- **Node.js** 25.9.0
 - **pnpm** 10.30.3+
 - **Docker** (for running PostgreSQL locally)
 

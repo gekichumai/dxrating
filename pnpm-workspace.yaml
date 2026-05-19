@@ -13,7 +13,7 @@ catalog:
   '@orpc/server': ^1.14.3
   '@orpc/tanstack-query': ^1.14.3
   '@orpc/zod': ^1.14.3
-  '@types/node': ^22.19.17
+  '@types/node': 25.9.0
   '@types/pg': ^8.20.0
   '@types/react': ^19.2.8
   better-auth: ^1.5.6
