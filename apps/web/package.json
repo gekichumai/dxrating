@@ -96,7 +96,7 @@
     "unocss": "^66.6.8",
     "unocss-preset-animations": "^1.3.0",
     "unplugin-icons": "^23.0.1",
-    "vite": "^7.3.2",
+    "vite": "^8.0.12",
     "vitest": "catalog:",
     "wrangler": "^4.90.0"
   }
