@@ -4,10 +4,11 @@ import { type FC, type ImgHTMLAttributes, memo, useRef, useState } from 'react'
 import MdiImageRemove from '~icons/mdi/image-remove'
 
 export const FadedImage: FC<
-  ImgHTMLAttributes<HTMLImageElement> & {
+  Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt'> & {
+    alt: string
     placeholderClassName?: string
   }
-> = memo(({ placeholderClassName, draggable, ...props }) => {
+> = memo(({ placeholderClassName, draggable, alt, ...props }) => {
   const [loaded, setLoaded] = useState(false)
   const [isError, setIsError] = useState(false)
   const [instantlyLoaded, setInstantlyLoaded] = useState(false)
@@ -39,8 +40,12 @@ export const FadedImage: FC<
       ) : (
         <img
           {...props}
+          alt={alt}
           onLoad={onLoad}
-          onError={() => setIsError(true)}
+          onError={(event) => {
+            setIsError(true)
+            props.onError?.(event)
+          }}
           className={clsx(
             'transition-opacity h-full w-full',
             loaded ? 'opacity-100' : 'opacity-0',
