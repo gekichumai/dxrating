@@ -11,17 +11,28 @@ export const i18nResources = {
   'zh-Hant': zhHant,
 }
 
+function replaceLanguageResources(
+  language: keyof typeof i18nResources,
+  resources?: (typeof i18nResources)[keyof typeof i18nResources],
+) {
+  if (!resources) return
+
+  for (const [namespace, entries] of Object.entries(resources)) {
+    i18n.addResourceBundle(language, namespace, entries, false, true)
+  }
+}
+
 if (import.meta.hot) {
   import.meta.hot.accept('./resources/en.json', (mod) => {
-    i18n.addResourceBundle('en', 'translation', mod?.default, true, true)
+    replaceLanguageResources('en', mod?.default)
   })
   import.meta.hot.accept('./resources/ja.json', (mod) => {
-    i18n.addResourceBundle('ja', 'translation', mod?.default, true, true)
+    replaceLanguageResources('ja', mod?.default)
   })
   import.meta.hot.accept('./resources/zh-Hans.json', (mod) => {
-    i18n.addResourceBundle('zh-Hans', 'translation', mod?.default, true, true)
+    replaceLanguageResources('zh-Hans', mod?.default)
   })
   import.meta.hot.accept('./resources/zh-Hant.json', (mod) => {
-    i18n.addResourceBundle('zh-Hant', 'translation', mod?.default, true, true)
+    replaceLanguageResources('zh-Hant', mod?.default)
   })
 }

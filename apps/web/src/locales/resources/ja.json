@@ -1,199 +1,119 @@
 {
   "root": {
-    "pages": {
-      "search": {
-        "title": "譜面検索",
-        "seo-title": "譜面検索",
-        "seo-description": "maimai DX の譜面を、楽曲名、アーティスト、難易度から検索できます。譜面定数、ノーツ数、詳しい譜面情報も確認できます。"
-      },
-      "rating": {
-        "title": "レーテイング計算",
-        "seo-title": "レーティング計算",
-        "seo-description": "maimai DX のレーティング記録、Best 50、達成率、スコア詳細を DXRating で計算・管理できます。"
-      }
-    },
-    "seo": {
-      "description": "DXRating は maimai DX Rating の分析ツールです。譜面詳細などの機能も提供しています。",
-      "keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating 分析, ゲキチュウマイ, maimaiでらっくす, 譜面情報, レーティング計算, maimai wiki"
-    },
-    "share": {
-      "copy-content": "{{ link }}",
-      "copy-succeeded": "クリップボードにコピーされました"
-    },
-    "external-links": {
-      "discord": "DXRating の Discord サーバーに参加",
-      "github": "DXRating を GitHub で開く"
-    }
+    "pages.search.title": "譜面検索",
+    "pages.search.seo-title": "譜面検索",
+    "pages.search.seo-description": "maimai DX の譜面を、楽曲名、アーティスト、難易度から検索できます。譜面定数、ノーツ数、詳しい譜面情報も確認できます。",
+    "pages.rating.title": "レーテイング計算",
+    "pages.rating.seo-title": "レーティング計算",
+    "pages.rating.seo-description": "maimai DX のレーティング記録、Best 50、達成率、スコア詳細を DXRating で計算・管理できます。",
+    "seo.description": "DXRating は maimai DX Rating の分析ツールです。譜面詳細などの機能も提供しています。",
+    "seo.keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating 分析, ゲキチュウマイ, maimaiでらっくす, 譜面情報, レーティング計算, maimai wiki",
+    "share.copy-content": "{{ link }}",
+    "share.copy-succeeded": "クリップボードにコピーされました",
+    "external-links.discord": "DXRating の Discord サーバーに参加",
+    "external-links.github": "DXRating を GitHub で開く"
   },
   "settings": {
-    "region": {
-      "title": "地域：{{region}}",
-      "jp": "日本",
-      "intl": "インタナショナル",
-      "cn": "中国",
-      "_generic": "通用"
-    },
-    "version-and-region": {
-      "info": "異なるバージョンと地域を選ぶと、配信されている楽曲と内部定数を表示されます",
-      "select": "バージョンと地域を選択ください",
-      "select-generic": "まだ、バージョンのみを選んでください",
-      "logo-alt": "maimai DX {{version}} ロゴ"
-    },
-    "language": {
-      "select": "言語を選択"
-    },
-    "import-provider": {
-      "diving-fish": {
-        "qq": "",
-        "title": "",
-        "username": ""
-      }
-    }
+    "region.title": "地域：{{region}}",
+    "region.jp": "日本",
+    "region.intl": "インタナショナル",
+    "region.cn": "中国",
+    "region._generic": "通用",
+    "version-and-region.info": "異なるバージョンと地域を選ぶと、配信されている楽曲と内部定数を表示されます",
+    "version-and-region.select": "バージョンと地域を選択ください",
+    "version-and-region.select-generic": "まだ、バージョンのみを選んでください",
+    "version-and-region.logo-alt": "maimai DX {{version}} ロゴ",
+    "language.select": "言語を選択",
+    "import-provider.diving-fish.qq": "",
+    "import-provider.diving-fish.title": "",
+    "import-provider.diving-fish.username": ""
   },
   "sheet": {
     "search": "検索",
     "ocr": "OCRをスタート",
-    "details": {
-      "achievement-to-rating": {
-        "achievement": "達成率",
-        "rating": "レーティング",
-        "title": "達成率→レーティング"
-      },
-      "bpm": "BPM",
-      "category": "カテゴリー",
-      "chart-designer": "譜面デザイナー",
-      "credits": "一部のデータは <link /> から取得されています",
-      "notes-statistics": {
-        "break": "ブレイク",
-        "hold": "ホールド",
-        "slide": "スライド",
-        "tap": "タップ",
-        "title": "ノーツの統計",
-        "total": "合計",
-        "touch": "タッチ"
-      },
-      "regional-availability": "配信地域",
-      "song-artist": "ソングアーティスト",
-      "title": "詳細",
-      "unlock-required": ""
-    },
+    "details.achievement-to-rating.achievement": "達成率",
+    "details.achievement-to-rating.rating": "レーティング",
+    "details.achievement-to-rating.title": "達成率→レーティング",
+    "details.bpm": "BPM",
+    "details.category": "カテゴリー",
+    "details.chart-designer": "譜面デザイナー",
+    "details.credits": "一部のデータは <link /> から取得されています",
+    "details.notes-statistics.break": "ブレイク",
+    "details.notes-statistics.hold": "ホールド",
+    "details.notes-statistics.slide": "スライド",
+    "details.notes-statistics.tap": "タップ",
+    "details.notes-statistics.title": "ノーツの統計",
+    "details.notes-statistics.total": "合計",
+    "details.notes-statistics.touch": "タッチ",
+    "details.regional-availability": "配信地域",
+    "details.song-artist": "ソングアーティスト",
+    "details.title": "詳細",
+    "details.unlock-required": "",
     "filter-current-version": "現在稼働バージョンのB15: {{version}} 譜面のみを表示",
-    "internal-level-history": {
-      "empty": "利用可能な履歴はありません",
-      "title": "譜面定数履歴"
-    },
+    "internal-level-history.empty": "利用可能な履歴はありません",
+    "internal-level-history.title": "譜面定数履歴",
     "search-summary": "{{found}} / {{total}} 譜面 ({{elapsed}}ミリ秒)",
     "release-date": "配信日 {{absoluteDate}} ({{relativeDate}})",
-    "filter": {
-      "title": "フィルタ",
-      "internal-level-value": {
-        "min": "min",
-        "max": "max",
-        "title": "譜面定数"
-      },
-      "version": {
-        "title": "実装バージョン",
-        "gesture-hint": {
-          "tap": "トグル",
-          "tap-hold": "のみ"
-        }
-      },
-      "tags": {
-        "title": "タグ"
-      },
-      "category": {
-        "title": "ジャンル"
-      },
-      "favorites": {
-        "title": "お気に入り",
-        "only": "お気に入りのみ"
-      },
-      "difficulty": {
-        "title": "難易度",
-        "gesture-hint": {
-          "tap": "トグル",
-          "tap-hold": "のみ"
-        }
-      }
-    },
-    "sort": {
-      "title": "並べ替え",
-      "add": "並べ替えを追加",
-      "predicate": "述語#{{index}}",
-      "release-date": {
-        "asc": "配信日（旧→新）",
-        "desc": "配信日（新→旧）"
-      },
-      "internal-level-value": {
-        "asc": "レベル（低→高）",
-        "desc": "レベル（高→低）"
-      },
-      "temporarily-disabled": "検索キーワードが入力されため、一時的に無効となります"
-    },
-    "sort-and-filter": {
-      "title": "フィルタと並べ替え",
-      "reset": {
-        "dialog": {
-          "title": "すべてのフィルタと並べ替え設定をリセット",
-          "message": "すべてのフィルタと並べ替え設定をリセットしてもよろしいですか？",
-          "cancel": "キャンセル",
-          "confirm": "リセット"
-        },
-        "button": "すべてリセット"
-      }
-    },
-    "tags": {
-      "add": {
-        "button": "追加",
-        "title": "タグを追加する",
-        "toast-failed": "タグを追加できませんでした: {{error}}",
-        "toast-success": "タグが追加されました",
-        "login-required": "タグを追加するにはログインまたは新規登録してください。"
-      }
-    },
-    "copy-title": {
-      "toast-success": "タイトルをクリップボードにコピーしました",
-      "tooltip": "クリックしてコピー"
-    },
-    "copy-link": {
-      "toast-success": "リンクをクリップボードにコピーしました",
-      "tooltip": "リンクをコピー"
-    },
-    "copy-alt-name": {
-      "toast-success": "{{content}} をクリップボードにコピーしました"
-    },
-    "aliases": {
-      "add-new": "別名を追加",
-      "dialog-title": "別名を追加する",
-      "input-label": "別名を入力",
-      "adding": "追加中...",
-      "add-button": "追加する",
-      "toast-success": "別名を追加しました：{{name}}",
-      "toast-failed": "別名の追加に失敗しました：{{error}}",
-      "login-required": "別名を追加するにはログインまたは新規登録してください。"
-    },
-    "comments": {
-      "title": "コメント",
-      "placeholder": "コメントを入力...",
-      "anonymous": "*名無し*",
-      "empty": "まだコメントはありません。",
-      "sign-in-to-comment": "コメントするにはログインまたは新規登録してください。"
-    }
+    "filter.title": "フィルタ",
+    "filter.internal-level-value.min": "min",
+    "filter.internal-level-value.max": "max",
+    "filter.internal-level-value.title": "譜面定数",
+    "filter.version.title": "実装バージョン",
+    "filter.version.gesture-hint.tap": "トグル",
+    "filter.version.gesture-hint.tap-hold": "のみ",
+    "filter.tags.title": "タグ",
+    "filter.category.title": "ジャンル",
+    "filter.favorites.title": "お気に入り",
+    "filter.favorites.only": "お気に入りのみ",
+    "filter.difficulty.title": "難易度",
+    "filter.difficulty.gesture-hint.tap": "トグル",
+    "filter.difficulty.gesture-hint.tap-hold": "のみ",
+    "sort.title": "並べ替え",
+    "sort.add": "並べ替えを追加",
+    "sort.predicate": "述語#{{index}}",
+    "sort.release-date.asc": "配信日（旧→新）",
+    "sort.release-date.desc": "配信日（新→旧）",
+    "sort.internal-level-value.asc": "レベル（低→高）",
+    "sort.internal-level-value.desc": "レベル（高→低）",
+    "sort.temporarily-disabled": "検索キーワードが入力されため、一時的に無効となります",
+    "sort-and-filter.title": "フィルタと並べ替え",
+    "sort-and-filter.reset.dialog.title": "すべてのフィルタと並べ替え設定をリセット",
+    "sort-and-filter.reset.dialog.message": "すべてのフィルタと並べ替え設定をリセットしてもよろしいですか？",
+    "sort-and-filter.reset.dialog.cancel": "キャンセル",
+    "sort-and-filter.reset.dialog.confirm": "リセット",
+    "sort-and-filter.reset.button": "すべてリセット",
+    "tags.add.button": "追加",
+    "tags.add.title": "タグを追加する",
+    "tags.add.toast-failed": "タグを追加できませんでした: {{error}}",
+    "tags.add.toast-success": "タグが追加されました",
+    "tags.add.login-required": "タグを追加するにはログインまたは新規登録してください。",
+    "copy-title.toast-success": "タイトルをクリップボードにコピーしました",
+    "copy-title.tooltip": "クリックしてコピー",
+    "copy-link.toast-success": "リンクをクリップボードにコピーしました",
+    "copy-link.tooltip": "リンクをコピー",
+    "copy-alt-name.toast-success": "{{content}} をクリップボードにコピーしました",
+    "aliases.add-new": "別名を追加",
+    "aliases.dialog-title": "別名を追加する",
+    "aliases.input-label": "別名を入力",
+    "aliases.adding": "追加中...",
+    "aliases.add-button": "追加する",
+    "aliases.toast-success": "別名を追加しました：{{name}}",
+    "aliases.toast-failed": "別名の追加に失敗しました：{{error}}",
+    "aliases.login-required": "別名を追加するにはログインまたは新規登録してください。",
+    "comments.title": "コメント",
+    "comments.placeholder": "コメントを入力...",
+    "comments.anonymous": "*名無し*",
+    "comments.empty": "まだコメントはありません。",
+    "comments.sign-in-to-comment": "コメントするにはログインまたは新規登録してください。"
   },
   "song": {
-    "not-found": {
-      "title": "楽曲が見つかりません",
-      "description": "お探しの楽曲は存在しません。",
-      "back-to-search": "検索に戻る"
-    },
-    "type": {
-      "dx": "でらっくす",
-      "std": "スタンダード",
-      "utage": "宴"
-    },
-    "seo": {
-      "description": "{{title}} / {{artist}} - {{sheetLabel}} の譜面詳細、譜面定数、ノーツ数 - DXRating。"
-    }
+    "not-found.title": "楽曲が見つかりません",
+    "not-found.description": "お探しの楽曲は存在しません。",
+    "not-found.back-to-search": "検索に戻る",
+    "type.dx": "でらっくす",
+    "type.std": "スタンダード",
+    "type.utage": "宴",
+    "seo.description": "{{title}} / {{artist}} - {{sheetLabel}} の譜面詳細、譜面定数、ノーツ数 - DXRating。"
   },
   "about": {
     "title": "当サイトについて",
@@ -204,36 +124,22 @@
     "chart-metadata": "譜面メタデータ",
     "chart-metadata-extended": "譜面メタデータ (拡張)",
     "fesplus-background": "FESTiVAL+の背景",
-    "version": {
-      "commit": "commit",
-      "build": "ビルド",
-      "build-time": "ビルド時間",
-      "upstream-data-update-time": "アップストリームデータバージョン"
-    },
-    "aliases": {
-      "yuri-yuzuchan-maimaidx": "楽曲別名 (中国語)",
-      "lomotos10-gcmbot": "楽曲別名 (英語、韓国語、ローマ字)"
-    },
-    "disclaimer": {
-      "title": "免責事項",
-      "content": "『DXRating』 はどのゲーム会社とも提携していません。本サイトは素材の権利を所有しておらず、全ての権利が株式会社SEGAを含む該当する権利所有者に帰属します。本サイトは研究を目的としたファンメイドのデータベースであり、株式会社SEGAとは一切関係ありません。当サイトは、掲載されている情報の利用により生じたいかなる損失、損害についても責任を負いかねます。ご不明点がございましたら、当サイト作者までご連絡ください。"
-    }
+    "version.commit": "commit",
+    "version.build": "ビルド",
+    "version.build-time": "ビルド時間",
+    "version.upstream-data-update-time": "アップストリームデータバージョン",
+    "aliases.yuri-yuzuchan-maimaidx": "楽曲別名 (中国語)",
+    "aliases.lomotos10-gcmbot": "楽曲別名 (英語、韓国語、ローマ字)",
+    "disclaimer.title": "免責事項",
+    "disclaimer.content": "『DXRating』 はどのゲーム会社とも提携していません。本サイトは素材の権利を所有しておらず、全ての権利が株式会社SEGAを含む該当する権利所有者に帰属します。本サイトは研究を目的としたファンメイドのデータベースであり、株式会社SEGAとは一切関係ありません。当サイトは、掲載されている情報の利用により生じたいかなる損失、損害についても責任を負いかねます。ご不明点がございましたら、当サイト作者までご連絡ください。"
   },
   "form": {
-    "validation": {
-      "max": {
-        "message": "有効な定数を入力してください (>{{value}})"
-      },
-      "min": {
-        "message": "有効な定数を入力してください (<{{value}})"
-      }
-    }
+    "validation.max.message": "有効な定数を入力してください (>{{value}})",
+    "validation.min.message": "有効な定数を入力してください (<{{value}})"
   },
   "global": {
-    "gesture-hint": {
-      "tap": "タップ",
-      "tap-hold": "ホールド"
-    },
+    "gesture-hint.tap": "タップ",
+    "gesture-hint.tap-hold": "ホールド",
     "beta": "ベータ",
     "submit": "送信",
     "back": "戻る",
@@ -245,348 +151,238 @@
     "available": "利用可能"
   },
   "auth": {
-    "login": {
-      "label": "ログイン",
-      "toast-success": "ログインされました"
-    },
-    "logout": {
-      "label": "ログアウト",
-      "toast-success": "ログアウトされました",
-      "confirm-title": "ログアウト",
-      "confirm-description": "ログアウトしてもよろしいですか？"
-    },
-    "update-password": {
-      "label": "パスワードを更新する",
-      "toast-success": "パスワードが更新されました"
-    },
-    "update-display-name": {
-      "label": "表示名を更新",
-      "sign-in-required": "表示名を更新するにはログインが必要です。",
-      "toast-failed": "プロフィールの更新に失敗しました：{{error}}",
-      "toast-success": "表示名が「{{name}}」に更新されました。"
-    },
-    "sign-up": {
-      "label": "新規登録",
-      "title": "アカウントを作成",
-      "toast-success": "アカウントが作成されました。ログインしてください。"
-    },
-    "form": {
-      "title": "ログイン",
-      "subtitle": "ようこそ！ログインして続けてください",
-      "continue-with-github": "GitHubで続ける",
-      "continue-with-google": "Googleで続ける",
-      "or": "または",
-      "email": "メールアドレス",
-      "password": "パスワード",
-      "continue": "続ける",
-      "sign-in-with-passkey": "パスキーで続ける",
-      "has-account": "アカウントをお持ちですか？ログインへ",
-      "no-account": "アカウントをお持ちでないですか？新規登録へ",
-      "error-generic": "エラーが発生しました",
-      "error-passkey": "パスキーでのログインに失敗しました",
-      "last-used": "前回使用",
-      "login-or-register-to-comment": "ログインまたは新規登録してコメントする",
-      "validation": {
-        "email-required": "メールアドレスを入力してください",
-        "email-invalid": "有効なメールアドレスを入力してください",
-        "password-required": "パスワードを入力してください",
-        "password-min-length": "パスワードは8文字以上で入力してください"
-      }
-    },
-    "user-menu": {
-      "sign-in": "DXRating にログイン",
-      "open-profile": "アカウントメニューを開く"
-    },
-    "user-profile": {
-      "title": "アカウント",
-      "profile": "プロフィール",
-      "security": "セキュリティ",
-      "display-name": "表示名",
-      "email": "メールアドレス",
-      "save": "保存",
-      "password": {
-        "title": "パスワード",
-        "current": "現在のパスワード",
-        "new": "新しいパスワード",
-        "confirm": "新しいパスワード（確認）",
-        "mismatch": "パスワードが一致しません",
-        "save": "パスワードを変更",
-        "success": "パスワードが変更されました",
-        "error": "パスワードの変更に失敗しました：{{error}}"
-      },
-      "passkeys": {
-        "title": "パスキー",
-        "add": "パスキーを追加",
-        "delete": "削除",
-        "empty": "パスキーが登録されていません",
-        "added": "パスキーが追加されました",
-        "deleted": "パスキーが削除されました",
-        "error": "失敗しました：{{error}}",
-        "confirm-delete-title": "パスキーを削除",
-        "confirm-delete-description": "このパスキーではアカウントにログインできなくなります。"
-      },
-      "devices": {
-        "title": "アクティブなデバイス",
-        "current": "このデバイス",
-        "revoke": "ログアウト",
-        "revoked": "デバイスからログアウトしました",
-        "confirm-revoke-title": "デバイスをログアウト",
-        "confirm-revoke-description": "このデバイスのセッションが終了します。"
-      },
-      "accounts": {
-        "title": "連携アカウント",
-        "description": "ログイン方法の管理",
-        "google": "Google",
-        "github": "GitHub",
-        "email-password": "メール & パスワード",
-        "connected": "連携済み",
-        "not-connected": "未連携",
-        "connect": "連携",
-        "disconnect": "解除",
-        "disconnected": "アカウントの連携を解除しました",
-        "error": "失敗しました：{{error}}",
-        "confirm-disconnect-title": "連携を解除",
-        "confirm-disconnect-description": "このアカウントではログインできなくなります。"
-      },
-      "confirm-cancel": "キャンセル",
-      "confirm-ok": "確認",
-      "oauth-error": {
-        "email_doesn't_match": "メールアドレスが一致しないため、このアカウントを連携できません。",
-        "unable_to_link_account": "このアカウントを連携できません。プロバイダーが検証されていない可能性があります。",
-        "account_already_linked_to_different_user": "このアカウントは既に別のユーザーに連携されています。",
-        "default": "認証エラーが発生しました：{{error}}"
-      }
-    }
+    "login.label": "ログイン",
+    "login.toast-success": "ログインされました",
+    "logout.label": "ログアウト",
+    "logout.toast-success": "ログアウトされました",
+    "logout.confirm-title": "ログアウト",
+    "logout.confirm-description": "ログアウトしてもよろしいですか？",
+    "update-password.label": "パスワードを更新する",
+    "update-password.toast-success": "パスワードが更新されました",
+    "update-display-name.label": "表示名を更新",
+    "update-display-name.sign-in-required": "表示名を更新するにはログインが必要です。",
+    "update-display-name.toast-failed": "プロフィールの更新に失敗しました：{{error}}",
+    "update-display-name.toast-success": "表示名が「{{name}}」に更新されました。",
+    "sign-up.label": "新規登録",
+    "sign-up.title": "アカウントを作成",
+    "sign-up.toast-success": "アカウントが作成されました。ログインしてください。",
+    "form.title": "ログイン",
+    "form.subtitle": "ようこそ！ログインして続けてください",
+    "form.continue-with-github": "GitHubで続ける",
+    "form.continue-with-google": "Googleで続ける",
+    "form.or": "または",
+    "form.email": "メールアドレス",
+    "form.password": "パスワード",
+    "form.continue": "続ける",
+    "form.sign-in-with-passkey": "パスキーで続ける",
+    "form.has-account": "アカウントをお持ちですか？ログインへ",
+    "form.no-account": "アカウントをお持ちでないですか？新規登録へ",
+    "form.error-generic": "エラーが発生しました",
+    "form.error-passkey": "パスキーでのログインに失敗しました",
+    "form.last-used": "前回使用",
+    "form.login-or-register-to-comment": "ログインまたは新規登録してコメントする",
+    "form.validation.email-required": "メールアドレスを入力してください",
+    "form.validation.email-invalid": "有効なメールアドレスを入力してください",
+    "form.validation.password-required": "パスワードを入力してください",
+    "form.validation.password-min-length": "パスワードは8文字以上で入力してください",
+    "user-menu.sign-in": "DXRating にログイン",
+    "user-menu.open-profile": "アカウントメニューを開く",
+    "user-profile.title": "アカウント",
+    "user-profile.profile": "プロフィール",
+    "user-profile.security": "セキュリティ",
+    "user-profile.display-name": "表示名",
+    "user-profile.email": "メールアドレス",
+    "user-profile.save": "保存",
+    "user-profile.password.title": "パスワード",
+    "user-profile.password.current": "現在のパスワード",
+    "user-profile.password.new": "新しいパスワード",
+    "user-profile.password.confirm": "新しいパスワード（確認）",
+    "user-profile.password.mismatch": "パスワードが一致しません",
+    "user-profile.password.save": "パスワードを変更",
+    "user-profile.password.success": "パスワードが変更されました",
+    "user-profile.password.error": "パスワードの変更に失敗しました：{{error}}",
+    "user-profile.passkeys.title": "パスキー",
+    "user-profile.passkeys.add": "パスキーを追加",
+    "user-profile.passkeys.delete": "削除",
+    "user-profile.passkeys.empty": "パスキーが登録されていません",
+    "user-profile.passkeys.added": "パスキーが追加されました",
+    "user-profile.passkeys.deleted": "パスキーが削除されました",
+    "user-profile.passkeys.error": "失敗しました：{{error}}",
+    "user-profile.passkeys.confirm-delete-title": "パスキーを削除",
+    "user-profile.passkeys.confirm-delete-description": "このパスキーではアカウントにログインできなくなります。",
+    "user-profile.devices.title": "アクティブなデバイス",
+    "user-profile.devices.current": "このデバイス",
+    "user-profile.devices.revoke": "ログアウト",
+    "user-profile.devices.revoked": "デバイスからログアウトしました",
+    "user-profile.devices.confirm-revoke-title": "デバイスをログアウト",
+    "user-profile.devices.confirm-revoke-description": "このデバイスのセッションが終了します。",
+    "user-profile.accounts.title": "連携アカウント",
+    "user-profile.accounts.description": "ログイン方法の管理",
+    "user-profile.accounts.google": "Google",
+    "user-profile.accounts.github": "GitHub",
+    "user-profile.accounts.email-password": "メール & パスワード",
+    "user-profile.accounts.connected": "連携済み",
+    "user-profile.accounts.not-connected": "未連携",
+    "user-profile.accounts.connect": "連携",
+    "user-profile.accounts.disconnect": "解除",
+    "user-profile.accounts.disconnected": "アカウントの連携を解除しました",
+    "user-profile.accounts.error": "失敗しました：{{error}}",
+    "user-profile.accounts.confirm-disconnect-title": "連携を解除",
+    "user-profile.accounts.confirm-disconnect-description": "このアカウントではログインできなくなります。",
+    "user-profile.confirm-cancel": "キャンセル",
+    "user-profile.confirm-ok": "確認",
+    "user-profile.oauth-error.email_doesn't_match": "メールアドレスが一致しないため、このアカウントを連携できません。",
+    "user-profile.oauth-error.unable_to_link_account": "このアカウントを連携できません。プロバイダーが検証されていない可能性があります。",
+    "user-profile.oauth-error.account_already_linked_to_different_user": "このアカウントは既に別のユーザーに連携されています。",
+    "user-profile.oauth-error.default": "認証エラーが発生しました：{{error}}"
   },
   "rating-calculator": {
-    "breakdown": {
-      "title": "レーティング内訳"
-    },
-    "auto-save": {
-      "title": "自動保存",
-      "saved-records": "{{count}}件の記録を保存しました"
-    },
-    "quick-actions": {
-      "title": "クイックアクション",
-      "show-only-b50": "B50のみを表示",
-      "compact-mode": "コンパクトモード"
-    },
-    "table": {
-      "no-entries": "記録がありません",
-      "headers": {
-        "chart": "譜面",
-        "included-in": "収録",
-        "combo": "コンボ",
-        "sync": "シンク",
-        "achievement-rate": "達成率",
-        "rating": "レーティング",
-        "actions": "操作"
-      },
-      "remove-dialog": {
-        "title": "記録を削除しますか？",
-        "cancel": "キャンセル",
-        "remove": "削除"
-      }
-    },
-    "statistics": {
-      "total": "合計",
-      "best-15": "ベスト15",
-      "best-35": "ベスト35",
-      "entries": "記録 {{current}}/{{total}}",
-      "subtotal": "小計",
-      "min": "最小",
-      "avg": "平均",
-      "max": "最大",
-      "histogram-hint": "ヒストグラムのバケットは (最小, 最大] の形式で表示されます。",
-      "histogram-available": "ヒストグラム利用可能",
-      "b15-avg": "B15 平均: {{value}}",
-      "b35-avg": "B35 平均: {{value}}"
-    },
-    "add-entry": {
-      "chart": "譜面",
-      "achievement-rate": "達成率",
-      "validation": {
-        "required": "必須項目です",
-        "invalid-number": "無効な数値です",
-        "range": "0%から101%の間で入力してください"
-      },
-      "current-rating": "現在のレーティング",
-      "new-rating": "新しいレーティング",
-      "rating": "レーティング",
-      "replace": "更新 (+{{diff}})",
-      "add": "追加"
-    },
-    "io": {
-      "export": {
-        "button": "書き出し...",
-        "to-json": {
-          "all-records": "JSONに書き出し (全ての記録)",
-          "b50-records": "JSONに書き出し (B50のみ)"
-        },
-        "toast-success": "{{name}} としてエクスポートしました",
-        "oneshot-image": {
-          "button": "ワンショット画像として書き出し...",
-          "dialog": {
-            "title": "ワンショット画像として書き出し...",
-            "loading": {
-              "title": "書き出し中...",
-              "calculating": "計算中...",
-              "message": "サーバーの負荷状況によって時間がかかる場合があります。通常は10秒以内に完了します。"
-            },
-            "error": "画像の書き出し中にエラーが発生しました：{{message}}",
-            "save-instruction": "画像を長押しまたは右クリックして、デバイスに保存してください。",
-            "beta-notice": "この機能はベータ版であり、予期せぬ動作をする可能性があります。問題や改善点がありましたら、開発者までご報告ください :D"
-          }
-        }
-      },
-      "import": {
-        "button": "読み込み...",
-        "diving-fish": {
-          "title": "diving-fishから読み込み...",
-          "description": "以下の2つのオプションから1つを選択し、対応するフィールドを入力してください。設定はブラウザに保存されます。",
-          "loading": "diving-fishから読み込み中...",
-          "success": "{{count}}件のレコードを読み込みしました",
-          "error": "読み込みに失敗しました：ユーザー名またはQQが正しいか確認してください。{{error}}",
-          "invalid-profile": "Diving-Fishプロフィールを入力してください",
-          "no-sheets": "譜面が見つかりませんでした",
-          "warning": {
-            "title": "注意！",
-            "description": "既存のエントリーは読み込みされたものに上書きされます。"
-          },
-          "or": "または",
-          "close": "閉じる",
-          "import": "読み込み",
-          "importing": "読み込み中...",
-          "missing-profile-info": "Diving-Fishプロフィールを入力してください",
-          "only-one-of-the-two-fields-should-be-filled": "Diving-Fishプロフィールを入力してください"
-        },
-        "lxns": {
-          "title": "LXNSから読み込み（落雪カフェ）",
-          "login-required": "ログインが必要です",
-          "description": "OAuthでLXNS (maimai.lxns.net) アカウントを接続し、スコアを読み込みます。",
-          "connect": "LXNSに接続",
-          "connecting": "LXNSにリダイレクト中...",
-          "connected": "LXNSアカウントが接続されています。",
-          "import": "読み込み開始",
-          "importing": "読み込み中...",
-          "disconnect": "接続解除",
-          "disconnect-confirm": "LXNSアカウントの接続を解除しますか？いつでも再接続できます。",
-          "disconnected": "LXNSアカウントの接続を解除しました。",
-          "success": "LXNSから{{count}}件のエントリーを読み込みました。",
-          "error": "LXNSからの読み込みに失敗しました：{{error}}",
-          "reconnect-required": "LXNSの接続が期限切れです。再接続してください。",
-          "close": "閉じる",
-          "callback": {
-            "success": "LXNSへの接続に成功しました！スコアを読み込めます。",
-            "error": "LXNSへの接続に失敗しました：{{error}}",
-            "redirecting": "レーティング計算機に戻ります..."
-          }
-        },
-        "aqua-dx": {
-          "title": "AquaDX JSONから読み込み...",
-          "success": "{{count}}件のエントリーを読み込みしました"
-        },
-        "aqua-sqlite": {
-          "title": "Aqua SQLiteデータベースから読み込み...",
-          "success": "{{count}}件のエントリーを読み込みしました",
-          "error": "読み込みに失敗しました：{{error}}",
-          "loading-db": "データベース読み込み中...",
-          "loaded-db": "データベースを読み込みました。",
-          "load-db-failed": "データベースの読み込みに失敗しました。",
-          "read-users-failed": "Aqua SQLiteデータベースからのユーザー読み込みに失敗しました：{{error}}",
-          "dialog-title": "Aqua SQLiteから読み込み",
-          "select-user": "ゲームプレイを読み込むユーザーを選択してください。",
-          "confirm-import": "選択したユーザーのゲームプレイの読み込みを確認してください。",
-          "sheet-not-found": "ゲームプレイに対応する譜面が見つかりませんでした：",
-          "import-action": "読み込み"
-        },
-        "json": {
-          "title": "DXRating JSONから読み込み...",
-          "success": "{{count}}件のエントリーを読み込みしました",
-          "error": "読み込みに失敗しました：{{error}}"
-        },
-        "net-records": {
-          "title": "NETから読み込み...",
-          "success": "{{count}}件のエントリーを読み込みしました",
-          "error": "読み込みに失敗しました：{{error}}",
-          "importing": "NETからレコードを読み込み中...",
-          "no-credentials": "NETからの読み込みエラー：認証情報が保存されていません。レーティング計算 - 読み込み - NETから読み込みで、SEGA IDとパスワードを設定してください。",
-          "imported": "{{region}} NETから{{count}}件のレコードを読み込みました。",
-          "latest-play": "最新のプレイ",
-          "date": "日付：{{date}}",
-          "cached": {
-            "title": "キャッシュされたプレイ記録を使用中",
-            "description": "{{minutes}}分前に更新済み。maimai NETへの負荷軽減のため、15分以内の記録は再利用されます。"
-          },
-          "errors": {
-            "maintenance": "maimai NETは現在メンテナンス中です。しばらくしてからもう一度お試しください。",
-            "invalid-credentials": "ログインに失敗しました。SEGA IDとパスワードをご確認ください。",
-            "unknown": "予期しないエラーが発生しました。もう一度お試しください。",
-            "internal": "レコードの取得中にサーバーエラーが発生しました。もう一度お試しください。",
-            "token": "maimai NETへの接続に失敗しました。しばらくしてからもう一度お試しください。"
-          },
-          "dialog": {
-            "actions": {
-              "close": "閉じる",
-              "import-once": "1度だけ読み込み",
-              "importing": "読み込み中...",
-              "reimport": {
-                "description": "既存のエントリーは読み込みされたものに上書きされます。",
-                "title": "再読み込み"
-              }
-            },
-            "auto-import": {
-              "description": "読み込みされたエントリーは、既存のエントリーに追加されます。",
-              "label": "自動読み込み",
-              "options": {
-                "disabled": {
-                  "title": "無効"
-                },
-                "merge": {
-                  "description": "既存のエントリーは読み込みされたものに追加されます。",
-                  "title": "追加"
-                },
-                "replace": {
-                  "description": "既存のエントリーは読み込みされたものに上書きされます。",
-                  "title": "上書き"
-                }
-              }
-            },
-            "region": {
-              "intl": {
-                "domain": "(maimaidx-eng.com)",
-                "name": "インタナショナル"
-              },
-              "jp": {
-                "domain": "(maimaidx.jp)",
-                "name": "日本"
-              },
-              "label": "地域"
-            },
-            "remember-credentials": {
-              "label": "認証情報を記憶する",
-              "description": "認証情報はブラウザにローカルで保存されます。"
-            },
-            "security-notice": {
-              "credentials": "あなたのログイン情報は保存されず、記録されず、共有されません。読み込みプロセスの間のみ使用されます。ご希望であれば、",
-              "source-code": "ソースコードを確認することができます"
-            },
-            "sega-id": "SEGA ID",
-            "sega-password": "SEGA ID パスワード",
-            "title": "NETから読み込み"
-          }
-        }
-      },
-      "clear": {
-        "button": "クリア",
-        "dialog": {
-          "title": "全てのエントリーをクリアしますか？",
-          "warning": "警告",
-          "message": "全てのエントリーがクリアされます。",
-          "cancel": "キャンセル",
-          "confirm": "クリア"
-        }
-      }
-    }
+    "breakdown.title": "レーティング内訳",
+    "auto-save.title": "自動保存",
+    "auto-save.saved-records": "{{count}}件の記録を保存しました",
+    "quick-actions.title": "クイックアクション",
+    "quick-actions.show-only-b50": "B50のみを表示",
+    "quick-actions.compact-mode": "コンパクトモード",
+    "table.no-entries": "記録がありません",
+    "table.headers.chart": "譜面",
+    "table.headers.included-in": "収録",
+    "table.headers.combo": "コンボ",
+    "table.headers.sync": "シンク",
+    "table.headers.achievement-rate": "達成率",
+    "table.headers.rating": "レーティング",
+    "table.headers.actions": "操作",
+    "table.remove-dialog.title": "記録を削除しますか？",
+    "table.remove-dialog.cancel": "キャンセル",
+    "table.remove-dialog.remove": "削除",
+    "statistics.total": "合計",
+    "statistics.best-15": "ベスト15",
+    "statistics.best-35": "ベスト35",
+    "statistics.entries": "記録 {{current}}/{{total}}",
+    "statistics.subtotal": "小計",
+    "statistics.min": "最小",
+    "statistics.avg": "平均",
+    "statistics.max": "最大",
+    "statistics.histogram-hint": "ヒストグラムのバケットは (最小, 最大] の形式で表示されます。",
+    "statistics.histogram-available": "ヒストグラム利用可能",
+    "statistics.b15-avg": "B15 平均: {{value}}",
+    "statistics.b35-avg": "B35 平均: {{value}}",
+    "add-entry.chart": "譜面",
+    "add-entry.achievement-rate": "達成率",
+    "add-entry.validation.required": "必須項目です",
+    "add-entry.validation.invalid-number": "無効な数値です",
+    "add-entry.validation.range": "0%から101%の間で入力してください",
+    "add-entry.current-rating": "現在のレーティング",
+    "add-entry.new-rating": "新しいレーティング",
+    "add-entry.rating": "レーティング",
+    "add-entry.replace": "更新 (+{{diff}})",
+    "add-entry.add": "追加",
+    "io.export.button": "書き出し...",
+    "io.export.to-json.all-records": "JSONに書き出し (全ての記録)",
+    "io.export.to-json.b50-records": "JSONに書き出し (B50のみ)",
+    "io.export.toast-success": "{{name}} としてエクスポートしました",
+    "io.export.oneshot-image.button": "ワンショット画像として書き出し...",
+    "io.export.oneshot-image.dialog.title": "ワンショット画像として書き出し...",
+    "io.export.oneshot-image.dialog.loading.title": "書き出し中...",
+    "io.export.oneshot-image.dialog.loading.calculating": "計算中...",
+    "io.export.oneshot-image.dialog.loading.message": "サーバーの負荷状況によって時間がかかる場合があります。通常は10秒以内に完了します。",
+    "io.export.oneshot-image.dialog.error": "画像の書き出し中にエラーが発生しました：{{message}}",
+    "io.export.oneshot-image.dialog.save-instruction": "画像を長押しまたは右クリックして、デバイスに保存してください。",
+    "io.export.oneshot-image.dialog.beta-notice": "この機能はベータ版であり、予期せぬ動作をする可能性があります。問題や改善点がありましたら、開発者までご報告ください :D",
+    "io.import.button": "読み込み...",
+    "io.import.diving-fish.title": "diving-fishから読み込み...",
+    "io.import.diving-fish.description": "以下の2つのオプションから1つを選択し、対応するフィールドを入力してください。設定はブラウザに保存されます。",
+    "io.import.diving-fish.loading": "diving-fishから読み込み中...",
+    "io.import.diving-fish.success": "{{count}}件のレコードを読み込みしました",
+    "io.import.diving-fish.error": "読み込みに失敗しました：ユーザー名またはQQが正しいか確認してください。{{error}}",
+    "io.import.diving-fish.invalid-profile": "Diving-Fishプロフィールを入力してください",
+    "io.import.diving-fish.no-sheets": "譜面が見つかりませんでした",
+    "io.import.diving-fish.warning.title": "注意！",
+    "io.import.diving-fish.warning.description": "既存のエントリーは読み込みされたものに上書きされます。",
+    "io.import.diving-fish.or": "または",
+    "io.import.diving-fish.close": "閉じる",
+    "io.import.diving-fish.import": "読み込み",
+    "io.import.diving-fish.importing": "読み込み中...",
+    "io.import.diving-fish.missing-profile-info": "Diving-Fishプロフィールを入力してください",
+    "io.import.diving-fish.only-one-of-the-two-fields-should-be-filled": "Diving-Fishプロフィールを入力してください",
+    "io.import.lxns.title": "LXNSから読み込み（落雪カフェ）",
+    "io.import.lxns.login-required": "ログインが必要です",
+    "io.import.lxns.description": "OAuthでLXNS (maimai.lxns.net) アカウントを接続し、スコアを読み込みます。",
+    "io.import.lxns.connect": "LXNSに接続",
+    "io.import.lxns.connecting": "LXNSにリダイレクト中...",
+    "io.import.lxns.connected": "LXNSアカウントが接続されています。",
+    "io.import.lxns.import": "読み込み開始",
+    "io.import.lxns.importing": "読み込み中...",
+    "io.import.lxns.disconnect": "接続解除",
+    "io.import.lxns.disconnect-confirm": "LXNSアカウントの接続を解除しますか？いつでも再接続できます。",
+    "io.import.lxns.disconnected": "LXNSアカウントの接続を解除しました。",
+    "io.import.lxns.success": "LXNSから{{count}}件のエントリーを読み込みました。",
+    "io.import.lxns.error": "LXNSからの読み込みに失敗しました：{{error}}",
+    "io.import.lxns.reconnect-required": "LXNSの接続が期限切れです。再接続してください。",
+    "io.import.lxns.close": "閉じる",
+    "io.import.lxns.callback.success": "LXNSへの接続に成功しました！スコアを読み込めます。",
+    "io.import.lxns.callback.error": "LXNSへの接続に失敗しました：{{error}}",
+    "io.import.lxns.callback.redirecting": "レーティング計算機に戻ります...",
+    "io.import.aqua-dx.title": "AquaDX JSONから読み込み...",
+    "io.import.aqua-dx.success": "{{count}}件のエントリーを読み込みしました",
+    "io.import.aqua-sqlite.title": "Aqua SQLiteデータベースから読み込み...",
+    "io.import.aqua-sqlite.success": "{{count}}件のエントリーを読み込みしました",
+    "io.import.aqua-sqlite.error": "読み込みに失敗しました：{{error}}",
+    "io.import.aqua-sqlite.loading-db": "データベース読み込み中...",
+    "io.import.aqua-sqlite.loaded-db": "データベースを読み込みました。",
+    "io.import.aqua-sqlite.load-db-failed": "データベースの読み込みに失敗しました。",
+    "io.import.aqua-sqlite.read-users-failed": "Aqua SQLiteデータベースからのユーザー読み込みに失敗しました：{{error}}",
+    "io.import.aqua-sqlite.dialog-title": "Aqua SQLiteから読み込み",
+    "io.import.aqua-sqlite.select-user": "ゲームプレイを読み込むユーザーを選択してください。",
+    "io.import.aqua-sqlite.confirm-import": "選択したユーザーのゲームプレイの読み込みを確認してください。",
+    "io.import.aqua-sqlite.sheet-not-found": "ゲームプレイに対応する譜面が見つかりませんでした：",
+    "io.import.aqua-sqlite.import-action": "読み込み",
+    "io.import.json.title": "DXRating JSONから読み込み...",
+    "io.import.json.success": "{{count}}件のエントリーを読み込みしました",
+    "io.import.json.error": "読み込みに失敗しました：{{error}}",
+    "io.import.net-records.title": "NETから読み込み...",
+    "io.import.net-records.success": "{{count}}件のエントリーを読み込みしました",
+    "io.import.net-records.error": "読み込みに失敗しました：{{error}}",
+    "io.import.net-records.importing": "NETからレコードを読み込み中...",
+    "io.import.net-records.no-credentials": "NETからの読み込みエラー：認証情報が保存されていません。レーティング計算 - 読み込み - NETから読み込みで、SEGA IDとパスワードを設定してください。",
+    "io.import.net-records.imported": "{{region}} NETから{{count}}件のレコードを読み込みました。",
+    "io.import.net-records.latest-play": "最新のプレイ",
+    "io.import.net-records.date": "日付：{{date}}",
+    "io.import.net-records.cached.title": "キャッシュされたプレイ記録を使用中",
+    "io.import.net-records.cached.description": "{{minutes}}分前に更新済み。maimai NETへの負荷軽減のため、15分以内の記録は再利用されます。",
+    "io.import.net-records.errors.maintenance": "maimai NETは現在メンテナンス中です。しばらくしてからもう一度お試しください。",
+    "io.import.net-records.errors.invalid-credentials": "ログインに失敗しました。SEGA IDとパスワードをご確認ください。",
+    "io.import.net-records.errors.unknown": "予期しないエラーが発生しました。もう一度お試しください。",
+    "io.import.net-records.errors.internal": "レコードの取得中にサーバーエラーが発生しました。もう一度お試しください。",
+    "io.import.net-records.errors.token": "maimai NETへの接続に失敗しました。しばらくしてからもう一度お試しください。",
+    "io.import.net-records.dialog.actions.close": "閉じる",
+    "io.import.net-records.dialog.actions.import-once": "1度だけ読み込み",
+    "io.import.net-records.dialog.actions.importing": "読み込み中...",
+    "io.import.net-records.dialog.actions.reimport.description": "既存のエントリーは読み込みされたものに上書きされます。",
+    "io.import.net-records.dialog.actions.reimport.title": "再読み込み",
+    "io.import.net-records.dialog.auto-import.description": "読み込みされたエントリーは、既存のエントリーに追加されます。",
+    "io.import.net-records.dialog.auto-import.label": "自動読み込み",
+    "io.import.net-records.dialog.auto-import.options.disabled.title": "無効",
+    "io.import.net-records.dialog.auto-import.options.merge.description": "既存のエントリーは読み込みされたものに追加されます。",
+    "io.import.net-records.dialog.auto-import.options.merge.title": "追加",
+    "io.import.net-records.dialog.auto-import.options.replace.description": "既存のエントリーは読み込みされたものに上書きされます。",
+    "io.import.net-records.dialog.auto-import.options.replace.title": "上書き",
+    "io.import.net-records.dialog.region.intl.domain": "(maimaidx-eng.com)",
+    "io.import.net-records.dialog.region.intl.name": "インタナショナル",
+    "io.import.net-records.dialog.region.jp.domain": "(maimaidx.jp)",
+    "io.import.net-records.dialog.region.jp.name": "日本",
+    "io.import.net-records.dialog.region.label": "地域",
+    "io.import.net-records.dialog.remember-credentials.label": "認証情報を記憶する",
+    "io.import.net-records.dialog.remember-credentials.description": "認証情報はブラウザにローカルで保存されます。",
+    "io.import.net-records.dialog.security-notice.credentials": "あなたのログイン情報は保存されず、記録されず、共有されません。読み込みプロセスの間のみ使用されます。ご希望であれば、",
+    "io.import.net-records.dialog.security-notice.source-code": "ソースコードを確認することができます",
+    "io.import.net-records.dialog.sega-id": "SEGA ID",
+    "io.import.net-records.dialog.sega-password": "SEGA ID パスワード",
+    "io.import.net-records.dialog.title": "NETから読み込み",
+    "io.clear.button": "クリア",
+    "io.clear.dialog.title": "全てのエントリーをクリアしますか？",
+    "io.clear.dialog.warning": "警告",
+    "io.clear.dialog.message": "全てのエントリーがクリアされます。",
+    "io.clear.dialog.cancel": "キャンセル",
+    "io.clear.dialog.confirm": "クリア"
   }
 }
