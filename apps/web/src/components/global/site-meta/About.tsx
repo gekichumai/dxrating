@@ -60,6 +60,8 @@ export const About = () => {
           setExpanded(true)
           posthog?.capture('about_dialog_opened')
         }}
+        aria-label={t('about:open')}
+        title={t('about:open')}
       >
         <MdiInformation />
       </IconButton>

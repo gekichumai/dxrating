@@ -19,6 +19,10 @@
     "share": {
       "copy-content": "{{ link }}",
       "copy-succeeded": "クリップボードにコピーされました"
+    },
+    "external-links": {
+      "discord": "DXRating の Discord サーバーに参加",
+      "github": "DXRating を GitHub で開く"
     }
   },
   "settings": {
@@ -32,7 +36,11 @@
     "version-and-region": {
       "info": "異なるバージョンと地域を選ぶと、配信されている楽曲と内部定数を表示されます",
       "select": "バージョンと地域を選択ください",
-      "select-generic": "まだ、バージョンのみを選んでください"
+      "select-generic": "まだ、バージョンのみを選んでください",
+      "logo-alt": "maimai DX {{version}} ロゴ"
+    },
+    "language": {
+      "select": "言語を選択"
     },
     "import-provider": {
       "diving-fish": {
@@ -189,6 +197,7 @@
   },
   "about": {
     "title": "当サイトについて",
+    "open": "DXRating について",
     "author": "著者",
     "source-code": "ソースコード",
     "internal-level-value": "譜面定数",
@@ -283,6 +292,10 @@
         "password-required": "パスワードを入力してください",
         "password-min-length": "パスワードは8文字以上で入力してください"
       }
+    },
+    "user-menu": {
+      "sign-in": "DXRating にログイン",
+      "open-profile": "アカウントメニューを開く"
     },
     "user-profile": {
       "title": "アカウント",
