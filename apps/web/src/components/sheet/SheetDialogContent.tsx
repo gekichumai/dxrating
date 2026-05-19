@@ -71,30 +71,23 @@ const RELATIVE_TIME_FORMATS: Record<string, Intl.RelativeTimeFormat> = {
 }
 
 const CommentCreatedAt: FC<{ createdAt: string }> = ({ createdAt }) => {
-  const [formattedDate, setFormattedDate] = useState('')
-
-  useEffect(() => {
-    setFormattedDate(new Date(createdAt).toLocaleString())
-  }, [createdAt])
+  const formattedDate = useMemo(() => new Date(createdAt).toLocaleString(), [createdAt])
 
   return <div className="text-xs ml-auto">{formattedDate}</div>
 }
 
 const ReleaseDateText: FC<{ releaseDateTimestamp: number }> = ({ releaseDateTimestamp }) => {
   const { t, i18n } = useTranslation(['sheet'])
-  const [releaseDateText, setReleaseDateText] = useState('')
-
-  useEffect(() => {
+  const releaseDateText = useMemo(() => {
     const releaseDate = new Date(releaseDateTimestamp)
     const relativeTimeFormat = RELATIVE_TIME_FORMATS[i18n.language] ?? RELATIVE_TIME_FORMATS.en
-    setReleaseDateText(
-      t('sheet:release-date', {
-        absoluteDate: releaseDate.toLocaleString(i18n.language, {
-          dateStyle: 'medium',
-        }),
-        relativeDate: relativeTimeFormat.format(Math.floor((releaseDate.getTime() - Date.now()) / DAY_MS), 'day'),
+
+    return t('sheet:release-date', {
+      absoluteDate: releaseDate.toLocaleString(i18n.language, {
+        dateStyle: 'medium',
       }),
-    )
+      relativeDate: relativeTimeFormat.format(Math.floor((releaseDate.getTime() - Date.now()) / DAY_MS), 'day'),
+    })
   }, [releaseDateTimestamp, i18n.language, t])
 
   return releaseDateText
