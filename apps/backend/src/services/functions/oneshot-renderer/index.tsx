@@ -12,6 +12,7 @@ import { renderAsync } from '@resvg/resvg-js'
 import type { Context } from 'hono'
 import satori, { type Font } from 'satori'
 import sharp from 'sharp'
+import { match } from 'ts-pattern'
 import { z } from 'zod'
 import { type Scope, Sentry } from '../../../lib/functions/sentry.js'
 import { fetchAsset } from './assetFetcher.js'
@@ -284,7 +285,10 @@ export const calculateEntries = (
           },
         ],
       })
-      const bucket = best50.b15.length ? 'b15' : best50.b35.length ? 'b35' : null
+      const bucket = match({ hasB15: best50.b15.length > 0, hasB35: best50.b35.length > 0 })
+        .with({ hasB15: true }, () => 'b15' as const)
+        .with({ hasB35: true }, () => 'b35' as const)
+        .otherwise(() => null)
       return bucket ? [{ bucket, index, renderData }] : []
     }),
   )

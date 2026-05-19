@@ -3,7 +3,7 @@ import { IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { usePostHog } from 'posthog-js/react'
-import { type FC, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { type FC, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import IconMdiClose from '~icons/mdi/close'
 import MdiIconInfo from '~icons/mdi/information'
@@ -11,7 +11,7 @@ import { ResponsiveDialog } from '../components/global/ResponsiveDialog'
 import { SheetDialogContent } from '../components/sheet/SheetDialogContent'
 import { SheetListContainer } from '../components/sheet/SheetListContainer'
 import { SheetSortFilter, type SheetSortFilterForm } from '../components/sheet/SheetSortFilter'
-import { SheetDetailsContext, SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
+import { SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { type FlattenedSheet, canonicalIdFromParts, useFilteredSheets, useSheets } from '../songs'
 import { sheetMatchesDifficultyFilter } from './sheetDifficultyFilter'
@@ -29,29 +29,21 @@ const SORT_DESCRIPTOR_MAPPING = {
   releaseDate: 'releaseDateTimestamp' as const,
 }
 
-const _SheetListInner: FC = () => {
+type SearchParams = ReturnType<typeof searchRouteApi.useSearch>
+
+const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
   const posthog = usePostHog()
   const { t } = useTranslation(['sheet'])
   const { data: sheets, isLoading } = useSheets({ acceptsPartialData: true })
-  const { setQueryActive } = useContext(SheetDetailsContext)
   const version = useAppContextDXDataVersion()
   const [sortFilterOptions, setSortFilterOptions] = useState<SheetSortFilterForm | null>(null)
   const navigate = useNavigate()
 
-  const search = searchRouteApi.useSearch()
-  const [query, setQuery] = useState<string>(search.q ?? '')
+  const query = search.q ?? ''
   const { results, elapsed: searchElapsed } = useFilteredSheets(query)
-
-  useEffect(() => {
-    const nextQuery = search.q ?? ''
-    setQuery(nextQuery)
-    setQueryActive(!!nextQuery)
-  }, [search.q, setQueryActive])
 
   const updateQuery = useCallback(
     (nextQuery: string) => {
-      setQuery(nextQuery)
-      setQueryActive(!!nextQuery)
       navigate({
         to: '/search',
         search: (prev: Record<string, unknown>) => ({
@@ -62,7 +54,7 @@ const _SheetListInner: FC = () => {
         resetScroll: false,
       })
     },
-    [navigate, setQueryActive],
+    [navigate],
   )
 
   const activeSheet = useMemo<FlattenedSheet | null>(() => {
@@ -313,12 +305,12 @@ const _SheetListInner: FC = () => {
   )
 }
 
-const SheetListInner = _SheetListInner
-
 export const SheetList: FC = () => {
+  const search = searchRouteApi.useSearch()
+
   return (
-    <SheetDetailsContextProvider>
-      <SheetListInner />
+    <SheetDetailsContextProvider queryActive={!!search.q}>
+      <SheetListInnerContent search={search} />
     </SheetDetailsContextProvider>
   )
 }

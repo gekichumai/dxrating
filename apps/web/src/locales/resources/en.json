@@ -1,199 +1,119 @@
 {
   "root": {
-    "pages": {
-      "search": {
-        "title": "Search Charts",
-        "seo-title": "Charts & Songs",
-        "seo-description": "Browse all maimai DX charts by song title, artist, or difficulty. View internal levels, note counts, and detailed chart information."
-      },
-      "rating": {
-        "title": "My Rating",
-        "seo-title": "Rating Calculator",
-        "seo-description": "Calculate and manage your maimai DX rating records, Best 50 entries, achievements, and score details on DXRating."
-      }
-    },
-    "seo": {
-      "description": "DXRating is a maimai DX Rating analyzer, along with other features like chart details and more.",
-      "keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating analyzer, gekichumai, maimai derakkusu, chart details, rating calculator, maimai wiki"
-    },
-    "share": {
-      "copy-succeeded": "Copied to clipboard",
-      "copy-content": "{{ link }}"
-    },
-    "external-links": {
-      "discord": "Join the DXRating Discord server",
-      "github": "Open DXRating on GitHub"
-    }
+    "pages.search.title": "Search Charts",
+    "pages.search.seo-title": "Charts & Songs",
+    "pages.search.seo-description": "Browse all maimai DX charts by song title, artist, or difficulty. View internal levels, note counts, and detailed chart information.",
+    "pages.rating.title": "My Rating",
+    "pages.rating.seo-title": "Rating Calculator",
+    "pages.rating.seo-description": "Calculate and manage your maimai DX rating records, Best 50 entries, achievements, and score details on DXRating.",
+    "seo.description": "DXRating is a maimai DX Rating analyzer, along with other features like chart details and more.",
+    "seo.keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating analyzer, gekichumai, maimai derakkusu, chart details, rating calculator, maimai wiki",
+    "share.copy-succeeded": "Copied to clipboard",
+    "share.copy-content": "{{ link }}",
+    "external-links.discord": "Join the DXRating Discord server",
+    "external-links.github": "Open DXRating on GitHub"
   },
   "settings": {
-    "version-and-region": {
-      "select": "Select DXData Version and Region",
-      "select-generic": "Or, select a DXData Version and use the \"Generic\" region",
-      "info": "Different data versions and regions correspond to different internal level values, song visibilities and rating eligibilities.",
-      "logo-alt": "maimai DX {{version}} logo"
-    },
-    "language": {
-      "select": "Select language"
-    },
-    "region": {
-      "title": "Region: {{region}}",
-      "jp": "Japan",
-      "intl": "International",
-      "cn": "China",
-      "_generic": "Generic"
-    },
-    "import-provider": {
-      "diving-fish": {
-        "title": "diving-fish",
-        "username": "Username of diving-fish",
-        "qq": "QQ binded to diving-fish"
-      }
-    }
+    "version-and-region.select": "Select DXData Version and Region",
+    "version-and-region.select-generic": "Or, select a DXData Version and use the \"Generic\" region",
+    "version-and-region.info": "Different data versions and regions correspond to different internal level values, song visibilities and rating eligibilities.",
+    "version-and-region.logo-alt": "maimai DX {{version}} logo",
+    "language.select": "Select language",
+    "region.title": "Region: {{region}}",
+    "region.jp": "Japan",
+    "region.intl": "International",
+    "region.cn": "China",
+    "region._generic": "Generic",
+    "import-provider.diving-fish.title": "diving-fish",
+    "import-provider.diving-fish.username": "Username of diving-fish",
+    "import-provider.diving-fish.qq": "QQ binded to diving-fish"
   },
   "sheet": {
     "filter-current-version": "Filter Current B15: Show only {{version}} charts",
     "search-summary": "{{found}} / {{total}} charts ({{elapsed}}ms)",
     "search": "Search",
     "ocr": "Launch OCR",
-    "internal-level-history": {
-      "title": "Internal Level History",
-      "empty": "No history available"
-    },
-    "details": {
-      "title": "Details",
-      "category": "Genre",
-      "song-artist": "Song Artist",
-      "bpm": "BPM",
-      "chart-designer": "Chart Designer",
-      "notes-statistics": {
-        "title": "Notes Statistics",
-        "tap": "Tap",
-        "hold": "Hold",
-        "slide": "Slide",
-        "touch": "Touch",
-        "break": "Break",
-        "total": "Total"
-      },
-      "regional-availability": "Regional Availability",
-      "credits": "Some data comes from <link />",
-      "achievement-to-rating": {
-        "title": "Achievement → Rating",
-        "achievement": "Achv.",
-        "rating": "Rating"
-      },
-      "unlock-required": "Unlock Required"
-    },
+    "internal-level-history.title": "Internal Level History",
+    "internal-level-history.empty": "No history available",
+    "details.title": "Details",
+    "details.category": "Genre",
+    "details.song-artist": "Song Artist",
+    "details.bpm": "BPM",
+    "details.chart-designer": "Chart Designer",
+    "details.notes-statistics.title": "Notes Statistics",
+    "details.notes-statistics.tap": "Tap",
+    "details.notes-statistics.hold": "Hold",
+    "details.notes-statistics.slide": "Slide",
+    "details.notes-statistics.touch": "Touch",
+    "details.notes-statistics.break": "Break",
+    "details.notes-statistics.total": "Total",
+    "details.regional-availability": "Regional Availability",
+    "details.credits": "Some data comes from <link />",
+    "details.achievement-to-rating.title": "Achievement → Rating",
+    "details.achievement-to-rating.achievement": "Achv.",
+    "details.achievement-to-rating.rating": "Rating",
+    "details.unlock-required": "Unlock Required",
     "release-date": "Released {{absoluteDate}} ({{relativeDate}})",
-    "filter": {
-      "title": "Filter",
-      "internal-level-value": {
-        "min": "Min",
-        "max": "Max",
-        "title": "Level"
-      },
-      "version": {
-        "title": "Version",
-        "gesture-hint": {
-          "tap": "Toggle",
-          "tap-hold": "Select"
-        }
-      },
-      "tags": {
-        "title": "Tags"
-      },
-      "category": {
-        "title": "Genre"
-      },
-      "favorites": {
-        "title": "Favorites",
-        "only": "Favorites only"
-      },
-      "difficulty": {
-        "title": "Difficulty",
-        "gesture-hint": {
-          "tap": "Toggle",
-          "tap-hold": "Select"
-        }
-      }
-    },
-    "sort": {
-      "title": "Sort",
-      "add": "Add Sort",
-      "predicate": "Predicate #{{index}}",
-      "release-date": {
-        "asc": "Release Date (Old → New)",
-        "desc": "Release Date (New → Old)"
-      },
-      "internal-level-value": {
-        "asc": "Level (Low → High)",
-        "desc": "Level (High → Low)"
-      },
-      "temporarily-disabled": "Temporarily disabled due to active search query."
-    },
-    "sort-and-filter": {
-      "title": "Filter & Sort",
-      "reset": {
-        "dialog": {
-          "title": "Reset All Sort and Filter Settings",
-          "message": "Are you sure you want to reset all sort and filter settings?",
-          "cancel": "Cancel",
-          "confirm": "Reset"
-        },
-        "button": "Reset All"
-      }
-    },
-    "tags": {
-      "add": {
-        "title": "Add a Tag",
-        "button": "Add",
-        "toast-success": "Tag added successfully",
-        "toast-failed": "Failed to add tag: {{error}}",
-        "login-required": "Login or Register an account to add tags."
-      }
-    },
-    "copy-title": {
-      "toast-success": "Copied title to clipboard",
-      "tooltip": "Click to copy"
-    },
-    "copy-link": {
-      "toast-success": "Copied link to clipboard",
-      "tooltip": "Copy link"
-    },
-    "copy-alt-name": {
-      "toast-success": "Copied {{content}} to clipboard"
-    },
-    "aliases": {
-      "add-new": "Add New Alias",
-      "dialog-title": "Add an Alias",
-      "input-label": "Add alias",
-      "adding": "Adding...",
-      "add-button": "Add Alias",
-      "toast-success": "Added alias: {{name}}",
-      "toast-failed": "Failed to add alias: {{error}}",
-      "login-required": "Login or Register an account to add an alias."
-    },
-    "comments": {
-      "title": "Comments",
-      "placeholder": "Leave a comment...",
-      "anonymous": "*Somebody*",
-      "empty": "There are no comments yet.",
-      "sign-in-to-comment": "Sign in or create an account to leave one."
-    }
+    "filter.title": "Filter",
+    "filter.internal-level-value.min": "Min",
+    "filter.internal-level-value.max": "Max",
+    "filter.internal-level-value.title": "Level",
+    "filter.version.title": "Version",
+    "filter.version.gesture-hint.tap": "Toggle",
+    "filter.version.gesture-hint.tap-hold": "Select",
+    "filter.tags.title": "Tags",
+    "filter.category.title": "Genre",
+    "filter.favorites.title": "Favorites",
+    "filter.favorites.only": "Favorites only",
+    "filter.difficulty.title": "Difficulty",
+    "filter.difficulty.gesture-hint.tap": "Toggle",
+    "filter.difficulty.gesture-hint.tap-hold": "Select",
+    "sort.title": "Sort",
+    "sort.add": "Add Sort",
+    "sort.predicate": "Predicate #{{index}}",
+    "sort.release-date.asc": "Release Date (Old → New)",
+    "sort.release-date.desc": "Release Date (New → Old)",
+    "sort.internal-level-value.asc": "Level (Low → High)",
+    "sort.internal-level-value.desc": "Level (High → Low)",
+    "sort.temporarily-disabled": "Temporarily disabled due to active search query.",
+    "sort-and-filter.title": "Filter & Sort",
+    "sort-and-filter.reset.dialog.title": "Reset All Sort and Filter Settings",
+    "sort-and-filter.reset.dialog.message": "Are you sure you want to reset all sort and filter settings?",
+    "sort-and-filter.reset.dialog.cancel": "Cancel",
+    "sort-and-filter.reset.dialog.confirm": "Reset",
+    "sort-and-filter.reset.button": "Reset All",
+    "tags.add.title": "Add a Tag",
+    "tags.add.button": "Add",
+    "tags.add.toast-success": "Tag added successfully",
+    "tags.add.toast-failed": "Failed to add tag: {{error}}",
+    "tags.add.login-required": "Login or Register an account to add tags.",
+    "copy-title.toast-success": "Copied title to clipboard",
+    "copy-title.tooltip": "Click to copy",
+    "copy-link.toast-success": "Copied link to clipboard",
+    "copy-link.tooltip": "Copy link",
+    "copy-alt-name.toast-success": "Copied {{content}} to clipboard",
+    "aliases.add-new": "Add New Alias",
+    "aliases.dialog-title": "Add an Alias",
+    "aliases.input-label": "Add alias",
+    "aliases.adding": "Adding...",
+    "aliases.add-button": "Add Alias",
+    "aliases.toast-success": "Added alias: {{name}}",
+    "aliases.toast-failed": "Failed to add alias: {{error}}",
+    "aliases.login-required": "Login or Register an account to add an alias.",
+    "comments.title": "Comments",
+    "comments.placeholder": "Leave a comment...",
+    "comments.anonymous": "*Somebody*",
+    "comments.empty": "There are no comments yet.",
+    "comments.sign-in-to-comment": "Sign in or create an account to leave one."
   },
   "song": {
-    "not-found": {
-      "title": "Song Not Found",
-      "description": "The song you're looking for doesn't exist.",
-      "back-to-search": "Back to Search"
-    },
-    "type": {
-      "dx": "DX",
-      "std": "Standard",
-      "utage": "Utage"
-    },
-    "seo": {
-      "description": "{{title}} by {{artist}} - {{sheetLabel}} chart details, internal levels, and note counts on DXRating."
-    }
+    "not-found.title": "Song Not Found",
+    "not-found.description": "The song you're looking for doesn't exist.",
+    "not-found.back-to-search": "Back to Search",
+    "type.dx": "DX",
+    "type.std": "Standard",
+    "type.utage": "Utage",
+    "seo.description": "{{title}} by {{artist}} - {{sheetLabel}} chart details, internal levels, and note counts on DXRating."
   },
   "about": {
     "title": "About",
@@ -204,36 +124,22 @@
     "chart-metadata": "Chart Metadata",
     "chart-metadata-extended": "Chart Metadata (Extended)",
     "fesplus-background": "FESTiVAL+ Background",
-    "version": {
-      "commit": "commit",
-      "build": "build",
-      "build-time": "built at",
-      "upstream-data-update-time": "upstream data version"
-    },
-    "aliases": {
-      "yuri-yuzuchan-maimaidx": "Song Aliases (Chinese)",
-      "lomotos10-gcmbot": "Song Aliases (English, Korean, Romaji)"
-    },
-    "disclaimer": {
-      "title": "Disclaimer",
-      "content": "DXRating is not affiliated with any game company. Any assets used in this website are for non-commercial purposes only, and all rights belong to their respective owners. This website is not responsible for any loss or damage caused by the use of the information provided. If you have any questions or suggestions, you are welcome to contact the author."
-    }
+    "version.commit": "commit",
+    "version.build": "build",
+    "version.build-time": "built at",
+    "version.upstream-data-update-time": "upstream data version",
+    "aliases.yuri-yuzuchan-maimaidx": "Song Aliases (Chinese)",
+    "aliases.lomotos10-gcmbot": "Song Aliases (English, Korean, Romaji)",
+    "disclaimer.title": "Disclaimer",
+    "disclaimer.content": "DXRating is not affiliated with any game company. Any assets used in this website are for non-commercial purposes only, and all rights belong to their respective owners. This website is not responsible for any loss or damage caused by the use of the information provided. If you have any questions or suggestions, you are welcome to contact the author."
   },
   "form": {
-    "validation": {
-      "min": {
-        "message": "\"{{fieldName}}\" must be greater than or equal to {{value}}"
-      },
-      "max": {
-        "message": "\"{{fieldName}}\" must be less than or equal to {{value}}"
-      }
-    }
+    "validation.min.message": "\"{{fieldName}}\" must be greater than or equal to {{value}}",
+    "validation.max.message": "\"{{fieldName}}\" must be less than or equal to {{value}}"
   },
   "global": {
-    "gesture-hint": {
-      "tap": "Tap",
-      "tap-hold": "Hold"
-    },
+    "gesture-hint.tap": "Tap",
+    "gesture-hint.tap-hold": "Hold",
     "beta": "Beta",
     "submit": "Submit",
     "back": "Back",
@@ -245,358 +151,244 @@
     "available": "AVAILABLE"
   },
   "auth": {
-    "update-password": {
-      "label": "Update Password",
-      "toast-success": "Successfully updated password."
-    },
-    "logout": {
-      "label": "Logout",
-      "toast-success": "Successfully logged out.",
-      "confirm-title": "Sign out",
-      "confirm-description": "Are you sure you want to sign out?"
-    },
-    "login": {
-      "label": "Login",
-      "toast-success": "Successfully logged in."
-    },
-    "update-display-name": {
-      "label": "Update Profile Name",
-      "sign-in-required": "You must be signed in to update your display name.",
-      "toast-failed": "Failed to update profile: {{error}}",
-      "toast-success": "Your profile name has been successfully updated to \"{{name}}\"."
-    },
-    "sign-up": {
-      "label": "Sign Up",
-      "title": "Create your account",
-      "toast-success": "Account created! You can now sign in."
-    },
-    "form": {
-      "title": "Sign in",
-      "subtitle": "Welcome! Please sign in to continue",
-      "continue-with-github": "Continue with GitHub",
-      "continue-with-google": "Continue with Google",
-      "or": "or",
-      "email": "Email",
-      "password": "Password",
-      "continue": "Continue",
-      "sign-in-with-passkey": "Sign in with Passkey",
-      "has-account": "Already have an account? Sign In",
-      "no-account": "Don't have an account? Sign up",
-      "error-generic": "An error occurred",
-      "error-passkey": "Failed to sign in with Passkey",
-      "last-used": "Last used",
-      "login-or-register-to-comment": "Login or Register to comment",
-      "validation": {
-        "email-required": "Email is required",
-        "email-invalid": "Please enter a valid email address",
-        "password-required": "Password is required",
-        "password-min-length": "Password must be at least 8 characters"
-      }
-    },
-    "user-menu": {
-      "sign-in": "Sign in to DXRating",
-      "open-profile": "Open account menu"
-    },
-    "user-profile": {
-      "title": "Account",
-      "profile": "Profile",
-      "security": "Security",
-      "display-name": "Display name",
-      "email": "Email address",
-      "save": "Save",
-      "password": {
-        "title": "Password",
-        "current": "Current password",
-        "new": "New password",
-        "confirm": "Confirm new password",
-        "mismatch": "Passwords do not match",
-        "save": "Change password",
-        "success": "Password changed successfully",
-        "error": "Failed to change password: {{error}}"
-      },
-      "passkeys": {
-        "title": "Passkeys",
-        "add": "Add passkey",
-        "delete": "Remove",
-        "empty": "No passkeys registered",
-        "added": "Passkey added successfully",
-        "deleted": "Passkey removed",
-        "error": "Failed: {{error}}",
-        "confirm-delete-title": "Remove passkey",
-        "confirm-delete-description": "This passkey will no longer be able to sign in to your account."
-      },
-      "devices": {
-        "title": "Active devices",
-        "current": "This device",
-        "revoke": "Sign out",
-        "revoked": "Device signed out",
-        "confirm-revoke-title": "Sign out device",
-        "confirm-revoke-description": "This will end the session on that device."
-      },
-      "accounts": {
-        "title": "Connected Accounts",
-        "description": "Manage your connected sign-in methods.",
-        "google": "Google",
-        "github": "GitHub",
-        "email-password": "Email & Password",
-        "connected": "Connected",
-        "not-connected": "Not connected",
-        "connect": "Connect",
-        "disconnect": "Disconnect",
-        "disconnected": "Account disconnected",
-        "error": "Failed: {{error}}",
-        "confirm-disconnect-title": "Disconnect account",
-        "confirm-disconnect-description": "You will no longer be able to sign in with this account."
-      },
-      "confirm-cancel": "Cancel",
-      "confirm-ok": "Confirm",
-      "oauth-error": {
-        "email_doesn't_match": "Cannot link this account because the email address doesn't match your account email.",
-        "unable_to_link_account": "Unable to link this account. The provider may not be verified.",
-        "account_already_linked_to_different_user": "This account is already linked to a different user.",
-        "default": "An authentication error occurred: {{error}}"
-      }
-    }
+    "update-password.label": "Update Password",
+    "update-password.toast-success": "Successfully updated password.",
+    "logout.label": "Logout",
+    "logout.toast-success": "Successfully logged out.",
+    "logout.confirm-title": "Sign out",
+    "logout.confirm-description": "Are you sure you want to sign out?",
+    "login.label": "Login",
+    "login.toast-success": "Successfully logged in.",
+    "update-display-name.label": "Update Profile Name",
+    "update-display-name.sign-in-required": "You must be signed in to update your display name.",
+    "update-display-name.toast-failed": "Failed to update profile: {{error}}",
+    "update-display-name.toast-success": "Your profile name has been successfully updated to \"{{name}}\".",
+    "sign-up.label": "Sign Up",
+    "sign-up.title": "Create your account",
+    "sign-up.toast-success": "Account created! You can now sign in.",
+    "form.title": "Sign in",
+    "form.subtitle": "Welcome! Please sign in to continue",
+    "form.continue-with-github": "Continue with GitHub",
+    "form.continue-with-google": "Continue with Google",
+    "form.or": "or",
+    "form.email": "Email",
+    "form.password": "Password",
+    "form.continue": "Continue",
+    "form.sign-in-with-passkey": "Sign in with Passkey",
+    "form.has-account": "Already have an account? Sign In",
+    "form.no-account": "Don't have an account? Sign up",
+    "form.error-generic": "An error occurred",
+    "form.error-passkey": "Failed to sign in with Passkey",
+    "form.last-used": "Last used",
+    "form.login-or-register-to-comment": "Login or Register to comment",
+    "form.validation.email-required": "Email is required",
+    "form.validation.email-invalid": "Please enter a valid email address",
+    "form.validation.password-required": "Password is required",
+    "form.validation.password-min-length": "Password must be at least 8 characters",
+    "user-menu.sign-in": "Sign in to DXRating",
+    "user-menu.open-profile": "Open account menu",
+    "user-profile.title": "Account",
+    "user-profile.profile": "Profile",
+    "user-profile.security": "Security",
+    "user-profile.display-name": "Display name",
+    "user-profile.email": "Email address",
+    "user-profile.save": "Save",
+    "user-profile.password.title": "Password",
+    "user-profile.password.current": "Current password",
+    "user-profile.password.new": "New password",
+    "user-profile.password.confirm": "Confirm new password",
+    "user-profile.password.mismatch": "Passwords do not match",
+    "user-profile.password.save": "Change password",
+    "user-profile.password.success": "Password changed successfully",
+    "user-profile.password.error": "Failed to change password: {{error}}",
+    "user-profile.passkeys.title": "Passkeys",
+    "user-profile.passkeys.add": "Add passkey",
+    "user-profile.passkeys.delete": "Remove",
+    "user-profile.passkeys.empty": "No passkeys registered",
+    "user-profile.passkeys.added": "Passkey added successfully",
+    "user-profile.passkeys.deleted": "Passkey removed",
+    "user-profile.passkeys.error": "Failed: {{error}}",
+    "user-profile.passkeys.confirm-delete-title": "Remove passkey",
+    "user-profile.passkeys.confirm-delete-description": "This passkey will no longer be able to sign in to your account.",
+    "user-profile.devices.title": "Active devices",
+    "user-profile.devices.current": "This device",
+    "user-profile.devices.revoke": "Sign out",
+    "user-profile.devices.revoked": "Device signed out",
+    "user-profile.devices.confirm-revoke-title": "Sign out device",
+    "user-profile.devices.confirm-revoke-description": "This will end the session on that device.",
+    "user-profile.accounts.title": "Connected Accounts",
+    "user-profile.accounts.description": "Manage your connected sign-in methods.",
+    "user-profile.accounts.google": "Google",
+    "user-profile.accounts.github": "GitHub",
+    "user-profile.accounts.email-password": "Email & Password",
+    "user-profile.accounts.connected": "Connected",
+    "user-profile.accounts.not-connected": "Not connected",
+    "user-profile.accounts.connect": "Connect",
+    "user-profile.accounts.disconnect": "Disconnect",
+    "user-profile.accounts.disconnected": "Account disconnected",
+    "user-profile.accounts.error": "Failed: {{error}}",
+    "user-profile.accounts.confirm-disconnect-title": "Disconnect account",
+    "user-profile.accounts.confirm-disconnect-description": "You will no longer be able to sign in with this account.",
+    "user-profile.confirm-cancel": "Cancel",
+    "user-profile.confirm-ok": "Confirm",
+    "user-profile.oauth-error.email_doesn't_match": "Cannot link this account because the email address doesn't match your account email.",
+    "user-profile.oauth-error.unable_to_link_account": "Unable to link this account. The provider may not be verified.",
+    "user-profile.oauth-error.account_already_linked_to_different_user": "This account is already linked to a different user.",
+    "user-profile.oauth-error.default": "An authentication error occurred: {{error}}"
   },
   "rating-calculator": {
-    "breakdown": {
-      "title": "Rating Breakdown"
-    },
-    "auto-save": {
-      "title": "Auto-save",
-      "saved-records": "Saved {{count}} records"
-    },
-    "quick-actions": {
-      "title": "Quick Actions",
-      "show-only-b50": "Show only B50 entries",
-      "compact-mode": "Compact Mode"
-    },
-    "table": {
-      "no-entries": "No entries",
-      "headers": {
-        "chart": "Chart",
-        "included-in": "Incl. In",
-        "combo": "Combo",
-        "sync": "Sync",
-        "achievement-rate": "Achievement Rate",
-        "rating": "Rating",
-        "actions": "Actions"
-      },
-      "remove-dialog": {
-        "title": "Remove rating entry?",
-        "cancel": "Cancel",
-        "remove": "Remove"
-      }
-    },
-    "statistics": {
-      "total": "Total",
-      "best-15": "Best 15",
-      "best-35": "Best 35",
-      "entries": "Entries {{current}}/{{total}}",
-      "subtotal": "Subtotal",
-      "min": "Min",
-      "avg": "Avg",
-      "max": "Max",
-      "histogram-hint": "Histogram buckets are visualized in shape of (min, max] to better represent the data distribution.",
-      "histogram-available": "Histogram Available",
-      "b15-avg": "B15 AVG: {{value}}",
-      "b35-avg": "B35 AVG: {{value}}"
-    },
-    "add-entry": {
-      "chart": "Chart",
-      "achievement-rate": "Achievement Rate",
-      "validation": {
-        "required": "Required",
-        "invalid-number": "Invalid number",
-        "range": "Must be between 0% and 101%"
-      },
-      "current-rating": "Current Rating",
-      "new-rating": "New Rating",
-      "rating": "Rating",
-      "replace": "Replace (+{{diff}})",
-      "add": "Add"
-    },
-    "io": {
-      "export": {
-        "button": "Export...",
-        "to-json": {
-          "all-records": "Export to JSON (All Records)",
-          "b50-records": "Export to JSON (Only B50 Records)"
-        },
-        "toast-success": "Exported as {{name}}",
-        "oneshot-image": {
-          "button": "Render as OneShot Image",
-          "dialog": {
-            "title": "Render as OneShot Image",
-            "loading": {
-              "title": "Rendering...",
-              "calculating": "Calculating...",
-              "message": "This may take a while depending on the current server load; typically rendering will finish within 10 seconds."
-            },
-            "error": "An error occurred while rendering the image: {{message}}",
-            "save-instruction": "Long-press or right-click the image to save it to your device.",
-            "beta-notice": "This feature is in beta and may not work as expected. Please feel free to report any issues or feedback to the developer :D"
-          }
-        }
-      },
-      "import": {
-        "button": "Import...",
-        "diving-fish": {
-          "title": "Import from diving-fish...",
-          "description": "Choose one of the following two options and fill in the corresponding field. Your settings will be saved in your browser.",
-          "loading": "Importing from diving-fish...",
-          "success": "Successfully imported {{count}} records from diving-fish.",
-          "error": "An error occurred while importing records from diving-fish. Are you sure the username or QQ binded is correct? {{error}}",
-          "invalid-profile": "Please enter your Diving-Fish profile",
-          "no-sheets": "No charts found",
-          "warning": {
-            "title": "Heads up!",
-            "description": "Your existing entries will be overwritten with the imported ones."
-          },
-          "or": "OR",
-          "close": "Close",
-          "import": "Import",
-          "importing": "Importing...",
-          "missing-profile-info": "Please enter your Diving-Fish profile",
-          "only-one-of-the-two-fields-should-be-filled": "Please enter your Diving-Fish profile"
-        },
-        "lxns": {
-          "title": "Import from LXNS (落雪咖啡屋)",
-          "login-required": "Login required",
-          "description": "Connect your LXNS (maimai.lxns.net) account via OAuth to import your scores.",
-          "connect": "Connect to LXNS",
-          "connecting": "Redirecting to LXNS...",
-          "connected": "Your LXNS account is connected.",
-          "import": "Import Now",
-          "importing": "Importing...",
-          "disconnect": "Disconnect",
-          "disconnect-confirm": "Disconnect your LXNS account? You can reconnect at any time.",
-          "disconnected": "LXNS account disconnected.",
-          "success": "Imported {{count}} entries from LXNS.",
-          "error": "Failed to import from LXNS: {{error}}",
-          "reconnect-required": "Your LXNS connection has expired. Please reconnect.",
-          "close": "Close",
-          "callback": {
-            "success": "Successfully connected to LXNS! You can now import your scores.",
-            "error": "Failed to connect to LXNS: {{error}}",
-            "redirecting": "Returning to rating calculator..."
-          }
-        },
-        "aqua-dx": {
-          "title": "Import from AquaDX Exported JSON...",
-          "success": "Imported {{count}} entries"
-        },
-        "mu-net": {
-          "title": "Import from MuNET Exported JSON...",
-          "success": "Imported {{count}} entries",
-          "error": "Failed to import: {{error}}"
-        },
-        "aqua-sqlite": {
-          "title": "Import from Aqua SQLite Database...",
-          "success": "Imported {{count}} entries",
-          "error": "Failed to import: {{error}}",
-          "loading-db": "Loading database...",
-          "loaded-db": "Database has been loaded.",
-          "load-db-failed": "Failed to load database.",
-          "read-users-failed": "Failed to read users from Aqua SQLite database: {{error}}",
-          "dialog-title": "Import from Aqua SQLite",
-          "select-user": "Choose the user to import their gameplays from.",
-          "confirm-import": "Confirm importing the selected user's gameplays.",
-          "sheet-not-found": "Failed to find chart for a gameplay with:",
-          "import-action": "Import"
-        },
-        "json": {
-          "title": "Import from DXRating JSON...",
-          "success": "Imported {{count}} entries",
-          "error": "Failed to import: {{error}}"
-        },
-        "net-records": {
-          "title": "Import from NET Records...",
-          "success": "Imported {{count}} entries",
-          "error": "Failed to import: {{error}}",
-          "importing": "Importing records from NET...",
-          "no-credentials": "Error occurred while importing records from NET: No credentials stored. Please head to Rating Calculator - Import - Import from NET and set your Sega ID and password to continue.",
-          "imported": "Imported {{count}} records from {{region}} NET.",
-          "latest-play": "Latest Play",
-          "date": "Date: {{date}}",
-          "cached": {
-            "title": "Using cached play records",
-            "description": "Last updated {{minutes}} min ago. To reduce load on maimai NET, records are reused within 15 minutes."
-          },
-          "errors": {
-            "maintenance": "maimai NET is currently under maintenance. Please try again later.",
-            "invalid-credentials": "Login failed. Please check your SEGA ID and password.",
-            "unknown": "An unexpected error occurred. Please try again.",
-            "internal": "A server error occurred while fetching records. Please try again.",
-            "token": "Failed to connect to maimai NET. Please try again later."
-          },
-          "dialog": {
-            "title": "Import from NET",
-            "sega-id": "Your Sega ID",
-            "sega-password": "Your Sega ID Password",
-            "region": {
-              "label": "Region",
-              "intl": {
-                "name": "International",
-                "domain": "(maimaidx-eng.com)"
-              },
-              "jp": {
-                "name": "Japan",
-                "domain": "(maimaidx.jp)"
-              }
-            },
-            "remember-credentials": {
-              "label": "Remember Credentials",
-              "description": "Your credentials will be stored locally in your browser."
-            },
-            "auto-import": {
-              "label": "Auto-import on App Start",
-              "description": "Automatically start importing records from NET when you open DXRating. Requires \"Remember Credentials\" to be enabled.",
-              "options": {
-                "disabled": {
-                  "title": "Disabled"
-                },
-                "replace": {
-                  "title": "Replace",
-                  "description": "Replaces all records"
-                },
-                "merge": {
-                  "title": "Merge",
-                  "description": "Overwrites record if higher, adds record if missing"
-                }
-              }
-            },
-            "security-notice": {
-              "credentials": "Your credentials will not be stored, logged, or shared, and are only used for the duration of this import process. If you wish, you may",
-              "source-code": "inspect the source code",
-              "slsa": {
-                "text": "We are also in the progress of employing the",
-                "framework": "SLSA framework",
-                "description": ", including reproducible builds and signed container images to help users determine the authenticity of the code running on our server. Moreover, if demand arises, we will support connecting to self-hosted instances of the NET import service so you can run it on your own infra."
-              }
-            },
-            "actions": {
-              "close": "Close",
-              "import-once": "Import Once",
-              "reimport": {
-                "title": "Re-import Now",
-                "description": "(auto-import enabled)"
-              },
-              "importing": "Importing..."
-            }
-          }
-        }
-      },
-      "clear": {
-        "button": "Clear",
-        "dialog": {
-          "title": "Clear all entries?",
-          "warning": "Warning",
-          "message": "This will clear all entries.",
-          "cancel": "Cancel",
-          "confirm": "Clear"
-        }
-      }
-    }
+    "breakdown.title": "Rating Breakdown",
+    "auto-save.title": "Auto-save",
+    "auto-save.saved-records": "Saved {{count}} records",
+    "quick-actions.title": "Quick Actions",
+    "quick-actions.show-only-b50": "Show only B50 entries",
+    "quick-actions.compact-mode": "Compact Mode",
+    "table.no-entries": "No entries",
+    "table.headers.chart": "Chart",
+    "table.headers.included-in": "Incl. In",
+    "table.headers.combo": "Combo",
+    "table.headers.sync": "Sync",
+    "table.headers.achievement-rate": "Achievement Rate",
+    "table.headers.rating": "Rating",
+    "table.headers.actions": "Actions",
+    "table.remove-dialog.title": "Remove rating entry?",
+    "table.remove-dialog.cancel": "Cancel",
+    "table.remove-dialog.remove": "Remove",
+    "statistics.total": "Total",
+    "statistics.best-15": "Best 15",
+    "statistics.best-35": "Best 35",
+    "statistics.entries": "Entries {{current}}/{{total}}",
+    "statistics.subtotal": "Subtotal",
+    "statistics.min": "Min",
+    "statistics.avg": "Avg",
+    "statistics.max": "Max",
+    "statistics.histogram-hint": "Histogram buckets are visualized in shape of (min, max] to better represent the data distribution.",
+    "statistics.histogram-available": "Histogram Available",
+    "statistics.b15-avg": "B15 AVG: {{value}}",
+    "statistics.b35-avg": "B35 AVG: {{value}}",
+    "add-entry.chart": "Chart",
+    "add-entry.achievement-rate": "Achievement Rate",
+    "add-entry.validation.required": "Required",
+    "add-entry.validation.invalid-number": "Invalid number",
+    "add-entry.validation.range": "Must be between 0% and 101%",
+    "add-entry.current-rating": "Current Rating",
+    "add-entry.new-rating": "New Rating",
+    "add-entry.rating": "Rating",
+    "add-entry.replace": "Replace (+{{diff}})",
+    "add-entry.add": "Add",
+    "io.export.button": "Export...",
+    "io.export.to-json.all-records": "Export to JSON (All Records)",
+    "io.export.to-json.b50-records": "Export to JSON (Only B50 Records)",
+    "io.export.toast-success": "Exported as {{name}}",
+    "io.export.oneshot-image.button": "Render as OneShot Image",
+    "io.export.oneshot-image.dialog.title": "Render as OneShot Image",
+    "io.export.oneshot-image.dialog.loading.title": "Rendering...",
+    "io.export.oneshot-image.dialog.loading.calculating": "Calculating...",
+    "io.export.oneshot-image.dialog.loading.message": "This may take a while depending on the current server load; typically rendering will finish within 10 seconds.",
+    "io.export.oneshot-image.dialog.error": "An error occurred while rendering the image: {{message}}",
+    "io.export.oneshot-image.dialog.save-instruction": "Long-press or right-click the image to save it to your device.",
+    "io.export.oneshot-image.dialog.beta-notice": "This feature is in beta and may not work as expected. Please feel free to report any issues or feedback to the developer :D",
+    "io.import.button": "Import...",
+    "io.import.diving-fish.title": "Import from diving-fish...",
+    "io.import.diving-fish.description": "Choose one of the following two options and fill in the corresponding field. Your settings will be saved in your browser.",
+    "io.import.diving-fish.loading": "Importing from diving-fish...",
+    "io.import.diving-fish.success": "Successfully imported {{count}} records from diving-fish.",
+    "io.import.diving-fish.error": "An error occurred while importing records from diving-fish. Are you sure the username or QQ binded is correct? {{error}}",
+    "io.import.diving-fish.invalid-profile": "Please enter your Diving-Fish profile",
+    "io.import.diving-fish.no-sheets": "No charts found",
+    "io.import.diving-fish.warning.title": "Heads up!",
+    "io.import.diving-fish.warning.description": "Your existing entries will be overwritten with the imported ones.",
+    "io.import.diving-fish.or": "OR",
+    "io.import.diving-fish.close": "Close",
+    "io.import.diving-fish.import": "Import",
+    "io.import.diving-fish.importing": "Importing...",
+    "io.import.diving-fish.missing-profile-info": "Please enter your Diving-Fish profile",
+    "io.import.diving-fish.only-one-of-the-two-fields-should-be-filled": "Please enter your Diving-Fish profile",
+    "io.import.lxns.title": "Import from LXNS (落雪咖啡屋)",
+    "io.import.lxns.login-required": "Login required",
+    "io.import.lxns.description": "Connect your LXNS (maimai.lxns.net) account via OAuth to import your scores.",
+    "io.import.lxns.connect": "Connect to LXNS",
+    "io.import.lxns.connecting": "Redirecting to LXNS...",
+    "io.import.lxns.connected": "Your LXNS account is connected.",
+    "io.import.lxns.import": "Import Now",
+    "io.import.lxns.importing": "Importing...",
+    "io.import.lxns.disconnect": "Disconnect",
+    "io.import.lxns.disconnect-confirm": "Disconnect your LXNS account? You can reconnect at any time.",
+    "io.import.lxns.disconnected": "LXNS account disconnected.",
+    "io.import.lxns.success": "Imported {{count}} entries from LXNS.",
+    "io.import.lxns.error": "Failed to import from LXNS: {{error}}",
+    "io.import.lxns.reconnect-required": "Your LXNS connection has expired. Please reconnect.",
+    "io.import.lxns.close": "Close",
+    "io.import.lxns.callback.success": "Successfully connected to LXNS! You can now import your scores.",
+    "io.import.lxns.callback.error": "Failed to connect to LXNS: {{error}}",
+    "io.import.lxns.callback.redirecting": "Returning to rating calculator...",
+    "io.import.aqua-dx.title": "Import from AquaDX Exported JSON...",
+    "io.import.aqua-dx.success": "Imported {{count}} entries",
+    "io.import.mu-net.title": "Import from MuNET Exported JSON...",
+    "io.import.mu-net.success": "Imported {{count}} entries",
+    "io.import.mu-net.error": "Failed to import: {{error}}",
+    "io.import.aqua-sqlite.title": "Import from Aqua SQLite Database...",
+    "io.import.aqua-sqlite.success": "Imported {{count}} entries",
+    "io.import.aqua-sqlite.error": "Failed to import: {{error}}",
+    "io.import.aqua-sqlite.loading-db": "Loading database...",
+    "io.import.aqua-sqlite.loaded-db": "Database has been loaded.",
+    "io.import.aqua-sqlite.load-db-failed": "Failed to load database.",
+    "io.import.aqua-sqlite.read-users-failed": "Failed to read users from Aqua SQLite database: {{error}}",
+    "io.import.aqua-sqlite.dialog-title": "Import from Aqua SQLite",
+    "io.import.aqua-sqlite.select-user": "Choose the user to import their gameplays from.",
+    "io.import.aqua-sqlite.confirm-import": "Confirm importing the selected user's gameplays.",
+    "io.import.aqua-sqlite.sheet-not-found": "Failed to find chart for a gameplay with:",
+    "io.import.aqua-sqlite.import-action": "Import",
+    "io.import.json.title": "Import from DXRating JSON...",
+    "io.import.json.success": "Imported {{count}} entries",
+    "io.import.json.error": "Failed to import: {{error}}",
+    "io.import.net-records.title": "Import from NET Records...",
+    "io.import.net-records.success": "Imported {{count}} entries",
+    "io.import.net-records.error": "Failed to import: {{error}}",
+    "io.import.net-records.importing": "Importing records from NET...",
+    "io.import.net-records.no-credentials": "Error occurred while importing records from NET: No credentials stored. Please head to Rating Calculator - Import - Import from NET and set your Sega ID and password to continue.",
+    "io.import.net-records.imported": "Imported {{count}} records from {{region}} NET.",
+    "io.import.net-records.latest-play": "Latest Play",
+    "io.import.net-records.date": "Date: {{date}}",
+    "io.import.net-records.cached.title": "Using cached play records",
+    "io.import.net-records.cached.description": "Last updated {{minutes}} min ago. To reduce load on maimai NET, records are reused within 15 minutes.",
+    "io.import.net-records.errors.maintenance": "maimai NET is currently under maintenance. Please try again later.",
+    "io.import.net-records.errors.invalid-credentials": "Login failed. Please check your SEGA ID and password.",
+    "io.import.net-records.errors.unknown": "An unexpected error occurred. Please try again.",
+    "io.import.net-records.errors.internal": "A server error occurred while fetching records. Please try again.",
+    "io.import.net-records.errors.token": "Failed to connect to maimai NET. Please try again later.",
+    "io.import.net-records.dialog.title": "Import from NET",
+    "io.import.net-records.dialog.sega-id": "Your Sega ID",
+    "io.import.net-records.dialog.sega-password": "Your Sega ID Password",
+    "io.import.net-records.dialog.region.label": "Region",
+    "io.import.net-records.dialog.region.intl.name": "International",
+    "io.import.net-records.dialog.region.intl.domain": "(maimaidx-eng.com)",
+    "io.import.net-records.dialog.region.jp.name": "Japan",
+    "io.import.net-records.dialog.region.jp.domain": "(maimaidx.jp)",
+    "io.import.net-records.dialog.remember-credentials.label": "Remember Credentials",
+    "io.import.net-records.dialog.remember-credentials.description": "Your credentials will be stored locally in your browser.",
+    "io.import.net-records.dialog.auto-import.label": "Auto-import on App Start",
+    "io.import.net-records.dialog.auto-import.description": "Automatically start importing records from NET when you open DXRating. Requires \"Remember Credentials\" to be enabled.",
+    "io.import.net-records.dialog.auto-import.options.disabled.title": "Disabled",
+    "io.import.net-records.dialog.auto-import.options.replace.title": "Replace",
+    "io.import.net-records.dialog.auto-import.options.replace.description": "Replaces all records",
+    "io.import.net-records.dialog.auto-import.options.merge.title": "Merge",
+    "io.import.net-records.dialog.auto-import.options.merge.description": "Overwrites record if higher, adds record if missing",
+    "io.import.net-records.dialog.security-notice.credentials": "Your credentials will not be stored, logged, or shared, and are only used for the duration of this import process. If you wish, you may",
+    "io.import.net-records.dialog.security-notice.source-code": "inspect the source code",
+    "io.import.net-records.dialog.security-notice.slsa.text": "We are also in the progress of employing the",
+    "io.import.net-records.dialog.security-notice.slsa.framework": "SLSA framework",
+    "io.import.net-records.dialog.security-notice.slsa.description": ", including reproducible builds and signed container images to help users determine the authenticity of the code running on our server. Moreover, if demand arises, we will support connecting to self-hosted instances of the NET import service so you can run it on your own infra.",
+    "io.import.net-records.dialog.actions.close": "Close",
+    "io.import.net-records.dialog.actions.import-once": "Import Once",
+    "io.import.net-records.dialog.actions.reimport.title": "Re-import Now",
+    "io.import.net-records.dialog.actions.reimport.description": "(auto-import enabled)",
+    "io.import.net-records.dialog.actions.importing": "Importing...",
+    "io.clear.button": "Clear",
+    "io.clear.dialog.title": "Clear all entries?",
+    "io.clear.dialog.warning": "Warning",
+    "io.clear.dialog.message": "This will clear all entries.",
+    "io.clear.dialog.cancel": "Cancel",
+    "io.clear.dialog.confirm": "Clear"
   }
 }

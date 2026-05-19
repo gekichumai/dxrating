@@ -62,6 +62,37 @@ const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
   </div>
 )
 
+const DAY_MS = 1000 * 60 * 60 * 24
+const RELATIVE_TIME_FORMATS: Record<string, Intl.RelativeTimeFormat> = {
+  en: new Intl.RelativeTimeFormat('en', { numeric: 'auto' }),
+  ja: new Intl.RelativeTimeFormat('ja', { numeric: 'auto' }),
+  'zh-Hans': new Intl.RelativeTimeFormat('zh-Hans', { numeric: 'auto' }),
+  'zh-Hant': new Intl.RelativeTimeFormat('zh-Hant', { numeric: 'auto' }),
+}
+
+const CommentCreatedAt: FC<{ createdAt: string }> = ({ createdAt }) => {
+  const formattedDate = useMemo(() => new Date(createdAt).toLocaleString(), [createdAt])
+
+  return <div className="text-xs ml-auto">{formattedDate}</div>
+}
+
+const ReleaseDateText: FC<{ releaseDateTimestamp: number }> = ({ releaseDateTimestamp }) => {
+  const { t, i18n } = useTranslation(['sheet'])
+  const releaseDateText = useMemo(() => {
+    const releaseDate = new Date(releaseDateTimestamp)
+    const relativeTimeFormat = RELATIVE_TIME_FORMATS[i18n.language] ?? RELATIVE_TIME_FORMATS.en
+
+    return t('sheet:release-date', {
+      absoluteDate: releaseDate.toLocaleString(i18n.language, {
+        dateStyle: 'medium',
+      }),
+      relativeDate: relativeTimeFormat.format(Math.floor((releaseDate.getTime() - Date.now()) / DAY_MS), 'day'),
+    })
+  }, [releaseDateTimestamp, i18n.language, t])
+
+  return releaseDateText
+}
+
 const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const { t } = useTranslation(['auth', 'sheet', 'global'])
   const { session, ensureAuthenticated, openLoginDialog, LoginDialog } = useAuth()
@@ -154,7 +185,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
               <div className="text-zinc-500 flex items-center">
                 <div className="text-sm font-bold">{comment.display_name ?? t('sheet:comments.anonymous')}</div>
 
-                <div className="text-xs ml-auto">{new Date(comment.created_at).toLocaleString()}</div>
+                <CommentCreatedAt createdAt={comment.created_at} />
               </div>
               <div>
                 {comment.content.split('\n').map((line, i) => (
@@ -181,7 +212,7 @@ export interface SheetDialogContentProps {
 }
 
 export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, currentAchievementRate }) => {
-  const { t, i18n } = useTranslation(['sheet', 'global'])
+  const { t } = useTranslation(['sheet', 'global'])
   const ratings = useMemo(() => {
     const rates = [...PRESET_ACHIEVEMENT_RATES]
     if (currentAchievementRate && !rates.includes(currentAchievementRate)) {
@@ -193,7 +224,6 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
       rating: calculateRating(sheet.internalLevelValue, rate),
     }))
   }, [sheet, currentAchievementRate])
-  const releaseDate = new Date(sheet.releaseDateTimestamp)
 
   return (
     <div className="flex flex-col gap-2 relative">
@@ -203,15 +233,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
 
       <div className="text-sm -mt-2">
         <div className="text-zinc-600">
-          {sheet.releaseDate &&
-            t('sheet:release-date', {
-              absoluteDate: releaseDate.toLocaleString(i18n.language, {
-                dateStyle: 'medium',
-              }),
-              relativeDate: new Intl.RelativeTimeFormat(i18n.language, {
-                numeric: 'auto',
-              }).format(Math.floor((releaseDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)), 'day'),
-            })}
+          {sheet.releaseDate && <ReleaseDateText releaseDateTimestamp={sheet.releaseDateTimestamp} />}
         </div>
       </div>
 

@@ -1,199 +1,119 @@
 {
   "root": {
-    "pages": {
-      "search": {
-        "title": "搜尋譜面",
-        "seo-title": "搜尋譜面",
-        "seo-description": "按歌曲名、藝術家或難度瀏覽所有 maimai DX 譜面，查看譜面定數、音符數和詳細譜面資訊。"
-      },
-      "rating": {
-        "title": "計算評分",
-        "seo-title": "評分計算器",
-        "seo-description": "在 DXRating 計算和管理你的 maimai DX Rating 記錄、Best 50、達成率和分數詳情。"
-      }
-    },
-    "seo": {
-      "description": "DXRating 是 maimai DX Rating 分析工具，也提供譜面詳情等功能。",
-      "keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating 分析工具, 中二節奏, 舞萌, 舞萌DX, 譜面詳情, 評分計算器, maimai wiki"
-    },
-    "share": {
-      "copy-content": "{{ link }}",
-      "copy-succeeded": "已複製至剪貼簿"
-    },
-    "external-links": {
-      "discord": "加入 DXRating Discord 伺服器",
-      "github": "在 GitHub 開啟 DXRating"
-    }
+    "pages.search.title": "搜尋譜面",
+    "pages.search.seo-title": "搜尋譜面",
+    "pages.search.seo-description": "按歌曲名、藝術家或難度瀏覽所有 maimai DX 譜面，查看譜面定數、音符數和詳細譜面資訊。",
+    "pages.rating.title": "計算評分",
+    "pages.rating.seo-title": "評分計算器",
+    "pages.rating.seo-description": "在 DXRating 計算和管理你的 maimai DX Rating 記錄、Best 50、達成率和分數詳情。",
+    "seo.description": "DXRating 是 maimai DX Rating 分析工具，也提供譜面詳情等功能。",
+    "seo.keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating 分析工具, 中二節奏, 舞萌, 舞萌DX, 譜面詳情, 評分計算器, maimai wiki",
+    "share.copy-content": "{{ link }}",
+    "share.copy-succeeded": "已複製至剪貼簿",
+    "external-links.discord": "加入 DXRating Discord 伺服器",
+    "external-links.github": "在 GitHub 開啟 DXRating"
   },
   "settings": {
-    "region": {
-      "title": "伺服器：{{region}}",
-      "jp": "日本",
-      "intl": "國際",
-      "cn": "中國大陸",
-      "_generic": "通用"
-    },
-    "version-and-region": {
-      "select": "選擇 DXData 數據版本與伺服器",
-      "select-generic": "或僅選擇 DXData 數據版本",
-      "info": "不同的數據版本與服務器對應了不同的樂曲與譜面定數可見性",
-      "logo-alt": "maimai DX {{version}} 標誌"
-    },
-    "language": {
-      "select": "選擇語言"
-    },
-    "import-provider": {
-      "diving-fish": {
-        "qq": "",
-        "title": "",
-        "username": ""
-      }
-    }
+    "region.title": "伺服器：{{region}}",
+    "region.jp": "日本",
+    "region.intl": "國際",
+    "region.cn": "中國大陸",
+    "region._generic": "通用",
+    "version-and-region.select": "選擇 DXData 數據版本與伺服器",
+    "version-and-region.select-generic": "或僅選擇 DXData 數據版本",
+    "version-and-region.info": "不同的數據版本與服務器對應了不同的樂曲與譜面定數可見性",
+    "version-and-region.logo-alt": "maimai DX {{version}} 標誌",
+    "language.select": "選擇語言",
+    "import-provider.diving-fish.qq": "",
+    "import-provider.diving-fish.title": "",
+    "import-provider.diving-fish.username": ""
   },
   "sheet": {
     "search": "搜尋",
     "ocr": "啟動 OCR",
     "filter-current-version": "過濾當前版本 B15：僅顯示來自 {{version}} 的譜面",
     "search-summary": "匹配到 {{found}} 份譜面 / 總計 {{total}} 份 (耗時 {{elapsed}}ms)",
-    "details": {
-      "achievement-to-rating": {
-        "achievement": "完成率",
-        "rating": "得分",
-        "title": "完成率→得分"
-      },
-      "bpm": "BPM",
-      "category": "類別",
-      "chart-designer": "製譜",
-      "credits": "部分數據來自 <link />",
-      "notes-statistics": {
-        "break": "Break",
-        "hold": "Hold",
-        "slide": "Slide",
-        "tap": "Tap",
-        "title": "音符統計",
-        "total": "總計",
-        "touch": "Touch"
-      },
-      "regional-availability": "可遊玩地區",
-      "song-artist": "作曲",
-      "title": "詳細資訊",
-      "unlock-required": ""
-    },
-    "internal-level-history": {
-      "empty": "無可用歷史紀錄",
-      "title": "譜面定數歷史"
-    },
+    "details.achievement-to-rating.achievement": "完成率",
+    "details.achievement-to-rating.rating": "得分",
+    "details.achievement-to-rating.title": "完成率→得分",
+    "details.bpm": "BPM",
+    "details.category": "類別",
+    "details.chart-designer": "製譜",
+    "details.credits": "部分數據來自 <link />",
+    "details.notes-statistics.break": "Break",
+    "details.notes-statistics.hold": "Hold",
+    "details.notes-statistics.slide": "Slide",
+    "details.notes-statistics.tap": "Tap",
+    "details.notes-statistics.title": "音符統計",
+    "details.notes-statistics.total": "總計",
+    "details.notes-statistics.touch": "Touch",
+    "details.regional-availability": "可遊玩地區",
+    "details.song-artist": "作曲",
+    "details.title": "詳細資訊",
+    "details.unlock-required": "",
+    "internal-level-history.empty": "無可用歷史紀錄",
+    "internal-level-history.title": "譜面定數歷史",
     "release-date": "樂曲上線日 {{absoluteDate}} ({{relativeDate}})",
-    "filter": {
-      "title": "篩選",
-      "internal-level-value": {
-        "min": "下限",
-        "max": "上限",
-        "title": "定數"
-      },
-      "version": {
-        "title": "樂曲上線版本",
-        "gesture-hint": {
-          "tap": "切換",
-          "tap-hold": "單選"
-        }
-      },
-      "tags": {
-        "title": "標籤"
-      },
-      "category": {
-        "title": "樂曲類型"
-      },
-      "favorites": {
-        "title": "收藏",
-        "only": "僅顯示收藏"
-      },
-      "difficulty": {
-        "title": "難度",
-        "gesture-hint": {
-          "tap": "切換",
-          "tap-hold": "單選"
-        }
-      }
-    },
-    "sort": {
-      "title": "排序",
-      "add": "添加排序規則",
-      "predicate": "規則 #{{index}}",
-      "internal-level-value": {
-        "asc": "譜面定數 (低→高)",
-        "desc": "譜面定數 (高→低)"
-      },
-      "release-date": {
-        "asc": "追加日期 (舊→新)",
-        "desc": "追加日期 (新→舊)"
-      },
-      "temporarily-disabled": "搜索關鍵詞已輸入，排序功能暫時關閉"
-    },
-    "sort-and-filter": {
-      "title": "篩選與排序",
-      "reset": {
-        "dialog": {
-          "title": "重設全部篩選與排序設定",
-          "message": "您真的要重設全部篩選與排序設定嗎？",
-          "cancel": "取消",
-          "confirm": "確定"
-        },
-        "button": "重設全部"
-      }
-    },
-    "tags": {
-      "add": {
-        "button": "添加",
-        "title": "添加標籤",
-        "toast-failed": "添加標籤失敗：{{error}}。請檢查是否已登錄。",
-        "toast-success": "已添加成功",
-        "login-required": "請登錄或註冊以添加標籤。"
-      }
-    },
-    "copy-title": {
-      "toast-success": "已複製標題至剪貼簿",
-      "tooltip": "點擊複製"
-    },
-    "copy-link": {
-      "toast-success": "已複製連結至剪貼簿",
-      "tooltip": "複製連結"
-    },
-    "copy-alt-name": {
-      "toast-success": "已複製 {{content}} 至剪貼簿"
-    },
-    "aliases": {
-      "add-new": "添加新別名",
-      "dialog-title": "添加別名",
-      "input-label": "輸入別名",
-      "adding": "添加中...",
-      "add-button": "添加",
-      "toast-success": "已添加別名：{{name}}",
-      "toast-failed": "添加別名失敗：{{error}}",
-      "login-required": "請登錄或註冊以添加別名。"
-    },
-    "comments": {
-      "title": "評論",
-      "placeholder": "發表評論...",
-      "anonymous": "*匿名用戶*",
-      "empty": "暫無評論。",
-      "sign-in-to-comment": "登錄或註冊以發表評論。"
-    }
+    "filter.title": "篩選",
+    "filter.internal-level-value.min": "下限",
+    "filter.internal-level-value.max": "上限",
+    "filter.internal-level-value.title": "定數",
+    "filter.version.title": "樂曲上線版本",
+    "filter.version.gesture-hint.tap": "切換",
+    "filter.version.gesture-hint.tap-hold": "單選",
+    "filter.tags.title": "標籤",
+    "filter.category.title": "樂曲類型",
+    "filter.favorites.title": "收藏",
+    "filter.favorites.only": "僅顯示收藏",
+    "filter.difficulty.title": "難度",
+    "filter.difficulty.gesture-hint.tap": "切換",
+    "filter.difficulty.gesture-hint.tap-hold": "單選",
+    "sort.title": "排序",
+    "sort.add": "添加排序規則",
+    "sort.predicate": "規則 #{{index}}",
+    "sort.internal-level-value.asc": "譜面定數 (低→高)",
+    "sort.internal-level-value.desc": "譜面定數 (高→低)",
+    "sort.release-date.asc": "追加日期 (舊→新)",
+    "sort.release-date.desc": "追加日期 (新→舊)",
+    "sort.temporarily-disabled": "搜索關鍵詞已輸入，排序功能暫時關閉",
+    "sort-and-filter.title": "篩選與排序",
+    "sort-and-filter.reset.dialog.title": "重設全部篩選與排序設定",
+    "sort-and-filter.reset.dialog.message": "您真的要重設全部篩選與排序設定嗎？",
+    "sort-and-filter.reset.dialog.cancel": "取消",
+    "sort-and-filter.reset.dialog.confirm": "確定",
+    "sort-and-filter.reset.button": "重設全部",
+    "tags.add.button": "添加",
+    "tags.add.title": "添加標籤",
+    "tags.add.toast-failed": "添加標籤失敗：{{error}}。請檢查是否已登錄。",
+    "tags.add.toast-success": "已添加成功",
+    "tags.add.login-required": "請登錄或註冊以添加標籤。",
+    "copy-title.toast-success": "已複製標題至剪貼簿",
+    "copy-title.tooltip": "點擊複製",
+    "copy-link.toast-success": "已複製連結至剪貼簿",
+    "copy-link.tooltip": "複製連結",
+    "copy-alt-name.toast-success": "已複製 {{content}} 至剪貼簿",
+    "aliases.add-new": "添加新別名",
+    "aliases.dialog-title": "添加別名",
+    "aliases.input-label": "輸入別名",
+    "aliases.adding": "添加中...",
+    "aliases.add-button": "添加",
+    "aliases.toast-success": "已添加別名：{{name}}",
+    "aliases.toast-failed": "添加別名失敗：{{error}}",
+    "aliases.login-required": "請登錄或註冊以添加別名。",
+    "comments.title": "評論",
+    "comments.placeholder": "發表評論...",
+    "comments.anonymous": "*匿名用戶*",
+    "comments.empty": "暫無評論。",
+    "comments.sign-in-to-comment": "登錄或註冊以發表評論。"
   },
   "song": {
-    "not-found": {
-      "title": "未找到歌曲",
-      "description": "您要查找的歌曲不存在。",
-      "back-to-search": "返回搜尋"
-    },
-    "type": {
-      "dx": "DX",
-      "std": "標準",
-      "utage": "宴"
-    },
-    "seo": {
-      "description": "{{title}} / {{artist}} - {{sheetLabel}} 譜面詳情、譜面定數與音符數 - DXRating。"
-    }
+    "not-found.title": "未找到歌曲",
+    "not-found.description": "您要查找的歌曲不存在。",
+    "not-found.back-to-search": "返回搜尋",
+    "type.dx": "DX",
+    "type.std": "標準",
+    "type.utage": "宴",
+    "seo.description": "{{title}} / {{artist}} - {{sheetLabel}} 譜面詳情、譜面定數與音符數 - DXRating。"
   },
   "about": {
     "title": "關於本站",
@@ -204,36 +124,22 @@
     "fesplus-background": "FESTiVAL+ 版本背景圖",
     "internal-level-value": "譜面定數",
     "source-code": "源代碼",
-    "version": {
-      "build": "構建序",
-      "build-time": "構建於",
-      "commit": "commit",
-      "upstream-data-update-time": "上游數據版本"
-    },
-    "aliases": {
-      "yuri-yuzuchan-maimaidx": "樂曲別名 (中文)",
-      "lomotos10-gcmbot": "樂曲別名 (英文、韓文與羅馬音)"
-    },
-    "disclaimer": {
-      "title": "免責聲明",
-      "content": "DXRating 不隸屬於任何遊戲公司。本站使用的任何資產僅供非商業用途，所有權利均屬於其各自所有者。本站對因使用所提供的信息而造成的任何損失或損害不承擔任何責任。如果您有任何疑問或建議，歡迎聯繫本站作者。"
-    }
+    "version.build": "構建序",
+    "version.build-time": "構建於",
+    "version.commit": "commit",
+    "version.upstream-data-update-time": "上游數據版本",
+    "aliases.yuri-yuzuchan-maimaidx": "樂曲別名 (中文)",
+    "aliases.lomotos10-gcmbot": "樂曲別名 (英文、韓文與羅馬音)",
+    "disclaimer.title": "免責聲明",
+    "disclaimer.content": "DXRating 不隸屬於任何遊戲公司。本站使用的任何資產僅供非商業用途，所有權利均屬於其各自所有者。本站對因使用所提供的信息而造成的任何損失或損害不承擔任何責任。如果您有任何疑問或建議，歡迎聯繫本站作者。"
   },
   "form": {
-    "validation": {
-      "max": {
-        "message": "有效的定數必須小於或等於 {{value}}"
-      },
-      "min": {
-        "message": "有效的定數必須大於或等於 {{value}}"
-      }
-    }
+    "validation.max.message": "有效的定數必須小於或等於 {{value}}",
+    "validation.min.message": "有效的定數必須大於或等於 {{value}}"
   },
   "global": {
-    "gesture-hint": {
-      "tap": "點按",
-      "tap-hold": "長按"
-    },
+    "gesture-hint.tap": "點按",
+    "gesture-hint.tap-hold": "長按",
     "beta": "測試版",
     "submit": "提交",
     "back": "返回",
@@ -245,353 +151,241 @@
     "available": "可用"
   },
   "auth": {
-    "login": {
-      "label": "登錄",
-      "toast-success": "登錄成功"
-    },
-    "logout": {
-      "label": "登出",
-      "toast-success": "已登出",
-      "confirm-title": "登出",
-      "confirm-description": "確定要登出嗎？"
-    },
-    "update-password": {
-      "label": "重設密碼",
-      "toast-success": "已重設密碼"
-    },
-    "update-display-name": {
-      "label": "修改顯示名稱",
-      "sign-in-required": "更新顯示名稱前請先登錄。",
-      "toast-failed": "更新個人資料失敗：{{error}}",
-      "toast-success": "您的顯示名稱已成功更新為「{{name}}」。"
-    },
-    "sign-up": {
-      "label": "註冊",
-      "title": "建立帳戶",
-      "toast-success": "帳戶已建立，請登錄。"
-    },
-    "form": {
-      "title": "登錄",
-      "subtitle": "歡迎回來！請登錄以繼續",
-      "continue-with-github": "透過 GitHub 登錄",
-      "continue-with-google": "透過 Google 登錄",
-      "or": "或",
-      "email": "電子郵件",
-      "password": "密碼",
-      "continue": "繼續",
-      "sign-in-with-passkey": "使用通行金鑰登錄",
-      "has-account": "已有帳戶？登錄",
-      "no-account": "還沒有帳戶？註冊",
-      "error-generic": "發生錯誤",
-      "error-passkey": "通行金鑰登錄失敗",
-      "last-used": "上次使用",
-      "login-or-register-to-comment": "登錄或註冊以發表評論",
-      "validation": {
-        "email-required": "請輸入電子郵件地址",
-        "email-invalid": "請輸入有效的電子郵件地址",
-        "password-required": "請輸入密碼",
-        "password-min-length": "密碼長度至少為8個字元"
-      }
-    },
-    "user-menu": {
-      "sign-in": "登錄 DXRating",
-      "open-profile": "開啟帳戶選單"
-    },
-    "user-profile": {
-      "title": "帳戶",
-      "profile": "個人資料",
-      "security": "安全",
-      "display-name": "顯示名稱",
-      "email": "電子郵件地址",
-      "save": "儲存",
-      "password": {
-        "title": "密碼",
-        "current": "目前密碼",
-        "new": "新密碼",
-        "confirm": "確認新密碼",
-        "mismatch": "密碼不一致",
-        "save": "變更密碼",
-        "success": "密碼已變更",
-        "error": "密碼變更失敗：{{error}}"
-      },
-      "passkeys": {
-        "title": "通行金鑰",
-        "add": "新增通行金鑰",
-        "delete": "移除",
-        "empty": "尚無通行金鑰",
-        "added": "通行金鑰已新增",
-        "deleted": "通行金鑰已移除",
-        "error": "操作失敗：{{error}}",
-        "confirm-delete-title": "移除通行金鑰",
-        "confirm-delete-description": "移除後將無法使用此通行金鑰登錄。"
-      },
-      "devices": {
-        "title": "活躍裝置",
-        "current": "目前裝置",
-        "revoke": "登出",
-        "revoked": "已登出該裝置",
-        "confirm-revoke-title": "登出裝置",
-        "confirm-revoke-description": "該裝置上的工作階段將被終止。"
-      },
-      "accounts": {
-        "title": "連結帳戶",
-        "description": "管理您的登錄方式。",
-        "google": "Google",
-        "github": "GitHub",
-        "email-password": "電子郵件與密碼",
-        "connected": "已連結",
-        "not-connected": "未連結",
-        "connect": "連結",
-        "disconnect": "解除",
-        "disconnected": "已解除連結",
-        "error": "操作失敗：{{error}}",
-        "confirm-disconnect-title": "解除連結",
-        "confirm-disconnect-description": "解除後將無法使用此帳戶登錄。"
-      },
-      "confirm-cancel": "取消",
-      "confirm-ok": "確認",
-      "oauth-error": {
-        "email_doesn't_match": "無法連結此帳戶，因為電子郵件地址與您的帳戶不符。",
-        "unable_to_link_account": "無法連結此帳戶。該提供商可能未經驗證。",
-        "account_already_linked_to_different_user": "此帳戶已連結到其他使用者。",
-        "default": "驗證錯誤：{{error}}"
-      }
-    }
+    "login.label": "登錄",
+    "login.toast-success": "登錄成功",
+    "logout.label": "登出",
+    "logout.toast-success": "已登出",
+    "logout.confirm-title": "登出",
+    "logout.confirm-description": "確定要登出嗎？",
+    "update-password.label": "重設密碼",
+    "update-password.toast-success": "已重設密碼",
+    "update-display-name.label": "修改顯示名稱",
+    "update-display-name.sign-in-required": "更新顯示名稱前請先登錄。",
+    "update-display-name.toast-failed": "更新個人資料失敗：{{error}}",
+    "update-display-name.toast-success": "您的顯示名稱已成功更新為「{{name}}」。",
+    "sign-up.label": "註冊",
+    "sign-up.title": "建立帳戶",
+    "sign-up.toast-success": "帳戶已建立，請登錄。",
+    "form.title": "登錄",
+    "form.subtitle": "歡迎回來！請登錄以繼續",
+    "form.continue-with-github": "透過 GitHub 登錄",
+    "form.continue-with-google": "透過 Google 登錄",
+    "form.or": "或",
+    "form.email": "電子郵件",
+    "form.password": "密碼",
+    "form.continue": "繼續",
+    "form.sign-in-with-passkey": "使用通行金鑰登錄",
+    "form.has-account": "已有帳戶？登錄",
+    "form.no-account": "還沒有帳戶？註冊",
+    "form.error-generic": "發生錯誤",
+    "form.error-passkey": "通行金鑰登錄失敗",
+    "form.last-used": "上次使用",
+    "form.login-or-register-to-comment": "登錄或註冊以發表評論",
+    "form.validation.email-required": "請輸入電子郵件地址",
+    "form.validation.email-invalid": "請輸入有效的電子郵件地址",
+    "form.validation.password-required": "請輸入密碼",
+    "form.validation.password-min-length": "密碼長度至少為8個字元",
+    "user-menu.sign-in": "登錄 DXRating",
+    "user-menu.open-profile": "開啟帳戶選單",
+    "user-profile.title": "帳戶",
+    "user-profile.profile": "個人資料",
+    "user-profile.security": "安全",
+    "user-profile.display-name": "顯示名稱",
+    "user-profile.email": "電子郵件地址",
+    "user-profile.save": "儲存",
+    "user-profile.password.title": "密碼",
+    "user-profile.password.current": "目前密碼",
+    "user-profile.password.new": "新密碼",
+    "user-profile.password.confirm": "確認新密碼",
+    "user-profile.password.mismatch": "密碼不一致",
+    "user-profile.password.save": "變更密碼",
+    "user-profile.password.success": "密碼已變更",
+    "user-profile.password.error": "密碼變更失敗：{{error}}",
+    "user-profile.passkeys.title": "通行金鑰",
+    "user-profile.passkeys.add": "新增通行金鑰",
+    "user-profile.passkeys.delete": "移除",
+    "user-profile.passkeys.empty": "尚無通行金鑰",
+    "user-profile.passkeys.added": "通行金鑰已新增",
+    "user-profile.passkeys.deleted": "通行金鑰已移除",
+    "user-profile.passkeys.error": "操作失敗：{{error}}",
+    "user-profile.passkeys.confirm-delete-title": "移除通行金鑰",
+    "user-profile.passkeys.confirm-delete-description": "移除後將無法使用此通行金鑰登錄。",
+    "user-profile.devices.title": "活躍裝置",
+    "user-profile.devices.current": "目前裝置",
+    "user-profile.devices.revoke": "登出",
+    "user-profile.devices.revoked": "已登出該裝置",
+    "user-profile.devices.confirm-revoke-title": "登出裝置",
+    "user-profile.devices.confirm-revoke-description": "該裝置上的工作階段將被終止。",
+    "user-profile.accounts.title": "連結帳戶",
+    "user-profile.accounts.description": "管理您的登錄方式。",
+    "user-profile.accounts.google": "Google",
+    "user-profile.accounts.github": "GitHub",
+    "user-profile.accounts.email-password": "電子郵件與密碼",
+    "user-profile.accounts.connected": "已連結",
+    "user-profile.accounts.not-connected": "未連結",
+    "user-profile.accounts.connect": "連結",
+    "user-profile.accounts.disconnect": "解除",
+    "user-profile.accounts.disconnected": "已解除連結",
+    "user-profile.accounts.error": "操作失敗：{{error}}",
+    "user-profile.accounts.confirm-disconnect-title": "解除連結",
+    "user-profile.accounts.confirm-disconnect-description": "解除後將無法使用此帳戶登錄。",
+    "user-profile.confirm-cancel": "取消",
+    "user-profile.confirm-ok": "確認",
+    "user-profile.oauth-error.email_doesn't_match": "無法連結此帳戶，因為電子郵件地址與您的帳戶不符。",
+    "user-profile.oauth-error.unable_to_link_account": "無法連結此帳戶。該提供商可能未經驗證。",
+    "user-profile.oauth-error.account_already_linked_to_different_user": "此帳戶已連結到其他使用者。",
+    "user-profile.oauth-error.default": "驗證錯誤：{{error}}"
   },
   "rating-calculator": {
-    "breakdown": {
-      "title": "評分詳情"
-    },
-    "auto-save": {
-      "title": "自動儲存",
-      "saved-records": "已儲存 {{count}} 條記錄"
-    },
-    "quick-actions": {
-      "title": "快捷操作",
-      "show-only-b50": "僅顯示 B50",
-      "compact-mode": "緊湊模式"
-    },
-    "table": {
-      "no-entries": "暫無記錄",
-      "headers": {
-        "chart": "譜面",
-        "included-in": "收錄於",
-        "combo": "連擊",
-        "sync": "同步",
-        "achievement-rate": "完成率",
-        "rating": "評分",
-        "actions": "操作"
-      },
-      "remove-dialog": {
-        "title": "刪除記錄？",
-        "cancel": "取消",
-        "remove": "刪除"
-      }
-    },
-    "statistics": {
-      "total": "總計",
-      "best-15": "最佳15",
-      "best-35": "最佳35",
-      "entries": "記錄 {{current}}/{{total}}",
-      "subtotal": "小計",
-      "min": "最小",
-      "avg": "平均",
-      "max": "最大",
-      "histogram-hint": "直方圖的分組以 (最小值, 最大值] 的形式展示，以更好地呈現數據分佈。",
-      "histogram-available": "可查看直方圖",
-      "b15-avg": "B15 均值：{{value}}",
-      "b35-avg": "B35 均值：{{value}}"
-    },
-    "add-entry": {
-      "chart": "譜面",
-      "achievement-rate": "完成率",
-      "validation": {
-        "required": "必填項",
-        "invalid-number": "無效數值",
-        "range": "必須在0%至101%之間"
-      },
-      "current-rating": "當前評分",
-      "new-rating": "新評分",
-      "rating": "評分",
-      "replace": "更新 (+{{diff}})",
-      "add": "添加"
-    },
-    "io": {
-      "export": {
-        "button": "匯出...",
-        "to-json": {
-          "all-records": "匯出為 JSON (所有記錄)",
-          "b50-records": "匯出為 JSON (僅 B50 記錄)"
-        },
-        "toast-success": "已匯出為 {{name}}",
-        "oneshot-image": {
-          "button": "渲染為 B50 圖片...",
-          "dialog": {
-            "title": "渲染為 B50 圖片...",
-            "loading": {
-              "title": "渲染中...",
-              "calculating": "計算中...",
-              "message": "這可能需要一段時間，具體取決於當前伺服器負載；通常來說，渲染將在 10 秒內完成。"
-            },
-            "error": "渲染圖片時發生錯誤：{{message}}",
-            "save-instruction": "長按或右鍵點擊圖片以儲存到您的裝置。",
-            "beta-notice": "此功能處於測試階段，可能無法正常運作。請隨時向開發者回報任何問題或反饋 :D"
-          }
-        }
-      },
-      "import": {
-        "button": "匯入...",
-        "diving-fish": {
-          "title": "從水魚查分器匯入...",
-          "description": "請選擇以下兩個選項之一並填寫對應欄位。您的設定將儲存在瀏覽器中。",
-          "loading": "正在從水魚查分器匯入...",
-          "success": "已從水魚查分器匯入 {{count}} 條記錄",
-          "error": "從水魚查分器匯入記錄時發生錯誤。請確認用戶名或綁定的 QQ 是否正確？{{error}}",
-          "invalid-profile": "請輸入您的水魚查分器資料",
-          "no-sheets": "未找到譜面",
-          "warning": {
-            "title": "注意！",
-            "description": "您現有的記錄將被匯入的記錄覆蓋。"
-          },
-          "or": "或",
-          "close": "關閉",
-          "import": "匯入",
-          "importing": "",
-          "missing-profile-info": "",
-          "only-one-of-the-two-fields-should-be-filled": ""
-        },
-        "net-records": {
-          "title": "從 NET 匯入...",
-          "success": "已匯入 {{count}} 條記錄",
-          "error": "匯入失敗：{{error}}",
-          "importing": "正在從 NET 匯入記錄...",
-          "no-credentials": "從 NET 匯入記錄時出錯：未儲存憑據。請前往評分計算 - 匯入 - 從 NET 匯入並設定您的 SEGA ID 和密碼。",
-          "imported": "已從 {{region}} NET 匯入 {{count}} 條記錄。",
-          "latest-play": "最近遊玩",
-          "date": "日期：{{date}}",
-          "cached": {
-            "title": "正在使用快取的遊玩記錄",
-            "description": "{{minutes}} 分鐘前已更新。為減少對 maimai NET 的存取，15 分鐘內的記錄將被複用。"
-          },
-          "errors": {
-            "maintenance": "maimai NET 目前正在維護中，請稍後再試。",
-            "invalid-credentials": "登錄失敗，請檢查您的 SEGA ID 和密碼。",
-            "unknown": "發生了意外錯誤，請重試。",
-            "internal": "取得記錄時發生伺服器錯誤，請重試。",
-            "token": "無法連線至 maimai NET，請稍後再試。"
-          },
-          "dialog": {
-            "title": "從 NET 匯入",
-            "sega-id": "您的 SEGA ID",
-            "sega-password": "您的 SEGA ID 密碼",
-            "region": {
-              "label": "地區",
-              "intl": {
-                "name": "國際版",
-                "domain": "(maimaidx-eng.com)"
-              },
-              "jp": {
-                "name": "日本",
-                "domain": "(maimaidx.jp)"
-              }
-            },
-            "remember-credentials": {
-              "label": "記住憑據",
-              "description": "您的憑據將儲存在瀏覽器本地。"
-            },
-            "auto-import": {
-              "label": "應用程式啟動時自動匯入",
-              "description": "開啟 DXRating 時自動從 NET 匯入記錄。需要啟用「記住憑據」。",
-              "options": {
-                "disabled": {
-                  "title": "停用"
-                },
-                "replace": {
-                  "title": "替換",
-                  "description": "替換所有記錄"
-                },
-                "merge": {
-                  "title": "合併",
-                  "description": "如果更高則覆蓋，如果缺失則添加"
-                }
-              }
-            },
-            "security-notice": {
-              "credentials": "您的憑據不會被儲存、記錄或共享，僅在匯入過程中使用。如果您願意，您可以",
-              "source-code": "檢查原始碼",
-              "slsa": {
-                "text": "我們也正在採用",
-                "framework": "SLSA 框架",
-                "description": "，包括可重現構建和簽名容器映像，以幫助用戶確定伺服器上運行的程式碼的真實性。此外，如果需求出現，我們將支援連接到自託管的 NET 匯入服務實例，這樣您就可以在自己的基礎設施上運行它。"
-              }
-            },
-            "actions": {
-              "close": "關閉",
-              "import-once": "匯入一次",
-              "reimport": {
-                "title": "立即重新匯入",
-                "description": "(已啟用自動匯入)"
-              },
-              "importing": "匯入中..."
-            }
-          }
-        },
-        "lxns": {
-          "title": "從落雪咖啡屋匯入",
-          "login-required": "請先登入",
-          "description": "透過 OAuth 連接您的落雪咖啡屋 (maimai.lxns.net) 帳戶以匯入成績。",
-          "connect": "連接落雪咖啡屋",
-          "connecting": "正在跳轉至落雪咖啡屋...",
-          "connected": "已連接落雪咖啡屋帳戶。",
-          "import": "立即匯入",
-          "importing": "匯入中...",
-          "disconnect": "中斷連接",
-          "disconnect-confirm": "確定中斷落雪咖啡屋帳戶？您可以隨時重新連接。",
-          "disconnected": "已中斷落雪咖啡屋帳戶。",
-          "success": "已從落雪咖啡屋匯入 {{count}} 筆記錄。",
-          "error": "從落雪咖啡屋匯入失敗：{{error}}",
-          "reconnect-required": "落雪咖啡屋連接已過期，請重新連接。",
-          "close": "關閉",
-          "callback": {
-            "success": "已成功連接落雪咖啡屋！您現在可以匯入成績了。",
-            "error": "連接落雪咖啡屋失敗：{{error}}",
-            "redirecting": "正在返回評分計算器..."
-          }
-        },
-        "aqua-dx": {
-          "success": "",
-          "title": ""
-        },
-        "aqua-sqlite": {
-          "title": "從 Aqua SQLite 資料庫匯入...",
-          "success": "成功匯入 {{count}} 條記錄",
-          "error": "匯入失敗：{{error}}",
-          "loading-db": "正在載入資料庫...",
-          "loaded-db": "資料庫已載入。",
-          "load-db-failed": "資料庫載入失敗。",
-          "read-users-failed": "從 Aqua SQLite 資料庫讀取用戶失敗：{{error}}",
-          "dialog-title": "從 Aqua SQLite 匯入",
-          "select-user": "選擇要匯入遊玩記錄的用戶。",
-          "confirm-import": "確認匯入所選用戶的遊玩記錄。",
-          "sheet-not-found": "未能找到遊玩記錄對應的譜面：",
-          "import-action": "匯入"
-        },
-        "json": {
-          "error": "",
-          "success": "",
-          "title": ""
-        }
-      },
-      "clear": {
-        "button": "清空",
-        "dialog": {
-          "title": "清空所有記錄？",
-          "warning": "警告",
-          "message": "此操作將清空所有記錄。",
-          "cancel": "取消",
-          "confirm": "清空"
-        }
-      }
-    }
+    "breakdown.title": "評分詳情",
+    "auto-save.title": "自動儲存",
+    "auto-save.saved-records": "已儲存 {{count}} 條記錄",
+    "quick-actions.title": "快捷操作",
+    "quick-actions.show-only-b50": "僅顯示 B50",
+    "quick-actions.compact-mode": "緊湊模式",
+    "table.no-entries": "暫無記錄",
+    "table.headers.chart": "譜面",
+    "table.headers.included-in": "收錄於",
+    "table.headers.combo": "連擊",
+    "table.headers.sync": "同步",
+    "table.headers.achievement-rate": "完成率",
+    "table.headers.rating": "評分",
+    "table.headers.actions": "操作",
+    "table.remove-dialog.title": "刪除記錄？",
+    "table.remove-dialog.cancel": "取消",
+    "table.remove-dialog.remove": "刪除",
+    "statistics.total": "總計",
+    "statistics.best-15": "最佳15",
+    "statistics.best-35": "最佳35",
+    "statistics.entries": "記錄 {{current}}/{{total}}",
+    "statistics.subtotal": "小計",
+    "statistics.min": "最小",
+    "statistics.avg": "平均",
+    "statistics.max": "最大",
+    "statistics.histogram-hint": "直方圖的分組以 (最小值, 最大值] 的形式展示，以更好地呈現數據分佈。",
+    "statistics.histogram-available": "可查看直方圖",
+    "statistics.b15-avg": "B15 均值：{{value}}",
+    "statistics.b35-avg": "B35 均值：{{value}}",
+    "add-entry.chart": "譜面",
+    "add-entry.achievement-rate": "完成率",
+    "add-entry.validation.required": "必填項",
+    "add-entry.validation.invalid-number": "無效數值",
+    "add-entry.validation.range": "必須在0%至101%之間",
+    "add-entry.current-rating": "當前評分",
+    "add-entry.new-rating": "新評分",
+    "add-entry.rating": "評分",
+    "add-entry.replace": "更新 (+{{diff}})",
+    "add-entry.add": "添加",
+    "io.export.button": "匯出...",
+    "io.export.to-json.all-records": "匯出為 JSON (所有記錄)",
+    "io.export.to-json.b50-records": "匯出為 JSON (僅 B50 記錄)",
+    "io.export.toast-success": "已匯出為 {{name}}",
+    "io.export.oneshot-image.button": "渲染為 B50 圖片...",
+    "io.export.oneshot-image.dialog.title": "渲染為 B50 圖片...",
+    "io.export.oneshot-image.dialog.loading.title": "渲染中...",
+    "io.export.oneshot-image.dialog.loading.calculating": "計算中...",
+    "io.export.oneshot-image.dialog.loading.message": "這可能需要一段時間，具體取決於當前伺服器負載；通常來說，渲染將在 10 秒內完成。",
+    "io.export.oneshot-image.dialog.error": "渲染圖片時發生錯誤：{{message}}",
+    "io.export.oneshot-image.dialog.save-instruction": "長按或右鍵點擊圖片以儲存到您的裝置。",
+    "io.export.oneshot-image.dialog.beta-notice": "此功能處於測試階段，可能無法正常運作。請隨時向開發者回報任何問題或反饋 :D",
+    "io.import.button": "匯入...",
+    "io.import.diving-fish.title": "從水魚查分器匯入...",
+    "io.import.diving-fish.description": "請選擇以下兩個選項之一並填寫對應欄位。您的設定將儲存在瀏覽器中。",
+    "io.import.diving-fish.loading": "正在從水魚查分器匯入...",
+    "io.import.diving-fish.success": "已從水魚查分器匯入 {{count}} 條記錄",
+    "io.import.diving-fish.error": "從水魚查分器匯入記錄時發生錯誤。請確認用戶名或綁定的 QQ 是否正確？{{error}}",
+    "io.import.diving-fish.invalid-profile": "請輸入您的水魚查分器資料",
+    "io.import.diving-fish.no-sheets": "未找到譜面",
+    "io.import.diving-fish.warning.title": "注意！",
+    "io.import.diving-fish.warning.description": "您現有的記錄將被匯入的記錄覆蓋。",
+    "io.import.diving-fish.or": "或",
+    "io.import.diving-fish.close": "關閉",
+    "io.import.diving-fish.import": "匯入",
+    "io.import.diving-fish.importing": "",
+    "io.import.diving-fish.missing-profile-info": "",
+    "io.import.diving-fish.only-one-of-the-two-fields-should-be-filled": "",
+    "io.import.net-records.title": "從 NET 匯入...",
+    "io.import.net-records.success": "已匯入 {{count}} 條記錄",
+    "io.import.net-records.error": "匯入失敗：{{error}}",
+    "io.import.net-records.importing": "正在從 NET 匯入記錄...",
+    "io.import.net-records.no-credentials": "從 NET 匯入記錄時出錯：未儲存憑據。請前往評分計算 - 匯入 - 從 NET 匯入並設定您的 SEGA ID 和密碼。",
+    "io.import.net-records.imported": "已從 {{region}} NET 匯入 {{count}} 條記錄。",
+    "io.import.net-records.latest-play": "最近遊玩",
+    "io.import.net-records.date": "日期：{{date}}",
+    "io.import.net-records.cached.title": "正在使用快取的遊玩記錄",
+    "io.import.net-records.cached.description": "{{minutes}} 分鐘前已更新。為減少對 maimai NET 的存取，15 分鐘內的記錄將被複用。",
+    "io.import.net-records.errors.maintenance": "maimai NET 目前正在維護中，請稍後再試。",
+    "io.import.net-records.errors.invalid-credentials": "登錄失敗，請檢查您的 SEGA ID 和密碼。",
+    "io.import.net-records.errors.unknown": "發生了意外錯誤，請重試。",
+    "io.import.net-records.errors.internal": "取得記錄時發生伺服器錯誤，請重試。",
+    "io.import.net-records.errors.token": "無法連線至 maimai NET，請稍後再試。",
+    "io.import.net-records.dialog.title": "從 NET 匯入",
+    "io.import.net-records.dialog.sega-id": "您的 SEGA ID",
+    "io.import.net-records.dialog.sega-password": "您的 SEGA ID 密碼",
+    "io.import.net-records.dialog.region.label": "地區",
+    "io.import.net-records.dialog.region.intl.name": "國際版",
+    "io.import.net-records.dialog.region.intl.domain": "(maimaidx-eng.com)",
+    "io.import.net-records.dialog.region.jp.name": "日本",
+    "io.import.net-records.dialog.region.jp.domain": "(maimaidx.jp)",
+    "io.import.net-records.dialog.remember-credentials.label": "記住憑據",
+    "io.import.net-records.dialog.remember-credentials.description": "您的憑據將儲存在瀏覽器本地。",
+    "io.import.net-records.dialog.auto-import.label": "應用程式啟動時自動匯入",
+    "io.import.net-records.dialog.auto-import.description": "開啟 DXRating 時自動從 NET 匯入記錄。需要啟用「記住憑據」。",
+    "io.import.net-records.dialog.auto-import.options.disabled.title": "停用",
+    "io.import.net-records.dialog.auto-import.options.replace.title": "替換",
+    "io.import.net-records.dialog.auto-import.options.replace.description": "替換所有記錄",
+    "io.import.net-records.dialog.auto-import.options.merge.title": "合併",
+    "io.import.net-records.dialog.auto-import.options.merge.description": "如果更高則覆蓋，如果缺失則添加",
+    "io.import.net-records.dialog.security-notice.credentials": "您的憑據不會被儲存、記錄或共享，僅在匯入過程中使用。如果您願意，您可以",
+    "io.import.net-records.dialog.security-notice.source-code": "檢查原始碼",
+    "io.import.net-records.dialog.security-notice.slsa.text": "我們也正在採用",
+    "io.import.net-records.dialog.security-notice.slsa.framework": "SLSA 框架",
+    "io.import.net-records.dialog.security-notice.slsa.description": "，包括可重現構建和簽名容器映像，以幫助用戶確定伺服器上運行的程式碼的真實性。此外，如果需求出現，我們將支援連接到自託管的 NET 匯入服務實例，這樣您就可以在自己的基礎設施上運行它。",
+    "io.import.net-records.dialog.actions.close": "關閉",
+    "io.import.net-records.dialog.actions.import-once": "匯入一次",
+    "io.import.net-records.dialog.actions.reimport.title": "立即重新匯入",
+    "io.import.net-records.dialog.actions.reimport.description": "(已啟用自動匯入)",
+    "io.import.net-records.dialog.actions.importing": "匯入中...",
+    "io.import.lxns.title": "從落雪咖啡屋匯入",
+    "io.import.lxns.login-required": "請先登入",
+    "io.import.lxns.description": "透過 OAuth 連接您的落雪咖啡屋 (maimai.lxns.net) 帳戶以匯入成績。",
+    "io.import.lxns.connect": "連接落雪咖啡屋",
+    "io.import.lxns.connecting": "正在跳轉至落雪咖啡屋...",
+    "io.import.lxns.connected": "已連接落雪咖啡屋帳戶。",
+    "io.import.lxns.import": "立即匯入",
+    "io.import.lxns.importing": "匯入中...",
+    "io.import.lxns.disconnect": "中斷連接",
+    "io.import.lxns.disconnect-confirm": "確定中斷落雪咖啡屋帳戶？您可以隨時重新連接。",
+    "io.import.lxns.disconnected": "已中斷落雪咖啡屋帳戶。",
+    "io.import.lxns.success": "已從落雪咖啡屋匯入 {{count}} 筆記錄。",
+    "io.import.lxns.error": "從落雪咖啡屋匯入失敗：{{error}}",
+    "io.import.lxns.reconnect-required": "落雪咖啡屋連接已過期，請重新連接。",
+    "io.import.lxns.close": "關閉",
+    "io.import.lxns.callback.success": "已成功連接落雪咖啡屋！您現在可以匯入成績了。",
+    "io.import.lxns.callback.error": "連接落雪咖啡屋失敗：{{error}}",
+    "io.import.lxns.callback.redirecting": "正在返回評分計算器...",
+    "io.import.aqua-dx.success": "",
+    "io.import.aqua-dx.title": "",
+    "io.import.aqua-sqlite.title": "從 Aqua SQLite 資料庫匯入...",
+    "io.import.aqua-sqlite.success": "成功匯入 {{count}} 條記錄",
+    "io.import.aqua-sqlite.error": "匯入失敗：{{error}}",
+    "io.import.aqua-sqlite.loading-db": "正在載入資料庫...",
+    "io.import.aqua-sqlite.loaded-db": "資料庫已載入。",
+    "io.import.aqua-sqlite.load-db-failed": "資料庫載入失敗。",
+    "io.import.aqua-sqlite.read-users-failed": "從 Aqua SQLite 資料庫讀取用戶失敗：{{error}}",
+    "io.import.aqua-sqlite.dialog-title": "從 Aqua SQLite 匯入",
+    "io.import.aqua-sqlite.select-user": "選擇要匯入遊玩記錄的用戶。",
+    "io.import.aqua-sqlite.confirm-import": "確認匯入所選用戶的遊玩記錄。",
+    "io.import.aqua-sqlite.sheet-not-found": "未能找到遊玩記錄對應的譜面：",
+    "io.import.aqua-sqlite.import-action": "匯入",
+    "io.import.json.error": "",
+    "io.import.json.success": "",
+    "io.import.json.title": "",
+    "io.clear.button": "清空",
+    "io.clear.dialog.title": "清空所有記錄？",
+    "io.clear.dialog.warning": "警告",
+    "io.clear.dialog.message": "此操作將清空所有記錄。",
+    "io.clear.dialog.cancel": "取消",
+    "io.clear.dialog.confirm": "清空"
   }
 }
