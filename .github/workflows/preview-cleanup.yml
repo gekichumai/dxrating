@@ -1,0 +1,55 @@
+name: Preview Cleanup
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: preview-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup-preview-workers:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    name: Cleanup Preview Workers
+
+    steps:
+      - name: Delete stale Cloudflare Worker previews
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          preview_workers=()
+          page=1
+          total_pages=1
+
+          while [ "$page" -le "$total_pages" ]; do
+            response=$(curl --fail-with-body --silent --show-error \
+              --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              --header "Content-Type: application/json" \
+              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts?per_page=100&page=${page}")
+
+            mapfile -t page_workers < <(jq -r '.result[]? | (.id // .name // empty) | select(startswith("dxrating-pr-"))' <<< "$response")
+            preview_workers+=("${page_workers[@]}")
+
+            total_pages=$(jq -r '.result_info.total_pages // 1' <<< "$response")
+            page=$((page + 1))
+          done
+
+          if [ "${#preview_workers[@]}" -eq 0 ]; then
+            echo "No preview Workers found."
+            exit 0
+          fi
+
+          for worker in "${preview_workers[@]}"; do
+            echo "Deleting ${worker}"
+            curl --fail-with-body --silent --show-error \
+              --request DELETE \
+              --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts/${worker}" || \
+              echo "::warning::Could not delete ${worker}. It may already be gone."
+          done
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

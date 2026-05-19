@@ -12,9 +12,8 @@ import {
   Grow,
   Paper,
 } from '@mui/material'
-import * as Collapsible from '@radix-ui/react-collapsible'
 import clsx from 'clsx'
-import { type FC, useContext, useEffect, useMemo, useState, useTransition } from 'react'
+import { type FC, useContext, useEffect, useId, useMemo, useState, useTransition } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { useEffectOnce } from 'react-use'
@@ -285,6 +284,7 @@ const SheetSortFilterFormContent = () => {
   const { control, setValue, reset } = useFormContext<SheetSortFilterForm>()
   const [expanded, setExpanded] = useState(false)
   const [pending, startTransition] = useTransition()
+  const contentId = useId()
 
   const resetByFilter = (...filters: (keyof SheetSortFilterForm['filters'])[]) => {
     const defaultForm = getDefaultSheetSortFilterForm()
@@ -340,31 +340,24 @@ const SheetSortFilterFormContent = () => {
   return (
     <>
       {import.meta.env.DEV && <DevTool control={control} />}
-      <Collapsible.Root
-        open={expanded}
-        onOpenChange={(expanded) => startTransition(() => setExpanded(expanded))}
-        className="w-full"
-      >
-        <Paper className="w-full flex flex-col overflow-hidden">
-          <Collapsible.Trigger asChild>
-            <ButtonBase
-              className={clsx(
-                'px-4 w-full flex items-center transition-all duration-300',
-                expanded ? 'bg-gray-200 py-4' : 'bg-gray-100 py-3',
-              )}
-            >
-              <div className="text-xl font-bold tracking-tight leading-none">{t('sheet:sort-and-filter.title')}</div>
-              {pending && <CircularProgress disableShrink className="ml-2 !h-4 !w-4" />}
-              <div className="flex-1" />
-              <MdiChevronDownIcon
-                className={clsx('w-6 h-6 transition-transform', expanded && 'transform rotate-180')}
-              />
-            </ButtonBase>
-          </Collapsible.Trigger>
+      <Paper className="w-full flex flex-col overflow-hidden">
+        <ButtonBase
+          className={clsx(
+            'px-4 w-full flex items-center transition-all duration-300',
+            expanded ? 'bg-gray-200 py-4' : 'bg-gray-100 py-3',
+          )}
+          aria-controls={contentId}
+          aria-expanded={expanded}
+          onClick={() => startTransition(() => setExpanded((current) => !current))}
+        >
+          <div className="text-xl font-bold tracking-tight leading-none">{t('sheet:sort-and-filter.title')}</div>
+          {pending && <CircularProgress disableShrink className="ml-2 !h-4 !w-4" />}
+          <div className="flex-1" />
+          <MdiChevronDownIcon className={clsx('w-6 h-6 transition-transform', expanded && 'transform rotate-180')} />
+        </ButtonBase>
 
-          <Collapsible.Content className="radix__collapsible-content">{collapsibleInner}</Collapsible.Content>
-        </Paper>
-      </Collapsible.Root>
+        {expanded && <div id={contentId}>{collapsibleInner}</div>}
+      </Paper>
     </>
   )
 }

@@ -17,6 +17,7 @@ const LocaleSelectorItem: FC<PropsWithChildren<{ locale: SupportedLocale; select
 
   return (
     <MenuItem
+      lang={locale}
       selected={selected}
       onClick={() => {
         startViewTransition(() => {
@@ -46,12 +47,16 @@ const LOCALES = [
 ] as const
 
 export const LocaleSelector = () => {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation(['settings'])
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
 
   return (
     <>
-      <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+      <IconButton
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        aria-label={t('settings:language.select')}
+        title={t('settings:language.select')}
+      >
         <MdiTranslate />
       </IconButton>
 

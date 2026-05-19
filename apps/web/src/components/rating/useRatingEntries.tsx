@@ -1,4 +1,13 @@
-import { VERSION_ID_MAP, VersionEnum } from '@gekichumai/dxdata'
+import type { VersionEnum } from '@gekichumai/dxdata'
+import {
+  calculateBest50,
+  calculateRatingAward,
+  getDxdataSongCatalog,
+  type Best50Result,
+  type RatingAward,
+  type RatingEntry,
+  type SongCatalog,
+} from '@gekichumai/maimai-domain'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { useMemo } from 'react'
 import type { Region } from '../../models/context/AppContext'
@@ -6,11 +15,11 @@ import { useRatingCalculatorContext } from '../../models/context/RatingCalculato
 import { useAppContext, useAppContextDXDataVersion } from '../../models/context/useAppContext'
 import type { Entry } from '../../pages/RatingCalculator'
 import { type FlattenedSheet, useSheets } from '../../songs'
-import { calculateRating, type Rating } from '../../utils/rating'
+import type { PlayEntry } from './RatingCalculatorAddEntryForm'
 
 export type RatingCalculatorEntry = Entry & {
   sheet: FlattenedSheet
-  rating: Rating | null
+  rating: RatingAward | null
 }
 interface UseRatingEntriesReturn {
   allEntries: RatingCalculatorEntry[]
@@ -30,38 +39,109 @@ interface UseRatingEntriesStatistics {
   b50Sum: number
 }
 
-const filterEligibleB15Entries = (sheet: FlattenedSheet, appVersion: VersionEnum, region: Region) => {
-  if (region === '_generic') return sheet.version === appVersion
-
-  const appVersionId = VERSION_ID_MAP.get(appVersion)
-  const sheetVersionId = VERSION_ID_MAP.get(sheet.version)
-  if (appVersionId !== undefined && sheetVersionId !== undefined) {
-    const useCircleB15 = appVersionId >= VERSION_ID_MAP.get(VersionEnum.CiRCLE)!
-    const sheetIsAvailableInRegion = sheet.regions[region]
-    if (useCircleB15) {
-      return sheetIsAvailableInRegion && (appVersionId === sheetVersionId || appVersionId === sheetVersionId + 1)
-    }
-
-    return sheetIsAvailableInRegion && appVersionId === sheetVersionId // only consider a B15 match if sheet version equals to app version, and sheet is available in the app region
-  }
-  return false
+interface NormalizedWebRatingEntry {
+  originalEntry: PlayEntry
+  sheet: FlattenedSheet
+  ratingEntry: RatingEntry | null
 }
 
-const filterB35EligibleEntries = (sheet: FlattenedSheet, appVersion: VersionEnum, region: Region) => {
-  if (region === '_generic') return sheet.version !== appVersion
+export const calculateWebRatingEntries = ({
+  entries,
+  sheets,
+  catalog,
+  appVersion,
+  region,
+}: {
+  entries: PlayEntry[]
+  sheets: FlattenedSheet[] | undefined
+  catalog: SongCatalog
+  appVersion: VersionEnum
+  region: Region
+}): UseRatingEntriesReturn => {
+  const sheetsById = new Map(sheets?.map((sheet) => [sheet.id, sheet]) ?? [])
+  const normalizedEntries = entries.flatMap((entry): NormalizedWebRatingEntry[] => {
+    const sheet = sheetsById.get(entry.sheetId)
+    if (!sheet) return []
 
-  const appVersionId = VERSION_ID_MAP.get(appVersion)
-  const sheetVersionId = VERSION_ID_MAP.get(sheet.version)
-  if (appVersionId !== undefined && sheetVersionId !== undefined) {
-    const useCircleB15 = appVersionId >= VERSION_ID_MAP.get(VersionEnum.CiRCLE)!
-    const sheetIsAvailableInRegion = sheet.regions[region]
-    if (useCircleB15) {
-      return sheetIsAvailableInRegion && appVersionId > sheetVersionId + 1
+    const identity = entry.identity ?? catalog.getById(entry.sheetId)?.identity
+    return [
+      {
+        originalEntry: entry,
+        sheet,
+        ratingEntry: identity
+          ? {
+              sheetId: entry.sheetId,
+              identity,
+              achievementRate: entry.achievementRate,
+              comboFlag: entry.comboFlag,
+              syncFlag: entry.syncFlag,
+              source: entry.providerConfig?.divingFish?.ratingEligibility
+                ? {
+                    provider: 'diving-fish' as const,
+                    best50Bucket: entry.providerConfig.divingFish.ratingEligibility,
+                  }
+                : undefined,
+            }
+          : null,
+      },
+    ]
+  })
+
+  const result = calculateBest50({
+    catalog,
+    version: appVersion,
+    region,
+    entries: normalizedEntries.flatMap((entry) => (entry.ratingEntry ? [entry.ratingEntry] : [])),
+  })
+
+  const resultByRatingEntry = new Map(result.allEntries.map((entry) => [entry.entry, entry]))
+  const webEntries = normalizedEntries.map(({ originalEntry, sheet, ratingEntry }) => {
+    const calculatedEntry = ratingEntry ? resultByRatingEntry.get(ratingEntry) : undefined
+    return {
+      ...originalEntry,
+      sheet,
+      rating: calculatedEntry?.rating ?? calculateFallbackRating(sheet, originalEntry),
+      includedIn: calculatedEntry?.bucket ?? null,
     }
+  })
 
-    return sheetIsAvailableInRegion && appVersionId > sheetVersionId // only consider a B35 match if app version is greater than sheet version, and sheet is available in the app region
+  const b15Entries = webEntries.filter((entry) => entry.includedIn === 'b15')
+  const b35Entries = webEntries.filter((entry) => entry.includedIn === 'b35')
+  return {
+    allEntries: webEntries,
+    b15Entries,
+    b35Entries,
+    statistics: toWebStatistics(result.statistics, b15Entries.length, b35Entries.length),
   }
-  return false
+}
+
+function calculateFallbackRating(sheet: FlattenedSheet, entry: PlayEntry): RatingAward | null {
+  if (!sheet.isRatingEligible) return null
+  return calculateRatingAward(sheet.internalLevelValue, entry.achievementRate, entry.comboFlag)
+}
+
+function toWebStatistics(
+  statistics: Best50Result['statistics'],
+  b15EntryCount: number,
+  b35EntryCount: number,
+): UseRatingEntriesStatistics {
+  return {
+    ...statistics,
+    ...(b15EntryCount === 0
+      ? {
+          b15Average: Number.NaN,
+          b15Min: Number.POSITIVE_INFINITY,
+          b15Max: Number.NEGATIVE_INFINITY,
+        }
+      : {}),
+    ...(b35EntryCount === 0
+      ? {
+          b35Average: Number.NaN,
+          b35Min: Number.POSITIVE_INFINITY,
+          b35Max: Number.NEGATIVE_INFINITY,
+        }
+      : {}),
+  }
 }
 
 export const useRatingEntries = (): UseRatingEntriesReturn => {
@@ -70,103 +150,25 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
   const { entries } = useRatingCalculatorContext()
   const { data: sheets } = useSheets({ acceptsPartialData: true })
 
-  const { allEntries, b15Entries, b35Entries } = useMemo(() => {
+  const { allEntries, b15Entries, b35Entries, statistics } = useMemo(() => {
     const computeStart = performance.now()
-    const calculated = entries.flatMap((entry) => {
-      const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId)
-      if (!sheet) {
-        return []
-      }
+    const catalog = getDxdataSongCatalog(appVersion)
 
-      return [
-        {
-          ...entry,
-          sheet,
-          rating: sheet.isRatingEligible
-            ? calculateRating(sheet.internalLevelValue, entry.achievementRate, entry.comboFlag)
-            : null,
-        },
-      ]
+    const result = calculateWebRatingEntries({
+      entries,
+      sheets,
+      catalog,
+      appVersion,
+      region,
     })
-
-    const best15OfCurrentVersionSheetIds = calculated
-      .filter((entry) => filterEligibleB15Entries(entry.sheet, appVersion, region))
-      // a.rating and b.rating could be null. put them at the end
-      .sort((a, b) => {
-        if (!a.rating) return 1
-        if (!b.rating) return -1
-        return b.rating.ratingAwardValue - a.rating.ratingAwardValue
-      })
-      .slice(0, 15)
-      .map((entry) => entry.sheetId)
-
-    const best35OfAllOtherVersionSheetIds = calculated
-      .filter((entry) => filterB35EligibleEntries(entry.sheet, appVersion, region))
-      .sort((a, b) => {
-        if (!a.rating) return 1
-        if (!b.rating) return -1
-        return b.rating.ratingAwardValue - a.rating.ratingAwardValue
-      })
-      .slice(0, 35)
-      .map((entry) => entry.sheetId)
-
-    const calculatedEntries = calculated.map((entry) => ({
-      ...entry,
-      includedIn:
-        best15OfCurrentVersionSheetIds.includes(entry.sheetId) ||
-        (region === 'cn' && entry.providerConfig?.divingFish?.ratingEligibility === 'b15')
-          ? ('b15' as const)
-          : best35OfAllOtherVersionSheetIds.includes(entry.sheetId) ||
-              (region === 'cn' && entry.providerConfig?.divingFish?.ratingEligibility === 'b35')
-            ? ('b35' as const)
-            : null,
-    }))
 
     Sentry.metrics.distribution('rating_calculation.duration', performance.now() - computeStart, {
       unit: 'millisecond',
       attributes: { entry_count: String(entries.length) },
     })
 
-    return {
-      allEntries: calculatedEntries,
-      b15Entries: calculatedEntries.filter((entry) => entry.includedIn === 'b15'),
-      b35Entries: calculatedEntries.filter((entry) => entry.includedIn === 'b35'),
-    }
+    return result
   }, [entries, sheets, appVersion, region])
-
-  const statistics = useMemo(() => {
-    const eligibleRatingEntriesB15 = b15Entries.filter((entry) => entry.rating)
-    const eligibleRatingEntriesB35 = b35Entries.filter((entry) => entry.rating)
-
-    const b15Average =
-      eligibleRatingEntriesB15.reduce((acc, entry) => acc + entry.rating!.ratingAwardValue, 0) / b15Entries.length
-
-    const b35Average =
-      eligibleRatingEntriesB35.reduce((acc, entry) => acc + entry.rating!.ratingAwardValue, 0) / b35Entries.length
-
-    const b15Min = Math.min(...eligibleRatingEntriesB15.map((entry) => entry.rating!.ratingAwardValue))
-    const b35Min = Math.min(...eligibleRatingEntriesB35.map((entry) => entry.rating!.ratingAwardValue))
-
-    const b15Max = Math.max(...eligibleRatingEntriesB15.map((entry) => entry.rating!.ratingAwardValue))
-    const b35Max = Math.max(...eligibleRatingEntriesB35.map((entry) => entry.rating!.ratingAwardValue))
-
-    const b15Sum = eligibleRatingEntriesB15.reduce((acc, entry) => acc + entry.rating!.ratingAwardValue, 0)
-    const b35Sum = eligibleRatingEntriesB35.reduce((acc, entry) => acc + entry.rating!.ratingAwardValue, 0)
-
-    const b50Sum = b15Sum + b35Sum
-
-    return {
-      b15Average,
-      b35Average,
-      b15Min,
-      b35Min,
-      b15Max,
-      b35Max,
-      b15Sum,
-      b35Sum,
-      b50Sum,
-    }
-  }, [b15Entries, b35Entries])
 
   return { allEntries, b15Entries, b35Entries, statistics }
 }

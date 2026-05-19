@@ -1,5 +1,4 @@
-import { canonicalIdFromParts } from '@/songs'
-import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import { getDxdataSongCatalog, normalizeMuNetRows, type ProviderMusicIdMap } from '@gekichumai/maimai-domain'
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
 import type { FC } from 'react'
 import toast from 'react-hot-toast'
@@ -8,7 +7,9 @@ import type { ListActions } from 'react-use/lib/useList'
 import { z } from 'zod'
 import MdiEarthArrowDown from '~icons/mdi/earth-arrow-down'
 import { useWebHaptics } from 'web-haptics/react'
+import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import { importResultToPlayEntries } from './importResultToPlayEntries'
 
 const MuNetUserMusicDetailSchema = z.object({
   musicId: z.number(),
@@ -26,11 +27,7 @@ export const ImportFromMuNetButtonListItem: FC<{
 }> = ({ modifyEntries, onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
   const haptic = useWebHaptics()
-  const difficulty = ['basic', 'advanced', 'expert', 'master', 'remaster']
-
-  const parseAchievement = (achievement: number): number => {
-    return Number.isNaN(achievement) ? 0 : achievement / 10000
-  }
+  const appVersion = useAppContextDXDataVersion()
 
   return (
     <MenuItem
@@ -65,47 +62,19 @@ export const ImportFromMuNetButtonListItem: FC<{
               const muNetData = parseResult.data
 
               const musicIdMapJson = await import('@/assets/music-id-map.json')
-              const musicIdMap: { [key: string]: { name: string; ver: string } } = musicIdMapJson.default
+              const musicIdMap = musicIdMapJson.default as ProviderMusicIdMap
 
-              const entries: PlayEntry[] = []
-              if (muNetData.userMusicDetailList.length > 0) {
-                for (const musicDetail of muNetData.userMusicDetailList) {
-                  const musicId = musicDetail.musicId
-                  const song = musicIdMap[String(musicId)]
-
-                  if (!song) {
-                    // console.warn(`Song not found for ID: ${musicId}`)
-                    continue
-                  }
-
-                  // ver: "24000" might need to be filtered out?
-                  // In AquaDX: if (!song || song.ver === '24000') continue
-                  // Let's assume similar logic
-                  if (song.ver === '24000') {
-                    continue
-                  }
-
-                  // Determine chart type (Standard vs DX)
-                  // Maimai logic: ID > 10000 usually implies DX, but let's check exact logic
-                  // So it works if musicId is number.
-                  const isDx = musicId >= 10000
-
-                  // Difficulty mapping
-                  // musicDetail.level is 0-4
-                  const diffName = difficulty[musicDetail.level]
-                  if (!diffName) {
-                    console.warn(`Unknown level: ${musicDetail.level} for song ${musicId}`)
-                    continue
-                  }
-
-                  const musicType = isDx ? 'dx' : 'std'
-                  const musicName = canonicalIdFromParts(song.name, musicType as TypeEnum, diffName as DifficultyEnum)
-                  entries.push({
-                    sheetId: musicName,
-                    achievementRate: parseAchievement(musicDetail.achievement),
-                  })
-                }
+              const rows = muNetData.userMusicDetailList.map((musicDetail) => ({
+                musicId: musicDetail.musicId,
+                level: musicDetail.level,
+                achievement: musicDetail.achievement,
+              }))
+              const importResult = normalizeMuNetRows(getDxdataSongCatalog(appVersion), rows, musicIdMap)
+              const entries = importResultToPlayEntries(importResult)
+              for (const warning of importResult.warnings) {
+                console.warn('[ImportFromMuNetButtonListItem]', warning.message, warning.row)
               }
+
               modifyEntries.set(entries)
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.mu-net.success', { count: entries.length }))

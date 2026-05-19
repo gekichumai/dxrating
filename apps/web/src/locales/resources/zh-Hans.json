@@ -2,15 +2,27 @@
   "root": {
     "pages": {
       "search": {
-        "title": "搜索谱面"
+        "title": "搜索谱面",
+        "seo-title": "搜索谱面",
+        "seo-description": "按歌曲名、艺术家或难度浏览所有 maimai DX 谱面，查看谱面定数、音符数和详细谱面信息。"
       },
       "rating": {
-        "title": "计算评分"
+        "title": "计算评分",
+        "seo-title": "评分计算器",
+        "seo-description": "在 DXRating 计算和管理你的 maimai DX Rating 记录、Best 50、达成率和分数详情。"
       }
+    },
+    "seo": {
+      "description": "DXRating 是 maimai DX Rating 分析工具，也提供谱面详情等功能。",
+      "keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating 分析工具, 中二节奏, 舞萌, 舞萌DX, 谱面详情, 评分计算器, maimai wiki"
     },
     "share": {
       "copy-content": "{{ link }}",
       "copy-succeeded": "已拷贝至剪贴板"
+    },
+    "external-links": {
+      "discord": "加入 DXRating Discord 服务器",
+      "github": "在 GitHub 打开 DXRating"
     }
   },
   "settings": {
@@ -24,7 +36,11 @@
     "version-and-region": {
       "select": "请选择 DXData 数据版本与服务器",
       "select-generic": "或仅选择 DXData 数据版本",
-      "info": "不同的数据版本与服务器对应了不同的乐曲与谱面定数可见性"
+      "info": "不同的数据版本与服务器对应了不同的乐曲与谱面定数可见性",
+      "logo-alt": "maimai DX {{version}} 标志"
+    },
+    "language": {
+      "select": "选择语言"
     },
     "import-provider": {
       "diving-fish": {
@@ -171,12 +187,16 @@
     },
     "type": {
       "dx": "DX",
-      "std": "STD",
-      "utage": "UTAGE"
+      "std": "标准",
+      "utage": "宴"
+    },
+    "seo": {
+      "description": "{{title}} / {{artist}} - {{sheetLabel}} 谱面详情、谱面定数与音符数 - DXRating。"
     }
   },
   "about": {
     "title": "关于本站",
+    "open": "关于 DXRating",
     "author": "作者",
     "chart-metadata": "谱面元数据",
     "chart-metadata-extended": "谱面元数据 (扩展)",
@@ -271,6 +291,10 @@
         "password-required": "请输入密码",
         "password-min-length": "密码长度至少为8个字符"
       }
+    },
+    "user-menu": {
+      "sign-in": "登录 DXRating",
+      "open-profile": "打开账户菜单"
     },
     "user-profile": {
       "title": "账户",

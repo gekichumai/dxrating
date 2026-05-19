@@ -13,6 +13,19 @@ describe('buildSheetLink', () => {
         },
         'https://dxrating.net',
       ),
-    ).toBe('https://dxrating.net/song%20100%25/dx/master')
+    ).toBe('https://dxrating.net/songs/song%20100%25/dx/master')
+  })
+
+  it('builds links for UTAGE custom difficulty labels', () => {
+    expect(
+      buildSheetLink(
+        {
+          songId: 'utage-song',
+          type: TypeEnum.UTAGE,
+          difficulty: '【協】',
+        },
+        'https://dxrating.net',
+      ),
+    ).toBe('https://dxrating.net/songs/utage-song/utage/%E3%80%90%E5%8D%94%E3%80%91')
   })
 })

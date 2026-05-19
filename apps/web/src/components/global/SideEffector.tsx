@@ -1,11 +1,10 @@
 import { useRatingEntries } from '@/components/rating/useRatingEntries'
 import { authClient } from '@/lib/auth-client'
-import { useAppContext } from '@/models/context/useAppContext'
+import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, memo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
-import { useSheets } from '../../songs'
 import { useVersionTheme } from '../../utils/useVersionTheme'
 import toast from 'react-hot-toast'
 import IconMdiCached from '~icons/mdi/cached'
@@ -45,12 +44,11 @@ const SideEffectorLocaleMeta: FC = () => {
 }
 
 const SideEffectorAutoImportRating: FC = () => {
-  const { data: sheets } = useSheets({ acceptsPartialData: true })
   const { modifyEntries } = useRatingCalculatorContext()
   const { t } = useTranslation()
+  const appVersion = useAppContextDXDataVersion()
 
   useEffect(() => {
-    if (!sheets) return
     const mode = (() => {
       try {
         const mode = localStorage.getItem('rating-auto-import-from-net')
@@ -91,8 +89,8 @@ const SideEffectorAutoImportRating: FC = () => {
       }
     }
 
-    importFromNETRecords(sheets, modifyEntries, mode)
-  }, [!!sheets])
+    importFromNETRecords(appVersion, modifyEntries, mode)
+  }, [appVersion])
 
   return null
 }

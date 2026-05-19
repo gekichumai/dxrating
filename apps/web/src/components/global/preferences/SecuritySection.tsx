@@ -11,6 +11,7 @@ import IconMdiLock from '~icons/mdi/lock-outline'
 import IconPasskey from '~icons/material-symbols/passkey'
 import aaguidData from '../../../data/passkey-aaguids.json'
 import { authClient } from '../../../lib/auth-client'
+import { formatErrorMessage } from '../../../utils/formatErrorMessage'
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 
 // -- Password Subsection --
@@ -130,9 +131,7 @@ const PasskeysSubsection: FC = () => {
   const [addState, handleAdd] = useAsyncFn(async () => {
     const res = await authClient.passkey.addPasskey()
     if (res.error) {
-      if (res.error.message) {
-        toast.error(t('auth:user-profile.passkeys.error', { error: res.error.message }))
-      }
+      toast.error(t('auth:user-profile.passkeys.error', { error: formatErrorMessage(res.error) }))
       return
     }
     toast.success(t('auth:user-profile.passkeys.added'))
@@ -146,8 +145,8 @@ const PasskeysSubsection: FC = () => {
       await authClient.passkey.deletePasskey({ id })
       toast.success(t('auth:user-profile.passkeys.deleted'))
       queryClient.invalidateQueries({ queryKey: ['passkeys'] })
-    } catch (e: any) {
-      toast.error(t('auth:user-profile.passkeys.error', { error: e.message }))
+    } catch (e: unknown) {
+      toast.error(t('auth:user-profile.passkeys.error', { error: formatErrorMessage(e) }))
     }
   }
 

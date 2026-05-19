@@ -28,6 +28,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 # Copy workspace package.json files
 COPY packages/tsconfig/package.json ./packages/tsconfig/
 COPY packages/dxdata/package.json ./packages/dxdata/
+COPY packages/maimai-domain/package.json ./packages/maimai-domain/
 COPY apps/backend/package.json ./apps/backend/
 
 # Install dependencies (--frozen-lockfile ensures reproducible deps)
@@ -36,6 +37,7 @@ RUN pnpm install --frozen-lockfile
 # Copy workspace source files
 COPY packages/tsconfig ./packages/tsconfig
 COPY packages/dxdata ./packages/dxdata
+COPY packages/maimai-domain ./packages/maimai-domain
 COPY apps/backend ./apps/backend
 
 # Bundle the backend with esbuild (fast transpilation, type-checking done in CI)
@@ -67,6 +69,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 # Copy workspace package.json files
 COPY packages/tsconfig/package.json ./packages/tsconfig/
 COPY packages/dxdata/package.json ./packages/dxdata/
+COPY packages/maimai-domain/package.json ./packages/maimai-domain/
 COPY apps/backend/package.json ./apps/backend/
 
 # Install production dependencies only

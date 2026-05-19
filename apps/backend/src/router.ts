@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node'
-import { implement } from '@orpc/server'
+import { ORPCError, implement } from '@orpc/server'
 import { appContract } from './contract.js'
 import { db } from './db/index.js'
 import { tags, tagGroups, tagSongs, comments, profiles, songAliases } from './db/schema.js'
@@ -7,6 +7,7 @@ import { eq, and, desc } from 'drizzle-orm'
 import Keyv from 'keyv'
 import type { auth } from './auth.js'
 import { config } from './config.js'
+import { renderChartOgImageOutput } from './services/functions/chart-og-image/index.js'
 
 type Context = {
   user?: typeof auth.$Infer.Session.user
@@ -251,6 +252,17 @@ const analyticsHandler = {
   }),
 }
 
+const chartOgImageHandler = {
+  render: os.chartOgImage.render.handler(async ({ input }) => {
+    const output = await renderChartOgImageOutput(input)
+    if (!output) {
+      throw new ORPCError('NOT_FOUND', { message: 'Chart not found' })
+    }
+
+    return output
+  }),
+}
+
 const maimaiHandler = {
   fetchRecords: os.maimai.fetchRecords.handler(async ({ input }) => {
     const { id, password, region } = input
@@ -313,6 +325,7 @@ export const appRouter = os.router({
   comments: commentsHandler,
   aliases: aliasesHandler,
   analytics: analyticsHandler,
+  chartOgImage: chartOgImageHandler,
   maimai: maimaiHandler,
   lxns: lxnsHandler,
 })

@@ -43,7 +43,6 @@ export function getI18nInitOptions(lng: SupportedLocale): InitOptions {
     resources: i18nResources,
     fallbackLng: DEFAULT_LOCALE,
     supportedLngs: [...SUPPORTED_LOCALES],
-    nonExplicitSupportedLngs: true,
     lng,
     interpolation: {
       escapeValue: false,

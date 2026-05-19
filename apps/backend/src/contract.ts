@@ -123,6 +123,17 @@ export const TrendingResponseSchema = z.object({
   dateTo: z.string(),
 })
 
+const ChartOgImageInputSchema = z.object({
+  songId: z.string(),
+  type: z.string(),
+  difficulty: z.string(),
+})
+
+const ChartOgImageOutputSchema = z.object({
+  headers: z.record(z.string(), z.string()),
+  body: z.instanceof(Blob),
+})
+
 export const appContract = oc.router({
   tags: {
     list: oc
@@ -224,6 +235,18 @@ export const appContract = oc.router({
         spec: (spec) => ({ ...spec, security: [] }),
       })
       .output(TrendingResponseSchema),
+  },
+  chartOgImage: {
+    render: oc
+      .route({
+        method: 'GET',
+        path: '/songs/{songId}/{type}/{difficulty}/og-image',
+        summary: 'Render chart OpenGraph image',
+        tags: ['internal'],
+        outputStructure: 'detailed',
+      })
+      .input(ChartOgImageInputSchema)
+      .output(ChartOgImageOutputSchema),
   },
   lxns: {
     authorize: oc

@@ -10,6 +10,7 @@ import IconLogosGithub from '~icons/logos/github-icon'
 import IconLogosGoogle from '~icons/logos/google-icon'
 import IconPasskey from '~icons/material-symbols/passkey'
 import { authClient } from '../../lib/auth-client'
+import { formatErrorMessage } from '../../utils/formatErrorMessage'
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
 
@@ -112,9 +113,9 @@ export const LoginForm = ({
         toast.success(t('auth:login.toast-success'))
         onSuccess?.()
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       haptic.trigger('error')
-      setError(e.message || t('auth:form.error-generic'))
+      setError(formatErrorMessage(e, t('auth:form.error-generic')))
     } finally {
       setPendingProvider(null)
       turnstileRef.current?.reset()
@@ -134,15 +135,16 @@ export const LoginForm = ({
 
   const handlePasskey = async () => {
     setPendingProvider('passkey')
+    setError(null)
     try {
       const { error } = await authClient.signIn.passkey()
       if (error) throw error
       haptic.trigger('success')
       toast.success(t('auth:login.toast-success'))
       onSuccess?.()
-    } catch (e: any) {
+    } catch (e: unknown) {
       haptic.trigger('error')
-      setError(e.message || t('auth:form.error-passkey'))
+      setError(formatErrorMessage(e, t('auth:form.error-passkey')))
     } finally {
       setPendingProvider(null)
     }

@@ -1,5 +1,7 @@
 import clsx from 'clsx'
+import { motion } from 'framer-motion'
 import { type FC, type ImgHTMLAttributes, memo, useRef, useState } from 'react'
+import MdiImageRemove from '~icons/mdi/image-remove'
 
 export const FadedImage: FC<
   Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt'> & {
@@ -8,6 +10,7 @@ export const FadedImage: FC<
   }
 > = memo(({ placeholderClassName, draggable, alt, ...props }) => {
   const [loaded, setLoaded] = useState(false)
+  const [isError, setIsError] = useState(false)
   const [instantlyLoaded, setInstantlyLoaded] = useState(false)
   const firstMountAt = useRef(Date.now())
   const onLoad = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -22,18 +25,36 @@ export const FadedImage: FC<
 
   return (
     <div className={clsx('relative', props.className, placeholderClassName)}>
-      <img
-        {...props}
-        alt={alt}
-        onLoad={onLoad}
-        className={clsx(
-          'transition-opacity h-full w-full',
-          loaded ? 'opacity-100' : 'opacity-0',
-          !draggable && 'select-none touch-callout-none',
-          instantlyLoaded ? 'duration-0' : 'duration-200',
-        )}
-        draggable={draggable}
-      />
+      {isError ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className={clsx(
+            'flex items-center justify-center transition-opacity h-full w-full opacity-100',
+            !draggable && 'select-none touch-callout-none',
+            'duration-200',
+          )}
+        >
+          <MdiImageRemove className="text-zinc-400 text-2xl" />
+        </motion.div>
+      ) : (
+        <img
+          {...props}
+          alt={alt}
+          onLoad={onLoad}
+          onError={(event) => {
+            setIsError(true)
+            props.onError?.(event)
+          }}
+          className={clsx(
+            'transition-opacity h-full w-full',
+            loaded ? 'opacity-100' : 'opacity-0',
+            !draggable && 'select-none touch-callout-none',
+            instantlyLoaded ? 'duration-0' : 'duration-200',
+          )}
+          draggable={draggable}
+        />
+      )}
     </div>
   )
 })

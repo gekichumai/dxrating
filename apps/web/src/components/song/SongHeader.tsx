@@ -1,4 +1,3 @@
-import type { Song } from '@gekichumai/dxdata'
 import { Button, ButtonGroup, IconButton } from '@mui/material'
 import { motion } from 'framer-motion'
 import { type FC, useState } from 'react'
@@ -9,11 +8,15 @@ import IconMdiSpotify from '~icons/mdi/spotify'
 import IconMdiYouTube from '~icons/mdi/youtube'
 import RiBilibiliFill from '~icons/ri/bilibili-fill'
 import MdiImageRemove from '~icons/mdi/image-remove'
+import type { FlattenedSheet } from '../../songs'
+import { AddSheetAltNameButton } from '../sheet/AddSheetAltNameButton'
+import { SheetAltNames } from '../sheet/SheetAltNames'
 
-export const SongHeader: FC<{ song: Song }> = ({ song }) => {
+export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const { t } = useTranslation(['sheet'])
   const [imgExpanded, setImgExpanded] = useState(false)
   const [imgError, setImgError] = useState(false)
+  const song = sheet
 
   const coverUrl = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
 
@@ -67,6 +70,10 @@ export const SongHeader: FC<{ song: Song }> = ({ song }) => {
           </h1>
           <div className="text-sm text-zinc-600">{song.artist}</div>
           <div className="text-sm text-zinc-500">{song.category}</div>
+          <div className="w-full font-bold flex flex-col pt-1">
+            {song.searchAcronyms.length > 0 && <SheetAltNames altNames={song.searchAcronyms} />}
+            <AddSheetAltNameButton sheet={sheet} />
+          </div>
         </div>
       </div>
 

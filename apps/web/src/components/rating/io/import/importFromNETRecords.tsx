@@ -1,4 +1,5 @@
-import { type DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import type { VersionEnum } from '@gekichumai/dxdata'
+import { getDxdataSongCatalog, normalizeMaimaiNetRecords } from '@gekichumai/maimai-domain'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import { CircularProgress } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
@@ -10,10 +11,10 @@ import type { ListActions } from 'react-use/lib/useList'
 import IconMdiCheck from '~icons/mdi/check'
 import IconMdiClose from '~icons/mdi/close'
 import { WebHaptics } from 'web-haptics'
-import { type FlattenedSheet, canonicalIdFromParts } from '../../../../songs'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
-import type { ComboFlag, PlayEntry, SyncFlag } from '../../RatingCalculatorAddEntryForm'
+import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
+import { importResultToPlayEntries } from './importResultToPlayEntries'
 
 type NetImportErrorCode = 'NET_MAINTENANCE' | 'INVALID_CREDENTIALS' | 'UNKNOWN_ERROR' | 'INTERNAL_ERROR' | 'TOKEN_ERROR'
 
@@ -129,35 +130,6 @@ const fetchNetRecords = async (
   })
 }
 
-const NET_COMBO_FLAG_MAP: Record<string, ComboFlag> = {
-  fullCombo: 'fc',
-  'fullCombo+': 'fcp',
-  allPerfect: 'ap',
-  'allPerfect+': 'app',
-}
-
-const NET_SYNC_FLAG_MAP: Record<string, SyncFlag> = {
-  syncPlay: 'sync',
-  fullSync: 'fs',
-  'fullSync+': 'fsp',
-  fullSyncDX: 'fsd',
-  'fullSyncDX+': 'fsdp',
-}
-
-function extractComboFlag(flags: string[]): ComboFlag {
-  for (const flag of flags) {
-    if (flag in NET_COMBO_FLAG_MAP) return NET_COMBO_FLAG_MAP[flag]
-  }
-  return null
-}
-
-function extractSyncFlag(flags: string[]): SyncFlag {
-  for (const flag of flags) {
-    if (flag in NET_SYNC_FLAG_MAP) return NET_SYNC_FLAG_MAP[flag]
-  }
-  return null
-}
-
 const haptics = new WebHaptics()
 
 export const NET_IMPORT_LAST_SUCCESS_KEY = 'net-import-last-success'
@@ -166,7 +138,7 @@ export const NET_IMPORT_COOLDOWN_MS = 15 * 60 * 1000 // 15 minutes
 let importInFlight = false
 
 export const importFromNETRecords = async (
-  sheets: FlattenedSheet[],
+  appVersion: VersionEnum,
   modifyEntries: ListActions<PlayEntry>,
   mode: 'merge' | 'replace',
   onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
@@ -206,36 +178,11 @@ export const importFromNETRecords = async (
         },
       )
     })
-    const entries = data.music
-      .filter((entry) => {
-        return entry.sheet.difficulty !== 'utage'
-      })
-      .map((record) => {
-        const flags = Array.isArray(record.achievement.flags) ? record.achievement.flags : []
-        return {
-          sheetId: canonicalIdFromParts(
-            record.sheet.songId,
-            (
-              {
-                standard: TypeEnum.STD,
-                dx: TypeEnum.DX,
-                utage: TypeEnum.UTAGE,
-              } as const
-            )[record.sheet.type],
-            record.sheet.difficulty as DifficultyEnum,
-          ),
-          achievementRate: record.achievement.rate / 10000,
-          comboFlag: extractComboFlag(flags),
-          syncFlag: extractSyncFlag(flags),
-        }
-      })
-      .filter((entry) => {
-        const exists = sheets?.find((sheet) => sheet.id === entry.sheetId)
-        if (!exists) {
-          console.warn('[ImportFromNETRecordsDialogContent] sheet not found', entry)
-        }
-        return exists
-      })
+    const importResult = normalizeMaimaiNetRecords(getDxdataSongCatalog(appVersion), data.music)
+    const entries = importResultToPlayEntries(importResult)
+    for (const warning of importResult.warnings) {
+      console.warn('[importFromNETRecords]', warning.message, warning.row)
+    }
 
     console.log(entries, mode)
 

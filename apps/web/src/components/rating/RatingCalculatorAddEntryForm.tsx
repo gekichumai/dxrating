@@ -1,4 +1,5 @@
 import { Autocomplete, Button, Card, CardContent, TextField } from '@mui/material'
+import type { RatingEntry } from '@gekichumai/maimai-domain'
 import clsx from 'clsx'
 import {
   cloneElement,
@@ -18,7 +19,7 @@ import IconMdiReplace from '~icons/mdi/find-replace'
 import IconMdiPlus from '~icons/mdi/plus'
 import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
 import { type FlattenedSheet, formatSheetToString, useSheets, useSheetsSearchEngine } from '../../songs'
-import { calculateRating, type ComboFlag } from '../../utils/rating'
+import { calculateRating } from '../../utils/rating'
 import { SheetListItemContent } from '../sheet/SheetListItem'
 
 export interface PlayEntryProviderConfig {
@@ -30,12 +31,8 @@ export interface PlayEntryProviderConfig {
 export type { ComboFlag } from '../../utils/rating'
 export type SyncFlag = 'fs' | 'fsp' | 'fsd' | 'fsdp' | 'sync' | null
 
-export interface PlayEntry {
-  sheetId: string
-  achievementRate: number
-  comboFlag?: ComboFlag
-  syncFlag?: SyncFlag
-
+export interface PlayEntry extends Omit<RatingEntry, 'identity'> {
+  identity?: RatingEntry['identity']
   providerConfig?: PlayEntryProviderConfig
 }
 
@@ -95,7 +92,7 @@ export const RatingCalculatorAddEntryForm: FC<{
           diff,
         }
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
     return null

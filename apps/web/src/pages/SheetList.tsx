@@ -14,6 +14,7 @@ import { SheetSortFilter, type SheetSortFilterForm } from '../components/sheet/S
 import { SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { type FlattenedSheet, canonicalIdFromParts, useFilteredSheets, useSheets } from '../songs'
+import { sheetMatchesDifficultyFilter } from './sheetDifficultyFilter'
 
 const searchRouteApi = getRouteApi('/search')
 
@@ -91,7 +92,7 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
             difficulty: sheet.difficulty,
           }),
           mask: {
-            to: '/$songId/$type/$difficulty',
+            to: '/songs/$songId/$type/$difficulty',
             params: { songId: sheet.songId, type: sheet.type, difficulty: sheet.difficulty },
           },
           resetScroll: false,
@@ -154,13 +155,7 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
             return true
           },
 
-          (v) => {
-            if (sortFilterOptions.filters.difficulties) {
-              const difficulties = sortFilterOptions.filters.difficulties
-              return difficulties.some((difficulty) => v.difficulty === difficulty)
-            }
-            return true
-          },
+          (v) => sheetMatchesDifficultyFilter(v, sortFilterOptions.filters.difficulties),
 
           (v) => {
             if (favoriteSheetIds) {

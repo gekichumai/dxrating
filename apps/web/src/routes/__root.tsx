@@ -17,15 +17,17 @@ import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCusto
 import { AppContextProvider } from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
 import { startViewTransition } from '@/utils/startViewTransition'
+import { buildAlternateLinks } from '@/utils/alternateLinks'
+import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import appCss from '@/index.css?url'
-import unoResetCss from '@unocss/reset/tailwind-compat.css?url'
 import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
 
 const APP_TABS_VALUES = ['search', 'rating'] as const
 type AppTabsValuesType = (typeof APP_TABS_VALUES)[number]
+const SONG_DETAIL_ROUTE_ID = '/songs/$songId/$type/$difficulty'
 
 const fallbackElement = (
   <div className="flex items-center justify-center h-50% w-full p-6">
@@ -34,105 +36,109 @@ const fallbackElement = (
 )
 
 export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1.0, viewport-fit=cover',
-      },
-      { title: 'DXRating' },
-      {
-        name: 'description',
-        content: 'DXRating is a maimai DX Rating analyzer, along with other features like chart details and more.',
-      },
-      {
-        name: 'keywords',
-        content:
-          'maimai, maimai DX, maimai DX Rating, maimai DX Rating analyzer, gekichumai, maimaiでらっくす, 舞萌, 舞萌DX, 舞萌查分器, 舞萌算分器, maimai wiki',
-      },
-      { property: 'og:site_name', content: 'DXRating' },
-      { property: 'og:type', content: 'website' },
-      { property: 'og:title', content: 'DXRating' },
-      {
-        property: 'og:description',
-        content: 'DXRating is a maimai DX Rating analyzer, along with other features like chart details and more.',
-      },
-      {
-        property: 'og:image',
-        content: 'https://shama.dxrating.net/favicon/pack/v1/apple-touch-icon.png',
-      },
-      { property: 'og:url', content: 'https://dxrating.net' },
-      { name: 'twitter:card', content: 'summary' },
-      { name: 'twitter:title', content: 'DXRating' },
-      {
-        name: 'twitter:description',
-        content: 'DXRating is a maimai DX Rating analyzer, along with other features like chart details and more.',
-      },
-      { name: 'theme-color', content: '#c8a8f9' },
-      { name: 'apple-mobile-web-app-capable', content: 'yes' },
-      { name: 'msapplication-TileColor', content: '#c8a8f9' },
-      {
-        name: 'msapplication-config',
-        content: 'https://shama.dxrating.net/favicon/pack/v1/browserconfig.xml',
-      },
-    ],
-    links: [
-      { rel: 'stylesheet', href: unoResetCss },
-      { rel: 'stylesheet', href: appCss },
-      { rel: 'alternate', hrefLang: 'en', href: 'https://dxrating.net/?locale=en' },
-      { rel: 'alternate', hrefLang: 'ja', href: 'https://dxrating.net/?locale=ja' },
-      { rel: 'alternate', hrefLang: 'zh-Hans', href: 'https://dxrating.net/?locale=zh-Hans' },
-      { rel: 'alternate', hrefLang: 'zh-Hant', href: 'https://dxrating.net/?locale=zh-Hant' },
-      {
-        rel: 'prefetch',
-        href: 'https://shama.dxrating.net/images/version-logo/buddies.webp',
-      },
-      { rel: 'preconnect', href: 'https://miruku.dxrating.net' },
-      {
-        rel: 'apple-touch-icon',
-        sizes: '180x180',
-        href: 'https://shama.dxrating.net/favicon/pack/v1/apple-touch-icon.png',
-      },
-      {
-        rel: 'icon',
-        type: 'image/png',
-        sizes: '32x32',
-        href: 'https://shama.dxrating.net/favicon/pack/v1/favicon-32x32.png',
-      },
-      {
-        rel: 'icon',
-        type: 'image/png',
-        sizes: '16x16',
-        href: 'https://shama.dxrating.net/favicon/pack/v1/favicon-16x16.png',
-      },
-      {
-        rel: 'mask-icon',
-        href: 'https://shama.dxrating.net/favicon/pack/v1/safari-pinned-tab.svg',
-        color: '#c8a8f9',
-      },
-      {
-        rel: 'shortcut icon',
-        href: 'https://shama.dxrating.net/favicon/pack/v1/favicon.ico',
-      },
-      {
-        rel: 'search',
-        type: 'application/opensearchdescription+xml',
-        title: 'DXRating Search',
-        href: 'https://dxrating.net/opensearch.xml',
-      },
-      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-      {
-        rel: 'preconnect',
-        href: 'https://fonts.gstatic.com',
-        crossOrigin: 'anonymous',
-      },
-      {
-        rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap',
-      },
-    ],
+  beforeLoad: (ctx) => ({
+    locale: resolveSeoLocale([
+      { context: (ctx as { serverContext?: unknown }).serverContext },
+      { context: ctx.context },
+    ]),
   }),
+  head: ({ match, matches }) => {
+    const locale = resolveSeoLocale([match, ...matches])
+    const includeRootTitle = !matches.some((match) => String(match.routeId) === SONG_DETAIL_ROUTE_ID)
+
+    return {
+      meta: [
+        { charSet: 'utf-8' },
+        {
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=1.0, viewport-fit=cover',
+        },
+        ...buildRootSeoMeta(locale, { includeTitle: includeRootTitle }),
+        { name: 'theme-color', content: '#c8a8f9' },
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'msapplication-TileColor', content: '#c8a8f9' },
+        {
+          name: 'msapplication-config',
+          content: 'https://shama.dxrating.net/favicon/pack/v1/browserconfig.xml',
+        },
+      ],
+      links: [
+        { rel: 'preconnect', href: 'https://shama.dxrating.net' },
+        { rel: 'stylesheet', href: appCss },
+        {
+          rel: 'preload',
+          as: 'font',
+          type: 'font/woff2',
+          href: 'https://shama.dxrating.net/fonts/Torus-Regular.woff2',
+          crossOrigin: 'anonymous',
+        },
+        {
+          rel: 'preload',
+          as: 'font',
+          type: 'font/woff2',
+          href: 'https://shama.dxrating.net/fonts/Torus-SemiBold.woff2',
+          crossOrigin: 'anonymous',
+        },
+        {
+          rel: 'preload',
+          as: 'image',
+          href: 'https://shama.dxrating.net/images/version-logo/circle-plus.webp',
+          fetchPriority: 'high',
+        },
+        ...buildAlternateLinks({
+          pathname: matches[matches.length - 1]?.pathname ?? '/',
+          search: matches[matches.length - 1]?.search,
+        }),
+        {
+          rel: 'prefetch',
+          href: 'https://shama.dxrating.net/images/version-logo/buddies.webp',
+        },
+        { rel: 'preconnect', href: 'https://miruku.dxrating.net' },
+        {
+          rel: 'apple-touch-icon',
+          sizes: '180x180',
+          href: 'https://shama.dxrating.net/favicon/pack/v1/apple-touch-icon.png',
+        },
+        {
+          rel: 'icon',
+          type: 'image/png',
+          sizes: '32x32',
+          href: 'https://shama.dxrating.net/favicon/pack/v1/favicon-32x32.png',
+        },
+        {
+          rel: 'icon',
+          type: 'image/png',
+          sizes: '16x16',
+          href: 'https://shama.dxrating.net/favicon/pack/v1/favicon-16x16.png',
+        },
+        {
+          rel: 'mask-icon',
+          href: 'https://shama.dxrating.net/favicon/pack/v1/safari-pinned-tab.svg',
+          color: '#c8a8f9',
+        },
+        {
+          rel: 'shortcut icon',
+          href: 'https://shama.dxrating.net/favicon/pack/v1/favicon.ico',
+        },
+        {
+          rel: 'search',
+          type: 'application/opensearchdescription+xml',
+          title: 'DXRating Search',
+          href: 'https://dxrating.net/opensearch.xml',
+        },
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        {
+          rel: 'preconnect',
+          href: 'https://fonts.gstatic.com',
+          crossOrigin: 'anonymous',
+        },
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap',
+        },
+      ],
+    }
+  },
   component: RootComponent,
 })
 
@@ -282,10 +288,10 @@ function AppLayout() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const { i18n } = useTranslation()
+  const { locale } = Route.useRouteContext()
 
   return (
-    <html lang={i18n.language}>
+    <html lang={locale}>
       <head>
         <HeadContent />
       </head>

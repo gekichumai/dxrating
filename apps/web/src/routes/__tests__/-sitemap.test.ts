@@ -12,7 +12,7 @@ describe('buildSitemap', () => {
     ])
 
     expect(sitemap).toContain(
-      '<loc>https://dxrating.net/1%2F3%E3%81%AE%E7%B4%94%E6%83%85%E3%81%AA%E6%84%9F%E6%83%85%20%26%20%3Ctest%3E/dx/master</loc>',
+      '<loc>https://dxrating.net/songs/1%2F3%E3%81%AE%E7%B4%94%E6%83%85%E3%81%AA%E6%84%9F%E6%83%85%20%26%20%3Ctest%3E/dx/master</loc>',
     )
     expect(sitemap).not.toContain('<loc>https://dxrating.net/1/3の純情な感情 & <test>/dx/master</loc>')
   })
@@ -36,7 +36,7 @@ describe('buildSitemap', () => {
       },
     ])
 
-    expect(sitemap.indexOf('/mixed/std/master')).toBeLessThan(sitemap.indexOf('/recent/dx/expert'))
-    expect(sitemap.indexOf('/recent/dx/expert')).toBeLessThan(sitemap.indexOf('/old/dx/master'))
+    expect(sitemap.indexOf('/songs/mixed/std/master')).toBeLessThan(sitemap.indexOf('/songs/recent/dx/expert'))
+    expect(sitemap.indexOf('/songs/recent/dx/expert')).toBeLessThan(sitemap.indexOf('/songs/old/dx/master'))
   })
 })

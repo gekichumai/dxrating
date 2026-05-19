@@ -1,5 +1,13 @@
 import { createHash } from 'node:crypto'
-import { type Sheet, type Song, VersionEnum, dxdata } from '@gekichumai/dxdata'
+import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
+import {
+  calculateBest50,
+  calculateRatingAward,
+  getDxdataSongCatalog,
+  type Best50Bucket,
+  type RatingAward,
+  type VersionedSheet,
+} from '@gekichumai/maimai-domain'
 import { renderAsync } from '@resvg/resvg-js'
 import type { Context } from 'hono'
 import satori, { type Font } from 'satori'
@@ -8,7 +16,6 @@ import { z } from 'zod'
 import { type Scope, Sentry } from '../../../lib/functions/sentry.js'
 import { fetchAsset } from './assetFetcher.js'
 import { calculateDXScoreStars } from './calculateDXScore.js'
-import { type Rating, calculateRating } from './calculateRating.js'
 import { demo } from './demo.js'
 import { renderContent } from './renderContent.js'
 
@@ -78,7 +85,7 @@ declare module 'react' {
 
 export interface RenderData extends PlayEntry {
   sheet: FlattenedSheet
-  rating: Rating
+  rating: RatingAward
   dxScore?: {
     achieved: number
     total: number
@@ -87,43 +94,6 @@ export interface RenderData extends PlayEntry {
   playCount: number
   allPerfectPlusCount: number
 }
-const CANONICAL_ID_PARTS_SEPARATOR = '__dxrt__'
-
-const canonicalId = (song: Song, sheet: Sheet) => {
-  return [song.songId, sheet.type, sheet.difficulty].join(CANONICAL_ID_PARTS_SEPARATOR)
-}
-
-const getFlattenedSheetsMap = () => {
-  const calcFlattenedSheets = (version: VersionEnum): FlattenedSheet[] => {
-    const songs = dxdata.songs
-    const flattenedSheets = songs.flatMap((song) => {
-      return song.sheets.map((sheet) => {
-        return {
-          ...song,
-          ...sheet,
-          id: canonicalId(song, sheet),
-          internalLevelValue: sheet.multiverInternalLevelValue
-            ? (sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue)
-            : sheet.internalLevelValue,
-        }
-      })
-    })
-    return flattenedSheets as FlattenedSheet[]
-  }
-
-  const cachedFlattenedSheets: Map<VersionEnum, Map<string, FlattenedSheet>> = new Map()
-  for (const version of Object.values(VersionEnum)) {
-    const calc = calcFlattenedSheets(version)
-    const map = new Map<string, FlattenedSheet>()
-    for (const sheet of calc) {
-      map.set(sheet.id, sheet)
-    }
-    cachedFlattenedSheets.set(version, map)
-  }
-  return cachedFlattenedSheets
-}
-
-const flattenedSheets = getFlattenedSheetsMap()
 
 const fetchFontPack = async (): Promise<Font[]> => {
   const fontConfig = [
@@ -168,16 +138,30 @@ const fetchFontPack = async (): Promise<Font[]> => {
 
 let cachedFonts: Font[] | null = null
 
-type FlattenedSheet = Song &
-  Sheet & {
-    id: string
-    isTypeUtage: boolean
-    isRatingEligible: boolean
-    tags: number[]
-    releaseDateTimestamp: number
-  }
+type FlattenedSheet = VersionedSheet & {
+  type: TypeEnum.DX | TypeEnum.STD
+  difficulty: DifficultyEnum
+  isTypeUtage: false
+  isRatingEligible: true
+}
 
-const enrichEntries = (entries: PlayEntry[], version: VersionEnum) => {
+const RENDERABLE_DIFFICULTIES = new Set<string>(Object.values(DifficultyEnum))
+
+export const isRenderableRatingSheet = (sheet: VersionedSheet): sheet is FlattenedSheet => {
+  return (
+    sheet.isRatingEligible &&
+    !sheet.isTypeUtage &&
+    (sheet.type === TypeEnum.DX || sheet.type === TypeEnum.STD) &&
+    RENDERABLE_DIFFICULTIES.has(sheet.difficulty)
+  )
+}
+
+const getFlattenedSheet = (version: VersionEnum, sheetId: string): FlattenedSheet | null => {
+  const sheet = getDxdataSongCatalog(version).getById(sheetId)
+  return sheet && isRenderableRatingSheet(sheet) ? sheet : null
+}
+
+export const enrichEntries = (entries: PlayEntry[], version: VersionEnum): RenderData[] => {
   return entries.flatMap((entry) => {
     // check data validity
     if (
@@ -198,7 +182,7 @@ const enrichEntries = (entries: PlayEntry[], version: VersionEnum) => {
       return []
     }
 
-    const sheet = flattenedSheets.get(version)?.get(entry.sheetId)
+    const sheet = getFlattenedSheet(version, entry.sheetId)
     if (!sheet) {
       return []
     }
@@ -209,12 +193,11 @@ const enrichEntries = (entries: PlayEntry[], version: VersionEnum) => {
           ...sheet,
           internalLevelValue: entry.sheetOverrides?.internalLevelValue ?? sheet.internalLevelValue,
         },
-        rating: sheet
-          ? calculateRating(
-              entry.sheetOverrides?.internalLevelValue ?? sheet.internalLevelValue ?? 0,
-              entry.achievementRate,
-            )
-          : undefined,
+        rating: calculateRatingAward(
+          entry.sheetOverrides?.internalLevelValue ?? sheet.internalLevelValue ?? 0,
+          entry.achievementRate,
+          entry.achievementAccuracy ?? null,
+        ),
         dxScore: entry.achievementDXScore
           ? {
               achieved: entry.achievementDXScore.achieved,
@@ -229,7 +212,7 @@ const enrichEntries = (entries: PlayEntry[], version: VersionEnum) => {
   })
 }
 
-const prepareCalculatedEntries = (
+export const prepareCalculatedEntries = (
   calculatedEntries: {
     b15: PlayEntry[]
     b35: PlayEntry[]
@@ -237,8 +220,8 @@ const prepareCalculatedEntries = (
   version: VersionEnum,
 ): { b15: RenderData[]; b35: RenderData[] } => {
   const prepared = {
-    b15: enrichEntries(calculatedEntries.b15, version).filter((entry) => entry.sheet && entry.rating) as RenderData[],
-    b35: enrichEntries(calculatedEntries.b35, version).filter((entry) => entry.sheet && entry.rating) as RenderData[],
+    b15: enrichEntries(calculatedEntries.b15, version),
+    b35: enrichEntries(calculatedEntries.b35, version),
   }
 
   prepared.b15.sort((a, b) => {
@@ -252,29 +235,79 @@ const prepareCalculatedEntries = (
   return prepared
 }
 
-const calculateEntries = (entries: PlayEntry[], version: VersionEnum): { b15: RenderData[]; b35: RenderData[] } => {
-  const mapped = enrichEntries(entries, version).filter((entry) => entry.sheet && entry.rating) as RenderData[]
+interface RawBest50Candidate {
+  bucket: Best50Bucket
+  index: number
+  renderData: RenderData
+}
 
-  const b15 = mapped
-    .filter((entry) => entry.sheet.version === version)
-    .sort((a, b) => b.rating.ratingAwardValue - a.rating.ratingAwardValue)
-    .slice(0, 15)
+const compareRawBest50Candidates = (a: RawBest50Candidate, b: RawBest50Candidate): number => {
+  return (
+    b.renderData.rating.ratingAwardValue - a.renderData.rating.ratingAwardValue ||
+    b.renderData.achievementRate - a.renderData.achievementRate ||
+    a.index - b.index
+  )
+}
 
-  const b35 = mapped
-    .filter((entry) => entry.sheet.version !== version)
-    .sort((a, b) => b.rating.ratingAwardValue - a.rating.ratingAwardValue)
-    .slice(0, 35)
+const deduplicateRawBest50Candidates = (candidates: RawBest50Candidate[]): RawBest50Candidate[] => {
+  const bestBySheetId = new Map<string, RawBest50Candidate>()
+  for (const candidate of candidates) {
+    const existing = bestBySheetId.get(candidate.renderData.sheetId)
+    if (!existing || compareRawBest50Candidates(candidate, existing) < 0) {
+      bestBySheetId.set(candidate.renderData.sheetId, candidate)
+    }
+  }
+  return Array.from(bestBySheetId.values())
+}
 
-  b15.sort((a, b) => {
-    return b.rating.ratingAwardValue - a.rating.ratingAwardValue
-  })
+export const calculateEntries = (
+  entries: PlayEntry[],
+  version: VersionEnum,
+  region: Region,
+): { b15: RenderData[]; b35: RenderData[] } => {
+  const catalog = getDxdataSongCatalog(version)
+  const candidates = deduplicateRawBest50Candidates(
+    entries.flatMap((entry, index): RawBest50Candidate[] => {
+      const renderData = enrichEntries([entry], version)[0]
+      if (!renderData) return []
 
-  b35.sort((a, b) => {
-    return b.rating.ratingAwardValue - a.rating.ratingAwardValue
-  })
+      const best50 = calculateBest50({
+        catalog,
+        version,
+        region,
+        entries: [
+          {
+            sheetId: renderData.sheetId,
+            identity: renderData.sheet.identity,
+            achievementRate: renderData.achievementRate,
+            comboFlag: renderData.achievementAccuracy ?? null,
+          },
+        ],
+      })
+      const bucket = best50.b15.length ? 'b15' : best50.b35.length ? 'b35' : null
+      return bucket ? [{ bucket, index, renderData }] : []
+    }),
+  )
+
+  const b15Ids = new Set(
+    candidates
+      .filter((entry) => entry.bucket === 'b15')
+      .sort(compareRawBest50Candidates)
+      .slice(0, 15)
+      .map((entry) => entry.renderData.sheetId),
+  )
+
   return {
-    b15,
-    b35,
+    b15: candidates
+      .filter((entry) => b15Ids.has(entry.renderData.sheetId))
+      .sort(compareRawBest50Candidates)
+      .map((entry) => entry.renderData),
+    b35: candidates
+      .filter((entry) => !b15Ids.has(entry.renderData.sheetId))
+      .filter((entry) => entry.bucket === 'b35')
+      .sort(compareRawBest50Candidates)
+      .slice(0, 35)
+      .map((entry) => entry.renderData),
   }
 }
 
@@ -380,7 +413,7 @@ export const handler = async (c: Context): Promise<Response> => {
         Sentry.addBreadcrumb({ message: 'Calculating entries', category: 'processing', level: 'info' })
         const data = body.calculatedEntries
           ? prepareCalculatedEntries(body.calculatedEntries, version)
-          : calculateEntries(body.entries ?? [], version)
+          : calculateEntries(body.entries ?? [], version, region)
         timer.stop('calc')
 
         timer.start('jsx')
@@ -498,7 +531,7 @@ export const handler = async (c: Context): Promise<Response> => {
     })
     const data = body.calculatedEntries
       ? prepareCalculatedEntries(body.calculatedEntries, version)
-      : calculateEntries(body.entries ?? [], version)
+      : calculateEntries(body.entries ?? [], version, region)
     timer.stop('calc')
 
     Sentry.addBreadcrumb({

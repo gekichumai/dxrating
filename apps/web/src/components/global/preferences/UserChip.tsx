@@ -1,5 +1,6 @@
 import { CircularProgress, IconButton } from '@mui/material'
 import { type FC, useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAsync } from 'react-use'
 import MdiAccountCheck from '~icons/mdi/account-check'
 import MdiLogin from '~icons/mdi/login'
@@ -49,6 +50,7 @@ export const ProfileImage: FC<{
 }
 
 export const UserChip: FC = () => {
+  const { t } = useTranslation(['auth'])
   const [open, setOpen] = useState<'auth' | 'profile' | null>(null)
   const [authPending, setAuthPending] = useState(false)
   const { data: sessionData, isPending: pending } = authClient.useSession()
@@ -81,6 +83,8 @@ export const UserChip: FC = () => {
           onClick={() => {
             setOpen(session ? 'profile' : 'auth')
           }}
+          aria-label={t(session ? 'auth:user-menu.open-profile' : 'auth:user-menu.sign-in')}
+          title={t(session ? 'auth:user-menu.open-profile' : 'auth:user-menu.sign-in')}
         >
           {session ? <ProfileImage email={user?.email} image={user?.image} size="1.2em" /> : <MdiLogin />}
         </IconButton>

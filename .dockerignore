@@ -8,4 +8,10 @@
 !.npmrc
 !packages/tsconfig/
 !packages/dxdata/
+!packages/maimai-domain/
 !apps/backend/
+
+# Keep local generated artifacts out of the Docker build context.
+**/node_modules
+**/dist
+**/.turbo

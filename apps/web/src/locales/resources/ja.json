@@ -2,15 +2,27 @@
   "root": {
     "pages": {
       "search": {
-        "title": "譜面検索"
+        "title": "譜面検索",
+        "seo-title": "譜面検索",
+        "seo-description": "maimai DX の譜面を、楽曲名、アーティスト、難易度から検索できます。譜面定数、ノーツ数、詳しい譜面情報も確認できます。"
       },
       "rating": {
-        "title": "レーテイング計算"
+        "title": "レーテイング計算",
+        "seo-title": "レーティング計算",
+        "seo-description": "maimai DX のレーティング記録、Best 50、達成率、スコア詳細を DXRating で計算・管理できます。"
       }
+    },
+    "seo": {
+      "description": "DXRating は maimai DX Rating の分析ツールです。譜面詳細などの機能も提供しています。",
+      "keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating 分析, ゲキチュウマイ, maimaiでらっくす, 譜面情報, レーティング計算, maimai wiki"
     },
     "share": {
       "copy-content": "{{ link }}",
       "copy-succeeded": "クリップボードにコピーされました"
+    },
+    "external-links": {
+      "discord": "DXRating の Discord サーバーに参加",
+      "github": "DXRating を GitHub で開く"
     }
   },
   "settings": {
@@ -24,7 +36,11 @@
     "version-and-region": {
       "info": "異なるバージョンと地域を選ぶと、配信されている楽曲と内部定数を表示されます",
       "select": "バージョンと地域を選択ください",
-      "select-generic": "まだ、バージョンのみを選んでください"
+      "select-generic": "まだ、バージョンのみを選んでください",
+      "logo-alt": "maimai DX {{version}} ロゴ"
+    },
+    "language": {
+      "select": "言語を選択"
     },
     "import-provider": {
       "diving-fish": {
@@ -171,13 +187,17 @@
       "back-to-search": "検索に戻る"
     },
     "type": {
-      "dx": "DX",
-      "std": "STD",
-      "utage": "UTAGE"
+      "dx": "でらっくす",
+      "std": "スタンダード",
+      "utage": "宴"
+    },
+    "seo": {
+      "description": "{{title}} / {{artist}} - {{sheetLabel}} の譜面詳細、譜面定数、ノーツ数 - DXRating。"
     }
   },
   "about": {
     "title": "当サイトについて",
+    "open": "DXRating について",
     "author": "著者",
     "source-code": "ソースコード",
     "internal-level-value": "譜面定数",
@@ -272,6 +292,10 @@
         "password-required": "パスワードを入力してください",
         "password-min-length": "パスワードは8文字以上で入力してください"
       }
+    },
+    "user-menu": {
+      "sign-in": "DXRating にログイン",
+      "open-profile": "アカウントメニューを開く"
     },
     "user-profile": {
       "title": "アカウント",
