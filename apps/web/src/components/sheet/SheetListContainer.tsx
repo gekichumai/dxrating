@@ -36,11 +36,10 @@ export const SheetListContainer = ({
   return (
     <div className={clsx('w-full', listContainerClassName)}>
       <Virtuoso
+        useWindowScroll
         data={sheets}
         itemContent={ItemContent}
-        className="w-full"
-        style={{ height: '100lvh' }}
-        fixedItemHeight={78}
+        className="w-full min-h-[100lvh]"
         increaseViewportBy={500}
         initialItemCount={Math.min(sheets.length, 20)}
       />

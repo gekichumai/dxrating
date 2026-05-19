@@ -92,10 +92,10 @@ export interface SheetListItemContentProps extends HTMLAttributes<HTMLDivElement
 export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
   ({ sheet, size = 'medium', className, enableSheetImage = true, SheetTitleProps, ListItemTextProps, ...rest }) => {
     return (
-      <div className={clsx('flex items-center w-full h-[70px] p-1 gap-2 tabular-nums relative', className)} {...rest}>
+      <div className={clsx('flex items-center w-full p-1 gap-2 tabular-nums relative', className)} {...rest}>
         {enableSheetImage && <SheetImage name={sheet.imageName} size={size} />}
 
-        <ListItemText {...ListItemTextProps} className={clsx('ml-2 pr-12 min-w-0', ListItemTextProps?.className)}>
+        <ListItemText {...ListItemTextProps} className={clsx('ml-2 pr-12', ListItemTextProps?.className)}>
           <SheetTitle
             {...SheetTitleProps}
             sheet={sheet}
@@ -254,11 +254,11 @@ export const SheetTitle: FC<SheetTitleProps> = ({
   const { t } = useTranslation(['sheet'])
   const { title, searchAcronyms, difficulty, type, version } = sheet
   return (
-    <div className="flex flex-col min-w-0">
-      <h3 className={clsx('flex flex-col md:flex-row md:items-start gap-x-2 gap-y-1 min-w-0', className)}>
-        <span className="flex flex-col min-w-0">
+    <div className="flex flex-col">
+      <h3 className={clsx('flex flex-col md:flex-row md:items-start gap-x-2 gap-y-1', className)}>
+        <span className="flex flex-col">
           <span
-            className="leading-tight cursor-pointer truncate"
+            className="leading-tight cursor-pointer"
             {...(enableClickToCopy && {
               onClick: () => {
                 navigator.clipboard.writeText(title)
