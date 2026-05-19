@@ -44,6 +44,7 @@ export function getI18nInitOptions(lng: SupportedLocale): InitOptions {
     fallbackLng: DEFAULT_LOCALE,
     supportedLngs: [...SUPPORTED_LOCALES],
     lng,
+    keySeparator: false,
     interpolation: {
       escapeValue: false,
     },
