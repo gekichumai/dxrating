@@ -52,7 +52,7 @@
     "lodash-es": "^4.18.1",
     "lucide-react": "^0.577.0",
     "marked": "^14.1.4",
-    "posthog-js": "^1.369.1",
+    "posthog-js": "^1.373.4",
     "react": "catalog:",
     "react-dom": "^19.2.6",
     "react-geiger": "^1.2.3",
