@@ -26,4 +26,4 @@ catalog:
   react: ^19.2.6
   ts-pattern: ^5.9.0
   typescript: ^5.9.3
-  vitest: ^4.1.5
+  vitest: ^4.1.6
