@@ -1,6 +1,10 @@
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { calculateRatingAward, getDxdataSongCatalog, type VersionedSheet } from '@gekichumai/maimai-domain'
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect } from 'vitest'
+import { app } from '../app.js'
 import {
   calculateEntries,
   enrichEntries,
@@ -17,21 +21,33 @@ const findRenderableSheet = (version: VersionEnum, predicate: (sheet: VersionedS
 }
 
 describe('Oneshot Renderer', () => {
-  let testServer: typeof import('./setup.js') | undefined
-
-  beforeAll(async () => {
-    testServer = await import('./setup.js')
-    await testServer.setupTestServer()
-  })
-  afterAll(async () => {
-    await testServer?.teardownTestServer()
-  })
-
   it('POST /functions/render-oneshot/v0 with demo=1 responds', async () => {
-    if (!testServer) throw new Error('Expected test server setup to complete')
-    const res = await fetch(`${testServer.getBaseUrl()}/functions/render-oneshot/v0?demo=1`, {
-      method: 'POST',
-    })
+    const originalAssetCacheDir = process.env.ASSETS_LOCAL_CACHE_DIR
+    const originalAssetRemoteUrl = process.env.ASSETS_REMOTE_URL
+    const assetCacheDir = await mkdtemp(join(tmpdir(), 'dxrating-test-assets-'))
+
+    let res: Response
+    try {
+      process.env.ASSETS_LOCAL_CACHE_DIR = assetCacheDir
+      process.env.ASSETS_REMOTE_URL = 'http://127.0.0.1:9'
+
+      res = await app.request('/functions/render-oneshot/v0?demo=1', {
+        method: 'POST',
+      })
+    } finally {
+      if (originalAssetCacheDir === undefined) {
+        delete process.env.ASSETS_LOCAL_CACHE_DIR
+      } else {
+        process.env.ASSETS_LOCAL_CACHE_DIR = originalAssetCacheDir
+      }
+      if (originalAssetRemoteUrl === undefined) {
+        delete process.env.ASSETS_REMOTE_URL
+      } else {
+        process.env.ASSETS_REMOTE_URL = originalAssetRemoteUrl
+      }
+      await rm(assetCacheDir, { recursive: true, force: true })
+    }
+
     // The renderer depends on font files (ASSETS_LOCAL_CACHE_DIR).
     // In test env without fonts, it may fail. We verify the endpoint is reachable.
     if (res.status === 200) {

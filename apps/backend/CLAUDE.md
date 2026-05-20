@@ -2,7 +2,7 @@
 
 ## Stack
 
-- **Runtime**: Node.js 25
+- **Runtime**: Node.js 25.9.0
 - **Framework**: Hono
 - **API Layer**: oRPC (type-safe OpenAPI-based RPC)
 - **Database**: PostgreSQL 16 via Drizzle ORM

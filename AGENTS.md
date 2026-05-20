@@ -116,7 +116,7 @@ Web requires `apps/web/.env` (no `.env.example` — create manually):
 - **ESM throughout** — use `.js` extensions in TypeScript imports (e.g., `import { foo } from './foo.js'`). Applies to `apps/backend` and `packages/`.
 - **Linter**: oxlint — do not add ESLint.
 - **Formatter**: oxfmt — do not add Prettier.
-- **Node.js v25**, pnpm 10.30.3.
+- **Node.js 25.9.0**, pnpm 10.30.3.
 - TypeScript strict mode is enabled across all packages.
 
 ## Testing
