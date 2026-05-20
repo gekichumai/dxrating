@@ -87,7 +87,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/sql.js": "^1.4.11",
     "@unocss/preset-typography": "^66.6.8",
-    "@vitejs/plugin-react": "^5.2.0",
+    "@vitejs/plugin-react": "^6.0.2",
     "@vitest/ui": "^4.1.6",
     "esno": "catalog:",
     "i18next-pseudo": "^2.2.1",
