@@ -19,7 +19,7 @@
     "@emotion/styled": "^11.14.1",
     "@gekichumai/dxdata": "workspace:*",
     "@gekichumai/maimai-domain": "workspace:*",
-    "@marsidev/react-turnstile": "^1.5.0",
+    "@marsidev/react-turnstile": "^1.5.2",
     "@microsoft/fetch-event-source": "^2.0.1",
     "@mui/material": "^5.18.0",
     "@orpc/client": "catalog:",
@@ -56,11 +56,11 @@
     "react": "catalog:",
     "react-dom": "^19.2.6",
     "react-geiger": "^1.2.3",
-    "react-hook-form": "^7.72.1",
+    "react-hook-form": "^7.76.0",
     "react-hot-toast": "^2.6.0",
     "react-i18next": "^15.7.4",
     "react-use": "^17.6.0",
-    "react-virtuoso": "^4.18.5",
+    "react-virtuoso": "^4.18.7",
     "sql.js": "^1.14.1",
     "swr": "^2.4.1",
     "ts-pattern": "catalog:",
@@ -69,8 +69,8 @@
     "web-haptics": "^0.0.6"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.36.3",
-    "@cloudflare/workers-types": "^4.20260508.1",
+    "@cloudflare/vite-plugin": "^1.37.1",
+    "@cloudflare/workers-types": "^4.20260517.1",
     "@hookform/devtools": "^4.4.0",
     "@iconify-json/carbon": "^1.2.21",
     "@iconify-json/logos": "^1.2.11",
@@ -91,13 +91,13 @@
     "@vitest/ui": "^4.1.6",
     "esno": "catalog:",
     "i18next-pseudo": "^2.2.1",
-    "react-grab": "^0.1.32",
+    "react-grab": "^0.1.34",
     "typescript": "catalog:",
     "unocss": "^66.6.8",
     "unocss-preset-animations": "^1.3.0",
     "unplugin-icons": "^23.0.1",
-    "vite": "^8.0.12",
+    "vite": "^8.0.13",
     "vitest": "catalog:",
-    "wrangler": "^4.90.0"
+    "wrangler": "^4.92.0"
   }
 }
