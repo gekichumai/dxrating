@@ -251,7 +251,7 @@ const SheetSortFilterFormListener: FC<{
   const { watch } = useFormContext<SheetSortFilterForm>()
 
   useEffect(() => {
-    watch((data) => {
+    const subscription = watch((data) => {
       if (data.filters || data.sorts) {
         onChange?.(data as SheetSortFilterForm)
         const lastActiveAt = Date.now()
@@ -267,6 +267,8 @@ const SheetSortFilterFormListener: FC<{
         persistFilterLastActiveAtCookie(lastActiveAt)
       }
     })
+
+    return () => subscription.unsubscribe()
   }, [onChange, watch])
 
   return null

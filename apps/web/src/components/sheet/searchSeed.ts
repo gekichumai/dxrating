@@ -1,4 +1,5 @@
 import { DifficultyEnum, TypeEnum, dxdata, type Sheet, type Song } from '@gekichumai/dxdata'
+import { parseCookieHeader } from '@/utils/cookies'
 import { buildSheetPath } from './sheetLinks'
 
 export const SHEET_SORT_FILTER_TTL = 5 * 60 * 1000
@@ -27,24 +28,6 @@ type SearchSeedSearchParams = {
 
 const typeOrder = Object.values(TypeEnum)
 const difficultyOrder = Object.values(DifficultyEnum)
-
-const parseCookieHeader = (cookieHeader: string | null) => {
-  const cookies = new Map<string, string>()
-  if (!cookieHeader) return cookies
-
-  for (const part of cookieHeader.split(';')) {
-    const [rawName, ...rawValue] = part.trim().split('=')
-    if (!rawName || rawValue.length === 0) continue
-
-    try {
-      cookies.set(rawName, decodeURIComponent(rawValue.join('=')))
-    } catch {
-      cookies.set(rawName, rawValue.join('='))
-    }
-  }
-
-  return cookies
-}
 
 const releaseDateTimestamp = (releaseDate: string | undefined) => {
   if (!releaseDate) return 0
@@ -76,11 +59,20 @@ const toSearchSeedSheet = (song: Song, sheet: Sheet): SearchSeedSheet => ({
   path: buildSheetPath({ songId: song.songId, type: sheet.type, difficulty: sheet.difficulty }),
 })
 
-export const buildSearchSeedSheets = (songs: readonly Song[] = dxdata.songs): SearchSeedSheet[] =>
+const createSearchSeedSheets = (songs: readonly Song[]): SearchSeedSheet[] =>
   songs
     .flatMap((song) => song.sheets.map((sheet) => toSearchSeedSheet(song, sheet)))
     .sort(compareSearchSeedSheets)
     .slice(0, SEARCH_SEED_LIMIT)
+
+let defaultSearchSeedSheets: SearchSeedSheet[] | null = null
+
+export const buildSearchSeedSheets = (songs?: readonly Song[]): SearchSeedSheet[] => {
+  if (songs) return createSearchSeedSheets(songs)
+
+  defaultSearchSeedSheets ??= createSearchSeedSheets(dxdata.songs)
+  return defaultSearchSeedSheets.slice()
+}
 
 export const hasActiveFilterLastActiveAtCookie = (cookieHeader: string | null, now = Date.now()) => {
   const value = parseCookieHeader(cookieHeader).get(FILTER_LAST_ACTIVE_AT_COOKIE_NAME)
@@ -93,12 +85,8 @@ export const hasActiveFilterLastActiveAtCookie = (cookieHeader: string | null, n
   return now - lastActiveAt < SHEET_SORT_FILTER_TTL
 }
 
-export const shouldShowSearchSeed = (search: SearchSeedSearchParams, cookieHeader: string | null, now = Date.now()) =>
-  !search.q &&
-  !search.songId &&
-  !search.type &&
-  !search.difficulty &&
-  !hasActiveFilterLastActiveAtCookie(cookieHeader, now)
+export const shouldShowSearchSeed = (search: SearchSeedSearchParams, hasActiveFilterLastActiveAt = false) =>
+  !search.q && !search.songId && !search.type && !search.difficulty && !hasActiveFilterLastActiveAt
 
 export const serializeFilterLastActiveAtCookie = (lastActiveAt = Date.now()) =>
   `${FILTER_LAST_ACTIVE_AT_COOKIE_NAME}=${encodeURIComponent(

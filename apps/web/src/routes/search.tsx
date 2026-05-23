@@ -3,7 +3,12 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeader } from '@tanstack/react-start/server'
 import { SheetList } from '@/pages/SheetList'
 import { buildSearchSeo, resolveSeoLocale } from '@/utils/seo'
-import { buildSearchSeedSheets, shouldShowSearchSeed, type SearchSeedSheet } from '@/components/sheet/searchSeed'
+import {
+  buildSearchSeedSheets,
+  hasActiveFilterLastActiveAtCookie,
+  shouldShowSearchSeed,
+  type SearchSeedSheet,
+} from '@/components/sheet/searchSeed'
 
 type SearchParams = {
   q?: string
@@ -16,7 +21,9 @@ type SearchLoaderData = {
   seedSheets: SearchSeedSheet[]
 }
 
-const getSearchSeedCookieHeader = createServerFn({ method: 'GET' }).handler(() => getRequestHeader('cookie') ?? null)
+const getHasActiveSearchSeedFilter = createServerFn({ method: 'GET' }).handler(() =>
+  hasActiveFilterLastActiveAtCookie(getRequestHeader('cookie') ?? null),
+)
 
 export const Route = createFileRoute('/search')({
   ssr: true,
@@ -47,9 +54,9 @@ export const Route = createFileRoute('/search')({
       return { seedSheets: [] }
     }
 
-    const cookieHeader = await getSearchSeedCookieHeader()
+    const hasActiveSearchSeedFilter = await getHasActiveSearchSeedFilter()
     return {
-      seedSheets: shouldShowSearchSeed(search, cookieHeader) ? buildSearchSeedSheets() : [],
+      seedSheets: shouldShowSearchSeed(search, hasActiveSearchSeedFilter) ? buildSearchSeedSheets() : [],
     }
   },
   component: SheetList,

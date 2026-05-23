@@ -2,6 +2,7 @@ import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum, type Song } from '
 import { describe, expect, it } from 'vitest'
 import {
   FILTER_LAST_ACTIVE_AT_COOKIE_NAME,
+  SEARCH_SEED_LIMIT,
   SHEET_SORT_FILTER_TTL,
   buildSearchSeedSheets,
   hasActiveFilterLastActiveAtCookie,
@@ -65,6 +66,17 @@ describe('search seed helpers', () => {
     expect(seed.every((sheet) => sheet.path.startsWith('/songs/'))).toBe(true)
   })
 
+  it('returns a copy of the cached default seed list', () => {
+    const first = buildSearchSeedSheets()
+    const firstSeed = first[0]
+    first.length = 0
+
+    const second = buildSearchSeedSheets()
+
+    expect(second).toHaveLength(SEARCH_SEED_LIMIT)
+    expect(second[0]).toEqual(firstSeed)
+  })
+
   it('keeps all difficulties in the seed candidates', () => {
     const seed = buildSearchSeedSheets([
       {
@@ -97,13 +109,13 @@ describe('search seed helpers', () => {
   })
 
   it('shows the seed only for default search without an active filter cookie', () => {
-    expect(shouldShowSearchSeed({}, null, 1_000_000)).toBe(true)
-    expect(shouldShowSearchSeed({ q: '宴' }, null, 1_000_000)).toBe(false)
-    expect(shouldShowSearchSeed({ songId: 'song-1' }, null, 1_000_000)).toBe(false)
-    expect(shouldShowSearchSeed({ type: 'dx' }, null, 1_000_000)).toBe(false)
-    expect(shouldShowSearchSeed({ difficulty: 'master' }, null, 1_000_000)).toBe(false)
-    expect(shouldShowSearchSeed({}, `${FILTER_LAST_ACTIVE_AT_COOKIE_NAME}=600000`, 1_000_000)).toBe(true)
-    expect(shouldShowSearchSeed({}, `${FILTER_LAST_ACTIVE_AT_COOKIE_NAME}=999999`, 1_000_000)).toBe(false)
+    expect(shouldShowSearchSeed({})).toBe(true)
+    expect(shouldShowSearchSeed({ q: '宴' })).toBe(false)
+    expect(shouldShowSearchSeed({ songId: 'song-1' })).toBe(false)
+    expect(shouldShowSearchSeed({ type: 'dx' })).toBe(false)
+    expect(shouldShowSearchSeed({ difficulty: 'master' })).toBe(false)
+    expect(shouldShowSearchSeed({}, false)).toBe(true)
+    expect(shouldShowSearchSeed({}, true)).toBe(false)
   })
 
   it('serializes the filter activity cookies with the expected browser scope', () => {
