@@ -1,7 +1,7 @@
 import { dxdata } from '@gekichumai/dxdata'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { SongPage } from '@/pages/SongPage'
-import { buildSongSheetSeo, formatSeoTitle, resolveSeoLocale } from '@/utils/seo'
+import { buildSongSheetSeo, buildSongSheetStructuredData, formatSeoTitle, resolveSeoLocale } from '@/utils/seo'
 import { createServerI18n } from '@/setup/init-i18n'
 
 export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
@@ -37,24 +37,7 @@ export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
       scripts: [
         {
           type: 'application/ld+json',
-          children: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'MusicComposition',
-            name: song.title,
-            composer: {
-              '@type': 'Person',
-              name: song.artist,
-            },
-            image: seo.image,
-            url: seo.url,
-            genre: song.category,
-            inLanguage: locale,
-            isPartOf: {
-              '@type': 'WebSite',
-              name: 'DXRating',
-              url: 'https://dxrating.net',
-            },
-          }),
+          children: JSON.stringify(buildSongSheetStructuredData(song, sheet, locale)),
         },
       ],
     }

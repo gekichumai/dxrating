@@ -13,6 +13,7 @@ import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
 import { getSheetPageTitle } from '../components/song/sheetDisplay'
+import { getVisibleSongPageSheets } from './songPageSheets'
 
 const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 
@@ -70,6 +71,7 @@ export const SongPage: FC = () => {
     (sheet) => sheet.type === activeType && sheet.difficulty === activeDifficulty,
   )
   const headerSheet = activeSheet ?? flattenedSheets[0]
+  const visibleSheets = getVisibleSongPageSheets(flattenedSheets, activeType, activeDifficulty)
   const locale = toSupportedLocale(i18n.language) ?? DEFAULT_LOCALE
   const pageTitle = song && activeSheet ? getSheetPageTitle(song, activeSheet, locale) : undefined
 
@@ -137,14 +139,11 @@ export const SongPage: FC = () => {
         onDifficultyChange={handleDifficultyChange}
       />
 
-      {flattenedSheets.map((sheet) => {
-        const isActive = sheet.type === activeType && sheet.difficulty === activeDifficulty
-        return (
-          <div key={sheet.id} style={isActive ? undefined : { display: 'none' }} aria-hidden={!isActive}>
-            <SongSheetContent sheet={sheet} isActive={isActive} />
-          </div>
-        )
-      })}
+      {visibleSheets.map((sheet) => (
+        <div key={sheet.id}>
+          <SongSheetContent sheet={sheet} isActive />
+        </div>
+      ))}
     </div>
   )
 }

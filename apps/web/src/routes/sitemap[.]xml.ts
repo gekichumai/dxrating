@@ -23,6 +23,8 @@ const escapeXml = (value: string) =>
 
 const urlLoc = (path: string) => escapeXml(`${BASE_URL}${path}`)
 
+const lastmodXml = (releaseDate?: string) => (releaseDate ? `\n    <lastmod>${escapeXml(releaseDate)}</lastmod>` : '')
+
 export function buildSitemap(songs: SitemapSong[]) {
   const sheetEntries = songs
     .flatMap((song) =>
@@ -41,10 +43,10 @@ export function buildSitemap(songs: SitemapSong[]) {
         type: sheet.type,
         difficulty: sheet.difficulty,
       }),
-    )}</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>`,
+    )}</loc>${lastmodXml(sheet.releaseDate)}
+	    <changefreq>monthly</changefreq>
+	    <priority>0.7</priority>
+	  </url>`,
     )
     .join('')
 
