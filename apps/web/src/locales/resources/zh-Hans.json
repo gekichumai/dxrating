@@ -33,6 +33,8 @@
     "ocr": "启动 OCR",
     "filter-current-version": "过滤当前版本 B15：仅显示来自 {{version}} 的谱面",
     "search-summary": "匹配到 {{found}} 份谱面 / 总计 {{total}} 份 (耗时 {{elapsed}}ms)",
+    "search-seed.title": "最近更新的谱面",
+    "search-seed.level": "Lv. {{level}}",
     "details.achievement-to-rating.achievement": "完成率",
     "details.achievement-to-rating.rating": "得分",
     "details.achievement-to-rating.title": "完成率→得分",

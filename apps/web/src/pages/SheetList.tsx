@@ -11,6 +11,8 @@ import { ResponsiveDialog } from '../components/global/ResponsiveDialog'
 import { SheetDialogContent } from '../components/sheet/SheetDialogContent'
 import { SheetListContainer } from '../components/sheet/SheetListContainer'
 import { SheetSortFilter, type SheetSortFilterForm } from '../components/sheet/SheetSortFilter'
+import { SearchSeedList } from '../components/sheet/SearchSeedList'
+import type { SearchSeedSheet } from '../components/sheet/searchSeed'
 import { SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { type FlattenedSheet, canonicalIdFromParts, useFilteredSheets, useSheets } from '../songs'
@@ -23,15 +25,21 @@ const chainEvery =
   (arg: T) =>
     fns.every((fn) => fn(arg))
 
-const skeletonWidths = Array.from({ length: 20 }).map(() => Math.random() * 6.0 + 5.5)
+const skeletonWidths = Array.from({ length: 20 }).map((_, index) => 5.5 + (index % 7) * 0.8)
 
 const SORT_DESCRIPTOR_MAPPING = {
   releaseDate: 'releaseDateTimestamp' as const,
 }
 
 type SearchParams = ReturnType<typeof searchRouteApi.useSearch>
+type SearchLoaderData = {
+  seedSheets?: readonly SearchSeedSheet[]
+}
 
-const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
+const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly SearchSeedSheet[] }> = ({
+  search,
+  seedSheets,
+}) => {
   const posthog = usePostHog()
   const { t } = useTranslation(['sheet'])
   const { data: sheets, isLoading } = useSheets({ acceptsPartialData: true })
@@ -221,6 +229,8 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
         {() => activeSheet && <SheetDialogContent sheet={activeSheet} />}
       </ResponsiveDialog>
 
+      <SearchSeedList sheets={seedSheets} />
+
       <TextField
         label={t('sheet:search')}
         variant="outlined"
@@ -307,10 +317,13 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
 
 export const SheetList: FC = () => {
   const search = searchRouteApi.useSearch()
+  const seedSheets = searchRouteApi.useLoaderData({
+    select: (data) => (data as SearchLoaderData | undefined)?.seedSheets ?? [],
+  })
 
   return (
     <SheetDetailsContextProvider queryActive={!!search.q}>
-      <SheetListInnerContent search={search} />
+      <SheetListInnerContent search={search} seedSheets={seedSheets} />
     </SheetDetailsContextProvider>
   )
 }

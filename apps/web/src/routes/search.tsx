@@ -1,6 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { createServerFn } from '@tanstack/react-start'
+import { getRequestHeader } from '@tanstack/react-start/server'
 import { SheetList } from '@/pages/SheetList'
 import { buildSearchSeo, resolveSeoLocale } from '@/utils/seo'
+import { buildSearchSeedSheets, shouldShowSearchSeed, type SearchSeedSheet } from '@/components/sheet/searchSeed'
 
 type SearchParams = {
   q?: string
@@ -9,8 +12,14 @@ type SearchParams = {
   difficulty?: string
 }
 
+type SearchLoaderData = {
+  seedSheets: SearchSeedSheet[]
+}
+
+const getSearchSeedCookieHeader = createServerFn({ method: 'GET' }).handler(() => getRequestHeader('cookie') ?? null)
+
 export const Route = createFileRoute('/search')({
-  ssr: false,
+  ssr: true,
   head: ({ match, matches }) => {
     const seo = buildSearchSeo(resolveSeoLocale([match, ...matches]))
 
@@ -25,5 +34,23 @@ export const Route = createFileRoute('/search')({
     type: typeof search.type === 'string' ? search.type : undefined,
     difficulty: typeof search.difficulty === 'string' ? search.difficulty : undefined,
   }),
+  loaderDeps: ({ search }): SearchParams => ({
+    q: search.q,
+    songId: search.songId,
+    type: search.type,
+    difficulty: search.difficulty,
+  }),
+  loader: async ({ deps }): Promise<SearchLoaderData> => {
+    const search = deps as SearchParams
+
+    if (search.q || search.songId || search.type || search.difficulty) {
+      return { seedSheets: [] }
+    }
+
+    const cookieHeader = await getSearchSeedCookieHeader()
+    return {
+      seedSheets: shouldShowSearchSeed(search, cookieHeader) ? buildSearchSeedSheets() : [],
+    }
+  },
   component: SheetList,
 })

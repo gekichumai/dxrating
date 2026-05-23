@@ -53,6 +53,8 @@
     "internal-level-history.empty": "利用可能な履歴はありません",
     "internal-level-history.title": "譜面定数履歴",
     "search-summary": "{{found}} / {{total}} 譜面 ({{elapsed}}ミリ秒)",
+    "search-seed.title": "最近追加された譜面",
+    "search-seed.level": "Lv. {{level}}",
     "release-date": "配信日 {{absoluteDate}} ({{relativeDate}})",
     "filter.title": "フィルタ",
     "filter.internal-level-value.min": "min",

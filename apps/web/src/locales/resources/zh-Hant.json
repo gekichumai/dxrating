@@ -33,6 +33,8 @@
     "ocr": "啟動 OCR",
     "filter-current-version": "過濾當前版本 B15：僅顯示來自 {{version}} 的譜面",
     "search-summary": "匹配到 {{found}} 份譜面 / 總計 {{total}} 份 (耗時 {{elapsed}}ms)",
+    "search-seed.title": "最近更新的譜面",
+    "search-seed.level": "Lv. {{level}}",
     "details.achievement-to-rating.achievement": "完成率",
     "details.achievement-to-rating.rating": "得分",
     "details.achievement-to-rating.title": "完成率→得分",
