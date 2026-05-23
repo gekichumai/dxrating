@@ -7,18 +7,16 @@ import MdiArrowLeft from '~icons/mdi/arrow-left'
 import { TYPE_ORDER, getHighestDifficulty } from '../models/constants'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { useServerAliases } from '../models/useServerAliases'
-import { DEFAULT_LOCALE, toSupportedLocale } from '../setup/locale'
 import { type FlattenedSheet, canonicalId, getSearchAcronymsWithServerAliases } from '../songs'
 import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
-import { getSheetPageTitle } from '../components/song/sheetDisplay'
 import { getVisibleSongPageSheets } from './songPageSheets'
 
 const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 
 export const SongPage: FC = () => {
-  const { t, i18n } = useTranslation(['song'])
+  const { t } = useTranslation(['song'])
   const { songId, type, difficulty } = routeApi.useParams()
   const navigate = useNavigate()
   const appVersion = useAppContextDXDataVersion()
@@ -72,8 +70,6 @@ export const SongPage: FC = () => {
   )
   const headerSheet = activeSheet ?? flattenedSheets[0]
   const visibleSheets = getVisibleSongPageSheets(flattenedSheets, activeType, activeDifficulty)
-  const locale = toSupportedLocale(i18n.language) ?? DEFAULT_LOCALE
-  const pageTitle = song && activeSheet ? getSheetPageTitle(song, activeSheet, locale) : undefined
 
   const handleTypeChange = (newType: TypeEnum) => {
     const sheetsOfType = flattenedSheets.filter((s) => s.type === newType)
@@ -112,7 +108,6 @@ export const SongPage: FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
-      {pageTitle && <title>{pageTitle}</title>}
       <a
         href="/"
         onClick={(e) => {
