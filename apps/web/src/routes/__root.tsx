@@ -157,8 +157,6 @@ function RootLayout() {
   const tab = getActiveAppTabValue(pathname)
 
   const handleTabChange = useCallback((_: React.SyntheticEvent, nextTab: AppTabValue) => {
-    if (CHART_DISCOVERY_NAV_LINKS.some((link) => link.value === nextTab)) return
-
     try {
       localStorage.setItem('tab-selection', JSON.stringify(nextTab))
     } catch {

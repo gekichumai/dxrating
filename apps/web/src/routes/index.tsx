@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
+import { APP_TAB_LINKS } from './-top-nav-links'
 
 export const Route = createFileRoute('/')({
   ssr: false,
@@ -14,8 +15,8 @@ export const Route = createFileRoute('/')({
         saved = 'search'
       }
     }
-    const tab = saved === 'rating' ? 'rating' : 'search'
+    const href = APP_TAB_LINKS.find((link) => link.value === saved)?.href ?? '/search'
     const suffix = `${location.searchStr}${location.hash}`
-    throw redirect({ href: `/${tab}${suffix}` })
+    throw redirect({ href: `${href}${suffix}` })
   },
 })
