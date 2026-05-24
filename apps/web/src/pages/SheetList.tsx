@@ -3,14 +3,14 @@ import { IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { usePostHog } from 'posthog-js/react'
-import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
+import { type FC, useCallback, useEffect, useId, useMemo, useState, useTransition } from 'react'
 import { useTranslation } from 'react-i18next'
 import IconMdiClose from '~icons/mdi/close'
 import MdiIconInfo from '~icons/mdi/information'
 import { ResponsiveDialog } from '../components/global/ResponsiveDialog'
 import { SheetDialogContent } from '../components/sheet/SheetDialogContent'
 import { SheetListContainer } from '../components/sheet/SheetListContainer'
-import { SheetSortFilter, type SheetSortFilterForm } from '../components/sheet/SheetSortFilter'
+import { SheetSortFilter, SheetSortFilterTrigger, type SheetSortFilterForm } from '../components/sheet/SheetSortFilter'
 import { SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { type FlattenedSheet, canonicalIdFromParts, useFilteredSheets, useSheets } from '../songs'
@@ -37,6 +37,9 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
   const { data: sheets, isLoading } = useSheets({ acceptsPartialData: true })
   const version = useAppContextDXDataVersion()
   const [sortFilterOptions, setSortFilterOptions] = useState<SheetSortFilterForm | null>(null)
+  const [sortFilterExpanded, setSortFilterExpanded] = useState(false)
+  const [sortFilterPending, startSortFilterTransition] = useTransition()
+  const sortFilterContentId = useId()
   const navigate = useNavigate()
 
   const query = search.q ?? ''
@@ -62,6 +65,12 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
     },
     [navigate],
   )
+
+  const toggleSortFilter = useCallback(() => {
+    startSortFilterTransition(() => {
+      setSortFilterExpanded((current) => !current)
+    })
+  }, [])
 
   const activeSheet = useMemo<FlattenedSheet | null>(() => {
     const { songId, type, difficulty } = search
@@ -228,31 +237,46 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
           {() => activeSheet && <SheetDialogContent sheet={activeSheet} />}
         </ResponsiveDialog>
 
-        <TextField
-          label={t('sheet:search')}
-          variant="outlined"
-          value={inputQuery}
-          fullWidth
-          onChange={(e) => {
-            updateQuery(e.target.value)
-          }}
-          InputProps={{
-            endAdornment: inputQuery && (
-              <IconButton
-                onClick={() => {
-                  updateQuery('')
-                  posthog?.capture('sheet_search_clear_button_clicked')
-                }}
-                size="small"
-              >
-                <IconMdiClose />
-              </IconButton>
-            ),
-          }}
-          data-attr="sheet-search"
-        />
+        <div className="flex w-full items-stretch gap-2">
+          <SheetSortFilterTrigger
+            variant="compact"
+            expanded={sortFilterExpanded}
+            contentId={sortFilterContentId}
+            pending={sortFilterPending}
+            onToggle={toggleSortFilter}
+            className="self-stretch"
+          />
+
+          <TextField
+            className="min-w-0 flex-1"
+            label={t('sheet:search')}
+            variant="outlined"
+            value={inputQuery}
+            fullWidth
+            onChange={(e) => {
+              updateQuery(e.target.value)
+            }}
+            InputProps={{
+              endAdornment: inputQuery && (
+                <IconButton
+                  onClick={() => {
+                    updateQuery('')
+                    posthog?.capture('sheet_search_clear_button_clicked')
+                  }}
+                  size="small"
+                >
+                  <IconMdiClose />
+                </IconButton>
+              ),
+            }}
+            data-attr="sheet-search"
+          />
+        </div>
 
         <SheetSortFilter
+          expanded={sortFilterExpanded}
+          contentId={sortFilterContentId}
+          showDefaultTrigger={false}
           onChange={(v) => {
             setSortFilterOptions(v)
           }}

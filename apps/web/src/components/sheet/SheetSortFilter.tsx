@@ -18,6 +18,7 @@ import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { useEffectOnce } from 'react-use'
 import MdiChevronDownIcon from '~icons/mdi/chevron-down'
+import MdiFilterIcon from '~icons/mdi/filter'
 import { SheetDetailsContext } from '../../models/context/SheetDetailsContext'
 import type { FlattenedSheet } from '../../songs'
 import { SheetSortSelect } from './SheetSortSelect'
@@ -206,7 +207,11 @@ const loadSavedSheetSortFilterForm = (): SheetSortFilterForm | null => {
 
 export const SheetSortFilter: FC<{
   onChange?: (form: SheetSortFilterForm) => void
-}> = ({ onChange }) => {
+  expanded?: boolean
+  contentId?: string
+  onExpandedChange?: (expanded: boolean) => void
+  showDefaultTrigger?: boolean
+}> = ({ onChange, expanded, contentId, onExpandedChange, showDefaultTrigger }) => {
   const methods = useForm<SheetSortFilterForm>({
     mode: 'onChange',
     defaultValues: getDefaultSheetSortFilterForm(),
@@ -227,7 +232,12 @@ export const SheetSortFilter: FC<{
   return (
     <FormProvider {...methods}>
       <SheetSortFilterFormListener onChange={onChange} />
-      <SheetSortFilterFormContent />
+      <SheetSortFilterFormContent
+        expanded={expanded}
+        contentId={contentId}
+        onExpandedChange={onExpandedChange}
+        showDefaultTrigger={showDefaultTrigger}
+      />
     </FormProvider>
   )
 }
@@ -301,13 +311,83 @@ const SheetSortFilterFormReset: FC<{
   )
 }
 
-const SheetSortFilterFormContent = () => {
+export const SheetSortFilterTrigger: FC<{
+  expanded: boolean
+  contentId: string
+  onToggle: () => void
+  pending?: boolean
+  variant?: 'bar' | 'compact'
+  className?: string
+}> = ({ expanded, contentId, onToggle, pending = false, variant = 'bar', className }) => {
+  const { t } = useTranslation(['sheet'])
+
+  if (variant === 'compact') {
+    return (
+      <ButtonBase
+        className={clsx(
+          'relative min-h-[56px] w-[4.75rem] shrink-0 rounded border px-2 py-1.5 transition-all duration-300',
+          'flex items-center justify-center gap-1.5 text-zinc-900 shadow-sm backdrop-blur-sm',
+          expanded ? 'border-zinc-500 bg-gray-200' : 'border-zinc-400/70 bg-white/70 hover:bg-white/90',
+          className,
+        )}
+        aria-label={t('sheet:sort-and-filter.title')}
+        aria-controls={contentId}
+        aria-expanded={expanded}
+        onClick={onToggle}
+      >
+        <MdiFilterIcon className="h-5 w-5 shrink-0" />
+        <span className="flex flex-col text-left text-[0.7rem] font-bold leading-[0.9rem] tracking-normal">
+          <span className="whitespace-nowrap">{t('sheet:filter.title')}</span>
+          <span className="whitespace-nowrap">{t('sheet:sort.title')}</span>
+        </span>
+        {pending && <CircularProgress disableShrink className="absolute right-1 top-1 !h-3 !w-3" />}
+      </ButtonBase>
+    )
+  }
+
+  return (
+    <ButtonBase
+      className={clsx(
+        'px-4 w-full flex items-center transition-all duration-300',
+        expanded ? 'bg-gray-200 py-4' : 'bg-gray-100 py-3',
+        className,
+      )}
+      aria-controls={contentId}
+      aria-expanded={expanded}
+      onClick={onToggle}
+    >
+      <div className="text-xl font-bold tracking-tight leading-none">{t('sheet:sort-and-filter.title')}</div>
+      {pending && <CircularProgress disableShrink className="ml-2 !h-4 !w-4" />}
+      <div className="flex-1" />
+      <MdiChevronDownIcon className={clsx('w-6 h-6 transition-transform', expanded && 'transform rotate-180')} />
+    </ButtonBase>
+  )
+}
+
+const SheetSortFilterFormContent: FC<{
+  expanded?: boolean
+  contentId?: string
+  onExpandedChange?: (expanded: boolean) => void
+  showDefaultTrigger?: boolean
+}> = ({ expanded: controlledExpanded, contentId, onExpandedChange, showDefaultTrigger = true }) => {
   const { t } = useTranslation(['sheet'])
   const { queryActive } = useContext(SheetDetailsContext)
   const { control, setValue, reset } = useFormContext<SheetSortFilterForm>()
-  const [expanded, setExpanded] = useState(false)
+  const [uncontrolledExpanded, setUncontrolledExpanded] = useState(false)
   const [pending, startTransition] = useTransition()
-  const contentId = useId()
+  const generatedContentId = useId()
+  const resolvedContentId = contentId ?? generatedContentId
+  const expanded = controlledExpanded ?? uncontrolledExpanded
+
+  const toggleExpanded = () => {
+    startTransition(() => {
+      const nextExpanded = !expanded
+      if (controlledExpanded === undefined) {
+        setUncontrolledExpanded(nextExpanded)
+      }
+      onExpandedChange?.(nextExpanded)
+    })
+  }
 
   const resetByFilter = (...filters: (keyof SheetSortFilterForm['filters'])[]) => {
     const defaultForm = getDefaultSheetSortFilterForm()
@@ -363,24 +443,20 @@ const SheetSortFilterFormContent = () => {
   return (
     <>
       {import.meta.env.DEV && <DevTool control={control} />}
-      <Paper className="w-full flex flex-col overflow-hidden">
-        <ButtonBase
-          className={clsx(
-            'px-4 w-full flex items-center transition-all duration-300',
-            expanded ? 'bg-gray-200 py-4' : 'bg-gray-100 py-3',
+      {(showDefaultTrigger || expanded) && (
+        <Paper className="w-full flex flex-col overflow-hidden">
+          {showDefaultTrigger && (
+            <SheetSortFilterTrigger
+              expanded={expanded}
+              contentId={resolvedContentId}
+              onToggle={toggleExpanded}
+              pending={pending}
+            />
           )}
-          aria-controls={contentId}
-          aria-expanded={expanded}
-          onClick={() => startTransition(() => setExpanded((current) => !current))}
-        >
-          <div className="text-xl font-bold tracking-tight leading-none">{t('sheet:sort-and-filter.title')}</div>
-          {pending && <CircularProgress disableShrink className="ml-2 !h-4 !w-4" />}
-          <div className="flex-1" />
-          <MdiChevronDownIcon className={clsx('w-6 h-6 transition-transform', expanded && 'transform rotate-180')} />
-        </ButtonBase>
 
-        {expanded && <div id={contentId}>{collapsibleInner}</div>}
-      </Paper>
+          {expanded && <div id={resolvedContentId}>{collapsibleInner}</div>}
+        </Paper>
+      )}
     </>
   )
 }
