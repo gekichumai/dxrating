@@ -3,7 +3,7 @@ import { IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { usePostHog } from 'posthog-js/react'
-import { type FC, useCallback, useMemo, useState } from 'react'
+import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import IconMdiClose from '~icons/mdi/close'
 import MdiIconInfo from '~icons/mdi/information'
@@ -40,10 +40,16 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
   const navigate = useNavigate()
 
   const query = search.q ?? ''
-  const { results, elapsed: searchElapsed } = useFilteredSheets(query)
+  const [inputQuery, setInputQuery] = useState(query)
+  const { results, elapsed: searchElapsed } = useFilteredSheets(inputQuery)
+
+  useEffect(() => {
+    setInputQuery(query)
+  }, [query])
 
   const updateQuery = useCallback(
     (nextQuery: string) => {
+      setInputQuery(nextQuery)
       navigate({
         to: '/search',
         search: (prev: Record<string, unknown>) => ({
@@ -165,7 +171,7 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
           },
         )(sheet)
       })
-      if (!query) {
+      if (!inputQuery) {
         sortFilteredResults.sort((a, b) =>
           sortFilterOptions.sorts.reduce((acc, sort) => {
             if (acc !== 0) {
@@ -201,116 +207,114 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
     const elapsed = performance.now() - startTime
     Sentry.metrics.distribution('sheet_filter.duration', elapsed, {
       unit: 'millisecond',
-      attributes: { has_query: String(!!query), has_filters: String(!!sortFilterOptions) },
+      attributes: { has_query: String(!!inputQuery), has_filters: String(!!sortFilterOptions) },
     })
 
     return {
       filteredResults: sortFilteredResults,
       elapsed,
     }
-  }, [results, sortFilterOptions, query, version])
+  }, [results, sortFilterOptions, inputQuery, version])
 
   return (
-    <div className="flex-container pb-global">
-      <ResponsiveDialog
-        open={!!activeSheet}
-        setOpen={(open) => {
-          if (!open) handleSheetDialogChange(null)
-        }}
-      >
-        {() => activeSheet && <SheetDialogContent sheet={activeSheet} />}
-      </ResponsiveDialog>
+    <SheetDetailsContextProvider queryActive={!!inputQuery}>
+      <div className="flex-container pb-global">
+        <ResponsiveDialog
+          open={!!activeSheet}
+          setOpen={(open) => {
+            if (!open) handleSheetDialogChange(null)
+          }}
+        >
+          {() => activeSheet && <SheetDialogContent sheet={activeSheet} />}
+        </ResponsiveDialog>
 
-      <TextField
-        label={t('sheet:search')}
-        variant="outlined"
-        value={query}
-        fullWidth
-        onChange={(e) => {
-          updateQuery(e.target.value)
-        }}
-        InputProps={{
-          endAdornment: query && (
-            <IconButton
-              onClick={() => {
-                updateQuery('')
-                posthog?.capture('sheet_search_clear_button_clicked')
-              }}
-              size="small"
-            >
-              <IconMdiClose />
-            </IconButton>
-          ),
-        }}
-        data-attr="sheet-search"
-      />
+        <TextField
+          label={t('sheet:search')}
+          variant="outlined"
+          value={inputQuery}
+          fullWidth
+          onChange={(e) => {
+            updateQuery(e.target.value)
+          }}
+          InputProps={{
+            endAdornment: inputQuery && (
+              <IconButton
+                onClick={() => {
+                  updateQuery('')
+                  posthog?.capture('sheet_search_clear_button_clicked')
+                }}
+                size="small"
+              >
+                <IconMdiClose />
+              </IconButton>
+            ),
+          }}
+          data-attr="sheet-search"
+        />
 
-      <SheetSortFilter
-        onChange={(v) => {
-          setSortFilterOptions(v)
-        }}
-      />
-
-      <div className="text-sm rounded-full shadow-lg px-4 py-2 bg-blue-200 relative overflow-hidden select-none font-bold">
-        <div
-          className="absolute -inset-4 bg-blue-900/20 -skew-x-8 translate-x-4 transition-width"
-          style={{
-            width: `${(filteredResults.length / (sheets?.length ?? filteredResults.length)) * 100}%`,
+        <SheetSortFilter
+          onChange={(v) => {
+            setSortFilterOptions(v)
           }}
         />
-        <div className="relative z-1 flex items-center gap-2">
-          <MdiIconInfo className="text-blue-900" />
-          <div className="text-blue-900">
-            {t('sheet:search-summary', {
-              found: isLoading ? '...' : filteredResults.length,
-              total: isLoading ? '...' : sheets?.length,
-              elapsed: (searchElapsed + filteringElapsed).toFixed(1),
-            })}
+
+        <div className="text-sm rounded-full shadow-lg px-4 py-2 bg-blue-200 relative overflow-hidden select-none font-bold">
+          <div
+            className="absolute -inset-4 bg-blue-900/20 -skew-x-8 translate-x-4 transition-width"
+            style={{
+              width: `${(filteredResults.length / (sheets?.length ?? filteredResults.length)) * 100}%`,
+            }}
+          />
+          <div className="relative z-1 flex items-center gap-2">
+            <MdiIconInfo className="text-blue-900" />
+            <div className="text-blue-900">
+              {t('sheet:search-summary', {
+                found: isLoading ? '...' : filteredResults.length,
+                total: isLoading ? '...' : sheets?.length,
+                elapsed: (searchElapsed + filteringElapsed).toFixed(1),
+              })}
+            </div>
           </div>
         </div>
-      </div>
 
-      {isLoading ? (
-        <div className="flex flex-col w-full">
-          {skeletonWidths.map((width, i) => (
-            <div
-              className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] px-5 py-2"
-              // oxlint-disable-next-line react/no-array-index-key -- index is stable
-              key={i}
-              style={{
-                animationDelay: `${i * 40}ms`,
-              }}
-            >
-              <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] rounded bg-slate-6/50" />
-              <div className="flex flex-col gap-1">
-                <div className="bg-slate-5/50 h-5 mb-1" style={{ width: `${width}rem` }}>
-                  &nbsp;
+        {isLoading ? (
+          <div className="flex flex-col w-full">
+            {skeletonWidths.map((width, i) => (
+              <div
+                className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] px-5 py-2"
+                // oxlint-disable-next-line react/no-array-index-key -- index is stable
+                key={i}
+                style={{
+                  animationDelay: `${i * 40}ms`,
+                }}
+              >
+                <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] rounded bg-slate-6/50" />
+                <div className="flex flex-col gap-1">
+                  <div className="bg-slate-5/50 h-5 mb-1" style={{ width: `${width}rem` }}>
+                    &nbsp;
+                  </div>
+                  <div className="w-24 bg-slate-3/50 h-3">&nbsp;</div>
                 </div>
-                <div className="w-24 bg-slate-3/50 h-3">&nbsp;</div>
-              </div>
 
-              <div className="flex-1" />
-              <div className="w-10 bg-slate-5/50 h-6 mr-2">&nbsp;</div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <SheetListContainer
-          sheets={filteredResults}
-          activeSheetId={activeSheetId}
-          onSheetDialogChange={handleSheetDialogChange}
-        />
-      )}
-    </div>
+                <div className="flex-1" />
+                <div className="w-10 bg-slate-5/50 h-6 mr-2">&nbsp;</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <SheetListContainer
+            sheets={filteredResults}
+            activeSheetId={activeSheetId}
+            onSheetDialogChange={handleSheetDialogChange}
+          />
+        )}
+      </div>
+    </SheetDetailsContextProvider>
   )
 }
 
 export const SheetList: FC = () => {
   const search = searchRouteApi.useSearch()
 
-  return (
-    <SheetDetailsContextProvider queryActive={!!search.q}>
-      <SheetListInnerContent search={search} />
-    </SheetDetailsContextProvider>
-  )
+  return <SheetListInnerContent search={search} />
 }
