@@ -155,7 +155,7 @@
     "version.commit": "commit",
     "version.build": "build",
     "version.build-time": "built at",
-    "version.logo-alt": "maimai DX BUDDiES logo",
+    "version.logo-alt": "maimai DX {{version}} logo",
     "version.upstream-data-update-time": "upstream data version",
     "aliases.yuri-yuzuchan-maimaidx": "Song Aliases (Chinese)",
     "aliases.lomotos10-gcmbot": "Song Aliases (English, Korean, Romaji)",
@@ -178,7 +178,7 @@
     "current": "Current",
     "locked": "LOCKED",
     "available": "AVAILABLE",
-    "dx-rank-alt": "DX rank {{rank}}"
+    "dx-rank-alt": "Rank {{rank}}"
   },
   "auth": {
     "update-password.label": "Update Password",

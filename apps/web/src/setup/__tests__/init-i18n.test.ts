@@ -27,4 +27,13 @@ describe('i18n initialization', () => {
     expect(createServerI18n('zh-Hans').t('root:pages.search.title')).toBe('搜索谱面')
     expect(createServerI18n('zh-Hant').t('root:pages.search.title')).toBe('搜尋譜面')
   })
+
+  it('uses reviewed image alt copy across locales', () => {
+    expect(createServerI18n('en').t('about:version.logo-alt', { version: 'PRiSM PLUS' })).toBe(
+      'maimai DX PRiSM PLUS logo',
+    )
+    expect(createServerI18n('en').t('global:dx-rank-alt', { rank: 'SSS' })).toBe('Rank SSS')
+    expect(createServerI18n('zh-Hans').t('sheet:cover-art-alt', { title: 'Song Title' })).toBe('「Song Title」封面图')
+    expect(createServerI18n('zh-Hant').t('sheet:cover-art-alt', { title: 'Song Title' })).toBe('「Song Title」封面圖')
+  })
 })

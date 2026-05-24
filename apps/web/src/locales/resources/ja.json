@@ -155,7 +155,7 @@
     "version.commit": "commit",
     "version.build": "ビルド",
     "version.build-time": "ビルド時間",
-    "version.logo-alt": "maimai DX BUDDiES ロゴ",
+    "version.logo-alt": "maimai DX {{version}} ロゴ",
     "version.upstream-data-update-time": "アップストリームデータバージョン",
     "aliases.yuri-yuzuchan-maimaidx": "楽曲別名 (中国語)",
     "aliases.lomotos10-gcmbot": "楽曲別名 (英語、韓国語、ローマ字)",
@@ -178,7 +178,7 @@
     "current": "現在",
     "locked": "ロック中",
     "available": "利用可能",
-    "dx-rank-alt": "DXランク {{rank}}"
+    "dx-rank-alt": "ランク {{rank}}"
   },
   "auth": {
     "login.label": "ログイン",

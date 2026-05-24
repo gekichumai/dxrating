@@ -55,7 +55,7 @@
     "type-alt.std": "標準譜面",
     "type-alt.utage": "宴譜面",
     "type-alt.utage2p": "Buddy 譜面",
-    "cover-art-alt": "《{{title}}》封面圖",
+    "cover-art-alt": "「{{title}}」封面圖",
     "version-title-alt": "maimai DX {{version}} 版本標誌",
     "details.achievement-to-rating.achievement": "完成率",
     "details.achievement-to-rating.rating": "得分",
@@ -154,7 +154,7 @@
     "source-code": "源代碼",
     "version.build": "構建序",
     "version.build-time": "構建於",
-    "version.logo-alt": "maimai DX BUDDiES 標誌",
+    "version.logo-alt": "maimai DX {{version}} 標誌",
     "version.commit": "commit",
     "version.upstream-data-update-time": "上游數據版本",
     "aliases.yuri-yuzuchan-maimaidx": "樂曲別名 (中文)",
@@ -178,7 +178,7 @@
     "current": "當前",
     "locked": "需解鎖",
     "available": "可用",
-    "dx-rank-alt": "DX 等級 {{rank}}"
+    "dx-rank-alt": "等級 {{rank}}"
   },
   "auth": {
     "login.label": "登錄",
