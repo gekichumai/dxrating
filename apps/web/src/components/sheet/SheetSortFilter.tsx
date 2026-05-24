@@ -384,6 +384,17 @@ const SheetSortFilterFormContent: FC<{
   const generatedContentId = useId()
   const resolvedContentId = contentId ?? generatedContentId
   const expanded = controlledExpanded ?? uncontrolledExpanded
+  const [contentMotionVisible, setContentMotionVisible] = useState(expanded)
+
+  useEffect(() => {
+    if (!expanded) {
+      setContentMotionVisible(false)
+      return
+    }
+
+    const animationFrame = window.requestAnimationFrame(() => setContentMotionVisible(true))
+    return () => window.cancelAnimationFrame(animationFrame)
+  }, [expanded])
 
   const toggleExpanded = () => {
     startTransition(() => {
@@ -407,9 +418,16 @@ const SheetSortFilterFormContent: FC<{
     }
   }
 
+  const contentMotionClassName = clsx(
+    'origin-top transition-[opacity,transform,filter] duration-[275ms] ease-[cubic-bezier(0.2,0,0,1)]',
+    contentMotionVisible
+      ? 'opacity-100 translate-y-0 scale-100 blur-0'
+      : 'opacity-0 -translate-y-1 scale-[0.995] blur-[1px]',
+  )
+
   const collapsibleInner = (
     <div className="p-2 w-full flex flex-col gap-4">
-      <div className="m-2 flex flex-col gap-4">
+      <div className="p-2 flex flex-col gap-4">
         <div className="flex">
           <SheetSortFilterFormReset
             onReset={() => {
@@ -464,13 +482,17 @@ const SheetSortFilterFormContent: FC<{
           />
 
           <Collapse className="w-full" in={expanded} timeout={275} unmountOnExit>
-            <div id={resolvedContentId}>{collapsibleInner}</div>
+            <div id={resolvedContentId} className={contentMotionClassName}>
+              {collapsibleInner}
+            </div>
           </Collapse>
         </Paper>
       ) : (
         <Collapse className="w-full" in={expanded} timeout={275} unmountOnExit>
           <Paper className="w-full flex flex-col overflow-hidden">
-            <div id={resolvedContentId}>{collapsibleInner}</div>
+            <div id={resolvedContentId} className={contentMotionClassName}>
+              {collapsibleInner}
+            </div>
           </Paper>
         </Collapse>
       )}
