@@ -29,11 +29,21 @@ describe('i18n initialization', () => {
   })
 
   it('uses reviewed image alt copy across locales', () => {
-    expect(createServerI18n('en').t('about:version.logo-alt', { version: 'PRiSM PLUS' })).toBe(
-      'maimai DX PRiSM PLUS logo',
+    expect(createServerI18n('en').t('settings:version-and-region.logo-alt', { version: 'PRiSM PLUS' })).toBe(
+      'PRiSM PLUS logo',
     )
+    expect(createServerI18n('en').t('sheet:version-title-alt', { version: 'PRiSM PLUS' })).toBe(
+      'PRiSM PLUS version logo',
+    )
+    expect(createServerI18n('en').t('about:version.logo-alt', { version: 'PRiSM PLUS' })).toBe('PRiSM PLUS logo')
     expect(createServerI18n('en').t('global:dx-rank-alt', { rank: 'SSS' })).toBe('Rank SSS')
     expect(createServerI18n('zh-Hans').t('sheet:cover-art-alt', { title: 'Song Title' })).toBe('「Song Title」封面图')
+    expect(createServerI18n('zh-Hans').t('sheet:version-title-alt', { version: 'PRiSM PLUS' })).toBe(
+      'PRiSM PLUS 版本标志',
+    )
     expect(createServerI18n('zh-Hant').t('sheet:cover-art-alt', { title: 'Song Title' })).toBe('「Song Title」封面圖')
+    expect(createServerI18n('zh-Hant').t('sheet:version-title-alt', { version: 'PRiSM PLUS' })).toBe(
+      'PRiSM PLUS 版本標誌',
+    )
   })
 })

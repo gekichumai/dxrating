@@ -22,6 +22,6 @@ describe('VersionRegionSwitcher', () => {
     )
 
     expect(screen.getByRole('combobox', { name: 'Select DXData Version and Region' })).toBeTruthy()
-    expect(screen.getByRole('img', { name: 'maimai DX CiRCLE PLUS logo' }).getAttribute('fetchpriority')).toBe('high')
+    expect(screen.getByRole('img', { name: 'CiRCLE PLUS logo' }).getAttribute('fetchpriority')).toBe('high')
   })
 })

@@ -20,7 +20,7 @@ describe('About', () => {
   it('passes the displayed version name into the logo alt text', () => {
     render(<About />)
 
-    expect(screen.getByRole('img', { name: 'maimai DX BUDDiES logo' }).getAttribute('src')).toBe(
+    expect(screen.getByRole('img', { name: 'BUDDiES logo' }).getAttribute('src')).toBe(
       'https://shama.dxrating.net/images/version-adornment/buddies.png',
     )
   })
