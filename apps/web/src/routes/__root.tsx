@@ -1,10 +1,10 @@
-import { HeadContent, Outlet, Scripts, createRootRoute, useLocation, useNavigate } from '@tanstack/react-router'
-import { CircularProgress, IconButton, Tab, Tabs, Tooltip } from '@mui/material'
+import { HeadContent, Link, Outlet, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
+import { CircularProgress, Tab, Tabs, Tooltip } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { usePostHog } from 'posthog-js/react'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
-import { Suspense, useCallback, useEffect, useTransition, type MouseEvent } from 'react'
+import { Suspense, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import MdiTrendingUpIcon from '~icons/mdi/trending-up'
@@ -18,18 +18,11 @@ import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
 import { AppContextProvider } from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
-import { startViewTransition } from '@/utils/startViewTransition'
 import { buildAlternateLinks } from '@/utils/alternateLinks'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import appCss from '@/index.css?url'
-import {
-  APP_TAB_LINKS,
-  CHART_DISCOVERY_NAV_LINKS,
-  getActiveAppTabValue,
-  type AppNavHref,
-  type AppTabValue,
-} from './-top-nav-links'
+import { APP_TAB_LINKS, CHART_DISCOVERY_NAV_LINKS, getActiveAppTabValue } from './-top-nav-links'
 import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
@@ -153,9 +146,7 @@ function RootLayout() {
   const versionTheme = useVersionTheme()
   const { t } = useTranslation(['root'])
   const location = useLocation()
-  const navigate = useNavigate()
   const posthog = usePostHog()
-  const [, startTransition] = useTransition()
 
   const pathname = location.pathname
 
@@ -164,44 +155,6 @@ function RootLayout() {
   const showTabs = !isSongPage && !isPrivacyPolicy
 
   const tab = getActiveAppTabValue(pathname)
-  const activeChartDiscoveryHref = CHART_DISCOVERY_NAV_LINKS.find((link) => link.href === pathname)?.href
-
-  const navigateTo = useCallback(
-    (href: AppNavHref, tabSelection?: AppTabValue) => {
-      startTransition(() => {
-        startViewTransition(() => {
-          navigate({ to: href })
-        })
-        if (tabSelection) {
-          try {
-            localStorage.setItem('tab-selection', JSON.stringify(tabSelection))
-          } catch {
-            // Navigation should still succeed if storage is unavailable.
-          }
-        }
-      })
-    },
-    [navigate, startTransition],
-  )
-
-  const handleNavLinkClick = useCallback(
-    (event: MouseEvent<HTMLAnchorElement>, href: AppNavHref, tabSelection?: AppTabValue) => {
-      if (
-        event.defaultPrevented ||
-        event.button !== 0 ||
-        event.metaKey ||
-        event.altKey ||
-        event.ctrlKey ||
-        event.shiftKey
-      ) {
-        return
-      }
-
-      event.preventDefault()
-      navigateTo(href, tabSelection)
-    },
-    [navigateTo],
-  )
 
   useEffect(() => {
     if (!tab) return
@@ -229,37 +182,6 @@ function RootLayout() {
         <VersionRegionSwitcher />
         {showTabs && (
           <div className="rounded-xl bg-zinc-900/10 !min-h-2.5rem flex items-center overflow-hidden">
-            {CHART_DISCOVERY_NAV_LINKS.map((link) => {
-              const Icon = link.value === 'recent' ? MdiUpdateIcon : MdiTrendingUpIcon
-              const active = activeChartDiscoveryHref === link.href
-
-              return (
-                <Tooltip key={link.href} title={t(link.labelKey)}>
-                  <IconButton
-                    aria-label={t(link.labelKey)}
-                    className={`!rounded-lg !min-h-2.5rem !h-2.5rem !w-2.5rem !text-white z-1 ${
-                      active ? 'text-shadow-md' : ''
-                    }`}
-                    component="a"
-                    href={link.href}
-                    onClick={(event) => handleNavLinkClick(event, link.href)}
-                    size="small"
-                    sx={
-                      active
-                        ? {
-                            backgroundColor: 'primary.main',
-                            '&:hover': {
-                              backgroundColor: 'primary.main',
-                            },
-                          }
-                        : undefined
-                    }
-                  >
-                    <Icon className="text-lg" />
-                  </IconButton>
-                </Tooltip>
-              )
-            })}
             <Tabs
               value={tab}
               classes={{
@@ -267,20 +189,39 @@ function RootLayout() {
                 indicator: '!h-full !rounded-lg z-0',
               }}
             >
-              {APP_TAB_LINKS.map((link) => (
-                <Tab
-                  key={link.value}
-                  component="a"
-                  href={link.href}
-                  label={t(link.labelKey)}
-                  onClick={(event) => handleNavLinkClick(event, link.href, link.value)}
-                  classes={{
-                    selected: '!text-white font-bold text-shadow-md',
-                    root: '!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem',
-                  }}
-                  value={link.value}
-                />
-              ))}
+              {APP_TAB_LINKS.map((link) => {
+                const label = t(link.labelKey)
+                const isIconOnlyTab = CHART_DISCOVERY_NAV_LINKS.some((chartLink) => chartLink.value === link.value)
+                const Icon =
+                  link.value === 'recent' ? MdiUpdateIcon : link.value === 'trending' ? MdiTrendingUpIcon : undefined
+
+                return (
+                  <Tab
+                    key={link.value}
+                    aria-label={isIconOnlyTab ? label : undefined}
+                    component={Link}
+                    icon={
+                      isIconOnlyTab && Icon ? (
+                        <Tooltip title={label}>
+                          <span className="inline-flex">
+                            <Icon className="text-lg" />
+                          </span>
+                        </Tooltip>
+                      ) : undefined
+                    }
+                    label={isIconOnlyTab ? undefined : label}
+                    to={link.href}
+                    viewTransition
+                    classes={{
+                      selected: '!text-white font-bold text-shadow-md',
+                      root: `!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem ${
+                        isIconOnlyTab ? '!min-w-2.5rem !w-2.5rem !px-0' : ''
+                      }`,
+                    }}
+                    value={link.value}
+                  />
+                )
+              })}
             </Tabs>
           </div>
         )}
