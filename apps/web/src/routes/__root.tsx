@@ -154,7 +154,7 @@ function RootLayout() {
 
   const tab = getActiveAppTabValue(pathname)
   const pendingTab = useRouterState({
-    select: (state) => getPendingAppTabValue(state.status, state.location.pathname),
+    select: (state) => getPendingAppTabValue(state.isTransitioning, state.location.pathname),
   })
 
   useEffect(() => {
