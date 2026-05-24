@@ -21,6 +21,10 @@ export const APP_TAB_LINKS = [
 ] as const
 
 export type AppTabValue = (typeof APP_TAB_LINKS)[number]['value']
+type RouterNavigationStatus = 'pending' | 'idle'
 
 export const getActiveAppTabValue = (pathname: string): AppTabValue | false =>
   APP_TAB_LINKS.find((link) => link.href === pathname)?.value ?? false
+
+export const getPendingAppTabValue = (status: RouterNavigationStatus, pathname: string): AppTabValue | false =>
+  status === 'pending' ? getActiveAppTabValue(pathname) : false
