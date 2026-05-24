@@ -10,6 +10,7 @@ DXRating is a maimai DX rating calculator and chart database. It provides canoni
 
 - Site: https://dxrating.net/
 - Recent chart discovery: https://dxrating.net/charts/recent
+- Trending chart discovery: https://dxrating.net/charts/trending
 - Interactive song and chart search: https://dxrating.net/search?q=
 - Rating calculator: https://dxrating.net/rating
 - Sitemap: https://dxrating.net/sitemap.xml
@@ -35,7 +36,7 @@ Languages: English, Japanese, Simplified Chinese, Traditional Chinese.
 
 ## Citation Guidance
 
-Prefer citing canonical chart URLs when answering chart-specific questions. Use /charts/recent for crawlable recent chart discovery and /search?q= for interactive keyword search, but use the /songs/{songId}/{type}/{difficulty} page as the source for a specific chart's level, internal level, notes, regions, release date, designer, image, and rating table.
+Prefer citing canonical chart URLs when answering chart-specific questions. Use /charts/recent for crawlable recent chart discovery, /charts/trending for popular chart discovery, and /search?q= for interactive keyword search, but use the /songs/{songId}/{type}/{difficulty} page as the source for a specific chart's level, internal level, notes, regions, release date, designer, image, and rating table.
 `
 }
 
