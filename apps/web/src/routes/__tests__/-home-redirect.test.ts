@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Route } from '../index'
 
 const redirectFromHome = (searchStr = '', hash = ''): Response => {
@@ -12,34 +12,23 @@ const redirectFromHome = (searchStr = '', hash = ''): Response => {
 }
 
 describe('home route redirect', () => {
-  let storage: Map<string, string>
-
-  beforeEach(() => {
-    storage = new Map()
-    vi.stubGlobal('localStorage', {
-      getItem: vi.fn((key: string) => storage.get(key) ?? null),
-      setItem: vi.fn((key: string, value: string) => storage.set(key, value)),
-    })
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
-  it.each([
-    ['recent', '/charts/recent?from=home#saved'],
-    ['trending', '/charts/trending?from=home#saved'],
-    ['search', '/search?from=home#saved'],
-    ['rating', '/rating?from=home#saved'],
-  ])('redirects to the saved %s app tab', (savedTab, expectedHref) => {
-    localStorage.setItem('tab-selection', JSON.stringify(savedTab))
-
+  it('redirects to search while preserving the incoming query and hash', () => {
     const redirect = redirectFromHome('?from=home', '#saved')
 
-    expect(redirect.headers.get('Location')).toBe(expectedHref)
+    expect(redirect.headers.get('Location')).toBe('/search?from=home#saved')
   })
 
-  it('falls back to search when the saved tab is unknown', () => {
-    localStorage.setItem('tab-selection', JSON.stringify('unknown'))
+  it('does not read obsolete saved tab state from localStorage', () => {
+    const getItem = vi.fn(() => JSON.stringify('rating'))
+    vi.stubGlobal('localStorage', { getItem })
 
     const redirect = redirectFromHome()
 
     expect(redirect.headers.get('Location')).toBe('/search')
+    expect(getItem).not.toHaveBeenCalled()
   })
 })

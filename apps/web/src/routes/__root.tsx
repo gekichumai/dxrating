@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { usePostHog } from 'posthog-js/react'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
-import { Suspense, useCallback, useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import MdiTrendingUpIcon from '~icons/mdi/trending-up'
@@ -22,7 +22,7 @@ import { buildAlternateLinks } from '@/utils/alternateLinks'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import appCss from '@/index.css?url'
-import { APP_TAB_LINKS, CHART_DISCOVERY_NAV_LINKS, getActiveAppTabValue, type AppTabValue } from './-top-nav-links'
+import { APP_TAB_LINKS, CHART_DISCOVERY_NAV_LINKS, getActiveAppTabValue } from './-top-nav-links'
 import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
@@ -156,14 +156,6 @@ function RootLayout() {
 
   const tab = getActiveAppTabValue(pathname)
 
-  const handleTabChange = useCallback((_: React.SyntheticEvent, nextTab: AppTabValue) => {
-    try {
-      localStorage.setItem('tab-selection', JSON.stringify(nextTab))
-    } catch {
-      // Navigation should still succeed if storage is unavailable.
-    }
-  }, [])
-
   useEffect(() => {
     if (!tab) return
     posthog?.capture('tab_switched', { tab })
@@ -192,7 +184,6 @@ function RootLayout() {
           <div className="rounded-xl bg-zinc-900/10 !min-h-2.5rem flex items-center overflow-hidden">
             <Tabs
               value={tab}
-              onChange={handleTabChange}
               classes={{
                 root: '!min-h-2.5rem',
                 indicator: '!h-full !rounded-lg z-0',
