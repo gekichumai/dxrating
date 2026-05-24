@@ -1,4 +1,5 @@
 import { DifficultyEnum, TypeEnum, dxdata, type Sheet, type Song } from '@gekichumai/dxdata'
+import { serialize } from 'cookie'
 import { parseCookieHeader } from '@/utils/cookies'
 import { buildSheetPath } from './sheetLinks'
 
@@ -75,7 +76,7 @@ export const buildSearchSeedSheets = (songs?: readonly Song[]): SearchSeedSheet[
 }
 
 export const hasActiveFilterLastActiveAtCookie = (cookieHeader: string | null, now = Date.now()) => {
-  const value = parseCookieHeader(cookieHeader).get(FILTER_LAST_ACTIVE_AT_COOKIE_NAME)
+  const value = parseCookieHeader(cookieHeader)[FILTER_LAST_ACTIVE_AT_COOKIE_NAME]
   if (!value) return false
 
   const lastActiveAt = Number(value)
@@ -89,9 +90,15 @@ export const shouldShowSearchSeed = (search: SearchSeedSearchParams, hasActiveFi
   !search.q && !search.songId && !search.type && !search.difficulty && !hasActiveFilterLastActiveAt
 
 export const serializeFilterLastActiveAtCookie = (lastActiveAt = Date.now()) =>
-  `${FILTER_LAST_ACTIVE_AT_COOKIE_NAME}=${encodeURIComponent(
-    String(lastActiveAt),
-  )}; Max-Age=${FILTER_LAST_ACTIVE_AT_COOKIE_MAX_AGE_SECONDS}; Path=/; SameSite=Lax`
+  serialize(FILTER_LAST_ACTIVE_AT_COOKIE_NAME, String(lastActiveAt), {
+    maxAge: FILTER_LAST_ACTIVE_AT_COOKIE_MAX_AGE_SECONDS,
+    path: '/',
+    sameSite: 'lax',
+  })
 
 export const serializeClearFilterLastActiveAtCookie = () =>
-  `${FILTER_LAST_ACTIVE_AT_COOKIE_NAME}=; Max-Age=0; Path=/; SameSite=Lax`
+  serialize(FILTER_LAST_ACTIVE_AT_COOKIE_NAME, '', {
+    maxAge: 0,
+    path: '/',
+    sameSite: 'lax',
+  })

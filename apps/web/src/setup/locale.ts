@@ -45,7 +45,7 @@ export function resolveSupportedLocale(candidates: string | readonly string[] | 
 }
 
 function detectLocaleFromCookieHeader(cookieHeader: string | null) {
-  return toSupportedLocale(parseCookieHeader(cookieHeader).get(LOCALE_COOKIE_NAME))
+  return toSupportedLocale(parseCookieHeader(cookieHeader)[LOCALE_COOKIE_NAME])
 }
 
 function detectLocaleFromAcceptLanguage(acceptLanguage: string | null) {
