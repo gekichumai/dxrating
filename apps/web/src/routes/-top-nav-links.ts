@@ -10,3 +10,6 @@ export const APP_TAB_LINKS = [
 
 export type AppTabValue = (typeof APP_TAB_LINKS)[number]['value']
 export type AppNavHref = (typeof APP_TAB_LINKS)[number]['href'] | typeof RECENT_CHARTS_NAV_LINK.href
+
+export const getActiveAppTabValue = (pathname: string): AppTabValue | false =>
+  APP_TAB_LINKS.find((link) => link.href === pathname)?.value ?? false

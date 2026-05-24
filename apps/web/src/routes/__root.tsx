@@ -22,7 +22,13 @@ import { buildAlternateLinks } from '@/utils/alternateLinks'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import appCss from '@/index.css?url'
-import { APP_TAB_LINKS, RECENT_CHARTS_NAV_LINK, type AppNavHref, type AppTabValue } from './-top-nav-links'
+import {
+  APP_TAB_LINKS,
+  RECENT_CHARTS_NAV_LINK,
+  getActiveAppTabValue,
+  type AppNavHref,
+  type AppTabValue,
+} from './-top-nav-links'
 import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
@@ -156,7 +162,7 @@ function RootLayout() {
   const isSongPage = pathname.startsWith('/songs/')
   const showTabs = !isSongPage && !isPrivacyPolicy
 
-  const tab = APP_TAB_LINKS.find((link) => link.href === pathname)?.value ?? 'search'
+  const tab = getActiveAppTabValue(pathname)
   const isRecentChartsPage = pathname === RECENT_CHARTS_NAV_LINK.href
 
   const navigateTo = useCallback(
@@ -197,6 +203,7 @@ function RootLayout() {
   )
 
   useEffect(() => {
+    if (!tab) return
     posthog?.capture('tab_switched', { tab })
   }, [posthog, tab])
 
