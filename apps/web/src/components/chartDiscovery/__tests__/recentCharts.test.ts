@@ -48,6 +48,8 @@ describe('buildRecentChartLinks', () => {
     )
 
     expect(charts).toHaveLength(RECENT_CHART_LIMIT)
+    expect(charts.every((chart) => chart.difficulty !== DifficultyEnum.Basic)).toBe(true)
+    expect(charts.every((chart) => chart.difficulty !== DifficultyEnum.Advanced)).toBe(true)
     expect(charts[0]).toMatchObject({
       songId: 'song-500',
       title: 'Song 500',
@@ -69,15 +71,20 @@ describe('buildRecentChartLinks', () => {
     expect(second[0]).toEqual(firstChart)
   })
 
-  it('keeps all difficulties in the recent chart candidates', () => {
+  it('excludes basic and advanced charts from the recent chart candidates', () => {
     const charts = buildRecentChartLinks([
       {
         ...createSong(1),
-        sheets: [createSheet('2026-05-01', DifficultyEnum.Basic), createSheet('2026-05-01', DifficultyEnum.Master)],
+        sheets: [
+          createSheet('2026-05-01', DifficultyEnum.Basic),
+          createSheet('2026-05-01', DifficultyEnum.Advanced),
+          createSheet('2026-05-01', DifficultyEnum.Expert),
+          createSheet('2026-05-01', DifficultyEnum.Master),
+        ],
       },
     ])
 
-    expect(charts.map((chart) => chart.difficulty)).toEqual([DifficultyEnum.Basic, DifficultyEnum.Master])
+    expect(charts.map((chart) => chart.difficulty)).toEqual([DifficultyEnum.Expert, DifficultyEnum.Master])
   })
 
   it('uses stable tie-breakers when release dates match', () => {

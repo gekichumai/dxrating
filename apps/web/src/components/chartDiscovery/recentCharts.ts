@@ -17,6 +17,7 @@ export type RecentChartLink = {
 
 const typeOrder = Object.values(TypeEnum)
 const difficultyOrder = Object.values(DifficultyEnum)
+const excludedRecentChartDifficulties = new Set<string>([DifficultyEnum.Basic, DifficultyEnum.Advanced])
 
 const releaseDateTimestamp = (releaseDate: string | undefined) => {
   if (!releaseDate) return 0
@@ -52,6 +53,7 @@ const toRecentChartLink = (song: Song, sheet: Sheet): RecentChartLink => ({
 const createRecentChartLinks = (songs: readonly Song[]) =>
   songs
     .flatMap((song) => song.sheets.map((sheet) => toRecentChartLink(song, sheet)))
+    .filter((chart) => !excludedRecentChartDifficulties.has(chart.difficulty))
     .sort(compareRecentChartLinks)
     .slice(0, RECENT_CHART_LIMIT)
 
