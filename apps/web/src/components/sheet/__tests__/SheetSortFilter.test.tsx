@@ -84,6 +84,9 @@ describe('SheetSortFilter', () => {
 
     expect(trigger.getAttribute('aria-expanded')).toBe('true')
     expect(icons[1]?.getAttribute('class')).toContain('rotate-180')
+    const panel = document.getElementById(contentId)
+    expect(panel).not.toBeNull()
+    expect(panel?.closest('.MuiCollapse-root')).not.toBeNull()
     expect(screen.getByText('Reset All')).toBeTruthy()
     expect(screen.queryByText('Filter & Sort')).toBeNull()
   })

@@ -3,6 +3,7 @@ import { DevTool } from '@hookform/devtools'
 import {
   Button,
   ButtonBase,
+  Collapse,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -448,19 +449,25 @@ const SheetSortFilterFormContent: FC<{
   return (
     <>
       {import.meta.env.DEV && <DevTool control={control} />}
-      {(showDefaultTrigger || expanded) && (
+      {showDefaultTrigger ? (
         <Paper className="w-full flex flex-col overflow-hidden">
-          {showDefaultTrigger && (
-            <SheetSortFilterTrigger
-              expanded={expanded}
-              contentId={resolvedContentId}
-              onToggle={toggleExpanded}
-              pending={pending}
-            />
-          )}
+          <SheetSortFilterTrigger
+            expanded={expanded}
+            contentId={resolvedContentId}
+            onToggle={toggleExpanded}
+            pending={pending}
+          />
 
-          {expanded && <div id={resolvedContentId}>{collapsibleInner}</div>}
+          <Collapse className="w-full" in={expanded} timeout={275} unmountOnExit>
+            <div id={resolvedContentId}>{collapsibleInner}</div>
+          </Collapse>
         </Paper>
+      ) : (
+        <Collapse className="w-full" in={expanded} timeout={275} unmountOnExit>
+          <Paper className="w-full flex flex-col overflow-hidden">
+            <div id={resolvedContentId}>{collapsibleInner}</div>
+          </Paper>
+        </Collapse>
       )}
     </>
   )
