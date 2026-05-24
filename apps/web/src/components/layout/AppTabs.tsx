@@ -13,12 +13,17 @@ interface AppTabsProps {
 
 interface AppTabContentProps {
   children: ReactNode
+  fixedSize?: boolean
   pending: boolean
 }
 
-const AppTabContent: FC<AppTabContentProps> = ({ children, pending }) => (
-  <span className="relative inline-flex items-center justify-center">
-    <span aria-hidden={pending ? true : undefined} style={pending ? { visibility: 'hidden' } : undefined}>
+const AppTabContent: FC<AppTabContentProps> = ({ children, fixedSize = false, pending }) => (
+  <span className={`relative inline-flex items-center justify-center ${fixedSize ? 'h-5 w-5' : ''}`}>
+    <span
+      aria-hidden={pending ? true : undefined}
+      className={`inline-flex items-center justify-center ${fixedSize ? 'h-5 w-5' : ''}`}
+      style={pending ? { visibility: 'hidden' } : undefined}
+    >
       {children}
     </span>
     {pending && (
@@ -57,10 +62,10 @@ export const AppTabs: FC<AppTabsProps> = ({ activeTab, pendingTab = false }) => 
               component={Link}
               icon={
                 isIconOnlyTab && Icon ? (
-                  <AppTabContent pending={isPendingTab}>
+                  <AppTabContent fixedSize pending={isPendingTab}>
                     <Tooltip title={label}>
-                      <span className="inline-flex">
-                        <Icon className="text-lg" />
+                      <span className="inline-flex h-5 w-5 items-center justify-center leading-none">
+                        <Icon className="block text-lg" />
                       </span>
                     </Tooltip>
                   </AppTabContent>

@@ -59,6 +59,8 @@ describe('AppTabs', () => {
 
     expect(recentTab.getAttribute('aria-selected')).toBe('true')
     expect(recentTab.getAttribute('aria-busy')).toBe('true')
+    expect(recentTab.querySelector('.relative > span')?.className).toContain('inline-flex')
+    expect(recentTab.querySelector('.relative > span')?.className).toContain('h-5')
     expect(within(recentTab).getByRole('progressbar')).toBeTruthy()
   })
 })
