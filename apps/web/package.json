@@ -17,6 +17,7 @@
     "@better-auth/passkey": "catalog:",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@gekichumai/api-contract": "workspace:*",
     "@gekichumai/dxdata": "workspace:*",
     "@gekichumai/maimai-domain": "workspace:*",
     "@marsidev/react-turnstile": "^1.5.0",

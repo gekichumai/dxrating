@@ -17,6 +17,7 @@
   "dependencies": {
     "@better-auth/i18n": "^1.6.11",
     "@better-auth/passkey": "catalog:",
+    "@gekichumai/api-contract": "workspace:*",
     "@gekichumai/dxdata": "workspace:*",
     "@gekichumai/maimai-domain": "workspace:*",
     "@hono/node-server": "^1.19.14",
