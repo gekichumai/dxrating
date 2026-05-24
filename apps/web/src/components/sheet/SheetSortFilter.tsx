@@ -27,11 +27,6 @@ import { SheetDifficultyFilter } from './filters/SheetDifficultyFilter'
 import { SheetInternalLevelFilter } from './filters/SheetInternalLevelFilter'
 import { SheetTagFilter } from './filters/SheetTagFilter'
 import { SheetVersionFilter } from './filters/SheetVersionFilter'
-import {
-  SHEET_SORT_FILTER_TTL,
-  serializeClearFilterLastActiveAtCookie,
-  serializeFilterLastActiveAtCookie,
-} from './searchSeed'
 
 export interface SortPredicate {
   descriptor: keyof FlattenedSheet
@@ -76,19 +71,11 @@ export const getDefaultSheetSortFilterForm = (): SheetSortFilterForm => ({
 const CURRENT_SCHEMA_VERSION = 1
 const SHEET_SORT_FILTER_STORAGE_KEY = 'dxrating-sheet-sort-filter'
 const LATEST_VERSION_KEY = 'dxrating-known-latest-game-version'
-
-const persistFilterLastActiveAtCookie = (lastActiveAt = Date.now()) => {
-  if (typeof document === 'undefined') return
-  document.cookie = serializeFilterLastActiveAtCookie(lastActiveAt)
-}
+const SHEET_SORT_FILTER_TTL = 5 * 60 * 1000
 
 const clearPersistedSheetSortFilter = () => {
   if (typeof window !== 'undefined') {
     window.localStorage.removeItem(SHEET_SORT_FILTER_STORAGE_KEY)
-  }
-
-  if (typeof document !== 'undefined') {
-    document.cookie = serializeClearFilterLastActiveAtCookie()
   }
 }
 
@@ -264,7 +251,6 @@ const SheetSortFilterFormListener: FC<{
             expiresAt: lastActiveAt + SHEET_SORT_FILTER_TTL,
           }),
         )
-        persistFilterLastActiveAtCookie(lastActiveAt)
       }
     })
 
