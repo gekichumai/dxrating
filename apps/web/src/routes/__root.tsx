@@ -1,7 +1,6 @@
-import { HeadContent, Outlet, Scripts, createRootRoute, useLocation, useRouterState } from '@tanstack/react-router'
+import { HeadContent, Outlet, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
 import { CircularProgress } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { usePostHog } from 'posthog-js/react'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
 import { Suspense, useEffect } from 'react'
@@ -21,7 +20,6 @@ import { buildAlternateLinks } from '@/utils/alternateLinks'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import appCss from '@/index.css?url'
-import { getActiveAppTabValue, getPendingAppTabValue } from './-top-nav-links'
 import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
@@ -144,23 +142,12 @@ export const Route = createRootRoute({
 function RootLayout() {
   const versionTheme = useVersionTheme()
   const location = useLocation()
-  const posthog = usePostHog()
 
   const pathname = location.pathname
 
   const isPrivacyPolicy = pathname === '/privacy-policy'
   const isSongPage = pathname.startsWith('/songs/')
   const showTabs = !isSongPage && !isPrivacyPolicy
-
-  const tab = getActiveAppTabValue(pathname)
-  const pendingTab = useRouterState({
-    select: (state) => getPendingAppTabValue(state.isTransitioning, state.location.pathname),
-  })
-
-  useEffect(() => {
-    if (!tab) return
-    posthog?.capture('tab_switched', { tab })
-  }, [posthog, tab])
 
   if (isPrivacyPolicy) return null
 
@@ -181,7 +168,7 @@ function RootLayout() {
         }}
       >
         <VersionRegionSwitcher />
-        {showTabs && <AppTabs activeTab={tab} pendingTab={pendingTab} />}
+        {showTabs && <AppTabs />}
       </div>
     </>
   )
