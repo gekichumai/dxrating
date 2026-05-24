@@ -4,7 +4,7 @@ import { type FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DIFFICULTIES } from '../../models/difficulties'
 import { DIFFICULTY_ORDER } from '../../models/constants'
-import { SHEET_TYPE_TAB_IMAGES } from './sheetDisplay'
+import { getSheetTypeAltTextKey, SHEET_TYPE_TAB_IMAGES } from '../sheet/sheetTypeAssets'
 
 export interface SongSheetTabsProps {
   sheets: Sheet[]
@@ -15,13 +15,18 @@ export interface SongSheetTabsProps {
   onDifficultyChange: (difficulty: DifficultyEnum) => void
 }
 
-const renderTypeTabLabel = (type: TypeEnum, label: string) => {
+const renderTypeTabLabel = (type: TypeEnum, label: string, altText: string) => {
   const image = SHEET_TYPE_TAB_IMAGES[type]
   if (!image) return <span>{label}</span>
 
   return (
     <span className="inline-flex h-6 min-w-18 items-center justify-center px-1">
-      <img src={image} alt={label} className="h-22px max-w-70px object-contain touch-callout-none" draggable={false} />
+      <img
+        src={image}
+        alt={altText}
+        className="h-22px max-w-70px object-contain touch-callout-none"
+        draggable={false}
+      />
     </span>
   )
 }
@@ -34,7 +39,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
   onTypeChange,
   onDifficultyChange,
 }) => {
-  const { t } = useTranslation(['song'])
+  const { t } = useTranslation(['song', 'sheet'])
 
   const difficultiesForActiveType = useMemo(() => {
     const diffSet = new Set(sheets.filter((s) => s.type === activeType).map((s) => s.difficulty))
@@ -54,12 +59,13 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
         }}
       >
         {availableTypes.map((type) => {
-          const label = t(`song:type.${type === TypeEnum.UTAGE2P ? 'utage' : type}`)
+          const label = t(`song:type.${type}`)
+          const altText = t(getSheetTypeAltTextKey(type))
           return (
             <Tab
               key={type}
               value={type}
-              label={renderTypeTabLabel(type, label)}
+              label={renderTypeTabLabel(type, label, altText)}
               classes={{
                 selected: '!text-white font-bold',
                 root: '!rounded-lg z-1 !py-0 !min-h-2.25rem !h-2.25rem !text-sm',

@@ -281,7 +281,8 @@ function AppLayout() {
     <div className="h-full w-full relative">
       <WebpSupportedImage
         src={versionTheme.background}
-        alt="background"
+        alt=""
+        aria-hidden={true}
         className="fixed inset-0 h-full-lvh w-full z-[-1] object-cover object-center select-none touch-callout-none"
         draggable={false}
       />

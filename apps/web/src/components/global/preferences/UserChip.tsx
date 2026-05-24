@@ -21,7 +21,8 @@ export const ProfileImage: FC<{
   email?: string
   image?: string | null
   size?: string
-}> = ({ email, image, size = '2rem' }) => {
+  alt?: string
+}> = ({ email, image, size = '2rem', alt = '' }) => {
   const gravatarEmailHash = useAsync(async () => {
     const e = email?.trim().toLowerCase()
     if (!e) return ''
@@ -44,7 +45,7 @@ export const ProfileImage: FC<{
         width: size,
         height: size,
       }}
-      alt="Profile"
+      alt={alt}
     />
   )
 }

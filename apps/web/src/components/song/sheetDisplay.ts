@@ -9,31 +9,26 @@ export const SHEET_TYPE_DISPLAY_NAMES: Record<SupportedLocale, SheetTypeDisplayN
     [TypeEnum.DX]: 'DX',
     [TypeEnum.STD]: 'Standard',
     [TypeEnum.UTAGE]: 'Utage',
-    [TypeEnum.UTAGE2P]: 'Utage',
+    [TypeEnum.UTAGE2P]: 'Buddy',
   },
   'zh-Hans': {
     [TypeEnum.DX]: 'DX',
     [TypeEnum.STD]: '标准',
     [TypeEnum.UTAGE]: '宴',
-    [TypeEnum.UTAGE2P]: '宴',
+    [TypeEnum.UTAGE2P]: 'Buddy',
   },
   'zh-Hant': {
     [TypeEnum.DX]: 'DX',
     [TypeEnum.STD]: '標準',
     [TypeEnum.UTAGE]: '宴',
-    [TypeEnum.UTAGE2P]: '宴',
+    [TypeEnum.UTAGE2P]: 'Buddy',
   },
   ja: {
     [TypeEnum.DX]: 'でらっくす',
     [TypeEnum.STD]: 'スタンダード',
     [TypeEnum.UTAGE]: '宴',
-    [TypeEnum.UTAGE2P]: '宴',
+    [TypeEnum.UTAGE2P]: 'バディ',
   },
-}
-
-export const SHEET_TYPE_TAB_IMAGES: Partial<Record<TypeEnum, string>> = {
-  [TypeEnum.DX]: 'https://shama.dxrating.net/images/type_dx.png',
-  [TypeEnum.STD]: 'https://shama.dxrating.net/images/type_sd.png',
 }
 
 export function getSheetTypeDisplayName(type: TypeEnum, locale: SupportedLocale = 'en') {

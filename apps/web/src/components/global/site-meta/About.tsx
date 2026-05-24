@@ -1,4 +1,4 @@
-import { dxdataUpdateTime } from '@gekichumai/dxdata'
+import { dxdataUpdateTime, VersionEnum } from '@gekichumai/dxdata'
 import { IconButton } from '@mui/material'
 import clsx from 'clsx'
 import { usePostHog } from 'posthog-js/react'
@@ -145,7 +145,7 @@ export const About = () => {
               <img
                 className="h-12 w-auto touch-callout-none mb-2"
                 src="https://shama.dxrating.net/images/version-adornment/buddies.png"
-                alt="Version"
+                alt={t('about:version.logo-alt', { version: VersionEnum.BUDDiES })}
                 draggable={false}
               />
 

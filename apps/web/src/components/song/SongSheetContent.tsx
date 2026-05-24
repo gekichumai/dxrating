@@ -34,6 +34,7 @@ const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
 )
 
 const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
+  const { t } = useTranslation(['sheet'])
   const direction = match(delta)
     .when(
       (d) => d > 0,
@@ -44,11 +45,17 @@ const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
       () => 'down',
     )
     .otherwise(() => 'neutral')
+  const altText =
+    delta > 0
+      ? t('sheet:internal-level-history.delta.increased')
+      : delta < 0
+        ? t('sheet:internal-level-history.delta.decreased')
+        : t('sheet:internal-level-history.delta.unchanged')
 
   return (
     <img
       src={`https://shama.dxrating.net/images/rating-arrow/${direction}.png`}
-      alt={direction}
+      alt={altText}
       className="w-6 h-6 touch-callout-none"
       draggable={false}
     />
@@ -122,7 +129,7 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
                 >
                   <img
                     src={`https://shama.dxrating.net/images/version-title/${VERSION_SLUG_MAP.get(version)}.png`}
-                    alt={VERSION_SLUG_MAP.get(version)}
+                    alt={t('sheet:version-title-alt', { version })}
                     className="h-40.75px w-83px min-w-[83px] -ml-1 touch-callout-none"
                     draggable={false}
                   />

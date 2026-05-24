@@ -1,6 +1,7 @@
 import { type Sheet, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { render, screen } from '@testing-library/react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
+import i18n from 'i18next'
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
 import { SongSheetTabs } from '../SongSheetTabs'
 
@@ -34,11 +35,20 @@ describe('SongSheetTabs', () => {
     initI18n()
   })
 
-  it('uses type images for DX and Standard tabs with text fallback for other types', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('en')
+  })
+
+  it('uses descriptive type image alt text for DX and Standard tabs with text fallback for other types', () => {
     render(
       <SongSheetTabs
-        sheets={[makeSheet(TypeEnum.DX), makeSheet(TypeEnum.STD), makeSheet(TypeEnum.UTAGE)]}
-        availableTypes={[TypeEnum.DX, TypeEnum.STD, TypeEnum.UTAGE]}
+        sheets={[
+          makeSheet(TypeEnum.DX),
+          makeSheet(TypeEnum.STD),
+          makeSheet(TypeEnum.UTAGE),
+          makeSheet(TypeEnum.UTAGE2P),
+        ]}
+        availableTypes={[TypeEnum.DX, TypeEnum.STD, TypeEnum.UTAGE, TypeEnum.UTAGE2P]}
         activeType={TypeEnum.DX}
         activeDifficulty={DifficultyEnum.Master}
         onTypeChange={vi.fn()}
@@ -46,13 +56,31 @@ describe('SongSheetTabs', () => {
       />,
     )
 
-    expect(screen.getByRole('img', { name: 'DX' }).getAttribute('src')).toBe(
+    expect(screen.getByRole('img', { name: 'DX chart' }).getAttribute('src')).toBe(
       'https://shama.dxrating.net/images/type_dx.png',
     )
-    expect(screen.getByRole('img', { name: 'Standard' }).getAttribute('src')).toBe(
+    expect(screen.getByRole('img', { name: 'Standard chart' }).getAttribute('src')).toBe(
       'https://shama.dxrating.net/images/type_sd.png',
     )
     expect(screen.getByRole('tab', { name: 'Utage' })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Buddy' })).toBeTruthy()
     expect(screen.queryByRole('img', { name: 'Utage' })).toBeNull()
+  })
+
+  it('localizes type image alt text', async () => {
+    await i18n.changeLanguage('ja')
+
+    render(
+      <SongSheetTabs
+        sheets={[makeSheet(TypeEnum.DX)]}
+        availableTypes={[TypeEnum.DX]}
+        activeType={TypeEnum.DX}
+        activeDifficulty={DifficultyEnum.Master}
+        onTypeChange={vi.fn()}
+        onDifficultyChange={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('img', { name: 'でらっくす譜面' })).toBeTruthy()
   })
 })
