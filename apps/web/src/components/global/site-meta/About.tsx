@@ -145,7 +145,7 @@ export const About = () => {
               <img
                 className="h-12 w-auto touch-callout-none mb-2"
                 src="https://shama.dxrating.net/images/version-adornment/buddies.png"
-                alt="Version"
+                alt={t('about:version.logo-alt')}
                 draggable={false}
               />
 

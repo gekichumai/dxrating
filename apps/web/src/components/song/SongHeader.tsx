@@ -45,7 +45,7 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           <motion.img
             layout
             src={coverUrl}
-            alt={song.title}
+            alt={t('sheet:cover-art-alt', { title: song.title })}
             className="overflow-hidden bg-slate-300/50"
             variants={imgVariants}
             initial="collapsed"

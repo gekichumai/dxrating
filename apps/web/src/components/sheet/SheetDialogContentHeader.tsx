@@ -110,7 +110,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ s
           <motion.img
             layout
             src={`https://shama.dxrating.net/images/cover/v2/${sheet.imageName}.jpg`}
-            alt={sheet.imageName}
+            alt={t('sheet:cover-art-alt', { title: sheet.title })}
             className="overflow-hidden rounded-lg bg-slate-300/50"
             variants={variants}
             initial="collapsed"

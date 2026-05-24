@@ -119,7 +119,7 @@ const RenderToOneShotImageDialogContent = () => {
           ) : (
             <img
               src={data}
-              alt="OneShot"
+              alt={t('rating-calculator:io.export.oneshot-image.preview-alt')}
               className="shadow rounded-md"
               style={{
                 boxShadow: `0 0 8px hsl(0deg 0% 0% / 0.25),

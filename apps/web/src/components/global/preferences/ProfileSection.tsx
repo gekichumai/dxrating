@@ -40,7 +40,12 @@ export const ProfileSection: FC = () => {
       {/* Profile row */}
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-4 border-b border-zinc-200 dark:border-zinc-700 pb-6">
-          <ProfileImage email={user?.email} image={user?.image} size="4rem" />
+          <ProfileImage
+            email={user?.email}
+            image={user?.image}
+            size="4rem"
+            alt={t('auth:user-profile.avatar-alt', { name: user?.name || user?.email || t('auth:user-profile.title') })}
+          />
           <div className="flex flex-col gap-0.5">
             <div className="text-base font-semibold">{user?.name || user?.email}</div>
           </div>

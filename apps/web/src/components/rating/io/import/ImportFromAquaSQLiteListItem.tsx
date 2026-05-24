@@ -172,7 +172,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
                 <ListItemAvatar>
                   <FadedImage
                     src={`https://shama.dxrating.net/assetbundle/icon/ui_icon_${String(user.icon_id).padStart(6, '0')}.png`}
-                    alt={`Icon ${String(user.icon_id).padStart(6, '0')}`}
+                    alt={t('rating-calculator:io.import.aqua-sqlite.user-icon-alt', { name: user.user_name })}
                     className="w-16 h-16 rounded-md bg-gray-400"
                   />
                 </ListItemAvatar>

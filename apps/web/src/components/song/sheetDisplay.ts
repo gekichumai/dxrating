@@ -31,11 +31,6 @@ export const SHEET_TYPE_DISPLAY_NAMES: Record<SupportedLocale, SheetTypeDisplayN
   },
 }
 
-export const SHEET_TYPE_TAB_IMAGES: Partial<Record<TypeEnum, string>> = {
-  [TypeEnum.DX]: 'https://shama.dxrating.net/images/type_dx.png',
-  [TypeEnum.STD]: 'https://shama.dxrating.net/images/type_sd.png',
-}
-
 export function getSheetTypeDisplayName(type: TypeEnum, locale: SupportedLocale = 'en') {
   return SHEET_TYPE_DISPLAY_NAMES[locale][type] ?? SHEET_TYPE_DISPLAY_NAMES.en[type]
 }

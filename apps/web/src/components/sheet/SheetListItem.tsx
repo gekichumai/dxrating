@@ -19,6 +19,7 @@ import { AddSheetAltNameButton } from './AddSheetAltNameButton'
 import { SheetAltNames } from './SheetAltNames'
 import { SheetDialogContent, type SheetDialogContentProps } from './SheetDialogContent'
 import { buildSheetPath } from './sheetLinks'
+import { getSheetTypeAltTextKey, SHEET_TYPE_IMAGES, SHEET_TYPE_UTAGE_2P_END_ADORNMENT_IMAGE } from './sheetTypeAssets'
 
 export const SheetListItem: FC<{
   size?: 'small' | 'medium'
@@ -91,9 +92,13 @@ export interface SheetListItemContentProps extends HTMLAttributes<HTMLDivElement
 
 export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
   ({ sheet, size = 'medium', className, enableSheetImage = true, SheetTitleProps, ListItemTextProps, ...rest }) => {
+    const { t } = useTranslation(['sheet'])
+
     return (
       <div className={clsx('flex items-center w-full p-1 gap-2 tabular-nums relative', className)} {...rest}>
-        {enableSheetImage && <SheetImage name={sheet.imageName} size={size} />}
+        {enableSheetImage && (
+          <SheetImage name={sheet.imageName} size={size} alt={t('sheet:cover-art-alt', { title: sheet.title })} />
+        )}
 
         <ListItemText {...ListItemTextProps} className={clsx('ml-2 pr-12', ListItemTextProps?.className)}>
           <SheetTitle
@@ -157,61 +162,59 @@ export const SheetDifficulty: FC<{
   ) : null
 }
 
-const SHEET_TYPE_IMAGE = {
-  [TypeEnum.DX]: 'https://shama.dxrating.net/images/type_dx.png',
-  [TypeEnum.STD]: 'https://shama.dxrating.net/images/type_sd.png',
-  [TypeEnum.UTAGE]: 'https://shama.dxrating.net/images/chart-type/type_utage.png',
-}
-
 const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({ type, difficulty }) => {
+  const { t } = useTranslation(['sheet'])
   const isUtage = type === TypeEnum.UTAGE || type === TypeEnum.UTAGE2P
+  const altText = t(getSheetTypeAltTextKey(type))
 
   if (isUtage) {
     const isUtage2P = type === TypeEnum.UTAGE2P
 
     return (
-      <>
-        <div
-          className="h-26px w-95.875px flex items-center justify-center text-center select-none"
-          style={{
-            background: `url(${SHEET_TYPE_IMAGE[TypeEnum.UTAGE]}) no-repeat center`,
-            backgroundSize: 'contain',
-          }}
-        >
-          <span className="text-shadow-[0_0_0.5rem_#FFFFFF99] text-white text-xs">
+      <div className="inline-flex items-center">
+        <div className="relative h-26px w-95.875px flex items-center justify-center text-center select-none">
+          <img
+            src={SHEET_TYPE_IMAGES[TypeEnum.UTAGE]}
+            alt={altText}
+            className="absolute inset-0 h-full w-full object-contain touch-callout-none"
+            draggable={false}
+          />
+          <span aria-hidden="true" className="relative text-shadow-[0_0_0.5rem_#FFFFFF99] text-white text-xs">
             {difficulty.replace(/[【】]/g, '')}
           </span>
         </div>
         {isUtage2P && (
           <img
-            src="https://shama.dxrating.net/images/chart-type/type_utage2p_endadornment.png"
+            src={SHEET_TYPE_UTAGE_2P_END_ADORNMENT_IMAGE}
             className="h-26px w-95.875px ml-[-27px] touch-callout-none"
-            alt={type}
+            alt=""
+            aria-hidden="true"
             draggable={false}
           />
         )}
-      </>
+      </div>
     )
   }
 
   return (
     <img
       key={type}
-      src={SHEET_TYPE_IMAGE[type]}
+      src={SHEET_TYPE_IMAGES[type]}
       className="h-26px w-70px touch-callout-none"
-      alt={type}
+      alt={altText}
       draggable={false}
     />
   )
 }
 
 export const SheetImage: FC<
-  ImgHTMLAttributes<HTMLImageElement> & {
+  Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt'> & {
     name: string
     size?: 'small' | 'medium' | 'large'
+    alt: string
   }
 > = memo(
-  ({ name, size = 'medium', ...props }) => {
+  ({ name, size = 'medium', alt, ...props }) => {
     return (
       <FadedImage
         key={name}
@@ -225,13 +228,13 @@ export const SheetImage: FC<
             .exhaustive(),
         )}
         placeholderClassName="bg-slate-300/50"
-        alt={name}
+        alt={alt}
         loading="lazy"
         {...props}
       />
     )
   },
-  (prev, next) => prev.name === next.name && prev.size === next.size,
+  (prev, next) => prev.name === next.name && prev.size === next.size && prev.alt === next.alt,
 )
 
 export interface SheetTitleProps {
