@@ -48,7 +48,8 @@ export const SheetListItem: FC<{
           </ResponsiveDialog>
         )}
 
-        <a
+        <ListItemButton
+          component="a"
           href={buildSheetPath(sheet)}
           onClick={(e) => {
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return
@@ -61,20 +62,15 @@ export const SheetListItem: FC<{
               sheet_difficulty: sheet.difficulty,
             })
           }}
-          className="no-underline text-inherit"
+          disableGutters={!isLargeDevice}
+          className={clsx(
+            'w-full cursor-pointer transition duration-500 hover:duration-25 !px-4 no-underline text-inherit',
+            open && '!bg-zinc-300/80',
+          )}
+          sx={{ borderRadius: 1 }}
         >
-          <ListItemButton
-            disableGutters={!isLargeDevice}
-            className={clsx(
-              'w-full cursor-pointer transition duration-500 hover:duration-25 !px-4',
-              open && '!bg-zinc-300/80',
-            )}
-            sx={{ borderRadius: 1 }}
-            component="div"
-          >
-            <SheetListItemContent sheet={sheet} size={size} {...SheetListItemContentProps} />
-          </ListItemButton>
-        </a>
+          <SheetListItemContent sheet={sheet} size={size} {...SheetListItemContentProps} />
+        </ListItemButton>
       </>
     )
   },

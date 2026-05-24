@@ -1,9 +1,19 @@
 import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { render, screen } from '@testing-library/react'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
 import type { FlattenedSheet } from '@/songs'
-import { SheetListItemContent } from '../SheetListItem'
+import { SheetListItem, SheetListItemContent } from '../SheetListItem'
+
+vi.mock('posthog-js/react', () => ({
+  usePostHog: () => null,
+}))
+
+vi.mock('web-haptics/react', () => ({
+  useWebHaptics: () => ({
+    trigger: vi.fn(),
+  }),
+}))
 
 function makeSheet(type: TypeEnum): FlattenedSheet {
   return {
@@ -50,6 +60,29 @@ function makeSheet(type: TypeEnum): FlattenedSheet {
     tags: [],
   }
 }
+
+const getFocusableElements = (container: HTMLElement) =>
+  Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter((element) => !element.hasAttribute('disabled') && element.getAttribute('aria-hidden') !== 'true')
+
+describe('SheetListItem', () => {
+  beforeAll(() => {
+    initI18n()
+  })
+
+  it('renders the row as a single focusable link', () => {
+    const { container } = render(<SheetListItem sheet={makeSheet(TypeEnum.DX)} />)
+
+    const sheetLink = screen.getByRole('link', { name: /Song Title/ })
+    const focusableElements = getFocusableElements(container)
+
+    expect(focusableElements).toHaveLength(1)
+    expect(focusableElements[0]).toBe(sheetLink)
+  })
+})
 
 describe('SheetListItemContent', () => {
   beforeAll(() => {
