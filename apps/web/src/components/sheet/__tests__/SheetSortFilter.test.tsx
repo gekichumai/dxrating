@@ -70,6 +70,7 @@ describe('SheetSortFilter', () => {
     render(<Harness />)
 
     const trigger = screen.getByRole('button', { name: 'Filter & Sort' })
+    expect(trigger.getAttribute('class')).toContain('MuiButton-root')
     expect(trigger.getAttribute('aria-controls')).toBe(contentId)
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
     expect(within(trigger).getByText('Filter')).toBeTruthy()
