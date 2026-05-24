@@ -106,6 +106,9 @@ importers:
       '@better-auth/passkey':
         specifier: 'catalog:'
         version: 1.6.11(@better-auth/core@1.6.11(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260508.1)(@opentelemetry/api@1.9.0)(better-call@1.3.5(zod@4.3.6))(jose@6.2.0)(kysely@0.28.17)(nanostores@1.1.1))(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(better-auth@1.6.11(aea99bc3ef88f7dc4443c261fbb0d3e5))(better-call@1.3.5(zod@4.3.6))(nanostores@1.1.1)
+      '@gekichumai/api-contract':
+        specifier: workspace:*
+        version: link:../../packages/api-contract
       '@gekichumai/dxdata':
         specifier: workspace:*
         version: link:../../packages/dxdata
@@ -239,6 +242,9 @@ importers:
       '@emotion/styled':
         specifier: ^11.14.1
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)
+      '@gekichumai/api-contract':
+        specifier: workspace:*
+        version: link:../../packages/api-contract
       '@gekichumai/dxdata':
         specifier: workspace:*
         version: link:../../packages/dxdata
@@ -483,6 +489,25 @@ importers:
       wrangler:
         specifier: ^4.90.0
         version: 4.90.0(@cloudflare/workers-types@4.20260508.1)
+
+  packages/api-contract:
+    dependencies:
+      '@orpc/contract':
+        specifier: 'catalog:'
+        version: 1.14.3(@opentelemetry/api@1.9.1)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.6(@opentelemetry/api@1.9.1)(@types/node@25.9.0)(@vitest/ui@4.1.6)(happy-dom@20.9.0)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.21.0))
 
   packages/dxdata: {}
 
@@ -11271,7 +11296,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.16
       tinyrainbow: 3.1.0
-      vitest: 4.1.6(@opentelemetry/api@1.9.0)(@types/node@25.9.0)(@vitest/ui@4.1.6)(happy-dom@20.9.0)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.21.0))
+      vitest: 4.1.6(@opentelemetry/api@1.9.1)(@types/node@25.9.0)(@vitest/ui@4.1.6)(happy-dom@20.9.0)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.21.0))
 
   '@vitest/utils@4.1.6':
     dependencies:

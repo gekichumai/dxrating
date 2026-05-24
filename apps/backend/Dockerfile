@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm
-RUN npm install -g pnpm@10.30.3
+RUN npm install -g pnpm@10.33.0
 
 WORKDIR /app
 
@@ -27,6 +27,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 
 # Copy workspace package.json files
 COPY packages/tsconfig/package.json ./packages/tsconfig/
+COPY packages/api-contract/package.json ./packages/api-contract/
 COPY packages/dxdata/package.json ./packages/dxdata/
 COPY packages/maimai-domain/package.json ./packages/maimai-domain/
 COPY apps/backend/package.json ./apps/backend/
@@ -36,6 +37,7 @@ RUN pnpm install --frozen-lockfile
 
 # Copy workspace source files
 COPY packages/tsconfig ./packages/tsconfig
+COPY packages/api-contract ./packages/api-contract
 COPY packages/dxdata ./packages/dxdata
 COPY packages/maimai-domain ./packages/maimai-domain
 COPY apps/backend ./apps/backend
@@ -59,7 +61,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm
-RUN npm install -g pnpm@10.30.3
+RUN npm install -g pnpm@10.33.0
 
 WORKDIR /app
 
@@ -68,6 +70,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 
 # Copy workspace package.json files
 COPY packages/tsconfig/package.json ./packages/tsconfig/
+COPY packages/api-contract/package.json ./packages/api-contract/
 COPY packages/dxdata/package.json ./packages/dxdata/
 COPY packages/maimai-domain/package.json ./packages/maimai-domain/
 COPY apps/backend/package.json ./apps/backend/

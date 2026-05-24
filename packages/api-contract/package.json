@@ -1,0 +1,21 @@
+{
+  "name": "@gekichumai/api-contract",
+  "version": "1.6.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@orpc/contract": "catalog:",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

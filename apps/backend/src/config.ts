@@ -5,7 +5,7 @@ import { z } from 'zod'
 dotenv.config()
 dotenv.config({
   path: path.resolve(process.cwd(), '.env.local'),
-  override: true,
+  override: process.env.NODE_ENV !== 'test',
 })
 const vaultSecretPath = process.env.VAULT_SECRET_PATH
 if (vaultSecretPath) {
@@ -14,6 +14,10 @@ if (vaultSecretPath) {
     override: true,
   })
 }
+
+const emptyStringToUndefined = (value: unknown) => (value === '' ? undefined : value)
+const optionalString = z.preprocess(emptyStringToUndefined, z.string().optional())
+const optionalUrl = z.preprocess(emptyStringToUndefined, z.string().url().optional())
 
 const envSchema = z.object({
   // === Core Application ===
@@ -26,26 +30,26 @@ const envSchema = z.object({
   // === Authentication (BetterAuth) ===
   BETTER_AUTH_SECRET: z.string(),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'), // Adjust default if needed
-  PASSKEY_RP_ID: z.string().optional(),
-  PASSKEY_ORIGIN: z.string().url().optional(),
-  GOOGLE_CLIENT_ID: z.string().optional(),
-  GOOGLE_CLIENT_SECRET: z.string().optional(),
-  GITHUB_CLIENT_ID: z.string().optional(),
-  GITHUB_CLIENT_SECRET: z.string().optional(),
+  PASSKEY_RP_ID: optionalString,
+  PASSKEY_ORIGIN: optionalUrl,
+  GOOGLE_CLIENT_ID: optionalString,
+  GOOGLE_CLIENT_SECRET: optionalString,
+  GITHUB_CLIENT_ID: optionalString,
+  GITHUB_CLIENT_SECRET: optionalString,
 
   // Cloudflare Turnstile (CAPTCHA)
-  TURNSTILE_SECRET_KEY: z.string().optional(),
+  TURNSTILE_SECRET_KEY: optionalString,
 
   // LXNS OAuth (maimai.lxns.net)
-  LXNS_CLIENT_ID: z.string().optional(),
-  LXNS_CLIENT_SECRET: z.string().optional(),
+  LXNS_CLIENT_ID: optionalString,
+  LXNS_CLIENT_SECRET: optionalString,
 
   // Frontend URL (used for OAuth redirects)
   FRONTEND_URL: z.string().url().default('http://localhost:5173'),
 
   // PostHog (for analytics API queries)
-  POSTHOG_PROJECT_ID: z.string().optional(),
-  POSTHOG_API_KEY: z.string().optional(),
+  POSTHOG_PROJECT_ID: optionalString,
+  POSTHOG_API_KEY: optionalString,
 })
 
 export const deriveCrossSubDomainCookieDomain = ({
