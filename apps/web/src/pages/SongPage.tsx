@@ -109,7 +109,7 @@ export const SongPage: FC = () => {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
       <a
-        href="/"
+        href="/search"
         onClick={(e) => {
           if (window.history.length > 1 && document.referrer.startsWith(window.location.origin)) {
             e.preventDefault()

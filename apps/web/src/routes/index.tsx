@@ -1,7 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
-  ssr: false,
   head: () => ({
     links: [{ rel: 'canonical', href: 'https://dxrating.net' }],
   }),

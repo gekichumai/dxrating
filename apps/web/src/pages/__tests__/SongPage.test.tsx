@@ -58,4 +58,10 @@ describe('SongPage', () => {
     expect(document.head.querySelectorAll('title')).toHaveLength(1)
     expect(document.head.querySelector('title')?.textContent).toBe('Route-owned title')
   })
+
+  it('uses search as the client fallback for the back link', () => {
+    const { container } = render(<SongPage />)
+
+    expect(container.querySelector('a')?.getAttribute('href')).toBe('/search')
+  })
 })
