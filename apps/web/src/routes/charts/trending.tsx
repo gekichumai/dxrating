@@ -3,9 +3,13 @@ import { TrendingPage } from '@/pages/TrendingPage'
 import { buildTrendingChartsSeo, resolveSeoLocale } from '@/utils/seo'
 import { apiClient } from '@/lib/orpc'
 
-export const loadTrendingRouteData = async () => ({
-  trendingData: await apiClient.analytics.trending(),
-})
+export const loadTrendingRouteData = async () => {
+  try {
+    return { trendingData: await apiClient.analytics.trending() }
+  } catch {
+    return { trendingData: undefined }
+  }
+}
 
 export const Route = createFileRoute('/charts/trending')({
   ssr: true,

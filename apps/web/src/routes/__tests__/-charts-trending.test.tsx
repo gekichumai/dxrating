@@ -32,4 +32,10 @@ describe('/charts/trending route', () => {
     await expect(loadTrendingRouteData()).resolves.toEqual({ trendingData })
     expect(apiClient.analytics.trending).toHaveBeenCalledTimes(1)
   })
+
+  it('lets SSR continue when trending analytics are unavailable', async () => {
+    mocks.trending.mockRejectedValueOnce(new Error('backend unavailable'))
+
+    await expect(loadTrendingRouteData()).resolves.toEqual({ trendingData: undefined })
+  })
 })

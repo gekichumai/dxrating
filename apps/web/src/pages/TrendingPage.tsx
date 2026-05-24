@@ -12,9 +12,17 @@ type TrendingPageProps = {
   initialTrendingData?: TrendingData
 }
 
+const trendingQueryStaleTime = 60 * 60 * 1000
 const siteUrl = 'https://dxrating.net'
 
 const toAbsoluteChartUrl = (href: string) => new URL(href, siteUrl).toString()
+
+export const buildTrendingQueryOptions = (initialTrendingData?: TrendingData, isServerRender = import.meta.env.SSR) =>
+  orpc.analytics.trending.queryOptions({
+    ...(isServerRender || !initialTrendingData ? {} : { initialData: initialTrendingData }),
+    enabled: !isServerRender,
+    staleTime: trendingQueryStaleTime,
+  })
 
 const TrendingChartsSkeleton: FC<{ label: string }> = ({ label }) => (
   <div aria-busy="true" aria-label={label} className="w-full" role="status">
@@ -45,12 +53,13 @@ const TrendingChartsSkeleton: FC<{ label: string }> = ({ label }) => (
 
 export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => {
   const { t } = useTranslation(['sheet'])
-  const trendingQuery = useQuery(
-    orpc.analytics.trending.queryOptions({ initialData: initialTrendingData, staleTime: 60 * 60 * 1000 }),
-  )
-  const trendingResults = trendingQuery.data?.results
+  const isServerRender = import.meta.env.SSR
+  const trendingQuery = useQuery(buildTrendingQueryOptions(initialTrendingData, isServerRender))
+  const trendingData = isServerRender ? initialTrendingData : trendingQuery.data
+  const trendingResults = trendingData?.results
   const charts = useMemo(() => (trendingResults ? buildTrendingChartLinks(trendingResults) : []), [trendingResults])
-  const hasDateRange = !!trendingQuery.data?.dateFrom && !!trendingQuery.data?.dateTo
+  const hasDateRange = !!trendingData?.dateFrom && !!trendingData?.dateTo
+  const isLoading = (isServerRender && !initialTrendingData) || trendingQuery.isLoading
 
   return (
     <main
@@ -67,8 +76,8 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
             {hasDateRange
               ? t('sheet:chart-discovery.trending.description-with-dates', {
                   count: charts.length,
-                  dateFrom: trendingQuery.data?.dateFrom,
-                  dateTo: trendingQuery.data?.dateTo,
+                  dateFrom: trendingData?.dateFrom,
+                  dateTo: trendingData?.dateTo,
                 })
               : t('sheet:chart-discovery.trending.description', { count: charts.length })}
           </p>
@@ -98,7 +107,7 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
           </Alert>
         )}
 
-        {trendingQuery.isLoading ? (
+        {isLoading ? (
           <TrendingChartsSkeleton label={t('sheet:chart-discovery.trending.loading')} />
         ) : trendingQuery.isError ? null : charts.length > 0 ? (
           <ol

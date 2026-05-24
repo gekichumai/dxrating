@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
-import { TrendingPage } from '../TrendingPage'
+import { TrendingPage, buildTrendingQueryOptions } from '../TrendingPage'
 
 const mocks = vi.hoisted(() => {
   const chartSheet = {
@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => {
     chartSheet,
     results: [{ songId: 'song-a' }],
     buildTrendingChartLinks: vi.fn(() => [chartSheet]),
+    queryOptions: vi.fn((options) => options),
     queryState: {
       data: null as null | {
         dateFrom: string
@@ -47,7 +48,7 @@ vi.mock('@/lib/orpc', () => ({
   orpc: {
     analytics: {
       trending: {
-        queryOptions: vi.fn((options) => options),
+        queryOptions: mocks.queryOptions,
       },
     },
   },
@@ -81,6 +82,7 @@ describe('TrendingPage', () => {
     mocks.queryState.isRefetching = false
     mocks.queryState.refetch.mockClear()
     mocks.buildTrendingChartLinks.mockClear()
+    mocks.queryOptions.mockClear()
   })
 
   it('renders trending charts through SheetListItem', () => {
@@ -114,6 +116,23 @@ describe('TrendingPage', () => {
     expect(html).toContain('itemType="https://schema.org/MusicRecording"')
     expect(html).toContain('Song A')
     expect(html).not.toContain('Loading trending charts...')
+  })
+
+  it('does not seed React Query initialData while rendering on the server', () => {
+    const initialTrendingData = {
+      dateFrom: '2026-05-01',
+      dateTo: '2026-05-24',
+      results: mocks.results,
+    }
+
+    expect(buildTrendingQueryOptions(initialTrendingData, true)).toEqual({
+      enabled: false,
+      staleTime: 60 * 60 * 1000,
+    })
+    expect(mocks.queryOptions).toHaveBeenCalledWith({
+      enabled: false,
+      staleTime: 60 * 60 * 1000,
+    })
   })
 
   it('memoizes chart mapping while the trending results reference is unchanged', () => {
