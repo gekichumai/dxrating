@@ -76,6 +76,7 @@ vi.mock('@/components/sheet/SheetListContainer', () => ({
 
 vi.mock('@/components/sheet/SheetSortFilter', () => ({
   SheetSortFilter: () => <div data-testid="sheet-sort-filter" />,
+  SheetSortFilterTrigger: () => <button type="button">Filter Sort</button>,
 }))
 
 describe('SheetList', () => {
