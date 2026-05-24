@@ -1,5 +1,5 @@
 import type { DetectorOptions } from 'i18next-browser-languagedetector'
-import { parseCookieHeader } from '@/utils/cookies'
+import { parse as parseCookie } from 'cookie'
 
 export const SUPPORTED_LOCALES = ['en', 'ja', 'zh-Hans', 'zh-Hant'] as const
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
@@ -45,7 +45,7 @@ export function resolveSupportedLocale(candidates: string | readonly string[] | 
 }
 
 function detectLocaleFromCookieHeader(cookieHeader: string | null) {
-  return toSupportedLocale(parseCookieHeader(cookieHeader)[LOCALE_COOKIE_NAME])
+  return toSupportedLocale(parseCookie(cookieHeader ?? '')[LOCALE_COOKIE_NAME])
 }
 
 function detectLocaleFromAcceptLanguage(acceptLanguage: string | null) {

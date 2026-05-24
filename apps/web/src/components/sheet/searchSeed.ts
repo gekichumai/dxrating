@@ -1,6 +1,5 @@
 import { DifficultyEnum, TypeEnum, dxdata, type Sheet, type Song } from '@gekichumai/dxdata'
-import { serialize } from 'cookie'
-import { parseCookieHeader } from '@/utils/cookies'
+import { parse as parseCookie, serialize } from 'cookie'
 import { buildSheetPath } from './sheetLinks'
 
 export const SHEET_SORT_FILTER_TTL = 5 * 60 * 1000
@@ -76,7 +75,7 @@ export const buildSearchSeedSheets = (songs?: readonly Song[]): SearchSeedSheet[
 }
 
 export const hasActiveFilterLastActiveAtCookie = (cookieHeader: string | null, now = Date.now()) => {
-  const value = parseCookieHeader(cookieHeader)[FILTER_LAST_ACTIVE_AT_COOKIE_NAME]
+  const value = parseCookie(cookieHeader ?? '')[FILTER_LAST_ACTIVE_AT_COOKIE_NAME]
   if (!value) return false
 
   const lastActiveAt = Number(value)
