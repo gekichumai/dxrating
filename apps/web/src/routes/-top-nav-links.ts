@@ -24,3 +24,6 @@ export type AppTabValue = (typeof APP_TAB_LINKS)[number]['value']
 
 export const getActiveAppTabValue = (pathname: string): AppTabValue | false =>
   APP_TAB_LINKS.find((link) => link.href === pathname)?.value ?? false
+
+export const getPendingAppTabValue = (isTransitioning: boolean, pathname: string): AppTabValue | false =>
+  isTransitioning ? getActiveAppTabValue(pathname) : false

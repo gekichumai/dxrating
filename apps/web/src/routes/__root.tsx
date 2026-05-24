@@ -1,19 +1,17 @@
-import { HeadContent, Link, Outlet, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
-import { CircularProgress, Tab, Tabs, Tooltip } from '@mui/material'
+import { HeadContent, Outlet, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
+import { CircularProgress } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { usePostHog } from 'posthog-js/react'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
 import { Suspense, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import MdiTrendingUpIcon from '~icons/mdi/trending-up'
-import MdiUpdateIcon from '~icons/mdi/update'
 import { CustomizedToaster } from '@/components/global/CustomizedToaster'
 import { OverscrollBackgroundFiller } from '@/components/global/OverscrollBackgroundFiller'
 import { SideEffector } from '@/components/global/SideEffector'
 import { WebpSupportedImage } from '@/components/global/WebpSupportedImage'
 import { VersionRegionSwitcher } from '@/components/global/preferences/VersionRegionSwitcher'
+import { AppTabs } from '@/components/layout/AppTabs'
 import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
 import { AppContextProvider } from '@/models/context/AppContext'
@@ -22,7 +20,6 @@ import { buildAlternateLinks } from '@/utils/alternateLinks'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import appCss from '@/index.css?url'
-import { APP_TAB_LINKS, CHART_DISCOVERY_NAV_LINKS, getActiveAppTabValue } from './-top-nav-links'
 import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
@@ -144,22 +141,13 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   const versionTheme = useVersionTheme()
-  const { t } = useTranslation(['root'])
   const location = useLocation()
-  const posthog = usePostHog()
 
   const pathname = location.pathname
 
   const isPrivacyPolicy = pathname === '/privacy-policy'
   const isSongPage = pathname.startsWith('/songs/')
   const showTabs = !isSongPage && !isPrivacyPolicy
-
-  const tab = getActiveAppTabValue(pathname)
-
-  useEffect(() => {
-    if (!tab) return
-    posthog?.capture('tab_switched', { tab })
-  }, [posthog, tab])
 
   if (isPrivacyPolicy) return null
 
@@ -180,51 +168,7 @@ function RootLayout() {
         }}
       >
         <VersionRegionSwitcher />
-        {showTabs && (
-          <div className="rounded-xl bg-zinc-900/10 !min-h-2.5rem flex items-center overflow-hidden">
-            <Tabs
-              value={tab}
-              classes={{
-                root: '!min-h-2.5rem',
-                indicator: '!h-full !rounded-lg z-0',
-              }}
-            >
-              {APP_TAB_LINKS.map((link) => {
-                const label = t(link.labelKey)
-                const isIconOnlyTab = CHART_DISCOVERY_NAV_LINKS.some((chartLink) => chartLink.value === link.value)
-                const Icon =
-                  link.value === 'recent' ? MdiUpdateIcon : link.value === 'trending' ? MdiTrendingUpIcon : undefined
-
-                return (
-                  <Tab
-                    key={link.value}
-                    aria-label={isIconOnlyTab ? label : undefined}
-                    component={Link}
-                    icon={
-                      isIconOnlyTab && Icon ? (
-                        <Tooltip title={label}>
-                          <span className="inline-flex">
-                            <Icon className="text-lg" />
-                          </span>
-                        </Tooltip>
-                      ) : undefined
-                    }
-                    label={isIconOnlyTab ? undefined : label}
-                    to={link.href}
-                    viewTransition
-                    classes={{
-                      selected: '!text-white font-bold text-shadow-md',
-                      root: `!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem ${
-                        isIconOnlyTab ? '!min-w-2.5rem !w-2.5rem !px-0' : ''
-                      }`,
-                    }}
-                    value={link.value}
-                  />
-                )
-              })}
-            </Tabs>
-          </div>
-        )}
+        {showTabs && <AppTabs />}
       </div>
     </>
   )

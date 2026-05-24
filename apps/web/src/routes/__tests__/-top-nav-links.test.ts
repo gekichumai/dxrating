@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { APP_TAB_LINKS, CHART_DISCOVERY_NAV_LINKS, getActiveAppTabValue } from '../-top-nav-links'
+import {
+  APP_TAB_LINKS,
+  CHART_DISCOVERY_NAV_LINKS,
+  getActiveAppTabValue,
+  getPendingAppTabValue,
+} from '../-top-nav-links'
 
 describe('top nav links', () => {
   it('exposes crawlable hrefs for app tabs and chart discovery tabs', () => {
@@ -29,5 +34,12 @@ describe('top nav links', () => {
     expect(getActiveAppTabValue('/rating')).toBe('rating')
     expect(getActiveAppTabValue('/charts/recent')).toBe('recent')
     expect(getActiveAppTabValue('/charts/trending')).toBe('trending')
+  })
+
+  it('selects a pending app tab only while router navigation is transitioning', () => {
+    expect(getPendingAppTabValue(true, '/search')).toBe('search')
+    expect(getPendingAppTabValue(true, '/charts/recent')).toBe('recent')
+    expect(getPendingAppTabValue(true, '/songs/1/dx/master')).toBe(false)
+    expect(getPendingAppTabValue(false, '/search')).toBe(false)
   })
 })
