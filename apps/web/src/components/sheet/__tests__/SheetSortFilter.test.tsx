@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { useState } from 'react'
+import { act, useState } from 'react'
 import { renderToString } from 'react-dom/server'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
@@ -89,5 +89,21 @@ describe('SheetSortFilter', () => {
     expect(panel?.closest('.MuiCollapse-root')).not.toBeNull()
     expect(screen.getByText('Reset All')).toBeTruthy()
     expect(screen.queryByText('Filter & Sort')).toBeNull()
+  })
+
+  it('uses latest uncontrolled expansion state for rapid toggles', () => {
+    const onExpandedChange = vi.fn()
+    render(<SheetSortFilter onExpandedChange={onExpandedChange} />)
+
+    const trigger = screen.getByRole('button', { name: 'Filter & Sort' })
+
+    act(() => {
+      trigger.click()
+      trigger.click()
+    })
+
+    expect(onExpandedChange).toHaveBeenNthCalledWith(1, true)
+    expect(onExpandedChange).toHaveBeenNthCalledWith(2, false)
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
   })
 })

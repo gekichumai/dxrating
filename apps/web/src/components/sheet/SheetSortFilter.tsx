@@ -387,11 +387,16 @@ const SheetSortFilterFormContent: FC<{
 
   const toggleExpanded = () => {
     startTransition(() => {
-      const nextExpanded = !expanded
       if (controlledExpanded === undefined) {
-        setUncontrolledExpanded(nextExpanded)
+        setUncontrolledExpanded((currentExpanded) => {
+          const nextExpanded = !currentExpanded
+          onExpandedChange?.(nextExpanded)
+          return nextExpanded
+        })
+        return
       }
-      onExpandedChange?.(nextExpanded)
+
+      onExpandedChange?.(!controlledExpanded)
     })
   }
 
