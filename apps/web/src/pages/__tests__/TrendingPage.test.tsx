@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react'
+import { renderToString } from 'react-dom/server'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
 import { TrendingPage } from '../TrendingPage'
@@ -35,14 +36,18 @@ const mocks = vi.hoisted(() => {
 })
 
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: () => mocks.queryState,
+  useQuery: (options: { initialData?: typeof mocks.queryState.data }) => ({
+    ...mocks.queryState,
+    data: mocks.queryState.data ?? options.initialData,
+    isLoading: mocks.queryState.data || options.initialData ? false : mocks.queryState.isLoading,
+  }),
 }))
 
 vi.mock('@/lib/orpc', () => ({
   orpc: {
     analytics: {
       trending: {
-        queryOptions: vi.fn(),
+        queryOptions: vi.fn((options) => options),
       },
     },
   },
@@ -87,6 +92,28 @@ describe('TrendingPage', () => {
     const sheetListItem = screen.getByTestId('sheet-list-item')
     expect(sheetListItem.textContent).toBe('Song A')
     expect(sheetListItem.getAttribute('href')).toBe('/songs/song-a/dx/master')
+  })
+
+  it('renders crawlable chart anchors in server HTML from initial trending data', () => {
+    mocks.queryState.data = null
+
+    const html = renderToString(
+      <TrendingPage
+        initialTrendingData={{
+          dateFrom: '2026-05-01',
+          dateTo: '2026-05-24',
+          results: mocks.results,
+        }}
+      />,
+    )
+
+    expect(html).toContain('href="/songs/song-a/dx/master"')
+    expect(html).toContain('itemType="https://schema.org/CollectionPage"')
+    expect(html).toContain('itemType="https://schema.org/ItemList"')
+    expect(html).toContain('itemType="https://schema.org/ListItem"')
+    expect(html).toContain('itemType="https://schema.org/MusicRecording"')
+    expect(html).toContain('Song A')
+    expect(html).not.toContain('Loading trending charts...')
   })
 
   it('memoizes chart mapping while the trending results reference is unchanged', () => {

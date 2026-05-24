@@ -4,7 +4,13 @@ import { useMemo, type FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { buildTrendingChartLinks } from '@/components/chartDiscovery/trendingCharts'
 import { SheetListItem } from '@/components/sheet/SheetListItem'
-import { orpc } from '@/lib/orpc'
+import { orpc, type RouterOutputs } from '@/lib/orpc'
+
+type TrendingData = RouterOutputs['analytics']['trending']
+
+type TrendingPageProps = {
+  initialTrendingData?: TrendingData
+}
 
 const siteUrl = 'https://dxrating.net'
 
@@ -37,9 +43,11 @@ const TrendingChartsSkeleton: FC<{ label: string }> = ({ label }) => (
   </div>
 )
 
-export const TrendingPage: FC = () => {
+export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => {
   const { t } = useTranslation(['sheet'])
-  const trendingQuery = useQuery(orpc.analytics.trending.queryOptions({ staleTime: 60 * 60 * 1000 }))
+  const trendingQuery = useQuery(
+    orpc.analytics.trending.queryOptions({ initialData: initialTrendingData, staleTime: 60 * 60 * 1000 }),
+  )
   const trendingResults = trendingQuery.data?.results
   const charts = useMemo(() => (trendingResults ? buildTrendingChartLinks(trendingResults) : []), [trendingResults])
   const hasDateRange = !!trendingQuery.data?.dateFrom && !!trendingQuery.data?.dateTo
