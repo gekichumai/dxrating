@@ -325,7 +325,7 @@ export const SheetSortFilterTrigger: FC<{
     return (
       <ButtonBase
         className={clsx(
-          'relative min-h-[56px] w-[4.75rem] shrink-0 rounded border px-2 py-1.5 transition-all duration-300',
+          'relative min-h-[56px] w-[6.25rem] shrink-0 rounded-[4px] border px-3 py-1.5 transition-all duration-300',
           'flex items-center justify-center gap-1.5 text-zinc-900 shadow-sm backdrop-blur-sm',
           expanded ? 'border-zinc-500 bg-gray-200' : 'border-zinc-400/70 bg-white/70 hover:bg-white/90',
           className,
@@ -340,6 +340,9 @@ export const SheetSortFilterTrigger: FC<{
           <span className="whitespace-nowrap">{t('sheet:filter.title')}</span>
           <span className="whitespace-nowrap">{t('sheet:sort.title')}</span>
         </span>
+        <MdiChevronDownIcon
+          className={clsx('h-4 w-4 shrink-0 transition-transform duration-300', expanded && 'transform rotate-180')}
+        />
         {pending && <CircularProgress disableShrink className="absolute right-1 top-1 !h-3 !w-3" />}
       </ButtonBase>
     )

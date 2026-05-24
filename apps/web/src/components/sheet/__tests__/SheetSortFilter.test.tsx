@@ -74,12 +74,15 @@ describe('SheetSortFilter', () => {
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
     expect(within(trigger).getByText('Filter')).toBeTruthy()
     expect(within(trigger).getByText('Sort')).toBeTruthy()
-    expect(trigger.querySelector('svg')).toBeTruthy()
+    const icons = trigger.querySelectorAll('svg')
+    expect(icons).toHaveLength(2)
+    expect(icons[1]?.getAttribute('class')).not.toContain('rotate-180')
     expect(screen.queryByText('Reset All')).toBeNull()
 
     fireEvent.click(trigger)
 
     expect(trigger.getAttribute('aria-expanded')).toBe('true')
+    expect(icons[1]?.getAttribute('class')).toContain('rotate-180')
     expect(screen.getByText('Reset All')).toBeTruthy()
     expect(screen.queryByText('Filter & Sort')).toBeNull()
   })
