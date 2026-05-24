@@ -12,7 +12,7 @@ The real goal is broader than `/search`: LLMs and crawlers need a reliable way t
 
 - Replace the disappearing `/search` seed list with a stable dedicated chart discovery page.
 - Add `/charts/recent` as an SSR page that permanently renders recently updated chart links.
-- Keep `/search` focused on the interactive search UI, with only a small persistent link to `/charts/recent`.
+- Keep `/search` focused on the interactive search UI, with only a small persistent icon link to `/charts/recent`.
 - Update machine-readable discovery surfaces so crawlers and LLM fetchers can find `/charts/recent`.
 - Keep the shape extensible for a later `/charts/trending` page without implementing trending now.
 
@@ -60,10 +60,12 @@ Remove:
 
 Keep or add:
 
-- a small persistent link to `/charts/recent` with the text "Browse recently updated charts";
+- an icon-only link to `/charts/recent` at the left side of the top tab bar that currently contains "Search Charts" and "My Rating";
 - the existing search input, filters, summary, and virtualized chart list behavior.
 
-The link is useful to users, not hidden or crawler-only. It lives near the search/filter controls where it does not compete with the main task.
+The link is useful to users, not hidden or crawler-only. It appears as a compact "recently updated" icon before the existing tab labels, so it does not add another text control to the search page.
+
+The top tab bar uses real navigable elements for discovery. The `/charts/recent` icon and the existing top-level destinations render as `<a>` elements or router `<Link>` elements with concrete `href` values, not click-only controls.
 
 ### Shared Discovery List Shape
 
@@ -91,7 +93,7 @@ Do not change `robots.txt`. Robots can continue allowing the site generally.
 2. The helper flattens songs into chart entries, sorts by `releaseDate` descending, and returns the first 500.
 3. The SSR page renders semantic HTML links to canonical chart URLs.
 4. Crawlers discover `/charts/recent` via normal links, `llms.txt`, and sitemap.
-5. Users reaching `/search` can navigate to `/charts/recent` through a small persistent link.
+5. Users reaching `/search` can navigate to `/charts/recent` through the persistent icon link in the top tab bar.
 
 ## Error Handling
 
@@ -106,7 +108,8 @@ Do not change `robots.txt`. Robots can continue allowing the site generally.
 - Render chart links as real `<a href="/songs/...">` anchors.
 - Use a semantic list (`ol` or `ul`) for chart entries.
 - Include `time dateTime="YYYY-MM-DD"` when a release date exists.
-- Add locale strings for visible text in all four locale files.
+- Add locale strings for visible text, icon `aria-label`, and icon tooltip text in all four locale files.
+- The `/search` icon link must have an accessible label equivalent to "Recently updated charts" despite having no visible text.
 - Avoid hidden crawler-only text.
 
 ## Testing
