@@ -232,12 +232,22 @@ function RootLayout() {
               <IconButton
                 aria-label={t(RECENT_CHARTS_NAV_LINK.labelKey)}
                 className={`!rounded-lg !min-h-2.5rem !h-2.5rem !w-2.5rem !text-white z-1 ${
-                  isRecentChartsPage ? '!bg-white/20 text-shadow-md' : ''
+                  isRecentChartsPage ? 'text-shadow-md' : ''
                 }`}
                 component="a"
                 href={RECENT_CHARTS_NAV_LINK.href}
                 onClick={(event) => handleNavLinkClick(event, RECENT_CHARTS_NAV_LINK.href)}
                 size="small"
+                sx={
+                  isRecentChartsPage
+                    ? {
+                        backgroundColor: 'primary.main',
+                        '&:hover': {
+                          backgroundColor: 'primary.main',
+                        },
+                      }
+                    : undefined
+                }
               >
                 <MdiUpdateIcon className="text-lg" />
               </IconButton>
