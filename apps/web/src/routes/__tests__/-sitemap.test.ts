@@ -39,4 +39,11 @@ describe('buildSitemap', () => {
     expect(sitemap.indexOf('/mixed/std/master')).toBeLessThan(sitemap.indexOf('/recent/dx/expert'))
     expect(sitemap.indexOf('/recent/dx/expert')).toBeLessThan(sitemap.indexOf('/old/dx/master'))
   })
+
+  it('includes top-level chart ranking pages', () => {
+    const sitemap = buildSitemap([])
+
+    expect(sitemap).toContain('<loc>https://dxrating.net/recent</loc>')
+    expect(sitemap).toContain('<loc>https://dxrating.net/trending</loc>')
+  })
 })

@@ -4,6 +4,12 @@
       "search": {
         "title": "搜尋譜面"
       },
+      "recent": {
+        "title": "最近更新"
+      },
+      "trending": {
+        "title": "熱門"
+      },
       "rating": {
         "title": "計算評分"
       }
@@ -11,6 +17,21 @@
     "share": {
       "copy-content": "{{ link }}",
       "copy-succeeded": "已複製至剪貼簿"
+    }
+  },
+  "charts": {
+    "retry": "重試",
+    "recent": {
+      "title": "最近更新譜面",
+      "description": "目前 DXData 版本中新加入或更新的譜面。",
+      "summary": "{{count}} 份譜面"
+    },
+    "trending": {
+      "title": "熱門趨勢譜面",
+      "description": "DXRating 上目前最受關注的譜面。",
+      "summary": "{{dateFrom}} - {{dateTo}}",
+      "empty": "暫時沒有熱門趨勢譜面資料。",
+      "error": "熱門趨勢譜面載入失敗。"
     }
   },
   "settings": {

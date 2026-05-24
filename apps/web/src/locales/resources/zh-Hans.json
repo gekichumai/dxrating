@@ -4,6 +4,12 @@
       "search": {
         "title": "搜索谱面"
       },
+      "recent": {
+        "title": "最近更新"
+      },
+      "trending": {
+        "title": "热门"
+      },
       "rating": {
         "title": "计算评分"
       }
@@ -11,6 +17,21 @@
     "share": {
       "copy-content": "{{ link }}",
       "copy-succeeded": "已拷贝至剪贴板"
+    }
+  },
+  "charts": {
+    "retry": "重试",
+    "recent": {
+      "title": "最近更新谱面",
+      "description": "当前 DXData 版本中新加入或更新的谱面。",
+      "summary": "{{count}} 份谱面"
+    },
+    "trending": {
+      "title": "热门趋势谱面",
+      "description": "DXRating 上当前最受关注的谱面。",
+      "summary": "{{dateFrom}} - {{dateTo}}",
+      "empty": "暂时没有热门趋势谱面数据。",
+      "error": "热门趋势谱面加载失败。"
     }
   },
   "settings": {

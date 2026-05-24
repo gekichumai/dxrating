@@ -5,8 +5,13 @@ import { usePostHog } from 'posthog-js/react'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
 import { Suspense, useEffect, useTransition } from 'react'
+import type { ComponentType } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import IconMdiCalculatorVariant from '~icons/mdi/calculator-variant'
+import IconMdiClockOutline from '~icons/mdi/clock-outline'
+import IconMdiMagnify from '~icons/mdi/magnify'
+import IconMdiTrendingUp from '~icons/mdi/trending-up'
 import { CustomizedToaster } from '@/components/global/CustomizedToaster'
 import { OverscrollBackgroundFiller } from '@/components/global/OverscrollBackgroundFiller'
 import { SideEffector } from '@/components/global/SideEffector'
@@ -20,12 +25,17 @@ import { startViewTransition } from '@/utils/startViewTransition'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import appCss from '@/index.css?url'
 import unoResetCss from '@unocss/reset/tailwind-compat.css?url'
+import { type AppTabValue, resolveAppTab } from './-appTabs'
 import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
 
-const APP_TABS_VALUES = ['search', 'rating'] as const
-type AppTabsValuesType = (typeof APP_TABS_VALUES)[number]
+const APP_TABS = [
+  { value: 'search', Icon: IconMdiMagnify },
+  { value: 'recent', Icon: IconMdiClockOutline },
+  { value: 'trending', Icon: IconMdiTrendingUp },
+  { value: 'rating', Icon: IconMdiCalculatorVariant },
+] satisfies { value: AppTabValue; Icon: ComponentType<{ className?: string }> }[]
 
 const fallbackElement = (
   <div className="flex items-center justify-center h-50% w-full p-6">
@@ -150,9 +160,7 @@ function RootLayout() {
   const isSongPage = pathname.startsWith('/songs/')
   const showTabs = !isSongPage && !isPrivacyPolicy
 
-  const tab: AppTabsValuesType = APP_TABS_VALUES.includes(pathname.slice(1) as AppTabsValuesType)
-    ? (pathname.slice(1) as AppTabsValuesType)
-    : 'search'
+  const tab = resolveAppTab(pathname.split('/')[1])
 
   useEffect(() => {
     posthog?.capture('tab_switched', { tab })
@@ -180,7 +188,7 @@ function RootLayout() {
         {showTabs && (
           <Tabs
             value={tab}
-            onChange={(_, v: AppTabsValuesType) => {
+            onChange={(_, v: AppTabValue) => {
               startTransition(() => {
                 startViewTransition(() => {
                   navigate({ to: `/${v}` })
@@ -196,16 +204,28 @@ function RootLayout() {
               root: 'rounded-xl bg-zinc-900/10 !min-h-2.5rem',
               indicator: '!h-full !rounded-lg z-0',
             }}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
           >
-            {APP_TABS_VALUES.map((v) => (
+            {APP_TABS.map(({ value, Icon }) => (
               <Tab
-                key={v}
-                label={t(`root:pages.${v}.title`)}
+                key={value}
+                icon={<Icon className="size-4" />}
+                iconPosition="start"
+                label={t(`root:pages.${value}.title`)}
                 classes={{
                   selected: '!text-white font-bold text-shadow-md',
-                  root: '!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem',
+                  root: '!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem !min-w-max !px-3',
                 }}
-                value={v}
+                value={value}
+                sx={{
+                  textTransform: 'none',
+                  '& .MuiTab-iconWrapper': {
+                    marginBottom: 0,
+                    marginRight: '0.375rem',
+                  },
+                }}
               />
             ))}
           </Tabs>

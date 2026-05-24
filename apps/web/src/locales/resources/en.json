@@ -4,6 +4,12 @@
       "search": {
         "title": "Search Charts"
       },
+      "recent": {
+        "title": "Recent Updates"
+      },
+      "trending": {
+        "title": "Trending"
+      },
       "rating": {
         "title": "My Rating"
       }
@@ -11,6 +17,21 @@
     "share": {
       "copy-succeeded": "Copied to clipboard",
       "copy-content": "{{ link }}"
+    }
+  },
+  "charts": {
+    "retry": "Retry",
+    "recent": {
+      "title": "Recent Chart Updates",
+      "description": "Newest charts and chart updates in the selected DXData version.",
+      "summary": "{{count}} charts"
+    },
+    "trending": {
+      "title": "Top Trending Charts",
+      "description": "Charts currently getting the most DXRating attention.",
+      "summary": "{{dateFrom}} - {{dateTo}}",
+      "empty": "No trending chart data is available yet.",
+      "error": "Failed to load trending charts."
     }
   },
   "settings": {

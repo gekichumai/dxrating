@@ -4,6 +4,12 @@
       "search": {
         "title": "譜面検索"
       },
+      "recent": {
+        "title": "最近の更新"
+      },
+      "trending": {
+        "title": "トレンド"
+      },
       "rating": {
         "title": "レーテイング計算"
       }
@@ -11,6 +17,21 @@
     "share": {
       "copy-content": "{{ link }}",
       "copy-succeeded": "クリップボードにコピーされました"
+    }
+  },
+  "charts": {
+    "retry": "再試行",
+    "recent": {
+      "title": "最近更新された譜面",
+      "description": "選択中の DXData バージョンで新しく追加・更新された譜面です。",
+      "summary": "{{count}} 譜面"
+    },
+    "trending": {
+      "title": "トレンド譜面",
+      "description": "DXRating で現在よく見られている譜面です。",
+      "summary": "{{dateFrom}} - {{dateTo}}",
+      "empty": "トレンド譜面データはまだありません。",
+      "error": "トレンド譜面を読み込めませんでした。"
     }
   },
   "settings": {
