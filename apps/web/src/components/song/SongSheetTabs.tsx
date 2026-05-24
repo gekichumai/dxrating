@@ -59,7 +59,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
         }}
       >
         {availableTypes.map((type) => {
-          const label = t(`song:type.${type === TypeEnum.UTAGE2P ? 'utage' : type}`)
+          const label = t(`song:type.${type}`)
           const altText = t(getSheetTypeAltTextKey(type))
           return (
             <Tab

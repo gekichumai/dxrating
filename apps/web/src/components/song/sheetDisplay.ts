@@ -9,25 +9,25 @@ export const SHEET_TYPE_DISPLAY_NAMES: Record<SupportedLocale, SheetTypeDisplayN
     [TypeEnum.DX]: 'DX',
     [TypeEnum.STD]: 'Standard',
     [TypeEnum.UTAGE]: 'Utage',
-    [TypeEnum.UTAGE2P]: 'Utage',
+    [TypeEnum.UTAGE2P]: 'Buddy',
   },
   'zh-Hans': {
     [TypeEnum.DX]: 'DX',
     [TypeEnum.STD]: '标准',
     [TypeEnum.UTAGE]: '宴',
-    [TypeEnum.UTAGE2P]: '宴',
+    [TypeEnum.UTAGE2P]: 'Buddy',
   },
   'zh-Hant': {
     [TypeEnum.DX]: 'DX',
     [TypeEnum.STD]: '標準',
     [TypeEnum.UTAGE]: '宴',
-    [TypeEnum.UTAGE2P]: '宴',
+    [TypeEnum.UTAGE2P]: 'Buddy',
   },
   ja: {
     [TypeEnum.DX]: 'でらっくす',
     [TypeEnum.STD]: 'スタンダード',
     [TypeEnum.UTAGE]: '宴',
-    [TypeEnum.UTAGE2P]: '宴',
+    [TypeEnum.UTAGE2P]: 'バディ',
   },
 }
 

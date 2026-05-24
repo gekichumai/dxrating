@@ -54,7 +54,7 @@
     "type-alt.dx": "DX 谱面",
     "type-alt.std": "标准谱面",
     "type-alt.utage": "宴谱面",
-    "type-alt.utage2p": "宴双人谱面",
+    "type-alt.utage2p": "Buddy 谱面",
     "cover-art-alt": "《{{title}}》封面图",
     "version-title-alt": "maimai DX {{version}} 版本标志",
     "details.achievement-to-rating.achievement": "完成率",
@@ -139,6 +139,7 @@
     "type.dx": "DX",
     "type.std": "标准",
     "type.utage": "宴",
+    "type.utage2p": "Buddy",
     "seo.description": "{{title}} / {{artist}} - {{sheetLabel}} 谱面详情、谱面定数与音符数 - DXRating。"
   },
   "about": {

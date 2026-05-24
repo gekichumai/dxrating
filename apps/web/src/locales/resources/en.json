@@ -52,7 +52,7 @@
     "type-alt.dx": "DX chart",
     "type-alt.std": "Standard chart",
     "type-alt.utage": "Utage chart",
-    "type-alt.utage2p": "2-player Utage chart",
+    "type-alt.utage2p": "Buddy chart",
     "cover-art-alt": "Cover art for {{title}}",
     "version-title-alt": "maimai DX {{version}} version logo",
     "search": "Search",
@@ -140,6 +140,7 @@
     "type.dx": "DX",
     "type.std": "Standard",
     "type.utage": "Utage",
+    "type.utage2p": "Buddy",
     "seo.description": "{{title}} by {{artist}} - {{sheetLabel}} chart details, internal levels, and note counts on DXRating."
   },
   "about": {

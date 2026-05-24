@@ -74,7 +74,7 @@
     "type-alt.dx": "でらっくす譜面",
     "type-alt.std": "スタンダード譜面",
     "type-alt.utage": "宴譜面",
-    "type-alt.utage2p": "宴 2人プレイ譜面",
+    "type-alt.utage2p": "バディ譜面",
     "cover-art-alt": "「{{title}}」のジャケット画像",
     "version-title-alt": "maimai DX {{version}} のバージョンロゴ",
     "internal-level-history.delta.increased": "譜面定数が上がりました",
@@ -140,6 +140,7 @@
     "type.dx": "でらっくす",
     "type.std": "スタンダード",
     "type.utage": "宴",
+    "type.utage2p": "バディ",
     "seo.description": "{{title}} / {{artist}} - {{sheetLabel}} の譜面詳細、譜面定数、ノーツ数 - DXRating。"
   },
   "about": {

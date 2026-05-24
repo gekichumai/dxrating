@@ -74,7 +74,7 @@ describe('SheetListItemContent', () => {
   it('uses one descriptive accessible label for the Utage 2P badge artwork', () => {
     render(<SheetListItemContent sheet={makeSheet(TypeEnum.UTAGE2P)} enableSheetImage={false} />)
 
-    expect(screen.getByRole('img', { name: '2-player Utage chart' })).toBeTruthy()
+    expect(screen.getByRole('img', { name: 'Buddy chart' })).toBeTruthy()
     expect(screen.queryByRole('img', { name: 'utage2p' })).toBeNull()
   })
 })

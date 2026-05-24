@@ -42,8 +42,13 @@ describe('SongSheetTabs', () => {
   it('uses descriptive type image alt text for DX and Standard tabs with text fallback for other types', () => {
     render(
       <SongSheetTabs
-        sheets={[makeSheet(TypeEnum.DX), makeSheet(TypeEnum.STD), makeSheet(TypeEnum.UTAGE)]}
-        availableTypes={[TypeEnum.DX, TypeEnum.STD, TypeEnum.UTAGE]}
+        sheets={[
+          makeSheet(TypeEnum.DX),
+          makeSheet(TypeEnum.STD),
+          makeSheet(TypeEnum.UTAGE),
+          makeSheet(TypeEnum.UTAGE2P),
+        ]}
+        availableTypes={[TypeEnum.DX, TypeEnum.STD, TypeEnum.UTAGE, TypeEnum.UTAGE2P]}
         activeType={TypeEnum.DX}
         activeDifficulty={DifficultyEnum.Master}
         onTypeChange={vi.fn()}
@@ -58,6 +63,7 @@ describe('SongSheetTabs', () => {
       'https://shama.dxrating.net/images/type_sd.png',
     )
     expect(screen.getByRole('tab', { name: 'Utage' })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Buddy' })).toBeTruthy()
     expect(screen.queryByRole('img', { name: 'Utage' })).toBeNull()
   })
 
