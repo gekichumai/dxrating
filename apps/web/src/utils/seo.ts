@@ -134,6 +134,29 @@ export function buildSearchSeo(locale: SupportedLocale) {
   }
 }
 
+export function buildRecentChartsSeo(locale: SupportedLocale) {
+  const title = formatSeoTitle(t(locale, 'root:pages.recent.seo-title'))
+  const description = t(locale, 'root:pages.recent.seo-description')
+
+  return {
+    title,
+    description,
+    meta: [
+      { title },
+      { name: 'description', content: description },
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:url', content: 'https://dxrating.net/charts/recent' },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:locale', content: OG_LOCALES[locale] },
+      { name: 'twitter:card', content: 'summary' },
+      { name: 'twitter:title', content: title },
+      { name: 'twitter:description', content: description },
+    ] satisfies SeoMeta[],
+    links: [{ rel: 'canonical', href: 'https://dxrating.net/charts/recent' }],
+  }
+}
+
 export function buildRatingSeo(locale: SupportedLocale) {
   const title = formatSeoTitle(t(locale, 'root:pages.rating.seo-title'))
   const description = t(locale, 'root:pages.rating.seo-description')

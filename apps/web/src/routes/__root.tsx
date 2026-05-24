@@ -1,12 +1,13 @@
 import { HeadContent, Outlet, Scripts, createRootRoute, useLocation, useNavigate } from '@tanstack/react-router'
-import { CircularProgress, Tab, Tabs } from '@mui/material'
+import { CircularProgress, IconButton, Tab, Tabs, Tooltip } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { usePostHog } from 'posthog-js/react'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
-import { Suspense, useEffect, useTransition } from 'react'
+import { Suspense, useCallback, useEffect, useTransition, type MouseEvent } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import MdiUpdateIcon from '~icons/mdi/update'
 import { CustomizedToaster } from '@/components/global/CustomizedToaster'
 import { OverscrollBackgroundFiller } from '@/components/global/OverscrollBackgroundFiller'
 import { SideEffector } from '@/components/global/SideEffector'
@@ -21,12 +22,17 @@ import { buildAlternateLinks } from '@/utils/alternateLinks'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import appCss from '@/index.css?url'
+import {
+  APP_TAB_LINKS,
+  RECENT_CHARTS_NAV_LINK,
+  getActiveAppTabValue,
+  type AppNavHref,
+  type AppTabValue,
+} from './-top-nav-links'
 import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
 
-const APP_TABS_VALUES = ['search', 'rating'] as const
-type AppTabsValuesType = (typeof APP_TABS_VALUES)[number]
 const SONG_DETAIL_ROUTE_ID = '/songs/$songId/$type/$difficulty'
 
 const fallbackElement = (
@@ -156,11 +162,48 @@ function RootLayout() {
   const isSongPage = pathname.startsWith('/songs/')
   const showTabs = !isSongPage && !isPrivacyPolicy
 
-  const tab: AppTabsValuesType = APP_TABS_VALUES.includes(pathname.slice(1) as AppTabsValuesType)
-    ? (pathname.slice(1) as AppTabsValuesType)
-    : 'search'
+  const tab = getActiveAppTabValue(pathname)
+  const isRecentChartsPage = pathname === RECENT_CHARTS_NAV_LINK.href
+
+  const navigateTo = useCallback(
+    (href: AppNavHref, tabSelection?: AppTabValue) => {
+      startTransition(() => {
+        startViewTransition(() => {
+          navigate({ to: href })
+        })
+        if (tabSelection) {
+          try {
+            localStorage.setItem('tab-selection', JSON.stringify(tabSelection))
+          } catch {
+            // Navigation should still succeed if storage is unavailable.
+          }
+        }
+      })
+    },
+    [navigate, startTransition],
+  )
+
+  const handleNavLinkClick = useCallback(
+    (event: MouseEvent<HTMLAnchorElement>, href: AppNavHref, tabSelection?: AppTabValue) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.shiftKey
+      ) {
+        return
+      }
+
+      event.preventDefault()
+      navigateTo(href, tabSelection)
+    },
+    [navigateTo],
+  )
 
   useEffect(() => {
+    if (!tab) return
     posthog?.capture('tab_switched', { tab })
   }, [posthog, tab])
 
@@ -184,37 +227,54 @@ function RootLayout() {
       >
         <VersionRegionSwitcher />
         {showTabs && (
-          <Tabs
-            value={tab}
-            onChange={(_, v: AppTabsValuesType) => {
-              startTransition(() => {
-                startViewTransition(() => {
-                  navigate({ to: `/${v}` })
-                })
-                try {
-                  localStorage.setItem('tab-selection', JSON.stringify(v))
-                } catch {
-                  // Navigation should still succeed if storage is unavailable.
+          <div className="rounded-xl bg-zinc-900/10 !min-h-2.5rem flex items-center overflow-hidden">
+            <Tooltip title={t(RECENT_CHARTS_NAV_LINK.labelKey)}>
+              <IconButton
+                aria-label={t(RECENT_CHARTS_NAV_LINK.labelKey)}
+                className={`!rounded-lg !min-h-2.5rem !h-2.5rem !w-2.5rem !text-white z-1 ${
+                  isRecentChartsPage ? 'text-shadow-md' : ''
+                }`}
+                component="a"
+                href={RECENT_CHARTS_NAV_LINK.href}
+                onClick={(event) => handleNavLinkClick(event, RECENT_CHARTS_NAV_LINK.href)}
+                size="small"
+                sx={
+                  isRecentChartsPage
+                    ? {
+                        backgroundColor: 'primary.main',
+                        '&:hover': {
+                          backgroundColor: 'primary.main',
+                        },
+                      }
+                    : undefined
                 }
-              })
-            }}
-            classes={{
-              root: 'rounded-xl bg-zinc-900/10 !min-h-2.5rem',
-              indicator: '!h-full !rounded-lg z-0',
-            }}
-          >
-            {APP_TABS_VALUES.map((v) => (
-              <Tab
-                key={v}
-                label={t(`root:pages.${v}.title`)}
-                classes={{
-                  selected: '!text-white font-bold text-shadow-md',
-                  root: '!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem',
-                }}
-                value={v}
-              />
-            ))}
-          </Tabs>
+              >
+                <MdiUpdateIcon className="text-lg" />
+              </IconButton>
+            </Tooltip>
+            <Tabs
+              value={tab}
+              classes={{
+                root: '!min-h-2.5rem',
+                indicator: '!h-full !rounded-lg z-0',
+              }}
+            >
+              {APP_TAB_LINKS.map((link) => (
+                <Tab
+                  key={link.value}
+                  component="a"
+                  href={link.href}
+                  label={t(link.labelKey)}
+                  onClick={(event) => handleNavLinkClick(event, link.href, link.value)}
+                  classes={{
+                    selected: '!text-white font-bold text-shadow-md',
+                    root: '!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem',
+                  }}
+                  value={link.value}
+                />
+              ))}
+            </Tabs>
+          </div>
         )}
       </div>
     </>

@@ -13,7 +13,7 @@ import {
   Paper,
 } from '@mui/material'
 import clsx from 'clsx'
-import { type FC, useContext, useEffect, useId, useMemo, useState, useTransition } from 'react'
+import { type FC, useContext, useEffect, useId, useState, useTransition } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { useEffectOnce } from 'react-use'
@@ -69,6 +69,15 @@ export const getDefaultSheetSortFilterForm = (): SheetSortFilterForm => ({
 })
 
 const CURRENT_SCHEMA_VERSION = 1
+const SHEET_SORT_FILTER_STORAGE_KEY = 'dxrating-sheet-sort-filter'
+const LATEST_VERSION_KEY = 'dxrating-known-latest-game-version'
+const SHEET_SORT_FILTER_TTL = 5 * 60 * 1000
+
+const clearPersistedSheetSortFilter = () => {
+  if (typeof window !== 'undefined') {
+    window.localStorage.removeItem(SHEET_SORT_FILTER_STORAGE_KEY)
+  }
+}
 
 type SchemaFilterFormVersionZero = SheetSortFilterForm
 const isSchemaFilterFormVersionZero = (v: unknown): v is SchemaFilterFormVersionZero => {
@@ -162,43 +171,56 @@ export const validateAndMigrate = (alreadySaved: unknown): SheetSortFilterForm =
   return migrated
 }
 
+const loadSavedSheetSortFilterForm = (): SheetSortFilterForm | null => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const currentLatest = VERSION_SORT_ORDER[VERSION_SORT_ORDER.length - 1]
+  const storedLatest = window.localStorage.getItem(LATEST_VERSION_KEY)
+
+  if (storedLatest !== currentLatest) {
+    clearPersistedSheetSortFilter()
+    window.localStorage.setItem(LATEST_VERSION_KEY, currentLatest)
+    return null
+  }
+
+  const alreadySaved = window.localStorage.getItem(SHEET_SORT_FILTER_STORAGE_KEY)
+  if (!alreadySaved) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(alreadySaved)
+    if (typeof parsed.expiresAt !== 'number' || parsed.expiresAt < Date.now()) {
+      clearPersistedSheetSortFilter()
+      return null
+    }
+    return validateAndMigrate(parsed)
+  } catch (e) {
+    console.warn('Failed to parse saved sort filter', e)
+    clearPersistedSheetSortFilter()
+    return null
+  }
+}
+
 export const SheetSortFilter: FC<{
   onChange?: (form: SheetSortFilterForm) => void
 }> = ({ onChange }) => {
-  const defaultValues = useMemo(() => {
-    const LATEST_VERSION_KEY = 'dxrating-known-latest-game-version'
-    const currentLatest = VERSION_SORT_ORDER[VERSION_SORT_ORDER.length - 1]
-    const storedLatest = window.localStorage.getItem(LATEST_VERSION_KEY)
-
-    if (storedLatest !== currentLatest) {
-      window.localStorage.removeItem('dxrating-sheet-sort-filter')
-      window.localStorage.setItem(LATEST_VERSION_KEY, currentLatest)
-      return getDefaultSheetSortFilterForm()
-    }
-
-    const alreadySaved = window.localStorage.getItem('dxrating-sheet-sort-filter')
-    if (alreadySaved) {
-      try {
-        const parsed = JSON.parse(alreadySaved)
-        if (typeof parsed.expiresAt !== 'number' || parsed.expiresAt < Date.now()) {
-          window.localStorage.removeItem('dxrating-sheet-sort-filter')
-          return getDefaultSheetSortFilterForm()
-        }
-        return validateAndMigrate(parsed)
-      } catch (e) {
-        console.warn('Failed to parse saved sort filter', e)
-      }
-    }
-
-    return getDefaultSheetSortFilterForm()
-  }, [])
-
   const methods = useForm<SheetSortFilterForm>({
     mode: 'onChange',
-    defaultValues,
+    defaultValues: getDefaultSheetSortFilterForm(),
   })
 
   useEffectOnce(() => {
+    const savedValues = loadSavedSheetSortFilterForm()
+
+    if (savedValues) {
+      methods.reset(savedValues)
+      onChange?.(savedValues)
+      return
+    }
+
     onChange?.(methods.getValues())
   })
 
@@ -210,28 +232,29 @@ export const SheetSortFilter: FC<{
   )
 }
 
-const SHEET_SORT_FILTER_TTL = 5 * 60 * 1000 // 5 minutes
-
 const SheetSortFilterFormListener: FC<{
   onChange?: (form: SheetSortFilterForm) => void
 }> = ({ onChange }) => {
   const { watch } = useFormContext<SheetSortFilterForm>()
 
   useEffect(() => {
-    watch((data) => {
+    const subscription = watch((data) => {
       if (data.filters || data.sorts) {
         onChange?.(data as SheetSortFilterForm)
+        const lastActiveAt = Date.now()
 
         window.localStorage.setItem(
-          'dxrating-sheet-sort-filter',
+          SHEET_SORT_FILTER_STORAGE_KEY,
           JSON.stringify({
             version: CURRENT_SCHEMA_VERSION,
             payload: data,
-            expiresAt: Date.now() + SHEET_SORT_FILTER_TTL,
+            expiresAt: lastActiveAt + SHEET_SORT_FILTER_TTL,
           }),
         )
       }
     })
+
+    return () => subscription.unsubscribe()
   }, [onChange, watch])
 
   return null
@@ -300,7 +323,7 @@ const SheetSortFilterFormContent = () => {
           <SheetSortFilterFormReset
             onReset={() => {
               reset(getDefaultSheetSortFilterForm())
-              window.localStorage.removeItem('dxrating-sheet-sort-filter')
+              clearPersistedSheetSortFilter()
             }}
           />
         </div>

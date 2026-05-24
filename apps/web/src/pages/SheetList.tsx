@@ -23,7 +23,7 @@ const chainEvery =
   (arg: T) =>
     fns.every((fn) => fn(arg))
 
-const skeletonWidths = Array.from({ length: 20 }).map(() => Math.random() * 6.0 + 5.5)
+const skeletonWidths = Array.from({ length: 20 }).map((_, index) => 5.5 + (index % 7) * 0.8)
 
 const SORT_DESCRIPTOR_MAPPING = {
   releaseDate: 'releaseDateTimestamp' as const,
