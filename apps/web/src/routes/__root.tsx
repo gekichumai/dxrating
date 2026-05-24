@@ -7,6 +7,7 @@ import { PostHogProvider } from 'posthog-js/react'
 import { Suspense, useCallback, useEffect, useTransition, type MouseEvent } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import MdiTrendingUpIcon from '~icons/mdi/trending-up'
 import MdiUpdateIcon from '~icons/mdi/update'
 import { CustomizedToaster } from '@/components/global/CustomizedToaster'
 import { OverscrollBackgroundFiller } from '@/components/global/OverscrollBackgroundFiller'
@@ -24,7 +25,7 @@ import { useVersionTheme } from '@/utils/useVersionTheme'
 import appCss from '@/index.css?url'
 import {
   APP_TAB_LINKS,
-  RECENT_CHARTS_NAV_LINK,
+  CHART_DISCOVERY_NAV_LINKS,
   getActiveAppTabValue,
   type AppNavHref,
   type AppTabValue,
@@ -163,7 +164,7 @@ function RootLayout() {
   const showTabs = !isSongPage && !isPrivacyPolicy
 
   const tab = getActiveAppTabValue(pathname)
-  const isRecentChartsPage = pathname === RECENT_CHARTS_NAV_LINK.href
+  const activeChartDiscoveryHref = CHART_DISCOVERY_NAV_LINKS.find((link) => link.href === pathname)?.href
 
   const navigateTo = useCallback(
     (href: AppNavHref, tabSelection?: AppTabValue) => {
@@ -228,30 +229,37 @@ function RootLayout() {
         <VersionRegionSwitcher />
         {showTabs && (
           <div className="rounded-xl bg-zinc-900/10 !min-h-2.5rem flex items-center overflow-hidden">
-            <Tooltip title={t(RECENT_CHARTS_NAV_LINK.labelKey)}>
-              <IconButton
-                aria-label={t(RECENT_CHARTS_NAV_LINK.labelKey)}
-                className={`!rounded-lg !min-h-2.5rem !h-2.5rem !w-2.5rem !text-white z-1 ${
-                  isRecentChartsPage ? 'text-shadow-md' : ''
-                }`}
-                component="a"
-                href={RECENT_CHARTS_NAV_LINK.href}
-                onClick={(event) => handleNavLinkClick(event, RECENT_CHARTS_NAV_LINK.href)}
-                size="small"
-                sx={
-                  isRecentChartsPage
-                    ? {
-                        backgroundColor: 'primary.main',
-                        '&:hover': {
-                          backgroundColor: 'primary.main',
-                        },
-                      }
-                    : undefined
-                }
-              >
-                <MdiUpdateIcon className="text-lg" />
-              </IconButton>
-            </Tooltip>
+            {CHART_DISCOVERY_NAV_LINKS.map((link) => {
+              const Icon = link.value === 'recent' ? MdiUpdateIcon : MdiTrendingUpIcon
+              const active = activeChartDiscoveryHref === link.href
+
+              return (
+                <Tooltip key={link.href} title={t(link.labelKey)}>
+                  <IconButton
+                    aria-label={t(link.labelKey)}
+                    className={`!rounded-lg !min-h-2.5rem !h-2.5rem !w-2.5rem !text-white z-1 ${
+                      active ? 'text-shadow-md' : ''
+                    }`}
+                    component="a"
+                    href={link.href}
+                    onClick={(event) => handleNavLinkClick(event, link.href)}
+                    size="small"
+                    sx={
+                      active
+                        ? {
+                            backgroundColor: 'primary.main',
+                            '&:hover': {
+                              backgroundColor: 'primary.main',
+                            },
+                          }
+                        : undefined
+                    }
+                  >
+                    <Icon className="text-lg" />
+                  </IconButton>
+                </Tooltip>
+              )
+            })}
             <Tabs
               value={tab}
               classes={{

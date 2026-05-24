@@ -15,6 +15,7 @@ describe('buildSitemap', () => {
       '<loc>https://dxrating.net/songs/1%2F3%E3%81%AE%E7%B4%94%E6%83%85%E3%81%AA%E6%84%9F%E6%83%85%20%26%20%3Ctest%3E/dx/master</loc>',
     )
     expect(sitemap).toContain('<loc>https://dxrating.net/charts/recent</loc>')
+    expect(sitemap).toContain('<loc>https://dxrating.net/charts/trending</loc>')
     expect(sitemap).not.toContain('<loc>https://dxrating.net/1/3の純情な感情 & <test>/dx/master</loc>')
   })
 
