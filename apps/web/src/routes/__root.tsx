@@ -7,6 +7,7 @@ import { PostHogProvider } from 'posthog-js/react'
 import { Suspense, useCallback, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import MdiTrendingUpIcon from '~icons/mdi/trending-up'
 import MdiUpdateIcon from '~icons/mdi/update'
 import { CustomizedToaster } from '@/components/global/CustomizedToaster'
 import { OverscrollBackgroundFiller } from '@/components/global/OverscrollBackgroundFiller'
@@ -21,7 +22,7 @@ import { buildAlternateLinks } from '@/utils/alternateLinks'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import appCss from '@/index.css?url'
-import { APP_TAB_LINKS, RECENT_CHARTS_NAV_LINK, getActiveAppTabValue, type AppTabValue } from './-top-nav-links'
+import { APP_TAB_LINKS, CHART_DISCOVERY_NAV_LINKS, getActiveAppTabValue, type AppTabValue } from './-top-nav-links'
 import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
@@ -156,7 +157,7 @@ function RootLayout() {
   const tab = getActiveAppTabValue(pathname)
 
   const handleTabChange = useCallback((_: React.SyntheticEvent, nextTab: AppTabValue) => {
-    if (nextTab === RECENT_CHARTS_NAV_LINK.value) return
+    if (CHART_DISCOVERY_NAV_LINKS.some((link) => link.value === nextTab)) return
 
     try {
       localStorage.setItem('tab-selection', JSON.stringify(nextTab))
@@ -201,17 +202,20 @@ function RootLayout() {
             >
               {APP_TAB_LINKS.map((link) => {
                 const label = t(link.labelKey)
-                const isIconOnlyTab = link.value === RECENT_CHARTS_NAV_LINK.value
+                const isIconOnlyTab = CHART_DISCOVERY_NAV_LINKS.some((chartLink) => chartLink.value === link.value)
+                const Icon =
+                  link.value === 'recent' ? MdiUpdateIcon : link.value === 'trending' ? MdiTrendingUpIcon : undefined
+
                 return (
                   <Tab
                     key={link.value}
                     aria-label={isIconOnlyTab ? label : undefined}
                     component={Link}
                     icon={
-                      isIconOnlyTab ? (
+                      isIconOnlyTab && Icon ? (
                         <Tooltip title={label}>
                           <span className="inline-flex">
-                            <MdiUpdateIcon className="text-lg" />
+                            <Icon className="text-lg" />
                           </span>
                         </Tooltip>
                       ) : undefined
