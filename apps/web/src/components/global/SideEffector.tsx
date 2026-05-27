@@ -2,6 +2,7 @@ import {
   NET_IMPORT_COOLDOWN_MS,
   NET_IMPORT_LAST_SUCCESS_KEY,
 } from '@/components/rating/io/import/netImportConstants'
+import { authClient } from '@/lib/auth-client'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, memo, useEffect } from 'react'
@@ -120,12 +121,30 @@ const SideEffectorAnalytics: FC = () => {
   return null
 }
 
+const SideEffectorAuth: FC = () => {
+  const { data } = authClient.useSession()
+  const posthog = usePostHog()
+
+  useEffect(() => {
+    if (data) {
+      posthog?.identify(data.user.id, {
+        email: data.user.email,
+      })
+    } else {
+      posthog?.reset()
+    }
+  }, [data?.user.email, data?.user.id, posthog])
+
+  return null
+}
+
 export const SideEffector: FC = memo(() => {
   return (
     <>
       <SideEffectorThemeMeta />
       <SideEffectorLocaleMeta />
       <SideEffectorAutoImportRating />
+      <SideEffectorAuth />
       <SideEffectorAnalytics />
     </>
   )

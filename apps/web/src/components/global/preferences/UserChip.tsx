@@ -70,19 +70,21 @@ export const UserChip: FC = () => {
 
   return (
     <>
-      <ResponsiveDialog
-        open={open === 'auth'}
-        setOpen={(opened) => setOpen(opened ? 'auth' : null)}
-        maxWidth="xs"
-        disableClose={authPending}
-        drawerHeight="70vh"
-      >
-        {() => (
-          <Suspense fallback={dialogFallback}>
-            <LoginForm onPendingChange={handlePendingChange} onSuccess={() => setOpen(null)} />
-          </Suspense>
-        )}
-      </ResponsiveDialog>
+      {open === 'auth' && (
+        <ResponsiveDialog
+          open={true}
+          setOpen={(opened) => setOpen(opened ? 'auth' : null)}
+          maxWidth="xs"
+          disableClose={authPending}
+          drawerHeight="70vh"
+        >
+          {() => (
+            <Suspense fallback={dialogFallback}>
+              <LoginForm onPendingChange={handlePendingChange} onSuccess={() => setOpen(null)} />
+            </Suspense>
+          )}
+        </ResponsiveDialog>
+      )}
 
       <Suspense fallback={null}>
         {open === 'profile' && <UserProfileModal open={true} onClose={() => setOpen(null)} />}
