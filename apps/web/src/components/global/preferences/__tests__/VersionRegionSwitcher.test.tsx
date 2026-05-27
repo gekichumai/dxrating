@@ -24,4 +24,16 @@ describe('VersionRegionSwitcher', () => {
     expect(screen.getByRole('combobox', { name: 'Select DXData Version and Region' })).toBeTruthy()
     expect(screen.getByRole('img', { name: 'CiRCLE PLUS logo' }).getAttribute('fetchpriority')).toBe('high')
   })
+
+  it('lays out the selected logo and region label horizontally', () => {
+    render(
+      <AppContextProvider>
+        <VersionRegionSwitcher />
+      </AppContextProvider>,
+    )
+
+    const summary = document.querySelector('[data-app-version-region-summary]')
+
+    expect(summary?.className).toContain('flex-row')
+  })
 })

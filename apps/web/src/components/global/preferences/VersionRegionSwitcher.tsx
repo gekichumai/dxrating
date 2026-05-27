@@ -113,11 +113,14 @@ export const VersionRegionSwitcher: FC = () => {
         const { version, region } = fromMergedVersionRegionId(value)
 
         return (
-          <div className="flex flex-col items-center gap-0.5 w-64 max-w-[80vw]">
+          <div
+            className="flex flex-row items-center justify-center gap-3 w-72 max-w-[80vw] min-w-0"
+            data-app-version-region-summary
+          >
             <WebpSupportedImage
               objectFit="contain"
               assetpackKey={`/images/version-logo/${version}.webp`}
-              className="h-16 sm:h-32 w-full touch-callout-none"
+              className="h-14 sm:h-20 w-auto max-w-[9rem] sm:max-w-[12rem] min-w-0 touch-callout-none"
               pictureSources={[
                 {
                   media: MOBILE_VERSION_LOGO_MEDIA,
@@ -136,7 +139,7 @@ export const VersionRegionSwitcher: FC = () => {
             />
 
             <div
-              className="text-center text-sm tracking-wide font-bold rounded-full leading-none py-1.5 px-3 border border-solid border-zinc-9/10 self-center text-zinc-6"
+              className="text-center text-xs sm:text-sm tracking-wide font-bold rounded-full leading-none py-1.5 px-3 border border-solid border-zinc-9/10 shrink-0 text-zinc-6"
               style={{
                 background: `${theme.accentColor}33`,
               }}
