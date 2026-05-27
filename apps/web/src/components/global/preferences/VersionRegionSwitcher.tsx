@@ -20,6 +20,10 @@ const toMergedVersionRegionId = (version: DXVersion, region: Region) => `${versi
 
 const getVersionEnum = (version: DXVersion) => DXVersionToDXDataVersionEnumMap[version]
 
+const MOBILE_VERSION_LOGO_MEDIA = '(max-width: 639px)'
+
+const getMobileVersionLogoUrl = (version: DXVersion) => `/images/version-logo-mobile/${version}.webp`
+
 interface VersionRegion {
   id: string
   versionEnum: VersionEnum
@@ -110,21 +114,17 @@ export const VersionRegionSwitcher: FC = () => {
 
         return (
           <div className="flex flex-col items-center gap-0.5 w-64 max-w-[80vw]">
-            <div className="sm:hidden h-16 w-full px-3 flex items-center justify-center text-center">
-              <span
-                className="text-xl leading-tight font-extrabold text-zinc-8 whitespace-normal"
-                data-app-version-label
-                data-app-version={version}
-                suppressHydrationWarning
-              >
-                {getVersionEnum(version)}
-              </span>
-            </div>
-
             <WebpSupportedImage
               objectFit="contain"
               assetpackKey={`/images/version-logo/${version}.webp`}
-              className="hidden sm:block h-32 w-full touch-callout-none"
+              className="h-16 sm:h-32 w-full touch-callout-none"
+              pictureSources={[
+                {
+                  media: MOBILE_VERSION_LOGO_MEDIA,
+                  type: 'image/webp',
+                  srcSet: getMobileVersionLogoUrl(version),
+                },
+              ]}
               alt={t('settings:version-and-region.logo-alt', {
                 version: getVersionEnum(version),
               })}

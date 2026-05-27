@@ -35,6 +35,8 @@ const queryClient = new QueryClient()
 const SONG_DETAIL_ROUTE_ID = '/songs/$songId/$type/$difficulty'
 
 const CDN_ORIGIN = 'https://shama.dxrating.net'
+const MOBILE_VERSION_LOGO_MEDIA = '(max-width: 639px)'
+const DESKTOP_VERSION_LOGO_MEDIA = '(min-width: 640px)'
 
 const VERSION_LOGO_DIMENSIONS: Record<DXVersion, { width: number; height: number }> = {
   'festival-plus': { width: 538, height: 266 },
@@ -53,18 +55,12 @@ const REGION_LABELS: Record<AppContextStates['region'], string> = {
   _generic: 'Generic',
 }
 
-const VERSION_LABELS: Record<DXVersion, string> = {
-  'festival-plus': 'FESTiVAL PLUS',
-  buddies: 'BUDDiES',
-  'buddies-plus': 'BUDDiES PLUS',
-  prism: 'PRiSM',
-  'prism-plus': 'PRiSM PLUS',
-  circle: 'CiRCLE',
-  'circle-plus': 'CiRCLE PLUS',
-}
-
 function getVersionLogoUrl(version: DXVersion) {
   return `${CDN_ORIGIN}/images/version-logo/${version}.webp`
+}
+
+function getMobileVersionLogoUrl(version: DXVersion) {
+  return `/images/version-logo-mobile/${version}.webp`
 }
 
 function readAppContextFromContext(context: unknown): AppContextStates | null {
@@ -100,9 +96,11 @@ const appContextPreferenceScript = `
     const preload = document.createElement('link');
     preload.rel = 'preload';
     preload.as = 'image';
-    preload.href = ${JSON.stringify(`${CDN_ORIGIN}/images/version-logo/`)} + state.version + '.webp';
+    const logoBase = window.matchMedia(${JSON.stringify(MOBILE_VERSION_LOGO_MEDIA)}).matches
+      ? ${JSON.stringify('/images/version-logo-mobile/')}
+      : ${JSON.stringify(`${CDN_ORIGIN}/images/version-logo/`)};
+    preload.href = logoBase + state.version + '.webp';
     preload.fetchPriority = 'high';
-    preload.media = '(min-width: 640px)';
     document.head.appendChild(preload);
   } catch {}
 })();
@@ -115,12 +113,13 @@ const appContextDomPatchScript = `
     const region = document.documentElement.dataset.appRegion;
     const dimensions = ${JSON.stringify(VERSION_LOGO_DIMENSIONS)};
     const regionLabels = ${JSON.stringify(REGION_LABELS)};
-    const versionLabels = ${JSON.stringify(VERSION_LABELS)};
     if (!version || !dimensions[version]) return;
 
     const logo = document.querySelector('[data-app-version-logo="selected"]');
     if (logo instanceof HTMLImageElement && logo.dataset.appVersion !== version) {
-      const url = ${JSON.stringify(`${CDN_ORIGIN}/images/version-logo/`)} + version + '.webp';
+      const desktopUrl = ${JSON.stringify(`${CDN_ORIGIN}/images/version-logo/`)} + version + '.webp';
+      const mobileUrl = ${JSON.stringify('/images/version-logo-mobile/')} + version + '.webp';
+      const url = window.matchMedia(${JSON.stringify(MOBILE_VERSION_LOGO_MEDIA)}).matches ? mobileUrl : desktopUrl;
       const size = dimensions[version];
       logo.src = url;
       logo.srcset = url;
@@ -130,7 +129,7 @@ const appContextDomPatchScript = `
       logo.dataset.appVersion = version;
       const picture = logo.closest('picture');
       picture?.querySelectorAll('source').forEach((source) => {
-        source.srcset = url;
+        source.srcset = source.media === ${JSON.stringify(MOBILE_VERSION_LOGO_MEDIA)} ? mobileUrl : desktopUrl;
         source.type = 'image/webp';
       });
     }
@@ -143,11 +142,6 @@ const appContextDomPatchScript = `
       regionLabel.textContent = prefix + ': ' + regionLabels[region];
     }
 
-    const versionLabel = document.querySelector('[data-app-version-label]');
-    if (versionLabels[version] && versionLabel) {
-      versionLabel.textContent = versionLabels[version];
-      versionLabel.dataset.appVersion = version;
-    }
   } catch {}
 })();
 `
@@ -171,7 +165,6 @@ export const Route = createRootRoute({
   }),
   head: ({ match, matches }) => {
     const locale = resolveSeoLocale([match, ...matches])
-    const appContext = resolveAppContext([match, ...matches])
     const includeRootTitle = !matches.some((match) => String(match.routeId) === SONG_DETAIL_ROUTE_ID)
 
     return {
@@ -207,21 +200,10 @@ export const Route = createRootRoute({
           href: 'https://shama.dxrating.net/fonts/Torus-SemiBold.woff2',
           crossOrigin: 'anonymous',
         },
-        {
-          rel: 'preload',
-          as: 'image',
-          href: getVersionLogoUrl(appContext.version),
-          fetchPriority: 'high',
-          media: '(min-width: 640px)',
-        },
         ...buildAlternateLinks({
           pathname: matches[matches.length - 1]?.pathname ?? '/',
           search: matches[matches.length - 1]?.search,
         }),
-        {
-          rel: 'prefetch',
-          href: 'https://shama.dxrating.net/images/version-logo/buddies.webp',
-        },
         { rel: 'preconnect', href: 'https://miruku.dxrating.net' },
         {
           rel: 'apple-touch-icon',
@@ -376,12 +358,26 @@ function AppLayout() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const { locale } = Route.useRouteContext()
+  const { appContext, locale } = Route.useRouteContext()
 
   return (
     <html lang={locale}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: appContextPreferenceScript }} />
+        <link
+          rel="preload"
+          as="image"
+          href={getMobileVersionLogoUrl(appContext.version)}
+          fetchPriority="high"
+          media={MOBILE_VERSION_LOGO_MEDIA}
+        />
+        <link
+          rel="preload"
+          as="image"
+          href={getVersionLogoUrl(appContext.version)}
+          fetchPriority="high"
+          media={DESKTOP_VERSION_LOGO_MEDIA}
+        />
         <HeadContent />
       </head>
       <body>
