@@ -76,7 +76,7 @@ export const useSheets = ({ acceptsPartialData = false } = {}) => {
     aliasCount: String(serverAliases?.length ?? 0),
     tagSongsCount: String(combinedTags?.tagSongs.length ?? 0),
   }).toString()}`
-  return useSWR(
+  const swr = useSWR(
     acceptsPartialData ? key : !(loadingCombinedTags || loadingServerAliases) && key,
     async () => {
       const sheets = await getFlattenedSheets(appVersion)
@@ -122,8 +122,20 @@ export const useSheets = ({ acceptsPartialData = false } = {}) => {
         }
       })
     },
-    { suspense: false },
+    {
+      keepPreviousData: acceptsPartialData,
+      suspense: false,
+    },
   )
+
+  if (acceptsPartialData && swr.data !== undefined && swr.isLoading) {
+    return {
+      ...swr,
+      isLoading: false,
+    }
+  }
+
+  return swr
 }
 
 export const useSongs = () => {

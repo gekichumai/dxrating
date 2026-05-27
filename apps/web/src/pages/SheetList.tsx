@@ -3,7 +3,7 @@ import { IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { usePostHog } from 'posthog-js/react'
-import { type FC, useCallback, useEffect, useId, useMemo, useState, useTransition } from 'react'
+import { type FC, useCallback, useEffect, useId, useMemo, useRef, useState, useTransition } from 'react'
 import { useTranslation } from 'react-i18next'
 import IconMdiClose from '~icons/mdi/close'
 import MdiIconInfo from '~icons/mdi/information'
@@ -75,7 +75,9 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
   const activeSheet = useMemo<FlattenedSheet | null>(() => {
     const { songId, type, difficulty } = search
     if (!songId || !type || !difficulty) return null
-    return sheets?.find((sheet) => sheet.songId === songId && sheet.type === type && sheet.difficulty === difficulty) ?? null
+    return (
+      sheets?.find((sheet) => sheet.songId === songId && sheet.type === type && sheet.difficulty === difficulty) ?? null
+    )
   }, [search, sheets])
   const activeSheetId = activeSheet?.id ?? null
 
@@ -208,6 +210,28 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
       elapsed,
     }
   }, [results, sortFilterOptions, inputQuery, version])
+  const summaryTotal = sheets?.length ?? filteredResults.length
+  const visibleElapsedKey = useMemo(
+    () =>
+      JSON.stringify({
+        found: filteredResults.length,
+        inputQuery,
+        isLoading,
+        sortFilterOptions,
+        total: summaryTotal,
+        version,
+      }),
+    [filteredResults.length, inputQuery, isLoading, sortFilterOptions, summaryTotal, version],
+  )
+  const visibleElapsedRef = useRef<{ key: string; value: string } | null>(null)
+  let visibleElapsed = visibleElapsedRef.current
+  if (visibleElapsed?.key !== visibleElapsedKey) {
+    visibleElapsed = {
+      key: visibleElapsedKey,
+      value: (searchElapsed + filteringElapsed).toFixed(1),
+    }
+    visibleElapsedRef.current = visibleElapsed
+  }
 
   return (
     <SheetDetailsContextProvider queryActive={!!inputQuery}>
@@ -270,7 +294,7 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
           <div
             className="absolute -inset-4 bg-blue-900/20 -skew-x-8 translate-x-4 transition-width"
             style={{
-              width: `${(filteredResults.length / (sheets?.length ?? filteredResults.length)) * 100}%`,
+              width: `${(filteredResults.length / summaryTotal) * 100}%`,
             }}
           />
           <div className="relative z-1 flex items-center gap-2">
@@ -279,7 +303,7 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
               {t('sheet:search-summary', {
                 found: isLoading ? '...' : filteredResults.length,
                 total: isLoading ? '...' : sheets?.length,
-                elapsed: (searchElapsed + filteringElapsed).toFixed(1),
+                elapsed: visibleElapsed.value,
               })}
             </div>
           </div>

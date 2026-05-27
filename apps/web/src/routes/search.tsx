@@ -1,8 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { type ComponentType, useEffect, useState } from 'react'
 import { buildSearchSeo, resolveSeoLocale } from '@/utils/seo'
 
-const SheetList = lazy(() => import('@/pages/SheetList').then((module) => ({ default: module.SheetList })))
+const loadSheetList = async (): Promise<ComponentType> => {
+  const module = await import('@/pages/SheetList')
+  return module.SheetList
+}
 
 type SearchParams = {
   q?: string
@@ -12,7 +15,6 @@ type SearchParams = {
 }
 
 export const Route = createFileRoute('/search')({
-  ssr: false,
   head: ({ match, matches }) => {
     const seo = buildSearchSeo(resolveSeoLocale([match, ...matches]))
 
@@ -31,28 +33,42 @@ export const Route = createFileRoute('/search')({
 })
 
 function SearchRouteComponent() {
-  const [showList, setShowList] = useState(false)
+  const [SheetList, setSheetList] = useState<ComponentType | null>(null)
+  const [loadError, setLoadError] = useState<unknown>(null)
 
   useEffect(() => {
+    let cancelled = false
     const schedule = window.requestIdleCallback ?? ((callback: IdleRequestCallback) => window.setTimeout(callback, 700))
     const cancel = window.cancelIdleCallback ?? window.clearTimeout
-    const id = schedule(() => setShowList(true), { timeout: 1800 })
+    const id = schedule(
+      () => {
+        void loadSheetList().then(
+          (Component) => {
+            if (!cancelled) setSheetList(() => Component)
+          },
+          (error: unknown) => {
+            if (!cancelled) setLoadError(() => error)
+          },
+        )
+      },
+      { timeout: 1800 },
+    )
 
-    return () => cancel(id)
+    return () => {
+      cancelled = true
+      cancel(id)
+    }
   }, [])
 
-  if (!showList) return <SearchRouteFallback />
+  if (loadError) throw loadError
+  if (!SheetList) return <SearchRouteFallback />
 
-  return (
-    <Suspense fallback={<SearchRouteFallback />}>
-      <SheetList />
-    </Suspense>
-  )
+  return <SheetList />
 }
 
 function SearchRouteFallback() {
   return (
-    <div className="flex-container pb-global">
+    <div className="flex-container pb-global" data-search-route-fallback>
       <div className="h-14 w-full rounded bg-white/35 animate-pulse" />
       <div className="h-10 w-40 rounded-full bg-blue-200/60 animate-pulse" />
       <div className="flex flex-col w-full">

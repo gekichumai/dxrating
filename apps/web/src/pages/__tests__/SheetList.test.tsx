@@ -42,6 +42,10 @@ vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => routeState.navigate,
 }))
 
+const sheetMocks = vi.hoisted(() => ({
+  searchElapsed: 0,
+}))
+
 vi.mock('@sentry/tanstackstart-react', () => ({
   metrics: {
     distribution: vi.fn(),
@@ -58,7 +62,7 @@ vi.mock('@/models/context/useAppContext', () => ({
 
 vi.mock('@/songs', () => ({
   canonicalIdFromParts: (...parts: string[]) => parts.join(':'),
-  useFilteredSheets: () => ({ results: [], elapsed: 0 }),
+  useFilteredSheets: () => ({ results: [], elapsed: sheetMocks.searchElapsed }),
   useSheets: () => ({ data: [], isLoading: false }),
 }))
 
@@ -90,6 +94,7 @@ describe('SheetList', () => {
     routeState.syncSearchOnNavigate = true
     routeState.onNavigate = undefined
     routeState.navigate.mockClear()
+    sheetMocks.searchElapsed = 0
   })
 
   it('keeps an in-progress search edit when the route query update is pending', () => {
@@ -120,5 +125,18 @@ describe('SheetList', () => {
     expect(input.value).toBe('abcd1ef')
     expect(input.selectionStart).toBe(5)
     expect(input.selectionEnd).toBe(5)
+  })
+
+  it('does not change the visible search duration when rendered inputs did not change', () => {
+    sheetMocks.searchElapsed = 9
+    const view = render(<SheetList />)
+
+    expect(screen.getByText(/9\.0ms/)).toBeTruthy()
+
+    sheetMocks.searchElapsed = 10
+    view.rerender(<SheetList />)
+
+    expect(screen.getByText(/9\.0ms/)).toBeTruthy()
+    expect(screen.queryByText(/10\.0ms/)).toBeNull()
   })
 })
