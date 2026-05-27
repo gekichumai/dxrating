@@ -1,4 +1,5 @@
-import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
+import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import { dxdata } from '@gekichumai/dxdata/data'
 import { Hono } from 'hono'
 import { describe, expect, it, vi } from 'vitest'
 import { app } from '../app.js'

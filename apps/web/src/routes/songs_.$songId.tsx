@@ -1,4 +1,4 @@
-import { type Song, TypeEnum, dxdata } from '@gekichumai/dxdata'
+import { type Song, TypeEnum } from '@gekichumai/dxdata'
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 import { TYPE_ORDER, getHighestDifficulty } from '@/models/constants'
 
@@ -58,7 +58,8 @@ export const Route = createFileRoute('/songs_/$songId')({
     type: typeof search.type === 'string' ? search.type : undefined,
     difficulty: typeof search.difficulty === 'string' ? search.difficulty : undefined,
   }),
-  beforeLoad: ({ params, search }) => {
+  beforeLoad: async ({ params, search }) => {
+    const { dxdata } = await import('@gekichumai/dxdata/data')
     const song = dxdata.songs.find((s) => s.songId === params.songId)
     if (!song) {
       throw notFound()

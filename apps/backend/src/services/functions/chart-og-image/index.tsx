@@ -1,5 +1,5 @@
-import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
-import type { NoteCounts } from '@gekichumai/dxdata'
+import { DifficultyEnum, TypeEnum, type NoteCounts } from '@gekichumai/dxdata'
+import { dxdata } from '@gekichumai/dxdata/data'
 import { ImageResponse } from '@takumi-rs/image-response'
 import type { Handler } from 'hono'
 import { createHash } from 'node:crypto'

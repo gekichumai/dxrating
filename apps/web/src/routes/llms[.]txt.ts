@@ -1,4 +1,4 @@
-import { dxdataUpdateTime } from '@gekichumai/dxdata'
+import { dxdataUpdateTime } from '@gekichumai/dxdata/metadata'
 import { createFileRoute } from '@tanstack/react-router'
 
 export function buildLlmsTxt() {

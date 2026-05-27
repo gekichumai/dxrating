@@ -1,9 +1,3 @@
-import dxdataJson from './dxdata.json' with { type: 'json' }
-
-export const dxdata = dxdataJson as DXData
-
-export const dxdataUpdateTime = dxdata.updateTime
-
 export interface DXData {
   songs: Song[]
   categories: CategoryElement[]

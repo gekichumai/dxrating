@@ -1,10 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { TrendingPage } from '@/pages/TrendingPage'
 import { buildTrendingChartsSeo, resolveSeoLocale } from '@/utils/seo'
-import { apiClient } from '@/lib/orpc'
 
 export const loadTrendingRouteData = async () => {
   try {
+    const { apiClient } = await import('@/lib/orpc')
     return { trendingData: await apiClient.analytics.trending() }
   } catch {
     return { trendingData: undefined }

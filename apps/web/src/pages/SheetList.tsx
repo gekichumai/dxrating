@@ -1,4 +1,4 @@
-import { type DifficultyEnum, TypeEnum, VERSION_ID_MAP, dxdata } from '@gekichumai/dxdata'
+import { VERSION_ID_MAP } from '@gekichumai/dxdata'
 import { IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
@@ -13,7 +13,7 @@ import { SheetListContainer } from '../components/sheet/SheetListContainer'
 import { SheetSortFilter, SheetSortFilterTrigger, type SheetSortFilterForm } from '../components/sheet/SheetSortFilter'
 import { SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
-import { type FlattenedSheet, canonicalIdFromParts, useFilteredSheets, useSheets } from '../songs'
+import { type FlattenedSheet, useFilteredSheets, useSheets } from '../songs'
 import { sheetMatchesDifficultyFilter } from './sheetDifficultyFilter'
 
 const searchRouteApi = getRouteApi('/search')
@@ -75,24 +75,8 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
   const activeSheet = useMemo<FlattenedSheet | null>(() => {
     const { songId, type, difficulty } = search
     if (!songId || !type || !difficulty) return null
-    const song = dxdata.songs.find((s) => s.songId === songId)
-    if (!song) return null
-    const sheet = song.sheets.find((s) => s.type === type && s.difficulty === difficulty)
-    if (!sheet) return null
-    const isTypeUtage = sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P
-    return {
-      ...song,
-      ...sheet,
-      id: canonicalIdFromParts(songId, type as TypeEnum, difficulty as DifficultyEnum),
-      searchAcronyms: song.searchAcronyms,
-      isTypeUtage,
-      isRatingEligible: !isTypeUtage,
-      releaseDateTimestamp: sheet.releaseDate ? new Date(`${sheet.releaseDate}T06:00:00+09:00`).valueOf() : 0,
-      internalLevelValue: sheet.multiverInternalLevelValue
-        ? (sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue)
-        : sheet.internalLevelValue,
-    } as FlattenedSheet
-  }, [search, version])
+    return sheets?.find((sheet) => sheet.songId === songId && sheet.type === type && sheet.difficulty === difficulty) ?? null
+  }, [search, sheets])
   const activeSheetId = activeSheet?.id ?? null
 
   const handleSheetDialogChange = useCallback(

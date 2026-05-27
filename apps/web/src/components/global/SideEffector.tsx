@@ -1,5 +1,7 @@
-import { useRatingEntries } from '@/components/rating/useRatingEntries'
-import { authClient } from '@/lib/auth-client'
+import {
+  NET_IMPORT_COOLDOWN_MS,
+  NET_IMPORT_LAST_SUCCESS_KEY,
+} from '@/components/rating/io/import/netImportConstants'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { usePostHog } from 'posthog-js/react'
 import { type FC, memo, useEffect } from 'react'
@@ -8,11 +10,6 @@ import { useRatingCalculatorContext } from '../../models/context/RatingCalculato
 import { useVersionTheme } from '../../utils/useVersionTheme'
 import toast from 'react-hot-toast'
 import IconMdiCached from '~icons/mdi/cached'
-import {
-  NET_IMPORT_COOLDOWN_MS,
-  NET_IMPORT_LAST_SUCCESS_KEY,
-  importFromNETRecords,
-} from '../rating/io/import/importFromNETRecords'
 
 const SideEffectorThemeMeta: FC = () => {
   const versionTheme = useVersionTheme()
@@ -89,25 +86,18 @@ const SideEffectorAutoImportRating: FC = () => {
       }
     }
 
-    importFromNETRecords(appVersion, modifyEntries, mode)
-  }, [appVersion])
+    let cancelled = false
 
-  return null
-}
+    import('../rating/io/import/importFromNETRecords').then(({ importFromNETRecords }) => {
+      if (!cancelled) {
+        importFromNETRecords(appVersion, modifyEntries, mode)
+      }
+    })
 
-const SideEffectorAuth: FC = () => {
-  const { data } = authClient.useSession()
-  const posthog = usePostHog()
-
-  useEffect(() => {
-    if (data) {
-      posthog?.identify(data.user.id, {
-        email: data.user.email,
-      })
-    } else {
-      posthog?.reset()
+    return () => {
+      cancelled = true
     }
-  }, [data?.user.id])
+  }, [appVersion, modifyEntries, t])
 
   return null
 }
@@ -116,17 +106,16 @@ const SideEffectorAnalytics: FC = () => {
   const { version, region } = useAppContext()
   const { i18n } = useTranslation()
   const posthog = usePostHog()
-  const { statistics, allEntries } = useRatingEntries()
+  const { entries } = useRatingCalculatorContext()
 
   useEffect(() => {
     posthog?.setPersonProperties({
       version: version,
       region: region,
       language: i18n.language,
-      rating: statistics.b50Sum,
-      entries: allEntries.length,
+      entries: entries.length,
     })
-  }, [version, region, i18n.language, statistics, allEntries])
+  }, [version, region, i18n.language, entries.length, posthog])
 
   return null
 }
@@ -137,7 +126,6 @@ export const SideEffector: FC = memo(() => {
       <SideEffectorThemeMeta />
       <SideEffectorLocaleMeta />
       <SideEffectorAutoImportRating />
-      <SideEffectorAuth />
       <SideEffectorAnalytics />
     </>
   )

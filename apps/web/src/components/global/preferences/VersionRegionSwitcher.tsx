@@ -105,31 +105,51 @@ export const VersionRegionSwitcher: FC = () => {
           setVersionAndRegion(version, region)
         })
       }}
-      renderValue={(value) => (
-        <div className="flex flex-col gap-0.5">
-          <WebpSupportedImage
-            objectFit="contain"
-            assetpackKey={`/images/version-logo/${fromMergedVersionRegionId(value).version}.webp`}
-            className="h-32 w-auto touch-callout-none"
-            alt={t('settings:version-and-region.logo-alt', {
-              version: getVersionEnum(fromMergedVersionRegionId(value).version),
-            })}
-            fetchPriority="high"
-            draggable={false}
-          />
+      renderValue={(value) => {
+        const { version, region } = fromMergedVersionRegionId(value)
 
-          <div
-            className="text-center text-sm tracking-wide font-bold rounded-full leading-none py-1.5 px-3 border border-solid border-zinc-9/10 self-center text-zinc-6"
-            style={{
-              background: `${theme.accentColor}33`,
-            }}
-          >
-            {t('settings:region.title', {
-              region: t(`settings:region.${fromMergedVersionRegionId(value).region}`),
-            })}
+        return (
+          <div className="flex flex-col items-center gap-0.5 w-64 max-w-[80vw]">
+            <div className="sm:hidden h-16 w-full px-3 flex items-center justify-center text-center">
+              <span
+                className="text-xl leading-tight font-extrabold text-zinc-8 whitespace-normal"
+                data-app-version-label
+                data-app-version={version}
+                suppressHydrationWarning
+              >
+                {getVersionEnum(version)}
+              </span>
+            </div>
+
+            <WebpSupportedImage
+              objectFit="contain"
+              assetpackKey={`/images/version-logo/${version}.webp`}
+              className="hidden sm:block h-32 w-full touch-callout-none"
+              alt={t('settings:version-and-region.logo-alt', {
+                version: getVersionEnum(version),
+              })}
+              data-app-version-logo="selected"
+              data-app-version={version}
+              suppressHydrationWarning
+              fetchPriority="high"
+              draggable={false}
+            />
+
+            <div
+              className="text-center text-sm tracking-wide font-bold rounded-full leading-none py-1.5 px-3 border border-solid border-zinc-9/10 self-center text-zinc-6"
+              style={{
+                background: `${theme.accentColor}33`,
+              }}
+              data-app-region-label
+              suppressHydrationWarning
+            >
+              {t('settings:region.title', {
+                region: t(`settings:region.${region}`),
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }}
     >
       <ListSubheader className="leading-normal py-4">{t('settings:version-and-region.select')}</ListSubheader>
       {VERSION_SPECIFIC_REGIONS.map(({ id, dxVersion, versionEnum, region }, i) => (

@@ -60,14 +60,15 @@ describe('buildRecentChartLinks', () => {
     expect(charts.every((chart) => chart.href.startsWith('/songs/'))).toBe(true)
   })
 
-  it('returns a copy of the cached default recent chart list', () => {
-    const first = buildRecentChartLinks()
+  it('returns a fresh recent chart list for the provided songs', () => {
+    const songs = Array.from({ length: 3 }, (_, index) => createSong(index))
+    const first = buildRecentChartLinks(songs)
     const firstChart = first[0]
     first.length = 0
 
-    const second = buildRecentChartLinks()
+    const second = buildRecentChartLinks(songs)
 
-    expect(second).toHaveLength(RECENT_CHART_LIMIT)
+    expect(second).toHaveLength(3)
     expect(second[0]).toEqual(firstChart)
   })
 

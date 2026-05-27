@@ -1,4 +1,5 @@
-import { DifficultyEnum, TypeEnum, dxdata, type Sheet, type Song } from '@gekichumai/dxdata'
+import { DifficultyEnum, TypeEnum, type Sheet, type Song } from '@gekichumai/dxdata'
+import { dxdata } from '@gekichumai/dxdata/data'
 import { formatSheetIdentity, type SheetIdentity } from '@gekichumai/maimai-domain'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import type { FlattenedSheet } from '@/songs'

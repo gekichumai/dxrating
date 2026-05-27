@@ -5,9 +5,13 @@ import { buildRecentChartsSeo, resolveSeoLocale } from '@/utils/seo'
 
 export const Route = createFileRoute('/charts/recent')({
   ssr: true,
-  loader: () => ({
-    charts: buildRecentChartLinks(),
-  }),
+  loader: async () => {
+    const { dxdata } = await import('@gekichumai/dxdata/data')
+
+    return {
+      charts: buildRecentChartLinks(dxdata.songs),
+    }
+  },
   head: ({ match, matches }) => {
     const seo = buildRecentChartsSeo(resolveSeoLocale([match, ...matches]))
 

@@ -364,16 +364,15 @@ async function main() {
 
   console.info('Updating data files...')
 
-  const data = JSON.stringify(
-    {
-      ...dxdata,
-      songs,
-    },
-    null,
-    4,
-  )
+  const output = {
+    ...dxdata,
+    songs,
+  }
+  const data = JSON.stringify(output, null, 4)
+  const metadata = `export const dxdataUpdateTime = ${JSON.stringify(output.updateTime)}\n`
 
   await fs.writeFile('../../packages/dxdata/dxdata.json', data)
+  await fs.writeFile('../../packages/dxdata/metadata.ts', metadata)
   await fs.writeFile('../../apps/web/ios/App/App/Assets/dxdata.json', data)
 }
 

@@ -1,4 +1,4 @@
-import { DifficultyEnum, TypeEnum, dxdata, type Sheet, type Song } from '@gekichumai/dxdata'
+import { DifficultyEnum, TypeEnum, type Sheet, type Song } from '@gekichumai/dxdata'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 
 export const RECENT_CHART_LIMIT = 500
@@ -57,11 +57,4 @@ const createRecentChartLinks = (songs: readonly Song[]) =>
     .sort(compareRecentChartLinks)
     .slice(0, RECENT_CHART_LIMIT)
 
-let defaultRecentChartLinks: RecentChartLink[] | null = null
-
-export const buildRecentChartLinks = (songs?: readonly Song[]): RecentChartLink[] => {
-  if (songs) return createRecentChartLinks(songs)
-
-  defaultRecentChartLinks ??= createRecentChartLinks(dxdata.songs)
-  return defaultRecentChartLinks.slice()
-}
+export const buildRecentChartLinks = (songs: readonly Song[]): RecentChartLink[] => createRecentChartLinks(songs)

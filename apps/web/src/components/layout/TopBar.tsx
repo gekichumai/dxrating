@@ -1,14 +1,47 @@
 import { IconButton } from '@mui/material'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MdiGithub from '~icons/mdi/github'
+import MdiLogin from '~icons/mdi/login'
 import DiscordLogo from '~icons/simple-icons/discord'
 import { BUNDLE } from '../../utils/bundle'
 import { RelativeTime } from '../../utils/useTime'
 import { useVersionTheme } from '../../utils/useVersionTheme'
 import { Logo } from '../global/Logo'
 import { LocaleSelector } from '../global/preferences/LocaleSelector'
-import { UserChip } from '../global/preferences/UserChip'
 import { About } from '../global/site-meta/About'
+
+const UserChip = lazy(() => import('../global/preferences/UserChip').then((module) => ({ default: module.UserChip })))
+
+const renderUserChipFallback = (onClick?: () => void) => (
+  <IconButton aria-label="Sign in" title="Sign in" onClick={onClick}>
+    <MdiLogin />
+  </IconButton>
+)
+
+const userChipFallback = renderUserChipFallback()
+
+function DeferredUserChip() {
+  const [loadUserChip, setLoadUserChip] = useState(false)
+
+  useEffect(() => {
+    const schedule = window.requestIdleCallback ?? ((callback: IdleRequestCallback) => window.setTimeout(callback, 1200))
+    const cancel = window.cancelIdleCallback ?? window.clearTimeout
+    const id = schedule(() => setLoadUserChip(true), { timeout: 3000 })
+
+    return () => cancel(id)
+  }, [])
+
+  if (!loadUserChip) {
+    return renderUserChipFallback(() => setLoadUserChip(true))
+  }
+
+  return (
+    <Suspense fallback={userChipFallback}>
+      <UserChip />
+    </Suspense>
+  )
+}
 
 export const TopBar = () => {
   const versionTheme = useVersionTheme()
@@ -57,7 +90,7 @@ export const TopBar = () => {
           <div className="flex">
             <LocaleSelector />
             <About />
-            <UserChip />
+            <DeferredUserChip />
           </div>
         </div>
       </div>

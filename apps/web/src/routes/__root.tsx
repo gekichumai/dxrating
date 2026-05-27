@@ -14,7 +14,15 @@ import { VersionRegionSwitcher } from '@/components/global/preferences/VersionRe
 import { AppTabs } from '@/components/layout/AppTabs'
 import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
-import { AppContextProvider } from '@/models/context/AppContext'
+import {
+  APP_CONTEXT_COOKIE_NAME,
+  APP_CONTEXT_STORAGE_KEY,
+  type AppContextStates,
+  type DXVersion,
+  AppContextProvider,
+  getDefaultAppContext,
+  isAppContextStates,
+} from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
 import { buildAlternateLinks } from '@/utils/alternateLinks'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
@@ -25,6 +33,124 @@ import 'virtual:uno.css'
 const queryClient = new QueryClient()
 
 const SONG_DETAIL_ROUTE_ID = '/songs/$songId/$type/$difficulty'
+
+const CDN_ORIGIN = 'https://shama.dxrating.net'
+
+const VERSION_LOGO_DIMENSIONS: Record<DXVersion, { width: number; height: number }> = {
+  'festival-plus': { width: 538, height: 266 },
+  buddies: { width: 774, height: 456 },
+  'buddies-plus': { width: 945, height: 506 },
+  prism: { width: 580, height: 276 },
+  'prism-plus': { width: 645, height: 257 },
+  circle: { width: 757, height: 361 },
+  'circle-plus': { width: 655, height: 392 },
+}
+
+const REGION_LABELS: Record<AppContextStates['region'], string> = {
+  jp: 'Japan',
+  intl: 'International',
+  cn: 'China',
+  _generic: 'Generic',
+}
+
+const VERSION_LABELS: Record<DXVersion, string> = {
+  'festival-plus': 'FESTiVAL PLUS',
+  buddies: 'BUDDiES',
+  'buddies-plus': 'BUDDiES PLUS',
+  prism: 'PRiSM',
+  'prism-plus': 'PRiSM PLUS',
+  circle: 'CiRCLE',
+  'circle-plus': 'CiRCLE PLUS',
+}
+
+function getVersionLogoUrl(version: DXVersion) {
+  return `${CDN_ORIGIN}/images/version-logo/${version}.webp`
+}
+
+function readAppContextFromContext(context: unknown): AppContextStates | null {
+  if (typeof context !== 'object' || context === null) return null
+
+  const record = context as Record<string, unknown>
+  return isAppContextStates(record.appContext) ? record.appContext : readAppContextFromContext(record.serverContext)
+}
+
+function resolveAppContext(matches?: readonly { context?: unknown }[]): AppContextStates {
+  for (const match of [...(matches ?? [])].reverse()) {
+    const appContext = readAppContextFromContext(match.context)
+    if (appContext) return appContext
+  }
+
+  return getDefaultAppContext()
+}
+
+const appContextPreferenceScript = `
+(() => {
+  try {
+    const raw = window.localStorage.getItem(${JSON.stringify(APP_CONTEXT_STORAGE_KEY)});
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    const validVersions = ${JSON.stringify(Object.keys(VERSION_LOGO_DIMENSIONS))};
+    const validRegions = ${JSON.stringify(Object.keys(REGION_LABELS))};
+    if (!validVersions.includes(state.version) || !validRegions.includes(state.region)) return;
+
+    document.documentElement.dataset.appVersion = state.version;
+    document.documentElement.dataset.appRegion = state.region;
+    document.cookie = ${JSON.stringify(`${APP_CONTEXT_COOKIE_NAME}=`)} + encodeURIComponent(JSON.stringify(state)) + '; Max-Age=31536000; Path=/; SameSite=Lax';
+
+    const preload = document.createElement('link');
+    preload.rel = 'preload';
+    preload.as = 'image';
+    preload.href = ${JSON.stringify(`${CDN_ORIGIN}/images/version-logo/`)} + state.version + '.webp';
+    preload.fetchPriority = 'high';
+    preload.media = '(min-width: 640px)';
+    document.head.appendChild(preload);
+  } catch {}
+})();
+`
+
+const appContextDomPatchScript = `
+(() => {
+  try {
+    const version = document.documentElement.dataset.appVersion;
+    const region = document.documentElement.dataset.appRegion;
+    const dimensions = ${JSON.stringify(VERSION_LOGO_DIMENSIONS)};
+    const regionLabels = ${JSON.stringify(REGION_LABELS)};
+    const versionLabels = ${JSON.stringify(VERSION_LABELS)};
+    if (!version || !dimensions[version]) return;
+
+    const logo = document.querySelector('[data-app-version-logo="selected"]');
+    if (logo instanceof HTMLImageElement && logo.dataset.appVersion !== version) {
+      const url = ${JSON.stringify(`${CDN_ORIGIN}/images/version-logo/`)} + version + '.webp';
+      const size = dimensions[version];
+      logo.src = url;
+      logo.srcset = url;
+      logo.width = size.width;
+      logo.height = size.height;
+      logo.style.aspectRatio = size.width + ' / ' + size.height;
+      logo.dataset.appVersion = version;
+      const picture = logo.closest('picture');
+      picture?.querySelectorAll('source').forEach((source) => {
+        source.srcset = url;
+        source.type = 'image/webp';
+      });
+    }
+
+    const regionLabel = document.querySelector('[data-app-region-label]');
+    if (region && regionLabels[region] && regionLabel) {
+      const current = regionLabel.textContent || '';
+      const separatorIndex = current.indexOf(':');
+      const prefix = separatorIndex >= 0 ? current.slice(0, separatorIndex) : 'Region';
+      regionLabel.textContent = prefix + ': ' + regionLabels[region];
+    }
+
+    const versionLabel = document.querySelector('[data-app-version-label]');
+    if (versionLabels[version] && versionLabel) {
+      versionLabel.textContent = versionLabels[version];
+      versionLabel.dataset.appVersion = version;
+    }
+  } catch {}
+})();
+`
 
 const fallbackElement = (
   <div className="flex items-center justify-center h-50% w-full p-6">
@@ -38,9 +164,14 @@ export const Route = createRootRoute({
       { context: (ctx as { serverContext?: unknown }).serverContext },
       { context: ctx.context },
     ]),
+    appContext: resolveAppContext([
+      { context: (ctx as { serverContext?: unknown }).serverContext },
+      { context: ctx.context },
+    ]),
   }),
   head: ({ match, matches }) => {
     const locale = resolveSeoLocale([match, ...matches])
+    const appContext = resolveAppContext([match, ...matches])
     const includeRootTitle = !matches.some((match) => String(match.routeId) === SONG_DETAIL_ROUTE_ID)
 
     return {
@@ -79,8 +210,9 @@ export const Route = createRootRoute({
         {
           rel: 'preload',
           as: 'image',
-          href: 'https://shama.dxrating.net/images/version-logo/circle-plus.webp',
+          href: getVersionLogoUrl(appContext.version),
           fetchPriority: 'high',
+          media: '(min-width: 640px)',
         },
         ...buildAlternateLinks({
           pathname: matches[matches.length - 1]?.pathname ?? '/',
@@ -198,10 +330,12 @@ function OAuthErrorHandler() {
 }
 
 function RootComponent() {
+  const { appContext } = Route.useRouteContext()
+
   return (
     <RootDocument>
       <QueryClientProvider client={queryClient}>
-        <AppContextProvider>
+        <AppContextProvider initialState={appContext}>
           <VersionCustomizedThemeProvider>
             <RatingCalculatorContextProvider>
               <PostHogProvider client={posthog}>
@@ -247,10 +381,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang={locale}>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: appContextPreferenceScript }} />
         <HeadContent />
       </head>
       <body>
         {children}
+        <script dangerouslySetInnerHTML={{ __html: appContextDomPatchScript }} />
         <Scripts />
       </body>
     </html>

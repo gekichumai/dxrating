@@ -1,6 +1,6 @@
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { AppContextProvider, type AppContextStates } from '../AppContext'
+import { APP_CONTEXT_COOKIE_NAME, AppContextProvider, type AppContextStates } from '../AppContext'
 import { useAppContext } from '../useAppContext'
 
 describe('AppContext', () => {
@@ -32,7 +32,7 @@ describe('AppContext', () => {
     expect(result.current.region).toBe('jp')
   })
 
-  it('should load values from localStorage if they exist', async () => {
+  it('should load values from localStorage during initial render if they exist', () => {
     const storedState: AppContextStates = {
       version: 'buddies',
       region: 'jp',
@@ -43,10 +43,8 @@ describe('AppContext', () => {
       wrapper: AppContextProvider,
     })
 
-    await waitFor(() => {
-      expect(result.current.version).toBe('buddies')
-      expect(result.current.region).toBe('jp')
-    })
+    expect(result.current.version).toBe('buddies')
+    expect(result.current.region).toBe('jp')
   })
 
   it('should update localStorage when values change', () => {
@@ -67,6 +65,23 @@ describe('AppContext', () => {
         region: 'jp',
       }),
     )
+  })
+
+  it('should update the SSR app context cookie when values change', () => {
+    mockLocalStorage.getItem.mockReturnValue(null)
+    document.cookie = `${APP_CONTEXT_COOKIE_NAME}=; Max-Age=0; Path=/`
+
+    const { result } = renderHook(() => useAppContext(), {
+      wrapper: AppContextProvider,
+    })
+
+    act(() => {
+      result.current.setVersionAndRegion('buddies', 'jp')
+    })
+
+    expect(document.cookie).toContain(`${APP_CONTEXT_COOKIE_NAME}=`)
+    expect(decodeURIComponent(document.cookie)).toContain('"version":"buddies"')
+    expect(decodeURIComponent(document.cookie)).toContain('"region":"jp"')
   })
 
   it('should keep in-memory state when localStorage writes fail', () => {
