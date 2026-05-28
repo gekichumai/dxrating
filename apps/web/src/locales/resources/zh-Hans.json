@@ -19,7 +19,10 @@
     "share.copy-content": "{{ link }}",
     "share.copy-succeeded": "已拷贝至剪贴板",
     "external-links.discord": "加入 DXRating Discord 服务器",
-    "external-links.github": "在 GitHub 打开 DXRating"
+    "external-links.github": "在 GitHub 打开 DXRating",
+    "not-found.title": "页面未找到",
+    "not-found.description": "页面可能已移动，或链接已经过期。",
+    "not-found.back-to-home": "返回首页"
   },
   "settings": {
     "region.title": "服务器：{{region}}",

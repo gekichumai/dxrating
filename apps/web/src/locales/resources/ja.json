@@ -19,7 +19,10 @@
     "share.copy-content": "{{ link }}",
     "share.copy-succeeded": "クリップボードにコピーされました",
     "external-links.discord": "DXRating の Discord サーバーに参加",
-    "external-links.github": "DXRating を GitHub で開く"
+    "external-links.github": "DXRating を GitHub で開く",
+    "not-found.title": "ページが見つかりません",
+    "not-found.description": "ページが移動したか、リンクが古くなっている可能性があります。",
+    "not-found.back-to-home": "ホームに戻る"
   },
   "settings": {
     "region.title": "地域：{{region}}",
