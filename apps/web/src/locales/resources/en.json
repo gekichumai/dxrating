@@ -19,7 +19,10 @@
     "share.copy-succeeded": "Copied to clipboard",
     "share.copy-content": "{{ link }}",
     "external-links.discord": "Join the DXRating Discord server",
-    "external-links.github": "Open DXRating on GitHub"
+    "external-links.github": "Open DXRating on GitHub",
+    "not-found.title": "Page Not Found",
+    "not-found.description": "This page may have moved, or the link may be outdated.",
+    "not-found.back-to-home": "Back to Home"
   },
   "settings": {
     "version-and-region.select": "Select DXData Version and Region",

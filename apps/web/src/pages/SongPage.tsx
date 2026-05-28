@@ -1,9 +1,9 @@
 import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
-import { Button, IconButton } from '@mui/material'
+import { IconButton } from '@mui/material'
 import { type FC, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import MdiArrowLeft from '~icons/mdi/arrow-left'
+import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { TYPE_ORDER, getHighestDifficulty } from '../models/constants'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { useServerAliases } from '../models/useServerAliases'
@@ -16,7 +16,6 @@ import { getVisibleSongPageSheets } from './songPageSheets'
 const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 
 export const SongPage: FC = () => {
-  const { t } = useTranslation(['song'])
   const { songId, type, difficulty } = routeApi.useParams()
   const navigate = useNavigate()
   const appVersion = useAppContextDXDataVersion()
@@ -95,15 +94,7 @@ export const SongPage: FC = () => {
   }
 
   if (!song) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-4 p-8">
-        <h1 className="text-2xl font-bold">{t('song:not-found.title')}</h1>
-        <p className="text-zinc-600">{t('song:not-found.description')}</p>
-        <Button variant="contained" href="/search">
-          {t('song:not-found.back-to-search')}
-        </Button>
-      </div>
-    )
+    return <NotFoundContent />
   }
 
   return (

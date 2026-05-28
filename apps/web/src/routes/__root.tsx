@@ -7,6 +7,7 @@ import { Suspense, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { CustomizedToaster } from '@/components/global/CustomizedToaster'
+import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { OverscrollBackgroundFiller } from '@/components/global/OverscrollBackgroundFiller'
 import { SideEffector } from '@/components/global/SideEffector'
 import { WebpSupportedImage } from '@/components/global/WebpSupportedImage'
@@ -33,6 +34,7 @@ const fallbackElement = (
 )
 
 export const Route = createRootRoute({
+  notFoundComponent: NotFoundContent,
   beforeLoad: (ctx) => ({
     locale: resolveSeoLocale([
       { context: (ctx as { serverContext?: unknown }).serverContext },
