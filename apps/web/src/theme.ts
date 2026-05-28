@@ -1,5 +1,5 @@
 import type { Asset } from '@/assetpack.gen'
-import { VersionEnum } from '@gekichumai/dxdata'
+import type { VersionEnum } from '@gekichumai/dxdata'
 import assetpack from '@/utils/assetpack.json'
 
 export interface Theme {
@@ -13,8 +13,12 @@ export interface Theme {
   disabled?: boolean
 }
 
-export const VERSION_THEME: Record<string, Theme> = {
-  [VersionEnum.FESTiVALPLUS]: {
+const versionKey = (value: string) => value as VersionEnum
+
+export const DEFAULT_VERSION_THEME_KEY = versionKey('PRiSM PLUS')
+
+export const VERSION_THEME: Partial<Record<VersionEnum, Theme>> = {
+  [versionKey('FESTiVAL PLUS')]: {
     background: {
       at1x: assetpack['/images/background/festival-plus.webp'],
     },
@@ -22,7 +26,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/festival-plus-1024x.jpg'],
     accentColor: '#c8a8f9',
   },
-  [VersionEnum.BUDDiES]: {
+  [versionKey('BUDDiES')]: {
     background: {
       at1x: assetpack['/images/background/buddies.webp'],
     },
@@ -30,7 +34,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/buddies-1024x.jpg'],
     accentColor: '#FAAE29',
   },
-  [VersionEnum.BUDDiESPLUS]: {
+  [versionKey('BUDDiES PLUS')]: {
     background: {
       at1x: assetpack['/images/background/buddies.webp'],
     },
@@ -38,7 +42,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/buddies-1024x.jpg'],
     accentColor: '#FAAE29',
   },
-  [VersionEnum.PRiSM]: {
+  [versionKey('PRiSM')]: {
     background: {
       at1x: assetpack['/images/background/prism.webp'],
       at2x: assetpack['/images/background/prism@2x.webp'],
@@ -47,7 +51,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#6368C7',
   },
-  [VersionEnum.PRiSMPLUS]: {
+  [versionKey('PRiSM PLUS')]: {
     background: {
       at1x: assetpack['/images/background/prism-plus.webp'],
       at2x: assetpack['/images/background/prism-plus@2x.webp'],
@@ -56,7 +60,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#6368C7',
   },
-  [VersionEnum.CiRCLE]: {
+  [versionKey('CiRCLE')]: {
     background: {
       at1x: assetpack['/images/background/circle.webp'],
     },
@@ -64,7 +68,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#EF67A4',
   },
-  [VersionEnum.CiRCLEPLUS]: {
+  [versionKey('CiRCLE PLUS')]: {
     background: {
       at1x: assetpack['/images/background/circle-plus.webp'],
     },

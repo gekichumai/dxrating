@@ -1,5 +1,7 @@
-import { type DifficultyEnum, type Sheet, type Song, TypeEnum, type VersionEnum, dxdata } from '@gekichumai/dxdata'
-import { formatSheetIdentity, getDxdataSongCatalog, type VersionedSheet } from '@gekichumai/maimai-domain'
+import { type DifficultyEnum, type DXData, type Sheet, type Song, TypeEnum, type VersionEnum } from '@gekichumai/dxdata'
+import { formatSheetIdentity } from '@gekichumai/maimai-domain/sheet-identity'
+import { buildSongCatalog } from '@gekichumai/maimai-domain/song-catalog'
+import type { VersionedSheet } from '@gekichumai/maimai-domain/types'
 import * as Sentry from '@sentry/tanstackstart-react'
 import Fuse from 'fuse.js'
 import uniq from 'lodash-es/uniq'
@@ -27,8 +29,15 @@ export const canonicalIdFromParts = (songId: string, type: TypeEnum, difficulty:
   return formatSheetIdentity({ songId, type, difficulty })
 }
 
-export const getSongs = (): Song[] => {
-  return dxdata.songs
+let dxdataPromise: Promise<DXData> | null = null
+
+const loadDxdata = async () => {
+  dxdataPromise ??= import('@gekichumai/dxdata/data').then((module) => module.dxdata)
+  return dxdataPromise
+}
+
+export const getSongs = async (): Promise<Song[]> => {
+  return (await loadDxdata()).songs
 }
 
 export interface ServerAlias {
@@ -47,7 +56,8 @@ export const getSearchAcronymsWithServerAliases = (
 }
 
 export const getFlattenedSheets = async (version: VersionEnum): Promise<FlattenedSheet[]> => {
-  return getDxdataSongCatalog(version).sheets.map((sheet) => ({
+  const data = await loadDxdata()
+  return buildSongCatalog(data, version).sheets.map((sheet) => ({
     ...sheet,
     difficulty: sheet.difficulty as DifficultyEnum,
     releaseDateTimestamp: sheet.releaseDateTimestamp as number,
@@ -66,7 +76,7 @@ export const useSheets = ({ acceptsPartialData = false } = {}) => {
     aliasCount: String(serverAliases?.length ?? 0),
     tagSongsCount: String(combinedTags?.tagSongs.length ?? 0),
   }).toString()}`
-  return useSWR(
+  const swr = useSWR(
     acceptsPartialData ? key : !(loadingCombinedTags || loadingServerAliases) && key,
     async () => {
       const sheets = await getFlattenedSheets(appVersion)
@@ -112,8 +122,20 @@ export const useSheets = ({ acceptsPartialData = false } = {}) => {
         }
       })
     },
-    { suspense: false },
+    {
+      keepPreviousData: acceptsPartialData,
+      suspense: false,
+    },
   )
+
+  if (acceptsPartialData && swr.data !== undefined && swr.isLoading) {
+    return {
+      ...swr,
+      isLoading: false,
+    }
+  }
+
+  return swr
 }
 
 export const useSongs = () => {

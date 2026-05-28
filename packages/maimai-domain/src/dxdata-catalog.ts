@@ -1,4 +1,5 @@
-import { dxdata, type VersionEnum } from '@gekichumai/dxdata'
+import type { VersionEnum } from '@gekichumai/dxdata'
+import { dxdata } from '@gekichumai/dxdata/data'
 import { buildSongCatalog, createSongCatalog, type SongCatalog } from './song-catalog.ts'
 import type { VersionedSheet } from './types.js'
 

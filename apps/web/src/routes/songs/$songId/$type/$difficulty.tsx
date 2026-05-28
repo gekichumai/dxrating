@@ -1,12 +1,13 @@
-import { dxdata } from '@gekichumai/dxdata'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { SongPage } from '@/pages/SongPage'
-import { buildSongSheetSeo, buildSongSheetStructuredData, formatSeoTitle, resolveSeoLocale } from '@/utils/seo'
+import { formatSeoTitle, resolveSeoLocale } from '@/utils/seo'
+import { buildSongSheetSeo, buildSongSheetStructuredData } from '@/utils/songSeo'
 import { createServerI18n } from '@/setup/init-i18n'
 
 export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
   ssr: true,
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
+    const { dxdata } = await import('@gekichumai/dxdata/data')
     const song = dxdata.songs.find((s) => s.songId === params.songId)
     if (!song) {
       throw notFound()

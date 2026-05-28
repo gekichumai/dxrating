@@ -1,4 +1,3 @@
-import { dxdata } from '@gekichumai/dxdata'
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 
 export const LEGACY_SHEET_PATH_REDIRECT_STATUS_CODE = 308
@@ -16,7 +15,8 @@ export const resolveLegacySheetPathRedirect = (songId: string, type: string, dif
 
 export const Route = createFileRoute('/$songId/$type/$difficulty')({
   ssr: true,
-  beforeLoad: ({ params }) => {
+  beforeLoad: async ({ params }) => {
+    const { dxdata } = await import('@gekichumai/dxdata/data')
     const song = dxdata.songs.find((s) => s.songId === params.songId)
     if (!song) {
       throw notFound()

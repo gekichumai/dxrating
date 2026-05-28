@@ -5,6 +5,12 @@
   "license": "MIT",
   "type": "module",
   "main": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./sheet-identity": "./src/sheet-identity.ts",
+    "./song-catalog": "./src/song-catalog.ts",
+    "./types": "./src/types.ts"
+  },
   "scripts": {
     "build": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"

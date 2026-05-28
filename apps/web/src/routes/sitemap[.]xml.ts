@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { type DifficultyEnum, type TypeEnum, dxdata } from '@gekichumai/dxdata'
+import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 
 const BASE_URL = 'https://dxrating.net'
@@ -84,6 +84,7 @@ export const Route = createFileRoute('/sitemap.xml')({
   server: {
     handlers: {
       GET: async () => {
+        const { dxdata } = await import('@gekichumai/dxdata/data')
         const sitemap = buildSitemap(dxdata.songs)
 
         return new Response(sitemap, {

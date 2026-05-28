@@ -1,4 +1,5 @@
-import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
+import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import { dxdata } from '@gekichumai/dxdata/data'
 import { Button, IconButton } from '@mui/material'
 import { type FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'

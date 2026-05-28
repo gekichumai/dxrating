@@ -3,10 +3,9 @@ import { describe, expect, it } from 'vitest'
 import {
   buildRootSeoMeta,
   buildSearchSeo,
-  buildSongSheetSeo,
-  buildSongSheetStructuredData,
   resolveSeoLocale,
 } from '../seo'
+import { buildSongSheetSeo, buildSongSheetStructuredData } from '../songSeo'
 
 describe('SEO localization', () => {
   it('resolves the locale from route server context before falling back to English', () => {

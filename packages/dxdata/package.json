@@ -5,6 +5,11 @@
   "license": "MIT",
   "type": "module",
   "main": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./data": "./data.ts",
+    "./metadata": "./metadata.ts"
+  },
   "publishConfig": {
     "access": "public"
   }

@@ -15,6 +15,7 @@ import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
+import { NET_IMPORT_LAST_SUCCESS_KEY } from './netImportConstants'
 
 type NetImportErrorCode = 'NET_MAINTENANCE' | 'INVALID_CREDENTIALS' | 'UNKNOWN_ERROR' | 'INTERNAL_ERROR' | 'TOKEN_ERROR'
 
@@ -131,9 +132,6 @@ const fetchNetRecords = async (
 }
 
 const haptics = new WebHaptics()
-
-export const NET_IMPORT_LAST_SUCCESS_KEY = 'net-import-last-success'
-export const NET_IMPORT_COOLDOWN_MS = 15 * 60 * 1000 // 15 minutes
 
 let importInFlight = false
 

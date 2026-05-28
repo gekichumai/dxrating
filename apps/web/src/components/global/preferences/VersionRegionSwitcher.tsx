@@ -20,6 +20,10 @@ const toMergedVersionRegionId = (version: DXVersion, region: Region) => `${versi
 
 const getVersionEnum = (version: DXVersion) => DXVersionToDXDataVersionEnumMap[version]
 
+const MOBILE_VERSION_LOGO_MEDIA = '(max-width: 639px)'
+
+const getMobileVersionLogoUrl = (version: DXVersion) => `/images/version-logo-mobile/${version}.webp`
+
 interface VersionRegion {
   id: string
   versionEnum: VersionEnum
@@ -105,31 +109,50 @@ export const VersionRegionSwitcher: FC = () => {
           setVersionAndRegion(version, region)
         })
       }}
-      renderValue={(value) => (
-        <div className="flex flex-col gap-0.5">
-          <WebpSupportedImage
-            objectFit="contain"
-            assetpackKey={`/images/version-logo/${fromMergedVersionRegionId(value).version}.webp`}
-            className="h-32 w-auto touch-callout-none"
-            alt={t('settings:version-and-region.logo-alt', {
-              version: getVersionEnum(fromMergedVersionRegionId(value).version),
-            })}
-            fetchPriority="high"
-            draggable={false}
-          />
+      renderValue={(value) => {
+        const { version, region } = fromMergedVersionRegionId(value)
 
+        return (
           <div
-            className="text-center text-sm tracking-wide font-bold rounded-full leading-none py-1.5 px-3 border border-solid border-zinc-9/10 self-center text-zinc-6"
-            style={{
-              background: `${theme.accentColor}33`,
-            }}
+            className="flex flex-row items-center justify-center gap-3 w-72 max-w-[80vw] min-w-0"
+            data-app-version-region-summary
           >
-            {t('settings:region.title', {
-              region: t(`settings:region.${fromMergedVersionRegionId(value).region}`),
-            })}
+            <WebpSupportedImage
+              objectFit="contain"
+              assetpackKey={`/images/version-logo/${version}.webp`}
+              className="h-14 sm:h-20 w-auto max-w-[9rem] sm:max-w-[12rem] min-w-0 touch-callout-none"
+              pictureSources={[
+                {
+                  media: MOBILE_VERSION_LOGO_MEDIA,
+                  type: 'image/webp',
+                  srcSet: getMobileVersionLogoUrl(version),
+                },
+              ]}
+              alt={t('settings:version-and-region.logo-alt', {
+                version: getVersionEnum(version),
+              })}
+              data-app-version-logo="selected"
+              data-app-version={version}
+              suppressHydrationWarning
+              fetchPriority="high"
+              draggable={false}
+            />
+
+            <div
+              className="text-center text-xs sm:text-sm tracking-wide font-bold rounded-full leading-none py-1.5 px-3 border border-solid border-zinc-9/10 shrink-0 text-zinc-6"
+              style={{
+                background: `${theme.accentColor}33`,
+              }}
+              data-app-region-label
+              suppressHydrationWarning
+            >
+              {t('settings:region.title', {
+                region: t(`settings:region.${region}`),
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }}
     >
       <ListSubheader className="leading-normal py-4">{t('settings:version-and-region.select')}</ListSubheader>
       {VERSION_SPECIFIC_REGIONS.map(({ id, dxVersion, versionEnum, region }, i) => (

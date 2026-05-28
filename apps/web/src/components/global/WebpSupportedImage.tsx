@@ -1,7 +1,7 @@
 import type { Asset } from '@/assetpack.gen'
 import assetpack from '@/utils/assetpack.json'
 import { omit } from 'lodash-es'
-import type { ImgHTMLAttributes } from 'react'
+import type { ImgHTMLAttributes, SourceHTMLAttributes } from 'react'
 
 const changeToWebp = (src: string) => {
   const lastDotIndex = src.lastIndexOf('.')
@@ -27,6 +27,7 @@ export const WebpSupportedImage = (
   props: Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'onLoad' | 'alt'> & {
     alt: string
     objectFit?: 'contain' | 'cover'
+    pictureSources?: SourceHTMLAttributes<HTMLSourceElement>[]
   } & (
       | {
           assetpackKey?: string
@@ -56,7 +57,7 @@ export const WebpSupportedImage = (
   if (!source) throw new Error('No source provided')
 
   const { alt } = props
-  const rest = omit(props, ['assetpackKey', 'objectFit', 'src', 'alt']) as Omit<
+  const rest = omit(props, ['assetpackKey', 'objectFit', 'src', 'alt', 'pictureSources']) as Omit<
     ImgHTMLAttributes<HTMLImageElement>,
     'src' | 'onLoad' | 'alt'
   >
@@ -71,6 +72,9 @@ export const WebpSupportedImage = (
 
   return (
     <picture>
+      {props.pictureSources?.map((sourceProps, index) => (
+        <source key={index} {...sourceProps} />
+      ))}
       <source type={srcToMimeType(webp)} srcSet={webpSrcSet} />
       <source type={srcToMimeType(source.at1x.path)} srcSet={originalSrcSet} />
       <img

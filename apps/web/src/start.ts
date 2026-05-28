@@ -1,11 +1,13 @@
 import { sentryGlobalFunctionMiddleware, sentryGlobalRequestMiddleware } from '@sentry/tanstackstart-react'
 import { createMiddleware, createStart } from '@tanstack/react-start'
+import { readAppContextFromCookieHeader } from './models/context/AppContext'
 import { appendVaryHeader, detectServerLocale } from './setup/locale'
 import { applySecurityReportHeaders } from './setup/security-headers'
 
 const localeMiddleware = createMiddleware().server(async ({ request, next }) => {
   const locale = detectServerLocale(request)
-  const result = await next({ context: { locale } })
+  const appContext = readAppContextFromCookieHeader(request.headers.get('cookie'))
+  const result = await next({ context: { locale, appContext } })
 
   result.response.headers.set('Content-Language', locale)
   appendVaryHeader(result.response.headers, 'Cookie')

@@ -1,4 +1,7 @@
-import { useRatingEntries } from '@/components/rating/useRatingEntries'
+import {
+  NET_IMPORT_COOLDOWN_MS,
+  NET_IMPORT_LAST_SUCCESS_KEY,
+} from '@/components/rating/io/import/netImportConstants'
 import { authClient } from '@/lib/auth-client'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { usePostHog } from 'posthog-js/react'
@@ -8,11 +11,6 @@ import { useRatingCalculatorContext } from '../../models/context/RatingCalculato
 import { useVersionTheme } from '../../utils/useVersionTheme'
 import toast from 'react-hot-toast'
 import IconMdiCached from '~icons/mdi/cached'
-import {
-  NET_IMPORT_COOLDOWN_MS,
-  NET_IMPORT_LAST_SUCCESS_KEY,
-  importFromNETRecords,
-} from '../rating/io/import/importFromNETRecords'
 
 const SideEffectorThemeMeta: FC = () => {
   const versionTheme = useVersionTheme()
@@ -89,8 +87,36 @@ const SideEffectorAutoImportRating: FC = () => {
       }
     }
 
-    importFromNETRecords(appVersion, modifyEntries, mode)
-  }, [appVersion])
+    let cancelled = false
+
+    import('../rating/io/import/importFromNETRecords').then(({ importFromNETRecords }) => {
+      if (!cancelled) {
+        importFromNETRecords(appVersion, modifyEntries, mode)
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [appVersion, modifyEntries, t])
+
+  return null
+}
+
+const SideEffectorAnalytics: FC = () => {
+  const { version, region } = useAppContext()
+  const { i18n } = useTranslation()
+  const posthog = usePostHog()
+  const { entries } = useRatingCalculatorContext()
+
+  useEffect(() => {
+    posthog?.setPersonProperties({
+      version: version,
+      region: region,
+      language: i18n.language,
+      entries: entries.length,
+    })
+  }, [version, region, i18n.language, entries.length, posthog])
 
   return null
 }
@@ -107,26 +133,7 @@ const SideEffectorAuth: FC = () => {
     } else {
       posthog?.reset()
     }
-  }, [data?.user.id])
-
-  return null
-}
-
-const SideEffectorAnalytics: FC = () => {
-  const { version, region } = useAppContext()
-  const { i18n } = useTranslation()
-  const posthog = usePostHog()
-  const { statistics, allEntries } = useRatingEntries()
-
-  useEffect(() => {
-    posthog?.setPersonProperties({
-      version: version,
-      region: region,
-      language: i18n.language,
-      rating: statistics.b50Sum,
-      entries: allEntries.length,
-    })
-  }, [version, region, i18n.language, statistics, allEntries])
+  }, [data?.user.email, data?.user.id, posthog])
 
   return null
 }

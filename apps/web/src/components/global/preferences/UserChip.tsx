@@ -1,13 +1,22 @@
 import { CircularProgress, IconButton } from '@mui/material'
-import { type FC, useCallback, useState } from 'react'
+import { lazy, type FC, Suspense, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAsync } from 'react-use'
 import MdiAccountCheck from '~icons/mdi/account-check'
 import MdiLogin from '~icons/mdi/login'
 import { authClient } from '../../../lib/auth-client'
-import { LoginForm } from '../../auth/LoginForm'
 import { ResponsiveDialog } from '../ResponsiveDialog'
-import { UserProfileModal } from './UserProfileModal'
+
+const LoginForm = lazy(() => import('../../auth/LoginForm').then((module) => ({ default: module.LoginForm })))
+const UserProfileModal = lazy(() =>
+  import('./UserProfileModal').then((module) => ({ default: module.UserProfileModal })),
+)
+
+const dialogFallback = (
+  <div className="flex items-center justify-center p-8">
+    <CircularProgress disableShrink size="1.5rem" />
+  </div>
+)
 
 async function sha256(message: string) {
   const msgBuffer = new TextEncoder().encode(message)
@@ -61,17 +70,25 @@ export const UserChip: FC = () => {
 
   return (
     <>
-      <ResponsiveDialog
-        open={open === 'auth'}
-        setOpen={(opened) => setOpen(opened ? 'auth' : null)}
-        maxWidth="xs"
-        disableClose={authPending}
-        drawerHeight="70vh"
-      >
-        {() => <LoginForm onPendingChange={handlePendingChange} onSuccess={() => setOpen(null)} />}
-      </ResponsiveDialog>
+      {open === 'auth' && (
+        <ResponsiveDialog
+          open={true}
+          setOpen={(opened) => setOpen(opened ? 'auth' : null)}
+          maxWidth="xs"
+          disableClose={authPending}
+          drawerHeight="70vh"
+        >
+          {() => (
+            <Suspense fallback={dialogFallback}>
+              <LoginForm onPendingChange={handlePendingChange} onSuccess={() => setOpen(null)} />
+            </Suspense>
+          )}
+        </ResponsiveDialog>
+      )}
 
-      <UserProfileModal open={open === 'profile'} onClose={() => setOpen(null)} />
+      <Suspense fallback={null}>
+        {open === 'profile' && <UserProfileModal open={true} onClose={() => setOpen(null)} />}
+      </Suspense>
 
       {pending ? (
         <div className="p-2 text-[1.5rem]">
