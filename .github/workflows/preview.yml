@@ -38,6 +38,7 @@ jobs:
           fi
 
           pr_json=$(gh pr list \
+            --repo "${GITHUB_REPOSITORY}" \
             --state open \
             --head "${GITHUB_REF_NAME}" \
             --json number,headRefOid \
