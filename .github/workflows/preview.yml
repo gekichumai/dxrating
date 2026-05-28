@@ -132,6 +132,7 @@ jobs:
         if: steps.preview.outputs.found == 'true' && steps.preview.outputs.head_repo == github.repository
         uses: marocchino/sticky-pull-request-comment@v3
         with:
+          number: ${{ steps.preview.outputs.number }}
           header: preview-deploy
           message: |
             ### Preview Deployment
