@@ -58,8 +58,31 @@ describe('resolveLegacySongRouteRedirect', () => {
     expect(resolveLegacySongRouteRedirect(song)).toMatchObject({
       params: {
         songId: 'song-1',
-        type: TypeEnum.DX,
-        difficulty: DifficultyEnum.Basic,
+        type: TypeEnum.STD,
+        difficulty: DifficultyEnum.Master,
+      },
+      statusCode: 308,
+    })
+  })
+
+  it('falls back to the first valid chart when a song has no master chart', () => {
+    const utageOnlySong = {
+      ...song,
+      songId: '[光]BREaK! BREaK! BREaK!',
+      sheets: [
+        {
+          ...song.sheets[0],
+          type: TypeEnum.UTAGE,
+          difficulty: '【光】' as DifficultyEnum,
+        },
+      ],
+    } satisfies Song
+
+    expect(resolveLegacySongRouteRedirect(utageOnlySong)).toMatchObject({
+      params: {
+        songId: '[光]BREaK! BREaK! BREaK!',
+        type: TypeEnum.UTAGE,
+        difficulty: '【光】',
       },
       statusCode: 308,
     })
