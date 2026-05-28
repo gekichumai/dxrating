@@ -36,10 +36,12 @@ describe('top nav links', () => {
     expect(getActiveAppTabValue('/charts/trending')).toBe('trending')
   })
 
-  it('selects a pending app tab only while router navigation is transitioning', () => {
-    expect(getPendingAppTabValue(true, '/search')).toBe('search')
-    expect(getPendingAppTabValue(true, '/charts/recent')).toBe('recent')
-    expect(getPendingAppTabValue(true, '/songs/1/dx/master')).toBe(false)
-    expect(getPendingAppTabValue(false, '/search')).toBe(false)
+  it('selects a pending app tab only while the router loads a different resolved location', () => {
+    expect(getPendingAppTabValue(true, '/search', '/rating')).toBe('search')
+    expect(getPendingAppTabValue(true, '/charts/recent', '/charts/trending')).toBe('recent')
+    expect(getPendingAppTabValue(true, '/songs/1/dx/master', '/rating')).toBe(false)
+    expect(getPendingAppTabValue(true, '/search', '/search')).toBe(false)
+    expect(getPendingAppTabValue(true, '/search')).toBe(false)
+    expect(getPendingAppTabValue(false, '/search', '/rating')).toBe(false)
   })
 })
