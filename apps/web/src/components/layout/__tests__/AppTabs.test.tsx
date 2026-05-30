@@ -8,8 +8,10 @@ const { capture, routeLocation, routerState } = vi.hoisted(() => ({
   capture: vi.fn(),
   routeLocation: { pathname: '/rating' },
   routerState: {
+    isLoading: false,
     isTransitioning: false,
     location: { pathname: '/rating' },
+    resolvedLocation: { pathname: '/rating' } as { pathname: string } | undefined,
   },
 }))
 
@@ -51,8 +53,10 @@ describe('AppTabs', () => {
     await i18n.changeLanguage('en')
     capture.mockClear()
     routeLocation.pathname = '/rating'
+    routerState.isLoading = false
     routerState.isTransitioning = false
     routerState.location.pathname = '/rating'
+    routerState.resolvedLocation = { pathname: '/rating' }
   })
 
   it('selects the current route tab and captures the selected tab', () => {
@@ -65,8 +69,9 @@ describe('AppTabs', () => {
   })
 
   it('selects the pending destination tab and shows a width-stable loading indicator', () => {
-    routerState.isTransitioning = true
+    routerState.isLoading = true
     routerState.location.pathname = '/search'
+    routerState.resolvedLocation = { pathname: '/rating' }
 
     render(<AppTabs />)
 
@@ -85,8 +90,9 @@ describe('AppTabs', () => {
 
   it('keeps icon-only tabs named while replacing their visible icon with the loading indicator', () => {
     routeLocation.pathname = '/charts/trending'
-    routerState.isTransitioning = true
+    routerState.isLoading = true
     routerState.location.pathname = '/charts/recent'
+    routerState.resolvedLocation = { pathname: '/charts/trending' }
 
     render(<AppTabs />)
 
@@ -97,5 +103,17 @@ describe('AppTabs', () => {
     expect(recentTab.querySelector('.relative > span')?.className).toContain('inline-flex')
     expect(recentTab.querySelector('.relative > span')?.className).toContain('h-5')
     expect(within(recentTab).getByRole('progressbar')).toBeTruthy()
+  })
+
+  it('does not show a loading indicator for the initial unresolved location', () => {
+    routerState.isLoading = true
+    routerState.resolvedLocation = undefined
+
+    render(<AppTabs />)
+
+    const ratingTab = screen.getByRole('tab', { name: 'My Rating' })
+
+    expect(ratingTab.getAttribute('aria-selected')).toBe('true')
+    expect(screen.queryByRole('progressbar')).toBeNull()
   })
 })

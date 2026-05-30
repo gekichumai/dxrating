@@ -42,7 +42,8 @@ export const AppTabs: FC = () => {
 
   const activeTab = getActiveAppTabValue(location.pathname)
   const pendingTab = useRouterState({
-    select: (state) => getPendingAppTabValue(state.isTransitioning, state.location.pathname),
+    select: (state) =>
+      getPendingAppTabValue(state.isLoading, state.location.pathname, state.resolvedLocation?.pathname),
   })
   const selectedTab = pendingTab || activeTab
 
