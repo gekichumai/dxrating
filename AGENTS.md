@@ -90,6 +90,14 @@ Web requires `apps/web/.env` (no `.env.example` — create manually):
 - **Local DB**: sql.js (SQLite in browser) for offline song data
 - **Analytics**: PostHog + Sentry
 
+### Web SSR and Hydration
+- The web app is server-rendered. SSR-visible markup must be deterministic between the server render and the first client render; do not suppress hydration warnings as a substitute for fixing the mismatch.
+- Request-scoped render inputs such as locale and render time belong in TanStack Start middleware/root route context, then in shared providers such as `RenderEnvironmentProvider`. Do not call `Date.now()`, depend on the browser time zone, or read browser-only state for text that appears in the first hydrated render unless the value is seeded from the server.
+- The root route owns the request-scoped `I18nextProvider`. Server code should create an isolated i18n instance with `createServerI18n(locale)`, while the client uses the shared i18n singleton after hydration has the same initial locale.
+- For sheet release dates and other date-only values rendered in SSR, use the date helpers in `apps/web/src/utils/dateFormatting.ts`. Avoid ad hoc `new Date(...)` plus `toLocaleString()` in components, especially without an explicit `timeZone`.
+- For relative times, use the rendered-at timestamp from `apps/web/src/utils/renderEnvironment.tsx` for the first render and update after mount. This preserves SSR/client parity while keeping the live UI behavior.
+- After SSR-visible web changes, validate at least one non-English locale on a production build or preview and check the browser console for React hydration errors such as React #418.
+
 ### API Layer
 - Contracts are defined with Zod in `apps/backend/src/contract.ts` and **mirrored** in `apps/web/src/lib/contract.ts` — both files must stay in sync.
 - The web client uses `@orpc/openapi-client` + `@orpc/tanstack-query` to call the backend.

@@ -3,10 +3,8 @@ import { wrapFetchWithSentry } from '@sentry/tanstackstart-react'
 import { StartServer, createStartHandler } from '@tanstack/react-start/server'
 import { renderRouterToStream } from '@tanstack/react-router/ssr/server'
 import { createElement } from 'react'
-import { I18nextProvider } from 'react-i18next'
 import { createServerEntry, type ServerEntry } from '@tanstack/react-start/server-entry'
 import { BUNDLE } from './utils/bundle'
-import { createServerI18n } from './setup/init-i18n'
 import { appendVaryHeader, detectServerLocale } from './setup/locale'
 import { finishServerTimingSpan, setServerTimingHeader, startServerTimingSpan } from './setup/server-timing'
 
@@ -21,7 +19,6 @@ const startHandler = createStartHandler(async ({ request, router, responseHeader
   const ssrTiming = startServerTimingSpan('ssr')
   const setupTiming = startServerTimingSpan('ssr_setup')
   const locale = detectServerLocale(request)
-  const serverI18n = createServerI18n(locale)
 
   responseHeaders.set('Content-Language', locale)
   appendVaryHeader(responseHeaders, 'Cookie')
@@ -32,7 +29,7 @@ const startHandler = createStartHandler(async ({ request, router, responseHeader
     request,
     router,
     responseHeaders,
-    children: createElement(I18nextProvider, { i18n: serverI18n }, createElement(StartServer, { router })),
+    children: createElement(StartServer, { router }),
   })
 
   setServerTimingHeader(response.headers, [setupMetric, finishServerTimingSpan(ssrTiming)])

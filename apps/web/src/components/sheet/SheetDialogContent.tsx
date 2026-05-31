@@ -26,7 +26,9 @@ import { apiClient as client } from '../../lib/orpc'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppContextDXDataVersion } from '../../models/context/useAppContext'
 import type { FlattenedSheet } from '../../songs'
+import { formatSheetReleaseDateParts } from '../../utils/dateFormatting'
 import { calculateRating } from '../../utils/rating'
+import { useRenderedAt } from '../../utils/renderEnvironment'
 import { DXRank } from '../global/DXRank'
 import { SheetDialogContentHeader } from './SheetDialogContentHeader'
 import { SheetTitle } from './SheetListItem'
@@ -69,33 +71,20 @@ const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
   </div>
 )
 
-const DAY_MS = 1000 * 60 * 60 * 24
-const RELATIVE_TIME_FORMATS: Record<string, Intl.RelativeTimeFormat> = {
-  en: new Intl.RelativeTimeFormat('en', { numeric: 'auto' }),
-  ja: new Intl.RelativeTimeFormat('ja', { numeric: 'auto' }),
-  'zh-Hans': new Intl.RelativeTimeFormat('zh-Hans', { numeric: 'auto' }),
-  'zh-Hant': new Intl.RelativeTimeFormat('zh-Hant', { numeric: 'auto' }),
-}
-
 const CommentCreatedAt: FC<{ createdAt: string }> = ({ createdAt }) => {
   const formattedDate = useMemo(() => new Date(createdAt).toLocaleString(), [createdAt])
 
   return <div className="text-xs ml-auto">{formattedDate}</div>
 }
 
-const ReleaseDateText: FC<{ releaseDateTimestamp: number }> = ({ releaseDateTimestamp }) => {
+const ReleaseDateText: FC<{ releaseDate: string }> = ({ releaseDate }) => {
   const { t, i18n } = useTranslation(['sheet'])
+  const renderedAt = useRenderedAt()
   const releaseDateText = useMemo(() => {
-    const releaseDate = new Date(releaseDateTimestamp)
-    const relativeTimeFormat = RELATIVE_TIME_FORMATS[i18n.language] ?? RELATIVE_TIME_FORMATS.en
+    const parts = formatSheetReleaseDateParts(releaseDate, i18n.language, renderedAt)
 
-    return t('sheet:release-date', {
-      absoluteDate: releaseDate.toLocaleString(i18n.language, {
-        dateStyle: 'medium',
-      }),
-      relativeDate: relativeTimeFormat.format(Math.floor((releaseDate.getTime() - Date.now()) / DAY_MS), 'day'),
-    })
-  }, [releaseDateTimestamp, i18n.language, t])
+    return t('sheet:release-date', parts)
+  }, [releaseDate, i18n.language, renderedAt, t])
 
   return releaseDateText
 }
@@ -239,9 +228,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
       <SheetTitle sheet={sheet} enableAltNames enableClickToCopy className="text-lg font-bold" />
 
       <div className="text-sm -mt-2">
-        <div className="text-zinc-600">
-          {sheet.releaseDate && <ReleaseDateText releaseDateTimestamp={sheet.releaseDateTimestamp} />}
-        </div>
+        <div className="text-zinc-600">{sheet.releaseDate && <ReleaseDateText releaseDate={sheet.releaseDate} />}</div>
       </div>
 
       <div className="flex flex-wrap gap-1">

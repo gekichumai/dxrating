@@ -16,6 +16,7 @@ import { SheetSortFilter, SheetSortFilterTrigger, type SheetSortFilterForm } fro
 import { SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { type FlattenedSheet, canonicalIdFromParts, useFilteredSheets, useSheets } from '../songs'
+import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { sheetMatchesDifficultyFilter } from './sheetDifficultyFilter'
 
 const searchRouteApi = getRouteApi('/search')
@@ -100,7 +101,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
       searchAcronyms: song.searchAcronyms,
       isTypeUtage,
       isRatingEligible: !isTypeUtage,
-      releaseDateTimestamp: sheet.releaseDate ? new Date(`${sheet.releaseDate}T06:00:00+09:00`).valueOf() : 0,
+      releaseDateTimestamp: sheetReleaseDateTimestamp(sheet.releaseDate),
       internalLevelValue: sheet.multiverInternalLevelValue
         ? (sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue)
         : sheet.internalLevelValue,

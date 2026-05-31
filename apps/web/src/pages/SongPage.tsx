@@ -11,6 +11,7 @@ import { type FlattenedSheet, canonicalId, getSearchAcronymsWithServerAliases } 
 import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
+import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { getVisibleSongPageSheets } from './songPageSheets'
 
 const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
@@ -49,7 +50,7 @@ export const SongPage: FC = () => {
         isTypeUtage,
         isRatingEligible: !isTypeUtage,
         tags: [],
-        releaseDateTimestamp: sheet.releaseDate ? new Date(`${sheet.releaseDate}T06:00:00+09:00`).valueOf() : 0,
+        releaseDateTimestamp: sheetReleaseDateTimestamp(sheet.releaseDate),
         internalLevelValue: sheet.multiverInternalLevelValue
           ? (sheet.multiverInternalLevelValue[appVersion] ?? sheet.internalLevelValue)
           : sheet.internalLevelValue,

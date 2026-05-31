@@ -8,6 +8,7 @@ import {
   type VersionEnum,
 } from '@gekichumai/dxdata'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
+import { sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
 
 export const RECENT_CHART_LIMIT = 500
 
@@ -32,14 +33,8 @@ const typeOrder = Object.values(TypeEnum)
 const difficultyOrder = Object.values(DifficultyEnum)
 const excludedRecentChartDifficulties = new Set<string>([DifficultyEnum.Basic, DifficultyEnum.Advanced])
 
-const releaseDateTimestamp = (releaseDate: string | undefined) => {
-  if (!releaseDate) return 0
-  const timestamp = new Date(`${releaseDate}T00:00:00Z`).valueOf()
-  return Number.isFinite(timestamp) ? timestamp : 0
-}
-
 const compareRecentChartLinks = (a: RecentChartLink, b: RecentChartLink) => {
-  const releaseDateComparison = releaseDateTimestamp(b.releaseDate) - releaseDateTimestamp(a.releaseDate)
+  const releaseDateComparison = sheetReleaseDateTimestamp(b.releaseDate) - sheetReleaseDateTimestamp(a.releaseDate)
   if (releaseDateComparison !== 0) return releaseDateComparison
 
   const titleComparison = a.title.localeCompare(b.title)
