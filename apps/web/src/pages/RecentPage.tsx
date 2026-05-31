@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RecentChartLink } from '@/components/chartDiscovery/recentCharts'
+import { SheetListItemContentView, SheetListItemSummary } from '@/components/sheet/SheetListItem'
 import { getSheetTitleLabel } from '@/components/song/sheetDisplay'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 
@@ -57,50 +58,58 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
                   className="block text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
                   href={chart.href}
                 >
-                  <article
-                    className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 px-4 py-3"
-                    itemScope
-                    itemType="https://schema.org/MusicRecording"
-                    itemID={chartUrl}
-                  >
+                  <article className="block" itemScope itemType="https://schema.org/MusicRecording" itemID={chartUrl}>
                     <link itemProp="url" href={chartUrl} />
                     <meta itemProp="identifier" content={`${chart.songId}/${chart.type}/${chart.difficulty}`} />
                     <meta itemProp="additionalType" content="maimai DX chart" />
-                    <div className="min-w-0 flex flex-col gap-1">
-                      <span itemProp="additionalProperty" itemScope itemType="https://schema.org/PropertyValue">
-                        <meta itemProp="name" content="Chart type" />
-                        <meta itemProp="value" content={chart.type} />
-                      </span>
-                      <span itemProp="additionalProperty" itemScope itemType="https://schema.org/PropertyValue">
-                        <meta itemProp="name" content="Difficulty" />
-                        <meta itemProp="value" content={chart.difficulty} />
-                      </span>
-                      <span itemProp="additionalProperty" itemScope itemType="https://schema.org/PropertyValue">
-                        <meta itemProp="name" content="Level" />
-                        <meta itemProp="value" content={chart.level} />
-                      </span>
-                      <h2 className="font-semibold truncate text-base leading-normal" itemProp="name">
-                        {chart.title}
-                      </h2>
-                      <p
-                        className="text-sm text-slate-600 truncate"
-                        itemProp="byArtist"
-                        itemScope
-                        itemType="https://schema.org/MusicGroup"
-                      >
-                        <span itemProp="name">{chart.artist}</span>
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-start sm:items-end justify-center gap-1 text-left sm:text-right">
-                      <p className="text-sm font-semibold text-slate-800" itemProp="description">
-                        {sheetLabel} {levelLabel}
-                      </p>
-                      {chart.releaseDate && (
-                        <time className="text-xs text-slate-500" dateTime={chart.releaseDate} itemProp="datePublished">
-                          {chart.releaseDate}
-                        </time>
-                      )}
-                    </div>
+                    <span itemProp="additionalProperty" itemScope itemType="https://schema.org/PropertyValue">
+                      <meta itemProp="name" content="Chart type" />
+                      <meta itemProp="value" content={chart.type} />
+                    </span>
+                    <span itemProp="additionalProperty" itemScope itemType="https://schema.org/PropertyValue">
+                      <meta itemProp="name" content="Difficulty" />
+                      <meta itemProp="value" content={chart.difficulty} />
+                    </span>
+                    <span itemProp="additionalProperty" itemScope itemType="https://schema.org/PropertyValue">
+                      <meta itemProp="name" content="Level" />
+                      <meta itemProp="value" content={chart.level} />
+                    </span>
+                    <meta itemProp="description" content={`${sheetLabel} ${levelLabel}`} />
+                    <SheetListItemContentView
+                      level={chart.level}
+                      internalLevelValue={chart.internalLevelValue}
+                      isTypeUtage={chart.isTypeUtage}
+                      imageName={chart.imageName}
+                      imageAlt={t('sheet:cover-art-alt', { title: chart.title })}
+                    >
+                      <SheetListItemSummary
+                        title={chart.title}
+                        type={chart.type}
+                        difficulty={chart.difficulty}
+                        version={chart.version}
+                        regions={chart.regions}
+                        isLocked={chart.isLocked}
+                        titleElement="h2"
+                        titleTextProps={{ itemProp: 'name' }}
+                        artist={<span itemProp="name">{chart.artist}</span>}
+                        artistProps={{
+                          itemProp: 'byArtist',
+                          itemScope: true,
+                          itemType: 'https://schema.org/MusicGroup',
+                        }}
+                        metadata={
+                          chart.releaseDate && (
+                            <time
+                              className="text-xs text-zinc-500"
+                              dateTime={chart.releaseDate}
+                              itemProp="datePublished"
+                            >
+                              {chart.releaseDate}
+                            </time>
+                          )
+                        }
+                      />
+                    </SheetListItemContentView>
                   </article>
                 </a>
               </li>

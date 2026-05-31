@@ -6,7 +6,18 @@ export const SEARCH_QUERY_SEED_LIMIT = 20
 
 export type SearchQuerySeedSheet = Pick<
   FlattenedSheet,
-  'songId' | 'title' | 'artist' | 'type' | 'difficulty' | 'level' | 'internalLevelValue'
+  | 'songId'
+  | 'title'
+  | 'artist'
+  | 'type'
+  | 'difficulty'
+  | 'level'
+  | 'internalLevelValue'
+  | 'imageName'
+  | 'version'
+  | 'regions'
+  | 'isLocked'
+  | 'isTypeUtage'
 > & {
   path: string
 }
@@ -19,6 +30,11 @@ const toSearchQuerySeedSheet = (sheet: FlattenedSheet): SearchQuerySeedSheet => 
   difficulty: sheet.difficulty,
   level: sheet.level,
   internalLevelValue: sheet.internalLevelValue,
+  imageName: sheet.imageName,
+  version: sheet.version,
+  regions: sheet.regions,
+  isLocked: sheet.isLocked,
+  isTypeUtage: sheet.isTypeUtage,
   path: buildSheetPath({ songId: sheet.songId, type: sheet.type, difficulty: sheet.difficulty }),
 })
 

@@ -2,7 +2,7 @@ import { type DifficultyEnum, type Regions, TypeEnum } from '@gekichumai/dxdata'
 import { ListItemButton, ListItemSecondaryAction, ListItemText, type ListItemTextProps } from '@mui/material'
 import clsx from 'clsx'
 import { usePostHog } from 'posthog-js/react'
-import { type FC, type HTMLAttributes, type ImgHTMLAttributes, memo, useState } from 'react'
+import { type FC, type HTMLAttributes, type ImgHTMLAttributes, memo, type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useWebHaptics } from 'web-haptics/react'
 import toast from 'react-hot-toast'
@@ -86,36 +86,81 @@ export interface SheetListItemContentProps extends HTMLAttributes<HTMLDivElement
   ListItemTextProps?: ListItemTextProps
 }
 
-export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
-  ({ sheet, size = 'medium', className, enableSheetImage = true, SheetTitleProps, ListItemTextProps, ...rest }) => {
-    const { t } = useTranslation(['sheet'])
+export interface SheetListItemContentViewProps extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode
 
+  level: string
+  internalLevelValue: number
+  isTypeUtage?: boolean
+  size?: 'small' | 'medium'
+  enableSheetImage?: boolean
+  imageName?: string
+  imageAlt?: string
+  ListItemTextProps?: ListItemTextProps
+}
+
+export const SheetListItemContentView: FC<SheetListItemContentViewProps> = memo(
+  ({
+    children,
+    level,
+    internalLevelValue,
+    isTypeUtage,
+    size = 'medium',
+    className,
+    enableSheetImage = true,
+    imageName,
+    imageAlt,
+    ListItemTextProps,
+    ...rest
+  }) => {
     return (
       <div className={clsx('flex items-center w-full p-1 gap-2 tabular-nums relative', className)} {...rest}>
-        {enableSheetImage && (
-          <SheetImage name={sheet.imageName} size={size} alt={t('sheet:cover-art-alt', { title: sheet.title })} />
-        )}
+        {enableSheetImage && imageName && imageAlt && <SheetImage name={imageName} size={size} alt={imageAlt} />}
 
         <ListItemText {...ListItemTextProps} className={clsx('ml-2 pr-12', ListItemTextProps?.className)}>
-          <SheetTitle
-            {...SheetTitleProps}
-            sheet={sheet}
-            className={clsx('font-bold', size === 'small' ? 'text-sm' : 'text-lg', SheetTitleProps?.className)}
-          />
+          {children}
         </ListItemText>
 
         <ListItemSecondaryAction>
-          {sheet.isTypeUtage ? (
-            <span className="font-bold tracking-tighter tabular-nums text-lg text-zinc-600">{sheet.level}</span>
+          {isTypeUtage ? (
+            <span className="font-bold tracking-tighter tabular-nums text-lg text-zinc-600">{level}</span>
           ) : (
-            <SheetInternalLevelValue value={sheet.internalLevelValue} />
+            <SheetInternalLevelValue value={internalLevelValue} />
           )}
         </ListItemSecondaryAction>
       </div>
     )
   },
 )
-SheetListItem.displayName = 'SheetListItem'
+SheetListItemContentView.displayName = 'SheetListItemContentView'
+
+export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
+  ({ sheet, size = 'medium', className, enableSheetImage = true, SheetTitleProps, ListItemTextProps, ...rest }) => {
+    const { t } = useTranslation(['sheet'])
+
+    return (
+      <SheetListItemContentView
+        level={sheet.level}
+        internalLevelValue={sheet.internalLevelValue}
+        isTypeUtage={sheet.isTypeUtage}
+        size={size}
+        className={className}
+        enableSheetImage={enableSheetImage}
+        imageName={sheet.imageName}
+        imageAlt={t('sheet:cover-art-alt', { title: sheet.title })}
+        ListItemTextProps={ListItemTextProps}
+        {...rest}
+      >
+        <SheetTitle
+          {...SheetTitleProps}
+          sheet={sheet}
+          className={clsx('font-bold', size === 'small' ? 'text-sm' : 'text-lg', SheetTitleProps?.className)}
+        />
+      </SheetListItemContentView>
+    )
+  },
+)
+SheetListItemContent.displayName = 'SheetListItemContent'
 
 const SheetInternalLevelValue: FC<{ value: number }> = ({ value }) => {
   const wholePart = Math.floor(value)
@@ -202,6 +247,77 @@ const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({ type, d
     />
   )
 }
+
+export interface SheetListItemSummaryProps {
+  title: string
+  type: TypeEnum
+  difficulty: DifficultyEnum
+  version?: string
+  regions?: Regions
+  isLocked?: boolean
+  artist?: ReactNode
+  metadata?: ReactNode
+  titleElement?: 'h2' | 'h3'
+  titleProps?: HTMLAttributes<HTMLHeadingElement>
+  titleTextProps?: HTMLAttributes<HTMLSpanElement>
+  artistProps?: HTMLAttributes<HTMLParagraphElement>
+  className?: string
+}
+
+export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
+  ({
+    title,
+    type,
+    difficulty,
+    version,
+    regions,
+    isLocked,
+    artist,
+    metadata,
+    titleElement: TitleElement = 'h3',
+    titleProps,
+    titleTextProps,
+    artistProps,
+    className,
+  }) => {
+    return (
+      <div className={clsx('flex flex-col', className)}>
+        <TitleElement
+          {...titleProps}
+          className={clsx(
+            'flex flex-col md:flex-row md:items-start gap-x-2 gap-y-1 font-bold text-lg',
+            titleProps?.className,
+          )}
+        >
+          <span className="flex flex-col">
+            <span {...titleTextProps} className={clsx('leading-tight', titleTextProps?.className)}>
+              {title}
+            </span>
+          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            <SheetType type={type} difficulty={difficulty} />
+            <SheetDifficulty difficulty={difficulty} regions={regions} isLocked={isLocked} />
+          </div>
+        </TitleElement>
+
+        {artist && (
+          <p {...artistProps} className={clsx('text-sm text-zinc-600 truncate', artistProps?.className)}>
+            {artist}
+          </p>
+        )}
+
+        {version && (
+          <div className="text-sm">
+            <span className="text-zinc-600">ver. {version}</span>
+          </div>
+        )}
+
+        {metadata}
+      </div>
+    )
+  },
+)
+SheetListItemSummary.displayName = 'SheetListItemSummary'
 
 export const SheetImage: FC<
   Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt'> & {

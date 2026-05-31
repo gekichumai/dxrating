@@ -47,6 +47,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
   const [sortFilterOptions, setSortFilterOptions] = useState<SheetSortFilterForm | null>(null)
   const [sortFilterExpanded, setSortFilterExpanded] = useState(false)
   const [sortFilterPending, startSortFilterTransition] = useTransition()
+  const [hydrated, setHydrated] = useState(false)
   const sortFilterContentId = useId()
   const navigate = useNavigate()
 
@@ -57,6 +58,10 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
   useEffect(() => {
     setInputQuery(query)
   }, [query])
+
+  useEffect(() => {
+    setHydrated(true)
+  }, [])
 
   const updateQuery = useCallback(
     (nextQuery: string) => {
@@ -306,7 +311,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
               {t('sheet:search-summary', {
                 found: isLoading ? '...' : filteredResults.length,
                 total: isLoading ? '...' : sheets?.length,
-                elapsed: (searchElapsed + filteringElapsed).toFixed(1),
+                elapsed: hydrated ? (searchElapsed + filteringElapsed).toFixed(1) : '...',
               })}
             </div>
           </div>
