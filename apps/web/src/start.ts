@@ -5,7 +5,7 @@ import { applySecurityReportHeaders } from './setup/security-headers'
 
 const localeMiddleware = createMiddleware().server(async ({ request, next }) => {
   const locale = detectServerLocale(request)
-  const result = await next({ context: { locale } })
+  const result = await next({ context: { locale, renderedAt: Date.now() } })
 
   result.response.headers.set('Content-Language', locale)
   appendVaryHeader(result.response.headers, 'Cookie')

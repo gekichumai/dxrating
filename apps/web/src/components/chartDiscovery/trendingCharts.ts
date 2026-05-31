@@ -2,6 +2,7 @@ import { DifficultyEnum, TypeEnum, dxdata, type Sheet, type Song } from '@gekich
 import { formatSheetIdentity, type SheetIdentity } from '@gekichumai/maimai-domain'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import type { FlattenedSheet } from '@/songs'
+import { sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
 
 export const TRENDING_CHART_LIMIT = 100
 
@@ -48,12 +49,6 @@ const selectRepresentativeSheet = (result: TrendingChartResult, song: Song) => {
   return [...song.sheets].sort(compareRepresentativeSheets)[0] ?? null
 }
 
-const releaseDateTimestamp = (releaseDate: string | undefined) => {
-  if (!releaseDate) return 0
-  const timestamp = new Date(`${releaseDate}T06:00:00+09:00`).valueOf()
-  return Number.isFinite(timestamp) ? timestamp : 0
-}
-
 const toTrendingChartLink = (song: Song, sheet: Sheet): TrendingChartLink => {
   const identity = {
     songId: song.songId,
@@ -70,7 +65,7 @@ const toTrendingChartLink = (song: Song, sheet: Sheet): TrendingChartLink => {
     identity,
     isTypeUtage,
     isRatingEligible: !isTypeUtage,
-    releaseDateTimestamp: releaseDateTimestamp(sheet.releaseDate),
+    releaseDateTimestamp: sheetReleaseDateTimestamp(sheet.releaseDate),
     tags: [],
     href: buildSheetPath(identity),
   }

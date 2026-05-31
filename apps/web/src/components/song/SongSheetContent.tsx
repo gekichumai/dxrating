@@ -20,7 +20,9 @@ import { apiClient as client } from '../../lib/orpc'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppContextDXDataVersion } from '../../models/context/useAppContext'
 import type { FlattenedSheet } from '../../songs'
+import { formatSheetReleaseDateParts } from '../../utils/dateFormatting'
 import { calculateRating } from '../../utils/rating'
+import { useRenderedAt } from '../../utils/renderEnvironment'
 import { DXRank } from '../global/DXRank'
 import { SheetTags } from '../sheet/tags/SheetTags'
 import { SheetDifficulty } from '../sheet/SheetListItem'
@@ -270,6 +272,7 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }> = memo(
   ({ sheet, isActive = true }) => {
     const { t, i18n } = useTranslation(['sheet', 'global'])
+    const renderedAt = useRenderedAt()
     const ratings = useMemo(
       () =>
         [...PRESET_ACHIEVEMENT_RATES]
@@ -280,7 +283,10 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
           })),
       [sheet.internalLevelValue],
     )
-    const releaseDate = new Date(sheet.releaseDateTimestamp)
+    const releaseDateParts = useMemo(
+      () => (sheet.releaseDate ? formatSheetReleaseDateParts(sheet.releaseDate, i18n.language, renderedAt) : null),
+      [sheet.releaseDate, i18n.language, renderedAt],
+    )
 
     return (
       <div className="flex flex-col gap-2 relative">
@@ -295,17 +301,7 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
         </div>
 
         <div className="text-sm">
-          <div className="text-zinc-600">
-            {sheet.releaseDate &&
-              t('sheet:release-date', {
-                absoluteDate: releaseDate.toLocaleString(i18n.language, {
-                  dateStyle: 'medium',
-                }),
-                relativeDate: new Intl.RelativeTimeFormat(i18n.language, {
-                  numeric: 'auto',
-                }).format(Math.floor((releaseDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)), 'day'),
-              })}
-          </div>
+          <div className="text-zinc-600">{releaseDateParts && t('sheet:release-date', releaseDateParts)}</div>
         </div>
 
         <div className="flex flex-wrap gap-1">

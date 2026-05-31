@@ -1,19 +1,24 @@
 import { intlFormatDistance } from 'date-fns'
 import { memo, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useRenderedAt } from './renderEnvironment'
 
-function useMinuteTick() {
-  const [tick, setTick] = useState(0)
+function useMinuteNow() {
+  const renderedAt = useRenderedAt()
+  const [now, setNow] = useState(renderedAt)
+
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 60_000)
+    setNow(Date.now())
+    const id = setInterval(() => setNow(Date.now()), 60_000)
     return () => clearInterval(id)
   }, [])
-  return tick
+
+  return now
 }
 
 export const useTime = (time?: string, length: 'short' | 'normal' = 'normal') => {
   const { i18n } = useTranslation()
-  const tick = useMinuteTick()
+  const now = useMinuteNow()
   return useMemo(() => {
     try {
       if (!time) throw new Error('useTime: time is undefined')
@@ -24,7 +29,7 @@ export const useTime = (time?: string, length: 'short' | 'normal' = 'normal') =>
       }
 
       const dateString = date.toLocaleString(i18n.language)
-      const relativeTime = intlFormatDistance(date, new Date())
+      const relativeTime = intlFormatDistance(date, new Date(now))
 
       if (length === 'short') {
         return relativeTime
@@ -33,7 +38,7 @@ export const useTime = (time?: string, length: 'short' | 'normal' = 'normal') =>
     } catch {
       return 'unknown'
     }
-  }, [time, i18n.language, tick])
+  }, [time, i18n.language, now])
 }
 
 /** Self-refreshing relative time display. Rerenders only itself once per minute. */

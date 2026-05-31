@@ -1,11 +1,12 @@
 import { HeadContent, Outlet, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
 import { CircularProgress } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import i18n from 'i18next'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
-import { Suspense, useEffect } from 'react'
+import { Suspense, useEffect, useMemo } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
+import { I18nextProvider, useTranslation } from 'react-i18next'
 import { CustomizedToaster } from '@/components/global/CustomizedToaster'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { OverscrollBackgroundFiller } from '@/components/global/OverscrollBackgroundFiller'
@@ -17,9 +18,11 @@ import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
 import { AppContextProvider } from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
+import { createServerI18n } from '@/setup/init-i18n'
 import { buildAlternateLinks } from '@/utils/alternateLinks'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { useVersionTheme } from '@/utils/useVersionTheme'
+import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
 import appCss from '@/index.css?url'
 import 'virtual:uno.css'
 
@@ -37,6 +40,10 @@ export const Route = createRootRoute({
   notFoundComponent: NotFoundContent,
   beforeLoad: (ctx) => ({
     locale: resolveSeoLocale([
+      { context: (ctx as { serverContext?: unknown }).serverContext },
+      { context: ctx.context },
+    ]),
+    renderedAt: resolveRenderedAt([
       { context: (ctx as { serverContext?: unknown }).serverContext },
       { context: ctx.context },
     ]),
@@ -200,23 +207,30 @@ function OAuthErrorHandler() {
 }
 
 function RootComponent() {
+  const { locale, renderedAt } = Route.useRouteContext()
+  const routeI18n = useMemo(() => (import.meta.env.SSR ? createServerI18n(locale) : i18n), [locale])
+
   return (
-    <RootDocument>
-      <QueryClientProvider client={queryClient}>
-        <AppContextProvider>
-          <VersionCustomizedThemeProvider>
-            <RatingCalculatorContextProvider>
-              <PostHogProvider client={posthog}>
-                <SideEffector />
-                <CustomizedToaster />
-                <OAuthErrorHandler />
-                <AppLayout />
-              </PostHogProvider>
-            </RatingCalculatorContextProvider>
-          </VersionCustomizedThemeProvider>
-        </AppContextProvider>
-      </QueryClientProvider>
-    </RootDocument>
+    <RenderEnvironmentProvider renderedAt={renderedAt}>
+      <I18nextProvider i18n={routeI18n}>
+        <RootDocument>
+          <QueryClientProvider client={queryClient}>
+            <AppContextProvider>
+              <VersionCustomizedThemeProvider>
+                <RatingCalculatorContextProvider>
+                  <PostHogProvider client={posthog}>
+                    <SideEffector />
+                    <CustomizedToaster />
+                    <OAuthErrorHandler />
+                    <AppLayout />
+                  </PostHogProvider>
+                </RatingCalculatorContextProvider>
+              </VersionCustomizedThemeProvider>
+            </AppContextProvider>
+          </QueryClientProvider>
+        </RootDocument>
+      </I18nextProvider>
+    </RenderEnvironmentProvider>
   )
 }
 
@@ -244,12 +258,13 @@ function AppLayout() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const { locale } = Route.useRouteContext()
+  const { locale, renderedAt } = Route.useRouteContext()
 
   return (
     <html lang={locale}>
       <head>
         <HeadContent />
+        <meta name={RENDERED_AT_META_NAME} content={String(renderedAt)} />
       </head>
       <body>
         {children}
