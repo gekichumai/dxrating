@@ -1,4 +1,12 @@
-import { DifficultyEnum, TypeEnum, dxdata, type Sheet, type Song } from '@gekichumai/dxdata'
+import {
+  DifficultyEnum,
+  TypeEnum,
+  dxdata,
+  type Regions,
+  type Sheet,
+  type Song,
+  type VersionEnum,
+} from '@gekichumai/dxdata'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 
 export const RECENT_CHART_LIMIT = 500
@@ -7,10 +15,15 @@ export type RecentChartLink = {
   songId: string
   title: string
   artist: string
+  imageName: string
   type: TypeEnum
   difficulty: DifficultyEnum
   level: string
   internalLevelValue: number
+  version: VersionEnum
+  regions: Regions
+  isLocked: boolean
+  isTypeUtage: boolean
   releaseDate?: string
   href: string
 }
@@ -42,10 +55,15 @@ const toRecentChartLink = (song: Song, sheet: Sheet): RecentChartLink => ({
   songId: song.songId,
   title: song.title,
   artist: song.artist,
+  imageName: song.imageName,
   type: sheet.type,
   difficulty: sheet.difficulty,
   level: sheet.level,
   internalLevelValue: sheet.internalLevelValue,
+  version: sheet.version,
+  regions: sheet.regions,
+  isLocked: song.isLocked,
+  isTypeUtage: sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P,
   releaseDate: sheet.releaseDate,
   href: buildSheetPath({ songId: song.songId, type: sheet.type, difficulty: sheet.difficulty }),
 })

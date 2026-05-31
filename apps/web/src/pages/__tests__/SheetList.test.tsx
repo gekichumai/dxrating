@@ -1,4 +1,4 @@
-import { VersionEnum } from '@gekichumai/dxdata'
+import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { fireEvent, render, screen, type RenderResult } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -35,6 +35,12 @@ const routeState = vi.hoisted(() => {
   return state
 })
 
+const sheetMocks = vi.hoisted(() => ({
+  filteredTerms: [] as string[],
+  isLoading: false,
+  searchElapsed: 0,
+}))
+
 vi.mock('@tanstack/react-router', () => ({
   getRouteApi: () => ({
     useSearch: () => routeState.search,
@@ -58,8 +64,11 @@ vi.mock('@/models/context/useAppContext', () => ({
 
 vi.mock('@/songs', () => ({
   canonicalIdFromParts: (...parts: string[]) => parts.join(':'),
-  useFilteredSheets: () => ({ results: [], elapsed: 0 }),
-  useSheets: () => ({ data: [], isLoading: false }),
+  useFilteredSheets: (term: string) => {
+    sheetMocks.filteredTerms.push(term)
+    return { results: [], elapsed: sheetMocks.searchElapsed }
+  },
+  useSheets: () => ({ data: [], isLoading: sheetMocks.isLoading }),
 }))
 
 vi.mock('@/components/global/ResponsiveDialog', () => ({
@@ -90,6 +99,44 @@ describe('SheetList', () => {
     routeState.syncSearchOnNavigate = true
     routeState.onNavigate = undefined
     routeState.navigate.mockClear()
+    sheetMocks.filteredTerms = []
+    sheetMocks.isLoading = false
+    sheetMocks.searchElapsed = 0
+  })
+
+  it('uses the route query immediately and shows seeded results while sheets load', () => {
+    routeState.search = { q: '螺旋' }
+    sheetMocks.isLoading = true
+
+    render(
+      <SheetList
+        seedSheets={[
+          {
+            songId: 'galatea',
+            title: 'ガラテアの螺旋',
+            artist: 'sasakure.UK',
+            imageName: 'galatea',
+            type: TypeEnum.STD,
+            difficulty: DifficultyEnum.Master,
+            level: '14+',
+            internalLevelValue: 14.6,
+            version: VersionEnum.CiRCLEPLUS,
+            regions: {
+              jp: true,
+              intl: true,
+              cn: true,
+            },
+            isLocked: false,
+            isTypeUtage: false,
+            path: '/songs/galatea/std/master',
+          },
+        ]}
+      />,
+    )
+
+    expect(sheetMocks.filteredTerms).toContain('螺旋')
+    expect(screen.getByRole('link', { name: /ガラテアの螺旋/ }).getAttribute('href')).toBe('/songs/galatea/std/master')
+    expect(screen.queryByTestId('sheet-list')).toBeNull()
   })
 
   it('keeps an in-progress search edit when the route query update is pending', () => {

@@ -1,4 +1,4 @@
-import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { render, screen, within } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import { beforeAll, describe, expect, it } from 'vitest'
@@ -10,10 +10,19 @@ const charts = [
     songId: 'song-a',
     title: 'Song A',
     artist: 'Artist A',
+    imageName: 'song-a',
     type: TypeEnum.DX,
     difficulty: DifficultyEnum.Master,
     level: '13+',
     internalLevelValue: 13.7,
+    version: VersionEnum.CiRCLEPLUS,
+    regions: {
+      jp: true,
+      intl: true,
+      cn: true,
+    },
+    isLocked: false,
+    isTypeUtage: false,
     releaseDate: '2025-05-01',
     href: '/songs/song-a/dx/master',
   },
@@ -71,7 +80,7 @@ describe('RecentPage', () => {
 
     const chart = listItem?.querySelector('article[itemscope][itemtype="https://schema.org/MusicRecording"]')
     expect(chart?.getAttribute('itemid')).toBe('https://dxrating.net/songs/song-a/dx/master')
-    expect(chart?.querySelector('h2[itemprop="name"]')?.textContent).toBe('Song A')
+    expect(chart?.querySelector('h2 [itemprop="name"]')?.textContent).toBe('Song A')
     expect(chart?.querySelector('[itemprop="byArtist"] [itemprop="name"]')?.textContent).toBe('Artist A')
     expect(chart?.querySelector('time[itemprop="datePublished"]')?.getAttribute('datetime')).toBe('2025-05-01')
   })
