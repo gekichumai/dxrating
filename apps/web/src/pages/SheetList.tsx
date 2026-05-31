@@ -8,6 +8,8 @@ import { useTranslation } from 'react-i18next'
 import IconMdiClose from '~icons/mdi/close'
 import MdiIconInfo from '~icons/mdi/information'
 import { ResponsiveDialog } from '../components/global/ResponsiveDialog'
+import { SearchQuerySeedList } from '../components/sheet/SearchQuerySeedList'
+import type { SearchQuerySeedSheet } from '../components/sheet/searchQuerySeed'
 import { SheetDialogContent } from '../components/sheet/SheetDialogContent'
 import { SheetListContainer } from '../components/sheet/SheetListContainer'
 import { SheetSortFilter, SheetSortFilterTrigger, type SheetSortFilterForm } from '../components/sheet/SheetSortFilter'
@@ -30,8 +32,14 @@ const SORT_DESCRIPTOR_MAPPING = {
 }
 
 type SearchParams = ReturnType<typeof searchRouteApi.useSearch>
+type SheetListProps = {
+  seedSheets?: readonly SearchQuerySeedSheet[]
+}
 
-const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
+const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly SearchQuerySeedSheet[] }> = ({
+  search,
+  seedSheets,
+}) => {
   const posthog = usePostHog()
   const { t } = useTranslation(['sheet'])
   const { data: sheets, isLoading } = useSheets({ acceptsPartialData: true })
@@ -224,6 +232,9 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
       elapsed,
     }
   }, [results, sortFilterOptions, inputQuery, version])
+  const showSeedResults = isLoading && inputQuery && seedSheets.length > 0
+  const summaryTotal = sheets?.length ?? filteredResults.length
+  const summaryProgress = summaryTotal > 0 ? filteredResults.length / summaryTotal : 0
 
   return (
     <SheetDetailsContextProvider queryActive={!!inputQuery}>
@@ -286,7 +297,7 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
           <div
             className="absolute -inset-4 bg-blue-900/20 -skew-x-8 translate-x-4 transition-width"
             style={{
-              width: `${(filteredResults.length / (sheets?.length ?? filteredResults.length)) * 100}%`,
+              width: `${summaryProgress * 100}%`,
             }}
           />
           <div className="relative z-1 flex items-center gap-2">
@@ -302,29 +313,33 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
         </div>
 
         {isLoading ? (
-          <div className="flex flex-col w-full">
-            {skeletonWidths.map((width, i) => (
-              <div
-                className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] px-5 py-2"
-                // oxlint-disable-next-line react/no-array-index-key -- index is stable
-                key={i}
-                style={{
-                  animationDelay: `${i * 40}ms`,
-                }}
-              >
-                <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] rounded bg-slate-6/50" />
-                <div className="flex flex-col gap-1">
-                  <div className="bg-slate-5/50 h-5 mb-1" style={{ width: `${width}rem` }}>
-                    &nbsp;
+          showSeedResults ? (
+            <SearchQuerySeedList sheets={seedSheets} />
+          ) : (
+            <div className="flex flex-col w-full">
+              {skeletonWidths.map((width, i) => (
+                <div
+                  className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] px-5 py-2"
+                  // oxlint-disable-next-line react/no-array-index-key -- index is stable
+                  key={i}
+                  style={{
+                    animationDelay: `${i * 40}ms`,
+                  }}
+                >
+                  <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] rounded bg-slate-6/50" />
+                  <div className="flex flex-col gap-1">
+                    <div className="bg-slate-5/50 h-5 mb-1" style={{ width: `${width}rem` }}>
+                      &nbsp;
+                    </div>
+                    <div className="w-24 bg-slate-3/50 h-3">&nbsp;</div>
                   </div>
-                  <div className="w-24 bg-slate-3/50 h-3">&nbsp;</div>
-                </div>
 
-                <div className="flex-1" />
-                <div className="w-10 bg-slate-5/50 h-6 mr-2">&nbsp;</div>
-              </div>
-            ))}
-          </div>
+                  <div className="flex-1" />
+                  <div className="w-10 bg-slate-5/50 h-6 mr-2">&nbsp;</div>
+                </div>
+              ))}
+            </div>
+          )
         ) : (
           <SheetListContainer
             sheets={filteredResults}
@@ -337,8 +352,8 @@ const SheetListInnerContent: FC<{ search: SearchParams }> = ({ search }) => {
   )
 }
 
-export const SheetList: FC = () => {
+export const SheetList: FC<SheetListProps> = ({ seedSheets = [] }) => {
   const search = searchRouteApi.useSearch()
 
-  return <SheetListInnerContent search={search} />
+  return <SheetListInnerContent search={search} seedSheets={seedSheets} />
 }

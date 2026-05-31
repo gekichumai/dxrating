@@ -1,5 +1,11 @@
+import { VersionEnum } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
-import { getSearchAcronymsWithServerAliases } from './songs'
+import {
+  createSheetsSearchEngine,
+  getFlattenedSheetsForVersion,
+  getSearchAcronymsWithServerAliases,
+  getSongs,
+} from './songs'
 
 describe('getSearchAcronymsWithServerAliases', () => {
   it('merges generated aliases with server aliases for the current song', () => {
@@ -16,5 +22,14 @@ describe('getSearchAcronymsWithServerAliases', () => {
         ],
       ),
     ).toEqual(['generated alias', 'shared alias', 'server alias'])
+  })
+
+  it('finds Japanese title matches for a prefilled URL query', () => {
+    const search = createSheetsSearchEngine({
+      songs: getSongs(),
+      sheets: getFlattenedSheetsForVersion(VersionEnum.CiRCLEPLUS),
+    })
+
+    expect(search('螺旋').map((sheet) => sheet.title)).toContain('ガラテアの螺旋')
   })
 })

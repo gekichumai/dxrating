@@ -46,13 +46,17 @@ export const getSearchAcronymsWithServerAliases = (
   ])
 }
 
-export const getFlattenedSheets = async (version: VersionEnum): Promise<FlattenedSheet[]> => {
+export const getFlattenedSheetsForVersion = (version: VersionEnum): FlattenedSheet[] => {
   return getDxdataSongCatalog(version).sheets.map((sheet) => ({
     ...sheet,
     difficulty: sheet.difficulty as DifficultyEnum,
     releaseDateTimestamp: sheet.releaseDateTimestamp as number,
     tags: [],
   }))
+}
+
+export const getFlattenedSheets = async (version: VersionEnum): Promise<FlattenedSheet[]> => {
+  return getFlattenedSheetsForVersion(version)
 }
 
 export const useSheets = ({ acceptsPartialData = false } = {}) => {
@@ -121,62 +125,63 @@ export const useSongs = () => {
   return useSWR(`dxdata::songs::${version}`, () => getSongs())
 }
 
-export const useSheetsSearchEngine = () => {
-  const { data: songs } = useSongs()
-  const { data: sheets } = useSheets({ acceptsPartialData: true })
-  const { data: serverAliases } = useServerAliases()
+type SheetsSearchEngineOptions = {
+  songs?: readonly Song[] | null
+  sheets?: readonly FlattenedSheet[] | null
+  serverAliases?: readonly ServerAlias[] | null
+}
 
-  const fuseInstance = useMemo(() => {
-    return new Fuse(
-      songs?.map((song) => ({
-        ...song,
-        searchAcronyms: getSearchAcronymsWithServerAliases(
-          {
-            songId: song.songId,
-            searchAcronyms: song.searchAcronyms.filter((acronym) => acronym.length < 70),
-          },
-          serverAliases,
-        ),
-      })) ?? [],
-      {
-        keys: [
-          {
-            name: 'searchAcronyms',
-            weight: 2,
-          },
-          {
-            name: 'title',
-            weight: 1,
-          },
-        ],
-        shouldSort: true,
-        threshold: 0.4,
-      },
-    )
-  }, [songs, serverAliases])
+export const createSheetsSearchEngine = ({
+  songs,
+  sheets,
+  serverAliases,
+}: SheetsSearchEngineOptions): ((term: string) => FlattenedSheet[]) => {
+  const availableSheets = sheets ?? []
+  const fuseInstance = new Fuse(
+    songs?.map((song) => ({
+      ...song,
+      searchAcronyms: getSearchAcronymsWithServerAliases(
+        {
+          songId: song.songId,
+          searchAcronyms: song.searchAcronyms.filter((acronym) => acronym.length < 70),
+        },
+        serverAliases,
+      ),
+    })) ?? [],
+    {
+      keys: [
+        {
+          name: 'searchAcronyms',
+          weight: 2,
+        },
+        {
+          name: 'title',
+          weight: 1,
+        },
+      ],
+      shouldSort: true,
+      threshold: 0.4,
+    },
+  )
 
-  const sheetsByInternalId = useMemo(() => {
-    const map = new Map<number, FlattenedSheet[]>()
+  const sheetsByInternalId = new Map<number, FlattenedSheet[]>()
 
-    for (const sheet of sheets ?? []) {
-      if (sheet.internalId === undefined) {
-        continue
-      }
-
-      const existing = map.get(sheet.internalId) ?? []
-      existing.push(sheet)
-      map.set(sheet.internalId, existing)
+  for (const sheet of availableSheets) {
+    if (sheet.internalId === undefined) {
+      continue
     }
 
-    return map
-  }, [sheets])
+    const existing = sheetsByInternalId.get(sheet.internalId) ?? []
+    existing.push(sheet)
+    sheetsByInternalId.set(sheet.internalId, existing)
+  }
 
-  const search = (term: string) => {
+  return (term: string) => {
     const trimmedTerm = term.trim()
 
     // Get Fuse search results (alias/title matches)
     const fuseResults = fuseInstance.search(trimmedTerm).flatMap((result) => {
-      return sheets?.filter((sheet) => sheet.songId === result.item.songId) ?? []
+      return availableSheets.filter((sheet) => sheet.songId === result.item.songId)
     })
 
     // Check for exact Music ID match
@@ -197,8 +202,14 @@ export const useSheetsSearchEngine = () => {
 
     return fuseResults
   }
+}
 
-  return search
+export const useSheetsSearchEngine = () => {
+  const { data: songs } = useSongs()
+  const { data: sheets } = useSheets({ acceptsPartialData: true })
+  const { data: serverAliases } = useServerAliases()
+
+  return useMemo(() => createSheetsSearchEngine({ songs, sheets, serverAliases }), [songs, sheets, serverAliases])
 }
 
 export const useFilteredSheets = (searchTerm: string) => {
