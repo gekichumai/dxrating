@@ -1,7 +1,26 @@
 import i18n from 'i18next'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Module } from 'i18next'
+import { i18nResources } from '@/locales/locales'
 import { createServerI18n, initI18n } from '../init-i18n'
+import { SUPPORTED_LOCALES } from '../locale'
+
+function flattenResourceKeys(value: unknown, prefix = ''): string[] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return [prefix]
+
+  return Object.entries(value as Record<string, unknown>).flatMap(([key, child]) =>
+    flattenResourceKeys(child, prefix ? `${prefix}.${key}` : key),
+  )
+}
+
+function collectEmptyStringKeys(value: unknown, prefix = ''): string[] {
+  if (value === '') return [prefix]
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return []
+
+  return Object.entries(value as Record<string, unknown>).flatMap(([key, child]) =>
+    collectEmptyStringKeys(child, prefix ? `${prefix}.${key}` : key),
+  )
+}
 
 describe('i18n initialization', () => {
   afterEach(() => {
@@ -26,6 +45,17 @@ describe('i18n initialization', () => {
     expect(createServerI18n('ja').t('root:pages.search.title')).toBe('譜面検索')
     expect(createServerI18n('zh-Hans').t('root:pages.search.title')).toBe('搜索谱面')
     expect(createServerI18n('zh-Hant').t('root:pages.search.title')).toBe('搜尋譜面')
+  })
+
+  it('keeps locale resources complete and non-empty', () => {
+    const expectedKeys = flattenResourceKeys(i18nResources.en).sort()
+
+    for (const locale of SUPPORTED_LOCALES) {
+      expect(flattenResourceKeys(i18nResources[locale]).sort(), `${locale} has missing or extra translations`).toEqual(
+        expectedKeys,
+      )
+      expect(collectEmptyStringKeys(i18nResources[locale]), `${locale} has blank translations`).toEqual([])
+    }
   })
 
   it('uses reviewed image alt copy across locales', () => {

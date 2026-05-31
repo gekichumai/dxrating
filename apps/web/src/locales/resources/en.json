@@ -338,7 +338,7 @@
     "io.import.diving-fish.import": "Import",
     "io.import.diving-fish.importing": "Importing...",
     "io.import.diving-fish.missing-profile-info": "Please enter your Diving-Fish profile",
-    "io.import.diving-fish.only-one-of-the-two-fields-should-be-filled": "Please enter your Diving-Fish profile",
+    "io.import.diving-fish.only-one-of-the-two-fields-should-be-filled": "Please fill only one of the two fields",
     "io.import.lxns.title": "Import from LXNS (落雪咖啡屋)",
     "io.import.lxns.login-required": "Login required",
     "io.import.lxns.description": "Connect your LXNS (maimai.lxns.net) account via OAuth to import your scores.",
