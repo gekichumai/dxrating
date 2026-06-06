@@ -74,3 +74,16 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Enable Markdown for Agents
+        run: pnpm --filter @gekichumai/dxrating-web run cf:enable-markdown
+        env:
+          CLOUDFLARE_ZONE_API_TOKEN: ${{ secrets.CLOUDFLARE_ZONE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_ZONE_NAME: dxrating.net
+
+      - name: Verify Markdown for Agents
+        run: pnpm --filter @gekichumai/dxrating-web run cf:verify-markdown
+        env:
+          MARKDOWN_FOR_AGENTS_URL: https://dxrating.net/search

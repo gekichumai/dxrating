@@ -1,7 +1,18 @@
 import { sentryGlobalFunctionMiddleware, sentryGlobalRequestMiddleware } from '@sentry/tanstackstart-react'
 import { createMiddleware, createStart } from '@tanstack/react-start'
 import { appendVaryHeader, detectServerLocale } from './setup/locale'
+import { acceptsMarkdown, normalizeMarkdownAcceptForHtmlRender } from './setup/markdownNegotiation'
 import { applySecurityReportHeaders } from './setup/security-headers'
+
+const markdownNegotiationMiddleware = createMiddleware().server(async ({ request, handlerType, next }) => {
+  const shouldVaryOnAccept = handlerType === 'router' && acceptsMarkdown(request)
+  if (handlerType === 'router') normalizeMarkdownAcceptForHtmlRender(request)
+  const result = await next()
+
+  if (shouldVaryOnAccept) appendVaryHeader(result.response.headers, 'Accept')
+
+  return result
+})
 
 const localeMiddleware = createMiddleware().server(async ({ request, next }) => {
   const locale = detectServerLocale(request)
@@ -24,7 +35,7 @@ const securityReportHeadersMiddleware = createMiddleware().server(async ({ next 
 
 export function buildStartOptions() {
   return {
-    requestMiddleware: [sentryGlobalRequestMiddleware, localeMiddleware, securityReportHeadersMiddleware],
+    requestMiddleware: [sentryGlobalRequestMiddleware, markdownNegotiationMiddleware, localeMiddleware, securityReportHeadersMiddleware],
     functionMiddleware: [sentryGlobalFunctionMiddleware],
   }
 }
