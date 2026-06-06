@@ -20,7 +20,11 @@ export default defineConfig({
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
     UnoCSS(),
     Icons({ compiler: 'jsx', jsx: 'react', autoInstall: true }),
-    tanstackStart(),
+    tanstackStart({
+      server: {
+        entry: './server.ts',
+      },
+    }),
     viteReact(),
     sentryTanstackStart({
       org: 'gekichumai',

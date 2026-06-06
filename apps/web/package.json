@@ -8,6 +8,8 @@
     "build": "vite build && tsc --noEmit",
     "preview": "vite preview",
     "deploy": "wrangler deploy",
+    "cf:enable-markdown": "node scripts/cloudflare-markdown-for-agents.mjs enable",
+    "cf:verify-markdown": "node scripts/cloudflare-markdown-for-agents.mjs verify",
     "cf-typegen": "wrangler types",
     "test": "vitest",
     "test:ui": "vitest --ui",

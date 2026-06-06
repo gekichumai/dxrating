@@ -4,7 +4,7 @@
   "compatibility_date": "2026-05-13",
   "compatibility_flags": ["nodejs_compat"],
   // Source config for TanStack Start's Cloudflare build. CI deploys the generated dist/server/wrangler.json.
-  "main": "@tanstack/react-start/server-entry",
+  "main": "src/server.ts",
   "workers_dev": true,
   "preview_urls": true,
 }
