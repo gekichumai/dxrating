@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node'
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { createMiddleware } from 'hono/factory'
 import { cors } from 'hono/cors'
@@ -23,6 +23,53 @@ import { RequestHeadersPlugin, ResponseHeadersPlugin } from '@orpc/server/plugin
 import { onError } from '@orpc/server'
 
 const app = new Hono<EvlogVariables>()
+
+const API_CATALOG_PROFILE_URL = 'https://www.rfc-editor.org/info/rfc9727'
+const API_CATALOG_CONTENT_TYPE = `application/linkset+json; profile="${API_CATALOG_PROFILE_URL}"`
+
+const getFirstHeaderValue = (value: string | undefined) => value?.split(',')[0]?.trim() || undefined
+
+const getRequestOrigin = (c: Context) => {
+  const requestUrl = new URL(c.req.url)
+  const protocol = getFirstHeaderValue(c.req.header('x-forwarded-proto')) ?? requestUrl.protocol.replace(/:$/, '')
+  const host = getFirstHeaderValue(c.req.header('x-forwarded-host')) ?? c.req.header('host') ?? requestUrl.host
+
+  return `${protocol}://${host}`
+}
+
+const buildApiCatalog = (origin: string) => ({
+  linkset: [
+    {
+      anchor: `${origin}/api/v1`,
+      'service-desc': [
+        {
+          href: `${origin}/spec.json`,
+          type: 'application/json',
+        },
+      ],
+      'service-doc': [
+        {
+          href: `${origin}/docs`,
+          type: 'text/html',
+        },
+      ],
+      status: [
+        {
+          href: `${origin}/health`,
+          type: 'application/json',
+        },
+      ],
+    },
+  ],
+})
+
+const setApiCatalogHeaders = (c: Context) => {
+  c.header('Content-Type', API_CATALOG_CONTENT_TYPE)
+  c.header(
+    'Link',
+    `</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"; profile="${API_CATALOG_PROFILE_URL}"`,
+  )
+}
 
 // Error handler
 app.onError((err, c) => {
@@ -77,7 +124,16 @@ app.use(
   '*',
   evlog({
     drain,
-    exclude: ['/health', '/version', '/robots.txt', '/docs', '/spec.json', '/', '/api/v1/monitoring/tunnel'],
+    exclude: [
+      '/health',
+      '/version',
+      '/robots.txt',
+      '/docs',
+      '/spec.json',
+      '/',
+      '/.well-known/api-catalog',
+      '/api/v1/monitoring/tunnel',
+    ],
   }) as unknown as MiddlewareHandler,
 )
 
@@ -96,6 +152,17 @@ app.get('/', (c) => c.redirect('/docs'))
 
 // Health endpoint
 app.get('/health', (c) => c.json({ status: 'ok' }))
+
+// API catalog for automated API discovery (RFC 9727)
+app.get('/.well-known/api-catalog', (c) => {
+  setApiCatalogHeaders(c)
+  return c.body(JSON.stringify(buildApiCatalog(getRequestOrigin(c))), 200)
+})
+
+app.on('HEAD', '/.well-known/api-catalog', (c) => {
+  setApiCatalogHeaders(c)
+  return c.body(null, 200)
+})
 
 // Build provenance endpoint
 app.get('/version', async (c) => {

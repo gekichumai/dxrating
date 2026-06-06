@@ -16,6 +16,52 @@ describe('Health & Basic Endpoints', () => {
     expect(body.status).toBe('ok')
   })
 
+  it('GET /.well-known/api-catalog returns RFC 9727 linkset JSON', async () => {
+    const res = await fetch(`${getBaseUrl()}/.well-known/api-catalog`)
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe(
+      'application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"',
+    )
+
+    const body = await res.json()
+    expect(body).toEqual({
+      linkset: [
+        {
+          anchor: `${getBaseUrl()}/api/v1`,
+          'service-desc': [
+            {
+              href: `${getBaseUrl()}/spec.json`,
+              type: 'application/json',
+            },
+          ],
+          'service-doc': [
+            {
+              href: `${getBaseUrl()}/docs`,
+              type: 'text/html',
+            },
+          ],
+          status: [
+            {
+              href: `${getBaseUrl()}/health`,
+              type: 'application/json',
+            },
+          ],
+        },
+      ],
+    })
+  })
+
+  it('HEAD /.well-known/api-catalog exposes api-catalog link metadata', async () => {
+    const res = await fetch(`${getBaseUrl()}/.well-known/api-catalog`, { method: 'HEAD' })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe(
+      'application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"',
+    )
+    expect(res.headers.get('link')).toBe(
+      '</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"; profile="https://www.rfc-editor.org/info/rfc9727"',
+    )
+  })
+
   it('GET /robots.txt returns 200', async () => {
     const res = await fetch(`${getBaseUrl()}/robots.txt`)
     expect(res.status).toBe(200)
