@@ -24,7 +24,8 @@ async function cloudflareFetch(path, init = {}) {
 
   const body = await response.json().catch(() => undefined)
   if (!response.ok || body?.success === false) {
-    const message = body?.errors?.map((error) => error.message).join('; ') || response.statusText
+    const errors = Array.isArray(body?.errors) ? body.errors : []
+    const message = errors.map((error) => error.message).join('; ') || response.statusText
     throw new Error(`Cloudflare API request failed: ${message}`)
   }
 
