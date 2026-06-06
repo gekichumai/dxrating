@@ -4,6 +4,7 @@ import { StartServer, createStartHandler } from '@tanstack/react-start/server'
 import { renderRouterToStream } from '@tanstack/react-router/ssr/server'
 import { createElement } from 'react'
 import { createServerEntry, type ServerEntry } from '@tanstack/react-start/server-entry'
+import { applyHomepageAgentDiscoveryHeaders } from './setup/agent-discovery'
 import { BUNDLE } from './utils/bundle'
 import { appendVaryHeader, detectServerLocale } from './setup/locale'
 import { finishServerTimingSpan, setServerTimingHeader, startServerTimingSpan } from './setup/server-timing'
@@ -23,6 +24,7 @@ const startHandler = createStartHandler(async ({ request, router, responseHeader
   responseHeaders.set('Content-Language', locale)
   appendVaryHeader(responseHeaders, 'Cookie')
   appendVaryHeader(responseHeaders, 'Accept-Language')
+  applyHomepageAgentDiscoveryHeaders(responseHeaders, request)
 
   const setupMetric = finishServerTimingSpan(setupTiming)
   const response = await renderRouterToStream({
@@ -32,6 +34,7 @@ const startHandler = createStartHandler(async ({ request, router, responseHeader
     children: createElement(StartServer, { router }),
   })
 
+  applyHomepageAgentDiscoveryHeaders(response.headers, request)
   setServerTimingHeader(response.headers, [setupMetric, finishServerTimingSpan(ssrTiming)])
 
   return response

@@ -1,5 +1,6 @@
 import { sentryGlobalFunctionMiddleware, sentryGlobalRequestMiddleware } from '@sentry/tanstackstart-react'
 import { createMiddleware, createStart } from '@tanstack/react-start'
+import { applyHomepageAgentDiscoveryHeaders } from './setup/agent-discovery'
 import { appendVaryHeader, detectServerLocale } from './setup/locale'
 import { applySecurityReportHeaders } from './setup/security-headers'
 
@@ -22,9 +23,22 @@ const securityReportHeadersMiddleware = createMiddleware().server(async ({ next 
   return result
 })
 
+const agentDiscoveryHeadersMiddleware = createMiddleware().server(async ({ request, next }) => {
+  const result = await next()
+
+  applyHomepageAgentDiscoveryHeaders(result.response.headers, request)
+
+  return result
+})
+
 export function buildStartOptions() {
   return {
-    requestMiddleware: [sentryGlobalRequestMiddleware, localeMiddleware, securityReportHeadersMiddleware],
+    requestMiddleware: [
+      sentryGlobalRequestMiddleware,
+      localeMiddleware,
+      securityReportHeadersMiddleware,
+      agentDiscoveryHeadersMiddleware,
+    ],
     functionMiddleware: [sentryGlobalFunctionMiddleware],
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildRobotsTxt } from '../robots[.]txt'
+import { CONTENT_SIGNAL_DIRECTIVE, buildRobotsTxt } from '../robots[.]txt'
 
 describe('buildRobotsTxt', () => {
   it('explicitly allows search, user-fetch, and training AI crawlers', () => {
@@ -17,9 +17,11 @@ describe('buildRobotsTxt', () => {
       'Googlebot',
       'Applebot',
     ]) {
-      expect(robots).toContain(`User-agent: ${userAgent}\nAllow: /`)
+      expect(robots).toContain(`User-agent: ${userAgent}\nAllow: /\n${CONTENT_SIGNAL_DIRECTIVE}`)
     }
 
+    expect(robots).toContain(`User-agent: *\nAllow: /\n${CONTENT_SIGNAL_DIRECTIVE}`)
+    expect(robots).toContain('Content-Signal: ai-train=yes, search=yes, ai-input=yes')
     expect(robots).not.toContain('Disallow: /')
     expect(robots).toContain('Sitemap: https://dxrating.net/sitemap.xml')
     expect(robots).toContain('LLM-Info: https://dxrating.net/llms.txt')

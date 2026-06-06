@@ -14,8 +14,10 @@ const ALLOWED_USER_AGENTS = [
   '*',
 ]
 
+export const CONTENT_SIGNAL_DIRECTIVE = 'Content-Signal: ai-train=yes, search=yes, ai-input=yes'
+
 export function buildRobotsTxt() {
-  return `${ALLOWED_USER_AGENTS.map((userAgent) => `User-agent: ${userAgent}\nAllow: /`).join('\n\n')}
+  return `${ALLOWED_USER_AGENTS.map((userAgent) => `User-agent: ${userAgent}\nAllow: /\n${CONTENT_SIGNAL_DIRECTIVE}`).join('\n\n')}
 
 Sitemap: https://dxrating.net/sitemap.xml
 LLM-Info: https://dxrating.net/llms.txt`
