@@ -29,10 +29,30 @@ const API_CATALOG_CONTENT_TYPE = `application/linkset+json; profile="${API_CATAL
 
 const getFirstHeaderValue = (value: string | undefined) => value?.split(',')[0]?.trim() || undefined
 
+const getValidProtocol = (value: string | undefined) => {
+  const protocol = value?.toLowerCase()
+  return protocol === 'http' || protocol === 'https' ? protocol : undefined
+}
+
+const isValidHost = (host: string | undefined) => {
+  if (!host || /[\s/@\\]/.test(host)) return false
+
+  try {
+    const url = new URL(`https://${host}`)
+    return url.hostname.length > 0 && url.pathname === '/' && !url.search && !url.hash
+  } catch {
+    return false
+  }
+}
+
 const getRequestOrigin = (c: Context) => {
   const requestUrl = new URL(c.req.url)
-  const protocol = getFirstHeaderValue(c.req.header('x-forwarded-proto')) ?? requestUrl.protocol.replace(/:$/, '')
-  const host = getFirstHeaderValue(c.req.header('x-forwarded-host')) ?? c.req.header('host') ?? requestUrl.host
+  const forwardedProtocol = getValidProtocol(getFirstHeaderValue(c.req.header('x-forwarded-proto')))
+  const forwardedHost = getFirstHeaderValue(c.req.header('x-forwarded-host'))
+  const hostHeader = getFirstHeaderValue(c.req.header('host'))
+
+  const protocol = forwardedProtocol ?? requestUrl.protocol.replace(/:$/, '')
+  const host = isValidHost(forwardedHost) ? forwardedHost : isValidHost(hostHeader) ? hostHeader : requestUrl.host
 
   return `${protocol}://${host}`
 }
@@ -65,6 +85,7 @@ const buildApiCatalog = (origin: string) => ({
 
 const setApiCatalogHeaders = (c: Context) => {
   c.header('Content-Type', API_CATALOG_CONTENT_TYPE)
+  c.header('Vary', 'Host, X-Forwarded-Host, X-Forwarded-Proto')
   c.header(
     'Link',
     `</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"; profile="${API_CATALOG_PROFILE_URL}"`,
