@@ -50,6 +50,10 @@ const envSchema = z.object({
   // PostHog (for analytics API queries)
   POSTHOG_PROJECT_ID: optionalString,
   POSTHOG_API_KEY: optionalString,
+
+  // Axiom (for evlog wide events)
+  AXIOM_API_KEY: optionalString,
+  AXIOM_DATASET: optionalString,
 })
 
 export const deriveCrossSubDomainCookieDomain = ({
@@ -106,5 +110,9 @@ export const config = {
   posthog: {
     projectId: env.POSTHOG_PROJECT_ID,
     apiKey: env.POSTHOG_API_KEY,
+  },
+  axiom: {
+    apiKey: env.AXIOM_API_KEY,
+    dataset: env.AXIOM_DATASET,
   },
 } as const
