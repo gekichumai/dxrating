@@ -1,5 +1,6 @@
 import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
 import type { NoteCounts } from '@gekichumai/dxdata'
+import type { SheetDifficulty } from '@gekichumai/maimai-domain'
 import { ImageResponse } from '@takumi-rs/image-response'
 import type { Handler } from 'hono'
 import { createHash } from 'node:crypto'
@@ -29,6 +30,11 @@ const DIFFICULTY_DISPLAY: Record<DifficultyEnum, DifficultyDisplay> = {
   [DifficultyEnum.ReMaster]: { title: 'Re:MASTER', color: '#ba67f8', textColor: '#ffffff' },
 }
 
+const UTAGE_DIFFICULTY_COLORS = {
+  color: '#ef4444',
+  textColor: '#ffffff',
+} satisfies Pick<DifficultyDisplay, 'color' | 'textColor'>
+
 const TYPE_DISPLAY: Record<TypeEnum, string> = {
   [TypeEnum.DX]: 'DX',
   [TypeEnum.STD]: 'Standard',
@@ -46,7 +52,7 @@ export type ChartOgImageData = {
   detailUrl: string
   type: TypeEnum
   typeLabel: string
-  difficulty: DifficultyEnum
+  difficulty: SheetDifficulty
   difficultyLabel: string
   difficultyColor: string
   difficultyTextColor: string
@@ -85,7 +91,10 @@ export function resolveChartOgImageData(songId: string, type: string, difficulty
   const sheet = song.sheets.find((candidate) => candidate.type === type && candidate.difficulty === difficulty)
   if (!sheet) return null
 
-  const difficultyDisplay = DIFFICULTY_DISPLAY[sheet.difficulty]
+  const sheetDifficulty = sheet.difficulty as SheetDifficulty
+  const difficultyDisplay = resolveDifficultyDisplay(sheet.type, sheetDifficulty)
+  if (!difficultyDisplay) return null
+
   const levelParts = formatInternalLevelLabelParts(sheet.internalLevelValue)
 
   return {
@@ -98,7 +107,7 @@ export function resolveChartOgImageData(songId: string, type: string, difficulty
     detailUrl: buildChartOgDetailUrl(song.songId, sheet.type, sheet.difficulty),
     type: sheet.type,
     typeLabel: TYPE_DISPLAY[sheet.type],
-    difficulty: sheet.difficulty,
+    difficulty: sheetDifficulty,
     difficultyLabel: difficultyDisplay.title,
     difficultyColor: difficultyDisplay.color,
     difficultyTextColor: difficultyDisplay.textColor,
@@ -109,6 +118,24 @@ export function resolveChartOgImageData(songId: string, type: string, difficulty
     noteCounts: sheet.noteCounts,
     version: sheet.version,
   }
+}
+
+function resolveDifficultyDisplay(type: TypeEnum, difficulty: SheetDifficulty): DifficultyDisplay | null {
+  const standardDifficultyDisplay = DIFFICULTY_DISPLAY[difficulty as DifficultyEnum]
+  if (standardDifficultyDisplay) return standardDifficultyDisplay
+
+  if (isUtageType(type)) {
+    return {
+      title: difficulty,
+      ...UTAGE_DIFFICULTY_COLORS,
+    }
+  }
+
+  return null
+}
+
+function isUtageType(type: TypeEnum) {
+  return type === TypeEnum.UTAGE || type === TypeEnum.UTAGE2P
 }
 
 export function createChartOgImageHandler(renderImage: RenderChartOgImage = renderChartOgImage): Handler {

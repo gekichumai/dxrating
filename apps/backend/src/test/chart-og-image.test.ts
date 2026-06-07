@@ -6,6 +6,7 @@ import {
   createChartOgImageHandler,
   formatInternalLevelLabelParts,
   getTitleLayout,
+  resolveChartOgImageData,
 } from '../services/functions/chart-og-image/index.js'
 
 const song = dxdata.songs.find((candidate) =>
@@ -19,6 +20,8 @@ const sheet = song.sheets.find(
 )
 
 if (!sheet) throw new Error('Expected fixture song to include selected sheet')
+
+const utageSongId = '[宴]セガサターン起動音[H.][Remix]'
 
 describe('chart OG image handler', () => {
   it('serves chart images from the API v1 endpoint format', async () => {
@@ -34,6 +37,16 @@ describe('chart OG image handler', () => {
     )
     expect(res.headers.get('etag')).toMatch(/^"sha256-[a-f0-9]{64}"$/)
     expect(res.headers.get('x-content-type-options')).toBe('nosniff')
+    expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(0)
+  })
+
+  it('serves Utage chart images with custom difficulty labels from the API v1 endpoint format', async () => {
+    const res = await app.request(
+      `/api/v1/songs/${encodeURIComponent(utageSongId)}/${TypeEnum.UTAGE}/${encodeURIComponent('【宴】')}/og-image`,
+    )
+
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('image/png')
     expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(0)
   })
 
@@ -87,6 +100,24 @@ describe('chart OG image handler', () => {
 
     expect(res.status).toBe(404)
     expect(renderImage).not.toHaveBeenCalled()
+  })
+})
+
+describe('chart OG image data resolution', () => {
+  it('supports Utage charts with custom difficulty labels', () => {
+    const data = resolveChartOgImageData(utageSongId, TypeEnum.UTAGE, '【宴】')
+
+    expect(data).toMatchObject({
+      detailUrl: `https://dxrating.net/songs/${encodeURIComponent(utageSongId)}/${TypeEnum.UTAGE}/${encodeURIComponent('【宴】')}`,
+      difficulty: '【宴】',
+      difficultyLabel: '【宴】',
+      level: '13+?',
+      levelLabel: 'Lv 13.6',
+      songId: utageSongId,
+      title: utageSongId,
+      type: TypeEnum.UTAGE,
+      typeLabel: 'Utage',
+    })
   })
 })
 
