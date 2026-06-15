@@ -13,17 +13,17 @@
     "oxfmt": "^0.49.0",
     "oxlint": "^1.64.0",
     "tsconfig": "workspace:*",
-    "turbo": "^2.9.6"
+    "turbo": "^2.9.17"
   },
   "engines": {
     "node": "25.9.0"
   },
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@10.34.1",
   "pnpm": {
     "overrides": {
       "happy-dom": ">=20.9.0",
       "flatted": ">=3.4.2",
-      "effect": ">=3.21.0"
+      "effect": ">=3.21.3"
     },
     "onlyBuiltDependencies": [
       "bcrypt",
