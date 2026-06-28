@@ -142,6 +142,7 @@ export const importFromNETRecords = async (
   modifyEntries: ListActions<PlayEntry>,
   mode: 'merge' | 'replace',
   onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
+  authParams?: AuthParams,
 ) => {
   if (importInFlight) {
     console.warn('[importFromNETRecords] Import already in progress, skipping duplicate call')
@@ -156,15 +157,24 @@ export const importFromNETRecords = async (
     icon: <CircularProgress size="1rem" thickness={5} />,
   })
   try {
-    const stored = localStorage.getItem('import-net-records')
-    if (!stored) {
+    const storedAuthParams = (() => {
+      const stored = localStorage.getItem('import-net-records')
+      if (!stored) return null
+      const parsed = JSON.parse(stored) as {
+        region: 'jp' | 'intl'
+        username: string
+        password: string
+      }
+      return parsed
+    })()
+    const params = authParams ?? storedAuthParams
+    if (!params) {
       toast.error(t('rating-calculator:io.import.net-records.no-credentials'), {
         id: toastId,
       })
       throw new Error('No credentials stored.')
     }
-    const parsed = JSON.parse(stored)
-    const { region, username, password } = parsed
+    const { region, username, password } = params
     const data = await fetchNetRecords({ region, username, password }, (state, progress) => {
       onProgress?.(state, progress)
       toast.loading(

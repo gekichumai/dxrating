@@ -68,7 +68,8 @@
     "ts-pattern": "catalog:",
     "type-fest": "^4.41.0",
     "use-long-press": "^3.3.0",
-    "web-haptics": "^0.0.6"
+    "web-haptics": "^0.0.6",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.36.3",

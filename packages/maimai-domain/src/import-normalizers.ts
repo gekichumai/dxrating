@@ -382,7 +382,7 @@ function normalizeAchievement(value: number, scale: number): number | null {
   if (!Number.isFinite(value)) return null
 
   const rate = value / scale
-  if (rate < 0 || rate > 100.5) return null
+  if (rate < 0 || rate > 101) return null
   return rate
 }
 

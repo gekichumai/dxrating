@@ -69,7 +69,7 @@ export const ImportFromNETRecordsListItem: FC<{
   return (
     <>
       {open && (
-        <Dialog open={open} onClose={handleClose}>
+        <Dialog open={open} onClose={handleClose} onKeyDown={(event) => event.stopPropagation()}>
           <ImportFromNETRecordsDialogContent modifyEntries={modifyEntries} onClose={handleClose} />
         </Dialog>
       )}
@@ -142,9 +142,15 @@ const ImportFromNETRecordsDialogContent: FC<{
   const handleImport = async () => {
     setBusy(true)
     try {
-      await importFromNETRecords(appVersion, modifyEntries, mappedAutoImport || 'replace', (state, progress) => {
-        setProgress({ state, progress })
-      })
+      await importFromNETRecords(
+        appVersion,
+        modifyEntries,
+        mappedAutoImport || 'replace',
+        (state, progress) => {
+          setProgress({ state, progress })
+        },
+        { region, username, password },
+      )
       onClose()
     } catch {
       setProgress((progress) => ({

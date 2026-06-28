@@ -99,6 +99,19 @@ describe('Rating Import normalizers', () => {
     expect(result.entries[0]!.comboFlag).toBe('ap')
   })
 
+  it('keeps MaimaiNET SSS+ achievements above the rating cap', () => {
+    const result = normalizeMaimaiNetRecords(catalog, [
+      {
+        sheet: { songId: 'Song A', type: 'dx', difficulty: 'master' },
+        achievement: { rate: 1008427, dxScore: { achieved: 1, total: 2 }, flags: ['allPerfect'] },
+      },
+    ])
+
+    expect(result.entries).toHaveLength(1)
+    expect(result.entries[0]!.achievementRate).toBe(100.8427)
+    expect(result.entries[0]!.comboFlag).toBe('ap')
+  })
+
   it('normalizes MaimaiNET visible titles when song id differs from title', () => {
     const titleCatalog = buildSongCatalog(
       {
@@ -258,7 +271,7 @@ describe('Rating Import normalizers', () => {
     const maimaiNet = normalizeMaimaiNetRecords(catalog, [
       {
         sheet: { songId: 'Song A', type: 'dx', difficulty: 'master' },
-        achievement: { rate: 1006000, dxScore: { achieved: 1, total: 2 }, flags: [] },
+        achievement: { rate: 1011000, dxScore: { achieved: 1, total: 2 }, flags: [] },
       },
     ])
     const divingFish = normalizeDivingFishRows(catalog, [
