@@ -55,7 +55,7 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
                 <meta itemProp="position" content={String(index + 1)} />
                 <link itemProp="url" href={chartUrl} />
                 <a
-                  className="block text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
+                  className="block px-4 text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
                   href={chart.href}
                 >
                   <article className="block" itemScope itemType="https://schema.org/MusicRecording" itemID={chartUrl}>
