@@ -215,4 +215,6 @@ export interface TypeElement {
 export interface VersionElement {
   version: VersionEnum
   abbr: string
+  /** Version launch date (YYYY-MM-DD), when present in dxdata.json */
+  releaseDate?: string
 }
