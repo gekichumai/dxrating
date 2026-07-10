@@ -205,15 +205,15 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
             const aValue = a[descriptor]
             const bValue = b[descriptor]
 
-            // null or undefined goes to the end
+            // null / undefined always sort last (both asc and desc)
             if (aValue == null && bValue == null) {
               return 0
             }
             if (aValue == null) {
-              return -1
+              return 1
             }
             if (bValue == null) {
-              return 1
+              return -1
             }
 
             if (aValue < bValue) {

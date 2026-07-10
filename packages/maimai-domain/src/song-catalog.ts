@@ -13,8 +13,57 @@ export interface SongCatalog {
 export type ParsedCatalogSheetId = SheetIdentity
 
 export function buildSongCatalog(data: DXData, version: VersionEnum): SongCatalog {
-  const sheets = data.songs.flatMap((song) => projectSong(song, version))
+  const latestReleaseDateByVersion = buildLatestReleaseDateByVersion(data)
+  const sheets = data.songs.flatMap((song) => projectSong(song, version, latestReleaseDateByVersion))
   return createSongCatalog(version, sheets)
+}
+
+/**
+ * For each game version, the latest known sheet release date (YYYY-MM-DD).
+ * Used when a sheet has no releaseDate so sort/order can treat it as among the
+ * last songs released in that version (newest-first puts them near the top).
+ */
+export function buildLatestReleaseDateByVersion(data: DXData): Map<string, string> {
+  const maxByVersion = new Map<string, string>()
+
+  for (const song of data.songs) {
+    for (const sheet of song.sheets) {
+      if (!sheet.releaseDate) continue
+      const current = maxByVersion.get(sheet.version)
+      if (!current || sheet.releaseDate > current) {
+        maxByVersion.set(sheet.version, sheet.releaseDate)
+      }
+    }
+  }
+
+  for (const versionMeta of data.versions) {
+    if (!maxByVersion.has(versionMeta.version) && versionMeta.releaseDate) {
+      maxByVersion.set(versionMeta.version, versionMeta.releaseDate)
+    }
+  }
+
+  return maxByVersion
+}
+
+export function releaseDateToTimestamp(releaseDate: string): number {
+  return new Date(`${releaseDate}T06:00:00+09:00`).valueOf()
+}
+
+/**
+ * Resolve a sort-friendly release timestamp.
+ * Prefer the sheet's own releaseDate; if missing, fall back to the latest
+ * known release date for that sheet's version.
+ */
+export function resolveReleaseDateTimestamp(
+  releaseDate: string | undefined,
+  version: string,
+  latestReleaseDateByVersion: ReadonlyMap<string, string>,
+): number | null {
+  if (releaseDate) {
+    return releaseDateToTimestamp(releaseDate)
+  }
+  const fallback = latestReleaseDateByVersion.get(version)
+  return fallback ? releaseDateToTimestamp(fallback) : null
 }
 
 export function createSongCatalog(version: VersionEnum, sheets: readonly VersionedSheet[]): SongCatalog {
@@ -64,7 +113,11 @@ export function createSongCatalog(version: VersionEnum, sheets: readonly Version
   }
 }
 
-function projectSong(song: Song, version: VersionEnum): VersionedSheet[] {
+function projectSong(
+  song: Song,
+  version: VersionEnum,
+  latestReleaseDateByVersion: ReadonlyMap<string, string>,
+): VersionedSheet[] {
   return song.sheets.map((sheet) => {
     const identity = toSheetIdentity(song.songId, sheet.type, sheet.difficulty as SheetDifficulty)
     const isTypeUtage = sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P
@@ -76,7 +129,7 @@ function projectSong(song: Song, version: VersionEnum): VersionedSheet[] {
       identity,
       isTypeUtage,
       isRatingEligible: !isTypeUtage,
-      releaseDateTimestamp: sheet.releaseDate ? new Date(`${sheet.releaseDate}T06:00:00+09:00`).valueOf() : null,
+      releaseDateTimestamp: resolveReleaseDateTimestamp(sheet.releaseDate, sheet.version, latestReleaseDateByVersion),
       internalLevelValue: sheet.multiverInternalLevelValue?.[version] ?? sheet.internalLevelValue,
     }
   })
