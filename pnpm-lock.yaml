@@ -167,8 +167,8 @@ importers:
         specifier: ^0.45.2
         version: 0.45.2(@cloudflare/workers-types@4.20260508.1)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.20.0)(@types/sql.js@1.4.11)(kysely@0.28.17)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.9)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(sql.js@1.14.1)
       evlog:
-        specifier: ^2.13.0
-        version: 2.13.0(@tanstack/start-client-core@1.169.4)(better-auth@1.6.11(923430c5de17614d9f314599b2420e7f))(hono@4.12.14)(ofetch@1.5.1)(react@19.2.6)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.21.0))
+        specifier: ^2.18.1
+        version: 2.18.1(@orpc/server@1.14.3(@opentelemetry/api@1.9.0)(crossws@0.4.5(srvx@0.11.15))(ws@8.20.0))(@tanstack/start-client-core@1.169.4)(hono@4.12.14)(ofetch@1.5.1)(react@19.2.6)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.21.0))
       hono:
         specifier: 'catalog:'
         version: 4.12.14
@@ -5305,36 +5305,36 @@ packages:
   estree-walker@3.0.3:
     resolution: {integrity: sha512-7RUKfXgSMMkzt6ZuXmqapOurLGPPfgj6l9uRZ7lRGolvk0y2yocc35LdcxKC5PQZdn2DMqioAQ2NoWcrTKmm6g==}
 
-  evlog@2.13.0:
-    resolution: {integrity: sha512-/tpm+MgS7p00O5400b+t7thKgeNBRPj56InQF1+XUloAuZIKtTN1NQlbQq3B+KvnYoBk+Md985sB7HAcJgd0uQ==}
+  evlog@2.18.1:
+    resolution: {integrity: sha512-uP7NNcmgQST0VdJ5c+gm4uBOOQDc/lGDWwH6aRS2H4C6mu4Hm7N8bCi6cSKIz8+If6pD2uA5EgPuhvI7OH+SHA==}
     peerDependencies:
-      '@nestjs/common': '>=11.1.18'
+      '@nestjs/common': '>=11.1.19'
       '@nuxt/kit': ^4.4.2
-      '@tanstack/start-client-core': ^1.167.9
-      ai: '>=6.0.154'
-      better-auth: '>=1.2.0'
+      '@orpc/server': '>=1.14.0'
+      '@tanstack/start-client-core': ^1.167.20
+      ai: '>=6.0.168'
       elysia: '>=1.4.28'
       express: '>=5.2.1'
-      fastify: '>=5.8.4'
+      fastify: '>=5.8.5'
       h3: ^1.15.11
-      hono: ''
-      next: '>=16.2.3'
+      hono: '>=4.11.0'
+      next: '>=16.2.4'
       nitro: ^3.0.260311-beta
       nitropack: ^2.13.3
       ofetch: ^1.5.1
       react: '>=19.2.5'
-      react-router: '>=7.14.0'
+      react-router: '>=7.14.2'
       vite: ^7.0.0 || ^8.0.0
     peerDependenciesMeta:
       '@nestjs/common':
         optional: true
       '@nuxt/kit':
         optional: true
+      '@orpc/server':
+        optional: true
       '@tanstack/start-client-core':
         optional: true
       ai:
-        optional: true
-      better-auth:
         optional: true
       elysia:
         optional: true
@@ -12399,10 +12399,10 @@ snapshots:
     dependencies:
       '@types/estree': 1.0.8
 
-  evlog@2.13.0(@tanstack/start-client-core@1.169.4)(better-auth@1.6.11(923430c5de17614d9f314599b2420e7f))(hono@4.12.14)(ofetch@1.5.1)(react@19.2.6)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.21.0)):
+  evlog@2.18.1(@orpc/server@1.14.3(@opentelemetry/api@1.9.0)(crossws@0.4.5(srvx@0.11.15))(ws@8.20.0))(@tanstack/start-client-core@1.169.4)(hono@4.12.14)(ofetch@1.5.1)(react@19.2.6)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.21.0)):
     optionalDependencies:
+      '@orpc/server': 1.14.3(@opentelemetry/api@1.9.0)(crossws@0.4.5(srvx@0.11.15))(ws@8.20.0)
       '@tanstack/start-client-core': 1.169.4
-      better-auth: 1.6.11(923430c5de17614d9f314599b2420e7f)
       hono: 4.12.14
       ofetch: 1.5.1
       react: 19.2.6
