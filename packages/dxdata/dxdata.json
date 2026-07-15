@@ -89692,7 +89692,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2017-07-11"
+                    "releaseDate": "2017-07-11",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.4
+                    }
                 },
                 {
                     "type": "std",
@@ -90479,7 +90482,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2017-07-25"
+                    "releaseDate": "2017-07-25",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.7
+                    }
                 },
                 {
                     "type": "std",
@@ -247304,7 +247310,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-04-01"
+                    "releaseDate": "2026-04-01",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.2
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -247407,7 +247416,10 @@
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
                     "internalId": 11956,
-                    "releaseDate": "2026-04-03"
+                    "releaseDate": "2026-04-03",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 12.9
+                    }
                 },
                 {
                     "type": "dx",
@@ -247437,7 +247449,10 @@
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
                     "internalId": 11956,
-                    "releaseDate": "2026-04-03"
+                    "releaseDate": "2026-04-03",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 14.7
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -247558,7 +247573,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-04-03"
+                    "releaseDate": "2026-04-03",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.1
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -247679,7 +247697,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-04-03"
+                    "releaseDate": "2026-04-03",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.6
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -247773,7 +247794,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-04-03"
+                    "releaseDate": "2026-04-03",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 12.8
+                    }
                 },
                 {
                     "type": "dx",
@@ -247800,7 +247824,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-04-03"
+                    "releaseDate": "2026-04-03",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 14.3
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -247921,7 +247948,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-04-17"
+                    "releaseDate": "2026-04-17",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.4
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -248015,7 +248045,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-04-17"
+                    "releaseDate": "2026-04-17",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 12.0
+                    }
                 },
                 {
                     "type": "dx",
@@ -248042,7 +248075,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-04-17"
+                    "releaseDate": "2026-04-17",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 14.5
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -248136,7 +248172,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-04-17"
+                    "releaseDate": "2026-04-17",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 12.9
+                    }
                 },
                 {
                     "type": "dx",
@@ -248163,7 +248202,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-04-17"
+                    "releaseDate": "2026-04-17",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 14.7
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -248284,7 +248326,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-05-01"
+                    "releaseDate": "2026-05-01",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.4
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -248405,7 +248450,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-05-01"
+                    "releaseDate": "2026-05-01",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.7
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -248526,7 +248574,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-05-01"
+                    "releaseDate": "2026-05-01",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.2
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -248647,7 +248698,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-05-08"
+                    "releaseDate": "2026-05-08",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.3
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -248768,7 +248822,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-05-08"
+                    "releaseDate": "2026-05-08",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.3
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -248889,7 +248946,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-05-08"
+                    "releaseDate": "2026-05-08",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 14.3
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -249010,7 +249070,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-05-14"
+                    "releaseDate": "2026-05-14",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.8
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -249131,7 +249194,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-05-14"
+                    "releaseDate": "2026-05-14",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.4
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -249252,7 +249318,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-05-14"
+                    "releaseDate": "2026-05-14",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.2
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -249414,7 +249483,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-05-29"
+                    "releaseDate": "2026-05-29",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.1
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -249535,7 +249607,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-05-29"
+                    "releaseDate": "2026-05-29",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 11.7
+                    }
                 },
                 {
                     "type": "dx",
@@ -249562,7 +249637,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-05-29"
+                    "releaseDate": "2026-05-29",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.4
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -249683,7 +249761,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-05-29"
+                    "releaseDate": "2026-05-29",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.6
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -249886,7 +249967,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-06-12"
+                    "releaseDate": "2026-06-12",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.9
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -250007,7 +250091,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-06-12"
+                    "releaseDate": "2026-06-12",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.9
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -250128,7 +250215,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-06-12"
+                    "releaseDate": "2026-06-12",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.8
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -250222,7 +250312,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-06-12"
+                    "releaseDate": "2026-06-12",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 12.8
+                    }
                 },
                 {
                     "type": "dx",
@@ -250249,7 +250342,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-06-12"
+                    "releaseDate": "2026-06-12",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 14.5
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -250370,7 +250466,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-06-26"
+                    "releaseDate": "2026-06-26",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.3
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -250491,7 +250590,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-06-26"
+                    "releaseDate": "2026-06-26",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.6
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -250612,7 +250714,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-06-26"
+                    "releaseDate": "2026-06-26",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.4
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -250733,7 +250838,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-06-26"
+                    "releaseDate": "2026-06-26",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 12.8
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -250936,7 +251044,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-07-02"
+                    "releaseDate": "2026-07-02",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.4
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -251057,7 +251168,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-07-02"
+                    "releaseDate": "2026-07-02",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.6
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -251178,7 +251292,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-07-02"
+                    "releaseDate": "2026-07-02",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.2
+                    }
                 }
             ],
             "searchAcronyms": []
@@ -251272,7 +251389,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-07-02"
+                    "releaseDate": "2026-07-02",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 12.7
+                    }
                 },
                 {
                     "type": "dx",
@@ -251299,7 +251419,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-07-02"
+                    "releaseDate": "2026-07-02",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 14.1
+                    }
                 }
             ],
             "searchAcronyms": []
