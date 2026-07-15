@@ -250811,7 +250811,10 @@
                     },
                     "isSpecial": false,
                     "version": "CiRCLE PLUS",
-                    "releaseDate": "2026-06-26"
+                    "releaseDate": "2026-06-26",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 12.8
+                    }
                 },
                 {
                     "type": "dx",
@@ -250840,7 +250843,7 @@
                     "version": "CiRCLE PLUS",
                     "releaseDate": "2026-06-26",
                     "multiverInternalLevelValue": {
-                        "CiRCLE PLUS": 12.8
+                        "CiRCLE PLUS": 14.2
                     }
                 }
             ],
