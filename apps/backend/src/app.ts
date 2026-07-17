@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/node'
 import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { createMiddleware } from 'hono/factory'
@@ -21,6 +20,7 @@ import { OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
 import { RequestHeadersPlugin, ResponseHeadersPlugin } from '@orpc/server/plugins'
 import { onError } from '@orpc/server'
+import { Sentry, shouldCaptureSentryError } from './lib/functions/sentry.js'
 
 const app = new Hono<EvlogVariables>()
 
@@ -289,6 +289,8 @@ const openAPIHandler = new OpenAPIHandler(appRouter, {
   plugins: [new RequestHeadersPlugin(), new ResponseHeadersPlugin()],
   clientInterceptors: [
     onError((error, { path }) => {
+      if (!shouldCaptureSentryError(error)) return
+
       const procedureName = path.join('.')
       console.error(`[oRPC] ${procedureName} failed:`, error)
       Sentry.captureException(error, {
