@@ -95,10 +95,6 @@ export const Route = createRootRoute({
           pathname: matches[matches.length - 1]?.pathname ?? '/',
           search: matches[matches.length - 1]?.search,
         }),
-        {
-          rel: 'prefetch',
-          href: 'https://shama.dxrating.net/images/version-logo/buddies.webp',
-        },
         { rel: 'preconnect', href: 'https://miruku.dxrating.net' },
         {
           rel: 'apple-touch-icon',
