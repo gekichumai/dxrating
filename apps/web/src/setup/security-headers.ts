@@ -23,7 +23,7 @@ const CSP_DIRECTIVES = [
       'https://sql.js.org',
     ],
   ],
-  ['style-src', ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com']],
+  ['style-src', ["'self'", "'unsafe-inline'"]],
   ['font-src', ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://shama.dxrating.net']],
   [
     'img-src',

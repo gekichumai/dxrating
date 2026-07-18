@@ -20,6 +20,7 @@ describe('security report headers', () => {
     const headers = buildSecurityReportHeaders()
     const policy = headers['Content-Security-Policy-Report-Only']
     const scriptSources = getDirectiveSources(policy, 'script-src')
+    const styleSources = getDirectiveSources(policy, 'style-src')
     const imageSources = getDirectiveSources(policy, 'img-src')
     const connectSources = getDirectiveSources(policy, 'connect-src')
 
@@ -30,6 +31,7 @@ describe('security report headers', () => {
     expect(policy).toContain("default-src 'self'")
     expect(policy).not.toContain('*.')
     expect(scriptSources).toContain('https://razu.dxrating.net')
+    expect(styleSources).toEqual(["'self'", "'unsafe-inline'"])
     expect(imageSources).toContain('https://gravatar.com')
     expect(imageSources).toContain('https://avatars.githubusercontent.com')
     expect(imageSources).toContain('https://lh3.googleusercontent.com')
