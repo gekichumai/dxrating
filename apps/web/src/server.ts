@@ -34,8 +34,8 @@ const startHandler = createStartHandler(async ({ request, router, responseHeader
     children: createElement(StartServer, { router }),
   })
 
-  applyHomepageAgentDiscoveryHeaders(ssrResponse.headers, request)
-  setServerTimingHeader(ssrResponse.headers, [setupMetric, finishServerTimingSpan(ssrTiming)])
+  applyHomepageAgentDiscoveryHeaders(ssrResponse.response.headers, request)
+  setServerTimingHeader(ssrResponse.response.headers, [setupMetric, finishServerTimingSpan(ssrTiming)])
 
   return ssrResponse
 })
