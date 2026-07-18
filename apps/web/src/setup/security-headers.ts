@@ -23,7 +23,7 @@ const CSP_DIRECTIVES = [
       'https://sql.js.org',
     ],
   ],
-  ['style-src', ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com']],
+  ['style-src', ["'self'", "'unsafe-inline'"]],
   ['font-src', ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://shama.dxrating.net']],
   [
     'img-src',
@@ -34,6 +34,7 @@ const CSP_DIRECTIVES = [
       'https://shama.dxrating.net',
       'https://gravatar.com',
       'https://avatars.githubusercontent.com',
+      'https://lh3.googleusercontent.com',
     ],
   ],
   [
@@ -42,6 +43,8 @@ const CSP_DIRECTIVES = [
       "'self'",
       'https://miruku.dxrating.net',
       'https://razu.dxrating.net',
+      'https://shama.dxrating.net',
+      'https://www.diving-fish.com',
       'https://o4506648698683392.ingest.us.sentry.io',
       'https://challenges.cloudflare.com',
       'https://sql.js.org',

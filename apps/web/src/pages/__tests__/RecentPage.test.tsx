@@ -24,6 +24,7 @@ const charts = [
     isLocked: false,
     isTypeUtage: false,
     releaseDate: '2025-05-01',
+    releaseDateTimestamp: new Date('2025-05-01T06:00:00+09:00').valueOf(),
     href: '/songs/song-a/dx/master',
   },
 ]

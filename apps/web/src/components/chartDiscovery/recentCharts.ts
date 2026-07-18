@@ -7,6 +7,7 @@ import {
   type Song,
   type VersionEnum,
 } from '@gekichumai/dxdata'
+import { buildLatestReleaseDateByVersion, resolveReleaseDateTimestamp } from '@gekichumai/maimai-domain'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import { sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
 
@@ -26,6 +27,8 @@ export type RecentChartLink = {
   isLocked: boolean
   isTypeUtage: boolean
   releaseDate?: string
+  /** Sort key: real release date, or latest known date for the sheet version when missing. */
+  releaseDateTimestamp: number
   href: string
 }
 
@@ -34,7 +37,7 @@ const difficultyOrder = Object.values(DifficultyEnum)
 const excludedRecentChartDifficulties = new Set<string>([DifficultyEnum.Basic, DifficultyEnum.Advanced])
 
 const compareRecentChartLinks = (a: RecentChartLink, b: RecentChartLink) => {
-  const releaseDateComparison = sheetReleaseDateTimestamp(b.releaseDate) - sheetReleaseDateTimestamp(a.releaseDate)
+  const releaseDateComparison = b.releaseDateTimestamp - a.releaseDateTimestamp
   if (releaseDateComparison !== 0) return releaseDateComparison
 
   const titleComparison = a.title.localeCompare(b.title)
@@ -46,7 +49,11 @@ const compareRecentChartLinks = (a: RecentChartLink, b: RecentChartLink) => {
   return difficultyOrder.indexOf(a.difficulty) - difficultyOrder.indexOf(b.difficulty)
 }
 
-const toRecentChartLink = (song: Song, sheet: Sheet): RecentChartLink => ({
+const toRecentChartLink = (
+  song: Song,
+  sheet: Sheet,
+  latestReleaseDateByVersion: ReadonlyMap<string, string>,
+): RecentChartLink => ({
   songId: song.songId,
   title: song.title,
   artist: song.artist,
@@ -60,15 +67,25 @@ const toRecentChartLink = (song: Song, sheet: Sheet): RecentChartLink => ({
   isLocked: song.isLocked,
   isTypeUtage: sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P,
   releaseDate: sheet.releaseDate,
+  releaseDateTimestamp:
+    resolveReleaseDateTimestamp(sheet.releaseDate, sheet.version, latestReleaseDateByVersion) ??
+    sheetReleaseDateTimestamp(sheet.releaseDate),
   href: buildSheetPath({ songId: song.songId, type: sheet.type, difficulty: sheet.difficulty }),
 })
 
-const createRecentChartLinks = (songs: readonly Song[]) =>
-  songs
-    .flatMap((song) => song.sheets.map((sheet) => toRecentChartLink(song, sheet)))
+const createRecentChartLinks = (songs: readonly Song[]) => {
+  // Keep version metadata from the full catalog so version launch dates can
+  // backfill when a custom song list has no dated sheets for a version.
+  const latestReleaseDateByVersion = buildLatestReleaseDateByVersion({
+    ...dxdata,
+    songs: songs as Song[],
+  })
+  return songs
+    .flatMap((song) => song.sheets.map((sheet) => toRecentChartLink(song, sheet, latestReleaseDateByVersion)))
     .filter((chart) => !excludedRecentChartDifficulties.has(chart.difficulty))
     .sort(compareRecentChartLinks)
     .slice(0, RECENT_CHART_LIMIT)
+}
 
 let defaultRecentChartLinks: RecentChartLink[] | null = null
 

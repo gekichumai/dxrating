@@ -20,6 +20,7 @@ describe('security report headers', () => {
     const headers = buildSecurityReportHeaders()
     const policy = headers['Content-Security-Policy-Report-Only']
     const scriptSources = getDirectiveSources(policy, 'script-src')
+    const styleSources = getDirectiveSources(policy, 'style-src')
     const imageSources = getDirectiveSources(policy, 'img-src')
     const connectSources = getDirectiveSources(policy, 'connect-src')
 
@@ -30,8 +31,12 @@ describe('security report headers', () => {
     expect(policy).toContain("default-src 'self'")
     expect(policy).not.toContain('*.')
     expect(scriptSources).toContain('https://razu.dxrating.net')
+    expect(styleSources).toEqual(["'self'", "'unsafe-inline'"])
     expect(imageSources).toContain('https://gravatar.com')
     expect(imageSources).toContain('https://avatars.githubusercontent.com')
+    expect(imageSources).toContain('https://lh3.googleusercontent.com')
+    expect(connectSources).toContain('https://shama.dxrating.net')
+    expect(connectSources).toContain('https://www.diving-fish.com')
     expect(connectSources).toContain('https://o4506648698683392.ingest.us.sentry.io')
     expect(policy).toContain(`report-uri ${SENTRY_SECURITY_REPORT_ENDPOINT}`)
     expect(policy).toContain(`report-to ${SECURITY_REPORT_ENDPOINT_GROUP}`)

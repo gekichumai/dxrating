@@ -50,6 +50,16 @@ describe('chart OG image handler', () => {
     expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(0)
   })
 
+  it('serves chart images when crawlers encode path parameters a second time', async () => {
+    const res = await app.request(
+      `/api/v1/songs/${encodeURIComponent(encodeURIComponent(song.songId))}/${sheet.type}/${sheet.difficulty}/og-image`,
+    )
+
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('image/png')
+    expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(0)
+  })
+
   it('keeps the internal chart image endpoint out of the OpenAPI spec', async () => {
     const res = await app.request('/spec.json')
     const spec = await res.json()

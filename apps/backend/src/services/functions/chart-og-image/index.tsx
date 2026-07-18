@@ -85,10 +85,17 @@ export function formatInternalLevelLabelParts(internalLevelValue: number) {
 }
 
 export function resolveChartOgImageData(songId: string, type: string, difficulty: string): ChartOgImageData | null {
-  const song = dxdata.songs.find((candidate) => candidate.songId === songId)
+  const decodedSongId = decodePathParameterOnce(songId)
+  const decodedType = decodePathParameterOnce(type)
+  const decodedDifficulty = decodePathParameterOnce(difficulty)
+  const song =
+    dxdata.songs.find((candidate) => candidate.songId === songId) ??
+    dxdata.songs.find((candidate) => candidate.songId === decodedSongId)
   if (!song) return null
 
-  const sheet = song.sheets.find((candidate) => candidate.type === type && candidate.difficulty === difficulty)
+  const sheet =
+    song.sheets.find((candidate) => candidate.type === type && candidate.difficulty === difficulty) ??
+    song.sheets.find((candidate) => candidate.type === decodedType && candidate.difficulty === decodedDifficulty)
   if (!sheet) return null
 
   const sheetDifficulty = sheet.difficulty as SheetDifficulty
@@ -117,6 +124,14 @@ export function resolveChartOgImageData(songId: string, type: string, difficulty
     noteDesigner: sheet.noteDesigner,
     noteCounts: sheet.noteCounts,
     version: sheet.version,
+  }
+}
+
+function decodePathParameterOnce(value: string) {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
   }
 }
 

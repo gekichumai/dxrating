@@ -27,17 +27,17 @@ const startHandler = createStartHandler(async ({ request, router, responseHeader
   applyHomepageAgentDiscoveryHeaders(responseHeaders, request)
 
   const setupMetric = finishServerTimingSpan(setupTiming)
-  const response = await renderRouterToStream({
+  const ssrResponse = await renderRouterToStream({
     request,
     router,
     responseHeaders,
     children: createElement(StartServer, { router }),
   })
 
-  applyHomepageAgentDiscoveryHeaders(response.headers, request)
-  setServerTimingHeader(response.headers, [setupMetric, finishServerTimingSpan(ssrTiming)])
+  applyHomepageAgentDiscoveryHeaders(ssrResponse.headers, request)
+  setServerTimingHeader(ssrResponse.headers, [setupMetric, finishServerTimingSpan(ssrTiming)])
 
-  return response
+  return ssrResponse
 })
 
 const requestHandler: ServerEntry = wrapFetchWithSentry({

@@ -107,4 +107,40 @@ describe('buildRecentChartLinks', () => {
       'Song 2:dx:master',
     ])
   })
+
+  it('sorts undated sheets as the newest in their version (NEW -> OLD)', () => {
+    const undatedSheet: Sheet = {
+      ...createSheet('2026-01-01'),
+      releaseDate: undefined,
+      version: VersionEnum.CiRCLE,
+    }
+    const charts = buildRecentChartLinks([
+      {
+        ...createSong(1, '2026-03-05'),
+        songId: 'dated-latest',
+        title: 'Dated Latest',
+        sheets: [{ ...createSheet('2026-03-05'), version: VersionEnum.CiRCLE }],
+      },
+      {
+        ...createSong(2, '2025-09-18'),
+        songId: 'dated-older',
+        title: 'Dated Older',
+        sheets: [{ ...createSheet('2025-09-18'), version: VersionEnum.CiRCLE }],
+      },
+      {
+        ...createSong(0),
+        songId: 'Bring it on',
+        title: 'Bring it on',
+        sheets: [undatedSheet],
+      },
+    ])
+
+    // Same timestamp as the newest known chart in CiRCLE; title tie-break is fine.
+    expect(charts.map((chart) => chart.songId)).toEqual(['Bring it on', 'dated-latest', 'dated-older'])
+    const undated = charts.find((chart) => chart.songId === 'Bring it on')
+    const latest = charts.find((chart) => chart.songId === 'dated-latest')
+    expect(undated?.releaseDate).toBeUndefined()
+    expect(undated?.releaseDateTimestamp).toBe(latest?.releaseDateTimestamp)
+    expect((undated?.releaseDateTimestamp ?? 0) > (charts[2]?.releaseDateTimestamp ?? 0)).toBe(true)
+  })
 })

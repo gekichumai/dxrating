@@ -86,6 +86,121 @@ describe('Song Catalog', () => {
     expect(sheet?.isRatingEligible).toBe(false)
   })
 
+  it('falls back missing release dates to the latest known date in that version', () => {
+    const catalog = buildSongCatalog(
+      {
+        ...fixtureData,
+        songs: [
+          {
+            songId: 'dated',
+            title: 'Dated Song',
+            artist: 'Artist',
+            bpm: 180,
+            category: CategoryEnum.Maimai,
+            imageName: 'dated',
+            isNew: false,
+            isLocked: false,
+            searchAcronyms: [],
+            sheets: [
+              {
+                type: TypeEnum.DX,
+                difficulty: DifficultyEnum.Master,
+                level: '14',
+                internalLevelValue: 14,
+                noteDesigner: null,
+                noteCounts: { tap: 1, hold: 1, slide: 1, touch: 1, break: 1, total: 5 },
+                regions: { jp: true, intl: true, cn: false },
+                isSpecial: false,
+                version: VersionEnum.CiRCLE,
+                releaseDate: '2026-03-05',
+              },
+            ],
+          },
+          {
+            songId: 'Bring it on',
+            title: 'Bring it on',
+            artist: 'Artist',
+            bpm: 180,
+            category: CategoryEnum.Maimai,
+            imageName: 'bring',
+            isNew: true,
+            isLocked: false,
+            searchAcronyms: [],
+            sheets: [
+              {
+                type: TypeEnum.DX,
+                difficulty: DifficultyEnum.Master,
+                level: '13+',
+                internalLevelValue: 13.8,
+                noteDesigner: null,
+                noteCounts: { tap: 1, hold: 1, slide: 1, touch: 1, break: 1, total: 5 },
+                regions: { jp: true, intl: true, cn: false },
+                isSpecial: false,
+                version: VersionEnum.CiRCLE,
+                // no releaseDate
+              },
+            ],
+          },
+          {
+            songId: 'older',
+            title: 'Older Song',
+            artist: 'Artist',
+            bpm: 180,
+            category: CategoryEnum.Maimai,
+            imageName: 'older',
+            isNew: false,
+            isLocked: false,
+            searchAcronyms: [],
+            sheets: [
+              {
+                type: TypeEnum.DX,
+                difficulty: DifficultyEnum.Master,
+                level: '12',
+                internalLevelValue: 12,
+                noteDesigner: null,
+                noteCounts: { tap: 1, hold: 1, slide: 1, touch: 1, break: 1, total: 5 },
+                regions: { jp: true, intl: true, cn: false },
+                isSpecial: false,
+                version: VersionEnum.CiRCLE,
+                releaseDate: '2025-09-18',
+              },
+            ],
+          },
+        ],
+      },
+      VersionEnum.CiRCLE,
+    )
+
+    const undated = catalog.getByIdentity({
+      songId: 'Bring it on',
+      type: TypeEnum.DX,
+      difficulty: DifficultyEnum.Master,
+    })
+    const latestDated = catalog.getByIdentity({
+      songId: 'dated',
+      type: TypeEnum.DX,
+      difficulty: DifficultyEnum.Master,
+    })
+    const older = catalog.getByIdentity({
+      songId: 'older',
+      type: TypeEnum.DX,
+      difficulty: DifficultyEnum.Master,
+    })
+
+    // Same sort key as the newest known CiRCLE chart (not epoch / null).
+    expect(undated?.releaseDateTimestamp).toBe(latestDated?.releaseDateTimestamp)
+    expect(undated?.releaseDateTimestamp).toBe(new Date('2026-03-05T06:00:00+09:00').valueOf())
+    expect((undated?.releaseDateTimestamp ?? 0) > (older?.releaseDateTimestamp ?? 0)).toBe(true)
+
+    // NEW -> OLD: undated ties with latest, both before older
+    const sorted = [...catalog.sheets].sort((a, b) => {
+      const byDate = (b.releaseDateTimestamp ?? 0) - (a.releaseDateTimestamp ?? 0)
+      if (byDate !== 0) return byDate
+      return a.songId.localeCompare(b.songId)
+    })
+    expect(sorted.map((s) => s.songId)).toEqual(['Bring it on', 'dated', 'older'])
+  })
+
   it('resolves explicit provider references without fuzzy matching', () => {
     const catalog = buildSongCatalog(fixtureData, VersionEnum.CiRCLE)
 

@@ -19,11 +19,10 @@ import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCusto
 import { AppContextProvider } from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
 import { createServerI18n } from '@/setup/init-i18n'
-import { buildAlternateLinks } from '@/utils/alternateLinks'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
+import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
-import appCss from '@/index.css?url'
 import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
@@ -68,81 +67,10 @@ export const Route = createRootRoute({
           content: 'https://shama.dxrating.net/favicon/pack/v1/browserconfig.xml',
         },
       ],
-      links: [
-        { rel: 'preconnect', href: 'https://shama.dxrating.net' },
-        { rel: 'stylesheet', href: appCss },
-        {
-          rel: 'preload',
-          as: 'font',
-          type: 'font/woff2',
-          href: 'https://shama.dxrating.net/fonts/Torus-Regular.woff2',
-          crossOrigin: 'anonymous',
-        },
-        {
-          rel: 'preload',
-          as: 'font',
-          type: 'font/woff2',
-          href: 'https://shama.dxrating.net/fonts/Torus-SemiBold.woff2',
-          crossOrigin: 'anonymous',
-        },
-        {
-          rel: 'preload',
-          as: 'image',
-          href: 'https://shama.dxrating.net/images/version-logo/circle-plus.webp',
-          fetchPriority: 'high',
-        },
-        ...buildAlternateLinks({
-          pathname: matches[matches.length - 1]?.pathname ?? '/',
-          search: matches[matches.length - 1]?.search,
-        }),
-        {
-          rel: 'prefetch',
-          href: 'https://shama.dxrating.net/images/version-logo/buddies.webp',
-        },
-        { rel: 'preconnect', href: 'https://miruku.dxrating.net' },
-        {
-          rel: 'apple-touch-icon',
-          sizes: '180x180',
-          href: 'https://shama.dxrating.net/favicon/pack/v1/apple-touch-icon.png',
-        },
-        {
-          rel: 'icon',
-          type: 'image/png',
-          sizes: '32x32',
-          href: 'https://shama.dxrating.net/favicon/pack/v1/favicon-32x32.png',
-        },
-        {
-          rel: 'icon',
-          type: 'image/png',
-          sizes: '16x16',
-          href: 'https://shama.dxrating.net/favicon/pack/v1/favicon-16x16.png',
-        },
-        {
-          rel: 'mask-icon',
-          href: 'https://shama.dxrating.net/favicon/pack/v1/safari-pinned-tab.svg',
-          color: '#c8a8f9',
-        },
-        {
-          rel: 'shortcut icon',
-          href: 'https://shama.dxrating.net/favicon/pack/v1/favicon.ico',
-        },
-        {
-          rel: 'search',
-          type: 'application/opensearchdescription+xml',
-          title: 'DXRating Search',
-          href: 'https://dxrating.net/opensearch.xml',
-        },
-        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        {
-          rel: 'preconnect',
-          href: 'https://fonts.gstatic.com',
-          crossOrigin: 'anonymous',
-        },
-        {
-          rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap',
-        },
-      ],
+      links: buildRootHeadLinks({
+        pathname: matches[matches.length - 1]?.pathname ?? '/',
+        search: matches[matches.length - 1]?.search,
+      }),
     }
   },
   component: RootComponent,
