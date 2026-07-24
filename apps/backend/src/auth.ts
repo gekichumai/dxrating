@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt'
+import { expo } from '@better-auth/expo'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from './db/index.js'
@@ -37,7 +38,7 @@ export const auth = betterAuth({
       ipAddressHeaders: ['cf-connecting-ip'],
     },
   },
-  trustedOrigins: ['https://dxrating.net', 'http://localhost:5173', 'http://localhost:5174'],
+  trustedOrigins: ['https://dxrating.net', 'dxrating://', 'http://localhost:5173', 'http://localhost:5174'],
   socialProviders: {
     google: {
       clientId: config.auth.google.clientId!,
@@ -52,6 +53,7 @@ export const auth = betterAuth({
   },
   // Add other providers if needed
   plugins: [
+    expo(),
     openAPI(),
     passkey({
       rpID: config.auth.passkey.rpID,

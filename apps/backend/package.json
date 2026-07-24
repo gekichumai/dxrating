@@ -15,6 +15,7 @@
     "db:down": "docker compose down"
   },
   "dependencies": {
+    "@better-auth/expo": "catalog:",
     "@better-auth/i18n": "^1.6.11",
     "@better-auth/passkey": "catalog:",
     "@gekichumai/api-contract": "workspace:*",
