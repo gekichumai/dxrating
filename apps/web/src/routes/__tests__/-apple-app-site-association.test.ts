@@ -27,6 +27,9 @@ describe('buildAppleAppSiteAssociation', () => {
           },
         ],
       },
+      webcredentials: {
+        apps: ['F25GFFJL49.net.dxrating.ios'],
+      },
     })
   })
 

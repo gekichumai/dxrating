@@ -26,6 +26,9 @@ export function buildAppleAppSiteAssociation() {
         },
       ],
     },
+    webcredentials: {
+      apps: [APP_ID],
+    },
   })
 }
 
