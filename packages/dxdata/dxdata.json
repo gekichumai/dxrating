@@ -588,7 +588,7 @@
                     "type": "std",
                     "difficulty": "master",
                     "level": "13",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.0,
                     "noteDesigner": "mai-Star",
                     "noteCounts": {
                         "tap": 502,
@@ -2060,7 +2060,7 @@
                     "type": "std",
                     "difficulty": "master",
                     "level": "12",
-                    "internalLevelValue": 12.6,
+                    "internalLevelValue": 12.0,
                     "noteDesigner": "rioN",
                     "noteCounts": {
                         "tap": 353,
@@ -5859,7 +5859,7 @@
                     "type": "dx",
                     "difficulty": "remaster",
                     "level": "13",
-                    "internalLevelValue": 12.8,
+                    "internalLevelValue": 13.0,
                     "noteDesigner": "隅田川星人",
                     "noteCounts": {
                         "tap": 632,
@@ -7592,7 +7592,7 @@
                     "type": "dx",
                     "difficulty": "expert",
                     "level": "11+",
-                    "internalLevelValue": 11.0,
+                    "internalLevelValue": 11.6,
                     "noteDesigner": "翠楼屋",
                     "noteCounts": {
                         "tap": 380,
@@ -7747,7 +7747,7 @@
                     "type": "dx",
                     "difficulty": "expert",
                     "level": "9+",
-                    "internalLevelValue": 8.7,
+                    "internalLevelValue": 9.6,
                     "noteDesigner": "隅田川星人",
                     "noteCounts": {
                         "tap": 292,
@@ -25175,7 +25175,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100259,
                     "releaseDate": "2023-09-14"
                 }
             ],
@@ -25216,7 +25215,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 110579,
                     "releaseDate": "2023-09-14"
                 }
             ],
@@ -25297,7 +25295,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 111516,
                     "releaseDate": "2023-10-12"
                 }
             ],
@@ -25338,7 +25335,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100022,
                     "releaseDate": "2023-12-25"
                 }
             ],
@@ -25379,13 +25375,10 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 110606,
                     "releaseDate": "2024-02-29"
                 }
             ],
-            "searchAcronyms": [
-                "宴电锯人"
-            ]
+            "searchAcronyms": []
         },
         {
             "songId": "[逆]KING is BACK!!",
@@ -25422,7 +25415,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 110631,
                     "releaseDate": "2024-02-29"
                 }
             ],
@@ -29912,7 +29904,7 @@
                     "type": "std",
                     "difficulty": "expert",
                     "level": "12",
-                    "internalLevelValue": 12.5,
+                    "internalLevelValue": 12.3,
                     "noteDesigner": "譜面-100号",
                     "noteCounts": {
                         "tap": 236,
@@ -37491,14 +37483,10 @@
                     },
                     "isSpecial": false,
                     "version": "maimai PLUS",
-                    "internalId": 131,
                     "releaseDate": "2023-11-23"
                 }
             ],
-            "searchAcronyms": [
-                "林克",
-                "链接"
-            ]
+            "searchAcronyms": []
         },
         {
             "songId": "Night Fly",
@@ -41028,7 +41016,6 @@
                     },
                     "isSpecial": false,
                     "version": "GreeN",
-                    "internalId": 200,
                     "releaseDate": "2013-07-11"
                 },
                 {
@@ -41056,7 +41043,6 @@
                     },
                     "isSpecial": false,
                     "version": "GreeN",
-                    "internalId": 200,
                     "releaseDate": "2013-07-11"
                 },
                 {
@@ -41084,7 +41070,6 @@
                     },
                     "isSpecial": false,
                     "version": "GreeN",
-                    "internalId": 200,
                     "releaseDate": "2013-07-11"
                 },
                 {
@@ -41112,7 +41097,6 @@
                     },
                     "isSpecial": false,
                     "version": "GreeN",
-                    "internalId": 200,
                     "releaseDate": "2013-07-11",
                     "multiverInternalLevelValue": {
                         "CiRCLE": 12.5,
@@ -41145,7 +41129,6 @@
                     },
                     "isSpecial": false,
                     "version": "GreeN",
-                    "internalId": 200,
                     "releaseDate": "2015-03-18",
                     "multiverInternalLevelValue": {
                         "CiRCLE": 13.3,
@@ -41156,19 +41139,7 @@
                 }
             ],
             "searchAcronyms": [
-                "Bad Apple",
-                "bad apple!! feat nomico",
-                "badapple",
-                "BDAP",
-                "iPhone",
-                "吃一堑吃一堑",
-                "吃一堑吃一堑吃一堑",
-                "坏苹果",
-                "好华为",
-                "年年考年年错",
-                "烂苹果",
-                "黑白苹果",
-                "黑苹果"
+                "Bad Apple"
             ]
         },
         {
@@ -45927,8 +45898,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -45954,8 +45925,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -45981,8 +45952,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -46008,8 +45979,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -46204,7 +46175,6 @@
                     },
                     "isSpecial": false,
                     "version": "GreeN",
-                    "internalId": 203,
                     "releaseDate": "2013-09-05"
                 },
                 {
@@ -46232,7 +46202,6 @@
                     },
                     "isSpecial": false,
                     "version": "GreeN",
-                    "internalId": 203,
                     "releaseDate": "2013-09-05"
                 },
                 {
@@ -46260,7 +46229,6 @@
                     },
                     "isSpecial": false,
                     "version": "GreeN",
-                    "internalId": 203,
                     "releaseDate": "2013-09-05"
                 },
                 {
@@ -46288,7 +46256,6 @@
                     },
                     "isSpecial": false,
                     "version": "GreeN",
-                    "internalId": 203,
                     "releaseDate": "2013-09-05",
                     "multiverInternalLevelValue": {
                         "CiRCLE": 12.5,
@@ -46297,15 +46264,7 @@
                     }
                 }
             ],
-            "searchAcronyms": [
-                "erin",
-                "help me, erinnnnnn!!",
-                "帮帮我，肯德基爷爷！",
-                "帮我",
-                "救我",
-                "救救我",
-                "永琳"
-            ]
+            "searchAcronyms": []
         },
         {
             "songId": "夜咄ディセイブ",
@@ -60548,7 +60507,6 @@
                     },
                     "isSpecial": false,
                     "version": "ORANGE",
-                    "internalId": 383,
                     "releaseDate": "2014-09-18"
                 },
                 {
@@ -60576,7 +60534,6 @@
                     },
                     "isSpecial": false,
                     "version": "ORANGE",
-                    "internalId": 383,
                     "releaseDate": "2014-09-18"
                 },
                 {
@@ -60604,7 +60561,6 @@
                     },
                     "isSpecial": false,
                     "version": "ORANGE",
-                    "internalId": 383,
                     "releaseDate": "2014-09-18"
                 },
                 {
@@ -60632,14 +60588,10 @@
                     },
                     "isSpecial": false,
                     "version": "ORANGE",
-                    "internalId": 383,
                     "releaseDate": "2014-09-18"
                 }
             ],
-            "searchAcronyms": [
-                "cof",
-                "朋友圈"
-            ]
+            "searchAcronyms": []
         },
         {
             "songId": "Dreampainter",
@@ -63472,7 +63424,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -63500,7 +63452,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -63528,7 +63480,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -63556,7 +63508,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -98105,7 +98057,7 @@
                     "type": "std",
                     "difficulty": "expert",
                     "level": "11+",
-                    "internalLevelValue": 12.1,
+                    "internalLevelValue": 11.6,
                     "noteDesigner": "サファ太",
                     "noteCounts": {
                         "tap": 514,
@@ -128913,10 +128865,7 @@
                         "cn": true
                     },
                     "regionOverrides": {
-                        "intl": {
-                            "level": "12",
-                            "levelValue": 12
-                        }
+                        "intl": {}
                     },
                     "isSpecial": false,
                     "version": "maimaiでらっくす PLUS",
@@ -168469,7 +168418,7 @@
                     "type": "dx",
                     "difficulty": "expert",
                     "level": "11+",
-                    "internalLevelValue": 11.2,
+                    "internalLevelValue": 11.6,
                     "noteDesigner": "隅田川星人",
                     "noteCounts": {
                         "tap": 316,
@@ -196111,15 +196060,11 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100018,
                     "releaseDate": "2023-09-14",
                     "comment": "リア充専用譜面だよ！リア充向けだってば！"
                 }
             ],
-            "searchAcronyms": [
-                "xql",
-                "和你们xql爆了"
-            ]
+            "searchAcronyms": []
         },
         {
             "songId": "[協]恋愛裁判",
@@ -196156,14 +196101,11 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100508,
                     "releaseDate": "2023-09-14",
                     "comment": "リア充向け譜面　～爆発しろ～"
                 }
             ],
-            "searchAcronyms": [
-                "协恋爱裁判"
-            ]
+            "searchAcronyms": []
         },
         {
             "songId": "[協]Hand in Hand",
@@ -196200,14 +196142,11 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100524,
                     "releaseDate": "2023-09-14",
                     "comment": "Hand in Hand in Hand in Hand"
                 }
             ],
-            "searchAcronyms": [
-                "协手牵手"
-            ]
+            "searchAcronyms": []
         },
         {
             "songId": "[協]疾走あんさんぶる",
@@ -196244,7 +196183,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100700,
                     "releaseDate": "2023-09-14",
                     "comment": "なりきれ！プリズムリバー三姉妹"
                 }
@@ -196286,7 +196224,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 111355,
                     "releaseDate": "2023-09-14",
                     "comment": "＼みんなでラグトレイン再現チャレンジ／"
                 }
@@ -196328,7 +196265,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 111359,
                     "releaseDate": "2023-09-14",
                     "comment": "ライバル譜面"
                 }
@@ -196411,7 +196347,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 121634,
                     "releaseDate": "2023-09-14",
                     "comment": "バンドメンバーを集めて楽しもう！（入門編）"
                 }
@@ -197268,15 +197203,11 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100363,
                     "releaseDate": "2023-10-12",
                     "comment": "Let's Party Night !"
                 }
             ],
-            "searchAcronyms": [
-                "宴牛奶",
-                "屏幕清洁大师"
-            ]
+            "searchAcronyms": []
         },
         {
             "songId": "ぽわわん劇場",
@@ -200304,14 +200235,11 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100199,
                     "releaseDate": "2023-12-25",
                     "comment": "パーフェクトホールド教室"
                 }
             ],
-            "searchAcronyms": [
-                "带头打歌"
-            ]
+            "searchAcronyms": []
         },
         {
             "songId": "[星]しゅわスパ大作戦☆",
@@ -200348,7 +200276,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100206,
                     "releaseDate": "2023-12-25",
                     "comment": "☆TAP大作戦☆"
                 }
@@ -200390,7 +200317,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100220,
                     "releaseDate": "2023-12-25",
                     "comment": "回転タップ検定起動音"
                 }
@@ -200432,7 +200358,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100227,
                     "releaseDate": "2023-12-25",
                     "comment": "はっぴーの若干ストイック気味版"
                 }
@@ -200474,7 +200399,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100230,
                     "releaseDate": "2023-12-25",
                     "comment": "いつもより多く回っております"
                 }
@@ -200516,7 +200440,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100327,
                     "releaseDate": "2023-12-25",
                     "comment": "名人マンよくばりセット"
                 }
@@ -200558,7 +200481,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100456,
                     "releaseDate": "2023-12-25",
                     "comment": "チャンさんの初稿シリーズ～王～"
                 }
@@ -200600,7 +200522,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100517,
                     "releaseDate": "2023-12-25",
                     "comment": "なぞる順番を覚えるゲーム(初級編)"
                 }
@@ -200642,7 +200563,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 100548,
                     "releaseDate": "2023-12-25",
                     "comment": "スライドの発射タイミング 速度がデタラメ"
                 }
@@ -203604,7 +203524,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 110114,
                     "releaseDate": "2024-02-29",
                     "comment": "HOLDがSQUILLAに！？"
                 }
@@ -203646,7 +203565,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES",
-                    "internalId": 111513,
                     "releaseDate": "2024-02-29",
                     "comment": "くるくる回る、お星さま。"
                 }
@@ -206626,7 +206544,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 110227,
                     "releaseDate": "2024-03-21",
                     "comment": "Jackの現代風アレンジ版"
                 }
@@ -206668,14 +206585,11 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 110553,
                     "releaseDate": "2024-03-21",
                     "comment": "生き残るのはどっちだッ？？？"
                 }
             ],
-            "searchAcronyms": [
-                "星星b大战键盘b"
-            ]
+            "searchAcronyms": []
         },
         {
             "songId": "[協]エイリアンエイリアン",
@@ -206712,7 +206626,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 110647,
                     "releaseDate": "2024-03-21",
                     "comment": "中央で踊るダンサー、急募。"
                 }
@@ -206754,7 +206667,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 110793,
                     "releaseDate": "2024-03-21",
                     "comment": "デタラメのロックンロール"
                 }
@@ -206796,7 +206708,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 111325,
                     "releaseDate": "2024-03-21",
                     "comment": "誰か一緒に舞わないか？"
                 }
@@ -206838,14 +206749,11 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 111597,
                     "releaseDate": "2024-03-21",
                     "comment": "息が詰まる息が詰まる息が詰まる息が詰まる"
                 }
             ],
-            "searchAcronyms": [
-                "粉南十字"
-            ]
+            "searchAcronyms": []
         },
         {
             "songId": "[r]Garakuta Doll Play",
@@ -206882,7 +206790,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 120227,
                     "releaseDate": "2024-03-21",
                     "comment": "rioNのスライド筋マシマシ版"
                 }
@@ -206924,7 +206831,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 130227,
                     "releaseDate": "2024-03-21",
                     "comment": "玉子豆腐のチュウニリスペクト版"
                 }
@@ -206966,7 +206872,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 140227,
                     "releaseDate": "2024-03-21",
                     "comment": "パリピS氏のやべーやつ版"
                 }
@@ -209546,7 +209451,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 100998,
                     "releaseDate": "2024-05-24",
                     "comment": "ぼくらのかんがえたさいきょうのまいまい"
                 }
@@ -209588,7 +209492,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 111636,
                     "releaseDate": "2024-05-24",
                     "comment": "2人合わせてさくゆいたいそう"
                 }
@@ -210171,7 +210074,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 111437,
                     "releaseDate": "2024-06-07",
                     "comment": "君たちが三妖精だ！！！"
                 }
@@ -210213,7 +210115,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 111488,
                     "releaseDate": "2024-06-07",
                     "comment": "隣を見てなぞる順番を覚えるゲーム（初級）"
                 }
@@ -212799,7 +212700,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 111433,
                     "releaseDate": "2024-08-16",
                     "comment": "ココロを叫べ!"
                 }
@@ -212841,7 +212741,6 @@
                     },
                     "isSpecial": true,
                     "version": "BUDDiES PLUS",
-                    "internalId": 111577,
                     "releaseDate": "2024-08-16",
                     "comment": "もう一人じゃないから"
                 }
@@ -215906,7 +215805,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM",
-                    "internalId": 110281,
                     "releaseDate": "2024-09-12",
                     "comment": "今から振り回しますので離れていてください"
                 }
@@ -215948,14 +215846,11 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM",
-                    "internalId": 110417,
                     "releaseDate": "2024-09-12",
                     "comment": "ウミユリ練習譚"
                 }
             ],
-            "searchAcronyms": [
-                "我们当年哪有这条件"
-            ]
+            "searchAcronyms": []
         },
         {
             "songId": "[奏]洗脳",
@@ -215992,7 +215887,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM",
-                    "internalId": 110532,
                     "releaseDate": "2024-09-12",
                     "comment": "知ってた？元祖デュエット譜面"
                 }
@@ -216034,7 +215928,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM",
-                    "internalId": 111069,
                     "releaseDate": "2024-09-12",
                     "comment": "一緒にデスコ"
                 }
@@ -216076,7 +215969,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM",
-                    "internalId": 111365,
                     "releaseDate": "2024-09-12",
                     "comment": "アンビバレンスな私なの"
                 }
@@ -218839,7 +218731,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM",
-                    "internalId": 111156,
                     "releaseDate": "2024-11-22",
                     "comment": "一緒に！舞舞タイム！"
                 }
@@ -218881,7 +218772,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM",
-                    "internalId": 111557,
                     "releaseDate": "2024-11-22",
                     "comment": "秘密を握った　真実を　魅せてあげる"
                 }
@@ -219711,7 +219601,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM",
-                    "internalId": 111715,
                     "releaseDate": "2024-12-06",
                     "comment": "嘘に踊れ"
                 }
@@ -219753,7 +219642,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM",
-                    "internalId": 111772,
                     "releaseDate": "2024-12-06",
                     "comment": "人（の初見姿観察推奨）マニア"
                 }
@@ -220183,7 +220071,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -220211,7 +220099,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -220239,7 +220127,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -220273,7 +220161,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -220327,7 +220215,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM",
-                    "internalId": 111429,
                     "releaseDate": "2024-12-24",
                     "comment": "爆発は好きか！？"
                 }
@@ -222087,7 +221974,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM",
-                    "internalId": 111234,
                     "releaseDate": "2025-02-14",
                     "comment": "ほしだけスペクタクル"
                 }
@@ -222129,7 +222015,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM",
-                    "internalId": 111363,
                     "releaseDate": "2025-02-14",
                     "comment": "神々が恋したトリル郷"
                 }
@@ -225459,7 +225344,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 110121,
                     "releaseDate": "2025-03-13",
                     "comment": "そんな「甘い魔法」"
                 }
@@ -225501,7 +225385,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 111113,
                     "releaseDate": "2025-03-13",
                     "comment": "まわると　うれしいね"
                 }
@@ -225543,7 +225426,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 111388,
                     "releaseDate": "2025-03-13",
                     "comment": "実際はBPM360らしいので…"
                 }
@@ -225585,7 +225467,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 111714,
                     "releaseDate": "2025-03-13",
                     "comment": "本日はインタビューよろしくお願いいたします"
                 }
@@ -225627,7 +225508,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 111838,
                     "releaseDate": "2025-03-13",
                     "comment": "誰か、助けてね(^^♪"
                 }
@@ -226277,10 +226157,7 @@
                         "cn": false
                     },
                     "regionOverrides": {
-                        "intl": {
-                            "level": "13",
-                            "levelValue": 13
-                        }
+                        "intl": {}
                     },
                     "isSpecial": false,
                     "version": "PRiSM PLUS",
@@ -226330,7 +226207,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 100851,
                     "releaseDate": "2025-04-01",
                     "comment": "HOLDだけでがんばろうとした。"
                 }
@@ -226500,7 +226376,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226528,7 +226404,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226556,7 +226432,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226584,7 +226460,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226630,7 +226506,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226658,7 +226534,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226686,7 +226562,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226714,7 +226590,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226760,7 +226636,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226788,7 +226664,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226816,7 +226692,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226844,7 +226720,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226890,7 +226766,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226918,7 +226794,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226946,7 +226822,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -226974,7 +226850,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -227023,7 +226899,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -227051,7 +226927,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -227079,13 +226955,10 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
-                        "intl": {
-                            "level": "10",
-                            "levelValue": 10
-                        }
+                        "intl": {}
                     },
                     "isSpecial": false,
                     "version": "PRiSM PLUS",
@@ -227110,7 +226983,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -227687,7 +227560,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 111852,
                     "releaseDate": "2025-05-09",
                     "comment": "好きな譜面発表Luxizhel"
                 }
@@ -227729,7 +227601,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 121852,
                     "releaseDate": "2025-05-09",
                     "comment": "好きな譜面発表サファ太"
                 }
@@ -227771,7 +227642,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 131852,
                     "releaseDate": "2025-05-09",
                     "comment": "好きな譜面発表鳩ホルダー"
                 }
@@ -227813,7 +227683,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 141852,
                     "releaseDate": "2025-05-09",
                     "comment": "好きな譜面発表メロンポップ"
                 }
@@ -227855,7 +227724,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 151852,
                     "releaseDate": "2025-05-09",
                     "comment": "好きな譜面発表きょむりん"
                 }
@@ -227897,7 +227765,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 161852,
                     "releaseDate": "2025-05-09",
                     "comment": "好きな譜面発表アマリリス"
                 }
@@ -228199,7 +228066,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -228227,7 +228094,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -228255,7 +228122,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -228288,7 +228155,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -228336,7 +228203,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -228364,7 +228231,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -228392,7 +228259,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -228425,7 +228292,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -228478,7 +228345,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 111770,
                     "releaseDate": "2025-05-21",
                     "comment": "みんなでFull Flavor!"
                 }
@@ -229045,7 +228911,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 111479,
                     "releaseDate": "2025-06-20",
                     "comment": "maimai でらっくす版覚譜面もほしかった"
                 }
@@ -229087,7 +228952,6 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
-                    "internalId": 111628,
                     "releaseDate": "2025-06-20",
                     "comment": "SLIDE BACK!!"
                 }
@@ -229891,10 +229755,7 @@
                         "cn": false
                     },
                     "regionOverrides": {
-                        "intl": {
-                            "level": "13+",
-                            "levelValue": 13.6
-                        }
+                        "intl": {}
                     },
                     "isSpecial": false,
                     "version": "PRiSM PLUS",
@@ -231942,7 +231803,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231970,7 +231831,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231998,7 +231859,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -232031,7 +231892,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -238818,10 +238679,7 @@
                         "cn": false
                     },
                     "regionOverrides": {
-                        "intl": {
-                            "level": "14",
-                            "levelValue": 14
-                        }
+                        "intl": {}
                     },
                     "isSpecial": false,
                     "version": "CiRCLE",
@@ -243713,8 +243571,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -243741,8 +243599,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -243769,8 +243627,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -243801,8 +243659,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -243846,8 +243704,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -243874,8 +243732,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -243902,8 +243760,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -243930,8 +243788,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -243975,8 +243833,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244003,8 +243861,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244031,8 +243889,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244059,8 +243917,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244104,8 +243962,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244132,8 +243990,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244160,8 +244018,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244188,8 +244046,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244233,8 +244091,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244261,8 +244119,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244289,8 +244147,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244317,8 +244175,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244362,8 +244220,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244389,8 +244247,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244416,8 +244274,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244443,8 +244301,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244486,8 +244344,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244513,8 +244371,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244540,8 +244398,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244567,8 +244425,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244610,8 +244468,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244637,8 +244495,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244664,8 +244522,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244691,8 +244549,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244734,8 +244592,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244761,8 +244619,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244788,8 +244646,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244818,8 +244676,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244861,8 +244719,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244888,8 +244746,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244915,8 +244773,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -244942,8 +244800,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245272,8 +245130,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245299,8 +245157,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245326,8 +245184,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245353,8 +245211,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245393,8 +245251,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245420,8 +245278,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245447,8 +245305,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245474,8 +245332,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245517,8 +245375,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245544,8 +245402,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245571,8 +245429,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245598,8 +245456,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245641,8 +245499,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245668,8 +245526,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245695,8 +245553,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245722,8 +245580,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245752,8 +245610,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245792,8 +245650,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245819,8 +245677,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245846,8 +245704,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245873,8 +245731,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245916,8 +245774,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245943,8 +245801,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245970,8 +245828,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -245997,8 +245855,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246027,8 +245885,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246070,8 +245928,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246097,8 +245955,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246124,8 +245982,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246151,8 +246009,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246194,8 +246052,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246221,8 +246079,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246248,8 +246106,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246275,8 +246133,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246318,8 +246176,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246345,8 +246203,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246372,8 +246230,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246399,8 +246257,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246442,8 +246300,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246469,8 +246327,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246496,8 +246354,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246523,8 +246381,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246566,8 +246424,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246593,8 +246451,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246620,8 +246478,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246650,8 +246508,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246693,8 +246551,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246734,8 +246592,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246775,8 +246633,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246816,8 +246674,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -246857,8 +246715,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248240,8 +248098,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248267,8 +248125,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248294,8 +248152,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248321,8 +248179,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248364,8 +248222,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248391,8 +248249,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248418,8 +248276,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248445,8 +248303,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248488,8 +248346,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248515,8 +248373,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248542,8 +248400,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248569,8 +248427,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -250074,7 +249932,7 @@
                     "type": "dx",
                     "difficulty": "master",
                     "level": "13+",
-                    "internalLevelValue": 13.9,
+                    "internalLevelValue": 13.8,
                     "noteDesigner": "Jack",
                     "noteCounts": {
                         "tap": 594,
@@ -250198,7 +250056,7 @@
                     "type": "dx",
                     "difficulty": "master",
                     "level": "13+",
-                    "internalLevelValue": 13.8,
+                    "internalLevelValue": 13.9,
                     "noteDesigner": "サファ太",
                     "noteCounts": {
                         "tap": 550,
@@ -250942,7 +250800,7 @@
             "artist": "karato feat.yuno",
             "bpm": 178.0,
             "imageName": "71e6044efc52b5caff598a4a763e28d25dbc64ce2506684da924fe67d5e4e928",
-            "isNew": true,
+            "isNew": false,
             "isLocked": true,
             "sheets": [
                 {
@@ -251030,7 +250888,7 @@
                     "type": "dx",
                     "difficulty": "master",
                     "level": "13",
-                    "internalLevelValue": 13.0,
+                    "internalLevelValue": 13.4,
                     "noteDesigner": "せめんともり",
                     "noteCounts": {
                         "tap": 617,
@@ -251066,7 +250924,7 @@
             "artist": "イロドリミドリ｜HaNaMiNa｜S.S.L.",
             "bpm": 168.0,
             "imageName": "b4f58eb1970b216717a6305bc8e7245b5455267bc15f66fcc2fa18b27df5f664",
-            "isNew": true,
+            "isNew": false,
             "isLocked": false,
             "sheets": [
                 {
@@ -251190,7 +251048,7 @@
             "artist": "イロドリミドリ",
             "bpm": 190.0,
             "imageName": "fb818abb8fb53cbde865b4953df416d34a13a50870c5115c5fd440ffc4217d08",
-            "isNew": true,
+            "isNew": false,
             "isLocked": false,
             "sheets": [
                 {
@@ -251278,7 +251136,7 @@
                     "type": "dx",
                     "difficulty": "master",
                     "level": "13",
-                    "internalLevelValue": 13.0,
+                    "internalLevelValue": 13.2,
                     "noteDesigner": "はっぴー",
                     "noteCounts": {
                         "tap": 523,
@@ -251314,7 +251172,7 @@
             "artist": "イロドリミドリ",
             "bpm": 136.0,
             "imageName": "073e92bb12e8130d04c82f6f9373a7db09e459821e00521e3e0712d1cb57bde5",
-            "isNew": true,
+            "isNew": false,
             "isLocked": true,
             "sheets": [
                 {
@@ -251375,7 +251233,7 @@
                     "type": "dx",
                     "difficulty": "expert",
                     "level": "12+",
-                    "internalLevelValue": 12.6,
+                    "internalLevelValue": 12.7,
                     "noteDesigner": "Jack",
                     "noteCounts": {
                         "tap": 453,
@@ -251405,7 +251263,7 @@
                     "type": "dx",
                     "difficulty": "master",
                     "level": "14",
-                    "internalLevelValue": 14.0,
+                    "internalLevelValue": 14.1,
                     "noteDesigner": "ロシェ@ペンギン",
                     "noteCounts": {
                         "tap": 876,
@@ -251429,6 +251287,626 @@
                     "releaseDate": "2026-07-02",
                     "multiverInternalLevelValue": {
                         "CiRCLE PLUS": 14.1
+                    }
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "イレギュラーマン",
+            "category": "niconico＆ボーカロイド",
+            "title": "イレギュラーマン",
+            "artist": "マサラダ",
+            "bpm": 201.0,
+            "imageName": "13b2d175a517ebe2d6ae5cc5249553cdbdac77e2a2bff1371590a1f7b1c54b6f",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "5",
+                    "internalLevelValue": 5.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 240,
+                        "hold": 10,
+                        "slide": 4,
+                        "touch": 12,
+                        "break": 8,
+                        "total": 274
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "7+",
+                    "internalLevelValue": 7.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 353,
+                        "hold": 16,
+                        "slide": 8,
+                        "touch": 13,
+                        "break": 4,
+                        "total": 394
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "11",
+                    "internalLevelValue": 11.0,
+                    "noteDesigner": "サファ太",
+                    "noteCounts": {
+                        "tap": 411,
+                        "hold": 102,
+                        "slide": 40,
+                        "touch": 24,
+                        "break": 52,
+                        "total": 629
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13+",
+                    "internalLevelValue": 13.9,
+                    "noteDesigner": "はっぴー",
+                    "noteCounts": {
+                        "tap": 562,
+                        "hold": 35,
+                        "slide": 204,
+                        "touch": 99,
+                        "break": 132,
+                        "total": 1032
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.9
+                    }
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "ちっちゃな私",
+            "category": "niconico＆ボーカロイド",
+            "title": "ちっちゃな私",
+            "artist": "マサラダ",
+            "bpm": 143.0,
+            "imageName": "95c11dd885bdf613c9f306a2afdfd3ecd8aa70a7525b40379db8b9aba1a34108",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 141,
+                        "hold": 18,
+                        "slide": 4,
+                        "touch": 8,
+                        "break": 4,
+                        "total": 175
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 233,
+                        "hold": 19,
+                        "slide": 6,
+                        "touch": 14,
+                        "break": 2,
+                        "total": 274
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "9+",
+                    "internalLevelValue": 9.6,
+                    "noteDesigner": "はっぴー",
+                    "noteCounts": {
+                        "tap": 276,
+                        "hold": 73,
+                        "slide": 22,
+                        "touch": 5,
+                        "break": 13,
+                        "total": 389
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "12+",
+                    "internalLevelValue": 12.9,
+                    "noteDesigner": "サファ太",
+                    "noteCounts": {
+                        "tap": 380,
+                        "hold": 54,
+                        "slide": 64,
+                        "touch": 98,
+                        "break": 53,
+                        "total": 649
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 12.9
+                    }
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "2代目閻魔",
+            "category": "niconico＆ボーカロイド",
+            "title": "2代目閻魔",
+            "artist": "読谷あかね",
+            "bpm": 135.0,
+            "imageName": "e4b8339d1f4d4609bac1f22c94736c533ff9c78ce2495a66a49db9aaaac77f0a",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "2",
+                    "internalLevelValue": 2.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 134,
+                        "hold": 9,
+                        "slide": 4,
+                        "touch": 7,
+                        "break": 6,
+                        "total": 160
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 274,
+                        "hold": 12,
+                        "slide": 6,
+                        "touch": 13,
+                        "break": 10,
+                        "total": 315
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10",
+                    "internalLevelValue": 10.0,
+                    "noteDesigner": "せめんともり",
+                    "noteCounts": {
+                        "tap": 331,
+                        "hold": 33,
+                        "slide": 46,
+                        "touch": 16,
+                        "break": 51,
+                        "total": 477
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13+",
+                    "internalLevelValue": 13.6,
+                    "noteDesigner": "はっぴー",
+                    "noteCounts": {
+                        "tap": 620,
+                        "hold": 18,
+                        "slide": 89,
+                        "touch": 102,
+                        "break": 35,
+                        "total": 864
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.6
+                    }
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "シスターに懺悔を",
+            "category": "niconico＆ボーカロイド",
+            "title": "シスターに懺悔を",
+            "artist": "廃原メモリ",
+            "bpm": 165.0,
+            "imageName": "0d4d90f457c2fefc4d92119a98445e9dc4ad25c620ceec5a5243f3962dad1912",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 157,
+                        "hold": 9,
+                        "slide": 4,
+                        "touch": 20,
+                        "break": 3,
+                        "total": 193
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "7",
+                    "internalLevelValue": 7.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 282,
+                        "hold": 18,
+                        "slide": 6,
+                        "touch": 30,
+                        "break": 8,
+                        "total": 344
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10+",
+                    "internalLevelValue": 10.6,
+                    "noteDesigner": "サファ太",
+                    "noteCounts": {
+                        "tap": 290,
+                        "hold": 61,
+                        "slide": 32,
+                        "touch": 25,
+                        "break": 43,
+                        "total": 451
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13",
+                    "internalLevelValue": 13.3,
+                    "noteDesigner": "Luxizhel",
+                    "noteCounts": {
+                        "tap": 506,
+                        "hold": 54,
+                        "slide": 125,
+                        "touch": 43,
+                        "break": 15,
+                        "total": 743
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.3
+                    }
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "Cryogenic",
+            "category": "ゲーム＆バラエティ",
+            "title": "Cryogenic",
+            "artist": "Camellia ft. Petra Gurin「In Falsus」",
+            "bpm": 145.0,
+            "imageName": "e970e78e489671ab3de9772486d51e6a1dec60fdb7d17399490b8ffe90b3b18c",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 117,
+                        "hold": 17,
+                        "slide": 5,
+                        "touch": 8,
+                        "break": 1,
+                        "total": 148
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 263,
+                        "hold": 16,
+                        "slide": 8,
+                        "touch": 11,
+                        "break": 4,
+                        "total": 302
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "11",
+                    "internalLevelValue": 11.0,
+                    "noteDesigner": "Luxizhel",
+                    "noteCounts": {
+                        "tap": 304,
+                        "hold": 44,
+                        "slide": 40,
+                        "touch": 18,
+                        "break": 13,
+                        "total": 419
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13+",
+                    "internalLevelValue": 13.8,
+                    "noteDesigner": "ぴちネコ",
+                    "noteCounts": {
+                        "tap": 439,
+                        "hold": 84,
+                        "slide": 84,
+                        "touch": 69,
+                        "break": 64,
+                        "total": 740
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-17",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.8
                     }
                 }
             ],
@@ -251661,5 +252139,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-07-05T13:56:28.059Z"
+    "updateTime": "2026-07-26T14:09:12.704Z"
 }
