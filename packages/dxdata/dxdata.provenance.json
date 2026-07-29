@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-28T21:57:18.723226397+00:00",
+  "generatedAt": "2026-07-29T03:28:57.904496803+00:00",
   "output": {
-    "sha256": "a3138b406f21f98131483bb71dfce7634d201b6cc3596f44dc462f5c8a9dab1c"
+    "sha256": "0f3cff99b378ead88e7cb336fc629ca9fe69de44c74ebc6a2fb09cb1224a2770"
   },
   "coverage": {
     "leafFields": 176253,
@@ -24,13 +24,13 @@
           "system": "arcade-songs-fetch legacy generated catalog"
         }
       },
-      "catalogSha256": "2a3eec7b9ae05f78be940be532d460e7c6e955dee280b6df57e92aded5649257",
+      "catalogSha256": "8714c839e6691fd78d10ec509c4606a27a7ccb2466592d14f7890fe16ad8604b",
       "fetch": {
-        "generatedAt": "2026-07-28T21:57:04.441713740+00:00",
+        "generatedAt": "2026-07-29T03:28:53.467694505+00:00",
         "schemaVersion": 1,
         "sources": [
           {
-            "checkedAt": "2026-07-28T21:57:00.803590305+00:00",
+            "checkedAt": "2026-07-29T03:28:49.031916547+00:00",
             "error": null,
             "name": "sega_official",
             "path": "official/maimai_songs.json",
@@ -39,7 +39,7 @@
             "url": "https://maimai.sega.jp/data/maimai_songs.json"
           },
           {
-            "checkedAt": "2026-07-28T21:57:01.087325996+00:00",
+            "checkedAt": "2026-07-29T03:28:49.415859581+00:00",
             "error": null,
             "name": "otoge_db_gamerch",
             "path": "enrichment/music-ex.json",
@@ -48,7 +48,7 @@
             "url": "https://raw.githubusercontent.com/zvuc/otoge-db/master/maimai/data/music-ex.json"
           },
           {
-            "checkedAt": "2026-07-28T21:57:01.349176625+00:00",
+            "checkedAt": "2026-07-29T03:28:49.775456577+00:00",
             "error": null,
             "name": "otoge_intl",
             "path": "regions/music-ex-intl.json",
@@ -57,7 +57,7 @@
             "url": "https://raw.githubusercontent.com/zvuc/otoge-db/master/maimai/data/music-ex-intl.json"
           },
           {
-            "checkedAt": "2026-07-28T21:57:01.514309008+00:00",
+            "checkedAt": "2026-07-29T03:28:50.053397870+00:00",
             "error": null,
             "name": "maimai_cn",
             "path": "regions/cn.json",
@@ -66,7 +66,7 @@
             "url": "https://raw.githubusercontent.com/CrazyKidCN/maimaiDX-CN-songs-database/main/maidata.json"
           },
           {
-            "checkedAt": "2026-07-28T21:57:02.882207797+00:00",
+            "checkedAt": "2026-07-29T03:28:52.464352086+00:00",
             "error": null,
             "name": "lxns_song_list",
             "path": "enrichment/lxns-songs.json",
@@ -75,7 +75,7 @@
             "url": "https://maimai.lxns.net/api/v0/maimai/song/list"
           },
           {
-            "checkedAt": "2026-07-28T21:57:03.043227595+00:00",
+            "checkedAt": "2026-07-29T03:28:52.709197193+00:00",
             "error": null,
             "name": "gcm_bot",
             "path": "aliases/gcm_bot.tsv",
@@ -84,7 +84,7 @@
             "url": "https://raw.githubusercontent.com/lomotos10/GCM-bot/main/data/aliases/en/chuni.tsv"
           },
           {
-            "checkedAt": "2026-07-28T21:57:03.101772548+00:00",
+            "checkedAt": "2026-07-29T03:28:52.782406736+00:00",
             "error": "input error in yuzuchan: HTTP 403 Forbidden",
             "name": "yuzuchan",
             "path": "aliases/yuzuchan.json",
@@ -93,7 +93,7 @@
             "url": "https://api.yuzuchan.moe/maimaidx/maimaidxalias"
           },
           {
-            "checkedAt": "2026-07-28T21:57:04.441708720+00:00",
+            "checkedAt": "2026-07-29T03:28:53.467688173+00:00",
             "error": null,
             "name": "lxns",
             "path": "aliases/lxns.json",
@@ -103,7 +103,7 @@
           }
         ]
       },
-      "generatedAt": "2026-07-28T21:57:04.638032958+00:00",
+      "generatedAt": "2026-07-29T03:28:53.696661715+00:00",
       "schemaVersion": 2,
       "songs": {
         "\"411Ψ892\"": {
@@ -18456,9 +18456,9 @@
         }
       },
       "sources": {
-        "legacy_bootstrap": {
-          "path": "/app/catalog-seed.json",
-          "sha256": "b645ceb46354d0b023bc38ef5b6c566481c565019fb7e85a4e1ec3633bdde66f"
+        "catalog_history": {
+          "path": "/data/input/songs/history.json",
+          "sha256": "2a3eec7b9ae05f78be940be532d460e7c6e955dee280b6df57e92aded5649257"
         },
         "lxns_song_list": {
           "path": "/data/input/enrichment/lxns-songs.json",
@@ -18497,7 +18497,7 @@
           "sha256": "1bf2dd533b27786706885f9f81ef462bf3d0bd83c0f01ea915e17088f88943e3"
         },
         "provenance/internal-level-refresh.json": {
-          "sha256": "6b0cd95bc769579e6a901e212b8598185d47c493349daa6ce51d29e8041012dd"
+          "sha256": "6b2532244938d5009230f0fc3fefa61cf58f3d68b2fd7c929986d4e5c1c34273"
         }
       },
       "postgres": {
