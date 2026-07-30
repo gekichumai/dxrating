@@ -11,6 +11,7 @@ import {
   boolean,
   doublePrecision,
   integer,
+  smallint,
   index,
   unique,
   check,
@@ -373,6 +374,116 @@ export const arcadeInstallations = arcade.table(
     index('installations_game_idx').on(table.game_id),
     index('installations_venue_active_idx').on(table.venue_id, table.absent_since),
     index('installations_game_active_idx').on(table.game_id, table.absent_since),
+  ],
+)
+
+export const arcadeGeocodingObservations = arcade.table(
+  'geocoding_observations',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    venue_id: bigint('venue_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => arcadeVenues.id),
+    provider: text('provider').notNull(),
+    operation: text('operation').notNull(),
+    observed_at: timestamp('observed_at', { withTimezone: true }).notNull(),
+    request_address: text('request_address').notNull(),
+    request_city: text('request_city'),
+    request_hash: text('request_hash').notNull(),
+    attempt: smallint('attempt').notNull(),
+    status: text('status').notNull(),
+    infocode: text('infocode'),
+    level: text('level'),
+    rejection_reason: text('rejection_reason'),
+    gcj02_longitude: doublePrecision('gcj02_longitude'),
+    gcj02_latitude: doublePrecision('gcj02_latitude'),
+    reported_crs: text('reported_crs').notNull(),
+    wgs84_longitude: doublePrecision('wgs84_longitude'),
+    wgs84_latitude: doublePrecision('wgs84_latitude'),
+    normalized_crs: text('normalized_crs').notNull(),
+    quality: doublePrecision('quality'),
+    raw_response: jsonb('raw_response').$type<Record<string, unknown>>().notNull(),
+    provenance: jsonb('provenance').$type<Record<string, unknown>>().notNull(),
+    terminal: boolean('terminal').default(false).notNull(),
+  },
+  (table) => [
+    check('geocoding_observations_operation_check', sql`${table.operation} in ('geocode', 'poi_search')`),
+    check('geocoding_observations_request_hash_check', sql`length(${table.request_hash}) = 64`),
+    check('geocoding_observations_attempt_check', sql`${table.attempt} > 0`),
+    check('geocoding_observations_status_check', sql`${table.status} in ('accepted', 'rejected', 'error')`),
+    check('geocoding_observations_reported_crs_check', sql`${table.reported_crs} = 'GCJ-02'`),
+    check('geocoding_observations_normalized_crs_check', sql`${table.normalized_crs} = 'WGS84'`),
+    check('geocoding_observations_quality_check', sql`${table.quality} is null or ${table.quality} between 0 and 1`),
+    check(
+      'geocoding_observations_gcj02_paired_check',
+      sql`(${table.gcj02_latitude} is null) = (${table.gcj02_longitude} is null)`,
+    ),
+    check(
+      'geocoding_observations_wgs84_paired_check',
+      sql`(${table.wgs84_latitude} is null) = (${table.wgs84_longitude} is null)`,
+    ),
+    index('geocoding_observations_venue_observed_idx').on(table.venue_id, table.observed_at.desc()),
+    index('geocoding_observations_resume_idx').on(table.provider, table.venue_id, table.request_hash, table.terminal),
+  ],
+)
+
+export const arcadeGeocodingCoordinateDecisions = arcade.table(
+  'geocoding_coordinate_decisions',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    observation_id: bigint('observation_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => arcadeGeocodingObservations.id),
+    venue_id: bigint('venue_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => arcadeVenues.id),
+    decided_at: timestamp('decided_at', { withTimezone: true }).notNull(),
+    decision: text('decision').notNull(),
+    wgs84_longitude: doublePrecision('wgs84_longitude').notNull(),
+    wgs84_latitude: doublePrecision('wgs84_latitude').notNull(),
+    reason: text('reason').notNull(),
+    provenance: jsonb('provenance').$type<Record<string, unknown>>().notNull(),
+  },
+  (table) => [
+    unique('geocoding_coordinate_decisions_observation_id_key').on(table.observation_id),
+    check('geocoding_coordinate_decisions_decision_check', sql`${table.decision} in ('applied', 'skipped_non_null')`),
+    check('geocoding_coordinate_decisions_latitude_range_check', sql`${table.wgs84_latitude} between -90 and 90`),
+    check('geocoding_coordinate_decisions_longitude_range_check', sql`${table.wgs84_longitude} between -180 and 180`),
+    index('geocoding_coordinate_decisions_venue_idx').on(table.venue_id, table.decided_at.desc()),
+  ],
+)
+
+export const arcadeGeocodingCoordinateInvalidations = arcade.table(
+  'geocoding_coordinate_invalidations',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    decision_id: bigint('decision_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => arcadeGeocodingCoordinateDecisions.id),
+    venue_id: bigint('venue_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => arcadeVenues.id),
+    invalidated_at: timestamp('invalidated_at', { withTimezone: true }).notNull(),
+    prior_wgs84_longitude: doublePrecision('prior_wgs84_longitude').notNull(),
+    prior_wgs84_latitude: doublePrecision('prior_wgs84_latitude').notNull(),
+    reason: text('reason').notNull(),
+    provenance: jsonb('provenance').$type<Record<string, unknown>>().notNull(),
+  },
+  (table) => [
+    unique('geocoding_coordinate_invalidations_decision_id_key').on(table.decision_id),
+    check(
+      'geocoding_coordinate_invalidations_reason_check',
+      sql`${table.reason} in ('trusted_source_attached', 'trusted_source_changed')`,
+    ),
+    check(
+      'geocoding_coordinate_invalidations_latitude_range_check',
+      sql`${table.prior_wgs84_latitude} between -90 and 90`,
+    ),
+    check(
+      'geocoding_coordinate_invalidations_longitude_range_check',
+      sql`${table.prior_wgs84_longitude} between -180 and 180`,
+    ),
+    index('geocoding_coordinate_invalidations_venue_idx').on(table.venue_id, table.invalidated_at.desc()),
   ],
 )
 
