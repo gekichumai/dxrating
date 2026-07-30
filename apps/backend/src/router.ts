@@ -2,8 +2,18 @@ import * as Sentry from '@sentry/node'
 import { ORPCError, implement } from '@orpc/server'
 import { appContract } from './contract.js'
 import { db } from './db/index.js'
-import { tags, tagGroups, tagSongs, comments, profiles, songAliases } from './db/schema.js'
-import { eq, and, desc } from 'drizzle-orm'
+import {
+  tags,
+  tagGroups,
+  tagSongs,
+  comments,
+  profiles,
+  songAliases,
+  arcadeGames,
+  arcadeVenues,
+  arcadeInstallations,
+} from './db/schema.js'
+import { eq, and, desc, asc, exists, gt, gte, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import Keyv from 'keyv'
 import type { auth } from './auth.js'
 import { config } from './config.js'
@@ -252,6 +262,378 @@ const analyticsHandler = {
   }),
 }
 
+type ArcadeVenueCursor = {
+  normalizedName: string
+  id: string
+}
+
+type ArcadeInstallationProvenance = {
+  source: string
+  observedAt: string
+  sourceUrl: string | null
+}
+
+type ArcadeInstallationResponse = {
+  id: string
+  gameId: string
+  gameName: string
+  machineCount: number | null
+  version: string | null
+  cabinetModel: string | null
+  status: string | null
+  region: string | null
+  network: string | null
+  price: string | null
+  condition: string | null
+  confidence: number | null
+  observedAt: string
+  provenance: ArcadeInstallationProvenance[]
+}
+
+function encodeArcadeVenueCursor(cursor: ArcadeVenueCursor): string {
+  return Buffer.from(JSON.stringify(cursor)).toString('base64url')
+}
+
+function decodeArcadeVenueCursor(cursor: string): { normalizedName: string; id: bigint } {
+  try {
+    const parsed: unknown = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'))
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      !('normalizedName' in parsed) ||
+      typeof parsed.normalizedName !== 'string' ||
+      !('id' in parsed) ||
+      typeof parsed.id !== 'string' ||
+      !/^[1-9]\d*$/.test(parsed.id)
+    ) {
+      throw new Error('Invalid cursor payload')
+    }
+    return { normalizedName: parsed.normalizedName, id: BigInt(parsed.id) }
+  } catch {
+    throw new ORPCError('BAD_REQUEST', { message: 'Invalid venue cursor' })
+  }
+}
+
+function normalizeArcadeSearch(value: string): string {
+  return value
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+}
+
+function escapeArcadeSearch(value: string): string {
+  return value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')
+}
+
+function normalizeArcadeProvenance(
+  value: Array<Record<string, unknown>>,
+  fallback: { source: string; observedAt: Date; sourceUrl: string | null },
+): ArcadeInstallationProvenance[] {
+  const provenance = value.flatMap((item) => {
+    const source = item.source
+    const rawObservedAt = item.observedAt ?? item.observed_at
+    const sourceUrl = item.sourceUrl ?? item.source_url
+    const observedAt =
+      rawObservedAt instanceof Date
+        ? rawObservedAt
+        : typeof rawObservedAt === 'string' && !Number.isNaN(Date.parse(rawObservedAt))
+          ? new Date(rawObservedAt)
+          : undefined
+
+    if (typeof source !== 'string' || !observedAt) return []
+    return [
+      {
+        source,
+        observedAt: observedAt.toISOString(),
+        sourceUrl: typeof sourceUrl === 'string' ? sourceUrl : null,
+      },
+    ]
+  })
+
+  if (provenance.length === 0) {
+    provenance.push({
+      source: fallback.source,
+      observedAt: fallback.observedAt.toISOString(),
+      sourceUrl: fallback.sourceUrl,
+    })
+  }
+
+  const unique = new Map<string, ArcadeInstallationProvenance>()
+  for (const item of provenance) {
+    unique.set(`${item.source}\u0000${item.observedAt}\u0000${item.sourceUrl ?? ''}`, item)
+  }
+
+  return [...unique.values()].sort(
+    (left, right) => left.source.localeCompare(right.source) || left.observedAt.localeCompare(right.observedAt),
+  )
+}
+
+async function loadArcadeInstallations(venueIds: bigint[]) {
+  const grouped = new Map<string, ArcadeInstallationResponse[]>()
+  if (venueIds.length === 0) return grouped
+
+  const rows = await db
+    .select({
+      id: arcadeInstallations.id,
+      venueId: arcadeInstallations.venue_id,
+      gameId: arcadeInstallations.game_id,
+      gameName: arcadeGames.name,
+      machineCount: arcadeInstallations.machine_count,
+      version: arcadeInstallations.version,
+      cabinetModel: arcadeInstallations.cabinet_model,
+      status: arcadeInstallations.status,
+      region: arcadeInstallations.region,
+      network: arcadeInstallations.network,
+      price: arcadeInstallations.price,
+      condition: arcadeInstallations.condition,
+      confidence: arcadeInstallations.confidence,
+      observedAt: arcadeInstallations.observed_at,
+      source: arcadeInstallations.source,
+      sourceUrl: arcadeInstallations.source_url,
+      provenance: arcadeInstallations.provenance,
+    })
+    .from(arcadeInstallations)
+    .innerJoin(arcadeGames, eq(arcadeGames.id, arcadeInstallations.game_id))
+    .where(and(inArray(arcadeInstallations.venue_id, venueIds), isNull(arcadeInstallations.absent_since)))
+    .orderBy(
+      asc(arcadeInstallations.venue_id),
+      asc(arcadeGames.name),
+      asc(arcadeInstallations.game_id),
+      asc(arcadeInstallations.region),
+      asc(arcadeInstallations.network),
+      asc(arcadeInstallations.version),
+      asc(arcadeInstallations.cabinet_model),
+      asc(arcadeInstallations.source),
+      asc(arcadeInstallations.id),
+    )
+
+  const logicalInstallations = new Map<
+    string,
+    {
+      rows: Array<(typeof rows)[number]>
+      provenance: ArcadeInstallationProvenance[]
+    }
+  >()
+
+  for (const row of rows) {
+    const identity = JSON.stringify([
+      row.venueId.toString(),
+      row.gameId,
+      row.region,
+      row.network,
+      row.version,
+      row.cabinetModel,
+    ])
+    const provenance = normalizeArcadeProvenance(row.provenance, {
+      source: row.source,
+      observedAt: row.observedAt,
+      sourceUrl: row.sourceUrl,
+    })
+    const existing = logicalInstallations.get(identity)
+    if (!existing) {
+      logicalInstallations.set(identity, { rows: [row], provenance })
+      continue
+    }
+
+    const merged = new Map<string, ArcadeInstallationProvenance>()
+    for (const item of [...existing.provenance, ...provenance]) {
+      merged.set(`${item.source}\u0000${item.observedAt}\u0000${item.sourceUrl ?? ''}`, item)
+    }
+    existing.provenance = [...merged.values()].sort(
+      (left, right) => left.source.localeCompare(right.source) || left.observedAt.localeCompare(right.observedAt),
+    )
+    existing.rows.push(row)
+  }
+
+  type InstallationRow = (typeof rows)[number]
+  const compareCandidates = (left: InstallationRow, right: InstallationRow) => {
+    const confidence = (right.confidence ?? -1) - (left.confidence ?? -1)
+    if (confidence !== 0) return confidence
+
+    const observedAt = right.observedAt.getTime() - left.observedAt.getTime()
+    if (observedAt !== 0) return observedAt
+
+    const source = left.source.localeCompare(right.source)
+    if (source !== 0) return source
+
+    return left.id < right.id ? -1 : left.id > right.id ? 1 : 0
+  }
+  const compareFreshness = (left: InstallationRow, right: InstallationRow) => {
+    const observedAt = right.observedAt.getTime() - left.observedAt.getTime()
+    if (observedAt !== 0) return observedAt
+
+    const source = left.source.localeCompare(right.source)
+    if (source !== 0) return source
+
+    return left.id < right.id ? -1 : left.id > right.id ? 1 : 0
+  }
+  const selectFact = <T>(candidates: InstallationRow[], read: (candidate: InstallationRow) => T | null): T | null => {
+    const selected = candidates.filter((candidate) => read(candidate) !== null).sort(compareCandidates)[0]
+    return selected ? read(selected) : null
+  }
+
+  for (const { rows: candidates, provenance } of logicalInstallations.values()) {
+    const winner = [...candidates].sort(compareCandidates)[0]
+    const freshest = [...candidates].sort(compareFreshness)[0]
+    const venueId = winner.venueId.toString()
+    const installations = grouped.get(venueId) ?? []
+    installations.push({
+      id: winner.id.toString(),
+      gameId: winner.gameId,
+      gameName: winner.gameName,
+      machineCount: selectFact(candidates, (candidate) => candidate.machineCount),
+      version: winner.version,
+      cabinetModel: winner.cabinetModel,
+      status: selectFact(candidates, (candidate) => candidate.status),
+      region: winner.region,
+      network: winner.network,
+      price: selectFact(candidates, (candidate) => candidate.price),
+      condition: selectFact(candidates, (candidate) => candidate.condition),
+      confidence: selectFact(candidates, (candidate) => candidate.confidence),
+      observedAt: freshest.observedAt.toISOString(),
+      provenance,
+    })
+    grouped.set(venueId, installations)
+  }
+
+  return grouped
+}
+
+function serializeArcadeVenue(
+  venue: typeof arcadeVenues.$inferSelect,
+  installations: Map<string, ArcadeInstallationResponse[]>,
+) {
+  const id = venue.id.toString()
+  return {
+    id,
+    name: venue.name,
+    countryCode: venue.country_code,
+    region: venue.region,
+    city: venue.city,
+    address: venue.address,
+    postalCode: venue.postal_code,
+    phone: venue.phone,
+    websiteUrl: venue.website_url,
+    timezone: venue.timezone,
+    latitude: venue.latitude,
+    longitude: venue.longitude,
+    installations: installations.get(id) ?? [],
+  }
+}
+
+const arcadesHandler = {
+  games: os.arcades.games.handler(async () => {
+    const items = await db
+      .select({
+        id: arcadeGames.id,
+        name: arcadeGames.name,
+        manufacturer: arcadeGames.manufacturer,
+      })
+      .from(arcadeGames)
+      .where(eq(arcadeGames.active, true))
+      .orderBy(asc(arcadeGames.name), asc(arcadeGames.id))
+
+    return { items }
+  }),
+  venues: os.arcades.venues.handler(async ({ input }) => {
+    const filters = []
+
+    if (
+      input.minLatitude !== undefined &&
+      input.minLongitude !== undefined &&
+      input.maxLatitude !== undefined &&
+      input.maxLongitude !== undefined
+    ) {
+      filters.push(
+        gte(arcadeVenues.latitude, input.minLatitude),
+        lte(arcadeVenues.latitude, input.maxLatitude),
+        gte(arcadeVenues.longitude, input.minLongitude),
+        lte(arcadeVenues.longitude, input.maxLongitude),
+      )
+    }
+
+    if (input.query) {
+      const pattern = `%${escapeArcadeSearch(input.query)}%`
+      const normalized = normalizeArcadeSearch(input.query)
+      const normalizedPattern = normalized ? `%${escapeArcadeSearch(normalized)}%` : undefined
+      filters.push(
+        or(
+          ilike(arcadeVenues.name, pattern),
+          ilike(arcadeVenues.address, pattern),
+          ilike(arcadeVenues.city, pattern),
+          ilike(arcadeVenues.region, pattern),
+          normalizedPattern ? ilike(arcadeVenues.normalized_name, normalizedPattern) : undefined,
+          normalizedPattern ? ilike(arcadeVenues.normalized_address, normalizedPattern) : undefined,
+        )!,
+      )
+    }
+
+    if (input.games || input.status) {
+      const installationFilters = [
+        eq(arcadeInstallations.venue_id, arcadeVenues.id),
+        isNull(arcadeInstallations.absent_since),
+      ]
+      if (input.games) installationFilters.push(inArray(arcadeInstallations.game_id, input.games))
+      if (input.status) installationFilters.push(eq(arcadeInstallations.status, input.status))
+      filters.push(
+        exists(
+          db
+            .select({ value: sql`1` })
+            .from(arcadeInstallations)
+            .where(and(...installationFilters)),
+        ),
+      )
+    }
+
+    if (input.cursor) {
+      const cursor = decodeArcadeVenueCursor(input.cursor)
+      filters.push(
+        or(
+          gt(arcadeVenues.normalized_name, cursor.normalizedName),
+          and(eq(arcadeVenues.normalized_name, cursor.normalizedName), gt(arcadeVenues.id, cursor.id)),
+        )!,
+      )
+    }
+
+    const rows = await db
+      .select()
+      .from(arcadeVenues)
+      .where(filters.length > 0 ? and(...filters) : undefined)
+      .orderBy(asc(arcadeVenues.normalized_name), asc(arcadeVenues.id))
+      .limit(input.limit + 1)
+
+    const hasMore = rows.length > input.limit
+    const page = hasMore ? rows.slice(0, input.limit) : rows
+    const installations = await loadArcadeInstallations(page.map((venue) => venue.id))
+    const last = page.at(-1)
+
+    return {
+      items: page.map((venue) => serializeArcadeVenue(venue, installations)),
+      nextCursor:
+        hasMore && last
+          ? encodeArcadeVenueCursor({
+              normalizedName: last.normalized_name,
+              id: last.id.toString(),
+            })
+          : null,
+    }
+  }),
+  venue: os.arcades.venue.handler(async ({ input }) => {
+    const [venue] = await db
+      .select()
+      .from(arcadeVenues)
+      .where(eq(arcadeVenues.id, BigInt(input.id)))
+      .limit(1)
+    if (!venue) {
+      throw new ORPCError('NOT_FOUND', { message: 'Arcade venue not found' })
+    }
+
+    const installations = await loadArcadeInstallations([venue.id])
+    return serializeArcadeVenue(venue, installations)
+  }),
+}
+
 const chartOgImageHandler = {
   render: os.chartOgImage.render.handler(async ({ input }) => {
     const output = await renderChartOgImageOutput(input)
@@ -325,6 +707,7 @@ export const appRouter = os.router({
   comments: commentsHandler,
   aliases: aliasesHandler,
   analytics: analyticsHandler,
+  arcades: arcadesHandler,
   chartOgImage: chartOgImageHandler,
   maimai: maimaiHandler,
   lxns: lxnsHandler,

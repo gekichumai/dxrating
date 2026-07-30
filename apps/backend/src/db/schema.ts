@@ -1,5 +1,21 @@
-import { pgTable, text, timestamp, bigserial, bigint, type AnyPgColumn, jsonb } from 'drizzle-orm/pg-core'
-import { relations } from 'drizzle-orm'
+import {
+  pgTable,
+  text,
+  timestamp,
+  bigserial,
+  bigint,
+  type AnyPgColumn,
+  jsonb,
+  primaryKey,
+  pgSchema,
+  boolean,
+  doublePrecision,
+  integer,
+  index,
+  unique,
+  check,
+} from 'drizzle-orm/pg-core'
+import { relations, sql } from 'drizzle-orm'
 import { user } from './auth-schema.js'
 
 // --- Application Tables ---
@@ -87,6 +103,278 @@ export const lxnsOauthTokens = pgTable('lxns_oauth_tokens', {
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 })
+
+// --- Arcade Location Tables ---
+//
+// The crawler owns writes to this schema. These definitions let the API query
+// the normalized current projection and keep Drizzle migrations in sync with
+// the crawler's PostgreSQL contract.
+// Deployment order: apply the backend migration before the crawler's first
+// ensure_schema call because generated CREATE SCHEMA migrations are one-shot.
+
+export const arcade = pgSchema('arcade')
+
+export const arcadeGames = arcade.table(
+  'games',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    manufacturer: text('manufacturer').notNull(),
+    active: boolean('active').default(true).notNull(),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index('arcade_games_active_name_idx').on(table.active, table.name)],
+)
+
+export const arcadeGameSourceMappings = arcade.table(
+  'game_source_mappings',
+  {
+    source: text('source').notNull(),
+    source_game_id: text('source_game_id').notNull(),
+    game_id: text('game_id')
+      .notNull()
+      .references(() => arcadeGames.id),
+    external_name: text('external_name'),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}).notNull(),
+    active: boolean('active').default(true).notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.source, table.source_game_id],
+    }),
+    index('game_source_mappings_game_id_idx').on(table.game_id),
+  ],
+)
+
+export const arcadeCrawlRuns = arcade.table(
+  'crawl_runs',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    source: text('source').notNull(),
+    started_at: timestamp('started_at', { withTimezone: true }).notNull(),
+    finished_at: timestamp('finished_at', { withTimezone: true }),
+    status: text('status').notNull(),
+    is_complete: boolean('is_complete').default(false).notNull(),
+    record_count: integer('record_count').default(0).notNull(),
+    error: text('error'),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}).notNull(),
+  },
+  (table) => [
+    check('arcade_crawl_runs_status_check', sql`${table.status} in ('running', 'succeeded', 'failed')`),
+    check('arcade_crawl_runs_record_count_check', sql`${table.record_count} >= 0`),
+    index('crawl_runs_source_started_idx').on(table.source, table.started_at.desc()),
+  ],
+)
+
+export const arcadeVenues = arcade.table(
+  'venues',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    name: text('name').notNull(),
+    normalized_name: text('normalized_name').notNull(),
+    country_code: text('country_code'),
+    region: text('region'),
+    city: text('city'),
+    address: text('address'),
+    normalized_address: text('normalized_address'),
+    postal_code: text('postal_code'),
+    phone: text('phone'),
+    website_url: text('website_url'),
+    timezone: text('timezone'),
+    latitude: doublePrecision('latitude'),
+    longitude: doublePrecision('longitude'),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check('venues_coordinates_paired_check', sql`(${table.latitude} is null) = (${table.longitude} is null)`),
+    check('venues_latitude_range_check', sql`${table.latitude} is null or ${table.latitude} between -90 and 90`),
+    check('venues_longitude_range_check', sql`${table.longitude} is null or ${table.longitude} between -180 and 180`),
+    check(
+      'venues_coordinates_nonzero_check',
+      sql`${table.latitude} is null or ${table.latitude} <> 0 or ${table.longitude} <> 0`,
+    ),
+    index('venues_normalized_name_idx').on(table.normalized_name),
+    index('venues_location_idx').on(table.country_code, table.region, table.city),
+    index('venues_coordinates_idx').on(table.latitude, table.longitude),
+    index('venues_name_address_idx').on(table.normalized_name, table.normalized_address),
+  ],
+)
+
+export const arcadeVenueSources = arcade.table(
+  'venue_sources',
+  {
+    source: text('source').notNull(),
+    source_venue_id: text('source_venue_id').notNull(),
+    venue_id: bigint('venue_id', { mode: 'bigint' }).references(() => arcadeVenues.id),
+    name: text('name').notNull(),
+    normalized_name: text('normalized_name').notNull(),
+    address: text('address'),
+    normalized_address: text('normalized_address'),
+    country_code: text('country_code'),
+    region: text('region'),
+    city: text('city'),
+    postal_code: text('postal_code'),
+    phone: text('phone'),
+    website_url: text('website_url'),
+    timezone: text('timezone'),
+    latitude: doublePrecision('latitude'),
+    longitude: doublePrecision('longitude'),
+    source_url: text('source_url'),
+    payload_hash: text('payload_hash'),
+    first_seen_run_id: bigint('first_seen_run_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => arcadeCrawlRuns.id),
+    last_seen_run_id: bigint('last_seen_run_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => arcadeCrawlRuns.id),
+    last_seen_at: timestamp('last_seen_at', { withTimezone: true }).notNull(),
+    active: boolean('active').default(true).notNull(),
+    raw: jsonb('raw').$type<Record<string, unknown>>().notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.source, table.source_venue_id],
+    }),
+    check('venue_sources_coordinates_paired_check', sql`(${table.latitude} is null) = (${table.longitude} is null)`),
+    check('venue_sources_latitude_range_check', sql`${table.latitude} is null or ${table.latitude} between -90 and 90`),
+    check(
+      'venue_sources_longitude_range_check',
+      sql`${table.longitude} is null or ${table.longitude} between -180 and 180`,
+    ),
+    check(
+      'venue_sources_coordinates_nonzero_check',
+      sql`${table.latitude} is null or ${table.latitude} <> 0 or ${table.longitude} <> 0`,
+    ),
+    index('venue_sources_venue_id_idx').on(table.venue_id),
+    index('venue_sources_normalized_name_idx').on(table.normalized_name),
+    index('venue_sources_active_seen_idx').on(table.active, table.last_seen_run_id),
+  ],
+)
+
+export const arcadeVenueMatches = arcade.table(
+  'venue_matches',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    source: text('source').notNull(),
+    source_venue_id: text('source_venue_id').notNull(),
+    venue_id: bigint('venue_id', { mode: 'bigint' }).references(() => arcadeVenues.id),
+    decision: text('decision').notNull(),
+    score: doublePrecision('score'),
+    reason: jsonb('reason').$type<Record<string, unknown>>().default({}).notNull(),
+    decided_by: text('decided_by').notNull(),
+    crawl_run_id: bigint('crawl_run_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => arcadeCrawlRuns.id),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check(
+      'arcade_venue_matches_decision_check',
+      sql`${table.decision} in ('exact_source_id', 'curated', 'auto', 'ambiguous', 'unmatched')`,
+    ),
+    check('arcade_venue_matches_score_check', sql`${table.score} is null or ${table.score} between 0 and 1`),
+    index('venue_matches_source_idx').on(table.source, table.source_venue_id, table.created_at.desc()),
+    index('venue_matches_venue_id_idx').on(table.venue_id),
+  ],
+)
+
+export const arcadeInstallationObservations = arcade.table(
+  'installation_observations',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    crawl_run_id: bigint('crawl_run_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => arcadeCrawlRuns.id, { onDelete: 'cascade' }),
+    source: text('source').notNull(),
+    source_venue_id: text('source_venue_id').notNull(),
+    game_id: text('game_id')
+      .notNull()
+      .references(() => arcadeGames.id),
+    observed_at: timestamp('observed_at', { withTimezone: true }).notNull(),
+    machine_count: integer('machine_count'),
+    version: text('version'),
+    cabinet_model: text('cabinet_model'),
+    status: text('status'),
+    region: text('region'),
+    network: text('network'),
+    price: text('price'),
+    condition: text('condition'),
+    confidence: doublePrecision('confidence'),
+    source_url: text('source_url'),
+    raw: jsonb('raw').$type<Record<string, unknown>>().notNull(),
+  },
+  (table) => [
+    unique('arcade_installation_observations_identity_unique')
+      .on(
+        table.crawl_run_id,
+        table.source,
+        table.source_venue_id,
+        table.game_id,
+        table.region,
+        table.network,
+        table.version,
+        table.cabinet_model,
+      )
+      .nullsNotDistinct(),
+    check(
+      'arcade_installation_observations_count_check',
+      sql`${table.machine_count} is null or ${table.machine_count} >= 0`,
+    ),
+    check(
+      'arcade_installation_observations_confidence_check',
+      sql`${table.confidence} is null or ${table.confidence} between 0 and 1`,
+    ),
+    index('installation_observations_game_idx').on(table.game_id),
+    index('installation_observations_source_venue_idx').on(table.source, table.source_venue_id),
+    index('installation_observations_observed_idx').on(table.observed_at.desc()),
+  ],
+)
+
+export const arcadeInstallations = arcade.table(
+  'installations',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    venue_id: bigint('venue_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => arcadeVenues.id, { onDelete: 'cascade' }),
+    game_id: text('game_id')
+      .notNull()
+      .references(() => arcadeGames.id),
+    version: text('version'),
+    cabinet_model: text('cabinet_model'),
+    machine_count: integer('machine_count'),
+    status: text('status'),
+    region: text('region'),
+    network: text('network'),
+    price: text('price'),
+    condition: text('condition'),
+    confidence: doublePrecision('confidence'),
+    observed_at: timestamp('observed_at', { withTimezone: true }).notNull(),
+    last_crawl_run_id: bigint('last_crawl_run_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => arcadeCrawlRuns.id),
+    source: text('source').notNull(),
+    source_url: text('source_url'),
+    provenance: jsonb('provenance').$type<Array<Record<string, unknown>>>().default([]).notNull(),
+    absent_since: timestamp('absent_since', { withTimezone: true }),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    unique('arcade_installations_identity_unique')
+      .on(table.venue_id, table.game_id, table.source, table.region, table.network, table.version, table.cabinet_model)
+      .nullsNotDistinct(),
+    check('arcade_installations_count_check', sql`${table.machine_count} is null or ${table.machine_count} >= 0`),
+    check(
+      'arcade_installations_confidence_check',
+      sql`${table.confidence} is null or ${table.confidence} between 0 and 1`,
+    ),
+    index('installations_game_idx').on(table.game_id),
+    index('installations_venue_active_idx').on(table.venue_id, table.absent_since),
+    index('installations_game_active_idx').on(table.game_id, table.absent_since),
+  ],
+)
 
 // --- Relations ---
 

@@ -108,6 +108,116 @@ export const LxnsStartOutputSchema = z.object({
   count: z.number(),
 })
 
+export const ArcadeGameSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  manufacturer: z.string(),
+})
+
+export const ArcadeGamesListResponseSchema = z.object({
+  items: z.array(ArcadeGameSchema),
+})
+
+export const ArcadeInstallationProvenanceSchema = z.object({
+  source: z.string(),
+  observedAt: z.string().datetime(),
+  sourceUrl: z.string().nullable(),
+})
+
+export const ArcadeInstallationSchema = z.object({
+  id: z.string().regex(/^[1-9]\d*$/),
+  gameId: z.string(),
+  gameName: z.string(),
+  machineCount: z.number().int().nonnegative().nullable(),
+  version: z.string().nullable(),
+  cabinetModel: z.string().nullable(),
+  status: z.string().nullable(),
+  region: z.string().nullable(),
+  network: z.string().nullable(),
+  price: z.string().nullable(),
+  condition: z.string().nullable(),
+  confidence: z.number().min(0).max(1).nullable(),
+  observedAt: z.string().datetime(),
+  provenance: z.array(ArcadeInstallationProvenanceSchema),
+})
+
+export const ArcadeVenueSchema = z.object({
+  id: z.string().regex(/^[1-9]\d*$/),
+  name: z.string(),
+  countryCode: z.string().nullable(),
+  region: z.string().nullable(),
+  city: z.string().nullable(),
+  address: z.string().nullable(),
+  postalCode: z.string().nullable(),
+  phone: z.string().nullable(),
+  websiteUrl: z.string().nullable(),
+  timezone: z.string().nullable(),
+  latitude: z.number().min(-90).max(90).nullable(),
+  longitude: z.number().min(-180).max(180).nullable(),
+  installations: z.array(ArcadeInstallationSchema),
+})
+
+const ArcadeGamesFilterSchema = z
+  .union([z.string(), z.array(z.string())])
+  .transform((value) =>
+    (Array.isArray(value) ? value : [value])
+      .flatMap((item) => item.split(','))
+      .map((item) => item.trim())
+      .filter(Boolean),
+  )
+  .pipe(z.array(z.string().max(64)).min(1).max(20))
+
+export const ArcadeVenuesListInputSchema = z
+  .object({
+    minLatitude: z.coerce.number().min(-90).max(90).optional(),
+    minLongitude: z.coerce.number().min(-180).max(180).optional(),
+    maxLatitude: z.coerce.number().min(-90).max(90).optional(),
+    maxLongitude: z.coerce.number().min(-180).max(180).optional(),
+    games: ArcadeGamesFilterSchema.optional(),
+    query: z.string().trim().min(1).max(100).optional(),
+    status: z.string().trim().min(1).max(64).optional(),
+    cursor: z.string().min(1).max(512).optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(50),
+  })
+  .superRefine((value, ctx) => {
+    const bbox = [value.minLatitude, value.minLongitude, value.maxLatitude, value.maxLongitude]
+    const supplied = bbox.filter((coordinate) => coordinate !== undefined).length
+    if (supplied !== 0 && supplied !== bbox.length) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'All four bounding-box coordinates must be provided together',
+        path: ['minLatitude'],
+      })
+    }
+    if (value.minLatitude !== undefined && value.maxLatitude !== undefined && value.minLatitude > value.maxLatitude) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'minLatitude must be less than or equal to maxLatitude',
+        path: ['minLatitude'],
+      })
+    }
+    if (
+      value.minLongitude !== undefined &&
+      value.maxLongitude !== undefined &&
+      value.minLongitude > value.maxLongitude
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'minLongitude must be less than or equal to maxLongitude',
+        path: ['minLongitude'],
+      })
+    }
+  })
+
+export const ArcadeVenuesListResponseSchema = z.object({
+  items: z.array(ArcadeVenueSchema),
+  nextCursor: z.string().nullable(),
+})
+
+export const ArcadeVenueDetailInputSchema = z.object({
+  id: z.string().regex(/^[1-9]\d*$/),
+})
+
 export const publicContractRoutes = {
   tags: {
     list: oc
@@ -180,6 +290,37 @@ export const publicContractRoutes = {
         spec: (spec) => ({ ...spec, security: [] }),
       })
       .output(TrendingResponseSchema),
+  },
+  arcades: {
+    games: oc
+      .route({
+        method: 'GET',
+        path: '/arcades/games',
+        summary: 'List supported arcade games',
+        tags: ['Arcades'],
+        spec: (spec) => ({ ...spec, security: [] }),
+      })
+      .output(ArcadeGamesListResponseSchema),
+    venues: oc
+      .route({
+        method: 'GET',
+        path: '/arcades/venues',
+        summary: 'List arcade venues',
+        tags: ['Arcades'],
+        spec: (spec) => ({ ...spec, security: [] }),
+      })
+      .input(ArcadeVenuesListInputSchema)
+      .output(ArcadeVenuesListResponseSchema),
+    venue: oc
+      .route({
+        method: 'GET',
+        path: '/arcades/venues/{id}',
+        summary: 'Get an arcade venue',
+        tags: ['Arcades'],
+        spec: (spec) => ({ ...spec, security: [] }),
+      })
+      .input(ArcadeVenueDetailInputSchema)
+      .output(ArcadeVenueSchema),
   },
   lxns: {
     authorize: oc

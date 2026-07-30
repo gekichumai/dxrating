@@ -39,6 +39,7 @@ export async function setupTestServer() {
     '0002_add_relations.sql',
     '0003_localized_tags_to_jsonb.sql',
     '0004_add_lxns_oauth.sql',
+    '0005_arcade_venues.sql',
   ]
 
   for (const file of migrationFiles) {
@@ -126,6 +127,14 @@ export async function authenticatedFetch(url: string, cookie: string, init?: Req
 export async function cleanDatabase() {
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
   // Order matters due to foreign keys
+  await pool.query('DELETE FROM arcade.installation_observations')
+  await pool.query('DELETE FROM arcade.installations')
+  await pool.query('DELETE FROM arcade.venue_matches')
+  await pool.query('DELETE FROM arcade.venue_sources')
+  await pool.query('DELETE FROM arcade.game_source_mappings')
+  await pool.query('DELETE FROM arcade.venues')
+  await pool.query('DELETE FROM arcade.games')
+  await pool.query('DELETE FROM arcade.crawl_runs')
   await pool.query('DELETE FROM tag_songs')
   await pool.query('DELETE FROM tags')
   await pool.query('DELETE FROM tag_groups')
