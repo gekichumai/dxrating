@@ -2,6 +2,7 @@ import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { createMiddleware } from 'hono/factory'
 import { cors } from 'hono/cors'
+import { etag, RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
 import { auth } from './auth.js'
 import { handler as oneshotRenderer } from './services/functions/oneshot-renderer/index.js'
@@ -26,6 +27,9 @@ const app = new Hono<EvlogVariables>()
 
 const API_CATALOG_PROFILE_URL = 'https://www.rfc-editor.org/info/rfc9727'
 const API_CATALOG_CONTENT_TYPE = `application/linkset+json; profile="${API_CATALOG_PROFILE_URL}"`
+const ARCADE_VENUES_PATH = '/api/v1/arcades/venues'
+const ARCADE_VENUES_BROWSER_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=60, stale-if-error=86400'
+const ARCADE_VENUES_CDN_CACHE_CONTROL = 'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800'
 
 const getFirstHeaderValue = (value: string | undefined) => value?.split(',')[0]?.trim() || undefined
 
@@ -111,34 +115,42 @@ app.onError((err, c) => {
   return c.json({ error: 'Internal server error', requestId }, 500)
 })
 
-// CORS
-app.use(
-  '*',
-  cors({
-    origin: (origin) => {
-      // Allow local development
-      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-        return origin
-      }
+const apiCors = cors({
+  origin: (origin) => {
+    // Allow local development
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return origin
+    }
 
-      // Allow production domain and preview deployments
-      if (
-        origin === 'https://dxrating.net' ||
-        origin.endsWith('.dxrating.pages.dev') ||
-        origin.endsWith('.galvin.workers.dev')
-      ) {
-        return origin
-      }
+    // Allow production domain and preview deployments
+    if (
+      origin === 'https://dxrating.net' ||
+      origin.endsWith('.dxrating.pages.dev') ||
+      origin.endsWith('.galvin.workers.dev')
+    ) {
+      return origin
+    }
 
-      return null
-    },
-    allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response'],
-    allowMethods: ['POST', 'GET', 'OPTIONS'],
-    exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],
-    maxAge: 600,
-    credentials: true,
-  }),
-)
+    return null
+  },
+  allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response'],
+  allowMethods: ['POST', 'GET', 'OPTIONS'],
+  exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],
+  maxAge: 600,
+  credentials: true,
+})
+
+const publicArcadeVenuesCors = cors({
+  origin: '*',
+  allowHeaders: ['Content-Type', 'If-None-Match'],
+  allowMethods: ['GET', 'OPTIONS'],
+  exposeHeaders: ['Content-Length', 'ETag', 'Cache-Control', 'CDN-Cache-Control', 'Cloudflare-CDN-Cache-Control'],
+  maxAge: 86400,
+})
+
+// The one-shot venue catalog is credential-independent, allowing one public
+// representation to be safely shared by browsers and the CDN.
+app.use('*', (c, next) => (c.req.path === ARCADE_VENUES_PATH ? publicArcadeVenuesCors(c, next) : apiCors(c, next)))
 
 // Request logging
 app.use(
@@ -163,7 +175,7 @@ app.use('*', async (c, next) => {
   await next()
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
-  if (requestId) {
+  if (requestId && c.req.path !== ARCADE_VENUES_PATH) {
     c.header('X-DXRating-Request-ID', requestId)
   }
 })
@@ -306,6 +318,53 @@ const openAPIGenerator = new OpenAPIGenerator({
 })
 
 app.get('/robots.txt', (c) => c.text('User-agent: *\\nDisallow: /'))
+
+const arcadeVenuesCacheHeaders = createMiddleware(async (c, next) => {
+  await next()
+  if (c.res.status !== 200) return
+
+  c.header('Cache-Control', ARCADE_VENUES_BROWSER_CACHE_CONTROL)
+  c.header('CDN-Cache-Control', ARCADE_VENUES_CDN_CACHE_CONTROL)
+  c.header('Cloudflare-CDN-Cache-Control', ARCADE_VENUES_CDN_CACHE_CONTROL)
+  c.header('Cache-Tag', 'arcade-venues')
+})
+
+// This exact public route bypasses Better Auth's session lookup. Filtered
+// compatibility requests still receive validators, while the CDN Cache Rule
+// only marks the canonical query-less catalog eligible for edge storage.
+app.get(
+  ARCADE_VENUES_PATH,
+  etag({
+    weak: false,
+    retainedHeaders: [
+      ...RETAINED_304_HEADERS,
+      'cdn-cache-control',
+      'cloudflare-cdn-cache-control',
+      'cache-tag',
+      'access-control-allow-origin',
+      'access-control-expose-headers',
+    ],
+    generateDigest: (body) => crypto.subtle.digest('SHA-256', body),
+  }),
+  arcadeVenuesCacheHeaders,
+  async (c) => {
+    const log = c.get('log')
+    const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+
+    try {
+      const { response } = await openAPIHandler.handle(c.req.raw, {
+        prefix: '/api/v1',
+        context: {},
+      })
+      if (!response) return c.notFound()
+      return response
+    } catch (err) {
+      log?.error(err instanceof Error ? err : new Error(String(err)))
+      Sentry.captureException(err, { tags: { requestId } })
+      return c.json({ error: 'Internal server error', requestId }, 500)
+    }
+  },
+)
 
 app.all('/api/v1/*', async (c) => {
   const log = c.get('log')

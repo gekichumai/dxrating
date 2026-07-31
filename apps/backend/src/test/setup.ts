@@ -40,6 +40,8 @@ export async function setupTestServer() {
     '0003_localized_tags_to_jsonb.sql',
     '0004_add_lxns_oauth.sql',
     '0005_arcade_venues.sql',
+    '0006_arcade_geocoding.sql',
+    '0007_arcade_chains.sql',
   ]
 
   for (const file of migrationFiles) {
@@ -127,12 +129,17 @@ export async function authenticatedFetch(url: string, cookie: string, init?: Req
 export async function cleanDatabase() {
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
   // Order matters due to foreign keys
+  await pool.query('DELETE FROM arcade.geocoding_coordinate_invalidations')
+  await pool.query('DELETE FROM arcade.geocoding_coordinate_decisions')
+  await pool.query('DELETE FROM arcade.geocoding_observations')
   await pool.query('DELETE FROM arcade.installation_observations')
   await pool.query('DELETE FROM arcade.installations')
+  await pool.query('DELETE FROM arcade.venue_chain_decisions')
   await pool.query('DELETE FROM arcade.venue_matches')
   await pool.query('DELETE FROM arcade.venue_sources')
   await pool.query('DELETE FROM arcade.game_source_mappings')
   await pool.query('DELETE FROM arcade.venues')
+  await pool.query('DELETE FROM arcade.chains')
   await pool.query('DELETE FROM arcade.games')
   await pool.query('DELETE FROM arcade.crawl_runs')
   await pool.query('DELETE FROM tag_songs')

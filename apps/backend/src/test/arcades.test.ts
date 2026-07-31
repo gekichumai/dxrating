@@ -12,6 +12,12 @@ async function seedArcades() {
         ('retired', 'Retired Game', 'Example', false)
     `)
 
+    await pool.query(`
+      INSERT INTO arcade.chains (id, name, country_codes) VALUES
+        ('gigo', 'GiGO', ARRAY['JP']),
+        ('timezone', 'Timezone', ARRAY['SG'])
+    `)
+
     const run = await pool.query<{ id: string }>(`
       INSERT INTO arcade.crawl_runs
         (source, started_at, finished_at, status, is_complete, record_count)
@@ -23,16 +29,16 @@ async function seedArcades() {
 
     const venues = await pool.query<{ id: string; normalized_name: string }>(`
       INSERT INTO arcade.venues
-        (name, normalized_name, country_code, region, city, postal_code, address,
+        (name, normalized_name, chain_id, country_code, region, city, postal_code, address,
          phone, website_url, timezone, latitude, longitude)
       VALUES
-        ('Alpha Arcade', 'alpha arcade', 'JP', 'Tokyo', 'Chiyoda', NULL,
+        ('Alpha Arcade', 'alpha arcade', NULL, 'JP', 'Tokyo', 'Chiyoda', NULL,
          '1-1 Alpha', NULL, NULL, 'Asia/Tokyo', NULL, NULL),
-        ('Beta Game Center', 'beta game center', 'JP', 'Tokyo', 'Shinjuku', '160-0022',
+        ('Beta Game Center', 'beta game center', NULL, 'JP', 'Tokyo', 'Shinjuku', '160-0022',
          '2-2 Beta', '+81-3-0000-0000', 'https://example.com/beta', 'Asia/Tokyo', 35.6900, 139.7000),
-        ('Gamma Games', 'gamma games', 'JP', 'Kanagawa', 'Yokohama', '220-0000',
+        ('Gamma Games', 'gamma games', NULL, 'JP', 'Kanagawa', 'Yokohama', '220-0000',
          '3-3 Gamma', NULL, NULL, 'Asia/Tokyo', 35.4500, 139.6300),
-        ('ＧｉＧＯ 秋葉原', 'gigo 秋葉原', 'JP', 'Tokyo', 'Chiyoda', '101-0021',
+        ('ＧｉＧＯ 秋葉原', 'gigo 秋葉原', 'gigo', 'JP', 'Tokyo', 'Chiyoda', '101-0021',
          '4-4 Akihabara', NULL, NULL, 'Asia/Tokyo', 35.6980, 139.7710)
       RETURNING id, normalized_name
     `)
@@ -66,6 +72,15 @@ async function seedArcades() {
         UPDATE arcade.installations
         SET absent_since = '2026-07-30T05:00:00Z'
         WHERE venue_id = $1 AND game_id = 'chunithm'
+      `,
+      [venueId.get('alpha arcade')],
+    )
+
+    await pool.query(
+      `
+        UPDATE arcade.installations
+        SET provenance = '[{"source":"private_test_source","observedAt":"2026-07-30T02:00:00Z"}]'::jsonb
+        WHERE venue_id = $1 AND game_id = 'maimai' AND source = 'z_source'
       `,
       [venueId.get('alpha arcade')],
     )
@@ -106,52 +121,49 @@ describe('Arcades API', () => {
     expect(spec.paths['/arcades/venues/{id}'].get.security).toEqual([])
   })
 
-  it('merges source facts without discarding known values or exposing raw data', async () => {
+  it('merges source facts, omits nulls, and keeps provenance private', async () => {
     const response = await fetch(`${getBaseUrl()}/api/v1/arcades/venues?query=Alpha`)
 
     expect(response.status).toBe(200)
     const body = await response.json()
-    expect(body.nextCursor).toBeNull()
+    expect(body).not.toHaveProperty('nextCursor')
     expect(body.items).toHaveLength(1)
     expect(body.items[0]).toMatchObject({
       id: expect.stringMatching(/^[1-9]\d*$/),
       name: 'Alpha Arcade',
-      postalCode: null,
-      phone: null,
-      websiteUrl: null,
-      latitude: null,
-      longitude: null,
     })
+    expect(body.items[0]).not.toHaveProperty('postalCode')
+    expect(body.items[0]).not.toHaveProperty('phone')
+    expect(body.items[0]).not.toHaveProperty('websiteUrl')
+    expect(body.items[0]).not.toHaveProperty('latitude')
+    expect(body.items[0]).not.toHaveProperty('longitude')
     expect(body.items[0].installations).toHaveLength(1)
     expect(body.items[0].installations[0]).toMatchObject({
       gameId: 'maimai',
       machineCount: 3,
       version: 'PRiSM',
-      cabinetModel: null,
       status: 'online',
       price: '100 JPY',
       condition: 'good',
       confidence: 0.9,
       observedAt: '2026-07-30T02:00:00.000Z',
     })
-    expect(body.items[0].installations[0].provenance).toEqual([
-      {
-        source: 'a_source',
-        observedAt: '2026-07-30T01:00:00.000Z',
-        sourceUrl: null,
-      },
-      {
-        source: 'y_source',
-        observedAt: '2026-07-30T01:30:00.000Z',
-        sourceUrl: 'https://source-y.example/alpha',
-      },
-      {
-        source: 'z_source',
-        observedAt: '2026-07-30T02:00:00.000Z',
-        sourceUrl: 'https://source-z.example/alpha',
-      },
+    expect(body.items[0].installations[0]).not.toHaveProperty('cabinetModel')
+    const json = JSON.stringify(body)
+    expect(json).not.toContain(':null')
+    expect(json).not.toContain('"provenance"')
+    expect(json).not.toContain('"raw"')
+
+    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+    const persisted = await pool.query<{ provenance: Array<Record<string, unknown>> }>(`
+      SELECT provenance
+      FROM arcade.installations
+      WHERE source = 'z_source'
+    `)
+    await pool.end()
+    expect(persisted.rows[0].provenance).toEqual([
+      { source: 'private_test_source', observedAt: '2026-07-30T02:00:00Z' },
     ])
-    expect(JSON.stringify(body)).not.toContain('"raw"')
   })
 
   it('filters by bbox, games, and installation status', async () => {
@@ -178,20 +190,32 @@ describe('Arcades API', () => {
     expect(body.items.map((venue: { name: string }) => venue.name)).toEqual(['ＧｉＧＯ 秋葉原'])
   })
 
-  it('orders and paginates with an opaque cursor', async () => {
-    const firstResponse = await fetch(`${getBaseUrl()}/api/v1/arcades/venues?limit=1`)
-    const first = await firstResponse.json()
+  it('returns the complete catalog in one response', async () => {
+    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+    await pool.query(`
+      INSERT INTO arcade.venues (name, normalized_name)
+      SELECT 'Venue ' || value, 'venue ' || lpad(value::text, 3, '0')
+      FROM generate_series(1, 120) AS value
+    `)
+    await pool.end()
 
-    expect(first.items.map((venue: { name: string }) => venue.name)).toEqual(['Alpha Arcade'])
-    expect(first.nextCursor).toEqual(expect.any(String))
+    const response = await fetch(`${getBaseUrl()}/api/v1/arcades/venues?limit=1`)
+    const body = await response.json()
 
-    const secondResponse = await fetch(
-      `${getBaseUrl()}/api/v1/arcades/venues?limit=1&cursor=${encodeURIComponent(first.nextCursor)}`,
-    )
-    const second = await secondResponse.json()
+    expect(body.items).toHaveLength(124)
+    expect(body).not.toHaveProperty('nextCursor')
+  })
 
-    expect(second.items.map((venue: { name: string }) => venue.name)).toEqual(['Beta Game Center'])
-    expect(second.items[0].id).toEqual(expect.stringMatching(/^[1-9]\d*$/))
+  it('returns represented chain metadata and filters by stable chain id', async () => {
+    const allResponse = await fetch(`${getBaseUrl()}/api/v1/arcades/venues`)
+    const all = await allResponse.json()
+    expect(all.chains).toEqual([{ id: 'gigo', name: 'GiGO', countryCodes: ['JP'] }])
+    expect(all.chains).not.toContainEqual(expect.objectContaining({ id: 'timezone' }))
+
+    const filteredResponse = await fetch(`${getBaseUrl()}/api/v1/arcades/venues?chains=gigo`)
+    const filtered = await filteredResponse.json()
+    expect(filtered.items.map((venue: { name: string }) => venue.name)).toEqual(['ＧｉＧＯ 秋葉原'])
+    expect(filtered.items[0].chainId).toBe('gigo')
   })
 
   it('returns detail and a 404 for an unknown venue', async () => {
@@ -212,7 +236,7 @@ describe('Arcades API', () => {
     expect(missingResponse.status).toBe(404)
   })
 
-  it('rejects partial or invalid bounding boxes, bad cursors, and oversized limits', async () => {
+  it('rejects partial or invalid bounding boxes', async () => {
     const partial = await fetch(`${getBaseUrl()}/api/v1/arcades/venues?minLatitude=35`)
     expect(partial.status).toBe(400)
 
@@ -220,11 +244,44 @@ describe('Arcades API', () => {
       `${getBaseUrl()}/api/v1/arcades/venues?minLatitude=36&minLongitude=139&maxLatitude=35&maxLongitude=140`,
     )
     expect(inverted.status).toBe(400)
+  })
 
-    const badCursor = await fetch(`${getBaseUrl()}/api/v1/arcades/venues?cursor=not-a-cursor`)
-    expect(badCursor.status).toBe(400)
+  it('serves the public catalog with CDN validators and cache-safe CORS', async () => {
+    const response = await fetch(`${getBaseUrl()}/api/v1/arcades/venues`, {
+      headers: { Origin: 'https://example.app' },
+    })
+    const etag = response.headers.get('etag')
 
-    const badLimit = await fetch(`${getBaseUrl()}/api/v1/arcades/venues?limit=101`)
-    expect(badLimit.status).toBe(400)
+    expect(response.status).toBe(200)
+    expect(etag).toMatch(/^"[a-f0-9]{64}"$/)
+    expect(response.headers.get('cache-control')).toBe(
+      'public, max-age=300, stale-while-revalidate=60, stale-if-error=86400',
+    )
+    expect(response.headers.get('cdn-cache-control')).toBe(
+      'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800',
+    )
+    expect(response.headers.get('cloudflare-cdn-cache-control')).toBe(
+      'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800',
+    )
+    expect(response.headers.get('access-control-allow-origin')).toBe('*')
+    expect(response.headers.has('access-control-allow-credentials')).toBe(false)
+    expect(response.headers.get('vary') ?? '').not.toContain('Origin')
+    expect(response.headers.has('x-dxrating-request-id')).toBe(false)
+
+    const notModified = await fetch(`${getBaseUrl()}/api/v1/arcades/venues`, {
+      headers: { 'If-None-Match': etag! },
+    })
+    expect(notModified.status).toBe(304)
+    expect(await notModified.text()).toBe('')
+    expect(notModified.headers.get('etag')).toBe(etag)
+    expect(notModified.headers.get('cache-control')).toBe(response.headers.get('cache-control'))
+
+    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+    await pool.query(`UPDATE arcade.venues SET name = 'Alpha Arcade Updated' WHERE normalized_name = 'alpha arcade'`)
+    await pool.end()
+
+    const changed = await fetch(`${getBaseUrl()}/api/v1/arcades/venues`)
+    expect(changed.headers.get('etag')).toMatch(/^"[a-f0-9]{64}"$/)
+    expect(changed.headers.get('etag')).not.toBe(etag)
   })
 })

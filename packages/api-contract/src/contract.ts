@@ -118,42 +118,42 @@ export const ArcadeGamesListResponseSchema = z.object({
   items: z.array(ArcadeGameSchema),
 })
 
-export const ArcadeInstallationProvenanceSchema = z.object({
-  source: z.string(),
-  observedAt: z.string().datetime(),
-  sourceUrl: z.string().nullable(),
-})
-
 export const ArcadeInstallationSchema = z.object({
   id: z.string().regex(/^[1-9]\d*$/),
   gameId: z.string(),
   gameName: z.string(),
-  machineCount: z.number().int().nonnegative().nullable(),
-  version: z.string().nullable(),
-  cabinetModel: z.string().nullable(),
-  status: z.string().nullable(),
-  region: z.string().nullable(),
-  network: z.string().nullable(),
-  price: z.string().nullable(),
-  condition: z.string().nullable(),
-  confidence: z.number().min(0).max(1).nullable(),
+  machineCount: z.number().int().nonnegative().optional(),
+  version: z.string().optional(),
+  cabinetModel: z.string().optional(),
+  status: z.string().optional(),
+  region: z.string().optional(),
+  network: z.string().optional(),
+  price: z.string().optional(),
+  condition: z.string().optional(),
+  confidence: z.number().min(0).max(1).optional(),
   observedAt: z.string().datetime(),
-  provenance: z.array(ArcadeInstallationProvenanceSchema),
+})
+
+export const ArcadeChainSchema = z.object({
+  id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  name: z.string(),
+  countryCodes: z.array(z.string()),
 })
 
 export const ArcadeVenueSchema = z.object({
   id: z.string().regex(/^[1-9]\d*$/),
   name: z.string(),
-  countryCode: z.string().nullable(),
-  region: z.string().nullable(),
-  city: z.string().nullable(),
-  address: z.string().nullable(),
-  postalCode: z.string().nullable(),
-  phone: z.string().nullable(),
-  websiteUrl: z.string().nullable(),
-  timezone: z.string().nullable(),
-  latitude: z.number().min(-90).max(90).nullable(),
-  longitude: z.number().min(-180).max(180).nullable(),
+  chainId: z.string().optional(),
+  countryCode: z.string().optional(),
+  region: z.string().optional(),
+  city: z.string().optional(),
+  address: z.string().optional(),
+  postalCode: z.string().optional(),
+  phone: z.string().optional(),
+  websiteUrl: z.string().optional(),
+  timezone: z.string().optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
   installations: z.array(ArcadeInstallationSchema),
 })
 
@@ -167,6 +167,26 @@ const ArcadeGamesFilterSchema = z
   )
   .pipe(z.array(z.string().max(64)).min(1).max(20))
 
+const ArcadeChainsFilterSchema = z
+  .union([z.string(), z.array(z.string())])
+  .transform((value) =>
+    (Array.isArray(value) ? value : [value])
+      .flatMap((item) => item.split(','))
+      .map((item) => item.trim())
+      .filter(Boolean),
+  )
+  .pipe(
+    z
+      .array(
+        z
+          .string()
+          .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+          .max(64),
+      )
+      .min(1)
+      .max(50),
+  )
+
 export const ArcadeVenuesListInputSchema = z
   .object({
     minLatitude: z.coerce.number().min(-90).max(90).optional(),
@@ -174,10 +194,9 @@ export const ArcadeVenuesListInputSchema = z
     maxLatitude: z.coerce.number().min(-90).max(90).optional(),
     maxLongitude: z.coerce.number().min(-180).max(180).optional(),
     games: ArcadeGamesFilterSchema.optional(),
+    chains: ArcadeChainsFilterSchema.optional(),
     query: z.string().trim().min(1).max(100).optional(),
     status: z.string().trim().min(1).max(64).optional(),
-    cursor: z.string().min(1).max(512).optional(),
-    limit: z.coerce.number().int().min(1).max(100).default(50),
   })
   .superRefine((value, ctx) => {
     const bbox = [value.minLatitude, value.minLongitude, value.maxLatitude, value.maxLongitude]
@@ -211,7 +230,7 @@ export const ArcadeVenuesListInputSchema = z
 
 export const ArcadeVenuesListResponseSchema = z.object({
   items: z.array(ArcadeVenueSchema),
-  nextCursor: z.string().nullable(),
+  chains: z.array(ArcadeChainSchema),
 })
 
 export const ArcadeVenueDetailInputSchema = z.object({

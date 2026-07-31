@@ -115,6 +115,14 @@ export const lxnsOauthTokens = pgTable('lxns_oauth_tokens', {
 
 export const arcade = pgSchema('arcade')
 
+export const arcadeChains = arcade.table('chains', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  country_codes: text('country_codes').array().notNull(),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
 export const arcadeGames = arcade.table(
   'games',
   {
@@ -174,6 +182,7 @@ export const arcadeVenues = arcade.table(
     id: bigserial('id', { mode: 'bigint' }).primaryKey(),
     name: text('name').notNull(),
     normalized_name: text('normalized_name').notNull(),
+    chain_id: text('chain_id').references(() => arcadeChains.id),
     country_code: text('country_code'),
     region: text('region'),
     city: text('city'),
@@ -197,9 +206,37 @@ export const arcadeVenues = arcade.table(
       sql`${table.latitude} is null or ${table.latitude} <> 0 or ${table.longitude} <> 0`,
     ),
     index('venues_normalized_name_idx').on(table.normalized_name),
+    index('venues_chain_id_idx').on(table.chain_id),
     index('venues_location_idx').on(table.country_code, table.region, table.city),
     index('venues_coordinates_idx').on(table.latitude, table.longitude),
     index('venues_name_address_idx').on(table.normalized_name, table.normalized_address),
+  ],
+)
+
+export const arcadeVenueChainDecisions = arcade.table(
+  'venue_chain_decisions',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    venue_id: bigint('venue_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => arcadeVenues.id),
+    classifier_version: text('classifier_version').notNull(),
+    input_hash: text('input_hash').notNull(),
+    decision: text('decision').notNull(),
+    chain_id: text('chain_id').references(() => arcadeChains.id),
+    previous_chain_id: text('previous_chain_id').references(() => arcadeChains.id),
+    evidence: jsonb('evidence').$type<Record<string, unknown>>().notNull(),
+    decided_at: timestamp('decided_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    unique('venue_chain_decisions_input_unique').on(table.venue_id, table.classifier_version, table.input_hash),
+    check('venue_chain_decisions_input_hash_check', sql`length(${table.input_hash}) = 64`),
+    check('venue_chain_decisions_decision_check', sql`${table.decision} in ('matched', 'unmatched', 'ambiguous')`),
+    check(
+      'venue_chain_decisions_chain_coherence_check',
+      sql`(${table.decision} = 'matched') = (${table.chain_id} is not null)`,
+    ),
+    index('venue_chain_decisions_venue_idx').on(table.venue_id, table.decided_at.desc()),
   ],
 )
 

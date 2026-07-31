@@ -10,10 +10,11 @@ import {
   profiles,
   songAliases,
   arcadeGames,
+  arcadeChains,
   arcadeVenues,
   arcadeInstallations,
 } from './db/schema.js'
-import { eq, and, desc, asc, exists, gt, gte, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm'
+import { eq, and, desc, asc, exists, gte, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import Keyv from 'keyv'
 import type { auth } from './auth.js'
 import { config } from './config.js'
@@ -262,56 +263,20 @@ const analyticsHandler = {
   }),
 }
 
-type ArcadeVenueCursor = {
-  normalizedName: string
-  id: string
-}
-
-type ArcadeInstallationProvenance = {
-  source: string
-  observedAt: string
-  sourceUrl: string | null
-}
-
 type ArcadeInstallationResponse = {
   id: string
   gameId: string
   gameName: string
-  machineCount: number | null
-  version: string | null
-  cabinetModel: string | null
-  status: string | null
-  region: string | null
-  network: string | null
-  price: string | null
-  condition: string | null
-  confidence: number | null
+  machineCount?: number
+  version?: string
+  cabinetModel?: string
+  status?: string
+  region?: string
+  network?: string
+  price?: string
+  condition?: string
+  confidence?: number
   observedAt: string
-  provenance: ArcadeInstallationProvenance[]
-}
-
-function encodeArcadeVenueCursor(cursor: ArcadeVenueCursor): string {
-  return Buffer.from(JSON.stringify(cursor)).toString('base64url')
-}
-
-function decodeArcadeVenueCursor(cursor: string): { normalizedName: string; id: bigint } {
-  try {
-    const parsed: unknown = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'))
-    if (
-      !parsed ||
-      typeof parsed !== 'object' ||
-      !('normalizedName' in parsed) ||
-      typeof parsed.normalizedName !== 'string' ||
-      !('id' in parsed) ||
-      typeof parsed.id !== 'string' ||
-      !/^[1-9]\d*$/.test(parsed.id)
-    ) {
-      throw new Error('Invalid cursor payload')
-    }
-    return { normalizedName: parsed.normalizedName, id: BigInt(parsed.id) }
-  } catch {
-    throw new ORPCError('BAD_REQUEST', { message: 'Invalid venue cursor' })
-  }
 }
 
 function normalizeArcadeSearch(value: string): string {
@@ -324,49 +289,6 @@ function normalizeArcadeSearch(value: string): string {
 
 function escapeArcadeSearch(value: string): string {
   return value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')
-}
-
-function normalizeArcadeProvenance(
-  value: Array<Record<string, unknown>>,
-  fallback: { source: string; observedAt: Date; sourceUrl: string | null },
-): ArcadeInstallationProvenance[] {
-  const provenance = value.flatMap((item) => {
-    const source = item.source
-    const rawObservedAt = item.observedAt ?? item.observed_at
-    const sourceUrl = item.sourceUrl ?? item.source_url
-    const observedAt =
-      rawObservedAt instanceof Date
-        ? rawObservedAt
-        : typeof rawObservedAt === 'string' && !Number.isNaN(Date.parse(rawObservedAt))
-          ? new Date(rawObservedAt)
-          : undefined
-
-    if (typeof source !== 'string' || !observedAt) return []
-    return [
-      {
-        source,
-        observedAt: observedAt.toISOString(),
-        sourceUrl: typeof sourceUrl === 'string' ? sourceUrl : null,
-      },
-    ]
-  })
-
-  if (provenance.length === 0) {
-    provenance.push({
-      source: fallback.source,
-      observedAt: fallback.observedAt.toISOString(),
-      sourceUrl: fallback.sourceUrl,
-    })
-  }
-
-  const unique = new Map<string, ArcadeInstallationProvenance>()
-  for (const item of provenance) {
-    unique.set(`${item.source}\u0000${item.observedAt}\u0000${item.sourceUrl ?? ''}`, item)
-  }
-
-  return [...unique.values()].sort(
-    (left, right) => left.source.localeCompare(right.source) || left.observedAt.localeCompare(right.observedAt),
-  )
 }
 
 async function loadArcadeInstallations(venueIds: bigint[]) {
@@ -390,8 +312,6 @@ async function loadArcadeInstallations(venueIds: bigint[]) {
       confidence: arcadeInstallations.confidence,
       observedAt: arcadeInstallations.observed_at,
       source: arcadeInstallations.source,
-      sourceUrl: arcadeInstallations.source_url,
-      provenance: arcadeInstallations.provenance,
     })
     .from(arcadeInstallations)
     .innerJoin(arcadeGames, eq(arcadeGames.id, arcadeInstallations.game_id))
@@ -408,13 +328,7 @@ async function loadArcadeInstallations(venueIds: bigint[]) {
       asc(arcadeInstallations.id),
     )
 
-  const logicalInstallations = new Map<
-    string,
-    {
-      rows: Array<(typeof rows)[number]>
-      provenance: ArcadeInstallationProvenance[]
-    }
-  >()
+  const logicalInstallations = new Map<string, Array<(typeof rows)[number]>>()
 
   for (const row of rows) {
     const identity = JSON.stringify([
@@ -425,25 +339,12 @@ async function loadArcadeInstallations(venueIds: bigint[]) {
       row.version,
       row.cabinetModel,
     ])
-    const provenance = normalizeArcadeProvenance(row.provenance, {
-      source: row.source,
-      observedAt: row.observedAt,
-      sourceUrl: row.sourceUrl,
-    })
     const existing = logicalInstallations.get(identity)
     if (!existing) {
-      logicalInstallations.set(identity, { rows: [row], provenance })
+      logicalInstallations.set(identity, [row])
       continue
     }
-
-    const merged = new Map<string, ArcadeInstallationProvenance>()
-    for (const item of [...existing.provenance, ...provenance]) {
-      merged.set(`${item.source}\u0000${item.observedAt}\u0000${item.sourceUrl ?? ''}`, item)
-    }
-    existing.provenance = [...merged.values()].sort(
-      (left, right) => left.source.localeCompare(right.source) || left.observedAt.localeCompare(right.observedAt),
-    )
-    existing.rows.push(row)
+    existing.push(row)
   }
 
   type InstallationRow = (typeof rows)[number]
@@ -468,12 +369,15 @@ async function loadArcadeInstallations(venueIds: bigint[]) {
 
     return left.id < right.id ? -1 : left.id > right.id ? 1 : 0
   }
-  const selectFact = <T>(candidates: InstallationRow[], read: (candidate: InstallationRow) => T | null): T | null => {
+  const selectFact = <T>(
+    candidates: InstallationRow[],
+    read: (candidate: InstallationRow) => T | null,
+  ): T | undefined => {
     const selected = candidates.filter((candidate) => read(candidate) !== null).sort(compareCandidates)[0]
-    return selected ? read(selected) : null
+    return selected ? (read(selected) ?? undefined) : undefined
   }
 
-  for (const { rows: candidates, provenance } of logicalInstallations.values()) {
+  for (const candidates of logicalInstallations.values()) {
     const winner = [...candidates].sort(compareCandidates)[0]
     const freshest = [...candidates].sort(compareFreshness)[0]
     const venueId = winner.venueId.toString()
@@ -483,16 +387,15 @@ async function loadArcadeInstallations(venueIds: bigint[]) {
       gameId: winner.gameId,
       gameName: winner.gameName,
       machineCount: selectFact(candidates, (candidate) => candidate.machineCount),
-      version: winner.version,
-      cabinetModel: winner.cabinetModel,
+      version: winner.version ?? undefined,
+      cabinetModel: winner.cabinetModel ?? undefined,
       status: selectFact(candidates, (candidate) => candidate.status),
-      region: winner.region,
-      network: winner.network,
+      region: winner.region ?? undefined,
+      network: winner.network ?? undefined,
       price: selectFact(candidates, (candidate) => candidate.price),
       condition: selectFact(candidates, (candidate) => candidate.condition),
       confidence: selectFact(candidates, (candidate) => candidate.confidence),
       observedAt: freshest.observedAt.toISOString(),
-      provenance,
     })
     grouped.set(venueId, installations)
   }
@@ -508,16 +411,17 @@ function serializeArcadeVenue(
   return {
     id,
     name: venue.name,
-    countryCode: venue.country_code,
-    region: venue.region,
-    city: venue.city,
-    address: venue.address,
-    postalCode: venue.postal_code,
-    phone: venue.phone,
-    websiteUrl: venue.website_url,
-    timezone: venue.timezone,
-    latitude: venue.latitude,
-    longitude: venue.longitude,
+    chainId: venue.chain_id ?? undefined,
+    countryCode: venue.country_code ?? undefined,
+    region: venue.region ?? undefined,
+    city: venue.city ?? undefined,
+    address: venue.address ?? undefined,
+    postalCode: venue.postal_code ?? undefined,
+    phone: venue.phone ?? undefined,
+    websiteUrl: venue.website_url ?? undefined,
+    timezone: venue.timezone ?? undefined,
+    latitude: venue.latitude ?? undefined,
+    longitude: venue.longitude ?? undefined,
     installations: installations.get(id) ?? [],
   }
 }
@@ -569,6 +473,10 @@ const arcadesHandler = {
       )
     }
 
+    if (input.chains) {
+      filters.push(inArray(arcadeVenues.chain_id, input.chains))
+    }
+
     if (input.games || input.status) {
       const installationFilters = [
         eq(arcadeInstallations.venue_id, arcadeVenues.id),
@@ -586,37 +494,35 @@ const arcadesHandler = {
       )
     }
 
-    if (input.cursor) {
-      const cursor = decodeArcadeVenueCursor(input.cursor)
-      filters.push(
-        or(
-          gt(arcadeVenues.normalized_name, cursor.normalizedName),
-          and(eq(arcadeVenues.normalized_name, cursor.normalizedName), gt(arcadeVenues.id, cursor.id)),
-        )!,
-      )
-    }
+    const [rows, chains] = await Promise.all([
+      db
+        .select()
+        .from(arcadeVenues)
+        .where(filters.length > 0 ? and(...filters) : undefined)
+        .orderBy(asc(arcadeVenues.normalized_name), asc(arcadeVenues.id)),
+      db
+        .select({
+          id: arcadeChains.id,
+          name: arcadeChains.name,
+          countryCodes: arcadeChains.country_codes,
+        })
+        .from(arcadeChains)
+        .where(
+          exists(
+            db
+              .select({ value: sql`1` })
+              .from(arcadeVenues)
+              .where(eq(arcadeVenues.chain_id, arcadeChains.id)),
+          ),
+        )
+        .orderBy(asc(arcadeChains.name), asc(arcadeChains.id)),
+    ])
 
-    const rows = await db
-      .select()
-      .from(arcadeVenues)
-      .where(filters.length > 0 ? and(...filters) : undefined)
-      .orderBy(asc(arcadeVenues.normalized_name), asc(arcadeVenues.id))
-      .limit(input.limit + 1)
-
-    const hasMore = rows.length > input.limit
-    const page = hasMore ? rows.slice(0, input.limit) : rows
-    const installations = await loadArcadeInstallations(page.map((venue) => venue.id))
-    const last = page.at(-1)
+    const installations = await loadArcadeInstallations(rows.map((venue) => venue.id))
 
     return {
-      items: page.map((venue) => serializeArcadeVenue(venue, installations)),
-      nextCursor:
-        hasMore && last
-          ? encodeArcadeVenueCursor({
-              normalizedName: last.normalized_name,
-              id: last.id.toString(),
-            })
-          : null,
+      items: rows.map((venue) => serializeArcadeVenue(venue, installations)),
+      chains,
     }
   }),
   venue: os.arcades.venue.handler(async ({ input }) => {
