@@ -42,6 +42,7 @@ export async function setupTestServer() {
     '0005_arcade_venues.sql',
     '0006_arcade_geocoding.sql',
     '0007_arcade_chains.sql',
+    '0008_arcade_chain_audit_alignment.sql',
   ]
 
   for (const file of migrationFiles) {

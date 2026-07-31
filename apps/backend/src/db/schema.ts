@@ -115,13 +115,17 @@ export const lxnsOauthTokens = pgTable('lxns_oauth_tokens', {
 
 export const arcade = pgSchema('arcade')
 
-export const arcadeChains = arcade.table('chains', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  country_codes: text('country_codes').array().notNull(),
-  created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-})
+export const arcadeChains = arcade.table(
+  'chains',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    country_codes: text('country_codes').array().notNull(),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [check('chains_country_codes_nonempty_check', sql`cardinality(${table.country_codes}) > 0`)],
+)
 
 export const arcadeGames = arcade.table(
   'games',
@@ -229,7 +233,6 @@ export const arcadeVenueChainDecisions = arcade.table(
     decided_at: timestamp('decided_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
-    unique('venue_chain_decisions_input_unique').on(table.venue_id, table.classifier_version, table.input_hash),
     check('venue_chain_decisions_input_hash_check', sql`length(${table.input_hash}) = 64`),
     check('venue_chain_decisions_decision_check', sql`${table.decision} in ('matched', 'unmatched', 'ambiguous')`),
     check(
