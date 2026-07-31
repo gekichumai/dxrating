@@ -268,6 +268,11 @@ describe('Arcades API', () => {
     expect(response.headers.get('vary') ?? '').not.toContain('Origin')
     expect(response.headers.has('x-dxrating-request-id')).toBe(false)
 
+    const head = await fetch(`${getBaseUrl()}/api/v1/arcades/venues`, { method: 'HEAD' })
+    expect(head.status).toBe(200)
+    expect(head.headers.get('etag')).toBe(etag)
+    expect(await head.text()).toBe('')
+
     const notModified = await fetch(`${getBaseUrl()}/api/v1/arcades/venues`, {
       headers: { 'If-None-Match': etag! },
     })

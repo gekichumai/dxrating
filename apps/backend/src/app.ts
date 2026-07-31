@@ -143,7 +143,7 @@ const apiCors = cors({
 const publicArcadeVenuesCors = cors({
   origin: '*',
   allowHeaders: ['Content-Type', 'If-None-Match'],
-  allowMethods: ['GET', 'OPTIONS'],
+  allowMethods: ['GET', 'HEAD', 'OPTIONS'],
   exposeHeaders: ['Content-Length', 'ETag', 'Cache-Control', 'CDN-Cache-Control', 'Cloudflare-CDN-Cache-Control'],
   maxAge: 86400,
 })
@@ -352,7 +352,8 @@ app.get(
     const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
 
     try {
-      const { response } = await openAPIHandler.handle(c.req.raw, {
+      const request = c.req.method === 'HEAD' ? new Request(c.req.raw, { method: 'GET' }) : c.req.raw
+      const { response } = await openAPIHandler.handle(request, {
         prefix: '/api/v1',
         context: {},
       })
