@@ -281,6 +281,25 @@ describe('Arcades API', () => {
     expect(notModified.headers.get('etag')).toBe(etag)
     expect(notModified.headers.get('cache-control')).toBe(response.headers.get('cache-control'))
 
+    for (const method of ['GET', 'HEAD']) {
+      const wildcard = await fetch(`${getBaseUrl()}/api/v1/arcades/venues`, {
+        method,
+        headers: { 'If-None-Match': '*' },
+      })
+      expect(wildcard.status).toBe(304)
+      expect(wildcard.headers.get('etag')).toBe(etag)
+      expect(await wildcard.text()).toBe('')
+    }
+
+    for (const method of ['GET', 'HEAD']) {
+      const invalid = await fetch(`${getBaseUrl()}/api/v1/arcades/venues?minLatitude=35`, {
+        method,
+        headers: { 'If-None-Match': '*' },
+      })
+      expect(invalid.status).toBe(400)
+      expect(invalid.headers.has('etag')).toBe(false)
+    }
+
     const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
     await pool.query(`UPDATE arcade.venues SET name = 'Alpha Arcade Updated' WHERE normalized_name = 'alpha arcade'`)
     await pool.end()

@@ -2,7 +2,7 @@ import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { createMiddleware } from 'hono/factory'
 import { cors } from 'hono/cors'
-import { etag, RETAINED_304_HEADERS } from 'hono/etag'
+import { RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
 import { auth } from './auth.js'
 import { handler as oneshotRenderer } from './services/functions/oneshot-renderer/index.js'
@@ -30,6 +30,14 @@ const API_CATALOG_CONTENT_TYPE = `application/linkset+json; profile="${API_CATAL
 const ARCADE_VENUES_PATH = '/api/v1/arcades/venues'
 const ARCADE_VENUES_BROWSER_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=60, stale-if-error=86400'
 const ARCADE_VENUES_CDN_CACHE_CONTROL = 'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800'
+const ARCADE_VENUES_RETAINED_304_HEADERS = [
+  ...RETAINED_304_HEADERS,
+  'cdn-cache-control',
+  'cloudflare-cdn-cache-control',
+  'cache-tag',
+  'access-control-allow-origin',
+  'access-control-expose-headers',
+]
 
 const getFirstHeaderValue = (value: string | undefined) => value?.split(',')[0]?.trim() || undefined
 
@@ -329,43 +337,62 @@ const arcadeVenuesCacheHeaders = createMiddleware(async (c, next) => {
   c.header('Cache-Tag', 'arcade-venues')
 })
 
+const stripWeakEtag = (value: string) => value.trim().replace(/^W\//, '')
+
+const arcadeVenuesEtag = createMiddleware(async (c, next) => {
+  const ifNoneMatch = c.req.header('If-None-Match')
+  await next()
+
+  // Validation errors and server errors are not stable catalog
+  // representations and must never turn into conditional 304 responses.
+  if (c.res.status !== 200) {
+    c.res.headers.delete('ETag')
+    return
+  }
+
+  const response = c.res
+  const digest = await crypto.subtle.digest('SHA-256', await response.clone().arrayBuffer())
+  const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
+  const responseEtag = `"${hash}"`
+  const matches =
+    ifNoneMatch?.trim() === '*' ||
+    ifNoneMatch?.split(',').some((candidate) => stripWeakEtag(candidate) === stripWeakEtag(responseEtag)) === true
+
+  if (!matches) {
+    c.res.headers.set('ETag', responseEtag)
+    return
+  }
+
+  const headers = new Headers()
+  for (const name of ARCADE_VENUES_RETAINED_304_HEADERS) {
+    const value = response.headers.get(name)
+    if (value !== null) headers.set(name, value)
+  }
+  headers.set('ETag', responseEtag)
+  c.res = new Response(null, { status: 304, statusText: 'Not Modified', headers })
+})
+
 // This exact public route bypasses Better Auth's session lookup. Filtered
 // compatibility requests still receive validators, while the CDN Cache Rule
 // only marks the canonical query-less catalog eligible for edge storage.
-app.get(
-  ARCADE_VENUES_PATH,
-  etag({
-    weak: false,
-    retainedHeaders: [
-      ...RETAINED_304_HEADERS,
-      'cdn-cache-control',
-      'cloudflare-cdn-cache-control',
-      'cache-tag',
-      'access-control-allow-origin',
-      'access-control-expose-headers',
-    ],
-    generateDigest: (body) => crypto.subtle.digest('SHA-256', body),
-  }),
-  arcadeVenuesCacheHeaders,
-  async (c) => {
-    const log = c.get('log')
-    const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+app.get(ARCADE_VENUES_PATH, arcadeVenuesEtag, arcadeVenuesCacheHeaders, async (c) => {
+  const log = c.get('log')
+  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
 
-    try {
-      const request = c.req.method === 'HEAD' ? new Request(c.req.raw, { method: 'GET' }) : c.req.raw
-      const { response } = await openAPIHandler.handle(request, {
-        prefix: '/api/v1',
-        context: {},
-      })
-      if (!response) return c.notFound()
-      return response
-    } catch (err) {
-      log?.error(err instanceof Error ? err : new Error(String(err)))
-      Sentry.captureException(err, { tags: { requestId } })
-      return c.json({ error: 'Internal server error', requestId }, 500)
-    }
-  },
-)
+  try {
+    const request = c.req.method === 'HEAD' ? new Request(c.req.raw, { method: 'GET' }) : c.req.raw
+    const { response } = await openAPIHandler.handle(request, {
+      prefix: '/api/v1',
+      context: {},
+    })
+    if (!response) return c.notFound()
+    return response
+  } catch (err) {
+    log?.error(err instanceof Error ? err : new Error(String(err)))
+    Sentry.captureException(err, { tags: { requestId } })
+    return c.json({ error: 'Internal server error', requestId }, 500)
+  }
+})
 
 app.all('/api/v1/*', async (c) => {
   const log = c.get('log')
