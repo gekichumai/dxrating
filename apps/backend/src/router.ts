@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 import { ORPCError, implement } from '@orpc/server'
 import { appContract } from './contract.js'
-import { db } from './db/index.js'
+import { db, pool } from './db/index.js'
 import {
   tags,
   tagGroups,
@@ -19,70 +19,120 @@ import Keyv from 'keyv'
 import type { auth } from './auth.js'
 import { config } from './config.js'
 import { renderChartOgImageOutput } from './services/functions/chart-og-image/index.js'
+import { CatalogIdentityError, createCatalogIdentityService } from './services/catalog-identities.js'
 
 type Context = {
   user?: typeof auth.$Infer.Session.user
 }
 
 const cache = new Keyv({ ttl: 30 * 60 * 1000 }) // 30 minute TTL
+const catalogIdentities = createCatalogIdentityService(async (text, values) => pool.query(text, values))
+
+export const withCatalogIdentityErrors = async <T>(operation: () => Promise<T>): Promise<T> => {
+  try {
+    return await operation()
+  } catch (error) {
+    if (!(error instanceof CatalogIdentityError)) throw error
+    const code = {
+      bad_request: 'BAD_REQUEST',
+      not_found: 'NOT_FOUND',
+      unavailable: 'SERVICE_UNAVAILABLE',
+    }[error.code] as 'BAD_REQUEST' | 'NOT_FOUND' | 'SERVICE_UNAVAILABLE'
+    throw new ORPCError(code, { message: error.message, cause: error })
+  }
+}
+
+type TagsListResult = {
+  tags: Array<{
+    id: number
+    localized_name: Record<string, string>
+    localized_description: Record<string, string>
+    group_id: number | null
+  }>
+  tagGroups: Array<{ id: number; localized_name: Record<string, string>; color: string }>
+  tagSongs: Array<{
+    song_id: string
+    sheet_type: string
+    sheet_difficulty: string
+    tag_id: number
+  }>
+}
+
+type AliasListResult = Array<{ song_id: string; name: string }>
+type TrendingCacheResult = {
+  results: Array<{ songId: string; count: number }>
+  dateFrom: string
+  dateTo: string
+}
 
 const os = implement(appContract)
 
 const tagsHandler = {
-  list: os.tags.list.handler(async () => {
-    const cached = await cache.get('tags:list')
+  list: os.tags.list.handler(async ({ input }) => {
+    const cached = await cache.get<TagsListResult>('tags:list')
+    let result: TagsListResult
     if (cached) {
       Sentry.metrics.count('cache.hit', 1, { attributes: { key: 'tags:list' } })
-      return cached
-    }
-    Sentry.metrics.count('cache.miss', 1, { attributes: { key: 'tags:list' } })
+      result = cached
+    } else {
+      Sentry.metrics.count('cache.miss', 1, { attributes: { key: 'tags:list' } })
 
-    const [allTags, allGroups, allTagSongs] = await Promise.all([
-      db
-        .select({
-          id: tags.id,
-          localized_name: tags.localized_name,
-          localized_description: tags.localized_description,
-          group_id: tags.group_id,
-        })
-        .from(tags),
-      db
-        .select({
-          id: tagGroups.id,
-          localized_name: tagGroups.localized_name,
-          color: tagGroups.color,
-        })
-        .from(tagGroups),
-      db
-        .select({
-          song_id: tagSongs.song_id,
-          sheet_type: tagSongs.sheet_type,
-          sheet_difficulty: tagSongs.sheet_difficulty,
-          tag_id: tagSongs.tag_id,
-        })
-        .from(tagSongs),
-    ])
+      const [allTags, allGroups, allTagSongs] = await Promise.all([
+        db
+          .select({
+            id: tags.id,
+            localized_name: tags.localized_name,
+            localized_description: tags.localized_description,
+            group_id: tags.group_id,
+          })
+          .from(tags),
+        db
+          .select({
+            id: tagGroups.id,
+            localized_name: tagGroups.localized_name,
+            color: tagGroups.color,
+          })
+          .from(tagGroups),
+        db
+          .select({
+            song_id: tagSongs.song_id,
+            sheet_type: tagSongs.sheet_type,
+            sheet_difficulty: tagSongs.sheet_difficulty,
+            tag_id: tagSongs.tag_id,
+          })
+          .from(tagSongs),
+      ])
 
-    const result = {
-      tags: allTags,
-      tagGroups: allGroups,
-      tagSongs: allTagSongs,
+      result = {
+        tags: allTags,
+        tagGroups: allGroups,
+        tagSongs: allTagSongs,
+      }
+      await cache.set('tags:list', result)
     }
-    await cache.set('tags:list', result)
+
+    if (input?.idScheme === 'public') {
+      const tagSongs = await withCatalogIdentityErrors(() =>
+        catalogIdentities.translateTagSongsToPublic(result.tagSongs),
+      )
+      return { ...result, tagSongs }
+    }
     return result
   }),
   attach: os.tags.attach.handler(async ({ input, context }) => {
     const user = (context as Context).user
     if (!user) throw new Error('Unauthorized')
 
+    const identity = await withCatalogIdentityErrors(() => catalogIdentities.resolveSheetInput(input))
+
     const existing = await db
       .select()
       .from(tagSongs)
       .where(
         and(
-          eq(tagSongs.song_id, input.songId),
-          eq(tagSongs.sheet_type, input.sheetType),
-          eq(tagSongs.sheet_difficulty, input.sheetDifficulty),
+          inArray(tagSongs.song_id, identity.legacySongIds),
+          eq(tagSongs.sheet_type, identity.sheetType),
+          eq(tagSongs.sheet_difficulty, identity.sheetDifficulty),
           eq(tagSongs.tag_id, input.tagId),
         ),
       )
@@ -92,9 +142,9 @@ const tagsHandler = {
     const res = await db
       .insert(tagSongs)
       .values({
-        song_id: input.songId,
-        sheet_type: input.sheetType,
-        sheet_difficulty: input.sheetDifficulty,
+        song_id: identity.legacySongId,
+        sheet_type: identity.sheetType,
+        sheet_difficulty: identity.sheetDifficulty,
         tag_id: input.tagId,
         created_by: user.id,
       })
@@ -112,19 +162,36 @@ const commentsHandler = {
       throw new Error('Unauthorized')
     }
 
-    if (input.parentId) {
-      const parent = await db.select().from(comments).where(eq(comments.id, input.parentId)).limit(1)
-      if (parent.length === 0) {
-        throw new Error('Parent comment not found')
+    const identity = await withCatalogIdentityErrors(() => catalogIdentities.resolveSheetInput(input))
+
+    if (input.parentId !== undefined) {
+      const [parent] = await db
+        .select({
+          song_id: comments.song_id,
+          sheet_type: comments.sheet_type,
+          sheet_difficulty: comments.sheet_difficulty,
+        })
+        .from(comments)
+        .where(eq(comments.id, input.parentId))
+        .limit(1)
+      if (!parent) {
+        throw new ORPCError('NOT_FOUND', { message: 'Parent comment not found' })
+      }
+      if (
+        !identity.legacySongIds.includes(parent.song_id) ||
+        parent.sheet_type !== identity.sheetType ||
+        parent.sheet_difficulty !== identity.sheetDifficulty
+      ) {
+        throw new ORPCError('BAD_REQUEST', { message: 'Parent comment belongs to a different chart' })
       }
     }
 
     const newComment = await db
       .insert(comments)
       .values({
-        song_id: input.songId,
-        sheet_type: input.sheetType,
-        sheet_difficulty: input.sheetDifficulty,
+        song_id: identity.legacySongId,
+        sheet_type: identity.sheetType,
+        sheet_difficulty: identity.sheetDifficulty,
         parent_id: input.parentId,
         content: input.content,
         created_by: user.id,
@@ -134,6 +201,7 @@ const commentsHandler = {
     return newComment[0]
   }),
   list: os.comments.list.handler(async ({ input }) => {
+    const identity = await withCatalogIdentityErrors(() => catalogIdentities.resolveSheetInput(input))
     const result = await db
       .select({
         id: comments.id,
@@ -146,9 +214,9 @@ const commentsHandler = {
       .leftJoin(profiles, eq(profiles.id, comments.created_by))
       .where(
         and(
-          eq(comments.song_id, input.songId),
-          eq(comments.sheet_type, input.sheetType),
-          eq(comments.sheet_difficulty, input.sheetDifficulty),
+          inArray(comments.song_id, identity.legacySongIds),
+          eq(comments.sheet_type, identity.sheetType),
+          eq(comments.sheet_difficulty, identity.sheetDifficulty),
         ),
       )
       .orderBy(desc(comments.created_at))
@@ -158,32 +226,46 @@ const commentsHandler = {
 }
 
 const aliasesHandler = {
-  list: os.aliases.list.handler(async () => {
-    const cached = await cache.get('aliases:list')
+  list: os.aliases.list.handler(async ({ input }) => {
+    const cached = await cache.get<AliasListResult>('aliases:list')
+    let result: AliasListResult
     if (cached) {
       Sentry.metrics.count('cache.hit', 1, { attributes: { key: 'aliases:list' } })
-      return cached
+      result = cached
+    } else {
+      Sentry.metrics.count('cache.miss', 1, { attributes: { key: 'aliases:list' } })
+
+      result = await db
+        .select({
+          song_id: songAliases.song_id,
+          name: songAliases.name,
+        })
+        .from(songAliases)
+
+      await cache.set('aliases:list', result)
     }
-    Sentry.metrics.count('cache.miss', 1, { attributes: { key: 'aliases:list' } })
 
-    const result = await db
-      .select({
-        song_id: songAliases.song_id,
-        name: songAliases.name,
+    if (input?.idScheme === 'public') {
+      const publicIds = await withCatalogIdentityErrors(() =>
+        catalogIdentities.translateSongIdsToPublic(result.map((alias) => alias.song_id)),
+      )
+      return result.flatMap((alias) => {
+        const songId = publicIds.get(alias.song_id)
+        return songId === undefined ? [] : [{ ...alias, song_id: songId }]
       })
-      .from(songAliases)
-
-    await cache.set('aliases:list', result)
+    }
     return result
   }),
   create: os.aliases.create.handler(async ({ input, context }) => {
     const user = (context as Context).user
     if (!user) throw new Error('Unauthorized')
 
+    const identity = await withCatalogIdentityErrors(() => catalogIdentities.resolveSongInput(input.songId))
+
     const res = await db
       .insert(songAliases)
       .values({
-        song_id: input.songId,
+        song_id: identity.legacySongId,
         name: input.name,
         created_by: user.id,
       })
@@ -198,68 +280,80 @@ import { MaimaiNETJpClient, MaimaiNETIntlClient } from './lib/functions/client.j
 import * as lxnsService from './services/lxns/index.js'
 
 const analyticsHandler = {
-  trending: os.analytics.trending.handler(async () => {
+  trending: os.analytics.trending.handler(async ({ input }) => {
     const cacheKey = 'analytics:trending'
-    const cached = await cache.get(cacheKey)
+    const cached = await cache.get<TrendingCacheResult>(cacheKey)
+    let result: TrendingCacheResult
     if (cached) {
       Sentry.metrics.count('cache.hit', 1, { attributes: { key: cacheKey } })
-      return cached
+      result = cached
+    } else {
+      Sentry.metrics.count('cache.miss', 1, { attributes: { key: cacheKey } })
+
+      const { projectId, apiKey } = config.posthog
+      if (!projectId || !apiKey) {
+        result = { results: [], dateFrom: '', dateTo: '' }
+      } else {
+        const response = await fetch(`https://us.posthog.com/api/projects/${projectId}/query/`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: {
+              kind: 'TrendsQuery',
+              series: [{ kind: 'EventsNode', event: 'sheet_content_viewed', math: 'total' }],
+              breakdownFilter: { breakdowns: [{ property: 'song_id', type: 'event' }] },
+              dateRange: { date_from: '-7d' },
+              interval: 'day',
+              filterTestAccounts: true,
+            },
+          }),
+        })
+
+        if (!response.ok) {
+          Sentry.captureException(new Error(`PostHog query failed: ${response.status}`))
+          result = { results: [], dateFrom: '', dateTo: '' }
+        } else {
+          const data = await response.json()
+          const series = (data.results as Array<Record<string, unknown>>).flat()
+
+          const songCounts = new Map<string, number>()
+          for (const s of series) {
+            if (!s.breakdown_value) continue
+            const songId = String(s.breakdown_value)
+            if (songId === '$$_posthog_breakdown_other_$$') continue
+            const total = (s.aggregated_value as number) ?? 0
+            songCounts.set(songId, (songCounts.get(songId) ?? 0) + total)
+          }
+
+          const results = [...songCounts.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .map(([songId, count]) => ({ songId, count }))
+
+          const now = new Date()
+          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+          result = {
+            results,
+            dateFrom: weekAgo.toISOString().split('T')[0],
+            dateTo: now.toISOString().split('T')[0],
+          }
+          await cache.set(cacheKey, result, 60 * 60 * 1000) // 1 hour TTL
+        }
+      }
     }
-    Sentry.metrics.count('cache.miss', 1, { attributes: { key: cacheKey } })
 
-    const { projectId, apiKey } = config.posthog
-    if (!projectId || !apiKey) {
-      return { results: [], dateFrom: '', dateTo: '' }
+    if (input?.idScheme === 'public') {
+      const results = await withCatalogIdentityErrors(() =>
+        catalogIdentities.translateSongCountsToPublic(result.results),
+      )
+      return {
+        ...result,
+        results: results.map(({ songId }) => ({ songId })),
+      }
     }
-
-    const response = await fetch(`https://us.posthog.com/api/projects/${projectId}/query/`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: {
-          kind: 'TrendsQuery',
-          series: [{ kind: 'EventsNode', event: 'sheet_content_viewed', math: 'total' }],
-          breakdownFilter: { breakdowns: [{ property: 'song_id', type: 'event' }] },
-          dateRange: { date_from: '-7d' },
-          interval: 'day',
-          filterTestAccounts: true,
-        },
-      }),
-    })
-
-    if (!response.ok) {
-      Sentry.captureException(new Error(`PostHog query failed: ${response.status}`))
-      return { results: [], dateFrom: '', dateTo: '' }
-    }
-
-    const data = await response.json()
-
-    const series = (data.results as Array<Record<string, unknown>>).flat()
-
-    const songCounts = new Map<string, number>()
-    for (const s of series) {
-      if (!s.breakdown_value) continue
-      const songId = String(s.breakdown_value)
-      if (songId === '$$_posthog_breakdown_other_$$') continue
-      const total = (s.aggregated_value as number) ?? 0
-      songCounts.set(songId, (songCounts.get(songId) ?? 0) + total)
-    }
-
-    const results = [...songCounts.entries()].sort((a, b) => b[1] - a[1]).map(([songId]) => ({ songId }))
-
-    const now = new Date()
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    const result = {
-      results,
-      dateFrom: weekAgo.toISOString().split('T')[0],
-      dateTo: now.toISOString().split('T')[0],
-    }
-
-    await cache.set(cacheKey, result, 60 * 60 * 1000) // 1 hour TTL
-    return result
+    return { ...result, results: result.results.map(({ songId }) => ({ songId })) }
   }),
 }
 
