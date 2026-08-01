@@ -26,6 +26,15 @@ pnpm db:up        # Start local PostgreSQL (Docker)
 pnpm db:down      # Stop local PostgreSQL
 ```
 
+The reusable `.github/workflows/dxdata-producer-contract.yml` workflow accepts
+`consumer_ref` and `producer_ref`. It applies the producer's real migration
+ledger, publishes its real-sized fixture through the staged promotion path,
+and runs `pnpm --filter @gekichumai/backend test:producer-contract`. Producer CI
+should call the workflow with its candidate commit as `producer_ref` so changes
+on either side exercise the same contract. The private producer calls this
+public workflow with its repository-scoped `GITHUB_TOKEN`; the workflow needs
+no cross-repository credential in DXRating.
+
 ## Project Structure
 
 ```
@@ -64,6 +73,7 @@ src/
 ### Direct Routes
 
 - `GET /health` — Health check
+- `GET|HEAD /api/v1/dxdata` — Complete published catalog or metadata-only headers
 - `POST|GET /api/auth/**` — Better Auth endpoints
 - `POST /functions/fetch-net-records/v0` — Fetch NET records (JSON)
 - `POST /functions/fetch-net-records/v1/:region` — Fetch NET records (SSE)

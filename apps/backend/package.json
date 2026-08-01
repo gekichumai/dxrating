@@ -10,6 +10,7 @@
     "start": "node dist/index.js",
     "lint": "oxlint .",
     "test": "vitest run",
+    "test:producer-contract": "DXDATA_PRODUCER_CONTRACT=1 vitest run src/test/dxdata-producer-contract.test.ts",
     "test:watch": "vitest",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down"

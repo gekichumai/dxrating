@@ -1,0 +1,97 @@
+name: DXData Producer Contract
+
+on:
+  workflow_call:
+    inputs:
+      consumer_ref:
+        description: DXRating commit, branch, or tag to verify
+        required: false
+        default: main
+        type: string
+      producer_ref:
+        description: Assembly-line commit, branch, or tag to verify
+        required: false
+        default: master
+        type: string
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Published Catalog Contract
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dxrating_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout DXRating consumer
+        uses: actions/checkout@v4
+        with:
+          repository: gekichumai/dxrating
+          ref: ${{ inputs.consumer_ref }}
+          persist-credentials: false
+
+      - name: Checkout dxdata assembly-line producer
+        uses: actions/checkout@v4
+        with:
+          repository: gekichumai/dxdata-assembly-line
+          ref: ${{ inputs.producer_ref }}
+          path: _producer/dxdata-assembly-line
+          persist-credentials: false
+          token: ${{ github.token }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.93'
+
+      - name: Cache producer build
+        uses: Swatinem/rust-cache@v2.9.1
+        with:
+          workspaces: '_producer/dxdata-assembly-line -> target'
+
+      - name: Install consumer dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The ignored producer integration test runs the real checksum-verified
+      # migration ledger and its stage/promote publication path. No consumer
+      # copy of the producer database schema or fixture is maintained here.
+      - name: Apply producer migrations and publish executable fixture
+        working-directory: _producer/dxdata-assembly-line
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/dxrating_test
+        run: >-
+          cargo test --locked --test catalog_writer_tests
+          publishes_the_real_sized_compatibility_catalog_transactionally
+          -- --ignored --exact --test-threads=1
+
+      - name: Verify producer-consumer API contract
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/dxrating_test
+          BETTER_AUTH_SECRET: ci_test_secret_1234567890
+          BETTER_AUTH_URL: http://localhost:3001
+          NODE_ENV: test
+          PORT: 3001
+        run: pnpm --filter @gekichumai/backend test:producer-contract
