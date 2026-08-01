@@ -1,4 +1,4 @@
-name: Upsert Arcade Venues Cache Rule
+name: Upsert Public Catalog Cache Rules
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: cloudflare-arcade-venues-cache-rule
+  group: cloudflare-public-catalog-cache-rules
   cancel-in-progress: false
 
 jobs:
@@ -21,18 +21,22 @@ jobs:
     name: Upsert cache rule
     runs-on: ubuntu-latest
     steps:
-      - name: Upsert the canonical catalog cache rule
+      - name: Upsert the canonical catalog cache rules
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           DRY_RUN: ${{ inputs.dry_run }}
           ZONE_NAME: dxrating.net
-          RULE_REF: dxrating_arcade_venues_static
         run: |
           set -euo pipefail
 
           api='https://api.cloudflare.com/client/v4'
           auth_header="Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
           content_header='Content-Type: application/json'
+
+          if [[ "$DRY_RUN" != 'true' && "$DRY_RUN" != 'false' ]]; then
+            echo 'dry_run must be true or false.' >&2
+            exit 1
+          fi
 
           zone_response=$(curl --fail-with-body --silent --show-error \
             --header "$auth_header" \
@@ -48,21 +52,47 @@ jobs:
           fi
           zone_id=$(jq -r '.result[0].id' <<<"$zone_response")
 
-          rule=$(jq -n \
-            --arg ref "$RULE_REF" \
-            '{
-              ref: $ref,
+          managed_rules=$(jq -n '[
+            {
+              ref: "dxrating_arcade_venues_static",
               description: "Cache the canonical one-shot arcade venue catalog",
               expression: "(http.host eq \"miruku.dxrating.net\" and http.request.method eq \"GET\" and http.request.uri.path eq \"/api/v1/arcades/venues\" and http.request.uri.query eq \"\")",
               action: "set_cache_settings",
               action_parameters: {
                 cache: true,
-                edge_ttl: {mode: "respect_origin"},
+                edge_ttl: {
+                  mode: "bypass_by_default",
+                  status_code_ttl: [
+                    {status_code_range: {from: 300, to: 499}, value: 0},
+                    {status_code_range: {from: 500, to: 599}, value: -1}
+                  ]
+                },
                 respect_strong_etags: true,
                 serve_stale: {disable_stale_while_updating: false}
               },
               enabled: true
-            }')
+            },
+            {
+              ref: "dxrating_dxdata_static",
+              description: "Cache the canonical published DX data catalog",
+              expression: "(http.host eq \"miruku.dxrating.net\" and http.request.method eq \"GET\" and http.request.uri.path eq \"/api/v1/dxdata\" and http.request.uri.query eq \"\")",
+              action: "set_cache_settings",
+              action_parameters: {
+                cache: true,
+                edge_ttl: {
+                  mode: "bypass_by_default",
+                  status_code_ttl: [
+                    {status_code_range: {from: 300, to: 499}, value: 0},
+                    {status_code_range: {from: 500, to: 599}, value: -1}
+                  ]
+                },
+                respect_strong_etags: true,
+                serve_stale: {disable_stale_while_updating: false}
+              },
+              enabled: true
+            }
+          ]')
+          managed_refs=$(jq '[.[].ref]' <<<"$managed_rules")
 
           entrypoint_file=$(mktemp)
           entrypoint_status=$(curl --silent --show-error \
@@ -80,35 +110,50 @@ jobs:
             fi
 
             ruleset_id=$(jq -r '.result.id' "$entrypoint_file")
-            payload=$(jq --argjson rule "$rule" --arg ref "$RULE_REF" '
-              .result
-              | {
-                  name,
-                  description: (.description // "DXRating zone cache rules"),
-                  kind,
-                  phase,
-                  rules: (
-                    if any(.rules[]?; .ref == $ref)
-                    then [.rules[] | if .ref == $ref then $rule else . end]
-                    else (.rules + [$rule])
-                    end
-                  )
-                }
-            ' "$entrypoint_file")
-            operation='update'
-            endpoint="${api}/zones/${zone_id}/rulesets/${ruleset_id}"
-            method='PUT'
+            operation='reconcile-rules'
+            operations='[]'
+
+            while IFS= read -r managed_rule; do
+              ref=$(jq -r '.ref' <<<"$managed_rule")
+              match_count=$(jq --arg ref "$ref" '[.result.rules[]? | select(.ref == $ref)] | length' "$entrypoint_file")
+
+              if (( match_count > 1 )); then
+                echo "Expected at most one existing rule with ref ${ref}." >&2
+                exit 1
+              fi
+
+              if (( match_count == 1 )); then
+                rule_id=$(jq -r --arg ref "$ref" '.result.rules[] | select(.ref == $ref) | .id' "$entrypoint_file")
+                method='PATCH'
+                endpoint="${api}/zones/${zone_id}/rulesets/${ruleset_id}/rules/${rule_id}"
+              else
+                method='POST'
+                endpoint="${api}/zones/${zone_id}/rulesets/${ruleset_id}/rules"
+              fi
+
+              operations=$(jq \
+                --arg method "$method" \
+                --arg endpoint "$endpoint" \
+                --argjson rule "$managed_rule" \
+                '. + [{method: $method, endpoint: $endpoint, rule: $rule}]' \
+                <<<"$operations")
+            done < <(jq -c '.[]' <<<"$managed_rules")
           elif [[ "$entrypoint_status" == '404' ]]; then
-            payload=$(jq -n --argjson rule "$rule" '{
+            payload=$(jq -n --argjson managedRules "$managed_rules" '{
               name: "DXRating zone cache rules",
               description: "Cache behavior managed by DXRating infrastructure workflows",
               kind: "zone",
               phase: "http_request_cache_settings",
-              rules: [$rule]
+              rules: $managedRules
             }')
             operation='create'
             endpoint="${api}/zones/${zone_id}/rulesets"
             method='POST'
+            operations=$(jq -n \
+              --arg method "$method" \
+              --arg endpoint "$endpoint" \
+              --argjson payload "$payload" \
+              '[{method: $method, endpoint: $endpoint, ruleset: $payload}]')
           else
             jq '{success, errors}' "$entrypoint_file" 2>/dev/null || true
             echo "Unexpected Cache Rules entrypoint status: ${entrypoint_status}" >&2
@@ -116,35 +161,90 @@ jobs:
           fi
 
           existing_count=$(jq '.result.rules | length // 0' "$entrypoint_file" 2>/dev/null || echo 0)
-          planned_count=$(jq '.rules | length' <<<"$payload")
           jq -n \
             --arg operation "$operation" \
-            --arg ref "$RULE_REF" \
+            --argjson operations "$operations" \
             --argjson existingRules "$existing_count" \
-            --argjson plannedRules "$planned_count" \
-            '{operation: $operation, ruleRef: $ref, existingRules: $existingRules, plannedRules: $plannedRules}'
+            --argjson definitions "$managed_rules" \
+            '{
+              operation: $operation,
+              existingRules: $existingRules,
+              operations: $operations,
+              managedDefinitions: $definitions
+            }'
 
           if [[ "$DRY_RUN" == 'true' ]]; then
             echo 'Dry run complete; Cloudflare was not modified.'
             exit 0
           fi
 
-          result=$(curl --fail-with-body --silent --show-error \
-            --request "$method" \
-            --header "$auth_header" \
-            --header "$content_header" \
-            --data "$payload" \
-            "$endpoint")
+          if [[ "$operation" == 'create' ]]; then
+            result=$(curl --fail-with-body --silent --show-error \
+              --request "$method" \
+              --header "$auth_header" \
+              --header "$content_header" \
+              --data "$payload" \
+              "$endpoint")
 
-          if ! jq -e --arg ref "$RULE_REF" \
-            '.success == true and any(.result.rules[]?; .ref == $ref and .enabled == true)' \
-            >/dev/null <<<"$result"; then
-            jq '{success, errors, messages}' <<<"$result"
-            echo 'Cloudflare did not confirm the enabled cache rule.' >&2
+            if ! jq -e '.success == true and (.result.id | type == "string")' >/dev/null <<<"$result"; then
+              jq '{success, errors, messages}' <<<"$result"
+              echo 'Cloudflare did not confirm Cache Rules ruleset creation.' >&2
+              exit 1
+            fi
+            ruleset_id=$(jq -r '.result.id' <<<"$result")
+          else
+            while IFS= read -r planned_operation; do
+              method=$(jq -r '.method' <<<"$planned_operation")
+              endpoint=$(jq -r '.endpoint' <<<"$planned_operation")
+              payload=$(jq -c '.rule' <<<"$planned_operation")
+
+              result=$(curl --fail-with-body --silent --show-error \
+                --request "$method" \
+                --header "$auth_header" \
+                --header "$content_header" \
+                --data "$payload" \
+                "$endpoint")
+
+              if ! jq -e '.success == true' >/dev/null <<<"$result"; then
+                jq '{success, errors, messages}' <<<"$result"
+                echo "Cloudflare rejected ${method} ${endpoint}." >&2
+                exit 1
+              fi
+            done < <(jq -c '.[]' <<<"$operations")
+          fi
+
+          final_file=$(mktemp)
+          final_status=$(curl --silent --show-error \
+            --output "$final_file" \
+            --write-out '%{http_code}' \
+            --header "$auth_header" \
+            "${api}/zones/${zone_id}/rulesets/${ruleset_id}")
+
+          if [[ "$final_status" != '200' ]] || ! jq -e --argjson managedRules "$managed_rules" '
+            . as $response
+            | ($managedRules | map(.ref)) as $managedRefs
+            | (
+                $response.result.rules
+                | map(select(.ref as $ref | $managedRefs | index($ref)))
+                | map({ref, description, expression, action, action_parameters, enabled})
+                | sort_by(.ref)
+              ) as $actual
+            | ($managedRules | sort_by(.ref)) as $expected
+            | $response.success == true
+              and $response.result.kind == "zone"
+              and $response.result.phase == "http_request_cache_settings"
+              and $actual == $expected
+          ' "$final_file" >/dev/null; then
+            jq '{success, errors, messages, result: (.result | {id, kind, phase, rules})}' "$final_file" 2>/dev/null || true
+            echo 'Cloudflare final state does not exactly match the managed cache rule definitions.' >&2
             exit 1
           fi
 
-          jq --arg ref "$RULE_REF" '{
+          jq --argjson refs "$managed_refs" '{
             rulesetId: .result.id,
-            rule: (.result.rules[] | select(.ref == $ref) | {id, ref, enabled, expression, action_parameters})
-          }' <<<"$result"
+            verifiedRules: [
+              .result.rules[]
+              | select(.ref as $ref | $refs | index($ref))
+              | {id, ref, description, enabled, expression, action, action_parameters}
+            ]
+          }' "$final_file"
