@@ -22,6 +22,8 @@ import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
 import { RequestHeadersPlugin, ResponseHeadersPlugin } from '@orpc/server/plugins'
 import { onError } from '@orpc/server'
 import { Sentry, shouldCaptureSentryError } from './lib/functions/sentry.js'
+import { pool } from './db/index.js'
+import { createDxdataHandler, createPostgresDxdataStore, DXDATA_CORS_OPTIONS, DXDATA_PATH } from './services/dxdata.js'
 
 const app = new Hono<EvlogVariables>()
 
@@ -38,6 +40,7 @@ const ARCADE_VENUES_RETAINED_304_HEADERS = [
   'access-control-allow-origin',
   'access-control-expose-headers',
 ]
+const PUBLIC_STATIC_CATALOG_PATHS = new Set([ARCADE_VENUES_PATH, DXDATA_PATH])
 
 const getFirstHeaderValue = (value: string | undefined) => value?.split(',')[0]?.trim() || undefined
 
@@ -148,17 +151,13 @@ const apiCors = cors({
   credentials: true,
 })
 
-const publicArcadeVenuesCors = cors({
-  origin: '*',
-  allowHeaders: ['Content-Type', 'If-None-Match'],
-  allowMethods: ['GET', 'HEAD', 'OPTIONS'],
-  exposeHeaders: ['Content-Length', 'ETag', 'Cache-Control', 'CDN-Cache-Control', 'Cloudflare-CDN-Cache-Control'],
-  maxAge: 86400,
-})
+const publicStaticCatalogCors = cors(DXDATA_CORS_OPTIONS)
 
-// The one-shot venue catalog is credential-independent, allowing one public
-// representation to be safely shared by browsers and the CDN.
-app.use('*', (c, next) => (c.req.path === ARCADE_VENUES_PATH ? publicArcadeVenuesCors(c, next) : apiCors(c, next)))
+// Static catalog responses are credential-independent, allowing one public
+// representation per URL to be safely shared by browsers and the CDN.
+app.use('*', (c, next) =>
+  PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path) ? publicStaticCatalogCors(c, next) : apiCors(c, next),
+)
 
 // Request logging
 app.use(
@@ -183,7 +182,7 @@ app.use('*', async (c, next) => {
   await next()
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
-  if (requestId && c.req.path !== ARCADE_VENUES_PATH) {
+  if (requestId && !PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)) {
     c.header('X-DXRating-Request-ID', requestId)
   }
 })
@@ -326,6 +325,19 @@ const openAPIGenerator = new OpenAPIGenerator({
 })
 
 app.get('/robots.txt', (c) => c.text('User-agent: *\\nDisallow: /'))
+
+const dxdataStore = createPostgresDxdataStore((text, values) => pool.query(text, values))
+const dxdataHandler = createDxdataHandler<EvlogVariables>(dxdataStore, (error, c) => {
+  const log = c.get('log')
+  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+  log?.error(error instanceof Error ? error : new Error(String(error)))
+  Sentry.captureException(error, { tags: { requestId } })
+})
+
+// The producer atomically advances the production publication pointer. Read
+// its small metadata row first so HEAD and conditional requests never fetch
+// the potentially large snapshot body.
+app.on(['GET', 'HEAD'], DXDATA_PATH, dxdataHandler)
 
 const arcadeVenuesCacheHeaders = createMiddleware(async (c, next) => {
   await next()
