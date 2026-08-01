@@ -66,9 +66,10 @@ The backend reads `dxdata.catalog_publications`, `dxdata.catalog_snapshots`, and
 
 The endpoint supports `GET`, metadata-only `HEAD`, strong `ETag` validators,
 and `If-None-Match`. Successful responses are public and use separate browser
-and CDN stale-while-revalidate policies. Errors are `no-store`. The Cloudflare
-Cache Rules workflow manages only the queryless catalog and arcade-catalog
-paths, leaving unrelated zone rules untouched.
+and CDN stale-while-revalidate policies. Errors are `no-store`. Cloudflare
+Cache Rules for the catalog and arcade-catalog paths are owned by the
+infrastructure Terraform repository, leaving this application repository with
+a single deployment authority.
 
 ## Tech Stack
 
