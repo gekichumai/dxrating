@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-01T10:03:51.215053207+00:00",
+  "generatedAt": "2026-08-01T10:57:36.301784687+00:00",
   "output": {
-    "sha256": "ac83227741b375ddf6b8086a698d41b710b58871cc715e7c699a49fbe142d3a8"
+    "sha256": "d53ccecada9684cd345a8c734d9afabb2a25c8b68f4656c8bae2ee448b9565b7"
   },
   "coverage": {
     "leafFields": 176253,
@@ -24,13 +24,13 @@
           "system": "arcade-songs-fetch legacy generated catalog"
         }
       },
-      "catalogSha256": "e0bf30b5be66f61b8efe98c4dba6d36f6e2c7fac19d8b190f361ff1ae0745458",
+      "catalogSha256": "a3ebb8362b8621f683fe2e7a81330df274b984ae34b2cd8190a06f625340a942",
       "fetch": {
-        "generatedAt": "2026-08-01T10:03:36.342979679+00:00",
+        "generatedAt": "2026-08-01T10:57:22.005722962+00:00",
         "schemaVersion": 1,
         "sources": [
           {
-            "checkedAt": "2026-08-01T10:03:32.467325789+00:00",
+            "checkedAt": "2026-08-01T10:57:17.693987845+00:00",
             "name": "sega_official",
             "path": "official/maimai_songs.json",
             "sha256": "ab4cc9b65e5c7e6fcad7338666ddde2466a2ea66f3402402dac0285225227a53",
@@ -38,7 +38,7 @@
             "url": "https://maimai.sega.jp/data/maimai_songs.json"
           },
           {
-            "checkedAt": "2026-08-01T10:03:32.716353716+00:00",
+            "checkedAt": "2026-08-01T10:57:17.926953321+00:00",
             "name": "otoge_db_gamerch",
             "path": "enrichment/music-ex.json",
             "sha256": "842dff90656846f31fb9567c811a9db2bc8ddb38672c42833c1e50f6f97633ee",
@@ -46,7 +46,7 @@
             "url": "https://raw.githubusercontent.com/zvuc/otoge-db/master/maimai/data/music-ex.json"
           },
           {
-            "checkedAt": "2026-08-01T10:03:32.948088020+00:00",
+            "checkedAt": "2026-08-01T10:57:18.137246462+00:00",
             "name": "otoge_intl",
             "path": "regions/music-ex-intl.json",
             "sha256": "a78a4a1c031d3102921f1d19b545b5cace009f9fca16bb906090942bf7186bf3",
@@ -54,7 +54,7 @@
             "url": "https://raw.githubusercontent.com/zvuc/otoge-db/master/maimai/data/music-ex-intl.json"
           },
           {
-            "checkedAt": "2026-08-01T10:03:33.118121344+00:00",
+            "checkedAt": "2026-08-01T10:57:18.309957926+00:00",
             "name": "maimai_cn",
             "path": "regions/cn.json",
             "sha256": "191a4b606fe01469829b3d8620a0ec8e9ec356d071cda2d2a19ae785a8da6d61",
@@ -62,7 +62,7 @@
             "url": "https://raw.githubusercontent.com/CrazyKidCN/maimaiDX-CN-songs-database/main/maidata.json"
           },
           {
-            "checkedAt": "2026-08-01T10:03:34.743380007+00:00",
+            "checkedAt": "2026-08-01T10:57:20.495168060+00:00",
             "name": "lxns_song_list",
             "path": "enrichment/lxns-songs.json",
             "sha256": "26271834c1a2615ac35c99991959b17f5fb706ed36c88f20b70dd9e15f1f9920",
@@ -70,7 +70,7 @@
             "url": "https://maimai.lxns.net/api/v0/maimai/song/list"
           },
           {
-            "checkedAt": "2026-08-01T10:03:34.911592735+00:00",
+            "checkedAt": "2026-08-01T10:57:20.655261138+00:00",
             "name": "gcm_bot",
             "path": "aliases/gcm_bot.tsv",
             "sha256": "37d5c789cb90b5c3a0ae94937b0a1ff16096b0f7d105288a18331214e9f370f7",
@@ -78,7 +78,7 @@
             "url": "https://raw.githubusercontent.com/lomotos10/GCM-bot/main/data/aliases/en/chuni.tsv"
           },
           {
-            "checkedAt": "2026-08-01T10:03:34.999399222+00:00",
+            "checkedAt": "2026-08-01T10:57:20.734079262+00:00",
             "error": "input error in yuzuchan: HTTP 403 Forbidden",
             "name": "yuzuchan",
             "path": "aliases/yuzuchan.json",
@@ -86,7 +86,7 @@
             "url": "https://api.yuzuchan.moe/maimaidx/maimaidxalias"
           },
           {
-            "checkedAt": "2026-08-01T10:03:36.259392009+00:00",
+            "checkedAt": "2026-08-01T10:57:21.818600822+00:00",
             "name": "lxns",
             "path": "aliases/lxns.json",
             "sha256": "1bf2dd533b27786706885f9f81ef462bf3d0bd83c0f01ea915e17088f88943e3",
@@ -94,7 +94,7 @@
             "url": "https://maimai.lxns.net/api/v0/maimai/alias/list"
           },
           {
-            "checkedAt": "2026-08-01T10:03:36.342968959+00:00",
+            "checkedAt": "2026-08-01T10:57:22.005708936+00:00",
             "error": "input error in sega_game_blogs: all 9 blog index requests failed",
             "name": "sega_game_blogs",
             "path": "enrichment/blog-covers.json",
@@ -103,7 +103,7 @@
           }
         ]
       },
-      "generatedAt": "2026-08-01T10:03:37.096852624+00:00",
+      "generatedAt": "2026-08-01T10:57:22.666453060+00:00",
       "identities": {
         "sheets": [
           {
@@ -322754,7 +322754,7 @@
       "sources": {
         "catalog_history": {
           "path": "/data/input/songs/history.json",
-          "sha256": "3b3e9f58873d8a1ffab55dc02ed44d1c2734df5097981ef2c25fd91bc1b19927"
+          "sha256": "e0bf30b5be66f61b8efe98c4dba6d36f6e2c7fac19d8b190f361ff1ae0745458"
         },
         "lxns_song_list": {
           "path": "/data/input/enrichment/lxns-songs.json",
@@ -322798,7 +322798,7 @@
           "sha256": "1bf2dd533b27786706885f9f81ef462bf3d0bd83c0f01ea915e17088f88943e3"
         },
         "provenance/internal-level-refresh.json": {
-          "sha256": "e1b8e6e9174e8f55147751bf00c64ab4ce86a7704a7645eab36896e530becb37"
+          "sha256": "db4476e9ac38a5ece5183e6ed685b557c4806e263d6326898397aba1fdccd0bb"
         }
       },
       "postgres": {
