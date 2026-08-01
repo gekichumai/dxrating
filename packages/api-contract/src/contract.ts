@@ -24,6 +24,7 @@ export const TagGroupSchema = z.object({
 
 export const TagSongSchema = z.object({
   song_id: z.string(),
+  sheet_id: z.string().optional(),
   sheet_type: z.string(),
   sheet_difficulty: z.string(),
   tag_id: z.number(),
@@ -37,6 +38,7 @@ export const TagsListResponseSchema = z.object({
 
 export const TagSongAttachSchema = z.object({
   songId: z.string(),
+  sheetId: z.string().optional(),
   sheetType: z.string(),
   sheetDifficulty: z.string(),
   tagId: z.number(),
@@ -46,6 +48,7 @@ export const CreateTagSongInputSchema = TagSongAttachSchema
 
 export const CreateCommentInputSchema = z.object({
   songId: z.string(),
+  sheetId: z.string().optional(),
   sheetType: z.string(),
   sheetDifficulty: z.string(),
   parentId: z.number().optional(),
@@ -59,6 +62,7 @@ export const CommentSchema = z.object({
 
 export const FetchCommentsInputSchema = z.object({
   songId: z.string(),
+  sheetId: z.string().optional(),
   sheetType: z.string(),
   sheetDifficulty: z.string(),
 })
@@ -90,6 +94,12 @@ export const TrendingResponseSchema = z.object({
   dateFrom: z.string(),
   dateTo: z.string(),
 })
+
+export const CatalogIdSchemeInputSchema = z
+  .object({
+    idScheme: z.enum(['legacy', 'public']).optional(),
+  })
+  .optional()
 
 export const LxnsScoreSchema = z.object({
   id: z.number(),
@@ -247,6 +257,7 @@ export const publicContractRoutes = {
         tags: ['Tags'],
         spec: (spec) => ({ ...spec, security: [] }),
       })
+      .input(CatalogIdSchemeInputSchema)
       .output(TagsListResponseSchema),
     attach: oc
       .route({
@@ -288,6 +299,7 @@ export const publicContractRoutes = {
         tags: ['Aliases'],
         spec: (spec) => ({ ...spec, security: [] }),
       })
+      .input(CatalogIdSchemeInputSchema)
       .output(z.array(AliasSchema)),
     create: oc
       .route({
@@ -308,6 +320,7 @@ export const publicContractRoutes = {
         tags: ['Analytics'],
         spec: (spec) => ({ ...spec, security: [] }),
       })
+      .input(CatalogIdSchemeInputSchema)
       .output(TrendingResponseSchema),
   },
   arcades: {

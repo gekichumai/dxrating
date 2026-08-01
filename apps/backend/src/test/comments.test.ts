@@ -110,4 +110,38 @@ describe('Comments API', () => {
     const reply = comments.find((c: { content: string }) => c.content === 'Reply comment')
     expect(reply.parent_id).toBe(parent.id)
   })
+
+  it('rejects a reply whose parent belongs to a different chart', async () => {
+    await signUp('cross-chart@example.com', 'password123', 'Cross Chart')
+    const loginRes = await signIn('cross-chart@example.com', 'password123')
+    const cookie = extractSessionCookie(loginRes)
+
+    const parentRes = await authenticatedFetch(`${getBaseUrl()}/api/v1/comments`, cookie, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        songId: 'song-1',
+        sheetType: 'dx',
+        sheetDifficulty: 'master',
+        content: 'Parent comment',
+      }),
+    })
+    const parent = await parentRes.json()
+
+    const replyRes = await authenticatedFetch(`${getBaseUrl()}/api/v1/comments`, cookie, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        songId: 'song-2',
+        sheetType: 'dx',
+        sheetDifficulty: 'master',
+        content: 'Cross-chart reply',
+        parentId: parent.id,
+      }),
+    })
+    expect(replyRes.status).toBe(400)
+
+    const commentsRes = await fetch(`${getBaseUrl()}/api/v1/comments?songId=song-2&sheetType=dx&sheetDifficulty=master`)
+    expect(await commentsRes.json()).toEqual([])
+  })
 })
