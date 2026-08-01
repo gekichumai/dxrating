@@ -103,6 +103,14 @@ async function seedArcades() {
       `,
       [venueId.get('alpha arcade')],
     )
+
+    await pool.query(`
+      UPDATE arcade.games SET updated_at = '2026-07-30T05:00:00Z';
+      UPDATE arcade.chains SET updated_at = '2026-07-30T05:00:00Z';
+      UPDATE arcade.venues SET updated_at = '2026-07-30T05:00:00Z';
+      UPDATE arcade.installation_identities SET created_at = '2026-07-30T05:00:00Z';
+      UPDATE arcade.installations SET updated_at = '2026-07-30T05:00:00Z';
+    `)
   } finally {
     await pool.end()
   }
@@ -301,9 +309,11 @@ describe('Arcades API', () => {
       headers: { Origin: 'https://example.app' },
     })
     const etag = response.headers.get('etag')
+    const lastModified = response.headers.get('last-modified')
 
     expect(response.status).toBe(200)
     expect(etag).toMatch(/^"[a-f0-9]{64}"$/)
+    expect(lastModified).toBe('Thu, 30 Jul 2026 05:00:00 GMT')
     expect(response.headers.get('cache-control')).toBe(
       'public, max-age=300, stale-while-revalidate=60, stale-if-error=86400',
     )
@@ -321,6 +331,7 @@ describe('Arcades API', () => {
     const head = await fetch(`${getBaseUrl()}/api/v1/arcades/venues`, { method: 'HEAD' })
     expect(head.status).toBe(200)
     expect(head.headers.get('etag')).toBe(etag)
+    expect(head.headers.get('last-modified')).toBe(lastModified)
     expect(await head.text()).toBe('')
 
     const notModified = await fetch(`${getBaseUrl()}/api/v1/arcades/venues`, {
@@ -329,6 +340,7 @@ describe('Arcades API', () => {
     expect(notModified.status).toBe(304)
     expect(await notModified.text()).toBe('')
     expect(notModified.headers.get('etag')).toBe(etag)
+    expect(notModified.headers.get('last-modified')).toBe(lastModified)
     expect(notModified.headers.get('cache-control')).toBe(response.headers.get('cache-control'))
 
     for (const method of ['GET', 'HEAD']) {
@@ -338,6 +350,7 @@ describe('Arcades API', () => {
       })
       expect(wildcard.status).toBe(304)
       expect(wildcard.headers.get('etag')).toBe(etag)
+      expect(wildcard.headers.get('last-modified')).toBe(lastModified)
       expect(await wildcard.text()).toBe('')
     }
 
@@ -351,11 +364,16 @@ describe('Arcades API', () => {
     }
 
     const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
-    await pool.query(`UPDATE arcade.venues SET name = 'Alpha Arcade Updated' WHERE normalized_name = 'alpha arcade'`)
+    await pool.query(`
+      UPDATE arcade.venues
+      SET name = 'Alpha Arcade Updated', updated_at = '2026-07-31T00:00:00Z'
+      WHERE normalized_name = 'alpha arcade'
+    `)
     await pool.end()
 
     const changed = await fetch(`${getBaseUrl()}/api/v1/arcades/venues`)
     expect(changed.headers.get('etag')).toMatch(/^"[a-f0-9]{64}"$/)
     expect(changed.headers.get('etag')).not.toBe(etag)
+    expect(changed.headers.get('last-modified')).toBe('Fri, 31 Jul 2026 00:00:00 GMT')
   })
 })

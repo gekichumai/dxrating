@@ -35,6 +35,7 @@ const ARCADE_VENUES_BROWSER_CACHE_CONTROL = 'public, max-age=300, stale-while-re
 const ARCADE_VENUES_CDN_CACHE_CONTROL = 'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800'
 const ARCADE_VENUES_RETAINED_304_HEADERS = [
   ...RETAINED_304_HEADERS,
+  'last-modified',
   'cdn-cache-control',
   'cloudflare-cdn-cache-control',
   'cache-tag',
@@ -343,6 +344,23 @@ app.on(['GET', 'HEAD'], DXDATA_PATH, dxdataHandler)
 const arcadeVenuesCacheHeaders = createMiddleware(async (c, next) => {
   await next()
   if (c.res.status !== 200) return
+
+  const result = await pool.query<{ last_modified: Date | null }>(`
+    SELECT max(last_modified) AS last_modified
+    FROM (
+      SELECT max(updated_at) AS last_modified FROM arcade.venues
+      UNION ALL
+      SELECT max(updated_at) AS last_modified FROM arcade.installations
+      UNION ALL
+      SELECT max(created_at) AS last_modified FROM arcade.installation_identities
+      UNION ALL
+      SELECT max(updated_at) AS last_modified FROM arcade.games
+      UNION ALL
+      SELECT max(updated_at) AS last_modified FROM arcade.chains
+    ) AS catalog_timestamps
+  `)
+  const lastModified = result.rows[0]?.last_modified
+  if (lastModified) c.header('Last-Modified', lastModified.toUTCString())
 
   c.header('Cache-Control', ARCADE_VENUES_BROWSER_CACHE_CONTROL)
   c.header('CDN-Cache-Control', ARCADE_VENUES_CDN_CACHE_CONTROL)
