@@ -24,6 +24,7 @@ import { onError } from '@orpc/server'
 import { Sentry, shouldCaptureSentryError } from './lib/functions/sentry.js'
 import { pool } from './db/index.js'
 import { createDxdataHandler, createPostgresDxdataStore, DXDATA_CORS_OPTIONS, DXDATA_PATH } from './services/dxdata.js'
+import { addPublishedDxdataToOpenApi } from './services/dxdata-openapi.js'
 
 const app = new Hono<EvlogVariables>()
 
@@ -446,7 +447,7 @@ app.get('/spec.json', async (c) => {
     },
     filter: ({ contract }) => !contract['~orpc'].route.tags?.includes('internal'),
   })
-  return c.json(spec)
+  return c.json(addPublishedDxdataToOpenApi(spec))
 })
 
 // Serve Scalar API documentation

@@ -114,6 +114,25 @@ describe('Health & Basic Endpoints', () => {
     expect(spec.info).toBeDefined()
     expect(spec.info.title).toBe('DXRating API')
     expect(spec.paths).toBeDefined()
+
+    const dxdata = spec.paths['/dxdata']
+    expect(dxdata.get).toMatchObject({
+      operationId: 'getPublishedDxdataCatalog',
+      security: [],
+    })
+    expect(dxdata.head).toMatchObject({
+      operationId: 'headPublishedDxdataCatalog',
+      security: [],
+    })
+    expect(dxdata.get.responses['200'].content['application/json'].schema).toEqual({
+      $ref: '#/components/schemas/PublishedDxdataCatalog',
+    })
+    expect(dxdata.get.responses['304'].headers.ETag).toBeDefined()
+    expect(dxdata.head.responses['200'].content).toBeUndefined()
+    expect(spec.components.schemas.PublishedDxdataCatalog).toMatchObject({
+      type: 'object',
+      required: expect.arrayContaining(['schemaVersion', 'updatedAt', 'songs']),
+    })
   })
 
   it('GET /docs returns HTML page', async () => {
