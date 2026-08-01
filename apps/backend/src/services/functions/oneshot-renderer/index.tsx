@@ -139,7 +139,7 @@ const fetchFontPack = async (): Promise<Font[]> => {
 
 let cachedFonts: Font[] | null = null
 
-type FlattenedSheet = VersionedSheet & {
+type FlattenedSheet = Omit<VersionedSheet, 'type' | 'difficulty' | 'isTypeUtage' | 'isRatingEligible'> & {
   type: TypeEnum.DX | TypeEnum.STD
   difficulty: DifficultyEnum
   isTypeUtage: false
