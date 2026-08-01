@@ -184,7 +184,7 @@ export const arcadeVenues = arcade.table(
   'venues',
   {
     id: bigserial('id', { mode: 'bigint' }).primaryKey(),
-    public_id: text('public_id'),
+    public_id: text('public_id').notNull(),
     name: text('name').notNull(),
     normalized_name: text('normalized_name').notNull(),
     chain_id: text('chain_id').references(() => arcadeChains.id),
@@ -204,10 +204,7 @@ export const arcadeVenues = arcade.table(
   },
   (table) => [
     unique('venues_public_id_unique').on(table.public_id),
-    check(
-      'venues_public_id_check',
-      sql`${table.public_id} is null or ${table.public_id} ~ '^dven_[23456789abcdefghjkmnpqrstvwxyz]{10}$'`,
-    ),
+    check('venues_public_id_check', sql`${table.public_id} ~ '^dven_[23456789abcdefghjkmnpqrstvwxyz]{10}$'`),
     check('venues_coordinates_paired_check', sql`(${table.latitude} is null) = (${table.longitude} is null)`),
     check('venues_latitude_range_check', sql`${table.latitude} is null or ${table.latitude} between -90 and 90`),
     check('venues_longitude_range_check', sql`${table.longitude} is null or ${table.longitude} between -180 and 180`),
@@ -414,10 +411,9 @@ export const arcadeInstallations = arcade.table(
   'installations',
   {
     id: bigserial('id', { mode: 'bigint' }).primaryKey(),
-    installation_identity_id: bigint('installation_identity_id', { mode: 'bigint' }).references(
-      () => arcadeInstallationIdentities.id,
-      { onDelete: 'cascade' },
-    ),
+    installation_identity_id: bigint('installation_identity_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => arcadeInstallationIdentities.id, { onDelete: 'cascade' }),
     venue_id: bigint('venue_id', { mode: 'bigint' })
       .notNull()
       .references(() => arcadeVenues.id, { onDelete: 'cascade' }),

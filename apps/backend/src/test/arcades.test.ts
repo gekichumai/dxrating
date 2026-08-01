@@ -29,16 +29,16 @@ async function seedArcades() {
 
     const venues = await pool.query<{ id: string; normalized_name: string }>(`
       INSERT INTO arcade.venues
-        (name, normalized_name, chain_id, country_code, region, city, postal_code, address,
+        (public_id, name, normalized_name, chain_id, country_code, region, city, postal_code, address,
          phone, website_url, timezone, latitude, longitude)
       VALUES
-        ('Alpha Arcade', 'alpha arcade', NULL, 'JP', 'Tokyo', 'Chiyoda', NULL,
+        ('dven_2222222222', 'Alpha Arcade', 'alpha arcade', NULL, 'JP', 'Tokyo', 'Chiyoda', NULL,
          '1-1 Alpha', NULL, NULL, 'Asia/Tokyo', NULL, NULL),
-        ('Beta Game Center', 'beta game center', NULL, 'JP', 'Tokyo', 'Shinjuku', '160-0022',
+        ('dven_3333333333', 'Beta Game Center', 'beta game center', NULL, 'JP', 'Tokyo', 'Shinjuku', '160-0022',
          '2-2 Beta', '+81-3-0000-0000', 'https://example.com/beta', 'Asia/Tokyo', 35.6900, 139.7000),
-        ('Gamma Games', 'gamma games', NULL, 'JP', 'Kanagawa', 'Yokohama', '220-0000',
+        ('dven_4444444444', 'Gamma Games', 'gamma games', NULL, 'JP', 'Kanagawa', 'Yokohama', '220-0000',
          '3-3 Gamma', NULL, NULL, 'Asia/Tokyo', 35.4500, 139.6300),
-        ('ＧｉＧＯ 秋葉原', 'gigo 秋葉原', 'gigo', 'JP', 'Tokyo', 'Chiyoda', '101-0021',
+        ('dven_5555555555', 'ＧｉＧＯ 秋葉原', 'gigo 秋葉原', 'gigo', 'JP', 'Tokyo', 'Chiyoda', '101-0021',
          '4-4 Akihabara', NULL, NULL, 'Asia/Tokyo', 35.6980, 139.7710)
       RETURNING id, normalized_name
     `)
@@ -46,22 +46,41 @@ async function seedArcades() {
 
     await pool.query(
       `
+        INSERT INTO arcade.installation_identities
+          (public_id, venue_id, game_id, version, cabinet_model, region, network)
+        VALUES
+          ('dins_2222222222', $1, 'maimai', 'PRiSM', NULL, 'JP', NULL),
+          ('dins_3333333333', $1, 'chunithm', NULL, NULL, NULL, NULL),
+          ('dins_4444444444', $2, 'chunithm', 'VERSE', 'CVT', 'JP', 'ALL.Net'),
+          ('dins_5555555555', $3, 'maimai', NULL, NULL, 'JP', NULL)
+      `,
+      [venueId.get('alpha arcade'), venueId.get('beta game center'), venueId.get('gamma games')],
+    )
+
+    await pool.query(
+      `
         INSERT INTO arcade.installations
-          (venue_id, game_id, version, cabinet_model, machine_count, status, region,
+          (installation_identity_id, venue_id, game_id, version, cabinet_model, machine_count, status, region,
            network, price, condition, confidence, source_url, observed_at,
            last_crawl_run_id, source, provenance)
         VALUES
-          ($1, 'maimai', 'PRiSM', NULL, 3, 'online', 'JP', NULL, '100 JPY', 'good',
+          ((SELECT id FROM arcade.installation_identities WHERE public_id = 'dins_2222222222'),
+           $1, 'maimai', 'PRiSM', NULL, 3, 'online', 'JP', NULL, '100 JPY', 'good',
            0.5, 'https://source-z.example/alpha', '2026-07-30T02:00:00Z', $4, 'z_source', '[]'),
-          ($1, 'maimai', 'PRiSM', NULL, NULL, NULL, 'JP', NULL, NULL, NULL,
+          ((SELECT id FROM arcade.installation_identities WHERE public_id = 'dins_2222222222'),
+           $1, 'maimai', 'PRiSM', NULL, NULL, NULL, 'JP', NULL, NULL, NULL,
            0.9, NULL, '2026-07-30T01:00:00Z', $4, 'a_source', '[]'),
-          ($1, 'maimai', 'PRiSM', NULL, 7, 'degraded', 'JP', NULL, '200 JPY', 'fair',
+          ((SELECT id FROM arcade.installation_identities WHERE public_id = 'dins_2222222222'),
+           $1, 'maimai', 'PRiSM', NULL, 7, 'degraded', 'JP', NULL, '200 JPY', 'fair',
            0.5, 'https://source-y.example/alpha', '2026-07-30T01:30:00Z', $4, 'y_source', '[]'),
-          ($1, 'chunithm', NULL, NULL, 1, 'offline', NULL, NULL, NULL, NULL,
+          ((SELECT id FROM arcade.installation_identities WHERE public_id = 'dins_3333333333'),
+           $1, 'chunithm', NULL, NULL, 1, 'offline', NULL, NULL, NULL, NULL,
            NULL, NULL, '2026-07-29T01:00:00Z', $4, 'old_source', '[]'),
-          ($2, 'chunithm', 'VERSE', 'CVT', 4, 'online', 'JP', 'ALL.Net', '100 JPY', 'good',
+          ((SELECT id FROM arcade.installation_identities WHERE public_id = 'dins_4444444444'),
+           $2, 'chunithm', 'VERSE', 'CVT', 4, 'online', 'JP', 'ALL.Net', '100 JPY', 'good',
            0.8, 'https://source.example/beta', '2026-07-30T03:00:00Z', $4, 'test', '[]'),
-          ($3, 'maimai', NULL, NULL, 2, 'maintenance', 'JP', NULL, NULL, NULL,
+          ((SELECT id FROM arcade.installation_identities WHERE public_id = 'dins_5555555555'),
+           $3, 'maimai', NULL, NULL, 2, 'maintenance', 'JP', NULL, NULL, NULL,
            NULL, NULL, '2026-07-30T04:00:00Z', $4, 'test', '[]')
       `,
       [venueId.get('alpha arcade'), venueId.get('beta game center'), venueId.get('gamma games'), runId],
@@ -121,7 +140,7 @@ describe('Arcades API', () => {
     expect(spec.paths['/arcades/venues/{id}'].get.security).toEqual([])
   })
 
-  it('merges source facts, omits nulls, and keeps provenance private', async () => {
+  it('merges source facts under a stable public identity, omits nulls, and keeps provenance private', async () => {
     const response = await fetch(`${getBaseUrl()}/api/v1/arcades/venues?query=Alpha`)
 
     expect(response.status).toBe(200)
@@ -129,7 +148,7 @@ describe('Arcades API', () => {
     expect(body).not.toHaveProperty('nextCursor')
     expect(body.items).toHaveLength(1)
     expect(body.items[0]).toMatchObject({
-      id: expect.stringMatching(/^[1-9]\d*$/),
+      id: expect.stringMatching(/^dven_[23456789abcdefghjkmnpqrstvwxyz]{10}$/),
       name: 'Alpha Arcade',
     })
     expect(body.items[0]).not.toHaveProperty('postalCode')
@@ -138,7 +157,9 @@ describe('Arcades API', () => {
     expect(body.items[0]).not.toHaveProperty('latitude')
     expect(body.items[0]).not.toHaveProperty('longitude')
     expect(body.items[0].installations).toHaveLength(1)
+    const installationId = body.items[0].installations[0].id
     expect(body.items[0].installations[0]).toMatchObject({
+      id: expect.stringMatching(/^dins_[23456789abcdefghjkmnpqrstvwxyz]{10}$/),
       gameId: 'maimai',
       machineCount: 3,
       version: 'PRiSM',
@@ -160,10 +181,25 @@ describe('Arcades API', () => {
       FROM arcade.installations
       WHERE source = 'z_source'
     `)
-    await pool.end()
     expect(persisted.rows[0].provenance).toEqual([
       { source: 'private_test_source', observedAt: '2026-07-30T02:00:00Z' },
     ])
+
+    await pool.query(`
+      UPDATE arcade.installations
+      SET confidence = 1, machine_count = 7, status = 'degraded'
+      WHERE source = 'y_source'
+    `)
+    const changedResponse = await fetch(`${getBaseUrl()}/api/v1/arcades/venues?query=Alpha`)
+    const changed = await changedResponse.json()
+    await pool.end()
+
+    expect(changed.items[0].installations[0]).toMatchObject({
+      id: installationId,
+      machineCount: 7,
+      status: 'degraded',
+      confidence: 1,
+    })
   })
 
   it('filters by bbox, games, and installation status', async () => {
@@ -193,8 +229,11 @@ describe('Arcades API', () => {
   it('returns the complete catalog in one response', async () => {
     const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
     await pool.query(`
-      INSERT INTO arcade.venues (name, normalized_name)
-      SELECT 'Venue ' || value, 'venue ' || lpad(value::text, 3, '0')
+      INSERT INTO arcade.venues (public_id, name, normalized_name)
+      SELECT
+        'dven_' || left(translate(md5(value::text), '01', 'yz'), 10),
+        'Venue ' || value,
+        'venue ' || lpad(value::text, 3, '0')
       FROM generate_series(1, 120) AS value
     `)
     await pool.end()
@@ -204,6 +243,14 @@ describe('Arcades API', () => {
 
     expect(body.items).toHaveLength(124)
     expect(body).not.toHaveProperty('nextCursor')
+    const venueIds = body.items.map((venue: { id: string }) => venue.id)
+    expect(new Set(venueIds).size).toBe(venueIds.length)
+    expect(venueIds.every((id: string) => /^dven_[23456789abcdefghjkmnpqrstvwxyz]{10}$/.test(id))).toBe(true)
+    const installationIds = body.items.flatMap((venue: { installations: Array<{ id: string }> }) =>
+      venue.installations.map((installation) => installation.id),
+    )
+    expect(new Set(installationIds).size).toBe(installationIds.length)
+    expect(installationIds.every((id: string) => /^dins_[23456789abcdefghjkmnpqrstvwxyz]{10}$/.test(id))).toBe(true)
   })
 
   it('returns represented chain metadata and filters by stable chain id', async () => {
@@ -232,7 +279,10 @@ describe('Arcades API', () => {
       installations: [{ gameId: 'chunithm', machineCount: 4, status: 'online' }],
     })
 
-    const missingResponse = await fetch(`${getBaseUrl()}/api/v1/arcades/venues/999999999`)
+    const malformedResponse = await fetch(`${getBaseUrl()}/api/v1/arcades/venues/999999999`)
+    expect(malformedResponse.status).toBe(400)
+
+    const missingResponse = await fetch(`${getBaseUrl()}/api/v1/arcades/venues/dven_zzzzzzzzzz`)
     expect(missingResponse.status).toBe(404)
   })
 

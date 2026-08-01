@@ -44,6 +44,7 @@ export async function setupTestServer() {
     '0007_arcade_chains.sql',
     '0008_arcade_chain_audit_alignment.sql',
     '0009_arcade_public_identities.sql',
+    '0010_enforce_arcade_public_identities.sql',
   ]
 
   for (const file of migrationFiles) {
@@ -136,6 +137,7 @@ export async function cleanDatabase() {
   await pool.query('DELETE FROM arcade.geocoding_observations')
   await pool.query('DELETE FROM arcade.installation_observations')
   await pool.query('DELETE FROM arcade.installations')
+  await pool.query('DELETE FROM arcade.installation_identities')
   await pool.query('DELETE FROM arcade.venue_chain_decisions')
   await pool.query('DELETE FROM arcade.venue_matches')
   await pool.query('DELETE FROM arcade.venue_sources')

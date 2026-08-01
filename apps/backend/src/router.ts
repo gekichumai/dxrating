@@ -12,6 +12,7 @@ import {
   arcadeGames,
   arcadeChains,
   arcadeVenues,
+  arcadeInstallationIdentities,
   arcadeInstallations,
 } from './db/schema.js'
 import { eq, and, desc, asc, exists, gte, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm'
@@ -392,6 +393,8 @@ async function loadArcadeInstallations(venueIds: bigint[]) {
   const rows = await db
     .select({
       id: arcadeInstallations.id,
+      installationIdentityId: arcadeInstallations.installation_identity_id,
+      publicId: arcadeInstallationIdentities.public_id,
       venueId: arcadeInstallations.venue_id,
       gameId: arcadeInstallations.game_id,
       gameName: arcadeGames.name,
@@ -408,6 +411,10 @@ async function loadArcadeInstallations(venueIds: bigint[]) {
       source: arcadeInstallations.source,
     })
     .from(arcadeInstallations)
+    .innerJoin(
+      arcadeInstallationIdentities,
+      eq(arcadeInstallationIdentities.id, arcadeInstallations.installation_identity_id),
+    )
     .innerJoin(arcadeGames, eq(arcadeGames.id, arcadeInstallations.game_id))
     .where(and(inArray(arcadeInstallations.venue_id, venueIds), isNull(arcadeInstallations.absent_since)))
     .orderBy(
@@ -425,14 +432,7 @@ async function loadArcadeInstallations(venueIds: bigint[]) {
   const logicalInstallations = new Map<string, Array<(typeof rows)[number]>>()
 
   for (const row of rows) {
-    const identity = JSON.stringify([
-      row.venueId.toString(),
-      row.gameId,
-      row.region,
-      row.network,
-      row.version,
-      row.cabinetModel,
-    ])
+    const identity = row.installationIdentityId.toString()
     const existing = logicalInstallations.get(identity)
     if (!existing) {
       logicalInstallations.set(identity, [row])
@@ -477,7 +477,7 @@ async function loadArcadeInstallations(venueIds: bigint[]) {
     const venueId = winner.venueId.toString()
     const installations = grouped.get(venueId) ?? []
     installations.push({
-      id: winner.id.toString(),
+      id: winner.publicId,
       gameId: winner.gameId,
       gameName: winner.gameName,
       machineCount: selectFact(candidates, (candidate) => candidate.machineCount),
@@ -501,9 +501,9 @@ function serializeArcadeVenue(
   venue: typeof arcadeVenues.$inferSelect,
   installations: Map<string, ArcadeInstallationResponse[]>,
 ) {
-  const id = venue.id.toString()
+  const internalId = venue.id.toString()
   return {
-    id,
+    id: venue.public_id,
     name: venue.name,
     chainId: venue.chain_id ?? undefined,
     countryCode: venue.country_code ?? undefined,
@@ -516,7 +516,7 @@ function serializeArcadeVenue(
     timezone: venue.timezone ?? undefined,
     latitude: venue.latitude ?? undefined,
     longitude: venue.longitude ?? undefined,
-    installations: installations.get(id) ?? [],
+    installations: installations.get(internalId) ?? [],
   }
 }
 
@@ -620,11 +620,7 @@ const arcadesHandler = {
     }
   }),
   venue: os.arcades.venue.handler(async ({ input }) => {
-    const [venue] = await db
-      .select()
-      .from(arcadeVenues)
-      .where(eq(arcadeVenues.id, BigInt(input.id)))
-      .limit(1)
+    const [venue] = await db.select().from(arcadeVenues).where(eq(arcadeVenues.public_id, input.id)).limit(1)
     if (!venue) {
       throw new ORPCError('NOT_FOUND', { message: 'Arcade venue not found' })
     }

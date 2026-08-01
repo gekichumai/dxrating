@@ -128,8 +128,11 @@ export const ArcadeGamesListResponseSchema = z.object({
   items: z.array(ArcadeGameSchema),
 })
 
+export const ArcadeInstallationIdSchema = z.string().regex(/^dins_[23456789abcdefghjkmnpqrstvwxyz]{10}$/)
+export const ArcadeVenueIdSchema = z.string().regex(/^dven_[23456789abcdefghjkmnpqrstvwxyz]{10}$/)
+
 export const ArcadeInstallationSchema = z.object({
-  id: z.string().regex(/^[1-9]\d*$/),
+  id: ArcadeInstallationIdSchema,
   gameId: z.string(),
   gameName: z.string(),
   machineCount: z.number().int().nonnegative().optional(),
@@ -151,7 +154,7 @@ export const ArcadeChainSchema = z.object({
 })
 
 export const ArcadeVenueSchema = z.object({
-  id: z.string().regex(/^[1-9]\d*$/),
+  id: ArcadeVenueIdSchema,
   name: z.string(),
   chainId: z.string().optional(),
   countryCode: z.string().optional(),
@@ -244,7 +247,7 @@ export const ArcadeVenuesListResponseSchema = z.object({
 })
 
 export const ArcadeVenueDetailInputSchema = z.object({
-  id: z.string().regex(/^[1-9]\d*$/),
+  id: ArcadeVenueIdSchema,
 })
 
 export const publicContractRoutes = {

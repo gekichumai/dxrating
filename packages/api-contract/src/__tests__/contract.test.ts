@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { publicAppContract, LxnsStartOutputSchema } from '../contract.js'
+import {
+  ArcadeInstallationIdSchema,
+  ArcadeVenueDetailInputSchema,
+  ArcadeVenueIdSchema,
+  publicAppContract,
+  LxnsStartOutputSchema,
+} from '../contract.js'
 
 describe('publicAppContract', () => {
   it('exposes browser-callable routes without backend-only routes', () => {
@@ -41,5 +47,18 @@ describe('publicAppContract', () => {
       ],
       count: 1,
     })
+  })
+
+  it('accepts only typed public arcade record identifiers', () => {
+    expect(ArcadeVenueIdSchema.parse('dven_23456789ab')).toBe('dven_23456789ab')
+    expect(ArcadeInstallationIdSchema.parse('dins_cdefghjkmn')).toBe('dins_cdefghjkmn')
+    expect(ArcadeVenueDetailInputSchema.parse({ id: 'dven_pqrstvwxyz' })).toEqual({ id: 'dven_pqrstvwxyz' })
+
+    for (const invalid of ['123', 'dven_1234567890', 'dven_23456789ai', 'venue_23456789ab']) {
+      expect(ArcadeVenueIdSchema.safeParse(invalid).success).toBe(false)
+    }
+    for (const invalid of ['501', 'dins_1234567890', 'dins_23456789ao', 'installation_23456789ab']) {
+      expect(ArcadeInstallationIdSchema.safeParse(invalid).success).toBe(false)
+    }
   })
 })
