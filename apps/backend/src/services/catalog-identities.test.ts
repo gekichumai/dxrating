@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import { CatalogIdentityError, type CatalogIdentityQuery, createCatalogIdentityService } from './catalog-identities.js'
 
-const SONG_A = 'sng_23456789ab'
-const SONG_B = 'sng_23456789ac'
-const SHEET_A = 'sht_23456789ab'
-const SHEET_B = 'sht_23456789ac'
+const SONG_A = 'dsng_23456789ab'
+const SONG_B = 'dsng_23456789ac'
+const SHEET_A = 'dsht_23456789ab'
+const SHEET_B = 'dsht_23456789ac'
 
 const row = (
   catalogRunId = '1',
@@ -119,6 +119,14 @@ describe('catalog identity service', () => {
     const snapshotQueries = query.mock.calls.filter(([text]) => text.includes('public_song_id'))
     expect(pointerQueries).toHaveLength(2)
     expect(snapshotQueries).toHaveLength(1)
+    expect(pointerQueries[0][0]).toContain('dxdata.catalog_publications')
+    expect(pointerQueries[0][0]).toContain('dxdata.catalog_snapshots')
+    expect(pointerQueries[0][0]).toContain('dxdata.catalog_build_runs')
+    expect(snapshotQueries[0][0]).toContain('dxdata.catalog_run_songs')
+    expect(snapshotQueries[0][0]).toContain('dxdata.canonical_songs')
+    expect(snapshotQueries[0][0]).toContain('dxdata.song_source_mappings')
+    expect(snapshotQueries[0][0]).toContain('dxdata.catalog_run_sheets')
+    expect(snapshotQueries[0][0]).toContain('dxdata.canonical_sheets')
     expect(snapshotQueries[0][0]).toContain('publication.catalog_run_id = $2::bigint')
     expect(snapshotQueries[0][0]).toContain("catalog_run.status = 'published'")
     expect(snapshotQueries[0][0]).toContain('publication.revision = $3::bigint')
@@ -130,7 +138,7 @@ describe('catalog identity service', () => {
     const query = vi.fn<CatalogIdentityQuery>()
     const identities = createCatalogIdentityService(query)
 
-    await expectCatalogError(identities.resolveSongInput('sng_not-valid'), 'bad_request')
+    await expectCatalogError(identities.resolveSongInput('dsng_not-valid'), 'bad_request')
     await expectCatalogError(
       identities.resolveSheetInput({
         songId: 'legacy-song-a',
@@ -197,14 +205,14 @@ describe('catalog identity service', () => {
         row(),
         row('1', {
           public_song_id: SONG_B,
-          legacy_song_id: 'sng_bad',
-          legacy_song_ids: ['sng_bad'],
+          legacy_song_id: 'dsng_bad',
+          legacy_song_ids: ['dsng_bad'],
           public_sheet_id: SHEET_B,
         }),
       ]),
     )
 
-    const songIds = await identities.translateSongIdsToPublic(['legacy-song-a', 'retired-song', SONG_A, 'sng_bad'])
+    const songIds = await identities.translateSongIdsToPublic(['legacy-song-a', 'retired-song', SONG_A, 'dsng_bad'])
     expect([...songIds]).toEqual([
       ['legacy-song-a', SONG_A],
       [SONG_A, SONG_A],

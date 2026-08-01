@@ -58,6 +58,11 @@ scripts/
 one schema-versioned, null-free document. The producer stores immutable bodies
 in PostgreSQL and atomically advances the `production-v1` pointer; the API never
 reconstructs the document per request or exposes stored provenance.
+The backend reads `dxdata.catalog_publications`, `dxdata.catalog_snapshots`, and
+`dxdata.catalog_build_runs`; identity translation joins the current
+`dxdata.catalog_run_songs` and `dxdata.catalog_run_sheets` memberships to
+`dxdata.canonical_songs`, `dxdata.canonical_sheets`, and
+`dxdata.song_source_mappings`.
 
 The endpoint supports `GET`, metadata-only `HEAD`, strong `ETag` validators,
 and `If-None-Match`. Successful responses are public and use separate browser

@@ -11,90 +11,90 @@ import {
   teardownTestServer,
 } from './setup.js'
 
-const SONG_A = 'sng_23456789ab'
-const SONG_B = 'sng_23456789ac'
-const SHEET_A = 'sht_23456789ab'
-const SHEET_B = 'sht_23456789ac'
+const SONG_A = 'dsng_23456789ab'
+const SONG_B = 'dsng_23456789ac'
+const SHEET_A = 'dsht_23456789ab'
+const SHEET_B = 'dsht_23456789ac'
 
 let publicationRevision = 0
 
 const createCatalogSchema = async (pool: pg.Pool, revision: number) => {
   await pool.query(`
     CREATE SCHEMA dxdata;
-    CREATE TABLE dxdata.dcat_runs (
+    CREATE TABLE dxdata.catalog_build_runs (
       id BIGINT PRIMARY KEY,
       status TEXT NOT NULL,
       api_schema_version INTEGER NOT NULL
     );
-    CREATE TABLE dxdata.dcat_publications (
+    CREATE TABLE dxdata.catalog_publications (
       channel TEXT PRIMARY KEY,
       catalog_run_id BIGINT NOT NULL,
       revision BIGINT NOT NULL
     );
-    CREATE TABLE dxdata.dcat_snapshots (
+    CREATE TABLE dxdata.catalog_snapshots (
       catalog_run_id BIGINT PRIMARY KEY,
       api_schema_version INTEGER NOT NULL
     );
-    CREATE TABLE dxdata.dsng_songs (
+    CREATE TABLE dxdata.canonical_songs (
       id TEXT PRIMARY KEY,
       legacy_song_id TEXT
     );
-    CREATE TABLE dxdata.dsng_source_mappings (
+    CREATE TABLE dxdata.song_source_mappings (
       source_id TEXT NOT NULL,
       external_id TEXT NOT NULL,
       song_id TEXT NOT NULL,
       active BOOLEAN NOT NULL,
       PRIMARY KEY (source_id, external_id)
     );
-    CREATE TABLE dxdata.dcat_songs (
+    CREATE TABLE dxdata.catalog_run_songs (
       catalog_run_id BIGINT NOT NULL,
       song_id TEXT NOT NULL,
       ordinal INTEGER NOT NULL
     );
-    CREATE TABLE dxdata.dsht_sheets (
+    CREATE TABLE dxdata.canonical_sheets (
       id TEXT PRIMARY KEY,
       song_id TEXT NOT NULL,
       chart_type TEXT NOT NULL,
       difficulty TEXT NOT NULL
     );
-    CREATE TABLE dxdata.dcat_sheets (
+    CREATE TABLE dxdata.catalog_run_sheets (
       catalog_run_id BIGINT NOT NULL,
       song_id TEXT NOT NULL,
       sheet_id TEXT NOT NULL,
       ordinal INTEGER NOT NULL
     );
   `)
-  await pool.query(`INSERT INTO dxdata.dcat_runs (id, status, api_schema_version) VALUES (1, 'published', 1)`)
+  await pool.query(`INSERT INTO dxdata.catalog_build_runs (id, status, api_schema_version) VALUES (1, 'published', 1)`)
   await pool.query(
-    `INSERT INTO dxdata.dcat_publications (channel, catalog_run_id, revision) VALUES ('production-v1', 1, $1)`,
+    `INSERT INTO dxdata.catalog_publications (channel, catalog_run_id, revision) VALUES ('production-v1', 1, $1)`,
     [revision],
   )
-  await pool.query(`INSERT INTO dxdata.dcat_snapshots (catalog_run_id, api_schema_version) VALUES (1, 1)`)
+  await pool.query(`INSERT INTO dxdata.catalog_snapshots (catalog_run_id, api_schema_version) VALUES (1, 1)`)
   await pool.query(
-    `INSERT INTO dxdata.dsng_songs (id, legacy_song_id) VALUES ($1, 'legacy-song-a'), ($2, 'legacy-song-b')`,
+    `INSERT INTO dxdata.canonical_songs (id, legacy_song_id) VALUES ($1, 'legacy-song-a'), ($2, 'legacy-song-b')`,
     [SONG_A, SONG_B],
   )
   await pool.query(
     `
-      INSERT INTO dxdata.dsng_source_mappings (source_id, external_id, song_id, active)
+      INSERT INTO dxdata.song_source_mappings (source_id, external_id, song_id, active)
       VALUES ('legacy_dxdata', 'legacy-song-a', $1, true), ('legacy_dxdata', 'legacy-song-b', $2, true)
     `,
     [SONG_A, SONG_B],
   )
-  await pool.query(`INSERT INTO dxdata.dcat_songs (catalog_run_id, song_id, ordinal) VALUES (1, $1, 0), (1, $2, 1)`, [
-    SONG_A,
-    SONG_B,
-  ])
+  await pool.query(
+    `INSERT INTO dxdata.catalog_run_songs (catalog_run_id, song_id, ordinal) VALUES (1, $1, 0), (1, $2, 1)`,
+    [SONG_A, SONG_B],
+  )
   await pool.query(
     `
-      INSERT INTO dxdata.dsht_sheets (id, song_id, chart_type, difficulty)
+      INSERT INTO dxdata.canonical_sheets (id, song_id, chart_type, difficulty)
       VALUES ($1, $2, 'dx', 'master'), ($3, $4, 'dx', 'master')
     `,
     [SHEET_A, SONG_A, SHEET_B, SONG_B],
   )
   await pool.query(
     `
-      INSERT INTO dxdata.dcat_sheets (catalog_run_id, song_id, sheet_id, ordinal)
+      INSERT INTO dxdata.catalog_run_sheets (catalog_run_id, song_id, sheet_id, ordinal)
       VALUES (1, $1, $2, 0), (1, $3, $4, 0)
     `,
     [SONG_A, SHEET_A, SONG_B, SHEET_B],
@@ -294,21 +294,21 @@ describe('Public catalog identity API boundary', () => {
     const client = await pool.connect()
     try {
       await client.query('BEGIN')
-      await client.query(`UPDATE dxdata.dsng_songs SET legacy_song_id = 'legacy-song-a-renamed' WHERE id = $1`, [
+      await client.query(`UPDATE dxdata.canonical_songs SET legacy_song_id = 'legacy-song-a-renamed' WHERE id = $1`, [
         SONG_A,
       ])
       await client.query(
-        `UPDATE dxdata.dsng_source_mappings SET active = false WHERE source_id = 'legacy_dxdata' AND external_id = 'legacy-song-a'`,
+        `UPDATE dxdata.song_source_mappings SET active = false WHERE source_id = 'legacy_dxdata' AND external_id = 'legacy-song-a'`,
       )
       await client.query(
         `
-          INSERT INTO dxdata.dsng_source_mappings (source_id, external_id, song_id, active)
+          INSERT INTO dxdata.song_source_mappings (source_id, external_id, song_id, active)
           VALUES ('legacy_dxdata', 'legacy-song-a-renamed', $1, true)
         `,
         [SONG_A],
       )
       publicationRevision += 1
-      await client.query(`UPDATE dxdata.dcat_publications SET revision = $1 WHERE channel = 'production-v1'`, [
+      await client.query(`UPDATE dxdata.catalog_publications SET revision = $1 WHERE channel = 'production-v1'`, [
         publicationRevision,
       ])
       await client.query('COMMIT')
@@ -426,11 +426,11 @@ describe('Public catalog identity API boundary', () => {
   })
 
   it('fails closed for malformed, unpublished, and mismatched public identities', async () => {
-    const malformed = await fetch(`${getBaseUrl()}/api/v1/comments?songId=sng_bad&sheetType=dx&sheetDifficulty=master`)
+    const malformed = await fetch(`${getBaseUrl()}/api/v1/comments?songId=dsng_bad&sheetType=dx&sheetDifficulty=master`)
     expect(malformed.status).toBe(400)
 
     const unpublished = await fetch(
-      `${getBaseUrl()}/api/v1/comments?songId=sng_23456789ad&sheetType=dx&sheetDifficulty=master`,
+      `${getBaseUrl()}/api/v1/comments?songId=dsng_23456789ad&sheetType=dx&sheetDifficulty=master`,
     )
     expect(unpublished.status).toBe(404)
 

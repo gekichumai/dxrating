@@ -187,9 +187,9 @@ describe('PostgreSQL DX data store', () => {
     expect(await store.getPublishedMetadata()).toEqual(metadata)
     expect(await store.getSnapshotBody(metadata.catalogRunId, metadata.bodySha256)).toBe(BODY)
 
-    expect(queries[0].text).toContain('dxdata.dcat_publications')
-    expect(queries[0].text).toContain('dxdata.dcat_snapshots')
-    expect(queries[0].text).toContain('dxdata.dcat_runs')
+    expect(queries[0].text).toContain('dxdata.catalog_publications')
+    expect(queries[0].text).toContain('dxdata.catalog_snapshots')
+    expect(queries[0].text).toContain('dxdata.catalog_build_runs')
     expect(queries[0].text).toContain('catalog_run.api_schema_version = $2')
     expect(queries[0].text).toContain('snapshot.api_schema_version = $2')
     expect(queries[0].values).toEqual(['production-v1', 1])

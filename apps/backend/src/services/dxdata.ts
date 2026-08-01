@@ -72,10 +72,10 @@ export const createPostgresDxdataStore = (query: DxdataQuery): DxdataStore => ({
           snapshot.body_sha256,
           snapshot.byte_length::text AS byte_length,
           snapshot.content_type
-        FROM dxdata.dcat_publications AS publication
-        INNER JOIN dxdata.dcat_snapshots AS snapshot
+        FROM dxdata.catalog_publications AS publication
+        INNER JOIN dxdata.catalog_snapshots AS snapshot
           ON snapshot.catalog_run_id = publication.catalog_run_id
-        INNER JOIN dxdata.dcat_runs AS catalog_run
+        INNER JOIN dxdata.catalog_build_runs AS catalog_run
           ON catalog_run.id = publication.catalog_run_id
         WHERE publication.channel = $1
           AND catalog_run.status = 'published'
@@ -94,7 +94,7 @@ export const createPostgresDxdataStore = (query: DxdataQuery): DxdataStore => ({
     const result = await query(
       `
         SELECT body_text
-        FROM dxdata.dcat_snapshots
+        FROM dxdata.catalog_snapshots
         WHERE catalog_run_id = $1::bigint
           AND body_sha256 = $2
           AND api_schema_version = $3

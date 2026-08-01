@@ -1,8 +1,8 @@
 const PRODUCTION_CHANNEL = 'production-v1'
 const API_SCHEMA_VERSION = 1
 const PUBLIC_ID_ALPHABET = '23456789abcdefghjkmnpqrstvwxyz'
-const PUBLIC_SONG_ID_PATTERN = new RegExp(`^sng_[${PUBLIC_ID_ALPHABET}]{10}$`)
-const PUBLIC_SHEET_ID_PATTERN = new RegExp(`^sht_[${PUBLIC_ID_ALPHABET}]{10}$`)
+const PUBLIC_SONG_ID_PATTERN = new RegExp(`^dsng_[${PUBLIC_ID_ALPHABET}]{10}$`)
+const PUBLIC_SHEET_ID_PATTERN = new RegExp(`^dsht_[${PUBLIC_ID_ALPHABET}]{10}$`)
 
 export type CatalogIdentityQuery = (text: string, values: unknown[]) => Promise<{ rows: unknown[] }>
 
@@ -218,10 +218,10 @@ const parseSnapshot = (pointer: CatalogIdentityPointer, rows: unknown[]): Catalo
 const isPublicSongId = (value: string) => PUBLIC_SONG_ID_PATTERN.test(value)
 
 const validateSongIdNamespace = (value: string) => {
-  if (value.startsWith('sng_') && !isPublicSongId(value)) {
+  if (value.startsWith('dsng_') && !isPublicSongId(value)) {
     throw new CatalogIdentityError('bad_request', 'Malformed public song ID')
   }
-  if (value.startsWith('sht_')) {
+  if (value.startsWith('dsht_')) {
     throw new CatalogIdentityError('bad_request', 'A sheet ID cannot be used as a song ID')
   }
 }
@@ -251,10 +251,10 @@ export const createCatalogIdentityService = (query: CatalogIdentityQuery): Catal
           SELECT
             publication.catalog_run_id::text AS catalog_run_id,
             publication.revision::text AS publication_revision
-          FROM dxdata.dcat_publications AS publication
-          INNER JOIN dxdata.dcat_snapshots AS snapshot
+          FROM dxdata.catalog_publications AS publication
+          INNER JOIN dxdata.catalog_snapshots AS snapshot
             ON snapshot.catalog_run_id = publication.catalog_run_id
-          INNER JOIN dxdata.dcat_runs AS catalog_run
+          INNER JOIN dxdata.catalog_build_runs AS catalog_run
             ON catalog_run.id = publication.catalog_run_id
           WHERE publication.channel = $1
             AND catalog_run.status = 'published'
@@ -285,7 +285,7 @@ export const createCatalogIdentityService = (query: CatalogIdentityQuery): Catal
             song.legacy_song_id,
             ARRAY(
               SELECT legacy_mapping.external_id
-              FROM dxdata.dsng_source_mappings AS legacy_mapping
+              FROM dxdata.song_source_mappings AS legacy_mapping
               WHERE legacy_mapping.song_id = catalog_song.song_id
                 AND legacy_mapping.source_id = 'legacy_dxdata'
               ORDER BY legacy_mapping.external_id
@@ -293,19 +293,19 @@ export const createCatalogIdentityService = (query: CatalogIdentityQuery): Catal
             catalog_sheet.sheet_id AS public_sheet_id,
             sheet.chart_type AS sheet_type,
             sheet.difficulty AS sheet_difficulty
-          FROM dxdata.dcat_publications AS publication
-          INNER JOIN dxdata.dcat_snapshots AS snapshot
+          FROM dxdata.catalog_publications AS publication
+          INNER JOIN dxdata.catalog_snapshots AS snapshot
             ON snapshot.catalog_run_id = publication.catalog_run_id
-          INNER JOIN dxdata.dcat_runs AS catalog_run
+          INNER JOIN dxdata.catalog_build_runs AS catalog_run
             ON catalog_run.id = publication.catalog_run_id
-          INNER JOIN dxdata.dcat_songs AS catalog_song
+          INNER JOIN dxdata.catalog_run_songs AS catalog_song
             ON catalog_song.catalog_run_id = publication.catalog_run_id
-          INNER JOIN dxdata.dsng_songs AS song
+          INNER JOIN dxdata.canonical_songs AS song
             ON song.id = catalog_song.song_id
-          LEFT JOIN dxdata.dcat_sheets AS catalog_sheet
+          LEFT JOIN dxdata.catalog_run_sheets AS catalog_sheet
             ON catalog_sheet.catalog_run_id = catalog_song.catalog_run_id
             AND catalog_sheet.song_id = catalog_song.song_id
-          LEFT JOIN dxdata.dsht_sheets AS sheet
+          LEFT JOIN dxdata.canonical_sheets AS sheet
             ON sheet.id = catalog_sheet.sheet_id
             AND sheet.song_id = catalog_song.song_id
           WHERE publication.channel = $1
@@ -486,7 +486,7 @@ export const createCatalogIdentityService = (query: CatalogIdentityQuery): Catal
       const snapshot = await getCurrentSnapshot()
       const translated = new Map<string, string>()
       for (const songId of songIds) {
-        if ((songId.startsWith('sng_') && !isPublicSongId(songId)) || songId.startsWith('sht_')) continue
+        if ((songId.startsWith('dsng_') && !isPublicSongId(songId)) || songId.startsWith('dsht_')) continue
         const song = isPublicSongId(songId)
           ? snapshot.songsByPublicId.get(songId)
           : snapshot.songsByLegacyId.get(songId)
@@ -499,7 +499,7 @@ export const createCatalogIdentityService = (query: CatalogIdentityQuery): Catal
       const snapshot = await getCurrentSnapshot()
       const translated = new Map<string, number>()
       for (const { songId, count } of songCounts) {
-        if ((songId.startsWith('sng_') && !isPublicSongId(songId)) || songId.startsWith('sht_')) continue
+        if ((songId.startsWith('dsng_') && !isPublicSongId(songId)) || songId.startsWith('dsht_')) continue
         const song = isPublicSongId(songId)
           ? snapshot.songsByPublicId.get(songId)
           : snapshot.songsByLegacyId.get(songId)
