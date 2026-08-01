@@ -43,6 +43,7 @@ export async function setupTestServer() {
     '0006_arcade_geocoding.sql',
     '0007_arcade_chains.sql',
     '0008_arcade_chain_audit_alignment.sql',
+    '0009_arcade_public_identities.sql',
   ]
 
   for (const file of migrationFiles) {

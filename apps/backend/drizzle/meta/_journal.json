@@ -64,6 +64,13 @@
       "when": 1785534392377,
       "tag": "0008_arcade_chain_audit_alignment",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785609962924,
+      "tag": "0009_arcade_public_identities",
+      "breakpoints": true
     }
   ]
 }

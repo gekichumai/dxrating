@@ -184,6 +184,7 @@ export const arcadeVenues = arcade.table(
   'venues',
   {
     id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    public_id: text('public_id'),
     name: text('name').notNull(),
     normalized_name: text('normalized_name').notNull(),
     chain_id: text('chain_id').references(() => arcadeChains.id),
@@ -202,6 +203,11 @@ export const arcadeVenues = arcade.table(
     updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
+    unique('venues_public_id_unique').on(table.public_id),
+    check(
+      'venues_public_id_check',
+      sql`${table.public_id} is null or ${table.public_id} ~ '^dven_[23456789abcdefghjkmnpqrstvwxyz]{10}$'`,
+    ),
     check('venues_coordinates_paired_check', sql`(${table.latitude} is null) = (${table.longitude} is null)`),
     check('venues_latitude_range_check', sql`${table.latitude} is null or ${table.latitude} between -90 and 90`),
     check('venues_longitude_range_check', sql`${table.longitude} is null or ${table.longitude} between -180 and 180`),
@@ -214,6 +220,37 @@ export const arcadeVenues = arcade.table(
     index('venues_location_idx').on(table.country_code, table.region, table.city),
     index('venues_coordinates_idx').on(table.latitude, table.longitude),
     index('venues_name_address_idx').on(table.normalized_name, table.normalized_address),
+  ],
+)
+
+export const arcadeInstallationIdentities = arcade.table(
+  'installation_identities',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    public_id: text('public_id').notNull(),
+    venue_id: bigint('venue_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => arcadeVenues.id, { onDelete: 'cascade' }),
+    game_id: text('game_id')
+      .notNull()
+      .references(() => arcadeGames.id),
+    version: text('version'),
+    cabinet_model: text('cabinet_model'),
+    region: text('region'),
+    network: text('network'),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    unique('installation_identities_public_id_unique').on(table.public_id),
+    unique('installation_identities_logical_identity_unique')
+      .on(table.venue_id, table.game_id, table.region, table.network, table.version, table.cabinet_model)
+      .nullsNotDistinct(),
+    check(
+      'installation_identities_public_id_check',
+      sql`${table.public_id} ~ '^dins_[23456789abcdefghjkmnpqrstvwxyz]{10}$'`,
+    ),
+    index('installation_identities_venue_idx').on(table.venue_id),
+    index('installation_identities_game_idx').on(table.game_id),
   ],
 )
 
@@ -377,6 +414,10 @@ export const arcadeInstallations = arcade.table(
   'installations',
   {
     id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    installation_identity_id: bigint('installation_identity_id', { mode: 'bigint' }).references(
+      () => arcadeInstallationIdentities.id,
+      { onDelete: 'cascade' },
+    ),
     venue_id: bigint('venue_id', { mode: 'bigint' })
       .notNull()
       .references(() => arcadeVenues.id, { onDelete: 'cascade' }),
@@ -412,6 +453,7 @@ export const arcadeInstallations = arcade.table(
       sql`${table.confidence} is null or ${table.confidence} between 0 and 1`,
     ),
     index('installations_game_idx').on(table.game_id),
+    index('installations_identity_idx').on(table.installation_identity_id),
     index('installations_venue_active_idx').on(table.venue_id, table.absent_since),
     index('installations_game_active_idx').on(table.game_id, table.absent_since),
   ],
