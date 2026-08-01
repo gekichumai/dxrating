@@ -151,6 +151,11 @@ const uncachedErrorResponse = {
   },
 } satisfies OpenAPI.ResponseObject
 
+const uncachedHeadErrorResponse = {
+  description: 'The published catalog is unavailable. This response is never cacheable.',
+  headers: uncachedResponseHeaders,
+} satisfies OpenAPI.ResponseObject
+
 const conditionalRequestParameter = {
   name: 'If-None-Match',
   in: 'header',
@@ -211,8 +216,8 @@ export const addPublishedDxdataToOpenApi = (document: OpenAPI.Document): OpenAPI
           description: 'The supplied validator matches the current published catalog.',
           headers: catalogResponseHeaders,
         },
-        '500': uncachedErrorResponse,
-        '503': uncachedErrorResponse,
+        '500': uncachedHeadErrorResponse,
+        '503': uncachedHeadErrorResponse,
       },
     },
   }

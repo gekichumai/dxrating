@@ -129,6 +129,8 @@ describe('Health & Basic Endpoints', () => {
     })
     expect(dxdata.get.responses['304'].headers.ETag).toBeDefined()
     expect(dxdata.head.responses['200'].content).toBeUndefined()
+    expect(dxdata.head.responses['500'].content).toBeUndefined()
+    expect(dxdata.head.responses['503'].content).toBeUndefined()
     expect(spec.components.schemas.PublishedDxdataCatalog).toMatchObject({
       type: 'object',
       required: expect.arrayContaining(['schemaVersion', 'updatedAt', 'songs']),

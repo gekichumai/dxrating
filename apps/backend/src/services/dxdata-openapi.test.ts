@@ -72,6 +72,9 @@ describe('published DX data OpenAPI contract', () => {
       operationId: 'headPublishedDxdataCatalog',
       security: [],
     })
+    expect(augmented.paths?.['/dxdata']?.get?.responses['503']).toHaveProperty('content.application/json')
+    expect(augmented.paths?.['/dxdata']?.head?.responses['500']).not.toHaveProperty('content')
+    expect(augmented.paths?.['/dxdata']?.head?.responses['503']).not.toHaveProperty('content')
     expect(augmented.components?.schemas?.PublishedDxdataCatalog).toBeDefined()
   })
 })
