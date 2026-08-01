@@ -1,0 +1,70 @@
+name: Purge Public Catalog Cache
+
+on:
+  workflow_dispatch:
+    inputs:
+      catalog:
+        description: Public catalog to invalidate
+        required: true
+        default: arcade-venues
+        type: choice
+        options:
+          - arcade-venues
+          - dxdata
+          - all
+
+permissions:
+  contents: read
+
+concurrency:
+  group: purge-public-catalog-cache
+  cancel-in-progress: false
+
+jobs:
+  purge:
+    name: Purge selected URLs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Purge exact catalog URLs
+        env:
+          CATALOG: ${{ inputs.catalog }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID: 7b393aa3bb2e6a524dc08877d51fe27e
+        run: |
+          set -euo pipefail
+
+          case "$CATALOG" in
+            arcade-venues)
+              files='["https://miruku.dxrating.net/api/v1/arcades/venues"]'
+              ;;
+            dxdata)
+              files='["https://miruku.dxrating.net/api/v1/dxdata"]'
+              ;;
+            all)
+              files='[
+                "https://miruku.dxrating.net/api/v1/arcades/venues",
+                "https://miruku.dxrating.net/api/v1/dxdata"
+              ]'
+              ;;
+            *)
+              echo "Unsupported catalog: $CATALOG" >&2
+              exit 2
+              ;;
+          esac
+
+          payload=$(jq -nc --argjson files "$files" '{files: $files}')
+          response=$(curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            --header 'Content-Type: application/json' \
+            --data "$payload" \
+            "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache")
+
+          if ! jq -e '.success == true and (.errors | length) == 0' >/dev/null <<<"$response"; then
+            jq '{success, errors, messages}' <<<"$response" >&2
+            exit 1
+          fi
+
+          jq -n --arg catalog "$CATALOG" --argjson files "$files" \
+            '{success: true, catalog: $catalog, purged: $files}'
