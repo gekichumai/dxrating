@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-01T18:02:27.202406582+00:00",
+  "generatedAt": "2026-08-02T15:00:21.947259950+00:00",
   "output": {
-    "sha256": "1bbda98821cb56ff8e47493641a9d04bb3e15408a08c2acd7b284002bb3b9054"
+    "sha256": "3fddefb02ec4357e78cae7696e1f0cb9254dad83948bb23437cae17533f65580"
   },
   "coverage": {
-    "leafFields": 176253,
-    "tracedLeafFields": 176253,
+    "leafFields": 176290,
+    "tracedLeafFields": 176290,
     "percent": 100.0,
     "unmatchedPaths": []
   },
@@ -24,13 +24,13 @@
           "system": "arcade-songs-fetch legacy generated catalog"
         }
       },
-      "catalogSha256": "27e9b4caa09f09959a12f5499d217fc14977bd99936a560c019d152c9eadc17f",
+      "catalogSha256": "798c4de2d62d3db06f8618fe1aaccd2a8559cb99f9ad8bc81bef538ac17bae1c",
       "fetch": {
-        "generatedAt": "2026-08-01T18:02:23.647160522+00:00",
+        "generatedAt": "2026-08-02T15:00:16.755962708+00:00",
         "schemaVersion": 1,
         "sources": [
           {
-            "checkedAt": "2026-08-01T18:02:19.616922401+00:00",
+            "checkedAt": "2026-08-02T15:00:06.379588130+00:00",
             "name": "sega_official",
             "path": "official/maimai_songs.json",
             "sha256": "ab4cc9b65e5c7e6fcad7338666ddde2466a2ea66f3402402dac0285225227a53",
@@ -38,7 +38,7 @@
             "url": "https://maimai.sega.jp/data/maimai_songs.json"
           },
           {
-            "checkedAt": "2026-08-01T18:02:19.699570585+00:00",
+            "checkedAt": "2026-08-02T15:00:07.447741292+00:00",
             "name": "otoge_db_gamerch",
             "path": "enrichment/music-ex.json",
             "sha256": "842dff90656846f31fb9567c811a9db2bc8ddb38672c42833c1e50f6f97633ee",
@@ -46,7 +46,7 @@
             "url": "https://raw.githubusercontent.com/zvuc/otoge-db/master/maimai/data/music-ex.json"
           },
           {
-            "checkedAt": "2026-08-01T18:02:19.762774775+00:00",
+            "checkedAt": "2026-08-02T15:00:08.628540163+00:00",
             "name": "otoge_intl",
             "path": "regions/music-ex-intl.json",
             "sha256": "a78a4a1c031d3102921f1d19b545b5cace009f9fca16bb906090942bf7186bf3",
@@ -54,7 +54,7 @@
             "url": "https://raw.githubusercontent.com/zvuc/otoge-db/master/maimai/data/music-ex-intl.json"
           },
           {
-            "checkedAt": "2026-08-01T18:02:19.774462753+00:00",
+            "checkedAt": "2026-08-02T15:00:08.871355609+00:00",
             "name": "maimai_cn",
             "path": "regions/cn.json",
             "sha256": "191a4b606fe01469829b3d8620a0ec8e9ec356d071cda2d2a19ae785a8da6d61",
@@ -62,15 +62,15 @@
             "url": "https://raw.githubusercontent.com/CrazyKidCN/maimaiDX-CN-songs-database/main/maidata.json"
           },
           {
-            "checkedAt": "2026-08-01T18:02:21.763922788+00:00",
+            "checkedAt": "2026-08-02T15:00:15.522855342+00:00",
             "name": "lxns_song_list",
             "path": "enrichment/lxns-songs.json",
-            "sha256": "26271834c1a2615ac35c99991959b17f5fb706ed36c88f20b70dd9e15f1f9920",
+            "sha256": "6c5acd4353a5a267970c279622b0efbf0b757bef2b41c67d27ea46cfa69cd491",
             "status": "fresh",
             "url": "https://maimai.lxns.net/api/v0/maimai/song/list"
           },
           {
-            "checkedAt": "2026-08-01T18:02:21.767884728+00:00",
+            "checkedAt": "2026-08-02T15:00:15.809152161+00:00",
             "name": "gcm_bot",
             "path": "aliases/gcm_bot.tsv",
             "sha256": "37d5c789cb90b5c3a0ae94937b0a1ff16096b0f7d105288a18331214e9f370f7",
@@ -78,7 +78,7 @@
             "url": "https://raw.githubusercontent.com/lomotos10/GCM-bot/main/data/aliases/en/chuni.tsv"
           },
           {
-            "checkedAt": "2026-08-01T18:02:21.826482718+00:00",
+            "checkedAt": "2026-08-02T15:00:15.873152868+00:00",
             "error": "input error in yuzuchan: HTTP 403 Forbidden",
             "name": "yuzuchan",
             "path": "aliases/yuzuchan.json",
@@ -86,15 +86,15 @@
             "url": "https://api.yuzuchan.moe/maimaidx/maimaidxalias"
           },
           {
-            "checkedAt": "2026-08-01T18:02:23.338504137+00:00",
+            "checkedAt": "2026-08-02T15:00:16.365401617+00:00",
             "name": "lxns",
             "path": "aliases/lxns.json",
-            "sha256": "1bf2dd533b27786706885f9f81ef462bf3d0bd83c0f01ea915e17088f88943e3",
+            "sha256": "dd190708f72fe31f37864310058ccb62f3dc6143714735718325e05e2c546281",
             "status": "fresh",
             "url": "https://maimai.lxns.net/api/v0/maimai/alias/list"
           },
           {
-            "checkedAt": "2026-08-01T18:02:23.647150483+00:00",
+            "checkedAt": "2026-08-02T15:00:16.755947339+00:00",
             "error": "input error in sega_game_blogs: all 9 blog index requests failed",
             "name": "sega_game_blogs",
             "path": "enrichment/blog-covers.json",
@@ -103,7 +103,7 @@
           }
         ]
       },
-      "generatedAt": "2026-08-01T18:02:24.391804471+00:00",
+      "generatedAt": "2026-08-02T15:00:17.524539658+00:00",
       "identities": {
         "sheets": [
           {
@@ -54392,6 +54392,13 @@
             "sourceId": "lxns_song_list"
           },
           {
+            "chartType": "utage",
+            "difficulty": "【好】",
+            "externalId": "source_sheet_v1:[\"111852\",\"difficulties.utage[difficulty=0]\"]",
+            "songId": "[好]好きな惣菜発表ドラゴン",
+            "sourceId": "lxns_song_list"
+          },
+          {
             "chartType": "std",
             "difficulty": "basic",
             "externalId": "source_sheet_v1:[\"112\",\"difficulties.standard[difficulty=0]\"]",
@@ -56972,6 +56979,13 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"1218\",\"difficulties.dx[difficulty=3]\"]",
             "songId": "自傷無色",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【譜】",
+            "externalId": "source_sheet_v1:[\"121852\",\"difficulties.utage[difficulty=0]\"]",
+            "songId": "[譜]好きな惣菜発表ドラゴン",
             "sourceId": "lxns_song_list"
           },
           {
@@ -59726,6 +59740,13 @@
             "sourceId": "lxns_song_list"
           },
           {
+            "chartType": "utage",
+            "difficulty": "【面】",
+            "externalId": "source_sheet_v1:[\"131852\",\"difficulties.utage[difficulty=0]\"]",
+            "songId": "[面]好きな惣菜発表ドラゴン",
+            "sourceId": "lxns_song_list"
+          },
+          {
             "chartType": "dx",
             "difficulty": "basic",
             "externalId": "source_sheet_v1:[\"1319\",\"difficulties.dx[difficulty=0]\"]",
@@ -62054,6 +62075,13 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"1418\",\"difficulties.dx[difficulty=3]\"]",
             "songId": "enchanted love",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【発】",
+            "externalId": "source_sheet_v1:[\"141852\",\"difficulties.utage[difficulty=0]\"]",
+            "songId": "[発]好きな惣菜発表ドラゴン",
             "sourceId": "lxns_song_list"
           },
           {
@@ -64763,6 +64791,13 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"1518\",\"difficulties.dx[difficulty=3]\"]",
             "songId": "ボッカデラベリタ",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【表】",
+            "externalId": "source_sheet_v1:[\"151852\",\"difficulties.utage[difficulty=0]\"]",
+            "songId": "[表]好きな惣菜発表ドラゴン",
             "sourceId": "lxns_song_list"
           },
           {
@@ -67591,6 +67626,13 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"1618\",\"difficulties.dx[difficulty=3]\"]",
             "songId": "Energizing Flame",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【龍】",
+            "externalId": "source_sheet_v1:[\"161852\",\"difficulties.utage[difficulty=0]\"]",
+            "songId": "[龍]好きな惣菜発表ドラゴン",
             "sourceId": "lxns_song_list"
           },
           {
@@ -72783,6 +72825,118 @@
           {
             "chartType": "dx",
             "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"1811\",\"difficulties.dx[difficulty=0]\"]",
+            "songId": "概して過誤",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"1811\",\"difficulties.dx[difficulty=1]\"]",
+            "songId": "概して過誤",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"1811\",\"difficulties.dx[difficulty=2]\"]",
+            "songId": "概して過誤",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"1811\",\"difficulties.dx[difficulty=3]\"]",
+            "songId": "概して過誤",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"1812\",\"difficulties.dx[difficulty=0]\"]",
+            "songId": "Unfinished Epic",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"1812\",\"difficulties.dx[difficulty=1]\"]",
+            "songId": "Unfinished Epic",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"1812\",\"difficulties.dx[difficulty=2]\"]",
+            "songId": "Unfinished Epic",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"1812\",\"difficulties.dx[difficulty=3]\"]",
+            "songId": "Unfinished Epic",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"1813\",\"difficulties.dx[difficulty=0]\"]",
+            "songId": "忙シー日",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"1813\",\"difficulties.dx[difficulty=1]\"]",
+            "songId": "忙シー日",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"1813\",\"difficulties.dx[difficulty=2]\"]",
+            "songId": "忙シー日",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"1813\",\"difficulties.dx[difficulty=3]\"]",
+            "songId": "忙シー日",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"1814\",\"difficulties.dx[difficulty=0]\"]",
+            "songId": "FLΛME/FRΦST",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"1814\",\"difficulties.dx[difficulty=1]\"]",
+            "songId": "FLΛME/FRΦST",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"1814\",\"difficulties.dx[difficulty=2]\"]",
+            "songId": "FLΛME/FRΦST",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"1814\",\"difficulties.dx[difficulty=3]\"]",
+            "songId": "FLΛME/FRΦST",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
             "externalId": "source_sheet_v1:[\"1822\",\"difficulties.dx[difficulty=0]\"]",
             "songId": "Supersonic Generation",
             "sourceId": "lxns_song_list"
@@ -72834,6 +72988,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"1823\",\"difficulties.dx[difficulty=3]\"]",
             "songId": "Zitronectar",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"1824\",\"difficulties.dx[difficulty=0]\"]",
+            "songId": "なんかノイズにきこえる",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"1824\",\"difficulties.dx[difficulty=1]\"]",
+            "songId": "なんかノイズにきこえる",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"1824\",\"difficulties.dx[difficulty=2]\"]",
+            "songId": "なんかノイズにきこえる",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"1824\",\"difficulties.dx[difficulty=3]\"]",
+            "songId": "なんかノイズにきこえる",
             "sourceId": "lxns_song_list"
           },
           {
@@ -73308,6 +73490,62 @@
           {
             "chartType": "dx",
             "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"1845\",\"difficulties.dx[difficulty=0]\"]",
+            "songId": "マヌルネコのうた",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"1845\",\"difficulties.dx[difficulty=1]\"]",
+            "songId": "マヌルネコのうた",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"1845\",\"difficulties.dx[difficulty=2]\"]",
+            "songId": "マヌルネコのうた",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"1845\",\"difficulties.dx[difficulty=3]\"]",
+            "songId": "マヌルネコのうた",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"1846\",\"difficulties.dx[difficulty=0]\"]",
+            "songId": "スナネコのうた",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"1846\",\"difficulties.dx[difficulty=1]\"]",
+            "songId": "スナネコのうた",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"1846\",\"difficulties.dx[difficulty=2]\"]",
+            "songId": "スナネコのうた",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"1846\",\"difficulties.dx[difficulty=3]\"]",
+            "songId": "スナネコのうた",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
             "externalId": "source_sheet_v1:[\"1847\",\"difficulties.dx[difficulty=0]\"]",
             "songId": "M@GICAL☆CURE! LOVE ♥ SHOT!",
             "sourceId": "lxns_song_list"
@@ -73504,6 +73742,34 @@
           {
             "chartType": "dx",
             "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"1852\",\"difficulties.dx[difficulty=0]\"]",
+            "songId": "好きな惣菜発表ドラゴン",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"1852\",\"difficulties.dx[difficulty=1]\"]",
+            "songId": "好きな惣菜発表ドラゴン",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"1852\",\"difficulties.dx[difficulty=2]\"]",
+            "songId": "好きな惣菜発表ドラゴン",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"1852\",\"difficulties.dx[difficulty=3]\"]",
+            "songId": "好きな惣菜発表ドラゴン",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
             "externalId": "source_sheet_v1:[\"1853\",\"difficulties.dx[difficulty=0]\"]",
             "songId": "Help me, ERINNNNNN!!",
             "sourceId": "lxns_song_list"
@@ -73639,6 +73905,90 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"187\",\"difficulties.standard[difficulty=3]\"]",
             "songId": "ローリンガール",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"1871\",\"difficulties.dx[difficulty=0]\"]",
+            "songId": "クーネル・エンゲイザー",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"1871\",\"difficulties.dx[difficulty=1]\"]",
+            "songId": "クーネル・エンゲイザー",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"1871\",\"difficulties.dx[difficulty=2]\"]",
+            "songId": "クーネル・エンゲイザー",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"1871\",\"difficulties.dx[difficulty=3]\"]",
+            "songId": "クーネル・エンゲイザー",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"1872\",\"difficulties.dx[difficulty=0]\"]",
+            "songId": "ゼロトーキング",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"1872\",\"difficulties.dx[difficulty=1]\"]",
+            "songId": "ゼロトーキング",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"1872\",\"difficulties.dx[difficulty=2]\"]",
+            "songId": "ゼロトーキング",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"1872\",\"difficulties.dx[difficulty=3]\"]",
+            "songId": "ゼロトーキング",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"1873\",\"difficulties.dx[difficulty=0]\"]",
+            "songId": "抜錨",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"1873\",\"difficulties.dx[difficulty=1]\"]",
+            "songId": "抜錨",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"1873\",\"difficulties.dx[difficulty=2]\"]",
+            "songId": "抜錨",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"1873\",\"difficulties.dx[difficulty=3]\"]",
+            "songId": "抜錨",
             "sourceId": "lxns_song_list"
           },
           {
@@ -269261,6 +269611,11 @@
             "sourceId": "lxns_song_list"
           },
           {
+            "externalId": "111852",
+            "songId": "[好]好きな惣菜発表ドラゴン",
+            "sourceId": "lxns_song_list"
+          },
+          {
             "externalId": "112",
             "songId": "Like the Wind [Reborn]",
             "sourceId": "lxns_song_list"
@@ -269713,6 +270068,11 @@
           {
             "externalId": "1218",
             "songId": "自傷無色",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "externalId": "121852",
+            "songId": "[譜]好きな惣菜発表ドラゴン",
             "sourceId": "lxns_song_list"
           },
           {
@@ -270186,6 +270546,11 @@
             "sourceId": "lxns_song_list"
           },
           {
+            "externalId": "131852",
+            "songId": "[面]好きな惣菜発表ドラゴン",
+            "sourceId": "lxns_song_list"
+          },
+          {
             "externalId": "1319",
             "songId": "ハードコア・シンドローム",
             "sourceId": "lxns_song_list"
@@ -270593,6 +270958,11 @@
           {
             "externalId": "1418",
             "songId": "enchanted love",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "externalId": "141852",
+            "songId": "[発]好きな惣菜発表ドラゴン",
             "sourceId": "lxns_song_list"
           },
           {
@@ -271058,6 +271428,11 @@
           {
             "externalId": "1518",
             "songId": "ボッカデラベリタ",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "externalId": "151852",
+            "songId": "[表]好きな惣菜発表ドラゴン",
             "sourceId": "lxns_song_list"
           },
           {
@@ -271558,6 +271933,11 @@
           {
             "externalId": "1618",
             "songId": "Energizing Flame",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "externalId": "161852",
+            "songId": "[龍]好きな惣菜発表ドラゴン",
             "sourceId": "lxns_song_list"
           },
           {
@@ -272471,6 +272851,26 @@
             "sourceId": "lxns_song_list"
           },
           {
+            "externalId": "1811",
+            "songId": "概して過誤",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "externalId": "1812",
+            "songId": "Unfinished Epic",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "externalId": "1813",
+            "songId": "忙シー日",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "externalId": "1814",
+            "songId": "FLΛME/FRΦST",
+            "sourceId": "lxns_song_list"
+          },
+          {
             "externalId": "1822",
             "songId": "Supersonic Generation",
             "sourceId": "lxns_song_list"
@@ -272478,6 +272878,11 @@
           {
             "externalId": "1823",
             "songId": "Zitronectar",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "externalId": "1824",
+            "songId": "なんかノイズにきこえる",
             "sourceId": "lxns_song_list"
           },
           {
@@ -272561,6 +272966,16 @@
             "sourceId": "lxns_song_list"
           },
           {
+            "externalId": "1845",
+            "songId": "マヌルネコのうた",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "externalId": "1846",
+            "songId": "スナネコのうた",
+            "sourceId": "lxns_song_list"
+          },
+          {
             "externalId": "1847",
             "songId": "M@GICAL☆CURE! LOVE ♥ SHOT!",
             "sourceId": "lxns_song_list"
@@ -272591,6 +273006,11 @@
             "sourceId": "lxns_song_list"
           },
           {
+            "externalId": "1852",
+            "songId": "好きな惣菜発表ドラゴン",
+            "sourceId": "lxns_song_list"
+          },
+          {
             "externalId": "1853",
             "songId": "Help me, ERINNNNNN!!",
             "sourceId": "lxns_song_list"
@@ -272613,6 +273033,21 @@
           {
             "externalId": "187",
             "songId": "ローリンガール",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "externalId": "1871",
+            "songId": "クーネル・エンゲイザー",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "externalId": "1872",
+            "songId": "ゼロトーキング",
+            "sourceId": "lxns_song_list"
+          },
+          {
+            "externalId": "1873",
+            "songId": "抜錨",
             "sourceId": "lxns_song_list"
           },
           {
@@ -307049,6 +307484,7 @@
         "FLΛME/FRΦST": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -311535,6 +311971,7 @@
         "Unfinished Epic": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -312484,6 +312921,7 @@
         "[好]好きな惣菜発表ドラゴン": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -312695,6 +313133,7 @@
         "[発]好きな惣菜発表ドラゴン": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -312818,6 +313257,7 @@
         "[表]好きな惣菜発表ドラゴン": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -312863,6 +313303,7 @@
         "[譜]好きな惣菜発表ドラゴン": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -312906,6 +313347,7 @@
         "[面]好きな惣菜発表ドラゴン": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -312972,6 +313414,7 @@
         "[龍]好きな惣菜発表ドラゴン": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -314543,6 +314986,7 @@
         "なんかノイズにきこえる": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -316153,6 +316597,7 @@
         "クーネル・エンゲイザー": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -316686,6 +317131,7 @@
         "スナネコのうた": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -316834,6 +317280,7 @@
         "ゼロトーキング": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -318249,6 +318696,7 @@
         "マヌルネコのうた": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -319920,6 +320368,7 @@
         "好きな惣菜発表ドラゴン": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -320293,6 +320742,7 @@
         "忙シー日": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -320445,6 +320895,7 @@
         "抜錨": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -320932,6 +321383,7 @@
         "概して過誤": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
+          "internalIds": "lxns_song_list",
           "regions": [
             "sega_official_jp",
             "otoge_intl",
@@ -322746,7 +323198,7 @@
         }
       },
       "sourceRecordCounts": {
-        "lxns_song_list": 1305,
+        "lxns_song_list": 1322,
         "maimai_cn": 1246,
         "otoge_intl": 1498,
         "sega_official": 1564
@@ -322754,12 +323206,12 @@
       "sources": {
         "catalog_history": {
           "path": "/data/input/songs/history.json",
-          "sha256": "ec8d2d8fca9cf6a180d1f981dfe2f24f2b07c9bfd5ebb5d87fa9e5dd45bac9aa"
+          "sha256": "27e9b4caa09f09959a12f5499d217fc14977bd99936a560c019d152c9eadc17f"
         },
         "lxns_song_list": {
           "path": "/data/input/enrichment/lxns-songs.json",
-          "recordCount": 1305,
-          "sha256": "26271834c1a2615ac35c99991959b17f5fb706ed36c88f20b70dd9e15f1f9920"
+          "recordCount": 1322,
+          "sha256": "6c5acd4353a5a267970c279622b0efbf0b757bef2b41c67d27ea46cfa69cd491"
         },
         "maimai_cn": {
           "path": "/data/input/regions/cn.json",
@@ -322795,10 +323247,10 @@
           "sha256": "37d5c789cb90b5c3a0ae94937b0a1ff16096b0f7d105288a18331214e9f370f7"
         },
         "aliases/lxns.json": {
-          "sha256": "1bf2dd533b27786706885f9f81ef462bf3d0bd83c0f01ea915e17088f88943e3"
+          "sha256": "dd190708f72fe31f37864310058ccb62f3dc6143714735718325e05e2c546281"
         },
         "provenance/internal-level-refresh.json": {
-          "sha256": "80cdff1dd66c1cb768e2a7b383d81d3934ece70d5073400da5d794fe65ef8eb6"
+          "sha256": "75b70e4eb224f26710f3538dc6f1a22e5ac0f5d9145ebdd3330b30ed8013687a"
         }
       },
       "postgres": {
