@@ -56,6 +56,34 @@ const DynamicSongSchema = z.strictObject({
   searchAcronyms: z.array(z.string()),
 })
 
+const DynamicLocalizedStringSchema = z.record(z.string().min(1), z.string())
+
+const DynamicTagGroupSchema = z.strictObject({
+  id: z.number().int().positive(),
+  localized_name: DynamicLocalizedStringSchema,
+  color: z.string(),
+})
+
+const DynamicTagSchema = z.strictObject({
+  id: z.number().int().positive(),
+  localized_name: DynamicLocalizedStringSchema,
+  localized_description: DynamicLocalizedStringSchema,
+  group_id: z.number().int().positive().optional(),
+})
+
+const DynamicTagSongSchema = z.strictObject({
+  song_id: z.string().regex(PUBLIC_SONG_ID_PATTERN),
+  sheet_id: z.string().regex(PUBLIC_SHEET_ID_PATTERN),
+  sheet_type: z.string().min(1),
+  sheet_difficulty: z.string().min(1),
+  tag_id: z.number().int().positive(),
+})
+
+const DynamicAliasSchema = z.strictObject({
+  song_id: z.string().regex(PUBLIC_SONG_ID_PATTERN),
+  name: z.string(),
+})
+
 /**
  * Executable consumer contract for the producer-owned public catalog body.
  *
@@ -92,6 +120,10 @@ export const PublishedDxdataCatalogSchema = z.strictObject({
   ),
   servers: z.array(z.strictObject({ id: z.string().min(1), name: z.string().min(1) })),
   songs: z.array(DynamicSongSchema),
+  tagGroups: z.array(DynamicTagGroupSchema),
+  tags: z.array(DynamicTagSchema),
+  tagSongs: z.array(DynamicTagSongSchema),
+  aliases: z.array(DynamicAliasSchema),
 })
 
 const catalogResponseHeaders = {
@@ -178,7 +210,7 @@ export const addPublishedDxdataToOpenApi = (document: OpenAPI.Document): OpenAPI
       operationId: 'getPublishedDxdataCatalog',
       summary: 'Get the complete published DX data catalog',
       description:
-        'Returns one schema-versioned, null-free immutable catalog document. Stored provenance and legacy identifiers are not exposed. Use `If-None-Match` or HEAD to avoid downloading an unchanged catalog.',
+        'Returns one schema-versioned, null-free immutable catalog document, including the tag and alias snapshot. Stored provenance and legacy identifiers are not exposed. Use `If-None-Match` or HEAD to avoid downloading an unchanged catalog.',
       tags: ['DX Data'],
       security: [],
       parameters: [conditionalRequestParameter],

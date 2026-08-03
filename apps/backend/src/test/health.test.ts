@@ -133,7 +133,15 @@ describe('Health & Basic Endpoints', () => {
     expect(dxdata.head.responses['503'].content).toBeUndefined()
     expect(spec.components.schemas.PublishedDxdataCatalog).toMatchObject({
       type: 'object',
-      required: expect.arrayContaining(['schemaVersion', 'updatedAt', 'songs']),
+      required: expect.arrayContaining([
+        'schemaVersion',
+        'updatedAt',
+        'songs',
+        'tagGroups',
+        'tags',
+        'tagSongs',
+        'aliases',
+      ]),
     })
   })
 

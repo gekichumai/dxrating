@@ -36,6 +36,31 @@ const catalogFixture = {
       searchAcronyms: [],
     },
   ],
+  tagGroups: [
+    {
+      id: 1,
+      localized_name: { ja: 'グループ' },
+      color: '#ff00aa',
+    },
+  ],
+  tags: [
+    {
+      id: 2,
+      localized_name: { ja: 'タグ' },
+      localized_description: {},
+      group_id: 1,
+    },
+  ],
+  tagSongs: [
+    {
+      song_id: 'dsng_23456789ab',
+      sheet_id: 'dsht_23456789ab',
+      sheet_type: 'dx',
+      sheet_difficulty: 'master',
+      tag_id: 2,
+    },
+  ],
+  aliases: [{ song_id: 'dsng_23456789ab', name: 'Contract alias' }],
 } as const
 
 describe('published DX data OpenAPI contract', () => {
@@ -51,6 +76,12 @@ describe('published DX data OpenAPI contract', () => {
       PublishedDxdataCatalogSchema.safeParse({
         ...catalogFixture,
         songs: [{ ...catalogFixture.songs[0], bpm: null }],
+      }).success,
+    ).toBe(false)
+    expect(
+      PublishedDxdataCatalogSchema.safeParse({
+        ...catalogFixture,
+        tags: [{ ...catalogFixture.tags[0], group_id: null }],
       }).success,
     ).toBe(false)
   })
