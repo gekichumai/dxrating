@@ -44116,6 +44116,118 @@
             "isLocked": false,
             "sheets": [
                 {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "GreeN",
+                    "internalId": 267,
+                    "releaseDate": "2026-08-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "GreeN",
+                    "internalId": 267,
+                    "releaseDate": "2026-08-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10",
+                    "internalLevelValue": 10.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "GreeN",
+                    "internalId": 267,
+                    "releaseDate": "2026-08-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13",
+                    "internalLevelValue": 13.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "GreeN",
+                    "internalId": 267,
+                    "releaseDate": "2026-08-04"
+                },
+                {
                     "type": "std",
                     "difficulty": "basic",
                     "level": "4",
@@ -44141,7 +44253,7 @@
                     "isSpecial": false,
                     "version": "GreeN",
                     "internalId": 267,
-                    "releaseDate": "2013-07-11"
+                    "releaseDate": "2026-08-04"
                 },
                 {
                     "type": "std",
@@ -44169,7 +44281,7 @@
                     "isSpecial": false,
                     "version": "GreeN",
                     "internalId": 267,
-                    "releaseDate": "2013-07-11"
+                    "releaseDate": "2026-08-04"
                 },
                 {
                     "type": "std",
@@ -44197,7 +44309,7 @@
                     "isSpecial": false,
                     "version": "GreeN",
                     "internalId": 267,
-                    "releaseDate": "2013-07-11"
+                    "releaseDate": "2026-08-04"
                 },
                 {
                     "type": "std",
@@ -44225,7 +44337,7 @@
                     "isSpecial": false,
                     "version": "GreeN",
                     "internalId": 267,
-                    "releaseDate": "2013-07-11",
+                    "releaseDate": "2026-08-04",
                     "multiverInternalLevelValue": {
                         "CiRCLE": 12.6,
                         "CiRCLE PLUS": 12.6,
@@ -247702,6 +247814,209 @@
                 }
             ],
             "searchAcronyms": []
+        },
+        {
+            "songId": "ボックスワンターバ〜ン",
+            "category": "POPS＆アニメ",
+            "title": "ボックスワンターバ〜ン",
+            "artist": "ぼくわたチャンネル",
+            "bpm": null,
+            "imageName": "d73447696f302731351cadfca8716e74d6528356438db1b399a136dbc92a0805",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "7",
+                    "internalLevelValue": 7.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10",
+                    "internalLevelValue": 10.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13+",
+                    "internalLevelValue": 13.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-04"
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "[音]インドア系ならトラックメイカー",
+            "category": "宴会場",
+            "title": "[音]インドア系ならトラックメイカー",
+            "artist": "Yunomi & nicamoq",
+            "bpm": null,
+            "imageName": "b0de196b2e5d7fe4025da4833c4d4647ad2eb348c4de3151c1b49910b799501a",
+            "isNew": false,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "utage",
+                    "difficulty": "【音】",
+                    "level": "14+?",
+                    "internalLevelValue": 14.6,
+                    "noteDesigner": null,
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": true,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-31",
+                    "comment": "～音取りほぼMAXバージョン～"
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "[僕]ボックスワンターバ〜ン",
+            "category": "宴会場",
+            "title": "[僕]ボックスワンターバ〜ン",
+            "artist": "ぼくわたチャンネル",
+            "bpm": null,
+            "imageName": "d73447696f302731351cadfca8716e74d6528356438db1b399a136dbc92a0805",
+            "isNew": false,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "utage2p",
+                    "difficulty": "【僕】",
+                    "level": "14?",
+                    "internalLevelValue": 14.0,
+                    "noteDesigner": null,
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": true,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-07-31",
+                    "comment": "コインを入れてランラン楽しいド派手なリズムゲーム 麻衣摩維DX"
+                }
+            ],
+            "searchAcronyms": []
         }
     ],
     "categories": [
@@ -247930,5 +248245,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-08-03T15:00:12.032921414+00:00"
+    "updateTime": "2026-08-04T15:00:13.991863116+00:00"
 }
