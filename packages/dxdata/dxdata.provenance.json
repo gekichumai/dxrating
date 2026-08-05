@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-04T15:00:28.846731219+00:00",
+  "generatedAt": "2026-08-05T15:00:16.834333882+00:00",
   "output": {
-    "sha256": "f5ac6e1e34959165f41a6982ce0acc3f3b4d5bc8de99ddbc8da42c64dacae0a7"
+    "sha256": "cbb30bb65360ba21f42e4b40f56ab958b938315005b28abee7323843c40e7331"
   },
   "coverage": {
     "leafFields": 176513,
@@ -24,13 +24,13 @@
           "system": "arcade-songs-fetch legacy generated catalog"
         }
       },
-      "catalogSha256": "81ce07757fca72f11d7ddb853a7a38c4f9b857e2c747d03dfd01ef3478e77a26",
+      "catalogSha256": "0c0873beef99b56304eae33377464455c91c614e90016b65896badc000fae7b5",
       "fetch": {
-        "generatedAt": "2026-08-04T15:00:13.607452178+00:00",
+        "generatedAt": "2026-08-05T15:00:12.135932206+00:00",
         "schemaVersion": 1,
         "sources": [
           {
-            "checkedAt": "2026-08-04T15:00:06.814820874+00:00",
+            "checkedAt": "2026-08-05T15:00:06.118739141+00:00",
             "name": "sega_official",
             "path": "official/maimai_songs.json",
             "sha256": "08668ce89a328a0fae1b90dca2d5fe502a9e96060f2f5a483c6342f44b5cdf77",
@@ -38,31 +38,31 @@
             "url": "https://maimai.sega.jp/data/maimai_songs.json"
           },
           {
-            "checkedAt": "2026-08-04T15:00:08.023938077+00:00",
+            "checkedAt": "2026-08-05T15:00:06.445879333+00:00",
             "name": "otoge_db_gamerch",
             "path": "enrichment/music-ex.json",
-            "sha256": "842dff90656846f31fb9567c811a9db2bc8ddb38672c42833c1e50f6f97633ee",
+            "sha256": "26193e124e3171e17c2ab42fe6c07ef8c57a1d0474ae1d66ffcdf7f806dc674d",
             "status": "fresh",
             "url": "https://raw.githubusercontent.com/zvuc/otoge-db/master/maimai/data/music-ex.json"
           },
           {
-            "checkedAt": "2026-08-04T15:00:09.131048178+00:00",
+            "checkedAt": "2026-08-05T15:00:07.727910128+00:00",
             "name": "otoge_intl",
             "path": "regions/music-ex-intl.json",
-            "sha256": "a78a4a1c031d3102921f1d19b545b5cace009f9fca16bb906090942bf7186bf3",
+            "sha256": "65f4db72fe0eac41e407ede21c8c5f62a2dd1aabe7b2a5e77aef527a6b5c7d2d",
             "status": "fresh",
             "url": "https://raw.githubusercontent.com/zvuc/otoge-db/master/maimai/data/music-ex-intl.json"
           },
           {
-            "checkedAt": "2026-08-04T15:00:09.765385609+00:00",
+            "checkedAt": "2026-08-05T15:00:08.328568991+00:00",
             "name": "maimai_cn",
             "path": "regions/cn.json",
-            "sha256": "191a4b606fe01469829b3d8620a0ec8e9ec356d071cda2d2a19ae785a8da6d61",
+            "sha256": "1df9f58fb7b88c5e3e859a703562e31f927d3f5e783a8599123f54104aa7502a",
             "status": "fresh",
             "url": "https://raw.githubusercontent.com/CrazyKidCN/maimaiDX-CN-songs-database/main/maidata.json"
           },
           {
-            "checkedAt": "2026-08-04T15:00:12.600195735+00:00",
+            "checkedAt": "2026-08-05T15:00:11.346052481+00:00",
             "name": "lxns_song_list",
             "path": "enrichment/lxns-songs.json",
             "sha256": "6c5acd4353a5a267970c279622b0efbf0b757bef2b41c67d27ea46cfa69cd491",
@@ -70,7 +70,7 @@
             "url": "https://maimai.lxns.net/api/v0/maimai/song/list"
           },
           {
-            "checkedAt": "2026-08-04T15:00:12.844323861+00:00",
+            "checkedAt": "2026-08-05T15:00:11.599737268+00:00",
             "name": "gcm_bot",
             "path": "aliases/gcm_bot.tsv",
             "sha256": "37d5c789cb90b5c3a0ae94937b0a1ff16096b0f7d105288a18331214e9f370f7",
@@ -78,7 +78,7 @@
             "url": "https://raw.githubusercontent.com/lomotos10/GCM-bot/main/data/aliases/en/chuni.tsv"
           },
           {
-            "checkedAt": "2026-08-04T15:00:12.915358027+00:00",
+            "checkedAt": "2026-08-05T15:00:11.675912760+00:00",
             "error": "input error in yuzuchan: HTTP 403 Forbidden",
             "name": "yuzuchan",
             "path": "aliases/yuzuchan.json",
@@ -86,7 +86,7 @@
             "url": "https://api.yuzuchan.moe/maimaidx/maimaidxalias"
           },
           {
-            "checkedAt": "2026-08-04T15:00:13.320796569+00:00",
+            "checkedAt": "2026-08-05T15:00:11.940610058+00:00",
             "name": "lxns",
             "path": "aliases/lxns.json",
             "sha256": "dd190708f72fe31f37864310058ccb62f3dc6143714735718325e05e2c546281",
@@ -94,7 +94,7 @@
             "url": "https://maimai.lxns.net/api/v0/maimai/alias/list"
           },
           {
-            "checkedAt": "2026-08-04T15:00:13.607441448+00:00",
+            "checkedAt": "2026-08-05T15:00:12.135920233+00:00",
             "error": "input error in sega_game_blogs: all 9 blog index requests failed",
             "name": "sega_game_blogs",
             "path": "enrichment/blog-covers.json",
@@ -103,7 +103,7 @@
           }
         ]
       },
-      "generatedAt": "2026-08-04T15:00:14.308680357+00:00",
+      "generatedAt": "2026-08-05T15:00:12.827909807+00:00",
       "identities": {
         "sheets": [
           {
@@ -9267,6 +9267,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"Ignis Danse\",\"sheets[type=std,difficulty=master]\"]",
             "songId": "Ignis Danse",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Ignite Infinity\",\"sheets[type=dx,difficulty=advanced]\"]",
+            "songId": "Ignite Infinity",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Ignite Infinity\",\"sheets[type=dx,difficulty=basic]\"]",
+            "songId": "Ignite Infinity",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Ignite Infinity\",\"sheets[type=dx,difficulty=expert]\"]",
+            "songId": "Ignite Infinity",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Ignite Infinity\",\"sheets[type=dx,difficulty=master]\"]",
+            "songId": "Ignite Infinity",
             "sourceId": "catalog_history"
           },
           {
@@ -21507,6 +21535,13 @@
           },
           {
             "chartType": "utage",
+            "difficulty": "【僕】",
+            "externalId": "source_sheet_v1:[\"[僕]ボックスワンターバ〜ン\",\"sheets[type=utage,difficulty=【僕】]\"]",
+            "songId": "[僕]ボックスワンターバ〜ン",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "utage",
             "difficulty": "【充】",
             "externalId": "source_sheet_v1:[\"[充]エンジェル ドリーム\",\"sheets[type=utage,difficulty=【充】]\"]",
             "songId": "[充]エンジェル ドリーム",
@@ -22105,6 +22140,13 @@
             "difficulty": "【音】",
             "externalId": "source_sheet_v1:[\"[音]snooze\",\"sheets[type=utage,difficulty=【音】]\"]",
             "songId": "[音]snooze",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【音】",
+            "externalId": "source_sheet_v1:[\"[音]インドア系ならトラックメイカー\",\"sheets[type=utage,difficulty=【音】]\"]",
+            "songId": "[音]インドア系ならトラックメイカー",
             "sourceId": "catalog_history"
           },
           {
@@ -37610,6 +37652,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"ボッカデラベリタ\",\"sheets[type=dx,difficulty=master]\"]",
             "songId": "ボッカデラベリタ",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"ボックスワンターバ〜ン\",\"sheets[type=dx,difficulty=advanced]\"]",
+            "songId": "ボックスワンターバ〜ン",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"ボックスワンターバ〜ン\",\"sheets[type=dx,difficulty=basic]\"]",
+            "songId": "ボックスワンターバ〜ン",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"ボックスワンターバ〜ン\",\"sheets[type=dx,difficulty=expert]\"]",
+            "songId": "ボックスワンターバ〜ン",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"ボックスワンターバ〜ン\",\"sheets[type=dx,difficulty=master]\"]",
+            "songId": "ボックスワンターバ〜ン",
             "sourceId": "catalog_history"
           },
           {
@@ -92971,6 +93041,34 @@
           {
             "chartType": "dx",
             "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"1a43fdb9edd49c1d.png\",\"dx_lev_adv\"]",
+            "songId": "概して過誤",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"1a43fdb9edd49c1d.png\",\"dx_lev_bas\"]",
+            "songId": "概して過誤",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"1a43fdb9edd49c1d.png\",\"dx_lev_exp\"]",
+            "songId": "概して過誤",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"1a43fdb9edd49c1d.png\",\"dx_lev_mas\"]",
+            "songId": "概して過誤",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"1a61a11a3b89420f.png\",\"dx_lev_adv\"]",
             "songId": "WiPE OUT MEMORIES",
             "sourceId": "maimai_cn"
@@ -95218,6 +95316,34 @@
           {
             "chartType": "dx",
             "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"2785e0ca30c916da.png\",\"dx_lev_adv\"]",
+            "songId": "マヌルネコのうた",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"2785e0ca30c916da.png\",\"dx_lev_bas\"]",
+            "songId": "マヌルネコのうた",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"2785e0ca30c916da.png\",\"dx_lev_exp\"]",
+            "songId": "マヌルネコのうた",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"2785e0ca30c916da.png\",\"dx_lev_mas\"]",
+            "songId": "マヌルネコのうた",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"27e298313b402e0b.png\",\"dx_lev_adv\"]",
             "songId": "Snow Colored Score",
             "sourceId": "maimai_cn"
@@ -97320,6 +97446,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"356f3d261ce84763.png\",\"lev_mas\"]",
             "songId": "キミノヨゾラ哨戒班",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"358706b964277c8b.png\",\"dx_lev_adv\"]",
+            "songId": "スナネコのうた",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"358706b964277c8b.png\",\"dx_lev_bas\"]",
+            "songId": "スナネコのうた",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"358706b964277c8b.png\",\"dx_lev_exp\"]",
+            "songId": "スナネコのうた",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"358706b964277c8b.png\",\"dx_lev_mas\"]",
+            "songId": "スナネコのうた",
             "sourceId": "maimai_cn"
           },
           {
@@ -105536,6 +105690,34 @@
           {
             "chartType": "dx",
             "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"6c00472275eba77d.png\",\"dx_lev_adv\"]",
+            "songId": "Unfinished Epic",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"6c00472275eba77d.png\",\"dx_lev_bas\"]",
+            "songId": "Unfinished Epic",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"6c00472275eba77d.png\",\"dx_lev_exp\"]",
+            "songId": "Unfinished Epic",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"6c00472275eba77d.png\",\"dx_lev_mas\"]",
+            "songId": "Unfinished Epic",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"6c0927e5febfcafd.png\",\"dx_lev_adv\"]",
             "songId": "on the rocks",
             "sourceId": "maimai_cn"
@@ -109367,6 +109549,34 @@
             "difficulty": "remaster",
             "externalId": "source_sheet_v1:[\"8bcd4e9515ccbeb9.png\",\"lev_remas\"]",
             "songId": "はやくそれになりたい！",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"8bd4abae1de74251.png\",\"dx_lev_adv\"]",
+            "songId": "なんかノイズにきこえる",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"8bd4abae1de74251.png\",\"dx_lev_bas\"]",
+            "songId": "なんかノイズにきこえる",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"8bd4abae1de74251.png\",\"dx_lev_exp\"]",
+            "songId": "なんかノイズにきこえる",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"8bd4abae1de74251.png\",\"dx_lev_mas\"]",
+            "songId": "なんかノイズにきこえる",
             "sourceId": "maimai_cn"
           },
           {
@@ -120584,6 +120794,34 @@
             "sourceId": "maimai_cn"
           },
           {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"d5b7dac7c24b8df6.png\",\"dx_lev_adv\"]",
+            "songId": "ゼロトーキング",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"d5b7dac7c24b8df6.png\",\"dx_lev_bas\"]",
+            "songId": "ゼロトーキング",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"d5b7dac7c24b8df6.png\",\"dx_lev_exp\"]",
+            "songId": "ゼロトーキング",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"d5b7dac7c24b8df6.png\",\"dx_lev_mas\"]",
+            "songId": "ゼロトーキング",
+            "sourceId": "maimai_cn"
+          },
+          {
             "chartType": "std",
             "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"d5d50489dcbcfd1f.png\",\"lev_adv\"]",
@@ -121746,6 +121984,34 @@
             "sourceId": "maimai_cn"
           },
           {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"dc086a7d603b1832.png\",\"dx_lev_adv\"]",
+            "songId": "クーネル・エンゲイザー",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"dc086a7d603b1832.png\",\"dx_lev_bas\"]",
+            "songId": "クーネル・エンゲイザー",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"dc086a7d603b1832.png\",\"dx_lev_exp\"]",
+            "songId": "クーネル・エンゲイザー",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"dc086a7d603b1832.png\",\"dx_lev_mas\"]",
+            "songId": "クーネル・エンゲイザー",
+            "sourceId": "maimai_cn"
+          },
+          {
             "chartType": "std",
             "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"dc279f21432d1438.png\",\"lev_adv\"]",
@@ -122569,6 +122835,62 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"e25404b426613ed6.png\",\"dx_lev_mas\"]",
             "songId": "あつすぎの歌",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"e27b4a41495e33d3.png\",\"dx_lev_adv\"]",
+            "songId": "忙シー日",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"e27b4a41495e33d3.png\",\"dx_lev_bas\"]",
+            "songId": "忙シー日",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"e27b4a41495e33d3.png\",\"dx_lev_exp\"]",
+            "songId": "忙シー日",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"e27b4a41495e33d3.png\",\"dx_lev_mas\"]",
+            "songId": "忙シー日",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"e2995fcfaec824da.png\",\"dx_lev_adv\"]",
+            "songId": "抜錨",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"e2995fcfaec824da.png\",\"dx_lev_bas\"]",
+            "songId": "抜錨",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"e2995fcfaec824da.png\",\"dx_lev_exp\"]",
+            "songId": "抜錨",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"e2995fcfaec824da.png\",\"dx_lev_mas\"]",
+            "songId": "抜錨",
             "sourceId": "maimai_cn"
           },
           {
@@ -125061,6 +125383,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"f4f0f2f8ebd3f0da.png\",\"dx_lev_mas\"]",
             "songId": "パラマウント☆ショータイム！！",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"f5f0c148fc18e746.png\",\"dx_lev_adv\"]",
+            "songId": "好きな惣菜発表ドラゴン",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"f5f0c148fc18e746.png\",\"dx_lev_bas\"]",
+            "songId": "好きな惣菜発表ドラゴン",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"f5f0c148fc18e746.png\",\"dx_lev_exp\"]",
+            "songId": "好きな惣菜発表ドラゴン",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"f5f0c148fc18e746.png\",\"dx_lev_mas\"]",
+            "songId": "好きな惣菜発表ドラゴン",
             "sourceId": "maimai_cn"
           },
           {
@@ -134574,6 +134924,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"Ignis Danse\",\"lev_mas\"]",
             "songId": "Ignis Danse",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Ignite Infinity\",\"dx_lev_adv\"]",
+            "songId": "Ignite Infinity",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Ignite Infinity\",\"dx_lev_bas\"]",
+            "songId": "Ignite Infinity",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Ignite Infinity\",\"dx_lev_exp\"]",
+            "songId": "Ignite Infinity",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Ignite Infinity\",\"dx_lev_mas\"]",
+            "songId": "Ignite Infinity",
             "sourceId": "otoge_db_gamerch"
           },
           {
@@ -145337,6 +145715,13 @@
           },
           {
             "chartType": "utage",
+            "difficulty": "【僕】",
+            "externalId": "source_sheet_v1:[\"[僕]ボックスワンターバ〜ン\",\"lev_utage\"]",
+            "songId": "[僕]ボックスワンターバ〜ン",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "utage",
             "difficulty": "【充】",
             "externalId": "source_sheet_v1:[\"[充]エンジェル ドリーム\",\"lev_utage\"]",
             "songId": "[充]エンジェル ドリーム",
@@ -145886,6 +146271,13 @@
             "difficulty": "【音】",
             "externalId": "source_sheet_v1:[\"[音]snooze\",\"lev_utage\"]",
             "songId": "[音]snooze",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【音】",
+            "externalId": "source_sheet_v1:[\"[音]インドア系ならトラックメイカー\",\"lev_utage\"]",
+            "songId": "[音]インドア系ならトラックメイカー",
             "sourceId": "otoge_db_gamerch"
           },
           {
@@ -159396,6 +159788,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"ボッカデラベリタ\",\"dx_lev_mas\"]",
             "songId": "ボッカデラベリタ",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"ボックスワンターバ〜ン\",\"dx_lev_adv\"]",
+            "songId": "ボックスワンターバ〜ン",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"ボックスワンターバ〜ン\",\"dx_lev_bas\"]",
+            "songId": "ボックスワンターバ〜ン",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"ボックスワンターバ〜ン\",\"dx_lev_exp\"]",
+            "songId": "ボックスワンターバ〜ン",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"ボックスワンターバ〜ン\",\"dx_lev_mas\"]",
+            "songId": "ボックスワンターバ〜ン",
             "sourceId": "otoge_db_gamerch"
           },
           {
@@ -263721,6 +264141,11 @@
             "sourceId": "catalog_history"
           },
           {
+            "externalId": "[僕]ボックスワンターバ〜ン",
+            "songId": "[僕]ボックスワンターバ〜ン",
+            "sourceId": "catalog_history"
+          },
+          {
             "externalId": "[充]エンジェル ドリーム",
             "songId": "[充]エンジェル ドリーム",
             "sourceId": "catalog_history"
@@ -264148,6 +264573,11 @@
           {
             "externalId": "[音]snooze",
             "songId": "[音]snooze",
+            "sourceId": "catalog_history"
+          },
+          {
+            "externalId": "[音]インドア系ならトラックメイカー",
+            "songId": "[音]インドア系ならトラックメイカー",
             "sourceId": "catalog_history"
           },
           {
@@ -266738,6 +267168,11 @@
           {
             "externalId": "ボッカデラベリタ",
             "songId": "ボッカデラベリタ",
+            "sourceId": "catalog_history"
+          },
+          {
+            "externalId": "ボックスワンターバ〜ン",
+            "songId": "ボックスワンターバ〜ン",
             "sourceId": "catalog_history"
           },
           {
@@ -276146,6 +276581,11 @@
             "sourceId": "maimai_cn"
           },
           {
+            "externalId": "1a43fdb9edd49c1d.png",
+            "songId": "概して過誤",
+            "sourceId": "maimai_cn"
+          },
+          {
             "externalId": "1a61a11a3b89420f.png",
             "songId": "WiPE OUT MEMORIES",
             "sourceId": "maimai_cn"
@@ -276531,6 +276971,11 @@
             "sourceId": "maimai_cn"
           },
           {
+            "externalId": "2785e0ca30c916da.png",
+            "songId": "マヌルネコのうた",
+            "sourceId": "maimai_cn"
+          },
+          {
             "externalId": "27e298313b402e0b.png",
             "songId": "Snow Colored Score",
             "sourceId": "maimai_cn"
@@ -276893,6 +277338,11 @@
           {
             "externalId": "356f3d261ce84763.png",
             "songId": "キミノヨゾラ哨戒班",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "externalId": "358706b964277c8b.png",
+            "songId": "スナネコのうた",
             "sourceId": "maimai_cn"
           },
           {
@@ -278246,6 +278696,11 @@
             "sourceId": "maimai_cn"
           },
           {
+            "externalId": "6c00472275eba77d.png",
+            "songId": "Unfinished Epic",
+            "sourceId": "maimai_cn"
+          },
+          {
             "externalId": "6c0927e5febfcafd.png",
             "songId": "on the rocks",
             "sourceId": "maimai_cn"
@@ -278893,6 +279348,11 @@
           {
             "externalId": "8bcd4e9515ccbeb9.png",
             "songId": "はやくそれになりたい！",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "externalId": "8bd4abae1de74251.png",
+            "songId": "なんかノイズにきこえる",
             "sourceId": "maimai_cn"
           },
           {
@@ -280781,6 +281241,11 @@
             "sourceId": "maimai_cn"
           },
           {
+            "externalId": "d5b7dac7c24b8df6.png",
+            "songId": "ゼロトーキング",
+            "sourceId": "maimai_cn"
+          },
+          {
             "externalId": "d5d50489dcbcfd1f.png",
             "songId": "前前前世",
             "sourceId": "maimai_cn"
@@ -280971,6 +281436,11 @@
             "sourceId": "maimai_cn"
           },
           {
+            "externalId": "dc086a7d603b1832.png",
+            "songId": "クーネル・エンゲイザー",
+            "sourceId": "maimai_cn"
+          },
+          {
             "externalId": "dc279f21432d1438.png",
             "songId": "キャプテン・ムラサのケツアンカー",
             "sourceId": "maimai_cn"
@@ -281103,6 +281573,16 @@
           {
             "externalId": "e25404b426613ed6.png",
             "songId": "あつすぎの歌",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "externalId": "e27b4a41495e33d3.png",
+            "songId": "忙シー日",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "externalId": "e2995fcfaec824da.png",
+            "songId": "抜錨",
             "sourceId": "maimai_cn"
           },
           {
@@ -281528,6 +282008,11 @@
           {
             "externalId": "f4f0f2f8ebd3f0da.png",
             "songId": "パラマウント☆ショータイム！！",
+            "sourceId": "maimai_cn"
+          },
+          {
+            "externalId": "f5f0c148fc18e746.png",
+            "songId": "好きな惣菜発表ドラゴン",
             "sourceId": "maimai_cn"
           },
           {
@@ -284951,6 +285436,11 @@
             "sourceId": "otoge_db_gamerch"
           },
           {
+            "externalId": "[僕]ボックスワンターバ〜ン",
+            "songId": "[僕]ボックスワンターバ〜ン",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
             "externalId": "[充]エンジェル ドリーム",
             "songId": "[充]エンジェル ドリーム",
             "sourceId": "otoge_db_gamerch"
@@ -285343,6 +285833,11 @@
           {
             "externalId": "[音]snooze",
             "songId": "[音]snooze",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "externalId": "[音]インドア系ならトラックメイカー",
+            "songId": "[音]インドア系ならトラックメイカー",
             "sourceId": "otoge_db_gamerch"
           },
           {
@@ -287608,6 +288103,11 @@
           {
             "externalId": "ボッカデラベリタ",
             "songId": "ボッカデラベリタ",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "externalId": "ボックスワンターバ〜ン",
+            "songId": "ボックスワンターバ〜ン",
             "sourceId": "otoge_db_gamerch"
           },
           {
@@ -312060,7 +312560,8 @@
           "regions": [
             "sega_official_jp",
             "otoge_intl",
-            "usa_derived_from_intl"
+            "usa_derived_from_intl",
+            "maimai_cn"
           ]
         },
         "UniTas": {
@@ -312672,7 +313173,7 @@
         },
         "[僕]ボックスワンターバ〜ン": {
           "catalog": "sega_official",
-          "enrichment": null,
+          "enrichment": "otoge_db_gamerch",
           "regions": [
             "sega_official_jp"
           ]
@@ -313464,7 +313965,7 @@
         },
         "[音]インドア系ならトラックメイカー": {
           "catalog": "sega_official",
-          "enrichment": null,
+          "enrichment": "otoge_db_gamerch",
           "regions": [
             "sega_official_jp"
           ]
@@ -315089,7 +315590,8 @@
           "regions": [
             "sega_official_jp",
             "otoge_intl",
-            "usa_derived_from_intl"
+            "usa_derived_from_intl",
+            "maimai_cn"
           ]
         },
         "にじよめちゃん体操第一億": {
@@ -316700,7 +317202,8 @@
           "regions": [
             "sega_official_jp",
             "otoge_intl",
-            "usa_derived_from_intl"
+            "usa_derived_from_intl",
+            "maimai_cn"
           ]
         },
         "グッバイ宣言": {
@@ -317234,7 +317737,8 @@
           "regions": [
             "sega_official_jp",
             "otoge_intl",
-            "usa_derived_from_intl"
+            "usa_derived_from_intl",
+            "maimai_cn"
           ]
         },
         "スノーマン (Rerec)": {
@@ -317383,7 +317887,8 @@
           "regions": [
             "sega_official_jp",
             "otoge_intl",
-            "usa_derived_from_intl"
+            "usa_derived_from_intl",
+            "maimai_cn"
           ]
         },
         "ソテリア": {
@@ -318719,7 +319224,7 @@
         },
         "ボックスワンターバ〜ン": {
           "catalog": "sega_official",
-          "enrichment": null,
+          "enrichment": "otoge_db_gamerch",
           "regions": [
             "sega_official_jp"
           ]
@@ -318806,7 +319311,8 @@
           "regions": [
             "sega_official_jp",
             "otoge_intl",
-            "usa_derived_from_intl"
+            "usa_derived_from_intl",
+            "maimai_cn"
           ]
         },
         "マネマネサイコトロピック": {
@@ -320478,7 +320984,8 @@
           "regions": [
             "sega_official_jp",
             "otoge_intl",
-            "usa_derived_from_intl"
+            "usa_derived_from_intl",
+            "maimai_cn"
           ]
         },
         "好き！雪！本気マジック": {
@@ -320852,7 +321359,8 @@
           "regions": [
             "sega_official_jp",
             "otoge_intl",
-            "usa_derived_from_intl"
+            "usa_derived_from_intl",
+            "maimai_cn"
           ]
         },
         "怒槌": {
@@ -321005,7 +321513,8 @@
           "regions": [
             "sega_official_jp",
             "otoge_intl",
-            "usa_derived_from_intl"
+            "usa_derived_from_intl",
+            "maimai_cn"
           ]
         },
         "拝啓、最高の思い出たち": {
@@ -321493,7 +322002,8 @@
           "regions": [
             "sega_official_jp",
             "otoge_intl",
-            "usa_derived_from_intl"
+            "usa_derived_from_intl",
+            "maimai_cn"
           ]
         },
         "橙の幻想郷音頭": {
@@ -323305,14 +323815,14 @@
       },
       "sourceRecordCounts": {
         "lxns_song_list": 1322,
-        "maimai_cn": 1246,
+        "maimai_cn": 1256,
         "otoge_intl": 1498,
         "sega_official": 1567
       },
       "sources": {
         "catalog_history": {
           "path": "/data/input/songs/history.json",
-          "sha256": "4512785ff6909c6c01f690da549db988cb2a246a0bab012e340692ce76f163f8"
+          "sha256": "81ce07757fca72f11d7ddb853a7a38c4f9b857e2c747d03dfd01ef3478e77a26"
         },
         "lxns_song_list": {
           "path": "/data/input/enrichment/lxns-songs.json",
@@ -323321,18 +323831,18 @@
         },
         "maimai_cn": {
           "path": "/data/input/regions/cn.json",
-          "recordCount": 1246,
-          "sha256": "191a4b606fe01469829b3d8620a0ec8e9ec356d071cda2d2a19ae785a8da6d61"
+          "recordCount": 1256,
+          "sha256": "1df9f58fb7b88c5e3e859a703562e31f927d3f5e783a8599123f54104aa7502a"
         },
         "otoge_db_gamerch": {
           "path": "/data/input/enrichment/music-ex.json",
-          "recordCount": 1564,
-          "sha256": "842dff90656846f31fb9567c811a9db2bc8ddb38672c42833c1e50f6f97633ee"
+          "recordCount": 1567,
+          "sha256": "26193e124e3171e17c2ab42fe6c07ef8c57a1d0474ae1d66ffcdf7f806dc674d"
         },
         "otoge_intl": {
           "path": "/data/input/regions/music-ex-intl.json",
           "recordCount": 1498,
-          "sha256": "a78a4a1c031d3102921f1d19b545b5cace009f9fca16bb906090942bf7186bf3"
+          "sha256": "65f4db72fe0eac41e407ede21c8c5f62a2dd1aabe7b2a5e77aef527a6b5c7d2d"
         },
         "sega_official": {
           "path": "/data/input/official/maimai_songs.json",
@@ -323356,7 +323866,7 @@
           "sha256": "dd190708f72fe31f37864310058ccb62f3dc6143714735718325e05e2c546281"
         },
         "provenance/internal-level-refresh.json": {
-          "sha256": "7d8573774b938bafb4cc78f38f43e2ce5c4fa1a811a716fac4588faff896b06c"
+          "sha256": "a1a5d67cced38945319ea015db0161b2c4781130861436d15ffea9a03ecdeea0"
         }
       },
       "postgres": {
