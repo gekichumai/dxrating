@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-05T15:00:16.834333882+00:00",
+  "generatedAt": "2026-08-06T15:00:18.328135049+00:00",
   "output": {
-    "sha256": "cbb30bb65360ba21f42e4b40f56ab958b938315005b28abee7323843c40e7331"
+    "sha256": "d3f6852ec7ffd48da905f7fc3a2b681c588238f021673023afb0e51ad56401a6"
   },
   "coverage": {
-    "leafFields": 176513,
-    "tracedLeafFields": 176513,
+    "leafFields": 176514,
+    "tracedLeafFields": 176514,
     "percent": 100.0,
     "unmatchedPaths": []
   },
@@ -24,13 +24,13 @@
           "system": "arcade-songs-fetch legacy generated catalog"
         }
       },
-      "catalogSha256": "0c0873beef99b56304eae33377464455c91c614e90016b65896badc000fae7b5",
+      "catalogSha256": "fde6fb1683e457ce1ce052721031b46bab0ed4bcf470bdfe96a5166879493595",
       "fetch": {
-        "generatedAt": "2026-08-05T15:00:12.135932206+00:00",
+        "generatedAt": "2026-08-06T15:00:13.439627260+00:00",
         "schemaVersion": 1,
         "sources": [
           {
-            "checkedAt": "2026-08-05T15:00:06.118739141+00:00",
+            "checkedAt": "2026-08-06T15:00:05.806682245+00:00",
             "name": "sega_official",
             "path": "official/maimai_songs.json",
             "sha256": "08668ce89a328a0fae1b90dca2d5fe502a9e96060f2f5a483c6342f44b5cdf77",
@@ -38,7 +38,7 @@
             "url": "https://maimai.sega.jp/data/maimai_songs.json"
           },
           {
-            "checkedAt": "2026-08-05T15:00:06.445879333+00:00",
+            "checkedAt": "2026-08-06T15:00:06.913524157+00:00",
             "name": "otoge_db_gamerch",
             "path": "enrichment/music-ex.json",
             "sha256": "26193e124e3171e17c2ab42fe6c07ef8c57a1d0474ae1d66ffcdf7f806dc674d",
@@ -46,7 +46,7 @@
             "url": "https://raw.githubusercontent.com/zvuc/otoge-db/master/maimai/data/music-ex.json"
           },
           {
-            "checkedAt": "2026-08-05T15:00:07.727910128+00:00",
+            "checkedAt": "2026-08-06T15:00:07.249939463+00:00",
             "name": "otoge_intl",
             "path": "regions/music-ex-intl.json",
             "sha256": "65f4db72fe0eac41e407ede21c8c5f62a2dd1aabe7b2a5e77aef527a6b5c7d2d",
@@ -54,7 +54,7 @@
             "url": "https://raw.githubusercontent.com/zvuc/otoge-db/master/maimai/data/music-ex-intl.json"
           },
           {
-            "checkedAt": "2026-08-05T15:00:08.328568991+00:00",
+            "checkedAt": "2026-08-06T15:00:08.015782636+00:00",
             "name": "maimai_cn",
             "path": "regions/cn.json",
             "sha256": "1df9f58fb7b88c5e3e859a703562e31f927d3f5e783a8599123f54104aa7502a",
@@ -62,7 +62,7 @@
             "url": "https://raw.githubusercontent.com/CrazyKidCN/maimaiDX-CN-songs-database/main/maidata.json"
           },
           {
-            "checkedAt": "2026-08-05T15:00:11.346052481+00:00",
+            "checkedAt": "2026-08-06T15:00:11.637258193+00:00",
             "name": "lxns_song_list",
             "path": "enrichment/lxns-songs.json",
             "sha256": "6c5acd4353a5a267970c279622b0efbf0b757bef2b41c67d27ea46cfa69cd491",
@@ -70,7 +70,7 @@
             "url": "https://maimai.lxns.net/api/v0/maimai/song/list"
           },
           {
-            "checkedAt": "2026-08-05T15:00:11.599737268+00:00",
+            "checkedAt": "2026-08-06T15:00:11.908641102+00:00",
             "name": "gcm_bot",
             "path": "aliases/gcm_bot.tsv",
             "sha256": "37d5c789cb90b5c3a0ae94937b0a1ff16096b0f7d105288a18331214e9f370f7",
@@ -78,7 +78,7 @@
             "url": "https://raw.githubusercontent.com/lomotos10/GCM-bot/main/data/aliases/en/chuni.tsv"
           },
           {
-            "checkedAt": "2026-08-05T15:00:11.675912760+00:00",
+            "checkedAt": "2026-08-06T15:00:11.995086157+00:00",
             "error": "input error in yuzuchan: HTTP 403 Forbidden",
             "name": "yuzuchan",
             "path": "aliases/yuzuchan.json",
@@ -86,15 +86,15 @@
             "url": "https://api.yuzuchan.moe/maimaidx/maimaidxalias"
           },
           {
-            "checkedAt": "2026-08-05T15:00:11.940610058+00:00",
+            "checkedAt": "2026-08-06T15:00:13.181687132+00:00",
             "name": "lxns",
             "path": "aliases/lxns.json",
-            "sha256": "dd190708f72fe31f37864310058ccb62f3dc6143714735718325e05e2c546281",
+            "sha256": "4f1673a8ea1fe7e9cbba2d337762b9e10600c7054986b4b4cfd37b39f6722db8",
             "status": "fresh",
             "url": "https://maimai.lxns.net/api/v0/maimai/alias/list"
           },
           {
-            "checkedAt": "2026-08-05T15:00:12.135920233+00:00",
+            "checkedAt": "2026-08-06T15:00:13.439617803+00:00",
             "error": "input error in sega_game_blogs: all 9 blog index requests failed",
             "name": "sega_game_blogs",
             "path": "enrichment/blog-covers.json",
@@ -103,7 +103,7 @@
           }
         ]
       },
-      "generatedAt": "2026-08-05T15:00:12.827909807+00:00",
+      "generatedAt": "2026-08-06T15:00:14.246621229+00:00",
       "identities": {
         "sheets": [
           {
@@ -323822,7 +323822,7 @@
       "sources": {
         "catalog_history": {
           "path": "/data/input/songs/history.json",
-          "sha256": "81ce07757fca72f11d7ddb853a7a38c4f9b857e2c747d03dfd01ef3478e77a26"
+          "sha256": "0c0873beef99b56304eae33377464455c91c614e90016b65896badc000fae7b5"
         },
         "lxns_song_list": {
           "path": "/data/input/enrichment/lxns-songs.json",
@@ -323863,10 +323863,10 @@
           "sha256": "37d5c789cb90b5c3a0ae94937b0a1ff16096b0f7d105288a18331214e9f370f7"
         },
         "aliases/lxns.json": {
-          "sha256": "dd190708f72fe31f37864310058ccb62f3dc6143714735718325e05e2c546281"
+          "sha256": "4f1673a8ea1fe7e9cbba2d337762b9e10600c7054986b4b4cfd37b39f6722db8"
         },
         "provenance/internal-level-refresh.json": {
-          "sha256": "a1a5d67cced38945319ea015db0161b2c4781130861436d15ffea9a03ecdeea0"
+          "sha256": "16042ead6c326d6b605710f364543e03afc45b36e68e294adbfcd83b83367c87"
         }
       },
       "postgres": {

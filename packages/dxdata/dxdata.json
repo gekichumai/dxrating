@@ -210003,7 +210003,8 @@
                 }
             ],
             "searchAcronyms": [
-                "yuusha  hero"
+                "yuusha  hero",
+                "葬送的芙莉莲"
             ]
         },
         {
@@ -223291,7 +223292,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "忙ー日"
+            ]
         },
         {
             "songId": "好きな惣菜発表ドラゴン",
@@ -223811,7 +223814,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "红门"
+            ]
         },
         {
             "songId": "Help me, ERINNNNNN!!",
@@ -248245,5 +248250,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-08-05T15:00:12.514326927+00:00"
+    "updateTime": "2026-08-06T15:00:13.840412274+00:00"
 }
