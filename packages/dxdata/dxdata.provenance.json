@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-06T15:00:18.328135049+00:00",
+  "generatedAt": "2026-08-08T15:18:20.702626742+00:00",
   "output": {
-    "sha256": "d3f6852ec7ffd48da905f7fc3a2b681c588238f021673023afb0e51ad56401a6"
+    "sha256": "2870601e0a610502b95691489eae3a0ec1f21e2e9d02f7542b6b112562123dea"
   },
   "coverage": {
-    "leafFields": 176514,
-    "tracedLeafFields": 176514,
+    "leafFields": 176878,
+    "tracedLeafFields": 176878,
     "percent": 100.0,
     "unmatchedPaths": []
   },
@@ -24,37 +24,37 @@
           "system": "arcade-songs-fetch legacy generated catalog"
         }
       },
-      "catalogSha256": "fde6fb1683e457ce1ce052721031b46bab0ed4bcf470bdfe96a5166879493595",
+      "catalogSha256": "dccf56c4fdf24458ef4350eb4d1e003fc0148b1a9c72d8d32fdd4ec724ecd1b4",
       "fetch": {
-        "generatedAt": "2026-08-06T15:00:13.439627260+00:00",
+        "generatedAt": "2026-08-08T15:18:16.315904344+00:00",
         "schemaVersion": 1,
         "sources": [
           {
-            "checkedAt": "2026-08-06T15:00:05.806682245+00:00",
+            "checkedAt": "2026-08-08T15:18:11.743212319+00:00",
             "name": "sega_official",
             "path": "official/maimai_songs.json",
-            "sha256": "08668ce89a328a0fae1b90dca2d5fe502a9e96060f2f5a483c6342f44b5cdf77",
+            "sha256": "7889ab1f9c212c85f20e2f042b6fe030c609d8765a8a4c553f3cca6854d81445",
             "status": "fresh",
             "url": "https://maimai.sega.jp/data/maimai_songs.json"
           },
           {
-            "checkedAt": "2026-08-06T15:00:06.913524157+00:00",
+            "checkedAt": "2026-08-08T15:18:12.046996832+00:00",
             "name": "otoge_db_gamerch",
             "path": "enrichment/music-ex.json",
-            "sha256": "26193e124e3171e17c2ab42fe6c07ef8c57a1d0474ae1d66ffcdf7f806dc674d",
+            "sha256": "571b3801fb4b637f534745ab6f7f696df955a314614e0283ac0432aa6ef1092f",
             "status": "fresh",
             "url": "https://raw.githubusercontent.com/zvuc/otoge-db/master/maimai/data/music-ex.json"
           },
           {
-            "checkedAt": "2026-08-06T15:00:07.249939463+00:00",
+            "checkedAt": "2026-08-08T15:18:12.295583359+00:00",
             "name": "otoge_intl",
             "path": "regions/music-ex-intl.json",
-            "sha256": "65f4db72fe0eac41e407ede21c8c5f62a2dd1aabe7b2a5e77aef527a6b5c7d2d",
+            "sha256": "2e15c0c667da2df862ea1178ce37dd63feb0d2afe05b337a6b966d659d92429d",
             "status": "fresh",
             "url": "https://raw.githubusercontent.com/zvuc/otoge-db/master/maimai/data/music-ex-intl.json"
           },
           {
-            "checkedAt": "2026-08-06T15:00:08.015782636+00:00",
+            "checkedAt": "2026-08-08T15:18:12.467147380+00:00",
             "name": "maimai_cn",
             "path": "regions/cn.json",
             "sha256": "1df9f58fb7b88c5e3e859a703562e31f927d3f5e783a8599123f54104aa7502a",
@@ -62,7 +62,7 @@
             "url": "https://raw.githubusercontent.com/CrazyKidCN/maimaiDX-CN-songs-database/main/maidata.json"
           },
           {
-            "checkedAt": "2026-08-06T15:00:11.637258193+00:00",
+            "checkedAt": "2026-08-08T15:18:15.328420539+00:00",
             "name": "lxns_song_list",
             "path": "enrichment/lxns-songs.json",
             "sha256": "6c5acd4353a5a267970c279622b0efbf0b757bef2b41c67d27ea46cfa69cd491",
@@ -70,7 +70,7 @@
             "url": "https://maimai.lxns.net/api/v0/maimai/song/list"
           },
           {
-            "checkedAt": "2026-08-06T15:00:11.908641102+00:00",
+            "checkedAt": "2026-08-08T15:18:15.491717539+00:00",
             "name": "gcm_bot",
             "path": "aliases/gcm_bot.tsv",
             "sha256": "37d5c789cb90b5c3a0ae94937b0a1ff16096b0f7d105288a18331214e9f370f7",
@@ -78,7 +78,7 @@
             "url": "https://raw.githubusercontent.com/lomotos10/GCM-bot/main/data/aliases/en/chuni.tsv"
           },
           {
-            "checkedAt": "2026-08-06T15:00:11.995086157+00:00",
+            "checkedAt": "2026-08-08T15:18:15.555912477+00:00",
             "error": "input error in yuzuchan: HTTP 403 Forbidden",
             "name": "yuzuchan",
             "path": "aliases/yuzuchan.json",
@@ -86,15 +86,15 @@
             "url": "https://api.yuzuchan.moe/maimaidx/maimaidxalias"
           },
           {
-            "checkedAt": "2026-08-06T15:00:13.181687132+00:00",
+            "checkedAt": "2026-08-08T15:18:15.902160368+00:00",
             "name": "lxns",
             "path": "aliases/lxns.json",
-            "sha256": "4f1673a8ea1fe7e9cbba2d337762b9e10600c7054986b4b4cfd37b39f6722db8",
+            "sha256": "3978c64ae8d8eede953d46de2bcda036ef7dac00b5c4218c8a6b109d5af1280a",
             "status": "fresh",
             "url": "https://maimai.lxns.net/api/v0/maimai/alias/list"
           },
           {
-            "checkedAt": "2026-08-06T15:00:13.439617803+00:00",
+            "checkedAt": "2026-08-08T15:18:16.315895538+00:00",
             "error": "input error in sega_game_blogs: all 9 blog index requests failed",
             "name": "sega_game_blogs",
             "path": "enrichment/blog-covers.json",
@@ -103,7 +103,7 @@
           }
         ]
       },
-      "generatedAt": "2026-08-06T15:00:14.246621229+00:00",
+      "generatedAt": "2026-08-08T15:18:17.052439576+00:00",
       "identities": {
         "sheets": [
           {
@@ -1378,6 +1378,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"Acceleration\",\"sheets[type=std,difficulty=master]\"]",
             "songId": "Acceleration",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Aegisfortia\",\"sheets[type=dx,difficulty=advanced]\"]",
+            "songId": "Aegisfortia",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Aegisfortia\",\"sheets[type=dx,difficulty=basic]\"]",
+            "songId": "Aegisfortia",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Aegisfortia\",\"sheets[type=dx,difficulty=expert]\"]",
+            "songId": "Aegisfortia",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Aegisfortia\",\"sheets[type=dx,difficulty=master]\"]",
+            "songId": "Aegisfortia",
             "sourceId": "catalog_history"
           },
           {
@@ -16347,6 +16375,34 @@
             "sourceId": "catalog_history"
           },
           {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"SERAPHIC SYNDROME\",\"sheets[type=dx,difficulty=advanced]\"]",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"SERAPHIC SYNDROME\",\"sheets[type=dx,difficulty=basic]\"]",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"SERAPHIC SYNDROME\",\"sheets[type=dx,difficulty=expert]\"]",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"SERAPHIC SYNDROME\",\"sheets[type=dx,difficulty=master]\"]",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "catalog_history"
+          },
+          {
             "chartType": "std",
             "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"SHINY DAYS\",\"sheets[type=std,difficulty=advanced]\"]",
@@ -18143,6 +18199,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"Still\",\"sheets[type=std,difficulty=master]\"]",
             "songId": "Still",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Story Continued\",\"sheets[type=dx,difficulty=advanced]\"]",
+            "songId": "Story Continued",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Story Continued\",\"sheets[type=dx,difficulty=basic]\"]",
+            "songId": "Story Continued",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Story Continued\",\"sheets[type=dx,difficulty=expert]\"]",
+            "songId": "Story Continued",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Story Continued\",\"sheets[type=dx,difficulty=master]\"]",
+            "songId": "Story Continued",
             "sourceId": "catalog_history"
           },
           {
@@ -48348,6 +48432,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"終わりなき物語\",\"sheets[type=std,difficulty=master]\"]",
             "songId": "終わりなき物語",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"終幕の傀儡\",\"sheets[type=dx,difficulty=advanced]\"]",
+            "songId": "終幕の傀儡",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"終幕の傀儡\",\"sheets[type=dx,difficulty=basic]\"]",
+            "songId": "終幕の傀儡",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"終幕の傀儡\",\"sheets[type=dx,difficulty=expert]\"]",
+            "songId": "終幕の傀儡",
+            "sourceId": "catalog_history"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"終幕の傀儡\",\"sheets[type=dx,difficulty=master]\"]",
+            "songId": "終幕の傀儡",
             "sourceId": "catalog_history"
           },
           {
@@ -127663,6 +127775,34 @@
           {
             "chartType": "dx",
             "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Aegisfortia\",\"dx_lev_adv\"]",
+            "songId": "Aegisfortia",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Aegisfortia\",\"dx_lev_bas\"]",
+            "songId": "Aegisfortia",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Aegisfortia\",\"dx_lev_exp\"]",
+            "songId": "Aegisfortia",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Aegisfortia\",\"dx_lev_mas\"]",
+            "songId": "Aegisfortia",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"Aegleseeker\",\"dx_lev_adv\"]",
             "songId": "Aegleseeker",
             "sourceId": "otoge_db_gamerch"
@@ -141234,6 +141374,34 @@
             "sourceId": "otoge_db_gamerch"
           },
           {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"SERAPHIC SYNDROME\",\"dx_lev_adv\"]",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"SERAPHIC SYNDROME\",\"dx_lev_bas\"]",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"SERAPHIC SYNDROME\",\"dx_lev_exp\"]",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"SERAPHIC SYNDROME\",\"dx_lev_mas\"]",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
             "chartType": "std",
             "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"SHOW TIME\",\"lev_adv\"]",
@@ -142722,6 +142890,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"Still\",\"lev_mas\"]",
             "songId": "Still",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Story Continued\",\"dx_lev_adv\"]",
+            "songId": "Story Continued",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Story Continued\",\"dx_lev_bas\"]",
+            "songId": "Story Continued",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Story Continued\",\"dx_lev_exp\"]",
+            "songId": "Story Continued",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Story Continued\",\"dx_lev_mas\"]",
+            "songId": "Story Continued",
             "sourceId": "otoge_db_gamerch"
           },
           {
@@ -169238,6 +169434,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"終わりなき物語\",\"lev_mas\"]",
             "songId": "終わりなき物語",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"終幕の傀儡\",\"dx_lev_adv\"]",
+            "songId": "終幕の傀儡",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"終幕の傀儡\",\"dx_lev_bas\"]",
+            "songId": "終幕の傀儡",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"終幕の傀儡\",\"dx_lev_exp\"]",
+            "songId": "終幕の傀儡",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"終幕の傀儡\",\"dx_lev_mas\"]",
+            "songId": "終幕の傀儡",
             "sourceId": "otoge_db_gamerch"
           },
           {
@@ -172449,6 +172673,34 @@
           {
             "chartType": "dx",
             "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"ANiMA\",\"dx_lev_adv\"]",
+            "songId": "ANiMA",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"ANiMA\",\"dx_lev_bas\"]",
+            "songId": "ANiMA",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"ANiMA\",\"dx_lev_exp\"]",
+            "songId": "ANiMA",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"ANiMA\",\"dx_lev_mas\"]",
+            "songId": "ANiMA",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"ARAIS\",\"dx_lev_adv\"]",
             "songId": "ARAIS",
             "sourceId": "otoge_intl"
@@ -172731,6 +172983,62 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"Ai C\",\"dx_lev_mas\"]",
             "songId": "Ai C",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"AiAe\",\"dx_lev_adv\"]",
+            "songId": "AiAe",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"AiAe\",\"dx_lev_bas\"]",
+            "songId": "AiAe",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"AiAe\",\"dx_lev_exp\"]",
+            "songId": "AiAe",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"AiAe\",\"dx_lev_mas\"]",
+            "songId": "AiAe",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Aides\",\"dx_lev_adv\"]",
+            "songId": "Aides",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Aides\",\"dx_lev_bas\"]",
+            "songId": "Aides",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Aides\",\"dx_lev_exp\"]",
+            "songId": "Aides",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Aides\",\"dx_lev_mas\"]",
+            "songId": "Aides",
             "sourceId": "otoge_intl"
           },
           {
@@ -174955,6 +175263,34 @@
           {
             "chartType": "dx",
             "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Chasing destiny\",\"dx_lev_adv\"]",
+            "songId": "Chasing destiny",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Chasing destiny\",\"dx_lev_bas\"]",
+            "songId": "Chasing destiny",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Chasing destiny\",\"dx_lev_exp\"]",
+            "songId": "Chasing destiny",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Chasing destiny\",\"dx_lev_mas\"]",
+            "songId": "Chasing destiny",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"Chronomia\",\"dx_lev_adv\"]",
             "songId": "Chronomia",
             "sourceId": "otoge_intl"
@@ -175209,6 +175545,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"Color My World\",\"lev_mas\"]",
             "songId": "Color My World",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Colorful Starting Line\",\"dx_lev_adv\"]",
+            "songId": "Colorful Starting Line",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Colorful Starting Line\",\"dx_lev_bas\"]",
+            "songId": "Colorful Starting Line",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Colorful Starting Line\",\"dx_lev_exp\"]",
+            "songId": "Colorful Starting Line",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Colorful Starting Line\",\"dx_lev_mas\"]",
+            "songId": "Colorful Starting Line",
             "sourceId": "otoge_intl"
           },
           {
@@ -180392,6 +180756,34 @@
             "sourceId": "otoge_intl"
           },
           {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"KNØCK ØUT!!\",\"dx_lev_adv\"]",
+            "songId": "KNØCK ØUT!!",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"KNØCK ØUT!!\",\"dx_lev_bas\"]",
+            "songId": "KNØCK ØUT!!",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"KNØCK ØUT!!\",\"dx_lev_exp\"]",
+            "songId": "KNØCK ØUT!!",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"KNØCK ØUT!!\",\"dx_lev_mas\"]",
+            "songId": "KNØCK ØUT!!",
+            "sourceId": "otoge_intl"
+          },
+          {
             "chartType": "std",
             "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"KONNANじゃないっ！\",\"lev_adv\"]",
@@ -183010,6 +183402,34 @@
             "sourceId": "otoge_intl"
           },
           {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Myosotis\",\"dx_lev_adv\"]",
+            "songId": "Myosotis",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Myosotis\",\"dx_lev_bas\"]",
+            "songId": "Myosotis",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Myosotis\",\"dx_lev_exp\"]",
+            "songId": "Myosotis",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Myosotis\",\"dx_lev_mas\"]",
+            "songId": "Myosotis",
+            "sourceId": "otoge_intl"
+          },
+          {
             "chartType": "std",
             "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"Mysterious Destiny\",\"lev_adv\"]",
@@ -183444,6 +183864,34 @@
             "sourceId": "otoge_intl"
           },
           {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Nine Point Eight\",\"dx_lev_adv\"]",
+            "songId": "Nine Point Eight",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Nine Point Eight\",\"dx_lev_bas\"]",
+            "songId": "Nine Point Eight",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Nine Point Eight\",\"dx_lev_exp\"]",
+            "songId": "Nine Point Eight",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Nine Point Eight\",\"dx_lev_mas\"]",
+            "songId": "Nine Point Eight",
+            "sourceId": "otoge_intl"
+          },
+          {
             "chartType": "std",
             "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"Nitrous Fury\",\"lev_adv\"]",
@@ -183756,6 +184204,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"One Step Ahead\",\"lev_mas\"]",
             "songId": "One Step Ahead",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Operation☆DOTABATA!\",\"dx_lev_adv\"]",
+            "songId": "Operation☆DOTABATA!",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Operation☆DOTABATA!\",\"dx_lev_bas\"]",
+            "songId": "Operation☆DOTABATA!",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Operation☆DOTABATA!\",\"dx_lev_exp\"]",
+            "songId": "Operation☆DOTABATA!",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Operation☆DOTABATA!\",\"dx_lev_mas\"]",
+            "songId": "Operation☆DOTABATA!",
             "sourceId": "otoge_intl"
           },
           {
@@ -184757,6 +185233,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"RAD DOGS\",\"dx_lev_mas\"]",
             "songId": "RAD DOGS",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"RE Aoharu\",\"dx_lev_adv\"]",
+            "songId": "RE Aoharu",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"RE Aoharu\",\"dx_lev_bas\"]",
+            "songId": "RE Aoharu",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"RE Aoharu\",\"dx_lev_exp\"]",
+            "songId": "RE Aoharu",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"RE Aoharu\",\"dx_lev_mas\"]",
+            "songId": "RE Aoharu",
             "sourceId": "otoge_intl"
           },
           {
@@ -187569,6 +188073,34 @@
           {
             "chartType": "dx",
             "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"TECHNOPOLIS 2085\",\"dx_lev_adv\"]",
+            "songId": "TECHNOPOLIS 2085",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"TECHNOPOLIS 2085\",\"dx_lev_bas\"]",
+            "songId": "TECHNOPOLIS 2085",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"TECHNOPOLIS 2085\",\"dx_lev_exp\"]",
+            "songId": "TECHNOPOLIS 2085",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"TECHNOPOLIS 2085\",\"dx_lev_mas\"]",
+            "songId": "TECHNOPOLIS 2085",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"TEmPTaTiON\",\"dx_lev_adv\"]",
             "songId": "TEmPTaTiON",
             "sourceId": "otoge_intl"
@@ -188024,6 +188556,34 @@
           {
             "chartType": "dx",
             "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Treasure Chest Expedition\",\"dx_lev_adv\"]",
+            "songId": "Treasure Chest Expedition",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Treasure Chest Expedition\",\"dx_lev_bas\"]",
+            "songId": "Treasure Chest Expedition",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Treasure Chest Expedition\",\"dx_lev_exp\"]",
+            "songId": "Treasure Chest Expedition",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Treasure Chest Expedition\",\"dx_lev_mas\"]",
+            "songId": "Treasure Chest Expedition",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"Trick tear\",\"dx_lev_adv\"]",
             "songId": "Trick tear",
             "sourceId": "otoge_intl"
@@ -188215,6 +188775,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"TwisteD! XD\",\"dx_lev_mas\"]",
             "songId": "TwisteD! XD",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"T氏の話を信じるな\",\"dx_lev_adv\"]",
+            "songId": "T氏の話を信じるな",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"T氏の話を信じるな\",\"dx_lev_bas\"]",
+            "songId": "T氏の話を信じるな",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"T氏の話を信じるな\",\"dx_lev_exp\"]",
+            "songId": "T氏の話を信じるな",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"T氏の話を信じるな\",\"dx_lev_mas\"]",
+            "songId": "T氏の話を信じるな",
             "sourceId": "otoge_intl"
           },
           {
@@ -188558,6 +189146,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"Urban Crusher [Remix]\",\"lev_mas\"]",
             "songId": "Urban Crusher [Remix]",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Usagi Flap\",\"dx_lev_adv\"]",
+            "songId": "Usagi Flap",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Usagi Flap\",\"dx_lev_bas\"]",
+            "songId": "Usagi Flap",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Usagi Flap\",\"dx_lev_exp\"]",
+            "songId": "Usagi Flap",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Usagi Flap\",\"dx_lev_mas\"]",
+            "songId": "Usagi Flap",
             "sourceId": "otoge_intl"
           },
           {
@@ -190068,6 +190684,13 @@
           {
             "chartType": "utage",
             "difficulty": "【奏】",
+            "externalId": "source_sheet_v1:[\"[奏]クレイジークレイジーダンサーズ\",\"lev_utage\"]",
+            "songId": "[奏]クレイジークレイジーダンサーズ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【奏】",
             "externalId": "source_sheet_v1:[\"[奏]チュルリラ・チュルリラ・ダッダッダ！\",\"lev_utage\"]",
             "songId": "[奏]チュルリラ・チュルリラ・ダッダッダ！",
             "sourceId": "otoge_intl"
@@ -190126,6 +190749,41 @@
             "difficulty": "【宴】",
             "externalId": "source_sheet_v1:[\"[宴]Oshama Scramble!\",\"lev_utage\"]",
             "songId": "[宴]Oshama Scramble!",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【宴】",
+            "externalId": "source_sheet_v1:[\"[宴]Wonderland Wars　オープニング (ADVANCED)\",\"lev_utage\"]",
+            "songId": "[宴]Wonderland Wars　オープニング (ADVANCED)",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【宴】",
+            "externalId": "source_sheet_v1:[\"[宴]Wonderland Wars　オープニング (BASIC)\",\"lev_utage\"]",
+            "songId": "[宴]Wonderland Wars　オープニング (BASIC)",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【宴】",
+            "externalId": "source_sheet_v1:[\"[宴]Wonderland Wars　オープニング (EXPERT)\",\"lev_utage\"]",
+            "songId": "[宴]Wonderland Wars　オープニング (EXPERT)",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【宴】",
+            "externalId": "source_sheet_v1:[\"[宴]Wonderland Wars　オープニング (MASTER)\",\"lev_utage\"]",
+            "songId": "[宴]Wonderland Wars　オープニング (MASTER)",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【宴】",
+            "externalId": "source_sheet_v1:[\"[宴]Wonderland Wars　オープニング (Re:MASTER)\",\"lev_utage\"]",
+            "songId": "[宴]Wonderland Wars　オープニング (Re:MASTER)",
             "sourceId": "otoge_intl"
           },
           {
@@ -190224,6 +190882,20 @@
             "difficulty": "【発】",
             "externalId": "source_sheet_v1:[\"[発]好きな惣菜発表ドラゴン\",\"lev_utage\"]",
             "songId": "[発]好きな惣菜発表ドラゴン",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【破】",
+            "externalId": "source_sheet_v1:[\"[破]テレパシ\",\"lev_utage\"]",
+            "songId": "[破]テレパシ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【習】",
+            "externalId": "source_sheet_v1:[\"[習]からくりピエロ\",\"lev_utage\"]",
+            "songId": "[習]からくりピエロ",
             "sourceId": "otoge_intl"
           },
           {
@@ -190355,8 +191027,22 @@
           {
             "chartType": "utage",
             "difficulty": "【音】",
+            "externalId": "source_sheet_v1:[\"[音]On your mark (104期 Ver.)\",\"lev_utage\"]",
+            "songId": "[音]On your mark (104期 Ver.)",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【音】",
             "externalId": "source_sheet_v1:[\"[音]snooze\",\"lev_utage\"]",
             "songId": "[音]snooze",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "utage",
+            "difficulty": "【音】",
+            "externalId": "source_sheet_v1:[\"[音]テトリス\",\"lev_utage\"]",
+            "songId": "[音]テトリス",
             "sourceId": "otoge_intl"
           },
           {
@@ -197297,6 +197983,34 @@
             "sourceId": "otoge_intl"
           },
           {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"オペラ！スペースオペラ！\",\"dx_lev_adv\"]",
+            "songId": "オペラ！スペースオペラ！",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"オペラ！スペースオペラ！\",\"dx_lev_bas\"]",
+            "songId": "オペラ！スペースオペラ！",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"オペラ！スペースオペラ！\",\"dx_lev_exp\"]",
+            "songId": "オペラ！スペースオペラ！",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"オペラ！スペースオペラ！\",\"dx_lev_mas\"]",
+            "songId": "オペラ！スペースオペラ！",
+            "sourceId": "otoge_intl"
+          },
+          {
             "chartType": "std",
             "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"オモイヨシノ\",\"lev_adv\"]",
@@ -197735,6 +198449,34 @@
             "difficulty": "remaster",
             "externalId": "source_sheet_v1:[\"キミとボクのミライ\",\"lev_remas\"]",
             "songId": "キミとボクのミライ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"キミは“見ていたね”？\",\"dx_lev_adv\"]",
+            "songId": "キミは“見ていたね”？",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"キミは“見ていたね”？\",\"dx_lev_bas\"]",
+            "songId": "キミは“見ていたね”？",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"キミは“見ていたね”？\",\"dx_lev_exp\"]",
+            "songId": "キミは“見ていたね”？",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"キミは“見ていたね”？\",\"dx_lev_mas\"]",
+            "songId": "キミは“見ていたね”？",
             "sourceId": "otoge_intl"
           },
           {
@@ -199959,6 +200701,34 @@
           {
             "chartType": "dx",
             "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"ソテリア\",\"dx_lev_adv\"]",
+            "songId": "ソテリア",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"ソテリア\",\"dx_lev_bas\"]",
+            "songId": "ソテリア",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"ソテリア\",\"dx_lev_exp\"]",
+            "songId": "ソテリア",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"ソテリア\",\"dx_lev_mas\"]",
+            "songId": "ソテリア",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"ソリッド\",\"dx_lev_adv\"]",
             "songId": "ソリッド",
             "sourceId": "otoge_intl"
@@ -200094,6 +200864,41 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"タテマエと本心の大乱闘\",\"dx_lev_mas\"]",
             "songId": "タテマエと本心の大乱闘",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"ダイダイダイダイダイキライ\",\"dx_lev_adv\"]",
+            "songId": "ダイダイダイダイダイキライ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"ダイダイダイダイダイキライ\",\"dx_lev_bas\"]",
+            "songId": "ダイダイダイダイダイキライ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"ダイダイダイダイダイキライ\",\"dx_lev_exp\"]",
+            "songId": "ダイダイダイダイダイキライ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"ダイダイダイダイダイキライ\",\"dx_lev_mas\"]",
+            "songId": "ダイダイダイダイダイキライ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "remaster",
+            "externalId": "source_sheet_v1:[\"ダイダイダイダイダイキライ\",\"dx_lev_remas\"]",
+            "songId": "ダイダイダイダイダイキライ",
             "sourceId": "otoge_intl"
           },
           {
@@ -200619,6 +201424,34 @@
             "difficulty": "remaster",
             "externalId": "source_sheet_v1:[\"テレキャスタービーボーイ\",\"dx_lev_remas\"]",
             "songId": "テレキャスタービーボーイ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"テレパシ\",\"dx_lev_adv\"]",
+            "songId": "テレパシ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"テレパシ\",\"dx_lev_bas\"]",
+            "songId": "テレパシ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"テレパシ\",\"dx_lev_exp\"]",
+            "songId": "テレパシ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"テレパシ\",\"dx_lev_mas\"]",
+            "songId": "テレパシ",
             "sourceId": "otoge_intl"
           },
           {
@@ -207888,6 +208721,34 @@
             "sourceId": "otoge_intl"
           },
           {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"奇々解体\",\"dx_lev_adv\"]",
+            "songId": "奇々解体",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"奇々解体\",\"dx_lev_bas\"]",
+            "songId": "奇々解体",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"奇々解体\",\"dx_lev_exp\"]",
+            "songId": "奇々解体",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"奇々解体\",\"dx_lev_mas\"]",
+            "songId": "奇々解体",
+            "sourceId": "otoge_intl"
+          },
+          {
             "chartType": "std",
             "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"奏者はただ背中と提琴で語るのみ\",\"lev_adv\"]",
@@ -209257,6 +210118,41 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"悪魔の踊り方\",\"dx_lev_mas\"]",
             "songId": "悪魔の踊り方",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"愛♡スクリ～ム！\",\"dx_lev_adv\"]",
+            "songId": "愛♡スクリ～ム！",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"愛♡スクリ～ム！\",\"dx_lev_bas\"]",
+            "songId": "愛♡スクリ～ム！",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"愛♡スクリ～ム！\",\"dx_lev_exp\"]",
+            "songId": "愛♡スクリ～ム！",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"愛♡スクリ～ム！\",\"dx_lev_mas\"]",
+            "songId": "愛♡スクリ～ム！",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "remaster",
+            "externalId": "source_sheet_v1:[\"愛♡スクリ～ム！\",\"dx_lev_remas\"]",
+            "songId": "愛♡スクリ～ム！",
             "sourceId": "otoge_intl"
           },
           {
@@ -210879,6 +211775,34 @@
           {
             "chartType": "dx",
             "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"浮世絵横丁\",\"dx_lev_adv\"]",
+            "songId": "浮世絵横丁",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"浮世絵横丁\",\"dx_lev_bas\"]",
+            "songId": "浮世絵横丁",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"浮世絵横丁\",\"dx_lev_exp\"]",
+            "songId": "浮世絵横丁",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"浮世絵横丁\",\"dx_lev_mas\"]",
+            "songId": "浮世絵横丁",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"深海シティアンダーグラウンド\",\"dx_lev_adv\"]",
             "songId": "深海シティアンダーグラウンド",
             "sourceId": "otoge_intl"
@@ -211273,6 +212197,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"無敵We are one!!\",\"lev_mas\"]",
             "songId": "無敵We are one!!",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"無敵的ハピネス！(SOS団5人Ver.)\",\"dx_lev_adv\"]",
+            "songId": "無敵的ハピネス！(SOS団5人Ver.)",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"無敵的ハピネス！(SOS団5人Ver.)\",\"dx_lev_bas\"]",
+            "songId": "無敵的ハピネス！(SOS団5人Ver.)",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"無敵的ハピネス！(SOS団5人Ver.)\",\"dx_lev_exp\"]",
+            "songId": "無敵的ハピネス！(SOS団5人Ver.)",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"無敵的ハピネス！(SOS団5人Ver.)\",\"dx_lev_mas\"]",
+            "songId": "無敵的ハピネス！(SOS団5人Ver.)",
             "sourceId": "otoge_intl"
           },
           {
@@ -213728,6 +214680,34 @@
           {
             "chartType": "dx",
             "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"超ナイト・オブ・ナイツ\",\"dx_lev_adv\"]",
+            "songId": "超ナイト・オブ・ナイツ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"超ナイト・オブ・ナイツ\",\"dx_lev_bas\"]",
+            "songId": "超ナイト・オブ・ナイツ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"超ナイト・オブ・ナイツ\",\"dx_lev_exp\"]",
+            "songId": "超ナイト・オブ・ナイツ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"超ナイト・オブ・ナイツ\",\"dx_lev_mas\"]",
+            "songId": "超ナイト・オブ・ナイツ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"超常マイマイン\",\"dx_lev_adv\"]",
             "songId": "超常マイマイン",
             "sourceId": "otoge_intl"
@@ -215879,6 +216859,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"Acceleration\",\"lev_mas\"]",
             "songId": "Acceleration",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Aegisfortia\",\"dx_lev_adv\"]",
+            "songId": "Aegisfortia",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Aegisfortia\",\"dx_lev_bas\"]",
+            "songId": "Aegisfortia",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Aegisfortia\",\"dx_lev_exp\"]",
+            "songId": "Aegisfortia",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Aegisfortia\",\"dx_lev_mas\"]",
+            "songId": "Aegisfortia",
             "sourceId": "sega_official"
           },
           {
@@ -229455,6 +230463,34 @@
             "sourceId": "sega_official"
           },
           {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"SERAPHIC SYNDROME\",\"dx_lev_adv\"]",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"SERAPHIC SYNDROME\",\"dx_lev_bas\"]",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"SERAPHIC SYNDROME\",\"dx_lev_exp\"]",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"SERAPHIC SYNDROME\",\"dx_lev_mas\"]",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "sega_official"
+          },
+          {
             "chartType": "std",
             "difficulty": "advanced",
             "externalId": "source_sheet_v1:[\"SHOW TIME\",\"lev_adv\"]",
@@ -230943,6 +231979,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"Still\",\"lev_mas\"]",
             "songId": "Still",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"Story Continued\",\"dx_lev_adv\"]",
+            "songId": "Story Continued",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"Story Continued\",\"dx_lev_bas\"]",
+            "songId": "Story Continued",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"Story Continued\",\"dx_lev_exp\"]",
+            "songId": "Story Continued",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"Story Continued\",\"dx_lev_mas\"]",
+            "songId": "Story Continued",
             "sourceId": "sega_official"
           },
           {
@@ -257459,6 +258523,34 @@
             "difficulty": "master",
             "externalId": "source_sheet_v1:[\"終わりなき物語\",\"lev_mas\"]",
             "songId": "終わりなき物語",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "advanced",
+            "externalId": "source_sheet_v1:[\"終幕の傀儡\",\"dx_lev_adv\"]",
+            "songId": "終幕の傀儡",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "basic",
+            "externalId": "source_sheet_v1:[\"終幕の傀儡\",\"dx_lev_bas\"]",
+            "songId": "終幕の傀儡",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "expert",
+            "externalId": "source_sheet_v1:[\"終幕の傀儡\",\"dx_lev_exp\"]",
+            "songId": "終幕の傀儡",
+            "sourceId": "sega_official"
+          },
+          {
+            "chartType": "dx",
+            "difficulty": "master",
+            "externalId": "source_sheet_v1:[\"終幕の傀儡\",\"dx_lev_mas\"]",
+            "songId": "終幕の傀儡",
             "sourceId": "sega_official"
           },
           {
@@ -260746,6 +261838,11 @@
             "sourceId": "catalog_history"
           },
           {
+            "externalId": "Aegisfortia",
+            "songId": "Aegisfortia",
+            "sourceId": "catalog_history"
+          },
+          {
             "externalId": "Aegleseeker",
             "songId": "Aegleseeker",
             "sourceId": "catalog_history"
@@ -263246,6 +264343,11 @@
             "sourceId": "catalog_history"
           },
           {
+            "externalId": "SERAPHIC SYNDROME",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "catalog_history"
+          },
+          {
             "externalId": "SHINY DAYS",
             "songId": "SHINY DAYS",
             "sourceId": "catalog_history"
@@ -263538,6 +264640,11 @@
           {
             "externalId": "Still",
             "songId": "Still",
+            "sourceId": "catalog_history"
+          },
+          {
+            "externalId": "Story Continued",
+            "songId": "Story Continued",
             "sourceId": "catalog_history"
           },
           {
@@ -268933,6 +270040,11 @@
           {
             "externalId": "終わりなき物語",
             "songId": "終わりなき物語",
+            "sourceId": "catalog_history"
+          },
+          {
+            "externalId": "終幕の傀儡",
+            "songId": "終幕の傀儡",
             "sourceId": "catalog_history"
           },
           {
@@ -282396,6 +283508,11 @@
             "sourceId": "otoge_db_gamerch"
           },
           {
+            "externalId": "Aegisfortia",
+            "songId": "Aegisfortia",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
             "externalId": "Aegleseeker",
             "songId": "Aegleseeker",
             "sourceId": "otoge_db_gamerch"
@@ -284666,6 +285783,11 @@
             "sourceId": "otoge_db_gamerch"
           },
           {
+            "externalId": "SERAPHIC SYNDROME",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
             "externalId": "SHOW TIME",
             "songId": "SHOW TIME",
             "sourceId": "otoge_db_gamerch"
@@ -284903,6 +286025,11 @@
           {
             "externalId": "Still",
             "songId": "Still",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "externalId": "Story Continued",
+            "songId": "Story Continued",
             "sourceId": "otoge_db_gamerch"
           },
           {
@@ -289658,6 +290785,11 @@
           {
             "externalId": "終わりなき物語",
             "songId": "終わりなき物語",
+            "sourceId": "otoge_db_gamerch"
+          },
+          {
+            "externalId": "終幕の傀儡",
+            "songId": "終幕の傀儡",
             "sourceId": "otoge_db_gamerch"
           },
           {
@@ -290186,6 +291318,11 @@
             "sourceId": "otoge_intl"
           },
           {
+            "externalId": "ANiMA",
+            "songId": "ANiMA",
+            "sourceId": "otoge_intl"
+          },
+          {
             "externalId": "ARAIS",
             "songId": "ARAIS",
             "sourceId": "otoge_intl"
@@ -290233,6 +291370,16 @@
           {
             "externalId": "Ai C",
             "songId": "Ai C",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "AiAe",
+            "songId": "AiAe",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "Aides",
+            "songId": "Aides",
             "sourceId": "otoge_intl"
           },
           {
@@ -290601,6 +291748,11 @@
             "sourceId": "otoge_intl"
           },
           {
+            "externalId": "Chasing destiny",
+            "songId": "Chasing destiny",
+            "sourceId": "otoge_intl"
+          },
+          {
             "externalId": "Chronomia",
             "songId": "Chronomia",
             "sourceId": "otoge_intl"
@@ -290643,6 +291795,11 @@
           {
             "externalId": "Color My World",
             "songId": "Color My World",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "Colorful Starting Line",
+            "songId": "Colorful Starting Line",
             "sourceId": "otoge_intl"
           },
           {
@@ -291516,6 +292673,11 @@
             "sourceId": "otoge_intl"
           },
           {
+            "externalId": "KNØCK ØUT!!",
+            "songId": "KNØCK ØUT!!",
+            "sourceId": "otoge_intl"
+          },
+          {
             "externalId": "KONNANじゃないっ！",
             "songId": "KONNANじゃないっ！",
             "sourceId": "otoge_intl"
@@ -291951,6 +293113,11 @@
             "sourceId": "otoge_intl"
           },
           {
+            "externalId": "Myosotis",
+            "songId": "Myosotis",
+            "sourceId": "otoge_intl"
+          },
+          {
             "externalId": "Mysterious Destiny",
             "songId": "Mysterious Destiny",
             "sourceId": "otoge_intl"
@@ -292026,6 +293193,11 @@
             "sourceId": "otoge_intl"
           },
           {
+            "externalId": "Nine Point Eight",
+            "songId": "Nine Point Eight",
+            "sourceId": "otoge_intl"
+          },
+          {
             "externalId": "Nitrous Fury",
             "songId": "Nitrous Fury",
             "sourceId": "otoge_intl"
@@ -292073,6 +293245,11 @@
           {
             "externalId": "One Step Ahead",
             "songId": "One Step Ahead",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "Operation☆DOTABATA!",
+            "songId": "Operation☆DOTABATA!",
             "sourceId": "otoge_intl"
           },
           {
@@ -292238,6 +293415,11 @@
           {
             "externalId": "RAD DOGS",
             "songId": "RAD DOGS",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "RE Aoharu",
+            "songId": "RE Aoharu",
             "sourceId": "otoge_intl"
           },
           {
@@ -292711,6 +293893,11 @@
             "sourceId": "otoge_intl"
           },
           {
+            "externalId": "TECHNOPOLIS 2085",
+            "songId": "TECHNOPOLIS 2085",
+            "sourceId": "otoge_intl"
+          },
+          {
             "externalId": "TEmPTaTiON",
             "songId": "TEmPTaTiON",
             "sourceId": "otoge_intl"
@@ -292786,6 +293973,11 @@
             "sourceId": "otoge_intl"
           },
           {
+            "externalId": "Treasure Chest Expedition",
+            "songId": "Treasure Chest Expedition",
+            "sourceId": "otoge_intl"
+          },
+          {
             "externalId": "Trick tear",
             "songId": "Trick tear",
             "sourceId": "otoge_intl"
@@ -292818,6 +294010,11 @@
           {
             "externalId": "TwisteD! XD",
             "songId": "TwisteD! XD",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "T氏の話を信じるな",
+            "songId": "T氏の話を信じるな",
             "sourceId": "otoge_intl"
           },
           {
@@ -292878,6 +294075,11 @@
           {
             "externalId": "Urban Crusher [Remix]",
             "songId": "Urban Crusher [Remix]",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "Usagi Flap",
+            "songId": "Usagi Flap",
             "sourceId": "otoge_intl"
           },
           {
@@ -293246,6 +294448,11 @@
             "sourceId": "otoge_intl"
           },
           {
+            "externalId": "[奏]クレイジークレイジーダンサーズ",
+            "songId": "[奏]クレイジークレイジーダンサーズ",
+            "sourceId": "otoge_intl"
+          },
+          {
             "externalId": "[奏]チュルリラ・チュルリラ・ダッダッダ！",
             "songId": "[奏]チュルリラ・チュルリラ・ダッダッダ！",
             "sourceId": "otoge_intl"
@@ -293288,6 +294495,31 @@
           {
             "externalId": "[宴]Oshama Scramble! (Cranky Remix)",
             "songId": "[宴]Oshama Scramble! (Cranky Remix)",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "[宴]Wonderland Wars　オープニング (ADVANCED)",
+            "songId": "[宴]Wonderland Wars　オープニング (ADVANCED)",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "[宴]Wonderland Wars　オープニング (BASIC)",
+            "songId": "[宴]Wonderland Wars　オープニング (BASIC)",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "[宴]Wonderland Wars　オープニング (EXPERT)",
+            "songId": "[宴]Wonderland Wars　オープニング (EXPERT)",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "[宴]Wonderland Wars　オープニング (MASTER)",
+            "songId": "[宴]Wonderland Wars　オープニング (MASTER)",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "[宴]Wonderland Wars　オープニング (Re:MASTER)",
+            "songId": "[宴]Wonderland Wars　オープニング (Re:MASTER)",
             "sourceId": "otoge_intl"
           },
           {
@@ -293358,6 +294590,16 @@
           {
             "externalId": "[発]好きな惣菜発表ドラゴン",
             "songId": "[発]好きな惣菜発表ドラゴン",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "[破]テレパシ",
+            "songId": "[破]テレパシ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "[習]からくりピエロ",
+            "songId": "[習]からくりピエロ",
             "sourceId": "otoge_intl"
           },
           {
@@ -293451,8 +294693,18 @@
             "sourceId": "otoge_intl"
           },
           {
+            "externalId": "[音]On your mark (104期 Ver.)",
+            "songId": "[音]On your mark (104期 Ver.)",
+            "sourceId": "otoge_intl"
+          },
+          {
             "externalId": "[音]snooze",
             "songId": "[音]snooze",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "[音]テトリス",
+            "songId": "[音]テトリス",
             "sourceId": "otoge_intl"
           },
           {
@@ -294651,6 +295903,11 @@
             "sourceId": "otoge_intl"
           },
           {
+            "externalId": "オペラ！スペースオペラ！",
+            "songId": "オペラ！スペースオペラ！",
+            "sourceId": "otoge_intl"
+          },
+          {
             "externalId": "オモイヨシノ",
             "songId": "オモイヨシノ",
             "sourceId": "otoge_intl"
@@ -294723,6 +295980,11 @@
           {
             "externalId": "キミとボクのミライ",
             "songId": "キミとボクのミライ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "キミは“見ていたね”？",
+            "songId": "キミは“見ていたね”？",
             "sourceId": "otoge_intl"
           },
           {
@@ -295081,6 +296343,11 @@
             "sourceId": "otoge_intl"
           },
           {
+            "externalId": "ソテリア",
+            "songId": "ソテリア",
+            "sourceId": "otoge_intl"
+          },
+          {
             "externalId": "ソリッド",
             "songId": "ソリッド",
             "sourceId": "otoge_intl"
@@ -295103,6 +296370,11 @@
           {
             "externalId": "タテマエと本心の大乱闘",
             "songId": "タテマエと本心の大乱闘",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "ダイダイダイダイダイキライ",
+            "songId": "ダイダイダイダイダイキライ",
             "sourceId": "otoge_intl"
           },
           {
@@ -295178,6 +296450,11 @@
           {
             "externalId": "テレキャスタービーボーイ",
             "songId": "テレキャスタービーボーイ",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "テレパシ",
+            "songId": "テレパシ",
             "sourceId": "otoge_intl"
           },
           {
@@ -296376,6 +297653,11 @@
             "sourceId": "otoge_intl"
           },
           {
+            "externalId": "奇々解体",
+            "songId": "奇々解体",
+            "sourceId": "otoge_intl"
+          },
+          {
             "externalId": "奏者はただ背中と提琴で語るのみ",
             "songId": "奏者はただ背中と提琴で語るのみ",
             "sourceId": "otoge_intl"
@@ -296593,6 +297875,11 @@
           {
             "externalId": "悪魔の踊り方",
             "songId": "悪魔の踊り方",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "愛♡スクリ～ム！",
+            "songId": "愛♡スクリ～ム！",
             "sourceId": "otoge_intl"
           },
           {
@@ -296871,6 +298158,11 @@
             "sourceId": "otoge_intl"
           },
           {
+            "externalId": "浮世絵横丁",
+            "songId": "浮世絵横丁",
+            "sourceId": "otoge_intl"
+          },
+          {
             "externalId": "深海シティアンダーグラウンド",
             "songId": "深海シティアンダーグラウンド",
             "sourceId": "otoge_intl"
@@ -296918,6 +298210,11 @@
           {
             "externalId": "無敵We are one!!",
             "songId": "無敵We are one!!",
+            "sourceId": "otoge_intl"
+          },
+          {
+            "externalId": "無敵的ハピネス！(SOS団5人Ver.)",
+            "songId": "無敵的ハピネス！(SOS団5人Ver.)",
             "sourceId": "otoge_intl"
           },
           {
@@ -297331,6 +298628,11 @@
             "sourceId": "otoge_intl"
           },
           {
+            "externalId": "超ナイト・オブ・ナイツ",
+            "songId": "超ナイト・オブ・ナイツ",
+            "sourceId": "otoge_intl"
+          },
+          {
             "externalId": "超常マイマイン",
             "songId": "超常マイマイン",
             "sourceId": "otoge_intl"
@@ -297693,6 +298995,11 @@
           {
             "externalId": "Acceleration",
             "songId": "Acceleration",
+            "sourceId": "sega_official"
+          },
+          {
+            "externalId": "Aegisfortia",
+            "songId": "Aegisfortia",
             "sourceId": "sega_official"
           },
           {
@@ -299966,6 +301273,11 @@
             "sourceId": "sega_official"
           },
           {
+            "externalId": "SERAPHIC SYNDROME",
+            "songId": "SERAPHIC SYNDROME",
+            "sourceId": "sega_official"
+          },
+          {
             "externalId": "SHOW TIME",
             "songId": "SHOW TIME",
             "sourceId": "sega_official"
@@ -300203,6 +301515,11 @@
           {
             "externalId": "Still",
             "songId": "Still",
+            "sourceId": "sega_official"
+          },
+          {
+            "externalId": "Story Continued",
+            "songId": "Story Continued",
             "sourceId": "sega_official"
           },
           {
@@ -304958,6 +306275,11 @@
           {
             "externalId": "終わりなき物語",
             "songId": "終わりなき物語",
+            "sourceId": "sega_official"
+          },
+          {
+            "externalId": "終幕の傀儡",
+            "songId": "終幕の傀儡",
             "sourceId": "sega_official"
           },
           {
@@ -306139,7 +307461,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "ARAIS": {
@@ -306203,6 +307527,13 @@
             "maimai_cn"
           ]
         },
+        "Aegisfortia": {
+          "catalog": "sega_official",
+          "enrichment": "otoge_db_gamerch",
+          "regions": [
+            "sega_official_jp"
+          ]
+        },
         "Aegleseeker": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
@@ -306262,14 +307593,18 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "Aides": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "Aiolos": {
@@ -307118,7 +308453,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "Choo Choo TRAIN": {
@@ -307243,7 +308580,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "Colorfull:Encounter": {
@@ -309242,7 +310581,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "KONNANじゃないっ！": {
@@ -310245,7 +311586,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "Mysterious Destiny": {
@@ -310429,7 +311772,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "Nitrous Fury": {
@@ -310553,7 +311898,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "Oshama Scramble!": {
@@ -310987,7 +312334,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "RE:INCARNATED DRAGNER": {
@@ -311358,6 +312707,13 @@
           "enrichment": null,
           "regions": [
             "legacy_bootstrap"
+          ]
+        },
+        "SERAPHIC SYNDROME": {
+          "catalog": "sega_official",
+          "enrichment": "otoge_db_gamerch",
+          "regions": [
+            "sega_official_jp"
           ]
         },
         "SHINY DAYS": {
@@ -311955,6 +313311,13 @@
             "maimai_cn"
           ]
         },
+        "Story Continued": {
+          "catalog": "sega_official",
+          "enrichment": "otoge_db_gamerch",
+          "regions": [
+            "sega_official_jp"
+          ]
+        },
         "Straight into the lights": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
@@ -312147,7 +313510,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "TEmPTaTiON": {
@@ -312375,7 +313740,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "Trick tear": {
@@ -312459,7 +313826,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "U&iVERSE -銀河鸞翔-": {
@@ -312610,7 +313979,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "Ututu": {
@@ -313452,7 +314823,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "[奏]チュルリラ・チュルリラ・ダッダッダ！": {
@@ -313555,35 +314928,45 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "[宴]Wonderland Wars　オープニング (BASIC)": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "[宴]Wonderland Wars　オープニング (EXPERT)": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "[宴]Wonderland Wars　オープニング (MASTER)": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "[宴]Wonderland Wars　オープニング (Re:MASTER)": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "[宴]セガサターン起動音[H.][Remix]": {
@@ -313737,14 +315120,18 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "[習]からくりピエロ": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "[習]ウミユリ海底譚": {
@@ -313951,7 +315338,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "[音]snooze": {
@@ -313974,7 +315363,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "[音]ラビットホール": {
@@ -316846,7 +318237,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "オモイヨシノ": {
@@ -317059,7 +318452,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "キミノヨゾラ哨戒班": {
@@ -317895,7 +319290,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "ソリッド": {
@@ -317957,7 +319354,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "ダブルラリアット": {
@@ -318133,7 +319532,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "ディカディズム": {
@@ -320956,7 +322357,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "奏者はただ背中と提琴で語るのみ": {
@@ -321467,7 +322870,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "愛のシュプリーム！": {
@@ -322151,7 +323556,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "深海シティアンダーグラウンド": {
@@ -322266,7 +323673,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "無間嫉妬劇場『666』": {
@@ -322824,6 +324233,13 @@
             "maimai_cn"
           ]
         },
+        "終幕の傀儡": {
+          "catalog": "sega_official",
+          "enrichment": "otoge_db_gamerch",
+          "regions": [
+            "sega_official_jp"
+          ]
+        },
         "終点": {
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
@@ -323247,7 +324663,9 @@
           "catalog": "sega_official",
           "enrichment": "otoge_db_gamerch",
           "regions": [
-            "sega_official_jp"
+            "sega_official_jp",
+            "otoge_intl",
+            "usa_derived_from_intl"
           ]
         },
         "超常マイマイン": {
@@ -323816,13 +325234,13 @@
       "sourceRecordCounts": {
         "lxns_song_list": 1322,
         "maimai_cn": 1256,
-        "otoge_intl": 1498,
+        "otoge_intl": 1532,
         "sega_official": 1567
       },
       "sources": {
         "catalog_history": {
           "path": "/data/input/songs/history.json",
-          "sha256": "0c0873beef99b56304eae33377464455c91c614e90016b65896badc000fae7b5"
+          "sha256": "ff491a075e64b87d8c688812ce7009d2975e3ff9b6145936874bcc64f3f147ae"
         },
         "lxns_song_list": {
           "path": "/data/input/enrichment/lxns-songs.json",
@@ -323837,17 +325255,17 @@
         "otoge_db_gamerch": {
           "path": "/data/input/enrichment/music-ex.json",
           "recordCount": 1567,
-          "sha256": "26193e124e3171e17c2ab42fe6c07ef8c57a1d0474ae1d66ffcdf7f806dc674d"
+          "sha256": "571b3801fb4b637f534745ab6f7f696df955a314614e0283ac0432aa6ef1092f"
         },
         "otoge_intl": {
           "path": "/data/input/regions/music-ex-intl.json",
-          "recordCount": 1498,
-          "sha256": "65f4db72fe0eac41e407ede21c8c5f62a2dd1aabe7b2a5e77aef527a6b5c7d2d"
+          "recordCount": 1532,
+          "sha256": "2e15c0c667da2df862ea1178ce37dd63feb0d2afe05b337a6b966d659d92429d"
         },
         "sega_official": {
           "path": "/data/input/official/maimai_songs.json",
           "recordCount": 1567,
-          "sha256": "08668ce89a328a0fae1b90dca2d5fe502a9e96060f2f5a483c6342f44b5cdf77"
+          "sha256": "7889ab1f9c212c85f20e2f042b6fe030c609d8765a8a4c553f3cca6854d81445"
         }
       }
     },
@@ -323863,10 +325281,10 @@
           "sha256": "37d5c789cb90b5c3a0ae94937b0a1ff16096b0f7d105288a18331214e9f370f7"
         },
         "aliases/lxns.json": {
-          "sha256": "4f1673a8ea1fe7e9cbba2d337762b9e10600c7054986b4b4cfd37b39f6722db8"
+          "sha256": "3978c64ae8d8eede953d46de2bcda036ef7dac00b5c4218c8a6b109d5af1280a"
         },
         "provenance/internal-level-refresh.json": {
-          "sha256": "16042ead6c326d6b605710f364543e03afc45b36e68e294adbfcd83b83367c87"
+          "sha256": "7dd20e6c9dbf255422127e4590bbbea92df207bd3b2921a516e6d36d5bfd45a9"
         }
       },
       "postgres": {
@@ -323875,8 +325293,8 @@
           "sha256": "a3164087b7ff0802ceed147406cff76fa0628fc531b1ddfe7959afb57c0f98a5"
         },
         "SheetInternalLevels": {
-          "rows": 14081,
-          "sha256": "540ba126c41e7367dacb18a14b5088ee10f6cc118dace65dd7102e7d868db431"
+          "rows": 14090,
+          "sha256": "4532472909181cf2951a0b4ba7b6dfcf57394198f7a7a7263dd6d5e996439c4e"
         }
       }
     }
