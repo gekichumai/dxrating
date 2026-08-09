@@ -16,6 +16,7 @@ export interface AuthParams {
 export type NetImportErrorCode =
   | 'NET_MAINTENANCE'
   | 'INVALID_CREDENTIALS'
+  | 'AIME_CARD_UNAVAILABLE'
   | 'UNKNOWN_ERROR'
   | 'INTERNAL_ERROR'
   | 'TOKEN_ERROR'
@@ -155,7 +156,7 @@ export class Client {
     this.#cookies.delete(hostname)
   }
 
-  async fetch(url: string, init?: RequestInit) {
+  async fetch(url: string, init?: RequestInit, errorRedirectCode: NetImportErrorCode = 'UNKNOWN_ERROR') {
     const requestURL = new URL(url)
     const cookies = this.getCookies(requestURL.hostname)
     const initHeaders = {
@@ -175,7 +176,12 @@ export class Client {
     this.setCookie(requestURL.hostname, res.headers)
 
     if (res.status === 302 && URLS.CHECKLIST.ERROR.includes(res.headers.get('location') ?? '')) {
-      throw new NetImportError('UNKNOWN_ERROR', 'response redirects to error page')
+      throw new NetImportError(
+        errorRedirectCode,
+        errorRedirectCode === 'AIME_CARD_UNAVAILABLE'
+          ? 'SEGA ID authentication succeeded, but maimai NET did not provide a usable Aime card.'
+          : 'maimai NET redirected the request to its error page.',
+      )
     }
 
     return res
@@ -207,18 +213,22 @@ export class MaimaiNETJpClient extends Client {
     const loginPageToken = loginPage?.querySelector('input[name="token"]')?.attributes.getNamedItem('value')?.value
     if (!loginPageToken) throw new NetImportError('TOKEN_ERROR')
 
-    const login = await this.fetch(URLS.JP.LOGIN_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+    const login = await this.fetch(
+      URLS.JP.LOGIN_ENDPOINT,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          segaId: id,
+          password: password,
+          save_cookie: 'on',
+          token: loginPageToken,
+        }),
       },
-      body: new URLSearchParams({
-        segaId: id,
-        password: password,
-        save_cookie: 'on',
-        token: loginPageToken,
-      }),
-    })
+      'INVALID_CREDENTIALS',
+    )
     if (URLS.CHECKLIST.ERROR.includes(login.headers.get('location') ?? '')) {
       throw new NetImportError('INVALID_CREDENTIALS')
     }
@@ -286,7 +296,7 @@ export class MaimaiNETIntlClient extends Client {
       throw new NetImportError('INVALID_CREDENTIALS')
     }
 
-    const redirectDestinationResponse = await this.fetch(redirectURL)
+    const redirectDestinationResponse = await this.fetch(redirectURL, undefined, 'AIME_CARD_UNAVAILABLE')
 
     const redirectDestinationText = await redirectDestinationResponse.text()
     this.checkMaintenance(redirectDestinationText)

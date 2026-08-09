@@ -11,27 +11,22 @@ import type { ListActions } from 'react-use/lib/useList'
 import IconMdiCheck from '~icons/mdi/check'
 import IconMdiClose from '~icons/mdi/close'
 import { WebHaptics } from 'web-haptics'
-import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
-
-type NetImportErrorCode = 'NET_MAINTENANCE' | 'INVALID_CREDENTIALS' | 'UNKNOWN_ERROR' | 'INTERNAL_ERROR' | 'TOKEN_ERROR'
+import { NetImportError, type NetImportErrorCode, unexpectedErrorSubtitle } from './netImportErrorFeedback'
 
 const ERROR_CODE_I18N: Record<NetImportErrorCode, string> = {
   NET_MAINTENANCE: 'rating-calculator:io.import.net-records.errors.maintenance',
   INVALID_CREDENTIALS: 'rating-calculator:io.import.net-records.errors.invalid-credentials',
+  AIME_CARD_UNAVAILABLE: 'rating-calculator:io.import.net-records.errors.aime-card-unavailable',
   UNKNOWN_ERROR: 'rating-calculator:io.import.net-records.errors.unknown',
   INTERNAL_ERROR: 'rating-calculator:io.import.net-records.errors.internal',
   TOKEN_ERROR: 'rating-calculator:io.import.net-records.errors.token',
 }
 
-class NetImportError extends Error {
-  code: NetImportErrorCode
-  constructor(code: NetImportErrorCode, message?: string) {
-    super(message ?? code)
-    this.code = code
-  }
+const ERROR_CODE_DETAIL_I18N: Partial<Record<NetImportErrorCode, string>> = {
+  AIME_CARD_UNAVAILABLE: 'rating-calculator:io.import.net-records.errors.aime-card-unavailable-detail',
 }
 
 export type FetchNetRecordProgressState =
@@ -172,7 +167,7 @@ export const importFromNETRecords = async (
       toast.error(t('rating-calculator:io.import.net-records.no-credentials'), {
         id: toastId,
       })
-      throw new Error('No credentials stored.')
+      return
     }
     const { region, username, password } = params
     const data = await fetchNetRecords({ region, username, password }, (state, progress) => {
@@ -272,15 +267,26 @@ export const importFromNETRecords = async (
       attributes: { error_code: error instanceof NetImportError ? error.code : 'unknown' },
     })
 
-    const errorMessage =
+    const title =
       error instanceof NetImportError
         ? t(ERROR_CODE_I18N[error.code])
-        : t('rating-calculator:io.import.net-records.error', { error: formatErrorMessage(error) })
-    toast.error(errorMessage, {
-      id: toastId,
-      icon: <IconMdiClose className="h-4 w-4 text-red-5 shrink-0" />,
-      duration: 20000,
-    })
+        : t('rating-calculator:io.import.net-records.errors.unknown')
+    const translatedDetail = error instanceof NetImportError ? ERROR_CODE_DETAIL_I18N[error.code] : undefined
+    const subtitle = translatedDetail ? t(translatedDetail) : unexpectedErrorSubtitle(error)
+
+    toast.error(
+      <div className="flex min-w-0 max-w-[22rem] flex-col items-start gap-0.5">
+        <div className="font-bold leading-snug">{title}</div>
+        {subtitle && (
+          <div className="break-words text-left text-xs font-normal leading-relaxed text-zinc-500">{subtitle}</div>
+        )}
+      </div>,
+      {
+        id: toastId,
+        icon: <IconMdiClose className="h-4 w-4 text-red-5 shrink-0" />,
+        duration: 20000,
+      },
+    )
   } finally {
     importInFlight = false
   }

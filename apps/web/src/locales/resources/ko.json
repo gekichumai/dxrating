@@ -390,6 +390,8 @@
     "io.import.net-records.cached.description": "{{minutes}}분 전에 업데이트했습니다. maimai NET의 부하를 줄이기 위해 15분 동안 같은 기록을 사용합니다.",
     "io.import.net-records.errors.maintenance": "maimai NET이 점검 중입니다. 점검이 끝난 뒤 다시 시도하세요.",
     "io.import.net-records.errors.invalid-credentials": "로그인하지 못했습니다. SEGA ID와 비밀번호를 확인하세요.",
+    "io.import.net-records.errors.aime-card-unavailable": "SEGA ID 로그인에는 성공했지만, 사용할 수 있는 Aime 카드를 찾지 못했습니다.",
+    "io.import.net-records.errors.aime-card-unavailable-detail": "국제판 maimai NET을 열고 이 SEGA ID에 Aime 카드를 등록하거나 연동한 뒤 다시 시도해 주세요.",
     "io.import.net-records.errors.unknown": "예상하지 못한 오류가 발생했습니다. 다시 시도하세요.",
     "io.import.net-records.errors.internal": "기록을 가져오는 중 서버 오류가 발생했습니다. 다시 시도하세요.",
     "io.import.net-records.errors.token": "maimai NET에 연결하지 못했습니다. 잠시 후 다시 시도하세요.",

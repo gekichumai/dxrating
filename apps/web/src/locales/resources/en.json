@@ -390,6 +390,8 @@
     "io.import.net-records.cached.description": "Last updated {{minutes}} min ago. To reduce load on maimai NET, records are reused within 15 minutes.",
     "io.import.net-records.errors.maintenance": "maimai NET is currently under maintenance. Please try again later.",
     "io.import.net-records.errors.invalid-credentials": "Login failed. Please check your SEGA ID and password.",
+    "io.import.net-records.errors.aime-card-unavailable": "SEGA ID login succeeded, but no usable Aime card was found.",
+    "io.import.net-records.errors.aime-card-unavailable-detail": "Open international maimai NET, finish registering or linking your Aime card to this SEGA ID, then try again.",
     "io.import.net-records.errors.unknown": "An unexpected error occurred. Please try again.",
     "io.import.net-records.errors.internal": "A server error occurred while fetching records. Please try again.",
     "io.import.net-records.errors.token": "Failed to connect to maimai NET. Please try again later.",

@@ -1,12 +1,20 @@
 import * as Sentry from '@sentry/node'
 import type { Scope } from '@sentry/node'
 import { ORPCError } from '@orpc/server'
+import { NetImportError } from './client.js'
 
 // Export types for use in other files
 export type { Scope }
 
 export function shouldCaptureSentryError(error: unknown) {
   if (error instanceof ORPCError && error.status >= 400 && error.status < 500) {
+    return false
+  }
+
+  if (
+    error instanceof NetImportError &&
+    ['INVALID_CREDENTIALS', 'NET_MAINTENANCE', 'AIME_CARD_UNAVAILABLE'].includes(error.code)
+  ) {
     return false
   }
 

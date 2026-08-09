@@ -390,6 +390,8 @@
     "io.import.net-records.cached.description": "{{minutes}} 分钟前已更新。为减少对 maimai NET 的访问，15 分钟内的记录将被复用。",
     "io.import.net-records.errors.maintenance": "maimai NET 正在维护中，请稍后再试。",
     "io.import.net-records.errors.invalid-credentials": "登录失败，请检查您的 SEGA ID 和密码。",
+    "io.import.net-records.errors.aime-card-unavailable": "SEGA ID 登录成功，但没有找到可用的 Aime 卡。",
+    "io.import.net-records.errors.aime-card-unavailable-detail": "请打开国际版 maimai NET，用这个 SEGA ID 完成 Aime 卡的注册或绑定后重试。",
     "io.import.net-records.errors.unknown": "发生了意外错误，请重试。",
     "io.import.net-records.errors.internal": "获取记录时发生服务器错误，请重试。",
     "io.import.net-records.errors.token": "无法连接到 maimai NET，请稍后再试。",
