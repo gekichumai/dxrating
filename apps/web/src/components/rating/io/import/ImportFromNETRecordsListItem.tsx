@@ -7,16 +7,21 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   FormControl,
   FormControlLabel,
   FormLabel,
   LinearProgress,
+  Link as MuiLink,
   ListItemIcon,
   ListItemText,
   MenuItem,
   Radio,
   RadioGroup,
   TextField,
+  Typography,
 } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, useEffect, useState } from 'react'
@@ -25,6 +30,8 @@ import { useLocalStorage } from 'react-use'
 import type { ListActions } from 'react-use/lib/useList'
 import { match } from 'ts-pattern'
 import IconMdiConnection from '~icons/mdi/connection'
+import IconMdiChevronDown from '~icons/mdi/chevron-down'
+import IconMdiHelpCircleOutline from '~icons/mdi/help-circle-outline'
 import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { type FetchNetRecordProgressState, importFromNETRecords } from './importFromNETRecords'
@@ -166,6 +173,7 @@ const ImportFromNETRecordsDialogContent: FC<{
     <>
       <DialogTitle>{t('rating-calculator:io.import.net-records.dialog.title')}</DialogTitle>
       <DialogContent>
+        <SegaIDImportGuide region={region} />
         <DialogContentText className="flex flex-col items-start gap-2 py-2">
           <FormControl>
             <TextField
@@ -363,3 +371,95 @@ const ImportFromNETRecordsDialogContent: FC<{
     </>
   )
 }
+
+const SegaIDImportGuide: FC<{ region: 'intl' | 'jp' }> = ({ region }) => {
+  const { t } = useTranslation()
+  const [expanded, setExpanded] = useState<string | false>('register')
+  const aimeURL = region === 'jp' ? 'https://maimaidx.jp/maimai-mobile/' : 'https://maimaidx-eng.com/maimai-mobile/'
+
+  return (
+    <div className="mb-2 rounded-2xl border border-blue-200/70 bg-blue-50/60 p-2 dark:border-blue-900/60 dark:bg-blue-950/25">
+      <div className="flex items-start gap-3 px-3 pb-1 pt-2">
+        <IconMdiHelpCircleOutline className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-300" />
+        <div>
+          <div className="font-semibold text-zinc-900 dark:text-zinc-100">
+            {t('rating-calculator:io.import.net-records.dialog.help.title')}
+          </div>
+          <div className="text-sm text-zinc-600 dark:text-zinc-300">
+            {t('rating-calculator:io.import.net-records.dialog.help.description')}
+          </div>
+        </div>
+      </div>
+
+      <Accordion
+        disableGutters
+        elevation={0}
+        expanded={expanded === 'register'}
+        onChange={(_, isExpanded) => setExpanded(isExpanded ? 'register' : false)}
+        sx={{ backgroundColor: 'transparent', '&:before': { display: 'none' } }}
+      >
+        <AccordionSummary expandIcon={<IconMdiChevronDown />}>
+          <Typography fontWeight={600} variant="body2">
+            {t('rating-calculator:io.import.net-records.dialog.help.register.title')}
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails className="pt-0">
+          <HelpSteps
+            steps={[
+              t('rating-calculator:io.import.net-records.dialog.help.register.step1'),
+              t('rating-calculator:io.import.net-records.dialog.help.register.step2'),
+              t('rating-calculator:io.import.net-records.dialog.help.register.step3'),
+            ]}
+          />
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+            <MuiLink href="https://gw.sega.jp/gateway/create/create1.html" target="_blank" rel="noopener noreferrer">
+              {t('rating-calculator:io.import.net-records.dialog.help.links.sega-id')}
+            </MuiLink>
+            <MuiLink href={aimeURL} target="_blank" rel="noopener noreferrer">
+              {t('rating-calculator:io.import.net-records.dialog.help.links.aime')}
+            </MuiLink>
+          </div>
+        </AccordionDetails>
+      </Accordion>
+
+      <Accordion
+        disableGutters
+        elevation={0}
+        expanded={expanded === 'oauth'}
+        onChange={(_, isExpanded) => setExpanded(isExpanded ? 'oauth' : false)}
+        sx={{ backgroundColor: 'transparent', '&:before': { display: 'none' } }}
+      >
+        <AccordionSummary expandIcon={<IconMdiChevronDown />}>
+          <Typography fontWeight={600} variant="body2">
+            {t('rating-calculator:io.import.net-records.dialog.help.oauth.title')}
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails className="pt-0">
+          <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-300">
+            {t('rating-calculator:io.import.net-records.dialog.help.oauth.description')}
+          </p>
+          <HelpSteps
+            steps={[
+              t('rating-calculator:io.import.net-records.dialog.help.oauth.step1'),
+              t('rating-calculator:io.import.net-records.dialog.help.oauth.step2'),
+              t('rating-calculator:io.import.net-records.dialog.help.oauth.step3'),
+            ]}
+          />
+        </AccordionDetails>
+      </Accordion>
+    </div>
+  )
+}
+
+const HelpSteps: FC<{ steps: string[] }> = ({ steps }) => (
+  <ol className="m-0 flex list-none flex-col gap-2 p-0">
+    {steps.map((step, index) => (
+      <li key={step} className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-200">
+        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white dark:bg-blue-400 dark:text-blue-950">
+          {index + 1}
+        </span>
+        <span>{step}</span>
+      </li>
+    ))}
+  </ol>
+)
