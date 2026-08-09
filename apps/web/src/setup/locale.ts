@@ -1,7 +1,7 @@
 import type { DetectorOptions } from 'i18next-browser-languagedetector'
 import { parse as parseCookie } from 'cookie'
 
-export const SUPPORTED_LOCALES = ['en', 'ja', 'zh-Hans', 'zh-Hant'] as const
+export const SUPPORTED_LOCALES = ['en', 'ja', 'ko', 'zh-Hans', 'zh-Hant'] as const
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 
 export const DEFAULT_LOCALE: SupportedLocale = 'en'
@@ -18,6 +18,7 @@ export function toSupportedLocale(lng: string | null | undefined): SupportedLoca
 
   if (lower === 'en' || lower.startsWith('en-')) return 'en'
   if (lower === 'ja' || lower.startsWith('ja-')) return 'ja'
+  if (lower === 'ko' || lower.startsWith('ko-')) return 'ko'
   if (lower === 'zh-hans' || lower === 'zh-cn' || lower === 'zh-sg' || lower === 'zh-my') return 'zh-Hans'
   if (lower === 'zh-hant' || lower === 'zh-tw' || lower === 'zh-hk' || lower === 'zh-mo') return 'zh-Hant'
   if (lower === 'zh' || lower.startsWith('zh-')) return 'zh-Hans'

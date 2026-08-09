@@ -37,6 +37,7 @@ type StructuredDataSheet = Pick<
 const OG_LOCALES: Record<SupportedLocale, string> = {
   en: 'en_US',
   ja: 'ja_JP',
+  ko: 'ko_KR',
   'zh-Hans': 'zh_CN',
   'zh-Hant': 'zh_TW',
 }

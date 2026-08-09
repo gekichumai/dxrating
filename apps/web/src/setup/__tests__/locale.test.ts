@@ -43,6 +43,7 @@ describe('locale detection', () => {
   it('normalizes browser and HTTP language variants to supported locales', () => {
     expect(toSupportedLocale('en-US')).toBe('en')
     expect(toSupportedLocale('ja-JP')).toBe('ja')
+    expect(toSupportedLocale('ko-KR')).toBe('ko')
     expect(toSupportedLocale('zh-CN')).toBe('zh-Hans')
     expect(toSupportedLocale('zh-SG')).toBe('zh-Hans')
     expect(toSupportedLocale('zh-TW')).toBe('zh-Hant')

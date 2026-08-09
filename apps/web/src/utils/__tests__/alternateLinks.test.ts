@@ -45,6 +45,11 @@ describe('buildAlternateLinks', () => {
       },
       {
         rel: 'alternate',
+        hrefLang: 'ko',
+        href: 'https://dxrating.net/songs/song-1?type=dx&locale=ko',
+      },
+      {
+        rel: 'alternate',
         hrefLang: 'zh-Hans',
         href: 'https://dxrating.net/songs/song-1?type=dx&locale=zh-Hans',
       },

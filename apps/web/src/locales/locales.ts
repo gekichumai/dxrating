@@ -1,12 +1,14 @@
 import i18n from 'i18next'
 import en from './resources/en.json'
 import ja from './resources/ja.json'
+import ko from './resources/ko.json'
 import zhHans from './resources/zh-Hans.json'
 import zhHant from './resources/zh-Hant.json'
 
 export const i18nResources = {
   en,
   ja,
+  ko,
   'zh-Hans': zhHans,
   'zh-Hant': zhHant,
 }
@@ -28,6 +30,9 @@ if (import.meta.hot) {
   })
   import.meta.hot.accept('./resources/ja.json', (mod) => {
     replaceLanguageResources('ja', mod?.default)
+  })
+  import.meta.hot.accept('./resources/ko.json', (mod) => {
+    replaceLanguageResources('ko', mod?.default)
   })
   import.meta.hot.accept('./resources/zh-Hans.json', (mod) => {
     replaceLanguageResources('zh-Hans', mod?.default)

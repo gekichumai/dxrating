@@ -42,6 +42,7 @@ const LocaleSelectorItem: FC<PropsWithChildren<{ locale: SupportedLocale; select
 const LOCALES = [
   { value: 'en', label: 'English' },
   { value: 'ja', label: '日本語' },
+  { value: 'ko', label: '한국어' },
   { value: 'zh-Hans', label: '简体中文' },
   { value: 'zh-Hant', label: '繁體中文' },
 ] as const

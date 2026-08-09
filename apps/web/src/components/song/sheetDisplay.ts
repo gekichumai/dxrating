@@ -11,6 +11,12 @@ export const SHEET_TYPE_DISPLAY_NAMES: Record<SupportedLocale, SheetTypeDisplayN
     [TypeEnum.UTAGE]: 'Utage',
     [TypeEnum.UTAGE2P]: 'Buddy',
   },
+  ko: {
+    [TypeEnum.DX]: 'DX',
+    [TypeEnum.STD]: '스탠다드',
+    [TypeEnum.UTAGE]: '宴会場',
+    [TypeEnum.UTAGE2P]: '버디',
+  },
   'zh-Hans': {
     [TypeEnum.DX]: 'DX',
     [TypeEnum.STD]: '标准',
