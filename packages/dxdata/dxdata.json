@@ -44180,7 +44180,7 @@
                     "difficulty": "expert",
                     "level": "10",
                     "internalLevelValue": 10.2,
-                    "noteDesigner": "-",
+                    "noteDesigner": "サファ太",
                     "noteCounts": {
                         "tap": 212,
                         "hold": 42,
@@ -78797,7 +78797,7 @@
                     "type": "std",
                     "difficulty": "basic",
                     "level": "7+",
-                    "internalLevelValue": 7.6,
+                    "internalLevelValue": 7.7,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": 347,
@@ -78997,7 +78997,7 @@
             "category": "maimai",
             "title": "Prophesy One",
             "artist": "vox2（小野秀幸）",
-            "bpm": 120.0,
+            "bpm": 264.0,
             "imageName": "8e37cad533ffc4b85c31f2b4f5ec651ac1648aef768ec24d28c7a76fe822f574",
             "isNew": false,
             "isLocked": false,
@@ -79006,7 +79006,7 @@
                     "type": "std",
                     "difficulty": "basic",
                     "level": "7+",
-                    "internalLevelValue": 7.6,
+                    "internalLevelValue": 7.7,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": 259,
@@ -116450,7 +116450,7 @@
                     "type": "std",
                     "difficulty": "basic",
                     "level": "7+",
-                    "internalLevelValue": 7.6,
+                    "internalLevelValue": 7.7,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": 257,
@@ -125403,7 +125403,7 @@
             "category": "maimai",
             "title": "モ°ルモ°ル",
             "artist": "sasakure.UK",
-            "bpm": 176.0,
+            "bpm": 256.0,
             "imageName": "5373c43e8e39c5daa41f09f2482c0e89d6764eb63039cb1beb4cdafc89b55da7",
             "isNew": false,
             "isLocked": false,
@@ -143832,7 +143832,7 @@
             "category": "POPS＆アニメ",
             "title": "タケモトピアノCMソング",
             "artist": "タケモトピアノCM",
-            "bpm": 122.0,
+            "bpm": 174.0,
             "imageName": "1fc15a3759bb19848a0f44b2d56cc27484a23ac412614edf1b1bc43eea759afd",
             "isNew": false,
             "isLocked": false,
@@ -195572,7 +195572,7 @@
                     "type": "utage",
                     "difficulty": "【蛸】",
                     "level": "12+?",
-                    "internalLevelValue": 12.6,
+                    "internalLevelValue": 12.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 58,
@@ -195658,7 +195658,7 @@
                     "type": "utage",
                     "difficulty": "【宴】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 904,
@@ -195784,7 +195784,7 @@
                     "type": "utage",
                     "difficulty": "【狂】",
                     "level": "14+?",
-                    "internalLevelValue": 14.6,
+                    "internalLevelValue": 14.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 682,
@@ -195817,7 +195817,7 @@
             "category": "宴会場",
             "title": "[蔵]Glorious Crown",
             "artist": "xi",
-            "bpm": null,
+            "bpm": 225.0,
             "imageName": "86732af137675c3d9cb03d1f28434cd35acbfaa50b3bb91fb3e7ad1e2ce76dbc",
             "isNew": false,
             "isLocked": false,
@@ -195826,7 +195826,7 @@
                     "type": "utage",
                     "difficulty": "【蔵】",
                     "level": "14+?",
-                    "internalLevelValue": 14.6,
+                    "internalLevelValue": 14.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 1192,
@@ -198918,7 +198918,7 @@
                     "type": "utage",
                     "difficulty": "【耐】",
                     "level": "14+?",
-                    "internalLevelValue": 14.6,
+                    "internalLevelValue": 14.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 1476,
@@ -202198,7 +202198,7 @@
                     "type": "utage2p",
                     "difficulty": "【奏】",
                     "level": "12+?",
-                    "internalLevelValue": 12.6,
+                    "internalLevelValue": 12.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": null,
@@ -202240,7 +202240,7 @@
                     "type": "utage",
                     "difficulty": "【息】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 803,
@@ -202326,7 +202326,7 @@
                     "type": "utage",
                     "difficulty": "【玉】",
                     "level": "14+?",
-                    "internalLevelValue": 14.6,
+                    "internalLevelValue": 14.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 660,
@@ -202368,7 +202368,7 @@
                     "type": "utage",
                     "difficulty": "【某】",
                     "level": "14+?",
-                    "internalLevelValue": 14.6,
+                    "internalLevelValue": 14.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 699,
@@ -205000,7 +205000,7 @@
                     "type": "utage",
                     "difficulty": "【宴】",
                     "level": "14+?",
-                    "internalLevelValue": 14.6,
+                    "internalLevelValue": 14.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 849,
@@ -205042,7 +205042,7 @@
                     "type": "utage2p",
                     "difficulty": "【奏】",
                     "level": "12+?",
-                    "internalLevelValue": 12.6,
+                    "internalLevelValue": 12.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": null,
@@ -211489,7 +211489,7 @@
                     "type": "utage",
                     "difficulty": "【習】",
                     "level": "12+?",
-                    "internalLevelValue": 12.6,
+                    "internalLevelValue": 12.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 549,
@@ -211533,7 +211533,7 @@
                     "type": "utage2p",
                     "difficulty": "【奏】",
                     "level": "12+?",
-                    "internalLevelValue": 12.6,
+                    "internalLevelValue": 12.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": null,
@@ -211575,7 +211575,7 @@
                     "type": "utage",
                     "difficulty": "【協】",
                     "level": "11+?",
-                    "internalLevelValue": 11.6,
+                    "internalLevelValue": 11.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 243,
@@ -214433,7 +214433,7 @@
                     "type": "utage2p",
                     "difficulty": "【奏】",
                     "level": "12+?",
-                    "internalLevelValue": 12.6,
+                    "internalLevelValue": 12.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": null,
@@ -214454,6 +214454,7 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM",
+                    "internalId": 111156,
                     "releaseDate": "2024-11-22",
                     "comment": "一緒に！舞舞タイム！"
                 }
@@ -215318,7 +215319,7 @@
                     "type": "utage",
                     "difficulty": "【嘘】",
                     "level": "12+?",
-                    "internalLevelValue": 12.6,
+                    "internalLevelValue": 12.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 157,
@@ -215381,6 +215382,7 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM",
+                    "internalId": 111772,
                     "releaseDate": "2024-12-06",
                     "comment": "人（の初見姿観察推奨）マニア"
                 }
@@ -221313,7 +221315,7 @@
                     "type": "utage2p",
                     "difficulty": "【匿】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": null,
@@ -221355,7 +221357,7 @@
                     "type": "utage2p",
                     "difficulty": "【助】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": null,
@@ -223589,7 +223591,7 @@
                     "type": "utage",
                     "difficulty": "【発】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 487,
@@ -223631,7 +223633,7 @@
                     "type": "utage",
                     "difficulty": "【表】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 399,
@@ -223673,7 +223675,7 @@
                     "type": "utage",
                     "difficulty": "【龍】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 545,
@@ -224256,7 +224258,7 @@
             "category": "宴会場",
             "title": "[協]Ultimate taste",
             "artist": "ぱらどっと",
-            "bpm": null,
+            "bpm": 200.0,
             "imageName": "6234a6b63bdc987c38d87f9a99821fc1dc95e33d9ac5c1baa5fc4673f7803636",
             "isNew": false,
             "isLocked": false,
@@ -224265,7 +224267,7 @@
                     "type": "utage2p",
                     "difficulty": "【協】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": null,
@@ -224836,7 +224838,7 @@
                     "type": "utage",
                     "difficulty": "【覚】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 151,
@@ -224857,6 +224859,7 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
+                    "internalId": 111479,
                     "releaseDate": "2025-06-20",
                     "comment": "maimai でらっくす版覚譜面もほしかった"
                 }
@@ -224877,7 +224880,7 @@
                     "type": "utage",
                     "difficulty": "【逆】",
                     "level": "12+?",
-                    "internalLevelValue": 12.6,
+                    "internalLevelValue": 12.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 489,
@@ -224898,6 +224901,7 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
+                    "internalId": 111628,
                     "releaseDate": "2025-06-20",
                     "comment": "SLIDE BACK!!"
                 }
@@ -226645,7 +226649,7 @@
                     "type": "dx",
                     "difficulty": "basic",
                     "level": "7+",
-                    "internalLevelValue": 7.6,
+                    "internalLevelValue": 7.8,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": 340,
@@ -227170,7 +227174,7 @@
                     "type": "dx",
                     "difficulty": "basic",
                     "level": "7+",
-                    "internalLevelValue": 7.6,
+                    "internalLevelValue": 7.9,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": 517,
@@ -228670,6 +228674,7 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
+                    "internalId": 110781,
                     "releaseDate": "2025-08-22",
                     "comment": "さらに言うことを聞いてくれるアカネチャン"
                 }
@@ -228711,6 +228716,7 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
+                    "internalId": 111638,
                     "releaseDate": "2025-08-22",
                     "comment": "せかせかせかせかせかせかせかせかせかせか"
                 }
@@ -228731,7 +228737,7 @@
                     "type": "utage2p",
                     "difficulty": "【騒】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": null,
@@ -228752,6 +228758,7 @@
                     },
                     "isSpecial": true,
                     "version": "PRiSM PLUS",
+                    "internalId": 111859,
                     "releaseDate": "2025-08-22",
                     "comment": "花隈の歌は可愛いし小春六花はマジでうるさい"
                 }
@@ -232140,7 +232147,7 @@
                     "type": "utage",
                     "difficulty": "【蛸】",
                     "level": "12+?",
-                    "internalLevelValue": 12.6,
+                    "internalLevelValue": 12.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 478,
@@ -232161,6 +232168,7 @@
                     },
                     "isSpecial": true,
                     "version": "CiRCLE",
+                    "internalId": 100207,
                     "releaseDate": "2025-09-18",
                     "comment": "つなげたりして消すぷよ（令和最新版）"
                 }
@@ -232181,7 +232189,7 @@
                     "type": "utage",
                     "difficulty": "【餡】",
                     "level": "12+?",
-                    "internalLevelValue": 12.6,
+                    "internalLevelValue": 12.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 444,
@@ -232202,6 +232210,7 @@
                     },
                     "isSpecial": true,
                     "version": "CiRCLE",
+                    "internalId": 111545,
                     "releaseDate": "2025-09-18",
                     "comment": "いい感じに同時押しするといい感じになる！"
                 }
@@ -232243,6 +232252,7 @@
                     },
                     "isSpecial": true,
                     "version": "CiRCLE",
+                    "internalId": 111670,
                     "releaseDate": "2025-09-18",
                     "comment": "のじゃロリックがはじまるぞ"
                 }
@@ -232263,7 +232273,7 @@
                     "type": "utage",
                     "difficulty": "【音】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 956,
@@ -232284,6 +232294,7 @@
                     },
                     "isSpecial": true,
                     "version": "CiRCLE",
+                    "internalId": 111697,
                     "releaseDate": "2025-09-18",
                     "comment": "～音取りほぼMAXバージョン～"
                 }
@@ -232325,6 +232336,7 @@
                     },
                     "isSpecial": true,
                     "version": "CiRCLE",
+                    "internalId": 111908,
                     "releaseDate": "2025-09-18",
                     "comment": "命はひとつ"
                 }
@@ -233804,6 +233816,7 @@
                     },
                     "isSpecial": true,
                     "version": "CiRCLE",
+                    "internalId": 111188,
                     "releaseDate": "2025-10-16",
                     "comment": "絶え間なく青色"
                 }
@@ -233824,7 +233837,7 @@
                     "type": "utage",
                     "difficulty": "【音】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 831,
@@ -233845,6 +233858,7 @@
                     },
                     "isSpecial": true,
                     "version": "CiRCLE",
+                    "internalId": 111783,
                     "releaseDate": "2025-10-16",
                     "comment": "～音取りほぼMAXバージョン～"
                 }
@@ -236867,7 +236881,7 @@
                     "type": "utage",
                     "difficulty": "【一】",
                     "level": "14+?",
-                    "internalLevelValue": 14.6,
+                    "internalLevelValue": 14.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 496,
@@ -236888,6 +236902,7 @@
                     },
                     "isSpecial": true,
                     "version": "CiRCLE",
+                    "internalId": 110684,
                     "releaseDate": "2025-12-24",
                     "comment": "どいつもこいつもリア充しやがって！"
                 }
@@ -236929,6 +236944,7 @@
                     },
                     "isSpecial": true,
                     "version": "CiRCLE",
+                    "internalId": 111919,
                     "releaseDate": "2025-12-24",
                     "comment": "目と目を合わせて舞を分け合おう"
                 }
@@ -237746,6 +237762,7 @@
                     },
                     "isSpecial": true,
                     "version": "CiRCLE",
+                    "internalId": 110351,
                     "releaseDate": "2026-01-16",
                     "comment": "MIRROR of ADVANCED(↻)"
                 }
@@ -237766,7 +237783,7 @@
                     "type": "utage",
                     "difficulty": "【邪】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 115,
@@ -237787,6 +237804,7 @@
                     },
                     "isSpecial": true,
                     "version": "CiRCLE",
+                    "internalId": 110766,
                     "releaseDate": "2026-01-16",
                     "comment": "ぜたっ作を面譜なルワジイ"
                 }
@@ -242602,7 +242620,7 @@
                     "type": "utage",
                     "difficulty": "【音】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": 753,
@@ -245125,7 +245143,7 @@
             "category": "宴会場",
             "title": "[音]愛包ダンスホール",
             "artist": "HIMEHINA",
-            "bpm": null,
+            "bpm": 141.0,
             "imageName": "70b6b7e7c3a013ba1393702eec9834ae1852966c480dab9b7a7e647c5824b1ab",
             "isNew": false,
             "isLocked": false,
@@ -245134,7 +245152,7 @@
                     "type": "utage",
                     "difficulty": "【音】",
                     "level": "13+?",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": null,
@@ -245568,7 +245586,7 @@
             "category": "宴会場",
             "title": "[即]Straight into the lights",
             "artist": "Cosmograph",
-            "bpm": null,
+            "bpm": 90.0,
             "imageName": "8fc940a2fcffd56224e372b2a57888e84ca295c43609dad8a185b14227caf2a8",
             "isNew": false,
             "isLocked": false,
@@ -245577,7 +245595,7 @@
                     "type": "utage",
                     "difficulty": "【即】",
                     "level": "14+?",
-                    "internalLevelValue": 14.6,
+                    "internalLevelValue": 14.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": null,
@@ -246648,7 +246666,7 @@
             "category": "宴会場",
             "title": "[奏]悪戯センセーション",
             "artist": "森羅万象",
-            "bpm": null,
+            "bpm": 192.0,
             "imageName": "66619c6142c923312d04833b32eceafd087d019792611725c26c81129902ecc1",
             "isNew": false,
             "isLocked": false,
@@ -246689,7 +246707,7 @@
             "category": "宴会場",
             "title": "[招]Re:Unknown X",
             "artist": "まらしぃ",
-            "bpm": null,
+            "bpm": 190.0,
             "imageName": "52a02b60219e3a6982df8f2894e89d6cc8515123455acdabac6540db0fdf14cd",
             "isNew": false,
             "isLocked": false,
@@ -246698,7 +246716,7 @@
                     "type": "utage",
                     "difficulty": "【招】",
                     "level": "14+?",
-                    "internalLevelValue": 14.6,
+                    "internalLevelValue": 14.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": null,
@@ -247849,7 +247867,7 @@
             "category": "POPS＆アニメ",
             "title": "ボックスワンターバ〜ン",
             "artist": "ぼくわたチャンネル",
-            "bpm": null,
+            "bpm": 171.0,
             "imageName": "d73447696f302731351cadfca8716e74d6528356438db1b399a136dbc92a0805",
             "isNew": true,
             "isLocked": false,
@@ -247913,7 +247931,7 @@
                     "difficulty": "expert",
                     "level": "10",
                     "internalLevelValue": 10.0,
-                    "noteDesigner": "-",
+                    "noteDesigner": "はっぴー",
                     "noteCounts": {
                         "tap": null,
                         "hold": null,
@@ -247940,7 +247958,7 @@
                     "difficulty": "master",
                     "level": "13+",
                     "internalLevelValue": 13.8,
-                    "noteDesigner": "-",
+                    "noteDesigner": "サファ太",
                     "noteCounts": {
                         "tap": null,
                         "hold": null,
@@ -247973,7 +247991,7 @@
             "category": "宴会場",
             "title": "[音]インドア系ならトラックメイカー",
             "artist": "Yunomi & nicamoq",
-            "bpm": null,
+            "bpm": 128.0,
             "imageName": "b0de196b2e5d7fe4025da4833c4d4647ad2eb348c4de3151c1b49910b799501a",
             "isNew": false,
             "isLocked": false,
@@ -247982,7 +248000,7 @@
                     "type": "utage",
                     "difficulty": "【音】",
                     "level": "14+?",
-                    "internalLevelValue": 14.6,
+                    "internalLevelValue": 14.7,
                     "noteDesigner": null,
                     "noteCounts": {
                         "tap": null,
@@ -248014,7 +248032,7 @@
             "category": "宴会場",
             "title": "[僕]ボックスワンターバ〜ン",
             "artist": "ぼくわたチャンネル",
-            "bpm": null,
+            "bpm": 171.0,
             "imageName": "d73447696f302731351cadfca8716e74d6528356438db1b399a136dbc92a0805",
             "isNew": false,
             "isLocked": false,
@@ -248782,5 +248800,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-08-09T15:00:13.090438855+00:00"
+    "updateTime": "2026-08-09T18:54:57.408256916+00:00"
 }
