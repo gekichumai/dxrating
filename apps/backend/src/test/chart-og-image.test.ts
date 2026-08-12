@@ -22,6 +22,11 @@ const sheet = song.sheets.find(
 if (!sheet) throw new Error('Expected fixture song to include selected sheet')
 
 const utageSongId = '[宴]セガサターン起動音[H.][Remix]'
+const utageSheet = dxdata.songs
+  .find((candidate) => candidate.songId === utageSongId)
+  ?.sheets.find((candidate) => candidate.type === TypeEnum.UTAGE && candidate.difficulty === '【宴】')
+
+if (!utageSheet) throw new Error('Expected fixture song to include selected Utage sheet')
 
 describe('chart OG image handler', () => {
   it('serves chart images from the API v1 endpoint format', async () => {
@@ -122,7 +127,7 @@ describe('chart OG image data resolution', () => {
       difficulty: '【宴】',
       difficultyLabel: '【宴】',
       level: '13+?',
-      levelLabel: 'Lv 13.6',
+      levelLabel: `Lv ${utageSheet.internalLevelValue.toFixed(1)}`,
       songId: utageSongId,
       title: utageSongId,
       type: TypeEnum.UTAGE,
