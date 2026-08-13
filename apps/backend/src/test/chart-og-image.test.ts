@@ -1,4 +1,5 @@
-import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
+import { DifficultyEnum, TypeEnum, VersionEnum, dxdata } from '@gekichumai/dxdata'
+import { getDxdataSongCatalog } from '@gekichumai/maimai-domain'
 import { Hono } from 'hono'
 import { describe, expect, it, vi } from 'vitest'
 import { app } from '../app.js'
@@ -22,9 +23,12 @@ const sheet = song.sheets.find(
 if (!sheet) throw new Error('Expected fixture song to include selected sheet')
 
 const utageSongId = '[宴]セガサターン起動音[H.][Remix]'
-const utageSheet = dxdata.songs
-  .find((candidate) => candidate.songId === utageSongId)
-  ?.sheets.find((candidate) => candidate.type === TypeEnum.UTAGE && candidate.difficulty === '【宴】')
+const utageDifficulty = '【宴】' as const
+const utageSheet = getDxdataSongCatalog(VersionEnum.CiRCLEPLUS).getByIdentity({
+  songId: utageSongId,
+  type: TypeEnum.UTAGE,
+  difficulty: utageDifficulty,
+})
 
 if (!utageSheet) throw new Error('Expected fixture song to include selected Utage sheet')
 
@@ -47,7 +51,7 @@ describe('chart OG image handler', () => {
 
   it('serves Utage chart images with custom difficulty labels from the API v1 endpoint format', async () => {
     const res = await app.request(
-      `/api/v1/songs/${encodeURIComponent(utageSongId)}/${TypeEnum.UTAGE}/${encodeURIComponent('【宴】')}/og-image`,
+      `/api/v1/songs/${encodeURIComponent(utageSongId)}/${TypeEnum.UTAGE}/${encodeURIComponent(utageDifficulty)}/og-image`,
     )
 
     expect(res.status).toBe(200)
@@ -120,12 +124,12 @@ describe('chart OG image handler', () => {
 
 describe('chart OG image data resolution', () => {
   it('supports Utage charts with custom difficulty labels', () => {
-    const data = resolveChartOgImageData(utageSongId, TypeEnum.UTAGE, '【宴】')
+    const data = resolveChartOgImageData(utageSongId, TypeEnum.UTAGE, utageDifficulty)
 
     expect(data).toMatchObject({
-      detailUrl: `https://dxrating.net/songs/${encodeURIComponent(utageSongId)}/${TypeEnum.UTAGE}/${encodeURIComponent('【宴】')}`,
-      difficulty: '【宴】',
-      difficultyLabel: '【宴】',
+      detailUrl: `https://dxrating.net/songs/${encodeURIComponent(utageSongId)}/${TypeEnum.UTAGE}/${encodeURIComponent(utageDifficulty)}`,
+      difficulty: utageDifficulty,
+      difficultyLabel: utageDifficulty,
       level: '13+?',
       levelLabel: `Lv ${utageSheet.internalLevelValue.toFixed(1)}`,
       songId: utageSongId,
