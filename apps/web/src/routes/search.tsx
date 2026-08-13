@@ -1,7 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { SheetList } from '@/pages/SheetList'
 import { buildSearchSeo, resolveSeoLocale } from '@/utils/seo'
-import { buildSearchQuerySeedSheets, type SearchQuerySeedSheet } from '@/components/sheet/searchQuerySeed'
+import {
+  buildSearchQuerySeedSheets,
+  SEARCH_QUERY_MAX_LENGTH,
+  type SearchQuerySeedSheet,
+} from '@/components/sheet/searchQuerySeed'
 
 type SearchParams = {
   q?: string
@@ -15,13 +19,28 @@ type SearchLoaderData = {
 }
 
 const searchString = (value: unknown) => {
-  if (typeof value === 'string') return value
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
-  return undefined
+  const stringValue =
+    typeof value === 'string'
+      ? value
+      : typeof value === 'number' || typeof value === 'boolean'
+        ? String(value)
+        : undefined
+
+  if (stringValue && stringValue.length > SEARCH_QUERY_MAX_LENGTH) {
+    throw new RangeError(`Search query must not exceed ${SEARCH_QUERY_MAX_LENGTH} characters`)
+  }
+  return stringValue
 }
 
 export const loadSearchRouteData = ({ q }: SearchParams): SearchLoaderData => ({
   seedSheets: q ? buildSearchQuerySeedSheets(q) : [],
+})
+
+export const validateSearchParams = (search: Record<string, unknown>): SearchParams => ({
+  q: searchString(search.q),
+  songId: typeof search.songId === 'string' ? search.songId : undefined,
+  type: typeof search.type === 'string' ? search.type : undefined,
+  difficulty: typeof search.difficulty === 'string' ? search.difficulty : undefined,
 })
 
 export const Route = createFileRoute('/search')({
@@ -34,12 +53,7 @@ export const Route = createFileRoute('/search')({
       links: seo.links,
     }
   },
-  validateSearch: (search: Record<string, unknown>): SearchParams => ({
-    q: searchString(search.q),
-    songId: typeof search.songId === 'string' ? search.songId : undefined,
-    type: typeof search.type === 'string' ? search.type : undefined,
-    difficulty: typeof search.difficulty === 'string' ? search.difficulty : undefined,
-  }),
+  validateSearch: validateSearchParams,
   loaderDeps: ({ search }): SearchParams => ({
     q: search.q,
     songId: search.songId,
