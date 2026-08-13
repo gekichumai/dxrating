@@ -3,6 +3,7 @@ import { createSheetsSearchEngine, getFlattenedSheetsForVersion, type FlattenedS
 import { buildSheetPath } from './sheetLinks'
 
 export const SEARCH_QUERY_SEED_LIMIT = 20
+export const SEARCH_QUERY_MAX_LENGTH = 100
 
 export type SearchQuerySeedSheet = Pick<
   FlattenedSheet,
@@ -38,16 +39,28 @@ const toSearchQuerySeedSheet = (sheet: FlattenedSheet): SearchQuerySeedSheet => 
   path: buildSheetPath({ songId: sheet.songId, type: sheet.type, difficulty: sheet.difficulty }),
 })
 
+const searchEngines = new Map<VersionEnum, ReturnType<typeof createSheetsSearchEngine>>()
+
+const getSearchEngine = (version: VersionEnum) => {
+  const cachedSearchEngine = searchEngines.get(version)
+  if (cachedSearchEngine) return cachedSearchEngine
+
+  const searchEngine = createSheetsSearchEngine({
+    songs: dxdata.songs,
+    sheets: getFlattenedSheetsForVersion(version),
+  })
+  searchEngines.set(version, searchEngine)
+  return searchEngine
+}
+
 export const buildSearchQuerySeedSheets = (
   query: string,
   version: VersionEnum = VersionEnum.CiRCLEPLUS,
 ): SearchQuerySeedSheet[] => {
+  if (query.length > SEARCH_QUERY_MAX_LENGTH) {
+    throw new RangeError(`Search query must not exceed ${SEARCH_QUERY_MAX_LENGTH} characters`)
+  }
   if (!query.trim()) return []
 
-  const search = createSheetsSearchEngine({
-    songs: dxdata.songs,
-    sheets: getFlattenedSheetsForVersion(version),
-  })
-
-  return search(query).slice(0, SEARCH_QUERY_SEED_LIMIT).map(toSearchQuerySeedSheet)
+  return getSearchEngine(version)(query).slice(0, SEARCH_QUERY_SEED_LIMIT).map(toSearchQuerySeedSheet)
 }
