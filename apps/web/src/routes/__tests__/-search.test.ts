@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { Route, loadSearchRouteData } from '../search'
 import { SEARCH_QUERY_MAX_LENGTH } from '@/components/sheet/searchQuerySeed'
+import { Route, loadSearchRouteData, validateSearchParams } from '../search'
 
 vi.mock('@/pages/SheetList', () => ({
   SheetList: () => null,
@@ -21,7 +21,8 @@ describe('/search route', () => {
   it('rejects oversized queries before loading search results', () => {
     const oversizedQuery = 'a'.repeat(SEARCH_QUERY_MAX_LENGTH + 1)
 
-    expect(() => Route.options.validateSearch?.({ q: oversizedQuery } as Record<string, unknown>)).toThrow(RangeError)
+    expect(Route.options.validateSearch).toBe(validateSearchParams)
+    expect(() => validateSearchParams({ q: oversizedQuery })).toThrow(RangeError)
     expect(() => loadSearchRouteData({ q: oversizedQuery })).toThrow(RangeError)
   })
 })
