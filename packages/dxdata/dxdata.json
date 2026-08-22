@@ -248638,6 +248638,502 @@
                 }
             ],
             "searchAcronyms": []
+        },
+        {
+            "songId": "Broomstick adventure!",
+            "category": "ゲーム＆バラエティ",
+            "title": "Broomstick adventure!",
+            "artist": "しーけー",
+            "bpm": 180.0,
+            "imageName": "763fc9e0e4f7f311203547bae22e0b4f2a2d167e9dc674f530bd95a69ef93088",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "4",
+                    "internalLevelValue": 4.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.9,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10+",
+                    "internalLevelValue": 10.9,
+                    "noteDesigner": "けんけん法師",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13+",
+                    "internalLevelValue": 13.6,
+                    "noteDesigner": "サファ太",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.6
+                    }
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "無彩色のディストピア",
+            "category": "ゲーム＆バラエティ",
+            "title": "無彩色のディストピア",
+            "artist": "HyuN feat. ウォルピスカーター",
+            "bpm": 183.0,
+            "imageName": "2cfa179a1ba49dcfd523b3f2f79f6857156ac33e2a411aee7380c7618e56f5de",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.5,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10+",
+                    "internalLevelValue": 10.8,
+                    "noteDesigner": "カマボコ君",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13",
+                    "internalLevelValue": 13.4,
+                    "noteDesigner": "Luxizhel",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.4
+                    }
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "Manifold Hypothesis",
+            "category": "ゲーム＆バラエティ",
+            "title": "Manifold Hypothesis",
+            "artist": "cybermiso feat. tigerlily",
+            "bpm": 174.0,
+            "imageName": "a9773adab7af4f799533c5594f59bf86e5b5a615b18c6a74ce753592ee434fe2",
+            "isNew": true,
+            "isLocked": true,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "7+",
+                    "internalLevelValue": 7.7,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "11",
+                    "internalLevelValue": 11.2,
+                    "noteDesigner": "サファ太",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13+",
+                    "internalLevelValue": 13.9,
+                    "noteDesigner": "Jack",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.9
+                    }
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "Inverted World",
+            "category": "ゲーム＆バラエティ",
+            "title": "Inverted World",
+            "artist": "ARForest",
+            "bpm": 180.0,
+            "imageName": "aeebab7210afc8655f7a4965ce59bb8fc1f7fcd9cb4ce5f0e18d5ca81521ddbd",
+            "isNew": true,
+            "isLocked": true,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "4",
+                    "internalLevelValue": 4.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "7",
+                    "internalLevelValue": 7.5,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "11+",
+                    "internalLevelValue": 11.8,
+                    "noteDesigner": "Luxizhel",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "14",
+                    "internalLevelValue": 14.1,
+                    "noteDesigner": "けんけん法師",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-08-21",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 14.1
+                    }
+                }
+            ],
+            "searchAcronyms": []
         }
     ],
     "categories": [
@@ -248866,5 +249362,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-08-20T15:00:22.396126329+00:00"
+    "updateTime": "2026-08-21T15:00:15.120049592+00:00"
 }
