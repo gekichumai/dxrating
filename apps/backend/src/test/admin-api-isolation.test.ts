@@ -7,10 +7,15 @@ import { resolveAdministratorPrincipal } from '../admin/role-policy.js'
 import { parseSuperAdministratorAllowlist } from '../admin/super-administrator-allowlist.js'
 import { createAdminRouter } from '../admin/router.js'
 import type { AdminRequestAuthentication } from '../admin/principal-loader.js'
+import { ADMIN_ACCESS_ASSERTION_HEADER, ADMIN_ACCESS_TEST_BYPASS_HEADER } from '../admin/access-verifier.js'
+import { TEST_ADMIN_ACCESS_HEADERS } from './admin-access.js'
 
 const requestAdminBootstrap = (compatibilityId?: string) =>
   app.request('/api/admin/bootstrap', {
-    headers: compatibilityId ? { [ADMIN_CONTRACT_HEADER]: compatibilityId } : undefined,
+    headers: {
+      ...TEST_ADMIN_ACCESS_HEADERS,
+      ...(compatibilityId ? { [ADMIN_CONTRACT_HEADER]: compatibilityId } : {}),
+    },
   })
 
 const requestAuthentication = (
@@ -27,6 +32,38 @@ const requestAuthentication = (
 })
 
 describe('private administrator API isolation', () => {
+  it('requires Access proof before compatibility, session, database, or future-route work', async () => {
+    const requests = [
+      app.request('/api/admin/bootstrap', {
+        headers: { [ADMIN_CONTRACT_HEADER]: ADMIN_CONTRACT_COMPATIBILITY_ID },
+      }),
+      app.request('/api/admin/bootstrap', {
+        headers: {
+          [ADMIN_CONTRACT_HEADER]: ADMIN_CONTRACT_COMPATIBILITY_ID,
+          [ADMIN_ACCESS_TEST_BYPASS_HEADER]: 'spoofed-test-proof',
+        },
+      }),
+      app.request('/api/admin/future-route', {
+        headers: { [ADMIN_ACCESS_ASSERTION_HEADER]: 'spoofed.assertion.value' },
+      }),
+      app.request('/api/admin'),
+    ]
+
+    for (const response of await Promise.all(requests)) {
+      expect(response.status).toBe(403)
+      const body = await response.json()
+      expect(body).toMatchObject({ defined: true, code: 'FORBIDDEN', status: 403 })
+      expect(JSON.stringify(body)).not.toContain('spoofed')
+      expect(response.headers.get('Cache-Control')).toBe('private, no-store')
+    }
+
+    const publicResponse = await app.request('/health', {
+      headers: { [ADMIN_ACCESS_ASSERTION_HEADER]: 'public-route-sentinel' },
+    })
+    expect(publicResponse.status).toBe(200)
+    await expect(publicResponse.json()).resolves.toEqual({ status: 'ok' })
+  })
+
   it('mounts the administrator handler only at the unversioned admin prefix and fails closed', async () => {
     const response = await requestAdminBootstrap(ADMIN_CONTRACT_COMPATIBILITY_ID)
     expect(response.status).toBe(401)
@@ -40,7 +77,7 @@ describe('private administrator API isolation', () => {
     expect(
       (
         await app.request('/api/admin/tags', {
-          headers: { [ADMIN_CONTRACT_HEADER]: ADMIN_CONTRACT_COMPATIBILITY_ID },
+          headers: { ...TEST_ADMIN_ACCESS_HEADERS, [ADMIN_CONTRACT_HEADER]: ADMIN_CONTRACT_COMPATIBILITY_ID },
         })
       ).status,
     ).toBe(404)
@@ -163,6 +200,7 @@ describe('private administrator API isolation', () => {
   it('replaces an unsafe client request identifier before logging or returning it', async () => {
     const response = await app.request('/api/admin/bootstrap', {
       headers: {
+        ...TEST_ADMIN_ACCESS_HEADERS,
         [ADMIN_CONTRACT_HEADER]: ADMIN_CONTRACT_COMPATIBILITY_ID,
         'x-request-id': 'credential=do-not-echo',
       },
@@ -208,14 +246,14 @@ describe('private administrator API isolation', () => {
     expect(
       (
         await app.request('/api/admin/spec.json', {
-          headers: { [ADMIN_CONTRACT_HEADER]: ADMIN_CONTRACT_COMPATIBILITY_ID },
+          headers: { ...TEST_ADMIN_ACCESS_HEADERS, [ADMIN_CONTRACT_HEADER]: ADMIN_CONTRACT_COMPATIBILITY_ID },
         })
       ).status,
     ).toBe(404)
   })
 
   it('checks compatibility at the boundary before routing every administrator request', async () => {
-    const response = await app.request('/api/admin/not-a-procedure')
+    const response = await app.request('/api/admin/not-a-procedure', { headers: TEST_ADMIN_ACCESS_HEADERS })
     expect(response.status).toBe(409)
     await expect(response.json()).resolves.toMatchObject({
       defined: true,

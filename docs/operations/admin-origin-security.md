@@ -14,6 +14,8 @@ State-changing administrator requests require an exact configured administrator 
 
 Every `/api/admin` response, including preflight and error responses, is marked `Cache-Control: private, no-store` with matching CDN no-store directives. Public catalog CORS and caching remain separate and credential-independent.
 
+Actual administrator API requests also require the independently validated Cloudflare Access assertion described in `admin-access-boundary.md`. CORS preflight is a transport exception and grants no application access by itself.
+
 ## Moving existing cookies to host-only scope
 
 Older deployments issued the production session cookie with `Domain=dxrating.net`. During rollout, set `LEGACY_AUTH_COOKIE_DOMAIN=dxrating.net`. Whenever Better Auth creates, rotates, or deletes a session cookie, the backend also expires the old parent-domain cookie names while leaving the new host-only cookie intact. This prevents two same-name cookies from surviving a sign-in or sign-out response.

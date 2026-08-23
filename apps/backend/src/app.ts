@@ -32,6 +32,11 @@ import {
   sanitizeAdminCorrelationId,
   type AdminAuthorizationResult,
 } from './admin/observability.js'
+import { createAdminAccessVerifier } from './admin/access-verifier.js'
+import {
+  createAdminAccessBoundaryMiddleware,
+  isAdminAccessProtectedPath as isAdminApiPath,
+} from './admin/access-boundary.js'
 import { loadAdminRequestAuthentication } from './admin/principal-loader.js'
 import { expireLegacyDomainAuthCookies } from './auth-security.js'
 import { isAllowedExactOrigin } from './origin-policy.js'
@@ -43,6 +48,8 @@ import {
 } from '@gekichumai/admin-contract'
 
 const app = new Hono<EvlogVariables>()
+const adminAccessVerifier = createAdminAccessVerifier(config.admin.access)
+const adminAccessBoundary = createAdminAccessBoundaryMiddleware(adminAccessVerifier)
 
 const API_CATALOG_PROFILE_URL = 'https://www.rfc-editor.org/info/rfc9727'
 const API_CATALOG_CONTENT_TYPE = `application/linkset+json; profile="${API_CATALOG_PROFILE_URL}"`
@@ -59,13 +66,10 @@ const ARCADE_VENUES_RETAINED_304_HEADERS = [
   'access-control-expose-headers',
 ]
 const PUBLIC_STATIC_CATALOG_PATHS = new Set([ARCADE_VENUES_PATH, DXDATA_PATH])
-const ADMIN_API_PREFIX = '/api/admin'
 const CREDENTIALED_ALLOW_HEADERS = ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response']
 const ADMIN_ALLOW_HEADERS = [...CREDENTIALED_ALLOW_HEADERS, ADMIN_CONTRACT_HEADER]
 const STANDARD_CREDENTIALED_METHODS = ['POST', 'GET', 'OPTIONS']
 const ADMIN_METHODS = ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS']
-
-const isAdminApiPath = (path: string): boolean => path === ADMIN_API_PREFIX || path.startsWith(`${ADMIN_API_PREFIX}/`)
 
 const isStateChangingMethod = (method: string): boolean => !['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())
 
@@ -229,6 +233,12 @@ app.use('*', (c, next) => {
   if (isAdminApiPath(c.req.path)) return adminCors(c, next)
   return apiCors(c, next)
 })
+
+// Access assertions are bearer credentials. Consume and remove both proof
+// headers before evlog or any error-reporting middleware can inspect request
+// headers. Public routes discard them; administrator requests validate the
+// captured proof before compatibility, session, database, or procedure work.
+app.use('*', adminAccessBoundary)
 
 // Request logging
 app.use(

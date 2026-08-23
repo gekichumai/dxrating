@@ -92,6 +92,8 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/dxrating_test
           BETTER_AUTH_SECRET: ci_test_secret_1234567890
           BETTER_AUTH_URL: http://localhost:3001
+          ADMIN_ACCESS_MODE: test_bypass
+          ADMIN_ACCESS_TEST_BYPASS_SECRET: ci-test-only-admin-access-proof-secret
           NODE_ENV: test
           PORT: 3001
         run: pnpm --filter @gekichumai/backend test:producer-contract

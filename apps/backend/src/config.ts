@@ -21,6 +21,32 @@ const emptyStringToUndefined = (value: unknown) => (value === '' ? undefined : v
 const optionalString = z.preprocess(emptyStringToUndefined, z.string().optional())
 const optionalUrl = z.preprocess(emptyStringToUndefined, z.string().url().optional())
 const optionalExactWebOrigin = z.preprocess(emptyStringToUndefined, ExactWebOriginSchema.optional())
+const optionalAdminAccessIssuer = z.preprocess(
+  emptyStringToUndefined,
+  ExactWebOriginSchema.refine((origin) => {
+    const parsed = new URL(origin)
+    return (
+      parsed.protocol === 'https:' &&
+      parsed.port === '' &&
+      parsed.hostname !== 'cloudflareaccess.com' &&
+      parsed.hostname.endsWith('.cloudflareaccess.com')
+    )
+  }, 'must be an exact HTTPS Cloudflare Access team origin').optional(),
+)
+const adminAccessAudienceList = z.preprocess(
+  (value) => {
+    if (value === undefined || value === '') return []
+    if (typeof value !== 'string') return value
+
+    try {
+      return JSON.parse(value)
+    } catch {
+      return value
+    }
+  },
+  z.array(z.string().regex(/^[A-Za-z0-9_-]{32,256}$/)).max(20),
+)
+const optionalAdminAccessBypassSecret = z.preprocess(emptyStringToUndefined, z.string().min(32).max(256).optional())
 const optionalCookieDomain = z.preprocess(
   emptyStringToUndefined,
   z
@@ -66,6 +92,10 @@ const envSchema = z
     PUBLIC_ADDITIONAL_TRUSTED_ORIGINS: ExactWebOriginListSchema.default([]),
     ADMIN_FRONTEND_URL: optionalExactWebOrigin,
     ADMIN_ADDITIONAL_TRUSTED_ORIGINS: ExactWebOriginListSchema.default([]),
+    ADMIN_ACCESS_MODE: z.enum(['cloudflare', 'test_bypass']),
+    ADMIN_ACCESS_ISSUER: optionalAdminAccessIssuer,
+    ADMIN_ACCESS_AUDIENCES: adminAccessAudienceList.default([]),
+    ADMIN_ACCESS_TEST_BYPASS_SECRET: optionalAdminAccessBypassSecret,
     // Transitional deletion only. Set this to the previous parent cookie
     // domain for one maximum session lifetime during the host-only rollout.
     LEGACY_AUTH_COOKIE_DOMAIN: optionalCookieDomain,
@@ -92,6 +122,81 @@ const envSchema = z
     validateAdditionalHttpOrigin(candidate.ADMIN_FRONTEND_URL, ['ADMIN_FRONTEND_URL'])
     for (const [index, origin] of candidate.ADMIN_ADDITIONAL_TRUSTED_ORIGINS.entries()) {
       validateAdditionalHttpOrigin(origin, ['ADMIN_ADDITIONAL_TRUSTED_ORIGINS', index])
+    }
+
+    if (candidate.ADMIN_ACCESS_MODE === 'cloudflare') {
+      if (!candidate.ADMIN_ACCESS_ISSUER) {
+        context.addIssue({
+          code: 'custom',
+          path: ['ADMIN_ACCESS_ISSUER'],
+          message: 'is required in cloudflare mode',
+        })
+      }
+      if (candidate.ADMIN_ACCESS_AUDIENCES.length === 0) {
+        context.addIssue({
+          code: 'custom',
+          path: ['ADMIN_ACCESS_AUDIENCES'],
+          message: 'must contain at least one administrator application audience in cloudflare mode',
+        })
+      }
+      if (candidate.ADMIN_ACCESS_TEST_BYPASS_SECRET) {
+        context.addIssue({
+          code: 'custom',
+          path: ['ADMIN_ACCESS_TEST_BYPASS_SECRET'],
+          message: 'must be unset in cloudflare mode',
+        })
+      }
+    } else {
+      if (candidate.NODE_ENV === 'production') {
+        context.addIssue({
+          code: 'custom',
+          path: ['ADMIN_ACCESS_MODE'],
+          message: 'test_bypass mode is forbidden in production',
+        })
+      }
+      if (!candidate.ADMIN_ACCESS_TEST_BYPASS_SECRET) {
+        context.addIssue({
+          code: 'custom',
+          path: ['ADMIN_ACCESS_TEST_BYPASS_SECRET'],
+          message: 'is required in test_bypass mode',
+        })
+      }
+      if (candidate.ADMIN_ACCESS_ISSUER || candidate.ADMIN_ACCESS_AUDIENCES.length > 0) {
+        context.addIssue({
+          code: 'custom',
+          path: ['ADMIN_ACCESS_MODE'],
+          message: 'Cloudflare issuer and audiences must be unset in test_bypass mode',
+        })
+      }
+
+      const localBypassOrigins = [
+        [['BETTER_AUTH_URL'], candidate.BETTER_AUTH_URL],
+        [['FRONTEND_URL'], candidate.FRONTEND_URL],
+        ...candidate.PUBLIC_ADDITIONAL_TRUSTED_ORIGINS.map(
+          (origin, index) => [['PUBLIC_ADDITIONAL_TRUSTED_ORIGINS', index], origin] as const,
+        ),
+        [['ADMIN_FRONTEND_URL'], candidate.ADMIN_FRONTEND_URL],
+        ...candidate.ADMIN_ADDITIONAL_TRUSTED_ORIGINS.map(
+          (origin, index) => [['ADMIN_ADDITIONAL_TRUSTED_ORIGINS', index], origin] as const,
+        ),
+      ] as const
+      for (const [path, origin] of localBypassOrigins) {
+        if (origin && !isLoopbackHostname(new URL(origin).hostname)) {
+          context.addIssue({
+            code: 'custom',
+            path: [...path],
+            message: 'test_bypass mode requires every configured web origin to be loopback',
+          })
+        }
+      }
+    }
+
+    if (new Set(candidate.ADMIN_ACCESS_AUDIENCES).size !== candidate.ADMIN_ACCESS_AUDIENCES.length) {
+      context.addIssue({
+        code: 'custom',
+        path: ['ADMIN_ACCESS_AUDIENCES'],
+        message: 'must not contain duplicate audiences',
+      })
     }
 
     if (candidate.NODE_ENV === 'production') {
@@ -172,6 +277,17 @@ export const config = {
   admin: {
     frontendOrigin: adminFrontendOrigin,
     trustedOrigins: adminTrustedOrigins,
+    access:
+      env.ADMIN_ACCESS_MODE === 'cloudflare'
+        ? {
+            mode: env.ADMIN_ACCESS_MODE,
+            issuer: env.ADMIN_ACCESS_ISSUER!,
+            audiences: env.ADMIN_ACCESS_AUDIENCES,
+          }
+        : {
+            mode: env.ADMIN_ACCESS_MODE,
+            bypassSecret: env.ADMIN_ACCESS_TEST_BYPASS_SECRET!,
+          },
   },
   public: {
     trustedOrigins: publicTrustedOrigins,

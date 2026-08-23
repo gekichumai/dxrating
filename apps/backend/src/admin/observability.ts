@@ -1,4 +1,5 @@
 import { Sentry } from '../lib/functions/sentry.js'
+import { ADMIN_ACCESS_DENIAL_CATEGORIES, type AdminAccessDenialCategory } from './access-verifier.js'
 
 const ADMIN_ERROR_MESSAGE = 'Administrator request failed'
 const SAFE_CORRELATION_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -23,6 +24,7 @@ export type AdminAuthorizationResult = (typeof ADMIN_AUTHORIZATION_RESULTS)[numb
 
 const adminTelemetryProcedures = new Set<string>(ADMIN_TELEMETRY_PROCEDURES)
 const adminAuthorizationResults = new Set<string>(ADMIN_AUTHORIZATION_RESULTS)
+const adminAccessDenialCategories = new Set<string>(ADMIN_ACCESS_DENIAL_CATEGORIES)
 
 export const sanitizeAdminCorrelationId = (requestId: string | null | undefined) =>
   requestId && SAFE_CORRELATION_ID.test(requestId) ? requestId : undefined
@@ -33,6 +35,9 @@ export const sanitizeAdminTelemetryProcedure = (procedureName: string): AdminTel
 export const sanitizeAdminAuthorizationResult = (result: string): AdminAuthorizationResult =>
   adminAuthorizationResults.has(result) ? (result as AdminAuthorizationResult) : 'UNKNOWN'
 
+export const sanitizeAdminAccessDenialCategory = (category: string): AdminAccessDenialCategory | 'UNKNOWN' =>
+  adminAccessDenialCategories.has(category) ? (category as AdminAccessDenialCategory) : 'UNKNOWN'
+
 export const createSafeAdminTelemetryError = () => new Error(ADMIN_ERROR_MESSAGE)
 
 export type AdminTelemetrySink = {
@@ -42,6 +47,21 @@ export type AdminTelemetrySink = {
 export type AdminAuthorizationTelemetrySink = {
   increment: (labels: { procedure: AdminTelemetryProcedure; result: AdminAuthorizationResult }) => unknown
 }
+
+export type AdminAccessDenialTelemetrySink = {
+  increment: (category: AdminAccessDenialCategory | 'UNKNOWN') => unknown
+}
+
+export const recordAdminAccessDenialTo = (category: string, sink: AdminAccessDenialTelemetrySink) =>
+  sink.increment(sanitizeAdminAccessDenialCategory(category))
+
+export const recordAdminAccessDenial = (category: string) =>
+  recordAdminAccessDenialTo(category, {
+    increment: (safeCategory) =>
+      Sentry.metrics.count('admin.access.denied', 1, {
+        attributes: { category: safeCategory },
+      }),
+  })
 
 export const recordAdminAuthorizationResultTo = (
   procedureName: string,

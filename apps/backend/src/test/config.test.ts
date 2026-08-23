@@ -13,9 +13,13 @@ const setProductionEnvironment = (overrides: Record<string, string> = {}) => {
     PUBLIC_ADDITIONAL_TRUSTED_ORIGINS: '[]',
     ADMIN_FRONTEND_URL: 'https://admin.dxrating.net',
     ADMIN_ADDITIONAL_TRUSTED_ORIGINS: '[]',
+    ADMIN_ACCESS_MODE: 'cloudflare',
+    ADMIN_ACCESS_ISSUER: 'https://example-team.cloudflareaccess.com',
+    ADMIN_ACCESS_AUDIENCES: JSON.stringify(['a'.repeat(64)]),
     ...overrides,
   }
   delete process.env.BETTER_AUTH_TRUSTED_ORIGINS
+  delete process.env.ADMIN_ACCESS_TEST_BYPASS_SECRET
 }
 
 afterEach(() => {
@@ -115,8 +119,12 @@ describe('config', () => {
       ADMIN_FRONTEND_URL: 'https://ADMIN.dxrating.net/',
       ADMIN_ADDITIONAL_TRUSTED_ORIGINS:
         '["https://admin.dxrating.net","http://localhost:5174","https://admin-pr-1.preview.dxrating.net"]',
+      ADMIN_ACCESS_MODE: 'cloudflare',
+      ADMIN_ACCESS_ISSUER: 'https://example-team.cloudflareaccess.com',
+      ADMIN_ACCESS_AUDIENCES: JSON.stringify(['a'.repeat(64)]),
     }
     delete process.env.BETTER_AUTH_TRUSTED_ORIGINS
+    delete process.env.ADMIN_ACCESS_TEST_BYPASS_SECRET
 
     const { config } = await import('../config.js')
 
@@ -135,6 +143,28 @@ describe('config', () => {
       'https://admin-pr-1.preview.dxrating.net',
     ])
     expect(config.auth.trustedOrigins).toEqual([...config.browserTrustedOrigins, 'dxrating://'])
+    expect(config.admin.access).toEqual({
+      mode: 'cloudflare',
+      issuer: 'https://example-team.cloudflareaccess.com',
+      audiences: ['a'.repeat(64)],
+    })
+  })
+
+  it('derives the Cloudflare Access verifier configuration from an exact team issuer and audience list', async () => {
+    vi.doMock('dotenv', () => ({ config: vi.fn() }))
+    const productionAudience = 'a'.repeat(64)
+    const previewAudience = 'b'.repeat(64)
+    setProductionEnvironment({
+      ADMIN_ACCESS_AUDIENCES: JSON.stringify([productionAudience, previewAudience]),
+    })
+
+    const { config } = await import('../config.js')
+
+    expect(config.admin.access).toEqual({
+      mode: 'cloudflare',
+      issuer: 'https://example-team.cloudflareaccess.com',
+      audiences: [productionAudience, previewAudience],
+    })
   })
 
   it('requires an explicit HTTPS administrator origin in production', async () => {
@@ -168,6 +198,84 @@ describe('config', () => {
     process.env.BETTER_AUTH_TRUSTED_ORIGINS = 'https://unreviewed.example'
 
     await expect(import('../config.js')).rejects.toThrow('BETTER_AUTH_TRUSTED_ORIGINS')
+  })
+
+  it.each([
+    ['a missing Access issuer', { ADMIN_ACCESS_ISSUER: '' }],
+    ['an unrelated Access issuer', { ADMIN_ACCESS_ISSUER: 'https://access.example.com' }],
+    ['an HTTP Access issuer', { ADMIN_ACCESS_ISSUER: 'http://example-team.cloudflareaccess.com' }],
+    ['an Access issuer path', { ADMIN_ACCESS_ISSUER: 'https://example-team.cloudflareaccess.com/certs' }],
+    ['an empty Access audience list', { ADMIN_ACCESS_AUDIENCES: '[]' }],
+    ['a malformed Access audience list', { ADMIN_ACCESS_AUDIENCES: '["audience"' }],
+    ['duplicate Access audiences', { ADMIN_ACCESS_AUDIENCES: JSON.stringify(['a'.repeat(64), 'a'.repeat(64)]) }],
+  ])('rejects %s in production', async (_description, overrides) => {
+    vi.doMock('dotenv', () => ({ config: vi.fn() }))
+    setProductionEnvironment(overrides)
+
+    await expect(import('../config.js')).rejects.toThrow()
+  })
+
+  it('rejects the Access test bypass in production', async () => {
+    vi.doMock('dotenv', () => ({ config: vi.fn() }))
+    setProductionEnvironment({
+      ADMIN_ACCESS_MODE: 'test_bypass',
+      ADMIN_ACCESS_ISSUER: '',
+      ADMIN_ACCESS_AUDIENCES: '[]',
+      ADMIN_ACCESS_TEST_BYPASS_SECRET: 'production-must-never-accept-this-secret',
+    })
+
+    await expect(import('../config.js')).rejects.toThrow('test_bypass mode is forbidden in production')
+  })
+
+  it('limits the test bypass to a loopback backend origin', async () => {
+    vi.doMock('dotenv', () => ({ config: vi.fn() }))
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'development',
+      DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/dxrating_test',
+      BETTER_AUTH_SECRET: 'test-secret',
+      BETTER_AUTH_URL: 'https://preview-backend.example.com',
+      ADMIN_ACCESS_MODE: 'test_bypass',
+      ADMIN_ACCESS_ISSUER: '',
+      ADMIN_ACCESS_AUDIENCES: '[]',
+      ADMIN_ACCESS_TEST_BYPASS_SECRET: 'development-loopback-only-bypass-secret',
+    }
+
+    await expect(import('../config.js')).rejects.toThrow(
+      'test_bypass mode requires every configured web origin to be loopback',
+    )
+  })
+
+  it.each([
+    ['the public frontend', { FRONTEND_URL: 'https://preview.dxrating.net' }],
+    ['a public additional origin', { PUBLIC_ADDITIONAL_TRUSTED_ORIGINS: '["https://preview.dxrating.net"]' }],
+    ['the administrator frontend', { ADMIN_FRONTEND_URL: 'https://admin.dxrating.net' }],
+    [
+      'an administrator additional origin',
+      { ADMIN_ADDITIONAL_TRUSTED_ORIGINS: '["https://admin-pr-307.preview.dxrating.net"]' },
+    ],
+  ])('rejects test-bypass configuration for non-loopback %s', async (_description, overrides) => {
+    vi.doMock('dotenv', () => ({ config: vi.fn() }))
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'test',
+      DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/dxrating_test',
+      BETTER_AUTH_SECRET: 'test-secret',
+      BETTER_AUTH_URL: 'http://localhost:3001',
+      FRONTEND_URL: 'http://localhost:5173',
+      PUBLIC_ADDITIONAL_TRUSTED_ORIGINS: '[]',
+      ADMIN_FRONTEND_URL: 'http://localhost:5174',
+      ADMIN_ADDITIONAL_TRUSTED_ORIGINS: '[]',
+      ADMIN_ACCESS_MODE: 'test_bypass',
+      ADMIN_ACCESS_ISSUER: '',
+      ADMIN_ACCESS_AUDIENCES: '[]',
+      ADMIN_ACCESS_TEST_BYPASS_SECRET: 'test-only-loopback-access-proof-secret',
+      ...overrides,
+    }
+
+    await expect(import('../config.js')).rejects.toThrow(
+      'test_bypass mode requires every configured web origin to be loopback',
+    )
   })
 
   it('accepts only the former public frontend hostname as a transitional legacy cookie domain', async () => {

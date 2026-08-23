@@ -90,6 +90,7 @@ Required:
 
 - `DATABASE_URL` — PostgreSQL connection string
 - `BETTER_AUTH_SECRET` — Auth secret key
+- `ADMIN_ACCESS_MODE` — `cloudflare` for production/protected previews, or the non-production-only `test_bypass`
 
 Optional:
 
@@ -100,6 +101,8 @@ Optional:
 - `ADMIN_FRONTEND_URL` (default outside production: http://localhost:5174; required in production)
 - `PUBLIC_ADDITIONAL_TRUSTED_ORIGINS` (JSON array of exact, trusted public preview/development origins)
 - `ADMIN_ADDITIONAL_TRUSTED_ORIGINS` (JSON array of exact, trusted administrator origins)
+- `ADMIN_ACCESS_ISSUER`, `ADMIN_ACCESS_AUDIENCES` (required together in `cloudflare` mode)
+- `ADMIN_ACCESS_TEST_BYPASS_SECRET` (required only in non-production `test_bypass` mode; inject server-side)
 - `LEGACY_AUTH_COOKIE_DOMAIN` (temporary parent-domain cookie cleanup during the host-only rollout)
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth
 - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` — GitHub OAuth
@@ -141,3 +144,5 @@ When working on Coolify deployment or integration, use context7 to query the Coo
 - Database schema changes are generated with Drizzle and applied by the locked one-shot runner; never edit generated SQL or run migrations from application startup
 - ES modules throughout (`.js` extensions in imports even for TypeScript)
 - Credentialed CORS uses separate exact public and administrator origin lists. Public previews never receive administrator-route CORS access. Administrator previews must be listed explicitly; wildcard and substring origin matching are not supported.
+- Every non-preflight `/api/admin` request validates the Cloudflare Access assertion before compatibility, session, database, or procedure work. The signed Access proof is an outer gate only and never supplies the DXRating user or role.
+- Access proof headers are consumed before request logging. Do not add them to browser CORS headers or expose the test-bypass secret through a `VITE_` variable.

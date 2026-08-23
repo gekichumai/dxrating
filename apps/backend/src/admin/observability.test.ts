@@ -3,9 +3,11 @@ import { ORPCError } from '@orpc/server'
 import { shouldCaptureSentryError } from '../lib/functions/sentry.js'
 import {
   createSafeAdminTelemetryError,
+  recordAdminAccessDenialTo,
   recordAdminAuthorizationResultTo,
   reportAdminExceptionTo,
   sanitizeAdminAuthorizationResult,
+  sanitizeAdminAccessDenialCategory,
   sanitizeAdminCorrelationId,
   sanitizeAdminTelemetryProcedure,
 } from './observability.js'
@@ -61,6 +63,18 @@ describe('administrator observability redaction', () => {
 })
 
 describe('administrator authorization outcome telemetry', () => {
+  it('records only finite Access denial categories', () => {
+    const increment = vi.fn()
+
+    recordAdminAccessDenialTo('WRONG_AUDIENCE', { increment })
+    recordAdminAccessDenialTo('user@example.com credential=do-not-send', { increment })
+
+    expect(increment.mock.calls).toEqual([['WRONG_AUDIENCE'], ['UNKNOWN']])
+    expect(JSON.stringify(increment.mock.calls)).not.toContain('user@example.com')
+    expect(sanitizeAdminAccessDenialCategory('INVALID_SIGNATURE')).toBe('INVALID_SIGNATURE')
+    expect(sanitizeAdminAccessDenialCategory('jwt-payload')).toBe('UNKNOWN')
+  })
+
   it('records only finite procedure and result labels', () => {
     const increment = vi.fn()
 

@@ -9,8 +9,9 @@ import {
   signUp,
   teardownTestServer,
 } from './setup.js'
+import { TEST_ADMIN_ACCESS_HEADERS } from './admin-access.js'
 
-const ADMIN_ORIGIN = 'https://admin.dxrating.net'
+const ADMIN_ORIGIN = 'http://localhost:5174'
 
 const signInFromAdmin = (email: string, password: string) =>
   fetch(`${getBaseUrl()}/api/auth/sign-in/email`, {
@@ -76,6 +77,7 @@ describe('administrator origin authentication integration', () => {
     const adminResponse = await fetch(`${getBaseUrl()}/api/admin/bootstrap`, {
       credentials: 'include',
       headers: {
+        ...TEST_ADMIN_ACCESS_HEADERS,
         Cookie: cookie,
         Origin: ADMIN_ORIGIN,
         [ADMIN_CONTRACT_HEADER]: ADMIN_CONTRACT_COMPATIBILITY_ID,
@@ -92,6 +94,7 @@ describe('administrator origin authentication integration', () => {
     const notFoundResponse = await fetch(`${getBaseUrl()}/api/admin/not-a-procedure`, {
       credentials: 'include',
       headers: {
+        ...TEST_ADMIN_ACCESS_HEADERS,
         Cookie: cookie,
         Origin: ADMIN_ORIGIN,
         [ADMIN_CONTRACT_HEADER]: ADMIN_CONTRACT_COMPATIBILITY_ID,
@@ -150,7 +153,10 @@ describe('administrator origin authentication integration', () => {
     ['an unrelated origin', 'https://unrelated.example'],
     ['a deceptive suffix origin', 'https://admin.dxrating.net.evil.example'],
   ])('rejects administrator mutations from %s before procedure routing', async (_description, origin) => {
-    const headers = new Headers({ [ADMIN_CONTRACT_HEADER]: ADMIN_CONTRACT_COMPATIBILITY_ID })
+    const headers = new Headers({
+      ...TEST_ADMIN_ACCESS_HEADERS,
+      [ADMIN_CONTRACT_HEADER]: ADMIN_CONTRACT_COMPATIBILITY_ID,
+    })
     if (origin !== undefined) headers.set('Origin', origin)
 
     const response = await fetch(`${getBaseUrl()}/api/admin/not-a-procedure`, {
@@ -183,8 +189,8 @@ describe('administrator origin authentication integration', () => {
   })
 
   it.each([
-    'https://admin.dxrating.net/after-auth',
-    'https://admin-pr-306.preview.dxrating.net/after-auth',
+    'http://localhost:5174/after-auth',
+    'http://admin-pr-306.localhost:5174/after-auth',
     'http://localhost:5173/after-auth',
   ])('accepts configured authentication return origin %s', async (callbackURL) => {
     const response = await fetch(`${getBaseUrl()}/api/auth/sign-in/social`, {
