@@ -18,6 +18,7 @@ import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { type FlattenedSheet, canonicalIdFromParts, useFilteredSheets, useSheets } from '../songs'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { sheetMatchesDifficultyFilter } from './sheetDifficultyFilter'
+import { compareSheetsBySorts } from './sheetSorting'
 
 const searchRouteApi = getRouteApi('/search')
 
@@ -27,10 +28,6 @@ const chainEvery =
     fns.every((fn) => fn(arg))
 
 const skeletonWidths = Array.from({ length: 20 }).map((_, index) => 5.5 + (index % 7) * 0.8)
-
-const SORT_DESCRIPTOR_MAPPING = {
-  releaseDate: 'releaseDateTimestamp' as const,
-}
 
 type SearchParams = ReturnType<typeof searchRouteApi.useSearch>
 type SheetListProps = {
@@ -195,36 +192,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
         )(sheet)
       })
       if (!inputQuery) {
-        sortFilteredResults.sort((a, b) =>
-          sortFilterOptions.sorts.reduce((acc, sort) => {
-            if (acc !== 0) {
-              return acc
-            }
-            const descriptor =
-              SORT_DESCRIPTOR_MAPPING[sort.descriptor as keyof typeof SORT_DESCRIPTOR_MAPPING] ?? sort.descriptor
-            const aValue = a[descriptor]
-            const bValue = b[descriptor]
-
-            // null / undefined always sort last (both asc and desc)
-            if (aValue == null && bValue == null) {
-              return 0
-            }
-            if (aValue == null) {
-              return 1
-            }
-            if (bValue == null) {
-              return -1
-            }
-
-            if (aValue < bValue) {
-              return sort.direction === 'asc' ? -1 : 1
-            }
-            if (aValue > bValue) {
-              return sort.direction === 'asc' ? 1 : -1
-            }
-            return 0
-          }, 0),
-        )
+        sortFilteredResults.sort((a, b) => compareSheetsBySorts(a, b, sortFilterOptions.sorts))
       }
     }
     const elapsed = performance.now() - startTime
