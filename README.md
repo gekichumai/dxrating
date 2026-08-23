@@ -40,7 +40,7 @@ scripts/
 
 - **`apps/web`** — The main frontend, serving both web and iOS (via WKWebView) variants. Built with React 19, Vite, UnoCSS, Material-UI 5, and shadcn/ui. Supports 4 languages (en, ja, zh-Hans, zh-Hant) via i18next, with an in-browser SQLite database (sql.js) for offline song data.
 
-- **`apps/backend`** — The API server built on Hono. Uses oRPC for type-safe API contracts (defined with Zod), Drizzle ORM with PostgreSQL 16 for persistence, and Better Auth for authentication (email/password, Google/GitHub OAuth, passkeys).
+- **`apps/backend`** — The API server built on Hono. Uses oRPC for type-safe API contracts (defined with Zod), Drizzle ORM with PostgreSQL 18 for persistence, and Better Auth for authentication (email/password, Google/GitHub OAuth, passkeys).
 
 - **`apps/functions`** — Cloudflare Workers edge functions built on Hono, mirroring select backend endpoints for lower latency.
 
@@ -76,7 +76,7 @@ a single deployment authority.
 | Layer | Technology |
 |-------|-----------|
 | Frontend | React 19, Vite, UnoCSS, MUI 5, wouter, TanStack Query |
-| Backend | Hono, oRPC, Drizzle ORM, PostgreSQL 16, Better Auth |
+| Backend | Hono, oRPC, Drizzle ORM, PostgreSQL 18, Better Auth |
 | Edge | Cloudflare Workers, Hono |
 | Language | TypeScript 5.9, ESM throughout |
 | Monorepo | Turborepo, pnpm 10 |
@@ -102,6 +102,7 @@ pnpm install
 
 ```bash
 pnpm --filter @gekichumai/backend db:up
+pnpm --filter @gekichumai/backend migrate:dev
 ```
 
 ### Configure environment
@@ -151,8 +152,10 @@ pnpm --filter @gekichumai/dxrating-web test   # Web unit tests
 ## Deployment
 
 - **Web** — Cloudflare Pages
-- **Backend** — Docker container deployed via Coolify
+- **Backend** — A protected pre-deployment job runs the locked, finite migration command from the exact rehearsed image digest while old traffic remains live; Raw Docker Compose then deploys that digest through Coolify. Backend startup itself never changes the database.
 - **CI/CD** — GitHub Actions auto-tags versions on push to `main` and triggers deployments
+
+Database changes use an online, backward-compatible expand/backfill/validate/contract sequence so no schema step requires a planned application outage. This does not imply that the container platform performs rolling replacement. See the [backend online migration runbook](docs/operations/backend-online-migrations.md) before authoring or operating a migration.
 
 ## Useful Links
 

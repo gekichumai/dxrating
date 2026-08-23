@@ -1,0 +1,7 @@
+# Reviewed non-transactional migrations
+
+This directory is reserved for PostgreSQL operations that cannot run inside Drizzle's transaction, notably `CREATE INDEX CONCURRENTLY`. Each entry has exactly one idempotent operation and one read-only postcondition query, both listed in `manifest.json` with reviewed SHA-256 digests. The dedicated migration job runs these files only after generated Drizzle migrations and records an operation only after its postcondition returns one row with `verified = true`.
+
+Never add `BEGIN`, `COMMIT`, or `ROLLBACK`, and never put ordinary schema migrations here. Prefer forms that are safe after a process failure between the SQL operation and ledger insertion, such as `CREATE INDEX CONCURRENTLY IF NOT EXISTS`. A concurrent-index verifier must check `pg_index.indisvalid`, `indisready`, the target, and the expected key definition; an invalid same-name index must fail the job for explicit operator repair. Update a digest only before an operation has run anywhere; an applied digest mismatch or failed postcondition fails closed.
+
+The runner applies the complete generated Drizzle journal before this manifest. A reviewed non-transactional operation may depend on any generated migration already in that journal, but a generated migration must never depend on a non-transactional operation. Put such follow-up work in another non-transactional entry or a later release. Applied ledger entries must be an exact prefix of the manifest; a hole is treated as corrupted history and is never repaired by running an older operation out of order.

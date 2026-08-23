@@ -87,6 +87,7 @@ COPY --from=builder /app/packages ./packages
 
 # Copy necessary runtime files
 COPY apps/backend/drizzle ./apps/backend/drizzle
+COPY apps/backend/non-transactional-migrations ./apps/backend/non-transactional-migrations
 
 WORKDIR /app/apps/backend
 
@@ -106,9 +107,16 @@ ENV REPO_URL=${REPO_URL}
 ENV BUILT_AT=${BUILT_AT}
 ENV VERSION=${VERSION}
 
+# The separate migration job overrides the command and does not use this HTTP
+# healthcheck because it is a finite process rather than a traffic server.
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \
+  CMD curl --fail --silent --show-error http://127.0.0.1:3000/health >/dev/null || exit 1
+
 # Copy entrypoint script
 COPY apps/backend/docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x docker-entrypoint.sh
 
-# Start the application (--experimental-transform-types needed for dxdata's TypeScript enums)
+# Start only the traffic-serving application. Database migrations run from
+# this exact image digest in the protected pre-deployment job.
+# --experimental-transform-types is needed for dxdata's TypeScript enums.
 CMD ["./docker-entrypoint.sh"]

@@ -27,6 +27,11 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+apps/backend/.env
+apps/backend/.env.*
+!apps/backend/.env.example
+!apps/backend/.env.production.example
+!apps/backend/.env.test
 
 # typescript incremental
 *.tsbuildinfo

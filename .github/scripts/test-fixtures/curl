@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+method='GET'
+url=''
+output_file=''
+payload=''
+write_out=false
+while (($#)); do
+  case "$1" in
+    --request | --url | --header | --output | --write-out | --connect-timeout | --max-time | --data)
+      option="$1"
+      value="$2"
+      shift 2
+      case "$option" in
+        --request) method="$value" ;;
+        --url) url="$value" ;;
+        --output) output_file="$value" ;;
+        --data) payload="$value" ;;
+        --write-out) write_out=true ;;
+      esac
+      ;;
+    --fail | --fail-with-body | --silent | --show-error)
+      shift
+      ;;
+    https://*)
+      url="$1"
+      shift
+      ;;
+    *)
+      echo "Unexpected curl argument: $1" >&2
+      exit 2
+      ;;
+  esac
+done
+
+test -n "$url"
+test -n "$output_file"
+test -n "${MOCK_CURL_STATE_FILE:-}"
+scenario="${MOCK_CURL_SCENARIO:-success}"
+body=''
+
+case "$url" in
+  https://coolify.test/api/v1/applications/app)
+    case "$method" in
+      GET)
+        body='{"id":42,"uuid":"app","build_pack":"dockercompose","docker_compose_location":"apps/backend/docker-compose.prod.yml","git_commit_sha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","settings":{"is_raw_compose_deployment_enabled":true,"is_auto_deploy_enabled":false}}'
+        ;;
+      PATCH)
+        [[ "$payload" == *'"git_commit_sha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"'* ]]
+        body='{"message":"updated"}'
+        ;;
+      *) exit 3 ;;
+    esac
+    ;;
+  https://coolify.test/api/v1/applications/app/envs)
+    case "$method" in
+      GET)
+        body='[{"key":"BACKEND_IMAGE_DIGEST","is_preview":false,"is_runtime":true,"is_buildtime":true}]'
+        ;;
+      PATCH)
+        [[ "$payload" == *'"is_runtime":true'* ]]
+        [[ "$payload" == *'"is_buildtime":true'* ]]
+        [[ "$payload" == *'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'* ]]
+        body='{"message":"updated"}'
+        ;;
+      *) exit 4 ;;
+    esac
+    ;;
+  https://coolify.test/api/v1/deployments)
+    [[ "$method" == 'GET' ]]
+    body='[]'
+    ;;
+  'https://coolify.test/api/v1/deploy?uuid=app')
+    [[ "$method" == 'POST' ]]
+    body='{"deployments":[{"resource_uuid":"app","deployment_uuid":"deployment-1"}]}'
+    ;;
+  https://coolify.test/api/v1/deployments/deployment-1)
+    [[ "$method" == 'GET' ]]
+    if [[ "$scenario" == 'reconcile' ]]; then
+      if grep --quiet '^cancelled$' "$MOCK_CURL_STATE_FILE" 2>/dev/null; then
+        body='{"status":"cancelled-by-user","commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}'
+      elif grep --quiet '^observed-unknown$' "$MOCK_CURL_STATE_FILE" 2>/dev/null; then
+        body='{"status":"in_progress","commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}'
+      else
+        printf '%s\n' observed-unknown >>"$MOCK_CURL_STATE_FILE"
+        body='{"status":"unexpected-state","commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}'
+      fi
+    else
+      body='{"status":"finished","commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}'
+    fi
+    ;;
+  https://coolify.test/api/v1/deployments/deployment-1/cancel)
+    [[ "$method" == 'POST' ]]
+    printf '%s\n' cancelled >>"$MOCK_CURL_STATE_FILE"
+    body='{"status":"cancelled-by-user"}'
+    ;;
+  https://backend.test/health)
+    body='{"status":"ok"}'
+    ;;
+  https://backend.test/version)
+    body='{"commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","imageDigest":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}'
+    ;;
+  https://backend.test/api/v1/tags)
+    body='{"tags":[],"tagGroups":[],"tagSongs":[]}'
+    ;;
+  *)
+    echo "Unexpected mock URL: $url" >&2
+    exit 5
+    ;;
+esac
+
+printf '%s' "$body" >"$output_file"
+if [[ "$write_out" == 'true' ]]; then
+  printf '200'
+fi

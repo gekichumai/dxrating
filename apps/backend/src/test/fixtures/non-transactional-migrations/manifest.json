@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "9000_test_concurrent_index",
+      "operation": {
+        "file": "9000_test_concurrent_index.sql",
+        "sha256": "5f3996fca76b705cafe05792c316bb68f46cf8bdf09dc6e3b9cb046ced269a9a"
+      },
+      "verification": {
+        "file": "9000_test_concurrent_index.verify.sql",
+        "sha256": "96c423eabe0fe20f4132692027d8e94797bbaf3208cc00c8952bec8de36901e2"
+      }
+    }
+  ]
+}

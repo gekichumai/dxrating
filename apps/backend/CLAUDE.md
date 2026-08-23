@@ -5,7 +5,7 @@
 - **Runtime**: Node.js 25.9.0
 - **Framework**: Hono
 - **API Layer**: oRPC (type-safe OpenAPI-based RPC)
-- **Database**: PostgreSQL 16 via Drizzle ORM
+- **Database**: PostgreSQL 18 via Drizzle ORM
 - **Auth**: Better Auth (email/password, OAuth, passkeys)
 - **Validation**: Zod
 - **Error Tracking**: Sentry
@@ -21,9 +21,12 @@ pnpm dev          # Start dev server with hot reload
 pnpm build        # TypeScript compilation
 pnpm start        # Run production build
 pnpm test         # Run tests (vitest)
+pnpm test:migrations # Build and rehearse the compiled migration CLI, lock, journal, and backfill
 pnpm lint         # Lint with oxlint
 pnpm db:up        # Start local PostgreSQL (Docker)
 pnpm db:down      # Stop local PostgreSQL
+pnpm migrate:dev  # Apply the migration journal with the dedicated local job
+pnpm migrate      # Apply migrations from the compiled production bundle
 ```
 
 The reusable `.github/workflows/dxdata-producer-contract.yml` workflow accepts
@@ -99,14 +102,24 @@ Optional:
 - `ASSETS_LOCAL_CACHE_DIR` — Local disk cache directory for oneshot renderer assets
 - `ASSETS_REMOTE_URL` — Remote asset server URL (default: `https://shama.dxrating.net`)
 - `VAULT_SECRET_PATH` — Optional vault secrets file
+- `MIGRATION_LOCK_TIMEOUT_MS`, `MIGRATION_LOCK_RETRY_MS` — Bounded advisory-lock wait and polling interval
+- `MIGRATION_CONNECTION_TIMEOUT_MS` — Dedicated migration connection timeout
+- `MIGRATION_SQL_LOCK_TIMEOUT_MS`, `MIGRATION_STATEMENT_TIMEOUT_MS` — PostgreSQL safety timeouts for migration SQL
 
 ## Deployment
 
 Deployed on Coolify with Docker Compose (`docker-compose.prod.yml`):
 
 - Multi-stage Dockerfile (builder → runner)
+- A protected, database-reachable runner executes the compiled migration entry point from the exact rehearsed image digest while the old backend remains live
+- The traffic-serving `backend` never migrates on startup and is deployed only after the migration process exits successfully
+- `docker-compose.prod.yml` contains no migration service or credential; `docker-compose.migrate.yml` is an explicit operator override for the same digest-pinned one-shot command
+- The traffic application uses Coolify Raw Compose with native auto-deploy disabled; CI pins both the source commit and `BACKEND_IMAGE_DIGEST`, reconciles deployment interruption, then verifies `/health`, `/version`, and a database-backed read
+- PostgreSQL, backend traffic, and the protected one-shot job share the stable external network named by `DATABASE_DOCKER_NETWORK`
 - Traefik reverse proxy via external `coolify` network
-- PostgreSQL 16 with persistent volume
+- PostgreSQL 18 with persistent volume
+
+Follow `docs/operations/backend-online-migrations.md` for the platform-neutral expand/backfill/validate/contract checklist, rollback boundaries, legacy-ledger reconciliation, and concurrent-index recovery. Do not bypass a failed migration job by starting the backend manually.
 
 ### Coolify Integration
 
@@ -114,12 +127,12 @@ When working on Coolify deployment or integration, use context7 to query the Coo
 
 - **Library ID**: `coollabsio/coolify-docs`
 - Coolify deploys via Docker Compose with Traefik labels for routing
-- Webhook-based deployments triggered via `GET` to webhook URL with `Authorization: Bearer <token>`
+- CI derives the application UUID/API base from the protected deployment URL, verifies Raw Compose and disabled native auto-deploy, then triggers and polls the exact deployment
 
 ## Conventions
 
 - API contracts defined in `contract.ts` using oRPC + Zod, implementations in `router.ts`
 - Auth context passed through oRPC handler context (`context.user`)
-- Database schema changes go through Drizzle migrations (`drizzle-kit`)
+- Database schema changes are generated with Drizzle and applied by the locked one-shot runner; never edit generated SQL or run migrations from application startup
 - ES modules throughout (`.js` extensions in imports even for TypeScript)
 - CORS allows `localhost` for dev, `https://dxrating.net` for production, and `*.dxrating.pages.dev` for preview deployments

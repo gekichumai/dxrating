@@ -1,18 +1,24 @@
 // env.ts is loaded via vitest setupFiles before this file is imported,
 // so process.env is already populated when config.ts parses.
 
-import * as path from 'node:path'
 import { serve } from '@hono/node-server'
 import type { ServerType } from '@hono/node-server'
+import { fileURLToPath } from 'node:url'
 import { app } from '../app.js'
 import { pool as appPool } from '../db/index.js'
+import { loadBackendMigrationConfig } from '../db/migration-config.js'
+import { runBackendMigrations, type MigrationLogger } from '../db/migration-runner.js'
 import pg from 'pg'
-import fs from 'node:fs/promises'
 
 const TEST_PORT = Number(process.env.PORT || 3001)
 const BASE_URL = `http://localhost:${TEST_PORT}`
 
 let server: ServerType | undefined
+
+const silentMigrationLogger: MigrationLogger = {
+  info: () => undefined,
+  error: () => undefined,
+}
 
 export function getBaseUrl() {
   return BASE_URL
@@ -20,51 +26,31 @@ export function getBaseUrl() {
 
 export async function setupTestServer() {
   // 1. Create test database if it doesn't exist
+  const adminDatabaseUrl = new URL(process.env.DATABASE_URL!)
+  adminDatabaseUrl.pathname = '/postgres'
   const adminPool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL!.replace('/dxrating_test', '/postgres'),
+    connectionString: adminDatabaseUrl.toString(),
   })
   try {
-    await adminPool.query('CREATE DATABASE dxrating_test')
-  } catch (e: unknown) {
-    if (!(e instanceof Error) || !e.message.includes('already exists')) throw e
-  }
-  await adminPool.end()
-
-  // 2. Run migration SQL files
-  const migrationsPool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
-  const migrationDir = path.resolve(__dirname, '../../drizzle')
-  const migrationFiles = [
-    '0000_init.sql',
-    '0001_add_better_auth.sql',
-    '0002_add_relations.sql',
-    '0003_localized_tags_to_jsonb.sql',
-    '0004_add_lxns_oauth.sql',
-    '0005_arcade_venues.sql',
-    '0006_arcade_geocoding.sql',
-    '0007_arcade_chains.sql',
-    '0008_arcade_chain_audit_alignment.sql',
-    '0009_arcade_public_identities.sql',
-    '0010_enforce_arcade_public_identities.sql',
-  ]
-
-  for (const file of migrationFiles) {
-    const sql = await fs.readFile(path.join(migrationDir, file), 'utf-8')
-    const statements = sql.split('--> statement-breakpoint')
-    for (const stmt of statements) {
-      const trimmed = stmt.trim()
-      if (trimmed) {
-        try {
-          await migrationsPool.query(trimmed)
-        } catch (e: unknown) {
-          if (e instanceof Error && (e.message.includes('already exists') || e.message.includes('duplicate key'))) {
-            continue
-          }
-          throw e
-        }
-      }
+    try {
+      await adminPool.query('CREATE DATABASE dxrating_test')
+    } catch (error: unknown) {
+      if (!(error instanceof pg.DatabaseError) || error.code !== '42P04') throw error
     }
+  } finally {
+    await adminPool.end()
   }
-  await migrationsPool.end()
+
+  // 2. Use the exact locked journal runner used by the one-shot production job.
+  // Drizzle discovers generated files from meta/_journal.json; failures are not
+  // converted to success based on database error text.
+  await runBackendMigrations(
+    loadBackendMigrationConfig({
+      migrationsFolder: fileURLToPath(new URL('../../drizzle', import.meta.url)),
+      nonTransactionalMigrationsFolder: fileURLToPath(new URL('../../non-transactional-migrations', import.meta.url)),
+    }),
+    { logger: silentMigrationLogger },
+  )
 
   // 3. Start the server
   server = serve({ fetch: app.fetch, port: TEST_PORT })
