@@ -47,4 +47,42 @@ describe('config', () => {
 
     expect(dotenvConfig).toHaveBeenCalledWith(expect.objectContaining({ override: false }))
   })
+
+  it('parses and deduplicates deployment-managed super-administrator IDs', async () => {
+    vi.doMock('dotenv', () => ({ config: vi.fn() }))
+    process.env = {
+      ...originalEnv,
+      DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/dxrating_test',
+      BETTER_AUTH_SECRET: 'test-secret',
+      SUPER_ADMIN_USER_IDS: '["immutable-id","immutable-id","CaseSensitive"]',
+    }
+
+    const { config } = await import('../config.js')
+
+    expect(config.auth.superAdministrators.configuredUserCount).toBe(2)
+    expect(config.auth.superAdministrators.hasExactUserId('immutable-id')).toBe(true)
+    expect(config.auth.superAdministrators.hasExactUserId('casesensitive')).toBe(false)
+  })
+
+  it('fails closed on malformed super-administrator configuration without leaking IDs', async () => {
+    vi.doMock('dotenv', () => ({ config: vi.fn() }))
+    process.env = {
+      ...originalEnv,
+      DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/dxrating_test',
+      BETTER_AUTH_SECRET: 'test-secret',
+      SUPER_ADMIN_USER_IDS: '["sensitive-id",',
+    }
+
+    let thrown: unknown
+    try {
+      await import('../config.js')
+    } catch (error) {
+      thrown = error
+    }
+
+    expect(String(thrown)).toBe(
+      'InvalidSuperAdministratorAllowlistError: SUPER_ADMIN_USER_IDS must be a JSON array of non-empty immutable user ID strings',
+    )
+    expect(String(thrown)).not.toContain('sensitive-id')
+  })
 })

@@ -12,9 +12,24 @@ export const AdminBootstrapInputSchema = z.object({
   }),
 })
 
+export const AdminEffectiveRoleSchema = z.enum(['admin', 'super_admin'])
+
+export const AdminCapabilitiesSchema = z.object({
+  canModerateUsers: z.boolean(),
+  canModerateAdministrators: z.boolean(),
+  canManageAdministrators: z.boolean(),
+})
+
+export const AdminPrincipalSchema = z.object({
+  userId: z.string().min(1),
+  effectiveRole: AdminEffectiveRoleSchema,
+  capabilities: AdminCapabilitiesSchema,
+})
+
 export const AdminBootstrapOutputSchema = z.object({
   contractCompatibilityId: AdminContractCompatibilityIdSchema,
   ready: z.literal(true),
+  principal: AdminPrincipalSchema,
 })
 
 export const AdminClientIncompatibleDataSchema = z.object({

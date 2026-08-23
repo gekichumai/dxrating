@@ -9,6 +9,7 @@ import { openAPI, oneTap, haveIBeenPwned, captcha, lastLoginMethod } from 'bette
 import { passkey } from '@better-auth/passkey'
 import { i18n } from '@better-auth/i18n'
 import { config } from './config.js'
+import { forceOrdinaryRoleForNewUser } from './admin/role-policy.js'
 
 const crossSubDomainCookies = config.auth.cookieDomain
   ? { enabled: true as const, domain: config.auth.cookieDomain }
@@ -24,6 +25,26 @@ export const auth = betterAuth({
   }),
   secret: config.auth.secret,
   baseURL: config.auth.url,
+  user: {
+    additionalFields: {
+      role: {
+        type: 'string',
+        required: true,
+        defaultValue: 'user',
+        input: false,
+        returned: false,
+      },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (candidate) => ({
+          data: forceOrdinaryRoleForNewUser(candidate),
+        }),
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     password: {

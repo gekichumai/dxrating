@@ -1,11 +1,15 @@
 import { relations } from 'drizzle-orm'
-import { pgTable, text, timestamp, boolean, integer, index } from 'drizzle-orm/pg-core'
+import { pgEnum, pgTable, text, timestamp, boolean, integer, index } from 'drizzle-orm/pg-core'
+import { PERSISTED_USER_ROLES } from '../admin/role-policy.js'
+
+export const userRole = pgEnum('user_role', PERSISTED_USER_ROLES)
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').default(false).notNull(),
+  role: userRole('role').default(PERSISTED_USER_ROLES[0]).notNull(),
   image: text('image'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')

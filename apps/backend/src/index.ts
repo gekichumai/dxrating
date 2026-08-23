@@ -8,6 +8,9 @@ import { config } from './config.js'
 
 const port = config.port
 console.log(`Server is running on port ${port}`)
+console.log(
+  `Super-administrator allowlist validated (${config.auth.superAdministrators.configuredUserCount} configured)`,
+)
 
 nodeServe({
   fetch: app.fetch,

@@ -1,6 +1,7 @@
 import * as path from 'node:path'
 import * as dotenv from 'dotenv'
 import { z } from 'zod'
+import { parseSuperAdministratorAllowlist } from './admin/super-administrator-allowlist.js'
 
 dotenv.config()
 dotenv.config({
@@ -30,6 +31,7 @@ const envSchema = z.object({
   // === Authentication (BetterAuth) ===
   BETTER_AUTH_SECRET: z.string(),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'), // Adjust default if needed
+  SUPER_ADMIN_USER_IDS: z.string().optional(),
   PASSKEY_RP_ID: optionalString,
   PASSKEY_ORIGIN: optionalUrl,
   GOOGLE_CLIENT_ID: optionalString,
@@ -70,6 +72,7 @@ export const deriveCrossSubDomainCookieDomain = ({
 }
 
 const env = envSchema.parse(process.env)
+const superAdministrators = parseSuperAdministratorAllowlist(env.SUPER_ADMIN_USER_IDS)
 
 export const config = {
   nodeEnv: env.NODE_ENV,
@@ -78,6 +81,7 @@ export const config = {
   auth: {
     secret: env.BETTER_AUTH_SECRET,
     url: env.BETTER_AUTH_URL,
+    superAdministrators,
     cookieDomain: deriveCrossSubDomainCookieDomain({
       authURL: env.BETTER_AUTH_URL,
       frontendURL: env.FRONTEND_URL,

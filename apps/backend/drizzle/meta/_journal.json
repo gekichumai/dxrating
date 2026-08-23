@@ -78,6 +78,13 @@
       "when": 1785610151236,
       "tag": "0010_enforce_arcade_public_identities",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1787521520178,
+      "tag": "0011_add_admin_roles",
+      "breakpoints": true
     }
   ]
 }

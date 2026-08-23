@@ -3,6 +3,8 @@ import { generateAdminOpenApiDocument } from '@gekichumai/admin-contract/openapi
 import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { describe, expect, it } from 'vitest'
 import { app } from '../app.js'
+import { resolveAdministratorPrincipal } from '../admin/role-policy.js'
+import { parseSuperAdministratorAllowlist } from '../admin/super-administrator-allowlist.js'
 import { createAdminRouter } from '../admin/router.js'
 
 const requestAdminBootstrap = (compatibilityId?: string) =>
@@ -31,18 +33,70 @@ describe('private administrator API isolation', () => {
 
   it('returns the shared compatibility identifier when the authorization seam permits bootstrap', async () => {
     const authorizedHandler = new OpenAPIHandler(createAdminRouter(() => true))
+    const administrator = {
+      id: 'administrator-id',
+      role: 'admin',
+    }
     const { response } = await authorizedHandler.handle(
       new Request('http://localhost/api/admin/bootstrap', {
         headers: { [ADMIN_CONTRACT_HEADER]: ADMIN_CONTRACT_COMPATIBILITY_ID },
       }),
-      { prefix: '/api/admin', context: {} },
+      { prefix: '/api/admin', context: { authorizationUser: administrator } },
     )
 
     expect(response?.status).toBe(200)
     await expect(response?.json()).resolves.toEqual({
       contractCompatibilityId: ADMIN_CONTRACT_COMPATIBILITY_ID,
       ready: true,
+      principal: {
+        userId: 'administrator-id',
+        effectiveRole: 'admin',
+        capabilities: {
+          canModerateUsers: true,
+          canModerateAdministrators: false,
+          canManageAdministrators: false,
+        },
+      },
     })
+  })
+
+  it('returns allowlist-derived super-administrator authority without exposing the allowlist', async () => {
+    const serializedAllowlist = '["configured-super-id","second-secret-id"]'
+    const superAdministrators = parseSuperAdministratorAllowlist(serializedAllowlist)
+    const authorizedHandler = new OpenAPIHandler(
+      createAdminRouter(
+        () => true,
+        (context) => resolveAdministratorPrincipal(context.authorizationUser, superAdministrators),
+      ),
+    )
+    const allowlistedUser = {
+      id: 'configured-super-id',
+      role: 'user',
+    }
+    const { response } = await authorizedHandler.handle(
+      new Request('http://localhost/api/admin/bootstrap', {
+        headers: { [ADMIN_CONTRACT_HEADER]: ADMIN_CONTRACT_COMPATIBILITY_ID },
+      }),
+      { prefix: '/api/admin', context: { authorizationUser: allowlistedUser } },
+    )
+
+    expect(response?.status).toBe(200)
+    const body = await response?.json()
+    expect(body).toMatchObject({
+      principal: {
+        userId: 'configured-super-id',
+        effectiveRole: 'super_admin',
+        capabilities: {
+          canModerateUsers: true,
+          canModerateAdministrators: true,
+          canManageAdministrators: true,
+        },
+      },
+    })
+    const serializedBody = JSON.stringify(body)
+    expect(serializedBody).not.toContain('SUPER_ADMIN_USER_IDS')
+    expect(serializedBody).not.toContain('second-secret-id')
+    expect(serializedBody).not.toContain(serializedAllowlist)
   })
 
   it('rejects a missing or stale compatibility identifier before feature decoding', async () => {
