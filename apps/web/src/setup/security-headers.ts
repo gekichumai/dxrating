@@ -23,7 +23,7 @@ const CSP_DIRECTIVES = [
       'https://sql.js.org',
     ],
   ],
-  ['style-src', ["'self'", "'unsafe-inline'"]],
+  ['style-src', ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com']],
   ['font-src', ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://shama.dxrating.net']],
   [
     'img-src',
@@ -48,6 +48,8 @@ const CSP_DIRECTIVES = [
       'https://o4506648698683392.ingest.us.sentry.io',
       'https://challenges.cloudflare.com',
       'https://sql.js.org',
+      'https://fonts.googleapis.com',
+      'https://fonts.gstatic.com',
     ],
   ],
   ['frame-src', ["'self'", 'https://challenges.cloudflare.com']],
