@@ -13,6 +13,7 @@ describe('publicAppContract', () => {
     expect('maimai' in publicAppContract).toBe(false)
     expect('chartOgImage' in publicAppContract).toBe(false)
     expect('monitoring' in publicAppContract).toBe(false)
+    expect('admin' in publicAppContract).toBe(false)
   })
 
   it('owns shared route payload schemas', () => {

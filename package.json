@@ -2,6 +2,7 @@
   "name": "@gekichumai/dxrating",
   "private": true,
   "scripts": {
+    "admin:openapi": "pnpm --filter @gekichumai/admin-contract openapi:generate",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "format": "oxfmt --write .",

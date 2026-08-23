@@ -19,6 +19,7 @@
     "@better-auth/expo": "catalog:",
     "@better-auth/i18n": "^1.6.11",
     "@better-auth/passkey": "catalog:",
+    "@gekichumai/admin-contract": "workspace:*",
     "@gekichumai/api-contract": "workspace:*",
     "@gekichumai/dxdata": "workspace:*",
     "@gekichumai/maimai-domain": "workspace:*",

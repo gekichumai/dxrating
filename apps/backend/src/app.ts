@@ -25,6 +25,13 @@ import { Sentry, shouldCaptureSentryError } from './lib/functions/sentry.js'
 import { pool } from './db/index.js'
 import { createDxdataHandler, createPostgresDxdataStore, DXDATA_CORS_OPTIONS, DXDATA_PATH } from './services/dxdata.js'
 import { addPublishedDxdataToOpenApi } from './services/dxdata-openapi.js'
+import { adminOpenAPIHandler } from './admin/handler.js'
+import { reportAdminException } from './admin/observability.js'
+import {
+  ADMIN_CLIENT_INCOMPATIBLE_MESSAGE,
+  ADMIN_CONTRACT_COMPATIBILITY_ID,
+  ADMIN_CONTRACT_HEADER,
+} from '@gekichumai/admin-contract'
 
 const app = new Hono<EvlogVariables>()
 
@@ -324,6 +331,50 @@ const openAPIHandler = new OpenAPIHandler(appRouter, {
 // oRPC OpenAPI generator for spec
 const openAPIGenerator = new OpenAPIGenerator({
   schemaConverters: [new ZodToJsonSchemaConverter()],
+})
+
+// The administrator contract has a physically separate handler and prefix.
+// Its router is fail closed until centralized administrator authorization is
+// added; it is never composed into the public router or OpenAPI generator.
+app.all('/api/admin/*', async (c) => {
+  const log = c.get('log')
+  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+  const receivedCompatibilityId = c.req.header(ADMIN_CONTRACT_HEADER)
+  if (receivedCompatibilityId !== ADMIN_CONTRACT_COMPATIBILITY_ID) {
+    return c.json(
+      {
+        defined: true,
+        code: 'ADMIN_CLIENT_INCOMPATIBLE',
+        status: 409,
+        message: ADMIN_CLIENT_INCOMPATIBLE_MESSAGE,
+        data: {
+          expected: ADMIN_CONTRACT_COMPATIBILITY_ID,
+          received: receivedCompatibilityId ?? null,
+        },
+      },
+      409,
+    )
+  }
+
+  try {
+    const { response } = await adminOpenAPIHandler.handle(c.req.raw, {
+      prefix: '/api/admin',
+      context: { requestId },
+    })
+    if (!response) return c.notFound()
+    return response
+  } catch {
+    reportAdminException('handler', requestId)
+    return c.json(
+      {
+        defined: false,
+        code: 'INTERNAL_SERVER_ERROR',
+        status: 500,
+        message: 'Internal server error',
+      },
+      500,
+    )
+  }
 })
 
 app.get('/robots.txt', (c) => c.text('User-agent: *\\nDisallow: /'))

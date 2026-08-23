@@ -112,6 +112,9 @@ importers:
       '@better-auth/passkey':
         specifier: 'catalog:'
         version: 1.6.11(@better-auth/core@1.6.11(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260508.1)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.0)(kysely@0.28.17)(nanostores@1.1.1))(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(better-auth@1.6.11(55145e6ea15f84e1eb9a9ff74c8f36c1))(better-call@1.3.5(zod@4.3.6))(nanostores@1.1.1)
+      '@gekichumai/admin-contract':
+        specifier: workspace:*
+        version: link:../../packages/admin-contract
       '@gekichumai/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
@@ -498,6 +501,34 @@ importers:
       wrangler:
         specifier: ^4.90.0
         version: 4.90.0(@cloudflare/workers-types@4.20260508.1)
+
+  packages/admin-contract:
+    dependencies:
+      '@orpc/contract':
+        specifier: 'catalog:'
+        version: 1.14.3(@opentelemetry/api@1.9.1)
+      zod:
+        specifier: ^4.3.6
+        version: 4.4.3
+    devDependencies:
+      '@orpc/openapi':
+        specifier: 'catalog:'
+        version: 1.14.3(@opentelemetry/api@1.9.1)(crossws@0.4.5(srvx@0.11.15))(ws@8.20.0)
+      '@orpc/zod':
+        specifier: 'catalog:'
+        version: 1.14.3(@opentelemetry/api@1.9.1)(@orpc/contract@1.14.3(@opentelemetry/api@1.9.1))(@orpc/server@1.14.3(@opentelemetry/api@1.9.1)(crossws@0.4.5(srvx@0.11.15))(ws@8.20.0))(crossws@0.4.5(srvx@0.11.15))(ws@8.20.0)(zod@4.4.3)
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.0
+      tsx:
+        specifier: ^4.21.0
+        version: 4.22.4
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.6(@opentelemetry/api@1.9.1)(@types/node@25.9.0)(@vitest/ui@4.1.6)(happy-dom@20.9.0)(vite@8.0.12(@types/node@25.9.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4))
 
   packages/api-contract:
     dependencies:
@@ -8183,6 +8214,22 @@ snapshots:
       escape-string-regexp: 5.0.0
       wildcard-match: 5.1.4
       zod: 4.3.6
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+      - crossws
+      - fastify
+      - ws
+
+  '@orpc/zod@1.14.3(@opentelemetry/api@1.9.1)(@orpc/contract@1.14.3(@opentelemetry/api@1.9.1))(@orpc/server@1.14.3(@opentelemetry/api@1.9.1)(crossws@0.4.5(srvx@0.11.15))(ws@8.20.0))(crossws@0.4.5(srvx@0.11.15))(ws@8.20.0)(zod@4.4.3)':
+    dependencies:
+      '@orpc/contract': 1.14.3(@opentelemetry/api@1.9.1)
+      '@orpc/json-schema': 1.14.3(@opentelemetry/api@1.9.1)(crossws@0.4.5(srvx@0.11.15))(ws@8.20.0)
+      '@orpc/openapi': 1.14.3(@opentelemetry/api@1.9.1)(crossws@0.4.5(srvx@0.11.15))(ws@8.20.0)
+      '@orpc/server': 1.14.3(@opentelemetry/api@1.9.1)(crossws@0.4.5(srvx@0.11.15))(ws@8.20.0)
+      '@orpc/shared': 1.14.3(@opentelemetry/api@1.9.1)
+      escape-string-regexp: 5.0.0
+      wildcard-match: 5.1.4
+      zod: 4.4.3
     transitivePeerDependencies:
       - '@opentelemetry/api'
       - crossws

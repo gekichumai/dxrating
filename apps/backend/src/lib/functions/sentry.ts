@@ -1,10 +1,70 @@
 import * as Sentry from '@sentry/node'
-import type { Scope } from '@sentry/node'
+import type { ErrorEvent, Event, Scope } from '@sentry/node'
 import { ORPCError } from '@orpc/server'
 import { NetImportError } from './client.js'
 
 // Export types for use in other files
 export type { Scope }
+
+const ADMIN_ERROR_MESSAGE = 'Administrator request failed'
+const ADMIN_SAFE_TAGS = ['orpc.procedure', 'orpc.surface', 'requestId'] as const
+
+export const SENTRY_DATA_COLLECTION = {
+  userInfo: false,
+  cookies: false,
+  httpHeaders: { request: false, response: false },
+  httpBodies: [],
+  urlQueryParams: false,
+  graphQL: { document: false, variables: false },
+  genAI: { inputs: false, outputs: false },
+  databaseQueryData: false,
+  stackFrameVariables: false,
+  frameContextLines: 0,
+}
+
+export function scrubAdminSentryEvent(event: ErrorEvent): ErrorEvent
+export function scrubAdminSentryEvent(event: Event): Event
+export function scrubAdminSentryEvent(event: Event): Event {
+  if (event.tags?.['orpc.surface'] !== 'admin') return event
+
+  const tags = Object.fromEntries(
+    ADMIN_SAFE_TAGS.flatMap((key) => {
+      const value = event.tags?.[key]
+      return typeof value === 'string' ? [[key, value]] : []
+    }),
+  )
+
+  // Administrator events use an allowlist instead of trying to enumerate all
+  // PII-bearing Sentry fields. In particular this discards the active HTTP
+  // request, cookies, user, breadcrumbs, extras, and integration contexts.
+  return {
+    event_id: event.event_id,
+    timestamp: event.timestamp,
+    platform: event.platform,
+    level: event.level,
+    message: ADMIN_ERROR_MESSAGE,
+    release: event.release,
+    environment: event.environment,
+    tags,
+  }
+}
+
+export function isAdminSentryRequest(name: string | undefined, requestUrl?: string) {
+  if (name && (name.includes('/api/admin/') || name.endsWith('/api/admin'))) return true
+  if (!requestUrl) return false
+
+  try {
+    const pathname = new URL(requestUrl, 'https://dxrating.invalid').pathname
+    return pathname === '/api/admin' || pathname.startsWith('/api/admin/')
+  } catch {
+    return false
+  }
+}
+
+export function isAdminSentryTransaction(event: Event) {
+  if (event.tags?.['orpc.surface'] === 'admin') return true
+  return isAdminSentryRequest(event.transaction, event.request?.url)
+}
 
 export function shouldCaptureSentryError(error: unknown) {
   if (error instanceof ORPCError && error.status >= 400 && error.status < 500) {
@@ -53,7 +113,8 @@ export function initSentry() {
     dsn,
     environment,
     release,
-    sendDefaultPii: true,
+    sendDefaultPii: false,
+    dataCollection: SENTRY_DATA_COLLECTION,
     enableLogs: true,
     integrations: [
       // HTTP integration for tracking HTTP requests
@@ -62,13 +123,17 @@ export function initSentry() {
       Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
     ],
     // Performance monitoring
-    tracesSampleRate: environment === 'production' ? 0.1 : 1.0,
+    tracesSampler({ name, normalizedRequest }) {
+      if (isAdminSentryRequest(name, normalizedRequest?.url)) return 0
+      return environment === 'production' ? 0.1 : 1.0
+    },
     // Configure which errors to capture
     beforeSend(event, hint) {
-      return shouldCaptureSentryError(hint.originalException) ? event : null
+      return shouldCaptureSentryError(hint.originalException) ? scrubAdminSentryEvent(event) : null
     },
     // Configure which transactions to capture
     beforeSendTransaction(event) {
+      if (isAdminSentryTransaction(event)) return null
       // Filter out health check transactions
       if (event.transaction === 'GET /') {
         return null

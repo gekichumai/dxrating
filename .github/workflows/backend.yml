@@ -55,6 +55,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate private administrator contract
+        run: |
+          admin_spec_file="$(mktemp)"
+          trap 'rm -f "$admin_spec_file"' EXIT
+          pnpm --silent admin:openapi > "$admin_spec_file"
+          test -s "$admin_spec_file"
+          node -e 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))' "$admin_spec_file"
+          pnpm --filter @gekichumai/admin-contract openapi:compatibility:check
+          pnpm --filter @gekichumai/admin-contract test
+          pnpm --filter @gekichumai/api-contract test
+
       - name: Lint backend
         run: pnpm --filter @gekichumai/backend lint
 
