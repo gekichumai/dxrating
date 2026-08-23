@@ -45,7 +45,7 @@ describe('Authentication', () => {
   it('overrides attempted registration role injection with the ordinary default', async () => {
     const res = await fetch(`${getBaseUrl()}/api/auth/sign-up/email`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:5173' },
       body: JSON.stringify({
         email: 'self-promoter@example.com',
         password: 'password123',
@@ -74,7 +74,7 @@ describe('Authentication', () => {
     const cookie = extractSessionCookie(signUpRes)
     const updateRes = await fetch(`${getBaseUrl()}/api/auth/update-user`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      headers: { 'Content-Type': 'application/json', Cookie: cookie, Origin: 'http://localhost:5173' },
       body: JSON.stringify({ role: 'admin' }),
     })
 
@@ -158,7 +158,7 @@ describe('Authentication', () => {
   it('does not install Better Auth administrator-management endpoints', async () => {
     const routeResponse = await fetch(`${getBaseUrl()}/api/auth/admin/set-role`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:5173' },
       body: JSON.stringify({ userId: 'any-user', role: 'admin' }),
     })
     expect(routeResponse.status).toBe(404)

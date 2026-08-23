@@ -96,6 +96,11 @@ Optional:
 - `PORT` (default: 3000)
 - `NODE_ENV` (default: development)
 - `BETTER_AUTH_URL` (default: http://localhost:3000)
+- `FRONTEND_URL` (default: http://localhost:5173)
+- `ADMIN_FRONTEND_URL` (default outside production: http://localhost:5174; required in production)
+- `PUBLIC_ADDITIONAL_TRUSTED_ORIGINS` (JSON array of exact, trusted public preview/development origins)
+- `ADMIN_ADDITIONAL_TRUSTED_ORIGINS` (JSON array of exact, trusted administrator origins)
+- `LEGACY_AUTH_COOKIE_DOMAIN` (temporary parent-domain cookie cleanup during the host-only rollout)
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth
 - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` — GitHub OAuth
 - `SENTRY_DSN`, `SENTRY_RELEASE` — Sentry config
@@ -135,4 +140,4 @@ When working on Coolify deployment or integration, use context7 to query the Coo
 - Auth context passed through oRPC handler context (`context.user`)
 - Database schema changes are generated with Drizzle and applied by the locked one-shot runner; never edit generated SQL or run migrations from application startup
 - ES modules throughout (`.js` extensions in imports even for TypeScript)
-- CORS allows `localhost` for dev, `https://dxrating.net` for production, and `*.dxrating.pages.dev` for preview deployments
+- Credentialed CORS uses separate exact public and administrator origin lists. Public previews never receive administrator-route CORS access. Administrator previews must be listed explicitly; wildcard and substring origin matching are not supported.

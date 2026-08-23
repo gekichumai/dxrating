@@ -2,6 +2,22 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const originalEnv = { ...process.env }
 
+const setProductionEnvironment = (overrides: Record<string, string> = {}) => {
+  process.env = {
+    ...originalEnv,
+    NODE_ENV: 'production',
+    DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/dxrating_test',
+    BETTER_AUTH_SECRET: 'test-secret',
+    BETTER_AUTH_URL: 'https://miruku.dxrating.net',
+    FRONTEND_URL: 'https://dxrating.net',
+    PUBLIC_ADDITIONAL_TRUSTED_ORIGINS: '[]',
+    ADMIN_FRONTEND_URL: 'https://admin.dxrating.net',
+    ADMIN_ADDITIONAL_TRUSTED_ORIGINS: '[]',
+    ...overrides,
+  }
+  delete process.env.BETTER_AUTH_TRUSTED_ORIGINS
+}
+
 afterEach(() => {
   process.env = { ...originalEnv }
   vi.doUnmock('dotenv')
@@ -84,5 +100,90 @@ describe('config', () => {
       'InvalidSuperAdministratorAllowlistError: SUPER_ADMIN_USER_IDS must be a JSON array of non-empty immutable user ID strings',
     )
     expect(String(thrown)).not.toContain('sensitive-id')
+  })
+
+  it('normalizes and deduplicates exact administrator origins for CORS and Better Auth', async () => {
+    vi.doMock('dotenv', () => ({ config: vi.fn() }))
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'test',
+      DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/dxrating_test',
+      BETTER_AUTH_SECRET: 'test-secret',
+      BETTER_AUTH_URL: 'http://localhost:3001',
+      FRONTEND_URL: 'http://localhost:5173/',
+      PUBLIC_ADDITIONAL_TRUSTED_ORIGINS: '["http://localhost:5173","https://web-pr-1.preview.dxrating.net"]',
+      ADMIN_FRONTEND_URL: 'https://ADMIN.dxrating.net/',
+      ADMIN_ADDITIONAL_TRUSTED_ORIGINS:
+        '["https://admin.dxrating.net","http://localhost:5174","https://admin-pr-1.preview.dxrating.net"]',
+    }
+    delete process.env.BETTER_AUTH_TRUSTED_ORIGINS
+
+    const { config } = await import('../config.js')
+
+    expect(config.admin.frontendOrigin).toBe('https://admin.dxrating.net')
+    expect(config.admin.trustedOrigins).toEqual([
+      'https://admin.dxrating.net',
+      'http://localhost:5174',
+      'https://admin-pr-1.preview.dxrating.net',
+    ])
+    expect(config.public.trustedOrigins).toEqual(['http://localhost:5173', 'https://web-pr-1.preview.dxrating.net'])
+    expect(config.browserTrustedOrigins).toEqual([
+      'http://localhost:5173',
+      'https://web-pr-1.preview.dxrating.net',
+      'https://admin.dxrating.net',
+      'http://localhost:5174',
+      'https://admin-pr-1.preview.dxrating.net',
+    ])
+    expect(config.auth.trustedOrigins).toEqual([...config.browserTrustedOrigins, 'dxrating://'])
+  })
+
+  it('requires an explicit HTTPS administrator origin in production', async () => {
+    vi.doMock('dotenv', () => ({ config: vi.fn() }))
+    setProductionEnvironment()
+    delete process.env.ADMIN_FRONTEND_URL
+
+    await expect(import('../config.js')).rejects.toThrow('ADMIN_FRONTEND_URL is required in production')
+  })
+
+  it.each([
+    ['an HTTP production origin', { ADMIN_FRONTEND_URL: 'http://localhost:5174' }],
+    ['an HTTP non-loopback origin', { ADMIN_FRONTEND_URL: 'http://admin.dxrating.net' }],
+    ['a wildcard origin', { ADMIN_FRONTEND_URL: 'https://*.dxrating.net' }],
+    ['a user-info origin', { ADMIN_FRONTEND_URL: 'https://user@admin.dxrating.net' }],
+    ['an origin with a path', { ADMIN_FRONTEND_URL: 'https://admin.dxrating.net/admin' }],
+    ['an origin with a query', { ADMIN_FRONTEND_URL: 'https://admin.dxrating.net?preview=1' }],
+    ['an origin with a fragment', { ADMIN_FRONTEND_URL: 'https://admin.dxrating.net#preview' }],
+    ['malformed public additional-origin JSON', { PUBLIC_ADDITIONAL_TRUSTED_ORIGINS: '["https://preview' }],
+    ['malformed additional-origin JSON', { ADMIN_ADDITIONAL_TRUSTED_ORIGINS: '["https://preview' }],
+  ])('fails closed for %s', async (_description, overrides) => {
+    vi.doMock('dotenv', () => ({ config: vi.fn() }))
+    setProductionEnvironment(overrides)
+
+    await expect(import('../config.js')).rejects.toThrow()
+  })
+
+  it('rejects Better Auth unvalidated trusted-origin environment overrides', async () => {
+    vi.doMock('dotenv', () => ({ config: vi.fn() }))
+    setProductionEnvironment()
+    process.env.BETTER_AUTH_TRUSTED_ORIGINS = 'https://unreviewed.example'
+
+    await expect(import('../config.js')).rejects.toThrow('BETTER_AUTH_TRUSTED_ORIGINS')
+  })
+
+  it('accepts only the former public frontend hostname as a transitional legacy cookie domain', async () => {
+    vi.doMock('dotenv', () => ({ config: vi.fn() }))
+    setProductionEnvironment({ LEGACY_AUTH_COOKIE_DOMAIN: 'DXRATING.NET' })
+
+    const { config } = await import('../config.js')
+    expect(config.auth.legacyCookieDomain).toBe('dxrating.net')
+  })
+
+  it('rejects an unrelated legacy cookie deletion domain', async () => {
+    vi.doMock('dotenv', () => ({ config: vi.fn() }))
+    setProductionEnvironment({ LEGACY_AUTH_COOKIE_DOMAIN: 'example.net' })
+
+    await expect(import('../config.js')).rejects.toThrow(
+      'must equal the frontend hostname and be a parent of the authentication host',
+    )
   })
 })

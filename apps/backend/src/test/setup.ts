@@ -82,7 +82,7 @@ export async function teardownTestServer() {
 export async function signUp(email: string, password: string, name: string) {
   return fetch(`${BASE_URL}/api/auth/sign-up/email`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:5173' },
     body: JSON.stringify({ email, password, name }),
   })
 }
@@ -90,7 +90,7 @@ export async function signUp(email: string, password: string, name: string) {
 export async function signIn(email: string, password: string) {
   return fetch(`${BASE_URL}/api/auth/sign-in/email`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:5173' },
     body: JSON.stringify({ email, password }),
   })
 }

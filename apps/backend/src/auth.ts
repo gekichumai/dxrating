@@ -10,10 +10,12 @@ import { passkey } from '@better-auth/passkey'
 import { i18n } from '@better-auth/i18n'
 import { config } from './config.js'
 import { forceOrdinaryRoleForNewUser } from './admin/role-policy.js'
+import { buildAuthSecurityOptions, rejectAuthReturnUrlUserInfo } from './auth-security.js'
 
-const crossSubDomainCookies = config.auth.cookieDomain
-  ? { enabled: true as const, domain: config.auth.cookieDomain }
-  : undefined
+const authSecurity = buildAuthSecurityOptions({
+  production: config.nodeEnv === 'production',
+  trustedOrigins: config.auth.trustedOrigins,
+})
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -25,6 +27,10 @@ export const auth = betterAuth({
   }),
   secret: config.auth.secret,
   baseURL: config.auth.url,
+  trustedOrigins: authSecurity.trustedOrigins,
+  hooks: {
+    before: rejectAuthReturnUrlUserInfo,
+  },
   user: {
     additionalFields: {
       role: {
@@ -53,13 +59,12 @@ export const auth = betterAuth({
     },
   },
   advanced: {
+    ...authSecurity.advanced,
     cookiePrefix: 'dxrating',
-    ...(crossSubDomainCookies ? { crossSubDomainCookies } : {}),
     ipAddress: {
       ipAddressHeaders: ['cf-connecting-ip'],
     },
   },
-  trustedOrigins: ['https://dxrating.net', 'dxrating://', 'http://localhost:5173', 'http://localhost:5174'],
   socialProviders: {
     google: {
       clientId: config.auth.google.clientId!,

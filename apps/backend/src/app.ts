@@ -33,6 +33,8 @@ import {
   type AdminAuthorizationResult,
 } from './admin/observability.js'
 import { loadAdminRequestAuthentication } from './admin/principal-loader.js'
+import { expireLegacyDomainAuthCookies } from './auth-security.js'
+import { isAllowedExactOrigin } from './origin-policy.js'
 import {
   ADMIN_CLIENT_INCOMPATIBLE_MESSAGE,
   ADMIN_CONTRACT_COMPATIBILITY_ID,
@@ -57,6 +59,56 @@ const ARCADE_VENUES_RETAINED_304_HEADERS = [
   'access-control-expose-headers',
 ]
 const PUBLIC_STATIC_CATALOG_PATHS = new Set([ARCADE_VENUES_PATH, DXDATA_PATH])
+const ADMIN_API_PREFIX = '/api/admin'
+const CREDENTIALED_ALLOW_HEADERS = ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response']
+const ADMIN_ALLOW_HEADERS = [...CREDENTIALED_ALLOW_HEADERS, ADMIN_CONTRACT_HEADER]
+const STANDARD_CREDENTIALED_METHODS = ['POST', 'GET', 'OPTIONS']
+const ADMIN_METHODS = ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS']
+
+const isAdminApiPath = (path: string): boolean => path === ADMIN_API_PREFIX || path.startsWith(`${ADMIN_API_PREFIX}/`)
+
+const isStateChangingMethod = (method: string): boolean => !['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())
+
+const setAdminPrivateNoStoreHeaders = (c: Context): void => {
+  c.header('Cache-Control', 'private, no-store')
+  c.header('CDN-Cache-Control', 'no-store')
+  c.header('Cloudflare-CDN-Cache-Control', 'no-store')
+}
+
+const createExactCredentialedCors = ({
+  origins,
+  allowMethods,
+  allowHeaders,
+}: {
+  origins: readonly string[]
+  allowMethods: string[]
+  allowHeaders: string[]
+}): MiddlewareHandler => {
+  const allowedOrigins = new Set(origins)
+  const allowedCors = cors({
+    origin: (origin) => (allowedOrigins.has(origin) ? origin : null),
+    allowHeaders,
+    allowMethods,
+    exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],
+    maxAge: 600,
+    credentials: true,
+  })
+
+  return async (c, next) => {
+    if (isAllowedExactOrigin(c.req.header('Origin'), allowedOrigins)) {
+      return allowedCors(c, next)
+    }
+
+    // Credentialed Hono CORS otherwise emits Allow-Credentials even when its
+    // origin callback rejects the origin. Do not invoke it for denied origins.
+    if (c.req.method === 'OPTIONS') {
+      c.header('Vary', 'Origin', { append: true })
+      return c.body(null, 204)
+    }
+    await next()
+    c.header('Vary', 'Origin', { append: true })
+  }
+}
 
 const getFirstHeaderValue = (value: string | undefined) => value?.split(',')[0]?.trim() || undefined
 
@@ -125,6 +177,8 @@ const setApiCatalogHeaders = (c: Context) => {
 
 // Error handler
 app.onError((err, c) => {
+  if (isAdminApiPath(c.req.path)) setAdminPrivateNoStoreHeaders(c)
+
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
 
@@ -142,38 +196,39 @@ app.onError((err, c) => {
   return c.json({ error: 'Internal server error', requestId }, 500)
 })
 
-const apiCors = cors({
-  origin: (origin) => {
-    // Allow local development
-    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-      return origin
-    }
-
-    // Allow production domain and preview deployments
-    if (
-      origin === 'https://dxrating.net' ||
-      origin.endsWith('.dxrating.pages.dev') ||
-      origin.endsWith('.galvin.workers.dev')
-    ) {
-      return origin
-    }
-
-    return null
-  },
-  allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response'],
-  allowMethods: ['POST', 'GET', 'OPTIONS'],
-  exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],
-  maxAge: 600,
-  credentials: true,
+const apiCors = createExactCredentialedCors({
+  origins: config.browserTrustedOrigins,
+  allowHeaders: CREDENTIALED_ALLOW_HEADERS,
+  allowMethods: STANDARD_CREDENTIALED_METHODS,
+})
+const adminCors = createExactCredentialedCors({
+  origins: config.admin.trustedOrigins,
+  allowHeaders: ADMIN_ALLOW_HEADERS,
+  allowMethods: ADMIN_METHODS,
 })
 
 const publicStaticCatalogCors = cors(DXDATA_CORS_OPTIONS)
 
+// Administrator responses can contain credentials, personal data, deleted
+// content, and internal reasons. This wrapper is deliberately registered
+// before CORS so it also covers preflight responses returned by that layer.
+app.use('*', async (c, next) => {
+  if (!isAdminApiPath(c.req.path)) return next()
+
+  try {
+    await next()
+  } finally {
+    setAdminPrivateNoStoreHeaders(c)
+  }
+})
+
 // Static catalog responses are credential-independent, allowing one public
 // representation per URL to be safely shared by browsers and the CDN.
-app.use('*', (c, next) =>
-  PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path) ? publicStaticCatalogCors(c, next) : apiCors(c, next),
-)
+app.use('*', (c, next) => {
+  if (PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)) return publicStaticCatalogCors(c, next)
+  if (isAdminApiPath(c.req.path)) return adminCors(c, next)
+  return apiCors(c, next)
+})
 
 // Request logging
 app.use(
@@ -234,7 +289,9 @@ app.get('/version', async (c) => {
 
 // BetterAuth
 app.on(['POST', 'GET'], '/api/auth/**', (c) => {
-  return auth.handler(c.req.raw)
+  return auth
+    .handler(c.req.raw)
+    .then((response) => expireLegacyDomainAuthCookies(response, config.auth.legacyCookieDomain))
 })
 
 // Middleware: validate auth params for fetch-net-records
@@ -380,6 +437,11 @@ app.all('/api/admin/*', async (c) => {
       },
       409,
     )
+  }
+
+  if (isStateChangingMethod(c.req.method) && !config.admin.trustedOrigins.includes(c.req.header('Origin') ?? '')) {
+    recordResult(procedureName, 'FORBIDDEN')
+    return createAdminStandardErrorResponse('FORBIDDEN', requestId)
   }
 
   try {
