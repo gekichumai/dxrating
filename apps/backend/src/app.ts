@@ -25,12 +25,19 @@ import { Sentry, shouldCaptureSentryError } from './lib/functions/sentry.js'
 import { pool } from './db/index.js'
 import { createDxdataHandler, createPostgresDxdataStore, DXDATA_CORS_OPTIONS, DXDATA_PATH } from './services/dxdata.js'
 import { addPublishedDxdataToOpenApi } from './services/dxdata-openapi.js'
-import { adminOpenAPIHandler } from './admin/handler.js'
-import { reportAdminException } from './admin/observability.js'
+import { adminOpenAPIHandler, createAdminStandardErrorResponse } from './admin/handler.js'
+import {
+  recordAdminAuthorizationResultTo,
+  reportAdminException,
+  sanitizeAdminCorrelationId,
+  type AdminAuthorizationResult,
+} from './admin/observability.js'
+import { loadAdminRequestAuthentication } from './admin/principal-loader.js'
 import {
   ADMIN_CLIENT_INCOMPATIBLE_MESSAGE,
   ADMIN_CONTRACT_COMPATIBILITY_ID,
   ADMIN_CONTRACT_HEADER,
+  AdminContractCompatibilityIdSchema,
 } from '@gekichumai/admin-contract'
 
 const app = new Hono<EvlogVariables>()
@@ -188,9 +195,15 @@ app.use(
 
 // Set X-DXRating-Request-ID response header
 app.use('*', async (c, next) => {
-  await next()
   const log = c.get('log')
-  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+  const currentRequestId = (log?.getContext() as Record<string, unknown>)?.requestId
+  const requestId =
+    sanitizeAdminCorrelationId(typeof currentRequestId === 'string' ? currentRequestId : undefined) ??
+    crypto.randomUUID()
+  log?.set({ requestId })
+
+  await next()
+
   if (requestId && !PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)) {
     c.header('X-DXRating-Request-ID', requestId)
   }
@@ -333,14 +346,26 @@ const openAPIGenerator = new OpenAPIGenerator({
   schemaConverters: [new ZodToJsonSchemaConverter()],
 })
 
-// The administrator contract has a physically separate handler and prefix.
-// Its router is fail closed until centralized administrator authorization is
-// added; it is never composed into the public router or OpenAPI generator.
+// The administrator contract has a physically separate handler and prefix. It
+// is never composed into the public router or OpenAPI generator.
 app.all('/api/admin/*', async (c) => {
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
   const receivedCompatibilityId = c.req.header(ADMIN_CONTRACT_HEADER)
+  const procedureName = c.req.path === '/api/admin/bootstrap' ? 'bootstrap' : 'handler'
+  const recordResult = (procedure: string, result: AdminAuthorizationResult): void => {
+    recordAdminAuthorizationResultTo(procedure, result, {
+      increment: (labels) => {
+        log?.info('Administrator authorization result', {
+          adminAuthorization: labels,
+        })
+      },
+    })
+  }
+
   if (receivedCompatibilityId !== ADMIN_CONTRACT_COMPATIBILITY_ID) {
+    recordResult(procedureName, 'ADMIN_CLIENT_INCOMPATIBLE')
+    const safeReceivedCompatibilityId = AdminContractCompatibilityIdSchema.safeParse(receivedCompatibilityId)
     return c.json(
       {
         defined: true,
@@ -348,8 +373,9 @@ app.all('/api/admin/*', async (c) => {
         status: 409,
         message: ADMIN_CLIENT_INCOMPATIBLE_MESSAGE,
         data: {
+          requestId: requestId ?? null,
           expected: ADMIN_CONTRACT_COMPATIBILITY_ID,
-          received: receivedCompatibilityId ?? null,
+          received: safeReceivedCompatibilityId.success ? safeReceivedCompatibilityId.data : null,
         },
       },
       409,
@@ -357,23 +383,24 @@ app.all('/api/admin/*', async (c) => {
   }
 
   try {
+    const authentication = await loadAdminRequestAuthentication(c.req.raw.headers)
     const { response } = await adminOpenAPIHandler.handle(c.req.raw, {
       prefix: '/api/admin',
-      context: { requestId },
+      context: {
+        authentication,
+        requestId,
+        recordAuthorizationResult: recordResult,
+      },
     })
-    if (!response) return c.notFound()
+    if (!response) {
+      recordResult(procedureName, 'NOT_FOUND')
+      return createAdminStandardErrorResponse('NOT_FOUND', requestId)
+    }
     return response
   } catch {
     reportAdminException('handler', requestId)
-    return c.json(
-      {
-        defined: false,
-        code: 'INTERNAL_SERVER_ERROR',
-        status: 500,
-        message: 'Internal server error',
-      },
-      500,
-    )
+    recordResult(procedureName, 'INTERNAL_SERVER_ERROR')
+    return createAdminStandardErrorResponse('INTERNAL_SERVER_ERROR', requestId)
   }
 })
 

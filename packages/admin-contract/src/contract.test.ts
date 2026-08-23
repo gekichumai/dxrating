@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { ADMIN_CONTRACT_COMPATIBILITY_ID } from './compatibility.js'
-import { AdminBootstrapOutputSchema, adminContract } from './contract.js'
+import {
+  ADMIN_BOOTSTRAP_AUTHORIZATION,
+  AdminBootstrapOutputSchema,
+  AdminProcedureAuthorizationPolicySchema,
+  adminContract,
+} from './contract.js'
 import { computeAdminContractCompatibilityId, generateAdminOpenApiDocument } from './openapi.js'
 
 describe('private administrator contract', () => {
@@ -13,8 +18,16 @@ describe('private administrator contract', () => {
     })
     expect(Object.keys(adminContract.bootstrap['~orpc'].errorMap)).toEqual([
       'ADMIN_CLIENT_INCOMPATIBLE',
-      'UNAUTHORIZED',
+      'UNAUTHENTICATED',
+      'FORBIDDEN',
+      'RECENT_AUTH_REQUIRED',
+      'FRESH_LOGIN_REQUIRED',
+      'VALIDATION_FAILED',
+      'NOT_FOUND',
+      'CONFLICT',
+      'INTERNAL_SERVER_ERROR',
     ])
+    expect(adminContract.bootstrap['~orpc'].meta.authorization).toEqual(ADMIN_BOOTSTRAP_AUTHORIZATION)
   })
 
   it('generates a deterministic private OpenAPI document and identifier', async () => {
@@ -54,5 +67,15 @@ describe('private administrator contract', () => {
         principal: { ...output.principal, effectiveRole: 'user' },
       }),
     ).toThrow()
+  })
+
+  it('keeps recent-authentication and fresh-login recovery policies mutually exclusive', () => {
+    expect(
+      AdminProcedureAuthorizationPolicySchema.safeParse({
+        ...ADMIN_BOOTSTRAP_AUTHORIZATION,
+        recentPrimaryAuth: true,
+        freshLogin: true,
+      }).success,
+    ).toBe(false)
   })
 })
