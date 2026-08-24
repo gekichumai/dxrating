@@ -16,6 +16,8 @@ import {
 import type { AdminRequestAuthentication, AuthenticatedAdminRequest } from './principal-loader.js'
 import type { AdministratorPrincipal, AdministratorTargetAction } from './role-policy.js'
 import type { SuperAdministratorAllowlist } from './super-administrator-allowlist.js'
+import { AdminPrimaryAuthFailure, type AdminPrimaryAuthActor, type AdminPrimaryAuthService } from './primary-auth.js'
+import { adminPrimaryAuthService } from './primary-auth-runtime.js'
 import {
   sanitizeAdminAuthorizationResult,
   sanitizeAdminCorrelationId,
@@ -25,6 +27,7 @@ import {
 export type AdminRequestContext = {
   readonly authentication?: AdminRequestAuthentication
   readonly requestId?: string
+  readonly requestOrigin?: string
   readonly recordAuthorizationResult?: (procedureName: string, result: AdminAuthorizationResult) => void | Promise<void>
 }
 
@@ -89,6 +92,11 @@ export const adminErrorBoundaryMiddleware = os.middleware(async ({ context, erro
         case 'NOT_FOUND':
           throw errors.NOT_FOUND({ data })
       }
+    }
+
+    if (error instanceof AdminPrimaryAuthFailure) {
+      if (error.code === 'RATE_LIMITED') throw errors.STEP_UP_RATE_LIMITED({ data })
+      throw errors.STEP_UP_FAILED({ data })
     }
 
     if (error instanceof ORPCError && error.status === 400) throw errors.VALIDATION_FAILED({ data })
@@ -203,7 +211,17 @@ export const createAdminTargetAuthorizationMiddleware = <Input>({
     }),
   )
 
-export const createAdminRouter = () => {
+const primaryAuthActorFromContext = (context: AuthorizedAdminContext): AdminPrimaryAuthActor => ({
+  userId: context.adminAuthentication.authorizationUser.id,
+  sessionId: context.adminAuthentication.session.id,
+  allowlistedSuperAdministrator: context.adminPrincipal.effectiveRole === 'super_admin',
+})
+
+export const createAdminRouter = ({
+  primaryAuth = adminPrimaryAuthService,
+}: {
+  primaryAuth?: AdminPrimaryAuthService
+} = {}) => {
   const authorized = os
     .use(authorizationOutcomeMiddleware)
     .use(adminErrorBoundaryMiddleware)
@@ -228,6 +246,15 @@ export const createAdminRouter = () => {
         principal: context.adminPrincipal,
       }
     }),
+    primaryAuthStatus: authorized.primaryAuthStatus.handler(async ({ context }) =>
+      primaryAuth.getStatus(primaryAuthActorFromContext(context)),
+    ),
+    completePrimaryAuthPassword: authorized.completePrimaryAuthPassword.handler(async ({ input, context }) =>
+      primaryAuth.completePassword(primaryAuthActorFromContext(context), input.body.password),
+    ),
+    initiatePrimaryAuthOauth: authorized.initiatePrimaryAuthOauth.handler(async ({ input, context }) =>
+      primaryAuth.initiateOauth(primaryAuthActorFromContext(context), input.body.provider, context.requestOrigin),
+    ),
   })
 }
 

@@ -30,7 +30,12 @@ const decodeContract = {
     .meta({ authorization: policy({ minimumRole: 'super_admin' }) })
     .route({ method: 'POST', path: '/super-decode' }),
   recentDecode: decodeProcedure
-    .meta({ authorization: policy({ recentPrimaryAuth: true }) })
+    .meta({
+      authorization: policy({
+        recentPrimaryAuth: true,
+        primaryAuthAction: 'comment.delete',
+      }),
+    })
     .route({ method: 'POST', path: '/recent-decode' }),
   freshDecode: decodeProcedure
     .meta({ authorization: policy({ freshLogin: true }) })

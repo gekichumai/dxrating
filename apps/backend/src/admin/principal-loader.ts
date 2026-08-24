@@ -3,6 +3,7 @@ import { auth } from '../auth.js'
 import { config } from '../config.js'
 import { db } from '../db/index.js'
 import { user } from '../db/auth-schema.js'
+import { hasRecentAdminPrimaryAuth } from './primary-auth-store.js'
 import { resolveAdministratorPrincipal, type AdministratorPrincipal, type RoleBearingUser } from './role-policy.js'
 import type { SuperAdministratorAllowlist } from './super-administrator-allowlist.js'
 
@@ -36,15 +37,21 @@ export type AdminSessionLookup = (headers: Headers) => Promise<
 >
 
 export type AdminUserLookup = (userId: string) => Promise<(RoleBearingUser & { id: string }) | undefined>
+export type AdminRecentPrimaryAuthLookup = (identity: {
+  readonly userId: string
+  readonly sessionId: string
+}) => Promise<boolean>
 
 export const createAdminPrincipalLoader = ({
   getSession,
   findUserById,
   superAdministrators,
+  hasRecentPrimaryAuth = async () => false,
 }: {
   getSession: AdminSessionLookup
   findUserById: AdminUserLookup
   superAdministrators: SuperAdministratorAllowlist
+  hasRecentPrimaryAuth?: AdminRecentPrimaryAuthLookup
 }) => {
   return async (headers: Headers): Promise<AdminRequestAuthentication> => {
     const session = await getSession(headers)
@@ -59,14 +66,20 @@ export const createAdminPrincipalLoader = ({
       return { status: 'unauthenticated' }
     }
 
+    const principal = resolveAdministratorPrincipal(authorizationUser, superAdministrators)
+    const recentPrimaryAuthSatisfied = principal
+      ? await hasRecentPrimaryAuth({ userId: authorizationUser.id, sessionId: session.session.id })
+      : false
+
     return {
       status: 'authenticated',
       authorizationUser,
-      principal: resolveAdministratorPrincipal(authorizationUser, superAdministrators),
+      principal,
       session: {
         id: session.session.id,
         createdAt: session.session.createdAt,
       },
+      assurance: { recentPrimaryAuthSatisfied },
     }
   }
 }
@@ -80,4 +93,5 @@ export const loadAdminRequestAuthentication = createAdminPrincipalLoader({
   getSession: (headers) => auth.api.getSession({ headers }),
   findUserById: findAdminAuthorizationUserById,
   superAdministrators: config.auth.superAdministrators,
+  hasRecentPrimaryAuth: hasRecentAdminPrimaryAuth,
 })

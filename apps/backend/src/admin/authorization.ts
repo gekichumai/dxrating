@@ -1,4 +1,7 @@
-import type { AdminProcedureAuthorizationPolicy } from '@gekichumai/admin-contract'
+import {
+  AdminProcedureAuthorizationPolicySchema,
+  type AdminProcedureAuthorizationPolicy,
+} from '@gekichumai/admin-contract'
 import {
   canTargetUser,
   resolveAdministratorPrincipal,
@@ -75,14 +78,16 @@ export const requireAdminProcedurePolicy = (
   context: AdminAuthorizationContext,
   policy: AdminProcedureAuthorizationPolicy,
 ): AuthorizedAdminRequest => {
-  if (policy.recentPrimaryAuth && policy.freshLogin) {
+  const validatedPolicy = AdminProcedureAuthorizationPolicySchema.safeParse(policy)
+  if (!validatedPolicy.success) {
     throw new Error('Invalid administrator authorization policy')
   }
 
-  let authentication = policy.minimumRole === 'super_admin' ? requireSuperAdmin(context) : requireAdmin(context)
+  let authentication =
+    validatedPolicy.data.minimumRole === 'super_admin' ? requireSuperAdmin(context) : requireAdmin(context)
 
-  if (policy.freshLogin) authentication = requireFreshLogin(context)
-  if (policy.recentPrimaryAuth) authentication = requireRecentPrimaryAuth(context)
+  if (validatedPolicy.data.freshLogin) authentication = requireFreshLogin(context)
+  if (validatedPolicy.data.recentPrimaryAuth) authentication = requireRecentPrimaryAuth(context)
 
   return authentication
 }

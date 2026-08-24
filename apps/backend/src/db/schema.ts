@@ -13,11 +13,12 @@ import {
   integer,
   smallint,
   index,
+  uniqueIndex,
   unique,
   check,
 } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
-import { user } from './auth-schema.js'
+import { account, session, user } from './auth-schema.js'
 
 // --- Application Tables ---
 
@@ -73,6 +74,85 @@ export const comments = pgTable('comments', {
   parent_id: bigint('parent_id', { mode: 'number' }).references((): AnyPgColumn => comments.id),
   content: text('content').notNull(),
 })
+
+// --- Administrator Primary Authentication ---
+
+export const adminPrimaryAuthWindows = pgTable(
+  'admin_primary_auth_windows',
+  {
+    session_id: text('session_id')
+      .primaryKey()
+      .references(() => session.id, { onDelete: 'cascade' }),
+    user_id: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    method: text('method').notNull(),
+    completed_at: timestamp('completed_at', { withTimezone: true }).notNull(),
+    expires_at: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    check('admin_primary_auth_windows_method_check', sql`${table.method} in ('password', 'google')`),
+    check(
+      'admin_primary_auth_windows_expiry_check',
+      sql`${table.expires_at} = ${table.completed_at} + interval '10 minutes'`,
+    ),
+    index('admin_primary_auth_windows_user_idx').on(table.user_id),
+    index('admin_primary_auth_windows_expiry_idx').on(table.expires_at),
+  ],
+)
+
+export const adminPrimaryAuthOauthAttempts = pgTable(
+  'admin_primary_auth_oauth_attempts',
+  {
+    state_digest: text('state_digest').primaryKey(),
+    session_id: text('session_id')
+      .notNull()
+      .references(() => session.id, { onDelete: 'cascade' }),
+    user_id: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    account_id: text('account_id')
+      .notNull()
+      .references(() => account.id, { onDelete: 'cascade' }),
+    provider: text('provider').notNull(),
+    provider_account_id: text('provider_account_id').notNull(),
+    code_verifier: text('code_verifier').notNull(),
+    nonce: text('nonce').notNull(),
+    redirect_uri: text('redirect_uri').notNull(),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    expires_at: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    check('admin_primary_auth_oauth_attempts_digest_check', sql`${table.state_digest} ~ '^[a-f0-9]{64}$'`),
+    check('admin_primary_auth_oauth_attempts_provider_check', sql`${table.provider} = 'google'`),
+    check(
+      'admin_primary_auth_oauth_attempts_verifier_check',
+      sql`length(${table.code_verifier}) between 43 and 128 and ${table.code_verifier} ~ '^[A-Za-z0-9._~-]+$'`,
+    ),
+    check(
+      'admin_primary_auth_oauth_attempts_expiry_check',
+      sql`${table.expires_at} = ${table.created_at} + interval '10 minutes'`,
+    ),
+    uniqueIndex('admin_primary_auth_oauth_attempts_session_idx').on(table.session_id),
+    index('admin_primary_auth_oauth_attempts_expiry_idx').on(table.expires_at),
+  ],
+)
+
+export const adminPrimaryAuthPasswordRateLimits = pgTable(
+  'admin_primary_auth_password_rate_limits',
+  {
+    user_id: text('user_id')
+      .primaryKey()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    window_started_at: timestamp('window_started_at', { withTimezone: true }).notNull(),
+    failure_count: integer('failure_count').notNull(),
+    blocked_until: timestamp('blocked_until', { withTimezone: true }),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check('admin_primary_auth_password_rate_limits_count_check', sql`${table.failure_count} between 1 and 5`),
+  ],
+)
 
 export const songAliases = pgTable('song_aliases', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),

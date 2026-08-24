@@ -79,10 +79,12 @@ describe('administrator authorization outcome telemetry', () => {
     const increment = vi.fn()
 
     recordAdminAuthorizationResultTo('bootstrap', 'FORBIDDEN', { increment })
+    recordAdminAuthorizationResultTo('completePrimaryAuthPassword', 'STEP_UP_FAILED', { increment })
     recordAdminAuthorizationResultTo('user@example.com', 'private moderation reason', { increment })
 
     expect(increment.mock.calls).toEqual([
       [{ procedure: 'bootstrap', result: 'FORBIDDEN' }],
+      [{ procedure: 'completePrimaryAuthPassword', result: 'STEP_UP_FAILED' }],
       [{ procedure: 'unknown', result: 'UNKNOWN' }],
     ])
     expect(JSON.stringify(increment.mock.calls)).not.toContain('user@example.com')
@@ -101,6 +103,8 @@ describe('administrator authorization outcome telemetry', () => {
     ['FORBIDDEN', 'FORBIDDEN'],
     ['UNAUTHORIZED', 'RECENT_AUTH_REQUIRED'],
     ['UNAUTHORIZED', 'FRESH_LOGIN_REQUIRED'],
+    ['UNAUTHORIZED', 'STEP_UP_FAILED'],
+    ['TOO_MANY_REQUESTS', 'STEP_UP_RATE_LIMITED'],
     ['BAD_REQUEST', 'VALIDATION_FAILED'],
     ['NOT_FOUND', 'NOT_FOUND'],
     ['CONFLICT', 'CONFLICT'],

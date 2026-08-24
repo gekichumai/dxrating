@@ -9,22 +9,67 @@ export const ADMIN_ERROR_MESSAGES = {
   FORBIDDEN: 'Administrator access is not permitted',
   RECENT_AUTH_REQUIRED: 'Recent primary authentication is required',
   FRESH_LOGIN_REQUIRED: 'A fresh login is required after the authority change',
+  STEP_UP_FAILED: 'Primary authentication could not be verified',
+  STEP_UP_RATE_LIMITED: 'Primary authentication could not be verified at this time',
   VALIDATION_FAILED: 'The administrator request is invalid',
   NOT_FOUND: 'The requested administrator resource was not found',
   CONFLICT: 'The administrator request conflicts with current state',
   INTERNAL_SERVER_ERROR: 'The administrator request could not be completed',
 } as const
 
+export const ADMIN_PRIMARY_AUTH_ACTIONS = [
+  'administrator.grant',
+  'administrator.revoke',
+  'user.ban',
+  'user.unban',
+  'comment.delete',
+  'comment.restore',
+  'chart_report.close',
+  'chart_report.submit',
+  'provenance.read',
+  'dashboard.read',
+  'raw_artifact.read',
+] as const
+
+export type AdminPrimaryAuthAction = (typeof ADMIN_PRIMARY_AUTH_ACTIONS)[number]
+
+export const ADMIN_PRIMARY_AUTH_ACTION_POLICY = {
+  'administrator.grant': true,
+  'administrator.revoke': true,
+  'user.ban': true,
+  'user.unban': true,
+  'comment.delete': true,
+  'comment.restore': false,
+  'chart_report.close': false,
+  'chart_report.submit': false,
+  'provenance.read': false,
+  'dashboard.read': false,
+  'raw_artifact.read': false,
+} as const satisfies Readonly<Record<AdminPrimaryAuthAction, boolean>>
+
+export const adminActionRequiresRecentPrimaryAuth = (action: AdminPrimaryAuthAction): boolean =>
+  ADMIN_PRIMARY_AUTH_ACTION_POLICY[action]
+
+export const AdminPrimaryAuthActionSchema = z.enum(ADMIN_PRIMARY_AUTH_ACTIONS)
+
 export const AdminProcedureAuthorizationPolicySchema = z
   .object({
     minimumRole: z.enum(['admin', 'super_admin']),
     recentPrimaryAuth: z.boolean(),
     freshLogin: z.boolean(),
+    primaryAuthAction: AdminPrimaryAuthActionSchema.nullable(),
     targetAction: z.enum(['moderate', 'manage_administrator_role']).nullable(),
   })
   .refine((policy) => !(policy.recentPrimaryAuth && policy.freshLogin), {
     message: 'Recent primary authentication and fresh login policies are mutually exclusive',
   })
+  .refine(
+    (policy) =>
+      policy.primaryAuthAction === null
+        ? !policy.recentPrimaryAuth
+        : policy.recentPrimaryAuth === adminActionRequiresRecentPrimaryAuth(policy.primaryAuthAction),
+    { message: 'Recent primary authentication must match the central action policy' },
+  )
 
 export type AdminProcedureAuthorizationPolicy = Readonly<z.infer<typeof AdminProcedureAuthorizationPolicySchema>>
 
@@ -36,8 +81,22 @@ export const ADMIN_DEFAULT_AUTHORIZATION = {
   minimumRole: 'admin',
   recentPrimaryAuth: false,
   freshLogin: false,
+  primaryAuthAction: null,
   targetAction: null,
 } as const satisfies AdminProcedureAuthorizationPolicy
+
+export const adminAuthorizationForAction = (
+  action: AdminPrimaryAuthAction,
+  overrides: Pick<AdminProcedureAuthorizationPolicy, 'minimumRole' | 'targetAction'> = {
+    minimumRole: ADMIN_DEFAULT_AUTHORIZATION.minimumRole,
+    targetAction: ADMIN_DEFAULT_AUTHORIZATION.targetAction,
+  },
+): AdminProcedureAuthorizationPolicy => ({
+  ...overrides,
+  freshLogin: false,
+  primaryAuthAction: action,
+  recentPrimaryAuth: adminActionRequiresRecentPrimaryAuth(action),
+})
 
 export const ADMIN_BOOTSTRAP_AUTHORIZATION = {
   ...ADMIN_DEFAULT_AUTHORIZATION,
@@ -107,6 +166,16 @@ export const adminErrors = {
     message: ADMIN_ERROR_MESSAGES.FRESH_LOGIN_REQUIRED,
     data: AdminErrorDataSchema,
   },
+  STEP_UP_FAILED: {
+    status: 401,
+    message: ADMIN_ERROR_MESSAGES.STEP_UP_FAILED,
+    data: AdminErrorDataSchema,
+  },
+  STEP_UP_RATE_LIMITED: {
+    status: 429,
+    message: ADMIN_ERROR_MESSAGES.STEP_UP_RATE_LIMITED,
+    data: AdminErrorDataSchema,
+  },
   VALIDATION_FAILED: {
     status: 400,
     message: ADMIN_ERROR_MESSAGES.VALIDATION_FAILED,
@@ -133,6 +202,35 @@ const adminProcedure = oc.$meta<AdminProcedureMetadata>({
   authorization: ADMIN_DEFAULT_AUTHORIZATION,
 })
 
+export const AdminPrimaryAuthProviderSchema = z.enum(['google'])
+export type AdminPrimaryAuthProvider = z.infer<typeof AdminPrimaryAuthProviderSchema>
+export const AdminPrimaryAuthWindowOutputSchema = z.object({
+  active: z.boolean(),
+  expiresAt: z.iso.datetime().nullable(),
+})
+export const AdminPrimaryAuthCompletionOutputSchema = z.object({
+  completed: z.literal(true),
+  expiresAt: z.iso.datetime(),
+})
+
+const AdminContractHeadersSchema = z.object({
+  [ADMIN_CONTRACT_HEADER]: AdminContractCompatibilityIdSchema.optional(),
+})
+
+export const AdminPrimaryAuthPasswordInputSchema = z.object({
+  headers: AdminContractHeadersSchema,
+  body: z.object({ password: z.string().min(1).max(1024) }),
+})
+
+export const AdminPrimaryAuthOauthInitiateInputSchema = z.object({
+  headers: AdminContractHeadersSchema,
+  body: z.object({ provider: AdminPrimaryAuthProviderSchema }),
+})
+
+export const AdminPrimaryAuthOauthInitiateOutputSchema = z.object({
+  authorizationUrl: z.url(),
+})
+
 export const adminContract = adminProcedure.errors(adminErrors).router({
   bootstrap: adminProcedure
     .meta({ authorization: ADMIN_BOOTSTRAP_AUTHORIZATION })
@@ -146,6 +244,39 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     })
     .input(AdminBootstrapInputSchema)
     .output(AdminBootstrapOutputSchema),
+  primaryAuthStatus: adminProcedure
+    .route({
+      method: 'GET',
+      path: '/primary-auth/status',
+      operationId: 'getAdminPrimaryAuthStatus',
+      summary: 'Read the current session primary-authentication window',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminBootstrapInputSchema)
+    .output(AdminPrimaryAuthWindowOutputSchema),
+  completePrimaryAuthPassword: adminProcedure
+    .route({
+      method: 'POST',
+      path: '/primary-auth/password',
+      operationId: 'completeAdminPrimaryAuthPassword',
+      summary: 'Complete primary authentication with the current password',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminPrimaryAuthPasswordInputSchema)
+    .output(AdminPrimaryAuthCompletionOutputSchema),
+  initiatePrimaryAuthOauth: adminProcedure
+    .route({
+      method: 'POST',
+      path: '/primary-auth/oauth/initiate',
+      operationId: 'initiateAdminPrimaryAuthOauth',
+      summary: 'Initiate provider-bound OAuth primary authentication',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminPrimaryAuthOauthInitiateInputSchema)
+    .output(AdminPrimaryAuthOauthInitiateOutputSchema),
 })
 
 export type AdminContract = typeof adminContract

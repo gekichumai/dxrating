@@ -23,6 +23,7 @@ const defaultPolicy = {
   minimumRole: 'admin',
   recentPrimaryAuth: false,
   freshLogin: false,
+  primaryAuthAction: null,
   targetAction: null,
 } as const satisfies AdminProcedureAuthorizationPolicy
 
@@ -56,11 +57,25 @@ const guardContract = {
     .meta({ authorization: { ...defaultPolicy, minimumRole: 'super_admin' } })
     .route({ method: 'GET', path: '/super' }),
   recentOperation: guardProcedure
-    .meta({ authorization: { ...defaultPolicy, recentPrimaryAuth: true } })
+    .meta({
+      authorization: {
+        ...defaultPolicy,
+        recentPrimaryAuth: true,
+        primaryAuthAction: 'comment.delete',
+      },
+    })
     .route({ method: 'GET', path: '/recent' }),
   freshOperation: guardProcedure
     .meta({ authorization: { ...defaultPolicy, freshLogin: true } })
     .route({ method: 'GET', path: '/fresh' }),
+  driftedOperation: guardProcedure
+    .meta({
+      authorization: {
+        ...defaultPolicy,
+        primaryAuthAction: 'comment.delete',
+      },
+    })
+    .route({ method: 'GET', path: '/drifted' }),
   unexpectedOperation: guardProcedure.route({ method: 'GET', path: '/unexpected' }),
 }
 
@@ -74,6 +89,9 @@ const guardRouter = policyGuarded.router({
     effectiveRole: context.adminPrincipal.effectiveRole,
   })),
   freshOperation: policyGuarded.freshOperation.handler(({ context }) => ({
+    effectiveRole: context.adminPrincipal.effectiveRole,
+  })),
+  driftedOperation: policyGuarded.driftedOperation.handler(({ context }) => ({
     effectiveRole: context.adminPrincipal.effectiveRole,
   })),
   unexpectedOperation: policyGuarded.unexpectedOperation.handler(() => {
@@ -125,6 +143,15 @@ describe('administrator oRPC policy guards over HTTP', () => {
 
     const freshSatisfied = await invokeGuard('/fresh', authentication('admin', { freshLoginSatisfied: true }))
     expect(freshSatisfied.response?.status).toBe(200)
+  })
+
+  it('fails closed when procedure metadata drifts from the central primary-auth action matrix', async () => {
+    const failed = await invokeGuard('/drifted', authentication('admin', { recentPrimaryAuthSatisfied: true }))
+    expect(failed.response?.status).toBe(500)
+    await expect(failed.response?.json()).resolves.toMatchObject({
+      defined: true,
+      code: 'INTERNAL_SERVER_ERROR',
+    })
   })
 
   it('replaces unexpected failures with a typed, sanitized server error', async () => {

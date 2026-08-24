@@ -72,6 +72,25 @@ describe('administrator principal loader', () => {
     })
   })
 
+  it('loads a non-sliding recent-primary-authentication window for the exact user and session', async () => {
+    const hasRecentPrimaryAuth = vi.fn().mockResolvedValue(true)
+    const load = createAdminPrincipalLoader({
+      getSession: vi.fn().mockResolvedValue(session),
+      findUserById: vi.fn().mockResolvedValue({ id: 'database-user-id', role: 'admin' }),
+      superAdministrators: parseSuperAdministratorAllowlist('[]'),
+      hasRecentPrimaryAuth,
+    })
+
+    await expect(load(headers)).resolves.toMatchObject({
+      status: 'authenticated',
+      assurance: { recentPrimaryAuthSatisfied: true },
+    })
+    expect(hasRecentPrimaryAuth).toHaveBeenCalledExactlyOnceWith({
+      userId: 'database-user-id',
+      sessionId: 'session-id',
+    })
+  })
+
   it('fails closed when the session user no longer resolves to the same database account', async () => {
     for (const databaseUser of [undefined, { id: 'different-user-id', role: 'admin' }]) {
       const load = createAdminPrincipalLoader({

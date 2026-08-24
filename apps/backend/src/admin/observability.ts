@@ -4,13 +4,21 @@ import { ADMIN_ACCESS_DENIAL_CATEGORIES, type AdminAccessDenialCategory } from '
 const ADMIN_ERROR_MESSAGE = 'Administrator request failed'
 const SAFE_CORRELATION_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
-const ADMIN_TELEMETRY_PROCEDURES = ['bootstrap', 'handler'] as const
+const ADMIN_TELEMETRY_PROCEDURES = [
+  'bootstrap',
+  'primaryAuthStatus',
+  'completePrimaryAuthPassword',
+  'initiatePrimaryAuthOauth',
+  'handler',
+] as const
 const ADMIN_AUTHORIZATION_RESULTS = [
   'SUCCESS',
   'UNAUTHENTICATED',
   'FORBIDDEN',
   'RECENT_AUTH_REQUIRED',
   'FRESH_LOGIN_REQUIRED',
+  'STEP_UP_FAILED',
+  'STEP_UP_RATE_LIMITED',
   'ADMIN_CLIENT_INCOMPATIBLE',
   'VALIDATION_FAILED',
   'NOT_FOUND',

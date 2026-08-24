@@ -38,6 +38,7 @@ import {
   isAdminAccessProtectedPath as isAdminApiPath,
 } from './admin/access-boundary.js'
 import { loadAdminRequestAuthentication } from './admin/principal-loader.js'
+import { adminPrimaryAuthService } from './admin/primary-auth-runtime.js'
 import { expireLegacyDomainAuthCookies } from './auth-security.js'
 import { isAllowedExactOrigin } from './origin-policy.js'
 import {
@@ -45,6 +46,7 @@ import {
   ADMIN_CONTRACT_COMPATIBILITY_ID,
   ADMIN_CONTRACT_HEADER,
   AdminContractCompatibilityIdSchema,
+  AdminPrimaryAuthProviderSchema,
 } from '@gekichumai/admin-contract'
 
 const app = new Hono<EvlogVariables>()
@@ -77,6 +79,7 @@ const setAdminPrivateNoStoreHeaders = (c: Context): void => {
   c.header('Cache-Control', 'private, no-store')
   c.header('CDN-Cache-Control', 'no-store')
   c.header('Cloudflare-CDN-Cache-Control', 'no-store')
+  c.header('Referrer-Policy', 'no-referrer')
 }
 
 const createExactCredentialedCors = ({
@@ -239,6 +242,42 @@ app.use('*', (c, next) => {
 // headers. Public routes discard them; administrator requests validate the
 // captured proof before compatibility, session, database, or procedure work.
 app.use('*', adminAccessBoundary)
+
+// OAuth authorization codes and state terminate on this server-only callback.
+// Keep it before evlog and the request-ID middleware so callback query values
+// cannot enter access logs, breadcrumbs, or frontend telemetry. Cloudflare
+// Access, private no-store headers, and the current Better Auth session still
+// apply through the middleware registered above.
+app.get('/api/admin/primary-auth/oauth/callback/:provider', async (c) => {
+  const resultUrl = new URL('/primary-auth/result', config.admin.frontendOrigin)
+  const fail = () => {
+    resultUrl.searchParams.set('status', 'failure')
+    return c.redirect(resultUrl.toString())
+  }
+
+  try {
+    const provider = AdminPrimaryAuthProviderSchema.safeParse(c.req.param('provider'))
+    if (!provider.success) return fail()
+
+    const authentication = await loadAdminRequestAuthentication(c.req.raw.headers)
+    if (authentication.status !== 'authenticated' || !authentication.principal) return fail()
+
+    await adminPrimaryAuthService.completeOauth(
+      {
+        userId: authentication.authorizationUser.id,
+        sessionId: authentication.session.id,
+        allowlistedSuperAdministrator: authentication.principal.effectiveRole === 'super_admin',
+      },
+      provider.data,
+      c.req.query('state') ?? null,
+      c.req.query('error') ? null : (c.req.query('code') ?? null),
+    )
+    resultUrl.searchParams.set('status', 'success')
+    return c.redirect(resultUrl.toString())
+  } catch {
+    return fail()
+  }
+})
 
 // Request logging
 app.use(
@@ -461,6 +500,9 @@ app.all('/api/admin/*', async (c) => {
       context: {
         authentication,
         requestId,
+        requestOrigin: config.admin.trustedOrigins.includes(c.req.header('Origin') ?? '')
+          ? c.req.header('Origin')
+          : undefined,
         recordAuthorizationResult: recordResult,
       },
     })

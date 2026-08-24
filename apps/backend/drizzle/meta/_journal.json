@@ -85,6 +85,13 @@
       "when": 1787521520178,
       "tag": "0011_add_admin_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1787544476483,
+      "tag": "0012_add_admin_primary_auth",
+      "breakpoints": true
     }
   ]
 }
