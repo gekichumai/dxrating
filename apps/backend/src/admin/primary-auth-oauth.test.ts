@@ -264,6 +264,23 @@ describe('Google administrator primary-auth OAuth adapter', () => {
     })
     await expectGenericProviderFailure(verifierFailure.exchangeAndVerify(googleExchangeInput), secret)
   })
+
+  it('aborts and fails generically when provider work exceeds its bounded timeout', async () => {
+    const fetchImplementation = vi.fn<TestFetch>(async () => new Promise<Response>(() => undefined))
+    const provider = createGoogleAdminPrimaryAuthOauthProvider({
+      clientId: 'id',
+      clientSecret: 'secret',
+      getProvider: async () => createBetterAuthProvider().provider,
+      fetchImplementation: fetchImplementation as unknown as typeof fetch,
+      providerTimeoutMilliseconds: 5,
+    })
+
+    await expectGenericProviderFailure(provider.exchangeAndVerify(googleExchangeInput))
+    expect(fetchImplementation).toHaveBeenCalledOnce()
+    const requestSignal = fetchImplementation.mock.calls[0]?.[1]?.signal
+    expect(requestSignal).toBeInstanceOf(AbortSignal)
+    expect(requestSignal?.aborted).toBe(true)
+  })
 })
 
 describe('administrator OAuth authorization URL invariants', () => {

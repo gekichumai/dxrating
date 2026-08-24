@@ -73,8 +73,24 @@ export const AdminProcedureAuthorizationPolicySchema = z
 
 export type AdminProcedureAuthorizationPolicy = Readonly<z.infer<typeof AdminProcedureAuthorizationPolicySchema>>
 
+export const AdminProcedureBanPolicySchema = z.enum([
+  'unclassified',
+  'authenticated_read',
+  'authenticated_write',
+  'transactional_write',
+])
+export type AdminProcedureBanPolicy = z.infer<typeof AdminProcedureBanPolicySchema>
+
 export type AdminProcedureMetadata = {
   readonly authorization: AdminProcedureAuthorizationPolicy
+  /**
+   * Explicit identity-side-effect classification. `unclassified` is a
+   * fail-closed sentinel so new administrator procedures cannot silently
+   * bypass active-ban review. `transactional_write` is reserved for a
+   * target-authorized service that rechecks actor, target, and session while
+   * holding its own canonical PostgreSQL row locks.
+   */
+  readonly banPolicy: AdminProcedureBanPolicy
 }
 
 export const ADMIN_DEFAULT_AUTHORIZATION = {
@@ -200,6 +216,7 @@ export const adminErrors = {
 
 const adminProcedure = oc.$meta<AdminProcedureMetadata>({
   authorization: ADMIN_DEFAULT_AUTHORIZATION,
+  banPolicy: 'unclassified',
 })
 
 export const AdminPrimaryAuthProviderSchema = z.enum(['google'])
@@ -351,7 +368,7 @@ export const AdminRevokeAdministratorOutputSchema = z.object({
 
 export const adminContract = adminProcedure.errors(adminErrors).router({
   bootstrap: adminProcedure
-    .meta({ authorization: ADMIN_BOOTSTRAP_AUTHORIZATION })
+    .meta({ authorization: ADMIN_BOOTSTRAP_AUTHORIZATION, banPolicy: 'authenticated_read' })
     .route({
       method: 'GET',
       path: '/bootstrap',
@@ -363,6 +380,7 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .input(AdminBootstrapInputSchema)
     .output(AdminBootstrapOutputSchema),
   primaryAuthStatus: adminProcedure
+    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
     .route({
       method: 'GET',
       path: '/primary-auth/status',
@@ -374,6 +392,7 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .input(AdminBootstrapInputSchema)
     .output(AdminPrimaryAuthWindowOutputSchema),
   completePrimaryAuthPassword: adminProcedure
+    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_write' })
     .route({
       method: 'POST',
       path: '/primary-auth/password',
@@ -385,6 +404,7 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .input(AdminPrimaryAuthPasswordInputSchema)
     .output(AdminPrimaryAuthCompletionOutputSchema),
   initiatePrimaryAuthOauth: adminProcedure
+    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_write' })
     .route({
       method: 'POST',
       path: '/primary-auth/oauth/initiate',
@@ -396,6 +416,7 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .input(AdminPrimaryAuthOauthInitiateInputSchema)
     .output(AdminPrimaryAuthOauthInitiateOutputSchema),
   listAdministrators: adminProcedure
+    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
     .route({
       method: 'GET',
       path: '/administrators',
@@ -407,6 +428,7 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .input(AdminBootstrapInputSchema)
     .output(AdminAdministratorRosterOutputSchema),
   listAdministratorRoleHistory: adminProcedure
+    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
     .route({
       method: 'GET',
       path: '/administrators/{userId}/role-history',
@@ -419,6 +441,7 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .output(AdminAdministratorRoleHistoryOutputSchema),
   grantAdministrator: adminProcedure
     .meta({
+      banPolicy: 'transactional_write',
       authorization: adminAuthorizationForAction('administrator.grant', {
         minimumRole: 'super_admin',
         targetAction: 'manage_administrator_role',
@@ -436,6 +459,7 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .output(AdminGrantAdministratorOutputSchema),
   revokeAdministrator: adminProcedure
     .meta({
+      banPolicy: 'transactional_write',
       authorization: adminAuthorizationForAction('administrator.revoke', {
         minimumRole: 'super_admin',
         targetAction: 'manage_administrator_role',

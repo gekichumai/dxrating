@@ -17,13 +17,23 @@ import {
 } from './db/schema.js'
 import { eq, and, desc, asc, exists, gte, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import Keyv from 'keyv'
-import type { auth } from './auth.js'
 import { config } from './config.js'
 import { renderChartOgImageOutput } from './services/functions/chart-og-image/index.js'
 import { CatalogIdentityError, createCatalogIdentityService } from './services/catalog-identities.js'
+import { auth } from './auth.js'
+import { loadPostgresUserBanState } from './admin/user-ban-store.js'
+import {
+  createPublicAccessPolicy,
+  PublicAccountBanned,
+  PublicAuthenticationRequired,
+  normalizePublicCanonicalSession,
+  runPostgresPublicUserWriteLease,
+  type PublicAuthenticatedUser,
+} from './public-access-policy.js'
 
-type Context = {
-  user?: typeof auth.$Infer.Session.user
+export type PublicRequestContext = {
+  readonly headers?: Headers
+  readonly user?: PublicAuthenticatedUser
 }
 
 const cache = new Keyv({ ttl: 30 * 60 * 1000 }) // 30 minute TTL
@@ -66,10 +76,60 @@ type TrendingCacheResult = {
   dateTo: string
 }
 
-const os = implement(appContract)
+const os = implement(appContract).$context<PublicRequestContext>()
+
+const publicAccessPolicy = createPublicAccessPolicy({
+  loadSession: async (headers) => {
+    const authentication = await auth.api.getSession({
+      headers,
+      query: { disableCookieCache: true, disableRefresh: true },
+    })
+    // Better Auth hooks can short-circuit an HTTP session probe with a
+    // Response. Internal callers never treat that transport object as an
+    // authenticated principal.
+    return normalizePublicCanonicalSession(authentication)
+  },
+  loadBanState: loadPostgresUserBanState,
+  database: pool,
+  runWriteLease: (identity, operation) => runPostgresPublicUserWriteLease(identity, operation, pool),
+})
+
+export const publicProcedureAccessMiddleware = os.middleware<{ readonly user?: PublicAuthenticatedUser }, unknown>(
+  async ({ context, errors, next, path, procedure }) => {
+    const access = procedure['~orpc'].meta.access
+    try {
+      return await publicAccessPolicy({
+        access,
+        headers: context.headers,
+        operation: async (user) => next({ context: { user } }),
+      })
+    } catch (error) {
+      if (error instanceof PublicAuthenticationRequired) {
+        Sentry.metrics.count('public_api.access_denied', 1, {
+          attributes: { access, code: 'UNAUTHORIZED', procedure: path.join('.') },
+        })
+        throw errors.UNAUTHORIZED()
+      }
+      if (error instanceof PublicAccountBanned) {
+        Sentry.metrics.count('public_api.access_denied', 1, {
+          attributes: { access, code: 'ACCOUNT_BANNED', procedure: path.join('.') },
+        })
+        throw errors.ACCOUNT_BANNED({
+          data: {
+            reason: error.reason,
+            expiresAt: error.expiresAt?.toISOString() ?? null,
+          },
+        })
+      }
+      throw error
+    }
+  },
+)
+
+const guarded = os.use(publicProcedureAccessMiddleware)
 
 const tagsHandler = {
-  list: os.tags.list.handler(async ({ input }) => {
+  list: guarded.tags.list.handler(async ({ input }) => {
     const cached = await cache.get<TagsListResult>('tags:list')
     let result: TagsListResult
     if (cached) {
@@ -120,8 +180,8 @@ const tagsHandler = {
     }
     return result
   }),
-  attach: os.tags.attach.handler(async ({ input, context }) => {
-    const user = (context as Context).user
+  attach: guarded.tags.attach.handler(async ({ input, context }) => {
+    const user = context.user
     if (!user) throw new Error('Unauthorized')
 
     const identity = await withCatalogIdentityErrors(() => catalogIdentities.resolveSheetInput(input))
@@ -157,8 +217,8 @@ const tagsHandler = {
 }
 
 const commentsHandler = {
-  create: os.comments.create.handler(async ({ input, context }) => {
-    const user = (context as Context).user
+  create: guarded.comments.create.handler(async ({ input, context }) => {
+    const user = context.user
     if (!user) {
       throw new Error('Unauthorized')
     }
@@ -201,7 +261,7 @@ const commentsHandler = {
 
     return newComment[0]
   }),
-  list: os.comments.list.handler(async ({ input }) => {
+  list: guarded.comments.list.handler(async ({ input }) => {
     const identity = await withCatalogIdentityErrors(() => catalogIdentities.resolveSheetInput(input))
     const result = await db
       .select({
@@ -227,7 +287,7 @@ const commentsHandler = {
 }
 
 const aliasesHandler = {
-  list: os.aliases.list.handler(async ({ input }) => {
+  list: guarded.aliases.list.handler(async ({ input }) => {
     const cached = await cache.get<AliasListResult>('aliases:list')
     let result: AliasListResult
     if (cached) {
@@ -257,8 +317,8 @@ const aliasesHandler = {
     }
     return result
   }),
-  create: os.aliases.create.handler(async ({ input, context }) => {
-    const user = (context as Context).user
+  create: guarded.aliases.create.handler(async ({ input, context }) => {
+    const user = context.user
     if (!user) throw new Error('Unauthorized')
 
     const identity = await withCatalogIdentityErrors(() => catalogIdentities.resolveSongInput(input.songId))
@@ -281,7 +341,7 @@ import { MaimaiNETJpClient, MaimaiNETIntlClient } from './lib/functions/client.j
 import * as lxnsService from './services/lxns/index.js'
 
 const analyticsHandler = {
-  trending: os.analytics.trending.handler(async ({ input }) => {
+  trending: guarded.analytics.trending.handler(async ({ input }) => {
     const cacheKey = 'analytics:trending'
     const cached = await cache.get<TrendingCacheResult>(cacheKey)
     let result: TrendingCacheResult
@@ -521,7 +581,7 @@ function serializeArcadeVenue(
 }
 
 const arcadesHandler = {
-  games: os.arcades.games.handler(async () => {
+  games: guarded.arcades.games.handler(async () => {
     const items = await db
       .select({
         id: arcadeGames.id,
@@ -534,7 +594,7 @@ const arcadesHandler = {
 
     return { items }
   }),
-  venues: os.arcades.venues.handler(async ({ input }) => {
+  venues: guarded.arcades.venues.handler(async ({ input }) => {
     const filters = []
 
     if (
@@ -619,7 +679,7 @@ const arcadesHandler = {
       chains,
     }
   }),
-  venue: os.arcades.venue.handler(async ({ input }) => {
+  venue: guarded.arcades.venue.handler(async ({ input }) => {
     const [venue] = await db.select().from(arcadeVenues).where(eq(arcadeVenues.public_id, input.id)).limit(1)
     if (!venue) {
       throw new ORPCError('NOT_FOUND', { message: 'Arcade venue not found' })
@@ -631,7 +691,7 @@ const arcadesHandler = {
 }
 
 const chartOgImageHandler = {
-  render: os.chartOgImage.render.handler(async ({ input }) => {
+  render: guarded.chartOgImage.render.handler(async ({ input }) => {
     const output = await renderChartOgImageOutput(input)
     if (!output) {
       throw new ORPCError('NOT_FOUND', { message: 'Chart not found' })
@@ -642,7 +702,7 @@ const chartOgImageHandler = {
 }
 
 const maimaiHandler = {
-  fetchRecords: os.maimai.fetchRecords.handler(async ({ input }) => {
+  fetchRecords: guarded.maimai.fetchRecords.handler(async ({ input }) => {
     const { id, password, region } = input
     const client = {
       jp: new MaimaiNETJpClient(),
@@ -657,20 +717,24 @@ const maimaiHandler = {
 }
 
 const lxnsHandler = {
-  authorize: os.lxns.authorize.handler(async ({ context }) => {
-    const user = (context as Context).user
+  authorize: guarded.lxns.authorize.handler(async ({ context }) => {
+    const user = context.user
     if (!user) throw new Error('Unauthorized')
     const url = await lxnsService.generateAuthorizationUrl(user.id)
     return { url }
   }),
-  status: os.lxns.status.handler(async ({ context }) => {
-    const user = (context as Context).user
+  status: guarded.lxns.status.handler(async ({ context }) => {
+    const user = context.user
     if (!user) throw new Error('Unauthorized')
     return await lxnsService.getConnectionStatus(user.id)
   }),
-  start: os.lxns.start.handler(async ({ context }) => {
-    const user = (context as Context).user
+  start: guarded.lxns.start.handler(async ({ context }) => {
+    const user = context.user
     if (!user) throw new Error('Unauthorized')
+    // Token refresh can update or delete the account-linked credential, so the
+    // write lease deliberately spans both LXNS requests. Each request has a
+    // 30-second abort deadline, bounding the lock while preserving one
+    // linearizable check across every possible mutation in this operation.
     const fetchStart = performance.now()
     const rawScores = await lxnsService.fetchPlayerScores(user.id)
     Sentry.metrics.distribution('lxns_fetch.duration', performance.now() - fetchStart, {
@@ -690,15 +754,15 @@ const lxnsHandler = {
     Sentry.metrics.distribution('lxns_fetch.scores', scores.length, { unit: 'none' })
     return { scores, count: scores.length }
   }),
-  disconnect: os.lxns.disconnect.handler(async ({ context }) => {
-    const user = (context as Context).user
+  disconnect: guarded.lxns.disconnect.handler(async ({ context }) => {
+    const user = context.user
     if (!user) throw new Error('Unauthorized')
     await lxnsService.disconnect(user.id)
     return { success: true }
   }),
 }
 
-export const appRouter = os.router({
+export const appRouter = guarded.router({
   tags: tagsHandler,
   comments: commentsHandler,
   aliases: aliasesHandler,

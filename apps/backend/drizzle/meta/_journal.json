@@ -127,6 +127,13 @@
       "when": 1787561007155,
       "tag": "0017_protect_admin_user_bans",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1787563515407,
+      "tag": "0018_enforce_active_user_bans",
+      "breakpoints": true
     }
   ]
 }

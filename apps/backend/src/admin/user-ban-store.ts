@@ -2,7 +2,8 @@ import pg, { type Pool, type PoolClient } from 'pg'
 import { pool } from '../db/index.js'
 import type { AdminMutationAuthorizationTransaction } from './authorization.js'
 import { createPostgresAdminMutationAuthorizationTransaction } from './mutation-authorization-store.js'
-import { revokeAllUserSessionsInTransaction } from './session-transitions.js'
+import { runRetryableAdminTransaction } from './retryable-transaction.js'
+import { lockUserSessionsForRevocationInTransaction } from './session-transitions.js'
 
 export type UserBanAction = 'ban' | 'unban'
 export type UserBanStatus = 'unbanned' | 'expired' | 'temporarily_banned' | 'permanently_banned'
@@ -228,6 +229,14 @@ const applyTransition = async (
   transaction: PoolClient,
   input: UserBanTransitionInput,
 ): Promise<AppliedUserBanTransition | undefined> => {
+  // The state trigger performs the atomic deletion so direct/future valid
+  // state writers cannot bypass revocation. Prelock here both avoids tuple
+  // cycles and preserves the service's useful revoked-session count.
+  const revokedSessionCount =
+    input.action === 'ban'
+      ? (await lockUserSessionsForRevocationInTransaction(transaction, input.subjectUserId)).revokedSessionCount
+      : 0
+
   const inserted = await transaction.query<UserBanHistoryRow>(
     `
       /* user-ban-store:append-event-and-project-state */
@@ -356,17 +365,25 @@ const applyTransition = async (
   const row = inserted.rows[0]
   if (!row) return undefined
 
-  const revokedSessionCount =
-    input.action === 'ban'
-      ? (await revokeAllUserSessionsInTransaction(transaction, input.subjectUserId)).revokedSessionCount
-      : 0
   const state = await loadPostgresUserBanState(transaction, input.subjectUserId)
   return { event: projectHistoryEvent(row), state, revokedSessionCount }
 }
 
 const createTransaction = (transaction: PoolClient): UserBanTransaction => ({
   authorization: createPostgresAdminMutationAuthorizationTransaction(transaction),
-  loadCurrentState: (subjectUserId) => loadPostgresUserBanState(transaction, subjectUserId),
+  async loadCurrentState(subjectUserId) {
+    // A direct state UPDATE owns its tuple before its BEFORE trigger requests
+    // the exclusive advisory lock. Yield this retryable application attempt
+    // instead of forming a row/advisory cycle.
+    await transaction.query(
+      `SELECT subject_user_id
+       FROM admin_user_ban_state
+       WHERE subject_user_id = $1
+       FOR UPDATE NOWAIT`,
+      [subjectUserId],
+    )
+    return loadPostgresUserBanState(transaction, subjectUserId)
+  },
   applyTransition: (input) => applyTransition(transaction, input),
 })
 
@@ -411,18 +428,9 @@ export const createPostgresUserBanStore = (database: Pool = pool): UserBanStore 
   },
 
   async runInTransaction(operation) {
-    const transaction = await database.connect()
     try {
-      await transaction.query('BEGIN')
-      const result = await operation(createTransaction(transaction))
-      await transaction.query('COMMIT')
-      return result
+      return await runRetryableAdminTransaction(database, (transaction) => operation(createTransaction(transaction)))
     } catch (error) {
-      try {
-        await transaction.query('ROLLBACK')
-      } catch {
-        // Preserve the operation or commit failure.
-      }
       if (
         error instanceof pg.DatabaseError &&
         error.code === '23514' &&
@@ -449,8 +457,6 @@ export const createPostgresUserBanStore = (database: Pool = pool): UserBanStore 
         throw new UserBanStoreFailure('CONFLICT')
       }
       throw error
-    } finally {
-      transaction.release()
     }
   },
 })

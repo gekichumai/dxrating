@@ -248,19 +248,11 @@ describe('user-ban service', () => {
     expect(permanent.event.expiresAt).toBeNull()
   })
 
-  it('replaces an active ban as a chained event while preserving its uninterrupted start and revoking sessions', async () => {
+  it('revokes pre-ban sessions and chains a replacement while preserving the uninterrupted start', async () => {
     await insertActor(database, { id: 'admin-actor', role: 'admin' })
     await insertTarget(database)
     const service = createService(database, [])
     const firstExpiry = await futureDatabaseTime(database, '1 hour')
-    const first = await service.banUser({
-      context: authentication('admin-actor', 'admin', 'admin'),
-      targetUserId: 'target-user',
-      expectedStateVersion: null,
-      kind: 'temporary',
-      expiresAt: firstExpiry,
-      reason: 'Initial restriction',
-    })
     await database.query(
       `
         INSERT INTO session (id, expires_at, token, updated_at, user_id)
@@ -325,6 +317,17 @@ describe('user-ban service', () => {
         VALUES ('target-user', clock_timestamp(), 2, clock_timestamp())
       `,
     )
+    const first = await service.banUser({
+      context: authentication('admin-actor', 'admin', 'admin'),
+      targetUserId: 'target-user',
+      expectedStateVersion: null,
+      kind: 'temporary',
+      expiresAt: firstExpiry,
+      reason: 'Initial restriction',
+    })
+    expect(first.revokedSessionCount).toBe(2)
+    expect(await sessionCount(database)).toBe(0)
+
     const replacementExpiry = await futureDatabaseTime(database, '2 hours')
 
     const replacement = await service.banUser({
@@ -349,7 +352,7 @@ describe('user-ban service', () => {
         status: 'temporarily_banned',
         banStartedAt: first.event.banStartedAt,
       },
-      revokedSessionCount: 2,
+      revokedSessionCount: 0,
     })
     expect(await sessionCount(database)).toBe(0)
     const sessionProofs = await database.query<{
@@ -736,6 +739,43 @@ describe('user-ban service', () => {
       reason: { code: 'CONFLICT' },
     })
     expect(await historyRows(database)).toHaveLength(2)
+  })
+
+  it('retries an atomic ban when a concurrent target-session update wins the tuple race', async () => {
+    await insertActor(database, { id: 'admin-actor', role: 'admin' })
+    await insertTarget(database)
+    await database.query(
+      `INSERT INTO session (id, expires_at, token, updated_at, user_id)
+       VALUES ('target-session', clock_timestamp() + interval '1 hour',
+               'target-token', clock_timestamp(), 'target-user')`,
+    )
+    const sessionUpdater = await database.connect()
+    let ban: Promise<UserBanTransitionResult> | undefined
+    try {
+      await sessionUpdater.query('BEGIN')
+      await sessionUpdater.query(`UPDATE session SET updated_at = clock_timestamp() WHERE id = 'target-session'`)
+
+      ban = createService(database, []).banUser({
+        context: authentication('admin-actor', 'admin', 'admin'),
+        targetUserId: 'target-user',
+        expectedStateVersion: null,
+        kind: 'permanent',
+        reason: 'Retried tuple-race ban',
+      })
+      await new Promise((resolve) => setTimeout(resolve, 45))
+      await sessionUpdater.query('COMMIT')
+
+      await expect(ban).resolves.toMatchObject({
+        state: { active: true, banReason: 'Retried tuple-race ban' },
+        revokedSessionCount: 1,
+      })
+      expect(await sessionCount(database)).toBe(0)
+      expect(await historyRows(database)).toHaveLength(1)
+    } finally {
+      await sessionUpdater.query('ROLLBACK').catch(() => undefined)
+      sessionUpdater.release()
+      await Promise.allSettled([ban].filter((promise) => promise !== undefined))
+    }
   })
 
   it('rolls back state, history, session revocation, and preserves authored content when insertion fails', async () => {

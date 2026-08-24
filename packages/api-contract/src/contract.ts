@@ -1,6 +1,41 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 
+export const PUBLIC_PROCEDURE_ACCESS_MODES = [
+  'public_read',
+  'identity_independent',
+  'authenticated_read',
+  'authenticated_write',
+] as const
+
+export type PublicProcedureAccessMode = (typeof PUBLIC_PROCEDURE_ACCESS_MODES)[number]
+
+/**
+ * Every procedure must replace the fail-closed sentinel with an explicit
+ * access classification. The contract inventory tests reject the sentinel,
+ * and the backend guard refuses to execute it at runtime.
+ */
+export type PublicProcedureMetadata = {
+  readonly access: PublicProcedureAccessMode | 'unclassified'
+}
+
+export const publicErrors = {
+  UNAUTHORIZED: {
+    status: 401,
+    message: 'Authentication is required',
+  },
+  ACCOUNT_BANNED: {
+    status: 403,
+    message: 'This account is banned',
+    data: z.object({
+      reason: z.string().min(1),
+      expiresAt: z.iso.datetime().nullable(),
+    }),
+  },
+} as const
+
+export const publicProcedure = oc.$meta<PublicProcedureMetadata>({ access: 'unclassified' }).errors(publicErrors)
+
 /**
  * A localized string is an object mapping language codes to translated strings.
  * Supported language codes: "en", "ja", "zh-Hans", "zh-Hant"
@@ -252,7 +287,8 @@ export const ArcadeVenueDetailInputSchema = z.object({
 
 export const publicContractRoutes = {
   tags: {
-    list: oc
+    list: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/tags',
@@ -262,7 +298,8 @@ export const publicContractRoutes = {
       })
       .input(CatalogIdSchemeInputSchema)
       .output(TagsListResponseSchema),
-    attach: oc
+    attach: publicProcedure
+      .meta({ access: 'authenticated_write' })
       .route({
         method: 'POST',
         path: '/tags/attach',
@@ -273,7 +310,8 @@ export const publicContractRoutes = {
       .output(z.object({ id: z.number() })),
   },
   comments: {
-    create: oc
+    create: publicProcedure
+      .meta({ access: 'authenticated_write' })
       .route({
         method: 'POST',
         path: '/comments',
@@ -282,7 +320,8 @@ export const publicContractRoutes = {
       })
       .input(CreateCommentInputSchema)
       .output(CommentSchema),
-    list: oc
+    list: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/comments',
@@ -294,7 +333,8 @@ export const publicContractRoutes = {
       .output(z.array(CommentWithProfileSchema)),
   },
   aliases: {
-    list: oc
+    list: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/aliases',
@@ -304,7 +344,8 @@ export const publicContractRoutes = {
       })
       .input(CatalogIdSchemeInputSchema)
       .output(z.array(AliasSchema)),
-    create: oc
+    create: publicProcedure
+      .meta({ access: 'authenticated_write' })
       .route({
         method: 'POST',
         path: '/aliases',
@@ -315,7 +356,8 @@ export const publicContractRoutes = {
       .output(z.object({ id: z.number() })),
   },
   analytics: {
-    trending: oc
+    trending: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/analytics/trending',
@@ -327,7 +369,8 @@ export const publicContractRoutes = {
       .output(TrendingResponseSchema),
   },
   arcades: {
-    games: oc
+    games: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/arcades/games',
@@ -336,7 +379,8 @@ export const publicContractRoutes = {
         spec: (spec) => ({ ...spec, security: [] }),
       })
       .output(ArcadeGamesListResponseSchema),
-    venues: oc
+    venues: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/arcades/venues',
@@ -346,7 +390,8 @@ export const publicContractRoutes = {
       })
       .input(ArcadeVenuesListInputSchema)
       .output(ArcadeVenuesListResponseSchema),
-    venue: oc
+    venue: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/arcades/venues/{id}',
@@ -358,7 +403,8 @@ export const publicContractRoutes = {
       .output(ArcadeVenueSchema),
   },
   lxns: {
-    authorize: oc
+    authorize: publicProcedure
+      .meta({ access: 'authenticated_write' })
       .route({
         method: 'POST',
         path: '/io/import/lxns/authorize',
@@ -366,7 +412,8 @@ export const publicContractRoutes = {
         tags: ['Import'],
       })
       .output(z.object({ url: z.string() })),
-    status: oc
+    status: publicProcedure
+      .meta({ access: 'authenticated_read' })
       .route({
         method: 'GET',
         path: '/io/import/lxns/status',
@@ -374,7 +421,8 @@ export const publicContractRoutes = {
         tags: ['Import'],
       })
       .output(z.object({ connected: z.boolean() })),
-    start: oc
+    start: publicProcedure
+      .meta({ access: 'authenticated_write' })
       .route({
         method: 'POST',
         path: '/io/import/lxns/start',
@@ -382,7 +430,8 @@ export const publicContractRoutes = {
         tags: ['Import'],
       })
       .output(LxnsStartOutputSchema),
-    disconnect: oc
+    disconnect: publicProcedure
+      .meta({ access: 'authenticated_write' })
       .route({
         method: 'POST',
         path: '/io/import/lxns/disconnect',
@@ -393,4 +442,4 @@ export const publicContractRoutes = {
   },
 }
 
-export const publicAppContract = oc.router(publicContractRoutes)
+export const publicAppContract = publicProcedure.router(publicContractRoutes)

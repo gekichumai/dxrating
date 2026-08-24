@@ -8,14 +8,39 @@ import * as authSchema from './db/auth-schema.js'
 import { openAPI, oneTap, haveIBeenPwned, captcha, lastLoginMethod } from 'better-auth/plugins'
 import { passkey } from '@better-auth/passkey'
 import { i18n } from '@better-auth/i18n'
+import { github as createGithubProvider, google as createGoogleProvider } from 'better-auth/social-providers'
 import { config } from './config.js'
 import { forceOrdinaryRoleForNewUser } from './admin/role-policy.js'
-import { buildAuthSecurityOptions, rejectAuthReturnUrlUserInfo, requireExistingOauthAccount } from './auth-security.js'
+import { buildAuthSecurityOptions, requireExistingOauthAccount } from './auth-security.js'
+import {
+  authBanAfterHook,
+  createAuthBanBeforeHook,
+  createPasskeyBanCallbacks,
+  createSessionBanHook,
+  logBanAwareBetterAuthMessage,
+  logUnexpectedBetterAuthError,
+  withOauthAccountBanCheck,
+} from './auth-ban-enforcement.js'
+import { pool } from './db/index.js'
 
 const authSecurity = buildAuthSecurityOptions({
   production: config.nodeEnv === 'production',
   trustedOrigins: config.auth.trustedOrigins,
 })
+
+const googleOptions = requireExistingOauthAccount({
+  clientId: config.auth.google.clientId!,
+  clientSecret: config.auth.google.clientSecret!,
+  enabled: !!config.auth.google.clientId && !!config.auth.google.clientSecret,
+})
+const githubOptions = requireExistingOauthAccount({
+  clientId: config.auth.github.clientId!,
+  clientSecret: config.auth.github.clientSecret!,
+  enabled: !!config.auth.github.clientId && !!config.auth.github.clientSecret,
+})
+const googleProvider = createGoogleProvider(googleOptions)
+const githubProvider = createGithubProvider(githubOptions)
+const passkeyBanCallbacks = createPasskeyBanCallbacks(pool)
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -28,8 +53,15 @@ export const auth = betterAuth({
   secret: config.auth.secret,
   baseURL: config.auth.url,
   trustedOrigins: authSecurity.trustedOrigins,
+  logger: {
+    log: logBanAwareBetterAuthMessage,
+  },
+  onAPIError: {
+    onError: (error, context) => logUnexpectedBetterAuthError(error, context.logger),
+  },
   hooks: {
-    before: rejectAuthReturnUrlUserInfo,
+    before: createAuthBanBeforeHook(pool),
+    after: authBanAfterHook,
   },
   user: {
     additionalFields: {
@@ -50,6 +82,11 @@ export const auth = betterAuth({
         }),
       },
     },
+    session: {
+      create: {
+        before: createSessionBanHook(pool),
+      },
+    },
   },
   emailAndPassword: {
     enabled: true,
@@ -66,16 +103,19 @@ export const auth = betterAuth({
     },
   },
   socialProviders: {
-    google: requireExistingOauthAccount({
-      clientId: config.auth.google.clientId!,
-      clientSecret: config.auth.google.clientSecret!,
-      enabled: !!config.auth.google.clientId && !!config.auth.google.clientSecret,
-    }),
-    github: requireExistingOauthAccount({
-      clientId: config.auth.github.clientId!,
-      clientSecret: config.auth.github.clientSecret!,
-      enabled: !!config.auth.github.clientId && !!config.auth.github.clientSecret,
-    }),
+    google: {
+      ...googleOptions,
+      getUserInfo: withOauthAccountBanCheck(pool, 'google', googleProvider.getUserInfo),
+    },
+    github: {
+      ...githubOptions,
+      getUserInfo: withOauthAccountBanCheck(pool, 'github', githubProvider.getUserInfo),
+    },
+  },
+  account: {
+    accountLinking: {
+      disableImplicitLinking: true,
+    },
   },
   // Add other providers if needed
   plugins: [
@@ -85,6 +125,7 @@ export const auth = betterAuth({
       rpID: config.auth.passkey.rpID,
       rpName: 'DXRating',
       origin: config.auth.passkey.origin,
+      ...passkeyBanCallbacks,
     }),
     oneTap(),
     lastLoginMethod({

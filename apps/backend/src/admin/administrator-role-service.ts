@@ -65,6 +65,25 @@ type CursorPayload = {
 const validationFailure = () => new AdministratorRoleServiceFailure('VALIDATION_FAILED')
 const conflictFailure = () => new AdministratorRoleServiceFailure('CONFLICT')
 
+const isActiveBanWriteGuardFailure = (error: unknown): boolean => {
+  const seen = new Set<object>()
+  let candidate = error
+
+  for (let depth = 0; depth < 8 && candidate !== null && typeof candidate === 'object'; depth += 1) {
+    if (seen.has(candidate)) return false
+    seen.add(candidate)
+    if (
+      Reflect.get(candidate, 'code') === 'DXB01' &&
+      Reflect.get(candidate, 'constraint') === 'active_user_ban_write_guard'
+    ) {
+      return true
+    }
+    candidate = Reflect.get(candidate, 'cause')
+  }
+
+  return false
+}
+
 const validateUserId = (userId: string): string => {
   if (userId.length === 0 || userId.length > MAXIMUM_USER_ID_LENGTH || userId !== userId.trim()) {
     throw validationFailure()
@@ -211,26 +230,35 @@ export const createAdministratorRoleService = ({
     const reason = normalizeReason(input.reason)
     const policy = action === 'administrator.grant' ? GRANT_POLICY : REVOKE_POLICY
 
-    return store.runInTransaction(async (transaction) => {
-      const authorization = await requireTargetAuthorization({
-        context: input.context,
-        targetUserId,
-        action: 'manage_administrator_role',
-        policy,
-        transaction: transaction.authorization,
-        superAdministrators,
-      })
-      if (authorization.target.role !== transition.previousRole) throw conflictFailure()
+    try {
+      return await store.runInTransaction(async (transaction) => {
+        const authorization = await requireTargetAuthorization({
+          context: input.context,
+          targetUserId,
+          action: 'manage_administrator_role',
+          policy,
+          transaction: transaction.authorization,
+          superAdministrators,
+        })
+        if (authorization.target.role !== transition.previousRole) throw conflictFailure()
 
-      const applied = await transaction.applyRoleChange({
-        subjectUserId: authorization.target.id,
-        actorUserId: authorization.actor.id,
-        transition,
-        reason,
+        const applied = await transaction.applyRoleChange({
+          subjectUserId: authorization.target.id,
+          actorUserId: authorization.actor.id,
+          transition,
+          reason,
+        })
+        if (!applied) throw conflictFailure()
+        return { change: projectChange(applied.change) }
       })
-      if (!applied) throw conflictFailure()
-      return { change: projectChange(applied.change) }
-    })
+    } catch (error) {
+      // The database trigger is the final race backstop for a ban established
+      // after target authorization. Treat that expected, target-specific grant
+      // denial like every other ineligible role transition: a generic conflict
+      // that neither discloses moderation state nor enters error telemetry.
+      if (action === 'administrator.grant' && isActiveBanWriteGuardFailure(error)) throw conflictFailure()
+      throw error
+    }
   }
 
   return {

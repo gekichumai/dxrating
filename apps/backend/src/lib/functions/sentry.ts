@@ -66,7 +66,30 @@ export function isAdminSentryTransaction(event: Event) {
   return isAdminSentryRequest(event.transaction, event.request?.url)
 }
 
+const objectField = (value: unknown, field: string): unknown =>
+  value !== null && typeof value === 'object' ? Reflect.get(value, field) : undefined
+
+/**
+ * Active-ban denials are expected authorization outcomes. Match both the
+ * typed Better Auth/oRPC shape and the database trigger's race-backstop
+ * identity without ever inspecting or forwarding the private reason.
+ */
+export const isExpectedAccountBanDenial = (error: unknown): boolean => {
+  const name = objectField(error, 'name')
+  const code = objectField(error, 'code')
+  const constraint = objectField(error, 'constraint')
+  const bodyCode = objectField(objectField(error, 'body'), 'code')
+  return (
+    name === 'PublicAccountBanned' ||
+    code === 'ACCOUNT_BANNED' ||
+    bodyCode === 'ACCOUNT_BANNED' ||
+    (code === 'DXB01' && constraint === 'active_user_ban_write_guard')
+  )
+}
+
 export function shouldCaptureSentryError(error: unknown) {
+  if (isExpectedAccountBanDenial(error)) return false
+
   if (error instanceof ORPCError && error.status >= 400 && error.status < 500) {
     return false
   }

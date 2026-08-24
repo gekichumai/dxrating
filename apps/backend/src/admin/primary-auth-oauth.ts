@@ -19,6 +19,7 @@ type FetchImplementation = typeof fetch
 
 const GOOGLE_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token'
 const OAUTH_CLOCK_TOLERANCE_SECONDS = 120
+export const ADMIN_PRIMARY_AUTH_OAUTH_PROVIDER_TIMEOUT_MS = 10_000
 
 class AdminPrimaryAuthOauthProviderFailure extends Error {
   constructor() {
@@ -29,6 +30,26 @@ class AdminPrimaryAuthOauthProviderFailure extends Error {
 
 const providerFailure = (): never => {
   throw new AdminPrimaryAuthOauthProviderFailure()
+}
+
+const runBoundedProviderOperation = async <Result>(
+  timeoutMilliseconds: number,
+  operation: (signal: AbortSignal) => Promise<Result>,
+): Promise<Result> => {
+  const controller = new AbortController()
+  let timeout: ReturnType<typeof setTimeout> | undefined
+  const timedOut = new Promise<never>((_resolve, reject) => {
+    timeout = setTimeout(() => {
+      controller.abort()
+      reject(new AdminPrimaryAuthOauthProviderFailure())
+    }, timeoutMilliseconds)
+  })
+
+  try {
+    return await Promise.race([operation(controller.signal), timedOut])
+  } finally {
+    if (timeout) clearTimeout(timeout)
+  }
 }
 
 const requireAuthorizationUrlInvariants = (url: URL, state: string): URL => {
@@ -74,11 +95,13 @@ export const createGoogleAdminPrimaryAuthOauthProvider = ({
   clientSecret,
   getProvider = () => getConfiguredBetterAuthProvider('google'),
   fetchImplementation = fetch,
+  providerTimeoutMilliseconds = ADMIN_PRIMARY_AUTH_OAUTH_PROVIDER_TIMEOUT_MS,
 }: {
   clientId: string
   clientSecret: string
   getProvider?: () => Promise<BetterAuthOauthProvider>
   fetchImplementation?: FetchImplementation
+  providerTimeoutMilliseconds?: number
 }): AdminPrimaryAuthOauthProvider => ({
   async createAuthorizationUrl({ state, codeVerifier, nonce, redirectUri }) {
     if (!nonce) return providerFailure()
@@ -103,45 +126,54 @@ export const createGoogleAdminPrimaryAuthOauthProvider = ({
 
   async exchangeAndVerify({ code, codeVerifier, nonce, redirectUri, attemptCreatedAt, consumedAt }) {
     if (!nonce) return providerFailure()
-    const tokenResponse = await readJsonResponse(
-      fetchImplementation(GOOGLE_TOKEN_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          code,
-          client_id: clientId,
-          client_secret: clientSecret,
-          redirect_uri: redirectUri,
-          code_verifier: codeVerifier,
+    if (!Number.isFinite(providerTimeoutMilliseconds) || providerTimeoutMilliseconds <= 0) return providerFailure()
+
+    // The callback holds the administrator's write lease while proving the
+    // provider identity. Bound the complete provider operation so a stalled
+    // token endpoint or verifier cannot indefinitely starve a queued ban or
+    // demotion. Native fetch receives the same abort signal.
+    return runBoundedProviderOperation(providerTimeoutMilliseconds, async (signal) => {
+      const tokenResponse = await readJsonResponse(
+        fetchImplementation(GOOGLE_TOKEN_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            grant_type: 'authorization_code',
+            code,
+            client_id: clientId,
+            client_secret: clientSecret,
+            redirect_uri: redirectUri,
+            code_verifier: codeVerifier,
+          }),
+          signal,
         }),
-      }),
-    )
-    const idToken = tokenResponse.id_token
-    if (typeof idToken !== 'string') return providerFailure()
+      )
+      const idToken = tokenResponse.id_token
+      if (typeof idToken !== 'string') return providerFailure()
 
-    let verified = false
-    let claims: ReturnType<typeof decodeJwt>
-    try {
-      const provider = await getProvider()
-      if (decodeProtectedHeader(idToken).alg !== 'RS256' || !provider.verifyIdToken) return providerFailure()
-      verified = await provider.verifyIdToken(idToken, nonce)
-      claims = decodeJwt(idToken)
-    } catch {
-      return providerFailure()
-    }
-    if (!verified || typeof claims.sub !== 'string' || typeof claims.auth_time !== 'number') {
-      return providerFailure()
-    }
+      let verified = false
+      let claims: ReturnType<typeof decodeJwt>
+      try {
+        const provider = await getProvider()
+        if (decodeProtectedHeader(idToken).alg !== 'RS256' || !provider.verifyIdToken) return providerFailure()
+        verified = await provider.verifyIdToken(idToken, nonce)
+        claims = decodeJwt(idToken)
+      } catch {
+        return providerFailure()
+      }
+      if (!verified || typeof claims.sub !== 'string' || typeof claims.auth_time !== 'number') {
+        return providerFailure()
+      }
 
-    const authenticatedAt = claims.auth_time * 1000
-    const earliestAllowed = attemptCreatedAt.getTime() - OAUTH_CLOCK_TOLERANCE_SECONDS * 1000
-    const latestAllowed = consumedAt.getTime() + OAUTH_CLOCK_TOLERANCE_SECONDS * 1000
-    if (!Number.isInteger(claims.auth_time) || authenticatedAt < earliestAllowed || authenticatedAt > latestAllowed) {
-      return providerFailure()
-    }
+      const authenticatedAt = claims.auth_time * 1000
+      const earliestAllowed = attemptCreatedAt.getTime() - OAUTH_CLOCK_TOLERANCE_SECONDS * 1000
+      const latestAllowed = consumedAt.getTime() + OAUTH_CLOCK_TOLERANCE_SECONDS * 1000
+      if (!Number.isInteger(claims.auth_time) || authenticatedAt < earliestAllowed || authenticatedAt > latestAllowed) {
+        return providerFailure()
+      }
 
-    return { accountId: claims.sub }
+      return { accountId: claims.sub }
+    })
   },
 })
 

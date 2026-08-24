@@ -1,0 +1,25 @@
+export const HONO_ROUTE_ACCESS_POLICIES = [
+  { method: 'GET', path: '/', access: 'public_read' },
+  { method: 'GET', path: '/health', access: 'public_read' },
+  { method: 'GET', path: '/.well-known/api-catalog', access: 'public_read' },
+  { method: 'HEAD', path: '/.well-known/api-catalog', access: 'public_read' },
+  { method: 'GET', path: '/version', access: 'public_read' },
+  { method: 'GET', path: '/api/admin/primary-auth/oauth/callback/:provider', access: 'admin_authenticated_write' },
+  { method: 'GET', path: '/api/auth/**', access: 'better_auth_namespace' },
+  { method: 'POST', path: '/api/auth/**', access: 'better_auth_namespace' },
+  { method: 'POST', path: '/api/v1/monitoring/tunnel', access: 'identity_independent' },
+  { method: 'POST', path: '/functions/fetch-net-records/v0', access: 'identity_independent' },
+  { method: 'POST', path: '/functions/fetch-net-records/v1/:region', access: 'identity_independent' },
+  { method: 'POST', path: '/functions/render-oneshot/v0', access: 'identity_independent' },
+  { method: 'GET', path: '/api/v1/io/import/lxns/oauth_callback', access: 'verified_identity_write' },
+  { method: 'ALL', path: '/api/admin/*', access: 'admin_procedure_namespace' },
+  { method: 'GET', path: '/robots.txt', access: 'public_read' },
+  { method: 'GET', path: '/api/v1/dxdata', access: 'public_read' },
+  { method: 'HEAD', path: '/api/v1/dxdata', access: 'public_read' },
+  { method: 'GET', path: '/api/v1/arcades/venues', access: 'public_read' },
+  { method: 'ALL', path: '/api/v1/*', access: 'public_procedure_namespace' },
+  { method: 'GET', path: '/spec.json', access: 'public_read' },
+  { method: 'GET', path: '/docs', access: 'public_read' },
+] as const
+
+export type HonoRouteAccessPolicy = (typeof HONO_ROUTE_ACCESS_POLICIES)[number]['access']

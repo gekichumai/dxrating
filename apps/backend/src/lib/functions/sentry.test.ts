@@ -2,6 +2,7 @@ import { ORPCError } from '@orpc/server'
 import { describe, expect, it } from 'vitest'
 import { NetImportError } from './client.js'
 import {
+  isExpectedAccountBanDenial,
   isAdminSentryRequest,
   isAdminSentryTransaction,
   scrubAdminSentryEvent,
@@ -34,6 +35,28 @@ describe('Sentry error filtering', () => {
 
   it('captures unexpected errors', () => {
     expect(shouldCaptureSentryError(new Error('Unexpected failure'))).toBe(true)
+  })
+
+  it('drops typed and database race-backstop account-ban denials without reading their reason', () => {
+    const publicDenial = Object.assign(new Error('generic'), {
+      name: 'PublicAccountBanned',
+      reason: 'private public API reason',
+    })
+    const typed = Object.assign(new Error('generic'), {
+      body: { code: 'ACCOUNT_BANNED', reason: 'private moderation reason' },
+    })
+    const database = Object.assign(new Error('generic'), {
+      code: 'DXB01',
+      constraint: 'active_user_ban_write_guard',
+    })
+
+    expect(isExpectedAccountBanDenial(publicDenial)).toBe(true)
+    expect(isExpectedAccountBanDenial(typed)).toBe(true)
+    expect(isExpectedAccountBanDenial(database)).toBe(true)
+    expect(shouldCaptureSentryError(publicDenial)).toBe(false)
+    expect(shouldCaptureSentryError(typed)).toBe(false)
+    expect(shouldCaptureSentryError(database)).toBe(false)
+    expect(isExpectedAccountBanDenial({ code: 'DXB01', constraint: 'different_constraint' })).toBe(false)
   })
 })
 

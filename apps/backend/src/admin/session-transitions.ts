@@ -1,8 +1,48 @@
 import type { PoolClient } from 'pg'
+import { lockPostgresUserIdentitiesForModeration } from '../user-identity-advisory-lock.js'
 
 export type UserSessionRevocation = {
   readonly userId: string
   readonly revokedSessionCount: number
+}
+
+/**
+ * Acquires the complete user/session lock set used by revocation and returns
+ * the number of sessions that the caller's transition must invalidate.
+ */
+export const lockUserSessionsForRevocationInTransaction = async (
+  transaction: PoolClient,
+  userId: string,
+): Promise<UserSessionRevocation> => {
+  await lockPostgresUserIdentitiesForModeration(transaction, [userId])
+  const lockedUser = await transaction.query<{ readonly id: string }>(
+    `
+      /* admin-session-revocation:lock-user */
+      SELECT id
+      FROM "user"
+      WHERE id = $1
+      FOR UPDATE NOWAIT
+    `,
+    [userId],
+  )
+  if (lockedUser.rowCount !== 1) return { userId, revokedSessionCount: 0 }
+
+  const lockedSessions = await transaction.query<{ readonly id: string }>(
+    `
+      /* admin-session-revocation:lock-sessions */
+      SELECT id
+      FROM session
+      WHERE user_id = $1
+      ORDER BY id
+      FOR UPDATE NOWAIT
+    `,
+    [userId],
+  )
+
+  return {
+    userId,
+    revokedSessionCount: lockedSessions.rowCount ?? lockedSessions.rows.length,
+  }
 }
 
 /**
@@ -16,29 +56,8 @@ export const revokeAllUserSessionsInTransaction = async (
   transaction: PoolClient,
   userId: string,
 ): Promise<UserSessionRevocation> => {
-  const lockedUser = await transaction.query<{ readonly id: string }>(
-    `
-      /* admin-session-revocation:lock-user */
-      SELECT id
-      FROM "user"
-      WHERE id = $1
-      FOR UPDATE
-    `,
-    [userId],
-  )
-  if (lockedUser.rowCount !== 1) return { userId, revokedSessionCount: 0 }
-
-  await transaction.query(
-    `
-      /* admin-session-revocation:lock-sessions */
-      SELECT id
-      FROM session
-      WHERE user_id = $1
-      ORDER BY id
-      FOR UPDATE
-    `,
-    [userId],
-  )
+  const locked = await lockUserSessionsForRevocationInTransaction(transaction, userId)
+  if (locked.revokedSessionCount === 0) return locked
 
   await transaction.query(
     `
@@ -61,5 +80,9 @@ export const revokeAllUserSessionsInTransaction = async (
     [userId],
   )
 
-  return { userId, revokedSessionCount: deletedSessions.rowCount ?? deletedSessions.rows.length }
+  const deletedSessionCount = deletedSessions.rowCount ?? deletedSessions.rows.length
+  if (deletedSessionCount !== locked.revokedSessionCount) {
+    throw new Error('Locked administrator session count changed during revocation')
+  }
+  return locked
 }

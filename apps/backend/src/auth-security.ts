@@ -45,14 +45,18 @@ export const findAuthReturnUrlUserInfoField = (...sources: unknown[]): AuthRetur
   return undefined
 }
 
-export const rejectAuthReturnUrlUserInfo = createAuthMiddleware(async (context) => {
-  const field = findAuthReturnUrlUserInfoField(context.body, context.query)
+export const assertAuthReturnUrlsDoNotContainUserInfo = (...sources: unknown[]): void => {
+  const field = findAuthReturnUrlUserInfoField(...sources)
   if (!field) return
 
   throw APIError.from('FORBIDDEN', {
     code: RETURN_URL_ERROR_CODES[field],
     message: 'Invalid authentication return URL',
   })
+}
+
+export const rejectAuthReturnUrlUserInfo = createAuthMiddleware(async (context) => {
+  assertAuthReturnUrlsDoNotContainUserInfo(context.body, context.query)
 })
 
 export const buildAuthSecurityOptions = ({

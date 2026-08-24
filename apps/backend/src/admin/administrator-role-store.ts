@@ -3,6 +3,7 @@ import { pool } from '../db/index.js'
 import type { AdminMutationAuthorizationTransaction } from './authorization.js'
 import { createPostgresAdminMutationAuthorizationTransaction } from './mutation-authorization-store.js'
 import type { PersistedUserRole } from './role-policy.js'
+import { runRetryableAdminTransaction } from './retryable-transaction.js'
 import { revokeAllUserSessionsInTransaction } from './session-transitions.js'
 import { loadPostgresUserBanStates, type EvaluatedUserBanState } from './user-ban-store.js'
 
@@ -266,21 +267,6 @@ export const createPostgresAdministratorRoleStore = (database: Pool = pool): Adm
   },
 
   async runInTransaction(operation) {
-    const transaction = await database.connect()
-    try {
-      await transaction.query('BEGIN')
-      const result = await operation(createTransaction(transaction))
-      await transaction.query('COMMIT')
-      return result
-    } catch (error) {
-      try {
-        await transaction.query('ROLLBACK')
-      } catch {
-        // Preserve the operation or commit failure.
-      }
-      throw error
-    } finally {
-      transaction.release()
-    }
+    return runRetryableAdminTransaction(database, (transaction) => operation(createTransaction(transaction)))
   },
 })

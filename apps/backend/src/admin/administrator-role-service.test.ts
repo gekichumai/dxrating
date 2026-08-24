@@ -1,5 +1,8 @@
+import { OpenAPIHandler } from '@orpc/openapi/fetch'
+import { onError } from '@orpc/server'
 import pg from 'pg'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { shouldCaptureSentryError } from '../lib/functions/sentry.js'
 import { cleanDatabase, setupTestServer, teardownTestServer } from '../test/setup.js'
 import { AdminAuthorizationFailure, type AdminAuthorizationContext } from './authorization.js'
 import {
@@ -9,6 +12,7 @@ import {
 } from './administrator-role-service.js'
 import { createPostgresAdministratorRoleStore } from './administrator-role-store.js'
 import type { PersistedUserRole } from './role-policy.js'
+import { createAdminRouter } from './router.js'
 import { parseSuperAdministratorAllowlist } from './super-administrator-allowlist.js'
 
 const ALLOWLIST_EFFECTIVE_AT = '2000-01-01T00:00:00.000Z'
@@ -120,6 +124,57 @@ const historyCount = async (database: pg.Pool, subjectUserId = 'target-user') =>
     [subjectUserId],
   )
   return result.rows[0]?.count ?? 0
+}
+
+const establishActiveBan = async (database: pg.Pool, reason: string): Promise<void> => {
+  await database.query(
+    `WITH established_ban AS (
+       INSERT INTO admin_user_ban_history (
+         subject_user_id,
+         actor_user_id,
+         previous_event_id,
+         action,
+         reason,
+         ban_started_at,
+         expires_at
+       )
+       VALUES ('target-user', 'super-actor', NULL, 'ban', $1, clock_timestamp(), NULL)
+       RETURNING id, subject_user_id, actor_user_id, action, reason, ban_started_at, expires_at
+     )
+     INSERT INTO admin_user_ban_state (
+       subject_user_id,
+       established_action,
+       ban_started_at,
+       ban_expires_at,
+       ban_reason,
+       actor_user_id,
+       established_by_event_id
+     )
+     SELECT subject_user_id, action, ban_started_at, expires_at, reason, actor_user_id, id
+     FROM established_ban`,
+    [reason],
+  )
+}
+
+const waitForBlockedQuery = async (database: pg.Pool, marker: string): Promise<void> => {
+  const deadline = Date.now() + 5_000
+  while (Date.now() < deadline) {
+    const result = await database.query<{ readonly blocked: boolean }>(
+      `SELECT EXISTS (
+         SELECT 1
+         FROM pg_stat_activity
+         WHERE datname = current_database()
+           AND pid <> pg_backend_pid()
+           AND state = 'active'
+           AND wait_event_type = 'Lock'
+           AND position($1 in query) > 0
+       ) AS blocked`,
+      [marker],
+    )
+    if (result.rows[0]?.blocked) return
+    await new Promise((resolve) => setTimeout(resolve, 10))
+  }
+  throw new Error(`Timed out waiting for blocked PostgreSQL query: ${marker}`)
 }
 
 describe('administrator role service', () => {
@@ -280,6 +335,59 @@ describe('administrator role service', () => {
     expect(await historyCount(database)).toBe(1)
   })
 
+  it('projects an active-ban grant race as a private conflict and keeps it out of error telemetry', async () => {
+    await insertActor(database)
+    await insertTarget(database)
+    const privateBanReason = 'Private moderation evidence must never leave the service'
+    const privateGrantReason = 'Private staffing rationale must never enter telemetry'
+    await establishActiveBan(database, privateBanReason)
+
+    const captureException = vi.fn()
+    const recordAuthorizationResult = vi.fn()
+    const handler = new OpenAPIHandler(
+      createAdminRouter({
+        administratorRoles: createService(database),
+      }),
+      {
+        clientInterceptors: [
+          onError((error) => {
+            if (shouldCaptureSentryError(error)) captureException(error)
+          }),
+        ],
+      },
+    )
+    const { response } = await handler.handle(
+      new Request('http://localhost/administrators/target-user/grant', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ reason: privateGrantReason }),
+      }),
+      {
+        context: {
+          ...authentication('super-actor', 'user'),
+          requestId: '18d7118c-ec70-4603-9176-cffea8a6cd8f',
+          recordAuthorizationResult,
+        },
+      },
+    )
+
+    expect(response?.status).toBe(409)
+    const body = await response?.json()
+    expect(body).toMatchObject({
+      defined: true,
+      code: 'CONFLICT',
+      data: { requestId: '18d7118c-ec70-4603-9176-cffea8a6cd8f' },
+    })
+    const serialized = JSON.stringify(body)
+    expect(serialized).not.toContain('target-user')
+    expect(serialized).not.toContain(privateBanReason)
+    expect(serialized).not.toContain(privateGrantReason)
+    expect(recordAuthorizationResult).toHaveBeenCalledWith('grantAdministrator', 'CONFLICT')
+    expect(captureException).not.toHaveBeenCalled()
+    await expect(roleState(database)).resolves.toMatchObject({ role: 'user' })
+    expect(await historyCount(database)).toBe(0)
+  })
+
   it('revokes an administrator and atomically removes every session-bound proof', async () => {
     await insertActor(database)
     await insertTarget(database, { role: 'admin' })
@@ -379,6 +487,70 @@ describe('administrator role service', () => {
     )
     expect(remaining.rows).toEqual([{ role: 'user', sessions: 0, windows: 0, attempts: 0, rate_limits: 1 }])
     expect(await historyCount(database)).toBe(1)
+  })
+
+  it('retries an atomic demotion when a concurrent target-session update wins the tuple race', async () => {
+    await insertActor(database)
+    await insertTarget(database, { role: 'admin' })
+    await database.query(
+      `INSERT INTO session (id, expires_at, token, updated_at, user_id)
+       VALUES ('target-session', clock_timestamp() + interval '1 hour',
+               'target-token', clock_timestamp(), 'target-user')`,
+    )
+    await database.query(
+      `CREATE FUNCTION admin_role_retry_pause() RETURNS trigger
+       LANGUAGE plpgsql AS $function$
+       BEGIN
+         IF OLD.role = 'admin' AND NEW.role = 'user' AND NEW.id = 'target-user' THEN
+           PERFORM pg_advisory_xact_lock(3150019);
+         END IF;
+         RETURN NEW;
+       END
+       $function$`,
+    )
+    await database.query(
+      `CREATE TRIGGER admin_role_zz_retry_pause
+       AFTER UPDATE OF role ON "user"
+       FOR EACH ROW EXECUTE FUNCTION admin_role_retry_pause()`,
+    )
+
+    const pause = await database.connect()
+    let pauseHeld = false
+    let demotion: ReturnType<AdministratorRoleService['revokeAdministrator']> | undefined
+    let sessionUpdate: Promise<pg.QueryResult> | undefined
+    try {
+      await pause.query('SELECT pg_advisory_lock(3150019)')
+      pauseHeld = true
+      demotion = createService(database).revokeAdministrator({
+        context: authentication('super-actor', 'user'),
+        targetUserId: 'target-user',
+        reason: 'Retried tuple-race demotion',
+      })
+      await waitForBlockedQuery(database, 'administrator-role-store:apply-role-change')
+
+      sessionUpdate = database.query(
+        `/* administrator-role-service:test-session-update */
+         UPDATE session SET updated_at = clock_timestamp() WHERE id = 'target-session'`,
+      )
+      await waitForBlockedQuery(database, 'administrator-role-service:test-session-update')
+
+      await pause.query('SELECT pg_advisory_unlock(3150019)')
+      pauseHeld = false
+      await expect(sessionUpdate).resolves.toMatchObject({ rowCount: 1 })
+      await expect(demotion).resolves.toMatchObject({
+        change: { previousRole: 'admin', newRole: 'user', reason: 'Retried tuple-race demotion' },
+      })
+      await expect(roleState(database)).resolves.toMatchObject({ role: 'user' })
+      const sessions = await database.query(`SELECT id FROM session WHERE user_id = 'target-user'`)
+      expect(sessions.rows).toEqual([])
+      expect(await historyCount(database)).toBe(1)
+    } finally {
+      if (pauseHeld) await pause.query('SELECT pg_advisory_unlock(3150019)').catch(() => undefined)
+      pause.release()
+      await Promise.allSettled([demotion, sessionUpdate].filter((promise) => promise !== undefined))
+      await database.query(`DROP TRIGGER IF EXISTS admin_role_zz_retry_pause ON "user"`)
+      await database.query(`DROP FUNCTION IF EXISTS admin_role_retry_pause()`)
+    }
   })
 
   it.each([

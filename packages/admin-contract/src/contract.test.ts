@@ -21,6 +21,7 @@ import {
   AdminPrimaryAuthPasswordInputSchema,
   AdminPrimaryAuthProviderSchema,
   AdminProcedureAuthorizationPolicySchema,
+  AdminProcedureBanPolicySchema,
   AdminRevokeAdministratorInputSchema,
   AdminRevokeAdministratorOutputSchema,
   adminActionRequiresRecentPrimaryAuth,
@@ -127,7 +128,27 @@ describe('private administrator contract', () => {
 
     for (const procedure of Object.values(adminContract)) {
       expect(Object.keys(procedure['~orpc'].errorMap)).toEqual(expectedErrors)
+      expect(AdminProcedureBanPolicySchema.safeParse(procedure['~orpc'].meta.banPolicy).success).toBe(true)
+      expect(procedure['~orpc'].meta.banPolicy).not.toBe('unclassified')
+      expect(procedure['~orpc'].meta.banPolicy === 'transactional_write').toBe(
+        procedure['~orpc'].meta.authorization.targetAction !== null,
+      )
     }
+
+    expect(
+      Object.fromEntries(
+        Object.entries(adminContract).map(([name, procedure]) => [name, procedure['~orpc'].meta.banPolicy]),
+      ),
+    ).toEqual({
+      bootstrap: 'authenticated_read',
+      primaryAuthStatus: 'authenticated_read',
+      completePrimaryAuthPassword: 'authenticated_write',
+      initiatePrimaryAuthOauth: 'authenticated_write',
+      listAdministrators: 'authenticated_read',
+      listAdministratorRoleHistory: 'authenticated_read',
+      grantAdministrator: 'transactional_write',
+      revokeAdministrator: 'transactional_write',
+    })
 
     for (const procedure of [
       adminContract.bootstrap,

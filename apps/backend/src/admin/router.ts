@@ -1,4 +1,9 @@
-import { ADMIN_CONTRACT_COMPATIBILITY_ID, ADMIN_CONTRACT_HEADER, adminContract } from '@gekichumai/admin-contract'
+import {
+  ADMIN_CONTRACT_COMPATIBILITY_ID,
+  ADMIN_CONTRACT_HEADER,
+  AdminProcedureBanPolicySchema,
+  adminContract,
+} from '@gekichumai/admin-contract'
 import { implement, isDefinedError, ORPCError } from '@orpc/server'
 import { config } from '../config.js'
 import {
@@ -30,6 +35,7 @@ import {
   sanitizeAdminCorrelationId,
   type AdminAuthorizationResult,
 } from './observability.js'
+import { runPostgresAdminWriteLease, type AdminWriteLeaseRunner } from './write-lease.js'
 
 export type AdminRequestContext = {
   readonly authentication?: AdminRequestAuthentication
@@ -134,19 +140,43 @@ export const requireAdminMiddleware = os.middleware<AuthorizedAdminContext, unkn
   })
 })
 
-export const requireAdminProcedurePolicyMiddleware = os.middleware<AuthorizedAdminContext, unknown>(
-  async ({ context, next, procedure }) => {
-    const policy = procedure['~orpc'].meta.authorization
-    const authentication = requireAdminProcedurePolicy(context, policy)
+export const createRequireAdminProcedurePolicyMiddleware = ({
+  runWriteLease = runPostgresAdminWriteLease,
+}: {
+  readonly runWriteLease?: AdminWriteLeaseRunner
+} = {}) =>
+  os.middleware<AuthorizedAdminContext, unknown>(async ({ context, next, procedure }) => {
+    const banPolicy = AdminProcedureBanPolicySchema.safeParse(procedure['~orpc'].meta.banPolicy)
+    if (!banPolicy.success || banPolicy.data === 'unclassified') {
+      throw new Error('Unclassified administrator active-ban policy')
+    }
 
-    return next({
-      context: {
-        adminAuthentication: authentication,
-        adminPrincipal: authentication.principal,
+    const policy = procedure['~orpc'].meta.authorization
+    const targetTransactionRequired = policy.targetAction !== null
+    if ((banPolicy.data === 'transactional_write') !== targetTransactionRequired) {
+      throw new Error('Administrator active-ban and target-authorization policies do not match')
+    }
+
+    const authentication = requireAdminProcedurePolicy(context, policy)
+    const operation = async () =>
+      next({
+        context: {
+          adminAuthentication: authentication,
+          adminPrincipal: authentication.principal,
+        },
+      })
+
+    if (banPolicy.data !== 'authenticated_write') return operation()
+    return runWriteLease(
+      {
+        userId: authentication.authorizationUser.id,
+        sessionId: authentication.session.id,
       },
-    })
-  },
-)
+      operation,
+    )
+  })
+
+export const requireAdminProcedurePolicyMiddleware = createRequireAdminProcedurePolicyMiddleware()
 
 export const requireSuperAdminMiddleware = os.middleware<AuthorizedAdminContext, unknown>(async ({ context, next }) => {
   const authentication = requireSuperAdmin(context)
@@ -246,14 +276,16 @@ export const createAdminRouter = ({
   administratorRoles = createPostgresAdministratorRoleService({
     superAdministrators: config.auth.superAdministrators,
   }),
+  runWriteLease = runPostgresAdminWriteLease,
 }: {
   primaryAuth?: AdminPrimaryAuthService
   administratorRoles?: AdministratorRoleService
+  runWriteLease?: AdminWriteLeaseRunner
 } = {}) => {
   const authorized = os
     .use(authorizationOutcomeMiddleware)
     .use(adminErrorBoundaryMiddleware)
-    .use(requireAdminProcedurePolicyMiddleware)
+    .use(createRequireAdminProcedurePolicyMiddleware({ runWriteLease }))
 
   return authorized.router({
     bootstrap: authorized.bootstrap.handler(async ({ input, errors, context }) => {

@@ -14,7 +14,7 @@ import type { AdminRequestAuthentication } from './principal-loader.js'
 import type { AdminRequestContext } from './router.js'
 
 const decodeProcedure = oc
-  .$meta<AdminProcedureMetadata>({ authorization: ADMIN_DEFAULT_AUTHORIZATION })
+  .$meta<AdminProcedureMetadata>({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_write' })
   .errors(adminErrors)
   .input(z.object({ value: z.string() }))
   .output(z.object({ accepted: z.literal(true) }))
@@ -27,10 +27,11 @@ const policy = (changes: Partial<AdminProcedureAuthorizationPolicy>): AdminProce
 const decodeContract = {
   decode: decodeProcedure.route({ method: 'POST', path: '/decode' }),
   superDecode: decodeProcedure
-    .meta({ authorization: policy({ minimumRole: 'super_admin' }) })
+    .meta({ authorization: policy({ minimumRole: 'super_admin' }), banPolicy: 'authenticated_write' })
     .route({ method: 'POST', path: '/super-decode' }),
   recentDecode: decodeProcedure
     .meta({
+      banPolicy: 'authenticated_write',
       authorization: policy({
         recentPrimaryAuth: true,
         primaryAuthAction: 'comment.delete',
@@ -38,7 +39,7 @@ const decodeContract = {
     })
     .route({ method: 'POST', path: '/recent-decode' }),
   freshDecode: decodeProcedure
-    .meta({ authorization: policy({ freshLogin: true }) })
+    .meta({ authorization: policy({ freshLogin: true }), banPolicy: 'authenticated_write' })
     .route({ method: 'POST', path: '/fresh-decode' }),
 }
 const decodeOs = implement(decodeContract).$context<AdminRequestContext>()

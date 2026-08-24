@@ -1,9 +1,10 @@
 import { and, eq, gt, sql } from 'drizzle-orm'
 import { auth } from '../auth.js'
 import { config } from '../config.js'
-import { db } from '../db/index.js'
+import { db, pool } from '../db/index.js'
 import { session, user } from '../db/auth-schema.js'
 import { hasRecentAdminPrimaryAuth } from './primary-auth-store.js'
+import { loadPostgresUserBanState, type EvaluatedUserBanState } from './user-ban-store.js'
 import {
   resolveAdministratorSessionAuthorization,
   type AdministratorPrincipal,
@@ -53,17 +54,20 @@ export type AdminRecentPrimaryAuthLookup = (identity: {
   readonly userId: string
   readonly sessionId: string
 }) => Promise<boolean>
+export type AdminUserBanStateLookup = (userId: string) => Promise<Pick<EvaluatedUserBanState, 'active'>>
 
 export const createAdminPrincipalLoader = ({
   getSession,
   findAuthorizationSnapshot,
   superAdministrators,
   hasRecentPrimaryAuth = async () => false,
+  loadUserBanState = async () => ({ active: false }),
 }: {
   getSession: AdminSessionLookup
   findAuthorizationSnapshot: AdminAuthorizationSnapshotLookup
   superAdministrators: SuperAdministratorAllowlist
   hasRecentPrimaryAuth?: AdminRecentPrimaryAuthLookup
+  loadUserBanState?: AdminUserBanStateLookup
 }) => {
   return async (headers: Headers): Promise<AdminRequestAuthentication> => {
     const session = await getSession(headers)
@@ -80,6 +84,13 @@ export const createAdminPrincipalLoader = ({
     if (!authorizationUser || authorizationUser.id !== session.user.id) {
       return { status: 'unauthenticated' }
     }
+
+    // A session payload is not an authorization source for moderation state.
+    // Re-evaluate the projection with PostgreSQL time on every request so an
+    // active ban cannot retain administrator authority through cookie caches
+    // or an in-flight session revocation.
+    const banState = await loadUserBanState(authorizationUser.id)
+    if (banState.active) return { status: 'unauthenticated' }
 
     const { principal, freshLoginSatisfied } = resolveAdministratorSessionAuthorization({
       user: authorizationUser,
@@ -120,8 +131,20 @@ export const findAdminAuthorizationSnapshot: AdminAuthorizationSnapshotLookup = 
 }
 
 export const loadAdminRequestAuthentication = createAdminPrincipalLoader({
-  getSession: (headers) => auth.api.getSession({ headers }),
+  getSession: async (headers) => {
+    const session = await auth.api.getSession({
+      headers,
+      query: { disableCookieCache: true, disableRefresh: true },
+    })
+
+    // The active-ban session-probe hook short-circuits HTTP requests with a
+    // JSON `null` Response. Better Auth currently preserves that Response for
+    // programmatic auth.api callers too, so normalize it at this boundary
+    // instead of mistaking the sentinel for an authenticated session.
+    return session instanceof Response ? null : session
+  },
   findAuthorizationSnapshot: findAdminAuthorizationSnapshot,
   superAdministrators: config.auth.superAdministrators,
   hasRecentPrimaryAuth: hasRecentAdminPrimaryAuth,
+  loadUserBanState: (userId) => loadPostgresUserBanState(pool, userId),
 })

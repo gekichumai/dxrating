@@ -1,5 +1,7 @@
 import type { Pool, PoolClient } from 'pg'
 import { pool } from '../db/index.js'
+import { acquireIdentityModerationPermit } from '../identity-write-lease-permit.js'
+import { lockPostgresUserIdentitiesForModeration } from '../user-identity-advisory-lock.js'
 import type {
   AdminMutationAuthorizationTransaction,
   LockedAdminAuthorizationSession,
@@ -10,6 +12,7 @@ export const createPostgresAdminMutationAuthorizationTransaction = (
   transaction: PoolClient,
 ): AdminMutationAuthorizationTransaction => ({
   async lockUsersByIdForUpdate(orderedUserIds) {
+    await lockPostgresUserIdentitiesForModeration(transaction, orderedUserIds)
     const result = await transaction.query<{
       readonly id: string
       readonly role: string
@@ -21,7 +24,7 @@ export const createPostgresAdminMutationAuthorizationTransaction = (
         FROM "user"
         WHERE id = ANY($1::text[])
         ORDER BY id
-        FOR UPDATE
+        FOR UPDATE NOWAIT
       `,
       [[...orderedUserIds]],
     )
@@ -49,7 +52,7 @@ export const createPostgresAdminMutationAuthorizationTransaction = (
         SELECT id, user_id, admin_authorization_issued_at
         FROM session
         WHERE id = $1 AND user_id = $2 AND expires_at > clock_timestamp()
-        FOR UPDATE
+        FOR UPDATE NOWAIT
       `,
       [sessionId, userId],
     )
@@ -84,20 +87,25 @@ export const runPostgresAdminMutationAuthorizationTransaction = async <Result>(
   operation: (transaction: AdminMutationAuthorizationTransaction) => Promise<Result>,
   database: Pool = pool,
 ): Promise<Result> => {
-  const client = await database.connect()
+  const releasePermit = await acquireIdentityModerationPermit(database)
+  let transaction: PoolClient | undefined
   try {
-    await client.query('BEGIN')
-    const result = await operation(createPostgresAdminMutationAuthorizationTransaction(client))
-    await client.query('COMMIT')
+    transaction = await database.connect()
+    await transaction.query('BEGIN')
+    const result = await operation(createPostgresAdminMutationAuthorizationTransaction(transaction))
+    await transaction.query('COMMIT')
     return result
   } catch (error) {
-    try {
-      await client.query('ROLLBACK')
-    } catch {
-      // Preserve the operation or commit failure.
+    if (transaction) {
+      try {
+        await transaction.query('ROLLBACK')
+      } catch {
+        // Preserve the authorization, operation, or commit failure.
+      }
     }
     throw error
   } finally {
-    client.release()
+    transaction?.release()
+    releasePermit()
   }
 }

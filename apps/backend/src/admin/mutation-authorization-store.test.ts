@@ -3,8 +3,12 @@ import pg from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanDatabase, setupTestServer, teardownTestServer } from '../test/setup.js'
 import { requireTargetAuthorization } from './authorization.js'
-import { runPostgresAdminMutationAuthorizationTransaction } from './mutation-authorization-store.js'
+import {
+  createPostgresAdminMutationAuthorizationTransaction,
+  runPostgresAdminMutationAuthorizationTransaction,
+} from './mutation-authorization-store.js'
 import type { AdminRequestAuthentication } from './principal-loader.js'
+import { ADMIN_TRANSACTION_MAX_ATTEMPTS, runRetryableAdminTransaction } from './retryable-transaction.js'
 import { revokeAllUserSessionsInTransaction } from './session-transitions.js'
 import { parseSuperAdministratorAllowlist } from './super-administrator-allowlist.js'
 
@@ -180,7 +184,7 @@ describe('PostgreSQL administrator mutation authorization', () => {
         mutationRan()
         return authorization
       }, database)
-      await waitForBlockedQuery(database, 'admin-mutation-authorization:lock-users')
+      await waitForBlockedQuery(database, 'user-identity-advisory-lock:exclusive')
 
       await transition.query('COMMIT')
       await expect(authorizing).rejects.toMatchObject({ code: 'UNAUTHENTICATED' })
@@ -189,6 +193,106 @@ describe('PostgreSQL administrator mutation authorization', () => {
       await transition.query('ROLLBACK').catch(() => undefined)
       transition.release()
       await Promise.allSettled([authorizing].filter((promise) => promise !== undefined))
+    }
+  })
+
+  it('retries the whole transaction when an actor-session update wins the row race', async () => {
+    let firstUsersLocked!: () => void
+    let continueFirstAttempt!: () => void
+    const usersLocked = new Promise<void>((resolve) => {
+      firstUsersLocked = resolve
+    })
+    const firstAttemptMayContinue = new Promise<void>((resolve) => {
+      continueFirstAttempt = resolve
+    })
+    let attempts = 0
+    let sessionUpdate: Promise<pg.QueryResult> | undefined
+
+    const authorizing = runRetryableAdminTransaction(database, async (databaseTransaction) => {
+      const transaction = createPostgresAdminMutationAuthorizationTransaction(databaseTransaction)
+      attempts += 1
+      const users = await transaction.lockUsersByIdForUpdate(['actor', 'target'])
+      if (attempts === 1) {
+        firstUsersLocked()
+        await firstAttemptMayContinue
+      }
+      const session = await transaction.lockSessionByIdForUpdate({ userId: 'actor', sessionId: 'actor-session' })
+      return { users, session }
+    })
+
+    try {
+      await usersLocked
+      sessionUpdate = database.query(
+        `/* admin-mutation-authorization:test-session-update */
+         UPDATE session SET updated_at = clock_timestamp() WHERE id = 'actor-session'`,
+      )
+      await waitForBlockedQuery(database, 'admin-mutation-authorization:test-session-update')
+
+      continueFirstAttempt()
+      await expect(sessionUpdate).resolves.toMatchObject({ rowCount: 1 })
+      await expect(authorizing).resolves.toMatchObject({
+        users: expect.any(Map),
+        session: { id: 'actor-session', userId: 'actor' },
+      })
+      expect(attempts).toBe(2)
+    } finally {
+      continueFirstAttempt()
+      await Promise.allSettled([authorizing, sessionUpdate].filter((promise) => promise !== undefined))
+    }
+  })
+
+  it('bounds exact lock retries and never repeats an unrelated failure', async () => {
+    let lockAttempts = 0
+    const lockFailure = Object.assign(new Error('synthetic lock conflict'), { code: '55P03' })
+    await expect(
+      runRetryableAdminTransaction(database, async () => {
+        lockAttempts += 1
+        throw lockFailure
+      }),
+    ).rejects.toBe(lockFailure)
+    expect(lockAttempts).toBe(ADMIN_TRANSACTION_MAX_ATTEMPTS)
+
+    let unrelatedAttempts = 0
+    const unrelatedFailure = Object.assign(new Error('unrelated failure'), { code: 'XX000' })
+    await expect(
+      runRetryableAdminTransaction(database, async () => {
+        unrelatedAttempts += 1
+        throw unrelatedFailure
+      }),
+    ).rejects.toBe(unrelatedFailure)
+    expect(unrelatedAttempts).toBe(1)
+  })
+
+  it('backs off long enough for a row lock to clear after the first NOWAIT conflict', async () => {
+    const locker = await database.connect()
+    let firstConflict!: () => void
+    const firstConflictObserved = new Promise<void>((resolve) => {
+      firstConflict = resolve
+    })
+    let attempts = 0
+
+    try {
+      await locker.query('BEGIN')
+      await locker.query(`UPDATE session SET updated_at = clock_timestamp() WHERE id = 'actor-session'`)
+
+      const operation = runRetryableAdminTransaction(database, async (transaction) => {
+        attempts += 1
+        try {
+          return await transaction.query(`SELECT id FROM session WHERE id = 'actor-session' FOR UPDATE NOWAIT`)
+        } catch (error) {
+          if (attempts === 1) firstConflict()
+          throw error
+        }
+      })
+
+      await firstConflictObserved
+      await locker.query('COMMIT')
+
+      await expect(operation).resolves.toMatchObject({ rowCount: 1 })
+      expect(attempts).toBe(2)
+    } finally {
+      await locker.query('ROLLBACK').catch(() => undefined)
+      locker.release()
     }
   })
 })

@@ -10,10 +10,13 @@ import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { parseSuperAdministratorAllowlist } from './super-administrator-allowlist.js'
 import { resolveAdministratorPrincipal } from './role-policy.js'
+import { AdminAuthorizationFailure } from './authorization.js'
 import type { AdminRequestAuthentication } from './principal-loader.js'
+import type { AdminWriteLeaseRunner } from './write-lease.js'
 import {
   adminErrorBoundaryMiddleware,
   createAdminTargetAuthorizationMiddleware,
+  createRequireAdminProcedurePolicyMiddleware,
   requireAdminProcedurePolicyMiddleware,
   type AdminMutationAuthorizationTransactionRunner,
   type AdminRequestContext,
@@ -50,17 +53,18 @@ const authentication = (
 }
 
 const guardProcedure = oc
-  .$meta<AdminProcedureMetadata>({ authorization: defaultPolicy })
+  .$meta<AdminProcedureMetadata>({ authorization: defaultPolicy, banPolicy: 'authenticated_read' })
   .errors(adminErrors)
   .input(z.object({}))
   .output(z.object({ effectiveRole: z.enum(['admin', 'super_admin']) }))
 
 const guardContract = {
   superOperation: guardProcedure
-    .meta({ authorization: { ...defaultPolicy, minimumRole: 'super_admin' } })
+    .meta({ authorization: { ...defaultPolicy, minimumRole: 'super_admin' }, banPolicy: 'authenticated_read' })
     .route({ method: 'GET', path: '/super' }),
   recentOperation: guardProcedure
     .meta({
+      banPolicy: 'authenticated_read',
       authorization: {
         ...defaultPolicy,
         recentPrimaryAuth: true,
@@ -69,10 +73,11 @@ const guardContract = {
     })
     .route({ method: 'GET', path: '/recent' }),
   freshOperation: guardProcedure
-    .meta({ authorization: { ...defaultPolicy, freshLogin: true } })
+    .meta({ authorization: { ...defaultPolicy, freshLogin: true }, banPolicy: 'authenticated_read' })
     .route({ method: 'GET', path: '/fresh' }),
   driftedOperation: guardProcedure
     .meta({
+      banPolicy: 'authenticated_read',
       authorization: {
         ...defaultPolicy,
         primaryAuthAction: 'comment.delete',
@@ -80,6 +85,9 @@ const guardContract = {
     })
     .route({ method: 'GET', path: '/drifted' }),
   unexpectedOperation: guardProcedure.route({ method: 'GET', path: '/unexpected' }),
+  unclassifiedOperation: guardProcedure
+    .meta({ authorization: defaultPolicy, banPolicy: 'unclassified' })
+    .route({ method: 'GET', path: '/unclassified' }),
 }
 
 const guardOs = implement(guardContract).$context<AdminRequestContext>()
@@ -100,6 +108,9 @@ const guardRouter = policyGuarded.router({
   unexpectedOperation: policyGuarded.unexpectedOperation.handler(() => {
     throw new Error('private moderation reason and credential')
   }),
+  unclassifiedOperation: policyGuarded.unclassifiedOperation.handler(({ context }) => ({
+    effectiveRole: context.adminPrincipal.effectiveRole,
+  })),
 })
 const guardHandler = new OpenAPIHandler(guardRouter)
 
@@ -157,6 +168,15 @@ describe('administrator oRPC policy guards over HTTP', () => {
     })
   })
 
+  it('fails closed when a future procedure has not received an active-ban classification', async () => {
+    const failed = await invokeGuard('/unclassified', authentication('admin'))
+    expect(failed.response?.status).toBe(500)
+    await expect(failed.response?.json()).resolves.toMatchObject({
+      defined: true,
+      code: 'INTERNAL_SERVER_ERROR',
+    })
+  })
+
   it('replaces unexpected failures with a typed, sanitized server error', async () => {
     const failed = await invokeGuard('/unexpected', authentication('admin'))
     expect(failed.response?.status).toBe(500)
@@ -173,12 +193,137 @@ describe('administrator oRPC policy guards over HTTP', () => {
   })
 })
 
+describe('administrator active-ban write policy over HTTP', () => {
+  const writeProcedure = oc
+    .$meta<AdminProcedureMetadata>({ authorization: defaultPolicy, banPolicy: 'authenticated_write' })
+    .errors(adminErrors)
+    .route({ method: 'POST', path: '/write' })
+    .input(z.object({}))
+    .output(z.object({ written: z.literal(true) }))
+
+  it('maps an authoritative banned or stale lease denial to generic unauthenticated before side effects', async () => {
+    const handler = vi.fn(() => ({ written: true as const }))
+    const writeLeaseInvocation = vi.fn()
+    const runWriteLease: AdminWriteLeaseRunner = async (identity, operation) => {
+      writeLeaseInvocation(identity, operation)
+      throw new AdminAuthorizationFailure('UNAUTHENTICATED')
+    }
+    const writeContract = { write: writeProcedure }
+    const writeOs = implement(writeContract).$context<AdminRequestContext>()
+    const guarded = writeOs
+      .use(adminErrorBoundaryMiddleware)
+      .use(createRequireAdminProcedurePolicyMiddleware({ runWriteLease }))
+    const writeHandler = new OpenAPIHandler(
+      guarded.router({
+        write: guarded.write.handler(handler),
+      }),
+    )
+
+    const result = await writeHandler.handle(
+      new Request('http://localhost/write', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{}',
+      }),
+      { context: { authentication: authentication('admin') } },
+    )
+
+    expect(result.response?.status).toBe(401)
+    await expect(result.response?.json()).resolves.toMatchObject({ defined: true, code: 'UNAUTHENTICATED' })
+    expect(writeLeaseInvocation).toHaveBeenCalledWith(
+      { userId: 'admin-id', sessionId: 'session-id' },
+      expect.any(Function),
+    )
+    expect(handler).not.toHaveBeenCalled()
+  })
+
+  it('holds the write lease through the handler', async () => {
+    const events: string[] = []
+    const runWriteLease: AdminWriteLeaseRunner = async (_identity, operation) => {
+      events.push('lease-start')
+      const result = await operation()
+      events.push('lease-end')
+      return result
+    }
+    const writeContract = { write: writeProcedure }
+    const writeOs = implement(writeContract).$context<AdminRequestContext>()
+    const guarded = writeOs
+      .use(adminErrorBoundaryMiddleware)
+      .use(createRequireAdminProcedurePolicyMiddleware({ runWriteLease }))
+    const writeHandler = new OpenAPIHandler(
+      guarded.router({
+        write: guarded.write.handler(() => {
+          events.push('handler')
+          return { written: true }
+        }),
+      }),
+    )
+
+    const result = await writeHandler.handle(
+      new Request('http://localhost/write', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{}',
+      }),
+      { context: { authentication: authentication('admin') } },
+    )
+
+    expect(result.response?.status).toBe(200)
+    expect(events).toEqual(['lease-start', 'handler', 'lease-end'])
+  })
+
+  it('fails closed when target-transaction metadata and the ban policy disagree', async () => {
+    const transactionalWithoutTarget = writeProcedure
+      .meta({ authorization: defaultPolicy, banPolicy: 'transactional_write' })
+      .route({ method: 'POST', path: '/transaction-without-target' })
+    const targetWithoutTransaction = writeProcedure
+      .meta({ authorization: { ...defaultPolicy, targetAction: 'moderate' }, banPolicy: 'authenticated_write' })
+      .route({ method: 'POST', path: '/target-without-transaction' })
+    const mismatchContract = { transactionalWithoutTarget, targetWithoutTransaction }
+    const mismatchOs = implement(mismatchContract).$context<AdminRequestContext>()
+    const writeLeaseInvocation = vi.fn()
+    const runWriteLease: AdminWriteLeaseRunner = async (identity, operation) => {
+      writeLeaseInvocation(identity)
+      return operation()
+    }
+    const guarded = mismatchOs
+      .use(adminErrorBoundaryMiddleware)
+      .use(createRequireAdminProcedurePolicyMiddleware({ runWriteLease }))
+    const sideEffect = vi.fn(() => ({ written: true as const }))
+    const mismatchHandler = new OpenAPIHandler(
+      guarded.router({
+        transactionalWithoutTarget: guarded.transactionalWithoutTarget.handler(sideEffect),
+        targetWithoutTransaction: guarded.targetWithoutTransaction.handler(sideEffect),
+      }),
+    )
+
+    for (const path of ['/transaction-without-target', '/target-without-transaction']) {
+      const result = await mismatchHandler.handle(
+        new Request(`http://localhost${path}`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: '{}',
+        }),
+        { context: { authentication: authentication('admin') } },
+      )
+      expect(result.response?.status).toBe(500)
+      await expect(result.response?.json()).resolves.toMatchObject({
+        defined: true,
+        code: 'INTERNAL_SERVER_ERROR',
+      })
+    }
+
+    expect(writeLeaseInvocation).not.toHaveBeenCalled()
+    expect(sideEffect).not.toHaveBeenCalled()
+  })
+})
+
 const targetPolicy = {
   ...defaultPolicy,
   targetAction: 'moderate',
 } as const satisfies AdminProcedureAuthorizationPolicy
 const targetProcedure = oc
-  .$meta<AdminProcedureMetadata>({ authorization: targetPolicy })
+  .$meta<AdminProcedureMetadata>({ authorization: targetPolicy, banPolicy: 'transactional_write' })
   .errors(adminErrors)
   .route({ method: 'POST', path: '/target' })
   .input(z.object({ targetUserId: z.string().min(1) }))

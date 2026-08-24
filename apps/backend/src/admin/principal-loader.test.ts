@@ -64,6 +64,48 @@ describe('administrator principal loader', () => {
     })
   })
 
+  it('re-evaluates the current ban after resolving the live session and fails closed for an active ban', async () => {
+    const hasRecentPrimaryAuth = vi.fn()
+    const loadUserBanState = vi.fn().mockResolvedValue({ active: true })
+    const load = createAdminPrincipalLoader({
+      getSession: vi.fn().mockResolvedValue(session),
+      findAuthorizationSnapshot: vi.fn().mockResolvedValue(authorizationSnapshot()),
+      superAdministrators: parseSuperAdministratorAllowlist('[]'),
+      hasRecentPrimaryAuth,
+      loadUserBanState,
+    })
+
+    await expect(load(headers)).resolves.toEqual({ status: 'unauthenticated' })
+    expect(loadUserBanState).toHaveBeenCalledExactlyOnceWith('database-user-id')
+    expect(hasRecentPrimaryAuth).not.toHaveBeenCalled()
+  })
+
+  it('allows an expired ban projection and never consults ban state without a live database identity', async () => {
+    const loadUserBanState = vi.fn().mockResolvedValue({ active: false })
+    const load = createAdminPrincipalLoader({
+      getSession: vi.fn().mockResolvedValue(session),
+      findAuthorizationSnapshot: vi.fn().mockResolvedValue(authorizationSnapshot()),
+      superAdministrators: parseSuperAdministratorAllowlist('[]'),
+      loadUserBanState,
+    })
+
+    await expect(load(headers)).resolves.toMatchObject({
+      status: 'authenticated',
+      principal: { effectiveRole: 'admin' },
+    })
+    expect(loadUserBanState).toHaveBeenCalledExactlyOnceWith('database-user-id')
+
+    const missingIdentityLookup = vi.fn()
+    const missingIdentityLoad = createAdminPrincipalLoader({
+      getSession: vi.fn().mockResolvedValue(null),
+      findAuthorizationSnapshot: vi.fn(),
+      superAdministrators: parseSuperAdministratorAllowlist('[]'),
+      loadUserBanState: missingIdentityLookup,
+    })
+    await expect(missingIdentityLoad(headers)).resolves.toEqual({ status: 'unauthenticated' })
+    expect(missingIdentityLookup).not.toHaveBeenCalled()
+  })
+
   it('resolves current database administrators and allowlisted ordinary users', async () => {
     const getSession = vi.fn().mockResolvedValue(session)
     const adminLoader = createAdminPrincipalLoader({
@@ -192,6 +234,7 @@ describe('administrator principal loader', () => {
   it('propagates session and database failures as unexpected server errors', async () => {
     const sessionFailure = new Error('session store unavailable')
     const databaseFailure = new Error('database unavailable')
+    const banStoreFailure = new Error('ban store unavailable')
     const loadSessionFailure = createAdminPrincipalLoader({
       getSession: vi.fn().mockRejectedValue(sessionFailure),
       findAuthorizationSnapshot: vi.fn(),
@@ -202,8 +245,15 @@ describe('administrator principal loader', () => {
       findAuthorizationSnapshot: vi.fn().mockRejectedValue(databaseFailure),
       superAdministrators: parseSuperAdministratorAllowlist('[]'),
     })
+    const loadBanFailure = createAdminPrincipalLoader({
+      getSession: vi.fn().mockResolvedValue(session),
+      findAuthorizationSnapshot: vi.fn().mockResolvedValue(authorizationSnapshot()),
+      superAdministrators: parseSuperAdministratorAllowlist('[]'),
+      loadUserBanState: vi.fn().mockRejectedValue(banStoreFailure),
+    })
 
     await expect(loadSessionFailure(headers)).rejects.toBe(sessionFailure)
     await expect(loadDatabaseFailure(headers)).rejects.toBe(databaseFailure)
+    await expect(loadBanFailure(headers)).rejects.toBe(banStoreFailure)
   })
 })

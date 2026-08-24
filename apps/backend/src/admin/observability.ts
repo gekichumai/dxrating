@@ -85,6 +85,14 @@ export const recordAdminAuthorizationResultTo = (
     result: sanitizeAdminAuthorizationResult(result),
   })
 
+export const recordAdminAuthorizationResult = (procedureName: string, result: string) =>
+  recordAdminAuthorizationResultTo(procedureName, result, {
+    increment: (labels) =>
+      Sentry.metrics.count('admin.authorization.result', 1, {
+        attributes: labels,
+      }),
+  })
+
 export const reportAdminExceptionTo = (
   procedureName: string,
   requestId: string | undefined,

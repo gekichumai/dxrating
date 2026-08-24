@@ -455,7 +455,7 @@ describe('PostgreSQL administrator primary-authentication store', () => {
       await waitForBlockedQuery(database, 'admin-primary-auth:open-window:lock-account')
 
       invalidating = store.invalidateUser(actor.userId)
-      await waitForBlockedQuery(database, 'admin-primary-auth:invalidate-user:lock-user')
+      await waitForBlockedQuery(database, 'admin-primary-auth:invalidate-user:lock-sessions')
 
       await blocker.query('COMMIT')
       await expect(opening).resolves.toEqual({ expiresAt: expect.any(Date) })

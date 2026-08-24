@@ -172,7 +172,7 @@ export const invalidateAdminPrimaryAuthForUserInTransaction = async (
       SELECT id
       FROM "user"
       WHERE id = $1
-      FOR UPDATE
+      FOR KEY SHARE
     `,
     [userId],
   )
@@ -268,8 +268,9 @@ export const createPostgresAdminPrimaryAuthStore = (
       await client.query('BEGIN')
 
       // OAuth initiation uses the same user, session, account lock order as
-      // completion. In particular, it must not let the INSERT's session FK
-      // lock precede the user lock held by transaction-scoped invalidation.
+      // completion. The user lock is no-key-update so it can nest beneath the
+      // request-wide key-share lease while still waiting behind ban, demotion,
+      // and role transitions that hold an update lock.
       const lockedUser = await client.query<{
         readonly id: string
         readonly role: string
@@ -280,7 +281,7 @@ export const createPostgresAdminPrimaryAuthStore = (
           SELECT id, role, admin_authorization_not_before
           FROM "user"
           WHERE id = $1
-          FOR UPDATE
+          FOR NO KEY UPDATE
         `,
         [attempt.userId],
       )
@@ -477,8 +478,9 @@ export const createPostgresAdminPrimaryAuthStore = (
       await client.query('BEGIN')
 
       // Every completion and role/ban revocation takes locks in this order:
-      // user, session, then the exact credential/provider account. The locks
-      // make the final eligibility check linearizable with concurrent changes.
+      // user, session, then the exact credential/provider account. No-key-
+      // update on the user coexists with the request-wide key-share lease but
+      // conflicts with authority and moderation transitions' update locks.
       const lockedUser = await client.query<{
         readonly id: string
         readonly role: string
@@ -489,7 +491,7 @@ export const createPostgresAdminPrimaryAuthStore = (
           SELECT id, role, admin_authorization_not_before
           FROM "user"
           WHERE id = $1
-          FOR UPDATE
+          FOR NO KEY UPDATE
         `,
         [identity.userId],
       )
@@ -634,7 +636,7 @@ export const createPostgresAdminPrimaryAuthStore = (
         await client.query(
           `
             /* admin-primary-auth:invalidate-session:lock-user */
-            SELECT id FROM "user" WHERE id = $1 FOR UPDATE
+            SELECT id FROM "user" WHERE id = $1 FOR KEY SHARE
           `,
           [userId],
         )
