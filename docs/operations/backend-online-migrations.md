@@ -315,6 +315,36 @@ Abort the rollout and investigate when any of these occur:
 
 Interruption and failure return non-zero. Correct the cause and rerun the same immutable job. Do not delete or manufacture ledger rows to make it pass.
 
+### Chart-report persistence expansion
+
+Chart reports use the adjacent `0023_add_chart_reports` expansion and `0024_protect_chart_reports` protection
+migrations. The expansion creates only a new empty `chart_reports` table, its foreign keys, bounded checks, and its
+queue/detail indexes. It does not scan or rewrite users, comments, or producer-owned catalog tables. Building the
+indexes in the generated transaction is safe here because the table has no rows or writers before this release; do
+not copy this pattern to an already populated table.
+
+Apply the protection migration before deploying any report-submission or closure writer. It gives creation and
+closure timestamps to PostgreSQL, validates bounded normalized URL references and number-map snapshots, rejects
+changes to submitted content, permits exactly one `open` to `closed` transition, and rejects row deletion. There is
+no backfill or contract step for this additive release. If rollout pauses after expansion, the previous backend can
+continue operating because it neither reads nor writes the new table.
+
+The report copies its stable song/chart IDs and the publication channel, catalog-run ID, revision, fingerprint, and
+field value shown at submission time. These retained values deliberately have no foreign key into the producer-owned
+`dxdata` schema, so later catalog publication or projection changes cannot rewrite or remove historical evidence.
+The application writer must therefore resolve the active publication and immutable snapshot while holding the same
+database transaction used to insert the report; syntactically valid client-supplied publication metadata is never a
+valid persistence authority. Do not deploy or reuse a direct chart-report writer that bypasses that transactional
+catalog-resolution boundary.
+Reporter and closer IDs reference `user` with `ON DELETE RESTRICT`; profile/display-name changes do not alter the
+retained identities.
+
+Grant the runtime role `SELECT`, `INSERT`, and `UPDATE` on `chart_reports`. Never grant `DELETE` or `TRUNCATE`.
+The update grant exists only for atomic closure; the database guard rejects content edits, reopen, note rewrites,
+and repeated closure updates. Verify all `chart_reports_*_idx` indexes are ready and valid, then canary the exact
+open-first ordering expression used by the reader: `(state = 'open') DESC, created_at DESC NULLS LAST, id DESC NULLS
+LAST`. Every filtered queue query must retain the same deterministic suffix.
+
 ### After expansion and application rollout
 
 - [ ] Confirm the migration service exited 0 and each expected identifier is in its ledger.

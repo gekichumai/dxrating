@@ -20,9 +20,80 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
+import {
+  CHART_REPORT_CATEGORY_KEYS,
+  CHART_REPORT_CLOSE_NOTE_MAX_LENGTH,
+  CHART_REPORT_EXPLANATION_MAX_LENGTH,
+  CHART_REPORT_FIELD_KEYS,
+  CHART_REPORT_JSON_SNAPSHOT_MAX_BYTES,
+  CHART_REPORT_PRODUCTION_CHANNEL,
+  CHART_REPORT_SOURCE_URL_MAX_COUNT,
+  type ChartReportCategoryKey,
+  type ChartReportFieldKey,
+  type ChartReportJsonSnapshot,
+  type ChartReportState,
+} from '../chart-reports/chart-report-domain.js'
 import { account, session, user, userRole } from './auth-schema.js'
 
 // --- Application Tables ---
+
+const sqlTextList = (values: readonly string[]) =>
+  sql.raw(values.map((value) => `'${value.replaceAll("'", "''")}'`).join(', '))
+
+const chartReportFieldKeySql = sqlTextList(CHART_REPORT_FIELD_KEYS)
+const chartReportCategoryKeySql = sqlTextList(CHART_REPORT_CATEGORY_KEYS)
+const chartReportProductionChannelSql = sqlTextList([CHART_REPORT_PRODUCTION_CHANNEL])
+const chartReportJsonSnapshotMaxBytesSql = sql.raw(CHART_REPORT_JSON_SNAPSHOT_MAX_BYTES.toString())
+const chartReportJsonSnapshotStorageMaxBytesSql = sql.raw((CHART_REPORT_JSON_SNAPSHOT_MAX_BYTES + 2 * 100).toString())
+const chartReportExplanationMaxLengthSql = sql.raw(CHART_REPORT_EXPLANATION_MAX_LENGTH.toString())
+const chartReportSourceUrlMaxCountSql = sql.raw(CHART_REPORT_SOURCE_URL_MAX_COUNT.toString())
+const chartReportCloseNoteMaxLengthSql = sql.raw(CHART_REPORT_CLOSE_NOTE_MAX_LENGTH.toString())
+
+const chartReportSnapshotCheck = (fieldKey: AnyPgColumn, value: AnyPgColumn) => sql`
+  octet_length(${value}::text) <= case
+    when ${fieldKey} = 'chart.multiver_internal_levels' then ${chartReportJsonSnapshotStorageMaxBytesSql}
+    else ${chartReportJsonSnapshotMaxBytesSql}
+  end
+  and case
+    when ${fieldKey} in (
+      'song.title', 'song.artist', 'song.category', 'song.image_name', 'song.version', 'chart.version'
+    ) then jsonb_typeof(${value}) = 'string'
+      and length(${value} #>> '{}') <= 2048
+    when ${fieldKey} in ('chart.type', 'chart.difficulty', 'chart.level') then jsonb_typeof(${value}) = 'string'
+      and length(${value} #>> '{}') <= 64
+    when ${fieldKey} in ('chart.note_designer', 'chart.comment') then jsonb_typeof(${value}) = 'null'
+      or (jsonb_typeof(${value}) = 'string' and length(${value} #>> '{}') <= 2048)
+    when ${fieldKey} = 'chart.release_date' then jsonb_typeof(${value}) = 'null'
+      or (jsonb_typeof(${value}) = 'string'
+        and (${value} #>> '{}') ~ '^\\d{4}-\\d{2}-\\d{2}$'
+        and to_char(to_date(${value} #>> '{}', 'YYYY-MM-DD'), 'YYYY-MM-DD') = (${value} #>> '{}'))
+    when ${fieldKey} in (
+      'song.is_new', 'song.is_locked', 'chart.regions.jp', 'chart.regions.intl', 'chart.regions.cn',
+      'chart.is_special'
+    ) then jsonb_typeof(${value}) = 'boolean'
+    when ${fieldKey} = 'song.bpm' then jsonb_typeof(${value}) = 'null'
+      or (jsonb_typeof(${value}) = 'number'
+        and (${value} #>> '{}')::numeric between 0.001 and 10000
+        and scale((${value} #>> '{}')::numeric) <= 3
+        and trunc((${value} #>> '{}')::numeric * 1000) = (${value} #>> '{}')::numeric * 1000)
+    when ${fieldKey} = 'chart.internal_level' then jsonb_typeof(${value}) = 'number'
+      and (${value} #>> '{}')::numeric between 0 and 100
+      and scale((${value} #>> '{}')::numeric) <= 3
+      and trunc((${value} #>> '{}')::numeric * 1000) = (${value} #>> '{}')::numeric * 1000
+    when ${fieldKey} in (
+      'chart.note_counts.tap', 'chart.note_counts.hold', 'chart.note_counts.slide',
+      'chart.note_counts.touch', 'chart.note_counts.break', 'chart.note_counts.total'
+    ) then jsonb_typeof(${value}) = 'null'
+      or (jsonb_typeof(${value}) = 'number'
+        and (${value} #>> '{}')::numeric between 0 and 1000000
+        and trunc((${value} #>> '{}')::numeric) = (${value} #>> '{}')::numeric)
+    when ${fieldKey} = 'chart.internal_id' then jsonb_typeof(${value}) = 'null'
+      or (jsonb_typeof(${value}) = 'number'
+        and (${value} #>> '{}')::numeric between 0 and 2147483647
+        and trunc((${value} #>> '{}')::numeric) = (${value} #>> '{}')::numeric)
+    when ${fieldKey} = 'chart.multiver_internal_levels' then jsonb_typeof(${value}) in ('null', 'object')
+    else true
+  end`
 
 export const tagGroups = pgTable('tag_groups', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
@@ -102,6 +173,135 @@ export const comments = pgTable(
       .on(table.parent_id, table.created_at, table.id)
       .concurrently()
       .where(sql`${table.parent_id} is not null`),
+  ],
+)
+
+// --- Chart-Data Issue Reports ---
+
+export const chartReports = pgTable(
+  'chart_reports',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    reporter_user_id: text('reporter_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    stable_song_id: text('stable_song_id').notNull(),
+    stable_chart_id: text('stable_chart_id').notNull(),
+    publication_channel: text('publication_channel').notNull(),
+    publication_catalog_run_id: bigint('publication_catalog_run_id', { mode: 'bigint' }).notNull(),
+    publication_revision: bigint('publication_revision', { mode: 'bigint' }).notNull(),
+    publication_fingerprint_sha256: text('publication_fingerprint_sha256').notNull(),
+    target_field_key: text('target_field_key').$type<ChartReportFieldKey>().notNull(),
+    category: text('category').$type<ChartReportCategoryKey>().notNull(),
+    current_value: jsonb('current_value').$type<ChartReportJsonSnapshot>().notNull(),
+    proposed_value: jsonb('proposed_value').$type<ChartReportJsonSnapshot>().notNull(),
+    explanation: text('explanation').notNull(),
+    source_urls: text('source_urls').array().notNull().default([]),
+    state: text('state').$type<ChartReportState>().notNull().default('open'),
+    created_at: timestamp('created_at', { withTimezone: true, precision: 3 }).defaultNow().notNull(),
+    closed_by_user_id: text('closed_by_user_id').references(() => user.id, { onDelete: 'restrict' }),
+    closed_at: timestamp('closed_at', { withTimezone: true, precision: 3 }),
+    close_note: text('close_note'),
+  },
+  (table) => [
+    check(
+      'chart_reports_stable_song_id_check',
+      sql`${table.stable_song_id} ~ '^dsng_[23456789abcdefghjkmnpqrstvwxyz]{10}$'`,
+    ),
+    check(
+      'chart_reports_stable_chart_id_check',
+      sql`${table.stable_chart_id} ~ '^dsht_[23456789abcdefghjkmnpqrstvwxyz]{10}$'`,
+    ),
+    check(
+      'chart_reports_publication_identity_check',
+      sql`${table.publication_channel} in (${chartReportProductionChannelSql})
+        and ${table.publication_catalog_run_id} > 0
+        and ${table.publication_revision} > 0
+        and ${table.publication_fingerprint_sha256} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check('chart_reports_target_field_key_check', sql`${table.target_field_key} in (${chartReportFieldKeySql})`),
+    check('chart_reports_category_check', sql`${table.category} in (${chartReportCategoryKeySql})`),
+    check('chart_reports_current_value_check', chartReportSnapshotCheck(table.target_field_key, table.current_value)),
+    check('chart_reports_proposed_value_check', chartReportSnapshotCheck(table.target_field_key, table.proposed_value)),
+    check(
+      'chart_reports_explanation_check',
+      sql`length(${table.explanation}) between 1 and ${chartReportExplanationMaxLengthSql}
+        and ${table.explanation} !~ '^[[:space:]]'
+        and ${table.explanation} !~ '[[:space:]]$'`,
+    ),
+    check(
+      'chart_reports_source_urls_check',
+      sql`cardinality(${table.source_urls}) between 0 and ${chartReportSourceUrlMaxCountSql}
+        and (cardinality(${table.source_urls}) = 0 or array_ndims(${table.source_urls}) = 1)
+        and array_position(${table.source_urls}, null) is null`,
+    ),
+    check('chart_reports_state_check', sql`${table.state} in ('open', 'closed')`),
+    check(
+      'chart_reports_closure_check',
+      sql`(${table.state} = 'open'
+          and ${table.closed_by_user_id} is null
+          and ${table.closed_at} is null
+          and ${table.close_note} is null)
+        or (${table.state} = 'closed'
+          and ${table.closed_by_user_id} is not null
+          and ${table.closed_at} is not null
+          and ${table.closed_at} >= ${table.created_at}
+          and (${table.close_note} is null
+            or (length(${table.close_note}) between 1 and ${chartReportCloseNoteMaxLengthSql}
+              and ${table.close_note} !~ '^[[:space:]]'
+              and ${table.close_note} !~ '[[:space:]]$')))`,
+    ),
+    index('chart_reports_queue_idx').using(
+      'btree',
+      sql`(${table.state} = 'open') DESC`,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    index('chart_reports_chart_queue_idx').using(
+      'btree',
+      table.stable_chart_id,
+      sql`(${table.state} = 'open') DESC`,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    index('chart_reports_field_queue_idx').using(
+      'btree',
+      table.target_field_key,
+      sql`(${table.state} = 'open') DESC`,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    index('chart_reports_category_queue_idx').using(
+      'btree',
+      table.category,
+      sql`(${table.state} = 'open') DESC`,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    index('chart_reports_reporter_queue_idx').using(
+      'btree',
+      table.reporter_user_id,
+      sql`(${table.state} = 'open') DESC`,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    index('chart_reports_publication_revision_queue_idx').using(
+      'btree',
+      table.publication_revision,
+      sql`(${table.state} = 'open') DESC`,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    index('chart_reports_publication_identity_idx').on(
+      table.publication_channel,
+      table.publication_catalog_run_id,
+      table.publication_revision,
+      table.publication_fingerprint_sha256,
+    ),
+    index('chart_reports_created_idx').on(table.created_at.desc(), table.id.desc()),
+    index('chart_reports_closed_at_idx')
+      .on(table.closed_at.desc(), table.id.desc())
+      .where(sql`${table.state} = 'closed'`),
   ],
 )
 
@@ -986,6 +1186,19 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
   moderationState: one(adminCommentModerationState),
 }))
 
+export const chartReportsRelations = relations(chartReports, ({ one }) => ({
+  reporter: one(user, {
+    fields: [chartReports.reporter_user_id],
+    references: [user.id],
+    relationName: 'chart_report_reporter',
+  }),
+  closedBy: one(user, {
+    fields: [chartReports.closed_by_user_id],
+    references: [user.id],
+    relationName: 'chart_report_closer',
+  }),
+}))
+
 export const adminCommentModerationHistoryRelations = relations(adminCommentModerationHistory, ({ one, many }) => ({
   comment: one(comments, {
     fields: [adminCommentModerationHistory.comment_id],
@@ -1101,6 +1314,12 @@ export const userExtraRelations = relations(user, ({ one, many }) => ({
   tags: many(tags),
   tagSongs: many(tagSongs),
   comments: many(comments),
+  chartReportsAsReporter: many(chartReports, {
+    relationName: 'chart_report_reporter',
+  }),
+  chartReportsAsCloser: many(chartReports, {
+    relationName: 'chart_report_closer',
+  }),
   adminRoleChangesAsSubject: many(adminRoleChangeHistory, {
     relationName: 'admin_role_change_subject',
   }),
