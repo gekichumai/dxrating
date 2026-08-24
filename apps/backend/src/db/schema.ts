@@ -89,6 +89,103 @@ export const comments = pgTable('comments', {
   content: text('content').notNull(),
 })
 
+// --- Administrator Comment-Moderation State and History ---
+
+export const adminCommentModerationHistory = pgTable(
+  'admin_comment_moderation_history',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    comment_id: bigint('comment_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => comments.id, { onDelete: 'restrict' }),
+    actor_user_id: text('actor_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    previous_event_id: bigint('previous_event_id', { mode: 'bigint' })
+      .unique()
+      .references((): AnyPgColumn => adminCommentModerationHistory.id, { onDelete: 'restrict' }),
+    action: text('action').$type<'delete' | 'restore'>().notNull(),
+    reason: text('reason'),
+    request_correlation_id: uuid('request_correlation_id').notNull(),
+    created_at: timestamp('created_at', { withTimezone: true, precision: 3 }).defaultNow().notNull(),
+  },
+  (table) => [
+    check('admin_comment_moderation_history_action_check', sql`${table.action} in ('delete', 'restore')`),
+    check(
+      'admin_comment_moderation_history_reason_check',
+      sql`(${table.action} = 'delete'
+          and ${table.reason} is not null
+          and length(${table.reason}) between 1 and 1000
+          and ${table.reason} !~ '^[[:space:]]'
+          and ${table.reason} !~ '[[:space:]]$')
+        or (${table.action} = 'restore' and ${table.reason} is null)`,
+    ),
+    unique('admin_comment_moderation_history_event_identity_unique').on(
+      table.id,
+      table.comment_id,
+      table.actor_user_id,
+      table.action,
+      table.created_at,
+    ),
+    index('admin_comment_moderation_history_comment_created_idx').on(
+      table.comment_id,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    uniqueIndex('admin_comment_moderation_history_comment_root_unique')
+      .on(table.comment_id)
+      .where(sql`${table.previous_event_id} is null`),
+  ],
+)
+
+export const adminCommentModerationState = pgTable(
+  'admin_comment_moderation_state',
+  {
+    comment_id: bigint('comment_id', { mode: 'bigint' })
+      .primaryKey()
+      .references(() => comments.id, { onDelete: 'restrict' }),
+    established_action: text('established_action').$type<'delete' | 'restore'>().notNull(),
+    deletion_reason: text('deletion_reason'),
+    actor_user_id: text('actor_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    established_by_event_id: bigint('established_by_event_id', { mode: 'bigint' }).notNull().unique(),
+    moderated_at: timestamp('moderated_at', { withTimezone: true, precision: 3 }).notNull(),
+  },
+  (table) => [
+    check('admin_comment_moderation_state_action_check', sql`${table.established_action} in ('delete', 'restore')`),
+    check(
+      'admin_comment_moderation_state_projection_check',
+      sql`(${table.established_action} = 'delete'
+          and ${table.deletion_reason} is not null
+          and length(${table.deletion_reason}) between 1 and 1000
+          and ${table.deletion_reason} !~ '^[[:space:]]'
+          and ${table.deletion_reason} !~ '[[:space:]]$')
+        or (${table.established_action} = 'restore' and ${table.deletion_reason} is null)`,
+    ),
+    foreignKey({
+      name: 'admin_comment_moderation_state_establishing_event_fk',
+      columns: [
+        table.established_by_event_id,
+        table.comment_id,
+        table.actor_user_id,
+        table.established_action,
+        table.moderated_at,
+      ],
+      foreignColumns: [
+        adminCommentModerationHistory.id,
+        adminCommentModerationHistory.comment_id,
+        adminCommentModerationHistory.actor_user_id,
+        adminCommentModerationHistory.action,
+        adminCommentModerationHistory.created_at,
+      ],
+    }).onDelete('restrict'),
+    index('admin_comment_moderation_state_deleted_recent_idx')
+      .on(table.moderated_at.desc(), table.comment_id.desc())
+      .where(sql`${table.established_action} = 'delete'`),
+  ],
+)
+
 // --- Administrator Role History ---
 
 export const adminRoleChangeHistory = pgTable(
@@ -860,6 +957,45 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
   }),
   replies: many(comments, {
     relationName: 'comment_replies',
+  }),
+  moderationHistory: many(adminCommentModerationHistory),
+  moderationState: one(adminCommentModerationState),
+}))
+
+export const adminCommentModerationHistoryRelations = relations(adminCommentModerationHistory, ({ one, many }) => ({
+  comment: one(comments, {
+    fields: [adminCommentModerationHistory.comment_id],
+    references: [comments.id],
+  }),
+  actor: one(user, {
+    fields: [adminCommentModerationHistory.actor_user_id],
+    references: [user.id],
+    relationName: 'admin_comment_moderation_actor',
+  }),
+  previousEvent: one(adminCommentModerationHistory, {
+    fields: [adminCommentModerationHistory.previous_event_id],
+    references: [adminCommentModerationHistory.id],
+    relationName: 'admin_comment_moderation_event_chain',
+  }),
+  subsequentEvents: many(adminCommentModerationHistory, {
+    relationName: 'admin_comment_moderation_event_chain',
+  }),
+  establishedState: one(adminCommentModerationState),
+}))
+
+export const adminCommentModerationStateRelations = relations(adminCommentModerationState, ({ one }) => ({
+  comment: one(comments, {
+    fields: [adminCommentModerationState.comment_id],
+    references: [comments.id],
+  }),
+  actor: one(user, {
+    fields: [adminCommentModerationState.actor_user_id],
+    references: [user.id],
+    relationName: 'admin_comment_moderation_state_actor',
+  }),
+  establishingEvent: one(adminCommentModerationHistory, {
+    fields: [adminCommentModerationState.established_by_event_id],
+    references: [adminCommentModerationHistory.id],
   }),
 }))
 

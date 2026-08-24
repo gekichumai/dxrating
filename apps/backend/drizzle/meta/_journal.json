@@ -141,6 +141,20 @@
       "when": 1787573577114,
       "tag": "0019_admin_user_moderation_search",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1787576252594,
+      "tag": "0020_add_admin_comment_moderation",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1787576257864,
+      "tag": "0021_protect_admin_comment_moderation",
+      "breakpoints": true
     }
   ]
 }

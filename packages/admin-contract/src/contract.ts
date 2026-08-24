@@ -634,6 +634,205 @@ export const AdminUserBanMutationOutputSchema = z
   })
   .strict()
 
+export const ADMIN_COMMENT_HISTORY_DEFAULT_LIMIT = 25 as const
+export const ADMIN_COMMENT_HISTORY_MAX_LIMIT = 100 as const
+export const ADMIN_COMMENT_HISTORY_CURSOR_MAX_LENGTH = 1_024 as const
+export const ADMIN_COMMENT_MODERATION_REASON_MAX_LENGTH = 1_000 as const
+
+export const AdminCommentIdSchema = z
+  .string()
+  .regex(/^[1-9]\d*$/)
+  .max(19)
+  .describe('Decimal comment identifier')
+export const AdminCommentModerationEventIdSchema = z
+  .string()
+  .regex(/^[1-9]\d*$/)
+  .max(19)
+  .describe('Decimal comment-moderation state version')
+export const AdminCommentHistoryCursorSchema = z
+  .string()
+  .min(1)
+  .max(ADMIN_COMMENT_HISTORY_CURSOR_MAX_LENGTH)
+  .regex(/^[A-Za-z0-9_-]+$/)
+  .describe('Opaque comment-bound moderation-history cursor')
+export const AdminCommentHistoryLimitSchema = z.coerce
+  .number<number>()
+  .int()
+  .min(1)
+  .max(ADMIN_COMMENT_HISTORY_MAX_LIMIT)
+  .default(ADMIN_COMMENT_HISTORY_DEFAULT_LIMIT)
+export const AdminCommentModerationReasonSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(ADMIN_COMMENT_MODERATION_REASON_MAX_LENGTH)
+
+export const AdminCommentImmutableEvidenceSchema = z
+  .object({
+    id: AdminCommentIdSchema,
+    parentId: AdminCommentIdSchema.nullable(),
+    authorUserId: AdminUserIdSchema,
+    chart: z
+      .object({
+        songId: z.string(),
+        sheetType: z.string(),
+        sheetDifficulty: z.string(),
+      })
+      .strict(),
+    createdAt: AdminUtcDateTimeSchema,
+    originalBody: z.string(),
+  })
+  .strict()
+  .describe('Privileged immutable comment evidence available only to authorized administrators')
+
+const AdminVisibleCommentModerationStateSchema = z
+  .object({
+    status: z.literal('visible'),
+    stateVersion: AdminCommentModerationEventIdSchema.nullable(),
+    actorUserId: AdminUserIdSchema.nullable(),
+    moderatedAt: AdminUtcDateTimeSchema.nullable(),
+    reason: z.null(),
+  })
+  .strict()
+  .refine(
+    (state) =>
+      state.stateVersion === null
+        ? state.actorUserId === null && state.moderatedAt === null
+        : state.actorUserId !== null && state.moderatedAt !== null,
+    { message: 'Visible comment state metadata must consistently represent initial or restored state' },
+  )
+
+const AdminDeletedCommentModerationStateSchema = z
+  .object({
+    status: z.literal('deleted'),
+    stateVersion: AdminCommentModerationEventIdSchema,
+    actorUserId: AdminUserIdSchema,
+    moderatedAt: AdminUtcDateTimeSchema,
+    reason: AdminCommentModerationReasonSchema,
+  })
+  .strict()
+
+export const AdminCommentModerationStateSchema = z.discriminatedUnion('status', [
+  AdminVisibleCommentModerationStateSchema,
+  AdminDeletedCommentModerationStateSchema,
+])
+
+const AdminCommentModerationEventBaseSchema = z.object({
+  id: AdminCommentModerationEventIdSchema,
+  commentId: AdminCommentIdSchema,
+  actorUserId: AdminUserIdSchema,
+  previousEventId: AdminCommentModerationEventIdSchema.nullable(),
+  createdAt: AdminUtcDateTimeSchema,
+})
+
+const AdminCommentDeleteEventSchema = AdminCommentModerationEventBaseSchema.extend({
+  action: z.literal('delete'),
+  reason: AdminCommentModerationReasonSchema,
+})
+  .strict()
+  .refine((event) => event.id !== event.previousEventId, {
+    message: 'A comment-moderation event cannot reference itself as its previous event',
+  })
+
+const AdminCommentRestoreEventSchema = AdminCommentModerationEventBaseSchema.extend({
+  action: z.literal('restore'),
+  previousEventId: AdminCommentModerationEventIdSchema,
+  reason: z.null(),
+})
+  .strict()
+  .refine((event) => event.id !== event.previousEventId, {
+    message: 'A comment-moderation event cannot reference itself as its previous event',
+  })
+
+export const AdminCommentModerationEventSchema = z.discriminatedUnion('action', [
+  AdminCommentDeleteEventSchema,
+  AdminCommentRestoreEventSchema,
+])
+
+const AdminCommentSubjectInputSchema = z.object({
+  headers: AdminContractHeadersSchema,
+  params: z.object({ commentId: AdminCommentIdSchema }).strict(),
+})
+
+export const AdminGetCommentModerationDetailInputSchema = AdminCommentSubjectInputSchema.extend({
+  query: z
+    .object({
+      cursor: AdminCommentHistoryCursorSchema.optional(),
+      limit: AdminCommentHistoryLimitSchema,
+    })
+    .strict(),
+})
+
+export const AdminGetCommentModerationDetailOutputSchema = z
+  .object({
+    comment: AdminCommentImmutableEvidenceSchema,
+    state: AdminCommentModerationStateSchema,
+    history: z
+      .object({
+        items: z.array(AdminCommentModerationEventSchema).max(ADMIN_COMMENT_HISTORY_MAX_LIMIT),
+        nextCursor: AdminCommentHistoryCursorSchema.nullable(),
+      })
+      .strict(),
+  })
+  .strict()
+  .refine((output) => output.history.items.every((event) => event.commentId === output.comment.id), {
+    message: 'Comment-moderation history items must belong to the requested comment detail',
+    path: ['history', 'items'],
+  })
+
+export const AdminDeleteCommentInputSchema = AdminCommentSubjectInputSchema.extend({
+  body: z
+    .object({
+      expectedStateVersion: AdminCommentModerationEventIdSchema.nullable(),
+      confirmed: z.literal(true),
+      reason: AdminCommentModerationReasonSchema,
+    })
+    .strict(),
+})
+
+export const AdminRestoreCommentInputSchema = AdminCommentSubjectInputSchema.extend({
+  body: z
+    .object({
+      expectedStateVersion: AdminCommentModerationEventIdSchema,
+      confirmed: z.literal(true),
+    })
+    .strict(),
+})
+
+export const AdminDeleteCommentOutputSchema = z
+  .object({
+    state: AdminDeletedCommentModerationStateSchema,
+    event: AdminCommentDeleteEventSchema,
+  })
+  .strict()
+  .refine(
+    ({ state, event }) =>
+      state.stateVersion === event.id &&
+      state.actorUserId === event.actorUserId &&
+      state.moderatedAt === event.createdAt &&
+      state.reason === event.reason,
+    { message: 'Comment-deletion state and event must describe the same transition' },
+  )
+
+export const AdminRestoreCommentOutputSchema = z
+  .object({
+    state: AdminVisibleCommentModerationStateSchema,
+    event: AdminCommentRestoreEventSchema,
+  })
+  .strict()
+  .refine(
+    ({ state, event }) =>
+      state.stateVersion === event.id &&
+      state.actorUserId === event.actorUserId &&
+      state.moderatedAt === event.createdAt,
+    { message: 'Comment-restoration state and event must describe the same transition' },
+  )
+
+export const AdminCommentModerationMutationOutputSchema = z.union([
+  AdminDeleteCommentOutputSchema,
+  AdminRestoreCommentOutputSchema,
+])
+
 export const adminContract = adminProcedure.errors(adminErrors).router({
   bootstrap: adminProcedure
     .meta({ authorization: ADMIN_BOOTSTRAP_AUTHORIZATION, banPolicy: 'authenticated_read' })
@@ -755,6 +954,54 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     })
     .input(AdminUnbanUserInputSchema)
     .output(AdminUserBanMutationOutputSchema),
+  getCommentModerationDetail: adminProcedure
+    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
+    .route({
+      method: 'GET',
+      path: '/comments/{commentId}',
+      operationId: 'getAdminCommentModerationDetail',
+      summary: 'Read immutable comment evidence, current state, and moderation history',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminGetCommentModerationDetailInputSchema)
+    .output(AdminGetCommentModerationDetailOutputSchema),
+  deleteComment: adminProcedure
+    .meta({
+      banPolicy: 'transactional_write',
+      authorization: adminAuthorizationForAction('comment.delete', {
+        minimumRole: 'admin',
+        targetAction: 'moderate',
+      }),
+    })
+    .route({
+      method: 'POST',
+      path: '/comments/{commentId}/delete',
+      operationId: 'deleteAdminComment',
+      summary: 'Hide a comment while preserving its immutable original evidence',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminDeleteCommentInputSchema)
+    .output(AdminDeleteCommentOutputSchema),
+  restoreComment: adminProcedure
+    .meta({
+      banPolicy: 'transactional_write',
+      authorization: adminAuthorizationForAction('comment.restore', {
+        minimumRole: 'admin',
+        targetAction: 'moderate',
+      }),
+    })
+    .route({
+      method: 'POST',
+      path: '/comments/{commentId}/restore',
+      operationId: 'restoreAdminComment',
+      summary: 'Restore a deleted comment without rewriting its original evidence',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminRestoreCommentInputSchema)
+    .output(AdminRestoreCommentOutputSchema),
   listAdministrators: adminProcedure
     .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
     .route({

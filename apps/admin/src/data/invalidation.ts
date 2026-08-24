@@ -16,7 +16,7 @@ export const invalidateAfterChartMutation = async (queryClient: QueryClient, cha
 export const invalidateAfterCommentMutation = async (queryClient: QueryClient, commentId: string): Promise<void> => {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: adminQueryKeys.comments.lists() }),
-    queryClient.invalidateQueries({ exact: true, queryKey: adminQueryKeys.comments.detail(commentId) }),
+    queryClient.invalidateQueries({ queryKey: adminQueryKeys.comments.detail(commentId) }),
     invalidateDashboard(queryClient),
   ])
 }

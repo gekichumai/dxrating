@@ -8,6 +8,7 @@ import {
   adminBootstrapQueryOptions,
   administratorRoleHistoryQueryOptions,
   administratorRosterQueryOptions,
+  commentModerationDetailQueryOptions,
   userBanHistoryQueryOptions,
   userModerationDetailQueryOptions,
   userSearchQueryOptions,
@@ -167,6 +168,48 @@ describe('administrator typed query option policy', () => {
     await expect(queryClient.fetchQuery(search)).resolves.toEqual({ items: [], nextCursor: null })
     await expect(queryClient.fetchQuery(userDetail)).resolves.toEqual(detail)
     await expect(queryClient.fetchQuery(banHistory)).resolves.toEqual(history)
+  })
+
+  it('keys each comment detail and comment-bound history page under its immutable comment ID', async () => {
+    const detail = {
+      comment: {
+        id: '42',
+        parentId: null,
+        authorUserId: 'comment-author',
+        chart: { songId: 'song-1', sheetType: 'dx', sheetDifficulty: 'master' },
+        createdAt: '2026-08-24T10:00:00.000Z',
+        originalBody: 'Immutable original body',
+      },
+      state: {
+        status: 'visible' as const,
+        stateVersion: null,
+        actorUserId: null,
+        moderatedAt: null,
+        reason: null,
+      },
+      history: { items: [], nextCursor: null },
+    }
+    const fetch = vi.fn(async (_request: RequestInfo | URL) => Response.json(detail))
+    const data = createAdminDataClient({
+      backendOrigin: 'https://api.dxrating.net',
+      fetch: fetch as unknown as typeof globalThis.fetch,
+      mode: 'production',
+    })
+    const parameters = { cursor: 'opaque_page', limit: 25 }
+    const options = commentModerationDetailQueryOptions(data, '42', parameters)
+    const queryClient = createAdminTestQueryClient()
+
+    expect(options.queryKey).toEqual(adminQueryKeys.comments.moderationDetail('42', parameters))
+    expectTypeOf(queryClient.getQueryData(options.queryKey)).toEqualTypeOf<
+      AdminContractOutputs['getCommentModerationDetail'] | undefined
+    >()
+    expect(options.staleTime).toBe(ADMIN_STALE_TIME_MS.comments)
+    await expect(queryClient.fetchQuery(options)).resolves.toEqual(detail)
+    const request = fetch.mock.calls[0]?.[0]
+    expect(request).toBeInstanceOf(Request)
+    expect((request as Request).url).toContain('/api/admin/comments/42')
+    expect((request as Request).url).toContain('cursor=opaque_page')
+    expect((request as Request).url).toContain('limit=25')
   })
 
   it('keys every subject role-history page by immutable user ID and opaque cursor', async () => {

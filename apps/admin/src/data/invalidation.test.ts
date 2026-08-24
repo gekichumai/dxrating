@@ -55,14 +55,26 @@ describe('administrator mutation invalidation recipes', () => {
     const dashboard = adminQueryKeys.dashboard.overview()
     const commentList = adminQueryKeys.comments.list({ status: 'recent' })
     const changedComment = adminQueryKeys.comments.detail('comment-1')
+    const changedCommentHistoryPage = adminQueryKeys.comments.moderationDetail('comment-1', { cursor: 'page-2' })
     const otherComment = adminQueryKeys.comments.detail('comment-2')
+    const otherCommentHistoryPage = adminQueryKeys.comments.moderationDetail('comment-2', { cursor: 'page-2' })
     const user = adminQueryKeys.users.detail('user-1')
-    seed(queryClient, [dashboard, commentList, changedComment, otherComment, user])
+    seed(queryClient, [
+      dashboard,
+      commentList,
+      changedComment,
+      changedCommentHistoryPage,
+      otherComment,
+      otherCommentHistoryPage,
+      user,
+    ])
 
     await invalidateAfterCommentMutation(queryClient, 'comment-1')
 
-    for (const key of [dashboard, commentList, changedComment]) expectInvalidated(queryClient, key, true)
-    for (const key of [otherComment, user]) expectInvalidated(queryClient, key, false)
+    for (const key of [dashboard, commentList, changedComment, changedCommentHistoryPage]) {
+      expectInvalidated(queryClient, key, true)
+    }
+    for (const key of [otherComment, otherCommentHistoryPage, user]) expectInvalidated(queryClient, key, false)
   })
 
   it('invalidates user presentation in user lists and comment queues after moderation', async () => {

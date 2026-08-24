@@ -118,8 +118,12 @@ export async function authenticatedFetch(url: string, cookie: string, init?: Req
 export async function cleanDatabase() {
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
   // Order matters due to foreign keys
-  // Production callers cannot truncate this append-only table. The test
-  // database owner resets it before deleting users referenced with RESTRICT.
+  // Production callers cannot truncate immutable comments or append-only
+  // moderation history. The test database owner resets them before deleting
+  // users referenced with RESTRICT.
+  await pool.query(
+    'TRUNCATE admin_comment_moderation_state, admin_comment_moderation_history, comments RESTART IDENTITY',
+  )
   await pool.query('TRUNCATE admin_user_ban_state, admin_user_ban_history RESTART IDENTITY')
   await pool.query('TRUNCATE admin_role_change_history RESTART IDENTITY')
   await pool.query('DELETE FROM arcade.geocoding_coordinate_invalidations')
@@ -139,7 +143,6 @@ export async function cleanDatabase() {
   await pool.query('DELETE FROM tag_songs')
   await pool.query('DELETE FROM tags')
   await pool.query('DELETE FROM tag_groups')
-  await pool.query('DELETE FROM comments')
   await pool.query('DELETE FROM song_aliases')
   await pool.query('DELETE FROM lxns_oauth_states')
   await pool.query('DELETE FROM lxns_oauth_tokens')

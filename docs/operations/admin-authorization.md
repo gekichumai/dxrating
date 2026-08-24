@@ -167,6 +167,12 @@ indexes, constraints, privileges, and database guards without rewriting users or
 binary can continue serving during expansion. Never deploy a writer between an expansion migration and its adjacent
 protection migration.
 
+Apply `0020_add_admin_comment_moderation` and then `0021_protect_admin_comment_moderation` before deploying comment-
+moderation writers. The expansion creates only empty private tables and their indexes. The protection step installs
+append-only projection guards and a constant-time trigger that makes existing comment rows immutable; it does not scan
+or rewrite the populated comments table. The prior backend can continue inserting and reading comments throughout both
+steps because it has no comment update or delete operation.
+
 Rolling application code back to a binary that ignores these markers requires an administrator-traffic gate. Drain
 the generation-aware fleet, revoke every session belonging to a persisted or effective administrator, restore a
 compatible allowlist configuration, and only then expose the older binary. Leave the additive session columns and
@@ -197,3 +203,32 @@ the ordinary fast-path policy check, then the ban service re-locks and revalidat
 authentication proof, target, effective roles, self-targeting, and the expected state version in the same transaction
 that appends history and changes the projection. The response exposes the approved state and event only; session counts,
 session identifiers, provider accounts, credentials, network metadata, and request-correlation IDs remain server-only.
+
+## Comment deletion, restoration, and retained evidence
+
+A comment row is immutable evidence. Its body, ID, author, chart identity, parent relation, and creation timestamp are
+never updated or deleted by moderation. PostgreSQL rejects comment updates and deletes, including deletion attempted by
+an author-account cascade. Replies therefore retain their original parent relationship regardless of either comment's
+moderation state. Owner-only test and maintenance cleanup may truncate the complete comment moderation/state/history
+set, but the runtime role cannot update, delete, or truncate the retained rows.
+
+No state row means the comment has never been moderated and is visible. Each deletion or restoration appends one event
+and advances a one-row projection in the same transaction. The event ID is the compare-and-set version: `null` is valid
+only for the first deletion, and every later action must supply the exact event it observed. Events alternate between
+`delete` and `restore`; stale, concurrent, and repeated actions are typed conflicts and create no extra event. A delete
+stores a trimmed internal reason of at most 1,000 characters. A restore has no reason and never rewrites the original
+body or prior deletion event.
+
+`GET /api/admin/comments/{commentId}` is the only #317 procedure that returns the original body. It requires an
+administrator and returns only immutable comment evidence, current moderation state, and bounded comment-bound history.
+Request-correlation IDs remain persistence-only. The delete procedure additionally requires explicit confirmation and
+the ten-minute recent-primary-authentication window; restoration requires explicit confirmation but no reason or recent
+authentication. Both mutations resolve the immutable author's current effective role, then lock and revalidate actor,
+session, author, comment, and state before advancing the version. Administrators may act only on ordinary users'
+comments, super administrators may also act on persisted administrators' comments, and nobody may act on their own or
+an effective super administrator's comment.
+
+The #317 private writer must be deployed together with, or remain operationally dark until, #318's tombstone-aware
+public reader is active. Public comment responses must never expose retained original text, deletion reasons, moderator
+identity, or history for a deleted comment. There is deliberately no comment-edit, replacement-body, revision, or hard-
+delete procedure.

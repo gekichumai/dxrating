@@ -39,6 +39,10 @@ const createHeaderlessClient = (rawClient: RawAdminClient, onClientCompatible?: 
   listUserBanHistory: (input, options) => rawClient.listUserBanHistory({ ...input, headers: {} }, options),
   banUser: (input, options) => rawClient.banUser({ ...input, headers: {} }, options),
   unbanUser: (input, options) => rawClient.unbanUser({ ...input, headers: {} }, options),
+  getCommentModerationDetail: (input, options) =>
+    rawClient.getCommentModerationDetail({ ...input, headers: {} }, options),
+  deleteComment: (input, options) => rawClient.deleteComment({ ...input, headers: {} }, options),
+  restoreComment: (input, options) => rawClient.restoreComment({ ...input, headers: {} }, options),
   listAdministrators: (_input, options) => rawClient.listAdministrators({ headers: {} }, options),
   listAdministratorRoleHistory: (input, options) =>
     rawClient.listAdministratorRoleHistory({ ...input, headers: {} }, options),

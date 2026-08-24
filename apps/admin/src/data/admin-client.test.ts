@@ -30,6 +30,9 @@ describe('private administrator data client', () => {
     type BanHistoryInput = Parameters<AdminClient['listUserBanHistory']>[0]
     type BanUserInput = Parameters<AdminClient['banUser']>[0]
     type UnbanUserInput = Parameters<AdminClient['unbanUser']>[0]
+    type CommentDetailInput = Parameters<AdminClient['getCommentModerationDetail']>[0]
+    type DeleteCommentInput = Parameters<AdminClient['deleteComment']>[0]
+    type RestoreCommentInput = Parameters<AdminClient['restoreComment']>[0]
     type RosterInput = Parameters<AdminClient['listAdministrators']>[0]
     type HistoryInput = Parameters<AdminClient['listAdministratorRoleHistory']>[0]
     type GrantInput = Parameters<AdminClient['grantAdministrator']>[0]
@@ -64,6 +67,18 @@ describe('private administrator data client', () => {
       params: { userId: string }
       body: { expectedStateVersion: string | null }
     }>()
+    expectTypeOf<CommentDetailInput>().toMatchTypeOf<{
+      params: { commentId: string }
+      query: { cursor?: string; limit?: number }
+    }>()
+    expectTypeOf<DeleteCommentInput>().toEqualTypeOf<{
+      params: { commentId: string }
+      body: { expectedStateVersion: string | null; confirmed: true; reason: string }
+    }>()
+    expectTypeOf<RestoreCommentInput>().toEqualTypeOf<{
+      params: { commentId: string }
+      body: { expectedStateVersion: string; confirmed: true }
+    }>()
     expectTypeOf<RosterInput>().toEqualTypeOf<undefined>()
     expectTypeOf<HistoryInput>().toMatchTypeOf<{
       params: { userId: string }
@@ -91,6 +106,9 @@ describe('private administrator data client', () => {
       'listUserBanHistory',
       'banUser',
       'unbanUser',
+      'getCommentModerationDetail',
+      'deleteComment',
+      'restoreComment',
       'listAdministrators',
       'listAdministratorRoleHistory',
       'grantAdministrator',
@@ -99,6 +117,10 @@ describe('private administrator data client', () => {
     expect(orpc.bootstrap.queryOptions().queryKey).toBeDefined()
     expect(orpc.searchUsers.queryOptions({ input: { body: {} } }).queryKey).toBeDefined()
     expect(orpc.banUser.mutationOptions().mutationKey).toBeDefined()
+    expect(
+      orpc.getCommentModerationDetail.queryOptions({ input: { params: { commentId: '1' }, query: {} } }).queryKey,
+    ).toBeDefined()
+    expect(orpc.deleteComment.mutationOptions().mutationKey).toBeDefined()
     expect(orpc.listAdministrators.queryOptions().queryKey).toBeDefined()
   })
 
@@ -265,6 +287,99 @@ describe('private administrator data client', () => {
       reason: 'Private moderation reason',
     })
     await expect(requests[4]?.clone().json()).resolves.toEqual({ expectedStateVersion: '1' })
+    for (const request of requests) {
+      expect(request.headers.get(ADMIN_CONTRACT_HEADER)).toBe(ADMIN_CONTRACT_COMPATIBILITY_ID)
+    }
+  })
+
+  it('serializes comment detail pagination, confirmed deletion, and reasonless restoration under the private prefix', async () => {
+    const requests: Request[] = []
+    const comment = {
+      id: '42',
+      parentId: null,
+      authorUserId: 'comment-author',
+      chart: { songId: 'song-1', sheetType: 'dx', sheetDifficulty: 'master' },
+      createdAt: '2026-08-24T10:00:00.000Z',
+      originalBody: 'Immutable original body',
+    }
+    const deleteEvent = {
+      id: '7',
+      commentId: '42',
+      actorUserId: 'administrator-id',
+      previousEventId: null,
+      action: 'delete' as const,
+      reason: 'Repeated harassment',
+      createdAt: '2026-08-24T12:00:00.000Z',
+    }
+    const deletedState = {
+      status: 'deleted' as const,
+      stateVersion: '7',
+      actorUserId: 'administrator-id',
+      moderatedAt: '2026-08-24T12:00:00.000Z',
+      reason: 'Repeated harassment',
+    }
+    const restoreEvent = {
+      id: '8',
+      commentId: '42',
+      actorUserId: 'administrator-id',
+      previousEventId: '7',
+      action: 'restore' as const,
+      reason: null,
+      createdAt: '2026-08-24T13:00:00.000Z',
+    }
+    const restoredState = {
+      status: 'visible' as const,
+      stateVersion: '8',
+      actorUserId: 'administrator-id',
+      moderatedAt: '2026-08-24T13:00:00.000Z',
+      reason: null,
+    }
+    const fetch = vi.fn(async (request: RequestInfo | URL) => {
+      const captured = request as Request
+      requests.push(captured)
+      if (captured.url.endsWith('/delete')) return jsonResponse({ state: deletedState, event: deleteEvent })
+      if (captured.url.endsWith('/restore')) return jsonResponse({ state: restoredState, event: restoreEvent })
+      return jsonResponse({
+        comment,
+        state: deletedState,
+        history: { items: [deleteEvent], nextCursor: 'next_page' },
+      })
+    })
+    const { client } = createAdminDataClient({
+      backendOrigin: 'https://api.dxrating.net',
+      fetch: fetch as unknown as typeof globalThis.fetch,
+      mode: 'production',
+    })
+
+    await client.getCommentModerationDetail({
+      params: { commentId: '42' },
+      query: { cursor: 'current_page', limit: 25 },
+    })
+    await client.deleteComment({
+      params: { commentId: '42' },
+      body: { expectedStateVersion: null, confirmed: true, reason: 'Repeated harassment' },
+    })
+    await client.restoreComment({
+      params: { commentId: '42' },
+      body: { expectedStateVersion: '7', confirmed: true },
+    })
+
+    expect(requests.map((request) => [request.method, new URL(request.url).pathname])).toEqual([
+      ['GET', '/api/admin/comments/42'],
+      ['POST', '/api/admin/comments/42/delete'],
+      ['POST', '/api/admin/comments/42/restore'],
+    ])
+    expect(requests[0]?.url).toContain('cursor=current_page')
+    expect(requests[0]?.url).toContain('limit=25')
+    await expect(requests[1]?.clone().json()).resolves.toEqual({
+      expectedStateVersion: null,
+      confirmed: true,
+      reason: 'Repeated harassment',
+    })
+    await expect(requests[2]?.clone().json()).resolves.toEqual({
+      expectedStateVersion: '7',
+      confirmed: true,
+    })
     for (const request of requests) {
       expect(request.headers.get(ADMIN_CONTRACT_HEADER)).toBe(ADMIN_CONTRACT_COMPATIBILITY_ID)
     }

@@ -18,6 +18,9 @@ const ADMIN_TELEMETRY_PROCEDURES = [
   'listUserBanHistory',
   'banUser',
   'unbanUser',
+  'getCommentModerationDetail',
+  'deleteComment',
+  'restoreComment',
   'handler',
 ] as const
 const ADMIN_AUTHORIZATION_RESULTS = [

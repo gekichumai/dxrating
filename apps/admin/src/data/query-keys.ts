@@ -43,6 +43,8 @@ export const adminQueryKeys = {
       [...adminQueryKeys.comments.lists(), parameters] as const,
     details: () => [...adminQueryKeys.comments.all(), 'detail'] as const,
     detail: (commentId: string) => [...adminQueryKeys.comments.details(), commentId] as const,
+    moderationDetail: (commentId: string, parameters: AdminQueryParameters = EMPTY_QUERY_PARAMETERS) =>
+      [...adminQueryKeys.comments.detail(commentId), 'moderation', parameters] as const,
   },
   users: {
     all: () => [...adminQueryKeys.all(), 'users'] as const,

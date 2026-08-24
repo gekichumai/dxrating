@@ -83,6 +83,9 @@ describe('administrator authorization outcome telemetry', () => {
     recordAdminAuthorizationResultTo('grantAdministrator', 'CONFLICT', { increment })
     recordAdminAuthorizationResultTo('searchUsers', 'SUCCESS', { increment })
     recordAdminAuthorizationResultTo('banUser', 'RECENT_AUTH_REQUIRED', { increment })
+    recordAdminAuthorizationResultTo('getCommentModerationDetail', 'SUCCESS', { increment })
+    recordAdminAuthorizationResultTo('deleteComment', 'RECENT_AUTH_REQUIRED', { increment })
+    recordAdminAuthorizationResultTo('restoreComment', 'CONFLICT', { increment })
     recordAdminAuthorizationResultTo('user@example.com', 'private moderation reason', { increment })
 
     expect(increment.mock.calls).toEqual([
@@ -91,6 +94,9 @@ describe('administrator authorization outcome telemetry', () => {
       [{ procedure: 'grantAdministrator', result: 'CONFLICT' }],
       [{ procedure: 'searchUsers', result: 'SUCCESS' }],
       [{ procedure: 'banUser', result: 'RECENT_AUTH_REQUIRED' }],
+      [{ procedure: 'getCommentModerationDetail', result: 'SUCCESS' }],
+      [{ procedure: 'deleteComment', result: 'RECENT_AUTH_REQUIRED' }],
+      [{ procedure: 'restoreComment', result: 'CONFLICT' }],
       [{ procedure: 'unknown', result: 'UNKNOWN' }],
     ])
     expect(JSON.stringify(increment.mock.calls)).not.toContain('user@example.com')

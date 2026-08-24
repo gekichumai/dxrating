@@ -26,6 +26,11 @@ import {
   type AdministratorRoleService,
 } from './administrator-role-service.js'
 import {
+  CommentModerationServiceFailure,
+  createPostgresCommentModerationService,
+  type CommentModerationService,
+} from './comment-moderation-service.js'
+import {
   createPostgresUserModerationService,
   UserModerationServiceFailure,
   type UserModerationService,
@@ -123,6 +128,17 @@ export const adminErrorBoundaryMiddleware = os.middleware(async ({ context, erro
     }
 
     if (error instanceof UserModerationServiceFailure) {
+      switch (error.code) {
+        case 'VALIDATION_FAILED':
+          throw errors.VALIDATION_FAILED({ data })
+        case 'NOT_FOUND':
+          throw errors.NOT_FOUND({ data })
+        case 'CONFLICT':
+          throw errors.CONFLICT({ data })
+      }
+    }
+
+    if (error instanceof CommentModerationServiceFailure) {
       switch (error.code) {
         case 'VALIDATION_FAILED':
           throw errors.VALIDATION_FAILED({ data })
@@ -295,11 +311,15 @@ export const createAdminRouter = ({
   userModeration = createPostgresUserModerationService({
     superAdministrators: config.auth.superAdministrators,
   }),
+  commentModeration = createPostgresCommentModerationService({
+    superAdministrators: config.auth.superAdministrators,
+  }),
   runWriteLease = runPostgresAdminWriteLease,
 }: {
   primaryAuth?: AdminPrimaryAuthService
   administratorRoles?: AdministratorRoleService
   userModeration?: UserModerationService
+  commentModeration?: CommentModerationService
   runWriteLease?: AdminWriteLeaseRunner
 } = {}) => {
   const authorized = os
@@ -362,6 +382,30 @@ export const createAdminRouter = ({
       userModeration.unbanUser({
         context: { authentication: context.adminAuthentication },
         targetUserId: input.params.userId,
+        expectedStateVersion: input.body.expectedStateVersion,
+        requestCorrelationId: context.requestId,
+      }),
+    ),
+    getCommentModerationDetail: authorized.getCommentModerationDetail.handler(async ({ input }) =>
+      commentModeration.getCommentModerationDetail({
+        commentId: input.params.commentId,
+        cursor: input.query.cursor,
+        limit: input.query.limit,
+      }),
+    ),
+    deleteComment: authorized.deleteComment.handler(async ({ input, context }) =>
+      commentModeration.deleteComment({
+        context: { authentication: context.adminAuthentication },
+        commentId: input.params.commentId,
+        expectedStateVersion: input.body.expectedStateVersion,
+        requestCorrelationId: context.requestId,
+        reason: input.body.reason,
+      }),
+    ),
+    restoreComment: authorized.restoreComment.handler(async ({ input, context }) =>
+      commentModeration.restoreComment({
+        context: { authentication: context.adminAuthentication },
+        commentId: input.params.commentId,
         expectedStateVersion: input.body.expectedStateVersion,
         requestCorrelationId: context.requestId,
       }),
