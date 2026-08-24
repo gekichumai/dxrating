@@ -1,0 +1,76 @@
+.root,
+.section {
+  min-width: 0;
+}
+
+.descriptionList {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.32fr) minmax(0, 1fr);
+  gap: 0.55rem 0.9rem;
+  margin: 0;
+}
+
+.descriptionList dt {
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 600;
+}
+
+.descriptionList dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.identifier {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.immutableBody {
+  max-height: 22rem;
+  overflow: auto;
+  background: var(--mantine-color-default-hover);
+}
+
+.bodyText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tombstone {
+  color: var(--mantine-color-dimmed);
+  font-style: italic;
+}
+
+.itemList {
+  display: grid;
+  gap: var(--mantine-spacing-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.threadItem,
+.historyItem {
+  min-width: 0;
+}
+
+.threadItem {
+  border-inline-start-width: 3px;
+}
+
+@media (max-width: 40rem) {
+  .descriptionList {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.2rem;
+  }
+
+  .descriptionList dd + dt {
+    margin-top: 0.5rem;
+  }
+
+  .threadItem {
+    margin-inline-start: 0 !important;
+  }
+}

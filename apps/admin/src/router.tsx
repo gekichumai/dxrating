@@ -7,6 +7,7 @@ import {
   type RouterHistory,
 } from '@tanstack/react-router'
 import { AdminNotFound, AdminRouteError, RouteLoading } from './components/route-states'
+import { validateCommentListSearch } from './comments/comment-route-search'
 import { validateUserDetailSearch, validateUserListSearch } from './users/user-route-search'
 
 const rootRoute = createRootRoute({
@@ -55,6 +56,7 @@ const chartsRoute = createRoute({
 const commentsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: 'comments',
+  validateSearch: validateCommentListSearch,
   component: lazyRouteComponent(() => import('./routes/comments-route'), 'CommentsRoute'),
 })
 
