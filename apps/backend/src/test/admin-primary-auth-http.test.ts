@@ -2,7 +2,7 @@ import { ADMIN_CONTRACT_COMPATIBILITY_ID, ADMIN_CONTRACT_HEADER } from '@gekichu
 import pg from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { TEST_ADMIN_ACCESS_HEADERS } from './admin-access.js'
-import { promoteUserToAdministratorInTransaction } from '../admin/role-transitions.js'
+import { promoteFixtureUserToAdministrator } from './admin-role-fixtures.js'
 import {
   cleanDatabase,
   extractSessionCookie,
@@ -27,7 +27,7 @@ const createAdministrator = async (email: string) => {
     const userId = candidate.rows[0]?.id
     if (!userId) throw new Error(`Administrator fixture user not found: ${email}`)
 
-    const transition = await promoteUserToAdministratorInTransaction(transaction, userId)
+    const transition = await promoteFixtureUserToAdministrator(transaction, userId)
     if (!transition) throw new Error(`Administrator fixture could not be promoted: ${email}`)
     await transaction.query('COMMIT')
   } catch (error) {

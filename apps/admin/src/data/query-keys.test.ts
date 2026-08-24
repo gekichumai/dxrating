@@ -39,6 +39,14 @@ describe('administrator query-key factories', () => {
       'detail',
       'revision-2',
     ])
+    expect(adminQueryKeys.administrators.roleHistory('user-1', { cursor: 'opaque-cursor', limit: 25 })).toEqual([
+      'admin',
+      'administrators',
+      'detail',
+      'user-1',
+      'role-history',
+      { cursor: 'opaque-cursor', limit: 25 },
+    ])
   })
 
   it('keeps equivalent filters stable while distinguishing different resources', () => {
@@ -49,6 +57,12 @@ describe('administrator query-key factories', () => {
       adminQueryKeys.comments.list({ status: 'deleted' }),
     )
     expect(adminQueryKeys.users.detail('user-1')).not.toEqual(adminQueryKeys.administrators.detail('user-1'))
+    expect(adminQueryKeys.administrators.roleHistory('user-1')).not.toEqual(
+      adminQueryKeys.administrators.roleHistory('user-2'),
+    )
+    expect(adminQueryKeys.administrators.roleHistory('user-1', { cursor: 'page-1' })).not.toEqual(
+      adminQueryKeys.administrators.roleHistory('user-1', { cursor: 'page-2' }),
+    )
     expect(adminQueryKeys.reports.detail('report-1')).not.toEqual(adminQueryKeys.comments.detail('report-1'))
   })
 
@@ -68,5 +82,10 @@ describe('administrator query-key factories', () => {
     expect(adminQueryKeys.users.activity('user-1').slice(0, adminQueryKeys.users.detail('user-1').length)).toEqual(
       adminQueryKeys.users.detail('user-1'),
     )
+    expect(
+      adminQueryKeys.administrators
+        .roleHistory('user-1', { cursor: 'next' })
+        .slice(0, adminQueryKeys.administrators.detail('user-1').length),
+    ).toEqual(adminQueryKeys.administrators.detail('user-1'))
   })
 })

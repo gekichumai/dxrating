@@ -6,12 +6,23 @@ import {
   ADMIN_ERROR_MESSAGES,
   ADMIN_PRIMARY_AUTH_ACTION_POLICY,
   ADMIN_PRIMARY_AUTH_ACTIONS,
+  ADMIN_ROLE_CHANGE_REASON_MAX_LENGTH,
+  ADMIN_ROLE_HISTORY_DEFAULT_LIMIT,
+  ADMIN_ROLE_HISTORY_MAX_LIMIT,
+  AdminAccountStatusSchema,
+  AdminAdministratorRoleChangeSchema,
+  AdminAdministratorRoleHistoryInputSchema,
+  AdminAdministratorRosterOutputSchema,
   AdminBootstrapOutputSchema,
+  AdminGrantAdministratorInputSchema,
+  AdminGrantAdministratorOutputSchema,
   AdminPrimaryAuthActionSchema,
   AdminPrimaryAuthOauthInitiateInputSchema,
   AdminPrimaryAuthPasswordInputSchema,
   AdminPrimaryAuthProviderSchema,
   AdminProcedureAuthorizationPolicySchema,
+  AdminRevokeAdministratorInputSchema,
+  AdminRevokeAdministratorOutputSchema,
   adminActionRequiresRecentPrimaryAuth,
   adminAuthorizationForAction,
   adminContract,
@@ -26,6 +37,10 @@ describe('private administrator contract', () => {
       'primaryAuthStatus',
       'completePrimaryAuthPassword',
       'initiatePrimaryAuthOauth',
+      'listAdministrators',
+      'listAdministratorRoleHistory',
+      'grantAdministrator',
+      'revokeAdministrator',
     ])
 
     expect(
@@ -50,6 +65,26 @@ describe('private administrator contract', () => {
         method: 'POST',
         path: '/primary-auth/oauth/initiate',
         operationId: 'initiateAdminPrimaryAuthOauth',
+      },
+      listAdministrators: {
+        method: 'GET',
+        path: '/administrators',
+        operationId: 'listAdminAdministrators',
+      },
+      listAdministratorRoleHistory: {
+        method: 'GET',
+        path: '/administrators/{userId}/role-history',
+        operationId: 'listAdminAdministratorRoleHistory',
+      },
+      grantAdministrator: {
+        method: 'POST',
+        path: '/administrators/{userId}/grant',
+        operationId: 'grantAdminAdministrator',
+      },
+      revokeAdministrator: {
+        method: 'POST',
+        path: '/administrators/{userId}/revoke',
+        operationId: 'revokeAdminAdministrator',
       },
     })
 
@@ -92,8 +127,31 @@ describe('private administrator contract', () => {
 
     for (const procedure of Object.values(adminContract)) {
       expect(Object.keys(procedure['~orpc'].errorMap)).toEqual(expectedErrors)
+    }
+
+    for (const procedure of [
+      adminContract.bootstrap,
+      adminContract.primaryAuthStatus,
+      adminContract.completePrimaryAuthPassword,
+      adminContract.initiatePrimaryAuthOauth,
+      adminContract.listAdministrators,
+      adminContract.listAdministratorRoleHistory,
+    ]) {
       expect(procedure['~orpc'].meta.authorization).toEqual(ADMIN_DEFAULT_AUTHORIZATION)
     }
+
+    expect(adminContract.grantAdministrator['~orpc'].meta.authorization).toEqual(
+      adminAuthorizationForAction('administrator.grant', {
+        minimumRole: 'super_admin',
+        targetAction: 'manage_administrator_role',
+      }),
+    )
+    expect(adminContract.revokeAdministrator['~orpc'].meta.authorization).toEqual(
+      adminAuthorizationForAction('administrator.revoke', {
+        minimumRole: 'super_admin',
+        targetAction: 'manage_administrator_role',
+      }),
+    )
 
     expect(Object.keys(adminContract.bootstrap['~orpc'].errorMap)).toEqual([
       'ADMIN_CLIENT_INCOMPATIBLE',
@@ -132,6 +190,10 @@ describe('private administrator contract', () => {
       '/primary-auth/status',
       '/primary-auth/password',
       '/primary-auth/oauth/initiate',
+      '/administrators',
+      '/administrators/{userId}/role-history',
+      '/administrators/{userId}/grant',
+      '/administrators/{userId}/revoke',
     ])
     expect(
       Object.fromEntries(Object.entries(document.paths ?? {}).map(([path, item]) => [path, Object.keys(item ?? {})])),
@@ -140,6 +202,10 @@ describe('private administrator contract', () => {
       '/primary-auth/status': ['get'],
       '/primary-auth/password': ['post'],
       '/primary-auth/oauth/initiate': ['post'],
+      '/administrators': ['get'],
+      '/administrators/{userId}/role-history': ['get'],
+      '/administrators/{userId}/grant': ['post'],
+      '/administrators/{userId}/revoke': ['post'],
     })
 
     const serializedDocument = JSON.stringify(document)
@@ -148,6 +214,199 @@ describe('private administrator contract', () => {
     expect(serializedDocument).toContain('STEP_UP_FAILED')
     expect(serializedDocument).toContain('STEP_UP_RATE_LIMITED')
     expect(await computeAdminContractCompatibilityId()).toBe(ADMIN_CONTRACT_COMPATIBILITY_ID)
+  })
+
+  it('returns only approved administrator roster identity, role, source, and account-status fields', () => {
+    const output = AdminAdministratorRosterOutputSchema.parse({
+      items: [
+        {
+          userId: 'database-administrator',
+          displayName: 'Database administrator',
+          email: 'database@example.com',
+          emailVerified: false,
+          effectiveRole: 'admin',
+          roleSource: 'database',
+          accountStatus: { status: 'active' },
+          sessionToken: 'must-not-cross-contract',
+          ipAddress: '192.0.2.10',
+          userAgent: 'private browser data',
+          oauthAccessToken: 'must-not-cross-contract',
+        },
+        {
+          userId: 'deployment-super-administrator',
+          displayName: 'Super administrator',
+          email: 'super@example.com',
+          emailVerified: true,
+          effectiveRole: 'super_admin',
+          roleSource: 'deployment',
+          accountStatus: { status: 'active' },
+        },
+      ],
+      deploymentAllowlist: ['must-not-cross-contract'],
+    })
+
+    expect(output).toEqual({
+      items: [
+        {
+          userId: 'database-administrator',
+          displayName: 'Database administrator',
+          email: 'database@example.com',
+          emailVerified: false,
+          effectiveRole: 'admin',
+          roleSource: 'database',
+          accountStatus: { status: 'active' },
+        },
+        {
+          userId: 'deployment-super-administrator',
+          displayName: 'Super administrator',
+          email: 'super@example.com',
+          emailVerified: true,
+          effectiveRole: 'super_admin',
+          roleSource: 'deployment',
+          accountStatus: { status: 'active' },
+        },
+      ],
+    })
+    expect(JSON.stringify(output)).not.toMatch(/token|oauth|ipAddress|userAgent|allowlist/i)
+
+    expect(
+      AdminAdministratorRosterOutputSchema.safeParse({
+        items: [
+          {
+            ...output.items[0],
+            effectiveRole: 'super_admin',
+            roleSource: 'database',
+          },
+        ],
+      }).success,
+    ).toBe(false)
+    expect(
+      AdminAccountStatusSchema.safeParse({
+        status: 'temporarily_banned',
+        expiresAt: '2026-08-25T12:00:00.000Z',
+      }).success,
+    ).toBe(true)
+    expect(
+      AdminAccountStatusSchema.safeParse({
+        status: 'temporarily_banned',
+      }).success,
+    ).toBe(false)
+    expect(AdminAccountStatusSchema.safeParse({ status: 'permanently_banned' }).success).toBe(true)
+    expect(AdminAccountStatusSchema.safeParse({ status: 'banned', kind: 'temporary' }).success).toBe(false)
+  })
+
+  it('requires a bounded trimmed reason for role grants and revocations', () => {
+    expect(
+      AdminGrantAdministratorInputSchema.parse({
+        headers: {},
+        params: { userId: 'existing-user' },
+        body: { reason: '  Approved for moderation coverage.  ' },
+      }).body.reason,
+    ).toBe('Approved for moderation coverage.')
+    expect(
+      AdminRevokeAdministratorInputSchema.parse({
+        headers: {},
+        params: { userId: 'existing-administrator' },
+        body: { reason: '  Access is no longer required.  ' },
+      }).body.reason,
+    ).toBe('Access is no longer required.')
+
+    for (const reason of ['', ' \n\t ']) {
+      expect(
+        AdminGrantAdministratorInputSchema.safeParse({
+          headers: {},
+          params: { userId: 'existing-user' },
+          body: { reason },
+        }).success,
+      ).toBe(false)
+      expect(
+        AdminRevokeAdministratorInputSchema.safeParse({
+          headers: {},
+          params: { userId: 'existing-administrator' },
+          body: { reason },
+        }).success,
+      ).toBe(false)
+    }
+    expect(
+      AdminGrantAdministratorInputSchema.safeParse({
+        headers: {},
+        params: { userId: 'existing-user' },
+        body: { reason: 'x'.repeat(ADMIN_ROLE_CHANGE_REASON_MAX_LENGTH + 1) },
+      }).success,
+    ).toBe(false)
+  })
+
+  it('requires subject-scoped role history with bounded opaque cursor pagination', () => {
+    expect(
+      AdminAdministratorRoleHistoryInputSchema.parse({
+        headers: {},
+        params: { userId: 'history-subject' },
+        query: {},
+      }),
+    ).toEqual({
+      headers: {},
+      params: { userId: 'history-subject' },
+      query: { limit: ADMIN_ROLE_HISTORY_DEFAULT_LIMIT },
+    })
+    expect(
+      AdminAdministratorRoleHistoryInputSchema.parse({
+        headers: {},
+        params: { userId: 'history-subject' },
+        query: { cursor: 'opaque.cursor.payload', limit: String(ADMIN_ROLE_HISTORY_MAX_LIMIT) },
+      }).query,
+    ).toEqual({ cursor: 'opaque.cursor.payload', limit: ADMIN_ROLE_HISTORY_MAX_LIMIT })
+    expect(
+      AdminAdministratorRoleHistoryInputSchema.safeParse({
+        headers: {},
+        params: { userId: 'history-subject' },
+        query: { limit: ADMIN_ROLE_HISTORY_MAX_LIMIT + 1 },
+      }).success,
+    ).toBe(false)
+    expect(
+      AdminAdministratorRoleHistoryInputSchema.safeParse({
+        headers: {},
+        params: { userId: 'history-subject' },
+        query: { cursor: '' },
+      }).success,
+    ).toBe(false)
+    expect(AdminAdministratorRoleHistoryInputSchema.safeParse({ headers: {}, params: {}, query: {} }).success).toBe(
+      false,
+    )
+  })
+
+  it('allows only persisted user-to-admin and admin-to-user history transitions', () => {
+    const event = {
+      id: '9223372036854775807',
+      subjectUserId: 'subject-id',
+      actorUserId: 'actor-id',
+      previousRole: 'user',
+      newRole: 'admin',
+      reason: 'Operational coverage',
+      changedAt: '2026-08-24T12:00:00.000Z',
+    } as const
+
+    expect(AdminAdministratorRoleChangeSchema.parse(event)).toEqual(event)
+    expect(AdminGrantAdministratorOutputSchema.safeParse({ change: event }).success).toBe(true)
+    expect(AdminRevokeAdministratorOutputSchema.safeParse({ change: event }).success).toBe(false)
+    expect(
+      AdminRevokeAdministratorOutputSchema.safeParse({
+        change: { ...event, previousRole: 'admin', newRole: 'user' },
+      }).success,
+    ).toBe(true)
+    expect(
+      AdminAdministratorRoleChangeSchema.safeParse({
+        ...event,
+        previousRole: 'admin',
+        newRole: 'admin',
+      }).success,
+    ).toBe(false)
+    expect(
+      AdminAdministratorRoleChangeSchema.safeParse({
+        ...event,
+        previousRole: 'admin',
+        newRole: 'super_admin',
+      }).success,
+    ).toBe(false)
   })
 
   it('defines exactly five protected and six unprotected primary-authentication actions', () => {

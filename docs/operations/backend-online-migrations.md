@@ -248,6 +248,8 @@ The workflow derives the API base and application UUID from the protected `COOLI
 
 `POSTGRES_USER` remains `dxrating` in the example because changing bootstrap variables does not rename a role in an initialized PostgreSQL volume. Before switching `MIGRATION_DATABASE_URL` and `DATABASE_URL` to dedicated logins, provision them against the existing volume in a separately reviewed maintenance step: retain the existing owner or a no-login owner role for schema objects, grant the migrator the required ownership/DDL capability, grant the runtime role only connect/schema usage and required DML/sequence privileges, configure matching default privileges for future objects, and test both connections. Never assume editing `.env.production` modifies roles in an existing database.
 
+`admin_role_change_history` is an append-only exception to broad DML defaults. Grant the runtime role `SELECT` and `INSERT` on that table plus `USAGE` and `SELECT` on its ID sequence; never grant `UPDATE`, `DELETE`, or `TRUNCATE`. The migrations revoke `PUBLIC` access and install a database trigger that owns the event timestamp and rejects row updates or deletes even if an overly broad table grant is introduced. Keep the migration/owner credential out of traffic so only a separately reviewed maintenance operation can bypass runtime privileges.
+
 Abort the rollout and investigate when any of these occur:
 
 - the advisory lock reaches its bounded timeout;

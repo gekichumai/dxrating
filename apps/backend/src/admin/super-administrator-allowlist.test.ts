@@ -62,6 +62,32 @@ describe('super-administrator allowlist configuration', () => {
     expect(Symbol.iterator in allowlist).toBe(false)
     expect('add' in allowlist).toBe(false)
     expect('delete' in allowlist).toBe(false)
+    expect('userIds' in allowlist).toBe(false)
+  })
+
+  it('resolves existing configured users only through a deterministic trusted repository bridge', async () => {
+    const allowlist = parseSuperAdministratorAllowlist('["user-b","missing-user","user-a","user-b"]', EFFECTIVE_AT)
+    let receivedIds: readonly string[] | undefined
+
+    const resolved = await allowlist.resolveExistingConfiguredUsers(async (orderedUserIds) => {
+      receivedIds = orderedUserIds
+      expect(Object.isFrozen(orderedUserIds)).toBe(true)
+      return [
+        { id: 'unexpected-user', name: 'Must not escape' },
+        { id: 'user-b', name: 'B' },
+        { id: 'user-a', name: 'A' },
+        { id: 'user-b', name: 'Duplicate B' },
+      ]
+    })
+
+    expect(receivedIds).toEqual(['missing-user', 'user-a', 'user-b'])
+    expect(resolved).toEqual([
+      { id: 'user-a', name: 'A' },
+      { id: 'user-b', name: 'B' },
+    ])
+    expect(Object.isFrozen(resolved)).toBe(true)
+    expect(JSON.stringify(allowlist)).toBe('{}')
+    expect(Symbol.iterator in allowlist).toBe(false)
   })
 
   it('requires a valid UTC effective time for a non-empty list without exposing configuration values', () => {

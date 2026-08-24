@@ -1,5 +1,6 @@
 import { ADMIN_CONTRACT_COMPATIBILITY_ID, ADMIN_CONTRACT_HEADER, adminContract } from '@gekichumai/admin-contract'
 import { implement, isDefinedError, ORPCError } from '@orpc/server'
+import { config } from '../config.js'
 import {
   AdminAuthorizationFailure,
   requireAdmin,
@@ -13,6 +14,12 @@ import {
   type AdminTargetAuthorization,
   type AuthorizedAdminRequest,
 } from './authorization.js'
+import {
+  AdministratorRoleServiceFailure,
+  createPostgresAdministratorRoleService,
+  type AdministratorRoleChange,
+  type AdministratorRoleService,
+} from './administrator-role-service.js'
 import type { AdminRequestAuthentication, AuthenticatedAdminRequest } from './principal-loader.js'
 import type { AdministratorPrincipal, AdministratorTargetAction } from './role-policy.js'
 import type { SuperAdministratorAllowlist } from './super-administrator-allowlist.js'
@@ -97,6 +104,11 @@ export const adminErrorBoundaryMiddleware = os.middleware(async ({ context, erro
     if (error instanceof AdminPrimaryAuthFailure) {
       if (error.code === 'RATE_LIMITED') throw errors.STEP_UP_RATE_LIMITED({ data })
       throw errors.STEP_UP_FAILED({ data })
+    }
+
+    if (error instanceof AdministratorRoleServiceFailure) {
+      if (error.code === 'VALIDATION_FAILED') throw errors.VALIDATION_FAILED({ data })
+      throw errors.CONFLICT({ data })
     }
 
     if (error instanceof ORPCError && error.status === 400) throw errors.VALIDATION_FAILED({ data })
@@ -217,10 +229,26 @@ const primaryAuthActorFromContext = (context: AuthorizedAdminContext): AdminPrim
   sessionId: context.adminAuthentication.session.id,
 })
 
+const roleChangeWithTransition = <PreviousRole extends 'user' | 'admin', NewRole extends 'user' | 'admin'>(
+  change: AdministratorRoleChange,
+  previousRole: PreviousRole,
+  newRole: NewRole,
+) => {
+  if (change.previousRole !== previousRole || change.newRole !== newRole) {
+    throw new Error('Administrator role service returned an invalid transition')
+  }
+
+  return { ...change, previousRole, newRole }
+}
+
 export const createAdminRouter = ({
   primaryAuth = adminPrimaryAuthService,
+  administratorRoles = createPostgresAdministratorRoleService({
+    superAdministrators: config.auth.superAdministrators,
+  }),
 }: {
   primaryAuth?: AdminPrimaryAuthService
+  administratorRoles?: AdministratorRoleService
 } = {}) => {
   const authorized = os
     .use(authorizationOutcomeMiddleware)
@@ -255,6 +283,45 @@ export const createAdminRouter = ({
     initiatePrimaryAuthOauth: authorized.initiatePrimaryAuthOauth.handler(async ({ input, context }) =>
       primaryAuth.initiateOauth(primaryAuthActorFromContext(context), input.body.provider, context.requestOrigin),
     ),
+    listAdministrators: authorized.listAdministrators.handler(async () => {
+      const roster = await administratorRoles.listAdministrators()
+      return { items: [...roster.items] }
+    }),
+    listAdministratorRoleHistory: authorized.listAdministratorRoleHistory.handler(async ({ input }) => {
+      const history = await administratorRoles.listRoleHistory({
+        subjectUserId: input.params.userId,
+        cursor: input.query.cursor,
+        limit: input.query.limit,
+      })
+      return {
+        items: history.items.map((change) => {
+          if (change.previousRole === 'user' && change.newRole === 'admin') {
+            return roleChangeWithTransition(change, 'user', 'admin')
+          }
+          if (change.previousRole === 'admin' && change.newRole === 'user') {
+            return roleChangeWithTransition(change, 'admin', 'user')
+          }
+          throw new Error('Administrator role service returned an invalid transition')
+        }),
+        nextCursor: history.nextCursor,
+      }
+    }),
+    grantAdministrator: authorized.grantAdministrator.handler(async ({ input, context }) => {
+      const result = await administratorRoles.grantAdministrator({
+        context: { authentication: context.adminAuthentication },
+        targetUserId: input.params.userId,
+        reason: input.body.reason,
+      })
+      return { change: roleChangeWithTransition(result.change, 'user', 'admin') }
+    }),
+    revokeAdministrator: authorized.revokeAdministrator.handler(async ({ input, context }) => {
+      const result = await administratorRoles.revokeAdministrator({
+        context: { authentication: context.adminAuthentication },
+        targetUserId: input.params.userId,
+        reason: input.body.reason,
+      })
+      return { change: roleChangeWithTransition(result.change, 'admin', 'user') }
+    }),
   })
 }
 

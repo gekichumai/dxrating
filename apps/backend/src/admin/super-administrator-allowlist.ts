@@ -11,6 +11,13 @@ export interface SuperAdministratorAllowlist {
   readonly configuredUserCount: number
   hasExactUserId(userId: string): boolean
   isSessionEligibleForCurrentGeneration(userId: string, authorizationIssuedAt: Date): boolean
+  /**
+   * Resolves configured IDs through a trusted account repository without
+   * exposing an iterable deployment allowlist to the rest of the application.
+   */
+  resolveExistingConfiguredUsers<T extends { readonly id: string }>(
+    loadUsersById: (orderedUserIds: readonly string[]) => Promise<readonly T[]>,
+  ): Promise<readonly T[]>
 }
 
 export class InvalidSuperAdministratorAllowlistError extends Error {
@@ -53,6 +60,27 @@ class ParsedSuperAdministratorAllowlist implements SuperAdministratorAllowlist {
       this.#userIds.has(userId) &&
       Number.isFinite(issuedAtMilliseconds) &&
       issuedAtMilliseconds > this.#effectiveAtMilliseconds
+    )
+  }
+
+  async resolveExistingConfiguredUsers<T extends { readonly id: string }>(
+    loadUsersById: (orderedUserIds: readonly string[]) => Promise<readonly T[]>,
+  ): Promise<readonly T[]> {
+    const orderedUserIds = Object.freeze([...this.#userIds].sort())
+    const loadedUsers = await loadUsersById(orderedUserIds)
+    const usersById = new Map<string, T>()
+
+    for (const loadedUser of loadedUsers) {
+      if (this.#userIds.has(loadedUser.id) && !usersById.has(loadedUser.id)) {
+        usersById.set(loadedUser.id, loadedUser)
+      }
+    }
+
+    return Object.freeze(
+      orderedUserIds.flatMap((userId) => {
+        const loadedUser = usersById.get(userId)
+        return loadedUser ? [loadedUser] : []
+      }),
     )
   }
 }

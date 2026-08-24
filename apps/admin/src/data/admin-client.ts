@@ -34,6 +34,11 @@ const createHeaderlessClient = (rawClient: RawAdminClient, onClientCompatible?: 
   completePrimaryAuthPassword: (input, options) =>
     rawClient.completePrimaryAuthPassword({ ...input, headers: {} }, options),
   initiatePrimaryAuthOauth: (input, options) => rawClient.initiatePrimaryAuthOauth({ ...input, headers: {} }, options),
+  listAdministrators: (_input, options) => rawClient.listAdministrators({ headers: {} }, options),
+  listAdministratorRoleHistory: (input, options) =>
+    rawClient.listAdministratorRoleHistory({ ...input, headers: {} }, options),
+  grantAdministrator: (input, options) => rawClient.grantAdministrator({ ...input, headers: {} }, options),
+  revokeAdministrator: (input, options) => rawClient.revokeAdministrator({ ...input, headers: {} }, options),
 })
 
 export type CreateAdminDataClientOptions = {

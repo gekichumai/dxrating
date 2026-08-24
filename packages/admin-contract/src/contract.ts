@@ -231,6 +231,124 @@ export const AdminPrimaryAuthOauthInitiateOutputSchema = z.object({
   authorizationUrl: z.url(),
 })
 
+export const ADMIN_ROLE_CHANGE_REASON_MAX_LENGTH = 1_000 as const
+export const ADMIN_ROLE_HISTORY_CURSOR_MAX_LENGTH = 1_024 as const
+export const ADMIN_ROLE_HISTORY_DEFAULT_LIMIT = 50 as const
+export const ADMIN_ROLE_HISTORY_MAX_LIMIT = 100 as const
+
+export const AdminUserIdSchema = z
+  .string()
+  .min(1)
+  .max(255)
+  .refine((userId) => userId === userId.trim(), { message: 'User IDs must not contain surrounding whitespace' })
+export const AdminPersistedRoleSchema = z.enum(['user', 'admin'])
+export const AdminRoleSourceSchema = z.enum(['database', 'deployment'])
+export const AdminRoleChangeReasonSchema = z.string().trim().min(1).max(ADMIN_ROLE_CHANGE_REASON_MAX_LENGTH)
+export const AdminRoleHistoryCursorSchema = z
+  .string()
+  .min(1)
+  .max(ADMIN_ROLE_HISTORY_CURSOR_MAX_LENGTH)
+  .describe('Opaque administrator role-history cursor')
+export const AdminRoleHistoryLimitSchema = z.coerce
+  .number<number>()
+  .int()
+  .min(1)
+  .max(ADMIN_ROLE_HISTORY_MAX_LIMIT)
+  .default(ADMIN_ROLE_HISTORY_DEFAULT_LIMIT)
+
+export const AdminAccountStatusSchema = z.discriminatedUnion('status', [
+  z.object({ status: z.literal('active') }).strict(),
+  z
+    .object({
+      status: z.literal('temporarily_banned'),
+      expiresAt: z.iso.datetime(),
+    })
+    .strict(),
+  z
+    .object({
+      status: z.literal('permanently_banned'),
+    })
+    .strict(),
+])
+
+const AdminAdministratorRosterIdentitySchema = z.object({
+  userId: AdminUserIdSchema,
+  displayName: z.string().min(1).max(255),
+  email: z.email().max(320),
+  emailVerified: z.boolean(),
+  accountStatus: AdminAccountStatusSchema,
+})
+
+export const AdminAdministratorRosterEntrySchema = z.discriminatedUnion('effectiveRole', [
+  AdminAdministratorRosterIdentitySchema.extend({
+    effectiveRole: z.literal('admin'),
+    roleSource: z.literal('database'),
+  }),
+  AdminAdministratorRosterIdentitySchema.extend({
+    effectiveRole: z.literal('super_admin'),
+    roleSource: z.literal('deployment'),
+  }),
+])
+
+export const AdminAdministratorRosterOutputSchema = z.object({
+  items: z.array(AdminAdministratorRosterEntrySchema),
+})
+
+export const AdminRoleChangeIdSchema = z
+  .string()
+  .regex(/^[1-9]\d*$/)
+  .max(19)
+const AdminAdministratorRoleChangeBaseSchema = z.object({
+  id: AdminRoleChangeIdSchema,
+  subjectUserId: AdminUserIdSchema,
+  actorUserId: AdminUserIdSchema,
+  reason: AdminRoleChangeReasonSchema,
+  changedAt: z.iso.datetime(),
+})
+export const AdminAdministratorGrantChangeSchema = AdminAdministratorRoleChangeBaseSchema.extend({
+  previousRole: z.literal('user'),
+  newRole: z.literal('admin'),
+})
+export const AdminAdministratorRevokeChangeSchema = AdminAdministratorRoleChangeBaseSchema.extend({
+  previousRole: z.literal('admin'),
+  newRole: z.literal('user'),
+})
+export const AdminAdministratorRoleChangeSchema = z.discriminatedUnion('newRole', [
+  AdminAdministratorGrantChangeSchema,
+  AdminAdministratorRevokeChangeSchema,
+])
+
+export const AdminAdministratorRoleHistoryInputSchema = z.object({
+  headers: AdminContractHeadersSchema,
+  params: z.object({ userId: AdminUserIdSchema }),
+  query: z.object({
+    cursor: AdminRoleHistoryCursorSchema.optional(),
+    limit: AdminRoleHistoryLimitSchema,
+  }),
+})
+
+export const AdminAdministratorRoleHistoryOutputSchema = z.object({
+  items: z.array(AdminAdministratorRoleChangeSchema).max(ADMIN_ROLE_HISTORY_MAX_LIMIT),
+  nextCursor: AdminRoleHistoryCursorSchema.nullable(),
+})
+
+const createAdminRoleChangeInputSchema = () =>
+  z.object({
+    headers: AdminContractHeadersSchema,
+    params: z.object({ userId: AdminUserIdSchema }),
+    body: z.object({ reason: AdminRoleChangeReasonSchema }),
+  })
+
+export const AdminGrantAdministratorInputSchema = createAdminRoleChangeInputSchema()
+export const AdminRevokeAdministratorInputSchema = createAdminRoleChangeInputSchema()
+
+export const AdminGrantAdministratorOutputSchema = z.object({
+  change: AdminAdministratorGrantChangeSchema,
+})
+export const AdminRevokeAdministratorOutputSchema = z.object({
+  change: AdminAdministratorRevokeChangeSchema,
+})
+
 export const adminContract = adminProcedure.errors(adminErrors).router({
   bootstrap: adminProcedure
     .meta({ authorization: ADMIN_BOOTSTRAP_AUTHORIZATION })
@@ -277,6 +395,62 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     })
     .input(AdminPrimaryAuthOauthInitiateInputSchema)
     .output(AdminPrimaryAuthOauthInitiateOutputSchema),
+  listAdministrators: adminProcedure
+    .route({
+      method: 'GET',
+      path: '/administrators',
+      operationId: 'listAdminAdministrators',
+      summary: 'List the administrator roster',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminBootstrapInputSchema)
+    .output(AdminAdministratorRosterOutputSchema),
+  listAdministratorRoleHistory: adminProcedure
+    .route({
+      method: 'GET',
+      path: '/administrators/{userId}/role-history',
+      operationId: 'listAdminAdministratorRoleHistory',
+      summary: 'List immutable administrator role history for one account',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminAdministratorRoleHistoryInputSchema)
+    .output(AdminAdministratorRoleHistoryOutputSchema),
+  grantAdministrator: adminProcedure
+    .meta({
+      authorization: adminAuthorizationForAction('administrator.grant', {
+        minimumRole: 'super_admin',
+        targetAction: 'manage_administrator_role',
+      }),
+    })
+    .route({
+      method: 'POST',
+      path: '/administrators/{userId}/grant',
+      operationId: 'grantAdminAdministrator',
+      summary: 'Grant the database administrator role to an existing account',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminGrantAdministratorInputSchema)
+    .output(AdminGrantAdministratorOutputSchema),
+  revokeAdministrator: adminProcedure
+    .meta({
+      authorization: adminAuthorizationForAction('administrator.revoke', {
+        minimumRole: 'super_admin',
+        targetAction: 'manage_administrator_role',
+      }),
+    })
+    .route({
+      method: 'POST',
+      path: '/administrators/{userId}/revoke',
+      operationId: 'revokeAdminAdministrator',
+      summary: 'Revoke the database administrator role from an account',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminRevokeAdministratorInputSchema)
+    .output(AdminRevokeAdministratorOutputSchema),
 })
 
 export type AdminContract = typeof adminContract

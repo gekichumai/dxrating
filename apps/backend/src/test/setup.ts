@@ -118,6 +118,9 @@ export async function authenticatedFetch(url: string, cookie: string, init?: Req
 export async function cleanDatabase() {
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
   // Order matters due to foreign keys
+  // Production callers cannot truncate this append-only table. The test
+  // database owner resets it before deleting users referenced with RESTRICT.
+  await pool.query('TRUNCATE admin_role_change_history RESTART IDENTITY')
   await pool.query('DELETE FROM arcade.geocoding_coordinate_invalidations')
   await pool.query('DELETE FROM arcade.geocoding_coordinate_decisions')
   await pool.query('DELETE FROM arcade.geocoding_observations')

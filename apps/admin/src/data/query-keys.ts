@@ -60,6 +60,8 @@ export const adminQueryKeys = {
       [...adminQueryKeys.administrators.lists(), parameters] as const,
     details: () => [...adminQueryKeys.administrators.all(), 'detail'] as const,
     detail: (userId: string) => [...adminQueryKeys.administrators.details(), userId] as const,
+    roleHistory: (userId: string, parameters: AdminQueryParameters = EMPTY_QUERY_PARAMETERS) =>
+      [...adminQueryKeys.administrators.detail(userId), 'role-history', parameters] as const,
   },
   reports: {
     all: () => [...adminQueryKeys.all(), 'reports'] as const,

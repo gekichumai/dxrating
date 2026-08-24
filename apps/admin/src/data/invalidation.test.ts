@@ -89,7 +89,9 @@ describe('administrator mutation invalidation recipes', () => {
     const dashboard = adminQueryKeys.dashboard.overview()
     const administratorList = adminQueryKeys.administrators.list()
     const changedAdministrator = adminQueryKeys.administrators.detail('user-1')
+    const changedAdministratorHistory = adminQueryKeys.administrators.roleHistory('user-1', { cursor: 'page-1' })
     const otherAdministrator = adminQueryKeys.administrators.detail('user-2')
+    const otherAdministratorHistory = adminQueryKeys.administrators.roleHistory('user-2')
     const userList = adminQueryKeys.users.list()
     const changedUser = adminQueryKeys.users.detail('user-1')
     const comments = adminQueryKeys.comments.list()
@@ -97,7 +99,9 @@ describe('administrator mutation invalidation recipes', () => {
       dashboard,
       administratorList,
       changedAdministrator,
+      changedAdministratorHistory,
       otherAdministrator,
+      otherAdministratorHistory,
       userList,
       changedUser,
       comments,
@@ -105,10 +109,19 @@ describe('administrator mutation invalidation recipes', () => {
 
     await invalidateAfterAdministratorMutation(queryClient, 'user-1')
 
-    for (const key of [dashboard, administratorList, changedAdministrator, userList, changedUser]) {
+    for (const key of [
+      dashboard,
+      administratorList,
+      changedAdministrator,
+      changedAdministratorHistory,
+      userList,
+      changedUser,
+    ]) {
       expectInvalidated(queryClient, key, true)
     }
-    for (const key of [otherAdministrator, comments]) expectInvalidated(queryClient, key, false)
+    for (const key of [otherAdministrator, otherAdministratorHistory, comments]) {
+      expectInvalidated(queryClient, key, false)
+    }
   })
 
   it('invalidates a report and its chart summary without touching unrelated reports or histories', async () => {

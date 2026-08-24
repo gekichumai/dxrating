@@ -5,7 +5,7 @@ import { cleanDatabase, setupTestServer, teardownTestServer } from '../test/setu
 import { requireTargetAuthorization } from './authorization.js'
 import { runPostgresAdminMutationAuthorizationTransaction } from './mutation-authorization-store.js'
 import type { AdminRequestAuthentication } from './principal-loader.js'
-import { demoteAdministratorToUserInTransaction } from './role-transitions.js'
+import { revokeAllUserSessionsInTransaction } from './session-transitions.js'
 import { parseSuperAdministratorAllowlist } from './super-administrator-allowlist.js'
 
 const policy = {
@@ -159,7 +159,14 @@ describe('PostgreSQL administrator mutation authorization', () => {
 
     try {
       await transition.query('BEGIN')
-      await demoteAdministratorToUserInTransaction(transition, 'actor')
+      await transition.query(
+        `
+          UPDATE "user"
+          SET role = 'user', admin_authorization_not_before = clock_timestamp()
+          WHERE id = 'actor'
+        `,
+      )
+      await revokeAllUserSessionsInTransaction(transition, 'actor')
 
       authorizing = runPostgresAdminMutationAuthorizationTransaction(async (transaction) => {
         const authorization = await requireTargetAuthorization({

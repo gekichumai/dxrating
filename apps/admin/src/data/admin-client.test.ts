@@ -25,10 +25,24 @@ describe('private administrator data client', () => {
     type BootstrapInput = Parameters<AdminClient['bootstrap']>[0]
     type PasswordInput = Parameters<AdminClient['completePrimaryAuthPassword']>[0]
     type OauthInput = Parameters<AdminClient['initiatePrimaryAuthOauth']>[0]
+    type RosterInput = Parameters<AdminClient['listAdministrators']>[0]
+    type HistoryInput = Parameters<AdminClient['listAdministratorRoleHistory']>[0]
+    type GrantInput = Parameters<AdminClient['grantAdministrator']>[0]
+    type RevokeInput = Parameters<AdminClient['revokeAdministrator']>[0]
 
     expectTypeOf<BootstrapInput>().toEqualTypeOf<undefined>()
     expectTypeOf<PasswordInput>().toEqualTypeOf<{ body: { password: string } }>()
     expectTypeOf<OauthInput>().toEqualTypeOf<{ body: { provider: 'google' } }>()
+    expectTypeOf<RosterInput>().toEqualTypeOf<undefined>()
+    expectTypeOf<HistoryInput>().toMatchTypeOf<{
+      params: { userId: string }
+      query: { cursor?: string; limit?: number }
+    }>()
+    expectTypeOf<GrantInput>().toEqualTypeOf<{
+      params: { userId: string }
+      body: { reason: string }
+    }>()
+    expectTypeOf<RevokeInput>().toEqualTypeOf<GrantInput>()
 
     const fetch = vi.fn(async () => jsonResponse(bootstrapOutput))
     const { client, orpc } = createAdminDataClient({
@@ -41,8 +55,72 @@ describe('private administrator data client', () => {
       'primaryAuthStatus',
       'completePrimaryAuthPassword',
       'initiatePrimaryAuthOauth',
+      'listAdministrators',
+      'listAdministratorRoleHistory',
+      'grantAdministrator',
+      'revokeAdministrator',
     ])
     expect(orpc.bootstrap.queryOptions().queryKey).toBeDefined()
+    expect(orpc.listAdministrators.queryOptions().queryKey).toBeDefined()
+  })
+
+  it('serializes roster, subject-scoped history, and role changes only under the private admin prefix', async () => {
+    const requests: Request[] = []
+    const fetch = vi.fn(async (request: RequestInfo | URL) => {
+      const captured = request as Request
+      requests.push(captured)
+
+      if (captured.url.endsWith('/administrators')) return jsonResponse({ items: [] })
+      if (captured.url.includes('/role-history')) return jsonResponse({ items: [], nextCursor: null })
+      const revoking = captured.url.endsWith('/revoke')
+      return jsonResponse({
+        change: {
+          id: revoking ? '2' : '1',
+          subjectUserId: 'target-id',
+          actorUserId: 'actor-id',
+          previousRole: revoking ? 'admin' : 'user',
+          newRole: revoking ? 'user' : 'admin',
+          reason: 'Operational coverage',
+          changedAt: '2026-08-24T12:00:00.000Z',
+        },
+      })
+    })
+    const { client } = createAdminDataClient({
+      backendOrigin: 'https://api.dxrating.net',
+      fetch: fetch as unknown as typeof globalThis.fetch,
+      mode: 'production',
+    })
+
+    await client.listAdministrators()
+    await client.listAdministratorRoleHistory({
+      params: { userId: 'target-id' },
+      query: { cursor: 'opaque-page', limit: 25 },
+    })
+    await client.grantAdministrator({
+      params: { userId: 'target-id' },
+      body: { reason: 'Operational coverage' },
+    })
+    await client.revokeAdministrator({
+      params: { userId: 'target-id' },
+      body: { reason: 'Operational coverage' },
+    })
+
+    expect(requests).toHaveLength(4)
+    expect(requests[0]).toMatchObject({ method: 'GET' })
+    expect(requests[0]?.url).toBe('https://api.dxrating.net/api/admin/administrators')
+    expect(requests[1]).toMatchObject({ method: 'GET' })
+    expect(requests[1]?.url).toContain('https://api.dxrating.net/api/admin/administrators/target-id/role-history')
+    expect(requests[1]?.url).toContain('cursor=opaque-page')
+    expect(requests[1]?.url).toContain('limit=25')
+    expect(requests[2]).toMatchObject({ method: 'POST' })
+    expect(requests[2]?.url).toBe('https://api.dxrating.net/api/admin/administrators/target-id/grant')
+    await expect(requests[2]?.clone().json()).resolves.toEqual({ reason: 'Operational coverage' })
+    expect(requests[3]).toMatchObject({ method: 'POST' })
+    expect(requests[3]?.url).toBe('https://api.dxrating.net/api/admin/administrators/target-id/revoke')
+    await expect(requests[3]?.clone().json()).resolves.toEqual({ reason: 'Operational coverage' })
+    for (const request of requests) {
+      expect(request.headers.get(ADMIN_CONTRACT_HEADER)).toBe(ADMIN_CONTRACT_COMPATIBILITY_ID)
+    }
   })
 
   it('uses the private prefix, global compatibility header, and included cookie credentials', async () => {

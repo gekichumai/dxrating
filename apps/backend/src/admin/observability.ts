@@ -9,6 +9,10 @@ const ADMIN_TELEMETRY_PROCEDURES = [
   'primaryAuthStatus',
   'completePrimaryAuthPassword',
   'initiatePrimaryAuthOauth',
+  'listAdministrators',
+  'listAdministratorRoleHistory',
+  'grantAdministrator',
+  'revokeAdministrator',
   'handler',
 ] as const
 const ADMIN_AUTHORIZATION_RESULTS = [

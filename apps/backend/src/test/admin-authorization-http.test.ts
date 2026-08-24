@@ -12,11 +12,8 @@ import {
 } from './setup.js'
 import { TEST_ADMIN_ACCESS_HEADERS } from './admin-access.js'
 import { ADMIN_ACCESS_TEST_BYPASS_HEADER } from '../admin/access-verifier.js'
-import {
-  demoteAdministratorToUserInTransaction,
-  promoteUserToAdministratorInTransaction,
-} from '../admin/role-transitions.js'
 import { revokeAllUserSessionsInTransaction } from '../admin/session-transitions.js'
+import { demoteFixtureAdministratorToUser, promoteFixtureUserToAdministrator } from './admin-role-fixtures.js'
 
 const adminFetch = (cookie?: string, accessHeaders: Record<string, string> = TEST_ADMIN_ACCESS_HEADERS) =>
   fetch(`${getBaseUrl()}/api/admin/bootstrap`, {
@@ -83,7 +80,7 @@ describe('administrator HTTP authorization', () => {
       const transition = await testPool.connect()
       try {
         await transition.query('BEGIN')
-        await expect(promoteUserToAdministratorInTransaction(transition, userId)).resolves.toMatchObject({
+        await expect(promoteFixtureUserToAdministrator(transition, userId)).resolves.toMatchObject({
           previousRole: 'user',
           nextRole: 'admin',
           revokedSessionCount: 0,
@@ -181,7 +178,7 @@ describe('administrator HTTP authorization', () => {
       const demotion = await testPool.connect()
       try {
         await demotion.query('BEGIN')
-        await expect(demoteAdministratorToUserInTransaction(demotion, userId)).resolves.toMatchObject({
+        await expect(demoteFixtureAdministratorToUser(demotion, userId)).resolves.toMatchObject({
           previousRole: 'admin',
           nextRole: 'user',
           revokedSessionCount: 2,

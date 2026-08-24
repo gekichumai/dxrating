@@ -18,7 +18,7 @@ import {
   check,
 } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
-import { account, session, user } from './auth-schema.js'
+import { account, session, user, userRole } from './auth-schema.js'
 
 // --- Application Tables ---
 
@@ -74,6 +74,43 @@ export const comments = pgTable('comments', {
   parent_id: bigint('parent_id', { mode: 'number' }).references((): AnyPgColumn => comments.id),
   content: text('content').notNull(),
 })
+
+// --- Administrator Role History ---
+
+export const adminRoleChangeHistory = pgTable(
+  'admin_role_change_history',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    subject_user_id: text('subject_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    actor_user_id: text('actor_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    previous_role: userRole('previous_role').notNull(),
+    new_role: userRole('new_role').notNull(),
+    reason: text('reason').notNull(),
+    created_at: timestamp('created_at', { withTimezone: true, precision: 3 }).defaultNow().notNull(),
+  },
+  (table) => [
+    check(
+      'admin_role_change_history_transition_check',
+      sql`(${table.previous_role} = 'user' and ${table.new_role} = 'admin')
+        or (${table.previous_role} = 'admin' and ${table.new_role} = 'user')`,
+    ),
+    check(
+      'admin_role_change_history_reason_check',
+      sql`length(${table.reason}) between 1 and 1000
+        and ${table.reason} !~ '^[[:space:]]'
+        and ${table.reason} !~ '[[:space:]]$'`,
+    ),
+    index('admin_role_change_history_subject_created_idx').on(
+      table.subject_user_id,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+  ],
+)
 
 // --- Administrator Primary Authentication ---
 
@@ -696,6 +733,19 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
   }),
 }))
 
+export const adminRoleChangeHistoryRelations = relations(adminRoleChangeHistory, ({ one }) => ({
+  subject: one(user, {
+    fields: [adminRoleChangeHistory.subject_user_id],
+    references: [user.id],
+    relationName: 'admin_role_change_subject',
+  }),
+  actor: one(user, {
+    fields: [adminRoleChangeHistory.actor_user_id],
+    references: [user.id],
+    relationName: 'admin_role_change_actor',
+  }),
+}))
+
 export const songAliasesRelations = relations(songAliases, ({ one }) => ({
   creator: one(user, {
     fields: [songAliases.created_by],
@@ -722,6 +772,12 @@ export const userExtraRelations = relations(user, ({ one, many }) => ({
   tags: many(tags),
   tagSongs: many(tagSongs),
   comments: many(comments),
+  adminRoleChangesAsSubject: many(adminRoleChangeHistory, {
+    relationName: 'admin_role_change_subject',
+  }),
+  adminRoleChangesAsActor: many(adminRoleChangeHistory, {
+    relationName: 'admin_role_change_actor',
+  }),
   songAliases: many(songAliases),
   lxnsOauthToken: one(lxnsOauthTokens),
 }))

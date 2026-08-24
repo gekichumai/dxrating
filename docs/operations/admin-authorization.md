@@ -18,8 +18,10 @@ other mutable profile values. Matching is case-sensitive and exact. Duplicate ID
 Invalid JSON, non-string entries, empty IDs, surrounding whitespace, and control characters make backend startup
 fail closed. Startup logs contain only validation status and the deduplicated count; they never contain the IDs.
 
-The parsed allowlist is opaque and immutable to application code. There is no API, database table, or administrator
-UI for adding, removing, or enumerating its members.
+The parsed allowlist is opaque and immutable to general application code. Its sole roster bridge passes configured
+IDs directly to the trusted account repository and returns only matching account records; unresolved IDs never leave
+that boundary. There is no external API, database table, or administrator UI for adding, removing, or enumerating its
+members.
 
 `SUPER_ADMIN_USER_IDS_EFFECTIVE_AT` is required whenever the list is non-empty. It must be a UTC ISO timestamp and
 must advance monotonically whenever membership changes. A super-administrator session is eligible only when its
@@ -85,16 +87,17 @@ a new, later generation timestamp and another session revocation; never move the
 
 ## Persisted role transitions and sessions
 
-Promotion changes `user → admin` and advances the account authorization floor in one transaction. Existing sessions
-are deliberately preserved for public use but cannot call any administrator route. Updating their ordinary expiry or
-`updated_at` fields cannot upgrade them because `session.admin_authorization_issued_at` is database-owned and
-immutable to Better Auth. A new login creates a session after the floor and gains administrator authority. Ordinary
-and administrator sessions use the same Better Auth lifetime.
+Promotion changes `user → admin`, advances the account authorization floor, and appends one role-history event in one
+transaction. Existing sessions are deliberately preserved for public use but cannot call any administrator route.
+Updating their ordinary expiry or `updated_at` fields cannot upgrade them because
+`session.admin_authorization_issued_at` is database-owned and immutable to Better Auth. A new login creates a session
+after the floor and gains administrator authority. Ordinary and administrator sessions use the same Better Auth
+lifetime.
 
-Demotion changes `admin → user`, advances the floor, deletes every session-bound primary-auth window and OAuth
-attempt, and deletes every Better Auth session in one transaction. The reusable revocation primitive takes locks in
-user-then-ordered-session order, is idempotent, and intentionally preserves password-attempt rate limits. Future ban
-transitions must use the same primitive in their state-change transaction.
+Demotion changes `admin → user`, advances the floor, appends one role-history event, deletes every session-bound
+primary-auth window and OAuth attempt, and deletes every Better Auth session in one transaction. The reusable
+revocation primitive takes locks in user-then-ordered-session order, is idempotent, and intentionally preserves
+password-attempt rate limits. Future ban transitions must use the same primitive in their state-change transaction.
 
 Administrator mutations treat the request principal as a fast-path check only. Inside the mutation transaction they
 lock actor and target users in sorted ID order, lock the actor's exact live session, lock the recent-primary-auth row
@@ -102,21 +105,39 @@ when the procedure requires it, rebuild the current effective role and freshness
 policy before changing state.
 
 Application code and operator tooling must never update `user.role` directly. Every role change must use the
-transactional role-transition service so that the authorization floor, session revocation, and future history record
-remain part of the same state change.
+administrator role service so that the authorization floor, session revocation, and immutable history record remain
+part of the same state change. The service trims and requires an internal reason, locks and revalidates both actor and
+subject, rejects no-op or concurrent transitions, and commits exactly one history row with a successful transition.
+Email verification is roster metadata only and never controls promotion eligibility.
+
+The administrator roster is a complete safe projection of database administrators and deployment-configured
+super-administrators. It exposes only immutable user ID, display name, email address and verification metadata,
+effective role, role source, and account status. It must never include session data, credentials, OAuth identities,
+network or device metadata, login activity, or unresolved allowlist IDs. Subject-scoped role history is available only
+through the private administrator contract with stable cursor pagination. Reasons are visible there to authorized
+administrators, but generic request, error, and authorization telemetry must never record them.
+
+`admin_role_change_history` is permanently retained and append-only. PostgreSQL owns its timestamps, permits only
+`user → admin` and `admin → user` transitions, keeps non-cascading actor and subject references, and rejects row
+updates or deletes even by the table owner. The traffic role receives only `SELECT` and `INSERT` on the table and the
+required sequence access; see [backend-online-migrations.md](./backend-online-migrations.md) for grants.
 
 ## Session-transition deployment and rollback
 
-Apply `0013_add_admin_session_transitions` before deploying this backend. It adds two non-null, database-defaulted
-timestamps. Existing session markers are stamped no later than the existing-user authorization floors, making old
-administrator sessions stale. Old and new binaries can continue inserting users and sessions because PostgreSQL owns
-both defaults, and the fields are omitted from Better Auth's public schema. The migration acquires the `user` table
-before `session`, matching live transaction lock order; do not reorder those statements during deployment.
+Apply `0013_add_admin_session_transitions`, then the additive `0014_add_admin_role_history`, and finally
+`0015_protect_admin_role_history` before deploying this backend. Migration `0013` adds two non-null,
+database-defaulted timestamps. Existing session markers are stamped no later than the existing-user authorization
+floors, making old administrator sessions stale. Old and new binaries can continue inserting users and sessions
+because PostgreSQL owns both defaults, and the fields are omitted from Better Auth's public schema. The migration
+acquires the `user` table before `session`, matching live transaction lock order; do not reorder those statements
+during deployment. Migrations `0014` and `0015` only add the empty history table, index, constraints, privileges, and
+append-only trigger, so the previous binary can continue serving during expansion.
 
 Rolling application code back to a binary that ignores these markers requires an administrator-traffic gate. Drain
 the generation-aware fleet, revoke every session belonging to a persisted or effective administrator, restore a
-compatible allowlist configuration, and only then expose the older binary. Leave both additive columns in place.
-Never reverse the schema migration or reuse an older allowlist generation during an incident rollback.
+compatible allowlist configuration, and only then expose the older binary. Leave the additive session columns and
+role-history table in place; the previous binary does not depend on or write the table. Never reverse either schema
+migration, delete retained role history, or reuse an older allowlist generation during an incident rollback.
 
 Role-management endpoints must re-read both actor and target under the authorization policy. Administrators may
 moderate effective users only. Super administrators may also moderate persisted administrators and grant or revoke
