@@ -610,6 +610,11 @@ describe('private administrator data client', () => {
           closure: null,
         },
         currentContext: { availability: 'current', publication, chart, currentValue: '14+' },
+        publicChartReference: {
+          legacySongId: 'legacy-song-1',
+          sheetType: 'dx',
+          sheetDifficulty: 'master',
+        },
       })
     })
     const { client } = createAdminDataClient({

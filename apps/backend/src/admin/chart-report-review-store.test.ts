@@ -56,6 +56,11 @@ const queueRow = (overrides: Record<string, unknown> = {}) => ({
 const detailRow = (overrides: Record<string, unknown> = {}) => ({
   ...queueRow(),
   source_urls: ['https://example.com/evidence'],
+  public_chart_reference: {
+    legacySongId: 'legacy-song-id',
+    sheetType: 'dx',
+    sheetDifficulty: 'master',
+  },
   closed_by_user_id: null,
   closer_display_name: null,
   closed_at_utc: null,
@@ -254,6 +259,11 @@ describe('PostgreSQL administrator chart-report review store', () => {
       id: REPORT_ID,
       state: 'closed',
       sourceUrls: ['https://example.com/evidence'],
+      publicChartReference: {
+        legacySongId: 'legacy-song-id',
+        sheetType: 'dx',
+        sheetDifficulty: 'master',
+      },
       closure: {
         actor: { userId: 'admin-user', displayName: 'Closing Admin' },
         closedAt: '2026-08-24T13:00:00.000000Z',
@@ -264,12 +274,29 @@ describe('PostgreSQL administrator chart-report review store', () => {
     expect(sql).toContain('chart-report-review-store:detail')
     expect(sql).toContain('report.source_urls')
     expect(sql).toContain('report.close_note')
+    expect(sql).toContain('jsonb_build_object')
+    expect(sql).toContain('LEFT JOIN dxdata.canonical_sheets canonical_sheet')
+    expect(sql).toContain('canonical_sheet.id = report.stable_chart_id')
+    expect(sql).toContain('canonical_sheet.song_id = report.stable_song_id')
+    expect(sql).toContain('LEFT JOIN dxdata.canonical_songs canonical_song')
+    expect(sql).toContain('canonical_song.id = report.stable_song_id')
     expect(sql).toContain('LEFT JOIN "user" closer')
     expect(sql.match(/INNER JOIN "user" reporter/g)).toHaveLength(1)
     expect(sql.match(/CROSS JOIN evaluation_clock/g)).toHaveLength(1)
     expect(sql).not.toMatch(/\b(account|session|passkey|provider|token|ip_address)\b/i)
     expect(sql).not.toMatch(/ban_reason|admin_user_ban_history/i)
     expect(calls[0]?.values).toEqual([REPORT_ID])
+    expect(calls).toHaveLength(1)
+  })
+
+  it('returns a missing canonical public mapping as a successful null detail field', async () => {
+    const { calls, database } = fakeDatabase(() => [detailRow({ public_chart_reference: null })])
+
+    await expect(createPostgresChartReportReviewStore(database).loadReportDetail(REPORT_ID)).resolves.toMatchObject({
+      id: REPORT_ID,
+      publicChartReference: null,
+    })
+    expect(calls).toHaveLength(1)
   })
 
   it('batches and deduplicates captured publication reads by the complete immutable identity', async () => {
@@ -345,6 +372,20 @@ describe('PostgreSQL administrator chart-report review store', () => {
     await expect(
       createPostgresChartReportReviewStore(orphanClosure.database).loadReportDetail(REPORT_ID),
     ).rejects.toThrow('closure projection')
+
+    const malformedPublicReference = fakeDatabase(() => [
+      detailRow({
+        public_chart_reference: {
+          legacySongId: 'legacy-song-id',
+          sheetType: 'dx',
+          sheetDifficulty: 'master',
+          guessedLabel: 'not allowed',
+        },
+      }),
+    ])
+    await expect(
+      createPostgresChartReportReviewStore(malformedPublicReference.database).loadReportDetail(REPORT_ID),
+    ).rejects.toThrow('public chart reference')
 
     const unexpectedPublication = fakeDatabase(() => [publicationRow({ publication_revision: '24' })])
     await expect(

@@ -1,12 +1,20 @@
-import { publicAppContract } from '@gekichumai/api-contract'
+import { CHART_REPORT_CATEGORY_KEYS, CHART_REPORT_FIELD_KEYS, publicAppContract } from '@gekichumai/api-contract'
 import { describe, expect, it } from 'vitest'
 import {
   ADMIN_CHART_REPORT_CLOSE_NOTE_MAX_LENGTH,
+  ADMIN_CHART_REPORT_CATEGORY_KEYS,
   ADMIN_CHART_REPORT_DEFAULT_LIMIT,
+  ADMIN_CHART_REPORT_FIELD_KEYS,
   ADMIN_CHART_REPORT_MAX_LIMIT,
   ADMIN_CHART_REPORT_PREVIEW_MAX_LENGTH,
   ADMIN_DEFAULT_AUTHORIZATION,
+  AdminChartReportCategoryKeySchema,
+  AdminChartReportDateBoundSchema,
   AdminChartReportDetailSchema,
+  AdminChartReportChartIdSchema,
+  AdminChartReportFieldKeySchema,
+  AdminChartReportPublicationRevisionSchema,
+  AdminChartReportPublicChartReferenceSchema,
   AdminChartReportQueueRowSchema,
   AdminCloseChartReportInputSchema,
   AdminCloseChartReportOutputSchema,
@@ -82,6 +90,21 @@ const openReport = {
 }
 
 describe('private chart-report administrator contract', () => {
+  it('owns readonly aliases for canonical filter options and identifiers', () => {
+    expect(ADMIN_CHART_REPORT_FIELD_KEYS).toBe(CHART_REPORT_FIELD_KEYS)
+    expect(ADMIN_CHART_REPORT_CATEGORY_KEYS).toBe(CHART_REPORT_CATEGORY_KEYS)
+    expect(ADMIN_CHART_REPORT_FIELD_KEYS.map((value) => AdminChartReportFieldKeySchema.parse(value))).toEqual(
+      CHART_REPORT_FIELD_KEYS,
+    )
+    expect(ADMIN_CHART_REPORT_CATEGORY_KEYS.map((value) => AdminChartReportCategoryKeySchema.parse(value))).toEqual(
+      CHART_REPORT_CATEGORY_KEYS,
+    )
+    expect(AdminChartReportChartIdSchema.parse(chart.chartId)).toBe(chart.chartId)
+    expect(AdminChartReportChartIdSchema.safeParse('legacy-chart-id').success).toBe(false)
+    expect(AdminChartReportPublicationRevisionSchema.parse(publication.revision)).toBe(publication.revision)
+    expect(AdminChartReportPublicationRevisionSchema.safeParse('0').success).toBe(false)
+  })
+
   it('exposes only the bounded list, detail, and close management procedures', async () => {
     expect(
       Object.fromEntries(
@@ -159,6 +182,9 @@ describe('private chart-report administrator contract', () => {
   })
 
   it('normalizes every queue filter and rejects unstable or unbounded combinations', () => {
+    expect(() => AdminChartReportDateBoundSchema.safeParse('not-a-date')).not.toThrow()
+    expect(AdminChartReportDateBoundSchema.safeParse('not-a-date').success).toBe(false)
+
     expect(AdminListChartReportsInputSchema.parse({ headers: {}, query: {} })).toEqual({
       headers: {},
       query: { limit: ADMIN_CHART_REPORT_DEFAULT_LIMIT },
@@ -267,6 +293,11 @@ describe('private chart-report administrator contract', () => {
     const currentOutput = {
       reporter,
       report: openReport,
+      publicChartReference: {
+        legacySongId: 'legacy-song-id',
+        sheetType: 'dx',
+        sheetDifficulty: 'master',
+      },
       currentContext: {
         availability: 'current' as const,
         publication: driftedPublication,
@@ -286,6 +317,16 @@ describe('private chart-report administrator contract', () => {
       },
     }
     expect(AdminGetChartReportDetailOutputSchema.parse(retiredOutput)).toEqual(retiredOutput)
+    expect(
+      AdminGetChartReportDetailOutputSchema.parse({ ...retiredOutput, publicChartReference: null })
+        .publicChartReference,
+    ).toBeNull()
+    expect(
+      AdminChartReportPublicChartReferenceSchema.safeParse({
+        ...currentOutput.publicChartReference,
+        guessedLabel: 'must not enter the private contract',
+      }).success,
+    ).toBe(false)
     expect(
       AdminGetChartReportDetailOutputSchema.safeParse({
         ...currentOutput,

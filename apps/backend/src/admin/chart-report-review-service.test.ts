@@ -104,6 +104,11 @@ const detail = (overrides: Partial<StoredChartReportReviewDetail> = {}): StoredC
   ...queueItem(),
   sourceUrls: ['https://example.com/evidence'],
   closure: null,
+  publicChartReference: {
+    legacySongId: 'legacy-song-id',
+    sheetType: 'dx',
+    sheetDifficulty: 'master',
+  },
   ...overrides,
 })
 
@@ -414,6 +419,11 @@ describe('chart-report review service', () => {
       currentValue: '15',
       chart: { songLabel: 'Captured Song', chartLabel: 'master (dx)' },
     })
+    expect(output.publicChartReference).toEqual({
+      legacySongId: 'legacy-song-id',
+      sheetType: 'dx',
+      sheetDifficulty: 'master',
+    })
     expect(JSON.stringify(output)).not.toMatch(/secret@example|google|session-secret|192\.0\.2\.1|private reason/)
   })
 
@@ -442,7 +452,7 @@ describe('chart-report review service', () => {
     expect(catalogBodyReads).toBe(1)
   })
 
-  it('maps a chart absent from a valid active publication to retired', async () => {
+  it('maps a chart absent from a valid active publication to retired and suppresses its retained public link', async () => {
     const activeIdentity = publication('24', 'b'.repeat(64))
     const output = await service(
       store({
@@ -457,6 +467,7 @@ describe('chart-report review service', () => {
       songId: SONG_ID,
       chartId: CHART_ID,
     })
+    expect(output.publicChartReference).toBeNull()
   })
 
   it('maps missing reports to NOT_FOUND and unavailable or corrupt publications to CHART_UNAVAILABLE', async () => {

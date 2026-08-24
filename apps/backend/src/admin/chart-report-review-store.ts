@@ -92,9 +92,16 @@ export type StoredChartReportReviewClosure = {
   readonly internalNote: string | null
 }
 
+export type StoredChartReportPublicReference = {
+  readonly legacySongId: string
+  readonly sheetType: string
+  readonly sheetDifficulty: string
+}
+
 export type StoredChartReportReviewDetail = StoredChartReportReviewQueueItem & {
   readonly sourceUrls: readonly string[]
   readonly closure: StoredChartReportReviewClosure | null
+  readonly publicChartReference: StoredChartReportPublicReference | null
 }
 
 export type StoredChartReportReviewPage = {
@@ -145,6 +152,7 @@ type QueueRow = {
 
 type DetailRow = QueueRow & {
   readonly source_urls: unknown
+  readonly public_chart_reference: unknown
   readonly closed_by_user_id: string | null
   readonly closer_display_name: string | null
   readonly closed_at_utc: string | null
@@ -296,10 +304,39 @@ const projectDetailRow = (row: DetailRow): StoredChartReportReviewDetail => {
         })
       : null
 
+  const publicChartReference = (() => {
+    if (row.public_chart_reference === null) return null
+    if (
+      typeof row.public_chart_reference !== 'object' ||
+      Array.isArray(row.public_chart_reference) ||
+      row.public_chart_reference === null
+    ) {
+      throw new Error('Invalid stored chart-report public chart reference')
+    }
+    const reference = row.public_chart_reference as Record<string, unknown>
+    if (
+      Object.keys(reference).sort().join(',') !== 'legacySongId,sheetDifficulty,sheetType' ||
+      typeof reference.legacySongId !== 'string' ||
+      reference.legacySongId.length === 0 ||
+      typeof reference.sheetType !== 'string' ||
+      reference.sheetType.length === 0 ||
+      typeof reference.sheetDifficulty !== 'string' ||
+      reference.sheetDifficulty.length === 0
+    ) {
+      throw new Error('Invalid stored chart-report public chart reference')
+    }
+    return Object.freeze({
+      legacySongId: reference.legacySongId,
+      sheetType: reference.sheetType,
+      sheetDifficulty: reference.sheetDifficulty,
+    })
+  })()
+
   return Object.freeze({
     ...report,
     sourceUrls: Object.freeze([...row.source_urls]),
     closure,
+    publicChartReference,
   })
 }
 
@@ -418,6 +455,14 @@ export const createPostgresChartReportReviewStore = (
         SELECT
           ${reportColumnsSql},
           report.source_urls,
+          CASE
+            WHEN canonical_song.legacy_song_id IS NULL OR canonical_sheet.id IS NULL THEN NULL
+            ELSE jsonb_build_object(
+              'legacySongId', canonical_song.legacy_song_id,
+              'sheetType', canonical_sheet.chart_type,
+              'sheetDifficulty', canonical_sheet.difficulty
+            )
+          END AS public_chart_reference,
           closer.id AS closed_by_user_id,
           CASE WHEN closer.id IS NULL THEN NULL
             ELSE ${canonicalDisplayNameSql('closer', 'closer_profile')}
@@ -426,6 +471,12 @@ export const createPostgresChartReportReviewStore = (
           report.close_note
         FROM public.chart_reports report
         ${reportJoinsSql}
+        LEFT JOIN dxdata.canonical_sheets canonical_sheet
+          ON canonical_sheet.id = report.stable_chart_id
+          AND canonical_sheet.song_id = report.stable_song_id
+        LEFT JOIN dxdata.canonical_songs canonical_song
+          ON canonical_song.id = report.stable_song_id
+          AND canonical_song.id = canonical_sheet.song_id
         LEFT JOIN "user" closer ON closer.id = report.closed_by_user_id
         LEFT JOIN profiles closer_profile ON closer_profile.id = closer.id
         WHERE report.id = $1::uuid

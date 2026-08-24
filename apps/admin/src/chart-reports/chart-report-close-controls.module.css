@@ -1,0 +1,25 @@
+.root {
+  min-width: 0;
+}
+
+.description {
+  text-wrap: pretty;
+}
+
+.identifier {
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.action {
+  min-height: 2.5rem;
+  transition-property: transform;
+  transition-duration: 120ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.action:active:not(:disabled) {
+  transform: scale(0.96);
+}

@@ -536,6 +536,14 @@ export const createChartReportReviewService = ({
         closure,
       } as GetChartReportDetailOutput['report'],
       currentContext,
+      publicChartReference:
+        currentContext.availability === 'retired' || detail.publicChartReference === null
+          ? null
+          : {
+              legacySongId: detail.publicChartReference.legacySongId,
+              sheetType: detail.publicChartReference.sheetType,
+              sheetDifficulty: detail.publicChartReference.sheetDifficulty,
+            },
     }
   },
 

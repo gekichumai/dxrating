@@ -104,6 +104,32 @@ export const commentModerationDetailQueryOptions = (
   })
 }
 
+export type ChartReportsQueryParameters = Parameters<AdminClient['listChartReports']>[0]['query']
+
+export const chartReportsQueryOptions = (data: AdminDataClient, parameters: ChartReportsQueryParameters = {}) => {
+  const input = { query: parameters }
+  const queryKey = data.orpc.listChartReports.queryKey({
+    input,
+    queryKey: adminQueryKeys.reports.list(parameters),
+  })
+  return withAdminQueryPolicy(data.orpc.listChartReports.queryOptions({ input, queryKey }), {
+    queryKey: adminQueryKeys.reports.list(parameters),
+    resource: 'reports',
+  })
+}
+
+export const chartReportDetailQueryOptions = (data: AdminDataClient, reportId: string) => {
+  const input = { params: { reportId } }
+  const queryKey = data.orpc.getChartReportDetail.queryKey({
+    input,
+    queryKey: adminQueryKeys.reports.detail(reportId),
+  })
+  return withAdminQueryPolicy(data.orpc.getChartReportDetail.queryOptions({ input, queryKey }), {
+    queryKey: adminQueryKeys.reports.detail(reportId),
+    resource: 'reports',
+  })
+}
+
 export type UserBanHistoryQueryParameters = Parameters<AdminClient['listUserBanHistory']>[0]['query']
 
 export const userBanHistoryQueryOptions = (

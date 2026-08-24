@@ -81,6 +81,8 @@ is not part of this flow.
   before returning to operations.
 - `/` is the dashboard.
 - `/charts`, `/comments`, `/users`, `/administrators`, and `/chart-reports` are typed, lazy top-level destinations.
+- `/chart-reports/:reportId` is a durable review URL beneath the chart-report queue. Queue filters and opaque
+  pagination cursors stay in validated URL search state; changing a filter always restarts traversal.
 - Unknown locations and render failures use dedicated recovery states.
 
 The code-based route tree in `src/router.tsx` avoids generated-file drift while retaining compile-time link checking.
@@ -125,6 +127,12 @@ Operational views should connect React Query's real `refetch`, `isFetching`, and
 `OperationalRefresh`. A failed refetch preserves the last successful data and timestamp. Error UI must use
 `normalizeAdminError` and local catalog copy, branch on the typed error code, and display only a schema-valid UUID as a
 support identifier; raw server messages are not presentation copy.
+
+Chart-report source URLs are untrusted evidence. Admin never embeds or previews them, and never navigates the
+privileged tab to them. The review screen shows the browser-canonical hostname and exact URL, supports copying the
+exact value, and requires an explicit warning before opening an HTTP(S) destination in a new isolated tab with no
+opener or referrer. Display labels are never used to infer a public chart route; the backend supplies a typed nullable
+legacy-route reference for that link.
 
 A compatibility mismatch is rejected from the stable raw error envelope before oRPC decodes a feature response. The
 runtime immediately unmounts protected providers, cancels reads, and clears query and mutation caches. It then offers

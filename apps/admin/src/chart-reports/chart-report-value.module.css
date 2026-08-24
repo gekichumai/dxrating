@@ -1,0 +1,28 @@
+.value {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.code {
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.block {
+  width: 100%;
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.semanticLabel {
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-xs);
+  font-style: italic;
+}

@@ -735,7 +735,12 @@ export const AdminChartIdSchema = z
   .regex(/^dsht_[23456789abcdefghjkmnpqrstvwxyz]{10}$/)
   .describe('Stable public chart identifier')
 
-const AdminCommentDateBoundSchema = z.iso.datetime().overwrite((value) => new Date(value).toISOString())
+const normalizeValidIsoDateTime = (value: string): string => {
+  const parsed = new Date(value)
+  return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : value
+}
+
+const AdminCommentDateBoundSchema = z.iso.datetime().overwrite(normalizeValidIsoDateTime)
 const hasOrderedCommentDateBounds = ({
   createdAtFromInclusive,
   createdAtBeforeExclusive,
@@ -1211,30 +1216,33 @@ export const ADMIN_CHART_REPORT_CLOSE_NOTE_MAX_LENGTH = 1_000 as const
 export const ADMIN_CHART_REPORT_SOURCE_URL_MAX_COUNT = 5 as const
 export const ADMIN_CHART_REPORT_SOURCE_URL_MAX_LENGTH = 2_048 as const
 
-type CanonicalChartReportFieldKey = (typeof CHART_REPORT_FIELD_KEYS)[number]
-type CanonicalChartReportCategoryKey = (typeof CHART_REPORT_CATEGORY_KEYS)[number]
+export const ADMIN_CHART_REPORT_FIELD_KEYS = CHART_REPORT_FIELD_KEYS
+export const ADMIN_CHART_REPORT_CATEGORY_KEYS = CHART_REPORT_CATEGORY_KEYS
+
+export type AdminChartReportFieldKey = (typeof ADMIN_CHART_REPORT_FIELD_KEYS)[number]
+export type AdminChartReportCategoryKey = (typeof ADMIN_CHART_REPORT_CATEGORY_KEYS)[number]
 type CanonicalChartReportJsonSnapshot = string | number | boolean | null | Readonly<Record<string, number>>
 
 // Keep one runtime authority for the public identifiers, keys, and submitted
 // value envelope while hiding the dependency package's private Zod instance
 // from this package's generated declaration types.
-const ChartReportFieldKeySchema: z.ZodType<CanonicalChartReportFieldKey, CanonicalChartReportFieldKey> =
-  CanonicalChartReportFieldKeySchema as unknown as z.ZodType<CanonicalChartReportFieldKey, CanonicalChartReportFieldKey>
-const ChartReportCategoryKeySchema: z.ZodType<CanonicalChartReportCategoryKey, CanonicalChartReportCategoryKey> =
+export const AdminChartReportFieldKeySchema: z.ZodType<AdminChartReportFieldKey, AdminChartReportFieldKey> =
+  CanonicalChartReportFieldKeySchema as unknown as z.ZodType<AdminChartReportFieldKey, AdminChartReportFieldKey>
+export const AdminChartReportCategoryKeySchema: z.ZodType<AdminChartReportCategoryKey, AdminChartReportCategoryKey> =
   CanonicalChartReportCategoryKeySchema as unknown as z.ZodType<
-    CanonicalChartReportCategoryKey,
-    CanonicalChartReportCategoryKey
+    AdminChartReportCategoryKey,
+    AdminChartReportCategoryKey
   >
 const ChartReportJsonSnapshotSchema: z.ZodType<CanonicalChartReportJsonSnapshot, CanonicalChartReportJsonSnapshot> =
   CanonicalChartReportJsonSnapshotSchema as unknown as z.ZodType<
     CanonicalChartReportJsonSnapshot,
     CanonicalChartReportJsonSnapshot
   >
-const ChartReportPublicChartIdSchema: z.ZodType<string, string> =
+export const AdminChartReportChartIdSchema: z.ZodType<string, string> =
   CanonicalChartReportPublicChartIdSchema as unknown as z.ZodType<string, string>
 const ChartReportPublicSongIdSchema: z.ZodType<string, string> =
   CanonicalChartReportPublicSongIdSchema as unknown as z.ZodType<string, string>
-const ChartReportPublicationRevisionSchema: z.ZodType<string, string> =
+export const AdminChartReportPublicationRevisionSchema: z.ZodType<string, string> =
   CanonicalChartReportPublicationRevisionSchema as unknown as z.ZodType<string, string>
 
 export const AdminChartReportIdSchema = z
@@ -1257,7 +1265,7 @@ export const AdminChartReportLimitSchema = z.coerce
   .min(1)
   .max(ADMIN_CHART_REPORT_MAX_LIMIT)
   .default(ADMIN_CHART_REPORT_DEFAULT_LIMIT)
-export const AdminChartReportDateBoundSchema = z.iso.datetime().overwrite((value) => new Date(value).toISOString())
+export const AdminChartReportDateBoundSchema = z.iso.datetime().overwrite(normalizeValidIsoDateTime)
 
 const hasOrderedChartReportDateBounds = ({
   submittedAtFromInclusive,
@@ -1274,25 +1282,25 @@ const hasOrderedChartReportDateBounds = ({
 
 const AdminChartReportFilterShape = {
   state: AdminChartReportStateSchema.optional(),
-  chartId: ChartReportPublicChartIdSchema.optional(),
-  fieldKey: ChartReportFieldKeySchema.optional(),
-  category: ChartReportCategoryKeySchema.optional(),
+  chartId: AdminChartReportChartIdSchema.optional(),
+  fieldKey: AdminChartReportFieldKeySchema.optional(),
+  category: AdminChartReportCategoryKeySchema.optional(),
   reporterUserId: AdminUserIdSchema.optional(),
   submittedAtFromInclusive: AdminChartReportDateBoundSchema.optional(),
   submittedAtBeforeExclusive: AdminChartReportDateBoundSchema.optional(),
-  publicationRevision: ChartReportPublicationRevisionSchema.optional(),
+  publicationRevision: AdminChartReportPublicationRevisionSchema.optional(),
 }
 
 export const AdminNormalizedChartReportFiltersSchema = z
   .object({
     state: AdminChartReportStateSchema.nullable(),
-    chartId: ChartReportPublicChartIdSchema.nullable(),
-    fieldKey: ChartReportFieldKeySchema.nullable(),
-    category: ChartReportCategoryKeySchema.nullable(),
+    chartId: AdminChartReportChartIdSchema.nullable(),
+    fieldKey: AdminChartReportFieldKeySchema.nullable(),
+    category: AdminChartReportCategoryKeySchema.nullable(),
     reporterUserId: AdminUserIdSchema.nullable(),
     submittedAtFromInclusive: AdminChartReportDateBoundSchema.nullable(),
     submittedAtBeforeExclusive: AdminChartReportDateBoundSchema.nullable(),
-    publicationRevision: ChartReportPublicationRevisionSchema.nullable(),
+    publicationRevision: AdminChartReportPublicationRevisionSchema.nullable(),
   })
   .strict()
   .refine(hasOrderedChartReportDateBounds, {
@@ -1319,7 +1327,7 @@ export const AdminChartReportPublicationSchema = z
   .object({
     channel: z.literal('production-v1'),
     catalogRunId: AdminCatalogIdentitySchema,
-    revision: ChartReportPublicationRevisionSchema,
+    revision: AdminChartReportPublicationRevisionSchema,
     fingerprintSha256: z.string().regex(/^[a-f0-9]{64}$/),
   })
   .strict()
@@ -1327,7 +1335,7 @@ export const AdminChartReportPublicationSchema = z
 export const AdminChartReportChartSummarySchema = z
   .object({
     songId: ChartReportPublicSongIdSchema,
-    chartId: ChartReportPublicChartIdSchema,
+    chartId: AdminChartReportChartIdSchema,
     songLabel: AdminSafeChartDisplayLabelSchema,
     chartLabel: AdminSafeChartDisplayLabelSchema,
   })
@@ -1356,8 +1364,8 @@ export const AdminChartReportQueueRowSchema = z
     id: AdminChartReportIdSchema,
     state: AdminChartReportStateSchema,
     chart: AdminChartReportChartSummarySchema,
-    fieldKey: ChartReportFieldKeySchema,
-    category: ChartReportCategoryKeySchema,
+    fieldKey: AdminChartReportFieldKeySchema,
+    category: AdminChartReportCategoryKeySchema,
     currentValuePreview: AdminChartReportValuePreviewSchema,
     proposedValuePreview: AdminChartReportValuePreviewSchema,
     explanationPreview: z.string().min(1).max(ADMIN_CHART_REPORT_PREVIEW_MAX_LENGTH),
@@ -1397,7 +1405,7 @@ const AdminRetiredChartReportContextSchema = z
     availability: z.literal('retired'),
     publication: AdminChartReportPublicationSchema,
     songId: ChartReportPublicSongIdSchema,
-    chartId: ChartReportPublicChartIdSchema,
+    chartId: AdminChartReportChartIdSchema,
   })
   .strict()
 
@@ -1405,6 +1413,14 @@ export const AdminChartReportCurrentContextSchema = z.discriminatedUnion('availa
   AdminCurrentChartReportContextSchema,
   AdminRetiredChartReportContextSchema,
 ])
+
+export const AdminChartReportPublicChartReferenceSchema = z
+  .object({
+    legacySongId: z.string().min(1).max(1_024),
+    sheetType: z.string().min(1).max(255),
+    sheetDifficulty: z.string().min(1).max(255),
+  })
+  .strict()
 
 export const AdminChartReportClosureSchema = z
   .object({
@@ -1416,8 +1432,8 @@ export const AdminChartReportClosureSchema = z
 
 const AdminChartReportDetailBaseSchema = z.object({
   id: AdminChartReportIdSchema,
-  fieldKey: ChartReportFieldKeySchema,
-  category: ChartReportCategoryKeySchema,
+  fieldKey: AdminChartReportFieldKeySchema,
+  category: AdminChartReportCategoryKeySchema,
   submittedCurrentValue: ChartReportJsonSnapshotSchema,
   submittedProposedValue: ChartReportJsonSnapshotSchema,
   explanation: z.string().trim().min(1).max(4_000),
@@ -1465,6 +1481,7 @@ export const AdminGetChartReportDetailOutputSchema = z
     reporter: AdminChartReportReporterSummarySchema,
     report: AdminChartReportDetailSchema,
     currentContext: AdminChartReportCurrentContextSchema,
+    publicChartReference: AdminChartReportPublicChartReferenceSchema.nullable(),
   })
   .strict()
   .superRefine((output, context) => {

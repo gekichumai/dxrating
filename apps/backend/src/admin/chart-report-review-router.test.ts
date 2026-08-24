@@ -95,6 +95,11 @@ const queueOutput = {
 
 const detailOutput = {
   reporter,
+  publicChartReference: {
+    legacySongId: 'legacy-song-id',
+    sheetType: 'dx',
+    sheetDifficulty: 'master',
+  },
   report: {
     id: REPORT_ID,
     state: 'open' as const,

@@ -1,0 +1,30 @@
+.scrollRegion {
+  min-width: 0;
+  overscroll-behavior-x: contain;
+}
+
+.explanationPreview,
+.valuePreview {
+  max-width: 28rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.identifier {
+  display: inline-block;
+  max-width: min(20rem, 100%);
+  font-variant-numeric: tabular-nums;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.timestamp {
+  min-width: 14rem;
+}
+
+@media (max-width: 48rem) {
+  .explanationPreview,
+  .valuePreview {
+    max-width: 20rem;
+  }
+}

@@ -26,6 +26,8 @@ const MAIN_CHART_ID = 'dsht_23456789ab'
 const ALTERNATE_CHART_ID = 'dsht_23456789ac'
 const RETIRED_SONG_ID = 'dsng_23456789ac'
 const RETIRED_CHART_ID = 'dsht_23456789ad'
+const MAIN_LEGACY_SONG_ID = 'legacy-main-song'
+const RETIRED_LEGACY_SONG_ID = 'legacy-retired-song'
 
 const REVISION_SIX = '6'
 const REVISION_SEVEN = '7'
@@ -268,6 +270,16 @@ const createCatalogFixture = async (): Promise<void> => {
       published_at timestamptz NOT NULL,
       PRIMARY KEY (channel, catalog_run_id, revision, publication_fingerprint_sha256)
     );
+    CREATE TABLE dxdata.canonical_songs (
+      id text PRIMARY KEY,
+      legacy_song_id text
+    );
+    CREATE TABLE dxdata.canonical_sheets (
+      id text PRIMARY KEY,
+      song_id text NOT NULL,
+      chart_type text NOT NULL,
+      difficulty text NOT NULL
+    );
   `)
 
   await db().query(
@@ -297,6 +309,19 @@ const createCatalogFixture = async (): Promise<void> => {
        (channel, catalog_run_id, revision, publication_fingerprint_sha256)
      VALUES ('production-v1', 108, $1::bigint, $2)`,
     [ACTIVE_REVISION, ACTIVE_FINGERPRINT],
+  )
+  await db().query(
+    `INSERT INTO dxdata.canonical_songs (id, legacy_song_id)
+     VALUES ($1, $2), ($3, $4)`,
+    [MAIN_SONG_ID, MAIN_LEGACY_SONG_ID, RETIRED_SONG_ID, RETIRED_LEGACY_SONG_ID],
+  )
+  await db().query(
+    `INSERT INTO dxdata.canonical_sheets (id, song_id, chart_type, difficulty)
+     VALUES
+       ($1, $2, 'dx', 'master'),
+       ($3, $2, 'dx', 'expert'),
+       ($4, $5, 'dx', 'expert')`,
+    [MAIN_CHART_ID, MAIN_SONG_ID, ALTERNATE_CHART_ID, RETIRED_CHART_ID, RETIRED_SONG_ID],
   )
 }
 
@@ -874,6 +899,11 @@ describe('administrator chart-report review HTTP boundary', () => {
         },
         currentValue: '15',
       },
+      publicChartReference: {
+        legacySongId: MAIN_LEGACY_SONG_ID,
+        sheetType: 'dx',
+        sheetDifficulty: 'master',
+      },
     })
     expect(Object.keys(drift.report).sort()).toEqual(
       [
@@ -920,6 +950,7 @@ describe('administrator chart-report review HTTP boundary', () => {
         songId: RETIRED_SONG_ID,
         chartId: RETIRED_CHART_ID,
       },
+      publicChartReference: null,
     })
     expect(evidenceFetchAttempts).toBe(0)
 

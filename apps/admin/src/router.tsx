@@ -7,6 +7,7 @@ import {
   type RouterHistory,
 } from '@tanstack/react-router'
 import { validateAdministratorRouteSearch } from './administrators/administrator-route-search'
+import { validateChartReportListSearch } from './chart-reports/chart-report-route-search'
 import { AdminNotFound, AdminRouteError, RouteLoading } from './components/route-states'
 import { validateCommentListSearch } from './comments/comment-route-search'
 import { validateUserDetailSearch, validateUserListSearch } from './users/user-route-search'
@@ -85,7 +86,14 @@ const administratorsRoute = createRoute({
 const chartReportsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: 'chart-reports',
+  validateSearch: validateChartReportListSearch,
   component: lazyRouteComponent(() => import('./routes/chart-reports-route'), 'ChartReportsRoute'),
+})
+
+const chartReportDetailRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: 'chart-reports/$reportId',
+  component: lazyRouteComponent(() => import('./routes/chart-report-detail-route'), 'ChartReportDetailRoute'),
 })
 
 const signInRoute = createRoute({
@@ -107,6 +115,7 @@ export const adminRouteTree = rootRoute.addChildren([
         userDetailRoute,
         administratorsRoute,
         chartReportsRoute,
+        chartReportDetailRoute,
       ]),
     ]),
   ]),
