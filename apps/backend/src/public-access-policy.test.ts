@@ -94,14 +94,15 @@ describe('public API access policy', () => {
     },
   )
 
-  it('returns only the current reason and expiry to the affected authenticated user', async () => {
+  it('returns a data-free marker when current state bans the authenticated user', async () => {
     const expiresAt = new Date('2026-08-25T00:00:00.000Z')
+    const reason = 'Repeated abuse must remain private'
     const { policy } = createHarness({
       state: banState({
         establishedAction: 'ban',
         status: 'temporarily_banned',
         active: true,
-        banReason: 'Repeated abuse',
+        banReason: reason,
         banExpiresAt: expiresAt,
       }),
     })
@@ -112,10 +113,13 @@ describe('public API access policy', () => {
       operation: vi.fn().mockResolvedValue('unreachable'),
     }).catch((failure: unknown) => failure)
     expect(error).toBeInstanceOf(PublicAccountBanned)
-    expect(error).toMatchObject({ reason: 'Repeated abuse', expiresAt })
-    expect((error as Error).message).not.toContain('Repeated abuse')
+    expect(error).not.toHaveProperty('reason')
+    expect(error).not.toHaveProperty('expiresAt')
+    expect((error as Error).message).not.toContain(reason)
+    expect((error as Error).message).not.toContain(expiresAt.toISOString())
     expect((error as Error).message).not.toContain(authentication.user.id)
-    expect(Object.keys(error as object)).not.toEqual(expect.arrayContaining(['reason', 'expiresAt']))
+    expect(JSON.stringify(error)).not.toContain(reason)
+    expect(JSON.stringify(error)).not.toContain(expiresAt.toISOString())
   })
 
   it('allows an expired ban according to the authoritative database-time projection', async () => {

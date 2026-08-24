@@ -140,9 +140,12 @@ preserving the uninterrupted original `ban_started_at`; a new ban after expiry o
 Both ban and unban require recent primary authentication and use the `moderate` hierarchy: administrators may act on
 ordinary users, effective super administrators may also act on persisted administrators, and nobody may act on an
 effective super administrator. A ban requires a trimmed internal reason of at most 1,000 characters. An unban reason
-may be omitted; when supplied it must meet the same bounds. The ban reason is intended for authorized administrators
-and, only after identity is proven, the affected account's sign-in denial implemented by the follow-up authentication
-guard. It must not appear in public user/comment responses, generic request logs, or unexpected-error telemetry.
+may be omitted by the internal transition service; the administrator HTTP unban procedure deliberately has no reason
+field. Temporary bans must end after the database evaluation time and no more than 365 days later. Longer restrictions
+use the explicit permanent form instead of a fake far-future timestamp. The ban reason is intended for authorized
+administrators and, only after identity is proven, the affected account's sign-in denial. Public oRPC procedures return
+only a data-free `ACCOUNT_BANNED` marker for the narrow in-flight write race; the reason must not appear in public
+user/comment responses, generic request logs, or unexpected-error telemetry.
 
 Every successful ban invokes the all-session revocation primitive in its transaction, including a replacement ban.
 Unban does not recreate a session or restore primary-authentication proof. Ban state is authorization state only:
@@ -174,3 +177,23 @@ incident rollback.
 Role-management endpoints must re-read both actor and target under the authorization policy. Administrators may
 moderate effective users only. Super administrators may also moderate persisted administrators and grant or revoke
 the `admin` role. No application operation may target an effective super administrator.
+
+## Private user-moderation reads and actions
+
+User search is a read-classified `POST /api/admin/users/search`. Names, email addresses, filter state, and opaque
+cursors stay in the request body rather than entering proxy logs, browser history, or copied URLs. Search supports an
+exact immutable user ID, a case-insensitive exact email, a case-insensitive canonical-display-name prefix of at least
+two characters, effective role, and current active-ban state. Results use immutable user-ID keyset order, a maximum
+page size of 100, and a cursor bound to a digest of the normalized filters. The cursor contains no search text.
+
+Search and detail select only immutable user ID, canonical display name, email and verification state, effective role,
+and the approved ban projection. Detail includes the current state version needed for compare-and-set mutations. Ban
+history is separately paginated and excludes request correlation IDs; the existing subject-scoped role-history route
+provides the other currently available domain history. Comment-moderation history is not represented as an empty
+placeholder: its state and event model is owned by the later comment-moderation migration and context API.
+
+`POST /api/admin/users/{userId}/ban` and `/unban` are transaction-owning target operations. The outer router performs
+the ordinary fast-path policy check, then the ban service re-locks and revalidates actor, exact session, recent-primary-
+authentication proof, target, effective roles, self-targeting, and the expected state version in the same transaction
+that appends history and changes the projection. The response exposes the approved state and event only; session counts,
+session identifiers, provider accounts, credentials, network metadata, and request-correlation IDs remain server-only.

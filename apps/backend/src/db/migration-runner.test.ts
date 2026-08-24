@@ -61,6 +61,10 @@ describe('locked backend migration runner', () => {
     await adminPool.query('DROP DATABASE IF EXISTS dxrating_migration_runner_test WITH (FORCE)')
     await adminPool.query('CREATE DATABASE dxrating_migration_runner_test')
     await runBackendMigrations(baseConfig, { logger })
+    // The fixture manifests below intentionally model independent reviewed
+    // histories. Keep their ledger assertions isolated from the production
+    // manifest that bootstraps this disposable database.
+    await inspectionPool.query('DELETE FROM drizzle.__dxrating_non_transactional_migrations')
     await inspectionPool.query('DROP TABLE IF EXISTS public.migration_runner_fixture')
     await inspectionPool.query('DELETE FROM drizzle.__dxrating_non_transactional_migrations WHERE id = $1', [
       fixtureMigrationId,

@@ -27,10 +27,6 @@ export const publicErrors = {
   ACCOUNT_BANNED: {
     status: 403,
     message: 'This account is banned',
-    data: z.object({
-      reason: z.string().min(1),
-      expiresAt: z.iso.datetime().nullable(),
-    }),
   },
 } as const
 

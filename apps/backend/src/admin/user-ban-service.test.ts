@@ -514,6 +514,16 @@ describe('user-ban service', () => {
         reason: 'Invalid timestamp',
       }),
     ).rejects.toBeInstanceOf(UserBanServiceFailure)
+    await expect(
+      service.banUser({
+        context: authentication('admin-actor', 'admin', 'admin'),
+        targetUserId: 'target-user',
+        expectedStateVersion: null,
+        kind: 'temporary',
+        expiresAt: await futureDatabaseTime(database, '365 days 1 hour'),
+        reason: 'Outside the supported temporary-ban range',
+      }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_FAILED' })
     expect(await historyRows(database)).toHaveLength(0)
 
     const ban = await service.banUser({

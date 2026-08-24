@@ -70,18 +70,30 @@ describe('administrator mutation invalidation recipes', () => {
     const dashboard = adminQueryKeys.dashboard.overview()
     const userList = adminQueryKeys.users.list()
     const changedUser = adminQueryKeys.users.detail('user-1')
+    const changedUserBanHistory = adminQueryKeys.users.banHistory('user-1', { cursor: 'page-1' })
     const changedActivity = adminQueryKeys.users.activity('user-1')
     const otherUser = adminQueryKeys.users.detail('user-2')
+    const otherUserBanHistory = adminQueryKeys.users.banHistory('user-2')
     const commentList = adminQueryKeys.comments.list()
     const commentDetail = adminQueryKeys.comments.detail('comment-1')
-    seed(queryClient, [dashboard, userList, changedUser, changedActivity, otherUser, commentList, commentDetail])
+    seed(queryClient, [
+      dashboard,
+      userList,
+      changedUser,
+      changedUserBanHistory,
+      changedActivity,
+      otherUser,
+      otherUserBanHistory,
+      commentList,
+      commentDetail,
+    ])
 
     await invalidateAfterUserModeration(queryClient, 'user-1')
 
-    for (const key of [dashboard, userList, changedUser, changedActivity, commentList]) {
+    for (const key of [dashboard, userList, changedUser, changedUserBanHistory, changedActivity, commentList]) {
       expectInvalidated(queryClient, key, true)
     }
-    for (const key of [otherUser, commentDetail]) expectInvalidated(queryClient, key, false)
+    for (const key of [otherUser, otherUserBanHistory, commentDetail]) expectInvalidated(queryClient, key, false)
   })
 
   it('updates administrator and user representations without invalidating moderation queues', async () => {

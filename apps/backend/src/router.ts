@@ -114,12 +114,7 @@ export const publicProcedureAccessMiddleware = os.middleware<{ readonly user?: P
         Sentry.metrics.count('public_api.access_denied', 1, {
           attributes: { access, code: 'ACCOUNT_BANNED', procedure: path.join('.') },
         })
-        throw errors.ACCOUNT_BANNED({
-          data: {
-            reason: error.reason,
-            expiresAt: error.expiresAt?.toISOString() ?? null,
-          },
-        })
+        throw errors.ACCOUNT_BANNED()
       }
       throw error
     }

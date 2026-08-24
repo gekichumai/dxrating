@@ -25,6 +25,11 @@ import {
   type AdministratorRoleChange,
   type AdministratorRoleService,
 } from './administrator-role-service.js'
+import {
+  createPostgresUserModerationService,
+  UserModerationServiceFailure,
+  type UserModerationService,
+} from './user-moderation-service.js'
 import type { AdminRequestAuthentication, AuthenticatedAdminRequest } from './principal-loader.js'
 import type { AdministratorPrincipal, AdministratorTargetAction } from './role-policy.js'
 import type { SuperAdministratorAllowlist } from './super-administrator-allowlist.js'
@@ -115,6 +120,17 @@ export const adminErrorBoundaryMiddleware = os.middleware(async ({ context, erro
     if (error instanceof AdministratorRoleServiceFailure) {
       if (error.code === 'VALIDATION_FAILED') throw errors.VALIDATION_FAILED({ data })
       throw errors.CONFLICT({ data })
+    }
+
+    if (error instanceof UserModerationServiceFailure) {
+      switch (error.code) {
+        case 'VALIDATION_FAILED':
+          throw errors.VALIDATION_FAILED({ data })
+        case 'NOT_FOUND':
+          throw errors.NOT_FOUND({ data })
+        case 'CONFLICT':
+          throw errors.CONFLICT({ data })
+      }
     }
 
     if (error instanceof ORPCError && error.status === 400) throw errors.VALIDATION_FAILED({ data })
@@ -276,10 +292,14 @@ export const createAdminRouter = ({
   administratorRoles = createPostgresAdministratorRoleService({
     superAdministrators: config.auth.superAdministrators,
   }),
+  userModeration = createPostgresUserModerationService({
+    superAdministrators: config.auth.superAdministrators,
+  }),
   runWriteLease = runPostgresAdminWriteLease,
 }: {
   primaryAuth?: AdminPrimaryAuthService
   administratorRoles?: AdministratorRoleService
+  userModeration?: UserModerationService
   runWriteLease?: AdminWriteLeaseRunner
 } = {}) => {
   const authorized = os
@@ -314,6 +334,37 @@ export const createAdminRouter = ({
     ),
     initiatePrimaryAuthOauth: authorized.initiatePrimaryAuthOauth.handler(async ({ input, context }) =>
       primaryAuth.initiateOauth(primaryAuthActorFromContext(context), input.body.provider, context.requestOrigin),
+    ),
+    searchUsers: authorized.searchUsers.handler(async ({ input }) => userModeration.searchUsers(input.body)),
+    getUserModerationDetail: authorized.getUserModerationDetail.handler(async ({ input }) =>
+      userModeration.getUserModerationDetail(input.params.userId),
+    ),
+    listUserBanHistory: authorized.listUserBanHistory.handler(async ({ input }) =>
+      userModeration.listBanHistory({
+        userId: input.params.userId,
+        cursor: input.query.cursor,
+        limit: input.query.limit,
+      }),
+    ),
+    banUser: authorized.banUser.handler(async ({ input, context }) =>
+      userModeration.banUser({
+        context: { authentication: context.adminAuthentication },
+        targetUserId: input.params.userId,
+        expectedStateVersion: input.body.expectedStateVersion,
+        requestCorrelationId: context.requestId,
+        reason: input.body.reason,
+        ...(input.body.kind === 'temporary'
+          ? { kind: 'temporary' as const, expiresAt: new Date(input.body.expiresAt) }
+          : { kind: 'permanent' as const }),
+      }),
+    ),
+    unbanUser: authorized.unbanUser.handler(async ({ input, context }) =>
+      userModeration.unbanUser({
+        context: { authentication: context.adminAuthentication },
+        targetUserId: input.params.userId,
+        expectedStateVersion: input.body.expectedStateVersion,
+        requestCorrelationId: context.requestId,
+      }),
     ),
     listAdministrators: authorized.listAdministrators.handler(async () => {
       const roster = await administratorRoles.listAdministrators()

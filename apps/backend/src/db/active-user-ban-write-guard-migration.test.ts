@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url'
+import { readFileSync } from 'node:fs'
 import * as path from 'node:path'
 import { readMigrationFiles } from 'drizzle-orm/migrator'
 import { Pool, type PoolClient } from 'pg'
@@ -23,7 +24,10 @@ const migrationDatabaseUrl = new URL(configuredDatabaseUrl)
 migrationDatabaseUrl.pathname = `/${DATABASE_NAME}`
 const migrationsFolder = fileURLToPath(new URL('../../drizzle', import.meta.url))
 const migrations = readMigrationFiles({ migrationsFolder })
-const migrationIndex = migrations.length - 1
+const migrationJournal = JSON.parse(readFileSync(`${migrationsFolder}/meta/_journal.json`, 'utf8')) as {
+  readonly entries: readonly { readonly idx: number; readonly tag: string }[]
+}
+const migrationIndex = migrationJournal.entries.findIndex(({ tag }) => tag === MIGRATION_TAG)
 const migration = migrations[migrationIndex]
 if (!migration) throw new Error(`Missing ${MIGRATION_TAG} migration`)
 
@@ -282,9 +286,8 @@ describe('active user-ban identity write guards', () => {
 
   it('is a no-rewrite migration with stable, security-definer database guards', async () => {
     expect(path.basename(migrationsFolder)).toBe('drizzle')
-    const journal = await import('../../drizzle/meta/_journal.json', { with: { type: 'json' } })
-    expect(migrationIndex).toBe(journal.default.entries.length - 1)
-    expect(journal.default.entries[migrationIndex]?.idx).toBe(migrationIndex)
+    expect(migrationJournal.entries[migrationIndex]?.tag).toBe(MIGRATION_TAG)
+    expect(migrationJournal.entries[migrationIndex]?.idx).toBe(migrationIndex)
 
     const migrationSql = migrations[migrationIndex]!.sql.join('\n')
     for (const statement of migration.sql) {

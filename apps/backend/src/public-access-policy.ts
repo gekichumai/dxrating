@@ -52,21 +52,10 @@ export class PublicAuthenticationRequired extends Error {
 }
 
 export class PublicAccountBanned extends Error {
-  declare readonly reason: string
-  declare readonly expiresAt: Date | null
-
-  constructor(state: EvaluatedUserBanState) {
-    if (!state.active || !state.banReason) {
-      throw new Error('An active user ban must have a reason')
-    }
+  constructor(state: Pick<EvaluatedUserBanState, 'active'>) {
+    if (!state.active) throw new Error('Cannot create an account-ban denial from inactive state')
     super('Public API access denied by active account ban')
     this.name = 'PublicAccountBanned'
-    // Keep self-facing details available to the typed response mapper without
-    // exposing them to generic Error serialization, logs, or Sentry extras.
-    Object.defineProperties(this, {
-      reason: { value: state.banReason, enumerable: false },
-      expiresAt: { value: state.banExpiresAt, enumerable: false },
-    })
   }
 }
 
@@ -111,8 +100,8 @@ const runPostgresLockedUserOperation = async <Result>(
 
     // Check the ban projection before the session row. When a moderation
     // transaction wins the race it revokes sessions before committing; the
-    // already-proven in-flight request must still receive ACCOUNT_BANNED, not
-    // lose the reason behind a generic stale-session response.
+    // already-proven in-flight request still receives a typed, data-free
+    // ACCOUNT_BANNED result rather than being mistaken for a stale session.
     throwWhenBanned(await loadPostgresUserBanState(transaction, identity.userId))
 
     if (identity.sessionId !== undefined) {

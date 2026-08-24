@@ -39,6 +39,14 @@ describe('administrator query-key factories', () => {
       'detail',
       'revision-2',
     ])
+    expect(adminQueryKeys.users.banHistory('user-1', { cursor: 'opaque-cursor', limit: 25 })).toEqual([
+      'admin',
+      'users',
+      'detail',
+      'user-1',
+      'ban-history',
+      { cursor: 'opaque-cursor', limit: 25 },
+    ])
     expect(adminQueryKeys.administrators.roleHistory('user-1', { cursor: 'opaque-cursor', limit: 25 })).toEqual([
       'admin',
       'administrators',
@@ -57,6 +65,10 @@ describe('administrator query-key factories', () => {
       adminQueryKeys.comments.list({ status: 'deleted' }),
     )
     expect(adminQueryKeys.users.detail('user-1')).not.toEqual(adminQueryKeys.administrators.detail('user-1'))
+    expect(adminQueryKeys.users.banHistory('user-1')).not.toEqual(adminQueryKeys.users.banHistory('user-2'))
+    expect(adminQueryKeys.users.banHistory('user-1', { cursor: 'page-1' })).not.toEqual(
+      adminQueryKeys.users.banHistory('user-1', { cursor: 'page-2' }),
+    )
     expect(adminQueryKeys.administrators.roleHistory('user-1')).not.toEqual(
       adminQueryKeys.administrators.roleHistory('user-2'),
     )
@@ -82,6 +94,11 @@ describe('administrator query-key factories', () => {
     expect(adminQueryKeys.users.activity('user-1').slice(0, adminQueryKeys.users.detail('user-1').length)).toEqual(
       adminQueryKeys.users.detail('user-1'),
     )
+    expect(
+      adminQueryKeys.users
+        .banHistory('user-1', { cursor: 'next' })
+        .slice(0, adminQueryKeys.users.detail('user-1').length),
+    ).toEqual(adminQueryKeys.users.detail('user-1'))
     expect(
       adminQueryKeys.administrators
         .roleHistory('user-1', { cursor: 'next' })

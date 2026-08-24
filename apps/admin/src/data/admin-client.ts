@@ -34,6 +34,11 @@ const createHeaderlessClient = (rawClient: RawAdminClient, onClientCompatible?: 
   completePrimaryAuthPassword: (input, options) =>
     rawClient.completePrimaryAuthPassword({ ...input, headers: {} }, options),
   initiatePrimaryAuthOauth: (input, options) => rawClient.initiatePrimaryAuthOauth({ ...input, headers: {} }, options),
+  searchUsers: (input, options) => rawClient.searchUsers({ ...input, headers: {} }, options),
+  getUserModerationDetail: (input, options) => rawClient.getUserModerationDetail({ ...input, headers: {} }, options),
+  listUserBanHistory: (input, options) => rawClient.listUserBanHistory({ ...input, headers: {} }, options),
+  banUser: (input, options) => rawClient.banUser({ ...input, headers: {} }, options),
+  unbanUser: (input, options) => rawClient.unbanUser({ ...input, headers: {} }, options),
   listAdministrators: (_input, options) => rawClient.listAdministrators({ headers: {} }, options),
   listAdministratorRoleHistory: (input, options) =>
     rawClient.listAdministratorRoleHistory({ ...input, headers: {} }, options),

@@ -51,6 +51,8 @@ export const adminQueryKeys = {
       [...adminQueryKeys.users.lists(), parameters] as const,
     details: () => [...adminQueryKeys.users.all(), 'detail'] as const,
     detail: (userId: string) => [...adminQueryKeys.users.details(), userId] as const,
+    banHistory: (userId: string, parameters: AdminQueryParameters = EMPTY_QUERY_PARAMETERS) =>
+      [...adminQueryKeys.users.detail(userId), 'ban-history', parameters] as const,
     activity: (userId: string) => [...adminQueryKeys.users.detail(userId), 'activity'] as const,
   },
   administrators: {

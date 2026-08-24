@@ -247,6 +247,25 @@ const waitForBlockedGoogleIdentityMutation = async (): Promise<string> => {
   throw new Error('OAuth callback did not reach a trigger-protected identity mutation')
 }
 
+const waitForBlockedQueryMarker = async (marker: string): Promise<void> => {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const blocked = await database.query<{ readonly blocked: boolean }>(
+      `SELECT EXISTS (
+         SELECT 1
+         FROM pg_stat_activity AS activity
+         WHERE activity.datname = current_database()
+           AND activity.pid <> pg_backend_pid()
+           AND activity.wait_event_type = 'Lock'
+           AND position($1 in activity.query) > 0
+       ) AS blocked`,
+      [marker],
+    )
+    if (blocked.rows[0]?.blocked) return
+    await new Promise((resolve) => setTimeout(resolve, 20))
+  }
+  throw new Error('Public request did not reach the expected blocked database operation')
+}
+
 const expectAuthBan = async (
   response: Response,
   fixture: {
@@ -700,6 +719,82 @@ describe('active user-ban HTTP enforcement', () => {
         active: false,
       },
     ])
+  })
+
+  it('returns no moderation reason when a ban wins after a public write proves its session', async () => {
+    const user = await createUser('public-write-race')
+    const reason = 'Private reason hidden from every public write response'
+    const moderation = await database.connect()
+    let responsePromise: Promise<Response> | undefined
+
+    try {
+      await moderation.query('BEGIN')
+      await lockPostgresUserIdentitiesForModeration(moderation, [user.id, moderatorUserId])
+      const lockedUsers = await moderation.query(
+        `SELECT id
+           FROM "user"
+          WHERE id = ANY($1::text[])
+          ORDER BY id
+          FOR UPDATE`,
+        [[user.id, moderatorUserId].sort()],
+      )
+      expect(lockedUsers.rowCount).toBe(2)
+      await insertBanState(moderation, user.id, reason, null)
+
+      responsePromise = fetch(`${setup.getBaseUrl()}/api/v1/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: user.cookie,
+          Origin: PUBLIC_ORIGIN,
+        },
+        body: JSON.stringify({
+          songId: 'public-write-race-song',
+          sheetType: 'dx',
+          sheetDifficulty: 'master',
+          content: 'This comment must not be persisted',
+        }),
+      })
+      await waitForBlockedQueryMarker('user-identity-advisory-lock:shared')
+      await moderation.query('COMMIT')
+
+      const response = await responsePromise
+      expect(response.status).toBe(403)
+      const body = await responseBody(response)
+      expect(body).toMatchObject({
+        defined: true,
+        code: 'ACCOUNT_BANNED',
+        status: 403,
+        message: 'This account is banned',
+      })
+      expect(body).not.toHaveProperty('data')
+      expect(body).not.toHaveProperty('reason')
+      expect(body).not.toHaveProperty('expiresAt')
+      const serialized = JSON.stringify(body)
+      expect(serialized).not.toContain(reason)
+      expect(serialized).not.toContain(user.id)
+      await expect(database.query(`SELECT id FROM comments WHERE created_by = $1`, [user.id])).resolves.toMatchObject({
+        rows: [],
+      })
+
+      const specificationResponse = await fetch(`${setup.getBaseUrl()}/spec.json`)
+      expect(specificationResponse.status).toBe(200)
+      const specification = (await specificationResponse.json()) as {
+        readonly paths: {
+          readonly '/comments': {
+            readonly post: { readonly responses: { readonly '403': unknown } }
+          }
+        }
+      }
+      const publicBanResponseSpecification = JSON.stringify(specification.paths['/comments'].post.responses['403'])
+      expect(publicBanResponseSpecification).toContain('ACCOUNT_BANNED')
+      expect(publicBanResponseSpecification).not.toContain('reason')
+      expect(publicBanResponseSpecification).not.toContain('expiresAt')
+    } finally {
+      await moderation.query('ROLLBACK').catch(() => undefined)
+      moderation.release()
+      await Promise.allSettled([responsePromise].filter((promise) => promise !== undefined))
+    }
   })
 
   it('blocks every revoked-session public identity write and the LXNS callback before account side effects', async () => {

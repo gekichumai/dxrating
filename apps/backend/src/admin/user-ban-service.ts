@@ -1,4 +1,8 @@
-import { adminAuthorizationForAction, type AdminPrimaryAuthAction } from '@gekichumai/admin-contract'
+import {
+  ADMIN_USER_TEMPORARY_BAN_MAX_DURATION_DAYS,
+  adminAuthorizationForAction,
+  type AdminPrimaryAuthAction,
+} from '@gekichumai/admin-contract'
 import { requireTargetAuthorization, type AdminAuthorizationContext } from './authorization.js'
 import type { SuperAdministratorAllowlist } from './super-administrator-allowlist.js'
 import {
@@ -14,6 +18,9 @@ export const USER_BAN_REASON_MAX_LENGTH = 1_000 as const
 export const USER_BAN_HISTORY_CURSOR_MAX_LENGTH = 1_024 as const
 export const USER_BAN_HISTORY_DEFAULT_LIMIT = 50 as const
 export const USER_BAN_HISTORY_MAX_LIMIT = 100 as const
+export const USER_BAN_MAXIMUM_TEMPORARY_DURATION_DAYS = ADMIN_USER_TEMPORARY_BAN_MAX_DURATION_DAYS
+
+const USER_BAN_MAXIMUM_TEMPORARY_DURATION_MS = USER_BAN_MAXIMUM_TEMPORARY_DURATION_DAYS * 24 * 60 * 60 * 1_000
 
 const MAXIMUM_USER_ID_LENGTH = 255
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -216,6 +223,12 @@ export const createUserBanService = ({
         } else {
           if (reason === null) throw validationFailure()
           if (expiresAt && expiresAt.getTime() <= currentState.evaluatedAt.getTime()) throw validationFailure()
+          if (
+            expiresAt &&
+            expiresAt.getTime() > currentState.evaluatedAt.getTime() + USER_BAN_MAXIMUM_TEMPORARY_DURATION_MS
+          ) {
+            throw validationFailure()
+          }
 
           const equivalentExpiry =
             (currentState.banExpiresAt === null && expiresAt === null) ||

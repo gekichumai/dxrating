@@ -46,6 +46,50 @@ export const administratorRosterQueryOptions = (data: AdminDataClient) => {
   })
 }
 
+export type UserSearchQueryParameters = Parameters<AdminClient['searchUsers']>[0]['body']
+
+export const userSearchQueryOptions = (data: AdminDataClient, parameters: UserSearchQueryParameters = {}) => {
+  const input = { body: parameters }
+  const queryKey = data.orpc.searchUsers.queryKey({
+    input,
+    queryKey: adminQueryKeys.users.list(parameters),
+  })
+  return withAdminQueryPolicy(data.orpc.searchUsers.queryOptions({ input, queryKey }), {
+    queryKey: adminQueryKeys.users.list(parameters),
+    resource: 'users',
+  })
+}
+
+export const userModerationDetailQueryOptions = (data: AdminDataClient, userId: string) => {
+  const input = { params: { userId } }
+  const queryKey = data.orpc.getUserModerationDetail.queryKey({
+    input,
+    queryKey: adminQueryKeys.users.detail(userId),
+  })
+  return withAdminQueryPolicy(data.orpc.getUserModerationDetail.queryOptions({ input, queryKey }), {
+    queryKey: adminQueryKeys.users.detail(userId),
+    resource: 'users',
+  })
+}
+
+export type UserBanHistoryQueryParameters = Parameters<AdminClient['listUserBanHistory']>[0]['query']
+
+export const userBanHistoryQueryOptions = (
+  data: AdminDataClient,
+  userId: string,
+  parameters: UserBanHistoryQueryParameters = {},
+) => {
+  const input = { params: { userId }, query: parameters }
+  const queryKey = data.orpc.listUserBanHistory.queryKey({
+    input,
+    queryKey: adminQueryKeys.users.banHistory(userId, parameters),
+  })
+  return withAdminQueryPolicy(data.orpc.listUserBanHistory.queryOptions({ input, queryKey }), {
+    queryKey: adminQueryKeys.users.banHistory(userId, parameters),
+    resource: 'users',
+  })
+}
+
 export type AdministratorRoleHistoryQueryParameters = Parameters<
   AdminClient['listAdministratorRoleHistory']
 >[0]['query']

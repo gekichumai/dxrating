@@ -176,7 +176,8 @@ describe('PostgreSQL public user-write lease', () => {
 
       await moderation.query('COMMIT')
       await expect(writing).rejects.toBeInstanceOf(PublicAccountBanned)
-      await expect(writing).rejects.toMatchObject({ reason: 'Concurrent moderation' })
+      await expect(writing).rejects.not.toHaveProperty('reason')
+      await expect(writing).rejects.not.toHaveProperty('expiresAt')
       expect(operation).not.toHaveBeenCalled()
     } finally {
       await moderation.query('ROLLBACK').catch(() => undefined)
@@ -246,8 +247,9 @@ describe('PostgreSQL public user-write lease', () => {
 
       await expect(laterWrite).rejects.toMatchObject({
         name: 'PublicAccountBanned',
-        reason: 'Priority moderation',
       })
+      await expect(laterWrite).rejects.not.toHaveProperty('reason')
+      await expect(laterWrite).rejects.not.toHaveProperty('expiresAt')
       expect(laterOperation).not.toHaveBeenCalled()
     } finally {
       releaseFirstWrite()

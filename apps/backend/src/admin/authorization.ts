@@ -190,6 +190,7 @@ export const requireTargetAuthorization = async ({
   }
   if (!target) throw new AdminAuthorizationFailure('NOT_FOUND')
   if (!['user', 'admin'].includes(target.role)) throw new Error('Invalid locked administrator role')
+  if (actor.id === target.id) throw new AdminAuthorizationFailure('FORBIDDEN')
   if (!canAdministratorPrincipalTargetUser({ principal, target, action, superAdministrators })) {
     throw new AdminAuthorizationFailure('FORBIDDEN')
   }

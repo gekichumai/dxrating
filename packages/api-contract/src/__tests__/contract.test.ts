@@ -4,6 +4,7 @@ import {
   ArcadeVenueDetailInputSchema,
   ArcadeVenueIdSchema,
   publicAppContract,
+  publicErrors,
   LxnsStartOutputSchema,
   PUBLIC_PROCEDURE_ACCESS_MODES,
 } from '../contract.js'
@@ -59,6 +60,23 @@ describe('publicAppContract', () => {
     expect('chartOgImage' in publicAppContract).toBe(false)
     expect('monitoring' in publicAppContract).toBe(false)
     expect('admin' in publicAppContract).toBe(false)
+  })
+
+  it('keeps public active-ban errors generic and free of moderation state', () => {
+    expect(publicErrors.ACCOUNT_BANNED).toEqual({
+      status: 403,
+      message: 'This account is banned',
+    })
+    expect(publicErrors.ACCOUNT_BANNED).not.toHaveProperty('data')
+
+    for (const procedure of Object.values(publicAppContract).flatMap((group) => Object.values(group))) {
+      const error = procedure['~orpc'].errorMap.ACCOUNT_BANNED
+      expect(error).toEqual({
+        status: 403,
+        message: 'This account is banned',
+      })
+      expect(error).not.toHaveProperty('data')
+    }
   })
 
   it('owns shared route payload schemas', () => {

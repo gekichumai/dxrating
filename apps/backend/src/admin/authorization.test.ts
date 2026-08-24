@@ -182,6 +182,22 @@ describe('administrator authorization guards', () => {
     ).rejects.toMatchObject({ code: 'FORBIDDEN' })
   })
 
+  it('rejects self-targeting explicitly after locking the current actor row', async () => {
+    const lockUsersByIdForUpdate = vi.fn().mockResolvedValue(new Map([['admin-id', lockedUser('admin-id', 'admin')]]))
+
+    await expect(
+      requireTargetAuthorization({
+        context: { authentication: authentication('admin') },
+        targetUserId: 'admin-id',
+        action: 'moderate',
+        policy: moderationPolicy,
+        transaction: mutationTransaction(lockUsersByIdForUpdate),
+        superAdministrators,
+      }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    expect(lockUsersByIdForUpdate).toHaveBeenCalledWith(['admin-id'])
+  })
+
   it('rechecks the exact live session and fresh-login floor under the mutation locks', async () => {
     const lockUsersByIdForUpdate = vi.fn().mockResolvedValue(
       new Map([

@@ -134,7 +134,8 @@ describe('LXNS OAuth callback ban enforcement', () => {
 
     const failure = await outcome
     expect(failure).toBeInstanceOf(PublicAccountBanned)
-    expect(failure).toMatchObject({ reason: 'Ban during callback' })
+    expect(failure).not.toHaveProperty('reason')
+    expect(failure).not.toHaveProperty('expiresAt')
     await expect(
       database.query(`SELECT user_id FROM lxns_oauth_tokens WHERE user_id = 'lxns-user'`),
     ).resolves.toMatchObject({ rows: [] })

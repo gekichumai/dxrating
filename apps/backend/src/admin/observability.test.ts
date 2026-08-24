@@ -81,12 +81,16 @@ describe('administrator authorization outcome telemetry', () => {
     recordAdminAuthorizationResultTo('bootstrap', 'FORBIDDEN', { increment })
     recordAdminAuthorizationResultTo('completePrimaryAuthPassword', 'STEP_UP_FAILED', { increment })
     recordAdminAuthorizationResultTo('grantAdministrator', 'CONFLICT', { increment })
+    recordAdminAuthorizationResultTo('searchUsers', 'SUCCESS', { increment })
+    recordAdminAuthorizationResultTo('banUser', 'RECENT_AUTH_REQUIRED', { increment })
     recordAdminAuthorizationResultTo('user@example.com', 'private moderation reason', { increment })
 
     expect(increment.mock.calls).toEqual([
       [{ procedure: 'bootstrap', result: 'FORBIDDEN' }],
       [{ procedure: 'completePrimaryAuthPassword', result: 'STEP_UP_FAILED' }],
       [{ procedure: 'grantAdministrator', result: 'CONFLICT' }],
+      [{ procedure: 'searchUsers', result: 'SUCCESS' }],
+      [{ procedure: 'banUser', result: 'RECENT_AUTH_REQUIRED' }],
       [{ procedure: 'unknown', result: 'UNKNOWN' }],
     ])
     expect(JSON.stringify(increment.mock.calls)).not.toContain('user@example.com')

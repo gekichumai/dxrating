@@ -56,13 +56,25 @@ export const tagSongs = pgTable('tag_songs', {
     .references(() => user.id, { onDelete: 'cascade' }),
 })
 
-export const profiles = pgTable('profiles', {
-  id: text('id')
-    .primaryKey()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  created_at: timestamp('created_at').defaultNow().notNull(),
-  display_name: text('display_name').notNull(),
-})
+export const profiles = pgTable(
+  'profiles',
+  {
+    id: text('id')
+      .primaryKey()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+    display_name: text('display_name').notNull(),
+  },
+  (table) => [
+    index('admin_profile_search_display_name_lower_pattern_id_idx')
+      .using(
+        'btree',
+        sql`lower(btrim(regexp_replace(normalize(${table.display_name}, NFKC), '[[:space:]]+', ' ', 'g'))) text_pattern_ops`,
+        table.id,
+      )
+      .concurrently(),
+  ],
+)
 
 export const comments = pgTable('comments', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
@@ -219,6 +231,14 @@ export const adminUserBanState = pgTable(
         adminUserBanHistory.action,
       ],
     }).onDelete('restrict'),
+    // Drizzle does not model PostgreSQL INCLUDE columns. The reviewed
+    // non-transactional operation creates this partial index with expiry and
+    // version as included columns; this declaration captures its searchable
+    // key and predicate for schema generation.
+    index('admin_user_ban_state_active_subject_idx')
+      .on(table.subject_user_id)
+      .concurrently()
+      .where(sql`${table.established_action} = 'ban'`),
   ],
 )
 

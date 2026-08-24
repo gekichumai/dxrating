@@ -366,6 +366,274 @@ export const AdminRevokeAdministratorOutputSchema = z.object({
   change: AdminAdministratorRevokeChangeSchema,
 })
 
+export const ADMIN_USER_SEARCH_DEFAULT_LIMIT = 25 as const
+export const ADMIN_USER_SEARCH_MAX_LIMIT = 100 as const
+export const ADMIN_USER_HISTORY_DEFAULT_LIMIT = 25 as const
+export const ADMIN_USER_HISTORY_MAX_LIMIT = 100 as const
+export const ADMIN_USER_SEARCH_CURSOR_MAX_LENGTH = 1_024 as const
+export const ADMIN_USER_HISTORY_CURSOR_MAX_LENGTH = 1_024 as const
+export const ADMIN_USER_DISPLAY_NAME_PREFIX_MIN_LENGTH = 2 as const
+export const ADMIN_USER_BAN_REASON_MAX_LENGTH = 1_000 as const
+export const ADMIN_USER_TEMPORARY_BAN_MAX_DURATION_DAYS = 365 as const
+
+const canonicalizeAdminUserSearchText = (value: string): string => value.normalize('NFKC').trim().replace(/\s+/gu, ' ')
+
+export const AdminUserSearchEmailSchema = z
+  .string()
+  .overwrite((value) => canonicalizeAdminUserSearchText(value).toLowerCase())
+  .email()
+  .max(320)
+export const AdminUserDisplayNamePrefixSchema = z
+  .string()
+  .overwrite(canonicalizeAdminUserSearchText)
+  .min(ADMIN_USER_DISPLAY_NAME_PREFIX_MIN_LENGTH)
+  .max(255)
+export const AdminUserEffectiveRoleSchema = z.enum(['user', 'admin', 'super_admin'])
+export const AdminUserSearchCursorSchema = z
+  .string()
+  .min(1)
+  .max(ADMIN_USER_SEARCH_CURSOR_MAX_LENGTH)
+  .regex(/^[A-Za-z0-9_-]+$/)
+  .describe('Opaque user-search cursor bound to the normalized filters')
+export const AdminUserHistoryCursorSchema = z
+  .string()
+  .min(1)
+  .max(ADMIN_USER_HISTORY_CURSOR_MAX_LENGTH)
+  .regex(/^[A-Za-z0-9_-]+$/)
+  .describe('Opaque subject-bound user-ban-history cursor')
+export const AdminUserSearchLimitSchema = z
+  .number()
+  .int()
+  .min(1)
+  .max(ADMIN_USER_SEARCH_MAX_LIMIT)
+  .default(ADMIN_USER_SEARCH_DEFAULT_LIMIT)
+export const AdminUserHistoryLimitSchema = z.coerce
+  .number<number>()
+  .int()
+  .min(1)
+  .max(ADMIN_USER_HISTORY_MAX_LIMIT)
+  .default(ADMIN_USER_HISTORY_DEFAULT_LIMIT)
+export const AdminUserBanStateVersionSchema = AdminRoleChangeIdSchema
+export const AdminUserBanReasonSchema = z.string().trim().min(1).max(ADMIN_USER_BAN_REASON_MAX_LENGTH)
+export const AdminUtcDateTimeSchema = z.iso.datetime().describe('UTC ISO 8601 timestamp')
+
+export const AdminUserModerationIdentitySchema = z
+  .object({
+    userId: AdminUserIdSchema,
+    displayName: z.string().min(1).max(255),
+    email: z.email().max(320),
+    emailVerified: z.boolean(),
+    effectiveRole: AdminUserEffectiveRoleSchema,
+  })
+  .strict()
+
+export const AdminUserSearchRowSchema = AdminUserModerationIdentitySchema.extend({
+  accountStatus: AdminAccountStatusSchema,
+}).strict()
+
+const AdminUnbannedUserStateSchema = z
+  .object({
+    status: z.literal('unbanned'),
+    stateVersion: AdminUserBanStateVersionSchema.nullable(),
+    reason: z.null(),
+    actorUserId: AdminUserIdSchema.nullable(),
+    banStartedAt: z.null(),
+    expiresAt: z.null(),
+    evaluatedAt: AdminUtcDateTimeSchema,
+  })
+  .strict()
+  .refine((state) => (state.stateVersion === null) === (state.actorUserId === null), {
+    message: 'Unbanned state version and actor must either both be present or both be absent',
+  })
+
+const AdminExpiredUserBanStateSchema = z
+  .object({
+    status: z.literal('expired'),
+    stateVersion: AdminUserBanStateVersionSchema,
+    reason: AdminUserBanReasonSchema,
+    actorUserId: AdminUserIdSchema,
+    banStartedAt: AdminUtcDateTimeSchema,
+    expiresAt: AdminUtcDateTimeSchema,
+    evaluatedAt: AdminUtcDateTimeSchema,
+  })
+  .strict()
+  .refine(
+    (state) =>
+      Date.parse(state.banStartedAt) <= Date.parse(state.expiresAt) &&
+      Date.parse(state.expiresAt) <= Date.parse(state.evaluatedAt),
+    { message: 'Expired ban timestamps are inconsistent' },
+  )
+
+const AdminTemporaryUserBanStateSchema = z
+  .object({
+    status: z.literal('temporary'),
+    stateVersion: AdminUserBanStateVersionSchema,
+    reason: AdminUserBanReasonSchema,
+    actorUserId: AdminUserIdSchema,
+    banStartedAt: AdminUtcDateTimeSchema,
+    expiresAt: AdminUtcDateTimeSchema,
+    evaluatedAt: AdminUtcDateTimeSchema,
+  })
+  .strict()
+  .refine(
+    (state) =>
+      Date.parse(state.banStartedAt) <= Date.parse(state.evaluatedAt) &&
+      Date.parse(state.evaluatedAt) < Date.parse(state.expiresAt),
+    { message: 'Temporary ban timestamps are inconsistent' },
+  )
+
+const AdminPermanentUserBanStateSchema = z
+  .object({
+    status: z.literal('permanent'),
+    stateVersion: AdminUserBanStateVersionSchema,
+    reason: AdminUserBanReasonSchema,
+    actorUserId: AdminUserIdSchema,
+    banStartedAt: AdminUtcDateTimeSchema,
+    expiresAt: z.null(),
+    evaluatedAt: AdminUtcDateTimeSchema,
+  })
+  .strict()
+  .refine((state) => Date.parse(state.banStartedAt) <= Date.parse(state.evaluatedAt), {
+    message: 'Permanent ban timestamps are inconsistent',
+  })
+
+export const AdminUserBanStateSchema = z.discriminatedUnion('status', [
+  AdminUnbannedUserStateSchema,
+  AdminExpiredUserBanStateSchema,
+  AdminTemporaryUserBanStateSchema,
+  AdminPermanentUserBanStateSchema,
+])
+
+const AdminUserBanHistoryEventBaseSchema = z.object({
+  id: AdminUserBanStateVersionSchema,
+  subjectUserId: AdminUserIdSchema,
+  actorUserId: AdminUserIdSchema,
+  previousEventId: AdminUserBanStateVersionSchema.nullable(),
+  createdAt: AdminUtcDateTimeSchema,
+})
+
+const AdminTemporaryUserBanHistoryEventSchema = AdminUserBanHistoryEventBaseSchema.extend({
+  action: z.literal('ban'),
+  kind: z.literal('temporary'),
+  reason: AdminUserBanReasonSchema,
+  banStartedAt: AdminUtcDateTimeSchema,
+  expiresAt: AdminUtcDateTimeSchema,
+})
+  .strict()
+  .refine(
+    (event) =>
+      Date.parse(event.banStartedAt) <= Date.parse(event.createdAt) &&
+      Date.parse(event.createdAt) < Date.parse(event.expiresAt),
+    { message: 'Temporary ban event timestamps are inconsistent' },
+  )
+
+const AdminPermanentUserBanHistoryEventSchema = AdminUserBanHistoryEventBaseSchema.extend({
+  action: z.literal('ban'),
+  kind: z.literal('permanent'),
+  reason: AdminUserBanReasonSchema,
+  banStartedAt: AdminUtcDateTimeSchema,
+  expiresAt: z.null(),
+})
+  .strict()
+  .refine((event) => Date.parse(event.banStartedAt) <= Date.parse(event.createdAt), {
+    message: 'Permanent ban event timestamps are inconsistent',
+  })
+
+const AdminUserUnbanHistoryEventSchema = AdminUserBanHistoryEventBaseSchema.extend({
+  action: z.literal('unban'),
+  kind: z.null(),
+  reason: AdminUserBanReasonSchema.nullable(),
+  banStartedAt: z.null(),
+  expiresAt: z.null(),
+}).strict()
+
+export const AdminUserBanHistoryEventSchema = z.union([
+  AdminTemporaryUserBanHistoryEventSchema,
+  AdminPermanentUserBanHistoryEventSchema,
+  AdminUserUnbanHistoryEventSchema,
+])
+
+export const AdminSearchUsersInputSchema = z.object({
+  headers: AdminContractHeadersSchema,
+  body: z
+    .object({
+      userId: AdminUserIdSchema.optional(),
+      email: AdminUserSearchEmailSchema.optional(),
+      displayName: AdminUserDisplayNamePrefixSchema.optional(),
+      effectiveRole: AdminUserEffectiveRoleSchema.optional(),
+      activeBan: z.boolean().optional(),
+      cursor: AdminUserSearchCursorSchema.optional(),
+      limit: AdminUserSearchLimitSchema,
+    })
+    .strict(),
+})
+
+export const AdminSearchUsersOutputSchema = z
+  .object({
+    items: z.array(AdminUserSearchRowSchema).max(ADMIN_USER_SEARCH_MAX_LIMIT),
+    nextCursor: AdminUserSearchCursorSchema.nullable(),
+  })
+  .strict()
+
+const AdminUserSubjectInputSchema = z.object({
+  headers: AdminContractHeadersSchema,
+  params: z.object({ userId: AdminUserIdSchema }),
+})
+
+export const AdminGetUserModerationDetailInputSchema = AdminUserSubjectInputSchema
+export const AdminGetUserModerationDetailOutputSchema = AdminUserModerationIdentitySchema.extend({
+  banState: AdminUserBanStateSchema,
+}).strict()
+
+export const AdminListUserBanHistoryInputSchema = AdminUserSubjectInputSchema.extend({
+  query: z.object({
+    cursor: AdminUserHistoryCursorSchema.optional(),
+    limit: AdminUserHistoryLimitSchema,
+  }),
+})
+export const AdminListUserBanHistoryOutputSchema = z
+  .object({
+    items: z.array(AdminUserBanHistoryEventSchema).max(ADMIN_USER_HISTORY_MAX_LIMIT),
+    nextCursor: AdminUserHistoryCursorSchema.nullable(),
+  })
+  .strict()
+
+const AdminUserBanMutationBaseShape = {
+  expectedStateVersion: AdminUserBanStateVersionSchema.nullable(),
+  reason: AdminUserBanReasonSchema,
+}
+
+export const AdminBanUserBodySchema = z.discriminatedUnion('kind', [
+  z
+    .object({
+      ...AdminUserBanMutationBaseShape,
+      kind: z.literal('temporary'),
+      expiresAt: AdminUtcDateTimeSchema.describe(
+        `UTC expiry no more than ${ADMIN_USER_TEMPORARY_BAN_MAX_DURATION_DAYS} days after server time`,
+      ),
+    })
+    .strict(),
+  z
+    .object({
+      ...AdminUserBanMutationBaseShape,
+      kind: z.literal('permanent'),
+    })
+    .strict(),
+])
+
+export const AdminBanUserInputSchema = AdminUserSubjectInputSchema.extend({
+  body: AdminBanUserBodySchema,
+})
+export const AdminUnbanUserInputSchema = AdminUserSubjectInputSchema.extend({
+  body: z.object({ expectedStateVersion: AdminUserBanStateVersionSchema.nullable() }).strict(),
+})
+export const AdminUserBanMutationOutputSchema = z
+  .object({
+    state: AdminUserBanStateSchema,
+    event: AdminUserBanHistoryEventSchema,
+  })
+  .strict()
+
 export const adminContract = adminProcedure.errors(adminErrors).router({
   bootstrap: adminProcedure
     .meta({ authorization: ADMIN_BOOTSTRAP_AUTHORIZATION, banPolicy: 'authenticated_read' })
@@ -415,6 +683,78 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     })
     .input(AdminPrimaryAuthOauthInitiateInputSchema)
     .output(AdminPrimaryAuthOauthInitiateOutputSchema),
+  searchUsers: adminProcedure
+    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
+    .route({
+      method: 'POST',
+      path: '/users/search',
+      operationId: 'searchAdminUsers',
+      summary: 'Search accounts for administrator moderation',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminSearchUsersInputSchema)
+    .output(AdminSearchUsersOutputSchema),
+  getUserModerationDetail: adminProcedure
+    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
+    .route({
+      method: 'GET',
+      path: '/users/{userId}',
+      operationId: 'getAdminUserModerationDetail',
+      summary: 'Read approved moderation detail for one account',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminGetUserModerationDetailInputSchema)
+    .output(AdminGetUserModerationDetailOutputSchema),
+  listUserBanHistory: adminProcedure
+    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
+    .route({
+      method: 'GET',
+      path: '/users/{userId}/ban-history',
+      operationId: 'listAdminUserBanHistory',
+      summary: 'List immutable ban history for one account',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminListUserBanHistoryInputSchema)
+    .output(AdminListUserBanHistoryOutputSchema),
+  banUser: adminProcedure
+    .meta({
+      banPolicy: 'transactional_write',
+      authorization: adminAuthorizationForAction('user.ban', {
+        minimumRole: 'admin',
+        targetAction: 'moderate',
+      }),
+    })
+    .route({
+      method: 'POST',
+      path: '/users/{userId}/ban',
+      operationId: 'banAdminUser',
+      summary: 'Apply a temporary or permanent account ban',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminBanUserInputSchema)
+    .output(AdminUserBanMutationOutputSchema),
+  unbanUser: adminProcedure
+    .meta({
+      banPolicy: 'transactional_write',
+      authorization: adminAuthorizationForAction('user.unban', {
+        minimumRole: 'admin',
+        targetAction: 'moderate',
+      }),
+    })
+    .route({
+      method: 'POST',
+      path: '/users/{userId}/unban',
+      operationId: 'unbanAdminUser',
+      summary: 'Remove an active account ban',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminUnbanUserInputSchema)
+    .output(AdminUserBanMutationOutputSchema),
   listAdministrators: adminProcedure
     .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
     .route({

@@ -8,6 +8,9 @@ import {
   adminBootstrapQueryOptions,
   administratorRoleHistoryQueryOptions,
   administratorRosterQueryOptions,
+  userBanHistoryQueryOptions,
+  userModerationDetailQueryOptions,
+  userSearchQueryOptions,
   withAdminQueryPolicy,
 } from './query-options'
 
@@ -91,6 +94,79 @@ describe('administrator typed query option policy', () => {
     >()
     expect(options.staleTime).toBe(ADMIN_STALE_TIME_MS.administrators)
     await expect(queryClient.fetchQuery(options)).resolves.toEqual(roster)
+  })
+
+  it('keys user search, detail, and subject ban-history reads under the typed users resource', async () => {
+    const state = {
+      status: 'temporary' as const,
+      stateVersion: '1',
+      reason: 'Temporary restriction',
+      actorUserId: 'administrator-id',
+      banStartedAt: '2026-08-24T10:00:00.000Z',
+      expiresAt: '2026-08-25T10:00:00.000Z',
+      evaluatedAt: '2026-08-24T12:00:00.000Z',
+    }
+    const detail = {
+      userId: 'user-1',
+      displayName: 'User One',
+      email: 'user-1@example.com',
+      emailVerified: true,
+      effectiveRole: 'user' as const,
+      banState: state,
+    }
+    const history = {
+      items: [
+        {
+          id: '1',
+          subjectUserId: 'user-1',
+          actorUserId: 'administrator-id',
+          previousEventId: null,
+          action: 'ban' as const,
+          kind: 'temporary' as const,
+          reason: 'Temporary restriction',
+          banStartedAt: '2026-08-24T10:00:00.000Z',
+          expiresAt: '2026-08-25T10:00:00.000Z',
+          createdAt: '2026-08-24T10:00:00.000Z',
+        },
+      ],
+      nextCursor: null,
+    }
+    const fetch = vi.fn(async (request: RequestInfo | URL) => {
+      const url = (request as Request).url
+      if (url.endsWith('/users/search')) return Response.json({ items: [], nextCursor: null })
+      if (url.includes('/ban-history')) return Response.json(history)
+      return Response.json(detail)
+    })
+    const data = createAdminDataClient({
+      backendOrigin: 'https://api.dxrating.net',
+      fetch: fetch as unknown as typeof globalThis.fetch,
+      mode: 'production',
+    })
+    const queryClient = createAdminTestQueryClient()
+    const searchParameters = { displayName: 'User', activeBan: true, limit: 25 }
+    const search = userSearchQueryOptions(data, searchParameters)
+    const userDetail = userModerationDetailQueryOptions(data, 'user-1')
+    const historyParameters = { cursor: 'opaque_page', limit: 25 }
+    const banHistory = userBanHistoryQueryOptions(data, 'user-1', historyParameters)
+
+    expect(search.queryKey).toEqual(adminQueryKeys.users.list(searchParameters))
+    expect(userDetail.queryKey).toEqual(adminQueryKeys.users.detail('user-1'))
+    expect(banHistory.queryKey).toEqual(adminQueryKeys.users.banHistory('user-1', historyParameters))
+    expect(search.staleTime).toBe(ADMIN_STALE_TIME_MS.users)
+    expect(userDetail.staleTime).toBe(ADMIN_STALE_TIME_MS.users)
+    expect(banHistory.staleTime).toBe(ADMIN_STALE_TIME_MS.users)
+    expectTypeOf(queryClient.getQueryData(search.queryKey)).toEqualTypeOf<
+      AdminContractOutputs['searchUsers'] | undefined
+    >()
+    expectTypeOf(queryClient.getQueryData(userDetail.queryKey)).toEqualTypeOf<
+      AdminContractOutputs['getUserModerationDetail'] | undefined
+    >()
+    expectTypeOf(queryClient.getQueryData(banHistory.queryKey)).toEqualTypeOf<
+      AdminContractOutputs['listUserBanHistory'] | undefined
+    >()
+    await expect(queryClient.fetchQuery(search)).resolves.toEqual({ items: [], nextCursor: null })
+    await expect(queryClient.fetchQuery(userDetail)).resolves.toEqual(detail)
+    await expect(queryClient.fetchQuery(banHistory)).resolves.toEqual(history)
   })
 
   it('keys every subject role-history page by immutable user ID and opaque cursor', async () => {

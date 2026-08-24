@@ -1,4 +1,60 @@
 {
   "version": 1,
-  "entries": []
+  "entries": [
+    {
+      "id": "0019_admin_profile_display_name_search",
+      "operation": {
+        "file": "0019_admin_profile_display_name_search.sql",
+        "sha256": "a916149e772d88554ca6cbc5e7d8de843af3a05a78e73c9dac9dc531c4bf7d71"
+      },
+      "verification": {
+        "file": "0019_admin_profile_display_name_search.verify.sql",
+        "sha256": "c422c9ce6128a636311f837a365a8507469cd708d65630c02a76e1e3d7a7c556"
+      }
+    },
+    {
+      "id": "0020_admin_user_active_ban_search",
+      "operation": {
+        "file": "0020_admin_user_active_ban_search.sql",
+        "sha256": "08b98d96321241ae54123d0d7aa443882d85ebb748b5b770782ca2cdbd892fb9"
+      },
+      "verification": {
+        "file": "0020_admin_user_active_ban_search.verify.sql",
+        "sha256": "4e99d9d90dc5898c09209a66456842b2c8ebd7a7a232b880060cff79cd4222e1"
+      }
+    },
+    {
+      "id": "0021_admin_user_email_search",
+      "operation": {
+        "file": "0021_admin_user_email_search.sql",
+        "sha256": "4445c62acdb41363bb885efefa64dcae1a909413b591dcc7e9cde22ac6000191"
+      },
+      "verification": {
+        "file": "0021_admin_user_email_search.verify.sql",
+        "sha256": "e426dcd67391e42e24375e26127ece67ceca1cecccf397a91613818bd6294d7d"
+      }
+    },
+    {
+      "id": "0022_admin_user_name_search",
+      "operation": {
+        "file": "0022_admin_user_name_search.sql",
+        "sha256": "757cb9f761cb9994b78ecb8e9cf533d3815b038b7683a84362df9c836c3c7336"
+      },
+      "verification": {
+        "file": "0022_admin_user_name_search.verify.sql",
+        "sha256": "fa17f9cd37d2fcb61592c3c0729da9c5f515c6b16344346bc952bfd7300cc223"
+      }
+    },
+    {
+      "id": "0023_admin_user_role_search",
+      "operation": {
+        "file": "0023_admin_user_role_search.sql",
+        "sha256": "7164e8763903dcc7d2428052c51d8ab82b1a257dc4b7d43a71ff7d567f3b96c3"
+      },
+      "verification": {
+        "file": "0023_admin_user_role_search.verify.sql",
+        "sha256": "c2509eb0463600ef0e38face0b090e8d43a28c13f56c901aa41a29945e28dac9"
+      }
+    }
+  ]
 }

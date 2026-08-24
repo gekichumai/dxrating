@@ -13,6 +13,11 @@ const ADMIN_TELEMETRY_PROCEDURES = [
   'listAdministratorRoleHistory',
   'grantAdministrator',
   'revokeAdministrator',
+  'searchUsers',
+  'getUserModerationDetail',
+  'listUserBanHistory',
+  'banUser',
+  'unbanUser',
   'handler',
 ] as const
 const ADMIN_AUTHORIZATION_RESULTS = [
