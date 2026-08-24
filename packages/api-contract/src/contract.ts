@@ -86,6 +86,126 @@ export const CreateCommentInputSchema = z.object({
   content: z.string(),
 })
 
+export const CHART_REPORT_FIELD_KEYS = [
+  'song.title',
+  'song.artist',
+  'song.category',
+  'song.bpm',
+  'song.image_name',
+  'song.is_new',
+  'song.is_locked',
+  'song.version',
+  'chart.type',
+  'chart.difficulty',
+  'chart.level',
+  'chart.internal_level',
+  'chart.multiver_internal_levels',
+  'chart.note_designer',
+  'chart.note_counts.tap',
+  'chart.note_counts.hold',
+  'chart.note_counts.slide',
+  'chart.note_counts.touch',
+  'chart.note_counts.break',
+  'chart.note_counts.total',
+  'chart.regions.jp',
+  'chart.regions.intl',
+  'chart.regions.cn',
+  'chart.version',
+  'chart.release_date',
+  'chart.internal_id',
+  'chart.is_special',
+  'chart.comment',
+] as const
+
+export const CHART_REPORT_CATEGORY_KEYS = ['incorrect_value', 'missing_value', 'outdated_value', 'other'] as const
+
+export const ChartReportFieldKeySchema = z.enum(CHART_REPORT_FIELD_KEYS)
+export const ChartReportCategoryKeySchema = z.enum(CHART_REPORT_CATEGORY_KEYS)
+export const ChartReportPublicSongIdSchema = z.string().regex(/^dsng_[23456789abcdefghjkmnpqrstvwxyz]{10}$/)
+export const ChartReportPublicChartIdSchema = z.string().regex(/^dsht_[23456789abcdefghjkmnpqrstvwxyz]{10}$/)
+export const ChartReportPublicationRevisionSchema = z
+  .string()
+  .regex(/^[1-9]\d{0,18}$/)
+  .refine((value) => {
+    try {
+      return BigInt(value) <= 9_223_372_036_854_775_807n
+    } catch {
+      return false
+    }
+  })
+
+const ChartReportNumberMapSnapshotSchema = z
+  .record(z.string().min(1).max(255), z.number().finite())
+  .refine((value) => Object.keys(value).length <= 100, 'Chart report number maps may contain at most 100 entries')
+
+export const ChartReportJsonSnapshotSchema = z
+  .union([z.string().max(2_048), z.number().finite(), z.boolean(), z.null(), ChartReportNumberMapSnapshotSchema])
+  .refine((value) => {
+    try {
+      return new TextEncoder().encode(JSON.stringify(value)).byteLength <= 4_096
+    } catch {
+      return false
+    }
+  }, 'Chart report snapshots may contain at most 4096 UTF-8 bytes')
+
+export const CreateChartReportInputSchema = z.strictObject({
+  songId: ChartReportPublicSongIdSchema,
+  chartId: ChartReportPublicChartIdSchema,
+  fieldKey: ChartReportFieldKeySchema,
+  category: ChartReportCategoryKeySchema,
+  publicationRevision: ChartReportPublicationRevisionSchema,
+  currentValue: ChartReportJsonSnapshotSchema,
+  proposedValue: ChartReportJsonSnapshotSchema,
+  explanation: z.string().trim().min(1).max(4_000),
+  sourceUrls: z.array(z.string().min(1).max(2_048)).max(5),
+  turnstileToken: z.string().min(1).max(2_048),
+})
+
+export const CreateChartReportOutputSchema = z.strictObject({
+  id: z.string().uuid(),
+  state: z.literal('open'),
+  createdAt: z.string().datetime(),
+})
+
+export const ChartReportStalePublicationDataSchema = z.strictObject({
+  songId: ChartReportPublicSongIdSchema,
+  chartId: ChartReportPublicChartIdSchema,
+  activePublicationRevision: ChartReportPublicationRevisionSchema,
+})
+
+export const ChartReportRateLimitedDataSchema = z.strictObject({
+  retryAfterSeconds: z.number().int().positive().max(86_400),
+})
+
+export const chartReportErrors = {
+  CHART_REPORT_VALIDATION_FAILED: {
+    status: 400,
+    message: 'Chart report submission is invalid',
+  },
+  CHART_REPORT_TURNSTILE_FAILED: {
+    status: 400,
+    message: 'Chart report verification failed',
+  },
+  CHART_REPORT_STALE_PUBLICATION: {
+    status: 409,
+    message: 'The published chart changed; review the current value before resubmitting',
+    data: ChartReportStalePublicationDataSchema,
+  },
+  CHART_REPORT_RATE_LIMITED: {
+    status: 429,
+    message: 'Too many chart report submissions',
+    data: ChartReportRateLimitedDataSchema,
+  },
+  CHART_REPORT_CATALOG_UNAVAILABLE: {
+    status: 503,
+    message: 'The published chart catalog is temporarily unavailable',
+  },
+  CHART_REPORT_VERIFICATION_UNAVAILABLE: {
+    status: 503,
+    message: 'Chart report verification is temporarily unavailable',
+  },
+} as const
+
 /**
  * Generic public body returned for a currently removed comment. Keeping the
  * marker in the existing required string field lets older clients preserve
@@ -289,6 +409,44 @@ export const ArcadeVenueDetailInputSchema = z.object({
 })
 
 export const publicContractRoutes = {
+  chartReports: {
+    create: publicProcedure
+      .errors(chartReportErrors)
+      .meta({ access: 'authenticated_write' })
+      .route({
+        method: 'POST',
+        path: '/chart-reports',
+        operationId: 'createChartReport',
+        summary: 'Report a suspected chart-data problem',
+        description:
+          'Captures a proposed correction against the active published chart after independent Turnstile verification. Report management and internal closure notes are private administrator operations.',
+        tags: ['Chart Reports'],
+        spec: (spec) => {
+          const rateLimitedResponse = spec.responses?.['429']
+          if (!rateLimitedResponse || '$ref' in rateLimitedResponse) return spec
+
+          return {
+            ...spec,
+            responses: {
+              ...spec.responses,
+              429: {
+                ...rateLimitedResponse,
+                headers: {
+                  ...rateLimitedResponse.headers,
+                  'Retry-After': {
+                    description:
+                      'Whole seconds until both the per-user and endpoint-global submission limits permit another attempt.',
+                    schema: { type: 'integer', minimum: 1, maximum: 86_400 },
+                  },
+                },
+              },
+            },
+          }
+        },
+      })
+      .input(CreateChartReportInputSchema)
+      .output(CreateChartReportOutputSchema),
+  },
   tags: {
     list: publicProcedure
       .meta({ access: 'public_read' })

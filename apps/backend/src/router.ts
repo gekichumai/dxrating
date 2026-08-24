@@ -19,6 +19,7 @@ import {
 } from './db/schema.js'
 import { eq, and, desc, asc, exists, gte, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import Keyv from 'keyv'
+import type { PoolClient } from 'pg'
 import { config } from './config.js'
 import { renderChartOgImageOutput } from './services/functions/chart-og-image/index.js'
 import { CatalogIdentityError, createCatalogIdentityService } from './services/catalog-identities.js'
@@ -32,14 +33,30 @@ import {
   runPostgresPublicUserWriteLease,
   type PublicAuthenticatedUser,
 } from './public-access-policy.js'
+import {
+  ChartReportRateLimitIdentityUnavailableError,
+  createChartReportSubmissionRateLimiter,
+} from './chart-reports/chart-report-rate-limit.js'
+import { createCloudflareChartReportTurnstileVerifier } from './chart-reports/chart-report-turnstile.js'
+import { createPostgresChartReportCatalogResolver } from './chart-reports/chart-report-catalog.js'
+import { createPostgresChartReportRepository } from './chart-reports/chart-report-repository.js'
+import { createChartReportService } from './chart-reports/chart-report-service.js'
+import {
+  ChartReportSubmissionFailure,
+  createChartReportSubmissionService,
+} from './chart-reports/chart-report-submission.js'
 
 export type PublicRequestContext = {
   readonly headers?: Headers
   readonly user?: PublicAuthenticatedUser
+  readonly publicWriteTransaction?: PoolClient
+  readonly resHeaders?: Headers
 }
 
 const cache = new Keyv({ ttl: 30 * 60 * 1000 }) // 30 minute TTL
 const catalogIdentities = createCatalogIdentityService(async (text, values) => pool.query(text, values))
+const consumeChartReportRateLimit = createChartReportSubmissionRateLimiter(pool)
+const chartReportTurnstile = createCloudflareChartReportTurnstileVerifier(config.chartReports.turnstile)
 
 export const withCatalogIdentityErrors = async <T>(operation: () => Promise<T>): Promise<T> => {
   try {
@@ -103,7 +120,7 @@ export const publicProcedureAccessMiddleware = os.middleware<{ readonly user?: P
       return await publicAccessPolicy({
         access,
         headers: context.headers,
-        operation: async (user) => next({ context: { user } }),
+        operation: async (user, publicWriteTransaction) => next({ context: { user, publicWriteTransaction } }),
       })
     } catch (error) {
       if (error instanceof PublicAuthenticationRequired) {
@@ -124,6 +141,61 @@ export const publicProcedureAccessMiddleware = os.middleware<{ readonly user?: P
 )
 
 const guarded = os.use(publicProcedureAccessMiddleware)
+
+const chartReportsHandler = {
+  create: guarded.chartReports.create.handler(async ({ input, context, errors }) => {
+    const user = context.user
+    const transaction = context.publicWriteTransaction
+    if (!user || !transaction) throw errors.UNAUTHORIZED()
+
+    let rateLimit: Awaited<ReturnType<typeof consumeChartReportRateLimit>>
+    try {
+      rateLimit = await consumeChartReportRateLimit(user.id)
+    } catch (error) {
+      if (error instanceof ChartReportRateLimitIdentityUnavailableError) throw errors.UNAUTHORIZED()
+      throw error
+    }
+    if (!rateLimit.allowed) {
+      context.resHeaders?.set('Retry-After', rateLimit.retryAfterSeconds.toString())
+      throw errors.CHART_REPORT_RATE_LIMITED({
+        data: { retryAfterSeconds: rateLimit.retryAfterSeconds },
+      })
+    }
+
+    const service = createChartReportSubmissionService({
+      catalog: createPostgresChartReportCatalogResolver(transaction),
+      reports: createChartReportService({
+        repository: createPostgresChartReportRepository(transaction),
+      }),
+      turnstile: chartReportTurnstile,
+    })
+
+    try {
+      return await service.create(user.id, input)
+    } catch (error) {
+      if (!(error instanceof ChartReportSubmissionFailure)) throw error
+      switch (error.code) {
+        case 'VALIDATION_FAILED':
+          throw errors.CHART_REPORT_VALIDATION_FAILED()
+        case 'TURNSTILE_REJECTED':
+          throw errors.CHART_REPORT_TURNSTILE_FAILED()
+        case 'TURNSTILE_UNAVAILABLE':
+          throw errors.CHART_REPORT_VERIFICATION_UNAVAILABLE()
+        case 'CATALOG_UNAVAILABLE':
+          throw errors.CHART_REPORT_CATALOG_UNAVAILABLE()
+        case 'STALE_PUBLICATION':
+          if (!error.activePublicationRevision) throw errors.CHART_REPORT_CATALOG_UNAVAILABLE()
+          throw errors.CHART_REPORT_STALE_PUBLICATION({
+            data: {
+              songId: input.songId,
+              chartId: input.chartId,
+              activePublicationRevision: error.activePublicationRevision,
+            },
+          })
+      }
+    }
+  }),
+}
 
 const tagsHandler = {
   list: guarded.tags.list.handler(async ({ input }) => {
@@ -767,6 +839,7 @@ const lxnsHandler = {
 }
 
 export const appRouter = guarded.router({
+  chartReports: chartReportsHandler,
   tags: tagsHandler,
   comments: commentsHandler,
   aliases: aliasesHandler,

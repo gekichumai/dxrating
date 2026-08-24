@@ -143,6 +143,22 @@ describe('Health & Basic Endpoints', () => {
         'aliases',
       ]),
     })
+
+    const chartReportPaths = Object.keys(spec.paths).filter((path) => path.startsWith('/chart-reports'))
+    expect(chartReportPaths).toEqual(['/chart-reports'])
+    expect(Object.keys(spec.paths['/chart-reports'])).toEqual(['post'])
+    expect(spec.paths['/chart-reports'].post).toMatchObject({
+      operationId: 'createChartReport',
+      responses: {
+        429: {
+          headers: {
+            'Retry-After': {
+              schema: { type: 'integer', minimum: 1, maximum: 86_400 },
+            },
+          },
+        },
+      },
+    })
   })
 
   it('GET /docs returns HTML page', async () => {

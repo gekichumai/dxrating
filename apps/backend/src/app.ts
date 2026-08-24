@@ -111,7 +111,7 @@ const createExactCredentialedCors = ({
     origin: (origin) => (allowedOrigins.has(origin) ? origin : null),
     allowHeaders,
     allowMethods,
-    exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],
+    exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID', 'Retry-After'],
     maxAge: 600,
     credentials: true,
   })

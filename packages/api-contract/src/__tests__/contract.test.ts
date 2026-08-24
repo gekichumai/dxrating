@@ -4,6 +4,11 @@ import {
   ArcadeInstallationIdSchema,
   ArcadeVenueDetailInputSchema,
   ArcadeVenueIdSchema,
+  CHART_REPORT_CATEGORY_KEYS,
+  CHART_REPORT_FIELD_KEYS,
+  chartReportErrors,
+  CreateChartReportInputSchema,
+  CreateChartReportOutputSchema,
   CommentWithProfileSchema,
   publicAppContract,
   publicErrors,
@@ -54,6 +59,7 @@ describe('publicAppContract', () => {
       'arcades.games': 'public_read',
       'arcades.venue': 'public_read',
       'arcades.venues': 'public_read',
+      'chartReports.create': 'authenticated_write',
       'comments.create': 'authenticated_write',
       'comments.list': 'public_read',
       'lxns.authorize': 'authenticated_write',
@@ -69,11 +75,116 @@ describe('publicAppContract', () => {
   })
 
   it('exposes browser-callable routes without backend-only routes', () => {
-    expect(Object.keys(publicAppContract)).toEqual(['tags', 'comments', 'aliases', 'analytics', 'arcades', 'lxns'])
+    expect(Object.keys(publicAppContract)).toEqual([
+      'chartReports',
+      'tags',
+      'comments',
+      'aliases',
+      'analytics',
+      'arcades',
+      'lxns',
+    ])
     expect('maimai' in publicAppContract).toBe(false)
     expect('chartOgImage' in publicAppContract).toBe(false)
     expect('monitoring' in publicAppContract).toBe(false)
     expect('admin' in publicAppContract).toBe(false)
+  })
+
+  it('owns a strict, bounded chart-report submission payload without server-authoritative fields', () => {
+    const input = CreateChartReportInputSchema.parse({
+      songId: 'dsng_23456789ab',
+      chartId: 'dsht_abcdefghjk',
+      fieldKey: 'chart.multiver_internal_levels',
+      category: 'incorrect_value',
+      publicationRevision: '42',
+      currentValue: { CiRCLE: 14.7 },
+      proposedValue: null,
+      explanation: 'The current release no longer contains this override.',
+      sourceUrls: ['https://example.com/evidence'],
+      turnstileToken: 'opaque-turnstile-token',
+    })
+    expect(input.fieldKey).toBe('chart.multiver_internal_levels')
+    expect(input.proposedValue).toBeNull()
+    expect(CHART_REPORT_FIELD_KEYS).toHaveLength(28)
+    expect(CHART_REPORT_CATEGORY_KEYS).toEqual(['incorrect_value', 'missing_value', 'outdated_value', 'other'])
+
+    for (const forbiddenKey of [
+      'reporterUserId',
+      'state',
+      'publicationFingerprintSha256',
+      'publicationCatalogRunId',
+      'closedAt',
+      'internalNote',
+      'file',
+    ]) {
+      expect(
+        CreateChartReportInputSchema.safeParse({
+          ...input,
+          [forbiddenKey]: 'forged',
+        }).success,
+      ).toBe(false)
+    }
+    expect(
+      CreateChartReportInputSchema.safeParse({
+        ...input,
+        turnstileToken: 'x'.repeat(2_049),
+      }).success,
+    ).toBe(false)
+    expect(
+      CreateChartReportInputSchema.safeParse({
+        ...input,
+        publicationRevision: 'not-a-revision',
+      }).success,
+    ).toBe(false)
+    expect(
+      CreateChartReportInputSchema.safeParse({
+        ...input,
+        sourceUrls: Array(6).fill('https://example.com/'),
+      }).success,
+    ).toBe(false)
+    expect(
+      CreateChartReportInputSchema.safeParse({
+        ...input,
+        currentValue: 'x'.repeat(2_049),
+      }).success,
+    ).toBe(false)
+    expect(
+      CreateChartReportInputSchema.safeParse({
+        ...input,
+        currentValue: '漢'.repeat(2_048),
+      }).success,
+    ).toBe(false)
+    expect(
+      CreateChartReportInputSchema.safeParse({
+        ...input,
+        currentValue: Object.fromEntries(Array.from({ length: 101 }, (_, index) => [`version-${index}`, 14.7])),
+      }).success,
+    ).toBe(false)
+    expect(
+      CreateChartReportInputSchema.safeParse({
+        ...input,
+        currentValue: { ['漢'.repeat(256)]: 14.7 },
+      }).success,
+    ).toBe(false)
+  })
+
+  it('returns only a minimal report receipt and declares typed safe failures', () => {
+    expect(
+      CreateChartReportOutputSchema.parse({
+        id: '0198e8d1-e05f-7f7f-89ba-fbc33e4b0bd1',
+        state: 'open',
+        createdAt: '2026-08-24T12:00:00.000Z',
+      }),
+    ).toEqual({
+      id: '0198e8d1-e05f-7f7f-89ba-fbc33e4b0bd1',
+      state: 'open',
+      createdAt: '2026-08-24T12:00:00.000Z',
+    })
+    expect(chartReportErrors.CHART_REPORT_STALE_PUBLICATION.status).toBe(409)
+    expect(chartReportErrors.CHART_REPORT_RATE_LIMITED.status).toBe(429)
+    expect(chartReportErrors.CHART_REPORT_RATE_LIMITED.data.keyof().options).toEqual(['retryAfterSeconds'])
+    expect(JSON.stringify(chartReportErrors)).not.toMatch(/token|secret|reporter|email|internalNote/i)
+    expect(Object.keys(publicAppContract.chartReports)).toEqual(['create'])
   })
 
   it('keeps removed comments compatible with existing required-string readers', () => {

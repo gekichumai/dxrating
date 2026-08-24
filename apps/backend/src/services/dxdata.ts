@@ -4,6 +4,7 @@ const PRODUCTION_CHANNEL = 'production-v1'
 const API_SCHEMA_VERSION = 1
 
 export const DXDATA_PATH = '/api/v1/dxdata'
+export const DXDATA_REVISION_HEADER = 'X-DXRating-Catalog-Revision'
 export const DXDATA_BROWSER_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=60, stale-if-error=86400'
 export const DXDATA_CDN_CACHE_CONTROL = 'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800'
 
@@ -11,12 +12,20 @@ export const DXDATA_CORS_OPTIONS = {
   origin: '*',
   allowHeaders: ['Content-Type', 'If-None-Match'],
   allowMethods: ['GET', 'HEAD', 'OPTIONS'],
-  exposeHeaders: ['Content-Length', 'ETag', 'Cache-Control', 'CDN-Cache-Control', 'Cloudflare-CDN-Cache-Control'],
+  exposeHeaders: [
+    'Content-Length',
+    'ETag',
+    DXDATA_REVISION_HEADER,
+    'Cache-Control',
+    'CDN-Cache-Control',
+    'Cloudflare-CDN-Cache-Control',
+  ],
   maxAge: 86400,
 }
 
 interface PublishedDxdataMetadata {
   catalogRunId: string
+  publicationRevision: string
   bodySha256: string
   byteLength: string
   contentType: string
@@ -37,6 +46,8 @@ const parseMetadata = (value: unknown): PublishedDxdataMetadata => {
     !isRecord(value) ||
     typeof value.catalog_run_id !== 'string' ||
     !/^\d+$/.test(value.catalog_run_id) ||
+    typeof value.publication_revision !== 'string' ||
+    !/^[1-9]\d*$/.test(value.publication_revision) ||
     typeof value.body_sha256 !== 'string' ||
     !/^[0-9a-f]{64}$/.test(value.body_sha256) ||
     typeof value.byte_length !== 'string' ||
@@ -49,6 +60,7 @@ const parseMetadata = (value: unknown): PublishedDxdataMetadata => {
 
   return {
     catalogRunId: value.catalog_run_id,
+    publicationRevision: value.publication_revision,
     bodySha256: value.body_sha256,
     byteLength: value.byte_length,
     contentType: value.content_type,
@@ -69,6 +81,7 @@ export const createPostgresDxdataStore = (query: DxdataQuery): DxdataStore => ({
       `
         SELECT
           publication.catalog_run_id::text AS catalog_run_id,
+          publication.revision::text AS publication_revision,
           snapshot.body_sha256,
           snapshot.byte_length::text AS byte_length,
           snapshot.content_type
@@ -125,6 +138,7 @@ const successHeaders = (metadata: PublishedDxdataMetadata) =>
     'Content-Length': metadata.byteLength,
     'Content-Type': metadata.contentType,
     ETag: `"${metadata.bodySha256}"`,
+    [DXDATA_REVISION_HEADER]: metadata.publicationRevision,
   })
 
 const uncachedError = (c: Context, message: string, status: 500 | 503) => {

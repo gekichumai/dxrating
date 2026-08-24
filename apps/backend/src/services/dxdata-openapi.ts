@@ -1,7 +1,7 @@
 import { toOpenAPISchema, type OpenAPI } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
 import { z } from 'zod'
-import { DXDATA_PATH } from './dxdata.js'
+import { DXDATA_PATH, DXDATA_REVISION_HEADER } from './dxdata.js'
 
 const PUBLIC_SONG_ID_PATTERN = /^dsng_[23456789abcdefghjkmnpqrstvwxyz]{10}$/
 const PUBLIC_SHEET_ID_PATTERN = /^dsht_[23456789abcdefghjkmnpqrstvwxyz]{10}$/
@@ -134,6 +134,10 @@ const catalogResponseHeaders = {
   ETag: {
     description: 'Strong validator containing the SHA-256 digest of the response body.',
     schema: { type: 'string', pattern: '^"[0-9a-f]{64}"$' },
+  },
+  [DXDATA_REVISION_HEADER]: {
+    description: 'Positive channel-local revision of the selected immutable catalog publication.',
+    schema: { type: 'string', pattern: '^[1-9][0-9]*$' },
   },
   'Cache-Control': {
     description: 'Browser cache policy.',

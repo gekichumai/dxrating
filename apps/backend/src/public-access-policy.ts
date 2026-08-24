@@ -36,7 +36,7 @@ export const normalizePublicCanonicalSession = (candidate: unknown): CanonicalPu
 
 export type PublicUserWriteLeaseRunner = <Result>(
   identity: { readonly userId: string; readonly sessionId: string },
-  operation: () => Promise<Result>,
+  operation: LockedUserOperation<Result>,
 ) => Promise<Result>
 
 type LockedUserOperation<Result> = (transaction: PoolClient) => Promise<Result>
@@ -145,9 +145,9 @@ const runPostgresLockedUserOperation = async <Result>(
  */
 export const runPostgresPublicUserWriteLease = async <Result>(
   identity: { readonly userId: string; readonly sessionId: string },
-  operation: () => Promise<Result>,
+  operation: LockedUserOperation<Result>,
   database: Pool = pool,
-): Promise<Result> => runPostgresLockedUserOperation(identity, () => operation(), database)
+): Promise<Result> => runPostgresLockedUserOperation(identity, operation, database)
 
 /**
  * Variant for a callback whose one-time server-side OAuth state already proved
@@ -176,7 +176,7 @@ export const createPublicAccessPolicy =
   }: {
     readonly access: PublicProcedureAccessMode | 'unclassified'
     readonly headers?: Headers
-    readonly operation: (user?: PublicAuthenticatedUser) => Promise<Result>
+    readonly operation: (user?: PublicAuthenticatedUser, transaction?: PoolClient) => Promise<Result>
   }): Promise<Result> => {
     if (access === 'unclassified') throw new UnclassifiedPublicProcedure()
     if (access === 'public_read' || access === 'identity_independent') {
@@ -192,7 +192,7 @@ export const createPublicAccessPolicy =
       return operation(authentication.user)
     }
 
-    return runWriteLease({ userId: authentication.user.id, sessionId: authentication.session.id }, () =>
-      operation(authentication.user),
+    return runWriteLease({ userId: authentication.user.id, sessionId: authentication.session.id }, (transaction) =>
+      operation(authentication.user, transaction),
     )
   }

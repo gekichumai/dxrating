@@ -305,6 +305,46 @@ export const chartReports = pgTable(
   ],
 )
 
+/**
+ * Short-lived counters for the public chart-report submission endpoint.
+ *
+ * The global row is deliberately separate from user rows: every limiter
+ * transaction can lock the singleton first and the user row second. This
+ * fixed order makes the two-layer decision atomic without introducing a
+ * user-to-user lock cycle.
+ */
+export const chartReportGlobalRateLimits = pgTable(
+  'chart_report_global_rate_limits',
+  {
+    singleton_key: smallint('singleton_key').primaryKey(),
+    window_started_at: timestamp('window_started_at', { withTimezone: true, precision: 3 }).notNull(),
+    attempt_count: bigint('attempt_count', { mode: 'bigint' }).notNull(),
+    expires_at: timestamp('expires_at', { withTimezone: true, precision: 3 }).notNull(),
+  },
+  (table) => [
+    check('chart_report_global_rate_limits_singleton_check', sql`${table.singleton_key} = 1`),
+    check('chart_report_global_rate_limits_count_check', sql`${table.attempt_count} >= 1`),
+    check('chart_report_global_rate_limits_window_check', sql`${table.expires_at} > ${table.window_started_at}`),
+  ],
+)
+
+export const chartReportUserRateLimits = pgTable(
+  'chart_report_user_rate_limits',
+  {
+    user_id: text('user_id')
+      .primaryKey()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    window_started_at: timestamp('window_started_at', { withTimezone: true, precision: 3 }).notNull(),
+    attempt_count: bigint('attempt_count', { mode: 'bigint' }).notNull(),
+    expires_at: timestamp('expires_at', { withTimezone: true, precision: 3 }).notNull(),
+  },
+  (table) => [
+    check('chart_report_user_rate_limits_count_check', sql`${table.attempt_count} >= 1`),
+    check('chart_report_user_rate_limits_window_check', sql`${table.expires_at} > ${table.window_started_at}`),
+    index('chart_report_user_rate_limits_expiry_idx').on(table.expires_at, table.user_id),
+  ],
+)
+
 // --- Administrator Comment-Moderation State and History ---
 
 export const adminCommentModerationHistory = pgTable(

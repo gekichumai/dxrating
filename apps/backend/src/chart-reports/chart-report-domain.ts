@@ -1,3 +1,7 @@
+import { CHART_REPORT_CATEGORY_KEYS, CHART_REPORT_FIELD_KEYS } from '@gekichumai/api-contract'
+
+export { CHART_REPORT_CATEGORY_KEYS, CHART_REPORT_FIELD_KEYS } from '@gekichumai/api-contract'
+
 export const CHART_REPORT_STATES = ['open', 'closed'] as const
 export type ChartReportState = (typeof CHART_REPORT_STATES)[number]
 
@@ -5,39 +9,8 @@ export type ChartReportState = (typeof CHART_REPORT_STATES)[number]
  * Stable persistence keys for reportable leaf values. User-facing wording is
  * deliberately owned by the clients, not by these stored identifiers.
  */
-export const CHART_REPORT_FIELD_KEYS = [
-  'song.title',
-  'song.artist',
-  'song.category',
-  'song.bpm',
-  'song.image_name',
-  'song.is_new',
-  'song.is_locked',
-  'song.version',
-  'chart.type',
-  'chart.difficulty',
-  'chart.level',
-  'chart.internal_level',
-  'chart.multiver_internal_levels',
-  'chart.note_designer',
-  'chart.note_counts.tap',
-  'chart.note_counts.hold',
-  'chart.note_counts.slide',
-  'chart.note_counts.touch',
-  'chart.note_counts.break',
-  'chart.note_counts.total',
-  'chart.regions.jp',
-  'chart.regions.intl',
-  'chart.regions.cn',
-  'chart.version',
-  'chart.release_date',
-  'chart.internal_id',
-  'chart.is_special',
-  'chart.comment',
-] as const
 export type ChartReportFieldKey = (typeof CHART_REPORT_FIELD_KEYS)[number]
 
-export const CHART_REPORT_CATEGORY_KEYS = ['incorrect_value', 'missing_value', 'outdated_value', 'other'] as const
 export type ChartReportCategoryKey = (typeof CHART_REPORT_CATEGORY_KEYS)[number]
 
 export const CHART_REPORT_PRODUCTION_CHANNEL = 'production-v1' as const

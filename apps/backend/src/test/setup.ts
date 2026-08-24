@@ -118,9 +118,10 @@ export async function authenticatedFetch(url: string, cookie: string, init?: Req
 export async function cleanDatabase() {
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
   // Order matters due to foreign keys
-  // Production callers cannot truncate immutable comments or append-only
-  // moderation history. The test database owner resets them before deleting
-  // users referenced with RESTRICT.
+  // Production callers cannot truncate retained reports, immutable comments,
+  // or append-only moderation history. The test database owner resets them
+  // before deleting users referenced with RESTRICT.
+  await pool.query('TRUNCATE chart_reports, chart_report_user_rate_limits, chart_report_global_rate_limits')
   await pool.query(
     'TRUNCATE admin_comment_moderation_state, admin_comment_moderation_history, comments RESTART IDENTITY',
   )

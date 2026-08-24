@@ -250,6 +250,9 @@ const superAdministrators = parseSuperAdministratorAllowlist(
 const adminFrontendOrigin = env.ADMIN_FRONTEND_URL ?? 'http://localhost:5174'
 const adminTrustedOrigins = uniqueOrigins([adminFrontendOrigin, ...env.ADMIN_ADDITIONAL_TRUSTED_ORIGINS])
 const publicTrustedOrigins = uniqueOrigins([env.FRONTEND_URL, ...env.PUBLIC_ADDITIONAL_TRUSTED_ORIGINS])
+const chartReportTurnstileAllowedHostnames = [
+  ...new Set(publicTrustedOrigins.map((origin) => new URL(origin).hostname)),
+]
 const browserTrustedOrigins = uniqueOrigins([...publicTrustedOrigins, ...adminTrustedOrigins])
 
 export const config = {
@@ -295,6 +298,12 @@ export const config = {
   },
   public: {
     trustedOrigins: publicTrustedOrigins,
+  },
+  chartReports: {
+    turnstile: {
+      secretKey: env.TURNSTILE_SECRET_KEY,
+      allowedHostnames: chartReportTurnstileAllowedHostnames,
+    },
   },
   browserTrustedOrigins,
   lxns: {

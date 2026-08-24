@@ -176,6 +176,13 @@
       "when": 1787588253714,
       "tag": "0024_protect_chart_reports",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1787589270444,
+      "tag": "0025_add_chart_report_rate_limits",
+      "breakpoints": true
     }
   ]
 }

@@ -345,6 +345,42 @@ and repeated closure updates. Verify all `chart_reports_*_idx` indexes are ready
 open-first ordering expression used by the reader: `(state = 'open') DESC, created_at DESC NULLS LAST, id DESC NULLS
 LAST`. Every filtered queue query must retain the same deterministic suffix.
 
+### Chart-report submission rate limits
+
+`0025_add_chart_report_rate_limits` is an expansion-only migration. It creates two new empty tables and an expiry
+index on the empty user-bucket table; it does not scan, rewrite, backfill, or constrain `user`, `chart_reports`, or
+another populated relation. The existing backend can continue serving throughout the migration and can ignore both
+tables. No backfill or later database contract is required.
+
+The public chart-report submission endpoint has two anchored fixed-window limits: **5 authenticated attempts per
+user per 600 seconds** and **300 authenticated attempts endpoint-wide per 60 seconds**. Attempts 1–5 and 1–300 are
+allowed; attempts 6 and 301 are rejected until their respective stored window expires. The public transport first
+performs its bounded structural parsing, so malformed payloads never reach application middleware. For every
+structurally valid request, the endpoint must invoke the limiter immediately after the centralized
+authenticated-write guard and before Turnstile, catalog lookup, normalized URL handling, or field-specific report
+validation. The limiter obtains its own pool connection and commits its own short transaction, so a later semantic
+validation failure or report-transaction rollback does not erase the attempt. A limiter database failure fails the
+submission closed.
+
+Each invocation consumes the global singleton first and the caller's user bucket second, even when one layer is
+already over its limit. Do not reverse or parallelize that lock order. The same database transaction timestamp is
+used for both buckets. A window resets when `expires_at <= database_now`; otherwise its end never slides. When one or
+both layers reject, compute one positive integer retry interval by rounding each violated stored-window remainder up
+and choosing the maximum. Return that exact value unchanged in the typed 429 response and `Retry-After` header; do
+not recompute it from an application clock or expose which layer rejected the request.
+
+The global table is constrained to one singleton row. The user table holds at most one active or stale row per user,
+references `user(id)` with `ON DELETE CASCADE`, and is indexed by expiry. After acquiring both normal bucket locks,
+each attempt removes at most 100 expired user rows in expiry/user order with `FOR UPDATE SKIP LOCKED`; it never deletes
+the global row or an active bucket. This is operational state only: do not add IP addresses, email addresses, user
+agents, request/report content, evidence URLs, Turnstile material, request digests, or report IDs. Never emit user IDs
+from limiter cleanup or error logs.
+
+Grant the runtime role `SELECT`, `INSERT`, and `UPDATE` on `chart_report_global_rate_limits`, and `SELECT`, `INSERT`,
+`UPDATE`, and `DELETE` on `chart_report_user_rate_limits`. Never grant `DELETE` on the global table or `TRUNCATE` on
+either table. Verify the singleton/count/window checks, the cascading user foreign key, and that
+`chart_report_user_rate_limits_expiry_idx` is ready and valid before deploying the submission handler.
+
 ### After expansion and application rollout
 
 - [ ] Confirm the migration service exited 0 and each expected identifier is in its ledger.

@@ -162,6 +162,7 @@ describe('config', () => {
       'https://admin-pr-1.preview.dxrating.net',
     ])
     expect(config.public.trustedOrigins).toEqual(['http://localhost:5173', 'https://web-pr-1.preview.dxrating.net'])
+    expect(config.chartReports.turnstile.allowedHostnames).toEqual(['localhost', 'web-pr-1.preview.dxrating.net'])
     expect(config.browserTrustedOrigins).toEqual([
       'http://localhost:5173',
       'https://web-pr-1.preview.dxrating.net',
@@ -175,6 +176,25 @@ describe('config', () => {
       issuer: 'https://example-team.cloudflareaccess.com',
       audiences: ['a'.repeat(64)],
     })
+  })
+
+  it('derives chart-report Turnstile hostnames only from exact public origins and keeps the secret server-side', async () => {
+    vi.doMock('dotenv', () => ({ config: vi.fn() }))
+    setProductionEnvironment({
+      TURNSTILE_SECRET_KEY: 'server-side-turnstile-secret',
+      PUBLIC_ADDITIONAL_TRUSTED_ORIGINS: '["https://DXRATING.net:8443","https://preview.dxrating.net"]',
+      ADMIN_ADDITIONAL_TRUSTED_ORIGINS: '["https://admin-preview.dxrating.net"]',
+    })
+
+    const { config } = await import('../config.js')
+
+    expect(config.chartReports.turnstile).toEqual({
+      secretKey: 'server-side-turnstile-secret',
+      allowedHostnames: ['dxrating.net', 'preview.dxrating.net'],
+    })
+    expect(config.chartReports.turnstile.allowedHostnames).not.toContain('admin.dxrating.net')
+    expect(config.chartReports.turnstile.allowedHostnames).not.toContain('admin-preview.dxrating.net')
+    expect(config.public.trustedOrigins).toContain('https://dxrating.net:8443')
   })
 
   it('derives the Cloudflare Access verifier configuration from an exact team issuer and audience list', async () => {

@@ -1,4 +1,4 @@
-import type { Pool } from 'pg'
+import type { Pool, PoolClient } from 'pg'
 import { describe, expect, it, vi } from 'vitest'
 import {
   createPublicAccessPolicy,
@@ -48,9 +48,10 @@ const createHarness = ({
   const loadSession = vi.fn().mockResolvedValue(session)
   const loadBanState = vi.fn().mockResolvedValue(state)
   const runWriteLeaseCalls = vi.fn()
+  const transaction = { query: vi.fn() } as unknown as PoolClient
   const runWriteLease: PublicUserWriteLeaseRunner = async (identity, operation) => {
     runWriteLeaseCalls(identity, operation)
-    return operation()
+    return operation(transaction)
   }
   const policy = createPublicAccessPolicy({
     loadSession,
@@ -58,7 +59,7 @@ const createHarness = ({
     database: {} as Pool,
     runWriteLease,
   })
-  return { policy, loadSession, loadBanState, runWriteLease: runWriteLeaseCalls }
+  return { policy, loadSession, loadBanState, runWriteLease: runWriteLeaseCalls, transaction }
 }
 
 describe('public API access policy', () => {
@@ -139,21 +140,38 @@ describe('public API access policy', () => {
     expect(operation).toHaveBeenCalledWith(authentication.user)
   })
 
-  it.each(['tags.attach', 'comments.create', 'aliases.create', 'lxns.authorize', 'lxns.start', 'lxns.disconnect'])(
-    'runs the %s family inside the same serialized user-write lease',
-    async () => {
-      const { policy, loadBanState, runWriteLease } = createHarness()
-      const operation = vi.fn().mockResolvedValue('ok')
+  it.each([
+    'tags.attach',
+    'comments.create',
+    'aliases.create',
+    'chartReports.create',
+    'lxns.authorize',
+    'lxns.start',
+    'lxns.disconnect',
+  ])('runs the %s family inside the same serialized user-write lease', async () => {
+    const { policy, loadBanState, runWriteLease, transaction } = createHarness()
+    const operation = vi.fn().mockResolvedValue('ok')
 
-      await expect(policy({ access: 'authenticated_write', headers: new Headers(), operation })).resolves.toBe('ok')
-      expect(runWriteLease).toHaveBeenCalledWith(
-        { userId: authentication.user.id, sessionId: authentication.session.id },
-        expect.any(Function),
-      )
-      expect(loadBanState).not.toHaveBeenCalled()
-      expect(operation).toHaveBeenCalledWith(authentication.user)
-    },
-  )
+    await expect(policy({ access: 'authenticated_write', headers: new Headers(), operation })).resolves.toBe('ok')
+    expect(runWriteLease).toHaveBeenCalledWith(
+      { userId: authentication.user.id, sessionId: authentication.session.id },
+      expect.any(Function),
+    )
+    expect(loadBanState).not.toHaveBeenCalled()
+    expect(operation).toHaveBeenCalledWith(authentication.user, transaction)
+  })
+
+  it('does not add an email-verification gate to authenticated chart-report writes', async () => {
+    const unverified = {
+      ...authentication,
+      user: { ...authentication.user, emailVerified: false },
+    }
+    const { policy, transaction } = createHarness({ session: unverified })
+    const operation = vi.fn().mockResolvedValue('created')
+
+    await expect(policy({ access: 'authenticated_write', headers: new Headers(), operation })).resolves.toBe('created')
+    expect(operation).toHaveBeenCalledWith(unverified.user, transaction)
+  })
 
   it('fails closed before authentication when a procedure is not classified', async () => {
     const { policy, loadSession } = createHarness()
