@@ -1,13 +1,24 @@
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import {
   ArcadeInstallationIdSchema,
   ArcadeVenueDetailInputSchema,
   ArcadeVenueIdSchema,
+  CommentWithProfileSchema,
   publicAppContract,
   publicErrors,
   LxnsStartOutputSchema,
+  PUBLIC_COMMENT_TOMBSTONE_CONTENT,
   PUBLIC_PROCEDURE_ACCESS_MODES,
 } from '../contract.js'
+
+const legacyCommentWithProfileSchema = z.object({
+  id: z.number(),
+  parent_id: z.number().nullable(),
+  created_at: z.date().or(z.string()),
+  content: z.string(),
+  display_name: z.string().nullable(),
+})
 
 const collectAccessInventory = (
   node: Record<string, unknown>,
@@ -18,7 +29,10 @@ const collectAccessInventory = (
     if (!value || typeof value !== 'object') continue
     const candidate = value as Record<string, unknown>
     const definition = candidate['~orpc'] as
-      | { readonly route?: unknown; readonly meta?: { readonly access?: unknown } }
+      | {
+          readonly route?: unknown
+          readonly meta?: { readonly access?: unknown }
+        }
       | undefined
     const path = [...prefix, name]
     if (definition?.route) {
@@ -60,6 +74,56 @@ describe('publicAppContract', () => {
     expect('chartOgImage' in publicAppContract).toBe(false)
     expect('monitoring' in publicAppContract).toBe(false)
     expect('admin' in publicAppContract).toBe(false)
+  })
+
+  it('keeps removed comments compatible with existing required-string readers', () => {
+    const publicComment = CommentWithProfileSchema.parse({
+      id: 41,
+      parent_id: 17,
+      created_at: '2026-08-24T12:00:00.000Z',
+      content: PUBLIC_COMMENT_TOMBSTONE_CONTENT,
+      display_name: 'Previous author',
+    })
+
+    expect(PUBLIC_COMMENT_TOMBSTONE_CONTENT).toBe('[deleted]')
+    expect(legacyCommentWithProfileSchema.parse(publicComment)).toEqual(publicComment)
+    expect(
+      CommentWithProfileSchema.safeParse({
+        ...publicComment,
+        content: undefined,
+      }).success,
+    ).toBe(false)
+  })
+
+  it('serializes only the stable public comment projection', () => {
+    const publicComment = CommentWithProfileSchema.parse({
+      id: 41,
+      parent_id: null,
+      created_at: '2026-08-24T12:00:00.000Z',
+      content: PUBLIC_COMMENT_TOMBSTONE_CONTENT,
+      display_name: null,
+      original_body: 'retained original text',
+      deletion_reason: 'private moderation reason',
+      moderator_user_id: 'moderator-1',
+      moderation_history: [{ action: 'delete' }],
+      state_version: '99',
+    })
+
+    expect(publicComment).toEqual({
+      id: 41,
+      parent_id: null,
+      created_at: '2026-08-24T12:00:00.000Z',
+      content: PUBLIC_COMMENT_TOMBSTONE_CONTENT,
+      display_name: null,
+    })
+    expect(Object.keys(CommentWithProfileSchema.shape)).toEqual([
+      'id',
+      'parent_id',
+      'created_at',
+      'content',
+      'display_name',
+    ])
+    expect(Object.keys(publicAppContract.comments)).toEqual(['create', 'list'])
   })
 
   it('keeps public active-ban errors generic and free of moderation state', () => {

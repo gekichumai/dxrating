@@ -69,6 +69,7 @@ const adminAccessBoundary = createAdminAccessBoundaryMiddleware(adminAccessVerif
 
 const API_CATALOG_PROFILE_URL = 'https://www.rfc-editor.org/info/rfc9727'
 const API_CATALOG_CONTENT_TYPE = `application/linkset+json; profile="${API_CATALOG_PROFILE_URL}"`
+const PUBLIC_COMMENTS_PATH = '/api/v1/comments'
 const ARCADE_VENUES_PATH = '/api/v1/arcades/venues'
 const ARCADE_VENUES_BROWSER_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=60, stale-if-error=86400'
 const ARCADE_VENUES_CDN_CACHE_CONTROL = 'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800'
@@ -651,6 +652,17 @@ const dxdataHandler = createDxdataHandler<AppEnvironment>(dxdataStore, (error, c
 // its small metadata row first so HEAD and conditional requests never fetch
 // the potentially large snapshot body.
 app.on(['GET', 'HEAD'], DXDATA_PATH, dxdataHandler)
+
+// Comment moderation state changes immediately, and a cached pre-deletion
+// response would retain text that is no longer public. Comments therefore
+// bypass browser, shared-CDN, and Cloudflare storage entirely; every list
+// request observes the current database projection.
+app.use(PUBLIC_COMMENTS_PATH, async (c, next) => {
+  await next()
+  c.header('Cache-Control', 'no-store')
+  c.header('CDN-Cache-Control', 'no-store')
+  c.header('Cloudflare-CDN-Cache-Control', 'no-store')
+})
 
 const arcadeVenuesCacheHeaders = createMiddleware(async (c, next) => {
   await next()

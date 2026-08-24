@@ -228,7 +228,17 @@ session, author, comment, and state before advancing the version. Administrators
 comments, super administrators may also act on persisted administrators' comments, and nobody may act on their own or
 an effective super administrator's comment.
 
-The #317 private writer must be deployed together with, or remain operationally dark until, #318's tombstone-aware
-public reader is active. Public comment responses must never expose retained original text, deletion reasons, moderator
-identity, or history for a deleted comment. There is deliberately no comment-edit, replacement-body, revision, or hard-
-delete procedure.
+Deploy the additive comment-moderation schema before the tombstone-aware public reader. Keep delete and restore calls
+blocked at the administrator access boundary while that reader rolls out; do not enable the private writer until every
+old backend instance has drained and the new reader generation has passed an anonymous comment-read check. Before the
+first deletion, prove that no CDN Cache Rule covers `/api/v1/comments*`; if one does or its prior behavior is unknown,
+bypass it and purge that path before opening writes.
+
+The public reader left-joins current moderation state, treats a missing row or a restoration as visible, and substitutes
+`[deleted]` inside PostgreSQL for an active deletion. It retains the immutable comment ID, parent, chart scope, creation
+time, ordering, and author display name, but never selects the retained original text, deletion reason, moderator identity,
+event identifiers, or history into the public result. Public comment responses carry browser, shared-CDN, and Cloudflare
+`no-store` directives, and the backend has no comment-result cache, so a successful atomic delete or restore is visible on
+the next read rather than after an invalidation window. A request whose database snapshot began before the transition
+committed may finish with the prior representation, but that response is non-storable. There is deliberately no
+comment-edit, replacement-body, revision, or hard-delete procedure.

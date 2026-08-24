@@ -17,6 +17,7 @@ export const HONO_ROUTE_ACCESS_POLICIES = [
   { method: 'GET', path: '/api/v1/dxdata', access: 'public_read' },
   { method: 'HEAD', path: '/api/v1/dxdata', access: 'public_read' },
   { method: 'GET', path: '/api/v1/arcades/venues', access: 'public_read' },
+  { method: 'ALL', path: '/api/v1/comments', access: 'public_procedure_namespace' },
   { method: 'ALL', path: '/api/v1/*', access: 'public_procedure_namespace' },
   { method: 'GET', path: '/spec.json', access: 'public_read' },
   { method: 'GET', path: '/docs', access: 'public_read' },

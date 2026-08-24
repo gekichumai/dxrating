@@ -86,6 +86,13 @@ export const CreateCommentInputSchema = z.object({
   content: z.string(),
 })
 
+/**
+ * Generic public body returned for a currently removed comment. Keeping the
+ * marker in the existing required string field lets older clients preserve
+ * the comment's place in a thread without learning private moderation data.
+ */
+export const PUBLIC_COMMENT_TOMBSTONE_CONTENT = '[deleted]' as const
+
 export const CommentSchema = z.object({
   id: z.number(),
   created_at: z.date().or(z.string()),
@@ -102,7 +109,7 @@ export const CommentWithProfileSchema = z.object({
   id: z.number(),
   parent_id: z.number().nullable(),
   created_at: z.date().or(z.string()),
-  content: z.string(),
+  content: z.string().describe(`Comment body. Currently removed comments use ${PUBLIC_COMMENT_TOMBSTONE_CONTENT}.`),
   display_name: z.string().nullable(),
 })
 

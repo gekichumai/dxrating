@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/node'
 import { ORPCError, implement } from '@orpc/server'
+import { PUBLIC_COMMENT_TOMBSTONE_CONTENT } from '@gekichumai/api-contract'
 import { appContract } from './contract.js'
 import { db, pool } from './db/index.js'
 import {
@@ -7,6 +8,7 @@ import {
   tagGroups,
   tagSongs,
   comments,
+  adminCommentModerationState,
   profiles,
   songAliases,
   arcadeGames,
@@ -263,11 +265,18 @@ const commentsHandler = {
         id: comments.id,
         parent_id: comments.parent_id,
         created_at: comments.created_at,
-        content: comments.content,
+        // Project the tombstone in PostgreSQL so a removed body's retained
+        // evidence never crosses the public reader's database boundary.
+        content: sql<string>`CASE
+          WHEN ${adminCommentModerationState.established_action} = 'delete'
+            THEN ${PUBLIC_COMMENT_TOMBSTONE_CONTENT}
+          ELSE ${comments.content}
+        END`,
         display_name: profiles.display_name,
       })
       .from(comments)
       .leftJoin(profiles, eq(profiles.id, comments.created_by))
+      .leftJoin(adminCommentModerationState, sql`${adminCommentModerationState.comment_id} = ${comments.id}`)
       .where(
         and(
           inArray(comments.song_id, identity.legacySongIds),
