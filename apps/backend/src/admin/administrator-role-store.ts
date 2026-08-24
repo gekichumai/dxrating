@@ -4,6 +4,7 @@ import type { AdminMutationAuthorizationTransaction } from './authorization.js'
 import { createPostgresAdminMutationAuthorizationTransaction } from './mutation-authorization-store.js'
 import type { PersistedUserRole } from './role-policy.js'
 import { revokeAllUserSessionsInTransaction } from './session-transitions.js'
+import { loadPostgresUserBanStates, type EvaluatedUserBanState } from './user-ban-store.js'
 
 export type AdministratorAccountRecord = {
   readonly id: string
@@ -60,6 +61,7 @@ export type AdministratorRoleTransaction = {
 export interface AdministratorRoleStore {
   listDatabaseAdministrators(): Promise<readonly AdministratorAccountRecord[]>
   loadExistingUsersById(orderedUserIds: readonly string[]): Promise<readonly AdministratorAccountRecord[]>
+  loadBanStatesByUserId(orderedUserIds: readonly string[]): Promise<ReadonlyMap<string, EvaluatedUserBanState>>
   listRoleHistory(input: {
     readonly subjectUserId: string
     readonly cursor?: StoredAdministratorRoleHistoryCursor
@@ -223,6 +225,10 @@ export const createPostgresAdministratorRoleStore = (database: Pool = pool): Adm
       [[...orderedUserIds]],
     )
     return result.rows.map(projectAccount)
+  },
+
+  loadBanStatesByUserId(orderedUserIds) {
+    return loadPostgresUserBanStates(database, orderedUserIds)
   },
 
   async listRoleHistory({ subjectUserId, cursor, limit }) {

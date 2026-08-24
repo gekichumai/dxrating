@@ -17,6 +17,7 @@ import {
   type StoredAdministratorRoleHistoryCursor,
 } from './administrator-role-store.js'
 import type { SuperAdministratorAllowlist } from './super-administrator-allowlist.js'
+import type { EvaluatedUserBanState } from './user-ban-store.js'
 
 const MAXIMUM_USER_ID_LENGTH = 255
 
@@ -157,14 +158,21 @@ const projectRevokeChange = (change: StoredAdministratorRoleChange): Administrat
 const projectRosterEntry = (
   account: AdministratorAccountRecord,
   superAdministrators: SuperAdministratorAllowlist,
+  banState: EvaluatedUserBanState,
 ): AdministratorRosterEntry => {
   const deploymentRole = superAdministrators.hasExactUserId(account.id)
+  const accountStatus =
+    banState.status === 'temporarily_banned' && banState.banExpiresAt
+      ? { status: 'temporarily_banned' as const, expiresAt: banState.banExpiresAt.toISOString() }
+      : banState.status === 'permanently_banned'
+        ? { status: 'permanently_banned' as const }
+        : { status: 'active' as const }
   const identity = {
     userId: account.id,
     displayName: account.displayName,
     email: account.email,
     emailVerified: account.emailVerified,
-    accountStatus: { status: 'active' as const },
+    accountStatus,
   }
   if (deploymentRole) {
     return { ...identity, effectiveRole: 'super_admin', roleSource: 'deployment' }
@@ -237,11 +245,15 @@ export const createAdministratorRoleService = ({
       for (const account of [...databaseAdministrators, ...configuredAdministrators]) {
         accountsById.set(account.id, account)
       }
+      const orderedAccounts = [...accountsById.values()].sort((left, right) => left.id.localeCompare(right.id, 'en'))
+      const banStates = await store.loadBanStatesByUserId(orderedAccounts.map((account) => account.id))
 
       return {
-        items: [...accountsById.values()]
-          .sort((left, right) => left.id.localeCompare(right.id, 'en'))
-          .map((account) => projectRosterEntry(account, superAdministrators)),
+        items: orderedAccounts.map((account) => {
+          const banState = banStates.get(account.id)
+          if (!banState) throw new Error('Missing evaluated administrator ban state')
+          return projectRosterEntry(account, superAdministrators, banState)
+        }),
       }
     },
 

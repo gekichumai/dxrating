@@ -122,22 +122,54 @@ administrators, but generic request, error, and authorization telemetry must nev
 updates or deletes even by the table owner. The traffic role receives only `SELECT` and `INSERT` on the table and the
 required sequence access; see [backend-online-migrations.md](./backend-online-migrations.md) for grants.
 
+## User-ban state and transitions
+
+User bans use a private one-row projection plus an immutable, subject-scoped event chain. No projection row means the
+account has never been moderated. A retained `unban` row means explicitly unbanned, a `ban` row with no expiry is
+permanent, a `ban` row with an expiry strictly later than the database evaluation time is temporarily active, and an
+expiry equal to or earlier than that time is expired. Expiry never appends a synthetic event and never depends on a
+cleanup job. Expired and explicitly unbanned rows remain as version tombstones.
+
+Every transition supplies the exact establishing event ID it observed, or `null` only when no projection row exists.
+The service rechecks that version after locking the actor and subject. A successful ban, replacement, or unban appends
+one event and advances the projection in the same transaction. This retained version prevents a ban-and-unban cycle
+from looking like the original unmoderated state to a stale client. An equivalent active ban and an inactive unban are
+conflicts with no event. Changing an active ban's normalized reason, expiry, or kind appends a replacement event while
+preserving the uninterrupted original `ban_started_at`; a new ban after expiry or explicit unban starts a new interval.
+
+Both ban and unban require recent primary authentication and use the `moderate` hierarchy: administrators may act on
+ordinary users, effective super administrators may also act on persisted administrators, and nobody may act on an
+effective super administrator. A ban requires a trimmed internal reason of at most 1,000 characters. An unban reason
+may be omitted; when supplied it must meet the same bounds. The ban reason is intended for authorized administrators
+and, only after identity is proven, the affected account's sign-in denial implemented by the follow-up authentication
+guard. It must not appear in public user/comment responses, generic request logs, or unexpected-error telemetry.
+
+Every successful ban invokes the all-session revocation primitive in its transaction, including a replacement ban.
+Unban does not recreate a session or restore primary-authentication proof. Ban state is authorization state only:
+profiles, comments, tags, aliases, reports, and other authored records remain unchanged and publicly readable wherever
+they were already public. The model and internal service alone do not guard login or every authenticated write; deploy
+the centralized enforcement inventory before exposing ban actions through an administrator API.
+
 ## Session-transition deployment and rollback
 
 Apply `0013_add_admin_session_transitions`, then the additive `0014_add_admin_role_history`, and finally
-`0015_protect_admin_role_history` before deploying this backend. Migration `0013` adds two non-null,
-database-defaulted timestamps. Existing session markers are stamped no later than the existing-user authorization
-floors, making old administrator sessions stale. Old and new binaries can continue inserting users and sessions
-because PostgreSQL owns both defaults, and the fields are omitted from Better Auth's public schema. The migration
-acquires the `user` table before `session`, matching live transaction lock order; do not reorder those statements
-during deployment. Migrations `0014` and `0015` only add the empty history table, index, constraints, privileges, and
-append-only trigger, so the previous binary can continue serving during expansion.
+`0015_protect_admin_role_history` before deploying the role-aware backend. Apply the additive
+`0016_add_admin_user_bans` and then `0017_protect_admin_user_bans` before deploying code that reads the ban
+projection. Migration `0013` adds two non-null, database-defaulted timestamps. Existing session markers are stamped
+no later than the existing-user authorization floors, making old administrator sessions stale. Old and new binaries
+can continue inserting users and sessions because PostgreSQL owns both defaults, and the fields are omitted from
+Better Auth's public schema. The migration acquires the `user` table before `session`, matching live transaction lock
+order; do not reorder those statements during deployment. Migrations `0014` through `0017` add empty private tables,
+indexes, constraints, privileges, and database guards without rewriting users or authored content, so the previous
+binary can continue serving during expansion. Never deploy a writer between an expansion migration and its adjacent
+protection migration.
 
 Rolling application code back to a binary that ignores these markers requires an administrator-traffic gate. Drain
 the generation-aware fleet, revoke every session belonging to a persisted or effective administrator, restore a
 compatible allowlist configuration, and only then expose the older binary. Leave the additive session columns and
-role-history table in place; the previous binary does not depend on or write the table. Never reverse either schema
-migration, delete retained role history, or reuse an older allowlist generation during an incident rollback.
+role/ban tables in place; the previous binary does not depend on or write them. Never reverse these schema migrations,
+delete retained domain history or ban-state version tombstones, or reuse an older allowlist generation during an
+incident rollback.
 
 Role-management endpoints must re-read both actor and target under the authorization policy. Administrators may
 moderate effective users only. Super administrators may also moderate persisted administrators and grant or revoke

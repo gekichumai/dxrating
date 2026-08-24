@@ -120,6 +120,7 @@ export async function cleanDatabase() {
   // Order matters due to foreign keys
   // Production callers cannot truncate this append-only table. The test
   // database owner resets it before deleting users referenced with RESTRICT.
+  await pool.query('TRUNCATE admin_user_ban_state, admin_user_ban_history RESTART IDENTITY')
   await pool.query('TRUNCATE admin_role_change_history RESTART IDENTITY')
   await pool.query('DELETE FROM arcade.geocoding_coordinate_invalidations')
   await pool.query('DELETE FROM arcade.geocoding_coordinate_decisions')

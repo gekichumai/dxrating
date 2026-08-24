@@ -16,6 +16,8 @@ import {
   uniqueIndex,
   unique,
   check,
+  foreignKey,
+  uuid,
 } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
 import { account, session, user, userRole } from './auth-schema.js'
@@ -109,6 +111,114 @@ export const adminRoleChangeHistory = pgTable(
       table.created_at.desc(),
       table.id.desc(),
     ),
+  ],
+)
+
+// --- Administrator User-Ban State and History ---
+
+export const adminUserBanHistory = pgTable(
+  'admin_user_ban_history',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    subject_user_id: text('subject_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    actor_user_id: text('actor_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    previous_event_id: bigint('previous_event_id', { mode: 'bigint' })
+      .unique()
+      .references((): AnyPgColumn => adminUserBanHistory.id, { onDelete: 'restrict' }),
+    action: text('action').$type<'ban' | 'unban'>().notNull(),
+    reason: text('reason'),
+    ban_started_at: timestamp('ban_started_at', { withTimezone: true, precision: 3 }),
+    expires_at: timestamp('expires_at', { withTimezone: true, precision: 3 }),
+    request_correlation_id: uuid('request_correlation_id'),
+    created_at: timestamp('created_at', { withTimezone: true, precision: 3 }).defaultNow().notNull(),
+  },
+  (table) => [
+    check('admin_user_ban_history_action_check', sql`${table.action} in ('ban', 'unban')`),
+    check(
+      'admin_user_ban_history_reason_check',
+      sql`(${table.action} = 'ban'
+          and ${table.reason} is not null
+          and length(${table.reason}) between 1 and 1000
+          and ${table.reason} !~ '^[[:space:]]'
+          and ${table.reason} !~ '[[:space:]]$')
+        or (${table.action} = 'unban'
+          and (${table.reason} is null
+            or (length(${table.reason}) between 1 and 1000
+              and ${table.reason} !~ '^[[:space:]]'
+              and ${table.reason} !~ '[[:space:]]$')))`,
+    ),
+    check(
+      'admin_user_ban_history_expiry_check',
+      sql`(${table.action} = 'ban'
+          and ${table.ban_started_at} is not null
+          and ${table.ban_started_at} <= ${table.created_at}
+          and (${table.expires_at} is null or ${table.expires_at} > ${table.created_at}))
+        or (${table.action} = 'unban'
+          and ${table.ban_started_at} is null
+          and ${table.expires_at} is null)`,
+    ),
+    unique('admin_user_ban_history_event_identity_unique').on(
+      table.id,
+      table.subject_user_id,
+      table.actor_user_id,
+      table.action,
+    ),
+    index('admin_user_ban_history_subject_created_idx').on(
+      table.subject_user_id,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    uniqueIndex('admin_user_ban_history_subject_root_unique')
+      .on(table.subject_user_id)
+      .where(sql`${table.previous_event_id} is null`),
+  ],
+)
+
+export const adminUserBanState = pgTable(
+  'admin_user_ban_state',
+  {
+    subject_user_id: text('subject_user_id')
+      .primaryKey()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    established_action: text('established_action').$type<'ban' | 'unban'>().notNull(),
+    ban_started_at: timestamp('ban_started_at', { withTimezone: true, precision: 3 }),
+    ban_expires_at: timestamp('ban_expires_at', { withTimezone: true, precision: 3 }),
+    ban_reason: text('ban_reason'),
+    actor_user_id: text('actor_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    established_by_event_id: bigint('established_by_event_id', { mode: 'bigint' }).notNull().unique(),
+  },
+  (table) => [
+    check('admin_user_ban_state_action_check', sql`${table.established_action} in ('ban', 'unban')`),
+    check(
+      'admin_user_ban_state_projection_check',
+      sql`(${table.established_action} = 'ban'
+          and ${table.ban_started_at} is not null
+          and ${table.ban_reason} is not null
+          and length(${table.ban_reason}) between 1 and 1000
+          and ${table.ban_reason} !~ '^[[:space:]]'
+          and ${table.ban_reason} !~ '[[:space:]]$'
+          and (${table.ban_expires_at} is null or ${table.ban_expires_at} > ${table.ban_started_at}))
+        or (${table.established_action} = 'unban'
+          and ${table.ban_started_at} is null
+          and ${table.ban_expires_at} is null
+          and ${table.ban_reason} is null)`,
+    ),
+    foreignKey({
+      name: 'admin_user_ban_state_establishing_event_fk',
+      columns: [table.established_by_event_id, table.subject_user_id, table.actor_user_id, table.established_action],
+      foreignColumns: [
+        adminUserBanHistory.id,
+        adminUserBanHistory.subject_user_id,
+        adminUserBanHistory.actor_user_id,
+        adminUserBanHistory.action,
+      ],
+    }).onDelete('restrict'),
   ],
 )
 
@@ -746,6 +856,45 @@ export const adminRoleChangeHistoryRelations = relations(adminRoleChangeHistory,
   }),
 }))
 
+export const adminUserBanHistoryRelations = relations(adminUserBanHistory, ({ one, many }) => ({
+  subject: one(user, {
+    fields: [adminUserBanHistory.subject_user_id],
+    references: [user.id],
+    relationName: 'admin_user_ban_subject',
+  }),
+  actor: one(user, {
+    fields: [adminUserBanHistory.actor_user_id],
+    references: [user.id],
+    relationName: 'admin_user_ban_actor',
+  }),
+  previousEvent: one(adminUserBanHistory, {
+    fields: [adminUserBanHistory.previous_event_id],
+    references: [adminUserBanHistory.id],
+    relationName: 'admin_user_ban_event_chain',
+  }),
+  subsequentEvents: many(adminUserBanHistory, {
+    relationName: 'admin_user_ban_event_chain',
+  }),
+  establishedState: one(adminUserBanState),
+}))
+
+export const adminUserBanStateRelations = relations(adminUserBanState, ({ one }) => ({
+  subject: one(user, {
+    fields: [adminUserBanState.subject_user_id],
+    references: [user.id],
+    relationName: 'admin_user_ban_state_subject',
+  }),
+  actor: one(user, {
+    fields: [adminUserBanState.actor_user_id],
+    references: [user.id],
+    relationName: 'admin_user_ban_state_actor',
+  }),
+  establishingEvent: one(adminUserBanHistory, {
+    fields: [adminUserBanState.established_by_event_id],
+    references: [adminUserBanHistory.id],
+  }),
+}))
+
 export const songAliasesRelations = relations(songAliases, ({ one }) => ({
   creator: one(user, {
     fields: [songAliases.created_by],
@@ -777,6 +926,12 @@ export const userExtraRelations = relations(user, ({ one, many }) => ({
   }),
   adminRoleChangesAsActor: many(adminRoleChangeHistory, {
     relationName: 'admin_role_change_actor',
+  }),
+  banHistoryAsSubject: many(adminUserBanHistory, {
+    relationName: 'admin_user_ban_subject',
+  }),
+  banHistoryAsActor: many(adminUserBanHistory, {
+    relationName: 'admin_user_ban_actor',
   }),
   songAliases: many(songAliases),
   lxnsOauthToken: one(lxnsOauthTokens),

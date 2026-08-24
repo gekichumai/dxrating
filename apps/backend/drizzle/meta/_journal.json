@@ -113,6 +113,20 @@
       "when": 1787559579368,
       "tag": "0015_protect_admin_role_history",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1787561006738,
+      "tag": "0016_add_admin_user_bans",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1787561007155,
+      "tag": "0017_protect_admin_user_bans",
+      "breakpoints": true
     }
   ]
 }
