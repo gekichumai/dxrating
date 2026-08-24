@@ -601,6 +601,9 @@ importers:
 
   packages/admin-contract:
     dependencies:
+      '@gekichumai/api-contract':
+        specifier: workspace:*
+        version: link:../api-contract
       '@orpc/contract':
         specifier: 'catalog:'
         version: 1.14.3(@opentelemetry/api@1.9.1)

@@ -964,6 +964,58 @@ describe('chart-report persistence migrations', () => {
          ORDER BY closed_at DESC NULLS LAST, id DESC NULLS LAST
          LIMIT 50`,
       )
+
+      const combinedQueuePlan = await migrationPool.query<{
+        readonly 'QUERY PLAN': [{ readonly Plan: ExplainNode }]
+      }>(
+        `EXPLAIN (ANALYZE, FORMAT JSON)
+         SELECT id
+         FROM chart_reports
+         WHERE state = $1
+           AND stable_chart_id = $2
+           AND target_field_key = $3
+           AND category = $4
+           AND reporter_user_id = $5
+           AND created_at >= $6::timestamptz
+           AND created_at < $7::timestamptz
+           AND created_at < timestamptz '2026-01-01 00:00:21+00'
+           AND (closed_at IS NULL OR closed_at < timestamptz '2026-01-01 00:00:21+00')
+           AND publication_revision = $8::bigint
+           AND ((state = 'open'), created_at, id) <
+             ($9::boolean, $10::timestamptz, $11::uuid)
+         ORDER BY (state = 'open') DESC, created_at DESC, id DESC
+         LIMIT 51`,
+        [
+          'open',
+          'dsht_23456789ab',
+          'chart.level',
+          'incorrect_value',
+          'plan-reporter-2',
+          '2026-01-01T00:00:01.000Z',
+          '2026-01-01T00:00:20.000Z',
+          '3',
+          true,
+          '2026-01-01T00:00:19.000Z',
+          'ffffffff-ffff-4fff-bfff-ffffffffffff',
+        ],
+      )
+      const combinedQueueNodes = flattenPlan(combinedQueuePlan.rows[0]!['QUERY PLAN'][0].Plan)
+      const combinedQueueIndexes = combinedQueueNodes.flatMap((node) =>
+        node['Index Name'] === undefined ? [] : [node['Index Name']],
+      )
+      expect(
+        combinedQueueIndexes.some((indexName) =>
+          [
+            'chart_reports_queue_idx',
+            'chart_reports_chart_queue_idx',
+            'chart_reports_field_queue_idx',
+            'chart_reports_category_queue_idx',
+            'chart_reports_reporter_queue_idx',
+            'chart_reports_publication_revision_queue_idx',
+          ].includes(indexName),
+        ),
+      ).toBe(true)
+      expect(combinedQueueNodes.some((node) => node['Node Type'] === 'Sort')).toBe(false)
     } finally {
       await migrationPool.query('RESET enable_bitmapscan')
       await migrationPool.query('RESET enable_seqscan')

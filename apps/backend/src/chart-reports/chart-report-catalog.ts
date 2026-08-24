@@ -70,15 +70,42 @@ const requirePublishedCatalogRow = (
       bodyText: value.body_text,
     }
   } catch (error) {
-    throw new ChartReportCatalogFailure('CATALOG_UNAVAILABLE', undefined, { cause: error })
+    throw new ChartReportCatalogFailure('CATALOG_UNAVAILABLE', undefined, {
+      cause: error,
+    })
   }
 }
 
-type PublishedCatalog = ReturnType<typeof PublishedDxdataCatalogSchema.parse>
-type PublishedSong = PublishedCatalog['songs'][number]
-type PublishedChart = PublishedSong['sheets'][number]
+export type PublishedChartReportCatalog = ReturnType<typeof PublishedDxdataCatalogSchema.parse>
+export type PublishedChartReportSong = PublishedChartReportCatalog['songs'][number]
+export type PublishedChartReportChart = PublishedChartReportSong['sheets'][number]
 
-const readChartReportField = (song: PublishedSong, chart: PublishedChart, fieldKey: ChartReportFieldKey): unknown => {
+/**
+ * A deliberately generic parser failure. Callers must not surface Zod or JSON
+ * parser details because an immutable catalog body can contain non-public
+ * source material unrelated to the requested chart.
+ */
+export class PublishedChartReportCatalogDocumentFailure extends Error {
+  constructor() {
+    super('Published chart catalog document is invalid')
+    this.name = 'PublishedChartReportCatalogDocumentFailure'
+  }
+}
+
+export const parsePublishedChartReportCatalogBody = (bodyText: unknown): PublishedChartReportCatalog => {
+  if (typeof bodyText !== 'string') throw new PublishedChartReportCatalogDocumentFailure()
+  try {
+    return PublishedDxdataCatalogSchema.parse(JSON.parse(bodyText))
+  } catch {
+    throw new PublishedChartReportCatalogDocumentFailure()
+  }
+}
+
+const readChartReportField = (
+  song: PublishedChartReportSong,
+  chart: PublishedChartReportChart,
+  fieldKey: ChartReportFieldKey,
+): unknown => {
   switch (fieldKey) {
     case 'song.title':
       return song.title
@@ -139,6 +166,32 @@ const readChartReportField = (song: PublishedSong, chart: PublishedChart, fieldK
   }
 }
 
+export type PublishedChartReportFieldContext = {
+  readonly song: PublishedChartReportSong
+  readonly chart: PublishedChartReportChart
+  readonly fieldValue: ChartReportJsonSnapshot
+}
+
+/**
+ * Resolves a reportable leaf from one already parsed immutable catalog body.
+ * Returning undefined means the stable song/chart pair is absent from this
+ * publication; parsing and field-value incompatibilities remain failures.
+ */
+export const resolvePublishedChartReportField = (
+  catalog: PublishedChartReportCatalog,
+  chartIdentity: ChartReportIdentity,
+  fieldKey: ChartReportFieldKey,
+): PublishedChartReportFieldContext | undefined => {
+  const song = catalog.songs.find((candidate) => candidate.id === chartIdentity.stableSongId)
+  const chart = song?.sheets.find((candidate) => candidate.id === chartIdentity.stableChartId)
+  if (!song || !chart) return undefined
+  return Object.freeze({
+    song,
+    chart,
+    fieldValue: normalizeChartReportJsonSnapshot(fieldKey, readChartReportField(song, chart, fieldKey)),
+  })
+}
+
 export interface ChartReportCatalogResolver {
   resolveActiveField(input: {
     readonly stableSongId: unknown
@@ -161,7 +214,9 @@ export const createPostgresChartReportCatalogResolver = (
       fieldKey = normalizeChartReportFieldKey(input.fieldKey)
     } catch (error) {
       if (error instanceof ChartReportDomainFailure) throw error
-      throw new ChartReportCatalogFailure('CATALOG_UNAVAILABLE', undefined, { cause: error })
+      throw new ChartReportCatalogFailure('CATALOG_UNAVAILABLE', undefined, {
+        cause: error,
+      })
     }
 
     let result: { readonly rows: PublishedCatalogRow[] }
@@ -194,31 +249,32 @@ export const createPostgresChartReportCatalogResolver = (
         [CHART_REPORT_PRODUCTION_CHANNEL, DXDATA_API_SCHEMA_VERSION],
       )
     } catch (error) {
-      throw new ChartReportCatalogFailure('CATALOG_UNAVAILABLE', undefined, { cause: error })
+      throw new ChartReportCatalogFailure('CATALOG_UNAVAILABLE', undefined, {
+        cause: error,
+      })
     }
 
     const row = result.rows[0]
     if (!row) throw new ChartReportCatalogFailure('CATALOG_UNAVAILABLE')
     const { publication, bodyText } = requirePublishedCatalogRow(row)
 
-    let catalog: PublishedCatalog
+    let catalog: PublishedChartReportCatalog
     try {
-      catalog = PublishedDxdataCatalogSchema.parse(JSON.parse(bodyText))
+      catalog = parsePublishedChartReportCatalogBody(bodyText)
     } catch (error) {
       throw new ChartReportCatalogFailure('CATALOG_UNAVAILABLE', publication.revision, { cause: error })
     }
 
-    const song = catalog.songs.find((candidate) => candidate.id === chartIdentity.stableSongId)
-    const chart = song?.sheets.find((candidate) => candidate.id === chartIdentity.stableChartId)
-    if (!song || !chart) throw new ChartReportCatalogFailure('CHART_NOT_FOUND', publication.revision)
-
     try {
+      const resolved = resolvePublishedChartReportField(catalog, chartIdentity, fieldKey)
+      if (!resolved) throw new ChartReportCatalogFailure('CHART_NOT_FOUND', publication.revision)
       return Object.freeze({
         chart: chartIdentity,
         publication,
-        currentValue: normalizeChartReportJsonSnapshot(fieldKey, readChartReportField(song, chart, fieldKey)),
+        currentValue: resolved.fieldValue,
       })
     } catch (error) {
+      if (error instanceof ChartReportCatalogFailure) throw error
       throw new ChartReportCatalogFailure('CATALOG_UNAVAILABLE', publication.revision, { cause: error })
     }
   },

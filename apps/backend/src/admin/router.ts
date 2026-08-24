@@ -36,6 +36,11 @@ import {
   type CommentModerationService,
 } from './comment-moderation-service.js'
 import {
+  ChartReportReviewServiceFailure,
+  createPostgresChartReportReviewService,
+  type ChartReportReviewService,
+} from './chart-report-review-service.js'
+import {
   createPostgresUserModerationService,
   UserModerationServiceFailure,
   type UserModerationService,
@@ -166,6 +171,21 @@ export const adminErrorBoundaryMiddleware = os.middleware(async ({ context, erro
           throw errors.NOT_FOUND({ data })
         case 'CHART_UNAVAILABLE':
           throw errors.CHART_UNAVAILABLE({ data })
+      }
+    }
+
+    if (error instanceof ChartReportReviewServiceFailure) {
+      switch (error.code) {
+        case 'VALIDATION_FAILED':
+          throw errors.VALIDATION_FAILED({ data })
+        case 'INVALID_CURSOR':
+          throw errors.INVALID_CURSOR({ data })
+        case 'NOT_FOUND':
+          throw errors.NOT_FOUND({ data })
+        case 'CHART_UNAVAILABLE':
+          throw errors.CHART_UNAVAILABLE({ data })
+        case 'CONFLICT':
+          throw errors.CONFLICT({ data })
       }
     }
 
@@ -335,6 +355,9 @@ export const createAdminRouter = ({
     superAdministrators: config.auth.superAdministrators,
   }),
   commentContext,
+  chartReportReview = createPostgresChartReportReviewService({
+    superAdministrators: config.auth.superAdministrators,
+  }),
   runWriteLease = runPostgresAdminWriteLease,
 }: {
   primaryAuth?: AdminPrimaryAuthService
@@ -342,6 +365,7 @@ export const createAdminRouter = ({
   userModeration?: UserModerationService
   commentModeration?: CommentModerationService
   commentContext?: CommentContextService
+  chartReportReview?: ChartReportReviewService
   runWriteLease?: AdminWriteLeaseRunner
 } = {}) => {
   const resolvedCommentContext =
@@ -444,6 +468,20 @@ export const createAdminRouter = ({
         commentId: input.params.commentId,
         expectedStateVersion: input.body.expectedStateVersion,
         requestCorrelationId: context.requestId,
+      }),
+    ),
+    listChartReports: authorized.listChartReports.handler(async ({ input }) =>
+      chartReportReview.listChartReports(input.query),
+    ),
+    getChartReportDetail: authorized.getChartReportDetail.handler(async ({ input }) =>
+      chartReportReview.getChartReportDetail({ reportId: input.params.reportId }),
+    ),
+    closeChartReport: authorized.closeChartReport.handler(async ({ input, context }) =>
+      chartReportReview.closeChartReport({
+        reportId: input.params.reportId,
+        actorUserId: context.adminAuthentication.authorizationUser.id,
+        expectedState: input.body.expectedState,
+        internalNote: input.body.internalNote,
       }),
     ),
     listAdministrators: authorized.listAdministrators.handler(async () => {

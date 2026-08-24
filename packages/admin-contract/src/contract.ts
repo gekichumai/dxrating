@@ -1,4 +1,14 @@
 import { oc, type InferContractRouterInputs, type InferContractRouterOutputs } from '@orpc/contract'
+import {
+  CHART_REPORT_CATEGORY_KEYS,
+  CHART_REPORT_FIELD_KEYS,
+  ChartReportCategoryKeySchema as CanonicalChartReportCategoryKeySchema,
+  ChartReportFieldKeySchema as CanonicalChartReportFieldKeySchema,
+  ChartReportJsonSnapshotSchema as CanonicalChartReportJsonSnapshotSchema,
+  ChartReportPublicChartIdSchema as CanonicalChartReportPublicChartIdSchema,
+  ChartReportPublicSongIdSchema as CanonicalChartReportPublicSongIdSchema,
+  ChartReportPublicationRevisionSchema as CanonicalChartReportPublicationRevisionSchema,
+} from '@gekichumai/api-contract'
 import { z } from 'zod'
 
 export const ADMIN_CONTRACT_HEADER = 'x-dxrating-admin-contract' as const
@@ -1193,6 +1203,316 @@ export const AdminCommentModerationMutationOutputSchema = z.union([
   AdminRestoreCommentOutputSchema,
 ])
 
+export const ADMIN_CHART_REPORT_DEFAULT_LIMIT = 50 as const
+export const ADMIN_CHART_REPORT_MAX_LIMIT = 100 as const
+export const ADMIN_CHART_REPORT_CURSOR_MAX_LENGTH = 1_024 as const
+export const ADMIN_CHART_REPORT_PREVIEW_MAX_LENGTH = 240 as const
+export const ADMIN_CHART_REPORT_CLOSE_NOTE_MAX_LENGTH = 1_000 as const
+export const ADMIN_CHART_REPORT_SOURCE_URL_MAX_COUNT = 5 as const
+export const ADMIN_CHART_REPORT_SOURCE_URL_MAX_LENGTH = 2_048 as const
+
+type CanonicalChartReportFieldKey = (typeof CHART_REPORT_FIELD_KEYS)[number]
+type CanonicalChartReportCategoryKey = (typeof CHART_REPORT_CATEGORY_KEYS)[number]
+type CanonicalChartReportJsonSnapshot = string | number | boolean | null | Readonly<Record<string, number>>
+
+// Keep one runtime authority for the public identifiers, keys, and submitted
+// value envelope while hiding the dependency package's private Zod instance
+// from this package's generated declaration types.
+const ChartReportFieldKeySchema: z.ZodType<CanonicalChartReportFieldKey, CanonicalChartReportFieldKey> =
+  CanonicalChartReportFieldKeySchema as unknown as z.ZodType<CanonicalChartReportFieldKey, CanonicalChartReportFieldKey>
+const ChartReportCategoryKeySchema: z.ZodType<CanonicalChartReportCategoryKey, CanonicalChartReportCategoryKey> =
+  CanonicalChartReportCategoryKeySchema as unknown as z.ZodType<
+    CanonicalChartReportCategoryKey,
+    CanonicalChartReportCategoryKey
+  >
+const ChartReportJsonSnapshotSchema: z.ZodType<CanonicalChartReportJsonSnapshot, CanonicalChartReportJsonSnapshot> =
+  CanonicalChartReportJsonSnapshotSchema as unknown as z.ZodType<
+    CanonicalChartReportJsonSnapshot,
+    CanonicalChartReportJsonSnapshot
+  >
+const ChartReportPublicChartIdSchema: z.ZodType<string, string> =
+  CanonicalChartReportPublicChartIdSchema as unknown as z.ZodType<string, string>
+const ChartReportPublicSongIdSchema: z.ZodType<string, string> =
+  CanonicalChartReportPublicSongIdSchema as unknown as z.ZodType<string, string>
+const ChartReportPublicationRevisionSchema: z.ZodType<string, string> =
+  CanonicalChartReportPublicationRevisionSchema as unknown as z.ZodType<string, string>
+
+export const AdminChartReportIdSchema = z
+  .string()
+  .uuid()
+  .overwrite((value) => value.toLowerCase())
+  .describe('Chart-report UUID')
+export const AdminChartReportStateSchema = z.enum(['open', 'closed'])
+export const AdminChartReportCursorSchema = z
+  .string()
+  .min(1)
+  .max(ADMIN_CHART_REPORT_CURSOR_MAX_LENGTH)
+  .regex(/^[A-Za-z0-9_-]+$/)
+  .describe(
+    'Opaque cursor bound to normalized filters, a fixed traversal boundary, and the deterministic `(open-first, createdAt DESC, id DESC)` keyset',
+  )
+export const AdminChartReportLimitSchema = z.coerce
+  .number<number>()
+  .int()
+  .min(1)
+  .max(ADMIN_CHART_REPORT_MAX_LIMIT)
+  .default(ADMIN_CHART_REPORT_DEFAULT_LIMIT)
+export const AdminChartReportDateBoundSchema = z.iso.datetime().overwrite((value) => new Date(value).toISOString())
+
+const hasOrderedChartReportDateBounds = ({
+  submittedAtFromInclusive,
+  submittedAtBeforeExclusive,
+}: {
+  readonly submittedAtFromInclusive?: string | null
+  readonly submittedAtBeforeExclusive?: string | null
+}) =>
+  submittedAtFromInclusive === undefined ||
+  submittedAtFromInclusive === null ||
+  submittedAtBeforeExclusive === undefined ||
+  submittedAtBeforeExclusive === null ||
+  Date.parse(submittedAtFromInclusive) < Date.parse(submittedAtBeforeExclusive)
+
+const AdminChartReportFilterShape = {
+  state: AdminChartReportStateSchema.optional(),
+  chartId: ChartReportPublicChartIdSchema.optional(),
+  fieldKey: ChartReportFieldKeySchema.optional(),
+  category: ChartReportCategoryKeySchema.optional(),
+  reporterUserId: AdminUserIdSchema.optional(),
+  submittedAtFromInclusive: AdminChartReportDateBoundSchema.optional(),
+  submittedAtBeforeExclusive: AdminChartReportDateBoundSchema.optional(),
+  publicationRevision: ChartReportPublicationRevisionSchema.optional(),
+}
+
+export const AdminNormalizedChartReportFiltersSchema = z
+  .object({
+    state: AdminChartReportStateSchema.nullable(),
+    chartId: ChartReportPublicChartIdSchema.nullable(),
+    fieldKey: ChartReportFieldKeySchema.nullable(),
+    category: ChartReportCategoryKeySchema.nullable(),
+    reporterUserId: AdminUserIdSchema.nullable(),
+    submittedAtFromInclusive: AdminChartReportDateBoundSchema.nullable(),
+    submittedAtBeforeExclusive: AdminChartReportDateBoundSchema.nullable(),
+    publicationRevision: ChartReportPublicationRevisionSchema.nullable(),
+  })
+  .strict()
+  .refine(hasOrderedChartReportDateBounds, {
+    message: 'The normalized inclusive submission date bound must precede the exclusive bound',
+    path: ['submittedAtBeforeExclusive'],
+  })
+
+export const AdminListChartReportsInputSchema = z.object({
+  headers: AdminContractHeadersSchema,
+  query: z
+    .object({
+      ...AdminChartReportFilterShape,
+      cursor: AdminChartReportCursorSchema.optional(),
+      limit: AdminChartReportLimitSchema,
+    })
+    .strict()
+    .refine(hasOrderedChartReportDateBounds, {
+      message: 'The inclusive submission date bound must precede the exclusive bound',
+      path: ['submittedAtBeforeExclusive'],
+    }),
+})
+
+export const AdminChartReportPublicationSchema = z
+  .object({
+    channel: z.literal('production-v1'),
+    catalogRunId: AdminCatalogIdentitySchema,
+    revision: ChartReportPublicationRevisionSchema,
+    fingerprintSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  })
+  .strict()
+
+export const AdminChartReportChartSummarySchema = z
+  .object({
+    songId: ChartReportPublicSongIdSchema,
+    chartId: ChartReportPublicChartIdSchema,
+    songLabel: AdminSafeChartDisplayLabelSchema,
+    chartLabel: AdminSafeChartDisplayLabelSchema,
+  })
+  .strict()
+
+export const AdminChartReportReporterSummarySchema = z
+  .object({
+    userId: AdminUserIdSchema,
+    displayName: z.string().min(1).max(255),
+    emailVerified: z.boolean(),
+    effectiveRole: AdminUserEffectiveRoleSchema,
+    accountStatus: AdminAccountStatusSchema,
+  })
+  .strict()
+  .describe('Approved reporter identity and moderation fields; excludes authentication and request metadata')
+
+export const AdminChartReportValuePreviewSchema = z
+  .object({
+    text: z.string().min(1).max(ADMIN_CHART_REPORT_PREVIEW_MAX_LENGTH),
+    truncated: z.boolean(),
+  })
+  .strict()
+
+export const AdminChartReportQueueRowSchema = z
+  .object({
+    id: AdminChartReportIdSchema,
+    state: AdminChartReportStateSchema,
+    chart: AdminChartReportChartSummarySchema,
+    fieldKey: ChartReportFieldKeySchema,
+    category: ChartReportCategoryKeySchema,
+    currentValuePreview: AdminChartReportValuePreviewSchema,
+    proposedValuePreview: AdminChartReportValuePreviewSchema,
+    explanationPreview: z.string().min(1).max(ADMIN_CHART_REPORT_PREVIEW_MAX_LENGTH),
+    explanationPreviewTruncated: z.boolean(),
+    createdAt: AdminUtcDateTimeSchema,
+    capturedPublication: AdminChartReportPublicationSchema,
+    reporter: AdminChartReportReporterSummarySchema,
+  })
+  .strict()
+
+export const AdminListChartReportsOutputSchema = z
+  .object({
+    items: z.array(AdminChartReportQueueRowSchema).max(ADMIN_CHART_REPORT_MAX_LIMIT),
+    nextCursor: AdminChartReportCursorSchema.nullable(),
+    normalizedFilters: AdminNormalizedChartReportFiltersSchema,
+  })
+  .strict()
+
+export const AdminChartReportCapturedContextSchema = z
+  .object({
+    publication: AdminChartReportPublicationSchema,
+    chart: AdminChartReportChartSummarySchema,
+  })
+  .strict()
+
+const AdminCurrentChartReportContextSchema = z
+  .object({
+    availability: z.literal('current'),
+    publication: AdminChartReportPublicationSchema,
+    chart: AdminChartReportChartSummarySchema,
+    currentValue: ChartReportJsonSnapshotSchema,
+  })
+  .strict()
+
+const AdminRetiredChartReportContextSchema = z
+  .object({
+    availability: z.literal('retired'),
+    publication: AdminChartReportPublicationSchema,
+    songId: ChartReportPublicSongIdSchema,
+    chartId: ChartReportPublicChartIdSchema,
+  })
+  .strict()
+
+export const AdminChartReportCurrentContextSchema = z.discriminatedUnion('availability', [
+  AdminCurrentChartReportContextSchema,
+  AdminRetiredChartReportContextSchema,
+])
+
+export const AdminChartReportClosureSchema = z
+  .object({
+    actorUserId: AdminUserIdSchema,
+    closedAt: AdminUtcDateTimeSchema,
+    internalNote: z.string().min(1).max(ADMIN_CHART_REPORT_CLOSE_NOTE_MAX_LENGTH).nullable(),
+  })
+  .strict()
+
+const AdminChartReportDetailBaseSchema = z.object({
+  id: AdminChartReportIdSchema,
+  fieldKey: ChartReportFieldKeySchema,
+  category: ChartReportCategoryKeySchema,
+  submittedCurrentValue: ChartReportJsonSnapshotSchema,
+  submittedProposedValue: ChartReportJsonSnapshotSchema,
+  explanation: z.string().trim().min(1).max(4_000),
+  sourceUrls: z
+    .array(
+      z
+        .url()
+        .max(ADMIN_CHART_REPORT_SOURCE_URL_MAX_LENGTH)
+        .refine((value) => {
+          try {
+            const protocol = new URL(value).protocol
+            return protocol === 'http:' || protocol === 'https:'
+          } catch {
+            return false
+          }
+        }, 'Chart-report evidence URLs must use HTTP or HTTPS'),
+    )
+    .max(ADMIN_CHART_REPORT_SOURCE_URL_MAX_COUNT),
+  createdAt: AdminUtcDateTimeSchema,
+  capturedContext: AdminChartReportCapturedContextSchema,
+})
+
+const AdminOpenChartReportDetailSchema = AdminChartReportDetailBaseSchema.extend({
+  state: z.literal('open'),
+  closure: z.null(),
+}).strict()
+
+const AdminClosedChartReportDetailSchema = AdminChartReportDetailBaseSchema.extend({
+  state: z.literal('closed'),
+  closure: AdminChartReportClosureSchema,
+}).strict()
+
+export const AdminChartReportDetailSchema = z.discriminatedUnion('state', [
+  AdminOpenChartReportDetailSchema,
+  AdminClosedChartReportDetailSchema,
+])
+
+export const AdminGetChartReportDetailInputSchema = z.object({
+  headers: AdminContractHeadersSchema,
+  params: z.object({ reportId: AdminChartReportIdSchema }).strict(),
+})
+
+export const AdminGetChartReportDetailOutputSchema = z
+  .object({
+    reporter: AdminChartReportReporterSummarySchema,
+    report: AdminChartReportDetailSchema,
+    currentContext: AdminChartReportCurrentContextSchema,
+  })
+  .strict()
+  .superRefine((output, context) => {
+    if (
+      output.currentContext.availability === 'current' &&
+      (output.currentContext.chart.songId !== output.report.capturedContext.chart.songId ||
+        output.currentContext.chart.chartId !== output.report.capturedContext.chart.chartId)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Captured and current contexts must identify the same stable chart',
+        path: ['currentContext', 'chart'],
+      })
+    }
+    if (
+      output.currentContext.availability === 'retired' &&
+      (output.currentContext.songId !== output.report.capturedContext.chart.songId ||
+        output.currentContext.chartId !== output.report.capturedContext.chart.chartId)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'The retired context must identify the captured stable chart',
+        path: ['currentContext'],
+      })
+    }
+  })
+
+export const AdminChartReportCloseNoteSchema = z.string().trim().min(1).max(ADMIN_CHART_REPORT_CLOSE_NOTE_MAX_LENGTH)
+
+export const AdminCloseChartReportInputSchema = z.object({
+  headers: AdminContractHeadersSchema,
+  params: z.object({ reportId: AdminChartReportIdSchema }).strict(),
+  body: z
+    .object({
+      expectedState: z.literal('open'),
+      internalNote: AdminChartReportCloseNoteSchema.nullable().default(null),
+    })
+    .strict(),
+})
+
+export const AdminCloseChartReportOutputSchema = z
+  .object({
+    id: AdminChartReportIdSchema,
+    state: z.literal('closed'),
+    closure: AdminChartReportClosureSchema,
+  })
+  .strict()
+
 export const adminContract = adminProcedure.errors(adminErrors).router({
   bootstrap: adminProcedure
     .meta({
@@ -1401,6 +1721,51 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     })
     .input(AdminRestoreCommentInputSchema)
     .output(AdminRestoreCommentOutputSchema),
+  listChartReports: adminProcedure
+    .meta({
+      authorization: ADMIN_DEFAULT_AUTHORIZATION,
+      banPolicy: 'authenticated_read',
+    })
+    .route({
+      method: 'GET',
+      path: '/chart-reports',
+      operationId: 'listAdminChartReports',
+      summary: 'List chart reports with bounded moderation context',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminListChartReportsInputSchema)
+    .output(AdminListChartReportsOutputSchema),
+  getChartReportDetail: adminProcedure
+    .meta({
+      authorization: ADMIN_DEFAULT_AUTHORIZATION,
+      banPolicy: 'authenticated_read',
+    })
+    .route({
+      method: 'GET',
+      path: '/chart-reports/{reportId}',
+      operationId: 'getAdminChartReportDetail',
+      summary: 'Read immutable report evidence and compare it with the active chart publication',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminGetChartReportDetailInputSchema)
+    .output(AdminGetChartReportDetailOutputSchema),
+  closeChartReport: adminProcedure
+    .meta({
+      authorization: adminAuthorizationForAction('chart_report.close'),
+      banPolicy: 'authenticated_write',
+    })
+    .route({
+      method: 'POST',
+      path: '/chart-reports/{reportId}/close',
+      operationId: 'closeAdminChartReport',
+      summary: 'Atomically close an open chart report without rewriting its submitted evidence',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminCloseChartReportInputSchema)
+    .output(AdminCloseChartReportOutputSchema),
   listAdministrators: adminProcedure
     .meta({
       authorization: ADMIN_DEFAULT_AUTHORIZATION,

@@ -324,6 +324,8 @@ describe('public chart-report submission HTTP boundary', () => {
     expect(passwordBody).toMatchObject({ state: 'open' })
     expect(passwordBody.id).toEqual(expect.any(String))
     expect(passwordBody.createdAt).toEqual(expect.any(String))
+    expect(Object.keys(passwordBody).sort()).toEqual(['createdAt', 'id', 'state'])
+    expect(JSON.stringify(passwordBody)).not.toMatch(/internalNote|closure|actorUserId|reporterUserId/i)
 
     const oauthUser = await createUser('chart-report-oauth')
     await convertToOauthOnlyAccount(oauthUser.id)

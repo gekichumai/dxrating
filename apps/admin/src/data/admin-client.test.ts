@@ -34,6 +34,9 @@ describe('private administrator data client', () => {
     type CommentDetailInput = Parameters<AdminClient['getCommentModerationDetail']>[0]
     type DeleteCommentInput = Parameters<AdminClient['deleteComment']>[0]
     type RestoreCommentInput = Parameters<AdminClient['restoreComment']>[0]
+    type ChartReportListInput = Parameters<AdminClient['listChartReports']>[0]
+    type ChartReportDetailInput = Parameters<AdminClient['getChartReportDetail']>[0]
+    type CloseChartReportInput = Parameters<AdminClient['closeChartReport']>[0]
     type RosterInput = Parameters<AdminClient['listAdministrators']>[0]
     type HistoryInput = Parameters<AdminClient['listAdministratorRoleHistory']>[0]
     type GrantInput = Parameters<AdminClient['grantAdministrator']>[0]
@@ -98,6 +101,25 @@ describe('private administrator data client', () => {
       params: { commentId: string }
       body: { expectedStateVersion: string; confirmed: true }
     }>()
+    expectTypeOf<ChartReportListInput>().toMatchTypeOf<{
+      query: {
+        state?: 'open' | 'closed'
+        chartId?: string
+        fieldKey?: string
+        category?: string
+        reporterUserId?: string
+        submittedAtFromInclusive?: string
+        submittedAtBeforeExclusive?: string
+        publicationRevision?: string
+        cursor?: string
+        limit?: number
+      }
+    }>()
+    expectTypeOf<ChartReportDetailInput>().toEqualTypeOf<{ params: { reportId: string } }>()
+    expectTypeOf<CloseChartReportInput>().toMatchTypeOf<{
+      params: { reportId: string }
+      body: { expectedState: 'open'; internalNote?: string | null }
+    }>()
     expectTypeOf<RosterInput>().toEqualTypeOf<undefined>()
     expectTypeOf<HistoryInput>().toMatchTypeOf<{
       params: { userId: string }
@@ -129,6 +151,9 @@ describe('private administrator data client', () => {
       'getCommentModerationDetail',
       'deleteComment',
       'restoreComment',
+      'listChartReports',
+      'getChartReportDetail',
+      'closeChartReport',
       'listAdministrators',
       'listAdministratorRoleHistory',
       'grantAdministrator',
@@ -142,6 +167,13 @@ describe('private administrator data client', () => {
       orpc.getCommentModerationDetail.queryOptions({ input: { params: { commentId: '1' }, query: {} } }).queryKey,
     ).toBeDefined()
     expect(orpc.deleteComment.mutationOptions().mutationKey).toBeDefined()
+    expect(orpc.listChartReports.queryOptions({ input: { query: {} } }).queryKey).toBeDefined()
+    expect(
+      orpc.getChartReportDetail.queryOptions({
+        input: { params: { reportId: '0198e8d1-e05f-7f7f-89ba-fbc33e4b0bd1' } },
+      }).queryKey,
+    ).toBeDefined()
+    expect(orpc.closeChartReport.mutationOptions().mutationKey).toBeDefined()
     expect(orpc.listAdministrators.queryOptions().queryKey).toBeDefined()
   })
 
@@ -509,6 +541,125 @@ describe('private administrator data client', () => {
     await expect(requests[3]?.clone().json()).resolves.toEqual({
       expectedStateVersion: '7',
       confirmed: true,
+    })
+    for (const request of requests) {
+      expect(request.headers.get(ADMIN_CONTRACT_HEADER)).toBe(ADMIN_CONTRACT_COMPATIBILITY_ID)
+    }
+  })
+
+  it('serializes chart-report queue, detail, and closure only under the private prefix', async () => {
+    const requests: Request[] = []
+    const reportId = '0198e8d1-e05f-7f7f-89ba-fbc33e4b0bd1'
+    const chart = {
+      songId: 'dsng_23456789ab',
+      chartId: 'dsht_23456789ab',
+      songLabel: 'Song One',
+      chartLabel: 'Master (DX)',
+    }
+    const publication = {
+      channel: 'production-v1' as const,
+      catalogRunId: '4',
+      revision: '7',
+      fingerprintSha256: 'a'.repeat(64),
+    }
+    const reporter = {
+      userId: 'reporter-id',
+      displayName: 'Report Author',
+      emailVerified: false,
+      effectiveRole: 'user' as const,
+      accountStatus: { status: 'active' as const },
+    }
+    const closure = {
+      actorUserId: 'administrator-id',
+      closedAt: '2026-08-24T13:00:00.000Z',
+      internalNote: 'Corrected in the active catalog',
+    }
+    const fetch = vi.fn(async (request: RequestInfo | URL) => {
+      const captured = request as Request
+      requests.push(captured)
+      if (captured.method === 'POST') return jsonResponse({ id: reportId, state: 'closed', closure })
+      if (new URL(captured.url).pathname === '/api/admin/chart-reports') {
+        return jsonResponse({
+          items: [],
+          nextCursor: null,
+          normalizedFilters: {
+            state: 'open',
+            chartId: chart.chartId,
+            fieldKey: 'chart.level',
+            category: 'incorrect_value',
+            reporterUserId: reporter.userId,
+            submittedAtFromInclusive: '2026-08-01T00:00:00.000Z',
+            submittedAtBeforeExclusive: '2026-09-01T00:00:00.000Z',
+            publicationRevision: publication.revision,
+          },
+        })
+      }
+      return jsonResponse({
+        reporter,
+        report: {
+          id: reportId,
+          state: 'open',
+          fieldKey: 'chart.level',
+          category: 'incorrect_value',
+          submittedCurrentValue: '14+',
+          submittedProposedValue: '15',
+          explanation: 'The current game release displays level 15.',
+          sourceUrls: ['https://example.com/evidence'],
+          createdAt: '2026-08-24T12:00:00.000Z',
+          capturedContext: { publication, chart },
+          closure: null,
+        },
+        currentContext: { availability: 'current', publication, chart, currentValue: '14+' },
+      })
+    })
+    const { client } = createAdminDataClient({
+      backendOrigin: 'https://api.dxrating.net',
+      fetch: fetch as unknown as typeof globalThis.fetch,
+      mode: 'production',
+    })
+
+    await client.listChartReports({
+      query: {
+        state: 'open',
+        chartId: chart.chartId,
+        fieldKey: 'chart.level',
+        category: 'incorrect_value',
+        reporterUserId: reporter.userId,
+        submittedAtFromInclusive: '2026-08-01T00:00:00.000Z',
+        submittedAtBeforeExclusive: '2026-09-01T00:00:00.000Z',
+        publicationRevision: publication.revision,
+        cursor: 'report_page',
+        limit: 25,
+      },
+    })
+    await client.getChartReportDetail({ params: { reportId } })
+    await client.closeChartReport({
+      params: { reportId },
+      body: { expectedState: 'open', internalNote: closure.internalNote },
+    })
+
+    expect(requests.map((request) => [request.method, new URL(request.url).pathname])).toEqual([
+      ['GET', '/api/admin/chart-reports'],
+      ['GET', `/api/admin/chart-reports/${reportId}`],
+      ['POST', `/api/admin/chart-reports/${reportId}/close`],
+    ])
+    for (const fragment of [
+      'state=open',
+      `chartId=${chart.chartId}`,
+      'fieldKey=chart.level',
+      'category=incorrect_value',
+      `reporterUserId=${reporter.userId}`,
+      'submittedAtFromInclusive=2026-08-01T00%3A00%3A00.000Z',
+      'submittedAtBeforeExclusive=2026-09-01T00%3A00%3A00.000Z',
+      `publicationRevision=${publication.revision}`,
+      'cursor=report_page',
+      'limit=25',
+    ]) {
+      expect(requests[0]?.url).toContain(fragment)
+    }
+    await expect(requests[2]?.clone().json()).resolves.toEqual({
+      expectedState: 'open',
+      internalNote: closure.internalNote,
     })
     for (const request of requests) {
       expect(request.headers.get(ADMIN_CONTRACT_HEADER)).toBe(ADMIN_CONTRACT_COMPATIBILITY_ID)

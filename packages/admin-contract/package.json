@@ -17,6 +17,7 @@
     "openapi:compatibility:update": "tsx scripts/update-compatibility.ts"
   },
   "dependencies": {
+    "@gekichumai/api-contract": "workspace:*",
     "@orpc/contract": "catalog:",
     "zod": "^4.3.6"
   },

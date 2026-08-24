@@ -44,6 +44,9 @@ const createHeaderlessClient = (rawClient: RawAdminClient, onClientCompatible?: 
     rawClient.getCommentModerationDetail({ ...input, headers: {} }, options),
   deleteComment: (input, options) => rawClient.deleteComment({ ...input, headers: {} }, options),
   restoreComment: (input, options) => rawClient.restoreComment({ ...input, headers: {} }, options),
+  listChartReports: (input, options) => rawClient.listChartReports({ ...input, headers: {} }, options),
+  getChartReportDetail: (input, options) => rawClient.getChartReportDetail({ ...input, headers: {} }, options),
+  closeChartReport: (input, options) => rawClient.closeChartReport({ ...input, headers: {} }, options),
   listAdministrators: (_input, options) => rawClient.listAdministrators({ headers: {} }, options),
   listAdministratorRoleHistory: (input, options) =>
     rawClient.listAdministratorRoleHistory({ ...input, headers: {} }, options),

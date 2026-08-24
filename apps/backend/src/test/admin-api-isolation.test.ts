@@ -228,6 +228,35 @@ describe('private administrator API isolation', () => {
     expect(JSON.stringify(spec.components?.schemas ?? {})).not.toContain('AdminBootstrap')
 
     const publicSpecJson = JSON.stringify(spec)
+    const privateChartReportOperations = [
+      {
+        path: '/chart-reports',
+        method: 'get',
+        operationId: 'listAdminChartReports',
+      },
+      {
+        path: '/chart-reports/{reportId}',
+        method: 'get',
+        operationId: 'getAdminChartReportDetail',
+      },
+      {
+        path: '/chart-reports/{reportId}/close',
+        method: 'post',
+        operationId: 'closeAdminChartReport',
+      },
+    ] as const
+    for (const { path, method, operationId } of privateChartReportOperations) {
+      expect(privateSpec.paths?.[path]?.[method]).toMatchObject({ operationId })
+      expect(publicSpecJson).not.toContain(operationId)
+    }
+    expect(spec.paths['/chart-reports']).toMatchObject({
+      post: { operationId: 'createChartReport' },
+    })
+    expect(spec.paths['/chart-reports']).not.toHaveProperty('get')
+    expect(spec.paths).not.toHaveProperty('/chart-reports/{reportId}')
+    expect(spec.paths).not.toHaveProperty('/chart-reports/{reportId}/close')
+    expect(publicSpecJson).not.toContain('internalNote')
+
     const privateOperationIds = Object.values(privateSpec.paths ?? {}).flatMap((pathItem) =>
       Object.values(pathItem ?? {}).flatMap((operation) => {
         if (!operation || typeof operation !== 'object' || !('operationId' in operation)) return []

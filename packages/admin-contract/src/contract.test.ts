@@ -82,6 +82,9 @@ describe('private administrator contract', () => {
       'getCommentModerationDetail',
       'deleteComment',
       'restoreComment',
+      'listChartReports',
+      'getChartReportDetail',
+      'closeChartReport',
       'listAdministrators',
       'listAdministratorRoleHistory',
       'grantAdministrator',
@@ -155,6 +158,21 @@ describe('private administrator contract', () => {
         method: 'POST',
         path: '/comments/{commentId}/restore',
         operationId: 'restoreAdminComment',
+      },
+      listChartReports: {
+        method: 'GET',
+        path: '/chart-reports',
+        operationId: 'listAdminChartReports',
+      },
+      getChartReportDetail: {
+        method: 'GET',
+        path: '/chart-reports/{reportId}',
+        operationId: 'getAdminChartReportDetail',
+      },
+      closeChartReport: {
+        method: 'POST',
+        path: '/chart-reports/{reportId}/close',
+        operationId: 'closeAdminChartReport',
       },
       listAdministrators: {
         method: 'GET',
@@ -244,6 +262,9 @@ describe('private administrator contract', () => {
       getCommentModerationDetail: 'authenticated_read',
       deleteComment: 'transactional_write',
       restoreComment: 'transactional_write',
+      listChartReports: 'authenticated_read',
+      getChartReportDetail: 'authenticated_read',
+      closeChartReport: 'authenticated_write',
       listAdministrators: 'authenticated_read',
       listAdministratorRoleHistory: 'authenticated_read',
       grantAdministrator: 'transactional_write',
@@ -260,6 +281,8 @@ describe('private administrator contract', () => {
       adminContract.listUserBanHistory,
       adminContract.listRecentComments,
       adminContract.getCommentModerationDetail,
+      adminContract.listChartReports,
+      adminContract.getChartReportDetail,
       adminContract.listAdministrators,
       adminContract.listAdministratorRoleHistory,
     ]) {
@@ -301,6 +324,9 @@ describe('private administrator contract', () => {
         minimumRole: 'admin',
         targetAction: 'moderate',
       }),
+    )
+    expect(adminContract.closeChartReport['~orpc'].meta.authorization).toEqual(
+      adminAuthorizationForAction('chart_report.close'),
     )
 
     expect(Object.keys(adminContract.bootstrap['~orpc'].errorMap)).toEqual([
@@ -359,6 +385,9 @@ describe('private administrator contract', () => {
       '/comments/{commentId}',
       '/comments/{commentId}/delete',
       '/comments/{commentId}/restore',
+      '/chart-reports',
+      '/chart-reports/{reportId}',
+      '/chart-reports/{reportId}/close',
       '/administrators',
       '/administrators/{userId}/role-history',
       '/administrators/{userId}/grant',
@@ -380,6 +409,9 @@ describe('private administrator contract', () => {
       '/comments/{commentId}': ['get'],
       '/comments/{commentId}/delete': ['post'],
       '/comments/{commentId}/restore': ['post'],
+      '/chart-reports': ['get'],
+      '/chart-reports/{reportId}': ['get'],
+      '/chart-reports/{reportId}/close': ['post'],
       '/administrators': ['get'],
       '/administrators/{userId}/role-history': ['get'],
       '/administrators/{userId}/grant': ['post'],
