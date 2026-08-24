@@ -18,9 +18,7 @@ export const canAccessAdminDestination = (
   principal: AdminPrincipal,
   destination: CapabilityGatedDestination,
 ): boolean => {
-  if (destination === 'administrators') {
-    return principal.capabilities.canModerateAdministrators || principal.capabilities.canManageAdministrators
-  }
+  if (destination === 'administrators') return true
   return principal.capabilities.canModerateUsers
 }
 

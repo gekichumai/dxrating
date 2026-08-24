@@ -1,0 +1,24 @@
+.root,
+.root > * {
+  min-width: 0;
+}
+
+.intro > * {
+  min-width: 0;
+}
+
+.sectionHeader {
+  min-width: 0;
+}
+
+.managementGrid {
+  align-items: start;
+}
+
+.managementGrid > * {
+  min-width: 0;
+}
+
+.selectedAction {
+  scroll-margin-top: 5.5rem;
+}

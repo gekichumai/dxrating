@@ -1,0 +1,45 @@
+.panel {
+  min-width: 0;
+}
+
+.itemList {
+  display: grid;
+  gap: var(--mantine-spacing-md);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.identifier {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.descriptionList {
+  display: grid;
+  gap: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr);
+  margin: 0;
+}
+
+.descriptionList dt {
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 600;
+}
+
+.descriptionList dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 36em) {
+  .descriptionList {
+    grid-template-columns: 1fr;
+  }
+
+  .descriptionList dd:not(:last-child) {
+    margin-bottom: var(--mantine-spacing-xs);
+  }
+}

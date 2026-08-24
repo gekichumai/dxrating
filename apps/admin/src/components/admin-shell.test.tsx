@@ -111,7 +111,7 @@ describe('administrator application shell', () => {
     const navigation = await screen.findByRole('navigation', { name: translate('nav.primary') })
     expect(within(navigation).queryByRole('link', { name: translate('nav.comments') })).toBeNull()
     expect(within(navigation).queryByRole('link', { name: translate('nav.users') })).toBeNull()
-    expect(within(navigation).queryByRole('link', { name: translate('nav.administrators') })).toBeNull()
+    expect(within(navigation).getByRole('link', { name: translate('nav.administrators') })).toBeTruthy()
     expect(within(navigation).getByRole('link', { name: translate('nav.charts') })).toBeTruthy()
   })
 })

@@ -1,0 +1,24 @@
+.scrollRegion {
+  min-width: 0;
+  overscroll-behavior-x: contain;
+}
+
+.identifier,
+.email,
+.explanation {
+  overflow-wrap: anywhere;
+}
+
+.identifier {
+  max-width: 18rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.email,
+.explanation {
+  max-width: 24rem;
+}
+
+.status {
+  min-width: 15rem;
+}

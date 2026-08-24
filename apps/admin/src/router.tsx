@@ -6,6 +6,7 @@ import {
   lazyRouteComponent,
   type RouterHistory,
 } from '@tanstack/react-router'
+import { validateAdministratorRouteSearch } from './administrators/administrator-route-search'
 import { AdminNotFound, AdminRouteError, RouteLoading } from './components/route-states'
 import { validateCommentListSearch } from './comments/comment-route-search'
 import { validateUserDetailSearch, validateUserListSearch } from './users/user-route-search'
@@ -77,6 +78,7 @@ const userDetailRoute = createRoute({
 const administratorsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: 'administrators',
+  validateSearch: validateAdministratorRouteSearch,
   component: lazyRouteComponent(() => import('./routes/administrators-route'), 'AdministratorsRoute'),
 })
 

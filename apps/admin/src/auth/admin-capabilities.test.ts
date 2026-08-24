@@ -30,6 +30,7 @@ describe('administrator capability presentation', () => {
 
     expect(canModerateUser(contradictory)).toBe(false)
     expect(canManageAdministrators(contradictory)).toBe(false)
+    expect(canAccessAdminDestination(contradictory, 'administrators')).toBe(true)
     expect(getAdministratorRoleLabelKey(contradictory)).toBe('shell.role.superAdmin')
   })
 

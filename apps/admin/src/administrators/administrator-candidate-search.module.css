@@ -1,0 +1,18 @@
+.formGrid {
+  align-items: end;
+}
+
+.table {
+  min-width: 48rem;
+}
+
+.identifier {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.verification {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--mantine-spacing-xs);
+}
