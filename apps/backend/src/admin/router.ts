@@ -199,6 +199,7 @@ export const createAdminTargetAuthorizationMiddleware = <Input>({
         context,
         targetUserId: getTargetUserId(input),
         action,
+        policy: procedure['~orpc'].meta.authorization,
         transaction,
         superAdministrators,
       })
@@ -214,7 +215,6 @@ export const createAdminTargetAuthorizationMiddleware = <Input>({
 const primaryAuthActorFromContext = (context: AuthorizedAdminContext): AdminPrimaryAuthActor => ({
   userId: context.adminAuthentication.authorizationUser.id,
   sessionId: context.adminAuthentication.session.id,
-  allowlistedSuperAdministrator: context.adminPrincipal.effectiveRole === 'super_admin',
 })
 
 export const createAdminRouter = ({

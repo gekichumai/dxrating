@@ -34,10 +34,16 @@ database clock and require both the exact user/session pair and a still-live ses
 an action never updates either timestamp.
 
 Deleting a Better Auth session or user cascades to its window and outstanding OAuth challenge. A role/ban transition
-must call `invalidateAdminPrimaryAuthForUserInTransaction` on the same PostgreSQL transaction before it commits.
-Initiation, completion, and invalidation lock rows in the canonical user, session, exact-account order. This makes the
-final live session, role, password credential, and linked-provider-account checks serialize with concurrent demotion,
-banning, password changes, and account unlinking instead of relying on an earlier request snapshot.
+must call `revokeAllUserSessionsInTransaction` on the same PostgreSQL transaction before it commits; demotion already
+does so. The revoker explicitly removes OAuth attempts and windows before deleting every session, while preserving the
+password-attempt rate limit.
+
+Initiation, completion, and invalidation lock rows in the canonical user, session, exact-account order. Under those
+locks, initiation and completion re-resolve the current persisted/allowlisted role and require the session's
+database-issued authorization timestamp to be strictly later than the account floor and current allowlist generation.
+A caller-supplied role or allowlist flag is never trusted. This makes the final live session, role, freshness, password
+credential, and linked-provider-account checks serialize with concurrent demotion, banning, password changes, and
+account unlinking instead of relying on an earlier request snapshot.
 
 ## Password ceremony
 
@@ -96,5 +102,8 @@ rows. Deploy the new backend only after the migration job succeeds, then verify:
 4. window expiry and sign-out cleanup; and
 5. explicit GitHub step-up rejection alongside unchanged ordinary GitHub sign-in and public API behavior.
 
-Rolling the application back is safe because the old binary ignores the new tables. Leave the additive tables in
-place during rollback; remove them only through a later contract migration after every new binary has been drained.
+Rolling back only the primary-authentication feature remains schema-compatible because the old binary ignores its
+tables. If the rollback also removes session-generation enforcement, follow the stricter administrator session
+rollback in `admin-authorization.md`: gate administrator traffic, drain, and revoke affected sessions first. Leave all
+additive tables and columns in place during rollback; remove them only through a later contract migration after every
+dependent binary has been drained.

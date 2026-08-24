@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  InvalidSuperAdministratorAllowlistEffectiveAtError,
   InvalidSuperAdministratorAllowlistError,
   parseSuperAdministratorAllowlist,
 } from './super-administrator-allowlist.js'
+
+const EFFECTIVE_AT = '2026-08-24T12:00:00.000Z'
 
 describe('super-administrator allowlist configuration', () => {
   it('defaults to an empty allowlist', () => {
@@ -14,7 +17,10 @@ describe('super-administrator allowlist configuration', () => {
   })
 
   it('deduplicates IDs and performs case-sensitive exact matching', () => {
-    const allowlist = parseSuperAdministratorAllowlist('["immutable-user-id","immutable-user-id","CaseSensitive"]')
+    const allowlist = parseSuperAdministratorAllowlist(
+      '["immutable-user-id","immutable-user-id","CaseSensitive"]',
+      EFFECTIVE_AT,
+    )
 
     expect(allowlist.configuredUserCount).toBe(2)
     expect(allowlist.hasExactUserId('immutable-user-id')).toBe(true)
@@ -50,12 +56,48 @@ describe('super-administrator allowlist configuration', () => {
   })
 
   it('does not expose the configured IDs through serialization or an iterator', () => {
-    const allowlist = parseSuperAdministratorAllowlist('["private-user-id"]')
+    const allowlist = parseSuperAdministratorAllowlist('["private-user-id"]', EFFECTIVE_AT)
 
     expect(JSON.stringify(allowlist)).toBe('{}')
     expect(Symbol.iterator in allowlist).toBe(false)
     expect('add' in allowlist).toBe(false)
     expect('delete' in allowlist).toBe(false)
+  })
+
+  it('requires a valid UTC effective time for a non-empty list without exposing configuration values', () => {
+    for (const effectiveAt of [undefined, '', 'not-a-timestamp', '2026-08-24T12:00:00+01:00']) {
+      let thrown: unknown
+      try {
+        parseSuperAdministratorAllowlist('["private-user-id"]', effectiveAt)
+      } catch (error) {
+        thrown = error
+      }
+
+      expect(thrown).toBeInstanceOf(InvalidSuperAdministratorAllowlistEffectiveAtError)
+      expect(String(thrown)).toBe(
+        'InvalidSuperAdministratorAllowlistEffectiveAtError: SUPER_ADMIN_USER_IDS_EFFECTIVE_AT must be a UTC ISO timestamp whenever super-administrator IDs are configured',
+      )
+      expect(String(thrown)).not.toContain('private-user-id')
+      if (effectiveAt) expect(String(thrown)).not.toContain(effectiveAt)
+    }
+  })
+
+  it('admits only sessions issued strictly after the current allowlist generation', () => {
+    const allowlist = parseSuperAdministratorAllowlist('["allowlisted-user"]', EFFECTIVE_AT)
+
+    expect(
+      allowlist.isSessionEligibleForCurrentGeneration('allowlisted-user', new Date('2026-08-24T11:59:59.999Z')),
+    ).toBe(false)
+    expect(
+      allowlist.isSessionEligibleForCurrentGeneration('allowlisted-user', new Date('2026-08-24T12:00:00.000Z')),
+    ).toBe(false)
+    expect(
+      allowlist.isSessionEligibleForCurrentGeneration('allowlisted-user', new Date('2026-08-24T12:00:00.001Z')),
+    ).toBe(true)
+    expect(allowlist.isSessionEligibleForCurrentGeneration('other-user', new Date('2026-08-24T12:00:00.001Z'))).toBe(
+      false,
+    )
+    expect(allowlist.isSessionEligibleForCurrentGeneration('allowlisted-user', new Date('invalid'))).toBe(false)
   })
 
   it('bounds the deployment configuration before constructing the set', () => {

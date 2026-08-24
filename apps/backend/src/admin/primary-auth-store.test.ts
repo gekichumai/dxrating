@@ -1,6 +1,7 @@
 import pg from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { cleanDatabase, setupTestServer, teardownTestServer } from '../test/setup.js'
+import { parseSuperAdministratorAllowlist } from './super-administrator-allowlist.js'
 import {
   createPostgresAdminPrimaryAuthStore,
   invalidateAdminPrimaryAuthForUserInTransaction,
@@ -10,7 +11,6 @@ import { digestAdminPrimaryAuthOauthState, type AdminPrimaryAuthActor } from './
 const actor: AdminPrimaryAuthActor = {
   userId: 'admin-user',
   sessionId: 'admin-session',
-  allowlistedSuperAdministrator: false,
 }
 
 const waitForBlockedQuery = async (database: pg.Pool, marker: string): Promise<void> => {
@@ -41,7 +41,11 @@ const waitForBlockedQuery = async (database: pg.Pool, marker: string): Promise<v
 
 describe('PostgreSQL administrator primary-authentication store', () => {
   const database = new pg.Pool({ connectionString: process.env.DATABASE_URL })
-  const store = createPostgresAdminPrimaryAuthStore(database)
+  const store = createPostgresAdminPrimaryAuthStore(database, parseSuperAdministratorAllowlist('[]'))
+  const allowlistedStore = createPostgresAdminPrimaryAuthStore(
+    database,
+    parseSuperAdministratorAllowlist('["admin-user"]', '2026-01-01T00:00:00.000Z'),
+  )
 
   beforeAll(setupTestServer)
   afterAll(async () => {
@@ -185,7 +189,6 @@ describe('PostgreSQL administrator primary-authentication store', () => {
       stateDigest,
       userId: actor.userId,
       sessionId: actor.sessionId,
-      allowlistedSuperAdministrator: false,
       accountId: 'google-account-row',
       provider: 'google',
       providerAccountId: 'google-subject',
@@ -227,7 +230,6 @@ describe('PostgreSQL administrator primary-authentication store', () => {
       stateDigest: 'c'.repeat(64),
       userId: actor.userId,
       sessionId: actor.sessionId,
-      allowlistedSuperAdministrator: false,
       accountId: 'google-account-row',
       provider: 'google' as const,
       providerAccountId: 'google-subject',
@@ -254,7 +256,7 @@ describe('PostgreSQL administrator primary-authentication store', () => {
     await database.query(`UPDATE "user" SET role = 'user' WHERE id = 'admin-user'`)
     await expect(store.createOauthAttempt(attempt)).rejects.toThrow('OAuth challenge could not be created')
 
-    await expect(store.createOauthAttempt({ ...attempt, allowlistedSuperAdministrator: true })).resolves.toEqual({
+    await expect(allowlistedStore.createOauthAttempt(attempt)).resolves.toEqual({
       createdAt: expect.any(Date),
       expiresAt: expect.any(Date),
     })
@@ -292,8 +294,8 @@ describe('PostgreSQL administrator primary-authentication store', () => {
     await database.query(`UPDATE "user" SET role = 'user' WHERE id = 'admin-user'`)
     await expect(store.openWindow({ identity: actor, method: 'google', linkedAccount })).resolves.toBeNull()
     await expect(
-      store.openWindow({
-        identity: { ...actor, allowlistedSuperAdministrator: true },
+      allowlistedStore.openWindow({
+        identity: actor,
         method: 'google',
         linkedAccount,
       }),
@@ -301,8 +303,8 @@ describe('PostgreSQL administrator primary-authentication store', () => {
 
     await database.query(`DELETE FROM account WHERE id = 'google-account-row'`)
     await expect(
-      store.openWindow({
-        identity: { ...actor, allowlistedSuperAdministrator: true },
+      allowlistedStore.openWindow({
+        identity: actor,
         method: 'google',
         linkedAccount,
       }),
@@ -312,7 +314,51 @@ describe('PostgreSQL administrator primary-authentication store', () => {
     await expect(store.getActiveWindow(actor)).resolves.toBeNull()
   })
 
-  it('provides immediate user invalidation for role and ban transition transactions', async () => {
+  it('cannot create step-up state from a session at or before the current administrator floor', async () => {
+    await database.query(
+      `
+        INSERT INTO account (id, account_id, provider_id, user_id, updated_at)
+        VALUES ('google-freshness-row', 'google-freshness-subject', 'google', 'admin-user', clock_timestamp())
+      `,
+    )
+    const attempt = {
+      stateDigest: 'e'.repeat(64),
+      userId: actor.userId,
+      sessionId: actor.sessionId,
+      accountId: 'google-freshness-row',
+      provider: 'google' as const,
+      providerAccountId: 'google-freshness-subject',
+      codeVerifier: 'E'.repeat(64),
+      nonce: 'freshness-nonce',
+      redirectUri: 'http://localhost:3000/api/admin/primary-auth/oauth/callback/google',
+    }
+    const passwordCredential = { id: 'credential-account-row', passwordHash: 'current-password-hash' }
+
+    await database.query(
+      `
+        UPDATE "user"
+        SET admin_authorization_not_before = (
+          SELECT admin_authorization_issued_at FROM session WHERE id = 'admin-session'
+        )
+        WHERE id = 'admin-user'
+      `,
+    )
+    await expect(store.openWindow({ identity: actor, method: 'password', passwordCredential })).resolves.toBeNull()
+    await expect(store.createOauthAttempt(attempt)).rejects.toThrow('OAuth challenge could not be created')
+
+    await database.query(
+      `UPDATE session SET admin_authorization_issued_at = clock_timestamp() WHERE id = 'admin-session'`,
+    )
+    await expect(store.openWindow({ identity: actor, method: 'password', passwordCredential })).resolves.toEqual({
+      expiresAt: expect.any(Date),
+    })
+    await expect(store.createOauthAttempt(attempt)).resolves.toEqual({
+      createdAt: expect.any(Date),
+      expiresAt: expect.any(Date),
+    })
+  })
+
+  it('provides immediate proof invalidation without revoking the ordinary session', async () => {
     const passwordCredential = { id: 'credential-account-row', passwordHash: 'current-password-hash' }
     await store.openWindow({ identity: actor, method: 'password', passwordCredential })
     await database.query(
@@ -325,7 +371,6 @@ describe('PostgreSQL administrator primary-authentication store', () => {
       stateDigest: 'b'.repeat(64),
       userId: actor.userId,
       sessionId: actor.sessionId,
-      allowlistedSuperAdministrator: false,
       accountId: 'google-invalidation-row',
       provider: 'google',
       providerAccountId: 'google-invalidation-subject',
@@ -336,14 +381,15 @@ describe('PostgreSQL administrator primary-authentication store', () => {
 
     await store.invalidateUser(actor.userId)
 
-    const remaining = await database.query<{ windows: number; attempts: number }>(
+    const remaining = await database.query<{ sessions: number; windows: number; attempts: number }>(
       `
         SELECT
+          (SELECT count(*)::integer FROM session WHERE user_id = 'admin-user') AS sessions,
           (SELECT count(*)::integer FROM admin_primary_auth_windows) AS windows,
           (SELECT count(*)::integer FROM admin_primary_auth_oauth_attempts) AS attempts
       `,
     )
-    expect(remaining.rows).toEqual([{ windows: 0, attempts: 0 }])
+    expect(remaining.rows).toEqual([{ sessions: 1, windows: 0, attempts: 0 }])
   })
 
   it('serializes demotion invalidation before OAuth challenge eligibility without deadlocking', async () => {
@@ -365,7 +411,6 @@ describe('PostgreSQL administrator primary-authentication store', () => {
         stateDigest: 'd'.repeat(64),
         userId: actor.userId,
         sessionId: actor.sessionId,
-        allowlistedSuperAdministrator: false,
         accountId: 'google-lock-order-row',
         provider: 'google',
         providerAccountId: 'google-lock-order-subject',

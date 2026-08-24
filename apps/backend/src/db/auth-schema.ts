@@ -10,6 +10,9 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').default(false).notNull(),
   role: userRole('role').default(PERSISTED_USER_ROLES[0]).notNull(),
+  adminAuthorizationNotBefore: timestamp('admin_authorization_not_before', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
   image: text('image'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
@@ -25,6 +28,9 @@ export const session = pgTable(
     expiresAt: timestamp('expires_at').notNull(),
     token: text('token').notNull().unique(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
+    adminAuthorizationIssuedAt: timestamp('admin_authorization_issued_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
     updatedAt: timestamp('updated_at')
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),

@@ -20,7 +20,6 @@ const DUMMY_PASSWORD_HASH = 'fixed-dummy-password-hash'
 const actor: AdminPrimaryAuthActor = {
   userId: 'admin-user-id',
   sessionId: 'admin-session-id',
-  allowlistedSuperAdministrator: true,
 }
 
 type StoredOauthAttempt = Omit<AdminPrimaryAuthOauthAttempt, 'consumedAt'>

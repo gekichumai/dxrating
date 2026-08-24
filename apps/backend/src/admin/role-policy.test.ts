@@ -3,13 +3,15 @@ import { parseSuperAdministratorAllowlist } from './super-administrator-allowlis
 import {
   canTargetUser,
   forceOrdinaryRoleForNewUser,
+  isAdministratorSessionEligible,
   normalizePersistedUserRole,
   resolveAdministratorCapabilities,
   resolveAdministratorPrincipal,
+  resolveAdministratorSessionAuthorization,
   resolveEffectiveRole,
 } from './role-policy.js'
 
-const allowlist = parseSuperAdministratorAllowlist('["allowlisted-id","CaseSensitiveId"]')
+const allowlist = parseSuperAdministratorAllowlist('["allowlisted-id","CaseSensitiveId"]', '2026-01-01T00:00:00.000Z')
 
 describe('administrator role policy', () => {
   it('uses the persisted role when the immutable user ID is not allowlisted', () => {
@@ -97,6 +99,64 @@ describe('administrator role policy', () => {
         canModerateAdministrators: true,
         canManageAdministrators: true,
       },
+    })
+  })
+
+  it('requires a DB-issued session after both account activation and the current allowlist generation', () => {
+    const activation = new Date('2026-08-24T12:00:00.000Z')
+    const before = new Date('2026-08-24T11:59:59.999Z')
+    const equal = new Date('2026-08-24T12:00:00.000Z')
+    const after = new Date('2026-08-24T12:00:00.001Z')
+
+    for (const authorizationIssuedAt of [before, equal]) {
+      expect(
+        isAdministratorSessionEligible({
+          user: { id: 'administrator-id', role: 'admin', adminAuthorizationNotBefore: activation },
+          authorizationIssuedAt,
+          superAdministrators: allowlist,
+        }),
+      ).toBe(false)
+    }
+    expect(
+      isAdministratorSessionEligible({
+        user: { id: 'administrator-id', role: 'admin', adminAuthorizationNotBefore: activation },
+        authorizationIssuedAt: after,
+        superAdministrators: allowlist,
+      }),
+    ).toBe(true)
+
+    const currentGeneration = parseSuperAdministratorAllowlist('["allowlisted-id"]', '2026-08-24T12:00:00.000Z')
+    expect(
+      isAdministratorSessionEligible({
+        user: { id: 'allowlisted-id', role: 'user', adminAuthorizationNotBefore: before },
+        authorizationIssuedAt: equal,
+        superAdministrators: currentGeneration,
+      }),
+    ).toBe(false)
+    expect(
+      isAdministratorSessionEligible({
+        user: { id: 'allowlisted-id', role: 'user', adminAuthorizationNotBefore: before },
+        authorizationIssuedAt: after,
+        superAdministrators: currentGeneration,
+      }),
+    ).toBe(true)
+  })
+
+  it('falls back to persisted administrator authority when a newer super-admin generation requires login', () => {
+    const user = {
+      id: 'allowlisted-id',
+      role: 'admin',
+      adminAuthorizationNotBefore: new Date('2026-08-23T00:00:00.000Z'),
+    }
+    const authorization = resolveAdministratorSessionAuthorization({
+      user,
+      authorizationIssuedAt: new Date('2026-08-24T00:00:00.000Z'),
+      superAdministrators: parseSuperAdministratorAllowlist('["allowlisted-id"]', '2026-08-25T00:00:00.000Z'),
+    })
+
+    expect(authorization).toMatchObject({
+      principal: { userId: 'allowlisted-id', effectiveRole: 'admin' },
+      freshLoginSatisfied: true,
     })
   })
 

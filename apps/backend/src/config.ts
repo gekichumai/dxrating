@@ -73,6 +73,7 @@ const envSchema = z
     // comes through the validated settings below instead of a second channel.
     BETTER_AUTH_TRUSTED_ORIGINS: z.undefined().optional(),
     SUPER_ADMIN_USER_IDS: z.string().optional(),
+    SUPER_ADMIN_USER_IDS_EFFECTIVE_AT: optionalString,
     PASSKEY_RP_ID: optionalString,
     PASSKEY_ORIGIN: optionalUrl,
     GOOGLE_CLIENT_ID: optionalString,
@@ -242,7 +243,10 @@ const envSchema = z
   })
 
 const env = envSchema.parse(process.env)
-const superAdministrators = parseSuperAdministratorAllowlist(env.SUPER_ADMIN_USER_IDS)
+const superAdministrators = parseSuperAdministratorAllowlist(
+  env.SUPER_ADMIN_USER_IDS,
+  env.SUPER_ADMIN_USER_IDS_EFFECTIVE_AT,
+)
 const adminFrontendOrigin = env.ADMIN_FRONTEND_URL ?? 'http://localhost:5174'
 const adminTrustedOrigins = uniqueOrigins([adminFrontendOrigin, ...env.ADMIN_ADDITIONAL_TRUSTED_ORIGINS])
 const publicTrustedOrigins = uniqueOrigins([env.FRONTEND_URL, ...env.PUBLIC_ADDITIONAL_TRUSTED_ORIGINS])

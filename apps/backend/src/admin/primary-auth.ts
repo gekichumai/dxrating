@@ -11,9 +11,7 @@ export type AdminPrimaryAuthIdentity = {
   readonly sessionId: string
 }
 
-export type AdminPrimaryAuthActor = AdminPrimaryAuthIdentity & {
-  readonly allowlistedSuperAdministrator: boolean
-}
+export type AdminPrimaryAuthActor = AdminPrimaryAuthIdentity
 
 export type AdminPrimaryAuthMethod = 'password' | AdminPrimaryAuthProvider
 
@@ -49,8 +47,7 @@ export type AdminPrimaryAuthOauthAttempt = {
 export type CreateAdminPrimaryAuthOauthAttempt = Omit<
   AdminPrimaryAuthOauthAttempt,
   'createdAt' | 'expiresAt' | 'consumedAt'
-> &
-  Pick<AdminPrimaryAuthActor, 'allowlistedSuperAdministrator'>
+>
 
 export type AdminPrimaryAuthStore = {
   getActiveWindow(identity: AdminPrimaryAuthIdentity): Promise<AdminPrimaryAuthWindow | null>

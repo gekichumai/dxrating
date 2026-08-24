@@ -266,7 +266,6 @@ app.get('/api/admin/primary-auth/oauth/callback/:provider', async (c) => {
       {
         userId: authentication.authorizationUser.id,
         sessionId: authentication.session.id,
-        allowlistedSuperAdministrator: authentication.principal.effectiveRole === 'super_admin',
       },
       provider.data,
       c.req.query('state') ?? null,

@@ -12,7 +12,7 @@
     "migrate:dev": "tsx --env-file-if-exists=.env.local src/migrate.ts",
     "lint": "oxlint .",
     "test": "vitest run",
-    "test:migrations": "pnpm build:bundle && MIGRATION_COMPILED_TEST=1 vitest run src/db/migration-config.test.ts src/db/migration-runner.test.ts src/db/backfill-runner.test.ts src/db/migration-cli.integration.test.ts src/db/admin-role-migration.test.ts src/db/admin-primary-auth-migration.test.ts",
+    "test:migrations": "pnpm build:bundle && MIGRATION_COMPILED_TEST=1 vitest run src/db/migration-config.test.ts src/db/migration-runner.test.ts src/db/backfill-runner.test.ts src/db/migration-cli.integration.test.ts src/db/admin-role-migration.test.ts src/db/admin-primary-auth-migration.test.ts src/db/admin-session-transition-migration.test.ts",
     "test:producer-contract": "DXDATA_PRODUCER_CONTRACT=1 vitest run src/test/dxdata-producer-contract.test.ts",
     "test:watch": "vitest",
     "db:up": "docker compose up -d",

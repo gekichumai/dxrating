@@ -1,6 +1,7 @@
 import { ADMIN_CONTRACT_COMPATIBILITY_ID, ADMIN_CONTRACT_HEADER } from '@gekichumai/admin-contract'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import pg from 'pg'
+import { promoteUserToAdministratorInTransaction } from '../admin/role-transitions.js'
 import {
   cleanDatabase,
   extractSessionCookie,
@@ -28,9 +29,23 @@ const signInFromAdmin = (email: string, password: string) =>
 
 const promoteToAdministrator = async (email: string) => {
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+  const transaction = await pool.connect()
   try {
-    await pool.query(`UPDATE "user" SET role = 'admin' WHERE email = $1`, [email])
+    await transaction.query('BEGIN')
+    const candidate = await transaction.query<{ readonly id: string }>(`SELECT id FROM "user" WHERE email = $1`, [
+      email,
+    ])
+    const userId = candidate.rows[0]?.id
+    if (!userId) throw new Error(`Administrator fixture user not found: ${email}`)
+
+    const transition = await promoteUserToAdministratorInTransaction(transaction, userId)
+    if (!transition) throw new Error(`Administrator fixture could not be promoted: ${email}`)
+    await transaction.query('COMMIT')
+  } catch (error) {
+    await transaction.query('ROLLBACK').catch(() => undefined)
+    throw error
   } finally {
+    transaction.release()
     await pool.end()
   }
 }
@@ -51,6 +66,7 @@ describe('administrator origin authentication integration', () => {
   it('completes the credentialed sign-in, session, admin API, and sign-out round trip', async () => {
     const email = 'admin-origin@example.com'
     await signUp(email, 'password123', 'Admin Origin')
+    await promoteToAdministrator(email)
     const signInResponse = await signInFromAdmin(email, 'password123')
 
     expect(signInResponse.status).toBe(200)
@@ -73,7 +89,6 @@ describe('administrator origin authentication integration', () => {
     expect(sessionResponse.headers.get('Access-Control-Allow-Origin')).toBe(ADMIN_ORIGIN)
     await expect(sessionResponse.json()).resolves.toMatchObject({ user: { email } })
 
-    await promoteToAdministrator(email)
     const adminResponse = await fetch(`${getBaseUrl()}/api/admin/bootstrap`, {
       credentials: 'include',
       headers: {

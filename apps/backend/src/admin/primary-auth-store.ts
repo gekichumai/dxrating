@@ -1,6 +1,9 @@
 import type { Pool, PoolClient } from 'pg'
 import type { AdminPrimaryAuthProvider } from '@gekichumai/admin-contract'
+import { config } from '../config.js'
 import { pool } from '../db/index.js'
+import { resolveAdministratorSessionAuthorization } from './role-policy.js'
+import type { SuperAdministratorAllowlist } from './super-administrator-allowlist.js'
 import {
   ADMIN_PRIMARY_AUTH_PASSWORD_ATTEMPT_LIMIT,
   ADMIN_PRIMARY_AUTH_PASSWORD_RATE_WINDOW_SECONDS,
@@ -152,8 +155,9 @@ const safelyRollback = async (client: PoolClient): Promise<void> => {
 
 /**
  * Removes every primary-authentication artifact for a user inside the caller's
- * existing PostgreSQL transaction. Role and ban transitions must call this
- * after locking/updating the user and before committing.
+ * existing PostgreSQL transaction without deleting ordinary sessions. Use it
+ * for credential/account changes that intentionally retain those sessions.
+ * Role and ban transitions must use revokeAllUserSessionsInTransaction.
  *
  * The lock order matches window completion: user, then sessions. Window
  * completion takes its final exact-account lock after those two locks.
@@ -196,7 +200,10 @@ export const invalidateAdminPrimaryAuthForUserInTransaction = async (
   )
 }
 
-export const createPostgresAdminPrimaryAuthStore = (database: Pool): AdminPrimaryAuthStore => ({
+export const createPostgresAdminPrimaryAuthStore = (
+  database: Pool,
+  superAdministrators: SuperAdministratorAllowlist,
+): AdminPrimaryAuthStore => ({
   async getActiveWindow(identity) {
     const expiresAt = await querySingleDate(
       database,
@@ -263,32 +270,53 @@ export const createPostgresAdminPrimaryAuthStore = (database: Pool): AdminPrimar
       // OAuth initiation uses the same user, session, account lock order as
       // completion. In particular, it must not let the INSERT's session FK
       // lock precede the user lock held by transaction-scoped invalidation.
-      const lockedUser = await client.query<{ readonly role: string }>(
+      const lockedUser = await client.query<{
+        readonly id: string
+        readonly role: string
+        readonly admin_authorization_not_before: Date
+      }>(
         `
           /* admin-primary-auth:create-oauth-attempt:lock-user */
-          SELECT role
+          SELECT id, role, admin_authorization_not_before
           FROM "user"
           WHERE id = $1
           FOR UPDATE
         `,
         [attempt.userId],
       )
-      const currentRole = lockedUser.rows[0]?.role
-      if (currentRole !== 'admin' && !attempt.allowlistedSuperAdministrator) {
+      const currentUser = lockedUser.rows[0]
+      if (!currentUser) {
         throw new Error('Administrator OAuth challenge could not be created')
       }
 
-      const lockedSession = await client.query<{ readonly id: string }>(
+      const lockedSession = await client.query<{
+        readonly id: string
+        readonly admin_authorization_issued_at: Date
+      }>(
         `
           /* admin-primary-auth:create-oauth-attempt:lock-session */
-          SELECT id
+          SELECT id, admin_authorization_issued_at
           FROM session
           WHERE id = $1 AND user_id = $2 AND expires_at > clock_timestamp()
           FOR UPDATE
         `,
         [attempt.sessionId, attempt.userId],
       )
-      if (lockedSession.rowCount !== 1) throw new Error('Administrator OAuth challenge could not be created')
+      const currentSession = lockedSession.rows[0]
+      if (!currentSession) throw new Error('Administrator OAuth challenge could not be created')
+
+      const authorization = resolveAdministratorSessionAuthorization({
+        user: {
+          id: currentUser.id,
+          role: currentUser.role,
+          adminAuthorizationNotBefore: currentUser.admin_authorization_not_before,
+        },
+        authorizationIssuedAt: currentSession.admin_authorization_issued_at,
+        superAdministrators,
+      })
+      if (!authorization.principal || !authorization.freshLoginSatisfied) {
+        throw new Error('Administrator OAuth challenge could not be created')
+      }
 
       const lockedAccount = await client.query<{ readonly id: string }>(
         `
@@ -448,36 +476,58 @@ export const createPostgresAdminPrimaryAuthStore = (database: Pool): AdminPrimar
     try {
       await client.query('BEGIN')
 
-      // Every completion and role/ban invalidation takes locks in this order:
+      // Every completion and role/ban revocation takes locks in this order:
       // user, session, then the exact credential/provider account. The locks
       // make the final eligibility check linearizable with concurrent changes.
-      const lockedUser = await client.query<{ readonly role: string }>(
+      const lockedUser = await client.query<{
+        readonly id: string
+        readonly role: string
+        readonly admin_authorization_not_before: Date
+      }>(
         `
           /* admin-primary-auth:open-window:lock-user */
-          SELECT role
+          SELECT id, role, admin_authorization_not_before
           FROM "user"
           WHERE id = $1
           FOR UPDATE
         `,
         [identity.userId],
       )
-      const currentRole = lockedUser.rows[0]?.role
-      if (currentRole !== 'admin' && !identity.allowlistedSuperAdministrator) {
+      const currentUser = lockedUser.rows[0]
+      if (!currentUser) {
         await client.query('ROLLBACK')
         return null
       }
 
-      const lockedSession = await client.query<{ readonly id: string }>(
+      const lockedSession = await client.query<{
+        readonly id: string
+        readonly admin_authorization_issued_at: Date
+      }>(
         `
           /* admin-primary-auth:open-window:lock-session */
-          SELECT id
+          SELECT id, admin_authorization_issued_at
           FROM session
           WHERE id = $1 AND user_id = $2 AND expires_at > clock_timestamp()
           FOR UPDATE
         `,
         [identity.sessionId, identity.userId],
       )
-      if (lockedSession.rowCount !== 1) {
+      const currentSession = lockedSession.rows[0]
+      if (!currentSession) {
+        await client.query('ROLLBACK')
+        return null
+      }
+
+      const authorization = resolveAdministratorSessionAuthorization({
+        user: {
+          id: currentUser.id,
+          role: currentUser.role,
+          adminAuthorizationNotBefore: currentUser.admin_authorization_not_before,
+        },
+        authorizationIssuedAt: currentSession.admin_authorization_issued_at,
+        superAdministrators,
+      })
+      if (!authorization.principal || !authorization.freshLoginSatisfied) {
         await client.query('ROLLBACK')
         return null
       }
@@ -630,7 +680,7 @@ export const createPostgresAdminPrimaryAuthStore = (database: Pool): AdminPrimar
   },
 })
 
-export const postgresAdminPrimaryAuthStore = createPostgresAdminPrimaryAuthStore(pool)
+export const postgresAdminPrimaryAuthStore = createPostgresAdminPrimaryAuthStore(pool, config.auth.superAdministrators)
 
 export const hasRecentAdminPrimaryAuth = async (identity: AdminPrimaryAuthIdentity): Promise<boolean> =>
   (await postgresAdminPrimaryAuthStore.getActiveWindow(identity)) !== null

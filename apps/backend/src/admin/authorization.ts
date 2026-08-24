@@ -3,8 +3,8 @@ import {
   type AdminProcedureAuthorizationPolicy,
 } from '@gekichumai/admin-contract'
 import {
-  canTargetUser,
-  resolveAdministratorPrincipal,
+  canAdministratorPrincipalTargetUser,
+  resolveAdministratorSessionAuthorization,
   type AdministratorPrincipal,
   type AdministratorTargetAction,
   type PersistedUserRole,
@@ -47,6 +47,9 @@ export const requireAuthenticated = (context: AdminAuthorizationContext): Authen
 export const requireAdmin = (context: AdminAuthorizationContext): AuthorizedAdminRequest => {
   const authentication = requireAuthenticated(context)
   if (!authentication.principal) throw new AdminAuthorizationFailure('FORBIDDEN')
+  if (!authentication.assurance.freshLoginSatisfied) {
+    throw new AdminAuthorizationFailure('FRESH_LOGIN_REQUIRED')
+  }
   return authentication as AuthorizedAdminRequest
 }
 
@@ -60,7 +63,7 @@ export const requireSuperAdmin = (context: AdminAuthorizationContext): Authorize
 
 export const requireRecentPrimaryAuth = (context: AdminAuthorizationContext): AuthorizedAdminRequest => {
   const authentication = requireAdmin(context)
-  if (authentication.assurance?.recentPrimaryAuthSatisfied !== true) {
+  if (!authentication.assurance.recentPrimaryAuthSatisfied) {
     throw new AdminAuthorizationFailure('RECENT_AUTH_REQUIRED')
   }
   return authentication
@@ -68,7 +71,7 @@ export const requireRecentPrimaryAuth = (context: AdminAuthorizationContext): Au
 
 export const requireFreshLogin = (context: AdminAuthorizationContext): AuthorizedAdminRequest => {
   const authentication = requireAdmin(context)
-  if (authentication.assurance?.freshLoginSatisfied !== true) {
+  if (!authentication.assurance.freshLoginSatisfied) {
     throw new AdminAuthorizationFailure('FRESH_LOGIN_REQUIRED')
   }
   return authentication
@@ -95,6 +98,13 @@ export const requireAdminProcedurePolicy = (
 export type LockedAdminAuthorizationUser = {
   readonly id: string
   readonly role: PersistedUserRole
+  readonly adminAuthorizationNotBefore: Date
+}
+
+export type LockedAdminAuthorizationSession = {
+  readonly id: string
+  readonly userId: string
+  readonly authorizationIssuedAt: Date
 }
 
 export type AdminMutationAuthorizationTransaction = {
@@ -102,6 +112,13 @@ export type AdminMutationAuthorizationTransaction = {
   lockUsersByIdForUpdate: (
     orderedUserIds: readonly string[],
   ) => Promise<ReadonlyMap<string, LockedAdminAuthorizationUser>>
+  /** Called after user locks; the implementation must reject missing, mismatched, or expired sessions. */
+  lockSessionByIdForUpdate: (identity: {
+    readonly userId: string
+    readonly sessionId: string
+  }) => Promise<LockedAdminAuthorizationSession | undefined>
+  /** Called after the actor session lock when the procedure requires recent primary authentication. */
+  hasRecentPrimaryAuthForUpdate: (identity: { readonly userId: string; readonly sessionId: string }) => Promise<boolean>
 }
 
 export type AdminTargetAuthorization = {
@@ -114,12 +131,14 @@ export const requireTargetAuthorization = async ({
   context,
   targetUserId,
   action,
+  policy,
   transaction,
   superAdministrators,
 }: {
   context: AdminAuthorizationContext
   targetUserId: string
   action: AdministratorTargetAction
+  policy: AdminProcedureAuthorizationPolicy
   transaction: AdminMutationAuthorizationTransaction
   superAdministrators: SuperAdministratorAllowlist
 }): Promise<AdminTargetAuthorization> => {
@@ -133,13 +152,45 @@ export const requireTargetAuthorization = async ({
   const target = lockedUsers.get(targetUserId)
 
   if (!actor) throw new AdminAuthorizationFailure('UNAUTHENTICATED')
-  if (!target) throw new AdminAuthorizationFailure('NOT_FOUND')
-  if (!['user', 'admin'].includes(actor.role) || !['user', 'admin'].includes(target.role)) {
+  if (!['user', 'admin'].includes(actor.role)) {
     throw new Error('Invalid locked administrator role')
   }
 
-  const principal = resolveAdministratorPrincipal(actor, superAdministrators)
-  if (!principal || !canTargetUser({ actor, target, action, superAdministrators })) {
+  const session = await transaction.lockSessionByIdForUpdate({
+    userId: actorUserId,
+    sessionId: authentication.session.id,
+  })
+  if (!session || session.userId !== actorUserId || session.id !== authentication.session.id) {
+    throw new AdminAuthorizationFailure('UNAUTHENTICATED')
+  }
+
+  const resolvedPolicy = AdminProcedureAuthorizationPolicySchema.safeParse(policy)
+  if (!resolvedPolicy.success || resolvedPolicy.data.targetAction !== action) {
+    throw new Error('Invalid administrator target authorization policy')
+  }
+
+  const { principal, freshLoginSatisfied } = resolveAdministratorSessionAuthorization({
+    user: actor,
+    authorizationIssuedAt: session.authorizationIssuedAt,
+    superAdministrators,
+  })
+  if (!principal) {
+    throw new AdminAuthorizationFailure('FORBIDDEN')
+  }
+  if (!freshLoginSatisfied) throw new AdminAuthorizationFailure('FRESH_LOGIN_REQUIRED')
+  if (resolvedPolicy.data.minimumRole === 'super_admin' && principal.effectiveRole !== 'super_admin') {
+    throw new AdminAuthorizationFailure('FORBIDDEN')
+  }
+  if (resolvedPolicy.data.recentPrimaryAuth) {
+    const recentPrimaryAuthSatisfied = await transaction.hasRecentPrimaryAuthForUpdate({
+      userId: actorUserId,
+      sessionId: session.id,
+    })
+    if (!recentPrimaryAuthSatisfied) throw new AdminAuthorizationFailure('RECENT_AUTH_REQUIRED')
+  }
+  if (!target) throw new AdminAuthorizationFailure('NOT_FOUND')
+  if (!['user', 'admin'].includes(target.role)) throw new Error('Invalid locked administrator role')
+  if (!canAdministratorPrincipalTargetUser({ principal, target, action, superAdministrators })) {
     throw new AdminAuthorizationFailure('FORBIDDEN')
   }
 

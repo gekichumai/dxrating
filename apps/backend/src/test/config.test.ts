@@ -75,6 +75,7 @@ describe('config', () => {
       DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/dxrating_test',
       BETTER_AUTH_SECRET: 'test-secret',
       SUPER_ADMIN_USER_IDS: '["immutable-id","immutable-id","CaseSensitive"]',
+      SUPER_ADMIN_USER_IDS_EFFECTIVE_AT: '2026-08-24T00:00:00.000Z',
     }
 
     const { config } = await import('../config.js')
@@ -82,6 +83,32 @@ describe('config', () => {
     expect(config.auth.superAdministrators.configuredUserCount).toBe(2)
     expect(config.auth.superAdministrators.hasExactUserId('immutable-id')).toBe(true)
     expect(config.auth.superAdministrators.hasExactUserId('casesensitive')).toBe(false)
+  })
+
+  it('fails closed when non-empty super-administrator IDs lack a valid UTC generation time', async () => {
+    for (const effectiveAt of [undefined, 'not-a-timestamp', '2026-08-24T01:00:00+01:00']) {
+      vi.doMock('dotenv', () => ({ config: vi.fn() }))
+      process.env = {
+        ...originalEnv,
+        DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/dxrating_test',
+        BETTER_AUTH_SECRET: 'test-secret',
+        SUPER_ADMIN_USER_IDS: '["sensitive-id"]',
+      }
+      if (effectiveAt) process.env.SUPER_ADMIN_USER_IDS_EFFECTIVE_AT = effectiveAt
+      else delete process.env.SUPER_ADMIN_USER_IDS_EFFECTIVE_AT
+
+      let thrown: unknown
+      try {
+        await import('../config.js')
+      } catch (error) {
+        thrown = error
+      }
+
+      expect(String(thrown)).toContain('SUPER_ADMIN_USER_IDS_EFFECTIVE_AT must be a UTC ISO timestamp')
+      expect(String(thrown)).not.toContain('sensitive-id')
+      expect(String(thrown)).not.toContain(String(effectiveAt))
+      vi.resetModules()
+    }
   })
 
   it('fails closed on malformed super-administrator configuration without leaking IDs', async () => {

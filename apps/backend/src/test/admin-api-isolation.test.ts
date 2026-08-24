@@ -27,8 +27,9 @@ const requestAuthentication = (
   principal: resolveAdministratorPrincipal(authorizationUser, superAdministrators),
   session: {
     id: 'session-id',
-    createdAt: new Date('2026-08-23T00:00:00.000Z'),
+    authorizationIssuedAt: new Date('2026-08-23T00:00:00.000Z'),
   },
+  assurance: { recentPrimaryAuthSatisfied: false, freshLoginSatisfied: true },
 })
 
 describe('private administrator API isolation', () => {
@@ -147,7 +148,7 @@ describe('private administrator API isolation', () => {
 
   it('returns allowlist-derived super-administrator authority without exposing the allowlist', async () => {
     const serializedAllowlist = '["configured-super-id","second-secret-id"]'
-    const superAdministrators = parseSuperAdministratorAllowlist(serializedAllowlist)
+    const superAdministrators = parseSuperAdministratorAllowlist(serializedAllowlist, '2026-01-01T00:00:00.000Z')
     const authorizedHandler = new OpenAPIHandler(createAdminRouter())
     const allowlistedUser = {
       id: 'configured-super-id',

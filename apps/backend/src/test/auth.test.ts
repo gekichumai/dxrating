@@ -116,6 +116,9 @@ describe('Authentication', () => {
     const session = await sessionRes.json()
     expect(session.user.email).toBe('test@example.com')
     expect(session.user).not.toHaveProperty('role')
+    expect(session.user).not.toHaveProperty('adminAuthorizationNotBefore')
+    expect(session.session).not.toHaveProperty('adminAuthorizationIssuedAt')
+    expect(JSON.stringify(session)).not.toContain('admin_authorization_')
   })
 
   it('get session without cookie returns null/unauthorized', async () => {

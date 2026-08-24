@@ -71,8 +71,11 @@ const authentication = (
       canManageAdministrators: role === 'super_admin',
     },
   },
-  session: { id: 'session-id', createdAt: new Date('2026-08-23T00:00:00.000Z') },
-  assurance,
+  session: { id: 'session-id', authorizationIssuedAt: new Date('2026-08-23T00:00:00.000Z') },
+  assurance: {
+    recentPrimaryAuthSatisfied: assurance?.recentPrimaryAuthSatisfied ?? false,
+    freshLoginSatisfied: assurance?.freshLoginSatisfied ?? true,
+  },
 })
 
 const malformedRequest = (path: string) =>
@@ -124,7 +127,7 @@ describe('administrator OpenAPI transport errors', () => {
     const cases = [
       ['/super-decode', authentication('admin'), 403, 'FORBIDDEN'],
       ['/recent-decode', authentication('admin'), 401, 'RECENT_AUTH_REQUIRED'],
-      ['/fresh-decode', authentication('admin'), 401, 'FRESH_LOGIN_REQUIRED'],
+      ['/fresh-decode', authentication('admin', { freshLoginSatisfied: false }), 401, 'FRESH_LOGIN_REQUIRED'],
       ['/super-decode', authentication('super_admin'), 400, 'VALIDATION_FAILED'],
       ['/recent-decode', authentication('admin', { recentPrimaryAuthSatisfied: true }), 400, 'VALIDATION_FAILED'],
       ['/fresh-decode', authentication('admin', { freshLoginSatisfied: true }), 400, 'VALIDATION_FAILED'],

@@ -2,11 +2,13 @@ import { ADMIN_CONTRACT_COMPATIBILITY_ID, ADMIN_CONTRACT_HEADER } from '@gekichu
 import pg from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { TEST_ADMIN_ACCESS_HEADERS } from './admin-access.js'
+import { promoteUserToAdministratorInTransaction } from '../admin/role-transitions.js'
 import {
   cleanDatabase,
   extractSessionCookie,
   getBaseUrl,
   setupTestServer,
+  signIn,
   signUp,
   teardownTestServer,
 } from './setup.js'
@@ -14,15 +16,31 @@ import {
 const ADMIN_ORIGIN = 'http://localhost:5174'
 
 const createAdministrator = async (email: string) => {
-  const signUpResponse = await signUp(email, 'password123', 'Step-up Administrator')
-  const cookie = extractSessionCookie(signUpResponse)
+  await signUp(email, 'password123', 'Step-up Administrator')
   const database = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+  const transaction = await database.connect()
   try {
-    await database.query(`UPDATE "user" SET role = 'admin' WHERE email = $1`, [email])
+    await transaction.query('BEGIN')
+    const candidate = await transaction.query<{ readonly id: string }>(`SELECT id FROM "user" WHERE email = $1`, [
+      email,
+    ])
+    const userId = candidate.rows[0]?.id
+    if (!userId) throw new Error(`Administrator fixture user not found: ${email}`)
+
+    const transition = await promoteUserToAdministratorInTransaction(transaction, userId)
+    if (!transition) throw new Error(`Administrator fixture could not be promoted: ${email}`)
+    await transaction.query('COMMIT')
+  } catch (error) {
+    await transaction.query('ROLLBACK').catch(() => undefined)
+    throw error
   } finally {
+    transaction.release()
     await database.end()
   }
-  return cookie
+
+  const signInResponse = await signIn(email, 'password123')
+  if (!signInResponse.ok) throw new Error(`Administrator fixture could not sign in: ${email}`)
+  return extractSessionCookie(signInResponse)
 }
 
 const adminRequest = (path: string, cookie: string, init: RequestInit = {}) =>

@@ -44,7 +44,8 @@ Treat these as separate operational stages. Expansion and contract normally belo
 Add only structures that the currently deployed backend can ignore or safely use:
 
 - nullable columns;
-- columns with safe, constant defaults that do not rewrite the table;
+- columns with safe, non-volatile defaults that have been verified to use PostgreSQL's fast-default path without a
+  table rewrite;
 - new tables;
 - unvalidated constraints when they do not reject writes from the old build;
 - concurrently built indexes through the reviewed non-transactional path.

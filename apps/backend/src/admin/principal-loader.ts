@@ -1,10 +1,14 @@
-import { eq } from 'drizzle-orm'
+import { and, eq, gt, sql } from 'drizzle-orm'
 import { auth } from '../auth.js'
 import { config } from '../config.js'
 import { db } from '../db/index.js'
-import { user } from '../db/auth-schema.js'
+import { session, user } from '../db/auth-schema.js'
 import { hasRecentAdminPrimaryAuth } from './primary-auth-store.js'
-import { resolveAdministratorPrincipal, type AdministratorPrincipal, type RoleBearingUser } from './role-policy.js'
+import {
+  resolveAdministratorSessionAuthorization,
+  type AdministratorPrincipal,
+  type RoleBearingUser,
+} from './role-policy.js'
 import type { SuperAdministratorAllowlist } from './super-administrator-allowlist.js'
 
 export type UnauthenticatedAdminRequest = {
@@ -17,11 +21,11 @@ export type AuthenticatedAdminRequest = {
   readonly principal: AdministratorPrincipal | undefined
   readonly session: {
     readonly id: string
-    readonly createdAt: Date
+    readonly authorizationIssuedAt: Date
   }
-  readonly assurance?: {
-    readonly recentPrimaryAuthSatisfied?: boolean
-    readonly freshLoginSatisfied?: boolean
+  readonly assurance: {
+    readonly recentPrimaryAuthSatisfied: boolean
+    readonly freshLoginSatisfied: boolean
   }
 }
 
@@ -29,14 +33,22 @@ export type AdminRequestAuthentication = UnauthenticatedAdminRequest | Authentic
 
 export type AdminSessionLookup = (headers: Headers) => Promise<
   | {
-      session: { id: string; createdAt: Date }
+      session: { id: string }
       user: { id: string }
     }
   | null
   | undefined
 >
 
-export type AdminUserLookup = (userId: string) => Promise<(RoleBearingUser & { id: string }) | undefined>
+export type AdminAuthorizationSnapshot = RoleBearingUser & {
+  readonly id: string
+  readonly adminAuthorizationNotBefore: Date
+  readonly authorizationIssuedAt: Date
+}
+export type AdminAuthorizationSnapshotLookup = (identity: {
+  readonly userId: string
+  readonly sessionId: string
+}) => Promise<AdminAuthorizationSnapshot | undefined>
 export type AdminRecentPrimaryAuthLookup = (identity: {
   readonly userId: string
   readonly sessionId: string
@@ -44,12 +56,12 @@ export type AdminRecentPrimaryAuthLookup = (identity: {
 
 export const createAdminPrincipalLoader = ({
   getSession,
-  findUserById,
+  findAuthorizationSnapshot,
   superAdministrators,
   hasRecentPrimaryAuth = async () => false,
 }: {
   getSession: AdminSessionLookup
-  findUserById: AdminUserLookup
+  findAuthorizationSnapshot: AdminAuthorizationSnapshotLookup
   superAdministrators: SuperAdministratorAllowlist
   hasRecentPrimaryAuth?: AdminRecentPrimaryAuthLookup
 }) => {
@@ -61,15 +73,23 @@ export const createAdminPrincipalLoader = ({
 
     // The persisted role is deliberately omitted from Better Auth's public
     // session output. Re-read the current row for every administrator request.
-    const authorizationUser = await findUserById(session.user.id)
+    const authorizationUser = await findAuthorizationSnapshot({
+      userId: session.user.id,
+      sessionId: session.session.id,
+    })
     if (!authorizationUser || authorizationUser.id !== session.user.id) {
       return { status: 'unauthenticated' }
     }
 
-    const principal = resolveAdministratorPrincipal(authorizationUser, superAdministrators)
-    const recentPrimaryAuthSatisfied = principal
-      ? await hasRecentPrimaryAuth({ userId: authorizationUser.id, sessionId: session.session.id })
-      : false
+    const { principal, freshLoginSatisfied } = resolveAdministratorSessionAuthorization({
+      user: authorizationUser,
+      authorizationIssuedAt: authorizationUser.authorizationIssuedAt,
+      superAdministrators,
+    })
+    const recentPrimaryAuthSatisfied =
+      principal && freshLoginSatisfied
+        ? await hasRecentPrimaryAuth({ userId: authorizationUser.id, sessionId: session.session.id })
+        : false
 
     return {
       status: 'authenticated',
@@ -77,21 +97,31 @@ export const createAdminPrincipalLoader = ({
       principal,
       session: {
         id: session.session.id,
-        createdAt: session.session.createdAt,
+        authorizationIssuedAt: authorizationUser.authorizationIssuedAt,
       },
-      assurance: { recentPrimaryAuthSatisfied },
+      assurance: { freshLoginSatisfied, recentPrimaryAuthSatisfied },
     }
   }
 }
 
-export const findAdminAuthorizationUserById: AdminUserLookup = async (userId) => {
-  const rows = await db.select({ id: user.id, role: user.role }).from(user).where(eq(user.id, userId)).limit(1)
+export const findAdminAuthorizationSnapshot: AdminAuthorizationSnapshotLookup = async ({ userId, sessionId }) => {
+  const rows = await db
+    .select({
+      id: user.id,
+      role: user.role,
+      adminAuthorizationNotBefore: user.adminAuthorizationNotBefore,
+      authorizationIssuedAt: session.adminAuthorizationIssuedAt,
+    })
+    .from(user)
+    .innerJoin(session, and(eq(session.id, sessionId), eq(session.userId, user.id)))
+    .where(and(eq(user.id, userId), gt(session.expiresAt, sql`clock_timestamp()`)))
+    .limit(1)
   return rows[0]
 }
 
 export const loadAdminRequestAuthentication = createAdminPrincipalLoader({
   getSession: (headers) => auth.api.getSession({ headers }),
-  findUserById: findAdminAuthorizationUserById,
+  findAuthorizationSnapshot: findAdminAuthorizationSnapshot,
   superAdministrators: config.auth.superAdministrators,
   hasRecentPrimaryAuth: hasRecentAdminPrimaryAuth,
 })

@@ -92,6 +92,13 @@
       "when": 1787544476483,
       "tag": "0012_add_admin_primary_auth",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1787546555053,
+      "tag": "0013_add_admin_session_transitions",
+      "breakpoints": true
     }
   ]
 }

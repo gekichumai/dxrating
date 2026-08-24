@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { AdminProcedureAuthorizationPolicy } from '@gekichumai/admin-contract'
 import { parseSuperAdministratorAllowlist } from './super-administrator-allowlist.js'
 import {
   AdminAuthorizationFailure,
@@ -9,10 +10,46 @@ import {
   requireSuperAdmin,
   requireTargetAuthorization,
   type AdminAuthorizationContext,
+  type AdminMutationAuthorizationTransaction,
+  type LockedAdminAuthorizationUser,
 } from './authorization.js'
 import type { AdminRequestAuthentication } from './principal-loader.js'
 
-const superAdministrators = parseSuperAdministratorAllowlist('["super-id"]')
+const superAdministrators = parseSuperAdministratorAllowlist('["super-id"]', '2026-01-01T00:00:00.000Z')
+const authorizationNotBefore = new Date('2026-08-22T00:00:00.000Z')
+const authorizationIssuedAt = new Date('2026-08-23T00:00:00.000Z')
+const moderationPolicy = {
+  minimumRole: 'admin',
+  recentPrimaryAuth: false,
+  freshLogin: false,
+  primaryAuthAction: null,
+  targetAction: 'moderate',
+} as const satisfies AdminProcedureAuthorizationPolicy
+const roleManagementPolicy = {
+  ...moderationPolicy,
+  minimumRole: 'super_admin',
+  targetAction: 'manage_administrator_role',
+} as const satisfies AdminProcedureAuthorizationPolicy
+
+const lockedUser = (id: string, role: 'user' | 'admin'): LockedAdminAuthorizationUser => ({
+  id,
+  role,
+  adminAuthorizationNotBefore: authorizationNotBefore,
+})
+
+const mutationTransaction = (
+  lockUsersByIdForUpdate: AdminMutationAuthorizationTransaction['lockUsersByIdForUpdate'],
+  overrides: Partial<AdminMutationAuthorizationTransaction> = {},
+): AdminMutationAuthorizationTransaction => ({
+  lockUsersByIdForUpdate,
+  lockSessionByIdForUpdate: vi.fn().mockResolvedValue({
+    id: 'session-id',
+    userId: 'admin-id',
+    authorizationIssuedAt,
+  }),
+  hasRecentPrimaryAuthForUpdate: vi.fn().mockResolvedValue(false),
+  ...overrides,
+})
 
 const authentication = (
   role: 'user' | 'admin' | 'super_admin',
@@ -35,8 +72,11 @@ const authentication = (
             canManageAdministrators: role === 'super_admin',
           },
         },
-  session: { id: 'session-id', createdAt: new Date('2026-08-23T00:00:00.000Z') },
-  assurance,
+  session: { id: 'session-id', authorizationIssuedAt },
+  assurance: {
+    recentPrimaryAuthSatisfied: assurance?.recentPrimaryAuthSatisfied ?? false,
+    freshLoginSatisfied: assurance?.freshLoginSatisfied ?? true,
+  },
 })
 
 const expectFailure = (callback: () => unknown, code: string) => {
@@ -58,7 +98,10 @@ describe('administrator authorization guards', () => {
   it('keeps recent-authentication and fresh-login ceremonies distinct and fail closed', () => {
     const admin = authentication('admin')
     expectFailure(() => requireRecentPrimaryAuth({ authentication: admin }), 'RECENT_AUTH_REQUIRED')
-    expectFailure(() => requireFreshLogin({ authentication: admin }), 'FRESH_LOGIN_REQUIRED')
+    expectFailure(
+      () => requireFreshLogin({ authentication: authentication('admin', { freshLoginSatisfied: false }) }),
+      'FRESH_LOGIN_REQUIRED',
+    )
 
     expect(
       requireRecentPrimaryAuth({
@@ -75,17 +118,19 @@ describe('administrator authorization guards', () => {
   it('locks and re-resolves actor and target inside the supplied mutation transaction', async () => {
     const lockUsersByIdForUpdate = vi.fn().mockResolvedValue(
       new Map([
-        ['admin-id', { id: 'admin-id', role: 'admin' }],
-        ['target-id', { id: 'target-id', role: 'user' }],
+        ['admin-id', lockedUser('admin-id', 'admin')],
+        ['target-id', lockedUser('target-id', 'user')],
       ]),
     )
+    const transaction = mutationTransaction(lockUsersByIdForUpdate)
 
     await expect(
       requireTargetAuthorization({
         context: { authentication: authentication('admin') },
         targetUserId: 'target-id',
         action: 'moderate',
-        transaction: { lockUsersByIdForUpdate },
+        policy: moderationPolicy,
+        transaction,
         superAdministrators,
       }),
     ).resolves.toMatchObject({
@@ -100,8 +145,8 @@ describe('administrator authorization guards', () => {
     const staleAdminContext: AdminAuthorizationContext = { authentication: authentication('admin') }
     const lockUsersByIdForUpdate = vi.fn().mockResolvedValue(
       new Map([
-        ['admin-id', { id: 'admin-id', role: 'user' }],
-        ['target-id', { id: 'target-id', role: 'user' }],
+        ['admin-id', lockedUser('admin-id', 'user')],
+        ['target-id', lockedUser('target-id', 'user')],
       ]),
     )
 
@@ -110,7 +155,8 @@ describe('administrator authorization guards', () => {
         context: staleAdminContext,
         targetUserId: 'target-id',
         action: 'moderate',
-        transaction: { lockUsersByIdForUpdate },
+        policy: moderationPolicy,
+        transaction: mutationTransaction(lockUsersByIdForUpdate),
         superAdministrators,
       }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' })
@@ -119,8 +165,8 @@ describe('administrator authorization guards', () => {
   it('denies when the target was promoted before the mutation lock was acquired', async () => {
     const lockUsersByIdForUpdate = vi.fn().mockResolvedValue(
       new Map([
-        ['admin-id', { id: 'admin-id', role: 'admin' }],
-        ['target-id', { id: 'target-id', role: 'admin' }],
+        ['admin-id', lockedUser('admin-id', 'admin')],
+        ['target-id', lockedUser('target-id', 'admin')],
       ]),
     )
 
@@ -129,29 +175,127 @@ describe('administrator authorization guards', () => {
         context: { authentication: authentication('admin') },
         targetUserId: 'target-id',
         action: 'moderate',
-        transaction: { lockUsersByIdForUpdate },
+        policy: moderationPolicy,
+        transaction: mutationTransaction(lockUsersByIdForUpdate),
         superAdministrators,
+      }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+  })
+
+  it('rechecks the exact live session and fresh-login floor under the mutation locks', async () => {
+    const lockUsersByIdForUpdate = vi.fn().mockResolvedValue(
+      new Map([
+        ['admin-id', lockedUser('admin-id', 'admin')],
+        ['target-id', lockedUser('target-id', 'user')],
+      ]),
+    )
+
+    await expect(
+      requireTargetAuthorization({
+        context: { authentication: authentication('admin') },
+        targetUserId: 'target-id',
+        action: 'moderate',
+        policy: moderationPolicy,
+        transaction: mutationTransaction(lockUsersByIdForUpdate, {
+          lockSessionByIdForUpdate: vi.fn().mockResolvedValue(undefined),
+        }),
+        superAdministrators,
+      }),
+    ).rejects.toMatchObject({ code: 'UNAUTHENTICATED' })
+
+    await expect(
+      requireTargetAuthorization({
+        context: { authentication: authentication('admin') },
+        targetUserId: 'target-id',
+        action: 'moderate',
+        policy: moderationPolicy,
+        transaction: mutationTransaction(lockUsersByIdForUpdate, {
+          lockSessionByIdForUpdate: vi.fn().mockResolvedValue({
+            id: 'session-id',
+            userId: 'admin-id',
+            authorizationIssuedAt: authorizationNotBefore,
+          }),
+        }),
+        superAdministrators,
+      }),
+    ).rejects.toMatchObject({ code: 'FRESH_LOGIN_REQUIRED' })
+  })
+
+  it('rechecks recent primary authentication under lock when the procedure requires it', async () => {
+    const recentPolicy = {
+      ...moderationPolicy,
+      recentPrimaryAuth: true,
+      primaryAuthAction: 'user.ban',
+    } as const satisfies AdminProcedureAuthorizationPolicy
+    const lockUsersByIdForUpdate = vi.fn().mockResolvedValue(
+      new Map([
+        ['admin-id', lockedUser('admin-id', 'admin')],
+        ['target-id', lockedUser('target-id', 'user')],
+      ]),
+    )
+    const hasRecentPrimaryAuthForUpdate = vi.fn().mockResolvedValue(false)
+    const transaction = mutationTransaction(lockUsersByIdForUpdate, { hasRecentPrimaryAuthForUpdate })
+
+    await expect(
+      requireTargetAuthorization({
+        context: { authentication: authentication('admin', { recentPrimaryAuthSatisfied: true }) },
+        targetUserId: 'target-id',
+        action: 'moderate',
+        policy: recentPolicy,
+        transaction,
+        superAdministrators,
+      }),
+    ).rejects.toMatchObject({ code: 'RECENT_AUTH_REQUIRED' })
+    expect(hasRecentPrimaryAuthForUpdate).toHaveBeenCalledExactlyOnceWith({
+      userId: 'admin-id',
+      sessionId: 'session-id',
+    })
+  })
+
+  it('does not regain super-admin targeting through a stale allowlist generation fallback', async () => {
+    const currentGeneration = parseSuperAdministratorAllowlist('["admin-id"]', '2026-08-24T00:00:00.000Z')
+    const lockUsersByIdForUpdate = vi.fn().mockResolvedValue(
+      new Map([
+        ['admin-id', lockedUser('admin-id', 'admin')],
+        ['target-id', lockedUser('target-id', 'admin')],
+      ]),
+    )
+
+    await expect(
+      requireTargetAuthorization({
+        context: { authentication: authentication('admin') },
+        targetUserId: 'target-id',
+        action: 'moderate',
+        policy: moderationPolicy,
+        transaction: mutationTransaction(lockUsersByIdForUpdate),
+        superAdministrators: currentGeneration,
       }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' })
   })
 
   it('never permits a locked effective super-admin target and returns not found for missing accounts', async () => {
     const superContext = { authentication: authentication('super_admin') }
-    const superTarget = {
-      lockUsersByIdForUpdate: vi.fn().mockResolvedValue(
-        new Map([
-          ['super-id', { id: 'super-id', role: 'user' }],
-          ['target-super', { id: 'target-super', role: 'admin' }],
-        ]),
-      ),
-    }
-    const targetAllowlist = parseSuperAdministratorAllowlist('["super-id","target-super"]')
+    const superTargetUsers = vi.fn().mockResolvedValue(
+      new Map([
+        ['super-id', lockedUser('super-id', 'user')],
+        ['target-super', lockedUser('target-super', 'admin')],
+      ]),
+    )
+    const superTarget = mutationTransaction(superTargetUsers, {
+      lockSessionByIdForUpdate: vi.fn().mockResolvedValue({
+        id: 'session-id',
+        userId: 'super-id',
+        authorizationIssuedAt,
+      }),
+    })
+    const targetAllowlist = parseSuperAdministratorAllowlist('["super-id","target-super"]', '2026-01-01T00:00:00.000Z')
 
     await expect(
       requireTargetAuthorization({
         context: superContext,
         targetUserId: 'target-super',
         action: 'manage_administrator_role',
+        policy: roleManagementPolicy,
         transaction: superTarget,
         superAdministrators: targetAllowlist,
       }),
@@ -162,9 +306,17 @@ describe('administrator authorization guards', () => {
         context: superContext,
         targetUserId: 'missing-id',
         action: 'moderate',
-        transaction: {
-          lockUsersByIdForUpdate: vi.fn().mockResolvedValue(new Map([['super-id', { id: 'super-id', role: 'user' }]])),
-        },
+        policy: moderationPolicy,
+        transaction: mutationTransaction(
+          vi.fn().mockResolvedValue(new Map([['super-id', lockedUser('super-id', 'user')]])),
+          {
+            lockSessionByIdForUpdate: vi.fn().mockResolvedValue({
+              id: 'session-id',
+              userId: 'super-id',
+              authorizationIssuedAt,
+            }),
+          },
+        ),
         superAdministrators,
       }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' })

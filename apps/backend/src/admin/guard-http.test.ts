@@ -35,14 +35,17 @@ const authentication = (
     id: role === 'super_admin' ? 'super-id' : 'admin-id',
     role: role === 'admin' ? ('admin' as const) : ('user' as const),
   }
-  const superAdministrators = parseSuperAdministratorAllowlist('["super-id"]')
+  const superAdministrators = parseSuperAdministratorAllowlist('["super-id"]', '2026-01-01T00:00:00.000Z')
 
   return {
     status: 'authenticated',
     authorizationUser: user,
     principal: resolveAdministratorPrincipal(user, superAdministrators),
-    session: { id: 'session-id', createdAt: new Date('2026-08-23T00:00:00.000Z') },
-    assurance,
+    session: { id: 'session-id', authorizationIssuedAt: new Date('2026-08-23T00:00:00.000Z') },
+    assurance: {
+      recentPrimaryAuthSatisfied: assurance?.recentPrimaryAuthSatisfied ?? false,
+      freshLoginSatisfied: assurance?.freshLoginSatisfied ?? true,
+    },
   }
 }
 
@@ -131,7 +134,7 @@ describe('administrator oRPC policy guards over HTTP', () => {
       code: 'RECENT_AUTH_REQUIRED',
     })
 
-    const freshRequired = await invokeGuard('/fresh', authentication('admin'))
+    const freshRequired = await invokeGuard('/fresh', authentication('admin', { freshLoginSatisfied: false }))
     expect(freshRequired.response?.status).toBe(401)
     await expect(freshRequired.response?.json()).resolves.toMatchObject({
       defined: true,
@@ -186,16 +189,30 @@ describe('administrator target-aware oRPC guard over HTTP', () => {
   it('keeps the row locks and handler in one transaction and rechecks stale authority', async () => {
     const events: string[] = []
     let lockedActorRole: 'user' | 'admin' = 'admin'
+    const adminAuthorizationNotBefore = new Date('2026-08-22T00:00:00.000Z')
+    const authorizationIssuedAt = new Date('2026-08-23T00:00:00.000Z')
     const lockUsersByIdForUpdate = vi.fn(async (orderedUserIds: readonly string[]) => {
       events.push(`lock:${orderedUserIds.join(',')}`)
       return new Map([
-        ['admin-id', { id: 'admin-id', role: lockedActorRole }],
-        ['target-id', { id: 'target-id', role: 'user' as const }],
+        ['admin-id', { id: 'admin-id', role: lockedActorRole, adminAuthorizationNotBefore }],
+        ['target-id', { id: 'target-id', role: 'user' as const, adminAuthorizationNotBefore }],
       ])
+    })
+    const lockSessionByIdForUpdate = vi.fn(async () => {
+      events.push('lock-session')
+      return { id: 'session-id', userId: 'admin-id', authorizationIssuedAt }
+    })
+    const hasRecentPrimaryAuthForUpdate = vi.fn(async () => {
+      events.push('lock-primary-auth')
+      return false
     })
     const runInTransaction: AdminMutationAuthorizationTransactionRunner = async (operation) => {
       events.push('begin')
-      const result = await operation({ lockUsersByIdForUpdate })
+      const result = await operation({
+        lockUsersByIdForUpdate,
+        lockSessionByIdForUpdate,
+        hasRecentPrimaryAuthForUpdate,
+      })
       events.push('commit')
       return result
     }
@@ -246,7 +263,7 @@ describe('administrator target-aware oRPC guard over HTTP', () => {
       actorUserId: 'admin-id',
       targetUserId: 'target-id',
     })
-    expect(events).toEqual(['begin', 'lock:admin-id,target-id', 'handler', 'commit'])
+    expect(events).toEqual(['begin', 'lock:admin-id,target-id', 'lock-session', 'handler', 'commit'])
 
     events.length = 0
     lockedActorRole = 'user'
@@ -256,6 +273,6 @@ describe('administrator target-aware oRPC guard over HTTP', () => {
       defined: true,
       code: 'FORBIDDEN',
     })
-    expect(events).toEqual(['begin', 'lock:admin-id,target-id'])
+    expect(events).toEqual(['begin', 'lock:admin-id,target-id', 'lock-session'])
   })
 })
