@@ -35,6 +35,7 @@ describe('public procedure access inventory', () => {
       'arcades.venues': 'public_read',
       'chartOgImage.render': 'public_read',
       'chartReports.create': 'authenticated_write',
+      'chartReports.resolveContext': 'authenticated_read',
       'comments.create': 'authenticated_write',
       'comments.list': 'public_read',
       'lxns.authorize': 'authenticated_write',

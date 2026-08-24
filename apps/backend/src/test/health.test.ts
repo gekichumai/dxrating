@@ -145,7 +145,7 @@ describe('Health & Basic Endpoints', () => {
     })
 
     const chartReportPaths = Object.keys(spec.paths).filter((path) => path.startsWith('/chart-reports'))
-    expect(chartReportPaths).toEqual(['/chart-reports'])
+    expect(chartReportPaths.sort()).toEqual(['/chart-reports', '/chart-reports/context'])
     expect(Object.keys(spec.paths['/chart-reports'])).toEqual(['post'])
     expect(spec.paths['/chart-reports'].post).toMatchObject({
       operationId: 'createChartReport',
@@ -157,6 +157,13 @@ describe('Health & Basic Endpoints', () => {
             },
           },
         },
+      },
+    })
+    expect(spec.paths['/chart-reports/context'].get).toMatchObject({
+      operationId: 'resolveChartReportContext',
+      responses: {
+        404: expect.any(Object),
+        503: expect.any(Object),
       },
     })
   })

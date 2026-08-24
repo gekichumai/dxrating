@@ -1,4 +1,8 @@
-import { CHART_REPORT_CATEGORY_KEYS, CHART_REPORT_FIELD_KEYS } from '@gekichumai/api-contract'
+import {
+  CHART_REPORT_CATEGORY_KEYS,
+  CHART_REPORT_FIELD_KEYS,
+  type ChartReportValueKind,
+} from '@gekichumai/api-contract'
 
 export { CHART_REPORT_CATEGORY_KEYS, CHART_REPORT_FIELD_KEYS } from '@gekichumai/api-contract'
 
@@ -277,15 +281,7 @@ const FIELD_VALUE_RULES: Readonly<Record<ChartReportFieldKey, FieldValueRule>> =
   'chart.comment': stringRule(TEXT_VALUE_MAX_LENGTH, true),
 })
 
-export type ChartReportJsonValueKind =
-  | 'string'
-  | 'nullable_string'
-  | 'number'
-  | 'nullable_number'
-  | 'integer'
-  | 'nullable_integer'
-  | 'boolean'
-  | 'nullable_number_map'
+export type ChartReportJsonValueKind = ChartReportValueKind
 
 const valueKindForRule = (rule: FieldValueRule): ChartReportJsonValueKind => {
   if (rule.type === 'string') return rule.nullable ? 'nullable_string' : 'string'

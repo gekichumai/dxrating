@@ -38,7 +38,11 @@ import {
   createChartReportSubmissionRateLimiter,
 } from './chart-reports/chart-report-rate-limit.js'
 import { createCloudflareChartReportTurnstileVerifier } from './chart-reports/chart-report-turnstile.js'
-import { createPostgresChartReportCatalogResolver } from './chart-reports/chart-report-catalog.js'
+import {
+  ChartReportCatalogFailure,
+  createPostgresChartReportCatalogResolver,
+} from './chart-reports/chart-report-catalog.js'
+import { CHART_REPORT_FIELD_VALUE_KINDS } from './chart-reports/chart-report-domain.js'
 import { createPostgresChartReportRepository } from './chart-reports/chart-report-repository.js'
 import { createChartReportService } from './chart-reports/chart-report-service.js'
 import {
@@ -57,6 +61,7 @@ const cache = new Keyv({ ttl: 30 * 60 * 1000 }) // 30 minute TTL
 const catalogIdentities = createCatalogIdentityService(async (text, values) => pool.query(text, values))
 const consumeChartReportRateLimit = createChartReportSubmissionRateLimiter(pool)
 const chartReportTurnstile = createCloudflareChartReportTurnstileVerifier(config.chartReports.turnstile)
+const chartReportContextCatalog = createPostgresChartReportCatalogResolver(pool)
 
 export const withCatalogIdentityErrors = async <T>(operation: () => Promise<T>): Promise<T> => {
   try {
@@ -143,6 +148,46 @@ export const publicProcedureAccessMiddleware = os.middleware<{ readonly user?: P
 const guarded = os.use(publicProcedureAccessMiddleware)
 
 const chartReportsHandler = {
+  resolveContext: guarded.chartReports.resolveContext.handler(async ({ input, errors }) => {
+    let identity: Awaited<ReturnType<typeof catalogIdentities.resolveSheetInput>>
+    try {
+      identity = await catalogIdentities.resolveSheetInput({
+        songId: input.songId,
+        sheetType: input.chartType,
+        sheetDifficulty: input.chartDifficulty,
+        requirePublicIdentity: true,
+      })
+    } catch (error) {
+      if (!(error instanceof CatalogIdentityError)) throw error
+      if (error.code === 'bad_request') throw errors.CHART_REPORT_VALIDATION_FAILED()
+      if (error.code === 'not_found') throw errors.CHART_REPORT_CONTEXT_NOT_FOUND()
+      throw errors.CHART_REPORT_CATALOG_UNAVAILABLE()
+    }
+
+    if (!identity.publicSongId || !identity.publicSheetId) {
+      throw errors.CHART_REPORT_CATALOG_UNAVAILABLE()
+    }
+
+    try {
+      const resolved = await chartReportContextCatalog.resolveActiveField({
+        stableSongId: identity.publicSongId,
+        stableChartId: identity.publicSheetId,
+        fieldKey: input.fieldKey,
+      })
+      return {
+        songId: resolved.chart.stableSongId,
+        chartId: resolved.chart.stableChartId,
+        fieldKey: input.fieldKey,
+        publicationRevision: resolved.publication.revision,
+        currentValue: resolved.currentValue,
+        valueKind: CHART_REPORT_FIELD_VALUE_KINDS[input.fieldKey],
+      }
+    } catch (error) {
+      if (!(error instanceof ChartReportCatalogFailure)) throw error
+      if (error.code === 'CHART_NOT_FOUND') throw errors.CHART_REPORT_CONTEXT_NOT_FOUND()
+      throw errors.CHART_REPORT_CATALOG_UNAVAILABLE()
+    }
+  }),
   create: guarded.chartReports.create.handler(async ({ input, context, errors }) => {
     const user = context.user
     const transaction = context.publicWriteTransaction

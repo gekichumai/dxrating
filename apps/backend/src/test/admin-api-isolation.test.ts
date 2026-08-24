@@ -253,6 +253,9 @@ describe('private administrator API isolation', () => {
       post: { operationId: 'createChartReport' },
     })
     expect(spec.paths['/chart-reports']).not.toHaveProperty('get')
+    expect(spec.paths['/chart-reports/context']).toMatchObject({
+      get: { operationId: 'resolveChartReportContext' },
+    })
     expect(spec.paths).not.toHaveProperty('/chart-reports/{reportId}')
     expect(spec.paths).not.toHaveProperty('/chart-reports/{reportId}/close')
     expect(publicSpecJson).not.toContain('internalNote')

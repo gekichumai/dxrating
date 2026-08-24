@@ -24,6 +24,7 @@ import { formatSheetReleaseDateParts } from '../../utils/dateFormatting'
 import { calculateRating } from '../../utils/rating'
 import { useRenderedAt } from '../../utils/renderEnvironment'
 import { DXRank } from '../global/DXRank'
+import { ChartIssueReportButton } from '../chartReports/ChartIssueReportButton'
 import { SheetTags } from '../sheet/tags/SheetTags'
 import { SheetDifficulty } from '../sheet/SheetListItem'
 
@@ -435,6 +436,10 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
                     ),
                   }}
                 />
+              </div>
+
+              <div className="mt-3 flex justify-end">
+                <ChartIssueReportButton sheet={sheet} />
               </div>
             </div>
           </div>

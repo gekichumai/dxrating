@@ -119,8 +119,24 @@ export const CHART_REPORT_FIELD_KEYS = [
 
 export const CHART_REPORT_CATEGORY_KEYS = ['incorrect_value', 'missing_value', 'outdated_value', 'other'] as const
 
+export const CHART_REPORT_VALUE_KINDS = [
+  'string',
+  'nullable_string',
+  'number',
+  'nullable_number',
+  'integer',
+  'nullable_integer',
+  'boolean',
+  'nullable_number_map',
+] as const
+
+export const CHART_REPORT_TURNSTILE_ACTION = 'chart-report' as const
+
+export type ChartReportValueKind = (typeof CHART_REPORT_VALUE_KINDS)[number]
+
 export const ChartReportFieldKeySchema = z.enum(CHART_REPORT_FIELD_KEYS)
 export const ChartReportCategoryKeySchema = z.enum(CHART_REPORT_CATEGORY_KEYS)
+export const ChartReportValueKindSchema = z.enum(CHART_REPORT_VALUE_KINDS)
 export const ChartReportPublicSongIdSchema = z.string().regex(/^dsng_[23456789abcdefghjkmnpqrstvwxyz]{10}$/)
 export const ChartReportPublicChartIdSchema = z.string().regex(/^dsht_[23456789abcdefghjkmnpqrstvwxyz]{10}$/)
 export const ChartReportPublicationRevisionSchema = z
@@ -167,6 +183,34 @@ export const CreateChartReportOutputSchema = z.strictObject({
   createdAt: z.string().datetime(),
 })
 
+const ChartReportContextSongIdentitySchema = z
+  .string()
+  .min(1)
+  .max(255)
+  .refine((value) => value === value.trim(), 'Chart report context identity must not have surrounding whitespace')
+
+const ChartReportContextChartPartSchema = z
+  .string()
+  .min(1)
+  .max(64)
+  .refine((value) => value === value.trim(), 'Chart report context chart part must not have surrounding whitespace')
+
+export const ResolveChartReportContextInputSchema = z.strictObject({
+  songId: ChartReportContextSongIdentitySchema,
+  chartType: ChartReportContextChartPartSchema,
+  chartDifficulty: ChartReportContextChartPartSchema,
+  fieldKey: ChartReportFieldKeySchema,
+})
+
+export const ResolveChartReportContextOutputSchema = z.strictObject({
+  songId: ChartReportPublicSongIdSchema,
+  chartId: ChartReportPublicChartIdSchema,
+  fieldKey: ChartReportFieldKeySchema,
+  publicationRevision: ChartReportPublicationRevisionSchema,
+  currentValue: ChartReportJsonSnapshotSchema,
+  valueKind: ChartReportValueKindSchema,
+})
+
 export const ChartReportStalePublicationDataSchema = z.strictObject({
   songId: ChartReportPublicSongIdSchema,
   chartId: ChartReportPublicChartIdSchema,
@@ -204,6 +248,15 @@ export const chartReportErrors = {
     status: 503,
     message: 'Chart report verification is temporarily unavailable',
   },
+} as const
+
+export const chartReportContextErrors = {
+  CHART_REPORT_VALIDATION_FAILED: chartReportErrors.CHART_REPORT_VALIDATION_FAILED,
+  CHART_REPORT_CONTEXT_NOT_FOUND: {
+    status: 404,
+    message: 'The requested chart report context was not found',
+  },
+  CHART_REPORT_CATALOG_UNAVAILABLE: chartReportErrors.CHART_REPORT_CATALOG_UNAVAILABLE,
 } as const
 
 /**
@@ -410,6 +463,20 @@ export const ArcadeVenueDetailInputSchema = z.object({
 
 export const publicContractRoutes = {
   chartReports: {
+    resolveContext: publicProcedure
+      .errors(chartReportContextErrors)
+      .meta({ access: 'authenticated_read' })
+      .route({
+        method: 'GET',
+        path: '/chart-reports/context',
+        operationId: 'resolveChartReportContext',
+        summary: 'Resolve the active context for a chart-data report',
+        description:
+          'Resolves a public chart-page identity and reportable field to the active stable chart identity, publication revision, and server-current value. Report management remains private.',
+        tags: ['Chart Reports'],
+      })
+      .input(ResolveChartReportContextInputSchema)
+      .output(ResolveChartReportContextOutputSchema),
     create: publicProcedure
       .errors(chartReportErrors)
       .meta({ access: 'authenticated_write' })

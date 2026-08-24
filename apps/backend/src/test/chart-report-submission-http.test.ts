@@ -4,6 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
 const PUBLIC_ORIGIN = 'http://localhost:5173'
 const PASSWORD = 'password123'
+const LEGACY_SONG_ID = 'http-fixture-song'
 const SONG_ID = 'dsng_23456789ab'
 const CHART_ID = 'dsht_abcdefghjk'
 const ACTIVE_REVISION = '23'
@@ -149,6 +150,32 @@ const createCatalogFixture = async (): Promise<void> => {
       publication_fingerprint_sha256 text NOT NULL,
       PRIMARY KEY (channel, catalog_run_id, revision, publication_fingerprint_sha256)
     );
+    CREATE TABLE dxdata.canonical_songs (
+      id text PRIMARY KEY,
+      legacy_song_id text
+    );
+    CREATE TABLE dxdata.song_source_mappings (
+      song_id text NOT NULL,
+      source_id text NOT NULL,
+      external_id text NOT NULL
+    );
+    CREATE TABLE dxdata.catalog_run_songs (
+      catalog_run_id bigint NOT NULL,
+      song_id text NOT NULL,
+      ordinal integer NOT NULL
+    );
+    CREATE TABLE dxdata.canonical_sheets (
+      id text PRIMARY KEY,
+      song_id text NOT NULL,
+      chart_type text NOT NULL,
+      difficulty text NOT NULL
+    );
+    CREATE TABLE dxdata.catalog_run_sheets (
+      catalog_run_id bigint NOT NULL,
+      song_id text NOT NULL,
+      sheet_id text NOT NULL,
+      ordinal integer NOT NULL
+    );
   `)
   await database.query(
     `INSERT INTO dxdata.catalog_build_runs (id, status, api_schema_version) VALUES (71, 'published', 1)`,
@@ -175,6 +202,28 @@ const createCatalogFixture = async (): Promise<void> => {
       VALUES ('production-v1', 71, $2, $1)
     `,
     [FINGERPRINT, ACTIVE_REVISION],
+  )
+  await database.query(`INSERT INTO dxdata.canonical_songs (id, legacy_song_id) VALUES ($1, $2)`, [
+    SONG_ID,
+    LEGACY_SONG_ID,
+  ])
+  await database.query(
+    `INSERT INTO dxdata.song_source_mappings (song_id, source_id, external_id)
+     VALUES ($1, 'legacy_dxdata', $2)`,
+    [SONG_ID, LEGACY_SONG_ID],
+  )
+  await database.query(`INSERT INTO dxdata.catalog_run_songs (catalog_run_id, song_id, ordinal) VALUES (71, $1, 0)`, [
+    SONG_ID,
+  ])
+  await database.query(
+    `INSERT INTO dxdata.canonical_sheets (id, song_id, chart_type, difficulty)
+     VALUES ($1, $2, 'dx', 'master')`,
+    [CHART_ID, SONG_ID],
+  )
+  await database.query(
+    `INSERT INTO dxdata.catalog_run_sheets (catalog_run_id, song_id, sheet_id, ordinal)
+     VALUES (71, $1, $2, 0)`,
+    [SONG_ID, CHART_ID],
   )
 }
 
@@ -251,6 +300,22 @@ const submit = (cookie: string, body: Record<string, unknown>): Promise<Response
     body: JSON.stringify(body),
   })
 
+const resolveContext = (cookie: string | undefined, overrides: Record<string, string> = {}): Promise<Response> => {
+  const query = new URLSearchParams({
+    songId: LEGACY_SONG_ID,
+    chartType: 'dx',
+    chartDifficulty: 'master',
+    fieldKey: 'chart.level',
+    ...overrides,
+  })
+  return fetch(`${setup.getBaseUrl()}/api/v1/chart-reports/context?${query}`, {
+    headers: {
+      ...(cookie ? { Cookie: cookie } : {}),
+      Origin: PUBLIC_ORIGIN,
+    },
+  })
+}
+
 const countReportsFor = async (userId: string): Promise<number> => {
   const result = await database.query<{ readonly count: string }>(
     `SELECT count(*)::text AS count FROM chart_reports WHERE reporter_user_id = $1`,
@@ -313,6 +378,62 @@ describe('public chart-report submission HTTP boundary', () => {
     siteverifyAttempts.length = 0
     await setup.cleanDatabase()
     await createCatalogFixture()
+  })
+
+  it('resolves authenticated report context from a legacy chart tuple without a write lease or verification', async () => {
+    await expectStatus(await resolveContext(undefined), 401)
+
+    const user = await createUser('chart-report-context')
+    expect(user.emailVerified).toBe(false)
+    siteverifyAttempts.length = 0
+
+    const response = await resolveContext(user.cookie, { fieldKey: 'chart.internal_level' })
+    expect(await expectStatus(response, 200)).toEqual({
+      songId: SONG_ID,
+      chartId: CHART_ID,
+      fieldKey: 'chart.internal_level',
+      publicationRevision: ACTIVE_REVISION,
+      currentValue: 14.8,
+      valueKind: 'number',
+    })
+    expect(siteverifyAttempts).toHaveLength(0)
+    expect(await countReportsFor(user.id)).toBe(0)
+    await expect(
+      database.query(`SELECT user_id FROM chart_report_user_rate_limits WHERE user_id = $1`, [user.id]),
+    ).resolves.toMatchObject({ rows: [] })
+  })
+
+  it('returns distinct safe context failures for malformed, missing, banned, and unavailable targets', async () => {
+    const user = await createUser('chart-report-context-errors')
+    const moderator = await createUser('chart-report-context-moderator')
+
+    expect(await expectStatus(await resolveContext(user.cookie, { songId: 'dsht_23456789ab' }), 400)).toMatchObject({
+      defined: true,
+      code: 'CHART_REPORT_VALIDATION_FAILED',
+      status: 400,
+    })
+    expect(
+      await expectStatus(await resolveContext(user.cookie, { songId: 'unmapped-legacy-song' }), 404),
+    ).toMatchObject({
+      defined: true,
+      code: 'CHART_REPORT_CONTEXT_NOT_FOUND',
+      status: 404,
+    })
+
+    await banUser(user.id, moderator.id)
+    expect(await expectStatus(await resolveContext(user.cookie), 401)).toMatchObject({
+      defined: true,
+      code: 'UNAUTHORIZED',
+      status: 401,
+    })
+
+    const availableUser = await createUser('chart-report-context-outage')
+    await database.query(`DELETE FROM dxdata.catalog_publications`)
+    expect(await expectStatus(await resolveContext(availableUser.cookie), 503)).toMatchObject({
+      defined: true,
+      code: 'CHART_REPORT_CATALOG_UNAVAILABLE',
+      status: 503,
+    })
   })
 
   it('accepts unverified password and OAuth-backed sessions and persists server-authoritative reports', async () => {
@@ -513,8 +634,19 @@ describe('public chart-report submission HTTP boundary', () => {
         },
       },
     })
-    expect(Object.keys(paths).filter((path) => path.startsWith('/chart-reports'))).toEqual(['/chart-reports'])
+    expect(
+      Object.keys(paths)
+        .filter((path) => path.startsWith('/chart-reports'))
+        .sort(),
+    ).toEqual(['/chart-reports', '/chart-reports/context'])
     expect(paths['/chart-reports']).not.toHaveProperty('get')
+    expect(paths['/chart-reports/context']).toMatchObject({
+      get: {
+        operationId: 'resolveChartReportContext',
+        tags: ['Chart Reports'],
+      },
+    })
     expect(JSON.stringify(paths['/chart-reports']!.post)).not.toContain('internalNote')
+    expect(JSON.stringify(paths['/chart-reports/context'])).not.toMatch(/internalNote|reporter|closure/i)
   })
 })

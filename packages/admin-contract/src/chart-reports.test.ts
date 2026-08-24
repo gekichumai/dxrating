@@ -152,7 +152,7 @@ describe('private chart-report administrator contract', () => {
     expect(serializedDocument).not.toMatch(/chart-reports.*\/(reopen|delete|edit|assign|merge|bulk-close)/i)
     expect(serializedDocument).not.toMatch(/reporter-notif|github|duplicate-link/i)
 
-    expect(Object.keys(publicAppContract.chartReports)).toEqual(['create'])
+    expect(Object.keys(publicAppContract.chartReports)).toEqual(['resolveContext', 'create'])
     expect(JSON.stringify(publicAppContract.chartReports)).not.toMatch(
       /close|internalNote|listChartReports|getChartReport/i,
     )

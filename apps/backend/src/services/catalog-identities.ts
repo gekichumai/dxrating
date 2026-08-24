@@ -73,6 +73,8 @@ export interface CatalogIdentityService {
     sheetId?: string
     sheetType: string
     sheetDifficulty: string
+    /** Fail instead of preserving a legacy passthrough when a current public identity is required. */
+    requirePublicIdentity?: boolean
   }): Promise<ResolvedSheetIdentity>
   translateSongIdsToPublic(songIds: readonly string[]): Promise<Map<string, string>>
   translateSongCountsToPublic(
@@ -431,13 +433,23 @@ export const createCatalogIdentityService = (query: CatalogIdentityQuery): Catal
       const publicSongInput = isPublicSongId(input.songId)
       if (!publicSongInput && input.sheetId === undefined) {
         const fallback = legacySheetPassthrough(input)
-        const snapshot = await getBestEffortSnapshot()
+        const snapshot = input.requirePublicIdentity ? await getCurrentSnapshot() : await getBestEffortSnapshot()
         const song = snapshot?.songsByLegacyId.get(input.songId)
-        if (!song?.legacySongId) return fallback
+        if (!song?.legacySongId) {
+          if (input.requirePublicIdentity) {
+            throw new CatalogIdentityError('not_found', 'Song is not in the current published catalog')
+          }
+          return fallback
+        }
         const sheet = snapshot?.sheetsByLegacyTuple.get(
           legacySheetKey(input.songId, input.sheetType, input.sheetDifficulty),
         )
-        if (!sheet || sheet.publicSongId !== song.publicSongId) return fallback
+        if (!sheet || sheet.publicSongId !== song.publicSongId) {
+          if (input.requirePublicIdentity) {
+            throw new CatalogIdentityError('not_found', 'Chart is not in the current published catalog')
+          }
+          return fallback
+        }
         return {
           legacySongId: song.legacySongId,
           legacySongIds: [...song.legacySongIds],

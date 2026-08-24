@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
+import { CHART_REPORT_TURNSTILE_ACTION } from '@gekichumai/api-contract'
 import { z } from 'zod'
 
-export const CHART_REPORT_TURNSTILE_ACTION = 'chart-report' as const
+export { CHART_REPORT_TURNSTILE_ACTION }
 export const CHART_REPORT_TURNSTILE_SITEVERIFY_URL =
   'https://challenges.cloudflare.com/turnstile/v0/siteverify' as const
 export const CHART_REPORT_TURNSTILE_TOKEN_MAX_LENGTH = 2_048

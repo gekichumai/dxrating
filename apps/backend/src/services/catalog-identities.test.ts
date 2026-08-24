@@ -90,6 +90,32 @@ describe('catalog identity service', () => {
     })
   })
 
+  it('preserves not-found versus unavailable when a caller requires a current public sheet identity', async () => {
+    const identities = createCatalogIdentityService(staticCatalogQuery([row()]))
+    await expectCatalogError(
+      identities.resolveSheetInput({
+        songId: 'unmapped-legacy-song',
+        sheetType: 'dx',
+        sheetDifficulty: 'master',
+        requirePublicIdentity: true,
+      }),
+      'not_found',
+    )
+
+    const unavailable = createCatalogIdentityService(async () => {
+      throw new Error('catalog pointer unavailable')
+    })
+    await expectCatalogError(
+      unavailable.resolveSheetInput({
+        songId: 'legacy-song-a',
+        sheetType: 'dx',
+        sheetDifficulty: 'master',
+        requirePublicIdentity: true,
+      }),
+      'unavailable',
+    )
+  })
+
   it('resolves a current public song and sheet to legacy persistence identities', async () => {
     const query = staticCatalogQuery([row()])
     const identities = createCatalogIdentityService(query)

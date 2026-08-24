@@ -6,12 +6,17 @@ import {
   ArcadeVenueIdSchema,
   CHART_REPORT_CATEGORY_KEYS,
   CHART_REPORT_FIELD_KEYS,
+  CHART_REPORT_TURNSTILE_ACTION,
+  CHART_REPORT_VALUE_KINDS,
+  chartReportContextErrors,
   chartReportErrors,
   CreateChartReportInputSchema,
   CreateChartReportOutputSchema,
   CommentWithProfileSchema,
   publicAppContract,
   publicErrors,
+  ResolveChartReportContextInputSchema,
+  ResolveChartReportContextOutputSchema,
   LxnsStartOutputSchema,
   PUBLIC_COMMENT_TOMBSTONE_CONTENT,
   PUBLIC_PROCEDURE_ACCESS_MODES,
@@ -60,6 +65,7 @@ describe('publicAppContract', () => {
       'arcades.venue': 'public_read',
       'arcades.venues': 'public_read',
       'chartReports.create': 'authenticated_write',
+      'chartReports.resolveContext': 'authenticated_read',
       'comments.create': 'authenticated_write',
       'comments.list': 'public_read',
       'lxns.authorize': 'authenticated_write',
@@ -168,6 +174,82 @@ describe('publicAppContract', () => {
     ).toBe(false)
   })
 
+  it('resolves one reportable field through a bounded authenticated public context contract', () => {
+    expect(
+      ResolveChartReportContextInputSchema.parse({
+        songId: 'legacy-song-id',
+        chartType: 'dx',
+        chartDifficulty: 'master',
+        fieldKey: 'chart.internal_level',
+      }),
+    ).toEqual({
+      songId: 'legacy-song-id',
+      chartType: 'dx',
+      chartDifficulty: 'master',
+      fieldKey: 'chart.internal_level',
+    })
+    expect(
+      ResolveChartReportContextOutputSchema.parse({
+        songId: 'dsng_23456789ab',
+        chartId: 'dsht_abcdefghjk',
+        fieldKey: 'chart.internal_level',
+        publicationRevision: '42',
+        currentValue: 14.8,
+        valueKind: 'number',
+      }),
+    ).toEqual({
+      songId: 'dsng_23456789ab',
+      chartId: 'dsht_abcdefghjk',
+      fieldKey: 'chart.internal_level',
+      publicationRevision: '42',
+      currentValue: 14.8,
+      valueKind: 'number',
+    })
+    expect(
+      ResolveChartReportContextInputSchema.safeParse({
+        songId: 'x'.repeat(256),
+        chartType: 'dx',
+        chartDifficulty: 'master',
+        fieldKey: 'chart.level',
+      }).success,
+    ).toBe(false)
+    expect(
+      ResolveChartReportContextInputSchema.safeParse({
+        songId: 'legacy-song-id',
+        chartType: 'dx',
+        chartDifficulty: 'master',
+        fieldKey: 'chart.level',
+        chartId: 'dsht_abcdefghjk',
+      }).success,
+    ).toBe(false)
+    expect(
+      ResolveChartReportContextOutputSchema.safeParse({
+        songId: 'dsng_23456789ab',
+        chartId: 'dsht_abcdefghjk',
+        fieldKey: 'chart.level',
+        publicationRevision: '42',
+        currentValue: '14+',
+        valueKind: 'string',
+        publicationFingerprintSha256: 'a'.repeat(64),
+      }).success,
+    ).toBe(false)
+    expect(CHART_REPORT_VALUE_KINDS).toEqual([
+      'string',
+      'nullable_string',
+      'number',
+      'nullable_number',
+      'integer',
+      'nullable_integer',
+      'boolean',
+      'nullable_number_map',
+    ])
+    expect(CHART_REPORT_TURNSTILE_ACTION).toBe('chart-report')
+    expect(chartReportContextErrors.CHART_REPORT_CONTEXT_NOT_FOUND).toEqual({
+      status: 404,
+      message: 'The requested chart report context was not found',
+    })
+  })
+
   it('returns only a minimal report receipt and declares typed safe failures', () => {
     expect(
       CreateChartReportOutputSchema.parse({
@@ -184,7 +266,7 @@ describe('publicAppContract', () => {
     expect(chartReportErrors.CHART_REPORT_RATE_LIMITED.status).toBe(429)
     expect(chartReportErrors.CHART_REPORT_RATE_LIMITED.data.keyof().options).toEqual(['retryAfterSeconds'])
     expect(JSON.stringify(chartReportErrors)).not.toMatch(/token|secret|reporter|email|internalNote/i)
-    expect(Object.keys(publicAppContract.chartReports)).toEqual(['create'])
+    expect(Object.keys(publicAppContract.chartReports)).toEqual(['resolveContext', 'create'])
   })
 
   it('keeps removed comments compatible with existing required-string readers', () => {
