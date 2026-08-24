@@ -1,15 +1,18 @@
 import { ADMIN_CONTRACT_COMPATIBILITY_ID } from '@gekichumai/admin-contract'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
+import { ORPCError } from '@orpc/client'
 import { act, render, screen } from '@testing-library/react'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { AdminProviders } from '../providers'
+import { ProtectedAdminProviders } from '../components/protected-admin-providers'
 import { createAdminClientIncompatibleError } from './compatibility'
 import { createAdminRuntime } from './admin-runtime'
 import { useAdminData } from './admin-data-context'
 import { createAdminTestQueryClient } from './query-client'
+import { adminQueryKeys } from './query-keys'
 import { adminBootstrapQueryOptions } from './query-options'
 
 const mismatch = {
@@ -29,6 +32,41 @@ const mismatchResponse = () =>
     },
     { status: 409 },
   )
+
+const authorizationError = (code: 'FORBIDDEN' | 'FRESH_LOGIN_REQUIRED' | 'UNAUTHENTICATED', status: number) =>
+  new ORPCError(code, {
+    data: { requestId: null },
+    defined: true,
+    message: 'raw authorization detail',
+    status,
+  })
+
+const authenticateRuntime = (runtime: ReturnType<typeof createAdminRuntime>) => {
+  const checkId = runtime.auth.beginAuthorizationCheck()
+  if (checkId === undefined) throw new Error('Administrator authorization check did not start')
+  expect(
+    runtime.auth.markAuthenticated(
+      {
+        userId: 'administrator-id',
+        effectiveRole: 'admin',
+        capabilities: {
+          canModerateUsers: true,
+          canModerateAdministrators: false,
+          canManageAdministrators: false,
+        },
+      },
+      checkId,
+    ),
+  ).toBe(true)
+}
+
+const deferred = () => {
+  let resolve!: () => void
+  const promise = new Promise<void>((complete) => {
+    resolve = complete
+  })
+  return { promise, resolve }
+}
 
 const createMemoryStorage = () => {
   const values = new Map<string, string>()
@@ -57,7 +95,9 @@ describe('administrator data runtime', () => {
       reload: vi.fn(),
       storage: createMemoryStorage(),
     })
-    runtime.queryClient.setQueryData(['admin', 'previously-safe'], { privileged: true })
+    runtime.queryClient.setQueryData(['admin', 'previously-safe'], {
+      privileged: true,
+    })
 
     render(
       <AdminProviders runtime={runtime}>
@@ -77,7 +117,9 @@ describe('administrator data runtime', () => {
       reload: vi.fn(),
       storage: createMemoryStorage(),
     })
-    runtime.queryClient.setQueryData(['admin', 'unsafe'], { privileged: true })
+    runtime.queryClient.setQueryData(['admin', 'unsafe'], {
+      privileged: true,
+    })
     const error = createAdminClientIncompatibleError(mismatch)
 
     if (kind === 'query') {
@@ -117,7 +159,9 @@ describe('administrator data runtime', () => {
         queryFn: ({ signal }) => {
           requestSignal = signal
           return new Promise<string>((_resolve, reject) => {
-            signal.addEventListener('abort', () => reject(signal.reason), { once: true })
+            signal.addEventListener('abort', () => reject(signal.reason), {
+              once: true,
+            })
           })
         },
         queryKey: ['admin', 'in-flight'],
@@ -138,7 +182,9 @@ describe('administrator data runtime', () => {
       reload: vi.fn(),
       storage: createMemoryStorage(),
     })
-    runtime.queryClient.setQueryData(['admin', 'unsafe-after-cancel-failure'], { privileged: true })
+    runtime.queryClient.setQueryData(['admin', 'unsafe-after-cancel-failure'], {
+      privileged: true,
+    })
     vi.spyOn(runtime.queryClient, 'cancelQueries').mockRejectedValueOnce(new Error('cancellation failed'))
 
     await runtime.compatibility.handleError(createAdminClientIncompatibleError(mismatch))
@@ -150,6 +196,138 @@ describe('administrator data runtime', () => {
     })
   })
 
+  it('shares one cancel-then-finally-clear operation across authorization and compatibility failures', async () => {
+    const runtime = createAdminRuntime({
+      queryClientFactory: createAdminTestQueryClient,
+      reload: vi.fn(),
+      storage: createMemoryStorage(),
+    })
+    authenticateRuntime(runtime)
+    runtime.queryClient.setQueryData(adminQueryKeys.users.detail('shared-clear-user'), { private: true })
+    const cancellation = deferred()
+    const cancelQueries = vi.spyOn(runtime.queryClient, 'cancelQueries').mockReturnValue(cancellation.promise)
+
+    runtime.auth.handleFeatureError(authorizationError('UNAUTHENTICATED', 401))
+    const compatibility = runtime.compatibility.handleError(createAdminClientIncompatibleError(mismatch))
+
+    await vi.waitFor(() => expect(cancelQueries).toHaveBeenCalledOnce())
+    cancellation.resolve()
+    await compatibility
+    await vi.waitFor(() =>
+      expect(runtime.auth.getState()).toEqual({ status: 'unauthenticated', reason: 'expired-or-revoked' }),
+    )
+
+    expect(cancelQueries).toHaveBeenCalledOnce()
+    expect(runtime.queryClient.getQueryCache().getAll()).toHaveLength(0)
+    expect(runtime.queryClient.getMutationCache().getAll()).toHaveLength(0)
+    expect(runtime.compatibility.getState().status).toBe('reload_available')
+  })
+
+  it.each(['query', 'mutation'] as const)(
+    'rechecks bootstrap instead of treating a feature %s denial as privilege loss',
+    async (kind) => {
+      const runtime = createAdminRuntime({
+        queryClientFactory: createAdminTestQueryClient,
+        reload: vi.fn(),
+        storage: createMemoryStorage(),
+      })
+      authenticateRuntime(runtime)
+      runtime.queryClient.setQueryData(adminQueryKeys.users.detail('retained-user'), { private: true })
+      const error = authorizationError('FORBIDDEN', 403)
+
+      if (kind === 'query') {
+        await expect(
+          runtime.queryClient.fetchQuery({
+            queryFn: async () => {
+              throw error
+            },
+            queryKey: adminQueryKeys.users.detail('forbidden-target'),
+            retry: false,
+          }),
+        ).rejects.toBe(error)
+      } else {
+        const mutation = runtime.queryClient.getMutationCache().build(runtime.queryClient, {
+          mutationFn: async () => {
+            throw error
+          },
+          retry: false,
+        })
+        await expect(mutation.execute(undefined)).rejects.toBe(error)
+      }
+
+      const pending = runtime.auth.getState()
+      expect(pending).toMatchObject({ status: 'pending', phase: 'authorization' })
+      expect(runtime.queryClient.getQueryData(adminQueryKeys.users.detail('retained-user'))).toEqual({ private: true })
+
+      expect(
+        runtime.auth.markAuthenticated(
+          {
+            userId: 'administrator-id',
+            effectiveRole: 'admin',
+            capabilities: {
+              canModerateUsers: true,
+              canModerateAdministrators: false,
+              canManageAdministrators: false,
+            },
+          },
+          pending.status === 'pending' ? pending.checkId : -1,
+        ),
+      ).toBe(true)
+      expect(runtime.auth.getState().status).toBe('authenticated')
+      expect(runtime.queryClient.getQueryData(adminQueryKeys.users.detail('retained-user'))).toEqual({ private: true })
+    },
+  )
+
+  it('treats a bootstrap denial as authoritative and purges protected state', async () => {
+    const runtime = createAdminRuntime({
+      queryClientFactory: createAdminTestQueryClient,
+      reload: vi.fn(),
+      storage: createMemoryStorage(),
+    })
+    authenticateRuntime(runtime)
+    runtime.queryClient.setQueryData(adminQueryKeys.users.detail('private-user'), { private: true })
+    const error = authorizationError('FORBIDDEN', 403)
+
+    await expect(
+      runtime.queryClient.fetchQuery({
+        queryFn: async () => {
+          throw error
+        },
+        queryKey: adminQueryKeys.bootstrap(),
+        retry: false,
+      }),
+    ).rejects.toBe(error)
+
+    await vi.waitFor(() => expect(runtime.auth.getState()).toEqual({ status: 'forbidden' }))
+    expect(runtime.queryClient.getQueryCache().getAll()).toHaveLength(0)
+    expect(runtime.queryClient.getMutationCache().getAll()).toHaveLength(0)
+  })
+
+  it.each([
+    ['UNAUTHENTICATED', 401, { status: 'unauthenticated', reason: 'expired-or-revoked' }],
+    ['FRESH_LOGIN_REQUIRED', 401, { status: 'fresh-login-required' }],
+  ] as const)('purges on a mutation %s response', async (code, status, terminal) => {
+    const runtime = createAdminRuntime({
+      queryClientFactory: createAdminTestQueryClient,
+      reload: vi.fn(),
+      storage: createMemoryStorage(),
+    })
+    authenticateRuntime(runtime)
+    runtime.queryClient.setQueryData(adminQueryKeys.comments.detail('sensitive-comment'), { private: true })
+    const error = authorizationError(code, status)
+    const mutation = runtime.queryClient.getMutationCache().build(runtime.queryClient, {
+      mutationFn: async () => {
+        throw error
+      },
+      retry: false,
+    })
+
+    await expect(mutation.execute(undefined)).rejects.toBe(error)
+    await vi.waitFor(() => expect(runtime.auth.getState()).toEqual(terminal))
+    expect(runtime.queryClient.getQueryCache().getAll()).toHaveLength(0)
+    expect(runtime.queryClient.getMutationCache().getAll()).toHaveLength(0)
+  })
+
   it('removes notification and modal portals with the protected provider subtree', async () => {
     const runtime = createAdminRuntime({
       queryClientFactory: createAdminTestQueryClient,
@@ -158,7 +336,10 @@ describe('administrator data runtime', () => {
     })
     const PortalProbe = () => {
       useEffect(() => {
-        notifications.show({ id: 'compatibility-notification', message: 'Protected notification content' })
+        notifications.show({
+          id: 'compatibility-notification',
+          message: 'Protected notification content',
+        })
         modals.open({
           children: <div>Protected modal content</div>,
           modalId: 'compatibility-modal',
@@ -169,7 +350,9 @@ describe('administrator data runtime', () => {
     }
     render(
       <AdminProviders runtime={runtime}>
-        <PortalProbe />
+        <ProtectedAdminProviders>
+          <PortalProbe />
+        </ProtectedAdminProviders>
       </AdminProviders>,
     )
     expect(await screen.findByText('Protected notification content')).toBeTruthy()

@@ -32,6 +32,12 @@ const collectSourceFiles = async (directory: string): Promise<string[]> => {
 }
 
 describe('administrator presentation boundary', () => {
+  it('boots the production entrypoint through live session authorization', async () => {
+    const main = await readFile(`${sourceRoot}/main.tsx`, 'utf8')
+
+    expect(main).toMatch(/<AdminProviders\s+authenticate>/)
+  })
+
   it('keeps prohibited public-web stacks out of dependencies and source imports', async () => {
     const packageJson = JSON.parse(await readFile(`${packageRoot}/package.json`, 'utf8')) as {
       dependencies?: Record<string, string>
@@ -48,6 +54,24 @@ describe('administrator presentation boundary', () => {
       const isTest = /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(path)
       const isTransport = path.endsWith('/data/admin-client.ts')
       if (!isTest && !isTransport) expect(rawFetchCall.test(source), `raw fetch found in ${path}`).toBe(false)
+
+      if (!isTest) {
+        expect(/\.signUp(?:\.|\s*\()|['"`]\/sign-up/.test(source), `registration found in ${path}`).toBe(false)
+        expect(/\b(?:totp|TOTP)\b/.test(source), `TOTP found in ${path}`).toBe(false)
+      }
+
+      const isAuthAdapter = path.endsWith('/auth/admin-auth-client.ts')
+      if (!isTest && !isAuthAdapter) {
+        expect(/from\s+['"]better-auth(?:\/react)?['"]/.test(source), `raw auth client found in ${path}`).toBe(false)
+      }
+
+      if (!isTest && path.includes('/auth/')) {
+        expect(/\b(?:localStorage|sessionStorage)\b/.test(source), `auth storage found in ${path}`).toBe(false)
+      }
+
+      if (!isTest && path.includes('recent-auth')) {
+        expect(/\buseMutation\b/.test(source), `secret-bearing mutation cache found in ${path}`).toBe(false)
+      }
 
       const isQueryOptionsBoundary = path.endsWith('/data/query-options.ts')
       if (!isTest && !isQueryOptionsBoundary) {

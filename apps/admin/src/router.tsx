@@ -15,8 +15,26 @@ const rootRoute = createRootRoute({
   notFoundComponent: AdminNotFound,
 })
 
-const shellRoute = createRoute({
+const requireAdminRoute = createRoute({
   getParentRoute: () => rootRoute,
+  id: 'require-admin',
+  component: lazyRouteComponent(() => import('./auth/admin-authorization-boundary'), 'AdminAuthorizationBoundary'),
+})
+
+const workspaceRoute = createRoute({
+  getParentRoute: () => requireAdminRoute,
+  id: 'workspace',
+  component: lazyRouteComponent(() => import('./components/protected-admin-providers'), 'ProtectedAdminProviders'),
+})
+
+const primaryAuthResultRoute = createRoute({
+  getParentRoute: () => requireAdminRoute,
+  path: 'primary-auth/result',
+  component: lazyRouteComponent(() => import('./routes/primary-auth-result-route'), 'PrimaryAuthResultRoute'),
+})
+
+const shellRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
   id: 'admin-shell',
   component: lazyRouteComponent(() => import('./components/admin-shell'), 'AdminShell'),
 })
@@ -65,13 +83,18 @@ const signInRoute = createRoute({
 
 export const adminRouteTree = rootRoute.addChildren([
   signInRoute,
-  shellRoute.addChildren([
-    dashboardRoute,
-    chartsRoute,
-    commentsRoute,
-    usersRoute,
-    administratorsRoute,
-    chartReportsRoute,
+  requireAdminRoute.addChildren([
+    primaryAuthResultRoute,
+    workspaceRoute.addChildren([
+      shellRoute.addChildren([
+        dashboardRoute,
+        chartsRoute,
+        commentsRoute,
+        usersRoute,
+        administratorsRoute,
+        chartReportsRoute,
+      ]),
+    ]),
   ]),
 ])
 

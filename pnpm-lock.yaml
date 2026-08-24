@@ -121,6 +121,9 @@ importers:
       '@mantine/notifications':
         specifier: 9.5.1
         version: 9.5.1(@mantine/core@9.5.1(@mantine/hooks@9.5.1(react@19.2.6))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@mantine/hooks@9.5.1(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@marsidev/react-turnstile':
+        specifier: ^1.5.0
+        version: 1.5.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@orpc/client':
         specifier: 'catalog:'
         version: 1.14.3(@opentelemetry/api@1.9.1)
@@ -142,6 +145,9 @@ importers:
       '@tanstack/react-router':
         specifier: ^1.170.17
         version: 1.170.18(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      better-auth:
+        specifier: 'catalog:'
+        version: 1.6.11(55145e6ea15f84e1eb9a9ff74c8f36c1)
       react:
         specifier: 'catalog:'
         version: 19.2.6

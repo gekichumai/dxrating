@@ -10,6 +10,13 @@ const RETURN_URL_ERROR_CODES = {
 
 type AuthReturnUrlField = keyof typeof RETURN_URL_ERROR_CODES
 
+export const requireExistingOauthAccount = <TOptions extends object>(
+  options: TOptions,
+): TOptions & { readonly disableImplicitSignUp: true } => ({
+  ...options,
+  disableImplicitSignUp: true,
+})
+
 const getStringField = (source: unknown, field: AuthReturnUrlField): string | undefined => {
   if (!source || typeof source !== 'object') return undefined
   const value = Reflect.get(source, field)

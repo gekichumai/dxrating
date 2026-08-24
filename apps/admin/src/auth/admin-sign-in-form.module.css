@@ -1,0 +1,49 @@
+.root {
+  width: 100%;
+}
+
+.title {
+  text-wrap: balance;
+}
+
+.description {
+  text-wrap: pretty;
+}
+
+.challenge {
+  min-inline-size: 0;
+  margin: 0;
+  border: 0;
+  border-radius: var(--mantine-radius-lg);
+  padding: var(--mantine-spacing-md);
+  box-shadow:
+    0 0 0 1px light-dark(rgb(0 0 0 / 6%), rgb(255 255 255 / 9%)),
+    0 1px 2px -1px light-dark(rgb(0 0 0 / 7%), transparent),
+    0 3px 8px light-dark(rgb(0 0 0 / 4%), transparent);
+}
+
+.turnstile {
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: var(--mantine-radius-md);
+}
+
+.actionButton {
+  transition-property: transform;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.actionButton:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .actionButton {
+    transition-duration: 0ms;
+  }
+
+  .actionButton:active:not(:disabled) {
+    transform: none;
+  }
+}

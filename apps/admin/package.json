@@ -19,6 +19,7 @@
     "@mantine/hooks": "9.5.1",
     "@mantine/modals": "9.5.1",
     "@mantine/notifications": "9.5.1",
+    "@marsidev/react-turnstile": "^1.5.0",
     "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
     "@orpc/openapi-client": "catalog:",
@@ -26,6 +27,7 @@
     "@tabler/icons-react": "^3.46.0",
     "@tanstack/react-query": "^5.100.11",
     "@tanstack/react-router": "^1.170.17",
+    "better-auth": "catalog:",
     "react": "catalog:",
     "react-dom": "^19.2.6"
   },

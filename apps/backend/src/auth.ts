@@ -10,7 +10,7 @@ import { passkey } from '@better-auth/passkey'
 import { i18n } from '@better-auth/i18n'
 import { config } from './config.js'
 import { forceOrdinaryRoleForNewUser } from './admin/role-policy.js'
-import { buildAuthSecurityOptions, rejectAuthReturnUrlUserInfo } from './auth-security.js'
+import { buildAuthSecurityOptions, rejectAuthReturnUrlUserInfo, requireExistingOauthAccount } from './auth-security.js'
 
 const authSecurity = buildAuthSecurityOptions({
   production: config.nodeEnv === 'production',
@@ -66,16 +66,16 @@ export const auth = betterAuth({
     },
   },
   socialProviders: {
-    google: {
+    google: requireExistingOauthAccount({
       clientId: config.auth.google.clientId!,
       clientSecret: config.auth.google.clientSecret!,
       enabled: !!config.auth.google.clientId && !!config.auth.google.clientSecret,
-    },
-    github: {
+    }),
+    github: requireExistingOauthAccount({
       clientId: config.auth.github.clientId!,
       clientSecret: config.auth.github.clientSecret!,
       enabled: !!config.auth.github.clientId && !!config.auth.github.clientSecret,
-    },
+    }),
   },
   // Add other providers if needed
   plugins: [

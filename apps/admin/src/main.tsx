@@ -13,7 +13,7 @@ if (!rootElement) throw new Error('Admin application root element is missing')
 
 createRoot(rootElement).render(
   <StrictMode>
-    <AdminProviders>
+    <AdminProviders authenticate>
       <RouterProvider router={adminRouter} />
     </AdminProviders>
   </StrictMode>,

@@ -3,7 +3,7 @@ import { renderAdminApp } from './render-admin-app'
 
 describe('administrator application test harness', () => {
   it('creates isolated router, data, compatibility, and deterministic Query Client contexts', async () => {
-    const firstAuth = { status: 'unauthenticated' } as const
+    const firstAuth = { status: 'unauthenticated', reason: 'initial' } as const
     const secondAuth = { status: 'forbidden' } as const
     const first = await renderAdminApp('/', { auth: firstAuth })
     first.queryClient.setQueryData(['admin', 'private-test-value'], { value: 1 })

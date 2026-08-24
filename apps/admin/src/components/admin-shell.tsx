@@ -20,9 +20,11 @@ import {
   useMantineColorScheme,
 } from '@mantine/core'
 import { useDisclosure, useMediaQuery } from '@mantine/hooks'
-import { IconChevronDown, IconMoon, IconSettings, IconSun } from '@tabler/icons-react'
+import { IconChevronDown, IconLogout, IconMoon, IconSun } from '@tabler/icons-react'
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { Suspense, useEffect, useRef, type KeyboardEvent } from 'react'
+import { canAccessAdminDestination, getAdministratorRoleLabelKey } from '../auth/admin-capabilities'
+import { useAdminAuth, useAdminAuthActions } from '../auth/admin-auth-context'
 import { useAdminTranslation } from '../i18n'
 import { ADMIN_DESTINATIONS, getAdminDestination } from '../navigation'
 import { RouteLoading } from './route-states'
@@ -39,7 +41,9 @@ export const resolveEnvironmentLabel = ({
 const ColorSchemeControl = () => {
   const { t } = useAdminTranslation()
   const { setColorScheme } = useMantineColorScheme()
-  const colorScheme = useComputedColorScheme('light', { getInitialValueInEffect: true })
+  const colorScheme = useComputedColorScheme('light', {
+    getInitialValueInEffect: true,
+  })
   const dark = colorScheme === 'dark'
   const label = t(dark ? 'shell.switchToLight' : 'shell.switchToDark')
 
@@ -72,6 +76,8 @@ export const AdminShell = () => {
   const previousPathname = useRef(location.pathname)
   const destination = getAdminDestination(location.pathname)
   const environment = resolveEnvironmentLabel(import.meta.env)
+  const auth = useAdminAuth()
+  const authActions = useAdminAuthActions()
 
   useEffect(() => {
     document.title = `${t(destination.titleKey)} · ${t('app.name')}`
@@ -87,6 +93,15 @@ export const AdminShell = () => {
       navigationRef.current?.querySelector<HTMLAnchorElement>('a[href]')?.focus()
     }
   }, [compactNavigation, mobileOpened])
+
+  if (auth.status !== 'authenticated') return null
+
+  const visibleDestinations = ADMIN_DESTINATIONS.filter((item) => {
+    if (item.id === 'administrators' || item.id === 'comments' || item.id === 'users') {
+      return canAccessAdminDestination(auth.principal, item.id)
+    }
+    return true
+  })
 
   const handleNavigationKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== 'Escape' || !compactNavigation || !mobileOpened) return
@@ -152,14 +167,14 @@ export const AdminShell = () => {
                   >
                     <Group gap="sm" wrap="nowrap">
                       <Avatar color="indigo" radius="xl" size={32}>
-                        A
+                        {auth.principal.effectiveRole === 'super_admin' ? 'S' : 'A'}
                       </Avatar>
                       <Box className={classes.userCopy}>
                         <Text fw={650} lh={1.15} size="sm">
-                          {t('shell.currentUserName')}
+                          {auth.principal.userId}
                         </Text>
                         <Text c="dimmed" lh={1.15} size="xs">
-                          {t('shell.currentUserRole')}
+                          {t(getAdministratorRoleLabelKey(auth.principal))}
                         </Text>
                       </Box>
                       <IconChevronDown aria-hidden="true" size={16} stroke={1.8} />
@@ -168,8 +183,12 @@ export const AdminShell = () => {
                 </Menu.Target>
                 <Menu.Dropdown>
                   <Menu.Label>{t('shell.currentUser')}</Menu.Label>
-                  <Menu.Item disabled leftSection={<IconSettings aria-hidden="true" size={17} stroke={1.8} />}>
-                    {t('shell.sessionPending')}
+                  <Menu.Item
+                    color="red"
+                    leftSection={<IconLogout aria-hidden="true" size={17} stroke={1.8} />}
+                    onClick={() => void authActions.signOut()}
+                  >
+                    {t('actions.signOut')}
                   </Menu.Item>
                 </Menu.Dropdown>
               </Menu>
@@ -189,7 +208,7 @@ export const AdminShell = () => {
         >
           <AppShell.Section component={ScrollArea} grow>
             <Stack gap={6}>
-              {ADMIN_DESTINATIONS.map((item) => {
+              {visibleDestinations.map((item) => {
                 const active = destination.id === item.id
                 const Icon = item.icon
                 return (

@@ -38,7 +38,7 @@ describe('administrator application shell', () => {
 
     const menuButton = screen.getByRole('button', { name: translate('shell.currentUserMenu') })
     await user.click(menuButton)
-    expect(await screen.findByText(translate('shell.sessionPending'))).toBeTruthy()
+    expect(await screen.findByText(translate('actions.signOut'))).toBeTruthy()
     await user.keyboard('{Escape}')
     expect(document.activeElement).toBe(menuButton)
   })
@@ -80,5 +80,38 @@ describe('administrator application shell', () => {
     expect(await screen.findByRole('button', { name: translate('shell.switchToLight') })).toBeTruthy()
 
     expect(screen.getByLabelText(translate('environment.badge', { environment: 'test' }))).toBeTruthy()
+  })
+
+  it('presents destinations from server capabilities rather than the role label', async () => {
+    vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }))
+    await renderAdminApp('/', {
+      auth: {
+        status: 'authenticated',
+        principal: {
+          userId: 'contradictory-super-administrator',
+          effectiveRole: 'super_admin',
+          capabilities: {
+            canModerateUsers: false,
+            canModerateAdministrators: false,
+            canManageAdministrators: false,
+          },
+        },
+      },
+    })
+
+    const navigation = await screen.findByRole('navigation', { name: translate('nav.primary') })
+    expect(within(navigation).queryByRole('link', { name: translate('nav.comments') })).toBeNull()
+    expect(within(navigation).queryByRole('link', { name: translate('nav.users') })).toBeNull()
+    expect(within(navigation).queryByRole('link', { name: translate('nav.administrators') })).toBeNull()
+    expect(within(navigation).getByRole('link', { name: translate('nav.charts') })).toBeTruthy()
   })
 })

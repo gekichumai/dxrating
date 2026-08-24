@@ -47,9 +47,38 @@ it in production. Never put credentials, Cloudflare Access assertions, bypass va
 in a `VITE_` variable because Vite embeds those values into the browser bundle. The client sends browser-managed cookies
 with requests; backend origin and session controls remain the security boundary.
 
+`VITE_TURNSTILE_SITE_KEY` is the public widget key for password sign-in. Pair it with the backend-only
+`TURNSTILE_SECRET_KEY`; enabling only one side is a deployment error. The widget response is held only in component
+memory, attached to the single password request as `x-captcha-response`, and discarded after every attempt. OAuth does
+not reuse that response. Cloudflare's documented test keys may be used locally, but production keys must match the
+deployed admin hostname.
+
+## Authentication and authorization
+
+The deployed admin hostname must remain behind the identity-aware outer access gate. That gate rejects people before
+the SPA, its assets, or the application sign-in screen load; the in-app checks complement it and do not emulate it.
+
+Admin uses the regular Better Auth cookie session and existing-account sign-in routes. It deliberately exposes no
+registration link or registration request. Password sign-in and the enabled Google/GitHub providers establish only an
+ordinary user session. The private `/api/admin/bootstrap` response is the sole browser authority for the effective
+administrator role and capability flags—never infer permission from Better Auth session fields or a role label.
+
+The guarded workspace remains unmounted while the session or bootstrap is unresolved. Session expiry, revocation,
+ban, demotion, and fresh-login enforcement first cancel active requests and clear the complete React Query cache, then
+show a terminal recovery state. Signing out follows the same ordering. The normal session lifetime is unchanged.
+
+Sensitive operations may request a recent primary-authentication window. Password and Google verification call the
+private admin endpoints directly so passwords and state-bearing OAuth URLs never enter React Query mutation history,
+Web Storage, or application logs. The browser caps a verified window at ten minutes and still treats the backend as
+authoritative. A `RECENT_AUTH_REQUIRED` response opens the reusable confirmation UI but never automatically repeats the
+original destructive action; a `FRESH_LOGIN_REQUIRED` response instead requires a complete sign-out and sign-in. TOTP
+is not part of this flow.
+
 ## Route layout
 
-- `/sign-in` is outside the authenticated shell so authentication can remain a small, independently loaded route.
+- `/sign-in` is outside the authenticated guard and shell so authentication remains independently loaded.
+- `/primary-auth/result` is guarded but outside the workspace shell; it verifies an OAuth completion with the backend
+  before returning to operations.
 - `/` is the dashboard.
 - `/charts`, `/comments`, `/users`, `/administrators`, and `/chart-reports` are typed, lazy top-level destinations.
 - Unknown locations and render failures use dedicated recovery states.
@@ -77,13 +106,13 @@ this boundary.
 
 Freshness windows are deliberately resource-specific:
 
-| Resource class | `staleTime` |
-| --- | ---: |
-| Bootstrap and primary-authentication status | 15 seconds |
-| Dashboard and administrators | 30 seconds |
-| Charts and users | 60 seconds |
-| Revisions/history | 5 minutes |
-| Comments and chart reports | 15 seconds |
+| Resource class                              | `staleTime` |
+| ------------------------------------------- | ----------: |
+| Bootstrap and primary-authentication status |  15 seconds |
+| Dashboard and administrators                |  30 seconds |
+| Charts and users                            |  60 seconds |
+| Revisions/history                           |   5 minutes |
+| Comments and chart reports                  |  15 seconds |
 
 Production queries refetch stale active data on window focus and reconnect. Fresh data stays inside its window, and no
 global or feature polling timer is configured. Tests use isolated caches with focus/reconnect behavior and retries

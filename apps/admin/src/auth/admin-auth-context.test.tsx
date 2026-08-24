@@ -25,6 +25,10 @@ describe('administrator authentication context seam', () => {
   })
 
   it('exports a stable pending state for the authentication implementation step', () => {
-    expect(PENDING_ADMIN_AUTH).toEqual({ status: 'pending' })
+    expect(PENDING_ADMIN_AUTH).toEqual({
+      status: 'pending',
+      phase: 'session',
+      checkId: 0,
+    })
   })
 })
