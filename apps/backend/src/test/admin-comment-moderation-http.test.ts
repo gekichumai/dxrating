@@ -229,15 +229,31 @@ describe('administrator comment-moderation HTTP flow', () => {
     const author = await createUser('comment-detail-author@example.com', 'Comment Detail Author')
     const { rootId, replyId } = await createCommentThread(author.id)
 
-    const rootResponse = await adminRequest(`/api/admin/comments/${rootId}?limit=10`, administrator.cookie)
+    const rootResponse = await adminRequest(
+      `/api/admin/comments/${rootId}?commentHistoryLimit=10`,
+      administrator.cookie,
+    )
     expect(rootResponse.status).toBe(200)
     const root = await responseBody<AdminContractOutputs['getCommentModerationDetail']>(rootResponse)
-    expect(root).toEqual({
+    expect(root).toMatchObject({
+      activePublication: null,
       comment: {
         id: rootId,
         parentId: null,
+        rootId,
         authorUserId: author.id,
-        chart: { songId: 'immutable-song', sheetType: 'dx', sheetDifficulty: 'master' },
+        chart: {
+          availability: 'unresolved',
+          legacyReference: {
+            legacySongId: 'immutable-song',
+            sheetType: 'dx',
+            sheetDifficulty: 'master',
+          },
+          songLabel: 'immutable-song',
+          chartLabel: 'master (dx)',
+          songId: null,
+          chartId: null,
+        },
         createdAt: expect.any(String),
         originalBody: ROOT_BODY,
       },
@@ -248,28 +264,46 @@ describe('administrator comment-moderation HTTP flow', () => {
         moderatedAt: null,
         reason: null,
       },
-      history: { items: [], nextCursor: null },
+      author: {
+        userId: author.id,
+        displayName: 'Comment Detail Author',
+        email: author.email,
+        effectiveRole: 'user',
+        banState: { status: 'unbanned' },
+      },
+      thread: {
+        completeness: 'complete',
+        nextCursor: null,
+        items: [
+          { id: rootId, parentId: null, rootId, depth: 0, originalBody: ROOT_BODY },
+          { id: replyId, parentId: rootId, rootId, depth: 1, originalBody: REPLY_BODY },
+        ],
+      },
+      commentHistory: { items: [], nextCursor: null },
+      authorBanHistory: { items: [], nextCursor: null },
     })
 
-    const replyResponse = await adminRequest(`/api/admin/comments/${replyId}?limit=10`, administrator.cookie)
+    const replyResponse = await adminRequest(
+      `/api/admin/comments/${replyId}?commentHistoryLimit=10`,
+      administrator.cookie,
+    )
     expect(replyResponse.status).toBe(200)
-    await expect(replyResponse.json()).resolves.toEqual({
-      comment: {
-        id: replyId,
-        parentId: rootId,
-        authorUserId: author.id,
-        chart: { songId: 'immutable-song', sheetType: 'dx', sheetDifficulty: 'master' },
-        createdAt: expect.any(String),
-        originalBody: REPLY_BODY,
+    const reply = await responseBody<AdminContractOutputs['getCommentModerationDetail']>(replyResponse)
+    expect(reply).toMatchObject({
+      activePublication: null,
+      comment: { id: replyId, parentId: rootId, rootId, authorUserId: author.id, originalBody: REPLY_BODY },
+      state: { status: 'visible', stateVersion: null, reason: null },
+      author: { userId: author.id, effectiveRole: 'user' },
+      thread: {
+        completeness: 'complete',
+        nextCursor: null,
+        items: [
+          { id: rootId, parentId: null, rootId, depth: 0, originalBody: ROOT_BODY },
+          { id: replyId, parentId: rootId, rootId, depth: 1, originalBody: REPLY_BODY },
+        ],
       },
-      state: {
-        status: 'visible',
-        stateVersion: null,
-        actorUserId: null,
-        moderatedAt: null,
-        reason: null,
-      },
-      history: { items: [], nextCursor: null },
+      commentHistory: { items: [], nextCursor: null },
+      authorBanHistory: { items: [], nextCursor: null },
     })
 
     const unauthenticated = await adminRequest(`/api/admin/comments/${rootId}`)
@@ -356,13 +390,16 @@ describe('administrator comment-moderation HTTP flow', () => {
       established_by_event_id: deletion.event.id,
     })
 
-    const deletedDetailResponse = await adminRequest(`/api/admin/comments/${rootId}?limit=10`, administrator.cookie)
+    const deletedDetailResponse = await adminRequest(
+      `/api/admin/comments/${rootId}?commentHistoryLimit=10`,
+      administrator.cookie,
+    )
     expect(deletedDetailResponse.status).toBe(200)
     const deletedDetailText = await deletedDetailResponse.clone().text()
     const deletedDetail = await responseBody<AdminContractOutputs['getCommentModerationDetail']>(deletedDetailResponse)
     expect(deletedDetail.comment.originalBody).toBe(ROOT_BODY)
     expect(deletedDetail.state).toEqual(deletion.state)
-    expect(deletedDetail.history).toEqual({ items: [deletion.event], nextCursor: null })
+    expect(deletedDetail.commentHistory).toEqual({ items: [deletion.event], nextCursor: null })
     expect(deletedDetailText).not.toContain('requestCorrelationId')
     expect(deletedDetailText).not.toContain(deletionRequestId!)
 
@@ -440,14 +477,17 @@ describe('administrator comment-moderation HTTP flow', () => {
       established_by_event_id: restoration.event.id,
     })
 
-    const restoredDetailResponse = await adminRequest(`/api/admin/comments/${rootId}?limit=10`, administrator.cookie)
+    const restoredDetailResponse = await adminRequest(
+      `/api/admin/comments/${rootId}?commentHistoryLimit=10`,
+      administrator.cookie,
+    )
     expect(restoredDetailResponse.status).toBe(200)
     const restoredDetailText = await restoredDetailResponse.clone().text()
     const restoredDetail =
       await responseBody<AdminContractOutputs['getCommentModerationDetail']>(restoredDetailResponse)
     expect(restoredDetail.comment.originalBody).toBe(ROOT_BODY)
     expect(restoredDetail.state).toEqual(restoration.state)
-    expect(restoredDetail.history).toEqual({ items: [restoration.event, deletion.event], nextCursor: null })
+    expect(restoredDetail.commentHistory).toEqual({ items: [restoration.event, deletion.event], nextCursor: null })
     expect(restoredDetailText).not.toContain('requestCorrelationId')
     expect(restoredDetailText).not.toContain(deletionRequestId!)
     expect(restoredDetailText).not.toContain(restorationRequestId!)

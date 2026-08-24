@@ -17,7 +17,9 @@ administrator mutation automatically unless the operation explicitly documents i
 | `FRESH_LOGIN_REQUIRED` | 401 | Clear the current session and require a complete sign-in. A step-up prompt is insufficient because the user's authority changed after this session began. Do not replay a mutation automatically after login. |
 | `ADMIN_CLIENT_INCOMPATIBLE` | 409 | Stop all administrator operations and show the update-required screen. Reload once to fetch the deployed client; if the compatibility identifier still differs, keep the client blocked rather than falling back to an older request shape. |
 | `VALIDATION_FAILED` | 400 | Keep the form open, show the safe validation failure, and let the user correct and resubmit it. Do not render raw server parser errors or echo rejected input into telemetry. |
+| `INVALID_CURSOR` | 400 | Discard only the affected pagination state and restart that read from its canonical first-page route. Do not reinterpret, repair, or log the opaque cursor. |
 | `NOT_FOUND` | 404 | Remove or mark the missing item, then refetch the containing list. Do not reveal whether a resource exists to a user who lacks access. |
+| `CHART_UNAVAILABLE` | 503 | Keep the selected stable chart filter visible and offer an explicit retry. Do not silently broaden the request to every chart or retry it in a background loop. |
 | `CONFLICT` | 409 | Refetch the resource and present its current state before the user decides whether to try again. Never silently overwrite a concurrent administrator action. |
 | `INTERNAL_SERVER_ERROR` | 500 | Show a generic failure, retain no privileged response body, and offer the safe `requestId` for support. A read may be retried with bounded backoff; a mutation requires an explicit user decision unless it is documented as idempotent. |
 

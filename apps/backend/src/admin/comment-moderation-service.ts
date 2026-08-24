@@ -26,7 +26,7 @@ export const COMMENT_MODERATION_REASON_MAX_LENGTH = ADMIN_COMMENT_MODERATION_REA
 const MAXIMUM_SIGNED_BIGINT = 9_223_372_036_854_775_807n
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
-export type CommentModerationServiceFailureCode = 'VALIDATION_FAILED' | 'NOT_FOUND' | 'CONFLICT'
+export type CommentModerationServiceFailureCode = 'VALIDATION_FAILED' | 'INVALID_CURSOR' | 'NOT_FOUND' | 'CONFLICT'
 
 export class CommentModerationServiceFailure extends Error {
   readonly code: CommentModerationServiceFailureCode
@@ -38,12 +38,44 @@ export class CommentModerationServiceFailure extends Error {
   }
 }
 
-export type CommentModerationDetail = AdminContractOutputs['getCommentModerationDetail']
-export type CommentModerationState = CommentModerationDetail['state']
-export type CommentModerationEvent = CommentModerationDetail['history']['items'][number]
 export type DeleteCommentOutput = AdminContractOutputs['deleteComment']
 export type RestoreCommentOutput = AdminContractOutputs['restoreComment']
 export type CommentModerationMutationOutput = DeleteCommentOutput | RestoreCommentOutput
+export type CommentModerationState = DeleteCommentOutput['state'] | RestoreCommentOutput['state']
+export type CommentModerationEvent = DeleteCommentOutput['event'] | RestoreCommentOutput['event']
+
+/**
+ * The immutable evidence owned by the comment-moderation subsystem. Chart
+ * catalog resolution and thread/author context belong to the wider admin read
+ * model and are deliberately absent here.
+ */
+export type CommentModerationEvidence = {
+  readonly id: string
+  readonly parentId: string | null
+  readonly authorUserId: string
+  readonly chart: {
+    readonly songId: string
+    readonly sheetType: string
+    readonly sheetDifficulty: string
+  }
+  readonly createdAt: string
+  readonly originalBody: string
+}
+
+export type CommentModerationHistoryPage = {
+  readonly items: readonly CommentModerationEvent[]
+  readonly nextCursor: string | null
+}
+
+/** Internal evidence/state/history result composed into the expanded admin detail. */
+export type CommentModerationEvidenceDetail = {
+  readonly comment: CommentModerationEvidence
+  readonly state: CommentModerationState
+  readonly commentHistory: CommentModerationHistoryPage
+}
+
+/** @deprecated Prefer the purpose-specific CommentModerationEvidenceDetail name. */
+export type CommentModerationDetail = CommentModerationEvidenceDetail
 
 export type GetCommentModerationDetailInput = {
   readonly commentId: string
@@ -67,7 +99,7 @@ export type RestoreCommentInput = Omit<CommentModerationMutationBase, 'expectedS
 }
 
 export interface CommentModerationService {
-  getCommentModerationDetail(input: GetCommentModerationDetailInput): Promise<CommentModerationDetail>
+  getCommentModerationDetail(input: GetCommentModerationDetailInput): Promise<CommentModerationEvidenceDetail>
   deleteComment(input: DeleteCommentInput): Promise<DeleteCommentOutput>
   restoreComment(input: RestoreCommentInput): Promise<RestoreCommentOutput>
 }
@@ -77,9 +109,16 @@ type CursorPayload = {
   readonly commentId: string
   readonly createdAt: string
   readonly id: string
+  readonly nextEventId: string
+}
+
+type DecodedHistoryCursor = {
+  readonly position: StoredCommentModerationHistoryCursor
+  readonly nextEventId: string
 }
 
 const validationFailure = () => new CommentModerationServiceFailure('VALIDATION_FAILED')
+const invalidCursorFailure = () => new CommentModerationServiceFailure('INVALID_CURSOR')
 const notFoundFailure = () => new CommentModerationServiceFailure('NOT_FOUND')
 const conflictFailure = () => new CommentModerationServiceFailure('CONFLICT')
 
@@ -105,50 +144,61 @@ const validateCorrelationId = (requestCorrelationId: unknown): string => {
   return requestCorrelationId.toLowerCase()
 }
 
-const encodeHistoryCursor = (commentId: string, event: StoredCommentModerationEvent): string =>
-  Buffer.from(
+const encodeHistoryCursor = (commentId: string, event: StoredCommentModerationEvent): string => {
+  if (event.previousEventId === null) {
+    throw new Error('A comment-history continuation boundary has no preceding event')
+  }
+  return Buffer.from(
     JSON.stringify({
       version: 1,
       commentId,
       createdAt: event.createdAt.toISOString(),
       id: event.id,
+      nextEventId: event.previousEventId,
     } satisfies CursorPayload),
   ).toString('base64url')
+}
 
-const decodeHistoryCursor = (cursor: string, commentId: string): StoredCommentModerationHistoryCursor => {
+const decodeHistoryCursor = (cursor: string, commentId: string): DecodedHistoryCursor => {
   if (
+    typeof cursor !== 'string' ||
     cursor.length === 0 ||
     cursor.length > COMMENT_MODERATION_HISTORY_CURSOR_MAX_LENGTH ||
     !/^[A-Za-z0-9_-]+$/.test(cursor)
   ) {
-    throw validationFailure()
+    throw invalidCursorFailure()
   }
 
   let payload: unknown
   try {
     payload = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'))
   } catch {
-    throw validationFailure()
+    throw invalidCursorFailure()
   }
-  if (!payload || typeof payload !== 'object') throw validationFailure()
+  if (!payload || typeof payload !== 'object') throw invalidCursorFailure()
 
   const candidate = payload as Partial<CursorPayload>
   if (
     candidate.version !== 1 ||
     candidate.commentId !== commentId ||
     !isPositiveDecimalBigint(candidate.id) ||
+    !isPositiveDecimalBigint(candidate.nextEventId) ||
+    candidate.nextEventId === candidate.id ||
     typeof candidate.createdAt !== 'string'
   ) {
-    throw validationFailure()
+    throw invalidCursorFailure()
   }
   const createdAt = new Date(candidate.createdAt)
   if (!Number.isFinite(createdAt.getTime()) || createdAt.toISOString() !== candidate.createdAt) {
-    throw validationFailure()
+    throw invalidCursorFailure()
   }
-  return { id: candidate.id, createdAt }
+  return {
+    position: { id: candidate.id, createdAt },
+    nextEventId: candidate.nextEventId,
+  }
 }
 
-const projectState = (state: StoredCommentModerationState): CommentModerationState => {
+export const projectCommentModerationState = (state: StoredCommentModerationState): CommentModerationState => {
   if (state.establishedAction === null) {
     if (
       state.stateVersion !== null ||
@@ -183,7 +233,7 @@ const projectState = (state: StoredCommentModerationState): CommentModerationSta
   return { status: 'visible', ...base, reason: null }
 }
 
-const projectEvent = (event: StoredCommentModerationEvent): CommentModerationEvent => {
+export const projectCommentModerationEvent = (event: StoredCommentModerationEvent): CommentModerationEvent => {
   const base = {
     id: event.id,
     commentId: event.commentId,
@@ -281,8 +331,8 @@ export const createCommentModerationService = ({
         return transition
       })
       return {
-        state: projectState(applied.state),
-        event: projectEvent(applied.event),
+        state: projectCommentModerationState(applied.state),
+        event: projectCommentModerationEvent(applied.event),
       }
     } catch (error) {
       if (error instanceof CommentModerationStoreFailure && error.code === 'CONFLICT') throw conflictFailure()
@@ -297,13 +347,16 @@ export const createCommentModerationService = ({
       if (!Number.isInteger(limit) || limit < 1 || limit > COMMENT_MODERATION_HISTORY_MAX_LIMIT) {
         throw validationFailure()
       }
-      const cursor = rawCursor === undefined ? undefined : decodeHistoryCursor(rawCursor, commentId)
+      const decodedCursor = rawCursor === undefined ? undefined : decodeHistoryCursor(rawCursor, commentId)
       const page = await store.loadCommentDetailPage({
         commentId,
-        cursor,
+        cursor: decodedCursor?.position,
         limit,
       })
       if (!page) throw notFoundFailure()
+      if (decodedCursor && page.history.items[0]?.id !== decodedCursor.nextEventId) {
+        throw invalidCursorFailure()
+      }
       const lastItem = page.history.items.at(-1)
 
       return {
@@ -319,9 +372,9 @@ export const createCommentModerationService = ({
           createdAt: page.detail.comment.createdAt.toISOString(),
           originalBody: page.detail.comment.originalBody,
         },
-        state: projectState(page.detail.state),
-        history: {
-          items: page.history.items.map(projectEvent),
+        state: projectCommentModerationState(page.detail.state),
+        commentHistory: {
+          items: page.history.items.map(projectCommentModerationEvent),
           nextCursor: page.history.hasMore && lastItem ? encodeHistoryCursor(commentId, lastItem) : null,
         },
       }

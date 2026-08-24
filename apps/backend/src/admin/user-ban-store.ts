@@ -416,7 +416,7 @@ export const createPostgresUserBanStore = (database: Pool = pool): UserBanStore 
         FROM admin_user_ban_history
         WHERE subject_user_id = $1
         ${cursorPredicate}
-        ORDER BY created_at DESC, id DESC
+        ORDER BY created_at DESC NULLS LAST, id DESC NULLS LAST
         LIMIT ${limitParameter}
       `,
       parameters,

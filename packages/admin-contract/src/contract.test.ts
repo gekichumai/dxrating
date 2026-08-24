@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { ADMIN_CONTRACT_COMPATIBILITY_ID } from './compatibility.js'
 import {
   ADMIN_BOOTSTRAP_AUTHORIZATION,
+  ADMIN_CONTRACT_HEADER,
+  ADMIN_COMMENT_PREVIEW_MAX_LENGTH,
+  ADMIN_COMMENT_THREAD_DEFAULT_LIMIT,
+  ADMIN_COMMENT_THREAD_MAX_LIMIT,
+  ADMIN_DELETED_COMMENT_PREVIEW,
   ADMIN_COMMENT_HISTORY_DEFAULT_LIMIT,
   ADMIN_COMMENT_HISTORY_MAX_LIMIT,
   ADMIN_COMMENT_MODERATION_REASON_MAX_LENGTH,
@@ -12,6 +17,8 @@ import {
   ADMIN_ROLE_CHANGE_REASON_MAX_LENGTH,
   ADMIN_ROLE_HISTORY_DEFAULT_LIMIT,
   ADMIN_ROLE_HISTORY_MAX_LIMIT,
+  ADMIN_RECENT_COMMENT_DEFAULT_LIMIT,
+  ADMIN_RECENT_COMMENT_MAX_LIMIT,
   ADMIN_USER_BAN_REASON_MAX_LENGTH,
   ADMIN_USER_DISPLAY_NAME_PREFIX_MIN_LENGTH,
   ADMIN_USER_HISTORY_DEFAULT_LIMIT,
@@ -33,6 +40,8 @@ import {
   AdminGetUserModerationDetailOutputSchema,
   AdminGetCommentModerationDetailInputSchema,
   AdminGetCommentModerationDetailOutputSchema,
+  AdminListRecentCommentsInputSchema,
+  AdminListRecentCommentsOutputSchema,
   AdminListUserBanHistoryInputSchema,
   AdminListUserBanHistoryOutputSchema,
   AdminPrimaryAuthActionSchema,
@@ -69,6 +78,7 @@ describe('private administrator contract', () => {
       'listUserBanHistory',
       'banUser',
       'unbanUser',
+      'listRecentComments',
       'getCommentModerationDetail',
       'deleteComment',
       'restoreComment',
@@ -125,6 +135,11 @@ describe('private administrator contract', () => {
         method: 'POST',
         path: '/users/{userId}/unban',
         operationId: 'unbanAdminUser',
+      },
+      listRecentComments: {
+        method: 'GET',
+        path: '/comments',
+        operationId: 'listAdminRecentComments',
       },
       getCommentModerationDetail: {
         method: 'GET',
@@ -195,7 +210,9 @@ describe('private administrator contract', () => {
       'STEP_UP_FAILED',
       'STEP_UP_RATE_LIMITED',
       'VALIDATION_FAILED',
+      'INVALID_CURSOR',
       'NOT_FOUND',
+      'CHART_UNAVAILABLE',
       'CONFLICT',
       'INTERNAL_SERVER_ERROR',
     ]
@@ -223,6 +240,7 @@ describe('private administrator contract', () => {
       listUserBanHistory: 'authenticated_read',
       banUser: 'transactional_write',
       unbanUser: 'transactional_write',
+      listRecentComments: 'authenticated_read',
       getCommentModerationDetail: 'authenticated_read',
       deleteComment: 'transactional_write',
       restoreComment: 'transactional_write',
@@ -240,6 +258,7 @@ describe('private administrator contract', () => {
       adminContract.searchUsers,
       adminContract.getUserModerationDetail,
       adminContract.listUserBanHistory,
+      adminContract.listRecentComments,
       adminContract.getCommentModerationDetail,
       adminContract.listAdministrators,
       adminContract.listAdministratorRoleHistory,
@@ -293,7 +312,9 @@ describe('private administrator contract', () => {
       'STEP_UP_FAILED',
       'STEP_UP_RATE_LIMITED',
       'VALIDATION_FAILED',
+      'INVALID_CURSOR',
       'NOT_FOUND',
+      'CHART_UNAVAILABLE',
       'CONFLICT',
       'INTERNAL_SERVER_ERROR',
     ])
@@ -306,6 +327,14 @@ describe('private administrator contract', () => {
     expect(adminErrors.STEP_UP_RATE_LIMITED).toMatchObject({
       status: 429,
       message: ADMIN_ERROR_MESSAGES.STEP_UP_RATE_LIMITED,
+    })
+    expect(adminErrors.INVALID_CURSOR).toMatchObject({
+      status: 400,
+      message: ADMIN_ERROR_MESSAGES.INVALID_CURSOR,
+    })
+    expect(adminErrors.CHART_UNAVAILABLE).toMatchObject({
+      status: 503,
+      message: ADMIN_ERROR_MESSAGES.CHART_UNAVAILABLE,
     })
     expect(adminErrors.STEP_UP_FAILED.data.parse({ requestId: null })).toEqual({
       requestId: null,
@@ -326,6 +355,7 @@ describe('private administrator contract', () => {
       '/users/{userId}/ban-history',
       '/users/{userId}/ban',
       '/users/{userId}/unban',
+      '/comments',
       '/comments/{commentId}',
       '/comments/{commentId}/delete',
       '/comments/{commentId}/restore',
@@ -346,6 +376,7 @@ describe('private administrator contract', () => {
       '/users/{userId}/ban-history': ['get'],
       '/users/{userId}/ban': ['post'],
       '/users/{userId}/unban': ['post'],
+      '/comments': ['get'],
       '/comments/{commentId}': ['get'],
       '/comments/{commentId}/delete': ['post'],
       '/comments/{commentId}/restore': ['post'],
@@ -366,6 +397,21 @@ describe('private administrator contract', () => {
         },
       },
     })
+    expect(document.paths?.['/comments']?.get?.requestBody).toBeUndefined()
+    expect(
+      document.paths?.['/comments']?.get?.parameters?.map((parameter) =>
+        '$ref' in parameter ? parameter.$ref : `${parameter.in}:${parameter.name}`,
+      ),
+    ).toEqual([
+      'query:authorUserId',
+      'query:chartId',
+      'query:status',
+      'query:createdAtFromInclusive',
+      'query:createdAtBeforeExclusive',
+      'query:cursor',
+      'query:limit',
+      `header:${ADMIN_CONTRACT_HEADER}`,
+    ])
 
     const serializedDocument = JSON.stringify(document)
     expect(serializedDocument).not.toContain('/primary-auth/oauth/complete')
@@ -375,6 +421,8 @@ describe('private administrator contract', () => {
     expect(serializedDocument).not.toContain('updateAdminComment')
     expect(serializedDocument).toContain('STEP_UP_FAILED')
     expect(serializedDocument).toContain('STEP_UP_RATE_LIMITED')
+    expect(serializedDocument).toContain('INVALID_CURSOR')
+    expect(serializedDocument).toContain('CHART_UNAVAILABLE')
     expect(await computeAdminContractCompatibilityId()).toBe(ADMIN_CONTRACT_COMPATIBILITY_ID)
   })
 
@@ -454,7 +502,12 @@ describe('private administrator contract', () => {
       }).success,
     ).toBe(false)
     expect(AdminAccountStatusSchema.safeParse({ status: 'permanently_banned' }).success).toBe(true)
-    expect(AdminAccountStatusSchema.safeParse({ status: 'banned', kind: 'temporary' }).success).toBe(false)
+    expect(
+      AdminAccountStatusSchema.safeParse({
+        status: 'banned',
+        kind: 'temporary',
+      }).success,
+    ).toBe(false)
   })
 
   it('requires a bounded trimmed reason for role grants and revocations', () => {
@@ -514,9 +567,15 @@ describe('private administrator contract', () => {
       AdminAdministratorRoleHistoryInputSchema.parse({
         headers: {},
         params: { userId: 'history-subject' },
-        query: { cursor: 'opaque.cursor.payload', limit: String(ADMIN_ROLE_HISTORY_MAX_LIMIT) },
+        query: {
+          cursor: 'opaque.cursor.payload',
+          limit: String(ADMIN_ROLE_HISTORY_MAX_LIMIT),
+        },
       }).query,
-    ).toEqual({ cursor: 'opaque.cursor.payload', limit: ADMIN_ROLE_HISTORY_MAX_LIMIT })
+    ).toEqual({
+      cursor: 'opaque.cursor.payload',
+      limit: ADMIN_ROLE_HISTORY_MAX_LIMIT,
+    })
     expect(
       AdminAdministratorRoleHistoryInputSchema.safeParse({
         headers: {},
@@ -531,9 +590,13 @@ describe('private administrator contract', () => {
         query: { cursor: '' },
       }).success,
     ).toBe(false)
-    expect(AdminAdministratorRoleHistoryInputSchema.safeParse({ headers: {}, params: {}, query: {} }).success).toBe(
-      false,
-    )
+    expect(
+      AdminAdministratorRoleHistoryInputSchema.safeParse({
+        headers: {},
+        params: {},
+        query: {},
+      }).success,
+    ).toBe(false)
   })
 
   it('allows only persisted user-to-admin and admin-to-user history transitions', () => {
@@ -619,7 +682,10 @@ describe('private administrator contract', () => {
       email: 'search@example.com',
       emailVerified: true,
       effectiveRole: 'user' as const,
-      accountStatus: { status: 'temporarily_banned' as const, expiresAt: '2026-08-25T12:00:00.000Z' },
+      accountStatus: {
+        status: 'temporarily_banned' as const,
+        expiresAt: '2026-08-25T12:00:00.000Z',
+      },
     }
     expect(AdminSearchUsersOutputSchema.parse({ items: [row], nextCursor: null })).toEqual({
       items: [row],
@@ -635,7 +701,10 @@ describe('private administrator contract', () => {
       { ipAddress: '192.0.2.1' },
     ]) {
       expect(
-        AdminSearchUsersOutputSchema.safeParse({ items: [{ ...row, ...prohibitedField }], nextCursor: null }).success,
+        AdminSearchUsersOutputSchema.safeParse({
+          items: [{ ...row, ...prohibitedField }],
+          nextCursor: null,
+        }).success,
       ).toBe(false)
     }
   })
@@ -690,7 +759,12 @@ describe('private administrator contract', () => {
     ]
 
     for (const banState of states) {
-      expect(AdminGetUserModerationDetailOutputSchema.parse({ ...identity, banState })).toEqual({
+      expect(
+        AdminGetUserModerationDetailOutputSchema.parse({
+          ...identity,
+          banState,
+        }),
+      ).toEqual({
         ...identity,
         banState,
       })
@@ -752,9 +826,16 @@ describe('private administrator contract', () => {
         items: [unbanEvent, permanentEvent, temporaryEvent],
         nextCursor: 'opaque_next_page',
       }),
-    ).toEqual({ items: [unbanEvent, permanentEvent, temporaryEvent], nextCursor: 'opaque_next_page' })
+    ).toEqual({
+      items: [unbanEvent, permanentEvent, temporaryEvent],
+      nextCursor: 'opaque_next_page',
+    })
     expect(
-      AdminListUserBanHistoryInputSchema.parse({ headers: {}, params: { userId: 'history-user' }, query: {} }),
+      AdminListUserBanHistoryInputSchema.parse({
+        headers: {},
+        params: { userId: 'history-user' },
+        query: {},
+      }),
     ).toEqual({
       headers: {},
       params: { userId: 'history-user' },
@@ -762,7 +843,12 @@ describe('private administrator contract', () => {
     })
     expect(
       AdminListUserBanHistoryOutputSchema.safeParse({
-        items: [{ ...temporaryEvent, requestCorrelationId: '18d7118c-ec70-4603-9176-cffea8a6cd8f' }],
+        items: [
+          {
+            ...temporaryEvent,
+            requestCorrelationId: '18d7118c-ec70-4603-9176-cffea8a6cd8f',
+          },
+        ],
         nextCursor: null,
       }).success,
     ).toBe(false)
@@ -801,12 +887,20 @@ describe('private administrator contract', () => {
     expect(
       AdminBanUserInputSchema.safeParse({
         ...base,
-        body: { expectedStateVersion: '7', kind: 'permanent', reason: 'Permanent safety restriction' },
+        body: {
+          expectedStateVersion: '7',
+          kind: 'permanent',
+          reason: 'Permanent safety restriction',
+        },
       }).success,
     ).toBe(true)
 
     for (const body of [
-      { expectedStateVersion: null, kind: 'temporary', reason: 'Missing expiry' },
+      {
+        expectedStateVersion: null,
+        kind: 'temporary',
+        reason: 'Missing expiry',
+      },
       {
         expectedStateVersion: null,
         kind: 'temporary',
@@ -820,19 +914,36 @@ describe('private administrator contract', () => {
         reason: 'Fake permanent expiry',
       },
       { expectedStateVersion: null, kind: 'permanent', reason: '   ' },
-      { expectedStateVersion: null, kind: 'permanent', reason: 'x'.repeat(ADMIN_USER_BAN_REASON_MAX_LENGTH + 1) },
-      { expectedStateVersion: null, kind: 'permanent', reason: 'Valid', providerToken: 'secret' },
+      {
+        expectedStateVersion: null,
+        kind: 'permanent',
+        reason: 'x'.repeat(ADMIN_USER_BAN_REASON_MAX_LENGTH + 1),
+      },
+      {
+        expectedStateVersion: null,
+        kind: 'permanent',
+        reason: 'Valid',
+        providerToken: 'secret',
+      },
     ]) {
       expect(AdminBanUserInputSchema.safeParse({ ...base, body }).success).toBe(false)
     }
 
-    expect(AdminUnbanUserInputSchema.parse({ ...base, body: { expectedStateVersion: '8' } }).body).toEqual({
+    expect(
+      AdminUnbanUserInputSchema.parse({
+        ...base,
+        body: { expectedStateVersion: '8' },
+      }).body,
+    ).toEqual({
       expectedStateVersion: '8',
     })
     expect(
       AdminUnbanUserInputSchema.safeParse({
         ...base,
-        body: { expectedStateVersion: '8', reason: 'The API deliberately accepts no unban reason' },
+        body: {
+          expectedStateVersion: '8',
+          reason: 'The API deliberately accepts no unban reason',
+        },
       }).success,
     ).toBe(false)
   })
@@ -859,13 +970,205 @@ describe('private administrator contract', () => {
       expiresAt: null,
       createdAt: '2026-08-24T10:00:00.000Z',
     }
-    expect(AdminUserBanMutationOutputSchema.parse({ state, event })).toEqual({ state, event })
-    expect(AdminUserBanMutationOutputSchema.safeParse({ state, event, revokedSessionCount: 3 }).success).toBe(false)
+    expect(AdminUserBanMutationOutputSchema.parse({ state, event })).toEqual({
+      state,
+      event,
+    })
+    expect(
+      AdminUserBanMutationOutputSchema.safeParse({
+        state,
+        event,
+        revokedSessionCount: 3,
+      }).success,
+    ).toBe(false)
   })
 
-  it('requires decimal comment IDs and bounded comment-bound history pagination', () => {
+  it('normalizes bounded recent-comment filters for durable deep links', () => {
+    expect(ADMIN_RECENT_COMMENT_DEFAULT_LIMIT).toBe(50)
+    expect(ADMIN_RECENT_COMMENT_MAX_LIMIT).toBe(100)
+    expect(ADMIN_COMMENT_PREVIEW_MAX_LENGTH).toBe(240)
+
+    expect(
+      AdminListRecentCommentsInputSchema.parse({
+        headers: {},
+        query: {
+          authorUserId: 'comment-author',
+          chartId: 'dsht_23456789ab',
+          status: 'deleted',
+          createdAtFromInclusive: '2026-08-01T00:00:00Z',
+          createdAtBeforeExclusive: '2026-09-01T00:00:00Z',
+          limit: String(ADMIN_RECENT_COMMENT_MAX_LIMIT),
+        },
+      }).query,
+    ).toEqual({
+      authorUserId: 'comment-author',
+      chartId: 'dsht_23456789ab',
+      status: 'deleted',
+      createdAtFromInclusive: '2026-08-01T00:00:00.000Z',
+      createdAtBeforeExclusive: '2026-09-01T00:00:00.000Z',
+      limit: ADMIN_RECENT_COMMENT_MAX_LIMIT,
+    })
+    expect(AdminListRecentCommentsInputSchema.parse({ headers: {}, query: {} }).query).toEqual({
+      limit: ADMIN_RECENT_COMMENT_DEFAULT_LIMIT,
+    })
+
+    for (const query of [
+      { authorUserId: ' comment-author' },
+      { chartId: 'legacy-chart-id' },
+      { status: 'visible' },
+      { cursor: 'not.a.cursor' },
+      { limit: ADMIN_RECENT_COMMENT_MAX_LIMIT + 1 },
+      {
+        createdAtFromInclusive: '2026-09-01T00:00:00Z',
+        createdAtBeforeExclusive: '2026-08-01T00:00:00Z',
+      },
+      {
+        createdAtFromInclusive: '2026-08-01T00:00:00Z',
+        createdAtBeforeExclusive: '2026-08-01T00:00:00Z',
+      },
+      { provider: 'google' },
+    ]) {
+      expect(AdminListRecentCommentsInputSchema.safeParse({ headers: {}, query }).success).toBe(false)
+    }
+  })
+
+  it('returns strict redacted recent-comment rows with explicit chart availability and normalized filters', () => {
+    const legacyReference = {
+      legacySongId: 'legacy-song-id',
+      sheetType: 'dx',
+      sheetDifficulty: 'master',
+    }
+    const author = {
+      userId: 'comment-author',
+      displayName: 'Comment Author',
+      effectiveRole: 'user' as const,
+      isBanned: true,
+    }
+    const currentChart = {
+      availability: 'current' as const,
+      legacyReference,
+      songId: 'dsng_23456789ab',
+      chartId: 'dsht_23456789ab',
+      songLabel: 'Published song',
+      chartLabel: 'DX · MASTER',
+    }
+    const activePublication = {
+      channel: 'production-v1' as const,
+      catalogRunId: '12',
+      revision: '34',
+    }
+    const normalizedFilters = {
+      authorUserId: null,
+      chartId: null,
+      status: null,
+      createdAtFromInclusive: null,
+      createdAtBeforeExclusive: null,
+    }
+    const activeRow = {
+      id: '42',
+      parentId: null,
+      rootId: '42',
+      createdAt: '2026-08-24T10:00:00.000Z',
+      status: 'active' as const,
+      bodyPreview: 'Visible preview',
+      bodyPreviewTruncated: false,
+      author,
+      chart: currentChart,
+    }
+    const deletedRow = {
+      ...activeRow,
+      id: '43',
+      parentId: '42',
+      rootId: '42',
+      status: 'deleted' as const,
+      bodyPreview: ADMIN_DELETED_COMMENT_PREVIEW,
+      bodyPreviewTruncated: false,
+    }
+    const output = {
+      items: [activeRow, deletedRow],
+      nextCursor: 'next_page',
+      normalizedFilters,
+      activePublication,
+    }
+
+    expect(AdminListRecentCommentsOutputSchema.parse(output)).toEqual(output)
+    expect(
+      AdminListRecentCommentsOutputSchema.safeParse({
+        ...output,
+        items: [{ ...deletedRow, bodyPreview: 'retained original body' }],
+      }).success,
+    ).toBe(false)
+    expect(
+      AdminListRecentCommentsOutputSchema.safeParse({
+        ...output,
+        items: [{ ...deletedRow, bodyPreviewTruncated: true }],
+      }).success,
+    ).toBe(false)
+    expect(
+      AdminListRecentCommentsOutputSchema.safeParse({
+        ...output,
+        activePublication: null,
+      }).success,
+    ).toBe(false)
+
+    const historicalChart = {
+      ...currentChart,
+      availability: 'historical' as const,
+    }
+    expect(
+      AdminListRecentCommentsOutputSchema.safeParse({
+        ...output,
+        activePublication: null,
+        items: [{ ...activeRow, chart: historicalChart }],
+      }).success,
+    ).toBe(true)
+    expect(
+      AdminListRecentCommentsOutputSchema.safeParse({
+        ...output,
+        items: [
+          {
+            ...activeRow,
+            chart: {
+              availability: 'unresolved',
+              legacyReference,
+              songId: null,
+              chartId: null,
+              songLabel: 'Unavailable song',
+              chartLabel: 'DX · MASTER',
+            },
+          },
+        ],
+      }).success,
+    ).toBe(true)
+
+    for (const prohibitedField of [
+      { originalBody: 'must not cross the list contract' },
+      { deletionReason: 'private reason' },
+      { actorUserId: 'moderator-id' },
+      { requestCorrelationId: '18d7118c-ec70-4603-9176-cffea8a6cd8f' },
+      { sessionToken: 'session-secret' },
+      { ipAddress: '192.0.2.1' },
+    ]) {
+      expect(
+        AdminListRecentCommentsOutputSchema.safeParse({
+          ...output,
+          items: [{ ...activeRow, ...prohibitedField }],
+        }).success,
+      ).toBe(false)
+    }
+    expect(
+      AdminListRecentCommentsOutputSchema.safeParse({
+        ...output,
+        normalizedFilters: {},
+      }).success,
+    ).toBe(false)
+  })
+
+  it('requires decimal comment IDs and independently bounded context pagination', () => {
     expect(ADMIN_COMMENT_HISTORY_DEFAULT_LIMIT).toBe(25)
     expect(ADMIN_COMMENT_HISTORY_MAX_LIMIT).toBe(100)
+    expect(ADMIN_COMMENT_THREAD_DEFAULT_LIMIT).toBe(100)
+    expect(ADMIN_COMMENT_THREAD_MAX_LIMIT).toBe(250)
 
     expect(
       AdminGetCommentModerationDetailInputSchema.parse({
@@ -876,38 +1179,89 @@ describe('private administrator contract', () => {
     ).toEqual({
       headers: {},
       params: { commentId: '9223372036854775807' },
-      query: { limit: ADMIN_COMMENT_HISTORY_DEFAULT_LIMIT },
+      query: {
+        threadLimit: ADMIN_COMMENT_THREAD_DEFAULT_LIMIT,
+        commentHistoryLimit: ADMIN_COMMENT_HISTORY_DEFAULT_LIMIT,
+        authorBanHistoryLimit: ADMIN_USER_HISTORY_DEFAULT_LIMIT,
+      },
     })
     expect(
       AdminGetCommentModerationDetailInputSchema.parse({
         headers: {},
         params: { commentId: '42' },
-        query: { cursor: 'comment_bound_cursor', limit: String(ADMIN_COMMENT_HISTORY_MAX_LIMIT) },
+        query: {
+          threadCursor: 'thread_bound_cursor',
+          threadLimit: String(ADMIN_COMMENT_THREAD_MAX_LIMIT),
+          commentHistoryCursor: 'comment_bound_cursor',
+          commentHistoryLimit: String(ADMIN_COMMENT_HISTORY_MAX_LIMIT),
+          authorBanHistoryCursor: 'author_bound_cursor',
+          authorBanHistoryLimit: String(ADMIN_COMMENT_HISTORY_MAX_LIMIT),
+        },
       }).query,
-    ).toEqual({ cursor: 'comment_bound_cursor', limit: ADMIN_COMMENT_HISTORY_MAX_LIMIT })
+    ).toEqual({
+      threadCursor: 'thread_bound_cursor',
+      threadLimit: ADMIN_COMMENT_THREAD_MAX_LIMIT,
+      commentHistoryCursor: 'comment_bound_cursor',
+      commentHistoryLimit: ADMIN_COMMENT_HISTORY_MAX_LIMIT,
+      authorBanHistoryCursor: 'author_bound_cursor',
+      authorBanHistoryLimit: ADMIN_COMMENT_HISTORY_MAX_LIMIT,
+    })
 
     for (const input of [
       { params: { commentId: '0' }, query: {} },
       { params: { commentId: '-1' }, query: {} },
       { params: { commentId: '01' }, query: {} },
       { params: { commentId: 1 }, query: {} },
-      { params: { commentId: '1' }, query: { cursor: 'not.a.cursor' } },
-      { params: { commentId: '1' }, query: { limit: ADMIN_COMMENT_HISTORY_MAX_LIMIT + 1 } },
+      { params: { commentId: '1' }, query: { threadCursor: 'not.a.cursor' } },
+      {
+        params: { commentId: '1' },
+        query: { commentHistoryCursor: 'not.a.cursor' },
+      },
+      {
+        params: { commentId: '1' },
+        query: { authorBanHistoryCursor: 'not.a.cursor' },
+      },
+      {
+        params: { commentId: '1' },
+        query: { threadLimit: ADMIN_COMMENT_THREAD_MAX_LIMIT + 1 },
+      },
+      {
+        params: { commentId: '1' },
+        query: { commentHistoryLimit: ADMIN_COMMENT_HISTORY_MAX_LIMIT + 1 },
+      },
+      {
+        params: { commentId: '1' },
+        query: { authorBanHistoryLimit: ADMIN_COMMENT_HISTORY_MAX_LIMIT + 1 },
+      },
     ]) {
-      expect(AdminGetCommentModerationDetailInputSchema.safeParse({ headers: {}, ...input }).success).toBe(false)
+      expect(
+        AdminGetCommentModerationDetailInputSchema.safeParse({
+          headers: {},
+          ...input,
+        }).success,
+      ).toBe(false)
     }
   })
 
-  it('returns only immutable comment evidence, coherent deletion state, and comment-bound history', () => {
-    const comment = {
-      id: '42',
-      parentId: '41',
-      authorUserId: 'comment-author',
-      chart: {
-        songId: 'song-1',
+  it('returns coherent privileged comment, thread, chart, author, and immutable moderation context', () => {
+    const chart = {
+      availability: 'current' as const,
+      legacyReference: {
+        legacySongId: 'legacy-song-id',
         sheetType: 'dx',
         sheetDifficulty: 'master',
       },
+      songId: 'dsng_23456789ab',
+      chartId: 'dsht_23456789ab',
+      songLabel: 'Published song',
+      chartLabel: 'DX · MASTER',
+    }
+    const comment = {
+      id: '42',
+      parentId: null,
+      rootId: '42',
+      authorUserId: 'comment-author',
+      chart,
       createdAt: '2026-08-24T10:00:00.000Z',
       originalBody: 'Immutable original comment body',
     }
@@ -927,22 +1281,58 @@ describe('private administrator contract', () => {
       moderatedAt: '2026-08-24T12:00:00.000Z',
       reason: 'Repeated harassment',
     }
+    const authorSummary = {
+      userId: 'comment-author',
+      displayName: 'Comment Author',
+      effectiveRole: 'user' as const,
+      isBanned: false,
+    }
+    const author = {
+      userId: 'comment-author',
+      displayName: 'Comment Author',
+      email: 'comment-author@example.test',
+      emailVerified: true,
+      effectiveRole: 'user' as const,
+      banState: {
+        status: 'unbanned' as const,
+        stateVersion: null,
+        reason: null,
+        actorUserId: null,
+        banStartedAt: null,
+        expiresAt: null,
+        evaluatedAt: '2026-08-24T12:00:00.000Z',
+      },
+    }
     const output = {
+      activePublication: {
+        channel: 'production-v1' as const,
+        catalogRunId: '12',
+        revision: '34',
+      },
       comment,
       state: deletedState,
-      history: { items: [deleteEvent], nextCursor: 'next_page' },
+      author,
+      thread: {
+        items: [
+          {
+            id: comment.id,
+            parentId: comment.parentId,
+            rootId: comment.rootId,
+            depth: 0,
+            createdAt: comment.createdAt,
+            originalBody: comment.originalBody,
+            state: deletedState,
+            author: authorSummary,
+          },
+        ],
+        completeness: 'complete' as const,
+        nextCursor: null,
+      },
+      commentHistory: { items: [deleteEvent], nextCursor: 'next_page' },
+      authorBanHistory: { items: [], nextCursor: null },
     }
 
     expect(AdminGetCommentModerationDetailOutputSchema.parse(output)).toEqual(output)
-    expect(
-      AdminGetCommentModerationDetailOutputSchema.safeParse({
-        ...output,
-        comment: {
-          ...comment,
-          chart: { songId: '', sheetType: 'x'.repeat(1_024), sheetDifficulty: '' },
-        },
-      }).success,
-    ).toBe(true)
     expect(
       AdminCommentModerationStateSchema.safeParse({
         status: 'visible',
@@ -980,14 +1370,38 @@ describe('private administrator contract', () => {
       expect(
         AdminGetCommentModerationDetailOutputSchema.safeParse({
           ...output,
-          history: { items: [{ ...deleteEvent, ...prohibitedField }], nextCursor: null },
+          commentHistory: {
+            items: [{ ...deleteEvent, ...prohibitedField }],
+            nextCursor: null,
+          },
         }).success,
       ).toBe(false)
     }
     expect(
       AdminGetCommentModerationDetailOutputSchema.safeParse({
         ...output,
-        history: { items: [{ ...deleteEvent, commentId: '43' }], nextCursor: null },
+        commentHistory: {
+          items: [{ ...deleteEvent, commentId: '43' }],
+          nextCursor: null,
+        },
+      }).success,
+    ).toBe(false)
+    expect(
+      AdminGetCommentModerationDetailOutputSchema.safeParse({
+        ...output,
+        thread: { ...output.thread, completeness: 'partial', nextCursor: null },
+      }).success,
+    ).toBe(false)
+    expect(
+      AdminGetCommentModerationDetailOutputSchema.safeParse({
+        ...output,
+        activePublication: null,
+      }).success,
+    ).toBe(false)
+    expect(
+      AdminGetCommentModerationDetailOutputSchema.safeParse({
+        ...output,
+        author: { ...author, sessionToken: 'must-not-cross-contract' },
       }).success,
     ).toBe(false)
   })
@@ -999,9 +1413,17 @@ describe('private administrator contract', () => {
     expect(
       AdminDeleteCommentInputSchema.parse({
         ...base,
-        body: { expectedStateVersion: null, confirmed: true, reason: '  Repeated harassment  ' },
+        body: {
+          expectedStateVersion: null,
+          confirmed: true,
+          reason: '  Repeated harassment  ',
+        },
       }).body,
-    ).toEqual({ expectedStateVersion: null, confirmed: true, reason: 'Repeated harassment' })
+    ).toEqual({
+      expectedStateVersion: null,
+      confirmed: true,
+      reason: 'Repeated harassment',
+    })
     expect(
       AdminRestoreCommentInputSchema.parse({
         ...base,
@@ -1018,15 +1440,28 @@ describe('private administrator contract', () => {
         confirmed: true,
         reason: 'x'.repeat(ADMIN_COMMENT_MODERATION_REASON_MAX_LENGTH + 1),
       },
-      { expectedStateVersion: null, confirmed: true, reason: 'Valid', replacementBody: 'Forbidden rewrite' },
+      {
+        expectedStateVersion: null,
+        confirmed: true,
+        reason: 'Valid',
+        replacementBody: 'Forbidden rewrite',
+      },
     ]) {
       expect(AdminDeleteCommentInputSchema.safeParse({ ...base, body }).success).toBe(false)
     }
     for (const body of [
       { expectedStateVersion: null, confirmed: true },
       { expectedStateVersion: '7', confirmed: false },
-      { expectedStateVersion: '7', confirmed: true, reason: 'Restore accepts no reason' },
-      { expectedStateVersion: '7', confirmed: true, content: 'Forbidden rewrite' },
+      {
+        expectedStateVersion: '7',
+        confirmed: true,
+        reason: 'Restore accepts no reason',
+      },
+      {
+        expectedStateVersion: '7',
+        confirmed: true,
+        content: 'Forbidden rewrite',
+      },
     ]) {
       expect(AdminRestoreCommentInputSchema.safeParse({ ...base, body }).success).toBe(false)
     }
@@ -1067,18 +1502,48 @@ describe('private administrator contract', () => {
       reason: null,
     }
 
-    expect(AdminCommentModerationMutationOutputSchema.parse({ state: deletedState, event: deleteEvent })).toEqual({
+    expect(
+      AdminCommentModerationMutationOutputSchema.parse({
+        state: deletedState,
+        event: deleteEvent,
+      }),
+    ).toEqual({
       state: deletedState,
       event: deleteEvent,
     })
-    expect(AdminCommentModerationMutationOutputSchema.parse({ state: restoredState, event: restoreEvent })).toEqual({
+    expect(
+      AdminCommentModerationMutationOutputSchema.parse({
+        state: restoredState,
+        event: restoreEvent,
+      }),
+    ).toEqual({
       state: restoredState,
       event: restoreEvent,
     })
-    expect(AdminDeleteCommentOutputSchema.safeParse({ state: deletedState, event: deleteEvent }).success).toBe(true)
-    expect(AdminDeleteCommentOutputSchema.safeParse({ state: restoredState, event: restoreEvent }).success).toBe(false)
-    expect(AdminRestoreCommentOutputSchema.safeParse({ state: restoredState, event: restoreEvent }).success).toBe(true)
-    expect(AdminRestoreCommentOutputSchema.safeParse({ state: deletedState, event: deleteEvent }).success).toBe(false)
+    expect(
+      AdminDeleteCommentOutputSchema.safeParse({
+        state: deletedState,
+        event: deleteEvent,
+      }).success,
+    ).toBe(true)
+    expect(
+      AdminDeleteCommentOutputSchema.safeParse({
+        state: restoredState,
+        event: restoreEvent,
+      }).success,
+    ).toBe(false)
+    expect(
+      AdminRestoreCommentOutputSchema.safeParse({
+        state: restoredState,
+        event: restoreEvent,
+      }).success,
+    ).toBe(true)
+    expect(
+      AdminRestoreCommentOutputSchema.safeParse({
+        state: deletedState,
+        event: deleteEvent,
+      }).success,
+    ).toBe(false)
     expect(
       AdminCommentModerationMutationOutputSchema.safeParse({
         state: { ...restoredState, stateVersion: '9' },
@@ -1094,7 +1559,10 @@ describe('private administrator contract', () => {
     expect(
       AdminCommentModerationMutationOutputSchema.safeParse({
         state: restoredState,
-        event: { ...restoreEvent, requestCorrelationId: '18d7118c-ec70-4603-9176-cffea8a6cd8f' },
+        event: {
+          ...restoreEvent,
+          requestCorrelationId: '18d7118c-ec70-4603-9176-cffea8a6cd8f',
+        },
       }).success,
     ).toBe(false)
   })

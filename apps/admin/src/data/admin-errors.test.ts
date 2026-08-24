@@ -32,6 +32,8 @@ describe('administrator error normalization', () => {
     ['STEP_UP_FAILED', 401, 'step-up-failed'],
     ['STEP_UP_RATE_LIMITED', 429, 'step-up-rate-limited'],
     ['VALIDATION_FAILED', 400, 'validation'],
+    ['INVALID_CURSOR', 400, 'invalid-cursor'],
+    ['CHART_UNAVAILABLE', 503, 'chart-unavailable'],
     ['NOT_FOUND', 404, 'not-found'],
     ['CONFLICT', 409, 'conflict'],
     ['INTERNAL_SERVER_ERROR', 500, 'server'],
@@ -96,6 +98,7 @@ describe('administrator read retry policy', () => {
     definedError('UNAUTHENTICATED', 401),
     definedError('FORBIDDEN', 403),
     definedError('VALIDATION_FAILED', 400),
+    definedError('INVALID_CURSOR', 400),
     definedError('NOT_FOUND', 404),
     definedError('CONFLICT', 409),
     definedError('STEP_UP_RATE_LIMITED', 429),
@@ -104,6 +107,10 @@ describe('administrator read retry policy', () => {
     new TypeError('programming type error'),
   ])('never retries an operational or non-network error', (error) => {
     expect(shouldRetryAdminRead(0, error)).toBe(false)
+  })
+
+  it('leaves typed chart recovery to the feature instead of automatically replaying the request', () => {
+    expect(shouldRetryAdminRead(0, definedError('CHART_UNAVAILABLE', 503))).toBe(false)
   })
 
   it('denies authentication retries by typed code even when an invalid status suggests a server error', () => {

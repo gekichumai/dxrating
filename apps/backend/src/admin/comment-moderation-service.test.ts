@@ -164,7 +164,7 @@ describe('comment-moderation service', () => {
         moderatedAt: null,
         reason: null,
       },
-      history: { items: [], nextCursor: null },
+      commentHistory: { items: [], nextCursor: null },
     })
     expect(Object.keys(detail.comment).sort()).toEqual(
       ['authorUserId', 'chart', 'createdAt', 'id', 'originalBody', 'parentId'].sort(),
@@ -280,23 +280,36 @@ describe('comment-moderation service', () => {
       parentId: null,
       originalBody: 'Root evidence',
     })
-    expect(firstPage.history.items.map(({ id }) => id)).toEqual([secondDeletion.event.id, restoration.event.id])
-    expect(firstPage.history.nextCursor).toEqual(expect.any(String))
+    expect(firstPage.commentHistory.items.map(({ id }) => id)).toEqual([secondDeletion.event.id, restoration.event.id])
+    expect(firstPage.commentHistory.nextCursor).toEqual(expect.any(String))
 
     const secondPage = await service.getCommentModerationDetail({
       commentId: rootId,
-      cursor: firstPage.history.nextCursor!,
+      cursor: firstPage.commentHistory.nextCursor!,
       limit: 2,
     })
-    expect(secondPage.history.items.map(({ id }) => id)).toEqual([deletion.event.id])
-    expect(secondPage.history.nextCursor).toBeNull()
+    expect(secondPage.commentHistory.items.map(({ id }) => id)).toEqual([deletion.event.id])
+    expect(secondPage.commentHistory.nextCursor).toBeNull()
     await expect(
       service.getCommentModerationDetail({
         commentId: replyId,
-        cursor: firstPage.history.nextCursor!,
+        cursor: firstPage.commentHistory.nextCursor!,
         limit: 2,
       }),
-    ).rejects.toMatchObject({ code: 'VALIDATION_FAILED' })
+    ).rejects.toMatchObject({ code: 'INVALID_CURSOR' })
+
+    const staleCursorPayload = JSON.parse(
+      Buffer.from(firstPage.commentHistory.nextCursor!, 'base64url').toString('utf8'),
+    ) as Record<string, unknown>
+    staleCursorPayload.createdAt = '2000-01-01T00:00:00.000Z'
+    const staleCursor = Buffer.from(JSON.stringify(staleCursorPayload)).toString('base64url')
+    await expect(
+      service.getCommentModerationDetail({
+        commentId: rootId,
+        cursor: staleCursor,
+        limit: 2,
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_CURSOR' })
 
     const persisted = await database.query<{
       readonly root_content: string
@@ -420,7 +433,7 @@ describe('comment-moderation service', () => {
         commentId: '9223372036854775807',
         cursor: 'not-a-valid-bound-cursor',
       }),
-    ).rejects.toMatchObject({ code: 'VALIDATION_FAILED' })
+    ).rejects.toMatchObject({ code: 'INVALID_CURSOR' })
     expect(persistenceCalls).toBe(0)
 
     await expect(
@@ -676,10 +689,10 @@ describe('comment-moderation service', () => {
     expect(observed).toHaveLength(24)
     for (const detail of observed) {
       if (detail.state.stateVersion === null) {
-        expect(detail.history.items).toEqual([])
+        expect(detail.commentHistory.items).toEqual([])
         continue
       }
-      const latest = detail.history.items[0]
+      const latest = detail.commentHistory.items[0]
       expect(latest?.id).toBe(detail.state.stateVersion)
       expect(latest?.actorUserId).toBe(detail.state.actorUserId)
       expect(latest?.createdAt).toBe(detail.state.moderatedAt)

@@ -12,7 +12,9 @@ export const ADMIN_ERROR_MESSAGES = {
   STEP_UP_FAILED: 'Primary authentication could not be verified',
   STEP_UP_RATE_LIMITED: 'Primary authentication could not be verified at this time',
   VALIDATION_FAILED: 'The administrator request is invalid',
+  INVALID_CURSOR: 'The administrator pagination cursor is invalid',
   NOT_FOUND: 'The requested administrator resource was not found',
+  CHART_UNAVAILABLE: 'Administrator chart context is unavailable',
   CONFLICT: 'The administrator request conflicts with current state',
   INTERNAL_SERVER_ERROR: 'The administrator request could not be completed',
 } as const
@@ -68,7 +70,9 @@ export const AdminProcedureAuthorizationPolicySchema = z
       policy.primaryAuthAction === null
         ? !policy.recentPrimaryAuth
         : policy.recentPrimaryAuth === adminActionRequiresRecentPrimaryAuth(policy.primaryAuthAction),
-    { message: 'Recent primary authentication must match the central action policy' },
+    {
+      message: 'Recent primary authentication must match the central action policy',
+    },
   )
 
 export type AdminProcedureAuthorizationPolicy = Readonly<z.infer<typeof AdminProcedureAuthorizationPolicySchema>>
@@ -197,9 +201,19 @@ export const adminErrors = {
     message: ADMIN_ERROR_MESSAGES.VALIDATION_FAILED,
     data: AdminErrorDataSchema,
   },
+  INVALID_CURSOR: {
+    status: 400,
+    message: ADMIN_ERROR_MESSAGES.INVALID_CURSOR,
+    data: AdminErrorDataSchema,
+  },
   NOT_FOUND: {
     status: 404,
     message: ADMIN_ERROR_MESSAGES.NOT_FOUND,
+    data: AdminErrorDataSchema,
+  },
+  CHART_UNAVAILABLE: {
+    status: 503,
+    message: ADMIN_ERROR_MESSAGES.CHART_UNAVAILABLE,
     data: AdminErrorDataSchema,
   },
   CONFLICT: {
@@ -257,7 +271,9 @@ export const AdminUserIdSchema = z
   .string()
   .min(1)
   .max(255)
-  .refine((userId) => userId === userId.trim(), { message: 'User IDs must not contain surrounding whitespace' })
+  .refine((userId) => userId === userId.trim(), {
+    message: 'User IDs must not contain surrounding whitespace',
+  })
 export const AdminPersistedRoleSchema = z.enum(['user', 'admin'])
 export const AdminRoleSourceSchema = z.enum(['database', 'deployment'])
 export const AdminRoleChangeReasonSchema = z.string().trim().min(1).max(ADMIN_ROLE_CHANGE_REASON_MAX_LENGTH)
@@ -638,6 +654,14 @@ export const ADMIN_COMMENT_HISTORY_DEFAULT_LIMIT = 25 as const
 export const ADMIN_COMMENT_HISTORY_MAX_LIMIT = 100 as const
 export const ADMIN_COMMENT_HISTORY_CURSOR_MAX_LENGTH = 1_024 as const
 export const ADMIN_COMMENT_MODERATION_REASON_MAX_LENGTH = 1_000 as const
+export const ADMIN_RECENT_COMMENT_DEFAULT_LIMIT = 50 as const
+export const ADMIN_RECENT_COMMENT_MAX_LIMIT = 100 as const
+export const ADMIN_RECENT_COMMENT_CURSOR_MAX_LENGTH = 1_024 as const
+export const ADMIN_COMMENT_PREVIEW_MAX_LENGTH = 240 as const
+export const ADMIN_DELETED_COMMENT_PREVIEW = '[deleted]' as const
+export const ADMIN_COMMENT_THREAD_DEFAULT_LIMIT = 100 as const
+export const ADMIN_COMMENT_THREAD_MAX_LIMIT = 250 as const
+export const ADMIN_COMMENT_THREAD_CURSOR_MAX_LENGTH = 1_024 as const
 
 export const AdminCommentIdSchema = z
   .string()
@@ -661,28 +685,248 @@ export const AdminCommentHistoryLimitSchema = z.coerce
   .min(1)
   .max(ADMIN_COMMENT_HISTORY_MAX_LIMIT)
   .default(ADMIN_COMMENT_HISTORY_DEFAULT_LIMIT)
+export const AdminRecentCommentCursorSchema = z
+  .string()
+  .min(1)
+  .max(ADMIN_RECENT_COMMENT_CURSOR_MAX_LENGTH)
+  .regex(/^[A-Za-z0-9_-]+$/)
+  .describe('Opaque recent-comment cursor bound to the normalized filters and `(createdAt, id)` keyset')
+export const AdminRecentCommentLimitSchema = z.coerce
+  .number<number>()
+  .int()
+  .min(1)
+  .max(ADMIN_RECENT_COMMENT_MAX_LIMIT)
+  .default(ADMIN_RECENT_COMMENT_DEFAULT_LIMIT)
+export const AdminCommentThreadCursorSchema = z
+  .string()
+  .min(1)
+  .max(ADMIN_COMMENT_THREAD_CURSOR_MAX_LENGTH)
+  .regex(/^[A-Za-z0-9_-]+$/)
+  .describe('Opaque requested-comment-bound cursor for a deterministic thread segment')
+export const AdminCommentThreadLimitSchema = z.coerce
+  .number<number>()
+  .int()
+  .min(1)
+  .max(ADMIN_COMMENT_THREAD_MAX_LIMIT)
+  .default(ADMIN_COMMENT_THREAD_DEFAULT_LIMIT)
 export const AdminCommentModerationReasonSchema = z
   .string()
   .trim()
   .min(1)
   .max(ADMIN_COMMENT_MODERATION_REASON_MAX_LENGTH)
 
+export const AdminRecentCommentStatusSchema = z.enum(['active', 'deleted'])
+export const AdminPublicSongIdSchema = z
+  .string()
+  .regex(/^dsng_[23456789abcdefghjkmnpqrstvwxyz]{10}$/)
+  .describe('Stable public song identifier')
+export const AdminChartIdSchema = z
+  .string()
+  .regex(/^dsht_[23456789abcdefghjkmnpqrstvwxyz]{10}$/)
+  .describe('Stable public chart identifier')
+
+const AdminCommentDateBoundSchema = z.iso.datetime().overwrite((value) => new Date(value).toISOString())
+const hasOrderedCommentDateBounds = ({
+  createdAtFromInclusive,
+  createdAtBeforeExclusive,
+}: {
+  readonly createdAtFromInclusive?: string | null
+  readonly createdAtBeforeExclusive?: string | null
+}) =>
+  createdAtFromInclusive === undefined ||
+  createdAtFromInclusive === null ||
+  createdAtBeforeExclusive === undefined ||
+  createdAtBeforeExclusive === null ||
+  Date.parse(createdAtFromInclusive) < Date.parse(createdAtBeforeExclusive)
+
+export const AdminListRecentCommentsInputSchema = z.object({
+  headers: AdminContractHeadersSchema,
+  query: z
+    .object({
+      authorUserId: AdminUserIdSchema.optional(),
+      chartId: AdminChartIdSchema.optional(),
+      status: AdminRecentCommentStatusSchema.optional(),
+      createdAtFromInclusive: AdminCommentDateBoundSchema.optional(),
+      createdAtBeforeExclusive: AdminCommentDateBoundSchema.optional(),
+      cursor: AdminRecentCommentCursorSchema.optional(),
+      limit: AdminRecentCommentLimitSchema,
+    })
+    .strict()
+    .refine(hasOrderedCommentDateBounds, {
+      message: 'The inclusive comment date bound must precede the exclusive bound',
+      path: ['createdAtBeforeExclusive'],
+    }),
+})
+
+export const AdminNormalizedRecentCommentFiltersSchema = z
+  .object({
+    authorUserId: AdminUserIdSchema.nullable(),
+    chartId: AdminChartIdSchema.nullable(),
+    status: AdminRecentCommentStatusSchema.nullable(),
+    createdAtFromInclusive: AdminCommentDateBoundSchema.nullable(),
+    createdAtBeforeExclusive: AdminCommentDateBoundSchema.nullable(),
+  })
+  .strict()
+  .refine(hasOrderedCommentDateBounds, {
+    message: 'The normalized inclusive comment date bound must precede the exclusive bound',
+    path: ['createdAtBeforeExclusive'],
+  })
+
+const AdminCatalogIdentitySchema = z
+  .string()
+  .regex(/^[1-9]\d*$/)
+  .max(19)
+
+export const AdminActiveCatalogPublicationSchema = z
+  .object({
+    channel: z.literal('production-v1'),
+    catalogRunId: AdminCatalogIdentitySchema,
+    revision: AdminCatalogIdentitySchema,
+  })
+  .strict()
+
+const AdminPersistedCommentChartReferenceSchema = z
+  .object({
+    legacySongId: z.string().min(1).max(1_024),
+    sheetType: z.string().min(1).max(255),
+    sheetDifficulty: z.string().min(1).max(255),
+  })
+  .strict()
+
+const hasAsciiControlCharacter = (value: string): boolean =>
+  [...value].some((character) => {
+    const codePoint = character.codePointAt(0)!
+    return codePoint <= 0x1f || codePoint === 0x7f
+  })
+
+const AdminSafeChartDisplayLabelSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(512)
+  .refine((value) => !hasAsciiControlCharacter(value), {
+    message: 'Chart display labels must not contain controls',
+  })
+
+const AdminCommentChartContextBaseShape = {
+  legacyReference: AdminPersistedCommentChartReferenceSchema,
+  songLabel: AdminSafeChartDisplayLabelSchema,
+  chartLabel: AdminSafeChartDisplayLabelSchema,
+}
+
+const AdminCurrentCommentChartContextSchema = z
+  .object({
+    availability: z.literal('current'),
+    ...AdminCommentChartContextBaseShape,
+    songId: AdminPublicSongIdSchema,
+    chartId: AdminChartIdSchema,
+  })
+  .strict()
+
+const AdminHistoricalCommentChartContextSchema = z
+  .object({
+    availability: z.literal('historical'),
+    ...AdminCommentChartContextBaseShape,
+    songId: AdminPublicSongIdSchema,
+    chartId: AdminChartIdSchema,
+  })
+  .strict()
+
+const AdminUnresolvedCommentChartContextSchema = z
+  .object({
+    availability: z.literal('unresolved'),
+    ...AdminCommentChartContextBaseShape,
+    songId: z.null(),
+    chartId: z.null(),
+  })
+  .strict()
+
+export const AdminCommentChartContextSchema = z.discriminatedUnion('availability', [
+  AdminCurrentCommentChartContextSchema,
+  AdminHistoricalCommentChartContextSchema,
+  AdminUnresolvedCommentChartContextSchema,
+])
+
+export const AdminCommentAuthorSummarySchema = z
+  .object({
+    userId: AdminUserIdSchema,
+    displayName: z.string().min(1).max(255),
+    effectiveRole: AdminUserEffectiveRoleSchema,
+    isBanned: z.boolean(),
+  })
+  .strict()
+
+export const AdminRecentCommentRowSchema = z
+  .object({
+    id: AdminCommentIdSchema,
+    parentId: AdminCommentIdSchema.nullable(),
+    rootId: AdminCommentIdSchema,
+    createdAt: AdminUtcDateTimeSchema,
+    status: AdminRecentCommentStatusSchema,
+    bodyPreview: z.string().max(ADMIN_COMMENT_PREVIEW_MAX_LENGTH),
+    bodyPreviewTruncated: z.boolean(),
+    author: AdminCommentAuthorSummarySchema,
+    chart: AdminCommentChartContextSchema,
+  })
+  .strict()
+  .superRefine((row, context) => {
+    if (row.parentId === null && row.rootId !== row.id) {
+      context.addIssue({
+        code: 'custom',
+        message: 'A root comment must identify itself as the root',
+        path: ['rootId'],
+      })
+    }
+    if (row.status === 'deleted') {
+      if (row.bodyPreview !== ADMIN_DELETED_COMMENT_PREVIEW) {
+        context.addIssue({
+          code: 'custom',
+          message: 'Deleted comments require the generic preview',
+          path: ['bodyPreview'],
+        })
+      }
+      if (row.bodyPreviewTruncated) {
+        context.addIssue({
+          code: 'custom',
+          message: 'The deleted preview is never truncated',
+          path: ['bodyPreviewTruncated'],
+        })
+      }
+    }
+  })
+
+export const AdminListRecentCommentsOutputSchema = z
+  .object({
+    items: z.array(AdminRecentCommentRowSchema).max(ADMIN_RECENT_COMMENT_MAX_LIMIT),
+    nextCursor: AdminRecentCommentCursorSchema.nullable(),
+    normalizedFilters: AdminNormalizedRecentCommentFiltersSchema,
+    activePublication: AdminActiveCatalogPublicationSchema.nullable(),
+  })
+  .strict()
+  .refine(
+    (output) =>
+      output.activePublication !== null || output.items.every(({ chart }) => chart.availability !== 'current'),
+    {
+      message: 'Current chart contexts require an active publication',
+      path: ['activePublication'],
+    },
+  )
+
 export const AdminCommentImmutableEvidenceSchema = z
   .object({
     id: AdminCommentIdSchema,
     parentId: AdminCommentIdSchema.nullable(),
+    rootId: AdminCommentIdSchema,
     authorUserId: AdminUserIdSchema,
-    chart: z
-      .object({
-        songId: z.string(),
-        sheetType: z.string(),
-        sheetDifficulty: z.string(),
-      })
-      .strict(),
+    chart: AdminCommentChartContextSchema,
     createdAt: AdminUtcDateTimeSchema,
     originalBody: z.string(),
   })
   .strict()
+  .refine((comment) => comment.parentId !== null || comment.rootId === comment.id, {
+    message: 'A root comment must identify itself as the root',
+    path: ['rootId'],
+  })
   .describe('Privileged immutable comment evidence available only to authorized administrators')
 
 const AdminVisibleCommentModerationStateSchema = z
@@ -699,7 +943,9 @@ const AdminVisibleCommentModerationStateSchema = z
       state.stateVersion === null
         ? state.actorUserId === null && state.moderatedAt === null
         : state.actorUserId !== null && state.moderatedAt !== null,
-    { message: 'Visible comment state metadata must consistently represent initial or restored state' },
+    {
+      message: 'Visible comment state metadata must consistently represent initial or restored state',
+    },
   )
 
 const AdminDeletedCommentModerationStateSchema = z
@@ -749,6 +995,73 @@ export const AdminCommentModerationEventSchema = z.discriminatedUnion('action', 
   AdminCommentRestoreEventSchema,
 ])
 
+export const AdminCommentThreadItemSchema = z
+  .object({
+    id: AdminCommentIdSchema,
+    parentId: AdminCommentIdSchema.nullable(),
+    rootId: AdminCommentIdSchema,
+    depth: z.number().int().nonnegative(),
+    createdAt: AdminUtcDateTimeSchema,
+    originalBody: z.string(),
+    state: AdminCommentModerationStateSchema,
+    author: AdminCommentAuthorSummarySchema,
+  })
+  .strict()
+  .superRefine((item, context) => {
+    if (item.depth === 0 && (item.parentId !== null || item.rootId !== item.id)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'The depth-zero thread item must be its root',
+        path: ['rootId'],
+      })
+    }
+    if (item.depth > 0 && (item.parentId === null || item.rootId === item.id)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'A reply must identify its parent and distinct root',
+        path: ['rootId'],
+      })
+    }
+  })
+
+export const AdminCommentThreadPageSchema = z
+  .object({
+    items: z.array(AdminCommentThreadItemSchema).max(ADMIN_COMMENT_THREAD_MAX_LIMIT),
+    completeness: z.enum(['complete', 'partial']),
+    nextCursor: AdminCommentThreadCursorSchema.nullable(),
+  })
+  .strict()
+  .superRefine((page, context) => {
+    if ((page.completeness === 'complete') !== (page.nextCursor === null)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Thread completeness and continuation must agree',
+        path: ['nextCursor'],
+      })
+    }
+    if (page.completeness === 'partial' && page.items.length === 0) {
+      context.addIssue({
+        code: 'custom',
+        message: 'A partial thread segment must make progress',
+        path: ['items'],
+      })
+    }
+  })
+
+export const AdminCommentModerationHistoryPageSchema = z
+  .object({
+    items: z.array(AdminCommentModerationEventSchema).max(ADMIN_COMMENT_HISTORY_MAX_LIMIT),
+    nextCursor: AdminCommentHistoryCursorSchema.nullable(),
+  })
+  .strict()
+
+export const AdminCommentAuthorBanHistoryPageSchema = z
+  .object({
+    items: z.array(AdminUserBanHistoryEventSchema).max(ADMIN_USER_HISTORY_MAX_LIMIT),
+    nextCursor: AdminUserHistoryCursorSchema.nullable(),
+  })
+  .strict()
+
 const AdminCommentSubjectInputSchema = z.object({
   headers: AdminContractHeadersSchema,
   params: z.object({ commentId: AdminCommentIdSchema }).strict(),
@@ -757,27 +1070,70 @@ const AdminCommentSubjectInputSchema = z.object({
 export const AdminGetCommentModerationDetailInputSchema = AdminCommentSubjectInputSchema.extend({
   query: z
     .object({
-      cursor: AdminCommentHistoryCursorSchema.optional(),
-      limit: AdminCommentHistoryLimitSchema,
+      threadCursor: AdminCommentThreadCursorSchema.optional(),
+      threadLimit: AdminCommentThreadLimitSchema,
+      commentHistoryCursor: AdminCommentHistoryCursorSchema.optional(),
+      commentHistoryLimit: AdminCommentHistoryLimitSchema,
+      authorBanHistoryCursor: AdminUserHistoryCursorSchema.optional(),
+      authorBanHistoryLimit: AdminUserHistoryLimitSchema,
     })
     .strict(),
 })
 
 export const AdminGetCommentModerationDetailOutputSchema = z
   .object({
+    activePublication: AdminActiveCatalogPublicationSchema.nullable(),
     comment: AdminCommentImmutableEvidenceSchema,
     state: AdminCommentModerationStateSchema,
-    history: z
-      .object({
-        items: z.array(AdminCommentModerationEventSchema).max(ADMIN_COMMENT_HISTORY_MAX_LIMIT),
-        nextCursor: AdminCommentHistoryCursorSchema.nullable(),
-      })
-      .strict(),
+    author: AdminGetUserModerationDetailOutputSchema,
+    thread: AdminCommentThreadPageSchema,
+    commentHistory: AdminCommentModerationHistoryPageSchema,
+    authorBanHistory: AdminCommentAuthorBanHistoryPageSchema,
   })
   .strict()
-  .refine((output) => output.history.items.every((event) => event.commentId === output.comment.id), {
-    message: 'Comment-moderation history items must belong to the requested comment detail',
-    path: ['history', 'items'],
+  .superRefine((output, context) => {
+    if (output.author.userId !== output.comment.authorUserId) {
+      context.addIssue({
+        code: 'custom',
+        message: 'The user detail must belong to the comment author',
+        path: ['author'],
+      })
+    }
+    if (output.commentHistory.items.some((event) => event.commentId !== output.comment.id)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Comment-moderation history items must belong to the requested comment detail',
+        path: ['commentHistory', 'items'],
+      })
+    }
+    if (output.authorBanHistory.items.some((event) => event.subjectUserId !== output.author.userId)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Ban-history items must belong to the selected comment author',
+        path: ['authorBanHistory', 'items'],
+      })
+    }
+    if (output.thread.items.some((item) => item.rootId !== output.comment.rootId)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Every thread item must belong to the selected comment root',
+        path: ['thread', 'items'],
+      })
+    }
+    if (new Set(output.thread.items.map(({ id }) => id)).size !== output.thread.items.length) {
+      context.addIssue({
+        code: 'custom',
+        message: 'A thread segment cannot repeat a comment',
+        path: ['thread', 'items'],
+      })
+    }
+    if (output.comment.chart.availability === 'current' && output.activePublication === null) {
+      context.addIssue({
+        code: 'custom',
+        message: 'A current chart context requires an active publication',
+        path: ['activePublication'],
+      })
+    }
   })
 
 export const AdminDeleteCommentInputSchema = AdminCommentSubjectInputSchema.extend({
@@ -811,7 +1167,9 @@ export const AdminDeleteCommentOutputSchema = z
       state.actorUserId === event.actorUserId &&
       state.moderatedAt === event.createdAt &&
       state.reason === event.reason,
-    { message: 'Comment-deletion state and event must describe the same transition' },
+    {
+      message: 'Comment-deletion state and event must describe the same transition',
+    },
   )
 
 export const AdminRestoreCommentOutputSchema = z
@@ -825,7 +1183,9 @@ export const AdminRestoreCommentOutputSchema = z
       state.stateVersion === event.id &&
       state.actorUserId === event.actorUserId &&
       state.moderatedAt === event.createdAt,
-    { message: 'Comment-restoration state and event must describe the same transition' },
+    {
+      message: 'Comment-restoration state and event must describe the same transition',
+    },
   )
 
 export const AdminCommentModerationMutationOutputSchema = z.union([
@@ -835,7 +1195,10 @@ export const AdminCommentModerationMutationOutputSchema = z.union([
 
 export const adminContract = adminProcedure.errors(adminErrors).router({
   bootstrap: adminProcedure
-    .meta({ authorization: ADMIN_BOOTSTRAP_AUTHORIZATION, banPolicy: 'authenticated_read' })
+    .meta({
+      authorization: ADMIN_BOOTSTRAP_AUTHORIZATION,
+      banPolicy: 'authenticated_read',
+    })
     .route({
       method: 'GET',
       path: '/bootstrap',
@@ -847,7 +1210,10 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .input(AdminBootstrapInputSchema)
     .output(AdminBootstrapOutputSchema),
   primaryAuthStatus: adminProcedure
-    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
+    .meta({
+      authorization: ADMIN_DEFAULT_AUTHORIZATION,
+      banPolicy: 'authenticated_read',
+    })
     .route({
       method: 'GET',
       path: '/primary-auth/status',
@@ -859,7 +1225,10 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .input(AdminBootstrapInputSchema)
     .output(AdminPrimaryAuthWindowOutputSchema),
   completePrimaryAuthPassword: adminProcedure
-    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_write' })
+    .meta({
+      authorization: ADMIN_DEFAULT_AUTHORIZATION,
+      banPolicy: 'authenticated_write',
+    })
     .route({
       method: 'POST',
       path: '/primary-auth/password',
@@ -871,7 +1240,10 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .input(AdminPrimaryAuthPasswordInputSchema)
     .output(AdminPrimaryAuthCompletionOutputSchema),
   initiatePrimaryAuthOauth: adminProcedure
-    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_write' })
+    .meta({
+      authorization: ADMIN_DEFAULT_AUTHORIZATION,
+      banPolicy: 'authenticated_write',
+    })
     .route({
       method: 'POST',
       path: '/primary-auth/oauth/initiate',
@@ -883,7 +1255,10 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .input(AdminPrimaryAuthOauthInitiateInputSchema)
     .output(AdminPrimaryAuthOauthInitiateOutputSchema),
   searchUsers: adminProcedure
-    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
+    .meta({
+      authorization: ADMIN_DEFAULT_AUTHORIZATION,
+      banPolicy: 'authenticated_read',
+    })
     .route({
       method: 'POST',
       path: '/users/search',
@@ -895,7 +1270,10 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .input(AdminSearchUsersInputSchema)
     .output(AdminSearchUsersOutputSchema),
   getUserModerationDetail: adminProcedure
-    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
+    .meta({
+      authorization: ADMIN_DEFAULT_AUTHORIZATION,
+      banPolicy: 'authenticated_read',
+    })
     .route({
       method: 'GET',
       path: '/users/{userId}',
@@ -907,7 +1285,10 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .input(AdminGetUserModerationDetailInputSchema)
     .output(AdminGetUserModerationDetailOutputSchema),
   listUserBanHistory: adminProcedure
-    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
+    .meta({
+      authorization: ADMIN_DEFAULT_AUTHORIZATION,
+      banPolicy: 'authenticated_read',
+    })
     .route({
       method: 'GET',
       path: '/users/{userId}/ban-history',
@@ -954,13 +1335,31 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     })
     .input(AdminUnbanUserInputSchema)
     .output(AdminUserBanMutationOutputSchema),
+  listRecentComments: adminProcedure
+    .meta({
+      authorization: ADMIN_DEFAULT_AUTHORIZATION,
+      banPolicy: 'authenticated_read',
+    })
+    .route({
+      method: 'GET',
+      path: '/comments',
+      operationId: 'listAdminRecentComments',
+      summary: 'List recent comments with bounded moderation context',
+      tags: ['Admin'],
+      inputStructure: 'detailed',
+    })
+    .input(AdminListRecentCommentsInputSchema)
+    .output(AdminListRecentCommentsOutputSchema),
   getCommentModerationDetail: adminProcedure
-    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
+    .meta({
+      authorization: ADMIN_DEFAULT_AUTHORIZATION,
+      banPolicy: 'authenticated_read',
+    })
     .route({
       method: 'GET',
       path: '/comments/{commentId}',
       operationId: 'getAdminCommentModerationDetail',
-      summary: 'Read immutable comment evidence, current state, and moderation history',
+      summary: 'Read a comment, its thread, chart context, author context, and moderation histories',
       tags: ['Admin'],
       inputStructure: 'detailed',
     })
@@ -1003,7 +1402,10 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .input(AdminRestoreCommentInputSchema)
     .output(AdminRestoreCommentOutputSchema),
   listAdministrators: adminProcedure
-    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
+    .meta({
+      authorization: ADMIN_DEFAULT_AUTHORIZATION,
+      banPolicy: 'authenticated_read',
+    })
     .route({
       method: 'GET',
       path: '/administrators',
@@ -1015,7 +1417,10 @@ export const adminContract = adminProcedure.errors(adminErrors).router({
     .input(AdminBootstrapInputSchema)
     .output(AdminAdministratorRosterOutputSchema),
   listAdministratorRoleHistory: adminProcedure
-    .meta({ authorization: ADMIN_DEFAULT_AUTHORIZATION, banPolicy: 'authenticated_read' })
+    .meta({
+      authorization: ADMIN_DEFAULT_AUTHORIZATION,
+      banPolicy: 'authenticated_read',
+    })
     .route({
       method: 'GET',
       path: '/administrators/{userId}/role-history',

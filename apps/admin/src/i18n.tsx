@@ -43,6 +43,9 @@ export const englishCatalog = {
   'environment.badge': '{environment} environment',
   'error.cancelled.description': 'The request was cancelled.',
   'error.cancelled.title': 'Request cancelled',
+  'error.chartUnavailable.description':
+    'Chart identity data is temporarily unavailable. Existing comment information has not been changed.',
+  'error.chartUnavailable.title': 'Chart data unavailable',
   'error.clientIncompatible.description': 'This administrator client cannot safely read the backend response.',
   'error.clientIncompatible.title': 'Administrator update required',
   'error.conflict.description':
@@ -53,6 +56,9 @@ export const englishCatalog = {
   'error.freshLoginRequired.description':
     'Your authority changed after this session began. Complete a full sign-in before continuing.',
   'error.freshLoginRequired.title': 'New sign-in required',
+  'error.invalidCursor.description':
+    'This saved result position is no longer valid for the selected filters. Refresh the result set to continue.',
+  'error.invalidCursor.title': 'Result position expired',
   'error.network.description': 'The administrator backend could not be reached. Check the connection and try again.',
   'error.network.title': 'Connection failed',
   'error.notFound.description': 'This item is no longer available. Refresh its containing list to see current data.',

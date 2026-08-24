@@ -258,6 +258,51 @@ Comment moderation follows the same adjacent expand-and-protect rollout. `0020_a
 
 Grant the runtime role `SELECT` and `INSERT` on `admin_comment_moderation_history`, `USAGE` and `SELECT` on `admin_comment_moderation_history_id_seq`, and `SELECT`, `INSERT`, and `UPDATE` on `admin_comment_moderation_state`. Never grant history `UPDATE`, `DELETE`, or `TRUNCATE`, state `DELETE` or `TRUNCATE`, or comment `UPDATE`, `DELETE`, or `TRUNCATE`. A delete event has a required trimmed internal reason and a non-null correlation UUID; a restore event has a null reason. An absent state row means never moderated, while a restore state row remains as the version token. Only the test database owner truncates moderation state, history, and comments together for fixture cleanup; production maintenance must retain originals, descendants, relations, and history indefinitely.
 
+### Administrator comment-feed projection backfill
+
+`0022_admin_comment_feed_indexes` expands `admin_comment_moderation_state` with nullable `comment_created_at` and replaces its existing guard without rewriting any populated table. The guard derives this value from immutable `comments.created_at` for every new state row and every normal delete/restore advance, including writes from the previous backend build that does not name the new column. For a pre-expansion row, it permits only a `NULL` to exact immutable creation-time update while every authoritative moderation field and version remains unchanged. Any other creation-time mutation fails at the database boundary.
+
+The same release records five separate reviewed `CREATE INDEX CONCURRENTLY` operations for global recency, author recency, stable legacy chart-tuple recency, child traversal, and deleted-comment creation-time recency. The generated migration transaction contains no index DDL. A failed or invalid concurrent build therefore follows the standard invalid-index recovery procedure above and does not justify removing the nullable projection.
+
+Deploy a reader that accepts both `NULL` legacy rows and populated rows before treating the new deleted-comment index as complete. Then run the resumable backfill from the same successfully migrated image digest with the direct migration database credential. The command uses only `DATABASE_URL` and the backfill-specific bounded settings; it does not require application, authentication, or provider secrets:
+
+```bash
+cd apps/backend
+ADMIN_COMMENT_CREATED_AT_BACKFILL_BATCH_SIZE=500 \
+  node --enable-source-maps --experimental-transform-types \
+  dist/backfill-admin-comment-created-at.js
+```
+
+For the production Compose image, map the protected `MIGRATION_DATABASE_URL` to `DATABASE_URL`, keep the old backend serving traffic, and override the finite migration service command:
+
+```bash
+cd apps/backend
+docker compose --env-file .env.production \
+  -f docker-compose.prod.yml -f docker-compose.migrate.yml run --rm \
+  -e ADMIN_COMMENT_CREATED_AT_BACKFILL_BATCH_SIZE=500 \
+  migrate node --enable-source-maps --experimental-transform-types \
+  dist/backfill-admin-comment-created-at.js
+```
+
+Set `ADMIN_COMMENT_CREATED_AT_BACKFILL_MAX_BATCHES` to a positive integer for a deliberate bounded pause rehearsal. A later invocation resumes the persisted fixed high-water mark; it does not restart or include newer rows, because the database guard already populates every new state. Optional connection, lock, and statement timeout overrides are `ADMIN_COMMENT_CREATED_AT_BACKFILL_CONNECTION_TIMEOUT_MS`, `ADMIN_COMMENT_CREATED_AT_BACKFILL_LOCK_TIMEOUT_MS`, and `ADMIN_COMMENT_CREATED_AT_BACKFILL_STATEMENT_TIMEOUT_MS`.
+
+Observe only aggregate progress and the operational checkpoint. Do not select comment bodies or moderation reasons into logs:
+
+```sql
+SELECT count(*) AS remaining_rows
+FROM admin_comment_moderation_state
+WHERE comment_created_at IS NULL;
+
+SELECT backfill_id,
+       processed_count,
+       completed_at IS NOT NULL AS completed,
+       updated_at
+FROM drizzle.__dxrating_backfill_checkpoints
+WHERE backfill_id = 'admin_comment_moderation_created_at_v1';
+```
+
+Completion requires `remaining_rows = 0`, a completed checkpoint, valid/ready reviewed indexes, and a deleted-comment feed canary from the deployed reader. Keep the column nullable for the mixed-version rollback window; a future independently reviewed contract may validate a non-null constraint after every old process and queued job has drained. Do not reset the checkpoint, run one unbounded update, disable the state guard, drop the old moderation-time index, or log row contents to accelerate this rollout.
+
 Abort the rollout and investigate when any of these occur:
 
 - the advisory lock reaches its bounded timeout;

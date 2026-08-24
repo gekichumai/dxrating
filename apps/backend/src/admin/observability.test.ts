@@ -83,6 +83,7 @@ describe('administrator authorization outcome telemetry', () => {
     recordAdminAuthorizationResultTo('grantAdministrator', 'CONFLICT', { increment })
     recordAdminAuthorizationResultTo('searchUsers', 'SUCCESS', { increment })
     recordAdminAuthorizationResultTo('banUser', 'RECENT_AUTH_REQUIRED', { increment })
+    recordAdminAuthorizationResultTo('listRecentComments', 'INVALID_CURSOR', { increment })
     recordAdminAuthorizationResultTo('getCommentModerationDetail', 'SUCCESS', { increment })
     recordAdminAuthorizationResultTo('deleteComment', 'RECENT_AUTH_REQUIRED', { increment })
     recordAdminAuthorizationResultTo('restoreComment', 'CONFLICT', { increment })
@@ -94,6 +95,7 @@ describe('administrator authorization outcome telemetry', () => {
       [{ procedure: 'grantAdministrator', result: 'CONFLICT' }],
       [{ procedure: 'searchUsers', result: 'SUCCESS' }],
       [{ procedure: 'banUser', result: 'RECENT_AUTH_REQUIRED' }],
+      [{ procedure: 'listRecentComments', result: 'INVALID_CURSOR' }],
       [{ procedure: 'getCommentModerationDetail', result: 'SUCCESS' }],
       [{ procedure: 'deleteComment', result: 'RECENT_AUTH_REQUIRED' }],
       [{ procedure: 'restoreComment', result: 'CONFLICT' }],
@@ -118,6 +120,7 @@ describe('administrator authorization outcome telemetry', () => {
     ['UNAUTHORIZED', 'STEP_UP_FAILED'],
     ['TOO_MANY_REQUESTS', 'STEP_UP_RATE_LIMITED'],
     ['BAD_REQUEST', 'VALIDATION_FAILED'],
+    ['BAD_REQUEST', 'INVALID_CURSOR'],
     ['NOT_FOUND', 'NOT_FOUND'],
     ['CONFLICT', 'CONFLICT'],
     ['CONFLICT', 'ADMIN_CLIENT_INCOMPATIBLE'],
@@ -128,5 +131,6 @@ describe('administrator authorization outcome telemetry', () => {
 
   it('still captures unexpected administrator server failures', () => {
     expect(shouldCaptureSentryError(new ORPCError('INTERNAL_SERVER_ERROR'))).toBe(true)
+    expect(sanitizeAdminAuthorizationResult('CHART_UNAVAILABLE')).toBe('CHART_UNAVAILABLE')
   })
 })

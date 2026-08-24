@@ -30,6 +30,7 @@ describe('private administrator data client', () => {
     type BanHistoryInput = Parameters<AdminClient['listUserBanHistory']>[0]
     type BanUserInput = Parameters<AdminClient['banUser']>[0]
     type UnbanUserInput = Parameters<AdminClient['unbanUser']>[0]
+    type RecentCommentsInput = Parameters<AdminClient['listRecentComments']>[0]
     type CommentDetailInput = Parameters<AdminClient['getCommentModerationDetail']>[0]
     type DeleteCommentInput = Parameters<AdminClient['deleteComment']>[0]
     type RestoreCommentInput = Parameters<AdminClient['restoreComment']>[0]
@@ -67,9 +68,27 @@ describe('private administrator data client', () => {
       params: { userId: string }
       body: { expectedStateVersion: string | null }
     }>()
+    expectTypeOf<RecentCommentsInput>().toMatchTypeOf<{
+      query: {
+        authorUserId?: string
+        chartId?: string
+        status?: 'active' | 'deleted'
+        createdAtFromInclusive?: string
+        createdAtBeforeExclusive?: string
+        cursor?: string
+        limit?: number
+      }
+    }>()
     expectTypeOf<CommentDetailInput>().toMatchTypeOf<{
       params: { commentId: string }
-      query: { cursor?: string; limit?: number }
+      query: {
+        threadCursor?: string
+        threadLimit?: number
+        commentHistoryCursor?: string
+        commentHistoryLimit?: number
+        authorBanHistoryCursor?: string
+        authorBanHistoryLimit?: number
+      }
     }>()
     expectTypeOf<DeleteCommentInput>().toEqualTypeOf<{
       params: { commentId: string }
@@ -106,6 +125,7 @@ describe('private administrator data client', () => {
       'listUserBanHistory',
       'banUser',
       'unbanUser',
+      'listRecentComments',
       'getCommentModerationDetail',
       'deleteComment',
       'restoreComment',
@@ -117,6 +137,7 @@ describe('private administrator data client', () => {
     expect(orpc.bootstrap.queryOptions().queryKey).toBeDefined()
     expect(orpc.searchUsers.queryOptions({ input: { body: {} } }).queryKey).toBeDefined()
     expect(orpc.banUser.mutationOptions().mutationKey).toBeDefined()
+    expect(orpc.listRecentComments.queryOptions({ input: { query: {} } }).queryKey).toBeDefined()
     expect(
       orpc.getCommentModerationDetail.queryOptions({ input: { params: { commentId: '1' }, query: {} } }).queryKey,
     ).toBeDefined()
@@ -292,13 +313,22 @@ describe('private administrator data client', () => {
     }
   })
 
-  it('serializes comment detail pagination, confirmed deletion, and reasonless restoration under the private prefix', async () => {
+  it('serializes the recent feed, expanded detail, deletion, and restoration under the private prefix', async () => {
     const requests: Request[] = []
+    const chart = {
+      availability: 'current' as const,
+      legacyReference: { legacySongId: 'legacy-song-1', sheetType: 'dx', sheetDifficulty: 'master' },
+      songLabel: 'Song One',
+      chartLabel: 'Master (DX)',
+      songId: 'dsng_23456789ab',
+      chartId: 'dsht_23456789ab',
+    }
     const comment = {
       id: '42',
       parentId: null,
+      rootId: '42',
       authorUserId: 'comment-author',
-      chart: { songId: 'song-1', sheetType: 'dx', sheetDifficulty: 'master' },
+      chart,
       createdAt: '2026-08-24T10:00:00.000Z',
       originalBody: 'Immutable original body',
     }
@@ -339,10 +369,80 @@ describe('private administrator data client', () => {
       requests.push(captured)
       if (captured.url.endsWith('/delete')) return jsonResponse({ state: deletedState, event: deleteEvent })
       if (captured.url.endsWith('/restore')) return jsonResponse({ state: restoredState, event: restoreEvent })
+      if (new URL(captured.url).pathname === '/api/admin/comments') {
+        return jsonResponse({
+          items: [
+            {
+              id: '42',
+              parentId: null,
+              rootId: '42',
+              createdAt: comment.createdAt,
+              status: 'active',
+              bodyPreview: comment.originalBody,
+              bodyPreviewTruncated: false,
+              author: {
+                userId: 'comment-author',
+                displayName: 'Comment Author',
+                effectiveRole: 'user',
+                isBanned: false,
+              },
+              chart,
+            },
+          ],
+          nextCursor: null,
+          normalizedFilters: {
+            authorUserId: 'comment-author',
+            chartId: chart.chartId,
+            status: 'active',
+            createdAtFromInclusive: '2026-08-01T00:00:00.000Z',
+            createdAtBeforeExclusive: '2026-09-01T00:00:00.000Z',
+          },
+          activePublication: { channel: 'production-v1', catalogRunId: '4', revision: '7' },
+        })
+      }
       return jsonResponse({
+        activePublication: { channel: 'production-v1', catalogRunId: '4', revision: '7' },
         comment,
         state: deletedState,
-        history: { items: [deleteEvent], nextCursor: 'next_page' },
+        author: {
+          userId: 'comment-author',
+          displayName: 'Comment Author',
+          email: 'comment-author@example.com',
+          emailVerified: true,
+          effectiveRole: 'user',
+          banState: {
+            status: 'unbanned',
+            stateVersion: null,
+            reason: null,
+            actorUserId: null,
+            banStartedAt: null,
+            expiresAt: null,
+            evaluatedAt: '2026-08-24T12:00:00.000Z',
+          },
+        },
+        thread: {
+          items: [
+            {
+              id: '42',
+              parentId: null,
+              rootId: '42',
+              depth: 0,
+              createdAt: comment.createdAt,
+              originalBody: comment.originalBody,
+              state: deletedState,
+              author: {
+                userId: 'comment-author',
+                displayName: 'Comment Author',
+                effectiveRole: 'user',
+                isBanned: false,
+              },
+            },
+          ],
+          completeness: 'complete',
+          nextCursor: null,
+        },
+        commentHistory: { items: [deleteEvent], nextCursor: 'next_page' },
+        authorBanHistory: { items: [], nextCursor: null },
       })
     })
     const { client } = createAdminDataClient({
@@ -351,9 +451,27 @@ describe('private administrator data client', () => {
       mode: 'production',
     })
 
+    await client.listRecentComments({
+      query: {
+        authorUserId: 'comment-author',
+        chartId: chart.chartId,
+        status: 'active',
+        createdAtFromInclusive: '2026-08-01T00:00:00.000Z',
+        createdAtBeforeExclusive: '2026-09-01T00:00:00.000Z',
+        cursor: 'feed_page',
+        limit: 50,
+      },
+    })
     await client.getCommentModerationDetail({
       params: { commentId: '42' },
-      query: { cursor: 'current_page', limit: 25 },
+      query: {
+        threadCursor: 'thread_page',
+        threadLimit: 100,
+        commentHistoryCursor: 'comment_history_page',
+        commentHistoryLimit: 25,
+        authorBanHistoryCursor: 'ban_history_page',
+        authorBanHistoryLimit: 25,
+      },
     })
     await client.deleteComment({
       params: { commentId: '42' },
@@ -365,18 +483,30 @@ describe('private administrator data client', () => {
     })
 
     expect(requests.map((request) => [request.method, new URL(request.url).pathname])).toEqual([
+      ['GET', '/api/admin/comments'],
       ['GET', '/api/admin/comments/42'],
       ['POST', '/api/admin/comments/42/delete'],
       ['POST', '/api/admin/comments/42/restore'],
     ])
-    expect(requests[0]?.url).toContain('cursor=current_page')
-    expect(requests[0]?.url).toContain('limit=25')
-    await expect(requests[1]?.clone().json()).resolves.toEqual({
+    expect(requests[0]?.url).toContain('authorUserId=comment-author')
+    expect(requests[0]?.url).toContain(`chartId=${chart.chartId}`)
+    expect(requests[0]?.url).toContain('status=active')
+    expect(requests[0]?.url).toContain('createdAtFromInclusive=2026-08-01T00%3A00%3A00.000Z')
+    expect(requests[0]?.url).toContain('createdAtBeforeExclusive=2026-09-01T00%3A00%3A00.000Z')
+    expect(requests[0]?.url).toContain('cursor=feed_page')
+    expect(requests[0]?.url).toContain('limit=50')
+    expect(requests[1]?.url).toContain('threadCursor=thread_page')
+    expect(requests[1]?.url).toContain('threadLimit=100')
+    expect(requests[1]?.url).toContain('commentHistoryCursor=comment_history_page')
+    expect(requests[1]?.url).toContain('commentHistoryLimit=25')
+    expect(requests[1]?.url).toContain('authorBanHistoryCursor=ban_history_page')
+    expect(requests[1]?.url).toContain('authorBanHistoryLimit=25')
+    await expect(requests[2]?.clone().json()).resolves.toEqual({
       expectedStateVersion: null,
       confirmed: true,
       reason: 'Repeated harassment',
     })
-    await expect(requests[2]?.clone().json()).resolves.toEqual({
+    await expect(requests[3]?.clone().json()).resolves.toEqual({
       expectedStateVersion: '7',
       confirmed: true,
     })

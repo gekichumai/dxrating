@@ -480,7 +480,7 @@ export const createPostgresCommentModerationStore = (database: Pool = pool): Com
             WHERE history.comment_id = $1::bigint
               AND EXISTS (SELECT 1 FROM requested_comment)
               ${cursorPredicate}
-            ORDER BY history.created_at DESC, history.id DESC
+            ORDER BY history.created_at DESC NULLS LAST, history.id DESC NULLS LAST
             LIMIT ${limitParameter}
           )
         SELECT requested_comment.*, history_page.*

@@ -173,6 +173,12 @@ append-only projection guards and a constant-time trigger that makes existing co
 or rewrite the populated comments table. The prior backend can continue inserting and reading comments throughout both
 steps because it has no comment update or delete operation.
 
+Before enabling the administrator recent-comment reader, apply `0022_admin_comment_feed_indexes`, deploy a reader that
+accepts both populated and `NULL` legacy creation-time projections, run the bounded resumable creation-time backfill, and
+apply the five reviewed concurrent indexes. Keep the derived column nullable through the mixed-version rollback window.
+The exact expand/backfill/index verification and rollback boundaries are documented in
+`backend-online-migrations.md`; no rollout step may use an unbounded table rewrite.
+
 Rolling application code back to a binary that ignores these markers requires an administrator-traffic gate. Drain
 the generation-aware fleet, revoke every session belonging to a persisted or effective administrator, restore a
 compatible allowlist configuration, and only then expose the older binary. Leave the additive session columns and
@@ -219,14 +225,37 @@ only for the first deletion, and every later action must supply the exact event 
 stores a trimmed internal reason of at most 1,000 characters. A restore has no reason and never rewrites the original
 body or prior deletion event.
 
-`GET /api/admin/comments/{commentId}` is the only #317 procedure that returns the original body. It requires an
-administrator and returns only immutable comment evidence, current moderation state, and bounded comment-bound history.
-Request-correlation IDs remain persistence-only. The delete procedure additionally requires explicit confirmation and
-the ten-minute recent-primary-authentication window; restoration requires explicit confirmation but no reason or recent
-authentication. Both mutations resolve the immutable author's current effective role, then lock and revalidate actor,
-session, author, comment, and state before advancing the version. Administrators may act only on ordinary users'
-comments, super administrators may also act on persisted administrators' comments, and nobody may act on their own or
-an effective super administrator's comment.
+`GET /api/admin/comments` is a newest-first moderation feed ordered by the exact PostgreSQL microsecond creation time and
+decimal comment ID. Its opaque keyset cursor is bound to normalized author, stable chart, active/deleted state, inclusive
+lower-time, and exclusive upper-time filters; changing any filter invalidates the cursor. Page size is capped at 100. A
+feed page is a live read, not a frozen snapshot: comments inserted above an already-issued boundary appear only after a
+fresh first-page request, while subsequent pages remain duplicate-free below that boundary. List rows expose only a
+bounded whitespace-normalized preview, immutable root/parent IDs, canonical display name, effective role, evaluated ban
+state, and chart display context. A deleted row is projected as the literal `[deleted]` in SQL and never selects its
+original body or deletion reason. Email, authentication/session/provider data, tokens, network metadata, raw artifacts,
+and request-correlation IDs are not part of the feed read model.
+
+Stable chart filters resolve through every retained `legacy_dxdata` mapping, so a retired chart remains filterable.
+Chart context is explicitly `current`, `historical`, or `unresolved`; a missing producer catalog degrades unfiltered rows
+to unresolved context, while a requested stable chart that cannot be resolved returns the typed `CHART_UNAVAILABLE`
+failure. The feed uses one bounded comment/ancestry/author/ban query plus one batched catalog query for a non-empty page;
+there is no row-by-row lookup.
+
+`GET /api/admin/comments/{commentId}` is the privileged evidence view. It returns the retained original body, current
+state, resolved root, approved author summary, current publication identity, paginated comment and author-ban histories,
+and a root-first depth-first thread segment. The thread page is capped at 250, captures an immutable high-water comment
+ID in its opaque selected-comment-bound cursor, and excludes replies inserted after that ceiling from every continuation;
+a fresh detail request starts a new view. Each continuation is one bounded recursive query, and every auxiliary read has
+a fixed query count independent of thread or history row count. Deleted originals and internal reasons appear only in
+this administrator-authorized detail. Request-correlation IDs remain persistence-only. Malformed, cross-filter,
+cross-comment, stale, or unavailable continuation positions return the typed `INVALID_CURSOR` failure rather than
+silently restarting.
+
+The delete procedure additionally requires explicit confirmation and the ten-minute recent-primary-authentication
+window; restoration requires explicit confirmation but no reason or recent authentication. Both mutations resolve the
+immutable author's current effective role, then lock and revalidate actor, session, author, comment, and state before
+advancing the version. Administrators may act only on ordinary users' comments, super administrators may also act on
+persisted administrators' comments, and nobody may act on their own or an effective super administrator's comment.
 
 Deploy the additive comment-moderation schema before the tombstone-aware public reader. Keep delete and restore calls
 blocked at the administrator access boundary while that reader rolls out; do not enable the private writer until every

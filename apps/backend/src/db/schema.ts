@@ -76,18 +76,34 @@ export const profiles = pgTable(
   ],
 )
 
-export const comments = pgTable('comments', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
-  created_at: timestamp('created_at').defaultNow().notNull(),
-  created_by: text('created_by')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  song_id: text('song_id').notNull(),
-  sheet_type: text('sheet_type').notNull(),
-  sheet_difficulty: text('sheet_difficulty').notNull(),
-  parent_id: bigint('parent_id', { mode: 'number' }).references((): AnyPgColumn => comments.id),
-  content: text('content').notNull(),
-})
+export const comments = pgTable(
+  'comments',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+    created_by: text('created_by')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    song_id: text('song_id').notNull(),
+    sheet_type: text('sheet_type').notNull(),
+    sheet_difficulty: text('sheet_difficulty').notNull(),
+    parent_id: bigint('parent_id', { mode: 'number' }).references((): AnyPgColumn => comments.id),
+    content: text('content').notNull(),
+  },
+  (table) => [
+    index('admin_comments_recent_idx').on(table.created_at.desc(), table.id.desc()).concurrently(),
+    index('admin_comments_author_recent_idx')
+      .on(table.created_by, table.created_at.desc(), table.id.desc())
+      .concurrently(),
+    index('admin_comments_chart_recent_idx')
+      .on(table.song_id, table.sheet_type, table.sheet_difficulty, table.created_at.desc(), table.id.desc())
+      .concurrently(),
+    index('admin_comments_parent_created_idx')
+      .on(table.parent_id, table.created_at, table.id)
+      .concurrently()
+      .where(sql`${table.parent_id} is not null`),
+  ],
+)
 
 // --- Administrator Comment-Moderation State and History ---
 
@@ -151,6 +167,10 @@ export const adminCommentModerationState = pgTable(
       .references(() => user.id, { onDelete: 'restrict' }),
     established_by_event_id: bigint('established_by_event_id', { mode: 'bigint' }).notNull().unique(),
     moderated_at: timestamp('moderated_at', { withTimezone: true, precision: 3 }).notNull(),
+    // Derived from immutable comments.created_at by the database guard. It is
+    // nullable only while the online high-water backfill covers pre-expansion
+    // moderation rows written before this projection existed.
+    comment_created_at: timestamp('comment_created_at'),
   },
   (table) => [
     check('admin_comment_moderation_state_action_check', sql`${table.established_action} in ('delete', 'restore')`),
@@ -183,6 +203,10 @@ export const adminCommentModerationState = pgTable(
     index('admin_comment_moderation_state_deleted_recent_idx')
       .on(table.moderated_at.desc(), table.comment_id.desc())
       .where(sql`${table.established_action} = 'delete'`),
+    index('admin_comment_moderation_state_deleted_comment_recent_idx')
+      .on(table.comment_created_at.desc(), table.comment_id.desc())
+      .concurrently()
+      .where(sql`${table.established_action} = 'delete' and ${table.comment_created_at} is not null`),
   ],
 )
 

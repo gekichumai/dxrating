@@ -24,6 +24,8 @@ describe('administrator error notice', () => {
     ['UNAUTHENTICATED', 401, 'Sign-in required'],
     ['FORBIDDEN', 403, 'Access denied'],
     ['VALIDATION_FAILED', 400, 'Check the information'],
+    ['INVALID_CURSOR', 400, 'Result position expired'],
+    ['CHART_UNAVAILABLE', 503, 'Chart data unavailable'],
     ['CONFLICT', 409, 'Information changed'],
     ['NOT_FOUND', 404, 'Item not found'],
     ['STEP_UP_RATE_LIMITED', 429, 'Identity confirmation paused'],
@@ -65,6 +67,29 @@ describe('administrator error notice', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Refresh current state' }))
     expect(onRefresh).toHaveBeenCalledOnce()
     expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
+  })
+
+  it('offers cursor refresh and explicit chart-data retry as separate recovery paths', () => {
+    const onRefresh = vi.fn()
+    const onRetry = vi.fn()
+    const { rerender } = render(
+      <AdminProviders>
+        <AdminErrorNotice error={definedError('INVALID_CURSOR', 400)} onRefresh={onRefresh} onRetry={onRetry} />
+      </AdminProviders>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh current state' }))
+    expect(onRefresh).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
+
+    rerender(
+      <AdminProviders>
+        <AdminErrorNotice error={definedError('CHART_UNAVAILABLE', 503)} onRefresh={onRefresh} onRetry={onRetry} />
+      </AdminProviders>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    expect(onRetry).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('button', { name: 'Refresh current state' })).toBeNull()
   })
 
   it('shows only a validated correlation identifier', () => {

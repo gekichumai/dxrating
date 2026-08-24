@@ -35,6 +35,11 @@ const ERROR_COPY = {
     title: 'error.stepUpRateLimited.title',
   },
   validation: { description: 'error.validation.description', title: 'error.validation.title' },
+  'invalid-cursor': { description: 'error.invalidCursor.description', title: 'error.invalidCursor.title' },
+  'chart-unavailable': {
+    description: 'error.chartUnavailable.description',
+    title: 'error.chartUnavailable.title',
+  },
   'not-found': { description: 'error.notFound.description', title: 'error.notFound.title' },
   conflict: { description: 'error.conflict.description', title: 'error.conflict.title' },
   'rate-limited': { description: 'error.rateLimited.description', title: 'error.rateLimited.title' },
@@ -53,6 +58,8 @@ const ERROR_COLOR = {
   'step-up-failed': 'orange',
   'step-up-rate-limited': 'yellow',
   validation: 'yellow',
+  'invalid-cursor': 'blue',
+  'chart-unavailable': 'orange',
   'not-found': 'blue',
   conflict: 'orange',
   'rate-limited': 'yellow',
@@ -77,9 +84,13 @@ export const AdminErrorNotice = ({ error, onRefresh, onRetry, onStepUp }: AdminE
   const copy = ERROR_COPY[presentation.kind]
   const signInRequired = presentation.kind === 'unauthenticated' || presentation.kind === 'fresh-login-required'
   const stepUpRequired = presentation.kind === 'recent-auth-required' || presentation.kind === 'step-up-failed'
-  const refreshRequired = presentation.kind === 'conflict' || presentation.kind === 'not-found'
+  const refreshRequired =
+    presentation.kind === 'conflict' || presentation.kind === 'not-found' || presentation.kind === 'invalid-cursor'
   const retryAllowed =
-    presentation.kind === 'network' || presentation.kind === 'server' || presentation.kind === 'unexpected'
+    presentation.kind === 'network' ||
+    presentation.kind === 'server' ||
+    presentation.kind === 'chart-unavailable' ||
+    presentation.kind === 'unexpected'
 
   return (
     <Alert color={ERROR_COLOR[presentation.kind]} role="alert" title={t(copy.title)} variant="light">

@@ -26,6 +26,11 @@ import {
   type AdministratorRoleService,
 } from './administrator-role-service.js'
 import {
+  CommentContextServiceFailure,
+  createPostgresCommentContextService,
+  type CommentContextService,
+} from './comment-context-service.js'
+import {
   CommentModerationServiceFailure,
   createPostgresCommentModerationService,
   type CommentModerationService,
@@ -142,10 +147,25 @@ export const adminErrorBoundaryMiddleware = os.middleware(async ({ context, erro
       switch (error.code) {
         case 'VALIDATION_FAILED':
           throw errors.VALIDATION_FAILED({ data })
+        case 'INVALID_CURSOR':
+          throw errors.INVALID_CURSOR({ data })
         case 'NOT_FOUND':
           throw errors.NOT_FOUND({ data })
         case 'CONFLICT':
           throw errors.CONFLICT({ data })
+      }
+    }
+
+    if (error instanceof CommentContextServiceFailure) {
+      switch (error.code) {
+        case 'VALIDATION_FAILED':
+          throw errors.VALIDATION_FAILED({ data })
+        case 'INVALID_CURSOR':
+          throw errors.INVALID_CURSOR({ data })
+        case 'NOT_FOUND':
+          throw errors.NOT_FOUND({ data })
+        case 'CHART_UNAVAILABLE':
+          throw errors.CHART_UNAVAILABLE({ data })
       }
     }
 
@@ -314,14 +334,23 @@ export const createAdminRouter = ({
   commentModeration = createPostgresCommentModerationService({
     superAdministrators: config.auth.superAdministrators,
   }),
+  commentContext,
   runWriteLease = runPostgresAdminWriteLease,
 }: {
   primaryAuth?: AdminPrimaryAuthService
   administratorRoles?: AdministratorRoleService
   userModeration?: UserModerationService
   commentModeration?: CommentModerationService
+  commentContext?: CommentContextService
   runWriteLease?: AdminWriteLeaseRunner
 } = {}) => {
+  const resolvedCommentContext =
+    commentContext ??
+    createPostgresCommentContextService({
+      superAdministrators: config.auth.superAdministrators,
+      commentModeration,
+      userModeration,
+    })
   const authorized = os
     .use(authorizationOutcomeMiddleware)
     .use(adminErrorBoundaryMiddleware)
@@ -386,11 +415,18 @@ export const createAdminRouter = ({
         requestCorrelationId: context.requestId,
       }),
     ),
+    listRecentComments: authorized.listRecentComments.handler(async ({ input }) =>
+      resolvedCommentContext.listRecentComments(input.query),
+    ),
     getCommentModerationDetail: authorized.getCommentModerationDetail.handler(async ({ input }) =>
-      commentModeration.getCommentModerationDetail({
+      resolvedCommentContext.getCommentModerationDetail({
         commentId: input.params.commentId,
-        cursor: input.query.cursor,
-        limit: input.query.limit,
+        threadCursor: input.query.threadCursor,
+        threadLimit: input.query.threadLimit,
+        commentHistoryCursor: input.query.commentHistoryCursor,
+        commentHistoryLimit: input.query.commentHistoryLimit,
+        authorBanHistoryCursor: input.query.authorBanHistoryCursor,
+        authorBanHistoryLimit: input.query.authorBanHistoryLimit,
       }),
     ),
     deleteComment: authorized.deleteComment.handler(async ({ input, context }) =>

@@ -72,6 +72,20 @@ export const userModerationDetailQueryOptions = (data: AdminDataClient, userId: 
   })
 }
 
+export type RecentCommentsQueryParameters = Parameters<AdminClient['listRecentComments']>[0]['query']
+
+export const recentCommentsQueryOptions = (data: AdminDataClient, parameters: RecentCommentsQueryParameters = {}) => {
+  const input = { query: parameters }
+  const queryKey = data.orpc.listRecentComments.queryKey({
+    input,
+    queryKey: adminQueryKeys.comments.list(parameters),
+  })
+  return withAdminQueryPolicy(data.orpc.listRecentComments.queryOptions({ input, queryKey }), {
+    queryKey: adminQueryKeys.comments.list(parameters),
+    resource: 'comments',
+  })
+}
+
 export type CommentModerationDetailQueryParameters = Parameters<AdminClient['getCommentModerationDetail']>[0]['query']
 
 export const commentModerationDetailQueryOptions = (

@@ -11,6 +11,8 @@ export type AdminErrorKind =
   | 'step-up-failed'
   | 'step-up-rate-limited'
   | 'validation'
+  | 'invalid-cursor'
+  | 'chart-unavailable'
   | 'not-found'
   | 'conflict'
   | 'rate-limited'
@@ -43,6 +45,8 @@ const ADMIN_ERROR_KIND_BY_CODE = {
   STEP_UP_FAILED: 'step-up-failed',
   STEP_UP_RATE_LIMITED: 'step-up-rate-limited',
   VALIDATION_FAILED: 'validation',
+  INVALID_CURSOR: 'invalid-cursor',
+  CHART_UNAVAILABLE: 'chart-unavailable',
   NOT_FOUND: 'not-found',
   CONFLICT: 'conflict',
   INTERNAL_SERVER_ERROR: 'server',
