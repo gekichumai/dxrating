@@ -75,7 +75,15 @@ export type AdminRecentAuthContextValue = {
    * accepts or invokes a destructive callback, so callers cannot accidentally
    * replay a failed mutation.
    */
-  readonly requestRecentAuth: () => Promise<boolean>
+  readonly requestRecentAuth: (options?: AdminRecentAuthRequestOptions) => Promise<boolean>
+}
+
+export type AdminRecentAuthRequestOptions = {
+  /**
+   * Discards the cached primary-auth observation before prompting. Callers use
+   * this after the backend rejects an action with RECENT_AUTH_REQUIRED.
+   */
+  readonly force?: boolean
 }
 
 const AdminRecentAuthContext = createContext<AdminRecentAuthContextValue | undefined>(undefined)
@@ -157,20 +165,27 @@ export const AdminRecentAuthProvider = ({
     [clearSensitiveUi],
   )
 
-  const requestRecentAuth = useCallback((): Promise<boolean> => {
-    if (auth.status !== 'authenticated') return Promise.resolve(false)
-    if (hasValidRecentAuth()) return Promise.resolve(true)
-    if (requestRef.current) return requestRef.current.promise
+  const requestRecentAuth = useCallback(
+    (options?: AdminRecentAuthRequestOptions): Promise<boolean> => {
+      if (auth.status !== 'authenticated') return Promise.resolve(false)
+      if (requestRef.current) return requestRef.current.promise
+      if (options?.force) {
+        queryClient.removeQueries({ exact: true, queryKey: adminQueryKeys.primaryAuth.status() })
+      } else if (hasValidRecentAuth()) {
+        return Promise.resolve(true)
+      }
 
-    let resolveRequest: (result: boolean) => void = () => undefined
-    const promise = new Promise<boolean>((resolve) => {
-      resolveRequest = resolve
-    })
-    requestRef.current = { promise, resolve: resolveRequest }
-    setError(undefined)
-    setOpened(true)
-    return promise
-  }, [auth.status, hasValidRecentAuth])
+      let resolveRequest: (result: boolean) => void = () => undefined
+      const promise = new Promise<boolean>((resolve) => {
+        resolveRequest = resolve
+      })
+      requestRef.current = { promise, resolve: resolveRequest }
+      setError(undefined)
+      setOpened(true)
+      return promise
+    },
+    [auth.status, hasValidRecentAuth, queryClient],
+  )
 
   useEffect(() => {
     if (auth.status !== 'authenticated' && requestRef.current) finishRequest(false)

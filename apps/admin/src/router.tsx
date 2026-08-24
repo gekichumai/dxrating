@@ -7,6 +7,7 @@ import {
   type RouterHistory,
 } from '@tanstack/react-router'
 import { AdminNotFound, AdminRouteError, RouteLoading } from './components/route-states'
+import { validateUserDetailSearch, validateUserListSearch } from './users/user-route-search'
 
 const rootRoute = createRootRoute({
   component: Outlet,
@@ -60,7 +61,15 @@ const commentsRoute = createRoute({
 const usersRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: 'users',
+  validateSearch: validateUserListSearch,
   component: lazyRouteComponent(() => import('./routes/users-route'), 'UsersRoute'),
+})
+
+const userDetailRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: 'users/$userId',
+  validateSearch: validateUserDetailSearch,
+  component: lazyRouteComponent(() => import('./routes/user-detail-route'), 'UserDetailRoute'),
 })
 
 const administratorsRoute = createRoute({
@@ -91,6 +100,7 @@ export const adminRouteTree = rootRoute.addChildren([
         chartsRoute,
         commentsRoute,
         usersRoute,
+        userDetailRoute,
         administratorsRoute,
         chartReportsRoute,
       ]),

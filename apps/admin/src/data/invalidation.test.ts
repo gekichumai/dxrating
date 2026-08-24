@@ -77,7 +77,7 @@ describe('administrator mutation invalidation recipes', () => {
     for (const key of [otherComment, otherCommentHistoryPage, user]) expectInvalidated(queryClient, key, false)
   })
 
-  it('invalidates user presentation in user lists and comment queues after moderation', async () => {
+  it('invalidates user and administrator presentation in lists and comment queues after moderation', async () => {
     const queryClient = createAdminTestQueryClient()
     const dashboard = adminQueryKeys.dashboard.overview()
     const userList = adminQueryKeys.users.list()
@@ -86,6 +86,11 @@ describe('administrator mutation invalidation recipes', () => {
     const changedActivity = adminQueryKeys.users.activity('user-1')
     const otherUser = adminQueryKeys.users.detail('user-2')
     const otherUserBanHistory = adminQueryKeys.users.banHistory('user-2')
+    const administratorList = adminQueryKeys.administrators.list()
+    const changedAdministrator = adminQueryKeys.administrators.detail('user-1')
+    const changedAdministratorHistory = adminQueryKeys.administrators.roleHistory('user-1', { cursor: 'page-1' })
+    const otherAdministrator = adminQueryKeys.administrators.detail('user-2')
+    const otherAdministratorHistory = adminQueryKeys.administrators.roleHistory('user-2')
     const commentList = adminQueryKeys.comments.list()
     const commentDetail = adminQueryKeys.comments.detail('comment-1')
     seed(queryClient, [
@@ -96,16 +101,33 @@ describe('administrator mutation invalidation recipes', () => {
       changedActivity,
       otherUser,
       otherUserBanHistory,
+      administratorList,
+      changedAdministrator,
+      changedAdministratorHistory,
+      otherAdministrator,
+      otherAdministratorHistory,
       commentList,
       commentDetail,
     ])
 
     await invalidateAfterUserModeration(queryClient, 'user-1')
 
-    for (const key of [dashboard, userList, changedUser, changedUserBanHistory, changedActivity, commentList]) {
+    for (const key of [
+      dashboard,
+      userList,
+      changedUser,
+      changedUserBanHistory,
+      changedActivity,
+      administratorList,
+      changedAdministrator,
+      changedAdministratorHistory,
+      commentList,
+    ]) {
       expectInvalidated(queryClient, key, true)
     }
-    for (const key of [otherUser, otherUserBanHistory, commentDetail]) expectInvalidated(queryClient, key, false)
+    for (const key of [otherUser, otherUserBanHistory, otherAdministrator, otherAdministratorHistory, commentDetail]) {
+      expectInvalidated(queryClient, key, false)
+    }
   })
 
   it('updates administrator and user representations without invalidating moderation queues', async () => {

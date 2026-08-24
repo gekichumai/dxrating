@@ -25,6 +25,8 @@ export const invalidateAfterUserModeration = async (queryClient: QueryClient, us
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: adminQueryKeys.users.lists() }),
     queryClient.invalidateQueries({ queryKey: adminQueryKeys.users.detail(userId) }),
+    queryClient.invalidateQueries({ queryKey: adminQueryKeys.administrators.lists() }),
+    queryClient.invalidateQueries({ queryKey: adminQueryKeys.administrators.detail(userId) }),
     queryClient.invalidateQueries({ queryKey: adminQueryKeys.comments.lists() }),
     invalidateDashboard(queryClient),
   ])

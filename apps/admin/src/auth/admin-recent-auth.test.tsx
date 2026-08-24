@@ -301,7 +301,58 @@ describe('administrator recent-authentication provider', () => {
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Verify identity' })).toBeNull())
   })
 
-  it('does not open a duplicate modal or promise for concurrent callers', async () => {
+  it('forces a new prompt and removes a cached valid observation after backend rejection', async () => {
+    const now = Date.parse('2026-08-24T12:00:00.000Z')
+    const expiresAt = new Date(now + 5 * 60_000).toISOString()
+    const fetch = vi.fn(async () => new Promise<Response>(() => undefined)) as unknown as typeof globalThis.fetch
+    const ForcedRequestProbe = () => {
+      const recentAuth = useAdminRecentAuth()
+      const [outcome, setOutcome] = useState('not requested')
+
+      return (
+        <div>
+          <button
+            onClick={() => {
+              void recentAuth.requestRecentAuth().then((verified) => setOutcome(verified ? 'verified' : 'cancelled'))
+            }}
+            type="button"
+          >
+            Reuse valid observation
+          </button>
+          <button
+            onClick={() => {
+              void recentAuth
+                .requestRecentAuth({ force: true })
+                .then((verified) => setOutcome(verified ? 'verified' : 'cancelled'))
+            }}
+            type="button"
+          >
+            Force verification
+          </button>
+          <output>{outcome}</output>
+        </div>
+      )
+    }
+    const user = userEvent.setup()
+    const { queryClient } = createHarness({ children: <ForcedRequestProbe />, fetch, now: () => now })
+    queryClient.setQueryData(adminQueryKeys.primaryAuth.status(), { active: true, expiresAt }, { updatedAt: now })
+
+    await user.click(screen.getByRole('button', { name: 'Reuse valid observation' }))
+    expect(await screen.findByText('verified')).toBeTruthy()
+    expect(screen.queryByRole('dialog', { name: 'Verify identity' })).toBeNull()
+    expect(queryClient.getQueryData(adminQueryKeys.primaryAuth.status())).toEqual({ active: true, expiresAt })
+
+    await user.click(screen.getByRole('button', { name: 'Force verification' }))
+
+    expect(await screen.findByRole('dialog', { name: 'Verify identity' })).toBeTruthy()
+    expect(queryClient.getQueryState(adminQueryKeys.primaryAuth.status())).toBeUndefined()
+    expect(fetch).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Cancel verification' }))
+    expect(await screen.findByText('cancelled')).toBeTruthy()
+  })
+
+  it('coalesces forced and ordinary concurrent callers into the same modal and promise', async () => {
     const fetch = vi.fn(async () => new Promise<Response>(() => undefined)) as unknown as typeof globalThis.fetch
     let first: Promise<boolean> | undefined
     let second: Promise<boolean> | undefined
@@ -310,7 +361,7 @@ describe('administrator recent-authentication provider', () => {
       return (
         <button
           onClick={() => {
-            first = recentAuth.requestRecentAuth()
+            first = recentAuth.requestRecentAuth({ force: true })
             second = recentAuth.requestRecentAuth()
           }}
           type="button"

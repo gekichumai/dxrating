@@ -1,0 +1,11 @@
+.route {
+  min-width: 0;
+}
+
+.primaryGrid {
+  align-items: start;
+}
+
+.primaryGrid > * {
+  min-width: 0;
+}
