@@ -13,12 +13,18 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@gekichumai/admin-contract": "workspace:*",
     "@mantine/core": "9.5.1",
     "@mantine/form": "9.5.1",
     "@mantine/hooks": "9.5.1",
     "@mantine/modals": "9.5.1",
     "@mantine/notifications": "9.5.1",
+    "@orpc/client": "catalog:",
+    "@orpc/contract": "catalog:",
+    "@orpc/openapi-client": "catalog:",
+    "@orpc/tanstack-query": "catalog:",
     "@tabler/icons-react": "^3.46.0",
+    "@tanstack/react-query": "^5.100.11",
     "@tanstack/react-router": "^1.170.17",
     "react": "catalog:",
     "react-dom": "^19.2.6"

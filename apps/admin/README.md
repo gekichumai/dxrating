@@ -9,11 +9,26 @@ From the repository root:
 
 ```sh
 pnpm install
+cp apps/backend/.env.example apps/backend/.env.local
+cp apps/admin/.env.example apps/admin/.env.local
+pnpm --filter @gekichumai/backend dev
+```
+
+In another terminal:
+
+```sh
 pnpm --filter @gekichumai/admin dev
 ```
 
 The development server uses `http://localhost:5174` with `strictPort` enabled because the backend allowlists that exact
-administrator origin. Useful package checks are:
+administrator origin. It reverse-proxies `/api` to the local backend at `http://localhost:3000` and injects the
+local-only Access substitute on `/api/admin` from the backend's `ADMIN_ACCESS_TEST_BYPASS_SECRET`. Vite loads that value
+server-side from `apps/backend/.env.local` (or the launching process environment) and refuses to start the development
+proxy when it is missing. The proof is never a `VITE_` value and never enters the browser bundle. Do not point the
+browser client directly at port 3000 while the backend uses `test_bypass`; direct browser requests cannot supply the
+outer access proof.
+
+Useful package checks are:
 
 ```sh
 pnpm --filter @gekichumai/admin typecheck
@@ -22,10 +37,15 @@ pnpm --filter @gekichumai/admin test
 pnpm --filter @gekichumai/admin build
 ```
 
-There are no required public environment variables at this scaffold stage. `VITE_ADMIN_ENVIRONMENT` is an optional,
-non-secret label for local or preview builds; it is ignored by the visible environment marker in production. Never put
-credentials, Cloudflare Access assertions, session values, or other secrets in a `VITE_` variable because Vite embeds
-those values into the browser bundle. The backend origin variable and private API client arrive in issue #311.
+`VITE_BACKEND_URL` selects the browser-facing backend origin. It must be an exact absolute origin: no path, credentials,
+query, hash, or wildcard. Development and tests default to the local proxy at `http://localhost:5174`; HTTP is otherwise
+rejected except for exact loopback hosts, and preview/staging/production builds require HTTPS. Set the production value
+explicitly rather than depending on the development fallback.
+
+`VITE_ADMIN_ENVIRONMENT` remains an optional, non-secret label for local or preview builds; the visible marker ignores
+it in production. Never put credentials, Cloudflare Access assertions, bypass values, session values, or other secrets
+in a `VITE_` variable because Vite embeds those values into the browser bundle. The client sends browser-managed cookies
+with requests; backend origin and session controls remain the security boundary.
 
 ## Route layout
 
@@ -40,6 +60,47 @@ Every route component and the authenticated shell are loaded through dynamic imp
 Vite development and preview servers use SPA history fallback because `appType` is explicitly `spa`. A production
 static host must apply the equivalent rule: serve a real asset when it exists and otherwise return `index.html` for an
 HTML navigation request. Production hosting, edge caching, and its smoke tests are owned by issue #343.
+
+## Private data access
+
+`src/data/admin-client.ts` is the only browser transport. It uses the browser-safe `@gekichumai/admin-contract` root,
+targets `/api/admin`, includes cookie credentials, preserves cancellation signals, and adds the compiled private-contract
+identifier exactly once. Do not import `@gekichumai/admin-contract/openapi`, the public API contract, or a raw `fetch`
+into feature code. The administrator routes and schemas remain absent from public API documentation.
+
+Use the shared query-option builders rather than calling oRPC `queryOptions()` directly. A builder must pass its
+`adminQueryKeys` value into oRPC so the transport operation context and React Query cache use the same key, then apply
+the matching freshness class. First tag the shared value through the procedure's `queryKey()`, then pass that tagged key
+to `queryOptions()` so output/error inference is preserved. `withAdminQueryPolicy` is the extension point for new
+procedures; the bootstrap and primary-authentication status builders are concrete examples. Architecture tests enforce
+this boundary.
+
+Freshness windows are deliberately resource-specific:
+
+| Resource class | `staleTime` |
+| --- | ---: |
+| Bootstrap and primary-authentication status | 15 seconds |
+| Dashboard and administrators | 30 seconds |
+| Charts and users | 60 seconds |
+| Revisions/history | 5 minutes |
+| Comments and chart reports | 15 seconds |
+
+Production queries refetch stale active data on window focus and reconnect. Fresh data stays inside its window, and no
+global or feature polling timer is configured. Tests use isolated caches with focus/reconnect behavior and retries
+disabled. Reads retry only branded transport failures and typed server failures, at most twice with bounded backoff;
+authentication, authorization, validation, conflict, cancellation, compatibility, and other operational failures are
+never retried. Mutations have no automatic retry, and the shared invalidation recipes target only the affected list,
+detail, history, queue, and dashboard families.
+
+Operational views should connect React Query's real `refetch`, `isFetching`, and `dataUpdatedAt` values to
+`OperationalRefresh`. A failed refetch preserves the last successful data and timestamp. Error UI must use
+`normalizeAdminError` and local catalog copy, branch on the typed error code, and display only a schema-valid UUID as a
+support identifier; raw server messages are not presentation copy.
+
+A compatibility mismatch is rejected from the stable raw error envelope before oRPC decodes a feature response. The
+runtime immediately unmounts protected providers, cancels reads, and clears query and mutation caches. It then offers
+one user-triggered hard reload recorded in session storage for the compiled identifier. A repeated mismatch or storage,
+cache, or reload failure stays on the terminal update-required screen instead of looping or resuming operations.
 
 ## Interface rules
 

@@ -1,0 +1,15 @@
+.root {
+  min-height: 100dvh;
+  padding: var(--mantine-spacing-xl);
+  background:
+    radial-gradient(
+      circle at top left,
+      color-mix(in srgb, var(--mantine-primary-color-filled) 12%, transparent),
+      transparent 38%
+    ),
+    var(--mantine-color-body);
+}
+
+.card {
+  width: min(100%, 38rem);
+}

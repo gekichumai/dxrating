@@ -11,8 +11,12 @@ const prohibited = [
   /@emotion\//,
   /(?:@unocss\/|\bunocss(?:\b|-)|virtual:uno\.css)/,
   /posthog-js/,
+  /@gekichumai\/api-contract/,
+  /@gekichumai\/admin-contract\/openapi/,
+  /\/api\/v1(?:\/|['"`])/,
   /(?:apps\/web|(?:\.\.\/)+web(?:\/|['"]))/,
 ]
+const rawFetchCall = /(?:\bfetch|(?:window|globalThis)\s*(?:\.\s*fetch|\[\s*['"]fetch['"]\s*\]))\s*\(/
 
 const collectSourceFiles = async (directory: string): Promise<string[]> => {
   const entries = await readdir(directory, { withFileTypes: true })
@@ -40,6 +44,15 @@ describe('administrator presentation boundary', () => {
     for (const path of sourceFiles) {
       const source = await readFile(path, 'utf8')
       for (const pattern of prohibited) expect(pattern.test(source), `${pattern} found in ${path}`).toBe(false)
+
+      const isTest = /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(path)
+      const isTransport = path.endsWith('/data/admin-client.ts')
+      if (!isTest && !isTransport) expect(rawFetchCall.test(source), `raw fetch found in ${path}`).toBe(false)
+
+      const isQueryOptionsBoundary = path.endsWith('/data/query-options.ts')
+      if (!isTest && !isQueryOptionsBoundary) {
+        expect(/\.queryOptions\s*\(/.test(source), `unscoped oRPC query options found in ${path}`).toBe(false)
+      }
     }
   })
 })

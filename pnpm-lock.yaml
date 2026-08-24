@@ -103,6 +103,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@gekichumai/admin-contract':
+        specifier: workspace:*
+        version: link:../../packages/admin-contract
       '@mantine/core':
         specifier: 9.5.1
         version: 9.5.1(@mantine/hooks@9.5.1(react@19.2.6))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -118,9 +121,24 @@ importers:
       '@mantine/notifications':
         specifier: 9.5.1
         version: 9.5.1(@mantine/core@9.5.1(@mantine/hooks@9.5.1(react@19.2.6))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@mantine/hooks@9.5.1(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@orpc/client':
+        specifier: 'catalog:'
+        version: 1.14.3(@opentelemetry/api@1.9.1)
+      '@orpc/contract':
+        specifier: 'catalog:'
+        version: 1.14.3(@opentelemetry/api@1.9.1)
+      '@orpc/openapi-client':
+        specifier: 'catalog:'
+        version: 1.14.3(@opentelemetry/api@1.9.1)
+      '@orpc/tanstack-query':
+        specifier: 'catalog:'
+        version: 1.14.3(@opentelemetry/api@1.9.1)(@orpc/client@1.14.3(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.100.11)
       '@tabler/icons-react':
         specifier: ^3.46.0
         version: 3.46.0(react@19.2.6)
+      '@tanstack/react-query':
+        specifier: ^5.100.11
+        version: 5.100.11(react@19.2.6)
       '@tanstack/react-router':
         specifier: ^1.170.17
         version: 1.170.18(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
