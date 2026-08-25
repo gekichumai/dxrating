@@ -1,7 +1,9 @@
 import { ADMIN_CONTRACT_COMPATIBILITY_ID, ADMIN_CONTRACT_HEADER } from '@gekichumai/admin-contract'
 import pg, { type PoolClient } from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { ADMIN_ACCESS_TEST_BYPASS_HEADER } from '../admin/access-verifier.js'
 import { lockPostgresUserIdentitiesForModeration } from '../user-identity-advisory-lock.js'
+import { TEST_ADMIN_ACCESS_BYPASS_SECRET } from './admin-access.js'
 
 const sentrySpies = vi.hoisted(() => ({
   captureException: vi.fn(),
@@ -58,8 +60,6 @@ type GoogleOauthAttempt = {
 }
 
 const PASSWORD = 'password123'
-const ADMIN_ACCESS_TEST_BYPASS_HEADER = 'x-dxrating-admin-access-test'
-const ADMIN_ACCESS_TEST_BYPASS_SECRET = 'dxrating-test-only-admin-access-proof-2026'
 const PUBLIC_ORIGIN = 'http://localhost:5173'
 const ADMIN_ORIGIN = 'http://localhost:5174'
 const LXNS_ORIGIN = 'https://maimai.lxns.net'
@@ -1071,7 +1071,7 @@ describe('active user-ban HTTP enforcement', () => {
       headers: {
         Cookie: freshCookie,
         Origin: ADMIN_ORIGIN,
-        [ADMIN_ACCESS_TEST_BYPASS_HEADER]: ADMIN_ACCESS_TEST_BYPASS_SECRET,
+        [ADMIN_ACCESS_TEST_BYPASS_HEADER]: TEST_ADMIN_ACCESS_BYPASS_SECRET,
         [ADMIN_CONTRACT_HEADER]: ADMIN_CONTRACT_COMPATIBILITY_ID,
       },
     })
