@@ -625,7 +625,7 @@ describe('administrator chart-report review HTTP boundary', () => {
     ]
     const traversed: string[] = []
     const serializedPages: string[] = []
-    let closedReturnedReport = false
+    let closedUnseenReport = false
     let cursor: string | null = null
     do {
       const query = new URLSearchParams({ limit: '3' })
@@ -637,22 +637,29 @@ describe('administrator chart-report review HTTP boundary', () => {
       serializedPages.push(text)
       const page = await responseBody<ListOutput>(response)
       traversed.push(...page.items.map(({ id }) => id))
+      const concurrentlyClosedItem = page.items.find(({ id }) => id === ALTERNATE_CATEGORY_REPORT_ID)
+      if (concurrentlyClosedItem) expect(concurrentlyClosedItem.state).toBe('open')
       cursor = page.nextCursor
       if (cursor) {
         expect(cursor).toMatch(/^[A-Za-z0-9_-]+$/)
         expect(cursor).not.toContain('{')
         expect(cursor).not.toContain('2026-08-24')
       }
-      if (!closedReturnedReport) {
-        expect(page.items.map(({ id }) => id)).toContain(AFTER_RANGE_REPORT_ID)
-        const closeResponse = await closeReport(administrator, AFTER_RANGE_REPORT_ID, { expectedState: 'open' })
+      if (!closedUnseenReport) {
+        expect(page.items.map(({ id }) => id)).not.toContain(ALTERNATE_CATEGORY_REPORT_ID)
+        const closeResponse = await closeReport(administrator, ALTERNATE_CATEGORY_REPORT_ID, { expectedState: 'open' })
         expect(closeResponse.status).toBe(200)
-        closedReturnedReport = true
+        closedUnseenReport = true
       }
     } while (cursor)
 
     expect(traversed).toEqual(expectedOrder)
     expect(new Set(traversed).size).toBe(traversed.length)
+    await expect(
+      db().query<{ readonly state: string }>(`SELECT state FROM chart_reports WHERE id = $1::uuid`, [
+        ALTERNATE_CATEGORY_REPORT_ID,
+      ]),
+    ).resolves.toMatchObject({ rows: [{ state: 'closed' }] })
     const serializedQueue = serializedPages.join('\n')
     for (const privateValue of [
       EVIDENCE_URL,
@@ -670,8 +677,8 @@ describe('administrator chart-report review HTTP boundary', () => {
     const superText = await superResponse.clone().text()
     expect(superResponse.status, superText).toBe(200)
     expect((await responseBody<ListOutput>(superResponse)).items.map(({ id }) => id)).toEqual([
+      AFTER_RANGE_REPORT_ID,
       ALTERNATE_CHART_REPORT_ID,
-      ALTERNATE_FIELD_REPORT_ID,
     ])
 
     const cursorResponse = await adminRequest('/api/admin/chart-reports?state=open&limit=1', administrator.cookie)

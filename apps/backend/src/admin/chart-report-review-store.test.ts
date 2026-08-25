@@ -12,6 +12,8 @@ const SECOND_REPORT_ID = '0198e8d1-e05f-7f7f-89ba-fbc33e4b0bd0'
 const FINGERPRINT = 'a'.repeat(64)
 const SECOND_FINGERPRINT = 'b'.repeat(64)
 const SNAPSHOT_AS_OF = '2026-08-24T13:00:00.000Z'
+const OPEN_AT_SNAPSHOT_SQL = '(report.closed_at IS NULL OR report.closed_at >= $1::timestamptz)'
+const STATE_AT_SNAPSHOT_SQL = `CASE WHEN ${OPEN_AT_SNAPSHOT_SQL} THEN 'open' ELSE 'closed' END`
 
 type QueryHandler = (
   text: string,
@@ -133,15 +135,40 @@ describe('PostgreSQL administrator chart-report review store', () => {
     expect(calls).toHaveLength(1)
     expect(calls[0]?.text).toContain('chart-report-review-store:list')
     expect(calls[0]?.text).toContain('report.created_at < $1::timestamptz')
-    expect(calls[0]?.text).toContain('(report.closed_at IS NULL OR report.closed_at < $1::timestamptz)')
-    expect(calls[0]?.text).toContain("ORDER BY (report.state = 'open') DESC, report.created_at DESC, report.id DESC")
+    expect(calls[0]?.text).toContain(`${STATE_AT_SNAPSHOT_SQL} AS state`)
+    expect(calls[0]?.text).toContain(`ORDER BY ${OPEN_AT_SNAPSHOT_SQL} DESC, report.created_at DESC, report.id DESC`)
     expect(calls[0]?.text).toContain('LIMIT $2::integer')
     expect(calls[0]?.values).toEqual([SNAPSHOT_AS_OF, 3])
   })
 
+  it('keeps a report closed between pages in its snapshot-time open position', async () => {
+    const { calls, database } = fakeDatabase(() => [queueRow()])
+    const store = createPostgresChartReportReviewStore(database)
+
+    const page = await store.listReports({
+      filters: {},
+      snapshotAsOf: SNAPSHOT_AS_OF,
+      cursor: {
+        isOpen: true,
+        createdAt: '2026-08-24T12:34:57.123000Z',
+        id: REPORT_ID,
+      },
+      limit: 25,
+    })
+
+    expect(page.items[0]?.state).toBe('open')
+    expect(calls[0]?.text).toContain(`${STATE_AT_SNAPSHOT_SQL} AS state`)
+    expect(calls[0]?.text).not.toContain('(report.closed_at IS NULL OR report.closed_at < $1::timestamptz)')
+    expect(calls[0]?.text).toContain(
+      `(${OPEN_AT_SNAPSHOT_SQL}, report.created_at, report.id) < ($2::boolean, $3::timestamptz, $4::uuid)`,
+    )
+    expect(calls[0]?.text).toContain(`ORDER BY ${OPEN_AT_SNAPSHOT_SQL} DESC, report.created_at DESC, report.id DESC`)
+    expect(calls[0]?.values).toEqual([SNAPSHOT_AS_OF, true, '2026-08-24T12:34:57.123000Z', REPORT_ID, 26])
+  })
+
   it('parameterizes every bounded filter alone and combines the complete normalized filter set with the tuple cursor', async () => {
     const singleFilters = [
-      [{ state: 'open' as const }, 'report.state = $2', ['open']],
+      [{ state: 'open' as const }, `${STATE_AT_SNAPSHOT_SQL} = $2`, ['open']],
       [{ stableChartId: 'dsht_abcdefghjk' }, 'report.stable_chart_id = $2', ['dsht_abcdefghjk']],
       [{ fieldKey: 'chart.internal_level' as const }, 'report.target_field_key = $2', ['chart.internal_level']],
       [{ category: 'incorrect_value' as const }, 'report.category = $2', ['incorrect_value']],
@@ -192,7 +219,7 @@ describe('PostgreSQL administrator chart-report review store', () => {
     })
 
     expect(calls[0]?.text).toContain(
-      "((report.state = 'open'), report.created_at, report.id) < ($10::boolean, $11::timestamptz, $12::uuid)",
+      `(${OPEN_AT_SNAPSHOT_SQL}, report.created_at, report.id) < ($10::boolean, $11::timestamptz, $12::uuid)`,
     )
     expect(calls[0]?.text).toContain('LIMIT $13::integer')
     expect(calls[0]?.values).toEqual([

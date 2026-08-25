@@ -51,7 +51,7 @@ export type ChartReportReviewCursor = {
 
 export type ListChartReportReviewsInput = {
   readonly filters: ChartReportReviewFilters
-  /** Stable traversal boundary. Rows created or closed at/after it wait for a fresh traversal. */
+  /** Stable traversal boundary. Later closure transitions remain open until a fresh traversal. */
   readonly snapshotAsOf: string
   readonly cursor?: ChartReportReviewCursor
   readonly limit: number
@@ -184,9 +184,15 @@ const activeBanSql = (banAlias: string): string => `(
     AND (${banAlias}.ban_expires_at IS NULL OR ${banAlias}.ban_expires_at > evaluation_clock.evaluated_at)
 )`
 
-const reportColumnsSql = `
+const reportOpenAtSnapshotSql = (snapshotBoundary: string): string =>
+  `(report.closed_at IS NULL OR report.closed_at >= ${snapshotBoundary})`
+
+const reportStateAtSnapshotSql = (snapshotBoundary: string): string =>
+  `CASE WHEN ${reportOpenAtSnapshotSql(snapshotBoundary)} THEN 'open' ELSE 'closed' END`
+
+const reportColumnsSql = (stateExpression = 'report.state'): string => `
   report.id::text AS id,
-  report.state,
+  ${stateExpression} AS state,
   report.stable_song_id,
   report.stable_chart_id,
   report.publication_channel,
@@ -376,12 +382,11 @@ const buildListQuery = ({ filters, snapshotAsOf, cursor, limit }: ListChartRepor
     throw new Error('Chart-report review snapshot boundary was not normalized by the service')
   }
   const snapshotBoundary = parameter.add(snapshotAsOf, '::timestamptz')
-  const predicates: string[] = [
-    `report.created_at < ${snapshotBoundary}`,
-    `(report.closed_at IS NULL OR report.closed_at < ${snapshotBoundary})`,
-  ]
+  const openAtSnapshot = reportOpenAtSnapshotSql(snapshotBoundary)
+  const stateAtSnapshot = reportStateAtSnapshotSql(snapshotBoundary)
+  const predicates: string[] = [`report.created_at < ${snapshotBoundary}`]
 
-  if (filters.state !== undefined) predicates.push(`report.state = ${parameter.add(filters.state)}`)
+  if (filters.state !== undefined) predicates.push(`${stateAtSnapshot} = ${parameter.add(filters.state)}`)
   if (filters.stableChartId !== undefined) {
     predicates.push(`report.stable_chart_id = ${parameter.add(filters.stableChartId)}`)
   }
@@ -406,7 +411,7 @@ const buildListQuery = ({ filters, snapshotAsOf, cursor, limit }: ListChartRepor
       throw new Error('Chart-report review cursor was not normalized by the service')
     }
     predicates.push(
-      `((report.state = 'open'), report.created_at, report.id) < (${parameter.add(cursor.isOpen, '::boolean')}, ${parameter.add(cursor.createdAt, '::timestamptz')}, ${parameter.add(cursor.id, '::uuid')})`,
+      `(${openAtSnapshot}, report.created_at, report.id) < (${parameter.add(cursor.isOpen, '::boolean')}, ${parameter.add(cursor.createdAt, '::timestamptz')}, ${parameter.add(cursor.id, '::uuid')})`,
     )
   }
   const pageLimit = parameter.add(limit + 1, '::integer')
@@ -417,11 +422,11 @@ const buildListQuery = ({ filters, snapshotAsOf, cursor, limit }: ListChartRepor
       WITH evaluation_clock AS MATERIALIZED (
         SELECT clock_timestamp()::timestamptz(3) AS evaluated_at
       )
-      SELECT ${reportColumnsSql}
+      SELECT ${reportColumnsSql(stateAtSnapshot)}
       FROM public.chart_reports report
       ${reportJoinsSql}
       ${predicates.length > 0 ? `WHERE ${predicates.join('\n        AND ')}` : ''}
-      ORDER BY (report.state = 'open') DESC, report.created_at DESC, report.id DESC
+      ORDER BY ${openAtSnapshot} DESC, report.created_at DESC, report.id DESC
       LIMIT ${pageLimit}
     `,
     values: parameter.values,
@@ -453,7 +458,7 @@ export const createPostgresChartReportReviewStore = (
           SELECT clock_timestamp()::timestamptz(3) AS evaluated_at
         )
         SELECT
-          ${reportColumnsSql},
+          ${reportColumnsSql()},
           report.source_urls,
           CASE
             WHEN canonical_song.legacy_song_id IS NULL OR canonical_sheet.id IS NULL THEN NULL
