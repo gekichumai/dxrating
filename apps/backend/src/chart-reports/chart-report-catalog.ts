@@ -40,6 +40,7 @@ type PublishedCatalogRow = {
   readonly catalog_run_id: unknown
   readonly publication_revision: unknown
   readonly publication_fingerprint_sha256: unknown
+  readonly snapshot_body_sha256: unknown
   readonly body_text: unknown
 }
 
@@ -54,6 +55,8 @@ const requirePublishedCatalogRow = (
     typeof value.catalog_run_id !== 'string' ||
     typeof value.publication_revision !== 'string' ||
     typeof value.publication_fingerprint_sha256 !== 'string' ||
+    typeof value.snapshot_body_sha256 !== 'string' ||
+    value.snapshot_body_sha256 !== value.publication_fingerprint_sha256 ||
     typeof value.body_text !== 'string'
   ) {
     throw new ChartReportCatalogFailure('CATALOG_UNAVAILABLE')
@@ -228,6 +231,7 @@ export const createPostgresChartReportCatalogResolver = (
                  publication.catalog_run_id::text AS catalog_run_id,
                  publication.revision::text AS publication_revision,
                  publication.publication_fingerprint_sha256,
+                 snapshot.body_sha256 AS snapshot_body_sha256,
                  snapshot.body_text
           FROM dxdata.catalog_publications AS publication
           INNER JOIN dxdata.catalog_publication_receipts AS receipt
@@ -237,6 +241,7 @@ export const createPostgresChartReportCatalogResolver = (
             AND receipt.publication_fingerprint_sha256 = publication.publication_fingerprint_sha256
           INNER JOIN dxdata.catalog_snapshots AS snapshot
             ON snapshot.catalog_run_id = publication.catalog_run_id
+            AND snapshot.body_sha256 = receipt.publication_fingerprint_sha256
           INNER JOIN dxdata.catalog_build_runs AS catalog_run
             ON catalog_run.id = publication.catalog_run_id
           WHERE publication.channel = $1

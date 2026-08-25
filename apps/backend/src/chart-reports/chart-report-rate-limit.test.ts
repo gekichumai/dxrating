@@ -62,6 +62,30 @@ const withTimeout = async <Result>(operation: Promise<Result>, timeoutMs: number
   }
 }
 
+const endPoolAndWaitForClientSockets = async (pool: pg.Pool): Promise<void> => {
+  const clientCount = pool.totalCount
+  if (clientCount === 0) {
+    await pool.end()
+    return
+  }
+
+  const clientsRemoved = new Promise<void>((resolve) => {
+    let removedClientCount = 0
+    const onRemove = () => {
+      removedClientCount += 1
+      if (removedClientCount !== clientCount) return
+      pool.off('remove', onRemove)
+      resolve()
+    }
+    pool.on('remove', onRemove)
+  })
+
+  // pg-pool resolves end() after scheduling idle client shutdown, before all
+  // underlying sockets have necessarily emitted their final close event.
+  await pool.end()
+  await clientsRemoved
+}
+
 describe('database-backed chart-report submission rate limiter', () => {
   const adminPool = new pg.Pool({ connectionString: adminDatabaseUrl.toString() })
   const database = new pg.Pool({ connectionString: testDatabaseUrl.toString(), max: 30 })
@@ -78,7 +102,7 @@ describe('database-backed chart-report submission rate limiter', () => {
   })
 
   afterAll(async () => {
-    await database.end()
+    await endPoolAndWaitForClientSockets(database)
     await adminPool.query(`DROP DATABASE IF EXISTS ${DATABASE_NAME} WITH (FORCE)`)
     await adminPool.end()
   })

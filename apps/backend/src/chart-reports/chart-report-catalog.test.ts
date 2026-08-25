@@ -59,6 +59,7 @@ const row = (overrides: Record<string, unknown> = {}) => ({
   catalog_run_id: '71',
   publication_revision: '23',
   publication_fingerprint_sha256: 'a'.repeat(64),
+  snapshot_body_sha256: 'a'.repeat(64),
   body_text: JSON.stringify(catalog),
   ...overrides,
 })
@@ -96,6 +97,7 @@ describe('active chart-report catalog resolver', () => {
     expect(calls).toHaveLength(1)
     expect(calls[0]!.text).toContain('dxdata.catalog_publication_receipts')
     expect(calls[0]!.text).toContain('dxdata.catalog_snapshots')
+    expect(calls[0]!.text).toContain('snapshot.body_sha256 = receipt.publication_fingerprint_sha256')
     expect(calls[0]!.text).toContain('FOR SHARE OF publication')
     expect(calls[0]!.text).not.toMatch(/canonical_songs|canonical_sheets/)
     expect(calls[0]!.values).toEqual(['production-v1', 1])
@@ -159,6 +161,20 @@ describe('active chart-report catalog resolver', () => {
       activePublicationRevision: '23',
     })
     expect(JSON.stringify(error)).not.toContain('Example Song')
+  })
+
+  it('fails closed when the active snapshot fingerprint differs from its receipt and publication', async () => {
+    const { database } = databaseWithRows(row({ snapshot_body_sha256: 'b'.repeat(64) }))
+    const error = await createPostgresChartReportCatalogResolver(database)
+      .resolveActiveField({
+        stableSongId: SONG_ID,
+        stableChartId: CHART_ID,
+        fieldKey: 'chart.level',
+      })
+      .catch((failure: unknown) => failure)
+
+    expect(error).toBeInstanceOf(ChartReportCatalogFailure)
+    expect(error).toMatchObject({ code: 'CATALOG_UNAVAILABLE' })
   })
 
   it('fails closed for missing, malformed, or incompatible publication snapshots', async () => {
