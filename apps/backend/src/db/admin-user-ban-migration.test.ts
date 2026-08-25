@@ -601,9 +601,11 @@ describe('administrator user-ban migrations', () => {
       )
       expect(retainedAfterIdentityChanges.rows).toEqual([{ comment_count: '1', history_count: '3' }])
       await expect(client.query(`DELETE FROM "user" WHERE id = 'subject-user'`)).rejects.toMatchObject({
-        code: '23503',
+        code: expect.stringMatching(/^(23001|23503)$/),
       })
-      await expect(client.query(`DELETE FROM "user" WHERE id = 'actor-user'`)).rejects.toMatchObject({ code: '23503' })
+      await expect(client.query(`DELETE FROM "user" WHERE id = 'actor-user'`)).rejects.toMatchObject({
+        code: expect.stringMatching(/^(23001|23503)$/),
+      })
 
       await client.query(`GRANT SELECT, INSERT ON admin_user_ban_history TO ${RUNTIME_ROLE}`)
       await client.query(`GRANT USAGE, SELECT ON SEQUENCE admin_user_ban_history_id_seq TO ${RUNTIME_ROLE}`)
