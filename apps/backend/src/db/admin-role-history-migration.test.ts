@@ -326,7 +326,9 @@ describe('administrator role-history migrations', () => {
       )
       expect(retainedAfterProfileChanges.rows).toEqual([{ count: '1' }])
       await expect(client.query(`DELETE FROM "user" WHERE id = 'subject-user'`)).rejects.toMatchObject({
-        code: '23503',
+        // PostgreSQL 18 reports explicit RESTRICT as restrict_violation;
+        // older supported releases report the equivalent foreign_key_violation.
+        code: expect.stringMatching(/^(23001|23503)$/),
       })
 
       await client.query(`GRANT SELECT, INSERT ON admin_role_change_history TO ${RUNTIME_ROLE}`)
