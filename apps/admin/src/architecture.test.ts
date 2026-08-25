@@ -79,4 +79,19 @@ describe('administrator presentation boundary', () => {
       }
     }
   })
+
+  it('mounts singleton overlay hosts at the fail-closed protected workspace root', async () => {
+    const providers = await readFile(`${sourceRoot}/providers.tsx`, 'utf8')
+    const protectedProviders = await readFile(`${sourceRoot}/components/protected-admin-providers.tsx`, 'utf8')
+    const router = await readFile(`${sourceRoot}/router.tsx`, 'utf8')
+
+    expect(providers).not.toMatch(/<Notifications\b/)
+    expect(providers).not.toMatch(/<ModalsProvider\b/)
+    expect(protectedProviders.match(/<Notifications\b/g) ?? []).toHaveLength(1)
+    expect(protectedProviders.match(/<ModalsProvider\b/g) ?? []).toHaveLength(1)
+    expect(router.match(/'ProtectedAdminProviders'/g) ?? []).toHaveLength(1)
+    expect(protectedProviders).toMatch(/notifications\.cleanQueue\(\)/)
+    expect(protectedProviders).toMatch(/notifications\.clean\(\)/)
+    expect(protectedProviders).toMatch(/modals\.closeAll\(\)/)
+  })
 })

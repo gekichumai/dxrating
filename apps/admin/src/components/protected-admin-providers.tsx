@@ -1,12 +1,28 @@
-import { ModalsProvider } from '@mantine/modals'
-import { Notifications } from '@mantine/notifications'
+import { modals, ModalsProvider } from '@mantine/modals'
+import { notifications, Notifications } from '@mantine/notifications'
 import { Outlet } from '@tanstack/react-router'
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { AdminRecentAuthProvider } from '../auth/admin-recent-auth'
 import { translate } from '../i18n'
 
+const ProtectedOverlayLifecycle = ({ children }: { readonly children: ReactNode }) => {
+  useEffect(
+    () => () => {
+      // The overlay hosts live once at the protected workspace root, but their content
+      // can contain protected identities and action details. Clear queued work
+      // first so removing visible notifications cannot promote stale content.
+      notifications.cleanQueue()
+      notifications.clean()
+      modals.closeAll()
+    },
+    [],
+  )
+
+  return children
+}
+
 export const ProtectedAdminProviders = ({ children }: { readonly children?: ReactNode }) => (
-  <>
+  <ProtectedOverlayLifecycle>
     <Notifications limit={4} position="top-right" />
     <ModalsProvider
       labels={{
@@ -29,5 +45,5 @@ export const ProtectedAdminProviders = ({ children }: { readonly children?: Reac
         {children ?? <Outlet />}
       </AdminRecentAuthProvider>
     </ModalsProvider>
-  </>
+  </ProtectedOverlayLifecycle>
 )

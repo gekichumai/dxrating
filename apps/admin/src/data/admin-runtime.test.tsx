@@ -1,6 +1,6 @@
 import { ADMIN_CONTRACT_COMPATIBILITY_ID } from '@gekichumai/admin-contract'
 import { modals } from '@mantine/modals'
-import { notifications } from '@mantine/notifications'
+import { notifications, notificationsStore } from '@mantine/notifications'
 import { ORPCError } from '@orpc/client'
 import { act, render, screen } from '@testing-library/react'
 import { useQuery } from '@tanstack/react-query'
@@ -328,7 +328,7 @@ describe('administrator data runtime', () => {
     expect(runtime.queryClient.getMutationCache().getAll()).toHaveLength(0)
   })
 
-  it('removes notification and modal portals with the protected provider subtree', async () => {
+  it('purges protected overlay content and state with the protected workspace root', async () => {
     const runtime = createAdminRuntime({
       queryClientFactory: createAdminTestQueryClient,
       reload: vi.fn(),
@@ -336,10 +336,12 @@ describe('administrator data runtime', () => {
     })
     const PortalProbe = () => {
       useEffect(() => {
-        notifications.show({
-          id: 'compatibility-notification',
-          message: 'Protected notification content',
-        })
+        for (let index = 0; index < 5; index += 1) {
+          notifications.show({
+            id: `compatibility-notification-${index}`,
+            message: `Protected notification content ${index}`,
+          })
+        }
         modals.open({
           children: <div>Protected modal content</div>,
           modalId: 'compatibility-modal',
@@ -355,17 +357,19 @@ describe('administrator data runtime', () => {
         </ProtectedAdminProviders>
       </AdminProviders>,
     )
-    expect(await screen.findByText('Protected notification content')).toBeTruthy()
+    expect(await screen.findByText('Protected notification content 0')).toBeTruthy()
     expect(await screen.findByText('Protected modal content')).toBeTruthy()
+    expect(notificationsStore.getState().notifications).toHaveLength(4)
+    expect(notificationsStore.getState().queue).toHaveLength(1)
 
     await act(async () => {
       await runtime.compatibility.handleError(createAdminClientIncompatibleError(mismatch))
     })
 
-    expect(screen.queryByText('Protected notification content')).toBeNull()
-    expect(screen.queryByText('Protected modal content')).toBeNull()
+    expect(notificationsStore.getState().notifications).toHaveLength(0)
+    expect(notificationsStore.getState().queue).toHaveLength(0)
     expect(screen.queryByText('Protected provider content')).toBeNull()
-    notifications.hide('compatibility-notification')
-    modals.close('compatibility-modal')
+    expect(screen.queryAllByText(/Protected notification content/)).toHaveLength(0)
+    expect(screen.queryByText('Protected modal content')).toBeNull()
   })
 })

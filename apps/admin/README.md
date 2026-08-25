@@ -88,9 +88,10 @@ is not part of this flow.
 The code-based route tree in `src/router.tsx` avoids generated-file drift while retaining compile-time link checking.
 Every route component and the authenticated shell are loaded through dynamic imports.
 
-Vite development and preview servers use SPA history fallback because `appType` is explicitly `spa`. A production
-static host must apply the equivalent rule: serve a real asset when it exists and otherwise return `index.html` for an
-HTML navigation request. Production hosting, edge caching, and its smoke tests are owned by issue #343.
+Vite development and preview servers use SPA history fallback because `appType` is explicitly `spa`. Admin CI starts
+the built preview and compares a nested-route HTML response with the root document. A production static host must apply
+the equivalent rule: serve a real asset when it exists and otherwise return `index.html` for an HTML navigation request.
+Production hosting, edge caching, and its smoke tests are owned by issue #343.
 
 ## Private data access
 
@@ -138,6 +139,10 @@ A compatibility mismatch is rejected from the stable raw error envelope before o
 runtime immediately unmounts protected providers, cancels reads, and clears query and mutation caches. It then offers
 one user-triggered hard reload recorded in session storage for the compiled identifier. A repeated mismatch or storage,
 cache, or reload failure stays on the terminal update-required screen instead of looping or resuming operations.
+
+Mantine notification and modal hosts mount once at the protected workspace root. This placement makes their portals part
+of the same fail-closed boundary as cached administrator data: protected-workspace teardown unmounts the hosts, closes
+every modal, and clears both visible and queued notifications before the terminal compatibility state is shown.
 
 ## Interface rules
 
