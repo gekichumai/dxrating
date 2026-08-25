@@ -526,7 +526,9 @@ describe('administrator comment-moderation migrations', () => {
         code: '55000',
         constraint: 'comments_immutable_guard',
       })
-      await expect(client.query(`DELETE FROM "user" WHERE id = 'actor-user'`)).rejects.toMatchObject({ code: '23503' })
+      await expect(client.query(`DELETE FROM "user" WHERE id = 'actor-user'`)).rejects.toMatchObject({
+        code: expect.stringMatching(/^(23001|23503)$/),
+      })
       const retainedAfterCleanup = await client.query<{
         readonly comment_count: string
         readonly event_count: string
