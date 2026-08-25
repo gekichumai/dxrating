@@ -88,10 +88,9 @@ is not part of this flow.
 The code-based route tree in `src/router.tsx` avoids generated-file drift while retaining compile-time link checking.
 Every route component and the authenticated shell are loaded through dynamic imports.
 
-Vite development and preview servers use SPA history fallback because `appType` is explicitly `spa`. Admin CI starts
-the built preview and compares a nested-route HTML response with the root document. A production static host must apply
-the equivalent rule: serve a real asset when it exists and otherwise return `index.html` for an HTML navigation request.
-Production hosting, edge caching, and its smoke tests are owned by issue #343.
+Vite development and preview servers use SPA history fallback because `appType` is explicitly `spa`. A production
+static host must apply the equivalent rule: serve a real asset when it exists and otherwise return `index.html` for an
+HTML navigation request. Production hosting, edge caching, and its smoke tests are owned by issue #343.
 
 ## Private data access
 
