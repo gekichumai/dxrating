@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "0019_admin_profile_display_name_search",
+      "operation": {
+        "file": "0019_admin_profile_display_name_search.sql",
+        "sha256": "a916149e772d88554ca6cbc5e7d8de843af3a05a78e73c9dac9dc531c4bf7d71"
+      },
+      "verification": {
+        "file": "0019_admin_profile_display_name_search.verify.sql",
+        "sha256": "c422c9ce6128a636311f837a365a8507469cd708d65630c02a76e1e3d7a7c556"
+      }
+    },
+    {
+      "id": "0020_admin_user_active_ban_search",
+      "operation": {
+        "file": "0020_admin_user_active_ban_search.sql",
+        "sha256": "08b98d96321241ae54123d0d7aa443882d85ebb748b5b770782ca2cdbd892fb9"
+      },
+      "verification": {
+        "file": "0020_admin_user_active_ban_search.verify.sql",
+        "sha256": "4e99d9d90dc5898c09209a66456842b2c8ebd7a7a232b880060cff79cd4222e1"
+      }
+    },
+    {
+      "id": "0021_admin_user_email_search",
+      "operation": {
+        "file": "0021_admin_user_email_search.sql",
+        "sha256": "4445c62acdb41363bb885efefa64dcae1a909413b591dcc7e9cde22ac6000191"
+      },
+      "verification": {
+        "file": "0021_admin_user_email_search.verify.sql",
+        "sha256": "e426dcd67391e42e24375e26127ece67ceca1cecccf397a91613818bd6294d7d"
+      }
+    },
+    {
+      "id": "0022_admin_user_name_search",
+      "operation": {
+        "file": "0022_admin_user_name_search.sql",
+        "sha256": "757cb9f761cb9994b78ecb8e9cf533d3815b038b7683a84362df9c836c3c7336"
+      },
+      "verification": {
+        "file": "0022_admin_user_name_search.verify.sql",
+        "sha256": "fa17f9cd37d2fcb61592c3c0729da9c5f515c6b16344346bc952bfd7300cc223"
+      }
+    },
+    {
+      "id": "0023_admin_user_role_search",
+      "operation": {
+        "file": "0023_admin_user_role_search.sql",
+        "sha256": "7164e8763903dcc7d2428052c51d8ab82b1a257dc4b7d43a71ff7d567f3b96c3"
+      },
+      "verification": {
+        "file": "0023_admin_user_role_search.verify.sql",
+        "sha256": "c2509eb0463600ef0e38face0b090e8d43a28c13f56c901aa41a29945e28dac9"
+      }
+    },
+    {
+      "id": "0024_admin_comments_recent",
+      "operation": {
+        "file": "0024_admin_comments_recent.sql",
+        "sha256": "dc4c36ef904218f2c27ccd514f883808da9ddd2fc4f876da15831adb5e6c2602"
+      },
+      "verification": {
+        "file": "0024_admin_comments_recent.verify.sql",
+        "sha256": "bb2d0e01246ebbc1c3f570295ab697f881230e32bd507f42791855335462d4c7"
+      }
+    },
+    {
+      "id": "0025_admin_comments_author_recent",
+      "operation": {
+        "file": "0025_admin_comments_author_recent.sql",
+        "sha256": "1043e54d6c89fad85ea54193240b121eee62df5a837e19815eaf6f160a4614b3"
+      },
+      "verification": {
+        "file": "0025_admin_comments_author_recent.verify.sql",
+        "sha256": "933ca195a280ab7c82f72bfa552d62421fac870eec352665bd24ac83b63f9606"
+      }
+    },
+    {
+      "id": "0026_admin_comments_chart_recent",
+      "operation": {
+        "file": "0026_admin_comments_chart_recent.sql",
+        "sha256": "124626fb3712bcdd19f775d0e6d5db40d3bad2336d72576bfa65b546e4392963"
+      },
+      "verification": {
+        "file": "0026_admin_comments_chart_recent.verify.sql",
+        "sha256": "4445148f08b1846e4230fa8e757bf4df1c1aefb85328d3ec2953d22f9d1e7053"
+      }
+    },
+    {
+      "id": "0027_admin_comments_parent_created",
+      "operation": {
+        "file": "0027_admin_comments_parent_created.sql",
+        "sha256": "d7cd7c49aa8054be09e47c5a1d4e87f07ccc7415ba26fffcf43ab7c14a788939"
+      },
+      "verification": {
+        "file": "0027_admin_comments_parent_created.verify.sql",
+        "sha256": "234ebd0ddbc6620cf4cff5b9cde0794c1c80668f6fc39fcf0e8dacaead725603"
+      }
+    },
+    {
+      "id": "0028_admin_deleted_comments_recent",
+      "operation": {
+        "file": "0028_admin_deleted_comments_recent.sql",
+        "sha256": "c9e5ececacc0016eccfe4df47018b536825f02edc0f3d2d4c5e8d54b69385704"
+      },
+      "verification": {
+        "file": "0028_admin_deleted_comments_recent.verify.sql",
+        "sha256": "33c09835509a4f8c59a3f1697eda02c18bd0e0c1f297209f8f137b2e90a06191"
+      }
+    }
+  ]
+}

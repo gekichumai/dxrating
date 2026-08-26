@@ -1,20 +1,29 @@
 import { Hono, type Context } from 'hono'
-import { HTTPException } from 'hono/http-exception'
 import { createMiddleware } from 'hono/factory'
 import { cors } from 'hono/cors'
 import { RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
 import { auth } from './auth.js'
+import {
+  ACCOUNT_BANNED_CODE,
+  createPrivateAuthOperationFailedResponse,
+  getProjectedAuthBanDenial,
+  getProvenAuthBanUserId,
+  projectAccountBannedResponse,
+  runWithAuthBanRequestState,
+  type AccountBannedResponse,
+} from './auth-ban-enforcement.js'
 import { handler as oneshotRenderer } from './services/functions/oneshot-renderer/index.js'
 import {
   v0Handler as fetchNetRecordsV0Handler,
   v1Handler as fetchNetRecordsV1Handler,
 } from './services/functions/fetch-net-records/index.js'
-import { evlog, type EvlogVariables } from 'evlog/hono'
+import { evlog } from 'evlog/hono'
 import type { MiddlewareHandler } from 'hono'
 import { drain } from './logger.js'
 import { appRouter } from './router.js'
 import { exchangeCodeForTokens } from './services/lxns/index.js'
+import { PublicAccountBanned } from './public-access-policy.js'
 import { config } from './config.js'
 import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { OpenAPIGenerator } from '@orpc/openapi'
@@ -23,13 +32,44 @@ import { RequestHeadersPlugin, ResponseHeadersPlugin } from '@orpc/server/plugin
 import { onError } from '@orpc/server'
 import { Sentry, shouldCaptureSentryError } from './lib/functions/sentry.js'
 import { pool } from './db/index.js'
+import { loadPostgresUserBanState } from './admin/user-ban-store.js'
 import { createDxdataHandler, createPostgresDxdataStore, DXDATA_CORS_OPTIONS, DXDATA_PATH } from './services/dxdata.js'
 import { addPublishedDxdataToOpenApi } from './services/dxdata-openapi.js'
+import { adminOpenAPIHandler, createAdminStandardErrorResponse } from './admin/handler.js'
+import {
+  recordAdminAuthorizationResult,
+  reportAdminException,
+  sanitizeAdminCorrelationId,
+  type AdminAuthorizationResult,
+} from './admin/observability.js'
+import { createAdminAccessVerifier } from './admin/access-verifier.js'
+import {
+  createAdminAccessBoundaryMiddleware,
+  isAdminAccessProtectedPath as isAdminApiPath,
+} from './admin/access-boundary.js'
+import { loadAdminRequestAuthentication } from './admin/principal-loader.js'
+import { adminPrimaryAuthService } from './admin/primary-auth-runtime.js'
+import { runPostgresAdminWriteLease } from './admin/write-lease.js'
+import { ADMIN_GENERIC_REQUEST_LOG_EXCLUSIONS } from './admin/request-logging-policy.js'
+import { createRequestErrorHandler } from './request-error-handler.js'
+import type { AppEnvironment } from './request-context.js'
+import { expireLegacyDomainAuthCookies } from './auth-security.js'
+import { isAllowedExactOrigin } from './origin-policy.js'
+import {
+  ADMIN_CLIENT_INCOMPATIBLE_MESSAGE,
+  ADMIN_CONTRACT_COMPATIBILITY_ID,
+  ADMIN_CONTRACT_HEADER,
+  AdminContractCompatibilityIdSchema,
+  AdminPrimaryAuthProviderSchema,
+} from '@gekichumai/admin-contract'
 
-const app = new Hono<EvlogVariables>()
+const app = new Hono<AppEnvironment>()
+const adminAccessVerifier = createAdminAccessVerifier(config.admin.access)
+const adminAccessBoundary = createAdminAccessBoundaryMiddleware(adminAccessVerifier)
 
 const API_CATALOG_PROFILE_URL = 'https://www.rfc-editor.org/info/rfc9727'
 const API_CATALOG_CONTENT_TYPE = `application/linkset+json; profile="${API_CATALOG_PROFILE_URL}"`
+const PUBLIC_COMMENTS_PATH = '/api/v1/comments'
 const ARCADE_VENUES_PATH = '/api/v1/arcades/venues'
 const ARCADE_VENUES_BROWSER_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=60, stale-if-error=86400'
 const ARCADE_VENUES_CDN_CACHE_CONTROL = 'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800'
@@ -43,6 +83,54 @@ const ARCADE_VENUES_RETAINED_304_HEADERS = [
   'access-control-expose-headers',
 ]
 const PUBLIC_STATIC_CATALOG_PATHS = new Set([ARCADE_VENUES_PATH, DXDATA_PATH])
+const CREDENTIALED_ALLOW_HEADERS = ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response']
+const ADMIN_ALLOW_HEADERS = [...CREDENTIALED_ALLOW_HEADERS, ADMIN_CONTRACT_HEADER]
+const STANDARD_CREDENTIALED_METHODS = ['POST', 'GET', 'OPTIONS']
+const ADMIN_METHODS = ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS']
+
+const isStateChangingMethod = (method: string): boolean => !['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())
+
+const setAdminPrivateNoStoreHeaders = (c: Context): void => {
+  c.header('Cache-Control', 'private, no-store')
+  c.header('CDN-Cache-Control', 'no-store')
+  c.header('Cloudflare-CDN-Cache-Control', 'no-store')
+  c.header('Referrer-Policy', 'no-referrer')
+}
+
+const createExactCredentialedCors = ({
+  origins,
+  allowMethods,
+  allowHeaders,
+}: {
+  origins: readonly string[]
+  allowMethods: string[]
+  allowHeaders: string[]
+}): MiddlewareHandler => {
+  const allowedOrigins = new Set(origins)
+  const allowedCors = cors({
+    origin: (origin) => (allowedOrigins.has(origin) ? origin : null),
+    allowHeaders,
+    allowMethods,
+    exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID', 'Retry-After'],
+    maxAge: 600,
+    credentials: true,
+  })
+
+  return async (c, next) => {
+    if (isAllowedExactOrigin(c.req.header('Origin'), allowedOrigins)) {
+      return allowedCors(c, next)
+    }
+
+    // Credentialed Hono CORS otherwise emits Allow-Credentials even when its
+    // origin callback rejects the origin. Do not invoke it for denied origins.
+    if (c.req.method === 'OPTIONS') {
+      c.header('Vary', 'Origin', { append: true })
+      return c.body(null, 204)
+    }
+    await next()
+    c.header('Vary', 'Origin', { append: true })
+  }
+}
 
 const getFirstHeaderValue = (value: string | undefined) => value?.split(',')[0]?.trim() || undefined
 
@@ -110,56 +198,224 @@ const setApiCatalogHeaders = (c: Context) => {
 }
 
 // Error handler
-app.onError((err, c) => {
-  const log = c.get('log')
-  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+app.onError(
+  createRequestErrorHandler({
+    reportAdminException,
+    captureException: (error, requestId) => Sentry.captureException(error, { tags: { requestId } }),
+  }),
+)
 
-  if (err instanceof z.ZodError) {
-    return c.json({ error: 'Validation error', details: err.issues, requestId }, 400)
-  }
-
-  log?.error(err)
-  Sentry.captureException(err, { tags: { requestId } })
-
-  if (err instanceof HTTPException) {
-    return err.getResponse()
-  }
-
-  return c.json({ error: 'Internal server error', requestId }, 500)
+const apiCors = createExactCredentialedCors({
+  origins: config.browserTrustedOrigins,
+  allowHeaders: CREDENTIALED_ALLOW_HEADERS,
+  allowMethods: STANDARD_CREDENTIALED_METHODS,
 })
-
-const apiCors = cors({
-  origin: (origin) => {
-    // Allow local development
-    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-      return origin
-    }
-
-    // Allow production domain and preview deployments
-    if (
-      origin === 'https://dxrating.net' ||
-      origin.endsWith('.dxrating.pages.dev') ||
-      origin.endsWith('.galvin.workers.dev')
-    ) {
-      return origin
-    }
-
-    return null
-  },
-  allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response'],
-  allowMethods: ['POST', 'GET', 'OPTIONS'],
-  exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],
-  maxAge: 600,
-  credentials: true,
+const adminCors = createExactCredentialedCors({
+  origins: config.admin.trustedOrigins,
+  allowHeaders: ADMIN_ALLOW_HEADERS,
+  allowMethods: ADMIN_METHODS,
 })
 
 const publicStaticCatalogCors = cors(DXDATA_CORS_OPTIONS)
 
+const accountBannedAuthResponse = (
+  denial: AccountBannedResponse | Pick<AccountBannedResponse, 'code' | 'message'>,
+): Response =>
+  new Response(JSON.stringify(denial), {
+    status: 403,
+    headers: {
+      'Cache-Control': 'private, no-store',
+      'CDN-Cache-Control': 'no-store',
+      'Cloudflare-CDN-Cache-Control': 'no-store',
+      'Content-Type': 'application/json',
+      'Referrer-Policy': 'no-referrer',
+    },
+  })
+
+const protectPublicAccountBanResponse = async (response: Response): Promise<Response> => {
+  if (response.status !== 403) return response
+
+  let body: unknown
+  try {
+    body = await response.clone().json()
+  } catch {
+    return response
+  }
+  if (!body || typeof body !== 'object' || Reflect.get(body, 'code') !== ACCOUNT_BANNED_CODE) return response
+
+  const headers = new Headers(response.headers)
+  headers.set('Cache-Control', 'private, no-store')
+  headers.set('CDN-Cache-Control', 'no-store')
+  headers.set('Cloudflare-CDN-Cache-Control', 'no-store')
+  headers.set('Referrer-Policy', 'no-referrer')
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  })
+}
+
+const isActiveBanDatabaseGuardError = (error: unknown): boolean =>
+  error !== null &&
+  typeof error === 'object' &&
+  Reflect.get(error, 'code') === 'DXB01' &&
+  Reflect.get(error, 'constraint') === 'active_user_ban_write_guard'
+
+const handleBetterAuthWithBanPolicy = async (request: Request, path: string): Promise<Response> =>
+  runWithAuthBanRequestState(async () => {
+    let response: Response | undefined
+    let databaseGuardFailure = false
+    try {
+      response = await auth.handler(request)
+    } catch (error) {
+      if (!isActiveBanDatabaseGuardError(error)) throw error
+      databaseGuardFailure = true
+    }
+
+    let denial = await getProjectedAuthBanDenial()
+    if (!denial && (databaseGuardFailure || (response?.status ?? 0) >= 500)) {
+      const provenUserId = await getProvenAuthBanUserId()
+      if (provenUserId) {
+        const state = await loadPostgresUserBanState(pool, provenUserId)
+        if (state.active) denial = projectAccountBannedResponse(state)
+      }
+    }
+
+    if (denial) {
+      Sentry.metrics.count('auth.account_banned', 1, {
+        attributes: {
+          code: ACCOUNT_BANNED_CODE,
+          flow: path.startsWith('/api/auth/callback/') ? 'oauth' : 'direct',
+          temporary: denial.expiresAt === null ? 'false' : 'true',
+        },
+      })
+      return accountBannedAuthResponse(denial)
+    }
+
+    // A dedicated database denial without a surviving proof identity remains
+    // a generic fail-closed response. Never infer an account from untrusted
+    // request fields merely to reveal moderation state.
+    if (databaseGuardFailure) {
+      return createPrivateAuthOperationFailedResponse()
+    }
+    return response!
+  })
+
+// Administrator responses can contain credentials, personal data, deleted
+// content, and internal reasons. This wrapper is deliberately registered
+// before CORS so it also covers preflight responses returned by that layer.
+app.use('*', async (c, next) => {
+  if (!isAdminApiPath(c.req.path)) return next()
+
+  try {
+    await next()
+  } finally {
+    setAdminPrivateNoStoreHeaders(c)
+  }
+})
+
 // Static catalog responses are credential-independent, allowing one public
 // representation per URL to be safely shared by browsers and the CDN.
-app.use('*', (c, next) =>
-  PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path) ? publicStaticCatalogCors(c, next) : apiCors(c, next),
-)
+app.use('*', (c, next) => {
+  if (PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)) return publicStaticCatalogCors(c, next)
+  if (isAdminApiPath(c.req.path)) return adminCors(c, next)
+  return apiCors(c, next)
+})
+
+// Access assertions are bearer credentials. Consume and remove both proof
+// headers before evlog or any error-reporting middleware can inspect request
+// headers. Public routes discard them; administrator requests validate the
+// captured proof before compatibility, session, database, or procedure work.
+app.use('*', adminAccessBoundary)
+
+// Generic request logging is deliberately disabled for administrator paths,
+// so correlation state must not depend on evlog's request-local logger. Place
+// this before the server-only callback as well as the administrator handler.
+app.use('*', async (c, next) => {
+  if (!isAdminApiPath(c.req.path)) return next()
+
+  const requestId = sanitizeAdminCorrelationId(c.req.header('x-request-id')) ?? crypto.randomUUID()
+  c.set('requestId', requestId)
+
+  await next()
+
+  c.header('X-DXRating-Request-ID', requestId)
+})
+
+// OAuth authorization codes and state terminate on this server-only callback.
+// Keep it before evlog so callback query values cannot enter access logs,
+// breadcrumbs, or frontend telemetry. The correlation middleware above sees
+// only the path and headers; Cloudflare Access, private no-store headers, and
+// the current Better Auth session still apply.
+app.get('/api/admin/primary-auth/oauth/callback/:provider', async (c) => {
+  const resultUrl = new URL('/primary-auth/result', config.admin.frontendOrigin)
+  const fail = () => {
+    resultUrl.searchParams.set('status', 'failure')
+    return c.redirect(resultUrl.toString())
+  }
+
+  try {
+    const provider = AdminPrimaryAuthProviderSchema.safeParse(c.req.param('provider'))
+    if (!provider.success) return fail()
+
+    const authentication = await loadAdminRequestAuthentication(c.req.raw.headers)
+    if (authentication.status !== 'authenticated' || !authentication.principal) return fail()
+
+    const actor = {
+      userId: authentication.authorizationUser.id,
+      sessionId: authentication.session.id,
+    }
+    await runPostgresAdminWriteLease(actor, () =>
+      adminPrimaryAuthService.completeOauth(
+        actor,
+        provider.data,
+        c.req.query('state') ?? null,
+        c.req.query('error') ? null : (c.req.query('code') ?? null),
+      ),
+    )
+    resultUrl.searchParams.set('status', 'success')
+    return c.redirect(resultUrl.toString())
+  } catch {
+    return fail()
+  }
+})
+
+// LXNS authorization codes and one-time states are credentials as well. Keep
+// this callback before evlog so its query string cannot enter access logs or
+// breadcrumbs. Ban denials use only a stable redirect code; never a reason or
+// account identifier.
+app.get('/api/v1/io/import/lxns/oauth_callback', async (c) => {
+  const code = c.req.query('code')
+  const state = c.req.query('state')
+  const error = c.req.query('error')
+
+  const frontendCallback = `${config.frontendUrl}/io/import/lxns/oauth_callback`
+
+  if (error || !code || !state) {
+    const msg = error || 'missing_params'
+    return c.redirect(`${frontendCallback}?status=error&error=${encodeURIComponent(msg)}`)
+  }
+
+  try {
+    await exchangeCodeForTokens(code, state)
+    return c.redirect(`${frontendCallback}?status=success`)
+  } catch (err) {
+    if (err instanceof PublicAccountBanned) {
+      Sentry.metrics.count('public_api.access_denied', 1, {
+        attributes: {
+          access: 'authenticated_write',
+          code: 'ACCOUNT_BANNED',
+          procedure: 'lxns.oauth_callback',
+        },
+      })
+      return c.redirect(`${frontendCallback}?status=error&error=account_banned`)
+    }
+    Sentry.metrics.count('lxns.oauth_callback_failed', 1, {
+      attributes: { result: 'exchange_failed' },
+    })
+    return c.redirect(`${frontendCallback}?status=error&error=exchange_failed`)
+  }
+})
 
 // Request logging
 app.use(
@@ -175,15 +431,25 @@ app.use(
       '/',
       '/.well-known/api-catalog',
       '/api/v1/monitoring/tunnel',
+      ...ADMIN_GENERIC_REQUEST_LOG_EXCLUSIONS,
     ],
   }) as unknown as MiddlewareHandler,
 )
 
 // Set X-DXRating-Request-ID response header
 app.use('*', async (c, next) => {
-  await next()
+  if (isAdminApiPath(c.req.path)) return next()
+
   const log = c.get('log')
-  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+  const currentRequestId = (log?.getContext() as Record<string, unknown>)?.requestId
+  const requestId =
+    sanitizeAdminCorrelationId(typeof currentRequestId === 'string' ? currentRequestId : undefined) ??
+    crypto.randomUUID()
+  c.set('requestId', requestId)
+  log?.set({ requestId })
+
+  await next()
+
   if (requestId && !PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)) {
     c.header('X-DXRating-Request-ID', requestId)
   }
@@ -214,7 +480,9 @@ app.get('/version', async (c) => {
 
 // BetterAuth
 app.on(['POST', 'GET'], '/api/auth/**', (c) => {
-  return auth.handler(c.req.raw)
+  return handleBetterAuthWithBanPolicy(c.req.raw, c.req.path).then((response) =>
+    expireLegacyDomainAuthCookies(response, config.auth.legacyCookieDomain),
+  )
 })
 
 // Middleware: validate auth params for fetch-net-records
@@ -228,7 +496,11 @@ const verifyParams = createMiddleware(async (c, next) => {
   const body = await c.req.json()
   const region = c.req.param('region') ?? body.region
 
-  const result = authParamsSchema.safeParse({ id: body.id, password: body.password, region })
+  const result = authParamsSchema.safeParse({
+    id: body.id,
+    password: body.password,
+    region,
+  })
   if (!result.success) {
     return c.json({ error: 'Invalid parameters', details: result.error.issues }, 400)
   }
@@ -282,29 +554,6 @@ app.post('/functions/fetch-net-records/v0', verifyParams, fetchNetRecordsV0Handl
 app.post('/functions/fetch-net-records/v1/:region', verifyParams, fetchNetRecordsV1Handler)
 app.post('/functions/render-oneshot/v0', oneshotRenderer)
 
-// LXNS OAuth callback (direct Hono route — must be before oRPC catch-all since it redirects)
-app.get('/api/v1/io/import/lxns/oauth_callback', async (c) => {
-  const code = c.req.query('code')
-  const state = c.req.query('state')
-  const error = c.req.query('error')
-
-  const frontendCallback = `${config.frontendUrl}/io/import/lxns/oauth_callback`
-
-  if (error || !code || !state) {
-    const msg = error || 'missing_params'
-    return c.redirect(`${frontendCallback}?status=error&error=${encodeURIComponent(msg)}`)
-  }
-
-  try {
-    await exchangeCodeForTokens(code, state)
-    return c.redirect(`${frontendCallback}?status=success`)
-  } catch (err) {
-    const log = c.get('log')
-    log?.error(err instanceof Error ? err : new Error(String(err)))
-    return c.redirect(`${frontendCallback}?status=error&error=exchange_failed`)
-  }
-})
-
 // oRPC OpenAPI handler
 const openAPIHandler = new OpenAPIHandler(appRouter, {
   plugins: [new RequestHeadersPlugin(), new ResponseHeadersPlugin()],
@@ -326,12 +575,75 @@ const openAPIGenerator = new OpenAPIGenerator({
   schemaConverters: [new ZodToJsonSchemaConverter()],
 })
 
+// The administrator contract has a physically separate handler and prefix. It
+// is never composed into the public router or OpenAPI generator.
+app.all('/api/admin/*', async (c) => {
+  const requestId = c.get('requestId')
+  const receivedCompatibilityId = c.req.header(ADMIN_CONTRACT_HEADER)
+  const procedureName = c.req.path === '/api/admin/bootstrap' ? 'bootstrap' : 'handler'
+  const recordResult = (procedure: string, result: AdminAuthorizationResult): void => {
+    try {
+      recordAdminAuthorizationResult(procedure, result)
+    } catch {
+      // Telemetry must never change an administrator response.
+    }
+  }
+
+  if (receivedCompatibilityId !== ADMIN_CONTRACT_COMPATIBILITY_ID) {
+    recordResult(procedureName, 'ADMIN_CLIENT_INCOMPATIBLE')
+    const safeReceivedCompatibilityId = AdminContractCompatibilityIdSchema.safeParse(receivedCompatibilityId)
+    return c.json(
+      {
+        defined: true,
+        code: 'ADMIN_CLIENT_INCOMPATIBLE',
+        status: 409,
+        message: ADMIN_CLIENT_INCOMPATIBLE_MESSAGE,
+        data: {
+          requestId: requestId ?? null,
+          expected: ADMIN_CONTRACT_COMPATIBILITY_ID,
+          received: safeReceivedCompatibilityId.success ? safeReceivedCompatibilityId.data : null,
+        },
+      },
+      409,
+    )
+  }
+
+  if (isStateChangingMethod(c.req.method) && !config.admin.trustedOrigins.includes(c.req.header('Origin') ?? '')) {
+    recordResult(procedureName, 'FORBIDDEN')
+    return createAdminStandardErrorResponse('FORBIDDEN', requestId)
+  }
+
+  try {
+    const authentication = await loadAdminRequestAuthentication(c.req.raw.headers)
+    const { response } = await adminOpenAPIHandler.handle(c.req.raw, {
+      prefix: '/api/admin',
+      context: {
+        authentication,
+        requestId,
+        requestOrigin: config.admin.trustedOrigins.includes(c.req.header('Origin') ?? '')
+          ? c.req.header('Origin')
+          : undefined,
+        recordAuthorizationResult: recordResult,
+      },
+    })
+    if (!response) {
+      recordResult(procedureName, 'NOT_FOUND')
+      return createAdminStandardErrorResponse('NOT_FOUND', requestId)
+    }
+    return response
+  } catch {
+    reportAdminException('handler', requestId)
+    recordResult(procedureName, 'INTERNAL_SERVER_ERROR')
+    return createAdminStandardErrorResponse('INTERNAL_SERVER_ERROR', requestId)
+  }
+})
+
 app.get('/robots.txt', (c) => c.text('User-agent: *\\nDisallow: /'))
 
 const dxdataStore = createPostgresDxdataStore((text, values) => pool.query(text, values))
-const dxdataHandler = createDxdataHandler<EvlogVariables>(dxdataStore, (error, c) => {
+const dxdataHandler = createDxdataHandler<AppEnvironment>(dxdataStore, (error, c) => {
   const log = c.get('log')
-  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+  const requestId = c.get('requestId')
   log?.error(error instanceof Error ? error : new Error(String(error)))
   Sentry.captureException(error, { tags: { requestId } })
 })
@@ -340,6 +652,17 @@ const dxdataHandler = createDxdataHandler<EvlogVariables>(dxdataStore, (error, c
 // its small metadata row first so HEAD and conditional requests never fetch
 // the potentially large snapshot body.
 app.on(['GET', 'HEAD'], DXDATA_PATH, dxdataHandler)
+
+// Comment moderation state changes immediately, and a cached pre-deletion
+// response would retain text that is no longer public. Comments therefore
+// bypass browser, shared-CDN, and Cloudflare storage entirely; every list
+// request observes the current database projection.
+app.use(PUBLIC_COMMENTS_PATH, async (c, next) => {
+  await next()
+  c.header('Cache-Control', 'no-store')
+  c.header('CDN-Cache-Control', 'no-store')
+  c.header('Cloudflare-CDN-Cache-Control', 'no-store')
+})
 
 const arcadeVenuesCacheHeaders = createMiddleware(async (c, next) => {
   await next()
@@ -400,7 +723,11 @@ const arcadeVenuesEtag = createMiddleware(async (c, next) => {
     if (value !== null) headers.set(name, value)
   }
   headers.set('ETag', responseEtag)
-  c.res = new Response(null, { status: 304, statusText: 'Not Modified', headers })
+  c.res = new Response(null, {
+    status: 304,
+    statusText: 'Not Modified',
+    headers,
+  })
 })
 
 // This exact public route bypasses Better Auth's session lookup. Filtered
@@ -430,14 +757,16 @@ app.all('/api/v1/*', async (c) => {
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
 
   try {
-    const session = await auth.api.getSession({ headers: c.req.raw.headers })
     const { response } = await openAPIHandler.handle(c.req.raw, {
       prefix: '/api/v1',
-      context: { user: session?.user },
+      // Procedure metadata decides whether identity is relevant. Public reads
+      // never inspect a cookie, while authenticated reads and writes resolve a
+      // fresh session and the current database-time ban state centrally.
+      context: { headers: c.req.raw.headers },
     })
 
     if (!response) return c.notFound()
-    return response
+    return protectPublicAccountBanResponse(response)
   } catch (err) {
     log?.error(err instanceof Error ? err : new Error(String(err)))
     Sentry.captureException(err, { tags: { requestId } })

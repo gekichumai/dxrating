@@ -16,6 +16,14 @@ interface BuildInfo {
 
 let cached: BuildInfo | null = null
 
+const imageDigestPattern = /^sha256:[0-9a-f]{64}$/
+
+export const parseConfiguredImageDigest = (value: string | undefined): string | null => {
+  if (!value) return null
+  if (!imageDigestPattern.test(value)) throw new Error('IMAGE_DIGEST must be an exact sha256 digest')
+  return value
+}
+
 export async function getBuildInfo(): Promise<BuildInfo> {
   if (cached) return cached
 
@@ -25,9 +33,10 @@ export async function getBuildInfo(): Promise<BuildInfo> {
   const builtAt = process.env.BUILT_AT ?? 'unknown'
   const version = process.env.VERSION ?? 'unknown'
 
+  const configuredImageDigest = parseConfiguredImageDigest(process.env.IMAGE_DIGEST)
   const info: BuildInfo = {
     commit,
-    imageDigest: null,
+    imageDigest: configuredImageDigest,
     buildUrl,
     repoUrl,
     builtAt,
@@ -37,7 +46,7 @@ export async function getBuildInfo(): Promise<BuildInfo> {
 
   if (process.env.NODE_ENV === 'production' && commit !== 'unknown') {
     try {
-      const imageDigest = await resolveImageDigest(commit)
+      const imageDigest = configuredImageDigest ?? (await resolveImageDigest(commit))
       if (imageDigest) {
         info.imageDigest = imageDigest
         const bundle = await fetchAttestation(imageDigest)

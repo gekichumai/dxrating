@@ -1,18 +1,41 @@
-import { relations } from 'drizzle-orm'
-import { pgTable, text, timestamp, boolean, integer, index } from 'drizzle-orm/pg-core'
+import { relations, sql } from 'drizzle-orm'
+import { pgEnum, pgTable, text, timestamp, boolean, integer, index } from 'drizzle-orm/pg-core'
+import { PERSISTED_USER_ROLES } from '../admin/role-policy.js'
 
-export const user = pgTable('user', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  email: text('email').notNull().unique(),
-  emailVerified: boolean('email_verified').default(false).notNull(),
-  image: text('image'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at')
-    .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
-    .notNull(),
-})
+export const userRole = pgEnum('user_role', PERSISTED_USER_ROLES)
+
+export const user = pgTable(
+  'user',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    email: text('email').notNull().unique(),
+    emailVerified: boolean('email_verified').default(false).notNull(),
+    role: userRole('role').default(PERSISTED_USER_ROLES[0]).notNull(),
+    adminAuthorizationNotBefore: timestamp('admin_authorization_not_before', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    image: text('image'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('admin_user_search_role_id_idx').on(table.role, table.id).concurrently(),
+    index('admin_user_search_email_lower_id_idx')
+      .using('btree', sql`lower(btrim(normalize(${table.email}, NFKC)))`, table.id)
+      .concurrently(),
+    index('admin_user_search_name_lower_pattern_id_idx')
+      .using(
+        'btree',
+        sql`lower(btrim(regexp_replace(normalize(${table.name}, NFKC), '[[:space:]]+', ' ', 'g'))) text_pattern_ops`,
+        table.id,
+      )
+      .concurrently(),
+  ],
+)
 
 export const session = pgTable(
   'session',
@@ -21,6 +44,9 @@ export const session = pgTable(
     expiresAt: timestamp('expires_at').notNull(),
     token: text('token').notNull().unique(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
+    adminAuthorizationIssuedAt: timestamp('admin_authorization_issued_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
     updatedAt: timestamp('updated_at')
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),

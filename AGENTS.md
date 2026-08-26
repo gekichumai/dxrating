@@ -41,9 +41,11 @@ pnpm format:check         # Check formatting
 ```bash
 pnpm --filter @gekichumai/backend dev          # Hono dev server — port 3000
 pnpm --filter @gekichumai/backend test         # Integration tests (requires PostgreSQL — run db:up first)
+pnpm --filter @gekichumai/backend test:migrations # Compiled CLI, lock, journal, and backfill rehearsal
 pnpm --filter @gekichumai/backend test:watch   # Watch mode
 pnpm --filter @gekichumai/backend db:up        # Start PostgreSQL via Docker
 pnpm --filter @gekichumai/backend db:down      # Stop PostgreSQL
+pnpm --filter @gekichumai/backend migrate:dev  # Apply migrations with the dedicated local job
 ```
 
 ### Web (`apps/web`)
@@ -109,9 +111,11 @@ Web requires `apps/web/.env` (no `.env.example` — create manually):
 - Throw `new Error('Unauthorized')` for unauthenticated access to protected routes.
 
 ### Database
-- Drizzle ORM with PostgreSQL 16.
+- Drizzle ORM with PostgreSQL 18.
 - Schema: `apps/backend/src/db/schema.ts` (app tables), `apps/backend/src/db/auth-schema.ts` (Better Auth tables).
-- Migrations live in `apps/backend/drizzle/`. Generate with `drizzle-kit generate`, apply with `drizzle-kit migrate`.
+- Generated migrations live in `apps/backend/drizzle/`. Generate with `drizzle-kit generate`, then apply them with the repository migration runner (`pnpm --filter @gekichumai/backend migrate:dev` locally or the compiled one-shot job in deployment).
+- Traffic-serving backend processes never apply migrations on startup. Follow `docs/operations/backend-online-migrations.md` for expand/backfill/validate/contract delivery and legacy-ledger recovery.
+- PostgreSQL operations that cannot run in a transaction use the reviewed, digest-pinned manifest under `apps/backend/non-transactional-migrations/`; do not put ordinary schema changes there.
 - Never hand-edit generated migration SQL files.
 
 ### Caching
@@ -124,7 +128,7 @@ Web requires `apps/web/.env` (no `.env.example` — create manually):
 - **ESM throughout** — use `.js` extensions in TypeScript imports (e.g., `import { foo } from './foo.js'`). Applies to `apps/backend` and `packages/`.
 - **Linter**: oxlint — do not add ESLint.
 - **Formatter**: oxfmt — do not add Prettier.
-- **Node.js 25.9.0**, pnpm 10.30.3.
+- **Node.js 25.9.0**, pnpm 10.33.0.
 - TypeScript strict mode is enabled across all packages.
 
 ## Testing
@@ -153,8 +157,10 @@ pnpm build       # verify no TypeScript errors
 
 1. Add the table definition to `apps/backend/src/db/schema.ts`.
 2. Run `cd apps/backend && pnpm drizzle-kit generate` to create a migration file.
-3. Apply with `pnpm drizzle-kit migrate` (or restart the dev server — it auto-migrates on startup).
+3. Review the generated SQL for online safety and apply it with `pnpm --filter @gekichumai/backend migrate:dev`.
 4. Export the new table from `schema.ts` and import it in `router.ts` as needed.
+
+The development server does not migrate the database. Production uses the compiled `dist/migrate.js` command as a locked one-shot job before the backend rollout.
 
 ## Adding UI Text (i18n)
 
@@ -167,6 +173,6 @@ All user-visible strings must use `useTranslation()` from `react-i18next`. Add t
 ## Deployment
 
 - **Web** → Cloudflare Pages (auto-deployed on push to `main`)
-- **Backend** → Docker container via Coolify (auto-deployed on push to `main`)
+- **Backend** → Raw Docker Compose stack via Coolify, gated by a protected one-shot migration job before the traffic deployment (deployed by CI on push to `main`; Coolify native auto-deploy is disabled)
 - **CI/CD** → GitHub Actions (`.github/workflows/`): `release.yml`, `backend.yml`, `preview.yml`
 - CI auto-tags versions on `main` push via `release-dispatcher.yml`.

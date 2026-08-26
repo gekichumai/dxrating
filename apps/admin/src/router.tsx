@@ -1,0 +1,140 @@
+import {
+  Outlet,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  lazyRouteComponent,
+  type RouterHistory,
+} from '@tanstack/react-router'
+import { validateAdministratorRouteSearch } from './administrators/administrator-route-search'
+import { validateChartReportListSearch } from './chart-reports/chart-report-route-search'
+import { AdminNotFound, AdminRouteError, RouteLoading } from './components/route-states'
+import { validateCommentListSearch } from './comments/comment-route-search'
+import { validateUserDetailSearch, validateUserListSearch } from './users/user-route-search'
+
+const rootRoute = createRootRoute({
+  component: Outlet,
+  pendingComponent: RouteLoading,
+  errorComponent: AdminRouteError,
+  notFoundComponent: AdminNotFound,
+})
+
+const requireAdminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: 'require-admin',
+  component: lazyRouteComponent(() => import('./auth/admin-authorization-boundary'), 'AdminAuthorizationBoundary'),
+})
+
+const workspaceRoute = createRoute({
+  getParentRoute: () => requireAdminRoute,
+  id: 'workspace',
+  component: lazyRouteComponent(() => import('./components/protected-admin-providers'), 'ProtectedAdminProviders'),
+})
+
+const primaryAuthResultRoute = createRoute({
+  getParentRoute: () => requireAdminRoute,
+  path: 'primary-auth/result',
+  component: lazyRouteComponent(() => import('./routes/primary-auth-result-route'), 'PrimaryAuthResultRoute'),
+})
+
+const shellRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  id: 'admin-shell',
+  component: lazyRouteComponent(() => import('./components/admin-shell'), 'AdminShell'),
+})
+
+const dashboardRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/',
+  component: lazyRouteComponent(() => import('./routes/dashboard-route'), 'DashboardRoute'),
+})
+
+const chartsRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: 'charts',
+  component: lazyRouteComponent(() => import('./routes/charts-route'), 'ChartsRoute'),
+})
+
+const commentsRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: 'comments',
+  validateSearch: validateCommentListSearch,
+  component: lazyRouteComponent(() => import('./routes/comments-route'), 'CommentsRoute'),
+})
+
+const usersRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: 'users',
+  validateSearch: validateUserListSearch,
+  component: lazyRouteComponent(() => import('./routes/users-route'), 'UsersRoute'),
+})
+
+const userDetailRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: 'users/$userId',
+  validateSearch: validateUserDetailSearch,
+  component: lazyRouteComponent(() => import('./routes/user-detail-route'), 'UserDetailRoute'),
+})
+
+const administratorsRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: 'administrators',
+  validateSearch: validateAdministratorRouteSearch,
+  component: lazyRouteComponent(() => import('./routes/administrators-route'), 'AdministratorsRoute'),
+})
+
+const chartReportsRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: 'chart-reports',
+  validateSearch: validateChartReportListSearch,
+  component: lazyRouteComponent(() => import('./routes/chart-reports-route'), 'ChartReportsRoute'),
+})
+
+const chartReportDetailRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: 'chart-reports/$reportId',
+  component: lazyRouteComponent(() => import('./routes/chart-report-detail-route'), 'ChartReportDetailRoute'),
+})
+
+const signInRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'sign-in',
+  component: lazyRouteComponent(() => import('./routes/sign-in-route'), 'SignInRoute'),
+})
+
+export const adminRouteTree = rootRoute.addChildren([
+  signInRoute,
+  requireAdminRoute.addChildren([
+    primaryAuthResultRoute,
+    workspaceRoute.addChildren([
+      shellRoute.addChildren([
+        dashboardRoute,
+        chartsRoute,
+        commentsRoute,
+        usersRoute,
+        userDetailRoute,
+        administratorsRoute,
+        chartReportsRoute,
+        chartReportDetailRoute,
+      ]),
+    ]),
+  ]),
+])
+
+export const createAdminRouter = ({ history }: { history?: RouterHistory } = {}) =>
+  createRouter({
+    routeTree: adminRouteTree,
+    history,
+    defaultPreload: 'intent',
+    defaultPendingMs: 0,
+    defaultPendingMinMs: 250,
+    scrollRestoration: true,
+  })
+
+export const adminRouter = createAdminRouter()
+
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: ReturnType<typeof createAdminRouter>
+  }
+}

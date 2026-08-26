@@ -1,9 +1,12 @@
 import * as crypto from 'node:crypto'
 import { eq, lt } from 'drizzle-orm'
+import type { Pool } from 'pg'
 import { z } from 'zod'
 import { config } from '../../config.js'
-import { db } from '../../db/index.js'
+import { db, pool } from '../../db/index.js'
 import { lxnsOauthStates, lxnsOauthTokens } from '../../db/schema.js'
+import { loadPostgresUserBanState } from '../../admin/user-ban-store.js'
+import { PublicAccountBanned, runPostgresPublicUserWriteLeaseWithoutSession } from '../../public-access-policy.js'
 
 const LXNS_BASE = 'https://maimai.lxns.net'
 const LXNS_AUTHORIZE_URL = `${LXNS_BASE}/oauth/authorize`
@@ -51,36 +54,77 @@ export async function generateAuthorizationUrl(userId: string): Promise<string> 
   return `${LXNS_AUTHORIZE_URL}?${params.toString()}`
 }
 
-export async function exchangeCodeForTokens(code: string, state: string): Promise<string> {
-  ensureConfigured()
+export type LxnsCodeExchangeDependencies = {
+  readonly database?: Pool
+  readonly request?: typeof globalThis.fetch
+  readonly clientId?: string
+  readonly clientSecret?: string
+  readonly redirectUri?: string
+}
 
-  // Validate state
-  const [stateRow] = await db.select().from(lxnsOauthStates).where(eq(lxnsOauthStates.state, state)).limit(1)
+export async function exchangeCodeForTokens(
+  code: string,
+  state: string,
+  dependencies: LxnsCodeExchangeDependencies = {},
+): Promise<string> {
+  const database = dependencies.database ?? pool
+  const request = dependencies.request ?? globalThis.fetch
+  const clientId = dependencies.clientId ?? config.lxns.clientId
+  const clientSecret = dependencies.clientSecret ?? config.lxns.clientSecret
+  const redirectUri = dependencies.redirectUri ?? getRedirectUri()
+  if (!clientId || !clientSecret) {
+    throw new Error('LXNS OAuth is not configured (missing LXNS_CLIENT_ID or LXNS_CLIENT_SECRET)')
+  }
 
+  // Resolve and consume the one-time server-side state before any external
+  // request. The callback intentionally does not trust a browser session.
+  const consumed = await database.query<{
+    readonly user_id: string
+    readonly created_at: Date
+    readonly valid: boolean
+  }>(
+    `
+      WITH consumed_state AS (
+        DELETE FROM lxns_oauth_states
+        WHERE state = $1
+        RETURNING user_id, created_at
+      )
+      SELECT
+        user_id,
+        created_at,
+        created_at > (
+          clock_timestamp() - ($2::bigint * interval '1 millisecond')
+        )::timestamp AS valid
+      FROM consumed_state
+    `,
+    [state, STATE_TTL_MS],
+  )
+  const stateRow = consumed.rows[0]
   if (!stateRow) {
     throw new Error('Invalid or expired OAuth state')
   }
-
-  if (Date.now() - stateRow.created_at.getTime() > STATE_TTL_MS) {
-    await db.delete(lxnsOauthStates).where(eq(lxnsOauthStates.id, stateRow.id))
+  if (!stateRow.valid) {
     throw new Error('OAuth state expired')
   }
 
   const userId = stateRow.user_id
 
-  // Delete used state
-  await db.delete(lxnsOauthStates).where(eq(lxnsOauthStates.id, stateRow.id))
+  // Avoid sending credentials or authorization codes to LXNS when the
+  // database-time projection already says this account is banned.
+  const stateBeforeExchange = await loadPostgresUserBanState(database, userId)
+  if (stateBeforeExchange.active) throw new PublicAccountBanned(stateBeforeExchange)
 
   // Exchange code for tokens
-  const response = await fetch(LXNS_TOKEN_URL, {
+  const response = await request(LXNS_TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(30_000),
     body: JSON.stringify({
-      client_id: config.lxns.clientId,
-      client_secret: config.lxns.clientSecret,
+      client_id: clientId,
+      client_secret: clientSecret,
       grant_type: 'authorization_code',
       code,
-      redirect_uri: getRedirectUri(),
+      redirect_uri: redirectUri,
     }),
   })
 
@@ -94,28 +138,35 @@ export async function exchangeCodeForTokens(code: string, state: string): Promis
   const now = new Date()
   const expiresAt = new Date(now.getTime() + tokenData.expires_in * 1000)
 
-  // Upsert token
-  await db
-    .insert(lxnsOauthTokens)
-    .values({
-      user_id: userId,
-      access_token: tokenData.access_token,
-      refresh_token: tokenData.refresh_token,
-      expires_at: expiresAt,
-      scope: tokenData.scope,
-      created_at: now,
-      updated_at: now,
-    })
-    .onConflictDoUpdate({
-      target: lxnsOauthTokens.user_id,
-      set: {
-        access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token,
-        expires_at: expiresAt,
-        scope: tokenData.scope,
-        updated_at: now,
-      },
-    })
+  // The network call creates a race window. Re-lock and re-evaluate the user
+  // after it returns, then commit the credential upsert in that same lease.
+  await runPostgresPublicUserWriteLeaseWithoutSession(
+    userId,
+    async (transaction) => {
+      await transaction.query(
+        `
+          INSERT INTO lxns_oauth_tokens (
+            user_id,
+            access_token,
+            refresh_token,
+            expires_at,
+            scope,
+            created_at,
+            updated_at
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $6)
+          ON CONFLICT (user_id) DO UPDATE SET
+            access_token = EXCLUDED.access_token,
+            refresh_token = EXCLUDED.refresh_token,
+            expires_at = EXCLUDED.expires_at,
+            scope = EXCLUDED.scope,
+            updated_at = EXCLUDED.updated_at
+        `,
+        [userId, tokenData.access_token, tokenData.refresh_token, expiresAt, tokenData.scope, now],
+      )
+    },
+    database,
+  )
 
   return userId
 }
@@ -132,6 +183,7 @@ async function refreshAccessToken(userId: string): Promise<string> {
   const response = await fetch(LXNS_TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(30_000),
     body: JSON.stringify({
       client_id: config.lxns.clientId,
       client_secret: config.lxns.clientSecret,

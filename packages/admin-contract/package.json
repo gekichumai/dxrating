@@ -1,0 +1,32 @@
+{
+  "name": "@gekichumai/admin-contract",
+  "version": "0.0.0-private",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./openapi": "./src/openapi.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "vitest run",
+    "openapi:generate": "tsx scripts/generate-openapi.ts",
+    "openapi:compatibility:check": "tsx scripts/check-compatibility.ts",
+    "openapi:compatibility:update": "tsx scripts/update-compatibility.ts"
+  },
+  "dependencies": {
+    "@gekichumai/api-contract": "workspace:*",
+    "@orpc/contract": "catalog:",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@orpc/openapi": "catalog:",
+    "@orpc/zod": "catalog:",
+    "@types/node": "catalog:",
+    "tsx": "^4.21.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -11,6 +11,7 @@ import IconLogosGoogle from '~icons/logos/google-icon'
 import IconPasskey from '~icons/material-symbols/passkey'
 import { authClient } from '../../lib/auth-client'
 import { formatErrorMessage } from '../../utils/formatErrorMessage'
+import { createPublicOauthSignInInput } from './oauth-sign-in-policy'
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
 
@@ -125,11 +126,13 @@ export const LoginForm = ({
 
   const handleSocial = async (provider: 'google' | 'github') => {
     setPendingProvider(provider)
-    await authClient.signIn.social({
-      provider,
-      callbackURL: window.location.href,
-      errorCallbackURL: window.location.href,
-    })
+    await authClient.signIn.social(
+      createPublicOauthSignInInput({
+        callbackURL: window.location.href,
+        isSignUp,
+        provider,
+      }),
+    )
     // No setPendingProvider(null) because it redirects
   }
 

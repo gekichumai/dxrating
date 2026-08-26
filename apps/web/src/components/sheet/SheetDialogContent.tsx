@@ -30,6 +30,7 @@ import { formatSheetReleaseDateParts } from '../../utils/dateFormatting'
 import { calculateRating } from '../../utils/rating'
 import { useRenderedAt } from '../../utils/renderEnvironment'
 import { DXRank } from '../global/DXRank'
+import { ChartIssueReportButton } from '../chartReports/ChartIssueReportButton'
 import { SheetDialogContentHeader } from './SheetDialogContentHeader'
 import { SheetTitle } from './SheetListItem'
 import { SheetTags } from './tags/SheetTags'
@@ -408,6 +409,10 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                   ),
                 }}
               />
+            </div>
+
+            <div className="mt-3 flex justify-end">
+              <ChartIssueReportButton sheet={sheet} />
             </div>
           </div>
         </div>

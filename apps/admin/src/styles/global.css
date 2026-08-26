@@ -1,0 +1,31 @@
+:root {
+  color-scheme: light dark;
+}
+
+html {
+  min-width: 20rem;
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body,
+#root {
+  min-height: 100dvh;
+  margin: 0;
+}
+
+body {
+  text-wrap: pretty;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 2px;
+}

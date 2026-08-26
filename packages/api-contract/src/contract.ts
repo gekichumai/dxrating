@@ -1,6 +1,37 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 
+export const PUBLIC_PROCEDURE_ACCESS_MODES = [
+  'public_read',
+  'identity_independent',
+  'authenticated_read',
+  'authenticated_write',
+] as const
+
+export type PublicProcedureAccessMode = (typeof PUBLIC_PROCEDURE_ACCESS_MODES)[number]
+
+/**
+ * Every procedure must replace the fail-closed sentinel with an explicit
+ * access classification. The contract inventory tests reject the sentinel,
+ * and the backend guard refuses to execute it at runtime.
+ */
+export type PublicProcedureMetadata = {
+  readonly access: PublicProcedureAccessMode | 'unclassified'
+}
+
+export const publicErrors = {
+  UNAUTHORIZED: {
+    status: 401,
+    message: 'Authentication is required',
+  },
+  ACCOUNT_BANNED: {
+    status: 403,
+    message: 'This account is banned',
+  },
+} as const
+
+export const publicProcedure = oc.$meta<PublicProcedureMetadata>({ access: 'unclassified' }).errors(publicErrors)
+
 /**
  * A localized string is an object mapping language codes to translated strings.
  * Supported language codes: "en", "ja", "zh-Hans", "zh-Hant"
@@ -55,6 +86,186 @@ export const CreateCommentInputSchema = z.object({
   content: z.string(),
 })
 
+export const CHART_REPORT_FIELD_KEYS = [
+  'song.title',
+  'song.artist',
+  'song.category',
+  'song.bpm',
+  'song.image_name',
+  'song.is_new',
+  'song.is_locked',
+  'song.version',
+  'chart.type',
+  'chart.difficulty',
+  'chart.level',
+  'chart.internal_level',
+  'chart.multiver_internal_levels',
+  'chart.note_designer',
+  'chart.note_counts.tap',
+  'chart.note_counts.hold',
+  'chart.note_counts.slide',
+  'chart.note_counts.touch',
+  'chart.note_counts.break',
+  'chart.note_counts.total',
+  'chart.regions.jp',
+  'chart.regions.intl',
+  'chart.regions.cn',
+  'chart.version',
+  'chart.release_date',
+  'chart.internal_id',
+  'chart.is_special',
+  'chart.comment',
+] as const
+
+export const CHART_REPORT_CATEGORY_KEYS = ['incorrect_value', 'missing_value', 'outdated_value', 'other'] as const
+
+export const CHART_REPORT_VALUE_KINDS = [
+  'string',
+  'nullable_string',
+  'number',
+  'nullable_number',
+  'integer',
+  'nullable_integer',
+  'boolean',
+  'nullable_number_map',
+] as const
+
+export const CHART_REPORT_TURNSTILE_ACTION = 'chart-report' as const
+
+export type ChartReportValueKind = (typeof CHART_REPORT_VALUE_KINDS)[number]
+
+export const ChartReportFieldKeySchema = z.enum(CHART_REPORT_FIELD_KEYS)
+export const ChartReportCategoryKeySchema = z.enum(CHART_REPORT_CATEGORY_KEYS)
+export const ChartReportValueKindSchema = z.enum(CHART_REPORT_VALUE_KINDS)
+export const ChartReportPublicSongIdSchema = z.string().regex(/^dsng_[23456789abcdefghjkmnpqrstvwxyz]{10}$/)
+export const ChartReportPublicChartIdSchema = z.string().regex(/^dsht_[23456789abcdefghjkmnpqrstvwxyz]{10}$/)
+export const ChartReportPublicationRevisionSchema = z
+  .string()
+  .regex(/^[1-9]\d{0,18}$/)
+  .refine((value) => {
+    try {
+      return BigInt(value) <= 9_223_372_036_854_775_807n
+    } catch {
+      return false
+    }
+  })
+
+const ChartReportNumberMapSnapshotSchema = z
+  .record(z.string().min(1).max(255), z.number().finite())
+  .refine((value) => Object.keys(value).length <= 100, 'Chart report number maps may contain at most 100 entries')
+
+export const ChartReportJsonSnapshotSchema = z
+  .union([z.string().max(2_048), z.number().finite(), z.boolean(), z.null(), ChartReportNumberMapSnapshotSchema])
+  .refine((value) => {
+    try {
+      return new TextEncoder().encode(JSON.stringify(value)).byteLength <= 4_096
+    } catch {
+      return false
+    }
+  }, 'Chart report snapshots may contain at most 4096 UTF-8 bytes')
+
+export const CreateChartReportInputSchema = z.strictObject({
+  songId: ChartReportPublicSongIdSchema,
+  chartId: ChartReportPublicChartIdSchema,
+  fieldKey: ChartReportFieldKeySchema,
+  category: ChartReportCategoryKeySchema,
+  publicationRevision: ChartReportPublicationRevisionSchema,
+  currentValue: ChartReportJsonSnapshotSchema,
+  proposedValue: ChartReportJsonSnapshotSchema,
+  explanation: z.string().trim().min(1).max(4_000),
+  sourceUrls: z.array(z.string().min(1).max(2_048)).max(5),
+  turnstileToken: z.string().min(1).max(2_048),
+})
+
+export const CreateChartReportOutputSchema = z.strictObject({
+  id: z.string().uuid(),
+  state: z.literal('open'),
+  createdAt: z.string().datetime(),
+})
+
+const ChartReportContextSongIdentitySchema = z
+  .string()
+  .min(1)
+  .max(255)
+  .refine((value) => value === value.trim(), 'Chart report context identity must not have surrounding whitespace')
+
+const ChartReportContextChartPartSchema = z
+  .string()
+  .min(1)
+  .max(64)
+  .refine((value) => value === value.trim(), 'Chart report context chart part must not have surrounding whitespace')
+
+export const ResolveChartReportContextInputSchema = z.strictObject({
+  songId: ChartReportContextSongIdentitySchema,
+  chartType: ChartReportContextChartPartSchema,
+  chartDifficulty: ChartReportContextChartPartSchema,
+  fieldKey: ChartReportFieldKeySchema,
+})
+
+export const ResolveChartReportContextOutputSchema = z.strictObject({
+  songId: ChartReportPublicSongIdSchema,
+  chartId: ChartReportPublicChartIdSchema,
+  fieldKey: ChartReportFieldKeySchema,
+  publicationRevision: ChartReportPublicationRevisionSchema,
+  currentValue: ChartReportJsonSnapshotSchema,
+  valueKind: ChartReportValueKindSchema,
+})
+
+export const ChartReportStalePublicationDataSchema = z.strictObject({
+  songId: ChartReportPublicSongIdSchema,
+  chartId: ChartReportPublicChartIdSchema,
+  activePublicationRevision: ChartReportPublicationRevisionSchema,
+})
+
+export const ChartReportRateLimitedDataSchema = z.strictObject({
+  retryAfterSeconds: z.number().int().positive().max(86_400),
+})
+
+export const chartReportErrors = {
+  CHART_REPORT_VALIDATION_FAILED: {
+    status: 400,
+    message: 'Chart report submission is invalid',
+  },
+  CHART_REPORT_TURNSTILE_FAILED: {
+    status: 400,
+    message: 'Chart report verification failed',
+  },
+  CHART_REPORT_STALE_PUBLICATION: {
+    status: 409,
+    message: 'The published chart changed; review the current value before resubmitting',
+    data: ChartReportStalePublicationDataSchema,
+  },
+  CHART_REPORT_RATE_LIMITED: {
+    status: 429,
+    message: 'Too many chart report submissions',
+    data: ChartReportRateLimitedDataSchema,
+  },
+  CHART_REPORT_CATALOG_UNAVAILABLE: {
+    status: 503,
+    message: 'The published chart catalog is temporarily unavailable',
+  },
+  CHART_REPORT_VERIFICATION_UNAVAILABLE: {
+    status: 503,
+    message: 'Chart report verification is temporarily unavailable',
+  },
+} as const
+
+export const chartReportContextErrors = {
+  CHART_REPORT_VALIDATION_FAILED: chartReportErrors.CHART_REPORT_VALIDATION_FAILED,
+  CHART_REPORT_CONTEXT_NOT_FOUND: {
+    status: 404,
+    message: 'The requested chart report context was not found',
+  },
+  CHART_REPORT_CATALOG_UNAVAILABLE: chartReportErrors.CHART_REPORT_CATALOG_UNAVAILABLE,
+} as const
+
+/**
+ * Generic public body returned for a currently removed comment. Keeping the
+ * marker in the existing required string field lets older clients preserve
+ * the comment's place in a thread without learning private moderation data.
+ */
+export const PUBLIC_COMMENT_TOMBSTONE_CONTENT = '[deleted]' as const
+
 export const CommentSchema = z.object({
   id: z.number(),
   created_at: z.date().or(z.string()),
@@ -71,7 +282,7 @@ export const CommentWithProfileSchema = z.object({
   id: z.number(),
   parent_id: z.number().nullable(),
   created_at: z.date().or(z.string()),
-  content: z.string(),
+  content: z.string().describe(`Comment body. Currently removed comments use ${PUBLIC_COMMENT_TOMBSTONE_CONTENT}.`),
   display_name: z.string().nullable(),
 })
 
@@ -251,8 +462,61 @@ export const ArcadeVenueDetailInputSchema = z.object({
 })
 
 export const publicContractRoutes = {
+  chartReports: {
+    resolveContext: publicProcedure
+      .errors(chartReportContextErrors)
+      .meta({ access: 'authenticated_read' })
+      .route({
+        method: 'GET',
+        path: '/chart-reports/context',
+        operationId: 'resolveChartReportContext',
+        summary: 'Resolve the active context for a chart-data report',
+        description:
+          'Resolves a public chart-page identity and reportable field to the active stable chart identity, publication revision, and server-current value. Report management remains private.',
+        tags: ['Chart Reports'],
+      })
+      .input(ResolveChartReportContextInputSchema)
+      .output(ResolveChartReportContextOutputSchema),
+    create: publicProcedure
+      .errors(chartReportErrors)
+      .meta({ access: 'authenticated_write' })
+      .route({
+        method: 'POST',
+        path: '/chart-reports',
+        operationId: 'createChartReport',
+        summary: 'Report a suspected chart-data problem',
+        description:
+          'Captures a proposed correction against the active published chart after independent Turnstile verification. Report management and internal closure notes are private administrator operations.',
+        tags: ['Chart Reports'],
+        spec: (spec) => {
+          const rateLimitedResponse = spec.responses?.['429']
+          if (!rateLimitedResponse || '$ref' in rateLimitedResponse) return spec
+
+          return {
+            ...spec,
+            responses: {
+              ...spec.responses,
+              429: {
+                ...rateLimitedResponse,
+                headers: {
+                  ...rateLimitedResponse.headers,
+                  'Retry-After': {
+                    description:
+                      'Whole seconds until both the per-user and endpoint-global submission limits permit another attempt.',
+                    schema: { type: 'integer', minimum: 1, maximum: 86_400 },
+                  },
+                },
+              },
+            },
+          }
+        },
+      })
+      .input(CreateChartReportInputSchema)
+      .output(CreateChartReportOutputSchema),
+  },
   tags: {
-    list: oc
+    list: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/tags',
@@ -262,7 +526,8 @@ export const publicContractRoutes = {
       })
       .input(CatalogIdSchemeInputSchema)
       .output(TagsListResponseSchema),
-    attach: oc
+    attach: publicProcedure
+      .meta({ access: 'authenticated_write' })
       .route({
         method: 'POST',
         path: '/tags/attach',
@@ -273,7 +538,8 @@ export const publicContractRoutes = {
       .output(z.object({ id: z.number() })),
   },
   comments: {
-    create: oc
+    create: publicProcedure
+      .meta({ access: 'authenticated_write' })
       .route({
         method: 'POST',
         path: '/comments',
@@ -282,7 +548,8 @@ export const publicContractRoutes = {
       })
       .input(CreateCommentInputSchema)
       .output(CommentSchema),
-    list: oc
+    list: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/comments',
@@ -294,7 +561,8 @@ export const publicContractRoutes = {
       .output(z.array(CommentWithProfileSchema)),
   },
   aliases: {
-    list: oc
+    list: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/aliases',
@@ -304,7 +572,8 @@ export const publicContractRoutes = {
       })
       .input(CatalogIdSchemeInputSchema)
       .output(z.array(AliasSchema)),
-    create: oc
+    create: publicProcedure
+      .meta({ access: 'authenticated_write' })
       .route({
         method: 'POST',
         path: '/aliases',
@@ -315,7 +584,8 @@ export const publicContractRoutes = {
       .output(z.object({ id: z.number() })),
   },
   analytics: {
-    trending: oc
+    trending: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/analytics/trending',
@@ -327,7 +597,8 @@ export const publicContractRoutes = {
       .output(TrendingResponseSchema),
   },
   arcades: {
-    games: oc
+    games: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/arcades/games',
@@ -336,7 +607,8 @@ export const publicContractRoutes = {
         spec: (spec) => ({ ...spec, security: [] }),
       })
       .output(ArcadeGamesListResponseSchema),
-    venues: oc
+    venues: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/arcades/venues',
@@ -346,7 +618,8 @@ export const publicContractRoutes = {
       })
       .input(ArcadeVenuesListInputSchema)
       .output(ArcadeVenuesListResponseSchema),
-    venue: oc
+    venue: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/arcades/venues/{id}',
@@ -358,7 +631,8 @@ export const publicContractRoutes = {
       .output(ArcadeVenueSchema),
   },
   lxns: {
-    authorize: oc
+    authorize: publicProcedure
+      .meta({ access: 'authenticated_write' })
       .route({
         method: 'POST',
         path: '/io/import/lxns/authorize',
@@ -366,7 +640,8 @@ export const publicContractRoutes = {
         tags: ['Import'],
       })
       .output(z.object({ url: z.string() })),
-    status: oc
+    status: publicProcedure
+      .meta({ access: 'authenticated_read' })
       .route({
         method: 'GET',
         path: '/io/import/lxns/status',
@@ -374,7 +649,8 @@ export const publicContractRoutes = {
         tags: ['Import'],
       })
       .output(z.object({ connected: z.boolean() })),
-    start: oc
+    start: publicProcedure
+      .meta({ access: 'authenticated_write' })
       .route({
         method: 'POST',
         path: '/io/import/lxns/start',
@@ -382,7 +658,8 @@ export const publicContractRoutes = {
         tags: ['Import'],
       })
       .output(LxnsStartOutputSchema),
-    disconnect: oc
+    disconnect: publicProcedure
+      .meta({ access: 'authenticated_write' })
       .route({
         method: 'POST',
         path: '/io/import/lxns/disconnect',
@@ -393,4 +670,4 @@ export const publicContractRoutes = {
   },
 }
 
-export const publicAppContract = oc.router(publicContractRoutes)
+export const publicAppContract = publicProcedure.router(publicContractRoutes)

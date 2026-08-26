@@ -7,6 +7,7 @@
 !pnpm-workspace.yaml
 !.npmrc
 !packages/tsconfig/
+!packages/admin-contract/
 !packages/api-contract/
 !packages/dxdata/
 !packages/maimai-domain/
@@ -16,3 +17,7 @@
 **/node_modules
 **/dist
 **/.turbo
+
+# Runtime configuration is supplied by the deployment environment. Never send
+# local credentials to the Docker daemon or a remote build cache.
+apps/backend/.env*

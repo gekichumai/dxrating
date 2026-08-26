@@ -1,0 +1,15 @@
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.65rem;
+  line-height: 1.45;
+}
+
+.timestamp {
+  font-variant-numeric: tabular-nums;
+}
+
+.utc {
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-xs);
+}

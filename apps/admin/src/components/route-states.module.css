@@ -1,0 +1,21 @@
+.loading {
+  display: grid;
+  gap: var(--mantine-spacing-lg);
+  padding-block: var(--mantine-spacing-xl);
+}
+
+.recovery {
+  min-height: 100dvh;
+  padding: var(--mantine-spacing-xl);
+  background:
+    radial-gradient(
+      circle at top left,
+      color-mix(in srgb, var(--mantine-primary-color-filled) 12%, transparent),
+      transparent 38%
+    ),
+    var(--mantine-color-body);
+}
+
+.recoveryCard {
+  width: min(100%, 36rem);
+}

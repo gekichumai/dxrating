@@ -1,0 +1,20 @@
+services:
+  migrate:
+    image: ghcr.io/gekichumai/dxrating/backend@${MIGRATION_IMAGE_DIGEST:?MIGRATION_IMAGE_DIGEST is required}
+    command:
+      - node
+      - --enable-source-maps
+      - --experimental-transform-types
+      - dist/migrate.js
+    environment:
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:?MIGRATION_DATABASE_URL is required}
+      MIGRATION_LOCK_TIMEOUT_MS: ${MIGRATION_LOCK_TIMEOUT_MS:-60000}
+      MIGRATION_LOCK_RETRY_MS: ${MIGRATION_LOCK_RETRY_MS:-250}
+      MIGRATION_CONNECTION_TIMEOUT_MS: ${MIGRATION_CONNECTION_TIMEOUT_MS:-10000}
+      MIGRATION_SQL_LOCK_TIMEOUT_MS: ${MIGRATION_SQL_LOCK_TIMEOUT_MS:-5000}
+      MIGRATION_STATEMENT_TIMEOUT_MS: ${MIGRATION_STATEMENT_TIMEOUT_MS:-900000}
+    healthcheck:
+      disable: true
+    restart: 'no'
+    networks:
+      - database

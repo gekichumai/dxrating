@@ -13,13 +13,87 @@ import {
   integer,
   smallint,
   index,
+  uniqueIndex,
   unique,
   check,
+  foreignKey,
+  uuid,
 } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
-import { user } from './auth-schema.js'
+import {
+  CHART_REPORT_CATEGORY_KEYS,
+  CHART_REPORT_CLOSE_NOTE_MAX_LENGTH,
+  CHART_REPORT_EXPLANATION_MAX_LENGTH,
+  CHART_REPORT_FIELD_KEYS,
+  CHART_REPORT_JSON_SNAPSHOT_MAX_BYTES,
+  CHART_REPORT_PRODUCTION_CHANNEL,
+  CHART_REPORT_SOURCE_URL_MAX_COUNT,
+  type ChartReportCategoryKey,
+  type ChartReportFieldKey,
+  type ChartReportJsonSnapshot,
+  type ChartReportState,
+} from '../chart-reports/chart-report-domain.js'
+import { account, session, user, userRole } from './auth-schema.js'
 
 // --- Application Tables ---
+
+const sqlTextList = (values: readonly string[]) =>
+  sql.raw(values.map((value) => `'${value.replaceAll("'", "''")}'`).join(', '))
+
+const chartReportFieldKeySql = sqlTextList(CHART_REPORT_FIELD_KEYS)
+const chartReportCategoryKeySql = sqlTextList(CHART_REPORT_CATEGORY_KEYS)
+const chartReportProductionChannelSql = sqlTextList([CHART_REPORT_PRODUCTION_CHANNEL])
+const chartReportJsonSnapshotMaxBytesSql = sql.raw(CHART_REPORT_JSON_SNAPSHOT_MAX_BYTES.toString())
+const chartReportJsonSnapshotStorageMaxBytesSql = sql.raw((CHART_REPORT_JSON_SNAPSHOT_MAX_BYTES + 2 * 100).toString())
+const chartReportExplanationMaxLengthSql = sql.raw(CHART_REPORT_EXPLANATION_MAX_LENGTH.toString())
+const chartReportSourceUrlMaxCountSql = sql.raw(CHART_REPORT_SOURCE_URL_MAX_COUNT.toString())
+const chartReportCloseNoteMaxLengthSql = sql.raw(CHART_REPORT_CLOSE_NOTE_MAX_LENGTH.toString())
+
+const chartReportSnapshotCheck = (fieldKey: AnyPgColumn, value: AnyPgColumn) => sql`
+  octet_length(${value}::text) <= case
+    when ${fieldKey} = 'chart.multiver_internal_levels' then ${chartReportJsonSnapshotStorageMaxBytesSql}
+    else ${chartReportJsonSnapshotMaxBytesSql}
+  end
+  and case
+    when ${fieldKey} in (
+      'song.title', 'song.artist', 'song.category', 'song.image_name', 'song.version', 'chart.version'
+    ) then jsonb_typeof(${value}) = 'string'
+      and length(${value} #>> '{}') <= 2048
+    when ${fieldKey} in ('chart.type', 'chart.difficulty', 'chart.level') then jsonb_typeof(${value}) = 'string'
+      and length(${value} #>> '{}') <= 64
+    when ${fieldKey} in ('chart.note_designer', 'chart.comment') then jsonb_typeof(${value}) = 'null'
+      or (jsonb_typeof(${value}) = 'string' and length(${value} #>> '{}') <= 2048)
+    when ${fieldKey} = 'chart.release_date' then jsonb_typeof(${value}) = 'null'
+      or (jsonb_typeof(${value}) = 'string'
+        and (${value} #>> '{}') ~ '^\\d{4}-\\d{2}-\\d{2}$'
+        and to_char(to_date(${value} #>> '{}', 'YYYY-MM-DD'), 'YYYY-MM-DD') = (${value} #>> '{}'))
+    when ${fieldKey} in (
+      'song.is_new', 'song.is_locked', 'chart.regions.jp', 'chart.regions.intl', 'chart.regions.cn',
+      'chart.is_special'
+    ) then jsonb_typeof(${value}) = 'boolean'
+    when ${fieldKey} = 'song.bpm' then jsonb_typeof(${value}) = 'null'
+      or (jsonb_typeof(${value}) = 'number'
+        and (${value} #>> '{}')::numeric between 0.001 and 10000
+        and scale((${value} #>> '{}')::numeric) <= 3
+        and trunc((${value} #>> '{}')::numeric * 1000) = (${value} #>> '{}')::numeric * 1000)
+    when ${fieldKey} = 'chart.internal_level' then jsonb_typeof(${value}) = 'number'
+      and (${value} #>> '{}')::numeric between 0 and 100
+      and scale((${value} #>> '{}')::numeric) <= 3
+      and trunc((${value} #>> '{}')::numeric * 1000) = (${value} #>> '{}')::numeric * 1000
+    when ${fieldKey} in (
+      'chart.note_counts.tap', 'chart.note_counts.hold', 'chart.note_counts.slide',
+      'chart.note_counts.touch', 'chart.note_counts.break', 'chart.note_counts.total'
+    ) then jsonb_typeof(${value}) = 'null'
+      or (jsonb_typeof(${value}) = 'number'
+        and (${value} #>> '{}')::numeric between 0 and 1000000
+        and trunc((${value} #>> '{}')::numeric) = (${value} #>> '{}')::numeric)
+    when ${fieldKey} = 'chart.internal_id' then jsonb_typeof(${value}) = 'null'
+      or (jsonb_typeof(${value}) = 'number'
+        and (${value} #>> '{}')::numeric between 0 and 2147483647
+        and trunc((${value} #>> '{}')::numeric) = (${value} #>> '{}')::numeric)
+    when ${fieldKey} = 'chart.multiver_internal_levels' then jsonb_typeof(${value}) in ('null', 'object')
+    else true
+  end`
 
 export const tagGroups = pgTable('tag_groups', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
@@ -53,26 +127,560 @@ export const tagSongs = pgTable('tag_songs', {
     .references(() => user.id, { onDelete: 'cascade' }),
 })
 
-export const profiles = pgTable('profiles', {
-  id: text('id')
-    .primaryKey()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  created_at: timestamp('created_at').defaultNow().notNull(),
-  display_name: text('display_name').notNull(),
-})
+export const profiles = pgTable(
+  'profiles',
+  {
+    id: text('id')
+      .primaryKey()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+    display_name: text('display_name').notNull(),
+  },
+  (table) => [
+    index('admin_profile_search_display_name_lower_pattern_id_idx')
+      .using(
+        'btree',
+        sql`lower(btrim(regexp_replace(normalize(${table.display_name}, NFKC), '[[:space:]]+', ' ', 'g'))) text_pattern_ops`,
+        table.id,
+      )
+      .concurrently(),
+  ],
+)
 
-export const comments = pgTable('comments', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
-  created_at: timestamp('created_at').defaultNow().notNull(),
-  created_by: text('created_by')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  song_id: text('song_id').notNull(),
-  sheet_type: text('sheet_type').notNull(),
-  sheet_difficulty: text('sheet_difficulty').notNull(),
-  parent_id: bigint('parent_id', { mode: 'number' }).references((): AnyPgColumn => comments.id),
-  content: text('content').notNull(),
-})
+export const comments = pgTable(
+  'comments',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+    created_by: text('created_by')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    song_id: text('song_id').notNull(),
+    sheet_type: text('sheet_type').notNull(),
+    sheet_difficulty: text('sheet_difficulty').notNull(),
+    parent_id: bigint('parent_id', { mode: 'number' }).references((): AnyPgColumn => comments.id),
+    content: text('content').notNull(),
+  },
+  (table) => [
+    index('admin_comments_recent_idx').on(table.created_at.desc(), table.id.desc()).concurrently(),
+    index('admin_comments_author_recent_idx')
+      .on(table.created_by, table.created_at.desc(), table.id.desc())
+      .concurrently(),
+    index('admin_comments_chart_recent_idx')
+      .on(table.song_id, table.sheet_type, table.sheet_difficulty, table.created_at.desc(), table.id.desc())
+      .concurrently(),
+    index('admin_comments_parent_created_idx')
+      .on(table.parent_id, table.created_at, table.id)
+      .concurrently()
+      .where(sql`${table.parent_id} is not null`),
+  ],
+)
+
+// --- Chart-Data Issue Reports ---
+
+export const chartReports = pgTable(
+  'chart_reports',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    reporter_user_id: text('reporter_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    stable_song_id: text('stable_song_id').notNull(),
+    stable_chart_id: text('stable_chart_id').notNull(),
+    publication_channel: text('publication_channel').notNull(),
+    publication_catalog_run_id: bigint('publication_catalog_run_id', { mode: 'bigint' }).notNull(),
+    publication_revision: bigint('publication_revision', { mode: 'bigint' }).notNull(),
+    publication_fingerprint_sha256: text('publication_fingerprint_sha256').notNull(),
+    target_field_key: text('target_field_key').$type<ChartReportFieldKey>().notNull(),
+    category: text('category').$type<ChartReportCategoryKey>().notNull(),
+    current_value: jsonb('current_value').$type<ChartReportJsonSnapshot>().notNull(),
+    proposed_value: jsonb('proposed_value').$type<ChartReportJsonSnapshot>().notNull(),
+    explanation: text('explanation').notNull(),
+    source_urls: text('source_urls').array().notNull().default([]),
+    state: text('state').$type<ChartReportState>().notNull().default('open'),
+    created_at: timestamp('created_at', { withTimezone: true, precision: 3 }).defaultNow().notNull(),
+    closed_by_user_id: text('closed_by_user_id').references(() => user.id, { onDelete: 'restrict' }),
+    closed_at: timestamp('closed_at', { withTimezone: true, precision: 3 }),
+    close_note: text('close_note'),
+  },
+  (table) => [
+    check(
+      'chart_reports_stable_song_id_check',
+      sql`${table.stable_song_id} ~ '^dsng_[23456789abcdefghjkmnpqrstvwxyz]{10}$'`,
+    ),
+    check(
+      'chart_reports_stable_chart_id_check',
+      sql`${table.stable_chart_id} ~ '^dsht_[23456789abcdefghjkmnpqrstvwxyz]{10}$'`,
+    ),
+    check(
+      'chart_reports_publication_identity_check',
+      sql`${table.publication_channel} in (${chartReportProductionChannelSql})
+        and ${table.publication_catalog_run_id} > 0
+        and ${table.publication_revision} > 0
+        and ${table.publication_fingerprint_sha256} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check('chart_reports_target_field_key_check', sql`${table.target_field_key} in (${chartReportFieldKeySql})`),
+    check('chart_reports_category_check', sql`${table.category} in (${chartReportCategoryKeySql})`),
+    check('chart_reports_current_value_check', chartReportSnapshotCheck(table.target_field_key, table.current_value)),
+    check('chart_reports_proposed_value_check', chartReportSnapshotCheck(table.target_field_key, table.proposed_value)),
+    check(
+      'chart_reports_explanation_check',
+      sql`length(${table.explanation}) between 1 and ${chartReportExplanationMaxLengthSql}
+        and ${table.explanation} !~ '^[[:space:]]'
+        and ${table.explanation} !~ '[[:space:]]$'`,
+    ),
+    check(
+      'chart_reports_source_urls_check',
+      sql`cardinality(${table.source_urls}) between 0 and ${chartReportSourceUrlMaxCountSql}
+        and (cardinality(${table.source_urls}) = 0 or array_ndims(${table.source_urls}) = 1)
+        and array_position(${table.source_urls}, null) is null`,
+    ),
+    check('chart_reports_state_check', sql`${table.state} in ('open', 'closed')`),
+    check(
+      'chart_reports_closure_check',
+      sql`(${table.state} = 'open'
+          and ${table.closed_by_user_id} is null
+          and ${table.closed_at} is null
+          and ${table.close_note} is null)
+        or (${table.state} = 'closed'
+          and ${table.closed_by_user_id} is not null
+          and ${table.closed_at} is not null
+          and ${table.closed_at} >= ${table.created_at}
+          and (${table.close_note} is null
+            or (length(${table.close_note}) between 1 and ${chartReportCloseNoteMaxLengthSql}
+              and ${table.close_note} !~ '^[[:space:]]'
+              and ${table.close_note} !~ '[[:space:]]$')))`,
+    ),
+    index('chart_reports_queue_idx').using(
+      'btree',
+      sql`(${table.state} = 'open') DESC`,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    index('chart_reports_chart_queue_idx').using(
+      'btree',
+      table.stable_chart_id,
+      sql`(${table.state} = 'open') DESC`,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    index('chart_reports_field_queue_idx').using(
+      'btree',
+      table.target_field_key,
+      sql`(${table.state} = 'open') DESC`,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    index('chart_reports_category_queue_idx').using(
+      'btree',
+      table.category,
+      sql`(${table.state} = 'open') DESC`,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    index('chart_reports_reporter_queue_idx').using(
+      'btree',
+      table.reporter_user_id,
+      sql`(${table.state} = 'open') DESC`,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    index('chart_reports_publication_revision_queue_idx').using(
+      'btree',
+      table.publication_revision,
+      sql`(${table.state} = 'open') DESC`,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    index('chart_reports_publication_identity_idx').on(
+      table.publication_channel,
+      table.publication_catalog_run_id,
+      table.publication_revision,
+      table.publication_fingerprint_sha256,
+    ),
+    index('chart_reports_created_idx').on(table.created_at.desc(), table.id.desc()),
+    index('chart_reports_closed_at_idx')
+      .on(table.closed_at.desc(), table.id.desc())
+      .where(sql`${table.state} = 'closed'`),
+  ],
+)
+
+/**
+ * Short-lived counters for the public chart-report submission endpoint.
+ *
+ * The global row is deliberately separate from user rows: every limiter
+ * transaction can lock the singleton first and the user row second. This
+ * fixed order makes the two-layer decision atomic without introducing a
+ * user-to-user lock cycle.
+ */
+export const chartReportGlobalRateLimits = pgTable(
+  'chart_report_global_rate_limits',
+  {
+    singleton_key: smallint('singleton_key').primaryKey(),
+    window_started_at: timestamp('window_started_at', { withTimezone: true, precision: 3 }).notNull(),
+    attempt_count: bigint('attempt_count', { mode: 'bigint' }).notNull(),
+    expires_at: timestamp('expires_at', { withTimezone: true, precision: 3 }).notNull(),
+  },
+  (table) => [
+    check('chart_report_global_rate_limits_singleton_check', sql`${table.singleton_key} = 1`),
+    check('chart_report_global_rate_limits_count_check', sql`${table.attempt_count} >= 1`),
+    check('chart_report_global_rate_limits_window_check', sql`${table.expires_at} > ${table.window_started_at}`),
+  ],
+)
+
+export const chartReportUserRateLimits = pgTable(
+  'chart_report_user_rate_limits',
+  {
+    user_id: text('user_id')
+      .primaryKey()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    window_started_at: timestamp('window_started_at', { withTimezone: true, precision: 3 }).notNull(),
+    attempt_count: bigint('attempt_count', { mode: 'bigint' }).notNull(),
+    expires_at: timestamp('expires_at', { withTimezone: true, precision: 3 }).notNull(),
+  },
+  (table) => [
+    check('chart_report_user_rate_limits_count_check', sql`${table.attempt_count} >= 1`),
+    check('chart_report_user_rate_limits_window_check', sql`${table.expires_at} > ${table.window_started_at}`),
+    index('chart_report_user_rate_limits_expiry_idx').on(table.expires_at, table.user_id),
+  ],
+)
+
+// --- Administrator Comment-Moderation State and History ---
+
+export const adminCommentModerationHistory = pgTable(
+  'admin_comment_moderation_history',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    comment_id: bigint('comment_id', { mode: 'bigint' })
+      .notNull()
+      .references(() => comments.id, { onDelete: 'restrict' }),
+    actor_user_id: text('actor_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    previous_event_id: bigint('previous_event_id', { mode: 'bigint' })
+      .unique()
+      .references((): AnyPgColumn => adminCommentModerationHistory.id, { onDelete: 'restrict' }),
+    action: text('action').$type<'delete' | 'restore'>().notNull(),
+    reason: text('reason'),
+    request_correlation_id: uuid('request_correlation_id').notNull(),
+    created_at: timestamp('created_at', { withTimezone: true, precision: 3 }).defaultNow().notNull(),
+  },
+  (table) => [
+    check('admin_comment_moderation_history_action_check', sql`${table.action} in ('delete', 'restore')`),
+    check(
+      'admin_comment_moderation_history_reason_check',
+      sql`(${table.action} = 'delete'
+          and ${table.reason} is not null
+          and length(${table.reason}) between 1 and 1000
+          and ${table.reason} !~ '^[[:space:]]'
+          and ${table.reason} !~ '[[:space:]]$')
+        or (${table.action} = 'restore' and ${table.reason} is null)`,
+    ),
+    unique('admin_comment_moderation_history_event_identity_unique').on(
+      table.id,
+      table.comment_id,
+      table.actor_user_id,
+      table.action,
+      table.created_at,
+    ),
+    index('admin_comment_moderation_history_comment_created_idx').on(
+      table.comment_id,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    uniqueIndex('admin_comment_moderation_history_comment_root_unique')
+      .on(table.comment_id)
+      .where(sql`${table.previous_event_id} is null`),
+  ],
+)
+
+export const adminCommentModerationState = pgTable(
+  'admin_comment_moderation_state',
+  {
+    comment_id: bigint('comment_id', { mode: 'bigint' })
+      .primaryKey()
+      .references(() => comments.id, { onDelete: 'restrict' }),
+    established_action: text('established_action').$type<'delete' | 'restore'>().notNull(),
+    deletion_reason: text('deletion_reason'),
+    actor_user_id: text('actor_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    established_by_event_id: bigint('established_by_event_id', { mode: 'bigint' }).notNull().unique(),
+    moderated_at: timestamp('moderated_at', { withTimezone: true, precision: 3 }).notNull(),
+    // Derived from immutable comments.created_at by the database guard. It is
+    // nullable only while the online high-water backfill covers pre-expansion
+    // moderation rows written before this projection existed.
+    comment_created_at: timestamp('comment_created_at'),
+  },
+  (table) => [
+    check('admin_comment_moderation_state_action_check', sql`${table.established_action} in ('delete', 'restore')`),
+    check(
+      'admin_comment_moderation_state_projection_check',
+      sql`(${table.established_action} = 'delete'
+          and ${table.deletion_reason} is not null
+          and length(${table.deletion_reason}) between 1 and 1000
+          and ${table.deletion_reason} !~ '^[[:space:]]'
+          and ${table.deletion_reason} !~ '[[:space:]]$')
+        or (${table.established_action} = 'restore' and ${table.deletion_reason} is null)`,
+    ),
+    foreignKey({
+      name: 'admin_comment_moderation_state_establishing_event_fk',
+      columns: [
+        table.established_by_event_id,
+        table.comment_id,
+        table.actor_user_id,
+        table.established_action,
+        table.moderated_at,
+      ],
+      foreignColumns: [
+        adminCommentModerationHistory.id,
+        adminCommentModerationHistory.comment_id,
+        adminCommentModerationHistory.actor_user_id,
+        adminCommentModerationHistory.action,
+        adminCommentModerationHistory.created_at,
+      ],
+    }).onDelete('restrict'),
+    index('admin_comment_moderation_state_deleted_recent_idx')
+      .on(table.moderated_at.desc(), table.comment_id.desc())
+      .where(sql`${table.established_action} = 'delete'`),
+    index('admin_comment_moderation_state_deleted_comment_recent_idx')
+      .on(table.comment_created_at.desc(), table.comment_id.desc())
+      .concurrently()
+      .where(sql`${table.established_action} = 'delete' and ${table.comment_created_at} is not null`),
+  ],
+)
+
+// --- Administrator Role History ---
+
+export const adminRoleChangeHistory = pgTable(
+  'admin_role_change_history',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    subject_user_id: text('subject_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    actor_user_id: text('actor_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    previous_role: userRole('previous_role').notNull(),
+    new_role: userRole('new_role').notNull(),
+    reason: text('reason').notNull(),
+    created_at: timestamp('created_at', { withTimezone: true, precision: 3 }).defaultNow().notNull(),
+  },
+  (table) => [
+    check(
+      'admin_role_change_history_transition_check',
+      sql`(${table.previous_role} = 'user' and ${table.new_role} = 'admin')
+        or (${table.previous_role} = 'admin' and ${table.new_role} = 'user')`,
+    ),
+    check(
+      'admin_role_change_history_reason_check',
+      sql`length(${table.reason}) between 1 and 1000
+        and ${table.reason} !~ '^[[:space:]]'
+        and ${table.reason} !~ '[[:space:]]$'`,
+    ),
+    index('admin_role_change_history_subject_created_idx').on(
+      table.subject_user_id,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+  ],
+)
+
+// --- Administrator User-Ban State and History ---
+
+export const adminUserBanHistory = pgTable(
+  'admin_user_ban_history',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    subject_user_id: text('subject_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    actor_user_id: text('actor_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    previous_event_id: bigint('previous_event_id', { mode: 'bigint' })
+      .unique()
+      .references((): AnyPgColumn => adminUserBanHistory.id, { onDelete: 'restrict' }),
+    action: text('action').$type<'ban' | 'unban'>().notNull(),
+    reason: text('reason'),
+    ban_started_at: timestamp('ban_started_at', { withTimezone: true, precision: 3 }),
+    expires_at: timestamp('expires_at', { withTimezone: true, precision: 3 }),
+    request_correlation_id: uuid('request_correlation_id'),
+    created_at: timestamp('created_at', { withTimezone: true, precision: 3 }).defaultNow().notNull(),
+  },
+  (table) => [
+    check('admin_user_ban_history_action_check', sql`${table.action} in ('ban', 'unban')`),
+    check(
+      'admin_user_ban_history_reason_check',
+      sql`(${table.action} = 'ban'
+          and ${table.reason} is not null
+          and length(${table.reason}) between 1 and 1000
+          and ${table.reason} !~ '^[[:space:]]'
+          and ${table.reason} !~ '[[:space:]]$')
+        or (${table.action} = 'unban'
+          and (${table.reason} is null
+            or (length(${table.reason}) between 1 and 1000
+              and ${table.reason} !~ '^[[:space:]]'
+              and ${table.reason} !~ '[[:space:]]$')))`,
+    ),
+    check(
+      'admin_user_ban_history_expiry_check',
+      sql`(${table.action} = 'ban'
+          and ${table.ban_started_at} is not null
+          and ${table.ban_started_at} <= ${table.created_at}
+          and (${table.expires_at} is null or ${table.expires_at} > ${table.created_at}))
+        or (${table.action} = 'unban'
+          and ${table.ban_started_at} is null
+          and ${table.expires_at} is null)`,
+    ),
+    unique('admin_user_ban_history_event_identity_unique').on(
+      table.id,
+      table.subject_user_id,
+      table.actor_user_id,
+      table.action,
+    ),
+    index('admin_user_ban_history_subject_created_idx').on(
+      table.subject_user_id,
+      table.created_at.desc(),
+      table.id.desc(),
+    ),
+    uniqueIndex('admin_user_ban_history_subject_root_unique')
+      .on(table.subject_user_id)
+      .where(sql`${table.previous_event_id} is null`),
+  ],
+)
+
+export const adminUserBanState = pgTable(
+  'admin_user_ban_state',
+  {
+    subject_user_id: text('subject_user_id')
+      .primaryKey()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    established_action: text('established_action').$type<'ban' | 'unban'>().notNull(),
+    ban_started_at: timestamp('ban_started_at', { withTimezone: true, precision: 3 }),
+    ban_expires_at: timestamp('ban_expires_at', { withTimezone: true, precision: 3 }),
+    ban_reason: text('ban_reason'),
+    actor_user_id: text('actor_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    established_by_event_id: bigint('established_by_event_id', { mode: 'bigint' }).notNull().unique(),
+  },
+  (table) => [
+    check('admin_user_ban_state_action_check', sql`${table.established_action} in ('ban', 'unban')`),
+    check(
+      'admin_user_ban_state_projection_check',
+      sql`(${table.established_action} = 'ban'
+          and ${table.ban_started_at} is not null
+          and ${table.ban_reason} is not null
+          and length(${table.ban_reason}) between 1 and 1000
+          and ${table.ban_reason} !~ '^[[:space:]]'
+          and ${table.ban_reason} !~ '[[:space:]]$'
+          and (${table.ban_expires_at} is null or ${table.ban_expires_at} > ${table.ban_started_at}))
+        or (${table.established_action} = 'unban'
+          and ${table.ban_started_at} is null
+          and ${table.ban_expires_at} is null
+          and ${table.ban_reason} is null)`,
+    ),
+    foreignKey({
+      name: 'admin_user_ban_state_establishing_event_fk',
+      columns: [table.established_by_event_id, table.subject_user_id, table.actor_user_id, table.established_action],
+      foreignColumns: [
+        adminUserBanHistory.id,
+        adminUserBanHistory.subject_user_id,
+        adminUserBanHistory.actor_user_id,
+        adminUserBanHistory.action,
+      ],
+    }).onDelete('restrict'),
+    // Drizzle does not model PostgreSQL INCLUDE columns. The reviewed
+    // non-transactional operation creates this partial index with expiry and
+    // version as included columns; this declaration captures its searchable
+    // key and predicate for schema generation.
+    index('admin_user_ban_state_active_subject_idx')
+      .on(table.subject_user_id)
+      .concurrently()
+      .where(sql`${table.established_action} = 'ban'`),
+  ],
+)
+
+// --- Administrator Primary Authentication ---
+
+export const adminPrimaryAuthWindows = pgTable(
+  'admin_primary_auth_windows',
+  {
+    session_id: text('session_id')
+      .primaryKey()
+      .references(() => session.id, { onDelete: 'cascade' }),
+    user_id: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    method: text('method').notNull(),
+    completed_at: timestamp('completed_at', { withTimezone: true }).notNull(),
+    expires_at: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    check('admin_primary_auth_windows_method_check', sql`${table.method} in ('password', 'google')`),
+    check(
+      'admin_primary_auth_windows_expiry_check',
+      sql`${table.expires_at} = ${table.completed_at} + interval '10 minutes'`,
+    ),
+    index('admin_primary_auth_windows_user_idx').on(table.user_id),
+    index('admin_primary_auth_windows_expiry_idx').on(table.expires_at),
+  ],
+)
+
+export const adminPrimaryAuthOauthAttempts = pgTable(
+  'admin_primary_auth_oauth_attempts',
+  {
+    state_digest: text('state_digest').primaryKey(),
+    session_id: text('session_id')
+      .notNull()
+      .references(() => session.id, { onDelete: 'cascade' }),
+    user_id: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    account_id: text('account_id')
+      .notNull()
+      .references(() => account.id, { onDelete: 'cascade' }),
+    provider: text('provider').notNull(),
+    provider_account_id: text('provider_account_id').notNull(),
+    code_verifier: text('code_verifier').notNull(),
+    nonce: text('nonce').notNull(),
+    redirect_uri: text('redirect_uri').notNull(),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    expires_at: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    check('admin_primary_auth_oauth_attempts_digest_check', sql`${table.state_digest} ~ '^[a-f0-9]{64}$'`),
+    check('admin_primary_auth_oauth_attempts_provider_check', sql`${table.provider} = 'google'`),
+    check(
+      'admin_primary_auth_oauth_attempts_verifier_check',
+      sql`length(${table.code_verifier}) between 43 and 128 and ${table.code_verifier} ~ '^[A-Za-z0-9._~-]+$'`,
+    ),
+    check(
+      'admin_primary_auth_oauth_attempts_expiry_check',
+      sql`${table.expires_at} = ${table.created_at} + interval '10 minutes'`,
+    ),
+    uniqueIndex('admin_primary_auth_oauth_attempts_session_idx').on(table.session_id),
+    index('admin_primary_auth_oauth_attempts_expiry_idx').on(table.expires_at),
+  ],
+)
+
+export const adminPrimaryAuthPasswordRateLimits = pgTable(
+  'admin_primary_auth_password_rate_limits',
+  {
+    user_id: text('user_id')
+      .primaryKey()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    window_started_at: timestamp('window_started_at', { withTimezone: true }).notNull(),
+    failure_count: integer('failure_count').notNull(),
+    blocked_until: timestamp('blocked_until', { withTimezone: true }),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check('admin_primary_auth_password_rate_limits_count_check', sql`${table.failure_count} between 1 and 5`),
+  ],
+)
 
 export const songAliases = pgTable('song_aliases', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
@@ -614,6 +1222,110 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
   replies: many(comments, {
     relationName: 'comment_replies',
   }),
+  moderationHistory: many(adminCommentModerationHistory),
+  moderationState: one(adminCommentModerationState),
+}))
+
+export const chartReportsRelations = relations(chartReports, ({ one }) => ({
+  reporter: one(user, {
+    fields: [chartReports.reporter_user_id],
+    references: [user.id],
+    relationName: 'chart_report_reporter',
+  }),
+  closedBy: one(user, {
+    fields: [chartReports.closed_by_user_id],
+    references: [user.id],
+    relationName: 'chart_report_closer',
+  }),
+}))
+
+export const adminCommentModerationHistoryRelations = relations(adminCommentModerationHistory, ({ one, many }) => ({
+  comment: one(comments, {
+    fields: [adminCommentModerationHistory.comment_id],
+    references: [comments.id],
+  }),
+  actor: one(user, {
+    fields: [adminCommentModerationHistory.actor_user_id],
+    references: [user.id],
+    relationName: 'admin_comment_moderation_actor',
+  }),
+  previousEvent: one(adminCommentModerationHistory, {
+    fields: [adminCommentModerationHistory.previous_event_id],
+    references: [adminCommentModerationHistory.id],
+    relationName: 'admin_comment_moderation_event_chain',
+  }),
+  subsequentEvents: many(adminCommentModerationHistory, {
+    relationName: 'admin_comment_moderation_event_chain',
+  }),
+  establishedState: one(adminCommentModerationState),
+}))
+
+export const adminCommentModerationStateRelations = relations(adminCommentModerationState, ({ one }) => ({
+  comment: one(comments, {
+    fields: [adminCommentModerationState.comment_id],
+    references: [comments.id],
+  }),
+  actor: one(user, {
+    fields: [adminCommentModerationState.actor_user_id],
+    references: [user.id],
+    relationName: 'admin_comment_moderation_state_actor',
+  }),
+  establishingEvent: one(adminCommentModerationHistory, {
+    fields: [adminCommentModerationState.established_by_event_id],
+    references: [adminCommentModerationHistory.id],
+  }),
+}))
+
+export const adminRoleChangeHistoryRelations = relations(adminRoleChangeHistory, ({ one }) => ({
+  subject: one(user, {
+    fields: [adminRoleChangeHistory.subject_user_id],
+    references: [user.id],
+    relationName: 'admin_role_change_subject',
+  }),
+  actor: one(user, {
+    fields: [adminRoleChangeHistory.actor_user_id],
+    references: [user.id],
+    relationName: 'admin_role_change_actor',
+  }),
+}))
+
+export const adminUserBanHistoryRelations = relations(adminUserBanHistory, ({ one, many }) => ({
+  subject: one(user, {
+    fields: [adminUserBanHistory.subject_user_id],
+    references: [user.id],
+    relationName: 'admin_user_ban_subject',
+  }),
+  actor: one(user, {
+    fields: [adminUserBanHistory.actor_user_id],
+    references: [user.id],
+    relationName: 'admin_user_ban_actor',
+  }),
+  previousEvent: one(adminUserBanHistory, {
+    fields: [adminUserBanHistory.previous_event_id],
+    references: [adminUserBanHistory.id],
+    relationName: 'admin_user_ban_event_chain',
+  }),
+  subsequentEvents: many(adminUserBanHistory, {
+    relationName: 'admin_user_ban_event_chain',
+  }),
+  establishedState: one(adminUserBanState),
+}))
+
+export const adminUserBanStateRelations = relations(adminUserBanState, ({ one }) => ({
+  subject: one(user, {
+    fields: [adminUserBanState.subject_user_id],
+    references: [user.id],
+    relationName: 'admin_user_ban_state_subject',
+  }),
+  actor: one(user, {
+    fields: [adminUserBanState.actor_user_id],
+    references: [user.id],
+    relationName: 'admin_user_ban_state_actor',
+  }),
+  establishingEvent: one(adminUserBanHistory, {
+    fields: [adminUserBanState.established_by_event_id],
+    references: [adminUserBanHistory.id],
+  }),
 }))
 
 export const songAliasesRelations = relations(songAliases, ({ one }) => ({
@@ -642,6 +1354,24 @@ export const userExtraRelations = relations(user, ({ one, many }) => ({
   tags: many(tags),
   tagSongs: many(tagSongs),
   comments: many(comments),
+  chartReportsAsReporter: many(chartReports, {
+    relationName: 'chart_report_reporter',
+  }),
+  chartReportsAsCloser: many(chartReports, {
+    relationName: 'chart_report_closer',
+  }),
+  adminRoleChangesAsSubject: many(adminRoleChangeHistory, {
+    relationName: 'admin_role_change_subject',
+  }),
+  adminRoleChangesAsActor: many(adminRoleChangeHistory, {
+    relationName: 'admin_role_change_actor',
+  }),
+  banHistoryAsSubject: many(adminUserBanHistory, {
+    relationName: 'admin_user_ban_subject',
+  }),
+  banHistoryAsActor: many(adminUserBanHistory, {
+    relationName: 'admin_user_ban_actor',
+  }),
   songAliases: many(songAliases),
   lxnsOauthToken: one(lxnsOauthTokens),
 }))

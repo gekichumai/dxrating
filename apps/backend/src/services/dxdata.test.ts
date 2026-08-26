@@ -8,6 +8,7 @@ import {
   DXDATA_CDN_CACHE_CONTROL,
   DXDATA_CORS_OPTIONS,
   DXDATA_PATH,
+  DXDATA_REVISION_HEADER,
   type DxdataStore,
 } from './dxdata.js'
 
@@ -17,6 +18,7 @@ const ETAG = `"${BODY_SHA256}"`
 
 const metadata = {
   catalogRunId: '42',
+  publicationRevision: '7',
   bodySha256: BODY_SHA256,
   byteLength: Buffer.byteLength(BODY).toString(),
   contentType: 'application/json; charset=utf-8',
@@ -62,6 +64,7 @@ describe('DX data catalog endpoint', () => {
     expect(await response.text()).toBe(BODY)
     expect(calls).toEqual(['metadata', 'body'])
     expect(response.headers.get('etag')).toBe(ETAG)
+    expect(response.headers.get(DXDATA_REVISION_HEADER)).toBe(metadata.publicationRevision)
     expect(response.headers.get('content-length')).toBe(Buffer.byteLength(BODY).toString())
     expect(response.headers.get('content-type')).toBe(metadata.contentType)
     expect(response.headers.get('cache-control')).toBe(DXDATA_BROWSER_CACHE_CONTROL)
@@ -87,6 +90,7 @@ describe('DX data catalog endpoint', () => {
     expect(response.status).toBe(304)
     expect(await response.text()).toBe('')
     expect(response.headers.get('etag')).toBe(ETAG)
+    expect(response.headers.get(DXDATA_REVISION_HEADER)).toBe(metadata.publicationRevision)
     expect(response.headers.get('cache-control')).toBe(DXDATA_BROWSER_CACHE_CONTROL)
     expect(calls).toEqual(['metadata'])
   })
@@ -98,6 +102,7 @@ describe('DX data catalog endpoint', () => {
     expect(response.status).toBe(200)
     expect(await response.text()).toBe('')
     expect(response.headers.get('etag')).toBe(ETAG)
+    expect(response.headers.get(DXDATA_REVISION_HEADER)).toBe(metadata.publicationRevision)
     expect(response.headers.get('content-length')).toBe(Buffer.byteLength(BODY).toString())
     expect(calls).toEqual(['metadata'])
   })
@@ -111,6 +116,19 @@ describe('DX data catalog endpoint', () => {
     expect(response.status).toBe(200)
     expect(await response.text()).toBe(BODY)
     expect(calls).toEqual(['metadata', 'body'])
+  })
+
+  it('exposes a changed publication revision even when the immutable body and ETag are reused', async () => {
+    const first = await createApp(createStore().store).request(DXDATA_PATH)
+    const nextRevision = '8'
+    const second = await createApp(
+      createStore({ metadata: { ...metadata, publicationRevision: nextRevision } }).store,
+    ).request(DXDATA_PATH)
+
+    expect(first.headers.get('etag')).toBe(ETAG)
+    expect(second.headers.get('etag')).toBe(ETAG)
+    expect(first.headers.get(DXDATA_REVISION_HEADER)).toBe(metadata.publicationRevision)
+    expect(second.headers.get(DXDATA_REVISION_HEADER)).toBe(nextRevision)
   })
 
   it('does not cache an unavailable publication or missing snapshot body', async () => {
@@ -174,6 +192,7 @@ describe('PostgreSQL DX data store', () => {
           rows: [
             {
               catalog_run_id: metadata.catalogRunId,
+              publication_revision: metadata.publicationRevision,
               body_sha256: metadata.bodySha256,
               byte_length: metadata.byteLength,
               content_type: metadata.contentType,
@@ -188,6 +207,7 @@ describe('PostgreSQL DX data store', () => {
     expect(await store.getSnapshotBody(metadata.catalogRunId, metadata.bodySha256)).toBe(BODY)
 
     expect(queries[0].text).toContain('dxdata.catalog_publications')
+    expect(queries[0].text).toContain('publication.revision::text AS publication_revision')
     expect(queries[0].text).toContain('dxdata.catalog_snapshots')
     expect(queries[0].text).toContain('dxdata.catalog_build_runs')
     expect(queries[0].text).toContain('catalog_run.api_schema_version = $2')

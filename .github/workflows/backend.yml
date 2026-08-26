@@ -8,7 +8,15 @@ on:
     paths:
       - 'apps/backend/**'
       - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.npmrc'
+      - '.node-version'
+      - 'turbo.json'
       - '.dockerignore'
+      - '.github/actionlint.yaml'
+      - '.github/scripts/**'
       - '.github/workflows/backend.yml'
       - '.github/workflows/dxdata-producer-contract.yml'
   pull_request:
@@ -17,14 +25,24 @@ on:
     paths:
       - 'apps/backend/**'
       - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.npmrc'
+      - '.node-version'
+      - 'turbo.json'
       - '.dockerignore'
+      - '.github/actionlint.yaml'
+      - '.github/scripts/**'
       - '.github/workflows/backend.yml'
       - '.github/workflows/dxdata-producer-contract.yml'
   workflow_dispatch:
 
 concurrency:
   group: backend-${{ github.ref }}
-  cancel-in-progress: true
+  # Serialize main releases after the database gate begins. Feature and
+  # pull-request runs still supersede stale work.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   lint-and-build:
@@ -34,6 +52,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Test deployment controller
+        run: bash .github/scripts/deploy-coolify-application.test.sh
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -54,6 +75,17 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Validate private administrator contract
+        run: |
+          admin_spec_file="$(mktemp)"
+          trap 'rm -f "$admin_spec_file"' EXIT
+          pnpm --silent admin:openapi > "$admin_spec_file"
+          test -s "$admin_spec_file"
+          node -e 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))' "$admin_spec_file"
+          pnpm --filter @gekichumai/admin-contract openapi:compatibility:check
+          pnpm --filter @gekichumai/admin-contract test
+          pnpm --filter @gekichumai/api-contract test
 
       - name: Lint backend
         run: pnpm --filter @gekichumai/backend lint
@@ -101,14 +133,460 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/dxrating_test
           BETTER_AUTH_SECRET: ci_test_secret_1234567890
           BETTER_AUTH_URL: http://localhost:3001
+          ADMIN_ACCESS_MODE: test_bypass
+          ADMIN_ACCESS_TEST_BYPASS_SECRET: ci-test-only-admin-access-proof-secret
           NODE_ENV: test
           PORT: 3001
         run: pnpm --filter @gekichumai/backend test
 
+  migration-rehearsal:
+    needs: [lint-and-build, integration-test, docker-build]
+    if: >-
+      always() &&
+      needs.lint-and-build.result == 'success' &&
+      needs.integration-test.result == 'success' &&
+      (needs.docker-build.result == 'success' || needs.docker-build.result == 'skipped')
+    runs-on: ubuntu-latest
+    name: Migration Rehearsal
+    permissions:
+      contents: read
+      packages: read
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dxrating_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+
+      - name: Install candidate dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Exercise locked migrations and resumable backfill
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/dxrating_test
+          BETTER_AUTH_SECRET: ci_test_secret_1234567890
+          BETTER_AUTH_URL: http://localhost:3001
+          ADMIN_ACCESS_MODE: test_bypass
+          ADMIN_ACCESS_TEST_BYPASS_SECRET: ci-test-only-admin-access-proof-secret
+          NODE_ENV: test
+          PORT: 3001
+        run: pnpm --filter @gekichumai/backend test:migrations
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Pull and pin the currently deployed backend image
+        id: previous-image
+        shell: bash
+        env:
+          PRODUCTION_BASE_URL: ${{ vars.BACKEND_PRODUCTION_URL || 'https://miruku.dxrating.net' }}
+        run: |
+          set -euo pipefail
+          version_file=$(mktemp)
+          trap 'rm -f -- "$version_file"' EXIT
+          curl --fail --silent --show-error --max-time 30 \
+            --output "$version_file" "${PRODUCTION_BASE_URL%/}/version"
+          deployed_commit=$(jq --exit-status --raw-output '.commit' "$version_file")
+          deployed_digest=$(jq --exit-status --raw-output '.imageDigest' "$version_file")
+          [[ "$deployed_commit" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$deployed_digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+
+          previous_image="ghcr.io/${GITHUB_REPOSITORY}/backend@${deployed_digest}"
+          docker pull "$previous_image" >/dev/null
+          image_commit=$(docker image inspect "$previous_image" --format \
+            '{{range .Config.Env}}{{println .}}{{end}}' | sed -n 's/^GIT_COMMIT=//p')
+          test "$image_commit" = "$deployed_commit"
+          echo "digest=$previous_image" >> "$GITHUB_OUTPUT"
+
+      - name: Build candidate backend image
+        if: needs.docker-build.result == 'skipped'
+        env:
+          CANDIDATE_IMAGE: dxrating-backend-migration-candidate:${{ github.sha }}
+        run: |
+          docker build \
+            --file apps/backend/Dockerfile \
+            --tag "$CANDIDATE_IMAGE" \
+            --build-arg GIT_COMMIT="${{ github.sha }}" \
+            --build-arg REPO_URL="${{ github.server_url }}/${{ github.repository }}" \
+            --build-arg BUILD_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            .
+          echo "CANDIDATE_IMAGE=$CANDIDATE_IMAGE" >> "$GITHUB_ENV"
+
+      - name: Pull the exact published candidate image
+        if: needs.docker-build.result == 'success'
+        env:
+          CANDIDATE_DIGEST: ${{ needs.docker-build.outputs.image-digest }}
+        run: |
+          set -euo pipefail
+          [[ "$CANDIDATE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          candidate_image="ghcr.io/${GITHUB_REPOSITORY}/backend@${CANDIDATE_DIGEST}"
+          docker pull "$candidate_image" >/dev/null
+          echo "CANDIDATE_IMAGE=$candidate_image" >> "$GITHUB_ENV"
+
+      - name: Validate production Compose topology
+        env:
+          BACKEND_IMAGE_DIGEST: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          MIGRATION_IMAGE_DIGEST: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        run: |
+          set -euo pipefail
+          traffic_compose=(docker compose
+            --env-file apps/backend/.env.production.example
+            --file apps/backend/docker-compose.prod.yml)
+          migration_compose=("${traffic_compose[@]}"
+            --file apps/backend/docker-compose.migrate.yml)
+          "${traffic_compose[@]}" config --quiet
+          "${migration_compose[@]}" config --quiet
+          expected_image="ghcr.io/${GITHUB_REPOSITORY}/backend@${BACKEND_IMAGE_DIGEST}"
+          test "$("${traffic_compose[@]}" config --images | grep --fixed-strings --line-regexp --count "$expected_image")" = '1'
+          test "$("${migration_compose[@]}" config --images | grep --fixed-strings --line-regexp --count "$expected_image")" = '2'
+          resolved_compose=$(mktemp)
+          trap 'rm -f -- "$resolved_compose"' EXIT
+          "${migration_compose[@]}" config --format json >"$resolved_compose"
+          jq --exit-status '
+            (.services.postgres.environment | keys | all(startswith("POSTGRES_"))) and
+            (.services.backend.environment | has("MIGRATION_DATABASE_URL") | not) and
+            (.services.migrate.environment | has("BETTER_AUTH_SECRET") | not) and
+            (.services.migrate.environment | has("DATABASE_URL")) and
+            (.services.postgres.networks | has("database")) and
+            (.services.backend.networks | has("database")) and
+            (.services.migrate.networks | has("database")) and
+            (.networks.database.external == true)
+          ' "$resolved_compose" >/dev/null
+
+      - name: Create isolated rehearsal database
+        env:
+          MAINTENANCE_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: >-
+          psql --dbname="$MAINTENANCE_DATABASE_URL" --set=ON_ERROR_STOP=1
+          --command='CREATE DATABASE dxrating_migration_rehearsal'
+
+      - name: Apply candidate migration journal
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/dxrating_migration_rehearsal
+          MIGRATION_LOCK_TIMEOUT_MS: 10000
+          MIGRATION_SQL_LOCK_TIMEOUT_MS: 5000
+          MIGRATION_STATEMENT_TIMEOUT_MS: 120000
+        run: >-
+          docker run --rm --network host
+          --env DATABASE_URL
+          --env MIGRATION_LOCK_TIMEOUT_MS
+          --env MIGRATION_SQL_LOCK_TIMEOUT_MS
+          --env MIGRATION_STATEMENT_TIMEOUT_MS
+          "$CANDIDATE_IMAGE"
+          node --enable-source-maps --experimental-transform-types dist/migrate.js
+
+      - name: Rehearse expand, pause, resume, validation, rollback, and contract
+        shell: bash
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/dxrating_migration_rehearsal
+          BETTER_AUTH_SECRET: ci_test_secret_1234567890
+          BETTER_AUTH_URL: http://localhost:3001
+          FRONTEND_URL: http://localhost:5173
+          ADMIN_ACCESS_MODE: test_bypass
+          ADMIN_ACCESS_TEST_BYPASS_SECRET: ci-test-only-admin-access-proof-secret
+          NODE_ENV: test
+          PREVIOUS_IMAGE: ${{ steps.previous-image.outputs.digest }}
+        run: |
+          set -euo pipefail
+
+          active_containers=()
+          cleanup() {
+            if ((${#active_containers[@]})); then
+              docker rm --force "${active_containers[@]}" >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup EXIT
+
+          probe_image() {
+            local image="$1"
+            local port="$2"
+            local label="$3"
+            local startup_mode="$4"
+            local log_file="${RUNNER_TEMP}/${label}.log"
+
+            local container_name="migration-rehearsal-${label}"
+            local run_arguments=(
+              --detach
+              --network host
+              --name "$container_name"
+              --env "DATABASE_URL=$DATABASE_URL"
+              --env "BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET"
+              --env "BETTER_AUTH_URL=http://localhost:${port}"
+              --env "FRONTEND_URL=$FRONTEND_URL"
+              --env "ADMIN_ACCESS_MODE=$ADMIN_ACCESS_MODE"
+              --env "ADMIN_ACCESS_TEST_BYPASS_SECRET=$ADMIN_ACCESS_TEST_BYPASS_SECRET"
+              --env "NODE_ENV=$NODE_ENV"
+              --env "PORT=$port"
+              "$image"
+            )
+            if [[ "$startup_mode" == 'direct' ]]; then
+              run_arguments+=(node --enable-source-maps --experimental-transform-types dist/index.js)
+            fi
+            docker run "${run_arguments[@]}" >/dev/null
+            active_containers+=("$container_name")
+
+            local ready=false
+            for _ in $(seq 1 30); do
+              if [[ "$(docker inspect --format '{{.State.Running}}' "$container_name")" != 'true' ]]; then
+                docker logs "$container_name" >"$log_file" 2>&1 || true
+                cat "$log_file"
+                return 1
+              fi
+              if curl --fail --silent "http://127.0.0.1:${port}/health" >/dev/null && \
+                 curl --fail --silent "http://127.0.0.1:${port}/api/v1/tags" >/dev/null; then
+                ready=true
+                break
+              fi
+              sleep 1
+            done
+
+            if [[ "$ready" != 'true' ]]; then
+              docker logs "$container_name" >"$log_file" 2>&1 || true
+              cat "$log_file"
+              return 1
+            fi
+
+            local email="${label}@migration-rehearsal.invalid"
+            local cookie_jar="${RUNNER_TEMP}/${label}.cookies"
+            curl --fail --silent --show-error \
+              --header 'Content-Type: application/json' \
+              --data "{\"email\":\"${email}\",\"password\":\"Migration-rehearsal-123!\",\"name\":\"Migration Rehearsal\"}" \
+              "http://127.0.0.1:${port}/api/auth/sign-up/email" >/dev/null
+            test "$(psql --dbname="$DATABASE_URL" --tuples-only --no-align --command \
+              "SELECT count(*) FROM public.\"user\" WHERE email = '${email}'")" = '1'
+
+            curl --fail --silent --show-error \
+              --cookie-jar "$cookie_jar" \
+              --header 'Content-Type: application/json' \
+              --data "{\"email\":\"${email}\",\"password\":\"Migration-rehearsal-123!\"}" \
+              "http://127.0.0.1:${port}/api/auth/sign-in/email" >/dev/null
+            local comment_response
+            comment_response=$(curl --fail --silent --show-error \
+              --cookie "$cookie_jar" \
+              --header 'Content-Type: application/json' \
+              --data "{\"songId\":\"migration-${label}\",\"sheetType\":\"dx\",\"sheetDifficulty\":\"master\",\"content\":\"${label}\"}" \
+              "http://127.0.0.1:${port}/api/v1/comments")
+            local comment_id
+            comment_id=$(jq --exit-status --raw-output '.id' <<<"$comment_response")
+            [[ "$comment_id" =~ ^[0-9]+$ ]]
+            test "$(psql --dbname="$DATABASE_URL" --tuples-only --no-align --command \
+              "SELECT count(*) FROM public.comments WHERE id = ${comment_id}")" = '1'
+            curl --fail --silent --show-error \
+              "http://127.0.0.1:${port}/api/v1/comments?songId=migration-${label}&sheetType=dx&sheetDifficulty=master" \
+              | jq --exit-status --arg expected "$label" 'any(.[]; .content == $expected)' >/dev/null
+
+            local alias_response
+            alias_response=$(curl --fail --silent --show-error \
+              --cookie "$cookie_jar" \
+              --header 'Content-Type: application/json' \
+              --data "{\"songId\":\"migration-alias-${label}\",\"name\":\"${label}\"}" \
+              "http://127.0.0.1:${port}/api/v1/aliases")
+            local alias_id
+            alias_id=$(jq --exit-status --raw-output '.id' <<<"$alias_response")
+            [[ "$alias_id" =~ ^[0-9]+$ ]]
+            test "$(psql --dbname="$DATABASE_URL" --tuples-only --no-align --command \
+              "SELECT migration_rehearsal_state FROM public.song_aliases WHERE id = ${alias_id}")" = 'visible'
+            curl --fail --silent --show-error "http://127.0.0.1:${port}/api/v1/aliases" \
+              | jq --exit-status \
+                  --arg song_id "migration-alias-${label}" \
+                  --arg expected "$label" \
+                  'any(.[]; .song_id == $song_id and .name == $expected)' >/dev/null
+            # Row 900 remains below the fixed high-water mark but incomplete
+            # during the deliberate pause. Both application versions must read it.
+            curl --fail --silent --show-error "http://127.0.0.1:${port}/api/v1/aliases" \
+              | jq --exit-status \
+                  'any(.[]; .song_id == "migration-alias-900" and .name == "representative alias 900")' >/dev/null
+            rm --force "$cookie_jar"
+
+            docker rm --force "$container_name" >/dev/null
+          }
+
+          apply_batch() {
+            psql --dbname="$DATABASE_URL" --set=ON_ERROR_STOP=1 <<'SQL'
+          WITH checkpoint AS (
+            SELECT high_water_id, last_id
+            FROM migration_rehearsal.backfill_checkpoint
+            WHERE backfill_id = 'initialize-alias-visibility-v1'
+            FOR UPDATE
+          ),
+          batch AS MATERIALIZED (
+            SELECT alias.id
+            FROM public.song_aliases AS alias, checkpoint
+            WHERE alias.id > checkpoint.last_id
+              AND alias.id <= checkpoint.high_water_id
+            ORDER BY alias.id
+            LIMIT 73
+            FOR UPDATE OF alias
+          ),
+          applied AS (
+            UPDATE public.song_aliases AS alias
+            SET migration_rehearsal_state = 'visible'
+            FROM batch
+            WHERE alias.id = batch.id
+            RETURNING alias.id
+          ),
+          progress AS (
+            SELECT max(id) AS last_id, count(*)::bigint AS row_count
+            FROM applied
+          )
+          UPDATE migration_rehearsal.backfill_checkpoint AS stored
+          SET last_id = coalesce(progress.last_id, stored.last_id),
+              processed_count = stored.processed_count + progress.row_count,
+              updated_at = clock_timestamp()
+          FROM progress
+          WHERE stored.backfill_id = 'initialize-alias-visibility-v1';
+          SQL
+          }
+
+          psql --dbname="$DATABASE_URL" --set=ON_ERROR_STOP=1 <<'SQL'
+          -- Seed a representative pre-admin user/alias population in the
+          -- generated application schema before any additive change exists.
+          -- This permanent framework fixture does not replace a migration-
+          -- specific prior-schema fixture when a real migration needs one.
+          INSERT INTO public."user" (id, name, email, email_verified)
+          VALUES ('migration-rehearsal-owner', 'Migration Owner', 'owner@migration-rehearsal.invalid', true);
+          INSERT INTO public.song_aliases
+            (created_by, song_id, name)
+          SELECT 'migration-rehearsal-owner',
+                 'migration-alias-' || id::text,
+                 'representative alias ' || id::text
+          FROM generate_series(1, 1000) AS id;
+
+          CREATE SCHEMA migration_rehearsal;
+          -- Expansion is additive and nullable, so the currently deployed
+          -- image continues to read and write the real aliases table.
+          ALTER TABLE public.song_aliases ADD COLUMN migration_rehearsal_state text;
+          ALTER TABLE public.song_aliases ALTER COLUMN migration_rehearsal_state SET DEFAULT 'visible';
+          CREATE TABLE migration_rehearsal.backfill_checkpoint (
+            backfill_id text PRIMARY KEY,
+            high_water_id bigint NOT NULL,
+            last_id bigint NOT NULL DEFAULT 0,
+            processed_count bigint NOT NULL DEFAULT 0,
+            updated_at timestamptz NOT NULL DEFAULT clock_timestamp()
+          );
+          INSERT INTO migration_rehearsal.backfill_checkpoint (backfill_id, high_water_id)
+          SELECT 'initialize-alias-visibility-v1', max(id)
+          FROM public.song_aliases;
+
+          -- A post-expansion write is outside the fixed backfill range and dual-writes the new value.
+          INSERT INTO public.song_aliases
+            (created_by, song_id, name, migration_rehearsal_state)
+          VALUES
+            ('migration-rehearsal-owner', 'migration-alias-live', 'live alias', 'visible');
+          SQL
+
+          # Run the exact currently deployed image after expansion. Override
+          # its legacy startup command so this traffic probe cannot run migrations.
+          probe_image "$PREVIOUS_IMAGE" 3010 previous-after-expansion direct
+
+          # Process a few bounded batches, then deliberately pause.
+          apply_batch
+          apply_batch
+          apply_batch
+
+          psql --dbname="$DATABASE_URL" --set=ON_ERROR_STOP=1 <<'SQL'
+          DO $rehearsal$
+          BEGIN
+            IF NOT EXISTS (
+              SELECT 1
+              FROM public.song_aliases
+              WHERE id <= 1000 AND migration_rehearsal_state IS NULL
+            ) THEN
+              RAISE EXCEPTION 'pause rehearsal unexpectedly completed the backfill';
+            END IF;
+          END
+          $rehearsal$;
+          SQL
+
+          # The candidate image uses its normal traffic entry point and must
+          # tolerate incomplete rows without applying migrations on startup.
+          probe_image "$CANDIDATE_IMAGE" 3011 candidate-during-backfill default
+
+          # Resume from the persisted cursor; every invocation is one bounded transaction.
+          for _ in $(seq 1 20); do
+            remaining=$(psql --dbname="$DATABASE_URL" --tuples-only --no-align --command \
+              "SELECT count(*) FROM public.song_aliases WHERE id <= 1000 AND migration_rehearsal_state IS NULL")
+            if [[ "$remaining" == '0' ]]; then
+              break
+            fi
+            apply_batch
+          done
+
+          psql --dbname="$DATABASE_URL" --set=ON_ERROR_STOP=1 <<'SQL'
+          DO $rehearsal$
+          BEGIN
+            IF EXISTS (
+              SELECT 1
+              FROM public.song_aliases
+              WHERE id <= 1000 AND migration_rehearsal_state <> 'visible'
+            ) OR EXISTS (
+              SELECT 1
+              FROM public.song_aliases
+              WHERE id <= 1000 AND migration_rehearsal_state IS NULL
+            ) THEN
+              RAISE EXCEPTION 'backfill validation failed';
+            END IF;
+            IF (SELECT processed_count FROM migration_rehearsal.backfill_checkpoint
+                WHERE backfill_id = 'initialize-alias-visibility-v1') <> 1000 THEN
+              RAISE EXCEPTION 'checkpoint count did not match the fixed high-water range';
+            END IF;
+          END
+          $rehearsal$;
+          SQL
+
+          # The same deployed image remains a viable code rollback immediately before contract.
+          probe_image "$PREVIOUS_IMAGE" 3012 previous-before-contract direct
+
+          psql --dbname="$DATABASE_URL" --set=ON_ERROR_STOP=1 <<'SQL'
+          -- Contract is intentionally separate and begins only after the rollback probe.
+          ALTER TABLE public.song_aliases
+            ADD CONSTRAINT song_aliases_migration_rehearsal_state_present
+            CHECK (migration_rehearsal_state IS NOT NULL) NOT VALID;
+          ALTER TABLE public.song_aliases
+            VALIDATE CONSTRAINT song_aliases_migration_rehearsal_state_present;
+          ALTER TABLE public.song_aliases
+            ALTER COLUMN migration_rehearsal_state SET NOT NULL;
+          ALTER TABLE public.song_aliases
+            DROP CONSTRAINT song_aliases_migration_rehearsal_state_present;
+          SQL
+
+          probe_image "$CANDIDATE_IMAGE" 3013 candidate-after-contract default
+
   docker-build:
     runs-on: ubuntu-latest
+    needs: [lint-and-build, integration-test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     name: Build Docker Image
+    outputs:
+      image-digest: ${{ steps.push.outputs.digest }}
     permissions:
       contents: read
       packages: write
@@ -127,10 +605,12 @@ jobs:
       - name: Compute build metadata
         id: build-meta
         run: |
-          echo "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          source_date_epoch=$(git show --no-patch --format=%ct "$GITHUB_SHA")
+          built_at=$(date -u --date="@${source_date_epoch}" +%Y-%m-%dT%H:%M:%SZ)
+          echo "built_at=${built_at}" >> "$GITHUB_OUTPUT"
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           echo "version=${LATEST_TAG}" >> "$GITHUB_OUTPUT"
-          echo "source_date_epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
+          echo "source_date_epoch=${source_date_epoch}" >> "$GITHUB_OUTPUT"
 
       - name: Extract metadata
         id: meta
@@ -139,12 +619,7 @@ jobs:
           images: |
             ghcr.io/${{ github.repository }}/backend
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix=sha-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=sha-${{ github.sha }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -161,7 +636,9 @@ jobs:
           file: ./apps/backend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            org.opencontainers.image.created=${{ steps.build-meta.outputs.built_at }}
           annotations: ${{ steps.meta.outputs.annotations }}
           build-args: |
             GIT_COMMIT=${{ github.sha }}
@@ -181,16 +658,206 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
+  production-migrate:
+    runs-on: [self-hosted, linux, x64, dxrating-production-migrations]
+    needs: [docker-build, migration-rehearsal]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    name: Migrate Production Database
+    timeout-minutes: 25
+    environment:
+      name: dxrating (Production)
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Run the exact rehearsed migration image
+        shell: bash
+        env:
+          IMAGE_DIGEST: ${{ needs.docker-build.outputs.image-digest }}
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+          MIGRATION_LOCK_TIMEOUT_MS: '60000'
+          MIGRATION_LOCK_RETRY_MS: '250'
+          MIGRATION_CONNECTION_TIMEOUT_MS: '10000'
+          MIGRATION_SQL_LOCK_TIMEOUT_MS: '5000'
+          MIGRATION_STATEMENT_TIMEOUT_MS: '900000'
+          DATABASE_DOCKER_NETWORK: ${{ vars.DATABASE_DOCKER_NETWORK }}
+        run: |
+          set -euo pipefail
+          [[ "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          test -n "$DATABASE_URL"
+          [[ "$DATABASE_DOCKER_NETWORK" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]{0,254}$ ]]
+          docker network inspect "$DATABASE_DOCKER_NETWORK" >/dev/null
+
+          image="ghcr.io/${GITHUB_REPOSITORY}/backend@${IMAGE_DIGEST}"
+          docker pull "$image" >/dev/null
+          image_commit=$(docker image inspect "$image" --format \
+            '{{range .Config.Env}}{{println .}}{{end}}' | sed -n 's/^GIT_COMMIT=//p')
+          image_revision=$(docker image inspect "$image" --format \
+            '{{index .Config.Labels "org.opencontainers.image.revision"}}')
+          test "$image_commit" = "$GITHUB_SHA"
+          test "$image_revision" = "$GITHUB_SHA"
+
+          container_name='dxrating-production-migration'
+          preflight_container_name='dxrating-production-migration-preflight'
+          migration_pid=''
+          owns_container=false
+          owns_preflight_container=false
+          cleanup() {
+            if [[ "$owns_container" == 'true' ]]; then
+              docker rm --force "$container_name" >/dev/null 2>&1 || true
+            fi
+            if [[ "$owns_preflight_container" == 'true' ]]; then
+              docker rm --force "$preflight_container_name" >/dev/null 2>&1 || true
+            fi
+          }
+          interrupt() {
+            local exit_code="$1"
+            trap - INT TERM
+            if [[ "$owns_container" == 'true' ]]; then
+              docker stop --time 30 "$container_name" >/dev/null 2>&1 || true
+            fi
+            if [[ "$owns_preflight_container" == 'true' ]]; then
+              docker stop --time 30 "$preflight_container_name" >/dev/null 2>&1 || true
+            fi
+            if [[ -n "$migration_pid" ]]; then
+              wait "$migration_pid" 2>/dev/null || true
+            fi
+            exit "$exit_code"
+          }
+          trap cleanup EXIT
+          trap 'interrupt 130' INT
+          trap 'interrupt 143' TERM
+
+          remove_reserved_orphan() {
+            local reserved_name="$1"
+            local expected_role="$2"
+            if ! docker container inspect "$reserved_name" >/dev/null 2>&1; then
+              return 0
+            fi
+            local existing_role
+            existing_role=$(docker container inspect "$reserved_name" --format \
+              '{{index .Config.Labels "com.gekichumai.role"}}')
+            if [[ "$existing_role" != "$expected_role" ]]; then
+              echo 'Reserved production migration container name is occupied' >&2
+              exit 1
+            fi
+            echo "Stopping orphaned ${expected_role} container before retry"
+            docker stop --time 30 "$reserved_name" >/dev/null 2>&1 || true
+            docker rm --force "$reserved_name" >/dev/null 2>&1 || true
+          }
+          remove_reserved_orphan "$container_name" backend-migration
+          remove_reserved_orphan "$preflight_container_name" backend-migration-preflight
+
+          owns_preflight_container=true
+          docker run --rm \
+            --name "$preflight_container_name" \
+            --label com.gekichumai.role=backend-migration-preflight \
+            --network "$DATABASE_DOCKER_NETWORK" \
+            --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --env DATABASE_URL \
+            "$image" \
+            node --input-type=module --eval \
+              'import pg from "pg"; const client = new pg.Client({ connectionString: process.env.DATABASE_URL, application_name: "dxrating-backend-migration-preflight", connectionTimeoutMillis: 10000 }); try { await client.connect(); await client.query("SELECT 1"); } finally { await client.end(); }'
+          owns_preflight_container=false
+
+          docker run --rm \
+            --name "$container_name" \
+            --label com.gekichumai.role=backend-migration \
+            --label "com.gekichumai.commit=${GITHUB_SHA}" \
+            --network "$DATABASE_DOCKER_NETWORK" \
+            --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --env DATABASE_URL \
+            --env MIGRATION_LOCK_TIMEOUT_MS \
+            --env MIGRATION_LOCK_RETRY_MS \
+            --env MIGRATION_CONNECTION_TIMEOUT_MS \
+            --env MIGRATION_SQL_LOCK_TIMEOUT_MS \
+            --env MIGRATION_STATEMENT_TIMEOUT_MS \
+            "$image" \
+            node --enable-source-maps --experimental-transform-types dist/migrate.js &
+          migration_pid=$!
+          owns_container=true
+          set +e
+          wait "$migration_pid"
+          migration_status=$?
+          set -e
+          trap - INT TERM
+          exit "$migration_status"
+
   deploy:
     runs-on: ubuntu-latest
-    needs: [lint-and-build, integration-test, docker-build]
+    needs: [docker-build, migration-rehearsal, production-migrate]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    name: Deploy to Coolify
+    name: Deploy Pinned Backend Image
+    # Leave reconciliation margin beyond the script's deployment, readiness,
+    # and cancellation budgets plus individual API calls.
+    timeout-minutes: 40
+    environment:
+      name: dxrating (Production)
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      - name: Trigger Coolify deployment
+      - name: Checkout exact deployment source
+        uses: actions/checkout@v4
+
+      - name: Pin and wait for Coolify deployment
+        env:
+          COOLIFY_DEPLOY_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          EXPECTED_COMMIT: ${{ github.sha }}
+          EXPECTED_IMAGE_DIGEST: ${{ needs.docker-build.outputs.image-digest }}
+          EXPECTED_COMPOSE_LOCATION: apps/backend/docker-compose.prod.yml
+          PRODUCTION_BASE_URL: ${{ vars.BACKEND_PRODUCTION_URL || 'https://miruku.dxrating.net' }}
+        run: bash .github/scripts/deploy-coolify-application.sh
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Promote aliases after verified deployment
+        env:
+          IMAGE_DIGEST: ${{ needs.docker-build.outputs.image-digest }}
         run: |
-          curl --request GET "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
-            --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-            --header "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
-            --header "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
-            --fail --silent --show-error
+          set -euo pipefail
+          [[ "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          image="ghcr.io/${GITHUB_REPOSITORY}/backend"
+          short_sha="${GITHUB_SHA:0:7}"
+          metadata_file=$(mktemp)
+          trap 'rm -f -- "$metadata_file"' EXIT
+          docker buildx imagetools create \
+            --prefer-index=false \
+            --metadata-file "$metadata_file" \
+            --tag "${image}:main" \
+            --tag "${image}:latest" \
+            --tag "${image}:sha-${short_sha}" \
+            "${image}@${IMAGE_DIGEST}"
+          test "$(jq --exit-status --raw-output '."containerimage.descriptor".digest' "$metadata_file")" = \
+            "$IMAGE_DIGEST"
+          for alias in main latest "sha-${short_sha}"; do
+            alias_digest=$(docker buildx imagetools inspect "${image}:${alias}" \
+              --format '{{json .Manifest}}' | jq --exit-status --raw-output '.digest')
+            test "$alias_digest" = "$IMAGE_DIGEST"
+          done

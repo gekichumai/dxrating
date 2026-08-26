@@ -1,0 +1,7 @@
+# Build output
+dist/
+
+# Local environment overrides
+.env
+.env.*
+!.env.example

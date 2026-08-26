@@ -1,0 +1,27 @@
+.route {
+  min-width: 0;
+  padding-bottom: var(--mantine-spacing-xl);
+}
+
+.header {
+  min-width: 0;
+}
+
+.contentGrid {
+  align-items: start;
+}
+
+.contentGrid > * {
+  min-width: 0;
+}
+
+@media (max-width: 48em) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column-reverse;
+  }
+
+  .header > * {
+    width: 100%;
+  }
+}

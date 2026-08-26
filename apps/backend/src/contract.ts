@@ -1,5 +1,4 @@
-import { publicContractRoutes } from '@gekichumai/api-contract'
-import { oc } from '@orpc/contract'
+import { publicContractRoutes, publicProcedure } from '@gekichumai/api-contract'
 import { z } from 'zod'
 
 const AchievementRecordSchema = z.object({
@@ -51,10 +50,11 @@ const ChartOgImageOutputSchema = z.object({
   body: z.instanceof(Blob),
 })
 
-export const appContract = oc.router({
+export const appContract = publicProcedure.router({
   ...publicContractRoutes,
   maimai: {
-    fetchRecords: oc
+    fetchRecords: publicProcedure
+      .meta({ access: 'identity_independent' })
       .route({
         method: 'POST',
         path: '/io/import/maimai-net',
@@ -76,7 +76,8 @@ export const appContract = oc.router({
       ),
   },
   chartOgImage: {
-    render: oc
+    render: publicProcedure
+      .meta({ access: 'public_read' })
       .route({
         method: 'GET',
         path: '/songs/{songId}/{type}/{difficulty}/og-image',

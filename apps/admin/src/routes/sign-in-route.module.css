@@ -1,0 +1,30 @@
+.page {
+  min-height: 100dvh;
+  padding: var(--mantine-spacing-xl);
+  background:
+    radial-gradient(
+      circle at 20% 0%,
+      color-mix(in srgb, var(--mantine-primary-color-filled) 14%, transparent),
+      transparent 36rem
+    ),
+    var(--mantine-color-body);
+}
+
+.card {
+  width: min(100%, 29rem);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 6%),
+    0 1px 2px -1px rgb(0 0 0 / 7%),
+    0 10px 28px rgb(0 0 0 / 8%);
+}
+
+.fieldset {
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+:global([data-mantine-color-scheme='dark']) .card {
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 9%);
+}

@@ -1,0 +1,17 @@
+.page {
+  min-height: 100dvh;
+  padding: var(--mantine-spacing-xl);
+  background:
+    radial-gradient(
+      circle at 18% 12%,
+      light-dark(rgba(76, 110, 245, 0.13), rgba(91, 124, 250, 0.12)),
+      transparent 34rem
+    ),
+    var(--mantine-color-body);
+}
+
+.card {
+  width: min(100%, 34rem);
+  border: 1px solid light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
+  box-shadow: var(--mantine-shadow-md);
+}

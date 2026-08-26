@@ -28,13 +28,18 @@ producerContractSuite('dxdata assembly-line producer contract', () => {
   })
 
   it('serves the exact snapshot published by the real producer migration and writer', async () => {
-    const migrations = await pool.query(`SELECT version, name FROM dxdata.catalog_schema_migrations ORDER BY version`)
-    expect(migrations.rows).toEqual([
+    const migrations = await pool.query<{ version: number; name: string }>(
+      `SELECT version, name FROM dxdata.catalog_schema_migrations ORDER BY version`,
+    )
+    expect(migrations.rows.slice(0, 4)).toEqual([
       { version: 1, name: 'dynamic_catalog' },
       { version: 2, name: 'source_mapping_run_integrity' },
       { version: 3, name: 'immutable_source_observations' },
       { version: 4, name: 'publication_staging_and_snapshot_integrity' },
     ])
+    expect(migrations.rows.map(({ version }) => version)).toEqual(
+      Array.from({ length: migrations.rows.length }, (_, index) => index + 1),
+    )
 
     const promotedStage = await pool.query<{
       catalog_run_id: string
@@ -60,13 +65,15 @@ producerContractSuite('dxdata assembly-line producer contract', () => {
     expect(Number(promotedStage.rows[0].revision)).toBeGreaterThan(0)
 
     const published = await pool.query<{
+      publication_revision: string
       body_text: string
       body_sha256: string
       byte_length: string
       content_type: string
     }>(
       `
-        SELECT snapshot.body_text,
+        SELECT publication.revision::text AS publication_revision,
+               snapshot.body_text,
                snapshot.body_sha256,
                snapshot.byte_length::text AS byte_length,
                snapshot.content_type
@@ -83,6 +90,7 @@ producerContractSuite('dxdata assembly-line producer contract', () => {
     const response = await fetch(`${getBaseUrl()}/api/v1/dxdata`)
     expect(response.status).toBe(200)
     expect(response.headers.get('etag')).toBe(etag)
+    expect(response.headers.get('x-dxrating-catalog-revision')).toBe(snapshot.publication_revision)
     expect(response.headers.get('content-length')).toBe(snapshot.byte_length)
     expect(response.headers.get('content-type')).toBe(snapshot.content_type)
 
@@ -95,6 +103,7 @@ producerContractSuite('dxdata assembly-line producer contract', () => {
     const head = await fetch(`${getBaseUrl()}/api/v1/dxdata`, { method: 'HEAD' })
     expect(head.status).toBe(200)
     expect(head.headers.get('etag')).toBe(etag)
+    expect(head.headers.get('x-dxrating-catalog-revision')).toBe(snapshot.publication_revision)
     expect(head.headers.get('content-length')).toBe(snapshot.byte_length)
     expect(await head.text()).toBe('')
 
@@ -103,6 +112,7 @@ producerContractSuite('dxdata assembly-line producer contract', () => {
     })
     expect(notModified.status).toBe(304)
     expect(notModified.headers.get('etag')).toBe(etag)
+    expect(notModified.headers.get('x-dxrating-catalog-revision')).toBe(snapshot.publication_revision)
     expect(await notModified.text()).toBe('')
   })
 

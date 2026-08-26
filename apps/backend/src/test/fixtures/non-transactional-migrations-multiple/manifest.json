@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "9002_multiple_statements",
+      "operation": {
+        "file": "9002_multiple_statements.sql",
+        "sha256": "82efb67f3010c6eb7ead02e4f6d9550633dbc1407f99aa487468e7b2567aebbc"
+      },
+      "verification": {
+        "file": "9002_multiple_statements.verify.sql",
+        "sha256": "9d9ae05c75a4dbc63584e22e62158653dff25ea4c3cccafdf3d4ed175a074c83"
+      }
+    }
+  ]
+}
