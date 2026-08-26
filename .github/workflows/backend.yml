@@ -398,15 +398,32 @@ jobs:
             comment_id=$(jq --exit-status --raw-output '.id' <<<"$comment_response")
             [[ "$comment_id" =~ ^[0-9]+$ ]]
             test "$(psql --dbname="$DATABASE_URL" --tuples-only --no-align --command \
-              "SELECT migration_rehearsal_state FROM public.comments WHERE id = ${comment_id}")" = 'visible'
+              "SELECT count(*) FROM public.comments WHERE id = ${comment_id}")" = '1'
             curl --fail --silent --show-error \
               "http://127.0.0.1:${port}/api/v1/comments?songId=migration-${label}&sheetType=dx&sheetDifficulty=master" \
               | jq --exit-status --arg expected "$label" 'any(.[]; .content == $expected)' >/dev/null
+
+            local alias_response
+            alias_response=$(curl --fail --silent --show-error \
+              --cookie "$cookie_jar" \
+              --header 'Content-Type: application/json' \
+              --data "{\"songId\":\"migration-alias-${label}\",\"name\":\"${label}\"}" \
+              "http://127.0.0.1:${port}/api/v1/aliases")
+            local alias_id
+            alias_id=$(jq --exit-status --raw-output '.id' <<<"$alias_response")
+            [[ "$alias_id" =~ ^[0-9]+$ ]]
+            test "$(psql --dbname="$DATABASE_URL" --tuples-only --no-align --command \
+              "SELECT migration_rehearsal_state FROM public.song_aliases WHERE id = ${alias_id}")" = 'visible'
+            curl --fail --silent --show-error "http://127.0.0.1:${port}/api/v1/aliases" \
+              | jq --exit-status \
+                  --arg song_id "migration-alias-${label}" \
+                  --arg expected "$label" \
+                  'any(.[]; .song_id == $song_id and .name == $expected)' >/dev/null
             # Row 900 remains below the fixed high-water mark but incomplete
             # during the deliberate pause. Both application versions must read it.
-            curl --fail --silent --show-error \
-              "http://127.0.0.1:${port}/api/v1/comments?songId=migration-song-900&sheetType=dx&sheetDifficulty=master" \
-              | jq --exit-status 'any(.[]; .content == "representative comment 900")' >/dev/null
+            curl --fail --silent --show-error "http://127.0.0.1:${port}/api/v1/aliases" \
+              | jq --exit-status \
+                  'any(.[]; .song_id == "migration-alias-900" and .name == "representative alias 900")' >/dev/null
             rm --force "$cookie_jar"
 
             docker rm --force "$container_name" >/dev/null
@@ -417,24 +434,24 @@ jobs:
           WITH checkpoint AS (
             SELECT high_water_id, last_id
             FROM migration_rehearsal.backfill_checkpoint
-            WHERE backfill_id = 'initialize-comment-visibility-v1'
+            WHERE backfill_id = 'initialize-alias-visibility-v1'
             FOR UPDATE
           ),
           batch AS MATERIALIZED (
-            SELECT comment.id
-            FROM public.comments AS comment, checkpoint
-            WHERE comment.id > checkpoint.last_id
-              AND comment.id <= checkpoint.high_water_id
-            ORDER BY comment.id
+            SELECT alias.id
+            FROM public.song_aliases AS alias, checkpoint
+            WHERE alias.id > checkpoint.last_id
+              AND alias.id <= checkpoint.high_water_id
+            ORDER BY alias.id
             LIMIT 73
-            FOR UPDATE OF comment
+            FOR UPDATE OF alias
           ),
           applied AS (
-            UPDATE public.comments AS comment
+            UPDATE public.song_aliases AS alias
             SET migration_rehearsal_state = 'visible'
             FROM batch
-            WHERE comment.id = batch.id
-            RETURNING comment.id
+            WHERE alias.id = batch.id
+            RETURNING alias.id
           ),
           progress AS (
             SELECT max(id) AS last_id, count(*)::bigint AS row_count
@@ -445,31 +462,29 @@ jobs:
               processed_count = stored.processed_count + progress.row_count,
               updated_at = clock_timestamp()
           FROM progress
-          WHERE stored.backfill_id = 'initialize-comment-visibility-v1';
+          WHERE stored.backfill_id = 'initialize-alias-visibility-v1';
           SQL
           }
 
           psql --dbname="$DATABASE_URL" --set=ON_ERROR_STOP=1 <<'SQL'
-          -- Seed a representative pre-admin user/comment population in the
+          -- Seed a representative pre-admin user/alias population in the
           -- generated application schema before any additive change exists.
           -- This permanent framework fixture does not replace a migration-
           -- specific prior-schema fixture when a real migration needs one.
           INSERT INTO public."user" (id, name, email, email_verified)
           VALUES ('migration-rehearsal-owner', 'Migration Owner', 'owner@migration-rehearsal.invalid', true);
-          INSERT INTO public.comments
-            (created_by, song_id, sheet_type, sheet_difficulty, content)
+          INSERT INTO public.song_aliases
+            (created_by, song_id, name)
           SELECT 'migration-rehearsal-owner',
-                 'migration-song-' || id::text,
-                 'dx',
-                 'master',
-                 'representative comment ' || id::text
+                 'migration-alias-' || id::text,
+                 'representative alias ' || id::text
           FROM generate_series(1, 1000) AS id;
 
           CREATE SCHEMA migration_rehearsal;
           -- Expansion is additive and nullable, so the currently deployed
-          -- image continues to read and write the real comments table.
-          ALTER TABLE public.comments ADD COLUMN migration_rehearsal_state text;
-          ALTER TABLE public.comments ALTER COLUMN migration_rehearsal_state SET DEFAULT 'visible';
+          -- image continues to read and write the real aliases table.
+          ALTER TABLE public.song_aliases ADD COLUMN migration_rehearsal_state text;
+          ALTER TABLE public.song_aliases ALTER COLUMN migration_rehearsal_state SET DEFAULT 'visible';
           CREATE TABLE migration_rehearsal.backfill_checkpoint (
             backfill_id text PRIMARY KEY,
             high_water_id bigint NOT NULL,
@@ -478,14 +493,14 @@ jobs:
             updated_at timestamptz NOT NULL DEFAULT clock_timestamp()
           );
           INSERT INTO migration_rehearsal.backfill_checkpoint (backfill_id, high_water_id)
-          SELECT 'initialize-comment-visibility-v1', max(id)
-          FROM public.comments;
+          SELECT 'initialize-alias-visibility-v1', max(id)
+          FROM public.song_aliases;
 
           -- A post-expansion write is outside the fixed backfill range and dual-writes the new value.
-          INSERT INTO public.comments
-            (created_by, song_id, sheet_type, sheet_difficulty, content, migration_rehearsal_state)
+          INSERT INTO public.song_aliases
+            (created_by, song_id, name, migration_rehearsal_state)
           VALUES
-            ('migration-rehearsal-owner', 'migration-song-live', 'dx', 'master', 'live comment', 'visible');
+            ('migration-rehearsal-owner', 'migration-alias-live', 'live alias', 'visible');
           SQL
 
           # Run the exact currently deployed image after expansion. Override
@@ -502,7 +517,7 @@ jobs:
           BEGIN
             IF NOT EXISTS (
               SELECT 1
-              FROM public.comments
+              FROM public.song_aliases
               WHERE id <= 1000 AND migration_rehearsal_state IS NULL
             ) THEN
               RAISE EXCEPTION 'pause rehearsal unexpectedly completed the backfill';
@@ -518,7 +533,7 @@ jobs:
           # Resume from the persisted cursor; every invocation is one bounded transaction.
           for _ in $(seq 1 20); do
             remaining=$(psql --dbname="$DATABASE_URL" --tuples-only --no-align --command \
-              "SELECT count(*) FROM public.comments WHERE id <= 1000 AND migration_rehearsal_state IS NULL")
+              "SELECT count(*) FROM public.song_aliases WHERE id <= 1000 AND migration_rehearsal_state IS NULL")
             if [[ "$remaining" == '0' ]]; then
               break
             fi
@@ -530,17 +545,17 @@ jobs:
           BEGIN
             IF EXISTS (
               SELECT 1
-              FROM public.comments
+              FROM public.song_aliases
               WHERE id <= 1000 AND migration_rehearsal_state <> 'visible'
             ) OR EXISTS (
               SELECT 1
-              FROM public.comments
+              FROM public.song_aliases
               WHERE id <= 1000 AND migration_rehearsal_state IS NULL
             ) THEN
               RAISE EXCEPTION 'backfill validation failed';
             END IF;
             IF (SELECT processed_count FROM migration_rehearsal.backfill_checkpoint
-                WHERE backfill_id = 'initialize-comment-visibility-v1') <> 1000 THEN
+                WHERE backfill_id = 'initialize-alias-visibility-v1') <> 1000 THEN
               RAISE EXCEPTION 'checkpoint count did not match the fixed high-water range';
             END IF;
           END
@@ -552,15 +567,15 @@ jobs:
 
           psql --dbname="$DATABASE_URL" --set=ON_ERROR_STOP=1 <<'SQL'
           -- Contract is intentionally separate and begins only after the rollback probe.
-          ALTER TABLE public.comments
-            ADD CONSTRAINT comments_migration_rehearsal_state_present
+          ALTER TABLE public.song_aliases
+            ADD CONSTRAINT song_aliases_migration_rehearsal_state_present
             CHECK (migration_rehearsal_state IS NOT NULL) NOT VALID;
-          ALTER TABLE public.comments
-            VALIDATE CONSTRAINT comments_migration_rehearsal_state_present;
-          ALTER TABLE public.comments
+          ALTER TABLE public.song_aliases
+            VALIDATE CONSTRAINT song_aliases_migration_rehearsal_state_present;
+          ALTER TABLE public.song_aliases
             ALTER COLUMN migration_rehearsal_state SET NOT NULL;
-          ALTER TABLE public.comments
-            DROP CONSTRAINT comments_migration_rehearsal_state_present;
+          ALTER TABLE public.song_aliases
+            DROP CONSTRAINT song_aliases_migration_rehearsal_state_present;
           SQL
 
           probe_image "$CANDIDATE_IMAGE" 3013 candidate-after-contract default
