@@ -75,10 +75,20 @@ jobs:
       - name: Install consumer dependencies
         run: pnpm install --frozen-lockfile
 
-      # The ignored producer integration test runs the real checksum-verified
-      # migration ledger and its stage/promote publication path. No consumer
-      # copy of the producer database schema or fixture is maintained here.
-      - name: Apply producer migrations and publish executable fixture
+      # The dedicated producer command owns and applies its complete,
+      # checksum-verified migration ledger. No consumer copy of the producer
+      # database schema is maintained here.
+      - name: Apply producer migrations
+        working-directory: _producer/dxdata-assembly-line
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/dxrating_test
+        run: |
+          cargo run --locked -- catalog-migrations apply
+          cargo run --locked -- catalog-migrations check
+
+      # The ignored producer integration test exercises the real
+      # stage/promote publication path after the dedicated migration step.
+      - name: Publish executable fixture
         working-directory: _producer/dxdata-assembly-line
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/dxrating_test
