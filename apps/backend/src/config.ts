@@ -36,6 +36,11 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: optionalString,
   GITHUB_CLIENT_ID: optionalString,
   GITHUB_CLIENT_SECRET: optionalString,
+  APPLE_CLIENT_ID: optionalString,
+  APPLE_TEAM_ID: optionalString,
+  APPLE_KEY_ID: optionalString,
+  APPLE_PRIVATE_KEY_B64: optionalString,
+  APPLE_APP_BUNDLE_IDENTIFIER: z.string().default('net.dxrating.ios'),
 
   // Cloudflare Turnstile (CAPTCHA)
   TURNSTILE_SECRET_KEY: optionalString,
@@ -93,6 +98,13 @@ export const config = {
     github: {
       clientId: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
+    },
+    apple: {
+      clientId: env.APPLE_CLIENT_ID,
+      teamId: env.APPLE_TEAM_ID,
+      keyId: env.APPLE_KEY_ID,
+      privateKeyBase64: env.APPLE_PRIVATE_KEY_B64,
+      appBundleIdentifier: env.APPLE_APP_BUNDLE_IDENTIFIER,
     },
     turnstile: {
       secretKey: env.TURNSTILE_SECRET_KEY,

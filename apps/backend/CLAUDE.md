@@ -95,6 +95,7 @@ Optional:
 - `BETTER_AUTH_URL` (default: http://localhost:3000)
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google OAuth
 - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` — GitHub OAuth
+- `APPLE_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY_B64`, `APPLE_APP_BUNDLE_IDENTIFIER` — Sign in with Apple; the backend derives short-lived client-secret JWTs from the base64-encoded `.p8` key
 - `SENTRY_DSN`, `SENTRY_RELEASE` — Sentry config
 - `ASSETS_LOCAL_CACHE_DIR` — Local disk cache directory for oneshot renderer assets
 - `ASSETS_REMOTE_URL` — Remote asset server URL (default: `https://shama.dxrating.net`)

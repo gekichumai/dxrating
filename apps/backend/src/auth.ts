@@ -9,10 +9,37 @@ import { openAPI, oneTap, haveIBeenPwned, captcha, lastLoginMethod } from 'bette
 import { passkey } from '@better-auth/passkey'
 import { i18n } from '@better-auth/i18n'
 import { config } from './config.js'
+import { createAppleClientSecretGenerator } from './lib/apple-client-secret.js'
 
 const crossSubDomainCookies = config.auth.cookieDomain
   ? { enabled: true as const, domain: config.auth.cookieDomain }
   : undefined
+
+const appleProvider = (() => {
+  const { clientId, teamId, keyId, privateKeyBase64, appBundleIdentifier } = config.auth.apple
+  const values = [clientId, teamId, keyId, privateKeyBase64]
+  if (values.every((value) => !value)) return undefined
+  if (values.some((value) => !value)) {
+    throw new Error(
+      'APPLE_CLIENT_ID, APPLE_TEAM_ID, APPLE_KEY_ID, and APPLE_PRIVATE_KEY_B64 must be configured together',
+    )
+  }
+
+  const generateClientSecret = createAppleClientSecretGenerator({
+    clientId: clientId!,
+    teamId: teamId!,
+    keyId: keyId!,
+    privateKeyBase64: privateKeyBase64!,
+  })
+
+  return {
+    clientId: clientId!,
+    appBundleIdentifier,
+    get clientSecret() {
+      return generateClientSecret()
+    },
+  }
+})()
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -38,7 +65,13 @@ export const auth = betterAuth({
       ipAddressHeaders: ['cf-connecting-ip'],
     },
   },
-  trustedOrigins: ['https://dxrating.net', 'dxrating://', 'http://localhost:5173', 'http://localhost:5174'],
+  trustedOrigins: [
+    'https://dxrating.net',
+    'https://appleid.apple.com',
+    'dxrating://',
+    'http://localhost:5173',
+    'http://localhost:5174',
+  ],
   socialProviders: {
     google: {
       clientId: config.auth.google.clientId!,
@@ -50,8 +83,8 @@ export const auth = betterAuth({
       clientSecret: config.auth.github.clientSecret!,
       enabled: !!config.auth.github.clientId && !!config.auth.github.clientSecret,
     },
+    ...(appleProvider ? { apple: appleProvider } : {}),
   },
-  // Add other providers if needed
   plugins: [
     expo(),
     openAPI(),
