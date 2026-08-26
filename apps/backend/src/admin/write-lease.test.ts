@@ -94,10 +94,22 @@ describe('PostgreSQL administrator write lease', () => {
     await cleanDatabase()
     await database.query(
       `
-        INSERT INTO "user" (id, name, email, role)
+        INSERT INTO "user" (id, name, email, role, admin_authorization_not_before)
         VALUES
-          ('admin-writer', 'Admin Writer', 'admin-writer@example.test', 'admin'),
-          ('moderator', 'Moderator', 'moderator@example.test', 'admin')
+          (
+            'admin-writer',
+            'Admin Writer',
+            'admin-writer@example.test',
+            'admin',
+            '2000-01-01T00:00:00Z'::timestamptz
+          ),
+          (
+            'moderator',
+            'Moderator',
+            'moderator@example.test',
+            'admin',
+            '2000-01-01T00:00:00Z'::timestamptz
+          )
       `,
     )
     await database.query(

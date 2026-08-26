@@ -56,8 +56,14 @@ describe('PostgreSQL administrator primary-authentication store', () => {
     await cleanDatabase()
     await database.query(
       `
-        INSERT INTO "user" (id, name, email, role)
-        VALUES ('admin-user', 'Administrator', 'admin@example.test', 'admin')
+        INSERT INTO "user" (id, name, email, role, admin_authorization_not_before)
+        VALUES (
+          'admin-user',
+          'Administrator',
+          'admin@example.test',
+          'admin',
+          '2000-01-01T00:00:00Z'::timestamptz
+        )
       `,
     )
     await database.query(
