@@ -206,6 +206,8 @@
     "form.or": "或",
     "form.email": "電子郵件",
     "form.password": "密碼",
+    "password.show-field": "顯示{{field}}",
+    "password.hide-field": "隱藏{{field}}",
     "form.continue": "繼續",
     "form.sign-in-with-passkey": "使用通行金鑰登錄",
     "form.has-account": "已有帳戶？登錄",

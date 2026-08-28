@@ -206,6 +206,8 @@
     "form.or": "または",
     "form.email": "メールアドレス",
     "form.password": "パスワード",
+    "password.show-field": "{{field}}を表示",
+    "password.hide-field": "{{field}}を隠す",
     "form.continue": "続ける",
     "form.sign-in-with-passkey": "パスキーで続ける",
     "form.has-account": "アカウントをお持ちですか？ログインへ",

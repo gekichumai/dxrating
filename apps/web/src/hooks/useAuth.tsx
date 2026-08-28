@@ -42,7 +42,7 @@ export const useAuth = () => {
   const LoginDialog = () => (
     <Dialog open={isLoginDialogOpen} onClose={() => !authPending && closeLoginDialog()} maxWidth="xs" fullWidth>
       <DialogContent>
-        <LoginForm onPendingChange={handlePendingChange} onSuccess={closeLoginDialog} />
+        <LoginForm idPrefix="global-auth-dialog" onPendingChange={handlePendingChange} onSuccess={closeLoginDialog} />
       </DialogContent>
     </Dialog>
   )

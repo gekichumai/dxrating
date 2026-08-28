@@ -206,6 +206,8 @@
     "form.or": "或",
     "form.email": "邮箱",
     "form.password": "密码",
+    "password.show-field": "显示{{field}}",
+    "password.hide-field": "隐藏{{field}}",
     "form.continue": "继续",
     "form.sign-in-with-passkey": "使用通行密钥登录",
     "form.has-account": "已有账户？登录",

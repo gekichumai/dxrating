@@ -206,6 +206,8 @@
     "form.or": "or",
     "form.email": "Email",
     "form.password": "Password",
+    "password.show-field": "Show {{field}}",
+    "password.hide-field": "Hide {{field}}",
     "form.continue": "Continue",
     "form.sign-in-with-passkey": "Sign in with Passkey",
     "form.has-account": "Already have an account? Sign In",

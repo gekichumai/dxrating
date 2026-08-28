@@ -22,10 +22,10 @@ function AccountSecurityPage() {
             <CircularProgress size="2rem" />
           </div>
         ) : sessionData?.session ? (
-          <SecuritySection currentSessionToken={sessionData.session.token} />
+          <SecuritySection currentSessionToken={sessionData.session.token} idPrefix="account-security" />
         ) : (
           <div className="mx-auto max-w-sm p-4">
-            <LoginForm />
+            <LoginForm idPrefix="account-security" />
           </div>
         )}
       </section>

@@ -12,15 +12,17 @@ import IconPasskey from '~icons/material-symbols/passkey'
 import aaguidData from '../../../data/passkey-aaguids.json'
 import { authClient } from '../../../lib/auth-client'
 import { formatErrorMessage } from '../../../utils/formatErrorMessage'
+import { PasswordVisibilityAdornment } from '../../auth/PasswordVisibilityAdornment'
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 
 // -- Password Subsection --
 
-const PasswordSubsection: FC = () => {
+const PasswordSubsection: FC<{ idPrefix: string }> = ({ idPrefix }) => {
   const { t } = useTranslation(['auth'])
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [visiblePasswords, setVisiblePasswords] = useState({ current: false, new: false, confirm: false })
 
   const mismatch = confirmPassword.length > 0 && newPassword !== confirmPassword
   const canSubmit = currentPassword.length > 0 && newPassword.length > 0 && confirmPassword.length > 0 && !mismatch
@@ -41,34 +43,81 @@ const PasswordSubsection: FC = () => {
     setConfirmPassword('')
   }, [currentPassword, newPassword])
 
+  const togglePasswordVisibility = (field: keyof typeof visiblePasswords) => {
+    setVisiblePasswords((visible) => ({ ...visible, [field]: !visible[field] }))
+  }
+
+  const titleId = `${idPrefix}-password-settings-title`
+  const currentPasswordId = `${idPrefix}-current-password`
+  const newPasswordId = `${idPrefix}-new-password`
+  const confirmPasswordId = `${idPrefix}-confirm-password`
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
         <IconMdiLock className="text-lg text-zinc-500" />
-        <h2 className="text-base font-semibold m-0">{t('auth:user-profile.password.title')}</h2>
+        <h2 id={titleId} className="text-base font-semibold m-0">
+          {t('auth:user-profile.password.title')}
+        </h2>
       </div>
-      <div className="flex flex-col gap-3">
+      <form
+        aria-labelledby={titleId}
+        className="flex flex-col gap-3"
+        onSubmit={(event) => {
+          event.preventDefault()
+          if (canSubmit && !changeState.loading) void handleChange()
+        }}
+        noValidate
+      >
         <TextField
+          id={currentPasswordId}
+          name="current-password"
           label={t('auth:user-profile.password.current')}
-          type="password"
+          type={visiblePasswords.current ? 'text' : 'password'}
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
           size="small"
           fullWidth
           autoComplete="current-password"
+          required
+          InputProps={{
+            endAdornment: (
+              <PasswordVisibilityAdornment
+                visible={visiblePasswords.current}
+                fieldLabel={t('auth:user-profile.password.current')}
+                inputId={currentPasswordId}
+                onToggle={() => togglePasswordVisibility('current')}
+              />
+            ),
+          }}
         />
         <TextField
+          id={newPasswordId}
+          name="new-password"
           label={t('auth:user-profile.password.new')}
-          type="password"
+          type={visiblePasswords.new ? 'text' : 'password'}
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           size="small"
           fullWidth
           autoComplete="new-password"
+          required
+          InputProps={{
+            endAdornment: (
+              <PasswordVisibilityAdornment
+                visible={visiblePasswords.new}
+                fieldLabel={t('auth:user-profile.password.new')}
+                inputId={newPasswordId}
+                onToggle={() => togglePasswordVisibility('new')}
+              />
+            ),
+          }}
         />
         <TextField
+          id={confirmPasswordId}
+          name="confirm-password"
           label={t('auth:user-profile.password.confirm')}
-          type="password"
+          type={visiblePasswords.confirm ? 'text' : 'password'}
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           size="small"
@@ -76,16 +125,22 @@ const PasswordSubsection: FC = () => {
           error={mismatch}
           helperText={mismatch ? t('auth:user-profile.password.mismatch') : undefined}
           autoComplete="new-password"
+          required
+          InputProps={{
+            endAdornment: (
+              <PasswordVisibilityAdornment
+                visible={visiblePasswords.confirm}
+                fieldLabel={t('auth:user-profile.password.confirm')}
+                inputId={confirmPasswordId}
+                onToggle={() => togglePasswordVisibility('confirm')}
+              />
+            ),
+          }}
         />
-        <Button
-          onClick={handleChange}
-          disabled={!canSubmit || changeState.loading}
-          variant="contained"
-          className="!self-start"
-        >
+        <Button type="submit" disabled={!canSubmit || changeState.loading} variant="contained" className="!self-start">
           {changeState.loading ? <CircularProgress size="1.25rem" /> : t('auth:user-profile.password.save')}
         </Button>
-      </div>
+      </form>
     </div>
   )
 }
@@ -332,7 +387,10 @@ const DevicesSubsection: FC<{ currentSessionToken?: string }> = ({ currentSessio
 
 // -- Main Security Section --
 
-export const SecuritySection: FC<{ currentSessionToken?: string }> = ({ currentSessionToken }) => {
+export const SecuritySection: FC<{ currentSessionToken?: string; idPrefix?: string }> = ({
+  currentSessionToken,
+  idPrefix = 'security',
+}) => {
   const { t } = useTranslation(['auth'])
 
   return (
@@ -341,7 +399,7 @@ export const SecuritySection: FC<{ currentSessionToken?: string }> = ({ currentS
         <h1 className="text-lg font-bold m-0">{t('auth:user-profile.security')}</h1>
       </div>
 
-      <PasswordSubsection />
+      <PasswordSubsection idPrefix={idPrefix} />
 
       <div className="h-px bg-zinc-200 dark:bg-zinc-700" />
 

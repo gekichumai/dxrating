@@ -206,6 +206,8 @@
     "form.or": "또는",
     "form.email": "이메일",
     "form.password": "비밀번호",
+    "password.show-field": "{{field}} 표시",
+    "password.hide-field": "{{field}} 숨기기",
     "form.continue": "계속",
     "form.sign-in-with-passkey": "패스키로 로그인",
     "form.has-account": "이미 계정이 있나요? 로그인",

@@ -68,7 +68,9 @@ export const UserChip: FC = () => {
         disableClose={authPending}
         drawerHeight="70vh"
       >
-        {() => <LoginForm onPendingChange={handlePendingChange} onSuccess={() => setOpen(null)} />}
+        {() => (
+          <LoginForm idPrefix="account-dialog" onPendingChange={handlePendingChange} onSuccess={() => setOpen(null)} />
+        )}
       </ResponsiveDialog>
 
       <UserProfileModal open={open === 'profile'} onClose={() => setOpen(null)} />
