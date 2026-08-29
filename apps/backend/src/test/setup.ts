@@ -45,6 +45,7 @@ export async function setupTestServer() {
     '0008_arcade_chain_audit_alignment.sql',
     '0009_arcade_public_identities.sql',
     '0010_enforce_arcade_public_identities.sql',
+    '0011_ancient_maelstrom.sql',
   ]
 
   for (const file of migrationFiles) {
