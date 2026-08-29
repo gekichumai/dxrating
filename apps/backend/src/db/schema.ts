@@ -43,7 +43,7 @@ export const tagSongs = pgTable('tag_songs', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   created_at: timestamp('created_at').defaultNow().notNull(),
   tag_id: bigint('tag_id', { mode: 'number' })
-    .references(() => tags.id)
+    .references(() => tags.id, { onDelete: 'cascade' })
     .notNull(),
   song_id: text('song_id').notNull(),
   sheet_type: text('sheet_type').notNull(),
@@ -70,7 +70,9 @@ export const comments = pgTable('comments', {
   song_id: text('song_id').notNull(),
   sheet_type: text('sheet_type').notNull(),
   sheet_difficulty: text('sheet_difficulty').notNull(),
-  parent_id: bigint('parent_id', { mode: 'number' }).references((): AnyPgColumn => comments.id),
+  parent_id: bigint('parent_id', { mode: 'number' }).references((): AnyPgColumn => comments.id, {
+    onDelete: 'set null',
+  }),
   content: text('content').notNull(),
 })
 
@@ -79,7 +81,7 @@ export const songAliases = pgTable('song_aliases', {
   created_at: timestamp('created_at').defaultNow().notNull(),
   song_id: text('song_id').notNull(),
   name: text('name').notNull(),
-  created_by: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+  created_by: text('created_by').references(() => user.id, { onDelete: 'cascade' }),
 })
 
 // --- LXNS OAuth Tables ---

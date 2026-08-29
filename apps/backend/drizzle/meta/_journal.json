@@ -78,6 +78,13 @@
       "when": 1785610151236,
       "tag": "0010_enforce_arcade_public_identities",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788016139847,
+      "tag": "0011_ancient_maelstrom",
+      "breakpoints": true
     }
   ]
 }

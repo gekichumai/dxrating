@@ -10,6 +10,8 @@ import { passkey } from '@better-auth/passkey'
 import { i18n } from '@better-auth/i18n'
 import { config } from './config.js'
 import { createAppleClientSecretGenerator } from './lib/apple-client-secret.js'
+import { revokeOAuthGrants } from './lib/oauth-revocation.js'
+import { eq } from 'drizzle-orm'
 
 const crossSubDomainCookies = config.auth.cookieDomain
   ? { enabled: true as const, domain: config.auth.cookieDomain }
@@ -56,6 +58,46 @@ export const auth = betterAuth({
     password: {
       hash: async (password) => bcrypt.hash(password, 10),
       verify: async ({ hash, password }) => bcrypt.compare(password, hash),
+    },
+  },
+  user: {
+    deleteUser: {
+      enabled: true,
+      beforeDelete: async (user) => {
+        const accounts = await db
+          .select({
+            providerId: authSchema.account.providerId,
+            accessToken: authSchema.account.accessToken,
+            refreshToken: authSchema.account.refreshToken,
+          })
+          .from(authSchema.account)
+          .where(eq(authSchema.account.userId, user.id))
+
+        const revocationIssues = await revokeOAuthGrants(accounts, {
+          ...(appleProvider
+            ? {
+                apple: {
+                  clientId: appleProvider.clientId,
+                  clientSecret: () => appleProvider.clientSecret,
+                },
+              }
+            : {}),
+          ...(config.auth.github.clientId && config.auth.github.clientSecret
+            ? {
+                github: {
+                  clientId: config.auth.github.clientId,
+                  clientSecret: config.auth.github.clientSecret,
+                },
+              }
+            : {}),
+        })
+
+        for (const issue of revocationIssues) {
+          console.warn('OAuth grant revocation issue during account deletion', issue)
+        }
+
+        await db.delete(authSchema.verification).where(eq(authSchema.verification.value, user.id))
+      },
     },
   },
   advanced: {
