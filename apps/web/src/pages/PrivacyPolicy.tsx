@@ -3,7 +3,7 @@ export const PrivacyPolicy = () => {
     <div className="flex items-center justify-center mx-auto bg-white/80 py-24">
       <article className="prose overflow-auto">
         <h1>Privacy Policy</h1>
-        <p>Last updated: 2024-11-23</p>
+        <p>Last updated: 2026-08-30</p>
 
         <h2>Introduction</h2>
         <p>
@@ -65,6 +65,18 @@ export const PrivacyPolicy = () => {
           We will retain your information only for as long as necessary to fulfill the purposes outlined in this Privacy
           Policy. We will retain and use your information to the extent necessary to comply with our legal obligations,
           resolve disputes, and enforce our policies.
+        </p>
+
+        <h2>Account Deletion</h2>
+        <p>
+          You can permanently delete your account from the account screen in the DXRating app. Deletion removes your
+          profile, comments, tags and tag attachments, aliases, sessions, passkeys, linked sign-in methods, and linked
+          LXNS credentials. Linked OAuth grants are revoked when supported by the provider. After deletion, you can
+          create a new account using the same email address or sign-in provider.
+        </p>
+        <p>
+          Account data is removed from our active systems immediately. Residual copies may remain in encrypted backups
+          until those backups are automatically deleted, or when retention is required by law.
         </p>
 
         <h2>Your Rights</h2>
