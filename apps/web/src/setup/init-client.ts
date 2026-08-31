@@ -1,6 +1,7 @@
 import i18n from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import posthog from 'posthog-js'
+import { sanitizeAnalyticsEvent } from '@/lib/analytics'
 import { initI18n } from './init-i18n'
 import { getClientLanguageDetectionOptions, resolveSupportedLocale } from './locale'
 
@@ -23,5 +24,13 @@ export function initClient() {
   posthog.init('phc_Hw7FM2D1vSwummp0D3O13Z6biV6udw5bKIcq4BJQxH7', {
     api_host: 'https://razu.dxrating.net',
     ui_host: 'https://app.posthog.com',
+    defaults: '2026-01-30',
+    capture_pageview: 'history_change',
+    capture_pageleave: true,
+    person_profiles: 'identified_only',
+    session_recording: {
+      maskAllInputs: true,
+    },
+    before_send: sanitizeAnalyticsEvent,
   })
 }

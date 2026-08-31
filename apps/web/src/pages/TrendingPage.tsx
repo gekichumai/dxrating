@@ -151,7 +151,7 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
                       <meta itemProp="value" content={chart.level} />
                     </span>
                     {chart.releaseDate && <meta itemProp="datePublished" content={chart.releaseDate} />}
-                    <SheetListItem sheet={chart} />
+                    <SheetListItem sheet={chart} analytics={{ source: 'trending', position: index + 1 }} />
                   </div>
                 </li>
               )

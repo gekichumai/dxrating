@@ -1,7 +1,6 @@
 import { type DifficultyEnum, type Regions, TypeEnum } from '@gekichumai/dxdata'
 import { ListItemButton, ListItemSecondaryAction, ListItemText, type ListItemTextProps } from '@mui/material'
 import clsx from 'clsx'
-import { usePostHog } from 'posthog-js/react'
 import { type FC, type HTMLAttributes, type ImgHTMLAttributes, memo, type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useWebHaptics } from 'web-haptics/react'
@@ -11,6 +10,7 @@ import MdiComment from '~icons/mdi/comment'
 import MdiLock from '~icons/mdi/lock'
 import MdiTrashCan from '~icons/mdi/trash-can'
 import { DIFFICULTIES } from '../../models/difficulties'
+import { captureAnalyticsEvent, type SheetViewSource } from '../../lib/analytics'
 import type { FlattenedSheet } from '../../songs'
 import { useIsLargeDevice } from '../../utils/breakpoints'
 import { FadedImage } from '../global/FadedImage'
@@ -21,6 +21,13 @@ import { SheetDialogContent, type SheetDialogContentProps } from './SheetDialogC
 import { buildSheetPath } from './sheetLinks'
 import { getSheetTypeAltTextKey, SHEET_TYPE_IMAGES, SHEET_TYPE_UTAGE_2P_END_ADORNMENT_IMAGE } from './sheetTypeAssets'
 
+export interface SheetListItemAnalyticsProps {
+  source: SheetViewSource
+  position?: number
+  queryPresent?: boolean
+  resultCount?: number
+}
+
 export const SheetListItem: FC<{
   size?: 'small' | 'medium'
   sheet: FlattenedSheet
@@ -29,9 +36,17 @@ export const SheetListItem: FC<{
 
   SheetListItemContentProps?: Omit<SheetListItemContentProps, 'sheet'>
   SheetDialogContentProps?: Omit<SheetDialogContentProps, 'sheet'>
+  analytics?: SheetListItemAnalyticsProps
 }> = memo(
-  ({ size = 'medium', sheet, dialogOpen, onDialogOpenChange, SheetListItemContentProps, SheetDialogContentProps }) => {
-    const posthog = usePostHog()
+  ({
+    size = 'medium',
+    sheet,
+    dialogOpen,
+    onDialogOpenChange,
+    SheetListItemContentProps,
+    SheetDialogContentProps,
+    analytics,
+  }) => {
     const haptic = useWebHaptics()
     const [internalOpen, setInternalOpen] = useState(false)
     const isLargeDevice = useIsLargeDevice()
@@ -56,10 +71,17 @@ export const SheetListItem: FC<{
             e.preventDefault()
             setOpen(true)
             haptic.trigger('medium')
-            posthog?.capture('sheet_content_viewed', {
+            captureAnalyticsEvent('sheet_content_viewed', {
               song_id: sheet.songId,
               sheet_type: sheet.type,
               sheet_difficulty: sheet.difficulty,
+              source: analytics?.source ?? 'unknown',
+              position: analytics?.position,
+              query_present: analytics?.queryPresent,
+              result_count: analytics?.resultCount,
+              sheet_version: sheet.version,
+              internal_level: sheet.internalLevelValue,
+              is_rating_eligible: sheet.isRatingEligible,
             })
           }}
           disableGutters={!isLargeDevice}

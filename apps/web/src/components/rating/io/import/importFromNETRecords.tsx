@@ -5,7 +5,6 @@ import { CircularProgress } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import cloneDeep from 'lodash-es/cloneDeep'
 import i18n from 'i18next'
-import posthog from 'posthog-js'
 import toast from 'react-hot-toast'
 import type { ListActions } from 'react-use/lib/useList'
 import IconMdiCheck from '~icons/mdi/check'
@@ -15,6 +14,7 @@ import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { NetImportError, type NetImportErrorCode, unexpectedErrorSubtitle } from './netImportErrorFeedback'
+import { captureAnalyticsEvent } from '@/lib/analytics'
 
 const ERROR_CODE_I18N: Record<NetImportErrorCode, string> = {
   NET_MAINTENANCE: 'rating-calculator:io.import.net-records.errors.maintenance',
@@ -144,8 +144,14 @@ export const importFromNETRecords = async (
     return
   }
   importInFlight = true
-  posthog?.capture('netimport_started')
   const importStart = performance.now()
+  const trigger = authParams ? 'manual' : 'automatic'
+  captureAnalyticsEvent('netimport_started', { mode, trigger })
+  captureAnalyticsEvent('rating_import_started', {
+    source: 'maimai_net',
+    mode,
+    trigger,
+  })
 
   const t = i18n.t.bind(i18n)
   const toastId = toast.loading(t('rating-calculator:io.import.net-records.importing'), {
@@ -164,6 +170,13 @@ export const importFromNETRecords = async (
     })()
     const params = authParams ?? storedAuthParams
     if (!params) {
+      captureAnalyticsEvent('rating_import_failed', {
+        source: 'maimai_net',
+        duration_ms: performance.now() - importStart,
+        error_code: 'missing_credentials',
+        mode,
+        trigger,
+      })
       toast.error(t('rating-calculator:io.import.net-records.no-credentials'), {
         id: toastId,
       })
@@ -249,12 +262,26 @@ export const importFromNETRecords = async (
 
     localStorage.setItem(NET_IMPORT_LAST_SUCCESS_KEY, Date.now().toString())
 
-    posthog?.capture('netimport_succeeded', {
+    const duration = performance.now() - importStart
+    captureAnalyticsEvent('netimport_succeeded', {
       region,
       count: entries.length,
+      mode,
+      duration_ms: duration,
+      warning_count: importResult.warnings.length,
+      trigger,
+    })
+    captureAnalyticsEvent('rating_import_succeeded', {
+      source: 'maimai_net',
+      duration_ms: duration,
+      entry_count: entries.length,
+      warning_count: importResult.warnings.length,
+      mode,
+      trigger,
+      region,
     })
 
-    Sentry.metrics.distribution('net_import.duration', performance.now() - importStart, {
+    Sentry.metrics.distribution('net_import.duration', duration, {
       unit: 'millisecond',
       attributes: { region, mode },
     })
@@ -263,6 +290,13 @@ export const importFromNETRecords = async (
       attributes: { region, mode },
     })
   } catch (error) {
+    captureAnalyticsEvent('rating_import_failed', {
+      source: 'maimai_net',
+      duration_ms: performance.now() - importStart,
+      error_code: error instanceof NetImportError ? error.code.toLowerCase() : 'unknown',
+      mode,
+      trigger,
+    })
     Sentry.metrics.count('net_import.failure', 1, {
       attributes: { error_code: error instanceof NetImportError ? error.code : 'unknown' },
     })

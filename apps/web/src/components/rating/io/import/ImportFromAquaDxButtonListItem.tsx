@@ -9,6 +9,7 @@ import { useWebHaptics } from 'web-haptics/react'
 import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
+import { createRatingImportTracker } from '@/lib/analytics'
 
 type AquaDxExportMusicDetail = {
   musicId: string | number
@@ -45,26 +46,33 @@ export const ImportFromAquaDxButtonListItem: FC<{
             if (!data) return
             if (typeof data !== 'string') return
 
-            const musicIdMapJson = await import('@/assets/music-id-map.json')
-            const musicIdMap = musicIdMapJson.default as ProviderMusicIdMap
+            const analytics = createRatingImportTracker('aqua_dx')
+            try {
+              const musicIdMapJson = await import('@/assets/music-id-map.json')
+              const musicIdMap = musicIdMapJson.default as ProviderMusicIdMap
 
-            const aquaExportData = JSON.parse(data)
-            const rows = Array.isArray(aquaExportData?.userMusicDetailList)
-              ? aquaExportData.userMusicDetailList.map((musicDetail: AquaDxExportMusicDetail) => ({
-                  musicId: musicDetail.musicId,
-                  level: musicDetail.level,
-                  achievement: musicDetail.achievement,
-                }))
-              : []
-            const importResult = normalizeAquaDxRows(getDxdataSongCatalog(appVersion), rows, musicIdMap)
-            const entries = importResultToPlayEntries(importResult)
-            for (const warning of importResult.warnings) {
-              console.warn('[ImportFromAquaDxButtonListItem]', warning.message, warning.row)
+              const aquaExportData = JSON.parse(data)
+              const rows = Array.isArray(aquaExportData?.userMusicDetailList)
+                ? aquaExportData.userMusicDetailList.map((musicDetail: AquaDxExportMusicDetail) => ({
+                    musicId: musicDetail.musicId,
+                    level: musicDetail.level,
+                    achievement: musicDetail.achievement,
+                  }))
+                : []
+              const importResult = normalizeAquaDxRows(getDxdataSongCatalog(appVersion), rows, musicIdMap)
+              const entries = importResultToPlayEntries(importResult)
+              for (const warning of importResult.warnings) {
+                console.warn('[ImportFromAquaDxButtonListItem]', warning.message, warning.row)
+              }
+
+              modifyEntries.set(entries)
+              analytics.succeeded(entries.length, importResult.warnings.length)
+              haptic.trigger('success')
+              toast.success(t('rating-calculator:io.import.aqua-dx.success', { count: entries.length }))
+            } catch (error) {
+              analytics.failed('invalid_file')
+              console.error(error)
             }
-
-            modifyEntries.set(entries)
-            haptic.trigger('success')
-            toast.success(t('rating-calculator:io.import.aqua-dx.success', { count: entries.length }))
           }
           reader.readAsText(file)
         }

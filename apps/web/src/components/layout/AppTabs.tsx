@@ -1,7 +1,6 @@
 import { CircularProgress, Tab, Tabs, Tooltip } from '@mui/material'
 import { Link, useLocation, useRouterState } from '@tanstack/react-router'
-import { usePostHog } from 'posthog-js/react'
-import { useEffect, type FC, type ReactNode } from 'react'
+import { type FC, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import MdiTrendingUpIcon from '~icons/mdi/trending-up'
 import MdiUpdateIcon from '~icons/mdi/update'
@@ -11,6 +10,7 @@ import {
   getActiveAppTabValue,
   getPendingAppTabValue,
 } from '@/routes/-top-nav-links'
+import { captureAnalyticsEvent } from '@/lib/analytics'
 
 interface AppTabContentProps {
   children: ReactNode
@@ -38,7 +38,6 @@ const AppTabContent: FC<AppTabContentProps> = ({ children, fixedSize = false, pe
 export const AppTabs: FC = () => {
   const { t } = useTranslation(['root'])
   const location = useLocation()
-  const posthog = usePostHog()
 
   const activeTab = getActiveAppTabValue(location.pathname)
   const pendingTab = useRouterState({
@@ -46,11 +45,6 @@ export const AppTabs: FC = () => {
       getPendingAppTabValue(state.isLoading, state.location.pathname, state.resolvedLocation?.pathname),
   })
   const selectedTab = pendingTab || activeTab
-
-  useEffect(() => {
-    if (!activeTab) return
-    posthog?.capture('tab_switched', { tab: activeTab })
-  }, [posthog, activeTab])
 
   return (
     <div className="rounded-xl bg-zinc-900/10 !min-h-2.5rem flex items-center overflow-hidden">
@@ -87,6 +81,12 @@ export const AppTabs: FC = () => {
               }
               label={isIconOnlyTab ? undefined : <AppTabContent pending={isPendingTab}>{label}</AppTabContent>}
               to={link.href}
+              onClick={() => {
+                captureAnalyticsEvent('tab_switched', {
+                  tab: link.value,
+                  source: 'top_navigation',
+                })
+              }}
               viewTransition
               classes={{
                 selected: '!text-white font-bold text-shadow-md',

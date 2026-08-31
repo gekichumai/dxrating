@@ -1,6 +1,5 @@
 import { IconButton } from '@mui/material'
 import { motion } from 'framer-motion'
-import { usePostHog } from 'posthog-js/react'
 import { type FC, memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
@@ -9,6 +8,7 @@ import MdiLinkVariant from '~icons/mdi/link-variant'
 import MdiStar from '~icons/mdi/star'
 import MdiStarOutline from '~icons/mdi/star-outline'
 import { useSheetFavoriteState } from '../../models/favorite'
+import { captureAnalyticsEvent } from '../../lib/analytics'
 import type { FlattenedSheet } from '../../songs'
 import { buildSheetLink } from './sheetLinks'
 
@@ -17,7 +17,6 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ s
   const [favored, toggleFavored] = useSheetFavoriteState(sheet.id)
   const [expanded, setExpanded] = useState(false)
   const [imgError, setImgError] = useState(false)
-  const posthog = usePostHog()
 
   const variants = {
     collapsed: {
@@ -48,7 +47,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ s
             toast.success(t('sheet:copy-link.toast-success'), {
               id: `copy-sheet-link-${sheet.id}`,
             })
-            posthog?.capture('sheet_link_copied', {
+            captureAnalyticsEvent('sheet_link_copied', {
               song_id: sheet.songId,
               sheet_type: sheet.type,
               sheet_difficulty: sheet.difficulty,
@@ -63,9 +62,13 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ s
         <IconButton
           size="small"
           onClick={() => {
-            const newFavored = toggleFavored()
-            posthog?.capture('sheet_favorite_button_clicked', {
+            const newFavored = !favored
+            toggleFavored()
+            captureAnalyticsEvent('sheet_favorite_button_clicked', {
               favored: newFavored,
+              song_id: sheet.songId,
+              sheet_type: sheet.type,
+              sheet_difficulty: sheet.difficulty,
             })
           }}
         >

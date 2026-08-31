@@ -2,6 +2,8 @@ import { Alert, AlertTitle, Button, Dialog, DialogActions, DialogContent, Dialog
 import { type FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
+import { captureAnalyticsEvent } from '@/lib/analytics'
+import { useRatingCalculatorContext } from '@/models/context/RatingCalculatorContext'
 import type { PlayEntry } from '../RatingCalculatorAddEntryForm'
 
 export const ClearButton: FC<{
@@ -9,6 +11,7 @@ export const ClearButton: FC<{
 }> = ({ modifyEntries }) => {
   const [dialogOpen, setDialogOpen] = useState(false)
   const { t } = useTranslation(['rating-calculator'])
+  const { entries } = useRatingCalculatorContext()
 
   return (
     <>
@@ -28,6 +31,9 @@ export const ClearButton: FC<{
             variant="contained"
             onClick={() => {
               setDialogOpen(false)
+              captureAnalyticsEvent('rating_calculator_cleared', {
+                entry_count: entries.length,
+              })
               modifyEntries.clear()
             }}
           >

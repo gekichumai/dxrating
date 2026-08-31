@@ -1,10 +1,10 @@
-import { type DifficultyEnum, TypeEnum, VERSION_ID_MAP, dxdata } from '@gekichumai/dxdata'
+import { CategoryEnum, DifficultyEnum, TypeEnum, VERSION_ID_MAP, VersionEnum, dxdata } from '@gekichumai/dxdata'
 import { IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
-import { usePostHog } from 'posthog-js/react'
-import { type FC, useCallback, useEffect, useId, useMemo, useState, useTransition } from 'react'
+import { type FC, useCallback, useId, useMemo, useState, useTransition } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useEffectOnce, useUpdateEffect } from 'react-use'
 import IconMdiClose from '~icons/mdi/close'
 import MdiIconInfo from '~icons/mdi/information'
 import { ResponsiveDialog } from '../components/global/ResponsiveDialog'
@@ -14,6 +14,7 @@ import { SheetDialogContent } from '../components/sheet/SheetDialogContent'
 import { SheetListContainer } from '../components/sheet/SheetListContainer'
 import { SheetSortFilter, SheetSortFilterTrigger, type SheetSortFilterForm } from '../components/sheet/SheetSortFilter'
 import { SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
+import { captureAnalyticsEvent } from '../lib/analytics'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { type FlattenedSheet, canonicalIdFromParts, useFilteredSheets, useSheets } from '../songs'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
@@ -34,11 +35,58 @@ type SheetListProps = {
   seedSheets?: readonly SearchQuerySeedSheet[]
 }
 
+const summarizeSortFilter = (form: SheetSortFilterForm) => {
+  const { filters, sorts } = form
+  const activeFilterCount = [
+    filters.versions.length !== Object.values(VersionEnum).length,
+    filters.internalLevelValue?.min !== 1 || filters.internalLevelValue?.max !== 15,
+    filters.tags.length > 0,
+    filters.categories.length !== Object.values(CategoryEnum).length,
+    filters.difficulties.length !== Object.values(DifficultyEnum).length,
+    filters.favoritesOnly,
+  ].filter(Boolean).length
+
+  return {
+    active_filter_count: activeFilterCount,
+    selected_version_count: filters.versions.length,
+    selected_difficulty_count: filters.difficulties.length,
+    selected_category_count: filters.categories.length,
+    selected_tag_count: filters.tags.length,
+    favorites_only: filters.favoritesOnly,
+    sort: sorts.map(({ descriptor, direction }) => `${descriptor}:${direction}`).join(','),
+  }
+}
+
+const SheetSearchAnalytics: FC<{
+  query: string
+  resultCount: number
+  durationMs: number
+  sortFilter: SheetSortFilterForm
+}> = ({ query, resultCount, durationMs, sortFilter }) => {
+  useEffectOnce(() => {
+    const filterSummary = summarizeSortFilter(sortFilter)
+    if (!query && filterSummary.active_filter_count === 0) return
+
+    const timeout = window.setTimeout(() => {
+      captureAnalyticsEvent('sheet_search_performed', {
+        query_length: query.length,
+        result_count: resultCount,
+        zero_results: resultCount === 0,
+        duration_ms: durationMs,
+        ...filterSummary,
+      })
+    }, 750)
+
+    return () => window.clearTimeout(timeout)
+  })
+
+  return null
+}
+
 const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly SearchQuerySeedSheet[] }> = ({
   search,
   seedSheets,
 }) => {
-  const posthog = usePostHog()
   const { t } = useTranslation(['sheet'])
   const { data: sheets, isLoading } = useSheets({ acceptsPartialData: true })
   const version = useAppContextDXDataVersion()
@@ -53,13 +101,13 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
   const [inputQuery, setInputQuery] = useState(query)
   const { results, elapsed: searchElapsed } = useFilteredSheets(inputQuery)
 
-  useEffect(() => {
+  useUpdateEffect(() => {
     setInputQuery(query)
   }, [query])
 
-  useEffect(() => {
+  useEffectOnce(() => {
     setHydrated(true)
-  }, [])
+  })
 
   const updateQuery = useCallback(
     (nextQuery: string) => {
@@ -212,6 +260,15 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
 
   return (
     <SheetDetailsContextProvider queryActive={!!inputQuery}>
+      {sortFilterOptions && !isLoading && (
+        <SheetSearchAnalytics
+          key={`${inputQuery}:${filteredResults.length}:${JSON.stringify(sortFilterOptions)}`}
+          query={inputQuery}
+          resultCount={filteredResults.length}
+          durationMs={searchElapsed + filteringElapsed}
+          sortFilter={sortFilterOptions}
+        />
+      )}
       <div className="flex-container pb-global">
         <ResponsiveDialog
           open={!!activeSheet}
@@ -246,7 +303,10 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
                 <IconButton
                   onClick={() => {
                     updateQuery('')
-                    posthog?.capture('sheet_search_clear_button_clicked')
+                    captureAnalyticsEvent('sheet_search_clear_button_clicked', {
+                      previous_query_length: inputQuery.length,
+                      result_count: filteredResults.length,
+                    })
                   }}
                   size="small"
                 >
@@ -319,6 +379,9 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
             sheets={filteredResults}
             activeSheetId={activeSheetId}
             onSheetDialogChange={handleSheetDialogChange}
+            analyticsSource="search_results"
+            analyticsQueryPresent={!!inputQuery}
+            analyticsResultCount={filteredResults.length}
           />
         )}
       </div>

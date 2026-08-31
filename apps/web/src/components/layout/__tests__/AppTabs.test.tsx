@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import i18n from 'i18next'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
@@ -32,8 +32,8 @@ vi.mock('@tanstack/react-router', async () => {
   }
 })
 
-vi.mock('posthog-js/react', () => ({
-  usePostHog: () => ({ capture }),
+vi.mock('@/lib/analytics', () => ({
+  captureAnalyticsEvent: capture,
 }))
 
 vi.mock('~icons/mdi/trending-up', () => ({
@@ -59,13 +59,19 @@ describe('AppTabs', () => {
     routerState.resolvedLocation = { pathname: '/rating' }
   })
 
-  it('selects the current route tab and captures the selected tab', () => {
+  it('selects the current route tab and captures deliberate navigation', () => {
     render(<AppTabs />)
 
     const ratingTab = screen.getByRole('tab', { name: 'My Rating' })
 
     expect(ratingTab.getAttribute('aria-selected')).toBe('true')
-    expect(capture).toHaveBeenCalledWith('tab_switched', { tab: 'rating' })
+    expect(capture).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Search Charts' }))
+    expect(capture).toHaveBeenCalledWith('tab_switched', {
+      tab: 'search',
+      source: 'top_navigation',
+    })
   })
 
   it('selects the pending destination tab and shows a width-stable loading indicator', () => {

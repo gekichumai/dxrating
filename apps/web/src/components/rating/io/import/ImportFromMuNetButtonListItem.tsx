@@ -10,6 +10,7 @@ import { useWebHaptics } from 'web-haptics/react'
 import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
+import { createRatingImportTracker } from '@/lib/analytics'
 
 const MuNetUserMusicDetailSchema = z.object({
   musicId: z.number(),
@@ -50,6 +51,7 @@ export const ImportFromMuNetButtonListItem: FC<{
             if (!data) return
             if (typeof data !== 'string') return
 
+            const analytics = createRatingImportTracker('mu_net')
             try {
               const json = JSON.parse(data)
               const parseResult = MuNetExportSchema.safeParse(json)
@@ -76,9 +78,11 @@ export const ImportFromMuNetButtonListItem: FC<{
               }
 
               modifyEntries.set(entries)
+              analytics.succeeded(entries.length, importResult.warnings.length)
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.mu-net.success', { count: entries.length }))
             } catch (error) {
+              analytics.failed('invalid_file')
               console.error(error)
               toast.error(
                 t('rating-calculator:io.import.mu-net.error', {

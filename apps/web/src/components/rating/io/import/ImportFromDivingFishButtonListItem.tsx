@@ -27,6 +27,7 @@ import { useAppContextDXDataVersion } from '../../../../models/context/useAppCon
 import { WebHaptics } from 'web-haptics'
 import type { ComboFlag, PlayEntry, SyncFlag } from '../../RatingCalculatorAddEntryForm'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
+import { createRatingImportTracker } from '@/lib/analytics'
 
 const haptics = new WebHaptics()
 
@@ -86,6 +87,7 @@ const fetchDivingFish = async (
   messages: DivingFishImportMessages,
 ) => {
   const toastId = toast.loading(messages.loading)
+  const analytics = createRatingImportTracker('diving_fish')
   try {
     const body: DivingFishRequestBody = {
       b50: 1,
@@ -120,11 +122,15 @@ const fetchDivingFish = async (
     }
 
     modifyEntries.set(entries)
+    analytics.succeeded(entries.length, importResult.warnings.length)
     haptics.trigger('success')
     toast.success(messages.success(entries.length), {
       id: toastId,
     })
   } catch (error) {
+    analytics.failed(
+      error instanceof Error && error.message === 'No Diving Fish Profile' ? 'missing_profile' : 'provider_error',
+    )
     console.error('There was a problem with the fetch operation:', error)
     toast.error(messages.error(String(formatErrorMessage(error))), {
       id: toastId,
