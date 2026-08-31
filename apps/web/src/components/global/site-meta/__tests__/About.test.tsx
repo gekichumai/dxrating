@@ -24,4 +24,12 @@ describe('About', () => {
       'https://shama.dxrating.net/images/version-adornment/buddies.png',
     )
   })
+
+  it('links to the developer and agent entry point', () => {
+    render(<About />)
+
+    expect(screen.getByRole('link', { name: /dxrating\.net\/developers/i }).getAttribute('href')).toBe(
+      'https://dxrating.net/developers',
+    )
+  })
 })

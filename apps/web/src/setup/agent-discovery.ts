@@ -2,24 +2,27 @@ export const API_CATALOG_PATH = '/.well-known/api-catalog'
 export const API_CATALOG_CONTENT_TYPE =
   'application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"; charset=utf-8'
 
-export const AGENT_DISCOVERY_LINKS = [
-  `<${API_CATALOG_PATH}>; rel="api-catalog"; type="application/linkset+json"`,
-  '<https://miruku.dxrating.net/spec.json>; rel="service-desc"; type="application/vnd.oai.openapi+json"',
-  '<https://miruku.dxrating.net/docs>; rel="service-doc"; type="text/html"',
-  '</llms.txt>; rel="describedby"; type="text/plain"',
-]
+export const AGENT_DISCOVERY_RELATIONS = [
+  { href: API_CATALOG_PATH, rel: 'api-catalog', type: 'application/linkset+json' },
+  {
+    href: 'https://miruku.dxrating.net/spec.json',
+    rel: 'service-desc',
+    type: 'application/vnd.oai.openapi+json',
+  },
+  { href: 'https://miruku.dxrating.net/docs', rel: 'service-doc', type: 'text/html' },
+  { href: '/developers', rel: 'service-doc', type: 'text/html' },
+  { href: '/llms.txt', rel: 'describedby', type: 'text/markdown' },
+] as const
+
+export const AGENT_DISCOVERY_LINKS = AGENT_DISCOVERY_RELATIONS.map(
+  ({ href, rel, type }) => `<${href}>; rel="${rel}"; type="${type}"`,
+)
 
 export function buildAgentDiscoveryLinkHeader() {
   return AGENT_DISCOVERY_LINKS.join(', ')
 }
 
-export function isHomepageRequest(request: Request) {
-  return new URL(request.url).pathname === '/'
-}
-
-export function applyHomepageAgentDiscoveryHeaders(headers: Headers, request: Request) {
-  if (!isHomepageRequest(request)) return
-
+export function applyAgentDiscoveryHeaders(headers: Headers) {
   appendLinkHeader(headers, AGENT_DISCOVERY_LINKS)
 }
 
@@ -40,6 +43,10 @@ export function buildApiCatalog() {
         ],
         'service-doc': [
           {
+            href: 'https://dxrating.net/developers',
+            type: 'text/html',
+          },
+          {
             href: 'https://miruku.dxrating.net/docs',
             type: 'text/html',
           },
@@ -47,7 +54,7 @@ export function buildApiCatalog() {
         describedby: [
           {
             href: 'https://dxrating.net/llms.txt',
-            type: 'text/plain',
+            type: 'text/markdown',
           },
           {
             href: 'https://dxrating.net/sitemap.xml',

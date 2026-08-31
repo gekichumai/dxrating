@@ -81,13 +81,23 @@ const buildApiCatalog = (origin: string) => ({
       'service-desc': [
         {
           href: `${origin}/spec.json`,
-          type: 'application/json',
+          type: 'application/vnd.oai.openapi+json',
         },
       ],
       'service-doc': [
         {
           href: `${origin}/docs`,
           type: 'text/html',
+        },
+        {
+          href: 'https://dxrating.net/developers',
+          type: 'text/html',
+        },
+      ],
+      describedby: [
+        {
+          href: 'https://dxrating.net/llms.txt',
+          type: 'text/markdown',
         },
       ],
       status: [
@@ -105,7 +115,13 @@ const setApiCatalogHeaders = (c: Context) => {
   c.header('Vary', 'Host, X-Forwarded-Host, X-Forwarded-Proto')
   c.header(
     'Link',
-    `</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"; profile="${API_CATALOG_PROFILE_URL}"`,
+    [
+      `</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"; profile="${API_CATALOG_PROFILE_URL}"`,
+      '</spec.json>; rel="service-desc"; type="application/vnd.oai.openapi+json"',
+      '</docs>; rel="service-doc"; type="text/html"',
+      '<https://dxrating.net/developers>; rel="service-doc"; type="text/html"',
+      '<https://dxrating.net/llms.txt>; rel="describedby"; type="text/markdown"',
+    ].join(', '),
   )
 }
 

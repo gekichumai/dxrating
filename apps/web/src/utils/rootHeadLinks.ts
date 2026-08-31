@@ -1,5 +1,6 @@
 import type { JSX } from 'react'
 import { buildAlternateLinks } from '@/utils/alternateLinks'
+import { AGENT_DISCOVERY_RELATIONS } from '@/setup/agent-discovery'
 import appCss from '@/index.css?url'
 
 type RootHeadLocation = {
@@ -33,6 +34,7 @@ export const buildRootHeadLinks = ({ pathname, search }: RootHeadLocation): Head
     fetchPriority: 'high',
   },
   ...buildAlternateLinks({ pathname, search }),
+  ...AGENT_DISCOVERY_RELATIONS,
   { rel: 'preconnect', href: 'https://miruku.dxrating.net' },
   {
     rel: 'apple-touch-icon',

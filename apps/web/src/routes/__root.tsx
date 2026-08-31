@@ -83,8 +83,9 @@ function RootLayout() {
   const pathname = location.pathname
 
   const isPrivacyPolicy = pathname === '/privacy-policy'
+  const isDevelopersPage = pathname === '/developers'
   const isSongPage = pathname.startsWith('/songs/')
-  const showTabs = !isSongPage && !isPrivacyPolicy
+  const showTabs = !isSongPage && !isPrivacyPolicy && !isDevelopersPage
 
   if (isPrivacyPolicy) return null
 
@@ -92,21 +93,23 @@ function RootLayout() {
     <>
       <OverscrollBackgroundFiller />
       <TopBar />
-      <div
-        className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-4 pb-4"
-        style={{
-          backgroundImage: `linear-gradient(
+      {!isDevelopersPage && (
+        <div
+          className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-4 pb-4"
+          style={{
+            backgroundImage: `linear-gradient(
     to bottom,
     ${versionTheme.accentColor},
     ${versionTheme.accentColor} env(safe-area-inset-top),
     ${versionTheme.accentColor}00
   )
 `,
-        }}
-      >
-        <VersionRegionSwitcher />
-        {showTabs && <AppTabs />}
-      </div>
+          }}
+        >
+          <VersionRegionSwitcher />
+          {showTabs && <AppTabs />}
+        </div>
+      )}
     </>
   )
 }

@@ -9,13 +9,17 @@ DXRating is a maimai DX rating calculator and chart database. It provides canoni
 ## Canonical Resources
 
 - Site: https://dxrating.net/
+- Developer and agent entry point: https://dxrating.net/developers
 - Recent chart discovery: https://dxrating.net/charts/recent
 - Trending chart discovery: https://dxrating.net/charts/trending
 - Interactive song and chart search: https://dxrating.net/search?q=
 - Rating calculator: https://dxrating.net/rating
 - Sitemap: https://dxrating.net/sitemap.xml
 - OpenSearch description: https://dxrating.net/opensearch.xml
+- API base: https://miruku.dxrating.net/api/v1
+- API catalog: https://dxrating.net/.well-known/api-catalog
 - API specification: https://miruku.dxrating.net/spec.json
+- API documentation: https://miruku.dxrating.net/docs
 
 ## URL Patterns
 
@@ -26,7 +30,7 @@ DXRating is a maimai DX rating calculator and chart database. It provides canoni
 
 ## Languages
 
-Languages: English, Japanese, Simplified Chinese, Traditional Chinese.
+Languages: English, Japanese, Korean, Simplified Chinese, Traditional Chinese.
 
 ## Data Notes
 
@@ -46,7 +50,7 @@ export const Route = createFileRoute('/llms.txt')({
       GET: async () =>
         new Response(buildLlmsTxt(), {
           headers: {
-            'Content-Type': 'text/plain; charset=utf-8',
+            'Content-Type': 'text/markdown; charset=utf-8',
             'Cache-Control': 'public, max-age=86400',
           },
         }),

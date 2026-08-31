@@ -42,13 +42,23 @@ describe('Health & Basic Endpoints', () => {
           'service-desc': [
             {
               href: `${getBaseUrl()}/spec.json`,
-              type: 'application/json',
+              type: 'application/vnd.oai.openapi+json',
             },
           ],
           'service-doc': [
             {
               href: `${getBaseUrl()}/docs`,
               type: 'text/html',
+            },
+            {
+              href: 'https://dxrating.net/developers',
+              type: 'text/html',
+            },
+          ],
+          describedby: [
+            {
+              href: 'https://dxrating.net/llms.txt',
+              type: 'text/markdown',
             },
           ],
           status: [
@@ -98,6 +108,9 @@ describe('Health & Basic Endpoints', () => {
     expect(linkHeader).toContain('rel="api-catalog"')
     expect(linkHeader).toContain('type="application/linkset+json"')
     expect(linkHeader).toContain(`profile="${API_CATALOG_PROFILE_URL}"`)
+    expect(linkHeader).toContain('rel="service-desc"')
+    expect(linkHeader).toContain('https://dxrating.net/developers')
+    expect(linkHeader).toContain('https://dxrating.net/llms.txt')
   })
 
   it('GET /robots.txt returns 200', async () => {

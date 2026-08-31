@@ -1,6 +1,7 @@
 import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
 import {
+  buildDevelopersSeo,
   buildRootSeoMeta,
   buildSearchSeo,
   buildSongSheetSeo,
@@ -41,6 +42,14 @@ describe('SEO localization', () => {
     expect(buildSearchSeo('ja').description).toBe(
       'maimai DX の譜面を、楽曲名、アーティスト、難易度から検索できます。譜面定数、ノーツ数、詳しい譜面情報も確認できます。',
     )
+  })
+
+  it('builds localized developer API metadata', () => {
+    const seo = buildDevelopersSeo('ja')
+
+    expect(seo.title).toBe('開発者向け API - DXRating')
+    expect(seo.links).toContainEqual({ rel: 'canonical', href: 'https://dxrating.net/developers' })
+    expect(seo.meta).toContainEqual({ property: 'og:url', content: 'https://dxrating.net/developers' })
   })
 
   it('builds localized song sheet title and social metadata', () => {

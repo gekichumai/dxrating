@@ -22,4 +22,17 @@ describe('buildRootHeadLinks', () => {
       href: 'https://dxrating.net/search?q=%E5%AE%B4&locale=ja',
     })
   })
+
+  it('publishes API and agent discovery relations in the final document head', () => {
+    const links = buildRootHeadLinks({ pathname: '/search' })
+
+    expect(links).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ rel: 'api-catalog', href: '/.well-known/api-catalog' }),
+        expect.objectContaining({ rel: 'service-desc', href: 'https://miruku.dxrating.net/spec.json' }),
+        expect.objectContaining({ rel: 'service-doc', href: '/developers' }),
+        expect.objectContaining({ rel: 'describedby', href: '/llms.txt', type: 'text/markdown' }),
+      ]),
+    )
+  })
 })

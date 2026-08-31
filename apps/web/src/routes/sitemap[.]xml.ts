@@ -76,6 +76,11 @@ export function buildSitemap(songs: SitemapSong[]) {
     <loc>${urlLoc('/rating')}</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${urlLoc('/developers')}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>${sheetEntries}
 </urlset>`
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   API_CATALOG_CONTENT_TYPE,
   API_CATALOG_PATH,
-  applyHomepageAgentDiscoveryHeaders,
+  applyAgentDiscoveryHeaders,
   buildAgentDiscoveryLinkHeader,
   buildApiCatalog,
   buildApiCatalogJson,
@@ -17,26 +17,26 @@ describe('agent discovery', () => {
       '<https://miruku.dxrating.net/spec.json>; rel="service-desc"; type="application/vnd.oai.openapi+json"',
     )
     expect(linkHeader).toContain('<https://miruku.dxrating.net/docs>; rel="service-doc"; type="text/html"')
-    expect(linkHeader).toContain('</llms.txt>; rel="describedby"; type="text/plain"')
+    expect(linkHeader).toContain('</developers>; rel="service-doc"; type="text/html"')
+    expect(linkHeader).toContain('</llms.txt>; rel="describedby"; type="text/markdown"')
   })
 
-  it('applies Link headers only to homepage responses', () => {
+  it('applies Link headers to final page responses as well as the homepage redirect', () => {
     const homepageHeaders = new Headers()
     const searchHeaders = new Headers()
 
-    applyHomepageAgentDiscoveryHeaders(homepageHeaders, new Request('https://dxrating.net/'))
-    applyHomepageAgentDiscoveryHeaders(searchHeaders, new Request('https://dxrating.net/search'))
+    applyAgentDiscoveryHeaders(homepageHeaders)
+    applyAgentDiscoveryHeaders(searchHeaders)
 
     expect(homepageHeaders.get('Link')).toBe(buildAgentDiscoveryLinkHeader())
-    expect(searchHeaders.has('Link')).toBe(false)
+    expect(searchHeaders.get('Link')).toBe(buildAgentDiscoveryLinkHeader())
   })
 
-  it('does not duplicate existing homepage Link values', () => {
+  it('does not duplicate existing Link values', () => {
     const headers = new Headers()
-    const request = new Request('https://dxrating.net/')
 
-    applyHomepageAgentDiscoveryHeaders(headers, request)
-    applyHomepageAgentDiscoveryHeaders(headers, request)
+    applyAgentDiscoveryHeaders(headers)
+    applyAgentDiscoveryHeaders(headers)
 
     expect(headers.get('Link')).toBe(buildAgentDiscoveryLinkHeader())
   })
@@ -53,7 +53,11 @@ describe('agent discovery', () => {
     expect(catalog.linkset[1]).toMatchObject({
       anchor: 'https://miruku.dxrating.net/api/v1',
       'service-desc': [{ href: 'https://miruku.dxrating.net/spec.json' }],
-      'service-doc': [{ href: 'https://miruku.dxrating.net/docs' }],
+      'service-doc': [{ href: 'https://dxrating.net/developers' }, { href: 'https://miruku.dxrating.net/docs' }],
+      describedby: [
+        { href: 'https://dxrating.net/llms.txt', type: 'text/markdown' },
+        { href: 'https://dxrating.net/sitemap.xml', type: 'application/xml' },
+      ],
     })
     expect(JSON.parse(buildApiCatalogJson())).toEqual(catalog)
   })
