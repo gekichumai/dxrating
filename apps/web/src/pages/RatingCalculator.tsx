@@ -29,7 +29,6 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import clsx from 'clsx'
-import { usePostHog } from 'posthog-js/react'
 import { type FC, memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
@@ -58,6 +57,7 @@ import { RenderToOneShotImageButton } from '../components/rating/io/export/Rende
 import { useRatingEntries } from '../components/rating/useRatingEntries'
 import { SheetListItem, SheetListItemContent } from '../components/sheet/SheetListItem'
 import { useRatingCalculatorContext } from '../models/context/RatingCalculatorContext'
+import { achievementRateBand, captureAnalyticsEvent } from '../lib/analytics'
 import { type FlattenedSheet, useSheets } from '../songs'
 import type { Rating } from '../utils/rating'
 
@@ -79,7 +79,7 @@ const RatingCalculatorRowActions: FC<{
 }> = ({ modifyEntries, entry }) => {
   const { data: sheets } = useSheets({ acceptsPartialData: true })
   const [dialogOpen, setDialogOpen] = useState(false)
-  const posthog = usePostHog()
+  const { entries } = useRatingCalculatorContext()
   const { t } = useTranslation(['rating-calculator'])
 
   const handleClick = useCallback(() => {
@@ -109,7 +109,10 @@ const RatingCalculatorRowActions: FC<{
             onClick={() => {
               setDialogOpen(false)
               handleClick()
-              posthog?.capture('rating_calculator_remove_entry_button_clicked')
+              captureAnalyticsEvent('rating_calculator_remove_entry_button_clicked', {
+                entry_count_before: entries.length,
+                sheet_id: entry.sheetId,
+              })
             }}
           >
             {t('rating-calculator:table.remove-dialog.remove')}
@@ -140,11 +143,24 @@ export const RatingCalculator = () => {
 
   const onSubmit = useCallback(
     (entry: PlayEntry) => {
-      if (allEntries.some((existingEntry) => existingEntry.sheetId === entry.sheetId)) {
+      const existingEntry = allEntries.find((existingEntry) => existingEntry.sheetId === entry.sheetId)
+      if (existingEntry) {
         modifyEntries.updateFirst((existingEntry) => existingEntry.sheetId === entry.sheetId, entry)
       } else modifyEntries.push(entry)
+
+      const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId)
+      if (sheet) {
+        captureAnalyticsEvent('rating_calculator_entry_saved', {
+          action: existingEntry ? 'updated' : 'added',
+          achievement_rate_band: achievementRateBand(entry.achievementRate),
+          entry_count: existingEntry ? allEntries.length : allEntries.length + 1,
+          song_id: sheet.songId,
+          sheet_type: sheet.type,
+          sheet_difficulty: sheet.difficulty,
+        })
+      }
     },
-    [allEntries, modifyEntries],
+    [allEntries, modifyEntries, sheets],
   )
 
   if (!sheets) return null
@@ -198,12 +214,36 @@ export const RatingCalculator = () => {
             <AlertTitle className="font-bold">{t('rating-calculator:quick-actions.title')}</AlertTitle>
             <div className="flex flex-col items-start mt-2">
               <FormControlLabel
-                control={<Switch checked={showOnlyB50} onChange={() => setShowOnlyB50((prev) => !prev)} />}
+                control={
+                  <Switch
+                    checked={showOnlyB50}
+                    onChange={() => {
+                      const enabled = !showOnlyB50
+                      setShowOnlyB50(enabled)
+                      captureAnalyticsEvent('rating_calculator_view_changed', {
+                        setting: 'show_only_b50',
+                        enabled,
+                      })
+                    }}
+                  />
+                }
                 label={t('rating-calculator:quick-actions.show-only-b50')}
               />
 
               <FormControlLabel
-                control={<Switch checked={compactMode} onChange={() => setCompactMode((prev) => !prev)} />}
+                control={
+                  <Switch
+                    checked={compactMode}
+                    onChange={() => {
+                      const enabled = !compactMode
+                      setCompactMode(enabled)
+                      captureAnalyticsEvent('rating_calculator_view_changed', {
+                        setting: 'compact_mode',
+                        enabled,
+                      })
+                    }}
+                  />
+                }
                 label={
                   <div className="flex items-center gap-1 leading-none">
                     {t('rating-calculator:quick-actions.compact-mode')} <BetaBadge />
@@ -370,6 +410,7 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
         cell: ({ row }) => (
           <SheetListItem
             sheet={row.original.sheet}
+            analytics={{ source: 'rating_calculator' }}
             SheetDialogContentProps={{
               currentAchievementRate: row.original.achievementRate,
             }}

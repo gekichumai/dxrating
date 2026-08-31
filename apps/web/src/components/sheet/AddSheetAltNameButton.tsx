@@ -1,5 +1,4 @@
 import { Button, Dialog, Grow, TextField } from '@mui/material'
-import { usePostHog } from 'posthog-js/react'
 import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
@@ -12,12 +11,12 @@ import type { FlattenedSheet } from '../../songs'
 import { formatErrorMessage } from '../../utils/formatErrorMessage'
 import { MotionButtonBase } from '../../utils/motion'
 import { SheetListItemContent } from './SheetListItem'
+import { captureAnalyticsEvent } from '@/lib/analytics'
 
 export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const { t } = useTranslation(['sheet'])
   const [open, setOpen] = useState(false)
   const { session, openLoginDialog, LoginDialog } = useAuth()
-  const posthog = usePostHog()
 
   const [newAltName, setNewAltName] = useState('')
   const { mutate } = useServerAliases()
@@ -32,10 +31,21 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
       })
 
       toast.success(t('sheet:aliases.toast-success', { name: newAltName.trim() }))
+      captureAnalyticsEvent('sheet_alias_created', {
+        song_id: sheet.songId,
+        sheet_type: sheet.type,
+        sheet_difficulty: sheet.difficulty,
+      })
       setOpen(false)
       setNewAltName('')
       mutate() // Trigger revalidation
     } catch (e: any) {
+      captureAnalyticsEvent('sheet_alias_failed', {
+        song_id: sheet.songId,
+        sheet_type: sheet.type,
+        sheet_difficulty: sheet.difficulty,
+        error_code: 'request_failed',
+      })
       toast.error(t('sheet:aliases.toast-failed', { error: formatErrorMessage(e) }))
     }
   }, [newAltName, sheet.songId, mutate])
@@ -47,7 +57,11 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
         className="h-6 border-1 border-solid border-gray-200 rounded-lg inline-flex self-start items-center justify-center px-2 cursor-pointer bg-gray-100 hover:bg-gray-200 hover:border-gray-300 active:bg-gray-300 active:border-gray-400 transition mt-2"
         onClick={() => {
           setOpen(true)
-          posthog?.capture('add_sheet_alt_name_button_clicked')
+          captureAnalyticsEvent('add_sheet_alt_name_button_clicked', {
+            song_id: sheet.songId,
+            sheet_type: sheet.type,
+            sheet_difficulty: sheet.difficulty,
+          })
         }}
       >
         <IconMdiPlus className="h-4 w-4" />

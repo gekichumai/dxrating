@@ -24,6 +24,7 @@ import { useAppContextDXDataVersion } from '../../../../models/context/useAppCon
 import { WebHaptics } from 'web-haptics'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
+import { createRatingImportTracker } from '@/lib/analytics'
 
 const haptics = new WebHaptics()
 
@@ -65,6 +66,7 @@ const LxnsImportDialogContent: FC<{
   const handleImport = async () => {
     setState('importing')
     const importStart = performance.now()
+    const analytics = createRatingImportTracker('lxns')
     try {
       const result = await apiClient.lxns.start()
 
@@ -75,6 +77,7 @@ const LxnsImportDialogContent: FC<{
       }
 
       modifyEntries.set(entries)
+      analytics.succeeded(entries.length, importResult.warnings.length)
       haptics.trigger('success')
       toast.success(t('rating-calculator:io.import.lxns.success', { count: entries.length }))
 
@@ -87,9 +90,11 @@ const LxnsImportDialogContent: FC<{
       Sentry.metrics.count('lxns_import.failure', 1)
       const msg = String(formatErrorMessage(error))
       if (msg.includes('expired') || msg.includes('reconnect') || msg.includes('authorize')) {
+        analytics.failed('reconnect_required')
         toast.error(t('rating-calculator:io.import.lxns.reconnect-required'))
         setState('not-connected')
       } else {
+        analytics.failed('provider_error')
         toast.error(t('rating-calculator:io.import.lxns.error', { error: msg }))
         setState('connected')
       }

@@ -31,6 +31,7 @@ import { SheetListItemContent } from '../../../sheet/SheetListItem'
 import { useWebHaptics } from 'web-haptics/react'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
+import { createRatingImportTracker } from '@/lib/analytics'
 
 export const ImportFromAquaSQLiteListItem: FC<{
   modifyEntries: ListActions<PlayEntry>
@@ -228,7 +229,9 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
             color="primary"
             variant="contained"
             onClick={() => {
+              const analytics = createRatingImportTracker('aqua_sqlite')
               modifyEntries.set(records.map((record) => record.entry))
+              analytics.succeeded(records.length, warnings.length)
 
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.aqua-sqlite.success', { count: records.length }))

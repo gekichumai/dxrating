@@ -6,6 +6,7 @@ import type { ListActions } from 'react-use/lib/useList'
 import MdiJson from '~icons/mdi/code-json'
 import { useWebHaptics } from 'web-haptics/react'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
+import { createRatingImportTracker } from '@/lib/analytics'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 
 export const ImportFromJSONButtonListItem: FC<{
@@ -36,12 +37,16 @@ export const ImportFromJSONButtonListItem: FC<{
             if (!data) return
             if (typeof data !== 'string') return
 
+            const analytics = createRatingImportTracker('json')
             try {
               const entries = JSON.parse(data)
+              if (!Array.isArray(entries)) throw new Error('Invalid rating entry list')
               modifyEntries.set(entries)
+              analytics.succeeded(entries.length)
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.json.success', { count: entries.length }))
             } catch (error) {
+              analytics.failed('invalid_file')
               toast.error(t('rating-calculator:io.import.json.error', { error: formatErrorMessage(error) }))
             }
           }

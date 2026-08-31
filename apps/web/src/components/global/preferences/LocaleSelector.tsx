@@ -1,8 +1,8 @@
 import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material'
-import { usePostHog } from 'posthog-js/react'
 import { type FC, type PropsWithChildren, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { persistClientLocalePreference, type SupportedLocale } from '@/setup/locale'
+import { captureAnalyticsEvent } from '@/lib/analytics'
 import MdiCheck from '~icons/mdi/check'
 import MdiTranslate from '~icons/mdi/translate'
 import { startViewTransition } from '../../../utils/startViewTransition'
@@ -13,18 +13,19 @@ const LocaleSelectorItem: FC<PropsWithChildren<{ locale: SupportedLocale; select
   children,
 }) => {
   const { i18n } = useTranslation()
-  const posthog = usePostHog()
 
   return (
     <MenuItem
       lang={locale}
       selected={selected}
       onClick={() => {
+        const previousLocale = i18n.language
         startViewTransition(() => {
           persistClientLocalePreference(locale)
           void i18n.changeLanguage(locale)
-          posthog?.capture('locale_selector_item_clicked', {
+          captureAnalyticsEvent('locale_selector_item_clicked', {
             locale,
+            previous_locale: previousLocale,
           })
         })
       }}

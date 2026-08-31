@@ -3,6 +3,7 @@ import type { FC } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import IconMdiFile from '~icons/mdi/file'
+import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useRatingCalculatorContext } from '../../../../models/context/RatingCalculatorContext'
 import { type RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
 
@@ -29,6 +30,11 @@ export const ExportToJSONMenuItem: FC = () => {
       <MenuItem
         onClick={() => {
           saveAsJsonFile(JSON.stringify(entries), t)
+          captureAnalyticsEvent('rating_exported', {
+            format: 'json',
+            scope: 'all',
+            entry_count: entries.length,
+          })
         }}
       >
         <ListItemIcon>
@@ -46,6 +52,11 @@ export const ExportToJSONMenuItem: FC = () => {
 
           const data = JSON.stringify([...b35Entries.map(preprocess), ...b15Entries.map(preprocess)])
           saveAsJsonFile(data, t)
+          captureAnalyticsEvent('rating_exported', {
+            format: 'json',
+            scope: 'best_50',
+            entry_count: b35Entries.length + b15Entries.length,
+          })
         }}
       >
         <ListItemIcon>

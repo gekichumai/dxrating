@@ -1,6 +1,5 @@
 import { Button, CircularProgress, Dialog, DialogContent, DialogContentText, DialogTitle, Grow } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
-import { usePostHog } from 'posthog-js/react'
 import { type FC, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
@@ -8,6 +7,7 @@ import IconMdiImage from '~icons/mdi/image'
 import { useAppContext, useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import { useRatingEntries } from '../../useRatingEntries'
 import { mapCalculatedEntryForOneShot } from './oneshotPayload'
+import { captureAnalyticsEvent } from '@/lib/analytics'
 
 const useElapsedTime = (isLoading: boolean) => {
   const startTime = useRef<number | null>(null)
@@ -41,7 +41,6 @@ const useElapsedTime = (isLoading: boolean) => {
 
 const RenderToOneShotImageDialogContent = () => {
   const { t } = useTranslation(['rating-calculator'])
-  const posthog = usePostHog()
   const { b15Entries, b35Entries, allEntries } = useRatingEntries()
   const version = useAppContextDXDataVersion()
   const { region } = useAppContext()
@@ -49,32 +48,52 @@ const RenderToOneShotImageDialogContent = () => {
   const { data, isValidating, error } = useSWR(
     `miruku::functions/oneshot-renderer?data=${JSON.stringify(allEntries)}&version=${version}&region=${region}`,
     async () => {
-      const from = Date.now()
-      const response = await fetch('https://miruku.dxrating.net/functions/render-oneshot/v0?pixelated=1', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          version,
-          region,
-          calculatedEntries: {
-            b15: b15Entries.map(mapCalculatedEntryForOneShot),
-            b35: b35Entries.map(mapCalculatedEntryForOneShot),
+      const from = performance.now()
+      try {
+        const response = await fetch('https://miruku.dxrating.net/functions/render-oneshot/v0?pixelated=1', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        }),
-      })
-      const blob = await response.blob()
+          body: JSON.stringify({
+            version,
+            region,
+            calculatedEntries: {
+              b15: b15Entries.map(mapCalculatedEntryForOneShot),
+              b35: b35Entries.map(mapCalculatedEntryForOneShot),
+            },
+          }),
+        })
+        if (!response.ok) {
+          throw new Error(`render_request_http_${response.status}`)
+        }
+        const blob = await response.blob()
 
-      const duration = Date.now() - from
-      posthog?.capture('oneshot_rendered', {
-        duration_seconds: duration,
-      })
-      Sentry.metrics.distribution('oneshot_render.duration', duration, {
-        unit: 'millisecond',
-      })
+        const duration = performance.now() - from
+        captureAnalyticsEvent('oneshot_rendered', {
+          duration_ms: duration,
+          duration_seconds: duration / 1000,
+          entry_count: allEntries.length,
+          response_size_bytes: blob.size,
+        })
+        Sentry.metrics.distribution('oneshot_render.duration', duration, {
+          unit: 'millisecond',
+        })
 
-      return URL.createObjectURL(blob)
+        return URL.createObjectURL(blob)
+      } catch (error) {
+        const duration = performance.now() - from
+        captureAnalyticsEvent('oneshot_render_failed', {
+          duration_ms: duration,
+          entry_count: allEntries.length,
+          error_code:
+            error instanceof Error && error.message.startsWith('render_request_http_')
+              ? error.message
+              : 'network_or_render_error',
+        })
+        Sentry.metrics.count('oneshot_render.failure', 1)
+        throw error
+      }
     },
     {
       revalidateOnFocus: false,
@@ -147,7 +166,7 @@ const RenderToOneShotImageDialogContent = () => {
 
 export const RenderToOneShotImageButton: FC = () => {
   const { t } = useTranslation()
-  const posthog = usePostHog()
+  const { b15Entries, b35Entries, allEntries } = useRatingEntries()
   const [open, setOpen] = useState(false)
 
   return (
@@ -155,7 +174,11 @@ export const RenderToOneShotImageButton: FC = () => {
       <Button
         onClick={() => {
           setOpen(true)
-          posthog?.capture('oneshot_render_button_clicked')
+          captureAnalyticsEvent('oneshot_render_button_clicked', {
+            entry_count: allEntries.length,
+            b15_count: b15Entries.length,
+            b35_count: b35Entries.length,
+          })
         }}
         variant="contained"
         color="primary"

@@ -1,16 +1,17 @@
 import { dxdataUpdateTime, VersionEnum } from '@gekichumai/dxdata'
 import { IconButton } from '@mui/material'
 import clsx from 'clsx'
-import { usePostHog } from 'posthog-js/react'
 import { type FC, type PropsWithChildren, type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MdiGithub from '~icons/mdi/github'
+import MdiApi from '~icons/mdi/api'
 import MdiInformation from '~icons/mdi/information'
 import MdiTwitter from '~icons/mdi/twitter'
 import MdiWeb from '~icons/mdi/web'
 import { BUNDLE } from '../../../utils/bundle'
 import { useTime } from '../../../utils/useTime'
 import { ResponsiveDialog } from '../ResponsiveDialog'
+import { captureAnalyticsEvent } from '@/lib/analytics'
 
 const ExternalLink: FC<PropsWithChildren<{ href: string; className?: string }>> = ({ href, children, className }) => (
   <a
@@ -51,14 +52,13 @@ export const About = () => {
 
   const buildTime = useTime(BUNDLE.buildTime)
   const updateTime = useTime(dxdataUpdateTime)
-  const posthog = usePostHog()
 
   return (
     <>
       <IconButton
         onClick={() => {
           setExpanded(true)
-          posthog?.capture('about_dialog_opened')
+          captureAnalyticsEvent('about_dialog_opened', {})
         }}
         aria-label={t('about:open')}
         title={t('about:open')}
@@ -72,6 +72,14 @@ export const About = () => {
             <h1 className="text-2xl font-bold">{t('about:title')}</h1>
 
             <ul className="flex flex-col gap-1.5">
+              <AboutLink
+                href="https://dxrating.net/developers"
+                startAdornment={<MdiApi />}
+                label={t('about:developers-api')}
+              >
+                dxrating.net/developers
+              </AboutLink>
+
               <AboutLink
                 href="https://github.com/gekichumai/dxrating"
                 startAdornment={<MdiGithub />}

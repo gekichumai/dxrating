@@ -1,9 +1,10 @@
 import { useRatingEntries } from '@/components/rating/useRatingEntries'
 import { authClient } from '@/lib/auth-client'
+import { identifyAnalyticsUser, registerAnalyticsContext, resetAnalyticsUser } from '@/lib/analytics'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
-import { usePostHog } from 'posthog-js/react'
 import { type FC, memo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useEffectOnce } from 'react-use'
 import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
 import { useVersionTheme } from '../../utils/useVersionTheme'
 import toast from 'react-hot-toast'
@@ -95,40 +96,62 @@ const SideEffectorAutoImportRating: FC = () => {
   return null
 }
 
-const SideEffectorAuth: FC = () => {
-  const { data } = authClient.useSession()
-  const posthog = usePostHog()
-
-  useEffect(() => {
-    if (data) {
-      posthog?.identify(data.user.id, {
-        email: data.user.email,
-      })
+const SideEffectorAnalyticsContext: FC<{
+  userId?: string
+  version: string
+  region: string
+  language: string
+  rating: number
+  entryCount: number
+}> = ({ userId, version, region, language, rating, entryCount }) => {
+  useEffectOnce(() => {
+    if (userId) {
+      identifyAnalyticsUser(userId)
     } else {
-      posthog?.reset()
+      resetAnalyticsUser()
     }
-  }, [data?.user.id])
+
+    registerAnalyticsContext({
+      app_surface: 'web',
+      game_version: version,
+      region,
+      language,
+      calculated_rating: Number.isFinite(rating) ? rating : 0,
+      rating_entry_count: entryCount,
+    })
+  })
 
   return null
 }
 
 const SideEffectorAnalytics: FC = () => {
+  const { data, isPending } = authClient.useSession()
   const { version, region } = useAppContext()
   const { i18n } = useTranslation()
-  const posthog = usePostHog()
   const { statistics, allEntries } = useRatingEntries()
 
-  useEffect(() => {
-    posthog?.setPersonProperties({
-      version: version,
-      region: region,
-      language: i18n.language,
-      rating: statistics.b50Sum,
-      entries: allEntries.length,
-    })
-  }, [version, region, i18n.language, statistics, allEntries])
+  const properties = {
+    userId: data?.user.id,
+    version,
+    region,
+    language: i18n.language,
+    rating: statistics.b50Sum,
+    entryCount: allEntries.length,
+  }
 
-  return null
+  if (isPending) return null
+
+  return (
+    <SideEffectorAnalyticsContext
+      key={JSON.stringify(properties)}
+      userId={properties.userId}
+      version={properties.version}
+      region={properties.region}
+      language={properties.language}
+      rating={properties.rating}
+      entryCount={properties.entryCount}
+    />
+  )
 }
 
 export const SideEffector: FC = memo(() => {
@@ -137,7 +160,6 @@ export const SideEffector: FC = memo(() => {
       <SideEffectorThemeMeta />
       <SideEffectorLocaleMeta />
       <SideEffectorAutoImportRating />
-      <SideEffectorAuth />
       <SideEffectorAnalytics />
     </>
   )
