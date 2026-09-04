@@ -143996,6 +143996,7 @@
             ],
             "searchAcronyms": [
                 "机厅老板快乐歌",
+                "竹本钢琴广告",
                 "花钱看广告",
                 "钢琴广告"
             ]
@@ -154985,6 +154986,7 @@
                 "matsuyoi",
                 "Matsuyoi Nightbug",
                 "nightbug",
+                "待宵夜虫",
                 "待宵的萤火虫",
                 "绿毛虫",
                 "莉格露",
@@ -175378,6 +175380,7 @@
                 }
             ],
             "searchAcronyms": [
+                "bad的最高级",
                 "一巴掌13个miss",
                 "哈利路大旋风",
                 "大b圈",
@@ -207374,6 +207377,7 @@
             ],
             "searchAcronyms": [
                 "华之集落",
+                "华之集落，致以秋意",
                 "华集落",
                 "秋届",
                 "蛋糕店里卖蛋糕"
@@ -217251,6 +217255,7 @@
             ],
             "searchAcronyms": [
                 "如何制作音游曲",
+                "我不写公式你们听什么",
                 "教作曲",
                 "音游曲"
             ]
@@ -223136,6 +223141,7 @@
                 }
             ],
             "searchAcronyms": [
+                "mostly wrong",
                 "大半错",
                 "概过误"
             ]
@@ -223268,7 +223274,8 @@
                 }
             ],
             "searchAcronyms": [
-                "未竟之诗"
+                "未竟之诗",
+                "未竟的史诗"
             ]
         },
         {
@@ -249175,6 +249182,378 @@
                 }
             ],
             "searchAcronyms": []
+        },
+        {
+            "songId": "相性×優勝ドロップス",
+            "category": "POPS＆アニメ",
+            "title": "相性×優勝ドロップス",
+            "artist": "Idios",
+            "bpm": 172.0,
+            "imageName": "34b5cecd3a8182a0f69ba14da647b998fe7c9bd1d0d95de1d4d264ad3d8e212a",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-09-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "7",
+                    "internalLevelValue": 7.2,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-09-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10",
+                    "internalLevelValue": 10.5,
+                    "noteDesigner": "はっぴー",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-09-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13",
+                    "internalLevelValue": 13.2,
+                    "noteDesigner": "Luxizhel",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-09-04",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.2
+                    }
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "光線歌",
+            "category": "niconico＆ボーカロイド",
+            "title": "光線歌",
+            "artist": "Guiano",
+            "bpm": 138.0,
+            "imageName": "d7ec0cdfd0de645e928704ac23fee469141c941f6f6aaa38b417570147871f03",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "2",
+                    "internalLevelValue": 2.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-09-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.2,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-09-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10",
+                    "internalLevelValue": 10.2,
+                    "noteDesigner": "Luxizhel",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-09-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "12+",
+                    "internalLevelValue": 12.8,
+                    "noteDesigner": "サファ太",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-09-04",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 12.8
+                    }
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "電脳眠眠猫",
+            "category": "niconico＆ボーカロイド",
+            "title": "電脳眠眠猫",
+            "artist": "桃寝ちのい",
+            "bpm": 160.0,
+            "imageName": "8d9f4441148d49d701451d3977334d0d84f70ad9751b23d7dd1e0792ea83472c",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "2",
+                    "internalLevelValue": 2.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-09-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.5,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-09-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10",
+                    "internalLevelValue": 10.4,
+                    "noteDesigner": "ブレーンバスター",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-09-04"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13",
+                    "internalLevelValue": 13.2,
+                    "noteDesigner": "じゃこレモン",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "CiRCLE PLUS",
+                    "releaseDate": "2026-09-04",
+                    "multiverInternalLevelValue": {
+                        "CiRCLE PLUS": 13.2
+                    }
+                }
+            ],
+            "searchAcronyms": []
         }
     ],
     "categories": [
@@ -249403,5 +249782,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-09-02T15:00:19.133157351+00:00"
+    "updateTime": "2026-09-04T15:00:14.194691571+00:00"
 }
