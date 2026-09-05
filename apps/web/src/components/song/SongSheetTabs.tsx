@@ -1,12 +1,15 @@
 import { type DifficultyEnum, type Sheet, TypeEnum } from '@gekichumai/dxdata'
 import { Tab, Tabs } from '@mui/material'
-import { type FC, useMemo } from 'react'
+import { type FC, type MouseEvent, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DIFFICULTIES } from '../../models/difficulties'
-import { DIFFICULTY_ORDER } from '../../models/constants'
+import { DIFFICULTY_ORDER, getHighestDifficulty } from '../../models/constants'
+import { buildSheetPath } from '../sheet/sheetLinks'
+import { toSupportedLocale } from '@/setup/locale'
 import { getSheetTypeAltTextKey, SHEET_TYPE_TAB_IMAGES } from '../sheet/sheetTypeAssets'
 
 export interface SongSheetTabsProps {
+  songId: string
   sheets: Sheet[]
   availableTypes: readonly TypeEnum[]
   activeType: TypeEnum
@@ -32,6 +35,7 @@ const renderTypeTabLabel = (type: TypeEnum, label: string, altText: string) => {
 }
 
 export const SongSheetTabs: FC<SongSheetTabsProps> = ({
+  songId,
   sheets,
   availableTypes,
   activeType,
@@ -39,7 +43,13 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
   onTypeChange,
   onDifficultyChange,
 }) => {
-  const { t } = useTranslation(['song', 'sheet'])
+  const { t, i18n } = useTranslation(['song', 'sheet'])
+  const locale = toSupportedLocale(i18n.language) ?? 'en'
+  const handleNavigation = (event: MouseEvent, navigate: () => void) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    event.preventDefault()
+    navigate()
+  }
 
   const difficultiesForActiveType = useMemo(() => {
     const diffSet = new Set(sheets.filter((s) => s.type === activeType).map((s) => s.difficulty))
@@ -50,7 +60,6 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
     <div className="flex flex-col gap-1">
       <Tabs
         value={activeType}
-        onChange={(_, v) => onTypeChange(v)}
         variant="scrollable"
         scrollButtons="auto"
         classes={{
@@ -64,6 +73,9 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
           return (
             <Tab
               key={type}
+              component="a"
+              href={`${buildSheetPath({ songId, type, difficulty: getHighestDifficulty(sheets.filter((sheet) => sheet.type === type)) })}?locale=${locale}`}
+              onClick={(event) => handleNavigation(event, () => onTypeChange(type))}
               value={type}
               label={renderTypeTabLabel(type, label, altText)}
               classes={{
@@ -77,7 +89,6 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
 
       <Tabs
         value={activeDifficulty}
-        onChange={(_, v) => onDifficultyChange(v)}
         variant="scrollable"
         scrollButtons="auto"
         classes={{
@@ -94,6 +105,9 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
           return (
             <Tab
               key={difficulty}
+              component="a"
+              href={`${buildSheetPath({ songId, type: activeType, difficulty })}?locale=${locale}`}
+              onClick={(event) => handleNavigation(event, () => onDifficultyChange(difficulty))}
               value={difficulty}
               label={config.title}
               classes={{

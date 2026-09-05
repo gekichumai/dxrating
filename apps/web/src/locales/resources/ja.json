@@ -1,8 +1,8 @@
 {
   "root": {
     "pages.search.title": "譜面検索",
-    "pages.search.seo-title": "譜面検索",
-    "pages.search.seo-description": "maimai DX の譜面を、楽曲名、アーティスト、難易度から検索できます。譜面定数、ノーツ数、詳しい譜面情報も確認できます。",
+    "pages.search.seo-title": "maimai 楽曲・譜面定数検索",
+    "pages.search.seo-description": "曲名・アーティスト・別名から楽曲を検索。譜面定数、BPM、ノーツ数、難易度を確認したり、レーティングや Best 50 を計算したりできます。",
     "pages.recent.title": "最近更新",
     "pages.recent.seo-title": "最近更新された譜面",
     "pages.recent.seo-description": "DXRating で BASIC と ADVANCED を除く、最近更新された maimai DX 譜面ページを確認できます。",
@@ -12,8 +12,8 @@
     "pages.trending.seo-description": "DXRating で現在よく見られている maimai DX 譜面ページを確認できます。",
     "pages.trending.icon-label": "トレンド譜面",
     "pages.rating.title": "レーテイング計算",
-    "pages.rating.seo-title": "レーティング計算",
-    "pages.rating.seo-description": "maimai DX のレーティング記録、Best 50、達成率、スコア詳細を DXRating で計算・管理できます。",
+    "pages.rating.seo-title": "maimai レーティング計算・Best 50",
+    "pages.rating.seo-description": "スコアのインポートや達成率の入力で、maimai でらっくすのレーティングを計算。Best 50 の確認や共有画像の作成もできます。",
     "seo.description": "DXRating は maimai DX Rating の分析ツールです。譜面詳細などの機能も提供しています。",
     "seo.keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating 分析, ゲキチュウマイ, maimaiでらっくす, 譜面情報, レーティング計算, maimai wiki",
     "share.copy-content": "{{ link }}",
@@ -22,7 +22,22 @@
     "external-links.github": "DXRating を GitHub で開く",
     "not-found.title": "ページが見つかりません",
     "not-found.description": "ページが移動したか、リンクが古くなっている可能性があります。",
-    "not-found.back-to-home": "ホームに戻る"
+    "not-found.back-to-home": "ホームに戻る",
+    "pages.search.heading": "maimai 楽曲・譜面検索",
+    "pages.search.introduction": "曲名・アーティスト・別名から楽曲を検索。譜面定数、BPM、ノーツ数、難易度を確認したり、レーティングや Best 50 を計算したりできます。",
+    "pages.search.explore": "maimai のツール",
+    "pages.search.featured": "楽曲の詳細を見る",
+    "pages.rating.heading": "maimai レーティング計算・Best 50",
+    "pages.rating.introduction": "スコアのインポートや達成率の入力で、maimai でらっくすのレーティングを計算。Best 50 の確認や共有画像の作成もできます。",
+    "pages.rating.start": "計算ツールへ",
+    "pages.rating.guide": "Best 50 の計算・共有方法",
+    "pages.rating.import-heading": "スコアを追加・インポート",
+    "pages.rating.import-description": "楽曲と達成率を手動で追加するか、「インポート」から MaimaiNET、Diving Fish、LXNS、対応ファイルの記録を読み込みます。",
+    "pages.rating.calculate-heading": "レーティングの仕組み",
+    "pages.rating.calculate-description": "各譜面のレーティングは譜面定数と達成率で決まります。Best 50 は現行バージョンの上位15譜面と旧曲の上位35譜面で構成されます。上部でプレイするバージョンと地域を選んでください。",
+    "pages.rating.share-heading": "Best 50 を共有",
+    "pages.rating.share-description": "画像ボタンから Best 50 の共有画像を作成できます。「エクスポート」では記録を JSON ファイルに保存し、後から再インポートできます。",
+    "pages.rating.loading": "計算ツールを読み込み中…"
   },
   "settings": {
     "region.title": "地域：{{region}}",
@@ -144,7 +159,12 @@
     "type.std": "スタンダード",
     "type.utage": "宴",
     "type.utage2p": "バディ",
-    "seo.description": "{{title}} / {{artist}} - {{sheetLabel}} の譜面詳細、譜面定数、ノーツ数 - DXRating。"
+    "seo.description": "{{title}} / {{artist}} — maimai {{sheetLabel}} の譜面定数、ノーツ数、レーティング情報。",
+    "summary.title": "譜面の概要",
+    "summary.description": "maimai「{{title}}」の {{chart}} 譜面情報。",
+    "summary.internal-level": "譜面定数",
+    "summary.version": "選択中のバージョン",
+    "seo.bpm": "BPM {{bpm}}。"
   },
   "about": {
     "title": "当サイトについて",

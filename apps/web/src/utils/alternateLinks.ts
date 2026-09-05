@@ -44,11 +44,11 @@ export const buildAlternateLinks = (location: AlternateLinkLocation): AlternateL
   {
     rel: 'alternate',
     hrefLang: 'x-default',
-    href: buildLocalizedUrl(location),
+    href: buildLocalizedUrl(location.pathname === '/search' ? { pathname: location.pathname } : location),
   },
   ...SUPPORTED_LOCALES.map((locale) => ({
     rel: 'alternate',
     hrefLang: locale,
-    href: buildLocalizedUrl(location, locale),
+    href: buildLocalizedUrl(location.pathname === '/search' ? { pathname: location.pathname } : location, locale),
   })),
 ]

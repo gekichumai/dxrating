@@ -1,8 +1,8 @@
 {
   "root": {
     "pages.search.title": "搜尋譜面",
-    "pages.search.seo-title": "搜尋譜面",
-    "pages.search.seo-description": "按歌曲名、藝術家或難度瀏覽所有 maimai DX 譜面，查看譜面定數、音符數和詳細譜面資訊。",
+    "pages.search.seo-title": "maimai 樂曲與譜面定數查詢",
+    "pages.search.seo-description": "依曲名、作曲家或別名搜尋，查看譜面定數、BPM、音符數和難度，也可以計算 Rating 和 Best 50。",
     "pages.recent.title": "最近更新",
     "pages.recent.seo-title": "最近更新的譜面",
     "pages.recent.seo-description": "在 DXRating 查看最近更新的 maimai DX 譜面頁面，不含 BASIC 與 ADVANCED 譜面。",
@@ -12,8 +12,8 @@
     "pages.trending.seo-description": "在 DXRating 查看目前最受關注的 maimai DX 譜面頁面。",
     "pages.trending.icon-label": "熱門趨勢譜面",
     "pages.rating.title": "計算評分",
-    "pages.rating.seo-title": "評分計算器",
-    "pages.rating.seo-description": "在 DXRating 計算和管理你的 maimai DX Rating 記錄、Best 50、達成率和分數詳情。",
+    "pages.rating.seo-title": "maimai Rating 計算器與 Best 50",
+    "pages.rating.seo-description": "匯入成績或手動輸入達成率，計算 maimai DX Rating、查看 Best 50，並產生分享圖片。",
     "seo.description": "DXRating 是 maimai DX Rating 分析工具，也提供譜面詳情等功能。",
     "seo.keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating 分析工具, 中二節奏, 舞萌, 舞萌DX, 譜面詳情, 評分計算器, maimai wiki",
     "share.copy-content": "{{ link }}",
@@ -22,7 +22,22 @@
     "external-links.github": "在 GitHub 開啟 DXRating",
     "not-found.title": "找不到頁面",
     "not-found.description": "頁面可能已移動，或連結已經過期。",
-    "not-found.back-to-home": "返回首頁"
+    "not-found.back-to-home": "返回首頁",
+    "pages.search.heading": "maimai 樂曲與譜面查詢",
+    "pages.search.introduction": "依曲名、作曲家或別名搜尋，查看譜面定數、BPM、音符數和難度，也可以計算 Rating 和 Best 50。",
+    "pages.search.explore": "maimai 工具",
+    "pages.search.featured": "查看樂曲詳情",
+    "pages.rating.heading": "maimai Rating 計算器與 Best 50",
+    "pages.rating.introduction": "匯入成績或手動輸入達成率，計算 maimai DX Rating、查看 Best 50，並產生分享圖片。",
+    "pages.rating.start": "前往計算器",
+    "pages.rating.guide": "如何計算及分享 Best 50",
+    "pages.rating.import-heading": "新增或匯入成績",
+    "pages.rating.import-description": "手動新增樂曲與達成率，或使用「匯入」從 MaimaiNET、水魚、落雪及支援的檔案中匯入成績。",
+    "pages.rating.calculate-heading": "了解 Rating 的計算方式",
+    "pages.rating.calculate-description": "單曲 Rating 由譜面定數與達成率決定。Best 50 由目前版本的前 15 個譜面及舊曲的前 35 個譜面組成。請先在上方選擇對應的遊戲版本與地區。",
+    "pages.rating.share-heading": "分享 Best 50",
+    "pages.rating.share-description": "使用圖片按鈕產生 Best 50 分享圖。「匯出」可將成績儲存為 JSON 檔案，方便日後重新匯入。",
+    "pages.rating.loading": "正在載入計算器…"
   },
   "settings": {
     "region.title": "伺服器：{{region}}",
@@ -144,7 +159,12 @@
     "type.std": "標準",
     "type.utage": "宴",
     "type.utage2p": "Buddy",
-    "seo.description": "{{title}} / {{artist}} - {{sheetLabel}} 譜面詳情、譜面定數與音符數 - DXRating。"
+    "seo.description": "{{title}} / {{artist}} — maimai {{sheetLabel}} 譜面定數、音符數與 Rating 資訊。",
+    "summary.title": "譜面概覽",
+    "summary.description": "maimai「{{title}}」的 {{chart}} 譜面資訊。",
+    "summary.internal-level": "譜面定數",
+    "summary.version": "目前選擇的版本",
+    "seo.bpm": "BPM {{bpm}}。"
   },
   "about": {
     "title": "關於本站",
