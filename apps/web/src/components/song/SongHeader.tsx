@@ -59,7 +59,7 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
         <div className="flex flex-col gap-1 flex-1 min-w-0">
           <h1
-            className="text-xl font-bold leading-tight cursor-pointer truncate"
+            className="text-xl font-bold leading-tight cursor-pointer break-words text-balance"
             onClick={() => {
               navigator.clipboard.writeText(song.title)
               toast.success(t('sheet:copy-title.toast-success'), { id: `copy-song-title-${song.songId}` })

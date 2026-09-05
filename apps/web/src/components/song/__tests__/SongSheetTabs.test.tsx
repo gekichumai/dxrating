@@ -1,5 +1,5 @@
 import { type Sheet, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import i18n from 'i18next'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
@@ -42,6 +42,7 @@ describe('SongSheetTabs', () => {
   it('uses descriptive type image alt text for DX and Standard tabs with text fallback for other types', () => {
     render(
       <SongSheetTabs
+        songId="test-song"
         sheets={[
           makeSheet(TypeEnum.DX),
           makeSheet(TypeEnum.STD),
@@ -72,6 +73,7 @@ describe('SongSheetTabs', () => {
 
     render(
       <SongSheetTabs
+        songId="test-song"
         sheets={[makeSheet(TypeEnum.DX)]}
         availableTypes={[TypeEnum.DX]}
         activeType={TypeEnum.DX}
@@ -82,5 +84,26 @@ describe('SongSheetTabs', () => {
     )
 
     expect(screen.getByRole('img', { name: 'でらっくす譜面' })).toBeTruthy()
+  })
+
+  it('exposes encoded difficulty links and preserves modified-click navigation', () => {
+    const onDifficultyChange = vi.fn()
+    render(
+      <SongSheetTabs
+        songId="a/b & c"
+        sheets={[makeSheet(TypeEnum.DX)]}
+        availableTypes={[TypeEnum.DX]}
+        activeType={TypeEnum.DX}
+        activeDifficulty={DifficultyEnum.Master}
+        onTypeChange={vi.fn()}
+        onDifficultyChange={onDifficultyChange}
+      />,
+    )
+    const tab = screen.getByRole('tab', { name: 'MASTER' })
+    expect(tab.getAttribute('href')).toBe('/songs/a%2Fb%20%26%20c/dx/master?locale=en')
+    fireEvent.click(tab, { ctrlKey: true })
+    expect(onDifficultyChange).not.toHaveBeenCalled()
+    fireEvent.click(tab)
+    expect(onDifficultyChange).toHaveBeenCalledWith(DifficultyEnum.Master)
   })
 })
