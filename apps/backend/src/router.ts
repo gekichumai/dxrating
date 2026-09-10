@@ -1,11 +1,13 @@
 import * as Sentry from '@sentry/node'
 import { ORPCError, implement } from '@orpc/server'
+import { TAG_SONG_HIDDEN_SCORE_THRESHOLD } from '@gekichumai/api-contract'
 import { appContract } from './contract.js'
 import { db, pool } from './db/index.js'
 import {
   tags,
   tagGroups,
   tagSongs,
+  tagSongVotes,
   comments,
   profiles,
   songAliases,
@@ -56,6 +58,7 @@ type TagsListResult = {
     sheet_type: string
     sheet_difficulty: string
     tag_id: number
+    score: number
   }>
 }
 
@@ -67,6 +70,39 @@ type TrendingCacheResult = {
 }
 
 const os = implement(appContract)
+
+/** Window during which the creator of a tag-sheet association may remove it. */
+const TAG_SONG_DETACH_WINDOW_MS = 60 * 60 * 1000
+
+const tagSongScore = sql<number>`coalesce(sum(${tagSongVotes.value}), 0)::int`
+const tagSongUpvotes = sql<number>`count(*) filter (where ${tagSongVotes.value} = 1)::int`
+const tagSongDownvotes = sql<number>`count(*) filter (where ${tagSongVotes.value} = -1)::int`
+
+const readTagSongVoteBreakdown = async (tagSongId: number, userId?: string) => {
+  const [breakdown] = await db
+    .select({
+      upvotes: tagSongUpvotes,
+      downvotes: tagSongDownvotes,
+      score: tagSongScore,
+    })
+    .from(tagSongVotes)
+    .where(eq(tagSongVotes.tag_song_id, tagSongId))
+
+  const userVote = userId
+    ? await db
+        .select({ value: tagSongVotes.value })
+        .from(tagSongVotes)
+        .where(and(eq(tagSongVotes.tag_song_id, tagSongId), eq(tagSongVotes.user_id, userId)))
+    : []
+
+  return {
+    tagSongId,
+    upvotes: breakdown?.upvotes ?? 0,
+    downvotes: breakdown?.downvotes ?? 0,
+    score: breakdown?.score ?? 0,
+    userVote: userVote[0]?.value ?? null,
+  }
+}
 
 const tagsHandler = {
   list: os.tags.list.handler(async ({ input }) => {
@@ -100,8 +136,14 @@ const tagsHandler = {
             sheet_type: tagSongs.sheet_type,
             sheet_difficulty: tagSongs.sheet_difficulty,
             tag_id: tagSongs.tag_id,
+            score: tagSongScore,
           })
-          .from(tagSongs),
+          .from(tagSongs)
+          .leftJoin(tagSongVotes, eq(tagSongVotes.tag_song_id, tagSongs.id))
+          .groupBy(tagSongs.id)
+          // Quality gate: associations the community has buried never reach the
+          // global list, so filters and chips derived from it stay clean.
+          .having(sql`coalesce(sum(${tagSongVotes.value}), 0) > ${TAG_SONG_HIDDEN_SCORE_THRESHOLD}`),
       ])
 
       result = {
@@ -151,8 +193,102 @@ const tagsHandler = {
       })
       .returning({ id: tagSongs.id })
 
+    // Attaching a tag is itself an endorsement, so the creator starts it at +1.
+    await db.insert(tagSongVotes).values({ tag_song_id: res[0].id, user_id: user.id, value: 1 }).onConflictDoNothing()
+
     await cache.delete('tags:list')
     return res[0]
+  }),
+  sheetTags: os.tags.sheetTags.handler(async ({ input }) => {
+    const identity = await withCatalogIdentityErrors(() => catalogIdentities.resolveSheetInput(input))
+
+    const rows = await db
+      .select({
+        id: tagSongs.id,
+        tag_id: tagSongs.tag_id,
+        created_at: tagSongs.created_at,
+        created_by: tagSongs.created_by,
+        upvotes: tagSongUpvotes,
+        downvotes: tagSongDownvotes,
+        score: tagSongScore,
+      })
+      .from(tagSongs)
+      .leftJoin(tagSongVotes, eq(tagSongVotes.tag_song_id, tagSongs.id))
+      .where(
+        and(
+          inArray(tagSongs.song_id, identity.legacySongIds),
+          eq(tagSongs.sheet_type, identity.sheetType),
+          eq(tagSongs.sheet_difficulty, identity.sheetDifficulty),
+        ),
+      )
+      .groupBy(tagSongs.id)
+
+    // Unlike tags.list this endpoint returns buried associations too, so the
+    // sheet view can offer them behind a "hidden tags" disclosure.
+    return rows.map((row) => ({
+      ...row,
+      song_id: input.songId,
+      sheet_id: input.sheetId,
+      sheet_type: input.sheetType,
+      sheet_difficulty: input.sheetDifficulty,
+    }))
+  }),
+  vote: os.tags.vote.handler(async ({ input, context }) => {
+    const user = (context as Context).user
+    if (!user) throw new Error('Unauthorized')
+
+    const [tagSong] = await db.select({ id: tagSongs.id }).from(tagSongs).where(eq(tagSongs.id, input.tagSongId))
+    if (!tagSong) throw new ORPCError('NOT_FOUND', { message: 'Tag association not found' })
+
+    await db
+      .insert(tagSongVotes)
+      .values({ tag_song_id: input.tagSongId, user_id: user.id, value: input.value })
+      .onConflictDoUpdate({
+        target: [tagSongVotes.tag_song_id, tagSongVotes.user_id],
+        set: { value: input.value },
+      })
+
+    // A vote can push an association across the visibility threshold.
+    await cache.delete('tags:list')
+
+    return readTagSongVoteBreakdown(input.tagSongId, user.id)
+  }),
+  userVotes: os.tags.userVotes.handler(async ({ input, context }) => {
+    const user = (context as Context).user
+    if (!user) throw new Error('Unauthorized')
+
+    if (input.tagSongIds.length === 0) return {}
+
+    const rows = await db
+      .select({ tag_song_id: tagSongVotes.tag_song_id, value: tagSongVotes.value })
+      .from(tagSongVotes)
+      .where(and(eq(tagSongVotes.user_id, user.id), inArray(tagSongVotes.tag_song_id, input.tagSongIds)))
+
+    return Object.fromEntries(rows.map((row) => [String(row.tag_song_id), row.value]))
+  }),
+  detach: os.tags.detach.handler(async ({ input, context }) => {
+    const user = (context as Context).user
+    if (!user) throw new Error('Unauthorized')
+
+    const [tagSong] = await db
+      .select({ id: tagSongs.id, created_at: tagSongs.created_at, created_by: tagSongs.created_by })
+      .from(tagSongs)
+      .where(eq(tagSongs.id, input.tagSongId))
+    if (!tagSong) throw new ORPCError('NOT_FOUND', { message: 'Tag association not found' })
+    if (tagSong.created_by !== user.id) {
+      throw new ORPCError('FORBIDDEN', { message: 'Only the creator of a tag association may remove it' })
+    }
+    if (Date.now() - tagSong.created_at.getTime() > TAG_SONG_DETACH_WINDOW_MS) {
+      throw new ORPCError('FORBIDDEN', {
+        message: 'Tag associations can only be removed within an hour of being created',
+      })
+    }
+
+    // Votes are removed by the tag_song_votes foreign key cascade.
+    await db.delete(tagSongs).where(eq(tagSongs.id, input.tagSongId))
+    await cache.delete('tags:list')
+
+    return { success: true }
   }),
 }
 

@@ -58,6 +58,13 @@ export type ResolvedSheetIdentity = ResolvedSongIdentity & {
   sheetDifficulty: string
 }
 
+export type LegacyTagSongIdentity = {
+  song_id: string
+  sheet_type: string
+  sheet_difficulty: string
+  tag_id: number
+}
+
 export type PublicTagSongIdentity = {
   song_id: string
   sheet_id: string
@@ -78,14 +85,9 @@ export interface CatalogIdentityService {
   translateSongCountsToPublic(
     songCounts: readonly { songId: string; count: number }[],
   ): Promise<Array<{ songId: string; count: number }>>
-  translateTagSongsToPublic(
-    tagSongs: readonly {
-      song_id: string
-      sheet_type: string
-      sheet_difficulty: string
-      tag_id: number
-    }[],
-  ): Promise<PublicTagSongIdentity[]>
+  translateTagSongsToPublic<T extends LegacyTagSongIdentity>(
+    tagSongs: readonly T[],
+  ): Promise<Array<Omit<T, keyof PublicTagSongIdentity> & PublicTagSongIdentity>>
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -509,9 +511,9 @@ export const createCatalogIdentityService = (query: CatalogIdentityQuery): Catal
       return [...translated].map(([songId, count]) => ({ songId, count })).sort((a, b) => b.count - a.count)
     },
 
-    async translateTagSongsToPublic(tagSongs) {
+    async translateTagSongsToPublic<T extends LegacyTagSongIdentity>(tagSongs: readonly T[]) {
       const snapshot = await getCurrentSnapshot()
-      const translated: PublicTagSongIdentity[] = []
+      const translated: Array<Omit<T, keyof PublicTagSongIdentity> & PublicTagSongIdentity> = []
       const seen = new Set<string>()
       for (const tagSong of tagSongs) {
         const sheet = snapshot.sheetsByLegacyTuple.get(
@@ -521,7 +523,10 @@ export const createCatalogIdentityService = (query: CatalogIdentityQuery): Catal
         const key = JSON.stringify([sheet.publicSongId, sheet.publicSheetId, tagSong.tag_id])
         if (seen.has(key)) continue
         seen.add(key)
+        // Spread first so caller-supplied extras (such as the aggregated vote
+        // score) survive translation while the identity fields are rewritten.
         translated.push({
+          ...tagSong,
           song_id: sheet.publicSongId,
           sheet_id: sheet.publicSheetId,
           sheet_type: sheet.sheetType,

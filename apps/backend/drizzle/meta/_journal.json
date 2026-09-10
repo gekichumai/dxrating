@@ -85,6 +85,13 @@
       "when": 1788016139847,
       "tag": "0011_ancient_maelstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789012033381,
+      "tag": "0012_remarkable_starhawk",
+      "breakpoints": true
     }
   ]
 }
