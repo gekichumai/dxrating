@@ -46,7 +46,7 @@
     "d3": "^7.9.0",
     "date-fns": "^2.30.0",
     "dayjs": "^1.11.20",
-    "framer-motion": "^12.38.0",
+    "motion": "^12.38.0",
     "fuse.js": "catalog:",
     "happy-dom": "^20.9.0",
     "i18next": "^23.16.8",
