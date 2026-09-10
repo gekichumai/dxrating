@@ -143,7 +143,8 @@ const tagsHandler = {
           .groupBy(tagSongs.id)
           // Quality gate: associations the community has buried never reach the
           // global list, so filters and chips derived from it stay clean.
-          .having(sql`coalesce(sum(${tagSongVotes.value}), 0) > ${TAG_SONG_HIDDEN_SCORE_THRESHOLD}`),
+          .having(sql`coalesce(sum(${tagSongVotes.value}), 0) > ${TAG_SONG_HIDDEN_SCORE_THRESHOLD}`)
+          .orderBy(tagSongs.id),
       ])
 
       result = {
@@ -155,8 +156,13 @@ const tagsHandler = {
     }
 
     if (input?.idScheme === 'public') {
+      // A legacy ID rename can leave one public association split across rows;
+      // their votes are all real votes on that association, so they add up.
       const tagSongs = await withCatalogIdentityErrors(() =>
-        catalogIdentities.translateTagSongsToPublic(result.tagSongs),
+        catalogIdentities.translateTagSongsToPublic(result.tagSongs, (kept, duplicate) => ({
+          ...kept,
+          score: kept.score + duplicate.score,
+        })),
       )
       return { ...result, tagSongs }
     }

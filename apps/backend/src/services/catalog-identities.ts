@@ -85,8 +85,14 @@ export interface CatalogIdentityService {
   translateSongCountsToPublic(
     songCounts: readonly { songId: string; count: number }[],
   ): Promise<Array<{ songId: string; count: number }>>
+  /**
+   * Rows whose legacy identities resolve to the same public sheet and tag are
+   * collapsed into one. Without `merge` the first row wins; pass it when rows
+   * carry per-row data (such as vote scores) that must be combined instead.
+   */
   translateTagSongsToPublic<T extends LegacyTagSongIdentity>(
     tagSongs: readonly T[],
+    merge?: (kept: T, duplicate: T) => T,
   ): Promise<Array<Omit<T, keyof PublicTagSongIdentity> & PublicTagSongIdentity>>
 }
 
@@ -511,30 +517,35 @@ export const createCatalogIdentityService = (query: CatalogIdentityQuery): Catal
       return [...translated].map(([songId, count]) => ({ songId, count })).sort((a, b) => b.count - a.count)
     },
 
-    async translateTagSongsToPublic<T extends LegacyTagSongIdentity>(tagSongs: readonly T[]) {
+    async translateTagSongsToPublic<T extends LegacyTagSongIdentity>(
+      tagSongs: readonly T[],
+      merge?: (kept: T, duplicate: T) => T,
+    ) {
       const snapshot = await getCurrentSnapshot()
-      const translated: Array<Omit<T, keyof PublicTagSongIdentity> & PublicTagSongIdentity> = []
-      const seen = new Set<string>()
+      const merged = new Map<string, { source: T; sheet: SheetIdentity }>()
       for (const tagSong of tagSongs) {
         const sheet = snapshot.sheetsByLegacyTuple.get(
           legacySheetKey(tagSong.song_id, tagSong.sheet_type, tagSong.sheet_difficulty),
         )
         if (!sheet) continue
         const key = JSON.stringify([sheet.publicSongId, sheet.publicSheetId, tagSong.tag_id])
-        if (seen.has(key)) continue
-        seen.add(key)
-        // Spread first so caller-supplied extras (such as the aggregated vote
-        // score) survive translation while the identity fields are rewritten.
-        translated.push({
-          ...tagSong,
-          song_id: sheet.publicSongId,
-          sheet_id: sheet.publicSheetId,
-          sheet_type: sheet.sheetType,
-          sheet_difficulty: sheet.sheetDifficulty,
-          tag_id: tagSong.tag_id,
-        })
+        const existing = merged.get(key)
+        if (!existing) {
+          merged.set(key, { source: tagSong, sheet })
+        } else if (merge) {
+          existing.source = merge(existing.source, tagSong)
+        }
       }
-      return translated
+      // Spread first so caller-supplied extras (such as the aggregated vote
+      // score) survive translation while the identity fields are rewritten.
+      return [...merged.values()].map(({ source, sheet }) => ({
+        ...source,
+        song_id: sheet.publicSongId,
+        sheet_id: sheet.publicSheetId,
+        sheet_type: sheet.sheetType,
+        sheet_difficulty: sheet.sheetDifficulty,
+        tag_id: source.tag_id,
+      }))
     },
   }
 }
