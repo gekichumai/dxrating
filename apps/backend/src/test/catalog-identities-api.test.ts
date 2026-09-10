@@ -214,6 +214,8 @@ describe('Public catalog identity API boundary', () => {
         sheet_type: 'dx',
         sheet_difficulty: 'master',
         tag_id: tagId,
+        // Attaching a tag records an implicit upvote from its creator.
+        score: 1,
       },
     ])
 
@@ -397,6 +399,8 @@ describe('Public catalog identity API boundary', () => {
         sheet_type: 'dx',
         sheet_difficulty: 'master',
         tag_id: tagId,
+        // Attaching a tag records an implicit upvote from its creator.
+        score: 1,
       },
     ])
     expect(await aliasesRes.json()).toEqual([
