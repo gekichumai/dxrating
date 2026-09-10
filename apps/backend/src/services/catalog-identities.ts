@@ -86,6 +86,16 @@ export interface CatalogIdentityService {
     songCounts: readonly { songId: string; count: number }[],
   ): Promise<Array<{ songId: string; count: number }>>
   /**
+   * Rewrites each row to its song's current legacy ID and collapses rows that
+   * then share a sheet and tag, combining them with `merge`. Legacy callers
+   * must keep working without a catalog, so rows pass through untouched when
+   * no snapshot is available.
+   */
+  collapseLegacyTagSongs<T extends LegacyTagSongIdentity>(
+    tagSongs: readonly T[],
+    merge: (kept: T, duplicate: T) => T,
+  ): Promise<T[]>
+  /**
    * Rows whose legacy identities resolve to the same public sheet and tag are
    * collapsed into one. Without `merge` the first row wins; pass it when rows
    * carry per-row data (such as vote scores) that must be combined instead.
@@ -515,6 +525,23 @@ export const createCatalogIdentityService = (query: CatalogIdentityQuery): Catal
         translated.set(song.publicSongId, (translated.get(song.publicSongId) ?? 0) + count)
       }
       return [...translated].map(([songId, count]) => ({ songId, count })).sort((a, b) => b.count - a.count)
+    },
+
+    async collapseLegacyTagSongs<T extends LegacyTagSongIdentity>(
+      tagSongs: readonly T[],
+      merge: (kept: T, duplicate: T) => T,
+    ) {
+      const snapshot = await getBestEffortSnapshot()
+      if (!snapshot) return [...tagSongs]
+      const merged = new Map<string, T>()
+      for (const tagSong of tagSongs) {
+        const current = snapshot.songsByLegacyId.get(tagSong.song_id)?.legacySongId ?? tagSong.song_id
+        const normalized = { ...tagSong, song_id: current }
+        const key = JSON.stringify([current, tagSong.sheet_type, tagSong.sheet_difficulty, tagSong.tag_id])
+        const existing = merged.get(key)
+        merged.set(key, existing ? merge(existing, normalized) : normalized)
+      }
+      return [...merged.values()]
     },
 
     async translateTagSongsToPublic<T extends LegacyTagSongIdentity>(

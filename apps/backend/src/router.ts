@@ -78,7 +78,65 @@ const tagSongScore = sql<number>`coalesce(sum(${tagSongVotes.value}), 0)::int`
 const tagSongUpvotes = sql<number>`count(*) filter (where ${tagSongVotes.value} = 1)::int`
 const tagSongDownvotes = sql<number>`count(*) filter (where ${tagSongVotes.value} = -1)::int`
 
-const readTagSongVoteBreakdown = async (tagSongId: number, userId?: string) => {
+type TagSongRow = typeof tagSongs.$inferSelect
+
+/**
+ * A legacy song ID rename can split one tag-sheet association across several
+ * tag_songs rows. Every row for the same tag on the same sheet is treated as
+ * one association, identified by its oldest (canonical) row.
+ */
+type TagSongGroup = { canonical: TagSongRow; rows: TagSongRow[]; ids: number[] }
+
+const findTagSongGroups = async (tagSongIds: readonly number[]) => {
+  const groups = new Map<number, TagSongGroup>()
+  if (tagSongIds.length === 0) return groups
+
+  const requested = await db
+    .select()
+    .from(tagSongs)
+    .where(inArray(tagSongs.id, [...tagSongIds]))
+  const bySheet = new Map<string, TagSongRow[]>()
+  for (const row of requested) {
+    const key = JSON.stringify([row.song_id, row.sheet_type, row.sheet_difficulty])
+    bySheet.set(key, [...(bySheet.get(key) ?? []), row])
+  }
+
+  for (const rows of bySheet.values()) {
+    const identity = await withCatalogIdentityErrors(() =>
+      catalogIdentities.resolveSheetInput({
+        songId: rows[0].song_id,
+        sheetType: rows[0].sheet_type,
+        sheetDifficulty: rows[0].sheet_difficulty,
+      }),
+    )
+    const siblings = await db
+      .select()
+      .from(tagSongs)
+      .where(
+        and(
+          inArray(tagSongs.song_id, identity.legacySongIds),
+          eq(tagSongs.sheet_type, identity.sheetType),
+          eq(tagSongs.sheet_difficulty, identity.sheetDifficulty),
+          inArray(
+            tagSongs.tag_id,
+            rows.map((row) => row.tag_id),
+          ),
+        ),
+      )
+      .orderBy(tagSongs.id)
+
+    for (const row of rows) {
+      const members = siblings.filter((sibling) => sibling.tag_id === row.tag_id)
+      const groupRows = members.length > 0 ? members : [row]
+      groups.set(row.id, { canonical: groupRows[0], rows: groupRows, ids: groupRows.map((member) => member.id) })
+    }
+  }
+  return groups
+}
+
+const findTagSongGroup = async (tagSongId: number) => (await findTagSongGroups([tagSongId])).get(tagSongId)
+
+const readTagSongVoteBreakdown = async (group: TagSongGroup, userId: string) => {
   const [breakdown] = await db
     .select({
       upvotes: tagSongUpvotes,
@@ -86,23 +144,33 @@ const readTagSongVoteBreakdown = async (tagSongId: number, userId?: string) => {
       score: tagSongScore,
     })
     .from(tagSongVotes)
-    .where(eq(tagSongVotes.tag_song_id, tagSongId))
+    .where(inArray(tagSongVotes.tag_song_id, group.ids))
 
-  const userVote = userId
-    ? await db
-        .select({ value: tagSongVotes.value })
-        .from(tagSongVotes)
-        .where(and(eq(tagSongVotes.tag_song_id, tagSongId), eq(tagSongVotes.user_id, userId)))
-    : []
+  const [userVote] = await db
+    .select({ value: tagSongVotes.value })
+    .from(tagSongVotes)
+    .where(and(inArray(tagSongVotes.tag_song_id, group.ids), eq(tagSongVotes.user_id, userId)))
 
   return {
-    tagSongId,
+    tagSongId: group.canonical.id,
     upvotes: breakdown?.upvotes ?? 0,
     downvotes: breakdown?.downvotes ?? 0,
     score: breakdown?.score ?? 0,
-    userVote: userVote[0]?.value ?? null,
+    userVote: userVote?.value ?? null,
   }
 }
+
+// Scores of rows collapsed into one association add up: votes are kept to one
+// per user per association (see tags.vote), so no voter is counted twice.
+const sumTagSongScores = <T extends { score: number }>(kept: T, duplicate: T): T => ({
+  ...kept,
+  score: kept.score + duplicate.score,
+})
+
+// Quality gate: associations the community has buried never reach the global
+// list, so filters and chips derived from it stay clean. It is applied only
+// after collapsing, so a buried row cannot hide a live sibling or vice versa.
+const isTagSongVisible = (tagSong: { score: number }) => tagSong.score > TAG_SONG_HIDDEN_SCORE_THRESHOLD
 
 const tagsHandler = {
   list: os.tags.list.handler(async ({ input }) => {
@@ -141,9 +209,6 @@ const tagsHandler = {
           .from(tagSongs)
           .leftJoin(tagSongVotes, eq(tagSongVotes.tag_song_id, tagSongs.id))
           .groupBy(tagSongs.id)
-          // Quality gate: associations the community has buried never reach the
-          // global list, so filters and chips derived from it stay clean.
-          .having(sql`coalesce(sum(${tagSongVotes.value}), 0) > ${TAG_SONG_HIDDEN_SCORE_THRESHOLD}`)
           .orderBy(tagSongs.id),
       ])
 
@@ -155,18 +220,17 @@ const tagsHandler = {
       await cache.set('tags:list', result)
     }
 
+    // The cache holds raw per-row scores; collapsing and gating happen per
+    // request so they always use the current catalog snapshot.
+    const collapsed = await catalogIdentities.collapseLegacyTagSongs(result.tagSongs, sumTagSongScores)
+
     if (input?.idScheme === 'public') {
-      // A legacy ID rename can leave one public association split across rows;
-      // their votes are all real votes on that association, so they add up.
       const tagSongs = await withCatalogIdentityErrors(() =>
-        catalogIdentities.translateTagSongsToPublic(result.tagSongs, (kept, duplicate) => ({
-          ...kept,
-          score: kept.score + duplicate.score,
-        })),
+        catalogIdentities.translateTagSongsToPublic(collapsed, sumTagSongScores),
       )
-      return { ...result, tagSongs }
+      return { ...result, tagSongs: tagSongs.filter(isTagSongVisible) }
     }
-    return result
+    return { ...result, tagSongs: collapsed.filter(isTagSongVisible) }
   }),
   attach: os.tags.attach.handler(async ({ input, context }) => {
     const user = (context as Context).user
@@ -185,6 +249,7 @@ const tagsHandler = {
           eq(tagSongs.tag_id, input.tagId),
         ),
       )
+      .orderBy(tagSongs.id)
 
     if (existing.length > 0) return { id: existing[0].id }
 
@@ -208,12 +273,16 @@ const tagsHandler = {
   sheetTags: os.tags.sheetTags.handler(async ({ input }) => {
     const identity = await withCatalogIdentityErrors(() => catalogIdentities.resolveSheetInput(input))
 
+    // Grouped by tag rather than by row, so an association split across legacy
+    // IDs by a rename surfaces once, under its canonical (oldest) row.
     const rows = await db
       .select({
-        id: tagSongs.id,
+        id: sql<number>`min(${tagSongs.id})`.mapWith(tagSongs.id),
         tag_id: tagSongs.tag_id,
-        created_at: tagSongs.created_at,
-        created_by: tagSongs.created_by,
+        created_at: sql<Date>`(array_agg(${tagSongs.created_at} order by ${tagSongs.id}))[1]`.mapWith(
+          tagSongs.created_at,
+        ),
+        created_by: sql<string>`(array_agg(${tagSongs.created_by} order by ${tagSongs.id}))[1]`,
         upvotes: tagSongUpvotes,
         downvotes: tagSongDownvotes,
         score: tagSongScore,
@@ -227,7 +296,8 @@ const tagsHandler = {
           eq(tagSongs.sheet_difficulty, identity.sheetDifficulty),
         ),
       )
-      .groupBy(tagSongs.id)
+      .groupBy(tagSongs.tag_id)
+      .orderBy(sql`min(${tagSongs.id})`)
 
     // Unlike tags.list this endpoint returns buried associations too, so the
     // sheet view can offer them behind a "hidden tags" disclosure.
@@ -243,55 +313,75 @@ const tagsHandler = {
     const user = (context as Context).user
     if (!user) throw new Error('Unauthorized')
 
-    const [tagSong] = await db.select({ id: tagSongs.id }).from(tagSongs).where(eq(tagSongs.id, input.tagSongId))
-    if (!tagSong) throw new ORPCError('NOT_FOUND', { message: 'Tag association not found' })
+    const group = await findTagSongGroup(input.tagSongId)
+    if (!group) throw new ORPCError('NOT_FOUND', { message: 'Tag association not found' })
 
-    await db
-      .insert(tagSongVotes)
-      .values({ tag_song_id: input.tagSongId, user_id: user.id, value: input.value })
-      .onConflictDoUpdate({
-        target: [tagSongVotes.tag_song_id, tagSongVotes.user_id],
-        set: { value: input.value },
-      })
+    // Votes always land on the canonical row, and any the user left on sibling
+    // rows are dropped, keeping one vote per user per association.
+    const siblingIds = group.ids.filter((id) => id !== group.canonical.id)
+    await db.transaction(async (tx) => {
+      if (siblingIds.length > 0) {
+        await tx
+          .delete(tagSongVotes)
+          .where(and(eq(tagSongVotes.user_id, user.id), inArray(tagSongVotes.tag_song_id, siblingIds)))
+      }
+      await tx
+        .insert(tagSongVotes)
+        .values({ tag_song_id: group.canonical.id, user_id: user.id, value: input.value })
+        .onConflictDoUpdate({
+          target: [tagSongVotes.tag_song_id, tagSongVotes.user_id],
+          set: { value: input.value },
+        })
+    })
 
     // A vote can push an association across the visibility threshold.
     await cache.delete('tags:list')
 
-    return readTagSongVoteBreakdown(input.tagSongId, user.id)
+    return readTagSongVoteBreakdown(group, user.id)
   }),
   userVotes: os.tags.userVotes.handler(async ({ input, context }) => {
     const user = (context as Context).user
     if (!user) throw new Error('Unauthorized')
 
-    if (input.tagSongIds.length === 0) return {}
+    const groups = await findTagSongGroups(input.tagSongIds)
+    const groupIds = [...groups.values()].flatMap((group) => group.ids)
+    if (groupIds.length === 0) return {}
 
-    const rows = await db
+    const votes = await db
       .select({ tag_song_id: tagSongVotes.tag_song_id, value: tagSongVotes.value })
       .from(tagSongVotes)
-      .where(and(eq(tagSongVotes.user_id, user.id), inArray(tagSongVotes.tag_song_id, input.tagSongIds)))
+      .where(and(eq(tagSongVotes.user_id, user.id), inArray(tagSongVotes.tag_song_id, groupIds)))
+      .orderBy(desc(tagSongVotes.id))
 
-    return Object.fromEntries(rows.map((row) => [String(row.tag_song_id), row.value]))
+    // Keyed by the id the caller asked about; a vote on any row of that
+    // association counts, with the most recent winning.
+    const result: Record<string, number> = {}
+    for (const [requestedId, group] of groups) {
+      const vote = votes.find((candidate) => group.ids.includes(candidate.tag_song_id))
+      if (vote) result[String(requestedId)] = vote.value
+    }
+    return result
   }),
   detach: os.tags.detach.handler(async ({ input, context }) => {
     const user = (context as Context).user
     if (!user) throw new Error('Unauthorized')
 
-    const [tagSong] = await db
-      .select({ id: tagSongs.id, created_at: tagSongs.created_at, created_by: tagSongs.created_by })
-      .from(tagSongs)
-      .where(eq(tagSongs.id, input.tagSongId))
-    if (!tagSong) throw new ORPCError('NOT_FOUND', { message: 'Tag association not found' })
-    if (tagSong.created_by !== user.id) {
+    const group = await findTagSongGroup(input.tagSongId)
+    if (!group) throw new ORPCError('NOT_FOUND', { message: 'Tag association not found' })
+    // Removing an association removes every row it spans, so the caller must
+    // have created all of them; nobody can take down someone else's row.
+    if (group.rows.some((row) => row.created_by !== user.id)) {
       throw new ORPCError('FORBIDDEN', { message: 'Only the creator of a tag association may remove it' })
     }
-    if (Date.now() - tagSong.created_at.getTime() > TAG_SONG_DETACH_WINDOW_MS) {
+    // Rows are ordered oldest first, so the canonical row bounds the window.
+    if (Date.now() - group.canonical.created_at.getTime() > TAG_SONG_DETACH_WINDOW_MS) {
       throw new ORPCError('FORBIDDEN', {
         message: 'Tag associations can only be removed within an hour of being created',
       })
     }
 
     // Votes are removed by the tag_song_votes foreign key cascade.
-    await db.delete(tagSongs).where(eq(tagSongs.id, input.tagSongId))
+    await db.delete(tagSongs).where(inArray(tagSongs.id, group.ids))
     await cache.delete('tags:list')
 
     return { success: true }
