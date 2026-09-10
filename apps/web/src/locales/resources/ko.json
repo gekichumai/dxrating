@@ -1,8 +1,8 @@
 {
   "root": {
     "pages.search.title": "채보 검색",
-    "pages.search.seo-title": "채보 및 곡",
-    "pages.search.seo-description": "곡명, 아티스트 또는 난이도로 모든 maimai DX 채보를 검색하세요. 내부 레벨, 노트 수와 상세 채보 정보를 확인할 수 있습니다.",
+    "pages.search.seo-title": "maimai 곡・채보 상수 검색",
+    "pages.search.seo-description": "곡명, 아티스트, 별명으로 검색하세요. 채보 상수, BPM, 노트 수와 난이도를 확인하고 레이팅과 Best 50을 계산할 수 있어요.",
     "pages.recent.title": "최근 업데이트",
     "pages.recent.seo-title": "최근 업데이트된 채보",
     "pages.recent.seo-description": "BASIC과 ADVANCED를 제외하고 최근 업데이트된 maimai DX 채보 페이지를 DXRating에서 확인하세요.",
@@ -12,8 +12,8 @@
     "pages.trending.seo-description": "현재 DXRating에서 가장 많은 관심을 받는 maimai DX 채보 페이지를 확인하세요.",
     "pages.trending.icon-label": "인기 채보",
     "pages.rating.title": "내 Rating",
-    "pages.rating.seo-title": "Rating 계산기",
-    "pages.rating.seo-description": "DXRating에서 maimai DX Rating 기록, Best 50 항목, 달성률과 점수 상세 정보를 계산하고 관리하세요.",
+    "pages.rating.seo-title": "maimai 레이팅 계산기 & Best 50",
+    "pages.rating.seo-description": "스코어를 가져오거나 달성률을 입력해 maimai DX 레이팅을 계산하고, Best 50을 확인하고 공유 이미지를 만들 수 있어요.",
     "seo.description": "DXRating은 채보 상세 정보 등 다양한 기능을 제공하는 maimai DX Rating 분석 도구입니다.",
     "seo.keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating 분석, gekichumai, maimai derakkusu, 채보 정보, Rating 계산기, maimai 위키",
     "share.copy-succeeded": "클립보드에 복사했습니다",
@@ -22,7 +22,22 @@
     "external-links.github": "GitHub에서 DXRating 열기",
     "not-found.title": "페이지를 찾을 수 없습니다",
     "not-found.description": "페이지가 이동했거나 링크가 오래되었을 수 있습니다.",
-    "not-found.back-to-home": "홈으로 돌아가기"
+    "not-found.back-to-home": "홈으로 돌아가기",
+    "pages.search.heading": "maimai 곡과 채보 검색",
+    "pages.search.introduction": "곡명, 아티스트, 별명으로 검색하세요. 채보 상수, BPM, 노트 수와 난이도를 확인하고 레이팅과 Best 50을 계산할 수 있어요.",
+    "pages.search.explore": "maimai 도구",
+    "pages.search.featured": "곡 정보 살펴보기",
+    "pages.rating.heading": "maimai 레이팅 계산기 & Best 50",
+    "pages.rating.introduction": "스코어를 가져오거나 달성률을 입력해 maimai DX 레이팅을 계산하고, Best 50을 확인하고 공유 이미지를 만들 수 있어요.",
+    "pages.rating.start": "계산기로 이동",
+    "pages.rating.guide": "Best 50 계산 및 공유 방법",
+    "pages.rating.import-heading": "스코어 추가 또는 가져오기",
+    "pages.rating.import-description": "곡과 달성률을 직접 추가하거나 가져오기 메뉴에서 MaimaiNET, Diving Fish, LXNS 또는 지원하는 파일의 기록을 불러오세요.",
+    "pages.rating.calculate-heading": "레이팅 계산 방식",
+    "pages.rating.calculate-description": "각 채보의 레이팅은 채보 상수와 달성률로 계산돼요. Best 50은 현재 버전의 상위 15개 채보와 이전 버전의 상위 35개 채보로 구성돼요. 위에서 게임 버전과 지역을 선택하세요.",
+    "pages.rating.share-heading": "Best 50 공유",
+    "pages.rating.share-description": "이미지 버튼으로 Best 50 공유 이미지를 만들 수 있어요. 내보내기로 기록을 JSON 파일에 저장하면 나중에 다시 가져올 수 있어요.",
+    "pages.rating.loading": "계산기를 불러오는 중…"
   },
   "settings": {
     "version-and-region.select": "DXData 버전 및 지역 선택",
@@ -144,7 +159,12 @@
     "type.std": "스탠다드",
     "type.utage": "宴会場",
     "type.utage2p": "버디",
-    "seo.description": "{{artist}}의 {{title}} - DXRating에서 {{sheetLabel}} 채보 상세 정보, 내부 레벨과 노트 수를 확인하세요."
+    "seo.description": "{{title}} / {{artist}} — maimai {{sheetLabel}} 채보 상수, 노트 수, 레이팅 정보.",
+    "summary.title": "채보 요약",
+    "summary.description": "maimai의 {{title}} — {{chart}} 채보 정보.",
+    "summary.internal-level": "채보 상수",
+    "summary.version": "선택한 버전",
+    "seo.bpm": "{{bpm}} BPM."
   },
   "about": {
     "title": "정보",

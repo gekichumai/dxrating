@@ -61,5 +61,5 @@ export function getSheetPageTitle(
   },
   locale: SupportedLocale = 'en',
 ) {
-  return `${song.title} [${getSheetTitleLabel(sheet, locale)}] - DXRating`
+  return `${song.title} [${getSheetTitleLabel(sheet, locale)}] - maimai - DXRating`
 }

@@ -2,6 +2,7 @@ import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
 import { IconButton } from '@mui/material'
 import { type FC, useMemo } from 'react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import MdiArrowLeft from '~icons/mdi/arrow-left'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { TYPE_ORDER, getHighestDifficulty } from '../models/constants'
@@ -9,16 +10,20 @@ import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { useServerAliases } from '../models/useServerAliases'
 import { type FlattenedSheet, canonicalId, getSearchAcronymsWithServerAliases } from '../songs'
 import { SongHeader } from '../components/song/SongHeader'
+import { SongChartSummary } from '../components/song/SongChartSummary'
 import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { getVisibleSongPageSheets } from './songPageSheets'
+import { toSupportedLocale } from '@/setup/locale'
 
 const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 
 export const SongPage: FC = () => {
   const { songId, type, difficulty } = routeApi.useParams()
   const navigate = useNavigate()
+  const { i18n } = useTranslation()
+  const locale = toSupportedLocale(i18n.language) ?? 'en'
   const appVersion = useAppContextDXDataVersion()
   const { data: serverAliases } = useServerAliases()
 
@@ -75,6 +80,7 @@ export const SongPage: FC = () => {
     const sheetsOfType = flattenedSheets.filter((s) => s.type === newType)
     navigate({
       to: '/songs/$songId/$type/$difficulty',
+      search: () => ({ locale }),
       params: {
         songId,
         type: newType,
@@ -86,6 +92,7 @@ export const SongPage: FC = () => {
   const handleDifficultyChange = (newDifficulty: DifficultyEnum) => {
     navigate({
       to: '/songs/$songId/$type/$difficulty',
+      search: () => ({ locale }),
       params: {
         songId,
         type: activeType,
@@ -101,7 +108,7 @@ export const SongPage: FC = () => {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
       <a
-        href="/search"
+        href={`/search?locale=${locale}`}
         onClick={(e) => {
           if (window.history.length > 1 && document.referrer.startsWith(window.location.origin)) {
             e.preventDefault()
@@ -116,8 +123,10 @@ export const SongPage: FC = () => {
       </a>
 
       {headerSheet && <SongHeader sheet={headerSheet} />}
+      {headerSheet && <SongChartSummary sheet={headerSheet} />}
 
       <SongSheetTabs
+        songId={song.songId}
         sheets={song.sheets}
         availableTypes={availableTypes}
         activeType={activeType}

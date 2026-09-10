@@ -9,7 +9,7 @@ describe('sheet display labels', () => {
     expect(getSheetTitleLabel({ type: TypeEnum.UTAGE, difficulty: '【協】' })).toBe('Utage 【協】')
     expect(getSheetTitleLabel({ type: TypeEnum.UTAGE2P, difficulty: '【協】' })).toBe('Buddy 【協】')
     expect(getSheetPageTitle({ title: 'Song Title' }, { type: TypeEnum.DX, difficulty: DifficultyEnum.ReMaster })).toBe(
-      'Song Title [DX Re:MASTER] - DXRating',
+      'Song Title [DX Re:MASTER] - maimai - DXRating',
     )
   })
 

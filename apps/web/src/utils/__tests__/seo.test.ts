@@ -1,8 +1,14 @@
 import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
+import { createServerI18n } from '@/setup/init-i18n'
+import { SUPPORTED_LOCALES } from '@/setup/locale'
+import { buildAlternateLinks } from '../alternateLinks'
 import {
   buildDevelopersSeo,
   buildRootSeoMeta,
+  buildRatingSeo,
+  buildRecentChartsSeo,
+  buildTrendingChartsSeo,
   buildSearchSeo,
   buildSongSheetSeo,
   buildSongSheetStructuredData,
@@ -10,6 +16,31 @@ import {
 } from '../seo'
 
 describe('SEO localization', () => {
+  it.each(SUPPORTED_LOCALES)('aligns canonical and language alternates for %s', (locale) => {
+    for (const [path, build] of [
+      ['/search', buildSearchSeo],
+      ['/rating', buildRatingSeo],
+      ['/developers', buildDevelopersSeo],
+      ['/charts/recent', buildRecentChartsSeo],
+      ['/charts/trending', buildTrendingChartsSeo],
+    ] as const) {
+      const alternate = buildAlternateLinks({ pathname: path }).find((link) => link.hrefLang === locale)
+      const seo = build(locale)
+      expect(seo.links).toContainEqual({ rel: 'canonical', href: alternate?.href })
+      expect(seo.meta).toContainEqual({ property: 'og:url', content: alternate?.href })
+    }
+  })
+
+  it('includes a known BPM in song metadata without inventing missing values', () => {
+    const song = { title: 'Song', artist: 'Artist', category: 'maimai', imageName: 'song', songId: 'a/b & c' }
+    const sheet = { type: TypeEnum.DX, difficulty: DifficultyEnum.Master }
+    expect(buildSongSheetSeo({ ...song, bpm: 180 }, sheet, 'en').description).toContain('180 BPM')
+    expect(buildSongSheetSeo({ ...song, bpm: null }, sheet, 'en').description).not.toMatch(/null|undefined|BPM/)
+    expect(buildSongSheetSeo(song, sheet, 'ja').links).toContainEqual({
+      rel: 'canonical',
+      href: 'https://dxrating.net/songs/a%2Fb%20%26%20c/dx/master?locale=ja',
+    })
+  })
   it('resolves the locale from route server context before falling back to English', () => {
     expect(
       resolveSeoLocale([
@@ -38,18 +69,17 @@ describe('SEO localization', () => {
   })
 
   it('builds localized search route metadata', () => {
-    expect(buildSearchSeo('ja').title).toBe('譜面検索 - DXRating')
-    expect(buildSearchSeo('ja').description).toBe(
-      'maimai DX の譜面を、楽曲名、アーティスト、難易度から検索できます。譜面定数、ノーツ数、詳しい譜面情報も確認できます。',
-    )
+    const i18n = createServerI18n('ja')
+    expect(buildSearchSeo('ja').title).toBe(`${i18n.t('root:pages.search.seo-title')} - DXRating`)
+    expect(buildSearchSeo('ja').description).toBe(i18n.t('root:pages.search.seo-description'))
   })
 
   it('builds localized developer API metadata', () => {
     const seo = buildDevelopersSeo('ja')
 
     expect(seo.title).toBe('開発者向け API - DXRating')
-    expect(seo.links).toContainEqual({ rel: 'canonical', href: 'https://dxrating.net/developers' })
-    expect(seo.meta).toContainEqual({ property: 'og:url', content: 'https://dxrating.net/developers' })
+    expect(seo.links).toContainEqual({ rel: 'canonical', href: 'https://dxrating.net/developers?locale=ja' })
+    expect(seo.meta).toContainEqual({ property: 'og:url', content: 'https://dxrating.net/developers?locale=ja' })
   })
 
   it('builds localized song sheet title and social metadata', () => {
@@ -68,8 +98,14 @@ describe('SEO localization', () => {
       'zh-Hant',
     )
 
-    expect(seo.title).toBe('Test Song [標準 MASTER] - DXRating')
-    expect(seo.description).toBe('Test Song / Test Artist - 標準 MASTER 譜面詳情、譜面定數與音符數 - DXRating。')
+    expect(seo.title).toBe('Test Song [標準 MASTER] - maimai - DXRating')
+    expect(seo.description).toBe(
+      createServerI18n('zh-Hant').t('song:seo.description', {
+        title: 'Test Song',
+        artist: 'Test Artist',
+        sheetLabel: '標準 MASTER',
+      }),
+    )
     expect(seo.meta).toContainEqual({ property: 'og:title', content: seo.title })
     expect(seo.meta).toContainEqual({
       property: 'og:image',
@@ -139,7 +175,7 @@ describe('SEO localization', () => {
         expect.objectContaining({
           '@type': 'Dataset',
           name: 'Test Song DX MASTER chart',
-          url: 'https://dxrating.net/songs/test-song/dx/master',
+          url: 'https://dxrating.net/songs/test-song/dx/master?locale=en',
           datePublished: '2026-05-10',
           additionalProperty: expect.arrayContaining([
             expect.objectContaining({ name: 'Chart type', value: 'DX' }),
