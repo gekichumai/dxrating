@@ -38,7 +38,11 @@
     "region._generic": "일반",
     "import-provider.diving-fish.title": "diving-fish",
     "import-provider.diving-fish.username": "diving-fish 사용자 이름",
-    "import-provider.diving-fish.qq": "diving-fish에 연동한 QQ"
+    "import-provider.diving-fish.qq": "diving-fish에 연동한 QQ",
+    "version-update.title": "새 버전을 사용할 수 있어요",
+    "version-update.description": "{{region}}에서 {{latest}} 버전을 사용할 수 있어요. 데이터 버전을 {{current}}에서 {{latest}}로 변경할까요?",
+    "version-update.confirm": "{{latest}} 사용",
+    "version-update.keep": "{{current}} 유지"
   },
   "sheet": {
     "filter-current-version": "현재 B15 필터: {{version}} 채보만 표시",

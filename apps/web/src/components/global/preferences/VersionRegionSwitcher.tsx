@@ -5,7 +5,12 @@ import uniqBy from 'lodash-es/uniqBy'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import MdiInformation from '~icons/mdi/information'
-import { type DXVersion, DXVersionToDXDataVersionEnumMap, type Region } from '../../../models/context/AppContext'
+import {
+  type DXVersion,
+  DXVersionToDXDataVersionEnumMap,
+  LATEST_REGION_VERSIONS,
+  type Region,
+} from '../../../models/context/AppContext'
 import { useAppContext } from '../../../models/context/useAppContext'
 import { startViewTransition } from '../../../utils/startViewTransition'
 import { VERSION_THEME } from '../../../theme'
@@ -30,15 +35,15 @@ interface VersionRegion {
 
 const VERSION_SPECIFIC_REGIONS: VersionRegion[] = [
   {
-    dxVersion: 'magical' as const,
+    dxVersion: LATEST_REGION_VERSIONS.jp,
     region: 'jp' as const,
   },
   {
-    dxVersion: 'circle-plus' as const,
+    dxVersion: LATEST_REGION_VERSIONS.intl,
     region: 'intl' as const,
   },
   {
-    dxVersion: 'prism' as const,
+    dxVersion: LATEST_REGION_VERSIONS.cn,
     region: 'cn' as const,
   },
 ].map(({ dxVersion, region }) => ({
@@ -92,6 +97,8 @@ export const VersionRegionSwitcher: FC = () => {
   const theme = useVersionTheme()
   const { version, region, setVersionAndRegion } = useAppContext()
   const selectLabel = t('settings:version-and-region.select')
+  const currentId = toMergedVersionRegionId(version, region)
+  const isListed = [...VERSION_SPECIFIC_REGIONS, ...VERSION_GENERIC_REGIONS].some(({ id }) => id === currentId)
 
   return (
     <StyledSelect
@@ -135,6 +142,11 @@ export const VersionRegionSwitcher: FC = () => {
         </div>
       )}
     >
+      {!isListed && (
+        <MenuItem value={currentId}>
+          {getVersionEnum(version)} · {t(`settings:region.${region}`)}
+        </MenuItem>
+      )}
       <ListSubheader className="leading-normal py-4">{t('settings:version-and-region.select')}</ListSubheader>
       {VERSION_SPECIFIC_REGIONS.map(({ id, versionEnum, region }, i) => (
         <MenuItem

@@ -16,6 +16,7 @@ import { VersionRegionSwitcher } from '@/components/global/preferences/VersionRe
 import { AppTabs } from '@/components/layout/AppTabs'
 import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
+import { RegionVersionUpdatePrompt } from '@/components/global/preferences/RegionVersionUpdatePrompt'
 import { AppContextProvider } from '@/models/context/AppContext'
 import { useAppContext } from '@/models/context/useAppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
@@ -161,6 +162,7 @@ function RootComponent() {
                     <SideEffector />
                     <CustomizedToaster />
                     <OAuthErrorHandler />
+                    <RegionVersionUpdatePrompt />
                     <AppLayout />
                   </PostHogProvider>
                 </RatingCalculatorContextProvider>
