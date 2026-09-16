@@ -28,8 +28,20 @@ describe('AppContext', () => {
       wrapper: AppContextProvider,
     })
 
-    expect(result.current.version).toBe('circle-plus')
+    expect(result.current.version).toBe('magical')
     expect(result.current.region).toBe('jp')
+  })
+
+  it.each([
+    ['circle-plus', 'jp', 'magical'],
+    ['circle', 'intl', 'circle-plus'],
+    ['circle-plus', '_generic', 'circle-plus'],
+    ['prism', 'cn', 'prism'],
+  ])('restores %s in %s as %s', (version, region, expected) => {
+    mockLocalStorage.getItem.mockReturnValue(JSON.stringify({ version, region }))
+    const { result } = renderHook(() => useAppContext(), { wrapper: AppContextProvider })
+    expect(result.current.version).toBe(expected)
+    expect(result.current.region).toBe(region)
   })
 
   it('should load values from localStorage if they exist', async () => {
@@ -94,7 +106,7 @@ describe('AppContext', () => {
       wrapper: AppContextProvider,
     })
 
-    expect(result.current.version).toBe('circle-plus')
+    expect(result.current.version).toBe('magical')
     expect(result.current.region).toBe('jp')
   })
 })

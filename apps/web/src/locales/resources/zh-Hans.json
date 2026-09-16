@@ -22,7 +22,8 @@
     "external-links.github": "在 GitHub 打开 DXRating",
     "not-found.title": "页面未找到",
     "not-found.description": "页面可能已移动，或链接已经过期。",
-    "not-found.back-to-home": "返回首页"
+    "not-found.back-to-home": "返回首页",
+    "magical-data-coming-soon": "日本版 MAGiCAL 数据即将更新，目前显示的谱面数据仍为上一版本。"
   },
   "settings": {
     "region.title": "服务器：{{region}}",

@@ -22,7 +22,8 @@
     "external-links.github": "Open DXRating on GitHub",
     "not-found.title": "Page Not Found",
     "not-found.description": "This page may have moved, or the link may be outdated.",
-    "not-found.back-to-home": "Back to Home"
+    "not-found.back-to-home": "Back to Home",
+    "magical-data-coming-soon": "MAGiCAL data for Japan is coming soon. Chart data currently reflects the previous version."
   },
   "settings": {
     "version-and-region.select": "Select DXData Version and Region",
