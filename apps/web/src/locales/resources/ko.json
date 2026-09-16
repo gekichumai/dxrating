@@ -22,7 +22,8 @@
     "external-links.github": "GitHub에서 DXRating 열기",
     "not-found.title": "페이지를 찾을 수 없습니다",
     "not-found.description": "페이지가 이동했거나 링크가 오래되었을 수 있습니다.",
-    "not-found.back-to-home": "홈으로 돌아가기"
+    "not-found.back-to-home": "홈으로 돌아가기",
+    "magical-data-coming-soon": "일본판 MAGiCAL 데이터가 곧 업데이트됩니다. 현재 채보 데이터는 이전 버전 기준입니다."
   },
   "settings": {
     "version-and-region.select": "DXData 버전 및 지역 선택",

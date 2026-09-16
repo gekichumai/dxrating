@@ -22,7 +22,8 @@
     "external-links.github": "DXRating を GitHub で開く",
     "not-found.title": "ページが見つかりません",
     "not-found.description": "ページが移動したか、リンクが古くなっている可能性があります。",
-    "not-found.back-to-home": "ホームに戻る"
+    "not-found.back-to-home": "ホームに戻る",
+    "magical-data-coming-soon": "日本版MAGiCALのデータは近日公開予定です。現在の譜面データは前バージョンのものです。"
   },
   "settings": {
     "region.title": "地域：{{region}}",

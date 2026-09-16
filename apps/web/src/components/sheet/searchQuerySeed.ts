@@ -55,7 +55,7 @@ const getSearchEngine = (version: VersionEnum) => {
 
 export const buildSearchQuerySeedSheets = (
   query: string,
-  version: VersionEnum = VersionEnum.CiRCLEPLUS,
+  version: VersionEnum = VersionEnum.MAGiCAL,
 ): SearchQuerySeedSheet[] => {
   if (query.length > SEARCH_QUERY_MAX_LENGTH) {
     throw new RangeError(`Search query must not exceed ${SEARCH_QUERY_MAX_LENGTH} characters`)

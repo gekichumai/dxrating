@@ -3,7 +3,15 @@ import { createContext, type FC, type PropsWithChildren, useCallback, useEffect,
 
 type AppContext = AppContextStates & AppContextFns
 
-export type DXVersion = 'festival-plus' | 'buddies' | 'buddies-plus' | 'prism' | 'prism-plus' | 'circle' | 'circle-plus'
+export type DXVersion =
+  | 'festival-plus'
+  | 'buddies'
+  | 'buddies-plus'
+  | 'prism'
+  | 'prism-plus'
+  | 'circle'
+  | 'circle-plus'
+  | 'magical'
 
 export type Region = 'jp' | 'intl' | 'cn' | '_generic'
 
@@ -15,6 +23,7 @@ export const DXVersionToDXDataVersionEnumMap: Record<DXVersion, VersionEnum> = {
   'prism-plus': VersionEnum.PRiSMPLUS,
   circle: VersionEnum.CiRCLE,
   'circle-plus': VersionEnum.CiRCLEPLUS,
+  magical: VersionEnum.MAGiCAL,
 }
 
 export interface AppContextStates {
@@ -27,7 +36,7 @@ interface AppContextFns {
 }
 
 export const AppContext = createContext<AppContext>({
-  version: 'circle-plus',
+  version: 'magical',
   region: 'jp',
   setVersionAndRegion: () => {
     throw new Error('AppContext not initialized')
@@ -36,7 +45,7 @@ export const AppContext = createContext<AppContext>({
 
 function getDefaultAppContext(): AppContextStates {
   return {
-    version: 'circle-plus',
+    version: 'magical',
     region: 'jp',
   }
 }
@@ -59,7 +68,10 @@ function readStoredAppContext(): AppContextStates {
     if (!stored) return getDefaultAppContext()
 
     const parsed = JSON.parse(stored)
-    return isAppContextStates(parsed) ? parsed : getDefaultAppContext()
+    if (!isAppContextStates(parsed)) return getDefaultAppContext()
+    if (parsed.region === 'jp' && parsed.version === 'circle-plus') return { ...parsed, version: 'magical' }
+    if (parsed.region === 'intl' && parsed.version === 'circle') return { ...parsed, version: 'circle-plus' }
+    return parsed
   } catch {
     return getDefaultAppContext()
   }

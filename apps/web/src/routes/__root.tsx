@@ -1,5 +1,5 @@
 import { HeadContent, Outlet, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
-import { CircularProgress } from '@mui/material'
+import { Alert, CircularProgress } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import i18n from 'i18next'
 import posthog from 'posthog-js'
@@ -17,6 +17,7 @@ import { AppTabs } from '@/components/layout/AppTabs'
 import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
 import { AppContextProvider } from '@/models/context/AppContext'
+import { useAppContext } from '@/models/context/useAppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
 import { createServerI18n } from '@/setup/init-i18n'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
@@ -78,6 +79,8 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   const versionTheme = useVersionTheme()
+  const { version, region } = useAppContext()
+  const { t } = useTranslation(['root'])
   const location = useLocation()
 
   const pathname = location.pathname
@@ -107,6 +110,11 @@ function RootLayout() {
           }}
         >
           <VersionRegionSwitcher />
+          {region === 'jp' && version === 'magical' && (
+            <Alert severity="info" className="mx-4 max-w-2xl">
+              {t('root:magical-data-coming-soon')}
+            </Alert>
+          )}
           {showTabs && <AppTabs />}
         </div>
       )}

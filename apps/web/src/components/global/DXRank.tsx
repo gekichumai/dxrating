@@ -11,7 +11,9 @@ export const DXRank: FC<{ rank?: string | null; className?: string }> = ({ rank,
     return <div className={clsx('aspect-w-128 aspect-h-60 bg-gray-200 rounded', className)} />
   }
 
-  const image = `https://shama.dxrating.net/images/rank/${slugVersion}/${rank}.png`
+  // MAGiCAL uses the existing rank artwork until its dedicated asset set is available.
+  const rankVersion = slugVersion === 'magical' ? 'circle-plus' : slugVersion
+  const image = `https://shama.dxrating.net/images/rank/${rankVersion}/${rank}.png`
 
   return (
     <img

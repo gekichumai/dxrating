@@ -8,6 +8,7 @@ import MdiInformation from '~icons/mdi/information'
 import { type DXVersion, DXVersionToDXDataVersionEnumMap, type Region } from '../../../models/context/AppContext'
 import { useAppContext } from '../../../models/context/useAppContext'
 import { startViewTransition } from '../../../utils/startViewTransition'
+import { VERSION_THEME } from '../../../theme'
 import { useVersionTheme } from '../../../utils/useVersionTheme'
 import { WebpSupportedImage } from '../WebpSupportedImage'
 
@@ -29,11 +30,11 @@ interface VersionRegion {
 
 const VERSION_SPECIFIC_REGIONS: VersionRegion[] = [
   {
-    dxVersion: 'circle-plus' as const,
+    dxVersion: 'magical' as const,
     region: 'jp' as const,
   },
   {
-    dxVersion: 'circle' as const,
+    dxVersion: 'circle-plus' as const,
     region: 'intl' as const,
   },
   {
@@ -48,6 +49,9 @@ const VERSION_SPECIFIC_REGIONS: VersionRegion[] = [
 }))
 
 const VERSION_GENERIC_REGIONS: VersionRegion[] = [
+  {
+    dxVersion: 'magical' as const,
+  },
   {
     dxVersion: 'circle-plus' as const,
   },
@@ -109,7 +113,7 @@ export const VersionRegionSwitcher: FC = () => {
         <div className="flex flex-col gap-0.5">
           <WebpSupportedImage
             objectFit="contain"
-            assetpackKey={`/images/version-logo/${fromMergedVersionRegionId(value).version}.webp`}
+            src={{ at1x: VERSION_THEME[getVersionEnum(fromMergedVersionRegionId(value).version)].logo }}
             className="h-32 w-auto touch-callout-none"
             alt={t('settings:version-and-region.logo-alt', {
               version: getVersionEnum(fromMergedVersionRegionId(value).version),
@@ -132,7 +136,7 @@ export const VersionRegionSwitcher: FC = () => {
       )}
     >
       <ListSubheader className="leading-normal py-4">{t('settings:version-and-region.select')}</ListSubheader>
-      {VERSION_SPECIFIC_REGIONS.map(({ id, dxVersion, versionEnum, region }, i) => (
+      {VERSION_SPECIFIC_REGIONS.map(({ id, versionEnum, region }, i) => (
         <MenuItem
           value={id}
           key={id}
@@ -140,7 +144,7 @@ export const VersionRegionSwitcher: FC = () => {
         >
           <WebpSupportedImage
             objectFit="contain"
-            assetpackKey={`/images/version-logo/${dxVersion}.webp`}
+            src={{ at1x: VERSION_THEME[versionEnum].logo }}
             className="h-16 touch-callout-none object-contain w-25"
             alt={t('settings:version-and-region.logo-alt', { version: versionEnum })}
             draggable={false}
@@ -154,28 +158,26 @@ export const VersionRegionSwitcher: FC = () => {
       ))}
 
       <ListSubheader className="leading-normal py-4">{t('settings:version-and-region.select-generic')}</ListSubheader>
-      {uniqBy(VERSION_GENERIC_REGIONS, (versionRegion) => versionRegion.dxVersion).map(
-        ({ id, dxVersion, versionEnum }, i) => (
-          <MenuItem
-            value={id}
-            key={id}
-            className={clsx('flex items-center gap-4 border-b border-solid border-gray-200', i === 0 && 'border-t')}
-          >
-            <WebpSupportedImage
-              objectFit="contain"
-              assetpackKey={`/images/version-logo/${dxVersion}.webp`}
-              className="h-12 touch-callout-none object-contain w-20"
-              alt={t('settings:version-and-region.logo-alt', { version: versionEnum })}
-              draggable={false}
-            />
+      {uniqBy(VERSION_GENERIC_REGIONS, (versionRegion) => versionRegion.dxVersion).map(({ id, versionEnum }, i) => (
+        <MenuItem
+          value={id}
+          key={id}
+          className={clsx('flex items-center gap-4 border-b border-solid border-gray-200', i === 0 && 'border-t')}
+        >
+          <WebpSupportedImage
+            objectFit="contain"
+            src={{ at1x: VERSION_THEME[versionEnum].logo }}
+            className="h-12 touch-callout-none object-contain w-20"
+            alt={t('settings:version-and-region.logo-alt', { version: versionEnum })}
+            draggable={false}
+          />
 
-            <div className="mr-2 opacity-70 flex flex-col items-start">
-              <span>{versionEnum}</span>
-              <span className="uppercase text-xs">{t('settings:region._generic')}</span>
-            </div>
-          </MenuItem>
-        ),
-      )}
+          <div className="mr-2 opacity-70 flex flex-col items-start">
+            <span>{versionEnum}</span>
+            <span className="uppercase text-xs">{t('settings:region._generic')}</span>
+          </div>
+        </MenuItem>
+      ))}
       <ListItem className="flex justify-center items-center text-sm">
         <div className="flex justify-center items-start max-w-[22rem] text-zinc-500">
           <MdiInformation className="mr-2 shrink-0 mt-0.5" />

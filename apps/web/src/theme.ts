@@ -14,6 +14,14 @@ export interface Theme {
 }
 
 export const VERSION_THEME: Record<string, Theme> = {
+  [VersionEnum.MAGiCAL]: {
+    background: {
+      at1x: { width: 1600, height: 1920, path: '/images/versions/magical/background.webp', local: true },
+    },
+    logo: { width: 604, height: 354, path: '/images/versions/magical/logo.webp', local: true },
+    favicon: assetpack['/favicon/prism-1024x.jpg'],
+    accentColor: '#178C72',
+  },
   [VersionEnum.FESTiVALPLUS]: {
     background: {
       at1x: assetpack['/images/background/festival-plus.webp'],

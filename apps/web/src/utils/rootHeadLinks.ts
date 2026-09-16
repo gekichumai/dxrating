@@ -30,7 +30,7 @@ export const buildRootHeadLinks = ({ pathname, search }: RootHeadLocation): Head
   {
     rel: 'preload',
     as: 'image',
-    href: 'https://shama.dxrating.net/images/version-logo/circle-plus.webp',
+    href: '/images/versions/magical/logo.webp',
     fetchPriority: 'high',
   },
   ...buildAlternateLinks({ pathname, search }),
