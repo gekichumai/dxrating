@@ -26,6 +26,14 @@ describe('buildLocalizedUrl', () => {
 })
 
 describe('buildAlternateLinks', () => {
+  it('keeps search language alternatives on the canonical landing pages', () => {
+    const links = buildAlternateLinks({
+      pathname: '/search',
+      search: { q: 'private query', songId: 'song', locale: 'ja' },
+    })
+    expect(links.find((link) => link.hrefLang === 'ja')?.href).toBe('https://dxrating.net/search?locale=ja')
+    expect(links.every((link) => !link.href?.includes('q='))).toBe(true)
+  })
   it('builds alternate links for the current route instead of the homepage', () => {
     expect(buildAlternateLinks({ pathname: '/songs/song-1', search: { type: 'dx' } })).toEqual([
       {

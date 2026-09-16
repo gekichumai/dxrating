@@ -2,7 +2,8 @@ import { TypeEnum, type DifficultyEnum, type NoteCounts, type Regions, type Shee
 import type { SupportedLocale } from '@/setup/locale'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 import { createServerI18n } from '@/setup/init-i18n'
-import { buildSheetLink } from '@/components/sheet/sheetLinks'
+import { buildSheetPath } from '@/components/sheet/sheetLinks'
+import { buildLocalizedUrl } from './alternateLinks'
 import { getSheetPageTitle, getSheetTitleLabel, getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { buildChartOgImageAlt, buildChartOgImageUrl } from '@/routes/-chart-og-meta'
 
@@ -113,6 +114,7 @@ export function buildRootSeoMeta(locale: SupportedLocale, options: { includeTitl
 }
 
 export function buildSearchSeo(locale: SupportedLocale) {
+  const url = buildLocalizedUrl({ pathname: '/search' }, locale)
   const title = formatSeoTitle(t(locale, 'root:pages.search.seo-title'))
   const description = t(locale, 'root:pages.search.seo-description')
 
@@ -124,18 +126,19 @@ export function buildSearchSeo(locale: SupportedLocale) {
       { name: 'description', content: description },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
-      { property: 'og:url', content: 'https://dxrating.net/search' },
+      { property: 'og:url', content: url },
       { property: 'og:type', content: 'website' },
       { property: 'og:locale', content: OG_LOCALES[locale] },
       { name: 'twitter:card', content: 'summary' },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
     ] satisfies SeoMeta[],
-    links: [{ rel: 'canonical', href: 'https://dxrating.net/search' }],
+    links: [{ rel: 'canonical', href: url }],
   }
 }
 
 export function buildDevelopersSeo(locale: SupportedLocale) {
+  const url = buildLocalizedUrl({ pathname: '/developers' }, locale)
   const title = formatSeoTitle(t(locale, 'developers:seo-title'))
   const description = t(locale, 'developers:seo-description')
 
@@ -147,18 +150,19 @@ export function buildDevelopersSeo(locale: SupportedLocale) {
       { name: 'description', content: description },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
-      { property: 'og:url', content: 'https://dxrating.net/developers' },
+      { property: 'og:url', content: url },
       { property: 'og:type', content: 'website' },
       { property: 'og:locale', content: OG_LOCALES[locale] },
       { name: 'twitter:card', content: 'summary' },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
     ] satisfies SeoMeta[],
-    links: [{ rel: 'canonical', href: 'https://dxrating.net/developers' }],
+    links: [{ rel: 'canonical', href: url }],
   }
 }
 
 export function buildRecentChartsSeo(locale: SupportedLocale) {
+  const url = buildLocalizedUrl({ pathname: '/charts/recent' }, locale)
   const title = formatSeoTitle(t(locale, 'root:pages.recent.seo-title'))
   const description = t(locale, 'root:pages.recent.seo-description')
 
@@ -170,18 +174,19 @@ export function buildRecentChartsSeo(locale: SupportedLocale) {
       { name: 'description', content: description },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
-      { property: 'og:url', content: 'https://dxrating.net/charts/recent' },
+      { property: 'og:url', content: url },
       { property: 'og:type', content: 'website' },
       { property: 'og:locale', content: OG_LOCALES[locale] },
       { name: 'twitter:card', content: 'summary' },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
     ] satisfies SeoMeta[],
-    links: [{ rel: 'canonical', href: 'https://dxrating.net/charts/recent' }],
+    links: [{ rel: 'canonical', href: url }],
   }
 }
 
 export function buildTrendingChartsSeo(locale: SupportedLocale) {
+  const url = buildLocalizedUrl({ pathname: '/charts/trending' }, locale)
   const title = formatSeoTitle(t(locale, 'root:pages.trending.seo-title'))
   const description = t(locale, 'root:pages.trending.seo-description')
 
@@ -193,18 +198,19 @@ export function buildTrendingChartsSeo(locale: SupportedLocale) {
       { name: 'description', content: description },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
-      { property: 'og:url', content: 'https://dxrating.net/charts/trending' },
+      { property: 'og:url', content: url },
       { property: 'og:type', content: 'website' },
       { property: 'og:locale', content: OG_LOCALES[locale] },
       { name: 'twitter:card', content: 'summary' },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
     ] satisfies SeoMeta[],
-    links: [{ rel: 'canonical', href: 'https://dxrating.net/charts/trending' }],
+    links: [{ rel: 'canonical', href: url }],
   }
 }
 
 export function buildRatingSeo(locale: SupportedLocale) {
+  const url = buildLocalizedUrl({ pathname: '/rating' }, locale)
   const title = formatSeoTitle(t(locale, 'root:pages.rating.seo-title'))
   const description = t(locale, 'root:pages.rating.seo-description')
 
@@ -216,20 +222,21 @@ export function buildRatingSeo(locale: SupportedLocale) {
       { name: 'description', content: description },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
-      { property: 'og:url', content: 'https://dxrating.net/rating' },
+      { property: 'og:url', content: url },
       { property: 'og:type', content: 'website' },
       { property: 'og:locale', content: OG_LOCALES[locale] },
       { name: 'twitter:card', content: 'summary' },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
     ] satisfies SeoMeta[],
-    links: [{ rel: 'canonical', href: 'https://dxrating.net/rating' }],
+    links: [{ rel: 'canonical', href: url }],
   }
 }
 
 export function buildSongSheetSeo(
   song: {
     title: string
+    bpm?: number | null
     artist: string
     category: string
     imageName: string
@@ -243,11 +250,13 @@ export function buildSongSheetSeo(
 ) {
   const sheetLabel = getSheetTitleLabel(sheet, locale)
   const title = getSheetPageTitle(song, sheet, locale)
-  const description = t(locale, 'song:seo.description', {
+  const chartDescription = t(locale, 'song:seo.description', {
     title: song.title,
     artist: song.artist,
     sheetLabel,
   })
+  const description =
+    song.bpm && song.bpm > 0 ? `${chartDescription} ${t(locale, 'song:seo.bpm', { bpm: song.bpm })}` : chartDescription
   const image = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
   const socialImage = buildChartOgImageUrl({
     songId: song.songId,
@@ -260,13 +269,9 @@ export function buildSongSheetSeo(
     type: sheet.type,
     difficulty: sheet.difficulty,
   })
-  const url = buildSheetLink(
-    {
-      songId: song.songId,
-      type: sheet.type,
-      difficulty: sheet.difficulty,
-    },
-    'https://dxrating.net',
+  const url = buildLocalizedUrl(
+    { pathname: buildSheetPath({ songId: song.songId, type: sheet.type, difficulty: sheet.difficulty }) },
+    locale,
   )
 
   return {

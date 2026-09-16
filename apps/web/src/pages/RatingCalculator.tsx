@@ -50,6 +50,7 @@ import {
   type SyncFlag,
 } from '../components/rating/RatingCalculatorAddEntryForm'
 import { RatingCalculatorStatistics } from '../components/rating/RatingCalculatorStatistics'
+import { RatingLoading } from '../components/rating/RatingIntroduction'
 import { ClearButton } from '../components/rating/io/ClearButton'
 import { ExportMenu } from '../components/rating/io/ExportMenu'
 import { ImportMenu } from '../components/rating/io/ImportMenu'
@@ -163,7 +164,7 @@ export const RatingCalculator = () => {
     [allEntries, modifyEntries, sheets],
   )
 
-  if (!sheets) return null
+  if (!sheets) return <RatingLoading />
 
   return (
     <div className="flex-container w-full pb-global">

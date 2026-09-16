@@ -1,8 +1,8 @@
 {
   "root": {
     "pages.search.title": "Search Charts",
-    "pages.search.seo-title": "Charts & Songs",
-    "pages.search.seo-description": "Browse all maimai DX charts by song title, artist, or difficulty. View internal levels, note counts, and detailed chart information.",
+    "pages.search.seo-title": "maimai Songs & Chart Constants",
+    "pages.search.seo-description": "Find songs by title, artist, or alias. Compare chart constants, BPM, note counts, and difficulties, or calculate your rating and Best 50.",
     "pages.recent.title": "Recently Updated",
     "pages.recent.seo-title": "Recently Updated Charts",
     "pages.recent.seo-description": "Discover recently updated maimai DX chart pages on DXRating, excluding BASIC and ADVANCED charts.",
@@ -12,8 +12,8 @@
     "pages.trending.seo-description": "Discover maimai DX chart pages currently getting the most attention on DXRating.",
     "pages.trending.icon-label": "Trending charts",
     "pages.rating.title": "My Rating",
-    "pages.rating.seo-title": "Rating Calculator",
-    "pages.rating.seo-description": "Calculate and manage your maimai DX rating records, Best 50 entries, achievements, and score details on DXRating.",
+    "pages.rating.seo-title": "maimai Rating Calculator & Best 50",
+    "pages.rating.seo-description": "Import your scores or add achievements to calculate your maimai DX rating, review your Best 50, and create a share image.",
     "seo.description": "DXRating is a maimai DX Rating analyzer, along with other features like chart details and more.",
     "seo.keywords": "maimai, maimai DX, maimai DX Rating, maimai DX Rating analyzer, gekichumai, maimai derakkusu, chart details, rating calculator, maimai wiki",
     "share.copy-succeeded": "Copied to clipboard",
@@ -22,7 +22,22 @@
     "external-links.github": "Open DXRating on GitHub",
     "not-found.title": "Page Not Found",
     "not-found.description": "This page may have moved, or the link may be outdated.",
-    "not-found.back-to-home": "Back to Home"
+    "not-found.back-to-home": "Back to Home",
+    "pages.search.heading": "Search maimai songs and charts",
+    "pages.search.introduction": "Find songs by title, artist, or alias. Compare chart constants, BPM, note counts, and difficulties, or calculate your rating and Best 50.",
+    "pages.search.explore": "Explore maimai tools",
+    "pages.search.featured": "Explore song details",
+    "pages.rating.heading": "maimai Rating Calculator & Best 50",
+    "pages.rating.introduction": "Import your scores or add achievements to calculate your maimai DX rating, review your Best 50, and create a share image.",
+    "pages.rating.start": "Go to the calculator",
+    "pages.rating.guide": "How to calculate and share your Best 50",
+    "pages.rating.import-heading": "Add or import scores",
+    "pages.rating.import-description": "Add a song and achievement manually, or use Import to load records from MaimaiNET, Diving Fish, LXNS, or a supported file.",
+    "pages.rating.calculate-heading": "Understand your rating",
+    "pages.rating.calculate-description": "Each chart contributes rating based on its chart constant and your achievement. Best 50 combines your best 15 current-version charts and 35 older charts. Select the correct game version and region above.",
+    "pages.rating.share-heading": "Share your Best 50",
+    "pages.rating.share-description": "Use the image button to create a Best 50 share image. Export saves your records as JSON so you can import them again later.",
+    "pages.rating.loading": "Loading the calculator…"
   },
   "settings": {
     "version-and-region.select": "Select DXData Version and Region",
@@ -144,7 +159,12 @@
     "type.std": "Standard",
     "type.utage": "Utage",
     "type.utage2p": "Buddy",
-    "seo.description": "{{title}} by {{artist}} - {{sheetLabel}} chart details, internal levels, and note counts on DXRating."
+    "seo.description": "{{title}} by {{artist}} — maimai {{sheetLabel}} chart constants, note counts, and rating information.",
+    "summary.title": "Chart at a glance",
+    "summary.description": "{{title}} in maimai — {{chart}} chart information.",
+    "summary.internal-level": "Chart constant",
+    "summary.version": "Selected version",
+    "seo.bpm": "{{bpm}} BPM."
   },
   "about": {
     "title": "About",

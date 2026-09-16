@@ -1,9 +1,14 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { RatingCalculator } from '@/pages/RatingCalculator'
+import { ClientOnly, createFileRoute } from '@tanstack/react-router'
+import { lazy, Suspense } from 'react'
+import { RatingIntroduction, RatingLoading } from '@/components/rating/RatingIntroduction'
 import { buildRatingSeo, resolveSeoLocale } from '@/utils/seo'
 
+const RatingCalculator = lazy(() =>
+  import('@/pages/RatingCalculator').then((module) => ({ default: module.RatingCalculator })),
+)
+
 export const Route = createFileRoute('/rating')({
-  ssr: false,
+  ssr: true,
   head: ({ match, matches }) => {
     const seo = buildRatingSeo(resolveSeoLocale([match, ...matches]))
 
@@ -12,5 +17,20 @@ export const Route = createFileRoute('/rating')({
       links: seo.links,
     }
   },
-  component: RatingCalculator,
+  component: RatingPage,
 })
+
+function RatingPage() {
+  return (
+    <main>
+      <RatingIntroduction />
+      <div id="rating-calculator" className="scroll-mt-4" tabIndex={-1}>
+        <ClientOnly fallback={<RatingLoading />}>
+          <Suspense fallback={<RatingLoading />}>
+            <RatingCalculator />
+          </Suspense>
+        </ClientOnly>
+      </div>
+    </main>
+  )
+}

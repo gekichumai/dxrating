@@ -13,13 +13,13 @@ describe('buildRootHeadLinks', () => {
     )
   })
 
-  it('retains the current-route alternate links', () => {
+  it('publishes canonical search landing pages as language alternatives', () => {
     const links = buildRootHeadLinks({ pathname: '/search', search: { q: '宴' } })
 
     expect(links).toContainEqual({
       rel: 'alternate',
       hrefLang: 'ja',
-      href: 'https://dxrating.net/search?q=%E5%AE%B4&locale=ja',
+      href: 'https://dxrating.net/search?locale=ja',
     })
   })
 

@@ -9,6 +9,7 @@ import IconMdiClose from '~icons/mdi/close'
 import MdiIconInfo from '~icons/mdi/information'
 import { ResponsiveDialog } from '../components/global/ResponsiveDialog'
 import { SearchQuerySeedList } from '../components/sheet/SearchQuerySeedList'
+import { SearchIntroduction } from '../components/sheet/SearchIntroduction'
 import type { SearchQuerySeedSheet } from '../components/sheet/searchQuerySeed'
 import { SheetDialogContent } from '../components/sheet/SheetDialogContent'
 import { SheetListContainer } from '../components/sheet/SheetListContainer'
@@ -270,6 +271,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
         />
       )}
       <div className="flex-container pb-global">
+        {!inputQuery && <SearchIntroduction />}
         <ResponsiveDialog
           open={!!activeSheet}
           setOpen={(open) => {
