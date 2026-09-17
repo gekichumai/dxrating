@@ -34,65 +34,65 @@
 }
 
 .magical-background__atmosphere {
-  --arrival-scale: 1.06;
+  --arrival-scale: 1.01;
 }
 .magical-background__pattern {
   --arrival-delay: 80ms;
-  --arrival-scale: 1.04;
+  --arrival-scale: 1.01;
 }
 .magical-background__ribbons {
   --arrival-delay: 140ms;
-  --arrival-y: 32px;
-  --arrival-turn: -3deg;
+  --arrival-y: 5px;
+  --arrival-turn: -0.3deg;
 }
 .magical-background__clock {
   --arrival-delay: 180ms;
-  --arrival-turn: -24deg;
-  --arrival-scale: 0.88;
+  --arrival-turn: -1deg;
+  --arrival-scale: 0.99;
 }
 .magical-background__edge-left {
   --arrival-delay: 240ms;
-  --arrival-x: -44px;
-  --arrival-turn: -4deg;
+  --arrival-x: -7px;
+  --arrival-turn: -0.4deg;
 }
 .magical-background__edge-right {
   --arrival-delay: 280ms;
-  --arrival-x: 44px;
-  --arrival-turn: 4deg;
+  --arrival-x: 7px;
+  --arrival-turn: 0.4deg;
 }
 .magical-background__emblems {
   --arrival-delay: 220ms;
-  --arrival-scale: 0.82;
-  --arrival-turn: -6deg;
+  --arrival-scale: 0.98;
+  --arrival-turn: -0.5deg;
 }
 .magical-background__lagoon {
   --arrival-delay: 180ms;
-  --arrival-y: 30px;
+  --arrival-y: 5px;
 }
 .magical-background__lower-clock {
   --arrival-delay: 300ms;
-  --arrival-turn: 28deg;
-  --arrival-scale: 0.86;
+  --arrival-turn: 1deg;
+  --arrival-scale: 0.99;
 }
 .magical-background__palace {
   --arrival-delay: 340ms;
-  --arrival-y: 64px;
+  --arrival-y: 10px;
 }
 .magical-background__wand {
   --arrival-delay: 420ms;
-  --arrival-y: 48px;
-  --arrival-turn: -18deg;
-  --arrival-scale: 0.9;
+  --arrival-y: 7px;
+  --arrival-turn: -0.6deg;
+  --arrival-scale: 0.99;
 }
 .magical-background__character {
   --arrival-delay: 480ms;
-  --arrival-y: 52px;
-  --arrival-x: 20px;
-  --arrival-turn: 5deg;
+  --arrival-y: 8px;
+  --arrival-x: 3px;
+  --arrival-turn: 0.4deg;
 }
 .magical-background__corners {
   --arrival-delay: 360ms;
-  --arrival-scale: 1.06;
+  --arrival-scale: 1.01;
 }
 
 @keyframes magical-arrive {

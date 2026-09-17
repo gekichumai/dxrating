@@ -86,13 +86,19 @@ describe('MAGiCAL scroll choreography', () => {
       scroll(i * 500)
       step()
     }
-    expect(parseFloat(artwork('clock').style.getPropertyValue('rotate'))).toBeLessThanOrEqual(21.6)
-    expect(parseFloat(artwork('clock').style.getPropertyValue('rotate'))).toBeGreaterThan(15)
+    expect(parseFloat(artwork('clock').style.getPropertyValue('rotate'))).toBeLessThanOrEqual(0.75)
+    expect(parseFloat(artwork('clock').style.getPropertyValue('rotate'))).toBeGreaterThan(0.3)
+    for (const element of document.querySelectorAll<SVGSVGElement>('.magical-background__art')) {
+      const translation = element.style.getPropertyValue('translate')
+      if (!translation) continue
+      expect(translation.split(' ').every((value) => Math.abs(parseFloat(value)) <= 8)).toBe(true)
+      expect(Math.abs(parseFloat(element.style.getPropertyValue('rotate')))).toBeLessThanOrEqual(0.75)
+    }
     for (let i = 29; i >= 0; i--) {
       scroll(i * 500)
       step()
     }
-    expect(parseFloat(artwork('clock').style.getPropertyValue('rotate'))).toBeLessThan(-15)
+    expect(parseFloat(artwork('clock').style.getPropertyValue('rotate'))).toBeLessThan(-0.3)
   })
 
   it('disables work immediately when reduced motion is enabled and resumes only on new scrolling', () => {

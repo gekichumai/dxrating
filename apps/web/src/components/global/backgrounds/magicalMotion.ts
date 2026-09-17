@@ -51,11 +51,11 @@ export function attachMagicalMotion(scene: HTMLDivElement) {
       reset()
       return
     }
-    const strength = compact.matches ? 0.5 : 1
+    const strength = compact.matches ? 0.06 : 0.12
     for (const { element, x, y, turn, slow } of active) {
       const force = (slow ? drift : momentum) * strength
       element.style.setProperty('translate', `${(x * force).toFixed(3)}px ${(y * force).toFixed(3)}px`)
-      element.style.setProperty('rotate', `${(turn * force).toFixed(3)}deg`)
+      element.style.setProperty('rotate', `${(turn * force * 0.2).toFixed(3)}deg`)
     }
     frame = requestAnimationFrame(tick)
   }
