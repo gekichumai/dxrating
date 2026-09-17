@@ -38,7 +38,11 @@
     "language.select": "言語を選択",
     "import-provider.diving-fish.qq": "diving-fish に紐付けた QQ",
     "import-provider.diving-fish.title": "diving-fish",
-    "import-provider.diving-fish.username": "diving-fish のユーザー名"
+    "import-provider.diving-fish.username": "diving-fish のユーザー名",
+    "version-update.title": "新しいバージョンが利用できます",
+    "version-update.description": "{{region}}では{{latest}}が利用できます。データバージョンを{{current}}から{{latest}}に切り替えますか？",
+    "version-update.confirm": "{{latest}}に切り替える",
+    "version-update.keep": "{{current}}を使い続ける"
   },
   "sheet": {
     "search": "検索",

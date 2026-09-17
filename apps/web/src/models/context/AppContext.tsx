@@ -1,4 +1,4 @@
-import { VersionEnum } from '@gekichumai/dxdata'
+import { VERSION_ID_MAP, VersionEnum } from '@gekichumai/dxdata'
 import { createContext, type FC, type PropsWithChildren, useCallback, useEffect, useMemo, useState } from 'react'
 
 type AppContext = AppContextStates & AppContextFns
@@ -26,18 +26,28 @@ export const DXVersionToDXDataVersionEnumMap: Record<DXVersion, VersionEnum> = {
   magical: VersionEnum.MAGiCAL,
 }
 
+export const LATEST_REGION_VERSIONS = {
+  jp: 'magical',
+  intl: 'circle-plus',
+  cn: 'prism',
+} as const satisfies Record<Exclude<Region, '_generic'>, DXVersion>
+
 export interface AppContextStates {
   version: DXVersion
   region: Region
 }
 
 interface AppContextFns {
+  availableVersionUpdate: DXVersion | null
+  dismissVersionUpdate: () => void
   setVersionAndRegion: (version: DXVersion, region: Region) => void
 }
 
 export const AppContext = createContext<AppContext>({
   version: 'magical',
   region: 'jp',
+  availableVersionUpdate: null,
+  dismissVersionUpdate: () => {},
   setVersionAndRegion: () => {
     throw new Error('AppContext not initialized')
   },
@@ -55,7 +65,7 @@ function isAppContextStates(value: unknown): value is AppContextStates {
   const candidate = value as Partial<AppContextStates>
   return (
     typeof candidate.version === 'string' &&
-    candidate.version in DXVersionToDXDataVersionEnumMap &&
+    Object.hasOwn(DXVersionToDXDataVersionEnumMap, candidate.version) &&
     ['jp', 'intl', 'cn', '_generic'].includes(candidate.region ?? '')
   )
 }
@@ -69,24 +79,55 @@ function readStoredAppContext(): AppContextStates {
 
     const parsed = JSON.parse(stored)
     if (!isAppContextStates(parsed)) return getDefaultAppContext()
-    if (parsed.region === 'jp' && parsed.version === 'circle-plus') return { ...parsed, version: 'magical' }
-    if (parsed.region === 'intl' && parsed.version === 'circle') return { ...parsed, version: 'circle-plus' }
     return parsed
   } catch {
     return getDefaultAppContext()
   }
 }
 
+function updateDismissalKey(region: Region, version: DXVersion) {
+  return `region-version-update-dismissed:${region}:${version}`
+}
+
+function getAvailableVersionUpdate(state: AppContextStates): DXVersion | null {
+  if (state.region === '_generic') return null
+  const latest = LATEST_REGION_VERSIONS[state.region]
+  const currentId = VERSION_ID_MAP.get(DXVersionToDXDataVersionEnumMap[state.version])!
+  const latestId = VERSION_ID_MAP.get(DXVersionToDXDataVersionEnumMap[latest])!
+  if (currentId >= latestId) return null
+  try {
+    if (window.localStorage.getItem(updateDismissalKey(state.region, latest)) === 'true') return null
+  } catch {
+    // The user can still choose a version when storage is unavailable.
+  }
+  return latest
+}
+
 export const AppContextProvider: FC<PropsWithChildren<object>> = ({ children }) => {
   const [state, setState] = useState<AppContextStates>(() => getDefaultAppContext())
 
+  const [availableVersionUpdate, setAvailableVersionUpdate] = useState<DXVersion | null>(null)
+
   useEffect(() => {
-    setState(readStoredAppContext())
+    const stored = readStoredAppContext()
+    setState(stored)
+    setAvailableVersionUpdate(getAvailableVersionUpdate(stored))
   }, [])
+
+  const dismissVersionUpdate = useCallback(() => {
+    if (!availableVersionUpdate) return
+    setAvailableVersionUpdate(null)
+    try {
+      window.localStorage.setItem(updateDismissalKey(state.region, availableVersionUpdate), 'true')
+    } catch {
+      // Keep the prompt dismissed for this visit even when storage is unavailable.
+    }
+  }, [state.region, availableVersionUpdate])
 
   const setVersionAndRegion = useCallback((version: DXVersion, region: Region) => {
     const next = { version, region }
     setState(next)
+    setAvailableVersionUpdate(null)
     try {
       window.localStorage.setItem('app-context', JSON.stringify(next))
     } catch {
@@ -100,8 +141,10 @@ export const AppContextProvider: FC<PropsWithChildren<object>> = ({ children }) 
 
       region: state.region ?? 'jp',
       setVersionAndRegion,
+      availableVersionUpdate,
+      dismissVersionUpdate,
     }),
-    [state, setVersionAndRegion],
+    [state, setVersionAndRegion, availableVersionUpdate, dismissVersionUpdate],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

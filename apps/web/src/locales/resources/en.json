@@ -38,7 +38,11 @@
     "region._generic": "Generic",
     "import-provider.diving-fish.title": "diving-fish",
     "import-provider.diving-fish.username": "Username of diving-fish",
-    "import-provider.diving-fish.qq": "QQ binded to diving-fish"
+    "import-provider.diving-fish.qq": "QQ binded to diving-fish",
+    "version-update.title": "A newer version is available",
+    "version-update.description": "{{region}} now has {{latest}}. Switch your data version from {{current}} to {{latest}}?",
+    "version-update.confirm": "Use {{latest}}",
+    "version-update.keep": "Keep {{current}}"
   },
   "sheet": {
     "filter-current-version": "Filter Current B15: Show only {{version}} charts",

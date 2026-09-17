@@ -38,7 +38,11 @@
     "language.select": "选择语言",
     "import-provider.diving-fish.title": "水鱼查分器",
     "import-provider.diving-fish.username": "水鱼查分器的用户名",
-    "import-provider.diving-fish.qq": "绑定到水鱼查分器的 QQ"
+    "import-provider.diving-fish.qq": "绑定到水鱼查分器的 QQ",
+    "version-update.title": "有新版本可用",
+    "version-update.description": "{{region}}已更新至 {{latest}}。要将数据版本从 {{current}} 切换至 {{latest}} 吗？",
+    "version-update.confirm": "使用 {{latest}}",
+    "version-update.keep": "保留 {{current}}"
   },
   "sheet": {
     "search": "搜索",

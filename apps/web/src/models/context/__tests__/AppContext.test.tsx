@@ -14,7 +14,7 @@ describe('AppContext', () => {
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
     Object.defineProperty(window, 'localStorage', {
       value: mockLocalStorage,
       writable: true,
@@ -33,8 +33,8 @@ describe('AppContext', () => {
   })
 
   it.each([
-    ['circle-plus', 'jp', 'magical'],
-    ['circle', 'intl', 'circle-plus'],
+    ['circle-plus', 'jp', 'circle-plus'],
+    ['circle', 'intl', 'circle'],
     ['circle-plus', '_generic', 'circle-plus'],
     ['prism', 'cn', 'prism'],
   ])('restores %s in %s as %s', (version, region, expected) => {
