@@ -27,7 +27,7 @@ function Artwork({
   )
 }
 
-/** SSR paints the entrance pose; hydration settles the scale without hiding artwork. */
+/** Hydration reveals the decorative layers with independent opacity and scale easing. */
 export function MagicalBackground() {
   return (
     <div className="magical-background" aria-hidden="true" ref={attachMagicalMotion}>
