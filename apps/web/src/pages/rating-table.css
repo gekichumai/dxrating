@@ -161,19 +161,27 @@
 }
 
 @media (max-width: 767px) {
-  .rating-table .rating-col--includedIn,
   .rating-table .rating-col--comboFlag,
   .rating-table .rating-col--syncFlag,
   .rating-table .rating-col--actions {
     display: none;
   }
 
+  .rating-table .rating-col--includedIn {
+    width: 50px;
+    text-align: center;
+  }
+  .rating-table td.rating-col--includedIn > span {
+    width: 34px;
+    font-size: 11px;
+  }
+
   .rating-table .rating-col--achievementRate {
-    width: 94px;
+    width: 86px;
     text-align: right;
   }
   .rating-table .rating-col--rating {
-    width: 64px;
+    width: 56px;
     text-align: right;
   }
   .rating-table thead th {
@@ -242,6 +250,9 @@
   }
   .rating-col--chart .rating-table-sort {
     justify-content: flex-start;
+  }
+  .rating-col--includedIn .rating-table-sort {
+    justify-content: center;
   }
   .rating-table-sort > div {
     font-size: 10px;

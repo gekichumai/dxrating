@@ -350,7 +350,6 @@ const RatingChartCell: FC<{ row: Row<Entry>; compactMode: boolean }> = ({ row, c
           </span>
         </span>
         <span className="rating-mobile-flags">
-          <RatingCalculatorIncludedInCell row={row} />
           <RatingCalculatorComboFlagCell row={row} />
           <RatingCalculatorSyncFlagCell row={row} />
         </span>
@@ -447,10 +446,11 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
           },
         },
       }),
-      columnHelper.accessor('includedIn', {
+      columnHelper.accessor((entry) => entry.includedIn ?? undefined, {
         id: 'includedIn',
         header: t('rating-calculator:table.headers.included-in'),
         cell: RatingCalculatorIncludedInCell,
+        sortUndefined: 'last',
       }),
       columnHelper.accessor('comboFlag', {
         id: 'comboFlag',
