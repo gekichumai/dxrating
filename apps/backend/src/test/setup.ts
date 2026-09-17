@@ -46,6 +46,7 @@ export async function setupTestServer() {
     '0009_arcade_public_identities.sql',
     '0010_enforce_arcade_public_identities.sql',
     '0011_ancient_maelstrom.sql',
+    '0012_remarkable_starhawk.sql',
   ]
 
   for (const file of migrationFiles) {
@@ -147,6 +148,7 @@ export async function cleanDatabase() {
   await pool.query('DELETE FROM arcade.chains')
   await pool.query('DELETE FROM arcade.games')
   await pool.query('DELETE FROM arcade.crawl_runs')
+  await pool.query('DELETE FROM tag_song_votes')
   await pool.query('DELETE FROM tag_songs')
   await pool.query('DELETE FROM tags')
   await pool.query('DELETE FROM tag_groups')

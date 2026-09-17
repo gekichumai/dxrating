@@ -316,6 +316,35 @@ describe('catalog identity service', () => {
         tag_id: 1,
       },
     ])
+
+    // Rows collapsed by a rename must combine through `merge` regardless of
+    // which one the database happens to return first.
+    const retired = {
+      song_id: 'legacy-song-retired',
+      sheet_type: 'dx',
+      sheet_difficulty: 'master',
+      tag_id: 1,
+      score: 0,
+    }
+    const current = {
+      song_id: 'legacy-song-current',
+      sheet_type: 'dx',
+      sheet_difficulty: 'master',
+      tag_id: 1,
+      score: 1,
+    }
+    const sumScores = (kept: typeof retired, duplicate: typeof retired) => ({
+      ...kept,
+      score: kept.score + duplicate.score,
+    })
+    for (const order of [
+      [retired, current],
+      [current, retired],
+    ]) {
+      await expect(identities.translateTagSongsToPublic(order, sumScores)).resolves.toEqual([
+        { song_id: SONG_A, sheet_id: SHEET_A, sheet_type: 'dx', sheet_difficulty: 'master', tag_id: 1, score: 1 },
+      ])
+    }
   })
 
   it('aggregates historical and current event identities before ranking public trends', async () => {

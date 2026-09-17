@@ -53,6 +53,26 @@ export const tagSongs = pgTable('tag_songs', {
     .references(() => user.id, { onDelete: 'cascade' }),
 })
 
+export const tagSongVotes = pgTable(
+  'tag_song_votes',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+    tag_song_id: bigint('tag_song_id', { mode: 'number' })
+      .references(() => tagSongs.id, { onDelete: 'cascade' })
+      .notNull(),
+    user_id: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    value: smallint('value').notNull(),
+  },
+  (table) => [
+    unique('tag_song_votes_tag_song_id_user_id_unique').on(table.tag_song_id, table.user_id),
+    check('tag_song_votes_value_check', sql`${table.value} in (-1, 1)`),
+    index('tag_song_votes_tag_song_id_idx').on(table.tag_song_id),
+  ],
+)
+
 export const profiles = pgTable('profiles', {
   id: text('id')
     .primaryKey()
@@ -585,13 +605,25 @@ export const tagsRelations = relations(tags, ({ one, many }) => ({
   tagSongs: many(tagSongs),
 }))
 
-export const tagSongsRelations = relations(tagSongs, ({ one }) => ({
+export const tagSongsRelations = relations(tagSongs, ({ one, many }) => ({
   tag: one(tags, {
     fields: [tagSongs.tag_id],
     references: [tags.id],
   }),
   createdBy: one(user, {
     fields: [tagSongs.created_by],
+    references: [user.id],
+  }),
+  votes: many(tagSongVotes),
+}))
+
+export const tagSongVotesRelations = relations(tagSongVotes, ({ one }) => ({
+  tagSong: one(tagSongs, {
+    fields: [tagSongVotes.tag_song_id],
+    references: [tagSongs.id],
+  }),
+  user: one(user, {
+    fields: [tagSongVotes.user_id],
     references: [user.id],
   }),
 }))
@@ -643,6 +675,7 @@ export const userExtraRelations = relations(user, ({ one, many }) => ({
   profile: one(profiles),
   tags: many(tags),
   tagSongs: many(tagSongs),
+  tagSongVotes: many(tagSongVotes),
   comments: many(comments),
   songAliases: many(songAliases),
   lxnsOauthToken: one(lxnsOauthTokens),

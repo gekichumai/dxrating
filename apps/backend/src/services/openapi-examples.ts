@@ -35,6 +35,23 @@ const tagSong = {
   sheet_type: sheetType,
   sheet_difficulty: sheetDifficulty,
   tag_id: 1,
+  score: 4,
+}
+
+const tagSongId = 1842
+
+const sheetTagSong = {
+  id: tagSongId,
+  song_id: songId,
+  sheet_id: sheetId,
+  sheet_type: sheetType,
+  sheet_difficulty: sheetDifficulty,
+  tag_id: 1,
+  created_at: '2026-08-30T15:04:05.000Z',
+  created_by: 'oB6yUYcOJXNb2Ls0KHXk3TkfLgZQ7Sxl',
+  upvotes: 5,
+  downvotes: 1,
+  score: 4,
 }
 
 const arcadeInstallation = {
@@ -109,7 +126,23 @@ export const publicApiOperationExamples = {
   },
   'tags.attach': {
     request: { songId, sheetId, sheetType, sheetDifficulty, tagId: 1 },
-    response: { id: 1842 },
+    response: { id: tagSongId },
+  },
+  'tags.sheetTags': {
+    parameters: { songId, sheetId, sheetType, sheetDifficulty },
+    response: [sheetTagSong],
+  },
+  'tags.vote': {
+    request: { tagSongId, value: 1 },
+    response: { tagSongId, upvotes: 5, downvotes: 1, score: 4, userVote: 1 },
+  },
+  'tags.userVotes': {
+    parameters: { tagSongIds: [tagSongId] },
+    response: { [tagSongId]: 1 },
+  },
+  'tags.detach': {
+    request: { tagSongId },
+    response: { success: true },
   },
   'comments.create': {
     request: {

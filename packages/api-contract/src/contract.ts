@@ -28,6 +28,79 @@ export const TagSongSchema = z.object({
   sheet_type: z.string(),
   sheet_difficulty: z.string(),
   tag_id: z.number(),
+  score: z.number(),
+})
+
+/**
+ * Tag-sheet associations whose net vote score is at or below this threshold are
+ * considered buried by the community and are omitted from the global tag list.
+ */
+export const TAG_SONG_HIDDEN_SCORE_THRESHOLD = -3
+
+export const SheetTagsInputSchema = z.object({
+  songId: z.string(),
+  sheetId: z.string().optional(),
+  sheetType: z.string(),
+  sheetDifficulty: z.string(),
+})
+
+export const SheetTagSongSchema = z.object({
+  id: z.number(),
+  song_id: z.string(),
+  sheet_id: z.string().optional(),
+  sheet_type: z.string(),
+  sheet_difficulty: z.string(),
+  tag_id: z.number(),
+  created_at: z.date().or(z.string()),
+  created_by: z.string(),
+  upvotes: z.number(),
+  downvotes: z.number(),
+  score: z.number(),
+})
+
+export const TagSongVoteValueSchema = z.union([z.literal(1), z.literal(-1)])
+
+export const TagSongVoteInputSchema = z.object({
+  tagSongId: z.number(),
+  value: TagSongVoteValueSchema,
+})
+
+export const TagSongVoteResultSchema = z.object({
+  tagSongId: z.number(),
+  upvotes: z.number(),
+  downvotes: z.number(),
+  score: z.number(),
+  userVote: z.number().nullable(),
+})
+
+/**
+ * `tagSongIds` arrives as a repeated or comma-joined query parameter, so it is
+ * normalized from either shape before validation.
+ */
+const TagSongIdsQuerySchema = z
+  .union([z.string(), z.number(), z.array(z.union([z.string(), z.number()]))])
+  .transform((value) => {
+    const items: Array<string | number> = Array.isArray(value) ? [...value] : [value]
+    return items
+      .flatMap<string | number>((item) => (typeof item === 'number' ? [item] : item.split(',')))
+      .map((item) => (typeof item === 'number' ? item : item.trim()))
+      .filter((item) => item !== '')
+      .map(Number)
+  })
+  .pipe(z.array(z.number().int().positive()).max(500))
+
+export const TagSongUserVotesInputSchema = z.object({
+  tagSongIds: TagSongIdsQuerySchema,
+})
+
+export const TagSongUserVotesResponseSchema = z.record(z.string(), z.number())
+
+export const TagSongDetachInputSchema = z.object({
+  tagSongId: z.number(),
+})
+
+export const TagSongDetachResultSchema = z.object({
+  success: z.boolean(),
 })
 
 export const TagsListResponseSchema = z.object({
@@ -271,6 +344,43 @@ export const publicContractRoutes = {
       })
       .input(TagSongAttachSchema)
       .output(z.object({ id: z.number() })),
+    sheetTags: oc
+      .route({
+        method: 'GET',
+        path: '/tags/sheet',
+        summary: 'List tag associations for a single sheet, including buried ones, with vote breakdowns',
+        tags: ['Tags'],
+        spec: (spec) => ({ ...spec, security: [] }),
+      })
+      .input(SheetTagsInputSchema)
+      .output(z.array(SheetTagSongSchema)),
+    vote: oc
+      .route({
+        method: 'POST',
+        path: '/tags/vote',
+        summary: 'Cast or change a vote on a tag-sheet association',
+        tags: ['Tags'],
+      })
+      .input(TagSongVoteInputSchema)
+      .output(TagSongVoteResultSchema),
+    userVotes: oc
+      .route({
+        method: 'GET',
+        path: '/tags/user-votes',
+        summary: "Get the current user's votes for a set of tag-sheet associations",
+        tags: ['Tags'],
+      })
+      .input(TagSongUserVotesInputSchema)
+      .output(TagSongUserVotesResponseSchema),
+    detach: oc
+      .route({
+        method: 'POST',
+        path: '/tags/detach',
+        summary: 'Remove a tag-sheet association created by the current user',
+        tags: ['Tags'],
+      })
+      .input(TagSongDetachInputSchema)
+      .output(TagSongDetachResultSchema),
   },
   comments: {
     create: oc

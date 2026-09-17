@@ -15,7 +15,7 @@ import { zoomTransitions } from '../../../utils/motionConstants'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
 import { Markdown } from '../../global/Markdown'
 import { SheetListItemContent } from '../SheetListItem'
-import { useSheetTags } from './useSheetTags'
+import { useSheetTagsDetailed } from './useSheetTagsDetailed'
 
 const SheetTagsAddDialog: FC<{
   sheet: FlattenedSheet
@@ -38,9 +38,9 @@ const SheetTagsAddDialog: FC<{
         })),
     }))
   })
-  const { data: existingTags, isLoading: loadingExistingTags, mutate: mutateExistingTags } = useSheetTags(sheet)
+  const { data: existingTags, isLoading: loadingExistingTags, mutate: mutateExistingTags } = useSheetTagsDetailed(sheet)
 
-  const existingTagsIDList = existingTags?.map(({ id }) => id) ?? []
+  const existingTagsIDList = existingTags.map((entry) => entry.tag.id)
 
   const addTag = async (tagId: number) => {
     setPending(true)
