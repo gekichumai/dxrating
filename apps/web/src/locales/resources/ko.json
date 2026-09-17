@@ -64,6 +64,7 @@
     "cover-art-alt": "{{title}} 재킷 이미지",
     "version-title-alt": "{{version}} 버전 로고",
     "search": "검색",
+    "search-placeholder": "곡 제목, 아티스트, 채보 제작자, 별칭 또는 Music ID",
     "ocr": "OCR 실행",
     "internal-level-history.title": "내부 레벨 변경 이력",
     "internal-level-history.empty": "변경 이력이 없습니다",

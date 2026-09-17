@@ -292,6 +292,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
           <TextField
             className="min-w-0 flex-1"
             label={t('sheet:search')}
+            placeholder={t('sheet:search-placeholder')}
             variant="outlined"
             value={inputQuery}
             fullWidth

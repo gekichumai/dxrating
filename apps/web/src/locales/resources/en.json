@@ -64,6 +64,7 @@
     "cover-art-alt": "Cover art for {{title}}",
     "version-title-alt": "{{version}} version logo",
     "search": "Search",
+    "search-placeholder": "Title, artist, chart designer, alias or Music ID",
     "ocr": "Launch OCR",
     "internal-level-history.title": "Internal Level History",
     "internal-level-history.empty": "No history available",

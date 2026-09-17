@@ -164,6 +164,20 @@ export const createSheetsSearchEngine = ({
     },
   )
 
+  const normalize = (value: string) => value.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
+  const songsById = new Map((songs ?? []).map((song) => [song.songId, song]))
+  const indexedSheets = availableSheets.map((sheet) => {
+    const song = songsById.get(sheet.songId)
+    const aliases = song ? getSearchAcronymsWithServerAliases(song, serverAliases) : sheet.searchAcronyms
+    const designer = sheet.noteDesigner?.trim()
+    return {
+      sheet,
+      fields: [sheet.title, song?.artist ?? sheet.artist, ...aliases, designer && designer !== '-' ? designer : ''].map(
+        normalize,
+      ),
+    }
+  })
+
   const sheetsByInternalId = new Map<number, FlattenedSheet[]>()
 
   for (const sheet of availableSheets) {
@@ -178,10 +192,22 @@ export const createSheetsSearchEngine = ({
 
   return (term: string) => {
     const trimmedTerm = term.trim()
+    if (!trimmedTerm) return []
+    const tokens = normalize(trimmedTerm).split(/\s+/u)
+    const metadataResults = indexedSheets
+      .filter(({ fields }) => tokens.every((token) => fields.some((field) => field.includes(token))))
+      .map(({ sheet }) => sheet)
 
     // Get Fuse search results (alias/title matches)
-    const fuseResults = fuseInstance.search(trimmedTerm).flatMap((result) => {
+    const titleResults = fuseInstance.search(trimmedTerm).flatMap((result) => {
       return availableSheets.filter((sheet) => sheet.songId === result.item.songId)
+    })
+
+    const seen = new Set<string>()
+    const fuseResults = [...titleResults, ...metadataResults].filter((sheet) => {
+      if (seen.has(sheet.id)) return false
+      seen.add(sheet.id)
+      return true
     })
 
     // Check for exact Music ID match
