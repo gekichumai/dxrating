@@ -17,3 +17,5 @@ The Sega homepage still displayed CiRCLE PLUS when these resources were retrieve
 The web exports are checked into `apps/web/public/images/versions/magical/` so they deploy with the app. They do not depend on a separate CDN upload. The background is 1600 × 1920 WebP; the logo is a lossless WebP conversion of Sega's transparent PNG.
 
 This update changes the selected release and artwork. It does not regenerate `packages/dxdata/dxdata.json` or invent MAGiCAL chart constants. The existing catalog continues to provide its known values until the upstream data is regenerated. Rank badges reuse the existing CiRCLE PLUS artwork until MAGiCAL rank assets are available.
+
+The central emblem pair is optically centered using the alpha-weighted centroid of its rendered strokes: (1000, 1200) on the 2000 × 2400 canvas. The group is translated by (62.49, 99.55) from the original placement, matching Figma.
