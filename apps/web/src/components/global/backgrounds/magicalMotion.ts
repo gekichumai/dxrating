@@ -1,4 +1,4 @@
-/** Hydration enables CSS drift; JavaScript only runs while scroll momentum settles. */
+/** Hydration enables the CSS entrance; JavaScript only runs while scroll momentum settles. */
 export function attachMagicalMotion(scene: HTMLDivElement) {
   scene.toggleAttribute('data-skip-entrance', document.documentElement.hasAttribute('data-preference-wipe'))
   scene.setAttribute('data-ready', '')
@@ -32,10 +32,10 @@ export function attachMagicalMotion(scene: HTMLDivElement) {
       reset()
       return
     }
-    // Idle peaks at half its total travel; scroll peaks 20% above that (0.5 × 1.2).
+    // Keep scroll displacement bounded as momentum settles.
     const force = (-momentum / 2.4) * 0.6
     for (const layer of active) {
-      layer.style.setProperty('translate', `0 calc(var(--idle-distance) * ${force.toFixed(4)})`)
+      layer.style.setProperty('translate', `0 calc(var(--scroll-distance) * ${force.toFixed(4)})`)
     }
     frame = requestAnimationFrame(tick)
   }

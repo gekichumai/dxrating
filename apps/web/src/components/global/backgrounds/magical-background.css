@@ -25,51 +25,30 @@
   height: 100%;
   overflow: hidden;
   opacity: 0;
+  /* Independent scale preserves the parent layout and scroll parallax. */
+  scale: 1;
+  transform-box: border-box;
+  transform-origin: var(--arrival-origin, 50% 0%);
 }
 
 .magical-background[data-ready] .magical-background__art {
   opacity: 1;
-  animation:
-    magical-arrive 350ms ease-out var(--arrival-delay, 0ms) backwards,
-    var(--idle-animation, none) var(--idle-duration, 6s) ease-in-out var(--idle-phase, 0s) infinite alternate;
+  animation: magical-arrive 560ms cubic-bezier(0.22, 1, 0.36, 1) var(--arrival-delay, 0ms) backwards;
 }
 
 .magical-background[data-ready][data-skip-entrance] .magical-background__art {
-  animation-name: none, var(--idle-animation, none);
+  animation: none;
 }
 
 .magical-background__layer[data-drift] {
-  /* Half the official 2% floating range, capped for large viewport-sized layers. */
-  --idle-distance: min(1%, 6px);
-  --idle-animation: magical-float;
+  /* Bound scroll parallax independently of the entrance scale. */
+  --scroll-distance: min(1%, 6px);
 }
 .magical-background__layer.magical-background__emblems {
-  --idle-distance: 2px;
-  --idle-duration: 8s;
+  --scroll-distance: 2px;
 }
 .magical-background__layer.magical-background__lagoon {
-  --idle-distance: 2.5px;
-  --idle-duration: 7s;
-}
-.magical-background__layer.magical-background__ribbons,
-.magical-background__layer.magical-background__edge-right,
-.magical-background__layer.magical-background__water-orbit {
-  --idle-phase: -3s;
-  --idle-duration: 7s;
-}
-.magical-background__layer.magical-background__palace,
-.magical-background__layer.magical-background__character {
-  --idle-phase: -1.5s;
-  --idle-duration: 5s;
-}
-
-@keyframes magical-float {
-  from {
-    transform: translateY(calc(var(--idle-distance) * -0.5));
-  }
-  to {
-    transform: translateY(calc(var(--idle-distance) * 0.5));
-  }
+  --scroll-distance: 2.5px;
 }
 
 .magical-background[data-motion-paused] .magical-background__art,
@@ -84,51 +63,79 @@ html[data-preference-wipe] .magical-background__art {
 }
 
 .magical-background__atmosphere {
+  --arrival-scale: 1.0875;
+  --arrival-origin: 50% 0%;
   --arrival-delay: 0ms;
 }
 .magical-background__pattern {
+  --arrival-scale: 1.0625;
+  --arrival-origin: 50% 0%;
   --arrival-delay: 10ms;
 }
 .magical-background__ribbons {
+  --arrival-scale: 1.1;
+  --arrival-origin: 50% 0%;
   --arrival-delay: 20ms;
 }
 .magical-background__sky-orbit {
+  --arrival-scale: 0.85;
+  --arrival-origin: 50% 50%;
   --arrival-delay: 30ms;
 }
 .magical-background__edge-left {
+  --arrival-scale: 1.0875;
+  --arrival-origin: 0% 50%;
   --arrival-delay: 40ms;
 }
 .magical-background__edge-right {
+  --arrival-scale: 1.0875;
+  --arrival-origin: 100% 50%;
   --arrival-delay: 50ms;
 }
 .magical-background__emblems {
+  --arrival-scale: 0.85;
+  --arrival-origin: 50% 50%;
   --arrival-delay: 60ms;
 }
 .magical-background__lagoon {
+  --arrival-scale: 1.0875;
+  --arrival-origin: 50% 100%;
   --arrival-delay: 70ms;
 }
 .magical-background__water-orbit {
+  --arrival-scale: 0.85;
+  --arrival-origin: 50% 50%;
   --arrival-delay: 80ms;
 }
 .magical-background__palace {
+  --arrival-scale: 0.875;
+  --arrival-origin: 18% 100%;
   --arrival-delay: 90ms;
 }
 .magical-background__wand {
+  --arrival-scale: 0.85;
+  --arrival-origin: 50% 85%;
   --arrival-delay: 100ms;
 }
 .magical-background__character {
+  --arrival-scale: 0.9;
+  --arrival-origin: 72% 100%;
   --arrival-delay: 110ms;
 }
 .magical-background__corners {
+  --arrival-scale: 1.0625;
+  --arrival-origin: 50% 0%;
   --arrival-delay: 120ms;
 }
 
 @keyframes magical-arrive {
   from {
     opacity: 0;
+    scale: var(--arrival-scale, 1);
   }
   to {
     opacity: 1;
+    scale: 1;
   }
 }
 
@@ -235,7 +242,6 @@ html[data-preference-wipe] .magical-background__art {
     opacity: 0.65;
   }
   .magical-background__layer.magical-background__wand {
-    --idle-animation: none;
     transform: translateX(-24px) rotate(-32deg) scale(0.85);
     opacity: 0;
   }
@@ -267,12 +273,10 @@ html[data-preference-wipe] .magical-background__art {
     opacity: 0.3;
   }
   .magical-background__layer.magical-background__edge-right {
-    --idle-animation: none;
     transform: translate(65%, -50%) scale(0.92);
     opacity: 0;
   }
   .magical-background__layer.magical-background__character {
-    --idle-animation: none;
     transform: translate(32%, 24%) scale(0.84);
     opacity: 0;
   }
@@ -308,7 +312,6 @@ html[data-preference-wipe] .magical-background__art {
     opacity: 0.75;
   }
   .magical-background__layer.magical-background__wand {
-    --idle-animation: none;
     opacity: 0;
   }
 }

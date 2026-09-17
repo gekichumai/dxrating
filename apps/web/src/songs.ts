@@ -4,9 +4,8 @@ import * as Sentry from '@sentry/tanstackstart-react'
 import Fuse from 'fuse.js'
 import uniq from 'lodash-es/uniq'
 import { useMemo } from 'react'
-import useSWR from 'swr'
-import { useAppContext, useAppContextDXDataVersion } from './models/context/useAppContext'
-import { useCombinedTags } from './models/useCombinedTags'
+import { useAppContextDXDataVersion } from './models/context/useAppContext'
+import { useCombinedTags, type CombinedTags } from './models/useCombinedTags'
 import { useServerAliases } from './models/useServerAliases'
 
 export type FlattenedSheet = VersionedSheet & {
@@ -55,75 +54,76 @@ export const getFlattenedSheetsForVersion = (version: VersionEnum): FlattenedShe
   }))
 }
 
-export const getFlattenedSheets = async (version: VersionEnum): Promise<FlattenedSheet[]> => {
-  return getFlattenedSheetsForVersion(version)
+const bundledSheetsCache = new Map<VersionEnum, FlattenedSheet[]>()
+const enrichedSheetsCache = new Map<
+  VersionEnum,
+  {
+    tagSongs: CombinedTags['tagSongs'] | undefined
+    aliases: readonly ServerAlias[] | undefined
+    sheets: FlattenedSheet[]
+  }
+>()
+
+function getSheetsWithMetadata(
+  version: VersionEnum,
+  tagSongs: CombinedTags['tagSongs'] | undefined,
+  aliases: readonly ServerAlias[] | undefined,
+): FlattenedSheet[] {
+  let sheets = bundledSheetsCache.get(version)
+  if (!sheets) {
+    sheets = getFlattenedSheetsForVersion(version)
+    bundledSheetsCache.set(version, sheets)
+  }
+  if (!tagSongs?.length && !aliases?.length) return sheets
+
+  // Share the derived catalog across consumers, invalidating on content references rather than counts.
+  const cached = enrichedSheetsCache.get(version)
+  if (cached && cached.tagSongs === tagSongs && cached.aliases === aliases) return cached.sheets
+
+  const tagsBySheet = new Map<string, number[]>()
+  for (const relation of tagSongs ?? []) {
+    const id = canonicalIdFromParts(
+      relation.song_id,
+      relation.sheet_type as TypeEnum,
+      relation.sheet_difficulty as DifficultyEnum,
+    )
+    const tags = tagsBySheet.get(id) ?? []
+    tags.push(relation.tag_id)
+    tagsBySheet.set(id, tags)
+  }
+
+  const aliasesBySong = new Map<string, string[]>()
+  for (const alias of aliases ?? []) {
+    const names = aliasesBySong.get(alias.song_id) ?? []
+    names.push(alias.name)
+    aliasesBySong.set(alias.song_id, names)
+  }
+
+  const enrichedSheets = sheets.map((sheet) => {
+    const tags = tagsBySheet.get(sheet.id)
+    const names = aliasesBySong.get(sheet.songId)
+    if (!tags && !names) return sheet
+    return {
+      ...sheet,
+      tags: tags ?? sheet.tags,
+      searchAcronyms: names ? uniq([...sheet.searchAcronyms, ...names]) : sheet.searchAcronyms,
+    }
+  })
+  enrichedSheetsCache.set(version, { tagSongs, aliases, sheets: enrichedSheets })
+  return enrichedSheets
 }
 
-export const useSheets = ({ acceptsPartialData = false } = {}) => {
-  const appVersion = useAppContextDXDataVersion()
-  const { data: combinedTags, isLoading: loadingCombinedTags } = useCombinedTags()
-  const { data: serverAliases, isLoading: loadingServerAliases } = useServerAliases()
-  const key = `dxdata::sheets?${new URLSearchParams({
-    version: appVersion,
-    loadingCombinedTags: String(loadingCombinedTags),
-    loadingServerAliases: String(loadingServerAliases),
-    aliasCount: String(serverAliases?.length ?? 0),
-    tagSongsCount: String(combinedTags?.tagSongs.length ?? 0),
-  }).toString()}`
-  return useSWR(
-    acceptsPartialData ? key : !(loadingCombinedTags || loadingServerAliases) && key,
-    async () => {
-      const sheets = await getFlattenedSheets(appVersion)
+export const useSheets = () => {
+  const version = useAppContextDXDataVersion()
+  const { data: combinedTags } = useCombinedTags()
+  const { data: serverAliases } = useServerAliases()
+  const data = getSheetsWithMetadata(version, combinedTags?.tagSongs, serverAliases)
 
-      if (!combinedTags) {
-        return sheets.map((sheet) => ({
-          ...sheet,
-          tags: [],
-        }))
-      }
-
-      const map = new Map<string, number[]>()
-      for (const relation of combinedTags.tagSongs) {
-        const canonical = canonicalIdFromParts(
-          relation.song_id,
-          relation.sheet_type as TypeEnum,
-          relation.sheet_difficulty as DifficultyEnum,
-        )
-        const tags = map.get(canonical) ?? []
-        tags.push(relation.tag_id)
-        map.set(canonical, tags)
-      }
-
-      if (!serverAliases) {
-        return sheets.map((sheet) => ({
-          ...sheet,
-          tags: map.get(sheet.id) ?? [],
-        }))
-      }
-
-      const aliasMap = new Map<string, string[]>()
-      for (const alias of serverAliases) {
-        const aliases = aliasMap.get(alias.song_id) ?? []
-        aliases.push(alias.name)
-        aliasMap.set(alias.song_id, aliases)
-      }
-
-      return sheets.map((sheet) => {
-        return {
-          ...sheet,
-          tags: map.get(sheet.id) ?? [],
-          searchAcronyms: uniq([...sheet.searchAcronyms, ...(aliasMap.get(sheet.songId) ?? [])]),
-        }
-      })
-    },
-    { suspense: false },
-  )
+  // The bundled catalog is available during SSR and every client render. Remote metadata only enriches it.
+  return { data, isLoading: false }
 }
 
-export const useSongs = () => {
-  const { version } = useAppContext()
-  return useSWR(`dxdata::songs::${version}`, () => getSongs())
-}
+export const useSongs = () => ({ data: getSongs() })
 
 type SheetsSearchEngineOptions = {
   songs?: readonly Song[] | null
@@ -232,14 +232,14 @@ export const createSheetsSearchEngine = ({
 
 export const useSheetsSearchEngine = () => {
   const { data: songs } = useSongs()
-  const { data: sheets } = useSheets({ acceptsPartialData: true })
+  const { data: sheets } = useSheets()
   const { data: serverAliases } = useServerAliases()
 
   return useMemo(() => createSheetsSearchEngine({ songs, sheets, serverAliases }), [songs, sheets, serverAliases])
 }
 
 export const useFilteredSheets = (searchTerm: string) => {
-  const { data: sheets } = useSheets({ acceptsPartialData: true })
+  const { data: sheets } = useSheets()
   const search = useSheetsSearchEngine()
 
   const defaultResults = useMemo(() => {

@@ -170,3 +170,16 @@ html[data-preference-wipe]::view-transition-new(root) {
     mask-image: none;
   }
 }
+
+/* Native scrollbar geometry keeps keyboard, touch, and OS behavior intact. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--theme-accent) 65%, black) var(--theme-canvas);
+}
+
+@media (forced-colors: active) {
+  html {
+    scrollbar-color: auto;
+    scrollbar-width: auto;
+  }
+}

@@ -101,7 +101,7 @@ describe('MAGiCAL hydration entrance', () => {
     expect(frames.size).toBe(0)
   })
 
-  it('caps scroll displacement at 120% of idle peak and settles back without changing idle transforms', () => {
+  it('caps scroll displacement and settles back without changing artwork transforms', () => {
     const { container } = render(<MagicalBackground />)
     const layer = container.querySelector<HTMLElement>('[data-drift="palace"]')!
     for (let i = 1; i <= 60; i++) {

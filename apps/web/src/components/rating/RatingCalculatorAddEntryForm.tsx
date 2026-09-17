@@ -62,7 +62,7 @@ const ListboxComponent = (({
 export const RatingCalculatorAddEntryForm: FC<{
   onSubmit: (entry: PlayEntry) => void
 }> = memo(({ onSubmit }) => {
-  const { data: sheets } = useSheets({ acceptsPartialData: true })
+  const { data: sheets } = useSheets()
   const [selectedSheet, setSelectedSheet] = useState<FlattenedSheet | null>(null)
   const [achievementRate, setAchievementRate] = useState<string>('')
   const [achievementRateError, setAchievementRateError] = useState<string | null>(null)
@@ -236,7 +236,7 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
   value: FlattenedSheet | null
   onChange: (sheet: FlattenedSheet | null) => void
 }> = ({ value, onChange }) => {
-  const { data: sheets } = useSheets({ acceptsPartialData: true })
+  const { data: sheets } = useSheets()
   const { t } = useTranslation(['rating-calculator'])
 
   const search = useSheetsSearchEngine()

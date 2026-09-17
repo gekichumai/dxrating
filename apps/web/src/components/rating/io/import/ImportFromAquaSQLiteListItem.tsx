@@ -143,7 +143,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
     }
   }, [db])
   const [selectedUser, setSelectedUser] = useState<AquaUser | null>(null)
-  const { data: sheets } = useSheets({ acceptsPartialData: true })
+  const { data: sheets } = useSheets()
   const appVersion = useAppContextDXDataVersion()
   const { records, warnings } = useMemo(() => {
     if (!selectedUser) return { records: [], warnings: [] }

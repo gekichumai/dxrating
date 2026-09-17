@@ -1,6 +1,8 @@
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { fireEvent, render, screen, type RenderResult } from '@testing-library/react'
 import type { ReactNode } from 'react'
+import { renderToString } from 'react-dom/server'
+import type { FlattenedSheet } from '@/songs'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
 import { SheetList } from '../SheetList'
@@ -37,6 +39,7 @@ const routeState = vi.hoisted(() => {
 
 const sheetMocks = vi.hoisted(() => ({
   filteredTerms: [] as string[],
+  results: [] as FlattenedSheet[],
   isLoading: false,
   searchElapsed: 0,
 }))
@@ -66,7 +69,7 @@ vi.mock('@/songs', () => ({
   canonicalIdFromParts: (...parts: string[]) => parts.join(':'),
   useFilteredSheets: (term: string) => {
     sheetMocks.filteredTerms.push(term)
-    return { results: [], elapsed: sheetMocks.searchElapsed }
+    return { results: sheetMocks.results, elapsed: sheetMocks.searchElapsed }
   },
   useSheets: () => ({ data: [], isLoading: sheetMocks.isLoading }),
 }))
@@ -80,10 +83,14 @@ vi.mock('@/components/sheet/SheetDialogContent', () => ({
 }))
 
 vi.mock('@/components/sheet/SheetListContainer', () => ({
-  SheetListContainer: () => <div data-testid="sheet-list" />,
+  SheetListContainer: ({ sheets }: { sheets: FlattenedSheet[] }) => (
+    <div data-testid="sheet-list">{sheets.map((sheet) => sheet.id).join(',')}</div>
+  ),
 }))
 
-vi.mock('@/components/sheet/SheetSortFilter', () => ({
+vi.mock('@/components/sheet/SheetSortFilter', async (importOriginal) => ({
+  getDefaultSheetSortFilterForm: (await importOriginal<typeof import('@/components/sheet/SheetSortFilter')>())
+    .getDefaultSheetSortFilterForm,
   SheetSortFilter: () => <div data-testid="sheet-sort-filter" />,
   SheetSortFilterTrigger: () => <button type="button">Filter Sort</button>,
 }))
@@ -100,8 +107,21 @@ describe('SheetList', () => {
     routeState.onNavigate = undefined
     routeState.navigate.mockClear()
     sheetMocks.filteredTerms = []
+    sheetMocks.results = []
     sheetMocks.isLoading = false
     sheetMocks.searchElapsed = 0
+  })
+
+  it('applies default sorting before the first server or client paint', async () => {
+    const { getFlattenedSheetsForVersion } = await vi.importActual<typeof import('@/songs')>('@/songs')
+    const sheet = getFlattenedSheetsForVersion(VersionEnum.CiRCLEPLUS)[0]!
+    sheetMocks.results = [
+      { ...sheet, id: 'older', songId: 'older', releaseDateTimestamp: 1 },
+      { ...sheet, id: 'newer', songId: 'newer', releaseDateTimestamp: 2 },
+    ]
+    expect(renderToString(<SheetList />)).toContain('newer,older')
+    render(<SheetList />)
+    expect(screen.getByTestId('sheet-list').textContent).toBe('newer,older')
   })
 
   it('uses the route query immediately and shows seeded results while sheets load', () => {

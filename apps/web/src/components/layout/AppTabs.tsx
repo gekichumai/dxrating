@@ -19,7 +19,8 @@ interface AppTabContentProps {
 }
 
 const AppTabContent: FC<AppTabContentProps> = ({ children, fixedSize = false, pending }) => (
-  <span className={`relative inline-flex items-center justify-center ${fixedSize ? 'h-5 w-5' : ''}`}>
+  // Before hydration, MUI renders the indicator inside the selected tab.
+  <span className={`relative z-1 inline-flex items-center justify-center ${fixedSize ? 'h-5 w-5' : ''}`}>
     <span
       aria-hidden={pending ? true : undefined}
       className={`inline-flex items-center justify-center ${fixedSize ? 'h-5 w-5' : ''}`}

@@ -12,7 +12,12 @@ import { SearchQuerySeedList } from '../components/sheet/SearchQuerySeedList'
 import type { SearchQuerySeedSheet } from '../components/sheet/searchQuerySeed'
 import { SheetDialogContent } from '../components/sheet/SheetDialogContent'
 import { SheetListContainer } from '../components/sheet/SheetListContainer'
-import { SheetSortFilter, SheetSortFilterTrigger, type SheetSortFilterForm } from '../components/sheet/SheetSortFilter'
+import {
+  getDefaultSheetSortFilterForm,
+  SheetSortFilter,
+  SheetSortFilterTrigger,
+  type SheetSortFilterForm,
+} from '../components/sheet/SheetSortFilter'
 import { SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { captureAnalyticsEvent } from '../lib/analytics'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
@@ -88,9 +93,9 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
   seedSheets,
 }) => {
   const { t } = useTranslation(['sheet'])
-  const { data: sheets, isLoading } = useSheets({ acceptsPartialData: true })
+  const { data: sheets, isLoading } = useSheets()
   const version = useAppContextDXDataVersion()
-  const [sortFilterOptions, setSortFilterOptions] = useState<SheetSortFilterForm | null>(null)
+  const [sortFilterOptions, setSortFilterOptions] = useState<SheetSortFilterForm>(getDefaultSheetSortFilterForm)
   const [sortFilterExpanded, setSortFilterExpanded] = useState(false)
   const [sortFilterPending, startSortFilterTransition] = useTransition()
   const [hydrated, setHydrated] = useState(false)
