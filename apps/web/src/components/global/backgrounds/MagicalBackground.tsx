@@ -27,7 +27,7 @@ function Artwork({
   )
 }
 
-/** CSS keeps artwork hidden until the hydration ref commits, without changing the SSR tree. */
+/** SSR paints the entrance pose; hydration settles the scale without hiding artwork. */
 export function MagicalBackground() {
   return (
     <div className="magical-background" aria-hidden="true" ref={attachMagicalMotion}>

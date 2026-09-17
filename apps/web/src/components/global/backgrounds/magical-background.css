@@ -18,21 +18,20 @@
     opacity 320ms ease-out;
 }
 
-/* Reveal complete SVG layers only after hydration; internal fragments stay static. */
+/* Paint artwork in its entrance pose during SSR so hydration never blanks the scene. */
 .magical-background__art {
   display: block;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  opacity: 0;
   /* Independent scale preserves the parent layout and scroll parallax. */
-  scale: 1;
+  scale: var(--arrival-scale, 1);
   transform-box: border-box;
   transform-origin: var(--arrival-origin, 50% 0%);
 }
 
 .magical-background[data-ready] .magical-background__art {
-  opacity: 1;
+  scale: 1;
   animation: magical-arrive 560ms cubic-bezier(0.22, 1, 0.36, 1) var(--arrival-delay, 0ms) backwards;
 }
 
@@ -130,11 +129,9 @@ html[data-preference-wipe] .magical-background__art {
 
 @keyframes magical-arrive {
   from {
-    opacity: 0;
     scale: var(--arrival-scale, 1);
   }
   to {
-    opacity: 1;
     scale: 1;
   }
 }
@@ -317,6 +314,9 @@ html[data-preference-wipe] .magical-background__art {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .magical-background__art {
+    scale: 1;
+  }
   .magical-background[data-ready][data-skip-entrance] .magical-background__art,
   .magical-background[data-ready] .magical-background__art {
     animation: none;

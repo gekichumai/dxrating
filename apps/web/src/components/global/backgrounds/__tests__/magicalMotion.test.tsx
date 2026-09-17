@@ -55,7 +55,7 @@ afterEach(() => {
 })
 
 describe('MAGiCAL hydration entrance', () => {
-  it('keeps server artwork gated until hydration commits without a markup mismatch', async () => {
+  it('starts entrance motion on hydration without replacing server artwork', async () => {
     const container = document.createElement('div')
     container.innerHTML = renderToString(<MagicalBackground />)
     document.body.append(container)
