@@ -1,0 +1,797 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 2400">
+  <defs>
+    <linearGradient id="base" x2=".85" y2="1">
+      <stop stop-color="#7CDBDA" />
+      <stop offset=".44" stop-color="#A6E8CF" />
+      <stop offset="1" stop-color="#69D1C7" />
+    </linearGradient>
+    <radialGradient id="light">
+      <stop stop-color="#FFFEED" stop-opacity=".94" />
+      <stop offset="1" stop-color="#FFFEED" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="ribbon" x2="1" y2="1">
+      <stop stop-color="#6AD1D9" />
+      <stop offset="1" stop-color="#50B89B" />
+    </linearGradient>
+    <pattern id="diamond" width="120" height="120" patternUnits="userSpaceOnUse">
+      <path d="M60 0L120 60 60 120 0 60Z" fill="#FFFFFF" opacity=".11" />
+    </pattern>
+    <linearGradient id="lagoon" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#98E9E9" stop-opacity=".05" />
+      <stop offset=".5" stop-color="#55D8D2" stop-opacity=".6" />
+      <stop offset="1" stop-color="#2ABBC8" stop-opacity=".8" />
+    </linearGradient>
+    <linearGradient id="island" x2="0" y2="1">
+      <stop stop-color="#8DDBAB" />
+      <stop offset="1" stop-color="#49ACA8" />
+    </linearGradient>
+    <linearGradient id="castlewall" x2="1" y2="1">
+      <stop stop-color="#F7FFFF" />
+      <stop offset=".55" stop-color="#B6EFF4" />
+      <stop offset="1" stop-color="#6ABAD6" />
+    </linearGradient>
+    <linearGradient id="musicrainbow" x2="0" y2="1">
+      <stop stop-color="#FFF3A8" />
+      <stop offset=".42" stop-color="#85E6CB" />
+      <stop offset="1" stop-color="#84C7F1" />
+    </linearGradient>
+  </defs>
+  <g id="paper">
+    <g>
+      <path d="M0 0H2000V2400H0Z" fill="url(#base)" />
+      <path d="M0 0H2000V2400H0Z" fill="url(#diamond)" />
+    </g>
+    <g fill="none" stroke="#E7FFF0" stroke-width="2" opacity=".22">
+      <path d="M-2100 0l2400 2400M-400 0l-2400 2400" />
+      <path d="M-1820 0l2400 2400M-120 0l-2400 2400" />
+      <path d="M-1540 0l2400 2400M160 0l-2400 2400" />
+      <path d="M-1260 0l2400 2400M440 0l-2400 2400" />
+      <path d="M-980 0l2400 2400M720 0l-2400 2400" />
+      <path d="M-700 0l2400 2400M1000 0l-2400 2400" />
+      <path d="M-420 0l2400 2400M1280 0l-2400 2400" />
+      <path d="M-140 0l2400 2400M1560 0l-2400 2400" />
+      <path d="M140 0l2400 2400M1840 0l-2400 2400" />
+      <path d="M420 0l2400 2400M2120 0l-2400 2400" />
+      <path d="M700 0l2400 2400M2400 0l-2400 2400" />
+      <path d="M980 0l2400 2400M2680 0l-2400 2400" />
+      <path d="M1260 0l2400 2400M2960 0l-2400 2400" />
+      <path d="M1540 0l2400 2400M3240 0l-2400 2400" />
+      <path d="M1820 0l2400 2400M3520 0l-2400 2400" />
+      <path d="M2100 0l2400 2400M3800 0l-2400 2400" />
+    </g>
+  </g>
+  <g id="pattern">
+    <g>
+      <g transform="translate(160 270) rotate(-45) scale(1.05)" fill="#EBFFA9" opacity=".66">
+        <path d="M0 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M36 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M72 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M108 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M144 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M180 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M216 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M252 -24l22 24-22 24h19l22-24-22-24Z" />
+        <polygon points="326,-34 335.19296134585426,-12.653025792024179 358.3359215540352,-10.506577808748212 340.8745239148562,4.833025792024177 345.9846985779441,27.50657780874821 326,15.64 306.0153014220559,27.50657780874821 311.1254760851438,4.833025792024179 293.6640784459648,-10.506577808748208 316.80703865414574,-12.653025792024177" fill="none" stroke="#EBFFA9" stroke-width="8" stroke-linejoin="round" />
+      </g>
+      <g transform="translate(910 190) rotate(-45) scale(0.85)" fill="#FFFFFF" opacity=".66">
+        <path d="M0 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M36 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M72 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M108 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M144 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M180 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M216 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M252 -24l22 24-22 24h19l22-24-22-24Z" />
+        <polygon points="326,-34 335.19296134585426,-12.653025792024179 358.3359215540352,-10.506577808748212 340.8745239148562,4.833025792024177 345.9846985779441,27.50657780874821 326,15.64 306.0153014220559,27.50657780874821 311.1254760851438,4.833025792024179 293.6640784459648,-10.506577808748208 316.80703865414574,-12.653025792024177" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round" />
+      </g>
+      <g transform="translate(1520 280) rotate(-45) scale(1)" fill="#71BDED" opacity=".66">
+        <path d="M0 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M36 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M72 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M108 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M144 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M180 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M216 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M252 -24l22 24-22 24h19l22-24-22-24Z" />
+        <polygon points="326,-34 335.19296134585426,-12.653025792024179 358.3359215540352,-10.506577808748212 340.8745239148562,4.833025792024177 345.9846985779441,27.50657780874821 326,15.64 306.0153014220559,27.50657780874821 311.1254760851438,4.833025792024179 293.6640784459648,-10.506577808748208 316.80703865414574,-12.653025792024177" fill="none" stroke="#71BDED" stroke-width="8" stroke-linejoin="round" />
+      </g>
+      <g transform="translate(-80 980) rotate(-45) scale(1)" fill="#FFFFFF" opacity=".66">
+        <path d="M0 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M36 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M72 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M108 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M144 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M180 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M216 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M252 -24l22 24-22 24h19l22-24-22-24Z" />
+        <polygon points="326,-34 335.19296134585426,-12.653025792024179 358.3359215540352,-10.506577808748212 340.8745239148562,4.833025792024177 345.9846985779441,27.50657780874821 326,15.64 306.0153014220559,27.50657780874821 311.1254760851438,4.833025792024179 293.6640784459648,-10.506577808748208 316.80703865414574,-12.653025792024177" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round" />
+      </g>
+      <g transform="translate(760 700) rotate(-45) scale(1.15)" fill="#F4F5A1" opacity=".66">
+        <path d="M0 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M36 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M72 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M108 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M144 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M180 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M216 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M252 -24l22 24-22 24h19l22-24-22-24Z" />
+        <polygon points="326,-34 335.19296134585426,-12.653025792024179 358.3359215540352,-10.506577808748212 340.8745239148562,4.833025792024177 345.9846985779441,27.50657780874821 326,15.64 306.0153014220559,27.50657780874821 311.1254760851438,4.833025792024179 293.6640784459648,-10.506577808748208 316.80703865414574,-12.653025792024177" fill="none" stroke="#F4F5A1" stroke-width="8" stroke-linejoin="round" />
+      </g>
+      <g transform="translate(1450 780) rotate(-45) scale(1.1)" fill="#FFFFFF" opacity=".66">
+        <path d="M0 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M36 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M72 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M108 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M144 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M180 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M216 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M252 -24l22 24-22 24h19l22-24-22-24Z" />
+        <polygon points="326,-34 335.19296134585426,-12.653025792024179 358.3359215540352,-10.506577808748212 340.8745239148562,4.833025792024177 345.9846985779441,27.50657780874821 326,15.64 306.0153014220559,27.50657780874821 311.1254760851438,4.833025792024179 293.6640784459648,-10.506577808748208 316.80703865414574,-12.653025792024177" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round" />
+      </g>
+      <g transform="translate(90 1530) rotate(-45) scale(1)" fill="#78BDEC" opacity=".66">
+        <path d="M0 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M36 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M72 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M108 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M144 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M180 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M216 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M252 -24l22 24-22 24h19l22-24-22-24Z" />
+        <polygon points="326,-34 335.19296134585426,-12.653025792024179 358.3359215540352,-10.506577808748212 340.8745239148562,4.833025792024177 345.9846985779441,27.50657780874821 326,15.64 306.0153014220559,27.50657780874821 311.1254760851438,4.833025792024179 293.6640784459648,-10.506577808748208 316.80703865414574,-12.653025792024177" fill="none" stroke="#78BDEC" stroke-width="8" stroke-linejoin="round" />
+      </g>
+      <g transform="translate(930 1510) rotate(-45) scale(0.9)" fill="#FFFFFF" opacity=".66">
+        <path d="M0 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M36 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M72 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M108 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M144 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M180 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M216 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M252 -24l22 24-22 24h19l22-24-22-24Z" />
+        <polygon points="326,-34 335.19296134585426,-12.653025792024179 358.3359215540352,-10.506577808748212 340.8745239148562,4.833025792024177 345.9846985779441,27.50657780874821 326,15.64 306.0153014220559,27.50657780874821 311.1254760851438,4.833025792024179 293.6640784459648,-10.506577808748208 316.80703865414574,-12.653025792024177" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round" />
+      </g>
+      <g transform="translate(1610 1570) rotate(-45) scale(1.1)" fill="#F2F2A5" opacity=".66">
+        <path d="M0 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M36 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M72 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M108 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M144 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M180 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M216 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M252 -24l22 24-22 24h19l22-24-22-24Z" />
+        <polygon points="326,-34 335.19296134585426,-12.653025792024179 358.3359215540352,-10.506577808748212 340.8745239148562,4.833025792024177 345.9846985779441,27.50657780874821 326,15.64 306.0153014220559,27.50657780874821 311.1254760851438,4.833025792024179 293.6640784459648,-10.506577808748208 316.80703865414574,-12.653025792024177" fill="none" stroke="#F2F2A5" stroke-width="8" stroke-linejoin="round" />
+      </g>
+      <g transform="translate(400 1940) rotate(-45) scale(1)" fill="#FFFFFF" opacity=".66">
+        <path d="M0 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M36 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M72 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M108 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M144 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M180 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M216 -24l22 24-22 24h19l22-24-22-24Z" />
+        <path d="M252 -24l22 24-22 24h19l22-24-22-24Z" />
+        <polygon points="326,-34 335.19296134585426,-12.653025792024179 358.3359215540352,-10.506577808748212 340.8745239148562,4.833025792024177 345.9846985779441,27.50657780874821 326,15.64 306.0153014220559,27.50657780874821 311.1254760851438,4.833025792024179 293.6640784459648,-10.506577808748208 316.80703865414574,-12.653025792024177" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round" />
+      </g>
+      <g transform="translate(250 680) rotate(-45) scale(1.05)" fill="none" stroke="#F2FFF5" stroke-width="5" opacity=".63">
+        <path d="M0 -15H370L392 0 370 15H0L-20 0Z" />
+        <path d="M8 -7H370M8 7H370" stroke-width="2" />
+        <path d="M410 -15H510L530 0 510 15H410L390 0Z" />
+      </g>
+      <g transform="translate(1060 560) rotate(-45) scale(1.05)" fill="none" stroke="#F2FFF5" stroke-width="5" opacity=".63">
+        <path d="M0 -15H370L392 0 370 15H0L-20 0Z" />
+        <path d="M8 -7H370M8 7H370" stroke-width="2" />
+        <path d="M410 -15H510L530 0 510 15H410L390 0Z" />
+      </g>
+      <g transform="translate(1580 1130) rotate(-45) scale(1)" fill="none" stroke="#F2FFF5" stroke-width="5" opacity=".63">
+        <path d="M0 -15H370L392 0 370 15H0L-20 0Z" />
+        <path d="M8 -7H370M8 7H370" stroke-width="2" />
+        <path d="M410 -15H510L530 0 510 15H410L390 0Z" />
+      </g>
+      <g transform="translate(130 1340) rotate(-45) scale(0.9)" fill="none" stroke="#F2FFF5" stroke-width="5" opacity=".63">
+        <path d="M0 -15H370L392 0 370 15H0L-20 0Z" />
+        <path d="M8 -7H370M8 7H370" stroke-width="2" />
+        <path d="M410 -15H510L530 0 510 15H410L390 0Z" />
+      </g>
+      <g transform="translate(500 1710) rotate(-45) scale(1)" fill="none" stroke="#F2FFF5" stroke-width="5" opacity=".63">
+        <path d="M0 -15H370L392 0 370 15H0L-20 0Z" />
+        <path d="M8 -7H370M8 7H370" stroke-width="2" />
+        <path d="M410 -15H510L530 0 510 15H410L390 0Z" />
+      </g>
+      <g transform="translate(1220 1880) rotate(-45) scale(0.95)" fill="none" stroke="#F2FFF5" stroke-width="5" opacity=".63">
+        <path d="M0 -15H370L392 0 370 15H0L-20 0Z" />
+        <path d="M8 -7H370M8 7H370" stroke-width="2" />
+        <path d="M410 -15H510L530 0 510 15H410L390 0Z" />
+      </g>
+    </g>
+    <g>
+      <path d="M120 140 Q120 200 150 200 Q120 200 120 260 Q120 200 90 200 Q120 200 120 140Z" fill="#FFFFFF" />
+      <circle cx="120" cy="200" r="19.5" fill="none" stroke="#CFB766" stroke-width="2" opacity=".65" />
+      <path d="M1730 206 Q1730 250 1752 250 Q1730 250 1730 294 Q1730 250 1708 250 Q1730 250 1730 206Z" fill="#FFFFFF" />
+      <circle cx="1730" cy="250" r="14.3" fill="none" stroke="#CFB766" stroke-width="2" opacity=".65" />
+      <path d="M220 664 Q220 700 238 700 Q220 700 220 736 Q220 700 202 700 Q220 700 220 664Z" fill="#FFFFFF" />
+      <circle cx="220" cy="700" r="11.700000000000001" fill="none" stroke="#CFB766" stroke-width="2" opacity=".65" />
+      <path d="M1850 880 Q1850 930 1875 930 Q1850 930 1850 980 Q1850 930 1825 930 Q1850 930 1850 880Z" fill="#FFFFFF" />
+      <circle cx="1850" cy="930" r="16.25" fill="none" stroke="#CFB766" stroke-width="2" opacity=".65" />
+      <path d="M100 1536 Q100 1580 122 1580 Q100 1580 100 1624 Q100 1580 78 1580 Q100 1580 100 1536Z" fill="#FFFFFF" />
+      <circle cx="100" cy="1580" r="14.3" fill="none" stroke="#CFB766" stroke-width="2" opacity=".65" />
+      <path d="M410 1870 Q410 1900 425 1900 Q410 1900 410 1930 Q410 1900 395 1900 Q410 1900 410 1870Z" fill="#FFFFFF" />
+      <circle cx="410" cy="1900" r="9.75" fill="none" stroke="#CFB766" stroke-width="2" opacity=".65" />
+      <path d="M1410 2048 Q1410 2100 1436 2100 Q1410 2100 1410 2152 Q1410 2100 1384 2100 Q1410 2100 1410 2048Z" fill="#FFFFFF" />
+      <circle cx="1410" cy="2100" r="16.900000000000002" fill="none" stroke="#CFB766" stroke-width="2" opacity=".65" />
+      <path d="M1780 1772 Q1780 1800 1794 1800 Q1780 1800 1780 1828 Q1780 1800 1766 1800 Q1780 1800 1780 1772Z" fill="#FFFFFF" />
+      <circle cx="1780" cy="1800" r="9.1" fill="none" stroke="#CFB766" stroke-width="2" opacity=".65" />
+    </g>
+  </g>
+  <g id="atmosphere">
+    <g opacity=".22">
+      <path d="M-70 440Q100 350 310 430L215 520 70 580Z" fill="#74B8AC" />
+      <path d="M-70 440Q100 350 310 430Q160 475 -70 440Z" fill="#A0DDB0" />
+      <path d="M1760 970Q1900 890 2070 950L1970 1110 1840 1080Z" fill="#75B8B4" />
+      <path d="M1760 970Q1900 890 2070 950Q1940 1020 1760 970Z" fill="#B0DFB1" />
+      <path d="M1825 935Q1900 885 1960 926" fill="none" stroke="#E1F2B2" stroke-width="12" />
+    </g>
+    <g opacity=".3">
+      <g transform="translate(80 190) scale(1.3)">
+        <path d="M-180 45Q-190 -12 -134 -20Q-148 -75 -86 -72Q-47 -146 14 -95Q85 -117 99 -55Q157 -69 166 -13Q219 -18 226 45Z" fill="#FFFFFF" />
+        <path d="M-180 45Q-175 3 -134 8Q-130 -27 -88 -19Q-42 -68 2 -25Q48 -48 71 -5Q120 -19 145 21Q195 13 226 45" fill="#C2F4E9" />
+      </g>
+      <g transform="translate(1880 390) scale(1.35)">
+        <path d="M-180 45Q-190 -12 -134 -20Q-148 -75 -86 -72Q-47 -146 14 -95Q85 -117 99 -55Q157 -69 166 -13Q219 -18 226 45Z" fill="#FFFFFF" />
+        <path d="M-180 45Q-175 3 -134 8Q-130 -27 -88 -19Q-42 -68 2 -25Q48 -48 71 -5Q120 -19 145 21Q195 13 226 45" fill="#C2F4E9" />
+      </g>
+      <g transform="translate(-15 1540) scale(0.9)">
+        <path d="M-180 45Q-190 -12 -134 -20Q-148 -75 -86 -72Q-47 -146 14 -95Q85 -117 99 -55Q157 -69 166 -13Q219 -18 226 45Z" fill="#FFFFFF" />
+        <path d="M-180 45Q-175 3 -134 8Q-130 -27 -88 -19Q-42 -68 2 -25Q48 -48 71 -5Q120 -19 145 21Q195 13 226 45" fill="#C2F4E9" />
+      </g>
+      <g transform="translate(1920 1620) scale(0.85)">
+        <path d="M-180 45Q-190 -12 -134 -20Q-148 -75 -86 -72Q-47 -146 14 -95Q85 -117 99 -55Q157 -69 166 -13Q219 -18 226 45Z" fill="#FFFFFF" />
+        <path d="M-180 45Q-175 3 -134 8Q-130 -27 -88 -19Q-42 -68 2 -25Q48 -48 71 -5Q120 -19 145 21Q195 13 226 45" fill="#C2F4E9" />
+      </g>
+    </g>
+  </g>
+  <g id="ribbons">
+    <g fill="none">
+      <path d="M-140 500Q200 120 800 -160" stroke="url(#ribbon)" stroke-width="140" opacity=".2" />
+      <path d="M-120 620Q220 200 960 -160" stroke="#FFFFFF" stroke-width="25" opacity=".72" />
+      <path d="M-120 658Q220 238 960 -122" stroke="#D2BE6D" stroke-width="4" opacity=".65" />
+      <path d="M1300 2500Q1600 1910 2200 1670" stroke="url(#ribbon)" stroke-width="180" opacity=".26" />
+      <path d="M1210 2500Q1510 1870 2200 1610" stroke="#FFFFFF" stroke-width="20" opacity=".65" />
+      <path d="M1180 2500Q1480 1840 2200 1580" stroke="#CEBA65" stroke-width="4" opacity=".6" />
+    </g>
+    <g fill="none" opacity=".5">
+      <path d="M-80 650C510 880 -180 1110 190 1320S190 1620 -80 1770" stroke="url(#musicrainbow)" stroke-width="7" />
+      <path d="M-80 672C510 902 -180 1132 190 1342S190 1642 -80 1792" stroke="#FFFFFF" stroke-width="4" />
+      <path d="M-80 694C510 924 -180 1154 190 1364S190 1664 -80 1814" stroke="url(#musicrainbow)" stroke-width="7" />
+      <path d="M-80 716C510 946 -180 1176 190 1386S190 1686 -80 1836" stroke="#FFFFFF" stroke-width="4" />
+      <path d="M-80 738C510 968 -180 1198 190 1408S190 1708 -80 1858" stroke="url(#musicrainbow)" stroke-width="7" />
+      <path d="M2090 350C1600 250 1710 650 2070 730" stroke="#FFFFFF" stroke-width="5" />
+      <path d="M2090 370C1600 270 1710 670 2070 750" stroke="#FFFFFF" stroke-width="5" />
+      <path d="M2090 390C1600 290 1710 690 2070 770" stroke="#FFFFFF" stroke-width="5" />
+      <path d="M-60 1960C400 1900 40 1730 -100 1750M1750 -60Q1510 50 1450 300" stroke="#F3DA79" stroke-width="5" />
+    </g>
+  </g>
+  <g id="edge-magic">
+    <g opacity=".62">
+      <path d="M30 310L145 390 95 555 230 610M1590 720L1715 570 1890 640 1960 470" fill="none" stroke="#BDAB65" stroke-width="3" stroke-dasharray="7 11" />
+      <polygon transform="translate(30 310) rotate(0)" points="1.6532731788489269e-15,-27 7.300292833472517,-10.047991070136847 25.678525939969145,-8.34345884812358 11.812121932385807,3.8379910701368467 15.870201811896775,21.843458848123582 7.605056622705064e-16,12.42 -15.870201811896772,21.843458848123582 -11.812121932385807,3.837991070136848 -25.678525939969145,-8.34345884812359 -7.3002928334725175,-10.047991070136845" fill="#65C8C5" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" />
+      <polygon transform="translate(145 390) rotate(15)" points="2.1431318985078682e-15,-35 9.463342561908819,-13.025173609436655 33.28697807033037,-10.815594803123158 15.312009912351973,4.975173609436654 20.57248383023656,28.31559480312316 9.858406733136194e-16,16.1 -20.572483830236557,28.31559480312316 -15.312009912351973,4.975173609436656 -33.28697807033037,-10.81559480312317 -9.46334256190882,-13.025173609436653" fill="#E5CA76" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" />
+      <polygon transform="translate(95 555) rotate(0)" points="1.1634144591899855e-15,-19 5.137243105036215,-7.0708085308370405 18.070073809607916,-5.871322893124001 8.312233952419643,2.7008085308370404 11.16791979355699,15.371322893124002 5.351706512273934e-16,8.74 -11.167919793556987,15.371322893124002 -8.312233952419643,2.7008085308370413 -18.070073809607916,-5.871322893124007 -5.137243105036216,-7.07080853083704" fill="#83C7B2" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" />
+      <polygon transform="translate(230 610) rotate(-12)" points="1.7145055188062944e-15,-28 7.570674049527055,-10.420138887549324 26.6295824562643,-8.652475842498527 12.249607929881579,3.9801388875493227 16.457987064189247,22.65247584249853 7.886725386508955e-16,12.88 -16.457987064189243,22.65247584249853 -12.249607929881579,3.980138887549324 -26.6295824562643,-8.652475842498536 -7.570674049527056,-10.420138887549323" fill="#71BDCB" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" />
+      <polygon transform="translate(1590 720) rotate(0)" points="1.4695761589768238e-15,-24 6.489149185308904,-8.93154761789942 22.825356391083684,-7.416407864998737 10.499663939898495,3.4115476178994197 14.106846055019355,19.41640786499874 6.760050331293391e-16,11.040000000000001 -14.106846055019354,19.41640786499874 -10.499663939898495,3.4115476178994206 -22.825356391083684,-7.416407864998746 -6.489149185308905,-8.931547617899419" fill="#E5CA76" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" />
+      <polygon transform="translate(1715 570) rotate(15)" points="2.204364238465236e-15,-36 9.733723777963357,-13.397321426849132 34.238034586625524,-11.124611797498106 15.749495909847745,5.11732142684913 21.160269082529034,29.12461179749811 1.0140075496940087e-15,16.560000000000002 -21.16026908252903,29.12461179749811 -15.749495909847745,5.117321426849132 -34.238034586625524,-11.124611797498119 -9.733723777963359,-13.39732142684913" fill="#68C4A8" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" />
+      <polygon transform="translate(1890 640) rotate(0)" points="1.4083438190194562e-15,-23 6.218767969254366,-8.559399800486943 21.87429987478853,-7.1073908706237905 10.062177942402725,3.2693998004869433 13.519060802726882,18.607390870623792 6.478381567489498e-16,10.58 -13.51906080272688,18.607390870623792 -10.062177942402725,3.2693998004869447 -21.87429987478853,-7.107390870623798 -6.218767969254367,-8.559399800486943" fill="#8BCEDA" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" />
+      <polygon transform="translate(1960 470) rotate(0)" points="1.8982025386783976e-15,-31 8.381817697690666,-11.53658233978675 29.48275200514976,-9.57952682562337 13.56206592236889,4.40658233978675 18.221342821066667,25.079526825623372 8.731731677920628e-16,14.26 -18.221342821066663,25.079526825623372 -13.56206592236889,4.406582339786751 -29.48275200514976,-9.579526825623379 -8.381817697690668,-11.536582339786749" fill="#E5CA76" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" />
+    </g>
+    <g opacity=".38">
+      <g fill="none" stroke="#69BCAA" stroke-width="4">
+        <path d="M-90 880C100 650 200 960 350 690" />
+        <path d="M-90 904C100 674 200 984 350 714" />
+        <path d="M-90 928C100 698 200 1008 350 738" />
+        <path d="M-90 952C100 722 200 1032 350 762" />
+        <path d="M-90 976C100 746 200 1056 350 786" />
+      </g>
+      <g transform="translate(95 865) scale(0.9) rotate(-18)" fill="#24A596" stroke="#24A596" stroke-width="9" stroke-linecap="round">
+        <ellipse cx="-15" cy="48" rx="18" ry="12" transform="rotate(-20 -15 48)" />
+        <path d="M0 42V-46L54 -59V27" fill="none" />
+        <ellipse cx="39" cy="33" rx="18" ry="12" transform="rotate(-20 39 33)" />
+        <path d="M0 -30L54 -43" fill="none" />
+      </g>
+      <g transform="translate(245 740) scale(0.6) rotate(12)" fill="#C5A94A" stroke="#C5A94A" stroke-width="9" stroke-linecap="round">
+        <ellipse cx="-15" cy="48" rx="18" ry="12" transform="rotate(-20 -15 48)" />
+        <path d="M0 42V-46L54 -59V27" fill="none" />
+        <ellipse cx="39" cy="33" rx="18" ry="12" transform="rotate(-20 39 33)" />
+        <path d="M0 -30L54 -43" fill="none" />
+      </g>
+      <g transform="translate(1810 1100) scale(1.1) rotate(18)" fill="#4EAFB3" stroke="#4EAFB3" stroke-width="9" stroke-linecap="round">
+        <ellipse cx="-15" cy="48" rx="18" ry="12" transform="rotate(-20 -15 48)" />
+        <path d="M0 42V-46L54 -59V27" fill="none" />
+        <ellipse cx="39" cy="33" rx="18" ry="12" transform="rotate(-20 39 33)" />
+        <path d="M0 -30L54 -43" fill="none" />
+      </g>
+      <g transform="translate(120 1440) scale(0.65) rotate(-20)" fill="#5CA68C" stroke="#5CA68C" stroke-width="9" stroke-linecap="round">
+        <ellipse cx="-15" cy="48" rx="18" ry="12" transform="rotate(-20 -15 48)" />
+        <path d="M0 42V-46L54 -59V27" fill="none" />
+        <ellipse cx="39" cy="33" rx="18" ry="12" transform="rotate(-20 39 33)" />
+        <path d="M0 -30L54 -43" fill="none" />
+      </g>
+      <g transform="translate(1870 1470) scale(0.5) rotate(15)" fill="#C5A94A" stroke="#C5A94A" stroke-width="9" stroke-linecap="round">
+        <ellipse cx="-15" cy="48" rx="18" ry="12" transform="rotate(-20 -15 48)" />
+        <path d="M0 42V-46L54 -59V27" fill="none" />
+        <ellipse cx="39" cy="33" rx="18" ry="12" transform="rotate(-20 39 33)" />
+        <path d="M0 -30L54 -43" fill="none" />
+      </g>
+    </g>
+    <g opacity=".26">
+      <g transform="translate(115 1140) rotate(8)" fill="none" stroke="#6EAF9B" stroke-width="4">
+        <circle r="110" />
+        <circle r="77" />
+        <path transform="rotate(0)" d="M-12 -110V-125H12V-110" />
+        <path transform="rotate(0)" d="M0 -27.5V-77" />
+        <path transform="rotate(30)" d="M-12 -110V-125H12V-110" />
+        <path transform="rotate(30)" d="M0 -27.5V-77" />
+        <path transform="rotate(60)" d="M-12 -110V-125H12V-110" />
+        <path transform="rotate(60)" d="M0 -27.5V-77" />
+        <path transform="rotate(90)" d="M-12 -110V-125H12V-110" />
+        <path transform="rotate(90)" d="M0 -27.5V-77" />
+        <path transform="rotate(120)" d="M-12 -110V-125H12V-110" />
+        <path transform="rotate(120)" d="M0 -27.5V-77" />
+        <path transform="rotate(150)" d="M-12 -110V-125H12V-110" />
+        <path transform="rotate(150)" d="M0 -27.5V-77" />
+        <path transform="rotate(180)" d="M-12 -110V-125H12V-110" />
+        <path transform="rotate(180)" d="M0 -27.5V-77" />
+        <path transform="rotate(210)" d="M-12 -110V-125H12V-110" />
+        <path transform="rotate(210)" d="M0 -27.5V-77" />
+        <path transform="rotate(240)" d="M-12 -110V-125H12V-110" />
+        <path transform="rotate(240)" d="M0 -27.5V-77" />
+        <path transform="rotate(270)" d="M-12 -110V-125H12V-110" />
+        <path transform="rotate(270)" d="M0 -27.5V-77" />
+        <path transform="rotate(300)" d="M-12 -110V-125H12V-110" />
+        <path transform="rotate(300)" d="M0 -27.5V-77" />
+        <path transform="rotate(330)" d="M-12 -110V-125H12V-110" />
+        <path transform="rotate(330)" d="M0 -27.5V-77" />
+        <circle r="27.5" />
+      </g>
+      <g transform="translate(20 1310) rotate(19)" fill="none" stroke="#6EAF9B" stroke-width="4">
+        <circle r="62" />
+        <circle r="43.4" />
+        <path transform="rotate(0)" d="M-12 -62V-77H12V-62" />
+        <path transform="rotate(0)" d="M0 -15.5V-43.4" />
+        <path transform="rotate(30)" d="M-12 -62V-77H12V-62" />
+        <path transform="rotate(30)" d="M0 -15.5V-43.4" />
+        <path transform="rotate(60)" d="M-12 -62V-77H12V-62" />
+        <path transform="rotate(60)" d="M0 -15.5V-43.4" />
+        <path transform="rotate(90)" d="M-12 -62V-77H12V-62" />
+        <path transform="rotate(90)" d="M0 -15.5V-43.4" />
+        <path transform="rotate(120)" d="M-12 -62V-77H12V-62" />
+        <path transform="rotate(120)" d="M0 -15.5V-43.4" />
+        <path transform="rotate(150)" d="M-12 -62V-77H12V-62" />
+        <path transform="rotate(150)" d="M0 -15.5V-43.4" />
+        <path transform="rotate(180)" d="M-12 -62V-77H12V-62" />
+        <path transform="rotate(180)" d="M0 -15.5V-43.4" />
+        <path transform="rotate(210)" d="M-12 -62V-77H12V-62" />
+        <path transform="rotate(210)" d="M0 -15.5V-43.4" />
+        <path transform="rotate(240)" d="M-12 -62V-77H12V-62" />
+        <path transform="rotate(240)" d="M0 -15.5V-43.4" />
+        <path transform="rotate(270)" d="M-12 -62V-77H12V-62" />
+        <path transform="rotate(270)" d="M0 -15.5V-43.4" />
+        <path transform="rotate(300)" d="M-12 -62V-77H12V-62" />
+        <path transform="rotate(300)" d="M0 -15.5V-43.4" />
+        <path transform="rotate(330)" d="M-12 -62V-77H12V-62" />
+        <path transform="rotate(330)" d="M0 -15.5V-43.4" />
+        <circle r="15.5" />
+      </g>
+      <g transform="translate(1940 890) rotate(-4)" fill="none" stroke="#6EAF9B" stroke-width="4">
+        <circle r="85" />
+        <circle r="59.49999999999999" />
+        <path transform="rotate(0)" d="M-12 -85V-100H12V-85" />
+        <path transform="rotate(0)" d="M0 -21.25V-59.49999999999999" />
+        <path transform="rotate(30)" d="M-12 -85V-100H12V-85" />
+        <path transform="rotate(30)" d="M0 -21.25V-59.49999999999999" />
+        <path transform="rotate(60)" d="M-12 -85V-100H12V-85" />
+        <path transform="rotate(60)" d="M0 -21.25V-59.49999999999999" />
+        <path transform="rotate(90)" d="M-12 -85V-100H12V-85" />
+        <path transform="rotate(90)" d="M0 -21.25V-59.49999999999999" />
+        <path transform="rotate(120)" d="M-12 -85V-100H12V-85" />
+        <path transform="rotate(120)" d="M0 -21.25V-59.49999999999999" />
+        <path transform="rotate(150)" d="M-12 -85V-100H12V-85" />
+        <path transform="rotate(150)" d="M0 -21.25V-59.49999999999999" />
+        <path transform="rotate(180)" d="M-12 -85V-100H12V-85" />
+        <path transform="rotate(180)" d="M0 -21.25V-59.49999999999999" />
+        <path transform="rotate(210)" d="M-12 -85V-100H12V-85" />
+        <path transform="rotate(210)" d="M0 -21.25V-59.49999999999999" />
+        <path transform="rotate(240)" d="M-12 -85V-100H12V-85" />
+        <path transform="rotate(240)" d="M0 -21.25V-59.49999999999999" />
+        <path transform="rotate(270)" d="M-12 -85V-100H12V-85" />
+        <path transform="rotate(270)" d="M0 -21.25V-59.49999999999999" />
+        <path transform="rotate(300)" d="M-12 -85V-100H12V-85" />
+        <path transform="rotate(300)" d="M0 -21.25V-59.49999999999999" />
+        <path transform="rotate(330)" d="M-12 -85V-100H12V-85" />
+        <path transform="rotate(330)" d="M0 -21.25V-59.49999999999999" />
+        <circle r="21.25" />
+      </g>
+      <g transform="translate(540 2370) rotate(9)" fill="none" stroke="#6EAF9B" stroke-width="4">
+        <circle r="90" />
+        <circle r="62.99999999999999" />
+        <path transform="rotate(0)" d="M-12 -90V-105H12V-90" />
+        <path transform="rotate(0)" d="M0 -22.5V-62.99999999999999" />
+        <path transform="rotate(30)" d="M-12 -90V-105H12V-90" />
+        <path transform="rotate(30)" d="M0 -22.5V-62.99999999999999" />
+        <path transform="rotate(60)" d="M-12 -90V-105H12V-90" />
+        <path transform="rotate(60)" d="M0 -22.5V-62.99999999999999" />
+        <path transform="rotate(90)" d="M-12 -90V-105H12V-90" />
+        <path transform="rotate(90)" d="M0 -22.5V-62.99999999999999" />
+        <path transform="rotate(120)" d="M-12 -90V-105H12V-90" />
+        <path transform="rotate(120)" d="M0 -22.5V-62.99999999999999" />
+        <path transform="rotate(150)" d="M-12 -90V-105H12V-90" />
+        <path transform="rotate(150)" d="M0 -22.5V-62.99999999999999" />
+        <path transform="rotate(180)" d="M-12 -90V-105H12V-90" />
+        <path transform="rotate(180)" d="M0 -22.5V-62.99999999999999" />
+        <path transform="rotate(210)" d="M-12 -90V-105H12V-90" />
+        <path transform="rotate(210)" d="M0 -22.5V-62.99999999999999" />
+        <path transform="rotate(240)" d="M-12 -90V-105H12V-90" />
+        <path transform="rotate(240)" d="M0 -22.5V-62.99999999999999" />
+        <path transform="rotate(270)" d="M-12 -90V-105H12V-90" />
+        <path transform="rotate(270)" d="M0 -22.5V-62.99999999999999" />
+        <path transform="rotate(300)" d="M-12 -90V-105H12V-90" />
+        <path transform="rotate(300)" d="M0 -22.5V-62.99999999999999" />
+        <path transform="rotate(330)" d="M-12 -90V-105H12V-90" />
+        <path transform="rotate(330)" d="M0 -22.5V-62.99999999999999" />
+        <circle r="22.5" />
+      </g>
+    </g>
+    <g opacity=".35">
+      <g transform="translate(50 1980) rotate(-15)">
+        <path d="M0 0Q70 -25 130 0V145Q70 120 0 145Z" fill="#FFFFFF" stroke="#9DBF9E" stroke-width="4" />
+        <path d="M20 33H105M20 53H105M20 73H80" stroke="#75B7A3" stroke-width="4" />
+        <polygon transform="translate(65 106) rotate(0)" points="1.0409497792752501e-15,-17 4.59648067292714,-6.3265128960120895 16.16796077701761,-5.253288904374106 7.437261957428101,2.4165128960120885 9.992349288972044,13.753288904374106 4.788368984666151e-16,7.82 -9.992349288972042,13.753288904374106 -7.437261957428101,2.4165128960120894 -16.16796077701761,-5.253288904374111 -4.596480672927141,-6.326512896012089" fill="#D2BA64" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" />
+      </g>
+      <g transform="translate(1810 1280) rotate(17)">
+        <path d="M0 0Q50 -20 100 0V130Q50 110 0 130Z" fill="#FFFFFF" stroke="#9DBF9E" stroke-width="4" />
+        <polygon transform="translate(50 43) rotate(0)" points="1.4083438190194562e-15,-23 6.218767969254366,-8.559399800486943 21.87429987478853,-7.1073908706237905 10.062177942402725,3.2693998004869433 13.519060802726882,18.607390870623792 6.478381567489498e-16,10.58 -13.51906080272688,18.607390870623792 -10.062177942402725,3.2693998004869447 -21.87429987478853,-7.107390870623798 -6.218767969254367,-8.559399800486943" fill="#D5BE67" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" />
+        <path d="M20 82H80M20 98H65" stroke="#75B7A3" stroke-width="4" />
+      </g>
+    </g>
+  </g>
+  <g id="emblems">
+    <g transform="translate(62.49 99.55)" fill="none" stroke="#F4FFD4" stroke-linecap="round" stroke-linejoin="round" opacity=".63">
+      <g transform="translate(690 1080) rotate(-12)">
+        <circle r="207" stroke-width="13" />
+        <circle r="181" stroke-width="4" />
+        <path transform="rotate(0)" d="M0 -166V-147" stroke-width="9" />
+        <path transform="rotate(30)" d="M0 -166V-147" stroke-width="9" />
+        <path transform="rotate(60)" d="M0 -166V-147" stroke-width="9" />
+        <path transform="rotate(90)" d="M0 -166V-147" stroke-width="9" />
+        <path transform="rotate(120)" d="M0 -166V-147" stroke-width="9" />
+        <path transform="rotate(150)" d="M0 -166V-147" stroke-width="9" />
+        <path transform="rotate(180)" d="M0 -166V-147" stroke-width="9" />
+        <path transform="rotate(210)" d="M0 -166V-147" stroke-width="9" />
+        <path transform="rotate(240)" d="M0 -166V-147" stroke-width="9" />
+        <path transform="rotate(270)" d="M0 -166V-147" stroke-width="9" />
+        <path transform="rotate(300)" d="M0 -166V-147" stroke-width="9" />
+        <path transform="rotate(330)" d="M0 -166V-147" stroke-width="9" />
+        <path d="M5 102C-90 82-90-22-8-38C96-61 101 63 9 76C-59 83-44 12-8 20C38 32 29 65 8 53M-9 112C-19 18-29-58-3-127C9-164 54-156 41-112C17-40-102-39-84 43C-69 99 61 91 40 165C23 211-45 178-17 155" stroke-width="12" />
+        <polygon points="168,-218 179.08562985823605,-192.25806051391152 206.9933171681013,-189.66969676937285 185.9369258973266,-171.1719394860885 192.0991953439914,-143.83030323062715 168,-158.14 143.9008046560086,-143.83030323062715 150.0630741026734,-171.1719394860885 129.0066828318987,-189.66969676937285 156.91437014176395,-192.25806051391152" fill="none" stroke="#F4FFD4" stroke-width="9" stroke-linejoin="round" />
+        <path d="M-181 157L-149 180M-197 187L-178 201" stroke-width="8" />
+      </g>
+      <g transform="translate(1240 1130) rotate(12)">
+        <path d="M-173 56Q-192-61-114-114Q-61-145-32-224Q-2-165 42-145Q127-124 154-26L164 53" stroke-width="13" />
+        <ellipse cy="53" rx="215" ry="50" stroke-width="13" />
+        <path d="M-158 1Q0 50 153 0M-98-107Q-35-89 55-131" stroke-width="7" />
+        <polygon points="16.000000000000004,-117 31.682110531163183,-80.58457340992359 71.16127794511891,-76.92298567374695 41.374187854754695,-50.755426590076404 50.09154463296344,-12.07701432625305 16,-32.32 -18.091544632963434,-12.07701432625305 -9.374187854754695,-50.7554265900764 -39.16127794511891,-76.92298567374695 0.3178894688368139,-80.58457340992359" fill="none" stroke="#F4FFD4" stroke-width="10" stroke-linejoin="round" />
+        <path d="M-123 155Q0 192 133 146M-87 192Q15 221 88 192" stroke-width="9" />
+        <polygon points="191,-214 199.92258012979974,-193.2808779746117 222.38486503774007,-191.19756081437328 205.43703791736044,-176.3091220253883 210.3969133256516,-154.30243918562672 191,-165.82 171.6030866743484,-154.30243918562672 176.56296208263956,-176.3091220253883 159.61513496225993,-191.19756081437325 182.07741987020026,-193.2808779746117" fill="none" stroke="#F4FFD4" stroke-width="9" stroke-linejoin="round" />
+      </g>
+    </g>
+  </g>
+  <g id="clock">
+    <g opacity=".3">
+      <circle r="510" fill="#FFFFFF" fill-opacity=".25" stroke="#6BB8A8" stroke-width="16" />
+      <circle r="476" fill="none" stroke="#C3B05F" stroke-width="4" />
+      <circle r="455" fill="none" stroke="#FFFFFF" stroke-width="12" />
+      <path transform="rotate(0)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(6)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(12)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(18)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(24)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(30)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(36)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(42)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(48)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(54)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(60)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(66)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(72)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(78)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(84)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(90)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(96)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(102)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(108)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(114)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(120)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(126)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(132)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(138)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(144)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(150)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(156)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(162)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(168)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(174)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(180)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(186)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(192)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(198)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(204)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(210)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(216)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(222)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(228)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(234)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(240)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(246)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(252)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(258)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(264)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(270)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(276)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(282)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(288)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(294)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(300)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(306)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(312)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(318)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(324)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(330)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(336)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(342)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(348)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(354)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <circle r="378" fill="none" stroke="#FFFFFF" stroke-width="3" />
+      <path d="M0 0L-230 -210M0 0L150 -350" stroke="#57AA96" stroke-width="14" />
+      <circle r="27" fill="#E9D891" stroke="#FFFFFF" stroke-width="8" />
+    </g>
+  </g>
+  <g id="lower-clock">
+    <g opacity=".25">
+      <circle r="490" fill="none" stroke="#FFFFFF" stroke-width="24" />
+      <circle r="458" fill="none" stroke="#C3B05F" stroke-width="5" />
+      <path transform="rotate(0)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(6)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(12)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(18)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(24)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(30)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(36)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(42)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(48)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(54)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(60)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(66)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(72)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(78)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(84)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(90)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(96)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(102)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(108)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(114)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(120)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(126)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(132)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(138)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(144)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(150)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(156)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(162)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(168)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(174)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(180)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(186)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(192)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(198)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(204)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(210)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(216)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(222)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(228)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(234)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(240)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(246)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(252)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(258)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(264)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(270)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(276)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(282)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(288)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(294)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(300)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(306)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(312)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(318)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(324)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(330)" d="M0 -400 V-442" stroke="#BFA64F" stroke-width="7" />
+      <path transform="rotate(336)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(342)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(348)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <path transform="rotate(354)" d="M0 -420 V-442" stroke="#46B9AD" stroke-width="3" />
+      <circle r="375" fill="none" stroke="#FFFFFF" stroke-width="4" />
+      <path d="M0 0L-170 -220M0 0L240 -100" stroke="#FFFFFF" stroke-width="15" />
+    </g>
+  </g>
+  <g id="wand">
+    <g opacity=".48">
+      <path d="M0 -45V240" stroke="#FFFFFF" stroke-width="25" stroke-linecap="round" />
+      <path d="M0 -45V240" stroke="#6AB7A3" stroke-width="13" stroke-linecap="round" />
+      <path d="M-8 173L8 190M-8 195L8 212" stroke="#E0C56F" stroke-width="9" />
+      <polygon transform="translate(0 -70) rotate(0)" points="3.5514757175273244e-15,-58 15.682110531163183,-21.584573409923596 55.161277945118904,-17.92298567374695 25.374187854754695,8.244573409923596 34.09154463296344,46.92298567374695 1.6336788300625693e-15,26.68 -34.09154463296343,46.92298567374695 -25.374187854754695,8.2445734099236 -55.161277945118904,-17.922985673746968 -15.682110531163186,-21.584573409923596" fill="#D9BE62" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" />
+      <path d="M-18 -29C-70 40 55 80 15 153" fill="none" stroke="#FFFFFF" stroke-width="8" />
+      <path d="M15 -25C85 15 20 45 45 110" fill="none" stroke="#D0BD74" stroke-width="5" />
+    </g>
+  </g>
+  <g id="lagoon">
+    <g opacity=".8">
+      <path d="M0 1780Q410 1870 900 1800T2000 1760V2400H0Z" fill="url(#lagoon)" />
+      <path d="M0 1860Q155 1780 350 1880L650 2120 350 2150 0 2100Z" fill="#6ECCC0" opacity=".32" />
+      <path d="M2000 1790Q1850 1750 1790 1900L1550 2040 2000 2180Z" fill="#65CBB5" opacity=".32" />
+      <path d="M-60 2160Q120 2070 380 2145L650 2230 375 2390H-60Z" fill="url(#island)" />
+      <path d="M-60 2160Q120 2070 380 2145L650 2230 300 2240 0 2300Z" fill="#B0E9B3" />
+      <path d="M-50 2190Q200 2170 385 2200" fill="none" stroke="#E0F8C7" stroke-width="9" />
+      <path d="M2000 2120Q1870 2160 1780 2300L1550 2400H2000Z" fill="#65C8A0" />
+      <path d="M2000 2120Q1870 2160 1780 2300L1880 2250 2000 2230Z" fill="#C1EBAD" />
+      <path d="M340 2390Q650 2290 820 2205H970Q1000 2310 1300 2400Z" fill="#DDFAE5" opacity=".65" />
+      <path d="M610 2400L840 2230M970 2230L1120 2400M760 2320H1050M700 2360H1140" stroke="#A4DACA" stroke-width="4" fill="none" />
+    </g>
+    <g>
+      <ellipse cx="39" cy="1970" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="202" cy="2041" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="365" cy="2112" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="528" cy="2183" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="691" cy="2254" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.73" />
+      <ellipse cx="854" cy="2325" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="1017" cy="1976" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="1180" cy="2047" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="1343" cy="2118" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="1506" cy="2189" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.73" />
+      <ellipse cx="1669" cy="2260" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="1832" cy="2331" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="45" cy="1982" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="208" cy="2053" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="371" cy="2124" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.73" />
+      <ellipse cx="534" cy="2195" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="697" cy="2266" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="860" cy="2337" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="1023" cy="1988" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="1186" cy="2059" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.73" />
+      <ellipse cx="1349" cy="2130" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="1512" cy="2201" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="1675" cy="2272" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="1838" cy="2343" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="51" cy="1994" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.73" />
+      <ellipse cx="214" cy="2065" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="377" cy="2136" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="540" cy="2207" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="703" cy="2278" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="866" cy="2349" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.73" />
+      <ellipse cx="1029" cy="2000" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="1192" cy="2071" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="1355" cy="2142" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="1518" cy="2213" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="1681" cy="2284" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.73" />
+      <ellipse cx="1844" cy="2355" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="57" cy="2006" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="220" cy="2077" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="383" cy="2148" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="546" cy="2219" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.73" />
+      <ellipse cx="709" cy="2290" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="872" cy="2361" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="1035" cy="2012" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="1198" cy="2083" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="1361" cy="2154" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.73" />
+      <ellipse cx="1524" cy="2225" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="1687" cy="2296" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="1850" cy="2367" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="63" cy="2018" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="226" cy="2089" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.73" />
+      <ellipse cx="389" cy="2160" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="552" cy="2231" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="715" cy="2302" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="878" cy="2373" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="1041" cy="2024" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.73" />
+      <ellipse cx="1204" cy="2095" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="1367" cy="2166" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="1530" cy="2237" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="1693" cy="2308" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="1856" cy="2379" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.73" />
+      <ellipse cx="69" cy="2030" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="232" cy="2101" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="395" cy="2172" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="558" cy="2243" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="721" cy="2314" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.73" />
+      <ellipse cx="884" cy="2385" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="1047" cy="2036" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="1210" cy="2107" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="1373" cy="2178" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="1536" cy="2249" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.73" />
+      <ellipse cx="1699" cy="2320" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.25" />
+      <ellipse cx="1862" cy="1971" rx="11.76" ry="4.2" fill="#FFFFFF" opacity="0.37" />
+      <ellipse cx="75" cy="2042" rx="4.199999999999999" ry="1.5" fill="#FFFFFF" opacity="0.49" />
+      <ellipse cx="238" cy="2113" rx="6.72" ry="2.4" fill="#FFFFFF" opacity="0.61" />
+      <ellipse cx="401" cy="2184" rx="9.239999999999998" ry="3.3" fill="#FFFFFF" opacity="0.73" />
+    </g>
+  </g>
+  <g id="palace">
+    <g opacity=".68" stroke-linejoin="round">
+      <ellipse cx="350" cy="48" rx="470" ry="76" fill="#77C6B1" opacity=".6" />
+      <path d="M-90 15L350 -80 830 10 690 84 40 84Z" fill="#B5E8CA" />
+      <g transform="translate(45 -250)">
+        <path d="M0 0H85V290H0Z" fill="url(#castlewall)" />
+        <path d="M55.25 0H85V290H55.25Z" fill="#73BCD5" opacity=".4" />
+        <path d="M-14 0L42.5 -106.25 99 0Z" fill="#DAB1C6" stroke="#E7CC74" stroke-width="4" />
+        <path d="M42.5 -106.25V-150.25L84.5 -135.25 42.5 -121.25" fill="#F4DF86" stroke="#D6BA58" stroke-width="3" />
+        <path d="M30.599999999999998 58Q42.5 32 54.4 58V98H30.599999999999998Z" fill="#61AECF" stroke="#F7F3B7" stroke-width="4" />
+        <path d="M-7 5H92M-5 276H90" stroke="#F2FFFF" stroke-width="10" />
+      </g>
+      <g transform="translate(575 -265)">
+        <path d="M0 0H92V310H0Z" fill="url(#castlewall)" />
+        <path d="M59.800000000000004 0H92V310H59.800000000000004Z" fill="#73BCD5" opacity=".4" />
+        <path d="M-14 0L46 -115 106 0Z" fill="#DAB1C6" stroke="#E7CC74" stroke-width="4" />
+        <path d="M46 -115V-159L88 -144 46 -130" fill="#F4DF86" stroke="#D6BA58" stroke-width="3" />
+        <path d="M33.12 62Q46 36 58.88 62V102H33.12Z" fill="#61AECF" stroke="#F7F3B7" stroke-width="4" />
+        <path d="M-7 5H99M-5 296H97" stroke="#F2FFFF" stroke-width="10" />
+      </g>
+      <g transform="translate(245 -420)">
+        <path d="M0 0H75V460H0Z" fill="url(#castlewall)" />
+        <path d="M48.75 0H75V460H48.75Z" fill="#73BCD5" opacity=".4" />
+        <path d="M-14 0L37.5 -93.75 89 0Z" fill="#91CBDA" stroke="#E7CC74" stroke-width="4" />
+        <path d="M37.5 -93.75V-137.75L79.5 -122.75 37.5 -108.75" fill="#F4DF86" stroke="#D6BA58" stroke-width="3" />
+        <path d="M27 92Q37.5 66 48 92V132H27Z" fill="#61AECF" stroke="#F7F3B7" stroke-width="4" />
+        <path d="M-7 5H82M-5 446H80" stroke="#F2FFFF" stroke-width="10" />
+      </g>
+      <g transform="translate(405 -475)">
+        <path d="M0 0H64V500H0Z" fill="url(#castlewall)" />
+        <path d="M41.6 0H64V500H41.6Z" fill="#73BCD5" opacity=".4" />
+        <path d="M-14 0L32 -80 78 0Z" fill="#AABADD" stroke="#E7CC74" stroke-width="4" />
+        <path d="M32 -80V-124L74 -109 32 -95" fill="#F4DF86" stroke="#D6BA58" stroke-width="3" />
+        <path d="M23.04 100Q32 74 40.96 100V140H23.04Z" fill="#61AECF" stroke="#F7F3B7" stroke-width="4" />
+        <path d="M-7 5H71M-5 486H69" stroke="#F2FFFF" stroke-width="10" />
+      </g>
+      <path d="M100 -200H590V50H100Z" fill="url(#castlewall)" stroke="#EAFEF9" stroke-width="7" />
+      <path d="M75 -205L350 -320 615 -205Z" fill="#8FBCDC" stroke="#E9D68C" stroke-width="5" />
+      <path d="M245 50V-190L350 -255 455 -190V50Z" fill="#8ECDD9" stroke="#F6FFFF" stroke-width="7" />
+      <path d="M276 50V-124Q350 -227 424 -124V50Z" fill="#65A9C5" stroke="#ECD17C" stroke-width="8" />
+      <path d="M305 50V-113Q350 -181 395 -113V50Z" fill="#D7F7EE" />
+      <path d="M326 50V-97Q350 -137 374 -97V50Z" fill="#62A5C1" />
+      <g transform="translate(175 -310)">
+        <path d="M0 0H68V355H0Z" fill="url(#castlewall)" />
+        <path d="M44.2 0H68V355H44.2Z" fill="#73BCD5" opacity=".4" />
+        <path d="M-14 0L34 -85 82 0Z" fill="#E0B3C5" stroke="#E7CC74" stroke-width="4" />
+        <path d="M34 -85V-129L76 -114 34 -100" fill="#F4DF86" stroke="#D6BA58" stroke-width="3" />
+        <path d="M24.48 71Q34 45 43.52 71V111H24.48Z" fill="#61AECF" stroke="#F7F3B7" stroke-width="4" />
+        <path d="M-7 5H75M-5 341H73" stroke="#F2FFFF" stroke-width="10" />
+      </g>
+      <g transform="translate(477 -340)">
+        <path d="M0 0H68V385H0Z" fill="url(#castlewall)" />
+        <path d="M44.2 0H68V385H44.2Z" fill="#73BCD5" opacity=".4" />
+        <path d="M-14 0L34 -85 82 0Z" fill="#CCB6D7" stroke="#E7CC74" stroke-width="4" />
+        <path d="M34 -85V-129L76 -114 34 -100" fill="#F4DF86" stroke="#D6BA58" stroke-width="3" />
+        <path d="M24.48 77Q34 51 43.52 77V117H24.48Z" fill="#61AECF" stroke="#F7F3B7" stroke-width="4" />
+        <path d="M-7 5H75M-5 371H73" stroke="#F2FFFF" stroke-width="10" />
+      </g>
+      <path d="M330 -286L350 -320 370 -286 350 -252Z" fill="#F9E894" stroke="#FFFFFF" stroke-width="5" />
+      <path d="M115 -104H160M545 -104H584M116 -24H160M545 -24H584" stroke="#76B5C8" stroke-width="19" />
+      <path d="M70 52H630M50 66H650M25 80H675" stroke="#E9FCED" stroke-width="12" />
+    </g>
+  </g>
+  <g id="corners">
+    <g opacity=".7">
+      <path d="M0 0H600L0 600Z" fill="#D6F5D7" />
+      <path d="M0 0H460L0 460Z" fill="#F6FFF7" />
+      <path d="M0 0H320L0 320Z" fill="#ADF2E6" />
+      <path d="M2000 2400H1580L2000 1980Z" fill="#F6FFF7" />
+      <path d="M2000 2400H1720L2000 2120Z" fill="#E4F1AA" />
+    </g>
+  </g>
+</svg>

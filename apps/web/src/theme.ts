@@ -3,10 +3,13 @@ import { VersionEnum } from '@gekichumai/dxdata'
 import assetpack from '@/utils/assetpack.json'
 
 export interface Theme {
-  background: {
-    at1x: Asset
-    at2x?: Asset
-  }
+  background:
+    | { kind: 'magical' }
+    | {
+        kind?: 'image'
+        at1x: Asset
+        at2x?: Asset
+      }
   logo: Asset
   favicon: Asset
   accentColor: string
@@ -15,9 +18,7 @@ export interface Theme {
 
 export const VERSION_THEME: Record<string, Theme> = {
   [VersionEnum.MAGiCAL]: {
-    background: {
-      at1x: { width: 1600, height: 1920, path: '/images/versions/magical/background.webp', local: true },
-    },
+    background: { kind: 'magical' },
     logo: { width: 604, height: 354, path: '/images/versions/magical/logo.webp', local: true },
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#178C72',
