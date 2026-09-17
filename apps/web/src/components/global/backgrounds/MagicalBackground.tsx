@@ -17,6 +17,7 @@ function Artwork({
   return (
     <div
       className={`magical-background__layer magical-background__${name}`}
+      data-drift={['paper', 'pattern', 'corners'].includes(name) ? undefined : name}
       style={{ aspectRatio: `${width} / ${height}` }}
     >
       <svg className="magical-background__art" viewBox={viewBox} aria-hidden="true" focusable="false">
@@ -26,7 +27,7 @@ function Artwork({
   )
 }
 
-/** CSS owns viewport adaptation so the initial SSR and hydrated scene are identical. */
+/** CSS keeps artwork hidden until the hydration ref commits, without changing the SSR tree. */
 export function MagicalBackground() {
   return (
     <div className="magical-background" aria-hidden="true" ref={attachMagicalMotion}>
@@ -34,14 +35,14 @@ export function MagicalBackground() {
       <Artwork name="atmosphere" />
       <Artwork name="pattern" />
       <Artwork name="ribbons" />
-      <Artwork name="clock" viewBox="-530 -530 1060 1060" />
+      <Artwork name="sky-orbit" viewBox="-530 -530 1060 1060" />
       <Artwork name="edge-left" viewBox="-100 260 510 1920" />
       <Artwork name="edge-right" viewBox="1610 260 490 1920" />
       {/* This viewBox is centered on the artwork's measured optical centroid (1000, 1200). */}
       <Artwork name="emblems" viewBox="400 870 1200 660" />
       <Artwork name="lagoon" viewBox="0 1750 2000 650" />
-      <Artwork name="lower-clock" viewBox="-520 -520 1040 1040" />
-      <Artwork name="palace" viewBox="-140 -620 990 770" />
+      <Artwork name="water-orbit" viewBox="-520 -520 1040 1040" />
+      <Artwork name="palace" viewBox="-140 -620 990 1050" />
       <Artwork name="wand" viewBox="-75 -150 150 410" />
       <Artwork name="character" viewBox="0 0 460 810">
         <defs>

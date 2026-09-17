@@ -273,7 +273,7 @@
     <use href="#double-note" transform="translate(1190 1170) rotate(15) scale(0.64)" fill="#65b8ae" opacity=".4" />
     <path d="M705 1260Q1000 1430 1295 1260M700 1278Q1000 1448 1300 1278" fill="none" stroke="#fbfbd8" stroke-width="2" opacity=".35" />
   </g>
-  <g id="sky-orbit">
+  <g id="sky-orbit" transform="translate(1910 170)">
     <circle cx="0" cy="0" r="465" fill="none" stroke="#fff5be" stroke-width="3" opacity="0.55" />
     <circle cx="0" cy="0" r="443" fill="none" stroke="#fff5be" stroke-width="1" opacity="0.55" />
     <circle cx="0" cy="0" r="400" fill="none" stroke="#fff5be" stroke-width="2" opacity="0.32" />
@@ -287,7 +287,7 @@
     <use href="#star" transform="translate(-0.0 -443.0) rotate(0) scale(0.5)" fill="#fff6c6" opacity="0.7" />
     <use href="#star" transform="translate(313.25 -313.25) rotate(0) scale(0.5)" fill="#fff6c6" opacity="0.7" />
   </g>
-  <g id="water-orbit" opacity=".65">
+  <g id="water-orbit" transform="translate(120 2370)" opacity=".65">
     <circle cx="0" cy="0" r="440" fill="none" stroke="#fff5be" stroke-width="3" opacity="0.55" />
     <circle cx="0" cy="0" r="418" fill="none" stroke="#fff5be" stroke-width="1" opacity="0.55" />
     <circle cx="0" cy="0" r="375" fill="none" stroke="#fff5be" stroke-width="2" opacity="0.32" />
@@ -374,7 +374,7 @@
     <use href="#star" transform="translate(1606 2174) rotate(0) scale(0.35)" fill="#ffffe6" opacity="0.45" />
     <use href="#star" transform="translate(137 2353) rotate(0) scale(0.15)" fill="#ffffe6" opacity="0.45" />
   </g>
-  <g id="palace" opacity=".72">
+  <g id="palace" transform="translate(120 2280) scale(.85)" opacity=".72">
     <g transform="translate(345 100) scale(1.75)">
       <path d="M-210 0Q-95-25 10-20Q160-42 230 0L125 105 0 145-150 75Z" fill="url(#rock)" />
       <path d="M-210 0Q-100-80 25-40Q120-70 230 0Q100 65-40 38Q-170 32-210 0Z" fill="#98d7ae" />
@@ -437,7 +437,7 @@
     <use href="#rune" transform="translate(474 -405) rotate(0) scale(0.4)" color="#fff0af" opacity=".8" />
     <use href="#rune" transform="translate(620 -340) rotate(0) scale(0.4)" color="#fff0af" opacity=".8" />
   </g>
-  <g id="wand" opacity=".55">
+  <g id="wand" transform="translate(320 1690) rotate(-27)" opacity=".55">
     <path d="M-7 17H7V225Q0 239-7 225Z" fill="#f0e5b5" stroke="#eaffd8" stroke-width="3" />
     <path d="M-7 55H7M-7 187H7" stroke="#fffcec" stroke-width="8" />
     <circle cx="0" cy="-25" r="51" fill="none" stroke="#ffface" stroke-width="5" />

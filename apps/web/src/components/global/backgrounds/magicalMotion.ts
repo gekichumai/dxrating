@@ -1,43 +1,25 @@
-/** A DOM ref lifecycle keeps scroll frames outside React and stops work completely at rest. */
+/** Hydration enables CSS drift; JavaScript only runs while scroll momentum settles. */
 export function attachMagicalMotion(scene: HTMLDivElement) {
-  // The preference wipe needs a complete new snapshot, not the entrance's hidden first frame.
   scene.toggleAttribute('data-skip-entrance', document.documentElement.hasAttribute('data-preference-wipe'))
+  scene.setAttribute('data-ready', '')
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
   const compact = window.matchMedia('(max-width: 600px)')
   const tablet = window.matchMedia('(max-width: 1100px)')
   const landscape = window.matchMedia('(max-height: 540px)')
-  // x/y are maximum pixel travel per unit of momentum; turn is in degrees.
-  const choreography = [
-    { name: 'ribbons', x: 5, y: -10, turn: 0.5, slow: true },
-    { name: 'clock', x: 0, y: -7, turn: 9, slow: false },
-    { name: 'edge-left', x: -9, y: -15, turn: -1.5, slow: false },
-    { name: 'edge-right', x: 9, y: -20, turn: 1.5, slow: false },
-    { name: 'emblems', x: 0, y: -8, turn: -0.4, slow: true },
-    { name: 'lower-clock', x: 0, y: 8, turn: -12, slow: false },
-    { name: 'palace', x: 0, y: -9, turn: 0, slow: true },
-    { name: 'wand', x: 8, y: -25, turn: 8, slow: false },
-    { name: 'character', x: 3, y: -19, turn: -1.2, slow: true },
-  ].map((step) => ({
-    ...step,
-    element: scene.querySelector<SVGSVGElement>(`.magical-background__${step.name} > svg`)!,
-  }))
-  let active = choreography
+  const layers = [...scene.querySelectorAll<HTMLElement>('[data-drift]')]
+  let active = layers
   let frame = 0
   let lastTime = 0
   let lastY = Math.max(0, window.scrollY)
   let sampledY = lastY
   let momentum = 0
-  let drift = 0
 
   function reset() {
     cancelAnimationFrame(frame)
     frame = 0
-    momentum = drift = 0
+    momentum = 0
     sampledY = lastY = Math.max(0, window.scrollY)
-    for (const { element } of choreography) {
-      element.style.removeProperty('translate')
-      element.style.removeProperty('rotate')
-    }
+    for (const layer of layers) layer.style.removeProperty('translate')
   }
 
   function tick(time: number) {
@@ -45,23 +27,21 @@ export function attachMagicalMotion(scene: HTMLDivElement) {
     lastTime = time
     const velocity = Math.max(-2.4, Math.min(2.4, (lastY - sampledY) / elapsed))
     sampledY = lastY
-    momentum += (velocity - momentum) * (1 - Math.exp(-elapsed / 95))
-    drift += (momentum - drift) * (1 - Math.exp(-elapsed / 180))
-    if (Math.abs(momentum) < 0.002 && Math.abs(drift) < 0.002 && velocity === 0) {
+    momentum += (velocity - momentum) * (1 - Math.exp(-elapsed / 140))
+    if (Math.abs(momentum) < 0.002 && velocity === 0) {
       reset()
       return
     }
-    const strength = compact.matches ? 0.06 : 0.12
-    for (const { element, x, y, turn, slow } of active) {
-      const force = (slow ? drift : momentum) * strength
-      element.style.setProperty('translate', `${(x * force).toFixed(3)}px ${(y * force).toFixed(3)}px`)
-      element.style.setProperty('rotate', `${(turn * force * 0.2).toFixed(3)}deg`)
+    // Idle peaks at half its total travel; scroll peaks 20% above that (0.5 × 1.2).
+    const force = (-momentum / 2.4) * 0.6
+    for (const layer of active) {
+      layer.style.setProperty('translate', `0 calc(var(--idle-distance) * ${force.toFixed(4)})`)
     }
     frame = requestAnimationFrame(tick)
   }
 
   function onScroll() {
-    if (reduced.matches || document.hidden) return
+    if (reduced.matches || document.hidden || document.documentElement.hasAttribute('data-preference-wipe')) return
     lastY = Math.max(0, window.scrollY)
     if (lastY === sampledY || frame) return
     lastTime = performance.now() - 16.667
@@ -70,7 +50,9 @@ export function attachMagicalMotion(scene: HTMLDivElement) {
 
   function configure() {
     reset()
-    active = choreography.filter(({ name }) => {
+    scene.toggleAttribute('data-motion-paused', document.hidden)
+    active = layers.filter((layer) => {
+      const name = layer.dataset.drift
       if (name === 'wand') return !tablet.matches && !landscape.matches
       if (name === 'character' || name === 'edge-right') return !compact.matches
       return true
@@ -79,12 +61,15 @@ export function attachMagicalMotion(scene: HTMLDivElement) {
 
   configure()
   window.addEventListener('scroll', onScroll, { passive: true })
-  document.addEventListener('visibilitychange', reset)
+  document.addEventListener('visibilitychange', configure)
   for (const media of [reduced, compact, tablet, landscape]) media.addEventListener('change', configure)
   return () => {
     reset()
     window.removeEventListener('scroll', onScroll)
-    document.removeEventListener('visibilitychange', reset)
+    document.removeEventListener('visibilitychange', configure)
     for (const media of [reduced, compact, tablet, landscape]) media.removeEventListener('change', configure)
+    scene.removeAttribute('data-ready')
+    scene.removeAttribute('data-skip-entrance')
+    scene.removeAttribute('data-motion-paused')
   }
 }
