@@ -277,3 +277,134 @@
     white-space: nowrap;
   }
 }
+.rating-calculator {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.rating-overview {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: start;
+  gap: 16px;
+}
+.rating-summary,
+.rating-tools,
+.rating-summary .MuiAlert-message,
+.rating-tools .MuiAlert-message {
+  min-width: 0;
+  width: 100%;
+}
+.rating-tools .MuiButton-root {
+  max-width: 100%;
+}
+.rating-statistics {
+  position: relative;
+  min-width: 0;
+}
+.rating-statistics .rating-statistics-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.rating-statistics--details {
+  padding-top: 40px;
+}
+.rating-records {
+  background: rgb(255 255 255 / 85%);
+  border-radius: 16px;
+}
+.rating-table-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 20px;
+  padding: 12px 16px 0;
+}
+.rating-table-controls .MuiFormControlLabel-root {
+  margin: 0;
+}
+.rating-table-controls .MuiFormControlLabel-label {
+  font-size: 14px;
+}
+.rating-add-form {
+  padding: 12px 16px 16px;
+  border-bottom: 1px solid rgb(15 23 42 / 10%);
+}
+.rating-add-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px auto;
+  gap: 12px;
+  align-items: start;
+}
+.rating-add-fields > * {
+  min-width: 0;
+}
+.rating-add-fields .rating-add-submit {
+  min-height: 40px;
+  white-space: nowrap;
+}
+.rating-add-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+}
+.rating-add-preview > * {
+  min-width: 0;
+}
+.rating-records .MuiTableContainer-root {
+  border-radius: 0 0 16px 16px;
+  box-shadow: none;
+}
+.rating-table th.rating-col--chart {
+  padding-left: 16px;
+}
+.rating-table .rating-chart-link {
+  padding-left: 16px !important;
+}
+@media (min-width: 1280px) {
+  .rating-statistics .rating-statistics-overview {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .rating-statistics-overview > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 400px) {
+  .rating-statistics-overview .text-3xl {
+    font-size: 24px;
+  }
+}
+@media (max-width: 767px) {
+  .rating-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rating-table-controls {
+    padding: 8px 12px 0;
+    gap: 0 12px;
+  }
+  .rating-add-form {
+    padding: 12px;
+  }
+  .rating-add-fields {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px 8px;
+  }
+  .rating-add-fields > .MuiAutocomplete-root {
+    grid-column: 1 / -1;
+  }
+  .rating-add-preview {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .rating-table th.rating-col--chart {
+    padding-left: 12px;
+  }
+  .rating-table .rating-chart-link {
+    padding-left: 12px !important;
+  }
+}

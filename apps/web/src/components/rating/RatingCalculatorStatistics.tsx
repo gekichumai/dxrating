@@ -1,11 +1,10 @@
 import clsx from 'clsx'
 import * as d3 from 'd3'
-import { motion } from 'framer-motion'
+import { Button } from '@mui/material'
 import compact from 'lodash-es/compact'
 import { type FC, type HTMLAttributes, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMeasure } from 'react-use'
-import IconMdiGestureSwipeLeft from '~icons/mdi/gesture-swipe-left'
 import { deriveColor } from '../../utils/color'
 import { makeId } from '../../utils/random'
 import { useVersionTheme } from '../../utils/useVersionTheme'
@@ -320,85 +319,29 @@ function RatingCalculatorStatisticsDetails({
 
 export const RatingCalculatorStatistics: FC = () => {
   const { t } = useTranslation(['rating-calculator'])
-  const firstHeightSet = useRef(false)
-  const [tab, setTab] = useState<'overview' | 'details'>('overview')
-  const [containerRef, containerRect] = useMeasure<HTMLDivElement>()
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const [firstItemRef, firstItemRect] = useMeasure<HTMLDivElement>()
-  const [lastItemRef, lastItemRect] = useMeasure<HTMLDivElement>()
+  const [showHistogram, setShowHistogram] = useState(false)
   const { statistics } = useRatingEntries()
-
-  const [containerRectHeight, setContainerRectHeight] = useState(containerRect.height)
-
-  useEffect(() => {
-    const listener = () => {
-      const scrollX = scrollContainerRef.current?.scrollLeft ?? 0
-      const scrollPercentage = scrollX / containerRect.width
-
-      if (scrollPercentage < 0.01) {
-        setTab('overview')
-        scrollContainerRef.current?.scrollTo({
-          left: 0,
-          behavior: 'instant',
-        })
-      } else if (scrollPercentage > 0.99) {
-        setTab('details')
-        scrollContainerRef.current?.scrollTo({
-          left: containerRect.width,
-          behavior: 'instant',
-        })
-      }
-    }
-    scrollContainerRef.current?.addEventListener('scroll', listener)
-    const scrollContainer = scrollContainerRef.current
-
-    return () => {
-      scrollContainer?.removeEventListener('scroll', listener)
-    }
-  }, [containerRect, firstItemRect, lastItemRect])
-
-  useEffect(() => {
-    if (!firstHeightSet.current) {
-      setContainerRectHeight(firstItemRect.height + 10)
-      firstHeightSet.current = true
-    } else {
-      setContainerRectHeight((tab === 'overview' ? firstItemRect.height : lastItemRect.height) + 10)
-    }
-  }, [tab, firstItemRect, lastItemRect])
-
-  const secondPageAvailable = statistics.b50Sum > 0
+  const detailsVisible = showHistogram && statistics.b50Sum > 0
 
   return (
-    <div className="w-full" ref={containerRef}>
-      <motion.div
-        ref={scrollContainerRef}
-        className={clsx(
-          'flex items-start overflow-y-hidden w-full py-1 will-change-height transition-height duration-300 relative',
-          containerRect.width && 'snap-x snap-mandatory',
-          secondPageAvailable ? 'overflow-x-auto' : 'overflow-x-hidden',
-        )}
-        style={{
-          width: containerRect.width,
-          height: containerRectHeight,
-        }}
-      >
-        {secondPageAvailable && (
-          <div className="flex gap-1 items-center absolute top-2 right-0 rounded-full bg-blue-100 text-zinc-500 px-2 py-1 font-bold select-none">
-            <IconMdiGestureSwipeLeft className="w-3 h-3" />
-            <div className="leading-none text-xs">{t('rating-calculator:statistics.histogram-available')}</div>
-          </div>
-        )}
-        <RatingCalculatorStatisticsOverview
-          ref={firstItemRef}
-          className="shrink-0 snap-end overflow-hidden"
-          style={{ width: containerRect.width }}
-        />
-        <RatingCalculatorStatisticsDetails
-          ref={lastItemRef}
-          className="shrink-0 snap-end overflow-hidden"
-          style={{ width: containerRect.width }}
-        />
-      </motion.div>
+    <div className={clsx('rating-statistics', detailsVisible && 'rating-statistics--details')}>
+      {statistics.b50Sum > 0 && (
+        <Button
+          size="small"
+          aria-expanded={detailsVisible}
+          onClick={() => setShowHistogram(!showHistogram)}
+          className="rating-statistics-toggle"
+        >
+          {detailsVisible
+            ? t('rating-calculator:breakdown.title')
+            : t('rating-calculator:statistics.histogram-available')}
+        </Button>
+      )}
+      {detailsVisible ? (
+        <RatingCalculatorStatisticsDetails />
+      ) : (
+        <RatingCalculatorStatisticsOverview className="rating-statistics-overview" />
+      )}
     </div>
   )
 }

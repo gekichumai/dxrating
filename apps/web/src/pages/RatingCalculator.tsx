@@ -166,18 +166,18 @@ export const RatingCalculator = () => {
   if (!sheets) return null
 
   return (
-    <div className="flex-container w-full pb-global">
-      <div className="flex flex-col md:flex-row items-start gap-4 w-full">
-        <Alert icon={false} severity="info" className="px-4 py-2 w-full md:w-2/3" classes={{ message: 'w-full' }}>
+    <div className="rating-calculator flex-container w-full pb-global">
+      <div className="rating-overview">
+        <Alert icon={false} severity="info" className="rating-summary px-4 py-2" classes={{ message: 'w-full' }}>
           <AlertTitle className="font-bold">{t('rating-calculator:breakdown.title')}</AlertTitle>
           <RatingCalculatorStatistics />
         </Alert>
 
-        <div className="flex flex-col gap-4 h-full self-stretch w-full md:w-1/3">
+        <div className="rating-tools">
           <Alert
             icon={false}
             severity="info"
-            className="w-full overflow-auto px-4 py-2"
+            className="w-full px-4 py-2"
             classes={{
               message: 'w-full',
             }}
@@ -192,7 +192,7 @@ export const RatingCalculator = () => {
               <RenderToOneShotImageButton />
             </div>
 
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex flex-wrap items-center gap-2 mt-2">
               <ImportMenu modifyEntries={modifyEntries} />
 
               <ExportMenu />
@@ -202,62 +202,50 @@ export const RatingCalculator = () => {
               <ClearButton modifyEntries={modifyEntries} />
             </div>
           </Alert>
-
-          <Alert
-            icon={false}
-            severity="info"
-            className="w-full px-4 py-2"
-            classes={{
-              message: 'overflow-unset',
-            }}
-          >
-            <AlertTitle className="font-bold">{t('rating-calculator:quick-actions.title')}</AlertTitle>
-            <div className="flex flex-col items-start mt-2">
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={showOnlyB50}
-                    onChange={() => {
-                      const enabled = !showOnlyB50
-                      setShowOnlyB50(enabled)
-                      captureAnalyticsEvent('rating_calculator_view_changed', {
-                        setting: 'show_only_b50',
-                        enabled,
-                      })
-                    }}
-                  />
-                }
-                label={t('rating-calculator:quick-actions.show-only-b50')}
-              />
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={compactMode}
-                    onChange={() => {
-                      const enabled = !compactMode
-                      setCompactMode(enabled)
-                      captureAnalyticsEvent('rating_calculator_view_changed', {
-                        setting: 'compact_mode',
-                        enabled,
-                      })
-                    }}
-                  />
-                }
-                label={
-                  <div className="flex items-center gap-1 leading-none">
-                    {t('rating-calculator:quick-actions.compact-mode')} <BetaBadge />
-                  </div>
-                }
-              />
-            </div>
-          </Alert>
         </div>
       </div>
 
-      <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
-
       <div className={clsx('rating-records w-full', compactMode && 'rating-records--compact')}>
+        <div className="rating-table-controls" role="group" aria-label={t('rating-calculator:quick-actions.title')}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showOnlyB50}
+                onChange={() => {
+                  const enabled = !showOnlyB50
+                  setShowOnlyB50(enabled)
+                  captureAnalyticsEvent('rating_calculator_view_changed', {
+                    setting: 'show_only_b50',
+                    enabled,
+                  })
+                }}
+              />
+            }
+            label={t('rating-calculator:quick-actions.show-only-b50')}
+          />
+
+          <FormControlLabel
+            control={
+              <Switch
+                checked={compactMode}
+                onChange={() => {
+                  const enabled = !compactMode
+                  setCompactMode(enabled)
+                  captureAnalyticsEvent('rating_calculator_view_changed', {
+                    setting: 'compact_mode',
+                    enabled,
+                  })
+                }}
+              />
+            }
+            label={
+              <div className="flex items-center gap-1 leading-none">
+                {t('rating-calculator:quick-actions.compact-mode')} <BetaBadge />
+              </div>
+            }
+          />
+        </div>
+        <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
         <RatingCalculatorTableContent compactMode={compactMode} showOnlyB50={showOnlyB50} />
 
         {allEntries.length === 0 && (
