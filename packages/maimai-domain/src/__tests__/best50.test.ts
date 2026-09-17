@@ -184,6 +184,24 @@ describe('calculateRatingAward', () => {
   })
 
   describe('floor truncation', () => {
+    it.each([
+      [1.5, 62.5, 9],
+      [3, 62.5, 18],
+      [4.5, 62.5, 27],
+      [6, 31.25, 9],
+      [6, 62.5, 36],
+      [9, 62.5, 54],
+      [11.2, 78.125, 105],
+      [11.5, 62.5, 69],
+      [12, 31.25, 18],
+      [12, 62.5, 72],
+      [12, 93.75, 171],
+    ])('preserves exact integer awards for level %s at %s%%', (level, achievement, expected) => {
+      expect(calculateRatingAward(level, achievement).ratingAwardValue).toBe(expected)
+      expect(calculateRatingAward(level, achievement, 'ap').ratingAwardValue).toBe(expected + 1)
+      expect(calculateRatingAward(level, achievement, 'app').ratingAwardValue).toBe(expected + 1)
+    })
+
     it('always floors to integer', () => {
       const result = calculateRatingAward(13.5, 100.5)
       expect(result.ratingAwardValue).toBe(303)
