@@ -11,7 +11,7 @@ import { CustomizedToaster } from '@/components/global/CustomizedToaster'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { OverscrollBackgroundFiller } from '@/components/global/OverscrollBackgroundFiller'
 import { SideEffector } from '@/components/global/SideEffector'
-import { WebpSupportedImage } from '@/components/global/WebpSupportedImage'
+import { VersionBackground } from '@/components/global/backgrounds/VersionBackground'
 import { VersionRegionSwitcher } from '@/components/global/preferences/VersionRegionSwitcher'
 import { AppTabs } from '@/components/layout/AppTabs'
 import { TopBar } from '@/components/layout/TopBar'
@@ -176,17 +176,9 @@ function RootComponent() {
 }
 
 function AppLayout() {
-  const versionTheme = useVersionTheme()
-
   return (
     <div className="h-full w-full relative">
-      <WebpSupportedImage
-        src={versionTheme.background}
-        alt=""
-        aria-hidden={true}
-        className="fixed inset-0 h-full-lvh w-full z-[-1] object-cover object-center select-none touch-callout-none"
-        draggable={false}
-      />
+      <VersionBackground />
 
       <div className="h-full w-full relative">
         <Suspense fallback={fallbackElement}>
