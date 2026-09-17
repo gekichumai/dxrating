@@ -13,6 +13,7 @@ import { SideEffector } from '@/components/global/SideEffector'
 import { VersionBackground } from '@/components/global/backgrounds/VersionBackground'
 import { VersionRegionSwitcher } from '@/components/global/preferences/VersionRegionSwitcher'
 import { AppTabs } from '@/components/layout/AppTabs'
+import { ThemedBody } from '@/components/layout/ThemedBody'
 import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
 import { RegionVersionUpdatePrompt } from '@/components/global/preferences/RegionVersionUpdatePrompt'
@@ -59,9 +60,7 @@ export const Route = createRootRoute({
           content: 'width=device-width, initial-scale=1.0, viewport-fit=cover',
         },
         ...buildRootSeoMeta(locale, { includeTitle: includeRootTitle }),
-        { name: 'theme-color', content: '#c8a8f9' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
-        { name: 'msapplication-TileColor', content: '#c8a8f9' },
         {
           name: 'msapplication-config',
           content: 'https://shama.dxrating.net/favicon/pack/v1/browserconfig.xml',
@@ -91,7 +90,10 @@ function RootLayout() {
 
   return (
     <>
-      <TopBar />
+      {/* Constrain the sticky tint source to its own height so the header still scrolls away. */}
+      <div>
+        <TopBar />
+      </div>
       {!isDevelopersPage && (
         <div
           className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-4 pb-4"
@@ -143,9 +145,9 @@ function RootComponent() {
   return (
     <RenderEnvironmentProvider renderedAt={renderedAt}>
       <I18nextProvider i18n={routeI18n}>
-        <RootDocument>
-          <QueryClientProvider client={queryClient}>
-            <AppContextProvider>
+        <AppContextProvider>
+          <RootDocument>
+            <QueryClientProvider client={queryClient}>
               <VersionCustomizedThemeProvider>
                 <RatingCalculatorContextProvider>
                   <PostHogProvider client={posthog}>
@@ -157,9 +159,9 @@ function RootComponent() {
                   </PostHogProvider>
                 </RatingCalculatorContextProvider>
               </VersionCustomizedThemeProvider>
-            </AppContextProvider>
-          </QueryClientProvider>
-        </RootDocument>
+            </QueryClientProvider>
+          </RootDocument>
+        </AppContextProvider>
       </I18nextProvider>
     </RenderEnvironmentProvider>
   )
@@ -181,18 +183,21 @@ function AppLayout() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const theme = useVersionTheme()
   const { locale, renderedAt } = Route.useRouteContext()
 
   return (
     <html lang={locale}>
       <head>
         <HeadContent />
+        <meta name="theme-color" content={theme.accentColor} />
+        <meta name="msapplication-TileColor" content={theme.accentColor} />
         <meta name={RENDERED_AT_META_NAME} content={String(renderedAt)} />
       </head>
-      <body>
+      <ThemedBody>
         {children}
         <Scripts />
-      </body>
+      </ThemedBody>
     </html>
   )
 }

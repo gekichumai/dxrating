@@ -15,7 +15,7 @@ export const TopBar = () => {
   const { t } = useTranslation(['root'])
 
   return (
-    <div style={{ background: versionTheme.accentColor }}>
+    <div className="sticky top-0" style={{ background: versionTheme.accentColor }}>
       <div className="flex items-center pt-[calc(env(safe-area-inset-top)+1rem)] max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)] flex-col sm:flex-row items-stretch sm:items-center gap-y-4 gap-x-2">
         <div className="flex flex-col items-start justify-center gap-1 select-none relative">
           <Logo />

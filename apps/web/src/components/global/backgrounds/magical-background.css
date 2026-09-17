@@ -6,7 +6,7 @@
   overflow: hidden;
   pointer-events: none;
   user-select: none;
-  background: #bdebdc;
+  background: var(--theme-canvas);
 }
 
 .magical-background__layer {

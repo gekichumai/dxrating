@@ -12,6 +12,7 @@ export interface Theme {
       }
   logo: Asset
   favicon: Asset
+  canvasColor?: string
   accentColor: string
   disabled?: boolean
 }
@@ -22,6 +23,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     logo: { width: 604, height: 354, path: '/images/versions/magical/logo.webp', local: true },
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#178C72',
+    canvasColor: '#bdebdc',
   },
   [VersionEnum.FESTiVALPLUS]: {
     background: {
