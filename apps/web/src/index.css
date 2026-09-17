@@ -124,78 +124,49 @@ body,
   }
 }
 
-@media (prefers-reduced-motion) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none !important;
-  }
+@property --preference-wipe-radius {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
 }
 
-::view-transition-old(*),
-::view-transition-new(*) {
+html[data-preference-wipe] {
+  --preference-wipe-feather: 30px;
+}
+
+html[data-preference-wipe]::view-transition-old(root),
+html[data-preference-wipe]::view-transition-new(root) {
   mix-blend-mode: normal;
 }
 
-::view-transition-old(*),
-::view-transition-new(*) {
-  backface-visibility: hidden;
+html[data-preference-wipe]::view-transition-old(root) {
+  animation: none;
 }
 
-@keyframes view-transition-exit {
-  0% {
-    opacity: 1;
-    transform: translate(0px, 0px) scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translate(0px, 0px) scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
-  }
-}
-
-::view-transition-old(root) {
-  animation-name: view-transition-exit;
-  animation-duration: 0.1s;
-  animation-delay: 0s;
-  animation-timing-function: cubic-bezier(0.27, 0, 0.51, 1);
-  animation-fill-mode: both;
-}
-
-@property --view-transition-wipe-offset {
-  syntax: '<number>';
-  initial-value: 0;
-  inherits: false;
-}
-
-@keyframes view-transition-enter {
-  0% {
-    opacity: 1;
-    transform: translate(0px, 0px) scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
-    --view-transition-wipe-offset: 0;
-  }
-
-  100% {
-    opacity: 1;
-    transform: translate(0px, 0px) scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
-    --view-transition-wipe-offset: 1;
-  }
-}
-
-::view-transition-new(root) {
-  animation-name: view-transition-enter;
-  animation-duration: 0.3s;
-  animation-delay: 0s;
-  animation-timing-function: cubic-bezier(0.27, 0, 0.51, 1);
-  animation-fill-mode: both;
-  mask-image: linear-gradient(
-    180deg,
-    black calc(calc(0% - 100%) + calc(calc(100% + 100%) * var(--view-transition-wipe-offset))),
-    transparent calc(calc(100% + 100%) * var(--view-transition-wipe-offset))
+html[data-preference-wipe]::view-transition-new(root) {
+  animation: preference-wipe 550ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  mask-image: radial-gradient(
+    circle at var(--preference-wipe-x) var(--preference-wipe-y),
+    #000 max(0px, var(--preference-wipe-radius) - var(--preference-wipe-feather)),
+    transparent var(--preference-wipe-radius)
   );
-  -webkit-mask-image: linear-gradient(
-    180deg,
-    black calc(calc(0% - 100%) + calc(calc(100% + 100%) * var(--view-transition-wipe-offset))),
-    transparent calc(calc(100% + 100%) * var(--view-transition-wipe-offset))
-  );
+  mask-repeat: no-repeat;
+}
+
+@keyframes preference-wipe {
+  from {
+    --preference-wipe-radius: 0px;
+  }
+  to {
+    --preference-wipe-radius: calc(var(--preference-wipe-reach) + var(--preference-wipe-feather));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-preference-wipe]::view-transition-group(*),
+  html[data-preference-wipe]::view-transition-old(*),
+  html[data-preference-wipe]::view-transition-new(*) {
+    animation: none !important;
+    mask-image: none;
+  }
 }

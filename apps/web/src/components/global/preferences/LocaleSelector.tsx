@@ -1,33 +1,36 @@
 import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material'
+import { flushSync } from 'react-dom'
 import { type FC, type PropsWithChildren, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { persistClientLocalePreference, type SupportedLocale } from '@/setup/locale'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import MdiCheck from '~icons/mdi/check'
 import MdiTranslate from '~icons/mdi/translate'
-import { startViewTransition } from '../../../utils/startViewTransition'
+import { startViewTransition, wipeOriginFromClick } from '../../../utils/startViewTransition'
 
-const LocaleSelectorItem: FC<PropsWithChildren<{ locale: SupportedLocale; selected?: boolean }>> = ({
-  locale,
-  selected,
-  children,
-}) => {
+const LocaleSelectorItem: FC<
+  PropsWithChildren<{ locale: SupportedLocale; selected?: boolean; onClose: () => void }>
+> = ({ locale, selected, onClose, children }) => {
   const { i18n } = useTranslation()
 
   return (
     <MenuItem
       lang={locale}
       selected={selected}
-      onClick={() => {
+      onClick={(event) => {
+        const origin = wipeOriginFromClick(event)
+        flushSync(onClose)
+        if (selected) return
         const previousLocale = i18n.language
-        startViewTransition(() => {
+        void startViewTransition(() => {
           persistClientLocalePreference(locale)
-          void i18n.changeLanguage(locale)
+          const changed = i18n.changeLanguage(locale)
           captureAnalyticsEvent('locale_selector_item_clicked', {
             locale,
             previous_locale: previousLocale,
           })
-        })
+          return changed.then(() => {})
+        }, origin)
       }}
     >
       {selected && (
@@ -62,9 +65,14 @@ export const LocaleSelector = () => {
         <MdiTranslate />
       </IconButton>
 
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+      <Menu transitionDuration={0} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
         {LOCALES.map(({ value, label }) => (
-          <LocaleSelectorItem locale={value} selected={i18n.language === value} key={value}>
+          <LocaleSelectorItem
+            locale={value}
+            selected={i18n.language === value}
+            key={value}
+            onClose={() => setAnchorEl(null)}
+          >
             {label}
           </LocaleSelectorItem>
         ))}

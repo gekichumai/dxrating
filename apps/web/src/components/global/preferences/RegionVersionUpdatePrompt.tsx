@@ -1,6 +1,7 @@
 import { DXVersionToDXDataVersionEnumMap } from '@/models/context/AppContext'
 import { useAppContext } from '@/models/context/useAppContext'
 import { useTranslation } from 'react-i18next'
+import { startViewTransition } from '@/utils/startViewTransition'
 import { ConfirmDialog } from '../ConfirmDialog'
 
 export function RegionVersionUpdatePrompt() {
@@ -23,7 +24,9 @@ export function RegionVersionUpdatePrompt() {
       cancelLabel={t('settings:version-update.keep', { current })}
       confirmColor="primary"
       onCancel={dismissVersionUpdate}
-      onConfirm={() => setVersionAndRegion(availableVersionUpdate, region)}
+      onConfirm={() => {
+        void startViewTransition(() => setVersionAndRegion(availableVersionUpdate, region))
+      }}
     />
   )
 }

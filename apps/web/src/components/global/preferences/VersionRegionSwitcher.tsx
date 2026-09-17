@@ -2,7 +2,8 @@ import type { VersionEnum } from '@gekichumai/dxdata'
 import { ListItem, ListSubheader, MenuItem, Select, styled } from '@mui/material'
 import clsx from 'clsx'
 import uniqBy from 'lodash-es/uniqBy'
-import type { FC } from 'react'
+import { type FC, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import MdiInformation from '~icons/mdi/information'
 import {
@@ -12,7 +13,7 @@ import {
   type Region,
 } from '../../../models/context/AppContext'
 import { useAppContext } from '../../../models/context/useAppContext'
-import { startViewTransition } from '../../../utils/startViewTransition'
+import { startViewTransition, wipeOriginFromElement } from '../../../utils/startViewTransition'
 import { VERSION_THEME } from '../../../theme'
 import { useVersionTheme } from '../../../utils/useVersionTheme'
 import { WebpSupportedImage } from '../WebpSupportedImage'
@@ -93,6 +94,8 @@ const StyledSelect = styled(Select<string>)(({ theme }) => ({
 }))
 
 export const VersionRegionSwitcher: FC = () => {
+  const selectRef = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(false)
   const { t } = useTranslation(['settings'])
   const theme = useVersionTheme()
   const { version, region, setVersionAndRegion } = useAppContext()
@@ -102,6 +105,11 @@ export const VersionRegionSwitcher: FC = () => {
 
   return (
     <StyledSelect
+      ref={selectRef}
+      open={open}
+      onOpen={() => setOpen(true)}
+      onClose={() => setOpen(false)}
+      MenuProps={{ transitionDuration: 0 }}
       value={toMergedVersionRegionId(version, region)}
       variant="filled"
       SelectDisplayProps={{
@@ -112,9 +120,11 @@ export const VersionRegionSwitcher: FC = () => {
       }}
       onChange={(e) => {
         const { version, region } = fromMergedVersionRegionId(e.target.value)
-        startViewTransition(() => {
+        const origin = wipeOriginFromElement(selectRef.current)
+        flushSync(() => setOpen(false))
+        void startViewTransition(() => {
           setVersionAndRegion(version, region)
-        })
+        }, origin)
       }}
       renderValue={(value) => (
         <div className="flex flex-col gap-0.5">
