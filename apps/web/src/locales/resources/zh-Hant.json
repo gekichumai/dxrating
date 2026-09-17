@@ -46,6 +46,7 @@
   },
   "sheet": {
     "search": "搜尋",
+    "search-placeholder": "曲名、曲師、譜師、別名或 Music ID",
     "ocr": "啟動 OCR",
     "filter-current-version": "過濾當前版本 B15：僅顯示來自 {{version}} 的譜面",
     "search-summary": "匹配到 {{found}} 份譜面 / 總計 {{total}} 份 (耗時 {{elapsed}}ms)",

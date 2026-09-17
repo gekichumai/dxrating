@@ -46,6 +46,7 @@
   },
   "sheet": {
     "search": "検索",
+    "search-placeholder": "曲名、アーティスト、譜面製作者、別名、Music ID",
     "ocr": "OCRをスタート",
     "details.achievement-to-rating.achievement": "達成率",
     "details.achievement-to-rating.rating": "レーティング",
