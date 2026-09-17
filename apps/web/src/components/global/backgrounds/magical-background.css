@@ -66,67 +66,67 @@ html[data-preference-wipe] .magical-background__art {
 }
 
 .magical-background__atmosphere {
-  --arrival-scale: 1.0875;
+  --arrival-scale: 1.175;
   --arrival-origin: 50% 0%;
   --arrival-delay: 0ms;
 }
 .magical-background__pattern {
-  --arrival-scale: 1.0625;
+  --arrival-scale: 1.125;
   --arrival-origin: 50% 0%;
   --arrival-delay: 10ms;
 }
 .magical-background__ribbons {
-  --arrival-scale: 1.1;
+  --arrival-scale: 1.2;
   --arrival-origin: 50% 0%;
   --arrival-delay: 20ms;
 }
 .magical-background__sky-orbit {
-  --arrival-scale: 0.85;
+  --arrival-scale: 0.7;
   --arrival-origin: 50% 50%;
   --arrival-delay: 30ms;
 }
 .magical-background__edge-left {
-  --arrival-scale: 1.0875;
+  --arrival-scale: 1.175;
   --arrival-origin: 0% 50%;
   --arrival-delay: 40ms;
 }
 .magical-background__edge-right {
-  --arrival-scale: 1.0875;
+  --arrival-scale: 1.175;
   --arrival-origin: 100% 50%;
   --arrival-delay: 50ms;
 }
 .magical-background__emblems {
-  --arrival-scale: 0.85;
+  --arrival-scale: 0.7;
   --arrival-origin: 50% 50%;
   --arrival-delay: 60ms;
 }
 .magical-background__lagoon {
-  --arrival-scale: 1.0875;
+  --arrival-scale: 1.175;
   --arrival-origin: 50% 100%;
   --arrival-delay: 70ms;
 }
 .magical-background__water-orbit {
-  --arrival-scale: 0.85;
+  --arrival-scale: 0.7;
   --arrival-origin: 50% 50%;
   --arrival-delay: 80ms;
 }
 .magical-background__palace {
-  --arrival-scale: 0.875;
+  --arrival-scale: 0.75;
   --arrival-origin: 18% 100%;
   --arrival-delay: 90ms;
 }
 .magical-background__wand {
-  --arrival-scale: 0.85;
+  --arrival-scale: 0.7;
   --arrival-origin: 50% 85%;
   --arrival-delay: 100ms;
 }
 .magical-background__character {
-  --arrival-scale: 0.9;
+  --arrival-scale: 0.8;
   --arrival-origin: 72% 100%;
   --arrival-delay: 110ms;
 }
 .magical-background__corners {
-  --arrival-scale: 1.0625;
+  --arrival-scale: 1.125;
   --arrival-origin: 50% 0%;
   --arrival-delay: 120ms;
 }

@@ -33,7 +33,7 @@ export function attachMagicalMotion(scene: HTMLDivElement) {
       return
     }
     // Keep scroll displacement bounded as momentum settles.
-    const force = (-momentum / 2.4) * 0.6
+    const force = (-momentum / 2.4) * 1.2
     for (const layer of active) {
       layer.style.setProperty('translate', `0 calc(var(--scroll-distance) * ${force.toFixed(4)})`)
     }

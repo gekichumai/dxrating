@@ -109,8 +109,8 @@ describe('MAGiCAL hydration entrance', () => {
       step()
     }
     const force = Number(layer.style.getPropertyValue('translate').match(/\* (-?[\d.]+)/)?.[1])
-    expect(force).toBeGreaterThanOrEqual(-0.6)
-    expect(force).toBeLessThan(-0.59)
+    expect(force).toBeGreaterThanOrEqual(-1.2)
+    expect(force).toBeLessThan(-1.19)
     expect(layer.querySelector('svg')?.style.getPropertyValue('transform')).toBe('')
     for (let i = 0; i < 180; i++) step()
     expect(frames.size).toBe(0)
