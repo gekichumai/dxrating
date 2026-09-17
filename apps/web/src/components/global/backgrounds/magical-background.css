@@ -1,7 +1,7 @@
 .magical-background {
   position: fixed;
   inset: 0;
-  height: 100lvh;
+  height: calc(100lvh + env(safe-area-inset-bottom, 0px));
   z-index: -1;
   overflow: hidden;
   pointer-events: none;

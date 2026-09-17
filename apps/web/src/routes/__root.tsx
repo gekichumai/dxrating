@@ -1,5 +1,5 @@
 import { HeadContent, Outlet, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
-import { Alert, CircularProgress } from '@mui/material'
+import { CircularProgress } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import i18n from 'i18next'
 import posthog from 'posthog-js'
@@ -9,7 +9,6 @@ import toast from 'react-hot-toast'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import { CustomizedToaster } from '@/components/global/CustomizedToaster'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
-import { OverscrollBackgroundFiller } from '@/components/global/OverscrollBackgroundFiller'
 import { SideEffector } from '@/components/global/SideEffector'
 import { VersionBackground } from '@/components/global/backgrounds/VersionBackground'
 import { VersionRegionSwitcher } from '@/components/global/preferences/VersionRegionSwitcher'
@@ -18,7 +17,6 @@ import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
 import { RegionVersionUpdatePrompt } from '@/components/global/preferences/RegionVersionUpdatePrompt'
 import { AppContextProvider } from '@/models/context/AppContext'
-import { useAppContext } from '@/models/context/useAppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
 import { createServerI18n } from '@/setup/init-i18n'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
@@ -80,8 +78,6 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   const versionTheme = useVersionTheme()
-  const { version, region } = useAppContext()
-  const { t } = useTranslation(['root'])
   const location = useLocation()
 
   const pathname = location.pathname
@@ -95,7 +91,6 @@ function RootLayout() {
 
   return (
     <>
-      <OverscrollBackgroundFiller />
       <TopBar />
       {!isDevelopersPage && (
         <div
@@ -111,11 +106,6 @@ function RootLayout() {
           }}
         >
           <VersionRegionSwitcher />
-          {region === 'jp' && version === 'magical' && (
-            <Alert severity="info" className="mx-4 max-w-2xl">
-              {t('root:magical-data-coming-soon')}
-            </Alert>
-          )}
           {showTabs && <AppTabs />}
         </div>
       )}

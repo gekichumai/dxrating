@@ -20,9 +20,11 @@ const SideEffectorThemeMeta: FC = () => {
   useEffect(() => {
     console.info('[theme] Theme changed to', versionTheme)
 
-    document.body.style.backgroundColor = versionTheme.accentColor
+    // Safari exposes the document canvas beneath its collapsing bottom toolbar.
+    const canvasColor = versionTheme.background.kind === 'magical' ? '#bdebdc' : versionTheme.accentColor
+    document.body.style.backgroundColor = canvasColor
 
-    document.head.querySelector('meta[name="theme-color"]')?.setAttribute('content', versionTheme.accentColor)
+    document.head.querySelector('meta[name="theme-color"]')?.setAttribute('content', canvasColor)
 
     document.head
       .querySelector('meta[name="msapplication-TileColor"]')
