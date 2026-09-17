@@ -564,12 +564,7 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
                 <TableCell
                   key={header.id}
                   colSpan={header.colSpan}
-                  className={clsx(
-                    `rating-col--${header.column.id}`,
-                    'group',
-                    header.column.getCanSort() &&
-                      'cursor-pointer select-none hover:bg-gray-900/10 active:bg-gray-900/20 leading-tight py-4',
-                  )}
+                  className={`rating-col--${header.column.id} group`}
                   scope="col"
                   sortDirection={header.column.getIsSorted() || false}
                 >

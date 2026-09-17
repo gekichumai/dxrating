@@ -16,13 +16,13 @@
 }
 .rating-table .rating-col--comboFlag,
 .rating-table .rating-col--syncFlag {
-  width: 72px;
+  width: 80px;
 }
 .rating-table .rating-col--achievementRate {
   width: 140px;
 }
 .rating-table .rating-col--rating {
-  width: 96px;
+  width: 136px;
 }
 .rating-table .rating-col--actions {
   width: 64px;
@@ -35,6 +35,12 @@
 }
 
 .rating-table-sort {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -43,6 +49,26 @@
   text-align: inherit;
   font: inherit;
   line-height: 1.2;
+}
+
+.rating-table-sort:enabled {
+  cursor: pointer;
+}
+
+.rating-table-sort:enabled:hover {
+  background: rgb(15 23 42 / 6%);
+}
+
+.rating-table-sort:enabled:active {
+  background: rgb(15 23 42 / 10%);
+}
+
+.rating-table-sort:disabled {
+  opacity: 1;
+}
+
+.rating-table-sort > div > div {
+  padding: 0 3px;
 }
 
 .rating-table-sort:focus-visible {
