@@ -2,7 +2,11 @@ import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import clsx from 'clsx'
 import type { FC, PropsWithChildren } from 'react'
 import { fetchImageAsset } from './assetFetcher.js'
+import { MAGICAL_BACKGROUND_SVG } from './magicalBackground.generated.js'
+
 import { type PlayerCollection, type Region, type RenderData } from './index.js'
+
+const magicalBackground = `data:image/svg+xml;base64,${Buffer.from(MAGICAL_BACKGROUND_SVG).toString('base64')}`
 
 interface VersionTheme {
   background: string
@@ -12,7 +16,22 @@ interface VersionTheme {
   backgroundSize: [number, number]
 }
 
-export const VERSION_THEME: Record<string, VersionTheme> = {
+const FALLBACK_THEME: VersionTheme = {
+  background: '/images/background/circle-plus.jpg',
+  logo: '/images/version-logo/circle-plus.png',
+  favicon: '/favicon/prism-1024x.jpg',
+  accentColor: '#EF67A4',
+  backgroundSize: [1500, 1500],
+}
+
+export const VERSION_THEME: Partial<Record<VersionEnum, VersionTheme>> = {
+  [VersionEnum.MAGiCAL]: {
+    background: magicalBackground,
+    logo: '/images/versions/magical/logo.webp',
+    favicon: '/favicon/prism-1024x.jpg',
+    accentColor: '#178C72',
+    backgroundSize: [1500, 1300],
+  },
   [VersionEnum.FESTiVALPLUS]: {
     background: '/images/background/festival-plus.jpg',
     logo: '/images/version-logo/festival-plus.png',
@@ -55,13 +74,7 @@ export const VERSION_THEME: Record<string, VersionTheme> = {
     accentColor: '#EF67A4',
     backgroundSize: [1500, 1500],
   },
-  [VersionEnum.CiRCLEPLUS]: {
-    background: '/images/background/circle-plus.jpg',
-    logo: '/images/version-logo/circle-plus.png',
-    favicon: '/favicon/prism-1024x.jpg',
-    accentColor: '#EF67A4',
-    backgroundSize: [1500, 1500],
-  },
+  [VersionEnum.CiRCLEPLUS]: FALLBACK_THEME,
 }
 
 const DIFFICULTIES: Record<DifficultyEnum, { title: string; color: string; inverted?: boolean }> = {
@@ -338,9 +351,13 @@ export const renderContent = async ({
   region?: Region
   playerCollection?: PlayerCollection
 }) => {
-  const theme = VERSION_THEME[version]
+  // New game versions can launch before renderer artwork is available.
+  // Fall back only the visuals; keep the requested version for ratings and labels.
+  const theme = VERSION_THEME[version] ?? FALLBACK_THEME
 
-  const background = (await fetchImageAsset(theme.background)).buffer
+  const background = theme.background.startsWith('data:')
+    ? theme.background
+    : (await fetchImageAsset(theme.background)).buffer
   const icon = (
     await fetchImageAsset(`/assetbundle/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`)
   ).buffer
