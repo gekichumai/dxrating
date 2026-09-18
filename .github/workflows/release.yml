@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -57,13 +59,17 @@ jobs:
           echo "VITE_VERSION=${{ steps.git-meta.outputs.version }}" >> ${GITHUB_ENV}
           echo "VITE_BUILD_NUMBER=${{ github.run_number }}" >> ${GITHUB_ENV}
           echo "VITE_BUILD_TIME=$(date --utc +%FT%TZ)" >> ${GITHUB_ENV}
+          echo "SENTRY_RELEASE=dxrating@${{ steps.git-meta.outputs.version }}" >> "${GITHUB_ENV}"
+          echo "VITE_SENTRY_ENVIRONMENT=production" >> "${GITHUB_ENV}"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build
         shell: bash
-        run: pnpm turbo run build --filter=@gekichumai/dxrating-web...
+        run: |
+          test -n "$SENTRY_AUTH_TOKEN"
+          pnpm turbo run build --filter=@gekichumai/dxrating-web... --force
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           VITE_BACKEND_URL: https://miruku.dxrating.net
@@ -74,3 +80,14 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Record Sentry deployment
+        uses: getsentry/action-release@v3
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: gekichumai
+          SENTRY_PROJECT: dxrating-web
+        with:
+          release: ${{ env.SENTRY_RELEASE }}
+          environment: production
+          set_commits: skip

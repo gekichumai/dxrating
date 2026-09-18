@@ -84,6 +84,8 @@ RUN pnpm install --filter @gekichumai/backend --prod --frozen-lockfile
 
 # Copy built application from builder
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+# Node maps stack frames to these paths; Sentry reads the files for source snippets.
+COPY --from=builder /app/apps/backend/src ./apps/backend/src
 COPY --from=builder /app/packages ./packages
 
 # Copy necessary runtime files
@@ -102,6 +104,7 @@ ARG BUILT_AT=unknown
 ARG VERSION=unknown
 ENV NODE_ENV=production
 ENV GIT_COMMIT=${GIT_COMMIT}
+ENV SENTRY_RELEASE=dxrating-backend@${GIT_COMMIT}
 ENV BUILD_URL=${BUILD_URL}
 ENV REPO_URL=${REPO_URL}
 ENV BUILT_AT=${BUILT_AT}

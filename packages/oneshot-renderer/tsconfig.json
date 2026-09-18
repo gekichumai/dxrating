@@ -8,7 +8,8 @@
     "rootDir": "src",
     "outDir": "dist",
     "types": ["node"],
-    "inlineSources": false
+    "sourceMap": true,
+    "inlineSources": true
   },
   "include": ["src"]
 }
