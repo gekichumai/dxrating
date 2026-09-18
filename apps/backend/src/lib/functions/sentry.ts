@@ -47,7 +47,11 @@ export function initSentry() {
   const dsn =
     process.env.SENTRY_DSN ||
     'https://e5561152e48961e6e43918588a750ebb@o4506648698683392.ingest.us.sentry.io/4511009913765888'
-  const release = process.env.SENTRY_RELEASE || 'unknown'
+  const release =
+    process.env.SENTRY_RELEASE ||
+    (process.env.GIT_COMMIT && process.env.GIT_COMMIT !== 'unknown'
+      ? `dxrating-backend@${process.env.GIT_COMMIT}`
+      : undefined)
 
   Sentry.init({
     dsn,
