@@ -3,6 +3,7 @@ import clsx from 'clsx'
 import type { FC, PropsWithChildren } from 'react'
 import type { LoadAsset, RenderEntry, RenderInput } from './types.js'
 import { imageData } from './imageData.js'
+import { MAGICAL_BACKGROUND_SVG } from './magicalBackground.generated.js'
 
 declare module 'react' {
   // oxlint-disable-next-line @typescript-eslint/no-unused-vars
@@ -10,6 +11,8 @@ declare module 'react' {
     tw?: string
   }
 }
+
+const magicalBackground = `data:image/svg+xml;base64,${Buffer.from(MAGICAL_BACKGROUND_SVG).toString('base64')}`
 
 interface VersionTheme {
   background: string
@@ -19,7 +22,22 @@ interface VersionTheme {
   backgroundSize: [number, number]
 }
 
-export const VERSION_THEME: Record<string, VersionTheme> = {
+const FALLBACK_THEME: VersionTheme = {
+  background: '/images/background/circle-plus.jpg',
+  logo: '/images/version-logo/circle-plus.png',
+  favicon: '/favicon/prism-1024x.jpg',
+  accentColor: '#EF67A4',
+  backgroundSize: [1500, 1500],
+}
+
+export const VERSION_THEME: Partial<Record<VersionEnum, VersionTheme>> = {
+  [VersionEnum.MAGiCAL]: {
+    background: magicalBackground,
+    logo: '/images/versions/magical/logo.webp',
+    favicon: '/favicon/prism-1024x.jpg',
+    accentColor: '#178C72',
+    backgroundSize: [1500, 1300],
+  },
   [VersionEnum.FESTiVALPLUS]: {
     background: '/images/background/festival-plus.jpg',
     logo: '/images/version-logo/festival-plus.png',
@@ -62,13 +80,7 @@ export const VERSION_THEME: Record<string, VersionTheme> = {
     accentColor: '#EF67A4',
     backgroundSize: [1500, 1500],
   },
-  [VersionEnum.CiRCLEPLUS]: {
-    background: '/images/background/circle-plus.jpg',
-    logo: '/images/version-logo/circle-plus.png',
-    favicon: '/favicon/prism-1024x.jpg',
-    accentColor: '#EF67A4',
-    backgroundSize: [1500, 1500],
-  },
+  [VersionEnum.CiRCLEPLUS]: FALLBACK_THEME,
 }
 
 const DIFFICULTIES: Record<DifficultyEnum, { title: string; color: string; inverted?: boolean }> = {
@@ -334,11 +346,11 @@ export const renderContent = async (
   fetchImageAsset: LoadAsset,
   revision: string,
 ) => {
-  const theme = VERSION_THEME[version]
-  if (!theme) throw new Error(`Unsupported oneshot theme: ${version}`)
+  // Preserve fallback artwork for newly accepted versions while keeping their labels and ratings.
+  const theme = VERSION_THEME[version] ?? FALLBACK_THEME
 
   const [background, icon] = await Promise.all([
-    fetchImageAsset(theme.background).then(imageData),
+    theme.background.startsWith('data:') ? theme.background : fetchImageAsset(theme.background).then(imageData),
     playerCollection
       ? fetchImageAsset(`/assetbundle/icon/ui_icon_${playerCollection.icon.toString().padStart(6, '0')}.png`).then(
           imageData,

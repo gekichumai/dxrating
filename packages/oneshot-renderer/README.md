@@ -36,6 +36,8 @@ The Skia-backed `@napi-rs/canvas` 1.0.9 SVG import was also evaluated. Embedded 
 
 There are no compensating one-pixel offsets or relaxed image thresholds in Stage 1.
 
+The latest main branch's bundled MAGiCAL SVG background and fallback artwork for older or newly accepted versions are preserved in this package. Its version-theme regression tests now run with the renderer tests. Regenerate that background with `node packages/oneshot-renderer/scripts/generate-magical-background.mjs`; the original seven-theme visual references remain unchanged.
+
 ## Verify output
 
 ```sh
