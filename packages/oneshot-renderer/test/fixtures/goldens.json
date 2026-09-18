@@ -1,0 +1,82 @@
+{
+  "sourceCommit": "796d7ca",
+  "revision": "796d7ca",
+  "versions": {
+    "satori": "0.26.0",
+    "resvg": "2.6.2",
+    "sharp": "0.34.5"
+  },
+  "assets": "assets.json",
+  "cases": {
+    "full-1500": {
+      "width": 1500,
+      "height": 1300,
+      "svg": "4b54c918111dd806ad45291ec06b8124cd6b94ee984897caa229fa800188d95c",
+      "rgba": "d56bedc8329ea1bfc2034ac0fecffd8f291d03a1513685a4a0a9827907ef4a4b",
+      "jpegRgba": "9e3bab0ff4a252db3500b4fd5629813101e3a892798b21604245beed3046b622"
+    },
+    "full-750": {
+      "width": 750,
+      "height": 650,
+      "svg": "4b54c918111dd806ad45291ec06b8124cd6b94ee984897caa229fa800188d95c",
+      "rgba": "62a1038d7b50d8d401c63cb376e2a6f5fbac6287020ad05724f184cb58901cfd",
+      "jpegRgba": "ba056777b7d159f6d106e3710c8597743f7506331cf6d9a3dd2747666f1d0cfa"
+    },
+    "full-3000": {
+      "width": 3000,
+      "height": 2600,
+      "svg": "4b54c918111dd806ad45291ec06b8124cd6b94ee984897caa229fa800188d95c",
+      "rgba": "34a5d9fac4e1349c68f1fcd99addac999afba5c386e7c3e365a84bee0fa404c9",
+      "jpegRgba": "11ef16a9c6b0634a81535f8c9f8db2593fde90889b9f7d15965253727e06df64"
+    },
+    "typography": {
+      "width": 1500,
+      "height": 1300,
+      "svg": "bc7b6fdf0702ec71caeb8ae5a275ded10402f89dd2f430716f646e255922d948",
+      "rgba": "eb191c706ac636dfc33ceec32c2ac0c153ac934b941d318aea55bcd18936ab05",
+      "jpegRgba": "f208e066c0a674756643693c117e18c6b4e5d77ee10e5295f0645f1723aeeb8d"
+    },
+    "theme-0": {
+      "width": 750,
+      "height": 650,
+      "svg": "aab90ca4890525079fd4d67f14669907f4bc9a6d2fd88ab86715d19d430faf92",
+      "rgba": "31ae9a2c1a0ad29954789d5d2a9a18e2eb43b884d67049894821b6258412851e",
+      "jpegRgba": "7dd694d0c2d5236afdbdc7f43b0e0677839eaa3f9fcc3c33253daae8d6a5c60b"
+    },
+    "theme-1": {
+      "width": 750,
+      "height": 650,
+      "svg": "0eb01cc1b3748dc9f025de85b560c80c3bad53e9dc35dbfe2aa5be0082d6de59",
+      "rgba": "a6fa9c58749401d743e45ec9704f9a41b3fa9d22ee6020a4543b13dc0709a248",
+      "jpegRgba": "6c882547d5d11e7f77f56dcb92000c65e36f97843de3d62f4f58b8085acca750"
+    },
+    "theme-2": {
+      "width": 750,
+      "height": 650,
+      "svg": "6390444d3a070ade6296af0d2dc8952d6fd9223f2b0408d696bf213d4ed9fede",
+      "rgba": "26f8c34e15d1520c14e5462b8fa8ed3c7c7e3e3a4b0d946cbb8c97da6bf81417",
+      "jpegRgba": "decd5055dabe7e66e0f641bc22641f3704405ff1411d73298bc5f1b09d72e4c4"
+    },
+    "theme-3": {
+      "width": 750,
+      "height": 650,
+      "svg": "5fa127be07e74adaf4441f969826fce8527180b444816c5e32e77ee591a872ed",
+      "rgba": "5847e91045831216f733031eb729d4f50124e5dba06cc570851e6604a0ccb86e",
+      "jpegRgba": "7fbbc199a7b5a36ab7ba042d9168acbc6af7a6aec36c4c9e32807e0cf23b13ac"
+    },
+    "theme-4": {
+      "width": 750,
+      "height": 650,
+      "svg": "503464fa6d299ba91a06e2e938fb82b762f4b96c02e8e10b48f6c4ca0105736b",
+      "rgba": "8e0e02a02c95a5b13508a268993e4c3ebda06a74f285b96228c8a29aac0299a4",
+      "jpegRgba": "15d34cdf8463bba9ab4f2b849c658d25336701920e5f58709de1351d619c476f"
+    },
+    "theme-5": {
+      "width": 750,
+      "height": 650,
+      "svg": "3b3d4bf9eba05cb095559664861b32aec4a15688373deb4fdf0e182fef360589",
+      "rgba": "6ac8c9d27397537b67cb2d54f748a82b0f5c7394d72002258c15b783ce5f6e0f",
+      "jpegRgba": "631afe6ad46f31efd7f75c75c5dd2809ed62c1d022c83930a184373a0bfef2a2"
+    }
+  }
+}

@@ -10,9 +10,11 @@
 !packages/api-contract/
 !packages/dxdata/
 !packages/maimai-domain/
+!packages/oneshot-renderer/
 !apps/backend/
 
 # Keep local generated artifacts out of the Docker build context.
 **/node_modules
 **/dist
 **/.turbo
+packages/oneshot-renderer/artifacts

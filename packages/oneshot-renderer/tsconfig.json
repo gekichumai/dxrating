@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig/base.json",
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "jsx": "react-jsx",
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": ["node"],
+    "inlineSources": false
+  },
+  "include": ["src"]
+}

@@ -30,6 +30,7 @@ COPY packages/tsconfig/package.json ./packages/tsconfig/
 COPY packages/api-contract/package.json ./packages/api-contract/
 COPY packages/dxdata/package.json ./packages/dxdata/
 COPY packages/maimai-domain/package.json ./packages/maimai-domain/
+COPY packages/oneshot-renderer/package.json ./packages/oneshot-renderer/
 COPY apps/backend/package.json ./apps/backend/
 
 # Install dependencies (--frozen-lockfile ensures reproducible deps)
@@ -40,11 +41,13 @@ COPY packages/tsconfig ./packages/tsconfig
 COPY packages/api-contract ./packages/api-contract
 COPY packages/dxdata ./packages/dxdata
 COPY packages/maimai-domain ./packages/maimai-domain
+COPY packages/oneshot-renderer ./packages/oneshot-renderer
 COPY apps/backend ./apps/backend
 
 # Bundle the backend with esbuild (fast transpilation, type-checking done in CI)
 # esbuild is deterministic for the same inputs
 WORKDIR /app/apps/backend
+RUN pnpm --filter @gekichumai/oneshot-renderer build
 RUN pnpm build:bundle
 
 # Production stage
@@ -73,6 +76,7 @@ COPY packages/tsconfig/package.json ./packages/tsconfig/
 COPY packages/api-contract/package.json ./packages/api-contract/
 COPY packages/dxdata/package.json ./packages/dxdata/
 COPY packages/maimai-domain/package.json ./packages/maimai-domain/
+COPY packages/oneshot-renderer/package.json ./packages/oneshot-renderer/
 COPY apps/backend/package.json ./apps/backend/
 
 # Install production dependencies only

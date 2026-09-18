@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import {
   calculateBest50,
@@ -8,33 +7,22 @@ import {
   type RatingAward,
   type VersionedSheet,
 } from '@gekichumai/maimai-domain'
-import { renderAsync } from '@resvg/resvg-js'
 import type { Context } from 'hono'
-import satori, { type Font } from 'satori'
-import sharp from 'sharp'
 import { match } from 'ts-pattern'
 import { z } from 'zod'
 import { type Scope, Sentry } from '../../../lib/functions/sentry.js'
-import { fetchAsset } from './assetFetcher.js'
+import { fetchAsset, fetchImageAsset, getAssetSourceKey } from './assetFetcher.js'
 import { calculateDXScoreStars } from './calculateDXScore.js'
 import { demo } from './demo.js'
-import { renderContent } from './renderContent.js'
+import {
+  createOneshotRenderer,
+  createRenderService,
+  RenderQueueFullError,
+  type Region,
+} from '@gekichumai/oneshot-renderer'
 
-export const ONESHOT_HEIGHT = 1300
-export const ONESHOT_WIDTH = 1500
-
-// LRU-ish render cache: stores rendered JPEG/PNG buffers keyed by content hash.
-// Bounded to 32 entries; oldest evicted when full.
-const RENDER_CACHE_MAX = 32
-const RENDER_CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
-const renderCache = new Map<string, { buffer: ArrayBuffer; type: string; expiresAt: number }>()
-
-export type Region = 'jp' | 'intl' | 'cn' | '_generic'
-
-export type PlayerCollection = {
-  name: string
-  icon: number
-}
+export { ONESHOT_HEIGHT, ONESHOT_WIDTH } from '@gekichumai/oneshot-renderer'
+export type { PlayerCollection, Region } from '@gekichumai/oneshot-renderer'
 
 export const playEntrySchema = z.object({
   sheetId: z.string(),
@@ -76,14 +64,6 @@ export const requestBodySchema = z.object({
     .optional(),
 })
 
-// declare a new attribute `tw` for JSX elements
-declare module 'react' {
-  // oxlint-disable-next-line @typescript-eslint/no-unused-vars
-  interface HTMLAttributes<T> {
-    tw?: string
-  }
-}
-
 export interface RenderData extends PlayEntry {
   sheet: FlattenedSheet
   rating: RatingAward
@@ -95,49 +75,6 @@ export interface RenderData extends PlayEntry {
   playCount: number
   allPerfectPlusCount: number
 }
-
-const fetchFontPack = async (): Promise<Font[]> => {
-  const fontConfig = [
-    {
-      name: 'NewRodinProDB',
-      file: 'NewRodinProDB.otf',
-      weight: 400 as const,
-    },
-    {
-      name: 'SeuratProDB',
-      file: 'SeuratProDB.otf',
-      weight: 400 as const,
-    },
-    {
-      name: 'Source Han Sans',
-      file: 'SourceHanSansJP-Regular.otf',
-      weight: 400 as const,
-    },
-    {
-      name: 'Source Han Sans',
-      file: 'SourceHanSansJP-Medium.otf',
-      weight: 500 as const,
-    },
-    {
-      name: 'Source Han Sans',
-      file: 'SourceHanSansJP-Bold.otf',
-      weight: 700 as const,
-    },
-  ]
-  const fonts = await Promise.all(fontConfig.map(async (font) => fetchAsset(`/fonts/${font.file}`)))
-  if (!fonts.every((font) => font instanceof Buffer)) {
-    console.error('Failed to load at least one font')
-    return []
-  }
-  return fontConfig.map((font, i) => ({
-    name: font.name,
-    data: fonts[i],
-    weight: font.weight,
-    style: 'normal',
-  }))
-}
-
-let cachedFonts: Font[] | null = null
 
 type FlattenedSheet = Omit<VersionedSheet, 'type' | 'difficulty' | 'isTypeUtage' | 'isRatingEligible'> & {
   type: TypeEnum.DX | TypeEnum.STD
@@ -315,298 +252,89 @@ export const calculateEntries = (
   }
 }
 
-interface ServerTimingTimerObservation {
-  name: string
-  duration: number
-}
+type OneshotRequest = z.infer<typeof requestBodySchema>
+let service: { source: string; render: ReturnType<typeof createRenderService<OneshotRequest>> } | undefined
 
-const createServerTimingTimer = () => {
-  const observations: ServerTimingTimerObservation[] = []
-  return {
-    start: (name: string) => {
-      observations.push({
-        name,
-        duration: Date.now(),
-      })
-    },
-    stop: (name: string) => {
-      const obs = observations.find((o) => o.name === name)
-      if (obs) {
-        obs.duration = Date.now() - obs.duration
-      }
-    },
-    get: () => {
-      return observations.map((obs) => `${obs.name};dur=${obs.duration}`)
-    },
+const getRenderService = () => {
+  const source = getAssetSourceKey()
+  if (!service || service.source !== source) {
+    const draw = createOneshotRenderer({
+      loadAsset: fetchAsset,
+      loadImage: fetchImageAsset,
+      revision: process.env.GIT_COMMIT ?? 'unknown',
+    })
+    service = {
+      source,
+      render: createRenderService(async (body: OneshotRequest, options) => {
+        const start = performance.now()
+        const data = body.calculatedEntries
+          ? prepareCalculatedEntries(body.calculatedEntries, body.version)
+          : calculateEntries(body.entries ?? [], body.version, body.region)
+        const calc = performance.now() - start
+        const result = await draw(
+          { data, version: body.version, region: body.region, playerCollection: body.playerCollection },
+          options,
+        )
+        return { ...result, timings: { calc, ...result.timings } }
+      }),
+    }
   }
+  return service.render
 }
 
 export const handler = async (c: Context): Promise<Response> => {
-  return await Sentry.startSpan({ name: 'renderOneshot', op: 'function' }, async () => {
+  return Sentry.startSpan({ name: 'renderOneshot', op: 'function' }, async () => {
     const queryDemo = c.req.query('demo')
     const queryPixelated = c.req.query('pixelated')
     const queryFormat = c.req.query('format')
     const queryWidth = c.req.query('width')
+    const format = queryPixelated ? (queryFormat === 'png' ? 'png' : 'jpeg') : 'svg'
 
-    Sentry.addBreadcrumb({
-      message: 'Starting oneshot render',
-      category: 'init',
-      data: {
-        demo: !!queryDemo,
-        pixelated: !!queryPixelated,
-        format: queryFormat || 'svg',
-      },
-      level: 'info',
-    })
-
-    const body = queryDemo
-      ? ({
-          entries: demo,
-          version: VersionEnum.PRiSMPLUS,
-          region: 'jp' as const,
-          playerCollection: {
-            name: 'お友達',
-            icon: 0,
-          },
-          calculatedEntries: undefined,
-        } as const)
-      : requestBodySchema.parse(await c.req.json())
-
-    const version = body.version
-    const region = body.region
-    const playerCollection = body.playerCollection
-
-    Sentry.addBreadcrumb({
-      message: 'Parsed request body',
-      category: 'validation',
-      data: {
-        version,
-        region,
-        hasPlayerCollection: !!playerCollection,
-        entryCount: body.entries?.length || 0,
-        hasCalculatedEntries: !!body.calculatedEntries,
-      },
-      level: 'info',
-    })
-
-    // Check render cache (only for rasterized output — SVG is fast already)
-    if (queryPixelated) {
-      const cacheKey = createHash('sha256')
-        .update(JSON.stringify({ body, queryFormat: queryFormat ?? null, queryWidth: queryWidth ?? null }))
-        .digest('hex')
-
-      const cached = renderCache.get(cacheKey)
-      if (cached && cached.expiresAt > Date.now()) {
-        c.header('Server-Timing', 'cache;desc="hit"')
-        c.header('Content-Type', cached.type)
-        c.header('X-Cache', 'HIT')
-        return c.body(cached.buffer)
-      }
-
-      // Store in cache after rendering — we pass cacheKey through closure
-      const originalHandler = async () => {
-        const timer = createServerTimingTimer()
-
-        timer.start('font')
-        Sentry.addBreadcrumb({ message: 'Loading fonts', category: 'resource', level: 'info' })
-        if (!cachedFonts) cachedFonts = await fetchFontPack()
-        const fonts = cachedFonts
-        timer.stop('font')
-
-        timer.start('calc')
-        Sentry.addBreadcrumb({ message: 'Calculating entries', category: 'processing', level: 'info' })
-        const data = body.calculatedEntries
-          ? prepareCalculatedEntries(body.calculatedEntries, version)
-          : calculateEntries(body.entries ?? [], version, region)
-        timer.stop('calc')
-
-        timer.start('jsx')
-        Sentry.addBreadcrumb({ message: 'Rendering JSX content', category: 'render', level: 'info' })
-        const content = await renderContent({ data, version, region, playerCollection })
-        timer.stop('jsx')
-
-        timer.start('satori')
-        Sentry.addBreadcrumb({ message: 'Converting JSX to SVG', category: 'render', level: 'info' })
-        const svg = await satori(content, {
-          width: ONESHOT_WIDTH,
-          height: ONESHOT_HEIGHT,
-          fonts,
-          tailwindConfig: {
-            theme: {
-              fontFamily: {
-                sans: 'Source Han Sans, sans-serif',
-                newrodin: 'NewRodinProDB, sans-serif',
-                seurat: 'SeuratProDB, sans-serif',
-              },
-            },
-          },
-        })
-        timer.stop('satori')
-
-        let width = typeof queryWidth === 'string' ? Number.parseInt(queryWidth) : ONESHOT_WIDTH
-        if (Number.isNaN(width) || !Number.isFinite(width) || width < 1 || width > 3000) {
-          width = ONESHOT_WIDTH
-        }
-
-        timer.start('resvg')
-        const renderedImage = await renderAsync(svg, {
-          languages: ['en', 'ja'],
-          shapeRendering: 2,
-          textRendering: 2,
-          imageRendering: 0,
-          fitTo: { mode: 'width', value: width },
-        })
-        timer.stop('resvg')
-
-        timer.start('result_buffer')
-        Sentry.addBreadcrumb({
-          message: 'Processing final image',
-          category: 'render',
-          data: { width, format: queryFormat },
-          level: 'info',
-        })
-        const { buffer, type } = await (async () => {
-          const s = sharp(renderedImage.pixels, {
-            raw: { width: renderedImage.width, height: renderedImage.height, channels: 4 },
-          })
-
-          if (queryFormat === 'png') {
-            return { buffer: await s.png().toBuffer(), type: 'image/png' }
-          }
-
-          return {
-            buffer: await s.jpeg({ quality: 90, progressive: true }).toBuffer(),
-            type: 'image/jpeg',
-          }
-        })()
-        timer.stop('result_buffer')
-
-        Sentry.addBreadcrumb({
-          message: 'Successfully rendered pixelated image',
-          category: 'success',
-          data: { type, bufferSize: buffer.length, width },
-          level: 'info',
-        })
-
-        for (const obs of timer.get()) {
-          const match = obs.match(/^(\w+);dur=(\d+)$/)
-          if (match) {
-            Sentry.metrics.distribution(`oneshot_render.stage.${match[1]}`, Number(match[2]), {
-              unit: 'millisecond',
-              attributes: { format: queryFormat || 'jpeg' },
-            })
-          }
-        }
-
-        const arrayBuffer = buffer.buffer as ArrayBuffer
-        // Store in render cache
-        renderCache.set(cacheKey, { buffer: arrayBuffer, type, expiresAt: Date.now() + RENDER_CACHE_TTL_MS })
-        if (renderCache.size > RENDER_CACHE_MAX) {
-          renderCache.delete(renderCache.keys().next().value as string)
-        }
-
-        c.header('Server-Timing', timer.get().join(', '))
-        c.header('Content-Type', type)
-        c.header('X-Cache', 'MISS')
-        return c.body(arrayBuffer)
-      }
-      return originalHandler()
-    }
-
-    const timer = createServerTimingTimer()
-
-    timer.start('font')
-    Sentry.addBreadcrumb({
-      message: 'Loading fonts',
-      category: 'resource',
-      level: 'info',
-    })
-    if (!cachedFonts) {
-      cachedFonts = await fetchFontPack()
-    }
-    const fonts = cachedFonts
-    timer.stop('font')
-
-    timer.start('calc')
-    Sentry.addBreadcrumb({
-      message: 'Calculating entries',
-      category: 'processing',
-      level: 'info',
-    })
-    const data = body.calculatedEntries
-      ? prepareCalculatedEntries(body.calculatedEntries, version)
-      : calculateEntries(body.entries ?? [], version, region)
-    timer.stop('calc')
-
-    Sentry.addBreadcrumb({
-      message: 'Entries calculated',
-      category: 'success',
-      data: {
-        b15Count: data.b15.length,
-        b35Count: data.b35.length,
-      },
-      level: 'info',
-    })
-
-    timer.start('jsx')
-    Sentry.addBreadcrumb({
-      message: 'Rendering JSX content',
-      category: 'render',
-      level: 'info',
-    })
-    const content = await renderContent({ data, version, region, playerCollection })
-    timer.stop('jsx')
-
-    timer.start('satori')
-    Sentry.addBreadcrumb({
-      message: 'Converting JSX to SVG',
-      category: 'render',
-      level: 'info',
-    })
-    const svg = await satori(content, {
-      width: ONESHOT_WIDTH,
-      height: ONESHOT_HEIGHT,
-      fonts,
-      tailwindConfig: {
-        theme: {
-          fontFamily: {
-            sans: 'Source Han Sans, sans-serif',
-            newrodin: 'NewRodinProDB, sans-serif',
-            seurat: 'SeuratProDB, sans-serif',
-          },
-        },
-      },
-    })
-    timer.stop('satori')
-
-    // Emit Sentry metrics for SVG render stages
-    for (const obs of timer.get()) {
-      const match = obs.match(/^(\w+);dur=(\d+)$/)
-      if (match) {
-        Sentry.metrics.distribution(`oneshot_render.stage.${match[1]}`, Number(match[2]), {
-          unit: 'millisecond',
-          attributes: { format: 'svg' },
-        })
-      }
-    }
-
-    c.header('Server-Timing', timer.get().join(', '))
-    c.header('Content-Type', 'image/svg+xml')
     try {
-      return c.body(svg)
-    } catch (error) {
-      if (error instanceof Error) {
-        Sentry.withScope((scope: Scope) => {
-          scope.setContext('function', { name: 'renderOneshot' })
-          scope.setContext('parameters', {
-            demo: !!queryDemo,
-            pixelated: !!queryPixelated,
-            format: queryFormat,
-            width: queryWidth,
+      const body = queryDemo
+        ? {
+            entries: demo,
+            version: VersionEnum.PRiSMPLUS,
+            region: 'jp' as const,
+            playerCollection: { name: 'お友達', icon: 0 },
+            calculatedEntries: undefined,
+          }
+        : requestBodySchema.parse(await c.req.json())
+      const result = await getRenderService()(body, {
+        format,
+        width: queryWidth === undefined ? undefined : Number.parseInt(queryWidth),
+      })
+
+      if (result.cache === 'MISS') {
+        const observations = result.timings
+        c.header(
+          'Server-Timing',
+          Object.entries(observations)
+            .map(([name, duration]) => `${name};dur=${duration.toFixed(1)}`)
+            .join(', '),
+        )
+        for (const [name, duration] of Object.entries(observations)) {
+          Sentry.metrics.distribution(`oneshot_render.stage.${name}`, duration, {
+            unit: 'millisecond',
+            attributes: { format },
           })
-          Sentry.captureException(error)
-        })
+        }
+      } else {
+        c.header('Server-Timing', `cache;desc="${result.cache.toLowerCase()}"`)
       }
+      c.header('Content-Type', result.contentType)
+      c.header('X-Cache', result.cache)
+      return c.body(result.body)
+    } catch (error) {
+      if (error instanceof RenderQueueFullError) {
+        c.header('Retry-After', '1')
+        return c.text(error.message, 503)
+      }
+      Sentry.withScope((scope: Scope) => {
+        scope.setContext('function', { name: 'renderOneshot' })
+        scope.setContext('parameters', { demo: !!queryDemo, format, width: queryWidth })
+        Sentry.captureException(error)
+      })
       throw error
     }
   })

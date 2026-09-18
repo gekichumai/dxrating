@@ -61,6 +61,12 @@ jobs:
       - name: Build backend
         run: pnpm turbo run build --filter=@gekichumai/backend
 
+      - name: Test renderer resource management
+        run: pnpm --filter @gekichumai/oneshot-renderer test
+
+      - name: Lint renderer
+        run: pnpm --filter @gekichumai/oneshot-renderer lint
+
   integration-test:
     runs-on: ubuntu-latest
     name: Integration Tests
@@ -103,7 +109,9 @@ jobs:
           BETTER_AUTH_URL: http://localhost:3001
           NODE_ENV: test
           PORT: 3001
-        run: pnpm --filter @gekichumai/backend test
+        run: |
+          pnpm --filter @gekichumai/oneshot-renderer build
+          pnpm --filter @gekichumai/backend test
 
   docker-build:
     runs-on: ubuntu-latest
