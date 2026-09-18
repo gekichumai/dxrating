@@ -1,5 +1,6 @@
+import { useNetImportSettings } from './import/NetImportSettingsContext'
 import { Button, Divider, Menu } from '@mui/material'
-import { type FC, useId, useState } from 'react'
+import { type FC, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
 import type { PlayEntry } from '../RatingCalculatorAddEntryForm'
@@ -14,6 +15,8 @@ import { ImportFromNETRecordsListItem } from './import/ImportFromNETRecordsListI
 export const ImportMenu: FC<{
   modifyEntries: ListActions<PlayEntry>
 }> = ({ modifyEntries }) => {
+  const { isOpen: settingsOpen, openSettings } = useNetImportSettings()
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const open = Boolean(anchorEl)
   const { t } = useTranslation(['rating-calculator'])
@@ -29,6 +32,7 @@ export const ImportMenu: FC<{
   return (
     <>
       <Button
+        ref={triggerRef}
         id={`button-${id}`}
         aria-controls={open ? `menu-${id}` : undefined}
         aria-haspopup="true"
@@ -49,9 +53,15 @@ export const ImportMenu: FC<{
           disabledItemsFocusable: true,
         }}
         variant="menu"
+        disableRestoreFocus={settingsOpen}
         disableAutoFocusItem
       >
-        <ImportFromNETRecordsListItem modifyEntries={modifyEntries} onClose={handleClose} />
+        <ImportFromNETRecordsListItem
+          onSelect={() => {
+            handleClose()
+            openSettings(triggerRef.current)
+          }}
+        />
         <ImportFromDivingFishButtonListItem modifyEntries={modifyEntries} onClose={handleClose} />
         <ImportFromLxnsButtonListItem modifyEntries={modifyEntries} onClose={handleClose} />
         <Divider />

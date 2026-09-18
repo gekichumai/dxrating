@@ -52,6 +52,7 @@ import {
 import { RatingCalculatorStatistics } from '../components/rating/RatingCalculatorStatistics'
 import { ClearButton } from '../components/rating/io/ClearButton'
 import { ExportMenu } from '../components/rating/io/ExportMenu'
+import { NetImportSettingsButton } from '../components/rating/io/import/NetImportSettingsButton'
 import { ImportMenu } from '../components/rating/io/ImportMenu'
 import { RenderToOneShotImageButton } from '../components/rating/io/export/RenderToOneShotImageButton'
 import { useRatingEntries } from '../components/rating/useRatingEntries'
@@ -193,13 +194,15 @@ export const RatingCalculator = () => {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 mt-2">
-              <ImportMenu modifyEntries={modifyEntries} />
-
-              <ExportMenu />
-
-              <div className="flex-1" />
-
-              <ClearButton modifyEntries={modifyEntries} />
+              <div className="flex items-center gap-2">
+                <ImportMenu modifyEntries={modifyEntries} />
+                <NetImportSettingsButton />
+              </div>
+              <div className="flex flex-1 items-center gap-2">
+                <ExportMenu />
+                <div className="flex-1" />
+                <ClearButton modifyEntries={modifyEntries} />
+              </div>
             </div>
           </Alert>
         </div>

@@ -1,20 +1,17 @@
 import type { VersionEnum } from '@gekichumai/dxdata'
 import { getDxdataSongCatalog, normalizeMaimaiNetRecords } from '@gekichumai/maimai-domain'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
-import { CircularProgress } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import cloneDeep from 'lodash-es/cloneDeep'
 import i18n from 'i18next'
-import toast from 'react-hot-toast'
 import type { ListActions } from 'react-use/lib/useList'
-import IconMdiCheck from '~icons/mdi/check'
-import IconMdiClose from '~icons/mdi/close'
 import { WebHaptics } from 'web-haptics'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { NetImportError, type NetImportErrorCode, unexpectedErrorSubtitle } from './netImportErrorFeedback'
 import { captureAnalyticsEvent } from '@/lib/analytics'
+import { netImportProgress } from './netImportProgressStore'
 
 const ERROR_CODE_I18N: Record<NetImportErrorCode, string> = {
   NET_MAINTENANCE: 'rating-calculator:io.import.net-records.errors.maintenance',
@@ -154,9 +151,7 @@ export const importFromNETRecords = async (
   })
 
   const t = i18n.t.bind(i18n)
-  const toastId = toast.loading(t('rating-calculator:io.import.net-records.importing'), {
-    icon: <CircularProgress size="1rem" thickness={5} />,
-  })
+  netImportProgress.update({ status: 'running', stage: 'ready', progress: 0 })
   try {
     const storedAuthParams = (() => {
       const stored = localStorage.getItem('import-net-records')
@@ -177,24 +172,13 @@ export const importFromNETRecords = async (
         mode,
         trigger,
       })
-      toast.error(t('rating-calculator:io.import.net-records.no-credentials'), {
-        id: toastId,
-      })
+      netImportProgress.finish('error', t('rating-calculator:io.import.net-records.no-credentials'))
       return
     }
     const { region, username, password } = params
     const data = await fetchNetRecords({ region, username, password }, (state, progress) => {
       onProgress?.(state, progress)
-      toast.loading(
-        <div className="flex flex-col items-start min-w-[16rem]">
-          <div className="font-bold">{t('rating-calculator:io.import.net-records.importing')}</div>
-          <div className="font-mono text-xs font-light text-zinc-500">{state}</div>
-        </div>,
-        {
-          id: toastId,
-          icon: <CircularProgress variant="determinate" value={progress * 100} size="1rem" thickness={5} />,
-        },
-      )
+      netImportProgress.update({ status: 'running', stage: state, progress })
     })
     const importResult = normalizeMaimaiNetRecords(getDxdataSongCatalog(appVersion), data.music)
     const entries = importResultToPlayEntries(importResult)
@@ -226,7 +210,8 @@ export const importFromNETRecords = async (
     const lastRecord = data.recent.at(0)
     const lastRecordPlayedAt = lastRecord?.play.timestamp ? new Date(lastRecord.play.timestamp).toLocaleString() : null
     haptics.trigger('success')
-    toast.success(
+    netImportProgress.finish(
+      'success',
       <div className="flex flex-col">
         <span>
           {t('rating-calculator:io.import.net-records.imported', {
@@ -253,11 +238,6 @@ export const importFromNETRecords = async (
           </>
         )}
       </div>,
-      {
-        id: toastId,
-        icon: <IconMdiCheck className="h-4 w-4 text-green-5" />,
-        duration: 20000,
-      },
     )
 
     localStorage.setItem(NET_IMPORT_LAST_SUCCESS_KEY, Date.now().toString())
@@ -308,18 +288,14 @@ export const importFromNETRecords = async (
     const translatedDetail = error instanceof NetImportError ? ERROR_CODE_DETAIL_I18N[error.code] : undefined
     const subtitle = translatedDetail ? t(translatedDetail) : unexpectedErrorSubtitle(error)
 
-    toast.error(
+    netImportProgress.finish(
+      'error',
       <div className="flex min-w-0 max-w-[22rem] flex-col items-start gap-0.5">
         <div className="font-bold leading-snug">{title}</div>
         {subtitle && (
           <div className="break-words text-left text-xs font-normal leading-relaxed text-zinc-500">{subtitle}</div>
         )}
       </div>,
-      {
-        id: toastId,
-        icon: <IconMdiClose className="h-4 w-4 text-red-5 shrink-0" />,
-        duration: 20000,
-      },
     )
   } finally {
     importInFlight = false

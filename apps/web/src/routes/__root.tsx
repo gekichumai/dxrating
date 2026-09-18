@@ -7,6 +7,8 @@ import { PostHogProvider } from 'posthog-js/react'
 import { type CSSProperties, Suspense, useEffect, useMemo } from 'react'
 import toast from 'react-hot-toast'
 import { I18nextProvider, useTranslation } from 'react-i18next'
+import { NetImportSettingsProvider } from '@/components/rating/io/import/NetImportSettingsContext'
+import { NetImportProgress } from '@/components/rating/io/import/NetImportProgress'
 import { CustomizedToaster } from '@/components/global/CustomizedToaster'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { SideEffector } from '@/components/global/SideEffector'
@@ -151,11 +153,14 @@ function RootComponent() {
               <VersionCustomizedThemeProvider>
                 <RatingCalculatorContextProvider>
                   <PostHogProvider client={posthog}>
-                    <SideEffector />
-                    <CustomizedToaster />
-                    <OAuthErrorHandler />
-                    <RegionVersionUpdatePrompt />
-                    <AppLayout />
+                    <NetImportSettingsProvider>
+                      <SideEffector />
+                      <CustomizedToaster />
+                      <NetImportProgress />
+                      <OAuthErrorHandler />
+                      <RegionVersionUpdatePrompt />
+                      <AppLayout />
+                    </NetImportSettingsProvider>
                   </PostHogProvider>
                 </RatingCalculatorContextProvider>
               </VersionCustomizedThemeProvider>
