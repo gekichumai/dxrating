@@ -7,6 +7,8 @@ import {
   tagGroups,
   tagSongs,
   comments,
+  commentReports,
+  userBlocks,
   profiles,
   songAliases,
   arcadeGames,
@@ -15,7 +17,7 @@ import {
   arcadeInstallationIdentities,
   arcadeInstallations,
 } from './db/schema.js'
-import { eq, and, desc, asc, exists, gte, ilike, inArray, isNull, lte, or, sql } from 'drizzle-orm'
+import { eq, and, desc, asc, exists, gte, ilike, inArray, isNull, lte, notExists, or, sql } from 'drizzle-orm'
 import Keyv from 'keyv'
 import type { auth } from './auth.js'
 import { config } from './config.js'
@@ -156,7 +158,35 @@ const tagsHandler = {
   }),
 }
 
+const moderateComment = async (viewerId: string | undefined, commentId: number, action: 'report' | 'block') => {
+  if (!viewerId) throw new ORPCError('UNAUTHORIZED')
+  return db.transaction(async (tx) => {
+    const [comment] = await tx
+      .select({ authorId: comments.created_by })
+      .from(comments)
+      .where(eq(comments.id, commentId))
+      .for('share')
+    if (!comment) throw new ORPCError('NOT_FOUND', { message: 'Comment not found' })
+    if (comment.authorId === viewerId)
+      throw new ORPCError('BAD_REQUEST', { message: 'Cannot report or block yourself' })
+    await tx
+      .insert(commentReports)
+      .values({ reporter_id: viewerId, comment_id: commentId, action })
+      .onConflictDoNothing()
+    if (action === 'block') {
+      await tx.insert(userBlocks).values({ blocker_id: viewerId, blocked_id: comment.authorId }).onConflictDoNothing()
+    }
+    return { success: true, author_id: comment.authorId }
+  })
+}
+
 const commentsHandler = {
+  report: os.comments.report.handler(({ input, context }) =>
+    moderateComment((context as Context).user?.id, input.commentId, 'report'),
+  ),
+  blockAuthor: os.comments.blockAuthor.handler(({ input, context }) =>
+    moderateComment((context as Context).user?.id, input.commentId, 'block'),
+  ),
   create: os.comments.create.handler(async ({ input, context }) => {
     const user = (context as Context).user
     if (!user) {
@@ -201,11 +231,13 @@ const commentsHandler = {
 
     return newComment[0]
   }),
-  list: os.comments.list.handler(async ({ input }) => {
+  list: os.comments.list.handler(async ({ input, context }) => {
+    const viewerId = (context as Context).user?.id
     const identity = await withCatalogIdentityErrors(() => catalogIdentities.resolveSheetInput(input))
     const result = await db
       .select({
         id: comments.id,
+        author_id: comments.created_by,
         parent_id: comments.parent_id,
         created_at: comments.created_at,
         content: comments.content,
@@ -215,6 +247,23 @@ const commentsHandler = {
       .leftJoin(profiles, eq(profiles.id, comments.created_by))
       .where(
         and(
+          isNull(comments.removed_at),
+          viewerId
+            ? notExists(
+                db
+                  .select({ id: commentReports.id })
+                  .from(commentReports)
+                  .where(and(eq(commentReports.reporter_id, viewerId), eq(commentReports.comment_id, comments.id))),
+              )
+            : undefined,
+          viewerId
+            ? notExists(
+                db
+                  .select({ id: userBlocks.blocked_id })
+                  .from(userBlocks)
+                  .where(and(eq(userBlocks.blocker_id, viewerId), eq(userBlocks.blocked_id, comments.created_by))),
+              )
+            : undefined,
           inArray(comments.song_id, identity.legacySongIds),
           eq(comments.sheet_type, identity.sheetType),
           eq(comments.sheet_difficulty, identity.sheetDifficulty),

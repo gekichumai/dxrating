@@ -82,18 +82,16 @@ function RootLayout() {
 
   const pathname = location.pathname
 
-  const isPrivacyPolicy = pathname === '/privacy-policy'
+  const isPrivacyPolicy = pathname === '/privacy-policy' || pathname === '/terms-of-service'
   const isDevelopersPage = pathname === '/developers'
   const isSongPage = pathname.startsWith('/songs/')
   const showTabs = !isSongPage && !isPrivacyPolicy && !isDevelopersPage
-
-  if (isPrivacyPolicy) return null
 
   return (
     <>
       <OverscrollBackgroundFiller />
       <TopBar />
-      {!isDevelopersPage && (
+      {!isDevelopersPage && !isPrivacyPolicy && (
         <div
           className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-4 pb-4"
           style={{
@@ -167,6 +165,8 @@ function RootComponent() {
 
 function AppLayout() {
   const versionTheme = useVersionTheme()
+  const { pathname } = useLocation()
+  const isLegalPage = pathname === '/privacy-policy' || pathname === '/terms-of-service'
 
   return (
     <div className="h-full w-full relative">
@@ -178,6 +178,13 @@ function AppLayout() {
         draggable={false}
       />
 
+      {isLegalPage && (
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 pointer-events-none"
+          style={{ background: `color-mix(in srgb, ${versionTheme.accentColor} 10%, rgba(255, 255, 255, 0.95))` }}
+        />
+      )}
       <div className="h-full w-full relative">
         <Suspense fallback={fallbackElement}>
           <RootLayout />

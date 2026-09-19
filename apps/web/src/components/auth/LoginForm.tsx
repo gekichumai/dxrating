@@ -1,5 +1,5 @@
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
-import { Alert, Button, Chip, CircularProgress, Divider, TextField } from '@mui/material'
+import { Alert, Button, Checkbox, FormControlLabel, Chip, CircularProgress, Divider, TextField } from '@mui/material'
 import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -44,6 +44,7 @@ export const LoginForm = ({
   const [pendingProvider, setPendingProvider] = useState<AuthProvider | null>(null)
   const loading = pendingProvider !== null
   const [isSignUp, setIsSignUp] = useState(false)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
@@ -56,40 +57,13 @@ export const LoginForm = ({
     onPendingChange?.(provider !== null)
   }
 
-  useMountEffect(() => {
-    let active = true
-
-    const signInWithConditionalPasskey = async () => {
-      if (
-        typeof PublicKeyCredential === 'undefined' ||
-        typeof PublicKeyCredential.isConditionalMediationAvailable !== 'function'
-      ) {
-        return
-      }
-
-      const available = await PublicKeyCredential.isConditionalMediationAvailable()
-      if (!active || !available) return
-
-      const { error } = await authClient.signIn.passkey({ autoFill: true })
-      if (!active || error) return
-
-      haptic.trigger('success')
-      toast.success(t('auth:login.toast-success'))
-      onSuccess?.()
-    }
-
-    void signInWithConditionalPasskey().catch(() => {})
-    return () => {
-      active = false
-    }
-  })
-
   const captchaHeaders = turnstileToken ? { 'x-captcha-response': turnstileToken } : undefined
   const waitingForTurnstile = !!TURNSTILE_SITE_KEY && !turnstileToken
   const buttonLoading = loading || (isValid && waitingForTurnstile)
-  const buttonDisabled = loading || !isValid || waitingForTurnstile
+  const buttonDisabled = !acceptedTerms || loading || !isValid || waitingForTurnstile
 
   const onSubmit = async (data: LoginFormValues) => {
+    if (!acceptedTerms) return
     setActiveProvider('email')
     setError(null)
     try {
@@ -127,6 +101,7 @@ export const LoginForm = ({
   }
 
   const handleSocial = async (provider: 'google' | 'github') => {
+    if (!acceptedTerms) return
     setActiveProvider(provider)
     await authClient.signIn.social({
       provider,
@@ -137,6 +112,7 @@ export const LoginForm = ({
   }
 
   const handlePasskey = async () => {
+    if (!acceptedTerms) return
     setActiveProvider('passkey')
     setError(null)
     try {
@@ -180,6 +156,17 @@ export const LoginForm = ({
           <div className="text-sm text-zinc-500 mt-1">{t('auth:form.subtitle')}</div>
         </div>
 
+        <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="underline">
+          {t('auth:terms.title')}
+        </a>
+        <FormControlLabel
+          control={
+            <Checkbox checked={acceptedTerms} onChange={(_, checked) => setAcceptedTerms(checked)} disabled={loading} />
+          }
+          label={t('auth:terms.accept')}
+        />
+        {acceptedTerms && !isSignUp && <ConditionalPasskey onSuccess={onSuccess} />}
+
         {error && <Alert severity="error">{error}</Alert>}
 
         <div className="flex flex-col gap-2">
@@ -195,7 +182,7 @@ export const LoginForm = ({
               ) : undefined
             }
             onClick={() => handleSocial('github')}
-            disabled={loading}
+            disabled={loading || !acceptedTerms}
             className="!py-2.5 !text-sm !normal-case"
             fullWidth
           >
@@ -213,7 +200,7 @@ export const LoginForm = ({
               ) : undefined
             }
             onClick={() => handleSocial('google')}
-            disabled={loading}
+            disabled={loading || !acceptedTerms}
             className="!py-2.5 !text-sm !normal-case"
             fullWidth
           >
@@ -237,7 +224,7 @@ export const LoginForm = ({
                 ) : undefined
               }
               onClick={handlePasskey}
-              disabled={loading}
+              disabled={loading || !acceptedTerms}
               className="!py-2.5 !text-sm !normal-case"
               fullWidth
             >
@@ -340,4 +327,38 @@ export const LoginForm = ({
       </Button>
     </div>
   )
+}
+// Mount conditional credentials only after the user agrees to the displayed terms.
+function ConditionalPasskey({ onSuccess }: { onSuccess?: () => void }) {
+  const { t } = useTranslation('auth')
+  const haptic = useWebHaptics()
+  useMountEffect(() => {
+    let active = true
+
+    const signInWithConditionalPasskey = async () => {
+      if (
+        typeof PublicKeyCredential === 'undefined' ||
+        typeof PublicKeyCredential.isConditionalMediationAvailable !== 'function'
+      ) {
+        return
+      }
+
+      const available = await PublicKeyCredential.isConditionalMediationAvailable()
+      if (!active || !available) return
+
+      const { error } = await authClient.signIn.passkey({ autoFill: true })
+      if (!active || error) return
+
+      haptic.trigger('success')
+      toast.success(t('auth:login.toast-success'))
+      onSuccess?.()
+    }
+
+    void signInWithConditionalPasskey().catch(() => {})
+    return () => {
+      active = false
+    }
+  })
+
+  return null
 }

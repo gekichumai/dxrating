@@ -1,0 +1,79 @@
+.legal-document {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 24px 48px;
+  color: #202724;
+}
+.legal-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 0;
+  margin-bottom: 20px;
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.legal-title {
+  margin-bottom: 32px;
+}
+.legal-title h1 {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 8px;
+}
+.legal-title p {
+  margin: 0;
+  font-size: 14px;
+  color: #4e5b54;
+}
+.legal-prose {
+  font-size: 16px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.legal-prose section + section,
+.legal-prose h2:not(:first-child) {
+  margin-top: 28px;
+}
+.legal-prose h2 {
+  font-size: 19px;
+  line-height: 1.4;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+.legal-prose p {
+  margin: 0 0 14px;
+}
+.legal-prose ul {
+  padding-left: 22px;
+  margin: 12px 0 20px;
+  list-style: disc;
+}
+.legal-prose li {
+  margin: 6px 0;
+}
+.legal-footer {
+  margin-top: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  font-size: 14px;
+}
+.legal-footer a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.legal-back:hover,
+.legal-footer a:hover {
+  opacity: 0.75;
+}
+.legal-page :focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}

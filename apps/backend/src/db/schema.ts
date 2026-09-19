@@ -74,7 +74,45 @@ export const comments = pgTable('comments', {
     onDelete: 'set null',
   }),
   content: text('content').notNull(),
+  removed_at: timestamp('removed_at'),
 })
+
+export const commentReports = pgTable(
+  'comment_reports',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    reporter_id: text('reporter_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    comment_id: bigint('comment_id', { mode: 'number' })
+      .notNull()
+      .references(() => comments.id, { onDelete: 'cascade' }),
+    action: text('action', { enum: ['report', 'block'] }).notNull(),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+    resolved_at: timestamp('resolved_at'),
+  },
+  (table) => [
+    unique('comment_reports_viewer_comment_action').on(table.reporter_id, table.comment_id, table.action),
+    index('comment_reports_unresolved').on(table.resolved_at),
+  ],
+)
+
+export const userBlocks = pgTable(
+  'user_blocks',
+  {
+    blocker_id: text('blocker_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    blocked_id: text('blocked_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.blocker_id, table.blocked_id] }),
+    check('user_blocks_not_self', sql`${table.blocker_id} <> ${table.blocked_id}`),
+  ],
+)
 
 export const songAliases = pgTable('song_aliases', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),

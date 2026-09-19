@@ -1,3 +1,5 @@
+import { CommentActions } from '../comments/CommentActions'
+import { filterComments, useCommentVisibility } from '../comments/commentVisibility'
 import { MULTIVER_AVAILABLE_VERSIONS, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@gekichumai/dxdata'
 import {
   Button,
@@ -91,7 +93,8 @@ const ReleaseDateText: FC<{ releaseDate: string }> = ({ releaseDate }) => {
 
 const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const { t } = useTranslation(['auth', 'sheet', 'global'])
-  const { session, ensureAuthenticated, openLoginDialog, LoginDialog } = useAuth()
+  const { session, user, ensureAuthenticated, openLoginDialog, LoginDialog } = useAuth()
+  const visibility = useCommentVisibility(user?.id)
   const [content, setContent] = useState<string>('')
   const {
     data: comments,
@@ -99,7 +102,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     mutate,
   } = useSWR(
     // Key
-    ['comments.list', sheet.songId, sheet.type, sheet.difficulty],
+    ['comments.list', user?.id ?? null, sheet.songId, sheet.type, sheet.difficulty],
     // Fetcher
     async () => {
       const data = await client.comments.list({
@@ -176,10 +179,11 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         ))
       ) : (
         <div className="flex flex-col gap-2">
-          {comments?.map((comment) => (
+          {filterComments(comments ?? [], visibility).map((comment) => (
             <div key={comment.id} className="flex flex-col gap-1 bg-zinc-1 rounded-lg px-4 py-2">
               <div className="text-zinc-500 flex items-center">
                 <div className="text-sm font-bold">{comment.display_name ?? t('sheet:comments.anonymous')}</div>
+                <CommentActions comment={comment} />
 
                 <CommentCreatedAt createdAt={comment.created_at} />
               </div>
@@ -190,7 +194,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
               </div>
             </div>
           ))}
-          {comments?.length === 0 && (
+          {filterComments(comments ?? [], visibility).length === 0 && (
             <div className="flex flex-col gap-1 bg-zinc-2 rounded-lg p-4 items-center text-zinc-5">
               {t('sheet:comments.empty')}
               {!session && ` ${t('sheet:comments.sign-in-to-comment')}`}

@@ -442,6 +442,15 @@ app.get(ARCADE_VENUES_PATH, arcadeVenuesEtag, arcadeVenuesCacheHeaders, async (c
   }
 })
 
+// Comment responses depend on the signed-in viewer and must never enter a shared cache.
+app.use('/api/v1/comments', async (c, next) => {
+  await next()
+  c.header('Cache-Control', 'private, no-store')
+  c.header('CDN-Cache-Control', 'no-store')
+  c.header('Cloudflare-CDN-Cache-Control', 'no-store')
+  c.header('Vary', 'Cookie, Authorization, Origin')
+})
+
 app.all('/api/v1/*', async (c) => {
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined

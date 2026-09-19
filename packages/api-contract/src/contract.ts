@@ -69,6 +69,7 @@ export const FetchCommentsInputSchema = z.object({
 
 export const CommentWithProfileSchema = z.object({
   id: z.number(),
+  author_id: z.string(),
   parent_id: z.number().nullable(),
   created_at: z.date().or(z.string()),
   content: z.string(),
@@ -273,6 +274,24 @@ export const publicContractRoutes = {
       .output(z.object({ id: z.number() })),
   },
   comments: {
+    report: oc
+      .route({
+        method: 'POST',
+        path: '/comments/{commentId}/report',
+        summary: 'Report and hide a comment for the current viewer',
+        tags: ['Comments'],
+      })
+      .input(z.object({ commentId: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER) }))
+      .output(z.object({ success: z.boolean() })),
+    blockAuthor: oc
+      .route({
+        method: 'POST',
+        path: '/comments/{commentId}/block-author',
+        summary: 'Block the author and report the selected comment',
+        tags: ['Comments'],
+      })
+      .input(z.object({ commentId: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER) }))
+      .output(z.object({ success: z.boolean(), author_id: z.string() })),
     create: oc
       .route({
         method: 'POST',

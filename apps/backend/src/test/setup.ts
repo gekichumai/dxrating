@@ -46,6 +46,7 @@ export async function setupTestServer() {
     '0009_arcade_public_identities.sql',
     '0010_enforce_arcade_public_identities.sql',
     '0011_ancient_maelstrom.sql',
+    '0012_comment_safety.sql',
   ]
 
   for (const file of migrationFiles) {
