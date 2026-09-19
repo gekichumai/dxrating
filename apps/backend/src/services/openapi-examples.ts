@@ -111,6 +111,14 @@ export const publicApiOperationExamples = {
     request: { songId, sheetId, sheetType, sheetDifficulty, tagId: 1 },
     response: { id: 1842 },
   },
+  'comments.report': {
+    parameters: { commentId: 1842 },
+    response: { success: true },
+  },
+  'comments.blockAuthor': {
+    parameters: { commentId: 1842 },
+    response: { success: true, author_id: 'mai-player-user-id' },
+  },
   'comments.create': {
     request: {
       songId,
@@ -129,6 +137,7 @@ export const publicApiOperationExamples = {
         parent_id: null,
         created_at: '2026-08-30T15:04:05.000Z',
         content: 'The delayed star slide is the key to this chart.',
+        author_id: 'mai-player-user-id',
         display_name: 'mai-player',
       },
       {
@@ -136,6 +145,7 @@ export const publicApiOperationExamples = {
         parent_id: 1842,
         created_at: '2026-08-30T15:08:21.000Z',
         content: 'Slowing the slide down helped me read it consistently.',
+        author_id: 'splash-plus-user-id',
         display_name: 'splash-plus',
       },
     ],
