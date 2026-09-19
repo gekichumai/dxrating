@@ -21,6 +21,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -46,13 +49,19 @@ jobs:
           echo "VITE_VERSION=pr-${{ github.event.pull_request.number }}" >> ${GITHUB_ENV}
           echo "VITE_BUILD_NUMBER=${{ github.run_number }}" >> ${GITHUB_ENV}
           echo "VITE_BUILD_TIME=$(date --utc +%FT%TZ)" >> ${GITHUB_ENV}
+          echo "SENTRY_RELEASE=dxrating@pr-${{ github.event.pull_request.number }}+${{ github.event.pull_request.head.sha }}" >> "${GITHUB_ENV}"
+          echo "VITE_SENTRY_ENVIRONMENT=preview" >> "${GITHUB_ENV}"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build
         shell: bash
-        run: pnpm turbo run build --filter=@gekichumai/dxrating-web...
+        run: |
+          if [ "${{ github.event.pull_request.head.repo.full_name }}" = "$GITHUB_REPOSITORY" ]; then
+            test -n "$SENTRY_AUTH_TOKEN"
+          fi
+          pnpm turbo run build --filter=@gekichumai/dxrating-web... --force
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           VITE_BACKEND_URL: https://miruku.dxrating.net
@@ -76,6 +85,18 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Record Sentry deployment
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: getsentry/action-release@v3
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: gekichumai
+          SENTRY_PROJECT: dxrating-web
+        with:
+          release: ${{ env.SENTRY_RELEASE }}
+          environment: preview
+          set_commits: skip
 
       - name: Comment PR with preview URL
         if: github.event.pull_request.head.repo.full_name == github.repository

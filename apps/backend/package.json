@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "pnpm --filter @gekichumai/oneshot-renderer build && tsx watch src/index.ts",
     "build": "tsc",
     "build:bundle": "esbuild src/index.ts src/migrate.ts --bundle --outdir=dist --platform=node --target=node25 --format=esm --packages=external --jsx=automatic --sourcemap",
     "start": "node dist/index.js",
@@ -13,7 +13,8 @@
     "test:producer-contract": "DXDATA_PRODUCER_CONTRACT=1 vitest run src/test/dxdata-producer-contract.test.ts",
     "test:watch": "vitest",
     "db:up": "docker compose up -d",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "test:source-context": "node --test scripts/test-sentry-source-context.mjs"
   },
   "dependencies": {
     "@better-auth/expo": "catalog:",
@@ -22,12 +23,12 @@
     "@gekichumai/api-contract": "workspace:*",
     "@gekichumai/dxdata": "workspace:*",
     "@gekichumai/maimai-domain": "workspace:*",
+    "@gekichumai/oneshot-renderer": "workspace:*",
     "@hono/node-server": "^1.19.14",
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
-    "@resvg/resvg-js": "^2.6.2",
     "@scalar/hono-api-reference": "^0.10.8",
     "@sentry/node": "^10.70.0",
     "@simplewebauthn/server": "^13.3.0",
@@ -45,8 +46,7 @@
     "pg": "catalog:",
     "postgres": "^3.4.9",
     "react": "catalog:",
-    "satori": "^0.26.0",
-    "sharp": "^0.34.5",
+    "sharp": "0.35.4",
     "ts-pattern": "catalog:",
     "undici": "^7.25.0",
     "xmldom-qsa": "^1.1.3",

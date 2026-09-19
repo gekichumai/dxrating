@@ -1,0 +1,878 @@
+{
+  "data": {
+    "b15": [
+      {
+        "sheet": {
+          "id": "enchanted wanderer__dxrt__dx__dxrt__master",
+          "title": "enchanted wanderer",
+          "imageName": "6f33754270f509444b12cfd35a0c2dc9f65c5e4d4ca139d9a892ad23d61debb6",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.8
+        },
+        "rating": {
+          "ratingAwardValue": 310,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.6216,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "Last Kingdom__dxrt__dx__dxrt__master",
+          "title": "Last Kingdom",
+          "imageName": "5bb41078ff7013e2f546d623b16a198d33b53fbb1911aa612342ce4bcb584b14",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.8
+        },
+        "rating": {
+          "ratingAwardValue": 310,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5766,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "MAGENTA POTION__dxrt__dx__dxrt__master",
+          "title": "MAGENTA POTION",
+          "imageName": "d04a44dcd14181db74d25e60effce0ee67d38a6647bdfbf2dee98d387be3eeeb",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.7
+        },
+        "rating": {
+          "ratingAwardValue": 308,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.7571,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "リスペク風神__dxrt__dx__dxrt__master",
+          "title": "リスペク風神",
+          "imageName": "5d78c4f3b6dcd2e853dbb1905a1bfe20c9f5390b9d437ef832fc1b4c111569d2",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.7
+        },
+        "rating": {
+          "ratingAwardValue": 308,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.6798,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "リフヴェイン__dxrt__dx__dxrt__master",
+          "title": "リフヴェイン",
+          "imageName": "21b28c9973a25650fcba253b2e5a601d7e51a4eaa9d039e2bdb4dcc263c7f947",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.6
+        },
+        "rating": {
+          "ratingAwardValue": 306,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.61,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "コンティニュー！ feat. 藍月なくる__dxrt__dx__dxrt__master",
+          "title": "コンティニュー！ feat. 藍月なくる",
+          "imageName": "56876612c1521d91889416e3fce690866a939e0ce29afb40fbdfe916a6879a2f",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.6
+        },
+        "rating": {
+          "ratingAwardValue": 306,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5328,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "Sunday Night feat Kanata.N__dxrt__dx__dxrt__master",
+          "title": "Sunday Night feat Kanata.N",
+          "imageName": "9d83a0f4b2f2358a6ef3469c0fe724468d36e8c905572e1ac7f6d9121d7e08e8",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.5
+        },
+        "rating": {
+          "ratingAwardValue": 303,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.7116,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "ロウワー__dxrt__dx__dxrt__remaster",
+          "title": "ロウワー",
+          "imageName": "e3c7240c7d75cd0b5e9b9b35c8b228f019365e8970eed9aecb4cc3697a347c17",
+          "type": "dx",
+          "difficulty": "remaster",
+          "internalLevelValue": 13.5
+        },
+        "rating": {
+          "ratingAwardValue": 303,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5688,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "ヒバリ__dxrt__dx__dxrt__master",
+          "title": "ヒバリ",
+          "imageName": "186fa137876da3b0b7e0e9c2524b16069f19d6c35fe380e7d47e9b00d5caeccd",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.4
+        },
+        "rating": {
+          "ratingAwardValue": 301,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5297,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "神っぽいな__dxrt__dx__dxrt__remaster",
+          "title": "神っぽいな",
+          "imageName": "4cafcae7e8a5ef15f0e92e3a9293de3687792cc88bdb03e283d3b8fc758e89b9",
+          "type": "dx",
+          "difficulty": "remaster",
+          "internalLevelValue": 13.3
+        },
+        "rating": {
+          "ratingAwardValue": 299,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.8046,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "PERSONA feat. PANXI__dxrt__dx__dxrt__master",
+          "title": "PERSONA feat. PANXI",
+          "imageName": "d88263d5cbb02f90f6e2552b59c266eb8b241e1e2ac9ee04debe106b6c6fa80a",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.3
+        },
+        "rating": {
+          "ratingAwardValue": 299,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.6406,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "Bad Apple!! feat.nomico ～五十嵐 撫子 Ver.～__dxrt__dx__dxrt__master",
+          "title": "Bad Apple!! feat.nomico ～五十嵐 撫子 Ver.～",
+          "imageName": "efb9b8a29916b9fd36c081ba9b6be13e7a804658e37c078dff2d70812e54614c",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.3
+        },
+        "rating": {
+          "ratingAwardValue": 299,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5688,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "アンバークロニクル__dxrt__dx__dxrt__master",
+          "title": "アンバークロニクル",
+          "imageName": "4b14725bdb015736863618fc14019a4fe752d8c8a5b93e3add29ff5b2e5d7239",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.3
+        },
+        "rating": {
+          "ratingAwardValue": 299,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5032,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "あつすぎの歌__dxrt__dx__dxrt__master",
+          "title": "あつすぎの歌",
+          "imageName": "d092a2dc73c551444ed4f7a21e14ab429c2206eda607a8a4f2a806fef4182456",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.8
+        },
+        "rating": {
+          "ratingAwardValue": 298,
+          "rank": "sss"
+        },
+        "achievementRate": 100.2238,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "Kairos__dxrt__dx__dxrt__master",
+          "title": "Kairos",
+          "imageName": "83ba2b49290d78463a6ad720081f30f579aaa7f1f1e59fd78d1044fd5f9e1b03",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.5
+        },
+        "rating": {
+          "ratingAwardValue": 292,
+          "rank": "sss"
+        },
+        "achievementRate": 100.4408,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      }
+    ],
+    "b35": [
+      {
+        "sheet": {
+          "id": "花と、雪と、ドラムンベース。__dxrt__std__dxrt__remaster",
+          "title": "花と、雪と、ドラムンベース。",
+          "imageName": "2b9ee0b6ea8fef773725b8ae8832cd6a8c1676669408f689b0698939d89ad81b",
+          "type": "std",
+          "difficulty": "remaster",
+          "internalLevelValue": 13.8
+        },
+        "rating": {
+          "ratingAwardValue": 310,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.7637,
+        "achievementAccuracy": "fcp",
+        "achievementSync": "fs",
+        "playCount": 114514,
+        "allPerfectPlusCount": 0,
+        "dxScore": {
+          "achieved": 2200,
+          "total": 2200,
+          "stars": 5
+        }
+      },
+      {
+        "sheet": {
+          "id": "頓珍漢の宴__dxrt__std__dxrt__master",
+          "title": "頓珍漢の宴",
+          "imageName": "b5d67aee408d3a8f421d491f2871b213f7b84eaa64dcfcabc6642762924568ca",
+          "type": "std",
+          "difficulty": "master",
+          "internalLevelValue": 13.8
+        },
+        "rating": {
+          "ratingAwardValue": 310,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5779,
+        "achievementAccuracy": "fcp",
+        "achievementSync": "fs",
+        "playCount": 12456,
+        "allPerfectPlusCount": 0,
+        "dxScore": {
+          "achieved": 2200,
+          "total": 2200,
+          "stars": 5
+        }
+      },
+      {
+        "sheet": {
+          "id": "Doll Judgment__dxrt__std__dxrt__master",
+          "title": "Doll Judgment",
+          "imageName": "81601a34e391f6d5613ef9a70adff5fe7ece9f18cc217cbca0fa25a684eb89dd",
+          "type": "std",
+          "difficulty": "master",
+          "internalLevelValue": 13.8
+        },
+        "rating": {
+          "ratingAwardValue": 310,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5674,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "ピュグマリオンの咒文__dxrt__dx__dxrt__master",
+          "title": "ピュグマリオンの咒文",
+          "imageName": "41e8f8de8a058b339d4bd2b30c6eacb74a01148a9ec2ca31f8c35dbe3fb0c7dd",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.8
+        },
+        "rating": {
+          "ratingAwardValue": 310,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5382,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "きゅうくらりん__dxrt__dx__dxrt__master",
+          "title": "きゅうくらりん",
+          "imageName": "b89bb0c6b2e597c18de48278dad7a1dfe64eb48093ff5f3898a474eaa5a8adba",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.7
+        },
+        "rating": {
+          "ratingAwardValue": 308,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.6209,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "生命不詳__dxrt__dx__dxrt__master",
+          "title": "生命不詳",
+          "imageName": "c7ccf9ea3d81f662f629d3d4a7390c9c3c79fb18227759230365d6339be8c6eb",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.7
+        },
+        "rating": {
+          "ratingAwardValue": 308,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.606,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "星空パーティーチューン__dxrt__dx__dxrt__master",
+          "title": "星空パーティーチューン",
+          "imageName": "917e04919ba3fb330947a539ebc2ecea89fe3cadc949b36703e87b231314249e",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.7
+        },
+        "rating": {
+          "ratingAwardValue": 308,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5983,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "オーディエンスを沸かす程度の能力 feat.タイツォン__dxrt__std__dxrt__master",
+          "title": "オーディエンスを沸かす程度の能力 feat.タイツォン",
+          "imageName": "e8668f97c5c3784afc6e620cfdb59beb42e78bc466e81ec94d833d510eb59a09",
+          "type": "std",
+          "difficulty": "master",
+          "internalLevelValue": 13.7
+        },
+        "rating": {
+          "ratingAwardValue": 308,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5674,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "enchanted love__dxrt__dx__dxrt__master",
+          "title": "enchanted love",
+          "imageName": "f013d7de2376d2ab3fc50ac6da7a0634a405719b794d0aa09de97fc853031846",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.7
+        },
+        "rating": {
+          "ratingAwardValue": 308,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5495,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "Altale__dxrt__std__dxrt__master",
+          "title": "Altale",
+          "imageName": "60e7212f4697f9b892401a54c8dee9a55752c314a65c65552e41e5cfbc3eac57",
+          "type": "std",
+          "difficulty": "master",
+          "internalLevelValue": 13.7
+        },
+        "rating": {
+          "ratingAwardValue": 308,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5308,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "アトロポスと最果の探究者__dxrt__dx__dxrt__master",
+          "title": "アトロポスと最果の探究者",
+          "imageName": "e2b952b3da054954ef7b68b6f3306f5e2fe575ebe9da0a1c2438c714bb175b74",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.7
+        },
+        "rating": {
+          "ratingAwardValue": 308,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5289,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "Irresistible__dxrt__dx__dxrt__master",
+          "title": "Irresistible",
+          "imageName": "1539ba0cbb17a5a0afdf551c4f5fc8167160ffb3d247e39444b38ce9b18d26a2",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.6
+        },
+        "rating": {
+          "ratingAwardValue": 306,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5639,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "モンダイナイトリッパー！__dxrt__dx__dxrt__master",
+          "title": "モンダイナイトリッパー！",
+          "imageName": "f4c5752ebfafc8ef3f13946e400bfbbdeee488056584252a4e3150106e1b4a81",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.6
+        },
+        "rating": {
+          "ratingAwardValue": 306,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5134,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "ナンセンス文学__dxrt__std__dxrt__master",
+          "title": "ナンセンス文学",
+          "imageName": "af8985b8cdb15c987199b34bed4919b06e7c114047b75aaa9fd92b21132893df",
+          "type": "std",
+          "difficulty": "master",
+          "internalLevelValue": 13.6
+        },
+        "rating": {
+          "ratingAwardValue": 306,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.6216,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "Transcend Lights__dxrt__dx__dxrt__master",
+          "title": "Transcend Lights",
+          "imageName": "9e7a9c706a68f7a2e548f81a68b972138b43fcab72c7743fe063e4d4013f6d03",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.5
+        },
+        "rating": {
+          "ratingAwardValue": 303,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.7907,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "スカーレット警察のゲットーパトロール24時__dxrt__dx__dxrt__master",
+          "title": "スカーレット警察のゲットーパトロール24時",
+          "imageName": "56f3f92e3231292d7e859d721153fc365bd42a1955c142945ef813eeb58145d9",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.5
+        },
+        "rating": {
+          "ratingAwardValue": 303,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.7611,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "INTERNET OVERDOSE__dxrt__dx__dxrt__master",
+          "title": "INTERNET OVERDOSE",
+          "imageName": "f4a9ee1fb86ae5819de2943e9ae1bbc113ad207df21e8f077b2a74c0ab87ec8e",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.5
+        },
+        "rating": {
+          "ratingAwardValue": 303,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.6428,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "ウミユリ海底譚__dxrt__std__dxrt__master",
+          "title": "ウミユリ海底譚",
+          "imageName": "e05e2a6fc30cd26f1b87310732062c03fdcc3900808695594d4b7d1c625c7315",
+          "type": "std",
+          "difficulty": "master",
+          "internalLevelValue": 13.4
+        },
+        "rating": {
+          "ratingAwardValue": 301,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.9642,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "Believe the Rainbow__dxrt__std__dxrt__master",
+          "title": "Believe the Rainbow",
+          "imageName": "b13a0558714e28404d2d28b2ac0610f9dccef2d83ee157f290522c05ab7be204",
+          "type": "std",
+          "difficulty": "master",
+          "internalLevelValue": 13.4
+        },
+        "rating": {
+          "ratingAwardValue": 301,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.763,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "春嵐__dxrt__dx__dxrt__master",
+          "title": "春嵐",
+          "imageName": "da4afc21aac928285710a128231eb225ac2a6372d247dcc60c81860f50558435",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.4
+        },
+        "rating": {
+          "ratingAwardValue": 301,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.669,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "Splash Dance!!__dxrt__dx__dxrt__master",
+          "title": "Splash Dance!!",
+          "imageName": "456bfcaea4d27d26101e110999ac21afb4f8c224d5a6866926d1923a79c7d863",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.4
+        },
+        "rating": {
+          "ratingAwardValue": 301,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.6676,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "ヒトガタ__dxrt__dx__dxrt__master",
+          "title": "ヒトガタ",
+          "imageName": "6608ba9e4388bdaa82f6816bff33cc263777c7a53faeddf4d8f42731daa8b842",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.4
+        },
+        "rating": {
+          "ratingAwardValue": 301,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.6377,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "白ゆき__dxrt__std__dxrt__master",
+          "title": "白ゆき",
+          "imageName": "063e0f1d33191801b0def65151cb2935e2123baee6faf2934c34fda94781b290",
+          "type": "std",
+          "difficulty": "master",
+          "internalLevelValue": 13.4
+        },
+        "rating": {
+          "ratingAwardValue": 301,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.6281,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "ヴァンパイア__dxrt__dx__dxrt__remaster",
+          "title": "ヴァンパイア",
+          "imageName": "0a9939aa70a5828eaa805bd946fd5d0c36f1be4d697a931848231bb3c1039ac8",
+          "type": "dx",
+          "difficulty": "remaster",
+          "internalLevelValue": 13.4
+        },
+        "rating": {
+          "ratingAwardValue": 301,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.6055,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "ベースラインやってる？笑__dxrt__dx__dxrt__master",
+          "title": "ベースラインやってる？笑",
+          "imageName": "1fbd9f7f5fccee27940fd3eef422093c826c99ba92515925a7bd8c1dbbc59ff9",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.4
+        },
+        "rating": {
+          "ratingAwardValue": 301,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5845,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "四次元跳躍機関__dxrt__std__dxrt__master",
+          "title": "四次元跳躍機関",
+          "imageName": "ba4c15c6a4d3a074fb1186b64a6e8189d2500f0880d46c29a6f63771dd50d680",
+          "type": "std",
+          "difficulty": "master",
+          "internalLevelValue": 13.4
+        },
+        "rating": {
+          "ratingAwardValue": 301,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.52,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "猫祭り__dxrt__std__dxrt__master",
+          "title": "猫祭り",
+          "imageName": "0d5fe4a24865264cb07ae3950183f04d328f2ec48c7022d04042d4ef55f96a4d",
+          "type": "std",
+          "difficulty": "master",
+          "internalLevelValue": 13.4
+        },
+        "rating": {
+          "ratingAwardValue": 301,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.5058,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "四月の雨__dxrt__std__dxrt__master",
+          "title": "四月の雨",
+          "imageName": "675a0c902ebd49793b64e40d6d8dd730358c7ee60611814b77662caa2c08166d",
+          "type": "std",
+          "difficulty": "master",
+          "internalLevelValue": 13.9
+        },
+        "rating": {
+          "ratingAwardValue": 300,
+          "rank": "sss"
+        },
+        "achievementRate": 100.0202,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "SUPER AMBULANCE__dxrt__dx__dxrt__master",
+          "title": "SUPER AMBULANCE",
+          "imageName": "dc0d6733393a2701699b7ab61af373f361a12ed5e819d96385214dfc461685f9",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 14.3
+        },
+        "rating": {
+          "ratingAwardValue": 300,
+          "rank": "ssp"
+        },
+        "achievementRate": 99.7073,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "フィクサー__dxrt__std__dxrt__master",
+          "title": "フィクサー",
+          "imageName": "a72f872e92067eabbed8f00665d10d223c14de08eca3d80e13a9bd431c85a789",
+          "type": "std",
+          "difficulty": "master",
+          "internalLevelValue": 13.3
+        },
+        "rating": {
+          "ratingAwardValue": 299,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.54,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "不思議の国のクリスマス__dxrt__std__dxrt__master",
+          "title": "不思議の国のクリスマス",
+          "imageName": "b43c2d9d9f290bd14a4d31a55ed5b1e87c0241c44586284dbe1165bbf82420c0",
+          "type": "std",
+          "difficulty": "master",
+          "internalLevelValue": 13.3
+        },
+        "rating": {
+          "ratingAwardValue": 299,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.7845,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "幽闇に目醒めしは__dxrt__std__dxrt__master",
+          "title": "幽闇に目醒めしは",
+          "imageName": "6d3938627b660424f62790f46990ae83b6c33b85110f99d154c27acb0e976474",
+          "type": "std",
+          "difficulty": "master",
+          "internalLevelValue": 13.3
+        },
+        "rating": {
+          "ratingAwardValue": 299,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.7516,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "三妖精SAY YA!!!__dxrt__dx__dxrt__master",
+          "title": "三妖精SAY YA!!!",
+          "imageName": "98d337773b4fc825168c34df7c4116f26c71067db81077ecc3a44c05a14865c0",
+          "type": "dx",
+          "difficulty": "master",
+          "internalLevelValue": 13.3
+        },
+        "rating": {
+          "ratingAwardValue": 299,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.6806,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "フォニイ__dxrt__dx__dxrt__remaster",
+          "title": "フォニイ",
+          "imageName": "9a2d320632a5a21ce028fd725455f5a18addcd580a98c21b1fe7db9dc06b6ef6",
+          "type": "dx",
+          "difficulty": "remaster",
+          "internalLevelValue": 13.3
+        },
+        "rating": {
+          "ratingAwardValue": 299,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.659,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      },
+      {
+        "sheet": {
+          "id": "天火明命__dxrt__std__dxrt__expert",
+          "title": "天火明命",
+          "imageName": "bfbaeaaa1ed5e2ec4fdfafb0861db7424b831d6f6afe420c648d218277ce3286",
+          "type": "std",
+          "difficulty": "expert",
+          "internalLevelValue": 13.3
+        },
+        "rating": {
+          "ratingAwardValue": 299,
+          "rank": "sssp"
+        },
+        "achievementRate": 100.6246,
+        "playCount": 0,
+        "allPerfectPlusCount": 0
+      }
+    ]
+  },
+  "version": "PRiSM PLUS",
+  "region": "jp",
+  "playerCollection": {
+    "name": "お友達",
+    "icon": 1
+  }
+}

@@ -132,7 +132,11 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
                   className={clsx(appVersion === version && 'bg-amber-200', !available && 'opacity-50')}
                 >
                   <img
-                    src={`https://shama.dxrating.net/images/version-title/${VERSION_SLUG_MAP.get(version)}.png`}
+                    src={
+                      version === 'MAGiCAL'
+                        ? '/images/versions/magical/logo.webp'
+                        : `https://shama.dxrating.net/images/version-title/${VERSION_SLUG_MAP.get(version)}.png`
+                    }
                     alt={t('sheet:version-title-alt', { version })}
                     className="h-40.75px w-83px min-w-[83px] -ml-1 touch-callout-none"
                     draggable={false}

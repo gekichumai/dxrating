@@ -30,6 +30,8 @@ export interface SheetListItemAnalyticsProps {
 
 export const SheetListItem: FC<{
   size?: 'small' | 'medium'
+  className?: string
+  children?: ReactNode
   sheet: FlattenedSheet
   dialogOpen?: boolean
   onDialogOpenChange?: (open: boolean) => void
@@ -40,6 +42,8 @@ export const SheetListItem: FC<{
 }> = memo(
   ({
     size = 'medium',
+    className,
+    children,
     sheet,
     dialogOpen,
     onDialogOpenChange,
@@ -88,10 +92,11 @@ export const SheetListItem: FC<{
           className={clsx(
             'w-full cursor-pointer transition duration-500 hover:duration-25 !px-4 no-underline text-inherit',
             open && '!bg-zinc-300/80',
+            className,
           )}
           sx={{ borderRadius: 1 }}
         >
-          <SheetListItemContent sheet={sheet} size={size} {...SheetListItemContentProps} />
+          {children ?? <SheetListItemContent sheet={sheet} size={size} {...SheetListItemContentProps} />}
         </ListItemButton>
       </>
     )

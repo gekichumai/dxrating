@@ -1,13 +1,18 @@
-import fs from 'node:fs/promises'
+import { createAssetLoader } from '@gekichumai/oneshot-renderer'
 import os from 'node:os'
 import path from 'node:path'
 import sharp from 'sharp'
 import { Sentry } from '../../../lib/functions/sentry.js'
 
-const getCacheDir = () => process.env.ASSETS_LOCAL_CACHE_DIR || path.join(os.tmpdir(), 'dxrating-assets')
-const getRemoteUrl = () => process.env.ASSETS_REMOTE_URL || 'https://shama.dxrating.net'
+export const getAssetSourceKey = () =>
+  JSON.stringify({
+    baseDir: process.env.ASSETS_BASE_DIR,
+    cacheDir: process.env.ASSETS_LOCAL_CACHE_DIR || path.join(os.tmpdir(), 'dxrating-assets'),
+    remoteUrl: process.env.ASSETS_REMOTE_URL || 'https://shama.dxrating.net',
+  })
 
-const memoryCache = new Map<string, Buffer>()
+let source: string | undefined
+let loader: ReturnType<typeof createAssetLoader> | undefined
 
 let fallbackImageBuffer: Buffer | undefined
 
@@ -35,42 +40,16 @@ export async function fetchImageAsset(relativePath: string): Promise<Buffer> {
   }
 }
 
-/**
- * Fetches an asset by relative path, trying local disk cache first.
- * If not found locally, fetches from the remote asset server and caches to disk.
- */
 export async function fetchAsset(relativePath: string): Promise<Buffer> {
-  const memoryCached = memoryCache.get(relativePath)
-  if (memoryCached) return memoryCached
-
-  const localPath = path.join(getCacheDir(), relativePath)
-
-  // Try local disk first
-  try {
-    const buffer = await fs.readFile(localPath)
-    memoryCache.set(relativePath, buffer)
-    return buffer
-  } catch {
-    // Not cached locally, fetch from remote
+  const currentSource = getAssetSourceKey()
+  if (!loader || source !== currentSource) {
+    source = currentSource
+    loader = createAssetLoader({
+      ...JSON.parse(currentSource),
+      onCacheError: (error, relativePath) => {
+        Sentry.captureException(error, { extra: { relativePath } })
+      },
+    })
   }
-
-  const url = `${getRemoteUrl()}/${relativePath.replace(/^\//, '')}`
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error(`Failed to fetch asset from ${url}: ${response.status} ${response.statusText}`)
-  }
-
-  const buffer = Buffer.from(await response.arrayBuffer())
-  memoryCache.set(relativePath, buffer)
-
-  // Cache to disk (best-effort, don't block on errors)
-  try {
-    await fs.mkdir(path.dirname(localPath), { recursive: true })
-    await fs.writeFile(localPath, buffer)
-  } catch (error) {
-    console.error(`Failed to cache asset to ${localPath}:`, error)
-    Sentry.captureException(error, { extra: { localPath, relativePath } })
-  }
-
-  return buffer
+  return loader(relativePath)
 }

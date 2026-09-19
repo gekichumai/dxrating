@@ -5,7 +5,9 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".output/**", ".wrangler/**"]
+      "outputs": ["dist/**", ".output/**", ".wrangler/**"],
+      "env": ["VITE_*", "SENTRY_RELEASE"],
+      "passThroughEnv": ["SENTRY_AUTH_TOKEN"]
     },
     "dev": {
       "cache": false,

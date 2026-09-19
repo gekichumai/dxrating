@@ -1,4 +1,4 @@
-import { Autocomplete, Button, Card, CardContent, TextField } from '@mui/material'
+import { Autocomplete, Button, TextField } from '@mui/material'
 import type { RatingEntry } from '@gekichumai/maimai-domain'
 import clsx from 'clsx'
 import {
@@ -40,29 +40,27 @@ const ListboxComponent = (({
   children,
   ref,
   ...rest
-}: PropsWithChildren<HTMLAttributes<HTMLUListElement>> & { ref?: React.Ref<HTMLElement> }) => {
+}: PropsWithChildren<HTMLAttributes<HTMLDivElement>> & { ref?: React.Ref<HTMLElement> }) => {
   const data = children as ReactElement<any>[]
 
   return (
-    <ul {...rest} className={clsx('!py-0', rest.className)}>
-      <Virtuoso
-        scrollerRef={ref as (ref: HTMLElement | Window | null) => void}
-        style={{ height: '30rem' }}
-        data={data}
-        itemContent={(index, child) => {
-          return cloneElement(child, { index })
-        }}
-        increaseViewportBy={500}
-        role="listbox"
-      />
-    </ul>
+    <Virtuoso
+      {...rest}
+      className={clsx('!py-0', rest.className)}
+      scrollerRef={ref as (ref: HTMLElement | Window | null) => void}
+      style={{ ...rest.style, height: 'min(30rem, 40dvh)', maxHeight: 'none' }}
+      data={data}
+      itemContent={(index, child) => cloneElement(child, { index })}
+      increaseViewportBy={500}
+      role="listbox"
+    />
   )
 }) as ComponentType<HTMLAttributes<HTMLElement>>
 
 export const RatingCalculatorAddEntryForm: FC<{
   onSubmit: (entry: PlayEntry) => void
 }> = memo(({ onSubmit }) => {
-  const { data: sheets } = useSheets({ acceptsPartialData: true })
+  const { data: sheets } = useSheets()
   const [selectedSheet, setSelectedSheet] = useState<FlattenedSheet | null>(null)
   const [achievementRate, setAchievementRate] = useState<string>('')
   const [achievementRateError, setAchievementRateError] = useState<string | null>(null)
@@ -121,57 +119,77 @@ export const RatingCalculatorAddEntryForm: FC<{
     [t],
   )
 
+  const canSubmit =
+    !!selectedSheet &&
+    achievementRate.trim() !== '' &&
+    Number.isFinite(Number(achievementRate)) &&
+    Number(achievementRate) >= 0 &&
+    Number(achievementRate) <= 101
+
   if (!sheets) return null
 
   return (
-    <Card className="w-full">
-      <CardContent className="flex flex-col items-center justify-center gap-2">
-        <div className="chunks-horizontal-2 items-start">
-          <RatingCalculatorAddEntryFormAutoComplete value={selectedSheet} onChange={setSelectedSheet} />
+    <form
+      className="rating-add-form"
+      onSubmit={(event) => {
+        event.preventDefault()
+        if (!canSubmit || !selectedSheet) return
+        onSubmit({ sheetId: selectedSheet.id, achievementRate: Number(achievementRate) })
+        resetForm()
+      }}
+    >
+      <div className="rating-add-fields">
+        <RatingCalculatorAddEntryFormAutoComplete value={selectedSheet} onChange={setSelectedSheet} />
 
-          <TextField
-            className="md:basis-24rem"
-            label={t('rating-calculator:add-entry.achievement-rate')}
-            variant="outlined"
-            value={achievementRate}
-            onChange={(e) => {
-              setAchievementRate(e.target.value)
-              validate(e.target.value)
-            }}
-            onBlur={() => validate(achievementRate)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                onSubmit({
-                  sheetId: selectedSheet!.id,
-                  achievementRate: Number.parseFloat(achievementRate),
-                })
-                resetForm()
-              }
-            }}
-            onWheel={(e) => {
-              const target = e.target as HTMLInputElement
-              // Prevent the input value change
-              target.blur()
+        <TextField
+          className="rating-add-achievement"
+          size="small"
+          label={t('rating-calculator:add-entry.achievement-rate')}
+          variant="outlined"
+          value={achievementRate}
+          onChange={(e) => {
+            setAchievementRate(e.target.value)
+            validate(e.target.value)
+          }}
+          onBlur={() => validate(achievementRate)}
+          onWheel={(e) => {
+            const target = e.target as HTMLInputElement
+            // Prevent the input value change
+            target.blur()
 
-              // Prevent the page/container scrolling
-              e.stopPropagation()
+            // Prevent the page/container scrolling
+            e.stopPropagation()
 
-              // Refocus immediately, on the next tick (after the current function is done)
-              setTimeout(() => {
-                target.focus()
-              }, 0)
-            }}
-            fullWidth
-            error={!!achievementRateError}
-            helperText={achievementRateError}
-            InputProps={{
-              endAdornment: '%',
-              type: 'number',
-            }}
-            data-attr="manual-rating-add-achievement-rate"
-          />
-        </div>
-        <div className="chunks-horizontal-2">
+            // Refocus immediately, on the next tick (after the current function is done)
+            setTimeout(() => {
+              target.focus()
+            }, 0)
+          }}
+          fullWidth
+          error={!!achievementRateError}
+          helperText={achievementRateError}
+          InputProps={{
+            endAdornment: '%',
+            type: 'number',
+          }}
+          inputProps={{ step: 'any', min: 0, max: 101 }}
+          data-attr="manual-rating-add-achievement-rate"
+        />
+        <Button
+          variant="contained"
+          type="submit"
+          className="rating-add-submit"
+          disabled={!canSubmit}
+          startIcon={replacing ? <IconMdiReplace fontSize="inherit" /> : <IconMdiPlus fontSize="inherit" />}
+          data-attr="manual-rating-add-submit"
+        >
+          {replacing
+            ? t('rating-calculator:add-entry.replace', { diff: replacing.diff })
+            : t('rating-calculator:add-entry.add')}
+        </Button>
+      </div>
+      {selectedSheet && (
+        <div className="rating-add-preview">
           <div className="w-full flex justify-start">
             {selectedSheet && <SheetListItemContent sheet={selectedSheet} />}
           </div>
@@ -207,28 +225,10 @@ export const RatingCalculatorAddEntryForm: FC<{
                 )}
               </div>
             )}
-
-            <Button
-              variant="contained"
-              disabled={!selectedSheet || !!achievementRateError || achievementRate === ''}
-              onClick={() => {
-                onSubmit({
-                  sheetId: selectedSheet!.id,
-                  achievementRate: Number.parseFloat(achievementRate),
-                })
-                resetForm()
-              }}
-              startIcon={replacing ? <IconMdiReplace fontSize="inherit" /> : <IconMdiPlus fontSize="inherit" />}
-              data-attr="manual-rating-add-submit"
-            >
-              {replacing
-                ? t('rating-calculator:add-entry.replace', { diff: replacing.diff })
-                : t('rating-calculator:add-entry.add')}
-            </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </form>
   )
 })
 
@@ -236,7 +236,7 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
   value: FlattenedSheet | null
   onChange: (sheet: FlattenedSheet | null) => void
 }> = ({ value, onChange }) => {
-  const { data: sheets } = useSheets({ acceptsPartialData: true })
+  const { data: sheets } = useSheets()
   const { t } = useTranslation(['rating-calculator'])
 
   const search = useSheetsSearchEngine()
@@ -253,6 +253,7 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
 
   return (
     <Autocomplete
+      size="small"
       fullWidth
       options={sheets}
       getOptionLabel={(sheet) => formatSheetToString(sheet)}

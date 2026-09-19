@@ -1,8 +1,18 @@
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import clsx from 'clsx'
 import type { FC, PropsWithChildren } from 'react'
-import { fetchImageAsset } from './assetFetcher.js'
-import { type PlayerCollection, type Region, type RenderData } from './index.js'
+import type { LoadAsset, RenderEntry, RenderInput } from './types.js'
+import { imageData } from './imageData.js'
+import { MAGICAL_BACKGROUND_SVG } from './magicalBackground.generated.js'
+
+declare module 'react' {
+  // oxlint-disable-next-line @typescript-eslint/no-unused-vars
+  interface HTMLAttributes<T> {
+    tw?: string
+  }
+}
+
+const magicalBackground = `data:image/svg+xml;base64,${Buffer.from(MAGICAL_BACKGROUND_SVG).toString('base64')}`
 
 interface VersionTheme {
   background: string
@@ -12,7 +22,22 @@ interface VersionTheme {
   backgroundSize: [number, number]
 }
 
-export const VERSION_THEME: Record<string, VersionTheme> = {
+const FALLBACK_THEME: VersionTheme = {
+  background: '/images/background/circle-plus.jpg',
+  logo: '/images/version-logo/circle-plus.png',
+  favicon: '/favicon/prism-1024x.jpg',
+  accentColor: '#EF67A4',
+  backgroundSize: [1500, 1500],
+}
+
+export const VERSION_THEME: Partial<Record<VersionEnum, VersionTheme>> = {
+  [VersionEnum.MAGiCAL]: {
+    background: magicalBackground,
+    logo: '/images/versions/magical/logo.webp',
+    favicon: '/favicon/prism-1024x.jpg',
+    accentColor: '#178C72',
+    backgroundSize: [1500, 1300],
+  },
   [VersionEnum.FESTiVALPLUS]: {
     background: '/images/background/festival-plus.jpg',
     logo: '/images/version-logo/festival-plus.png',
@@ -55,13 +80,7 @@ export const VERSION_THEME: Record<string, VersionTheme> = {
     accentColor: '#EF67A4',
     backgroundSize: [1500, 1500],
   },
-  [VersionEnum.CiRCLEPLUS]: {
-    background: '/images/background/circle-plus.jpg',
-    logo: '/images/version-logo/circle-plus.png',
-    favicon: '/favicon/prism-1024x.jpg',
-    accentColor: '#EF67A4',
-    backgroundSize: [1500, 1500],
-  },
+  [VersionEnum.CiRCLEPLUS]: FALLBACK_THEME,
 }
 
 const DIFFICULTIES: Record<DifficultyEnum, { title: string; color: string; inverted?: boolean }> = {
@@ -95,7 +114,7 @@ const estimateTitleCharacterLength = (title: string) => {
   return englishCount + nonEnglishCount * 2
 }
 
-const renderCell = async (entry: RenderData | undefined, i: number) => {
+const renderCell = async (entry: RenderEntry | undefined, i: number, fetchImageAsset: LoadAsset) => {
   if (!entry) {
     return (
       <div key={`empty${i}`} tw="w-1/5 p-[4px] flex h-[116px]">
@@ -105,10 +124,10 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
   }
 
   const [coverImage, typeImage, accuracyImage, syncImage] = await Promise.all([
-    fetchImageAsset(`/images/cover/v2/${entry.sheet.imageName}.jpg`),
-    fetchImageAsset(`/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`),
-    fetchImageAsset(`/images/play-achievement/${entry.achievementAccuracy ?? 'blank'}.png`),
-    fetchImageAsset(`/images/play-achievement/${entry.achievementSync ?? 'blank'}.png`),
+    fetchImageAsset(`/images/cover/v2/${entry.sheet.imageName}.jpg`).then(imageData),
+    fetchImageAsset(`/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`).then(imageData),
+    fetchImageAsset(`/images/play-achievement/${entry.achievementAccuracy ?? 'blank'}.png`).then(imageData),
+    fetchImageAsset(`/images/play-achievement/${entry.achievementSync ?? 'blank'}.png`).then(imageData),
   ])
 
   const theme = DIFFICULTIES[entry.sheet.difficulty]
@@ -130,7 +149,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
         return '/images/dxscore-star/1.png'
     }
   })()
-  const starImage = starImagePath && (await fetchImageAsset(starImagePath)).buffer
+  const starImage = starImagePath && imageData(await fetchImageAsset(starImagePath))
 
   return (
     <div key={entry.sheet.id} tw="w-1/5 p-[4px] flex h-[116px]">
@@ -144,7 +163,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
       >
         <img
           // @ts-expect-error satori expects buffer for img src
-          src={coverImage.buffer}
+          src={coverImage}
           alt={entry.sheet.imageName}
           tw="h-[108px] w-[108px] absolute top-0 right-[-1px]"
           style={{
@@ -180,7 +199,7 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
           <div tw="text-sm leading-none flex items-center">
             <img
               // @ts-expect-error satori expects buffer for img src
-              src={typeImage.buffer}
+              src={typeImage}
               alt=""
               tw="h-[20px] mr-1"
               style={{ filter: 'saturate(0.75) brightness(0.95) contrast(0.9)' }}
@@ -238,14 +257,14 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
 
             <img
               // @ts-expect-error satori expects buffer for img src
-              src={accuracyImage.buffer}
+              src={accuracyImage}
               alt=""
               tw={`h-[22px] w-[22px] -ml-0.5 ${entry.achievementAccuracy ? '' : 'opacity-80'}`}
             />
 
             <img
               // @ts-expect-error satori expects buffer for img src
-              src={syncImage.buffer}
+              src={syncImage}
               alt=""
               tw={`h-[22px] w-[22px] ${entry.achievementSync ? '' : 'opacity-80'}`}
             />
@@ -283,8 +302,6 @@ const renderCell = async (entry: RenderData | undefined, i: number) => {
 const padArray = <T,>(arr: T[], len: number, fill?: T): (T | undefined)[] => {
   return arr.concat(Array(len).fill(fill)).slice(0, len)
 }
-
-const gitVersion = process.env.GIT_COMMIT ?? 'unknown'
 
 const FactItem = ({
   value,
@@ -324,26 +341,26 @@ export const BottomLabel: FC<
   )
 }
 
-export const renderContent = async ({
-  data,
-  version,
-  region,
-  playerCollection,
-}: {
-  data: {
-    b15: RenderData[]
-    b35: RenderData[]
-  }
-  version: VersionEnum
-  region?: Region
-  playerCollection?: PlayerCollection
-}) => {
-  const theme = VERSION_THEME[version]
+export const renderContent = async (
+  { data, version, region, playerCollection }: RenderInput,
+  fetchImageAsset: LoadAsset,
+  revision: string,
+) => {
+  // Preserve fallback artwork for newly accepted versions while keeping their labels and ratings.
+  const theme = VERSION_THEME[version] ?? FALLBACK_THEME
 
-  const background = (await fetchImageAsset(theme.background)).buffer
-  const icon = (
-    await fetchImageAsset(`/assetbundle/icon/ui_icon_${(playerCollection?.icon ?? 1).toString().padStart(6, '0')}.png`)
-  ).buffer
+  const [background, icon] = await Promise.all([
+    theme.background.startsWith('data:') ? theme.background : fetchImageAsset(theme.background).then(imageData),
+    playerCollection
+      ? fetchImageAsset(`/assetbundle/icon/ui_icon_${playerCollection.icon.toString().padStart(6, '0')}.png`).then(
+          imageData,
+        )
+      : undefined,
+  ])
+  const [b35Cells, b15Cells] = await Promise.all([
+    Promise.all(padArray(data.b35, 35).map((entry, i) => renderCell(entry, i, fetchImageAsset))),
+    Promise.all(padArray(data.b15, 15).map((entry, i) => renderCell(entry, i, fetchImageAsset))),
+  ])
 
   const b50Sum = [...data.b15, ...data.b35].reduce((acc, cur) => acc + cur.rating.ratingAwardValue, 0)
 
@@ -393,16 +410,16 @@ export const renderContent = async ({
           </div>
         </div>
 
-        {await Promise.all(padArray(data.b35, 35).map(renderCell))}
+        {b35Cells}
 
         <div tw="w-full h-[1px] bg-black/20 my-[6px]" />
 
-        {await Promise.all(padArray(data.b15, 15).map(renderCell))}
+        {b15Cells}
 
         <div tw="w-full flex items-center justify-center h-[27px] pt-1">
           <BottomLabel first>Rendered by DXRating.net</BottomLabel>
 
-          <BottomLabel>Renderer Revision {gitVersion.slice(0, 7)}</BottomLabel>
+          <BottomLabel>Renderer Revision {revision.slice(0, 7)}</BottomLabel>
 
           <BottomLabel>
             ver. {version}

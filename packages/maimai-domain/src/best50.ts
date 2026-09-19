@@ -91,12 +91,18 @@ export function calculateRatingAward(
   achievementRate: number,
   comboFlag?: ComboFlag,
 ): RatingAward {
+  const levelTenths = Math.round(internalLevel * 10)
+  const achievementUnits = Math.min(1005000, Math.round(achievementRate * 10000))
   for (let i = 0; i < SCORE_COEFFICIENT_TABLE.length; i++) {
-    if (i === SCORE_COEFFICIENT_TABLE.length - 1 || achievementRate < SCORE_COEFFICIENT_TABLE[i + 1]![0]) {
+    if (
+      i === SCORE_COEFFICIENT_TABLE.length - 1 ||
+      achievementUnits < Math.round(SCORE_COEFFICIENT_TABLE[i + 1]![0] * 10000)
+    ) {
       const coefficient = SCORE_COEFFICIENT_TABLE[i]![1]
+      const coefficientTenths = Math.round(coefficient * 10)
       const apBonus = comboFlag === 'ap' || comboFlag === 'app' ? 1 : 0
       return {
-        ratingAwardValue: Math.floor((coefficient * internalLevel * Math.min(100.5, achievementRate)) / 100) + apBonus,
+        ratingAwardValue: Math.floor((levelTenths * achievementUnits * coefficientTenths) / 100000000) + apBonus,
         coefficient,
         rank: SCORE_COEFFICIENT_TABLE[i]![2],
         index: i,

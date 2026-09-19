@@ -30,6 +30,7 @@ COPY packages/tsconfig/package.json ./packages/tsconfig/
 COPY packages/api-contract/package.json ./packages/api-contract/
 COPY packages/dxdata/package.json ./packages/dxdata/
 COPY packages/maimai-domain/package.json ./packages/maimai-domain/
+COPY packages/oneshot-renderer/package.json ./packages/oneshot-renderer/
 COPY apps/backend/package.json ./apps/backend/
 
 # Install dependencies (--frozen-lockfile ensures reproducible deps)
@@ -40,11 +41,13 @@ COPY packages/tsconfig ./packages/tsconfig
 COPY packages/api-contract ./packages/api-contract
 COPY packages/dxdata ./packages/dxdata
 COPY packages/maimai-domain ./packages/maimai-domain
+COPY packages/oneshot-renderer ./packages/oneshot-renderer
 COPY apps/backend ./apps/backend
 
 # Bundle the backend with esbuild (fast transpilation, type-checking done in CI)
 # esbuild is deterministic for the same inputs
 WORKDIR /app/apps/backend
+RUN pnpm --filter @gekichumai/oneshot-renderer build
 RUN pnpm build:bundle
 
 # Production stage
@@ -73,6 +76,7 @@ COPY packages/tsconfig/package.json ./packages/tsconfig/
 COPY packages/api-contract/package.json ./packages/api-contract/
 COPY packages/dxdata/package.json ./packages/dxdata/
 COPY packages/maimai-domain/package.json ./packages/maimai-domain/
+COPY packages/oneshot-renderer/package.json ./packages/oneshot-renderer/
 COPY apps/backend/package.json ./apps/backend/
 
 # Install production dependencies only
@@ -80,6 +84,8 @@ RUN pnpm install --filter @gekichumai/backend --prod --frozen-lockfile
 
 # Copy built application from builder
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+# Node maps stack frames to these paths; Sentry reads the files for source snippets.
+COPY --from=builder /app/apps/backend/src ./apps/backend/src
 COPY --from=builder /app/packages ./packages
 
 # Copy necessary runtime files
@@ -98,6 +104,7 @@ ARG BUILT_AT=unknown
 ARG VERSION=unknown
 ENV NODE_ENV=production
 ENV GIT_COMMIT=${GIT_COMMIT}
+ENV SENTRY_RELEASE=dxrating-backend@${GIT_COMMIT}
 ENV BUILD_URL=${BUILD_URL}
 ENV REPO_URL=${REPO_URL}
 ENV BUILT_AT=${BUILT_AT}

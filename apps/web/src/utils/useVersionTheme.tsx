@@ -5,7 +5,7 @@ import { VERSION_THEME } from '../theme'
 
 export const useVersionTheme = () => {
   const { version } = useAppContext()
-  const theme = VERSION_THEME[DXVersionToDXDataVersionEnumMap[version]] ?? VERSION_THEME[VersionEnum.PRiSMPLUS]
+  const theme = VERSION_THEME[DXVersionToDXDataVersionEnumMap[version]] ?? VERSION_THEME[VersionEnum.MAGiCAL]
 
   return theme
 }

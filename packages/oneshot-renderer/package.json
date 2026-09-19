@@ -1,0 +1,36 @@
+{
+  "name": "@gekichumai/oneshot-renderer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "lint": "oxlint src test",
+    "test": "vitest run",
+    "test:visual": "node --import tsx scripts/verify-visual.ts"
+  },
+  "dependencies": {
+    "@gekichumai/dxdata": "workspace:*",
+    "@resvg/resvg-js": "2.6.2",
+    "clsx": "catalog:",
+    "react": "catalog:",
+    "satori": "0.29.0",
+    "sharp": "0.35.4"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "tsx": "^4.21.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

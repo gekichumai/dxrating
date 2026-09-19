@@ -24,11 +24,16 @@ export default defineConfig({
     viteReact(),
     sentryTanstackStart({
       org: 'gekichumai',
-      project: 'dxrating',
+      project: 'dxrating-web',
       authToken: process.env.SENTRY_AUTH_TOKEN,
+      release: {
+        name: process.env.SENTRY_RELEASE,
+        setCommits: process.env.SENTRY_AUTH_TOKEN ? { auto: true } : undefined,
+      },
+      sourcemaps: { filesToDeleteAfterUpload: ['./dist/**/*.map'] },
     }),
   ],
   build: {
-    sourcemap: true,
+    sourcemap: 'hidden',
   },
 })

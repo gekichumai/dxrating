@@ -3,17 +3,28 @@ import { VersionEnum } from '@gekichumai/dxdata'
 import assetpack from '@/utils/assetpack.json'
 
 export interface Theme {
-  background: {
-    at1x: Asset
-    at2x?: Asset
-  }
+  background:
+    | { kind: 'magical' }
+    | {
+        kind?: 'image'
+        at1x: Asset
+        at2x?: Asset
+      }
   logo: Asset
   favicon: Asset
+  canvasColor?: string
   accentColor: string
   disabled?: boolean
 }
 
 export const VERSION_THEME: Record<string, Theme> = {
+  [VersionEnum.MAGiCAL]: {
+    background: { kind: 'magical' },
+    logo: { width: 604, height: 354, path: '/images/versions/magical/logo.webp', local: true },
+    favicon: assetpack['/favicon/prism-1024x.jpg'],
+    accentColor: '#178C72',
+    canvasColor: '#bdebdc',
+  },
   [VersionEnum.FESTiVALPLUS]: {
     background: {
       at1x: assetpack['/images/background/festival-plus.webp'],

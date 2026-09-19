@@ -5,13 +5,13 @@ import { renderRouterToStream } from '@tanstack/react-router/ssr/server'
 import { createElement } from 'react'
 import { createServerEntry, type ServerEntry } from '@tanstack/react-start/server-entry'
 import { applyAgentDiscoveryHeaders } from './setup/agent-discovery'
-import { BUNDLE } from './utils/bundle'
 import { appendVaryHeader, detectServerLocale } from './setup/locale'
 import { finishServerTimingSpan, setServerTimingHeader, startServerTimingSpan } from './setup/server-timing'
 
 Sentry.init({
   dsn: 'https://9346c04036724f129e00a750c8ab9415@o4506648698683392.ingest.us.sentry.io/4511398317064192',
-  release: `dxrating@${BUNDLE.version ?? 'unknown'}`,
+  // The Vite plugin injects the same release used for artifact uploads.
+  environment: import.meta.env.VITE_SENTRY_ENVIRONMENT ?? 'development',
   enabled: import.meta.env.PROD,
   tracesSampleRate: 0.2,
 })

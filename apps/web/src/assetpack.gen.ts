@@ -18,6 +18,7 @@ export interface Asset {
   width: number
   height: number
   path: string
+  local?: boolean
 }
 
 async function main() {

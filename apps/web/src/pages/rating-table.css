@@ -1,0 +1,431 @@
+.rating-records {
+  --rating-row-height: 88px;
+}
+
+.rating-records--compact {
+  --rating-row-height: 72px;
+}
+
+.rating-table {
+  width: 100%;
+  border-spacing: 0;
+}
+
+.rating-table .rating-col--includedIn {
+  width: 80px;
+}
+.rating-table .rating-col--comboFlag,
+.rating-table .rating-col--syncFlag {
+  width: 80px;
+}
+.rating-table .rating-col--achievementRate {
+  width: 140px;
+}
+.rating-table .rating-col--rating {
+  width: 136px;
+}
+.rating-table .rating-col--actions {
+  width: 64px;
+}
+
+.rating-table thead th {
+  position: relative;
+  padding: 8px;
+  background: color-mix(in srgb, var(--theme-canvas) 25%, white);
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-accent) 25%, transparent);
+}
+
+.rating-table-sort {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 36px;
+  width: 100%;
+  text-align: inherit;
+  font: inherit;
+  line-height: 1.2;
+}
+
+.rating-table-sort:enabled {
+  cursor: pointer;
+}
+
+.rating-table-sort:enabled::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.rating-table-sort:enabled:hover::after {
+  background: rgb(15 23 42 / 6%);
+}
+
+.rating-table-sort:enabled:active::after {
+  background: rgb(15 23 42 / 10%);
+}
+
+.rating-table-sort:disabled {
+  opacity: 1;
+}
+
+.rating-table-sort > div > div {
+  padding: 0 3px;
+}
+
+.rating-table-sort:focus-visible {
+  outline: none;
+}
+
+.rating-table-sort:focus-visible::after {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: -2px;
+}
+
+.rating-table-row {
+  height: var(--rating-row-height);
+}
+
+.rating-table-row > td {
+  box-sizing: border-box;
+  height: var(--rating-row-height);
+  padding: 0 8px;
+  border-bottom: 1px solid rgb(15 23 42 / 10%);
+}
+
+.rating-table-row > td.rating-col--chart {
+  padding: 0;
+}
+
+.rating-table .rating-chart-link {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: calc(var(--rating-row-height) - 1px);
+  min-width: 0;
+  padding: 8px !important;
+  overflow: hidden;
+}
+
+.rating-chart-cover {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.rating-chart-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.rating-chart-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 17px;
+  font-weight: 600;
+}
+
+.rating-records--compact .rating-chart-title {
+  -webkit-line-clamp: 1;
+}
+
+.rating-chart-meta {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 5px;
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.rating-chart-meta > span {
+  white-space: nowrap;
+}
+.rating-mobile-flags,
+.rating-mobile-action {
+  display: none;
+}
+.rating-value-cell {
+  font-size: 18px;
+  font-weight: 600;
+}
+.rating-table .rating-row-remove {
+  width: 44px;
+  height: 44px;
+}
+.rating-col--achievementRate > span {
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .rating-table .rating-col--comboFlag,
+  .rating-table .rating-col--syncFlag,
+  .rating-table .rating-col--actions {
+    display: none;
+  }
+
+  .rating-table .rating-col--includedIn {
+    width: 50px;
+    text-align: center;
+  }
+  .rating-table td.rating-col--includedIn > span {
+    width: 34px;
+    font-size: 11px;
+  }
+
+  .rating-table .rating-col--achievementRate {
+    width: 86px;
+    text-align: right;
+  }
+  .rating-table .rating-col--rating {
+    width: 56px;
+    text-align: right;
+  }
+  .rating-table thead th {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+  .rating-table-row > td {
+    padding: 0 6px;
+  }
+  .rating-table .rating-chart-link {
+    gap: 7px;
+    padding: 6px !important;
+  }
+  .rating-chart-cover {
+    flex-basis: 32px;
+    width: 32px;
+    height: 32px;
+  }
+  .rating-chart-title {
+    font-size: 13px;
+    line-height: 16px;
+  }
+  .rating-chart-copy {
+    gap: 2px;
+  }
+  .rating-chart-meta {
+    column-gap: 4px;
+    font-size: 10px;
+    line-height: 12px;
+  }
+  .rating-mobile-flags {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 16px;
+  }
+  .rating-table .rating-mobile-flags > * {
+    width: auto;
+    padding: 1px 4px;
+    font-size: 9px;
+    line-height: 12px;
+    box-shadow: none;
+  }
+  .rating-mobile-action {
+    display: block;
+    height: 44px;
+  }
+  .rating-value-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 20px;
+  }
+  .rating-table .rating-row-remove {
+    margin-right: -7px;
+    color: rgb(15 23 42 / 55%);
+  }
+  .rating-col--achievementRate > span {
+    font-size: 13px;
+    letter-spacing: -0.3px;
+  }
+  .rating-table-sort {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 2px;
+  }
+  .rating-col--chart .rating-table-sort {
+    justify-content: flex-start;
+  }
+  .rating-col--includedIn .rating-table-sort {
+    justify-content: center;
+  }
+  .rating-table-sort > div {
+    font-size: 10px;
+  }
+  .rating-table-sort > div > div {
+    padding: 0 3px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 359px) {
+  .rating-chart-cover {
+    display: none;
+  }
+}
+
+.rating-table-row {
+  background: rgb(255 255 255 / 65%);
+}
+.rating-table-row[data-bucket='b15'] {
+  background: #fff7d6;
+}
+.rating-table-row[data-bucket='b35'] {
+  background: #e4f7fb;
+}
+.rating-table-sort svg {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .rating-table-sort > span {
+    white-space: nowrap;
+  }
+}
+.rating-calculator {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.rating-overview {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: start;
+  gap: 16px;
+}
+.rating-summary,
+.rating-tools,
+.rating-summary .MuiAlert-message,
+.rating-tools .MuiAlert-message {
+  min-width: 0;
+  width: 100%;
+}
+.rating-tools .MuiButton-root {
+  max-width: 100%;
+}
+.rating-statistics {
+  position: relative;
+  min-width: 0;
+}
+.rating-statistics .rating-statistics-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.rating-statistics--details {
+  padding-top: 40px;
+}
+.rating-records {
+  background: rgb(255 255 255 / 85%);
+  border-radius: 16px;
+}
+.rating-table-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 20px;
+  padding: 12px 16px 0;
+}
+.rating-table-controls .MuiFormControlLabel-root {
+  margin: 0;
+}
+.rating-table-controls .MuiFormControlLabel-label {
+  font-size: 14px;
+}
+.rating-add-form {
+  padding: 12px 16px 16px;
+  border-bottom: 1px solid rgb(15 23 42 / 10%);
+}
+.rating-add-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px auto;
+  gap: 12px;
+  align-items: start;
+}
+.rating-add-fields > * {
+  min-width: 0;
+}
+.rating-add-fields .rating-add-submit {
+  min-height: 40px;
+  white-space: nowrap;
+}
+.rating-add-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+}
+.rating-add-preview > * {
+  min-width: 0;
+}
+.rating-records .MuiTableContainer-root {
+  border-radius: 0 0 16px 16px;
+  box-shadow: none;
+}
+.rating-table th.rating-col--chart {
+  padding-left: 16px;
+}
+.rating-table .rating-chart-link {
+  padding-left: 16px !important;
+}
+@media (min-width: 1280px) {
+  .rating-statistics .rating-statistics-overview {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .rating-statistics-overview > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 400px) {
+  .rating-statistics-overview .text-3xl {
+    font-size: 24px;
+  }
+}
+@media (max-width: 767px) {
+  .rating-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rating-table-controls {
+    padding: 8px 12px 0;
+    gap: 0 12px;
+  }
+  .rating-add-form {
+    padding: 12px;
+  }
+  .rating-add-fields {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px 8px;
+  }
+  .rating-add-fields > .MuiAutocomplete-root {
+    grid-column: 1 / -1;
+  }
+  .rating-add-preview {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .rating-table th.rating-col--chart {
+    padding-left: 12px;
+  }
+  .rating-table .rating-chart-link {
+    padding-left: 12px !important;
+  }
+}

@@ -4,18 +4,21 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import i18n from 'i18next'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
-import { Suspense, useEffect, useMemo } from 'react'
+import { type CSSProperties, Suspense, useEffect, useMemo } from 'react'
 import toast from 'react-hot-toast'
 import { I18nextProvider, useTranslation } from 'react-i18next'
+import { NetImportSettingsProvider } from '@/components/rating/io/import/NetImportSettingsContext'
+import { NetImportProgress } from '@/components/rating/io/import/NetImportProgress'
 import { CustomizedToaster } from '@/components/global/CustomizedToaster'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
-import { OverscrollBackgroundFiller } from '@/components/global/OverscrollBackgroundFiller'
 import { SideEffector } from '@/components/global/SideEffector'
-import { WebpSupportedImage } from '@/components/global/WebpSupportedImage'
+import { VersionBackground } from '@/components/global/backgrounds/VersionBackground'
 import { VersionRegionSwitcher } from '@/components/global/preferences/VersionRegionSwitcher'
 import { AppTabs } from '@/components/layout/AppTabs'
+import { ThemedBody } from '@/components/layout/ThemedBody'
 import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
+import { RegionVersionUpdatePrompt } from '@/components/global/preferences/RegionVersionUpdatePrompt'
 import { AppContextProvider } from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
 import { createServerI18n } from '@/setup/init-i18n'
@@ -59,9 +62,7 @@ export const Route = createRootRoute({
           content: 'width=device-width, initial-scale=1.0, viewport-fit=cover',
         },
         ...buildRootSeoMeta(locale, { includeTitle: includeRootTitle }),
-        { name: 'theme-color', content: '#c8a8f9' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
-        { name: 'msapplication-TileColor', content: '#c8a8f9' },
         {
           name: 'msapplication-config',
           content: 'https://shama.dxrating.net/favicon/pack/v1/browserconfig.xml',
@@ -89,8 +90,10 @@ function RootLayout() {
 
   return (
     <>
-      <OverscrollBackgroundFiller />
-      <TopBar />
+      {/* Constrain the sticky tint source to its own height so the header still scrolls away. */}
+      <div>
+        <TopBar />
+      </div>
       {!isDevelopersPage && !isPrivacyPolicy && (
         <div
           className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-4 pb-4"
@@ -142,22 +145,26 @@ function RootComponent() {
   return (
     <RenderEnvironmentProvider renderedAt={renderedAt}>
       <I18nextProvider i18n={routeI18n}>
-        <RootDocument>
-          <QueryClientProvider client={queryClient}>
-            <AppContextProvider>
+        <AppContextProvider>
+          <RootDocument>
+            <QueryClientProvider client={queryClient}>
               <VersionCustomizedThemeProvider>
                 <RatingCalculatorContextProvider>
                   <PostHogProvider client={posthog}>
-                    <SideEffector />
-                    <CustomizedToaster />
-                    <OAuthErrorHandler />
-                    <AppLayout />
+                    <NetImportSettingsProvider>
+                      <SideEffector />
+                      <CustomizedToaster />
+                      <NetImportProgress />
+                      <OAuthErrorHandler />
+                      <RegionVersionUpdatePrompt />
+                      <AppLayout />
+                    </NetImportSettingsProvider>
                   </PostHogProvider>
                 </RatingCalculatorContextProvider>
               </VersionCustomizedThemeProvider>
-            </AppContextProvider>
-          </QueryClientProvider>
-        </RootDocument>
+            </QueryClientProvider>
+          </RootDocument>
+        </AppContextProvider>
       </I18nextProvider>
     </RenderEnvironmentProvider>
   )
@@ -170,13 +177,7 @@ function AppLayout() {
 
   return (
     <div className="h-full w-full relative">
-      <WebpSupportedImage
-        src={versionTheme.background}
-        alt=""
-        aria-hidden={true}
-        className="fixed inset-0 h-full-lvh w-full z-[-1] object-cover object-center select-none touch-callout-none"
-        draggable={false}
-      />
+      <VersionBackground />
 
       {isLegalPage && (
         <div
@@ -196,18 +197,29 @@ function AppLayout() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const theme = useVersionTheme()
   const { locale, renderedAt } = Route.useRouteContext()
 
   return (
-    <html lang={locale}>
+    <html
+      lang={locale}
+      style={
+        {
+          '--theme-accent': theme.accentColor,
+          '--theme-canvas': theme.canvasColor ?? theme.accentColor,
+        } as CSSProperties
+      }
+    >
       <head>
         <HeadContent />
+        <meta name="theme-color" content={theme.accentColor} />
+        <meta name="msapplication-TileColor" content={theme.accentColor} />
         <meta name={RENDERED_AT_META_NAME} content={String(renderedAt)} />
       </head>
-      <body>
+      <ThemedBody>
         {children}
         <Scripts />
-      </body>
+      </ThemedBody>
     </html>
   )
 }

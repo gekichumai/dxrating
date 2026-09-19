@@ -52,6 +52,7 @@ import {
 import { RatingCalculatorStatistics } from '../components/rating/RatingCalculatorStatistics'
 import { ClearButton } from '../components/rating/io/ClearButton'
 import { ExportMenu } from '../components/rating/io/ExportMenu'
+import { NetImportSettingsButton } from '../components/rating/io/import/NetImportSettingsButton'
 import { ImportMenu } from '../components/rating/io/ImportMenu'
 import { RenderToOneShotImageButton } from '../components/rating/io/export/RenderToOneShotImageButton'
 import { useRatingEntries } from '../components/rating/useRatingEntries'
@@ -60,6 +61,8 @@ import { useRatingCalculatorContext } from '../models/context/RatingCalculatorCo
 import { achievementRateBand, captureAnalyticsEvent } from '../lib/analytics'
 import { type FlattenedSheet, useSheets } from '../songs'
 import type { Rating } from '../utils/rating'
+import { DIFFICULTIES } from '../models/difficulties'
+import './rating-table.css'
 
 export interface Entry {
   sheet: FlattenedSheet
@@ -77,27 +80,20 @@ const RatingCalculatorRowActions: FC<{
   modifyEntries: ListActions<PlayEntry>
   entry: PlayEntry
 }> = ({ modifyEntries, entry }) => {
-  const { data: sheets } = useSheets({ acceptsPartialData: true })
+  const { data: sheets } = useSheets()
   const [dialogOpen, setDialogOpen] = useState(false)
   const { entries } = useRatingCalculatorContext()
   const { t } = useTranslation(['rating-calculator'])
 
   const handleClick = useCallback(() => {
     modifyEntries.filter((existingEntry) => existingEntry.sheetId !== entry.sheetId)
-  }, [])
+  }, [modifyEntries, entry.sheetId])
 
   const sheet = useMemo(() => sheets?.find((sheet) => sheet.id === entry.sheetId), [sheets, entry.sheetId])
 
   return (
     <>
-      <Dialog
-        TransitionComponent={Grow}
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        classes={{
-          paper: 'min-w-[20rem]',
-        }}
-      >
+      <Dialog TransitionComponent={Grow} open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="xs">
         <DialogTitle>{t('rating-calculator:table.remove-dialog.title')}</DialogTitle>
         <DialogContent>{sheet && <SheetListItemContent sheet={sheet} />}</DialogContent>
         <DialogActions>
@@ -120,7 +116,12 @@ const RatingCalculatorRowActions: FC<{
         </DialogActions>
       </Dialog>
 
-      <IconButton size="small" onClick={() => setDialogOpen(true)}>
+      <IconButton
+        size="small"
+        aria-label={`${t('rating-calculator:table.remove-dialog.remove')} ${sheet?.title ?? ''}`}
+        className="rating-row-remove"
+        onClick={() => setDialogOpen(true)}
+      >
         <IconMdiTrashCan />
       </IconButton>
     </>
@@ -134,7 +135,7 @@ const TransparentPaper = styled(Paper)(() => ({
 
 export const RatingCalculator = () => {
   const { modifyEntries } = useRatingCalculatorContext()
-  const { data: sheets } = useSheets({ acceptsPartialData: true })
+  const { data: sheets } = useSheets()
   const [showOnlyB50, setShowOnlyB50] = useState(false)
   const [compactMode, setCompactMode] = useState(false)
   const { t } = useTranslation(['rating-calculator'])
@@ -166,18 +167,18 @@ export const RatingCalculator = () => {
   if (!sheets) return null
 
   return (
-    <div className="flex-container w-full pb-global">
-      <div className="flex flex-col md:flex-row items-start gap-4 w-full">
-        <Alert icon={false} severity="info" className="px-4 py-2 w-full md:w-2/3" classes={{ message: 'w-full' }}>
+    <div className="rating-calculator flex-container w-full pb-global">
+      <div className="rating-overview">
+        <Alert icon={false} severity="info" className="rating-summary px-4 py-2" classes={{ message: 'w-full' }}>
           <AlertTitle className="font-bold">{t('rating-calculator:breakdown.title')}</AlertTitle>
           <RatingCalculatorStatistics />
         </Alert>
 
-        <div className="flex flex-col gap-4 h-full self-stretch w-full md:w-1/3">
+        <div className="rating-tools">
           <Alert
             icon={false}
             severity="info"
-            className="w-full overflow-auto px-4 py-2"
+            className="w-full px-4 py-2"
             classes={{
               message: 'w-full',
             }}
@@ -192,72 +193,62 @@ export const RatingCalculator = () => {
               <RenderToOneShotImageButton />
             </div>
 
-            <div className="flex items-center gap-2 mt-2">
-              <ImportMenu modifyEntries={modifyEntries} />
-
-              <ExportMenu />
-
-              <div className="flex-1" />
-
-              <ClearButton modifyEntries={modifyEntries} />
-            </div>
-          </Alert>
-
-          <Alert
-            icon={false}
-            severity="info"
-            className="w-full px-4 py-2"
-            classes={{
-              message: 'overflow-unset',
-            }}
-          >
-            <AlertTitle className="font-bold">{t('rating-calculator:quick-actions.title')}</AlertTitle>
-            <div className="flex flex-col items-start mt-2">
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={showOnlyB50}
-                    onChange={() => {
-                      const enabled = !showOnlyB50
-                      setShowOnlyB50(enabled)
-                      captureAnalyticsEvent('rating_calculator_view_changed', {
-                        setting: 'show_only_b50',
-                        enabled,
-                      })
-                    }}
-                  />
-                }
-                label={t('rating-calculator:quick-actions.show-only-b50')}
-              />
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={compactMode}
-                    onChange={() => {
-                      const enabled = !compactMode
-                      setCompactMode(enabled)
-                      captureAnalyticsEvent('rating_calculator_view_changed', {
-                        setting: 'compact_mode',
-                        enabled,
-                      })
-                    }}
-                  />
-                }
-                label={
-                  <div className="flex items-center gap-1 leading-none">
-                    {t('rating-calculator:quick-actions.compact-mode')} <BetaBadge />
-                  </div>
-                }
-              />
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <div className="flex items-center gap-2">
+                <ImportMenu modifyEntries={modifyEntries} />
+                <NetImportSettingsButton />
+              </div>
+              <div className="flex flex-1 items-center gap-2">
+                <ExportMenu />
+                <div className="flex-1" />
+                <ClearButton modifyEntries={modifyEntries} />
+              </div>
             </div>
           </Alert>
         </div>
       </div>
 
-      <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
+      <div className={clsx('rating-records w-full', compactMode && 'rating-records--compact')}>
+        <div className="rating-table-controls" role="group" aria-label={t('rating-calculator:quick-actions.title')}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showOnlyB50}
+                onChange={() => {
+                  const enabled = !showOnlyB50
+                  setShowOnlyB50(enabled)
+                  captureAnalyticsEvent('rating_calculator_view_changed', {
+                    setting: 'show_only_b50',
+                    enabled,
+                  })
+                }}
+              />
+            }
+            label={t('rating-calculator:quick-actions.show-only-b50')}
+          />
 
-      <div className="max-w-screen w-full overflow-x-auto -mx-4">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={compactMode}
+                onChange={() => {
+                  const enabled = !compactMode
+                  setCompactMode(enabled)
+                  captureAnalyticsEvent('rating_calculator_view_changed', {
+                    setting: 'compact_mode',
+                    enabled,
+                  })
+                }}
+              />
+            }
+            label={
+              <div className="flex items-center gap-1 leading-none">
+                {t('rating-calculator:quick-actions.compact-mode')} <BetaBadge />
+              </div>
+            }
+          />
+        </div>
+        <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
         <RatingCalculatorTableContent compactMode={compactMode} showOnlyB50={showOnlyB50} />
 
         {allEntries.length === 0 && (
@@ -275,15 +266,15 @@ const RatingCalculatorIncludedInCell: FC<{
   if (!includedIn) return null
 
   return (
-    <div
+    <span
       className={clsx(
-        'tabular-nums font-mono tracking-tighter w-12 leading-none py-1.5 rounded-full text-white text-center shadow select-none',
+        'inline-block tabular-nums font-mono tracking-tighter w-12 leading-none py-1.5 rounded-full text-white text-center shadow select-none',
         includedIn === 'b15' && 'bg-amber-500',
         includedIn === 'b35' && 'bg-cyan-500',
       )}
     >
       {includedIn.toUpperCase()}
-    </div>
+    </span>
   )
 })
 RatingCalculatorIncludedInCell.displayName = 'memo(RatingCalculatorIncludedInCell)'
@@ -330,14 +321,68 @@ const RatingCalculatorSyncFlagCell: FC<{
 })
 RatingCalculatorSyncFlagCell.displayName = 'memo(RatingCalculatorSyncFlagCell)'
 
+const RatingChartCell: FC<{ row: Row<Entry>; compactMode: boolean }> = ({ row, compactMode }) => {
+  const { sheet, achievementRate } = row.original
+  const difficulty = DIFFICULTIES[sheet.difficulty as keyof typeof DIFFICULTIES]
+  return (
+    <SheetListItem
+      sheet={sheet}
+      className="rating-chart-link"
+      analytics={{ source: 'rating_calculator' }}
+      SheetDialogContentProps={{ currentAchievementRate: achievementRate }}
+    >
+      {!compactMode && (
+        <img
+          className="rating-chart-cover"
+          src={`https://shama.dxrating.net/images/cover/v2/${sheet.imageName}.jpg`}
+          alt=""
+          loading="lazy"
+          width={40}
+          height={40}
+        />
+      )}
+      <span className="rating-chart-copy">
+        <span className="rating-chart-title" title={sheet.title}>
+          {sheet.title}
+        </span>
+        <span className="rating-chart-meta">
+          <span style={{ color: difficulty?.color }}>{difficulty?.title ?? sheet.difficulty}</span>
+          <span>
+            {sheet.type.toUpperCase()} ·{' '}
+            {sheet.isTypeUtage ? sheet.level : (sheet.internalLevelValue?.toFixed(1) ?? sheet.level)}
+          </span>
+        </span>
+        <span className="rating-mobile-flags">
+          <RatingCalculatorComboFlagCell row={row} />
+          <RatingCalculatorSyncFlagCell row={row} />
+        </span>
+      </span>
+    </SheetListItem>
+  )
+}
+
 const RatingCalculatorAchievementRateCell: FC<{
   row: Row<Entry>
 }> = ({ row }) => (
   <span className="font-sans tracking-wide tabular-nums">{row.original.achievementRate.toFixed(4)}%</span>
 )
 
-const RatingCalculatorTable: FC<TableProps> = (props: TableProps) => (
-  <Table {...props} size="small" className="rounded-lg w-full min-w-2xl" style={{ borderCollapse: 'separate' }} />
+const RATING_COLUMN_IDS = ['chart', 'includedIn', 'comboFlag', 'syncFlag', 'achievementRate', 'rating', 'actions']
+
+const RatingCalculatorTable: FC<TableProps> = ({ children, style, ...props }) => (
+  <Table
+    {...props}
+    size="small"
+    className="rating-table"
+    style={{ ...style, tableLayout: 'fixed', borderCollapse: 'separate' }}
+  >
+    <colgroup>
+      {RATING_COLUMN_IDS.map((id) => (
+        <col key={id} className={`rating-col--${id}`} />
+      ))}
+    </colgroup>
+    {children}
+  </Table>
 )
 
 function RatingCalculatorTableBody({ ref, ...props }: TableBodyProps & { ref?: React.Ref<HTMLTableSectionElement> }) {
@@ -345,21 +390,11 @@ function RatingCalculatorTableBody({ ref, ...props }: TableBodyProps & { ref?: R
 }
 
 const RatingCalculatorTableRow: FC<ItemProps<Row<Entry>>> = ({ item, ...props }) => (
-  <TableRow
-    {...props}
-    className={clsx(
-      'tabular-nums w-full',
-      {
-        b15: 'bg-amber-200',
-        b35: 'bg-cyan-200',
-        none: undefined,
-      }[item.original.includedIn ?? 'none'],
-    )}
-  />
+  <TableRow {...props} className="rating-table-row tabular-nums" data-bucket={item.original.includedIn ?? 'none'} />
 )
 
 function RatingCalculatorScroller({ ref, ...props }: ScrollerProps & { ref?: React.Ref<HTMLDivElement> }) {
-  return <TableContainer component={TransparentPaper} {...props} ref={ref} />
+  return <TableContainer component={TransparentPaper} {...props} ref={ref} sx={{ overflow: 'clip' }} />
 }
 
 const RatingCalculatorRatingCell: FC<{
@@ -382,7 +417,7 @@ const RatingCalculatorTableRowContent: FC<{
                 cellProps?: Record<string, unknown>
               }
             )?.cellProps}
-            style={{ width: cell.column.getSize() }}
+            className={`rating-col--${cell.column.id}`}
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
           </TableCell>
@@ -407,46 +442,23 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
       columnHelper.display({
         id: 'chart',
         header: t('rating-calculator:table.headers.chart'),
-        cell: ({ row }) => (
-          <SheetListItem
-            sheet={row.original.sheet}
-            analytics={{ source: 'rating_calculator' }}
-            SheetDialogContentProps={{
-              currentAchievementRate: row.original.achievementRate,
-            }}
-            SheetListItemContentProps={{
-              enableSheetImage: !compactMode,
-              SheetTitleProps: {
-                enableVersion: false,
-                className: 'flex-col',
-              },
-              ListItemTextProps: {
-                className: clsx('!my-0', compactMode ? '!ml-0' : '!ml-1'),
-              },
-            }}
-          />
-        ),
+        cell: ({ row }) => <RatingChartCell row={row} compactMode={compactMode} />,
         meta: {
           cellProps: {
             padding: 'none',
           },
         },
-        size: 700,
-        minSize: 400,
       }),
-      columnHelper.accessor('includedIn', {
+      columnHelper.accessor((entry) => entry.includedIn ?? undefined, {
         id: 'includedIn',
         header: t('rating-calculator:table.headers.included-in'),
         cell: RatingCalculatorIncludedInCell,
-        size: 50,
-        minSize: 100,
+        sortUndefined: 'last',
       }),
       columnHelper.accessor('comboFlag', {
         id: 'comboFlag',
         header: t('rating-calculator:table.headers.combo'),
         cell: RatingCalculatorComboFlagCell,
-        size: 50,
-        minSize: 50,
         sortingFn: (a, b) => {
           const rankA = a.original.comboFlag ? COMBO_FLAG_CONFIG[a.original.comboFlag].rank : 0
           const rankB = b.original.comboFlag ? COMBO_FLAG_CONFIG[b.original.comboFlag].rank : 0
@@ -457,8 +469,6 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
         id: 'syncFlag',
         header: t('rating-calculator:table.headers.sync'),
         cell: RatingCalculatorSyncFlagCell,
-        size: 50,
-        minSize: 50,
         sortingFn: (a, b) => {
           const rankA = a.original.syncFlag ? SYNC_FLAG_CONFIG[a.original.syncFlag].rank : 0
           const rankB = b.original.syncFlag ? SYNC_FLAG_CONFIG[b.original.syncFlag].rank : 0
@@ -469,15 +479,18 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
         id: 'achievementRate',
         header: t('rating-calculator:table.headers.achievement-rate'),
         cell: RatingCalculatorAchievementRateCell,
-        size: 100,
-        minSize: 150,
       }),
       columnHelper.accessor('rating.ratingAwardValue', {
         id: 'rating',
         header: t('rating-calculator:table.headers.rating'),
-        cell: RatingCalculatorRatingCell,
-        size: 50,
-        minSize: 100,
+        cell: ({ row }) => (
+          <div className="rating-value-cell">
+            <RatingCalculatorRatingCell row={row} />
+            <span className="rating-mobile-action">
+              <RatingCalculatorRowActions entry={row.original} modifyEntries={modifyEntries} />
+            </span>
+          </div>
+        ),
         sortingFn: (a, b) => {
           if (!a.original.rating) return -1
           if (!b.original.rating) return 1
@@ -488,8 +501,6 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
         id: 'actions',
         header: t('rating-calculator:table.headers.actions'),
         cell: ({ row }) => <RatingCalculatorRowActions entry={row.original} modifyEntries={modifyEntries} />,
-        size: 50,
-        minSize: 100,
       }),
     ],
     [modifyEntries, compactMode, t],
@@ -503,8 +514,8 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
     data,
     columns,
     state: { sorting },
+    getRowId: (entry) => entry.sheetId,
     onSortingChange: setSorting,
-    isMultiSortEvent: () => true,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   })
@@ -519,20 +530,21 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
         TableRow: RatingCalculatorTableRow,
         TableBody: RatingCalculatorTableBody,
       }) as TableComponents<Row<Entry>>,
-    [compactMode],
+    [],
   )
 
-  const getItemContent = useCallback(
-    (index: number) => <RatingCalculatorTableRowContent row={table.getRowModel().rows[index]} />,
-    [table],
-  )
+  const getItemContent = useCallback((_: number, row: Row<Entry>) => <RatingCalculatorTableRowContent row={row} />, [])
 
   return (
     <TableVirtuoso<Row<Entry>>
+      // Virtuoso caches item measurements; a density change must discard the previous row heights.
+      key={compactMode ? 'compact' : 'comfortable'}
       useWindowScroll
+      fixedItemHeight={compactMode ? 72 : 88}
+      computeItemKey={(_, row) => row.original.sheetId}
       data={table.getRowModel().rows}
-      className="w-full overflow-y-hidden"
-      increaseViewportBy={2000}
+      className="w-full"
+      increaseViewportBy={400}
       overscan={10}
       components={TableComponents}
       fixedHeaderContent={() =>
@@ -543,17 +555,18 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
                 <TableCell
                   key={header.id}
                   colSpan={header.colSpan}
-                  className={clsx(
-                    'group bg-gray-900/5 transition whitespace-nowrap',
-                    header.column.getCanSort() &&
-                      'cursor-pointer select-none hover:bg-gray-900/10 active:bg-gray-900/20 leading-tight py-4',
-                  )}
-                  onClick={header.column.getToggleSortingHandler()}
-                  style={{ width: header.getSize() }}
+                  className={`rating-col--${header.column.id} group`}
+                  scope="col"
+                  sortDirection={header.column.getIsSorted() || false}
                 >
                   {header.isPlaceholder ? null : (
-                    <div>
-                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    <button
+                      type="button"
+                      className="rating-table-sort"
+                      disabled={!header.column.getCanSort()}
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
+                      <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
                       <div
                         className={clsx(
                           'inline-flex items-center overflow-hidden relative',
@@ -578,7 +591,7 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
                           </div>
                         )}
                       </div>
-                    </div>
+                    </button>
                   )}
                 </TableCell>
               )

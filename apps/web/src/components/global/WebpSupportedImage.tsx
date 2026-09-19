@@ -19,8 +19,8 @@ const srcToMimeType = (src: string) => {
   }[ext]
 }
 
-const toCdnUrl = (path: string) => {
-  return `https://shama.dxrating.net${path}`
+const toAssetUrl = (path: string, asset: Asset) => {
+  return asset.local ? path : `https://shama.dxrating.net${path}`
 }
 
 export const WebpSupportedImage = (
@@ -63,18 +63,18 @@ export const WebpSupportedImage = (
 
   const webp = changeToWebp(source.at1x.path)
   const webpSrcSet = source.at2x
-    ? `${toCdnUrl(webp)} 1x, ${toCdnUrl(changeToWebp(source.at2x.path))} 2x`
-    : toCdnUrl(webp)
+    ? `${toAssetUrl(webp, source.at1x)} 1x, ${toAssetUrl(changeToWebp(source.at2x.path), source.at2x)} 2x`
+    : toAssetUrl(webp, source.at1x)
   const originalSrcSet = source.at2x
-    ? `${toCdnUrl(source.at1x.path)} 1x, ${toCdnUrl(source.at2x.path)} 2x`
-    : toCdnUrl(source.at1x.path)
+    ? `${toAssetUrl(source.at1x.path, source.at1x)} 1x, ${toAssetUrl(source.at2x.path, source.at2x)} 2x`
+    : toAssetUrl(source.at1x.path, source.at1x)
 
   return (
     <picture>
       <source type={srcToMimeType(webp)} srcSet={webpSrcSet} />
       <source type={srcToMimeType(source.at1x.path)} srcSet={originalSrcSet} />
       <img
-        src={toCdnUrl(source.at1x.path)}
+        src={toAssetUrl(source.at1x.path, source.at1x)}
         alt={alt}
         height={source.at1x.height}
         width={source.at1x.width}

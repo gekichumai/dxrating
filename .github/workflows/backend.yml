@@ -61,6 +61,15 @@ jobs:
       - name: Build backend
         run: pnpm turbo run build --filter=@gekichumai/backend
 
+      - name: Test Sentry source context
+        run: pnpm --filter @gekichumai/backend test:source-context
+
+      - name: Test renderer resource management
+        run: pnpm --filter @gekichumai/oneshot-renderer test
+
+      - name: Lint renderer
+        run: pnpm --filter @gekichumai/oneshot-renderer lint
+
   integration-test:
     runs-on: ubuntu-latest
     name: Integration Tests
@@ -103,7 +112,9 @@ jobs:
           BETTER_AUTH_URL: http://localhost:3001
           NODE_ENV: test
           PORT: 3001
-        run: pnpm --filter @gekichumai/backend test
+        run: |
+          pnpm --filter @gekichumai/oneshot-renderer build
+          pnpm --filter @gekichumai/backend test
 
   docker-build:
     runs-on: ubuntu-latest
@@ -174,6 +185,16 @@ jobs:
           cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/backend:buildcache,mode=max,compression=zstd
           platforms: linux/amd64
 
+      - name: Create Sentry release with commits
+        uses: getsentry/action-release@v3
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: gekichumai
+          SENTRY_PROJECT: dxrating-backend
+        with:
+          release: dxrating-backend@${{ github.sha }}
+          set_commits: auto
+
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v2
         with:
@@ -194,3 +215,34 @@ jobs:
             --header "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
             --header "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
             --fail --silent --show-error
+
+      - name: Wait for the deployed commit
+        timeout-minutes: 12
+        env:
+          EXPECTED_COMMIT: ${{ github.sha }}
+        run: |
+          for attempt in $(seq 1 60); do
+            COMMIT=$(curl --fail --silent --show-error --max-time 10 \
+              https://miruku.dxrating.net/version | jq -r '.commit' || true)
+            if [ "$COMMIT" = "$EXPECTED_COMMIT" ]; then
+              echo "Verified deployed commit $COMMIT"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::The backend did not deploy the expected commit"
+          exit 1
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Record Sentry deployment
+        uses: getsentry/action-release@v3
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: gekichumai
+          SENTRY_PROJECT: dxrating-backend
+        with:
+          release: dxrating-backend@${{ github.sha }}
+          environment: production
+          set_commits: skip
