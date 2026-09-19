@@ -315,7 +315,7 @@
     "user-profile.oauth-error.account_already_linked_to_different_user": "此账户已关联到其他用户。",
     "user-profile.oauth-error.default": "身份验证出错：{{error}}",
     "terms.title": "服务条款",
-    "terms.accept": "我同意服务条款。",
+    "terms.notice": "登录或注册即表示您同意<terms>服务条款</terms>。",
     "terms.updated": "更新日期：2026年9月19日",
     "terms.p1": "DXRating 是由 MikuNet LLC 提供的 Rating 与乐曲信息社区服务。本条款适用于网站和应用。请在注册或登录前阅读；如不同意，请勿注册或登录。",
     "terms.p2": "请妥善保管账号凭据并合法使用服务。禁止冒充他人、未经授权访问账号、干扰服务或发送垃圾信息。",

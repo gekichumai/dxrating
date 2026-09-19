@@ -84,17 +84,16 @@ describe('LoginForm', () => {
     expect(screen.getByRole('button', { name: 'Hide Password' }).getAttribute('aria-pressed')).toBe('true')
   })
 
-  it('blocks authentication before terms acceptance, including direct form submission', async () => {
+  it('shows a linked agreement notice without gating social login', async () => {
     render(<LoginForm />)
-    fireEvent.change(screen.getByLabelText(/^Email/), { target: { value: 'review@example.com' } })
-    fireEvent.change(screen.getByLabelText(/^Password/), { target: { value: 'password12345' } })
-    fireEvent.submit(screen.getByRole('form', { name: 'Sign in' }))
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Continue' }).hasAttribute('disabled')).toBe(true))
-    expect(screen.getByRole('button', { name: 'Continue with Google' }).hasAttribute('disabled')).toBe(true)
-    expect(screen.getByRole('button', { name: 'Sign in with Passkey' }).hasAttribute('disabled')).toBe(true)
-    expect(emailSignIn).not.toHaveBeenCalled()
-    expect(socialSignIn).not.toHaveBeenCalled()
-    expect(passkeySignIn).not.toHaveBeenCalled()
+    expect(screen.queryByRole('checkbox')).toBeNull()
+    expect(screen.getByRole('link', { name: 'Terms of Service' }).getAttribute('href')).toBe('/terms-of-service')
+    expect(screen.getByText(/By logging in or registering/).textContent).toBe(
+      'By logging in or registering, you agree to the Terms of Service.',
+    )
+    expect(screen.getByRole('button', { name: 'Continue with Google' }).hasAttribute('disabled')).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with Google' }))
+    await waitFor(() => expect(socialSignIn).toHaveBeenCalledWith(expect.objectContaining({ provider: 'google' })))
   })
 
   it('switches to one registration form without leaving duplicate controls mounted', () => {
@@ -114,13 +113,12 @@ describe('LoginForm', () => {
     expect(screen.getByRole('button', { name: 'Sign Up' }).getAttribute('type')).toBe('submit')
   })
 
-  it('starts conditional passkey autofill only after terms acceptance', async () => {
+  it('starts conditional passkey autofill when the login form opens', async () => {
     const isConditionalMediationAvailable = vi.fn().mockResolvedValue(true)
     vi.stubGlobal('PublicKeyCredential', { isConditionalMediationAvailable })
 
     render(<LoginForm />)
     expect(passkeySignIn).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('checkbox', { name: 'I agree to the Terms of Service.' }))
 
     await waitFor(() => {
       expect(isConditionalMediationAvailable).toHaveBeenCalledOnce()
@@ -133,7 +131,6 @@ describe('LoginForm', () => {
     vi.stubGlobal('PublicKeyCredential', { isConditionalMediationAvailable })
 
     render(<LoginForm />)
-    fireEvent.click(screen.getByRole('checkbox', { name: 'I agree to the Terms of Service.' }))
     fireEvent.click(screen.getByRole('button', { name: 'Sign in with Passkey' }))
 
     await waitFor(() => expect(passkeySignIn).toHaveBeenCalledWith())

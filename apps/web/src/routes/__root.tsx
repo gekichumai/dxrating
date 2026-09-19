@@ -92,7 +92,7 @@ function RootLayout() {
     <>
       {/* Constrain the sticky tint source to its own height so the header still scrolls away. */}
       <div>
-        <TopBar />
+        <TopBar standalone={isPrivacyPolicy || isDevelopersPage} transparent={isPrivacyPolicy} />
       </div>
       {!isDevelopersPage && !isPrivacyPolicy && (
         <div

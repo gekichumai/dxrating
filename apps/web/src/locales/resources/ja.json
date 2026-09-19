@@ -315,7 +315,7 @@
     "user-profile.oauth-error.account_already_linked_to_different_user": "このアカウントは既に別のユーザーに連携されています。",
     "user-profile.oauth-error.default": "認証エラーが発生しました：{{error}}",
     "terms.title": "利用規約",
-    "terms.accept": "利用規約に同意します。",
+    "terms.notice": "ログインまたは新規登録することで、<terms>利用規約</terms>に同意したものとみなされます。",
     "terms.updated": "更新日：2026年9月19日",
     "terms.p1": "DXRatingはMikuNet LLCが提供するレーティング・楽曲情報のコミュニティサービスです。本規約はウェブサイトとアプリに適用されます。アカウント作成またはログイン前にお読みください。同意しない場合は、アカウント作成やログインをしないでください。",
     "terms.p2": "認証情報を安全に管理し、法令を守ってご利用ください。なりすまし、不正アクセス、サービスへの妨害、スパム投稿は禁止します。",

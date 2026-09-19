@@ -315,7 +315,7 @@
     "user-profile.oauth-error.account_already_linked_to_different_user": "This account is already linked to a different user.",
     "user-profile.oauth-error.default": "An authentication error occurred: {{error}}",
     "terms.title": "Terms of Service",
-    "terms.accept": "I agree to the Terms of Service.",
+    "terms.notice": "By logging in or registering, you agree to the <terms>Terms of Service</terms>.",
     "terms.updated": "Updated September 19, 2026",
     "terms.p1": "DXRating is a community rating and song-information service provided by MikuNet LLC. These terms apply to its website and apps. Read them before creating an account or signing in. If you do not agree, do not create an account or sign in.",
     "terms.p2": "Keep your account credentials secure and use the service lawfully. Do not impersonate others, access accounts without permission, interfere with the service, or submit spam.",
