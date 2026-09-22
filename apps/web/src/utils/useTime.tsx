@@ -29,7 +29,7 @@ export const useTime = (time?: string, length: 'short' | 'normal' = 'normal') =>
       }
 
       const dateString = date.toLocaleString(i18n.language)
-      const relativeTime = intlFormatDistance(date, new Date(now))
+      const relativeTime = intlFormatDistance(date, new Date(now), { locale: i18n.language })
 
       if (length === 'short') {
         return relativeTime
