@@ -75,6 +75,9 @@ jobs:
       - name: Install consumer dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build oneshot renderer
+        run: pnpm --filter @gekichumai/oneshot-renderer build
+
       # The ignored producer integration test runs the real checksum-verified
       # migration ledger and its stage/promote publication path. No consumer
       # copy of the producer database schema or fixture is maintained here.
