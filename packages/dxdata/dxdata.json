@@ -70814,7 +70814,7 @@
                     "isSpecial": false,
                     "version": "MAGiCAL",
                     "internalId": 360,
-                    "releaseDate": "2026-09-17"
+                    "releaseDate": "2015-12-09"
                 },
                 {
                     "type": "dx",
@@ -70842,7 +70842,7 @@
                     "isSpecial": false,
                     "version": "MAGiCAL",
                     "internalId": 360,
-                    "releaseDate": "2026-09-17"
+                    "releaseDate": "2015-12-09"
                 },
                 {
                     "type": "dx",
@@ -70870,7 +70870,7 @@
                     "isSpecial": false,
                     "version": "MAGiCAL",
                     "internalId": 360,
-                    "releaseDate": "2026-09-17"
+                    "releaseDate": "2015-12-09"
                 },
                 {
                     "type": "dx",
@@ -70898,7 +70898,7 @@
                     "isSpecial": false,
                     "version": "MAGiCAL",
                     "internalId": 360,
-                    "releaseDate": "2026-09-17"
+                    "releaseDate": "2015-12-09"
                 },
                 {
                     "type": "std",
@@ -70926,7 +70926,7 @@
                     "isSpecial": false,
                     "version": "PiNK",
                     "internalId": 360,
-                    "releaseDate": "2026-09-17"
+                    "releaseDate": "2015-12-09"
                 },
                 {
                     "type": "std",
@@ -70957,7 +70957,7 @@
                     "isSpecial": false,
                     "version": "PiNK",
                     "internalId": 360,
-                    "releaseDate": "2026-09-17"
+                    "releaseDate": "2015-12-09"
                 },
                 {
                     "type": "std",
@@ -70985,7 +70985,7 @@
                     "isSpecial": false,
                     "version": "PiNK",
                     "internalId": 360,
-                    "releaseDate": "2026-09-17"
+                    "releaseDate": "2015-12-09"
                 },
                 {
                     "type": "std",
@@ -71013,7 +71013,7 @@
                     "isSpecial": false,
                     "version": "PiNK",
                     "internalId": 360,
-                    "releaseDate": "2026-09-17",
+                    "releaseDate": "2015-12-09",
                     "multiverInternalLevelValue": {
                         "BUDDiES": 12.9,
                         "CiRCLE": 13.4,
@@ -254292,6 +254292,369 @@
                 }
             ],
             "searchAcronyms": []
+        },
+        {
+            "songId": "天靈靈地靈靈",
+            "category": "ゲーム＆バラエティ",
+            "title": "天靈靈地靈靈",
+            "artist": "iKz feat.小可學妹",
+            "bpm": null,
+            "imageName": "4e6ce472a7e3d21108063c8fc7ddd276c89ec24d297c06b5e52aabd01b108b39",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-09-25"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-09-25"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10",
+                    "internalLevelValue": 10.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-09-25"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13",
+                    "internalLevelValue": 13.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-09-25"
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "The Happycore Idol",
+            "category": "ゲーム＆バラエティ",
+            "title": "The Happycore Idol",
+            "artist": "3R2",
+            "bpm": null,
+            "imageName": "f84fb937a5c65eb49529a3a30c65319fccbd9eb25cbf15b55606c64cd4e4758d",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-09-25"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-09-25"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10",
+                    "internalLevelValue": 10.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-09-25"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13+",
+                    "internalLevelValue": 13.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-09-25"
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "XODUS",
+            "category": "ゲーム＆バラエティ",
+            "title": "XODUS",
+            "artist": "DJ Myosuke & Gram",
+            "bpm": null,
+            "imageName": "c90a10a34d3d7606c36ac69817de4a85ddb7d61e4647ddd07c229fd313e1e95f",
+            "isNew": true,
+            "isLocked": true,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "6",
+                    "internalLevelValue": 6.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-09-25"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "8",
+                    "internalLevelValue": 8.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-09-25"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "12+",
+                    "internalLevelValue": 12.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-09-25"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "14",
+                    "internalLevelValue": 14.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-09-25"
+                }
+            ],
+            "searchAcronyms": []
         }
     ],
     "categories": [
@@ -254525,5 +254888,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-09-24T10:00:10.538659871+00:00"
+    "updateTime": "2026-09-25T02:00:11.481584738+00:00"
 }
