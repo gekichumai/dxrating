@@ -3,7 +3,7 @@ import { Effect, Data, Either } from 'effect'
 import os from 'node:os'
 import path from 'node:path'
 import sharp from 'sharp'
-import { Sentry } from '../../../lib/functions/sentry.js'
+import { Sentry } from '../../../lib/functions/sentry'
 
 export class RendererAssetError extends Data.TaggedError('RendererAssetError')<{
   readonly operation: string

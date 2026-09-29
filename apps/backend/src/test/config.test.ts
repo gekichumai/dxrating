@@ -23,7 +23,7 @@ describe('config', () => {
       PASSKEY_ORIGIN: '',
     }
 
-    const { config } = await import('../config.js')
+    const { config } = await import('../config')
 
     expect(config.auth.passkey.rpID).toBeUndefined()
     expect(config.auth.passkey.origin).toBeUndefined()
@@ -43,7 +43,7 @@ describe('config', () => {
       FRONTEND_URL: 'http://localhost:5173',
     }
 
-    await import('../config.js')
+    await import('../config')
 
     expect(dotenvConfig).toHaveBeenCalledWith(expect.objectContaining({ override: false }))
   })

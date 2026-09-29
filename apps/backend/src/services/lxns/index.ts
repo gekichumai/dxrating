@@ -2,9 +2,9 @@ import * as crypto from 'node:crypto'
 import { Clock, Data, Effect } from 'effect'
 import { eq, lt } from 'drizzle-orm'
 import { z } from 'zod'
-import { AppConfig } from '../../config.js'
-import { Database } from '../../db/index.js'
-import { HttpClient } from '../http-client.js'
+import { AppConfig } from '../../config'
+import { Database } from '../../db/index'
+import { HttpClient } from '../http-client'
 
 const LXNS_BASE = 'https://maimai.lxns.net'
 const LXNS_TOKEN_URL = `${LXNS_BASE}/api/v0/oauth/token`
@@ -195,7 +195,7 @@ export const disconnect = Effect.fn('Lxns.disconnect')(function* (userId: string
   )
 })
 
-import { lxnsOauthStates, lxnsOauthTokens } from '../../db/schema.js'
+import { lxnsOauthStates, lxnsOauthTokens } from '../../db/schema'
 
 // --- LXNS Response Envelope ---
 

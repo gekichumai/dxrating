@@ -1,7 +1,7 @@
 import { VERSION_ID_MAP, VersionEnum, type VersionEnum as Version } from '@gekichumai/dxdata'
 import { match } from 'ts-pattern'
-import type { SongCatalog } from './song-catalog.js'
-import type { Best50Bucket, ComboFlag, RatingEntry, Region, VersionedSheet } from './types.js'
+import type { SongCatalog } from './song-catalog'
+import type { Best50Bucket, ComboFlag, RatingEntry, Region, VersionedSheet } from './types'
 
 export type RatingRank =
   | 'd'

@@ -1,7 +1,7 @@
 import { Effect, Exit, Layer, ManagedRuntime } from 'effect'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { HttpClient, makeHttpClient } from '../services/http-client.js'
-import { BuildInformationLive, getBuildInfo } from '../version.js'
+import { HttpClient, makeHttpClient } from '../services/http-client'
+import { BuildInformationLive, getBuildInfo } from '../version'
 
 afterEach(() => vi.unstubAllEnvs())
 

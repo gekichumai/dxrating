@@ -2,7 +2,7 @@
 // It provides local defaults while preserving explicit CI/test-runner values.
 import * as dotenv from 'dotenv'
 import * as path from 'node:path'
-import { assertSafeTestDatabaseUrl } from './test-database-safety.js'
+import { assertSafeTestDatabaseUrl } from './test-database-safety'
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env.test'), override: false })
 assertSafeTestDatabaseUrl(process.env.DATABASE_URL)

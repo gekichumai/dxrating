@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import pg from 'pg'
-import { cleanDatabase, getBaseUrl, setupTestServer, teardownTestServer } from './setup.js'
+import { cleanDatabase, getBaseUrl, setupTestServer, teardownTestServer } from './setup'
 
 async function seedArcades() {
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })

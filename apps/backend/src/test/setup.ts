@@ -4,9 +4,9 @@
 import * as path from 'node:path'
 import { serve } from '@hono/node-server'
 import type { ServerType } from '@hono/node-server'
-import { app } from '../app.js'
-import { pool as appPool } from '../db/index.js'
-import { shutdownApp } from '../runtime.js'
+import { app } from '../app'
+import { pool as appPool } from '../db/index'
+import { shutdownApp } from '../runtime'
 import pg from 'pg'
 import fs from 'node:fs/promises'
 

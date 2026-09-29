@@ -1,6 +1,6 @@
 import { Context, Effect, Layer } from 'effect'
-import { Database, type DatabaseError } from '../db/index.js'
-import { createCatalogIdentityEffects } from './catalog-identities.js'
+import { Database, type DatabaseError } from '../db/index'
+import { createCatalogIdentityEffects } from './catalog-identities'
 
 export class CatalogIdentities extends Context.Tag('dxrating/CatalogIdentities')<
   CatalogIdentities,

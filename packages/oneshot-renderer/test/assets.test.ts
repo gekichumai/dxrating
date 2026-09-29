@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createAssetLoader } from '../src/assets.js'
+import { createAssetLoader } from '../src/assets'
 
 const directories: string[] = []
 const directory = async () => {

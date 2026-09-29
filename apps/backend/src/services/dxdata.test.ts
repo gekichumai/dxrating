@@ -9,7 +9,7 @@ import {
   DXDATA_CDN_CACHE_CONTROL,
   DXDATA_CORS_OPTIONS,
   DXDATA_PATH,
-} from './dxdata.js'
+} from './dxdata'
 
 const BODY = '{\n  "title": "でらっくす",\n  "songs": []\n}\n'
 const BODY_SHA256 = 'a'.repeat(64)

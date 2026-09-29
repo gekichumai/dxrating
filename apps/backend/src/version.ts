@@ -1,5 +1,5 @@
 import { Context, Effect, Layer, Option, SynchronizedRef, type Scope } from 'effect'
-import { HttpClient } from './services/http-client.js'
+import { HttpClient } from './services/http-client'
 
 const GHCR_IMAGE = 'gekichumai/dxrating/backend'
 const GITHUB_REPO = 'gekichumai/dxrating'

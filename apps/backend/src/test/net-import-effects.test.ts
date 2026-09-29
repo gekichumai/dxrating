@@ -1,7 +1,7 @@
 import { Effect, Either } from 'effect'
 import { Response } from 'undici'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { NetImportError, withMaimaiNETClient } from '../lib/functions/client.js'
+import { NetImportError, withMaimaiNETClient } from '../lib/functions/client'
 
 const runTest = <A, E>(effect: Effect.Effect<A, E>, options?: { signal?: AbortSignal }) =>
   Effect.runPromise(Effect.either(effect), options).then(Either.getOrThrowWith((error) => error))

@@ -4,13 +4,13 @@ import { join } from 'node:path'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { calculateRatingAward, getDxdataSongCatalog, type VersionedSheet } from '@gekichumai/maimai-domain'
 import { describe, it, expect } from 'vitest'
-import { app } from '../app.js'
+import { app } from '../app'
 import {
   calculateEntries,
   enrichEntries,
   isRenderableRatingSheet,
   prepareCalculatedEntries,
-} from '../services/functions/oneshot-renderer/index.js'
+} from '../services/functions/oneshot-renderer/index'
 
 const findRenderableSheet = (version: VersionEnum, predicate: (sheet: VersionedSheet) => boolean = () => true) => {
   const sheet = getDxdataSongCatalog(version).sheets.find((candidate) => {

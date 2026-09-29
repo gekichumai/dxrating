@@ -1,8 +1,8 @@
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
-import * as schema from './schema.js'
-import * as authSchema from './auth-schema.js'
-import { config } from '../config.js'
+import * as schema from './schema'
+import * as authSchema from './auth-schema'
+import { config } from '../config'
 import { Cause, Context, Data, Effect, Exit, Layer } from 'effect'
 import type { PoolClient } from 'pg'
 

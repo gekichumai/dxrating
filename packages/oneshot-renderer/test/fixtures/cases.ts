@@ -1,5 +1,5 @@
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
-import type { RenderInput } from '../../src/types.js'
+import type { RenderInput } from '../../src/types'
 
 export const cases = (full: RenderInput) => {
   const typography = structuredClone(full)

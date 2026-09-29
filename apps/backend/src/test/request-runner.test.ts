@@ -1,7 +1,7 @@
 import { ORPCError } from '@orpc/server'
 import { Context, Deferred, Effect, Layer, ManagedRuntime, Runtime } from 'effect'
 import { describe, expect, it, vi } from 'vitest'
-import { createRequestRunner, RequestRunnerClosedError } from '../request-runner.js'
+import { createRequestRunner, RequestRunnerClosedError } from '../request-runner'
 
 class Resource extends Context.Tag('test/RequestRunnerResource')<Resource, { readonly open: true }>() {}
 

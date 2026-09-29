@@ -11,10 +11,10 @@ import {
 import type { Context } from 'hono'
 import { match } from 'ts-pattern'
 import { z } from 'zod'
-import { type Scope, Sentry } from '../../../lib/functions/sentry.js'
-import { fetchAsset, fetchImageAsset, getAssetSourceKey } from './assetFetcher.js'
-import { calculateDXScoreStars } from './calculateDXScore.js'
-import { demo } from './demo.js'
+import { type Scope, Sentry } from '../../../lib/functions/sentry'
+import { fetchAsset, fetchImageAsset, getAssetSourceKey } from './assetFetcher'
+import { calculateDXScoreStars } from './calculateDXScore'
+import { demo } from './demo'
 import {
   createOneshotRenderer,
   createRenderService,

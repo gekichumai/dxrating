@@ -1,7 +1,7 @@
 import { ORPCError } from '@orpc/server'
 import { describe, expect, it } from 'vitest'
-import { NetImportError } from './client.js'
-import { shouldCaptureSentryError } from './sentry.js'
+import { NetImportError } from './client'
+import { shouldCaptureSentryError } from './sentry'
 
 describe('Sentry error filtering', () => {
   it.each(['BAD_REQUEST', 'UNAUTHORIZED', 'FORBIDDEN', 'NOT_FOUND'] as const)(

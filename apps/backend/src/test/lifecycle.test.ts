@@ -2,7 +2,7 @@ import { Cause, Deferred, Effect, Exit, Fiber, Option } from 'effect'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { describe, expect, it } from 'vitest'
-import { serve, ServerError } from '../lifecycle.js'
+import { serve, ServerError } from '../lifecycle'
 
 describe('Effect HTTP server lifetime', () => {
   it('serves HTTP requests and releases the listener when its scope closes', async () => {

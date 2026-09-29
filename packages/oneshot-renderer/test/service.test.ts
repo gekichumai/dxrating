@@ -1,7 +1,7 @@
 import { VersionEnum } from '@gekichumai/dxdata'
 import { describe, expect, it, vi } from 'vitest'
-import { createRenderService, RenderQueueFullError } from '../src/service.js'
-import type { RenderInput, RenderResult } from '../src/types.js'
+import { createRenderService, RenderQueueFullError } from '../src/service'
+import type { RenderInput, RenderResult } from '../src/types'
 
 const input: RenderInput = { data: { b15: [], b35: [] }, version: VersionEnum.PRiSMPLUS }
 const result: RenderResult = { body: new Uint8Array([1, 2, 3]), contentType: 'image/png', timings: {} }

@@ -1,12 +1,12 @@
 import { Effect } from 'effect'
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { NetImportError, NetRequestError } from '../lib/functions/client.js'
-import { v0Handler, v1Handler } from '../services/functions/fetch-net-records/index.js'
+import { NetImportError, NetRequestError } from '../lib/functions/client'
+import { v0Handler, v1Handler } from '../services/functions/fetch-net-records/index'
 
 const { login } = vi.hoisted(() => ({ login: vi.fn<() => Effect.Effect<void, NetImportError | NetRequestError>>() }))
-vi.mock('../lib/functions/client.js', async (original) => {
-  const actual = await original<typeof import('../lib/functions/client.js')>()
+vi.mock('../lib/functions/client', async (original) => {
+  const actual = await original<typeof import('../lib/functions/client')>()
   const { Effect } = await import('effect')
   return {
     ...actual,

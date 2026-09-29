@@ -8,8 +8,8 @@ import {
   MaimaiNETIntlClient,
   NetImportError,
   type NetImportErrorCode,
-} from './client.js'
-import { URLS } from './URLS.js'
+} from './client'
+import { URLS } from './URLS'
 
 class StubIntlClient extends MaimaiNETIntlClient {
   override fetchEffect = (url: string, _init?: RequestInit, errorRedirectCode?: NetImportErrorCode) => {

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
-import { ByteCache } from './cache.js'
-import { normalizeWidth } from './dimensions.js'
-import type { RenderOptions, RenderResult } from './types.js'
+import { ByteCache } from './cache'
+import { normalizeWidth } from './dimensions'
+import type { RenderOptions, RenderResult } from './types'
 
 export class RenderQueueFullError extends Error {
   constructor() {

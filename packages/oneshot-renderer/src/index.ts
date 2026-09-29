@@ -1,15 +1,15 @@
 import { renderAsync } from '@resvg/resvg-js'
 import satori, { type Font } from 'satori'
 import sharp from 'sharp'
-import { renderContent } from './renderContent.js'
-import { ONESHOT_WIDTH, ONESHOT_HEIGHT, normalizeWidth } from './dimensions.js'
-import type { LoadAsset, RenderInput, RenderOptions, RenderResult, RenderStage } from './types.js'
+import { renderContent } from './renderContent'
+import { ONESHOT_WIDTH, ONESHOT_HEIGHT, normalizeWidth } from './dimensions'
+import type { LoadAsset, RenderInput, RenderOptions, RenderResult, RenderStage } from './types'
 
-export type * from './types.js'
-export { createAssetLoader } from './assets.js'
-export { createRenderService, RenderQueueFullError } from './service.js'
-export { VERSION_THEME } from './renderContent.js'
-export { ONESHOT_WIDTH, ONESHOT_HEIGHT, normalizeWidth } from './dimensions.js'
+export type * from './types'
+export { createAssetLoader } from './assets'
+export { createRenderService, RenderQueueFullError } from './service'
+export { VERSION_THEME } from './renderContent'
+export { ONESHOT_WIDTH, ONESHOT_HEIGHT, normalizeWidth } from './dimensions'
 
 export const FONT_CONFIG = [
   { name: 'NewRodinProDB', file: 'NewRodinProDB.otf', weight: 400 },

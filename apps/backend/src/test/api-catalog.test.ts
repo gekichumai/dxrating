@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { app } from '../app.js'
+import { app } from '../app'
 
 describe('API catalog discovery', () => {
   it('publishes the API schema, documentation, and agent metadata', async () => {

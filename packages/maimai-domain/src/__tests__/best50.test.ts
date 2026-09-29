@@ -1,9 +1,9 @@
 import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum, type DXData } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
-import { SCORE_COEFFICIENT_TABLE, calculateBest50, calculateRatingAward } from '../best50.js'
-import { buildSongCatalog } from '../song-catalog.js'
-import { formatSheetIdentity } from '../sheet-identity.js'
-import type { ComboFlag, RatingEntry, SheetIdentity } from '../types.js'
+import { SCORE_COEFFICIENT_TABLE, calculateBest50, calculateRatingAward } from '../best50'
+import { buildSongCatalog } from '../song-catalog'
+import { formatSheetIdentity } from '../sheet-identity'
+import type { ComboFlag, RatingEntry, SheetIdentity } from '../types'
 
 function makeData(): DXData {
   return {

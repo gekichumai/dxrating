@@ -2,9 +2,9 @@ import { randomUUID } from 'node:crypto'
 import { Effect, Either, type Scope } from 'effect'
 import { Pool } from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { AppConfig, config } from '../config.js'
-import { Database, makeDatabase } from '../db/index.js'
-import { HttpClient, HttpError, makeHttpClient } from '../services/http-client.js'
+import { AppConfig, config } from '../config'
+import { Database, makeDatabase } from '../db/index'
+import { HttpClient, HttpError, makeHttpClient } from '../services/http-client'
 import {
   disconnect,
   exchangeCodeForTokens,
@@ -12,8 +12,8 @@ import {
   generateAuthorizationUrl,
   getConnectionStatus,
   LxnsError,
-} from '../services/lxns/index.js'
-import { cleanDatabase, setupTestServer, teardownTestServer } from './setup.js'
+} from '../services/lxns/index'
+import { cleanDatabase, setupTestServer, teardownTestServer } from './setup'
 
 const testConfig = {
   ...config,

@@ -14,9 +14,9 @@ import {
 } from 'effect'
 import { Pool } from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Database, DatabaseError, databaseLayer, makeDatabase } from '../db/index.js'
-import { ApplicationCache, ApplicationCacheLive } from '../services/cache.js'
-import { HttpClient, makeHttpClient } from '../services/http-client.js'
+import { Database, DatabaseError, databaseLayer, makeDatabase } from '../db/index'
+import { ApplicationCache, ApplicationCacheLive } from '../services/cache'
+import { HttpClient, makeHttpClient } from '../services/http-client'
 describe('Effect database transactions', () => {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 1 })
   const database = makeDatabase(pool)

@@ -1,13 +1,13 @@
-import { initSentry } from './lib/functions/sentry.js'
+import { initSentry } from './lib/functions/sentry'
 initSentry()
 
-import './logger.js'
+import './logger'
 import { Effect } from 'effect'
 import { runMain } from '@effect/platform-node/NodeRuntime'
-import { app } from './app.js'
-import { config } from './config.js'
-import { serve } from './lifecycle.js'
-import { appRuntime, shutdownApp } from './runtime.js'
+import { app } from './app'
+import { config } from './config'
+import { serve } from './lifecycle'
+import { appRuntime, shutdownApp } from './runtime'
 
 runMain(
   Effect.scoped(

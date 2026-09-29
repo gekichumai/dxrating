@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { app } from '../app.js'
+import { app } from '../app'
 
 function envelopeFor(dsn: string) {
   return `${JSON.stringify({ dsn })}\n${JSON.stringify({ type: 'event' })}\n{}`

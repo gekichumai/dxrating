@@ -1,11 +1,11 @@
 import * as Sentry from '@sentry/node'
 import { ORPCError, implement } from '@orpc/server'
-import { appContract } from './contract.js'
-import { Database } from './db/index.js'
+import { appContract } from './contract'
+import { Database } from './db/index'
 import { Clock, Data, Duration, Effect } from 'effect'
-import { runApp } from './runtime.js'
-import { ApplicationCache } from './services/cache.js'
-import { HttpClient } from './services/http-client.js'
+import { runApp } from './runtime'
+import { ApplicationCache } from './services/cache'
+import { HttpClient } from './services/http-client'
 import {
   tags,
   tagGroups,
@@ -20,13 +20,13 @@ import {
   arcadeVenues,
   arcadeInstallationIdentities,
   arcadeInstallations,
-} from './db/schema.js'
+} from './db/schema'
 import { eq, and, desc, asc, exists, gte, ilike, inArray, isNull, lte, notExists, or, sql, type SQL } from 'drizzle-orm'
-import type { BackendAuth } from './auth.js'
-import { AppConfig } from './config.js'
-import { renderChartOgImageOutputEffect } from './services/functions/chart-og-image/index.js'
-import { CatalogIdentityError } from './services/catalog-identities.js'
-import { CatalogIdentities } from './services/application.js'
+import type { BackendAuth } from './auth'
+import { AppConfig } from './config'
+import { renderChartOgImageOutputEffect } from './services/functions/chart-og-image/index'
+import { CatalogIdentityError } from './services/catalog-identities'
+import { CatalogIdentities } from './services/application'
 
 type Context = {
   user?: BackendAuth['$Infer']['Session']['user']
@@ -429,8 +429,8 @@ const aliasesHandler = {
   ),
 }
 
-import { withMaimaiNETClient } from './lib/functions/client.js'
-import * as lxnsService from './services/lxns/index.js'
+import { withMaimaiNETClient } from './lib/functions/client'
+import * as lxnsService from './services/lxns/index'
 
 const analyticsHandler = {
   trending: os.analytics.trending.handler(({ input, context }) =>

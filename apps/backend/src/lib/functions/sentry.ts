@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 import type { Scope } from '@sentry/node'
 import { ORPCError } from '@orpc/server'
-import { NetImportError } from './client.js'
+import { NetImportError } from './client'
 
 // Export types for use in other files
 export type { Scope }

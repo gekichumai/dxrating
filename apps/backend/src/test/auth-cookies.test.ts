@@ -4,7 +4,7 @@ vi.mock('dotenv', () => ({
   config: vi.fn(),
 }))
 
-const { deriveCrossSubDomainCookieDomain } = await import('../config.js')
+const { deriveCrossSubDomainCookieDomain } = await import('../config')
 
 describe('auth cookie options', () => {
   it('derives the parent domain from FRONTEND_URL when the auth host is a subdomain', () => {

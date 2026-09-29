@@ -1,9 +1,9 @@
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import clsx from 'clsx'
 import type { FC, PropsWithChildren } from 'react'
-import type { LoadAsset, RenderEntry, RenderInput } from './types.js'
-import { imageData } from './imageData.js'
-import { MAGICAL_BACKGROUND_SVG } from './magicalBackground.generated.js'
+import type { LoadAsset, RenderEntry, RenderInput } from './types'
+import { imageData } from './imageData'
+import { MAGICAL_BACKGROUND_SVG } from './magicalBackground.generated'
 
 declare module 'react' {
   // oxlint-disable-next-line @typescript-eslint/no-unused-vars

@@ -1,6 +1,6 @@
 import { Effect, Either } from 'effect'
 import { describe, expect, it, vi } from 'vitest'
-import { createCatalogIdentityEffects } from './catalog-identities.js'
+import { createCatalogIdentityEffects } from './catalog-identities'
 
 const runTest = <A, E>(effect: Effect.Effect<A, E>, options?: { signal?: AbortSignal }) =>
   Effect.runPromise(Effect.either(effect), options).then(Either.getOrThrowWith((error) => error))

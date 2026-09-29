@@ -126,7 +126,7 @@ When working on Coolify deployment or integration, use context7 to query the Coo
 - API contracts defined in `contract.ts` using oRPC + Zod, implementations in `router.ts`
 - Auth context passed through oRPC handler context (`context.user`)
 - Database schema changes go through Drizzle migrations (`drizzle-kit`)
-- ES modules throughout (`.js` extensions in imports even for TypeScript)
+- ES modules with extensionless relative TypeScript imports. TypeScript uses `bundler` module resolution; esbuild resolves local modules into the production bundle. Keep extensions on actual output and asset paths.
 - CORS allows `localhost` for dev, `https://dxrating.net` for production, and `*.dxrating.pages.dev` for preview deployments
 
 

@@ -5,7 +5,7 @@ import {
   CatalogIdentityError,
   type CatalogIdentityEffectQuery,
   createCatalogIdentityEffects,
-} from './catalog-identities.js'
+} from './catalog-identities'
 const SONG_A = 'dsng_23456789ab'
 const SONG_B = 'dsng_23456789ac'
 const SHEET_A = 'dsht_23456789ab'

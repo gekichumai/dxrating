@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assertSafeTestDatabaseUrl } from './test-database-safety.js'
+import { assertSafeTestDatabaseUrl } from './test-database-safety'
 
 describe('test database safety', () => {
   it.each([

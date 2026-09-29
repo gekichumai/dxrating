@@ -6,8 +6,8 @@ import {
   NetImportError,
   type AuthParams,
   type StateUpdateCallback,
-} from '../../../lib/functions/client.js'
-import { Sentry, type Scope } from '../../../lib/functions/sentry.js'
+} from '../../../lib/functions/client'
+import { Sentry, type Scope } from '../../../lib/functions/sentry'
 
 export class NetStreamError extends Data.TaggedError('NetStreamError')<{
   readonly operation: string

@@ -1,7 +1,7 @@
 import { Data, Effect } from 'effect'
 import { runMain } from '@effect/platform-node/NodeRuntime'
 import { sql } from 'drizzle-orm'
-import { Database, DatabaseLive } from './db/index.js'
+import { Database, DatabaseLive } from './db/index'
 
 class ModerationError extends Data.TaggedError('ModerationError')<{ readonly message: string }> {}
 

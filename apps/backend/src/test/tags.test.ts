@@ -8,7 +8,7 @@ import {
   extractSessionCookie,
   authenticatedFetch,
   cleanDatabase,
-} from './setup.js'
+} from './setup'
 import pg from 'pg'
 
 describe('Tags API', () => {

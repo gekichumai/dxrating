@@ -2,9 +2,9 @@ import { isContractProcedure, type AnyContractProcedure } from '@orpc/contract'
 import { OpenAPIGenerator, type OpenAPI } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
 import { describe, expect, it } from 'vitest'
-import { appContract } from '../contract.js'
-import { addPublishedDxdataToOpenApi } from './dxdata-openapi.js'
-import { addPublicApiExamplesToOpenApi, publicApiOperationExamples } from './openapi-examples.js'
+import { appContract } from '../contract'
+import { addPublishedDxdataToOpenApi } from './dxdata-openapi'
+import { addPublicApiExamplesToOpenApi, publicApiOperationExamples } from './openapi-examples'
 
 const httpMethods = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'] as const
 

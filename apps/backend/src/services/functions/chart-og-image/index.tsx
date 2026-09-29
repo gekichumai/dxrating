@@ -6,7 +6,7 @@ import { ImageResponse } from '@takumi-rs/image-response'
 import type { Handler } from 'hono'
 import { createHash } from 'node:crypto'
 import type { CSSProperties, ReactNode } from 'react'
-import { fetchAssetEffect, fetchImageAssetEffect } from '../oneshot-renderer/assetFetcher.js'
+import { fetchAssetEffect, fetchImageAssetEffect } from '../oneshot-renderer/assetFetcher'
 
 export class ChartOgRenderError extends Data.TaggedError('ChartOgRenderError')<{
   readonly operation: string

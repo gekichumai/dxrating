@@ -12,12 +12,12 @@ export class NetRequestError extends Data.TaggedError('NetRequestError')<{
 import cookie from 'cookie'
 import tls from 'node:tls'
 import { DOMParser } from 'xmldom-qsa'
-import { URLS } from './URLS.js'
+import { URLS } from './URLS'
 
 import { Agent, Headers, type RequestInit, fetch } from 'undici'
-import { parseMusicRecordNode } from './parseMusicRecordNode.js'
-import { parseRecentRecordNode } from './parseRecentRecordNode.js'
-import type { AchievementRecord } from './record.js'
+import { parseMusicRecordNode } from './parseMusicRecordNode'
+import { parseRecentRecordNode } from './parseRecentRecordNode'
+import type { AchievementRecord } from './record'
 
 const parseNetResponse = <A>(parse: () => A) =>
   Effect.try({

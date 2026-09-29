@@ -1,5 +1,5 @@
 import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
-import type { SheetIdentity, UtageDifficultyLabel } from './types.js'
+import type { SheetIdentity, UtageDifficultyLabel } from './types'
 
 export const SHEET_IDENTITY_SEPARATOR = '__dxrt__'
 

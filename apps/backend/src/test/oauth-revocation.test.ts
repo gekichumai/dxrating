@@ -1,6 +1,6 @@
 import { Effect } from 'effect'
 import { describe, expect, it, vi } from 'vitest'
-import { revokeOAuthGrants } from '../lib/oauth-revocation.js'
+import { revokeOAuthGrants } from '../lib/oauth-revocation'
 
 describe('OAuth grant revocation', () => {
   it('revokes Apple using the refresh token', async () => {
