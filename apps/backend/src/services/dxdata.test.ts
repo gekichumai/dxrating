@@ -1,14 +1,14 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { Data, Effect } from 'effect'
 import { describe, expect, it, vi } from 'vitest'
 import {
-  createDxdataHandler,
-  createPostgresDxdataStore,
+  createDxdataEffect,
+  createPostgresDxdataEffects,
   DXDATA_BROWSER_CACHE_CONTROL,
   DXDATA_CDN_CACHE_CONTROL,
   DXDATA_CORS_OPTIONS,
   DXDATA_PATH,
-  type DxdataStore,
 } from './dxdata.js'
 
 const BODY = '{\n  "title": "でらっくす",\n  "songs": []\n}\n'
@@ -22,25 +22,34 @@ const metadata = {
   contentType: 'application/json; charset=utf-8',
 }
 
+class StoreError extends Data.TaggedError('StoreError')<{ readonly message: string }> {}
+
+type FixtureStore = {
+  getPublishedMetadata: () => Effect.Effect<typeof metadata | undefined, StoreError>
+  getSnapshotBody: (catalogRunId: string, bodySha256: string) => Effect.Effect<string | undefined, StoreError>
+}
+
 const createStore = (options?: { metadata?: typeof metadata; body?: string }) => {
   const calls: string[] = []
-  const store: DxdataStore = {
-    async getPublishedMetadata() {
-      calls.push('metadata')
-      return options && 'metadata' in options ? options.metadata : metadata
-    },
-    async getSnapshotBody() {
-      calls.push('body')
-      return options && 'body' in options ? options.body : BODY
-    },
+  const store: FixtureStore = {
+    getPublishedMetadata: () =>
+      Effect.sync(() => {
+        calls.push('metadata')
+        return options && 'metadata' in options ? options.metadata : metadata
+      }),
+    getSnapshotBody: () =>
+      Effect.sync(() => {
+        calls.push('body')
+        return options && 'body' in options ? options.body : BODY
+      }),
   }
   return { calls, store }
 }
 
-const createApp = (store: DxdataStore, reportError: (error: unknown) => void = () => {}) => {
+const createApp = (store: FixtureStore, reportError: (error: unknown) => void = () => {}) => {
   const app = new Hono()
   app.use('*', cors(DXDATA_CORS_OPTIONS))
-  app.on(['GET', 'HEAD'], DXDATA_PATH, createDxdataHandler(store, reportError))
+  app.on(['GET', 'HEAD'], DXDATA_PATH, (context) => Effect.runPromise(createDxdataEffect(store, reportError)(context)))
   return app
 }
 
@@ -130,11 +139,11 @@ describe('DX data catalog endpoint', () => {
   })
 
   it('reports database failures and returns an uncached error', async () => {
-    const error = new Error('database unavailable')
+    const error = new StoreError({ message: 'database unavailable' })
     const reportError = vi.fn()
-    const store: DxdataStore = {
-      getPublishedMetadata: async () => Promise.reject(error),
-      getSnapshotBody: async () => BODY,
+    const store: FixtureStore = {
+      getPublishedMetadata: () => Effect.fail(error),
+      getSnapshotBody: () => Effect.succeed(BODY),
     }
 
     const response = await createApp(store, reportError).request(DXDATA_PATH)
@@ -167,25 +176,27 @@ describe('DX data catalog endpoint', () => {
 describe('PostgreSQL DX data store', () => {
   it('reads publication metadata from the producer tables and then fetches the selected snapshot body', async () => {
     const queries: Array<{ text: string; values: unknown[] }> = []
-    const store = createPostgresDxdataStore(async (text, values) => {
-      queries.push({ text, values })
-      if (queries.length === 1) {
-        return {
-          rows: [
-            {
-              catalog_run_id: metadata.catalogRunId,
-              body_sha256: metadata.bodySha256,
-              byte_length: metadata.byteLength,
-              content_type: metadata.contentType,
-            },
-          ],
+    const store = createPostgresDxdataEffects((text, values) =>
+      Effect.sync(() => {
+        queries.push({ text, values })
+        if (queries.length === 1) {
+          return {
+            rows: [
+              {
+                catalog_run_id: metadata.catalogRunId,
+                body_sha256: metadata.bodySha256,
+                byte_length: metadata.byteLength,
+                content_type: metadata.contentType,
+              },
+            ],
+          }
         }
-      }
-      return { rows: [{ body_text: BODY }] }
-    })
+        return { rows: [{ body_text: BODY }] }
+      }),
+    )
 
-    expect(await store.getPublishedMetadata()).toEqual(metadata)
-    expect(await store.getSnapshotBody(metadata.catalogRunId, metadata.bodySha256)).toBe(BODY)
+    expect(await Effect.runPromise(store.getPublishedMetadata())).toEqual(metadata)
+    expect(await Effect.runPromise(store.getSnapshotBody(metadata.catalogRunId, metadata.bodySha256))).toBe(BODY)
 
     expect(queries[0].text).toContain('dxdata.catalog_publications')
     expect(queries[0].text).toContain('dxdata.catalog_snapshots')

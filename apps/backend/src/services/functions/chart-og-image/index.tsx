@@ -1,3 +1,4 @@
+import { Effect, Data, Either } from 'effect'
 import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
 import type { NoteCounts } from '@gekichumai/dxdata'
 import type { SheetDifficulty } from '@gekichumai/maimai-domain'
@@ -5,7 +6,16 @@ import { ImageResponse } from '@takumi-rs/image-response'
 import type { Handler } from 'hono'
 import { createHash } from 'node:crypto'
 import type { CSSProperties, ReactNode } from 'react'
-import { fetchAsset, fetchImageAsset } from '../oneshot-renderer/assetFetcher.js'
+import { fetchAssetEffect, fetchImageAssetEffect } from '../oneshot-renderer/assetFetcher.js'
+
+export class ChartOgRenderError extends Data.TaggedError('ChartOgRenderError')<{
+  readonly operation: string
+  readonly cause: unknown
+}> {
+  get message() {
+    return this.cause instanceof Error ? this.cause.message : this.operation + ' failed'
+  }
+}
 
 export const CHART_OG_IMAGE_WIDTH = 1200
 export const CHART_OG_IMAGE_HEIGHT = 630
@@ -153,46 +163,60 @@ function isUtageType(type: TypeEnum) {
   return type === TypeEnum.UTAGE || type === TypeEnum.UTAGE2P
 }
 
-export function createChartOgImageHandler(renderImage: RenderChartOgImage = renderChartOgImage): Handler {
-  return async (c) => {
-    const songId = c.req.param('songId')
-    const type = c.req.param('type')
-    const difficulty = c.req.param('difficulty')
-    if (!songId || !type || !difficulty) return c.text('Chart not found', 404)
+export function createChartOgImageHandler(renderImage?: RenderChartOgImage): Handler {
+  return (c) =>
+    Effect.runPromise(
+      Effect.either(
+        Effect.scoped(
+          Effect.gen(function* () {
+            const songId = c.req.param('songId')
+            const type = c.req.param('type')
+            const difficulty = c.req.param('difficulty')
+            if (!songId || !type || !difficulty) return c.text('Chart not found', 404)
 
-    const output = await renderChartOgImageOutput({ songId, type, difficulty }, renderImage)
-    if (!output) return c.text('Chart not found', 404)
+            const output = yield* renderChartOgImageOutputEffect({ songId, type, difficulty }, renderImage)
+            if (!output) return c.text('Chart not found', 404)
 
-    return new Response(output.body, {
-      headers: {
-        ...output.headers,
-        'Content-Length': String(output.body.size),
-      },
-    })
-  }
+            return new Response(output.body, {
+              headers: {
+                ...output.headers,
+                'Content-Length': String(output.body.size),
+              },
+            })
+          }),
+        ),
+      ),
+      { signal: c.req.raw.signal },
+    ).then(Either.getOrThrowWith((error) => error))
 }
 
-export async function renderChartOgImageOutput(
+export const renderChartOgImageOutputEffect = (
   input: { songId: string; type: string; difficulty: string },
-  renderImage: RenderChartOgImage = renderChartOgImage,
-): Promise<ChartOgImageOutput | null> {
-  const data = resolveChartOgImageData(input.songId, input.type, input.difficulty)
-  if (!data) return null
+  renderImage?: RenderChartOgImage,
+) =>
+  Effect.gen(function* () {
+    const data = resolveChartOgImageData(input.songId, input.type, input.difficulty)
+    if (!data) return null
 
-  const image = await renderImage(data)
-  const body = toArrayBuffer(image)
+    const image = yield* renderImage
+      ? Effect.tryPromise({
+          try: () => renderImage(data),
+          catch: (cause) => new ChartOgRenderError({ operation: 'render chart OG image', cause }),
+        })
+      : renderChartOgImageEffect(data)
+    const body = toArrayBuffer(image)
 
-  return {
-    headers: {
-      'Cache-Control': CHART_OG_IMAGE_CACHE_CONTROL,
-      'Content-Disposition': CHART_OG_IMAGE_CONTENT_DISPOSITION,
-      'Content-Type': CHART_OG_IMAGE_CONTENT_TYPE,
-      ETag: createChartOgImageEtag(body),
-      'X-Content-Type-Options': 'nosniff',
-    },
-    body: new Blob([body], { type: CHART_OG_IMAGE_CONTENT_TYPE }),
-  }
-}
+    return {
+      headers: {
+        'Cache-Control': CHART_OG_IMAGE_CACHE_CONTROL,
+        'Content-Disposition': CHART_OG_IMAGE_CONTENT_DISPOSITION,
+        'Content-Type': CHART_OG_IMAGE_CONTENT_TYPE,
+        ETag: createChartOgImageEtag(body),
+        'X-Content-Type-Options': 'nosniff',
+      },
+      body: new Blob([body], { type: CHART_OG_IMAGE_CONTENT_TYPE }),
+    }
+  })
 
 function createChartOgImageEtag(image: ArrayBuffer) {
   return `"sha256-${createHash('sha256').update(Buffer.from(image)).digest('hex')}"`
@@ -217,53 +241,60 @@ const fontConfig = [
 
 let cachedFonts: TakumiFont[] | null = null
 
-async function loadFonts(): Promise<TakumiFont[]> {
+const loadFonts = Effect.gen(function* () {
   if (cachedFonts) return cachedFonts
-
-  cachedFonts = await Promise.all(
-    fontConfig.map(async (font) => ({
-      name: font.name,
-      data: await fetchAsset(`/fonts/${font.file}`),
-      weight: font.weight,
-      style: 'normal' as const,
-    })),
+  const fonts = yield* Effect.all(
+    fontConfig.map((font) =>
+      fetchAssetEffect(`/fonts/${font.file}`).pipe(
+        Effect.map((data) => ({ name: font.name, data, weight: font.weight, style: 'normal' as const })),
+      ),
+    ),
+    { concurrency: 'unbounded' },
   )
-  return cachedFonts
-}
+  cachedFonts = fonts
+  return fonts
+})
 
 function dataUri(mimeType: 'image/jpeg' | 'image/png', data: Buffer) {
   return `data:${mimeType};base64,${data.toString('base64')}`
 }
 
-async function loadCoverDataUri(imageName: string) {
-  const cover = await fetchImageAsset(`/images/cover/v2/${imageName}.jpg`)
-  return dataUri('image/jpeg', cover)
-}
+const loadCoverDataUri = (imageName: string) =>
+  fetchImageAssetEffect(`/images/cover/v2/${imageName}.jpg`).pipe(Effect.map((cover) => dataUri('image/jpeg', cover)))
 
-async function loadTypeBadgeDataUri(type: TypeEnum) {
-  if (type !== TypeEnum.DX) return null
+const loadTypeBadgeDataUri = (type: TypeEnum) =>
+  type !== TypeEnum.DX
+    ? Effect.succeed(null)
+    : fetchImageAssetEffect('/images/type_dx.png').pipe(Effect.map((image) => dataUri('image/png', image)))
 
-  const typeImage = await fetchImageAsset('/images/type_dx.png')
-  return dataUri('image/png', typeImage)
-}
-
-export async function renderChartOgImage(data: ChartOgImageData): Promise<Uint8Array> {
-  const [fonts, coverSrc, typeBadgeSrc] = await Promise.all([
-    loadFonts(),
-    loadCoverDataUri(data.imageName),
-    loadTypeBadgeDataUri(data.type),
-  ])
-  const response = new ImageResponse(<ChartOgCard data={data} coverSrc={coverSrc} typeBadgeSrc={typeBadgeSrc} />, {
-    width: CHART_OG_IMAGE_WIDTH,
-    height: CHART_OG_IMAGE_HEIGHT,
-    format: 'png',
-    fonts,
-    emoji: 'twemoji',
+export const renderChartOgImageEffect = (data: ChartOgImageData) =>
+  Effect.gen(function* () {
+    const [fonts, coverSrc, typeBadgeSrc] = yield* Effect.all(
+      [loadFonts, loadCoverDataUri(data.imageName), loadTypeBadgeDataUri(data.type)],
+      { concurrency: 'unbounded' },
+    )
+    const response = yield* Effect.try({
+      try: () =>
+        new ImageResponse(<ChartOgCard data={data} coverSrc={coverSrc} typeBadgeSrc={typeBadgeSrc} />, {
+          width: CHART_OG_IMAGE_WIDTH,
+          height: CHART_OG_IMAGE_HEIGHT,
+          format: 'png',
+          fonts,
+          emoji: 'twemoji',
+        }),
+      catch: (cause) => new ChartOgRenderError({ operation: 'initialize chart OG renderer', cause }),
+    })
+    // Native rendering has no cancellation API; interruption only stops waiting for its result.
+    yield* Effect.tryPromise({
+      try: () => response.ready,
+      catch: (cause) => new ChartOgRenderError({ operation: 'render chart OG image', cause }),
+    })
+    const image = yield* Effect.tryPromise({
+      try: () => response.arrayBuffer(),
+      catch: (cause) => new ChartOgRenderError({ operation: 'read chart OG image', cause }),
+    })
+    return new Uint8Array(image)
   })
-
-  await response.ready
-  return new Uint8Array(await response.arrayBuffer())
-}
 
 function ChartOgCard({
   data,

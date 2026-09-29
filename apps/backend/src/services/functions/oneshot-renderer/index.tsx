@@ -1,3 +1,4 @@
+import { Effect, Data, Either } from 'effect'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import {
   calculateBest50,
@@ -20,6 +21,23 @@ import {
   RenderQueueFullError,
   type Region,
 } from '@gekichumai/oneshot-renderer'
+
+export class OneshotQueueFullError extends Data.TaggedError('OneshotQueueFullError')<{
+  readonly cause: RenderQueueFullError
+}> {
+  get message() {
+    return this.cause.message
+  }
+}
+
+export class OneshotRenderError extends Data.TaggedError('OneshotRenderError')<{
+  readonly operation: string
+  readonly cause: unknown
+}> {
+  get message() {
+    return this.cause instanceof Error ? this.cause.message : this.operation + ' failed'
+  }
+}
 
 export { ONESHOT_HEIGHT, ONESHOT_WIDTH } from '@gekichumai/oneshot-renderer'
 export type { PlayerCollection, Region } from '@gekichumai/oneshot-renderer'
@@ -265,77 +283,119 @@ const getRenderService = () => {
     })
     service = {
       source,
-      render: createRenderService(async (body: OneshotRequest, options) => {
-        const start = performance.now()
-        const data = body.calculatedEntries
-          ? prepareCalculatedEntries(body.calculatedEntries, body.version)
-          : calculateEntries(body.entries ?? [], body.version, body.region)
-        const calc = performance.now() - start
-        const result = await draw(
-          { data, version: body.version, region: body.region, playerCollection: body.playerCollection },
-          options,
-        )
-        return { ...result, timings: { calc, ...result.timings } }
-      }),
+      render: createRenderService((body: OneshotRequest, options) =>
+        Effect.runPromise(
+          Effect.either(
+            Effect.scoped(
+              Effect.gen(function* () {
+                const start = performance.now()
+                const data = body.calculatedEntries
+                  ? prepareCalculatedEntries(body.calculatedEntries, body.version)
+                  : calculateEntries(body.entries ?? [], body.version, body.region)
+                const calc = performance.now() - start
+                const result = yield* Effect.tryPromise({
+                  try: () =>
+                    draw(
+                      { data, version: body.version, region: body.region, playerCollection: body.playerCollection },
+                      options,
+                    ),
+                  catch: (cause) =>
+                    cause instanceof RenderQueueFullError
+                      ? new OneshotQueueFullError({ cause })
+                      : new OneshotRenderError({ operation: 'draw oneshot image', cause }),
+                })
+                return { ...result, timings: { calc, ...result.timings } }
+              }),
+            ),
+          ),
+        ).then(Either.getOrThrowWith((error) => error)),
+      ),
     }
   }
   return service.render
 }
 
-export const handler = async (c: Context): Promise<Response> => {
-  return Sentry.startSpan({ name: 'renderOneshot', op: 'function' }, async () => {
-    const queryDemo = c.req.query('demo')
-    const queryPixelated = c.req.query('pixelated')
-    const queryFormat = c.req.query('format')
-    const queryWidth = c.req.query('width')
-    const format = queryPixelated ? (queryFormat === 'png' ? 'png' : 'jpeg') : 'svg'
-
-    try {
-      const body = queryDemo
-        ? {
-            entries: demo,
-            version: VersionEnum.PRiSMPLUS,
-            region: 'jp' as const,
-            playerCollection: { name: 'お友達', icon: 0 },
-            calculatedEntries: undefined,
-          }
-        : requestBodySchema.parse(await c.req.json())
-      const result = await getRenderService()(body, {
-        format,
-        width: queryWidth === undefined ? undefined : Number.parseInt(queryWidth),
-      })
-
-      if (result.cache === 'MISS') {
-        const observations = result.timings
-        c.header(
-          'Server-Timing',
-          Object.entries(observations)
-            .map(([name, duration]) => `${name};dur=${duration.toFixed(1)}`)
-            .join(', '),
-        )
-        for (const [name, duration] of Object.entries(observations)) {
-          Sentry.metrics.distribution(`oneshot_render.stage.${name}`, duration, {
-            unit: 'millisecond',
-            attributes: { format },
-          })
-        }
-      } else {
-        c.header('Server-Timing', `cache;desc="${result.cache.toLowerCase()}"`)
-      }
-      c.header('Content-Type', result.contentType)
-      c.header('X-Cache', result.cache)
-      return c.body(result.body)
-    } catch (error) {
-      if (error instanceof RenderQueueFullError) {
-        c.header('Retry-After', '1')
-        return c.text(error.message, 503)
-      }
-      Sentry.withScope((scope: Scope) => {
-        scope.setContext('function', { name: 'renderOneshot' })
-        scope.setContext('parameters', { demo: !!queryDemo, format, width: queryWidth })
-        Sentry.captureException(error)
-      })
-      throw error
-    }
+export const renderOneshotEffect = (
+  body: OneshotRequest,
+  options: { format: 'svg' | 'png' | 'jpeg'; width?: number },
+) =>
+  Effect.tryPromise({
+    try: () => getRenderService()(body, options),
+    catch: (cause) =>
+      cause instanceof RenderQueueFullError
+        ? new OneshotQueueFullError({ cause })
+        : cause instanceof OneshotQueueFullError || cause instanceof OneshotRenderError
+          ? cause
+          : new OneshotRenderError({ operation: 'render oneshot image', cause }),
   })
+
+export const handler = (c: Context): Promise<Response> => {
+  const queryDemo = c.req.query('demo')
+  const queryPixelated = c.req.query('pixelated')
+  const queryFormat = c.req.query('format')
+  const queryWidth = c.req.query('width')
+  const format = queryPixelated ? (queryFormat === 'png' ? 'png' : 'jpeg') : 'svg'
+  const program = Effect.gen(function* () {
+    const input = queryDemo
+      ? {
+          entries: demo,
+          version: VersionEnum.PRiSMPLUS,
+          region: 'jp' as const,
+          playerCollection: { name: 'お友達', icon: 0 },
+          calculatedEntries: undefined,
+        }
+      : yield* Effect.tryPromise({
+          try: () => c.req.json(),
+          catch: (cause) => new OneshotRenderError({ operation: 'read oneshot request', cause }),
+        })
+    const body = yield* Effect.try({
+      try: () => requestBodySchema.parse(input),
+      catch: (cause) =>
+        cause instanceof z.ZodError ? cause : new OneshotRenderError({ operation: 'validate oneshot request', cause }),
+    })
+    const result = yield* renderOneshotEffect(body, {
+      format,
+      width: queryWidth === undefined ? undefined : Number.parseInt(queryWidth),
+    })
+    if (result.cache === 'MISS') {
+      c.header(
+        'Server-Timing',
+        Object.entries(result.timings)
+          .map(([name, duration]) => `${name};dur=${duration.toFixed(1)}`)
+          .join(', '),
+      )
+      for (const [name, duration] of Object.entries(result.timings)) {
+        Sentry.metrics.distribution(`oneshot_render.stage.${name}`, duration, {
+          unit: 'millisecond',
+          attributes: { format },
+        })
+      }
+    } else {
+      c.header('Server-Timing', `cache;desc="${result.cache.toLowerCase()}"`)
+    }
+    c.header('Content-Type', result.contentType)
+    c.header('X-Cache', result.cache)
+    return c.body(result.body)
+  }).pipe(
+    Effect.catchAll((error) => {
+      if (error instanceof OneshotQueueFullError) {
+        return Effect.sync(() => {
+          c.header('Retry-After', '1')
+          return c.text(error.message, 503)
+        })
+      }
+      return Effect.sync(() =>
+        Sentry.withScope((scope: Scope) => {
+          scope.setContext('function', { name: 'renderOneshot' })
+          scope.setContext('parameters', { demo: !!queryDemo, format, width: queryWidth })
+          Sentry.captureException(error)
+        }),
+      ).pipe(Effect.zipRight(Effect.fail(error)))
+    }),
+  )
+  return Sentry.startSpan({ name: 'renderOneshot', op: 'function' }, () =>
+    Effect.runPromise(Effect.either(Effect.scoped(program)), { signal: c.req.raw.signal }).then(
+      Either.getOrThrowWith((error) => error),
+    ),
+  )
 }

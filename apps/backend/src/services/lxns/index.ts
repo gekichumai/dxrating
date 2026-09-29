@@ -1,214 +1,201 @@
 import * as crypto from 'node:crypto'
+import { Clock, Data, Effect } from 'effect'
 import { eq, lt } from 'drizzle-orm'
 import { z } from 'zod'
-import { config } from '../../config.js'
-import { db } from '../../db/index.js'
-import { lxnsOauthStates, lxnsOauthTokens } from '../../db/schema.js'
+import { AppConfig } from '../../config.js'
+import { Database } from '../../db/index.js'
+import { HttpClient } from '../http-client.js'
 
 const LXNS_BASE = 'https://maimai.lxns.net'
-const LXNS_AUTHORIZE_URL = `${LXNS_BASE}/oauth/authorize`
 const LXNS_TOKEN_URL = `${LXNS_BASE}/api/v0/oauth/token`
-const LXNS_USER_SCORES_URL = `${LXNS_BASE}/api/v0/user/maimai/player/scores`
-
 const OAUTH_SCOPE = 'read_user_profile read_player'
-const STATE_TTL_MS = 10 * 60 * 1000 // 10 minutes
-const TOKEN_SAFETY_MARGIN_MS = 30 * 1000 // 30 seconds before actual expiry
+const STATE_TTL_MS = 10 * 60 * 1000
+const TOKEN_SAFETY_MARGIN_MS = 30 * 1000
 
-function getRedirectUri() {
-  // Use BETTER_AUTH_URL as the canonical backend URL (it's always the public-facing backend origin)
-  const backendUrl = config.auth.url.replace(/\/$/, '')
-  return `${backendUrl}/api/v1/io/import/lxns/oauth_callback`
-}
+export class LxnsError extends Data.TaggedError('LxnsError')<{
+  readonly message: string
+  readonly cause?: unknown
+}> {}
 
-function ensureConfigured() {
+const configured = Effect.gen(function* () {
+  const config = yield* AppConfig
   if (!config.lxns.clientId || !config.lxns.clientSecret) {
-    throw new Error('LXNS OAuth is not configured (missing LXNS_CLIENT_ID or LXNS_CLIENT_SECRET)')
+    return yield* Effect.fail(
+      new LxnsError({
+        message: 'LXNS OAuth is not configured (missing LXNS_CLIENT_ID or LXNS_CLIENT_SECRET)',
+      }),
+    )
   }
-}
+  return {
+    clientId: config.lxns.clientId,
+    clientSecret: config.lxns.clientSecret,
+    redirectUri: `${config.auth.url.replace(/\/$/, '')}/api/v1/io/import/lxns/oauth_callback`,
+  }
+})
 
-// --- OAuth Flow ---
-
-export async function generateAuthorizationUrl(userId: string): Promise<string> {
-  ensureConfigured()
-
-  // Clean up expired states
-  await db.delete(lxnsOauthStates).where(lt(lxnsOauthStates.created_at, new Date(Date.now() - STATE_TTL_MS)))
-
-  const state = crypto.randomUUID()
-  await db.insert(lxnsOauthStates).values({
-    state,
-    user_id: userId,
+const decodeTokens = (json: unknown) =>
+  Effect.try({
+    try: () => LxnsTokenResponseSchema.parse(unwrapLxnsResponse(json)),
+    catch: (cause) => new LxnsError({ message: 'Invalid LXNS token response', cause }),
   })
 
+export const generateAuthorizationUrl = Effect.fn('Lxns.generateAuthorizationUrl')(function* (userId: string) {
+  const config = yield* configured
+  const database = yield* Database
+  const now = yield* Clock.currentTimeMillis
+  yield* database.query('Delete expired LXNS states', (db) =>
+    db.delete(lxnsOauthStates).where(lt(lxnsOauthStates.created_at, new Date(now - STATE_TTL_MS))),
+  )
+  const state = yield* Effect.sync(() => crypto.randomUUID())
+  yield* database.query('Create LXNS OAuth state', (db) =>
+    db.insert(lxnsOauthStates).values({ state, user_id: userId }),
+  )
   const params = new URLSearchParams({
     response_type: 'code',
-    client_id: config.lxns.clientId!,
-    redirect_uri: getRedirectUri(),
+    client_id: config.clientId,
+    redirect_uri: config.redirectUri,
     scope: OAUTH_SCOPE,
     state,
   })
+  return `${LXNS_BASE}/oauth/authorize?${params.toString()}`
+})
 
-  return `${LXNS_AUTHORIZE_URL}?${params.toString()}`
-}
-
-export async function exchangeCodeForTokens(code: string, state: string): Promise<string> {
-  ensureConfigured()
-
-  // Validate state
-  const [stateRow] = await db.select().from(lxnsOauthStates).where(eq(lxnsOauthStates.state, state)).limit(1)
-
-  if (!stateRow) {
-    throw new Error('Invalid or expired OAuth state')
+// Once an upstream token is issued, finish persisting it even if the caller disconnects.
+export const exchangeCodeForTokens = Effect.fn('Lxns.exchangeCodeForTokens')(function* (code: string, state: string) {
+  const config = yield* configured
+  const database = yield* Database
+  const http = yield* HttpClient
+  // Delete/return atomically: concurrent callbacks must not exchange the same state twice.
+  const [stateRow] = yield* database.query('Consume LXNS OAuth state', (db) =>
+    db.delete(lxnsOauthStates).where(eq(lxnsOauthStates.state, state)).returning(),
+  )
+  if (!stateRow) return yield* Effect.fail(new LxnsError({ message: 'Invalid or expired OAuth state' }))
+  const timestamp = yield* Clock.currentTimeMillis
+  if (timestamp - stateRow.created_at.getTime() > STATE_TTL_MS) {
+    return yield* Effect.fail(new LxnsError({ message: 'OAuth state expired' }))
   }
-
-  if (Date.now() - stateRow.created_at.getTime() > STATE_TTL_MS) {
-    await db.delete(lxnsOauthStates).where(eq(lxnsOauthStates.id, stateRow.id))
-    throw new Error('OAuth state expired')
-  }
-
-  const userId = stateRow.user_id
-
-  // Delete used state
-  await db.delete(lxnsOauthStates).where(eq(lxnsOauthStates.id, stateRow.id))
-
-  // Exchange code for tokens
-  const response = await fetch(LXNS_TOKEN_URL, {
+  const response = yield* http.request(LXNS_TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      client_id: config.lxns.clientId,
-      client_secret: config.lxns.clientSecret,
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
       grant_type: 'authorization_code',
       code,
-      redirect_uri: getRedirectUri(),
+      redirect_uri: config.redirectUri,
     }),
+    signal: AbortSignal.timeout(30_000),
   })
-
   if (!response.ok) {
-    const text = await response.text()
-    throw new Error(`LXNS token exchange failed: ${response.status} ${text}`)
+    const text = yield* http.text(response)
+    return yield* Effect.fail(new LxnsError({ message: `LXNS token exchange failed: ${response.status} ${text}` }))
   }
-
-  const tokenData = LxnsTokenResponseSchema.parse(unwrapLxnsResponse(await response.json()))
-
-  const now = new Date()
-  const expiresAt = new Date(now.getTime() + tokenData.expires_in * 1000)
-
-  // Upsert token
-  await db
-    .insert(lxnsOauthTokens)
-    .values({
-      user_id: userId,
-      access_token: tokenData.access_token,
-      refresh_token: tokenData.refresh_token,
-      expires_at: expiresAt,
-      scope: tokenData.scope,
-      created_at: now,
-      updated_at: now,
-    })
-    .onConflictDoUpdate({
-      target: lxnsOauthTokens.user_id,
-      set: {
-        access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token,
-        expires_at: expiresAt,
-        scope: tokenData.scope,
-        updated_at: now,
-      },
-    })
-
-  return userId
-}
-
-async function refreshAccessToken(userId: string): Promise<string> {
-  ensureConfigured()
-
-  const [token] = await db.select().from(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId)).limit(1)
-
-  if (!token) {
-    throw new Error('No LXNS connection found. Please authorize first.')
+  const tokenData = yield* decodeTokens(yield* http.json(response))
+  const now = new Date(yield* Clock.currentTimeMillis)
+  const values = {
+    access_token: tokenData.access_token,
+    refresh_token: tokenData.refresh_token,
+    expires_at: new Date(now.getTime() + tokenData.expires_in * 1000),
+    scope: tokenData.scope,
+    updated_at: now,
   }
+  yield* database.query('Save LXNS OAuth tokens', (db) =>
+    db
+      .insert(lxnsOauthTokens)
+      .values({ user_id: stateRow.user_id, created_at: now, ...values })
+      .onConflictDoUpdate({ target: lxnsOauthTokens.user_id, set: values }),
+  )
+  return stateRow.user_id
+}, Effect.uninterruptible)
 
-  const response = await fetch(LXNS_TOKEN_URL, {
+// Refresh tokens can rotate; cancellation must not lose the replacement credential.
+const refreshAccessToken = Effect.fn('Lxns.refreshAccessToken')(function* (userId: string) {
+  const config = yield* configured
+  const database = yield* Database
+  const http = yield* HttpClient
+  const [token] = yield* database.query('Read LXNS refresh token', (db) =>
+    db.select().from(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId)).limit(1),
+  )
+  if (!token) return yield* Effect.fail(new LxnsError({ message: 'No LXNS connection found. Please authorize first.' }))
+  const response = yield* http.request(LXNS_TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      client_id: config.lxns.clientId,
-      client_secret: config.lxns.clientSecret,
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
       grant_type: 'refresh_token',
       refresh_token: token.refresh_token,
     }),
+    signal: AbortSignal.timeout(30_000),
   })
-
   if (!response.ok) {
-    // If refresh fails, the user needs to re-authorize
-    await db.delete(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId))
-    throw new Error('LXNS connection expired. Please reconnect your account.')
+    yield* disconnect(userId)
+    return yield* Effect.fail(new LxnsError({ message: 'LXNS connection expired. Please reconnect your account.' }))
   }
-
-  const tokenData = LxnsTokenResponseSchema.parse(unwrapLxnsResponse(await response.json()))
-
-  const now = new Date()
-  const expiresAt = new Date(now.getTime() + tokenData.expires_in * 1000)
-
-  await db
-    .update(lxnsOauthTokens)
-    .set({
-      access_token: tokenData.access_token,
-      refresh_token: tokenData.refresh_token,
-      expires_at: expiresAt,
-      scope: tokenData.scope,
-      updated_at: now,
-    })
-    .where(eq(lxnsOauthTokens.user_id, userId))
-
+  const tokenData = yield* decodeTokens(yield* http.json(response))
+  const now = new Date(yield* Clock.currentTimeMillis)
+  yield* database.query('Update LXNS tokens', (db) =>
+    db
+      .update(lxnsOauthTokens)
+      .set({
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token,
+        expires_at: new Date(now.getTime() + tokenData.expires_in * 1000),
+        scope: tokenData.scope,
+        updated_at: now,
+      })
+      .where(eq(lxnsOauthTokens.user_id, userId)),
+  )
   return tokenData.access_token
-}
+}, Effect.uninterruptible)
 
-async function getValidAccessToken(userId: string): Promise<string> {
-  const [token] = await db.select().from(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId)).limit(1)
+const getValidAccessToken = Effect.fn('Lxns.getValidAccessToken')(function* (userId: string) {
+  const database = yield* Database
+  const [token] = yield* database.query('Read LXNS access token', (db) =>
+    db.select().from(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId)).limit(1),
+  )
+  if (!token) return yield* Effect.fail(new LxnsError({ message: 'No LXNS connection found. Please authorize first.' }))
+  const now = yield* Clock.currentTimeMillis
+  return token.expires_at.getTime() - TOKEN_SAFETY_MARGIN_MS < now
+    ? yield* refreshAccessToken(userId)
+    : token.access_token
+})
 
-  if (!token) {
-    throw new Error('No LXNS connection found. Please authorize first.')
-  }
-
-  if (token.expires_at.getTime() - TOKEN_SAFETY_MARGIN_MS < Date.now()) {
-    return await refreshAccessToken(userId)
-  }
-
-  return token.access_token
-}
-
-// --- LXNS API ---
-
-export async function fetchPlayerScores(userId: string) {
-  const accessToken = await getValidAccessToken(userId)
-
-  const response = await fetch(LXNS_USER_SCORES_URL, {
+export const fetchPlayerScores = Effect.fn('Lxns.fetchPlayerScores')(function* (userId: string) {
+  const accessToken = yield* getValidAccessToken(userId)
+  const http = yield* HttpClient
+  const response = yield* http.request(`${LXNS_BASE}/api/v0/user/maimai/player/scores`, {
     headers: { Authorization: `Bearer ${accessToken}` },
     signal: AbortSignal.timeout(30_000),
   })
-
   if (!response.ok) {
-    const text = await response.text()
-    throw new Error(`LXNS API error: ${response.status} ${text}`)
+    const text = yield* http.text(response)
+    return yield* Effect.fail(new LxnsError({ message: `LXNS API error: ${response.status} ${text}` }))
   }
+  const json = yield* http.json(response)
+  return yield* Effect.try({
+    try: () => LxnsScoresResponseSchema.parse(unwrapLxnsResponse(json)),
+    catch: (cause) =>
+      new LxnsError({ message: cause instanceof Error ? cause.message : 'Invalid LXNS scores response', cause }),
+  })
+})
 
-  const data = unwrapLxnsResponse(await response.json())
-  return LxnsScoresResponseSchema.parse(data)
-}
-
-// --- Connection Status ---
-
-export async function getConnectionStatus(userId: string): Promise<{ connected: boolean }> {
-  const [token] = await db.select().from(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId)).limit(1)
-
+export const getConnectionStatus = Effect.fn('Lxns.getConnectionStatus')(function* (userId: string) {
+  const database = yield* Database
+  const [token] = yield* database.query('Read LXNS connection', (db) =>
+    db.select().from(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId)).limit(1),
+  )
   return { connected: !!token }
-}
+})
 
-export async function disconnect(userId: string): Promise<void> {
-  await db.delete(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId))
-}
+export const disconnect = Effect.fn('Lxns.disconnect')(function* (userId: string) {
+  const database = yield* Database
+  yield* database.query('Delete LXNS connection', (db) =>
+    db.delete(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId)),
+  )
+})
+
+import { lxnsOauthStates, lxnsOauthTokens } from '../../db/schema.js'
 
 // --- LXNS Response Envelope ---
 

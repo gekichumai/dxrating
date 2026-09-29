@@ -1,3 +1,14 @@
+import { Effect, Data } from 'effect'
+
+export class NetRequestError extends Data.TaggedError('NetRequestError')<{
+  readonly operation: string
+  readonly cause: unknown
+}> {
+  get message() {
+    return this.cause instanceof Error ? this.cause.message : this.operation + ' failed'
+  }
+}
+
 import cookie from 'cookie'
 import tls from 'node:tls'
 import { DOMParser } from 'xmldom-qsa'
@@ -7,6 +18,12 @@ import { Agent, Headers, type RequestInit, fetch } from 'undici'
 import { parseMusicRecordNode } from './parseMusicRecordNode.js'
 import { parseRecentRecordNode } from './parseRecentRecordNode.js'
 import type { AchievementRecord } from './record.js'
+
+const parseNetResponse = <A>(parse: () => A) =>
+  Effect.try({
+    try: parse,
+    catch: (cause) => new NetRequestError({ operation: 'parse maimai NET response', cause }),
+  })
 
 export interface AuthParams {
   id: string
@@ -21,13 +38,12 @@ export type NetImportErrorCode =
   | 'INTERNAL_ERROR'
   | 'TOKEN_ERROR'
 
-export class NetImportError extends Error {
-  code: NetImportErrorCode
-
+export class NetImportError extends Data.TaggedError('NetImportError')<{
+  readonly code: NetImportErrorCode
+  readonly message: string
+}> {
   constructor(code: NetImportErrorCode, message?: string) {
-    super(message ?? code)
-    this.name = 'NetImportError'
-    this.code = code
+    super({ code, message: message ?? code })
   }
 }
 
@@ -110,12 +126,6 @@ la7ZYEqcc56eoPAiElhvrg==
 -----END CERTIFICATE-----`,
 ] as const
 
-const AGENT = new Agent({
-  connect: {
-    ca: [...tls.rootCertificates, ...MAIMAI_NET_INTERMEDIATE_CERTIFICATES],
-  },
-})
-
 const COMMON_HEADERS = {
   Accept:
     'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -153,10 +163,11 @@ type ClientFetchState =
   | 'fetch:music:completed'
   | 'concluded'
 
-export type StateUpdateCallback = (newState: ClientFetchState) => void
+export type StateUpdateCallback = (newState: ClientFetchState) => void | Promise<void>
 
 export class Client {
   #cookies = new Map<string, Cookie[]>()
+  #agent: Agent | undefined
   onUpdate?: StateUpdateCallback
 
   constructor(cb?: StateUpdateCallback) {
@@ -189,47 +200,83 @@ export class Client {
     this.#cookies.delete(hostname)
   }
 
-  async fetch(url: string, init?: RequestInit, errorRedirectCode: NetImportErrorCode = 'UNKNOWN_ERROR') {
-    const requestURL = new URL(url)
-    const cookies = this.getCookies(requestURL.hostname)
-    const initHeaders = {
-      ...(init?.headers as Record<string, string>),
-      Referer: `${requestURL.protocol}//${requestURL.hostname}`,
-      ...COMMON_HEADERS,
-    }
-    const headers = new Headers(initHeaders)
-    headers.set('Cookie', cookies.map((c) => `${c.name}=${c.value}`).join('; '))
-
-    const res = await fetch(url, {
-      redirect: 'manual',
-      ...init,
-      headers,
-      dispatcher: AGENT,
+  fetchEffect = (url: string, init?: RequestInit, errorRedirectCode: NetImportErrorCode = 'UNKNOWN_ERROR') =>
+    Effect.gen(this, function* () {
+      const requestURL = yield* parseNetResponse(() => new URL(url))
+      const cookies = this.getCookies(requestURL.hostname)
+      const headers = new Headers({
+        ...(init?.headers as Record<string, string>),
+        Referer: `${requestURL.protocol}//${requestURL.hostname}`,
+        ...COMMON_HEADERS,
+      })
+      headers.set('Cookie', cookies.map((c) => `${c.name}=${c.value}`).join('; '))
+      this.#agent ??= new Agent({ connect: { ca: [...tls.rootCertificates, ...MAIMAI_NET_INTERMEDIATE_CERTIFICATES] } })
+      const res = yield* Effect.tryPromise({
+        try: (signal) =>
+          fetch(url, {
+            redirect: 'manual',
+            ...init,
+            headers,
+            dispatcher: this.#agent,
+            signal: init?.signal ? AbortSignal.any([signal, init.signal]) : signal,
+          }),
+        catch: (cause) => new NetRequestError({ operation: 'request maimai NET', cause }),
+      })
+      this.setCookie(requestURL.hostname, res.headers)
+      if (res.status === 302 && URLS.CHECKLIST.ERROR.includes(res.headers.get('location') ?? '')) {
+        yield* Effect.tryPromise({
+          try: () => res.body?.cancel() ?? Promise.resolve(),
+          catch: (cause) => new NetRequestError({ operation: 'release maimai NET response', cause }),
+        })
+        return yield* Effect.fail(
+          new NetImportError(
+            errorRedirectCode,
+            errorRedirectCode === 'AIME_CARD_UNAVAILABLE'
+              ? 'SEGA ID authentication succeeded, but maimai NET did not provide a usable Aime card.'
+              : 'maimai NET redirected the request to its error page.',
+          ),
+        )
+      }
+      return res
     })
-    this.setCookie(requestURL.hostname, res.headers)
 
-    if (res.status === 302 && URLS.CHECKLIST.ERROR.includes(res.headers.get('location') ?? '')) {
-      throw new NetImportError(
-        errorRedirectCode,
-        errorRedirectCode === 'AIME_CARD_UNAVAILABLE'
-          ? 'SEGA ID authentication succeeded, but maimai NET did not provide a usable Aime card.'
-          : 'maimai NET redirected the request to its error page.',
-      )
-    }
+  fetchAsDOMEffect = (url: string, init?: RequestInit) =>
+    Effect.gen(this, function* () {
+      const res = yield* this.fetchEffect(url, init)
+      const text = yield* Effect.tryPromise({
+        try: () => res.text(),
+        catch: (cause) => new NetRequestError({ operation: 'read maimai NET response', cause }),
+      })
+      yield* this.checkMaintenanceEffect(text)
+      return yield* Effect.try({
+        try: () => new DOMParser({ errorHandler: () => {} }).parseFromString(text, 'text/html'),
+        catch: () => new NetImportError('INTERNAL_ERROR', 'failed to parse record page'),
+      })
+    })
 
-    return res
-  }
-
-  async fetchAsDOM(url: string, init?: RequestInit) {
-    const res = await this.fetch(url, init)
-    const text = await res.text()
-    this.checkMaintenance(text)
-    return new DOMParser({
-      errorHandler: () => {
-        // ignore errors
+  protected progress = (state: ClientFetchState) =>
+    Effect.tryPromise({
+      try: async () => {
+        await this.onUpdate?.(state)
       },
-    }).parseFromString(text, 'text/html')
-  }
+      catch: (cause) => new NetRequestError({ operation: 'publish maimai NET progress', cause }),
+    })
+
+  protected checkMaintenanceEffect = (text: string) =>
+    Effect.try({
+      try: () => this.checkMaintenance(text),
+      catch: (error) => (error instanceof NetImportError ? error : new NetImportError('INTERNAL_ERROR')),
+    })
+
+  disposeEffect = () =>
+    Effect.tryPromise({
+      try: async () => {
+        await this.#agent?.destroy()
+        this.#agent = undefined
+        this.#cookies.clear()
+      },
+      catch: (cause) => new NetRequestError({ operation: 'close maimai NET connections', cause }),
+    })
 
   checkMaintenance(text: string) {
     if (URLS.CHECKLIST.MAINTENANCE.some((m) => text.includes(m))) {
@@ -239,140 +286,183 @@ export class Client {
 }
 
 export class MaimaiNETJpClient extends Client {
-  async login({ id, password }: AuthParams) {
-    this.onUpdate?.('auth:in-progress')
+  loginEffect = ({ id, password }: AuthParams) =>
+    Effect.gen(this, function* () {
+      yield* this.progress('auth:in-progress')
 
-    const loginPage = await this.fetchAsDOM(URLS.JP.LOGIN_PAGE)
-    const loginPageToken = loginPage?.querySelector('input[name="token"]')?.attributes.getNamedItem('value')?.value
-    if (!loginPageToken) throw new NetImportError('TOKEN_ERROR')
+      const loginPage = yield* this.fetchAsDOMEffect(URLS.JP.LOGIN_PAGE)
+      const loginPageToken = loginPage?.querySelector('input[name="token"]')?.attributes.getNamedItem('value')?.value
+      if (!loginPageToken) return yield* Effect.fail(new NetImportError('TOKEN_ERROR'))
 
-    const login = await this.fetch(
-      URLS.JP.LOGIN_ENDPOINT,
-      {
+      const login = yield* this.fetchEffect(
+        URLS.JP.LOGIN_ENDPOINT,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            segaId: id,
+            password: password,
+            save_cookie: 'on',
+            token: loginPageToken,
+          }),
+        },
+        'INVALID_CREDENTIALS',
+      )
+      if (URLS.CHECKLIST.ERROR.includes(login.headers.get('location') ?? '')) {
+        return yield* Effect.fail(new NetImportError('INVALID_CREDENTIALS'))
+      }
+
+      yield* Effect.tryPromise({
+        try: () => login.body?.cancel() ?? Promise.resolve(),
+        catch: (cause) => new NetRequestError({ operation: 'release maimai NET login response', cause }),
+      })
+      for (const url of [URLS.JP.LOGIN_AIMELIST, URLS.JP.LOGIN_AIMELIST_SUBMIT, URLS.JP.HOMEPAGE]) {
+        const response = yield* this.fetchEffect(url)
+        yield* Effect.tryPromise({
+          try: () => response.body?.cancel() ?? Promise.resolve(),
+          catch: (cause) => new NetRequestError({ operation: 'release maimai NET login response', cause }),
+        })
+      }
+
+      yield* this.progress('auth:succeeded')
+    })
+
+  fetchRecentRecordsEffect = () =>
+    Effect.gen(this, function* () {
+      yield* this.progress('fetch:recent:in-progress')
+      const recentRecordsPage = yield* this.fetchAsDOMEffect(URLS.JP.RECORD_RECENT_PAGE)
+      if (!recentRecordsPage) {
+        return yield* Effect.fail(new NetImportError('INTERNAL_ERROR', 'failed to parse record page'))
+      }
+      const records = yield* parseNetResponse(() =>
+        Array.from(recentRecordsPage.querySelectorAll('.wrapper > div.p_10')).flatMap(parseRecentRecordNode),
+      )
+      yield* this.progress('fetch:recent:completed')
+      return records
+    })
+
+  fetchMusicRecordsEffect = () =>
+    Effect.gen(this, function* () {
+      const musicRecords: AchievementRecord[] = []
+      for (const { url, fetchState } of musicRecordURLs(URLS.JP.RECORD_MUSICS_PAGE)) {
+        const musicRecordsPage = yield* this.fetchAsDOMEffect(url)
+        if (!musicRecordsPage) {
+          return yield* Effect.fail(new NetImportError('INTERNAL_ERROR', 'failed to parse music records page'))
+        }
+        const records = yield* parseNetResponse(() =>
+          Array.from(musicRecordsPage.querySelectorAll('.w_450.m_15.p_r.f_0')).flatMap(parseMusicRecordNode),
+        )
+        musicRecords.push(...records)
+        yield* this.progress(fetchState)
+      }
+      yield* this.progress('fetch:music:completed')
+      return musicRecords
+    })
+}
+
+export class MaimaiNETIntlClient extends Client {
+  loginEffect = ({ id, password }: AuthParams) =>
+    Effect.gen(this, function* () {
+      yield* this.progress('auth:in-progress')
+
+      const loginPage = yield* this.fetchEffect(URLS.INTL.LOGIN_PAGE)
+      yield* Effect.tryPromise({
+        try: () => loginPage.body?.cancel() ?? Promise.resolve(),
+        catch: (cause) => new NetRequestError({ operation: 'release maimai NET login page', cause }),
+      })
+
+      const loginResponse = yield* this.fetchEffect(URLS.INTL.LOGIN_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          segaId: id,
-          password: password,
-          save_cookie: 'on',
-          token: loginPageToken,
+          sid: id,
+          password,
+          retention: '1',
         }),
-      },
-      'INVALID_CREDENTIALS',
-    )
-    if (URLS.CHECKLIST.ERROR.includes(login.headers.get('location') ?? '')) {
-      throw new NetImportError('INVALID_CREDENTIALS')
-    }
-
-    await this.fetch(URLS.JP.LOGIN_AIMELIST)
-    await this.fetch(URLS.JP.LOGIN_AIMELIST_SUBMIT)
-    await this.fetch(URLS.JP.HOMEPAGE)
-
-    this.onUpdate?.('auth:succeeded')
-  }
-
-  async fetchRecentRecords() {
-    this.onUpdate?.('fetch:recent:in-progress')
-    const recentRecordsPage = await this.fetchAsDOM(URLS.JP.RECORD_RECENT_PAGE)
-    if (!recentRecordsPage) {
-      throw new NetImportError('INTERNAL_ERROR', 'failed to parse record page')
-    }
-    const records = Array.from(recentRecordsPage.querySelectorAll('.wrapper > div.p_10')).flatMap(parseRecentRecordNode)
-    this.onUpdate?.('fetch:recent:completed')
-    return records
-  }
-
-  async fetchMusicRecords() {
-    const musicRecords: AchievementRecord[] = []
-    for (const { url, fetchState } of musicRecordURLs(URLS.JP.RECORD_MUSICS_PAGE)) {
-      const musicRecordsPage = await this.fetchAsDOM(url)
-      if (!musicRecordsPage) {
-        throw new NetImportError('INTERNAL_ERROR', 'failed to parse music records page')
+      })
+      if (loginResponse.status !== 302) {
+        return yield* Effect.fail(
+          new NetImportError(
+            'INTERNAL_ERROR',
+            `unexpected login response status: ${loginResponse.status} ${URLS.INTL.LOGIN_ENDPOINT}`,
+          ),
+        )
       }
-      musicRecords.push(
-        ...Array.from(musicRecordsPage.querySelectorAll('.w_450.m_15.p_r.f_0')).flatMap(parseMusicRecordNode),
-      )
-      this.onUpdate?.(fetchState)
-    }
-    this.onUpdate?.('fetch:music:completed')
-    return musicRecords
-  }
-}
+      const redirectURL = loginResponse.headers.get('location')
+      yield* Effect.tryPromise({
+        try: () => loginResponse.body?.cancel() ?? Promise.resolve(),
+        catch: (cause) => new NetRequestError({ operation: 'release maimai NET login response', cause }),
+      })
+      if (!redirectURL) {
+        return yield* Effect.fail(new NetImportError('INVALID_CREDENTIALS'))
+      }
 
-export class MaimaiNETIntlClient extends Client {
-  async login({ id, password }: AuthParams) {
-    this.onUpdate?.('auth:in-progress')
+      const redirectDestinationResponse = yield* this.fetchEffect(redirectURL, undefined, 'AIME_CARD_UNAVAILABLE')
 
-    await this.fetch(URLS.INTL.LOGIN_PAGE)
+      const redirectDestinationText = yield* Effect.tryPromise({
+        try: () => redirectDestinationResponse.text(),
+        catch: (cause) => new NetRequestError({ operation: 'read maimai NET login response', cause }),
+      })
+      yield* this.checkMaintenanceEffect(redirectDestinationText)
 
-    const loginResponse = await this.fetch(URLS.INTL.LOGIN_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        sid: id,
-        password,
-        retention: '1',
-      }),
+      if (redirectURL.startsWith('https://lng-tgk-aime-gw.am-all.net/common_auth/login')) {
+        const textDom = yield* parseNetResponse(() =>
+          new DOMParser({ errorHandler: () => {} }).parseFromString(redirectDestinationText, 'text/html'),
+        )
+        const errorString = textDom.querySelector('#error')?.textContent?.trim() ?? undefined
+        return yield* Effect.fail(new NetImportError('INVALID_CREDENTIALS', errorString))
+      }
+
+      yield* this.progress('auth:succeeded')
     })
-    if (loginResponse.status !== 302) {
-      throw new NetImportError(
-        'INTERNAL_ERROR',
-        `unexpected login response status: ${loginResponse.status} ${URLS.INTL.LOGIN_ENDPOINT}`,
-      )
-    }
-    const redirectURL = loginResponse.headers.get('location')
-    if (!redirectURL) {
-      throw new NetImportError('INVALID_CREDENTIALS')
-    }
 
-    const redirectDestinationResponse = await this.fetch(redirectURL, undefined, 'AIME_CARD_UNAVAILABLE')
+  fetchRecentRecordsEffect = () =>
+    Effect.gen(this, function* () {
+      yield* this.progress('fetch:recent:in-progress')
 
-    const redirectDestinationText = await redirectDestinationResponse.text()
-    this.checkMaintenance(redirectDestinationText)
-
-    if (redirectURL.startsWith('https://lng-tgk-aime-gw.am-all.net/common_auth/login')) {
-      const textDom = new DOMParser({
-        errorHandler: () => {
-          // ignore errors
-        },
-      }).parseFromString(redirectDestinationText, 'text/html')
-      const errorString = textDom.querySelector('#error')?.textContent?.trim() ?? undefined
-      throw new NetImportError('INVALID_CREDENTIALS', errorString)
-    }
-
-    this.onUpdate?.('auth:succeeded')
-  }
-
-  async fetchRecentRecords() {
-    this.onUpdate?.('fetch:recent:in-progress')
-
-    const recentRecordsPage = await this.fetchAsDOM(URLS.INTL.RECORD_RECENT_PAGE)
-    if (!recentRecordsPage) {
-      throw new NetImportError('INTERNAL_ERROR', 'failed to parse record page')
-    }
-    const records = Array.from(recentRecordsPage.querySelectorAll('.wrapper > div.p_10')).flatMap(parseRecentRecordNode)
-
-    this.onUpdate?.('fetch:recent:completed')
-    return records
-  }
-
-  async fetchMusicRecords() {
-    const musicRecords: AchievementRecord[] = []
-    for (const { url, fetchState } of musicRecordURLs(URLS.INTL.RECORD_MUSICS_PAGE)) {
-      const musicRecordsPage = await this.fetchAsDOM(url)
-      if (!musicRecordsPage) {
-        throw new NetImportError('INTERNAL_ERROR', 'failed to parse music records page')
+      const recentRecordsPage = yield* this.fetchAsDOMEffect(URLS.INTL.RECORD_RECENT_PAGE)
+      if (!recentRecordsPage) {
+        return yield* Effect.fail(new NetImportError('INTERNAL_ERROR', 'failed to parse record page'))
       }
-      musicRecords.push(
-        ...Array.from(musicRecordsPage.querySelectorAll('.w_450.m_15.p_r.f_0')).flatMap(parseMusicRecordNode),
+      const records = yield* parseNetResponse(() =>
+        Array.from(recentRecordsPage.querySelectorAll('.wrapper > div.p_10')).flatMap(parseRecentRecordNode),
       )
-      this.onUpdate?.(fetchState)
-    }
-    this.onUpdate?.('fetch:music:completed')
-    return musicRecords
-  }
+
+      yield* this.progress('fetch:recent:completed')
+      return records
+    })
+
+  fetchMusicRecordsEffect = () =>
+    Effect.gen(this, function* () {
+      const musicRecords: AchievementRecord[] = []
+      for (const { url, fetchState } of musicRecordURLs(URLS.INTL.RECORD_MUSICS_PAGE)) {
+        const musicRecordsPage = yield* this.fetchAsDOMEffect(url)
+        if (!musicRecordsPage) {
+          return yield* Effect.fail(new NetImportError('INTERNAL_ERROR', 'failed to parse music records page'))
+        }
+        const records = yield* parseNetResponse(() =>
+          Array.from(musicRecordsPage.querySelectorAll('.w_450.m_15.p_r.f_0')).flatMap(parseMusicRecordNode),
+        )
+        musicRecords.push(...records)
+        yield* this.progress(fetchState)
+      }
+      yield* this.progress('fetch:music:completed')
+      return musicRecords
+    })
 }
+
+export const withMaimaiNETClient = <A, E, R>(
+  region: 'jp' | 'intl',
+  use: (client: MaimaiNETJpClient | MaimaiNETIntlClient) => Effect.Effect<A, E, R>,
+  onProgress?: StateUpdateCallback,
+) =>
+  Effect.scoped(
+    Effect.acquireRelease(
+      Effect.sync(() => (region === 'jp' ? new MaimaiNETJpClient(onProgress) : new MaimaiNETIntlClient(onProgress))),
+      (client) => client.disposeEffect().pipe(Effect.orDie),
+    ).pipe(Effect.flatMap(use)),
+  )

@@ -41,6 +41,7 @@ describe('Sentry tunnel', () => {
     expect(fetchMock).toHaveBeenCalledWith(expectedEnvelopeUrl, {
       method: 'POST',
       body: envelope,
+      signal: expect.any(AbortSignal),
     })
   })
 

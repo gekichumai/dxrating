@@ -1,7 +1,11 @@
 import * as Sentry from '@sentry/node'
 import { ORPCError, implement } from '@orpc/server'
 import { appContract } from './contract.js'
-import { db, pool } from './db/index.js'
+import { Database } from './db/index.js'
+import { Clock, Data, Duration, Effect } from 'effect'
+import { runApp } from './runtime.js'
+import { ApplicationCache } from './services/cache.js'
+import { HttpClient } from './services/http-client.js'
 import {
   tags,
   tagGroups,
@@ -17,33 +21,35 @@ import {
   arcadeInstallationIdentities,
   arcadeInstallations,
 } from './db/schema.js'
-import { eq, and, desc, asc, exists, gte, ilike, inArray, isNull, lte, notExists, or, sql } from 'drizzle-orm'
-import Keyv from 'keyv'
-import type { auth } from './auth.js'
-import { config } from './config.js'
-import { renderChartOgImageOutput } from './services/functions/chart-og-image/index.js'
-import { CatalogIdentityError, createCatalogIdentityService } from './services/catalog-identities.js'
+import { eq, and, desc, asc, exists, gte, ilike, inArray, isNull, lte, notExists, or, sql, type SQL } from 'drizzle-orm'
+import type { BackendAuth } from './auth.js'
+import { AppConfig } from './config.js'
+import { renderChartOgImageOutputEffect } from './services/functions/chart-og-image/index.js'
+import { CatalogIdentityError } from './services/catalog-identities.js'
+import { CatalogIdentities } from './services/application.js'
 
 type Context = {
-  user?: typeof auth.$Infer.Session.user
+  user?: BackendAuth['$Infer']['Session']['user']
+  signal?: AbortSignal
 }
 
-const cache = new Keyv({ ttl: 30 * 60 * 1000 }) // 30 minute TTL
-const catalogIdentities = createCatalogIdentityService(async (text, values) => pool.query(text, values))
-
-export const withCatalogIdentityErrors = async <T>(operation: () => Promise<T>): Promise<T> => {
-  try {
-    return await operation()
-  } catch (error) {
-    if (!(error instanceof CatalogIdentityError)) throw error
-    const code = {
-      bad_request: 'BAD_REQUEST',
-      not_found: 'NOT_FOUND',
-      unavailable: 'SERVICE_UNAVAILABLE',
-    }[error.code] as 'BAD_REQUEST' | 'NOT_FOUND' | 'SERVICE_UNAVAILABLE'
-    throw new ORPCError(code, { message: error.message, cause: error })
+class UnauthorizedError extends Data.TaggedError('UnauthorizedError')<{ readonly message: string }> {
+  constructor() {
+    super({ message: 'Unauthorized' })
   }
 }
+
+export const withCatalogIdentityErrors = <A, R>(effect: Effect.Effect<A, CatalogIdentityError, R>) =>
+  effect.pipe(
+    Effect.mapError((error) => {
+      const code = {
+        bad_request: 'BAD_REQUEST',
+        not_found: 'NOT_FOUND',
+        unavailable: 'SERVICE_UNAVAILABLE',
+      }[error.code] as 'BAD_REQUEST' | 'NOT_FOUND' | 'SERVICE_UNAVAILABLE'
+      return new ORPCError(code, { message: error.message, cause: error })
+    }),
+  )
 
 type TagsListResult = {
   tags: Array<{
@@ -71,340 +77,446 @@ type TrendingCacheResult = {
 const os = implement(appContract)
 
 const tagsHandler = {
-  list: os.tags.list.handler(async ({ input }) => {
-    const cached = await cache.get<TagsListResult>('tags:list')
-    let result: TagsListResult
-    if (cached) {
-      Sentry.metrics.count('cache.hit', 1, { attributes: { key: 'tags:list' } })
-      result = cached
-    } else {
-      Sentry.metrics.count('cache.miss', 1, { attributes: { key: 'tags:list' } })
+  list: os.tags.list.handler(({ input, context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const database = yield* Database
+        const cache = yield* ApplicationCache
+        const catalogIdentities = yield* CatalogIdentities
+        const cached = yield* cache.get<TagsListResult>('tags:list')
+        let result: TagsListResult
+        if (cached) {
+          yield* Effect.sync(() => Sentry.metrics.count('cache.hit', 1, { attributes: { key: 'tags:list' } }))
+          result = cached
+        } else {
+          yield* Effect.sync(() => Sentry.metrics.count('cache.miss', 1, { attributes: { key: 'tags:list' } }))
 
-      const [allTags, allGroups, allTagSongs] = await Promise.all([
-        db
-          .select({
-            id: tags.id,
-            localized_name: tags.localized_name,
-            localized_description: tags.localized_description,
-            group_id: tags.group_id,
-          })
-          .from(tags),
-        db
-          .select({
-            id: tagGroups.id,
-            localized_name: tagGroups.localized_name,
-            color: tagGroups.color,
-          })
-          .from(tagGroups),
-        db
-          .select({
-            song_id: tagSongs.song_id,
-            sheet_type: tagSongs.sheet_type,
-            sheet_difficulty: tagSongs.sheet_difficulty,
-            tag_id: tagSongs.tag_id,
-          })
-          .from(tagSongs),
-      ])
+          const [allTags, allGroups, allTagSongs] = yield* Effect.all(
+            [
+              database.query('Tags.list', (db) =>
+                db
+                  .select({
+                    id: tags.id,
+                    localized_name: tags.localized_name,
+                    localized_description: tags.localized_description,
+                    group_id: tags.group_id,
+                  })
+                  .from(tags),
+              ),
+              database.query('Tags.listGroups', (db) =>
+                db
+                  .select({
+                    id: tagGroups.id,
+                    localized_name: tagGroups.localized_name,
+                    color: tagGroups.color,
+                  })
+                  .from(tagGroups),
+              ),
+              database.query('Tags.listSongTags', (db) =>
+                db
+                  .select({
+                    song_id: tagSongs.song_id,
+                    sheet_type: tagSongs.sheet_type,
+                    sheet_difficulty: tagSongs.sheet_difficulty,
+                    tag_id: tagSongs.tag_id,
+                  })
+                  .from(tagSongs),
+              ),
+            ],
+            { concurrency: 'unbounded' },
+          )
 
-      result = {
-        tags: allTags,
-        tagGroups: allGroups,
-        tagSongs: allTagSongs,
+          result = {
+            tags: allTags,
+            tagGroups: allGroups,
+            tagSongs: allTagSongs,
+          }
+          yield* cache.set('tags:list', result)
+        }
+
+        if (input?.idScheme === 'public') {
+          const tagSongs = yield* withCatalogIdentityErrors(
+            catalogIdentities.translateTagSongsToPublic(result.tagSongs),
+          )
+          return { ...result, tagSongs }
+        }
+        return result
+      }).pipe(Effect.withSpan('api.tags.list')),
+      { signal: (context as Context).signal },
+    ),
+  ),
+  attach: os.tags.attach.handler(({ input, context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const database = yield* Database
+        const cache = yield* ApplicationCache
+        const catalogIdentities = yield* CatalogIdentities
+        const user = (context as Context).user
+        if (!user) return yield* Effect.fail(new UnauthorizedError())
+
+        const identity = yield* withCatalogIdentityErrors(catalogIdentities.resolveSheetInput(input))
+
+        const existing = yield* database.query('Tags.findAttachment', (db) =>
+          db
+            .select()
+            .from(tagSongs)
+            .where(
+              and(
+                inArray(tagSongs.song_id, identity.legacySongIds),
+                eq(tagSongs.sheet_type, identity.sheetType),
+                eq(tagSongs.sheet_difficulty, identity.sheetDifficulty),
+                eq(tagSongs.tag_id, input.tagId),
+              ),
+            ),
+        )
+
+        if (existing.length > 0) return { id: existing[0].id }
+
+        const res = yield* database
+          .query('Tags.attach', (db) =>
+            db
+              .insert(tagSongs)
+              .values({
+                song_id: identity.legacySongId,
+                sheet_type: identity.sheetType,
+                sheet_difficulty: identity.sheetDifficulty,
+                tag_id: input.tagId,
+                created_by: user.id,
+              })
+              .returning({ id: tagSongs.id }),
+          )
+          .pipe(
+            Effect.tap(() => cache.delete('tags:list')),
+            Effect.uninterruptible,
+          )
+
+        return res[0]
+      }).pipe(Effect.withSpan('api.tags.attach')),
+      { signal: (context as Context).signal },
+    ),
+  ),
+}
+
+const moderateComment = Effect.fn('Comments.moderate')(function* (
+  viewerId: string | undefined,
+  commentId: number,
+  action: 'report' | 'block',
+) {
+  if (!viewerId) return yield* Effect.fail(new ORPCError('UNAUTHORIZED'))
+  const database = yield* Database
+  return yield* database.transaction((tx) =>
+    Effect.gen(function* () {
+      const [comment] = yield* database.query('Comments.findAuthor', () =>
+        tx.select({ authorId: comments.created_by }).from(comments).where(eq(comments.id, commentId)).for('share'),
+      )
+      if (!comment) return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Comment not found' }))
+      if (comment.authorId === viewerId)
+        return yield* Effect.fail(new ORPCError('BAD_REQUEST', { message: 'Cannot report or block yourself' }))
+      yield* database.query('Comments.report', () =>
+        tx
+          .insert(commentReports)
+          .values({ reporter_id: viewerId, comment_id: commentId, action })
+          .onConflictDoNothing(),
+      )
+      if (action === 'block') {
+        yield* database.query('Comments.blockAuthor', () =>
+          tx.insert(userBlocks).values({ blocker_id: viewerId, blocked_id: comment.authorId }).onConflictDoNothing(),
+        )
       }
-      await cache.set('tags:list', result)
-    }
-
-    if (input?.idScheme === 'public') {
-      const tagSongs = await withCatalogIdentityErrors(() =>
-        catalogIdentities.translateTagSongsToPublic(result.tagSongs),
-      )
-      return { ...result, tagSongs }
-    }
-    return result
-  }),
-  attach: os.tags.attach.handler(async ({ input, context }) => {
-    const user = (context as Context).user
-    if (!user) throw new Error('Unauthorized')
-
-    const identity = await withCatalogIdentityErrors(() => catalogIdentities.resolveSheetInput(input))
-
-    const existing = await db
-      .select()
-      .from(tagSongs)
-      .where(
-        and(
-          inArray(tagSongs.song_id, identity.legacySongIds),
-          eq(tagSongs.sheet_type, identity.sheetType),
-          eq(tagSongs.sheet_difficulty, identity.sheetDifficulty),
-          eq(tagSongs.tag_id, input.tagId),
-        ),
-      )
-
-    if (existing.length > 0) return { id: existing[0].id }
-
-    const res = await db
-      .insert(tagSongs)
-      .values({
-        song_id: identity.legacySongId,
-        sheet_type: identity.sheetType,
-        sheet_difficulty: identity.sheetDifficulty,
-        tag_id: input.tagId,
-        created_by: user.id,
-      })
-      .returning({ id: tagSongs.id })
-
-    await cache.delete('tags:list')
-    return res[0]
-  }),
-}
-
-const moderateComment = async (viewerId: string | undefined, commentId: number, action: 'report' | 'block') => {
-  if (!viewerId) throw new ORPCError('UNAUTHORIZED')
-  return db.transaction(async (tx) => {
-    const [comment] = await tx
-      .select({ authorId: comments.created_by })
-      .from(comments)
-      .where(eq(comments.id, commentId))
-      .for('share')
-    if (!comment) throw new ORPCError('NOT_FOUND', { message: 'Comment not found' })
-    if (comment.authorId === viewerId)
-      throw new ORPCError('BAD_REQUEST', { message: 'Cannot report or block yourself' })
-    await tx
-      .insert(commentReports)
-      .values({ reporter_id: viewerId, comment_id: commentId, action })
-      .onConflictDoNothing()
-    if (action === 'block') {
-      await tx.insert(userBlocks).values({ blocker_id: viewerId, blocked_id: comment.authorId }).onConflictDoNothing()
-    }
-    return { success: true, author_id: comment.authorId }
-  })
-}
+      return { success: true, author_id: comment.authorId }
+    }),
+  )
+})
 
 const commentsHandler = {
   report: os.comments.report.handler(({ input, context }) =>
-    moderateComment((context as Context).user?.id, input.commentId, 'report'),
+    runApp(moderateComment((context as Context).user?.id, input.commentId, 'report'), {
+      signal: (context as Context).signal,
+    }),
   ),
   blockAuthor: os.comments.blockAuthor.handler(({ input, context }) =>
-    moderateComment((context as Context).user?.id, input.commentId, 'block'),
+    runApp(moderateComment((context as Context).user?.id, input.commentId, 'block'), {
+      signal: (context as Context).signal,
+    }),
   ),
-  create: os.comments.create.handler(async ({ input, context }) => {
-    const user = (context as Context).user
-    if (!user) {
-      throw new Error('Unauthorized')
-    }
+  create: os.comments.create.handler(({ input, context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const database = yield* Database
+        const catalogIdentities = yield* CatalogIdentities
+        const user = (context as Context).user
+        if (!user) {
+          return yield* Effect.fail(new UnauthorizedError())
+        }
 
-    const identity = await withCatalogIdentityErrors(() => catalogIdentities.resolveSheetInput(input))
+        const identity = yield* withCatalogIdentityErrors(catalogIdentities.resolveSheetInput(input))
 
-    if (input.parentId !== undefined) {
-      const [parent] = await db
-        .select({
-          song_id: comments.song_id,
-          sheet_type: comments.sheet_type,
-          sheet_difficulty: comments.sheet_difficulty,
-        })
-        .from(comments)
-        .where(eq(comments.id, input.parentId))
-        .limit(1)
-      if (!parent) {
-        throw new ORPCError('NOT_FOUND', { message: 'Parent comment not found' })
-      }
-      if (
-        !identity.legacySongIds.includes(parent.song_id) ||
-        parent.sheet_type !== identity.sheetType ||
-        parent.sheet_difficulty !== identity.sheetDifficulty
-      ) {
-        throw new ORPCError('BAD_REQUEST', { message: 'Parent comment belongs to a different chart' })
-      }
-    }
+        const parentId = input.parentId
+        if (parentId !== undefined) {
+          const [parent] = yield* database.query('Comments.findParent', (db) =>
+            db
+              .select({
+                song_id: comments.song_id,
+                sheet_type: comments.sheet_type,
+                sheet_difficulty: comments.sheet_difficulty,
+              })
+              .from(comments)
+              .where(eq(comments.id, parentId))
+              .limit(1),
+          )
+          if (!parent) {
+            return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Parent comment not found' }))
+          }
+          if (
+            !identity.legacySongIds.includes(parent.song_id) ||
+            parent.sheet_type !== identity.sheetType ||
+            parent.sheet_difficulty !== identity.sheetDifficulty
+          ) {
+            return yield* Effect.fail(
+              new ORPCError('BAD_REQUEST', { message: 'Parent comment belongs to a different chart' }),
+            )
+          }
+        }
 
-    const newComment = await db
-      .insert(comments)
-      .values({
-        song_id: identity.legacySongId,
-        sheet_type: identity.sheetType,
-        sheet_difficulty: identity.sheetDifficulty,
-        parent_id: input.parentId,
-        content: input.content,
-        created_by: user.id,
-      })
-      .returning({ id: comments.id, created_at: comments.created_at })
+        const newComment = yield* database.query('Comments.create', (db) =>
+          db
+            .insert(comments)
+            .values({
+              song_id: identity.legacySongId,
+              sheet_type: identity.sheetType,
+              sheet_difficulty: identity.sheetDifficulty,
+              parent_id: input.parentId,
+              content: input.content,
+              created_by: user.id,
+            })
+            .returning({ id: comments.id, created_at: comments.created_at }),
+        )
 
-    return newComment[0]
-  }),
-  list: os.comments.list.handler(async ({ input, context }) => {
-    const viewerId = (context as Context).user?.id
-    const identity = await withCatalogIdentityErrors(() => catalogIdentities.resolveSheetInput(input))
-    const result = await db
-      .select({
-        id: comments.id,
-        author_id: comments.created_by,
-        parent_id: comments.parent_id,
-        created_at: comments.created_at,
-        content: comments.content,
-        display_name: profiles.display_name,
-      })
-      .from(comments)
-      .leftJoin(profiles, eq(profiles.id, comments.created_by))
-      .where(
-        and(
-          isNull(comments.removed_at),
-          viewerId
-            ? notExists(
-                db
-                  .select({ id: commentReports.id })
-                  .from(commentReports)
-                  .where(and(eq(commentReports.reporter_id, viewerId), eq(commentReports.comment_id, comments.id))),
-              )
-            : undefined,
-          viewerId
-            ? notExists(
-                db
-                  .select({ id: userBlocks.blocked_id })
-                  .from(userBlocks)
-                  .where(and(eq(userBlocks.blocker_id, viewerId), eq(userBlocks.blocked_id, comments.created_by))),
-              )
-            : undefined,
-          inArray(comments.song_id, identity.legacySongIds),
-          eq(comments.sheet_type, identity.sheetType),
-          eq(comments.sheet_difficulty, identity.sheetDifficulty),
-        ),
-      )
-      .orderBy(desc(comments.created_at))
+        return newComment[0]
+      }).pipe(Effect.withSpan('api.comments.create')),
+      { signal: (context as Context).signal },
+    ),
+  ),
+  list: os.comments.list.handler(({ input, context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const database = yield* Database
+        const catalogIdentities = yield* CatalogIdentities
+        const viewerId = (context as Context).user?.id
+        const identity = yield* withCatalogIdentityErrors(catalogIdentities.resolveSheetInput(input))
+        const result = yield* database.query('Comments.list', (db) =>
+          db
+            .select({
+              id: comments.id,
+              author_id: comments.created_by,
+              parent_id: comments.parent_id,
+              created_at: comments.created_at,
+              content: comments.content,
+              display_name: profiles.display_name,
+            })
+            .from(comments)
+            .leftJoin(profiles, eq(profiles.id, comments.created_by))
+            .where(
+              and(
+                isNull(comments.removed_at),
+                viewerId
+                  ? notExists(
+                      db
+                        .select({ id: commentReports.id })
+                        .from(commentReports)
+                        .where(
+                          and(eq(commentReports.reporter_id, viewerId), eq(commentReports.comment_id, comments.id)),
+                        ),
+                    )
+                  : undefined,
+                viewerId
+                  ? notExists(
+                      db
+                        .select({ id: userBlocks.blocked_id })
+                        .from(userBlocks)
+                        .where(
+                          and(eq(userBlocks.blocker_id, viewerId), eq(userBlocks.blocked_id, comments.created_by)),
+                        ),
+                    )
+                  : undefined,
+                inArray(comments.song_id, identity.legacySongIds),
+                eq(comments.sheet_type, identity.sheetType),
+                eq(comments.sheet_difficulty, identity.sheetDifficulty),
+              ),
+            )
+            .orderBy(desc(comments.created_at)),
+        )
 
-    return result
-  }),
+        return result
+      }).pipe(Effect.withSpan('api.comments.list')),
+      { signal: (context as Context).signal },
+    ),
+  ),
 }
 
 const aliasesHandler = {
-  list: os.aliases.list.handler(async ({ input }) => {
-    const cached = await cache.get<AliasListResult>('aliases:list')
-    let result: AliasListResult
-    if (cached) {
-      Sentry.metrics.count('cache.hit', 1, { attributes: { key: 'aliases:list' } })
-      result = cached
-    } else {
-      Sentry.metrics.count('cache.miss', 1, { attributes: { key: 'aliases:list' } })
+  list: os.aliases.list.handler(({ input, context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const database = yield* Database
+        const cache = yield* ApplicationCache
+        const catalogIdentities = yield* CatalogIdentities
+        const cached = yield* cache.get<AliasListResult>('aliases:list')
+        let result: AliasListResult
+        if (cached) {
+          yield* Effect.sync(() => Sentry.metrics.count('cache.hit', 1, { attributes: { key: 'aliases:list' } }))
+          result = cached
+        } else {
+          yield* Effect.sync(() => Sentry.metrics.count('cache.miss', 1, { attributes: { key: 'aliases:list' } }))
 
-      result = await db
-        .select({
-          song_id: songAliases.song_id,
-          name: songAliases.name,
-        })
-        .from(songAliases)
+          result = yield* database.query('Aliases.list', (db) =>
+            db
+              .select({
+                song_id: songAliases.song_id,
+                name: songAliases.name,
+              })
+              .from(songAliases),
+          )
 
-      await cache.set('aliases:list', result)
-    }
+          yield* cache.set('aliases:list', result)
+        }
 
-    if (input?.idScheme === 'public') {
-      const publicIds = await withCatalogIdentityErrors(() =>
-        catalogIdentities.translateSongIdsToPublic(result.map((alias) => alias.song_id)),
-      )
-      return result.flatMap((alias) => {
-        const songId = publicIds.get(alias.song_id)
-        return songId === undefined ? [] : [{ ...alias, song_id: songId }]
-      })
-    }
-    return result
-  }),
-  create: os.aliases.create.handler(async ({ input, context }) => {
-    const user = (context as Context).user
-    if (!user) throw new Error('Unauthorized')
+        if (input?.idScheme === 'public') {
+          const publicIds = yield* withCatalogIdentityErrors(
+            catalogIdentities.translateSongIdsToPublic(result.map((alias) => alias.song_id)),
+          )
+          return result.flatMap((alias) => {
+            const songId = publicIds.get(alias.song_id)
+            return songId === undefined ? [] : [{ ...alias, song_id: songId }]
+          })
+        }
+        return result
+      }).pipe(Effect.withSpan('api.aliases.list')),
+      { signal: (context as Context).signal },
+    ),
+  ),
+  create: os.aliases.create.handler(({ input, context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const database = yield* Database
+        const cache = yield* ApplicationCache
+        const catalogIdentities = yield* CatalogIdentities
+        const user = (context as Context).user
+        if (!user) return yield* Effect.fail(new UnauthorizedError())
 
-    const identity = await withCatalogIdentityErrors(() => catalogIdentities.resolveSongInput(input.songId))
+        const identity = yield* withCatalogIdentityErrors(catalogIdentities.resolveSongInput(input.songId))
 
-    const res = await db
-      .insert(songAliases)
-      .values({
-        song_id: identity.legacySongId,
-        name: input.name,
-        created_by: user.id,
-      })
-      .returning({ id: songAliases.id })
+        const res = yield* database
+          .query('Aliases.create', (db) =>
+            db
+              .insert(songAliases)
+              .values({
+                song_id: identity.legacySongId,
+                name: input.name,
+                created_by: user.id,
+              })
+              .returning({ id: songAliases.id }),
+          )
+          .pipe(
+            Effect.tap(() => cache.delete('aliases:list')),
+            Effect.uninterruptible,
+          )
 
-    await cache.delete('aliases:list')
-    return res[0]
-  }),
+        return res[0]
+      }).pipe(Effect.withSpan('api.aliases.create')),
+      { signal: (context as Context).signal },
+    ),
+  ),
 }
 
-import { MaimaiNETJpClient, MaimaiNETIntlClient } from './lib/functions/client.js'
+import { withMaimaiNETClient } from './lib/functions/client.js'
 import * as lxnsService from './services/lxns/index.js'
 
 const analyticsHandler = {
-  trending: os.analytics.trending.handler(async ({ input }) => {
-    const cacheKey = 'analytics:trending'
-    const cached = await cache.get<TrendingCacheResult>(cacheKey)
-    let result: TrendingCacheResult
-    if (cached) {
-      Sentry.metrics.count('cache.hit', 1, { attributes: { key: cacheKey } })
-      result = cached
-    } else {
-      Sentry.metrics.count('cache.miss', 1, { attributes: { key: cacheKey } })
-
-      const { projectId, apiKey } = config.posthog
-      if (!projectId || !apiKey) {
-        result = { results: [], dateFrom: '', dateTo: '' }
-      } else {
-        const response = await fetch(`https://us.posthog.com/api/projects/${projectId}/query/`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            query: {
-              kind: 'TrendsQuery',
-              series: [{ kind: 'EventsNode', event: 'sheet_content_viewed', math: 'total' }],
-              breakdownFilter: { breakdowns: [{ property: 'song_id', type: 'event' }] },
-              dateRange: { date_from: '-7d' },
-              interval: 'day',
-              filterTestAccounts: true,
-            },
-          }),
-        })
-
-        if (!response.ok) {
-          Sentry.captureException(new Error(`PostHog query failed: ${response.status}`))
-          result = { results: [], dateFrom: '', dateTo: '' }
+  trending: os.analytics.trending.handler(({ input, context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const cache = yield* ApplicationCache
+        const catalogIdentities = yield* CatalogIdentities
+        const config = yield* AppConfig
+        const http = yield* HttpClient
+        const cacheKey = 'analytics:trending'
+        const cached = yield* cache.get<TrendingCacheResult>(cacheKey)
+        let result: TrendingCacheResult
+        if (cached) {
+          yield* Effect.sync(() => Sentry.metrics.count('cache.hit', 1, { attributes: { key: cacheKey } }))
+          result = cached
         } else {
-          const data = await response.json()
-          const series = (data.results as Array<Record<string, unknown>>).flat()
+          yield* Effect.sync(() => Sentry.metrics.count('cache.miss', 1, { attributes: { key: cacheKey } }))
 
-          const songCounts = new Map<string, number>()
-          for (const s of series) {
-            if (!s.breakdown_value) continue
-            const songId = String(s.breakdown_value)
-            if (songId === '$$_posthog_breakdown_other_$$') continue
-            const total = (s.aggregated_value as number) ?? 0
-            songCounts.set(songId, (songCounts.get(songId) ?? 0) + total)
+          const { projectId, apiKey } = config.posthog
+          if (!projectId || !apiKey) {
+            result = { results: [], dateFrom: '', dateTo: '' }
+          } else {
+            const response = yield* http.request(`https://us.posthog.com/api/projects/${projectId}/query/`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                query: {
+                  kind: 'TrendsQuery',
+                  series: [{ kind: 'EventsNode', event: 'sheet_content_viewed', math: 'total' }],
+                  breakdownFilter: { breakdowns: [{ property: 'song_id', type: 'event' }] },
+                  dateRange: { date_from: '-7d' },
+                  interval: 'day',
+                  filterTestAccounts: true,
+                },
+              }),
+            })
+
+            if (!response.ok) {
+              yield* Effect.sync(() => Sentry.captureException(new Error(`PostHog query failed: ${response.status}`)))
+              result = { results: [], dateFrom: '', dateTo: '' }
+            } else {
+              const data = yield* http.json<{ results: Array<Record<string, unknown>> }>(response)
+              const series = (data.results as Array<Record<string, unknown>>).flat()
+
+              const songCounts = new Map<string, number>()
+              for (const s of series) {
+                if (!s.breakdown_value) continue
+                const songId = String(s.breakdown_value)
+                if (songId === '$$_posthog_breakdown_other_$$') continue
+                const total = (s.aggregated_value as number) ?? 0
+                songCounts.set(songId, (songCounts.get(songId) ?? 0) + total)
+              }
+
+              const results = [...songCounts.entries()]
+                .sort((a, b) => b[1] - a[1])
+                .map(([songId, count]) => ({ songId, count }))
+
+              const now = new Date(yield* Clock.currentTimeMillis)
+              const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+              result = {
+                results,
+                dateFrom: weekAgo.toISOString().split('T')[0],
+                dateTo: now.toISOString().split('T')[0],
+              }
+              yield* cache.set(cacheKey, result, 60 * 60 * 1000) // 1 hour TTL
+            }
           }
-
-          const results = [...songCounts.entries()]
-            .sort((a, b) => b[1] - a[1])
-            .map(([songId, count]) => ({ songId, count }))
-
-          const now = new Date()
-          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-          result = {
-            results,
-            dateFrom: weekAgo.toISOString().split('T')[0],
-            dateTo: now.toISOString().split('T')[0],
-          }
-          await cache.set(cacheKey, result, 60 * 60 * 1000) // 1 hour TTL
         }
-      }
-    }
 
-    if (input?.idScheme === 'public') {
-      const results = await withCatalogIdentityErrors(() =>
-        catalogIdentities.translateSongCountsToPublic(result.results),
-      )
-      return {
-        ...result,
-        results: results.map(({ songId }) => ({ songId })),
-      }
-    }
-    return { ...result, results: result.results.map(({ songId }) => ({ songId })) }
-  }),
+        if (input?.idScheme === 'public') {
+          const results = yield* withCatalogIdentityErrors(
+            catalogIdentities.translateSongCountsToPublic(result.results),
+          )
+          return {
+            ...result,
+            results: results.map(({ songId }) => ({ songId })),
+          }
+        }
+        return { ...result, results: result.results.map(({ songId }) => ({ songId })) }
+      }).pipe(Effect.withSpan('api.analytics.trending')),
+      { signal: (context as Context).signal },
+    ),
+  ),
 }
 
 type ArcadeInstallationResponse = {
@@ -435,48 +547,51 @@ function escapeArcadeSearch(value: string): string {
   return value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')
 }
 
-async function loadArcadeInstallations(venueIds: bigint[]) {
+const loadArcadeInstallations = Effect.fn('Arcades.loadInstallations')(function* (venueIds: bigint[]) {
+  const database = yield* Database
   const grouped = new Map<string, ArcadeInstallationResponse[]>()
   if (venueIds.length === 0) return grouped
 
-  const rows = await db
-    .select({
-      id: arcadeInstallations.id,
-      installationIdentityId: arcadeInstallations.installation_identity_id,
-      publicId: arcadeInstallationIdentities.public_id,
-      venueId: arcadeInstallations.venue_id,
-      gameId: arcadeInstallations.game_id,
-      gameName: arcadeGames.name,
-      machineCount: arcadeInstallations.machine_count,
-      version: arcadeInstallations.version,
-      cabinetModel: arcadeInstallations.cabinet_model,
-      status: arcadeInstallations.status,
-      region: arcadeInstallations.region,
-      network: arcadeInstallations.network,
-      price: arcadeInstallations.price,
-      condition: arcadeInstallations.condition,
-      confidence: arcadeInstallations.confidence,
-      observedAt: arcadeInstallations.observed_at,
-      source: arcadeInstallations.source,
-    })
-    .from(arcadeInstallations)
-    .innerJoin(
-      arcadeInstallationIdentities,
-      eq(arcadeInstallationIdentities.id, arcadeInstallations.installation_identity_id),
-    )
-    .innerJoin(arcadeGames, eq(arcadeGames.id, arcadeInstallations.game_id))
-    .where(and(inArray(arcadeInstallations.venue_id, venueIds), isNull(arcadeInstallations.absent_since)))
-    .orderBy(
-      asc(arcadeInstallations.venue_id),
-      asc(arcadeGames.name),
-      asc(arcadeInstallations.game_id),
-      asc(arcadeInstallations.region),
-      asc(arcadeInstallations.network),
-      asc(arcadeInstallations.version),
-      asc(arcadeInstallations.cabinet_model),
-      asc(arcadeInstallations.source),
-      asc(arcadeInstallations.id),
-    )
+  const rows = yield* database.query('Arcades.loadInstallations', (db) =>
+    db
+      .select({
+        id: arcadeInstallations.id,
+        installationIdentityId: arcadeInstallations.installation_identity_id,
+        publicId: arcadeInstallationIdentities.public_id,
+        venueId: arcadeInstallations.venue_id,
+        gameId: arcadeInstallations.game_id,
+        gameName: arcadeGames.name,
+        machineCount: arcadeInstallations.machine_count,
+        version: arcadeInstallations.version,
+        cabinetModel: arcadeInstallations.cabinet_model,
+        status: arcadeInstallations.status,
+        region: arcadeInstallations.region,
+        network: arcadeInstallations.network,
+        price: arcadeInstallations.price,
+        condition: arcadeInstallations.condition,
+        confidence: arcadeInstallations.confidence,
+        observedAt: arcadeInstallations.observed_at,
+        source: arcadeInstallations.source,
+      })
+      .from(arcadeInstallations)
+      .innerJoin(
+        arcadeInstallationIdentities,
+        eq(arcadeInstallationIdentities.id, arcadeInstallations.installation_identity_id),
+      )
+      .innerJoin(arcadeGames, eq(arcadeGames.id, arcadeInstallations.game_id))
+      .where(and(inArray(arcadeInstallations.venue_id, venueIds), isNull(arcadeInstallations.absent_since)))
+      .orderBy(
+        asc(arcadeInstallations.venue_id),
+        asc(arcadeGames.name),
+        asc(arcadeInstallations.game_id),
+        asc(arcadeInstallations.region),
+        asc(arcadeInstallations.network),
+        asc(arcadeInstallations.version),
+        asc(arcadeInstallations.cabinet_model),
+        asc(arcadeInstallations.source),
+        asc(arcadeInstallations.id),
+      ),
+  )
 
   const logicalInstallations = new Map<string, Array<(typeof rows)[number]>>()
 
@@ -544,7 +659,7 @@ async function loadArcadeInstallations(venueIds: bigint[]) {
   }
 
   return grouped
-}
+})
 
 function serializeArcadeVenue(
   venue: typeof arcadeVenues.$inferSelect,
@@ -570,181 +685,243 @@ function serializeArcadeVenue(
 }
 
 const arcadesHandler = {
-  games: os.arcades.games.handler(async () => {
-    const items = await db
-      .select({
-        id: arcadeGames.id,
-        name: arcadeGames.name,
-        manufacturer: arcadeGames.manufacturer,
-      })
-      .from(arcadeGames)
-      .where(eq(arcadeGames.active, true))
-      .orderBy(asc(arcadeGames.name), asc(arcadeGames.id))
-
-    return { items }
-  }),
-  venues: os.arcades.venues.handler(async ({ input }) => {
-    const filters = []
-
-    if (
-      input.minLatitude !== undefined &&
-      input.minLongitude !== undefined &&
-      input.maxLatitude !== undefined &&
-      input.maxLongitude !== undefined
-    ) {
-      filters.push(
-        gte(arcadeVenues.latitude, input.minLatitude),
-        lte(arcadeVenues.latitude, input.maxLatitude),
-        gte(arcadeVenues.longitude, input.minLongitude),
-        lte(arcadeVenues.longitude, input.maxLongitude),
-      )
-    }
-
-    if (input.query) {
-      const pattern = `%${escapeArcadeSearch(input.query)}%`
-      const normalized = normalizeArcadeSearch(input.query)
-      const normalizedPattern = normalized ? `%${escapeArcadeSearch(normalized)}%` : undefined
-      filters.push(
-        or(
-          ilike(arcadeVenues.name, pattern),
-          ilike(arcadeVenues.address, pattern),
-          ilike(arcadeVenues.city, pattern),
-          ilike(arcadeVenues.region, pattern),
-          normalizedPattern ? ilike(arcadeVenues.normalized_name, normalizedPattern) : undefined,
-          normalizedPattern ? ilike(arcadeVenues.normalized_address, normalizedPattern) : undefined,
-        )!,
-      )
-    }
-
-    if (input.chains) {
-      filters.push(inArray(arcadeVenues.chain_id, input.chains))
-    }
-
-    if (input.games || input.status) {
-      const installationFilters = [
-        eq(arcadeInstallations.venue_id, arcadeVenues.id),
-        isNull(arcadeInstallations.absent_since),
-      ]
-      if (input.games) installationFilters.push(inArray(arcadeInstallations.game_id, input.games))
-      if (input.status) installationFilters.push(eq(arcadeInstallations.status, input.status))
-      filters.push(
-        exists(
+  games: os.arcades.games.handler(({ context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const database = yield* Database
+        const items = yield* database.query('Arcades.listGames', (db) =>
           db
-            .select({ value: sql`1` })
-            .from(arcadeInstallations)
-            .where(and(...installationFilters)),
-        ),
-      )
-    }
-
-    const [rows, chains] = await Promise.all([
-      db
-        .select()
-        .from(arcadeVenues)
-        .where(filters.length > 0 ? and(...filters) : undefined)
-        .orderBy(asc(arcadeVenues.normalized_name), asc(arcadeVenues.id)),
-      db
-        .select({
-          id: arcadeChains.id,
-          name: arcadeChains.name,
-          countryCodes: arcadeChains.country_codes,
-        })
-        .from(arcadeChains)
-        .where(
-          exists(
-            db
-              .select({ value: sql`1` })
-              .from(arcadeVenues)
-              .where(eq(arcadeVenues.chain_id, arcadeChains.id)),
-          ),
+            .select({
+              id: arcadeGames.id,
+              name: arcadeGames.name,
+              manufacturer: arcadeGames.manufacturer,
+            })
+            .from(arcadeGames)
+            .where(eq(arcadeGames.active, true))
+            .orderBy(asc(arcadeGames.name), asc(arcadeGames.id)),
         )
-        .orderBy(asc(arcadeChains.name), asc(arcadeChains.id)),
-    ])
 
-    const installations = await loadArcadeInstallations(rows.map((venue) => venue.id))
+        return { items }
+      }).pipe(Effect.withSpan('api.arcades.games')),
+      { signal: (context as Context).signal },
+    ),
+  ),
+  venues: os.arcades.venues.handler(({ input, context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const database = yield* Database
+        const db = database.db
+        const filters: SQL[] = []
 
-    return {
-      items: rows.map((venue) => serializeArcadeVenue(venue, installations)),
-      chains,
-    }
-  }),
-  venue: os.arcades.venue.handler(async ({ input }) => {
-    const [venue] = await db.select().from(arcadeVenues).where(eq(arcadeVenues.public_id, input.id)).limit(1)
-    if (!venue) {
-      throw new ORPCError('NOT_FOUND', { message: 'Arcade venue not found' })
-    }
+        if (
+          input.minLatitude !== undefined &&
+          input.minLongitude !== undefined &&
+          input.maxLatitude !== undefined &&
+          input.maxLongitude !== undefined
+        ) {
+          filters.push(
+            gte(arcadeVenues.latitude, input.minLatitude),
+            lte(arcadeVenues.latitude, input.maxLatitude),
+            gte(arcadeVenues.longitude, input.minLongitude),
+            lte(arcadeVenues.longitude, input.maxLongitude),
+          )
+        }
 
-    const installations = await loadArcadeInstallations([venue.id])
-    return serializeArcadeVenue(venue, installations)
-  }),
+        if (input.query) {
+          const pattern = `%${escapeArcadeSearch(input.query)}%`
+          const normalized = normalizeArcadeSearch(input.query)
+          const normalizedPattern = normalized ? `%${escapeArcadeSearch(normalized)}%` : undefined
+          filters.push(
+            or(
+              ilike(arcadeVenues.name, pattern),
+              ilike(arcadeVenues.address, pattern),
+              ilike(arcadeVenues.city, pattern),
+              ilike(arcadeVenues.region, pattern),
+              normalizedPattern ? ilike(arcadeVenues.normalized_name, normalizedPattern) : undefined,
+              normalizedPattern ? ilike(arcadeVenues.normalized_address, normalizedPattern) : undefined,
+            )!,
+          )
+        }
+
+        if (input.chains) {
+          filters.push(inArray(arcadeVenues.chain_id, input.chains))
+        }
+
+        if (input.games || input.status) {
+          const installationFilters = [
+            eq(arcadeInstallations.venue_id, arcadeVenues.id),
+            isNull(arcadeInstallations.absent_since),
+          ]
+          if (input.games) installationFilters.push(inArray(arcadeInstallations.game_id, input.games))
+          if (input.status) installationFilters.push(eq(arcadeInstallations.status, input.status))
+          filters.push(
+            exists(
+              db
+                .select({ value: sql`1` })
+                .from(arcadeInstallations)
+                .where(and(...installationFilters)),
+            ),
+          )
+        }
+
+        const [rows, chains] = yield* Effect.all(
+          [
+            database.query('Arcades.listVenues', (db) =>
+              db
+                .select()
+                .from(arcadeVenues)
+                .where(filters.length > 0 ? and(...filters) : undefined)
+                .orderBy(asc(arcadeVenues.normalized_name), asc(arcadeVenues.id)),
+            ),
+            database.query('Arcades.listChains', (db) =>
+              db
+                .select({
+                  id: arcadeChains.id,
+                  name: arcadeChains.name,
+                  countryCodes: arcadeChains.country_codes,
+                })
+                .from(arcadeChains)
+                .where(
+                  exists(
+                    db
+                      .select({ value: sql`1` })
+                      .from(arcadeVenues)
+                      .where(eq(arcadeVenues.chain_id, arcadeChains.id)),
+                  ),
+                )
+                .orderBy(asc(arcadeChains.name), asc(arcadeChains.id)),
+            ),
+          ],
+          { concurrency: 'unbounded' },
+        )
+
+        const installations = yield* loadArcadeInstallations(rows.map((venue) => venue.id))
+
+        return {
+          items: rows.map((venue) => serializeArcadeVenue(venue, installations)),
+          chains,
+        }
+      }).pipe(Effect.withSpan('api.arcades.venues')),
+      { signal: (context as Context).signal },
+    ),
+  ),
+  venue: os.arcades.venue.handler(({ input, context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const database = yield* Database
+        const [venue] = yield* database.query('Arcades.findVenue', (db) =>
+          db.select().from(arcadeVenues).where(eq(arcadeVenues.public_id, input.id)).limit(1),
+        )
+        if (!venue) {
+          return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Arcade venue not found' }))
+        }
+
+        const installations = yield* loadArcadeInstallations([venue.id])
+        return serializeArcadeVenue(venue, installations)
+      }).pipe(Effect.withSpan('api.arcades.venue')),
+      { signal: (context as Context).signal },
+    ),
+  ),
 }
 
 const chartOgImageHandler = {
-  render: os.chartOgImage.render.handler(async ({ input }) => {
-    const output = await renderChartOgImageOutput(input)
-    if (!output) {
-      throw new ORPCError('NOT_FOUND', { message: 'Chart not found' })
-    }
+  render: os.chartOgImage.render.handler(({ input, context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const output = yield* renderChartOgImageOutputEffect(input)
+        if (!output) {
+          return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Chart not found' }))
+        }
 
-    return output
-  }),
+        return output
+      }).pipe(Effect.withSpan('api.chartOgImage.render')),
+      { signal: (context as Context).signal },
+    ),
+  ),
 }
 
 const maimaiHandler = {
-  fetchRecords: os.maimai.fetchRecords.handler(async ({ input }) => {
-    const { id, password, region } = input
-    const client = {
-      jp: new MaimaiNETJpClient(),
-      intl: new MaimaiNETIntlClient(),
-    }[region]
-
-    await client.login({ id, password })
-    const [recentRecords, musicRecords] = await Promise.all([client.fetchRecentRecords(), client.fetchMusicRecords()])
-
-    return { recentRecords, musicRecords }
-  }),
+  fetchRecords: os.maimai.fetchRecords.handler(({ input, context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const { id, password, region } = input
+        return yield* withMaimaiNETClient(region, (client) =>
+          Effect.gen(function* () {
+            yield* client.loginEffect({ id, password })
+            const [recentRecords, musicRecords] = yield* Effect.all(
+              [client.fetchRecentRecordsEffect(), client.fetchMusicRecordsEffect()],
+              { concurrency: 'unbounded' },
+            )
+            return { recentRecords, musicRecords }
+          }),
+        )
+      }).pipe(Effect.withSpan('api.maimai.fetchRecords')),
+      { signal: (context as Context).signal },
+    ),
+  ),
 }
 
 const lxnsHandler = {
-  authorize: os.lxns.authorize.handler(async ({ context }) => {
-    const user = (context as Context).user
-    if (!user) throw new Error('Unauthorized')
-    const url = await lxnsService.generateAuthorizationUrl(user.id)
-    return { url }
-  }),
-  status: os.lxns.status.handler(async ({ context }) => {
-    const user = (context as Context).user
-    if (!user) throw new Error('Unauthorized')
-    return await lxnsService.getConnectionStatus(user.id)
-  }),
-  start: os.lxns.start.handler(async ({ context }) => {
-    const user = (context as Context).user
-    if (!user) throw new Error('Unauthorized')
-    const fetchStart = performance.now()
-    const rawScores = await lxnsService.fetchPlayerScores(user.id)
-    Sentry.metrics.distribution('lxns_fetch.duration', performance.now() - fetchStart, {
-      unit: 'millisecond',
-    })
-    const scores = rawScores.map((s) => ({
-      id: s.id,
-      songName: s.song_name,
-      level: s.level,
-      levelIndex: s.level_index,
-      achievements: s.achievements,
-      fc: s.fc,
-      fs: s.fs,
-      type: s.type,
-      dxScore: s.dx_score,
-    }))
-    Sentry.metrics.distribution('lxns_fetch.scores', scores.length, { unit: 'none' })
-    return { scores, count: scores.length }
-  }),
-  disconnect: os.lxns.disconnect.handler(async ({ context }) => {
-    const user = (context as Context).user
-    if (!user) throw new Error('Unauthorized')
-    await lxnsService.disconnect(user.id)
-    return { success: true }
-  }),
+  authorize: os.lxns.authorize.handler(({ context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const user = (context as Context).user
+        if (!user) return yield* Effect.fail(new UnauthorizedError())
+        const url = yield* lxnsService.generateAuthorizationUrl(user.id)
+        return { url }
+      }).pipe(Effect.withSpan('api.lxns.authorize')),
+      { signal: (context as Context).signal },
+    ),
+  ),
+  status: os.lxns.status.handler(({ context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const user = (context as Context).user
+        if (!user) return yield* Effect.fail(new UnauthorizedError())
+        return yield* lxnsService.getConnectionStatus(user.id)
+      }).pipe(Effect.withSpan('api.lxns.status')),
+      { signal: (context as Context).signal },
+    ),
+  ),
+  start: os.lxns.start.handler(({ context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const user = (context as Context).user
+        if (!user) return yield* Effect.fail(new UnauthorizedError())
+        const [duration, rawScores] = yield* Effect.timed(lxnsService.fetchPlayerScores(user.id))
+        yield* Effect.sync(() =>
+          Sentry.metrics.distribution('lxns_fetch.duration', Duration.toMillis(duration), {
+            unit: 'millisecond',
+          }),
+        )
+        const scores = rawScores.map((s) => ({
+          id: s.id,
+          songName: s.song_name,
+          level: s.level,
+          levelIndex: s.level_index,
+          achievements: s.achievements,
+          fc: s.fc,
+          fs: s.fs,
+          type: s.type,
+          dxScore: s.dx_score,
+        }))
+        yield* Effect.sync(() => Sentry.metrics.distribution('lxns_fetch.scores', scores.length, { unit: 'none' }))
+        return { scores, count: scores.length }
+      }).pipe(Effect.withSpan('api.lxns.start')),
+      { signal: (context as Context).signal },
+    ),
+  ),
+  disconnect: os.lxns.disconnect.handler(({ context }) =>
+    runApp(
+      Effect.gen(function* () {
+        const user = (context as Context).user
+        if (!user) return yield* Effect.fail(new UnauthorizedError())
+        yield* lxnsService.disconnect(user.id)
+        return { success: true }
+      }).pipe(Effect.withSpan('api.lxns.disconnect')),
+      { signal: (context as Context).signal },
+    ),
+  ),
 }
 
 export const appRouter = os.router({

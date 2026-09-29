@@ -13,10 +13,59 @@
     "baseUrl": ".",
     "declaration": false,
     "declarationMap": false,
-    "noEmit": false,
+    "noEmit": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "tsBuildInfoFile": "./node_modules/.cache/.tsbuildinfo"
+    "tsBuildInfoFile": "./node_modules/.cache/.tsbuildinfo",
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "diagnosticSeverity": {
+          "anyUnknownInErrorContext": "error",
+          "classSelfMismatch": "error",
+          "duplicatePackage": "error",
+          "effectFnImplicitAny": "error",
+          "floatingEffect": "error",
+          "genericEffectServices": "error",
+          "missingEffectContext": "error",
+          "missingEffectError": "error",
+          "missingLayerContext": "error",
+          "missingReturnYieldStar": "error",
+          "missingStarInYieldEffectGen": "error",
+          "nonObjectEffectServiceType": "error",
+          "overriddenSchemaConstructor": "error",
+          "unsupportedServiceAccessors": "error",
+          "catchUnfailableEffect": "error",
+          "effectFnIife": "error",
+          "effectGenUsesAdapter": "error",
+          "effectInFailure": "error",
+          "effectInVoidSuccess": "error",
+          "globalErrorInEffectCatch": "error",
+          "globalErrorInEffectFailure": "error",
+          "layerMergeAllWithDependencies": "error",
+          "lazyPromiseInEffectSync": "error",
+          "leakingRequirements": "error",
+          "multipleEffectProvide": "error",
+          "returnEffectInGen": "error",
+          "runEffectInsideEffect": "error",
+          "schemaSyncInEffect": "error",
+          "scopeInLayerEffect": "error",
+          "strictEffectProvide": "error",
+          "tryCatchInEffectGen": "error",
+          "unknownInEffectCatch": "error",
+          "unsafeEffectTypeAssertion": "error",
+          "catchAllToMapError": "error",
+          "effectMapFlatten": "error",
+          "effectMapVoid": "error",
+          "effectSucceedWithVoid": "error",
+          "flatMapToMap": "error",
+          "unnecessaryEffectGen": "error",
+          "unnecessaryPipe": "error",
+          "unnecessaryPipeChain": "error"
+        },
+        "missingDiagnosticNextLine": "error"
+      }
+    ]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "scripts/**/*.ts"]
 }

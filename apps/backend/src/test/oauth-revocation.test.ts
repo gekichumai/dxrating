@@ -1,3 +1,4 @@
+import { Effect } from 'effect'
 import { describe, expect, it, vi } from 'vitest'
 import { revokeOAuthGrants } from '../lib/oauth-revocation.js'
 
@@ -5,15 +6,17 @@ describe('OAuth grant revocation', () => {
   it('revokes Apple using the refresh token', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async () => new Response(null, { status: 200 }))
 
-    const issues = await revokeOAuthGrants(
-      [{ providerId: 'apple', accessToken: 'access', refreshToken: 'refresh' }],
-      {
-        apple: {
-          clientId: 'apple-client',
-          clientSecret: () => 'apple-secret',
+    const issues = await Effect.runPromise(
+      revokeOAuthGrants(
+        [{ providerId: 'apple', accessToken: 'access', refreshToken: 'refresh' }],
+        {
+          apple: {
+            clientId: 'apple-client',
+            clientSecret: () => 'apple-secret',
+          },
         },
-      },
-      { fetch },
+        { fetch },
+      ),
     )
 
     expect(issues).toEqual([])
@@ -29,10 +32,8 @@ describe('OAuth grant revocation', () => {
   it('treats an already-invalid Google token as revoked', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async () => new Response(null, { status: 400 }))
 
-    const issues = await revokeOAuthGrants(
-      [{ providerId: 'google', accessToken: 'access', refreshToken: null }],
-      {},
-      { fetch },
+    const issues = await Effect.runPromise(
+      revokeOAuthGrants([{ providerId: 'google', accessToken: 'access', refreshToken: null }], {}, { fetch }),
     )
 
     expect(issues).toEqual([])
@@ -42,10 +43,12 @@ describe('OAuth grant revocation', () => {
   it('revokes a GitHub application token with application credentials', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async () => new Response(null, { status: 204 }))
 
-    const issues = await revokeOAuthGrants(
-      [{ providerId: 'github', accessToken: 'access', refreshToken: null }],
-      { github: { clientId: 'github-client', clientSecret: 'github-secret' } },
-      { fetch },
+    const issues = await Effect.runPromise(
+      revokeOAuthGrants(
+        [{ providerId: 'github', accessToken: 'access', refreshToken: null }],
+        { github: { clientId: 'github-client', clientSecret: 'github-secret' } },
+        { fetch },
+      ),
     )
 
     expect(issues).toEqual([])
@@ -61,10 +64,8 @@ describe('OAuth grant revocation', () => {
   it('reports failures without exposing token values', async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async () => new Response(null, { status: 503 }))
 
-    const issues = await revokeOAuthGrants(
-      [{ providerId: 'google', accessToken: 'secret-token', refreshToken: null }],
-      {},
-      { fetch },
+    const issues = await Effect.runPromise(
+      revokeOAuthGrants([{ providerId: 'google', accessToken: 'secret-token', refreshToken: null }], {}, { fetch }),
     )
 
     expect(issues).toEqual([

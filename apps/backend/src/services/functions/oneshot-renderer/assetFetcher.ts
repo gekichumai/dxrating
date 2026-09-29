@@ -1,8 +1,18 @@
 import { createAssetLoader } from '@gekichumai/oneshot-renderer'
+import { Effect, Data, Either } from 'effect'
 import os from 'node:os'
 import path from 'node:path'
 import sharp from 'sharp'
 import { Sentry } from '../../../lib/functions/sentry.js'
+
+export class RendererAssetError extends Data.TaggedError('RendererAssetError')<{
+  readonly operation: string
+  readonly cause: unknown
+}> {
+  get message() {
+    return this.cause instanceof Error ? this.cause.message : this.operation + ' failed'
+  }
+}
 
 export const getAssetSourceKey = () =>
   JSON.stringify({
@@ -13,43 +23,60 @@ export const getAssetSourceKey = () =>
 
 let source: string | undefined
 let loader: ReturnType<typeof createAssetLoader> | undefined
-
 let fallbackImageBuffer: Buffer | undefined
 
-async function getFallbackImage(): Promise<Buffer> {
-  if (!fallbackImageBuffer) {
-    fallbackImageBuffer = await sharp({
-      create: { width: 1, height: 1, channels: 4, background: { r: 128, g: 128, b: 128, alpha: 1 } },
-    })
-      .png()
-      .toBuffer()
-  }
-  return fallbackImageBuffer
-}
+const fallbackImage = Effect.gen(function* () {
+  if (fallbackImageBuffer) return fallbackImageBuffer
+  const buffer = yield* Effect.tryPromise({
+    try: () =>
+      sharp({
+        create: { width: 1, height: 1, channels: 4, background: { r: 128, g: 128, b: 128, alpha: 1 } },
+      })
+        .png()
+        .toBuffer(),
+    catch: (cause) => new RendererAssetError({ operation: 'create fallback image', cause }),
+  })
+  fallbackImageBuffer = buffer
+  return buffer
+})
 
-/**
- * Fetches an image asset, returning a gray 1x1 PNG fallback on failure.
- */
-export async function fetchImageAsset(relativePath: string): Promise<Buffer> {
-  try {
-    return await fetchAsset(relativePath)
-  } catch (error) {
-    console.warn(`Image asset not found, using gray fallback: ${relativePath}`)
-    Sentry.captureException(error, { level: 'warning', extra: { relativePath } })
-    return getFallbackImage()
-  }
-}
-
-export async function fetchAsset(relativePath: string): Promise<Buffer> {
-  const currentSource = getAssetSourceKey()
-  if (!loader || source !== currentSource) {
-    source = currentSource
-    loader = createAssetLoader({
-      ...JSON.parse(currentSource),
-      onCacheError: (error, relativePath) => {
-        Sentry.captureException(error, { extra: { relativePath } })
-      },
+export const fetchAssetEffect = (relativePath: string) =>
+  Effect.suspend(() => {
+    const currentSource = getAssetSourceKey()
+    if (!loader || source !== currentSource) {
+      source = currentSource
+      loader = createAssetLoader({
+        ...JSON.parse(currentSource),
+        onCacheError: (error, path) => Sentry.captureException(error, { extra: { relativePath: path } }),
+      })
+    }
+    const load = loader
+    // The shared renderer's asset adapter owns filesystem/HTTP caching and its timeout.
+    return Effect.tryPromise({
+      try: () => load(relativePath),
+      catch: (cause) => new RendererAssetError({ operation: 'load renderer asset', cause }),
     })
-  }
-  return loader(relativePath)
-}
+  })
+
+export const fetchImageAssetEffect = (relativePath: string) =>
+  fetchAssetEffect(relativePath).pipe(
+    Effect.catchAll((error) =>
+      Effect.gen(function* () {
+        yield* Effect.sync(() => {
+          console.warn(`Image asset not found, using gray fallback: ${relativePath}`)
+          Sentry.captureException(error.cause, { level: 'warning', extra: { relativePath } })
+        })
+        return yield* fallbackImage
+      }),
+    ),
+  )
+
+// The shared renderer package accepts Promise loaders at its integration boundary.
+export const fetchAsset = (relativePath: string): Promise<Buffer> =>
+  Effect.runPromise(Effect.either(Effect.scoped(fetchAssetEffect(relativePath)))).then(
+    Either.getOrThrowWith((error) => error),
+  )
+export const fetchImageAsset = (relativePath: string): Promise<Buffer> =>
+  Effect.runPromise(Effect.either(Effect.scoped(fetchImageAssetEffect(relativePath)))).then(
+    Either.getOrThrowWith((error) => error),
+  )
