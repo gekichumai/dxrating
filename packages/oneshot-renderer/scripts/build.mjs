@@ -22,7 +22,7 @@ const options = {
   logLevel: 'info',
 }
 
-await rm(new URL('../dist', import.meta.url), { recursive: true, force: true })
+if (!watch) await rm(new URL('../dist', import.meta.url), { recursive: true, force: true })
 const declarations = spawn(
   process.execPath,
   [
