@@ -39,12 +39,12 @@ beforeEach(() => {
 afterEach(cleanup)
 
 const tagsFor = (tagId: number): CombinedTags => {
-  const sheet = getFlattenedSheetsForVersion(VersionEnum.MAGiCAL)[0]!
+  const sheet = getFlattenedSheetsForVersion(VersionEnum.MAGiCAL)[0]
   return {
     tags: [],
     tagGroups: [],
     tagSongs: [{ song_id: sheet.songId, sheet_type: sheet.type, sheet_difficulty: sheet.difficulty, tag_id: tagId }],
-  } as CombinedTags
+  }
 }
 
 describe('sheet catalog availability', () => {
@@ -75,22 +75,22 @@ describe('sheet catalog availability', () => {
     state.loadingTags = false
     rerender()
     await act(async () => {})
-    state.aliases = [{ song_id: result.current.data![0]!.songId, name: 'new alias' }]
+    state.aliases = [{ song_id: result.current.data[0].songId, name: 'new alias' }]
     state.loadingAliases = false
     rerender()
     await act(async () => {})
     expect(snapshots.every((count) => count !== undefined && count > 0)).toBe(true)
-    expect(result.current.data![0]!.tags).toEqual([11])
-    expect(result.current.data![0]!.searchAcronyms).toContain('new alias')
+    expect(result.current.data[0].tags).toEqual([11])
+    expect(result.current.data[0].searchAcronyms).toContain('new alias')
   })
 
   it('applies same-count metadata edits and aliases arriving before tags', async () => {
-    const songId = getFlattenedSheetsForVersion(VersionEnum.MAGiCAL)[0]!.songId
+    const songId = getFlattenedSheetsForVersion(VersionEnum.MAGiCAL)[0].songId
     state.aliases = [{ song_id: songId, name: 'first alias' }]
     state.loadingAliases = false
     const { result, rerender } = renderHook(() => useSheets(), { wrapper })
     await waitFor(() => expect(result.current.data?.length).toBeGreaterThan(0))
-    expect(result.current.data![0]!.searchAcronyms).toContain('first alias')
+    expect(result.current.data[0].searchAcronyms).toContain('first alias')
     state.tags = tagsFor(11)
     state.loadingTags = false
     rerender()
@@ -99,13 +99,13 @@ describe('sheet catalog availability', () => {
     state.aliases = [{ song_id: songId, name: 'replacement alias' }]
     rerender()
     await act(async () => {})
-    expect(result.current.data![0]!.tags).toEqual([22])
-    expect(result.current.data![0]!.searchAcronyms).toContain('replacement alias')
-    expect(result.current.data![0]!.searchAcronyms).not.toContain('first alias')
+    expect(result.current.data[0].tags).toEqual([22])
+    expect(result.current.data[0].searchAcronyms).toContain('replacement alias')
+    expect(result.current.data[0].searchAcronyms).not.toContain('first alias')
   })
 
   it('refreshes edits and removals even when metadata collection sizes stay the same', async () => {
-    const songId = getFlattenedSheetsForVersion(VersionEnum.MAGiCAL)[0]!.songId
+    const songId = getFlattenedSheetsForVersion(VersionEnum.MAGiCAL)[0].songId
     state.tags = tagsFor(11)
     state.aliases = [{ song_id: songId, name: 'old alias' }]
     state.loadingTags = false
@@ -115,14 +115,14 @@ describe('sheet catalog availability', () => {
     state.tags = tagsFor(22)
     state.aliases = [{ song_id: songId, name: 'edited alias' }]
     rerender()
-    expect(result.current.data[0]!.tags).toEqual([22])
-    expect(result.current.data[0]!.searchAcronyms).toContain('edited alias')
-    expect(result.current.data[0]!.searchAcronyms).not.toContain('old alias')
+    expect(result.current.data[0].tags).toEqual([22])
+    expect(result.current.data[0].searchAcronyms).toContain('edited alias')
+    expect(result.current.data[0].searchAcronyms).not.toContain('old alias')
     state.tags = { tags: [], tagGroups: [], tagSongs: [] }
     state.aliases = []
     rerender()
-    expect(result.current.data[0]!.tags).toEqual([])
-    expect(result.current.data[0]!.searchAcronyms).not.toContain('edited alias')
+    expect(result.current.data[0].tags).toEqual([])
+    expect(result.current.data[0].searchAcronyms).not.toContain('edited alias')
   })
 
   it('switches directly to the selected version without retaining a stale catalog', async () => {

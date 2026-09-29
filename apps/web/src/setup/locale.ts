@@ -11,7 +11,7 @@ export const LOCALE_STORAGE_KEY = 'dxrating-locale'
 export const LOCALE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365
 
 export function toSupportedLocale(lng: string | null | undefined): SupportedLocale | null {
-  if (!lng) return null
+  if (lng === null || lng === undefined || lng === '') return null
 
   const normalized = lng.trim().replaceAll('_', '-')
   const lower = normalized.toLowerCase()
@@ -35,11 +35,15 @@ export function convertDetectedLanguage(lng: string) {
 }
 
 export function resolveSupportedLocale(candidates: string | readonly string[] | null | undefined) {
-  const values = Array.isArray(candidates) ? candidates : candidates ? [candidates] : []
+  const values = Array.isArray(candidates)
+    ? candidates
+    : typeof candidates === 'string' && candidates !== ''
+      ? [candidates]
+      : []
 
   for (const value of values) {
     const locale = toSupportedLocale(value)
-    if (locale) return locale
+    if (locale !== null && locale !== undefined) return locale
   }
 
   return null
@@ -50,7 +54,7 @@ function detectLocaleFromCookieHeader(cookieHeader: string | null) {
 }
 
 function detectLocaleFromAcceptLanguage(acceptLanguage: string | null) {
-  if (!acceptLanguage) return null
+  if (acceptLanguage === null || acceptLanguage === undefined || acceptLanguage === '') return null
 
   const candidates = acceptLanguage
     .split(',')
@@ -61,16 +65,19 @@ function detectLocaleFromAcceptLanguage(acceptLanguage: string | null) {
       return {
         index,
         tag: rawTag,
-        quality: q ? Number(q.slice(2)) : 1,
+        quality: q !== null && q !== undefined && q !== '' ? Number(q.slice(2)) : 1,
       }
     })
-    .filter(({ tag, quality }) => tag && Number.isFinite(quality) && quality > 0)
-    .sort((a, b) => b.quality - a.quality || a.index - b.index)
+    .filter(({ tag, quality }) => tag !== '' && Number.isFinite(quality) && quality > 0)
+    .toSorted((a, b) => {
+      const qualityDifference = b.quality - a.quality
+      return qualityDifference !== 0 ? qualityDifference : a.index - b.index
+    })
 
   return resolveSupportedLocale(candidates.map(({ tag }) => tag))
 }
 
-export function detectServerLocale(request: Request): SupportedLocale {
+export function detectServerLocale(request: Pick<Request, 'url' | 'headers'>): SupportedLocale {
   const url = new URL(request.url)
 
   return (
@@ -113,7 +120,7 @@ export function persistClientLocalePreference(locale: SupportedLocale) {
 
 export function appendVaryHeader(headers: Headers, value: string) {
   const existing = headers.get('Vary')
-  if (!existing) {
+  if (existing === null || existing === undefined || existing === '') {
     headers.set('Vary', value)
     return
   }

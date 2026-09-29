@@ -75,11 +75,11 @@ describe('Rating Import normalizers', () => {
     ])
 
     expect(result.entries).toHaveLength(1)
-    expect(result.entries[0]!.sheetId).toBe('Song A__dxrt__dx__dxrt__master')
-    expect(result.entries[0]!.comboFlag).toBe('ap')
-    expect(result.entries[0]!.syncFlag).toBe('fsdp')
+    expect(result.entries[0].sheetId).toBe('Song A__dxrt__dx__dxrt__master')
+    expect(result.entries[0].comboFlag).toBe('ap')
+    expect(result.entries[0].syncFlag).toBe('fsdp')
     expect(result.warnings).toHaveLength(1)
-    expect(result.warnings[0]!.code).toBe('sheet-not-found')
+    expect(result.warnings[0].code).toBe('sheet-not-found')
   })
 
   it('dedupes by Sheet Identity and keeps highest achievement', () => {
@@ -95,8 +95,8 @@ describe('Rating Import normalizers', () => {
     ])
 
     expect(result.entries).toHaveLength(1)
-    expect(result.entries[0]!.achievementRate).toBe(100.5)
-    expect(result.entries[0]!.comboFlag).toBe('ap')
+    expect(result.entries[0].achievementRate).toBe(100.5)
+    expect(result.entries[0].comboFlag).toBe('ap')
   })
 
   it('keeps MaimaiNET SSS+ achievements above the rating cap', () => {
@@ -108,8 +108,8 @@ describe('Rating Import normalizers', () => {
     ])
 
     expect(result.entries).toHaveLength(1)
-    expect(result.entries[0]!.achievementRate).toBe(100.8427)
-    expect(result.entries[0]!.comboFlag).toBe('ap')
+    expect(result.entries[0].achievementRate).toBe(100.8427)
+    expect(result.entries[0].comboFlag).toBe('ap')
   })
 
   it('normalizes MaimaiNET visible titles when song id differs from title', () => {
@@ -118,7 +118,7 @@ describe('Rating Import normalizers', () => {
         ...data,
         songs: [
           {
-            ...data.songs[0]!,
+            ...data.songs[0],
             songId: 'internal-song-a',
             title: 'Visible Song A',
           },
@@ -135,7 +135,7 @@ describe('Rating Import normalizers', () => {
     ])
 
     expect(result.entries).toHaveLength(1)
-    expect(result.entries[0]!.identity.songId).toBe('internal-song-a')
+    expect(result.entries[0].identity.songId).toBe('internal-song-a')
   })
 
   it('warns when a MaimaiNET visible title is ambiguous', () => {
@@ -144,15 +144,15 @@ describe('Rating Import normalizers', () => {
         ...data,
         songs: [
           {
-            ...data.songs[0]!,
+            ...data.songs[0],
             songId: 'song-a-1',
             title: 'Shared Visible Title',
           },
           {
-            ...data.songs[0]!,
+            ...data.songs[0],
             songId: 'song-a-2',
             title: 'Shared Visible Title',
-            sheets: [{ ...data.songs[0]!.sheets[0]!, internalId: 10002 }],
+            sheets: [{ ...data.songs[0].sheets[0], internalId: 10002 }],
           },
         ],
       },
@@ -168,7 +168,7 @@ describe('Rating Import normalizers', () => {
 
     expect(result.entries).toHaveLength(0)
     expect(result.warnings).toHaveLength(1)
-    expect(result.warnings[0]!.code).toBe('sheet-not-found')
+    expect(result.warnings[0].code).toBe('sheet-not-found')
   })
 
   it('dedupes equal achievements by better combo and sync flags regardless of order', () => {
@@ -218,11 +218,11 @@ describe('Rating Import normalizers', () => {
     ])
 
     expect(fcThenAp.entries).toHaveLength(1)
-    expect(fcThenAp.entries[0]!.comboFlag).toBe('ap')
-    expect(fcThenAp.entries[0]!.syncFlag).toBe('fsdp')
+    expect(fcThenAp.entries[0].comboFlag).toBe('ap')
+    expect(fcThenAp.entries[0].syncFlag).toBe('fsdp')
     expect(apThenFc.entries).toHaveLength(1)
-    expect(apThenFc.entries[0]!.comboFlag).toBe('ap')
-    expect(apThenFc.entries[0]!.syncFlag).toBe('fsdp')
+    expect(apThenFc.entries[0].comboFlag).toBe('ap')
+    expect(apThenFc.entries[0].syncFlag).toBe('fsdp')
   })
 
   it('preserves Diving Fish bucket hints when a better duplicate lacks the hint', () => {
@@ -249,10 +249,10 @@ describe('Rating Import normalizers', () => {
     ])
 
     expect(result.entries).toHaveLength(1)
-    expect(result.entries[0]!.achievementRate).toBe(100.5)
-    expect(result.entries[0]!.comboFlag).toBe('ap')
-    expect(result.entries[0]!.syncFlag).toBe('fsdp')
-    expect(result.entries[0]!.source?.best50Bucket).toBe('b35')
+    expect(result.entries[0].achievementRate).toBe(100.5)
+    expect(result.entries[0].comboFlag).toBe('ap')
+    expect(result.entries[0].syncFlag).toBe('fsdp')
+    expect(result.entries[0].source?.best50Bucket).toBe('b35')
   })
 
   it('warns and skips invalid achievements across providers', () => {
@@ -293,7 +293,7 @@ describe('Rating Import normalizers', () => {
     for (const result of [lxns, maimaiNet, divingFish, aquaDx]) {
       expect(result.entries).toHaveLength(0)
       expect(result.warnings).toHaveLength(1)
-      expect(result.warnings[0]!.code).toBe('invalid-achievement')
+      expect(result.warnings[0].code).toBe('invalid-achievement')
     }
   })
 
@@ -311,7 +311,7 @@ describe('Rating Import normalizers', () => {
       },
     ])
 
-    expect(result.entries[0]!.source?.best50Bucket).toBe('b15')
+    expect(result.entries[0].source?.best50Bucket).toBe('b15')
   })
 
   it('resolves Diving Fish ambiguous titles by provider song id before title fallback', () => {
@@ -320,16 +320,16 @@ describe('Rating Import normalizers', () => {
         ...data,
         songs: [
           {
-            ...data.songs[0]!,
+            ...data.songs[0],
             songId: 'link-original',
             title: 'Link',
-            sheets: [{ ...data.songs[0]!.sheets[0]!, internalId: 383, type: TypeEnum.STD }],
+            sheets: [{ ...data.songs[0].sheets[0], internalId: 383, type: TypeEnum.STD }],
           },
           {
-            ...data.songs[0]!,
+            ...data.songs[0],
             songId: 'link-cover',
             title: 'Link',
-            sheets: [{ ...data.songs[0]!.sheets[0]!, internalId: 384, type: TypeEnum.STD }],
+            sheets: [{ ...data.songs[0].sheets[0], internalId: 384, type: TypeEnum.STD }],
           },
         ],
       },
@@ -350,7 +350,7 @@ describe('Rating Import normalizers', () => {
     ])
 
     expect(result.entries).toHaveLength(1)
-    expect(result.entries[0]!.identity.songId).toBe('link-original')
+    expect(result.entries[0].identity.songId).toBe('link-original')
     expect(result.warnings).toHaveLength(0)
   })
 
@@ -360,7 +360,7 @@ describe('Rating Import normalizers', () => {
     })
 
     expect(result.entries).toHaveLength(1)
-    expect(result.entries[0]!.achievementRate).toBe(100.5)
+    expect(result.entries[0].achievementRate).toBe(100.5)
   })
 
   it('normalizes MuNET rows through zero-based level indexes', () => {
@@ -369,7 +369,7 @@ describe('Rating Import normalizers', () => {
     })
 
     expect(result.entries).toHaveLength(1)
-    expect(result.entries[0]!.identity.difficulty).toBe(DifficultyEnum.Master)
+    expect(result.entries[0].identity.difficulty).toBe(DifficultyEnum.Master)
   })
 
   it('skips AquaDX rows with provider map version 24000 before internal id fallback', () => {
@@ -414,7 +414,7 @@ describe('Rating Import normalizers', () => {
     })
 
     expect(result.entries).toHaveLength(1)
-    expect(result.entries[0]!.achievementRate).toBe(100.5)
+    expect(result.entries[0].achievementRate).toBe(100.5)
   })
 
   it('normalizes Aqua SQLite combo and sync statuses when present', () => {
@@ -435,7 +435,7 @@ describe('Rating Import normalizers', () => {
     })
 
     expect(result.entries).toHaveLength(1)
-    expect(result.entries[0]!.comboFlag).toBe('app')
-    expect(result.entries[0]!.syncFlag).toBe('fsdp')
+    expect(result.entries[0].comboFlag).toBe('app')
+    expect(result.entries[0].syncFlag).toBe('fsdp')
   })
 })

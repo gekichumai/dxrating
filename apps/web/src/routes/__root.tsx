@@ -52,7 +52,7 @@ export const Route = createRootRoute({
   }),
   head: ({ match, matches }) => {
     const locale = resolveSeoLocale([match, ...matches])
-    const includeRootTitle = !matches.some((match) => String(match.routeId) === SONG_DETAIL_ROUTE_ID)
+    const includeRootTitle = !matches.some(({ routeId }: { routeId: string }) => routeId === SONG_DETAIL_ROUTE_ID)
 
     return {
       meta: [
@@ -121,17 +121,18 @@ function OAuthErrorHandler() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const error = params.get('error')
-    if (!error) return
+    if (error === null || error === undefined || error === '') return
 
     const key = `auth:oauth-error.${error}` as const
     const message = t(key, { defaultValue: '' })
-    toast.error(message || t('auth:oauth-error.default', { error }), { id: 'oauth-error' })
+    toast.error(message !== '' ? message : t('auth:oauth-error.default', { error }), { id: 'oauth-error' })
 
     params.delete('error')
     params.delete('error_description')
-    const cleanURL = params.toString()
-      ? `${window.location.pathname}?${params.toString()}${window.location.hash}`
-      : `${window.location.pathname}${window.location.hash}`
+    const cleanURL =
+      params.toString() !== ''
+        ? `${window.location.pathname}?${params.toString()}${window.location.hash}`
+        : `${window.location.pathname}${window.location.hash}`
     window.history.replaceState({}, '', cleanURL)
   }, [t])
 
@@ -199,17 +200,13 @@ function AppLayout() {
 function RootDocument({ children }: { children: React.ReactNode }) {
   const theme = useVersionTheme()
   const { locale, renderedAt } = Route.useRouteContext()
+  const themeStyle: CSSProperties & Record<'--theme-accent' | '--theme-canvas', string> = {
+    '--theme-accent': theme.accentColor,
+    '--theme-canvas': theme.canvasColor ?? theme.accentColor,
+  }
 
   return (
-    <html
-      lang={locale}
-      style={
-        {
-          '--theme-accent': theme.accentColor,
-          '--theme-canvas': theme.canvasColor ?? theme.accentColor,
-        } as CSSProperties
-      }
-    >
+    <html lang={locale} style={themeStyle}>
       <head>
         <HeadContent />
         <meta name="theme-color" content={theme.accentColor} />

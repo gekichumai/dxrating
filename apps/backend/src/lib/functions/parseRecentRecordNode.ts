@@ -1,31 +1,32 @@
 import type { Flag, RecentRecord } from './record'
 import { NODE_ELEMENT_NODE, NODE_TEXT_NODE } from './client'
 
-const RECENT_RECORD_FLAG_MATCHERS: Record<Flag, string> = {
-  fullCombo: 'fc.png',
-  'fullCombo+': 'fcplus.png',
-  allPerfect: 'ap.png',
-  'allPerfect+': 'applus.png',
-  syncPlay: 'sync.png',
-  fullSync: 'fs.png',
-  'fullSync+': 'fsplus.png',
-  fullSyncDX: 'fsd.png',
-  'fullSyncDX+': 'fsdplus.png',
+const RECENT_RECORD_FLAG_MATCHERS: Record<Flag, { flag: Flag; image: string }> = {
+  fullCombo: { flag: 'fullCombo', image: 'fc.png' },
+  'fullCombo+': { flag: 'fullCombo+', image: 'fcplus.png' },
+  allPerfect: { flag: 'allPerfect', image: 'ap.png' },
+  'allPerfect+': { flag: 'allPerfect+', image: 'applus.png' },
+  syncPlay: { flag: 'syncPlay', image: 'sync.png' },
+  fullSync: { flag: 'fullSync', image: 'fs.png' },
+  'fullSync+': { flag: 'fullSync+', image: 'fsplus.png' },
+  fullSyncDX: { flag: 'fullSyncDX', image: 'fsd.png' },
+  'fullSyncDX+': { flag: 'fullSyncDX+', image: 'fsdplus.png' },
 }
 
 export function parseRecentRecordNode(record: Element): RecentRecord[] {
   if (record.nodeType !== NODE_ELEMENT_NODE) return [] as const
-  const el = record as Element
+  const el = record
 
   // Extract only the direct text content of the element, excluding child elements like the level icon
   const songIdElement = el.querySelector('.basic_block.break')
-  const songId = songIdElement
-    ? Array.from(songIdElement.childNodes)
-        .filter((node) => node.nodeType === NODE_TEXT_NODE)
-        .map((node) => node.textContent?.trim())
-        .join('')
-        .trim()
-    : undefined
+  const songId =
+    songIdElement !== undefined && songIdElement !== null
+      ? Array.from(songIdElement.childNodes)
+          .filter((node) => node.nodeType === NODE_TEXT_NODE)
+          .map((node) => node.textContent?.trim())
+          .join('')
+          .trim()
+      : undefined
 
   const achievementRateString = el.querySelector('.playlog_achievement_txt')?.textContent?.trim()
 
@@ -50,7 +51,7 @@ export function parseRecentRecordNode(record: Element): RecentRecord[] {
       } catch {
         return [] as const
       }
-    }) as [number, number]
+    })
 
   if (dxScorePair.length !== 2) {
     console.warn('[parseNode] invalid dx score pair:', dxScorePair)
@@ -64,7 +65,17 @@ export function parseRecentRecordNode(record: Element): RecentRecord[] {
   const playedAtString = subtitles[1].textContent?.trim()
   const playedAt = playedAtString?.replace(/(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})/, '$1-$2-$3T$4:$5:00+09:00')
 
-  if (!songId || !type || !difficulty) {
+  if (
+    songId === undefined ||
+    songId === null ||
+    songId === '' ||
+    type === undefined ||
+    type === null ||
+    type === '' ||
+    difficulty === undefined ||
+    difficulty === null ||
+    difficulty === ''
+  ) {
     console.warn('[parseNode] missing required fields:', songId, type, difficulty)
     return [] as const
   }
@@ -74,17 +85,15 @@ export function parseRecentRecordNode(record: Element): RecentRecord[] {
   const flagImages = el.querySelectorAll('.playlog_result_innerblock img.f_l')
   for (const flagImage of Array.from(flagImages)) {
     if (flagImage.nodeType !== NODE_ELEMENT_NODE) return [] as const
-    const el = flagImage as Element
+    const el = flagImage
     const src = el.attributes.getNamedItem('src')?.value
-    if (!src) {
+    if (src === undefined || src === null || src === '') {
       console.warn('[parseNode] missing src attribute on flag image', el.innerHTML)
       continue
     }
-    const flag = (Object.keys(RECENT_RECORD_FLAG_MATCHERS) as Flag[]).find((key) =>
-      src.includes(RECENT_RECORD_FLAG_MATCHERS[key]),
-    ) as Flag | undefined
-    if (flag) {
-      flags.push(flag)
+    const flag = Object.values(RECENT_RECORD_FLAG_MATCHERS).find(({ image }) => src.includes(image))
+    if (flag !== undefined) {
+      flags.push(flag.flag)
     }
   }
 

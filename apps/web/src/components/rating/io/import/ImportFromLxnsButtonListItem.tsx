@@ -49,7 +49,7 @@ const LxnsImportDialogContent: FC<{
   }, [])
 
   useEffect(() => {
-    checkStatus()
+    void checkStatus()
   }, [checkStatus])
 
   const handleConnect = async () => {
@@ -78,7 +78,7 @@ const LxnsImportDialogContent: FC<{
 
       modifyEntries.set(entries)
       analytics.succeeded(entries.length, importResult.warnings.length)
-      haptics.trigger('success')
+      void haptics.trigger('success').catch((error: unknown) => console.warn('Haptic feedback failed', error))
       toast.success(t('rating-calculator:io.import.lxns.success', { count: entries.length }))
 
       Sentry.metrics.distribution('lxns_import.duration', performance.now() - importStart, {
@@ -88,7 +88,7 @@ const LxnsImportDialogContent: FC<{
       onClose()
     } catch (error) {
       Sentry.metrics.count('lxns_import.failure', 1)
-      const msg = String(formatErrorMessage(error))
+      const msg = String(error)
       if (msg.includes('expired') || msg.includes('reconnect') || msg.includes('authorize')) {
         analytics.failed('reconnect_required')
         toast.error(t('rating-calculator:io.import.lxns.reconnect-required'))

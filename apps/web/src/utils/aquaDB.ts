@@ -6,11 +6,13 @@ export function convertQueryExecResultToEntries<T>(result: sqljs.QueryExecResult
   const values = result.values
 
   return values.map((row) => {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- SQL.js returns positional rows; callers supply the schema of their explicit SELECT.
     const entry: T = {} as T
     for (let i = 0; i < columns.length; i++) {
       const column = columns[i]
       const value = row[i]
 
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- SQLite column names and values are paired in the same query result.
       entry[column as keyof T] = value as T[keyof T]
     }
 
@@ -100,7 +102,7 @@ export interface AquaUser {
 
 export function readAquaUsers(db: sqljs.Database): AquaUser[] {
   const results = db.exec('SELECT * FROM maimai2_user_detail')
-  if (!results || results.length === 0) {
+  if (results.length === 0) {
     return []
   }
 
@@ -144,9 +146,9 @@ const AQUA_GAME_PLAY_LEVEL_TO_DIFFICULTY: { [key: number]: DifficultyEnum } = {
 
 export function readAquaGamePlays(db: sqljs.Database): AquaGamePlay[] {
   const results = db.exec('SELECT * FROM maimai2_user_music_detail')
-  if (!results || results.length === 0) return []
+  if (results.length === 0) return []
 
-  const records = convertQueryExecResultToEntries(results[0]) as AquaGamePlayFromDB[]
+  const records = convertQueryExecResultToEntries<AquaGamePlayFromDB>(results[0])
 
   return records.map((record) => ({
     ...record,
@@ -367,9 +369,9 @@ export interface AquaPlayLog {
 
 export function readAquaPlayLogs(db: sqljs.Database): AquaPlayLog[] {
   const results = db.exec('SELECT * FROM maimai2_user_playlog')
-  if (!results || results.length === 0) return []
+  if (results.length === 0) return []
 
-  const records = convertQueryExecResultToEntries(results[0]) as AquaPlayLogFromDB[]
+  const records = convertQueryExecResultToEntries<AquaPlayLogFromDB>(results[0])
 
   return records.map((record) => ({
     id: record.id,

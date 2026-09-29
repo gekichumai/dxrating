@@ -6,19 +6,19 @@ import { createServerI18n, initI18n } from '../init-i18n'
 import { SUPPORTED_LOCALES } from '../locale'
 
 function flattenResourceKeys(value: unknown, prefix = ''): string[] {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return [prefix]
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return [prefix]
 
-  return Object.entries(value as Record<string, unknown>).flatMap(([key, child]) =>
-    flattenResourceKeys(child, prefix ? `${prefix}.${key}` : key),
+  return Object.entries(value).flatMap(([key, child]) =>
+    flattenResourceKeys(child, prefix !== '' ? `${prefix}.${key}` : key),
   )
 }
 
 function collectEmptyStringKeys(value: unknown, prefix = ''): string[] {
   if (value === '') return [prefix]
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return []
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return []
 
-  return Object.entries(value as Record<string, unknown>).flatMap(([key, child]) =>
-    collectEmptyStringKeys(child, prefix ? `${prefix}.${key}` : key),
+  return Object.entries(value).flatMap(([key, child]) =>
+    collectEmptyStringKeys(child, prefix !== '' ? `${prefix}.${key}` : key),
   )
 }
 
@@ -49,12 +49,13 @@ describe('i18n initialization', () => {
   })
 
   it('keeps locale resources complete and non-empty', () => {
-    const expectedKeys = flattenResourceKeys(i18nResources.en).sort()
+    const expectedKeys = flattenResourceKeys(i18nResources.en).toSorted()
 
     for (const locale of SUPPORTED_LOCALES) {
-      expect(flattenResourceKeys(i18nResources[locale]).sort(), `${locale} has missing or extra translations`).toEqual(
-        expectedKeys,
-      )
+      expect(
+        flattenResourceKeys(i18nResources[locale]).toSorted(),
+        `${locale} has missing or extra translations`,
+      ).toEqual(expectedKeys)
       expect(collectEmptyStringKeys(i18nResources[locale]), `${locale} has blank translations`).toEqual([])
     }
   })

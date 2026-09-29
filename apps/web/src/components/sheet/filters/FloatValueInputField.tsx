@@ -12,16 +12,16 @@ export function FloatValueInputField({
 }: {
   onChange: (value: number) => void
   onBlur?: TextFieldProps['onBlur']
-  value: number
+  value?: number
   TextFieldProps?: Omit<
     TextFieldProps,
     'value' | 'onChange' | 'type' | 'inputProps' | 'inputRef' | 'onWheel' | 'onBlur'
   >
   ref?: React.Ref<HTMLInputElement>
 }) {
-  const [internalInputValue, setInternalInputValue] = useState(value.toFixed(1).toString())
+  const [internalInputValue, setInternalInputValue] = useState(value?.toFixed(1) ?? '')
   useEffect(() => {
-    setInternalInputValue(value.toFixed(1).toString())
+    setInternalInputValue(value?.toFixed(1) ?? '')
   }, [value])
 
   return (
@@ -40,10 +40,10 @@ export function FloatValueInputField({
         if (!Number.isNaN(newValue)) {
           const adjustedValue = fixedDecimalPrecision(newValue, 1)
           onChange(adjustedValue)
-          setInternalInputValue(adjustedValue.toFixed(1).toString())
+          setInternalInputValue(adjustedValue.toFixed(1))
         } else {
           // Reset the input value to the current value
-          setInternalInputValue(value.toFixed(1).toString())
+          setInternalInputValue(value?.toFixed(1) ?? '')
         }
 
         // Trigger the onBlur event
@@ -51,12 +51,14 @@ export function FloatValueInputField({
 
         // Actually blur the input
         setTimeout(() => {
-          const target = e.target as HTMLElement
+          const target = e.target
+          if (!(target instanceof HTMLElement)) return
           target.blur()
         }, 0)
       }}
       onWheel={(e) => {
-        const target = e.target as HTMLElement
+        const target = e.target
+        if (!(target instanceof HTMLElement)) return
         // Prevent the input value change
         target.blur()
 

@@ -1,16 +1,16 @@
 import { type DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 
 export const sheetMatchesDifficultyFilter = (
-  sheet: { type: TypeEnum; difficulty: DifficultyEnum | string },
+  sheet: { type: TypeEnum; difficulty: string },
   difficulties: readonly DifficultyEnum[] | undefined,
 ) => {
   if (sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P) {
     return true
   }
 
-  if (!difficulties) {
+  if (difficulties === null || difficulties === undefined) {
     return true
   }
 
-  return difficulties.includes(sheet.difficulty as DifficultyEnum)
+  return difficulties.some((difficulty) => difficulty === sheet.difficulty)
 }

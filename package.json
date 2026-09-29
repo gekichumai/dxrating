@@ -6,12 +6,13 @@
     "dev": "turbo run dev",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
-    "lint": "oxlint . && pnpm --filter @gekichumai/backend lint:effect",
-    "lint:fix": "oxlint --fix ."
+    "lint": "pnpm --filter @gekichumai/oneshot-renderer build && oxlint --type-aware . && pnpm --filter @gekichumai/backend lint:effect",
+    "lint:fix": "pnpm --filter @gekichumai/oneshot-renderer build && oxlint --type-aware --fix ."
   },
   "devDependencies": {
     "oxfmt": "^0.49.0",
     "oxlint": "^1.64.0",
+    "oxlint-tsgolint": "7.0.2003",
     "tsconfig": "workspace:*",
     "turbo": "^2.9.6"
   },

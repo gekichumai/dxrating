@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/formatErrorMessage'
 import clsx from 'clsx'
 import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -28,18 +29,29 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
               setExpanded(true)
               if (altName.length > 50) {
                 const sanitizedAltName = altName.trim()
-                navigator.clipboard.writeText(`${sanitizedAltName}是什么歌`)
-                toast.success(t('sheet:copy-alt-name.toast-success', { content: `${sanitizedAltName}是什么歌` }), {
-                  id: `copy-sheet-alt-name-${altName}`,
-                })
+                void navigator.clipboard
+                  .writeText(`${sanitizedAltName}是什么歌`)
+                  .then(() => {
+                    toast.success(t('sheet:copy-alt-name.toast-success', { content: `${sanitizedAltName}是什么歌` }), {
+                      id: `copy-sheet-alt-name-${altName}`,
+                    })
+                  })
+                  .catch((error: unknown) => toast.error(formatErrorMessage(error)))
               } else {
                 const sanitizedAltName = altName
                   .trim()
                   .replace(/[\s|\n|，|。|！|@|；|《|》|？|：|【|】|（|）|、|·|~|!|#|%|&|*|(|)|{|}|\\[|\\]|\\|]/g, '-')
-                navigator.clipboard.writeText(`https://${sanitizedAltName}.是什么歌.com`)
-                toast.success(t('sheet:copy-alt-name.toast-success', { content: `${sanitizedAltName}.是什么歌.com` }), {
-                  id: `copy-sheet-alt-name-${altName}`,
-                })
+                void navigator.clipboard
+                  .writeText(`https://${sanitizedAltName}.是什么歌.com`)
+                  .then(() => {
+                    toast.success(
+                      t('sheet:copy-alt-name.toast-success', { content: `${sanitizedAltName}.是什么歌.com` }),
+                      {
+                        id: `copy-sheet-alt-name-${altName}`,
+                      },
+                    )
+                  })
+                  .catch((error: unknown) => toast.error(formatErrorMessage(error)))
               }
             }}
           >

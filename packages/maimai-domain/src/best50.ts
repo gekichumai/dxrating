@@ -96,15 +96,15 @@ export function calculateRatingAward(
   for (let i = 0; i < SCORE_COEFFICIENT_TABLE.length; i++) {
     if (
       i === SCORE_COEFFICIENT_TABLE.length - 1 ||
-      achievementUnits < Math.round(SCORE_COEFFICIENT_TABLE[i + 1]![0] * 10000)
+      achievementUnits < Math.round(SCORE_COEFFICIENT_TABLE[i + 1][0] * 10000)
     ) {
-      const coefficient = SCORE_COEFFICIENT_TABLE[i]![1]
+      const coefficient = SCORE_COEFFICIENT_TABLE[i][1]
       const coefficientTenths = Math.round(coefficient * 10)
       const apBonus = comboFlag === 'ap' || comboFlag === 'app' ? 1 : 0
       return {
         ratingAwardValue: Math.floor((levelTenths * achievementUnits * coefficientTenths) / 100000000) + apBonus,
         coefficient,
-        rank: SCORE_COEFFICIENT_TABLE[i]![2],
+        rank: SCORE_COEFFICIENT_TABLE[i][2],
         index: i,
       }
     }
@@ -126,7 +126,7 @@ export function calculateBest50({
   const calculated = deduplicateEntries(
     entries.flatMap((entry): BucketAwareCalculatedRatingEntry[] => {
       const sheet = catalog.getById(entry.sheetId)
-      if (!sheet || !sheet.isRatingEligible || !isAvailableInRegion(sheet.regions, region)) return []
+      if (sheet === null || !sheet.isRatingEligible || !isAvailableInRegion(sheet.regions, region)) return []
       const rating = calculateRatingAward(sheet.internalLevelValue, entry.achievementRate, entry.comboFlag)
       return [
         {
@@ -143,7 +143,7 @@ export function calculateBest50({
   const b15Ids = new Set(
     calculated
       .filter((entry) => getEntryBucket(entry, version, region) === 'b15')
-      .sort(byRatingDesc)
+      .toSorted(byRatingDesc)
       .slice(0, 15)
       .map((entry) => entry.entry.sheetId),
   )
@@ -152,7 +152,7 @@ export function calculateBest50({
     calculated
       .filter((entry) => !b15Ids.has(entry.entry.sheetId))
       .filter((entry) => getEntryBucket(entry, version, region) === 'b35')
-      .sort(byRatingDesc)
+      .toSorted(byRatingDesc)
       .slice(0, 35)
       .map((entry) => entry.entry.sheetId),
   )
@@ -165,8 +165,8 @@ export function calculateBest50({
       bucket: getSelectedBucket(b15Ids.has(entry.entry.sheetId), b35Ids.has(entry.entry.sheetId)),
     }),
   )
-  const b15 = allEntries.filter((entry) => entry.bucket === 'b15').sort(byRatingDesc)
-  const b35 = allEntries.filter((entry) => entry.bucket === 'b35').sort(byRatingDesc)
+  const b15 = allEntries.filter((entry) => entry.bucket === 'b15').toSorted(byRatingDesc)
+  const b35 = allEntries.filter((entry) => entry.bucket === 'b35').toSorted(byRatingDesc)
   return { allEntries, b15, b35, statistics: calculateStatistics(b15, b35) }
 }
 
@@ -179,7 +179,7 @@ function getEntryBucket(
   appVersion: Version,
   region: Region,
 ): Best50Bucket | null {
-  if (entry.authoritativeBest50Hint) return entry.authoritativeBest50Hint.bucket
+  if (entry.authoritativeBest50Hint !== null) return entry.authoritativeBest50Hint.bucket
   if (isB15Sheet(entry.sheet.version, appVersion, region)) return 'b15'
   if (isB35Sheet(entry.sheet.version, appVersion, region)) return 'b35'
   return null
@@ -232,7 +232,8 @@ function isB35Sheet(sheetVersion: Version, appVersion: Version, region: Region):
 }
 
 function byRatingDesc(a: CalculatedRatingEntry, b: CalculatedRatingEntry): number {
-  return b.rating.ratingAwardValue - a.rating.ratingAwardValue || b.entry.achievementRate - a.entry.achievementRate
+  const difference = b.rating.ratingAwardValue - a.rating.ratingAwardValue
+  return difference === 0 || Number.isNaN(difference) ? b.entry.achievementRate - a.entry.achievementRate : difference
 }
 
 function deduplicateEntries(entries: BucketAwareCalculatedRatingEntry[]): BucketAwareCalculatedRatingEntry[] {
@@ -240,7 +241,7 @@ function deduplicateEntries(entries: BucketAwareCalculatedRatingEntry[]): Bucket
   for (const entry of entries) {
     const existing = bestBySheetId.get(entry.entry.sheetId)
 
-    if (!existing) {
+    if (existing === undefined) {
       bestBySheetId.set(entry.entry.sheetId, entry)
       continue
     }
@@ -261,8 +262,8 @@ function chooseAuthoritativeBest50Hint(
   a: AuthoritativeBest50Hint | null,
   b: AuthoritativeBest50Hint | null,
 ): AuthoritativeBest50Hint | null {
-  if (!a) return b
-  if (!b) return a
+  if (a === null) return b
+  if (b === null) return a
   const ratingDelta = b.rating.ratingAwardValue - a.rating.ratingAwardValue
   if (ratingDelta !== 0) return ratingDelta > 0 ? b : a
   const achievementDelta = b.achievementRate - a.achievementRate

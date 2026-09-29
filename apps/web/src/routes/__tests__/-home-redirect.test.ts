@@ -3,9 +3,11 @@ import { Route } from '../index'
 
 const redirectFromHome = (searchStr = '', hash = ''): Response => {
   try {
-    Route.options.beforeLoad?.({ location: { searchStr, hash } } as never)
+    if (Route.options.beforeLoad === undefined) throw new Error('Missing beforeLoad')
+    Reflect.apply(Route.options.beforeLoad, undefined, [{ location: { searchStr, hash } }])
   } catch (error) {
-    return error as Response
+    if (!(error instanceof Response)) throw error
+    return error
   }
 
   throw new Error('Expected home route to redirect')

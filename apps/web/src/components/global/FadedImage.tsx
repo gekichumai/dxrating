@@ -19,7 +19,7 @@ export const FadedImage: FC<
           animate={{ opacity: 1 }}
           className={clsx(
             'flex items-center justify-center transition-opacity h-full w-full opacity-100',
-            !draggable && 'select-none touch-callout-none',
+            draggable !== true && draggable !== 'true' && draggable !== 'false' && 'select-none touch-callout-none',
             'duration-200',
           )}
         >
@@ -36,7 +36,7 @@ export const FadedImage: FC<
           className={clsx(
             // Native image painting also works when load fires before hydration.
             'h-full w-full',
-            !draggable && 'select-none touch-callout-none',
+            draggable !== true && draggable !== 'true' && draggable !== 'false' && 'select-none touch-callout-none',
           )}
           draggable={draggable}
         />

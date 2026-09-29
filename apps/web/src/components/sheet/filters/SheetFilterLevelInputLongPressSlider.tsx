@@ -1,7 +1,8 @@
 import { ClickAwayListener } from '@mui/material'
 import MdiGestureSwipeVertical from '~icons/mdi/gesture-swipe-vertical'
 import { AnimatePresence, motion } from 'framer-motion'
-import { type TouchEvent, type TouchEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type TouchEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLockBodyScroll } from 'react-use'
 import { mapRange } from '../../../utils/mapRange'
 
@@ -16,6 +17,7 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
   min: number
   max: number
 }) => {
+  const { t } = useTranslation(['sheet'])
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState(false)
   const inclusiveWholeNumbers = useMemo(() => Array.from({ length: max - min + 1 }).map((_, i) => min + i), [min, max])
@@ -31,9 +33,9 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
   const valuePercentage = ((value ?? 0) - min) / (max - min)
 
   const onPointerMove = useCallback(
-    (e: MouseEvent | TouchEvent<HTMLDivElement>) => {
+    (e: MouseEvent | TouchEvent<HTMLButtonElement>) => {
       if (!isPressed) return
-      if (!containerRef.current) return
+      if (containerRef.current === null) return
       if ('touches' in e && e.touches.length !== 1) return
 
       const { top, height } = containerRef.current.getBoundingClientRect()
@@ -57,7 +59,7 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
   }, [onPointerMove])
 
   const indicatorPosition = useMemo(() => {
-    if (!containerRef.current) return 0
+    if (containerRef.current === null) return 0
     const { height } = containerRef.current.getBoundingClientRect()
     const padding = 8 // each side
     const indicatorHeight = 32
@@ -67,8 +69,10 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
   return (
     <ClickAwayListener mouseEvent="onMouseUp" onClickAway={() => setIsPressed(false)}>
       <div className="relative select-none">
-        <div
-          className="cursor-row-resize bg-white/50 rounded-full shadow touch-none flex items-center justify-center h-14 w-10 active:bg-white/100 transition duration-75"
+        <button
+          type="button"
+          aria-label={t('sheet:filter.internal-level-value.title')}
+          className="border-0 p-0 cursor-row-resize bg-white/50 rounded-full shadow touch-none flex items-center justify-center h-14 w-10 active:bg-white/100 transition duration-75"
           onTouchStart={() => {
             setIsPressed(true)
           }}
@@ -77,10 +81,17 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
           onMouseDown={() => {
             setIsPressed(true)
           }}
-          tabIndex={-1}
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+              event.preventDefault()
+              const steppedValue = (value ?? min) + (event.key === 'ArrowUp' ? 0.1 : -0.1)
+              const roundedValue = Math.round(steppedValue * 10) / 10
+              onChange(Math.max(min, Math.min(max, roundedValue)))
+            }
+          }}
         >
           <MdiGestureSwipeVertical fontSize="1rem" />
-        </div>
+        </button>
         <AnimatePresence>
           {isPressed && (
             <motion.div

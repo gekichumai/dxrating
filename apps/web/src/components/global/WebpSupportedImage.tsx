@@ -20,7 +20,7 @@ const srcToMimeType = (src: string) => {
 }
 
 const toAssetUrl = (path: string, asset: Asset) => {
-  return asset.local ? path : `https://shama.dxrating.net${path}`
+  return asset.local === true ? path : `https://shama.dxrating.net${path}`
 }
 
 export const WebpSupportedImage = (
@@ -41,8 +41,9 @@ export const WebpSupportedImage = (
 ) => {
   const source = (() => {
     if ('assetpackKey' in props) {
-      const might = assetpack[props.assetpackKey as keyof typeof assetpack] as Asset | undefined
-      if (might)
+      const assets: Partial<Record<string, Asset>> = assetpack
+      const might = props.assetpackKey === undefined ? undefined : assets[props.assetpackKey]
+      if (might !== undefined)
         return {
           at1x: might,
         }
@@ -53,7 +54,7 @@ export const WebpSupportedImage = (
 
     throw new Error('No source provided')
   })()
-  if (!source) throw new Error('No source provided')
+  if (source === undefined) throw new Error('No source provided')
 
   const { alt } = props
   const rest = omit(props, ['assetpackKey', 'objectFit', 'src', 'alt']) as Omit<
@@ -62,12 +63,14 @@ export const WebpSupportedImage = (
   >
 
   const webp = changeToWebp(source.at1x.path)
-  const webpSrcSet = source.at2x
-    ? `${toAssetUrl(webp, source.at1x)} 1x, ${toAssetUrl(changeToWebp(source.at2x.path), source.at2x)} 2x`
-    : toAssetUrl(webp, source.at1x)
-  const originalSrcSet = source.at2x
-    ? `${toAssetUrl(source.at1x.path, source.at1x)} 1x, ${toAssetUrl(source.at2x.path, source.at2x)} 2x`
-    : toAssetUrl(source.at1x.path, source.at1x)
+  const webpSrcSet =
+    source.at2x !== undefined
+      ? `${toAssetUrl(webp, source.at1x)} 1x, ${toAssetUrl(changeToWebp(source.at2x.path), source.at2x)} 2x`
+      : toAssetUrl(webp, source.at1x)
+  const originalSrcSet =
+    source.at2x !== undefined
+      ? `${toAssetUrl(source.at1x.path, source.at1x)} 1x, ${toAssetUrl(source.at2x.path, source.at2x)} 2x`
+      : toAssetUrl(source.at1x.path, source.at1x)
 
   return (
     <picture>

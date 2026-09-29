@@ -27,7 +27,7 @@ export const useAuth = () => {
   const ensureAuthenticated = async (options: EnsureAuthenticatedOptions = {}): Promise<boolean> => {
     const { throwOnError = false } = options
 
-    if (session) {
+    if (session !== null && session !== undefined) {
       return true
     }
 
@@ -50,7 +50,7 @@ export const useAuth = () => {
   return {
     session,
     user: sessionData?.user,
-    isAuthenticated: !!session,
+    isAuthenticated: session !== null && session !== undefined,
     ensureAuthenticated,
     openLoginDialog,
     closeLoginDialog,

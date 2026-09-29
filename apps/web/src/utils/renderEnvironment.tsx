@@ -20,8 +20,10 @@ function normalizeRenderedAt(value: unknown) {
 function readRenderedAtFromContext(context: unknown): number | null {
   if (typeof context !== 'object' || context === null) return null
 
-  const record = context as Record<string, unknown>
-  return normalizeRenderedAt(record.renderedAt) ?? readRenderedAtFromContext(record.serverContext)
+  return (
+    normalizeRenderedAt('renderedAt' in context ? context.renderedAt : undefined) ??
+    readRenderedAtFromContext('serverContext' in context ? context.serverContext : undefined)
+  )
 }
 
 function readRenderedAtFromDocument() {
@@ -31,9 +33,9 @@ function readRenderedAtFromDocument() {
 }
 
 export function resolveRenderedAt(matches?: readonly RouteContextMatch[]) {
-  for (const match of [...(matches ?? [])].reverse()) {
+  for (const match of [...(matches ?? [])].toReversed()) {
     const renderedAt = readRenderedAtFromContext(match.context)
-    if (renderedAt) return renderedAt
+    if (renderedAt !== null) return renderedAt
   }
 
   return readRenderedAtFromDocument() ?? Date.now()
@@ -44,5 +46,6 @@ export function RenderEnvironmentProvider({ renderedAt, children }: PropsWithChi
 }
 
 export function useRenderedAt() {
-  return useContext(RenderEnvironmentContext).renderedAt || Date.now()
+  const { renderedAt } = useContext(RenderEnvironmentContext)
+  return renderedAt !== 0 && !Number.isNaN(renderedAt) ? renderedAt : Date.now()
 }

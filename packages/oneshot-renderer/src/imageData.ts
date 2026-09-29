@@ -3,7 +3,7 @@ const imageBuffers = new WeakMap<Buffer, ArrayBuffer>()
 /** Satori's JPEG decoder requires an ArrayBuffer, not a Buffer or a view into a pooled slab. */
 export function imageData(buffer: Buffer): ArrayBuffer {
   const cached = imageBuffers.get(buffer)
-  if (cached) return cached
+  if (cached !== undefined) return cached
   const data =
     buffer.byteOffset === 0 && buffer.byteLength === buffer.buffer.byteLength && buffer.buffer instanceof ArrayBuffer
       ? buffer.buffer

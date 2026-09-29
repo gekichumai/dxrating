@@ -21,7 +21,7 @@ export const useTime = (time?: string, length: 'short' | 'normal' = 'normal') =>
   const now = useMinuteNow()
   return useMemo(() => {
     try {
-      if (!time) throw new Error('useTime: time is undefined')
+      if (time === null || time === undefined || time === '') throw new Error('useTime: time is undefined')
 
       const date = new Date(time)
       if (Number.isNaN(date.getTime())) {

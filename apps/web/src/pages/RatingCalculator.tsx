@@ -32,14 +32,7 @@ import clsx from 'clsx'
 import { type FC, memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
-import {
-  type ItemProps,
-  type ScrollerProps,
-  type TableBodyProps,
-  type TableComponents,
-  type TableProps,
-  TableVirtuoso,
-} from 'react-virtuoso'
+import { type ItemProps, type ScrollerProps, type TableBodyProps, type TableProps, TableVirtuoso } from 'react-virtuoso'
 import IconMdiArrowDown from '~icons/mdi/arrow-down'
 import IconMdiTrashCan from '~icons/mdi/trash-can'
 import { BetaBadge } from '../components/global/BetaBadge'
@@ -95,7 +88,7 @@ const RatingCalculatorRowActions: FC<{
     <>
       <Dialog TransitionComponent={Grow} open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="xs">
         <DialogTitle>{t('rating-calculator:table.remove-dialog.title')}</DialogTitle>
-        <DialogContent>{sheet && <SheetListItemContent sheet={sheet} />}</DialogContent>
+        <DialogContent>{sheet !== null && sheet !== undefined && <SheetListItemContent sheet={sheet} />}</DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>{t('rating-calculator:table.remove-dialog.cancel')}</Button>
 
@@ -145,16 +138,17 @@ export const RatingCalculator = () => {
   const onSubmit = useCallback(
     (entry: PlayEntry) => {
       const existingEntry = allEntries.find((existingEntry) => existingEntry.sheetId === entry.sheetId)
-      if (existingEntry) {
+      if (existingEntry !== null && existingEntry !== undefined) {
         modifyEntries.updateFirst((existingEntry) => existingEntry.sheetId === entry.sheetId, entry)
       } else modifyEntries.push(entry)
 
       const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId)
-      if (sheet) {
+      if (sheet !== null && sheet !== undefined) {
         captureAnalyticsEvent('rating_calculator_entry_saved', {
-          action: existingEntry ? 'updated' : 'added',
+          action: existingEntry !== null && existingEntry !== undefined ? 'updated' : 'added',
           achievement_rate_band: achievementRateBand(entry.achievementRate),
-          entry_count: existingEntry ? allEntries.length : allEntries.length + 1,
+          entry_count:
+            existingEntry !== null && existingEntry !== undefined ? allEntries.length : allEntries.length + 1,
           song_id: sheet.songId,
           sheet_type: sheet.type,
           sheet_difficulty: sheet.difficulty,
@@ -163,8 +157,6 @@ export const RatingCalculator = () => {
     },
     [allEntries, modifyEntries, sheets],
   )
-
-  if (!sheets) return null
 
   return (
     <div className="rating-calculator flex-container w-full pb-global">
@@ -184,7 +176,7 @@ export const RatingCalculator = () => {
             }}
           >
             <AlertTitle className="font-bold">
-              {allEntries?.length
+              {allEntries.length > 0
                 ? t('rating-calculator:auto-save.saved-records', { count: allEntries.length })
                 : t('rating-calculator:auto-save.title')}
             </AlertTitle>
@@ -209,7 +201,10 @@ export const RatingCalculator = () => {
       </div>
 
       <div className={clsx('rating-records w-full', compactMode && 'rating-records--compact')}>
-        <div className="rating-table-controls" role="group" aria-label={t('rating-calculator:quick-actions.title')}>
+        <fieldset
+          className="rating-table-controls border-0 m-0 min-w-0"
+          aria-label={t('rating-calculator:quick-actions.title')}
+        >
           <FormControlLabel
             control={
               <Switch
@@ -247,7 +242,7 @@ export const RatingCalculator = () => {
               </div>
             }
           />
-        </div>
+        </fieldset>
         <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
         <RatingCalculatorTableContent compactMode={compactMode} showOnlyB50={showOnlyB50} />
 
@@ -263,7 +258,7 @@ const RatingCalculatorIncludedInCell: FC<{
   row: Row<Entry>
 }> = memo(({ row }) => {
   const includedIn = row.original.includedIn
-  if (!includedIn) return null
+  if (includedIn === null || includedIn === undefined) return null
 
   return (
     <span
@@ -307,7 +302,7 @@ const RatingCalculatorComboFlagCell: FC<{
   row: Row<Entry>
 }> = memo(({ row }) => {
   const { comboFlag } = row.original
-  if (!comboFlag) return null
+  if (comboFlag === null || comboFlag === undefined) return null
   return <FlagPill label={COMBO_FLAG_CONFIG[comboFlag].label} color={COMBO_FLAG_CONFIG[comboFlag].color} />
 })
 RatingCalculatorComboFlagCell.displayName = 'memo(RatingCalculatorComboFlagCell)'
@@ -316,14 +311,14 @@ const RatingCalculatorSyncFlagCell: FC<{
   row: Row<Entry>
 }> = memo(({ row }) => {
   const { syncFlag } = row.original
-  if (!syncFlag) return null
+  if (syncFlag === null || syncFlag === undefined) return null
   return <FlagPill label={SYNC_FLAG_CONFIG[syncFlag].label} color={SYNC_FLAG_CONFIG[syncFlag].color} />
 })
 RatingCalculatorSyncFlagCell.displayName = 'memo(RatingCalculatorSyncFlagCell)'
 
 const RatingChartCell: FC<{ row: Row<Entry>; compactMode: boolean }> = ({ row, compactMode }) => {
   const { sheet, achievementRate } = row.original
-  const difficulty = DIFFICULTIES[sheet.difficulty as keyof typeof DIFFICULTIES]
+  const difficulty = DIFFICULTIES[sheet.difficulty]
   return (
     <SheetListItem
       sheet={sheet}
@@ -400,7 +395,9 @@ function RatingCalculatorScroller({ ref, ...props }: ScrollerProps & { ref?: Rea
 const RatingCalculatorRatingCell: FC<{
   row: Row<Entry>
 }> = ({ row }) => (
-  <span className="font-sans tabular-nums">{row.original.rating ? row.original.rating.ratingAwardValue : '-'}</span>
+  <span className="font-sans tabular-nums">
+    {row.original.rating !== null && row.original.rating !== undefined ? row.original.rating.ratingAwardValue : '-'}
+  </span>
 )
 
 const RatingCalculatorTableRowContent: FC<{
@@ -412,11 +409,7 @@ const RatingCalculatorTableRowContent: FC<{
         return (
           <TableCell
             key={cell.id}
-            {...(
-              cell.column.columnDef.meta as {
-                cellProps?: Record<string, unknown>
-              }
-            )?.cellProps}
+            padding={cell.column.id === 'chart' ? 'none' : 'normal'}
             className={`rating-col--${cell.column.id}`}
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -443,11 +436,6 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
         id: 'chart',
         header: t('rating-calculator:table.headers.chart'),
         cell: ({ row }) => <RatingChartCell row={row} compactMode={compactMode} />,
-        meta: {
-          cellProps: {
-            padding: 'none',
-          },
-        },
       }),
       columnHelper.accessor((entry) => entry.includedIn ?? undefined, {
         id: 'includedIn',
@@ -460,8 +448,14 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
         header: t('rating-calculator:table.headers.combo'),
         cell: RatingCalculatorComboFlagCell,
         sortingFn: (a, b) => {
-          const rankA = a.original.comboFlag ? COMBO_FLAG_CONFIG[a.original.comboFlag].rank : 0
-          const rankB = b.original.comboFlag ? COMBO_FLAG_CONFIG[b.original.comboFlag].rank : 0
+          const rankA =
+            a.original.comboFlag !== null && a.original.comboFlag !== undefined
+              ? COMBO_FLAG_CONFIG[a.original.comboFlag].rank
+              : 0
+          const rankB =
+            b.original.comboFlag !== null && b.original.comboFlag !== undefined
+              ? COMBO_FLAG_CONFIG[b.original.comboFlag].rank
+              : 0
           return rankA - rankB
         },
       }),
@@ -470,8 +464,14 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
         header: t('rating-calculator:table.headers.sync'),
         cell: RatingCalculatorSyncFlagCell,
         sortingFn: (a, b) => {
-          const rankA = a.original.syncFlag ? SYNC_FLAG_CONFIG[a.original.syncFlag].rank : 0
-          const rankB = b.original.syncFlag ? SYNC_FLAG_CONFIG[b.original.syncFlag].rank : 0
+          const rankA =
+            a.original.syncFlag !== null && a.original.syncFlag !== undefined
+              ? SYNC_FLAG_CONFIG[a.original.syncFlag].rank
+              : 0
+          const rankB =
+            b.original.syncFlag !== null && b.original.syncFlag !== undefined
+              ? SYNC_FLAG_CONFIG[b.original.syncFlag].rank
+              : 0
           return rankA - rankB
         },
       }),
@@ -492,8 +492,8 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
           </div>
         ),
         sortingFn: (a, b) => {
-          if (!a.original.rating) return -1
-          if (!b.original.rating) return 1
+          if (a.original.rating === null || a.original.rating === undefined) return -1
+          if (b.original.rating === null || b.original.rating === undefined) return 1
           return a.original.rating.ratingAwardValue - b.original.rating.ratingAwardValue
         },
       }),
@@ -507,7 +507,9 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
   )
 
   const data = useMemo(() => {
-    return showOnlyB50 ? allEntries.filter((entry) => entry.includedIn) : allEntries
+    return showOnlyB50
+      ? allEntries.filter((entry) => entry.includedIn !== null && entry.includedIn !== undefined)
+      : allEntries
   }, [allEntries, showOnlyB50])
 
   const table = useReactTable({
@@ -521,15 +523,13 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
   })
 
   const TableComponents = useMemo(
-    () =>
-      ({
-        Scroller: RatingCalculatorScroller,
-        Table: RatingCalculatorTable,
-        // oxlint-disable-next-line @typescript-eslint/no-explicit-any -- it is sort of impossible to type this
-        TableHead: TableHead as any,
-        TableRow: RatingCalculatorTableRow,
-        TableBody: RatingCalculatorTableBody,
-      }) as TableComponents<Row<Entry>>,
+    () => ({
+      Scroller: RatingCalculatorScroller,
+      Table: RatingCalculatorTable,
+      TableHead,
+      TableRow: RatingCalculatorTableRow,
+      TableBody: RatingCalculatorTableBody,
+    }),
     [],
   )
 
@@ -551,13 +551,14 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
         table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id}>
             {headerGroup.headers.map((header) => {
+              const sortDirection = header.column.getIsSorted()
               return (
                 <TableCell
                   key={header.id}
                   colSpan={header.colSpan}
                   className={`rating-col--${header.column.id} group`}
                   scope="col"
-                  sortDirection={header.column.getIsSorted() || false}
+                  sortDirection={sortDirection}
                 >
                   {header.isPlaceholder ? null : (
                     <button
@@ -570,7 +571,7 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
                       <div
                         className={clsx(
                           'inline-flex items-center overflow-hidden relative',
-                          header.column.getIsSorted() && 'bg-gray-900/50 text-zinc-100 rounded-full',
+                          sortDirection !== false && 'bg-gray-900/50 text-zinc-100 rounded-full',
                         )}
                       >
                         <IconMdiArrowDown
@@ -582,10 +583,10 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
                               none: header.column.getCanSort()
                                 ? 'inline-flex opacity-0 group-hover:opacity-70'
                                 : 'hidden',
-                            }[(header.column.getIsSorted() as string) || 'none'],
+                            }[sortDirection === false ? 'none' : sortDirection],
                           )}
                         />
-                        {header.column.getIsSorted() && sorting.length > 1 && (
+                        {sortDirection !== false && sorting.length > 1 && (
                           <div className="inline-flex items-center justify-center text-sm px-2 font-bold bg-gray-9/50">
                             {header.column.getSortIndex() + 1}
                           </div>

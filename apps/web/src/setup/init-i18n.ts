@@ -11,7 +11,7 @@ type RuntimeLanguageDetector = Module & {
 }
 
 function registerLanguageDetectorAfterInit(languageDetector: Module, detectionOptions?: object) {
-  if (i18n.services.languageDetector) return
+  if (i18n.services.languageDetector !== undefined && i18n.services.languageDetector !== null) return
 
   const detector = languageDetector as RuntimeLanguageDetector
   i18n.use(languageDetector)
@@ -21,18 +21,18 @@ function registerLanguageDetectorAfterInit(languageDetector: Module, detectionOp
 
 export function initI18n(languageDetector?: Module, detectionOptions?: object) {
   if (initialized || i18n.isInitialized) {
-    if (languageDetector) {
+    if (languageDetector !== null && languageDetector !== undefined) {
       registerLanguageDetectorAfterInit(languageDetector, detectionOptions)
     }
     return
   }
   initialized = true
 
-  if (languageDetector) {
+  if (languageDetector !== null && languageDetector !== undefined) {
     i18n.use(languageDetector)
   }
 
-  i18n.use(initReactI18next).init({
+  void i18n.use(initReactI18next).init({
     ...getI18nInitOptions(DEFAULT_LOCALE),
     detection: detectionOptions,
   })
@@ -53,7 +53,7 @@ export function getI18nInitOptions(lng: SupportedLocale): InitOptions {
 
 export function createServerI18n(locale: SupportedLocale) {
   const instance = createInstance()
-  instance.use(initReactI18next).init({
+  void instance.use(initReactI18next).init({
     ...getI18nInitOptions(locale),
     initImmediate: false,
   })

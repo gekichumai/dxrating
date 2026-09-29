@@ -40,7 +40,13 @@ beforeEach(() => {
   })
   vi.spyOn(window, 'matchMedia').mockImplementation((query) => {
     if (!media.has(query)) {
-      const target = new EventTarget() as MediaQueryList
+      const target: MediaQueryList = Object.assign(new EventTarget(), {
+        media: query,
+        matches: false,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+      })
       Object.defineProperty(target, 'matches', { configurable: true, value: false })
       media.set(query, target)
     }

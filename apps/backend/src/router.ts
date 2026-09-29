@@ -1,3 +1,9 @@
+import { z } from 'zod'
+import {
+  AliasSchema,
+  TagsListResponseSchema,
+  TrendingResponseSchema as PublicTrendingResponseSchema,
+} from '@gekichumai/api-contract'
 import * as Sentry from '@sentry/node'
 import { ORPCError, implement } from '@orpc/server'
 import { appContract } from './contract'
@@ -49,11 +55,13 @@ class UnauthorizedError extends Data.TaggedError('UnauthorizedError')<{ readonly
 export const withCatalogIdentityErrors = <A, R>(effect: Effect.Effect<A, CatalogIdentityError, R>) =>
   effect.pipe(
     Effect.mapError((error) => {
-      const code = {
-        bad_request: 'BAD_REQUEST',
-        not_found: 'NOT_FOUND',
-        unavailable: 'SERVICE_UNAVAILABLE',
-      }[error.code] as 'BAD_REQUEST' | 'NOT_FOUND' | 'SERVICE_UNAVAILABLE'
+      const code = (
+        {
+          bad_request: 'BAD_REQUEST',
+          not_found: 'NOT_FOUND',
+          unavailable: 'SERVICE_UNAVAILABLE',
+        } as const
+      )[error.code]
       return new ORPCError(code, { message: error.message, cause: error })
     }),
   )
@@ -75,6 +83,10 @@ type TagsListResult = {
 }
 
 type AliasListResult = Array<{ song_id: string; name: string }>
+const TrendingCacheSchema = PublicTrendingResponseSchema.extend({
+  results: z.array(z.object({ songId: z.string(), count: z.number() })),
+})
+
 type TrendingCacheResult = {
   results: Array<{ songId: string; count: number }>
   dateFrom: string
@@ -89,9 +101,11 @@ const tagsHandler = {
       const database = yield* Database
       const cache = yield* ApplicationCache
       const catalogIdentities = yield* CatalogIdentities
-      const cached = yield* cache.get<TagsListResult>('tags:list')
+      const cached = yield* cache
+        .get('tags:list')
+        .pipe(Effect.map((value) => TagsListResponseSchema.optional().parse(value)))
       let result: TagsListResult
-      if (cached) {
+      if (cached !== undefined && cached !== null) {
         yield* Effect.sync(() => Sentry.metrics.count('cache.hit', 1, { attributes: { key: 'tags:list' } }))
         result = cached
       } else {
@@ -153,7 +167,7 @@ const tagsHandler = {
       const cache = yield* ApplicationCache
       const catalogIdentities = yield* CatalogIdentities
       const user = context.user
-      if (!user) return yield* new UnauthorizedError()
+      if (user === undefined || user === null) return yield* new UnauthorizedError()
 
       const identity = yield* withCatalogIdentityErrors(catalogIdentities.resolveSheetInput(input))
 
@@ -201,14 +215,15 @@ const moderateComment = Effect.fn('Comments.moderate')(function* (
   commentId: number,
   action: 'report' | 'block',
 ) {
-  if (!viewerId) return yield* Effect.fail(new ORPCError('UNAUTHORIZED'))
+  if (viewerId === undefined || viewerId === null || viewerId === '')
+    return yield* Effect.fail(new ORPCError('UNAUTHORIZED'))
   const database = yield* Database
   return yield* database.transaction((tx) =>
     Effect.gen(function* () {
       const [comment] = yield* database.query('Comments.findAuthor', () =>
         tx.select({ authorId: comments.created_by }).from(comments).where(eq(comments.id, commentId)).for('share'),
       )
-      if (!comment) return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Comment not found' }))
+      if (comment === undefined) return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Comment not found' }))
       if (comment.authorId === viewerId)
         return yield* Effect.fail(new ORPCError('BAD_REQUEST', { message: 'Cannot report or block yourself' }))
       yield* database.query('Comments.report', () =>
@@ -243,7 +258,7 @@ const commentsHandler = {
       const database = yield* Database
       const catalogIdentities = yield* CatalogIdentities
       const user = context.user
-      if (!user) {
+      if (user === undefined || user === null) {
         return yield* new UnauthorizedError()
       }
 
@@ -262,7 +277,7 @@ const commentsHandler = {
             .where(eq(comments.id, parentId))
             .limit(1),
         )
-        if (!parent) {
+        if (parent === undefined) {
           return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Parent comment not found' }))
         }
         if (
@@ -314,7 +329,7 @@ const commentsHandler = {
           .where(
             and(
               isNull(comments.removed_at),
-              viewerId
+              viewerId !== undefined && viewerId !== null && viewerId !== ''
                 ? notExists(
                     db
                       .select({ id: commentReports.id })
@@ -322,7 +337,7 @@ const commentsHandler = {
                       .where(and(eq(commentReports.reporter_id, viewerId), eq(commentReports.comment_id, comments.id))),
                   )
                 : undefined,
-              viewerId
+              viewerId !== undefined && viewerId !== null && viewerId !== ''
                 ? notExists(
                     db
                       .select({ id: userBlocks.blocked_id })
@@ -349,9 +364,11 @@ const aliasesHandler = {
       const database = yield* Database
       const cache = yield* ApplicationCache
       const catalogIdentities = yield* CatalogIdentities
-      const cached = yield* cache.get<AliasListResult>('aliases:list')
+      const cached = yield* cache
+        .get('aliases:list')
+        .pipe(Effect.map((value) => AliasSchema.array().optional().parse(value)))
       let result: AliasListResult
-      if (cached) {
+      if (cached !== undefined && cached !== null) {
         yield* Effect.sync(() => Sentry.metrics.count('cache.hit', 1, { attributes: { key: 'aliases:list' } }))
         result = cached
       } else {
@@ -387,7 +404,7 @@ const aliasesHandler = {
       const cache = yield* ApplicationCache
       const catalogIdentities = yield* CatalogIdentities
       const user = context.user
-      if (!user) return yield* new UnauthorizedError()
+      if (user === undefined || user === null) return yield* new UnauthorizedError()
 
       const identity = yield* withCatalogIdentityErrors(catalogIdentities.resolveSongInput(input.songId))
 
@@ -455,35 +472,45 @@ const analyticsHandler = {
       const catalogIdentities = yield* CatalogIdentities
       const config = yield* AppConfig
       const cacheKey = 'analytics:trending'
-      const cached = yield* cache.get<TrendingCacheResult>(cacheKey)
+      const cached = yield* cache.get(cacheKey).pipe(Effect.map((value) => TrendingCacheSchema.optional().parse(value)))
       let result: TrendingCacheResult
-      if (cached) {
+      if (cached !== undefined && cached !== null) {
         yield* Effect.sync(() => Sentry.metrics.count('cache.hit', 1, { attributes: { key: cacheKey } }))
         result = cached
       } else {
         yield* Effect.sync(() => Sentry.metrics.count('cache.miss', 1, { attributes: { key: cacheKey } }))
 
         const { projectId, apiKey } = config.posthog
-        if (!projectId || !apiKey) {
+        if (
+          projectId === undefined ||
+          projectId === null ||
+          projectId === '' ||
+          apiKey === undefined ||
+          apiKey === null ||
+          apiKey === ''
+        ) {
           result = { results: [], dateFrom: '', dateTo: '' }
         } else {
           const data = yield* queryTrending(projectId, apiKey)
-          if (!data) {
+          if (data === undefined || data === null) {
             result = { results: [], dateFrom: '', dateTo: '' }
           } else {
             const series = data.results.flat()
 
             const songCounts = new Map<string, number>()
             for (const s of series) {
-              if (!s.breakdown_value) continue
-              const songId = String(s.breakdown_value)
+              const breakdown = s.breakdown_value
+              if (typeof breakdown !== 'string' && typeof breakdown !== 'number') continue
+              if (breakdown === '' || breakdown === 0 || (typeof breakdown === 'number' && Number.isNaN(breakdown)))
+                continue
+              const songId = String(breakdown)
               if (songId === '$$_posthog_breakdown_other_$$') continue
               const total = s.aggregated_value ?? 0
               songCounts.set(songId, (songCounts.get(songId) ?? 0) + total)
             }
 
             const results = [...songCounts.entries()]
-              .sort((a, b) => b[1] - a[1])
+              .toSorted((a, b) => b[1] - a[1])
               .map(([songId, count]) => ({ songId, count }))
 
             const now = new Date(yield* Clock.currentTimeMillis)
@@ -538,6 +565,30 @@ function escapeArcadeSearch(value: string): string {
   return value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')
 }
 
+type InstallationRanking = { confidence: number | null; observedAt: Date; source: string; id: bigint }
+
+const compareCandidates = (left: InstallationRanking, right: InstallationRanking) => {
+  const confidence = (right.confidence ?? -1) - (left.confidence ?? -1)
+  if (confidence !== 0) return confidence
+
+  const observedAt = right.observedAt.getTime() - left.observedAt.getTime()
+  if (observedAt !== 0) return observedAt
+
+  const source = left.source.localeCompare(right.source)
+  if (source !== 0) return source
+
+  return left.id < right.id ? -1 : left.id > right.id ? 1 : 0
+}
+const compareFreshness = (left: InstallationRanking, right: InstallationRanking) => {
+  const observedAt = right.observedAt.getTime() - left.observedAt.getTime()
+  if (observedAt !== 0) return observedAt
+
+  const source = left.source.localeCompare(right.source)
+  if (source !== 0) return source
+
+  return left.id < right.id ? -1 : left.id > right.id ? 1 : 0
+}
+
 const loadArcadeInstallations = Effect.fn('Arcades.loadInstallations')(function* (venueIds: bigint[]) {
   const database = yield* Database
   const grouped = new Map<string, ArcadeInstallationResponse[]>()
@@ -589,7 +640,7 @@ const loadArcadeInstallations = Effect.fn('Arcades.loadInstallations')(function*
   for (const row of rows) {
     const identity = row.installationIdentityId.toString()
     const existing = logicalInstallations.get(identity)
-    if (!existing) {
+    if (existing === undefined || existing === null) {
       logicalInstallations.set(identity, [row])
       continue
     }
@@ -597,38 +648,17 @@ const loadArcadeInstallations = Effect.fn('Arcades.loadInstallations')(function*
   }
 
   type InstallationRow = (typeof rows)[number]
-  const compareCandidates = (left: InstallationRow, right: InstallationRow) => {
-    const confidence = (right.confidence ?? -1) - (left.confidence ?? -1)
-    if (confidence !== 0) return confidence
-
-    const observedAt = right.observedAt.getTime() - left.observedAt.getTime()
-    if (observedAt !== 0) return observedAt
-
-    const source = left.source.localeCompare(right.source)
-    if (source !== 0) return source
-
-    return left.id < right.id ? -1 : left.id > right.id ? 1 : 0
-  }
-  const compareFreshness = (left: InstallationRow, right: InstallationRow) => {
-    const observedAt = right.observedAt.getTime() - left.observedAt.getTime()
-    if (observedAt !== 0) return observedAt
-
-    const source = left.source.localeCompare(right.source)
-    if (source !== 0) return source
-
-    return left.id < right.id ? -1 : left.id > right.id ? 1 : 0
-  }
   const selectFact = <T>(
     candidates: InstallationRow[],
     read: (candidate: InstallationRow) => T | null,
   ): T | undefined => {
-    const selected = candidates.filter((candidate) => read(candidate) !== null).sort(compareCandidates)[0]
-    return selected ? (read(selected) ?? undefined) : undefined
+    const selected = candidates.filter((candidate) => read(candidate) !== null).toSorted(compareCandidates)[0]
+    return selected !== undefined ? (read(selected) ?? undefined) : undefined
   }
 
   for (const candidates of logicalInstallations.values()) {
-    const winner = [...candidates].sort(compareCandidates)[0]
-    const freshest = [...candidates].sort(compareFreshness)[0]
+    const winner = [...candidates].toSorted(compareCandidates)[0]
+    const freshest = [...candidates].toSorted(compareFreshness)[0]
     const venueId = winner.venueId.toString()
     const installations = grouped.get(venueId) ?? []
     installations.push({
@@ -714,33 +744,42 @@ const arcadesHandler = {
         )
       }
 
-      if (input.query) {
+      if (input.query !== undefined && input.query !== null && input.query !== '') {
         const pattern = `%${escapeArcadeSearch(input.query)}%`
         const normalized = normalizeArcadeSearch(input.query)
-        const normalizedPattern = normalized ? `%${escapeArcadeSearch(normalized)}%` : undefined
+        const normalizedPattern = normalized !== '' ? `%${escapeArcadeSearch(normalized)}%` : undefined
         filters.push(
           or(
             ilike(arcadeVenues.name, pattern),
             ilike(arcadeVenues.address, pattern),
             ilike(arcadeVenues.city, pattern),
             ilike(arcadeVenues.region, pattern),
-            normalizedPattern ? ilike(arcadeVenues.normalized_name, normalizedPattern) : undefined,
-            normalizedPattern ? ilike(arcadeVenues.normalized_address, normalizedPattern) : undefined,
+            normalizedPattern !== undefined && normalizedPattern !== null && normalizedPattern !== ''
+              ? ilike(arcadeVenues.normalized_name, normalizedPattern)
+              : undefined,
+            normalizedPattern !== undefined && normalizedPattern !== null && normalizedPattern !== ''
+              ? ilike(arcadeVenues.normalized_address, normalizedPattern)
+              : undefined,
           )!,
         )
       }
 
-      if (input.chains) {
+      if (input.chains !== undefined && input.chains !== null) {
         filters.push(inArray(arcadeVenues.chain_id, input.chains))
       }
 
-      if (input.games || input.status) {
+      if (
+        (input.games !== undefined && input.games !== null) ||
+        (input.status !== undefined && input.status !== null && input.status !== '')
+      ) {
         const installationFilters = [
           eq(arcadeInstallations.venue_id, arcadeVenues.id),
           isNull(arcadeInstallations.absent_since),
         ]
-        if (input.games) installationFilters.push(inArray(arcadeInstallations.game_id, input.games))
-        if (input.status) installationFilters.push(eq(arcadeInstallations.status, input.status))
+        if (input.games !== undefined && input.games !== null)
+          installationFilters.push(inArray(arcadeInstallations.game_id, input.games))
+        if (input.status !== undefined && input.status !== null && input.status !== '')
+          installationFilters.push(eq(arcadeInstallations.status, input.status))
         filters.push(
           exists(
             db
@@ -796,7 +835,7 @@ const arcadesHandler = {
       const [venue] = yield* database.query('Arcades.findVenue', (db) =>
         db.select().from(arcadeVenues).where(eq(arcadeVenues.public_id, input.id)).limit(1),
       )
-      if (!venue) {
+      if (venue === undefined) {
         return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Arcade venue not found' }))
       }
 
@@ -810,7 +849,7 @@ const chartOgImageHandler = {
   render: os.chartOgImage.render.handler(
     handlerGen(function* ({ input }) {
       const output = yield* renderChartOgImageOutputEffect(input)
-      if (!output) {
+      if (output === undefined || output === null) {
         return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Chart not found' }))
       }
 
@@ -841,7 +880,7 @@ const lxnsHandler = {
   authorize: os.lxns.authorize.handler(
     handlerGen(function* ({ context }) {
       const user = context.user
-      if (!user) return yield* new UnauthorizedError()
+      if (user === undefined || user === null) return yield* new UnauthorizedError()
       const url = yield* lxnsService.generateAuthorizationUrl(user.id)
       return { url }
     }),
@@ -849,14 +888,14 @@ const lxnsHandler = {
   status: os.lxns.status.handler(
     handlerGen(function* ({ context }) {
       const user = context.user
-      if (!user) return yield* new UnauthorizedError()
+      if (user === undefined || user === null) return yield* new UnauthorizedError()
       return yield* lxnsService.getConnectionStatus(user.id)
     }),
   ),
   start: os.lxns.start.handler(
     handlerGen(function* ({ context }) {
       const user = context.user
-      if (!user) return yield* new UnauthorizedError()
+      if (user === undefined || user === null) return yield* new UnauthorizedError()
       const [duration, rawScores] = yield* Effect.timed(lxnsService.fetchPlayerScores(user.id))
       yield* Effect.sync(() =>
         Sentry.metrics.distribution('lxns_fetch.duration', Duration.toMillis(duration), {
@@ -881,7 +920,7 @@ const lxnsHandler = {
   disconnect: os.lxns.disconnect.handler(
     handlerGen(function* ({ context }) {
       const user = context.user
-      if (!user) return yield* new UnauthorizedError()
+      if (user === undefined || user === null) return yield* new UnauthorizedError()
       yield* lxnsService.disconnect(user.id)
       return { success: true }
     }),

@@ -24,7 +24,16 @@ describe('LocaleSelector wipe', () => {
       return { ready: done, updateCallbackDone: done, finished: done, skipTransition: vi.fn() }
     })
     Object.defineProperty(document, 'startViewTransition', { configurable: true, value: start })
-    vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as MediaQueryList)
+    vi.spyOn(window, 'matchMedia').mockReturnValue({
+      matches: false,
+      media: '',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })
     render(
       <I18nextProvider i18n={i18n}>
         <LocaleSelector />

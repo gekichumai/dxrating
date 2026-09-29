@@ -35,12 +35,12 @@ const createStore = (options?: { metadata?: typeof metadata; body?: string }) =>
     getPublishedMetadata: () =>
       Effect.sync(() => {
         calls.push('metadata')
-        return options && 'metadata' in options ? options.metadata : metadata
+        return options !== undefined && options !== null && 'metadata' in options ? options.metadata : metadata
       }),
     getSnapshotBody: () =>
       Effect.sync(() => {
         calls.push('body')
-        return options && 'body' in options ? options.body : BODY
+        return options !== undefined && options !== null && 'body' in options ? options.body : BODY
       }),
   }
   return { calls, store }

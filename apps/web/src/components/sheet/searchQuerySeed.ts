@@ -43,7 +43,7 @@ const searchEngines = new Map<VersionEnum, ReturnType<typeof createSheetsSearchE
 
 const getSearchEngine = (version: VersionEnum) => {
   const cachedSearchEngine = searchEngines.get(version)
-  if (cachedSearchEngine) return cachedSearchEngine
+  if (cachedSearchEngine !== undefined) return cachedSearchEngine
 
   const searchEngine = createSheetsSearchEngine({
     songs: dxdata.songs,
@@ -60,7 +60,7 @@ export const buildSearchQuerySeedSheets = (
   if (query.length > SEARCH_QUERY_MAX_LENGTH) {
     throw new RangeError(`Search query must not exceed ${SEARCH_QUERY_MAX_LENGTH} characters`)
   }
-  if (!query.trim()) return []
+  if (query.trim().length === 0) return []
 
   return getSearchEngine(version)(query).slice(0, SEARCH_QUERY_SEED_LIMIT).map(toSearchQuerySeedSheet)
 }

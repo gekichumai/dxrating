@@ -35,9 +35,9 @@ export function createRenderService<TInput>(
       .update(JSON.stringify([input, normalized]))
       .digest('hex')
     const cached = cache.get(key)
-    if (cached) return { ...cached, cache: 'HIT' as const }
+    if (cached !== undefined) return { ...cached, cache: 'HIT' as const }
     const existing = pending.get(key)
-    if (existing) return { ...(await existing), cache: 'COALESCED' as const }
+    if (existing !== undefined) return { ...(await existing), cache: 'COALESCED' as const }
     if (active >= maxConcurrent && queue.length >= maxQueued) throw new RenderQueueFullError()
 
     const promise = (async () => {
@@ -53,7 +53,7 @@ export function createRenderService<TInput>(
         return result
       } finally {
         const next = queue.shift()
-        if (next) next()
+        if (next !== undefined) next()
         else active--
       }
     })()

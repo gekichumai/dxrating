@@ -44,6 +44,31 @@ describe('Build information Effect cache', () => {
     }
   })
 
+  it.each([undefined, ''])('keeps provenance absent when the image digest header is %s', async (digest) => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('GIT_COMMIT', 'abcdef0123456')
+    const headers = new Headers()
+    if (digest !== undefined) headers.set('docker-content-digest', digest)
+    const upstream = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({ token: 'test-registry-token' }))
+      .mockResolvedValueOnce(new Response('{}', { headers }))
+    const runtime = ManagedRuntime.make(
+      BuildInformationLive.pipe(
+        Layer.provide(HttpClientLive.pipe(Layer.provide(Layer.succeed(FetchHttpClient.Fetch, upstream)))),
+      ),
+    )
+    try {
+      expect(await runtime.runPromise(Effect.scoped(getBuildInfo))).toMatchObject({
+        imageDigest: null,
+        attestation: null,
+      })
+      expect(upstream).toHaveBeenCalledTimes(2)
+    } finally {
+      await runtime.dispose()
+    }
+  })
+
   it('retrieves and caches verified image provenance after successful responses', async () => {
     vi.stubEnv('NODE_ENV', 'production')
     vi.stubEnv('GIT_COMMIT', 'abcdef0123456')

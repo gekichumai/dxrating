@@ -9,12 +9,15 @@ describe('index route', () => {
 
   it('redirects root visits to search while preserving the URL suffix', () => {
     try {
-      Route.options.beforeLoad?.({
-        location: {
-          searchStr: '?locale=ja',
-          hash: '#songs',
+      if (Route.options.beforeLoad === undefined) throw new Error('Missing beforeLoad')
+      Reflect.apply(Route.options.beforeLoad, undefined, [
+        {
+          location: {
+            searchStr: '?locale=ja',
+            hash: '#songs',
+          },
         },
-      } as never)
+      ])
     } catch (error) {
       expect(isRedirect(error)).toBe(true)
       expect(error).toMatchObject({

@@ -29,7 +29,7 @@ export function CommentActions({ comment }: { comment: Comment }) {
   if (user?.id === comment.author_id) return null
 
   const submit = async () => {
-    if (!action || pending || !user) return
+    if (action === null || pending || user === undefined) return
     setPending(true)
     const undo = hideComment(user.id, comment.id, action === 'block' ? comment.author_id : undefined)
     try {
@@ -62,7 +62,7 @@ export function CommentActions({ comment }: { comment: Comment }) {
       >
         <MoreHorizontal size={20} />
       </IconButton>
-      <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
+      <Menu anchorEl={anchor} open={anchor !== null} onClose={() => setAnchor(null)}>
         {(['report', 'block'] as const).map((value) => (
           <MenuItem
             key={value}
@@ -76,21 +76,21 @@ export function CommentActions({ comment }: { comment: Comment }) {
         ))}
       </Menu>
       <Dialog
-        open={!!action}
+        open={action !== null}
         onClose={() => {
           if (!pending) setAction(null)
         }}
       >
-        <DialogTitle>{action ? t(`comments.safety.${action}`) : ''}</DialogTitle>
+        <DialogTitle>{action !== null ? t(`comments.safety.${action}`) : ''}</DialogTitle>
         <DialogContent>
-          <DialogContentText>{action ? t(`comments.safety.${action}-description`) : ''}</DialogContentText>
+          <DialogContentText>{action !== null ? t(`comments.safety.${action}-description`) : ''}</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button disabled={pending} onClick={() => setAction(null)}>
             {t('comments.safety.cancel')}
           </Button>
           <Button disabled={pending} onClick={submit}>
-            {action ? t(`comments.safety.${action}`) : ''}
+            {action !== null ? t(`comments.safety.${action}`) : ''}
           </Button>
         </DialogActions>
       </Dialog>

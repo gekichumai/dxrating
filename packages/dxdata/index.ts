@@ -1,5 +1,6 @@
 import dxdataJson from './dxdata.json' with { type: 'json' }
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Generated catalog JSON widens enum literals during JSON module inference.
 export const dxdata = dxdataJson as DXData
 
 export const dxdataUpdateTime = dxdata.updateTime
@@ -71,7 +72,7 @@ export interface Sheet {
   difficulty: DifficultyEnum
   level: string
   internalLevelValue: number
-  multiverInternalLevelValue?: Record<VersionEnum, number>
+  multiverInternalLevelValue?: Partial<Record<VersionEnum, number>>
   noteDesigner: null | string
   noteCounts: NoteCounts
   regions: Regions
@@ -138,7 +139,7 @@ export const VersionEnum = {
 export type VersionEnum = (typeof VersionEnum)[keyof typeof VersionEnum]
 
 // from https://github.com/zetaraku/arcade-songs-fetch/blob/362f2a1b1a1752074951006cedde06948fb0061a/src/maimai/fetch-intl-versions.ts#L16
-export const VERSION_ID_MAP = new Map([
+export const VERSION_ID_MAP = new Map<VersionEnum, number>([
   ['maimai', 0],
   ['maimai PLUS', 1],
   ['GreeN', 2],
@@ -170,7 +171,7 @@ export const VERSION_ID_MAP = new Map([
   //! add further version here !//
 ])
 
-export const VERSION_IDS = Array.from(VERSION_ID_MAP.keys()) as VersionEnum[]
+export const VERSION_IDS = Array.from(VERSION_ID_MAP.keys())
 
 export const VERSION_SLUG_MAP = new Map([
   ['maimai', 'maimai'],
@@ -205,15 +206,15 @@ export const VERSION_SLUG_MAP = new Map([
 ])
 
 export const VERSION_SORT_ORDER = Array.from(VERSION_ID_MAP.entries())
-  .sort((a, b) => a[1] - b[1])
+  .toSorted((a, b) => a[1] - b[1])
   .map((a) => a[0])
 
 export const MULTIVER_AVAILABLE_MIN_VERSION = VERSION_ID_MAP.get(VersionEnum.MaimaiでらっくすPLUS)!
 
 export const MULTIVER_AVAILABLE_VERSIONS = Array.from(VERSION_ID_MAP.entries())
   .filter((a) => a[1] >= MULTIVER_AVAILABLE_MIN_VERSION)
-  .sort((a, b) => a[1] - b[1])
-  .map((a) => a[0]) as VersionEnum[]
+  .toSorted((a, b) => a[1] - b[1])
+  .map((a) => a[0])
 
 export interface TypeElement {
   type: TypeEnum

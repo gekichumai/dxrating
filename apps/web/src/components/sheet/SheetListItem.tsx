@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/formatErrorMessage'
 import { type DifficultyEnum, type Regions, TypeEnum } from '@gekichumai/dxdata'
 import { ListItemButton, ListItemSecondaryAction, ListItemText, type ListItemTextProps } from '@mui/material'
 import clsx from 'clsx'
@@ -74,7 +75,7 @@ export const SheetListItem: FC<{
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return
             e.preventDefault()
             setOpen(true)
-            haptic.trigger('medium')
+            void haptic.trigger('medium')?.catch((error: unknown) => console.warn('Haptic feedback failed', error))
             captureAnalyticsEvent('sheet_content_viewed', {
               song_id: sheet.songId,
               sheet_type: sheet.type,
@@ -142,14 +143,18 @@ export const SheetListItemContentView: FC<SheetListItemContentViewProps> = memo(
   }) => {
     return (
       <div className={clsx('flex items-center w-full p-1 gap-2 tabular-nums relative', className)} {...rest}>
-        {enableSheetImage && imageName && imageAlt && <SheetImage name={imageName} size={size} alt={imageAlt} />}
+        {enableSheetImage &&
+          imageName !== undefined &&
+          imageName !== '' &&
+          imageAlt !== undefined &&
+          imageAlt !== '' && <SheetImage name={imageName} size={size} alt={imageAlt} />}
 
         <ListItemText {...ListItemTextProps} className={clsx('ml-2 pr-12', ListItemTextProps?.className)}>
           {children}
         </ListItemText>
 
         <ListItemSecondaryAction>
-          {isTypeUtage ? (
+          {isTypeUtage === true ? (
             <span className="font-bold tracking-tighter tabular-nums text-lg text-zinc-600">{level}</span>
           ) : (
             <SheetInternalLevelValue value={internalLevelValue} />
@@ -206,9 +211,9 @@ export const SheetDifficulty: FC<{
   regions?: Regions
   isLocked?: boolean
 }> = ({ difficulty, regions, isLocked }) => {
-  const difficultyConfig = difficulty ? DIFFICULTIES[difficulty] : undefined
-  const allUnavailable = Object.values(regions ?? {}).every((v) => !v)
-  return difficultyConfig ? (
+  const difficultyConfig = difficulty !== undefined ? DIFFICULTIES[difficulty] : undefined
+  const allUnavailable = Object.values(regions ?? {}).every((v) => v !== true)
+  return difficultyConfig !== undefined ? (
     <span
       className="rounded-full px-2 text-sm shadow-[0.0625rem_0.125rem_0_0_#0b38714D] leading-relaxed translate-y-[-0.125rem] text-white inline-flex items-center"
       style={{ backgroundColor: difficultyConfig.color }}
@@ -219,7 +224,7 @@ export const SheetDifficulty: FC<{
           style={{ color: difficultyConfig.color }}
         />
       )}
-      {isLocked && (
+      {isLocked === true && (
         <MdiLock
           className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-white rounded-full"
           style={{ color: difficultyConfig.color }}
@@ -327,13 +332,19 @@ export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
           </div>
         </TitleElement>
 
-        {artist && (
-          <p {...artistProps} className={clsx('text-sm text-zinc-600 truncate', artistProps?.className)}>
-            {artist}
-          </p>
-        )}
+        {artist !== undefined &&
+          artist !== null &&
+          artist !== '' &&
+          artist !== false &&
+          artist !== 0 &&
+          artist !== 0n &&
+          (typeof artist !== 'number' || !Number.isNaN(artist)) && (
+            <p {...artistProps} className={clsx('text-sm text-zinc-600 truncate', artistProps?.className)}>
+              {artist}
+            </p>
+          )}
 
-        {version && (
+        {version !== undefined && version !== '' && (
           <div className="text-sm">
             <span className="text-zinc-600">ver. {version}</span>
           </div>
@@ -401,12 +412,16 @@ export const SheetTitle: FC<SheetTitleProps> = ({
         <span className="flex flex-col">
           <span
             className="leading-tight cursor-pointer"
-            {...(enableClickToCopy && {
+            {...(enableClickToCopy === true && {
               onClick: () => {
-                navigator.clipboard.writeText(title)
-                toast.success(t('sheet:copy-title.toast-success'), {
-                  id: `copy-sheet-title-${title}`,
-                })
+                void navigator.clipboard
+                  .writeText(title)
+                  .then(() => {
+                    toast.success(t('sheet:copy-title.toast-success'), {
+                      id: `copy-sheet-title-${title}`,
+                    })
+                  })
+                  .catch((error: unknown) => toast.error(formatErrorMessage(error)))
               },
               title: t('sheet:copy-title.tooltip'),
             })}
@@ -420,9 +435,9 @@ export const SheetTitle: FC<SheetTitleProps> = ({
         </div>
       </h3>
 
-      {enableAltNames && (
+      {enableAltNames === true && (
         <div className="w-full font-bold flex flex-col">
-          {(searchAcronyms?.length ?? 0) > 0 && <SheetAltNames altNames={searchAcronyms!} />}
+          {(searchAcronyms?.length ?? 0) > 0 && <SheetAltNames altNames={searchAcronyms} />}
           <AddSheetAltNameButton sheet={sheet} />
         </div>
       )}

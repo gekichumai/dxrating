@@ -28,9 +28,10 @@ export const ResponsiveDialog: FC<{
 
   useEffect(() => {
     if (open) {
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
         setInternalOpen(true)
       }, 0)
+      return () => clearTimeout(timeout)
     } else {
       const timeout = setTimeout(() => {
         setInternalOpen(false)
@@ -44,7 +45,7 @@ export const ResponsiveDialog: FC<{
       {internalOpen && (
         <Dialog
           open={open}
-          onClose={() => !disableClose && setOpen(false)}
+          onClose={() => disableClose !== true && setOpen(false)}
           maxWidth={maxWidth}
           fullWidth
           TransitionComponent={Grow}
@@ -61,7 +62,7 @@ export const ResponsiveDialog: FC<{
           disableSwipeToOpen
           anchor="bottom"
           open={drawerOpen}
-          onClose={() => !disableClose && setOpen(false)}
+          onClose={() => disableClose !== true && setOpen(false)}
           onOpen={() => setOpen(true)}
           sx={{
             '& .MuiDrawer-paper': {

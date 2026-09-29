@@ -161,9 +161,9 @@ export const About = () => {
                 label={t('about:version.commit')}
                 // value={BUNDLE.gitCommit?.slice(0, 7) || "unknown"}
                 value={
-                  BUNDLE.gitCommit ? (
+                  BUNDLE.gitCommit !== undefined && BUNDLE.gitCommit !== '' ? (
                     <ExternalLink href={`https://github.com/gekichumai/dxrating/commit/${BUNDLE.gitCommit}`}>
-                      {BUNDLE.gitCommit?.slice(0, 7) || 'unknown'}
+                      {BUNDLE.gitCommit === '' ? 'unknown' : BUNDLE.gitCommit.slice(0, 7)}
                     </ExternalLink>
                   ) : (
                     'unknown'

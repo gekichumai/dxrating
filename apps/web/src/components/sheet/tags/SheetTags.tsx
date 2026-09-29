@@ -19,7 +19,7 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   }, [sheet])
 
   const inner = () => {
-    if (isLoading || !data) {
+    if (isLoading || data === undefined || data === null) {
       return (
         <MotionButtonBase {...zoomTransitions} className="h-6 w-16 bg-gray-200 rounded-lg animate-pulse" disabled />
       )

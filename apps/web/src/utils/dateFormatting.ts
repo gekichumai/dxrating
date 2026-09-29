@@ -6,7 +6,7 @@ const relativeTimeFormatters = new Map<string, Intl.RelativeTimeFormat>()
 
 function getDateFormatter(locale: string) {
   const cached = dateFormatters.get(locale)
-  if (cached) return cached
+  if (cached !== null && cached !== undefined) return cached
 
   const formatter = new Intl.DateTimeFormat(locale, {
     dateStyle: 'medium',
@@ -18,7 +18,7 @@ function getDateFormatter(locale: string) {
 
 function getRelativeTimeFormatter(locale: string) {
   const cached = relativeTimeFormatters.get(locale)
-  if (cached) return cached
+  if (cached !== null && cached !== undefined) return cached
 
   const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
   relativeTimeFormatters.set(locale, formatter)
@@ -26,7 +26,7 @@ function getRelativeTimeFormatter(locale: string) {
 }
 
 export function sheetReleaseDateTimestamp(releaseDate: string | undefined) {
-  if (!releaseDate) return 0
+  if (releaseDate === null || releaseDate === undefined || releaseDate === '') return 0
 
   const timestamp = Date.parse(`${releaseDate}T00:00:00.000Z`)
   return Number.isFinite(timestamp) ? timestamp : 0

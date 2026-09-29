@@ -13,7 +13,8 @@ import { authClient } from '../../lib/auth-client'
 import { formatErrorMessage } from '../../utils/formatErrorMessage'
 import { PasswordVisibilityAdornment } from './PasswordVisibilityAdornment'
 
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
+const siteKey: unknown = import.meta.env.VITE_TURNSTILE_SITE_KEY
+const TURNSTILE_SITE_KEY = typeof siteKey === 'string' ? siteKey : undefined
 
 interface LoginFormValues {
   email: string
@@ -48,7 +49,7 @@ export const LoginForm = ({
   const [error, setError] = useState<string | null>(null)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const turnstileRef = useRef<TurnstileInstance>(null)
-  const lastUsedMethod = authClient.getLastUsedLoginMethod() as AuthProvider | null
+  const lastUsedMethod = authClient.getLastUsedLoginMethod()
   const isLastUsed = (provider: AuthProvider) => lastUsedMethod === provider
 
   const setActiveProvider = (provider: AuthProvider | null) => {
@@ -56,8 +57,10 @@ export const LoginForm = ({
     onPendingChange?.(provider !== null)
   }
 
-  const captchaHeaders = turnstileToken ? { 'x-captcha-response': turnstileToken } : undefined
-  const waitingForTurnstile = !!TURNSTILE_SITE_KEY && !turnstileToken
+  const captchaHeaders =
+    turnstileToken !== null && turnstileToken !== '' ? { 'x-captcha-response': turnstileToken } : undefined
+  const waitingForTurnstile =
+    TURNSTILE_SITE_KEY !== undefined && TURNSTILE_SITE_KEY !== '' && (turnstileToken === null || turnstileToken === '')
   const buttonLoading = loading || (isValid && waitingForTurnstile)
   const buttonDisabled = loading || !isValid || waitingForTurnstile
 
@@ -70,10 +73,10 @@ export const LoginForm = ({
           email: data.email,
           password: data.password,
           name: data.email.split('@')[0], // Default name
-          fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
+          fetchOptions: captchaHeaders !== undefined ? { headers: captchaHeaders } : undefined,
         })
-        if (error) throw error
-        haptic.trigger('success')
+        if (error !== null) throw error
+        void haptic.trigger('success')?.catch((error: unknown) => console.warn('Haptic feedback failed', error))
         toast.success(t('auth:sign-up.toast-success'))
         setIsSignUp(false)
         setShowPassword(false)
@@ -81,15 +84,15 @@ export const LoginForm = ({
         const { error } = await authClient.signIn.email({
           email: data.email,
           password: data.password,
-          fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
+          fetchOptions: captchaHeaders !== undefined ? { headers: captchaHeaders } : undefined,
         })
-        if (error) throw error
-        haptic.trigger('success')
+        if (error !== null) throw error
+        void haptic.trigger('success')?.catch((error: unknown) => console.warn('Haptic feedback failed', error))
         toast.success(t('auth:login.toast-success'))
         onSuccess?.()
       }
     } catch (e: unknown) {
-      haptic.trigger('error')
+      void haptic.trigger('error')?.catch((error: unknown) => console.warn('Haptic feedback failed', error))
       setError(formatErrorMessage(e, t('auth:form.error-generic')))
     } finally {
       setActiveProvider(null)
@@ -113,12 +116,12 @@ export const LoginForm = ({
     setError(null)
     try {
       const { error } = await authClient.signIn.passkey()
-      if (error) throw error
-      haptic.trigger('success')
+      if (error !== null) throw error
+      void haptic.trigger('success')?.catch((error: unknown) => console.warn('Haptic feedback failed', error))
       toast.success(t('auth:login.toast-success'))
       onSuccess?.()
     } catch (e: unknown) {
-      haptic.trigger('error')
+      void haptic.trigger('error')?.catch((error: unknown) => console.warn('Haptic feedback failed', error))
       setError(formatErrorMessage(e, t('auth:form.error-passkey')))
     } finally {
       setActiveProvider(null)
@@ -157,13 +160,17 @@ export const LoginForm = ({
             t={t}
             i18nKey="auth:terms.notice"
             components={{
-              terms: <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="underline" />,
+              terms: (
+                <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="underline">
+                  {t('auth:terms.title')}
+                </a>
+              ),
             }}
           />
         </p>
         {!isSignUp && <ConditionalPasskey onSuccess={onSuccess} />}
 
-        {error && <Alert severity="error">{error}</Alert>}
+        {error !== null && error !== '' && <Alert severity="error">{error}</Alert>}
 
         <div className="flex flex-col gap-2">
           <Button
@@ -251,7 +258,7 @@ export const LoginForm = ({
             type="email"
             autoComplete={isSignUp ? 'email' : 'username webauthn'}
             required
-            error={!!errors.email}
+            error={errors.email !== undefined}
             helperText={errors.email?.message}
             disabled={loading}
             fullWidth
@@ -270,7 +277,7 @@ export const LoginForm = ({
             type={showPassword ? 'text' : 'password'}
             autoComplete={isSignUp ? 'new-password' : 'current-password webauthn'}
             required
-            error={!!errors.password}
+            error={errors.password !== undefined}
             helperText={errors.password?.message}
             disabled={loading}
             fullWidth
@@ -288,7 +295,7 @@ export const LoginForm = ({
           />
         </div>
 
-        {TURNSTILE_SITE_KEY && (
+        {TURNSTILE_SITE_KEY !== undefined && TURNSTILE_SITE_KEY !== '' && (
           <Turnstile
             ref={turnstileRef}
             siteKey={TURNSTILE_SITE_KEY}
@@ -342,9 +349,9 @@ function ConditionalPasskey({ onSuccess }: { onSuccess?: () => void }) {
       if (!active || !available) return
 
       const { error } = await authClient.signIn.passkey({ autoFill: true })
-      if (!active || error) return
+      if (!active || error !== null) return
 
-      haptic.trigger('success')
+      void haptic.trigger('success')?.catch((error: unknown) => console.warn('Haptic feedback failed', error))
       toast.success(t('auth:login.toast-success'))
       onSuccess?.()
     }

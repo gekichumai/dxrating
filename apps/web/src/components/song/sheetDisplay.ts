@@ -1,4 +1,4 @@
-import { type DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import { TypeEnum } from '@gekichumai/dxdata'
 import type { SupportedLocale } from '@/setup/locale'
 import { DIFFICULTIES } from '../../models/difficulties'
 
@@ -44,11 +44,11 @@ export function getSheetTypeDisplayName(type: TypeEnum, locale: SupportedLocale 
 export function getSheetTitleLabel(
   sheet: {
     type: TypeEnum
-    difficulty: DifficultyEnum | string
+    difficulty: string
   },
   locale: SupportedLocale = 'en',
 ) {
-  return `${getSheetTypeDisplayName(sheet.type, locale)} ${DIFFICULTIES[sheet.difficulty as DifficultyEnum]?.title ?? sheet.difficulty}`
+  return `${getSheetTypeDisplayName(sheet.type, locale)} ${Object.entries(DIFFICULTIES).find(([difficulty]) => difficulty === sheet.difficulty)?.[1].title ?? sheet.difficulty}`
 }
 
 export function getSheetPageTitle(
@@ -57,7 +57,7 @@ export function getSheetPageTitle(
   },
   sheet: {
     type: TypeEnum
-    difficulty: DifficultyEnum | string
+    difficulty: string
   },
   locale: SupportedLocale = 'en',
 ) {

@@ -20,6 +20,11 @@ const saveAsJsonFile = (data: string, t: (key: string, opts?: Record<string, str
   toast.success(t('rating-calculator:io.export.toast-success', { name }))
 }
 
+const preprocess = (entry: RatingCalculatorEntry) => ({
+  sheetId: entry.sheetId,
+  achievementRate: entry.achievementRate,
+})
+
 export const ExportToJSONMenuItem: FC = () => {
   const { entries } = useRatingCalculatorContext()
   const { b15Entries, b35Entries } = useRatingEntries()
@@ -45,11 +50,6 @@ export const ExportToJSONMenuItem: FC = () => {
 
       <MenuItem
         onClick={() => {
-          const preprocess = (entry: RatingCalculatorEntry) => ({
-            sheetId: entry.sheetId,
-            achievementRate: entry.achievementRate,
-          })
-
           const data = JSON.stringify([...b35Entries.map(preprocess), ...b15Entries.map(preprocess)])
           saveAsJsonFile(data, t)
           captureAnalyticsEvent('rating_exported', {

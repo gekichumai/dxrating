@@ -16,7 +16,8 @@ const findRenderableSheet = (version: VersionEnum, predicate: (sheet: VersionedS
   const sheet = getDxdataSongCatalog(version).sheets.find((candidate) => {
     return isRenderableRatingSheet(candidate) && predicate(candidate)
   })
-  if (!sheet) throw new Error(`Expected ${version} catalog to include a matching renderable sheet`)
+  if (sheet === undefined || sheet === null)
+    throw new Error(`Expected ${version} catalog to include a matching renderable sheet`)
   return sheet
 }
 
@@ -68,7 +69,8 @@ describe('oneshot renderer calculations', () => {
     const [withoutCombo] = enrichEntries([{ sheetId: sheet.id, achievementRate: 100.5 }], version)
     const [withAp] = enrichEntries([{ sheetId: sheet.id, achievementRate: 100.5, achievementAccuracy: 'ap' }], version)
 
-    if (!withoutCombo || !withAp) throw new Error('Expected entry enrichment to return render data')
+    if (withoutCombo === undefined || withAp === undefined)
+      throw new Error('Expected entry enrichment to return render data')
     expect(withAp.rating).toEqual(calculateRatingAward(sheet.internalLevelValue, 100.5, 'ap'))
     expect(withAp.rating.ratingAwardValue).toBe(withoutCombo.rating.ratingAwardValue + 1)
   })
@@ -115,11 +117,16 @@ describe('oneshot renderer calculations', () => {
       .sheets.filter((candidate) => {
         return isRenderableRatingSheet(candidate) && candidate.version === version && candidate.regions.intl
       })
-      .sort((a, b) => a.internalLevelValue - b.internalLevelValue)
+      .toSorted((a, b) => a.internalLevelValue - b.internalLevelValue)
 
     const boostedSheet = orderedSheets[0]
     const demotedSheet = orderedSheets.at(-1)
-    if (!boostedSheet || !demotedSheet || boostedSheet.internalLevelValue >= demotedSheet.internalLevelValue) {
+    if (
+      boostedSheet === undefined ||
+      demotedSheet === undefined ||
+      demotedSheet === null ||
+      boostedSheet.internalLevelValue >= demotedSheet.internalLevelValue
+    ) {
       throw new Error('Expected at least two current-version renderable sheets')
     }
 

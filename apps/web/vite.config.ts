@@ -28,7 +28,12 @@ export default defineConfig({
       authToken: process.env.SENTRY_AUTH_TOKEN,
       release: {
         name: process.env.SENTRY_RELEASE,
-        setCommits: process.env.SENTRY_AUTH_TOKEN ? { auto: true } : undefined,
+        setCommits:
+          process.env.SENTRY_AUTH_TOKEN !== null &&
+          process.env.SENTRY_AUTH_TOKEN !== undefined &&
+          process.env.SENTRY_AUTH_TOKEN !== ''
+            ? { auto: true }
+            : undefined,
       },
       sourcemaps: { filesToDeleteAfterUpload: ['./dist/**/*.map'] },
     }),

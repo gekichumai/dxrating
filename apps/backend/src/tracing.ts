@@ -11,5 +11,5 @@ export const TracingLive = OtelTracer.layerGlobal.pipe(
 
 export const withActiveRequestSpan = <A, E, R>(effect: Effect.Effect<A, E, R>) => {
   const parent = trace.getSpanContext(context.active())
-  return parent ? OtelTracer.withSpanContext(effect, parent) : effect
+  return parent !== undefined && parent !== null ? OtelTracer.withSpanContext(effect, parent) : effect
 }

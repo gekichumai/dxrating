@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import type { VersionEnum } from '@gekichumai/dxdata'
 import { getDxdataSongCatalog, normalizeMaimaiNetRecords } from '@gekichumai/maimai-domain'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
@@ -63,6 +64,31 @@ interface AuthParams {
   password: string
 }
 
+const musicRecordSchema = z.object({
+  sheet: z.object({
+    songId: z.string(),
+    type: z.enum(['standard', 'dx', 'utage']),
+    difficulty: z.enum(['basic', 'advanced', 'expert', 'master', 'remaster', 'utage']),
+  }),
+  achievement: z.object({
+    rate: z.number(),
+    dxScore: z.object({ achieved: z.number(), total: z.number() }),
+    flags: z.array(z.string()),
+  }),
+})
+const netRecordsSchema = z.object({
+  music: z.array(musicRecordSchema),
+  recent: z.array(
+    musicRecordSchema.extend({ play: z.object({ track: z.number(), timestamp: z.string().optional() }) }),
+  ),
+})
+const authParamsSchema = z.object({ region: z.enum(['jp', 'intl']), username: z.string(), password: z.string() })
+const errorEventSchema = z.object({ code: z.string().optional(), error: z.string().optional() })
+const isProgressState = (state: unknown): state is FetchNetRecordProgressState =>
+  typeof state === 'string' && Object.hasOwn(FETCH_STATE_PROGRESS, state)
+const isErrorCode = (code: unknown): code is NetImportErrorCode =>
+  typeof code === 'string' && Object.hasOwn(ERROR_CODE_I18N, code)
+
 const fetchNetRecords = async (
   authParams: AuthParams,
   onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
@@ -70,7 +96,7 @@ const fetchNetRecords = async (
   const { region, username, password } = authParams
 
   return new Promise((resolve, reject) => {
-    fetchEventSource(`https://miruku.dxrating.net/functions/fetch-net-records/v1/${region}`, {
+    void fetchEventSource(`https://miruku.dxrating.net/functions/fetch-net-records/v1/${region}`, {
       method: 'POST',
       body: JSON.stringify({ id: username, password }),
       openWhenHidden: true,
@@ -78,26 +104,22 @@ const fetchNetRecords = async (
         'Content-Type': 'application/json',
       },
       onmessage: (message) => {
-        const event = message.event as 'progress' | 'data' | 'error' | ''
-        if (!event) {
+        const event = message.event
+        if (event === '') {
           return
         }
 
         if (event === 'progress') {
-          const { state } = JSON.parse(message.data) as {
-            state: FetchNetRecordProgressState
-          }
+          const { state } = z.object({ state: z.unknown() }).parse(JSON.parse(message.data))
+          if (!isProgressState(state)) throw new Error('Unknown import progress state')
           onProgress?.(state, FETCH_STATE_PROGRESS[state])
         } else if (event === 'data') {
-          const data = JSON.parse(message.data) as {
-            music: MusicRecord[]
-            recent: RecentRecord[]
-          }
+          const data = netRecordsSchema.parse(JSON.parse(message.data))
           resolve(data)
         } else if (event === 'error') {
-          const parsed = JSON.parse(message.data) as { code?: string; error?: string }
-          if (parsed.code && parsed.code in ERROR_CODE_I18N) {
-            reject(new NetImportError(parsed.code as NetImportErrorCode, parsed.error))
+          const parsed = errorEventSchema.parse(JSON.parse(message.data))
+          if (isErrorCode(parsed.code)) {
+            reject(new NetImportError(parsed.code, parsed.error))
           } else {
             reject(new Error(parsed.error ?? 'unknown error'))
           }
@@ -118,7 +140,7 @@ const fetchNetRecords = async (
         // if the server responds with an error, DO NOT retry
         throw new Error(await response.text())
       },
-    })
+    }).catch(reject)
   })
 }
 
@@ -142,7 +164,7 @@ export const importFromNETRecords = async (
   }
   importInFlight = true
   const importStart = performance.now()
-  const trigger = authParams ? 'manual' : 'automatic'
+  const trigger = authParams !== undefined ? 'manual' : 'automatic'
   captureAnalyticsEvent('netimport_started', { mode, trigger })
   captureAnalyticsEvent('rating_import_started', {
     source: 'maimai_net',
@@ -155,16 +177,12 @@ export const importFromNETRecords = async (
   try {
     const storedAuthParams = (() => {
       const stored = localStorage.getItem('import-net-records')
-      if (!stored) return null
-      const parsed = JSON.parse(stored) as {
-        region: 'jp' | 'intl'
-        username: string
-        password: string
-      }
+      if (stored === null || stored === '') return null
+      const parsed = authParamsSchema.parse(JSON.parse(stored))
       return parsed
     })()
     const params = authParams ?? storedAuthParams
-    if (!params) {
+    if (params === null) {
       captureAnalyticsEvent('rating_import_failed', {
         source: 'maimai_net',
         duration_ms: performance.now() - importStart,
@@ -195,7 +213,7 @@ export const importFromNETRecords = async (
         const cloned = cloneDeep(prev)
         for (const entry of entries) {
           const existed = cloned.find((item) => item.sheetId === entry.sheetId)
-          if (!existed) {
+          if (existed === undefined) {
             cloned.push(entry)
           } else if (entry.achievementRate > existed.achievementRate) {
             existed.achievementRate = entry.achievementRate
@@ -208,24 +226,27 @@ export const importFromNETRecords = async (
     }
 
     const lastRecord = data.recent.at(0)
-    const lastRecordPlayedAt = lastRecord?.play.timestamp ? new Date(lastRecord.play.timestamp).toLocaleString() : null
-    haptics.trigger('success')
+    const lastRecordPlayedAt =
+      lastRecord?.play.timestamp !== undefined && lastRecord?.play.timestamp !== ''
+        ? new Date(lastRecord.play.timestamp).toLocaleString()
+        : null
+    void haptics.trigger('success').catch((error: unknown) => console.warn('Haptic feedback failed', error))
     netImportProgress.finish(
       'success',
       <div className="flex flex-col">
         <span>
           {t('rating-calculator:io.import.net-records.imported', {
             count: entries.length,
-            region: String(region).toUpperCase(),
+            region: region.toUpperCase(),
           })}
         </span>
-        {lastRecord && (
+        {lastRecord !== undefined && (
           <>
             <span className="text-sm text-zinc-500">{t('rating-calculator:io.import.net-records.latest-play')}</span>
             <span className="text-xs text-zinc-500">
               {lastRecord.sheet.songId} [{lastRecord.sheet.type}]
             </span>
-            {lastRecordPlayedAt && (
+            {lastRecordPlayedAt !== null && lastRecordPlayedAt !== '' && (
               <span className="text-xs text-zinc-500">
                 {t('rating-calculator:io.import.net-records.date', {
                   date: lastRecordPlayedAt,
@@ -286,13 +307,14 @@ export const importFromNETRecords = async (
         ? t(ERROR_CODE_I18N[error.code])
         : t('rating-calculator:io.import.net-records.errors.unknown')
     const translatedDetail = error instanceof NetImportError ? ERROR_CODE_DETAIL_I18N[error.code] : undefined
-    const subtitle = translatedDetail ? t(translatedDetail) : unexpectedErrorSubtitle(error)
+    const subtitle =
+      translatedDetail !== undefined && translatedDetail !== '' ? t(translatedDetail) : unexpectedErrorSubtitle(error)
 
     netImportProgress.finish(
       'error',
       <div className="flex min-w-0 max-w-[22rem] flex-col items-start gap-0.5">
         <div className="font-bold leading-snug">{title}</div>
-        {subtitle && (
+        {subtitle !== undefined && subtitle !== '' && (
           <div className="break-words text-left text-xs font-normal leading-relaxed text-zinc-500">{subtitle}</div>
         )}
       </div>,

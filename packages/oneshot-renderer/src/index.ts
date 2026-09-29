@@ -77,7 +77,7 @@ export function createOneshotRenderer({
         tailwindConfig,
       }),
     )
-    if (!options.format || options.format === 'svg') {
+    if (options.format === undefined || options.format.length === 0 || options.format === 'svg') {
       return { body: svg, contentType: 'image/svg+xml', timings }
     }
 
@@ -101,7 +101,7 @@ export function createOneshotRenderer({
     })
     return {
       // A Buffer can be a view into a larger slab. Expose only this image's bytes.
-      body: new Uint8Array(buffer.buffer as ArrayBuffer, buffer.byteOffset, buffer.byteLength),
+      body: new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength),
       contentType: options.format === 'png' ? 'image/png' : 'image/jpeg',
       timings,
     }

@@ -404,7 +404,7 @@ describe('Public catalog identity API boundary', () => {
       { song_id: SONG_A, name: 'alias after rename' },
     ])
     for (const response of [publicCommentsRes, currentLegacyCommentsRes, oldLegacyCommentsRes]) {
-      expect((await response.json()).map((comment: { content: string }) => comment.content).sort()).toEqual([
+      expect((await response.json()).map((comment: { content: string }) => comment.content).toSorted()).toEqual([
         'comment before rename',
         'reply after rename',
       ])

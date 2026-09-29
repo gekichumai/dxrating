@@ -32,11 +32,11 @@ export function createAssetLoader({
 
   const load = async (relativePath: string) => {
     for (const directory of new Set([baseDir, cacheDir])) {
-      if (!directory) continue
+      if (directory === undefined || directory === '') continue
       try {
         return await readFile(path.join(directory, relativePath))
       } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+        if (!(error instanceof Error) || !('code' in error) || error.code !== 'ENOENT') throw error
       }
     }
     const url = `${remoteUrl.replace(/\/$/, '')}/${relativePath}`
@@ -59,7 +59,7 @@ export function createAssetLoader({
   return async (requestedPath) => {
     const relativePath = requestedPath.replace(/^\/+/, '')
     if (
-      !relativePath ||
+      relativePath === '' ||
       relativePath.split('/').includes('..') ||
       relativePath.includes('\0') ||
       /[\\?#]/.test(relativePath)
@@ -67,9 +67,9 @@ export function createAssetLoader({
       throw new Error(`Invalid asset path: ${requestedPath}`)
     }
     const cached = cache.get(relativePath)
-    if (cached) return cached
+    if (cached !== undefined) return cached
     const existing = pending.get(relativePath)
-    if (existing) return existing
+    if (existing !== undefined) return existing
     const promise = (async () => {
       if (active >= maxConcurrent) await new Promise<void>((resolve) => queue.push(resolve))
       else active++
@@ -79,7 +79,7 @@ export function createAssetLoader({
         return buffer
       } finally {
         const next = queue.shift()
-        if (next) next()
+        if (next !== undefined) next()
         else active--
       }
     })()

@@ -20,7 +20,14 @@ export class LxnsError extends Data.TaggedError('LxnsError')<{
 
 const configured = Effect.gen(function* () {
   const config = yield* AppConfig
-  if (!config.lxns.clientId || !config.lxns.clientSecret) {
+  if (
+    config.lxns.clientId === undefined ||
+    config.lxns.clientId === null ||
+    config.lxns.clientId === '' ||
+    config.lxns.clientSecret === undefined ||
+    config.lxns.clientSecret === null ||
+    config.lxns.clientSecret === ''
+  ) {
     return yield* Effect.fail(
       new LxnsError({
         message: 'LXNS OAuth is not configured (missing LXNS_CLIENT_ID or LXNS_CLIENT_SECRET)',
@@ -70,7 +77,7 @@ export const exchangeCodeForTokens = Effect.fn('Lxns.exchangeCodeForTokens')(fun
   const [stateRow] = yield* database.query('Consume LXNS OAuth state', (db) =>
     db.delete(lxnsOauthStates).where(eq(lxnsOauthStates.state, state)).returning(),
   )
-  if (!stateRow) return yield* Effect.fail(new LxnsError({ message: 'Invalid or expired OAuth state' }))
+  if (stateRow === undefined) return yield* Effect.fail(new LxnsError({ message: 'Invalid or expired OAuth state' }))
   const timestamp = yield* Clock.currentTimeMillis
   if (timestamp - stateRow.created_at.getTime() > STATE_TTL_MS) {
     return yield* Effect.fail(new LxnsError({ message: 'OAuth state expired' }))
@@ -117,7 +124,8 @@ const refreshAccessToken = Effect.fn('Lxns.refreshAccessToken')(function* (userI
   const [token] = yield* database.query('Read LXNS refresh token', (db) =>
     db.select().from(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId)).limit(1),
   )
-  if (!token) return yield* Effect.fail(new LxnsError({ message: 'No LXNS connection found. Please authorize first.' }))
+  if (token === undefined)
+    return yield* Effect.fail(new LxnsError({ message: 'No LXNS connection found. Please authorize first.' }))
   const tokenData = yield* Effect.gen(function* () {
     const response = yield* http.post(LXNS_TOKEN_URL, {
       headers: { 'Content-Type': 'application/json' },
@@ -155,7 +163,8 @@ const getValidAccessToken = Effect.fn('Lxns.getValidAccessToken')(function* (use
   const [token] = yield* database.query('Read LXNS access token', (db) =>
     db.select().from(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId)).limit(1),
   )
-  if (!token) return yield* Effect.fail(new LxnsError({ message: 'No LXNS connection found. Please authorize first.' }))
+  if (token === undefined)
+    return yield* Effect.fail(new LxnsError({ message: 'No LXNS connection found. Please authorize first.' }))
   const now = yield* Clock.currentTimeMillis
   return token.expires_at.getTime() - TOKEN_SAFETY_MARGIN_MS < now
     ? yield* refreshAccessToken(userId)
@@ -187,7 +196,7 @@ export const getConnectionStatus = Effect.fn('Lxns.getConnectionStatus')(functio
   const [token] = yield* database.query('Read LXNS connection', (db) =>
     db.select().from(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId)).limit(1),
   )
-  return { connected: !!token }
+  return { connected: token !== undefined }
 })
 
 export const disconnect = Effect.fn('Lxns.disconnect')(function* (userId: string) {
@@ -211,7 +220,9 @@ const LxnsEnvelopeSchema = z.object({
 function unwrapLxnsResponse(json: unknown): unknown {
   const envelope = LxnsEnvelopeSchema.parse(json)
   if (!envelope.success) {
-    throw new Error(`LXNS API error (${envelope.code}): ${envelope.message || 'Unknown error'}`)
+    throw new Error(
+      `LXNS API error (${envelope.code}): ${envelope.message !== undefined && envelope.message !== '' ? envelope.message : 'Unknown error'}`,
+    )
   }
   return envelope.data
 }

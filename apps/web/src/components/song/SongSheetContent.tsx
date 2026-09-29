@@ -1,17 +1,7 @@
 import { CommentActions } from '../comments/CommentActions'
 import { filterComments, useCommentVisibility } from '../comments/commentVisibility'
 import { MULTIVER_AVAILABLE_VERSIONS, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@gekichumai/dxdata'
-import {
-  Button,
-  Chip,
-  CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-} from '@mui/material'
+import { Button, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, type PropsWithChildren, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
@@ -93,9 +83,14 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       })).reduce(
         (acc, { version, internalLevelValue, ...extra }) => {
           let delta: number | undefined
-          const accReversed = [...acc].reverse()
+          const accReversed = [...acc].toReversed()
           const prev = accReversed.find((v) => v.internalLevelValue !== undefined)
-          if (prev && internalLevelValue !== undefined && prev.internalLevelValue !== undefined) {
+          if (
+            prev !== undefined &&
+            prev !== null &&
+            internalLevelValue !== undefined &&
+            prev.internalLevelValue !== undefined
+          ) {
             delta = internalLevelValue - prev.internalLevelValue
           }
 
@@ -113,7 +108,7 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   )
 
   useEffect(() => {
-    if (scrollableContainer.current) {
+    if (scrollableContainer.current !== null) {
       scrollableContainer.current.style.overflowX = 'hidden'
       scrollableContainer.current.scrollLeft = scrollableContainer.current.scrollWidth
       scrollableContainer.current.style.overflowX = 'auto'
@@ -189,7 +184,7 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     })
     return data.map((c) => ({
       ...c,
-      created_at: c.created_at.toString(),
+      created_at: c.created_at,
     }))
   })
 
@@ -205,7 +200,7 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     }
     await client.comments.create(payload)
 
-    mutate()
+    await mutate()
     setContent('')
   }, [sheet, content, ensureAuthenticated])
 
@@ -223,30 +218,28 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           maxRows={3}
           multiline
           data-attr="comment-input"
-          disabled={!session}
+          disabled={session === undefined}
         />
-        <Button variant="contained" onClick={handleSubmit} disabled={!content || submitting}>
+        <Button variant="contained" onClick={handleSubmit} disabled={content === '' || submitting}>
           {submitting ? <CircularProgress size={24} /> : t('global:submit')}
         </Button>
 
-        {!session && (
-          <div
-            className="absolute inset-0 flex items-center justify-center bg-white/80 rounded cursor-pointer z-1"
+        {session === undefined && (
+          <button
+            className="border-0 p-0 absolute inset-0 flex items-center justify-center bg-white/80 rounded cursor-pointer z-1"
             onClick={openLoginDialog}
-            onKeyDown={(e) => e.key === 'Enter' && openLoginDialog()}
-            role="button"
+            type="button"
             tabIndex={0}
           >
             <span className="font-bold text-sm text-zinc-600 underline underline-offset-2">
               {t('auth:form.login-or-register-to-comment')}
             </span>
-          </div>
+          </button>
         )}
       </div>
 
       {isLoadingComments ? (
         Array.from({ length: 1 }).map((_, i) => (
-          // oxlint-disable-next-line react/no-array-index-key -- index is stable
           <div key={i} className="flex flex-col gap-1 bg-zinc-2 rounded-lg h-16 animate-pulse" />
         ))
       ) : (
@@ -268,7 +261,7 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           {filterComments(comments ?? [], visibility).length === 0 && (
             <div className="flex flex-col gap-1 bg-zinc-2 rounded-lg p-4 items-center text-zinc-5">
               {t('sheet:comments.empty')}
-              {!session && ` ${t('sheet:comments.sign-in-to-comment')}`}
+              {session === undefined && ` ${t('sheet:comments.sign-in-to-comment')}`}
             </div>
           )}
         </div>
@@ -284,7 +277,7 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
     const ratings = useMemo(
       () =>
         [...PRESET_ACHIEVEMENT_RATES]
-          .sort((a, b) => b - a)
+          .toSorted((a, b) => b - a)
           .map((rate) => ({
             achievementRate: rate,
             rating: calculateRating(sheet.internalLevelValue, rate),
@@ -292,7 +285,10 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
       [sheet.internalLevelValue],
     )
     const releaseDateParts = useMemo(
-      () => (sheet.releaseDate ? formatSheetReleaseDateParts(sheet.releaseDate, i18n.language, renderedAt) : null),
+      () =>
+        sheet.releaseDate !== undefined && sheet.releaseDate !== ''
+          ? formatSheetReleaseDateParts(sheet.releaseDate, i18n.language, renderedAt)
+          : null,
       [sheet.releaseDate, i18n.language, renderedAt],
     )
 
@@ -309,7 +305,7 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
         </div>
 
         <div className="text-sm">
-          <div className="text-zinc-600">{releaseDateParts && t('sheet:release-date', releaseDateParts)}</div>
+          <div className="text-zinc-600">{releaseDateParts !== null && t('sheet:release-date', releaseDateParts)}</div>
         </div>
 
         <div className="flex flex-wrap gap-1">
@@ -401,7 +397,7 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
                             key={region}
                             className={clsx(
                               'uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs',
-                              available ? '!bg-green-500' : '!bg-gray-300',
+                              available === true ? '!bg-green-500' : '!bg-gray-300',
                             )}
                           >
                             {region}
@@ -486,7 +482,7 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
                             <div className="relative font-sans">
                               <span className="font-bold">{rating.rating.ratingAwardValue}</span>
 
-                              {nextRating && (
+                              {nextRating !== undefined && nextRating !== null && (
                                 <div className="absolute -bottom-5 -left-1 px-1 text-xs text-zinc-500 bg-zinc-100 shadow-[0_0_0_1px_var(--un-shadow-color)] shadow-zinc-300/80 rounded-xs">
                                   ↑{' '}
                                   <span className="font-bold">

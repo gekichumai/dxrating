@@ -16,7 +16,7 @@ export function NetImportProgress() {
     netImportProgress.getSnapshot,
     netImportProgress.getServerSnapshot,
   )
-  return progress ? <FloatingImportProgress progress={progress} /> : null
+  return progress !== null ? <FloatingImportProgress progress={progress} /> : null
 }
 
 function FloatingImportProgress({ progress }: { progress: Progress }) {
@@ -30,7 +30,7 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
   const percent = Math.round(Math.min(1, Math.max(0, progress.progress)) * 100)
   const running = progress.status === 'running'
   const statusText = t(`${prefix}floating.${progress.status}`)
-  const transition = reducedMotion ? { duration: 0 } : { type: 'spring' as const, duration: 0.35, bounce: 0 }
+  const transition = reducedMotion === true ? { duration: 0 } : { type: 'spring' as const, duration: 0.35, bounce: 0 }
   const collapse = () => {
     setExpanded(false)
     triggerRef.current?.focus({ preventScroll: true })
@@ -51,7 +51,7 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
       >
         <output className="sr-only">{statusText}</output>
         <motion.div
-          layout={!reducedMotion}
+          layout={reducedMotion !== true}
           initial={false}
           transition={transition}
           className="absolute right-0 overflow-hidden bg-white text-zinc-800"
@@ -76,7 +76,7 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: reducedMotion ? 0 : 0.12 }}
+                  transition={{ duration: reducedMotion === true ? 0 : 0.12 }}
                   className="absolute left-4 right-16 text-sm font-bold"
                 >
                   {statusText}
@@ -93,7 +93,7 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
               aria-expanded={expanded}
               aria-controls={expanded ? panelId : undefined}
               className={`relative flex shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent text-violet-600 hover:bg-violet-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-violet-600 rounded-full ${expanded ? 'size-12' : 'size-14'}`}
-              whileTap={reducedMotion ? undefined : { scale: 0.96 }}
+              whileTap={reducedMotion === true ? undefined : { scale: 0.96 }}
             >
               <svg
                 width="32"
@@ -118,7 +118,7 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
                   transform="rotate(-90 18 18)"
                   initial={false}
                   animate={{ strokeDashoffset: 100 - percent }}
-                  transition={{ duration: reducedMotion ? 0 : 0.3, ease: 'easeOut' }}
+                  transition={{ duration: reducedMotion === true ? 0 : 0.3, ease: 'easeOut' }}
                 />
               </svg>
               {progress.status === 'success' && (
@@ -139,7 +139,7 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ ...transition, opacity: { duration: reducedMotion ? 0 : 0.12 } }}
+                transition={{ ...transition, opacity: { duration: reducedMotion === true ? 0 : 0.12 } }}
                 className="px-4 pb-4 overflow-y-auto"
                 style={{ maxHeight: 'calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 6rem)' }}
               >
@@ -160,7 +160,7 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
                         className="h-full origin-left rounded-full bg-violet-500"
                         initial={false}
                         animate={{ scaleX: percent / 100 }}
-                        transition={{ duration: reducedMotion ? 0 : 0.3 }}
+                        transition={{ duration: reducedMotion === true ? 0 : 0.3 }}
                       />
                     </div>
                   </div>

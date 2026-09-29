@@ -2,8 +2,7 @@ import { generateKeyPairSync, verify } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import { createAppleClientSecretGenerator } from '../lib/apple-client-secret'
 
-const decodePart = (part: string) =>
-  JSON.parse(Buffer.from(part, 'base64url').toString('utf8')) as Record<string, unknown>
+const decodePart = (part: string) => JSON.parse(Buffer.from(part, 'base64url').toString('utf8'))
 
 describe('Apple client secret generation', () => {
   it('derives a fresh, short-lived ES256 JWT from the stored private key', () => {
@@ -12,7 +11,7 @@ describe('Apple client secret generation', () => {
     const { privateKey, publicKey } = generateKeyPairSync('ec', {
       namedCurve: 'prime256v1',
     })
-    const privateKeyPEM = privateKey.export({ type: 'pkcs8', format: 'pem' }).toString()
+    const privateKeyPEM = privateKey.export({ type: 'pkcs8', format: 'pem' })
     const generate = createAppleClientSecretGenerator({
       clientId: 'net.dxrating.ios',
       teamId: 'F25GFFJL49',
@@ -22,8 +21,8 @@ describe('Apple client secret generation', () => {
 
     const token = generate()
     const [headerPart, payloadPart, signaturePart] = token.split('.')
-    const header = decodePart(headerPart!)
-    const payload = decodePart(payloadPart!)
+    const header = decodePart(headerPart)
+    const payload = decodePart(payloadPart)
 
     expect(header).toEqual({ alg: 'ES256', kid: '4L73JRJD56' })
     expect(payload).toMatchObject({
@@ -41,7 +40,7 @@ describe('Apple client secret generation', () => {
           key: publicKey,
           dsaEncoding: 'ieee-p1363',
         },
-        Buffer.from(signaturePart!, 'base64url'),
+        Buffer.from(signaturePart, 'base64url'),
       ),
     ).toBe(true)
     vi.useRealTimers()

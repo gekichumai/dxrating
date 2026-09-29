@@ -8,15 +8,14 @@ const makeEntry = ({
 }: {
   comboFlag?: RatingCalculatorEntry['comboFlag']
   syncFlag?: RatingCalculatorEntry['syncFlag']
-}): RatingCalculatorEntry =>
-  ({
-    sheet: {
-      id: 'sheet-id',
-    },
-    achievementRate: 100.5,
-    comboFlag,
-    syncFlag,
-  }) as RatingCalculatorEntry
+}): Parameters<typeof mapCalculatedEntryForOneShot>[0] => ({
+  sheet: {
+    id: 'sheet-id',
+  },
+  achievementRate: 100.5,
+  comboFlag,
+  syncFlag,
+})
 
 describe('mapCalculatedEntryForOneShot', () => {
   it('maps combo and backend-supported sync flags into the oneshot payload', () => {
@@ -41,7 +40,7 @@ describe('mapCalculatedEntryForOneShot', () => {
     expect(
       mapCalculatedEntryForOneShot({
         ...makeEntry({ comboFlag: 'ap' }),
-        syncFlag: 'unsupported' as unknown as RatingCalculatorEntry['syncFlag'],
+        syncFlag: 'unsupported',
       }),
     ).toEqual({
       sheetId: 'sheet-id',

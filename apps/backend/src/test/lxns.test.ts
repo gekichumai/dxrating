@@ -104,7 +104,9 @@ describe('LXNS Effect service', () => {
     expect(rejected).toMatchObject({ reason: { _tag: 'LxnsError', message: 'Invalid or expired OAuth state' } })
     expect(upstream).toHaveBeenCalledTimes(1)
     const request = upstream.mock.calls[0]
-    expect(String(request[0])).toBe('https://maimai.lxns.net/api/v0/oauth/token')
+    expect(request[0] instanceof Request ? request[0].url : request[0].toString()).toBe(
+      'https://maimai.lxns.net/api/v0/oauth/token',
+    )
     expect(await new Response(request[1]!.body).json()).toMatchObject({
       grant_type: 'authorization_code',
       code: 'code',

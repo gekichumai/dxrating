@@ -45,7 +45,7 @@ const SideEffectorAutoImportRating: FC = () => {
     const mode = (() => {
       try {
         const mode = localStorage.getItem('rating-auto-import-from-net')
-        if (!mode) return 'disabled'
+        if (mode === null || mode === '') return 'disabled'
 
         const parsed = JSON.parse(mode)
         if (parsed === 'merge') return 'merge'
@@ -55,13 +55,13 @@ const SideEffectorAutoImportRating: FC = () => {
       } catch {
         return 'disabled'
       }
-    })() as 'merge' | 'replace' | 'disabled'
+    })()
 
     if (mode === 'disabled') return
 
     // Cooldown: skip auto-import if last success was within 15 minutes
     const lastSuccess = localStorage.getItem(NET_IMPORT_LAST_SUCCESS_KEY)
-    if (lastSuccess) {
+    if (lastSuccess !== null && lastSuccess !== '') {
       const elapsed = Date.now() - Number(lastSuccess)
       if (elapsed < NET_IMPORT_COOLDOWN_MS) {
         const minutes = Math.round(elapsed / 60_000)
@@ -69,7 +69,9 @@ const SideEffectorAutoImportRating: FC = () => {
           <div className="flex flex-col">
             <span className="font-bold">{t('rating-calculator:io.import.net-records.cached.title')}</span>
             <span className="text-sm text-zinc-500">
-              {t('rating-calculator:io.import.net-records.cached.description', { minutes: minutes || '<1' })}
+              {t('rating-calculator:io.import.net-records.cached.description', {
+                minutes: minutes === 0 || Number.isNaN(minutes) ? '<1' : minutes,
+              })}
             </span>
           </div>,
           {
@@ -82,7 +84,7 @@ const SideEffectorAutoImportRating: FC = () => {
       }
     }
 
-    importFromNETRecords(appVersion, modifyEntries, mode)
+    void importFromNETRecords(appVersion, modifyEntries, mode)
   }, [appVersion])
 
   return null
@@ -97,7 +99,7 @@ const SideEffectorAnalyticsContext: FC<{
   entryCount: number
 }> = ({ userId, version, region, language, rating, entryCount }) => {
   useEffectOnce(() => {
-    if (userId) {
+    if (userId !== undefined && userId !== '') {
       identifyAnalyticsUser(userId)
     } else {
       resetAnalyticsUser()

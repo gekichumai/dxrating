@@ -18,12 +18,12 @@ export const Route = createFileRoute('/$songId/$type/$difficulty')({
   ssr: true,
   beforeLoad: ({ params }) => {
     const song = dxdata.songs.find((s) => s.songId === params.songId)
-    if (!song) {
+    if (song === null || song === undefined) {
       throw notFound()
     }
 
     const sheet = song.sheets.find((s) => s.type === params.type && s.difficulty === params.difficulty)
-    if (!sheet) {
+    if (sheet === null || sheet === undefined) {
       throw notFound()
     }
 

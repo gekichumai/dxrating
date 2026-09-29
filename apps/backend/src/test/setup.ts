@@ -10,7 +10,7 @@ import { shutdownApp } from '../runtime'
 import pg from 'pg'
 import { readMigrationFiles } from 'drizzle-orm/migrator'
 
-const TEST_PORT = Number(process.env.PORT || 3001)
+const TEST_PORT = Number(process.env.PORT !== undefined && process.env.PORT !== '' ? process.env.PORT : 3001)
 const BASE_URL = `http://localhost:${TEST_PORT}`
 
 let server: ServerType | undefined
@@ -39,7 +39,7 @@ export async function setupTestServer() {
   for (const migration of migrations) {
     for (const stmt of migration.sql) {
       const trimmed = stmt.trim()
-      if (trimmed) {
+      if (trimmed !== '') {
         try {
           await migrationsPool.query(trimmed)
         } catch (e: unknown) {
@@ -74,8 +74,10 @@ async function waitForServer(retries = 30, delayMs = 200) {
 }
 
 export async function teardownTestServer() {
-  if (server) {
-    await new Promise<void>((resolve, reject) => server!.close((error) => (error ? reject(error) : resolve())))
+  if (server !== undefined && server !== null) {
+    await new Promise<void>((resolve, reject) =>
+      server!.close((error) => (error !== undefined && error !== null ? reject(error) : resolve())),
+    )
   }
   await shutdownApp()
   if (!appPool.ended) await appPool.end()
@@ -111,7 +113,7 @@ export async function authenticatedFetch(url: string, cookie: string, init?: Req
   return fetch(url, {
     ...init,
     headers: {
-      ...init?.headers,
+      ...Object.fromEntries(new Headers(init?.headers)),
       Cookie: cookie,
     },
   })

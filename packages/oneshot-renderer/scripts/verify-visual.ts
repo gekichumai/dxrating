@@ -10,21 +10,33 @@ import { cases } from '../test/fixtures/cases'
 const root = fileURLToPath(new URL('..', import.meta.url))
 const fixtureDir = path.join(root, 'test/fixtures')
 const baseDir = process.env.ASSETS_BASE_DIR
-if (!baseDir) throw new Error('ASSETS_BASE_DIR is required. Visual verification never downloads or substitutes assets.')
+if (baseDir === undefined || baseDir === '')
+  throw new Error('ASSETS_BASE_DIR is required. Visual verification never downloads or substitutes assets.')
 const artifactDir = path.resolve(process.env.RENDER_ARTIFACT_DIR ?? path.join(root, 'artifacts'))
 const readJson = async (name: string) => JSON.parse(await readFile(path.join(fixtureDir, name), 'utf8'))
+// The committed full.json fixture is the captured renderer contract checked by these golden comparisons.
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 const input = (await readJson('full.json')) as RenderInput
 const expected = await readJson('goldens.json')
-const hashes = (await readJson('assets.json')) as Record<string, string>
+const hashes: unknown = await readJson('assets.json')
+assert.ok(typeof hashes === 'object' && hashes !== null)
 const assets = new Map<string, Buffer>()
 const digest = (data: string | Uint8Array) => createHash('sha256').update(data).digest('hex')
 
 for (const [assetPath, hash] of Object.entries(hashes)) {
+  assert.equal(typeof hash, 'string')
   let buffer: Buffer
   try {
     buffer = await readFile(path.join(baseDir, assetPath))
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT' || !process.env.ASSETS_LOCAL_CACHE_DIR) throw error
+    if (
+      !(error instanceof Error) ||
+      !('code' in error) ||
+      error.code !== 'ENOENT' ||
+      process.env.ASSETS_LOCAL_CACHE_DIR === undefined ||
+      process.env.ASSETS_LOCAL_CACHE_DIR === ''
+    )
+      throw error
     buffer = await readFile(path.join(process.env.ASSETS_LOCAL_CACHE_DIR, assetPath))
   }
   assert.equal(
@@ -38,7 +50,7 @@ const render = createOneshotRenderer({
   revision: expected.revision,
   loadAsset: async (assetPath) => {
     const buffer = assets.get(assetPath)
-    if (!buffer) throw new Error(`Unrecorded asset: ${assetPath}`)
+    if (buffer === undefined) throw new Error(`Unrecorded asset: ${assetPath}`)
     return buffer
   },
 })

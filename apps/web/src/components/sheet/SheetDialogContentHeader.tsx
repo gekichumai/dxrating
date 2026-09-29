@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/formatErrorMessage'
 import { IconButton } from '@mui/material'
 import { motion } from 'framer-motion'
 import { type FC, memo, useState } from 'react'
@@ -43,10 +44,14 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ s
         <IconButton
           size="small"
           onClick={() => {
-            navigator.clipboard.writeText(buildSheetLink(sheet))
-            toast.success(t('sheet:copy-link.toast-success'), {
-              id: `copy-sheet-link-${sheet.id}`,
-            })
+            void navigator.clipboard
+              .writeText(buildSheetLink(sheet))
+              .then(() => {
+                toast.success(t('sheet:copy-link.toast-success'), {
+                  id: `copy-sheet-link-${sheet.id}`,
+                })
+              })
+              .catch((error: unknown) => toast.error(formatErrorMessage(error)))
             captureAnalyticsEvent('sheet_link_copied', {
               song_id: sheet.songId,
               sheet_type: sheet.type,
@@ -92,9 +97,10 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ s
       </div>
       <div className="flex items-center">
         {imgError ? (
-          <motion.div
+          <motion.button
+            aria-label={t('sheet:cover-art-alt', { title: sheet.title })}
             layout
-            className="overflow-hidden rounded-lg bg-slate-300/50 flex items-center justify-center"
+            className="border-0 p-0 overflow-hidden rounded-lg bg-slate-300/50 flex items-center justify-center"
             variants={variants}
             initial="collapsed"
             animate={expanded ? 'expanded' : 'collapsed'}
@@ -104,16 +110,15 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ s
               stiffness: 235,
             }}
             onClick={() => setExpanded((prev) => !prev)}
-            role="button"
+            type="button"
             data-attr="sheet-image"
           >
             <MdiImageRemove className="text-zinc-400 text-2xl" />
-          </motion.div>
+          </motion.button>
         ) : (
-          <motion.img
+          <motion.button
+            type="button"
             layout
-            src={`https://shama.dxrating.net/images/cover/v2/${sheet.imageName}.jpg`}
-            alt={t('sheet:cover-art-alt', { title: sheet.title })}
             className="overflow-hidden rounded-lg bg-slate-300/50"
             variants={variants}
             initial="collapsed"
@@ -124,10 +129,16 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet }> = memo(({ s
               stiffness: 235,
             }}
             onClick={() => setExpanded((prev) => !prev)}
-            onError={() => setImgError(true)}
-            role="button"
             data-attr="sheet-image"
-          />
+            style={{ padding: 0, border: 0 }}
+          >
+            <img
+              src={`https://shama.dxrating.net/images/cover/v2/${sheet.imageName}.jpg`}
+              alt={t('sheet:cover-art-alt', { title: sheet.title })}
+              onError={() => setImgError(true)}
+              className="block h-full w-full"
+            />
+          </motion.button>
         )}
 
         <div className="flex-1" />

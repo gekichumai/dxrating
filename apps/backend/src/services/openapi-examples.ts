@@ -242,13 +242,15 @@ export const publicApiOperationExamples = {
   },
 } satisfies Record<string, OperationExamples>
 
+export const operationExamples: Readonly<Record<string, OperationExamples>> = publicApiOperationExamples
+
 const operationsWithDedicatedExamples = new Set(['getPublishedDxdataCatalog', 'headPublishedDxdataCatalog'])
 const httpMethods = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'] as const
 
 const isReference = (value: object): value is OpenAPI.ReferenceObject => '$ref' in value
 
 const getJsonContent = (content: Record<string, OpenAPI.MediaTypeObject> | undefined) => {
-  if (!content) return undefined
+  if (content === undefined || content === null) return undefined
   const entry = Object.entries(content).find(([mediaType]) => /^application\/json(?:;|$)/i.test(mediaType))
   return entry?.[1]
 }
@@ -260,20 +262,21 @@ const addMediaExample = (media: OpenAPI.MediaTypeObject, summary: string, value:
 }
 
 export const addPublicApiExamplesToOpenApi = (document: OpenAPI.OpenAPIObject): OpenAPI.OpenAPIObject => {
-  for (const [path, pathItem] of Object.entries(document.paths ?? {})) {
-    if (!pathItem || isReference(pathItem)) continue
+  const paths: [string, OpenAPI.PathItemObject | OpenAPI.ReferenceObject][] = Object.entries(document.paths ?? {})
+  for (const [path, pathItem] of paths) {
+    if (pathItem === undefined || pathItem === null || isReference(pathItem)) continue
 
     for (const method of httpMethods) {
       const operation = pathItem[method]
-      if (!operation) continue
+      if (operation === undefined || operation === null) continue
 
       const operationId = operation.operationId
-      if (!operationId) throw new Error(`Public OpenAPI operation ${method.toUpperCase()} ${path} has no operationId`)
+      if (typeof operationId !== 'string' || operationId === '')
+        throw new Error(`Public OpenAPI operation ${method.toUpperCase()} ${path} has no operationId`)
       if (operationsWithDedicatedExamples.has(operationId)) continue
 
-      const examples: OperationExamples | undefined =
-        publicApiOperationExamples[operationId as keyof typeof publicApiOperationExamples]
-      if (!examples) throw new Error(`Public OpenAPI operation ${operationId} has no examples`)
+      const examples: OperationExamples | undefined = operationExamples[operationId]
+      if (examples === undefined) throw new Error(`Public OpenAPI operation ${operationId} has no examples`)
 
       const parameterExamples = examples.parameters ?? {}
       for (const parameterOrReference of operation.parameters ?? []) {
@@ -285,26 +288,33 @@ export const addPublicApiExamplesToOpenApi = (document: OpenAPI.OpenAPIObject): 
         const value = parameterExamples[parameterOrReference.name]
         parameterOrReference.example = value
         const parameterSchema = parameterOrReference.schema
-        if (parameterSchema && !('$ref' in parameterSchema)) {
+        if (typeof parameterSchema === 'object' && parameterSchema !== null && !('$ref' in parameterSchema)) {
           parameterSchema.example = value
         }
       }
 
-      if (operation.requestBody && !isReference(operation.requestBody)) {
+      if (
+        operation.requestBody !== undefined &&
+        operation.requestBody !== null &&
+        !isReference(operation.requestBody)
+      ) {
         const requestMedia = getJsonContent(operation.requestBody.content)
-        if (requestMedia) {
+        if (requestMedia !== undefined && requestMedia !== null) {
           if (!('request' in examples)) throw new Error(`Public OpenAPI request ${operationId} has no example`)
           addMediaExample(requestMedia, `${operation.summary ?? operationId} request`, examples.request)
         }
       }
 
       let documentedResponse = false
-      for (const status of Object.keys(operation.responses ?? {})) {
+      const responses: [string, OpenAPI.ResponseObject | OpenAPI.ReferenceObject][] = Object.entries(
+        operation.responses ?? {},
+      )
+      for (const [status, responseOrReference] of responses) {
         if (!/^2\d\d$/.test(status)) continue
-        const responseOrReference = operation.responses?.[status as `${number}`]
-        if (!responseOrReference || isReference(responseOrReference)) continue
+        if (responseOrReference === undefined || responseOrReference === null || isReference(responseOrReference))
+          continue
         const responseMedia = getJsonContent(responseOrReference.content)
-        if (!responseMedia) continue
+        if (responseMedia === undefined || responseMedia === null) continue
         addMediaExample(responseMedia, `${operation.summary ?? operationId} response`, examples.response)
         documentedResponse = true
       }

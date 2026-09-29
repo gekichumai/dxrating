@@ -17,7 +17,7 @@ export function initClient() {
   const detector = new LanguageDetector(null, detectionOptions)
   initI18n(detector, detectionOptions)
   const lng = resolveSupportedLocale(detector.detect())
-  if (lng && lng !== i18n.language) {
+  if (lng !== null && lng !== undefined && lng !== i18n.language) {
     void i18n.changeLanguage(lng)
   }
 

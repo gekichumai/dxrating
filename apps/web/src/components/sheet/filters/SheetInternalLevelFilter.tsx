@@ -1,6 +1,6 @@
 import type { TextFieldProps } from '@mui/material'
 import { type FC, useMemo } from 'react'
-import { type Control, type FieldPath, useController, type UseControllerProps } from 'react-hook-form'
+import { type Control, useController, type UseControllerProps } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { useControllerRulePresets } from '../../global/form/useControllerRulePresets'
 import { TouchDeviceGuard } from '../../global/TouchDeviceGuard'
@@ -9,7 +9,7 @@ import { FloatValueInputField } from './FloatValueInputField'
 import { SheetFilterInternalLevelInputLongPressSlider } from './SheetFilterLevelInputLongPressSlider'
 import { SheetFilterSection } from './SheetFilterSection'
 
-const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
+const SheetFilterInternalLevelValueInput = ({
   label,
   name,
   control,
@@ -17,15 +17,18 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
   controllerProps,
 }: {
   label: string
-  name: FieldPath<T>
-  control: Control<T>
+  name: 'filters.internalLevelValue.min' | 'filters.internalLevelValue.max'
+  control: Control<SheetSortFilterForm>
   TextFieldProps?: TextFieldProps
-  controllerProps?: Omit<UseControllerProps<T>, 'control' | 'name'>
+  controllerProps?: Omit<
+    UseControllerProps<SheetSortFilterForm, 'filters.internalLevelValue.min' | 'filters.internalLevelValue.max'>,
+    'control' | 'name'
+  >
 }) => {
   const {
     field: { onChange, onBlur, value, ref },
     fieldState: { invalid, error },
-  } = useController<T>({
+  } = useController<SheetSortFilterForm, 'filters.internalLevelValue.min' | 'filters.internalLevelValue.max'>({
     control,
     name,
     ...controllerProps,
@@ -35,7 +38,7 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
     <div className="flex items-center gap-2 w-full md:w-auto">
       <FloatValueInputField
         onChange={(v) => onChange(v)}
-        value={value as number}
+        value={value}
         // rest props
         ref={ref}
         onBlur={onBlur}
@@ -53,7 +56,7 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
       </TouchDeviceGuard>
 
       <TouchDeviceGuard renderOnlyOn="touch">
-        <SheetFilterInternalLevelInputLongPressSlider value={value as number} onChange={onChange} min={9} max={15} />
+        <SheetFilterInternalLevelInputLongPressSlider value={value} onChange={onChange} min={9} max={15} />
       </TouchDeviceGuard>
     </div>
   )

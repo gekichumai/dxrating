@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "useDefineForClassFields": true,
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
 
@@ -22,7 +22,6 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["node", "unplugin-icons/types/react"],
 
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }

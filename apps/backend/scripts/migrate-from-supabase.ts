@@ -84,18 +84,19 @@ interface SupabaseUser extends QueryResultRow {
 }
 
 function getName(meta: Record<string, unknown> | null, email: string): string {
-  if (meta) {
-    if (typeof meta.name === 'string' && meta.name) return meta.name
-    if (typeof meta.full_name === 'string' && meta.full_name) return meta.full_name
-    if (typeof meta.user_name === 'string' && meta.user_name) return meta.user_name
+  if (meta !== undefined && meta !== null) {
+    if (typeof meta.name === 'string' && meta.name !== '') return meta.name
+    if (typeof meta.full_name === 'string' && meta.full_name !== '') return meta.full_name
+    if (typeof meta.user_name === 'string' && meta.user_name !== '') return meta.user_name
   }
-  return email.split('@')[0] || 'Unknown'
+  const localPart = email.split('@')[0]
+  return localPart === '' ? 'Unknown' : localPart
 }
 
 function getImage(meta: Record<string, unknown> | null): string | null {
-  if (meta) {
-    if (typeof meta.avatar_url === 'string' && meta.avatar_url) return meta.avatar_url
-    if (typeof meta.picture === 'string' && meta.picture) return meta.picture
+  if (meta !== undefined && meta !== null) {
+    if (typeof meta.avatar_url === 'string' && meta.avatar_url !== '') return meta.avatar_url
+    if (typeof meta.picture === 'string' && meta.picture !== '') return meta.picture
   }
   return null
 }
@@ -115,10 +116,10 @@ const migrateUsers = Effect.fn('migration.users')(function* (source: Pool, targe
   yield* transaction(target, (client) =>
     Effect.gen(function* () {
       for (const u of users) {
-        const meta = u.raw_user_meta_data as Record<string, unknown> | null
+        const meta = u.raw_user_meta_data
         const name = getName(meta, u.email)
         const image = getImage(meta)
-        const emailVerified = u.email_confirmed_at != null
+        const emailVerified = u.email_confirmed_at !== null && u.email_confirmed_at !== undefined
 
         yield* query(
           client,
@@ -143,7 +144,12 @@ const migrateIdentities = Effect.fn('migration.identities')(function* (
 
   const passwordMap = new Map<string, string>()
   for (const u of users) {
-    if (u.encrypted_password && u.encrypted_password !== '' && !u.encrypted_password.startsWith('$2a$10$fake')) {
+    if (
+      u.encrypted_password !== undefined &&
+      u.encrypted_password !== null &&
+      u.encrypted_password !== '' &&
+      !u.encrypted_password.startsWith('$2a$10$fake')
+    ) {
       passwordMap.set(u.id, u.encrypted_password)
     }
   }
@@ -160,7 +166,11 @@ const migrateIdentities = Effect.fn('migration.identities')(function* (
   yield* transaction(target, (client) =>
     Effect.gen(function* () {
       for (const identity of identities) {
-        const data = identity.identity_data as Record<string, unknown> | null
+        const data: unknown = identity.identity_data
+        const subject =
+          typeof data === 'object' && data !== null && 'sub' in data && typeof data.sub === 'string'
+            ? data.sub
+            : undefined
         // Use Supabase identity.id as account.id for deterministic idempotency
         const accountId = identity.id
 
@@ -174,10 +184,10 @@ const migrateIdentities = Effect.fn('migration.identities')(function* (
           password = passwordMap.get(identity.user_id) ?? null
         } else if (identity.provider === 'google') {
           providerId = 'google'
-          identityAccountId = (data?.sub as string) || identity.provider_id
+          identityAccountId = subject !== undefined && subject !== '' ? subject : identity.provider_id
         } else if (identity.provider === 'github') {
           providerId = 'github'
-          identityAccountId = (data?.sub as string) || identity.provider_id
+          identityAccountId = subject !== undefined && subject !== '' ? subject : identity.provider_id
         } else {
           yield* Console.warn(`  Skipping unknown provider: ${identity.provider} for user ${identity.user_id}`)
           continue

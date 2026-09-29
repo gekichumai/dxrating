@@ -16,8 +16,6 @@ describe('sheetMatchesDifficultyFilter', () => {
   })
 
   it.each([TypeEnum.UTAGE, TypeEnum.UTAGE2P])('does not filter %s charts by difficulty', (type) => {
-    expect(sheetMatchesDifficultyFilter({ type, difficulty: '【宴】' as DifficultyEnum }, selectedDifficulties)).toBe(
-      true,
-    )
+    expect(sheetMatchesDifficultyFilter({ type, difficulty: '【宴】' }, selectedDifficulties)).toBe(true)
   })
 })

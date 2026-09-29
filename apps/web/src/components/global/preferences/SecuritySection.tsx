@@ -33,7 +33,7 @@ const PasswordSubsection: FC<{ idPrefix: string }> = ({ idPrefix }) => {
       newPassword,
       revokeOtherSessions: true,
     })
-    if (error) {
+    if (error !== null) {
       toast.error(t('auth:user-profile.password.error', { error: error.message }))
       return
     }
@@ -151,8 +151,18 @@ const PasswordSubsection: FC<{ idPrefix: string }> = ({ idPrefix }) => {
 const aaguids = aaguidData as Record<string, { name: string; icon?: string }>
 
 function getPasskeyInfo(passkey: PasskeyItem): { name: string; icon?: string } {
-  const entry = passkey.aaguid ? aaguids[passkey.aaguid] : undefined
-  const name = passkey.name || entry?.name || (passkey.deviceType === 'singleDevice' ? 'Security Key' : 'Passkey')
+  const entry =
+    passkey.aaguid !== null && passkey.aaguid !== undefined && passkey.aaguid !== ''
+      ? aaguids[passkey.aaguid]
+      : undefined
+  const name =
+    passkey.name !== undefined && passkey.name !== null && passkey.name !== ''
+      ? passkey.name
+      : entry?.name !== undefined && entry.name !== ''
+        ? entry.name
+        : passkey.deviceType === 'singleDevice'
+          ? 'Security Key'
+          : 'Passkey'
   return { name, icon: entry?.icon }
 }
 
@@ -179,18 +189,18 @@ const PasskeysSubsection: FC = () => {
     queryKey: ['passkeys'],
     queryFn: async () => {
       const res = await authClient.passkey.listUserPasskeys()
-      return (res.data ?? []) as PasskeyItem[]
+      return res.data ?? []
     },
   })
 
   const [addState, handleAdd] = useAsyncFn(async () => {
     const res = await authClient.passkey.addPasskey()
-    if (res.error) {
+    if (res.error !== null) {
       toast.error(t('auth:user-profile.passkeys.error', { error: formatErrorMessage(res.error) }))
       return
     }
     toast.success(t('auth:user-profile.passkeys.added'))
-    queryClient.invalidateQueries({ queryKey: ['passkeys'] })
+    await queryClient.invalidateQueries({ queryKey: ['passkeys'] })
   }, [queryClient])
 
   const handleDelete = async (id: string) => {
@@ -199,7 +209,7 @@ const PasskeysSubsection: FC = () => {
     try {
       await authClient.passkey.deletePasskey({ id })
       toast.success(t('auth:user-profile.passkeys.deleted'))
-      queryClient.invalidateQueries({ queryKey: ['passkeys'] })
+      await queryClient.invalidateQueries({ queryKey: ['passkeys'] })
     } catch (e: unknown) {
       toast.error(t('auth:user-profile.passkeys.error', { error: formatErrorMessage(e) }))
     }
@@ -234,7 +244,7 @@ const PasskeysSubsection: FC = () => {
             const info = getPasskeyInfo(pk)
             return (
               <div key={pk.id} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-                {info.icon ? (
+                {info.icon !== undefined && info.icon !== '' ? (
                   <img src={info.icon} alt="" className="size-5 shrink-0" />
                 ) : (
                   <IconPasskey className="text-lg text-zinc-400 shrink-0" />
@@ -267,16 +277,8 @@ const PasskeysSubsection: FC = () => {
 
 // -- Active Devices Subsection --
 
-interface SessionItem {
-  id: string
-  token: string
-  ipAddress?: string | null
-  userAgent?: string | null
-  createdAt: Date
-}
-
 function parseUserAgent(ua?: string | null): string {
-  if (!ua) return 'Unknown device'
+  if (ua === null || ua === undefined || ua === '') return 'Unknown device'
 
   let browser = 'Unknown browser'
   if (ua.includes('Firefox/')) browser = 'Firefox'
@@ -291,7 +293,7 @@ function parseUserAgent(ua?: string | null): string {
   else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS'
   else if (ua.includes('Linux')) os = 'Linux'
 
-  return os ? `${browser} on ${os}` : browser
+  return os !== '' ? `${browser} on ${os}` : browser
 }
 
 const DevicesSubsection: FC<{ currentSessionToken?: string }> = ({ currentSessionToken }) => {
@@ -303,7 +305,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string }> = ({ currentSessio
     queryKey: ['sessions'],
     queryFn: async () => {
       const res = await authClient.listSessions()
-      return (res.data ?? []) as SessionItem[]
+      return res.data ?? []
     },
   })
 
@@ -313,7 +315,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string }> = ({ currentSessio
     try {
       await authClient.revokeSession({ token })
       toast.success(t('auth:user-profile.devices.revoked'))
-      queryClient.invalidateQueries({ queryKey: ['sessions'] })
+      await queryClient.invalidateQueries({ queryKey: ['sessions'] })
     } catch (e: any) {
       toast.error(e.message)
     }
@@ -363,7 +365,11 @@ const DevicesSubsection: FC<{ currentSessionToken?: string }> = ({ currentSessio
                       />
                     )}
                   </div>
-                  <span className="text-xs text-zinc-400">{session.ipAddress || 'Unknown IP'}</span>
+                  <span className="text-xs text-zinc-400">
+                    {session.ipAddress !== undefined && session.ipAddress !== null && session.ipAddress !== ''
+                      ? session.ipAddress
+                      : 'Unknown IP'}
+                  </span>
                 </div>
                 {!isCurrent && (
                   <Button

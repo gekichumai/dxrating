@@ -55,7 +55,7 @@ const SheetTagsAddDialog: FC<{
       toast.success(t('sheet:tags.add.toast-success'), {
         id: `tag-add-success:${tagId}`,
       })
-      mutateExistingTags()
+      await mutateExistingTags()
     } catch (error) {
       console.error('Failed to add tag', error)
 
@@ -79,7 +79,6 @@ const SheetTagsAddDialog: FC<{
       <div className="flex flex-wrap gap-2">
         {loadingTags || loadingExistingTags ? (
           Array.from({ length: 5 }).map((_, i) => (
-            // oxlint-disable-next-line react/no-array-index-key -- index is stable
             <Chip key={i} color="primary" disabled className="rounded-lg animate-pulse w-16" />
           ))
         ) : (
@@ -137,18 +136,17 @@ const SheetTagsAddDialog: FC<{
         )}
       </div>
 
-      {!session && (
-        <div
-          className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8 cursor-pointer"
+      {session === undefined && (
+        <button
+          className="border-0 text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8 cursor-pointer"
           onClick={openLoginDialog}
-          onKeyDown={(e) => e.key === 'Enter' && openLoginDialog()}
-          role="button"
+          type="button"
           tabIndex={0}
         >
           <span className="text-center font-bold text-sm text-zinc-600 underline underline-offset-2">
             {t('sheet:tags.add.login-required')}
           </span>
-        </div>
+        </button>
       )}
     </div>
   )

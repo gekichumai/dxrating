@@ -42,6 +42,7 @@ const startHandler = createStartHandler(async ({ request, router, responseHeader
 
 const requestHandler: ServerEntry = wrapFetchWithSentry({
   fetch(request, opts) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Sentry widens the options parameter while forwarding the same TanStack server options.
     return startHandler(request, opts as Parameters<typeof startHandler>[1])
   },
 })

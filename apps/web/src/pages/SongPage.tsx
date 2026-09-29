@@ -23,17 +23,17 @@ export const SongPage: FC = () => {
   const { data: serverAliases } = useServerAliases()
 
   const song = useMemo(() => {
-    if (!songId) return null
+    if (songId === '') return null
     return dxdata.songs.find((s) => s.songId === songId) ?? null
   }, [songId])
 
   const searchAcronyms = useMemo(() => {
-    if (!song) return []
+    if (song === null || song === undefined) return []
     return getSearchAcronymsWithServerAliases(song, serverAliases)
   }, [song, serverAliases])
 
   const flattenedSheets = useMemo<FlattenedSheet[]>(() => {
-    if (!song) return []
+    if (song === null || song === undefined) return []
     return song.sheets.map((sheet) => {
       const isTypeUtage = sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P
       const identity = {
@@ -51,10 +51,11 @@ export const SongPage: FC = () => {
         isRatingEligible: !isTypeUtage,
         tags: [],
         releaseDateTimestamp: sheetReleaseDateTimestamp(sheet.releaseDate),
-        internalLevelValue: sheet.multiverInternalLevelValue
-          ? (sheet.multiverInternalLevelValue[appVersion] ?? sheet.internalLevelValue)
-          : sheet.internalLevelValue,
-      } as FlattenedSheet
+        internalLevelValue:
+          sheet.multiverInternalLevelValue !== null && sheet.multiverInternalLevelValue !== undefined
+            ? (sheet.multiverInternalLevelValue[appVersion] ?? sheet.internalLevelValue)
+            : sheet.internalLevelValue,
+      }
     })
   }, [song, searchAcronyms, appVersion])
 
@@ -63,7 +64,9 @@ export const SongPage: FC = () => {
     return TYPE_ORDER.filter((type) => typeSet.has(type))
   }, [flattenedSheets])
 
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The route beforeLoad validates the requested type against this song.
   const activeType = type as TypeEnum
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Validated chart routes may use custom Utage labels outside the declared enum.
   const activeDifficulty = difficulty as DifficultyEnum
   const activeSheet = flattenedSheets.find(
     (sheet) => sheet.type === activeType && sheet.difficulty === activeDifficulty,
@@ -73,7 +76,7 @@ export const SongPage: FC = () => {
 
   const handleTypeChange = (newType: TypeEnum) => {
     const sheetsOfType = flattenedSheets.filter((s) => s.type === newType)
-    navigate({
+    void navigate({
       to: '/songs/$songId/$type/$difficulty',
       params: {
         songId,
@@ -84,7 +87,7 @@ export const SongPage: FC = () => {
   }
 
   const handleDifficultyChange = (newDifficulty: DifficultyEnum) => {
-    navigate({
+    void navigate({
       to: '/songs/$songId/$type/$difficulty',
       params: {
         songId,
@@ -94,7 +97,7 @@ export const SongPage: FC = () => {
     })
   }
 
-  if (!song) {
+  if (song === null || song === undefined) {
     return <NotFoundContent />
   }
 
@@ -115,7 +118,7 @@ export const SongPage: FC = () => {
         </IconButton>
       </a>
 
-      {headerSheet && <SongHeader sheet={headerSheet} />}
+      {headerSheet !== undefined && <SongHeader sheet={headerSheet} />}
 
       <SongSheetTabs
         sheets={song.sheets}

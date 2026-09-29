@@ -24,11 +24,17 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
 }) => (
   <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
     <DialogTitle>{title}</DialogTitle>
-    {description && (
-      <DialogContent>
-        <DialogContentText>{description}</DialogContentText>
-      </DialogContent>
-    )}
+    {description !== undefined &&
+      description !== null &&
+      description !== false &&
+      description !== '' &&
+      description !== 0 &&
+      description !== 0n &&
+      (typeof description !== 'number' || !Number.isNaN(description)) && (
+        <DialogContent>
+          <DialogContentText>{description}</DialogContentText>
+        </DialogContent>
+      )}
     <DialogActions>
       <Button onClick={onCancel}>{cancelLabel}</Button>
       <Button onClick={onConfirm} color={confirmColor} variant="contained">

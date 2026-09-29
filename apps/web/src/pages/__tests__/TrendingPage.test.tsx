@@ -40,7 +40,11 @@ vi.mock('@tanstack/react-query', () => ({
   useQuery: (options: { initialData?: typeof mocks.queryState.data }) => ({
     ...mocks.queryState,
     data: mocks.queryState.data ?? options.initialData,
-    isLoading: mocks.queryState.data || options.initialData ? false : mocks.queryState.isLoading,
+    isLoading:
+      (mocks.queryState.data !== null && mocks.queryState.data !== undefined) ||
+      (options.initialData !== null && options.initialData !== undefined)
+        ? false
+        : mocks.queryState.isLoading,
   }),
 }))
 

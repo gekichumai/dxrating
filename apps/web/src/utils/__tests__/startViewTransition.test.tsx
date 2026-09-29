@@ -33,22 +33,33 @@ function mockTransitions() {
   return { start, transitions }
 }
 
+function mediaQueryList(matches: boolean): MediaQueryList {
+  return Object.assign(new EventTarget(), {
+    matches,
+    media: '',
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+  })
+}
+
 beforeEach(() => {
   Object.defineProperty(document, 'startViewTransition', { configurable: true, value: undefined })
-  vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as MediaQueryList)
+  vi.spyOn(window, 'matchMedia').mockReturnValue(mediaQueryList(false))
 })
 
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
-  if (originalStart) Object.defineProperty(document, 'startViewTransition', originalStart)
+  if (originalStart !== null && originalStart !== undefined)
+    Object.defineProperty(document, 'startViewTransition', originalStart)
   else Reflect.deleteProperty(document, 'startViewTransition')
 })
 
 describe('preference wipe', () => {
   it('uses pointer coordinates and the focused control center for keyboard activation', () => {
     const button = document.createElement('button')
-    vi.spyOn(button, 'getBoundingClientRect').mockReturnValue({ left: 200, top: 40, width: 100, height: 40 } as DOMRect)
+    vi.spyOn(button, 'getBoundingClientRect').mockReturnValue(new DOMRect(200, 40, 100, 40))
     expect(wipeOriginFromClick({ detail: 1, clientX: 260, clientY: 51, currentTarget: button })).toEqual({
       x: 260,
       y: 51,
@@ -70,8 +81,8 @@ describe('preference wipe', () => {
     expect(document.documentElement.style.getPropertyValue('--preference-wipe-reach')).toBe(
       `${Math.hypot(window.innerWidth, window.innerHeight)}px`,
     )
-    act(() => {
-      transitions[0].update()
+    await act(async () => {
+      await transitions[0].update()
     })
     expect(screen.getByText('new')).toBeTruthy()
     transitions[0].done.resolve()
@@ -84,7 +95,7 @@ describe('preference wipe', () => {
 
   it.each([false, true])('applies immediately without browser support or with reduced motion (%s)', async (reduced) => {
     const { start } = mockTransitions()
-    if (reduced) vi.mocked(window.matchMedia).mockReturnValue({ matches: true } as MediaQueryList)
+    if (reduced) vi.mocked(window.matchMedia).mockReturnValue(mediaQueryList(true))
     else Object.defineProperty(document, 'startViewTransition', { configurable: true, value: undefined })
     const update = vi.fn()
     await startViewTransition(update)
@@ -118,7 +129,7 @@ describe('preference wipe', () => {
     const old = vi.fn()
     const latest = vi.fn()
     void startViewTransition(old)
-    vi.mocked(window.matchMedia).mockReturnValue({ matches: true } as MediaQueryList)
+    vi.mocked(window.matchMedia).mockReturnValue(mediaQueryList(true))
     await startViewTransition(latest)
     await transitions[0].update()
     transitions[0].done.resolve()

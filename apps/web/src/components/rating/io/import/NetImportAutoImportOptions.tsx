@@ -28,10 +28,12 @@ export function NetImportAutoImportOptions({
       </FormLabel>
       <RadioGroup
         aria-labelledby={labelId}
-        value={value || 'false'}
-        onChange={(event) =>
-          onChange(event.target.value === 'false' ? false : (event.target.value as NetAutoImportMode))
-        }
+        value={value === false || value === undefined ? 'false' : value}
+        onChange={(event) => {
+          const nextValue = event.target.value
+          if (nextValue === 'false') onChange(false)
+          else if (nextValue === 'merge' || nextValue === 'replace') onChange(nextValue)
+        }}
       >
         {(['disabled', 'replace', 'merge'] as const).map((mode) => (
           <FormControlLabel

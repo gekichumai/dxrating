@@ -120,10 +120,10 @@ const parseSnapshot = (pointer: CatalogIdentityPointer, rows: unknown[]): Catalo
     const legacySongId =
       value.legacy_song_id === null || value.legacy_song_id.length === 0 ? undefined : value.legacy_song_id
     let song = snapshot.songsByPublicId.get(value.public_song_id)
-    if (song && song.legacySongId !== legacySongId) {
+    if (song !== undefined && song !== null && song.legacySongId !== legacySongId) {
       throw unavailable('Published catalog contains conflicting song identities')
     }
-    if (!song) {
+    if (song === undefined || song === null) {
       song = {
         publicSongId: value.public_song_id,
         legacySongId,
@@ -135,7 +135,11 @@ const parseSnapshot = (pointer: CatalogIdentityPointer, rows: unknown[]): Catalo
     const aliases = legacySongId === undefined ? value.legacy_song_ids : [legacySongId, ...value.legacy_song_ids]
     for (const alias of aliases) {
       const previousLegacySong = snapshot.songsByLegacyId.get(alias)
-      if (previousLegacySong && previousLegacySong.publicSongId !== song.publicSongId) {
+      if (
+        previousLegacySong !== undefined &&
+        previousLegacySong !== null &&
+        previousLegacySong.publicSongId !== song.publicSongId
+      ) {
         throw unavailable('Published catalog contains conflicting legacy song identities')
       }
       song.legacySongIds.add(alias)
@@ -169,7 +173,8 @@ const parseSnapshot = (pointer: CatalogIdentityPointer, rows: unknown[]): Catalo
     }
     const previousSheet = snapshot.sheetsByPublicId.get(sheet.publicSheetId)
     if (
-      previousSheet &&
+      previousSheet !== undefined &&
+      previousSheet !== null &&
       (previousSheet.publicSongId !== sheet.publicSongId ||
         previousSheet.sheetType !== sheet.sheetType ||
         previousSheet.sheetDifficulty !== sheet.sheetDifficulty)
@@ -183,7 +188,11 @@ const parseSnapshot = (pointer: CatalogIdentityPointer, rows: unknown[]): Catalo
     for (const legacySongId of sheet.legacySongIds) {
       const key = legacySheetKey(legacySongId, sheet.sheetType, sheet.sheetDifficulty)
       const previousLegacySheet = snapshot.sheetsByLegacyTuple.get(key)
-      if (previousLegacySheet && previousLegacySheet.publicSheetId !== sheet.publicSheetId) {
+      if (
+        previousLegacySheet !== undefined &&
+        previousLegacySheet !== null &&
+        previousLegacySheet.publicSheetId !== sheet.publicSheetId
+      ) {
         throw unavailable('Published catalog contains conflicting legacy sheet identities')
       }
       snapshot.sheetsByLegacyTuple.set(key, sheet)
@@ -228,6 +237,21 @@ const catalogTry = <A>(evaluate: () => A): Effect.Effect<A, CatalogIdentityError
     catch: (error) =>
       error instanceof CatalogIdentityError ? error : unavailable('Published catalog identities are invalid', error),
   })
+
+const legacySongPassthrough = (songId: string): ResolvedSongIdentity => ({
+  legacySongId: songId,
+  legacySongIds: [songId],
+})
+
+const legacySheetPassthrough = (input: {
+  songId: string
+  sheetType: string
+  sheetDifficulty: string
+}): ResolvedSheetIdentity => ({
+  ...legacySongPassthrough(input.songId),
+  sheetType: input.sheetType,
+  sheetDifficulty: input.sheetDifficulty,
+})
 
 export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQuery<E, R>) => {
   let cachedSnapshot: CatalogIdentitySnapshot | undefined
@@ -317,7 +341,7 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
         const flight = yield* Effect.acquireRelease(
           Effect.gen(function* () {
             let flight = inFlightSnapshots.get(key)
-            if (!flight) {
+            if (flight === undefined || flight === null) {
               const result = yield* SynchronizedRef.make(Option.none<Exit.Exit<SnapshotResult, CatalogIdentityError>>())
               flight = { participants: 0, result }
               inFlightSnapshots.set(key, flight)
@@ -347,7 +371,11 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
     )
 
   const installSnapshot = (snapshot: CatalogIdentitySnapshot): CatalogIdentitySnapshot => {
-    if (!cachedSnapshot || snapshot.publicationRevisionValue > cachedSnapshot.publicationRevisionValue) {
+    if (
+      cachedSnapshot === undefined ||
+      cachedSnapshot === null ||
+      snapshot.publicationRevisionValue > cachedSnapshot.publicationRevisionValue
+    ) {
       cachedSnapshot = snapshot
       return snapshot
     }
@@ -364,7 +392,7 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
     Effect.gen(function* () {
       for (let attempt = 0; attempt < 2; attempt += 1) {
         const pointer = yield* queryCurrentPointer()
-        if (cachedSnapshot) {
+        if (cachedSnapshot !== undefined && cachedSnapshot !== null) {
           if (pointer.publicationRevisionValue < cachedSnapshot.publicationRevisionValue) return cachedSnapshot
           if (pointer.publicationRevisionValue === cachedSnapshot.publicationRevisionValue) {
             if (pointer.catalogRunId !== cachedSnapshot.catalogRunId) {
@@ -375,7 +403,7 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
         }
 
         const snapshot = yield* loadSnapshotSingleFlight(pointer)
-        if (snapshot) return yield* catalogTry(() => installSnapshot(snapshot))
+        if (snapshot !== undefined && snapshot !== null) return yield* catalogTry(() => installSnapshot(snapshot))
         // The publication pointer can move between the pointer read and the
         // snapshot query. Re-read it once rather than serving the old catalog.
       }
@@ -386,7 +414,7 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
     Effect.gen(function* () {
       const snapshot = yield* getCurrentSnapshot()
       const song = snapshot.songsByPublicId.get(songId)
-      if (!song)
+      if (song === undefined || song === null)
         return yield* Effect.fail(new CatalogIdentityError('not_found', 'Song is not in the current published catalog'))
       return { snapshot, song }
     })
@@ -396,21 +424,6 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
       Effect.catch((error) => (error.code === 'unavailable' ? Effect.void : Effect.fail(error))),
     )
 
-  const legacySongPassthrough = (songId: string): ResolvedSongIdentity => ({
-    legacySongId: songId,
-    legacySongIds: [songId],
-  })
-
-  const legacySheetPassthrough = (input: {
-    songId: string
-    sheetType: string
-    sheetDifficulty: string
-  }): ResolvedSheetIdentity => ({
-    ...legacySongPassthrough(input.songId),
-    sheetType: input.sheetType,
-    sheetDifficulty: input.sheetDifficulty,
-  })
-
   return {
     resolveSongInput: (songId: string) =>
       Effect.gen(function* () {
@@ -418,7 +431,8 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
         if (!isPublicSongId(songId)) {
           const snapshot = yield* getBestEffortSnapshot()
           const song = snapshot?.songsByLegacyId.get(songId)
-          if (!song?.legacySongId) return legacySongPassthrough(songId)
+          if (song?.legacySongId === undefined || song?.legacySongId === null || song?.legacySongId === '')
+            return legacySongPassthrough(songId)
           return {
             legacySongId: song.legacySongId,
             legacySongIds: [...song.legacySongIds],
@@ -444,11 +458,12 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
           const fallback = legacySheetPassthrough(input)
           const snapshot = yield* getBestEffortSnapshot()
           const song = snapshot?.songsByLegacyId.get(input.songId)
-          if (!song?.legacySongId) return fallback
+          if (song?.legacySongId === undefined || song?.legacySongId === null || song?.legacySongId === '')
+            return fallback
           const sheet = snapshot?.sheetsByLegacyTuple.get(
             legacySheetKey(input.songId, input.sheetType, input.sheetDifficulty),
           )
-          if (!sheet || sheet.publicSongId !== song.publicSongId) return fallback
+          if (sheet === undefined || sheet === null || sheet.publicSongId !== song.publicSongId) return fallback
           return {
             legacySongId: song.legacySongId,
             legacySongIds: [...song.legacySongIds],
@@ -463,7 +478,7 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
         const song = publicSongInput
           ? snapshot.songsByPublicId.get(input.songId)
           : snapshot.songsByLegacyId.get(input.songId)
-        if (!song) {
+        if (song === undefined || song === null) {
           return yield* Effect.fail(
             new CatalogIdentityError('not_found', 'Song is not in the current published catalog'),
           )
@@ -474,7 +489,7 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
           input.sheetId === undefined
             ? snapshot.sheetsByLegacyTuple.get(legacySheetKey(legacySongId, input.sheetType, input.sheetDifficulty))
             : snapshot.sheetsByPublicId.get(input.sheetId)
-        if (!sheet) {
+        if (sheet === undefined || sheet === null) {
           return yield* Effect.fail(
             new CatalogIdentityError('not_found', 'Sheet is not in the current published catalog'),
           )
@@ -508,7 +523,7 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
           const song = isPublicSongId(songId)
             ? snapshot.songsByPublicId.get(songId)
             : snapshot.songsByLegacyId.get(songId)
-          if (song) translated.set(songId, song.publicSongId)
+          if (song !== undefined && song !== null) translated.set(songId, song.publicSongId)
         }
         return translated
       }),
@@ -522,10 +537,10 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
           const song = isPublicSongId(songId)
             ? snapshot.songsByPublicId.get(songId)
             : snapshot.songsByLegacyId.get(songId)
-          if (!song) continue
+          if (song === undefined || song === null) continue
           translated.set(song.publicSongId, (translated.get(song.publicSongId) ?? 0) + count)
         }
-        return [...translated].map(([songId, count]) => ({ songId, count })).sort((a, b) => b.count - a.count)
+        return [...translated].map(([songId, count]) => ({ songId, count })).toSorted((a, b) => b.count - a.count)
       }),
 
     translateTagSongsToPublic: (
@@ -539,7 +554,7 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
           const sheet = snapshot.sheetsByLegacyTuple.get(
             legacySheetKey(tagSong.song_id, tagSong.sheet_type, tagSong.sheet_difficulty),
           )
-          if (!sheet) continue
+          if (sheet === undefined || sheet === null) continue
           const key = JSON.stringify([sheet.publicSongId, sheet.publicSheetId, tagSong.tag_id])
           if (seen.has(key)) continue
           seen.add(key)

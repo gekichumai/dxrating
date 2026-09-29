@@ -70,8 +70,9 @@ export const fetchNetRecordsEffect = (
     onProgress,
   )
 
-export const v0Handler = (c: Context) => {
-  const region = c.get('region') as 'jp' | 'intl'
+export const v0Handler = (c: Context): Response | Promise<Response> => {
+  const region: unknown = c.get('region')
+  if (region !== 'jp' && region !== 'intl') return c.json({ error: 'Invalid region' }, 400)
   const program = fetchNetRecordsEffect(region, c.get('authParams')).pipe(
     Effect.map(({ recent, music }) => c.json({ recentRecords: recent, musicRecords: music })),
     Effect.tapError((error) => Effect.sync(() => reportError(error, region, false))),
@@ -81,8 +82,9 @@ export const v0Handler = (c: Context) => {
   )
 }
 
-export const v1Handler = (c: Context) => {
-  const region = c.get('region') as 'jp' | 'intl'
+export const v1Handler = (c: Context): Response | Promise<Response> => {
+  const region: unknown = c.get('region')
+  if (region !== 'jp' && region !== 'intl') return c.json({ error: 'Invalid region' }, 400)
   return streamSSE(c, async (stream) => {
     const disconnected = new AbortController()
     stream.onAbort(() => disconnected.abort())

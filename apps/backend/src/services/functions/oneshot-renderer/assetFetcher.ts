@@ -17,8 +17,14 @@ export class RendererAssetError extends Data.TaggedError('RendererAssetError')<{
 export const getAssetSourceKey = () =>
   JSON.stringify({
     baseDir: process.env.ASSETS_BASE_DIR,
-    cacheDir: process.env.ASSETS_LOCAL_CACHE_DIR || path.join(os.tmpdir(), 'dxrating-assets'),
-    remoteUrl: process.env.ASSETS_REMOTE_URL || 'https://shama.dxrating.net',
+    cacheDir:
+      process.env.ASSETS_LOCAL_CACHE_DIR !== undefined && process.env.ASSETS_LOCAL_CACHE_DIR !== ''
+        ? process.env.ASSETS_LOCAL_CACHE_DIR
+        : path.join(os.tmpdir(), 'dxrating-assets'),
+    remoteUrl:
+      process.env.ASSETS_REMOTE_URL !== undefined && process.env.ASSETS_REMOTE_URL !== ''
+        ? process.env.ASSETS_REMOTE_URL
+        : 'https://shama.dxrating.net',
   })
 
 let source: string | undefined
@@ -26,7 +32,7 @@ let loader: ReturnType<typeof createAssetLoader> | undefined
 let fallbackImageBuffer: Buffer | undefined
 
 const fallbackImage = Effect.gen(function* () {
-  if (fallbackImageBuffer) return fallbackImageBuffer
+  if (fallbackImageBuffer !== undefined && fallbackImageBuffer !== null) return fallbackImageBuffer
   const buffer = yield* Effect.tryPromise({
     try: () =>
       sharp({
@@ -43,7 +49,7 @@ const fallbackImage = Effect.gen(function* () {
 export const fetchAssetEffect = (relativePath: string) =>
   Effect.suspend(() => {
     const currentSource = getAssetSourceKey()
-    if (!loader || source !== currentSource) {
+    if (loader === undefined || loader === null || source !== currentSource) {
       source = currentSource
       loader = createAssetLoader({
         ...JSON.parse(currentSource),

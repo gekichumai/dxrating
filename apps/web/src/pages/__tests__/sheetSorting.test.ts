@@ -17,6 +17,7 @@ const sheet = (
     releaseDateTimestamp,
     internalLevelValue,
     difficulty,
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- This comparator fixture intentionally supplies only fields involved in the selected sorts.
   }) as FlattenedSheet
 
 const catalogPositions = new Map([
@@ -38,9 +39,9 @@ describe('compareSheetsBySorts', () => {
       (songId) => sheet(songId, Date.parse('2026-08-21')),
     )
 
-    expect(batch.sort((a, b) => compareSheetsBySorts(a, b, releaseDateDescending)).map(({ songId }) => songId)).toEqual(
-      ['Inverted World', 'Manifold Hypothesis', '無彩色のディストピア', 'Broomstick adventure!'],
-    )
+    expect(
+      batch.toSorted((a, b) => compareSheetsBySorts(a, b, releaseDateDescending)).map(({ songId }) => songId),
+    ).toEqual(['Inverted World', 'Manifold Hypothesis', '無彩色のディストピア', 'Broomstick adventure!'])
   })
 
   it('follows ascending release-date direction for the catalog tie-break', () => {

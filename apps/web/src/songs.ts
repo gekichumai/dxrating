@@ -1,4 +1,4 @@
-import { type DifficultyEnum, type Sheet, type Song, TypeEnum, type VersionEnum, dxdata } from '@gekichumai/dxdata'
+import { DifficultyEnum, type Sheet, type Song, TypeEnum, type VersionEnum, dxdata } from '@gekichumai/dxdata'
 import { formatSheetIdentity, getDxdataSongCatalog, type VersionedSheet } from '@gekichumai/maimai-domain'
 import * as Sentry from '@sentry/tanstackstart-react'
 import Fuse from 'fuse.js'
@@ -48,7 +48,9 @@ export const getSearchAcronymsWithServerAliases = (
 export const getFlattenedSheetsForVersion = (version: VersionEnum): FlattenedSheet[] => {
   return getDxdataSongCatalog(version).sheets.map((sheet) => ({
     ...sheet,
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Generated DX data includes custom Utage difficulty labels outside its declared enum.
     difficulty: sheet.difficulty as DifficultyEnum,
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- getDxdataSongCatalog always supplies the release timestamp for this generated catalog.
     releaseDateTimestamp: sheet.releaseDateTimestamp as number,
     tags: [],
   }))
@@ -70,21 +72,24 @@ function getSheetsWithMetadata(
   aliases: readonly ServerAlias[] | undefined,
 ): FlattenedSheet[] {
   let sheets = bundledSheetsCache.get(version)
-  if (!sheets) {
+  if (sheets === null || sheets === undefined) {
     sheets = getFlattenedSheetsForVersion(version)
     bundledSheetsCache.set(version, sheets)
   }
-  if (!tagSongs?.length && !aliases?.length) return sheets
+  if ((tagSongs?.length ?? 0) === 0 && (aliases?.length ?? 0) === 0) return sheets
 
   // Share the derived catalog across consumers, invalidating on content references rather than counts.
   const cached = enrichedSheetsCache.get(version)
-  if (cached && cached.tagSongs === tagSongs && cached.aliases === aliases) return cached.sheets
+  if (cached !== null && cached !== undefined && cached.tagSongs === tagSongs && cached.aliases === aliases)
+    return cached.sheets
 
   const tagsBySheet = new Map<string, number[]>()
   for (const relation of tagSongs ?? []) {
     const id = canonicalIdFromParts(
       relation.song_id,
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Tag API identities use the generated DX data vocabulary.
       relation.sheet_type as TypeEnum,
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Tag identities include custom Utage labels outside the declared enum.
       relation.sheet_difficulty as DifficultyEnum,
     )
     const tags = tagsBySheet.get(id) ?? []
@@ -102,11 +107,12 @@ function getSheetsWithMetadata(
   const enrichedSheets = sheets.map((sheet) => {
     const tags = tagsBySheet.get(sheet.id)
     const names = aliasesBySong.get(sheet.songId)
-    if (!tags && !names) return sheet
+    if ((tags === null || tags === undefined) && (names === null || names === undefined)) return sheet
     return {
       ...sheet,
       tags: tags ?? sheet.tags,
-      searchAcronyms: names ? uniq([...sheet.searchAcronyms, ...names]) : sheet.searchAcronyms,
+      searchAcronyms:
+        names !== null && names !== undefined ? uniq([...sheet.searchAcronyms, ...names]) : sheet.searchAcronyms,
     }
   })
   enrichedSheetsCache.set(version, { tagSongs, aliases, sheets: enrichedSheets })
@@ -130,6 +136,8 @@ type SheetsSearchEngineOptions = {
   sheets?: readonly FlattenedSheet[] | null
   serverAliases?: readonly ServerAlias[] | null
 }
+
+const normalize = (value: string) => value.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
 
 export const createSheetsSearchEngine = ({
   songs,
@@ -164,17 +172,22 @@ export const createSheetsSearchEngine = ({
     },
   )
 
-  const normalize = (value: string) => value.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
   const songsById = new Map((songs ?? []).map((song) => [song.songId, song]))
   const indexedSheets = availableSheets.map((sheet) => {
     const song = songsById.get(sheet.songId)
-    const aliases = song ? getSearchAcronymsWithServerAliases(song, serverAliases) : sheet.searchAcronyms
+    const aliases =
+      song !== null && song !== undefined
+        ? getSearchAcronymsWithServerAliases(song, serverAliases)
+        : sheet.searchAcronyms
     const designer = sheet.noteDesigner?.trim()
     return {
       sheet,
-      fields: [sheet.title, song?.artist ?? sheet.artist, ...aliases, designer && designer !== '-' ? designer : ''].map(
-        normalize,
-      ),
+      fields: [
+        sheet.title,
+        song?.artist ?? sheet.artist,
+        ...aliases,
+        designer !== null && designer !== undefined && designer !== '' && designer !== '-' ? designer : '',
+      ].map(normalize),
     }
   })
 
@@ -192,7 +205,7 @@ export const createSheetsSearchEngine = ({
 
   return (term: string) => {
     const trimmedTerm = term.trim()
-    if (!trimmedTerm) return []
+    if (trimmedTerm === '') return []
     const tokens = normalize(trimmedTerm).split(/\s+/u)
     const metadataResults = indexedSheets
       .filter(({ fields }) => tokens.every((token) => fields.some((field) => field.includes(token))))

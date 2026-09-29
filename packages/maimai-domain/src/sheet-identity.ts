@@ -15,32 +15,29 @@ export function parseSheetIdentity(value: string): SheetIdentity | null {
   if (parts.length !== 3) return null
 
   const [songId, type, difficulty] = parts
-  if (!songId || !TYPE_VALUES.has(type) || !isValidDifficultyForType(type as TypeEnum, difficulty)) return null
+  if (songId === '' || !isSheetType(type)) return null
 
-  const parsedType = type as TypeEnum
-  if (isUtageType(parsedType)) {
-    return {
-      songId,
-      type: parsedType,
-      difficulty: difficulty as DifficultyEnum | UtageDifficultyLabel,
-    }
+  if (isUtageType(type) && isUtageDifficulty(difficulty)) {
+    return { songId, type, difficulty }
   }
-
-  return {
-    songId,
-    type: parsedType as typeof TypeEnum.DX | typeof TypeEnum.STD,
-    difficulty: difficulty as DifficultyEnum,
-  }
+  if (!isStandardDifficulty(difficulty)) return null
+  return { songId, type, difficulty }
 }
 
 export function sameSheetIdentity(a: SheetIdentity, b: SheetIdentity): boolean {
   return a.songId === b.songId && a.type === b.type && a.difficulty === b.difficulty
 }
 
-function isValidDifficultyForType(type: TypeEnum, difficulty: string | undefined): difficulty is string {
-  if (!difficulty) return false
-  if (DIFFICULTY_VALUES.has(difficulty)) return true
-  return isUtageType(type) && /^【.+】$/.test(difficulty)
+function isSheetType(value: string): value is TypeEnum {
+  return TYPE_VALUES.has(value)
+}
+
+export function isStandardDifficulty(value: string): value is DifficultyEnum {
+  return DIFFICULTY_VALUES.has(value)
+}
+
+function isUtageDifficulty(value: string): value is UtageDifficultyLabel {
+  return /^【.+】$/.test(value)
 }
 
 function isUtageType(type: TypeEnum): type is typeof TypeEnum.UTAGE | typeof TypeEnum.UTAGE2P {

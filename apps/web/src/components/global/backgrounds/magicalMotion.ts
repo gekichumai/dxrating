@@ -43,7 +43,7 @@ export function attachMagicalMotion(scene: HTMLDivElement) {
   function onScroll() {
     if (reduced.matches || document.hidden || document.documentElement.hasAttribute('data-preference-wipe')) return
     lastY = Math.max(0, window.scrollY)
-    if (lastY === sampledY || frame) return
+    if (lastY === sampledY || (frame !== 0 && !Number.isNaN(frame))) return
     lastTime = performance.now() - 16.667
     frame = requestAnimationFrame(tick)
   }

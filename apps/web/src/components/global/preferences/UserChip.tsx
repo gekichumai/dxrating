@@ -25,15 +25,18 @@ export const ProfileImage: FC<{
 }> = ({ email, image, size = '2rem', alt = '' }) => {
   const gravatarEmailHash = useAsync(async () => {
     const e = email?.trim().toLowerCase()
-    if (!e) return ''
+    if (e === undefined || e === '') return ''
     return await sha256(e)
   }, [email])
 
   const src =
-    image ||
-    (gravatarEmailHash.value ? `https://gravatar.com/avatar/${gravatarEmailHash.value}?s=96&d=identicon` : undefined)
+    image !== undefined && image !== null && image !== ''
+      ? image
+      : gravatarEmailHash.value !== undefined && gravatarEmailHash.value !== ''
+        ? `https://gravatar.com/avatar/${gravatarEmailHash.value}?s=96&d=identicon`
+        : undefined
 
-  return !src && gravatarEmailHash.loading ? (
+  return (src === undefined || src === '') && gravatarEmailHash.loading ? (
     <div className="shrink-0 rounded-full flex items-center justify-center" style={{ width: size, height: size }}>
       <MdiAccountCheck />
     </div>
@@ -84,12 +87,12 @@ export const UserChip: FC = () => {
       ) : (
         <IconButton
           onClick={() => {
-            setOpen(session ? 'profile' : 'auth')
+            setOpen(session !== undefined ? 'profile' : 'auth')
           }}
-          aria-label={t(session ? 'auth:user-menu.open-profile' : 'auth:user-menu.sign-in')}
-          title={t(session ? 'auth:user-menu.open-profile' : 'auth:user-menu.sign-in')}
+          aria-label={t(session !== undefined ? 'auth:user-menu.open-profile' : 'auth:user-menu.sign-in')}
+          title={t(session !== undefined ? 'auth:user-menu.open-profile' : 'auth:user-menu.sign-in')}
         >
-          {session ? <ProfileImage email={user?.email} image={user?.image} size="1.2em" /> : <MdiLogin />}
+          {session !== undefined ? <ProfileImage email={user?.email} image={user?.image} size="1.2em" /> : <MdiLogin />}
         </IconButton>
       )}
     </>

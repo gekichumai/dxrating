@@ -61,28 +61,31 @@ export const calculateWebRatingEntries = ({
   const sheetsById = new Map(sheets?.map((sheet) => [sheet.id, sheet]) ?? [])
   const normalizedEntries = entries.flatMap((entry): NormalizedWebRatingEntry[] => {
     const sheet = sheetsById.get(entry.sheetId)
-    if (!sheet) return []
+    if (sheet === undefined) return []
 
     const identity = entry.identity ?? catalog.getById(entry.sheetId)?.identity
     return [
       {
         originalEntry: entry,
         sheet,
-        ratingEntry: identity
-          ? {
-              sheetId: entry.sheetId,
-              identity,
-              achievementRate: entry.achievementRate,
-              comboFlag: entry.comboFlag,
-              syncFlag: entry.syncFlag,
-              source: entry.providerConfig?.divingFish?.ratingEligibility
-                ? {
-                    provider: 'diving-fish' as const,
-                    best50Bucket: entry.providerConfig.divingFish.ratingEligibility,
-                  }
-                : undefined,
-            }
-          : null,
+        ratingEntry:
+          identity !== null && identity !== undefined
+            ? {
+                sheetId: entry.sheetId,
+                identity,
+                achievementRate: entry.achievementRate,
+                comboFlag: entry.comboFlag,
+                syncFlag: entry.syncFlag,
+                source:
+                  entry.providerConfig?.divingFish?.ratingEligibility !== null &&
+                  entry.providerConfig?.divingFish?.ratingEligibility !== undefined
+                    ? {
+                        provider: 'diving-fish' as const,
+                        best50Bucket: entry.providerConfig.divingFish.ratingEligibility,
+                      }
+                    : undefined,
+              }
+            : null,
       },
     ]
   })
@@ -91,12 +94,12 @@ export const calculateWebRatingEntries = ({
     catalog,
     version: appVersion,
     region,
-    entries: normalizedEntries.flatMap((entry) => (entry.ratingEntry ? [entry.ratingEntry] : [])),
+    entries: normalizedEntries.flatMap((entry) => (entry.ratingEntry !== null ? [entry.ratingEntry] : [])),
   })
 
   const resultByRatingEntry = new Map(result.allEntries.map((entry) => [entry.entry, entry]))
   const webEntries = normalizedEntries.map(({ originalEntry, sheet, ratingEntry }) => {
-    const calculatedEntry = ratingEntry ? resultByRatingEntry.get(ratingEntry) : undefined
+    const calculatedEntry = ratingEntry !== null ? resultByRatingEntry.get(ratingEntry) : undefined
     return {
       ...originalEntry,
       sheet,

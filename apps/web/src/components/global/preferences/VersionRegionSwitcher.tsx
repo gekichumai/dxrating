@@ -18,8 +18,14 @@ import { VERSION_THEME } from '../../../theme'
 import { useVersionTheme } from '../../../utils/useVersionTheme'
 import { WebpSupportedImage } from '../WebpSupportedImage'
 
-const fromMergedVersionRegionId = (id: string) => {
-  const [version, region] = id.split('__') as [DXVersion, Region]
+const isVersion = (value: string | undefined): value is DXVersion =>
+  value !== undefined && Object.hasOwn(DXVersionToDXDataVersionEnumMap, value)
+
+const fromMergedVersionRegionId = (id: string): { version: DXVersion; region: Region } => {
+  const [version, region] = id.split('__')
+  if (!isVersion(version) || (region !== 'jp' && region !== 'intl' && region !== 'cn' && region !== '_generic')) {
+    throw new Error(`Unknown version and region: ${id}`)
+  }
   return { version, region }
 }
 
@@ -71,7 +77,7 @@ const VERSION_GENERIC_REGIONS: VersionRegion[] = [
     dxVersion: 'prism' as const,
   },
 ].map(({ dxVersion }) => ({
-  id: `${dxVersion}__${'_generic'}`,
+  id: `${dxVersion}___generic`,
   versionEnum: DXVersionToDXDataVersionEnumMap[dxVersion],
   dxVersion,
   region: '_generic' as const,

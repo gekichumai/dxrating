@@ -12,7 +12,7 @@ export const useCombinedTags = () => {
   return useSWR(
     'tags.list',
     async () => {
-      return (await client.tags.list()) as CombinedTags
+      return await client.tags.list()
     },
     {
       focusThrottleInterval: 1000 * 60 * 60,

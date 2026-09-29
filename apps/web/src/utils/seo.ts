@@ -1,4 +1,4 @@
-import { TypeEnum, type DifficultyEnum, type NoteCounts, type Regions, type Sheet, type Song } from '@gekichumai/dxdata'
+import { TypeEnum, type NoteCounts, type Regions, type Sheet, type Song } from '@gekichumai/dxdata'
 import type { SupportedLocale } from '@/setup/locale'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 import { createServerI18n } from '@/setup/init-i18n'
@@ -46,7 +46,7 @@ const i18nCache = new Map<SupportedLocale, ReturnType<typeof createServerI18n>>(
 
 function getSeoI18n(locale: SupportedLocale) {
   const cached = i18nCache.get(locale)
-  if (cached) return cached
+  if (cached !== null && cached !== undefined) return cached
 
   const instance = createServerI18n(locale)
   i18nCache.set(locale, instance)
@@ -60,20 +60,22 @@ function t(locale: SupportedLocale, key: string, values?: Record<string, unknown
 function readLocaleFromContext(context: unknown): SupportedLocale | null {
   if (typeof context !== 'object' || context === null) return null
 
-  const record = context as Record<string, unknown>
-  return toSupportedLocale(record.locale as string | undefined) ?? readLocaleFromContext(record.serverContext)
+  const locale = 'locale' in context && typeof context.locale === 'string' ? context.locale : undefined
+  return (
+    toSupportedLocale(locale) ?? readLocaleFromContext('serverContext' in context ? context.serverContext : undefined)
+  )
 }
 
 function readLocaleFromSearch(search: unknown): SupportedLocale | null {
   if (typeof search !== 'object' || search === null) return null
 
-  return toSupportedLocale((search as Record<string, unknown>).locale as string | undefined)
+  return toSupportedLocale('locale' in search && typeof search.locale === 'string' ? search.locale : undefined)
 }
 
 export function resolveSeoLocale(matches?: readonly SeoRouteMatch[]): SupportedLocale {
-  for (const match of [...(matches ?? [])].reverse()) {
+  for (const match of [...(matches ?? [])].toReversed()) {
     const locale = readLocaleFromContext(match.context) ?? readLocaleFromSearch(match.search)
-    if (locale) return locale
+    if (locale !== null) return locale
   }
 
   if (typeof document !== 'undefined') {
@@ -237,7 +239,7 @@ export function buildSongSheetSeo(
   },
   sheet: {
     type: TypeEnum
-    difficulty: DifficultyEnum | string
+    difficulty: string
   },
   locale: SupportedLocale,
 ) {
@@ -335,7 +337,7 @@ export function buildSongSheetStructuredData(
   const seo = buildSongSheetSeo(song, sheet, locale)
   const sheetLabel = getSheetTitleLabel(sheet, locale)
   const typeLabel = getSheetTypeDisplayName(sheet.type, locale)
-  const difficultyLabel = String(sheet.difficulty).toUpperCase()
+  const difficultyLabel = sheet.difficulty.toUpperCase()
   const chartUrl = seo.url
   const websiteId = 'https://dxrating.net/#website'
   const breadcrumbId = `${chartUrl}#breadcrumb`

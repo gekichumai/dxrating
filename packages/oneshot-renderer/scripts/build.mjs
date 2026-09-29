@@ -22,19 +22,19 @@ const options = {
   logLevel: 'info',
 }
 
-if (!watch) await rm(new URL('../dist', import.meta.url), { recursive: true, force: true })
+if (watch !== true) await rm(new URL('../dist', import.meta.url), { recursive: true, force: true })
 const declarations = spawn(
   process.execPath,
   [
     require.resolve('typescript/bin/tsc'),
     '-p',
     'tsconfig.json',
-    ...(watch ? ['--watch', '--preserveWatchOutput'] : []),
+    ...(watch === true ? ['--watch', '--preserveWatchOutput'] : []),
   ],
   { cwd: root, stdio: 'inherit' },
 )
 
-if (watch) {
+if (watch === true) {
   const bundler = await context(options)
   let stopping = false
   const stop = async () => {

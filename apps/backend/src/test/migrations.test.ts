@@ -17,7 +17,7 @@ const expectedTables = Object.values({ ...appSchema, ...authSchema })
     const table = getTableConfig(value)
     return [`${table.schema ?? 'public'}.${table.name}`]
   })
-  .sort()
+  .toSorted()
 const testUrl = new URL(process.env.DATABASE_URL!)
 const adminUrl = new URL(testUrl)
 adminUrl.pathname = '/postgres'
@@ -71,9 +71,9 @@ describe('native Effect deployment migrations', () => {
       migrate(fixture.url)
       const applied = await ledger(fixture.pool)
       expect(applied).toHaveLength(migrations.length)
-      expect((await applicationTables(fixture.pool)).map((table) => `${table.schema}.${table.name}`).sort()).toEqual(
-        expectedTables,
-      )
+      expect(
+        (await applicationTables(fixture.pool)).map((table) => `${table.schema}.${table.name}`).toSorted(),
+      ).toEqual(expectedTables)
       expect(
         (
           await fixture.pool.query(`

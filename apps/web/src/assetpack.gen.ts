@@ -1,10 +1,11 @@
 import fs from 'node:fs/promises'
 import childProcess from 'node:child_process'
 import path from 'node:path'
+import { z } from 'zod'
 
 // Get assets directory from command line arguments
 const args = process.argv.slice(2)
-const assetsDir = args[0] || 'public'
+const assetsDir = args[0] !== undefined && args[0] !== '' ? args[0] : 'public'
 
 const WHITELIST_GLOB = [
   'images/version-logo/*.jpg',
@@ -32,7 +33,7 @@ async function main() {
       for await (const filePath of pathIterator) {
         files.add(filePath)
       }
-    } catch (error) {
+    } catch {
       console.warn(`⚠️  No files found matching pattern: ${glob}`)
     }
   }
@@ -54,8 +55,8 @@ async function main() {
         {
           cwd: process.cwd(),
         },
-        (error, stdout, stderr) => {
-          if (error) {
+        (error, stdout) => {
+          if (error !== null && error !== undefined) {
             return reject(error)
           }
 
@@ -64,14 +65,10 @@ async function main() {
       )
     })
 
-    const [exif] = JSON.parse(r) as Array<{
-      ImageWidth: number
-      ImageHeight: number
-      FileSize: string
-    }>
-
-    const stats = await fs.stat(file)
-    const name = path.basename(file, path.extname(file))
+    const [exif] = z
+      .array(z.object({ ImageWidth: z.number(), ImageHeight: z.number() }))
+      .nonempty()
+      .parse(JSON.parse(r))
 
     // Convert absolute path to relative public URL path
     const relativePath = path.relative(assetsDir, file)
