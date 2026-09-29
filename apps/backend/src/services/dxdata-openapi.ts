@@ -1,5 +1,5 @@
-import { toOpenAPISchema, type OpenAPI } from '@orpc/openapi'
-import { JSON_SCHEMA_REGISTRY, ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
+import type * as OpenAPI from '@openapi-spec/types/v3.1'
+import { JSON_SCHEMA_REGISTRY, ZodToJsonSchemaConverter } from '@orpc/zod'
 import { z } from 'zod'
 import { DXDATA_BROWSER_CACHE_CONTROL, DXDATA_CDN_CACHE_CONTROL, DXDATA_PATH } from './dxdata'
 
@@ -371,14 +371,14 @@ const conditionalRequestParameter = {
 
 const zodToJsonSchema = new ZodToJsonSchemaConverter()
 
-export const addPublishedDxdataToOpenApi = (document: OpenAPI.Document): OpenAPI.Document => {
-  const [, catalogSchema] = zodToJsonSchema.convert(PublishedDxdataCatalogSchema, { strategy: 'output' })
+export const addPublishedDxdataToOpenApi = (document: OpenAPI.OpenAPIObject): OpenAPI.OpenAPIObject => {
+  const [catalogSchema] = zodToJsonSchema.convert(PublishedDxdataCatalogSchema, 'output')
 
   document.components ??= {}
   document.components.schemas ??= {}
-  document.components.schemas.PublishedDxdataCatalog = toOpenAPISchema(catalogSchema)
+  document.components.schemas.PublishedDxdataCatalog = catalogSchema
   document.paths ??= {}
-  document.paths[DXDATA_PATH.replace('/api/v1', '')] = {
+  document.paths[DXDATA_PATH.replace('/api/v1', '') as `/${string}`] = {
     get: {
       operationId: 'getPublishedDxdataCatalog',
       summary: 'Get the complete published DX data catalog',

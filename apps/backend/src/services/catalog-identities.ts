@@ -337,7 +337,7 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
           if (Option.isSome(cached)) return Effect.succeed([cached.value, cached] as const)
           return Effect.exit(loadSnapshot(pointer)).pipe(
             Effect.flatMap((result) => {
-              if (Exit.isFailure(result) && Cause.isInterrupted(result.cause)) return Effect.failCause(result.cause)
+              if (Exit.isFailure(result) && Cause.hasInterrupts(result.cause)) return Effect.failCause(result.cause)
               return Effect.succeed([result, Option.some(result)] as const)
             }),
           )
@@ -393,7 +393,7 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
 
   const getBestEffortSnapshot = () =>
     getCurrentSnapshot().pipe(
-      Effect.catchAll((error) => (error.code === 'unavailable' ? Effect.void : Effect.fail(error))),
+      Effect.catch((error) => (error.code === 'unavailable' ? Effect.void : Effect.fail(error))),
     )
 
   const legacySongPassthrough = (songId: string): ResolvedSongIdentity => ({

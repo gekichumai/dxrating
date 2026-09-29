@@ -1,4 +1,4 @@
-import type { OpenAPI } from '@orpc/openapi'
+import type * as OpenAPI from '@openapi-spec/types/v3.1'
 
 type OperationExamples = {
   parameters?: Readonly<Record<string, unknown>>
@@ -112,10 +112,12 @@ export const publicApiOperationExamples = {
     response: { id: 1842 },
   },
   'comments.report': {
+    request: {},
     parameters: { commentId: 1842 },
     response: { success: true },
   },
   'comments.blockAuthor': {
+    request: {},
     parameters: { commentId: 1842 },
     response: { success: true, author_id: 'mai-player-user-id' },
   },
@@ -257,7 +259,7 @@ const addMediaExample = (media: OpenAPI.MediaTypeObject, summary: string, value:
   }
 }
 
-export const addPublicApiExamplesToOpenApi = (document: OpenAPI.Document): OpenAPI.Document => {
+export const addPublicApiExamplesToOpenApi = (document: OpenAPI.OpenAPIObject): OpenAPI.OpenAPIObject => {
   for (const [path, pathItem] of Object.entries(document.paths ?? {})) {
     if (!pathItem || isReference(pathItem)) continue
 
@@ -297,8 +299,10 @@ export const addPublicApiExamplesToOpenApi = (document: OpenAPI.Document): OpenA
       }
 
       let documentedResponse = false
-      for (const [status, responseOrReference] of Object.entries(operation.responses)) {
-        if (!/^2\d\d$/.test(status) || isReference(responseOrReference)) continue
+      for (const status of Object.keys(operation.responses ?? {})) {
+        if (!/^2\d\d$/.test(status)) continue
+        const responseOrReference = operation.responses?.[status as `${number}`]
+        if (!responseOrReference || isReference(responseOrReference)) continue
         const responseMedia = getJsonContent(responseOrReference.content)
         if (!responseMedia) continue
         addMediaExample(responseMedia, `${operation.summary ?? operationId} response`, examples.response)

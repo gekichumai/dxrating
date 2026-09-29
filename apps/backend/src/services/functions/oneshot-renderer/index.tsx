@@ -1,4 +1,4 @@
-import { Effect, Data, Either } from 'effect'
+import { Effect, Data } from 'effect'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import {
   calculateBest50,
@@ -95,7 +95,7 @@ export interface RenderData extends PlayEntry {
 }
 
 type FlattenedSheet = Omit<VersionedSheet, 'type' | 'difficulty' | 'isTypeUtage' | 'isRatingEligible'> & {
-  type: TypeEnum.DX | TypeEnum.STD
+  type: typeof TypeEnum.DX | typeof TypeEnum.STD
   difficulty: DifficultyEnum
   isTypeUtage: false
   isRatingEligible: true
@@ -285,30 +285,28 @@ const getRenderService = () => {
       source,
       render: createRenderService((body: OneshotRequest, options) =>
         Effect.runPromise(
-          Effect.either(
-            Effect.scoped(
-              Effect.gen(function* () {
-                const start = performance.now()
-                const data = body.calculatedEntries
-                  ? prepareCalculatedEntries(body.calculatedEntries, body.version)
-                  : calculateEntries(body.entries ?? [], body.version, body.region)
-                const calc = performance.now() - start
-                const result = yield* Effect.tryPromise({
-                  try: () =>
-                    draw(
-                      { data, version: body.version, region: body.region, playerCollection: body.playerCollection },
-                      options,
-                    ),
-                  catch: (cause) =>
-                    cause instanceof RenderQueueFullError
-                      ? new OneshotQueueFullError({ cause })
-                      : new OneshotRenderError({ operation: 'draw oneshot image', cause }),
-                })
-                return { ...result, timings: { calc, ...result.timings } }
-              }),
-            ),
+          Effect.scoped(
+            Effect.gen(function* () {
+              const start = performance.now()
+              const data = body.calculatedEntries
+                ? prepareCalculatedEntries(body.calculatedEntries, body.version)
+                : calculateEntries(body.entries ?? [], body.version, body.region)
+              const calc = performance.now() - start
+              const result = yield* Effect.tryPromise({
+                try: () =>
+                  draw(
+                    { data, version: body.version, region: body.region, playerCollection: body.playerCollection },
+                    options,
+                  ),
+                catch: (cause) =>
+                  cause instanceof RenderQueueFullError
+                    ? new OneshotQueueFullError({ cause })
+                    : new OneshotRenderError({ operation: 'draw oneshot image', cause }),
+              })
+              return { ...result, timings: { calc, ...result.timings } }
+            }),
           ),
-        ).then(Either.getOrThrowWith((error) => error)),
+        ),
       ),
     }
   }
@@ -377,7 +375,7 @@ export const handler = (c: Context): Promise<Response> => {
     c.header('X-Cache', result.cache)
     return c.body(result.body)
   }).pipe(
-    Effect.catchAll((error) => {
+    Effect.catch((error) => {
       if (error instanceof OneshotQueueFullError) {
         return Effect.sync(() => {
           c.header('Retry-After', '1')
@@ -390,12 +388,10 @@ export const handler = (c: Context): Promise<Response> => {
           scope.setContext('parameters', { demo: !!queryDemo, format, width: queryWidth })
           Sentry.captureException(error)
         }),
-      ).pipe(Effect.zipRight(Effect.fail(error)))
+      ).pipe(Effect.andThen(Effect.fail(error)))
     }),
   )
   return Sentry.startSpan({ name: 'renderOneshot', op: 'function' }, () =>
-    Effect.runPromise(Effect.either(Effect.scoped(program)), { signal: c.req.raw.signal }).then(
-      Either.getOrThrowWith((error) => error),
-    ),
+    Effect.runPromise(Effect.scoped(program), { signal: c.req.raw.signal }),
   )
 }

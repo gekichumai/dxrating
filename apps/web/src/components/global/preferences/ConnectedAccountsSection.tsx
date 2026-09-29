@@ -63,11 +63,13 @@ export const ConnectedAccountsSection: FC = () => {
   }
 
   const handleDisconnect = async (providerId: string) => {
+    const account = accounts.find((item) => item.providerId === providerId)
+    if (!account) return
     const confirmed = await confirmDisconnect.confirm()
     if (!confirmed) return
     setDisconnectingProvider(providerId)
     try {
-      await authClient.unlinkAccount({ providerId })
+      await authClient.unlinkAccount({ accountId: account.id })
       toast.success(t('auth:user-profile.accounts.disconnected'))
       setAccounts((prev) => prev.filter((a) => a.providerId !== providerId))
     } catch (e: any) {

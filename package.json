@@ -16,14 +16,14 @@
     "turbo": "^2.9.6"
   },
   "engines": {
-    "node": "25.9.0"
+    "node": "26.10.0"
   },
   "packageManager": "pnpm@10.33.0",
   "pnpm": {
     "overrides": {
       "happy-dom": ">=20.9.0",
       "flatted": ">=3.4.2",
-      "effect": ">=3.21.0"
+      "effect@<4.0.0-0": "3.22.2"
     },
     "onlyBuiltDependencies": [
       "bcrypt",
@@ -38,6 +38,9 @@
       "protobufjs",
       "react-grab",
       "workerd"
-    ]
+    ],
+    "patchedDependencies": {
+      "drizzle-orm@1.0.0-rc.5-5935859": "patches/drizzle-orm@1.0.0-rc.5-5935859.patch"
+    }
   }
 }

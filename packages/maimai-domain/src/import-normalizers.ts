@@ -445,17 +445,17 @@ function normalizeAquaSyncStatus(value: number | string | null): SyncFlag {
   return normalizeSync(value)
 }
 
-function normalizeStandardDxType(value: string): TypeEnum.STD | TypeEnum.DX | null {
+function normalizeStandardDxType(value: string): typeof TypeEnum.STD | typeof TypeEnum.DX | null {
   return match(value)
-    .returnType<TypeEnum.STD | TypeEnum.DX | null>()
+    .returnType<typeof TypeEnum.STD | typeof TypeEnum.DX | null>()
     .with('standard', () => TypeEnum.STD)
     .with('dx', () => TypeEnum.DX)
     .otherwise(() => null)
 }
 
-function normalizeDivingFishType(value: string): TypeEnum.STD | TypeEnum.DX | null {
+function normalizeDivingFishType(value: string): typeof TypeEnum.STD | typeof TypeEnum.DX | null {
   return match(value.toLowerCase())
-    .returnType<TypeEnum.STD | TypeEnum.DX | null>()
+    .returnType<typeof TypeEnum.STD | typeof TypeEnum.DX | null>()
     .with('sd', () => TypeEnum.STD)
     .with('dx', () => TypeEnum.DX)
     .otherwise(() => null)

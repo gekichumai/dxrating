@@ -10,8 +10,10 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
-    "zod": "^4.3.6"
+    "@orpc/openapi": "catalog:",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@types/node": "catalog:",

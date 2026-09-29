@@ -1,5 +1,5 @@
 import { createAssetLoader } from '@gekichumai/oneshot-renderer'
-import { Effect, Data, Either } from 'effect'
+import { Effect, Data } from 'effect'
 import os from 'node:os'
 import path from 'node:path'
 import sharp from 'sharp'
@@ -60,7 +60,7 @@ export const fetchAssetEffect = (relativePath: string) =>
 
 export const fetchImageAssetEffect = (relativePath: string) =>
   fetchAssetEffect(relativePath).pipe(
-    Effect.catchAll((error) =>
+    Effect.catch((error) =>
       Effect.gen(function* () {
         yield* Effect.sync(() => {
           console.warn(`Image asset not found, using gray fallback: ${relativePath}`)
@@ -73,10 +73,6 @@ export const fetchImageAssetEffect = (relativePath: string) =>
 
 // The shared renderer package accepts Promise loaders at its integration boundary.
 export const fetchAsset = (relativePath: string): Promise<Buffer> =>
-  Effect.runPromise(Effect.either(Effect.scoped(fetchAssetEffect(relativePath)))).then(
-    Either.getOrThrowWith((error) => error),
-  )
+  Effect.runPromise(Effect.scoped(fetchAssetEffect(relativePath)))
 export const fetchImageAsset = (relativePath: string): Promise<Buffer> =>
-  Effect.runPromise(Effect.either(Effect.scoped(fetchImageAssetEffect(relativePath)))).then(
-    Either.getOrThrowWith((error) => error),
-  )
+  Effect.runPromise(Effect.scoped(fetchImageAssetEffect(relativePath)))

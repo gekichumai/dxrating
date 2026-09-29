@@ -1,5 +1,6 @@
 import * as crypto from 'node:crypto'
 import { Clock, Data, Effect } from 'effect'
+import { HttpBody } from 'effect/http'
 import { eq, lt } from 'drizzle-orm'
 import { z } from 'zod'
 import { AppConfig } from '../../config'
@@ -74,23 +75,23 @@ export const exchangeCodeForTokens = Effect.fn('Lxns.exchangeCodeForTokens')(fun
   if (timestamp - stateRow.created_at.getTime() > STATE_TTL_MS) {
     return yield* Effect.fail(new LxnsError({ message: 'OAuth state expired' }))
   }
-  const response = yield* http.request(LXNS_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: config.redirectUri,
-    }),
-    signal: AbortSignal.timeout(30_000),
-  })
-  if (!response.ok) {
-    const text = yield* http.text(response)
-    return yield* Effect.fail(new LxnsError({ message: `LXNS token exchange failed: ${response.status} ${text}` }))
-  }
-  const tokenData = yield* decodeTokens(yield* http.json(response))
+  const tokenData = yield* Effect.gen(function* () {
+    const response = yield* http.post(LXNS_TOKEN_URL, {
+      headers: { 'Content-Type': 'application/json' },
+      body: HttpBody.jsonUnsafe({
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: config.redirectUri,
+      }),
+    })
+    if (response.status < 200 || response.status >= 300) {
+      const text = yield* response.text
+      return yield* Effect.fail(new LxnsError({ message: `LXNS token exchange failed: ${response.status} ${text}` }))
+    }
+    return yield* decodeTokens(yield* response.json)
+  }).pipe(Effect.scoped, Effect.timeout('30 seconds'))
   const now = new Date(yield* Clock.currentTimeMillis)
   const values = {
     access_token: tokenData.access_token,
@@ -117,22 +118,22 @@ const refreshAccessToken = Effect.fn('Lxns.refreshAccessToken')(function* (userI
     db.select().from(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId)).limit(1),
   )
   if (!token) return yield* Effect.fail(new LxnsError({ message: 'No LXNS connection found. Please authorize first.' }))
-  const response = yield* http.request(LXNS_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
-      grant_type: 'refresh_token',
-      refresh_token: token.refresh_token,
-    }),
-    signal: AbortSignal.timeout(30_000),
-  })
-  if (!response.ok) {
-    yield* disconnect(userId)
-    return yield* Effect.fail(new LxnsError({ message: 'LXNS connection expired. Please reconnect your account.' }))
-  }
-  const tokenData = yield* decodeTokens(yield* http.json(response))
+  const tokenData = yield* Effect.gen(function* () {
+    const response = yield* http.post(LXNS_TOKEN_URL, {
+      headers: { 'Content-Type': 'application/json' },
+      body: HttpBody.jsonUnsafe({
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        grant_type: 'refresh_token',
+        refresh_token: token.refresh_token,
+      }),
+    })
+    if (response.status < 200 || response.status >= 300) {
+      yield* disconnect(userId)
+      return yield* Effect.fail(new LxnsError({ message: 'LXNS connection expired. Please reconnect your account.' }))
+    }
+    return yield* decodeTokens(yield* response.json)
+  }).pipe(Effect.scoped, Effect.timeout('30 seconds'))
   const now = new Date(yield* Clock.currentTimeMillis)
   yield* database.query('Update LXNS tokens', (db) =>
     db
@@ -164,20 +165,21 @@ const getValidAccessToken = Effect.fn('Lxns.getValidAccessToken')(function* (use
 export const fetchPlayerScores = Effect.fn('Lxns.fetchPlayerScores')(function* (userId: string) {
   const accessToken = yield* getValidAccessToken(userId)
   const http = yield* HttpClient
-  const response = yield* http.request(`${LXNS_BASE}/api/v0/user/maimai/player/scores`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-    signal: AbortSignal.timeout(30_000),
-  })
-  if (!response.ok) {
-    const text = yield* http.text(response)
-    return yield* Effect.fail(new LxnsError({ message: `LXNS API error: ${response.status} ${text}` }))
-  }
-  const json = yield* http.json(response)
-  return yield* Effect.try({
-    try: () => LxnsScoresResponseSchema.parse(unwrapLxnsResponse(json)),
-    catch: (cause) =>
-      new LxnsError({ message: cause instanceof Error ? cause.message : 'Invalid LXNS scores response', cause }),
-  })
+  return yield* Effect.gen(function* () {
+    const response = yield* http.get(`${LXNS_BASE}/api/v0/user/maimai/player/scores`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    if (response.status < 200 || response.status >= 300) {
+      const text = yield* response.text
+      return yield* Effect.fail(new LxnsError({ message: `LXNS API error: ${response.status} ${text}` }))
+    }
+    const json = yield* response.json
+    return yield* Effect.try({
+      try: () => LxnsScoresResponseSchema.parse(unwrapLxnsResponse(json)),
+      catch: (cause) =>
+        new LxnsError({ message: cause instanceof Error ? cause.message : 'Invalid LXNS scores response', cause }),
+    })
+  }).pipe(Effect.scoped, Effect.timeout('30 seconds'))
 })
 
 export const getConnectionStatus = Effect.fn('Lxns.getConnectionStatus')(function* (userId: string) {

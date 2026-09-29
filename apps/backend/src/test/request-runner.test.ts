@@ -1,12 +1,12 @@
 import { ORPCError } from '@orpc/server'
-import { Context, Deferred, Effect, Layer, ManagedRuntime, Runtime } from 'effect'
-import { describe, expect, it, vi } from 'vitest'
+import { Context, Deferred, Effect, Exit, Fiber, Layer, ManagedRuntime } from 'effect'
+import { describe, expect, it, vi } from '@effect/vitest'
 import { createRequestRunner, RequestRunnerClosedError } from '../request-runner'
 
-class Resource extends Context.Tag('test/RequestRunnerResource')<Resource, { readonly open: true }>() {}
+class Resource extends Context.Service<Resource, { readonly open: true }>()('test/RequestRunnerResource') {}
 
 const resourceLayer = (events: string[]) =>
-  Layer.scoped(
+  Layer.effect(
     Resource,
     Effect.acquireRelease(Effect.succeed({ open: true as const }), () =>
       Effect.sync(() => {
@@ -16,6 +16,49 @@ const resourceLayer = (events: string[]) =>
   )
 
 describe('supervised application requests', () => {
+  it.effect('joins framework-owned fibers before disposing application services', () =>
+    Effect.gen(function* () {
+      const events: string[] = []
+      const runtime = ManagedRuntime.make(resourceLayer(events))
+      const runner = createRequestRunner(runtime)
+      yield* Effect.promise(() => runtime.runPromise(Resource))
+      const started = yield* Deferred.make<void>()
+      const finishSdk = yield* Deferred.make<void>()
+      const request = yield* Effect.forkChild(
+        runner.supervise(
+          Effect.scoped(
+            Effect.gen(function* () {
+              yield* Effect.acquireRelease(Deferred.succeed(started, undefined), () =>
+                Effect.sync(() => {
+                  events.push('framework request closed')
+                }),
+              )
+              yield* Deferred.await(finishSdk).pipe(Effect.uninterruptible)
+            }),
+          ),
+        ),
+      )
+      yield* Deferred.await(started)
+      const stopped = runner.shutdown()
+      yield* Effect.yieldNow
+      yield* Deferred.succeed(finishSdk, undefined)
+      yield* Effect.promise(() => stopped)
+      expect(Exit.hasInterrupts(yield* Fiber.await(request))).toBe(true)
+      expect(events).toEqual(['framework request closed', 'service closed'])
+    }),
+  )
+
+  it.effect('does not dispatch a framework effect after shutdown', () =>
+    Effect.gen(function* () {
+      const runner = createRequestRunner(ManagedRuntime.make(Layer.empty))
+      yield* Effect.promise(runner.shutdown)
+      const execute = vi.fn()
+      const exit = yield* Effect.exit(runner.supervise(Effect.sync(execute)))
+      expect(Exit.hasInterrupts(exit)).toBe(true)
+      expect(execute).not.toHaveBeenCalled()
+    }),
+  )
+
   it('joins masked SDK work and request finalizers before closing services', async () => {
     const events: string[] = []
     const started = await Effect.runPromise(Deferred.make<void>())
@@ -101,13 +144,12 @@ describe('supervised application requests', () => {
     }
   })
 
-  it('leaves unexpected defects in the runtime failure channel', async () => {
+  it('preserves unexpected defect identity at the native Promise boundary', async () => {
     const runner = createRequestRunner(ManagedRuntime.make(Layer.empty))
     const defect = new Error('Unexpected application defect')
     try {
       const failure = await runner.run(Effect.die(defect)).catch((error: unknown) => error)
-      expect(Runtime.isFiberFailure(failure)).toBe(true)
-      expect(failure).not.toBe(defect)
+      expect(failure).toBe(defect)
     } finally {
       await runner.shutdown()
     }

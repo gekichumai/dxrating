@@ -45,7 +45,7 @@ describe('Effect HTTP server lifetime', () => {
       )
       expect(Exit.isFailure(exit)).toBe(true)
       if (!Exit.isFailure(exit)) throw new Error('Expected address-in-use failure')
-      const failure = Option.getOrThrow(Cause.failureOption(exit.cause))
+      const failure = Option.getOrThrow(Cause.findErrorOption(exit.cause))
       expect(failure).toBeInstanceOf(ServerError)
       expect(failure.cause).toMatchObject({ code: 'EADDRINUSE' })
       expect(await (await fetch(`http://127.0.0.1:${port}`)).text()).toBe('original owner')
@@ -90,7 +90,8 @@ describe('Effect HTTP server lifetime', () => {
     finishRequest()
 
     expect(await (await response).text()).toBe('drained')
-    expect(Exit.isInterrupted(await shutdown)).toBe(true)
+    await shutdown
+    expect(Exit.hasInterrupts(await Effect.runPromise(Fiber.await(fiber)))).toBe(true)
     await Effect.runPromise(
       Effect.scoped(serve({ hostname: '127.0.0.1', port: address, fetch: () => new Response('rebound') })),
     )

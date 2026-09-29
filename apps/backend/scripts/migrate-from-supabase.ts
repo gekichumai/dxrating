@@ -359,13 +359,13 @@ const main = Effect.scoped(
       dotenv.config()
       dotenv.config({ path: path.resolve(process.cwd(), '.env.local'), override: true })
     })
-    const sourceUrl = yield* Config.string('SUPABASE_DATABASE_URL').pipe(
+    const sourceUrl = yield* Config.String('SUPABASE_DATABASE_URL').pipe(
       Effect.filterOrFail(
         (value) => value.length > 0,
         () => new MigrationConfigurationError({ message: 'Missing SUPABASE_DATABASE_URL env var' }),
       ),
     )
-    const targetUrl = yield* Config.string('DATABASE_URL').pipe(
+    const targetUrl = yield* Config.String('DATABASE_URL').pipe(
       Effect.filterOrFail(
         (value) => value.length > 0,
         () => new MigrationConfigurationError({ message: 'Missing DATABASE_URL env var' }),
@@ -381,6 +381,6 @@ const main = Effect.scoped(
     yield* resetSequences(target)
     yield* Console.log('\nMigration completed successfully!')
   }),
-).pipe(Effect.tapErrorCause((cause) => Console.error('\nMigration failed:', cause)))
+).pipe(Effect.tapCause((cause) => Console.error('\nMigration failed:', cause)))
 
 NodeRuntime.runMain(main)

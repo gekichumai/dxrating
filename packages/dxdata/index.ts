@@ -18,15 +18,17 @@ export interface CategoryElement {
   category: CategoryEnum
 }
 
-export enum CategoryEnum {
-  Popsアニメ = 'POPS＆アニメ',
-  Niconicoボーカロイド = 'niconico＆ボーカロイド',
-  東方Project = '東方Project',
-  ゲームバラエティ = 'ゲーム＆バラエティ',
-  Maimai = 'maimai',
-  オンゲキChunithm = 'オンゲキ＆CHUNITHM',
-  宴会場 = '宴会場',
-}
+export const CategoryEnum = {
+  Popsアニメ: 'POPS＆アニメ',
+  Niconicoボーカロイド: 'niconico＆ボーカロイド',
+  東方Project: '東方Project',
+  ゲームバラエティ: 'ゲーム＆バラエティ',
+  Maimai: 'maimai',
+  オンゲキChunithm: 'オンゲキ＆CHUNITHM',
+  宴会場: '宴会場',
+} as const
+
+export type CategoryEnum = (typeof CategoryEnum)[keyof typeof CategoryEnum]
 
 export interface DifficultyElement {
   difficulty: DifficultyEnum
@@ -34,13 +36,15 @@ export interface DifficultyElement {
   color: string
 }
 
-export enum DifficultyEnum {
-  Basic = 'basic',
-  Advanced = 'advanced',
-  Expert = 'expert',
-  Master = 'master',
-  ReMaster = 'remaster',
-}
+export const DifficultyEnum = {
+  Basic: 'basic',
+  Advanced: 'advanced',
+  Expert: 'expert',
+  Master: 'master',
+  ReMaster: 'remaster',
+} as const
+
+export type DifficultyEnum = (typeof DifficultyEnum)[keyof typeof DifficultyEnum]
 
 export interface Region {
   region: string
@@ -91,43 +95,47 @@ export interface Regions {
   cn: boolean
 }
 
-export enum TypeEnum {
-  DX = 'dx',
-  STD = 'std',
-  UTAGE = 'utage',
-  UTAGE2P = 'utage2p',
-}
+export const TypeEnum = {
+  DX: 'dx',
+  STD: 'std',
+  UTAGE: 'utage',
+  UTAGE2P: 'utage2p',
+} as const
 
-export enum VersionEnum {
-  BUDDiES = 'BUDDiES', // 2023.9
-  BUDDiESPLUS = 'BUDDiES PLUS', // 2024.3
-  PRiSM = 'PRiSM', // 2024.9
-  PRiSMPLUS = 'PRiSM PLUS', // 2025.3
-  CiRCLE = 'CiRCLE', // 2025.9
-  CiRCLEPLUS = 'CiRCLE PLUS', // 2026.3
-  MAGiCAL = 'MAGiCAL', // 2026.9
-  FESTiVAL = 'FESTiVAL',
-  FESTiVALPLUS = 'FESTiVAL PLUS',
-  FiNALE = 'FiNALE',
-  GreeN = 'GreeN',
-  GreeNPLUS = 'GreeN PLUS',
-  MURASAKi = 'MURASAKi',
-  MURASAKiPLUS = 'MURASAKi PLUS',
-  Maimai = 'maimai',
-  MaimaiPLUS = 'maimai PLUS',
-  Maimaiでらっくす = 'maimaiでらっくす',
-  MaimaiでらっくすPLUS = 'maimaiでらっくす PLUS',
-  MiLK = 'MiLK',
-  MiLKPLUS = 'MiLK PLUS',
-  Orange = 'ORANGE',
-  OrangePlus = 'ORANGE PLUS',
-  PiNK = 'PiNK',
-  PiNKPLUS = 'PiNK PLUS',
-  Splash = 'Splash',
-  SplashPLUS = 'Splash PLUS',
-  UNiVERSE = 'UNiVERSE',
-  UNiVERSEPLUS = 'UNiVERSE PLUS',
-}
+export type TypeEnum = (typeof TypeEnum)[keyof typeof TypeEnum]
+
+export const VersionEnum = {
+  BUDDiES: 'BUDDiES', // 2023.9
+  BUDDiESPLUS: 'BUDDiES PLUS', // 2024.3
+  PRiSM: 'PRiSM', // 2024.9
+  PRiSMPLUS: 'PRiSM PLUS', // 2025.3
+  CiRCLE: 'CiRCLE', // 2025.9
+  CiRCLEPLUS: 'CiRCLE PLUS', // 2026.3
+  MAGiCAL: 'MAGiCAL', // 2026.9
+  FESTiVAL: 'FESTiVAL',
+  FESTiVALPLUS: 'FESTiVAL PLUS',
+  FiNALE: 'FiNALE',
+  GreeN: 'GreeN',
+  GreeNPLUS: 'GreeN PLUS',
+  MURASAKi: 'MURASAKi',
+  MURASAKiPLUS: 'MURASAKi PLUS',
+  Maimai: 'maimai',
+  MaimaiPLUS: 'maimai PLUS',
+  Maimaiでらっくす: 'maimaiでらっくす',
+  MaimaiでらっくすPLUS: 'maimaiでらっくす PLUS',
+  MiLK: 'MiLK',
+  MiLKPLUS: 'MiLK PLUS',
+  Orange: 'ORANGE',
+  OrangePlus: 'ORANGE PLUS',
+  PiNK: 'PiNK',
+  PiNKPLUS: 'PiNK PLUS',
+  Splash: 'Splash',
+  SplashPLUS: 'Splash PLUS',
+  UNiVERSE: 'UNiVERSE',
+  UNiVERSEPLUS: 'UNiVERSE PLUS',
+} as const
+
+export type VersionEnum = (typeof VersionEnum)[keyof typeof VersionEnum]
 
 // from https://github.com/zetaraku/arcade-songs-fetch/blob/362f2a1b1a1752074951006cedde06948fb0061a/src/maimai/fetch-intl-versions.ts#L16
 export const VERSION_ID_MAP = new Map([

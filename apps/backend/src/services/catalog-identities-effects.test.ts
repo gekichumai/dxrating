@@ -1,9 +1,9 @@
-import { Effect, Either } from 'effect'
+import { Effect } from 'effect'
 import { describe, expect, it, vi } from 'vitest'
 import { createCatalogIdentityEffects } from './catalog-identities'
 
 const runTest = <A, E>(effect: Effect.Effect<A, E>, options?: { signal?: AbortSignal }) =>
-  Effect.runPromise(Effect.either(effect), options).then(Either.getOrThrowWith((error) => error))
+  Effect.runPromise(effect, options)
 
 const songId = 'dsng_23456789ab'
 const snapshot = {
@@ -36,7 +36,7 @@ describe('catalog snapshot interruption isolation', () => {
         }
         snapshotReads += 1
         if (snapshotReads > 1) return Effect.succeed(snapshot)
-        return Effect.async<{ rows: unknown[] }>(() =>
+        return Effect.callback<{ rows: unknown[] }>(() =>
           Effect.sync(() => {
             cancelled += 1
           }),
@@ -91,7 +91,7 @@ describe('catalog snapshot interruption isolation', () => {
           return Effect.succeed(pointer)
         }
         snapshotReads += 1
-        return Effect.async<{ rows: unknown[] }>((resume) => {
+        return Effect.callback<{ rows: unknown[] }>((resume) => {
           complete = () => resume(Effect.succeed(snapshot))
         })
       }),

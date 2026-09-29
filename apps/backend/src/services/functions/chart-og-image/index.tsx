@@ -1,4 +1,4 @@
-import { Effect, Data, Either } from 'effect'
+import { Effect, Data } from 'effect'
 import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
 import type { NoteCounts } from '@gekichumai/dxdata'
 import type { SheetDifficulty } from '@gekichumai/maimai-domain'
@@ -166,28 +166,26 @@ function isUtageType(type: TypeEnum) {
 export function createChartOgImageHandler(renderImage?: RenderChartOgImage): Handler {
   return (c) =>
     Effect.runPromise(
-      Effect.either(
-        Effect.scoped(
-          Effect.gen(function* () {
-            const songId = c.req.param('songId')
-            const type = c.req.param('type')
-            const difficulty = c.req.param('difficulty')
-            if (!songId || !type || !difficulty) return c.text('Chart not found', 404)
+      Effect.scoped(
+        Effect.gen(function* () {
+          const songId = c.req.param('songId')
+          const type = c.req.param('type')
+          const difficulty = c.req.param('difficulty')
+          if (!songId || !type || !difficulty) return c.text('Chart not found', 404)
 
-            const output = yield* renderChartOgImageOutputEffect({ songId, type, difficulty }, renderImage)
-            if (!output) return c.text('Chart not found', 404)
+          const output = yield* renderChartOgImageOutputEffect({ songId, type, difficulty }, renderImage)
+          if (!output) return c.text('Chart not found', 404)
 
-            return new Response(output.body, {
-              headers: {
-                ...output.headers,
-                'Content-Length': String(output.body.size),
-              },
-            })
-          }),
-        ),
+          return new Response(output.body, {
+            headers: {
+              ...output.headers,
+              'Content-Length': String(output.body.size),
+            },
+          })
+        }),
       ),
       { signal: c.req.raw.signal },
-    ).then(Either.getOrThrowWith((error) => error))
+    )
 }
 
 export const renderChartOgImageOutputEffect = (

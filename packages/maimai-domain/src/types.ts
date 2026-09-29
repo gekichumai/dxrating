@@ -4,8 +4,8 @@ export type Region = 'jp' | 'intl' | 'cn' | '_generic'
 
 export type UtageDifficultyLabel = `【${string}】`
 export type SheetDifficulty = DifficultyEnum | UtageDifficultyLabel
-export type StandardSheetType = TypeEnum.DX | TypeEnum.STD
-export type UtageSheetType = TypeEnum.UTAGE | TypeEnum.UTAGE2P
+export type StandardSheetType = typeof TypeEnum.DX | typeof TypeEnum.STD
+export type UtageSheetType = typeof TypeEnum.UTAGE | typeof TypeEnum.UTAGE2P
 
 export interface StandardSheetTypeDifficulty {
   type: StandardSheetType

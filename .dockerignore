@@ -6,6 +6,7 @@
 !pnpm-lock.yaml
 !pnpm-workspace.yaml
 !.npmrc
+!patches/
 !packages/tsconfig/
 !packages/api-contract/
 !packages/dxdata/
@@ -14,6 +15,8 @@
 !apps/backend/
 
 # Keep local generated artifacts out of the Docker build context.
+**/.env
+**/.env.*
 **/node_modules
 **/dist
 **/.turbo

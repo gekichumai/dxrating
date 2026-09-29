@@ -38,7 +38,7 @@ await Sentry.close(5000)
       outfile: path.join(directory, 'dist/fixture.js'),
       bundle: true,
       platform: 'node',
-      target: 'node25',
+      target: 'node26',
       format: 'esm',
       packages: 'external',
       sourcemap: true,

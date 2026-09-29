@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { OpenAPI } from '@orpc/openapi'
+import type * as OpenAPI from '@openapi-spec/types/v3.1'
 import { PublishedDxdataCatalogSchema, addPublishedDxdataToOpenApi } from './dxdata-openapi'
 
 const catalogFixture = {
@@ -87,7 +87,7 @@ describe('published DX data OpenAPI contract', () => {
   })
 
   it('adds discoverable GET and HEAD operations without defining a runtime handler', () => {
-    const document: OpenAPI.Document = {
+    const document: OpenAPI.OpenAPIObject = {
       openapi: '3.1.1',
       info: { title: 'test', version: '1' },
       paths: {},
@@ -103,21 +103,21 @@ describe('published DX data OpenAPI contract', () => {
       operationId: 'headPublishedDxdataCatalog',
       security: [],
     })
-    expect(augmented.paths?.['/dxdata']?.get?.responses['503']).toHaveProperty('content.application/json')
-    expect(augmented.paths?.['/dxdata']?.head?.responses['500']).not.toHaveProperty('content')
-    expect(augmented.paths?.['/dxdata']?.head?.responses['503']).not.toHaveProperty('content')
+    expect(augmented.paths?.['/dxdata']?.get?.responses?.['503']).toHaveProperty('content.application/json')
+    expect(augmented.paths?.['/dxdata']?.head?.responses?.['500']).not.toHaveProperty('content')
+    expect(augmented.paths?.['/dxdata']?.head?.responses?.['503']).not.toHaveProperty('content')
     expect(augmented.components?.schemas?.PublishedDxdataCatalog).toBeDefined()
   })
 
   it('documents concise real-data examples for the catalog, headers, validators, and errors', () => {
-    const document: OpenAPI.Document = {
+    const document: OpenAPI.OpenAPIObject = {
       openapi: '3.1.1',
       info: { title: 'test', version: '1' },
       paths: {},
     }
 
     const augmented = addPublishedDxdataToOpenApi(document)
-    const catalogSchema = augmented.components?.schemas?.PublishedDxdataCatalog as OpenAPI.SchemaObject
+    const catalogSchema = augmented.components?.schemas?.PublishedDxdataCatalog as OpenAPI.SchemaObjectFields
     const [catalogExample] = catalogSchema.examples ?? []
     const parsedExample = PublishedDxdataCatalogSchema.parse(catalogExample)
 
@@ -147,7 +147,7 @@ describe('published DX data OpenAPI contract', () => {
     }
 
     const get = augmented.paths?.['/dxdata']?.get
-    const successResponse = get?.responses['200'] as OpenAPI.ResponseObject
+    const successResponse = get?.responses?.['200'] as OpenAPI.ResponseObject
     const mediaExample = successResponse.content?.['application/json']?.examples?.representativeCatalog
     expect(mediaExample).not.toHaveProperty('$ref')
     expect(mediaExample).toHaveProperty('value', parsedExample)
@@ -168,8 +168,8 @@ describe('published DX data OpenAPI contract', () => {
       '*',
     ])
 
-    const internalError = get?.responses['500'] as OpenAPI.ResponseObject
-    const unavailableError = get?.responses['503'] as OpenAPI.ResponseObject
+    const internalError = get?.responses?.['500'] as OpenAPI.ResponseObject
+    const unavailableError = get?.responses?.['503'] as OpenAPI.ResponseObject
     const internalErrorExample = internalError.content?.['application/json']?.examples?.error
     const unavailableErrorExample = unavailableError.content?.['application/json']?.examples?.error
     expect(internalErrorExample).toHaveProperty('value', {

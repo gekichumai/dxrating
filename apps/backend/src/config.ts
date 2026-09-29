@@ -122,5 +122,5 @@ export const config = {
   },
 } as const
 
-export class AppConfig extends Context.Tag('dxrating/AppConfig')<AppConfig, typeof config>() {}
+export class AppConfig extends Context.Service<AppConfig, typeof config>()('dxrating/AppConfig') {}
 export const AppConfigLive = Layer.succeed(AppConfig, config)

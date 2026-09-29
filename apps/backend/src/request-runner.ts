@@ -1,4 +1,4 @@
-import { Effect, Either, ManagedRuntime, type Scope } from 'effect'
+import { Effect, Exit, FiberSet, ManagedRuntime, Scope } from 'effect'
 
 export class RequestRunnerClosedError extends Error {
   constructor() {
@@ -10,8 +10,17 @@ export class RequestRunnerClosedError extends Error {
 /** Own foreign request entry points independently of the runtime's service scope. */
 export const createRequestRunner = <R, ER>(runtime: ManagedRuntime.ManagedRuntime<R, ER>) => {
   const active = new Map<AbortController, Promise<unknown>>()
+  const requestScope = Scope.makeUnsafe()
+  const foreignFibers = Effect.runSync(FiberSet.make().pipe(Scope.provide(requestScope)))
   let accepting = true
   let shutdownPromise: Promise<void> | undefined
+
+  // Official framework integrations execute their own fibers. Register those
+  // fibers so shutdown also joins their masked operations and finalizers.
+  const supervise = <A, E, R2>(effect: Effect.Effect<A, E, R2>): Effect.Effect<A, E, R2> =>
+    Effect.withFiber((fiber) =>
+      accepting ? FiberSet.add(foreignFibers, fiber).pipe(Effect.andThen(effect)) : Effect.interrupt,
+    )
 
   const run = <A, E>(
     effect: Effect.Effect<A, E, R | Scope.Scope>,
@@ -26,16 +35,12 @@ export const createRequestRunner = <R, ER>(runtime: ManagedRuntime.ManagedRuntim
     else externalSignal?.addEventListener('abort', forwardAbort, { once: true })
 
     // Register before the runtime can execute user code or initiate a nested request.
-    const pending = Promise.resolve()
-      .then(() =>
-        runtime.runPromise(
-          Effect.either(
-            Effect.suspend(() => (!accepting || controller.signal.aborted ? Effect.interrupt : Effect.scoped(effect))),
-          ),
-          { signal: controller.signal },
-        ),
-      )
-      .then(Either.getOrThrowWith((error) => error))
+    const pending = Promise.resolve().then(() =>
+      runtime.runPromise(
+        Effect.suspend(() => (!accepting || controller.signal.aborted ? Effect.interrupt : Effect.scoped(effect))),
+        { signal: controller.signal },
+      ),
+    )
     active.set(controller, pending)
     const finished = () => {
       active.delete(controller)
@@ -51,10 +56,11 @@ export const createRequestRunner = <R, ER>(runtime: ManagedRuntime.ManagedRuntim
       for (const controller of active.keys()) controller.abort()
       // Interrupting a fiber waits for its finalizers and any masked SDK calls.
       // ManagedRuntime.dispose alone only closes layers; it does not join requests.
-      return Promise.allSettled(active.values()).then(() => runtime.dispose())
+      const closeForeignRequests = Effect.runPromise(Scope.close(requestScope, Exit.void))
+      return Promise.allSettled([...active.values(), closeForeignRequests]).then(() => runtime.dispose())
     })
     return shutdownPromise
   }
 
-  return { run, shutdown }
+  return { run, supervise, shutdown }
 }

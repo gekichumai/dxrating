@@ -16,7 +16,7 @@
     "dev": "node scripts/build.mjs --watch",
     "lint": "oxlint src test scripts",
     "test": "vitest run && pnpm test:runtime",
-    "test:runtime": "pnpm build && node --experimental-transform-types --test scripts/runtime-import.test.mjs",
+    "test:runtime": "pnpm build && node --test scripts/runtime-import.test.mjs",
     "test:visual": "node --import tsx scripts/verify-visual.ts"
   },
   "dependencies": {

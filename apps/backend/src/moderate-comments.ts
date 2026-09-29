@@ -11,18 +11,24 @@ const program = Effect.gen(function* () {
   const database = yield* Database
   if (action === 'list') {
     const result = yield* database.query('List unresolved comment reports', (db) =>
-      db.execute(sql`
+      db.execute(
+        sql`
       SELECT r.id, r.action, r.created_at, c.id AS comment_id, c.content, c.created_by
       FROM comment_reports r JOIN comments c ON c.id = r.comment_id
-      WHERE r.resolved_at IS NULL ORDER BY r.created_at LIMIT 100`),
+      WHERE r.resolved_at IS NULL ORDER BY r.created_at LIMIT 100`,
+        'objects',
+      ),
     )
-    yield* Effect.sync(() => console.log(JSON.stringify(result.rows, null, 2)))
+    yield* Effect.sync(() => console.log(JSON.stringify(result, null, 2)))
   } else if ((action === 'remove' || action === 'dismiss') && /^\d+$/.test(rawId ?? '')) {
     yield* database.transaction((tx) =>
       Effect.gen(function* () {
-        const { rows } = yield* database.query('Lock comment report', () =>
-          tx.execute<{ comment_id: number }>(sql`
-        SELECT comment_id FROM comment_reports WHERE id = ${rawId} FOR UPDATE`),
+        const rows = yield* database.query('Lock comment report', () =>
+          tx.execute<{ comment_id: number }>(
+            sql`
+        SELECT comment_id FROM comment_reports WHERE id = ${rawId} FOR UPDATE`,
+            'objects',
+          ),
         )
         if (!rows.length) return yield* Effect.fail(new ModerationError({ message: 'Report not found' }))
         if (action === 'remove') {

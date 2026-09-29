@@ -10,7 +10,7 @@ const sheet = (
   songId: string,
   releaseDateTimestamp: number,
   internalLevelValue = 12,
-  difficulty = DifficultyEnum.Basic,
+  difficulty: DifficultyEnum = DifficultyEnum.Basic,
 ) =>
   ({
     songId,

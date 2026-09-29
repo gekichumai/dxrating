@@ -1,6 +1,9 @@
 import { publicContractRoutes } from '@gekichumai/api-contract'
-import { oc } from '@orpc/contract'
+import { oc as contractBuilder } from '@orpc/contract'
+import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
+
+const oc = contractBuilder.errors({})
 
 const AchievementRecordSchema = z.object({
   sheet: z.object({
@@ -55,12 +58,14 @@ export const appContract = oc.router({
   ...publicContractRoutes,
   maimai: {
     fetchRecords: oc
-      .route({
-        method: 'POST',
-        path: '/io/import/maimai-net',
-        summary: 'Fetch records from MaimaiNET',
-        tags: ['Import'],
-      })
+      .meta(
+        openapi({
+          method: 'POST',
+          path: '/io/import/maimai-net',
+          summary: 'Fetch records from MaimaiNET',
+          tags: ['Import'],
+        }),
+      )
       .input(
         z.object({
           id: z.string(),
@@ -77,13 +82,15 @@ export const appContract = oc.router({
   },
   chartOgImage: {
     render: oc
-      .route({
-        method: 'GET',
-        path: '/songs/{songId}/{type}/{difficulty}/og-image',
-        summary: 'Render chart OpenGraph image',
-        tags: ['internal'],
-        outputStructure: 'detailed',
-      })
+      .meta(
+        openapi({
+          method: 'GET',
+          path: '/songs/{songId}/{type}/{difficulty}/og-image',
+          summary: 'Render chart OpenGraph image',
+          tags: ['internal'],
+          outputStructure: 'detailed',
+        }),
+      )
       .input(ChartOgImageInputSchema)
       .output(ChartOgImageOutputSchema),
   },

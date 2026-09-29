@@ -1,14 +1,15 @@
 import * as Sentry from '@sentry/node'
 import type { Scope } from '@sentry/node'
-import { ORPCError } from '@orpc/server'
+import { COMMON_ERROR_STATUS_MAP, ORPCError } from '@orpc/server'
 import { NetImportError } from './client'
 
 // Export types for use in other files
 export type { Scope }
 
 export function shouldCaptureSentryError(error: unknown) {
-  if (error instanceof ORPCError && error.status >= 400 && error.status < 500) {
-    return false
+  if (error instanceof ORPCError) {
+    const status = COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500
+    if (status >= 400 && status < 500) return false
   }
 
   if (

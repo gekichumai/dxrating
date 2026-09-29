@@ -1,5 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { app } from '../app'
+
+const fetchMock = vi.fn<typeof fetch>()
 
 function envelopeFor(dsn: string) {
   return `${JSON.stringify({ dsn })}\n${JSON.stringify({ type: 'event' })}\n{}`
@@ -16,6 +18,11 @@ async function postTunnelEnvelope(dsn: string) {
 }
 
 describe('Sentry tunnel', () => {
+  beforeEach(() => {
+    fetchMock.mockReset().mockResolvedValue(new Response(null, { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+  })
+
   afterEach(() => {
     vi.unstubAllGlobals()
   })
@@ -32,23 +39,18 @@ describe('Sentry tunnel', () => {
       'https://o4506648698683392.ingest.sentry.io/api/4506648709627904/envelope/',
     ],
   ])('accepts the %s DSN', async (_name, dsn, expectedEnvelopeUrl) => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 200 }))
-    vi.stubGlobal('fetch', fetchMock)
-
     const { envelope, response } = await postTunnelEnvelope(dsn)
 
     expect(response.status).toBe(200)
-    expect(fetchMock).toHaveBeenCalledWith(expectedEnvelopeUrl, {
-      method: 'POST',
-      body: envelope,
-      signal: expect.any(AbortSignal),
-    })
+    expect(fetchMock).toHaveBeenCalledOnce()
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect(String(url)).toBe(expectedEnvelopeUrl)
+    expect(init?.method).toBe('POST')
+    expect(init?.signal).toBeInstanceOf(AbortSignal)
+    expect(await new Response(init?.body).text()).toBe(envelope)
   })
 
   it('rejects Sentry DSNs outside the allowlist', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 200 }))
-    vi.stubGlobal('fetch', fetchMock)
-
     const { response } = await postTunnelEnvelope(
       'https://9346c04036724f129e00a750c8ab9415@o4506648698683392.ingest.us.sentry.io/9999999999999999',
     )

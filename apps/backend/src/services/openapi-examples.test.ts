@@ -1,6 +1,7 @@
-import { isContractProcedure, type AnyContractProcedure } from '@orpc/contract'
-import { OpenAPIGenerator, type OpenAPI } from '@orpc/openapi'
-import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
+import { ProcedureContract, type AnyProcedureContract } from '@orpc/contract'
+import { getOpenAPIMeta, OpenAPIGenerator } from '@orpc/openapi'
+import type * as OpenAPI from '@openapi-spec/types/v3.1'
+import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { describe, expect, it } from 'vitest'
 import { appContract } from '../contract'
 import { addPublishedDxdataToOpenApi } from './dxdata-openapi'
@@ -31,11 +32,12 @@ const assertMeaningfulValue = (value: unknown) => {
 
 const generateDocument = async () => {
   const generator = new OpenAPIGenerator({
-    schemaConverters: [new ZodToJsonSchemaConverter()],
+    converters: [new ZodToJsonSchemaConverter()],
   })
   const generated = await generator.generate(appContract, {
-    info: { title: 'DXRating API', version: '1.0.0' },
-    filter: ({ contract }) => !contract['~orpc'].route.tags?.includes('internal'),
+    version: '3.1.1',
+    base: { info: { title: 'DXRating API', version: '1.0.0' } },
+    filter: (contract) => !getOpenAPIMeta(contract)?.tags?.includes('internal'),
   })
   return addPublicApiExamplesToOpenApi(addPublishedDxdataToOpenApi(generated))
 }
@@ -43,10 +45,10 @@ const generateDocument = async () => {
 const collectPublicProcedures = (
   value: unknown,
   path: string[] = [],
-  procedures = new Map<string, AnyContractProcedure>(),
+  procedures = new Map<string, AnyProcedureContract>(),
 ) => {
-  if (isContractProcedure(value)) {
-    if (!value['~orpc'].route.tags?.includes('internal')) procedures.set(path.join('.'), value)
+  if (value instanceof ProcedureContract) {
+    if (!getOpenAPIMeta(value)?.tags?.includes('internal')) procedures.set(path.join('.'), value)
     return procedures
   }
   if (!value || typeof value !== 'object') return procedures
@@ -97,7 +99,7 @@ describe('public OpenAPI examples', () => {
         }
 
         if (operation.requestBody && !isReference(operation.requestBody)) {
-          for (const [mediaType, media] of Object.entries(operation.requestBody.content)) {
+          for (const [mediaType, media] of Object.entries<OpenAPI.MediaTypeObject>(operation.requestBody.content)) {
             if (!/^application\/json(?:;|$)/i.test(mediaType)) continue
             const values = getExampleValues(media.examples)
             expect(values.length, `${operation.operationId} request`).toBeGreaterThan(0)
@@ -105,16 +107,20 @@ describe('public OpenAPI examples', () => {
           }
         }
 
-        for (const [status, responseOrReference] of Object.entries(operation.responses)) {
-          if (isReference(responseOrReference)) continue
-          for (const [mediaType, media] of Object.entries(responseOrReference.content ?? {})) {
+        for (const status of Object.keys(operation.responses ?? {})) {
+          if (!/^[1-5][0-9X]{2}$/.test(status) && status !== 'default') continue
+          const responseOrReference = operation.responses?.[status as `${number}`]
+          if (!responseOrReference || isReference(responseOrReference)) continue
+          for (const [mediaType, media] of Object.entries<OpenAPI.MediaTypeObject>(responseOrReference.content ?? {})) {
             if (!/^application\/json(?:;|$)/i.test(mediaType)) continue
             const values = getExampleValues(media.examples)
             expect(values.length, `${operation.operationId} response ${status}`).toBeGreaterThan(0)
             exampleValues.push(...values)
           }
 
-          for (const headerOrReference of Object.values(responseOrReference.headers ?? {})) {
+          for (const headerOrReference of Object.values<OpenAPI.HeaderObject | OpenAPI.ReferenceObject>(
+            responseOrReference.headers ?? {},
+          )) {
             if (isReference(headerOrReference) || headerOrReference.example === undefined) continue
             exampleValues.push(headerOrReference.example)
           }
@@ -148,7 +154,7 @@ describe('public OpenAPI examples', () => {
 
     const venueResponse = document.paths?.['/arcades/venues/{id}']
     if (!venueResponse || isReference(venueResponse)) throw new Error('Missing arcade venue path')
-    const response = venueResponse.get?.responses['200']
+    const response = venueResponse.get?.responses?.['200']
     if (!response || isReference(response)) throw new Error('Missing arcade venue response')
     expect(getExampleValues(response.content?.['application/json']?.examples)[0]).toMatchObject({
       id: 'dven_ctwf8yjqy6',
@@ -163,13 +169,18 @@ describe('public OpenAPI examples', () => {
       const examples = publicApiOperationExamples[operationId as keyof typeof publicApiOperationExamples]
       if (!examples) throw new Error(`Missing examples for contract procedure ${operationId}`)
 
-      const inputSchema = procedure['~orpc'].inputSchema
-      if (inputSchema) {
+      for (const inputSchema of procedure['~orpc'].inputSchemas ?? []) {
         const input =
-          'request' in examples ? examples.request : 'parameters' in examples ? examples.parameters : undefined
+          'request' in examples
+            ? { ...('parameters' in examples ? examples.parameters : {}), ...examples.request }
+            : 'parameters' in examples
+              ? examples.parameters
+              : undefined
         await expectSchemaAccepts(inputSchema, input, `${operationId} input`)
       }
-      await expectSchemaAccepts(procedure['~orpc'].outputSchema, examples.response, `${operationId} output`)
+      for (const outputSchema of procedure['~orpc'].outputSchemas ?? []) {
+        await expectSchemaAccepts(outputSchema, examples.response, `${operationId} output`)
+      }
     }
   })
 })

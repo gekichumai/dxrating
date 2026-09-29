@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto'
-import { Effect, Either, type Scope } from 'effect'
+import { Effect, Layer, ManagedRuntime, type Scope } from 'effect'
+import { FetchHttpClient } from 'effect/http'
 import { Pool } from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppConfig, config } from '../config'
-import { Database, makeDatabase } from '../db/index'
-import { HttpClient, HttpError, makeHttpClient } from '../services/http-client'
+import { Database, databaseLayer } from '../db/index'
+import { HttpClient, HttpClientLive, HttpError } from '../services/http-client'
 import {
   disconnect,
   exchangeCodeForTokens,
@@ -32,26 +33,14 @@ const envelope = (data: unknown) => Response.json({ success: true, code: 200, da
 
 describe('LXNS Effect service', () => {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-  const database = makeDatabase(pool)
   const upstream = vi.fn<typeof fetch>()
-  const http = makeHttpClient(upstream)
+  const http = HttpClientLive.pipe(Layer.provide(Layer.succeed(FetchHttpClient.Fetch, upstream)))
+  const runtime = ManagedRuntime.make(Layer.merge(databaseLayer(Effect.succeed(pool)), http))
   const userId = randomUUID()
   const run = <A, E>(
     effect: Effect.Effect<A, E, Database | AppConfig | HttpClient | Scope.Scope>,
     options?: { signal: AbortSignal },
-  ) =>
-    Effect.runPromise(
-      Effect.either(
-        Effect.scoped(
-          effect.pipe(
-            Effect.provideService(Database, database),
-            Effect.provideService(AppConfig, testConfig),
-            Effect.provideService(HttpClient, http),
-          ),
-        ),
-      ),
-      options,
-    ).then(Either.getOrThrowWith((error) => error))
+  ) => runtime.runPromise(Effect.scoped(effect.pipe(Effect.provideService(AppConfig, testConfig))), options)
 
   const seedToken = (expiresAt: Date) =>
     pool.query(
@@ -72,7 +61,7 @@ describe('LXNS Effect service', () => {
   })
 
   afterAll(async () => {
-    await pool.end()
+    await runtime.dispose()
     await teardownTestServer()
   })
 
@@ -115,8 +104,11 @@ describe('LXNS Effect service', () => {
     expect(rejected).toMatchObject({ reason: { _tag: 'LxnsError', message: 'Invalid or expired OAuth state' } })
     expect(upstream).toHaveBeenCalledTimes(1)
     const request = upstream.mock.calls[0]
-    expect(request[0]).toBe('https://maimai.lxns.net/api/v0/oauth/token')
-    expect(JSON.parse(request[1]!.body as string)).toMatchObject({ grant_type: 'authorization_code', code: 'code' })
+    expect(String(request[0])).toBe('https://maimai.lxns.net/api/v0/oauth/token')
+    expect(await new Response(request[1]!.body).json()).toMatchObject({
+      grant_type: 'authorization_code',
+      code: 'code',
+    })
     expect(
       (await pool.query('SELECT user_id, access_token, refresh_token, scope FROM lxns_oauth_tokens')).rows,
     ).toEqual([
@@ -173,7 +165,7 @@ describe('LXNS Effect service', () => {
 
     expect(await run(fetchPlayerScores(userId))).toEqual([{ ...score, fc: null, fs: null }])
     expect(upstream).toHaveBeenCalledTimes(1)
-    expect(upstream.mock.calls[0][1]?.headers).toEqual({ Authorization: 'Bearer old-access' })
+    expect(new Headers(upstream.mock.calls[0][1]?.headers).get('authorization')).toBe('Bearer old-access')
   })
 
   it('refreshes near-expiry tokens before fetching scores and persists the replacement', async () => {
@@ -182,11 +174,13 @@ describe('LXNS Effect service', () => {
 
     expect(await run(fetchPlayerScores(userId))).toEqual([])
     expect(upstream).toHaveBeenCalledTimes(2)
-    expect(JSON.parse(upstream.mock.calls[0][1]!.body as string)).toMatchObject({
+    expect(await new Response(upstream.mock.calls[0][1]!.body).json()).toMatchObject({
       grant_type: 'refresh_token',
       refresh_token: 'old-refresh',
     })
-    expect(upstream.mock.calls[1][1]?.headers).toEqual({ Authorization: `Bearer ${tokenData.access_token}` })
+    expect(new Headers(upstream.mock.calls[1][1]?.headers).get('authorization')).toBe(
+      `Bearer ${tokenData.access_token}`,
+    )
     const tokens = await pool.query(
       "SELECT access_token, refresh_token, extract(epoch from expires_at AT TIME ZONE 'UTC') * 1000 AS expires_at_ms FROM lxns_oauth_tokens",
     )
@@ -231,7 +225,6 @@ describe('LXNS Effect service', () => {
           ? new URL(await run(generateAuthorizationUrl(userId))).searchParams.get('state')!
           : undefined
       if (operation === 'refresh') await seedToken(new Date(Date.now() - 1000))
-      upstream.mockResolvedValueOnce(envelope(tokenData))
       let reportReading!: () => void
       let finishReading!: () => void
       const reading = new Promise<void>((resolve) => {
@@ -240,21 +233,24 @@ describe('LXNS Effect service', () => {
       const gate = new Promise<void>((resolve) => {
         finishReading = resolve
       })
-      const delayedHttp: typeof HttpClient.Service = {
-        ...http,
-        json: <A>(response: Response) =>
-          Effect.gen(function* () {
-            yield* Effect.sync(reportReading)
-            yield* Effect.promise(() => gate)
-            return yield* http.json<A>(response)
-          }),
-      }
+      const body = new ReadableStream<Uint8Array>(
+        {
+          async pull(controller) {
+            reportReading()
+            await gate
+            controller.enqueue(new TextEncoder().encode(JSON.stringify({ success: true, code: 200, data: tokenData })))
+            controller.close()
+          },
+        },
+        { highWaterMark: 0 },
+      )
+      upstream.mockResolvedValueOnce(new Response(body))
       const controller = new AbortController()
       const workflow =
         operation === 'exchange'
           ? exchangeCodeForTokens('code', state!).pipe(Effect.asVoid)
           : fetchPlayerScores(userId).pipe(Effect.asVoid)
-      const response = run(workflow.pipe(Effect.provideService(HttpClient, delayedHttp)), { signal: controller.signal })
+      const response = run(workflow, { signal: controller.signal })
       const rejected = expect(response).rejects.toBeDefined()
       await reading
       controller.abort()

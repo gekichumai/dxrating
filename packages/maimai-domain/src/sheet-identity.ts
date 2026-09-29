@@ -28,7 +28,7 @@ export function parseSheetIdentity(value: string): SheetIdentity | null {
 
   return {
     songId,
-    type: parsedType as TypeEnum.DX | TypeEnum.STD,
+    type: parsedType as typeof TypeEnum.DX | typeof TypeEnum.STD,
     difficulty: difficulty as DifficultyEnum,
   }
 }
@@ -43,6 +43,6 @@ function isValidDifficultyForType(type: TypeEnum, difficulty: string | undefined
   return isUtageType(type) && /^【.+】$/.test(difficulty)
 }
 
-function isUtageType(type: TypeEnum): type is TypeEnum.UTAGE | TypeEnum.UTAGE2P {
+function isUtageType(type: TypeEnum): type is typeof TypeEnum.UTAGE | typeof TypeEnum.UTAGE2P {
   return type === TypeEnum.UTAGE || type === TypeEnum.UTAGE2P
 }

@@ -1,31 +1,23 @@
-import { Data, Effect } from 'effect'
+import * as PgClient from '@effect/sql-pg/PgClient'
 import { runMain } from '@effect/platform-node/NodeRuntime'
-import { drizzle } from 'drizzle-orm/node-postgres'
-import { migrate } from 'drizzle-orm/node-postgres/migrator'
-import { Pool } from 'pg'
-class MigrationError extends Data.TaggedError('MigrationError')<{
-  readonly operation: string
-  readonly cause: unknown
-}> {}
+import * as PgDrizzle from 'drizzle-orm/effect-postgres'
+import { migrate } from 'drizzle-orm/effect-postgres/migrator'
+import { Config, Effect } from 'effect'
 
 runMain(
-  Effect.scoped(
-    Effect.gen(function* () {
-      const pool = yield* Effect.acquireRelease(
-        Effect.sync(() => new Pool({ connectionString: process.env.DATABASE_URL })),
-        (resource) =>
-          Effect.tryPromise({
-            try: () => resource.end(),
-            catch: (cause) => new MigrationError({ operation: 'Close migration pool', cause }),
-          }).pipe(Effect.orDie),
-      )
-      // Drizzle migration promises do not support cancellation; let them settle
-      // before releasing the database connection, including on process shutdown.
-      yield* Effect.tryPromise({
-        try: () => migrate(drizzle(pool), { migrationsFolder: './drizzle' }),
-        catch: (cause) => new MigrationError({ operation: 'Apply database migrations', cause }),
-      }).pipe(Effect.uninterruptible)
-      yield* Effect.logInfo('Migrations applied successfully')
-    }),
+  Effect.gen(function* () {
+    const database = yield* PgDrizzle.makeWithDefaults()
+    yield* migrate(database, { migrationsFolder: './drizzle' })
+    yield* Effect.logInfo('Migrations applied successfully')
+  }).pipe(
+    // The migration executable owns this layer and its connection lifetime.
+    // @effect-diagnostics-next-line strictEffectProvide:off
+    Effect.provide(
+      PgClient.layerConfig({
+        url: Config.Redacted('DATABASE_URL'),
+        maxConnections: Config.succeed(1),
+        applicationName: Config.succeed('dxrating-migrate'),
+      }),
+    ),
   ),
 )

@@ -1,6 +1,7 @@
 import { Effect, Exit, Layer, ManagedRuntime } from 'effect'
+import { FetchHttpClient } from 'effect/http'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { HttpClient, makeHttpClient } from '../services/http-client'
+import { HttpClientLive } from '../services/http-client'
 import { BuildInformationLive, getBuildInfo } from '../version'
 
 afterEach(() => vi.unstubAllEnvs())
@@ -24,7 +25,9 @@ describe('Build information Effect cache', () => {
       )
       .mockResolvedValue(new Response('Registry unavailable', { status: 503 }))
     const runtime = ManagedRuntime.make(
-      BuildInformationLive.pipe(Layer.provide(Layer.succeed(HttpClient, makeHttpClient(upstream)))),
+      BuildInformationLive.pipe(
+        Layer.provide(HttpClientLive.pipe(Layer.provide(Layer.succeed(FetchHttpClient.Fetch, upstream)))),
+      ),
     )
     const controller = new AbortController()
     try {
@@ -32,7 +35,7 @@ describe('Build information Effect cache', () => {
       await started
       const second = runtime.runPromise(Effect.scoped(getBuildInfo))
       controller.abort()
-      expect(Exit.isInterrupted(await first)).toBe(true)
+      expect(Exit.hasInterrupts(await first)).toBe(true)
       expect(await second).toMatchObject({ commit: '1234567890', imageDigest: null, attestation: null })
       expect(await runtime.runPromise(Effect.scoped(getBuildInfo))).toMatchObject({ commit: '1234567890' })
       expect(upstream).toHaveBeenCalledTimes(2)
@@ -50,7 +53,9 @@ describe('Build information Effect cache', () => {
       .mockResolvedValueOnce(new Response('{}', { headers: { 'docker-content-digest': 'sha256:testdigest' } }))
       .mockResolvedValueOnce(Response.json({ attestations: [{ bundle: { mediaType: 'test-bundle' } }] }))
     const runtime = ManagedRuntime.make(
-      BuildInformationLive.pipe(Layer.provide(Layer.succeed(HttpClient, makeHttpClient(upstream)))),
+      BuildInformationLive.pipe(
+        Layer.provide(HttpClientLive.pipe(Layer.provide(Layer.succeed(FetchHttpClient.Fetch, upstream)))),
+      ),
     )
     try {
       const info = await runtime.runPromise(Effect.scoped(getBuildInfo))

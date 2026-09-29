@@ -7,7 +7,7 @@ export class ServerError extends Data.TaggedError('ServerError')<{
 
 export const serve = (options: Parameters<typeof nodeServe>[0]) =>
   Effect.acquireRelease(
-    Effect.async<ServerType, ServerError>((resume) => {
+    Effect.callback<ServerType, ServerError>((resume) => {
       try {
         const server = nodeServe(options, () => resume(Effect.succeed(server)))
         server.once('error', (cause) => resume(Effect.fail(new ServerError({ cause }))))
