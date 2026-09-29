@@ -22,7 +22,8 @@
   "pnpm": {
     "overrides": {
       "happy-dom": ">=20.9.0",
-      "flatted": ">=3.4.2"
+      "flatted": ">=3.4.2",
+      "effect@<4.0.0-0": "3.22.2"
     },
     "onlyBuiltDependencies": [
       "bcrypt",

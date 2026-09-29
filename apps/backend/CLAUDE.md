@@ -179,7 +179,8 @@ Effect 4 is pinned to `4.0.0-rc.118`; oRPC's official adapter currently requires
 its `2.0.0-beta.40` release. Drizzle's `1.0.0-rc.5-5935859` driver is compatible
 with this Effect runtime. The pnpm patch only updates eight PostgreSQL type
 imports from `effect/unstable/sql/SqlError` to `effect/sql/SqlError`; it changes no
-runtime code. Remove the patch when upstream publishes corrected declarations.
+runtime code. The scoped Effect 3 override keeps Prisma tooling on a patched v3
+release without changing the application's Effect 4 runtime. Remove the patch when upstream publishes corrected declarations.
 
 The API continues emitting the v1 error `status` field for deployed clients.
 Keep the compatibility tests when updating oRPC. Migration folders use the
