@@ -15,7 +15,7 @@ const options = {
   bundle: true,
   packages: 'external',
   platform: 'node',
-  target: 'node25',
+  target: 'node26',
   format: 'esm',
   jsx: 'automatic',
   sourcemap: true,

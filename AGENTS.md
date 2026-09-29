@@ -124,7 +124,7 @@ Web requires `apps/web/.env` (no `.env.example` — create manually):
 - **ESM throughout** — use extensionless relative imports in bundled TypeScript code (e.g., `import { foo } from './foo'`). Backend and renderer use TypeScript's `bundler` module resolution and esbuild for Node-compatible output. Source-only packages loaded directly by Node retain explicit `.ts` extensions on runtime imports; type-only imports can be extensionless. Keep extensions for assets and actual emitted file paths.
 - **Linter**: oxlint — do not add ESLint.
 - **Formatter**: oxfmt — do not add Prettier.
-- **Node.js 25.9.0**, pnpm 10.30.3.
+- **Node.js 26.10.0**, pnpm 10.33.0.
 - TypeScript strict mode is enabled across all packages.
 
 ## Testing

@@ -14,7 +14,7 @@ runMain(
     Effect.gen(function* () {
       // Register the runtime first: the HTTP listener drains before its services close.
       yield* Effect.addFinalizer(() => Effect.promise(shutdownApp))
-      yield* appRuntime.runtimeEffect
+      yield* appRuntime.contextEffect
       const server = yield* serve({ fetch: app.fetch, port: config.port })
       const address = server.address()
       yield* Effect.logInfo(`Server is running on port ${typeof address === 'object' ? address?.port : config.port}`)

@@ -1,13 +1,13 @@
 import { Clock, Context, Effect, Layer } from 'effect'
 
-export class ApplicationCache extends Context.Tag('dxrating/ApplicationCache')<
+export class ApplicationCache extends Context.Service<
   ApplicationCache,
   {
     readonly get: <A>(key: string) => Effect.Effect<A | undefined>
     readonly set: (key: string, value: unknown, ttlMs?: number) => Effect.Effect<void>
     readonly delete: (key: string) => Effect.Effect<void>
   }
->() {}
+>()('dxrating/ApplicationCache') {}
 
 export const ApplicationCacheLive = Layer.sync(ApplicationCache, () => {
   const entries = new Map<string, { value: unknown; expiresAt: number }>()

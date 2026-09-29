@@ -7,6 +7,7 @@ import { DatabaseLive, type Database } from './db/index'
 import { createRequestRunner } from './request-runner'
 import { ApplicationCacheLive, type ApplicationCache } from './services/cache'
 import { HttpClientLive, type HttpClient } from './services/http-client'
+import { TracingLive, withActiveRequestSpan } from './tracing'
 
 export const ApplicationLive = Layer.mergeAll(
   AppConfigLive,
@@ -16,7 +17,7 @@ export const ApplicationLive = Layer.mergeAll(
   AuthenticationLive.pipe(Layer.provide(Layer.merge(AppConfigLive, DatabaseLive))),
   CatalogIdentitiesLive.pipe(Layer.provide(DatabaseLive)),
   BuildInformationLive.pipe(Layer.provide(HttpClientLive)),
-)
+).pipe(Layer.provideMerge(TracingLive))
 export type ApplicationServices =
   | AppConfig
   | Database
@@ -30,5 +31,6 @@ export const appRuntime = ManagedRuntime.make(ApplicationLive)
 const requests = createRequestRunner(appRuntime)
 
 /** The sole application runtime boundary used by HTTP and SDK adapters. */
-export const runApp = requests.run
+export const runApp: typeof requests.run = (effect, options) => requests.run(withActiveRequestSpan(effect), options)
+export const superviseApp: typeof requests.supervise = (effect) => requests.supervise(withActiveRequestSpan(effect))
 export const shutdownApp = requests.shutdown

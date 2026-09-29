@@ -9,7 +9,7 @@ export interface RenderEntry {
     id: string
     title: string
     imageName: string
-    type: TypeEnum.STD | TypeEnum.DX
+    type: typeof TypeEnum.STD | typeof TypeEnum.DX
     difficulty: DifficultyEnum
     internalLevelValue: number
   }

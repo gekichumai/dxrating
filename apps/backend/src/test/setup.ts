@@ -8,7 +8,7 @@ import { app } from '../app'
 import { pool as appPool } from '../db/index'
 import { shutdownApp } from '../runtime'
 import pg from 'pg'
-import fs from 'node:fs/promises'
+import { readMigrationFiles } from 'drizzle-orm/migrator'
 
 const TEST_PORT = Number(process.env.PORT || 3001)
 const BASE_URL = `http://localhost:${TEST_PORT}`
@@ -34,26 +34,10 @@ export async function setupTestServer() {
   // 2. Run migration SQL files
   const migrationsPool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
   const migrationDir = path.resolve(__dirname, '../../drizzle')
-  const migrationFiles = [
-    '0000_init.sql',
-    '0001_add_better_auth.sql',
-    '0002_add_relations.sql',
-    '0003_localized_tags_to_jsonb.sql',
-    '0004_add_lxns_oauth.sql',
-    '0005_arcade_venues.sql',
-    '0006_arcade_geocoding.sql',
-    '0007_arcade_chains.sql',
-    '0008_arcade_chain_audit_alignment.sql',
-    '0009_arcade_public_identities.sql',
-    '0010_enforce_arcade_public_identities.sql',
-    '0011_ancient_maelstrom.sql',
-    '0012_comment_safety.sql',
-  ]
+  const migrations = readMigrationFiles({ migrationsFolder: migrationDir })
 
-  for (const file of migrationFiles) {
-    const sql = await fs.readFile(path.join(migrationDir, file), 'utf-8')
-    const statements = sql.split('--> statement-breakpoint')
-    for (const stmt of statements) {
+  for (const migration of migrations) {
+    for (const stmt of migration.sql) {
       const trimmed = stmt.trim()
       if (trimmed) {
         try {

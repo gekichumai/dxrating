@@ -173,7 +173,7 @@ export const createDxdataEffect =
       if (body === undefined) return uncachedError(c, 'DX data catalog is unavailable', 503)
       return new Response(body, { status: 200, headers })
     }).pipe(
-      Effect.catchAll((error) =>
+      Effect.catch((error) =>
         Effect.sync(() => {
           try {
             reportError(error, c)

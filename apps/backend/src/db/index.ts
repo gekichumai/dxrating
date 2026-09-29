@@ -1,114 +1,94 @@
+import * as PgClient from '@effect/sql-pg/PgClient'
+import * as PgDrizzle from 'drizzle-orm/effect-postgres'
 import { drizzle } from 'drizzle-orm/node-postgres'
+import { Context, Data, Effect, Layer, Redacted } from 'effect'
+import { isSqlError } from 'effect/sql/SqlError'
 import { Pool } from 'pg'
-import * as schema from './schema'
-import * as authSchema from './auth-schema'
 import { config } from '../config'
-import { Cause, Context, Data, Effect, Exit, Layer } from 'effect'
-import type { PoolClient } from 'pg'
 
-export const pool = new Pool({
-  connectionString: config.databaseUrl,
-})
+export const pool = new Pool({ connectionString: config.databaseUrl, max: 5 })
 
-const makeDb = (connection: Pool | PoolClient) =>
-  drizzle(connection, {
-    schema: {
-      ...schema,
-      ...authSchema,
-    },
-  })
-
-export type AppDatabase = ReturnType<typeof makeDb>
+export type AppDatabase = Effect.Success<ReturnType<typeof PgDrizzle.makeWithDefaults>>
+type AuthDatabase = ReturnType<typeof makeAuthDatabase>
+const makeAuthDatabase = (connection: Pool) => drizzle({ client: connection })
 
 export class DatabaseError extends Data.TaggedError('DatabaseError')<{
   readonly operation: string
   readonly cause: unknown
 }> {}
 
-const query = <A>(operation: string, evaluate: () => PromiseLike<A>) =>
-  Effect.tryPromise({
-    try: () => Promise.resolve(evaluate()),
-    catch: (cause) => new DatabaseError({ operation, cause }),
-  })
-
-export class Database extends Context.Tag('dxrating/Database')<
+export class Database extends Context.Service<
   Database,
   {
     readonly db: AppDatabase
+    readonly authDb: AuthDatabase
     readonly pool: Pool
-    readonly query: <A>(
+    readonly sql: PgClient.PgClient
+    readonly query: <A, E, R>(
       operation: string,
-      evaluate: (db: AppDatabase) => PromiseLike<A>,
-    ) => Effect.Effect<A, DatabaseError>
+      evaluate: (db: AppDatabase) => Effect.Effect<A, E, R>,
+    ) => Effect.Effect<A, DatabaseError, R>
+    readonly raw: <A extends object = Record<string, unknown>>(
+      operation: string,
+      text: string,
+      values?: readonly unknown[],
+    ) => Effect.Effect<{ rows: A[] }, DatabaseError>
     readonly transaction: <A, E, R>(
       evaluate: (tx: AppDatabase) => Effect.Effect<A, E, R>,
     ) => Effect.Effect<A, E | DatabaseError, R>
   }
->() {}
+>()('dxrating/Database') {}
 
-export const makeDatabase = (connection: Pool): typeof Database.Service => {
-  const client = makeDb(connection)
-  return {
-    db: client,
-    pool: connection,
-    // pg queries cannot be cancelled by AbortSignal. Wait for completion before
-    // releasing their connection or closing the pool.
-    query: (operation, evaluate) => query(operation, () => evaluate(client)).pipe(Effect.uninterruptible),
-    transaction: (evaluate) =>
-      Effect.scoped(
-        Effect.gen(function* () {
-          const resource = yield* Effect.acquireRelease(
-            query('Acquire transaction connection', () => connection.connect()).pipe(
-              Effect.map((client) => ({ client, discard: false })),
+export const makeDatabase = (connection: Pool) =>
+  Effect.gen(function* () {
+    const db = yield* PgDrizzle.makeWithDefaults()
+    const sql = yield* PgClient.PgClient
+    const query: typeof Database.Service.query = (operation, evaluate) =>
+      Effect.suspend(() => evaluate(db)).pipe(
+        Effect.mapError((cause) => new DatabaseError({ operation, cause })),
+        Effect.withSpan(operation),
+      )
+
+    return Database.of({
+      db,
+      authDb: makeAuthDatabase(connection),
+      pool: connection,
+      sql,
+      query,
+      raw: <A extends object>(operation: string, text: string, values: readonly unknown[] = []) =>
+        sql.unsafe<A>(text, values).pipe(
+          Effect.map((rows) => ({ rows: Array.from(rows) })),
+          Effect.mapError((cause) => new DatabaseError({ operation, cause })),
+          Effect.withSpan(operation),
+        ),
+      transaction: (evaluate) =>
+        sql
+          .withTransaction(Effect.suspend(() => evaluate(db)))
+          .pipe(
+            Effect.mapError((cause) =>
+              isSqlError(cause) ? new DatabaseError({ operation: 'Database transaction', cause }) : cause,
             ),
-            (resource) => Effect.sync(() => resource.client.release(resource.discard)),
-          )
-          const connectionClient = resource.client
-          return yield* Effect.uninterruptibleMask((restore) =>
-            Effect.gen(function* () {
-              const begun = yield* Effect.exit(query('Begin transaction', () => connectionClient.query('BEGIN')))
-              if (Exit.isFailure(begun)) {
-                resource.discard = true
-                return yield* Effect.failCause(begun.cause)
-              }
+          ),
+    })
+  })
 
-              const result = yield* Effect.exit(restore(Effect.suspend(() => evaluate(makeDb(connectionClient)))))
-              if (Exit.isFailure(result)) {
-                const rolledBack = yield* Effect.exit(
-                  query('Roll back transaction', () => connectionClient.query('ROLLBACK')),
-                )
-                if (Exit.isFailure(rolledBack)) {
-                  resource.discard = true
-                  return yield* Effect.failCause(Cause.sequential(result.cause, rolledBack.cause))
-                }
-                return yield* Effect.failCause(result.cause)
-              }
+class AuthPool extends Context.Service<AuthPool, Pool>()('dxrating/AuthPool') {}
 
-              const committed = yield* Effect.exit(query('Commit transaction', () => connectionClient.query('COMMIT')))
-              if (Exit.isFailure(committed)) {
-                // A failed COMMIT has an uncertain outcome; never recycle this connection.
-                resource.discard = true
-                const rolledBack = yield* Effect.exit(
-                  query('Roll back transaction', () => connectionClient.query('ROLLBACK')),
-                )
-                return yield* Effect.failCause(
-                  Exit.isFailure(rolledBack) ? Cause.sequential(committed.cause, rolledBack.cause) : committed.cause,
-                )
-              }
-              return result.value
-            }),
-          )
-        }),
-      ),
-  }
-}
-
-export const databaseLayer = (acquire: Effect.Effect<Pool, DatabaseError>) =>
-  Layer.scoped(
-    Database,
-    Effect.acquireRelease(acquire, (resource) =>
-      resource.ended ? Effect.void : query('Close database pool', () => resource.end()).pipe(Effect.orDie),
-    ).pipe(Effect.map(makeDatabase)),
+export const databaseLayer = (
+  acquire: Effect.Effect<Pool, DatabaseError>,
+  nativeOptions: PgClient.PgPoolConfig = {
+    url: Redacted.make(config.databaseUrl),
+    maxConnections: 5,
+    applicationName: 'dxrating-effect',
+  },
+) => {
+  const authPoolLayer = Layer.effect(
+    AuthPool,
+    Effect.acquireRelease(acquire, (resource) => (resource.ended ? Effect.void : Effect.promise(() => resource.end()))),
   )
+  return Layer.effect(Database, Effect.flatMap(AuthPool, makeDatabase)).pipe(
+    Layer.provide(Layer.mergeAll(authPoolLayer, PgClient.layer(nativeOptions))),
+  )
+}
 
 export const DatabaseLive = databaseLayer(Effect.succeed(pool))

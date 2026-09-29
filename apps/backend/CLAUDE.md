@@ -2,18 +2,18 @@
 
 ## Stack
 
-- **Runtime**: Node.js 25.9.0
-- **Application**: Effect 3 services, layers, typed failures, and scoped resources
+- **Runtime**: Node.js 26.10.0
+- **Application**: Effect 4 services, layers, typed failures, and scoped resources
 - **HTTP adapter**: Hono
-- **API Layer**: oRPC (type-safe OpenAPI-based RPC)
-- **Database**: PostgreSQL 16 via Drizzle ORM
+- **API Layer**: oRPC 2 with the official Effect handler integration
+- **Database**: PostgreSQL via Drizzle Effect PostgreSQL and @effect/sql-pg
 - **Auth**: Better Auth (email/password, OAuth, passkeys)
 - **Validation**: Zod
 - **Error Tracking**: Sentry
 - **Build**: Effect diagnostics + TypeScript checking + esbuild production bundle
 - **Dev**: `tsx watch`
-- **Test**: Vitest
-- **Lint**: oxlint + official Effect language-service diagnostics (errors)
+- **Test**: Vitest 5 and @effect/vitest
+- **Lint**: oxlint + official @effect/tsgo diagnostics (errors)
 
 ## Commands
 
@@ -137,30 +137,51 @@ Application operations return `Effect<A, E, R>` and compose with `Effect.gen`,
 Hono/oRPC clients retain the existing wire format. Pure parsing, calculations,
 and JSX construction stay ordinary pure functions.
 
-Use `Context.Tag` services and compose their live `Layer`s in `runtime.ts`.
+Use `Context.Service` services and compose their live `Layer`s in `runtime.ts`.
 Provide test services at the test entry point. Model recoverable failures with
 specific tagged errors; retain the foreign failure in `cause`. Adapt individual
 foreign operations with `Effect.tryPromise` or `Effect.try`, without generic
 Promise wrappers, `unknown` error channels, or converting defects into expected
 failures. Use `Effect.acquireRelease` and scopes for resource ownership.
 
-Only Hono/oRPC handlers, Better Auth callbacks, renderer SDK callbacks, test
-runners, and executable entry points convert Effects to Promises. The HTTP
-boundary uses `runApp`, whose managed runtime preserves expected error identity
-using `Effect.either` and `Either.getOrThrowWith`. Defects and interruptions retain
-Effect's runtime failure semantics. Do not recursively unwrap or squash causes.
+Use the official oRPC `handlerGen` integration with the application service
+context. Its `effect/wrap` hook registers framework-owned fibers with the
+application request supervisor. Hono adapters use `runApp`; Better Auth and
+renderer callbacks use native `Effect.runPromise`. Effect 4 preserves original
+error identity at that boundary, so no `Either` wrapper or custom cause
+unwrapping is needed.
 
 Shutdown closes the listener, interrupts and joins in-flight application work,
-and then disposes service layers. PostgreSQL and Better Auth do not support
-AbortSignal cancellation: keep their promises tracked until they settle. OAuth
-token exchange/rotation must persist issued credentials even if the caller
-cancels. Database transactions roll back on failure, defect, or interruption,
-and discard connections after failed commit/cleanup.
+including oRPC fibers, and then disposes service layers. Application queries and
+transactions use `drizzle-orm/effect-postgres` and `@effect/sql-pg` directly.
+Better Auth uses the official Promise-based Drizzle adapter with a separate
+node-postgres pool; both pools are scoped and together retain the original
+maximum of ten connections. OAuth token exchange/rotation must persist issued
+credentials even if the caller cancels. Native transactions roll back on
+failure, defect, or interruption and support nested savepoints.
 
-`pnpm lint:effect` runs the official language-service CLI against all backend
+Use the official Effect HTTP client for HTTP requests and response-body Effects.
+The request scope owns cancellation through body consumption. Effect spans use
+`@effect/opentelemetry` with the existing Sentry provider; do not install a second
+provider or exporter.
+
+`pnpm lint:effect` runs the official @effect/tsgo CLI against all backend
 TypeScript, including tests and operator scripts. The `diagnosticSeverity` map
 in `tsconfig.json` makes correctness and unsafe-pattern rules errors. Both
 backend build and root/backend lint run it; no editor-only plugin or patched
-compiler is required. Do not disable a rule to hide an application error. The
-single `strictEffectProvide` exception at the moderation CLI documents a real
-application entry point; the upstream rule flags all layer provision calls.
+compiler is required. Do not disable a rule to hide an application error. Only executable entry points may document a `strictEffectProvide` exception.
+Use `@effect/vitest` for Effect-native tests and ordinary Vitest for foreign
+Promise/HTTP boundary tests.
+
+## Upgrade compatibility
+
+Effect 4 is pinned to `4.0.0-rc.118`; oRPC's official adapter currently requires
+its `2.0.0-beta.40` release. Drizzle's `1.0.0-rc.5-5935859` driver is compatible
+with this Effect runtime. The pnpm patch only updates eight PostgreSQL type
+imports from `effect/unstable/sql/SqlError` to `effect/sql/SqlError`; it changes no
+runtime code. Remove the patch when upstream publishes corrected declarations.
+
+The API continues emitting the v1 error `status` field for deployed clients.
+Keep the compatibility tests when updating oRPC. Migration folders use the
+current Drizzle Kit format; generate or upgrade them through Drizzle Kit and
+verify existing ledgers before release. Never rewrite previously applied SQL.

@@ -201,7 +201,7 @@ export class Client {
   }
 
   fetchEffect = (url: string, init?: RequestInit, errorRedirectCode: NetImportErrorCode = 'UNKNOWN_ERROR') =>
-    Effect.gen(this, function* () {
+    Effect.gen({ self: this }, function* () {
       const requestURL = yield* parseNetResponse(() => new URL(url))
       const cookies = this.getCookies(requestURL.hostname)
       const headers = new Headers({
@@ -241,7 +241,7 @@ export class Client {
     })
 
   fetchAsDOMEffect = (url: string, init?: RequestInit) =>
-    Effect.gen(this, function* () {
+    Effect.gen({ self: this }, function* () {
       const res = yield* this.fetchEffect(url, init)
       const text = yield* Effect.tryPromise({
         try: () => res.text(),
@@ -287,7 +287,7 @@ export class Client {
 
 export class MaimaiNETJpClient extends Client {
   loginEffect = ({ id, password }: AuthParams) =>
-    Effect.gen(this, function* () {
+    Effect.gen({ self: this }, function* () {
       yield* this.progress('auth:in-progress')
 
       const loginPage = yield* this.fetchAsDOMEffect(URLS.JP.LOGIN_PAGE)
@@ -330,7 +330,7 @@ export class MaimaiNETJpClient extends Client {
     })
 
   fetchRecentRecordsEffect = () =>
-    Effect.gen(this, function* () {
+    Effect.gen({ self: this }, function* () {
       yield* this.progress('fetch:recent:in-progress')
       const recentRecordsPage = yield* this.fetchAsDOMEffect(URLS.JP.RECORD_RECENT_PAGE)
       if (!recentRecordsPage) {
@@ -344,7 +344,7 @@ export class MaimaiNETJpClient extends Client {
     })
 
   fetchMusicRecordsEffect = () =>
-    Effect.gen(this, function* () {
+    Effect.gen({ self: this }, function* () {
       const musicRecords: AchievementRecord[] = []
       for (const { url, fetchState } of musicRecordURLs(URLS.JP.RECORD_MUSICS_PAGE)) {
         const musicRecordsPage = yield* this.fetchAsDOMEffect(url)
@@ -364,7 +364,7 @@ export class MaimaiNETJpClient extends Client {
 
 export class MaimaiNETIntlClient extends Client {
   loginEffect = ({ id, password }: AuthParams) =>
-    Effect.gen(this, function* () {
+    Effect.gen({ self: this }, function* () {
       yield* this.progress('auth:in-progress')
 
       const loginPage = yield* this.fetchEffect(URLS.INTL.LOGIN_PAGE)
@@ -421,7 +421,7 @@ export class MaimaiNETIntlClient extends Client {
     })
 
   fetchRecentRecordsEffect = () =>
-    Effect.gen(this, function* () {
+    Effect.gen({ self: this }, function* () {
       yield* this.progress('fetch:recent:in-progress')
 
       const recentRecordsPage = yield* this.fetchAsDOMEffect(URLS.INTL.RECORD_RECENT_PAGE)
@@ -437,7 +437,7 @@ export class MaimaiNETIntlClient extends Client {
     })
 
   fetchMusicRecordsEffect = () =>
-    Effect.gen(this, function* () {
+    Effect.gen({ self: this }, function* () {
       const musicRecords: AchievementRecord[] = []
       for (const { url, fetchState } of musicRecordURLs(URLS.INTL.RECORD_MUSICS_PAGE)) {
         const musicRecordsPage = yield* this.fetchAsDOMEffect(url)

@@ -1,10 +1,10 @@
-import { Effect, Either } from 'effect'
+import { Effect } from 'effect'
 import { Response } from 'undici'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NetImportError, withMaimaiNETClient } from '../lib/functions/client'
 
 const runTest = <A, E>(effect: Effect.Effect<A, E>, options?: { signal?: AbortSignal }) =>
-  Effect.runPromise(Effect.either(effect), options).then(Either.getOrThrowWith((error) => error))
+  Effect.runPromise(effect, options)
 
 const { request, destroy } = vi.hoisted(() => ({ request: vi.fn(), destroy: vi.fn() }))
 vi.mock('undici', async (original) => ({

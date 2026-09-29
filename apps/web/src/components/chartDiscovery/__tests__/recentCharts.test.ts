@@ -2,7 +2,7 @@ import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum, type Sheet, type S
 import { describe, expect, it } from 'vitest'
 import { RECENT_CHART_LIMIT, buildRecentChartLinks } from '../recentCharts'
 
-const createSheet = (releaseDate: string, difficulty = DifficultyEnum.Master): Sheet => ({
+const createSheet = (releaseDate: string, difficulty: DifficultyEnum = DifficultyEnum.Master): Sheet => ({
   type: TypeEnum.DX,
   difficulty,
   level: '13',

@@ -1,6 +1,6 @@
 # Build stage
 # Pin digest for reproducibility — update periodically
-FROM node:25.9.0-bookworm-slim@sha256:67134eb99e14d566f2882a38a374b8351ea474656487dbb1e0c79e4064cc1725 AS builder
+FROM node:26.10.0-bookworm-slim@sha256:662933cf47f013bc8e4beb31a6116448427a82057ba7c42c97e4c5ba766504c2 AS builder
 
 # Reproducibility: SOURCE_DATE_EPOCH makes timestamps deterministic
 ARG SOURCE_DATE_EPOCH=0
@@ -24,6 +24,7 @@ WORKDIR /app
 
 # Copy root workspace files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY patches ./patches
 
 # Copy workspace package.json files
 COPY packages/tsconfig/package.json ./packages/tsconfig/
@@ -51,7 +52,7 @@ RUN pnpm --filter @gekichumai/oneshot-renderer build
 RUN pnpm build:bundle
 
 # Production stage
-FROM node:25.9.0-bookworm-slim@sha256:67134eb99e14d566f2882a38a374b8351ea474656487dbb1e0c79e4064cc1725 AS runner
+FROM node:26.10.0-bookworm-slim@sha256:662933cf47f013bc8e4beb31a6116448427a82057ba7c42c97e4c5ba766504c2 AS runner
 
 # Install runtime dependencies for sharp and other native modules
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -70,6 +71,7 @@ WORKDIR /app
 
 # Copy root workspace files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY patches ./patches
 
 # Copy workspace package.json files
 COPY packages/tsconfig/package.json ./packages/tsconfig/
@@ -114,5 +116,5 @@ ENV VERSION=${VERSION}
 COPY apps/backend/docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x docker-entrypoint.sh
 
-# Start the application (--experimental-transform-types needed for dxdata's TypeScript enums)
+# Start the application with native Node TypeScript stripping for source packages
 CMD ["./docker-entrypoint.sh"]

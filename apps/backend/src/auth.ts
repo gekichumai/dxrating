@@ -3,7 +3,7 @@ import { expo } from '@better-auth/expo'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { Database } from './db/index'
-import { Context, Data, Effect, Either, Layer } from 'effect'
+import { Context, Data, Effect, Layer } from 'effect'
 import * as schema from './db/schema'
 import * as authSchema from './db/auth-schema'
 import { openAPI, oneTap, haveIBeenPwned, captcha, lastLoginMethod } from 'better-auth/plugins'
@@ -12,7 +12,7 @@ import { i18n } from '@better-auth/i18n'
 import { AppConfig } from './config'
 import { createAppleClientSecretGenerator } from './lib/apple-client-secret'
 import { revokeOAuthGrants } from './lib/oauth-revocation'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 class AuthenticationError extends Data.TaggedError('AuthenticationError')<{
   readonly operation: string
   readonly cause: unknown
@@ -50,7 +50,7 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
   })()
 
   return betterAuth({
-    database: drizzleAdapter(database.db, {
+    database: drizzleAdapter(database.authDb, {
       provider: 'pg', // or "mysql", "sqlite"
       schema: {
         ...schema,
@@ -64,22 +64,18 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
       password: {
         hash: (password) =>
           Effect.runPromise(
-            Effect.either(
-              Effect.tryPromise({
-                try: () => bcrypt.hash(password, 10),
-                catch: (cause) => new AuthenticationError({ operation: 'Hash password', cause }),
-              }),
-            ),
-          ).then(Either.getOrThrowWith((error) => error)),
+            Effect.tryPromise({
+              try: () => bcrypt.hash(password, 10),
+              catch: (cause) => new AuthenticationError({ operation: 'Hash password', cause }),
+            }),
+          ),
         verify: ({ hash, password }) =>
           Effect.runPromise(
-            Effect.either(
-              Effect.tryPromise({
-                try: () => bcrypt.compare(password, hash),
-                catch: (cause) => new AuthenticationError({ operation: 'Verify password', cause }),
-              }),
-            ),
-          ).then(Either.getOrThrowWith((error) => error)),
+            Effect.tryPromise({
+              try: () => bcrypt.compare(password, hash),
+              catch: (cause) => new AuthenticationError({ operation: 'Verify password', cause }),
+            }),
+          ),
       },
     },
     user: {
@@ -87,48 +83,46 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
         enabled: true,
         beforeDelete: (user) =>
           Effect.runPromise(
-            Effect.either(
-              Effect.gen(function* () {
-                const accounts = yield* database.query('Read linked OAuth accounts', (db) =>
-                  db
-                    .select({
-                      providerId: authSchema.account.providerId,
-                      accessToken: authSchema.account.accessToken,
-                      refreshToken: authSchema.account.refreshToken,
-                    })
-                    .from(authSchema.account)
-                    .where(eq(authSchema.account.userId, user.id)),
-                )
+            Effect.gen(function* () {
+              const accounts = yield* database.query('Read linked OAuth accounts', (db) =>
+                db
+                  .select({
+                    providerId: authSchema.account.providerId,
+                    accessToken: authSchema.account.accessToken,
+                    refreshToken: authSchema.account.refreshToken,
+                  })
+                  .from(authSchema.account)
+                  .where(eq(authSchema.account.userId, user.id)),
+              )
 
-                const revocationIssues = yield* revokeOAuthGrants(accounts, {
-                  ...(appleProvider
-                    ? {
-                        apple: {
-                          clientId: appleProvider.clientId,
-                          clientSecret: () => appleProvider.clientSecret,
-                        },
-                      }
-                    : {}),
-                  ...(config.auth.github.clientId && config.auth.github.clientSecret
-                    ? {
-                        github: {
-                          clientId: config.auth.github.clientId,
-                          clientSecret: config.auth.github.clientSecret,
-                        },
-                      }
-                    : {}),
-                })
+              const revocationIssues = yield* revokeOAuthGrants(accounts, {
+                ...(appleProvider
+                  ? {
+                      apple: {
+                        clientId: appleProvider.clientId,
+                        clientSecret: () => appleProvider.clientSecret,
+                      },
+                    }
+                  : {}),
+                ...(config.auth.github.clientId && config.auth.github.clientSecret
+                  ? {
+                      github: {
+                        clientId: config.auth.github.clientId,
+                        clientSecret: config.auth.github.clientSecret,
+                      },
+                    }
+                  : {}),
+              })
 
-                for (const issue of revocationIssues) {
-                  console.warn('OAuth grant revocation issue during account deletion', issue)
-                }
+              for (const issue of revocationIssues) {
+                console.warn('OAuth grant revocation issue during account deletion', issue)
+              }
 
-                yield* database.query('Delete account verification records', (db) =>
-                  db.delete(authSchema.verification).where(eq(authSchema.verification.value, user.id)),
-                )
-              }),
-            ),
-          ).then(Either.getOrThrowWith((error) => error)),
+              yield* database.query('Delete account verification records', (db) =>
+                db.delete(authSchema.verification).where(eq(authSchema.verification.value, user.id)),
+              )
+            }),
+          ),
       },
     },
     advanced: {
@@ -247,7 +241,7 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
 
 export type BackendAuth = ReturnType<typeof createAuth>
 
-export class Authentication extends Context.Tag('dxrating/Authentication')<
+export class Authentication extends Context.Service<
   Authentication,
   {
     readonly handle: (request: Request) => Effect.Effect<Response, AuthenticationError>
@@ -255,7 +249,7 @@ export class Authentication extends Context.Tag('dxrating/Authentication')<
       headers: Headers,
     ) => Effect.Effect<Awaited<ReturnType<BackendAuth['api']['getSession']>>, AuthenticationError>
   }
->() {}
+>()('dxrating/Authentication') {}
 
 export const AuthenticationLive = Layer.effect(
   Authentication,
@@ -263,14 +257,74 @@ export const AuthenticationLive = Layer.effect(
     const database = yield* Database
     const config = yield* AppConfig
     const auth = yield* Effect.sync(() => createAuth(database, config))
+    const normalizeUnlinkRequest = Effect.fn('Authentication.normalizeUnlinkRequest')(function* (request: Request) {
+      if (request.method !== 'POST' || new URL(request.url).pathname !== '/api/auth/unlink-account') return request
+
+      const body: unknown = yield* Effect.tryPromise({
+        try: () => request.clone().json(),
+        catch: () => undefined,
+      }).pipe(Effect.catch(() => Effect.void))
+      if (
+        typeof body !== 'object' ||
+        body === null ||
+        !('providerId' in body) ||
+        typeof body.providerId !== 'string' ||
+        ('accountId' in body && typeof body.accountId !== 'string')
+      ) {
+        return request
+      }
+      const providerId = body.providerId
+      const remoteAccountId = 'accountId' in body && typeof body.accountId === 'string' ? body.accountId : undefined
+
+      // Better Auth 1.7 accepts its local account row ID. Older clients send a
+      // provider and optional remote account ID; resolve only the caller's rows.
+      const session = yield* Effect.tryPromise({
+        try: () =>
+          auth.api.getSession({
+            headers: request.headers,
+            query: { disableCookieCache: true, disableRefresh: true },
+          }),
+        catch: (cause) => new AuthenticationError({ operation: 'Read unlink account session', cause }),
+      })
+      const accounts = session
+        ? yield* database.query('Resolve legacy linked account', (db) =>
+            db
+              .select({ id: authSchema.account.id })
+              .from(authSchema.account)
+              .where(
+                and(
+                  eq(authSchema.account.userId, session.user.id),
+                  eq(authSchema.account.providerId, providerId),
+                  remoteAccountId === undefined ? undefined : eq(authSchema.account.accountId, remoteAccountId),
+                ),
+              )
+              .limit(1),
+          )
+        : []
+      const headers = new Headers(request.headers)
+      headers.delete('content-length')
+      // A missing match still goes through Better Auth's session, origin,
+      // account ownership, and last-account checks before it can mutate data.
+      return new Request(request, { headers, body: JSON.stringify({ accountId: accounts[0]?.id ?? '' }) })
+    })
     return {
       // Better Auth cannot cancel its database/hashing work. Keep it tracked until
       // it settles so shutdown never closes the pool under an active SDK call.
       handle: (request: Request) =>
-        Effect.tryPromise({
-          try: () => auth.handler(request),
-          catch: (cause) => new AuthenticationError({ operation: 'Handle authentication request', cause }),
-        }).pipe(Effect.uninterruptible),
+        normalizeUnlinkRequest(request).pipe(
+          Effect.flatMap((normalized) =>
+            Effect.tryPromise({
+              try: () => auth.handler(normalized),
+              catch: (cause) => new AuthenticationError({ operation: 'Handle authentication request', cause }),
+            }),
+          ),
+          Effect.mapError((cause) =>
+            cause instanceof AuthenticationError
+              ? cause
+              : new AuthenticationError({ operation: 'Normalize authentication request', cause }),
+          ),
+          Effect.uninterruptible,
+        ),
       session: (headers: Headers) =>
         Effect.tryPromise({
           try: () => auth.api.getSession({ headers }),

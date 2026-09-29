@@ -6,7 +6,8 @@ import { RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
 import { Authentication } from './auth'
 import { Data, Effect, Option } from 'effect'
-import { runApp } from './runtime'
+import { HttpBody } from 'effect/http'
+import { appRuntime, runApp, superviseApp } from './runtime'
 import { HttpClient } from './services/http-client'
 import { getBuildInfo } from './version'
 import { handler as oneshotRenderer } from './services/functions/oneshot-renderer/index'
@@ -17,13 +18,13 @@ import {
 import { evlog, type EvlogVariables } from 'evlog/hono'
 import type { MiddlewareHandler } from 'hono'
 import { drain } from './logger'
-import { appRouter } from './router'
+import { appRouter, type ApiContext } from './router'
 import { exchangeCodeForTokens } from './services/lxns/index'
 import { AppConfig } from './config'
 import { OpenAPIHandler } from '@orpc/openapi/fetch'
-import { OpenAPIGenerator } from '@orpc/openapi'
-import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
-import { RequestHeadersPlugin, ResponseHeadersPlugin } from '@orpc/server/plugins'
+import { COMMON_ERROR_STATUS_MAP, getOpenAPIMeta, OpenAPIGenerator } from '@orpc/openapi'
+import { ZodToJsonSchemaConverter } from '@orpc/zod'
+import { RequestHeadersHandlerPlugin, ResponseHeadersHandlerPlugin } from '@orpc/server/plugins'
 import { onError } from '@orpc/server'
 import { Sentry, shouldCaptureSentryError } from './lib/functions/sentry'
 import { Database } from './db/index'
@@ -316,13 +317,12 @@ app.post('/api/v1/monitoring/tunnel', (c) =>
       }
       const http = yield* HttpClient
       yield* http
-        .request(`https://${dsn.hostname}/api/${projectId}/envelope/`, {
-          method: 'POST',
-          body: envelope,
+        .post(`https://${dsn.hostname}/api/${projectId}/envelope/`, {
+          body: HttpBody.raw(envelope),
         })
         .pipe(
-          Effect.flatMap(http.text),
-          Effect.catchAll(() => Effect.void),
+          Effect.flatMap((response) => response.text),
+          Effect.catch(() => Effect.void),
         )
       return c.body(null, 200)
     }),
@@ -349,7 +349,7 @@ app.get('/api/v1/io/import/lxns/oauth_callback', (c) =>
       }
       return yield* exchangeCodeForTokens(code, state).pipe(
         Effect.map(() => c.redirect(`${frontendCallback}?status=success`)),
-        Effect.catchAll((error) =>
+        Effect.catch((error) =>
           Effect.sync(() => {
             c.get('log')?.error(error)
             return c.redirect(`${frontendCallback}?status=error&error=exchange_failed`)
@@ -361,9 +361,17 @@ app.get('/api/v1/io/import/lxns/oauth_callback', (c) =>
   ),
 )
 
+const superviseApi: NonNullable<ApiContext['effect/wrap']> = (effect, { path }) =>
+  superviseApp(effect.pipe(Effect.withSpan(`api.${path.join('.')}`)))
+
 // oRPC OpenAPI handler
 const openAPIHandler = new OpenAPIHandler(appRouter, {
-  plugins: [new RequestHeadersPlugin(), new ResponseHeadersPlugin()],
+  // Existing browser and mobile clients consume the v1 status field.
+  customErrorResponseBodyEncoder: (error) => ({
+    ...error.toJSON(),
+    status: COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500,
+  }),
+  plugins: [new RequestHeadersHandlerPlugin<ApiContext>(), new ResponseHeadersHandlerPlugin<ApiContext>()],
   clientInterceptors: [
     onError((error, { path }) => {
       if (!shouldCaptureSentryError(error)) return
@@ -379,15 +387,13 @@ const openAPIHandler = new OpenAPIHandler(appRouter, {
 
 // oRPC OpenAPI generator for spec
 const openAPIGenerator = new OpenAPIGenerator({
-  schemaConverters: [new ZodToJsonSchemaConverter()],
+  converters: [new ZodToJsonSchemaConverter()],
 })
 
 app.get('/robots.txt', (c) => c.text('User-agent: *\\nDisallow: /'))
 
 const dxdataStore = createPostgresDxdataEffects((text, values) =>
-  Effect.flatMap(Database, (database) =>
-    database.query('Read published catalog', () => database.pool.query(text, values)),
-  ),
+  Effect.flatMap(Database, (database) => database.raw('Read published catalog', text, values)),
 )
 const dxdataHandler = createDxdataEffect(dxdataStore, (error, c: Context<EvlogVariables>) => {
   const log = c.get('log')
@@ -411,8 +417,9 @@ const arcadeVenuesCacheHeaders = createMiddleware((c, next) =>
       if (c.res.status !== 200) return
 
       const database = yield* Database
-      const result = yield* database.query('Read arcade modification date', () =>
-        database.pool.query<{ last_modified: Date | null }>(`
+      const result = yield* database.raw<{ last_modified: Date | null }>(
+        'Read arcade modification date',
+        `
     SELECT max(last_modified) AS last_modified
     FROM (
       SELECT max(updated_at) AS last_modified FROM arcade.venues
@@ -425,7 +432,7 @@ const arcadeVenuesCacheHeaders = createMiddleware((c, next) =>
       UNION ALL
       SELECT max(updated_at) AS last_modified FROM arcade.chains
     ) AS catalog_timestamps
-  `),
+  `,
       )
       const lastModified = result.rows[0]?.last_modified
       if (lastModified) c.header('Last-Modified', lastModified.toUTCString())
@@ -502,16 +509,21 @@ const reportApiError = (c: Context, error: unknown) => {
 
 app.get(ARCADE_VENUES_PATH, arcadeVenuesEtag, arcadeVenuesCacheHeaders, (c) =>
   runApp(
-    Effect.tryPromise({
-      try: () =>
-        openAPIHandler.handle(c.req.method === 'HEAD' ? new Request(c.req.raw, { method: 'GET' }) : c.req.raw, {
-          prefix: '/api/v1',
-          context: { signal: c.req.raw.signal },
-        }),
-      catch: (cause) => new HttpAdapterError({ operation: 'Handle public arcade API', cause }),
+    Effect.gen(function* () {
+      const effectContext = yield* appRuntime.contextEffect
+      return yield* Effect.tryPromise({
+        try: () =>
+          openAPIHandler.handle(c.req.method === 'HEAD' ? new Request(c.req.raw, { method: 'GET' }) : c.req.raw, {
+            prefix: '/api/v1',
+            context: { 'effect/context': effectContext, 'effect/wrap': superviseApi, signal: c.req.raw.signal },
+          }),
+        catch: (cause) => new HttpAdapterError({ operation: 'Handle public arcade API', cause }),
+      })
     }).pipe(
-      Effect.map(({ response }) => response ?? c.notFound()),
-      Effect.catchAll((error) => Effect.sync(() => reportApiError(c, error.cause))),
+      Effect.flatMap(({ response }) =>
+        response ? Effect.succeed(response) : Effect.promise(() => Promise.resolve(c.notFound())),
+      ),
+      Effect.catch((error) => Effect.sync(() => reportApiError(c, error.cause))),
     ),
     { signal: c.req.raw.signal },
   ),
@@ -539,16 +551,22 @@ app.all('/api/v1/*', (c) =>
     Effect.gen(function* () {
       const auth = yield* Authentication
       const session = yield* auth.session(c.req.raw.headers)
+      const effectContext = yield* appRuntime.contextEffect
       const { response } = yield* Effect.tryPromise({
         try: () =>
           openAPIHandler.handle(c.req.raw, {
             prefix: '/api/v1',
-            context: { user: session?.user, signal: c.req.raw.signal },
+            context: {
+              'effect/context': effectContext,
+              'effect/wrap': superviseApi,
+              user: session?.user,
+              signal: c.req.raw.signal,
+            },
           }),
         catch: (cause) => new HttpAdapterError({ operation: 'Handle API request', cause }),
       })
-      return response ?? c.notFound()
-    }).pipe(Effect.catchAll((error) => Effect.sync(() => reportApiError(c, error.cause)))),
+      return response ?? (yield* Effect.promise(() => Promise.resolve(c.notFound())))
+    }).pipe(Effect.catch((error) => Effect.sync(() => reportApiError(c, error.cause)))),
     { signal: c.req.raw.signal },
   ),
 )
@@ -559,23 +577,26 @@ app.get('/spec.json', (c) =>
       const spec = yield* Effect.tryPromise({
         try: () =>
           openAPIGenerator.generate(appRouter, {
-            info: {
-              title: 'DXRating API',
-              version: '1.0.0',
-              description:
-                '> **Public Beta**: This API is in public beta and may not be finalized before the end of May 2026. Breaking changes are expected.\n\nOpenAPI for DXRating.net',
-            },
-            servers: [{ url: '/api/v1' }],
-            security: [{ bearerAuth: [] }],
-            components: {
-              securitySchemes: {
-                bearerAuth: {
-                  type: 'http',
-                  scheme: 'bearer',
+            version: '3.1.1',
+            base: {
+              info: {
+                title: 'DXRating API',
+                version: '1.0.0',
+                description:
+                  '> **Public Beta**: This API is in public beta and may not be finalized before the end of May 2026. Breaking changes are expected.\n\nOpenAPI for DXRating.net',
+              },
+              servers: [{ url: '/api/v1' }],
+              security: [{ bearerAuth: [] }],
+              components: {
+                securitySchemes: {
+                  bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                  },
                 },
               },
             },
-            filter: ({ contract }) => !contract['~orpc'].route.tags?.includes('internal'),
+            filter: (contract) => !getOpenAPIMeta(contract)?.tags?.includes('internal'),
           }),
         catch: (cause) => new HttpAdapterError({ operation: 'Generate OpenAPI specification', cause }),
       })

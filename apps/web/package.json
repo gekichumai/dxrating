@@ -25,8 +25,7 @@
     "@mui/material": "^5.18.0",
     "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
-    "@orpc/openapi-client": "catalog:",
-    "@orpc/react": "catalog:",
+    "@orpc/openapi": "catalog:",
     "@orpc/tanstack-query": "catalog:",
     "@radix-ui/react-collapsible": "^1.1.12",
     "@sentry/tanstackstart-react": "^10.70.0",
@@ -69,7 +68,7 @@
     "type-fest": "^4.41.0",
     "use-long-press": "^3.3.0",
     "web-haptics": "^0.0.6",
-    "zod": "^4.3.6"
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.36.3",
@@ -91,7 +90,7 @@
     "@types/sql.js": "^1.4.11",
     "@unocss/preset-typography": "^66.6.8",
     "@vitejs/plugin-react": "^5.2.0",
-    "@vitest/ui": "^4.1.6",
+    "@vitest/ui": "5.0.2",
     "esno": "catalog:",
     "i18next-pseudo": "^2.2.1",
     "react-grab": "^0.1.32",

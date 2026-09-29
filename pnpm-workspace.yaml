@@ -4,20 +4,18 @@ packages:
   - scripts/*
 
 catalog:
-  '@better-auth/expo': 1.6.11
-  '@better-auth/passkey': ^1.6.11
-  '@orpc/client': ^1.14.3
-  '@orpc/contract': ^1.14.3
-  '@orpc/openapi': ^1.14.3
-  '@orpc/openapi-client': ^1.14.3
-  '@orpc/react': ^1.14.3
-  '@orpc/server': ^1.14.3
-  '@orpc/tanstack-query': ^1.14.3
-  '@orpc/zod': ^1.14.3
+  '@better-auth/expo': 1.7.6
+  '@better-auth/passkey': 1.7.6
+  '@orpc/client': 2.0.0-beta.40
+  '@orpc/contract': 2.0.0-beta.40
+  '@orpc/openapi': 2.0.0-beta.40
+  '@orpc/server': 2.0.0-beta.40
+  '@orpc/tanstack-query': 2.0.0-beta.40
+  '@orpc/zod': 2.0.0-beta.40
   '@types/node': 25.9.0
   '@types/pg': ^8.20.0
   '@types/react': ^19.2.14
-  better-auth: ^1.6.11
+  better-auth: 1.7.6
   clsx: ^2.1.1
   dotenv: ^16.6.1
   esno: ^4.8.0
@@ -27,4 +25,4 @@ catalog:
   react: ^19.2.6
   ts-pattern: ^5.9.0
   typescript: ^5.9.3
-  vitest: ^4.1.6
+  vitest: 5.0.2

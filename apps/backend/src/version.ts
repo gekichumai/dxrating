@@ -14,12 +14,12 @@ interface BuildInfo {
   attestation: { sigstoreBundle: unknown; verifyCommand: string } | null
 }
 
-export class BuildInformation extends Context.Tag('dxrating/BuildInformation')<
+export class BuildInformation extends Context.Service<
   BuildInformation,
   {
     readonly get: Effect.Effect<BuildInfo, never, Scope.Scope>
   }
->() {}
+>()('dxrating/BuildInformation') {}
 
 export const BuildInformationLive = Layer.effect(
   BuildInformation,
@@ -39,42 +39,36 @@ export const BuildInformationLive = Layer.effect(
       }
       if (process.env.NODE_ENV !== 'production' || commit === 'unknown') return info
       const provenance = Effect.gen(function* () {
-        const tokenResponse = yield* http.request(`https://ghcr.io/token?scope=repository:${GHCR_IMAGE}:pull`)
-        if (!tokenResponse.ok) {
-          yield* http.text(tokenResponse)
+        const tokenResponse = yield* http.get(`https://ghcr.io/token?scope=repository:${GHCR_IMAGE}:pull`)
+        if (tokenResponse.status < 200 || tokenResponse.status >= 300) {
+          yield* tokenResponse.text
           return
         }
-        const { token } = yield* http.json<{ token: string }>(tokenResponse)
-        const manifest = yield* http.request(
-          `https://ghcr.io/v2/${GHCR_IMAGE}/manifests/sha-${commit.substring(0, 7)}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: [
-                'application/vnd.oci.image.index.v1+json',
-                'application/vnd.docker.distribution.manifest.list.v2+json',
-                'application/vnd.docker.distribution.manifest.v2+json',
-                'application/vnd.oci.image.manifest.v1+json',
-              ].join(', '),
-            },
+        const { token } = (yield* tokenResponse.json) as { token: string }
+        const manifest = yield* http.get(`https://ghcr.io/v2/${GHCR_IMAGE}/manifests/sha-${commit.substring(0, 7)}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: [
+              'application/vnd.oci.image.index.v1+json',
+              'application/vnd.docker.distribution.manifest.list.v2+json',
+              'application/vnd.docker.distribution.manifest.v2+json',
+              'application/vnd.oci.image.manifest.v1+json',
+            ].join(', '),
           },
-        )
-        yield* http.text(manifest)
-        if (!manifest.ok) return
-        const imageDigest = manifest.headers.get('docker-content-digest')
+        })
+        yield* manifest.text
+        if (manifest.status < 200 || manifest.status >= 300) return
+        const imageDigest = manifest.headers['docker-content-digest']
         if (!imageDigest) return
         info.imageDigest = imageDigest
-        const response = yield* http.request(
-          `https://api.github.com/repos/${GITHUB_REPO}/attestations/${imageDigest}`,
-          {
-            headers: { Accept: 'application/json' },
-          },
-        )
-        if (!response.ok) {
-          yield* http.text(response)
+        const response = yield* http.get(`https://api.github.com/repos/${GITHUB_REPO}/attestations/${imageDigest}`, {
+          headers: { Accept: 'application/json' },
+        })
+        if (response.status < 200 || response.status >= 300) {
+          yield* response.text
           return
         }
-        const data = yield* http.json<{ attestations?: { bundle: unknown }[] }>(response)
+        const data = (yield* response.json) as { attestations?: { bundle: unknown }[] }
         const bundle = data.attestations?.[0]?.bundle
         if (bundle)
           info.attestation = {
@@ -85,7 +79,7 @@ export const BuildInformationLive = Layer.effect(
       // Optional provenance must not prevent a version response during an upstream outage.
       yield* provenance.pipe(
         Effect.timeout('10 seconds'),
-        Effect.catchAll(() => Effect.void),
+        Effect.catch(() => Effect.void),
       )
       return info
     })

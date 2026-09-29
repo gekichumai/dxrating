@@ -1,5 +1,8 @@
-import { oc } from '@orpc/contract'
+import { oc as contractBuilder } from '@orpc/contract'
+import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
+
+const oc = contractBuilder.errors({})
 
 /**
  * A localized string is an object mapping language codes to translated strings.
@@ -254,160 +257,192 @@ export const ArcadeVenueDetailInputSchema = z.object({
 export const publicContractRoutes = {
   tags: {
     list: oc
-      .route({
-        method: 'GET',
-        path: '/tags',
-        summary: 'List all tags, groups, and song associations',
-        tags: ['Tags'],
-        spec: (spec) => ({ ...spec, security: [] }),
-      })
+      .meta(
+        openapi({
+          method: 'GET',
+          path: '/tags',
+          summary: 'List all tags, groups, and song associations',
+          tags: ['Tags'],
+          spec: (spec) => ({ ...spec, security: [] }),
+        }),
+      )
       .input(CatalogIdSchemeInputSchema)
       .output(TagsListResponseSchema),
     attach: oc
-      .route({
-        method: 'POST',
-        path: '/tags/attach',
-        summary: 'Attach a tag to a song',
-        tags: ['Tags'],
-      })
+      .meta(
+        openapi({
+          method: 'POST',
+          path: '/tags/attach',
+          summary: 'Attach a tag to a song',
+          tags: ['Tags'],
+        }),
+      )
       .input(TagSongAttachSchema)
       .output(z.object({ id: z.number() })),
   },
   comments: {
     report: oc
-      .route({
-        method: 'POST',
-        path: '/comments/{commentId}/report',
-        summary: 'Report and hide a comment for the current viewer',
-        tags: ['Comments'],
-      })
+      .meta(
+        openapi({
+          method: 'POST',
+          path: '/comments/{commentId}/report',
+          summary: 'Report and hide a comment for the current viewer',
+          tags: ['Comments'],
+        }),
+      )
       .input(z.object({ commentId: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER) }))
       .output(z.object({ success: z.boolean() })),
     blockAuthor: oc
-      .route({
-        method: 'POST',
-        path: '/comments/{commentId}/block-author',
-        summary: 'Block the author and report the selected comment',
-        tags: ['Comments'],
-      })
+      .meta(
+        openapi({
+          method: 'POST',
+          path: '/comments/{commentId}/block-author',
+          summary: 'Block the author and report the selected comment',
+          tags: ['Comments'],
+        }),
+      )
       .input(z.object({ commentId: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER) }))
       .output(z.object({ success: z.boolean(), author_id: z.string() })),
     create: oc
-      .route({
-        method: 'POST',
-        path: '/comments',
-        summary: 'Create a new comment',
-        tags: ['Comments'],
-      })
+      .meta(
+        openapi({
+          method: 'POST',
+          path: '/comments',
+          summary: 'Create a new comment',
+          tags: ['Comments'],
+        }),
+      )
       .input(CreateCommentInputSchema)
       .output(CommentSchema),
     list: oc
-      .route({
-        method: 'GET',
-        path: '/comments',
-        summary: 'List comments for a specific song sheet',
-        tags: ['Comments'],
-        spec: (spec) => ({ ...spec, security: [] }),
-      })
+      .meta(
+        openapi({
+          method: 'GET',
+          path: '/comments',
+          summary: 'List comments for a specific song sheet',
+          tags: ['Comments'],
+          spec: (spec) => ({ ...spec, security: [] }),
+        }),
+      )
       .input(FetchCommentsInputSchema)
       .output(z.array(CommentWithProfileSchema)),
   },
   aliases: {
     list: oc
-      .route({
-        method: 'GET',
-        path: '/aliases',
-        summary: 'List all song aliases',
-        tags: ['Aliases'],
-        spec: (spec) => ({ ...spec, security: [] }),
-      })
+      .meta(
+        openapi({
+          method: 'GET',
+          path: '/aliases',
+          summary: 'List all song aliases',
+          tags: ['Aliases'],
+          spec: (spec) => ({ ...spec, security: [] }),
+        }),
+      )
       .input(CatalogIdSchemeInputSchema)
       .output(z.array(AliasSchema)),
     create: oc
-      .route({
-        method: 'POST',
-        path: '/aliases',
-        summary: 'Create a new song alias',
-        tags: ['Aliases'],
-      })
+      .meta(
+        openapi({
+          method: 'POST',
+          path: '/aliases',
+          summary: 'Create a new song alias',
+          tags: ['Aliases'],
+        }),
+      )
       .input(CreateAliasInputSchema)
       .output(z.object({ id: z.number() })),
   },
   analytics: {
     trending: oc
-      .route({
-        method: 'GET',
-        path: '/analytics/trending',
-        summary: 'Get trending sheets based on view counts',
-        tags: ['Analytics'],
-        spec: (spec) => ({ ...spec, security: [] }),
-      })
+      .meta(
+        openapi({
+          method: 'GET',
+          path: '/analytics/trending',
+          summary: 'Get trending sheets based on view counts',
+          tags: ['Analytics'],
+          spec: (spec) => ({ ...spec, security: [] }),
+        }),
+      )
       .input(CatalogIdSchemeInputSchema)
       .output(TrendingResponseSchema),
   },
   arcades: {
     games: oc
-      .route({
-        method: 'GET',
-        path: '/arcades/games',
-        summary: 'List supported arcade games',
-        tags: ['Arcades'],
-        spec: (spec) => ({ ...spec, security: [] }),
-      })
+      .meta(
+        openapi({
+          method: 'GET',
+          path: '/arcades/games',
+          summary: 'List supported arcade games',
+          tags: ['Arcades'],
+          spec: (spec) => ({ ...spec, security: [] }),
+        }),
+      )
       .output(ArcadeGamesListResponseSchema),
     venues: oc
-      .route({
-        method: 'GET',
-        path: '/arcades/venues',
-        summary: 'List arcade venues',
-        tags: ['Arcades'],
-        spec: (spec) => ({ ...spec, security: [] }),
-      })
+      .meta(
+        openapi({
+          method: 'GET',
+          path: '/arcades/venues',
+          summary: 'List arcade venues',
+          tags: ['Arcades'],
+          spec: (spec) => ({ ...spec, security: [] }),
+        }),
+      )
       .input(ArcadeVenuesListInputSchema)
       .output(ArcadeVenuesListResponseSchema),
     venue: oc
-      .route({
-        method: 'GET',
-        path: '/arcades/venues/{id}',
-        summary: 'Get an arcade venue',
-        tags: ['Arcades'],
-        spec: (spec) => ({ ...spec, security: [] }),
-      })
+      .meta(
+        openapi({
+          method: 'GET',
+          path: '/arcades/venues/{id}',
+          summary: 'Get an arcade venue',
+          tags: ['Arcades'],
+          spec: (spec) => ({ ...spec, security: [] }),
+        }),
+      )
       .input(ArcadeVenueDetailInputSchema)
       .output(ArcadeVenueSchema),
   },
   lxns: {
     authorize: oc
-      .route({
-        method: 'POST',
-        path: '/io/import/lxns/authorize',
-        summary: 'Get LXNS OAuth authorization URL',
-        tags: ['Import'],
-      })
+      .meta(
+        openapi({
+          method: 'POST',
+          path: '/io/import/lxns/authorize',
+          summary: 'Get LXNS OAuth authorization URL',
+          tags: ['Import'],
+        }),
+      )
       .output(z.object({ url: z.string() })),
     status: oc
-      .route({
-        method: 'GET',
-        path: '/io/import/lxns/status',
-        summary: 'Check LXNS OAuth connection status',
-        tags: ['Import'],
-      })
+      .meta(
+        openapi({
+          method: 'GET',
+          path: '/io/import/lxns/status',
+          summary: 'Check LXNS OAuth connection status',
+          tags: ['Import'],
+        }),
+      )
       .output(z.object({ connected: z.boolean() })),
     start: oc
-      .route({
-        method: 'POST',
-        path: '/io/import/lxns/start',
-        summary: 'Import scores from LXNS using stored OAuth token',
-        tags: ['Import'],
-      })
+      .meta(
+        openapi({
+          method: 'POST',
+          path: '/io/import/lxns/start',
+          summary: 'Import scores from LXNS using stored OAuth token',
+          tags: ['Import'],
+        }),
+      )
       .output(LxnsStartOutputSchema),
     disconnect: oc
-      .route({
-        method: 'POST',
-        path: '/io/import/lxns/disconnect',
-        summary: 'Disconnect LXNS account',
-        tags: ['Import'],
-      })
+      .meta(
+        openapi({
+          method: 'POST',
+          path: '/io/import/lxns/disconnect',
+          summary: 'Disconnect LXNS account',
+          tags: ['Import'],
+        }),
+      )
       .output(z.object({ success: z.boolean() })),
   },
 }

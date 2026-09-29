@@ -9,7 +9,6 @@
     "skipLibCheck": true,
     "types": ["node"],
     "outDir": "./dist",
-    "baseUrl": ".",
     "declaration": false,
     "declarationMap": false,
     "noEmit": true,
@@ -33,7 +32,6 @@
           "missingStarInYieldEffectGen": "error",
           "nonObjectEffectServiceType": "error",
           "overriddenSchemaConstructor": "error",
-          "unsupportedServiceAccessors": "error",
           "catchUnfailableEffect": "error",
           "effectFnIife": "error",
           "effectGenUsesAdapter": "error",
@@ -60,9 +58,20 @@
           "flatMapToMap": "error",
           "unnecessaryEffectGen": "error",
           "unnecessaryPipe": "error",
-          "unnecessaryPipeChain": "error"
+          "unnecessaryPipeChain": "error",
+          "outdatedApi": "error",
+          "floatingEffectInVitest": "error",
+          "promiseInEffectSuccess": "error",
+          "obsoleteMatchImport": "error",
+          "obsoleteSchemaImport": "error",
+          "schemaLiteralNonFinite": "error",
+          "schemaOpaqueInstanceMember": "error",
+          "preferUnsafeConstructor": "error",
+          "lazyEffect": "error"
         },
-        "missingDiagnosticNextLine": "error"
+        "missingDiagnosticNextLine": "error",
+        "ignoreEffectWarningsInTscExitCode": false,
+        "ignoreEffectErrorsInTscExitCode": false
       }
     ]
   },

@@ -46,9 +46,9 @@ const expectCatalogError = async (
   effect: Effect.Effect<unknown, CatalogIdentityError>,
   code: CatalogIdentityError['code'],
 ) => {
-  await expect(Effect.runPromise(Effect.either(effect))).resolves.toMatchObject({
-    _tag: 'Left',
-    left: { name: 'CatalogIdentityError', code },
+  await expect(Effect.runPromise(Effect.result(effect))).resolves.toMatchObject({
+    _tag: 'Failure',
+    failure: { name: 'CatalogIdentityError', code },
   })
 }
 describe('catalog identity service', () => {

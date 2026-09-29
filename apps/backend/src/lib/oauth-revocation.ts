@@ -72,7 +72,7 @@ export const revokeOAuthGrants = (
         }
         return undefined
       }).pipe(
-        Effect.catchAll((error) =>
+        Effect.catch((error) =>
           Effect.succeed({
             providerId: account.providerId,
             reason: 'request-failed' as const,

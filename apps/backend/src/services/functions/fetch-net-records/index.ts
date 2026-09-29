@@ -1,4 +1,4 @@
-import { Cause, Clock, Effect, Data, Runtime } from 'effect'
+import { Cause, Clock, Effect, Data, Exit } from 'effect'
 import type { Context } from 'hono'
 import { streamSSE } from 'hono/streaming'
 import {
@@ -96,6 +96,7 @@ export const v1Handler = (c: Context) => {
       })
       return stream.writeSSE({ event: 'progress', data: JSON.stringify({ state }) })
     }
+    let interrupted = false
     const program = Effect.gen(function* () {
       const startedAt = yield* Clock.currentTimeMillis
       const { recent, music } = yield* fetchNetRecordsEffect(region, c.get('authParams'), onProgress)
@@ -117,7 +118,7 @@ export const v1Handler = (c: Context) => {
         catch: (cause) => new NetStreamError({ operation: 'write NET import records', cause }),
       })
     }).pipe(
-      Effect.catchAll((error) =>
+      Effect.catch((error) =>
         Effect.gen(function* () {
           yield* Effect.sync(() => {
             Sentry.metrics.count('net_fetch.failure', 1, {
@@ -139,13 +140,17 @@ export const v1Handler = (c: Context) => {
         }),
       ),
     )
+    const observedProgram = program.pipe(
+      Effect.onExit((exit) =>
+        Effect.sync(() => {
+          interrupted = Exit.isFailure(exit) && Cause.hasInterruptsOnly(exit.cause)
+        }),
+      ),
+    )
     try {
-      await Sentry.startSpan({ name: 'fetchNetRecords_v1', op: 'function' }, () => runApp(program, { signal }))
+      await Sentry.startSpan({ name: 'fetchNetRecords_v1', op: 'function' }, () => runApp(observedProgram, { signal }))
     } catch (error) {
-      if (
-        !signal.aborted &&
-        !(Runtime.isFiberFailure(error) && Cause.isInterruptedOnly(error[Runtime.FiberFailureCauseId]))
-      ) {
+      if (!signal.aborted && !interrupted) {
         throw error
       }
     }
