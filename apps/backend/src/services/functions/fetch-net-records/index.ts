@@ -1,4 +1,4 @@
-import { Clock, Effect, Data, Either } from 'effect'
+import { Cause, Clock, Effect, Data, Runtime } from 'effect'
 import type { Context } from 'hono'
 import { streamSSE } from 'hono/streaming'
 import {
@@ -8,6 +8,7 @@ import {
   type StateUpdateCallback,
 } from '../../../lib/functions/client'
 import { Sentry, type Scope } from '../../../lib/functions/sentry'
+import { runApp } from '../../../runtime'
 
 export class NetStreamError extends Data.TaggedError('NetStreamError')<{
   readonly operation: string
@@ -76,9 +77,7 @@ export const v0Handler = (c: Context) => {
     Effect.tapError((error) => Effect.sync(() => reportError(error, region, false))),
   )
   return Sentry.startSpan({ name: 'fetchNetRecords_v0', op: 'function' }, () =>
-    Effect.runPromise(Effect.either(Effect.scoped(program)), { signal: c.req.raw.signal }).then(
-      Either.getOrThrowWith((error) => error),
-    ),
+    runApp(program, { signal: c.req.raw.signal }),
   )
 }
 
@@ -141,13 +140,14 @@ export const v1Handler = (c: Context) => {
       ),
     )
     try {
-      await Sentry.startSpan({ name: 'fetchNetRecords_v1', op: 'function' }, () =>
-        Effect.runPromise(Effect.either(Effect.scoped(program)), { signal }).then(
-          Either.getOrThrowWith((error) => error),
-        ),
-      )
+      await Sentry.startSpan({ name: 'fetchNetRecords_v1', op: 'function' }, () => runApp(program, { signal }))
     } catch (error) {
-      if (!signal.aborted) throw error
+      if (
+        !signal.aborted &&
+        !(Runtime.isFiberFailure(error) && Cause.isInterruptedOnly(error[Runtime.FiberFailureCauseId]))
+      ) {
+        throw error
+      }
     }
   })
 }
