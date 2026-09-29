@@ -1,8 +1,8 @@
 import { renderAsync } from '@resvg/resvg-js'
 import { VersionEnum } from '@gekichumai/dxdata'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { MAGICAL_BACKGROUND_SVG } from '../src/magicalBackground.generated.js'
-import { renderContent } from '../src/renderContent.js'
+import { MAGICAL_BACKGROUND_SVG } from '../src/magicalBackground.generated'
+import { renderContent } from '../src/renderContent'
 
 const fetchImageAsset = vi.fn(async () => Buffer.from('synthetic image'))
 

@@ -6,7 +6,7 @@
     "dev": "turbo run dev",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
-    "lint": "oxlint .",
+    "lint": "oxlint . && pnpm --filter @gekichumai/backend lint:effect",
     "lint:fix": "oxlint --fix ."
   },
   "devDependencies": {

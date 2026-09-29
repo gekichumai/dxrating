@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import pg from 'pg'
-import { PublishedDxdataCatalogSchema } from '../services/dxdata-openapi.js'
-import { cleanDatabase, getBaseUrl, setupTestServer, teardownTestServer } from './setup.js'
+import { PublishedDxdataCatalogSchema } from '../services/dxdata-openapi'
+import { cleanDatabase, getBaseUrl, setupTestServer, teardownTestServer } from './setup'
 
 const producerContractSuite = process.env.DXDATA_PRODUCER_CONTRACT === '1' ? describe : describe.skip
 

@@ -1,6 +1,7 @@
 import * as path from 'node:path'
 import * as dotenv from 'dotenv'
 import { z } from 'zod'
+import { Context, Layer } from 'effect'
 
 dotenv.config()
 dotenv.config({
@@ -120,3 +121,6 @@ export const config = {
     apiKey: env.POSTHOG_API_KEY,
   },
 } as const
+
+export class AppConfig extends Context.Tag('dxrating/AppConfig')<AppConfig, typeof config>() {}
+export const AppConfigLive = Layer.succeed(AppConfig, config)

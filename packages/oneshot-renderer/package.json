@@ -12,10 +12,11 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
-    "lint": "oxlint src test",
-    "test": "vitest run",
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs --watch",
+    "lint": "oxlint src test scripts",
+    "test": "vitest run && pnpm test:runtime",
+    "test:runtime": "pnpm build && node --experimental-transform-types --test scripts/runtime-import.test.mjs",
     "test:visual": "node --import tsx scripts/verify-visual.ts"
   },
   "dependencies": {
@@ -29,6 +30,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/react": "catalog:",
+    "esbuild": "^0.28.0",
     "tsx": "^4.21.0",
     "typescript": "catalog:",
     "vitest": "catalog:"

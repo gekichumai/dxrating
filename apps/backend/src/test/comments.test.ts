@@ -1,6 +1,6 @@
 beforeAll(setupTestServer)
 afterAll(teardownTestServer)
-import { pool } from '../db/index.js'
+import { pool } from '../db/index'
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import {
   setupTestServer,
@@ -11,7 +11,7 @@ import {
   extractSessionCookie,
   authenticatedFetch,
   cleanDatabase,
-} from './setup.js'
+} from './setup'
 
 describe('Comments API', () => {
   beforeEach(async () => {

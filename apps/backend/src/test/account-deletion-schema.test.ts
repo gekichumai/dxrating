@@ -1,6 +1,6 @@
 import pg from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { cleanDatabase, setupTestServer, signUp, teardownTestServer } from './setup.js'
+import { cleanDatabase, setupTestServer, signUp, teardownTestServer } from './setup'
 
 describe('Account deletion database relationships', () => {
   beforeAll(async () => {

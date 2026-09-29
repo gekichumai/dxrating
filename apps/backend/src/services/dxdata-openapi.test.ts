@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { OpenAPI } from '@orpc/openapi'
-import { PublishedDxdataCatalogSchema, addPublishedDxdataToOpenApi } from './dxdata-openapi.js'
+import { PublishedDxdataCatalogSchema, addPublishedDxdataToOpenApi } from './dxdata-openapi'
 
 const catalogFixture = {
   schemaVersion: 1,

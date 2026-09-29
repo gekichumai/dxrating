@@ -22,6 +22,8 @@ const image = await render(input, { format: 'png', width: 1500 })
 
 Run `pnpm --filter @gekichumai/oneshot-renderer build` before importing the compiled package. `pnpm dev` watches package changes; the backend's own dev command builds it before startup. Turbo builds, backend CI, and Docker also build the package before the backend.
 
+Source imports are extensionless. esbuild bundles local modules into the ESM entry point in `dist`, while TypeScript emits declarations for the workspace's bundler-resolution consumers. Dependencies remain external, including native renderer libraries. Development watches both the JavaScript bundle and declarations. `pnpm test` rebuilds and checks the public package in Node as well as running the unit tests; Node's type transform is still needed for the external `dxdata` package.
+
 ## Compatibility decision
 
 | Component | Previous | Stage 1 | Evidence |

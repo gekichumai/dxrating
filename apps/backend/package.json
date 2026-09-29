@@ -5,21 +5,23 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter @gekichumai/oneshot-renderer build && tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "pnpm lint:effect && tsc && pnpm build:bundle",
     "build:bundle": "esbuild src/index.ts src/migrate.ts --bundle --outdir=dist --platform=node --target=node25 --format=esm --packages=external --jsx=automatic --sourcemap",
-    "start": "node dist/index.js",
-    "lint": "oxlint .",
+    "start": "node --enable-source-maps --experimental-transform-types dist/index.js",
+    "lint": "oxlint . && pnpm lint:effect",
     "test": "vitest run",
     "test:producer-contract": "DXDATA_PRODUCER_CONTRACT=1 vitest run src/test/dxdata-producer-contract.test.ts",
     "test:watch": "vitest",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "test:source-context": "node --test scripts/test-sentry-source-context.mjs"
+    "test:source-context": "node --test scripts/test-sentry-source-context.mjs",
+    "lint:effect": "effect-language-service diagnostics --project tsconfig.json --strict --severity error,warning"
   },
   "dependencies": {
     "@better-auth/expo": "catalog:",
     "@better-auth/i18n": "^1.6.11",
     "@better-auth/passkey": "catalog:",
+    "@effect/platform-node": "0.106.0",
     "@gekichumai/api-contract": "workspace:*",
     "@gekichumai/dxdata": "workspace:*",
     "@gekichumai/maimai-domain": "workspace:*",
@@ -40,9 +42,9 @@
     "cookie": "^1.1.1",
     "dotenv": "catalog:",
     "drizzle-orm": "^0.45.2",
+    "effect": "^3.21.4",
     "evlog": "^2.13.0",
     "hono": "catalog:",
-    "keyv": "^5.6.0",
     "pg": "catalog:",
     "postgres": "^3.4.9",
     "react": "catalog:",
@@ -53,6 +55,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@effect/language-service": "^0.87.2",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie": "^0.6.0",
     "@types/node": "catalog:",

@@ -17,7 +17,7 @@ import {
   check,
 } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
-import { user } from './auth-schema.js'
+import { user } from './auth-schema'
 
 // --- Application Tables ---
 

@@ -3,25 +3,27 @@
 ## Stack
 
 - **Runtime**: Node.js 25.9.0
-- **Framework**: Hono
+- **Application**: Effect 3 services, layers, typed failures, and scoped resources
+- **HTTP adapter**: Hono
 - **API Layer**: oRPC (type-safe OpenAPI-based RPC)
 - **Database**: PostgreSQL 16 via Drizzle ORM
 - **Auth**: Better Auth (email/password, OAuth, passkeys)
 - **Validation**: Zod
 - **Error Tracking**: Sentry
-- **Build**: TypeScript (`tsc`)
+- **Build**: Effect diagnostics + TypeScript checking + esbuild production bundle
 - **Dev**: `tsx watch`
 - **Test**: Vitest
-- **Lint**: oxlint
+- **Lint**: oxlint + official Effect language-service diagnostics (errors)
 
 ## Commands
 
 ```bash
 pnpm dev          # Start dev server with hot reload
-pnpm build        # TypeScript compilation
+pnpm build        # Effect diagnostics, TypeScript, and production bundle
 pnpm start        # Run production build
 pnpm test         # Run tests (vitest)
-pnpm lint         # Lint with oxlint
+pnpm lint         # oxlint and strict Effect diagnostics
+pnpm lint:effect  # Effect correctness and idiom checks
 pnpm db:up        # Start local PostgreSQL (Docker)
 pnpm db:down      # Stop local PostgreSQL
 ```
@@ -39,7 +41,9 @@ no cross-repository credential in DXRating.
 
 ```
 src/
-├── index.ts          # Entry point: Sentry init → Hono server
+├── index.ts          # NodeRuntime entry point, scoped listener and shutdown
+├── runtime.ts        # Application layer composition and HTTP runtime
+├── request-runner.ts # Tracks, interrupts, and joins requests before disposal
 ├── app.ts            # Hono app: routes, CORS, error handling
 ├── config.ts         # Env loading (dotenv → .env.local → vault) + Zod schema
 ├── contract.ts       # oRPC API contracts (type-safe route definitions)
@@ -122,5 +126,41 @@ When working on Coolify deployment or integration, use context7 to query the Coo
 - API contracts defined in `contract.ts` using oRPC + Zod, implementations in `router.ts`
 - Auth context passed through oRPC handler context (`context.user`)
 - Database schema changes go through Drizzle migrations (`drizzle-kit`)
-- ES modules throughout (`.js` extensions in imports even for TypeScript)
+- ES modules with extensionless relative TypeScript imports. TypeScript uses `bundler` module resolution; esbuild resolves local modules into the production bundle. Keep extensions on actual output and asset paths.
 - CORS allows `localhost` for dev, `https://dxrating.net` for production, and `*.dxrating.pages.dev` for preview deployments
+
+
+## Effect conventions
+
+Application operations return `Effect<A, E, R>` and compose with `Effect.gen`,
+`Effect.fn`, and the standard combinators. Keep shared API contracts in Zod so
+Hono/oRPC clients retain the existing wire format. Pure parsing, calculations,
+and JSX construction stay ordinary pure functions.
+
+Use `Context.Tag` services and compose their live `Layer`s in `runtime.ts`.
+Provide test services at the test entry point. Model recoverable failures with
+specific tagged errors; retain the foreign failure in `cause`. Adapt individual
+foreign operations with `Effect.tryPromise` or `Effect.try`, without generic
+Promise wrappers, `unknown` error channels, or converting defects into expected
+failures. Use `Effect.acquireRelease` and scopes for resource ownership.
+
+Only Hono/oRPC handlers, Better Auth callbacks, renderer SDK callbacks, test
+runners, and executable entry points convert Effects to Promises. The HTTP
+boundary uses `runApp`, whose managed runtime preserves expected error identity
+using `Effect.either` and `Either.getOrThrowWith`. Defects and interruptions retain
+Effect's runtime failure semantics. Do not recursively unwrap or squash causes.
+
+Shutdown closes the listener, interrupts and joins in-flight application work,
+and then disposes service layers. PostgreSQL and Better Auth do not support
+AbortSignal cancellation: keep their promises tracked until they settle. OAuth
+token exchange/rotation must persist issued credentials even if the caller
+cancels. Database transactions roll back on failure, defect, or interruption,
+and discard connections after failed commit/cleanup.
+
+`pnpm lint:effect` runs the official language-service CLI against all backend
+TypeScript, including tests and operator scripts. The `diagnosticSeverity` map
+in `tsconfig.json` makes correctness and unsafe-pattern rules errors. Both
+backend build and root/backend lint run it; no editor-only plugin or patched
+compiler is required. Do not disable a rule to hide an application error. The
+single `strictEffectProvide` exception at the moderation CLI documents a real
+application entry point; the upstream rule flags all layer provision calls.

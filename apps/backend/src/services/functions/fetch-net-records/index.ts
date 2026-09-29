@@ -1,182 +1,153 @@
+import { Cause, Clock, Effect, Data, Runtime } from 'effect'
 import type { Context } from 'hono'
 import { streamSSE } from 'hono/streaming'
 import {
-  MaimaiNETIntlClient,
-  MaimaiNETJpClient,
+  withMaimaiNETClient,
   NetImportError,
+  type AuthParams,
   type StateUpdateCallback,
-} from '../../../lib/functions/client.js'
-import { Sentry, type Scope } from '../../../lib/functions/sentry.js'
+} from '../../../lib/functions/client'
+import { Sentry, type Scope } from '../../../lib/functions/sentry'
+import { runApp } from '../../../runtime'
 
-export async function v0Handler(c: Context) {
-  return await Sentry.startSpan({ name: 'fetchNetRecords_v0', op: 'function' }, async () => {
-    const region = c.get('region') as 'jp' | 'intl'
-    const authParams = c.get('authParams')
+export class NetStreamError extends Data.TaggedError('NetStreamError')<{
+  readonly operation: string
+  readonly cause: unknown
+}> {
+  get message() {
+    return this.cause instanceof Error ? this.cause.message : this.operation + ' failed'
+  }
+}
 
-    Sentry.addBreadcrumb({
-      message: 'Initializing MaimaiNET client',
-      category: 'init',
-      data: { region },
-      level: 'info',
-    })
-
-    const client = {
-      jp: new MaimaiNETJpClient(),
-      intl: new MaimaiNETIntlClient(),
-    }[region]
-
-    Sentry.addBreadcrumb({
-      message: 'Attempting login to MaimaiNET',
-      category: 'auth',
-      data: { region },
-      level: 'info',
-    })
-    await client.login(authParams)
-
-    Sentry.addBreadcrumb({
-      message: 'Fetching recent records',
-      category: 'fetch',
-      level: 'info',
-    })
-    const recentRecords = await client.fetchRecentRecords()
-
-    Sentry.addBreadcrumb({
-      message: 'Fetching music records',
-      category: 'fetch',
-      level: 'info',
-    })
-    const musicRecords = await client.fetchMusicRecords()
-
-    Sentry.addBreadcrumb({
-      message: 'Successfully fetched all records',
-      category: 'success',
-      data: {
-        recentCount: recentRecords.length,
-        musicCount: musicRecords.length,
-      },
-      level: 'info',
-    })
-
-    try {
-      return c.json({ recentRecords, musicRecords })
-    } catch (error) {
-      if (error instanceof Error) {
-        Sentry.withScope((scope: Scope) => {
-          scope.setContext('function', { name: 'fetchNetRecords_v0' })
-          scope.setContext('parameters', { region })
-          scope.setContext('endpoint', { name: 'MaimaiNET' })
-          if (error.message.includes('response redirects to error page')) {
-            scope.setFingerprint(['net-error-redirect'])
-          }
-          Sentry.captureException(error)
-        })
-      }
-      throw error
-    }
+const reportError = (failure: unknown, region: string, streaming: boolean) => {
+  const error = failure
+  if (!(error instanceof Error)) return
+  Sentry.withScope((scope: Scope) => {
+    scope.setContext('function', { name: streaming ? 'fetchNetRecords_v1' : 'fetchNetRecords_v0' })
+    scope.setContext('parameters', { region })
+    scope.setContext('endpoint', { name: streaming ? 'MaimaiNET (SSE)' : 'MaimaiNET' })
+    if (error.message.includes('response redirects to error page')) scope.setFingerprint(['net-error-redirect'])
+    Sentry.captureException(error)
   })
 }
 
-export async function v1Handler(c: Context) {
-  const region = c.get('region') as 'jp' | 'intl'
-  const authParams = c.get('authParams')
+export const fetchNetRecordsEffect = (
+  region: 'jp' | 'intl',
+  authParams: AuthParams,
+  onProgress?: StateUpdateCallback,
+) =>
+  withMaimaiNETClient(
+    region,
+    (client) =>
+      Effect.gen(function* () {
+        yield* Effect.sync(() =>
+          Sentry.addBreadcrumb({
+            message: 'Attempting login to MaimaiNET',
+            category: 'auth',
+            data: { region },
+            level: 'info',
+          }),
+        )
+        yield* client.loginEffect(authParams)
+        yield* Effect.sync(() =>
+          Sentry.addBreadcrumb({ message: 'Fetching recent records', category: 'fetch', level: 'info' }),
+        )
+        const recent = yield* client.fetchRecentRecordsEffect()
+        yield* Effect.sync(() =>
+          Sentry.addBreadcrumb({ message: 'Fetching music records', category: 'fetch', level: 'info' }),
+        )
+        const music = yield* client.fetchMusicRecordsEffect()
+        yield* Effect.sync(() =>
+          Sentry.addBreadcrumb({
+            message: 'Successfully fetched all records',
+            category: 'success',
+            data: { recentCount: recent.length, musicCount: music.length },
+            level: 'info',
+          }),
+        )
+        return { recent, music }
+      }),
+    onProgress,
+  )
 
+export const v0Handler = (c: Context) => {
+  const region = c.get('region') as 'jp' | 'intl'
+  const program = fetchNetRecordsEffect(region, c.get('authParams')).pipe(
+    Effect.map(({ recent, music }) => c.json({ recentRecords: recent, musicRecords: music })),
+    Effect.tapError((error) => Effect.sync(() => reportError(error, region, false))),
+  )
+  return Sentry.startSpan({ name: 'fetchNetRecords_v0', op: 'function' }, () =>
+    runApp(program, { signal: c.req.raw.signal }),
+  )
+}
+
+export const v1Handler = (c: Context) => {
+  const region = c.get('region') as 'jp' | 'intl'
   return streamSSE(c, async (stream) => {
-    const onProgress: StateUpdateCallback = async (state) => {
+    const disconnected = new AbortController()
+    stream.onAbort(() => disconnected.abort())
+    const signal = AbortSignal.any([c.req.raw.signal, disconnected.signal])
+    const onProgress: StateUpdateCallback = (state) => {
       Sentry.addBreadcrumb({
         message: `Progress update: ${state}`,
         category: 'progress',
         data: { state, region },
         level: 'info',
       })
-      await stream.writeSSE({ event: 'progress', data: JSON.stringify({ state }) })
+      return stream.writeSSE({ event: 'progress', data: JSON.stringify({ state }) })
     }
-
-    await Sentry.startSpan({ name: 'fetchNetRecords_v1', op: 'function' }, async () => {
-      const fetchStart = performance.now()
-      try {
-        Sentry.addBreadcrumb({
-          message: 'Starting SSE fetch NET records',
-          category: 'init',
-          data: { region },
-          level: 'info',
-        })
-
-        const client = {
-          jp: new MaimaiNETJpClient(onProgress),
-          intl: new MaimaiNETIntlClient(onProgress),
-        }[region]
-
-        Sentry.addBreadcrumb({
-          message: 'Attempting login to MaimaiNET (SSE)',
-          category: 'auth',
-          data: { region },
-          level: 'info',
-        })
-        await client.login(authParams)
-
-        Sentry.addBreadcrumb({
-          message: 'Fetching recent records (SSE)',
-          category: 'fetch',
-          level: 'info',
-        })
-        const recent = await client.fetchRecentRecords()
-
-        Sentry.addBreadcrumb({
-          message: 'Fetching music records (SSE)',
-          category: 'fetch',
-          level: 'info',
-        })
-        const music = await client.fetchMusicRecords()
-
-        Sentry.addBreadcrumb({
-          message: 'Successfully completed SSE fetch',
-          category: 'success',
-          data: {
-            recentCount: recent.length,
-            musicCount: music.length,
-          },
-          level: 'info',
-        })
-
-        Sentry.metrics.distribution('net_fetch.duration', performance.now() - fetchStart, {
+    const program = Effect.gen(function* () {
+      const startedAt = yield* Clock.currentTimeMillis
+      const { recent, music } = yield* fetchNetRecordsEffect(region, c.get('authParams'), onProgress)
+      const finishedAt = yield* Clock.currentTimeMillis
+      yield* Effect.sync(() => {
+        Sentry.metrics.distribution('net_fetch.duration', finishedAt - startedAt, {
           unit: 'millisecond',
           attributes: { region },
         })
-        Sentry.metrics.distribution('net_fetch.music_records', music.length, {
-          unit: 'none',
-          attributes: { region },
-        })
-        Sentry.metrics.distribution('net_fetch.recent_records', recent.length, {
-          unit: 'none',
-          attributes: { region },
-        })
-
-        await stream.writeSSE({ event: 'progress', data: JSON.stringify({ state: 'concluded' }) })
-        await stream.writeSSE({ event: 'data', data: JSON.stringify({ recent, music }) })
-      } catch (err) {
-        Sentry.metrics.count('net_fetch.failure', 1, {
-          attributes: { region, error_code: err instanceof NetImportError ? err.code : 'unknown' },
-        })
-        if (err instanceof Error) {
-          Sentry.withScope((scope: Scope) => {
-            scope.setContext('function', { name: 'fetchNetRecords_v1' })
-            scope.setContext('parameters', { region })
-            scope.setContext('endpoint', { name: 'MaimaiNET (SSE)' })
-            if (err.message.includes('response redirects to error page')) {
-              scope.setFingerprint(['net-error-redirect'])
-            }
-            Sentry.captureException(err)
+        Sentry.metrics.distribution('net_fetch.music_records', music.length, { unit: 'none', attributes: { region } })
+        Sentry.metrics.distribution('net_fetch.recent_records', recent.length, { unit: 'none', attributes: { region } })
+      })
+      yield* Effect.tryPromise({
+        try: () => stream.writeSSE({ event: 'progress', data: JSON.stringify({ state: 'concluded' }) }),
+        catch: (cause) => new NetStreamError({ operation: 'write NET import completion', cause }),
+      })
+      yield* Effect.tryPromise({
+        try: () => stream.writeSSE({ event: 'data', data: JSON.stringify({ recent, music }) }),
+        catch: (cause) => new NetStreamError({ operation: 'write NET import records', cause }),
+      })
+    }).pipe(
+      Effect.catchAll((error) =>
+        Effect.gen(function* () {
+          yield* Effect.sync(() => {
+            Sentry.metrics.count('net_fetch.failure', 1, {
+              attributes: { region, error_code: error instanceof NetImportError ? error.code : 'unknown' },
+            })
+            reportError(error, region, true)
           })
-        }
-
-        await stream.writeSSE({
-          event: 'error',
-          data: JSON.stringify({
-            code: err instanceof NetImportError ? err.code : 'UNKNOWN_ERROR',
-            error: err instanceof Error ? err.message : 'internal server error',
-          }),
-        })
+          yield* Effect.tryPromise({
+            try: () =>
+              stream.writeSSE({
+                event: 'error',
+                data: JSON.stringify({
+                  code: error instanceof NetImportError ? error.code : 'UNKNOWN_ERROR',
+                  error: error instanceof Error ? error.message : 'internal server error',
+                }),
+              }),
+            catch: (cause) => new NetStreamError({ operation: 'write NET import error', cause }),
+          })
+        }),
+      ),
+    )
+    try {
+      await Sentry.startSpan({ name: 'fetchNetRecords_v1', op: 'function' }, () => runApp(program, { signal }))
+    } catch (error) {
+      if (
+        !signal.aborted &&
+        !(Runtime.isFiberFailure(error) && Cause.isInterruptedOnly(error[Runtime.FiberFailureCauseId]))
+      ) {
+        throw error
       }
-    })
+    }
   })
 }

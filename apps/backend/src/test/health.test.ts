@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { setupTestServer, teardownTestServer, getBaseUrl } from './setup.js'
+import { setupTestServer, teardownTestServer, getBaseUrl } from './setup'
 
 const API_CATALOG_PROFILE_URL = 'https://www.rfc-editor.org/info/rfc9727'
 

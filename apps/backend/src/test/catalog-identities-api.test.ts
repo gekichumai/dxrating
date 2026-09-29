@@ -9,7 +9,7 @@ import {
   signIn,
   signUp,
   teardownTestServer,
-} from './setup.js'
+} from './setup'
 
 const SONG_A = 'dsng_23456789ab'
 const SONG_B = 'dsng_23456789ac'

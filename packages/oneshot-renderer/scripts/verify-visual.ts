@@ -4,8 +4,8 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
-import { createOneshotRenderer, type RenderInput } from '../src/index.js'
-import { cases } from '../test/fixtures/cases.js'
+import { createOneshotRenderer, type RenderInput } from '../src/index'
+import { cases } from '../test/fixtures/cases'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const fixtureDir = path.join(root, 'test/fixtures')

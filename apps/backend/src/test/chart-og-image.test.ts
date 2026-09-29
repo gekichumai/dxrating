@@ -2,13 +2,13 @@ import { DifficultyEnum, TypeEnum, VersionEnum, dxdata } from '@gekichumai/dxdat
 import { getDxdataSongCatalog } from '@gekichumai/maimai-domain'
 import { Hono } from 'hono'
 import { describe, expect, it, vi } from 'vitest'
-import { app } from '../app.js'
+import { app } from '../app'
 import {
   createChartOgImageHandler,
   formatInternalLevelLabelParts,
   getTitleLayout,
   resolveChartOgImageData,
-} from '../services/functions/chart-og-image/index.js'
+} from '../services/functions/chart-og-image/index'
 
 const song = dxdata.songs.find((candidate) =>
   candidate.sheets.some((sheet) => sheet.type === TypeEnum.DX && sheet.difficulty === DifficultyEnum.Master),

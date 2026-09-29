@@ -4,8 +4,9 @@
 import * as path from 'node:path'
 import { serve } from '@hono/node-server'
 import type { ServerType } from '@hono/node-server'
-import { app } from '../app.js'
-import { pool as appPool } from '../db/index.js'
+import { app } from '../app'
+import { pool as appPool } from '../db/index'
+import { shutdownApp } from '../runtime'
 import pg from 'pg'
 import fs from 'node:fs/promises'
 
@@ -89,8 +90,11 @@ async function waitForServer(retries = 30, delayMs = 200) {
 }
 
 export async function teardownTestServer() {
-  server?.close()
-  await appPool.end()
+  if (server) {
+    await new Promise<void>((resolve, reject) => server!.close((error) => (error ? reject(error) : resolve())))
+  }
+  await shutdownApp()
+  if (!appPool.ended) await appPool.end()
 }
 
 // --- Auth helpers ---

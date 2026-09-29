@@ -1,31 +1,34 @@
 import { X509Certificate } from 'node:crypto'
 import tls from 'node:tls'
+import { Effect } from 'effect'
 import { Response, type RequestInit } from 'undici'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   MAIMAI_NET_INTERMEDIATE_CERTIFICATES,
   MaimaiNETIntlClient,
   NetImportError,
   type NetImportErrorCode,
-} from './client.js'
-import { URLS } from './URLS.js'
+} from './client'
+import { URLS } from './URLS'
 
 class StubIntlClient extends MaimaiNETIntlClient {
-  override async fetch(url: string, _init?: RequestInit, errorRedirectCode?: NetImportErrorCode) {
+  override fetchEffect = (url: string, _init?: RequestInit, errorRedirectCode?: NetImportErrorCode) => {
     if (url === URLS.INTL.LOGIN_PAGE) {
-      return new Response('', { status: 200 })
+      return Effect.succeed(new Response('', { status: 200 }))
     }
 
     if (url === URLS.INTL.LOGIN_ENDPOINT) {
-      return new Response(null, {
-        status: 302,
-        headers: {
-          location: 'https://maimaidx-eng.com/maimai-mobile/?ssid=synthetic',
-        },
-      })
+      return Effect.succeed(
+        new Response(null, {
+          status: 302,
+          headers: {
+            location: 'https://maimaidx-eng.com/maimai-mobile/?ssid=synthetic',
+          },
+        }),
+      )
     }
 
-    throw new NetImportError(errorRedirectCode ?? 'UNKNOWN_ERROR')
+    return Effect.fail(new NetImportError(errorRedirectCode ?? 'UNKNOWN_ERROR'))
   }
 }
 
@@ -33,9 +36,38 @@ describe('international maimai NET login', () => {
   it('distinguishes a rejected authenticated callback from invalid credentials', async () => {
     const client = new StubIntlClient()
 
-    await expect(client.login({ id: 'test-id', password: 'test-password' })).rejects.toMatchObject({
+    await expect(
+      Effect.runPromise(Effect.flip(client.loginEffect({ id: 'test-id', password: 'test-password' }))),
+    ).resolves.toMatchObject({
       code: 'AIME_CARD_UNAVAILABLE',
     })
+  })
+
+  it('waits for a progress consumer before starting upstream requests', async () => {
+    let releaseProgress!: () => void
+    let reportStarted!: () => void
+    const progress = new Promise<void>((resolve) => {
+      releaseProgress = resolve
+    })
+    const started = new Promise<void>((resolve) => {
+      reportStarted = resolve
+    })
+    const client = new StubIntlClient(async () => {
+      reportStarted()
+      await progress
+    })
+    const request = vi.spyOn(client, 'fetchEffect')
+    const login = expect(
+      Effect.runPromise(Effect.flip(client.loginEffect({ id: 'test-id', password: 'test-password' }))),
+    ).resolves.toMatchObject({
+      code: 'AIME_CARD_UNAVAILABLE',
+    })
+    await started
+    expect(request).not.toHaveBeenCalled()
+
+    releaseProgress()
+    await login
+    expect(request).toHaveBeenCalled()
   })
 })
 

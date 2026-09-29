@@ -7,8 +7,8 @@ import {
   normalizeLxnsScores,
   normalizeMaimaiNetRecords,
   normalizeMuNetRows,
-} from '../import-normalizers.js'
-import { buildSongCatalog } from '../song-catalog.js'
+} from '../import-normalizers'
+import { buildSongCatalog } from '../song-catalog'
 
 const data: DXData = {
   updateTime: '2026-05-17T00:00:00.000Z',

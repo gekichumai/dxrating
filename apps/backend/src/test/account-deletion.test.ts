@@ -9,7 +9,7 @@ import {
   signIn,
   signUp,
   teardownTestServer,
-} from './setup.js'
+} from './setup'
 
 describe('Account deletion', () => {
   beforeAll(async () => {

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { ByteCache } from './cache.js'
-import type { LoadAsset } from './types.js'
+import { ByteCache } from './cache'
+import type { LoadAsset } from './types'
 
 /** An instance belongs to one immutable source configuration; never share it between asset roots. */
 export function createAssetLoader({

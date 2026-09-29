@@ -1,7 +1,8 @@
 import { ORPCError } from '@orpc/server'
+import { Effect } from 'effect'
 import { describe, expect, it } from 'vitest'
-import { withCatalogIdentityErrors } from '../router.js'
-import { CatalogIdentityError } from './catalog-identities.js'
+import { withCatalogIdentityErrors } from '../router'
+import { CatalogIdentityError } from './catalog-identities'
 
 describe('catalog identity API errors', () => {
   it('preserves the identity and database cause chain when converting to ORPCError', async () => {
@@ -10,12 +11,7 @@ describe('catalog identity API errors', () => {
       cause: databaseError,
     })
 
-    let caught: unknown
-    try {
-      await withCatalogIdentityErrors(() => Promise.reject(identityError))
-    } catch (error) {
-      caught = error
-    }
+    const caught = await Effect.runPromise(Effect.flip(withCatalogIdentityErrors(Effect.fail(identityError))))
 
     expect(caught).toBeInstanceOf(ORPCError)
     expect(caught).toMatchObject({

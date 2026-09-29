@@ -1,7 +1,7 @@
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { getDxdataSongCatalog } from '@gekichumai/maimai-domain'
 import { describe, expect, it } from 'vitest'
-import { isRenderableRatingSheet } from '../services/functions/oneshot-renderer/index.js'
+import { isRenderableRatingSheet } from '../services/functions/oneshot-renderer/index'
 
 describe('oneshot renderer sheet guard', () => {
   it('rejects UTAGE sheets with custom difficulty labels', () => {

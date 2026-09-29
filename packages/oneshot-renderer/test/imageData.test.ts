@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { imageData } from '../src/imageData.js'
+import { imageData } from '../src/imageData'
 
 describe('image bytes', () => {
   it('never includes unrelated bytes from a pooled Buffer', () => {

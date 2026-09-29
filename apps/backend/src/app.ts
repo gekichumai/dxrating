@@ -4,28 +4,36 @@ import { createMiddleware } from 'hono/factory'
 import { cors } from 'hono/cors'
 import { RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
-import { auth } from './auth.js'
-import { handler as oneshotRenderer } from './services/functions/oneshot-renderer/index.js'
+import { Authentication } from './auth'
+import { Data, Effect, Option } from 'effect'
+import { runApp } from './runtime'
+import { HttpClient } from './services/http-client'
+import { getBuildInfo } from './version'
+import { handler as oneshotRenderer } from './services/functions/oneshot-renderer/index'
 import {
   v0Handler as fetchNetRecordsV0Handler,
   v1Handler as fetchNetRecordsV1Handler,
-} from './services/functions/fetch-net-records/index.js'
+} from './services/functions/fetch-net-records/index'
 import { evlog, type EvlogVariables } from 'evlog/hono'
 import type { MiddlewareHandler } from 'hono'
-import { drain } from './logger.js'
-import { appRouter } from './router.js'
-import { exchangeCodeForTokens } from './services/lxns/index.js'
-import { config } from './config.js'
+import { drain } from './logger'
+import { appRouter } from './router'
+import { exchangeCodeForTokens } from './services/lxns/index'
+import { AppConfig } from './config'
 import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
 import { RequestHeadersPlugin, ResponseHeadersPlugin } from '@orpc/server/plugins'
 import { onError } from '@orpc/server'
-import { Sentry, shouldCaptureSentryError } from './lib/functions/sentry.js'
-import { pool } from './db/index.js'
-import { createDxdataHandler, createPostgresDxdataStore, DXDATA_CORS_OPTIONS, DXDATA_PATH } from './services/dxdata.js'
-import { addPublishedDxdataToOpenApi } from './services/dxdata-openapi.js'
-import { addPublicApiExamplesToOpenApi } from './services/openapi-examples.js'
+import { Sentry, shouldCaptureSentryError } from './lib/functions/sentry'
+import { Database } from './db/index'
+import { createDxdataEffect, createPostgresDxdataEffects, DXDATA_CORS_OPTIONS, DXDATA_PATH } from './services/dxdata'
+import { addPublishedDxdataToOpenApi } from './services/dxdata-openapi'
+import { addPublicApiExamplesToOpenApi } from './services/openapi-examples'
+class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
+  readonly operation: string
+  readonly cause: unknown
+}> {}
 
 const app = new Hono<EvlogVariables>()
 
@@ -197,14 +205,22 @@ app.use(
 )
 
 // Set X-DXRating-Request-ID response header
-app.use('*', async (c, next) => {
-  await next()
-  const log = c.get('log')
-  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
-  if (requestId && !PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)) {
-    c.header('X-DXRating-Request-ID', requestId)
-  }
-})
+app.use('*', (c, next) =>
+  runApp(
+    Effect.gen(function* () {
+      yield* Effect.tryPromise({
+        try: next,
+        catch: (cause) => new HttpAdapterError({ operation: 'Run HTTP middleware', cause }),
+      })
+      const log = c.get('log')
+      const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+      if (requestId && !PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)) {
+        c.header('X-DXRating-Request-ID', requestId)
+      }
+    }),
+    { signal: c.req.raw.signal },
+  ),
+)
 
 // Root redirect to docs
 app.get('/', (c) => c.redirect('/docs'))
@@ -224,14 +240,19 @@ app.on('HEAD', '/.well-known/api-catalog', (c) => {
 })
 
 // Build provenance endpoint
-app.get('/version', async (c) => {
-  const { getBuildInfo } = await import('./version.js')
-  return c.json(await getBuildInfo())
-})
+app.get('/version', (c) =>
+  runApp(
+    Effect.map(getBuildInfo, (info) => c.json(info)),
+    { signal: c.req.raw.signal },
+  ),
+)
 
 // BetterAuth
 app.on(['POST', 'GET'], '/api/auth/**', (c) => {
-  return auth.handler(c.req.raw)
+  return runApp(
+    Effect.flatMap(Authentication, (auth) => auth.handle(c.req.raw)),
+    { signal: c.req.raw.signal },
+  )
 })
 
 // Middleware: validate auth params for fetch-net-records
@@ -241,19 +262,30 @@ const authParamsSchema = z.object({
   region: z.enum(['jp', 'intl']),
 })
 
-const verifyParams = createMiddleware(async (c, next) => {
-  const body = await c.req.json()
-  const region = c.req.param('region') ?? body.region
+const verifyParams = createMiddleware((c, next) =>
+  runApp(
+    Effect.gen(function* () {
+      const body = yield* Effect.tryPromise({
+        try: () => c.req.json(),
+        catch: (cause) => new HttpAdapterError({ operation: 'Read NET parameters', cause }),
+      })
+      const region = c.req.param('region') ?? body.region
 
-  const result = authParamsSchema.safeParse({ id: body.id, password: body.password, region })
-  if (!result.success) {
-    return c.json({ error: 'Invalid parameters', details: result.error.issues }, 400)
-  }
+      const result = authParamsSchema.safeParse({ id: body.id, password: body.password, region })
+      if (!result.success) {
+        return c.json({ error: 'Invalid parameters', details: result.error.issues }, 400)
+      }
 
-  c.set('authParams', { id: result.data.id, password: result.data.password })
-  c.set('region', result.data.region)
-  return next()
-})
+      c.set('authParams', { id: result.data.id, password: result.data.password })
+      c.set('region', result.data.region)
+      return yield* Effect.tryPromise({
+        try: next,
+        catch: (cause) => new HttpAdapterError({ operation: 'Run NET handler', cause }),
+      })
+    }),
+    { signal: c.req.raw.signal },
+  ),
+)
 
 // Sentry tunnel — accepts raw envelope body, proxies as-is
 const SENTRY_ALLOWED_DSN_TARGETS = new Set([
@@ -262,37 +294,41 @@ const SENTRY_ALLOWED_DSN_TARGETS = new Set([
 ])
 const MAX_TUNNEL_BODY_SIZE = 20 * 1024 * 1024 // 20 MB
 
-app.post('/api/v1/monitoring/tunnel', async (c) => {
-  const contentLength = Number(c.req.header('content-length') ?? 0)
-  if (contentLength > MAX_TUNNEL_BODY_SIZE) {
-    return c.json({ error: 'Payload too large' }, 413)
-  }
-
-  const envelope = await c.req.text()
-  if (Buffer.byteLength(envelope) > MAX_TUNNEL_BODY_SIZE) {
-    return c.json({ error: 'Payload too large' }, 413)
-  }
-
-  try {
-    const header = JSON.parse(envelope.split('\n')[0])
-    const dsn = new URL(header.dsn)
-    const projectId = dsn.pathname.replace('/', '')
-    const sentryTarget = `${dsn.hostname}/${projectId}`
-
-    if (!SENTRY_ALLOWED_DSN_TARGETS.has(sentryTarget)) {
-      return c.json({ error: 'Invalid Sentry DSN' }, 400)
-    }
-
-    await fetch(`https://${dsn.hostname}/api/${projectId}/envelope/`, {
-      method: 'POST',
-      body: envelope,
-    })
-  } catch {
-    // silently discard malformed envelopes
-  }
-
-  return c.body(null, 200)
-})
+app.post('/api/v1/monitoring/tunnel', (c) =>
+  runApp(
+    Effect.gen(function* () {
+      const contentLength = Number(c.req.header('content-length') ?? 0)
+      if (contentLength > MAX_TUNNEL_BODY_SIZE) return c.json({ error: 'Payload too large' }, 413)
+      const envelope = yield* Effect.tryPromise({
+        try: () => c.req.text(),
+        catch: (cause) => new HttpAdapterError({ operation: 'Read Sentry envelope', cause }),
+      })
+      if (Buffer.byteLength(envelope) > MAX_TUNNEL_BODY_SIZE) return c.json({ error: 'Payload too large' }, 413)
+      const parsed = yield* Effect.try(() => {
+        const header = JSON.parse(envelope.split('\n')[0])
+        return new URL(header.dsn)
+      }).pipe(Effect.option)
+      if (Option.isNone(parsed)) return c.body(null, 200)
+      const dsn = parsed.value
+      const projectId = dsn.pathname.replace('/', '')
+      if (!SENTRY_ALLOWED_DSN_TARGETS.has(`${dsn.hostname}/${projectId}`)) {
+        return c.json({ error: 'Invalid Sentry DSN' }, 400)
+      }
+      const http = yield* HttpClient
+      yield* http
+        .request(`https://${dsn.hostname}/api/${projectId}/envelope/`, {
+          method: 'POST',
+          body: envelope,
+        })
+        .pipe(
+          Effect.flatMap(http.text),
+          Effect.catchAll(() => Effect.void),
+        )
+      return c.body(null, 200)
+    }),
+    { signal: c.req.raw.signal },
+  ),
+)
 
 // Functions
 app.post('/functions/fetch-net-records/v0', verifyParams, fetchNetRecordsV0Handler)
@@ -300,27 +336,30 @@ app.post('/functions/fetch-net-records/v1/:region', verifyParams, fetchNetRecord
 app.post('/functions/render-oneshot/v0', oneshotRenderer)
 
 // LXNS OAuth callback (direct Hono route — must be before oRPC catch-all since it redirects)
-app.get('/api/v1/io/import/lxns/oauth_callback', async (c) => {
-  const code = c.req.query('code')
-  const state = c.req.query('state')
-  const error = c.req.query('error')
-
-  const frontendCallback = `${config.frontendUrl}/io/import/lxns/oauth_callback`
-
-  if (error || !code || !state) {
-    const msg = error || 'missing_params'
-    return c.redirect(`${frontendCallback}?status=error&error=${encodeURIComponent(msg)}`)
-  }
-
-  try {
-    await exchangeCodeForTokens(code, state)
-    return c.redirect(`${frontendCallback}?status=success`)
-  } catch (err) {
-    const log = c.get('log')
-    log?.error(err instanceof Error ? err : new Error(String(err)))
-    return c.redirect(`${frontendCallback}?status=error&error=exchange_failed`)
-  }
-})
+app.get('/api/v1/io/import/lxns/oauth_callback', (c) =>
+  runApp(
+    Effect.gen(function* () {
+      const code = c.req.query('code')
+      const state = c.req.query('state')
+      const error = c.req.query('error')
+      const config = yield* AppConfig
+      const frontendCallback = `${config.frontendUrl}/io/import/lxns/oauth_callback`
+      if (error || !code || !state) {
+        return c.redirect(`${frontendCallback}?status=error&error=${encodeURIComponent(error || 'missing_params')}`)
+      }
+      return yield* exchangeCodeForTokens(code, state).pipe(
+        Effect.map(() => c.redirect(`${frontendCallback}?status=success`)),
+        Effect.catchAll((error) =>
+          Effect.sync(() => {
+            c.get('log')?.error(error)
+            return c.redirect(`${frontendCallback}?status=error&error=exchange_failed`)
+          }),
+        ),
+      )
+    }),
+    { signal: c.req.raw.signal },
+  ),
+)
 
 // oRPC OpenAPI handler
 const openAPIHandler = new OpenAPIHandler(appRouter, {
@@ -345,8 +384,12 @@ const openAPIGenerator = new OpenAPIGenerator({
 
 app.get('/robots.txt', (c) => c.text('User-agent: *\\nDisallow: /'))
 
-const dxdataStore = createPostgresDxdataStore((text, values) => pool.query(text, values))
-const dxdataHandler = createDxdataHandler<EvlogVariables>(dxdataStore, (error, c) => {
+const dxdataStore = createPostgresDxdataEffects((text, values) =>
+  Effect.flatMap(Database, (database) =>
+    database.query('Read published catalog', () => database.pool.query(text, values)),
+  ),
+)
+const dxdataHandler = createDxdataEffect(dxdataStore, (error, c: Context<EvlogVariables>) => {
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
   log?.error(error instanceof Error ? error : new Error(String(error)))
@@ -356,13 +399,20 @@ const dxdataHandler = createDxdataHandler<EvlogVariables>(dxdataStore, (error, c
 // The producer atomically advances the production publication pointer. Read
 // its small metadata row first so HEAD and conditional requests never fetch
 // the potentially large snapshot body.
-app.on(['GET', 'HEAD'], DXDATA_PATH, dxdataHandler)
+app.on(['GET', 'HEAD'], DXDATA_PATH, (c) => runApp(dxdataHandler(c), { signal: c.req.raw.signal }))
 
-const arcadeVenuesCacheHeaders = createMiddleware(async (c, next) => {
-  await next()
-  if (c.res.status !== 200) return
+const arcadeVenuesCacheHeaders = createMiddleware((c, next) =>
+  runApp(
+    Effect.gen(function* () {
+      yield* Effect.tryPromise({
+        try: next,
+        catch: (cause) => new HttpAdapterError({ operation: 'Run arcade handler', cause }),
+      })
+      if (c.res.status !== 200) return
 
-  const result = await pool.query<{ last_modified: Date | null }>(`
+      const database = yield* Database
+      const result = yield* database.query('Read arcade modification date', () =>
+        database.pool.query<{ last_modified: Date | null }>(`
     SELECT max(last_modified) AS last_modified
     FROM (
       SELECT max(updated_at) AS last_modified FROM arcade.venues
@@ -375,124 +425,165 @@ const arcadeVenuesCacheHeaders = createMiddleware(async (c, next) => {
       UNION ALL
       SELECT max(updated_at) AS last_modified FROM arcade.chains
     ) AS catalog_timestamps
-  `)
-  const lastModified = result.rows[0]?.last_modified
-  if (lastModified) c.header('Last-Modified', lastModified.toUTCString())
+  `),
+      )
+      const lastModified = result.rows[0]?.last_modified
+      if (lastModified) c.header('Last-Modified', lastModified.toUTCString())
 
-  c.header('Cache-Control', ARCADE_VENUES_BROWSER_CACHE_CONTROL)
-  c.header('CDN-Cache-Control', ARCADE_VENUES_CDN_CACHE_CONTROL)
-  c.header('Cloudflare-CDN-Cache-Control', ARCADE_VENUES_CDN_CACHE_CONTROL)
-  c.header('Cache-Tag', 'arcade-venues')
-})
+      c.header('Cache-Control', ARCADE_VENUES_BROWSER_CACHE_CONTROL)
+      c.header('CDN-Cache-Control', ARCADE_VENUES_CDN_CACHE_CONTROL)
+      c.header('Cloudflare-CDN-Cache-Control', ARCADE_VENUES_CDN_CACHE_CONTROL)
+      c.header('Cache-Tag', 'arcade-venues')
+    }),
+    { signal: c.req.raw.signal },
+  ),
+)
 
 const stripWeakEtag = (value: string) => value.trim().replace(/^W\//, '')
 
-const arcadeVenuesEtag = createMiddleware(async (c, next) => {
-  const ifNoneMatch = c.req.header('If-None-Match')
-  await next()
+const arcadeVenuesEtag = createMiddleware((c, next) =>
+  runApp(
+    Effect.gen(function* () {
+      const ifNoneMatch = c.req.header('If-None-Match')
+      yield* Effect.tryPromise({
+        try: next,
+        catch: (cause) => new HttpAdapterError({ operation: 'Run arcade cache middleware', cause }),
+      })
 
-  // Validation errors and server errors are not stable catalog
-  // representations and must never turn into conditional 304 responses.
-  if (c.res.status !== 200) {
-    c.res.headers.delete('ETag')
-    return
-  }
+      // Validation errors and server errors are not stable catalog
+      // representations and must never turn into conditional 304 responses.
+      if (c.res.status !== 200) {
+        c.res.headers.delete('ETag')
+        return
+      }
 
-  const response = c.res
-  const digest = await crypto.subtle.digest('SHA-256', await response.clone().arrayBuffer())
-  const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
-  const responseEtag = `"${hash}"`
-  const matches =
-    ifNoneMatch?.trim() === '*' ||
-    ifNoneMatch?.split(',').some((candidate) => stripWeakEtag(candidate) === stripWeakEtag(responseEtag)) === true
+      const response = c.res
+      const body = yield* Effect.tryPromise({
+        try: () => response.clone().arrayBuffer(),
+        catch: (cause) => new HttpAdapterError({ operation: 'Read arcade response', cause }),
+      })
+      const digest = yield* Effect.tryPromise({
+        try: () => crypto.subtle.digest('SHA-256', body),
+        catch: (cause) => new HttpAdapterError({ operation: 'Hash arcade response', cause }),
+      })
+      const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
+      const responseEtag = `"${hash}"`
+      const matches =
+        ifNoneMatch?.trim() === '*' ||
+        ifNoneMatch?.split(',').some((candidate) => stripWeakEtag(candidate) === stripWeakEtag(responseEtag)) === true
 
-  if (!matches) {
-    c.res.headers.set('ETag', responseEtag)
-    return
-  }
+      if (!matches) {
+        c.res.headers.set('ETag', responseEtag)
+        return
+      }
 
-  const headers = new Headers()
-  for (const name of ARCADE_VENUES_RETAINED_304_HEADERS) {
-    const value = response.headers.get(name)
-    if (value !== null) headers.set(name, value)
-  }
-  headers.set('ETag', responseEtag)
-  c.res = new Response(null, { status: 304, statusText: 'Not Modified', headers })
-})
+      const headers = new Headers()
+      for (const name of ARCADE_VENUES_RETAINED_304_HEADERS) {
+        const value = response.headers.get(name)
+        if (value !== null) headers.set(name, value)
+      }
+      headers.set('ETag', responseEtag)
+      c.res = new Response(null, { status: 304, statusText: 'Not Modified', headers })
+    }),
+    { signal: c.req.raw.signal },
+  ),
+)
 
 // This exact public route bypasses Better Auth's session lookup. Filtered
 // compatibility requests still receive validators, while the CDN Cache Rule
 // only marks the canonical query-less catalog eligible for edge storage.
-app.get(ARCADE_VENUES_PATH, arcadeVenuesEtag, arcadeVenuesCacheHeaders, async (c) => {
+const reportApiError = (c: Context, error: unknown) => {
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+  log?.error(error instanceof Error ? error : new Error(String(error)))
+  Sentry.captureException(error, { tags: { requestId } })
+  return c.json({ error: 'Internal server error', requestId }, 500)
+}
 
-  try {
-    const request = c.req.method === 'HEAD' ? new Request(c.req.raw, { method: 'GET' }) : c.req.raw
-    const { response } = await openAPIHandler.handle(request, {
-      prefix: '/api/v1',
-      context: {},
-    })
-    if (!response) return c.notFound()
-    return response
-  } catch (err) {
-    log?.error(err instanceof Error ? err : new Error(String(err)))
-    Sentry.captureException(err, { tags: { requestId } })
-    return c.json({ error: 'Internal server error', requestId }, 500)
-  }
-})
+app.get(ARCADE_VENUES_PATH, arcadeVenuesEtag, arcadeVenuesCacheHeaders, (c) =>
+  runApp(
+    Effect.tryPromise({
+      try: () =>
+        openAPIHandler.handle(c.req.method === 'HEAD' ? new Request(c.req.raw, { method: 'GET' }) : c.req.raw, {
+          prefix: '/api/v1',
+          context: { signal: c.req.raw.signal },
+        }),
+      catch: (cause) => new HttpAdapterError({ operation: 'Handle public arcade API', cause }),
+    }).pipe(
+      Effect.map(({ response }) => response ?? c.notFound()),
+      Effect.catchAll((error) => Effect.sync(() => reportApiError(c, error.cause))),
+    ),
+    { signal: c.req.raw.signal },
+  ),
+)
 
 // Comment responses depend on the signed-in viewer and must never enter a shared cache.
-app.use('/api/v1/comments', async (c, next) => {
-  await next()
-  c.header('Cache-Control', 'private, no-store')
-  c.header('CDN-Cache-Control', 'no-store')
-  c.header('Cloudflare-CDN-Cache-Control', 'no-store')
-  c.header('Vary', 'Cookie, Authorization, Origin')
-})
+app.use('/api/v1/comments', (c, next) =>
+  runApp(
+    Effect.gen(function* () {
+      yield* Effect.tryPromise({
+        try: next,
+        catch: (cause) => new HttpAdapterError({ operation: 'Run comments handler', cause }),
+      })
+      c.header('Cache-Control', 'private, no-store')
+      c.header('CDN-Cache-Control', 'no-store')
+      c.header('Cloudflare-CDN-Cache-Control', 'no-store')
+      c.header('Vary', 'Cookie, Authorization, Origin')
+    }),
+    { signal: c.req.raw.signal },
+  ),
+)
 
-app.all('/api/v1/*', async (c) => {
-  const log = c.get('log')
-  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+app.all('/api/v1/*', (c) =>
+  runApp(
+    Effect.gen(function* () {
+      const auth = yield* Authentication
+      const session = yield* auth.session(c.req.raw.headers)
+      const { response } = yield* Effect.tryPromise({
+        try: () =>
+          openAPIHandler.handle(c.req.raw, {
+            prefix: '/api/v1',
+            context: { user: session?.user, signal: c.req.raw.signal },
+          }),
+        catch: (cause) => new HttpAdapterError({ operation: 'Handle API request', cause }),
+      })
+      return response ?? c.notFound()
+    }).pipe(Effect.catchAll((error) => Effect.sync(() => reportApiError(c, error.cause)))),
+    { signal: c.req.raw.signal },
+  ),
+)
 
-  try {
-    const session = await auth.api.getSession({ headers: c.req.raw.headers })
-    const { response } = await openAPIHandler.handle(c.req.raw, {
-      prefix: '/api/v1',
-      context: { user: session?.user },
-    })
-
-    if (!response) return c.notFound()
-    return response
-  } catch (err) {
-    log?.error(err instanceof Error ? err : new Error(String(err)))
-    Sentry.captureException(err, { tags: { requestId } })
-    return c.json({ error: 'Internal server error', requestId }, 500)
-  }
-})
-
-app.get('/spec.json', async (c) => {
-  const spec = await openAPIGenerator.generate(appRouter, {
-    info: {
-      title: 'DXRating API',
-      version: '1.0.0',
-      description:
-        '> **Public Beta**: This API is in public beta and may not be finalized before the end of May 2026. Breaking changes are expected.\n\nOpenAPI for DXRating.net',
-    },
-    servers: [{ url: '/api/v1' }],
-    security: [{ bearerAuth: [] }],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-        },
-      },
-    },
-    filter: ({ contract }) => !contract['~orpc'].route.tags?.includes('internal'),
-  })
-  return c.json(addPublicApiExamplesToOpenApi(addPublishedDxdataToOpenApi(spec)))
-})
+app.get('/spec.json', (c) =>
+  runApp(
+    Effect.gen(function* () {
+      const spec = yield* Effect.tryPromise({
+        try: () =>
+          openAPIGenerator.generate(appRouter, {
+            info: {
+              title: 'DXRating API',
+              version: '1.0.0',
+              description:
+                '> **Public Beta**: This API is in public beta and may not be finalized before the end of May 2026. Breaking changes are expected.\n\nOpenAPI for DXRating.net',
+            },
+            servers: [{ url: '/api/v1' }],
+            security: [{ bearerAuth: [] }],
+            components: {
+              securitySchemes: {
+                bearerAuth: {
+                  type: 'http',
+                  scheme: 'bearer',
+                },
+              },
+            },
+            filter: ({ contract }) => !contract['~orpc'].route.tags?.includes('internal'),
+          }),
+        catch: (cause) => new HttpAdapterError({ operation: 'Generate OpenAPI specification', cause }),
+      })
+      return c.json(addPublicApiExamplesToOpenApi(addPublishedDxdataToOpenApi(spec)))
+    }),
+    { signal: c.req.raw.signal },
+  ),
+)
 
 // Serve Scalar API documentation
 app.get('/docs', (c) => {

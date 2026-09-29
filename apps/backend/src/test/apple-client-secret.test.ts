@@ -1,6 +1,6 @@
 import { generateKeyPairSync, verify } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
-import { createAppleClientSecretGenerator } from '../lib/apple-client-secret.js'
+import { createAppleClientSecretGenerator } from '../lib/apple-client-secret'
 
 const decodePart = (part: string) =>
   JSON.parse(Buffer.from(part, 'base64url').toString('utf8')) as Record<string, unknown>

@@ -5,7 +5,7 @@ import {
   ArcadeVenueIdSchema,
   publicAppContract,
   LxnsStartOutputSchema,
-} from '../contract.js'
+} from '../contract'
 
 describe('publicAppContract', () => {
   it('exposes browser-callable routes without backend-only routes', () => {

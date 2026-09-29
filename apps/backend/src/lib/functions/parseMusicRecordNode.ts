@@ -1,5 +1,5 @@
-import { NODE_ELEMENT_NODE } from './client.js'
-import type { Flag, MusicRecord } from './record.js'
+import { NODE_ELEMENT_NODE } from './client'
+import type { Flag, MusicRecord } from './record'
 
 const MUSIC_RECORD_FLAG_MATCHERS: Record<Flag, string> = {
   fullCombo: 'fc.png',

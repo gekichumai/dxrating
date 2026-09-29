@@ -1,7 +1,7 @@
 import { toOpenAPISchema, type OpenAPI } from '@orpc/openapi'
 import { JSON_SCHEMA_REGISTRY, ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
 import { z } from 'zod'
-import { DXDATA_BROWSER_CACHE_CONTROL, DXDATA_CDN_CACHE_CONTROL, DXDATA_PATH } from './dxdata.js'
+import { DXDATA_BROWSER_CACHE_CONTROL, DXDATA_CDN_CACHE_CONTROL, DXDATA_PATH } from './dxdata'
 
 const PUBLIC_SONG_ID_PATTERN = /^dsng_[23456789abcdefghjkmnpqrstvwxyz]{10}$/
 const PUBLIC_SHEET_ID_PATTERN = /^dsht_[23456789abcdefghjkmnpqrstvwxyz]{10}$/

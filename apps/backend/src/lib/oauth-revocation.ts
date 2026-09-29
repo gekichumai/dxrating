@@ -1,3 +1,7 @@
+import { Data, Effect } from 'effect'
+
+class OAuthRevocationError extends Data.TaggedError('OAuthRevocationError')<{ readonly cause: unknown }> {}
+
 type OAuthAccount = {
   providerId: string
   accessToken: string | null
@@ -32,45 +36,52 @@ const acceptedStatuses: Record<string, ReadonlySet<number>> = {
   github: new Set([204, 404]),
 }
 
-export async function revokeOAuthGrants(
+export const revokeOAuthGrants = (
   accounts: OAuthAccount[],
   configuration: OAuthRevocationConfiguration,
   options: RevokeOAuthGrantsOptions = {},
-): Promise<OAuthRevocationIssue[]> {
-  const fetchImplementation = options.fetch ?? globalThis.fetch
-  const timeoutMs = options.timeoutMs ?? 5_000
-
-  const results = await Promise.all(
-    accounts
-      .filter((account) => Object.hasOwn(acceptedStatuses, account.providerId))
-      .map(async (account): Promise<OAuthRevocationIssue | undefined> => {
-        try {
-          const request = createRevocationRequest(account, configuration)
-          if ('issue' in request) return request.issue
-
-          const response = await fetchImplementation(request.url, {
-            ...request.init,
-            signal: AbortSignal.timeout(timeoutMs),
-          })
-          if (!acceptedStatuses[account.providerId]!.has(response.status)) {
-            return {
-              providerId: account.providerId,
-              reason: 'request-failed',
-              error: `Unexpected HTTP status ${response.status}`,
-            }
-          }
-        } catch (error) {
+) =>
+  Effect.forEach(
+    accounts.filter((account) => Object.hasOwn(acceptedStatuses, account.providerId)),
+    (account) =>
+      Effect.gen(function* () {
+        const request = yield* Effect.try({
+          try: () => createRevocationRequest(account, configuration),
+          catch: (cause) => new OAuthRevocationError({ cause }),
+        })
+        if ('issue' in request) return request.issue
+        const response = yield* Effect.tryPromise({
+          try: (signal) =>
+            (options.fetch ?? globalThis.fetch)(request.url, {
+              ...request.init,
+              signal: AbortSignal.any([signal, AbortSignal.timeout(options.timeoutMs ?? 5_000)]),
+            }),
+          catch: (cause) => new OAuthRevocationError({ cause }),
+        })
+        // Consume the body even for provider errors so the connection is reusable.
+        yield* Effect.tryPromise({
+          try: () => response.arrayBuffer(),
+          catch: (cause) => new OAuthRevocationError({ cause }),
+        })
+        if (!acceptedStatuses[account.providerId]!.has(response.status)) {
           return {
             providerId: account.providerId,
-            reason: 'request-failed',
-            error: error instanceof Error ? error.message : 'Unknown revocation error',
+            reason: 'request-failed' as const,
+            error: `Unexpected HTTP status ${response.status}`,
           }
         }
-      }),
-  )
-
-  return results.filter((issue): issue is OAuthRevocationIssue => issue !== undefined)
-}
+        return undefined
+      }).pipe(
+        Effect.catchAll((error) =>
+          Effect.succeed({
+            providerId: account.providerId,
+            reason: 'request-failed' as const,
+            error: error.cause instanceof Error ? error.cause.message : 'Unknown revocation error',
+          }),
+        ),
+      ),
+    { concurrency: 'unbounded' },
+  ).pipe(Effect.map((results) => results.filter((issue): issue is OAuthRevocationIssue => issue !== undefined)))
 
 function createRevocationRequest(
   account: OAuthAccount,

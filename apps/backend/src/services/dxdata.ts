@@ -1,4 +1,11 @@
-import type { Context, Env, Handler } from 'hono'
+import { Data, Effect } from 'effect'
+
+export class DxdataDecodeError extends Data.TaggedError('DxdataDecodeError')<{
+  readonly operation: string
+  readonly cause: unknown
+}> {}
+
+import type { Context, Env } from 'hono'
 
 const PRODUCTION_CHANNEL = 'production-v1'
 const API_SCHEMA_VERSION = 1
@@ -21,13 +28,6 @@ interface PublishedDxdataMetadata {
   byteLength: string
   contentType: string
 }
-
-export interface DxdataStore {
-  getPublishedMetadata(): Promise<PublishedDxdataMetadata | undefined>
-  getSnapshotBody(catalogRunId: string, bodySha256: string): Promise<string | undefined>
-}
-
-export type DxdataQuery = (text: string, values: unknown[]) => Promise<{ rows: unknown[] }>
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -63,10 +63,13 @@ const parseBody = (value: unknown): string => {
   return value.body_text
 }
 
-export const createPostgresDxdataStore = (query: DxdataQuery): DxdataStore => ({
-  async getPublishedMetadata() {
-    const result = await query(
-      `
+export const createPostgresDxdataEffects = <E, R>(
+  query: (text: string, values: unknown[]) => Effect.Effect<{ rows: unknown[] }, E, R>,
+) => ({
+  getPublishedMetadata: () =>
+    Effect.gen(function* () {
+      const result = yield* query(
+        `
         SELECT
           publication.catalog_run_id::text AS catalog_run_id,
           snapshot.body_sha256,
@@ -83,16 +86,22 @@ export const createPostgresDxdataStore = (query: DxdataQuery): DxdataStore => ({
           AND snapshot.api_schema_version = $2
         LIMIT 1
       `,
-      [PRODUCTION_CHANNEL, API_SCHEMA_VERSION],
-    )
+        [PRODUCTION_CHANNEL, API_SCHEMA_VERSION],
+      )
 
-    const row = result.rows[0]
-    return row === undefined ? undefined : parseMetadata(row)
-  },
+      const row = result.rows[0]
+      return row === undefined
+        ? undefined
+        : yield* Effect.try({
+            try: () => parseMetadata(row),
+            catch: (cause) => new DxdataDecodeError({ operation: 'decode published catalog metadata', cause }),
+          })
+    }),
 
-  async getSnapshotBody(catalogRunId, bodySha256) {
-    const result = await query(
-      `
+  getSnapshotBody: (catalogRunId: string, bodySha256: string) =>
+    Effect.gen(function* () {
+      const result = yield* query(
+        `
         SELECT body_text
         FROM dxdata.catalog_snapshots
         WHERE catalog_run_id = $1::bigint
@@ -100,12 +109,17 @@ export const createPostgresDxdataStore = (query: DxdataQuery): DxdataStore => ({
           AND api_schema_version = $3
         LIMIT 1
       `,
-      [catalogRunId, bodySha256, API_SCHEMA_VERSION],
-    )
+        [catalogRunId, bodySha256, API_SCHEMA_VERSION],
+      )
 
-    const row = result.rows[0]
-    return row === undefined ? undefined : parseBody(row)
-  },
+      const row = result.rows[0]
+      return row === undefined
+        ? undefined
+        : yield* Effect.try({
+            try: () => parseBody(row),
+            catch: (cause) => new DxdataDecodeError({ operation: 'decode published catalog body', cause }),
+          })
+    }),
 })
 
 const weakEtagValue = (value: string) => (value.startsWith('W/') ? value.slice(2) : value)
@@ -134,36 +148,39 @@ const uncachedError = (c: Context, message: string, status: 500 | 503) => {
   return c.json({ error: message }, status)
 }
 
-export const createDxdataHandler = <E extends Env = Env>(
-  store: DxdataStore,
-  reportError: (error: unknown, context: Context<E>) => void = () => {},
-): Handler<E> =>
-  async function serveDxdata(c) {
-    try {
-      const metadata = await store.getPublishedMetadata()
+export const createDxdataEffect =
+  <E, R, H extends Env = Env>(
+    store: {
+      getPublishedMetadata: () => Effect.Effect<PublishedDxdataMetadata | undefined, E, R>
+      getSnapshotBody: (catalogRunId: string, bodySha256: string) => Effect.Effect<string | undefined, E, R>
+    },
+    reportError: (error: unknown, context: Context<H>) => void = () => {},
+  ) =>
+  (c: Context<H>) =>
+    Effect.gen(function* () {
+      const metadata = yield* store.getPublishedMetadata()
       if (!metadata) return uncachedError(c, 'DX data catalog is unavailable', 503)
-
-      const headers = successHeaders(metadata)
+      const headers = yield* Effect.try({
+        try: () => successHeaders(metadata),
+        catch: (cause) => new DxdataDecodeError({ operation: 'encode published catalog headers', cause }),
+      })
       const etag = headers.get('ETag')!
-
       if (ifNoneMatchMatches(c.req.header('If-None-Match'), etag)) {
         return new Response(null, { status: 304, statusText: 'Not Modified', headers })
       }
-
-      if (c.req.method === 'HEAD') {
-        return new Response(null, { status: 200, headers })
-      }
-
-      const body = await store.getSnapshotBody(metadata.catalogRunId, metadata.bodySha256)
+      if (c.req.method === 'HEAD') return new Response(null, { status: 200, headers })
+      const body = yield* store.getSnapshotBody(metadata.catalogRunId, metadata.bodySha256)
       if (body === undefined) return uncachedError(c, 'DX data catalog is unavailable', 503)
-
       return new Response(body, { status: 200, headers })
-    } catch (error) {
-      try {
-        reportError(error, c)
-      } catch {
-        // Reporting must not replace a cache-safe endpoint failure.
-      }
-      return uncachedError(c, 'Internal server error', 500)
-    }
-  }
+    }).pipe(
+      Effect.catchAll((error) =>
+        Effect.sync(() => {
+          try {
+            reportError(error, c)
+          } catch {
+            /* Reporting must not replace a cache-safe endpoint failure. */
+          }
+          return uncachedError(c, 'Internal server error', 500)
+        }),
+      ),
+    )

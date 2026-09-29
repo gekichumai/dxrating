@@ -1,7 +1,7 @@
 import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
-import { formatSheetIdentity, parseSheetIdentity, sameSheetIdentity } from '../sheet-identity.js'
-import type { SheetIdentity } from '../types.js'
+import { formatSheetIdentity, parseSheetIdentity, sameSheetIdentity } from '../sheet-identity'
+import type { SheetIdentity } from '../types'
 
 function assertSheetIdentityTypes(): void {
   const standard: SheetIdentity = {

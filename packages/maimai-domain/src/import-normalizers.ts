@@ -1,6 +1,6 @@
 import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { match } from 'ts-pattern'
-import type { SongCatalog } from './song-catalog.js'
+import type { SongCatalog } from './song-catalog'
 import type {
   Best50Bucket,
   ComboFlag,
@@ -9,7 +9,7 @@ import type {
   ProviderMusicIdMap,
   RatingEntry,
   SyncFlag,
-} from './types.js'
+} from './types'
 
 export interface RatingImportResult {
   entries: RatingEntry[]

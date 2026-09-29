@@ -1,7 +1,7 @@
 import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum, type DXData } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
-import { getDxdataSongCatalog } from '../dxdata-catalog.js'
-import { buildSongCatalog, getSheetIdentityFromId } from '../song-catalog.js'
+import { getDxdataSongCatalog } from '../dxdata-catalog'
+import { buildSongCatalog, getSheetIdentityFromId } from '../song-catalog'
 
 const fixtureData: DXData = {
   updateTime: '2026-05-17T00:00:00.000Z',
