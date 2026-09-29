@@ -6,8 +6,8 @@
     "dev": "turbo run dev",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
-    "lint": "pnpm --filter @gekichumai/oneshot-renderer build && oxlint --type-aware . && pnpm --filter @gekichumai/backend lint:effect",
-    "lint:fix": "pnpm --filter @gekichumai/oneshot-renderer build && oxlint --type-aware --fix ."
+    "lint": "pnpm --filter @gekichumai/dxrating-web generate:routes && pnpm --filter @gekichumai/oneshot-renderer build && oxlint --type-aware . && pnpm --filter @gekichumai/backend lint:effect",
+    "lint:fix": "pnpm --filter @gekichumai/dxrating-web generate:routes && pnpm --filter @gekichumai/oneshot-renderer build && oxlint --type-aware --fix ."
   },
   "devDependencies": {
     "oxfmt": "^0.49.0",

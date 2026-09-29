@@ -70,7 +70,7 @@ export const Route = createFileRoute('/search')({
 })
 
 function SearchRouteComponent() {
-  const loaderData = Route.useLoaderData() as SearchLoaderData | undefined
+  const loaderData: SearchLoaderData | undefined = Route.useLoaderData()
 
   return <SheetList seedSheets={loaderData?.seedSheets ?? []} />
 }
