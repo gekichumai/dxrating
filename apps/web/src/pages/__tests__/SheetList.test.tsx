@@ -17,21 +17,25 @@ const routeState = vi.hoisted(() => {
   } = {
     search: {},
     syncSearchOnNavigate: true,
-    navigate: vi.fn((options: { search?: Record<string, unknown> | ((prev: Record<string, unknown>) => unknown) }) => {
-      let nextSearch = state.search
-      if (typeof options.search === 'function') {
-        nextSearch = options.search(state.search) as Record<string, unknown>
-      } else if (options.search) {
-        nextSearch = options.search
-      }
+    navigate: vi.fn(
+      (options: {
+        search?: Record<string, unknown> | ((prev: Record<string, unknown>) => Record<string, unknown>)
+      }) => {
+        let nextSearch = state.search
+        if (typeof options.search === 'function') {
+          nextSearch = options.search(state.search)
+        } else if (options.search !== null && options.search !== undefined) {
+          nextSearch = options.search
+        }
 
-      if (state.syncSearchOnNavigate) {
-        state.search = nextSearch
-      } else {
-        state.pendingSearch = nextSearch
-      }
-      state.onNavigate?.()
-    }),
+        if (state.syncSearchOnNavigate) {
+          state.search = nextSearch
+        } else {
+          state.pendingSearch = nextSearch
+        }
+        state.onNavigate?.()
+      },
+    ),
   }
 
   return state
@@ -114,7 +118,7 @@ describe('SheetList', () => {
 
   it('applies default sorting before the first server or client paint', async () => {
     const { getFlattenedSheetsForVersion } = await vi.importActual<typeof import('@/songs')>('@/songs')
-    const sheet = getFlattenedSheetsForVersion(VersionEnum.CiRCLEPLUS)[0]!
+    const sheet = getFlattenedSheetsForVersion(VersionEnum.CiRCLEPLUS)[0]
     sheetMocks.results = [
       { ...sheet, id: 'older', songId: 'older', releaseDateTimestamp: 1 },
       { ...sheet, id: 'newer', songId: 'newer', releaseDateTimestamp: 2 },
@@ -169,7 +173,7 @@ describe('SheetList', () => {
 
     view = render(<SheetList />)
 
-    const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+    const input = screen.getByRole<HTMLInputElement>('textbox', { name: 'Search' })
     input.focus()
     input.setSelectionRange(4, 4)
 

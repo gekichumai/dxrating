@@ -1,5 +1,5 @@
 import { TypeEnum, type DXData, type Song, type VersionEnum } from '@gekichumai/dxdata'
-import { formatSheetIdentity, parseSheetIdentity } from './sheet-identity.ts'
+import { formatSheetIdentity, parseSheetIdentity, isStandardDifficulty } from './sheet-identity.ts'
 import type { ProviderSheetReference, SheetDifficulty, SheetIdentity, VersionedSheet } from './types'
 
 export interface SongCatalog {
@@ -28,16 +28,20 @@ export function buildLatestReleaseDateByVersion(data: DXData): Map<string, strin
 
   for (const song of data.songs) {
     for (const sheet of song.sheets) {
-      if (!sheet.releaseDate) continue
+      if (sheet.releaseDate === undefined || sheet.releaseDate === '') continue
       const current = maxByVersion.get(sheet.version)
-      if (!current || sheet.releaseDate > current) {
+      if (current === undefined || current === '' || sheet.releaseDate > current) {
         maxByVersion.set(sheet.version, sheet.releaseDate)
       }
     }
   }
 
   for (const versionMeta of data.versions) {
-    if (!maxByVersion.has(versionMeta.version) && versionMeta.releaseDate) {
+    if (
+      !maxByVersion.has(versionMeta.version) &&
+      versionMeta.releaseDate !== undefined &&
+      versionMeta.releaseDate !== ''
+    ) {
       maxByVersion.set(versionMeta.version, versionMeta.releaseDate)
     }
   }
@@ -59,11 +63,11 @@ export function resolveReleaseDateTimestamp(
   version: string,
   latestReleaseDateByVersion: ReadonlyMap<string, string>,
 ): number | null {
-  if (releaseDate) {
+  if (releaseDate !== undefined && releaseDate !== '') {
     return releaseDateToTimestamp(releaseDate)
   }
   const fallback = latestReleaseDateByVersion.get(version)
-  return fallback ? releaseDateToTimestamp(fallback) : null
+  return fallback !== undefined && fallback !== '' ? releaseDateToTimestamp(fallback) : null
 }
 
 export function createSongCatalog(version: VersionEnum, sheets: readonly VersionedSheet[]): SongCatalog {
@@ -84,7 +88,7 @@ export function createSongCatalog(version: VersionEnum, sheets: readonly Version
     sheets,
     getById: (id) => byId.get(id) ?? null,
     getByIdentity: (identity) => byId.get(formatSheetIdentity(identity)) ?? null,
-    resolveReference: (reference) => {
+    resolveReference: (reference): VersionedSheet | null => {
       switch (reference.kind) {
         case 'identity':
           return byId.get(formatSheetIdentity(reference.identity)) ?? null
@@ -97,18 +101,19 @@ export function createSongCatalog(version: VersionEnum, sheets: readonly Version
           const type = inferProviderMusicType(numericId)
           if (numericId !== null) {
             const sheet = byInternalId.get(internalIdKey(numericId, type, reference.difficulty))
-            if (sheet) return sheet
+            if (sheet !== undefined) return sheet
           }
 
           const mapped = reference.map?.[String(reference.musicId)]
-          if (!mapped) return null
+          if (mapped === undefined) return null
 
           const sheet = byId.get(formatSheetIdentity(toSheetIdentity(mapped.name, type, reference.difficulty)))
-          if (sheet) return sheet
+          if (sheet !== undefined) return sheet
 
           return byTitle.get(titleKey(mapped.name, type, reference.difficulty)) ?? null
         }
       }
+      return null
     },
   }
 }
@@ -119,7 +124,7 @@ function projectSong(
   latestReleaseDateByVersion: ReadonlyMap<string, string>,
 ): VersionedSheet[] {
   return song.sheets.map((sheet) => {
-    const identity = toSheetIdentity(song.songId, sheet.type, sheet.difficulty as SheetDifficulty)
+    const identity = toSheetIdentity(song.songId, sheet.type, sheet.difficulty)
     const isTypeUtage = sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P
 
     return {
@@ -149,7 +154,7 @@ function parseProviderMusicId(musicId: string | number): number | null {
   }
 
   const trimmed = musicId.trim()
-  if (!trimmed) return null
+  if (trimmed === '') return null
 
   const numericId = Number(trimmed)
   return Number.isFinite(numericId) && Number.isInteger(numericId) ? numericId : null
@@ -160,11 +165,9 @@ function inferProviderMusicType(numericId: number | null): TypeEnum {
 }
 
 function toSheetIdentity(songId: string, type: TypeEnum, difficulty: SheetDifficulty): SheetIdentity {
-  return {
-    songId,
-    type,
-    difficulty,
-  } as SheetIdentity
+  if (type === TypeEnum.UTAGE || type === TypeEnum.UTAGE2P) return { songId, type, difficulty }
+  if (isStandardDifficulty(difficulty)) return { songId, type, difficulty }
+  throw new Error(`Invalid standard chart difficulty: ${difficulty}`)
 }
 
 export function getSheetIdentityFromId(id: string): SheetIdentity | null {

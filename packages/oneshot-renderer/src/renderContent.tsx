@@ -6,7 +6,6 @@ import { imageData } from './imageData'
 import { MAGICAL_BACKGROUND_SVG } from './magicalBackground.generated'
 
 declare module 'react' {
-  // oxlint-disable-next-line @typescript-eslint/no-unused-vars
   interface HTMLAttributes<T> {
     tw?: string
   }
@@ -109,13 +108,13 @@ const DIFFICULTIES: Record<DifficultyEnum, { title: string; color: string; inver
 
 const estimateTitleCharacterLength = (title: string) => {
   // assume english characters as 1 and japanese characters as 2
-  const englishCount = (title.match(/[A-Za-z]/g) || []).length
+  const englishCount = (title.match(/[A-Za-z]/g) ?? []).length
   const nonEnglishCount = title.length - englishCount
   return englishCount + nonEnglishCount * 2
 }
 
 const renderCell = async (entry: RenderEntry | undefined, i: number, fetchImageAsset: LoadAsset) => {
-  if (!entry) {
+  if (entry === undefined) {
     return (
       <div key={`empty${i}`} tw="w-1/5 p-[4px] flex h-[116px]">
         <div tw="h-full w-full rounded-lg" />
@@ -130,14 +129,16 @@ const renderCell = async (entry: RenderEntry | undefined, i: number, fetchImageA
     fetchImageAsset(`/images/play-achievement/${entry.achievementSync ?? 'blank'}.png`).then(imageData),
   ])
 
+  const hasPlayCount = entry.playCount !== 0 && !Number.isNaN(entry.playCount)
+  const hasAllPerfectPlusCount = entry.allPerfectPlusCount !== 0 && !Number.isNaN(entry.allPerfectPlusCount)
   const theme = DIFFICULTIES[entry.sheet.difficulty]
 
-  const backgroundColor = theme.inverted ? '#EBCFFF' : theme.color
-  const foregroundColor = theme.inverted ? theme.color : '#fff'
-  const shadowColor = theme.inverted ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)'
+  const backgroundColor = theme.inverted === true ? '#EBCFFF' : theme.color
+  const foregroundColor = theme.inverted === true ? theme.color : '#fff'
+  const shadowColor = theme.inverted === true ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)'
 
   const starImagePath = (() => {
-    if (!entry.dxScore) return null
+    if (entry.dxScore === undefined) return null
     switch (entry.dxScore.stars) {
       case 5:
         return '/images/dxscore-star/3.png'
@@ -148,8 +149,9 @@ const renderCell = async (entry: RenderEntry | undefined, i: number, fetchImageA
       case 1:
         return '/images/dxscore-star/1.png'
     }
+    return null
   })()
-  const starImage = starImagePath && imageData(await fetchImageAsset(starImagePath))
+  const starImage = starImagePath === null ? undefined : imageData(await fetchImageAsset(starImagePath))
 
   return (
     <div key={entry.sheet.id} tw="w-1/5 p-[4px] flex h-[116px]">
@@ -230,23 +232,21 @@ const renderCell = async (entry: RenderEntry | undefined, i: number, fetchImageA
               style={{ textShadow: `0 0 2px ${shadowColor}` }}
             >
               <span tw="text-sm leading-none">{entry.rating.rank?.replace('p', '')?.toUpperCase()}</span>
-              {entry.rating.rank?.includes('p') && <span tw="text-[15px] leading-none">+</span>}
+              {entry.rating.rank?.includes('p') === true && <span tw="text-[15px] leading-none">+</span>}
             </span>
           </div>
 
           <div tw="flex items-center text-[13px] leading-none font-bold">
-            {(!!entry.playCount || !!entry.allPerfectPlusCount) && (
+            {(hasPlayCount || hasAllPerfectPlusCount) && (
               <span tw="leading-none bg-black/50 rounded-full leading-none px-[6px] py-[2px] text-white mr-1 flex items-center">
-                {!!entry.playCount && (
+                {hasPlayCount && (
                   <div tw="flex items-center">
                     <span tw="opacity-40 text-[9px] tracking-tighter">PC</span>
                     <span tw="font-bold ml-0.5 text-[12px]">{entry.playCount}</span>
                   </div>
                 )}
-                {!!entry.playCount && !!entry.allPerfectPlusCount && (
-                  <span tw="w-[1px] h-[10px] bg-white/40 ml-0.5 mr-[3px]" />
-                )}
-                {!!entry.allPerfectPlusCount && (
+                {hasPlayCount && hasAllPerfectPlusCount && <span tw="w-[1px] h-[10px] bg-white/40 ml-0.5 mr-[3px]" />}
+                {hasAllPerfectPlusCount && (
                   <div tw="flex items-center">
                     <span tw="opacity-40 text-[7px] tracking-tighter">AP+</span>
                     <span tw="font-bold ml-0.5 text-[12px]">{entry.allPerfectPlusCount}</span>
@@ -259,27 +259,26 @@ const renderCell = async (entry: RenderEntry | undefined, i: number, fetchImageA
               // @ts-expect-error satori expects buffer for img src
               src={accuracyImage}
               alt=""
-              tw={`h-[22px] w-[22px] -ml-0.5 ${entry.achievementAccuracy ? '' : 'opacity-80'}`}
+              tw={`h-[22px] w-[22px] -ml-0.5 ${entry.achievementAccuracy !== undefined && entry.achievementAccuracy.length > 0 ? '' : 'opacity-80'}`}
             />
 
             <img
               // @ts-expect-error satori expects buffer for img src
               src={syncImage}
               alt=""
-              tw={`h-[22px] w-[22px] ${entry.achievementSync ? '' : 'opacity-80'}`}
+              tw={`h-[22px] w-[22px] ${entry.achievementSync !== undefined && entry.achievementSync.length > 0 ? '' : 'opacity-80'}`}
             />
 
-            {entry.dxScore && (
+            {entry.dxScore !== undefined && (
               <div tw="flex flex-col items-start leading-none leading-none ml-1 relative">
                 <span tw="text-[9px] leading-none" style={{ textShadow: `0 0 1px ${shadowColor}` }}>
                   {entry.dxScore.achieved} / {entry.dxScore.total}
                 </span>
 
                 <div tw="flex items-center -mt-[1px]">
-                  {starImage ? (
+                  {starImage !== null && starImage !== undefined ? (
                     Array.from({ length: entry.dxScore.stars }).map((_, i) => (
                       // @ts-expect-error satori expects buffer for img src
-                      // oxlint-disable-next-line react/no-array-index-key -- index is stable
                       <img key={i} src={starImage} alt="" tw="h-[12px] w-[12px] -ml-0.5" />
                     ))
                   ) : (
@@ -333,7 +332,7 @@ export const BottomLabel: FC<
     <div
       tw={clsx(
         'flex items-center justify-center bg-black/40 rounded-t-lg text-[12px] text-white px-3 pt-1 pb-2 font-bold leading-none',
-        !first && 'ml-1',
+        first !== true && 'ml-1',
       )}
     >
       {children}
@@ -351,7 +350,7 @@ export const renderContent = async (
 
   const [background, icon] = await Promise.all([
     theme.background.startsWith('data:') ? theme.background : fetchImageAsset(theme.background).then(imageData),
-    playerCollection
+    playerCollection !== undefined
       ? fetchImageAsset(`/assetbundle/icon/ui_icon_${playerCollection.icon.toString().padStart(6, '0')}.png`).then(
           imageData,
         )
@@ -367,7 +366,12 @@ export const renderContent = async (
   const b15Sum = data.b15.reduce((acc, cur) => acc + cur.rating.ratingAwardValue, 0)
   const b35Sum = data.b35.reduce((acc, cur) => acc + cur.rating.ratingAwardValue, 0)
 
-  const formattedRegionSuffix = region ? (region === '_generic' ? ' (Generic)' : ` (${region.toUpperCase()})`) : ''
+  const formattedRegionSuffix =
+    region !== undefined && region.length > 0
+      ? region === '_generic'
+        ? ' (Generic)'
+        : ` (${region.toUpperCase()})`
+      : ''
 
   return (
     <div tw="font-sans text-lg leading-none flex h-full">
@@ -384,12 +388,12 @@ export const renderContent = async (
 
       <div tw="w-full h-full px-1 pt-1 flex flex-wrap">
         <div tw="h-[100px] w-full flex pt-[2px] pb-1 px-[4px]">
-          {playerCollection && (
+          {playerCollection !== undefined && (
             <div tw="flex items-center justify-start p-3 rounded-lg w-[589px] bg-black/80 text-white h-full mr-[8px]">
               {/* @ts-expect-error satori expects buffer for img src */}
               <img src={icon} tw="h-[70px] w-[70px] rounded-md bg-gray-500 mr-3" alt="" />
 
-              {playerCollection?.name && (
+              {playerCollection?.name !== '' && (
                 <div
                   tw="font-seurat text-black bg-white rounded-md p-2 px-3 text-4xl flex items-center justify-center mr-6 border-2 border-solid border-white h-[58px]"
                   style={{

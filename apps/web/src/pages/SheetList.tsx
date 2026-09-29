@@ -31,7 +31,7 @@ const searchRouteApi = getRouteApi('/search')
 const chainEvery =
   <T,>(...fns: ((arg: T) => boolean | undefined)[]) =>
   (arg: T) =>
-    fns.every((fn) => fn(arg))
+    fns.every((fn) => fn(arg) === true)
 
 const skeletonWidths = Array.from({ length: 20 }).map((_, index) => 5.5 + (index % 7) * 0.8)
 
@@ -70,7 +70,7 @@ const SheetSearchAnalytics: FC<{
 }> = ({ query, resultCount, durationMs, sortFilter }) => {
   useEffectOnce(() => {
     const filterSummary = summarizeSortFilter(sortFilter)
-    if (!query && filterSummary.active_filter_count === 0) return
+    if (query === '' && filterSummary.active_filter_count === 0) return undefined
 
     const timeout = window.setTimeout(() => {
       captureAnalyticsEvent('sheet_search_performed', {
@@ -102,7 +102,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
   const sortFilterContentId = useId()
   const navigate = useNavigate()
 
-  const query = search.q ?? ''
+  const query = typeof search.q === 'string' ? search.q : ''
   const [inputQuery, setInputQuery] = useState(query)
   const { results, elapsed: searchElapsed } = useFilteredSheets(inputQuery)
 
@@ -117,11 +117,11 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
   const updateQuery = useCallback(
     (nextQuery: string) => {
       setInputQuery(nextQuery)
-      navigate({
+      void navigate({
         to: '/search',
         search: (prev: Record<string, unknown>) => ({
           ...prev,
-          q: nextQuery || undefined,
+          q: nextQuery !== '' ? nextQuery : undefined,
         }),
         replace: true,
         resetScroll: false,
@@ -138,31 +138,35 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
 
   const activeSheet = useMemo<FlattenedSheet | null>(() => {
     const { songId, type, difficulty } = search
-    if (!songId || !type || !difficulty) return null
+    if (typeof songId !== 'string' || songId === '' || typeof type !== 'string' || typeof difficulty !== 'string')
+      return null
     const song = dxdata.songs.find((s) => s.songId === songId)
-    if (!song) return null
+    if (song === null || song === undefined) return null
     const sheet = song.sheets.find((s) => s.type === type && s.difficulty === difficulty)
-    if (!sheet) return null
+    if (sheet === null || sheet === undefined) return null
     const isTypeUtage = sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P
     return {
       ...song,
       ...sheet,
-      id: canonicalIdFromParts(songId, type as TypeEnum, difficulty as DifficultyEnum),
+      id: canonicalIdFromParts(songId, sheet.type, sheet.difficulty),
+      identity: { songId, type: sheet.type, difficulty: sheet.difficulty },
+      tags: [],
       searchAcronyms: song.searchAcronyms,
       isTypeUtage,
       isRatingEligible: !isTypeUtage,
       releaseDateTimestamp: sheetReleaseDateTimestamp(sheet.releaseDate),
-      internalLevelValue: sheet.multiverInternalLevelValue
-        ? (sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue)
-        : sheet.internalLevelValue,
-    } as FlattenedSheet
+      internalLevelValue:
+        sheet.multiverInternalLevelValue !== null && sheet.multiverInternalLevelValue !== undefined
+          ? (sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue)
+          : sheet.internalLevelValue,
+    }
   }, [search, version])
   const activeSheetId = activeSheet?.id ?? null
 
   const handleSheetDialogChange = useCallback(
     (sheet: FlattenedSheet | null) => {
-      if (sheet) {
-        navigate({
+      if (sheet !== null && sheet !== undefined) {
+        void navigate({
           to: '/search',
           search: (prev: Record<string, unknown>) => ({
             ...prev,
@@ -177,7 +181,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
           resetScroll: false,
         })
       } else {
-        navigate({
+        void navigate({
           to: '/search',
           search: (prev: Record<string, unknown>) => {
             const { songId: _, type: __, difficulty: ___, ...rest } = prev
@@ -193,65 +197,59 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
   const { filteredResults, elapsed: filteringElapsed } = useMemo(() => {
     const startTime = performance.now()
     let sortFilteredResults: FlattenedSheet[] = results
-    if (sortFilterOptions) {
-      const currentVersionId = VERSION_ID_MAP.get(version) ?? 0
-      const validVersions = Array.from(VERSION_ID_MAP.entries())
-        .filter(([, id]) => id <= currentVersionId)
-        .map(([v]) => v)
-      const favoriteSheetIds = sortFilterOptions.filters.favoritesOnly
-        ? new Set<string>(JSON.parse(localStorage.getItem('favorite-sheets') ?? '[]'))
-        : null
-      sortFilteredResults = results.filter((sheet) => {
-        return chainEvery<FlattenedSheet>(
-          (v) => !!v,
-          (v) => {
-            if (sortFilterOptions.filters.internalLevelValue) {
-              const { min, max } = sortFilterOptions.filters.internalLevelValue
-              return v.internalLevelValue >= min && v.internalLevelValue <= max
-            }
-            return true
-          },
-          (v) => {
-            if (sortFilterOptions.filters.versions) {
-              const versions = sortFilterOptions.filters.versions.filter((v) => validVersions.includes(v))
-              return versions.includes(v.version)
-            }
-            return true
-          },
-          (v) => {
-            if (sortFilterOptions.filters.tags.length) {
-              const tags = sortFilterOptions.filters.tags
-              return tags.every((tag) => v.tags.includes(tag))
-            }
-            return true
-          },
+    const currentVersionId = VERSION_ID_MAP.get(version) ?? 0
+    const validVersions = Array.from(VERSION_ID_MAP.entries())
+      .filter(([, id]) => id <= currentVersionId)
+      .map(([v]) => v)
+    const favoriteSheetIds = sortFilterOptions.filters.favoritesOnly
+      ? new Set<string>(JSON.parse(localStorage.getItem('favorite-sheets') ?? '[]'))
+      : null
+    sortFilteredResults = results.filter((sheet) => {
+      return chainEvery<FlattenedSheet>(
+        (v) => {
+          if (
+            sortFilterOptions.filters.internalLevelValue !== null &&
+            sortFilterOptions.filters.internalLevelValue !== undefined
+          ) {
+            const { min, max } = sortFilterOptions.filters.internalLevelValue
+            return v.internalLevelValue >= min && v.internalLevelValue <= max
+          }
+          return true
+        },
+        (v) => {
+          const versions = sortFilterOptions.filters.versions.filter((v) => validVersions.includes(v))
+          return versions.includes(v.version)
+        },
+        (v) => {
+          if (sortFilterOptions.filters.tags.length > 0) {
+            const tags = sortFilterOptions.filters.tags
+            return tags.every((tag) => v.tags.includes(tag))
+          }
+          return true
+        },
 
-          (v) => {
-            if (sortFilterOptions.filters.categories) {
-              const categories = sortFilterOptions.filters.categories
-              return categories.some((category) => v.category.includes(category))
-            }
-            return true
-          },
+        (v) => {
+          const categories = sortFilterOptions.filters.categories
+          return categories.some((category) => v.category.includes(category))
+        },
 
-          (v) => sheetMatchesDifficultyFilter(v, sortFilterOptions.filters.difficulties),
+        (v) => sheetMatchesDifficultyFilter(v, sortFilterOptions.filters.difficulties),
 
-          (v) => {
-            if (favoriteSheetIds) {
-              return favoriteSheetIds.has(v.id)
-            }
-            return true
-          },
-        )(sheet)
-      })
-      if (!inputQuery) {
-        sortFilteredResults.sort((a, b) => compareSheetsBySorts(a, b, sortFilterOptions.sorts))
-      }
+        (v) => {
+          if (favoriteSheetIds !== null && favoriteSheetIds !== undefined) {
+            return favoriteSheetIds.has(v.id)
+          }
+          return true
+        },
+      )(sheet)
+    })
+    if (inputQuery === '') {
+      sortFilteredResults = sortFilteredResults.toSorted((a, b) => compareSheetsBySorts(a, b, sortFilterOptions.sorts))
     }
     const elapsed = performance.now() - startTime
     Sentry.metrics.distribution('sheet_filter.duration', elapsed, {
       unit: 'millisecond',
-      attributes: { has_query: String(!!inputQuery), has_filters: String(!!sortFilterOptions) },
+      attributes: { has_query: String(inputQuery !== ''), has_filters: 'true' },
     })
 
     return {
@@ -259,13 +257,13 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
       elapsed,
     }
   }, [results, sortFilterOptions, inputQuery, version])
-  const showSeedResults = isLoading && inputQuery && seedSheets.length > 0
+  const showSeedResults = isLoading && inputQuery !== '' && seedSheets.length > 0
   const summaryTotal = sheets?.length ?? filteredResults.length
   const summaryProgress = summaryTotal > 0 ? filteredResults.length / summaryTotal : 0
 
   return (
-    <SheetDetailsContextProvider queryActive={!!inputQuery}>
-      {sortFilterOptions && !isLoading && (
+    <SheetDetailsContextProvider queryActive={inputQuery !== ''}>
+      {!isLoading && (
         <SheetSearchAnalytics
           key={`${inputQuery}:${filteredResults.length}:${JSON.stringify(sortFilterOptions)}`}
           query={inputQuery}
@@ -276,12 +274,12 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
       )}
       <div className="flex-container pb-global">
         <ResponsiveDialog
-          open={!!activeSheet}
+          open={activeSheet !== null && activeSheet !== undefined}
           setOpen={(open) => {
             if (!open) handleSheetDialogChange(null)
           }}
         >
-          {() => activeSheet && <SheetDialogContent sheet={activeSheet} />}
+          {() => activeSheet !== null && activeSheet !== undefined && <SheetDialogContent sheet={activeSheet} />}
         </ResponsiveDialog>
 
         <div className="flex w-full items-stretch gap-2">
@@ -305,7 +303,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
               updateQuery(e.target.value)
             }}
             InputProps={{
-              endAdornment: inputQuery && (
+              endAdornment: inputQuery !== '' && (
                 <IconButton
                   onClick={() => {
                     updateQuery('')
@@ -360,7 +358,6 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
               {skeletonWidths.map((width, i) => (
                 <div
                   className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] px-5 py-2"
-                  // oxlint-disable-next-line react/no-array-index-key -- index is stable
                   key={i}
                   style={{
                     animationDelay: `${i * 40}ms`,
@@ -386,7 +383,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
             activeSheetId={activeSheetId}
             onSheetDialogChange={handleSheetDialogChange}
             analyticsSource="search_results"
-            analyticsQueryPresent={!!inputQuery}
+            analyticsQueryPresent={inputQuery !== ''}
             analyticsResultCount={filteredResults.length}
           />
         )}

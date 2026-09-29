@@ -45,7 +45,7 @@ export const AppTabs: FC = () => {
     select: (state) =>
       getPendingAppTabValue(state.isLoading, state.location.pathname, state.resolvedLocation?.pathname),
   })
-  const selectedTab = pendingTab || activeTab
+  const selectedTab = pendingTab === false ? activeTab : pendingTab
 
   return (
     <div className="rounded-xl bg-zinc-900/10 !min-h-2.5rem flex items-center overflow-hidden">
@@ -70,7 +70,7 @@ export const AppTabs: FC = () => {
               aria-label={isIconOnlyTab || isPendingTab ? label : undefined}
               component={Link}
               icon={
-                isIconOnlyTab && Icon ? (
+                isIconOnlyTab && Icon !== undefined ? (
                   <AppTabContent fixedSize pending={isPendingTab}>
                     <Tooltip title={label}>
                       <span className="inline-flex h-5 w-5 items-center justify-center leading-none">

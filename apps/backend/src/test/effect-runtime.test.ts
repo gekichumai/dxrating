@@ -207,10 +207,8 @@ describe('native Effect database transactions', () => {
       database.transaction((tx) =>
         Effect.gen(function* () {
           yield* tx.execute(sql`INSERT INTO effect_transaction_probe (value) VALUES ('terminated')`)
-          const { rows } = yield* database.raw<{ pid: number }>(
-            'Read transaction connection',
-            'SELECT pg_backend_pid() AS pid',
-          )
+          const { rows } = yield* database.raw('Read transaction connection', 'SELECT pg_backend_pid() AS pid')
+          expect.assert(typeof rows[0].pid === 'number')
           entered.resolve(rows[0].pid)
           yield* Effect.promise(() => resume.promise)
           return yield* tx.execute(sql`SELECT 1`, 'objects')
@@ -399,7 +397,7 @@ describe('Effect framework boundary', () => {
       ),
     )
     const [url, init] = upstream.mock.calls[0]
-    expect(String(url)).toBe('https://example.invalid/resource?key=value')
+    expect(url instanceof Request ? url.url : url.toString()).toBe('https://example.invalid/resource?key=value')
     expect(init?.method).toBe('POST')
     expect(new Headers(init?.headers).get('authorization')).toBe('Bearer synthetic-token')
     expect(await new Response(init?.body).json()).toEqual({ input: 'test' })

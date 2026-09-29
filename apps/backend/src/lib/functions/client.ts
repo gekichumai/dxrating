@@ -51,7 +51,7 @@ export const NODE_ELEMENT_NODE = 1
 export const NODE_TEXT_NODE = 3
 
 function musicRecordURLs(base: string) {
-  const difficulties = [
+  const difficulties: { value: number; fetchState: ClientFetchState }[] = [
     { value: 0, fetchState: 'fetch:music:in-progress:basic' },
     { value: 1, fetchState: 'fetch:music:in-progress:advanced' },
     { value: 2, fetchState: 'fetch:music:in-progress:expert' },
@@ -61,7 +61,7 @@ function musicRecordURLs(base: string) {
   ]
   return difficulties.map(({ value, fetchState }) => ({
     url: `${base}?genre=99&diff=${value}`,
-    fetchState: fetchState as ClientFetchState,
+    fetchState,
   }))
 }
 
@@ -179,7 +179,7 @@ export class Client {
 
     for (const cookieString of headers.getSetCookie()) {
       const c = cookie.parse(cookieString)
-      if (!c) continue
+      if (c === undefined) continue
       const name = Object.keys(c)[0]
       const value = c[name]
       const exist = existingCookies.findIndex((e) => e.name === name)
@@ -204,11 +204,9 @@ export class Client {
     Effect.gen({ self: this }, function* () {
       const requestURL = yield* parseNetResponse(() => new URL(url))
       const cookies = this.getCookies(requestURL.hostname)
-      const headers = new Headers({
-        ...(init?.headers as Record<string, string>),
-        Referer: `${requestURL.protocol}//${requestURL.hostname}`,
-        ...COMMON_HEADERS,
-      })
+      const headers = new Headers(init?.headers)
+      headers.set('Referer', `${requestURL.protocol}//${requestURL.hostname}`)
+      for (const [name, value] of Object.entries(COMMON_HEADERS)) headers.set(name, value)
       headers.set('Cookie', cookies.map((c) => `${c.name}=${c.value}`).join('; '))
       this.#agent ??= new Agent({ connect: { ca: [...tls.rootCertificates, ...MAIMAI_NET_INTERMEDIATE_CERTIFICATES] } })
       const res = yield* Effect.tryPromise({
@@ -218,7 +216,8 @@ export class Client {
             ...init,
             headers,
             dispatcher: this.#agent,
-            signal: init?.signal ? AbortSignal.any([signal, init.signal]) : signal,
+            signal:
+              init?.signal !== undefined && init?.signal !== null ? AbortSignal.any([signal, init.signal]) : signal,
           }),
         catch: (cause) => new NetRequestError({ operation: 'request maimai NET', cause }),
       })
@@ -292,7 +291,8 @@ export class MaimaiNETJpClient extends Client {
 
       const loginPage = yield* this.fetchAsDOMEffect(URLS.JP.LOGIN_PAGE)
       const loginPageToken = loginPage?.querySelector('input[name="token"]')?.attributes.getNamedItem('value')?.value
-      if (!loginPageToken) return yield* Effect.fail(new NetImportError('TOKEN_ERROR'))
+      if (loginPageToken === undefined || loginPageToken === null || loginPageToken === '')
+        return yield* Effect.fail(new NetImportError('TOKEN_ERROR'))
 
       const login = yield* this.fetchEffect(
         URLS.JP.LOGIN_ENDPOINT,
@@ -326,14 +326,14 @@ export class MaimaiNETJpClient extends Client {
         })
       }
 
-      yield* this.progress('auth:succeeded')
+      return yield* this.progress('auth:succeeded')
     })
 
   fetchRecentRecordsEffect = () =>
     Effect.gen({ self: this }, function* () {
       yield* this.progress('fetch:recent:in-progress')
       const recentRecordsPage = yield* this.fetchAsDOMEffect(URLS.JP.RECORD_RECENT_PAGE)
-      if (!recentRecordsPage) {
+      if (recentRecordsPage === undefined) {
         return yield* Effect.fail(new NetImportError('INTERNAL_ERROR', 'failed to parse record page'))
       }
       const records = yield* parseNetResponse(() =>
@@ -348,7 +348,7 @@ export class MaimaiNETJpClient extends Client {
       const musicRecords: AchievementRecord[] = []
       for (const { url, fetchState } of musicRecordURLs(URLS.JP.RECORD_MUSICS_PAGE)) {
         const musicRecordsPage = yield* this.fetchAsDOMEffect(url)
-        if (!musicRecordsPage) {
+        if (musicRecordsPage === undefined) {
           return yield* Effect.fail(new NetImportError('INTERNAL_ERROR', 'failed to parse music records page'))
         }
         const records = yield* parseNetResponse(() =>
@@ -397,7 +397,7 @@ export class MaimaiNETIntlClient extends Client {
         try: () => loginResponse.body?.cancel() ?? Promise.resolve(),
         catch: (cause) => new NetRequestError({ operation: 'release maimai NET login response', cause }),
       })
-      if (!redirectURL) {
+      if (redirectURL === undefined || redirectURL === null || redirectURL === '') {
         return yield* Effect.fail(new NetImportError('INVALID_CREDENTIALS'))
       }
 
@@ -417,7 +417,7 @@ export class MaimaiNETIntlClient extends Client {
         return yield* Effect.fail(new NetImportError('INVALID_CREDENTIALS', errorString))
       }
 
-      yield* this.progress('auth:succeeded')
+      return yield* this.progress('auth:succeeded')
     })
 
   fetchRecentRecordsEffect = () =>
@@ -425,7 +425,7 @@ export class MaimaiNETIntlClient extends Client {
       yield* this.progress('fetch:recent:in-progress')
 
       const recentRecordsPage = yield* this.fetchAsDOMEffect(URLS.INTL.RECORD_RECENT_PAGE)
-      if (!recentRecordsPage) {
+      if (recentRecordsPage === undefined) {
         return yield* Effect.fail(new NetImportError('INTERNAL_ERROR', 'failed to parse record page'))
       }
       const records = yield* parseNetResponse(() =>
@@ -441,7 +441,7 @@ export class MaimaiNETIntlClient extends Client {
       const musicRecords: AchievementRecord[] = []
       for (const { url, fetchState } of musicRecordURLs(URLS.INTL.RECORD_MUSICS_PAGE)) {
         const musicRecordsPage = yield* this.fetchAsDOMEffect(url)
-        if (!musicRecordsPage) {
+        if (musicRecordsPage === undefined) {
           return yield* Effect.fail(new NetImportError('INTERNAL_ERROR', 'failed to parse music records page'))
         }
         const records = yield* parseNetResponse(() =>

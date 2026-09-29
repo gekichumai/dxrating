@@ -10,6 +10,10 @@ import {
   toSupportedLocale,
 } from '../locale'
 
+function createServerRequest(url: string, headers: Record<string, string>) {
+  return { url, headers: new Headers(headers) }
+}
+
 describe('locale detection', () => {
   const mockLocalStorage = {
     getItem: vi.fn(),
@@ -28,17 +32,6 @@ describe('locale detection', () => {
     })
     document.cookie = `${LOCALE_COOKIE_NAME}=; Max-Age=0; Path=/`
   })
-
-  function createServerRequest(url: string, headers: Record<string, string>) {
-    return {
-      url,
-      headers: {
-        get(name: string) {
-          return headers[name.toLowerCase()] ?? null
-        },
-      },
-    } as Request
-  }
 
   it('normalizes browser and HTTP language variants to supported locales', () => {
     expect(toSupportedLocale('en-US')).toBe('en')

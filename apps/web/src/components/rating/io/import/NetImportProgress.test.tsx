@@ -8,6 +8,9 @@ import { NetImportSettingsButton } from './NetImportSettingsButton'
 import { importFromNETRecords } from './importFromNETRecords'
 import { netImportProgress } from './netImportProgressStore'
 
+vi.mock('@/models/context/RatingCalculatorContext', () => ({
+  useRatingCalculatorContext: () => ({ modifyEntries: { set: vi.fn() } }),
+}))
 vi.mock('./importFromNETRecords', () => ({ importFromNETRecords: vi.fn() }))
 vi.mock('@/models/context/useAppContext', () => ({ useAppContextDXDataVersion: () => 'circle-plus' }))
 
@@ -96,8 +99,8 @@ describe('global auto-import settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     fireEvent.click(trigger)
-    expect((screen.getByLabelText('Your Sega ID') as HTMLInputElement).value).toBe('fixture')
-    expect((screen.getByRole('radio', { name: /^Merge/ }) as HTMLInputElement).checked).toBe(true)
+    expect(screen.getByLabelText<HTMLInputElement>('Your Sega ID').value).toBe('fixture')
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: /^Merge/ }).checked).toBe(true)
     fireEvent.click(screen.getByRole('checkbox', { name: /Remember Credentials/ }))
     expect(localStorage.getItem('import-net-records')).toBeNull()
     expect(localStorage.getItem('rating-auto-import-from-net')).toBe('false')
@@ -130,7 +133,7 @@ describe('global auto-import settings', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     localStorage.setItem('rating-auto-import-from-net', '"merge"')
     fireEvent.click(screen.getByRole('button', { name: 'Auto-import' }))
-    expect((screen.getByRole('radio', { name: /^Merge/ }) as HTMLInputElement).checked).toBe(true)
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: /^Merge/ }).checked).toBe(true)
     fireEvent.click(screen.getByRole('radio', { name: 'Disabled' }))
     expect(localStorage.getItem('rating-auto-import-from-net')).toBe('false')
   })

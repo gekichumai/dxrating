@@ -26,14 +26,19 @@ const searchString = (value: unknown) => {
         ? String(value)
         : undefined
 
-  if (stringValue && stringValue.length > SEARCH_QUERY_MAX_LENGTH) {
+  if (
+    stringValue !== null &&
+    stringValue !== undefined &&
+    stringValue !== '' &&
+    stringValue.length > SEARCH_QUERY_MAX_LENGTH
+  ) {
     throw new RangeError(`Search query must not exceed ${SEARCH_QUERY_MAX_LENGTH} characters`)
   }
   return stringValue
 }
 
 export const loadSearchRouteData = ({ q }: SearchParams): SearchLoaderData => ({
-  seedSheets: q ? buildSearchQuerySeedSheets(q) : [],
+  seedSheets: q !== null && q !== undefined && q !== '' ? buildSearchQuerySeedSheets(q) : [],
 })
 
 export const validateSearchParams = (search: Record<string, unknown>): SearchParams => ({
@@ -65,7 +70,7 @@ export const Route = createFileRoute('/search')({
 })
 
 function SearchRouteComponent() {
-  const loaderData = Route.useLoaderData() as SearchLoaderData | undefined
+  const loaderData: SearchLoaderData | undefined = Route.useLoaderData()
 
   return <SheetList seedSheets={loaderData?.seedSheets ?? []} />
 }

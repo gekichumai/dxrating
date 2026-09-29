@@ -45,7 +45,7 @@ const SheetTagFilterInputTag = ({
   return (
     <ButtonBase
       {...bind()}
-      className={clsx('rounded-lg overflow-hidden', skeleton && 'pointer-events-none animate-pulse')}
+      className={clsx('rounded-lg overflow-hidden', skeleton === true && 'pointer-events-none animate-pulse')}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           onToggle()
@@ -131,7 +131,6 @@ const SheetTagFilterInput = ({ value, onChange }: { value: number[]; onChange: (
       <div className="flex flex-wrap gap-2">
         {Array.from({ length: 8 }).map((_, i) => (
           <SheetTagFilterInputTag
-            // oxlint-disable-next-line react/no-array-index-key -- index is stable
             key={i}
             label={<div className="w-8">&nbsp;</div>}
             count="--"

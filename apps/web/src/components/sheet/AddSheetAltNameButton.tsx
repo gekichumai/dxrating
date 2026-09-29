@@ -22,7 +22,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
   const { mutate } = useServerAliases()
 
   const [{ loading }, handleAddAltName] = useAsyncFn(async () => {
-    if (!session) return
+    if (session === undefined) return
 
     try {
       await client.aliases.create({
@@ -38,7 +38,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
       })
       setOpen(false)
       setNewAltName('')
-      mutate() // Trigger revalidation
+      await mutate() // Trigger revalidation
     } catch (e: any) {
       captureAnalyticsEvent('sheet_alias_failed', {
         song_id: sheet.songId,
@@ -92,7 +92,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
               onChange={(e) => setNewAltName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  handleAddAltName()
+                  void handleAddAltName()
                 }
               }}
               data-attr="add-alias-input"
@@ -103,25 +103,26 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
               color="primary"
               onClick={handleAddAltName}
               startIcon={<IconMdiPlus />}
-              disabled={newAltName.trim().length === 0 || newAltName.trim().length > 100 || !session || loading}
+              disabled={
+                newAltName.trim().length === 0 || newAltName.trim().length > 100 || session === undefined || loading
+              }
               type="submit"
             >
               {loading ? t('sheet:aliases.adding') : t('sheet:aliases.add-button')}
             </Button>
           </div>
 
-          {!session && (
-            <div
-              className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8 z-1 cursor-pointer"
+          {session === undefined && (
+            <button
+              className="border-0 text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8 z-1 cursor-pointer"
               onClick={openLoginDialog}
-              onKeyDown={(e) => e.key === 'Enter' && openLoginDialog()}
-              role="button"
+              type="button"
               tabIndex={0}
             >
               <span className="text-center font-bold text-sm text-zinc-600 underline underline-offset-2">
                 {t('sheet:aliases.login-required')}
               </span>
-            </div>
+            </button>
           )}
         </div>
       </Dialog>

@@ -12,7 +12,7 @@ let snapshot: NetImportProgress | null = null
 const listeners = new Set<() => void>()
 
 export const netImportProgress = {
-  subscribe(listener: () => void) {
+  subscribe: (listener: () => void) => {
     listeners.add(listener)
     return () => {
       listeners.delete(listener)

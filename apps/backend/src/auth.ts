@@ -19,15 +19,16 @@ class AuthenticationError extends Data.TaggedError('AuthenticationError')<{
 }> {}
 
 export const createAuth = (database: typeof Database.Service, config: typeof AppConfig.Service) => {
-  const crossSubDomainCookies = config.auth.cookieDomain
-    ? { enabled: true as const, domain: config.auth.cookieDomain }
-    : undefined
+  const crossSubDomainCookies =
+    config.auth.cookieDomain !== undefined && config.auth.cookieDomain !== null && config.auth.cookieDomain !== ''
+      ? { enabled: true as const, domain: config.auth.cookieDomain }
+      : undefined
 
   const appleProvider = (() => {
     const { clientId, teamId, keyId, privateKeyBase64, appBundleIdentifier } = config.auth.apple
     const values = [clientId, teamId, keyId, privateKeyBase64]
-    if (values.every((value) => !value)) return undefined
-    if (values.some((value) => !value)) {
+    if (values.every((value) => value === undefined || value === null || value === '')) return undefined
+    if (values.some((value) => value === undefined || value === null || value === '')) {
       throw new Error(
         'APPLE_CLIENT_ID, APPLE_TEAM_ID, APPLE_KEY_ID, and APPLE_PRIVATE_KEY_B64 must be configured together',
       )
@@ -96,7 +97,7 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
               )
 
               const revocationIssues = yield* revokeOAuthGrants(accounts, {
-                ...(appleProvider
+                ...(appleProvider !== undefined && appleProvider !== null
                   ? {
                       apple: {
                         clientId: appleProvider.clientId,
@@ -104,7 +105,12 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
                       },
                     }
                   : {}),
-                ...(config.auth.github.clientId && config.auth.github.clientSecret
+                ...(config.auth.github.clientId !== undefined &&
+                config.auth.github.clientId !== null &&
+                config.auth.github.clientId !== '' &&
+                config.auth.github.clientSecret !== undefined &&
+                config.auth.github.clientSecret !== null &&
+                config.auth.github.clientSecret !== ''
                   ? {
                       github: {
                         clientId: config.auth.github.clientId,
@@ -127,7 +133,7 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
     },
     advanced: {
       cookiePrefix: 'dxrating',
-      ...(crossSubDomainCookies ? { crossSubDomainCookies } : {}),
+      ...(crossSubDomainCookies !== undefined && crossSubDomainCookies !== null ? { crossSubDomainCookies } : {}),
       ipAddress: {
         ipAddressHeaders: ['cf-connecting-ip'],
       },
@@ -143,14 +149,26 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
       google: {
         clientId: config.auth.google.clientId!,
         clientSecret: config.auth.google.clientSecret!,
-        enabled: !!config.auth.google.clientId && !!config.auth.google.clientSecret,
+        enabled:
+          config.auth.google.clientId !== undefined &&
+          config.auth.google.clientId !== null &&
+          config.auth.google.clientId !== '' &&
+          config.auth.google.clientSecret !== undefined &&
+          config.auth.google.clientSecret !== null &&
+          config.auth.google.clientSecret !== '',
       },
       github: {
         clientId: config.auth.github.clientId!,
         clientSecret: config.auth.github.clientSecret!,
-        enabled: !!config.auth.github.clientId && !!config.auth.github.clientSecret,
+        enabled:
+          config.auth.github.clientId !== undefined &&
+          config.auth.github.clientId !== null &&
+          config.auth.github.clientId !== '' &&
+          config.auth.github.clientSecret !== undefined &&
+          config.auth.github.clientSecret !== null &&
+          config.auth.github.clientSecret !== '',
       },
-      ...(appleProvider ? { apple: appleProvider } : {}),
+      ...(appleProvider !== undefined && appleProvider !== null ? { apple: appleProvider } : {}),
     },
     plugins: [
       expo(),
@@ -165,7 +183,9 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
         cookieName: 'dxrating.last_used_login_method',
       }),
       ...(config.nodeEnv !== 'test' ? [haveIBeenPwned()] : []),
-      ...(config.auth.turnstile.secretKey
+      ...(config.auth.turnstile.secretKey !== undefined &&
+      config.auth.turnstile.secretKey !== null &&
+      config.auth.turnstile.secretKey !== ''
         ? [
             captcha({
               provider: 'cloudflare-turnstile',
@@ -286,26 +306,31 @@ export const AuthenticationLive = Layer.effect(
           }),
         catch: (cause) => new AuthenticationError({ operation: 'Read unlink account session', cause }),
       })
-      const accounts = session
-        ? yield* database.query('Resolve legacy linked account', (db) =>
-            db
-              .select({ id: authSchema.account.id })
-              .from(authSchema.account)
-              .where(
-                and(
-                  eq(authSchema.account.userId, session.user.id),
-                  eq(authSchema.account.providerId, providerId),
-                  remoteAccountId === undefined ? undefined : eq(authSchema.account.accountId, remoteAccountId),
-                ),
-              )
-              .limit(1),
-          )
-        : []
+      const accounts =
+        session !== undefined && session !== null
+          ? yield* database.query('Resolve legacy linked account', (db) =>
+              db
+                .select({ id: authSchema.account.id })
+                .from(authSchema.account)
+                .where(
+                  and(
+                    eq(authSchema.account.userId, session.user.id),
+                    eq(authSchema.account.providerId, providerId),
+                    remoteAccountId === undefined ? undefined : eq(authSchema.account.accountId, remoteAccountId),
+                  ),
+                )
+                .limit(1),
+            )
+          : []
       const headers = new Headers(request.headers)
       headers.delete('content-length')
       // A missing match still goes through Better Auth's session, origin,
       // account ownership, and last-account checks before it can mutate data.
-      return new Request(request, { headers, body: JSON.stringify({ accountId: accounts[0]?.id ?? '' }) })
+      return new Request(request, {
+        method: request.method,
+        headers,
+        body: JSON.stringify({ accountId: accounts[0]?.id ?? '' }),
+      })
     })
     return {
       // Better Auth cannot cancel its database/hashing work. Keep it tracked until

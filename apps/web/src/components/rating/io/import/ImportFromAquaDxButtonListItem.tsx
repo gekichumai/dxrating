@@ -33,49 +33,59 @@ export const ImportFromAquaDxButtonListItem: FC<{
         const input = document.createElement('input')
         input.type = 'file'
         input.accept = 'application/json'
-        input.onchange = (event) => {
-          const element = event.target as HTMLInputElement
-          if (!element) return
+        input.addEventListener(
+          'change',
+          (event) => {
+            const element = event.target
+            if (!(element instanceof HTMLInputElement)) return
 
-          const file = element?.files ? element?.files[0] : undefined
-          if (!file) return
+            const file = element?.files !== null ? element?.files[0] : undefined
+            if (file === undefined) return
 
-          const reader = new FileReader()
-          reader.onload = async (event) => {
-            const data = event.target?.result
-            if (!data) return
-            if (typeof data !== 'string') return
+            const reader = new FileReader()
+            reader.addEventListener(
+              'load',
+              async (event) => {
+                const data = event.target?.result
+                if (data === null || data === undefined || data === '') return
+                if (typeof data !== 'string') return
 
-            const analytics = createRatingImportTracker('aqua_dx')
-            try {
-              const musicIdMapJson = await import('@/assets/music-id-map.json')
-              const musicIdMap = musicIdMapJson.default as ProviderMusicIdMap
+                const analytics = createRatingImportTracker('aqua_dx')
+                try {
+                  const musicIdMapJson = await import('@/assets/music-id-map.json')
+                  const musicIdMap = musicIdMapJson.default as ProviderMusicIdMap
 
-              const aquaExportData = JSON.parse(data)
-              const rows = Array.isArray(aquaExportData?.userMusicDetailList)
-                ? aquaExportData.userMusicDetailList.map((musicDetail: AquaDxExportMusicDetail) => ({
-                    musicId: musicDetail.musicId,
-                    level: musicDetail.level,
-                    achievement: musicDetail.achievement,
-                  }))
-                : []
-              const importResult = normalizeAquaDxRows(getDxdataSongCatalog(appVersion), rows, musicIdMap)
-              const entries = importResultToPlayEntries(importResult)
-              for (const warning of importResult.warnings) {
-                console.warn('[ImportFromAquaDxButtonListItem]', warning.message, warning.row)
-              }
+                  const aquaExportData = JSON.parse(data)
+                  const rows = Array.isArray(aquaExportData?.userMusicDetailList)
+                    ? aquaExportData.userMusicDetailList.map((musicDetail: AquaDxExportMusicDetail) => ({
+                        musicId: musicDetail.musicId,
+                        level: musicDetail.level,
+                        achievement: musicDetail.achievement,
+                      }))
+                    : []
+                  const importResult = normalizeAquaDxRows(getDxdataSongCatalog(appVersion), rows, musicIdMap)
+                  const entries = importResultToPlayEntries(importResult)
+                  for (const warning of importResult.warnings) {
+                    console.warn('[ImportFromAquaDxButtonListItem]', warning.message, warning.row)
+                  }
 
-              modifyEntries.set(entries)
-              analytics.succeeded(entries.length, importResult.warnings.length)
-              haptic.trigger('success')
-              toast.success(t('rating-calculator:io.import.aqua-dx.success', { count: entries.length }))
-            } catch (error) {
-              analytics.failed('invalid_file')
-              console.error(error)
-            }
-          }
-          reader.readAsText(file)
-        }
+                  modifyEntries.set(entries)
+                  analytics.succeeded(entries.length, importResult.warnings.length)
+                  void haptic
+                    .trigger('success')
+                    ?.catch((error: unknown) => console.warn('Haptic feedback failed', error))
+                  toast.success(t('rating-calculator:io.import.aqua-dx.success', { count: entries.length }))
+                } catch (error) {
+                  analytics.failed('invalid_file')
+                  console.error(error)
+                }
+              },
+              { once: true },
+            )
+            reader.readAsText(file)
+          },
+          { once: true },
+        )
         input.click()
       }}
     >

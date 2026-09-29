@@ -78,7 +78,8 @@ describe('maimai NET TLS certificates', () => {
     )
 
     expect(intermediate).toBeDefined()
-    if (!intermediate) throw new Error('current maimai NET intermediate certificate is missing')
+    if (intermediate === undefined || intermediate === null)
+      throw new Error('current maimai NET intermediate certificate is missing')
     expect(intermediate.ca).toBe(true)
 
     const issuer = tls.rootCertificates
@@ -86,7 +87,7 @@ describe('maimai NET TLS certificates', () => {
       .find((root) => root.subject === intermediate.issuer)
 
     expect(issuer).toBeDefined()
-    if (!issuer) throw new Error('issuer root certificate is missing')
+    if (issuer === undefined || issuer === null) throw new Error('issuer root certificate is missing')
     expect(intermediate.verify(issuer.publicKey)).toBe(true)
   })
 })

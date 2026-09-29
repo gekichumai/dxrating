@@ -7,7 +7,7 @@ export const DXRank: FC<{ rank?: string | null; className?: string }> = ({ rank,
   const slugVersion = useAppContextSlugVersion()
   const { t } = useTranslation(['global'])
 
-  if (!rank) {
+  if (rank === null || rank === undefined || rank === '') {
     return <div className={clsx('aspect-w-128 aspect-h-60 bg-gray-200 rounded', className)} />
   }
 

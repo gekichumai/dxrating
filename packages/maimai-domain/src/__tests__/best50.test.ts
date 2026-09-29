@@ -63,7 +63,7 @@ function providerEntry(
     sheetId: formatSheetIdentity(identity),
     identity,
     achievementRate,
-    source: best50Bucket ? { provider, best50Bucket } : undefined,
+    source: best50Bucket !== undefined ? { provider, best50Bucket } : undefined,
   }
 }
 
@@ -232,13 +232,13 @@ describe('calculateRatingAward', () => {
   describe('coefficient table is sorted', () => {
     it('achievement rate thresholds are monotonically increasing', () => {
       for (let i = 1; i < SCORE_COEFFICIENT_TABLE.length; i++) {
-        expect(SCORE_COEFFICIENT_TABLE[i]![0]).toBeGreaterThan(SCORE_COEFFICIENT_TABLE[i - 1]![0])
+        expect(SCORE_COEFFICIENT_TABLE[i][0]).toBeGreaterThan(SCORE_COEFFICIENT_TABLE[i - 1][0])
       }
     })
 
     it('coefficients are monotonically increasing', () => {
       for (let i = 1; i < SCORE_COEFFICIENT_TABLE.length; i++) {
-        expect(SCORE_COEFFICIENT_TABLE[i]![1]).toBeGreaterThanOrEqual(SCORE_COEFFICIENT_TABLE[i - 1]![1])
+        expect(SCORE_COEFFICIENT_TABLE[i][1]).toBeGreaterThanOrEqual(SCORE_COEFFICIENT_TABLE[i - 1][1])
       }
     })
   })

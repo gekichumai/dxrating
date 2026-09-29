@@ -4,16 +4,20 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
 import { AppTabs } from '../AppTabs'
 
-const { capture, routeLocation, routerState } = vi.hoisted(() => ({
-  capture: vi.fn(),
-  routeLocation: { pathname: '/rating' },
-  routerState: {
+const { capture, routeLocation, routerState } = vi.hoisted(() => {
+  const routerState: {
+    isLoading: boolean
+    isTransitioning: boolean
+    location: { pathname: string }
+    resolvedLocation: { pathname: string } | undefined
+  } = {
     isLoading: false,
     isTransitioning: false,
     location: { pathname: '/rating' },
-    resolvedLocation: { pathname: '/rating' } as { pathname: string } | undefined,
-  },
-}))
+    resolvedLocation: { pathname: '/rating' },
+  }
+  return { capture: vi.fn(), routeLocation: { pathname: '/rating' }, routerState }
+})
 
 vi.mock('@tanstack/react-router', async () => {
   const React = await import('react')

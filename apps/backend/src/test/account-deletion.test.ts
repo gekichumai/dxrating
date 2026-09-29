@@ -158,12 +158,12 @@ async function seedUserData(pool: pg.Pool, deletedUserId: string, survivorId: st
   const tag = await pool.query<{ id: number }>(
     `INSERT INTO tags (created_by, localized_name, localized_description, group_id)
      VALUES ($1, '{"en":"Delete"}', '{"en":"Delete"}', $2) RETURNING id`,
-    [deletedUserId, tagGroup.rows[0]!.id],
+    [deletedUserId, tagGroup.rows[0].id],
   )
   await pool.query(
     `INSERT INTO tag_songs (tag_id, song_id, sheet_type, sheet_difficulty, created_by)
      VALUES ($1, 'song', 'dx', 'master', $2)`,
-    [tag.rows[0]!.id, deletedUserId],
+    [tag.rows[0].id, deletedUserId],
   )
   await pool.query(`INSERT INTO song_aliases (song_id, name, created_by) VALUES ('song', 'Deleted alias', $1)`, [
     deletedUserId,
@@ -177,6 +177,6 @@ async function seedUserData(pool: pg.Pool, deletedUserId: string, survivorId: st
   await pool.query(
     `INSERT INTO comments (created_by, song_id, sheet_type, sheet_difficulty, parent_id, content)
      VALUES ($1, 'song', 'dx', 'master', $2, 'Surviving reply')`,
-    [survivorId, parent.rows[0]!.id],
+    [survivorId, parent.rows[0].id],
   )
 }

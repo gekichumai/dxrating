@@ -20,7 +20,7 @@ export const useSheetTags = (sheet: FlattenedSheet) => {
         ...tag,
         group: combinedTags.tagGroups.find((group) => group.id === tag?.group_id),
       })),
-  ).sort((a, b) => {
+  ).toSorted((a, b) => {
     const aIdx = groupOrder.indexOf(a.group_id ?? -1)
     const bIdx = groupOrder.indexOf(b.group_id ?? -1)
     return aIdx - bIdx

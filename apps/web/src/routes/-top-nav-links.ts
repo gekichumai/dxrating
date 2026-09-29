@@ -30,6 +30,13 @@ export const getPendingAppTabValue = (
   pathname: string,
   resolvedPathname?: string,
 ): AppTabValue | false => {
-  if (!isLoading || !resolvedPathname || pathname === resolvedPathname) return false
+  if (
+    !isLoading ||
+    resolvedPathname === null ||
+    resolvedPathname === undefined ||
+    resolvedPathname === '' ||
+    pathname === resolvedPathname
+  )
+    return false
   return getActiveAppTabValue(pathname)
 }

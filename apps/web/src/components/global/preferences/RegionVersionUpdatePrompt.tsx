@@ -7,7 +7,7 @@ import { ConfirmDialog } from '../ConfirmDialog'
 export function RegionVersionUpdatePrompt() {
   const { t } = useTranslation(['settings'])
   const { version, region, availableVersionUpdate, dismissVersionUpdate, setVersionAndRegion } = useAppContext()
-  if (!availableVersionUpdate) return null
+  if (availableVersionUpdate === null) return null
 
   const current = DXVersionToDXDataVersionEnumMap[version]
   const latest = DXVersionToDXDataVersionEnumMap[availableVersionUpdate]

@@ -12,10 +12,13 @@ import type { SheetSortFilterForm, SortPredicate } from './SheetSortFilter'
 const SortPredicateTransformer = {
   to: (value: string) => {
     const [descriptor, direction] = value.split('_')
-    return {
-      descriptor,
-      direction,
-    } as SortPredicate
+    if (
+      (descriptor !== 'releaseDate' && descriptor !== 'internalLevelValue') ||
+      (direction !== 'asc' && direction !== 'desc')
+    ) {
+      throw new Error(`Unknown sort predicate: ${value}`)
+    }
+    return { descriptor, direction } satisfies SortPredicate
   },
   from: (value: SortPredicate) => {
     return `${value.descriptor}_${value.direction}`

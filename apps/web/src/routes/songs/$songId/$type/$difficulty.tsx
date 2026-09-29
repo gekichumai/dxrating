@@ -8,12 +8,12 @@ export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
   ssr: true,
   loader: ({ params }) => {
     const song = dxdata.songs.find((s) => s.songId === params.songId)
-    if (!song) {
+    if (song === null || song === undefined) {
       throw notFound()
     }
 
     const sheet = song.sheets.find((s) => s.type === params.type && s.difficulty === params.difficulty)
-    if (!sheet) {
+    if (sheet === null || sheet === undefined) {
       throw notFound()
     }
 
@@ -23,7 +23,7 @@ export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
     const locale = resolveSeoLocale([match, ...matches])
     const song = loaderData?.song
     const sheet = loaderData?.sheet
-    if (!song || !sheet) {
+    if (song === null || song === undefined || sheet === null || sheet === undefined) {
       return {
         meta: [{ title: formatSeoTitle(createServerI18n(locale).t('song:not-found.title')) }],
       }

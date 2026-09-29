@@ -1,7 +1,7 @@
 import type * as OpenAPI from '@openapi-spec/types/v3.1'
 import { JSON_SCHEMA_REGISTRY, ZodToJsonSchemaConverter } from '@orpc/zod'
 import { z } from 'zod'
-import { DXDATA_BROWSER_CACHE_CONTROL, DXDATA_CDN_CACHE_CONTROL, DXDATA_PATH } from './dxdata'
+import { DXDATA_BROWSER_CACHE_CONTROL, DXDATA_CDN_CACHE_CONTROL } from './dxdata'
 
 const PUBLIC_SONG_ID_PATTERN = /^dsng_[23456789abcdefghjkmnpqrstvwxyz]{10}$/
 const PUBLIC_SHEET_ID_PATTERN = /^dsht_[23456789abcdefghjkmnpqrstvwxyz]{10}$/
@@ -378,7 +378,7 @@ export const addPublishedDxdataToOpenApi = (document: OpenAPI.OpenAPIObject): Op
   document.components.schemas ??= {}
   document.components.schemas.PublishedDxdataCatalog = catalogSchema
   document.paths ??= {}
-  document.paths[DXDATA_PATH.replace('/api/v1', '') as `/${string}`] = {
+  document.paths['/dxdata'] = {
     get: {
       operationId: 'getPublishedDxdataCatalog',
       summary: 'Get the complete published DX data catalog',

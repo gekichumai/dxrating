@@ -117,7 +117,8 @@ describe('published DX data OpenAPI contract', () => {
     }
 
     const augmented = addPublishedDxdataToOpenApi(document)
-    const catalogSchema = augmented.components?.schemas?.PublishedDxdataCatalog as OpenAPI.SchemaObjectFields
+    const catalogSchema = augmented.components?.schemas?.PublishedDxdataCatalog
+    expect.assert(typeof catalogSchema === 'object' && catalogSchema !== null)
     const [catalogExample] = catalogSchema.examples ?? []
     const parsedExample = PublishedDxdataCatalogSchema.parse(catalogExample)
 
@@ -147,18 +148,22 @@ describe('published DX data OpenAPI contract', () => {
     }
 
     const get = augmented.paths?.['/dxdata']?.get
-    const successResponse = get?.responses?.['200'] as OpenAPI.ResponseObject
+    const successResponse = get?.responses?.['200']
+    expect.assert(successResponse !== undefined && !('$ref' in successResponse))
     const mediaExample = successResponse.content?.['application/json']?.examples?.representativeCatalog
     expect(mediaExample).not.toHaveProperty('$ref')
     expect(mediaExample).toHaveProperty('value', parsedExample)
 
-    const headers = successResponse.headers as Record<string, OpenAPI.HeaderObject>
+    const headers = successResponse.headers
+    expect.assert(headers !== undefined)
     for (const header of Object.values(headers)) {
+      expect.assert(!('$ref' in header))
       expect(header.example).toBeDefined()
       expect(header.example).not.toBe('string')
     }
 
-    const validator = get?.parameters?.[0] as OpenAPI.ParameterObject
+    const validator = get?.parameters?.[0]
+    expect.assert(validator !== undefined && !('$ref' in validator))
     const validatorExamples = Object.values(validator.examples ?? {}).map((example) =>
       '$ref' in example ? undefined : example.value,
     )
@@ -168,8 +173,10 @@ describe('published DX data OpenAPI contract', () => {
       '*',
     ])
 
-    const internalError = get?.responses?.['500'] as OpenAPI.ResponseObject
-    const unavailableError = get?.responses?.['503'] as OpenAPI.ResponseObject
+    const internalError = get?.responses?.['500']
+    expect.assert(internalError !== undefined && !('$ref' in internalError))
+    const unavailableError = get?.responses?.['503']
+    expect.assert(unavailableError !== undefined && !('$ref' in unavailableError))
     const internalErrorExample = internalError.content?.['application/json']?.examples?.error
     const unavailableErrorExample = unavailableError.content?.['application/json']?.examples?.error
     expect(internalErrorExample).toHaveProperty('value', {
@@ -182,7 +189,7 @@ describe('published DX data OpenAPI contract', () => {
     expect(
       JSON.stringify({
         catalogExample,
-        headerExamples: Object.values(headers).map((header) => header.example),
+        headerExamples: Object.values(headers).map((header) => ('$ref' in header ? undefined : header.example)),
         validatorExamples,
         internalErrorExample,
         unavailableErrorExample,

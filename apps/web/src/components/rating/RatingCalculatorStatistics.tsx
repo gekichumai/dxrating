@@ -184,7 +184,7 @@ const Histogram: FC<{
     // Create the histogram bins for both datasets
     const histogram = d3
       .histogram()
-      .domain(x.domain() as [number, number])
+      .domain([xDomain[0], xDomain[1]])
       .thresholds(x.ticks((max - min) / ticksIntervalRatio))
 
     const bins1 = histogram(b15Values)
@@ -208,7 +208,7 @@ const Histogram: FC<{
       d3.axisLeft(y).tickFormat((d) => {
         if (typeof d !== 'number') return ''
         if (d % 1 === 0) {
-          return (d as number).toFixed(0)
+          return d.toFixed(0)
         }
         return ''
       }),

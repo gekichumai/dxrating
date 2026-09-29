@@ -98,7 +98,9 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
                           itemType: 'https://schema.org/MusicGroup',
                         }}
                         metadata={
-                          chart.releaseDate && (
+                          chart.releaseDate !== null &&
+                          chart.releaseDate !== undefined &&
+                          chart.releaseDate !== '' && (
                             <time
                               className="text-xs text-zinc-500"
                               dateTime={chart.releaseDate}

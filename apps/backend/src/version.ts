@@ -44,7 +44,15 @@ export const BuildInformationLive = Layer.effect(
           yield* tokenResponse.text
           return
         }
-        const { token } = (yield* tokenResponse.json) as { token: string }
+        const tokenData = yield* tokenResponse.json
+        if (
+          typeof tokenData !== 'object' ||
+          tokenData === null ||
+          !('token' in tokenData) ||
+          typeof tokenData.token !== 'string'
+        )
+          return
+        const { token } = tokenData
         const manifest = yield* http.get(`https://ghcr.io/v2/${GHCR_IMAGE}/manifests/sha-${commit.substring(0, 7)}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -59,7 +67,7 @@ export const BuildInformationLive = Layer.effect(
         yield* manifest.text
         if (manifest.status < 200 || manifest.status >= 300) return
         const imageDigest = manifest.headers['docker-content-digest']
-        if (!imageDigest) return
+        if (imageDigest === undefined || imageDigest === '') return
         info.imageDigest = imageDigest
         const response = yield* http.get(`https://api.github.com/repos/${GITHUB_REPO}/attestations/${imageDigest}`, {
           headers: { Accept: 'application/json' },
@@ -68,9 +76,13 @@ export const BuildInformationLive = Layer.effect(
           yield* response.text
           return
         }
-        const data = (yield* response.json) as { attestations?: { bundle: unknown }[] }
-        const bundle = data.attestations?.[0]?.bundle
-        if (bundle)
+        const data = yield* response.json
+        if (typeof data !== 'object' || data === null || !('attestations' in data) || !Array.isArray(data.attestations))
+          return
+        const first: unknown = data.attestations[0]
+        if (typeof first !== 'object' || first === null || !('bundle' in first)) return
+        const { bundle } = first
+        if (typeof bundle === 'object' && bundle !== null)
           info.attestation = {
             sigstoreBundle: bundle,
             verifyCommand: `gh attestation verify oci://ghcr.io/${GHCR_IMAGE}@${imageDigest} --repo ${GITHUB_REPO}`,

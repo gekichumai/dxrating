@@ -11,7 +11,7 @@ export class ByteCache<T> {
 
   get(key: string): T | undefined {
     const entry = this.entries.get(key)
-    if (!entry) return undefined
+    if (entry === undefined) return undefined
     this.remove(key)
     if (entry.expiresAt <= this.now()) return undefined
     this.entries.set(key, entry)
@@ -22,7 +22,7 @@ export class ByteCache<T> {
   set(key: string, value: T, bytes: number) {
     this.remove(key)
     if (this.maxBytes <= 0 || bytes > this.maxBytes) return
-    while ((this.bytes + bytes > this.maxBytes || this.entries.size >= this.maxEntries) && this.entries.size) {
+    while ((this.bytes + bytes > this.maxBytes || this.entries.size >= this.maxEntries) && this.entries.size > 0) {
       this.remove(this.entries.keys().next().value!)
     }
     this.entries.set(key, { value, bytes, expiresAt: this.now() + this.ttlMs })
@@ -31,7 +31,7 @@ export class ByteCache<T> {
 
   private remove(key: string) {
     const entry = this.entries.get(key)
-    if (entry) {
+    if (entry !== undefined) {
       this.bytes -= entry.bytes
       this.entries.delete(key)
     }

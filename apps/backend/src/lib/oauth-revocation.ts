@@ -63,7 +63,7 @@ export const revokeOAuthGrants = (
           try: () => response.arrayBuffer(),
           catch: (cause) => new OAuthRevocationError({ cause }),
         })
-        if (!acceptedStatuses[account.providerId]!.has(response.status)) {
+        if (!acceptedStatuses[account.providerId].has(response.status)) {
           return {
             providerId: account.providerId,
             reason: 'request-failed' as const,
@@ -90,10 +90,10 @@ function createRevocationRequest(
   switch (account.providerId) {
     case 'apple': {
       const provider = configuration.apple
-      if (!provider) return issue(account.providerId, 'missing-configuration')
+      if (provider === undefined || provider === null) return issue(account.providerId, 'missing-configuration')
 
       const token = account.refreshToken ?? account.accessToken
-      if (!token) return issue(account.providerId, 'missing-token')
+      if (token === undefined || token === null || token === '') return issue(account.providerId, 'missing-token')
 
       return {
         url: 'https://appleid.apple.com/auth/revoke',
@@ -104,14 +104,17 @@ function createRevocationRequest(
             client_id: provider.clientId,
             client_secret: provider.clientSecret(),
             token,
-            token_type_hint: account.refreshToken ? 'refresh_token' : 'access_token',
+            token_type_hint:
+              account.refreshToken !== undefined && account.refreshToken !== null && account.refreshToken !== ''
+                ? 'refresh_token'
+                : 'access_token',
           }),
         },
       }
     }
     case 'google': {
       const token = account.refreshToken ?? account.accessToken
-      if (!token) return issue(account.providerId, 'missing-token')
+      if (token === undefined || token === null || token === '') return issue(account.providerId, 'missing-token')
 
       return {
         url: 'https://oauth2.googleapis.com/revoke',
@@ -124,8 +127,9 @@ function createRevocationRequest(
     }
     case 'github': {
       const provider = configuration.github
-      if (!provider) return issue(account.providerId, 'missing-configuration')
-      if (!account.accessToken) return issue(account.providerId, 'missing-token')
+      if (provider === undefined || provider === null) return issue(account.providerId, 'missing-configuration')
+      if (account.accessToken === undefined || account.accessToken === null || account.accessToken === '')
+        return issue(account.providerId, 'missing-token')
 
       return {
         url: `https://api.github.com/applications/${encodeURIComponent(provider.clientId)}/token`,

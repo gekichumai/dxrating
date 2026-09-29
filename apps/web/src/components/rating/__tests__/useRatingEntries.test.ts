@@ -16,57 +16,57 @@ const makeSheet = (
     tags?: number[]
     searchAcronyms?: string[]
   } = {},
-): FlattenedSheet =>
-  ({
-    id,
+): FlattenedSheet => ({
+  id,
+  songId: id,
+  title: id,
+  artist: 'artist',
+  bpm: 120,
+  category: 'maimai',
+  imageName: `${id}.png`,
+  isNew: false,
+  isLocked: false,
+  searchAcronyms,
+  sheets: [],
+  internalId: 1,
+  type: TypeEnum.DX,
+  difficulty: DifficultyEnum.Master,
+  level: '14',
+  internalLevelValue: 14,
+  noteDesigner: null,
+  noteCounts: {
+    tap: null,
+    hold: null,
+    slide: null,
+    touch: null,
+    break: null,
+    total: null,
+  },
+  regions: {
+    jp: true,
+    intl: true,
+    cn: true,
+  },
+  isSpecial: false,
+  version: VersionEnum.CiRCLEPLUS,
+  identity: {
     songId: id,
-    title: id,
-    artist: 'artist',
-    bpm: 120,
-    category: 'maimai',
-    imageName: `${id}.png`,
-    isNew: false,
-    isLocked: false,
-    searchAcronyms,
-    sheets: [],
-    internalId: 1,
     type: TypeEnum.DX,
     difficulty: DifficultyEnum.Master,
-    level: '14',
-    internalLevelValue: 14,
-    noteDesigner: null,
-    noteCounts: {
-      tap: null,
-      hold: null,
-      slide: null,
-      touch: null,
-      break: null,
-      total: null,
-    },
-    regions: {
-      jp: true,
-      intl: true,
-      cn: true,
-    },
-    isSpecial: false,
-    version: VersionEnum.CiRCLEPLUS,
-    identity: {
-      songId: id,
-      type: TypeEnum.DX,
-      difficulty: DifficultyEnum.Master,
-    },
-    isTypeUtage: !isRatingEligible,
-    isRatingEligible,
-    releaseDateTimestamp: 1,
-    tags,
-  }) as FlattenedSheet
+  },
+  isTypeUtage: !isRatingEligible,
+  isRatingEligible,
+  releaseDateTimestamp: 1,
+  tags,
+})
 
-const makeCatalog = (sheets: FlattenedSheet[]): SongCatalog =>
-  ({
-    version: VersionEnum.CiRCLEPLUS,
-    sheets,
-    getById: (id: string) => sheets.find((sheet) => sheet.id === id) ?? null,
-  }) as unknown as SongCatalog
+const makeCatalog = (sheets: FlattenedSheet[]): SongCatalog => ({
+  version: VersionEnum.CiRCLEPLUS,
+  sheets,
+  getById: (id) => sheets.find((sheet) => sheet.id === id) ?? null,
+  getByIdentity: () => null,
+  resolveReference: () => null,
+})
 
 describe('calculateWebRatingEntries', () => {
   it('keeps non-rating-eligible entries with null rating and no bucket', () => {
@@ -80,9 +80,9 @@ describe('calculateWebRatingEntries', () => {
     })
 
     expect(result.allEntries).toHaveLength(1)
-    expect(result.allEntries[0]!.sheet).toBe(utageSheet)
-    expect(result.allEntries[0]!.rating).toBeNull()
-    expect(result.allEntries[0]!.includedIn).toBeNull()
+    expect(result.allEntries[0].sheet).toBe(utageSheet)
+    expect(result.allEntries[0].rating).toBeNull()
+    expect(result.allEntries[0].includedIn).toBeNull()
   })
 
   it('uses the web-enriched sheet rather than the catalog sheet', () => {
@@ -96,9 +96,9 @@ describe('calculateWebRatingEntries', () => {
       region: 'jp',
     })
 
-    expect(result.allEntries[0]!.sheet).toBe(webSheet)
-    expect(result.allEntries[0]!.sheet.tags).toEqual([42])
-    expect(result.allEntries[0]!.sheet.searchAcronyms).toEqual(['server alias'])
+    expect(result.allEntries[0].sheet).toBe(webSheet)
+    expect(result.allEntries[0].sheet.tags).toEqual([42])
+    expect(result.allEntries[0].sheet.searchAcronyms).toEqual(['server alias'])
   })
 
   it('marks the selected duplicate entry without mixing in another original entry', () => {
@@ -126,9 +126,9 @@ describe('calculateWebRatingEntries', () => {
 
     expect(result.allEntries).toHaveLength(2)
     expect(result.b15Entries).toHaveLength(1)
-    expect(result.b15Entries[0]!.achievementRate).toBe(highEntry.achievementRate)
-    expect(result.b15Entries[0]!.comboFlag).toBe(highEntry.comboFlag)
-    expect(result.b15Entries[0]!.syncFlag).toBe(highEntry.syncFlag)
+    expect(result.b15Entries[0].achievementRate).toBe(highEntry.achievementRate)
+    expect(result.b15Entries[0].comboFlag).toBe(highEntry.comboFlag)
+    expect(result.b15Entries[0].syncFlag).toBe(highEntry.syncFlag)
     expect(result.allEntries.find((entry) => entry.achievementRate === lowEntry.achievementRate)!.includedIn).toBeNull()
   })
 })

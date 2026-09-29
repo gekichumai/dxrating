@@ -12,5 +12,6 @@ files = "\\.(js|jsx|ts|tsx)$"
 id = "oxlint"
 name = "oxlint"
 language = "system"
-entry = "pnpm oxlint"
+entry = "pnpm lint"
+pass_filenames = false
 files = "\\.(js|jsx|ts|tsx)$"

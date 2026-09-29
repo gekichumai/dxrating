@@ -78,19 +78,19 @@ const createRecentChartLinks = (songs: readonly Song[]) => {
   // backfill when a custom song list has no dated sheets for a version.
   const latestReleaseDateByVersion = buildLatestReleaseDateByVersion({
     ...dxdata,
-    songs: songs as Song[],
+    songs: [...songs],
   })
   return songs
     .flatMap((song) => song.sheets.map((sheet) => toRecentChartLink(song, sheet, latestReleaseDateByVersion)))
     .filter((chart) => !excludedRecentChartDifficulties.has(chart.difficulty))
-    .sort(compareRecentChartLinks)
+    .toSorted(compareRecentChartLinks)
     .slice(0, RECENT_CHART_LIMIT)
 }
 
 let defaultRecentChartLinks: RecentChartLink[] | null = null
 
 export const buildRecentChartLinks = (songs?: readonly Song[]): RecentChartLink[] => {
-  if (songs) return createRecentChartLinks(songs)
+  if (songs !== undefined) return createRecentChartLinks(songs)
 
   defaultRecentChartLinks ??= createRecentChartLinks(dxdata.songs)
   return defaultRecentChartLinks.slice()

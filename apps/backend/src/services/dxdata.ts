@@ -159,7 +159,7 @@ export const createDxdataEffect =
   (c: Context<H>) =>
     Effect.gen(function* () {
       const metadata = yield* store.getPublishedMetadata()
-      if (!metadata) return uncachedError(c, 'DX data catalog is unavailable', 503)
+      if (metadata === undefined || metadata === null) return uncachedError(c, 'DX data catalog is unavailable', 503)
       const headers = yield* Effect.try({
         try: () => successHeaders(metadata),
         catch: (cause) => new DxdataDecodeError({ operation: 'encode published catalog headers', cause }),

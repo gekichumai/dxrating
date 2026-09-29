@@ -48,13 +48,16 @@ const makeSheet = (id: string, overrides: Partial<Sheet> = {}): Sheet => ({
 
 describe('buildTrendingChartLinks', () => {
   it('does not read song data when trending results are empty', () => {
-    const unreadableSongs = {
-      [Symbol.iterator]: () => {
-        throw new Error('songs should not be read')
-      },
-    } as unknown as readonly Song[]
+    const unreadableSongs: Song[] = []
+    unreadableSongs[Symbol.iterator] = () => {
+      throw new Error('songs should not be read')
+    }
 
     expect(buildTrendingChartLinks([], unreadableSongs)).toEqual([])
+  })
+
+  it('skips songs with no sheets', () => {
+    expect(buildTrendingChartLinks([{ songId: 'empty' }], [makeSong('empty', [])])).toEqual([])
   })
 
   it('maps trending song results to representative charts in API order', () => {

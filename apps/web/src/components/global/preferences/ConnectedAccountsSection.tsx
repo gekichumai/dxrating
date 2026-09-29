@@ -35,8 +35,8 @@ export const ConnectedAccountsSection: FC = () => {
     setLoading(true)
     try {
       const res = await authClient.listAccounts()
-      if (res.data) {
-        setAccounts(res.data as AccountItem[])
+      if (res.data !== null) {
+        setAccounts(res.data)
       }
     } finally {
       setLoading(false)
@@ -44,7 +44,7 @@ export const ConnectedAccountsSection: FC = () => {
   }, [])
 
   useEffect(() => {
-    fetchAccounts()
+    void fetchAccounts()
   }, [fetchAccounts])
 
   // Count total auth methods: social accounts + credential (email/password) account + passkeys
@@ -64,7 +64,7 @@ export const ConnectedAccountsSection: FC = () => {
 
   const handleDisconnect = async (providerId: string) => {
     const account = accounts.find((item) => item.providerId === providerId)
-    if (!account) return
+    if (account === undefined) return
     const confirmed = await confirmDisconnect.confirm()
     if (!confirmed) return
     setDisconnectingProvider(providerId)
@@ -112,12 +112,12 @@ export const ConnectedAccountsSection: FC = () => {
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className="text-sm font-medium">{t(labelKey)}</span>
                   <span className="text-xs text-zinc-400">
-                    {connected
+                    {connected !== undefined
                       ? t('auth:user-profile.accounts.connected')
                       : t('auth:user-profile.accounts.not-connected')}
                   </span>
                 </div>
-                {connected ? (
+                {connected !== undefined ? (
                   <Button
                     size="small"
                     onClick={() => handleDisconnect(id)}

@@ -135,7 +135,7 @@ export const captureAnalyticsEvent = <Event extends AnalyticsEventName>(
   event: Event,
   properties: AnalyticsEventProperties[Event],
 ) => {
-  posthog.capture(event, properties as Properties)
+  posthog.capture(event, properties)
 }
 
 export const createRatingImportTracker = (
@@ -190,12 +190,13 @@ export const identifyAnalyticsUser = (userId: string) => {
   const currentUserId = posthog.get_property('$user_id')
   if (currentUserId === userId) return
 
-  if (currentUserId) posthog.reset()
+  if (typeof currentUserId === 'string' && currentUserId !== '') posthog.reset()
   posthog.identify(userId)
 }
 
 export const resetAnalyticsUser = () => {
-  if (posthog.get_property('$user_id')) {
+  const userId: unknown = posthog.get_property('$user_id')
+  if (typeof userId === 'string' && userId !== '') {
     posthog.reset()
   }
 }
@@ -232,7 +233,7 @@ export const sanitizeAnalyticsUrl = (value: string): string => {
 }
 
 const sanitizeProperties = (properties: Properties | undefined): Properties | undefined => {
-  if (!properties) return properties
+  if (properties === null || properties === undefined) return properties
 
   const sanitized = { ...properties }
   for (const property of URL_PROPERTY_NAMES) {
@@ -245,7 +246,7 @@ const sanitizeProperties = (properties: Properties | undefined): Properties | un
 }
 
 export const sanitizeAnalyticsEvent: BeforeSendFn = (event) => {
-  if (!event) return null
+  if (event === null || event === undefined) return null
 
   return {
     ...event,

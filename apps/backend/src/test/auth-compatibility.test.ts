@@ -24,7 +24,8 @@ const createUser = async () => {
   })
   expect(response.status).toBe(200)
   const { user } = await response.json()
-  return { id: user.id as string, cookie: extractSessionCookie(response) }
+  expect.assert(typeof user.id === 'string')
+  return { id: user.id, cookie: extractSessionCookie(response) }
 }
 
 const linkAccount = async (userId: string, providerId = 'github') => {

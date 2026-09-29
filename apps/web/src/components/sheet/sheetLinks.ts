@@ -1,9 +1,9 @@
-import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import type { TypeEnum } from '@gekichumai/dxdata'
 
 type SheetLinkTarget = {
   songId: string
   type: TypeEnum
-  difficulty: DifficultyEnum | string
+  difficulty: string
 }
 
 export const buildSheetPath = (sheet: SheetLinkTarget): string =>

@@ -30,7 +30,7 @@ const fixtureData: DXData = {
           internalLevelValue: 13.7,
           multiverInternalLevelValue: {
             [VersionEnum.CiRCLE]: 13.8,
-          } as Record<VersionEnum, number>,
+          },
           noteDesigner: 'Designer',
           noteCounts: { tap: 1, hold: 1, slide: 1, touch: 1, break: 1, total: 5 },
           regions: { jp: true, intl: true, cn: false },
@@ -193,7 +193,7 @@ describe('Song Catalog', () => {
     expect((undated?.releaseDateTimestamp ?? 0) > (older?.releaseDateTimestamp ?? 0)).toBe(true)
 
     // NEW -> OLD: undated ties with latest, both before older
-    const sorted = [...catalog.sheets].sort((a, b) => {
+    const sorted = [...catalog.sheets].toSorted((a, b) => {
       const byDate = (b.releaseDateTimestamp ?? 0) - (a.releaseDateTimestamp ?? 0)
       if (byDate !== 0) return byDate
       return a.songId.localeCompare(b.songId)
@@ -284,7 +284,7 @@ describe('Song Catalog', () => {
         ...fixtureData,
         songs: [
           {
-            ...fixtureData.songs[0]!,
+            ...fixtureData.songs[0],
             title: 'Shared Title',
           },
           {
@@ -350,7 +350,7 @@ describe('Song Catalog', () => {
         ...fixtureData,
         songs: [
           {
-            ...fixtureData.songs[0]!,
+            ...fixtureData.songs[0],
             songId: 'Shared Name',
             title: 'Shared Name',
           },
@@ -438,6 +438,7 @@ describe('Song Catalog', () => {
               {
                 internalId: 30001,
                 type: TypeEnum.UTAGE,
+                // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Reproduce the legacy generated catalog's custom Utage label.
                 difficulty: '【協】' as unknown as DifficultyEnum,
                 level: '13?',
                 internalLevelValue: 13,
@@ -456,13 +457,13 @@ describe('Song Catalog', () => {
     const sheet = catalog.sheets[0]
 
     expect(sheet?.id).toBe('utage-song__dxrt__utage__dxrt__【協】')
-    const identity = sheet ? getSheetIdentityFromId(sheet.id) : null
+    const identity = sheet !== undefined ? getSheetIdentityFromId(sheet.id) : null
     expect(identity).toEqual({
       songId: 'utage-song',
       type: TypeEnum.UTAGE,
       difficulty: '【協】',
     })
-    if (!identity) throw new Error('Expected UTAGE catalog id to parse')
+    if (identity === null) throw new Error('Expected UTAGE catalog id to parse')
     expect(catalog.getByIdentity(identity)?.id).toBe(sheet?.id)
   })
 
@@ -485,10 +486,11 @@ describe('Song Catalog', () => {
     const catalog = getDxdataSongCatalog(VersionEnum.CiRCLE)
     const originalLength = catalog.sheets.length
     const firstSheet = catalog.sheets[0]
-    if (!firstSheet) throw new Error('Expected dxdata catalog to include at least one sheet')
+    if (firstSheet === undefined) throw new Error('Expected dxdata catalog to include at least one sheet')
     const originalTitle = firstSheet.title
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Deliberately bypass readonly types to verify runtime freeze protection.
     const mutableSheets = catalog.sheets as unknown[]
-    const mutableFirstSheet = firstSheet as unknown as { title: string }
+    const mutableFirstSheet = firstSheet
 
     try {
       mutableSheets.push(firstSheet)
@@ -510,7 +512,7 @@ describe('Song Catalog', () => {
   it('prevents cached dxdata lookup mutations from leaking between callers', () => {
     const catalog = getDxdataSongCatalog(VersionEnum.CiRCLE)
     const exposedSheet = catalog.sheets[0]
-    if (!exposedSheet) throw new Error('Expected dxdata catalog to include at least one sheet')
+    if (exposedSheet === undefined) throw new Error('Expected dxdata catalog to include at least one sheet')
 
     const lookupById = catalog.getById(exposedSheet.id)
     const lookupByIdentity = catalog.getByIdentity(exposedSheet.identity)
@@ -518,7 +520,7 @@ describe('Song Catalog', () => {
       kind: 'identity',
       identity: exposedSheet.identity,
     })
-    if (!lookupById || !lookupByIdentity || !lookupByReference) {
+    if (lookupById === null || lookupByIdentity === null || lookupByReference === null) {
       throw new Error('Expected dxdata catalog lookups to resolve the exposed sheet')
     }
 
@@ -530,7 +532,7 @@ describe('Song Catalog', () => {
     expect(lookupByReference).toBe(exposedSheet)
 
     try {
-      ;(lookupById as unknown as { title: string }).title = '__MUTATED_BY_LOOKUP__'
+      lookupById.title = '__MUTATED_BY_LOOKUP__'
     } catch {
       // Frozen lookup results reject property mutation.
     }
@@ -549,13 +551,13 @@ describe('Song Catalog', () => {
 
   it('deep-freezes runtime nested dxdata extras returned through cached lookups', () => {
     const catalog = getDxdataSongCatalog(VersionEnum.CiRCLE)
-    const sheetWithOverrides = catalog.sheets.find((sheet) => getIntlRegionOverrides(sheet))
-    if (!sheetWithOverrides) throw new Error('Expected dxdata catalog to include regionOverrides.intl')
+    const sheetWithOverrides = catalog.sheets.find((sheet) => getIntlRegionOverrides(sheet) !== undefined)
+    if (sheetWithOverrides === undefined) throw new Error('Expected dxdata catalog to include regionOverrides.intl')
 
     const lookup = catalog.getById(sheetWithOverrides.id)
     const regionOverrides = getRegionOverrides(lookup)
     const intlOverrides = getIntlRegionOverrides(lookup)
-    if (!regionOverrides || !intlOverrides) {
+    if (regionOverrides === undefined || intlOverrides === undefined) {
       throw new Error('Expected dxdata lookup to expose regionOverrides.intl')
     }
 
@@ -563,18 +565,18 @@ describe('Song Catalog', () => {
     expect(Object.isFrozen(intlOverrides)).toBe(true)
 
     try {
-      intlOverrides.__lookupProbe = '__MUTATED_REGION_OVERRIDES__'
+      intlOverrides.lookupProbe = '__MUTATED_REGION_OVERRIDES__'
     } catch {
       // Frozen nested runtime extras reject property mutation.
     }
 
     const nextLookup = getDxdataSongCatalog(VersionEnum.CiRCLE).getById(sheetWithOverrides.id)
-    expect(getIntlRegionOverrides(nextLookup)?.__lookupProbe).toBeUndefined()
+    expect(getIntlRegionOverrides(nextLookup)?.lookupProbe).toBeUndefined()
   })
 })
 
 function getRegionOverrides(sheet: unknown): Record<string, unknown> | undefined {
-  const regionOverrides = (sheet as { regionOverrides?: unknown } | null | undefined)?.regionOverrides
+  const regionOverrides = isRecord(sheet) ? sheet.regionOverrides : undefined
   return isRecord(regionOverrides) ? regionOverrides : undefined
 }
 

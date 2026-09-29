@@ -19,7 +19,7 @@ const useElapsedTime = (isLoading: boolean) => {
       startTime.current = Date.now()
       setElapsedTime(null)
       timer.current = window.setInterval(() => {
-        if (startTime.current) {
+        if (startTime.current !== null && startTime.current !== 0 && !Number.isNaN(startTime.current)) {
           setElapsedTime(Date.now() - startTime.current)
         }
       }, 1 / 60)
@@ -123,7 +123,7 @@ const RenderToOneShotImageDialogContent = () => {
                 </div>
 
                 <div className="text-base font-bold tabular-nums tracking-tight font-mono">
-                  {elapsedTime
+                  {elapsedTime !== null && elapsedTime !== 0 && !Number.isNaN(elapsedTime)
                     ? `${(elapsedTime / 1000).toFixed(1)}s`
                     : t('rating-calculator:io.export.oneshot-image.dialog.loading.calculating')}
                 </div>
@@ -131,7 +131,7 @@ const RenderToOneShotImageDialogContent = () => {
                 <div className="text-sm">{t('rating-calculator:io.export.oneshot-image.dialog.loading.message')}</div>
               </div>
             </div>
-          ) : error ? (
+          ) : error !== null && error !== undefined ? (
             <div className="text-red-500">
               {t('rating-calculator:io.export.oneshot-image.dialog.error', { message: error.message })}
             </div>

@@ -35,5 +35,10 @@ export const setServerTimingHeader = (headers: Headers, metrics: Array<ServerTim
   const nextValue = formatServerTimingHeader(metrics)
   const currentValue = headers.get('Server-Timing')
 
-  headers.set('Server-Timing', currentValue ? `${currentValue}, ${nextValue}` : nextValue)
+  headers.set(
+    'Server-Timing',
+    currentValue !== null && currentValue !== undefined && currentValue !== ''
+      ? `${currentValue}, ${nextValue}`
+      : nextValue,
+  )
 }

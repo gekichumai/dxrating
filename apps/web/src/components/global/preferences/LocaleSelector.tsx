@@ -20,7 +20,7 @@ const LocaleSelectorItem: FC<
       onClick={(event) => {
         const origin = wipeOriginFromClick(event)
         flushSync(onClose)
-        if (selected) return
+        if (selected === true) return
         const previousLocale = i18n.language
         void startViewTransition(() => {
           persistClientLocalePreference(locale)
@@ -33,12 +33,12 @@ const LocaleSelectorItem: FC<
         }, origin)
       }}
     >
-      {selected && (
+      {selected === true && (
         <ListItemIcon>
           <MdiCheck />
         </ListItemIcon>
       )}
-      {selected ? children : <ListItemText inset>{children}</ListItemText>}
+      {selected === true ? children : <ListItemText inset>{children}</ListItemText>}
     </MenuItem>
   )
 }

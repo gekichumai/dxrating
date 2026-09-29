@@ -21,10 +21,11 @@ describe('OAuth grant revocation', () => {
 
     expect(issues).toEqual([])
     expect(fetch).toHaveBeenCalledOnce()
-    const [url, init] = fetch.mock.calls[0]!
+    const [url, init] = fetch.mock.calls[0]
     expect(url).toBe('https://appleid.apple.com/auth/revoke')
     expect(init?.method).toBe('POST')
-    expect(init?.body?.toString()).toBe(
+    expect.assert(init?.body instanceof URLSearchParams)
+    expect(init.body.toString()).toBe(
       'client_id=apple-client&client_secret=apple-secret&token=refresh&token_type_hint=refresh_token',
     )
   })
@@ -37,7 +38,7 @@ describe('OAuth grant revocation', () => {
     )
 
     expect(issues).toEqual([])
-    expect(fetch.mock.calls[0]![0]).toBe('https://oauth2.googleapis.com/revoke')
+    expect(fetch.mock.calls[0][0]).toBe('https://oauth2.googleapis.com/revoke')
   })
 
   it('revokes a GitHub application token with application credentials', async () => {
@@ -52,7 +53,7 @@ describe('OAuth grant revocation', () => {
     )
 
     expect(issues).toEqual([])
-    const [url, init] = fetch.mock.calls[0]!
+    const [url, init] = fetch.mock.calls[0]
     expect(url).toBe('https://api.github.com/applications/github-client/token')
     expect(init?.method).toBe('DELETE')
     expect(init?.headers).toMatchObject({

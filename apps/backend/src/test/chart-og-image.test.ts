@@ -14,13 +14,13 @@ const song = dxdata.songs.find((candidate) =>
   candidate.sheets.some((sheet) => sheet.type === TypeEnum.DX && sheet.difficulty === DifficultyEnum.Master),
 )
 
-if (!song) throw new Error('Expected fixture song with a DX Master chart')
+if (song === undefined || song === null) throw new Error('Expected fixture song with a DX Master chart')
 
 const sheet = song.sheets.find(
   (candidate) => candidate.type === TypeEnum.DX && candidate.difficulty === DifficultyEnum.Master,
 )
 
-if (!sheet) throw new Error('Expected fixture song to include selected sheet')
+if (sheet === undefined || sheet === null) throw new Error('Expected fixture song to include selected sheet')
 
 const utageSongId = '[宴]セガサターン起動音[H.][Remix]'
 const utageDifficulty = '【宴】' as const
@@ -30,7 +30,8 @@ const utageSheet = getDxdataSongCatalog(VersionEnum.CiRCLEPLUS).getByIdentity({
   difficulty: utageDifficulty,
 })
 
-if (!utageSheet) throw new Error('Expected fixture song to include selected Utage sheet')
+if (utageSheet === undefined || utageSheet === null)
+  throw new Error('Expected fixture song to include selected Utage sheet')
 
 describe('chart OG image handler', () => {
   it('serves chart images from the API v1 endpoint format', async () => {
@@ -149,7 +150,7 @@ describe('chart OG image level label', () => {
 
 describe('chart OG image title layout', () => {
   it('uses a compact layout for the longest song title in dxdata', () => {
-    const [longestSong] = [...dxdata.songs].sort((a, b) => b.title.length - a.title.length)
+    const [longestSong] = [...dxdata.songs].toSorted((a, b) => b.title.length - a.title.length)
 
     expect(longestSong.title).toBe(
       'False Amber (from the Black Bazaar, Or by A Kervan Trader from the Lands Afar, Or Buried Beneath the Shifting Sands That Lead Everywhere but Nowhere)',

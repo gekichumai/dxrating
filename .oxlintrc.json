@@ -8,13 +8,36 @@
     "jsx-a11y/click-events-have-key-events": "off",
     "import/no-named-as-default": "off",
     "import/no-named-as-default-member": "off",
-    "import/no-unassigned-import": "off"
+    "import/no-unassigned-import": "off",
+    "eqeqeq": [
+      "error",
+      "always",
+      {
+        "null": "always"
+      }
+    ],
+    "typescript/strict-boolean-expressions": [
+      "error",
+      {
+        "allowString": false,
+        "allowNumber": false,
+        "allowNullableObject": false,
+        "allowNullableBoolean": false,
+        "allowNullableString": false,
+        "allowNullableNumber": false,
+        "allowNullableEnum": false,
+        "allowAny": false
+      }
+    ],
+    "unicorn/explicit-length-check": "error",
+    "unicorn/no-null": "off",
+    "typescript/prefer-nullish-coalescing": "error"
   },
   "categories": {
-    "correctness": "warn",
-    "suspicious": "warn"
+    "correctness": "error",
+    "suspicious": "error"
   },
-  "plugins": ["react", "typescript", "jsx-a11y", "import"],
+  "plugins": ["react", "typescript", "jsx-a11y", "import", "unicorn"],
   "ignorePatterns": [
     "dist",
     ".turbo",
@@ -22,7 +45,9 @@
     "scripts/annotator/*.json",
     "apps/web/ios",
     "apps/web/android",
-    "apps/server"
+    "apps/server",
+    "apps/web/src/routeTree.gen.ts",
+    "packages/oneshot-renderer/src/magicalBackground.generated.ts"
   ],
   "overrides": [
     {
@@ -41,5 +66,10 @@
         ]
       }
     }
-  ]
+  ],
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "options": {
+    "typeAware": true,
+    "reportUnusedDisableDirectives": "error"
+  }
 }

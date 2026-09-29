@@ -2,13 +2,14 @@ import { Autocomplete, Button, TextField } from '@mui/material'
 import type { RatingEntry } from '@gekichumai/maimai-domain'
 import clsx from 'clsx'
 import {
+  Children,
+  isValidElement,
   cloneElement,
   type ComponentType,
   type FC,
   type HTMLAttributes,
   memo,
   type PropsWithChildren,
-  type ReactElement,
   useCallback,
   useMemo,
   useState,
@@ -41,17 +42,22 @@ const ListboxComponent = (({
   ref,
   ...rest
 }: PropsWithChildren<HTMLAttributes<HTMLDivElement>> & { ref?: React.Ref<HTMLElement> }) => {
-  const data = children as ReactElement<any>[]
+  const data = Children.toArray(children).filter(isValidElement<{ index?: number }>)
 
   return (
     <Virtuoso
       {...rest}
       className={clsx('!py-0', rest.className)}
-      scrollerRef={ref as (ref: HTMLElement | Window | null) => void}
+      scrollerRef={(element) => {
+        const node = element instanceof HTMLElement ? element : null
+        if (typeof ref === 'function') ref(node)
+        else if (ref !== undefined && ref !== null) ref.current = node
+      }}
       style={{ ...rest.style, height: 'min(30rem, 40dvh)', maxHeight: 'none' }}
       data={data}
       itemContent={(index, child) => cloneElement(child, { index })}
       increaseViewportBy={500}
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- MUI Autocomplete requires a virtualized rich listbox, which cannot be represented by a native select.
       role="listbox"
     />
   )
@@ -78,7 +84,7 @@ export const RatingCalculatorAddEntryForm: FC<{
 
   const replacing = useMemo(() => {
     try {
-      if (found && achievementRate) {
+      if (found !== undefined && achievementRate !== '') {
         const newRating = calculateRating(selectedSheet!.internalLevelValue, Number.parseFloat(achievementRate))
         const currentRating = calculateRating(selectedSheet!.internalLevelValue, found.achievementRate)
         const diff = newRating.ratingAwardValue - currentRating.ratingAwardValue
@@ -98,11 +104,11 @@ export const RatingCalculatorAddEntryForm: FC<{
 
   const validate = useCallback(
     (value: string) => {
-      if (!value) {
+      if (value === '') {
         setAchievementRateError(t('rating-calculator:add-entry.validation.required'))
       }
       try {
-        const parsed = Number.parseFloat(value!)
+        const parsed = Number.parseFloat(value)
         if (Number.isNaN(parsed)) {
           setAchievementRateError(t('rating-calculator:add-entry.validation.invalid-number'))
         } else if (parsed < 0 || parsed > 101) {
@@ -112,7 +118,7 @@ export const RatingCalculatorAddEntryForm: FC<{
         }
       } catch (e) {
         setAchievementRateError(
-          `${t('rating-calculator:add-entry.validation.invalid-number')}: ${(e as Error).message}`,
+          `${t('rating-calculator:add-entry.validation.invalid-number')}: ${e instanceof Error ? e.message : String(e)}`,
         )
       }
     },
@@ -120,20 +126,20 @@ export const RatingCalculatorAddEntryForm: FC<{
   )
 
   const canSubmit =
-    !!selectedSheet &&
+    selectedSheet !== null &&
     achievementRate.trim() !== '' &&
     Number.isFinite(Number(achievementRate)) &&
     Number(achievementRate) >= 0 &&
     Number(achievementRate) <= 101
 
-  if (!sheets) return null
+  if (sheets === undefined) return null
 
   return (
     <form
       className="rating-add-form"
       onSubmit={(event) => {
         event.preventDefault()
-        if (!canSubmit || !selectedSheet) return
+        if (!canSubmit || selectedSheet === null) return
         onSubmit({ sheetId: selectedSheet.id, achievementRate: Number(achievementRate) })
         resetForm()
       }}
@@ -153,7 +159,8 @@ export const RatingCalculatorAddEntryForm: FC<{
           }}
           onBlur={() => validate(achievementRate)}
           onWheel={(e) => {
-            const target = e.target as HTMLInputElement
+            const target = e.target
+            if (!(target instanceof HTMLInputElement)) return
             // Prevent the input value change
             target.blur()
 
@@ -166,7 +173,7 @@ export const RatingCalculatorAddEntryForm: FC<{
             }, 0)
           }}
           fullWidth
-          error={!!achievementRateError}
+          error={achievementRateError !== null && achievementRateError !== ''}
           helperText={achievementRateError}
           InputProps={{
             endAdornment: '%',
@@ -180,30 +187,30 @@ export const RatingCalculatorAddEntryForm: FC<{
           type="submit"
           className="rating-add-submit"
           disabled={!canSubmit}
-          startIcon={replacing ? <IconMdiReplace fontSize="inherit" /> : <IconMdiPlus fontSize="inherit" />}
+          startIcon={replacing !== null ? <IconMdiReplace fontSize="inherit" /> : <IconMdiPlus fontSize="inherit" />}
           data-attr="manual-rating-add-submit"
         >
-          {replacing
+          {replacing !== null
             ? t('rating-calculator:add-entry.replace', { diff: replacing.diff })
             : t('rating-calculator:add-entry.add')}
         </Button>
       </div>
-      {selectedSheet && (
+      {selectedSheet !== null && (
         <div className="rating-add-preview">
           <div className="w-full flex justify-start">
-            {selectedSheet && <SheetListItemContent sheet={selectedSheet} />}
+            {selectedSheet !== null && <SheetListItemContent sheet={selectedSheet} />}
           </div>
 
           <div className="w-full flex justify-end items-center gap-4">
-            {selectedSheet && (
+            {selectedSheet !== null && (
               <div className="flex flex-col items-start gap-0.5">
-                {found && (
+                {found !== undefined && (
                   <div>
                     {t('rating-calculator:add-entry.current-rating')}:{' '}
                     {calculateRating(selectedSheet.internalLevelValue, found.achievementRate).ratingAwardValue}
                   </div>
                 )}
-                {replacing ? (
+                {replacing !== null ? (
                   <div className="flex flex-col items-start font-bold">
                     <div>
                       {t('rating-calculator:add-entry.new-rating')}: {replacing.newRating.ratingAwardValue}
@@ -213,7 +220,7 @@ export const RatingCalculatorAddEntryForm: FC<{
                     </div>
                   </div>
                 ) : (
-                  achievementRate && (
+                  achievementRate !== '' && (
                     <div className="flex flex-col items-center gap-1">
                       {t('rating-calculator:add-entry.rating')}:{' '}
                       {
@@ -249,7 +256,7 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
     ),
     [],
   )
-  if (!sheets) return null
+  if (sheets === undefined) return null
 
   return (
     <Autocomplete
@@ -261,7 +268,7 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
         <TextField {...params} label={t('rating-calculator:add-entry.chart')} variant="outlined" />
       )}
       filterOptions={(_, { inputValue }) => {
-        if (!inputValue) return sheets
+        if (inputValue === '') return sheets
         return search(inputValue)
       }}
       renderOption={renderOption}

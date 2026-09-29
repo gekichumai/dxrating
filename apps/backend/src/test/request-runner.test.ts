@@ -122,7 +122,7 @@ describe('supervised application requests', () => {
     await runner.shutdown()
 
     expect((await responses).every((response) => response.status === 'rejected')).toBe(true)
-    expect(events.slice(0, 2).sort()).toEqual(['first', 'second'])
+    expect(events.slice(0, 2).toSorted()).toEqual(['first', 'second'])
     expect(events[2]).toBe('service closed')
   })
 

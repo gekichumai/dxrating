@@ -51,7 +51,7 @@ describe('RecentPage', () => {
     render(<RecentPage charts={charts} />)
 
     expect(screen.getByRole('heading', { level: 1 })).toBeTruthy()
-    const link = screen.getByRole('link', { name: /Song A/i }) as HTMLAnchorElement
+    const link = screen.getByRole('link', { name: /Song A/i })
     expect(link.getAttribute('href')).toBe('/songs/song-a/dx/master')
     expect(within(screen.getByRole('list')).getAllByRole('listitem')).toHaveLength(1)
 

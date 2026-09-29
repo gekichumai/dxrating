@@ -4,7 +4,7 @@ import { AppContext, DXVersionToDXDataVersionEnumMap } from './AppContext'
 
 export const useAppContext = () => {
   const context = useContext(AppContext)
-  if (!context) {
+  if (context === undefined) {
     throw new Error('Missing AppContextProvider')
   }
   return context

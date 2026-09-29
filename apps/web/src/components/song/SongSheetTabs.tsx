@@ -17,7 +17,7 @@ export interface SongSheetTabsProps {
 
 const renderTypeTabLabel = (type: TypeEnum, label: string, altText: string) => {
   const image = SHEET_TYPE_TAB_IMAGES[type]
-  if (!image) return <span>{label}</span>
+  if (image === undefined || image === '') return <span>{label}</span>
 
   return (
     <span className="inline-flex h-6 min-w-18 items-center justify-center px-1">
@@ -85,7 +85,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
         }}
         TabIndicatorProps={{
           style: {
-            backgroundColor: DIFFICULTIES[activeDifficulty as DifficultyEnum]?.color,
+            backgroundColor: DIFFICULTIES[activeDifficulty]?.color,
           },
         }}
       >

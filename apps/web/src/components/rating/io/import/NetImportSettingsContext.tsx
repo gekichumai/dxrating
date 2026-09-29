@@ -26,7 +26,7 @@ export function NetImportSettingsProvider({ children }: PropsWithChildren) {
         open={isOpen}
         onClose={closeSettings}
         onExited={() => {
-          if (returnFocusRef.current?.isConnected) returnFocusRef.current.focus({ preventScroll: true })
+          if (returnFocusRef.current?.isConnected === true) returnFocusRef.current.focus({ preventScroll: true })
         }}
       />
     </NetImportSettingsContext.Provider>
@@ -35,6 +35,6 @@ export function NetImportSettingsProvider({ children }: PropsWithChildren) {
 
 export function useNetImportSettings() {
   const context = useContext(NetImportSettingsContext)
-  if (!context) throw new Error('Missing NetImportSettingsProvider')
+  if (context === null) throw new Error('Missing NetImportSettingsProvider')
   return context
 }

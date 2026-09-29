@@ -46,7 +46,7 @@ export const ImportFromAquaSQLiteListItem: FC<{
 
   return (
     <>
-      {db && (
+      {db !== null && (
         <Dialog open={true} onClose={handleClose}>
           <ImportFromAquaSQLiteDatabaseContent db={db} modifyEntries={modifyEntries} onClose={handleClose} />
         </Dialog>
@@ -55,61 +55,71 @@ export const ImportFromAquaSQLiteListItem: FC<{
       <MenuItem
         color="primary"
         onClick={() => {
-          toast.promise(
-            new Promise((resolve, reject) => {
-              const fileInput = document.createElement('input')
-              fileInput.type = 'file'
-              fileInput.accept = '.sqlite'
+          void toast
+            .promise(
+              new Promise((resolve, reject) => {
+                const fileInput = document.createElement('input')
+                fileInput.type = 'file'
+                fileInput.accept = '.sqlite'
 
-              const onChange = async () => {
-                const file = fileInput.files?.[0]
-                if (!file) {
-                  return reject('No file selected')
+                const onChange = async () => {
+                  const file = fileInput.files?.[0]
+                  if (file === undefined) {
+                    return reject('No file selected')
+                  }
+
+                  const SQL = await sqljs({
+                    locateFile: (file) => `https://sql.js.org/dist/${file}`,
+                  })
+
+                  const r = new FileReader()
+                  r.addEventListener(
+                    'load',
+                    () => {
+                      if (r.result === null || typeof r.result === 'string') {
+                        return reject(
+                          `Failed to load file: unknown error: no result received from FileReader (typeof: ${typeof r.result})`,
+                        )
+                      }
+                      try {
+                        console.info(`Loaded file: ${file.name}`, r.result)
+                        const uints = new Uint8Array(r.result)
+                        console.log(`Size: ${uints.length}`)
+                        const db = new SQL.Database(uints)
+                        setDb(db)
+                        resolve('Database loaded.')
+                      } catch (e) {
+                        console.error(e)
+                        reject(`Failed to load file: ${String(e)}`)
+                      }
+                    },
+                    { once: true },
+                  )
+                  r.addEventListener(
+                    'error',
+                    () => {
+                      reject(`Failed to load file: ${r.error}`)
+                    },
+                    { once: true },
+                  )
+                  r.readAsArrayBuffer(file)
                 }
 
-                const SQL = await sqljs({
-                  locateFile: (file) => `https://sql.js.org/dist/${file}`,
+                fileInput.addEventListener('change', () => {
+                  void onChange().catch(reject)
                 })
-
-                const r = new FileReader()
-                r.onload = () => {
-                  if (r.result === null || typeof r.result === 'string') {
-                    return reject(
-                      `Failed to load file: unknown error: no result received from FileReader (typeof: ${typeof r.result})`,
-                    )
-                  }
-                  try {
-                    console.info(`Loaded file: ${file.name}`, r.result)
-                    const uints = new Uint8Array(r.result)
-                    console.log(`Size: ${uints.length}`)
-                    const db = new SQL.Database(uints)
-                    setDb(db)
-                    resolve('Database loaded.')
-                  } catch (e) {
-                    console.error(e)
-                    reject(`Failed to load file: ${e}`)
-                  }
-                }
-                r.onerror = () => {
-                  reject(`Failed to load file: ${r.error}`)
-                }
-                r.readAsArrayBuffer(file)
-              }
-
-              fileInput.addEventListener('change', () => {
-                onChange()
-              })
-              fileInput.addEventListener('cancel', () => {
-                reject('User cancelled file selection')
-              })
-              fileInput.click()
-            }),
-            {
-              loading: t('rating-calculator:io.import.aqua-sqlite.loading-db'),
-              success: t('rating-calculator:io.import.aqua-sqlite.loaded-db'),
-              error: t('rating-calculator:io.import.aqua-sqlite.load-db-failed'),
-            },
-          )
+                fileInput.addEventListener('cancel', () => {
+                  reject('User cancelled file selection')
+                })
+                fileInput.click()
+              }),
+              {
+                loading: t('rating-calculator:io.import.aqua-sqlite.loading-db'),
+                success: t('rating-calculator:io.import.aqua-sqlite.loaded-db'),
+                error: t('rating-calculator:io.import.aqua-sqlite.load-db-failed'),
+              },
+            )
+            .catch((error: unknown) => console.warn('SQLite import failed', error))
         }}
       >
         <ListItemIcon>
@@ -146,13 +156,13 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
   const { data: sheets } = useSheets()
   const appVersion = useAppContextDXDataVersion()
   const { records, warnings } = useMemo(() => {
-    if (!selectedUser) return { records: [], warnings: [] }
-    if (!sheets) return { records: [], warnings: [] }
+    if (selectedUser === null) return { records: [], warnings: [] }
+    if (sheets === undefined) return { records: [], warnings: [] }
 
     return getUserGamePlays(db, selectedUser, sheets, appVersion)
   }, [appVersion, db, selectedUser, sheets])
 
-  const mode = !selectedUser ? 'select-user' : 'confirm-import'
+  const mode = selectedUser === null ? 'select-user' : 'confirm-import'
 
   return (
     <>
@@ -233,7 +243,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
               modifyEntries.set(records.map((record) => record.entry))
               analytics.succeeded(records.length, warnings.length)
 
-              haptic.trigger('success')
+              void haptic.trigger('success')?.catch((error: unknown) => console.warn('Haptic feedback failed', error))
               toast.success(t('rating-calculator:io.import.aqua-sqlite.success', { count: records.length }))
 
               onClose?.()
@@ -265,7 +275,7 @@ function getUserGamePlays(
 
   const records = entries.flatMap((entry): AquaFilteredMappedEntry[] => {
     const sheet = sheets.find((sheet) => sheet.id === entry.sheetId)
-    if (!sheet) {
+    if (sheet === undefined) {
       console.warn('[ImportFromAquaSQLiteButton] Failed to find normalized sheet: ', entry)
       return []
     }
@@ -282,11 +292,12 @@ function getUserGamePlays(
 function formatAquaWarningRow(warning: ImportWarning): string {
   if (typeof warning.row !== 'object' || warning.row === null) return warning.message
 
-  const row = warning.row as Record<string, unknown>
+  const row = warning.row
+
   return [
     `code=${warning.code}`,
-    `music_id=${String(row.music_id)}`,
-    `[${String(row.type)}, ${String(row.level)}]`,
-    `achievement=${String(row.achievement)}`,
+    `music_id=${String('music_id' in row ? row.music_id : undefined)}`,
+    `[${String('type' in row ? row.type : undefined)}, ${String('level' in row ? row.level : undefined)}]`,
+    `achievement=${String('achievement' in row ? row.achievement : undefined)}`,
   ].join(' ')
 }

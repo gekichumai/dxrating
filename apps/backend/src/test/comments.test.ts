@@ -160,7 +160,9 @@ describe('Comment safety', () => {
       body: JSON.stringify({ songId, sheetType: 'dx', sheetDifficulty: 'master', content: 'Sample chart discussion' }),
     })
     expect(response.status).toBe(200)
-    return (await response.json()).id as number
+    const body: unknown = await response.json()
+    expect.assert(typeof body === 'object' && body !== null && 'id' in body && typeof body.id === 'number')
+    return body.id
   }
   const list = (cookie = '', song = 'song-1') =>
     authenticatedFetch(`${getBaseUrl()}/api/v1/comments?songId=${song}&sheetType=dx&sheetDifficulty=master`, cookie)

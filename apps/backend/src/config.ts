@@ -9,7 +9,7 @@ dotenv.config({
   override: process.env.NODE_ENV !== 'test',
 })
 const vaultSecretPath = process.env.VAULT_SECRET_PATH
-if (vaultSecretPath) {
+if (vaultSecretPath !== undefined && vaultSecretPath !== null && vaultSecretPath !== '') {
   dotenv.config({
     path: path.resolve(vaultSecretPath),
     override: true,

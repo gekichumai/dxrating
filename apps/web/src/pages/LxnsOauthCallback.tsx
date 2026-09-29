@@ -15,7 +15,8 @@ export const LxnsOauthCallback: FC = () => {
     .with('success', () => 'success' as const)
     .with('error', () => 'error' as const)
     .otherwise(() => 'loading' as const)
-  const initialError = params.get('error') || 'unknown'
+  const rawError = params.get('error')
+  const initialError = rawError !== null && rawError !== '' ? rawError : 'unknown'
 
   const [status] = useState<'loading' | 'success' | 'error'>(initialStatus)
   const [error] = useState<string | null>(initialStatus === 'error' ? initialError : null)
@@ -24,14 +25,19 @@ export const LxnsOauthCallback: FC = () => {
     if (status === 'success') {
       toast.success(t('rating-calculator:io.import.lxns.callback.success'))
       const timer = setTimeout(() => {
-        navigate({ to: '/rating' })
+        void navigate({ to: '/rating' })
       }, 2000)
       return () => clearTimeout(timer)
     }
 
     if (status === 'error') {
-      toast.error(t('rating-calculator:io.import.lxns.callback.error', { error: error || 'unknown' }))
+      toast.error(
+        t('rating-calculator:io.import.lxns.callback.error', {
+          error: error !== null && error !== '' ? error : 'unknown',
+        }),
+      )
     }
+    return undefined
   }, [t, status, error])
 
   return (

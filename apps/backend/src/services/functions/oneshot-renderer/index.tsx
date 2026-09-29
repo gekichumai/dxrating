@@ -114,22 +114,37 @@ export const isRenderableRatingSheet = (sheet: VersionedSheet): sheet is Flatten
 
 const getFlattenedSheet = (version: VersionEnum, sheetId: string): FlattenedSheet | null => {
   const sheet = getDxdataSongCatalog(version).getById(sheetId)
-  return sheet && isRenderableRatingSheet(sheet) ? sheet : null
+  return sheet !== undefined && sheet !== null && isRenderableRatingSheet(sheet) ? sheet : null
 }
 
 export const enrichEntries = (entries: PlayEntry[], version: VersionEnum): RenderData[] => {
   return entries.flatMap((entry) => {
     // check data validity
     if (
-      !entry.sheetId ||
+      entry.sheetId === '' ||
       typeof entry.achievementRate !== 'number' ||
       entry.achievementRate < 0 ||
       entry.achievementRate > 101 ||
-      (entry.achievementAccuracy && !['fc', 'fcp', 'ap', 'app'].includes(entry.achievementAccuracy)) ||
-      (entry.achievementSync && !['sp', 'fs', 'fsp', 'fsd', 'fsdp'].includes(entry.achievementSync)) ||
-      (entry.playCount && (typeof entry.playCount !== 'number' || entry.playCount < 0)) ||
-      (entry.allPerfectPlusCount && (typeof entry.allPerfectPlusCount !== 'number' || entry.allPerfectPlusCount < 0)) ||
-      (entry.achievementDXScore &&
+      (entry.achievementAccuracy !== undefined &&
+        entry.achievementAccuracy !== null &&
+        entry.achievementAccuracy.length > 0 &&
+        !['fc', 'fcp', 'ap', 'app'].includes(entry.achievementAccuracy)) ||
+      (entry.achievementSync !== undefined &&
+        entry.achievementSync !== null &&
+        entry.achievementSync.length > 0 &&
+        !['sp', 'fs', 'fsp', 'fsd', 'fsdp'].includes(entry.achievementSync)) ||
+      (entry.playCount !== undefined &&
+        entry.playCount !== null &&
+        entry.playCount !== 0 &&
+        !Number.isNaN(entry.playCount) &&
+        (typeof entry.playCount !== 'number' || entry.playCount < 0)) ||
+      (entry.allPerfectPlusCount !== undefined &&
+        entry.allPerfectPlusCount !== null &&
+        entry.allPerfectPlusCount !== 0 &&
+        !Number.isNaN(entry.allPerfectPlusCount) &&
+        (typeof entry.allPerfectPlusCount !== 'number' || entry.allPerfectPlusCount < 0)) ||
+      (entry.achievementDXScore !== undefined &&
+        entry.achievementDXScore !== null &&
         (typeof entry.achievementDXScore.achieved !== 'number' ||
           typeof entry.achievementDXScore.total !== 'number' ||
           entry.achievementDXScore.achieved < 0 ||
@@ -139,7 +154,7 @@ export const enrichEntries = (entries: PlayEntry[], version: VersionEnum): Rende
     }
 
     const sheet = getFlattenedSheet(version, entry.sheetId)
-    if (!sheet) {
+    if (sheet === undefined || sheet === null) {
       return []
     }
     return [
@@ -154,13 +169,14 @@ export const enrichEntries = (entries: PlayEntry[], version: VersionEnum): Rende
           entry.achievementRate,
           entry.achievementAccuracy ?? null,
         ),
-        dxScore: entry.achievementDXScore
-          ? {
-              achieved: entry.achievementDXScore.achieved,
-              total: entry.achievementDXScore.total,
-              stars: calculateDXScoreStars(entry.achievementDXScore.achieved, entry.achievementDXScore.total),
-            }
-          : undefined,
+        dxScore:
+          entry.achievementDXScore !== undefined && entry.achievementDXScore !== null
+            ? {
+                achieved: entry.achievementDXScore.achieved,
+                total: entry.achievementDXScore.total,
+                stars: calculateDXScoreStars(entry.achievementDXScore.achieved, entry.achievementDXScore.total),
+              }
+            : undefined,
         playCount: entry.playCount ?? 0,
         allPerfectPlusCount: entry.allPerfectPlusCount ?? 0,
       },
@@ -198,18 +214,18 @@ interface RawBest50Candidate {
 }
 
 const compareRawBest50Candidates = (a: RawBest50Candidate, b: RawBest50Candidate): number => {
-  return (
-    b.renderData.rating.ratingAwardValue - a.renderData.rating.ratingAwardValue ||
-    b.renderData.achievementRate - a.renderData.achievementRate ||
-    a.index - b.index
-  )
+  const ratingDifference = b.renderData.rating.ratingAwardValue - a.renderData.rating.ratingAwardValue
+  if (ratingDifference !== 0 && !Number.isNaN(ratingDifference)) return ratingDifference
+  const achievementDifference = b.renderData.achievementRate - a.renderData.achievementRate
+  if (achievementDifference !== 0 && !Number.isNaN(achievementDifference)) return achievementDifference
+  return a.index - b.index
 }
 
 const deduplicateRawBest50Candidates = (candidates: RawBest50Candidate[]): RawBest50Candidate[] => {
   const bestBySheetId = new Map<string, RawBest50Candidate>()
   for (const candidate of candidates) {
     const existing = bestBySheetId.get(candidate.renderData.sheetId)
-    if (!existing || compareRawBest50Candidates(candidate, existing) < 0) {
+    if (existing === undefined || existing === null || compareRawBest50Candidates(candidate, existing) < 0) {
       bestBySheetId.set(candidate.renderData.sheetId, candidate)
     }
   }
@@ -225,7 +241,7 @@ export const calculateEntries = (
   const candidates = deduplicateRawBest50Candidates(
     entries.flatMap((entry, index): RawBest50Candidate[] => {
       const renderData = enrichEntries([entry], version)[0]
-      if (!renderData) return []
+      if (renderData === undefined) return []
 
       const best50 = calculateBest50({
         catalog,
@@ -244,14 +260,14 @@ export const calculateEntries = (
         .with({ hasB15: true }, () => 'b15' as const)
         .with({ hasB35: true }, () => 'b35' as const)
         .otherwise(() => null)
-      return bucket ? [{ bucket, index, renderData }] : []
+      return bucket !== undefined && bucket !== null ? [{ bucket, index, renderData }] : []
     }),
   )
 
   const b15Ids = new Set(
     candidates
       .filter((entry) => entry.bucket === 'b15')
-      .sort(compareRawBest50Candidates)
+      .toSorted(compareRawBest50Candidates)
       .slice(0, 15)
       .map((entry) => entry.renderData.sheetId),
   )
@@ -259,12 +275,12 @@ export const calculateEntries = (
   return {
     b15: candidates
       .filter((entry) => b15Ids.has(entry.renderData.sheetId))
-      .sort(compareRawBest50Candidates)
+      .toSorted(compareRawBest50Candidates)
       .map((entry) => entry.renderData),
     b35: candidates
       .filter((entry) => !b15Ids.has(entry.renderData.sheetId))
       .filter((entry) => entry.bucket === 'b35')
-      .sort(compareRawBest50Candidates)
+      .toSorted(compareRawBest50Candidates)
       .slice(0, 35)
       .map((entry) => entry.renderData),
   }
@@ -275,7 +291,7 @@ let service: { source: string; render: ReturnType<typeof createRenderService<One
 
 const getRenderService = () => {
   const source = getAssetSourceKey()
-  if (!service || service.source !== source) {
+  if (service === undefined || service === null || service.source !== source) {
     const draw = createOneshotRenderer({
       loadAsset: fetchAsset,
       loadImage: fetchImageAsset,
@@ -288,9 +304,10 @@ const getRenderService = () => {
           Effect.scoped(
             Effect.gen(function* () {
               const start = performance.now()
-              const data = body.calculatedEntries
-                ? prepareCalculatedEntries(body.calculatedEntries, body.version)
-                : calculateEntries(body.entries ?? [], body.version, body.region)
+              const data =
+                body.calculatedEntries !== undefined && body.calculatedEntries !== null
+                  ? prepareCalculatedEntries(body.calculatedEntries, body.version)
+                  : calculateEntries(body.entries ?? [], body.version, body.region)
               const calc = performance.now() - start
               const result = yield* Effect.tryPromise({
                 try: () =>
@@ -332,20 +349,26 @@ export const handler = (c: Context): Promise<Response> => {
   const queryPixelated = c.req.query('pixelated')
   const queryFormat = c.req.query('format')
   const queryWidth = c.req.query('width')
-  const format = queryPixelated ? (queryFormat === 'png' ? 'png' : 'jpeg') : 'svg'
+  const format =
+    queryPixelated !== undefined && queryPixelated !== null && queryPixelated !== ''
+      ? queryFormat === 'png'
+        ? 'png'
+        : 'jpeg'
+      : 'svg'
   const program = Effect.gen(function* () {
-    const input = queryDemo
-      ? {
-          entries: demo,
-          version: VersionEnum.PRiSMPLUS,
-          region: 'jp' as const,
-          playerCollection: { name: 'お友達', icon: 0 },
-          calculatedEntries: undefined,
-        }
-      : yield* Effect.tryPromise({
-          try: () => c.req.json(),
-          catch: (cause) => new OneshotRenderError({ operation: 'read oneshot request', cause }),
-        })
+    const input =
+      queryDemo !== undefined && queryDemo !== null && queryDemo !== ''
+        ? {
+            entries: demo,
+            version: VersionEnum.PRiSMPLUS,
+            region: 'jp' as const,
+            playerCollection: { name: 'お友達', icon: 0 },
+            calculatedEntries: undefined,
+          }
+        : yield* Effect.tryPromise({
+            try: () => c.req.json(),
+            catch: (cause) => new OneshotRenderError({ operation: 'read oneshot request', cause }),
+          })
     const body = yield* Effect.try({
       try: () => requestBodySchema.parse(input),
       catch: (cause) =>
@@ -385,7 +408,11 @@ export const handler = (c: Context): Promise<Response> => {
       return Effect.sync(() =>
         Sentry.withScope((scope: Scope) => {
           scope.setContext('function', { name: 'renderOneshot' })
-          scope.setContext('parameters', { demo: !!queryDemo, format, width: queryWidth })
+          scope.setContext('parameters', {
+            demo: queryDemo !== undefined && queryDemo !== null && queryDemo !== '',
+            format,
+            width: queryWidth,
+          })
           Sentry.captureException(error)
         }),
       ).pipe(Effect.andThen(Effect.fail(error)))

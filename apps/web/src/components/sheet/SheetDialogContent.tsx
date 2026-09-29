@@ -116,7 +116,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       // Dates: created_at: Date | string. UI: new Date(comment.created_at).
       return data.map((c) => ({
         ...c,
-        created_at: c.created_at.toString(),
+        created_at: c.created_at,
       }))
     },
   )
@@ -133,7 +133,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     }
     await client.comments.create(payload) // Logic handles auth and parentId
 
-    mutate()
+    await mutate()
     setContent('')
   }, [sheet, content, ensureAuthenticated])
 
@@ -151,30 +151,28 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           maxRows={3}
           multiline
           data-attr="comment-input"
-          disabled={!session}
+          disabled={session === undefined}
         />
-        <Button variant="contained" onClick={handleSubmit} disabled={!content || submitting}>
+        <Button variant="contained" onClick={handleSubmit} disabled={content === '' || submitting}>
           {submitting ? <CircularProgress size={24} /> : t('global:submit')}
         </Button>
 
-        {!session && (
-          <div
-            className="absolute inset-0 flex items-center justify-center bg-white/80 rounded cursor-pointer z-1"
+        {session === undefined && (
+          <button
+            className="border-0 p-0 absolute inset-0 flex items-center justify-center bg-white/80 rounded cursor-pointer z-1"
             onClick={openLoginDialog}
-            onKeyDown={(e) => e.key === 'Enter' && openLoginDialog()}
-            role="button"
+            type="button"
             tabIndex={0}
           >
             <span className="font-bold text-sm text-zinc-600 underline underline-offset-2">
               {t('auth:form.login-or-register-to-comment')}
             </span>
-          </div>
+          </button>
         )}
       </div>
 
       {isLoadingComments ? (
         Array.from({ length: 1 }).map((_, i) => (
-          // oxlint-disable-next-line react/no-array-index-key -- index is stable
           <div key={i} className="flex flex-col gap-1 bg-zinc-2 rounded-lg h-16 animate-pulse" />
         ))
       ) : (
@@ -188,7 +186,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
                 <CommentCreatedAt createdAt={comment.created_at} />
               </div>
               <div>
-                {comment.content.split('\n').map((line, i) => (
+                {comment.content.split('\n').map((line) => (
                   <p key={line}>{line ?? ' '}</p>
                 ))}
               </div>
@@ -197,7 +195,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           {filterComments(comments ?? [], visibility).length === 0 && (
             <div className="flex flex-col gap-1 bg-zinc-2 rounded-lg p-4 items-center text-zinc-5">
               {t('sheet:comments.empty')}
-              {!session && ` ${t('sheet:comments.sign-in-to-comment')}`}
+              {session === undefined && ` ${t('sheet:comments.sign-in-to-comment')}`}
             </div>
           )}
         </div>
@@ -215,7 +213,12 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
   const { t } = useTranslation(['sheet', 'global'])
   const ratings = useMemo(() => {
     const rates = [...PRESET_ACHIEVEMENT_RATES]
-    if (currentAchievementRate && !rates.includes(currentAchievementRate)) {
+    if (
+      currentAchievementRate !== undefined &&
+      currentAchievementRate !== 0 &&
+      !Number.isNaN(currentAchievementRate) &&
+      !rates.includes(currentAchievementRate)
+    ) {
       rates.push(currentAchievementRate)
     }
     rates.sort((a, b) => b - a)
@@ -232,7 +235,11 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
       <SheetTitle sheet={sheet} enableAltNames enableClickToCopy className="text-lg font-bold" />
 
       <div className="text-sm -mt-2">
-        <div className="text-zinc-600">{sheet.releaseDate && <ReleaseDateText releaseDate={sheet.releaseDate} />}</div>
+        <div className="text-zinc-600">
+          {sheet.releaseDate !== undefined && sheet.releaseDate !== '' && (
+            <ReleaseDateText releaseDate={sheet.releaseDate} />
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-1">
@@ -370,7 +377,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                           key={region}
                           className={clsx(
                             'uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs',
-                            available ? '!bg-green-500' : '!bg-gray-300',
+                            available === true ? '!bg-green-500' : '!bg-gray-300',
                           )}
                         >
                           {region}
@@ -458,7 +465,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                           <div className="relative font-sans">
                             <span className="font-bold">{rating.rating.ratingAwardValue}</span>
 
-                            {nextRating && (
+                            {nextRating !== null && (
                               <div className="absolute -bottom-5 -left-1 px-1 text-xs text-zinc-500 bg-zinc-100 shadow-[0_0_0_1px_var(--un-shadow-color)] shadow-zinc-300/80 rounded-xs">
                                 ↑{' '}
                                 <span className="font-bold">
@@ -513,9 +520,14 @@ const SheetInternalLevelHistory: FC<{
           // add `delta` field
           let delta: number | undefined
           // accumulating spread is fine here since we don't really have a lot of versions
-          const accReversed = [...acc].reverse()
+          const accReversed = [...acc].toReversed()
           const prev = accReversed.find((v) => v.internalLevelValue !== undefined)
-          if (prev && internalLevelValue !== undefined && prev.internalLevelValue !== undefined) {
+          if (
+            prev !== undefined &&
+            prev !== null &&
+            internalLevelValue !== undefined &&
+            prev.internalLevelValue !== undefined
+          ) {
             delta = internalLevelValue - prev.internalLevelValue
           }
 
@@ -533,7 +545,7 @@ const SheetInternalLevelHistory: FC<{
   )
 
   useEffect(() => {
-    if (scrollableContainer.current) {
+    if (scrollableContainer.current !== null) {
       // hide the scrollbar when scrolling to the right
       scrollableContainer.current.style.overflowX = 'hidden'
       scrollableContainer.current.scrollLeft = scrollableContainer.current.scrollWidth

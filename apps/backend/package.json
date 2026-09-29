@@ -8,7 +8,7 @@
     "build": "pnpm lint:effect && tsc && pnpm build:bundle",
     "build:bundle": "esbuild src/index.ts src/migrate.ts --bundle --outdir=dist --platform=node --target=node26 --format=esm --packages=external --jsx=automatic --sourcemap",
     "start": "node --enable-source-maps dist/index.js",
-    "lint": "oxlint . && pnpm lint:effect",
+    "lint": "pnpm --filter @gekichumai/oneshot-renderer build && oxlint --type-aware . && pnpm lint:effect",
     "test": "vitest run",
     "test:producer-contract": "DXDATA_PRODUCER_CONTRACT=1 vitest run src/test/dxdata-producer-contract.test.ts",
     "test:watch": "vitest",

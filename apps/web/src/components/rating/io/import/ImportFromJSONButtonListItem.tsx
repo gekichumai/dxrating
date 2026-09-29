@@ -24,34 +24,44 @@ export const ImportFromJSONButtonListItem: FC<{
         const input = document.createElement('input')
         input.type = 'file'
         input.accept = 'application/json'
-        input.onchange = (event) => {
-          const element = event.target as HTMLInputElement
-          if (!element) return
+        input.addEventListener(
+          'change',
+          (event) => {
+            const element = event.target
+            if (!(element instanceof HTMLInputElement)) return
 
-          const file = element?.files ? element?.files[0] : undefined
-          if (!file) return
+            const file = element?.files !== null ? element?.files[0] : undefined
+            if (file === undefined) return
 
-          const reader = new FileReader()
-          reader.onload = (event) => {
-            const data = event.target?.result
-            if (!data) return
-            if (typeof data !== 'string') return
+            const reader = new FileReader()
+            reader.addEventListener(
+              'load',
+              (event) => {
+                const data = event.target?.result
+                if (data === null || data === undefined || data === '') return
+                if (typeof data !== 'string') return
 
-            const analytics = createRatingImportTracker('json')
-            try {
-              const entries = JSON.parse(data)
-              if (!Array.isArray(entries)) throw new Error('Invalid rating entry list')
-              modifyEntries.set(entries)
-              analytics.succeeded(entries.length)
-              haptic.trigger('success')
-              toast.success(t('rating-calculator:io.import.json.success', { count: entries.length }))
-            } catch (error) {
-              analytics.failed('invalid_file')
-              toast.error(t('rating-calculator:io.import.json.error', { error: formatErrorMessage(error) }))
-            }
-          }
-          reader.readAsText(file)
-        }
+                const analytics = createRatingImportTracker('json')
+                try {
+                  const entries = JSON.parse(data)
+                  if (!Array.isArray(entries)) throw new Error('Invalid rating entry list')
+                  modifyEntries.set(entries)
+                  analytics.succeeded(entries.length)
+                  void haptic
+                    .trigger('success')
+                    ?.catch((error: unknown) => console.warn('Haptic feedback failed', error))
+                  toast.success(t('rating-calculator:io.import.json.success', { count: entries.length }))
+                } catch (error) {
+                  analytics.failed('invalid_file')
+                  toast.error(t('rating-calculator:io.import.json.error', { error: formatErrorMessage(error) }))
+                }
+              },
+              { once: true },
+            )
+            reader.readAsText(file)
+          },
+          { once: true },
+        )
         input.click()
       }}
     >

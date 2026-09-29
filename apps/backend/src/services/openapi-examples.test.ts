@@ -5,7 +5,7 @@ import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { describe, expect, it } from 'vitest'
 import { appContract } from '../contract'
 import { addPublishedDxdataToOpenApi } from './dxdata-openapi'
-import { addPublicApiExamplesToOpenApi, publicApiOperationExamples } from './openapi-examples'
+import { addPublicApiExamplesToOpenApi, operationExamples } from './openapi-examples'
 
 const httpMethods = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'] as const
 
@@ -25,7 +25,7 @@ const assertMeaningfulValue = (value: unknown) => {
     for (const item of value) assertMeaningfulValue(item)
     return
   }
-  if (value && typeof value === 'object') {
+  if (value !== null && typeof value === 'object') {
     for (const nested of Object.values(value)) assertMeaningfulValue(nested)
   }
 }
@@ -37,7 +37,7 @@ const generateDocument = async () => {
   const generated = await generator.generate(appContract, {
     version: '3.1.1',
     base: { info: { title: 'DXRating API', version: '1.0.0' } },
-    filter: (contract) => !getOpenAPIMeta(contract)?.tags?.includes('internal'),
+    filter: (contract) => getOpenAPIMeta(contract)?.tags?.includes('internal') !== true,
   })
   return addPublicApiExamplesToOpenApi(addPublishedDxdataToOpenApi(generated))
 }
@@ -48,27 +48,21 @@ const collectPublicProcedures = (
   procedures = new Map<string, AnyProcedureContract>(),
 ) => {
   if (value instanceof ProcedureContract) {
-    if (!getOpenAPIMeta(value)?.tags?.includes('internal')) procedures.set(path.join('.'), value)
+    if (getOpenAPIMeta(value)?.tags?.includes('internal') !== true) procedures.set(path.join('.'), value)
     return procedures
   }
-  if (!value || typeof value !== 'object') return procedures
+  if (value === null || typeof value !== 'object') return procedures
 
   for (const [key, nested] of Object.entries(value)) collectPublicProcedures(nested, [...path, key], procedures)
   return procedures
 }
 
-const expectSchemaAccepts = async (schema: unknown, value: unknown, label: string) => {
-  const standardSchema = schema as {
-    '~standard': {
-      validate: (
-        input: unknown,
-      ) =>
-        | { value: unknown; issues?: undefined }
-        | { issues: ReadonlyArray<{ message: string }> }
-        | Promise<{ value: unknown; issues?: undefined } | { issues: ReadonlyArray<{ message: string }> }>
-    }
-  }
-  const result = await standardSchema['~standard'].validate(value)
+const expectSchemaAccepts = async (
+  schema: NonNullable<AnyProcedureContract['~orpc']['inputSchemas']>[number],
+  value: unknown,
+  label: string,
+) => {
+  const result = await schema['~standard'].validate(value)
   expect(result.issues, `${label}: ${JSON.stringify(result.issues)}`).toBeUndefined()
 }
 
@@ -78,15 +72,16 @@ describe('public OpenAPI examples', () => {
     const operationIds: string[] = []
     const exampleValues: unknown[] = []
 
-    for (const pathItem of Object.values(document.paths ?? {})) {
-      if (!pathItem || isReference(pathItem)) continue
+    const paths: (OpenAPI.PathItemObject | OpenAPI.ReferenceObject)[] = Object.values(document.paths ?? {})
+    for (const pathItem of paths) {
+      if (pathItem === undefined || pathItem === null || isReference(pathItem)) continue
 
       for (const method of httpMethods) {
         const operation = pathItem[method]
-        if (!operation) continue
+        if (operation === undefined || operation === null) continue
 
-        expect(operation.operationId).toBeDefined()
-        operationIds.push(operation.operationId!)
+        expect.assert(operation.operationId !== undefined)
+        operationIds.push(operation.operationId)
 
         for (const parameterOrReference of operation.parameters ?? []) {
           if (isReference(parameterOrReference)) continue
@@ -98,7 +93,11 @@ describe('public OpenAPI examples', () => {
           exampleValues.push(...values)
         }
 
-        if (operation.requestBody && !isReference(operation.requestBody)) {
+        if (
+          operation.requestBody !== undefined &&
+          operation.requestBody !== null &&
+          !isReference(operation.requestBody)
+        ) {
           for (const [mediaType, media] of Object.entries<OpenAPI.MediaTypeObject>(operation.requestBody.content)) {
             if (!/^application\/json(?:;|$)/i.test(mediaType)) continue
             const values = getExampleValues(media.examples)
@@ -107,10 +106,13 @@ describe('public OpenAPI examples', () => {
           }
         }
 
-        for (const status of Object.keys(operation.responses ?? {})) {
+        const responses: [string, OpenAPI.ResponseObject | OpenAPI.ReferenceObject][] = Object.entries(
+          operation.responses ?? {},
+        )
+        for (const [status, responseOrReference] of responses) {
           if (!/^[1-5][0-9X]{2}$/.test(status) && status !== 'default') continue
-          const responseOrReference = operation.responses?.[status as `${number}`]
-          if (!responseOrReference || isReference(responseOrReference)) continue
+          if (responseOrReference === undefined || responseOrReference === null || isReference(responseOrReference))
+            continue
           for (const [mediaType, media] of Object.entries<OpenAPI.MediaTypeObject>(responseOrReference.content ?? {})) {
             if (!/^application\/json(?:;|$)/i.test(mediaType)) continue
             const values = getExampleValues(media.examples)
@@ -128,12 +130,12 @@ describe('public OpenAPI examples', () => {
       }
     }
 
-    expect(operationIds.sort()).toEqual(
+    expect(operationIds.toSorted()).toEqual(
       [
         ...collectPublicProcedures(appContract).keys(),
         'getPublishedDxdataCatalog',
         'headPublishedDxdataCatalog',
-      ].sort(),
+      ].toSorted(),
     )
     expect(exampleValues.length).toBeGreaterThan(operationIds.length)
     for (const value of exampleValues) assertMeaningfulValue(value)
@@ -142,10 +144,12 @@ describe('public OpenAPI examples', () => {
   it('keeps examples attached to the generated request and response media types', async () => {
     const document = await generateDocument()
     const createComment = document.paths?.['/comments']
-    if (!createComment || isReference(createComment)) throw new Error('Missing /comments path')
+    if (createComment === undefined || createComment === null || isReference(createComment))
+      throw new Error('Missing /comments path')
 
     const requestBody = createComment.post?.requestBody
-    if (!requestBody || isReference(requestBody)) throw new Error('Missing comments.create request body')
+    if (requestBody === undefined || requestBody === null || isReference(requestBody))
+      throw new Error('Missing comments.create request body')
     expect(getExampleValues(requestBody.content['application/json']?.examples)[0]).toMatchObject({
       songId: 'dsng_d9dbdcaw9v',
       sheetId: 'dsht_jxnmx39rwt',
@@ -153,9 +157,11 @@ describe('public OpenAPI examples', () => {
     })
 
     const venueResponse = document.paths?.['/arcades/venues/{id}']
-    if (!venueResponse || isReference(venueResponse)) throw new Error('Missing arcade venue path')
+    if (venueResponse === undefined || venueResponse === null || isReference(venueResponse))
+      throw new Error('Missing arcade venue path')
     const response = venueResponse.get?.responses?.['200']
-    if (!response || isReference(response)) throw new Error('Missing arcade venue response')
+    if (response === undefined || response === null || isReference(response))
+      throw new Error('Missing arcade venue response')
     expect(getExampleValues(response.content?.['application/json']?.examples)[0]).toMatchObject({
       id: 'dven_ctwf8yjqy6',
       name: 'ＧｉＧＯ　ＢＬｉＸ茅ヶ崎',
@@ -166,13 +172,16 @@ describe('public OpenAPI examples', () => {
     const procedures = collectPublicProcedures(appContract)
 
     for (const [operationId, procedure] of procedures) {
-      const examples = publicApiOperationExamples[operationId as keyof typeof publicApiOperationExamples]
-      if (!examples) throw new Error(`Missing examples for contract procedure ${operationId}`)
+      const examples = operationExamples[operationId]
+      if (examples === undefined) throw new Error(`Missing examples for contract procedure ${operationId}`)
 
       for (const inputSchema of procedure['~orpc'].inputSchemas ?? []) {
         const input =
           'request' in examples
-            ? { ...('parameters' in examples ? examples.parameters : {}), ...examples.request }
+            ? {
+                ...('parameters' in examples ? examples.parameters : {}),
+                ...(typeof examples.request === 'object' && examples.request !== null ? examples.request : {}),
+              }
             : 'parameters' in examples
               ? examples.parameters
               : undefined

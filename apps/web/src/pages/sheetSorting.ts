@@ -27,19 +27,18 @@ export const compareSheetsBySorts = (
     if (result !== 0) {
       return result
     }
-    const descriptor =
-      SORT_DESCRIPTOR_MAPPING[sort.descriptor as keyof typeof SORT_DESCRIPTOR_MAPPING] ?? sort.descriptor
+    const descriptor = sort.descriptor === 'releaseDate' ? SORT_DESCRIPTOR_MAPPING.releaseDate : sort.descriptor
     const aValue = a[descriptor]
     const bValue = b[descriptor]
 
     // null / undefined always sort last (both asc and desc)
-    if (aValue == null && bValue == null) {
+    if ((aValue === null || aValue === undefined) && (bValue === null || bValue === undefined)) {
       return 0
     }
-    if (aValue == null) {
+    if (aValue === null || aValue === undefined) {
       return 1
     }
-    if (bValue == null) {
+    if (bValue === null || bValue === undefined) {
       return -1
     }
 
@@ -57,19 +56,19 @@ export const compareSheetsBySorts = (
   }
 
   const releaseDateSort = sorts.find((sort) => sort.descriptor === 'releaseDate')
-  if (!releaseDateSort) {
+  if (releaseDateSort === null || releaseDateSort === undefined) {
     return 0
   }
 
   const aPosition = songCatalogPositionById.get(a.songId)
   const bPosition = songCatalogPositionById.get(b.songId)
-  if (aPosition == null && bPosition == null) {
+  if ((aPosition === null || aPosition === undefined) && (bPosition === null || bPosition === undefined)) {
     return 0
   }
-  if (aPosition == null) {
+  if (aPosition === null || aPosition === undefined) {
     return 1
   }
-  if (bPosition == null) {
+  if (bPosition === null || bPosition === undefined) {
     return -1
   }
 

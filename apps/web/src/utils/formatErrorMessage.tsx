@@ -11,19 +11,24 @@ function extractErrorMessage(error: unknown): string | undefined {
     return String(error)
   }
 
-  if (!error) {
+  if (error === null || error === undefined) {
     return undefined
   }
 
   if (error instanceof Error) {
-    return error.message || error.name
+    return error.message !== '' ? error.message : error.name
   }
 
   if (typeof error !== 'object') {
     return undefined
   }
 
-  const errorLike = error as { code?: unknown; message?: unknown; error?: unknown; toString?: unknown }
+  const errorLike = {
+    message: 'message' in error ? error.message : undefined,
+    error: 'error' in error ? error.error : undefined,
+    code: 'code' in error ? error.code : undefined,
+    toString: typeof error.toString === 'function' ? error.toString.bind(error) : undefined,
+  }
   return (
     extractErrorMessage(errorLike.message) ??
     extractErrorMessage(errorLike.error) ??

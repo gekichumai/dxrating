@@ -6,9 +6,14 @@ import { NetImportError } from './client'
 // Export types for use in other files
 export type { Scope }
 
+export function getCommonErrorStatus(code: string): number {
+  const statuses: Readonly<Record<string, number>> = COMMON_ERROR_STATUS_MAP
+  return statuses[code] ?? 500
+}
+
 export function shouldCaptureSentryError(error: unknown) {
   if (error instanceof ORPCError) {
-    const status = COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500
+    const status = getCommonErrorStatus(error.code)
     if (status >= 400 && status < 500) return false
   }
 
@@ -38,7 +43,8 @@ export function shouldCaptureSentryError(error: unknown) {
 
 // Initialize Sentry configuration
 export function initSentry() {
-  const environment = process.env.NODE_ENV || 'development'
+  const environment =
+    process.env.NODE_ENV === undefined || process.env.NODE_ENV === '' ? 'development' : process.env.NODE_ENV
 
   if (environment !== 'production') {
     console.log(`Sentry disabled in ${environment} environment`)
@@ -46,13 +52,18 @@ export function initSentry() {
   }
 
   const dsn =
-    process.env.SENTRY_DSN ||
-    'https://e5561152e48961e6e43918588a750ebb@o4506648698683392.ingest.us.sentry.io/4511009913765888'
+    process.env.SENTRY_DSN !== undefined && process.env.SENTRY_DSN !== ''
+      ? process.env.SENTRY_DSN
+      : 'https://e5561152e48961e6e43918588a750ebb@o4506648698683392.ingest.us.sentry.io/4511009913765888'
   const release =
-    process.env.SENTRY_RELEASE ||
-    (process.env.GIT_COMMIT && process.env.GIT_COMMIT !== 'unknown'
-      ? `dxrating-backend@${process.env.GIT_COMMIT}`
-      : undefined)
+    process.env.SENTRY_RELEASE !== undefined && process.env.SENTRY_RELEASE !== ''
+      ? process.env.SENTRY_RELEASE
+      : process.env.GIT_COMMIT !== undefined &&
+          process.env.GIT_COMMIT !== null &&
+          process.env.GIT_COMMIT !== '' &&
+          process.env.GIT_COMMIT !== 'unknown'
+        ? `dxrating-backend@${process.env.GIT_COMMIT}`
+        : undefined
 
   Sentry.init({
     dsn,

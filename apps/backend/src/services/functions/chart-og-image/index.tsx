@@ -101,16 +101,16 @@ export function resolveChartOgImageData(songId: string, type: string, difficulty
   const song =
     dxdata.songs.find((candidate) => candidate.songId === songId) ??
     dxdata.songs.find((candidate) => candidate.songId === decodedSongId)
-  if (!song) return null
+  if (song === undefined || song === null) return null
 
   const sheet =
     song.sheets.find((candidate) => candidate.type === type && candidate.difficulty === difficulty) ??
     song.sheets.find((candidate) => candidate.type === decodedType && candidate.difficulty === decodedDifficulty)
-  if (!sheet) return null
+  if (sheet === undefined || sheet === null) return null
 
   const sheetDifficulty = sheet.difficulty as SheetDifficulty
   const difficultyDisplay = resolveDifficultyDisplay(sheet.type, sheetDifficulty)
-  if (!difficultyDisplay) return null
+  if (difficultyDisplay === undefined || difficultyDisplay === null) return null
 
   const levelParts = formatInternalLevelLabelParts(sheet.internalLevelValue)
 
@@ -146,8 +146,10 @@ function decodePathParameterOnce(value: string) {
 }
 
 function resolveDifficultyDisplay(type: TypeEnum, difficulty: SheetDifficulty): DifficultyDisplay | null {
-  const standardDifficultyDisplay = DIFFICULTY_DISPLAY[difficulty as DifficultyEnum]
-  if (standardDifficultyDisplay) return standardDifficultyDisplay
+  const standardDifficulty = Object.values(DifficultyEnum).find((value) => value === difficulty)
+  const standardDifficultyDisplay =
+    standardDifficulty === undefined ? undefined : DIFFICULTY_DISPLAY[standardDifficulty]
+  if (standardDifficultyDisplay !== undefined) return standardDifficultyDisplay
 
   if (isUtageType(type)) {
     return {
@@ -171,10 +173,21 @@ export function createChartOgImageHandler(renderImage?: RenderChartOgImage): Han
           const songId = c.req.param('songId')
           const type = c.req.param('type')
           const difficulty = c.req.param('difficulty')
-          if (!songId || !type || !difficulty) return c.text('Chart not found', 404)
+          if (
+            songId === undefined ||
+            songId === null ||
+            songId === '' ||
+            type === undefined ||
+            type === null ||
+            type === '' ||
+            difficulty === undefined ||
+            difficulty === null ||
+            difficulty === ''
+          )
+            return c.text('Chart not found', 404)
 
           const output = yield* renderChartOgImageOutputEffect({ songId, type, difficulty }, renderImage)
-          if (!output) return c.text('Chart not found', 404)
+          if (output === undefined || output === null) return c.text('Chart not found', 404)
 
           return new Response(output.body, {
             headers: {
@@ -194,9 +207,9 @@ export const renderChartOgImageOutputEffect = (
 ) =>
   Effect.gen(function* () {
     const data = resolveChartOgImageData(input.songId, input.type, input.difficulty)
-    if (!data) return null
+    if (data === undefined || data === null) return null
 
-    const image = yield* renderImage
+    const image = yield* renderImage !== undefined && renderImage !== null
       ? Effect.tryPromise({
           try: () => renderImage(data),
           catch: (cause) => new ChartOgRenderError({ operation: 'render chart OG image', cause }),
@@ -222,7 +235,7 @@ function createChartOgImageEtag(image: ArrayBuffer) {
 
 function toArrayBuffer(image: ArrayBuffer | Uint8Array): ArrayBuffer {
   if (image instanceof ArrayBuffer) return image
-  return image.buffer.slice(image.byteOffset, image.byteOffset + image.byteLength) as ArrayBuffer
+  return new Uint8Array(image).buffer
 }
 
 type TakumiFont = {
@@ -240,7 +253,7 @@ const fontConfig = [
 let cachedFonts: TakumiFont[] | null = null
 
 const loadFonts = Effect.gen(function* () {
-  if (cachedFonts) return cachedFonts
+  if (cachedFonts !== undefined && cachedFonts !== null) return cachedFonts
   const fonts = yield* Effect.all(
     fontConfig.map((font) =>
       fetchAssetEffect(`/fonts/${font.file}`).pipe(
@@ -318,7 +331,7 @@ function ChartOgCard({
         <div style={styles.artist}>{data.artist}</div>
 
         <div style={styles.badges}>
-          {typeBadgeSrc ? (
+          {typeBadgeSrc !== undefined && typeBadgeSrc !== null && typeBadgeSrc !== '' ? (
             <img alt="" src={typeBadgeSrc} height={45} style={styles.typeImage} />
           ) : (
             <Badge background="#111827" color="#ffffff">

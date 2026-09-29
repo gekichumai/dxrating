@@ -28,11 +28,11 @@ export class Database extends Context.Service<
       operation: string,
       evaluate: (db: AppDatabase) => Effect.Effect<A, E, R>,
     ) => Effect.Effect<A, DatabaseError, R>
-    readonly raw: <A extends object = Record<string, unknown>>(
+    readonly raw: (
       operation: string,
       text: string,
       values?: readonly unknown[],
-    ) => Effect.Effect<{ rows: A[] }, DatabaseError>
+    ) => Effect.Effect<{ rows: Record<string, unknown>[] }, DatabaseError>
     readonly transaction: <A, E, R>(
       evaluate: (tx: AppDatabase) => Effect.Effect<A, E, R>,
     ) => Effect.Effect<A, E | DatabaseError, R>
@@ -55,8 +55,8 @@ export const makeDatabase = (connection: Pool) =>
       pool: connection,
       sql,
       query,
-      raw: <A extends object>(operation: string, text: string, values: readonly unknown[] = []) =>
-        sql.unsafe<A>(text, values).pipe(
+      raw: (operation: string, text: string, values: readonly unknown[] = []) =>
+        sql.unsafe<Record<string, unknown>>(text, values).pipe(
           Effect.map((rows) => ({ rows: Array.from(rows) })),
           Effect.mapError((cause) => new DatabaseError({ operation, cause })),
           Effect.withSpan(operation),

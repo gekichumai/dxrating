@@ -14,13 +14,13 @@ const subscribe = (listener: () => void) => {
 const operations = new Map<string, Map<symbol, { commentId: number; authorId?: string }>>()
 export function hideComment(viewer: string, commentId: number, authorId?: string) {
   const token = Symbol()
-  const viewerOperations = operations.get(viewer) ?? new Map()
+  const viewerOperations = operations.get(viewer) ?? new Map<symbol, { commentId: number; authorId?: string }>()
   operations.set(viewer, viewerOperations)
   const update = () => {
     const comments = new Set<number>()
     const authors = new Set<string>()
     for (const operation of viewerOperations.values()) {
-      if (operation.authorId) authors.add(operation.authorId)
+      if (operation.authorId !== undefined && operation.authorId !== '') authors.add(operation.authorId)
       else comments.add(operation.commentId)
     }
     byViewer.set(viewer, { comments, authors })
@@ -43,7 +43,7 @@ export function filterComments<T extends { id: number; author_id: string }>(comm
 export function useCommentVisibility(viewer?: string) {
   return useSyncExternalStore(
     subscribe,
-    () => (viewer ? (byViewer.get(viewer) ?? empty) : empty),
+    () => (viewer !== undefined && viewer !== '' ? (byViewer.get(viewer) ?? empty) : empty),
     () => empty,
   )
 }

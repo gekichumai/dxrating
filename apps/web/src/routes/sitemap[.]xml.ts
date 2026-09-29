@@ -23,7 +23,10 @@ const escapeXml = (value: string) =>
 
 const urlLoc = (path: string) => escapeXml(`${BASE_URL}${path}`)
 
-const lastmodXml = (releaseDate?: string) => (releaseDate ? `\n    <lastmod>${escapeXml(releaseDate)}</lastmod>` : '')
+const lastmodXml = (releaseDate?: string) =>
+  releaseDate !== null && releaseDate !== undefined && releaseDate !== ''
+    ? `\n    <lastmod>${escapeXml(releaseDate)}</lastmod>`
+    : ''
 
 export function buildSitemap(songs: SitemapSong[]) {
   const sheetEntries = songs
@@ -33,7 +36,7 @@ export function buildSitemap(songs: SitemapSong[]) {
         sheet,
       })),
     )
-    .sort((a, b) => (b.sheet.releaseDate ?? '').localeCompare(a.sheet.releaseDate ?? ''))
+    .toSorted((a, b) => (b.sheet.releaseDate ?? '').localeCompare(a.sheet.releaseDate ?? ''))
     .map(
       ({ songId, sheet }) => `
   <url>

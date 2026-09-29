@@ -998,7 +998,7 @@ const KATAKANAS = [
   },
 ]
 
-const kanaToRoumajiMap = new Map()
+const kanaToRoumajiMap = new Map<string, string>()
 for (const { kana, roumaji } of KATAKANAS) {
   kanaToRoumajiMap.set(kana, roumaji)
 }
@@ -1032,7 +1032,8 @@ export async function annotateMecab(str: string) {
         .map((kana) => {
           if (kana === 'ー') return ''
           if (kana === '(pause)') return ''
-          return kanaToRoumajiMap.get(kana) || kana
+          const roumaji = kanaToRoumajiMap.get(kana)
+          return roumaji === undefined || roumaji === '' ? kana : roumaji
         })
         .map((roumaji) => {
           fullWidthToHalfWidth(roumaji)

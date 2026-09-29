@@ -14,7 +14,7 @@ export const ProfileSection: FC = () => {
   const [initialized, setInitialized] = useState(false)
 
   useEffect(() => {
-    if (!initialized && user?.name) {
+    if (!initialized && user?.name !== undefined && user?.name !== '') {
       setDisplayName(user.name)
       setInitialized(true)
     }
@@ -24,7 +24,7 @@ export const ProfileSection: FC = () => {
     const { error } = await authClient.updateUser({
       name: displayName,
     })
-    if (error) {
+    if (error !== null) {
       toast.error(t('auth:update-display-name.toast-failed', { error: error.message }))
       return
     }
@@ -44,10 +44,19 @@ export const ProfileSection: FC = () => {
             email={user?.email}
             image={user?.image}
             size="4rem"
-            alt={t('auth:user-profile.avatar-alt', { name: user?.name || user?.email || t('auth:user-profile.title') })}
+            alt={t('auth:user-profile.avatar-alt', {
+              name:
+                user?.name !== undefined && user.name !== ''
+                  ? user.name
+                  : user?.email !== undefined && user.email !== ''
+                    ? user.email
+                    : t('auth:user-profile.title'),
+            })}
           />
           <div className="flex flex-col gap-0.5">
-            <div className="text-base font-semibold">{user?.name || user?.email}</div>
+            <div className="text-base font-semibold">
+              {user?.name !== undefined && user.name !== '' ? user.name : user?.email}
+            </div>
           </div>
         </div>
 

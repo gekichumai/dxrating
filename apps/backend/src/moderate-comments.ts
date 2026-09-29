@@ -30,7 +30,7 @@ const program = Effect.gen(function* () {
             'objects',
           ),
         )
-        if (!rows.length) return yield* Effect.fail(new ModerationError({ message: 'Report not found' }))
+        if (rows.length === 0) return yield* Effect.fail(new ModerationError({ message: 'Report not found' }))
         if (action === 'remove') {
           yield* database.query('Remove comment', () =>
             tx.execute(sql`
@@ -46,6 +46,7 @@ const program = Effect.gen(function* () {
           UPDATE comment_reports SET resolved_at = now() WHERE id = ${rawId}`),
           )
         }
+        return undefined
       }),
     )
     yield* Effect.logInfo('Report resolved. Viewer hide/block preferences remain in effect.')
@@ -56,6 +57,7 @@ const program = Effect.gen(function* () {
       }),
     )
   }
+  return undefined
 })
 
 // The operator CLI is an application entry point; this layer owns its pool.

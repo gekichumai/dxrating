@@ -31,7 +31,7 @@ export const createRequestRunner = <R, ER>(runtime: ManagedRuntime.ManagedRuntim
     const controller = new AbortController()
     const externalSignal = options?.signal
     const forwardAbort = () => controller.abort(externalSignal?.reason)
-    if (externalSignal?.aborted) forwardAbort()
+    if (externalSignal?.aborted === true) forwardAbort()
     else externalSignal?.addEventListener('abort', forwardAbort, { once: true })
 
     // Register before the runtime can execute user code or initiate a nested request.

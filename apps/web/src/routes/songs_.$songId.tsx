@@ -26,20 +26,22 @@ const getPreferredSheet = (sheets: SongSheet[]) => {
 
 const getDefaultSheetParams = (song: Song) => {
   const preferredSheet = getPreferredSheet(song.sheets)
-  return preferredSheet ? getSheetRouteParams(preferredSheet) : { type: TypeEnum.DX, difficulty: DifficultyEnum.Master }
+  return preferredSheet !== undefined
+    ? getSheetRouteParams(preferredSheet)
+    : { type: TypeEnum.DX, difficulty: DifficultyEnum.Master }
 }
 
 const getLegacySheetParams = (song: Song, requestedType?: string, requestedDifficulty?: string) => {
   const matchingSheet = song.sheets.find(
     (sheet) => sheet.type === requestedType && sheet.difficulty === requestedDifficulty,
   )
-  if (matchingSheet) {
+  if (matchingSheet !== null && matchingSheet !== undefined) {
     return getSheetRouteParams(matchingSheet)
   }
 
   const requestedTypeSheets = song.sheets.filter((sheet) => sheet.type === requestedType)
   const preferredRequestedTypeSheet = getPreferredSheet(requestedTypeSheets)
-  if (preferredRequestedTypeSheet) {
+  if (preferredRequestedTypeSheet !== undefined) {
     return getSheetRouteParams(preferredRequestedTypeSheet)
   }
 
@@ -68,7 +70,7 @@ export const Route = createFileRoute('/songs_/$songId')({
   }),
   beforeLoad: ({ params, search }) => {
     const song = dxdata.songs.find((s) => s.songId === params.songId)
-    if (!song) {
+    if (song === null || song === undefined) {
       throw notFound()
     }
 

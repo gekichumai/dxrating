@@ -87,11 +87,11 @@ const isSchemaFilterFormVersionZero = (v: unknown): v is SchemaFilterFormVersion
     return false
   }
 
-  if (typeof (v as SchemaFilterFormVersionZero).filters !== 'object') {
+  if (!('filters' in v) || typeof v.filters !== 'object') {
     return false
   }
 
-  if (typeof (v as SchemaFilterFormVersionZero).sorts !== 'object') {
+  if (!('sorts' in v) || typeof v.sorts !== 'object') {
     return false
   }
 
@@ -103,19 +103,18 @@ const isSchemaFilterFormVersionOne = (v: unknown): v is SchemaFilterFormVersionO
     return false
   }
 
-  if ((v as SchemaFilterFormVersionOne).version !== 1) {
+  if (!('version' in v) || v.version !== 1) {
     return false
   }
 
-  if (typeof (v as SchemaFilterFormVersionOne).payload !== 'object') {
+  if (!('payload' in v) || typeof v.payload !== 'object') {
     return false
   }
 
   return true
 }
 
-// oxlint-disable-next-line @typescript-eslint/no-explicit-any
-const migrations = {
+const migrations: Partial<Record<number, (v: SchemaFilterFormVersionZero) => SheetSortFilterForm>> = {
   1: (v: SchemaFilterFormVersionZero): SheetSortFilterForm => {
     return {
       ...v,
@@ -146,27 +145,20 @@ export const validateAndMigrate = (alreadySaved: unknown): SheetSortFilterForm =
     throw new Error('Invalid saved sort filter')
   })()
 
-  if (payload.filters.tags === undefined) {
-    payload.filters.tags = []
-  }
+  payload.filters.tags ??= []
 
-  if (payload.filters.categories === undefined) {
-    payload.filters.categories = Object.values(CategoryEnum)
-  }
+  payload.filters.categories ??= Object.values(CategoryEnum)
 
-  if (payload.filters.favoritesOnly === undefined) {
-    payload.filters.favoritesOnly = false
-  }
+  payload.filters.favoritesOnly ??= false
 
-  if (payload.filters.difficulties === undefined) {
-    payload.filters.difficulties = Object.values(DifficultyEnum)
-  }
+  payload.filters.difficulties ??= Object.values(DifficultyEnum)
 
   // apply migrations
   let migrated = payload
   for (let i = version + 1; i <= CURRENT_SCHEMA_VERSION; i++) {
-    if (migrations[i as keyof typeof migrations]) {
-      migrated = migrations[i as keyof typeof migrations](migrated)
+    const migrate = migrations[i]
+    if (migrate !== undefined) {
+      migrated = migrate(migrated)
     }
   }
 
@@ -188,7 +180,7 @@ const loadSavedSheetSortFilterForm = (): SheetSortFilterForm | null => {
   }
 
   const alreadySaved = window.localStorage.getItem(SHEET_SORT_FILTER_STORAGE_KEY)
-  if (!alreadySaved) {
+  if (alreadySaved === null || alreadySaved === '') {
     return null
   }
 
@@ -221,7 +213,7 @@ export const SheetSortFilter: FC<{
   useEffectOnce(() => {
     const savedValues = loadSavedSheetSortFilterForm()
 
-    if (savedValues) {
+    if (savedValues !== null) {
       methods.reset(savedValues)
       onChange?.(savedValues)
       return
@@ -246,12 +238,12 @@ export const SheetSortFilter: FC<{
 const SheetSortFilterFormListener: FC<{
   onChange?: (form: SheetSortFilterForm) => void
 }> = ({ onChange }) => {
-  const { watch } = useFormContext<SheetSortFilterForm>()
+  const { watch, getValues } = useFormContext<SheetSortFilterForm>()
 
   useEffect(() => {
     const subscription = watch((data) => {
-      if (data.filters || data.sorts) {
-        onChange?.(data as SheetSortFilterForm)
+      if (data.filters !== undefined || data.sorts !== undefined) {
+        onChange?.(getValues())
         const lastActiveAt = Date.now()
 
         window.localStorage.setItem(
@@ -266,7 +258,7 @@ const SheetSortFilterFormListener: FC<{
     })
 
     return () => subscription.unsubscribe()
-  }, [onChange, watch])
+  }, [onChange, watch, getValues])
 
   return null
 }
@@ -389,7 +381,7 @@ const SheetSortFilterFormContent: FC<{
   useEffect(() => {
     if (!expanded) {
       setContentMotionVisible(false)
-      return
+      return undefined
     }
 
     const animationFrame = window.requestAnimationFrame(() => setContentMotionVisible(true))

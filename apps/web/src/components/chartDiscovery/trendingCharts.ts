@@ -39,14 +39,14 @@ const compareRepresentativeSheets = (a: Sheet, b: Sheet) => {
 }
 
 const selectRepresentativeSheet = (result: TrendingChartResult, song: Song) => {
-  if (result.sheetType && result.sheetDifficulty) {
+  if (result.sheetType !== undefined && result.sheetDifficulty !== undefined) {
     const exactSheet = song.sheets.find(
       (sheet) => sheet.type === result.sheetType && sheet.difficulty === result.sheetDifficulty,
     )
-    if (exactSheet) return exactSheet
+    if (exactSheet !== undefined) return exactSheet
   }
 
-  return [...song.sheets].sort(compareRepresentativeSheets)[0] ?? null
+  return [...song.sheets].toSorted(compareRepresentativeSheets)[0] ?? null
 }
 
 const toTrendingChartLink = (song: Song, sheet: Sheet): TrendingChartLink => {
@@ -94,10 +94,10 @@ export const buildTrendingChartLinks = (
   return results
     .flatMap((result) => {
       const song = songsById.get(result.songId)
-      if (!song) return []
+      if (song === undefined) return []
 
       const sheet = selectRepresentativeSheet(result, song)
-      if (!sheet) return []
+      if (sheet === null) return []
 
       const chart = toTrendingChartLink(song, sheet)
       if (seenChartHrefs.has(chart.href)) return []

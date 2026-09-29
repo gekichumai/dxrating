@@ -23,7 +23,7 @@ const song = {
       noteCounts: { tap: null, hold: null, slide: null, touch: null, break: null, total: null },
       regions: { jp: true, intl: true, cn: true },
       isSpecial: false,
-      version: 'maimai' as never,
+      version: 'maimai',
     },
     {
       type: TypeEnum.STD,
@@ -34,7 +34,7 @@ const song = {
       noteCounts: { tap: null, hold: null, slide: null, touch: null, break: null, total: null },
       regions: { jp: true, intl: true, cn: true },
       isSpecial: false,
-      version: 'maimai' as never,
+      version: 'maimai',
     },
   ],
 } satisfies Song
@@ -73,6 +73,7 @@ describe('resolveLegacySongRouteRedirect', () => {
         {
           ...song.sheets[0],
           type: TypeEnum.UTAGE,
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Real Utage charts use custom labels despite the generated enum type.
           difficulty: '【光】' as DifficultyEnum,
         },
       ],

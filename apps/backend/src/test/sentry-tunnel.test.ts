@@ -43,8 +43,8 @@ describe('Sentry tunnel', () => {
 
     expect(response.status).toBe(200)
     expect(fetchMock).toHaveBeenCalledOnce()
-    const [url, init] = fetchMock.mock.calls[0]!
-    expect(String(url)).toBe(expectedEnvelopeUrl)
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url instanceof Request ? url.url : url.toString()).toBe(expectedEnvelopeUrl)
     expect(init?.method).toBe('POST')
     expect(init?.signal).toBeInstanceOf(AbortSignal)
     expect(await new Response(init?.body).text()).toBe(envelope)

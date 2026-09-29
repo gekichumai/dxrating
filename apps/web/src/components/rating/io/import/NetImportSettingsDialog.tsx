@@ -19,7 +19,6 @@ import {
 import { type FC, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocalStorage } from 'react-use'
-import { match } from 'ts-pattern'
 import IconMdiChevronDown from '~icons/mdi/chevron-down'
 import IconMdiHelpCircleOutline from '~icons/mdi/help-circle-outline'
 import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
@@ -57,10 +56,18 @@ export function NetImportSettingsDialog({
 function readSavedCredentials() {
   const empty = { region: 'intl' as 'intl' | 'jp', username: '', password: '', remember: false }
   try {
-    const saved = JSON.parse(localStorage.getItem('import-net-records') ?? 'null')
-    if (!saved || typeof saved.username !== 'string' || typeof saved.password !== 'string') return empty
+    const saved: unknown = JSON.parse(localStorage.getItem('import-net-records') ?? 'null')
+    if (
+      typeof saved !== 'object' ||
+      saved === null ||
+      !('username' in saved) ||
+      !('password' in saved) ||
+      typeof saved.username !== 'string' ||
+      typeof saved.password !== 'string'
+    )
+      return empty
     return {
-      region: saved.region === 'jp' ? ('jp' as const) : ('intl' as const),
+      region: 'region' in saved && saved.region === 'jp' ? ('jp' as const) : ('intl' as const),
       username: saved.username,
       password: saved.password,
       remember: true,
@@ -84,11 +91,8 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const { t } = useTranslation()
   const [form, setForm] = useState(readSavedCredentials)
   const { region, username, password, remember } = form
-  const [autoImport, setAutoImport] = useLocalStorage<AutoImportMode>('rating-auto-import-from-net', false)
-  const mappedAutoImport = match(autoImport as AutoImportMode | 'false')
-    .with(true, () => 'replace' as const)
-    .with('false', () => false as const)
-    .otherwise((value) => value)
+  const [autoImport, setAutoImport] = useLocalStorage<AutoImportMode | 'false'>('rating-auto-import-from-net', false)
+  const mappedAutoImport = autoImport === true ? 'replace' : autoImport === 'false' ? false : (autoImport ?? false)
   const appVersion = useAppContextDXDataVersion()
 
   const updateForm = (patch: Partial<typeof form>) => {
@@ -106,11 +110,17 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   const handleImport = () => {
-    void importFromNETRecords(appVersion, modifyEntries, mappedAutoImport || 'replace', undefined, {
-      region,
-      username,
-      password,
-    })
+    void importFromNETRecords(
+      appVersion,
+      modifyEntries,
+      mappedAutoImport === 'merge' ? 'merge' : 'replace',
+      undefined,
+      {
+        region,
+        username,
+        password,
+      },
+    )
     onClose()
   }
 
@@ -126,7 +136,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
               label={t('rating-calculator:io.import.net-records.dialog.region.label')}
               select
               value={region}
-              onChange={(event) => updateForm({ region: event.target.value as 'intl' | 'jp' })}
+              onChange={(event) => updateForm({ region: event.target.value === 'jp' ? 'jp' : 'intl' })}
             >
               <MenuItem value="intl">
                 <span>
@@ -191,7 +201,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
 
           <NetImportAutoImportOptions
             value={mappedAutoImport}
-            disabled={!remember || !username || !password}
+            disabled={!remember || username.length === 0 || password.length === 0}
             onChange={setAutoImport}
           />
 
@@ -225,10 +235,14 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>{t('rating-calculator:io.import.net-records.dialog.actions.close')}</Button>
-        <Button onClick={handleImport} disabled={!username || !password || busy} variant="contained">
+        <Button
+          onClick={handleImport}
+          disabled={username.length === 0 || password.length === 0 || busy}
+          variant="contained"
+        >
           {busy ? (
             t('rating-calculator:io.import.net-records.dialog.actions.importing')
-          ) : mappedAutoImport ? (
+          ) : mappedAutoImport !== false && mappedAutoImport !== undefined ? (
             <div className="flex flex-col gap-1 items-start py-1">
               <span className="leading-none">
                 {t('rating-calculator:io.import.net-records.dialog.actions.reimport.title')}

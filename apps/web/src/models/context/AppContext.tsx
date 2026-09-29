@@ -75,7 +75,7 @@ function readStoredAppContext(): AppContextStates {
 
   try {
     const stored = window.localStorage.getItem('app-context')
-    if (!stored) return getDefaultAppContext()
+    if (stored === null || stored === undefined || stored === '') return getDefaultAppContext()
 
     const parsed = JSON.parse(stored)
     if (!isAppContextStates(parsed)) return getDefaultAppContext()
@@ -115,7 +115,7 @@ export const AppContextProvider: FC<PropsWithChildren<object>> = ({ children }) 
   }, [])
 
   const dismissVersionUpdate = useCallback(() => {
-    if (!availableVersionUpdate) return
+    if (availableVersionUpdate === null || availableVersionUpdate === undefined) return
     setAvailableVersionUpdate(null)
     try {
       window.localStorage.setItem(updateDismissalKey(state.region, availableVersionUpdate), 'true')

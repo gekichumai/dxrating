@@ -60,6 +60,6 @@ describe('Authentication', () => {
     const res = await fetch(`${getBaseUrl()}/api/auth/get-session`)
     const body = await res.json()
     // Better Auth returns null body when not authenticated
-    expect(body === null || !body?.user).toBe(true)
+    expect(body === null || body?.user === undefined || body?.user === null).toBe(true)
   })
 })

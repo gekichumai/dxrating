@@ -34,8 +34,8 @@ describe('getSearchAcronymsWithServerAliases', () => {
   })
 })
 describe('artist and chart designer search', () => {
-  const baseSong = getSongs()[0]!
-  const baseSheet = getFlattenedSheetsForVersion(VersionEnum.CiRCLEPLUS)[0]!
+  const baseSong = getSongs()[0]
+  const baseSheet = getFlattenedSheetsForVersion(VersionEnum.CiRCLEPLUS)[0]
   const song = {
     ...baseSong,
     songId: 'credits-song',

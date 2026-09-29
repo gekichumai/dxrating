@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { ImportRegionSupportTag } from '@/components/rating/io/import/ImportRegionSupportTag'
 import type { VersionEnum } from '@gekichumai/dxdata'
 import { getDxdataSongCatalog, normalizeDivingFishRows } from '@gekichumai/maimai-domain'
@@ -80,6 +81,21 @@ export interface Chart {
   type: string
 }
 
+const divingFishRowSchema = z
+  .object({
+    achievements: z.number(),
+    fc: z.string().nullable(),
+    fs: z.string().nullable(),
+    level_index: z.number(),
+    title: z.string(),
+    type: z.string(),
+    song_id: z.number(),
+  })
+  .passthrough()
+const divingFishResponseSchema = z.object({
+  charts: z.object({ dx: z.array(divingFishRowSchema), sd: z.array(divingFishRowSchema) }),
+})
+
 const fetchDivingFish = async (
   appVersion: VersionEnum,
   divingFishProfile: DivingFishProfile | null,
@@ -92,9 +108,9 @@ const fetchDivingFish = async (
     const body: DivingFishRequestBody = {
       b50: 1,
     }
-    if (divingFishProfile?.username) {
+    if (divingFishProfile?.username !== undefined && divingFishProfile?.username !== '') {
       body.username = divingFishProfile?.username
-    } else if (divingFishProfile?.qq) {
+    } else if (divingFishProfile?.qq !== undefined && divingFishProfile?.qq !== '') {
       body.qq = divingFishProfile?.qq
     } else {
       throw new Error('No Diving Fish Profile')
@@ -111,7 +127,7 @@ const fetchDivingFish = async (
       throw new Error(`Unsatisfactory status code: ${response.status}: ${await response.text()}`)
     }
 
-    const data = (await response.json()) as DivingFishResponseBody
+    const data = divingFishResponseSchema.parse(await response.json())
     const importResult = normalizeDivingFishRows(getDxdataSongCatalog(appVersion), [
       ...data.charts.dx.map((row) => ({ ...row, bucket: 'b15' as const })),
       ...data.charts.sd.map((row) => ({ ...row, bucket: 'b35' as const })),
@@ -123,7 +139,7 @@ const fetchDivingFish = async (
 
     modifyEntries.set(entries)
     analytics.succeeded(entries.length, importResult.warnings.length)
-    haptics.trigger('success')
+    void haptics.trigger('success').catch((error: unknown) => console.warn('Haptic feedback failed', error))
     toast.success(messages.success(entries.length), {
       id: toastId,
     })
@@ -132,7 +148,7 @@ const fetchDivingFish = async (
       error instanceof Error && error.message === 'No Diving Fish Profile' ? 'missing_profile' : 'provider_error',
     )
     console.error('There was a problem with the fetch operation:', error)
-    toast.error(messages.error(String(formatErrorMessage(error))), {
+    toast.error(messages.error(formatErrorMessage(error)), {
       id: toastId,
     })
   }
@@ -148,9 +164,19 @@ export const ImportDivingFishDialogContent: FC<{
   const [divingFishConfig, setDivingFishConfig] = useLocalStorage<DivingFishProfile | null>('diving-fish-profile', null)
 
   const invalidReason = useMemo(() => {
-    if (!divingFishConfig) return 'missing' as const
-    if (!divingFishConfig.username && !divingFishConfig.qq) return 'missing' as const
-    if (divingFishConfig.username && divingFishConfig.qq) return 'excessive' as const
+    if (divingFishConfig === null || divingFishConfig === undefined) return 'missing' as const
+    if (
+      (divingFishConfig.username === undefined || divingFishConfig.username === '') &&
+      (divingFishConfig.qq === undefined || divingFishConfig.qq === '')
+    )
+      return 'missing' as const
+    if (
+      divingFishConfig.username !== undefined &&
+      divingFishConfig.username !== '' &&
+      divingFishConfig.qq !== undefined &&
+      divingFishConfig.qq !== ''
+    )
+      return 'excessive' as const
     return null
   }, [divingFishConfig])
 
@@ -218,7 +244,7 @@ export const ImportDivingFishDialogContent: FC<{
           onClick={async () => {
             setBusy(true)
             try {
-              if (invalidReason) {
+              if (invalidReason !== null) {
                 toast.error(t('rating-calculator:io.import.diving-fish.invalid-profile'))
                 return
               }
@@ -232,7 +258,7 @@ export const ImportDivingFishDialogContent: FC<{
               setBusy(false)
             }
           }}
-          disabled={!!invalidReason || busy}
+          disabled={invalidReason !== null || busy}
           variant="contained"
         >
           {busy ? (
@@ -240,7 +266,7 @@ export const ImportDivingFishDialogContent: FC<{
               <CircularProgress size="1rem" />
               <span>{t('rating-calculator:io.import.diving-fish.importing')}</span>
             </div>
-          ) : invalidReason ? (
+          ) : invalidReason !== null ? (
             <div className="flex flex-col gap-1 items-end py-1">
               <span className="leading-none">{t('rating-calculator:io.import.diving-fish.import')}</span>
               <span className="text-xs opacity-50 leading-none">

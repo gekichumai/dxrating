@@ -1,3 +1,4 @@
+import { getCommonErrorStatus } from './lib/functions/sentry'
 import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { createMiddleware } from 'hono/factory'
@@ -16,13 +17,12 @@ import {
   v1Handler as fetchNetRecordsV1Handler,
 } from './services/functions/fetch-net-records/index'
 import { evlog, type EvlogVariables } from 'evlog/hono'
-import type { MiddlewareHandler } from 'hono'
 import { drain } from './logger'
 import { appRouter, type ApiContext } from './router'
 import { exchangeCodeForTokens } from './services/lxns/index'
 import { AppConfig } from './config'
 import { OpenAPIHandler } from '@orpc/openapi/fetch'
-import { COMMON_ERROR_STATUS_MAP, getOpenAPIMeta, OpenAPIGenerator } from '@orpc/openapi'
+import { getOpenAPIMeta, OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { RequestHeadersHandlerPlugin, ResponseHeadersHandlerPlugin } from '@orpc/server/plugins'
 import { onError } from '@orpc/server'
@@ -54,7 +54,10 @@ const ARCADE_VENUES_RETAINED_304_HEADERS = [
 ]
 const PUBLIC_STATIC_CATALOG_PATHS = new Set([ARCADE_VENUES_PATH, DXDATA_PATH])
 
-const getFirstHeaderValue = (value: string | undefined) => value?.split(',')[0]?.trim() || undefined
+const getFirstHeaderValue = (value: string | undefined) => {
+  const first = value?.split(',')[0]?.trim()
+  return first === '' ? undefined : first
+}
 
 const getValidProtocol = (value: string | undefined) => {
   const protocol = value?.toLowerCase()
@@ -62,11 +65,11 @@ const getValidProtocol = (value: string | undefined) => {
 }
 
 const isValidHost = (host: string | undefined) => {
-  if (!host || /[\s/@\\]/.test(host)) return false
+  if (host === undefined || host === null || host === '' || /[\s/@\\]/.test(host)) return false
 
   try {
     const url = new URL(`https://${host}`)
-    return url.hostname.length > 0 && url.pathname === '/' && !url.search && !url.hash
+    return url.hostname.length > 0 && url.pathname === '/' && url.search === '' && url.hash === ''
   } catch {
     return false
   }
@@ -138,7 +141,8 @@ const setApiCatalogHeaders = (c: Context) => {
 // Error handler
 app.onError((err, c) => {
   const log = c.get('log')
-  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+  const contextRequestId: unknown = log?.getContext().requestId
+  const requestId = typeof contextRequestId === 'string' ? contextRequestId : undefined
 
   if (err instanceof z.ZodError) {
     return c.json({ error: 'Validation error', details: err.issues, requestId }, 400)
@@ -202,7 +206,7 @@ app.use(
       '/.well-known/api-catalog',
       '/api/v1/monitoring/tunnel',
     ],
-  }) as unknown as MiddlewareHandler,
+  }),
 )
 
 // Set X-DXRating-Request-ID response header
@@ -214,8 +218,14 @@ app.use('*', (c, next) =>
         catch: (cause) => new HttpAdapterError({ operation: 'Run HTTP middleware', cause }),
       })
       const log = c.get('log')
-      const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
-      if (requestId && !PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)) {
+      const contextRequestId: unknown = log?.getContext().requestId
+      const requestId = typeof contextRequestId === 'string' ? contextRequestId : undefined
+      if (
+        requestId !== undefined &&
+        requestId !== null &&
+        requestId !== '' &&
+        !PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)
+      ) {
         c.header('X-DXRating-Request-ID', requestId)
       }
     }),
@@ -344,8 +354,18 @@ app.get('/api/v1/io/import/lxns/oauth_callback', (c) =>
       const error = c.req.query('error')
       const config = yield* AppConfig
       const frontendCallback = `${config.frontendUrl}/io/import/lxns/oauth_callback`
-      if (error || !code || !state) {
-        return c.redirect(`${frontendCallback}?status=error&error=${encodeURIComponent(error || 'missing_params')}`)
+      if (
+        (error !== undefined && error !== null && error !== '') ||
+        code === undefined ||
+        code === null ||
+        code === '' ||
+        state === undefined ||
+        state === null ||
+        state === ''
+      ) {
+        return c.redirect(
+          `${frontendCallback}?status=error&error=${encodeURIComponent(error === undefined || error === '' ? 'missing_params' : error)}`,
+        )
       }
       return yield* exchangeCodeForTokens(code, state).pipe(
         Effect.map(() => c.redirect(`${frontendCallback}?status=success`)),
@@ -369,7 +389,7 @@ const openAPIHandler = new OpenAPIHandler(appRouter, {
   // Existing browser and mobile clients consume the v1 status field.
   customErrorResponseBodyEncoder: (error) => ({
     ...error.toJSON(),
-    status: COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500,
+    status: getCommonErrorStatus(error.code),
   }),
   plugins: [new RequestHeadersHandlerPlugin<ApiContext>(), new ResponseHeadersHandlerPlugin<ApiContext>()],
   clientInterceptors: [
@@ -397,7 +417,8 @@ const dxdataStore = createPostgresDxdataEffects((text, values) =>
 )
 const dxdataHandler = createDxdataEffect(dxdataStore, (error, c: Context<EvlogVariables>) => {
   const log = c.get('log')
-  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+  const contextRequestId: unknown = log?.getContext().requestId
+  const requestId = typeof contextRequestId === 'string' ? contextRequestId : undefined
   log?.error(error instanceof Error ? error : new Error(String(error)))
   Sentry.captureException(error, { tags: { requestId } })
 })
@@ -417,7 +438,7 @@ const arcadeVenuesCacheHeaders = createMiddleware((c, next) =>
       if (c.res.status !== 200) return
 
       const database = yield* Database
-      const result = yield* database.raw<{ last_modified: Date | null }>(
+      const result = yield* database.raw(
         'Read arcade modification date',
         `
     SELECT max(last_modified) AS last_modified
@@ -435,7 +456,7 @@ const arcadeVenuesCacheHeaders = createMiddleware((c, next) =>
   `,
       )
       const lastModified = result.rows[0]?.last_modified
-      if (lastModified) c.header('Last-Modified', lastModified.toUTCString())
+      if (lastModified instanceof Date) c.header('Last-Modified', lastModified.toUTCString())
 
       c.header('Cache-Control', ARCADE_VENUES_BROWSER_CACHE_CONTROL)
       c.header('CDN-Cache-Control', ARCADE_VENUES_CDN_CACHE_CONTROL)
@@ -501,7 +522,8 @@ const arcadeVenuesEtag = createMiddleware((c, next) =>
 // only marks the canonical query-less catalog eligible for edge storage.
 const reportApiError = (c: Context, error: unknown) => {
   const log = c.get('log')
-  const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
+  const contextRequestId: unknown = log?.getContext().requestId
+  const requestId = typeof contextRequestId === 'string' ? contextRequestId : undefined
   log?.error(error instanceof Error ? error : new Error(String(error)))
   Sentry.captureException(error, { tags: { requestId } })
   return c.json({ error: 'Internal server error', requestId }, 500)
@@ -521,7 +543,9 @@ app.get(ARCADE_VENUES_PATH, arcadeVenuesEtag, arcadeVenuesCacheHeaders, (c) =>
       })
     }).pipe(
       Effect.flatMap(({ response }) =>
-        response ? Effect.succeed(response) : Effect.promise(() => Promise.resolve(c.notFound())),
+        response !== undefined && response !== null
+          ? Effect.succeed(response)
+          : Effect.promise(() => Promise.resolve(c.notFound())),
       ),
       Effect.catch((error) => Effect.sync(() => reportApiError(c, error.cause))),
     ),
@@ -596,7 +620,7 @@ app.get('/spec.json', (c) =>
                 },
               },
             },
-            filter: (contract) => !getOpenAPIMeta(contract)?.tags?.includes('internal'),
+            filter: (contract) => getOpenAPIMeta(contract)?.tags?.includes('internal') !== true,
           }),
         catch: (cause) => new HttpAdapterError({ operation: 'Generate OpenAPI specification', cause }),
       })

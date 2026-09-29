@@ -1,5 +1,6 @@
 import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { match } from 'ts-pattern'
+import { isStandardDifficulty } from './sheet-identity.ts'
 import type { SongCatalog } from './song-catalog'
 import type {
   Best50Bucket,
@@ -18,7 +19,7 @@ export interface RatingImportResult {
 
 type ImportRowResult = { entry: RatingEntry } | { warning: ImportWarning } | { skipped: true }
 
-const LEVEL_INDEX_TO_DIFFICULTY: Record<number, DifficultyEnum> = {
+const LEVEL_INDEX_TO_DIFFICULTY: Partial<Record<number, DifficultyEnum>> = {
   0: DifficultyEnum.Basic,
   1: DifficultyEnum.Advanced,
   2: DifficultyEnum.Expert,
@@ -26,7 +27,7 @@ const LEVEL_INDEX_TO_DIFFICULTY: Record<number, DifficultyEnum> = {
   4: DifficultyEnum.ReMaster,
 }
 
-const AQUA_DX_LEVEL_TO_DIFFICULTY: Record<number, DifficultyEnum> = {
+const AQUA_DX_LEVEL_TO_DIFFICULTY: Partial<Record<number, DifficultyEnum>> = {
   1: DifficultyEnum.Basic,
   2: DifficultyEnum.Expert,
   3: DifficultyEnum.Master,
@@ -85,16 +86,17 @@ export function normalizeLxnsScores(catalog: SongCatalog, rows: LxnsScoreRow[]):
       }
 
       const difficulty = LEVEL_INDEX_TO_DIFFICULTY[row.levelIndex]
-      if (!difficulty) return missing('lxns', row, 'invalid-difficulty', `Unknown LXNS level index: ${row.levelIndex}`)
+      if (difficulty === undefined)
+        return missing('lxns', row, 'invalid-difficulty', `Unknown LXNS level index: ${row.levelIndex}`)
 
       const type = normalizeStandardDxType(row.type)
-      if (!type) return missing('lxns', row, 'invalid-type', `Unknown LXNS chart type: ${row.type}`)
+      if (type === null) return missing('lxns', row, 'invalid-type', `Unknown LXNS chart type: ${row.type}`)
 
       const achievement = validateAchievement('lxns', row, row.achievements, 1)
       if ('warning' in achievement) return achievement
 
       const sheet = catalog.resolveReference({ kind: 'title', title: row.songName, type, difficulty })
-      if (!sheet) {
+      if (sheet === null) {
         return missing('lxns', row, 'sheet-not-found', `No sheet found for ${row.songName} (${type}/${difficulty})`)
       }
 
@@ -121,11 +123,10 @@ export function normalizeMaimaiNetRecords(catalog: SongCatalog, rows: MaimaiNetR
   return finalizeImport(
     rows.map((row) => {
       const type = normalizeStandardDxType(row.sheet.type)
-      const difficulty = Object.values(DifficultyEnum).includes(row.sheet.difficulty as DifficultyEnum)
-        ? (row.sheet.difficulty as DifficultyEnum)
-        : null
-      if (!type) return missing('maimai-net', row, 'invalid-type', `Unknown MaimaiNET chart type: ${row.sheet.type}`)
-      if (!difficulty) {
+      const difficulty = isStandardDifficulty(row.sheet.difficulty) ? row.sheet.difficulty : null
+      if (type === null)
+        return missing('maimai-net', row, 'invalid-type', `Unknown MaimaiNET chart type: ${row.sheet.type}`)
+      if (difficulty === null) {
         return missing('maimai-net', row, 'invalid-difficulty', `Unknown MaimaiNET difficulty: ${row.sheet.difficulty}`)
       }
 
@@ -133,7 +134,7 @@ export function normalizeMaimaiNetRecords(catalog: SongCatalog, rows: MaimaiNetR
       if ('warning' in achievement) return achievement
 
       const sheet = catalog.resolveReference({ kind: 'title', title: row.sheet.songId, type, difficulty })
-      if (!sheet) {
+      if (sheet === null) {
         return missing(
           'maimai-net',
           row,
@@ -172,10 +173,11 @@ export function normalizeDivingFishRows(catalog: SongCatalog, rows: DivingFishRo
     rows.map((row) => {
       const difficulty = LEVEL_INDEX_TO_DIFFICULTY[row.level_index]
       const type = normalizeDivingFishType(row.type)
-      if (!difficulty) {
+      if (difficulty === undefined) {
         return missing('diving-fish', row, 'invalid-difficulty', `Unknown Diving Fish level index: ${row.level_index}`)
       }
-      if (!type) return missing('diving-fish', row, 'invalid-type', `Unknown Diving Fish chart type: ${row.type}`)
+      if (type === null)
+        return missing('diving-fish', row, 'invalid-type', `Unknown Diving Fish chart type: ${row.type}`)
 
       const achievement = validateAchievement('diving-fish', row, row.achievements, 1)
       if ('warning' in achievement) return achievement
@@ -183,7 +185,7 @@ export function normalizeDivingFishRows(catalog: SongCatalog, rows: DivingFishRo
       const sheet =
         catalog.resolveReference({ kind: 'internal-id', internalId: row.song_id, type, difficulty }) ??
         catalog.resolveReference({ kind: 'title', title: row.title, type, difficulty })
-      if (!sheet) {
+      if (sheet === null) {
         return missing('diving-fish', row, 'sheet-not-found', `No sheet found for ${row.title} (${type}/${difficulty})`)
       }
 
@@ -220,7 +222,8 @@ export function normalizeAquaDxRows(
   return finalizeImport(
     rows.map((row) => {
       const difficulty = AQUA_DX_LEVEL_TO_DIFFICULTY[row.level]
-      if (!difficulty) return missing('aqua-dx', row, 'invalid-difficulty', `Unknown AquaDX level: ${row.level}`)
+      if (difficulty === undefined)
+        return missing('aqua-dx', row, 'invalid-difficulty', `Unknown AquaDX level: ${row.level}`)
 
       if (shouldSkipProviderMusicId(row.musicId, map)) return skipped()
 
@@ -228,7 +231,8 @@ export function normalizeAquaDxRows(
       if ('warning' in achievement) return achievement
 
       const sheet = catalog.resolveReference({ kind: 'provider-music-id', musicId: row.musicId, difficulty, map })
-      if (!sheet) return missing('aqua-dx', row, 'sheet-not-found', `No sheet found for AquaDX music id ${row.musicId}`)
+      if (sheet === null)
+        return missing('aqua-dx', row, 'sheet-not-found', `No sheet found for AquaDX music id ${row.musicId}`)
 
       return {
         entry: {
@@ -256,7 +260,8 @@ export function normalizeMuNetRows(
   return finalizeImport(
     rows.map((row) => {
       const difficulty = LEVEL_INDEX_TO_DIFFICULTY[row.level]
-      if (!difficulty) return missing('mu-net', row, 'invalid-difficulty', `Unknown MuNET level: ${row.level}`)
+      if (difficulty === undefined)
+        return missing('mu-net', row, 'invalid-difficulty', `Unknown MuNET level: ${row.level}`)
 
       if (shouldSkipProviderMusicId(row.musicId, map)) return skipped()
 
@@ -264,7 +269,8 @@ export function normalizeMuNetRows(
       if ('warning' in achievement) return achievement
 
       const sheet = catalog.resolveReference({ kind: 'provider-music-id', musicId: row.musicId, difficulty, map })
-      if (!sheet) return missing('mu-net', row, 'sheet-not-found', `No sheet found for MuNET music id ${row.musicId}`)
+      if (sheet === null)
+        return missing('mu-net', row, 'sheet-not-found', `No sheet found for MuNET music id ${row.musicId}`)
 
       return {
         entry: {
@@ -306,7 +312,7 @@ export function normalizeAquaSqliteRows(
           type: row.type,
           difficulty: row.level,
         })
-        if (!sheet) {
+        if (sheet === null) {
           return missing(
             'aqua-sqlite',
             row,
@@ -337,7 +343,7 @@ function finalizeImport(results: ImportRowResult[]): RatingImportResult {
     if (!('entry' in result)) continue
 
     const existing = bySheetId.get(result.entry.sheetId)
-    if (!existing) {
+    if (existing === undefined) {
       bySheetId.set(result.entry.sheetId, result.entry)
     } else {
       bySheetId.set(result.entry.sheetId, mergeDuplicateEntry(existing, result.entry))
@@ -406,16 +412,16 @@ function compareEntry(a: RatingEntry, b: RatingEntry): number {
 }
 
 function comboRank(flag: ComboFlag | undefined): number {
-  return flag ? COMBO_FLAG_RANK[flag] : 0
+  return flag !== null && flag !== undefined ? COMBO_FLAG_RANK[flag] : 0
 }
 
 function syncRank(flag: SyncFlag | undefined): number {
-  return flag ? SYNC_FLAG_RANK[flag] : 0
+  return flag !== null && flag !== undefined ? SYNC_FLAG_RANK[flag] : 0
 }
 
 function mergeSource(base: RatingEntry['source'], fallback: RatingEntry['source']): RatingEntry['source'] {
-  if (!base) return fallback
-  if (!fallback) return base
+  if (base === undefined) return fallback
+  if (fallback === undefined) return base
 
   return {
     ...base,

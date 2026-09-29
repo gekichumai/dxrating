@@ -21,7 +21,7 @@ function AccountSecurityPage() {
           <div className="flex min-h-64 items-center justify-center" aria-busy="true">
             <CircularProgress size="2rem" />
           </div>
-        ) : sessionData?.session ? (
+        ) : sessionData?.session !== null && sessionData?.session !== undefined ? (
           <SecuritySection currentSessionToken={sessionData.session.token} idPrefix="account-security" />
         ) : (
           <div className="mx-auto max-w-sm p-4">

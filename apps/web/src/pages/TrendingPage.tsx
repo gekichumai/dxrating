@@ -19,13 +19,15 @@ const toAbsoluteChartUrl = (href: string) => new URL(href, siteUrl).toString()
 
 export const buildTrendingQueryOptions = (initialTrendingData?: TrendingData, isServerRender = import.meta.env.SSR) =>
   orpc.analytics.trending.queryOptions({
-    ...(isServerRender || !initialTrendingData ? {} : { initialData: initialTrendingData }),
+    ...(isServerRender || initialTrendingData === null || initialTrendingData === undefined
+      ? {}
+      : { initialData: initialTrendingData }),
     enabled: !isServerRender,
     staleTime: trendingQueryStaleTime,
   })
 
 const TrendingChartsSkeleton: FC<{ label: string }> = ({ label }) => (
-  <div aria-busy="true" aria-label={label} className="w-full" role="status">
+  <output aria-busy="true" aria-label={label} className="block w-full">
     {Array.from({ length: 6 }, (_, index) => (
       <div className="w-full px-4 py-1" key={index}>
         <div className="flex items-center w-full p-1 gap-2 tabular-nums relative">
@@ -48,7 +50,7 @@ const TrendingChartsSkeleton: FC<{ label: string }> = ({ label }) => (
         </div>
       </div>
     ))}
-  </div>
+  </output>
 )
 
 export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => {
@@ -57,9 +59,17 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
   const trendingQuery = useQuery(buildTrendingQueryOptions(initialTrendingData, isServerRender))
   const trendingData = isServerRender ? initialTrendingData : trendingQuery.data
   const trendingResults = trendingData?.results
-  const charts = useMemo(() => (trendingResults ? buildTrendingChartLinks(trendingResults) : []), [trendingResults])
-  const hasDateRange = !!trendingData?.dateFrom && !!trendingData?.dateTo
-  const isLoading = (isServerRender && !initialTrendingData) || trendingQuery.isLoading
+  const charts = useMemo(
+    () => (trendingResults !== null && trendingResults !== undefined ? buildTrendingChartLinks(trendingResults) : []),
+    [trendingResults],
+  )
+  const hasDateRange =
+    trendingData?.dateFrom !== null &&
+    trendingData?.dateFrom !== undefined &&
+    trendingData?.dateFrom !== '' &&
+    trendingData?.dateTo !== ''
+  const isLoading =
+    (isServerRender && (initialTrendingData === null || initialTrendingData === undefined)) || trendingQuery.isLoading
 
   return (
     <main
@@ -150,7 +160,9 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
                       <meta itemProp="name" content="Level" />
                       <meta itemProp="value" content={chart.level} />
                     </span>
-                    {chart.releaseDate && <meta itemProp="datePublished" content={chart.releaseDate} />}
+                    {chart.releaseDate !== null && chart.releaseDate !== undefined && chart.releaseDate !== '' && (
+                      <meta itemProp="datePublished" content={chart.releaseDate} />
+                    )}
                     <SheetListItem sheet={chart} analytics={{ source: 'trending', position: index + 1 }} />
                   </div>
                 </li>

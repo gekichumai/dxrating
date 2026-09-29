@@ -17,14 +17,14 @@ function replaceLanguageResources(
   language: keyof typeof i18nResources,
   resources?: (typeof i18nResources)[keyof typeof i18nResources],
 ) {
-  if (!resources) return
+  if (resources === null || resources === undefined) return
 
   for (const [namespace, entries] of Object.entries(resources)) {
     i18n.addResourceBundle(language, namespace, entries, false, true)
   }
 }
 
-if (import.meta.hot) {
+if (import.meta.hot !== null && import.meta.hot !== undefined) {
   import.meta.hot.accept('./resources/en.json', (mod) => {
     replaceLanguageResources('en', mod?.default)
   })

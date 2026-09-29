@@ -23,16 +23,17 @@ export const SheetListContainer = ({
 }) => {
   const ItemContent = useCallback<ItemContent<FlattenedSheet, unknown>>(
     (index, sheet: FlattenedSheet) => {
-      if (!sheet) return null
-      const analytics = analyticsSource
-        ? {
-            source: analyticsSource,
-            position: index + 1,
-            queryPresent: analyticsQueryPresent,
-            resultCount: analyticsResultCount,
-          }
-        : undefined
-      if (activeSheetId !== undefined && onSheetDialogChange) {
+      if (sheet === undefined) return null
+      const analytics =
+        analyticsSource !== undefined
+          ? {
+              source: analyticsSource,
+              position: index + 1,
+              queryPresent: analyticsQueryPresent,
+              resultCount: analyticsResultCount,
+            }
+          : undefined
+      if (activeSheetId !== undefined && onSheetDialogChange !== undefined) {
         return (
           <SheetListItem
             key={sheet.id}

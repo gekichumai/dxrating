@@ -1,3 +1,4 @@
+import { formatErrorMessage } from '@/utils/formatErrorMessage'
 import { Button, ButtonGroup, IconButton } from '@mui/material'
 import { motion } from 'framer-motion'
 import { type FC, useState } from 'react'
@@ -29,40 +30,50 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     <div className="flex flex-col gap-3">
       <div className="flex items-start gap-4">
         {imgError ? (
-          <motion.div
+          <motion.button
+            aria-label={t('sheet:cover-art-alt', { title: song.title })}
             layout
-            className="overflow-hidden bg-slate-300/50 flex items-center justify-center"
+            className="border-0 p-0 overflow-hidden bg-slate-300/50 flex items-center justify-center"
             variants={imgVariants}
             initial="collapsed"
             animate={imgExpanded ? 'expanded' : 'collapsed'}
             transition={{ type: 'spring', damping: 18, stiffness: 235 }}
             onClick={() => setImgExpanded((p) => !p)}
-            role="button"
+            type="button"
           >
             <MdiImageRemove className="text-zinc-400 text-2xl" />
-          </motion.div>
+          </motion.button>
         ) : (
-          <motion.img
+          <motion.button
+            type="button"
             layout
-            src={coverUrl}
-            alt={t('sheet:cover-art-alt', { title: song.title })}
             className="overflow-hidden bg-slate-300/50"
             variants={imgVariants}
             initial="collapsed"
             animate={imgExpanded ? 'expanded' : 'collapsed'}
             transition={{ type: 'spring', damping: 18, stiffness: 235 }}
             onClick={() => setImgExpanded((p) => !p)}
-            onError={() => setImgError(true)}
-            role="button"
-          />
+            style={{ padding: 0, border: 0 }}
+          >
+            <img
+              src={coverUrl}
+              alt={t('sheet:cover-art-alt', { title: song.title })}
+              onError={() => setImgError(true)}
+              className="block h-full w-full"
+            />
+          </motion.button>
         )}
 
         <div className="flex flex-col gap-1 flex-1 min-w-0">
           <h1
             className="text-xl font-bold leading-tight cursor-pointer truncate"
             onClick={() => {
-              navigator.clipboard.writeText(song.title)
-              toast.success(t('sheet:copy-title.toast-success'), { id: `copy-song-title-${song.songId}` })
+              void navigator.clipboard
+                .writeText(song.title)
+                .then(() => {
+                  toast.success(t('sheet:copy-title.toast-success'), { id: `copy-song-title-${song.songId}` })
+                })
+                .catch((error: unknown) => toast.error(formatErrorMessage(error)))
             }}
             title={t('sheet:copy-title.tooltip')}
           >
