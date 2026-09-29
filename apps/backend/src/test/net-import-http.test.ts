@@ -1,10 +1,15 @@
-import { Effect } from 'effect'
+import { Effect, Layer, ManagedRuntime } from 'effect'
 import { Hono } from 'hono'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NetImportError, NetRequestError } from '../lib/functions/client.js'
+import { createRequestRunner } from '../request-runner.js'
 import { v0Handler, v1Handler } from '../services/functions/fetch-net-records/index.js'
 
-const { login } = vi.hoisted(() => ({ login: vi.fn<() => Effect.Effect<void, NetImportError | NetRequestError>>() }))
+const { login, runApp } = vi.hoisted(() => ({
+  login: vi.fn<() => Effect.Effect<void, NetImportError | NetRequestError>>(),
+  runApp: vi.fn(),
+}))
+vi.mock('../runtime.js', () => ({ runApp }))
 vi.mock('../lib/functions/client.js', async (original) => {
   const actual = await original<typeof import('../lib/functions/client.js')>()
   const { Effect } = await import('effect')
@@ -45,7 +50,13 @@ app.use('*', (c, next) => {
 app.post('/v0', v0Handler)
 app.post('/v1', v1Handler)
 
-beforeEach(() => login.mockReset().mockReturnValue(Effect.void))
+let requests: ReturnType<typeof createRequestRunner<never, never>>
+beforeEach(() => {
+  login.mockReset().mockReturnValue(Effect.void)
+  requests = createRequestRunner(ManagedRuntime.make(Layer.empty))
+  runApp.mockReset().mockImplementation(requests.run)
+})
+afterEach(() => requests.shutdown())
 
 const readEvents = async (response: Response) =>
   (await response.text())
@@ -103,5 +114,43 @@ describe('NET import HTTP compatibility', () => {
       event: 'error',
       data: { code: 'UNKNOWN_ERROR', error: 'upstream connection reset' },
     })
+  })
+
+  it('joins an active SSE producer and its resource finalizer during application shutdown', async () => {
+    const started = Promise.withResolvers<void>()
+    const finalizing = Promise.withResolvers<void>()
+    const release = Promise.withResolvers<void>()
+    let finalized = false
+    login.mockReturnValue(
+      Effect.scoped(
+        Effect.acquireRelease(
+          Effect.sync(() => started.resolve()),
+          () =>
+            Effect.promise(async () => {
+              finalizing.resolve()
+              await release.promise
+              finalized = true
+            }),
+        ).pipe(Effect.andThen(Effect.never)),
+      ),
+    )
+
+    const response = await app.request('/v1', { method: 'POST' })
+    const events = readEvents(response)
+    await started.promise
+    let stopped = false
+    const shutdown = requests.shutdown().then(() => {
+      stopped = true
+    })
+    try {
+      await finalizing.promise
+      expect(stopped).toBe(false)
+      expect(finalized).toBe(false)
+    } finally {
+      release.resolve()
+      await shutdown
+    }
+    expect(finalized).toBe(true)
+    expect(await events).toEqual([{ event: 'progress', data: { state: 'auth:in-progress' } }])
   })
 })
