@@ -133,6 +133,12 @@ pnpm format      # must pass
 pnpm build       # verify no TypeScript errors
 ```
 
+## Fixing Sentry Issues
+
+When asked to fix a Sentry issue, mark it resolved via the commit message ([docs](https://docs.sentry.io/product/releases/?platform=browser#resolving-issues-via-commits)). Put `Fixes <SHORT-ID>` in the commit message (or PR description), using the issue's short ID as shown in Sentry (e.g. `Fixes DXRATING-1A`). Use one `Fixes` line per issue when a commit fixes several.
+
+Sentry then resolves the issue once the release containing the commit ships, and flags it as a regression if it reappears in a later release, so devs get notified.
+
 ## Adding a New API Endpoint
 
 1. Add the contract (input/output Zod schemas + route definition) to `apps/backend/src/contract.ts`.
