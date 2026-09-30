@@ -30,7 +30,7 @@ export const SheetFilterSection: FC<{
         >
           <MdiRestore aria-hidden="true" />
           <span id={resetId} className="sr-only">
-            {t('sheet:sort-and-filter.reset.dialog.confirm')}
+            {t('sheet:sort-and-filter.reset.section')}
           </span>
         </Button>
         <div className="flex-1" />

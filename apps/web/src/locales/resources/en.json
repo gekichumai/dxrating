@@ -120,6 +120,7 @@
     "sort-and-filter.reset.dialog.cancel": "Cancel",
     "sort-and-filter.reset.dialog.confirm": "Reset all",
     "sort-and-filter.reset.button": "Reset all",
+    "sort-and-filter.reset.section": "Reset",
     "tags.add.title": "Add a tag",
     "tags.add.button": "Add",
     "tags.add.toast-success": "Tag added",

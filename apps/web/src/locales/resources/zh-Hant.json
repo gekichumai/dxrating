@@ -120,6 +120,7 @@
     "sort-and-filter.reset.dialog.cancel": "取消",
     "sort-and-filter.reset.dialog.confirm": "重設全部",
     "sort-and-filter.reset.button": "重設全部",
+    "sort-and-filter.reset.section": "重設",
     "tags.add.button": "添加",
     "tags.add.title": "添加標籤",
     "tags.add.toast-failed": "添加標籤失敗：{{error}}。請檢查是否已登錄。",

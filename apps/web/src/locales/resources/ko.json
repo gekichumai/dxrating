@@ -120,6 +120,7 @@
     "sort-and-filter.reset.dialog.cancel": "취소",
     "sort-and-filter.reset.dialog.confirm": "모두 초기화",
     "sort-and-filter.reset.button": "모두 초기화",
+    "sort-and-filter.reset.section": "초기화",
     "tags.add.title": "태그 추가",
     "tags.add.button": "추가",
     "tags.add.toast-success": "태그를 추가했습니다",

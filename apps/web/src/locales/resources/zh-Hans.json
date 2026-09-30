@@ -120,6 +120,7 @@
     "sort-and-filter.reset.dialog.cancel": "取消",
     "sort-and-filter.reset.dialog.confirm": "全部重置",
     "sort-and-filter.reset.button": "全部重置",
+    "sort-and-filter.reset.section": "重置",
     "tags.add.button": "添加",
     "tags.add.title": "添加标签",
     "tags.add.toast-failed": "添加标签失败：{{error}}；请检查是否已登录",

@@ -120,6 +120,7 @@
     "sort-and-filter.reset.dialog.cancel": "キャンセル",
     "sort-and-filter.reset.dialog.confirm": "すべてリセット",
     "sort-and-filter.reset.button": "すべてリセット",
+    "sort-and-filter.reset.section": "リセット",
     "tags.add.button": "追加",
     "tags.add.title": "タグを追加する",
     "tags.add.toast-failed": "タグを追加できませんでした: {{error}}",
