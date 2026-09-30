@@ -32,7 +32,7 @@ describe('VersionRegionSwitcher', () => {
       </AppContextProvider>,
     )
 
-    expect(screen.getByRole('combobox', { name: 'Select DXData Version and Region' })).toBeTruthy()
+    expect(screen.getByRole('combobox', { name: 'Select DXData version and region' })).toBeTruthy()
     expect(screen.getByRole('img', { name: 'MAGiCAL logo' }).getAttribute('fetchpriority')).toBe('high')
   })
 })

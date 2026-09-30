@@ -11,8 +11,8 @@ describe('NotFoundContent', () => {
   it('shows polished not-found copy and a home link', () => {
     render(<NotFoundContent />)
 
-    expect(screen.getByRole('heading', { name: 'Page Not Found' }).tagName).toBe('H1')
+    expect(screen.getByRole('heading', { name: 'Page not found' }).tagName).toBe('H1')
     expect(screen.getByText('This page may have moved, or the link may be outdated.')).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Back to Home' }).getAttribute('href')).toBe('/')
+    expect(screen.getByRole('link', { name: 'Back to home' }).getAttribute('href')).toBe('/')
   })
 })

@@ -211,7 +211,7 @@ const PasskeysSubsection: FC = () => {
         open={confirmDelete.open}
         title={t('auth:user-profile.passkeys.confirm-delete-title')}
         description={t('auth:user-profile.passkeys.confirm-delete-description')}
-        confirmLabel={t('auth:user-profile.confirm-ok')}
+        confirmLabel={t('auth:user-profile.passkeys.confirm-delete-button')}
         cancelLabel={t('auth:user-profile.confirm-cancel')}
         onConfirm={confirmDelete.onConfirm}
         onCancel={confirmDelete.onCancel}
@@ -325,7 +325,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string }> = ({ currentSessio
         open={confirmRevoke.open}
         title={t('auth:user-profile.devices.confirm-revoke-title')}
         description={t('auth:user-profile.devices.confirm-revoke-description')}
-        confirmLabel={t('auth:user-profile.confirm-ok')}
+        confirmLabel={t('auth:user-profile.devices.confirm-revoke-button')}
         cancelLabel={t('auth:user-profile.confirm-cancel')}
         onConfirm={confirmRevoke.onConfirm}
         onCancel={confirmRevoke.onCancel}

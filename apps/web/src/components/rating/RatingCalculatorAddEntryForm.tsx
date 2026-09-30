@@ -100,20 +100,15 @@ export const RatingCalculatorAddEntryForm: FC<{
     (value: string) => {
       if (!value) {
         setAchievementRateError(t('rating-calculator:add-entry.validation.required'))
+        return
       }
-      try {
-        const parsed = Number.parseFloat(value!)
-        if (Number.isNaN(parsed)) {
-          setAchievementRateError(t('rating-calculator:add-entry.validation.invalid-number'))
-        } else if (parsed < 0 || parsed > 101) {
-          setAchievementRateError(t('rating-calculator:add-entry.validation.range'))
-        } else {
-          setAchievementRateError(null)
-        }
-      } catch (e) {
-        setAchievementRateError(
-          `${t('rating-calculator:add-entry.validation.invalid-number')}: ${(e as Error).message}`,
-        )
+      const parsed = Number.parseFloat(value)
+      if (Number.isNaN(parsed)) {
+        setAchievementRateError(t('rating-calculator:add-entry.validation.invalid-number'))
+      } else if (parsed < 0 || parsed > 101) {
+        setAchievementRateError(t('rating-calculator:add-entry.validation.range'))
+      } else {
+        setAchievementRateError(null)
       }
     },
     [t],

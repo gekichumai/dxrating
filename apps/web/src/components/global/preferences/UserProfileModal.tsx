@@ -126,7 +126,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
         open={confirmLogout.open}
         title={t('auth:logout.confirm-title')}
         description={t('auth:logout.confirm-description')}
-        confirmLabel={t('auth:user-profile.confirm-ok')}
+        confirmLabel={t('auth:logout.confirm-button')}
         cancelLabel={t('auth:user-profile.confirm-cancel')}
         onConfirm={confirmLogout.onConfirm}
         onCancel={confirmLogout.onCancel}

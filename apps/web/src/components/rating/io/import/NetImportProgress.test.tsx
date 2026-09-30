@@ -82,9 +82,9 @@ describe('global auto-import settings', () => {
     const trigger = screen.getByRole('button', { name: 'Auto-import' })
     fireEvent.click(trigger)
     for (const radio of screen.getAllByRole('radio')) expect(radio.hasAttribute('disabled')).toBe(true)
-    fireEvent.change(screen.getByLabelText('Your Sega ID'), { target: { value: 'fixture' } })
-    fireEvent.change(screen.getByLabelText('Your Sega ID Password'), { target: { value: 'fixture-password' } })
-    fireEvent.click(screen.getByRole('checkbox', { name: /Remember Credentials/ }))
+    fireEvent.change(screen.getByLabelText('SEGA ID'), { target: { value: 'fixture' } })
+    fireEvent.change(screen.getByLabelText('SEGA ID password'), { target: { value: 'fixture-password' } })
+    fireEvent.click(screen.getByRole('checkbox', { name: /Remember credentials/ }))
     fireEvent.click(screen.getByRole('radio', { name: /^Merge/ }))
     expect(JSON.parse(localStorage.getItem('import-net-records')!)).toEqual({
       region: 'intl',
@@ -96,9 +96,9 @@ describe('global auto-import settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     fireEvent.click(trigger)
-    expect((screen.getByLabelText('Your Sega ID') as HTMLInputElement).value).toBe('fixture')
+    expect((screen.getByLabelText('SEGA ID') as HTMLInputElement).value).toBe('fixture')
     expect((screen.getByRole('radio', { name: /^Merge/ }) as HTMLInputElement).checked).toBe(true)
-    fireEvent.click(screen.getByRole('checkbox', { name: /Remember Credentials/ }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /Remember credentials/ }))
     expect(localStorage.getItem('import-net-records')).toBeNull()
     expect(localStorage.getItem('rating-auto-import-from-net')).toBe('false')
   })
@@ -143,7 +143,7 @@ describe('global auto-import settings', () => {
     localStorage.setItem('rating-auto-import-from-net', '"merge"')
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
     fireEvent.click(screen.getByRole('button', { name: 'Auto-import' }))
-    fireEvent.click(screen.getByRole('button', { name: /Re-import Now/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Re-import now/ }))
     expect(importFromNETRecords).toHaveBeenCalledWith('circle-plus', expect.anything(), 'merge', undefined, {
       region: 'jp',
       username: 'fixture',

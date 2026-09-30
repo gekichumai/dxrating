@@ -85,7 +85,7 @@ export const ConnectedAccountsSection: FC = () => {
         open={confirmDisconnect.open}
         title={t('auth:user-profile.accounts.confirm-disconnect-title')}
         description={t('auth:user-profile.accounts.confirm-disconnect-description')}
-        confirmLabel={t('auth:user-profile.confirm-ok')}
+        confirmLabel={t('auth:user-profile.accounts.confirm-disconnect-button')}
         cancelLabel={t('auth:user-profile.confirm-cancel')}
         onConfirm={confirmDisconnect.onConfirm}
         onCancel={confirmDisconnect.onCancel}

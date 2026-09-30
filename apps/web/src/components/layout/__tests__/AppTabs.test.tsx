@@ -62,12 +62,12 @@ describe('AppTabs', () => {
   it('selects the current route tab and captures deliberate navigation', () => {
     render(<AppTabs />)
 
-    const ratingTab = screen.getByRole('tab', { name: 'My Rating' })
+    const ratingTab = screen.getByRole('tab', { name: 'My rating' })
 
     expect(ratingTab.getAttribute('aria-selected')).toBe('true')
     expect(capture).not.toHaveBeenCalled()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Search Charts' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Search charts' }))
     expect(capture).toHaveBeenCalledWith('tab_switched', {
       tab: 'search',
       source: 'top_navigation',
@@ -81,15 +81,15 @@ describe('AppTabs', () => {
 
     render(<AppTabs />)
 
-    const searchTab = screen.getByRole('tab', { name: 'Search Charts' })
-    const ratingTab = screen.getByRole('tab', { name: 'My Rating' })
+    const searchTab = screen.getByRole('tab', { name: 'Search charts' })
+    const ratingTab = screen.getByRole('tab', { name: 'My rating' })
 
     expect(searchTab.getAttribute('aria-selected')).toBe('true')
     expect(searchTab.getAttribute('aria-busy')).toBe('true')
     expect(ratingTab.getAttribute('aria-selected')).toBe('false')
     expect(within(searchTab).getByRole('progressbar')).toBeTruthy()
 
-    const originalLabel = within(searchTab).getByText('Search Charts')
+    const originalLabel = within(searchTab).getByText('Search charts')
     expect(originalLabel.getAttribute('aria-hidden')).toBe('true')
     expect(originalLabel.getAttribute('style')).toContain('visibility: hidden')
   })
@@ -117,7 +117,7 @@ describe('AppTabs', () => {
 
     render(<AppTabs />)
 
-    const ratingTab = screen.getByRole('tab', { name: 'My Rating' })
+    const ratingTab = screen.getByRole('tab', { name: 'My rating' })
 
     expect(ratingTab.getAttribute('aria-selected')).toBe('true')
     expect(screen.queryByRole('progressbar')).toBeNull()

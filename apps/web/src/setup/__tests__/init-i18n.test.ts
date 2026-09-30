@@ -41,7 +41,7 @@ describe('i18n initialization', () => {
   })
 
   it('resolves supported locales to their own resource bundles', () => {
-    expect(createServerI18n('en').t('root:pages.search.title')).toBe('Search Charts')
+    expect(createServerI18n('en').t('root:pages.search.title')).toBe('Search charts')
     expect(createServerI18n('ja').t('root:pages.search.title')).toBe('譜面検索')
     expect(createServerI18n('ko').t('root:pages.search.title')).toBe('채보 검색')
     expect(createServerI18n('zh-Hans').t('root:pages.search.title')).toBe('搜索谱面')

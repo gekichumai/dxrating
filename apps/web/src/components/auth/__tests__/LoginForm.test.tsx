@@ -88,8 +88,8 @@ describe('LoginForm', () => {
     render(<LoginForm />)
     expect(screen.queryByRole('checkbox')).toBeNull()
     expect(screen.getByRole('link', { name: 'Terms of Service' }).getAttribute('href')).toBe('/terms-of-service')
-    expect(screen.getByText(/By logging in or registering/).textContent).toBe(
-      'By logging in or registering, you agree to the Terms of Service.',
+    expect(screen.getByText(/By signing in or creating an account/).textContent).toBe(
+      'By signing in or creating an account, you agree to the Terms of Service.',
     )
     expect(screen.getByRole('button', { name: 'Continue with Google' }).hasAttribute('disabled')).toBe(false)
     fireEvent.click(screen.getByRole('button', { name: 'Continue with Google' }))
@@ -99,18 +99,18 @@ describe('LoginForm', () => {
   it('switches to one registration form without leaving duplicate controls mounted', () => {
     render(<LoginForm />)
 
-    fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Sign up" }))
+    fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
 
     expect(screen.getAllByRole('form')).toHaveLength(1)
     expect(screen.getAllByLabelText(/^Email/)).toHaveLength(1)
     expect(screen.getAllByLabelText(/^Password/)).toHaveLength(1)
     expect(screen.getAllByTestId('turnstile')).toHaveLength(1)
-    expect(screen.queryByRole('button', { name: 'Sign in with Passkey' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Sign in with passkey' })).toBeNull()
     expect(screen.getByLabelText(/^Email/).getAttribute('id')).toBe('auth-sign-up-email')
     expect(screen.getByLabelText(/^Email/).getAttribute('autocomplete')).toBe('email')
     expect(screen.getByLabelText(/^Password/).getAttribute('id')).toBe('auth-sign-up-password')
     expect(screen.getByLabelText(/^Password/).getAttribute('autocomplete')).toBe('new-password')
-    expect(screen.getByRole('button', { name: 'Sign Up' }).getAttribute('type')).toBe('submit')
+    expect(screen.getByRole('button', { name: 'Create account' }).getAttribute('type')).toBe('submit')
   })
 
   it('starts conditional passkey autofill when the login form opens', async () => {
@@ -131,7 +131,7 @@ describe('LoginForm', () => {
     vi.stubGlobal('PublicKeyCredential', { isConditionalMediationAvailable })
 
     render(<LoginForm />)
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in with Passkey' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in with passkey' }))
 
     await waitFor(() => expect(passkeySignIn).toHaveBeenCalledWith())
   })

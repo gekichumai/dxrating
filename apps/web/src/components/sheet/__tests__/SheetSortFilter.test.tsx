@@ -78,7 +78,7 @@ describe('SheetSortFilter', () => {
     const icons = trigger.querySelectorAll('svg')
     expect(icons).toHaveLength(2)
     expect(icons[1]?.getAttribute('class')).not.toContain('rotate-180')
-    expect(screen.queryByText('Reset All')).toBeNull()
+    expect(screen.queryByText('Reset all')).toBeNull()
 
     fireEvent.click(trigger)
 
@@ -88,7 +88,7 @@ describe('SheetSortFilter', () => {
     expect(panel).not.toBeNull()
     expect(panel?.getAttribute('class')).toContain('transition-[opacity,transform,filter]')
     expect(panel?.closest('.MuiCollapse-root')).not.toBeNull()
-    expect(screen.getByText('Reset All')).toBeTruthy()
+    expect(screen.getByText('Reset all')).toBeTruthy()
     expect(screen.queryByText('Filter & Sort')).toBeNull()
   })
 

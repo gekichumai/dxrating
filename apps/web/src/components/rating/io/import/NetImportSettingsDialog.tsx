@@ -17,7 +17,7 @@ import {
   Typography,
 } from '@mui/material'
 import { type FC, useState, useSyncExternalStore } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { useLocalStorage } from 'react-use'
 import { match } from 'ts-pattern'
 import IconMdiChevronDown from '~icons/mdi/chevron-down'
@@ -201,24 +201,30 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
 
           <div className="text-sm text-zinc-500 [&>p]:mb-1">
             <p className="font-bold">
-              {t('rating-calculator:io.import.net-records.dialog.security-notice.credentials')}{' '}
-              <a
-                href="https://github.com/gekichumai/dxrating/tree/main/apps/backend"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
-                {t('rating-calculator:io.import.net-records.dialog.security-notice.source-code')}
-              </a>
-              .
+              <Trans
+                t={t}
+                i18nKey="rating-calculator:io.import.net-records.dialog.security-notice.credentials"
+                components={{
+                  source: (
+                    <a
+                      href="https://github.com/gekichumai/dxrating/tree/main/apps/backend"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    />
+                  ),
+                }}
+              />
             </p>
 
             <p className="text-xs text-zinc-4">
-              {t('rating-calculator:io.import.net-records.dialog.security-notice.slsa.text')}{' '}
-              <a href="https://slsa.dev/" target="_blank" rel="noopener noreferrer" className="underline">
-                {t('rating-calculator:io.import.net-records.dialog.security-notice.slsa.framework')}
-              </a>
-              {t('rating-calculator:io.import.net-records.dialog.security-notice.slsa.description')}
+              <Trans
+                t={t}
+                i18nKey="rating-calculator:io.import.net-records.dialog.security-notice.slsa"
+                components={{
+                  slsa: <a href="https://slsa.dev/" target="_blank" rel="noopener noreferrer" className="underline" />,
+                }}
+              />
             </p>
           </div>
         </DialogContentText>
