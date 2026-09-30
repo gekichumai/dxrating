@@ -1,5 +1,6 @@
 {
   "root": {
+    "skip-to-content": "본문으로 건너뛰기",
     "pages.search.title": "채보 검색",
     "pages.search.seo-title": "채보 및 곡",
     "pages.search.seo-description": "곡명, 아티스트 또는 난이도로 모든 maimai DX 채보를 검색하세요. 내부 레벨, 노트 수와 상세 채보 정보를 확인할 수 있습니다.",
@@ -45,6 +46,7 @@
     "version-update.keep": "{{current}} 유지"
   },
   "sheet": {
+    "sort.remove": "정렬 조건 {{index}} 삭제",
     "filter-current-version": "현재 B15 필터: {{version}} 채보만 표시",
     "search-summary": "{{found}} / {{total}}개 채보 ({{elapsed}}ms)",
     "chart-discovery.recent.title": "최근 업데이트된 채보",

@@ -88,12 +88,14 @@ body,
   transform-origin: center 0.5rem;
 }
 
-.radix__collapsible-content[data-state='open'] {
-  animation: slideDown 275ms cubic-bezier(0.33, 1, 0.68, 1);
-}
+@media (prefers-reduced-motion: no-preference) {
+  .radix__collapsible-content[data-state='open'] {
+    animation: slideDown 275ms cubic-bezier(0.33, 1, 0.68, 1);
+  }
 
-.radix__collapsible-content[data-state='closed'] {
-  animation: slideUp 275ms cubic-bezier(0.33, 1, 0.68, 1);
+  .radix__collapsible-content[data-state='closed'] {
+    animation: slideUp 275ms cubic-bezier(0.33, 1, 0.68, 1);
+  }
 }
 
 @keyframes slideDown {
@@ -182,4 +184,25 @@ html {
     scrollbar-color: auto;
     scrollbar-width: auto;
   }
+}
+
+.skip-to-content {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1500;
+  padding: 0.75rem 1rem;
+  color: CanvasText;
+  background: Canvas;
+  transform: translateY(calc(-100% - 2rem));
+}
+
+.skip-to-content:focus-visible {
+  transform: none;
+  outline: auto;
+}
+
+.MuiButtonBase-root:focus-visible {
+  outline: auto;
+  outline-offset: 2px;
 }

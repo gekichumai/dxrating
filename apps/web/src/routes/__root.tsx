@@ -171,12 +171,16 @@ function RootComponent() {
 }
 
 function AppLayout() {
+  const { t } = useTranslation(['root'])
   const versionTheme = useVersionTheme()
   const { pathname } = useLocation()
   const isLegalPage = pathname === '/privacy-policy' || pathname === '/terms-of-service'
 
   return (
     <div className="h-full w-full relative">
+      <a href="#main-content" className="skip-to-content">
+        {t('root:skip-to-content')}
+      </a>
       <VersionBackground />
 
       {isLegalPage && (
@@ -189,7 +193,9 @@ function AppLayout() {
       <div className="h-full w-full relative">
         <Suspense fallback={fallbackElement}>
           <RootLayout />
-          <Outlet />
+          <main id="main-content" tabIndex={-1}>
+            <Outlet />
+          </main>
         </Suspense>
       </div>
     </div>

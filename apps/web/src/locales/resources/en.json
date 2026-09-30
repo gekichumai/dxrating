@@ -1,5 +1,6 @@
 {
   "root": {
+    "skip-to-content": "Skip to content",
     "pages.search.title": "Search Charts",
     "pages.search.seo-title": "Charts & Songs",
     "pages.search.seo-description": "Browse all maimai DX charts by song title, artist, or difficulty. View internal levels, note counts, and detailed chart information.",
@@ -45,6 +46,7 @@
     "version-update.keep": "Keep {{current}}"
   },
   "sheet": {
+    "sort.remove": "Remove sort rule {{index}}",
     "filter-current-version": "Filter Current B15: Show only {{version}} charts",
     "search-summary": "{{found}} / {{total}} charts ({{elapsed}}ms)",
     "chart-discovery.recent.title": "Recently updated charts",

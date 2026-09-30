@@ -33,6 +33,7 @@ const SheetCategoryFilterInputCategory = ({
   return (
     <ButtonBase
       {...bind()}
+      aria-pressed={selected}
       className="rounded-lg overflow-hidden"
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

@@ -16,7 +16,7 @@ export function LegalLayout({
   const { t } = useTranslation('auth')
   return (
     <div className="legal-page">
-      <main className="legal-document">
+      <div className="legal-document">
         <button
           className="legal-back"
           type="button"
@@ -49,7 +49,7 @@ export function LegalLayout({
           </a>
           <a href="https://discord.gg/8CFgUPxyrU">{t('terms.support')}</a>
         </footer>
-      </main>
+      </div>
     </div>
   )
 }

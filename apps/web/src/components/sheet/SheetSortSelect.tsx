@@ -62,8 +62,13 @@ export const SheetSortSelect: FC<{
                 size="small"
                 {...(index > 0 && {
                   endAdornment: (
-                    <IconButton size="small" onClick={() => remove(index)}>
-                      <MdiClose />
+                    <IconButton
+                      size="small"
+                      aria-label={t('sheet:sort.remove', { index: index + 1 })}
+                      disabled={queryActive}
+                      onClick={() => remove(index)}
+                    >
+                      <MdiClose aria-hidden="true" />
                     </IconButton>
                   ),
                 })}

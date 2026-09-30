@@ -33,7 +33,7 @@ export const DevelopersPage = () => {
   const { t } = useTranslation(['developers'])
 
   return (
-    <main
+    <div
       className="w-full max-w-5xl mx-auto px-4 py-8 md:py-12 pb-global text-slate-950"
       itemScope
       itemType="https://schema.org/WebPage"
@@ -128,6 +128,6 @@ export const DevelopersPage = () => {
           </section>
         </div>
       </article>
-    </main>
+    </div>
   )
 }

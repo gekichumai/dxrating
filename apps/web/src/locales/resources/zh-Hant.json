@@ -1,5 +1,6 @@
 {
   "root": {
+    "skip-to-content": "跳至主要內容",
     "pages.search.title": "搜尋譜面",
     "pages.search.seo-title": "搜尋譜面",
     "pages.search.seo-description": "按歌曲名、藝術家或難度瀏覽所有 maimai DX 譜面，查看譜面定數、音符數和詳細譜面資訊。",
@@ -45,6 +46,7 @@
     "version-update.keep": "保留 {{current}}"
   },
   "sheet": {
+    "sort.remove": "移除排序條件 {{index}}",
     "search": "搜尋",
     "search-placeholder": "曲名、曲師、譜師、別名或 Music ID",
     "ocr": "啟動 OCR",

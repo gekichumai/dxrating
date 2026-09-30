@@ -62,7 +62,7 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
   const isLoading = (isServerRender && !initialTrendingData) || trendingQuery.isLoading
 
   return (
-    <main
+    <div
       className="flex-container w-full max-w-5xl px-4 pb-global"
       itemScope
       itemType="https://schema.org/CollectionPage"
@@ -161,6 +161,6 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
           <Alert severity="info">{t('sheet:chart-discovery.trending.empty')}</Alert>
         )}
       </div>
-    </main>
+    </div>
   )
 }

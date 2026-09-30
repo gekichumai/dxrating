@@ -22,6 +22,7 @@ export const SheetFavoritesFilter: FC<{
   return (
     <SheetFilterSection titleLeft={t('sheet:filter.favorites.title')} reset={reset}>
       <Chip
+        aria-pressed={value}
         icon={value ? <MdiStar className="!text-amber-500" /> : <MdiStarOutline />}
         label={t('sheet:filter.favorites.only')}
         color={value ? 'primary' : 'default'}

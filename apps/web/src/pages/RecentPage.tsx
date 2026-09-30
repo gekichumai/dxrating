@@ -18,7 +18,7 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
   const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
 
   return (
-    <main
+    <div
       className="flex-container w-full max-w-5xl px-4 pb-global"
       itemScope
       itemType="https://schema.org/CollectionPage"
@@ -117,6 +117,6 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
           })}
         </ol>
       </div>
-    </main>
+    </div>
   )
 }

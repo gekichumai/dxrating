@@ -1,5 +1,6 @@
 {
   "root": {
+    "skip-to-content": "本文へスキップ",
     "pages.search.title": "譜面検索",
     "pages.search.seo-title": "譜面検索",
     "pages.search.seo-description": "maimai DX の譜面を、楽曲名、アーティスト、難易度から検索できます。譜面定数、ノーツ数、詳しい譜面情報も確認できます。",
@@ -45,6 +46,7 @@
     "version-update.keep": "{{current}}を使い続ける"
   },
   "sheet": {
+    "sort.remove": "並べ替え条件 {{index}} を削除",
     "search": "検索",
     "search-placeholder": "曲名、アーティスト、譜面製作者、別名、Music ID",
     "ocr": "OCRをスタート",
