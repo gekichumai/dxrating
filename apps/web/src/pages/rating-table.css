@@ -188,11 +188,11 @@
 
   .rating-table .rating-col--achievementRate {
     width: 86px;
-    text-align: right;
+    text-align: end;
   }
   .rating-table .rating-col--rating {
     width: 56px;
-    text-align: right;
+    text-align: end;
   }
   .rating-table thead th {
     padding: 8px 6px;
@@ -246,7 +246,7 @@
     line-height: 20px;
   }
   .rating-table .rating-row-remove {
-    margin-right: -7px;
+    margin-inline-end: -7px;
     color: rgb(15 23 42 / 55%);
   }
   .rating-col--achievementRate > span {
@@ -327,7 +327,7 @@
 .rating-statistics .rating-statistics-toggle {
   position: absolute;
   top: 0;
-  right: 0;
+  inset-inline-end: 0;
 }
 .rating-statistics--details {
   padding-top: 40px;
@@ -354,17 +354,28 @@
   border-bottom: 1px solid rgb(15 23 42 / 10%);
 }
 .rating-add-fields {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 180px auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: start;
 }
 .rating-add-fields > * {
   min-width: 0;
 }
+.rating-add-fields > .MuiAutocomplete-root {
+  flex: 1 1 240px;
+}
+.rating-add-fields > .rating-add-achievement {
+  flex: 0 1 180px;
+}
+.rating-add-fields > .rating-add-submit {
+  flex: 0 1 auto;
+  max-width: 100%;
+}
 .rating-add-fields .rating-add-submit {
   min-height: 40px;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .rating-add-preview {
   display: flex;
@@ -381,10 +392,10 @@
   box-shadow: none;
 }
 .rating-table th.rating-col--chart {
-  padding-left: 16px;
+  padding-inline-start: 16px;
 }
 .rating-table .rating-chart-link {
-  padding-left: 16px !important;
+  padding-inline-start: 16px !important;
 }
 @media (min-width: 1280px) {
   .rating-statistics .rating-statistics-overview {
@@ -412,20 +423,22 @@
     padding: 12px;
   }
   .rating-add-fields {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 12px 8px;
+    gap: 12px;
   }
   .rating-add-fields > .MuiAutocomplete-root {
-    grid-column: 1 / -1;
+    flex-basis: 100%;
+  }
+  .rating-add-fields > .rating-add-achievement {
+    flex-grow: 1;
   }
   .rating-add-preview {
     flex-direction: column;
     align-items: stretch;
   }
   .rating-table th.rating-col--chart {
-    padding-left: 12px;
+    padding-inline-start: 12px;
   }
   .rating-table .rating-chart-link {
-    padding-left: 12px !important;
+    padding-inline-start: 12px !important;
   }
 }
