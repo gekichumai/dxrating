@@ -65,10 +65,10 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: '1.93'
+          toolchain: '1.98'
 
       - name: Cache producer build
-        uses: Swatinem/rust-cache@v2.9.1
+        uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: '_producer/dxdata-assembly-line -> target'
 
