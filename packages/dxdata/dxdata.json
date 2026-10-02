@@ -134989,7 +134989,7 @@
                     "isSpecial": false,
                     "version": "Splash",
                     "internalId": 11154,
-                    "releaseDate": "2020-09-17"
+                    "releaseDate": "2026-10-02"
                 },
                 {
                     "type": "dx",
@@ -135017,7 +135017,7 @@
                     "isSpecial": false,
                     "version": "Splash",
                     "internalId": 11154,
-                    "releaseDate": "2020-09-17"
+                    "releaseDate": "2026-10-02"
                 },
                 {
                     "type": "dx",
@@ -135045,7 +135045,7 @@
                     "isSpecial": false,
                     "version": "Splash",
                     "internalId": 11154,
-                    "releaseDate": "2020-09-17"
+                    "releaseDate": "2026-10-02"
                 },
                 {
                     "type": "dx",
@@ -135073,7 +135073,7 @@
                     "isSpecial": false,
                     "version": "Splash",
                     "internalId": 11154,
-                    "releaseDate": "2020-09-17",
+                    "releaseDate": "2026-10-02",
                     "multiverInternalLevelValue": {
                         "CiRCLE": 12.9,
                         "CiRCLE PLUS": 12.9,
@@ -135082,6 +135082,118 @@
                         "UNiVERSE": 12.9,
                         "UNiVERSE PLUS": 12.9
                     }
+                },
+                {
+                    "type": "std",
+                    "difficulty": "basic",
+                    "level": "4",
+                    "internalLevelValue": 4.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "internalId": 1154,
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "std",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "internalId": 1154,
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "std",
+                    "difficulty": "expert",
+                    "level": "10+",
+                    "internalLevelValue": 10.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "internalId": 1154,
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "std",
+                    "difficulty": "master",
+                    "level": "13+",
+                    "internalLevelValue": 13.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "internalId": 1154,
+                    "releaseDate": "2026-10-02"
                 }
             ],
             "searchAcronyms": [
@@ -254674,6 +254786,611 @@
                 }
             ],
             "searchAcronyms": []
+        },
+        {
+            "songId": "OV3RCLOCK",
+            "category": "maimai",
+            "title": "OV3RCLOCK",
+            "artist": "Alicemetix",
+            "bpm": null,
+            "imageName": "ed2b18829927219282dd0047513bbbbcfc7099d7bbd90cc7e6eb4c4be467fc43",
+            "isNew": true,
+            "isLocked": true,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "6",
+                    "internalLevelValue": 6.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "7+",
+                    "internalLevelValue": 7.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "12+",
+                    "internalLevelValue": 12.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "14+",
+                    "internalLevelValue": 14.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "All Over Again",
+            "category": "ゲーム＆バラエティ",
+            "title": "All Over Again",
+            "artist": "Zekk",
+            "bpm": null,
+            "imageName": "5983c1d270cee81755e60a7bb5d14b0a6bde6fddfa561384e51106df6d99537c",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "5",
+                    "internalLevelValue": 5.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "7+",
+                    "internalLevelValue": 7.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "11+",
+                    "internalLevelValue": 11.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13+",
+                    "internalLevelValue": 13.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "Energy",
+            "category": "ゲーム＆バラエティ",
+            "title": "Energy",
+            "artist": "Ryo Nakamura",
+            "bpm": null,
+            "imageName": "95c799276458085376e42b6a99de83f8fad1545befcd96b66ba1a8e185505c8e",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10+",
+                    "internalLevelValue": 10.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13+",
+                    "internalLevelValue": 13.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "Crossfire",
+            "category": "ゲーム＆バラエティ",
+            "title": "Crossfire",
+            "artist": "Blacklolita",
+            "bpm": null,
+            "imageName": "5d1c6000bb32f7efbc8274cfdd93deeb28ae0bc34f4d4f94fa9c636e012080a2",
+            "isNew": true,
+            "isLocked": true,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "4",
+                    "internalLevelValue": 4.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "7",
+                    "internalLevelValue": 7.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "11",
+                    "internalLevelValue": 11.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13+",
+                    "internalLevelValue": 13.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "RE!NCARN4T10N",
+            "category": "ゲーム＆バラエティ",
+            "title": "RE!NCARN4T10N",
+            "artist": "xi",
+            "bpm": null,
+            "imageName": "e4384b9ab75be9161170d97d272be1c23ab7bd6688fdca79af3df1fcfd2345ed",
+            "isNew": true,
+            "isLocked": true,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "6",
+                    "internalLevelValue": 6.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "8",
+                    "internalLevelValue": 8.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "12",
+                    "internalLevelValue": 12.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "14",
+                    "internalLevelValue": 14.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-02"
+                }
+            ],
+            "searchAcronyms": []
         }
     ],
     "categories": [
@@ -254907,5 +255624,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-10-01T20:00:13.432612361+00:00"
+    "updateTime": "2026-10-02T02:00:11.832275556+00:00"
 }
