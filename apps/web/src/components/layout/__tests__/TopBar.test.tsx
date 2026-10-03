@@ -16,7 +16,7 @@ vi.mock('~icons/simple-icons/qq', () => ({
   default: ({ className }: { className?: string }) => <svg className={className} />,
 }))
 
-vi.mock('~icons/mdi/forum-outline', () => ({
+vi.mock('~icons/mdi/chevron-down', () => ({
   default: ({ className }: { className?: string }) => <svg className={className} />,
 }))
 
