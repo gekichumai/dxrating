@@ -80,7 +80,7 @@ describe('TopBar', () => {
       within(menu)
         .getAllByRole('menuitem')
         .map((item) => item.textContent),
-    ).toEqual(['Discord', 'QQ Group', 'GitHub'])
+    ).toEqual(['Discord', 'QQ group', 'GitHub'])
   })
 
   it('uses a higher contrast version stamp over the themed header color', () => {
