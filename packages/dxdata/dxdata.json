@@ -247254,8 +247254,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247282,8 +247282,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247310,8 +247310,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247338,8 +247338,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247382,8 +247382,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247410,8 +247410,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247438,8 +247438,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247466,8 +247466,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247510,8 +247510,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247538,8 +247538,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247566,8 +247566,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247594,8 +247594,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247638,8 +247638,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -254883,14 +254883,14 @@
                     "difficulty": "master",
                     "level": "14+",
                     "internalLevelValue": 14.6,
-                    "noteDesigner": "-",
+                    "noteDesigner": "LuxizheLemon",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 685,
+                        "hold": 40,
+                        "slide": 91,
+                        "touch": 24,
+                        "break": 87,
+                        "total": 927
                     },
                     "regions": {
                         "jp": true,
@@ -254913,7 +254913,7 @@
             "category": "ゲーム＆バラエティ",
             "title": "All Over Again",
             "artist": "Zekk",
-            "bpm": null,
+            "bpm": 210.0,
             "imageName": "5983c1d270cee81755e60a7bb5d14b0a6bde6fddfa561384e51106df6d99537c",
             "isNew": true,
             "isLocked": false,
@@ -254949,7 +254949,7 @@
                     "type": "dx",
                     "difficulty": "advanced",
                     "level": "7+",
-                    "internalLevelValue": 7.6,
+                    "internalLevelValue": 7.8,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -254976,7 +254976,7 @@
                     "type": "dx",
                     "difficulty": "expert",
                     "level": "11+",
-                    "internalLevelValue": 11.6,
+                    "internalLevelValue": 11.8,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255003,7 +255003,7 @@
                     "type": "dx",
                     "difficulty": "master",
                     "level": "13+",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.9,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255070,7 +255070,7 @@
                     "type": "dx",
                     "difficulty": "advanced",
                     "level": "6",
-                    "internalLevelValue": 6.0,
+                    "internalLevelValue": 6.4,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255124,7 +255124,7 @@
                     "type": "dx",
                     "difficulty": "master",
                     "level": "13+",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.8,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255191,7 +255191,7 @@
                     "type": "dx",
                     "difficulty": "advanced",
                     "level": "7",
-                    "internalLevelValue": 7.0,
+                    "internalLevelValue": 7.5,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255245,7 +255245,7 @@
                     "type": "dx",
                     "difficulty": "master",
                     "level": "13+",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.9,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255276,7 +255276,7 @@
             "category": "ゲーム＆バラエティ",
             "title": "RE!NCARN4T10N",
             "artist": "xi",
-            "bpm": null,
+            "bpm": 186.0,
             "imageName": "e4384b9ab75be9161170d97d272be1c23ab7bd6688fdca79af3df1fcfd2345ed",
             "isNew": true,
             "isLocked": true,
@@ -255312,7 +255312,7 @@
                     "type": "dx",
                     "difficulty": "advanced",
                     "level": "8",
-                    "internalLevelValue": 8.0,
+                    "internalLevelValue": 8.3,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255339,7 +255339,7 @@
                     "type": "dx",
                     "difficulty": "expert",
                     "level": "12",
-                    "internalLevelValue": 12.0,
+                    "internalLevelValue": 12.2,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255366,7 +255366,7 @@
                     "type": "dx",
                     "difficulty": "master",
                     "level": "14",
-                    "internalLevelValue": 14.0,
+                    "internalLevelValue": 14.3,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255624,5 +255624,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-10-02T02:00:11.832275556+00:00"
+    "updateTime": "2026-10-03T19:00:11.181294618+00:00"
 }
