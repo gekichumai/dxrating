@@ -1,6 +1,6 @@
 import { AppContextProvider } from '@/models/context/AppContext'
 import { initI18n } from '@/setup/init-i18n'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { TopBar } from '../TopBar'
 
@@ -9,6 +9,14 @@ vi.mock('~icons/mdi/github', () => ({
 }))
 
 vi.mock('~icons/simple-icons/discord', () => ({
+  default: ({ className }: { className?: string }) => <svg className={className} />,
+}))
+
+vi.mock('~icons/simple-icons/qq', () => ({
+  default: ({ className }: { className?: string }) => <svg className={className} />,
+}))
+
+vi.mock('~icons/mdi/chevron-down', () => ({
   default: ({ className }: { className?: string }) => <svg className={className} />,
 }))
 
@@ -53,6 +61,26 @@ describe('TopBar', () => {
     expect(screen.getByRole('link', { name: 'Open DXRating on GitHub' }).getAttribute('href')).toBe(
       'https://github.com/gekichumai/dxrating',
     )
+    expect(
+      screen.getByRole('link', { name: 'Join the DXRating QQ group (developer chat)' }).getAttribute('href'),
+    ).toMatch(/^https:\/\/qun\.qq\.com\//)
+  })
+
+  it('collects community links into one menu for small screens', () => {
+    render(
+      <AppContextProvider>
+        <TopBar />
+      </AppContextProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Community' }))
+
+    const menu = screen.getByRole('menu')
+    expect(
+      within(menu)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent),
+    ).toEqual(['Discord', 'QQ group', 'GitHub'])
   })
 
   it('uses a higher contrast version stamp over the themed header color', () => {
