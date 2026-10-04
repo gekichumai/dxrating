@@ -135115,7 +135115,7 @@
                     "type": "std",
                     "difficulty": "advanced",
                     "level": "6",
-                    "internalLevelValue": 6.0,
+                    "internalLevelValue": 6.8,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -135143,7 +135143,7 @@
                     "type": "std",
                     "difficulty": "expert",
                     "level": "10+",
-                    "internalLevelValue": 10.6,
+                    "internalLevelValue": 10.7,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -135171,7 +135171,7 @@
                     "type": "std",
                     "difficulty": "master",
                     "level": "13+",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.8,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -254813,8 +254813,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -254828,7 +254828,7 @@
                     "type": "dx",
                     "difficulty": "advanced",
                     "level": "7+",
-                    "internalLevelValue": 7.6,
+                    "internalLevelValue": 7.9,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -254840,8 +254840,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -254867,8 +254867,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -254882,7 +254882,7 @@
                     "type": "dx",
                     "difficulty": "master",
                     "level": "14+",
-                    "internalLevelValue": 14.6,
+                    "internalLevelValue": 14.8,
                     "noteDesigner": "LuxizheLemon",
                     "noteCounts": {
                         "tap": 685,
@@ -254894,8 +254894,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -255624,5 +255624,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-10-03T19:00:11.181294618+00:00"
+    "updateTime": "2026-10-04T11:00:12.368422236+00:00"
 }
