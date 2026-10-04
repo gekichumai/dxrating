@@ -135090,12 +135090,12 @@
                     "internalLevelValue": 4.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
+                        "tap": 174,
+                        "hold": 10,
+                        "slide": 9,
                         "touch": null,
-                        "break": null,
-                        "total": null
+                        "break": 4,
+                        "total": 197
                     },
                     "regions": {
                         "jp": true,
@@ -135118,12 +135118,12 @@
                     "internalLevelValue": 6.8,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
+                        "tap": 280,
+                        "hold": 18,
+                        "slide": 14,
                         "touch": null,
-                        "break": null,
-                        "total": null
+                        "break": 12,
+                        "total": 324
                     },
                     "regions": {
                         "jp": true,
@@ -135144,14 +135144,14 @@
                     "difficulty": "expert",
                     "level": "10+",
                     "internalLevelValue": 10.7,
-                    "noteDesigner": "-",
+                    "noteDesigner": "Luxizhel",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
+                        "tap": 427,
+                        "hold": 78,
+                        "slide": 55,
                         "touch": null,
-                        "break": null,
-                        "total": null
+                        "break": 44,
+                        "total": 604
                     },
                     "regions": {
                         "jp": true,
@@ -135172,14 +135172,14 @@
                     "difficulty": "master",
                     "level": "13+",
                     "internalLevelValue": 13.8,
-                    "noteDesigner": "-",
+                    "noteDesigner": "サファ太",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
+                        "tap": 592,
+                        "hold": 56,
+                        "slide": 174,
                         "touch": null,
-                        "break": null,
-                        "total": null
+                        "break": 93,
+                        "total": 915
                     },
                     "regions": {
                         "jp": true,
@@ -252446,11 +252446,11 @@
                     "internalLevelValue": 5.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
+                        "tap": 220,
+                        "hold": 14,
+                        "slide": 4,
+                        "touch": 14,
+                        "break": 2,
                         "total": 254
                     },
                     "regions": {
@@ -252473,11 +252473,11 @@
                     "internalLevelValue": 8.5,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
+                        "tap": 309,
+                        "hold": 18,
+                        "slide": 18,
+                        "touch": 41,
+                        "break": 8,
                         "total": 394
                     },
                     "regions": {
@@ -252500,11 +252500,11 @@
                     "internalLevelValue": 12.8,
                     "noteDesigner": "サファ太",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
+                        "tap": 346,
+                        "hold": 85,
+                        "slide": 66,
+                        "touch": 37,
+                        "break": 69,
                         "total": 603
                     },
                     "regions": {
@@ -252527,11 +252527,11 @@
                     "internalLevelValue": 14.4,
                     "noteDesigner": "せめんともり",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
+                        "tap": 664,
+                        "hold": 101,
+                        "slide": 66,
+                        "touch": 57,
+                        "break": 91,
                         "total": 979
                     },
                     "regions": {
@@ -254429,7 +254429,7 @@
             "category": "ゲーム＆バラエティ",
             "title": "天靈靈地靈靈",
             "artist": "iKz feat.小可學妹",
-            "bpm": null,
+            "bpm": 155.0,
             "imageName": "4e6ce472a7e3d21108063c8fc7ddd276c89ec24d297c06b5e52aabd01b108b39",
             "isNew": true,
             "isLocked": false,
@@ -254441,12 +254441,12 @@
                     "internalLevelValue": 3.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 158,
+                        "hold": 9,
+                        "slide": 4,
+                        "touch": 13,
+                        "break": 8,
+                        "total": 192
                     },
                     "regions": {
                         "jp": true,
@@ -254468,12 +254468,12 @@
                     "internalLevelValue": 6.5,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 246,
+                        "hold": 20,
+                        "slide": 8,
+                        "touch": 26,
+                        "break": 10,
+                        "total": 310
                     },
                     "regions": {
                         "jp": true,
@@ -254493,14 +254493,14 @@
                     "difficulty": "expert",
                     "level": "10",
                     "internalLevelValue": 10.5,
-                    "noteDesigner": "-",
+                    "noteDesigner": "サファ太",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 385,
+                        "hold": 54,
+                        "slide": 23,
+                        "touch": 15,
+                        "break": 72,
+                        "total": 549
                     },
                     "regions": {
                         "jp": true,
@@ -254520,14 +254520,14 @@
                     "difficulty": "master",
                     "level": "13",
                     "internalLevelValue": 13.4,
-                    "noteDesigner": "-",
+                    "noteDesigner": "アマリリス",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 608,
+                        "hold": 51,
+                        "slide": 80,
+                        "touch": 75,
+                        "break": 102,
+                        "total": 916
                     },
                     "regions": {
                         "jp": true,
@@ -254550,7 +254550,7 @@
             "category": "ゲーム＆バラエティ",
             "title": "The Happycore Idol",
             "artist": "3R2",
-            "bpm": null,
+            "bpm": 170.0,
             "imageName": "f84fb937a5c65eb49529a3a30c65319fccbd9eb25cbf15b55606c64cd4e4758d",
             "isNew": true,
             "isLocked": false,
@@ -254562,12 +254562,12 @@
                     "internalLevelValue": 3.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 154,
+                        "hold": 8,
+                        "slide": 4,
+                        "touch": 8,
+                        "break": 5,
+                        "total": 179
                     },
                     "regions": {
                         "jp": true,
@@ -254589,12 +254589,12 @@
                     "internalLevelValue": 6.7,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 279,
+                        "hold": 14,
+                        "slide": 6,
+                        "touch": 24,
+                        "break": 8,
+                        "total": 331
                     },
                     "regions": {
                         "jp": true,
@@ -254614,14 +254614,14 @@
                     "difficulty": "expert",
                     "level": "10",
                     "internalLevelValue": 10.5,
-                    "noteDesigner": "-",
+                    "noteDesigner": "発光ビーバー",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 345,
+                        "hold": 60,
+                        "slide": 18,
+                        "touch": 22,
+                        "break": 17,
+                        "total": 462
                     },
                     "regions": {
                         "jp": true,
@@ -254641,14 +254641,14 @@
                     "difficulty": "master",
                     "level": "13+",
                     "internalLevelValue": 13.7,
-                    "noteDesigner": "-",
+                    "noteDesigner": "サファ太",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 547,
+                        "hold": 55,
+                        "slide": 92,
+                        "touch": 20,
+                        "break": 68,
+                        "total": 782
                     },
                     "regions": {
                         "jp": true,
@@ -254671,7 +254671,7 @@
             "category": "ゲーム＆バラエティ",
             "title": "XODUS",
             "artist": "DJ Myosuke & Gram",
-            "bpm": null,
+            "bpm": 202.0,
             "imageName": "c90a10a34d3d7606c36ac69817de4a85ddb7d61e4647ddd07c229fd313e1e95f",
             "isNew": true,
             "isLocked": true,
@@ -254683,12 +254683,12 @@
                     "internalLevelValue": 6.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 200,
+                        "hold": 12,
+                        "slide": 6,
+                        "touch": 15,
+                        "break": 7,
+                        "total": 240
                     },
                     "regions": {
                         "jp": true,
@@ -254710,12 +254710,12 @@
                     "internalLevelValue": 8.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 308,
+                        "hold": 16,
+                        "slide": 10,
+                        "touch": 23,
+                        "break": 4,
+                        "total": 361
                     },
                     "regions": {
                         "jp": true,
@@ -254735,14 +254735,14 @@
                     "difficulty": "expert",
                     "level": "12+",
                     "internalLevelValue": 12.8,
-                    "noteDesigner": "-",
+                    "noteDesigner": "けんけん法師",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 598,
+                        "hold": 20,
+                        "slide": 26,
+                        "touch": 17,
+                        "break": 36,
+                        "total": 697
                     },
                     "regions": {
                         "jp": true,
@@ -254762,14 +254762,14 @@
                     "difficulty": "master",
                     "level": "14",
                     "internalLevelValue": 14.4,
-                    "noteDesigner": "-",
+                    "noteDesigner": "発光ビーバー",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 810,
+                        "hold": 71,
+                        "slide": 78,
+                        "touch": 41,
+                        "break": 32,
+                        "total": 1032
                     },
                     "regions": {
                         "jp": true,
@@ -254792,7 +254792,7 @@
             "category": "maimai",
             "title": "OV3RCLOCK",
             "artist": "Alicemetix",
-            "bpm": null,
+            "bpm": 118.0,
             "imageName": "ed2b18829927219282dd0047513bbbbcfc7099d7bbd90cc7e6eb4c4be467fc43",
             "isNew": true,
             "isLocked": true,
@@ -254804,12 +254804,12 @@
                     "internalLevelValue": 6.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 195,
+                        "hold": 18,
+                        "slide": 4,
+                        "touch": 3,
+                        "break": 9,
+                        "total": 229
                     },
                     "regions": {
                         "jp": true,
@@ -254831,12 +254831,12 @@
                     "internalLevelValue": 7.9,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 219,
+                        "hold": 22,
+                        "slide": 6,
+                        "touch": 8,
+                        "break": 26,
+                        "total": 281
                     },
                     "regions": {
                         "jp": true,
@@ -254856,14 +254856,14 @@
                     "difficulty": "expert",
                     "level": "12+",
                     "internalLevelValue": 12.6,
-                    "noteDesigner": "-",
+                    "noteDesigner": "サファ太",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 376,
+                        "hold": 44,
+                        "slide": 26,
+                        "touch": 71,
+                        "break": 31,
+                        "total": 548
                     },
                     "regions": {
                         "jp": true,
@@ -254925,12 +254925,12 @@
                     "internalLevelValue": 5.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 200,
+                        "hold": 12,
+                        "slide": 10,
+                        "touch": 17,
+                        "break": 2,
+                        "total": 241
                     },
                     "regions": {
                         "jp": true,
@@ -254952,12 +254952,12 @@
                     "internalLevelValue": 7.8,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 374,
+                        "hold": 19,
+                        "slide": 9,
+                        "touch": 21,
+                        "break": 2,
+                        "total": 425
                     },
                     "regions": {
                         "jp": true,
@@ -254977,14 +254977,14 @@
                     "difficulty": "expert",
                     "level": "11+",
                     "internalLevelValue": 11.8,
-                    "noteDesigner": "-",
+                    "noteDesigner": "はっぴー",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 623,
+                        "hold": 85,
+                        "slide": 60,
+                        "touch": 21,
+                        "break": 23,
+                        "total": 812
                     },
                     "regions": {
                         "jp": true,
@@ -255004,14 +255004,14 @@
                     "difficulty": "master",
                     "level": "13+",
                     "internalLevelValue": 13.9,
-                    "noteDesigner": "-",
+                    "noteDesigner": "サファ太",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 693,
+                        "hold": 48,
+                        "slide": 134,
+                        "touch": 82,
+                        "break": 137,
+                        "total": 1094
                     },
                     "regions": {
                         "jp": true,
@@ -255034,7 +255034,7 @@
             "category": "ゲーム＆バラエティ",
             "title": "Energy",
             "artist": "Ryo Nakamura",
-            "bpm": null,
+            "bpm": 128.0,
             "imageName": "95c799276458085376e42b6a99de83f8fad1545befcd96b66ba1a8e185505c8e",
             "isNew": true,
             "isLocked": false,
@@ -255046,12 +255046,12 @@
                     "internalLevelValue": 3.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 154,
+                        "hold": 10,
+                        "slide": 4,
+                        "touch": 14,
+                        "break": 4,
+                        "total": 186
                     },
                     "regions": {
                         "jp": true,
@@ -255073,12 +255073,12 @@
                     "internalLevelValue": 6.4,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 242,
+                        "hold": 12,
+                        "slide": 6,
+                        "touch": 26,
+                        "break": 5,
+                        "total": 291
                     },
                     "regions": {
                         "jp": true,
@@ -255098,14 +255098,14 @@
                     "difficulty": "expert",
                     "level": "10+",
                     "internalLevelValue": 10.6,
-                    "noteDesigner": "-",
+                    "noteDesigner": "けんけん法師",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 332,
+                        "hold": 36,
+                        "slide": 52,
+                        "touch": 31,
+                        "break": 18,
+                        "total": 469
                     },
                     "regions": {
                         "jp": true,
@@ -255125,14 +255125,14 @@
                     "difficulty": "master",
                     "level": "13+",
                     "internalLevelValue": 13.8,
-                    "noteDesigner": "-",
+                    "noteDesigner": "Luxizhel",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 613,
+                        "hold": 43,
+                        "slide": 104,
+                        "touch": 40,
+                        "break": 61,
+                        "total": 861
                     },
                     "regions": {
                         "jp": true,
@@ -255155,7 +255155,7 @@
             "category": "ゲーム＆バラエティ",
             "title": "Crossfire",
             "artist": "Blacklolita",
-            "bpm": null,
+            "bpm": 200.0,
             "imageName": "5d1c6000bb32f7efbc8274cfdd93deeb28ae0bc34f4d4f94fa9c636e012080a2",
             "isNew": true,
             "isLocked": true,
@@ -255167,12 +255167,12 @@
                     "internalLevelValue": 4.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 229,
+                        "hold": 9,
+                        "slide": 7,
+                        "touch": 15,
+                        "break": 5,
+                        "total": 265
                     },
                     "regions": {
                         "jp": true,
@@ -255194,12 +255194,12 @@
                     "internalLevelValue": 7.5,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 325,
+                        "hold": 7,
+                        "slide": 11,
+                        "touch": 36,
+                        "break": 4,
+                        "total": 383
                     },
                     "regions": {
                         "jp": true,
@@ -255219,14 +255219,14 @@
                     "difficulty": "expert",
                     "level": "11",
                     "internalLevelValue": 11.0,
-                    "noteDesigner": "-",
+                    "noteDesigner": "サファ太",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 332,
+                        "hold": 91,
+                        "slide": 40,
+                        "touch": 57,
+                        "break": 63,
+                        "total": 583
                     },
                     "regions": {
                         "jp": true,
@@ -255246,14 +255246,14 @@
                     "difficulty": "master",
                     "level": "13+",
                     "internalLevelValue": 13.9,
-                    "noteDesigner": "-",
+                    "noteDesigner": "Jack",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 200,
+                        "hold": 164,
+                        "slide": 229,
+                        "touch": 99,
+                        "break": 49,
+                        "total": 741
                     },
                     "regions": {
                         "jp": true,
@@ -255288,12 +255288,12 @@
                     "internalLevelValue": 6.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 201,
+                        "hold": 9,
+                        "slide": 10,
+                        "touch": 19,
+                        "break": 3,
+                        "total": 242
                     },
                     "regions": {
                         "jp": true,
@@ -255315,12 +255315,12 @@
                     "internalLevelValue": 8.3,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 378,
+                        "hold": 20,
+                        "slide": 12,
+                        "touch": 24,
+                        "break": 4,
+                        "total": 438
                     },
                     "regions": {
                         "jp": true,
@@ -255340,14 +255340,14 @@
                     "difficulty": "expert",
                     "level": "12",
                     "internalLevelValue": 12.2,
-                    "noteDesigner": "-",
+                    "noteDesigner": "発光ビーバー",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 514,
+                        "hold": 43,
+                        "slide": 50,
+                        "touch": 22,
+                        "break": 34,
+                        "total": 663
                     },
                     "regions": {
                         "jp": true,
@@ -255367,14 +255367,14 @@
                     "difficulty": "master",
                     "level": "14",
                     "internalLevelValue": 14.3,
-                    "noteDesigner": "-",
+                    "noteDesigner": "けんけん法師",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 797,
+                        "hold": 57,
+                        "slide": 113,
+                        "touch": 74,
+                        "break": 67,
+                        "total": 1108
                     },
                     "regions": {
                         "jp": true,
@@ -255624,5 +255624,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-10-04T11:00:12.368422236+00:00"
+    "updateTime": "2026-10-04T14:00:12.857429570+00:00"
 }
