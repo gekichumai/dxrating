@@ -1,4 +1,4 @@
-import { Effect, Data } from 'effect'
+import { Effect, Data, Schedule } from 'effect'
 
 export class NetRequestError extends Data.TaggedError('NetRequestError')<{
   readonly operation: string
@@ -254,6 +254,15 @@ export class Client {
       })
     })
 
+  protected fetchRecordPageEffect = (url: string) =>
+    this.fetchAsDOMEffect(url).pipe(
+      Effect.retry({
+        times: 2,
+        schedule: Schedule.exponential('500 millis'),
+        while: (error) => error instanceof NetImportError && error.code === 'UNKNOWN_ERROR',
+      }),
+    )
+
   protected progress = (state: ClientFetchState) =>
     Effect.tryPromise({
       try: async () => {
@@ -332,7 +341,7 @@ export class MaimaiNETJpClient extends Client {
   fetchRecentRecordsEffect = () =>
     Effect.gen({ self: this }, function* () {
       yield* this.progress('fetch:recent:in-progress')
-      const recentRecordsPage = yield* this.fetchAsDOMEffect(URLS.JP.RECORD_RECENT_PAGE)
+      const recentRecordsPage = yield* this.fetchRecordPageEffect(URLS.JP.RECORD_RECENT_PAGE)
       if (!recentRecordsPage) {
         return yield* Effect.fail(new NetImportError('INTERNAL_ERROR', 'failed to parse record page'))
       }
@@ -347,7 +356,7 @@ export class MaimaiNETJpClient extends Client {
     Effect.gen({ self: this }, function* () {
       const musicRecords: AchievementRecord[] = []
       for (const { url, fetchState } of musicRecordURLs(URLS.JP.RECORD_MUSICS_PAGE)) {
-        const musicRecordsPage = yield* this.fetchAsDOMEffect(url)
+        const musicRecordsPage = yield* this.fetchRecordPageEffect(url)
         if (!musicRecordsPage) {
           return yield* Effect.fail(new NetImportError('INTERNAL_ERROR', 'failed to parse music records page'))
         }
@@ -424,7 +433,7 @@ export class MaimaiNETIntlClient extends Client {
     Effect.gen({ self: this }, function* () {
       yield* this.progress('fetch:recent:in-progress')
 
-      const recentRecordsPage = yield* this.fetchAsDOMEffect(URLS.INTL.RECORD_RECENT_PAGE)
+      const recentRecordsPage = yield* this.fetchRecordPageEffect(URLS.INTL.RECORD_RECENT_PAGE)
       if (!recentRecordsPage) {
         return yield* Effect.fail(new NetImportError('INTERNAL_ERROR', 'failed to parse record page'))
       }
@@ -440,7 +449,7 @@ export class MaimaiNETIntlClient extends Client {
     Effect.gen({ self: this }, function* () {
       const musicRecords: AchievementRecord[] = []
       for (const { url, fetchState } of musicRecordURLs(URLS.INTL.RECORD_MUSICS_PAGE)) {
-        const musicRecordsPage = yield* this.fetchAsDOMEffect(url)
+        const musicRecordsPage = yield* this.fetchRecordPageEffect(url)
         if (!musicRecordsPage) {
           return yield* Effect.fail(new NetImportError('INTERNAL_ERROR', 'failed to parse music records page'))
         }
