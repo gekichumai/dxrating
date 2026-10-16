@@ -13255,10 +13255,10 @@
             "songId": "Can Do",
             "category": "POPS＆アニメ",
             "title": "Can Do",
-            "artist": "GRANRODEO[PV]",
+            "artist": "GRANRODEO",
             "bpm": 200.0,
-            "imageName": "07efedcb40d494ac2678b09bbc4cc4ac7269630feb58157fb1f549871084ce21",
-            "isNew": false,
+            "imageName": "8b9126e45c74148e046cb5c814c8750639b48c8c4491aa73497dfa1fdf770d75",
+            "isNew": true,
             "isLocked": false,
             "sheets": [
                 {
@@ -13276,7 +13276,7 @@
                         "total": 151
                     },
                     "regions": {
-                        "jp": false,
+                        "jp": true,
                         "intl": false,
                         "usa": false,
                         "cn": false
@@ -13287,13 +13287,13 @@
                     "isSpecial": false,
                     "version": "ORANGE PLUS",
                     "internalId": 397,
-                    "releaseDate": "2015-04-16"
+                    "releaseDate": "2026-10-16"
                 },
                 {
                     "type": "std",
                     "difficulty": "advanced",
-                    "level": "6",
-                    "internalLevelValue": 6.0,
+                    "level": "7+",
+                    "internalLevelValue": 6.8,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": 273,
@@ -13304,7 +13304,7 @@
                         "total": 299
                     },
                     "regions": {
-                        "jp": false,
+                        "jp": true,
                         "intl": false,
                         "usa": false,
                         "cn": false
@@ -13315,12 +13315,12 @@
                     "isSpecial": false,
                     "version": "ORANGE PLUS",
                     "internalId": 397,
-                    "releaseDate": "2015-04-16"
+                    "releaseDate": "2026-10-16"
                 },
                 {
                     "type": "std",
                     "difficulty": "expert",
-                    "level": "9",
+                    "level": "10+",
                     "internalLevelValue": 9.0,
                     "noteDesigner": "Jack",
                     "noteCounts": {
@@ -13332,7 +13332,7 @@
                         "total": 423
                     },
                     "regions": {
-                        "jp": false,
+                        "jp": true,
                         "intl": false,
                         "usa": false,
                         "cn": false
@@ -13343,13 +13343,13 @@
                     "isSpecial": false,
                     "version": "ORANGE PLUS",
                     "internalId": 397,
-                    "releaseDate": "2015-04-16"
+                    "releaseDate": "2026-10-16"
                 },
                 {
                     "type": "std",
                     "difficulty": "master",
-                    "level": "11+",
-                    "internalLevelValue": 11.6,
+                    "level": "13",
+                    "internalLevelValue": 11.8,
                     "noteDesigner": "mai-Star",
                     "noteCounts": {
                         "tap": 446,
@@ -13360,7 +13360,7 @@
                         "total": 581
                     },
                     "regions": {
-                        "jp": false,
+                        "jp": true,
                         "intl": false,
                         "usa": false,
                         "cn": false
@@ -13371,7 +13371,35 @@
                     "isSpecial": false,
                     "version": "ORANGE PLUS",
                     "internalId": 397,
-                    "releaseDate": "2015-04-16"
+                    "releaseDate": "2026-10-16"
+                },
+                {
+                    "type": "std",
+                    "difficulty": "remaster",
+                    "level": "13+",
+                    "internalLevelValue": 13.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "ORANGE PLUS",
+                    "internalId": 397,
+                    "releaseDate": "2026-10-16"
                 }
             ],
             "searchAcronyms": []
@@ -255447,6 +255475,248 @@
                 }
             ],
             "searchAcronyms": []
+        },
+        {
+            "songId": "ChaosBlue",
+            "category": "POPS＆アニメ",
+            "title": "ChaosBlue",
+            "artist": "GRANRODEO",
+            "bpm": null,
+            "imageName": "b67c5bba26f89af4e9f13445adf431e1e43259243aeccaf30cc6c17f607df1d9",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10",
+                    "internalLevelValue": 10.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13",
+                    "internalLevelValue": 13.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "GO GO PARADISE!!",
+            "category": "POPS＆アニメ",
+            "title": "GO GO PARADISE!!",
+            "artist": "GRANRODEO",
+            "bpm": null,
+            "imageName": "41d7ec9686b04b8b14aed7ee5ac526434191814592e3a08bbc17caf65e25db8d",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10",
+                    "internalLevelValue": 10.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13",
+                    "internalLevelValue": 13.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                }
+            ],
+            "searchAcronyms": []
         }
     ],
     "categories": [
@@ -255680,5 +255950,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-10-14T18:00:12.992412061+00:00"
+    "updateTime": "2026-10-16T01:00:13.933403750+00:00"
 }
