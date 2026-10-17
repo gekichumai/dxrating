@@ -1,6 +1,6 @@
 # Build stage
 # Pin digest for reproducibility — update periodically
-FROM node:26.10.0-bookworm-slim@sha256:662933cf47f013bc8e4beb31a6116448427a82057ba7c42c97e4c5ba766504c2 AS builder
+FROM node:26.11.1-bookworm-slim@sha256:86f07bc9c5dce4578cf37e5a418b7bfc7f817cda25cde66e2b66e95ed86c4567 AS builder
 
 # Reproducibility: SOURCE_DATE_EPOCH makes timestamps deterministic
 ARG SOURCE_DATE_EPOCH=0
@@ -52,7 +52,7 @@ RUN pnpm --filter @gekichumai/oneshot-renderer build
 RUN pnpm build:bundle
 
 # Production stage
-FROM node:26.10.0-bookworm-slim@sha256:662933cf47f013bc8e4beb31a6116448427a82057ba7c42c97e4c5ba766504c2 AS runner
+FROM node:26.11.1-bookworm-slim@sha256:86f07bc9c5dce4578cf37e5a418b7bfc7f817cda25cde66e2b66e95ed86c4567 AS runner
 
 # Install runtime dependencies for sharp and other native modules
 RUN apt-get update && apt-get install -y --no-install-recommends \
