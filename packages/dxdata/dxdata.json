@@ -13268,12 +13268,12 @@
                     "internalLevelValue": 4.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": 135,
-                        "hold": 6,
-                        "slide": 3,
+                        "tap": 146,
+                        "hold": 8,
+                        "slide": 4,
                         "touch": null,
-                        "break": 7,
-                        "total": 151
+                        "break": 4,
+                        "total": 162
                     },
                     "regions": {
                         "jp": true,
@@ -13296,12 +13296,12 @@
                     "internalLevelValue": 7.7,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": 273,
-                        "hold": 9,
-                        "slide": 5,
+                        "tap": 199,
+                        "hold": 22,
+                        "slide": 6,
                         "touch": null,
-                        "break": 12,
-                        "total": 299
+                        "break": 6,
+                        "total": 233
                     },
                     "regions": {
                         "jp": true,
@@ -13322,14 +13322,14 @@
                     "difficulty": "expert",
                     "level": "10+",
                     "internalLevelValue": 10.8,
-                    "noteDesigner": "Jack",
+                    "noteDesigner": "はっぴー",
                     "noteCounts": {
-                        "tap": 368,
-                        "hold": 14,
-                        "slide": 19,
+                        "tap": 337,
+                        "hold": 33,
+                        "slide": 25,
                         "touch": null,
-                        "break": 22,
-                        "total": 423
+                        "break": 20,
+                        "total": 415
                     },
                     "regions": {
                         "jp": true,
@@ -13378,14 +13378,14 @@
                     "difficulty": "remaster",
                     "level": "13+",
                     "internalLevelValue": 13.7,
-                    "noteDesigner": "-",
+                    "noteDesigner": "Luxizhel",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
+                        "tap": 446,
+                        "hold": 19,
+                        "slide": 106,
                         "touch": null,
-                        "break": null,
-                        "total": null
+                        "break": 43,
+                        "total": 614
                     },
                     "regions": {
                         "jp": true,
@@ -255481,7 +255481,7 @@
             "category": "POPS＆アニメ",
             "title": "ChaosBlue",
             "artist": "GRANRODEO",
-            "bpm": null,
+            "bpm": 126.0,
             "imageName": "b67c5bba26f89af4e9f13445adf431e1e43259243aeccaf30cc6c17f607df1d9",
             "isNew": true,
             "isLocked": false,
@@ -255493,12 +255493,12 @@
                     "internalLevelValue": 3.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 134,
+                        "hold": 12,
+                        "slide": 4,
+                        "touch": 6,
+                        "break": 6,
+                        "total": 162
                     },
                     "regions": {
                         "jp": true,
@@ -255520,12 +255520,12 @@
                     "internalLevelValue": 6.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 204,
+                        "hold": 17,
+                        "slide": 8,
+                        "touch": 29,
+                        "break": 4,
+                        "total": 262
                     },
                     "regions": {
                         "jp": true,
@@ -255545,14 +255545,14 @@
                     "difficulty": "expert",
                     "level": "10",
                     "internalLevelValue": 10.0,
-                    "noteDesigner": "-",
+                    "noteDesigner": "サファ太",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 291,
+                        "hold": 28,
+                        "slide": 37,
+                        "touch": 12,
+                        "break": 48,
+                        "total": 416
                     },
                     "regions": {
                         "jp": true,
@@ -255572,14 +255572,14 @@
                     "difficulty": "master",
                     "level": "13",
                     "internalLevelValue": 13.4,
-                    "noteDesigner": "-",
+                    "noteDesigner": "ぴちネコ",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 411,
+                        "hold": 62,
+                        "slide": 80,
+                        "touch": 85,
+                        "break": 70,
+                        "total": 708
                     },
                     "regions": {
                         "jp": true,
@@ -255602,7 +255602,7 @@
             "category": "POPS＆アニメ",
             "title": "GO GO PARADISE!!",
             "artist": "GRANRODEO",
-            "bpm": null,
+            "bpm": 154.0,
             "imageName": "41d7ec9686b04b8b14aed7ee5ac526434191814592e3a08bbc17caf65e25db8d",
             "isNew": true,
             "isLocked": false,
@@ -255614,12 +255614,12 @@
                     "internalLevelValue": 3.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 172,
+                        "hold": 10,
+                        "slide": 5,
+                        "touch": 8,
+                        "break": 5,
+                        "total": 200
                     },
                     "regions": {
                         "jp": true,
@@ -255641,12 +255641,12 @@
                     "internalLevelValue": 6.6,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 280,
+                        "hold": 16,
+                        "slide": 7,
+                        "touch": 21,
+                        "break": 8,
+                        "total": 332
                     },
                     "regions": {
                         "jp": true,
@@ -255666,14 +255666,14 @@
                     "difficulty": "expert",
                     "level": "10",
                     "internalLevelValue": 10.5,
-                    "noteDesigner": "-",
+                    "noteDesigner": "発光ビーバー",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 380,
+                        "hold": 37,
+                        "slide": 40,
+                        "touch": 27,
+                        "break": 26,
+                        "total": 510
                     },
                     "regions": {
                         "jp": true,
@@ -255693,14 +255693,14 @@
                     "difficulty": "master",
                     "level": "13",
                     "internalLevelValue": 13.3,
-                    "noteDesigner": "-",
+                    "noteDesigner": "けんけん法師",
                     "noteCounts": {
-                        "tap": null,
-                        "hold": null,
-                        "slide": null,
-                        "touch": null,
-                        "break": null,
-                        "total": null
+                        "tap": 561,
+                        "hold": 27,
+                        "slide": 109,
+                        "touch": 56,
+                        "break": 53,
+                        "total": 806
                     },
                     "regions": {
                         "jp": true,
@@ -255950,5 +255950,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-10-20T07:00:15.240699580+00:00"
+    "updateTime": "2026-10-20T08:00:13.163763319+00:00"
 }
