@@ -13293,7 +13293,7 @@
                     "type": "std",
                     "difficulty": "advanced",
                     "level": "7+",
-                    "internalLevelValue": 6.8,
+                    "internalLevelValue": 7.7,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": 273,
@@ -13321,7 +13321,7 @@
                     "type": "std",
                     "difficulty": "expert",
                     "level": "10+",
-                    "internalLevelValue": 9.0,
+                    "internalLevelValue": 10.8,
                     "noteDesigner": "Jack",
                     "noteCounts": {
                         "tap": 368,
@@ -13349,7 +13349,7 @@
                     "type": "std",
                     "difficulty": "master",
                     "level": "13",
-                    "internalLevelValue": 11.8,
+                    "internalLevelValue": 13.4,
                     "noteDesigner": "mai-Star",
                     "noteCounts": {
                         "tap": 446,
@@ -13377,7 +13377,7 @@
                     "type": "std",
                     "difficulty": "remaster",
                     "level": "13+",
-                    "internalLevelValue": 13.6,
+                    "internalLevelValue": 13.7,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255571,7 +255571,7 @@
                     "type": "dx",
                     "difficulty": "master",
                     "level": "13",
-                    "internalLevelValue": 13.0,
+                    "internalLevelValue": 13.4,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255638,7 +255638,7 @@
                     "type": "dx",
                     "difficulty": "advanced",
                     "level": "6",
-                    "internalLevelValue": 6.0,
+                    "internalLevelValue": 6.6,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255665,7 +255665,7 @@
                     "type": "dx",
                     "difficulty": "expert",
                     "level": "10",
-                    "internalLevelValue": 10.0,
+                    "internalLevelValue": 10.5,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255692,7 +255692,7 @@
                     "type": "dx",
                     "difficulty": "master",
                     "level": "13",
-                    "internalLevelValue": 13.0,
+                    "internalLevelValue": 13.3,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255950,5 +255950,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-10-19T18:00:13.114705432+00:00"
+    "updateTime": "2026-10-20T07:00:15.240699580+00:00"
 }
