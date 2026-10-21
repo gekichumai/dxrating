@@ -2,7 +2,7 @@
 
 ## Stack
 
-- **Runtime**: Node.js 26.10.0
+- **Runtime**: Node.js 26.12.1
 - **Application**: Effect 4 services, layers, typed failures, and scoped resources
 - **HTTP adapter**: Hono
 - **API Layer**: oRPC 2 with the official Effect handler integration
