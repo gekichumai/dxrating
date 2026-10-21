@@ -86,7 +86,7 @@ a single deployment authority.
 
 ## Prerequisites
 
-- **Node.js** 26.10.0
+- **Node.js** 26.12.1
 - **pnpm** 10.30.3+
 - **Docker** (for running PostgreSQL locally)
 
