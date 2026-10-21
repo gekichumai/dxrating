@@ -64,3 +64,94 @@ describe('scoped NET imports', () => {
     expect(destroy).toHaveBeenCalledOnce()
   })
 })
+
+describe.each(['jp', 'intl'] as const)('%s NET record retries', (region) => {
+  const base = region === 'jp' ? 'https://maimaidx.jp' : 'https://maimaidx-eng.com'
+  const redirect = () =>
+    new Response(null, {
+      status: 302,
+      headers: { location: `${base}/maimai-mobile/error/` },
+    })
+
+  it('retries only the rejected difficulty and completes the remaining pages', async () => {
+    let remasterAttempts = 0
+    request.mockImplementation(async (url: string) => {
+      if (new URL(url).searchParams.get('diff') === '4' && ++remasterAttempts < 3) return redirect()
+      return new Response('<html><body></body></html>')
+    })
+    const progress = vi.fn()
+    await expect(
+      runTest(withMaimaiNETClient(region, (client) => client.fetchMusicRecordsEffect(), progress)),
+    ).resolves.toEqual([])
+    expect(request.mock.calls.map(([url]) => new URL(url).searchParams.get('diff'))).toEqual([
+      '0',
+      '1',
+      '2',
+      '3',
+      '4',
+      '4',
+      '4',
+      '10',
+    ])
+    expect(progress.mock.calls.flat()).toEqual([
+      'fetch:music:in-progress:basic',
+      'fetch:music:in-progress:advanced',
+      'fetch:music:in-progress:expert',
+      'fetch:music:in-progress:master',
+      'fetch:music:in-progress:remaster',
+      'fetch:music:in-progress:utage',
+      'fetch:music:completed',
+    ])
+    expect(destroy).toHaveBeenCalledOnce()
+  })
+
+  it('preserves the failure after three attempts without publishing completion', async () => {
+    request.mockImplementation(async () => redirect())
+    const progress = vi.fn()
+    await expect(
+      runTest(withMaimaiNETClient(region, (client) => client.fetchMusicRecordsEffect(), progress)),
+    ).rejects.toMatchObject({ code: 'UNKNOWN_ERROR' })
+    expect(request).toHaveBeenCalledTimes(3)
+    expect(progress).not.toHaveBeenCalled()
+    expect(destroy).toHaveBeenCalledOnce()
+  })
+
+  it('also recovers a rejected recent-record page', async () => {
+    request.mockResolvedValueOnce(redirect()).mockResolvedValueOnce(new Response('<html><body></body></html>'))
+    await expect(runTest(withMaimaiNETClient(region, (client) => client.fetchRecentRecordsEffect()))).resolves.toEqual(
+      [],
+    )
+    expect(request).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not retry maintenance responses', async () => {
+    request.mockResolvedValue(new Response('<html>Sorry, servers are under maintenance.</html>'))
+    await expect(
+      runTest(withMaimaiNETClient(region, (client) => client.fetchRecentRecordsEffect())),
+    ).rejects.toMatchObject({ code: 'NET_MAINTENANCE' })
+    expect(request).toHaveBeenCalledOnce()
+  })
+
+  it('stops during retry backoff when the caller disconnects', async () => {
+    const controller = new AbortController()
+    const released = Promise.withResolvers<void>()
+    // A body lets the test observe when the rejected response has been released.
+    request.mockImplementation(async () => {
+      const response = new Response('redirect', { status: 302, headers: { location: `${base}/maimai-mobile/error/` } })
+      vi.spyOn(response.body!, 'cancel').mockImplementation(async () => {
+        released.resolve()
+      })
+      return response
+    })
+    const result = runTest(
+      withMaimaiNETClient(region, (client) => client.fetchRecentRecordsEffect()),
+      { signal: controller.signal },
+    )
+    const failure = expect(result).rejects.toBeDefined()
+    await released.promise
+    controller.abort()
+    await failure
+    expect(request).toHaveBeenCalledOnce()
+    expect(destroy).toHaveBeenCalledOnce()
+  })
+})
