@@ -203,10 +203,14 @@ const moderateComment = Effect.fn('Comments.moderate')(function* (
 ) {
   if (!viewerId) return yield* Effect.fail(new ORPCError('UNAUTHORIZED'))
   const database = yield* Database
-  return yield* database.transaction((tx) =>
+  const result = yield* database.transaction((tx) =>
     Effect.gen(function* () {
       const [comment] = yield* database.query('Comments.findAuthor', () =>
-        tx.select({ authorId: comments.created_by }).from(comments).where(eq(comments.id, commentId)).for('share'),
+        tx
+          .select({ authorId: comments.created_by, content: comments.content })
+          .from(comments)
+          .where(eq(comments.id, commentId))
+          .for('share'),
       )
       if (!comment) return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Comment not found' }))
       if (comment.authorId === viewerId)
@@ -222,9 +226,20 @@ const moderateComment = Effect.fn('Comments.moderate')(function* (
           tx.insert(userBlocks).values({ blocker_id: viewerId, blocked_id: comment.authorId }).onConflictDoNothing(),
         )
       }
-      return { success: true, author_id: comment.authorId }
+      return { success: true, author_id: comment.authorId, content: comment.content }
     }),
   )
+  // Every report/block reaches the operator (App Review guideline 1.2): one Sentry issue per
+  // comment, so the first report alerts and repeats group under it. Triage with moderate-comments.ts.
+  yield* Effect.sync(() =>
+    Sentry.captureMessage(`Comment ${action === 'block' ? 'author blocked' : 'reported'}: #${commentId}`, {
+      level: 'warning',
+      fingerprint: ['comment-moderation', String(commentId)],
+      tags: { moderation_action: action, comment_id: String(commentId) },
+      extra: { commentId, authorId: result.author_id, reporterId: viewerId, content: result.content.slice(0, 500) },
+    }),
+  )
+  return { success: result.success, author_id: result.author_id }
 })
 
 const commentsHandler = {
