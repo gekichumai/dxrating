@@ -212,7 +212,10 @@
     "usage.title": "Integration guidance",
     "usage.cache": "Use ETag and conditional requests when downloading catalog data.",
     "usage.links": "Return or cite canonical DXRating chart URLs when presenting chart-specific results.",
-    "usage.polling": "Avoid repeatedly downloading the full catalog when a conditional request or focused endpoint is sufficient."
+    "usage.polling": "Avoid repeatedly downloading the full catalog when a conditional request or focused endpoint is sufficient.",
+    "license.title": "Data license",
+    "license.description": "DXRating's song and chart data (dxdata) is CC BY-NC 4.0. Use it however you like, just credit us and don't use it commercially. The code is MIT. Some of the internal levels and aliases come from the community, so thanks, everyone!",
+    "license.attribution": "Example credit line:"
   },
   "form": {
     "validation.min.message": "Enter {{value}} or more",

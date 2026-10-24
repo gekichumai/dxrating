@@ -37,6 +37,7 @@ Languages: English, Japanese, Korean, Simplified Chinese, Traditional Chinese.
 - Song and chart metadata is generated from the repository's dxdata package.
 - Data update time: ${dxdataUpdateTime}
 - User-generated community data may include tags, comments, and aliases.
+- License: dxdata song and chart data is CC BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/). Credit it as "Data from DXRating (dxrating.net), CC BY-NC 4.0" and don't use it commercially. DXRating's code is MIT.
 
 ## Citation Guidance
 

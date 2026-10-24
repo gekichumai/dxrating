@@ -212,7 +212,10 @@
     "usage.title": "集成建议",
     "usage.cache": "下载数据目录时，请使用 ETag 和条件请求。",
     "usage.links": "展示具体谱面结果时，请返回或引用 DXRating 的规范谱面 URL。",
-    "usage.polling": "若条件请求或针对性接口已足够，请勿反复下载完整数据目录。"
+    "usage.polling": "若条件请求或针对性接口已足够，请勿反复下载完整数据目录。",
+    "license.title": "数据许可",
+    "license.description": "DXRating 的歌曲和谱面数据（dxdata）采用 CC BY-NC 4.0：随便用，注明出处就行，别拿去商用。代码是 MIT。部分定数、别名来自社区，感谢大家！",
+    "license.attribution": "署名示例："
   },
   "form": {
     "validation.max.message": "请输入小于或等于 {{value}} 的定数",

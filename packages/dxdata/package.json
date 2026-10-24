@@ -2,7 +2,7 @@
   "name": "@gekichumai/dxdata",
   "version": "1.6.0",
   "private": true,
-  "license": "MIT",
+  "license": "CC-BY-NC-4.0",
   "type": "module",
   "main": "index.ts",
   "publishConfig": {
