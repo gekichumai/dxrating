@@ -21,4 +21,14 @@ describe('DevelopersPage', () => {
     expect(screen.getByRole('link', { name: 'https://dxrating.net/.well-known/api-catalog' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'https://dxrating.net/llms.txt' })).toBeTruthy()
   })
+
+  it('states the dxdata license and how to credit it', () => {
+    render(<DevelopersPage />)
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Data license' })).toBeTruthy()
+    expect(screen.getByText('Data from DXRating (dxrating.net), CC BY-NC 4.0')).toBeTruthy()
+    expect(
+      screen.getByRole('link', { name: 'https://creativecommons.org/licenses/by-nc/4.0/' }).getAttribute('href'),
+    ).toBe('https://creativecommons.org/licenses/by-nc/4.0/')
+  })
 })

@@ -29,6 +29,9 @@ const accessNotes = [
   ['access.beta.title', 'access.beta.description'],
 ] as const
 
+const dataLicenseUrl = 'https://creativecommons.org/licenses/by-nc/4.0/'
+const attributionLine = 'Data from DXRating (dxrating.net), CC BY-NC 4.0'
+
 export const DevelopersPage = () => {
   const { t } = useTranslation(['developers'])
 
@@ -125,6 +128,27 @@ export const DevelopersPage = () => {
                 {t('developers:usage.polling')}
               </li>
             </ul>
+          </section>
+
+          <section aria-labelledby="developers-license">
+            <h2 id="developers-license" className="text-2xl font-semibold tracking-tight">
+              {t('developers:license.title')}
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm md:text-base leading-relaxed text-slate-700">
+              {t('developers:license.description')}
+            </p>
+            <p className="mt-3 text-sm text-slate-600">
+              {t('developers:license.attribution')}{' '}
+              <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-slate-900">{attributionLine}</code>
+            </p>
+            <a
+              className="mt-3 inline-flex font-mono text-sm text-violet-700 underline decoration-violet-700/40 underline-offset-4 hover:text-violet-900"
+              href={dataLicenseUrl}
+              target="_blank"
+              rel="noopener noreferrer license"
+            >
+              {dataLicenseUrl}
+            </a>
           </section>
         </div>
       </article>

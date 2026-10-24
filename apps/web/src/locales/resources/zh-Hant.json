@@ -212,7 +212,10 @@
     "usage.title": "整合建議",
     "usage.cache": "下載資料目錄時，請使用 ETag 和條件式請求。",
     "usage.links": "顯示特定譜面結果時，請回傳或引用 DXRating 的標準譜面 URL。",
-    "usage.polling": "若條件式請求或針對性端點已足夠，請勿重複下載完整資料目錄。"
+    "usage.polling": "若條件式請求或針對性端點已足夠，請勿重複下載完整資料目錄。",
+    "license.title": "資料授權",
+    "license.description": "DXRating 的歌曲和譜面資料（dxdata）採用 CC BY-NC 4.0：歡迎使用，註明出處就好，請勿商用。程式碼是 MIT。部分定數、別名來自社群，感謝大家！",
+    "license.attribution": "署名範例："
   },
   "form": {
     "validation.max.message": "請輸入小於或等於 {{value}} 的定數",

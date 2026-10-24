@@ -212,7 +212,10 @@
     "usage.title": "연동 가이드",
     "usage.cache": "카탈로그 데이터를 내려받을 때 ETag와 조건부 요청을 사용하세요.",
     "usage.links": "채보별 결과를 보여 줄 때는 DXRating의 정식 채보 URL을 반환하거나 인용하세요.",
-    "usage.polling": "조건부 요청이나 목적에 맞는 엔드포인트로 충분하다면 전체 카탈로그를 반복해서 내려받지 마세요."
+    "usage.polling": "조건부 요청이나 목적에 맞는 엔드포인트로 충분하다면 전체 카탈로그를 반복해서 내려받지 마세요.",
+    "license.title": "데이터 라이선스",
+    "license.description": "DXRating의 곡·채보 데이터(dxdata)는 CC BY-NC 4.0입니다. 자유롭게 쓰셔도 되지만 출처는 꼭 밝혀 주시고, 상업적으로는 쓰지 말아 주세요. 코드는 MIT입니다. 내부 레벨과 별칭 일부는 커뮤니티 덕분이에요. 모두 고마워요!",
+    "license.attribution": "출처 표기 예시:"
   },
   "form": {
     "validation.min.message": "{{value}} 이상을 입력하세요",

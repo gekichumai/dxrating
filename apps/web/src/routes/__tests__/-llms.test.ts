@@ -13,6 +13,8 @@ describe('buildLlmsTxt', () => {
     expect(llms).toContain('https://dxrating.net/charts/recent')
     expect(llms).toContain('https://dxrating.net/charts/trending')
     expect(llms).toContain('https://dxrating.net/search?q=')
+    expect(llms).toContain('CC BY-NC 4.0')
+    expect(llms).toContain('Data from DXRating (dxrating.net), CC BY-NC 4.0')
     expect(llms).toContain('https://dxrating.net/songs/{songId}/{type}/{difficulty}')
     expect(llms).toContain('https://miruku.dxrating.net/spec.json')
     expect(llms).toContain('https://miruku.dxrating.net/docs')

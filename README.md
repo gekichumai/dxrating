@@ -163,7 +163,7 @@ pnpm --filter @gekichumai/dxrating-web test   # Web unit tests
 
 ## License
 
-[MIT](LICENSE)
+The code is [MIT](LICENSE). The dxdata song and chart data ([`packages/dxdata`](packages/dxdata), `/api/v1/dxdata`) is [CC BY-NC 4.0](packages/dxdata/LICENSE): credit DXRating and don't use it commercially.
 
 ## Security
 
