@@ -1,6 +1,7 @@
 import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { createMiddleware } from 'hono/factory'
+import { routePath } from 'hono/route'
 import { cors } from 'hono/cors'
 import { RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
@@ -31,6 +32,16 @@ import { Database } from './db/index'
 import { createDxdataEffect, createPostgresDxdataEffects, DXDATA_CORS_OPTIONS, DXDATA_PATH } from './services/dxdata'
 import { addPublishedDxdataToOpenApi } from './services/dxdata-openapi'
 import { addPublicApiExamplesToOpenApi } from './services/openapi-examples'
+import {
+  API_CLIENT_HEADER,
+  ApiUsage,
+  classifyCaller,
+  classifyUserAgent,
+  createRouteResolver,
+  isTrackedApiPath,
+  readClientId,
+} from './services/api-usage'
+import { appContract } from './contract'
 class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
   readonly operation: string
   readonly cause: unknown
@@ -172,7 +183,7 @@ const apiCors = cors({
 
     return null
   },
-  allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response'],
+  allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response', API_CLIENT_HEADER],
   allowMethods: ['POST', 'GET', 'OPTIONS'],
   exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],
   maxAge: 600,
@@ -204,6 +215,48 @@ app.use(
     ],
   }) as unknown as MiddlewareHandler,
 )
+
+// API usage accounting: classify each request by route template and caller,
+// attach the result to the request wide event, and add it to the per-minute
+// rollup flushed by the ApiUsage service.
+const resolveApiRoute = createRouteResolver(appContract)
+
+app.use('*', (c, next) => {
+  if (!isTrackedApiPath(c.req.path)) return next()
+
+  const startedAt = performance.now()
+  return runApp(
+    Effect.gen(function* () {
+      const usage = yield* ApiUsage
+      // Evaluated after `next()`: `routePath(c)` then names the handler that
+      // produced the response, not merely the last route pattern that matched.
+      const record = Effect.suspend(() => {
+        const request = {
+          route: resolveApiRoute(c.req.method, c.req.path, routePath(c)),
+          method: c.req.method,
+          status: c.res.status,
+          caller: classifyCaller(c.req.header('origin'), c.req.header('referer')),
+          userAgentClass: classifyUserAgent(c.req.header('user-agent')),
+          clientId: readClientId(c.req.header(API_CLIENT_HEADER)),
+        }
+        c.get('log')?.set({
+          api: {
+            route: request.route,
+            caller: request.caller,
+            ua_class: request.userAgentClass,
+            client_id: request.clientId,
+          },
+        })
+        return usage.record(request, performance.now() - startedAt)
+      })
+      yield* Effect.tryPromise({
+        try: next,
+        catch: (cause) => new HttpAdapterError({ operation: 'Run API usage middleware', cause }),
+      }).pipe(Effect.ensuring(record))
+    }),
+    { signal: c.req.raw.signal },
+  )
+})
 
 // Set X-DXRating-Request-ID response header
 app.use('*', (c, next) =>
