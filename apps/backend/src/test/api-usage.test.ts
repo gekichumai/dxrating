@@ -106,21 +106,36 @@ describe('API usage rollup', () => {
     expect(rollup.drain()).toEqual([])
   })
 
-  it('caps bucket cardinality by folding new callers into an overflow bucket', () => {
+  it('folds every combination beyond the cap into one overflow bucket', () => {
     const rollup = createApiUsageRollup(2)
 
     rollup.record({ ...request, caller: 'a.example' }, 1)
     rollup.record({ ...request, caller: 'b.example' }, 1)
-    rollup.record({ ...request, caller: 'c.example' }, 1)
-    rollup.record({ ...request, caller: 'd.example', clientId: 'spam' }, 1)
+    for (const route of ['/api/v1/tags', '/api/v1/aliases', '/api/v1/comments']) {
+      for (const userAgentClass of ['browser', 'cli', 'script'] as const) {
+        rollup.record({ ...request, route, userAgentClass, caller: 'c.example' }, 2)
+      }
+    }
+    rollup.record({ ...request, method: 'POST', status: 503, clientId: 'spam' }, 10)
     rollup.record({ ...request, caller: 'a.example' }, 1)
 
     const buckets = rollup.drain()
+    expect(buckets).toHaveLength(3)
     expect(buckets.map((b) => [b.caller, b.count])).toEqual([
       ['a.example', 2],
       ['b.example', 1],
-      ['overflow', 2],
+      ['overflow', 10],
     ])
+    expect(buckets[2]).toMatchObject({
+      route: 'overflow',
+      method: 'overflow',
+      status: 'overflow',
+      userAgentClass: 'overflow',
+      clientId: 'overflow',
+      errorCount: 1,
+      durationMsSum: 28,
+      durationMsMax: 10,
+    })
   })
 
   it('flushes pending buckets when the runtime is disposed', async () => {

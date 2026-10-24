@@ -233,7 +233,18 @@ type BaseAnalyticsContext = {
  * `$pageview`, so every event carries platform, region and version.
  */
 export const registerBaseAnalyticsContext = (properties: BaseAnalyticsContext) => {
+  deviceContext = { platform: properties.platform, deployment: properties.deployment }
   posthog.register(properties)
+}
+
+// `posthog.reset()` clears every super property. Platform and deployment
+// describe the page load rather than the user, so they are restored after an
+// identity reset; region/version are re-registered by `SideEffector`.
+let deviceContext: Pick<BaseAnalyticsContext, 'platform' | 'deployment'> | undefined
+
+const resetAnalyticsIdentity = () => {
+  posthog.reset()
+  if (deviceContext) posthog.register(deviceContext)
 }
 
 export const registerAnalyticsContext = (properties: {
@@ -251,13 +262,13 @@ export const identifyAnalyticsUser = (userId: string) => {
   const currentUserId = posthog.get_property('$user_id')
   if (currentUserId === userId) return
 
-  if (currentUserId) posthog.reset()
+  if (currentUserId) resetAnalyticsIdentity()
   posthog.identify(userId)
 }
 
 export const resetAnalyticsUser = () => {
   if (posthog.get_property('$user_id')) {
-    posthog.reset()
+    resetAnalyticsIdentity()
   }
 }
 
