@@ -15,7 +15,6 @@ export type RatingImportTrigger = 'automatic' | 'manual'
  * never used as an analytics value.
  */
 export type AnalyticsRegion = Region
-export type NetImportRegion = Extract<AnalyticsRegion, 'jp' | 'intl'>
 
 /** Runtime shell. Lets insights segment app traffic without relying on `$host`. */
 export type AnalyticsPlatform = 'web' | 'ios'
@@ -34,24 +33,6 @@ type AnalyticsEventProperties = {
   locale_selector_item_clicked: {
     locale: string
     previous_locale: string
-  }
-  /**
-   * @deprecated Sent alongside `rating_import_started` with `source: 'maimai_net'`; never sum the two.
-   * Kept until PostHog insights 13232218 (12-month NET imports by region) and 1548421 move to
-   * `rating_import_*`, which only exists from 2026-09-01.
-   */
-  netimport_started: {
-    mode: 'merge' | 'replace'
-    trigger: 'automatic' | 'manual'
-  }
-  /** @deprecated See `netimport_started`. */
-  netimport_succeeded: {
-    region: NetImportRegion
-    count: number
-    mode: 'merge' | 'replace'
-    duration_ms: number
-    warning_count: number
-    trigger: 'automatic' | 'manual'
   }
   oneshot_render_button_clicked: {
     entry_count: number
