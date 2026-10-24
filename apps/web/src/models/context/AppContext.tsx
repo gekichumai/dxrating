@@ -70,7 +70,7 @@ function isAppContextStates(value: unknown): value is AppContextStates {
   )
 }
 
-function readStoredAppContext(): AppContextStates {
+export function readStoredAppContext(): AppContextStates {
   if (typeof window === 'undefined') return getDefaultAppContext()
 
   try {

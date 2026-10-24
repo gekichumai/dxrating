@@ -1,10 +1,26 @@
 import posthog, { type BeforeSendFn, type Properties } from 'posthog-js'
+import type { DXVersion, Region } from '@/models/context/AppContext'
 
 export type RatingImportSource = 'maimai_net' | 'diving_fish' | 'lxns' | 'json' | 'aqua_dx' | 'mu_net' | 'aqua_sqlite'
 
 export type SheetViewSource = 'search_results' | 'rating_calculator' | 'trending' | 'unknown'
 export type RatingImportMode = 'merge' | 'replace'
 export type RatingImportTrigger = 'automatic' | 'manual'
+
+/**
+ * Game region as selected in the app (`region` super property) or, on import
+ * events, the region the records came from. North American cabinets share
+ * maimai NET with the international build (maimaidx-eng.com), so they report
+ * `intl`; the catalog's `usa` region only describes chart availability and is
+ * never used as an analytics value.
+ */
+export type AnalyticsRegion = Region
+export type NetImportRegion = Extract<AnalyticsRegion, 'jp' | 'intl'>
+
+/** Runtime shell. Lets insights segment app traffic without relying on `$host`. */
+export type AnalyticsPlatform = 'web' | 'ios'
+/** Which deployment sent the event; use instead of `$host` for test-traffic filters. */
+export type AnalyticsDeployment = 'production' | 'preview' | 'development'
 
 type SheetProperties = {
   song_id: string
@@ -19,12 +35,18 @@ type AnalyticsEventProperties = {
     locale: string
     previous_locale: string
   }
+  /**
+   * @deprecated Sent alongside `rating_import_started` with `source: 'maimai_net'`; never sum the two.
+   * Kept until PostHog insights 13232218 (12-month NET imports by region) and 1548421 move to
+   * `rating_import_*`, which only exists from 2026-09-01.
+   */
   netimport_started: {
     mode: 'merge' | 'replace'
     trigger: 'automatic' | 'manual'
   }
+  /** @deprecated See `netimport_started`. */
   netimport_succeeded: {
-    region: 'jp' | 'intl'
+    region: NetImportRegion
     count: number
     mode: 'merge' | 'replace'
     duration_ms: number
@@ -87,7 +109,7 @@ type AnalyticsEventProperties = {
     warning_count: number
     mode: 'merge' | 'replace'
     trigger: 'automatic' | 'manual'
-    region?: string
+    region?: AnalyticsRegion
   }
   sheet_content_viewed: SheetProperties & {
     source: SheetViewSource
@@ -148,7 +170,7 @@ export const createRatingImportTracker = (
   captureAnalyticsEvent('rating_import_started', { source, mode, trigger })
 
   return {
-    succeeded: (entryCount: number, warningCount = 0, region?: string) => {
+    succeeded: (entryCount: number, warningCount = 0, region?: AnalyticsRegion) => {
       if (finished) return
       finished = true
       captureAnalyticsEvent('rating_import_succeeded', {
@@ -175,10 +197,49 @@ export const createRatingImportTracker = (
   }
 }
 
+const NATIVE_SHELL_PROTOCOLS = new Set(['capacitor:', 'ionic:'])
+
+export const detectAnalyticsPlatform = (url: string, nativePlatform?: string): AnalyticsPlatform => {
+  if (nativePlatform === 'ios') return 'ios'
+  try {
+    return NATIVE_SHELL_PROTOCOLS.has(new URL(url).protocol) ? 'ios' : 'web'
+  } catch {
+    return 'web'
+  }
+}
+
+export const detectAnalyticsDeployment = (url: string, platform: AnalyticsPlatform): AnalyticsDeployment => {
+  // A native shell serves the bundled app from `capacitor://localhost`; that is production traffic.
+  if (platform !== 'web') return 'production'
+  try {
+    const { hostname } = new URL(url)
+    if (hostname === 'dxrating.net' || hostname === 'www.dxrating.net') return 'production'
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]') return 'development'
+    return 'preview'
+  } catch {
+    return 'preview'
+  }
+}
+
+type BaseAnalyticsContext = {
+  platform: AnalyticsPlatform
+  deployment: AnalyticsDeployment
+  game_version: DXVersion
+  region: AnalyticsRegion
+}
+
+/**
+ * Registered from `posthog.init`'s `loaded` callback, before the initial
+ * `$pageview`, so every event carries platform, region and version.
+ */
+export const registerBaseAnalyticsContext = (properties: BaseAnalyticsContext) => {
+  posthog.register(properties)
+}
+
 export const registerAnalyticsContext = (properties: {
   app_surface: 'web'
-  game_version: string
-  region: string
+  game_version: DXVersion
+  region: AnalyticsRegion
   language: string
   calculated_rating: number
   rating_entry_count: number

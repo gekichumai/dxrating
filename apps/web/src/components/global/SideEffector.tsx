@@ -1,6 +1,7 @@
 import { useRatingEntries } from '@/components/rating/useRatingEntries'
 import { authClient } from '@/lib/auth-client'
 import { identifyAnalyticsUser, registerAnalyticsContext, resetAnalyticsUser } from '@/lib/analytics'
+import type { DXVersion, Region } from '@/models/context/AppContext'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { type FC, memo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -90,8 +91,8 @@ const SideEffectorAutoImportRating: FC = () => {
 
 const SideEffectorAnalyticsContext: FC<{
   userId?: string
-  version: string
-  region: string
+  version: DXVersion
+  region: Region
   language: string
   rating: number
   entryCount: number
