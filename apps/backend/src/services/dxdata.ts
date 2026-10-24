@@ -6,6 +6,7 @@ export class DxdataDecodeError extends Data.TaggedError('DxdataDecodeError')<{
 }> {}
 
 import type { Context, Env } from 'hono'
+import { API_CLIENT_HEADER } from './api-usage'
 
 const PRODUCTION_CHANNEL = 'production-v1'
 const API_SCHEMA_VERSION = 1
@@ -16,7 +17,7 @@ export const DXDATA_CDN_CACHE_CONTROL = 'public, max-age=21600, stale-while-reva
 
 export const DXDATA_CORS_OPTIONS = {
   origin: '*',
-  allowHeaders: ['Content-Type', 'If-None-Match'],
+  allowHeaders: ['Content-Type', 'If-None-Match', API_CLIENT_HEADER],
   allowMethods: ['GET', 'HEAD', 'OPTIONS'],
   exposeHeaders: ['Content-Length', 'ETag', 'Cache-Control', 'CDN-Cache-Control', 'Cloudflare-CDN-Cache-Control'],
   maxAge: 86400,
