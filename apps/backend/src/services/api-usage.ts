@@ -30,7 +30,30 @@ export interface ApiRequestClassification {
   readonly clientId: string
 }
 
-export interface ApiUsageBucket extends ApiRequestClassification {
+const OVERFLOW = 'overflow'
+
+type ApiUsageBucketKey =
+  | ApiRequestClassification
+  | {
+      readonly route: typeof OVERFLOW
+      readonly method: typeof OVERFLOW
+      readonly status: typeof OVERFLOW
+      readonly caller: typeof OVERFLOW
+      readonly userAgentClass: typeof OVERFLOW
+      readonly clientId: typeof OVERFLOW
+    }
+
+/** Once the rollup is full, every new combination folds into this single bucket. */
+const OVERFLOW_BUCKET_KEY = {
+  route: OVERFLOW,
+  method: OVERFLOW,
+  status: OVERFLOW,
+  caller: OVERFLOW,
+  userAgentClass: OVERFLOW,
+  clientId: OVERFLOW,
+} as const satisfies ApiUsageBucketKey
+
+export type ApiUsageBucket = ApiUsageBucketKey & {
   readonly count: number
   readonly errorCount: number
   readonly durationMsSum: number
@@ -139,22 +162,26 @@ export const createRouteResolver = (contract: unknown) => {
 
 export const isTrackedApiPath = (path: string) => !UNTRACKED_PATHS.has(path)
 
-const OVERFLOW = 'overflow'
+/**
+ * Mutable per-process aggregate; drained once per flush interval. Holds at
+ * most `maxBuckets` distinct combinations plus one overflow bucket, which
+ * keeps request, error and timing totals for everything that did not fit.
+ */
+const OVERFLOW_KEY = JSON.stringify(OVERFLOW_BUCKET_KEY)
 
-/** Mutable per-process aggregate; drained once per flush interval. */
 export const createApiUsageRollup = (maxBuckets = MAX_API_USAGE_BUCKETS) => {
   let buckets = new Map<string, ApiUsageBucket>()
 
   const record = (request: ApiRequestClassification, durationMs: number) => {
-    let classification = request
+    let classification: ApiUsageBucketKey = request
     let key = JSON.stringify(classification)
     if (!buckets.has(key) && buckets.size >= maxBuckets) {
       // Cap cardinality (e.g. arbitrary third-party hostnames or client ids).
-      classification = { ...request, caller: OVERFLOW, clientId: OVERFLOW }
-      key = JSON.stringify(classification)
+      classification = OVERFLOW_BUCKET_KEY
+      key = OVERFLOW_KEY
     }
     const previous = buckets.get(key)
-    const isError = classification.status >= 500
+    const isError = request.status >= 500
     buckets.set(key, {
       ...classification,
       count: (previous?.count ?? 0) + 1,
@@ -179,7 +206,7 @@ export const emitApiUsageBuckets = (buckets: readonly ApiUsageBucket[]) => {
       route: bucket.route,
       method: bucket.method,
       status: String(bucket.status),
-      status_class: `${Math.floor(bucket.status / 100)}xx`,
+      status_class: bucket.status === OVERFLOW ? OVERFLOW : `${Math.floor(bucket.status / 100)}xx`,
       caller: bucket.caller,
       ua_class: bucket.userAgentClass,
       client_id: bucket.clientId,

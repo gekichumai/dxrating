@@ -142,4 +142,26 @@ describe('analytics', () => {
     )
     expect(posthog.capture).toHaveBeenCalledTimes(2)
   })
+
+  it('restores platform and deployment after an identity reset', () => {
+    registerBaseAnalyticsContext({
+      platform: 'web',
+      deployment: 'production',
+      game_version: 'magical',
+      region: 'jp',
+    })
+    vi.clearAllMocks()
+
+    posthog.get_property.mockReturnValue('user-1')
+    identifyAnalyticsUser('user-2')
+    expect(posthog.reset.mock.invocationCallOrder[0]).toBeLessThan(posthog.register.mock.invocationCallOrder[0])
+    expect(posthog.register).toHaveBeenCalledWith({ platform: 'web', deployment: 'production' })
+    expect(posthog.register.mock.invocationCallOrder[0]).toBeLessThan(posthog.identify.mock.invocationCallOrder[0])
+
+    vi.clearAllMocks()
+    posthog.get_property.mockReturnValue('user-2')
+    resetAnalyticsUser()
+    expect(posthog.reset).toHaveBeenCalledOnce()
+    expect(posthog.register).toHaveBeenCalledWith({ platform: 'web', deployment: 'production' })
+  })
 })
