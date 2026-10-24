@@ -7,7 +7,10 @@ on:
       - 'v*'
 
 concurrency:
-  group: release-${{ github.ref }}
+  # One production deploy at a time; a newer tag replaces any queued older one,
+  # so back-to-back merges can't deploy out of order.
+  group: release-production
+  cancel-in-progress: false
 
 jobs:
   publish:
