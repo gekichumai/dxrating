@@ -143,7 +143,6 @@ export const importFromNETRecords = async (
   importInFlight = true
   const importStart = performance.now()
   const trigger = authParams ? 'manual' : 'automatic'
-  captureAnalyticsEvent('netimport_started', { mode, trigger })
   captureAnalyticsEvent('rating_import_started', {
     source: 'maimai_net',
     mode,
@@ -243,14 +242,6 @@ export const importFromNETRecords = async (
     localStorage.setItem(NET_IMPORT_LAST_SUCCESS_KEY, Date.now().toString())
 
     const duration = performance.now() - importStart
-    captureAnalyticsEvent('netimport_succeeded', {
-      region,
-      count: entries.length,
-      mode,
-      duration_ms: duration,
-      warning_count: importResult.warnings.length,
-      trigger,
-    })
     captureAnalyticsEvent('rating_import_succeeded', {
       source: 'maimai_net',
       duration_ms: duration,
