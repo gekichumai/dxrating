@@ -123,9 +123,9 @@ function OAuthErrorHandler() {
     const error = params.get('error')
     if (!error) return
 
-    const key = `auth:oauth-error.${error}` as const
+    const key = `auth:user-profile.oauth-error.${error}` as const
     const message = t(key, { defaultValue: '' })
-    toast.error(message || t('auth:oauth-error.default', { error }), { id: 'oauth-error' })
+    toast.error(message || t('auth:user-profile.oauth-error.default', { error }), { id: 'oauth-error' })
 
     params.delete('error')
     params.delete('error_description')
