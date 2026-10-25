@@ -25736,6 +25736,7 @@
                 }
             ],
             "searchAcronyms": [
+                "朋友的酒",
                 "未来"
             ]
         },
@@ -46040,6 +46041,7 @@
                 "Marisa Stole the Precious Thing",
                 "大便",
                 "大盗魔理沙",
+                "魔理沙偷东西",
                 "魔理沙大变",
                 "魔理沙大变盗",
                 "魔理沙大盗",
@@ -154888,6 +154890,7 @@
                 "商场跑圈",
                 "打交",
                 "星星保卫战",
+                "特大",
                 "绕着商场跑一圈",
                 "舞立方体验票",
                 "鼓手模拟器"
@@ -173456,6 +173459,7 @@
                 "Scarlet Police",
                 "Scarlet Police on Ghetto Patrol",
                 "东方警察",
+                "两小儿辩日",
                 "尾杀大b圈",
                 "斯卡雷特警察",
                 "蕾米琪露诺斗舞",
@@ -201096,6 +201100,7 @@
                 "kop5决赛曲",
                 "tsunagite",
                 "ysk泡温泉",
+                "ysk泡温泉1",
                 "两个舞神六个尖",
                 "两舞神六个a",
                 "两舞神直播越级",
@@ -217410,6 +217415,7 @@
             "searchAcronyms": [
                 "ultratrailer",
                 "炒鱼糕片",
+                "超予告编",
                 "超预告篇"
             ]
         },
@@ -228835,6 +228841,7 @@
             "searchAcronyms": [
                 "🇺🇸",
                 "2个14守一个13+",
+                "棱镜塔守门员",
                 "美国人",
                 "美国佬"
             ]
@@ -229693,6 +229700,7 @@
                 "五万日元",
                 "别笑你也过不了第二关",
                 "射雕英雄传",
+                "新手教程3",
                 "百元之恋",
                 "起床战争"
             ]
@@ -229833,6 +229841,7 @@
             "searchAcronyms": [
                 "refrain",
                 "track 2/1",
+                "包饺子",
                 "咏人2",
                 "咏人不知2",
                 "女同和好",
@@ -231683,7 +231692,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "没一个是人"
+            ]
         },
         {
             "songId": "Leave All Behind",
@@ -231816,7 +231827,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "lab"
+            ]
         },
         {
             "songId": "Retribution ～ Cycle of Redemption ～",
@@ -231951,7 +231964,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "报应sp"
+            ]
         },
         {
             "songId": "Luminescence",
@@ -232081,7 +232096,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "冷光"
+            ]
         },
         {
             "songId": "CiRCLE CAMPAiGN",
@@ -255955,5 +255972,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-10-20T12:00:12.774845427+00:00"
+    "updateTime": "2026-10-25T05:00:13.429955661+00:00"
 }
