@@ -1,98 +1,63 @@
+import { useTranslation } from 'react-i18next'
 import { LegalLayout } from './LegalLayout'
 
 export const PrivacyPolicy = () => {
+  const { t } = useTranslation('auth')
   return (
-    <LegalLayout title="Privacy Policy" updated="Last updated: August 30, 2026" current="privacy">
-      <h2>Introduction</h2>
-      <p>
-        This Privacy Policy explains how we collect, use, process, and disclose your information when you use our
-        service.
-      </p>
+    <LegalLayout title={t('privacy.title')} updated={t('privacy.updated')} current="privacy">
+      <h2>{t('privacy.intro.heading')}</h2>
+      <p>{t('privacy.intro.body')}</p>
 
-      <h2>Information We Collect</h2>
-      <p>We collect information in the following ways:</p>
+      <h2>{t('privacy.collect.heading')}</h2>
+      <p>{t('privacy.collect.body')}</p>
       <ul>
         <li>
-          <strong>Information you provide to us directly:</strong> Information that you submit through our service,
-          including registration information, profile information, and any other information you choose to provide.
+          <strong>{t('privacy.collect.direct.label')}</strong> {t('privacy.collect.direct.body')}
         </li>
         <li>
-          <strong>Usage Information:</strong> We collect information about your interactions with our service using
-          PostHog analytics, including:
+          <strong>{t('privacy.collect.usage.label')}</strong> {t('privacy.collect.usage.body')}
           <ul>
-            <li>Pages you visit</li>
-            <li>Features you use</li>
-            <li>Actions you take</li>
-            <li>Time spent on pages</li>
-            <li>Technical information about your device and internet connection</li>
+            {[1, 2, 3, 4, 5].map((item) => (
+              <li key={item}>{t(`privacy.collect.usage.item${item}`)}</li>
+            ))}
           </ul>
         </li>
       </ul>
 
-      <h2>How We Use Your Information</h2>
-      <p>We use the collected information for various purposes:</p>
+      <h2>{t('privacy.use.heading')}</h2>
+      <p>{t('privacy.use.body')}</p>
       <ul>
-        <li>To provide and maintain our service</li>
-        <li>To notify you about changes to our service</li>
-        <li>To provide customer support</li>
-        <li>To monitor usage of our service</li>
-        <li>To detect, prevent, and address technical issues</li>
+        {[1, 2, 3, 4, 5].map((item) => (
+          <li key={item}>{t(`privacy.use.item${item}`)}</li>
+        ))}
       </ul>
 
-      <h2>Data Storage</h2>
-      <p>
-        We use a secure database provider. Your data is stored securely and processed in accordance with security
-        standards and practices.
-      </p>
+      <h2>{t('privacy.storage.heading')}</h2>
+      <p>{t('privacy.storage.body')}</p>
 
-      <h2>Analytics</h2>
-      <p>
-        We use PostHog, an open-source analytics platform, to understand how our service is used. PostHog collects
-        anonymous usage data that helps us improve our service. You can learn more about PostHog's privacy practices on
-        their website.
-      </p>
+      <h2>{t('privacy.analytics.heading')}</h2>
+      <p>{t('privacy.analytics.body')}</p>
 
-      <h2>Cookies and Tracking</h2>
-      <p>
-        We use cookies and similar tracking technologies to track activity on our service and hold certain information.
-        You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent.
-      </p>
+      <h2>{t('privacy.cookies.heading')}</h2>
+      <p>{t('privacy.cookies.body')}</p>
 
-      <h2>Data Retention</h2>
-      <p>
-        We will retain your information only for as long as necessary to fulfill the purposes outlined in this Privacy
-        Policy. We will retain and use your information to the extent necessary to comply with our legal obligations,
-        resolve disputes, and enforce our policies.
-      </p>
+      <h2>{t('privacy.retention.heading')}</h2>
+      <p>{t('privacy.retention.body')}</p>
 
-      <h2>Account Deletion</h2>
-      <p>
-        You can permanently delete your account from the account screen in the DXRating app. Deletion removes your
-        profile, comments, tags and tag attachments, aliases, sessions, passkeys, linked sign-in methods, and linked
-        LXNS credentials. Linked OAuth grants are revoked when supported by the provider. After deletion, you can create
-        a new account using the same email address or sign-in provider.
-      </p>
-      <p>
-        Account data is removed from our active systems immediately. Residual copies may remain in encrypted backups
-        until those backups are automatically deleted, or when retention is required by law.
-      </p>
+      <h2>{t('privacy.deletion.heading')}</h2>
+      <p>{t('privacy.deletion.p1')}</p>
+      <p>{t('privacy.deletion.p2')}</p>
 
-      <h2>Your Rights</h2>
-      <p>You have the following data protection rights:</p>
+      <h2>{t('privacy.rights.heading')}</h2>
+      <p>{t('privacy.rights.body')}</p>
       <ul>
-        <li>The right to access, update, or delete your information</li>
-        <li>The right to rectification</li>
-        <li>The right to object</li>
-        <li>The right of restriction</li>
-        <li>The right to data portability</li>
-        <li>The right to withdraw consent</li>
+        {[1, 2, 3, 4, 5, 6].map((item) => (
+          <li key={item}>{t(`privacy.rights.item${item}`)}</li>
+        ))}
       </ul>
 
-      <h2>Changes to This Privacy Policy</h2>
-      <p>
-        We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy
-        Policy on this page and updating the "Last updated" date.
-      </p>
+      <h2>{t('privacy.changes.heading')}</h2>
+      <p>{t('privacy.changes.body')}</p>
     </LegalLayout>
   )
 }
