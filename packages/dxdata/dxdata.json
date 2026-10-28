@@ -13285,7 +13285,7 @@
                         "intl": {}
                     },
                     "isSpecial": false,
-                    "version": "ORANGE PLUS",
+                    "version": "MAGiCAL",
                     "internalId": 397,
                     "releaseDate": "2026-10-16"
                 },
@@ -13313,7 +13313,7 @@
                         "intl": {}
                     },
                     "isSpecial": false,
-                    "version": "ORANGE PLUS",
+                    "version": "MAGiCAL",
                     "internalId": 397,
                     "releaseDate": "2026-10-16"
                 },
@@ -13341,7 +13341,7 @@
                         "intl": {}
                     },
                     "isSpecial": false,
-                    "version": "ORANGE PLUS",
+                    "version": "MAGiCAL",
                     "internalId": 397,
                     "releaseDate": "2026-10-16"
                 },
@@ -13369,7 +13369,7 @@
                         "intl": {}
                     },
                     "isSpecial": false,
-                    "version": "ORANGE PLUS",
+                    "version": "MAGiCAL",
                     "internalId": 397,
                     "releaseDate": "2026-10-16"
                 },
@@ -13397,7 +13397,7 @@
                         "intl": {}
                     },
                     "isSpecial": false,
-                    "version": "ORANGE PLUS",
+                    "version": "MAGiCAL",
                     "internalId": 397,
                     "releaseDate": "2026-10-16"
                 }
@@ -254720,7 +254720,10 @@
                     },
                     "isSpecial": false,
                     "version": "MAGiCAL",
-                    "releaseDate": "2026-09-25"
+                    "releaseDate": "2026-09-25",
+                    "multiverInternalLevelValue": {
+                        "MAGiCAL": 6.8
+                    }
                 },
                 {
                     "type": "dx",
@@ -255204,7 +255207,10 @@
                     },
                     "isSpecial": false,
                     "version": "MAGiCAL",
-                    "releaseDate": "2026-10-02"
+                    "releaseDate": "2026-10-02",
+                    "multiverInternalLevelValue": {
+                        "MAGiCAL": 6.3
+                    }
                 },
                 {
                     "type": "dx",
@@ -255688,7 +255694,10 @@
                     },
                     "isSpecial": false,
                     "version": "MAGiCAL",
-                    "releaseDate": "2026-10-16"
+                    "releaseDate": "2026-10-16",
+                    "multiverInternalLevelValue": {
+                        "MAGiCAL": 6.5
+                    }
                 },
                 {
                     "type": "dx",
@@ -255979,5 +255988,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-10-28T15:00:15.984660986+00:00"
+    "updateTime": "2026-10-28T18:00:15.944742930+00:00"
 }
