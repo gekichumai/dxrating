@@ -26,8 +26,16 @@ export function getRouter() {
           shouldCreateSpanForRequest: () => true,
         }),
       ],
-      tracePropagationTargets: ['localhost', /^\//, /^https?:\/\/dxrating\.net/, /^https?:\/\/miruku\.dxrating\.net/],
+      // Not the song catalog: trace headers would make its revalidation fail the API's CORS preflight
+      tracePropagationTargets: [
+        'localhost',
+        /^\//,
+        /^https?:\/\/dxrating\.net/,
+        /^https?:\/\/miruku\.dxrating\.net\/(?!api\/v1\/dxdata)/,
+      ],
       tracesSampleRate: 0.2,
+      // Sends what the app logs with Sentry.logger (saved-data migrations, catalog API fallbacks); nothing else
+      enableLogs: true,
       ignoreErrors: [
         'top.GLOBALS',
         'originalCreateNotification',

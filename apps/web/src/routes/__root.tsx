@@ -21,6 +21,8 @@ import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCusto
 import { RegionVersionUpdatePrompt } from '@/components/global/preferences/RegionVersionUpdatePrompt'
 import { AppContextProvider } from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
+import { CatalogProvider } from '@/catalog/CatalogContext'
+import { loadCatalogMeta } from '@/catalog/catalogSource'
 import { createServerI18n } from '@/setup/init-i18n'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
@@ -51,6 +53,9 @@ export const Route = createRootRoute({
       { context: ctx.context },
     ]),
   }),
+  // The catalog fields every page renders with; the songs a page needs come from its own loader (see CatalogProvider)
+  loader: async () => ({ catalogMeta: await loadCatalogMeta() }),
+  shouldReload: false,
   head: ({ match, matches }) => {
     const locale = resolveSeoLocale([match, ...matches])
     const includeRootTitle = !matches.some((match) => String(match.routeId) === SONG_DETAIL_ROUTE_ID)
@@ -149,22 +154,24 @@ function RootComponent() {
       <I18nextProvider i18n={routeI18n}>
         <AppContextProvider>
           <RootDocument>
-            <QueryClientProvider client={queryClient}>
-              <VersionCustomizedThemeProvider>
-                <RatingCalculatorContextProvider>
-                  <PostHogProvider client={posthog}>
-                    <NetImportSettingsProvider>
-                      <SideEffector />
-                      <CustomizedToaster />
-                      <NetImportProgress />
-                      <OAuthErrorHandler />
-                      <RegionVersionUpdatePrompt />
-                      <AppLayout />
-                    </NetImportSettingsProvider>
-                  </PostHogProvider>
-                </RatingCalculatorContextProvider>
-              </VersionCustomizedThemeProvider>
-            </QueryClientProvider>
+            <CatalogProvider>
+              <QueryClientProvider client={queryClient}>
+                <VersionCustomizedThemeProvider>
+                  <RatingCalculatorContextProvider>
+                    <PostHogProvider client={posthog}>
+                      <NetImportSettingsProvider>
+                        <SideEffector />
+                        <CustomizedToaster />
+                        <NetImportProgress />
+                        <OAuthErrorHandler />
+                        <RegionVersionUpdatePrompt />
+                        <AppLayout />
+                      </NetImportSettingsProvider>
+                    </PostHogProvider>
+                  </RatingCalculatorContextProvider>
+                </VersionCustomizedThemeProvider>
+              </QueryClientProvider>
+            </CatalogProvider>
           </RootDocument>
         </AppContextProvider>
       </I18nextProvider>

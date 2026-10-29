@@ -1,4 +1,4 @@
-import { useSongCatalog } from '@/catalog/CatalogContext'
+import { useSongCatalogLoader } from '@/catalog/CatalogContext'
 import {
   Button,
   Checkbox,
@@ -89,7 +89,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
     .with(true, () => 'replace' as const)
     .with('false', () => false as const)
     .otherwise((value) => value)
-  const catalog = useSongCatalog()
+  const loadCatalog = useSongCatalogLoader()
 
   const updateForm = (patch: Partial<typeof form>) => {
     const next = { ...form, ...patch }
@@ -106,11 +106,16 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   const handleImport = () => {
-    void importFromNETRecords(catalog, modifyEntries, mappedAutoImport || 'replace', undefined, {
-      region,
-      username,
-      password,
-    })
+    // The import reports its own progress; it starts once the complete catalog is there
+    void loadCatalog()
+      .then((catalog) =>
+        importFromNETRecords(catalog, modifyEntries, mappedAutoImport || 'replace', undefined, {
+          region,
+          username,
+          password,
+        }),
+      )
+      .catch((error: unknown) => console.error('Failed to import NET records', error))
     onClose()
   }
 

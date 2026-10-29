@@ -1,9 +1,10 @@
+import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { describe, expect, it } from 'vitest'
 import { buildLlmsTxt } from '../llms[.]txt'
 
 describe('buildLlmsTxt', () => {
   it('publishes a concise machine-readable map for AI systems', () => {
-    const llms = buildLlmsTxt()
+    const llms = buildLlmsTxt(catalogSnapshot.updatedAt)
 
     expect(llms).toContain('# DXRating')
     expect(llms).toContain('https://dxrating.net/sitemap.xml')

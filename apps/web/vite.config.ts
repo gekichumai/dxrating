@@ -23,7 +23,17 @@ const dxdataJsonParse = (): Plugin => ({
   },
 })
 
+// The catalog the build renders with: the browser never uses an older one (see src/catalog/clientCatalog.ts)
+const catalogSnapshotUpdatedAt = (
+  JSON.parse(readFileSync(path.resolve(__dirname, '../../packages/dxdata/snapshot.json'), 'utf8')) as {
+    updatedAt: string
+  }
+).updatedAt
+
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_CATALOG_SNAPSHOT_UPDATED_AT': JSON.stringify(catalogSnapshotUpdatedAt),
+  },
   server: {
     port: 5173,
   },

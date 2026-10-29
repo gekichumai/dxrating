@@ -1,4 +1,4 @@
-import { useSongCatalog } from '@/catalog/CatalogContext'
+import { useSongCatalogLoader } from '@/catalog/CatalogContext'
 import { loadLegacySongIds } from '@/catalog/legacySongIds'
 import { normalizeMuNetRows, type ProviderMusicIdMap } from '@gekichumai/maimai-domain'
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
@@ -29,7 +29,7 @@ export const ImportFromMuNetButtonListItem: FC<{
 }> = ({ modifyEntries, onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
   const haptic = useWebHaptics()
-  const catalog = useSongCatalog()
+  const loadCatalog = useSongCatalogLoader()
 
   return (
     <MenuItem
@@ -72,7 +72,7 @@ export const ImportFromMuNetButtonListItem: FC<{
                 level: musicDetail.level,
                 achievement: musicDetail.achievement,
               }))
-              const importResult = normalizeMuNetRows(catalog, rows, musicIdMap, await loadLegacySongIds())
+              const importResult = normalizeMuNetRows(await loadCatalog(), rows, musicIdMap, await loadLegacySongIds())
               const entries = importResultToPlayEntries(importResult)
               for (const warning of importResult.warnings) {
                 console.warn('[ImportFromMuNetButtonListItem]', warning.message, warning.row)

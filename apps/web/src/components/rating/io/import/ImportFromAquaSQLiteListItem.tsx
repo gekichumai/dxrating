@@ -1,4 +1,4 @@
-import { useSongCatalog } from '@/catalog/CatalogContext'
+import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import { normalizeAquaSqliteRows, type ImportWarning, type SongCatalog } from '@gekichumai/maimai-domain'
 import {
   Alert,
@@ -147,10 +147,10 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
   }, [db])
   const [selectedUser, setSelectedUser] = useState<AquaUser | null>(null)
   const { data: sheets } = useSheets()
-  const catalog = useSongCatalog()
+  const catalog = useCompleteSongCatalog()
   const { records, warnings } = useMemo(() => {
     if (!selectedUser) return { records: [], warnings: [] }
-    if (!sheets) return { records: [], warnings: [] }
+    if (!sheets || !catalog) return { records: [], warnings: [] }
 
     return getUserGamePlays(db, selectedUser, sheets, catalog)
   }, [catalog, db, selectedUser, sheets])

@@ -3,7 +3,7 @@ import { createContext, type FC, type PropsWithChildren, useContext, useEffect }
 import { useList, useLocalStorage } from 'react-use'
 import type { ListActions } from 'react-use/lib/useList'
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
-import { useCatalogDocument } from '../../catalog/CatalogContext'
+import { useCompleteCatalogDocument } from '../../catalog/CatalogContext'
 import { loadLegacySongIds } from '../../catalog/legacySongIds'
 import {
   backUpBeforeMigration,
@@ -27,7 +27,8 @@ export const RatingCalculatorContext = createContext<RatingCalculatorContext>({
 export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({ children }) => {
   const [localStorageEntries, setLocalStorageEntries] = useLocalStorage<PlayEntry[]>(RATING_ENTRIES_STORAGE_KEY, [])
   const [entries, modifyEntries] = useList<PlayEntry>(localStorageEntries)
-  const catalogDocument = useCatalogDocument()
+  // Migrations resolve saved sheet IDs against the catalog: they wait for the complete one
+  const catalogDocument = useCompleteCatalogDocument()
 
   useEffect(() => {
     setLocalStorageEntries(entries)
@@ -37,7 +38,7 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
   // Re-runs on every change of the entries, so a later import is migrated too; a pass that matches nothing changes
   // nothing, and a change while the legacy map loads cancels the pass in favor of the one for the new entries.
   useEffect(() => {
-    if (!hasLegacySheetRecords(entries)) return
+    if (!catalogDocument || !hasLegacySheetRecords(entries)) return
     let cancelled = false
     void loadLegacySongIds().then((legacySongIds) => {
       if (cancelled) return
@@ -53,6 +54,7 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
   }, [entries, catalogDocument, modifyEntries])
 
   useEffect(() => {
+    if (!catalogDocument) return
     void migrateStoredFavoriteSheetIds(window.localStorage, catalogDocument)
   }, [catalogDocument])
 

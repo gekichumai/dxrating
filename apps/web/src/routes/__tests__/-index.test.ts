@@ -11,18 +11,18 @@ describe('home route (chart search)', () => {
     expect(Route.options.ssr).toBe(true)
   })
 
-  it('loads seed sheets for a prefilled query parameter', () => {
-    const { seedSheets } = loadSearchRouteData({ q: '螺旋' })
+  it('loads seed sheets for a prefilled query parameter', async () => {
+    const { seedSheets } = await loadSearchRouteData({ q: '螺旋' })
 
     expect(seedSheets.map((sheet) => sheet.title)).toContain('ガラテアの螺旋')
     expect(seedSheets[0]?.path).toMatch(/^\/songs\//)
   })
 
-  it('rejects oversized queries before loading search results', () => {
+  it('rejects oversized queries before loading search results', async () => {
     const oversizedQuery = 'a'.repeat(SEARCH_QUERY_MAX_LENGTH + 1)
 
     expect(Route.options.validateSearch).toBe(validateSearchParams)
     expect(() => validateSearchParams({ q: oversizedQuery })).toThrow(RangeError)
-    expect(() => loadSearchRouteData({ q: oversizedQuery })).toThrow(RangeError)
+    await expect(loadSearchRouteData({ q: oversizedQuery })).rejects.toThrow(RangeError)
   })
 })

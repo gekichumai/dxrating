@@ -1,4 +1,4 @@
-import { useSongCatalog } from '@/catalog/CatalogContext'
+import { useSongCatalogLoader } from '@/catalog/CatalogContext'
 import { ImportRegionSupportTag } from '@/components/rating/io/import/ImportRegionSupportTag'
 import { normalizeLxnsScores, type SongCatalog } from '@gekichumai/maimai-domain'
 import {
@@ -35,7 +35,7 @@ const LxnsImportDialogContent: FC<{
   onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
-  const catalog = useSongCatalog()
+  const loadCatalog = useSongCatalogLoader()
   const [state, setState] = useState<ConnectionState>('loading')
 
   const checkStatus = useCallback(async () => {
@@ -70,7 +70,7 @@ const LxnsImportDialogContent: FC<{
     try {
       const result = await apiClient.lxns.start()
 
-      const importResult = normalizeLxnsScores(catalog, result.scores)
+      const importResult = normalizeLxnsScores(await loadCatalog(), result.scores)
       const entries = importResultToPlayEntries(importResult)
       for (const warning of importResult.warnings) {
         console.warn('[ImportFromLxnsButtonListItem]', warning.message, warning.row)

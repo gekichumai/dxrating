@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
-import { getBundledCatalogDocument } from '@/catalog/bundledCatalog'
+import { getCatalogDocument } from '@/catalog/catalogSource'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 
 const BASE_URL = 'https://dxrating.net'
@@ -85,7 +85,7 @@ export const Route = createFileRoute('/sitemap.xml')({
   server: {
     handlers: {
       GET: async () => {
-        const sitemap = buildSitemap(getBundledCatalogDocument().songs)
+        const sitemap = buildSitemap((await getCatalogDocument()).songs)
 
         return new Response(sitemap, {
           headers: {

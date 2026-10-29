@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { getBundledCatalogDocument } from '@/catalog/bundledCatalog'
+import { getCatalogDocument } from '@/catalog/catalogSource'
 
-export function buildLlmsTxt(catalogUpdatedAt = getBundledCatalogDocument().updatedAt) {
+export function buildLlmsTxt(catalogUpdatedAt: string) {
   return `# DXRating
 
 DXRating is a maimai DX rating calculator and chart database. It provides canonical chart pages, localized metadata, score/rating tools, tags, comments, aliases, and chart facts such as difficulty, internal level, note counts, regions, release dates, and designers.
@@ -53,7 +53,7 @@ export const Route = createFileRoute('/llms.txt')({
   server: {
     handlers: {
       GET: async () =>
-        new Response(buildLlmsTxt(), {
+        new Response(buildLlmsTxt((await getCatalogDocument()).updatedAt), {
           headers: {
             'Content-Type': 'text/markdown; charset=utf-8',
             'Cache-Control': 'public, max-age=86400',

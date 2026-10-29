@@ -1,6 +1,6 @@
 import { DifficultyEnum, type Song, TypeEnum } from '@gekichumai/dxdata'
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
-import { getBundledCatalogDocument } from '@/catalog/bundledCatalog'
+import { getCatalogDocument } from '@/catalog/catalogSource'
 import { findSongById, resolveSongRouteParam } from '@/catalog/songLookup'
 
 type SongSearchParams = {
@@ -69,7 +69,7 @@ export const Route = createFileRoute('/songs_/$songId')({
     difficulty: typeof search.difficulty === 'string' ? search.difficulty : undefined,
   }),
   beforeLoad: async ({ params, search }) => {
-    const catalogDocument = getBundledCatalogDocument()
+    const catalogDocument = await getCatalogDocument()
     const resolution = await resolveSongRouteParam(catalogDocument, params.songId)
     const song =
       resolution && ('song' in resolution ? resolution.song : findSongById(catalogDocument, resolution.redirectSongId))

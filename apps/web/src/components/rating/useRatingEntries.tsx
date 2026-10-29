@@ -22,6 +22,8 @@ export type RatingCalculatorEntry = Entry & {
   rating: RatingAward | null
 }
 interface UseRatingEntriesReturn {
+  /** The complete catalog is still loading: the entries are not resolved yet, so the lists are empty */
+  isLoading?: boolean
   allEntries: RatingCalculatorEntry[]
   b15Entries: RatingCalculatorEntry[]
   b35Entries: RatingCalculatorEntry[]
@@ -170,5 +172,5 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
     return result
   }, [entries, sheets, catalog, appVersion, region])
 
-  return { allEntries, b15Entries, b35Entries, statistics }
+  return { isLoading: !sheets, allEntries, b15Entries, b35Entries, statistics }
 }

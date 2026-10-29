@@ -7,6 +7,7 @@ import {
   type Sheet,
   type Song,
 } from '@gekichumai/dxdata'
+import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { describe, expect, it } from 'vitest'
 import { RECENT_CHART_LIMIT, buildRecentChartLinks } from '../recentCharts'
 
@@ -40,6 +41,7 @@ const createSong = (index: number, releaseDate = `2026-05-${String((index % 28) 
 describe('buildRecentChartLinks', () => {
   it('sorts charts by release date descending and caps at 500', () => {
     const charts = buildRecentChartLinks(
+      catalogSnapshot,
       Array.from({ length: 501 }, (_, index) =>
         createSong(index, new Date(Date.UTC(2026, 0, index + 1)).toISOString().slice(0, 10)),
       ),
@@ -59,18 +61,18 @@ describe('buildRecentChartLinks', () => {
   })
 
   it('returns a copy of the cached default recent chart list', () => {
-    const first = buildRecentChartLinks()
+    const first = buildRecentChartLinks(catalogSnapshot)
     const firstChart = first[0]
     first.length = 0
 
-    const second = buildRecentChartLinks()
+    const second = buildRecentChartLinks(catalogSnapshot)
 
     expect(second).toHaveLength(RECENT_CHART_LIMIT)
     expect(second[0]).toEqual(firstChart)
   })
 
   it('excludes basic and advanced charts from the recent chart candidates', () => {
-    const charts = buildRecentChartLinks([
+    const charts = buildRecentChartLinks(catalogSnapshot, [
       {
         ...createSong(1),
         sheets: [
@@ -86,7 +88,7 @@ describe('buildRecentChartLinks', () => {
   })
 
   it('uses stable tie-breakers when release dates match', () => {
-    const charts = buildRecentChartLinks([
+    const charts = buildRecentChartLinks(catalogSnapshot, [
       createSong(2, '2026-05-01'),
       createSong(1, '2026-05-01'),
       {
@@ -112,7 +114,7 @@ describe('buildRecentChartLinks', () => {
       releaseDate: undefined,
       version: VersionEnum.CiRCLE,
     }
-    const charts = buildRecentChartLinks([
+    const charts = buildRecentChartLinks(catalogSnapshot, [
       {
         ...createSong(1, '2026-03-05'),
         id: 'dated-latest',

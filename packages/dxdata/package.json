@@ -8,6 +8,7 @@
   "exports": {
     ".": "./index.ts",
     "./snapshot": "./snapshot.ts",
+    "./snapshot.json": "./snapshot.json",
     "./legacy-song-ids": "./legacy-song-ids.ts"
   },
   "publishConfig": {

@@ -4,7 +4,7 @@ import * as Sentry from '@sentry/tanstackstart-react'
 import Fuse from 'fuse.js'
 import uniq from 'lodash-es/uniq'
 import { useMemo } from 'react'
-import { useCatalogDocument, useSongCatalog } from './catalog/CatalogContext'
+import { useCompleteCatalogDocument, useCompleteSongCatalog } from './catalog/CatalogContext'
 import { useCombinedTags, type CombinedTags } from './models/useCombinedTags'
 import { useServerAliases } from './models/useServerAliases'
 
@@ -102,16 +102,18 @@ function getSheetsWithMetadata(
   return enrichedSheets
 }
 
+/** Every sheet of the complete catalog; no data (`isLoading`) during SSR and until the complete catalog has loaded */
 export const useSheets = () => {
-  const catalog = useSongCatalog()
+  const catalog = useCompleteSongCatalog()
   const { data: combinedTags } = useCombinedTags()
   const { data: serverAliases } = useServerAliases()
-  const data = getSheetsWithMetadata(catalog, combinedTags?.tagSongs, serverAliases)
+  const data = catalog ? getSheetsWithMetadata(catalog, combinedTags?.tagSongs, serverAliases) : undefined
 
-  return { data, isLoading: false }
+  return { data, isLoading: !catalog }
 }
 
-export const useSongs = () => ({ data: useCatalogDocument().songs })
+/** Every song of the complete catalog; no data until it has loaded */
+export const useSongs = () => ({ data: useCompleteCatalogDocument()?.songs })
 
 type SheetsSearchEngineOptions = {
   songs?: readonly Song[] | null
@@ -251,8 +253,14 @@ export const useSheetsSearchEngine = () => {
   const { data: sheets } = useSheets()
   const { data: serverAliases } = useServerAliases()
 
-  return useMemo(() => getSharedSheetsSearchEngine(songs, sheets, serverAliases), [songs, sheets, serverAliases])
+  return useMemo(
+    () => (songs && sheets ? getSharedSheetsSearchEngine(songs, sheets, serverAliases) : searchNothing),
+    [songs, sheets, serverAliases],
+  )
 }
+
+// Until the complete catalog has loaded there is nothing to search
+const searchNothing = (_term: string): FlattenedSheet[] => []
 
 // One engine per catalog snapshot, shared across components and (during SSR) across requests. The inputs are cached
 // references, so identity is enough to tell when the catalog or its remote metadata changed.
