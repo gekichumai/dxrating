@@ -18,12 +18,17 @@ describe('/search route', () => {
     expect(Route.options.ssr).not.toBe(false)
   })
 
+  // Parsed TanStack locations carry the hash without its leading `#`.
   it('permanently redirects to the home page, keeping the query and hash', () => {
-    const redirect = redirectFromSearch('?q=pandora&locale=ja', '#songs')
+    const redirect = redirectFromSearch('?q=pandora&locale=ja', 'songs')
 
     expect(redirect.options.href).toBe('/?q=pandora&locale=ja#songs')
     expect(redirect.options.statusCode).toBe(301)
     expect(redirect.headers.get('Location')).toBe('/?q=pandora&locale=ja#songs')
+  })
+
+  it('keeps a fragment-only URL as a fragment', () => {
+    expect(redirectFromSearch('', 'main-content').options.href).toBe('/#main-content')
   })
 
   it('redirects a bare /search to the home page', () => {
