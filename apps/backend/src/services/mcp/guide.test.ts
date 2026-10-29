@@ -1,5 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
+import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { buildMcpCatalog } from './catalog'
 import { APP_DOCS, CHAT_APPS, CODING_TOOLS, GUIDE_TEXTS } from './guide-text'
@@ -8,6 +9,14 @@ import { handleMcpRequest } from './http'
 import { MCP_PUBLIC_URL } from './listing'
 import { createMcpServer } from './server'
 import { publishedCatalog } from './test-fixture'
+
+const unescape = (s: string) =>
+  s
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&amp;', '&')
 
 const request = (path: string, headers: Record<string, string> = {}, method = 'GET') =>
   new Request(`https://mcp.dxrating.net${path}`, { method, headers: { host: 'mcp.dxrating.net', ...headers } })
@@ -22,7 +31,7 @@ describe('guide', () => {
         expect(body, lang).toContain(MCP_PUBLIC_URL)
         for (const tool of GUIDE_TOOLS) expect(body, lang).toContain(tool)
       }
-      expect(page.html).toContain(`<html lang="${lang}">`)
+      expect(page.html).toContain(`<html lang="${lang}" `)
     }
     expect(llms).toContain('If you are an AI agent asked to connect this server')
   })
@@ -44,10 +53,9 @@ describe('guide', () => {
 
   it('gives JSON snippets that parse, and one-click links with the endpoint', () => {
     const html = renderGuide().pages.get('en')!.html
-    for (const [, code] of html.matchAll(/<pre><code class="language-json">([^<]*)<\/code><\/pre>/g)) {
-      const json = code.replaceAll('&quot;', '"').replaceAll('&#39;', "'").replaceAll('&amp;', '&')
-      expect(() => JSON.parse(json)).not.toThrow()
-    }
+    const json = [...html.matchAll(/<div class="code code-json" data-c="([^"]*)">/g)].map(([, c]) => unescape(c))
+    expect(json.length).toBeGreaterThan(5)
+    for (const code of json) expect(() => JSON.parse(code)).not.toThrow()
     const endpoint = encodeURIComponent(MCP_PUBLIC_URL)
     expect(html).toContain(`connectorUrl=${endpoint}`)
     const cursor = html.match(/cursor\.com\/en\/install-mcp\?name=dxrating&amp;config=([^"]+)/)![1]
@@ -61,6 +69,83 @@ describe('guide', () => {
     expect(guideLanguage(null, 'zh-CN,en;q=0.8')).toBe('zh-Hans')
     expect(guideLanguage(null, 'ko;q=1, ja;q=0.5, en;q=0.6')).toBe('en')
     expect(guideLanguage('xx', 'fr')).toBe('en')
+  })
+})
+
+describe('guide page', () => {
+  const pages = [...renderGuide().pages]
+  const sha256 = (s: string) => `'sha256-${createHash('sha256').update(s).digest('base64')}'`
+
+  it('allows its inline style and script by their hashes, and nothing else', () => {
+    for (const [lang, { html }] of pages) {
+      const style = [...html.matchAll(/<style>([\s\S]*?)<\/style>/g)]
+      const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
+      expect(style.length, lang).toBe(1)
+      expect(script.length, lang).toBe(1)
+      expect(GUIDE_CSP, lang).toContain(`style-src ${sha256(style[0][1])};`)
+      expect(GUIDE_CSP, lang).toContain(`script-src ${sha256(script[0][1])};`)
+      expect(html.match(/<script/g)?.length, lang).toBe(1)
+      expect(html.match(/<style/g)?.length, lang).toBe(1)
+      expect(html, lang).not.toMatch(/rel="stylesheet"|@import|\son[a-z]+=|style="/)
+    }
+    for (const directive of [
+      "default-src 'none';",
+      'font-src https://shama.dxrating.net;',
+      'img-src https://shama.dxrating.net;',
+      "base-uri 'none'",
+      "form-action 'none'",
+      "frame-ancestors 'none'",
+    ]) {
+      expect(GUIDE_CSP).toContain(directive)
+    }
+  })
+
+  it('loads nothing but the icon and the fonts of dxrating.net', () => {
+    for (const [lang, { html }] of pages) {
+      for (const [, src] of html.matchAll(/\ssrc="([^"]*)"/g))
+        expect(src, lang).toMatch(/^https:\/\/shama\.dxrating\.net\//)
+      const urls = [...html.matchAll(/url\(([^)]*)\)/g)].map(([, u]) => u)
+      expect(urls, lang).toEqual([
+        'https://shama.dxrating.net/fonts/Torus-Regular.woff2',
+        'https://shama.dxrating.net/fonts/Torus-SemiBold.woff2',
+      ])
+      for (const [, href] of html.matchAll(/<use href="([^"]*)"/g)) {
+        expect(html, lang).toContain(`<symbol id="${href.slice(1)}"`)
+      }
+    }
+  })
+
+  it('links to anchors it has, each id once, a tab for every app', () => {
+    for (const [lang, { html }] of pages) {
+      const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(([, id]) => id)
+      expect(new Set(ids).size, lang).toBe(ids.length)
+      for (const [, id] of html.matchAll(/href="#([^"]+)"/g)) expect(ids, `${lang} #${id}`).toContain(id)
+      const tabs = [...html.matchAll(/<a class="tab" href="#([^"]+)"/g)].map(([, id]) => id)
+      const panels = [...html.matchAll(/<section class="app-p" id="([^"]+)"/g)].map(([, id]) => id)
+      expect(tabs, lang).toEqual([...CHAT_APPS, ...CODING_TOOLS, 'other'])
+      expect(panels, lang).toEqual(tabs)
+      for (const id of ['agent', 'install', 'try', 'tools', 'data', 'limits', 'privacy', 'troubleshooting', 'links']) {
+        expect(ids, lang).toContain(id)
+      }
+    }
+  })
+
+  it('has a copy button for every text to copy, which copies it as plain text', () => {
+    for (const [lang, { html }] of pages) {
+      const texts = [...html.matchAll(/data-c="([^"]*)"/g)].map(([, c]) => unescape(c))
+      expect(html.match(/<button type="button" class="cp[ "]/g)?.length, lang).toBe(texts.length)
+      expect(texts.length, lang).toBeGreaterThan(20)
+      for (const text of texts) {
+        expect(text, lang).not.toBe('')
+        expect(text, lang).not.toMatch(/[<>`]|\*\*/)
+      }
+      expect(texts, lang).toContain(MCP_PUBLIC_URL)
+      const prompt = GUIDE_TEXTS.find((t) => t.lang === lang)!.agentPrompt
+      expect(
+        texts.some((t) => t.startsWith(prompt.slice(0, 30))),
+        lang,
+      ).toBe(true)
+    }
   })
 })
 
