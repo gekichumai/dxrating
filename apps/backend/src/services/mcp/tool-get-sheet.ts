@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { resolveSongReference, searchKey, type McpCatalog, type PublishedSheet } from './catalog'
+import type { McpCatalog, PublishedSheet } from './catalog'
 import {
   catalogInfo,
   catalogInfoSchema,
@@ -11,19 +11,9 @@ import {
   toolError,
   type Language,
 } from './output'
+import { resolveSheets, sheetOnServer } from './sheets'
 
 const COVER_URL = 'https://shama.dxrating.net/images/cover/v2'
-
-/** The names of each standard difficulty, by their search keys */
-const DIFFICULTY_NAMES: Record<string, string> = Object.fromEntries(
-  Object.entries({
-    basic: ['basic', 'bas', 'bsc'],
-    advanced: ['advanced', 'adv'],
-    expert: ['expert', 'exp'],
-    master: ['master', 'mas', 'mst'],
-    remaster: ['remaster', 're:master', 'rem', 'remas', 're:mas'],
-  }).flatMap(([difficulty, names]) => names.map((name) => [searchKey(name), difficulty])),
-)
 
 export const getSheetInput = {
   song: z
@@ -122,54 +112,13 @@ export function runGetSheet(
     lang?: Language
   },
 ) {
-  const songs = resolveSongReference(catalog, input.song)
-  if (songs.length === 0) {
-    return toolError(
-      `No song is named or has the ID ${JSON.stringify(input.song)}. Find its song ID with search_songs.`,
-    )
-  }
-  if (songs.length > 1) {
-    const candidates = songs
-      .slice(0, 10)
-      .map(({ song }) => `${song.id} (${song.title} / ${song.artist})`)
-      .join(', ')
-    return toolError(`${songs.length} songs are named ${JSON.stringify(input.song)}: ${candidates}. Pass a song ID.`)
-  }
-  const [{ song, aliases }] = songs
-
-  const server = input.server?.trim().toLowerCase()
-  if (server !== undefined && !catalog.serverNames.has(server)) {
-    return toolError(
-      `Unknown server ${JSON.stringify(input.server)}. Servers: ${[...catalog.serverNames.keys()].join(', ')}.`,
-    )
-  }
-
-  let difficulty: string | undefined
-  if (input.difficulty !== undefined) {
-    const key = searchKey(input.difficulty)
-    difficulty = DIFFICULTY_NAMES[key] ?? song.sheets.find((sheet) => searchKey(sheet.difficulty) === key)?.difficulty
-    if (difficulty === undefined) {
-      return toolError(
-        `Unknown difficulty ${JSON.stringify(input.difficulty)}: basic, advanced, expert, master or remaster` +
-          (song.sheets.some((sheet) => !(sheet.difficulty in DIFFICULTY_NAMES))
-            ? ', or the label of an utage chart.'
-            : '.'),
-      )
-    }
-  }
-
-  // a sheet given by its ID is that sheet, unless the filters say otherwise
-  const bySheetId = song.sheets.find((sheet) => sheet.id === input.song.trim())
-  const sheets = (bySheetId ? [bySheetId] : song.sheets).filter(
-    (sheet) =>
-      (input.type === undefined || sheet.type === input.type) &&
-      (difficulty === undefined || sheet.difficulty === difficulty) &&
-      (server === undefined || sheet.serverIds.includes(server)),
-  )
-  if (sheets.length === 0) {
-    const available = song.sheets.map((sheet) => `${sheet.type} ${sheet.difficulty} (${sheet.serverIds.join('/')})`)
-    return toolError(`${song.title} has no such chart. Its charts: ${available.join(', ')}.`)
-  }
+  const resolved = resolveSheets(catalog, input)
+  if (!resolved.ok) return toolError(resolved.error)
+  const {
+    entry: { song, aliases },
+    sheets,
+    server,
+  } = resolved
 
   return structured({
     song: {
@@ -197,7 +146,6 @@ function sheetDetail(
   server: string | undefined,
   lang: Language | undefined,
 ) {
-  const override = server === undefined ? undefined : sheet.serverOverrides?.[server]
   const tags = (catalog.tagIdsBySheetId.get(sheet.id) ?? []).flatMap((tagId) => {
     const tag = catalog.tagsById.get(tagId)
     if (!tag) return []
@@ -214,12 +162,10 @@ function sheetDetail(
     sheetId: sheet.id,
     type: sheet.type,
     difficulty: sheet.difficulty,
-    level: override?.level ?? sheet.level,
-    internalLevel: override?.levelValue ?? sheet.internalLevelValue,
+    ...sheetOnServer(sheet, server),
     ...(sheet.multiverInternalLevelValue ? { internalLevelByVersion: sheet.multiverInternalLevelValue } : {}),
     noteDesigner: sheet.noteDesigner ?? null,
     noteCounts: sheet.noteCounts,
-    version: override?.version ?? sheet.version,
     releaseDate: sheet.releaseDate ?? null,
     servers: sheet.serverIds,
     ...(server === undefined && sheet.serverOverrides ? { serverOverrides: sheet.serverOverrides } : {}),
