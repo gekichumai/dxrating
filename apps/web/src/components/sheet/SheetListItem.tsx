@@ -90,7 +90,7 @@ export const SheetListItem: FC<{
           }}
           disableGutters={!isLargeDevice}
           className={clsx(
-            'w-full cursor-pointer transition duration-500 hover:duration-25 !px-4 no-underline text-inherit',
+            'w-full cursor-pointer transition-colors duration-150 hover:duration-25 !px-4 no-underline text-inherit',
             open && '!bg-zinc-300/80',
             className,
           )}
@@ -359,7 +359,7 @@ export const SheetImage: FC<
         key={name}
         src={`https://shama.dxrating.net/images/cover/v2/${name}.jpg`}
         className={clsx(
-          'overflow-hidden',
+          'overflow-hidden outline outline-1 -outline-offset-1 outline-black/10',
           match(size)
             .with('small', () => 'h-8 w-8 min-w-[2rem] min-h-[2rem] rounded-sm')
             .with('medium', () => 'h-12 w-12 min-w-[3rem] min-h-[3rem] rounded')
