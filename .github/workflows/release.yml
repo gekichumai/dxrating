@@ -68,6 +68,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Refresh catalog snapshot
+        # The SSR worker renders the catalog bundled at build time: take the one the dxdata API serves now
+        # (keeps the committed snapshot, with a warning, if the API cannot be reached)
+        run: pnpm --filter @gekichumai/dxdata snapshot:refresh
+
       - name: Build
         shell: bash
         run: |

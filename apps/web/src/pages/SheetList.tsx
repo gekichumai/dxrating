@@ -21,6 +21,7 @@ import {
 import { SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { captureAnalyticsEvent } from '../lib/analytics'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
+import { readFavoriteSheetIds } from '../models/favorite'
 import { useCatalogDocument, useSongCatalog } from '../catalog/CatalogContext'
 import { type FlattenedSheet, useFilteredSheets, useSheets } from '../songs'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
@@ -139,9 +140,7 @@ const computeSortFilteredSheets = (
     const validVersions = Array.from(VERSION_ID_MAP.entries())
       .filter(([, id]) => id <= currentVersionId)
       .map(([v]) => v)
-    const favoriteSheetIds = sortFilterOptions.filters.favoritesOnly
-      ? new Set<string>(JSON.parse(localStorage.getItem('favorite-sheets') ?? '[]'))
-      : null
+    const favoriteSheetIds = sortFilterOptions.filters.favoritesOnly ? new Set<string>(readFavoriteSheetIds()) : null
     sortFilteredResults = results.filter((sheet) => {
       return chainEvery<FlattenedSheet>(
         (v) => !!v,

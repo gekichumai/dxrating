@@ -7,6 +7,7 @@ import {
   type SheetReferencingRecord,
 } from '@gekichumai/maimai-domain'
 import * as Sentry from '@sentry/tanstackstart-react'
+import { FAVORITE_SHEETS_STORAGE_KEY, writeFavoriteSheetIds } from '@/models/favorite'
 import { loadLegacySongIds } from './legacySongIds'
 
 // Saved data from before public sheet IDs names sheets by legacy sheet ID (`<legacy song ID>__dxrt__<type>__dxrt__
@@ -15,7 +16,7 @@ import { loadLegacySongIds } from './legacySongIds'
 // key leaves a copy of the original value under `<key>.legacy-backup`.
 
 export const RATING_ENTRIES_STORAGE_KEY = 'rating-calculator-entries'
-export const FAVORITE_SHEETS_STORAGE_KEY = 'favorite-sheets'
+export { FAVORITE_SHEETS_STORAGE_KEY }
 export const LEGACY_BACKUP_SUFFIX = '.legacy-backup'
 
 /** Whether any record still names its sheet by a legacy sheet ID */
@@ -44,7 +45,8 @@ export async function migrateStoredFavoriteSheetIds(storage: Storage, document: 
   const current = storage.getItem(FAVORITE_SHEETS_STORAGE_KEY)
   if (current !== original) return migrateStoredFavoriteSheetIds(storage, document)
   backUpBeforeMigration(storage, FAVORITE_SHEETS_STORAGE_KEY, original)
-  storage.setItem(FAVORITE_SHEETS_STORAGE_KEY, JSON.stringify(result.records))
+  // through the favorites store, so mounted favorite controls see the migrated IDs
+  writeFavoriteSheetIds(result.records, storage)
   reportMigration('favorites', result)
 }
 

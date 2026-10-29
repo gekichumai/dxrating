@@ -1,6 +1,7 @@
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { PlayEntry } from '../../../components/rating/RatingCalculatorAddEntryForm'
+import { useSheetFavoriteState } from '../../favorite'
 import { RatingCalculatorContextProvider, useRatingCalculatorContext } from '../RatingCalculatorContext'
 
 // Saved data from before public sheet IDs, as real browsers hold it, against the bundled catalog snapshot
@@ -87,5 +88,35 @@ describe('RatingCalculatorContext saved data migration', () => {
       ]),
     )
     expect(window.localStorage.getItem('favorite-sheets.legacy-backup')).toBe(saved)
+  })
+
+  it('updates mounted favorite controls, so a later toggle keeps the migrated favorites', async () => {
+    window.localStorage.setItem(
+      'favorite-sheets',
+      JSON.stringify(['Link__dxrt__std__dxrt__basic', 'Link (2)__dxrt__std__dxrt__basic']),
+    )
+    const FavoriteStar = ({ sheetId }: { sheetId: string }) => {
+      const [favored, toggle] = useSheetFavoriteState(sheetId)
+      return (
+        <button type="button" onClick={toggle}>
+          {sheetId}:{favored ? 'favored' : 'not favored'}
+        </button>
+      )
+    }
+
+    render(
+      <RatingCalculatorContextProvider>
+        <FavoriteStar sheetId="dsht_mpd82wyms9" />
+      </RatingCalculatorContextProvider>,
+    )
+
+    // "Link" basic, favored under its legacy ID before the migration
+    await waitFor(() => expect(screen.getByRole('button').textContent).toBe('dsht_mpd82wyms9:favored'))
+    act(() => {
+      screen.getByRole('button').click()
+    })
+
+    expect(screen.getByRole('button').textContent).toBe('dsht_mpd82wyms9:not favored')
+    expect(JSON.parse(window.localStorage.getItem('favorite-sheets')!)).toEqual(['dsht_5mk3yr8gme'])
   })
 })

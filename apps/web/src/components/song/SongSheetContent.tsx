@@ -1,4 +1,5 @@
 import { SERVER_BADGE_ORDER } from '@/models/constants'
+import { getArcadeSongsUrl } from '@/catalog/arcadeSongs'
 import { CommentActions } from '../comments/CommentActions'
 import { filterComments, useCommentVisibility } from '../comments/commentVisibility'
 import { MULTIVER_AVAILABLE_VERSIONS, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@gekichumai/dxdata'
@@ -437,12 +438,7 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
                   i18nKey="sheet:details.credits"
                   components={{
                     link: (
-                      <a
-                        href={`https://arcade-songs.zetaraku.dev/maimai/song/?id=${encodeURIComponent(sheet.songId)}`}
-                        rel="noreferrer"
-                        target="_blank"
-                        className="tracking-tighter"
-                      >
+                      <a href={getArcadeSongsUrl(sheet)} rel="noreferrer" target="_blank" className="tracking-tighter">
                         arcade-songs.zetaraku.dev
                       </a>
                     ),
