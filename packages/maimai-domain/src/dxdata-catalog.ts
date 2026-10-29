@@ -14,7 +14,11 @@ export function getDxdataSongCatalog(version: VersionEnum): SongCatalog {
 }
 
 function freezeSongCatalog(catalog: SongCatalog): SongCatalog {
-  const sheets = Object.freeze(catalog.sheets.map(freezeVersionedSheet))
+  // Projected sheets share nested values with their song (each sheet spreads the song, including its full `sheets`
+  // array), so reuse one frozen clone per source object instead of re-cloning the same data for every sheet.
+  // The projected sheet objects themselves are fresh and private to this call, so they are frozen in place.
+  const clones = new WeakMap<object, unknown>()
+  const sheets = Object.freeze(catalog.sheets.map((sheet) => freezeOwnedObject(sheet, clones)))
   const frozenCatalog = createSongCatalog(catalog.version, sheets)
   return Object.freeze({
     ...frozenCatalog,
@@ -22,23 +26,33 @@ function freezeSongCatalog(catalog: SongCatalog): SongCatalog {
   }) as SongCatalog
 }
 
-function freezeVersionedSheet(sheet: VersionedSheet): VersionedSheet {
-  return cloneAndDeepFreeze(sheet)
+function freezeOwnedObject<T extends object>(value: T, clones: WeakMap<object, unknown>): T {
+  const target = value as Record<PropertyKey, unknown>
+  for (const key of Reflect.ownKeys(target)) {
+    target[key] = cloneAndDeepFreeze(target[key], clones)
+  }
+  return Object.freeze(value)
 }
 
-function cloneAndDeepFreeze<T>(value: T): T {
+function cloneAndDeepFreeze<T>(value: T, clones: WeakMap<object, unknown>): T {
   if (!isObject(value)) return value
 
-  if (Array.isArray(value)) {
-    return Object.freeze(value.map((item) => cloneAndDeepFreeze(item))) as T
-  }
+  const cached = clones.get(value)
+  if (cached) return cached as T
 
-  const source = value as Record<PropertyKey, unknown>
-  const clone: Record<PropertyKey, unknown> = {}
-  for (const key of Reflect.ownKeys(source)) {
-    clone[key] = cloneAndDeepFreeze(source[key])
+  let frozen: T
+  if (Array.isArray(value)) {
+    frozen = Object.freeze(value.map((item) => cloneAndDeepFreeze(item, clones))) as T
+  } else {
+    const source = value as Record<PropertyKey, unknown>
+    const clone: Record<PropertyKey, unknown> = {}
+    for (const key of Reflect.ownKeys(source)) {
+      clone[key] = cloneAndDeepFreeze(source[key], clones)
+    }
+    frozen = Object.freeze(clone) as T
   }
-  return Object.freeze(clone) as T
+  clones.set(value, frozen)
+  return frozen
 }
 
 function isObject(value: unknown): value is object {

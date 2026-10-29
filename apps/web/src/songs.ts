@@ -137,6 +137,29 @@ export const createSheetsSearchEngine = ({
   serverAliases,
 }: SheetsSearchEngineOptions): ((term: string) => FlattenedSheet[]) => {
   const availableSheets = sheets ?? []
+  // Building the index normalizes every sheet; defer it until the first real query so renders without a search term
+  // (including every SSR of the default list) skip it entirely.
+  let index: ReturnType<typeof buildSheetsSearchIndex> | undefined
+  let lastSearch: { term: string; results: FlattenedSheet[] } | undefined
+
+  return (term: string) => {
+    const trimmedTerm = term.trim()
+    if (!trimmedTerm) return []
+    if (lastSearch?.term === trimmedTerm) return lastSearch.results
+    index ??= buildSheetsSearchIndex(songs, availableSheets, serverAliases)
+    const results = searchSheetsIndex(index, availableSheets, trimmedTerm)
+    lastSearch = { term: trimmedTerm, results }
+    return results
+  }
+}
+
+const normalizeSearchText = (value: string) => value.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
+
+function buildSheetsSearchIndex(
+  songs: readonly Song[] | null | undefined,
+  availableSheets: readonly FlattenedSheet[],
+  serverAliases: readonly ServerAlias[] | null | undefined,
+) {
   const fuseInstance = new Fuse(
     songs?.map((song) => ({
       ...song,
@@ -164,7 +187,6 @@ export const createSheetsSearchEngine = ({
     },
   )
 
-  const normalize = (value: string) => value.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
   const songsById = new Map((songs ?? []).map((song) => [song.songId, song]))
   const indexedSheets = availableSheets.map((sheet) => {
     const song = songsById.get(sheet.songId)
@@ -173,7 +195,7 @@ export const createSheetsSearchEngine = ({
     return {
       sheet,
       fields: [sheet.title, song?.artist ?? sheet.artist, ...aliases, designer && designer !== '-' ? designer : ''].map(
-        normalize,
+        normalizeSearchText,
       ),
     }
   })
@@ -190,44 +212,48 @@ export const createSheetsSearchEngine = ({
     sheetsByInternalId.set(sheet.internalId, existing)
   }
 
-  return (term: string) => {
-    const trimmedTerm = term.trim()
-    if (!trimmedTerm) return []
-    const tokens = normalize(trimmedTerm).split(/\s+/u)
-    const metadataResults = indexedSheets
-      .filter(({ fields }) => tokens.every((token) => fields.some((field) => field.includes(token))))
-      .map(({ sheet }) => sheet)
+  return { fuseInstance, indexedSheets, sheetsByInternalId }
+}
 
-    // Get Fuse search results (alias/title matches)
-    const titleResults = fuseInstance.search(trimmedTerm).flatMap((result) => {
-      return availableSheets.filter((sheet) => sheet.songId === result.item.songId)
-    })
+function searchSheetsIndex(
+  { fuseInstance, indexedSheets, sheetsByInternalId }: ReturnType<typeof buildSheetsSearchIndex>,
+  availableSheets: readonly FlattenedSheet[],
+  trimmedTerm: string,
+): FlattenedSheet[] {
+  const tokens = normalizeSearchText(trimmedTerm).split(/\s+/u)
+  const metadataResults = indexedSheets
+    .filter(({ fields }) => tokens.every((token) => fields.some((field) => field.includes(token))))
+    .map(({ sheet }) => sheet)
 
-    const seen = new Set<string>()
-    const fuseResults = [...titleResults, ...metadataResults].filter((sheet) => {
-      if (seen.has(sheet.id)) return false
-      seen.add(sheet.id)
-      return true
-    })
+  // Get Fuse search results (alias/title matches)
+  const titleResults = fuseInstance.search(trimmedTerm).flatMap((result) => {
+    return availableSheets.filter((sheet) => sheet.songId === result.item.songId)
+  })
 
-    // Check for exact Music ID match
-    let internalIdResults: FlattenedSheet[] = []
-    if (/^\d+$/.test(trimmedTerm)) {
-      const targetInternalId = Number.parseInt(trimmedTerm, 10)
-      if (!Number.isNaN(targetInternalId)) {
-        internalIdResults = sheetsByInternalId.get(targetInternalId) ?? []
-      }
+  const seen = new Set<string>()
+  const fuseResults = [...titleResults, ...metadataResults].filter((sheet) => {
+    if (seen.has(sheet.id)) return false
+    seen.add(sheet.id)
+    return true
+  })
+
+  // Check for exact Music ID match
+  let internalIdResults: FlattenedSheet[] = []
+  if (/^\d+$/.test(trimmedTerm)) {
+    const targetInternalId = Number.parseInt(trimmedTerm, 10)
+    if (!Number.isNaN(targetInternalId)) {
+      internalIdResults = sheetsByInternalId.get(targetInternalId) ?? []
     }
-
-    // If exact Music ID match exists, put it at the top, followed by other results
-    if (internalIdResults.length > 0) {
-      const internalIdSet = new Set(internalIdResults.map((sheet) => sheet.id))
-      const filteredFuseResults = fuseResults.filter((sheet) => !internalIdSet.has(sheet.id))
-      return [...internalIdResults, ...filteredFuseResults]
-    }
-
-    return fuseResults
   }
+
+  // If exact Music ID match exists, put it at the top, followed by other results
+  if (internalIdResults.length > 0) {
+    const internalIdSet = new Set(internalIdResults.map((sheet) => sheet.id))
+    const filteredFuseResults = fuseResults.filter((sheet) => !internalIdSet.has(sheet.id))
+    return [...internalIdResults, ...filteredFuseResults]
+  }
+
+  return fuseResults
 }
 
 export const useSheetsSearchEngine = () => {
@@ -235,16 +261,47 @@ export const useSheetsSearchEngine = () => {
   const { data: sheets } = useSheets()
   const { data: serverAliases } = useServerAliases()
 
-  return useMemo(() => createSheetsSearchEngine({ songs, sheets, serverAliases }), [songs, sheets, serverAliases])
+  return useMemo(() => getSharedSheetsSearchEngine(songs, sheets, serverAliases), [songs, sheets, serverAliases])
 }
+
+// One engine per catalog snapshot, shared across components and (during SSR) across requests. The inputs are cached
+// references, so identity is enough to tell when the catalog or its remote metadata changed.
+let sharedSearchEngine:
+  | {
+      songs: readonly Song[]
+      sheets: readonly FlattenedSheet[]
+      serverAliases: readonly ServerAlias[] | null | undefined
+      search: (term: string) => FlattenedSheet[]
+    }
+  | undefined
+
+function getSharedSheetsSearchEngine(
+  songs: readonly Song[],
+  sheets: readonly FlattenedSheet[],
+  serverAliases: readonly ServerAlias[] | null | undefined,
+) {
+  if (
+    sharedSearchEngine?.songs === songs &&
+    sharedSearchEngine.sheets === sheets &&
+    sharedSearchEngine.serverAliases === serverAliases
+  ) {
+    return sharedSearchEngine.search
+  }
+
+  const search = createSheetsSearchEngine({ songs, sheets, serverAliases })
+  sharedSearchEngine = { songs, sheets, serverAliases, search }
+  return search
+}
+
+const NO_SHEETS: FlattenedSheet[] = []
 
 export const useFilteredSheets = (searchTerm: string) => {
   const { data: sheets } = useSheets()
   const search = useSheetsSearchEngine()
 
-  const defaultResults = useMemo(() => {
-    return (sheets ?? []).slice()
-  }, [sheets])
+  // The catalog arrays are cached and shared; consumers filter into new arrays before sorting, so pass them through
+  // as-is to keep a stable identity for downstream memoization.
+  const defaultResults = sheets ?? NO_SHEETS
 
   return useMemo(() => {
     const start = performance.now()
