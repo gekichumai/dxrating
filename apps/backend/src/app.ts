@@ -42,6 +42,16 @@ import {
   readClientId,
 } from './services/api-usage'
 import { appContract } from './contract'
+import { McpCatalogSource } from './services/application'
+import {
+  clientKey,
+  createRateLimiter,
+  handleMcpRequest,
+  MCP_CORS_OPTIONS,
+  MCP_PATH,
+  MCP_RATE_LIMIT,
+  rateLimited,
+} from './services/mcp/http'
 class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
   readonly operation: string
   readonly cause: unknown
@@ -191,11 +201,17 @@ const apiCors = cors({
 })
 
 const publicStaticCatalogCors = cors(DXDATA_CORS_OPTIONS)
+const mcpCors = cors(MCP_CORS_OPTIONS)
 
 // Static catalog responses are credential-independent, allowing one public
-// representation per URL to be safely shared by browsers and the CDN.
+// representation per URL to be safely shared by browsers and the CDN. The MCP
+// server is read-only and takes no credentials, so any origin may call it.
 app.use('*', (c, next) =>
-  PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path) ? publicStaticCatalogCors(c, next) : apiCors(c, next),
+  PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)
+    ? publicStaticCatalogCors(c, next)
+    : c.req.path === MCP_PATH
+      ? mcpCors(c, next)
+      : apiCors(c, next),
 )
 
 // Request logging
@@ -291,6 +307,30 @@ app.get('/.well-known/api-catalog', (c) => {
 app.on('HEAD', '/.well-known/api-catalog', (c) => {
   setApiCatalogHeaders(c)
   return c.body(null, 200)
+})
+
+// MCP server for AI assistants: read-only, stateless, no authentication. Its
+// catalog is in memory (McpCatalogSource), so tool calls do not query the
+// database beyond a check of the publication pointer once a minute.
+const mcpRateLimiter = createRateLimiter(MCP_RATE_LIMIT)
+
+app.on(['GET', 'POST', 'DELETE'], MCP_PATH, (c) => {
+  const retryAfter = mcpRateLimiter.take(clientKey(c.req.raw.headers))
+  if (retryAfter > 0) return rateLimited(retryAfter)
+  return runApp(
+    Effect.gen(function* () {
+      // Before the first catalog is loaded the server still answers, and its
+      // tools say that the data is loading.
+      const catalog = yield* Effect.flatMap(McpCatalogSource, (source) => source.current).pipe(
+        Effect.orElseSucceed(() => undefined),
+      )
+      return yield* Effect.tryPromise({
+        try: () => handleMcpRequest(c.req.raw, catalog),
+        catch: (cause) => new HttpAdapterError({ operation: 'Handle MCP request', cause }),
+      })
+    }),
+    { signal: c.req.raw.signal },
+  )
 })
 
 // Build provenance endpoint
