@@ -1,0 +1,26 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "net.dxrating/dxrating",
+  "title": "DXRating",
+  "description": "maimai DX songs, charts and internal levels, and rating and Best 50 calculators, from DXRating",
+  "version": "1.0.0",
+  "websiteUrl": "https://mcp.dxrating.net/",
+  "repository": {
+    "url": "https://github.com/gekichumai/dxrating",
+    "source": "github",
+    "id": "706001155",
+    "subfolder": "apps/backend"
+  },
+  "icons": [
+    {
+      "src": "https://shama.dxrating.net/favicon/pack/v1/apple-touch-icon.png",
+      "mimeType": "image/png"
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.dxrating.net/mcp"
+    }
+  ]
+}

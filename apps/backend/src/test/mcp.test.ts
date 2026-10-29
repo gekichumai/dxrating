@@ -102,4 +102,27 @@ describe('MCP endpoint', () => {
     const res = await fetch(`${getBaseUrl()}/mcp`, { headers: { Accept: 'text/event-stream' } })
     expect(res.status).toBe(405)
   })
+
+  it('serves the server card to any origin', async () => {
+    const res = await fetch(`${getBaseUrl()}/mcp/server-card`, { headers: { Origin: 'https://example.com' } })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('application/mcp-server-card+json')
+    expect(res.headers.get('access-control-allow-origin')).toBe('*')
+    expect((await res.json()).name).toBe('net.dxrating/dxrating')
+  })
+
+  it('serves the guide at the root of its host only', async () => {
+    const guide = await fetch(`${getBaseUrl()}/?lang=en`, {
+      headers: { 'X-Forwarded-Host': 'mcp.dxrating.net' },
+      redirect: 'manual',
+    })
+    expect(guide.status).toBe(200)
+    expect(await guide.text()).toContain('<title>DXRating MCP Server</title>')
+    const robots = await fetch(`${getBaseUrl()}/robots.txt`, { headers: { 'X-Forwarded-Host': 'mcp.dxrating.net' } })
+    expect(await robots.text()).toContain('Disallow: /mcp')
+
+    const api = await fetch(`${getBaseUrl()}/`, { redirect: 'manual' })
+    expect(api.status).toBe(302)
+    expect(api.headers.get('location')).toBe('/docs')
+  })
 })
