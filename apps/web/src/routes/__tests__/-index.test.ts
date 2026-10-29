@@ -1,30 +1,28 @@
-import { isRedirect } from '@tanstack/react-router'
-import { describe, expect, it } from 'vitest'
-import { Route } from '../index'
+import { describe, expect, it, vi } from 'vitest'
+import { SEARCH_QUERY_MAX_LENGTH } from '@/components/sheet/searchQuerySeed'
+import { Route, loadSearchRouteData, validateSearchParams } from '../index'
 
-describe('index route', () => {
-  it('runs during SSR so the server redirects instead of rendering an empty outlet', () => {
-    expect(Route.options.ssr).not.toBe(false)
+vi.mock('@/pages/SheetList', () => ({
+  SheetList: () => null,
+}))
+
+describe('home route (chart search)', () => {
+  it('renders during SSR so direct query URLs can show seeded results', () => {
+    expect(Route.options.ssr).toBe(true)
   })
 
-  it('redirects root visits to search while preserving the URL suffix', () => {
-    try {
-      Route.options.beforeLoad?.({
-        location: {
-          searchStr: '?locale=ja',
-          hash: '#songs',
-        },
-      } as never)
-    } catch (error) {
-      expect(isRedirect(error)).toBe(true)
-      expect(error).toMatchObject({
-        options: {
-          href: '/search?locale=ja#songs',
-        },
-      })
-      return
-    }
+  it('loads seed sheets for a prefilled query parameter', () => {
+    const { seedSheets } = loadSearchRouteData({ q: '螺旋' })
 
-    throw new Error('Expected the index route to redirect')
+    expect(seedSheets.map((sheet) => sheet.title)).toContain('ガラテアの螺旋')
+    expect(seedSheets[0]?.path).toMatch(/^\/songs\//)
+  })
+
+  it('rejects oversized queries before loading search results', () => {
+    const oversizedQuery = 'a'.repeat(SEARCH_QUERY_MAX_LENGTH + 1)
+
+    expect(Route.options.validateSearch).toBe(validateSearchParams)
+    expect(() => validateSearchParams({ q: oversizedQuery })).toThrow(RangeError)
+    expect(() => loadSearchRouteData({ q: oversizedQuery })).toThrow(RangeError)
   })
 })

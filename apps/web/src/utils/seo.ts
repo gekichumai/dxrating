@@ -124,14 +124,14 @@ export function buildSearchSeo(locale: SupportedLocale) {
       { name: 'description', content: description },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
-      { property: 'og:url', content: 'https://dxrating.net/search' },
+      { property: 'og:url', content: 'https://dxrating.net/' },
       { property: 'og:type', content: 'website' },
       { property: 'og:locale', content: OG_LOCALES[locale] },
       { name: 'twitter:card', content: 'summary' },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
     ] satisfies SeoMeta[],
-    links: [{ rel: 'canonical', href: 'https://dxrating.net/search' }],
+    links: [{ rel: 'canonical', href: 'https://dxrating.net/' }],
   }
 }
 
@@ -365,7 +365,7 @@ export function buildSongSheetStructuredData(
       inLanguage: locale,
       potentialAction: {
         '@type': 'SearchAction',
-        target: 'https://dxrating.net/search?q={search_term_string}',
+        target: 'https://dxrating.net/?q={search_term_string}',
         'query-input': 'required name=search_term_string',
       },
     },
@@ -382,12 +382,6 @@ export function buildSongSheetStructuredData(
         {
           '@type': 'ListItem',
           position: 2,
-          name: 'Charts & Songs',
-          item: 'https://dxrating.net/search',
-        },
-        {
-          '@type': 'ListItem',
-          position: 3,
           name: seo.title,
           item: chartUrl,
         },

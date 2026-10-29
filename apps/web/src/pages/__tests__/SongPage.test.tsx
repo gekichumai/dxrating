@@ -59,9 +59,9 @@ describe('SongPage', () => {
     expect(document.head.querySelector('title')?.textContent).toBe('Route-owned title')
   })
 
-  it('uses search as the client fallback for the back link', () => {
+  it('uses the home page (chart search) as the client fallback for the back link', () => {
     const { container } = render(<SongPage />)
 
-    expect(container.querySelector('a')?.getAttribute('href')).toBe('/search')
+    expect(container.querySelector('a')?.getAttribute('href')).toBe('/')
   })
 })
