@@ -24,19 +24,16 @@ const PRE_BUILD = {
 }
 const BUILD = catalogOf(catalogSnapshot.updatedAt)
 
-// fetch as browsers do it: an abort rejects the request, or errors the body once headers are in
-const stalledFetch = (stall: 'response' | 'body') => (_input: RequestInfo | URL, init?: RequestInit) =>
-  new Promise<Response>((resolve, reject) => {
-    const signal = init?.signal
-    if (stall === 'response') {
-      signal?.addEventListener('abort', () => reject(signal.reason))
-      return
-    }
-    // a body that never arrives; reading it fails once the request is aborted
-    const text = () =>
-      new Promise<string>((_, rejectBody) => signal?.addEventListener('abort', () => rejectBody(signal.reason)))
-    resolve({ ok: true, status: 200, headers: new Headers(), text } as Response)
-  })
+// An API that never answers, or answers and never sends the body
+const stalledFetch = (stall: 'response' | 'body') => () =>
+  stall === 'response'
+    ? new Promise<Response>(() => {})
+    : Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        text: () => new Promise<string>(() => {}),
+      } as Response)
 
 const jsonResponse = (body: unknown, init?: ResponseInit) =>
   new Response(JSON.stringify(body), {
@@ -87,8 +84,8 @@ describe('client catalog loading', () => {
 
     await expect(loadClientCatalogDocument()).resolves.toEqual(NEW)
 
-    // a plain request (a signal only), so it consumes the <link rel=preload> of the head script
-    expect(fetchMock).toHaveBeenCalledWith(CATALOG_URL, { signal: expect.any(AbortSignal) })
+    // a plain request, so it consumes the <link rel=preload> of the head script
+    expect(fetchMock).toHaveBeenCalledWith(CATALOG_URL)
     expect(getLoadedCatalogDocument()).toEqual(NEW)
     await vi.waitFor(() => expect(localStorage.getItem(CATALOG_CACHED_MARKER_KEY)).toBe('1'))
     const cached = cacheStorage.entries.get(CATALOG_URL)!
@@ -154,7 +151,7 @@ describe('client catalog loading', () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(NEW, { headers: { etag: 'W/"new"' } }))
 
     await expect(loadClientCatalogDocument()).resolves.toEqual(NEW)
-    expect(fetchMock).toHaveBeenCalledWith(CATALOG_URL, { signal: expect.any(AbortSignal) })
+    expect(fetchMock).toHaveBeenCalledWith(CATALOG_URL)
   })
 
   it('does not render from a copy older than the build, and loads the API document instead', async () => {
@@ -222,8 +219,8 @@ describe('client catalog loading', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     try {
       vi.stubGlobal('caches', undefined)
-      fetchMock.mockImplementation(async (input, init) => {
-        if (String(input) === CATALOG_URL) return stalledFetch(stall)(input, init)
+      fetchMock.mockImplementation(async (input) => {
+        if (String(input) === CATALOG_URL) return stalledFetch(stall)()
         if (String(input) === snapshotAssetUrl) return jsonResponse(BUILD)
         throw new Error(`unexpected request ${String(input)}`)
       })

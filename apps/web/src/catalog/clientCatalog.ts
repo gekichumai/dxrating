@@ -116,24 +116,38 @@ async function readCatalogResponse(response: Response): Promise<CatalogResponse>
   return { document, text, etag: response.headers.get('etag') }
 }
 
+/** Rejects once `ms` pass without the promise settling. The work itself goes on; nothing waits for it any more */
+const withDeadline = <T>(promise: Promise<T>, ms: number, message: string) =>
+  new Promise<T>((resolve, reject) => {
+    const deadline = setTimeout(() => reject(new Error(message)), ms)
+    promise.then(
+      (value) => {
+        clearTimeout(deadline)
+        resolve(value)
+      },
+      (error: unknown) => {
+        clearTimeout(deadline)
+        reject(error)
+      },
+    )
+  })
+
 async function fetchApiCatalog(): Promise<CatalogResponse> {
-  const controller = new AbortController()
-  let deadline = setTimeout(
-    () => controller.abort(new Error('The catalog API did not respond in time')),
+  // A plain request: an abort signal or headers would keep it from consuming the preload. The deadlines settle the
+  // load instead of aborting it
+  const response = await withDeadline(
+    fetch(CATALOG_URL),
     API_RESPONSE_DEADLINE_MS,
+    'The catalog API did not respond in time',
   )
-  try {
-    // No headers or other options that would keep it from consuming the preload
-    const response = await fetch(CATALOG_URL, { signal: controller.signal })
-    clearTimeout(deadline)
-    deadline = setTimeout(() => controller.abort(new Error('The catalog API response stalled')), API_BODY_DEADLINE_MS)
-    const catalog = await readCatalogResponse(response)
-    if (isOlderThanBuildCatalog(catalog.document))
-      throw new Error('The catalog API served a catalog older than this build')
-    return catalog
-  } finally {
-    clearTimeout(deadline)
-  }
+  const catalog = await withDeadline(
+    readCatalogResponse(response),
+    API_BODY_DEADLINE_MS,
+    'The catalog API response stalled',
+  )
+  if (isOlderThanBuildCatalog(catalog.document))
+    throw new Error('The catalog API served a catalog older than this build')
+  return catalog
 }
 
 async function fetchCatalog(): Promise<CatalogResponse> {
