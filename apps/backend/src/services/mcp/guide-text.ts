@@ -63,6 +63,8 @@ export interface GuideText {
 export interface GuideUi {
   /** The language in the language switch on phones, abbreviated */
   abbr: string
+  /** The name of the link of the logo, to the website */
+  home: string
   skip: string
   pageNav: string
   langNav: string
@@ -338,6 +340,7 @@ const en: GuideText = {
   otherLanguages: 'Other languages',
   ui: {
     abbr: 'EN',
+    home: 'DXRating home',
     skip: 'Skip to content',
     pageNav: 'On this page',
     langNav: 'Language',
@@ -580,6 +583,7 @@ const ja: GuideText = {
   otherLanguages: 'ほかの言語',
   ui: {
     abbr: '日',
+    home: 'DXRating ホーム',
     skip: '本文へスキップ',
     pageNav: 'このページの内容',
     langNav: '言語',
@@ -809,6 +813,7 @@ const zhHans: GuideText = {
   otherLanguages: '其他语言',
   ui: {
     abbr: '简',
+    home: 'DXRating 首页',
     skip: '跳到正文',
     pageNav: '本页内容',
     langNav: '语言',
@@ -1039,6 +1044,7 @@ const zhHant: GuideText = {
   otherLanguages: '其他語言',
   ui: {
     abbr: '繁',
+    home: 'DXRating 首頁',
     skip: '跳到正文',
     pageNav: '本頁內容',
     langNav: '語言',

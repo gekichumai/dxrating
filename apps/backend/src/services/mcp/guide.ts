@@ -251,11 +251,14 @@ function htmlBlocks(blocks: Block[], expand: (s: string) => string, copy: string
     .join('\n')
 }
 
-/** A copy button, which the script shows: an icon, with its label for screen readers, or a button that says it */
+/**
+ * A copy button, which the script shows: an icon, with its label for screen readers, or a button that says it. It has
+ * both icons, copy and copied, which cross-fade.
+ */
 function copyButton(label: string, kind: 'icon' | 'text' | 'solid' | 'cta' = 'icon'): string {
   const cls = { icon: 'cp cp-ico', text: 'cp', solid: 'cp cp-solid', cta: 'cp cta' }[kind]
   const t = `<span class="t${kind === 'icon' ? ' sr' : ''}">${escapeHtml(label)}</span>`
-  return `<button type="button" class="${cls}" hidden><svg class="i" aria-hidden="true"><use href="#i-copy"/></svg>${t}</button>`
+  return `<button type="button" class="${cls}" hidden><span class="ic">${icon('copy')}${icon('check')}</span>${t}</button>`
 }
 
 /** A line of the texts as the text it is: what a copy button copies */
@@ -445,7 +448,8 @@ function renderHtml(text: GuideText): string {
     SPRITE,
     `<a class="skip" href="#main">${escapeHtml(ui.skip)}</a>`,
     '<header class="bar"><div class="in">',
-    `<a class="mark" href="#top">${img(30)}<span>${escapeHtml(brand)}</span><span class="chip">MCP</span></a>`,
+    `<div class="mark"><a class="home" href="${SITE_URL}/" aria-label="${escapeHtml(ui.home)}">${img(30)}` +
+      `<span>${escapeHtml(brand)}</span></a><span class="chip">MCP</span></div>`,
     `<nav class="jump" aria-label="${escapeHtml(ui.pageNav)}"><a href="#install">${escapeHtml(text.installHeading)}</a>` +
       `<a href="#tools">${escapeHtml(text.toolsHeading)}</a>` +
       `<a href="#troubleshooting">${escapeHtml(text.troubleshooting.heading)}</a></nav>`,
@@ -519,7 +523,7 @@ function renderHtml(text: GuideText): string {
     `<script>${GUIDE_SCRIPT_JS}</script>`,
   ]
   return (
-    `<!doctype html>\n<html lang="${text.lang}" data-copied="${escapeHtml(ui.copied)}" id="top">\n` +
+    `<!doctype html>\n<html lang="${text.lang}" data-copied="${escapeHtml(ui.copied)}">\n` +
     `<head>\n${head.join('\n')}\n</head>\n<body>\n${body.join('\n')}\n</body>\n</html>\n`
   )
 }
