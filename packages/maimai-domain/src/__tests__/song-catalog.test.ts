@@ -1,4 +1,4 @@
-import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum, type DXData } from '@gekichumai/dxdata'
+import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum, dxdata, type DXData } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
 import { getDxdataSongCatalog } from '../dxdata-catalog'
 import { buildSongCatalog, getSheetIdentityFromId } from '../song-catalog'
@@ -545,6 +545,16 @@ describe('Song Catalog', () => {
       })?.title,
     ).toBe(exposedSheet.title)
     expect(nextCatalog.sheets[0]?.title).toBe(exposedSheet.title)
+  })
+
+  it('freezes a copy that matches the projected catalog without freezing dxdata itself', () => {
+    const catalog = getDxdataSongCatalog(VersionEnum.CiRCLE)
+    const projected = buildSongCatalog(dxdata, VersionEnum.CiRCLE)
+
+    expect(catalog.sheets).toEqual(projected.sheets)
+    expect(Object.isFrozen(catalog.sheets[0])).toBe(true)
+    expect(Object.isFrozen(dxdata.songs[0])).toBe(false)
+    expect(Object.isFrozen(dxdata.songs[0]?.sheets)).toBe(false)
   })
 
   it('deep-freezes runtime nested dxdata extras returned through cached lookups', () => {

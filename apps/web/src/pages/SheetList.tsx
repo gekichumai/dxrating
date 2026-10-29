@@ -88,6 +88,100 @@ const SheetSearchAnalytics: FC<{
   return null
 }
 
+// Filtering and sorting the full catalog is the bulk of a /search render. The inputs are stable references (the cached
+// catalog plus a serializable form), so keep the last result and reuse it across remounts and SSR requests.
+let lastSortFilterResult:
+  | { results: FlattenedSheet[]; key: string; version: VersionEnum; sheets: FlattenedSheet[] }
+  | undefined
+
+const getSortFilteredSheets = (
+  results: FlattenedSheet[],
+  sortFilterOptions: SheetSortFilterForm | undefined,
+  inputQuery: string,
+  version: VersionEnum,
+): FlattenedSheet[] => {
+  // Favorites live in localStorage and can change between calls, so that path is never cached.
+  const cacheable = !sortFilterOptions?.filters.favoritesOnly
+  const key = cacheable ? JSON.stringify([inputQuery, sortFilterOptions ?? null]) : ''
+  if (
+    cacheable &&
+    lastSortFilterResult?.results === results &&
+    lastSortFilterResult.version === version &&
+    lastSortFilterResult.key === key
+  ) {
+    return lastSortFilterResult.sheets
+  }
+
+  const sheets = computeSortFilteredSheets(results, sortFilterOptions, inputQuery, version)
+  if (cacheable) lastSortFilterResult = { results, key, version, sheets }
+  return sheets
+}
+
+const computeSortFilteredSheets = (
+  results: FlattenedSheet[],
+  sortFilterOptions: SheetSortFilterForm | undefined,
+  inputQuery: string,
+  version: VersionEnum,
+): FlattenedSheet[] => {
+  let sortFilteredResults: FlattenedSheet[] = results
+  if (sortFilterOptions) {
+    const currentVersionId = VERSION_ID_MAP.get(version) ?? 0
+    const validVersions = Array.from(VERSION_ID_MAP.entries())
+      .filter(([, id]) => id <= currentVersionId)
+      .map(([v]) => v)
+    const favoriteSheetIds = sortFilterOptions.filters.favoritesOnly
+      ? new Set<string>(JSON.parse(localStorage.getItem('favorite-sheets') ?? '[]'))
+      : null
+    sortFilteredResults = results.filter((sheet) => {
+      return chainEvery<FlattenedSheet>(
+        (v) => !!v,
+        (v) => {
+          if (sortFilterOptions.filters.internalLevelValue) {
+            const { min, max } = sortFilterOptions.filters.internalLevelValue
+            return v.internalLevelValue >= min && v.internalLevelValue <= max
+          }
+          return true
+        },
+        (v) => {
+          if (sortFilterOptions.filters.versions) {
+            const versions = sortFilterOptions.filters.versions.filter((v) => validVersions.includes(v))
+            return versions.includes(v.version)
+          }
+          return true
+        },
+        (v) => {
+          if (sortFilterOptions.filters.tags.length) {
+            const tags = sortFilterOptions.filters.tags
+            return tags.every((tag) => v.tags.includes(tag))
+          }
+          return true
+        },
+
+        (v) => {
+          if (sortFilterOptions.filters.categories) {
+            const categories = sortFilterOptions.filters.categories
+            return categories.some((category) => v.category.includes(category))
+          }
+          return true
+        },
+
+        (v) => sheetMatchesDifficultyFilter(v, sortFilterOptions.filters.difficulties),
+
+        (v) => {
+          if (favoriteSheetIds) {
+            return favoriteSheetIds.has(v.id)
+          }
+          return true
+        },
+      )(sheet)
+    })
+    if (!inputQuery) {
+      sortFilteredResults.sort((a, b) => compareSheetsBySorts(a, b, sortFilterOptions.sorts))
+    }
+  }
+  return sortFilteredResults
+}
+
 const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly SearchQuerySeedSheet[] }> = ({
   search,
   seedSheets,
@@ -192,62 +286,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
 
   const { filteredResults, elapsed: filteringElapsed } = useMemo(() => {
     const startTime = performance.now()
-    let sortFilteredResults: FlattenedSheet[] = results
-    if (sortFilterOptions) {
-      const currentVersionId = VERSION_ID_MAP.get(version) ?? 0
-      const validVersions = Array.from(VERSION_ID_MAP.entries())
-        .filter(([, id]) => id <= currentVersionId)
-        .map(([v]) => v)
-      const favoriteSheetIds = sortFilterOptions.filters.favoritesOnly
-        ? new Set<string>(JSON.parse(localStorage.getItem('favorite-sheets') ?? '[]'))
-        : null
-      sortFilteredResults = results.filter((sheet) => {
-        return chainEvery<FlattenedSheet>(
-          (v) => !!v,
-          (v) => {
-            if (sortFilterOptions.filters.internalLevelValue) {
-              const { min, max } = sortFilterOptions.filters.internalLevelValue
-              return v.internalLevelValue >= min && v.internalLevelValue <= max
-            }
-            return true
-          },
-          (v) => {
-            if (sortFilterOptions.filters.versions) {
-              const versions = sortFilterOptions.filters.versions.filter((v) => validVersions.includes(v))
-              return versions.includes(v.version)
-            }
-            return true
-          },
-          (v) => {
-            if (sortFilterOptions.filters.tags.length) {
-              const tags = sortFilterOptions.filters.tags
-              return tags.every((tag) => v.tags.includes(tag))
-            }
-            return true
-          },
-
-          (v) => {
-            if (sortFilterOptions.filters.categories) {
-              const categories = sortFilterOptions.filters.categories
-              return categories.some((category) => v.category.includes(category))
-            }
-            return true
-          },
-
-          (v) => sheetMatchesDifficultyFilter(v, sortFilterOptions.filters.difficulties),
-
-          (v) => {
-            if (favoriteSheetIds) {
-              return favoriteSheetIds.has(v.id)
-            }
-            return true
-          },
-        )(sheet)
-      })
-      if (!inputQuery) {
-        sortFilteredResults.sort((a, b) => compareSheetsBySorts(a, b, sortFilterOptions.sorts))
-      }
-    }
+    const sortFilteredResults = getSortFilteredSheets(results, sortFilterOptions, inputQuery, version)
     const elapsed = performance.now() - startTime
     Sentry.metrics.distribution('sheet_filter.duration', elapsed, {
       unit: 'millisecond',
