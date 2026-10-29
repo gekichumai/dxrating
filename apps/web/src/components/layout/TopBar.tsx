@@ -1,10 +1,11 @@
-import { ButtonBase, IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material'
+import { ButtonBase, Divider, IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material'
 import clsx from 'clsx'
 import { type ComponentType, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MdiChevronDown from '~icons/mdi/chevron-down'
 import MdiGithub from '~icons/mdi/github'
 import DiscordLogo from '~icons/simple-icons/discord'
+import McpLogo from '~icons/simple-icons/modelcontextprotocol'
 import QqLogo from '~icons/simple-icons/qq'
 import { BUNDLE } from '../../utils/bundle'
 import { RelativeTime } from '../../utils/useTime'
@@ -44,7 +45,13 @@ const COMMUNITY_LINKS: {
   },
 ]
 
+// The MCP server lets AI assistants (Claude, ChatGPT, Cursor…) query DXRating. It links to the
+// human-readable setup guide; the endpoint itself lives at /mcp.
+const MCP_GUIDE_URL = 'https://mcp.dxrating.net/'
+
 const BRAND_BADGE_CLASS_NAME = 'text-white border-1 border-solid border-black/20 shadow'
+// MCP has no brand color; a white badge with the black logo keeps it distinct from the community links.
+const MCP_BADGE_CLASS_NAME = 'bg-white text-black border-1 border-solid border-black/20 shadow'
 
 // Small screens fold the community links into one menu so the header stays a single row; the
 // overlapping brand badges keep the entry point as recognizable as the full row on desktop.
@@ -75,6 +82,14 @@ const CommunityMenu = () => {
             <Icon className="size-3.5" />
           </span>
         ))}
+        <span
+          className={clsx(
+            'flex size-6 2xs:size-7 items-center justify-center rounded-full -ml-3 2xs:-ml-2.5',
+            MCP_BADGE_CLASS_NAME,
+          )}
+        >
+          <McpLogo className="size-3.5" />
+        </span>
         <MdiChevronDown className="hidden 2xs:block size-4 text-black/60" />
       </ButtonBase>
 
@@ -103,6 +118,22 @@ const CommunityMenu = () => {
             <ListItemText>{shortLabel ?? t('root:external-links.qq-short')}</ListItemText>
           </MenuItem>
         ))}
+        <Divider />
+        <MenuItem
+          component="a"
+          href={MCP_GUIDE_URL}
+          target="_blank"
+          rel="noopener"
+          title={t('root:external-links.mcp')}
+          onClick={() => setAnchorEl(null)}
+        >
+          <ListItemIcon>
+            <span className={clsx('flex size-7 items-center justify-center rounded-full', MCP_BADGE_CLASS_NAME)}>
+              <McpLogo className="size-3.5" />
+            </span>
+          </ListItemIcon>
+          <ListItemText>{t('root:external-links.mcp-short')}</ListItemText>
+        </MenuItem>
       </Menu>
     </>
   )
@@ -134,6 +165,18 @@ export const TopBar = ({
         {/* Tighter icon buttons below 375px keep the row from colliding with the logo. */}
         <div className="flex items-center shrink-0 [&_.MuiIconButton-root]:p-1.5 2xs:[&_.MuiIconButton-root]:p-2">
           <div className="hidden sm:flex items-center gap-2">
+            <ButtonBase
+              component="a"
+              href={MCP_GUIDE_URL}
+              target="_blank"
+              rel="noopener"
+              aria-label={t('root:external-links.mcp')}
+              title={t('root:external-links.mcp')}
+              className="mr-1 flex h-9 items-center gap-1.5 rounded-full bg-white/35 hover:bg-white/50 pl-2.5 pr-3 text-sm font-semibold text-black/80 transition-colors"
+            >
+              <McpLogo className="size-4" />
+              MCP
+            </ButtonBase>
             {COMMUNITY_LINKS.map(({ key, href, Icon, brandClassName }) => (
               <IconButton
                 key={key}

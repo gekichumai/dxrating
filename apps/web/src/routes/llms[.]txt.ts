@@ -20,6 +20,8 @@ DXRating is a maimai DX rating calculator and chart database. It provides canoni
 - API catalog: https://dxrating.net/.well-known/api-catalog
 - API specification: https://miruku.dxrating.net/spec.json
 - API documentation: https://miruku.dxrating.net/docs
+- MCP server (Model Context Protocol, for AI assistants): https://mcp.dxrating.net/mcp
+- MCP server setup guide: https://mcp.dxrating.net/
 
 ## URL Patterns
 

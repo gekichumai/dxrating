@@ -8,6 +8,7 @@ describe('buildLlmsTxt', () => {
     expect(llms).toContain('# DXRating')
     expect(llms).toContain('https://dxrating.net/sitemap.xml')
     expect(llms).toContain('https://dxrating.net/opensearch.xml')
+    expect(llms).toContain('https://mcp.dxrating.net/mcp')
     expect(llms).toContain('https://dxrating.net/developers')
     expect(llms).toContain('https://dxrating.net/.well-known/api-catalog')
     expect(llms).toContain('https://dxrating.net/charts/recent')

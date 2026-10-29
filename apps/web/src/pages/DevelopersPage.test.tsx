@@ -20,6 +20,7 @@ describe('DevelopersPage', () => {
     )
     expect(screen.getByRole('link', { name: 'https://dxrating.net/.well-known/api-catalog' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'https://dxrating.net/llms.txt' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'https://mcp.dxrating.net/mcp' })).toBeTruthy()
   })
 
   it('states the dxdata license and how to credit it', () => {
