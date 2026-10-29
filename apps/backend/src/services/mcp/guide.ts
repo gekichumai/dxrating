@@ -12,13 +12,16 @@ import {
   type Section,
 } from './guide-text'
 import { MCP_GUIDE_URL, MCP_HOST, MCP_PUBLIC_URL, MCP_SERVER_CARD_URL, REPOSITORY } from './listing'
+import { GUIDE_SCRIPT, GUIDE_STYLE } from './guide-assets'
 import { ICONS, SITE_URL } from './output'
 
 // The setup guide of the MCP server, at the root of its host (mcp.dxrating.net): how to add the server to Claude,
 // ChatGPT, Cursor, VS Code and other apps, what its tools do, its data, limits and privacy. It is in the languages of
 // the web app (guide-text.ts), as HTML for people and as Markdown for agents, with llms.txt and robots.txt for the
-// host. Everything is rendered once, on the first request. The HTML loads nothing but the icon of the site and has
-// no script; its Content-Security-Policy allows its style by its hash.
+// host. Everything is rendered once, on the first request. The HTML page looks like dxrating.net: it loads nothing but
+// the icon of the site and the Torus font, from the host of the assets, and its inline style and script
+// (guide-assets.ts), which its Content-Security-Policy allows by their hashes. The script only enhances it: copy
+// buttons, and the apps as tabs (without it, every app shows, one under the other).
 //
 // The guide is served to its host only: the backend answers other hosts too, whose root redirects to the API docs.
 // An MCP client given the URL of the guide instead of the endpoint is helped on: its POST is redirected to the
@@ -228,64 +231,177 @@ function inlineHtml(s: string): string {
   return html + escapeHtml(s.slice(last))
 }
 
-function htmlBlocks(blocks: Block[], expand: (s: string) => string): string {
+/** Blocks as HTML; in a section of prompts (Try it), a list is of prompts to copy, and a paragraph led by a bold label
+ * (**Check that it works:**) a callout */
+function htmlBlocks(blocks: Block[], expand: (s: string) => string, copy: string, prompts = false): string {
   return blocks
-    .map((block) => {
-      if ('p' in block) return `<p>${inlineHtml(expand(block.p))}</p>`
-      if ('items' in block) return `<ul>${block.items.map((i) => `<li>${inlineHtml(expand(i))}</li>`).join('')}</ul>`
-      if ('steps' in block) return `<ol>${block.steps.map((i) => `<li>${inlineHtml(expand(i))}</li>`).join('')}</ol>`
-      const { lang, code } = snippetBlock(block.code)
-      return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`
+    .map((block, i) => {
+      if ('p' in block) {
+        const p = expand(block.p)
+        return prompts && /^\*\*[^*]+[:：]\*\*/.test(p)
+          ? `<p class="callout">${inlineHtml(p)}</p>`
+          : `<p>${inlineHtml(p)}</p>`
+      }
+      if ('items' in block) return itemsHtml(block.items.map(expand), copy, prompts)
+      if ('steps' in block)
+        return `<ol class="steps">${block.steps.map((s) => `<li>${inlineHtml(expand(s))}</li>`).join('')}</ol>`
+      const before = blocks[i - 1]
+      return codeHtml(block.code, before && 'p' in before ? before.p : '', copy)
     })
     .join('\n')
 }
 
-const CSS = `
-:root{color-scheme:light dark;--bg:#fbfaff;--fg:#1d1b26;--muted:#5f5b70;--line:#e2deef;--code:#f1eef9;--accent:#6b3fd4}
-@media (prefers-color-scheme:dark){:root{--bg:#141219;--fg:#ebe8f4;--muted:#a6a1b8;--line:#2e2a3a;--code:#1f1c28;--accent:#b49bff}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 system-ui,-apple-system,"Segoe UI","Hiragino Sans","PingFang SC","Microsoft YaHei",sans-serif}
-.wrap{max-width:46rem;margin:0 auto;padding:1.5rem 1rem 3rem}
-nav{display:flex;flex-wrap:wrap;gap:.25rem .9rem;justify-content:flex-end;font-size:.875rem}
-nav a[aria-current]{font-weight:600;color:var(--fg);text-decoration:none}
-h1{display:flex;align-items:center;gap:.75rem;font-size:1.9rem;line-height:1.2;margin:1.5rem 0 1rem}
-h1 img{width:2.75rem;height:2.75rem;border-radius:.6rem}
-h2{font-size:1.35rem;margin:2.5rem 0 .75rem;padding-top:1rem;border-top:1px solid var(--line)}
-h3{font-size:1.05rem;margin:1.75rem 0 .5rem}
-a{color:var(--accent);overflow-wrap:anywhere}
-.badges{color:var(--muted);font-weight:600}
-code{font:.875em/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--code);padding:.1em .3em;border-radius:.3em;overflow-wrap:anywhere}
-pre{background:var(--code);padding:.75rem 1rem;border-radius:.5rem;overflow-x:auto}
-pre code{padding:0;background:none;white-space:pre;overflow-wrap:normal}
-pre.wrap-code code{white-space:pre-wrap}
-table{border-collapse:collapse;width:100%;font-size:.95rem}
-th,td{text-align:left;vertical-align:top;padding:.45rem .6rem;border-bottom:1px solid var(--line)}
-th[scope=row]{white-space:nowrap}
-details{border:1px solid var(--line);border-radius:.5rem;padding:.25rem .9rem;margin:.5rem 0}
-summary{cursor:pointer;font-weight:600;padding:.4rem 0}
-.docs,footer{color:var(--muted);font-size:.875rem}
-footer{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--line)}
-`.trim()
+/** A copy button, which the script shows: an icon, with its label for screen readers, or a button that says it */
+function copyButton(label: string, kind: 'icon' | 'text' | 'solid' | 'cta' = 'icon'): string {
+  const cls = { icon: 'cp cp-ico', text: 'cp', solid: 'cp cp-solid', cta: 'cp cta' }[kind]
+  const t = `<span class="t${kind === 'icon' ? ' sr' : ''}">${escapeHtml(label)}</span>`
+  return `<button type="button" class="${cls}" hidden><svg class="i" aria-hidden="true"><use href="#i-copy"/></svg>${t}</button>`
+}
 
-const STYLE_HASH = `sha256-${createHash('sha256').update(CSS).digest('base64')}`
+/** A line of the texts as the text it is: what a copy button copies */
+const plain = (s: string) =>
+  s
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+
+/**
+ * A list as its items are: questions and their answers (every item starts with a bold question), prompts to copy (in
+ * Try it), else a list
+ */
+function itemsHtml(items: string[], copy: string, prompts = false): string {
+  const faq = items.map((item) => item.match(/^\*\*(.+?)[:：]?\*\*\s*(.*)$/s))
+  if (faq.every((m) => m !== null)) {
+    const rows = faq.map((m) => `<div><dt>${inlineHtml(m![1])}</dt><dd>${inlineHtml(m![2])}</dd></div>`)
+    return `<dl class="faq panel">${rows.join('')}</dl>`
+  }
+  if (prompts) {
+    const li = items.map((i) => `<li data-c="${escapeHtml(plain(i))}"><p>${inlineHtml(i)}</p>${copyButton(copy)}</li>`)
+    return `<ul class="prompts">${li.join('')}</ul>`
+  }
+  return `<ul class="dash">${items.map((item) => `<li>${inlineHtml(item)}</li>`).join('')}</ul>`
+}
+
+/** A line of code of lang, highlighted: keys (k), strings (s), punctuation (p), the command (c) and its flags (f) */
+function highlight(lang: string, line: string): string {
+  const span = (cls: string, s: string) => `<span class="${cls}">${escapeHtml(s)}</span>`
+  if (lang === 'json') {
+    return line.replace(
+      /("(?:[^"\\]|\\.)*")(\s*:)?|([{}[\],:])|([^\s"{}[\],:]+)|(\s+)/g,
+      (_, str?: string, colon?: string, punct?: string, word?: string, space?: string) => {
+        if (str !== undefined) return colon ? span('k', str) + span('p', colon) : span('s', str)
+        if (punct !== undefined) return span('p', punct)
+        return escapeHtml(word ?? space ?? '')
+      },
+    )
+  }
+  if (lang === 'toml') {
+    const section = line.match(/^\[(.+)\]$/)
+    if (section) return span('p', '[') + span('k', section[1]) + span('p', ']')
+    const pair = line.match(/^([\w.-]+)(\s*=\s*)(.*)$/)
+    return pair ? span('k', pair[1]) + span('p', pair[2]) + span('s', pair[3]) : escapeHtml(line)
+  }
+  let first = true
+  return line.replace(/('[^']*'|"[^"]*")|(\S+)|(\s+)/g, (_, quoted?: string, word?: string, space?: string) => {
+    if (quoted !== undefined) return span('s', quoted)
+    if (word === undefined) return space ?? ''
+    if (first) {
+      first = false
+      return span('c', word)
+    }
+    return word.startsWith('-') ? span('f', word) : escapeHtml(word)
+  })
+}
+
+/** The label of a block of code: the file it goes in, as the paragraph before it names it, else its language */
+function codeLabel(lang: string, before: string): string {
+  const file = [...before.matchAll(/`([^`\s]+)`/g)].map((m) => m[1]).find((f) => f.endsWith(`.${lang}`))
+  return file ?? { sh: 'Terminal', json: 'JSON', toml: 'TOML' }[lang] ?? lang
+}
+
+/** A block of code: its label, a copy button, the code, each line a span that wraps under its indentation */
+function codeHtml(name: string, before: string, copy: string): string {
+  const { lang, code } = snippetBlock(name)
+  const lines = code.split('\n').map((line) => {
+    const spaces = line.length - line.trimStart().length
+    return `<span class="ln i${Math.min(3, spaces >> 1)}">${' '.repeat(spaces)}${highlight(lang, line.trimStart())}</span>`
+  })
+  return (
+    `<div class="code code-${lang}" data-c="${escapeHtml(code)}"><div class="code-h"><span class="code-l">` +
+    `${escapeHtml(codeLabel(lang, before))}</span>${copyButton(copy, 'text')}</div>` +
+    `<pre tabindex="0"><code class="language-${lang}">${lines.join('')}</code></pre></div>`
+  )
+}
+
+/** src, CSS or JavaScript, without its comments and the indentation of its lines */
+function minify(src: string, comment: RegExp): string {
+  return src
+    .replace(comment, '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join('\n')
+}
+
+export const GUIDE_STYLE_CSS = minify(GUIDE_STYLE, /\/\*[\s\S]*?\*\//g)
+export const GUIDE_SCRIPT_JS = minify(GUIDE_SCRIPT, /^\s*\/\/.*$/gm)
+
+/** The CSP source of an inline style or script */
+const cspHash = (s: string) => `'sha256-${createHash('sha256').update(s).digest('base64')}'`
 const ICON = ICONS[0].src
+/** The host of the assets of dxrating.net: the icon, and the Torus font of the style */
+const ASSETS = new URL(ICON).origin
+const FONT = `${ASSETS}/fonts/Torus-Regular.woff2`
 
 export const GUIDE_CSP =
-  `default-src 'none'; style-src '${STYLE_HASH}'; img-src ${new URL(ICON).origin}; base-uri 'none'; ` +
-  "form-action 'none'; frame-ancestors 'none'"
+  `default-src 'none'; style-src ${cspHash(GUIDE_STYLE_CSS)}; script-src ${cspHash(GUIDE_SCRIPT_JS)}; ` +
+  `font-src ${ASSETS}; img-src ${ASSETS}; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`
+
+const SPRITE =
+  '<svg class="sprite" aria-hidden="true">' +
+  '<symbol id="i-copy" viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="2"/>' +
+  '<path d="M10.5 5.5V4a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5"/></symbol>' +
+  '<symbol id="i-check" viewBox="0 0 16 16"><path d="M3 8.5l3.2 3.2L13 4.8"/></symbol>' +
+  '<symbol id="i-out" viewBox="0 0 16 16"><path d="M6 4h6v6M12 4l-8 8"/></symbol></svg>'
+const icon = (id: string) => `<svg class="i" aria-hidden="true"><use href="#i-${id}"/></svg>`
+
+/** An app's name and the qualifier in its brackets: Claude (claude.ai, Claude Desktop, Claude mobile) */
+function appName(id: AppId): { name: string; qualifier?: string } {
+  const m = APP_NAMES[id].match(/^(.+?) \((.+)\)$/)
+  return m ? { name: m[1], qualifier: m[2] } : { name: APP_NAMES[id] }
+}
+
+/** The first sentence of a paragraph, and the rest */
+function firstSentence(s: string): [string, string] {
+  const m = s.match(/^(.+?(?:\.(?=\s)|。))\s*(.*)$/s)
+  return m ? [m[1], m[2]] : ['', s]
+}
+
+const unlabel = (s: string) => s.replace(/\s*[:：]\s*$/, '')
 
 function renderHtml(text: GuideText): string {
   const expand = expander(text)
-  const blocks = (b: Block[]) => htmlBlocks(b, expand)
-  const section = (s: Section) =>
-    `<section id="${s.id}">\n<h2>${escapeHtml(s.heading)}</h2>\n${blocks(s.blocks)}\n</section>`
-  const app = (id: AppId) =>
-    `<details id="${id}"><summary>${escapeHtml(APP_NAMES[id])}</summary>\n${blocks(text.apps[id])}\n` +
-    `<p class="docs">${escapeHtml(text.docs)}<a href="${escapeHtml(APP_DOCS[id])}">${escapeHtml(APP_DOCS[id])}</a></p></details>`
+  const ui = text.ui
+  const blocks = (b: Block[], prompts = false) => htmlBlocks(b, expand, ui.copy, prompts)
   const page = (t: GuideText) => `${MCP_GUIDE_URL}?lang=${t.lang}`
+  const space = text.title.indexOf(' ')
+  const [brand, rest] = [text.title.slice(0, space), text.title.slice(space + 1)]
+  const h2 = (id: string, heading: string) => `<h2 id="${id}-h"><a href="#${id}">${escapeHtml(heading)}</a></h2>`
+  const section = (s: Section, body = blocks(s.blocks), cls = 'sec') =>
+    `<section class="${cls}" id="${s.id}" aria-labelledby="${s.id}-h">\n${h2(s.id, s.heading)}\n<div class="sec-b">${body}</div>\n</section>`
+  const langs = GUIDE_TEXTS.map(
+    (t) =>
+      `<a href="?lang=${t.lang}" hreflang="${t.lang}" lang="${t.lang}"${t === text ? ' aria-current="page"' : ''}>` +
+      `<span class="ln">${escapeHtml(t.name)}</span><span class="ln-s" aria-hidden="true">${escapeHtml(t.ui.abbr)}</span></a>`,
+  ).join('')
+  const img = (size: number, cls = '') =>
+    `<img${cls ? ` class="${cls}"` : ''} src="${escapeHtml(ICON)}" alt="" width="${size}" height="${size}">`
   const head = [
     '<meta charset="utf-8">',
-    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    '<meta name="viewport" content="width=device-width,initial-scale=1">',
+    '<meta name="color-scheme" content="light dark">',
+    '<meta name="theme-color" content="#127a63" media="(prefers-color-scheme: light)">',
+    '<meta name="theme-color" content="#0f2a24" media="(prefers-color-scheme: dark)">',
     `<title>${escapeHtml(text.title)}</title>`,
     `<meta name="description" content="${escapeHtml(text.description)}">`,
     `<meta property="og:title" content="${escapeHtml(text.title)}">`,
@@ -296,56 +412,116 @@ function renderHtml(text: GuideText): string {
     ...GUIDE_TEXTS.map((t) => `<link rel="alternate" hreflang="${t.lang}" href="${escapeHtml(page(t))}">`),
     `<link rel="alternate" hreflang="x-default" href="${escapeHtml(MCP_GUIDE_URL)}">`,
     `<link rel="alternate" type="text/markdown" href="${escapeHtml(expand('{md}'))}">`,
-    `<style>${CSS}</style>`,
+    `<link rel="preload" href="${FONT}" as="font" type="font/woff2" crossorigin>`,
+    `<style>${GUIDE_STYLE_CSS}</style>`,
   ]
-  const nav = GUIDE_TEXTS.map((t) =>
-    t === text
-      ? `<a href="?lang=${t.lang}" lang="${t.lang}" aria-current="page">${escapeHtml(t.name)}</a>`
-      : `<a href="?lang=${t.lang}" lang="${t.lang}" hreflang="${t.lang}">${escapeHtml(t.name)}</a>`,
-  ).join('')
-  const oneClick = Object.values(ONE_CLICK)
-    .map((a) => `<a href="${escapeHtml(a.link(MCP_PUBLIC_URL))}">${escapeHtml(text.addTo.replace('%s', a.name))}</a>`)
-    .join(' · ')
-  const facts = [[text.urlLabel, `\`${MCP_PUBLIC_URL}\``], ...text.facts]
-    .map(([label, value]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${inlineHtml(expand(value))}</td></tr>`)
-    .join('')
+  const tab = (id: string, name: string) => `<a class="tab" href="#${id}">${escapeHtml(name)}</a>`
+  const group = (label: string, tabs: string[]) =>
+    `<div class="grp"><span class="grp-l">${escapeHtml(label)}</span><div class="seg">${tabs.join('')}</div></div>`
+  const panel = (id: string, name: string, body: string, qualifier?: string) =>
+    `<section class="app-p" id="${id}" aria-labelledby="${id}-h"><h3 id="${id}-h">${escapeHtml(name)}` +
+    `${qualifier ? ` <span class="q">${escapeHtml(qualifier)}</span>` : ''}</h3>\n${body}</section>`
+  const app = (id: AppId) => {
+    const { name, qualifier } = appName(id)
+    const docs = APP_DOCS[id]
+    const link =
+      `<p class="docs"><span>${escapeHtml(unlabel(text.docs))}</span> <a href="${escapeHtml(docs)}">` +
+      `<span>${escapeHtml(docs.replace(/^https:\/\//, ''))}</span>${icon('out')}</a></p>`
+    return panel(id, name, `${blocks(text.apps[id])}\n${link}`, qualifier)
+  }
+  const oneClick = Object.values(ONE_CLICK).map(
+    (a) =>
+      `<a class="pill-btn" href="${escapeHtml(a.link(MCP_PUBLIC_URL))}">${escapeHtml(text.addTo.replace('%s', a.name))}${icon('out')}</a>`,
+  )
+  const [l1, lrest] = firstSentence(expand(text.lead[0]))
+  const prompt = expand(text.agentPrompt)
   const tools = GUIDE_TOOLS.map(
-    (name) => `<tr><td><code>${name}</code></td><td>${inlineHtml(expand(text.tools[name]))}</td></tr>`,
-  ).join('')
+    (name) => `<li class="panel"><h3><code>${name}</code></h3><p>${inlineHtml(expand(text.tools[name]))}</p></li>`,
+  )
+  const facts = text.facts.map(
+    ([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${inlineHtml(expand(value))}</dd></div>`,
+  )
   const body = [
-    `<nav aria-label="Language">${nav}</nav>`,
-    '<header>',
-    `<h1><img src="${escapeHtml(ICON)}" alt="" width="44" height="44">${escapeHtml(text.title)}</h1>`,
-    ...text.lead.map((p) => `<p>${inlineHtml(expand(p))}</p>`),
-    `<p class="badges">${escapeHtml(text.badges)}</p>`,
-    '</header>',
-    '<main>',
-    `<section id="agent">\n<h2>${escapeHtml(text.agentHeading)}</h2>\n<p>${inlineHtml(expand(text.agentIntro))}</p>`,
-    `<pre class="wrap-code"><code>${escapeHtml(expand(text.agentPrompt))}</code></pre>\n</section>`,
-    `<section id="install">\n<h2>${escapeHtml(text.installHeading)}</h2>`,
-    `<table>${facts}</table>`,
-    `<p>${inlineHtml(expand(text.urlNote))}</p>`,
-    `<p><strong>${escapeHtml(text.oneClick)}</strong> ${oneClick}</p>`,
-    `<p>${inlineHtml(expand(text.oneClickNote))}</p>`,
-    `<h3>${escapeHtml(text.chatApps)}</h3>`,
-    ...CHAT_APPS.map(app),
-    `<h3>${escapeHtml(text.codingTools)}</h3>`,
-    ...CODING_TOOLS.map(app),
-    `<details id="${text.other.id}"><summary>${escapeHtml(text.other.heading)}</summary>\n${blocks(text.other.blocks)}</details>`,
+    SPRITE,
+    `<a class="skip" href="#main">${escapeHtml(ui.skip)}</a>`,
+    '<header class="bar"><div class="in">',
+    `<a class="mark" href="#top">${img(30)}<span>${escapeHtml(brand)}</span><span class="chip">MCP</span></a>`,
+    `<nav class="jump" aria-label="${escapeHtml(ui.pageNav)}"><a href="#install">${escapeHtml(text.installHeading)}</a>` +
+      `<a href="#tools">${escapeHtml(text.toolsHeading)}</a>` +
+      `<a href="#troubleshooting">${escapeHtml(text.troubleshooting.heading)}</a></nav>`,
+    `<div class="bar-r"><a class="md" href="${escapeHtml(expand('{md}'))}" type="text/markdown">${escapeHtml(ui.markdown)}</a>` +
+      `<nav class="langs" aria-label="${escapeHtml(ui.langNav)}">${langs}</nav></div>`,
+    '</div></header>',
+    '<main id="main" class="in">',
+    '<section class="hero" aria-labelledby="title">',
+    img(76, 'app'),
+    `<h1 id="title">${escapeHtml(brand)} <span class="h1-b">${escapeHtml(rest)}</span></h1>`,
+    `<p class="lead">${l1 ? `<span class="l1">${inlineHtml(l1)}</span>` : ''}${inlineHtml(lrest)}</p>`,
+    ...text.lead.slice(1).map((p) => `<p class="aside">${inlineHtml(expand(p))}</p>`),
+    `<ul class="badges">${text.badges
+      .split(' · ')
+      .map((b) => `<li>${icon('check')}${escapeHtml(b)}</li>`)
+      .join('')}</ul>`,
     '</section>',
-    section(text.tryIt),
-    `<section id="tools">\n<h2>${escapeHtml(text.toolsHeading)}</h2>\n<p>${inlineHtml(expand(text.toolsIntro))}</p>`,
-    `<table><thead><tr><th>${escapeHtml(text.toolHead[0])}</th><th>${escapeHtml(text.toolHead[1])}</th></tr></thead>` +
-      `<tbody>${tools}</tbody></table>\n</section>`,
-    section(text.data),
-    section(text.limits),
-    section(text.privacy),
+    '<div class="connect">',
+    '<section class="panel" aria-labelledby="url">',
+    `<h2 class="kicker" id="url">${escapeHtml(text.urlLabel)}</h2>`,
+    `<div class="field" data-c="${MCP_PUBLIC_URL}"><code>${MCP_PUBLIC_URL}</code>${copyButton(ui.copy, 'solid')}</div>`,
+    `<dl class="facts">${facts.join('')}</dl>`,
+    `<p class="note">${inlineHtml(expand(text.urlNote))}</p>`,
+    `<div class="oc"><h3 class="kicker">${escapeHtml(unlabel(text.oneClick))}</h3>`,
+    `<div class="oc-g">${oneClick.join('')}</div>`,
+    `<p class="note">${inlineHtml(expand(text.oneClickNote))}</p></div>`,
+    '</section>',
+    `<section class="panel agent" id="agent" aria-labelledby="agent-h" data-c="${escapeHtml(prompt)}">`,
+    `<h2 id="agent-h">${escapeHtml(text.agentHeading)}</h2>`,
+    `<p class="note">${inlineHtml(expand(text.agentIntro))}</p>`,
+    `<pre class="prompt"><code>${escapeHtml(prompt)}</code></pre>`,
+    copyButton(ui.copyPrompt, 'cta'),
+    '</section>',
+    '</div>',
+    `<section class="sec" id="install" aria-labelledby="install-h">`,
+    h2('install', text.installHeading),
+    `<nav class="clients" aria-label="${escapeHtml(ui.appNav)}" data-tabs>`,
+    group(
+      text.chatApps,
+      CHAT_APPS.map((id) => tab(id, appName(id).name)),
+    ),
+    group(text.codingTools, [
+      ...CODING_TOOLS.map((id) => tab(id, appName(id).name)),
+      tab(text.other.id, text.other.heading),
+    ]),
+    '</nav>',
+    '<div class="apps panel">',
+    ...CHAT_APPS.map(app),
+    ...CODING_TOOLS.map(app),
+    panel(text.other.id, text.other.heading, blocks(text.other.blocks)),
+    '</div>',
+    '</section>',
+    section(text.tryIt, blocks(text.tryIt.blocks, true)),
+    section(
+      { id: 'tools', heading: text.toolsHeading, blocks: [] },
+      `<p>${inlineHtml(expand(text.toolsIntro))}</p><ul class="tools">${tools.join('')}</ul>`,
+    ),
+    '<div class="trio">',
+    section(text.data, undefined, 'sec panel'),
+    section(text.limits, undefined, 'sec panel'),
+    section(text.privacy, undefined, 'sec panel'),
+    '</div>',
     section(text.troubleshooting),
     section(text.links),
     '</main>',
-    `<footer><p>${inlineHtml(expand(text.footer))}</p></footer>`,
+    '<footer class="foot"><div class="in">',
+    `<div><p class="foot-b">${img(22)}${escapeHtml(brand)} <span class="chip">MCP</span></p><p>${inlineHtml(expand(text.footer))}</p></div>`,
+    `<p class="foot-l">${langs}</p>`,
+    '</div></footer>',
+    '<div id="live" class="sr" aria-live="polite"></div>',
+    `<script>${GUIDE_SCRIPT_JS}</script>`,
   ]
-  return `<!doctype html>\n<html lang="${text.lang}">\n<head>\n${head.join('\n')}\n</head>\n<body>\n<div class="wrap">\n${body.join('\n')}\n</div>\n</body>\n</html>\n`
+  return (
+    `<!doctype html>\n<html lang="${text.lang}" data-copied="${escapeHtml(ui.copied)}" id="top">\n` +
+    `<head>\n${head.join('\n')}\n</head>\n<body>\n${body.join('\n')}\n</body>\n</html>\n`
+  )
 }
 
 /** robots.txt of the host: the guide and the card may be crawled; the endpoint, which only takes POSTs, not */

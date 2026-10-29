@@ -56,6 +56,21 @@ export interface GuideText {
   footer: string
   /** The language links at the end of the Markdown */
   otherLanguages: string
+  /** The labels of the controls of the HTML page, which the Markdown does not have */
+  ui: GuideUi
+}
+
+export interface GuideUi {
+  /** The language in the language switch on phones, abbreviated */
+  abbr: string
+  skip: string
+  pageNav: string
+  langNav: string
+  appNav: string
+  markdown: string
+  copy: string
+  copied: string
+  copyPrompt: string
 }
 
 /** The names of the apps, the same in every language */
@@ -204,10 +219,11 @@ const en: GuideText = {
       { p: 'Ask in any language: English, 日本語, 简体中文, 繁體中文. Titles, aliases and nicknames all work.' },
       {
         items: [
-          "What is the internal level of PANDORA PARADOXXX's Re:MASTER?",
+          'Which song is "bbb"? List its charts with their levels.',
+          "What is the internal level of PANDORA PARADOXXX's Re:MASTER on the JP, international and CN servers?",
           'Which charts of level 14 have the lowest internal level on the international server?',
           'What rating does 100.5% on the master chart of 系ぎて give, and what do I need for 300?',
-          'Here are my best scores: … What is my rating, and which charts should I improve first?',
+          'Here are my best scores: … What is my Best 50 rating, and which charts should I improve first?',
           "Has the internal level of PANDORA PARADOXXX's master chart changed between versions?",
         ],
       },
@@ -268,7 +284,7 @@ const en: GuideText = {
     blocks: [
       {
         items: [
-          'No account, no key, no cookies. This page loads no scripts and has no analytics.',
+          'No account, no key, no cookies. This page loads no third-party scripts and has no analytics.',
           'The server only receives what your assistant sends it: the tool name and its arguments, such as a song ' +
             'name or the scores you pasted. It never sees your conversation, and it does not store your scores.',
           'For each request we log the time, the path, the status, how long it took and the request headers, which ' +
@@ -320,6 +336,17 @@ const en: GuideText = {
     "Steps checked against each app's documentation in October 2026. Apps change their menus often; if a step is out " +
     'of date, please [open an issue]({repo}/issues).',
   otherLanguages: 'Other languages',
+  ui: {
+    abbr: 'EN',
+    skip: 'Skip to content',
+    pageNav: 'On this page',
+    langNav: 'Language',
+    appNav: 'Apps',
+    markdown: 'Markdown',
+    copy: 'Copy',
+    copied: 'Copied',
+    copyPrompt: 'Copy prompt for your agent',
+  },
 }
 
 const ja: GuideText = {
@@ -442,7 +469,8 @@ const ja: GuideText = {
       { p: '日本語、English、简体中文、繁體中文のどれで聞いても大丈夫です。曲名、別名、愛称で探せます。' },
       {
         items: [
-          'PANDORA PARADOXXX の Re:MASTER の譜面定数は？',
+          '「bbb」ってどの曲？ 各譜面のレベルも教えて。',
+          'PANDORA PARADOXXX の Re:MASTER の譜面定数を、日本版・インターナショナル版・中国版で比べて。',
           'インターナショナル版で、レベル 14 の中で定数が一番低い譜面は？',
           '系ぎて の MASTER で 100.5% だとレートはいくつ？ 300 にするには何％必要？',
           '私のベストスコアはこれ：… レートはいくつで、どの譜面から上げるといい？',
@@ -501,7 +529,7 @@ const ja: GuideText = {
     blocks: [
       {
         items: [
-          'アカウント、キー、Cookie はありません。このページはスクリプトを読み込まず、アクセス解析もしていません。',
+          'アカウント、キー、Cookie はありません。このページは外部のスクリプトを読み込まず、アクセス解析もしていません。',
           'サーバーが受け取るのはアシスタントが送るもの、つまりツール名と引数（曲名や貼り付けたスコアなど）だけです。会話は見えず、' +
             'スコアも保存しません。',
           'リクエストごとに時刻、パス、ステータス、所要時間、リクエストヘッダー（IP アドレスと User-Agent を含む）を記録します。' +
@@ -550,6 +578,17 @@ const ja: GuideText = {
     '手順は 2026 年 10 月に各アプリのドキュメントで確認しました。アプリのメニューはよく変わります。古くなっていたら' +
     '[Issue を開いて]({repo}/issues)ください。',
   otherLanguages: 'ほかの言語',
+  ui: {
+    abbr: '日',
+    skip: '本文へスキップ',
+    pageNav: 'このページの内容',
+    langNav: '言語',
+    appNav: 'アプリ',
+    markdown: 'Markdown',
+    copy: 'コピー',
+    copied: 'コピーしました',
+    copyPrompt: 'エージェント用プロンプトをコピー',
+  },
 }
 
 const zhHans: GuideText = {
@@ -664,7 +703,8 @@ const zhHans: GuideText = {
       { p: '用中文、日本語、English 问都可以。曲名、别名、外号都能搜到。' },
       {
         items: [
-          'PANDORA PARADOXXX 的白谱定数是多少？',
+          '「潘」是哪首歌？列出它各难度的等级。',
+          'PANDORA PARADOXXX 的白谱定数在日服、国际服和国服分别是多少？',
           '国际服 14 级里定数最低的谱面有哪些？',
           '系ぎて 紫谱 100.5% 是多少 Rating？想拿 300 要打多少？',
           '这是我的最好成绩：…… 我的 Rating 是多少，先推哪些谱面？',
@@ -723,7 +763,7 @@ const zhHans: GuideText = {
     blocks: [
       {
         items: [
-          '没有账号、没有 Key、没有 Cookie。本页不加载任何脚本，也没有统计分析。',
+          '没有账号、没有 Key、没有 Cookie。本页不加载任何第三方脚本，也没有统计分析。',
           '服务器只收到助手发来的内容：工具名和参数，比如曲名或你贴的成绩。它看不到你的对话，也不会保存你的成绩。',
           '每个请求会记录时间、路径、状态码、耗时和请求头（包括 IP 地址和 User-Agent），但不记录包含工具参数的请求体。日志发送到' +
             '我们的监控服务（Sentry），只用于运维和防止滥用。',
@@ -767,6 +807,17 @@ const zhHans: GuideText = {
   },
   footer: '步骤于 2026 年 10 月按各应用的文档核对。应用的菜单经常变，如果哪一步过时了，请[提 Issue]({repo}/issues)。',
   otherLanguages: '其他语言',
+  ui: {
+    abbr: '简',
+    skip: '跳到正文',
+    pageNav: '本页内容',
+    langNav: '语言',
+    appNav: '应用',
+    markdown: 'Markdown',
+    copy: '复制',
+    copied: '已复制',
+    copyPrompt: '复制给 AI 的安装指令',
+  },
 }
 
 const zhHant: GuideText = {
@@ -881,7 +932,8 @@ const zhHant: GuideText = {
       { p: '用中文、日本語、English 問都可以。曲名、別名、暱稱都找得到。' },
       {
         items: [
-          'PANDORA PARADOXXX 的白譜定數是多少？',
+          '「潘」是哪首歌？列出它各難度的等級。',
+          'PANDORA PARADOXXX 的白譜定數在日版、國際版和國服分別是多少？',
           '國際版 14 級裡定數最低的譜面有哪些？',
           '系ぎて 紫譜 100.5% 是多少 Rating？想拿 300 要打多少？',
           '這是我的最佳成績：…… 我的 Rating 是多少，先推哪些譜面？',
@@ -940,7 +992,7 @@ const zhHant: GuideText = {
     blocks: [
       {
         items: [
-          '沒有帳號、沒有 Key、沒有 Cookie。本頁不載入任何指令碼，也沒有流量分析。',
+          '沒有帳號、沒有 Key、沒有 Cookie。本頁不載入任何第三方指令碼，也沒有流量分析。',
           '伺服器只收到助理送來的內容：工具名稱和參數，例如曲名或你貼上的成績。它看不到你的對話，也不會儲存你的成績。',
           '每個請求會記錄時間、路徑、狀態碼、耗時和請求標頭（包括 IP 位址和 User-Agent），但不記錄包含工具參數的請求內容。記錄會' +
             '送到我們的監控服務（Sentry），只用於維運和防止濫用。',
@@ -985,6 +1037,17 @@ const zhHant: GuideText = {
   footer:
     '步驟於 2026 年 10 月依各應用程式的文件核對。應用程式的選單經常變動，如果哪一步過時了，請[開 Issue]({repo}/issues)。',
   otherLanguages: '其他語言',
+  ui: {
+    abbr: '繁',
+    skip: '跳到正文',
+    pageNav: '本頁內容',
+    langNav: '語言',
+    appNav: '應用程式',
+    markdown: 'Markdown',
+    copy: '複製',
+    copied: '已複製',
+    copyPrompt: '複製給 AI 的安裝指令',
+  },
 }
 
 /** The texts, in the order of the language switch; the first is the default */
