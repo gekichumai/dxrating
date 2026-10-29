@@ -88,7 +88,18 @@ describe('guide responses', () => {
 
     const index = guideResponse(request('/index.md?lang=zh-Hant'))!
     expect(index.headers.get('cache-control')).toBe('public, max-age=3600')
+    expect(index.headers.get('vary')).toBeNull()
     expect(await index.text()).toMatch(/^# DXRating MCP 伺服器/)
+    // without ?lang the language comes from Accept-Language, so shared caches must not keep one for all
+    for (const [acceptLanguage, title] of [
+      ['ja', /^# DXRating MCP サーバー/],
+      ['en', /^# DXRating MCP Server/],
+    ] as const) {
+      const negotiated = guideResponse(request('/index.md', { 'accept-language': acceptLanguage }))!
+      expect(negotiated.headers.get('vary')).toBe('Accept-Language')
+      expect(negotiated.headers.get('cache-control')).toBe('private, max-age=300')
+      expect(await negotiated.text()).toMatch(title)
+    }
 
     const llms = guideResponse(request('/llms.txt'))!
     expect(llms.headers.get('content-type')).toBe('text/plain; charset=utf-8')

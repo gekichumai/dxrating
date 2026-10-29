@@ -455,10 +455,18 @@ export function guideResponse(request: Request): Response | undefined {
       Link: `${LICENSE_LINK}, ${CARD_LINK}`,
     })
   } else if (path === GUIDE_MARKDOWN_PATH) {
-    response = text(page.markdown, 'text/markdown; charset=utf-8', 'public, max-age=3600', {
-      'Content-Language': lang,
-      Link: `<${html}>; rel="canonical", ${LICENSE_LINK}, ${CARD_LINK}`,
-    })
+    // the same for every request to its URL when ?lang names the language; else negotiated, as the root is
+    const byQuery = lang.toLowerCase() === url.searchParams.get('lang')?.toLowerCase()
+    response = text(
+      page.markdown,
+      'text/markdown; charset=utf-8',
+      byQuery ? 'public, max-age=3600' : 'private, max-age=300',
+      {
+        'Content-Language': lang,
+        ...(byQuery ? {} : { Vary: 'Accept-Language' }),
+        Link: `<${html}>; rel="canonical", ${LICENSE_LINK}, ${CARD_LINK}`,
+      },
+    )
   } else {
     // the root varies by Accept and Accept-Language: private keeps the variants out of shared caches
     const negotiated = { 'Content-Language': lang, Vary: 'Accept, Accept-Language' }
