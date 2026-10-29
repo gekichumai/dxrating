@@ -29,7 +29,7 @@ import type { BackendAuth } from './auth'
 import { AppConfig } from './config'
 import { renderChartOgImageOutputEffect } from './services/functions/chart-og-image/index'
 import { CatalogIdentityError } from './services/catalog-identities'
-import { CatalogIdentities } from './services/application'
+import { CatalogIdentities, McpCatalogSource } from './services/application'
 
 export interface ApiContext
   extends
@@ -824,7 +824,25 @@ const arcadesHandler = {
 const chartOgImageHandler = {
   render: os.chartOgImage.render.handler(
     handlerGen(function* ({ input }) {
-      const output = yield* renderChartOgImageOutputEffect(input)
+      const catalogIdentities = yield* CatalogIdentities
+      const catalogSource = yield* McpCatalogSource
+      const catalog = yield* catalogSource.current.pipe(
+        Effect.mapError(
+          (cause) => new ORPCError('SERVICE_UNAVAILABLE', { message: 'The song catalog is still loading', cause }),
+        ),
+      )
+      // Pages link the public song ID; legacy song IDs stay valid for images that were indexed before.
+      const lookupSong = (songId: string) =>
+        Effect.gen(function* () {
+          const published = catalog.songsById.get(songId)
+          if (published) return published.song
+          // a public ID the published catalog lacks names no song; only legacy IDs need the identity mapping
+          if (songId.startsWith('dsng_') || songId.startsWith('dsht_')) return null
+          const publicIds = yield* withCatalogIdentityErrors(catalogIdentities.translateSongIdsToPublic([songId]))
+          const publicId = publicIds.get(songId)
+          return (publicId === undefined ? undefined : catalog.songsById.get(publicId)?.song) ?? null
+        })
+      const output = yield* renderChartOgImageOutputEffect(input, lookupSong)
       if (!output) {
         return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Chart not found' }))
       }

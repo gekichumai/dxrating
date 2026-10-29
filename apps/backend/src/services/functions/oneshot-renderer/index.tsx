@@ -3,9 +3,11 @@ import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import {
   calculateBest50,
   calculateRatingAward,
+  formatSheetIdentity,
   getDxdataSongCatalog,
   type Best50Bucket,
   type RatingAward,
+  type SheetIdentity,
   type VersionedSheet,
 } from '@gekichumai/maimai-domain'
 import type { Context } from 'hono'
@@ -270,7 +272,7 @@ export const calculateEntries = (
   }
 }
 
-type OneshotRequest = z.infer<typeof requestBodySchema>
+export type OneshotRequest = z.infer<typeof requestBodySchema>
 let service: { source: string; render: ReturnType<typeof createRenderService<OneshotRequest>> } | undefined
 
 const getRenderService = () => {
@@ -327,71 +329,133 @@ export const renderOneshotEffect = (
           : new OneshotRenderError({ operation: 'render oneshot image', cause }),
   })
 
-export const handler = (c: Context): Promise<Response> => {
-  const queryDemo = c.req.query('demo')
-  const queryPixelated = c.req.query('pixelated')
-  const queryFormat = c.req.query('format')
-  const queryWidth = c.req.query('width')
-  const format = queryPixelated ? (queryFormat === 'png' ? 'png' : 'jpeg') : 'svg'
-  const program = Effect.gen(function* () {
-    const input = queryDemo
+/** The legacy sheet identity of each public sheet ID (dsht_…) it knows; see CatalogIdentities.translateSheetIdsToLegacy */
+export type OneshotSheetIdTranslator = (
+  sheetIds: readonly string[],
+) => Promise<ReadonlyMap<string, { songId: string; sheetType: string; sheetDifficulty: string }>>
+
+const PUBLIC_SHEET_ID_PREFIX = 'dsht_'
+
+/**
+ * Rewrites the public sheet IDs of a request to the legacy sheet IDs the renderer's catalog is keyed by. Clients send
+ * public IDs since the web moved to the dxdata API catalog (#386); legacy IDs, as sent by older clients, pass through.
+ * An ID without a legacy identity is kept, and the renderer skips it like any other unknown sheet.
+ */
+export const translatePublicSheetIds = async (
+  body: OneshotRequest,
+  translate: OneshotSheetIdTranslator,
+): Promise<OneshotRequest> => {
+  const entries = [
+    ...(body.entries ?? []),
+    ...(body.calculatedEntries?.b15 ?? []),
+    ...(body.calculatedEntries?.b35 ?? []),
+  ]
+  const publicIds = [...new Set(entries.map((entry) => entry.sheetId))].filter((id) =>
+    id.startsWith(PUBLIC_SHEET_ID_PREFIX),
+  )
+  if (publicIds.length === 0) return body
+
+  const legacyIdentities = await translate(publicIds)
+  const rewrite = (entry: PlayEntry): PlayEntry => {
+    const identity = legacyIdentities.get(entry.sheetId)
+    return identity
       ? {
-          entries: demo,
-          version: VersionEnum.PRiSMPLUS,
-          region: 'jp' as const,
-          playerCollection: { name: 'お友達', icon: 0 },
-          calculatedEntries: undefined,
+          ...entry,
+          sheetId: formatSheetIdentity({
+            songId: identity.songId,
+            type: identity.sheetType,
+            difficulty: identity.sheetDifficulty,
+          } as SheetIdentity),
         }
-      : yield* Effect.tryPromise({
-          try: () => c.req.json(),
-          catch: (cause) => new OneshotRenderError({ operation: 'read oneshot request', cause }),
-        })
-    const body = yield* Effect.try({
-      try: () => requestBodySchema.parse(input),
-      catch: (cause) =>
-        cause instanceof z.ZodError ? cause : new OneshotRenderError({ operation: 'validate oneshot request', cause }),
-    })
-    const result = yield* renderOneshotEffect(body, {
-      format,
-      width: queryWidth === undefined ? undefined : Number.parseInt(queryWidth),
-    })
-    if (result.cache === 'MISS') {
-      c.header(
-        'Server-Timing',
-        Object.entries(result.timings)
-          .map(([name, duration]) => `${name};dur=${duration.toFixed(1)}`)
-          .join(', '),
-      )
-      for (const [name, duration] of Object.entries(result.timings)) {
-        Sentry.metrics.distribution(`oneshot_render.stage.${name}`, duration, {
-          unit: 'millisecond',
-          attributes: { format },
-        })
-      }
-    } else {
-      c.header('Server-Timing', `cache;desc="${result.cache.toLowerCase()}"`)
-    }
-    c.header('Content-Type', result.contentType)
-    c.header('X-Cache', result.cache)
-    return c.body(result.body)
-  }).pipe(
-    Effect.catch((error) => {
-      if (error instanceof OneshotQueueFullError) {
-        return Effect.sync(() => {
-          c.header('Retry-After', '1')
-          return c.text(error.message, 503)
-        })
-      }
-      return Effect.sync(() =>
-        Sentry.withScope((scope: Scope) => {
-          scope.setContext('function', { name: 'renderOneshot' })
-          scope.setContext('parameters', { demo: !!queryDemo, format, width: queryWidth })
-          Sentry.captureException(error)
-        }),
-      ).pipe(Effect.andThen(Effect.fail(error)))
-    }),
-  )
-  return Sentry.startSpan({ name: 'renderOneshot', op: 'function' }, () =>
-    Effect.runPromise(Effect.scoped(program), { signal: c.req.raw.signal }),
-  )
+      : entry
+  }
+  return {
+    ...body,
+    entries: body.entries?.map(rewrite),
+    calculatedEntries: body.calculatedEntries && {
+      b15: body.calculatedEntries.b15.map(rewrite),
+      b35: body.calculatedEntries.b35.map(rewrite),
+    },
+  }
 }
+
+export const createOneshotHandler =
+  (translateSheetIds?: OneshotSheetIdTranslator) =>
+  (c: Context): Promise<Response> => {
+    const queryDemo = c.req.query('demo')
+    const queryPixelated = c.req.query('pixelated')
+    const queryFormat = c.req.query('format')
+    const queryWidth = c.req.query('width')
+    const format = queryPixelated ? (queryFormat === 'png' ? 'png' : 'jpeg') : 'svg'
+    const program = Effect.gen(function* () {
+      const input = queryDemo
+        ? {
+            entries: demo,
+            version: VersionEnum.PRiSMPLUS,
+            region: 'jp' as const,
+            playerCollection: { name: 'お友達', icon: 0 },
+            calculatedEntries: undefined,
+          }
+        : yield* Effect.tryPromise({
+            try: () => c.req.json(),
+            catch: (cause) => new OneshotRenderError({ operation: 'read oneshot request', cause }),
+          })
+      const parsed = yield* Effect.try({
+        try: () => requestBodySchema.parse(input),
+        catch: (cause) =>
+          cause instanceof z.ZodError
+            ? cause
+            : new OneshotRenderError({ operation: 'validate oneshot request', cause }),
+      })
+      const body = translateSheetIds
+        ? yield* Effect.tryPromise({
+            try: () => translatePublicSheetIds(parsed, translateSheetIds),
+            catch: (cause) => new OneshotRenderError({ operation: 'translate public sheet IDs', cause }),
+          })
+        : parsed
+      const result = yield* renderOneshotEffect(body, {
+        format,
+        width: queryWidth === undefined ? undefined : Number.parseInt(queryWidth),
+      })
+      if (result.cache === 'MISS') {
+        c.header(
+          'Server-Timing',
+          Object.entries(result.timings)
+            .map(([name, duration]) => `${name};dur=${duration.toFixed(1)}`)
+            .join(', '),
+        )
+        for (const [name, duration] of Object.entries(result.timings)) {
+          Sentry.metrics.distribution(`oneshot_render.stage.${name}`, duration, {
+            unit: 'millisecond',
+            attributes: { format },
+          })
+        }
+      } else {
+        c.header('Server-Timing', `cache;desc="${result.cache.toLowerCase()}"`)
+      }
+      c.header('Content-Type', result.contentType)
+      c.header('X-Cache', result.cache)
+      return c.body(result.body)
+    }).pipe(
+      Effect.catch((error) => {
+        if (error instanceof OneshotQueueFullError) {
+          return Effect.sync(() => {
+            c.header('Retry-After', '1')
+            return c.text(error.message, 503)
+          })
+        }
+        return Effect.sync(() =>
+          Sentry.withScope((scope: Scope) => {
+            scope.setContext('function', { name: 'renderOneshot' })
+            scope.setContext('parameters', { demo: !!queryDemo, format, width: queryWidth })
+            Sentry.captureException(error)
+          }),
+        ).pipe(Effect.andThen(Effect.fail(error)))
+      }),
+    )
+    return Sentry.startSpan({ name: 'renderOneshot', op: 'function' }, () =>
+      Effect.runPromise(Effect.scoped(program), { signal: c.req.raw.signal }),
+    )
+  }
+
+export const handler = createOneshotHandler()
