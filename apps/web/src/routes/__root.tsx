@@ -23,7 +23,6 @@ import { AppContextProvider } from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
 import { CatalogProvider } from '@/catalog/CatalogContext'
 import { loadCatalogMeta } from '@/catalog/catalogSource'
-import { CATALOG_EARLY_FETCH_INLINE_SCRIPT } from '@/catalog/clientCatalog'
 import { createServerI18n } from '@/setup/init-i18n'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
@@ -79,7 +78,7 @@ export const Route = createRootRoute({
         pathname: matches[matches.length - 1]?.pathname ?? '/',
         search: matches[matches.length - 1]?.search,
       }),
-      scripts: [{ children: ZOD_JITLESS_INLINE_SCRIPT }, { children: CATALOG_EARLY_FETCH_INLINE_SCRIPT }],
+      scripts: [{ children: ZOD_JITLESS_INLINE_SCRIPT }],
     }
   },
   component: RootComponent,
