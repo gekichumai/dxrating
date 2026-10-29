@@ -26,6 +26,8 @@
     "external-links.community": "コミュニティ",
     "external-links.mcp": "Claude・ChatGPT・Cursor などの AI アシスタントで DXRating を使う（MCP サーバー）",
     "external-links.mcp-short": "AI アシスタント (MCP)",
+    "external-links.developers": "開発者向け：公開 API・OpenAPI 仕様・ドキュメント",
+    "external-links.developers-short": "開発者向け API",
     "not-found.title": "ページが見つかりません",
     "not-found.description": "ページが移動したか、リンクが古くなっている可能性があります。",
     "not-found.back-to-home": "ホームに戻る",
