@@ -1,6 +1,11 @@
 import { Layer, ManagedRuntime } from 'effect'
 import { Authentication, AuthenticationLive } from './auth'
-import { CatalogIdentities, CatalogIdentitiesLive } from './services/application'
+import {
+  CatalogIdentities,
+  CatalogIdentitiesLive,
+  McpCatalogSource,
+  McpCatalogSourceLive,
+} from './services/application'
 import { BuildInformation, BuildInformationLive } from './version'
 import { AppConfigLive, type AppConfig } from './config'
 import { DatabaseLive, type Database } from './db/index'
@@ -18,6 +23,7 @@ export const ApplicationLive = Layer.mergeAll(
   HttpClientLive,
   AuthenticationLive.pipe(Layer.provide(Layer.merge(AppConfigLive, DatabaseLive))),
   CatalogIdentitiesLive.pipe(Layer.provide(DatabaseLive)),
+  McpCatalogSourceLive.pipe(Layer.provide(DatabaseLive)),
   BuildInformationLive.pipe(Layer.provide(HttpClientLive)),
 ).pipe(Layer.provideMerge(TracingLive))
 export type ApplicationServices =
@@ -28,6 +34,7 @@ export type ApplicationServices =
   | HttpClient
   | Authentication
   | CatalogIdentities
+  | McpCatalogSource
   | BuildInformation
 export const appRuntime = ManagedRuntime.make(ApplicationLive)
 

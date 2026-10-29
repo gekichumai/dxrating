@@ -23,7 +23,7 @@ export const DXDATA_CORS_OPTIONS = {
   maxAge: 86400,
 }
 
-interface PublishedDxdataMetadata {
+export interface PublishedDxdataMetadata {
   catalogRunId: string
   bodySha256: string
   byteLength: string
