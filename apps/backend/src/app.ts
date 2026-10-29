@@ -11,7 +11,7 @@ import { HttpBody } from 'effect/http'
 import { appRuntime, runApp, superviseApp } from './runtime'
 import { HttpClient } from './services/http-client'
 import { getBuildInfo } from './version'
-import { handler as oneshotRenderer } from './services/functions/oneshot-renderer/index'
+import { createOneshotHandler } from './services/functions/oneshot-renderer/index'
 import {
   v0Handler as fetchNetRecordsV0Handler,
   v1Handler as fetchNetRecordsV1Handler,
@@ -42,7 +42,7 @@ import {
   readClientId,
 } from './services/api-usage'
 import { appContract } from './contract'
-import { McpCatalogSource } from './services/application'
+import { CatalogIdentities, McpCatalogSource } from './services/application'
 import {
   clientKey,
   createRateLimiter,
@@ -451,7 +451,12 @@ app.post('/api/v1/monitoring/tunnel', (c) =>
 // Functions
 app.post('/functions/fetch-net-records/v0', verifyParams, fetchNetRecordsV0Handler)
 app.post('/functions/fetch-net-records/v1/:region', verifyParams, fetchNetRecordsV1Handler)
-app.post('/functions/render-oneshot/v0', oneshotRenderer)
+app.post(
+  '/functions/render-oneshot/v0',
+  createOneshotHandler((sheetIds) =>
+    runApp(Effect.flatMap(CatalogIdentities, (identities) => identities.translateSheetIdsToLegacy(sheetIds))),
+  ),
+)
 
 // LXNS OAuth callback (direct Hono route — must be before oRPC catch-all since it redirects)
 app.get('/api/v1/io/import/lxns/oauth_callback', (c) =>
