@@ -325,6 +325,9 @@ importers:
       '@radix-ui/react-collapsible':
         specifier: ^1.1.12
         version: 1.1.14(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@sentry/cloudflare':
+        specifier: 10.70.0
+        version: 10.70.0(@cloudflare/workers-types@4.20260508.1)(wrangler@4.90.0(@cloudflare/workers-types@4.20260508.1))
       '@sentry/tanstackstart-react':
         specifier: ^10.70.0
         version: 10.70.0(react@19.2.6)(rollup@4.58.0)
@@ -3393,6 +3396,18 @@ packages:
     resolution: {integrity: sha512-baBcNPLLfUi9WuL+Tpri9BFaAdvugZIKelC5X0tt0Zdy+K0K+PCVSrnNmwMWU/HyaF/SEv6b6UHnXIdqanBlcg==}
     engines: {node: '>= 10'}
     hasBin: true
+
+  '@sentry/cloudflare@10.70.0':
+    resolution: {integrity: sha512-jlr9txw3lQrbc6KQn9FzlpgC1KcB36u7aIGSlUhXAZ2MB93DgwjuTnHF20qQHxmHbZylg7CtHoMq3rGiTXAgpg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@cloudflare/workers-types': ^4.x || ^5.x
+      wrangler: ^4.x
+    peerDependenciesMeta:
+      '@cloudflare/workers-types':
+        optional: true
+      wrangler:
+        optional: true
 
   '@sentry/conventions@0.16.0':
     resolution: {integrity: sha512-fO9PLmHdVURcSPUpWCItWAtgKiMwGdJHbovoSEyLplX5sxs2ugvI4CBPTrkkgqhObnZOD0CnWBKDzSVQYBKEyQ==}
@@ -9850,6 +9865,18 @@ snapshots:
       - encoding
       - supports-color
 
+  '@sentry/cloudflare@10.70.0(@cloudflare/workers-types@4.20260508.1)(wrangler@4.90.0(@cloudflare/workers-types@4.20260508.1))':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@sentry/core': 10.70.0
+      '@sentry/server-utils': 10.70.0
+      magic-string: 0.30.21
+    optionalDependencies:
+      '@cloudflare/workers-types': 4.20260508.1
+      wrangler: 4.90.0(@cloudflare/workers-types@4.20260508.1)
+    transitivePeerDependencies:
+      - supports-color
+
   '@sentry/conventions@0.16.0': {}
 
   '@sentry/core@10.70.0':
@@ -12652,7 +12679,7 @@ snapshots:
       aws-ssl-profiles: 1.1.2
       denque: 2.1.0
       generate-function: 2.3.1
-      iconv-lite: 0.7.2
+      iconv-lite: 0.7.3
       long: 5.3.2
       lru.min: 1.1.4
       named-placeholders: 1.1.6

@@ -97,6 +97,7 @@ Web requires `apps/web/.env` (no `.env.example` — create manually):
 - For sheet release dates and other date-only values rendered in SSR, use the date helpers in `apps/web/src/utils/dateFormatting.ts`. Avoid ad hoc `new Date(...)` plus `toLocaleString()` in components, especially without an explicit `timeZone`.
 - For relative times, use the rendered-at timestamp from `apps/web/src/utils/renderEnvironment.tsx` for the first render and update after mount. This preserves SSR/client parity while keeping the live UI behavior.
 - After SSR-visible web changes, validate at least one non-English locale on a production build or preview and check the browser console for React hydration errors such as React #418.
+- Anonymous page HTML is cached per data center for 30 minutes (`apps/web/src/setup/html-cache.ts`, wired in `apps/web/src/server.ts`), keyed by build commit, resolved locale, path and query. A page on its allowlist must render from those inputs alone: no cookies other than the locale, no user data, and no loader that fetches remote data. Otherwise, take the page off the list. Cache hits get a fresh CSP nonce; every other per-request value, such as the render time, is served as cached. The Cache API is a no-op on `workers.dev`, so PR previews never hit the cache; verify on dxrating.net.
 
 ### API Layer
 - Contracts are defined with Zod in `apps/backend/src/contract.ts` and **mirrored** in `apps/web/src/lib/contract.ts` — both files must stay in sync.
