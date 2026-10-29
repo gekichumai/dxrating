@@ -25,6 +25,7 @@ import { createServerI18n } from '@/setup/init-i18n'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
+import { ZOD_JITLESS_INLINE_SCRIPT } from '@/setup/zod-jitless'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
 import 'virtual:uno.css'
 
@@ -72,6 +73,7 @@ export const Route = createRootRoute({
         pathname: matches[matches.length - 1]?.pathname ?? '/',
         search: matches[matches.length - 1]?.search,
       }),
+      scripts: [{ children: ZOD_JITLESS_INLINE_SCRIPT }],
     }
   },
   component: RootComponent,

@@ -52,7 +52,8 @@ import {
   MCP_RATE_LIMIT,
   rateLimited,
 } from './services/mcp/http'
-import { guideResponse } from './services/mcp/guide'
+import { guideResponse, isMcpHost } from './services/mcp/guide'
+import { API_DOCS_CSP, API_DOCS_HTML, API_JSON_CSP, isJsonContentType } from './services/api-docs'
 import { MCP_SERVER_CARD_PATH, serverCardResponse } from './services/mcp/listing'
 class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
   readonly operation: string
@@ -297,6 +298,21 @@ app.use('*', (c, next) =>
 // The setup guide of the MCP server, on its host only (mcp.dxrating.net): its
 // root, /index.md, /llms.txt and /robots.txt. Other hosts fall through.
 app.use('*', async (c, next) => guideResponse(c.req.raw) ?? next())
+
+// A conservative Content-Security-Policy for the JSON responses of the API, which load and run nothing; /docs sets
+// its own. The MCP host is left alone: its guide sets its own hashed policy, and answers before this middleware.
+app.use('*', async (c, next) => {
+  await next()
+  if (isMcpHost(c.req.raw.headers) || c.res.headers.has('Content-Security-Policy')) return
+  if (!isJsonContentType(c.res.headers.get('Content-Type'))) return
+  try {
+    c.res.headers.set('Content-Security-Policy', API_JSON_CSP)
+  } catch {
+    // The headers of a response passed through from fetch are immutable.
+    c.res = new Response(c.res.body, c.res)
+    c.res.headers.set('Content-Security-Policy', API_JSON_CSP)
+  }
+})
 
 // Root redirect to docs
 app.get('/', (c) => c.redirect('/docs'))
@@ -710,32 +726,9 @@ app.get('/spec.json', (c) =>
 
 // Serve Scalar API documentation
 app.get('/docs', (c) => {
-  const html = `
-    <!doctype html>
-    <html>
-      <head>
-        <title>DXRating API</title>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="robots" content="noindex, nofollow" />
-      </head>
-      <body>
-        <div id="app"></div>
-        <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
-        <script>
-          Scalar.createApiReference('#app', {
-            url: '/spec.json',
-            authentication: {
-              securitySchemes: {
-                bearerAuth: {},
-              },
-            },
-          })
-        </script>
-      </body>
-    </html>
-  `
-  return c.html(html)
+  c.header('Content-Security-Policy', API_DOCS_CSP)
+  c.header('X-Frame-Options', 'DENY')
+  return c.html(API_DOCS_HTML)
 })
 
 export { app }
