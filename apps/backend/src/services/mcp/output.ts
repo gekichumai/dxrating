@@ -6,6 +6,8 @@ import type { McpCatalog, PublishedSheet } from './catalog'
 // a sheet, and the shape of a result.
 
 export const SITE_URL = 'https://dxrating.net'
+/** The icon of the site, for clients and directories to show */
+export const ICONS = [{ src: 'https://shama.dxrating.net/favicon/pack/v1/apple-touch-icon.png', mimeType: 'image/png' }]
 export const DATA_LICENSE = 'CC BY-NC 4.0'
 export const DATA_LICENSE_URL = 'https://creativecommons.org/licenses/by-nc/4.0/'
 

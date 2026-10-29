@@ -52,6 +52,8 @@ import {
   MCP_RATE_LIMIT,
   rateLimited,
 } from './services/mcp/http'
+import { guideResponse } from './services/mcp/guide'
+import { MCP_SERVER_CARD_PATH, serverCardResponse } from './services/mcp/listing'
 class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
   readonly operation: string
   readonly cause: unknown
@@ -209,7 +211,7 @@ const mcpCors = cors(MCP_CORS_OPTIONS)
 app.use('*', (c, next) =>
   PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)
     ? publicStaticCatalogCors(c, next)
-    : c.req.path === MCP_PATH
+    : c.req.path === MCP_PATH || c.req.path === MCP_SERVER_CARD_PATH
       ? mcpCors(c, next)
       : apiCors(c, next),
 )
@@ -292,6 +294,10 @@ app.use('*', (c, next) =>
   ),
 )
 
+// The setup guide of the MCP server, on its host only (mcp.dxrating.net): its
+// root, /index.md, /llms.txt and /robots.txt. Other hosts fall through.
+app.use('*', async (c, next) => guideResponse(c.req.raw) ?? next())
+
 // Root redirect to docs
 app.get('/', (c) => c.redirect('/docs'))
 
@@ -332,6 +338,9 @@ app.on(['GET', 'POST', 'DELETE'], MCP_PATH, (c) => {
     { signal: c.req.raw.signal },
   )
 })
+
+// The MCP Server Card, which clients and directories fetch before connecting
+app.on(['GET', 'HEAD'], MCP_SERVER_CARD_PATH, (c) => serverCardResponse(c.req.method))
 
 // Build provenance endpoint
 app.get('/version', (c) =>

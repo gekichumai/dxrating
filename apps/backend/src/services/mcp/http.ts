@@ -1,5 +1,6 @@
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
 import type { McpCatalog } from './catalog'
+import { MCP_GUIDE_URL } from './listing'
 import { createMcpServer } from './server'
 
 export const MCP_PATH = '/mcp'
@@ -28,6 +29,10 @@ const jsonRpcError = (status: number, code: number, message: string, headers: Re
  * a session) are 405, as the specification has it for a server without them.
  */
 export async function handleMcpRequest(request: Request, catalog: McpCatalog | undefined): Promise<Response> {
+  // a person who opens the endpoint in a browser is sent to the guide
+  if (request.method === 'GET' && request.headers.get('accept')?.includes('text/html')) {
+    return new Response(null, { status: 303, headers: { Location: MCP_GUIDE_URL, 'Cache-Control': 'no-store' } })
+  }
   if (request.method !== 'POST') {
     return jsonRpcError(405, -32000, 'Method not allowed: this server answers POST only (stateless, no sessions).', {
       Allow: 'POST, OPTIONS',

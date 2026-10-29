@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js'
 import type { McpCatalog } from './catalog'
-import { CATALOG_LOADING_MESSAGE, SITE_URL, toolError } from './output'
+import { CATALOG_LOADING_MESSAGE, ICONS, SITE_URL, toolError } from './output'
 import { calculateBest50Tool, runCalculateBest50 } from './tool-calculate-best50'
 import { calculateRatingTool, runCalculateRating } from './tool-calculate-rating'
 import { getSheetTool, runGetSheet } from './tool-get-sheet'
@@ -9,12 +9,15 @@ import { runSearchSongs, searchSongsTool } from './tool-search-songs'
 
 // The read-only MCP server (https://modelcontextprotocol.io) of the DXRating song catalog, for AI assistants. Each
 // tool has a file of its own (tool-<name>.ts) and a line in createMcpServer; output.ts has what their results share,
-// catalog.ts the catalog and its search, loader.ts the loading of the catalog, http.ts the endpoint.
+// catalog.ts the catalog and its search, loader.ts the loading of the catalog, http.ts the endpoint, listing.ts
+// server.json and the server card, guide.ts the setup guide at the root of the host.
 
 /** The name of the server for programs, as the MCP Registry will list it */
 export const SERVER_NAME = 'net.dxrating/dxrating'
 export const SERVER_TITLE = 'DXRating'
-export const SERVER_DESCRIPTION = 'maimai DX songs and charts: levels, internal levels, note counts, aliases and tags'
+/** What the server is, in 100 characters at most (the limit of the registry) */
+export const SERVER_DESCRIPTION =
+  'maimai DX songs, charts and internal levels, and rating and Best 50 calculators, from DXRating'
 
 /**
  * Tell the model what the data is and which tool answers which question (600 characters at most, as clients may cut
@@ -52,7 +55,9 @@ export function createMcpServer(catalog: McpCatalog | undefined, build = process
       name: SERVER_NAME,
       title: SERVER_TITLE,
       version: serverVersion(build),
+      description: SERVER_DESCRIPTION,
       websiteUrl: SITE_URL,
+      icons: ICONS,
     },
     { instructions: INSTRUCTIONS, capabilities: { tools: {} } },
   )
