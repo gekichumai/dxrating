@@ -50,7 +50,12 @@ describe('MCP server', () => {
   it('lists read-only tools, each named in the instructions', async () => {
     const client = await connect()
     const { tools } = await client.listTools()
-    expect(tools.map((tool) => tool.name)).toEqual(['search_songs', 'get_sheet'])
+    expect(tools.map((tool) => tool.name)).toEqual([
+      'search_songs',
+      'get_sheet',
+      'calculate_rating',
+      'calculate_best50',
+    ])
     for (const tool of tools) {
       expect(INSTRUCTIONS).toContain(tool.name)
       expect(tool.annotations).toMatchObject({

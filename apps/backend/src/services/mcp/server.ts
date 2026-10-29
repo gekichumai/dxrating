@@ -2,6 +2,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js'
 import type { McpCatalog } from './catalog'
 import { CATALOG_LOADING_MESSAGE, SITE_URL, toolError } from './output'
+import { calculateBest50Tool, runCalculateBest50 } from './tool-calculate-best50'
+import { calculateRatingTool, runCalculateRating } from './tool-calculate-rating'
 import { getSheetTool, runGetSheet } from './tool-get-sheet'
 import { runSearchSongs, searchSongsTool } from './tool-search-songs'
 
@@ -19,10 +21,11 @@ export const SERVER_DESCRIPTION = 'maimai DX songs and charts: levels, internal 
  * them). They name every tool, as a client that loads tools on demand may have loaded only some of them.
  */
 export const INSTRUCTIONS =
-  'DXRating (dxrating.net): the maimai DX song catalog, with the level and internal level (譜面定数) of every chart. ' +
-  'Find a song by any name, alias or nickname in any language with search_songs, then get its charts with ' +
-  "get_sheet; don't trust remembered internal levels, which change between versions. Charts differ by server " +
-  '(jp, intl, usa, cn): ask which one the user plays on when it matters. Credit DXRating, CC BY-NC 4.0.'
+  'DXRating (dxrating.net): maimai DX songs, chart internal levels (譜面定数) and ratings. Find a song by any name ' +
+  "or alias with search_songs; chart details: get_sheet. Don't trust remembered internal levels. Ratings: " +
+  'calculate_rating (one chart, or the achievement a rating needs), calculate_best50 (b15 + b35 and what to ' +
+  'improve). Achievements are integers in 1/10000 %: 100.7543% is 1007543. Servers differ (jp, intl, usa, cn): ' +
+  'ask which one the user plays. Credit DXRating, CC BY-NC 4.0.'
 
 /** Every tool only reads the catalog, and the same arguments give the same result until the catalog changes. */
 const annotations = (title: string): ToolAnnotations => ({
@@ -68,6 +71,16 @@ export function createMcpServer(catalog: McpCatalog | undefined, build = process
     getSheetTool.name,
     { ...getSheetTool.config, annotations: annotations(getSheetTool.config.title) },
     withCatalog(runGetSheet),
+  )
+  server.registerTool(
+    calculateRatingTool.name,
+    { ...calculateRatingTool.config, annotations: annotations(calculateRatingTool.config.title) },
+    withCatalog(runCalculateRating),
+  )
+  server.registerTool(
+    calculateBest50Tool.name,
+    { ...calculateBest50Tool.config, annotations: annotations(calculateBest50Tool.config.title) },
+    withCatalog(runCalculateBest50),
   )
   return server
 }

@@ -211,7 +211,7 @@ function hasAuthoritativeBucketHint(
   return region === 'cn' && entry.source?.provider === 'diving-fish' && entry.source.best50Bucket !== undefined
 }
 
-function isB15Sheet(sheetVersion: Version, appVersion: Version, region: Region): boolean {
+export function isB15Sheet(sheetVersion: Version, appVersion: Version, region: Region): boolean {
   if (region === '_generic') return sheetVersion === appVersion
   const appVersionId = VERSION_ID_MAP.get(appVersion)
   const sheetVersionId = VERSION_ID_MAP.get(sheetVersion)
@@ -222,7 +222,7 @@ function isB15Sheet(sheetVersion: Version, appVersion: Version, region: Region):
     : appVersionId === sheetVersionId
 }
 
-function isB35Sheet(sheetVersion: Version, appVersion: Version, region: Region): boolean {
+export function isB35Sheet(sheetVersion: Version, appVersion: Version, region: Region): boolean {
   if (region === '_generic') return sheetVersion !== appVersion
   const appVersionId = VERSION_ID_MAP.get(appVersion)
   const sheetVersionId = VERSION_ID_MAP.get(sheetVersion)
