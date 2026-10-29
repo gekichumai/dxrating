@@ -82,15 +82,17 @@ const CommunityMenu = () => {
             <Icon className="size-3.5" />
           </span>
         ))}
+        {/* The MCP badge takes the chevron's place on 375–479px phones so the pill stays as wide as before;
+            below 375px there is no room for either, and the menu still lists MCP. */}
         <span
           className={clsx(
-            'flex size-6 2xs:size-7 items-center justify-center rounded-full -ml-3 2xs:-ml-2.5',
+            'hidden 2xs:flex size-7 items-center justify-center rounded-full -ml-2.5',
             MCP_BADGE_CLASS_NAME,
           )}
         >
           <McpLogo className="size-3.5" />
         </span>
-        <MdiChevronDown className="hidden 2xs:block size-4 text-black/60" />
+        <MdiChevronDown className="hidden xs:block size-4 text-black/60" />
       </ButtonBase>
 
       <Menu transitionDuration={0} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
