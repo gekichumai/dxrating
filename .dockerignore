@@ -21,3 +21,5 @@
 **/dist
 **/.turbo
 packages/oneshot-renderer/artifacts
+# The retired catalog file (9 MB); the backend reads the published catalog and the legacy song ID map instead
+packages/dxdata/dxdata.json
