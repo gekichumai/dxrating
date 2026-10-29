@@ -4,39 +4,14 @@ import * as Sentry from '@sentry/tanstackstart-react'
 
 // The browser never gets the catalog in a JS chunk. It loads the dxdata API document once, keeps it in Cache Storage,
 // and on later visits renders from that copy at once while it revalidates in the background with the stored ETag.
-// The catalog is a plain GET route of the backend, not an oRPC procedure: a first visit takes over the plain fetch() the
-// head script starts (`CATALOG_EARLY_FETCH_INLINE_SCRIPT`), and revalidation needs its own conditional request.
+// A first visit starts the download when the app's JS runs (client.tsx), not from <head>: on a slow link an earlier
+// download takes bandwidth from the page's own images and delays its largest paint, while the server-rendered page
+// does not need the catalog. The catalog is a plain GET route of the backend, not an oRPC procedure, and revalidation
+// needs a conditional request of its own, hence fetch().
 
 export const CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}/api/v1/dxdata`
 export const CATALOG_CACHE_NAME = 'dxrating-catalog-v1'
-/** Set once a catalog is in Cache Storage: the head script then does not fetch the catalog, which would go unused */
-export const CATALOG_CACHED_MARKER_KEY = 'dxrating:catalog-cached'
 const ETAG_HEADER = 'x-dxrating-catalog-etag'
-
-declare global {
-  interface Window {
-    /** The catalog request the head script started, until the loader takes it over (null after that) */
-    __dxratingCatalogRequest?: Promise<Response> | null
-  }
-}
-
-/**
- * Starts the catalog download for visitors without a cached copy; runs in <head>, before any module script, so the
- * download runs alongside the app's JS. A plain fetch rather than an injected <link rel=preload>: hydration re-creates
- * a script-inserted link, which starts a second download, and browsers differ on preloads `as=fetch`. The router runs
- * head scripts once more when it hydrates, so the script starts one request only. Low priority: on a slow link the
- * page's own images and scripts come first, and the server-rendered page does not need the catalog.
- */
-export const CATALOG_EARLY_FETCH_INLINE_SCRIPT = `try{if(!localStorage.getItem(${JSON.stringify(CATALOG_CACHED_MARKER_KEY)})&&window.__dxratingCatalogRequest===undefined){var r=fetch(${JSON.stringify(CATALOG_URL)},{priority:"low"});r.catch(function(){});window.__dxratingCatalogRequest=r}}catch(e){}`
-
-/** The request the head script started, once: the first load takes it over instead of starting its own */
-const takeEarlyCatalogRequest = (): Promise<Response> | undefined => {
-  if (typeof window === 'undefined') return undefined
-  const request = window.__dxratingCatalogRequest ?? undefined
-  // null, not undefined: the script runs again when the router hydrates and must not start another request
-  if (request) window.__dxratingCatalogRequest = null
-  return request
-}
 
 type CatalogResponse = { document: SongCatalogDocument; text: string; etag: string | null }
 
@@ -150,9 +125,9 @@ const withDeadline = <T>(promise: Promise<T>, ms: number, message: string) =>
   })
 
 async function fetchApiCatalog(): Promise<CatalogResponse> {
-  // The head script's request when there is one. The deadlines settle the load instead of aborting the request
+  // The deadlines settle the load; the request itself is left to finish or fail
   const response = await withDeadline(
-    takeEarlyCatalogRequest() ?? fetch(CATALOG_URL),
+    fetch(CATALOG_URL),
     API_RESPONSE_DEADLINE_MS,
     'The catalog API did not respond in time',
   )
@@ -225,7 +200,6 @@ async function storeCatalog(cache: Cache, { text, etag }: CatalogResponse) {
       CATALOG_URL,
       new Response(text, { headers: { 'content-type': 'application/json', [ETAG_HEADER]: etag ?? '' } }),
     )
-    localStorage.setItem(CATALOG_CACHED_MARKER_KEY, '1')
   } catch {
     // A full quota only costs the next visit a download
   }

@@ -3,8 +3,6 @@ import snapshotAssetUrl from '@gekichumai/dxdata/snapshot.json?url'
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  CATALOG_CACHED_MARKER_KEY,
-  CATALOG_EARLY_FETCH_INLINE_SCRIPT,
   CATALOG_URL,
   getLoadedCatalogDocument,
   loadClientCatalogDocument,
@@ -79,15 +77,14 @@ describe('client catalog loading', () => {
     setLoadedCatalogDocumentForTests(catalogSnapshot)
   })
 
-  it('loads the API document on a first visit, keeps it with its ETag and marks the cache as filled', async () => {
+  it('loads the API document on a first visit and keeps it with its ETag', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(NEW, { headers: { etag: 'W/"new"' } }))
 
     await expect(loadClientCatalogDocument()).resolves.toEqual(NEW)
 
-    // without a request from the head script, the loader starts its own
     expect(fetchMock).toHaveBeenCalledWith(CATALOG_URL)
     expect(getLoadedCatalogDocument()).toEqual(NEW)
-    await vi.waitFor(() => expect(localStorage.getItem(CATALOG_CACHED_MARKER_KEY)).toBe('1'))
+    await vi.waitFor(() => expect(cacheStorage.entries.has(CATALOG_URL)).toBe(true))
     const cached = cacheStorage.entries.get(CATALOG_URL)!
     expect(cached.headers.get('x-dxrating-catalog-etag')).toBe('W/"new"')
     await expect(cached.clone().json()).resolves.toEqual(NEW)
@@ -241,7 +238,6 @@ describe('client catalog loading', () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(NEW, { headers: { etag: 'W/"new"' } }))
 
     await expect(loadClientCatalogDocument()).resolves.toEqual(NEW)
-    expect(localStorage.getItem(CATALOG_CACHED_MARKER_KEY)).toBeNull()
   })
 
   it('retries after a failed load', async () => {
@@ -251,50 +247,5 @@ describe('client catalog loading', () => {
     fetchMock.mockReset()
     fetchMock.mockResolvedValueOnce(jsonResponse(NEW, { headers: { etag: 'W/"new"' } }))
     await expect(loadClientCatalogDocument()).resolves.toEqual(NEW)
-  })
-})
-
-describe('catalog early fetch script', () => {
-  const fetchMock = vi.fn<typeof fetch>()
-
-  beforeEach(() => {
-    localStorage.clear()
-    window.__dxratingCatalogRequest = undefined
-    vi.stubGlobal('fetch', fetchMock)
-    fetchMock.mockReset()
-    fetchMock.mockResolvedValue(jsonResponse(NEW, { headers: { etag: 'W/"new"' } }))
-  })
-
-  afterEach(() => {
-    vi.unstubAllGlobals()
-    window.__dxratingCatalogRequest = undefined
-    setLoadedCatalogDocumentForTests(catalogSnapshot)
-  })
-
-  it('starts the download for visitors without a cached copy, and the first load takes it over', async () => {
-    new Function(CATALOG_EARLY_FETCH_INLINE_SCRIPT)()
-    expect(fetchMock).toHaveBeenCalledExactlyOnceWith(CATALOG_URL, { priority: 'low' })
-
-    setLoadedCatalogDocumentForTests(null)
-    vi.stubGlobal('caches', undefined)
-    await expect(loadClientCatalogDocument()).resolves.toEqual(NEW)
-
-    // no second request, also when the router runs the head script again after the load took the request over
-    new Function(CATALOG_EARLY_FETCH_INLINE_SCRIPT)()
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-  })
-
-  it('starts one download, though the router runs head scripts again when it hydrates', () => {
-    new Function(CATALOG_EARLY_FETCH_INLINE_SCRIPT)()
-    new Function(CATALOG_EARLY_FETCH_INLINE_SCRIPT)()
-
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-  })
-
-  it('downloads nothing when the catalog is cached', () => {
-    localStorage.setItem(CATALOG_CACHED_MARKER_KEY, '1')
-    new Function(CATALOG_EARLY_FETCH_INLINE_SCRIPT)()
-
-    expect(fetchMock).not.toHaveBeenCalled()
   })
 })
