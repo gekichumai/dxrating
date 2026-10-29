@@ -21,6 +21,14 @@ const resources = [
     label: 'resource.agent-guide',
     href: 'https://dxrating.net/llms.txt',
   },
+  {
+    label: 'resource.mcp-guide',
+    href: 'https://mcp.dxrating.net/',
+  },
+  {
+    label: 'resource.mcp-endpoint',
+    href: 'https://mcp.dxrating.net/mcp',
+  },
 ] as const
 
 const accessNotes = [

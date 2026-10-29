@@ -8,6 +8,7 @@ import MdiApi from '~icons/mdi/api'
 import MdiInformation from '~icons/mdi/information'
 import MdiTwitter from '~icons/mdi/twitter'
 import MdiWeb from '~icons/mdi/web'
+import McpLogo from '~icons/simple-icons/modelcontextprotocol'
 import { BUNDLE } from '../../../utils/bundle'
 import { useTime } from '../../../utils/useTime'
 import { ResponsiveDialog } from '../ResponsiveDialog'
@@ -78,6 +79,10 @@ export const About = () => {
                 label={t('about:developers-api')}
               >
                 dxrating.net/developers
+              </AboutLink>
+
+              <AboutLink href="https://mcp.dxrating.net/" startAdornment={<McpLogo />} label={t('about:mcp-server')}>
+                mcp.dxrating.net
               </AboutLink>
 
               <AboutLink
