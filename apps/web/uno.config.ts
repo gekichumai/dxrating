@@ -49,6 +49,17 @@ export default defineConfig({
       '3xl': '1920px', // Very large screens
     },
   },
+  variants: [
+    // `hover:` only applies on devices that can hover: on touch, :hover stays on whatever was tapped last
+    {
+      name: 'hover-capable',
+      order: -1,
+      match: (matcher) =>
+        matcher.startsWith('hover:')
+          ? { matcher: matcher.slice('hover:'.length), selector: (s) => `${s}:hover`, parent: '@media (hover: hover)' }
+          : undefined,
+    },
+  ],
   shortcuts: {
     'flex-container':
       'flex flex-col items-center justify-center py-4 gap-4 max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
