@@ -6,6 +6,7 @@ import type {
   ComboFlag,
   ImportProvider,
   ImportWarning,
+  LegacySongIdMap,
   ProviderMusicIdMap,
   RatingEntry,
   SyncFlag,
@@ -216,6 +217,7 @@ export function normalizeAquaDxRows(
   catalog: SongCatalog,
   rows: AquaDxRow[],
   map: ProviderMusicIdMap,
+  legacySongIds?: LegacySongIdMap,
 ): RatingImportResult {
   return finalizeImport(
     rows.map((row) => {
@@ -227,7 +229,13 @@ export function normalizeAquaDxRows(
       const achievement = validateAchievement('aqua-dx', row, row.achievement, 10000)
       if ('warning' in achievement) return achievement
 
-      const sheet = catalog.resolveReference({ kind: 'provider-music-id', musicId: row.musicId, difficulty, map })
+      const sheet = catalog.resolveReference({
+        kind: 'provider-music-id',
+        musicId: row.musicId,
+        difficulty,
+        map,
+        legacySongIds,
+      })
       if (!sheet) return missing('aqua-dx', row, 'sheet-not-found', `No sheet found for AquaDX music id ${row.musicId}`)
 
       return {
@@ -252,6 +260,7 @@ export function normalizeMuNetRows(
   catalog: SongCatalog,
   rows: MuNetRow[],
   map: ProviderMusicIdMap,
+  legacySongIds?: LegacySongIdMap,
 ): RatingImportResult {
   return finalizeImport(
     rows.map((row) => {
@@ -263,7 +272,13 @@ export function normalizeMuNetRows(
       const achievement = validateAchievement('mu-net', row, row.achievement, 10000)
       if ('warning' in achievement) return achievement
 
-      const sheet = catalog.resolveReference({ kind: 'provider-music-id', musicId: row.musicId, difficulty, map })
+      const sheet = catalog.resolveReference({
+        kind: 'provider-music-id',
+        musicId: row.musicId,
+        difficulty,
+        map,
+        legacySongIds,
+      })
       if (!sheet) return missing('mu-net', row, 'sheet-not-found', `No sheet found for MuNET music id ${row.musicId}`)
 
       return {

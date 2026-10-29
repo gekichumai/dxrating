@@ -1,6 +1,7 @@
+import { useSongCatalog } from '@/catalog/CatalogContext'
 import { ImportRegionSupportTag } from '@/components/rating/io/import/ImportRegionSupportTag'
 import type { VersionEnum } from '@gekichumai/dxdata'
-import { getDxdataSongCatalog, normalizeDivingFishRows } from '@gekichumai/maimai-domain'
+import { normalizeDivingFishRows, type SongCatalog } from '@gekichumai/maimai-domain'
 import {
   Alert,
   AlertTitle,
@@ -23,7 +24,6 @@ import type { ListActions } from 'react-use/lib/useList'
 import CarbonFish from '~icons/carbon/fish'
 import AlertIcon from '~icons/material-symbols/warning'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
-import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import { WebHaptics } from 'web-haptics'
 import type { ComboFlag, PlayEntry, SyncFlag } from '../../RatingCalculatorAddEntryForm'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
@@ -81,7 +81,7 @@ export interface Chart {
 }
 
 const fetchDivingFish = async (
-  appVersion: VersionEnum,
+  catalog: SongCatalog,
   divingFishProfile: DivingFishProfile | null,
   modifyEntries: ListActions<PlayEntry>,
   messages: DivingFishImportMessages,
@@ -112,7 +112,7 @@ const fetchDivingFish = async (
     }
 
     const data = (await response.json()) as DivingFishResponseBody
-    const importResult = normalizeDivingFishRows(getDxdataSongCatalog(appVersion), [
+    const importResult = normalizeDivingFishRows(catalog, [
       ...data.charts.dx.map((row) => ({ ...row, bucket: 'b15' as const })),
       ...data.charts.sd.map((row) => ({ ...row, bucket: 'b35' as const })),
     ])
@@ -142,7 +142,7 @@ export const ImportDivingFishDialogContent: FC<{
   modifyEntries: ListActions<PlayEntry>
   onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
-  const appVersion = useAppContextDXDataVersion()
+  const catalog = useSongCatalog()
   const [busy, setBusy] = useState(false)
   const { t } = useTranslation(['rating-calculator'])
   const [divingFishConfig, setDivingFishConfig] = useLocalStorage<DivingFishProfile | null>('diving-fish-profile', null)
@@ -222,7 +222,7 @@ export const ImportDivingFishDialogContent: FC<{
                 toast.error(t('rating-calculator:io.import.diving-fish.invalid-profile'))
                 return
               }
-              await fetchDivingFish(appVersion, divingFishConfig!, modifyEntries, {
+              await fetchDivingFish(catalog, divingFishConfig!, modifyEntries, {
                 loading: t('rating-calculator:io.import.diving-fish.loading'),
                 success: (count) => t('rating-calculator:io.import.diving-fish.success', { count }),
                 error: (error) => t('rating-calculator:io.import.diving-fish.error', { error }),

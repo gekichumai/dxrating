@@ -5,7 +5,7 @@ import { apiClient } from '@/lib/orpc'
 
 export const loadTrendingRouteData = async () => {
   try {
-    return { trendingData: await apiClient.analytics.trending() }
+    return { trendingData: await apiClient.analytics.trending({ idScheme: 'public' }) }
   } catch {
     return { trendingData: undefined }
   }

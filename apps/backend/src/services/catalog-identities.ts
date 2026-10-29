@@ -499,24 +499,6 @@ export const createCatalogIdentityEffects = <E, R>(query: CatalogIdentityEffectQ
         }
       }),
 
-    /** The legacy sheet identity (song ID, type, difficulty) of each published public sheet ID that has one */
-    translateSheetIdsToLegacy: (sheetIds: readonly string[]) =>
-      Effect.gen(function* () {
-        const snapshot = yield* getCurrentSnapshot()
-        const translated = new Map<string, { songId: string; sheetType: string; sheetDifficulty: string }>()
-        for (const sheetId of sheetIds) {
-          if (!PUBLIC_SHEET_ID_PATTERN.test(sheetId)) continue
-          const sheet = snapshot.sheetsByPublicId.get(sheetId)
-          if (!sheet?.legacySongId) continue
-          translated.set(sheetId, {
-            songId: sheet.legacySongId,
-            sheetType: sheet.sheetType,
-            sheetDifficulty: sheet.sheetDifficulty,
-          })
-        }
-        return translated
-      }),
-
     translateSongIdsToPublic: (songIds: readonly string[]) =>
       Effect.gen(function* () {
         const snapshot = yield* getCurrentSnapshot()

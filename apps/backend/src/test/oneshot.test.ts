@@ -2,7 +2,8 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
-import { calculateRatingAward, getDxdataSongCatalog, type VersionedSheet } from '@gekichumai/maimai-domain'
+import { calculateRatingAward, getSongCatalog, type VersionedSheet } from '@gekichumai/maimai-domain'
+import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { describe, it, expect } from 'vitest'
 import { app } from '../app'
 import {
@@ -13,7 +14,7 @@ import {
 } from '../services/functions/oneshot-renderer/index'
 
 const findRenderableSheet = (version: VersionEnum, predicate: (sheet: VersionedSheet) => boolean = () => true) => {
-  const sheet = getDxdataSongCatalog(version).sheets.find((candidate) => {
+  const sheet = getSongCatalog(catalogSnapshot, version).sheets.find((candidate) => {
     return isRenderableRatingSheet(candidate) && predicate(candidate)
   })
   if (!sheet) throw new Error(`Expected ${version} catalog to include a matching renderable sheet`)
@@ -63,10 +64,16 @@ describe('Oneshot Renderer', () => {
 describe('oneshot renderer calculations', () => {
   it('applies AP combo bonus when enriching raw entries', () => {
     const version = VersionEnum.CiRCLEPLUS
-    const sheet = findRenderableSheet(version, (candidate) => candidate.regions.jp)
+    const sheet = findRenderableSheet(version, (candidate) => candidate.serverIds.includes('jp'))
 
-    const [withoutCombo] = enrichEntries([{ sheetId: sheet.id, achievementRate: 100.5 }], version)
-    const [withAp] = enrichEntries([{ sheetId: sheet.id, achievementRate: 100.5, achievementAccuracy: 'ap' }], version)
+    const [withoutCombo] = enrichEntries(
+      [{ sheetId: sheet.id, achievementRate: 100.5 }],
+      getSongCatalog(catalogSnapshot, version),
+    )
+    const [withAp] = enrichEntries(
+      [{ sheetId: sheet.id, achievementRate: 100.5, achievementAccuracy: 'ap' }],
+      getSongCatalog(catalogSnapshot, version),
+    )
 
     if (!withoutCombo || !withAp) throw new Error('Expected entry enrichment to return render data')
     expect(withAp.rating).toEqual(calculateRatingAward(sheet.internalLevelValue, 100.5, 'ap'))
@@ -80,11 +87,15 @@ describe('oneshot renderer calculations', () => {
         candidate.version === VersionEnum.CiRCLE &&
         candidate.type === TypeEnum.DX &&
         candidate.difficulty === DifficultyEnum.Master &&
-        candidate.regions.intl
+        candidate.serverIds.includes('intl')
       )
     })
 
-    const calculated = calculateEntries([{ sheetId: previousVersionSheet.id, achievementRate: 100.5 }], version, 'intl')
+    const calculated = calculateEntries(
+      [{ sheetId: previousVersionSheet.id, achievementRate: 100.5 }],
+      getSongCatalog(catalogSnapshot, version),
+      'intl',
+    )
 
     expect(calculated.b15.map((entry) => entry.sheet.id)).toContain(previousVersionSheet.id)
     expect(calculated.b35.map((entry) => entry.sheet.id)).not.toContain(previousVersionSheet.id)
@@ -92,14 +103,17 @@ describe('oneshot renderer calculations', () => {
 
   it('selects the best duplicate raw entry for the same sheet', () => {
     const version = VersionEnum.CiRCLEPLUS
-    const sheet = findRenderableSheet(version, (candidate) => candidate.version === version && candidate.regions.intl)
+    const sheet = findRenderableSheet(
+      version,
+      (candidate) => candidate.version === version && candidate.serverIds.includes('intl'),
+    )
 
     const calculated = calculateEntries(
       [
         { sheetId: sheet.id, achievementRate: 100.5, achievementAccuracy: 'app' },
         { sheetId: sheet.id, achievementRate: 80 },
       ],
-      version,
+      getSongCatalog(catalogSnapshot, version),
       'intl',
     )
 
@@ -111,9 +125,11 @@ describe('oneshot renderer calculations', () => {
 
   it('uses sheet overrides when ranking raw entries', () => {
     const version = VersionEnum.CiRCLEPLUS
-    const orderedSheets = getDxdataSongCatalog(version)
+    const orderedSheets = getSongCatalog(catalogSnapshot, version)
       .sheets.filter((candidate) => {
-        return isRenderableRatingSheet(candidate) && candidate.version === version && candidate.regions.intl
+        return (
+          isRenderableRatingSheet(candidate) && candidate.version === version && candidate.serverIds.includes('intl')
+        )
       })
       .sort((a, b) => a.internalLevelValue - b.internalLevelValue)
 
@@ -138,7 +154,7 @@ describe('oneshot renderer calculations', () => {
           achievementRate: 100.5,
         },
       ],
-      version,
+      getSongCatalog(catalogSnapshot, version),
       'intl',
     )
 
@@ -161,7 +177,7 @@ describe('oneshot renderer calculations', () => {
         b15: [],
         b35: [{ sheetId: currentVersionSheet.id, achievementRate: 100.5, achievementAccuracy: 'app' }],
       },
-      version,
+      getSongCatalog(catalogSnapshot, version),
     )
 
     expect(prepared.b15).toHaveLength(0)

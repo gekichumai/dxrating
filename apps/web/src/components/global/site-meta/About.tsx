@@ -1,4 +1,5 @@
-import { dxdataUpdateTime, VersionEnum } from '@gekichumai/dxdata'
+import { VersionEnum } from '@gekichumai/dxdata'
+import { useCatalogDocument } from '@/catalog/CatalogContext'
 import { IconButton } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, type PropsWithChildren, type ReactNode, useState } from 'react'
@@ -52,7 +53,7 @@ export const About = () => {
   const [expanded, setExpanded] = useState(false)
 
   const buildTime = useTime(BUNDLE.buildTime)
-  const updateTime = useTime(dxdataUpdateTime)
+  const updateTime = useTime(useCatalogDocument().updatedAt)
 
   return (
     <>

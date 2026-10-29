@@ -206,28 +206,6 @@ describe('catalog identity service', () => {
       'not_found',
     )
   })
-  it('translates published public sheet IDs to their legacy sheet identities', async () => {
-    const identities = createCatalogIdentityEffects(
-      staticCatalogQuery([
-        row(),
-        row('1', {
-          public_song_id: SONG_B,
-          legacy_song_id: null,
-          legacy_song_ids: [],
-          public_sheet_id: SHEET_B,
-        }),
-      ]),
-    )
-    const sheetIds = await Effect.runPromise(
-      identities.translateSheetIdsToLegacy([
-        SHEET_A,
-        SHEET_B,
-        'dsht_zzzzzzzzzz',
-        'legacy-song-a__dxrt__dx__dxrt__master',
-      ]),
-    )
-    expect([...sheetIds]).toEqual([[SHEET_A, { songId: 'legacy-song-a', sheetType: 'dx', sheetDifficulty: 'master' }]])
-  })
   it('drops orphaned legacy associations when producing public list responses', async () => {
     const identities = createCatalogIdentityEffects(
       staticCatalogQuery([

@@ -5,7 +5,7 @@ export const useServerAliases = () => {
   return useSWR(
     'aliases.list',
     async () => {
-      return await client.aliases.list()
+      return await client.aliases.list({ idScheme: 'public' })
     },
     {
       focusThrottleInterval: 1000 * 60 * 60,

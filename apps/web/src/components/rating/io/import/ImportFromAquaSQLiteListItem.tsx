@@ -1,4 +1,5 @@
-import { getDxdataSongCatalog, normalizeAquaSqliteRows, type ImportWarning } from '@gekichumai/maimai-domain'
+import { useSongCatalog } from '@/catalog/CatalogContext'
+import { normalizeAquaSqliteRows, type ImportWarning, type SongCatalog } from '@gekichumai/maimai-domain'
 import {
   Alert,
   AlertTitle,
@@ -28,7 +29,6 @@ import IconMdiDatabase from '~icons/mdi/database'
 import { type FlattenedSheet, useSheets } from '../../../../songs'
 import { type AquaUser, readAquaGamePlays, readAquaUsers } from '../../../../utils/aquaDB'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
-import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import { FadedImage } from '../../../global/FadedImage'
 import { SheetListItemContent } from '../../../sheet/SheetListItem'
 import { useWebHaptics } from 'web-haptics/react'
@@ -147,13 +147,13 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
   }, [db])
   const [selectedUser, setSelectedUser] = useState<AquaUser | null>(null)
   const { data: sheets } = useSheets()
-  const appVersion = useAppContextDXDataVersion()
+  const catalog = useSongCatalog()
   const { records, warnings } = useMemo(() => {
     if (!selectedUser) return { records: [], warnings: [] }
     if (!sheets) return { records: [], warnings: [] }
 
-    return getUserGamePlays(db, selectedUser, sheets, appVersion)
-  }, [appVersion, db, selectedUser, sheets])
+    return getUserGamePlays(db, selectedUser, sheets, catalog)
+  }, [catalog, db, selectedUser, sheets])
 
   const mode = !selectedUser ? 'select-user' : 'confirm-import'
 
@@ -250,14 +250,9 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
   )
 }
 
-function getUserGamePlays(
-  db: Database,
-  selectedUser: AquaUser,
-  sheets: FlattenedSheet[],
-  appVersion: Parameters<typeof getDxdataSongCatalog>[0],
-) {
+function getUserGamePlays(db: Database, selectedUser: AquaUser, sheets: FlattenedSheet[], catalog: SongCatalog) {
   const gameplays = readAquaGamePlays(db)
-  const importResult = normalizeAquaSqliteRows(getDxdataSongCatalog(appVersion), {
+  const importResult = normalizeAquaSqliteRows(catalog, {
     selectedUserId: selectedUser.id,
     gameplays,
   })

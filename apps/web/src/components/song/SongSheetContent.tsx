@@ -1,3 +1,5 @@
+import { SERVER_BADGE_ORDER } from '@/models/constants'
+import { getArcadeSongsUrl } from '@/catalog/arcadeSongs'
 import { CommentActions } from '../comments/CommentActions'
 import { filterComments, useCommentVisibility } from '../comments/commentVisibility'
 import { MULTIVER_AVAILABLE_VERSIONS, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@gekichumai/dxdata'
@@ -184,6 +186,7 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   } = useSWR(['comments.list', user?.id ?? null, sheet.songId, sheet.type, sheet.difficulty], async () => {
     const data = await client.comments.list({
       songId: sheet.songId,
+      sheetId: sheet.id,
       sheetType: sheet.type,
       sheetDifficulty: sheet.difficulty,
     })
@@ -199,6 +202,7 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
     const payload = {
       songId: sheet.songId,
+      sheetId: sheet.id,
       sheetType: sheet.type,
       sheetDifficulty: sheet.difficulty,
       content,
@@ -299,7 +303,7 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
     return (
       <div className="flex flex-col gap-2 relative">
         <div className="flex items-center gap-2 flex-wrap">
-          <SheetDifficulty difficulty={sheet.difficulty} regions={sheet.regions} isLocked={sheet.isLocked} />
+          <SheetDifficulty difficulty={sheet.difficulty} serverIds={sheet.serverIds} isLocked={sheet.isLocked} />
           {!sheet.isTypeUtage && (
             <span className="font-bold tabular-nums text-2xl">{sheet.internalLevelValue.toFixed(1)}</span>
           )}
@@ -396,17 +400,19 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
                     <TableCell>{t('sheet:details.regional-availability')}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {Object.entries(sheet.regions).map(([region, available]) => (
-                          <div
-                            key={region}
-                            className={clsx(
-                              'uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs',
-                              available ? '!bg-green-500' : '!bg-gray-300',
-                            )}
-                          >
-                            {region}
-                          </div>
-                        ))}{' '}
+                        {SERVER_BADGE_ORDER.map((region) => [region, sheet.serverIds.includes(region)] as const).map(
+                          ([region, available]) => (
+                            <div
+                              key={region}
+                              className={clsx(
+                                'uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs',
+                                available ? '!bg-green-500' : '!bg-gray-300',
+                              )}
+                            >
+                              {region}
+                            </div>
+                          ),
+                        )}{' '}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -432,12 +438,7 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
                   i18nKey="sheet:details.credits"
                   components={{
                     link: (
-                      <a
-                        href={`https://arcade-songs.zetaraku.dev/maimai/song/?id=${encodeURIComponent(sheet.songId)}`}
-                        rel="noreferrer"
-                        target="_blank"
-                        className="tracking-tighter"
-                      >
+                      <a href={getArcadeSongsUrl(sheet)} rel="noreferrer" target="_blank" className="tracking-tighter">
                         arcade-songs.zetaraku.dev
                       </a>
                     ),

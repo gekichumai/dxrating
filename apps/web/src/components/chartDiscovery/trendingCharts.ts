@@ -1,5 +1,5 @@
-import { DifficultyEnum, TypeEnum, dxdata, type Sheet, type Song } from '@gekichumai/dxdata'
-import { formatSheetIdentity, type SheetIdentity } from '@gekichumai/maimai-domain'
+import { DifficultyEnum, TypeEnum, type Sheet, type Song } from '@gekichumai/dxdata'
+import type { SheetIdentity } from '@gekichumai/maimai-domain'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import type { FlattenedSheet } from '@/songs'
 import { sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
@@ -50,18 +50,19 @@ const selectRepresentativeSheet = (result: TrendingChartResult, song: Song) => {
 }
 
 const toTrendingChartLink = (song: Song, sheet: Sheet): TrendingChartLink => {
+  const { id: songId, sheets: _sheets, version: _songVersion, ...songFields } = song
   const identity = {
-    songId: song.songId,
+    songId,
     type: sheet.type,
     difficulty: sheet.difficulty,
   } as SheetIdentity
   const isTypeUtage = sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P
 
   return {
-    ...song,
+    ...songFields,
     ...sheet,
+    songId,
     difficulty: sheet.difficulty,
-    id: formatSheetIdentity(identity),
     identity,
     isTypeUtage,
     isRatingEligible: !isTypeUtage,
@@ -71,20 +72,20 @@ const toTrendingChartLink = (song: Song, sheet: Sheet): TrendingChartLink => {
   }
 }
 
-let defaultSongsById: Map<string, Song> | null = null
+const songsByIdCache = new WeakMap<readonly Song[], Map<string, Song>>()
 
 const getSongsById = (songs: readonly Song[]) => {
-  if (songs === dxdata.songs) {
-    defaultSongsById ??= new Map(dxdata.songs.map((song) => [song.songId, song]))
-    return defaultSongsById
+  let songsById = songsByIdCache.get(songs)
+  if (!songsById) {
+    songsById = new Map(songs.map((song) => [song.id, song]))
+    songsByIdCache.set(songs, songsById)
   }
-
-  return new Map(songs.map((song) => [song.songId, song]))
+  return songsById
 }
 
 export const buildTrendingChartLinks = (
   results: readonly TrendingChartResult[],
-  songs: readonly Song[] = dxdata.songs,
+  songs: readonly Song[],
 ): TrendingChartLink[] => {
   if (results.length === 0) return []
 

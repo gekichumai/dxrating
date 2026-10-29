@@ -11,6 +11,7 @@ import { HttpBody } from 'effect/http'
 import { appRuntime, runApp, superviseApp } from './runtime'
 import { HttpClient } from './services/http-client'
 import { getBuildInfo } from './version'
+import type { SongCatalogSource } from '@gekichumai/maimai-domain'
 import { createOneshotHandler } from './services/functions/oneshot-renderer/index'
 import {
   v0Handler as fetchNetRecordsV0Handler,
@@ -42,7 +43,7 @@ import {
   readClientId,
 } from './services/api-usage'
 import { appContract } from './contract'
-import { CatalogIdentities, McpCatalogSource } from './services/application'
+import { McpCatalogSource } from './services/application'
 import {
   clientKey,
   createRateLimiter,
@@ -453,8 +454,12 @@ app.post('/functions/fetch-net-records/v0', verifyParams, fetchNetRecordsV0Handl
 app.post('/functions/fetch-net-records/v1/:region', verifyParams, fetchNetRecordsV1Handler)
 app.post(
   '/functions/render-oneshot/v0',
-  createOneshotHandler((sheetIds) =>
-    runApp(Effect.flatMap(CatalogIdentities, (identities) => identities.translateSheetIdsToLegacy(sheetIds))),
+  createOneshotHandler(() =>
+    runApp(
+      Effect.flatMap(McpCatalogSource, (source) => source.current).pipe(
+        Effect.map((catalog) => ({ revision: catalog.catalogRunId, document: catalog.document as SongCatalogSource })),
+      ),
+    ),
   ),
 )
 

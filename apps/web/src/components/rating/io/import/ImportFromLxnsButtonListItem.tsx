@@ -1,5 +1,6 @@
+import { useSongCatalog } from '@/catalog/CatalogContext'
 import { ImportRegionSupportTag } from '@/components/rating/io/import/ImportRegionSupportTag'
-import { getDxdataSongCatalog, normalizeLxnsScores } from '@gekichumai/maimai-domain'
+import { normalizeLxnsScores, type SongCatalog } from '@gekichumai/maimai-domain'
 import {
   Button,
   CircularProgress,
@@ -20,7 +21,6 @@ import * as Sentry from '@sentry/tanstackstart-react'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { useAuth } from '../../../../hooks/useAuth'
 import { apiClient } from '../../../../lib/orpc'
-import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import { WebHaptics } from 'web-haptics'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
@@ -35,7 +35,7 @@ const LxnsImportDialogContent: FC<{
   onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
-  const appVersion = useAppContextDXDataVersion()
+  const catalog = useSongCatalog()
   const [state, setState] = useState<ConnectionState>('loading')
 
   const checkStatus = useCallback(async () => {
@@ -70,7 +70,7 @@ const LxnsImportDialogContent: FC<{
     try {
       const result = await apiClient.lxns.start()
 
-      const importResult = normalizeLxnsScores(getDxdataSongCatalog(appVersion), result.scores)
+      const importResult = normalizeLxnsScores(catalog, result.scores)
       const entries = importResultToPlayEntries(importResult)
       for (const warning of importResult.warnings) {
         console.warn('[ImportFromLxnsButtonListItem]', warning.message, warning.row)

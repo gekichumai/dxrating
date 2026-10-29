@@ -1,4 +1,4 @@
-import { type Sheet, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
+import { type ServerEnum, type Sheet, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { render, screen } from '@testing-library/react'
 import i18n from 'i18next'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -7,24 +7,13 @@ import { SongSheetTabs } from '../SongSheetTabs'
 
 function makeSheet(type: TypeEnum): Sheet {
   return {
+    id: `sheet-${type}`,
     type,
     difficulty: DifficultyEnum.Master,
     level: '13',
     internalLevelValue: 13,
-    noteDesigner: null,
-    noteCounts: {
-      tap: null,
-      hold: null,
-      slide: null,
-      touch: null,
-      break: null,
-      total: null,
-    },
-    regions: {
-      jp: true,
-      intl: true,
-      cn: true,
-    },
+    noteCounts: {},
+    serverIds: ['jp', 'intl', 'usa', 'cn'] as ServerEnum[],
     isSpecial: false,
     version: VersionEnum.CiRCLEPLUS,
   }

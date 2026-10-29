@@ -6,7 +6,7 @@ describe('buildSitemap', () => {
   it('encodes song URLs for route and XML safety', () => {
     const sitemap = buildSitemap([
       {
-        songId: '1/3の純情な感情 & <test>',
+        id: '1/3の純情な感情 & <test>',
         sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Master }],
       },
     ])
@@ -23,15 +23,15 @@ describe('buildSitemap', () => {
   it('sorts sheet URLs by release date descending', () => {
     const sitemap = buildSitemap([
       {
-        songId: 'old',
+        id: 'old',
         sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Master, releaseDate: '2015-07-16' }],
       },
       {
-        songId: 'recent',
+        id: 'recent',
         sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Expert, releaseDate: '2026-05-01' }],
       },
       {
-        songId: 'mixed',
+        id: 'mixed',
         sheets: [
           { type: TypeEnum.DX, difficulty: DifficultyEnum.Basic, releaseDate: '2019-01-01' },
           { type: TypeEnum.STD, difficulty: DifficultyEnum.Master, releaseDate: '2026-05-10' },
@@ -46,11 +46,11 @@ describe('buildSitemap', () => {
   it('includes lastmod for chart URLs with release dates', () => {
     const sitemap = buildSitemap([
       {
-        songId: 'released',
+        id: 'released',
         sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Master, releaseDate: '2026-05-10' }],
       },
       {
-        songId: 'undated',
+        id: 'undated',
         sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Basic }],
       },
     ])

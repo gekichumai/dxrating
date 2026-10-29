@@ -1,6 +1,5 @@
 import { Effect, Data } from 'effect'
 import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
-import type { NoteCounts } from '@gekichumai/dxdata'
 import type { SheetDifficulty } from '@gekichumai/maimai-domain'
 import { ImageResponse } from '@takumi-rs/image-response'
 import type { Handler } from 'hono'
@@ -53,6 +52,8 @@ const TYPE_DISPLAY: Record<TypeEnum, string> = {
   [TypeEnum.UTAGE2P]: 'Utage',
 }
 
+type ChartOgNoteCounts = Record<'tap' | 'hold' | 'slide' | 'touch' | 'break' | 'total', number | null>
+
 export type ChartOgImageData = {
   songId: string
   title: string
@@ -71,7 +72,7 @@ export type ChartOgImageData = {
   levelLabel: string
   internalLevelValue: number
   noteDesigner: string | null
-  noteCounts: NoteCounts
+  noteCounts: ChartOgNoteCounts
   version: string
 }
 

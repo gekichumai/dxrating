@@ -4,9 +4,10 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
 import { SongPage } from '../SongPage'
 
+// WWW, by its public song ID
 const routeState = vi.hoisted(() => ({
   params: {
-    songId: 'WWW',
+    songId: 'dsng_d3kkdkrcqj',
     type: 'dx',
     difficulty: 'basic',
   },

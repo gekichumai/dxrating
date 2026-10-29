@@ -28,7 +28,7 @@ export const SearchQuerySeedList: FC<{ sheets: readonly SearchQuerySeedSheet[] }
                 type={sheet.type}
                 difficulty={sheet.difficulty}
                 version={sheet.version}
-                regions={sheet.regions}
+                serverIds={sheet.serverIds}
                 isLocked={sheet.isLocked}
                 artist={sheet.artist}
               />

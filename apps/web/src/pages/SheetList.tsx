@@ -1,4 +1,4 @@
-import { CategoryEnum, DifficultyEnum, TypeEnum, VERSION_ID_MAP, VersionEnum, dxdata } from '@gekichumai/dxdata'
+import { CategoryEnum, DifficultyEnum, type TypeEnum, VERSION_ID_MAP, VersionEnum } from '@gekichumai/dxdata'
 import { IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
@@ -21,10 +21,12 @@ import {
 import { SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { captureAnalyticsEvent } from '../lib/analytics'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
-import { type FlattenedSheet, canonicalIdFromParts, useFilteredSheets, useSheets } from '../songs'
+import { readFavoriteSheetIds } from '../models/favorite'
+import { useCatalogDocument, useSongCatalog } from '../catalog/CatalogContext'
+import { type FlattenedSheet, useFilteredSheets, useSheets } from '../songs'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { sheetMatchesDifficultyFilter } from './sheetDifficultyFilter'
-import { compareSheetsBySorts } from './sheetSorting'
+import { compareSheetsBySorts, getSongCatalogPositions } from './sheetSorting'
 
 const searchRouteApi = getRouteApi('/')
 
@@ -91,7 +93,13 @@ const SheetSearchAnalytics: FC<{
 // Filtering and sorting the full catalog is the bulk of a home page render. The inputs are stable references (the cached
 // catalog plus a serializable form), so keep the last result and reuse it across remounts and SSR requests.
 let lastSortFilterResult:
-  | { results: FlattenedSheet[]; key: string; version: VersionEnum; sheets: FlattenedSheet[] }
+  | {
+      results: FlattenedSheet[]
+      key: string
+      version: VersionEnum
+      positions: ReadonlyMap<string, number>
+      sheets: FlattenedSheet[]
+    }
   | undefined
 
 const getSortFilteredSheets = (
@@ -99,6 +107,7 @@ const getSortFilteredSheets = (
   sortFilterOptions: SheetSortFilterForm | undefined,
   inputQuery: string,
   version: VersionEnum,
+  songCatalogPositions: ReadonlyMap<string, number>,
 ): FlattenedSheet[] => {
   // Favorites live in localStorage and can change between calls, so that path is never cached.
   const cacheable = !sortFilterOptions?.filters.favoritesOnly
@@ -107,13 +116,14 @@ const getSortFilteredSheets = (
     cacheable &&
     lastSortFilterResult?.results === results &&
     lastSortFilterResult.version === version &&
+    lastSortFilterResult.positions === songCatalogPositions &&
     lastSortFilterResult.key === key
   ) {
     return lastSortFilterResult.sheets
   }
 
-  const sheets = computeSortFilteredSheets(results, sortFilterOptions, inputQuery, version)
-  if (cacheable) lastSortFilterResult = { results, key, version, sheets }
+  const sheets = computeSortFilteredSheets(results, sortFilterOptions, inputQuery, version, songCatalogPositions)
+  if (cacheable) lastSortFilterResult = { results, key, version, positions: songCatalogPositions, sheets }
   return sheets
 }
 
@@ -122,6 +132,7 @@ const computeSortFilteredSheets = (
   sortFilterOptions: SheetSortFilterForm | undefined,
   inputQuery: string,
   version: VersionEnum,
+  songCatalogPositions: ReadonlyMap<string, number>,
 ): FlattenedSheet[] => {
   let sortFilteredResults: FlattenedSheet[] = results
   if (sortFilterOptions) {
@@ -129,9 +140,7 @@ const computeSortFilteredSheets = (
     const validVersions = Array.from(VERSION_ID_MAP.entries())
       .filter(([, id]) => id <= currentVersionId)
       .map(([v]) => v)
-    const favoriteSheetIds = sortFilterOptions.filters.favoritesOnly
-      ? new Set<string>(JSON.parse(localStorage.getItem('favorite-sheets') ?? '[]'))
-      : null
+    const favoriteSheetIds = sortFilterOptions.filters.favoritesOnly ? new Set<string>(readFavoriteSheetIds()) : null
     sortFilteredResults = results.filter((sheet) => {
       return chainEvery<FlattenedSheet>(
         (v) => !!v,
@@ -176,7 +185,7 @@ const computeSortFilteredSheets = (
       )(sheet)
     })
     if (!inputQuery) {
-      sortFilteredResults.sort((a, b) => compareSheetsBySorts(a, b, sortFilterOptions.sorts))
+      sortFilteredResults.sort((a, b) => compareSheetsBySorts(a, b, sortFilterOptions.sorts, songCatalogPositions))
     }
   }
   return sortFilteredResults
@@ -230,27 +239,24 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
     })
   }, [])
 
+  const catalog = useSongCatalog()
+  const songCatalogPositions = getSongCatalogPositions(useCatalogDocument())
   const activeSheet = useMemo<FlattenedSheet | null>(() => {
     const { songId, type, difficulty } = search
     if (!songId || !type || !difficulty) return null
-    const song = dxdata.songs.find((s) => s.songId === songId)
-    if (!song) return null
-    const sheet = song.sheets.find((s) => s.type === type && s.difficulty === difficulty)
-    if (!sheet) return null
-    const isTypeUtage = sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P
+    const versioned = catalog.getByIdentity({
+      songId,
+      type: type as TypeEnum,
+      difficulty: difficulty as DifficultyEnum,
+    })
+    if (!versioned) return null
     return {
-      ...song,
-      ...sheet,
-      id: canonicalIdFromParts(songId, type as TypeEnum, difficulty as DifficultyEnum),
-      searchAcronyms: song.searchAcronyms,
-      isTypeUtage,
-      isRatingEligible: !isTypeUtage,
-      releaseDateTimestamp: sheetReleaseDateTimestamp(sheet.releaseDate),
-      internalLevelValue: sheet.multiverInternalLevelValue
-        ? (sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue)
-        : sheet.internalLevelValue,
-    } as FlattenedSheet
-  }, [search, version])
+      ...versioned,
+      difficulty: versioned.difficulty as DifficultyEnum,
+      releaseDateTimestamp: sheetReleaseDateTimestamp(versioned.releaseDate),
+      tags: [],
+    }
+  }, [search, catalog])
   const activeSheetId = activeSheet?.id ?? null
 
   const handleSheetDialogChange = useCallback(
@@ -286,7 +292,13 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
 
   const { filteredResults, elapsed: filteringElapsed } = useMemo(() => {
     const startTime = performance.now()
-    const sortFilteredResults = getSortFilteredSheets(results, sortFilterOptions, inputQuery, version)
+    const sortFilteredResults = getSortFilteredSheets(
+      results,
+      sortFilterOptions,
+      inputQuery,
+      version,
+      songCatalogPositions,
+    )
     const elapsed = performance.now() - startTime
     Sentry.metrics.distribution('sheet_filter.duration', elapsed, {
       unit: 'millisecond',
@@ -297,7 +309,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
       filteredResults: sortFilteredResults,
       elapsed,
     }
-  }, [results, sortFilterOptions, inputQuery, version])
+  }, [results, sortFilterOptions, inputQuery, version, songCatalogPositions])
   const showSeedResults = isLoading && inputQuery && seedSheets.length > 0
   const summaryTotal = sheets?.length ?? filteredResults.length
   const summaryProgress = summaryTotal > 0 ? filteredResults.length / summaryTotal : 0

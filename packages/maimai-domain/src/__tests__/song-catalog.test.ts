@@ -1,89 +1,103 @@
-import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum, dxdata, type DXData } from '@gekichumai/dxdata'
+import {
+  CategoryEnum,
+  DifficultyEnum,
+  ServerEnum,
+  TypeEnum,
+  VersionEnum,
+  type Sheet,
+  type Song,
+} from '@gekichumai/dxdata'
+import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
+import { LEGACY_SONG_IDS } from '@gekichumai/dxdata/legacy-song-ids'
 import { describe, expect, it } from 'vitest'
-import { getDxdataSongCatalog } from '../dxdata-catalog'
-import { buildSongCatalog, getSheetIdentityFromId } from '../song-catalog'
+import { buildSongCatalog, getSongCatalog, type SongCatalogSource } from '../song-catalog'
 
-const fixtureData: DXData = {
-  updateTime: '2026-05-17T00:00:00.000Z',
-  categories: [],
+const sheet = (overrides: Partial<Sheet> & Pick<Sheet, 'id'>): Sheet => ({
+  type: TypeEnum.DX,
+  difficulty: DifficultyEnum.Master,
+  level: '13',
+  internalLevelValue: 13,
+  noteCounts: { tap: 1, hold: 1, slide: 1, touch: 1, break: 1, total: 5 },
+  serverIds: [ServerEnum.JP, ServerEnum.INTL, ServerEnum.USA],
+  isSpecial: false,
+  version: VersionEnum.PRiSMPLUS,
+  ...overrides,
+})
+
+const song = (overrides: Partial<Song> & Pick<Song, 'id' | 'title' | 'sheets'>): Song => ({
+  artist: 'Artist',
+  bpm: 180,
+  category: CategoryEnum.Maimai,
+  imageName: overrides.id,
+  version: VersionEnum.PRiSMPLUS,
+  isNew: false,
+  isLocked: false,
+  searchAcronyms: [],
+  ...overrides,
+})
+
+const fixtureData: SongCatalogSource = {
   versions: [],
-  types: [],
-  difficulties: [],
-  regions: [],
   songs: [
-    {
-      songId: 'song-a',
+    song({
+      id: 'dsng_songa00000',
       title: 'Song A',
-      artist: 'Artist',
-      bpm: 180,
-      category: CategoryEnum.Maimai,
-      imageName: 'song-a',
-      isNew: false,
-      isLocked: false,
       searchAcronyms: ['sa'],
       sheets: [
-        {
+        sheet({
+          id: 'dsht_songadxmas',
           internalId: 10001,
-          type: TypeEnum.DX,
-          difficulty: DifficultyEnum.Master,
           level: '13+',
           internalLevelValue: 13.7,
-          multiverInternalLevelValue: {
-            [VersionEnum.CiRCLE]: 13.8,
-          } as Record<VersionEnum, number>,
+          multiverInternalLevelValue: { [VersionEnum.CiRCLE]: 13.8 },
           noteDesigner: 'Designer',
-          noteCounts: { tap: 1, hold: 1, slide: 1, touch: 1, break: 1, total: 5 },
-          regions: { jp: true, intl: true, cn: false },
-          isSpecial: false,
-          version: VersionEnum.PRiSMPLUS,
           releaseDate: '2025-03-01',
-        },
-        {
+        }),
+        sheet({
+          id: 'dsht_songautage',
           internalId: 20001,
           type: TypeEnum.UTAGE,
-          difficulty: DifficultyEnum.Master,
           level: '宴',
           internalLevelValue: 0,
-          noteDesigner: null,
-          noteCounts: { tap: null, hold: null, slide: null, touch: null, break: null, total: null },
-          regions: { jp: true, intl: false, cn: false },
+          noteCounts: {},
+          serverIds: [ServerEnum.JP],
           isSpecial: true,
-          version: VersionEnum.PRiSMPLUS,
-        },
+        }),
       ],
-    },
+    }),
   ],
 }
 
-describe('Song Catalog', () => {
-  it('projects Versioned Sheets with identity, id, and selected internal level', () => {
-    const catalog = buildSongCatalog(fixtureData, VersionEnum.CiRCLE)
-    const sheet = catalog.getByIdentity({
-      songId: 'song-a',
-      type: TypeEnum.DX,
-      difficulty: DifficultyEnum.Master,
-    })
+const SONG_A_DX_MASTER = { songId: 'dsng_songa00000', type: TypeEnum.DX, difficulty: DifficultyEnum.Master } as const
 
-    expect(sheet?.id).toBe('song-a__dxrt__dx__dxrt__master')
-    expect(sheet?.identity).toEqual({
-      songId: 'song-a',
-      type: TypeEnum.DX,
-      difficulty: DifficultyEnum.Master,
-    })
-    expect(sheet?.internalLevelValue).toBe(13.8)
-    expect(sheet?.releaseDateTimestamp).toBe(new Date('2025-03-01T06:00:00+09:00').valueOf())
+describe('Song Catalog', () => {
+  it('projects Versioned Sheets with public IDs, identity, and the selected internal level', () => {
+    const catalog = buildSongCatalog(fixtureData, VersionEnum.CiRCLE)
+    const versioned = catalog.getByIdentity(SONG_A_DX_MASTER)
+
+    expect(versioned?.id).toBe('dsht_songadxmas')
+    expect(versioned?.songId).toBe('dsng_songa00000')
+    expect(versioned?.identity).toEqual(SONG_A_DX_MASTER)
+    expect(versioned?.title).toBe('Song A')
+    expect(versioned?.version).toBe(VersionEnum.PRiSMPLUS)
+    expect(versioned?.internalLevelValue).toBe(13.8)
+    expect(versioned?.releaseDateTimestamp).toBe(new Date('2025-03-01T06:00:00+09:00').valueOf())
+    expect(catalog.getById('dsht_songadxmas')).toBe(versioned)
+    expect(catalog.getSong('dsng_songa00000')?.title).toBe('Song A')
+  })
+
+  it('does not copy the song sheet list into every sheet', () => {
+    const catalog = buildSongCatalog(fixtureData, VersionEnum.CiRCLE)
+
+    expect(catalog.sheets.every((versioned) => !('sheets' in versioned))).toBe(true)
   })
 
   it('marks UTAGE sheets as not rating eligible', () => {
     const catalog = buildSongCatalog(fixtureData, VersionEnum.CiRCLE)
-    const sheet = catalog.getByIdentity({
-      songId: 'song-a',
-      type: TypeEnum.UTAGE,
-      difficulty: DifficultyEnum.Master,
-    })
+    const versioned = catalog.getById('dsht_songautage')
 
-    expect(sheet?.isTypeUtage).toBe(true)
-    expect(sheet?.isRatingEligible).toBe(false)
+    expect(versioned?.isTypeUtage).toBe(true)
+    expect(versioned?.isRatingEligible).toBe(false)
   })
 
   it('falls back missing release dates to the latest known date in that version', () => {
@@ -91,144 +105,72 @@ describe('Song Catalog', () => {
       {
         ...fixtureData,
         songs: [
-          {
-            songId: 'dated',
+          song({
+            id: 'dsng_dated00000',
             title: 'Dated Song',
-            artist: 'Artist',
-            bpm: 180,
-            category: CategoryEnum.Maimai,
-            imageName: 'dated',
-            isNew: false,
-            isLocked: false,
-            searchAcronyms: [],
-            sheets: [
-              {
-                type: TypeEnum.DX,
-                difficulty: DifficultyEnum.Master,
-                level: '14',
-                internalLevelValue: 14,
-                noteDesigner: null,
-                noteCounts: { tap: 1, hold: 1, slide: 1, touch: 1, break: 1, total: 5 },
-                regions: { jp: true, intl: true, cn: false },
-                isSpecial: false,
-                version: VersionEnum.CiRCLE,
-                releaseDate: '2026-03-05',
-              },
-            ],
-          },
-          {
-            songId: 'Bring it on',
+            sheets: [sheet({ id: 'dsht_dated00000', version: VersionEnum.CiRCLE, releaseDate: '2026-03-05' })],
+          }),
+          song({
+            id: 'dsng_bring00000',
             title: 'Bring it on',
-            artist: 'Artist',
-            bpm: 180,
-            category: CategoryEnum.Maimai,
-            imageName: 'bring',
             isNew: true,
-            isLocked: false,
-            searchAcronyms: [],
-            sheets: [
-              {
-                type: TypeEnum.DX,
-                difficulty: DifficultyEnum.Master,
-                level: '13+',
-                internalLevelValue: 13.8,
-                noteDesigner: null,
-                noteCounts: { tap: 1, hold: 1, slide: 1, touch: 1, break: 1, total: 5 },
-                regions: { jp: true, intl: true, cn: false },
-                isSpecial: false,
-                version: VersionEnum.CiRCLE,
-                // no releaseDate
-              },
-            ],
-          },
-          {
-            songId: 'older',
+            sheets: [sheet({ id: 'dsht_bring00000', version: VersionEnum.CiRCLE })],
+          }),
+          song({
+            id: 'dsng_older00000',
             title: 'Older Song',
-            artist: 'Artist',
-            bpm: 180,
-            category: CategoryEnum.Maimai,
-            imageName: 'older',
-            isNew: false,
-            isLocked: false,
-            searchAcronyms: [],
-            sheets: [
-              {
-                type: TypeEnum.DX,
-                difficulty: DifficultyEnum.Master,
-                level: '12',
-                internalLevelValue: 12,
-                noteDesigner: null,
-                noteCounts: { tap: 1, hold: 1, slide: 1, touch: 1, break: 1, total: 5 },
-                regions: { jp: true, intl: true, cn: false },
-                isSpecial: false,
-                version: VersionEnum.CiRCLE,
-                releaseDate: '2025-09-18',
-              },
-            ],
-          },
+            sheets: [sheet({ id: 'dsht_older00000', version: VersionEnum.CiRCLE, releaseDate: '2025-09-18' })],
+          }),
         ],
       },
       VersionEnum.CiRCLE,
     )
 
-    const undated = catalog.getByIdentity({
-      songId: 'Bring it on',
-      type: TypeEnum.DX,
-      difficulty: DifficultyEnum.Master,
-    })
-    const latestDated = catalog.getByIdentity({
-      songId: 'dated',
-      type: TypeEnum.DX,
-      difficulty: DifficultyEnum.Master,
-    })
-    const older = catalog.getByIdentity({
-      songId: 'older',
-      type: TypeEnum.DX,
-      difficulty: DifficultyEnum.Master,
-    })
+    const undated = catalog.getById('dsht_bring00000')
+    const latestDated = catalog.getById('dsht_dated00000')
+    const older = catalog.getById('dsht_older00000')
 
     // Same sort key as the newest known CiRCLE chart (not epoch / null).
     expect(undated?.releaseDateTimestamp).toBe(latestDated?.releaseDateTimestamp)
     expect(undated?.releaseDateTimestamp).toBe(new Date('2026-03-05T06:00:00+09:00').valueOf())
     expect((undated?.releaseDateTimestamp ?? 0) > (older?.releaseDateTimestamp ?? 0)).toBe(true)
+  })
 
-    // NEW -> OLD: undated ties with latest, both before older
-    const sorted = [...catalog.sheets].sort((a, b) => {
-      const byDate = (b.releaseDateTimestamp ?? 0) - (a.releaseDateTimestamp ?? 0)
-      if (byDate !== 0) return byDate
-      return a.songId.localeCompare(b.songId)
-    })
-    expect(sorted.map((s) => s.songId)).toEqual(['Bring it on', 'dated', 'older'])
+  it('falls back to the version launch date when no sheet of that version is dated', () => {
+    const catalog = buildSongCatalog(
+      {
+        versions: [{ version: VersionEnum.MAGiCAL, releaseDate: '2026-09-17' }],
+        songs: [
+          song({
+            id: 'dsng_magic00000',
+            title: 'M',
+            sheets: [sheet({ id: 'dsht_magic00000', version: VersionEnum.MAGiCAL })],
+          }),
+        ],
+      },
+      VersionEnum.MAGiCAL,
+    )
+
+    expect(catalog.sheets[0]?.releaseDateTimestamp).toBe(new Date('2026-09-17T06:00:00+09:00').valueOf())
   })
 
   it('resolves explicit provider references without fuzzy matching', () => {
     const catalog = buildSongCatalog(fixtureData, VersionEnum.CiRCLE)
 
     expect(
-      catalog.resolveReference({
-        kind: 'title',
-        title: 'Song A',
-        type: TypeEnum.DX,
-        difficulty: DifficultyEnum.Master,
-      })?.identity.songId,
-    ).toBe('song-a')
-
+      catalog.resolveReference({ kind: 'title', title: 'Song A', type: TypeEnum.DX, difficulty: DifficultyEnum.Master })
+        ?.id,
+    ).toBe('dsht_songadxmas')
     expect(
       catalog.resolveReference({
         kind: 'internal-id',
         internalId: 10001,
         type: TypeEnum.DX,
         difficulty: DifficultyEnum.Master,
-      })?.identity.songId,
-    ).toBe('song-a')
-
+      })?.id,
+    ).toBe('dsht_songadxmas')
     expect(
-      catalog.resolveReference({
-        kind: 'title',
-        title: 'Song',
-        type: TypeEnum.DX,
-        difficulty: DifficultyEnum.Master,
-      }),
+      catalog.resolveReference({ kind: 'title', title: 'Song', type: TypeEnum.DX, difficulty: DifficultyEnum.Master }),
     ).toBeNull()
   })
 
@@ -238,31 +180,11 @@ describe('Song Catalog', () => {
         ...fixtureData,
         songs: [
           ...fixtureData.songs,
-          {
-            songId: 'song-b',
+          song({
+            id: 'dsng_songb00000',
             title: 'Song A',
-            artist: 'Other Artist',
-            bpm: 190,
-            category: CategoryEnum.Maimai,
-            imageName: 'song-b',
-            isNew: false,
-            isLocked: false,
-            searchAcronyms: ['sb'],
-            sheets: [
-              {
-                internalId: 10002,
-                type: TypeEnum.DX,
-                difficulty: DifficultyEnum.Master,
-                level: '13',
-                internalLevelValue: 13,
-                noteDesigner: 'Other Designer',
-                noteCounts: { tap: 2, hold: 2, slide: 2, touch: 2, break: 2, total: 10 },
-                regions: { jp: true, intl: true, cn: false },
-                isSpecial: false,
-                version: VersionEnum.PRiSMPLUS,
-              },
-            ],
-          },
+            sheets: [sheet({ id: 'dsht_songbdxmas', internalId: 10002 })],
+          }),
         ],
       },
       VersionEnum.CiRCLE,
@@ -283,316 +205,123 @@ describe('Song Catalog', () => {
       {
         ...fixtureData,
         songs: [
-          {
-            ...fixtureData.songs[0]!,
+          { ...fixtureData.songs[0]!, title: 'Shared Title' },
+          song({
+            id: 'dsng_songb00000',
             title: 'Shared Title',
-          },
-          {
-            songId: 'song-b',
-            title: 'Shared Title',
-            artist: 'Other Artist',
-            bpm: 190,
-            category: CategoryEnum.Maimai,
-            imageName: 'song-b',
-            isNew: false,
-            isLocked: false,
-            searchAcronyms: ['sb'],
-            sheets: [
-              {
-                internalId: 10002,
-                type: TypeEnum.DX,
-                difficulty: DifficultyEnum.Master,
-                level: '13',
-                internalLevelValue: 13,
-                noteDesigner: 'Other Designer',
-                noteCounts: { tap: 2, hold: 2, slide: 2, touch: 2, break: 2, total: 10 },
-                regions: { jp: true, intl: true, cn: false },
-                isSpecial: false,
-                version: VersionEnum.PRiSMPLUS,
-              },
-            ],
-          },
+            sheets: [sheet({ id: 'dsht_songbdxmas', internalId: 10002 })],
+          }),
         ],
       },
       VersionEnum.CiRCLE,
     )
 
     expect(
-      catalog.resolveReference({
-        kind: 'provider-music-id',
-        musicId: 10002,
-        difficulty: DifficultyEnum.Master,
-      })?.identity.songId,
-    ).toBe('song-b')
+      catalog.resolveReference({ kind: 'provider-music-id', musicId: 10002, difficulty: DifficultyEnum.Master })
+        ?.songId,
+    ).toBe('dsng_songb00000')
   })
 
   it('resolves provider music id maps through exact mapped names', () => {
     const catalog = buildSongCatalog(fixtureData, VersionEnum.CiRCLE)
-    const sheet = catalog.resolveReference({
+    const versioned = catalog.resolveReference({
       kind: 'provider-music-id',
       musicId: 99999,
       difficulty: DifficultyEnum.Master,
-      map: {
-        '99999': { name: 'Song A', ver: '24000' },
-      },
+      map: { '99999': { name: 'Song A', ver: '24000' } },
     })
 
-    expect(sheet?.identity).toEqual({
-      songId: 'song-a',
-      type: TypeEnum.DX,
-      difficulty: DifficultyEnum.Master,
-    })
+    expect(versioned?.identity).toEqual(SONG_A_DX_MASTER)
   })
 
-  it('resolves provider music id maps by song id before ambiguous title fallback', () => {
+  it('resolves provider music id maps by legacy song ID before ambiguous title fallback', () => {
     const catalog = buildSongCatalog(
       {
         ...fixtureData,
         songs: [
-          {
-            ...fixtureData.songs[0]!,
-            songId: 'Shared Name',
+          { ...fixtureData.songs[0]!, title: 'Shared Name' },
+          song({
+            id: 'dsng_songb00000',
             title: 'Shared Name',
-          },
-          {
-            songId: 'song-b',
-            title: 'Shared Name',
-            artist: 'Other Artist',
-            bpm: 190,
-            category: CategoryEnum.Maimai,
-            imageName: 'song-b',
-            isNew: false,
-            isLocked: false,
-            searchAcronyms: ['sb'],
-            sheets: [
-              {
-                internalId: 10002,
-                type: TypeEnum.DX,
-                difficulty: DifficultyEnum.Master,
-                level: '13',
-                internalLevelValue: 13,
-                noteDesigner: 'Other Designer',
-                noteCounts: { tap: 2, hold: 2, slide: 2, touch: 2, break: 2, total: 10 },
-                regions: { jp: true, intl: true, cn: false },
-                isSpecial: false,
-                version: VersionEnum.PRiSMPLUS,
-              },
-            ],
-          },
+            sheets: [sheet({ id: 'dsht_songbdxmas', internalId: 10002 })],
+          }),
         ],
       },
       VersionEnum.CiRCLE,
     )
+    const reference = {
+      kind: 'provider-music-id' as const,
+      musicId: 999999,
+      difficulty: DifficultyEnum.Master,
+      map: { '999999': { name: 'Shared Name' } },
+    }
+
+    expect(catalog.resolveReference(reference)).toBeNull()
+    expect(
+      catalog.resolveReference({ ...reference, legacySongIds: { 'Shared Name': 'dsng_songa00000' } })?.songId,
+    ).toBe('dsng_songa00000')
+  })
+
+  it('resolves legacy sheet identities through the legacy song ID map, then an unambiguous title', () => {
+    const catalog = buildSongCatalog(fixtureData, VersionEnum.CiRCLE)
+    const identity = { legacySongId: 'song-a', type: TypeEnum.DX, difficulty: DifficultyEnum.Master } as const
 
     expect(
-      catalog.resolveReference({
-        kind: 'provider-music-id',
-        musicId: 999999,
-        difficulty: DifficultyEnum.Master,
-        map: {
-          '999999': { name: 'Shared Name' },
-        },
-      })?.identity.songId,
-    ).toBe('Shared Name')
+      catalog.resolveReference({ kind: 'legacy', identity, legacySongIds: { 'song-a': 'dsng_songa00000' } })?.id,
+    ).toBe('dsht_songadxmas')
+    expect(catalog.resolveReference({ kind: 'legacy', identity, legacySongIds: {} })).toBeNull()
+    expect(
+      catalog.resolveReference({ kind: 'legacy', identity: { ...identity, legacySongId: 'Song A' }, legacySongIds: {} })
+        ?.id,
+    ).toBe('dsht_songadxmas')
   })
 
-  it('resolves cached provider music id maps through title fallback when internal id misses', () => {
-    const catalog = getDxdataSongCatalog(VersionEnum.CiRCLE)
-    const sheet = catalog.resolveReference({
-      kind: 'provider-music-id',
-      musicId: 99999,
-      difficulty: DifficultyEnum.Master,
-      map: {
-        '99999': { name: '君の知らない物語', ver: '24000' },
-      },
-    })
+  it('caches one catalog per document and version, with frozen sheets', () => {
+    const catalog = getSongCatalog(fixtureData, VersionEnum.CiRCLE)
 
-    expect(sheet?.identity).toEqual({
-      songId: '君の知らない物語',
-      type: TypeEnum.DX,
-      difficulty: DifficultyEnum.Master,
-    })
+    expect(getSongCatalog(fixtureData, VersionEnum.CiRCLE)).toBe(catalog)
+    expect(getSongCatalog(fixtureData, VersionEnum.PRiSM)).not.toBe(catalog)
+    expect(Object.isFrozen(catalog.sheets)).toBe(true)
+    expect(Object.isFrozen(catalog.sheets[0])).toBe(true)
   })
+})
 
-  it('parses catalog ids for UTAGE custom difficulty labels', () => {
-    const catalog = buildSongCatalog(
-      {
-        updateTime: '2026-05-17T00:00:00.000Z',
-        categories: [],
-        versions: [],
-        types: [],
-        difficulties: [],
-        regions: [],
-        songs: [
-          {
-            songId: 'utage-song',
-            title: 'UTAGE Song',
-            artist: 'Artist',
-            bpm: 180,
-            category: CategoryEnum.宴会場,
-            imageName: 'utage-song',
-            isNew: false,
-            isLocked: false,
-            searchAcronyms: [],
-            sheets: [
-              {
-                internalId: 30001,
-                type: TypeEnum.UTAGE,
-                difficulty: '【協】' as unknown as DifficultyEnum,
-                level: '13?',
-                internalLevelValue: 13,
-                noteDesigner: null,
-                noteCounts: { tap: null, hold: null, slide: null, touch: null, break: null, total: null },
-                regions: { jp: true, intl: false, cn: false },
-                isSpecial: true,
-                version: VersionEnum.PRiSMPLUS,
-              },
-            ],
-          },
-        ],
-      },
-      VersionEnum.CiRCLE,
+describe('Song Catalog of the bundled snapshot', () => {
+  const catalog = getSongCatalog(catalogSnapshot, VersionEnum.CiRCLE)
+
+  it('has a unique public ID for every sheet', () => {
+    expect(new Set(catalog.sheets.map((versioned) => versioned.id)).size).toBe(catalog.sheets.length)
+    expect(catalog.sheets.every((versioned) => /^dsht_[23456789abcdefghjkmnpqrstvwxyz]{10}$/.test(versioned.id))).toBe(
+      true,
     )
-    const sheet = catalog.sheets[0]
-
-    expect(sheet?.id).toBe('utage-song__dxrt__utage__dxrt__【協】')
-    const identity = sheet ? getSheetIdentityFromId(sheet.id) : null
-    expect(identity).toEqual({
-      songId: 'utage-song',
-      type: TypeEnum.UTAGE,
-      difficulty: '【協】',
-    })
-    if (!identity) throw new Error('Expected UTAGE catalog id to parse')
-    expect(catalog.getByIdentity(identity)?.id).toBe(sheet?.id)
   })
 
-  it('resolves bundled provider music ids by internal id before ambiguous title fallback', () => {
-    const catalog = getDxdataSongCatalog(VersionEnum.CiRCLE)
-    const sheet = catalog.resolveReference({
+  it('resolves provider music ids by internal id before ambiguous title fallback (Link)', () => {
+    const versioned = catalog.resolveReference({
       kind: 'provider-music-id',
       musicId: 383,
       difficulty: DifficultyEnum.Basic,
     })
 
-    expect(sheet?.identity).toEqual({
-      songId: 'Link (2)',
-      type: TypeEnum.STD,
-      difficulty: DifficultyEnum.Basic,
+    expect(versioned?.songId).toBe(LEGACY_SONG_IDS['Link (2)'])
+    expect(versioned?.identity.type).toBe(TypeEnum.STD)
+  })
+
+  it('maps every legacy song ID to a song of the snapshot', () => {
+    const songIds = new Set(catalogSnapshot.songs.map((entry) => entry.id))
+    const missing = Object.entries(LEGACY_SONG_IDS).filter(([, songId]) => !songIds.has(songId))
+
+    expect(missing).toEqual([])
+  })
+
+  it('resolves cached provider music id maps through title fallback when internal id misses', () => {
+    const versioned = catalog.resolveReference({
+      kind: 'provider-music-id',
+      musicId: 99999,
+      difficulty: DifficultyEnum.Master,
+      map: { '99999': { name: '君の知らない物語', ver: '24000' } },
     })
-  })
 
-  it('prevents cached dxdata catalog mutations from leaking between callers', () => {
-    const catalog = getDxdataSongCatalog(VersionEnum.CiRCLE)
-    const originalLength = catalog.sheets.length
-    const firstSheet = catalog.sheets[0]
-    if (!firstSheet) throw new Error('Expected dxdata catalog to include at least one sheet')
-    const originalTitle = firstSheet.title
-    const mutableSheets = catalog.sheets as unknown[]
-    const mutableFirstSheet = firstSheet as unknown as { title: string }
-
-    try {
-      mutableSheets.push(firstSheet)
-    } catch {
-      // Frozen catalogs reject array mutation.
-    }
-
-    try {
-      mutableFirstSheet.title = 'Mutated title'
-    } catch {
-      // Frozen sheet objects reject property mutation.
-    }
-
-    const nextCatalog = getDxdataSongCatalog(VersionEnum.CiRCLE)
-    expect(nextCatalog.sheets).toHaveLength(originalLength)
-    expect(nextCatalog.sheets[0]?.title).toBe(originalTitle)
-  })
-
-  it('prevents cached dxdata lookup mutations from leaking between callers', () => {
-    const catalog = getDxdataSongCatalog(VersionEnum.CiRCLE)
-    const exposedSheet = catalog.sheets[0]
-    if (!exposedSheet) throw new Error('Expected dxdata catalog to include at least one sheet')
-
-    const lookupById = catalog.getById(exposedSheet.id)
-    const lookupByIdentity = catalog.getByIdentity(exposedSheet.identity)
-    const lookupByReference = catalog.resolveReference({
-      kind: 'identity',
-      identity: exposedSheet.identity,
-    })
-    if (!lookupById || !lookupByIdentity || !lookupByReference) {
-      throw new Error('Expected dxdata catalog lookups to resolve the exposed sheet')
-    }
-
-    expect(Object.isFrozen(lookupById)).toBe(true)
-    expect(Object.isFrozen(lookupByIdentity)).toBe(true)
-    expect(Object.isFrozen(lookupByReference)).toBe(true)
-    expect(lookupById).toBe(exposedSheet)
-    expect(lookupByIdentity).toBe(exposedSheet)
-    expect(lookupByReference).toBe(exposedSheet)
-
-    try {
-      ;(lookupById as unknown as { title: string }).title = '__MUTATED_BY_LOOKUP__'
-    } catch {
-      // Frozen lookup results reject property mutation.
-    }
-
-    const nextCatalog = getDxdataSongCatalog(VersionEnum.CiRCLE)
-    expect(nextCatalog.getById(exposedSheet.id)?.title).toBe(exposedSheet.title)
-    expect(nextCatalog.getByIdentity(exposedSheet.identity)?.title).toBe(exposedSheet.title)
-    expect(
-      nextCatalog.resolveReference({
-        kind: 'identity',
-        identity: exposedSheet.identity,
-      })?.title,
-    ).toBe(exposedSheet.title)
-    expect(nextCatalog.sheets[0]?.title).toBe(exposedSheet.title)
-  })
-
-  it('freezes a copy that matches the projected catalog without freezing dxdata itself', () => {
-    const catalog = getDxdataSongCatalog(VersionEnum.CiRCLE)
-    const projected = buildSongCatalog(dxdata, VersionEnum.CiRCLE)
-
-    expect(catalog.sheets).toEqual(projected.sheets)
-    expect(Object.isFrozen(catalog.sheets[0])).toBe(true)
-    expect(Object.isFrozen(dxdata.songs[0])).toBe(false)
-    expect(Object.isFrozen(dxdata.songs[0]?.sheets)).toBe(false)
-  })
-
-  it('deep-freezes runtime nested dxdata extras returned through cached lookups', () => {
-    const catalog = getDxdataSongCatalog(VersionEnum.CiRCLE)
-    const sheetWithOverrides = catalog.sheets.find((sheet) => getIntlRegionOverrides(sheet))
-    if (!sheetWithOverrides) throw new Error('Expected dxdata catalog to include regionOverrides.intl')
-
-    const lookup = catalog.getById(sheetWithOverrides.id)
-    const regionOverrides = getRegionOverrides(lookup)
-    const intlOverrides = getIntlRegionOverrides(lookup)
-    if (!regionOverrides || !intlOverrides) {
-      throw new Error('Expected dxdata lookup to expose regionOverrides.intl')
-    }
-
-    expect(Object.isFrozen(regionOverrides)).toBe(true)
-    expect(Object.isFrozen(intlOverrides)).toBe(true)
-
-    try {
-      intlOverrides.__lookupProbe = '__MUTATED_REGION_OVERRIDES__'
-    } catch {
-      // Frozen nested runtime extras reject property mutation.
-    }
-
-    const nextLookup = getDxdataSongCatalog(VersionEnum.CiRCLE).getById(sheetWithOverrides.id)
-    expect(getIntlRegionOverrides(nextLookup)?.__lookupProbe).toBeUndefined()
+    expect(versioned?.songId).toBe(LEGACY_SONG_IDS['君の知らない物語'])
   })
 })
-
-function getRegionOverrides(sheet: unknown): Record<string, unknown> | undefined {
-  const regionOverrides = (sheet as { regionOverrides?: unknown } | null | undefined)?.regionOverrides
-  return isRecord(regionOverrides) ? regionOverrides : undefined
-}
-
-function getIntlRegionOverrides(sheet: unknown): Record<string, unknown> | undefined {
-  const intlOverrides = getRegionOverrides(sheet)?.intl
-  return isRecord(intlOverrides) ? intlOverrides : undefined
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-}

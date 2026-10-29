@@ -1,4 +1,6 @@
-import { getDxdataSongCatalog, normalizeMuNetRows, type ProviderMusicIdMap } from '@gekichumai/maimai-domain'
+import { useSongCatalog } from '@/catalog/CatalogContext'
+import { loadLegacySongIds } from '@/catalog/legacySongIds'
+import { normalizeMuNetRows, type ProviderMusicIdMap } from '@gekichumai/maimai-domain'
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
 import type { FC } from 'react'
 import toast from 'react-hot-toast'
@@ -7,7 +9,6 @@ import type { ListActions } from 'react-use/lib/useList'
 import { z } from 'zod'
 import MdiEarthArrowDown from '~icons/mdi/earth-arrow-down'
 import { useWebHaptics } from 'web-haptics/react'
-import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
@@ -28,7 +29,7 @@ export const ImportFromMuNetButtonListItem: FC<{
 }> = ({ modifyEntries, onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
   const haptic = useWebHaptics()
-  const appVersion = useAppContextDXDataVersion()
+  const catalog = useSongCatalog()
 
   return (
     <MenuItem
@@ -71,7 +72,7 @@ export const ImportFromMuNetButtonListItem: FC<{
                 level: musicDetail.level,
                 achievement: musicDetail.achievement,
               }))
-              const importResult = normalizeMuNetRows(getDxdataSongCatalog(appVersion), rows, musicIdMap)
+              const importResult = normalizeMuNetRows(catalog, rows, musicIdMap, await loadLegacySongIds())
               const entries = importResultToPlayEntries(importResult)
               for (const warning of importResult.warnings) {
                 console.warn('[ImportFromMuNetButtonListItem]', warning.message, warning.row)

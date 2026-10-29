@@ -5,7 +5,8 @@ import { renderToString } from 'react-dom/server'
 import { SWRConfig } from 'swr'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CombinedTags } from '../models/useCombinedTags'
-import { getFlattenedSheetsForVersion, useSheets, useSongs, type ServerAlias } from '../songs'
+import { useSheets, useSongs, type ServerAlias } from '../songs'
+import { getSnapshotFlattenedSheets as getFlattenedSheetsForVersion } from '../test-utils/catalog'
 
 const state = vi.hoisted(() => ({
   version: 'MAGiCAL' as string,
@@ -43,7 +44,15 @@ const tagsFor = (tagId: number): CombinedTags => {
   return {
     tags: [],
     tagGroups: [],
-    tagSongs: [{ song_id: sheet.songId, sheet_type: sheet.type, sheet_difficulty: sheet.difficulty, tag_id: tagId }],
+    tagSongs: [
+      {
+        song_id: sheet.songId,
+        sheet_id: sheet.id,
+        sheet_type: sheet.type,
+        sheet_difficulty: sheet.difficulty,
+        tag_id: tagId,
+      },
+    ],
   } as CombinedTags
 }
 

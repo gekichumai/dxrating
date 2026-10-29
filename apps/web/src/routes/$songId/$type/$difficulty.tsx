@@ -1,5 +1,6 @@
-import { dxdata } from '@gekichumai/dxdata'
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
+import { getBundledCatalogDocument } from '@/catalog/bundledCatalog'
+import { findSongById, resolveSongRouteParam } from '@/catalog/songLookup'
 
 export const LEGACY_SHEET_PATH_REDIRECT_STATUS_CODE = 308
 
@@ -16,8 +17,11 @@ export const resolveLegacySheetPathRedirect = (songId: string, type: string, dif
 
 export const Route = createFileRoute('/$songId/$type/$difficulty')({
   ssr: true,
-  beforeLoad: ({ params }) => {
-    const song = dxdata.songs.find((s) => s.songId === params.songId)
+  beforeLoad: async ({ params }) => {
+    const catalogDocument = getBundledCatalogDocument()
+    const resolution = await resolveSongRouteParam(catalogDocument, params.songId)
+    const song =
+      resolution && ('song' in resolution ? resolution.song : findSongById(catalogDocument, resolution.redirectSongId))
     if (!song) {
       throw notFound()
     }
@@ -27,6 +31,6 @@ export const Route = createFileRoute('/$songId/$type/$difficulty')({
       throw notFound()
     }
 
-    throw redirect(resolveLegacySheetPathRedirect(params.songId, params.type, params.difficulty))
+    throw redirect(resolveLegacySheetPathRedirect(song.id, params.type, params.difficulty))
   },
 })

@@ -126,10 +126,12 @@ describe('TrendingPage', () => {
     }
 
     expect(buildTrendingQueryOptions(initialTrendingData, true)).toEqual({
+      input: { idScheme: 'public' },
       enabled: false,
       staleTime: 60 * 60 * 1000,
     })
     expect(mocks.queryOptions).toHaveBeenCalledWith({
+      input: { idScheme: 'public' },
       enabled: false,
       staleTime: 60 * 60 * 1000,
     })

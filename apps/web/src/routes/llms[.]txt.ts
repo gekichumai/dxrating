@@ -1,7 +1,7 @@
-import { dxdataUpdateTime } from '@gekichumai/dxdata'
 import { createFileRoute } from '@tanstack/react-router'
+import { getBundledCatalogDocument } from '@/catalog/bundledCatalog'
 
-export function buildLlmsTxt() {
+export function buildLlmsTxt(catalogUpdatedAt = getBundledCatalogDocument().updatedAt) {
   return `# DXRating
 
 DXRating is a maimai DX rating calculator and chart database. It provides canonical chart pages, localized metadata, score/rating tools, tags, comments, aliases, and chart facts such as difficulty, internal level, note counts, regions, release dates, and designers.
@@ -17,6 +17,7 @@ DXRating is a maimai DX rating calculator and chart database. It provides canoni
 - Sitemap: https://dxrating.net/sitemap.xml
 - OpenSearch description: https://dxrating.net/opensearch.xml
 - API base: https://miruku.dxrating.net/api/v1
+- Song catalog (JSON, every song and chart): https://miruku.dxrating.net/api/v1/dxdata
 - API catalog: https://dxrating.net/.well-known/api-catalog
 - API specification: https://miruku.dxrating.net/spec.json
 - API documentation: https://miruku.dxrating.net/docs
@@ -26,6 +27,7 @@ DXRating is a maimai DX rating calculator and chart database. It provides canoni
 ## URL Patterns
 
 - Canonical chart page: https://dxrating.net/songs/{songId}/{type}/{difficulty}
+- Song IDs are the stable public IDs of the song catalog (dsng_ followed by 10 characters); links that use a song's title redirect to its canonical page
 - Chart types: dx, std, utage, utage2p
 - Difficulties: basic, advanced, expert, master, remaster
 - Chart Open Graph image: https://miruku.dxrating.net/api/v1/songs/{songId}/{type}/{difficulty}/og-image
@@ -36,8 +38,8 @@ Languages: English, Japanese, Korean, Simplified Chinese, Traditional Chinese.
 
 ## Data Notes
 
-- Song and chart metadata is generated from the repository's dxdata package.
-- Data update time: ${dxdataUpdateTime}
+- Song and chart metadata is the DXRating song catalog, served at https://miruku.dxrating.net/api/v1/dxdata.
+- Data update time: ${catalogUpdatedAt}
 - User-generated community data may include tags, comments, and aliases.
 - License: dxdata song and chart data is CC BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/). Credit it as "Data from DXRating (dxrating.net), CC BY-NC 4.0" and don't use it commercially. DXRating's code is MIT.
 
