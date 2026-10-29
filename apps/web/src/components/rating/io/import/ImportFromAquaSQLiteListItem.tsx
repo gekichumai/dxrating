@@ -21,6 +21,9 @@ import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
 import sqljs, { type Database } from 'sql.js'
+// The binary of the installed sql.js, served with the app: sql.js.org only hosts the latest build, under another
+// name than the browser build of the package asks for (sql-wasm-browser.wasm), and the versions must match.
+import sqlWasmUrl from 'sql.js/dist/sql-wasm-browser.wasm?url'
 import IconMdiDatabase from '~icons/mdi/database'
 import { type FlattenedSheet, useSheets } from '../../../../songs'
 import { type AquaUser, readAquaGamePlays, readAquaUsers } from '../../../../utils/aquaDB'
@@ -68,7 +71,7 @@ export const ImportFromAquaSQLiteListItem: FC<{
                 }
 
                 const SQL = await sqljs({
-                  locateFile: (file) => `https://sql.js.org/dist/${file}`,
+                  locateFile: () => sqlWasmUrl,
                 })
 
                 const r = new FileReader()

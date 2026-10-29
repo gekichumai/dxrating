@@ -2,7 +2,7 @@ import { sentryGlobalFunctionMiddleware, sentryGlobalRequestMiddleware } from '@
 import { createMiddleware, createStart } from '@tanstack/react-start'
 import { applyAgentDiscoveryHeaders } from './setup/agent-discovery'
 import { appendVaryHeader, detectServerLocale } from './setup/locale'
-import { applySecurityReportHeaders } from './setup/security-headers'
+import { applySecurityHeaders, createCspNonce } from './setup/security-headers'
 
 const localeMiddleware = createMiddleware().server(async ({ request, next }) => {
   const locale = detectServerLocale(request)
@@ -15,10 +15,13 @@ const localeMiddleware = createMiddleware().server(async ({ request, next }) => 
   return result
 })
 
-const securityReportHeadersMiddleware = createMiddleware().server(async ({ next }) => {
-  const result = await next()
+// The nonce reaches the router through the global start context (router.tsx), which renders it on every inline
+// script of the page; the same nonce goes into the Content-Security-Policy of the response.
+export const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
+  const cspNonce = createCspNonce()
+  const result = await next({ context: { cspNonce } })
 
-  applySecurityReportHeaders(result.response.headers)
+  applySecurityHeaders(result.response.headers, { nonce: cspNonce })
 
   return result
 })
@@ -36,7 +39,7 @@ export function buildStartOptions() {
     requestMiddleware: [
       sentryGlobalRequestMiddleware,
       localeMiddleware,
-      securityReportHeadersMiddleware,
+      securityHeadersMiddleware,
       agentDiscoveryHeadersMiddleware,
     ],
     functionMiddleware: [sentryGlobalFunctionMiddleware],
