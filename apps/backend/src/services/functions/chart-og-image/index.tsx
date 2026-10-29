@@ -1,11 +1,12 @@
 import { Effect, Data } from 'effect'
-import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
+import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import type { NoteCounts } from '@gekichumai/dxdata'
 import type { SheetDifficulty } from '@gekichumai/maimai-domain'
 import { ImageResponse } from '@takumi-rs/image-response'
 import type { Handler } from 'hono'
 import { createHash } from 'node:crypto'
 import type { CSSProperties, ReactNode } from 'react'
+import type { PublishedSong } from '../../mcp/catalog'
 import { fetchAssetEffect, fetchImageAssetEffect } from '../oneshot-renderer/assetFetcher'
 
 export class ChartOgRenderError extends Data.TaggedError('ChartOgRenderError')<{
@@ -94,19 +95,19 @@ export function formatInternalLevelLabelParts(internalLevelValue: number) {
   }
 }
 
-export function resolveChartOgImageData(songId: string, type: string, difficulty: string): ChartOgImageData | null {
-  const decodedSongId = decodePathParameterOnce(songId)
-  const decodedType = decodePathParameterOnce(type)
-  const decodedDifficulty = decodePathParameterOnce(difficulty)
-  const song =
-    dxdata.songs.find((candidate) => candidate.songId === songId) ??
-    dxdata.songs.find((candidate) => candidate.songId === decodedSongId)
-  if (!song) return null
+/**
+ * Finds the published song a path segment names: a public song ID (dsng_…) or a legacy song ID, as indexed pages and
+ * crawlers still request both. Returns null when no published song has it.
+ */
+export type ChartOgSongLookup<E = never, R = never> = (songId: string) => Effect.Effect<PublishedSong | null, E, R>
 
-  const sheet =
-    song.sheets.find((candidate) => candidate.type === type && candidate.difficulty === difficulty) ??
-    song.sheets.find((candidate) => candidate.type === decodedType && candidate.difficulty === decodedDifficulty)
-  if (!sheet) return null
+export function resolveChartOgImageData(
+  song: PublishedSong,
+  type: string,
+  difficulty: string,
+): ChartOgImageData | null {
+  const sheet = song.sheets.find((candidate) => candidate.type === type && candidate.difficulty === difficulty)
+  if (!sheet || !isSheetType(sheet.type)) return null
 
   const sheetDifficulty = sheet.difficulty as SheetDifficulty
   const difficultyDisplay = resolveDifficultyDisplay(sheet.type, sheetDifficulty)
@@ -115,13 +116,13 @@ export function resolveChartOgImageData(songId: string, type: string, difficulty
   const levelParts = formatInternalLevelLabelParts(sheet.internalLevelValue)
 
   return {
-    songId: song.songId,
+    songId: song.id,
     title: song.title,
     artist: song.artist,
     category: song.category,
     imageName: song.imageName,
     coverUrl: `${ASSET_ORIGIN}/images/cover/v2/${song.imageName}.jpg`,
-    detailUrl: buildChartOgDetailUrl(song.songId, sheet.type, sheet.difficulty),
+    detailUrl: buildChartOgDetailUrl(song.id, sheet.type, sheet.difficulty),
     type: sheet.type,
     typeLabel: TYPE_DISPLAY[sheet.type],
     difficulty: sheetDifficulty,
@@ -131,10 +132,40 @@ export function resolveChartOgImageData(songId: string, type: string, difficulty
     level: sheet.level,
     levelLabel: `${levelParts.prefix}${levelParts.integer}${levelParts.fraction}`,
     internalLevelValue: sheet.internalLevelValue,
-    noteDesigner: sheet.noteDesigner,
-    noteCounts: sheet.noteCounts,
+    noteDesigner: sheet.noteDesigner ?? null,
+    noteCounts: {
+      tap: sheet.noteCounts.tap ?? null,
+      hold: sheet.noteCounts.hold ?? null,
+      slide: sheet.noteCounts.slide ?? null,
+      touch: sheet.noteCounts.touch ?? null,
+      break: sheet.noteCounts.break ?? null,
+      total: sheet.noteCounts.total ?? null,
+    },
     version: sheet.version,
   }
+}
+
+/** The chart a request names, trying each path parameter as given and then decoded once (crawlers double-encode) */
+export const resolveChartOgImageDataEffect = <E, R>(
+  input: { songId: string; type: string; difficulty: string },
+  lookupSong: ChartOgSongLookup<E, R>,
+) =>
+  Effect.gen(function* () {
+    const decodedSongId = decodePathParameterOnce(input.songId)
+    const song =
+      (yield* lookupSong(input.songId)) ?? (decodedSongId === input.songId ? null : yield* lookupSong(decodedSongId))
+    if (!song) return null
+
+    return (
+      resolveChartOgImageData(song, input.type, input.difficulty) ??
+      resolveChartOgImageData(song, decodePathParameterOnce(input.type), decodePathParameterOnce(input.difficulty))
+    )
+  })
+
+const SHEET_TYPES = new Set<string>(Object.values(TypeEnum))
+
+function isSheetType(type: string): type is TypeEnum {
+  return SHEET_TYPES.has(type)
 }
 
 function decodePathParameterOnce(value: string) {
@@ -163,7 +194,7 @@ function isUtageType(type: TypeEnum) {
   return type === TypeEnum.UTAGE || type === TypeEnum.UTAGE2P
 }
 
-export function createChartOgImageHandler(renderImage?: RenderChartOgImage): Handler {
+export function createChartOgImageHandler(lookupSong: ChartOgSongLookup, renderImage?: RenderChartOgImage): Handler {
   return (c) =>
     Effect.runPromise(
       Effect.scoped(
@@ -173,7 +204,7 @@ export function createChartOgImageHandler(renderImage?: RenderChartOgImage): Han
           const difficulty = c.req.param('difficulty')
           if (!songId || !type || !difficulty) return c.text('Chart not found', 404)
 
-          const output = yield* renderChartOgImageOutputEffect({ songId, type, difficulty }, renderImage)
+          const output = yield* renderChartOgImageOutputEffect({ songId, type, difficulty }, lookupSong, renderImage)
           if (!output) return c.text('Chart not found', 404)
 
           return new Response(output.body, {
@@ -188,12 +219,13 @@ export function createChartOgImageHandler(renderImage?: RenderChartOgImage): Han
     )
 }
 
-export const renderChartOgImageOutputEffect = (
+export const renderChartOgImageOutputEffect = <E, R>(
   input: { songId: string; type: string; difficulty: string },
+  lookupSong: ChartOgSongLookup<E, R>,
   renderImage?: RenderChartOgImage,
 ) =>
   Effect.gen(function* () {
-    const data = resolveChartOgImageData(input.songId, input.type, input.difficulty)
+    const data = yield* resolveChartOgImageDataEffect(input, lookupSong)
     if (!data) return null
 
     const image = yield* renderImage
@@ -585,5 +617,3 @@ const styles = {
     lineHeight: 1,
   },
 } satisfies Record<string, CSSProperties>
-
-export const handler = createChartOgImageHandler()
