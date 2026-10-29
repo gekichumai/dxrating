@@ -288,7 +288,7 @@ export const GUIDE_SCRIPT = String.raw`
           }, 1600);
         }, function () {
           var range = d.createRange(), selection = getSelection();
-          range.selectNodeContents(box.querySelector('pre, code, p') || box);
+          range.selectNodeContents(box.querySelector('pre') || box.querySelector('code') || box.querySelector('p') || box);
           selection.removeAllRanges();
           selection.addRange(range);
         });
