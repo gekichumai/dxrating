@@ -4,7 +4,7 @@ import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   CATALOG_CACHED_MARKER_KEY,
-  CATALOG_PRELOAD_INLINE_SCRIPT,
+  CATALOG_EARLY_FETCH_INLINE_SCRIPT,
   CATALOG_URL,
   getLoadedCatalogDocument,
   loadClientCatalogDocument,
@@ -84,7 +84,7 @@ describe('client catalog loading', () => {
 
     await expect(loadClientCatalogDocument()).resolves.toEqual(NEW)
 
-    // a plain request, so it consumes the <link rel=preload> of the head script
+    // without a request from the head script, the loader starts its own
     expect(fetchMock).toHaveBeenCalledWith(CATALOG_URL)
     expect(getLoadedCatalogDocument()).toEqual(NEW)
     await vi.waitFor(() => expect(localStorage.getItem(CATALOG_CACHED_MARKER_KEY)).toBe('1'))
@@ -254,32 +254,47 @@ describe('client catalog loading', () => {
   })
 })
 
-describe('catalog preload script', () => {
+describe('catalog early fetch script', () => {
+  const fetchMock = vi.fn<typeof fetch>()
+
   beforeEach(() => {
     localStorage.clear()
-    for (const link of document.head.querySelectorAll('link[rel=preload]')) link.remove()
+    window.__dxratingCatalogRequest = undefined
+    vi.stubGlobal('fetch', fetchMock)
+    fetchMock.mockReset()
+    fetchMock.mockResolvedValue(jsonResponse(NEW, { headers: { etag: 'W/"new"' } }))
   })
 
-  it('preloads the catalog for visitors without a cached copy', () => {
-    new Function(CATALOG_PRELOAD_INLINE_SCRIPT)()
-
-    const link = document.head.querySelector('link[rel=preload]') as HTMLLinkElement
-    expect(link.getAttribute('href')).toBe(CATALOG_URL)
-    expect(link.getAttribute('as')).toBe('fetch')
-    expect(link.getAttribute('crossorigin')).toBe('anonymous')
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    window.__dxratingCatalogRequest = undefined
+    setLoadedCatalogDocumentForTests(catalogSnapshot)
   })
 
-  it('adds the preload once, though the router runs head scripts again when it hydrates', () => {
-    new Function(CATALOG_PRELOAD_INLINE_SCRIPT)()
-    new Function(CATALOG_PRELOAD_INLINE_SCRIPT)()
+  it('starts the download for visitors without a cached copy, and the first load takes it over', async () => {
+    new Function(CATALOG_EARLY_FETCH_INLINE_SCRIPT)()
+    expect(fetchMock).toHaveBeenCalledExactlyOnceWith(CATALOG_URL)
 
-    expect(document.head.querySelectorAll('link[rel=preload]')).toHaveLength(1)
+    setLoadedCatalogDocumentForTests(null)
+    vi.stubGlobal('caches', undefined)
+    await expect(loadClientCatalogDocument()).resolves.toEqual(NEW)
+
+    // no second request, also when the router runs the head script again after the load took the request over
+    new Function(CATALOG_EARLY_FETCH_INLINE_SCRIPT)()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
-  it('leaves the preload out when the catalog is cached', () => {
+  it('starts one download, though the router runs head scripts again when it hydrates', () => {
+    new Function(CATALOG_EARLY_FETCH_INLINE_SCRIPT)()
+    new Function(CATALOG_EARLY_FETCH_INLINE_SCRIPT)()
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('downloads nothing when the catalog is cached', () => {
     localStorage.setItem(CATALOG_CACHED_MARKER_KEY, '1')
-    new Function(CATALOG_PRELOAD_INLINE_SCRIPT)()
+    new Function(CATALOG_EARLY_FETCH_INLINE_SCRIPT)()
 
-    expect(document.head.querySelector('link[rel=preload]')).toBeNull()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 })
