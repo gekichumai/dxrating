@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { securityHeadersMiddleware } from '../../start'
 
 type ServerMiddleware = (options: {
@@ -18,6 +18,15 @@ const runMiddleware = async () => {
 }
 
 describe('security headers middleware', () => {
+  // As in a production build
+  beforeEach(() => {
+    vi.stubEnv('DEV', false)
+    vi.stubEnv('VITE_BACKEND_URL', 'https://miruku.dxrating.net')
+  })
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   it('hands the router the same nonce that the enforced policy allows', async () => {
     const { context, headers } = await runMiddleware()
     const nonce = context?.cspNonce

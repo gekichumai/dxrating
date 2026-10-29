@@ -2,11 +2,18 @@ import { describe, expect, it } from 'vitest'
 import {
   SECURITY_REPORT_ENDPOINT_GROUP,
   SENTRY_SECURITY_REPORT_ENDPOINT,
-  applySecurityHeaders,
+  type SecurityHeaderOptions,
+  applySecurityHeaders as applyHeaders,
   buildContentSecurityPolicy,
-  buildSecurityHeaders,
+  buildSecurityHeaders as buildHeaders,
   createCspNonce,
 } from '../security-headers'
+
+// A production build that calls the production backend
+const production = { reportOnly: false, backendUrl: 'https://miruku.dxrating.net' } satisfies SecurityHeaderOptions
+const buildSecurityHeaders = (options: SecurityHeaderOptions = {}) => buildHeaders({ ...production, ...options })
+const applySecurityHeaders = (headers: Headers, options: SecurityHeaderOptions = {}) =>
+  applyHeaders(headers, { ...production, ...options })
 
 const getDirectiveSources = (policy: string, directive: string) => {
   const entry = policy.split('; ').find((item) => item.startsWith(`${directive} `))
@@ -133,5 +140,30 @@ describe('security headers', () => {
     expect(responseHeaders.get('Content-Security-Policy')).toContain(`'nonce-${nonce}'`)
     expect(responseHeaders.get('Content-Security-Policy')).toContain(`report-uri ${SENTRY_SECURITY_REPORT_ENDPOINT}`)
     expect(responseHeaders.get('Content-Security-Policy-Report-Only')).toContain("'strict-dynamic'")
+  })
+
+  it('allows the backend the build is configured with', () => {
+    const local = getDirectiveSources(
+      buildContentSecurityPolicy({ backendUrl: 'http://localhost:3000' }),
+      'connect-src',
+    )
+    const prod = getDirectiveSources(
+      buildContentSecurityPolicy({ backendUrl: 'https://miruku.dxrating.net/' }),
+      'connect-src',
+    )
+
+    expect(local).toContain('http://localhost:3000')
+    expect(prod.filter((source) => source === 'https://miruku.dxrating.net')).toHaveLength(1)
+    expect(getDirectiveSources(buildContentSecurityPolicy({ backendUrl: 'not a url' }), 'connect-src')).toEqual(
+      getDirectiveSources(buildContentSecurityPolicy(), 'connect-src'),
+    )
+  })
+
+  it('only reports on the development server, whose own scripts carry no nonce', () => {
+    const headers = buildSecurityHeaders({ nonce: createCspNonce(), reportOnly: true })
+
+    expect(headers).not.toHaveProperty('Content-Security-Policy')
+    expect(headers['Content-Security-Policy-Report-Only']).not.toContain("'strict-dynamic'")
+    expect(headers['X-Frame-Options']).toBe('DENY')
   })
 })

@@ -73,6 +73,25 @@ const CSP_DIRECTIVES = [
 export interface SecurityHeaderOptions {
   /** The per-request nonce of the inline scripts of the page, if it renders any */
   nonce?: string
+  /** The backend the client of this build calls (VITE_BACKEND_URL), e.g. http://localhost:3000 in development */
+  backendUrl?: string
+  /** Report violations of the policy without enforcing it (the development server, whose own scripts carry no nonce) */
+  reportOnly?: boolean
+}
+
+const defaultSecurityHeaderOptions = (): SecurityHeaderOptions => ({
+  backendUrl: import.meta.env.VITE_BACKEND_URL,
+  reportOnly: import.meta.env.DEV,
+})
+
+const originOf = (url: string | undefined) => {
+  if (!url) return undefined
+  try {
+    const { origin } = new URL(url)
+    return origin === 'null' ? undefined : origin
+  } catch {
+    return undefined
+  }
 }
 
 /** A fresh nonce for the Content-Security-Policy of one response: 128 random bits, base64 */
@@ -84,12 +103,18 @@ export function createCspNonce() {
 
 export function buildContentSecurityPolicy({
   nonce,
+  backendUrl,
   strictDynamic = false,
 }: SecurityHeaderOptions & { strictDynamic?: boolean } = {}) {
+  const backendOrigin = originOf(backendUrl)
   const policy = CSP_DIRECTIVES.map(([directive, sources]) => {
     const allSources: string[] = [...sources]
     if (directive === 'script-src' && nonce) {
       allSources.splice(1, 0, `'nonce-${nonce}'`, ...(strictDynamic ? ["'strict-dynamic'"] : []))
+    }
+    // The API and auth requests of the client go to the backend of the build, which is not always production's.
+    if (directive === 'connect-src' && backendOrigin && !allSources.includes(backendOrigin)) {
+      allSources.push(backendOrigin)
     }
     return `${directive} ${allSources.join(' ')}`
   })
@@ -100,13 +125,13 @@ export function buildContentSecurityPolicy({
   return policy.join('; ')
 }
 
-export function buildSecurityHeaders(options: SecurityHeaderOptions = {}) {
+export function buildSecurityHeaders(securityOptions: SecurityHeaderOptions = {}) {
+  const options = { ...defaultSecurityHeaderOptions(), ...securityOptions }
   const headers: Record<string, string> = {
     'X-Frame-Options': 'DENY',
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy': 'geolocation=(), camera=(), microphone=()',
-    'Content-Security-Policy': buildContentSecurityPolicy(options),
     'Report-To': JSON.stringify({
       group: SECURITY_REPORT_ENDPOINT_GROUP,
       max_age: REPORT_TO_MAX_AGE_SECONDS,
@@ -115,6 +140,13 @@ export function buildSecurityHeaders(options: SecurityHeaderOptions = {}) {
     }),
     'Reporting-Endpoints': `${SECURITY_REPORT_ENDPOINT_GROUP}="${SENTRY_SECURITY_REPORT_ENDPOINT}"`,
   }
+
+  if (options.reportOnly) {
+    headers['Content-Security-Policy-Report-Only'] = buildContentSecurityPolicy(options)
+    return headers
+  }
+
+  headers['Content-Security-Policy'] = buildContentSecurityPolicy(options)
 
   // Trial of 'strict-dynamic' (scripts are trusted by nonce, and the scripts they load, rather than by host), in
   // Report-Only mode beside the enforced policy: it passed a headless browse of the app, but reports from real
