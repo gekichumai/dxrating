@@ -255755,6 +255755,137 @@
                 }
             ],
             "searchAcronyms": []
+        },
+        {
+            "songId": "魔法仕掛けのファンタジア",
+            "category": "maimai",
+            "title": "魔法仕掛けのファンタジア",
+            "artist": "igel",
+            "bpm": 280.0,
+            "imageName": "b546c6d80257206f97bf76ac2d7eda94020383910ad689f8fc81aeaa57eb8b26",
+            "isNew": true,
+            "isLocked": true,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "5",
+                    "internalLevelValue": 5.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 164,
+                        "hold": 15,
+                        "slide": 8,
+                        "touch": 15,
+                        "break": 4,
+                        "total": 206
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "internalId": 2025,
+                    "releaseDate": "2026-10-29"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "8",
+                    "internalLevelValue": 8.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 248,
+                        "hold": 8,
+                        "slide": 18,
+                        "touch": 15,
+                        "break": 2,
+                        "total": 291
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "internalId": 2025,
+                    "releaseDate": "2026-10-29"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "12",
+                    "internalLevelValue": 12.2,
+                    "noteDesigner": "アマリリス",
+                    "noteCounts": {
+                        "tap": 477,
+                        "hold": 50,
+                        "slide": 50,
+                        "touch": 4,
+                        "break": 36,
+                        "total": 617
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "internalId": 2025,
+                    "releaseDate": "2026-10-29"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "14+",
+                    "internalLevelValue": 14.8,
+                    "noteDesigner": "lynx magical symphony",
+                    "noteCounts": {
+                        "tap": 620,
+                        "hold": 97,
+                        "slide": 87,
+                        "touch": 105,
+                        "break": 146,
+                        "total": 1055
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "internalId": 2025,
+                    "releaseDate": "2026-10-29"
+                }
+            ],
+            "searchAcronyms": [
+                "wec2026",
+                "wec2026决胜曲",
+                "比日本人快",
+                "魔法士",
+                "魔法机关幻想曲"
+            ]
         }
     ],
     "categories": [
@@ -255988,5 +256119,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-10-28T18:00:15.944742930+00:00"
+    "updateTime": "2026-10-29T14:56:01.619885631+00:00"
 }

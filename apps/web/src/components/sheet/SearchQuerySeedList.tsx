@@ -13,7 +13,7 @@ export const SearchQuerySeedList: FC<{ sheets: readonly SearchQuerySeedSheet[] }
       {sheets.map((sheet) => (
         <li key={`${sheet.songId}-${sheet.type}-${sheet.difficulty}`}>
           <a
-            className="block w-full cursor-pointer transition duration-500 hover:duration-25 px-4 no-underline text-inherit hover:bg-zinc-300/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
+            className="block w-full cursor-pointer transition-colors duration-150 hover:duration-25 px-4 no-underline text-inherit hover:bg-zinc-300/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
             href={sheet.path}
           >
             <SheetListItemContentView
