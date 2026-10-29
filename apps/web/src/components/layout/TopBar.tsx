@@ -3,6 +3,7 @@ import clsx from 'clsx'
 import { type ComponentType, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MdiChevronDown from '~icons/mdi/chevron-down'
+import MdiCodeBraces from '~icons/mdi/code-braces'
 import MdiGithub from '~icons/mdi/github'
 import DiscordLogo from '~icons/simple-icons/discord'
 import McpLogo from '~icons/simple-icons/modelcontextprotocol'
@@ -48,10 +49,17 @@ const COMMUNITY_LINKS: {
 // The MCP server lets AI assistants (Claude, ChatGPT, Cursor…) query DXRating. It links to the
 // human-readable setup guide; the endpoint itself lives at /mcp.
 const MCP_GUIDE_URL = 'https://mcp.dxrating.net/'
+// Public API base, OpenAPI spec, docs and MCP links for developers.
+const DEVELOPERS_URL = '/developers'
 
 const BRAND_BADGE_CLASS_NAME = 'text-white border-1 border-solid border-black/20 shadow'
 // MCP has no brand color; a white badge with the black logo keeps it distinct from the community links.
 const MCP_BADGE_CLASS_NAME = 'bg-white text-black border-1 border-solid border-black/20 shadow'
+const API_BADGE_CLASS_NAME = 'bg-slate-900 text-white border-1 border-solid border-black/20 shadow'
+
+// One segment of the MCP / API pill on wider screens.
+const DEVELOPER_PILL_SEGMENT_CLASS_NAME =
+  'flex h-8 items-center gap-1.5 rounded-full pl-2 pr-2.5 text-sm font-semibold text-black/80 hover:bg-white/45 transition-colors'
 
 // Small screens fold the community links into one menu so the header stays a single row; the
 // overlapping brand badges keep the entry point as recognizable as the full row on desktop.
@@ -91,6 +99,15 @@ const CommunityMenu = () => {
           )}
         >
           <McpLogo className="size-3.5" />
+        </span>
+        {/* 480–639px phones have room for the API badge too; narrower ones keep it in the menu only. */}
+        <span
+          className={clsx(
+            'hidden xs:flex size-7 items-center justify-center rounded-full -ml-2.5',
+            API_BADGE_CLASS_NAME,
+          )}
+        >
+          <MdiCodeBraces className="size-3.5" />
         </span>
         <MdiChevronDown className="hidden xs:block size-4 text-black/60" />
       </ButtonBase>
@@ -136,6 +153,19 @@ const CommunityMenu = () => {
           </ListItemIcon>
           <ListItemText>{t('root:external-links.mcp-short')}</ListItemText>
         </MenuItem>
+        <MenuItem
+          component="a"
+          href={DEVELOPERS_URL}
+          title={t('root:external-links.developers')}
+          onClick={() => setAnchorEl(null)}
+        >
+          <ListItemIcon>
+            <span className={clsx('flex size-7 items-center justify-center rounded-full', API_BADGE_CLASS_NAME)}>
+              <MdiCodeBraces className="size-3.5" />
+            </span>
+          </ListItemIcon>
+          <ListItemText>{t('root:external-links.developers-short')}</ListItemText>
+        </MenuItem>
       </Menu>
     </>
   )
@@ -167,18 +197,32 @@ export const TopBar = ({
         {/* Tighter icon buttons below 375px keep the row from colliding with the logo. */}
         <div className="flex items-center shrink-0 [&_.MuiIconButton-root]:p-1.5 2xs:[&_.MuiIconButton-root]:p-2">
           <div className="hidden sm:flex items-center gap-2">
-            <ButtonBase
-              component="a"
-              href={MCP_GUIDE_URL}
-              target="_blank"
-              rel="noopener"
-              aria-label={t('root:external-links.mcp')}
-              title={t('root:external-links.mcp')}
-              className="mr-1 flex h-9 items-center gap-1.5 rounded-full bg-white/35 hover:bg-white/50 pl-2.5 pr-3 text-sm font-semibold text-black/80 transition-colors"
-            >
-              <McpLogo className="size-4" />
-              MCP
-            </ButtonBase>
+            {/* MCP and the developer API share one pill so the "for developers / AI" entries read as a group. */}
+            <div className="mr-1 flex h-9 items-center rounded-full bg-white/35 p-0.5">
+              <ButtonBase
+                component="a"
+                href={MCP_GUIDE_URL}
+                target="_blank"
+                rel="noopener"
+                aria-label={t('root:external-links.mcp')}
+                title={t('root:external-links.mcp')}
+                className={DEVELOPER_PILL_SEGMENT_CLASS_NAME}
+              >
+                <McpLogo className="size-4" />
+                MCP
+              </ButtonBase>
+              <div className="h-4 w-px bg-black/15" aria-hidden />
+              <ButtonBase
+                component="a"
+                href={DEVELOPERS_URL}
+                aria-label={t('root:external-links.developers')}
+                title={t('root:external-links.developers')}
+                className={DEVELOPER_PILL_SEGMENT_CLASS_NAME}
+              >
+                <MdiCodeBraces className="size-4" />
+                API
+              </ButtonBase>
+            </div>
             {COMMUNITY_LINKS.map(({ key, href, Icon, brandClassName }) => (
               <IconButton
                 key={key}

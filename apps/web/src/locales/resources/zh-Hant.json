@@ -26,6 +26,8 @@
     "external-links.community": "社群",
     "external-links.mcp": "在 Claude、ChatGPT、Cursor 等 AI 助理中使用 DXRating（MCP 伺服器）",
     "external-links.mcp-short": "AI 助理 (MCP)",
+    "external-links.developers": "開發者：公開 API、OpenAPI 規格與文件",
+    "external-links.developers-short": "開發者與 API",
     "not-found.title": "找不到頁面",
     "not-found.description": "頁面可能已移動，或連結已經過期。",
     "not-found.back-to-home": "返回首頁",
