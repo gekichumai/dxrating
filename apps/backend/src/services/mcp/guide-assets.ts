@@ -43,7 +43,6 @@ body{margin:0;min-height:100vh;color:var(--ink);font:400 16px/1.65 var(--sans);-
 h1,h2,h3{text-wrap:balance}
 p,li,dd{text-wrap:pretty}
 a{color:var(--acc-ink);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.22em;text-decoration-color:color-mix(in srgb,currentColor 40%,transparent)}
-a:hover{text-decoration-color:currentColor}
 p a,li a,dd a{overflow-wrap:anywhere}
 strong{font-weight:600;color:var(--ink)}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:6px}
@@ -53,6 +52,9 @@ code{font-family:var(--mono);font-size:.86em}
 .sr{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .sprite{position:absolute;width:0;height:0;overflow:hidden}
 .i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+/* strokes in pixels, whatever the size of the icon: 1.5 by regular text, 2 by semibold */
+.sprite *{vector-effect:non-scaling-stroke}
+.cp .i,.pill-btn .i,.badges .i{stroke-width:2}
 .skip{position:absolute;left:12px;top:-60px;z-index:30;padding:8px 14px;border-radius:999px;background:var(--btn);color:var(--on-btn);text-decoration:none;font-weight:600}
 .skip:focus{top:10px}
 .in{max-width:1080px;margin:0 auto;padding:0 24px}
@@ -60,16 +62,17 @@ code{font-family:var(--mono);font-size:.86em}
 /* the bar of dxrating.net: the wordmark on the teal of the theme */
 .bar{position:sticky;top:0;z-index:20;background:var(--bar);color:var(--bar-ink);box-shadow:0 1px 0 rgba(0,0,0,.08),0 6px 18px -12px rgba(0,0,0,.4)}
 .bar .in{display:flex;align-items:center;gap:18px;height:60px}
-.mark{display:inline-flex;align-items:center;gap:10px;color:inherit;text-decoration:none;font-size:18px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
-.mark img{width:30px;height:30px;border-radius:8px;box-shadow:0 0 0 1px rgba(255,255,255,.35)}
+.mark{display:inline-flex;align-items:center;gap:2px;font-size:18px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+/* the logo and the name, a link to the website: 8 (the icon) + 4 */
+.home{display:inline-flex;align-items:center;gap:10px;margin-left:-4px;padding:4px 8px 4px 4px;border-radius:12px;color:inherit;text-decoration:none}
+.bar .home:focus-visible{outline-offset:0;border-radius:12px}
+.home img{width:30px;height:30px;border-radius:8px;box-shadow:0 0 0 1px rgba(255,255,255,.35)}
 .chip{padding:3px 8px 2px;border-radius:999px;background:rgba(255,255,255,.2);font-size:11px;font-weight:600;letter-spacing:.06em}
 .jump{display:flex;gap:2px;margin-left:8px}
 .jump a,.md{padding:6px 12px;border-radius:999px;color:inherit;opacity:.9;text-decoration:none;font-size:14px;white-space:nowrap}
-.jump a:hover,.md:hover{opacity:1;background:rgba(255,255,255,.14)}
 .bar-r{display:flex;align-items:center;gap:8px;margin-left:auto}
 .langs{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:rgba(0,0,0,.16)}
 .langs a{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;color:inherit;text-decoration:none;font-size:13px;line-height:1;white-space:nowrap;opacity:.88}
-.langs a:hover{opacity:1}
 .langs a[aria-current]{opacity:1;background:#fff;color:#0f6e59;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .ln-s{display:none}
 .bar :focus-visible{outline-color:#fff}
@@ -83,8 +86,8 @@ h1 .h1-b{color:var(--acc-ink)}
 .l1{display:block;margin-bottom:4px;font-size:21px;font-weight:600;color:var(--ink)}
 .aside{margin:14px auto 0;max-width:46em;font-size:14px;color:var(--mut)}
 .badges{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:26px 0 0;padding:0;list-style:none}
-.badges li{display:inline-flex;align-items:center;gap:6px;padding:5px 14px 5px 10px;border-radius:999px;background:var(--panel);box-shadow:inset 0 0 0 1px var(--line);font-size:13px;font-weight:600;color:var(--ink2)}
-.badges .i{width:14px;height:14px;color:var(--acc);stroke-width:2}
+.badges li{display:inline-flex;align-items:center;gap:6px;padding:4px 13px 4px 9px;border:1px solid transparent;border-radius:999px;background:var(--panel) padding-box;box-shadow:inset 0 0 0 1px var(--line);font-size:13px;font-weight:600;color:var(--ink2)}
+.badges .i{width:14px;height:14px;color:var(--acc)}
 
 /* panels: the translucent cards of dxrating.net */
 .panel{border-radius:var(--r);background:var(--panel);border:1px solid var(--panel-bd);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3)}
@@ -95,7 +98,8 @@ h1 .h1-b{color:var(--acc-ink)}
 /* connect: the URL and how to add it by hand, then the prompt for an agent */
 .connect{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
 .connect>.panel{padding:24px}
-.field{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 16px;border-radius:12px;background:var(--solid);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--acc) 55%,transparent)}
+/* a pill around the pill of its button: 19 + 5 + 1 is half its height */
+.field{display:flex;align-items:center;gap:8px;padding:5px 5px 5px 19px;border:1px solid transparent;border-radius:999px;background:var(--solid) padding-box;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--acc) 55%,transparent)}
 .field code{flex:1;padding:0;background:none;min-width:0;font-size:15px;line-height:1.5;white-space:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-user-select:all;user-select:all}
 .facts{margin:16px 0 0}
 .facts>div{display:grid;grid-template-columns:132px minmax(0,1fr);gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.55}
@@ -104,25 +108,28 @@ h1 .h1-b{color:var(--acc-ink)}
 .facts dd{margin:0;color:var(--ink2)}
 .oc{margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
 .oc-g{display:flex;flex-wrap:wrap;gap:8px}
-.pill-btn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px 0 16px;border-radius:999px;background:var(--solid);box-shadow:inset 0 0 0 1px var(--line2),0 1px 2px rgba(16,60,50,.06);color:var(--ink);font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap}
-.pill-btn:hover{box-shadow:inset 0 0 0 1.5px var(--acc);color:var(--acc-ink)}
+.pill-btn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 13px 0 15px;border:1px solid transparent;border-radius:999px;background:var(--solid) padding-box;box-shadow:inset 0 0 0 1px var(--line2),0 1px 2px rgba(16,60,50,.06);color:var(--ink);font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap}
 .pill-btn .i{width:14px;height:14px;color:var(--acc)}
 .agent h2{margin:0 0 6px;font-size:20px;line-height:1.3;font-weight:600}
 .agent .note{margin:0 0 14px}
-.prompt{margin:0;padding:14px 16px;border-radius:12px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);font:13.5px/1.7 var(--mono);color:var(--ink2);white-space:pre-wrap;overflow-wrap:anywhere}
+.prompt{margin:0;padding:13px 15px;border:1px solid transparent;border-radius:12px;background:var(--sunk) padding-box;box-shadow:inset 0 0 0 1px var(--line);font:13.5px/1.7 var(--mono);color:var(--ink2);white-space:pre-wrap;overflow-wrap:anywhere}
 .prompt code{font-size:inherit}
 
 /* buttons that copy, which the script shows */
-.cp{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:30px;padding:0 10px;border:0;border-radius:999px;background:transparent;color:var(--mut);font:600 12.5px/1 var(--sans);cursor:pointer;white-space:nowrap}
+.cp{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:30px;padding:0 10px 0 8px;border:0;border-radius:999px;background:transparent;color:var(--mut);font:600 12.5px/1 var(--sans);cursor:pointer;white-space:nowrap}
 .cp[hidden]{display:none}
-.cp:hover{background:var(--acc-soft);color:var(--acc-ink)}
 .cp.ok{color:var(--acc-ink)}
 .cp-ico{width:32px;padding:0}
 .cp-solid,.cta{background:var(--btn);color:var(--on-btn)}
-.cp-solid{height:38px;padding:0 16px;font-size:14px}
-.cp-solid:hover,.cta:hover,.cp-solid.ok,.cta.ok{background:var(--btn-h);color:var(--on-btn)}
+.cp-solid{height:38px;padding:0 16px 0 14px;font-size:14px}
+.cp-solid.ok,.cta.ok{background:var(--btn-h);color:var(--on-btn)}
 .cta{width:100%;height:46px;margin-top:14px;font-size:15px;box-shadow:0 8px 20px -10px color-mix(in srgb,var(--btn) 80%,transparent)}
 .cta .i{width:18px;height:18px}
+/* the copy and copied icons, one over the other, cross-fade */
+.ic{display:grid;flex:none}
+.ic>.i{grid-area:1/1;transition:opacity .3s cubic-bezier(.2,0,0,1)}
+.ic>.i+.i,.ok .ic>.i:first-child{opacity:0}
+.ok .ic>.i+.i{opacity:1}
 
 /* sections */
 .sec{padding:64px 0 0}
@@ -130,15 +137,14 @@ h1 .h1-b{color:var(--acc-ink)}
 .sec>h2::before{content:"";flex:none;width:6px;height:24px;border-radius:3px;background:var(--acc)}
 h2 a{color:inherit;text-decoration:none}
 h2 a::after{content:"#";margin-left:.3em;color:var(--mut);opacity:0}
-h2 a:hover::after{opacity:.6}
 .sec-b>p{margin:0 0 16px;max-width:68ch;color:var(--ink2)}
 
 /* install: the apps as a segmented control, then the steps of one */
 .clients{display:flex;flex-wrap:wrap;gap:12px 20px;margin:0 0 16px}
 .grp-l{display:block;margin:0 0 6px 4px;font-size:12px;font-weight:600;color:var(--mut)}
-.seg{display:flex;flex-wrap:wrap;gap:4px;padding:4px;border-radius:22px;background:color-mix(in srgb,var(--solid) 55%,transparent);box-shadow:inset 0 0 0 1px var(--line)}
+/* 17 (the tabs) + 4 + 1 */
+.seg{display:flex;flex-wrap:wrap;gap:4px;padding:4px;border:1px solid transparent;border-radius:22px;background:color-mix(in srgb,var(--solid) 55%,transparent) padding-box;box-shadow:inset 0 0 0 1px var(--line)}
 .tab{display:inline-flex;align-items:center;min-height:34px;padding:0 15px;border-radius:999px;color:var(--ink2);font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap}
-.tab:hover{background:var(--acc-soft);color:var(--acc-ink)}
 .tab[aria-selected=true]{background:var(--btn);color:var(--on-btn);box-shadow:0 2px 8px -3px color-mix(in srgb,var(--btn) 70%,transparent)}
 .apps{padding:28px 32px}
 .app-p+.app-p{margin-top:36px;padding-top:32px;border-top:1px solid var(--line)}
@@ -156,12 +162,13 @@ h2 a:hover::after{opacity:.6}
 .docs>span{flex:none}
 .docs a{display:inline-flex;align-items:center;gap:4px;min-width:0;color:var(--ink2);text-decoration:none}
 .docs a span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.docs a:hover{color:var(--acc-ink)}
 .docs .i{width:13px;height:13px;color:var(--acc)}
 
 /* code: a label, a copy button, the code highlighted in the teal of the theme */
-.code{margin:12px 0 18px;border-radius:12px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
-.code-h{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:38px;padding:0 4px 0 14px;border-bottom:1px solid var(--line)}
+.code{margin:12px 0 18px;border:1px solid transparent;border-radius:18px;background:var(--sunk) padding-box;box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+/* its button in the corner, concentric with the block: 14 + 3 + 1 */
+.code-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:3px 3px 3px 14px;border-bottom:1px solid var(--line)}
+.code .cp{height:28px}
 .code-l{font:12px/1 var(--mono);color:var(--mut);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .code pre{margin:0;padding:12px 16px 14px;overflow-x:auto;font:13px/1.7 var(--mono);color:var(--ink2)}
 .code code{font-size:inherit}
@@ -214,7 +221,7 @@ h2 a:hover::after{opacity:.6}
 .foot-b img{width:22px;height:22px;border-radius:6px}
 .foot-l{display:flex;gap:12px}
 .foot-l a{color:var(--mut);text-decoration:none}
-.foot-l a[aria-current],.foot-l a:hover{color:var(--acc-ink)}
+.foot-l a[aria-current]{color:var(--acc-ink)}
 
 @media (max-width:900px){
 .jump{display:none}
@@ -224,6 +231,7 @@ h1{font-size:44px}
 @media (max-width:640px){
 .in{padding:0 16px}
 .bar .in{height:56px;gap:10px}
+.home{gap:8px}
 .md{display:none}
 .mark{font-size:17px}
 .langs a{padding:0 10px}
@@ -236,7 +244,7 @@ h1{font-size:36px}
 .lead{font-size:16px}
 .l1{font-size:18px}
 .connect>.panel{padding:18px}
-.field{padding-left:12px}
+.field{padding-left:15px}
 .field code{font-size:13.5px}
 .cp-solid{width:38px;padding:0}
 .cp-solid .t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
@@ -255,10 +263,32 @@ h1{font-size:36px}
 .faq{padding:4px 16px}
 }
 @media (max-width:360px){.chip{display:none}h1{font-size:32px}}
-@media (pointer:coarse){.tab{min-height:40px}.cp{height:36px}.cp-ico{width:36px}.langs a{min-height:34px}}
+@media (pointer:coarse){.tab{min-height:40px}.seg{border-radius:25px}.cp:not(.cp-solid,.cta){height:36px}.cp-ico{width:36px}.code{border-radius:22px}.langs a{min-height:34px}}
+/* hover only where there is one: on touch, :hover stays on what was tapped */
+@media (hover:hover){
+a:hover{text-decoration-color:currentColor}
+h2 a:hover::after{opacity:.6}
+.jump a:hover,.md:hover,.home:hover{opacity:1;background:rgba(255,255,255,.14)}
+.langs a:hover{opacity:1}
+.pill-btn:hover{box-shadow:inset 0 0 0 1.5px var(--acc);color:var(--acc-ink)}
+.cp:hover{background:var(--acc-soft);color:var(--acc-ink)}
+.cp-solid:hover,.cta:hover{background:var(--btn-h);color:var(--on-btn)}
+.tab:hover{background:var(--acc-soft);color:var(--acc-ink)}
+.tab[aria-selected=true]:hover{background:var(--btn);color:var(--on-btn)}
+.docs a:hover{color:var(--acc-ink)}
+.foot-l a:hover{color:var(--acc-ink)}
+}
+.tab,.cp,.pill-btn,.langs a,.home{-webkit-tap-highlight-color:transparent}
 @media (forced-colors:active){.tab[aria-selected=true],.langs a[aria-current]{forced-color-adjust:none;background:Highlight;color:HighlightText}}
 @media print{.bar,.skip,.clients,.cp{display:none!important}.app-p[hidden]{display:block!important}.panel{box-shadow:none;backdrop-filter:none}}
-@media (prefers-reduced-motion:no-preference){a,.tab,.cp,.pill-btn{transition:color .15s,background-color .15s,box-shadow .15s}}
+@media (prefers-reduced-motion:no-preference){
+a,.tab{transition:color .15s,background-color .15s,box-shadow .15s}
+.cp,.pill-btn{transition:color .15s,background-color .15s,box-shadow .15s,scale .15s ease-out}
+.cp:not(:disabled):active,.pill-btn:active{scale:.96}
+.ic>.i{transition:opacity .3s cubic-bezier(.2,0,0,1),scale .3s cubic-bezier(.2,0,0,1),filter .3s cubic-bezier(.2,0,0,1)}
+.ic>.i+.i,.ok .ic>.i:first-child{scale:.25;filter:blur(4px)}
+.ok .ic>.i+.i{scale:1;filter:none}
+}
 `
 
 export const GUIDE_SCRIPT = String.raw`
@@ -269,20 +299,18 @@ export const GUIDE_SCRIPT = String.raw`
   // copy buttons copy the data-c of their box; where the clipboard is denied, they select the text for Ctrl+C
   if (navigator.clipboard && window.isSecureContext) {
     d.querySelectorAll('button.cp').forEach(function (button) {
-      var label = button.querySelector('.t'), text = label.textContent, icon = button.querySelector('use'), timer;
+      var label = button.querySelector('.t'), text = label.textContent, timer;
       button.hidden = false;
       button.addEventListener('click', function () {
         var box = button.closest('[data-c]');
         navigator.clipboard.writeText(box.getAttribute('data-c')).then(function () {
           if (!button.classList.contains('ok')) button.style.minWidth = button.offsetWidth + 'px';
           button.classList.add('ok');
-          icon.setAttribute('href', '#i-check');
           label.textContent = live.textContent = copied;
           clearTimeout(timer);
           timer = setTimeout(function () {
             button.classList.remove('ok');
             button.style.minWidth = '';
-            icon.setAttribute('href', '#i-copy');
             label.textContent = text;
             live.textContent = '';
           }, 1600);

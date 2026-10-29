@@ -130,6 +130,19 @@ describe('guide page', () => {
     }
   })
 
+  it('links its logo and name to the website, in the same tab, with a name in its language', () => {
+    for (const [lang, { html }] of pages) {
+      const home = GUIDE_TEXTS.find((t) => t.lang === lang)!.ui.home
+      expect(home, lang).toContain('DXRating')
+      expect(html, lang).toMatch(
+        new RegExp(
+          `<a class="home" href="https://dxrating\\.net/" aria-label="${home}"><img [^>]*><span>DXRating</span></a><span class="chip">MCP</span>`,
+        ),
+      )
+      expect(html, lang).not.toContain('target=')
+    }
+  })
+
   it('has a copy button for every text to copy, which copies it as plain text', () => {
     for (const [lang, { html }] of pages) {
       const texts = [...html.matchAll(/data-c="([^"]*)"/g)].map(([, c]) => unescape(c))
