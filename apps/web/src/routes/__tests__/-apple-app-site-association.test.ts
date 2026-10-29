@@ -12,6 +12,7 @@ describe('buildAppleAppSiteAssociation', () => {
           {
             appID: 'F25GFFJL49.net.dxrating.ios',
             paths: [
+              '/',
               '/songs/*',
               '/charts/recent',
               '/charts/trending',

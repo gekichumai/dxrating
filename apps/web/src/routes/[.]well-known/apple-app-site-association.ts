@@ -2,6 +2,8 @@ import { createFileRoute } from '@tanstack/react-router'
 
 const APP_ID = 'F25GFFJL49.net.dxrating.ios'
 const APP_PATHS = [
+  // The home page is the chart search; `/search` stays for links shared before it moved.
+  '/',
   '/songs/*',
   '/charts/recent',
   '/charts/trending',
