@@ -4,6 +4,9 @@ import { type ItemContent, Virtuoso } from 'react-virtuoso'
 import type { FlattenedSheet } from '../../songs'
 import { SheetListItem, type SheetListItemAnalyticsProps } from './SheetListItem'
 
+/** The rows a list renders before it can measure the viewport: all a server render shows */
+export const SHEET_LIST_FIRST_SCREEN_ROWS = 20
+
 export const SheetListContainer = ({
   sheets,
   listContainerClassName,
@@ -56,7 +59,7 @@ export const SheetListContainer = ({
         itemContent={ItemContent}
         className="w-full min-h-[100lvh]"
         increaseViewportBy={500}
-        initialItemCount={Math.min(sheets.length, 20)}
+        initialItemCount={Math.min(sheets.length, SHEET_LIST_FIRST_SCREEN_ROWS)}
       />
     </div>
   )

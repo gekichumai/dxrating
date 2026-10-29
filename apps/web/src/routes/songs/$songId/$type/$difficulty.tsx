@@ -1,5 +1,5 @@
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
-import { getBundledCatalogDocument } from '@/catalog/bundledCatalog'
+import { getCatalogDocument } from '@/catalog/catalogSource'
 import { resolveSongRouteParam } from '@/catalog/songLookup'
 import { SongPage } from '@/pages/SongPage'
 import { buildSongSheetSeo, buildSongSheetStructuredData, formatSeoTitle, resolveSeoLocale } from '@/utils/seo'
@@ -8,7 +8,7 @@ import { createServerI18n } from '@/setup/init-i18n'
 export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
   ssr: true,
   loader: async ({ params }) => {
-    const resolution = await resolveSongRouteParam(getBundledCatalogDocument(), params.songId)
+    const resolution = await resolveSongRouteParam(await getCatalogDocument(), params.songId)
     if (!resolution) {
       throw notFound()
     }
@@ -28,7 +28,8 @@ export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
       throw notFound()
     }
 
-    return { song, sheet }
+    // The song is the page's catalog slice: SSR and hydration render it before the complete catalog loads
+    return { song, sheet, catalogSongs: [song] }
   },
   head: ({ loaderData, match, matches }) => {
     const locale = resolveSeoLocale([match, ...matches])

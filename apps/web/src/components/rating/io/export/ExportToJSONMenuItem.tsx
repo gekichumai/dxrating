@@ -22,7 +22,7 @@ const saveAsJsonFile = (data: string, t: (key: string, opts?: Record<string, str
 
 export const ExportToJSONMenuItem: FC = () => {
   const { entries } = useRatingCalculatorContext()
-  const { b15Entries, b35Entries } = useRatingEntries()
+  const { isLoading, b15Entries, b35Entries } = useRatingEntries()
   const { t } = useTranslation(['rating-calculator'])
 
   return (
@@ -44,6 +44,7 @@ export const ExportToJSONMenuItem: FC = () => {
       </MenuItem>
 
       <MenuItem
+        disabled={isLoading}
         onClick={() => {
           const preprocess = (entry: RatingCalculatorEntry) => ({
             sheetId: entry.sheetId,

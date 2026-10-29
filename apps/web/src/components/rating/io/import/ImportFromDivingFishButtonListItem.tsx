@@ -1,4 +1,4 @@
-import { useSongCatalog } from '@/catalog/CatalogContext'
+import { useSongCatalogLoader } from '@/catalog/CatalogContext'
 import { ImportRegionSupportTag } from '@/components/rating/io/import/ImportRegionSupportTag'
 import type { VersionEnum } from '@gekichumai/dxdata'
 import { normalizeDivingFishRows, type SongCatalog } from '@gekichumai/maimai-domain'
@@ -142,7 +142,7 @@ export const ImportDivingFishDialogContent: FC<{
   modifyEntries: ListActions<PlayEntry>
   onClose: () => void
 }> = ({ modifyEntries, onClose }) => {
-  const catalog = useSongCatalog()
+  const loadCatalog = useSongCatalogLoader()
   const [busy, setBusy] = useState(false)
   const { t } = useTranslation(['rating-calculator'])
   const [divingFishConfig, setDivingFishConfig] = useLocalStorage<DivingFishProfile | null>('diving-fish-profile', null)
@@ -222,7 +222,7 @@ export const ImportDivingFishDialogContent: FC<{
                 toast.error(t('rating-calculator:io.import.diving-fish.invalid-profile'))
                 return
               }
-              await fetchDivingFish(catalog, divingFishConfig!, modifyEntries, {
+              await fetchDivingFish(await loadCatalog(), divingFishConfig!, modifyEntries, {
                 loading: t('rating-calculator:io.import.diving-fish.loading'),
                 success: (count) => t('rating-calculator:io.import.diving-fish.success', { count }),
                 error: (error) => t('rating-calculator:io.import.diving-fish.error', { error }),

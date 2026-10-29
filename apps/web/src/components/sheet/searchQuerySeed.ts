@@ -1,6 +1,5 @@
 import { VersionEnum, type SongCatalogDocument } from '@gekichumai/dxdata'
 import { getSongCatalog } from '@gekichumai/maimai-domain'
-import { getBundledCatalogDocument } from '@/catalog/bundledCatalog'
 import { createSheetsSearchEngine, getFlattenedSheets, type FlattenedSheet } from '@/songs'
 import { buildSheetPath } from './sheetLinks'
 
@@ -62,8 +61,8 @@ const getSearchEngine = (document: SongCatalogDocument, version: VersionEnum) =>
 
 export const buildSearchQuerySeedSheets = (
   query: string,
+  document: SongCatalogDocument,
   version: VersionEnum = VersionEnum.MAGiCAL,
-  document: SongCatalogDocument = getBundledCatalogDocument(),
 ): SearchQuerySeedSheet[] => {
   if (query.length > SEARCH_QUERY_MAX_LENGTH) {
     throw new RangeError(`Search query must not exceed ${SEARCH_QUERY_MAX_LENGTH} characters`)

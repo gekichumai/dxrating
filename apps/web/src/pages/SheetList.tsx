@@ -1,4 +1,13 @@
-import { CategoryEnum, DifficultyEnum, type TypeEnum, VERSION_ID_MAP, VersionEnum } from '@gekichumai/dxdata'
+import {
+  CategoryEnum,
+  DifficultyEnum,
+  type Song,
+  type SongCatalogDocument,
+  type TypeEnum,
+  VERSION_ID_MAP,
+  VersionEnum,
+} from '@gekichumai/dxdata'
+import { getSongCatalog } from '@gekichumai/maimai-domain'
 import { IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
@@ -11,7 +20,7 @@ import { ResponsiveDialog } from '../components/global/ResponsiveDialog'
 import { SearchQuerySeedList } from '../components/sheet/SearchQuerySeedList'
 import type { SearchQuerySeedSheet } from '../components/sheet/searchQuerySeed'
 import { SheetDialogContent } from '../components/sheet/SheetDialogContent'
-import { SheetListContainer } from '../components/sheet/SheetListContainer'
+import { SHEET_LIST_FIRST_SCREEN_ROWS, SheetListContainer } from '../components/sheet/SheetListContainer'
 import {
   getDefaultSheetSortFilterForm,
   SheetSortFilter,
@@ -20,10 +29,11 @@ import {
 } from '../components/sheet/SheetSortFilter'
 import { SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { captureAnalyticsEvent } from '../lib/analytics'
+import { DXVersionToDXDataVersionEnumMap, getDefaultAppContext } from '../models/context/AppContext'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { readFavoriteSheetIds } from '../models/favorite'
 import { useCatalogDocument, useSongCatalog } from '../catalog/CatalogContext'
-import { type FlattenedSheet, useFilteredSheets, useSheets } from '../songs'
+import { type FlattenedSheet, getFlattenedSheets, useFilteredSheets, useSheets } from '../songs'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { sheetMatchesDifficultyFilter } from './sheetDifficultyFilter'
 import { compareSheetsBySorts, getSongCatalogPositions } from './sheetSorting'
@@ -125,6 +135,29 @@ const getSortFilteredSheets = (
   const sheets = computeSortFilteredSheets(results, sortFilterOptions, inputQuery, version, songCatalogPositions)
   if (cacheable) lastSortFilterResult = { results, key, version, positions: songCatalogPositions, sheets }
   return sheets
+}
+
+/** The rows a list without a query shows first: what SSR and the first client render show from the page's slice */
+export const getSheetListFirstScreen = (
+  document: SongCatalogDocument,
+  version: VersionEnum = DXVersionToDXDataVersionEnumMap[getDefaultAppContext().version],
+  sortFilterOptions: SheetSortFilterForm | undefined = getDefaultSheetSortFilterForm(),
+): FlattenedSheet[] =>
+  computeSortFilteredSheets(
+    getFlattenedSheets(getSongCatalog(document, version)),
+    sortFilterOptions,
+    '',
+    version,
+    getSongCatalogPositions(document),
+  ).slice(0, SHEET_LIST_FIRST_SCREEN_ROWS)
+
+/**
+ * The songs of the default list's first rows, for the home page's catalog slice. Ranked within the slice they come out
+ * in the same order: the slice holds every song of those rows, in catalog order.
+ */
+export const getSheetListFirstScreenSongs = (document: SongCatalogDocument): Song[] => {
+  const songIds = new Set(getSheetListFirstScreen(document).map((row) => row.songId))
+  return document.songs.filter((song) => songIds.has(song.id))
 }
 
 const computeSortFilteredSheets = (
@@ -240,7 +273,8 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
   }, [])
 
   const catalog = useSongCatalog()
-  const songCatalogPositions = getSongCatalogPositions(useCatalogDocument())
+  const catalogDocument = useCatalogDocument()
+  const songCatalogPositions = getSongCatalogPositions(catalogDocument)
   const activeSheet = useMemo<FlattenedSheet | null>(() => {
     const { songId, type, difficulty } = search
     if (!songId || !type || !difficulty) return null
@@ -311,6 +345,12 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
     }
   }, [results, sortFilterOptions, inputQuery, version, songCatalogPositions])
   const showSeedResults = isLoading && inputQuery && seedSheets.length > 0
+  // Until the complete catalog loads (and during SSR), the default list shows its first rows from the page's slice
+  const firstScreenSheets = useMemo(
+    () => (isLoading && !inputQuery ? getSheetListFirstScreen(catalogDocument, version, sortFilterOptions) : null),
+    [isLoading, inputQuery, catalogDocument, version, sortFilterOptions],
+  )
+  const listSheets = isLoading ? (firstScreenSheets?.length ? firstScreenSheets : null) : filteredResults
   const summaryTotal = sheets?.length ?? filteredResults.length
   const summaryProgress = summaryTotal > 0 ? filteredResults.length / summaryTotal : 0
 
@@ -403,7 +443,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
           </div>
         </div>
 
-        {isLoading ? (
+        {!listSheets ? (
           showSeedResults ? (
             <SearchQuerySeedList sheets={seedSheets} />
           ) : (
@@ -433,12 +473,12 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
           )
         ) : (
           <SheetListContainer
-            sheets={filteredResults}
+            sheets={listSheets}
             activeSheetId={activeSheetId}
             onSheetDialogChange={handleSheetDialogChange}
             analyticsSource="search_results"
             analyticsQueryPresent={!!inputQuery}
-            analyticsResultCount={filteredResults.length}
+            analyticsResultCount={listSheets.length}
           />
         )}
       </div>

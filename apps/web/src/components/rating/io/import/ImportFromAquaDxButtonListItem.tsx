@@ -1,4 +1,4 @@
-import { useSongCatalog } from '@/catalog/CatalogContext'
+import { useSongCatalogLoader } from '@/catalog/CatalogContext'
 import { loadLegacySongIds } from '@/catalog/legacySongIds'
 import { normalizeAquaDxRows, type ProviderMusicIdMap } from '@gekichumai/maimai-domain'
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
@@ -24,7 +24,7 @@ export const ImportFromAquaDxButtonListItem: FC<{
 }> = ({ modifyEntries, onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
   const haptic = useWebHaptics()
-  const catalog = useSongCatalog()
+  const loadCatalog = useSongCatalogLoader()
 
   return (
     <MenuItem
@@ -60,7 +60,7 @@ export const ImportFromAquaDxButtonListItem: FC<{
                     achievement: musicDetail.achievement,
                   }))
                 : []
-              const importResult = normalizeAquaDxRows(catalog, rows, musicIdMap, await loadLegacySongIds())
+              const importResult = normalizeAquaDxRows(await loadCatalog(), rows, musicIdMap, await loadLegacySongIds())
               const entries = importResultToPlayEntries(importResult)
               for (const warning of importResult.warnings) {
                 console.warn('[ImportFromAquaDxButtonListItem]', warning.message, warning.row)

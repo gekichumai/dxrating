@@ -144,16 +144,19 @@ describe('global auto-import settings', () => {
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
     fireEvent.click(screen.getByRole('button', { name: 'Auto-import' }))
     fireEvent.click(screen.getByRole('button', { name: /Re-import now/ }))
-    expect(importFromNETRecords).toHaveBeenCalledWith(
-      expect.objectContaining({ getById: expect.any(Function) }),
-      expect.anything(),
-      'merge',
-      undefined,
-      {
-        region: 'jp',
-        username: 'fixture',
-        password: 'fixture',
-      },
+    // the import starts once the complete catalog is there
+    await waitFor(() =>
+      expect(importFromNETRecords).toHaveBeenCalledWith(
+        expect.objectContaining({ getById: expect.any(Function) }),
+        expect.anything(),
+        'merge',
+        undefined,
+        {
+          region: 'jp',
+          username: 'fixture',
+          password: 'fixture',
+        },
+      ),
     )
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })

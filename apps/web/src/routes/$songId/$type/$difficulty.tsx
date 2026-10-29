@@ -1,5 +1,5 @@
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
-import { getBundledCatalogDocument } from '@/catalog/bundledCatalog'
+import { getCatalogDocument } from '@/catalog/catalogSource'
 import { findSongById, resolveSongRouteParam } from '@/catalog/songLookup'
 
 export const LEGACY_SHEET_PATH_REDIRECT_STATUS_CODE = 308
@@ -18,7 +18,7 @@ export const resolveLegacySheetPathRedirect = (songId: string, type: string, dif
 export const Route = createFileRoute('/$songId/$type/$difficulty')({
   ssr: true,
   beforeLoad: async ({ params }) => {
-    const catalogDocument = getBundledCatalogDocument()
+    const catalogDocument = await getCatalogDocument()
     const resolution = await resolveSongRouteParam(catalogDocument, params.songId)
     const song =
       resolution && ('song' in resolution ? resolution.song : findSongById(catalogDocument, resolution.redirectSongId))

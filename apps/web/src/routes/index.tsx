@@ -1,9 +1,10 @@
 import { isPublicSongId } from '@gekichumai/maimai-domain'
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { getBundledCatalogDocument } from '@/catalog/bundledCatalog'
+import { getCatalogDocument } from '@/catalog/catalogSource'
 import { loadLegacySongIds } from '@/catalog/legacySongIds'
 import { resolveLegacySongId } from '@/catalog/songLookup'
-import { SheetList } from '@/pages/SheetList'
+import type { Song } from '@gekichumai/dxdata'
+import { getSheetListFirstScreenSongs, SheetList } from '@/pages/SheetList'
 import { buildSearchSeo, resolveSeoLocale } from '@/utils/seo'
 import {
   buildSearchQuerySeedSheets,
@@ -20,6 +21,8 @@ type SearchParams = {
 
 type SearchLoaderData = {
   seedSheets: SearchQuerySeedSheet[]
+  /** The page's catalog slice: the songs of the default list's first rows */
+  catalogSongs: Song[]
 }
 
 const searchString = (value: unknown) => {
@@ -36,9 +39,12 @@ const searchString = (value: unknown) => {
   return stringValue
 }
 
-export const loadSearchRouteData = ({ q }: SearchParams): SearchLoaderData => ({
-  seedSheets: q ? buildSearchQuerySeedSheets(q) : [],
-})
+export const loadSearchRouteData = async ({ q }: SearchParams): Promise<SearchLoaderData> => {
+  const document = await getCatalogDocument()
+  if (q) return { seedSheets: buildSearchQuerySeedSheets(q, document), catalogSongs: [] }
+  // Only server renders (and the hydration that follows) render from the slice; the browser has the complete catalog
+  return { seedSheets: [], catalogSongs: import.meta.env.SSR ? getSheetListFirstScreenSongs(document) : [] }
+}
 
 export const validateSearchParams = (search: Record<string, unknown>): SearchParams => ({
   q: searchString(search.q),
@@ -67,7 +73,7 @@ export const Route = createFileRoute('/')({
   loader: async ({ deps }: { deps: SearchParams }) => {
     // Chart dialog links from before public song IDs name the song by its legacy ID
     if (deps.songId && !isPublicSongId(deps.songId)) {
-      const songId = resolveLegacySongId(getBundledCatalogDocument(), deps.songId, await loadLegacySongIds())
+      const songId = resolveLegacySongId(await getCatalogDocument(), deps.songId, await loadLegacySongIds())
       if (songId) {
         throw redirect({ to: '/', search: (prev) => ({ ...prev, songId }), statusCode: 308, replace: true })
       }

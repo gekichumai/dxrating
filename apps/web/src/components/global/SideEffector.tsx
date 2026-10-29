@@ -1,4 +1,4 @@
-import { useSongCatalog } from '@/catalog/CatalogContext'
+import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import { useRatingEntries } from '@/components/rating/useRatingEntries'
 import { authClient } from '@/lib/auth-client'
 import { identifyAnalyticsUser, registerAnalyticsContext, resetAnalyticsUser } from '@/lib/analytics'
@@ -41,9 +41,11 @@ const SideEffectorLocaleMeta: FC = () => {
 const SideEffectorAutoImportRating: FC = () => {
   const { modifyEntries } = useRatingCalculatorContext()
   const { t } = useTranslation()
-  const catalog = useSongCatalog()
+  // An import resolves records against the catalog: run it once the complete catalog has loaded
+  const catalog = useCompleteSongCatalog()
 
   useEffect(() => {
+    if (!catalog) return
     const mode = (() => {
       try {
         const mode = localStorage.getItem('rating-auto-import-from-net')
@@ -122,7 +124,7 @@ const SideEffectorAnalytics: FC = () => {
   const { data, isPending } = authClient.useSession()
   const { version, region } = useAppContext()
   const { i18n } = useTranslation()
-  const { statistics, allEntries } = useRatingEntries()
+  const { isLoading: entriesLoading, statistics, allEntries } = useRatingEntries()
 
   const properties = {
     userId: data?.user.id,
@@ -133,7 +135,8 @@ const SideEffectorAnalytics: FC = () => {
     entryCount: allEntries.length,
   }
 
-  if (isPending) return null
+  // Register the rating once the entries are resolved, not the empty lists of the catalog's loading
+  if (isPending || entriesLoading) return null
 
   return (
     <SideEffectorAnalyticsContext

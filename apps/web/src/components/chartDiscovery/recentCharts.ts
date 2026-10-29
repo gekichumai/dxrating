@@ -8,7 +8,6 @@ import {
   type VersionEnum,
 } from '@gekichumai/dxdata'
 import { buildLatestReleaseDateByVersion, resolveReleaseDateTimestamp } from '@gekichumai/maimai-domain'
-import { getBundledCatalogDocument } from '@/catalog/bundledCatalog'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import { sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
 
@@ -90,10 +89,7 @@ const createRecentChartLinks = (document: SongCatalogDocument, songs: readonly S
 
 const defaultRecentChartLinks = new WeakMap<SongCatalogDocument, RecentChartLink[]>()
 
-export const buildRecentChartLinks = (
-  songs?: readonly Song[],
-  document: SongCatalogDocument = getBundledCatalogDocument(),
-): RecentChartLink[] => {
+export const buildRecentChartLinks = (document: SongCatalogDocument, songs?: readonly Song[]): RecentChartLink[] => {
   if (songs) return createRecentChartLinks(document, songs)
 
   let links = defaultRecentChartLinks.get(document)
