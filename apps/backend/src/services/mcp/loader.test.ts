@@ -87,15 +87,47 @@ describe('MCP catalog loader', () => {
     }),
   )
 
-  it.effect('fails before a catalog is loaded, and loads one once it is published', () =>
+  it.effect('fails before a catalog is loaded, and checks again only after the interval', () =>
     Effect.gen(function* () {
+      const errors: unknown[] = []
       const { state, store } = fakeStore({})
-      const loader = createMcpCatalogLoader(store)
-      expect(Exit.isFailure(yield* Effect.exit(loader.current))).toBe(true)
+      const loader = createMcpCatalogLoader(store, { reportError: (error) => errors.push(error) })
+      const exits = yield* Effect.all(
+        Array.from({ length: 20 }, () => Effect.exit(loader.current)),
+        { concurrency: 'unbounded' },
+      )
+      expect(exits.every(Exit.isFailure)).toBe(true)
+      expect(state.metadataReads).toBe(1)
 
+      // published, but not checked again before the interval
       state.metadata = metadata('1')
       state.body = body()
+      expect(Exit.isFailure(yield* Effect.exit(loader.current))).toBe(true)
+      expect(state.metadataReads).toBe(1)
+
+      yield* TestClock.adjust('61 seconds')
       expect((yield* loader.current).catalogRunId).toBe('1')
+      expect(errors).toEqual([])
+    }),
+  )
+
+  it.effect('reports a failed first check once per interval, and recovers', () =>
+    Effect.gen(function* () {
+      const errors: unknown[] = []
+      const { state, store } = fakeStore({ metadata: metadata('1'), body: body() })
+      state.fail = true
+      const loader = createMcpCatalogLoader(store, { reportError: (error) => errors.push(error) })
+      yield* Effect.all(
+        Array.from({ length: 20 }, () => Effect.exit(loader.current)),
+        { concurrency: 'unbounded' },
+      )
+      expect(state.metadataReads).toBe(1)
+      expect(errors).toEqual(['database is down'])
+
+      state.fail = false
+      yield* TestClock.adjust('61 seconds')
+      expect((yield* loader.current).catalogRunId).toBe('1')
+      expect(state.metadataReads).toBe(2)
     }),
   )
 
