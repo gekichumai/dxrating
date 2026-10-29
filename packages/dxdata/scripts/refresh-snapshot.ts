@@ -12,7 +12,10 @@ async function fetchCatalog(): Promise<string> {
   let lastError: unknown
   for (let attempt = 1; attempt <= 4; attempt += 1) {
     try {
-      const response = await fetch(CATALOG_URL, { headers: { 'X-DXRating-Client': 'dxrating-web-build' } })
+      // A query the edge has not cached: the catalog the origin publishes now, not an edge copy up to hours old
+      const response = await fetch(`${CATALOG_URL}?build=${Date.now()}`, {
+        headers: { 'X-DXRating-Client': 'dxrating-web-build' },
+      })
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       return await response.text()
     } catch (error) {
