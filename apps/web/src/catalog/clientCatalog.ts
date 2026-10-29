@@ -23,6 +23,23 @@ export const CATALOG_PRELOAD_INLINE_SCRIPT = `try{if(!localStorage.getItem(${JSO
 
 type CatalogResponse = { document: SongCatalogDocument; text: string; etag: string | null }
 
+// A cold load waits this long for the API to respond, then this long for the body, before it falls back to the
+// snapshot: an unresponsive API must not hold up search, the calculator and imports
+const API_RESPONSE_DEADLINE_MS = 10_000
+const API_BODY_DEADLINE_MS = 60_000
+
+const catalogTime = (updatedAt: string) => Date.parse(updatedAt.replace(/(\.\d{3})\d+/, '$1'))
+const BUILD_CATALOG_TIME = catalogTime(import.meta.env.VITE_CATALOG_SNAPSHOT_UPDATED_AT ?? '')
+
+/**
+ * Whether a catalog is older than the snapshot this build renders with: it may lack songs the server-rendered page
+ * shows, so it is only used when nothing newer can be had
+ */
+export const isOlderThanBuildCatalog = (document: SongCatalogDocument) => {
+  const time = catalogTime(document.updatedAt)
+  return Number.isFinite(BUILD_CATALOG_TIME) && Number.isFinite(time) && time < BUILD_CATALOG_TIME
+}
+
 let loadedDocument: SongCatalogDocument | null = null
 let pendingLoad: Promise<SongCatalogDocument> | undefined
 const listeners = new Set<() => void>()
@@ -58,13 +75,22 @@ export function loadClientCatalogDocument(): Promise<SongCatalogDocument> {
 async function loadCatalog(): Promise<SongCatalogDocument> {
   const cache = await openCatalogCache()
   const cached = cache ? await readCachedCatalog(cache) : null
-  if (cached) {
+  if (cached && !isOlderThanBuildCatalog(cached.document)) {
     publish(cached.document)
     void revalidateCatalog(cache!, cached.etag)
     return cached.document
   }
 
-  const fresh = await fetchCatalog()
+  // No copy, or one older than the catalog this page was rendered with
+  let fresh: CatalogResponse
+  try {
+    fresh = await fetchCatalog()
+  } catch (error) {
+    // Neither the API nor the snapshot: an older copy still beats no catalog
+    if (!cached) throw error
+    publish(cached.document)
+    return cached.document
+  }
   publish(fresh.document)
   if (cache) void storeCatalog(cache, fresh)
   return fresh.document
@@ -90,9 +116,29 @@ async function readCatalogResponse(response: Response): Promise<CatalogResponse>
   return { document, text, etag: response.headers.get('etag') }
 }
 
+async function fetchApiCatalog(): Promise<CatalogResponse> {
+  const controller = new AbortController()
+  let deadline = setTimeout(
+    () => controller.abort(new Error('The catalog API did not respond in time')),
+    API_RESPONSE_DEADLINE_MS,
+  )
+  try {
+    // No headers or other options that would keep it from consuming the preload
+    const response = await fetch(CATALOG_URL, { signal: controller.signal })
+    clearTimeout(deadline)
+    deadline = setTimeout(() => controller.abort(new Error('The catalog API response stalled')), API_BODY_DEADLINE_MS)
+    const catalog = await readCatalogResponse(response)
+    if (isOlderThanBuildCatalog(catalog.document))
+      throw new Error('The catalog API served a catalog older than this build')
+    return catalog
+  } finally {
+    clearTimeout(deadline)
+  }
+}
+
 async function fetchCatalog(): Promise<CatalogResponse> {
   try {
-    return await readCatalogResponse(await fetch(CATALOG_URL))
+    return await fetchApiCatalog()
   } catch (error) {
     // The snapshot this build was made with, served as a static asset: the site keeps working while the API is down
     Sentry.logger?.warn?.('Catalog API unavailable, loading the bundled snapshot', { error: String(error) })
@@ -110,6 +156,7 @@ async function revalidateCatalog(cache: Cache, etag: string | null) {
     })
     if (response.status === 304) return
     const fresh = await readCatalogResponse(response)
+    if (isOlderThanBuildCatalog(fresh.document)) return
     await storeCatalog(cache, fresh)
     publish(fresh.document)
   } catch {

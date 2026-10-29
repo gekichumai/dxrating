@@ -13,8 +13,30 @@ import {
 } from '../clientCatalog'
 
 const catalogOf = (updatedAt: string): SongCatalogDocument => ({ ...catalogSnapshot, updatedAt })
-const OLD = catalogOf('2026-10-28T00:00:00Z')
-const NEW = catalogOf('2026-10-29T00:00:00Z')
+// Both newer than the snapshot the build renders with; PRE_BUILD is older and may lack the page's songs
+const OLD = catalogOf('2099-01-01T00:00:00Z')
+const NEW = catalogOf('2099-01-02T00:00:00Z')
+// 君の知らない物語, as a page of this build server-renders it, is missing from PRE_BUILD
+const PAGE_SONG_ID = 'dsng_kkx38yfx4t'
+const PRE_BUILD = {
+  ...catalogOf('2020-01-01T00:00:00Z'),
+  songs: catalogSnapshot.songs.filter((song) => song.id !== PAGE_SONG_ID),
+}
+const BUILD = catalogOf(catalogSnapshot.updatedAt)
+
+// fetch as browsers do it: an abort rejects the request, or errors the body once headers are in
+const stalledFetch = (stall: 'response' | 'body') => (_input: RequestInfo | URL, init?: RequestInit) =>
+  new Promise<Response>((resolve, reject) => {
+    const signal = init?.signal
+    if (stall === 'response') {
+      signal?.addEventListener('abort', () => reject(signal.reason))
+      return
+    }
+    // a body that never arrives; reading it fails once the request is aborted
+    const text = () =>
+      new Promise<string>((_, rejectBody) => signal?.addEventListener('abort', () => rejectBody(signal.reason)))
+    resolve({ ok: true, status: 200, headers: new Headers(), text } as Response)
+  })
 
 const jsonResponse = (body: unknown, init?: ResponseInit) =>
   new Response(JSON.stringify(body), {
@@ -65,8 +87,8 @@ describe('client catalog loading', () => {
 
     await expect(loadClientCatalogDocument()).resolves.toEqual(NEW)
 
-    // a plain request, so it consumes the <link rel=preload> of the head script
-    expect(fetchMock).toHaveBeenCalledWith(CATALOG_URL)
+    // a plain request (a signal only), so it consumes the <link rel=preload> of the head script
+    expect(fetchMock).toHaveBeenCalledWith(CATALOG_URL, { signal: expect.any(AbortSignal) })
     expect(getLoadedCatalogDocument()).toEqual(NEW)
     await vi.waitFor(() => expect(localStorage.getItem(CATALOG_CACHED_MARKER_KEY)).toBe('1'))
     const cached = cacheStorage.entries.get(CATALOG_URL)!
@@ -132,7 +154,89 @@ describe('client catalog loading', () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(NEW, { headers: { etag: 'W/"new"' } }))
 
     await expect(loadClientCatalogDocument()).resolves.toEqual(NEW)
-    expect(fetchMock).toHaveBeenCalledWith(CATALOG_URL)
+    expect(fetchMock).toHaveBeenCalledWith(CATALOG_URL, { signal: expect.any(AbortSignal) })
+  })
+
+  it('does not render from a copy older than the build, and loads the API document instead', async () => {
+    cacheCatalog(cacheStorage.entries, PRE_BUILD, 'W/"pre-build"')
+    fetchMock.mockResolvedValueOnce(jsonResponse(NEW, { headers: { etag: 'W/"new"' } }))
+    const listener = vi.fn()
+    const unsubscribe = subscribeToCatalog(listener)
+
+    await expect(loadClientCatalogDocument()).resolves.toEqual(NEW)
+
+    // the older copy is never published: it may lack songs the server-rendered page shows
+    expect(listener).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() =>
+      expect(cacheStorage.entries.get(CATALOG_URL)!.headers.get('x-dxrating-catalog-etag')).toBe('W/"new"'),
+    )
+    unsubscribe()
+  })
+
+  it('replaces a copy older than the build with the build snapshot when the API is down', async () => {
+    cacheCatalog(cacheStorage.entries, PRE_BUILD, 'W/"pre-build"')
+    fetchMock.mockImplementation(async (input) => {
+      if (String(input) === CATALOG_URL) throw new TypeError('Failed to fetch')
+      if (String(input) === snapshotAssetUrl) return jsonResponse(BUILD)
+      throw new Error(`unexpected request ${String(input)}`)
+    })
+
+    await expect(loadClientCatalogDocument()).resolves.toEqual(BUILD)
+    expect(getLoadedCatalogDocument()!.songs.some((song) => song.id === PAGE_SONG_ID)).toBe(true)
+  })
+
+  it('still renders a copy older than the build when neither the API nor the snapshot loads', async () => {
+    cacheCatalog(cacheStorage.entries, PRE_BUILD, 'W/"pre-build"')
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
+
+    await expect(loadClientCatalogDocument()).resolves.toEqual(PRE_BUILD)
+  })
+
+  it('uses the build snapshot when the API serves a catalog older than the build', async () => {
+    fetchMock.mockImplementation(async (input) => {
+      if (String(input) === CATALOG_URL) return jsonResponse(PRE_BUILD, { headers: { etag: 'W/"pre-build"' } })
+      if (String(input) === snapshotAssetUrl) return jsonResponse(BUILD)
+      throw new Error(`unexpected request ${String(input)}`)
+    })
+
+    await expect(loadClientCatalogDocument()).resolves.toEqual(BUILD)
+  })
+
+  it('never swaps in a catalog older than the build found by revalidation', async () => {
+    cacheCatalog(cacheStorage.entries, OLD, 'W/"old"')
+    fetchMock.mockResolvedValueOnce(jsonResponse(PRE_BUILD, { headers: { etag: 'W/"pre-build"' } }))
+
+    await expect(loadClientCatalogDocument()).resolves.toEqual(OLD)
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(getLoadedCatalogDocument()).toEqual(OLD)
+    expect(cacheStorage.entries.get(CATALOG_URL)!.headers.get('x-dxrating-catalog-etag')).toBe('W/"old"')
+  })
+
+  it.each([
+    ['does not respond', 'response', 10_000],
+    // the body deadline starts once the response is in, here at once
+    ['stalls in the body', 'body', 60_000],
+  ] as const)('falls back to the build snapshot when the API %s', async (_case, stall, deadlineMs) => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    try {
+      vi.stubGlobal('caches', undefined)
+      fetchMock.mockImplementation(async (input, init) => {
+        if (String(input) === CATALOG_URL) return stalledFetch(stall)(input, init)
+        if (String(input) === snapshotAssetUrl) return jsonResponse(BUILD)
+        throw new Error(`unexpected request ${String(input)}`)
+      })
+
+      const load = loadClientCatalogDocument()
+      await vi.advanceTimersByTimeAsync(deadlineMs - 1_000)
+      expect(getLoadedCatalogDocument()).toBeNull()
+      await vi.advanceTimersByTimeAsync(1_000)
+
+      await expect(load).resolves.toEqual(BUILD)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('loads from the network every time without Cache Storage', async () => {
