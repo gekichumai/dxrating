@@ -76,7 +76,7 @@ describe('AppTabs', () => {
 
   it('selects the pending destination tab and shows a width-stable loading indicator', () => {
     routerState.isLoading = true
-    routerState.location.pathname = '/search'
+    routerState.location.pathname = '/'
     routerState.resolvedLocation = { pathname: '/rating' }
 
     render(<AppTabs />)

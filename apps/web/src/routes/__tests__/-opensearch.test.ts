@@ -6,7 +6,7 @@ describe('buildOpenSearchDescription', () => {
     const xml = buildOpenSearchDescription()
 
     expect(xml).toContain('<ShortName>DXRating</ShortName>')
-    expect(xml).toContain('template="https://dxrating.net/search?q={searchTerms}"')
+    expect(xml).toContain('template="https://dxrating.net/?q={searchTerms}"')
     expect(xml).toContain('type="application/opensearchdescription+xml"')
     expect(xml).toContain('<InputEncoding>UTF-8</InputEncoding>')
   })

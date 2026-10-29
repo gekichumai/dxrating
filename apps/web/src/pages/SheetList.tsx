@@ -26,7 +26,7 @@ import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { sheetMatchesDifficultyFilter } from './sheetDifficultyFilter'
 import { compareSheetsBySorts } from './sheetSorting'
 
-const searchRouteApi = getRouteApi('/search')
+const searchRouteApi = getRouteApi('/')
 
 const chainEvery =
   <T,>(...fns: ((arg: T) => boolean | undefined)[]) =>
@@ -88,7 +88,7 @@ const SheetSearchAnalytics: FC<{
   return null
 }
 
-// Filtering and sorting the full catalog is the bulk of a /search render. The inputs are stable references (the cached
+// Filtering and sorting the full catalog is the bulk of a home page render. The inputs are stable references (the cached
 // catalog plus a serializable form), so keep the last result and reuse it across remounts and SSR requests.
 let lastSortFilterResult:
   | { results: FlattenedSheet[]; key: string; version: VersionEnum; sheets: FlattenedSheet[] }
@@ -212,7 +212,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
     (nextQuery: string) => {
       setInputQuery(nextQuery)
       navigate({
-        to: '/search',
+        to: '/',
         search: (prev: Record<string, unknown>) => ({
           ...prev,
           q: nextQuery || undefined,
@@ -257,7 +257,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
     (sheet: FlattenedSheet | null) => {
       if (sheet) {
         navigate({
-          to: '/search',
+          to: '/',
           search: (prev: Record<string, unknown>) => ({
             ...prev,
             songId: sheet.songId,
@@ -272,7 +272,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
         })
       } else {
         navigate({
-          to: '/search',
+          to: '/',
           search: (prev: Record<string, unknown>) => {
             const { songId: _, type: __, difficulty: ___, ...rest } = prev
             return rest

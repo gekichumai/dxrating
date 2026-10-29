@@ -58,11 +58,6 @@ export function buildSitemap(songs: SitemapSong[]) {
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>${urlLoc('/search')}</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
     <loc>${urlLoc('/charts/recent')}</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>

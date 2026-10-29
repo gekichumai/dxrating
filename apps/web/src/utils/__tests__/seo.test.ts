@@ -124,7 +124,7 @@ describe('SEO localization', () => {
           '@type': 'WebSite',
           potentialAction: expect.objectContaining({
             '@type': 'SearchAction',
-            target: 'https://dxrating.net/search?q={search_term_string}',
+            target: 'https://dxrating.net/?q={search_term_string}',
             'query-input': 'required name=search_term_string',
           }),
         }),
