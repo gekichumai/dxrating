@@ -134,4 +134,15 @@ describe('calculate_best50', () => {
       (await call('calculate_best50', { scores: [{ song: HIBANA_MASTER, achievement: 1 }], version: 'X' })).isError,
     ).toBe(true)
   })
+
+  it('rates the charts of a past version with their internal level then', async () => {
+    const content = structured(
+      await call('calculate_best50', {
+        scores: [{ song: UMIYURI_MASTER, achievement: 1_005_000 }],
+        version: 'maimaiでらっくす PLUS',
+      }),
+    )
+    expect(content.b35.entries[0]).toMatchObject({ internalLevel: 12.8, rating: ratingOf(12.8, 1_005_000).rating })
+    expect(content.suggestions).toEqual([])
+  })
 })

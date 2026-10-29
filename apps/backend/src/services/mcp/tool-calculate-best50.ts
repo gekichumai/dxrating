@@ -119,7 +119,8 @@ export function runCalculateBest50(
   const parsedServer = parseServer(catalog, input.server ?? 'jp')
   if (!parsedServer.ok) return toolError(parsedServer.error)
   const server = parsedServer.server!
-  const version = input.version?.trim() ?? currentVersion(catalog, server)
+  const latest = currentVersion(catalog, server)
+  const version = input.version?.trim() ?? latest
   if (version === undefined || versionOrder(version) === undefined) {
     return toolError(`Unknown game version ${JSON.stringify(input.version)}: PRiSM, PRiSM PLUS, CiRCLE, …`)
   }
@@ -140,6 +141,11 @@ export function runCalculateBest50(
     }
     const [sheet] = sheets
     const onServer = sheetOnServer(sheet, server)
+    // a past version rates a chart with its internal level then, where the catalog knows it, as the web app does
+    const internalLevel =
+      version === latest
+        ? onServer.internalLevel
+        : (sheet.multiverInternalLevelValue?.[version] ?? onServer.internalLevel)
     const bucket = isB15Sheet(onServer.version as VersionEnum, version as VersionEnum, 'jp')
       ? 'b15'
       : isB35Sheet(onServer.version as VersionEnum, version as VersionEnum, 'jp')
@@ -153,11 +159,11 @@ export function runCalculateBest50(
       type: sheet.type,
       difficulty: sheet.difficulty,
       level: onServer.level,
-      internalLevel: onServer.internalLevel,
+      internalLevel,
       version: onServer.version,
       achievement: score.achievement,
       combo: score.combo ?? null,
-      ...ratingOf(onServer.internalLevel, score.achievement, score.combo),
+      ...ratingOf(internalLevel, score.achievement, score.combo),
       bucket,
       comboFlag: score.combo,
     }
