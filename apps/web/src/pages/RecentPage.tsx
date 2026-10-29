@@ -87,7 +87,7 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
                         type={chart.type}
                         difficulty={chart.difficulty}
                         version={chart.version}
-                        regions={chart.regions}
+                        serverIds={chart.serverIds}
                         isLocked={chart.isLocked}
                         titleElement="h2"
                         titleTextProps={{ itemProp: 'name' }}

@@ -1,56 +1,47 @@
 import { VersionEnum } from '@gekichumai/dxdata'
-import { describe, expect, it, vi } from 'vitest'
-import {
-  calculateEntries,
-  translatePublicSheetIds,
-  type OneshotRequest,
-} from '../services/functions/oneshot-renderer/index'
+import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
+import { getSongCatalog } from '@gekichumai/maimai-domain'
+import { describe, expect, it } from 'vitest'
+import { calculateEntries, enrichEntries } from '../services/functions/oneshot-renderer/index'
 
-const PUBLIC_SHEET_ID = 'dsht_jxnmx39rwt'
-const LEGACY_SHEET_ID = 'ウミユリ海底譚__dxrt__std__dxrt__master'
+// 君の知らない物語 DX MASTER, by public sheet ID and by the legacy sheet ID clients from before public IDs send
+const PUBLIC_SHEET_ID = 'dsht_e5nsvt8k2a'
+const LEGACY_SHEET_ID = '君の知らない物語__dxrt__dx__dxrt__master'
+const catalog = getSongCatalog(catalogSnapshot, VersionEnum.CiRCLE)
 
-const translate = vi.fn(
-  async (sheetIds: readonly string[]) =>
-    new Map(
-      sheetIds
-        .filter((sheetId) => sheetId === PUBLIC_SHEET_ID)
-        .map(
-          (sheetId) => [sheetId, { songId: 'ウミユリ海底譚', sheetType: 'std', sheetDifficulty: 'master' }] as const,
-        ),
-    ),
-)
+describe('oneshot sheet IDs', () => {
+  it('renders public sheet IDs', () => {
+    const [entry] = enrichEntries([{ sheetId: PUBLIC_SHEET_ID, achievementRate: 100.5 }], catalog)
 
-const request = (sheetIds: string[]): OneshotRequest => ({
-  version: VersionEnum.CiRCLE,
-  region: 'jp',
-  entries: sheetIds.map((sheetId) => ({ sheetId, achievementRate: 100.5 })),
-  calculatedEntries: {
-    b15: [],
-    b35: sheetIds.map((sheetId) => ({ sheetId, achievementRate: 100.5 })),
-  },
-})
-
-describe('oneshot public sheet IDs', () => {
-  it('renders public sheet IDs like the legacy sheet IDs they translate to', async () => {
-    const translated = await translatePublicSheetIds(request([PUBLIC_SHEET_ID]), translate)
-
-    expect(translated.entries?.map((entry) => entry.sheetId)).toEqual([LEGACY_SHEET_ID])
-    expect(translated.calculatedEntries?.b35.map((entry) => entry.sheetId)).toEqual([LEGACY_SHEET_ID])
-    expect(calculateEntries(translated.entries!, VersionEnum.CiRCLE, 'jp').b35).toHaveLength(1)
+    expect(entry?.sheet.title).toBe('君の知らない物語')
+    expect(entry?.sheetId).toBe(PUBLIC_SHEET_ID)
   })
 
-  it('passes legacy sheet IDs through without a lookup', async () => {
-    translate.mockClear()
-    const body = request([LEGACY_SHEET_ID])
+  it('renders legacy sheet IDs as the sheet they name, under its public ID', () => {
+    const [entry] = enrichEntries([{ sheetId: LEGACY_SHEET_ID, achievementRate: 100.5 }], catalog)
 
-    await expect(translatePublicSheetIds(body, translate)).resolves.toBe(body)
-    expect(translate).not.toHaveBeenCalled()
+    expect(entry?.sheetId).toBe(PUBLIC_SHEET_ID)
+    expect(entry?.sheet.id).toBe(PUBLIC_SHEET_ID)
   })
 
-  it('keeps public sheet IDs it cannot translate, which the renderer then skips', async () => {
-    const translated = await translatePublicSheetIds(request(['dsht_zzzzzzzzzz', LEGACY_SHEET_ID]), translate)
+  it('counts a sheet sent under both IDs once', () => {
+    const calculated = calculateEntries(
+      [
+        { sheetId: LEGACY_SHEET_ID, achievementRate: 99 },
+        { sheetId: PUBLIC_SHEET_ID, achievementRate: 100.5 },
+      ],
+      catalog,
+      // the song is no longer playable on any server; the generic region rates it regardless
+      '_generic',
+    )
 
-    expect(translated.entries?.map((entry) => entry.sheetId)).toEqual(['dsht_zzzzzzzzzz', LEGACY_SHEET_ID])
-    expect(calculateEntries(translated.entries!, VersionEnum.CiRCLE, 'jp').b35).toHaveLength(1)
+    expect([...calculated.b15, ...calculated.b35].map((entry) => entry.achievementRate)).toEqual([100.5])
+  })
+
+  it('skips sheet IDs no sheet has', () => {
+    expect(enrichEntries([{ sheetId: 'dsht_zzzzzzzzzz', achievementRate: 100 }], catalog)).toEqual([])
+    expect(enrichEntries([{ sheetId: 'no such song__dxrt__dx__dxrt__master', achievementRate: 100 }], catalog)).toEqual(
+      [],
+    )
   })
 })

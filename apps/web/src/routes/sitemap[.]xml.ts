@@ -1,11 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { type DifficultyEnum, type TypeEnum, dxdata } from '@gekichumai/dxdata'
+import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import { getBundledCatalogDocument } from '@/catalog/bundledCatalog'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 
 const BASE_URL = 'https://dxrating.net'
 
 type SitemapSong = {
-  songId: string
+  id: string
   sheets?: {
     type: TypeEnum
     difficulty: DifficultyEnum
@@ -29,7 +30,7 @@ export function buildSitemap(songs: SitemapSong[]) {
   const sheetEntries = songs
     .flatMap((song) =>
       (song.sheets ?? []).map((sheet) => ({
-        songId: song.songId,
+        songId: song.id,
         sheet,
       })),
     )
@@ -84,7 +85,7 @@ export const Route = createFileRoute('/sitemap.xml')({
   server: {
     handlers: {
       GET: async () => {
-        const sitemap = buildSitemap(dxdata.songs)
+        const sitemap = buildSitemap(getBundledCatalogDocument().songs)
 
         return new Response(sitemap, {
           headers: {

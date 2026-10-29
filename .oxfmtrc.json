@@ -10,6 +10,8 @@
     ".turbo",
     "node_modules",
     "packages/dxdata/dxdata.json",
+    "packages/dxdata/snapshot.json",
+    "packages/dxdata/legacy-song-ids.json",
     "scripts/annotator/*.json",
     "apps/backend/drizzle",
     ".github",

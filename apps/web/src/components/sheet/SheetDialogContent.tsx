@@ -1,3 +1,4 @@
+import { SERVER_BADGE_ORDER } from '@/models/constants'
 import { CommentActions } from '../comments/CommentActions'
 import { filterComments, useCommentVisibility } from '../comments/commentVisibility'
 import { MULTIVER_AVAILABLE_VERSIONS, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@gekichumai/dxdata'
@@ -107,6 +108,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     async () => {
       const data = await client.comments.list({
         songId: sheet.songId,
+        sheetId: sheet.id,
         sheetType: sheet.type,
         sheetDifficulty: sheet.difficulty,
       })
@@ -127,6 +129,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
     const payload = {
       songId: sheet.songId,
+      sheetId: sheet.id,
       sheetType: sheet.type,
       sheetDifficulty: sheet.difficulty,
       content,
@@ -365,17 +368,19 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                   <TableCell>{t('sheet:details.regional-availability')}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {Object.entries(sheet.regions).map(([region, available]) => (
-                        <div
-                          key={region}
-                          className={clsx(
-                            'uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs',
-                            available ? '!bg-green-500' : '!bg-gray-300',
-                          )}
-                        >
-                          {region}
-                        </div>
-                      ))}{' '}
+                      {SERVER_BADGE_ORDER.map((region) => [region, sheet.serverIds.includes(region)] as const).map(
+                        ([region, available]) => (
+                          <div
+                            key={region}
+                            className={clsx(
+                              'uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs',
+                              available ? '!bg-green-500' : '!bg-gray-300',
+                            )}
+                          >
+                            {region}
+                          </div>
+                        ),
+                      )}{' '}
                     </div>
                   </TableCell>
                 </TableRow>

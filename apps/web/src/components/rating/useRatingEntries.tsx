@@ -2,13 +2,13 @@ import type { VersionEnum } from '@gekichumai/dxdata'
 import {
   calculateBest50,
   calculateRatingAward,
-  getDxdataSongCatalog,
   type Best50Result,
   type RatingAward,
   type RatingEntry,
   type SongCatalog,
 } from '@gekichumai/maimai-domain'
 import * as Sentry from '@sentry/tanstackstart-react'
+import { useSongCatalog } from '../../catalog/CatalogContext'
 import { useMemo } from 'react'
 import type { Region } from '../../models/context/AppContext'
 import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
@@ -149,10 +149,10 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
   const { region } = useAppContext()
   const { entries } = useRatingCalculatorContext()
   const { data: sheets } = useSheets()
+  const catalog = useSongCatalog()
 
   const { allEntries, b15Entries, b35Entries, statistics } = useMemo(() => {
     const computeStart = performance.now()
-    const catalog = getDxdataSongCatalog(appVersion)
 
     const result = calculateWebRatingEntries({
       entries,
@@ -168,7 +168,7 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
     })
 
     return result
-  }, [entries, sheets, appVersion, region])
+  }, [entries, sheets, catalog, appVersion, region])
 
   return { allEntries, b15Entries, b35Entries, statistics }
 }

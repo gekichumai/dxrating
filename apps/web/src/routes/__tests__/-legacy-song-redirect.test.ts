@@ -1,10 +1,11 @@
-import { CategoryEnum, DifficultyEnum, TypeEnum, type Song } from '@gekichumai/dxdata'
+import { CategoryEnum, DifficultyEnum, TypeEnum, type ServerEnum, type Song } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
 import { LEGACY_SHEET_PATH_REDIRECT_STATUS_CODE, resolveLegacySheetPathRedirect } from '../$songId/$type/$difficulty'
 import { LEGACY_SONG_ROUTE_REDIRECT_STATUS_CODE, resolveLegacySongRouteRedirect } from '../songs_.$songId'
 
 const song = {
-  songId: 'song-1',
+  id: 'song-1',
+  version: 'maimai' as never,
   searchAcronyms: [],
   category: CategoryEnum.Maimai,
   title: 'Song 1',
@@ -15,24 +16,24 @@ const song = {
   isLocked: false,
   sheets: [
     {
+      id: 'sheet-1',
       type: TypeEnum.DX,
       difficulty: DifficultyEnum.Basic,
       level: '1',
       internalLevelValue: 1,
-      noteDesigner: null,
-      noteCounts: { tap: null, hold: null, slide: null, touch: null, break: null, total: null },
-      regions: { jp: true, intl: true, cn: true },
+      noteCounts: {},
+      serverIds: ['jp', 'intl', 'usa', 'cn'] as ServerEnum[],
       isSpecial: false,
       version: 'maimai' as never,
     },
     {
+      id: 'sheet-2',
       type: TypeEnum.STD,
       difficulty: DifficultyEnum.Master,
       level: '12',
       internalLevelValue: 12,
-      noteDesigner: null,
-      noteCounts: { tap: null, hold: null, slide: null, touch: null, break: null, total: null },
-      regions: { jp: true, intl: true, cn: true },
+      noteCounts: {},
+      serverIds: ['jp', 'intl', 'usa', 'cn'] as ServerEnum[],
       isSpecial: false,
       version: 'maimai' as never,
     },
@@ -68,7 +69,7 @@ describe('resolveLegacySongRouteRedirect', () => {
   it('falls back to the first valid chart when a song has no master chart', () => {
     const utageOnlySong = {
       ...song,
-      songId: '[光]BREaK! BREaK! BREaK!',
+      id: 'dsng_breakbreak',
       sheets: [
         {
           ...song.sheets[0],
@@ -80,7 +81,7 @@ describe('resolveLegacySongRouteRedirect', () => {
 
     expect(resolveLegacySongRouteRedirect(utageOnlySong)).toMatchObject({
       params: {
-        songId: '[光]BREaK! BREaK! BREaK!',
+        songId: 'dsng_breakbreak',
         type: TypeEnum.UTAGE,
         difficulty: '【光】',
       },

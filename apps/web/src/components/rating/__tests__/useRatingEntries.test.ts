@@ -1,3 +1,4 @@
+import type { ServerEnum } from '@gekichumai/dxdata'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import type { SongCatalog } from '@gekichumai/maimai-domain'
 import { describe, expect, it } from 'vitest'
@@ -28,26 +29,13 @@ const makeSheet = (
     isNew: false,
     isLocked: false,
     searchAcronyms,
-    sheets: [],
     internalId: 1,
     type: TypeEnum.DX,
     difficulty: DifficultyEnum.Master,
     level: '14',
     internalLevelValue: 14,
-    noteDesigner: null,
-    noteCounts: {
-      tap: null,
-      hold: null,
-      slide: null,
-      touch: null,
-      break: null,
-      total: null,
-    },
-    regions: {
-      jp: true,
-      intl: true,
-      cn: true,
-    },
+    noteCounts: {},
+    serverIds: ['jp', 'intl', 'usa', 'cn'] as ServerEnum[],
     isSpecial: false,
     version: VersionEnum.CiRCLEPLUS,
     identity: {

@@ -1,34 +1,32 @@
-import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum, type Sheet, type Song } from '@gekichumai/dxdata'
+import {
+  CategoryEnum,
+  type ServerEnum,
+  DifficultyEnum,
+  TypeEnum,
+  VersionEnum,
+  type Sheet,
+  type Song,
+} from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
 import { RECENT_CHART_LIMIT, buildRecentChartLinks } from '../recentCharts'
 
 const createSheet = (releaseDate: string, difficulty: DifficultyEnum = DifficultyEnum.Master): Sheet => ({
+  id: `sheet-${releaseDate}-${difficulty}`,
   type: TypeEnum.DX,
   difficulty,
   level: '13',
   internalLevelValue: 13,
   releaseDate,
-  noteDesigner: null,
-  noteCounts: {
-    tap: null,
-    hold: null,
-    slide: null,
-    touch: null,
-    break: null,
-    total: null,
-  },
-  regions: {
-    jp: true,
-    intl: true,
-    cn: true,
-  },
+  noteCounts: {},
+  serverIds: ['jp', 'intl', 'usa', 'cn'] as ServerEnum[],
   isSpecial: false,
   version: VersionEnum.CiRCLEPLUS,
 })
 
 const createSong = (index: number, releaseDate = `2026-05-${String((index % 28) + 1).padStart(2, '0')}`): Song => ({
-  songId: `song-${index}`,
+  id: `song-${index}`,
   title: `Song ${index}`,
+  version: VersionEnum.CiRCLEPLUS,
   artist: `Artist ${index}`,
   category: CategoryEnum.Maimai,
   bpm: 120,
@@ -117,19 +115,19 @@ describe('buildRecentChartLinks', () => {
     const charts = buildRecentChartLinks([
       {
         ...createSong(1, '2026-03-05'),
-        songId: 'dated-latest',
+        id: 'dated-latest',
         title: 'Dated Latest',
         sheets: [{ ...createSheet('2026-03-05'), version: VersionEnum.CiRCLE }],
       },
       {
         ...createSong(2, '2025-09-18'),
-        songId: 'dated-older',
+        id: 'dated-older',
         title: 'Dated Older',
         sheets: [{ ...createSheet('2025-09-18'), version: VersionEnum.CiRCLE }],
       },
       {
         ...createSong(0),
-        songId: 'Bring it on',
+        id: 'Bring it on',
         title: 'Bring it on',
         sheets: [undatedSheet],
       },

@@ -1,13 +1,14 @@
-import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
+import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { IconButton } from '@mui/material'
 import { type FC, useMemo } from 'react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import MdiArrowLeft from '~icons/mdi/arrow-left'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { TYPE_ORDER, getHighestDifficulty } from '../models/constants'
-import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { useServerAliases } from '../models/useServerAliases'
-import { type FlattenedSheet, canonicalId, getSearchAcronymsWithServerAliases } from '../songs'
+import { useCatalogDocument, useSongCatalog } from '@/catalog/CatalogContext'
+import { findSongById } from '@/catalog/songLookup'
+import { type FlattenedSheet, getSearchAcronymsWithServerAliases } from '../songs'
 import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
@@ -19,44 +20,36 @@ const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 export const SongPage: FC = () => {
   const { songId, type, difficulty } = routeApi.useParams()
   const navigate = useNavigate()
-  const appVersion = useAppContextDXDataVersion()
+  const catalogDocument = useCatalogDocument()
+  const catalog = useSongCatalog()
   const { data: serverAliases } = useServerAliases()
 
   const song = useMemo(() => {
     if (!songId) return null
-    return dxdata.songs.find((s) => s.songId === songId) ?? null
-  }, [songId])
+    return findSongById(catalogDocument, songId) ?? null
+  }, [catalogDocument, songId])
 
   const searchAcronyms = useMemo(() => {
     if (!song) return []
-    return getSearchAcronymsWithServerAliases(song, serverAliases)
+    return getSearchAcronymsWithServerAliases({ songId: song.id, searchAcronyms: song.searchAcronyms }, serverAliases)
   }, [song, serverAliases])
 
   const flattenedSheets = useMemo<FlattenedSheet[]>(() => {
     if (!song) return []
-    return song.sheets.map((sheet) => {
-      const isTypeUtage = sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P
-      const identity = {
-        songId: song.songId,
-        type: sheet.type,
-        difficulty: sheet.difficulty,
-      }
-      return {
-        ...song,
-        ...sheet,
-        id: canonicalId(song, sheet),
-        identity,
-        searchAcronyms,
-        isTypeUtage,
-        isRatingEligible: !isTypeUtage,
-        tags: [],
-        releaseDateTimestamp: sheetReleaseDateTimestamp(sheet.releaseDate),
-        internalLevelValue: sheet.multiverInternalLevelValue
-          ? (sheet.multiverInternalLevelValue[appVersion] ?? sheet.internalLevelValue)
-          : sheet.internalLevelValue,
-      } as FlattenedSheet
+    return song.sheets.flatMap((sheet) => {
+      const versioned = catalog.getById(sheet.id)
+      if (!versioned) return []
+      return [
+        {
+          ...versioned,
+          difficulty: versioned.difficulty as DifficultyEnum,
+          searchAcronyms,
+          tags: [],
+          releaseDateTimestamp: sheetReleaseDateTimestamp(sheet.releaseDate),
+        },
+      ]
     })
-  }, [song, searchAcronyms, appVersion])
+  }, [song, catalog, searchAcronyms])
 
   const availableTypes = useMemo(() => {
     const typeSet = new Set(flattenedSheets.map((s) => s.type))

@@ -1,4 +1,4 @@
-import { TypeEnum, type DifficultyEnum, type NoteCounts, type Regions, type Sheet, type Song } from '@gekichumai/dxdata'
+import { ServerEnum, TypeEnum, type DifficultyEnum, type NoteCounts, type Sheet, type Song } from '@gekichumai/dxdata'
 import type { SupportedLocale } from '@/setup/locale'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 import { createServerI18n } from '@/setup/init-i18n'
@@ -19,7 +19,7 @@ type SeoRouteMatch = {
 
 type JsonLdNode = Record<string, unknown>
 
-type StructuredDataSong = Pick<Song, 'artist' | 'bpm' | 'category' | 'imageName' | 'songId' | 'title'>
+type StructuredDataSong = Pick<Song, 'artist' | 'bpm' | 'category' | 'id' | 'imageName' | 'title'>
 
 type StructuredDataSheet = Pick<
   Sheet,
@@ -28,7 +28,7 @@ type StructuredDataSheet = Pick<
   | 'level'
   | 'noteCounts'
   | 'noteDesigner'
-  | 'regions'
+  | 'serverIds'
   | 'releaseDate'
   | 'type'
   | 'version'
@@ -233,7 +233,7 @@ export function buildSongSheetSeo(
     artist: string
     category: string
     imageName: string
-    songId: string
+    id: string
   },
   sheet: {
     type: TypeEnum
@@ -250,7 +250,7 @@ export function buildSongSheetSeo(
   })
   const image = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
   const socialImage = buildChartOgImageUrl({
-    songId: song.songId,
+    songId: song.id,
     type: sheet.type,
     difficulty: sheet.difficulty,
   })
@@ -262,7 +262,7 @@ export function buildSongSheetSeo(
   })
   const url = buildSheetLink(
     {
-      songId: song.songId,
+      songId: song.id,
       type: sheet.type,
       difficulty: sheet.difficulty,
     },
@@ -321,10 +321,10 @@ const noteCountProperties = (noteCounts: NoteCounts) =>
     propertyValue('Total notes', noteCounts.total),
   ].filter((property): property is JsonLdNode => property !== null)
 
-const regionProperties = (regions: Regions) => [
-  propertyValue('Japan availability', regions.jp),
-  propertyValue('International availability', regions.intl),
-  propertyValue('China availability', regions.cn),
+const regionProperties = (serverIds: readonly ServerEnum[]) => [
+  propertyValue('Japan availability', serverIds.includes(ServerEnum.JP)),
+  propertyValue('International availability', serverIds.includes(ServerEnum.INTL)),
+  propertyValue('China availability', serverIds.includes(ServerEnum.CN)),
 ]
 
 export function buildSongSheetStructuredData(
@@ -353,7 +353,7 @@ export function buildSongSheetStructuredData(
     propertyValue('Release date', sheet.releaseDate),
     propertyValue('Version', sheet.version),
     ...noteCountProperties(sheet.noteCounts),
-    ...regionProperties(sheet.regions),
+    ...regionProperties(sheet.serverIds),
   ].filter((property): property is JsonLdNode => property !== null)
 
   const graph: JsonLdNode[] = [
@@ -421,7 +421,7 @@ export function buildSongSheetStructuredData(
       name: `${song.title} ${sheetLabel} chart`,
       description: seo.description,
       url: chartUrl,
-      identifier: `${song.songId}:${sheet.type}:${sheet.difficulty}`,
+      identifier: `${song.id}:${sheet.type}:${sheet.difficulty}`,
       image: seo.socialImage,
       inLanguage: locale,
       datePublished: sheet.releaseDate,

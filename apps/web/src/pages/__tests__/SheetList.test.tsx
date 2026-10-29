@@ -1,3 +1,4 @@
+import type { ServerEnum } from '@gekichumai/dxdata'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { fireEvent, render, screen, type RenderResult } from '@testing-library/react'
 import type { ReactNode } from 'react'
@@ -113,8 +114,10 @@ describe('SheetList', () => {
   })
 
   it('applies default sorting before the first server or client paint', async () => {
-    const { getFlattenedSheetsForVersion } = await vi.importActual<typeof import('@/songs')>('@/songs')
-    const sheet = getFlattenedSheetsForVersion(VersionEnum.CiRCLEPLUS)[0]!
+    const { getFlattenedSheets } = await vi.importActual<typeof import('@/songs')>('@/songs')
+    const { catalogSnapshot } = await import('@gekichumai/dxdata/snapshot')
+    const { getSongCatalog } = await import('@gekichumai/maimai-domain')
+    const sheet = getFlattenedSheets(getSongCatalog(catalogSnapshot, VersionEnum.CiRCLEPLUS))[0]!
     sheetMocks.results = [
       { ...sheet, id: 'older', songId: 'older', releaseDateTimestamp: 1 },
       { ...sheet, id: 'newer', songId: 'newer', releaseDateTimestamp: 2 },
@@ -141,11 +144,7 @@ describe('SheetList', () => {
             level: '14+',
             internalLevelValue: 14.6,
             version: VersionEnum.CiRCLEPLUS,
-            regions: {
-              jp: true,
-              intl: true,
-              cn: true,
-            },
+            serverIds: ['jp', 'intl', 'usa', 'cn'] as ServerEnum[],
             isLocked: false,
             isTypeUtage: false,
             path: '/songs/galatea/std/master',

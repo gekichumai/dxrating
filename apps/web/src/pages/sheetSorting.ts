@@ -1,4 +1,4 @@
-import { dxdata } from '@gekichumai/dxdata'
+import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import type { SortPredicate } from '../components/sheet/SheetSortFilter'
 import type { FlattenedSheet } from '../songs'
 
@@ -6,7 +6,17 @@ const SORT_DESCRIPTOR_MAPPING = {
   releaseDate: 'releaseDateTimestamp' as const,
 }
 
-const SONG_CATALOG_POSITION_BY_ID = new Map(dxdata.songs.map((song, index) => [song.songId, index]))
+const songCatalogPositions = new WeakMap<SongCatalogDocument, ReadonlyMap<string, number>>()
+
+/** The position of each song in the catalog, which lists songs in the order they were added */
+export const getSongCatalogPositions = (document: SongCatalogDocument): ReadonlyMap<string, number> => {
+  let positions = songCatalogPositions.get(document)
+  if (!positions) {
+    positions = new Map(document.songs.map((song, index) => [song.id, index]))
+    songCatalogPositions.set(document, positions)
+  }
+  return positions
+}
 
 /**
  * Compare sheets using the selected sort predicates.
@@ -21,7 +31,7 @@ export const compareSheetsBySorts = (
   a: FlattenedSheet,
   b: FlattenedSheet,
   sorts: readonly SortPredicate[],
-  songCatalogPositionById: ReadonlyMap<string, number> = SONG_CATALOG_POSITION_BY_ID,
+  songCatalogPositionById: ReadonlyMap<string, number>,
 ): number => {
   const comparison = sorts.reduce((result, sort) => {
     if (result !== 0) {

@@ -1,13 +1,15 @@
 import { Effect, Data } from 'effect'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
+import { LEGACY_SONG_IDS } from '@gekichumai/dxdata/legacy-song-ids'
 import {
   calculateBest50,
   calculateRatingAward,
-  formatSheetIdentity,
-  getDxdataSongCatalog,
+  getSongCatalog,
+  resolveLegacySheetId,
   type Best50Bucket,
   type RatingAward,
-  type SheetIdentity,
+  type SongCatalog,
+  type SongCatalogSource,
   type VersionedSheet,
 } from '@gekichumai/maimai-domain'
 import type { Context } from 'hono'
@@ -114,12 +116,14 @@ export const isRenderableRatingSheet = (sheet: VersionedSheet): sheet is Flatten
   )
 }
 
-const getFlattenedSheet = (version: VersionEnum, sheetId: string): FlattenedSheet | null => {
-  const sheet = getDxdataSongCatalog(version).getById(sheetId)
+// Clients send public sheet IDs (dsht_…); clients from before them send legacy sheet IDs, resolved the same way
+const getFlattenedSheet = (catalog: SongCatalog, sheetId: string): FlattenedSheet | null => {
+  const publicSheetId = resolveLegacySheetId(catalog, sheetId, LEGACY_SONG_IDS)
+  const sheet = publicSheetId ? catalog.getById(publicSheetId) : null
   return sheet && isRenderableRatingSheet(sheet) ? sheet : null
 }
 
-export const enrichEntries = (entries: PlayEntry[], version: VersionEnum): RenderData[] => {
+export const enrichEntries = (entries: PlayEntry[], catalog: SongCatalog): RenderData[] => {
   return entries.flatMap((entry) => {
     // check data validity
     if (
@@ -140,13 +144,14 @@ export const enrichEntries = (entries: PlayEntry[], version: VersionEnum): Rende
       return []
     }
 
-    const sheet = getFlattenedSheet(version, entry.sheetId)
+    const sheet = getFlattenedSheet(catalog, entry.sheetId)
     if (!sheet) {
       return []
     }
     return [
       {
         ...entry,
+        sheetId: sheet.id,
         sheet: {
           ...sheet,
           internalLevelValue: entry.sheetOverrides?.internalLevelValue ?? sheet.internalLevelValue,
@@ -175,11 +180,11 @@ export const prepareCalculatedEntries = (
     b15: PlayEntry[]
     b35: PlayEntry[]
   },
-  version: VersionEnum,
+  catalog: SongCatalog,
 ): { b15: RenderData[]; b35: RenderData[] } => {
   const prepared = {
-    b15: enrichEntries(calculatedEntries.b15, version),
-    b35: enrichEntries(calculatedEntries.b35, version),
+    b15: enrichEntries(calculatedEntries.b15, catalog),
+    b35: enrichEntries(calculatedEntries.b35, catalog),
   }
 
   prepared.b15.sort((a, b) => {
@@ -220,13 +225,13 @@ const deduplicateRawBest50Candidates = (candidates: RawBest50Candidate[]): RawBe
 
 export const calculateEntries = (
   entries: PlayEntry[],
-  version: VersionEnum,
+  catalog: SongCatalog,
   region: Region,
 ): { b15: RenderData[]; b35: RenderData[] } => {
-  const catalog = getDxdataSongCatalog(version)
+  const { version } = catalog
   const candidates = deduplicateRawBest50Candidates(
     entries.flatMap((entry, index): RawBest50Candidate[] => {
-      const renderData = enrichEntries([entry], version)[0]
+      const renderData = enrichEntries([entry], catalog)[0]
       if (!renderData) return []
 
       const best50 = calculateBest50({
@@ -273,7 +278,23 @@ export const calculateEntries = (
 }
 
 export type OneshotRequest = z.infer<typeof requestBodySchema>
-let service: { source: string; render: ReturnType<typeof createRenderService<OneshotRequest>> } | undefined
+
+/** A request with the catalog to render it from */
+interface OneshotJob {
+  body: OneshotRequest
+  /** Identifies the catalog, so renders of one request against different catalogs are cached apart */
+  catalogRevision: string
+  catalog: SongCatalogSource
+}
+
+// The render service caches by the JSON of its input: the catalog is kept out of it (and represented by its revision)
+const createOneshotJob = (body: OneshotRequest, catalog: { revision: string; document: SongCatalogSource }) =>
+  Object.defineProperty({ body, catalogRevision: catalog.revision } as OneshotJob, 'catalog', {
+    value: catalog.document,
+    enumerable: false,
+  })
+
+let service: { source: string; render: ReturnType<typeof createRenderService<OneshotJob>> } | undefined
 
 const getRenderService = () => {
   const source = getAssetSourceKey()
@@ -285,14 +306,15 @@ const getRenderService = () => {
     })
     service = {
       source,
-      render: createRenderService((body: OneshotRequest, options) =>
+      render: createRenderService(({ body, catalog: document }: OneshotJob, options) =>
         Effect.runPromise(
           Effect.scoped(
             Effect.gen(function* () {
               const start = performance.now()
+              const catalog = getSongCatalog(document, body.version)
               const data = body.calculatedEntries
-                ? prepareCalculatedEntries(body.calculatedEntries, body.version)
-                : calculateEntries(body.entries ?? [], body.version, body.region)
+                ? prepareCalculatedEntries(body.calculatedEntries, catalog)
+                : calculateEntries(body.entries ?? [], catalog, body.region)
               const calc = performance.now() - start
               const result = yield* Effect.tryPromise({
                 try: () =>
@@ -318,9 +340,10 @@ const getRenderService = () => {
 export const renderOneshotEffect = (
   body: OneshotRequest,
   options: { format: 'svg' | 'png' | 'jpeg'; width?: number },
+  catalog: { revision: string; document: SongCatalogSource },
 ) =>
   Effect.tryPromise({
-    try: () => getRenderService()(body, options),
+    try: () => getRenderService()(createOneshotJob(body, catalog), options),
     catch: (cause) =>
       cause instanceof RenderQueueFullError
         ? new OneshotQueueFullError({ cause })
@@ -329,58 +352,15 @@ export const renderOneshotEffect = (
           : new OneshotRenderError({ operation: 'render oneshot image', cause }),
   })
 
-/** The legacy sheet identity of each public sheet ID (dsht_…) it knows; see CatalogIdentities.translateSheetIdsToLegacy */
-export type OneshotSheetIdTranslator = (
-  sheetIds: readonly string[],
-) => Promise<ReadonlyMap<string, { songId: string; sheetType: string; sheetDifficulty: string }>>
+/** The published catalog the renderer resolves sheets from; see McpCatalogSource */
+export type OneshotCatalogLoader = () => Promise<{ revision: string; document: SongCatalogSource }>
 
-const PUBLIC_SHEET_ID_PREFIX = 'dsht_'
-
-/**
- * Rewrites the public sheet IDs of a request to the legacy sheet IDs the renderer's catalog is keyed by. Clients send
- * public IDs since the web moved to the dxdata API catalog (#386); legacy IDs, as sent by older clients, pass through.
- * An ID without a legacy identity is kept, and the renderer skips it like any other unknown sheet.
- */
-export const translatePublicSheetIds = async (
-  body: OneshotRequest,
-  translate: OneshotSheetIdTranslator,
-): Promise<OneshotRequest> => {
-  const entries = [
-    ...(body.entries ?? []),
-    ...(body.calculatedEntries?.b15 ?? []),
-    ...(body.calculatedEntries?.b35 ?? []),
-  ]
-  const publicIds = [...new Set(entries.map((entry) => entry.sheetId))].filter((id) =>
-    id.startsWith(PUBLIC_SHEET_ID_PREFIX),
-  )
-  if (publicIds.length === 0) return body
-
-  const legacyIdentities = await translate(publicIds)
-  const rewrite = (entry: PlayEntry): PlayEntry => {
-    const identity = legacyIdentities.get(entry.sheetId)
-    return identity
-      ? {
-          ...entry,
-          sheetId: formatSheetIdentity({
-            songId: identity.songId,
-            type: identity.sheetType,
-            difficulty: identity.sheetDifficulty,
-          } as SheetIdentity),
-        }
-      : entry
-  }
-  return {
-    ...body,
-    entries: body.entries?.map(rewrite),
-    calculatedEntries: body.calculatedEntries && {
-      b15: body.calculatedEntries.b15.map(rewrite),
-      b35: body.calculatedEntries.b35.map(rewrite),
-    },
-  }
-}
+export class OneshotCatalogUnavailableError extends Data.TaggedError('OneshotCatalogUnavailableError')<{
+  readonly cause: unknown
+}> {}
 
 export const createOneshotHandler =
-  (translateSheetIds?: OneshotSheetIdTranslator) =>
+  (loadCatalog: OneshotCatalogLoader) =>
   (c: Context): Promise<Response> => {
     const queryDemo = c.req.query('demo')
     const queryPixelated = c.req.query('pixelated')
@@ -400,23 +380,25 @@ export const createOneshotHandler =
             try: () => c.req.json(),
             catch: (cause) => new OneshotRenderError({ operation: 'read oneshot request', cause }),
           })
-      const parsed = yield* Effect.try({
+      const body = yield* Effect.try({
         try: () => requestBodySchema.parse(input),
         catch: (cause) =>
           cause instanceof z.ZodError
             ? cause
             : new OneshotRenderError({ operation: 'validate oneshot request', cause }),
       })
-      const body = translateSheetIds
-        ? yield* Effect.tryPromise({
-            try: () => translatePublicSheetIds(parsed, translateSheetIds),
-            catch: (cause) => new OneshotRenderError({ operation: 'translate public sheet IDs', cause }),
-          })
-        : parsed
-      const result = yield* renderOneshotEffect(body, {
-        format,
-        width: queryWidth === undefined ? undefined : Number.parseInt(queryWidth),
+      const catalog = yield* Effect.tryPromise({
+        try: loadCatalog,
+        catch: (cause) => new OneshotCatalogUnavailableError({ cause }),
       })
+      const result = yield* renderOneshotEffect(
+        body,
+        {
+          format,
+          width: queryWidth === undefined ? undefined : Number.parseInt(queryWidth),
+        },
+        catalog,
+      )
       if (result.cache === 'MISS') {
         c.header(
           'Server-Timing',
@@ -438,6 +420,12 @@ export const createOneshotHandler =
       return c.body(result.body)
     }).pipe(
       Effect.catch((error) => {
+        if (error instanceof OneshotCatalogUnavailableError) {
+          return Effect.sync(() => {
+            c.header('Retry-After', '5')
+            return c.text('The song catalog is still loading', 503)
+          })
+        }
         if (error instanceof OneshotQueueFullError) {
           return Effect.sync(() => {
             c.header('Retry-After', '1')
@@ -457,5 +445,3 @@ export const createOneshotHandler =
       Effect.runPromise(Effect.scoped(program), { signal: c.req.raw.signal }),
     )
   }
-
-export const handler = createOneshotHandler()

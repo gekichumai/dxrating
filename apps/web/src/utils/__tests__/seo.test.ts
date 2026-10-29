@@ -1,4 +1,4 @@
-import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
+import { CategoryEnum, DifficultyEnum, ServerEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
 import {
   buildDevelopersSeo,
@@ -59,7 +59,7 @@ describe('SEO localization', () => {
         artist: 'Test Artist',
         category: 'POPSアニメ',
         imageName: 'test-song',
-        songId: 'test-song',
+        id: 'test-song',
       },
       {
         type: TypeEnum.STD,
@@ -87,7 +87,7 @@ describe('SEO localization', () => {
         artist: 'Test Artist',
         category: CategoryEnum.Maimai,
         imageName: 'test-song',
-        songId: 'test-song',
+        id: 'test-song',
         bpm: 180,
       },
       {
@@ -105,11 +105,7 @@ describe('SEO localization', () => {
           break: 10,
           total: 700,
         },
-        regions: {
-          jp: true,
-          intl: true,
-          cn: false,
-        },
+        serverIds: [ServerEnum.JP, ServerEnum.INTL, ServerEnum.USA],
         version: VersionEnum.CiRCLEPLUS,
       },
       'en',

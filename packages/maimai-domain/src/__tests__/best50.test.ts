@@ -1,18 +1,23 @@
-import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum, type DXData } from '@gekichumai/dxdata'
+import { CategoryEnum, DifficultyEnum, ServerEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
 import { SCORE_COEFFICIENT_TABLE, calculateBest50, calculateRatingAward } from '../best50'
-import { buildSongCatalog } from '../song-catalog'
-import { formatSheetIdentity } from '../sheet-identity'
+import { buildSongCatalog, type SongCatalogSource } from '../song-catalog'
 import type { ComboFlag, RatingEntry, SheetIdentity } from '../types'
 
-function makeData(): DXData {
+// Test sheet IDs; the catalog indexes any string, public sheet IDs are only required of saved data
+const sheetIdOf = ({ songId, type, difficulty }: SheetIdentity) => `${songId}:${type}:${difficulty}`
+
+const serverIdsOf = (regions: { jp: boolean; intl: boolean; cn: boolean }) =>
+  [
+    regions.jp && ServerEnum.JP,
+    regions.intl && ServerEnum.INTL,
+    regions.intl && ServerEnum.USA,
+    regions.cn && ServerEnum.CN,
+  ].filter((server) => server !== false)
+
+function makeData(): SongCatalogSource {
   return {
-    updateTime: '2026-05-17T00:00:00.000Z',
-    categories: [],
     versions: [],
-    types: [],
-    difficulties: [],
-    regions: [],
     songs: [
       makeSong('current', VersionEnum.CiRCLEPLUS, { jp: true, intl: true, cn: true }),
       makeSong('previous', VersionEnum.CiRCLE, { jp: true, intl: true, cn: true }),
@@ -23,9 +28,10 @@ function makeData(): DXData {
 
 function makeSong(songId: string, version: VersionEnum, regions: { jp: boolean; intl: boolean; cn: boolean }) {
   return {
-    songId,
+    id: songId,
     title: songId,
     artist: 'artist',
+    version,
     bpm: 120,
     category: CategoryEnum.Maimai,
     imageName: songId,
@@ -34,14 +40,14 @@ function makeSong(songId: string, version: VersionEnum, regions: { jp: boolean; 
     searchAcronyms: [],
     sheets: [
       {
+        id: sheetIdOf({ songId, type: TypeEnum.DX, difficulty: DifficultyEnum.Master }),
         internalId: songId.length * 100,
         type: TypeEnum.DX,
         difficulty: DifficultyEnum.Master,
         level: '13',
         internalLevelValue: 13,
-        noteDesigner: null,
         noteCounts: { tap: 1, hold: 1, slide: 1, touch: 1, break: 1, total: 5 },
-        regions,
+        serverIds: serverIdsOf(regions),
         isSpecial: false,
         version,
       },
@@ -60,7 +66,7 @@ function providerEntry(
   best50Bucket?: 'b15' | 'b35',
 ): RatingEntry {
   return {
-    sheetId: formatSheetIdentity(identity),
+    sheetId: sheetIdOf(identity),
     identity,
     achievementRate,
     source: best50Bucket ? { provider, best50Bucket } : undefined,
@@ -399,7 +405,7 @@ describe('Best 50', () => {
     const catalog = buildSongCatalog(makeData(), VersionEnum.CiRCLEPLUS)
     const identity = masterIdentity('current')
     const selectedEntry: RatingEntry = {
-      sheetId: formatSheetIdentity(identity),
+      sheetId: sheetIdOf(identity),
       identity,
       achievementRate: 100.5,
       source: {
@@ -438,7 +444,7 @@ describe('Best 50', () => {
     const catalog = buildSongCatalog(makeData(), VersionEnum.CiRCLEPLUS)
     const identity = masterIdentity('current')
     const selectedEntry: RatingEntry = {
-      sheetId: formatSheetIdentity(identity),
+      sheetId: sheetIdOf(identity),
       identity,
       achievementRate: 100.5,
       source: {
@@ -477,7 +483,7 @@ describe('Best 50', () => {
     const catalog = buildSongCatalog(makeData(), VersionEnum.CiRCLEPLUS)
     const identity = masterIdentity('current')
     const selectedEntry: RatingEntry = {
-      sheetId: formatSheetIdentity(identity),
+      sheetId: sheetIdOf(identity),
       identity,
       achievementRate: 100.5,
       source: { provider: 'lxns', providerId: 'lxns-current' },
@@ -535,7 +541,7 @@ describe('Best 50', () => {
   })
 
   it('caps b15 at 15 and b35 at 35 for unique entries', () => {
-    const data: DXData = {
+    const data: SongCatalogSource = {
       ...makeData(),
       songs: [
         ...Array.from({ length: 20 }, (_, index) =>
@@ -551,7 +557,7 @@ describe('Best 50', () => {
       catalog,
       version: VersionEnum.CiRCLEPLUS,
       region: 'jp',
-      entries: data.songs.map((song, index) => entry(masterIdentity(song.songId), 100.5 - index * 0.01)),
+      entries: data.songs.map((song, index) => entry(masterIdentity(song.id), 100.5 - index * 0.01)),
     })
 
     expect(result.b15).toHaveLength(15)

@@ -1,4 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { isPublicSongId } from '@gekichumai/maimai-domain'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { getBundledCatalogDocument } from '@/catalog/bundledCatalog'
+import { loadLegacySongIds } from '@/catalog/legacySongIds'
+import { resolveLegacySongId } from '@/catalog/songLookup'
 import { SheetList } from '@/pages/SheetList'
 import { buildSearchSeo, resolveSeoLocale } from '@/utils/seo'
 import {
@@ -60,7 +64,16 @@ export const Route = createFileRoute('/')({
     type: search.type,
     difficulty: search.difficulty,
   }),
-  loader: ({ deps }) => loadSearchRouteData(deps),
+  loader: async ({ deps }: { deps: SearchParams }) => {
+    // Chart dialog links from before public song IDs name the song by its legacy ID
+    if (deps.songId && !isPublicSongId(deps.songId)) {
+      const songId = resolveLegacySongId(getBundledCatalogDocument(), deps.songId, await loadLegacySongIds())
+      if (songId) {
+        throw redirect({ to: '/', search: (prev) => ({ ...prev, songId }), statusCode: 308, replace: true })
+      }
+    }
+    return loadSearchRouteData(deps)
+  },
   component: SearchRouteComponent,
 })
 

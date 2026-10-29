@@ -1,3 +1,4 @@
+import { useSongCatalog } from '@/catalog/CatalogContext'
 import {
   Button,
   Checkbox,
@@ -22,7 +23,6 @@ import { useLocalStorage } from 'react-use'
 import { match } from 'ts-pattern'
 import IconMdiChevronDown from '~icons/mdi/chevron-down'
 import IconMdiHelpCircleOutline from '~icons/mdi/help-circle-outline'
-import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import { importFromNETRecords } from './importFromNETRecords'
 import { NetImportAutoImportOptions } from './NetImportAutoImportOptions'
 
@@ -89,7 +89,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
     .with(true, () => 'replace' as const)
     .with('false', () => false as const)
     .otherwise((value) => value)
-  const appVersion = useAppContextDXDataVersion()
+  const catalog = useSongCatalog()
 
   const updateForm = (patch: Partial<typeof form>) => {
     const next = { ...form, ...patch }
@@ -106,7 +106,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   }
 
   const handleImport = () => {
-    void importFromNETRecords(appVersion, modifyEntries, mappedAutoImport || 'replace', undefined, {
+    void importFromNETRecords(catalog, modifyEntries, mappedAutoImport || 'replace', undefined, {
       region,
       username,
       password,

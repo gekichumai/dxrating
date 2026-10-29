@@ -47,6 +47,7 @@ const SheetTagsAddDialog: FC<{
     try {
       await client.tags.attach({
         songId: sheet.songId,
+        sheetId: sheet.id,
         sheetType: sheet.type,
         sheetDifficulty: sheet.difficulty,
         tagId: tagId,

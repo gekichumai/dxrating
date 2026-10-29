@@ -1,4 +1,6 @@
-import { getDxdataSongCatalog, normalizeAquaDxRows, type ProviderMusicIdMap } from '@gekichumai/maimai-domain'
+import { useSongCatalog } from '@/catalog/CatalogContext'
+import { loadLegacySongIds } from '@/catalog/legacySongIds'
+import { normalizeAquaDxRows, type ProviderMusicIdMap } from '@gekichumai/maimai-domain'
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
 import type { FC } from 'react'
 import toast from 'react-hot-toast'
@@ -6,7 +8,6 @@ import { useTranslation } from 'react-i18next'
 import type { ListActions } from 'react-use/lib/useList'
 import MdiEarthArrowDown from '~icons/mdi/earth-arrow-down'
 import { useWebHaptics } from 'web-haptics/react'
-import { useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
@@ -23,7 +24,7 @@ export const ImportFromAquaDxButtonListItem: FC<{
 }> = ({ modifyEntries, onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
   const haptic = useWebHaptics()
-  const appVersion = useAppContextDXDataVersion()
+  const catalog = useSongCatalog()
 
   return (
     <MenuItem
@@ -59,7 +60,7 @@ export const ImportFromAquaDxButtonListItem: FC<{
                     achievement: musicDetail.achievement,
                   }))
                 : []
-              const importResult = normalizeAquaDxRows(getDxdataSongCatalog(appVersion), rows, musicIdMap)
+              const importResult = normalizeAquaDxRows(catalog, rows, musicIdMap, await loadLegacySongIds())
               const entries = importResultToPlayEntries(importResult)
               for (const warning of importResult.warnings) {
                 console.warn('[ImportFromAquaDxButtonListItem]', warning.message, warning.row)

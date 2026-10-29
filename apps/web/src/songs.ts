@@ -1,10 +1,10 @@
-import { type DifficultyEnum, type Sheet, type Song, TypeEnum, type VersionEnum, dxdata } from '@gekichumai/dxdata'
-import { formatSheetIdentity, getDxdataSongCatalog, type VersionedSheet } from '@gekichumai/maimai-domain'
+import type { DifficultyEnum, Song } from '@gekichumai/dxdata'
+import type { SongCatalog, VersionedSheet } from '@gekichumai/maimai-domain'
 import * as Sentry from '@sentry/tanstackstart-react'
 import Fuse from 'fuse.js'
 import uniq from 'lodash-es/uniq'
 import { useMemo } from 'react'
-import { useAppContextDXDataVersion } from './models/context/useAppContext'
+import { useCatalogDocument, useSongCatalog } from './catalog/CatalogContext'
 import { useCombinedTags, type CombinedTags } from './models/useCombinedTags'
 import { useServerAliases } from './models/useServerAliases'
 
@@ -14,29 +14,13 @@ export type FlattenedSheet = VersionedSheet & {
   tags: number[]
 }
 
-export const canonicalId = (song: Song, sheet: Sheet) => {
-  return formatSheetIdentity({
-    songId: song.songId,
-    type: sheet.type,
-    difficulty: sheet.difficulty,
-  })
-}
-
-export const canonicalIdFromParts = (songId: string, type: TypeEnum, difficulty: DifficultyEnum) => {
-  return formatSheetIdentity({ songId, type, difficulty })
-}
-
-export const getSongs = (): Song[] => {
-  return dxdata.songs
-}
-
 export interface ServerAlias {
   song_id: string
   name: string
 }
 
 export const getSearchAcronymsWithServerAliases = (
-  song: Pick<Song, 'songId' | 'searchAcronyms'>,
+  song: { songId: string; searchAcronyms: readonly string[] },
   serverAliases?: readonly ServerAlias[] | null,
 ) => {
   return uniq([
@@ -45,18 +29,23 @@ export const getSearchAcronymsWithServerAliases = (
   ])
 }
 
-export const getFlattenedSheetsForVersion = (version: VersionEnum): FlattenedSheet[] => {
-  return getDxdataSongCatalog(version).sheets.map((sheet) => ({
-    ...sheet,
-    difficulty: sheet.difficulty as DifficultyEnum,
-    releaseDateTimestamp: sheet.releaseDateTimestamp as number,
-    tags: [],
-  }))
+export const getFlattenedSheets = (catalog: SongCatalog): FlattenedSheet[] => {
+  let sheets = flattenedSheetsCache.get(catalog)
+  if (!sheets) {
+    sheets = catalog.sheets.map((sheet) => ({
+      ...sheet,
+      difficulty: sheet.difficulty as DifficultyEnum,
+      releaseDateTimestamp: sheet.releaseDateTimestamp as number,
+      tags: [],
+    }))
+    flattenedSheetsCache.set(catalog, sheets)
+  }
+  return sheets
 }
 
-const bundledSheetsCache = new Map<VersionEnum, FlattenedSheet[]>()
-const enrichedSheetsCache = new Map<
-  VersionEnum,
+const flattenedSheetsCache = new WeakMap<SongCatalog, FlattenedSheet[]>()
+const enrichedSheetsCache = new WeakMap<
+  SongCatalog,
   {
     tagSongs: CombinedTags['tagSongs'] | undefined
     aliases: readonly ServerAlias[] | undefined
@@ -65,31 +54,31 @@ const enrichedSheetsCache = new Map<
 >()
 
 function getSheetsWithMetadata(
-  version: VersionEnum,
+  catalog: SongCatalog,
   tagSongs: CombinedTags['tagSongs'] | undefined,
   aliases: readonly ServerAlias[] | undefined,
 ): FlattenedSheet[] {
-  let sheets = bundledSheetsCache.get(version)
-  if (!sheets) {
-    sheets = getFlattenedSheetsForVersion(version)
-    bundledSheetsCache.set(version, sheets)
-  }
+  const sheets = getFlattenedSheets(catalog)
   if (!tagSongs?.length && !aliases?.length) return sheets
 
   // Share the derived catalog across consumers, invalidating on content references rather than counts.
-  const cached = enrichedSheetsCache.get(version)
+  const cached = enrichedSheetsCache.get(catalog)
   if (cached && cached.tagSongs === tagSongs && cached.aliases === aliases) return cached.sheets
 
   const tagsBySheet = new Map<string, number[]>()
   for (const relation of tagSongs ?? []) {
-    const id = canonicalIdFromParts(
-      relation.song_id,
-      relation.sheet_type as TypeEnum,
-      relation.sheet_difficulty as DifficultyEnum,
-    )
-    const tags = tagsBySheet.get(id) ?? []
+    // Tags are listed with public IDs (idScheme=public), which always name the sheet
+    const sheetId =
+      relation.sheet_id ??
+      catalog.getByIdentity({
+        songId: relation.song_id,
+        type: relation.sheet_type,
+        difficulty: relation.sheet_difficulty,
+      } as VersionedSheet['identity'])?.id
+    if (!sheetId) continue
+    const tags = tagsBySheet.get(sheetId) ?? []
     tags.push(relation.tag_id)
-    tagsBySheet.set(id, tags)
+    tagsBySheet.set(sheetId, tags)
   }
 
   const aliasesBySong = new Map<string, string[]>()
@@ -109,21 +98,20 @@ function getSheetsWithMetadata(
       searchAcronyms: names ? uniq([...sheet.searchAcronyms, ...names]) : sheet.searchAcronyms,
     }
   })
-  enrichedSheetsCache.set(version, { tagSongs, aliases, sheets: enrichedSheets })
+  enrichedSheetsCache.set(catalog, { tagSongs, aliases, sheets: enrichedSheets })
   return enrichedSheets
 }
 
 export const useSheets = () => {
-  const version = useAppContextDXDataVersion()
+  const catalog = useSongCatalog()
   const { data: combinedTags } = useCombinedTags()
   const { data: serverAliases } = useServerAliases()
-  const data = getSheetsWithMetadata(version, combinedTags?.tagSongs, serverAliases)
+  const data = getSheetsWithMetadata(catalog, combinedTags?.tagSongs, serverAliases)
 
-  // The bundled catalog is available during SSR and every client render. Remote metadata only enriches it.
   return { data, isLoading: false }
 }
 
-export const useSongs = () => ({ data: getSongs() })
+export const useSongs = () => ({ data: useCatalogDocument().songs })
 
 type SheetsSearchEngineOptions = {
   songs?: readonly Song[] | null
@@ -165,7 +153,7 @@ function buildSheetsSearchIndex(
       ...song,
       searchAcronyms: getSearchAcronymsWithServerAliases(
         {
-          songId: song.songId,
+          songId: song.id,
           searchAcronyms: song.searchAcronyms.filter((acronym) => acronym.length < 70),
         },
         serverAliases,
@@ -187,10 +175,12 @@ function buildSheetsSearchIndex(
     },
   )
 
-  const songsById = new Map((songs ?? []).map((song) => [song.songId, song]))
+  const songsById = new Map((songs ?? []).map((song) => [song.id, song]))
   const indexedSheets = availableSheets.map((sheet) => {
     const song = songsById.get(sheet.songId)
-    const aliases = song ? getSearchAcronymsWithServerAliases(song, serverAliases) : sheet.searchAcronyms
+    const aliases = song
+      ? getSearchAcronymsWithServerAliases({ songId: song.id, searchAcronyms: song.searchAcronyms }, serverAliases)
+      : sheet.searchAcronyms
     const designer = sheet.noteDesigner?.trim()
     return {
       sheet,
@@ -227,7 +217,7 @@ function searchSheetsIndex(
 
   // Get Fuse search results (alias/title matches)
   const titleResults = fuseInstance.search(trimmedTerm).flatMap((result) => {
-    return availableSheets.filter((sheet) => sheet.songId === result.item.songId)
+    return availableSheets.filter((sheet) => sheet.songId === result.item.id)
   })
 
   const seen = new Set<string>()

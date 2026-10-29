@@ -10,14 +10,14 @@ import { defineConfig, type Plugin } from 'vite'
 
 // Emit the song catalog in the Worker bundle as JSON.parse("...") instead of a multi-megabyte object literal. V8 parses
 // a JSON string much faster than the equivalent JS, which shortens Worker cold starts (isolate startup evaluates every
-// chunk before the first request). Vite 8's native JSON plugin keeps it as a literal, so target dxdata.json directly.
+// chunk before the first request). Vite 8's native JSON plugin keeps it as a literal, so target the catalog snapshot directly.
 // The client keeps the minified literal, which is smaller over the wire.
 const dxdataJsonParse = (): Plugin => ({
   name: 'dxrating:dxdata-json-parse',
   enforce: 'pre',
   applyToEnvironment: (environment) => environment.name === 'ssr',
   load(id) {
-    if (!id.endsWith('/packages/dxdata/dxdata.json')) return null
+    if (!id.endsWith('/packages/dxdata/snapshot.json')) return null
     const json = JSON.stringify(JSON.parse(readFileSync(id, 'utf8')))
     return { code: `export default JSON.parse(${JSON.stringify(json)})`, moduleType: 'js' }
   },

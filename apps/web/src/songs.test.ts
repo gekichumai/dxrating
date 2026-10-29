@@ -1,11 +1,10 @@
 import { VersionEnum } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
+import { createSheetsSearchEngine, getSearchAcronymsWithServerAliases } from './songs'
 import {
-  createSheetsSearchEngine,
-  getFlattenedSheetsForVersion,
-  getSearchAcronymsWithServerAliases,
-  getSongs,
-} from './songs'
+  getSnapshotFlattenedSheets as getFlattenedSheetsForVersion,
+  getSnapshotSongs as getSongs,
+} from './test-utils/catalog'
 
 describe('getSearchAcronymsWithServerAliases', () => {
   it('merges generated aliases with server aliases for the current song', () => {
@@ -38,7 +37,7 @@ describe('artist and chart designer search', () => {
   const baseSheet = getFlattenedSheetsForVersion(VersionEnum.CiRCLEPLUS)[0]!
   const song = {
     ...baseSong,
-    songId: 'credits-song',
+    id: 'credits-song',
     title: 'Moonlight',
     artist: 'Café Ensemble',
     searchAcronyms: ['lunar alias'],
@@ -47,7 +46,7 @@ describe('artist and chart designer search', () => {
     {
       ...baseSheet,
       id: 'credits-master',
-      songId: song.songId,
+      songId: song.id,
       title: song.title,
       artist: song.artist,
       noteDesigner: 'Unique Designer',
@@ -56,7 +55,7 @@ describe('artist and chart designer search', () => {
     {
       ...baseSheet,
       id: 'credits-basic',
-      songId: song.songId,
+      songId: song.id,
       title: song.title,
       artist: song.artist,
       noteDesigner: 'Another Mapper',
@@ -65,10 +64,10 @@ describe('artist and chart designer search', () => {
     {
       ...baseSheet,
       id: 'credits-unknown',
-      songId: song.songId,
+      songId: song.id,
       title: song.title,
       artist: song.artist,
-      noteDesigner: null,
+      noteDesigner: undefined,
       internalId: 987654,
     },
   ]

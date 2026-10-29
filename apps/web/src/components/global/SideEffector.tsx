@@ -1,3 +1,4 @@
+import { useSongCatalog } from '@/catalog/CatalogContext'
 import { useRatingEntries } from '@/components/rating/useRatingEntries'
 import { authClient } from '@/lib/auth-client'
 import { identifyAnalyticsUser, registerAnalyticsContext, resetAnalyticsUser } from '@/lib/analytics'
@@ -40,7 +41,7 @@ const SideEffectorLocaleMeta: FC = () => {
 const SideEffectorAutoImportRating: FC = () => {
   const { modifyEntries } = useRatingCalculatorContext()
   const { t } = useTranslation()
-  const appVersion = useAppContextDXDataVersion()
+  const catalog = useSongCatalog()
 
   useEffect(() => {
     const mode = (() => {
@@ -83,8 +84,8 @@ const SideEffectorAutoImportRating: FC = () => {
       }
     }
 
-    importFromNETRecords(appVersion, modifyEntries, mode)
-  }, [appVersion])
+    importFromNETRecords(catalog, modifyEntries, mode)
+  }, [catalog])
 
   return null
 }

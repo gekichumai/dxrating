@@ -29,6 +29,8 @@ export interface CatalogSong {
 
 export interface McpCatalog {
   catalogRunId: string
+  /** The published document itself, for consumers that build their own indexes (the oneshot renderer) */
+  document: PublishedCatalog
   updatedAt: string
   songs: CatalogSong[]
   songsById: Map<string, CatalogSong>
@@ -99,6 +101,7 @@ export function buildMcpCatalog(catalogRunId: string, published: PublishedCatalo
 
   return {
     catalogRunId,
+    document: published,
     updatedAt: published.updatedAt,
     songs,
     songsById: new Map(songs.map((entry) => [entry.song.id, entry])),

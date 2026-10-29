@@ -1,4 +1,7 @@
-import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import { DifficultyEnum, ServerEnum, TypeEnum } from '@gekichumai/dxdata'
+
+/** The order regional availability badges are shown in */
+export const SERVER_BADGE_ORDER = [ServerEnum.JP, ServerEnum.INTL, ServerEnum.USA, ServerEnum.CN] as const
 
 export const TYPE_ORDER = [TypeEnum.DX, TypeEnum.STD, TypeEnum.UTAGE, TypeEnum.UTAGE2P] as const
 

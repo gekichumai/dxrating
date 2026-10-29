@@ -1,11 +1,12 @@
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
-import { getDxdataSongCatalog } from '@gekichumai/maimai-domain'
+import { getSongCatalog } from '@gekichumai/maimai-domain'
+import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { describe, expect, it } from 'vitest'
 import { isRenderableRatingSheet } from '../services/functions/oneshot-renderer/index'
 
 describe('oneshot renderer sheet guard', () => {
   it('rejects UTAGE sheets with custom difficulty labels', () => {
-    const catalog = getDxdataSongCatalog(VersionEnum.CiRCLE)
+    const catalog = getSongCatalog(catalogSnapshot, VersionEnum.CiRCLE)
     const utageSheet = catalog.sheets.find(
       (sheet) => sheet.isTypeUtage && !Object.values(DifficultyEnum).includes(sheet.difficulty as DifficultyEnum),
     )
@@ -15,7 +16,7 @@ describe('oneshot renderer sheet guard', () => {
   })
 
   it('accepts rating-eligible standard sheets with enum difficulties', () => {
-    const catalog = getDxdataSongCatalog(VersionEnum.CiRCLE)
+    const catalog = getSongCatalog(catalogSnapshot, VersionEnum.CiRCLE)
     const standardSheet = catalog.sheets.find(
       (sheet) => sheet.type === TypeEnum.DX && sheet.difficulty === DifficultyEnum.Master && sheet.isRatingEligible,
     )

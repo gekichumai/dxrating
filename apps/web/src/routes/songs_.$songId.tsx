@@ -1,5 +1,7 @@
-import { DifficultyEnum, type Song, TypeEnum, dxdata } from '@gekichumai/dxdata'
+import { DifficultyEnum, type Song, TypeEnum } from '@gekichumai/dxdata'
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
+import { getBundledCatalogDocument } from '@/catalog/bundledCatalog'
+import { findSongById, resolveSongRouteParam } from '@/catalog/songLookup'
 
 type SongSearchParams = {
   type?: string
@@ -51,7 +53,7 @@ export const resolveLegacySongRouteRedirect = (song: Song, requestedType?: strin
   return {
     to: '/songs/$songId/$type/$difficulty' as const,
     params: {
-      songId: song.songId,
+      songId: song.id,
       type,
       difficulty,
     },
@@ -66,8 +68,11 @@ export const Route = createFileRoute('/songs_/$songId')({
     type: typeof search.type === 'string' ? search.type : undefined,
     difficulty: typeof search.difficulty === 'string' ? search.difficulty : undefined,
   }),
-  beforeLoad: ({ params, search }) => {
-    const song = dxdata.songs.find((s) => s.songId === params.songId)
+  beforeLoad: async ({ params, search }) => {
+    const catalogDocument = getBundledCatalogDocument()
+    const resolution = await resolveSongRouteParam(catalogDocument, params.songId)
+    const song =
+      resolution && ('song' in resolution ? resolution.song : findSongById(catalogDocument, resolution.redirectSongId))
     if (!song) {
       throw notFound()
     }
