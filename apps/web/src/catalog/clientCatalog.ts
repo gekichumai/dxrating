@@ -24,9 +24,10 @@ declare global {
  * Starts the catalog download for visitors without a cached copy; runs in <head>, before any module script, so the
  * download runs alongside the app's JS. A plain fetch rather than an injected <link rel=preload>: hydration re-creates
  * a script-inserted link, which starts a second download, and browsers differ on preloads `as=fetch`. The router runs
- * head scripts once more when it hydrates, so the script starts one request only.
+ * head scripts once more when it hydrates, so the script starts one request only. Low priority: on a slow link the
+ * page's own images and scripts come first, and the server-rendered page does not need the catalog.
  */
-export const CATALOG_EARLY_FETCH_INLINE_SCRIPT = `try{if(!localStorage.getItem(${JSON.stringify(CATALOG_CACHED_MARKER_KEY)})&&window.__dxratingCatalogRequest===undefined){var r=fetch(${JSON.stringify(CATALOG_URL)});r.catch(function(){});window.__dxratingCatalogRequest=r}}catch(e){}`
+export const CATALOG_EARLY_FETCH_INLINE_SCRIPT = `try{if(!localStorage.getItem(${JSON.stringify(CATALOG_CACHED_MARKER_KEY)})&&window.__dxratingCatalogRequest===undefined){var r=fetch(${JSON.stringify(CATALOG_URL)},{priority:"low"});r.catch(function(){});window.__dxratingCatalogRequest=r}}catch(e){}`
 
 /** The request the head script started, once: the first load takes it over instead of starting its own */
 const takeEarlyCatalogRequest = (): Promise<Response> | undefined => {

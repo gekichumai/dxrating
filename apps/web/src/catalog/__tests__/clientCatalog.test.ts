@@ -273,7 +273,7 @@ describe('catalog early fetch script', () => {
 
   it('starts the download for visitors without a cached copy, and the first load takes it over', async () => {
     new Function(CATALOG_EARLY_FETCH_INLINE_SCRIPT)()
-    expect(fetchMock).toHaveBeenCalledExactlyOnceWith(CATALOG_URL)
+    expect(fetchMock).toHaveBeenCalledExactlyOnceWith(CATALOG_URL, { priority: 'low' })
 
     setLoadedCatalogDocumentForTests(null)
     vi.stubGlobal('caches', undefined)
