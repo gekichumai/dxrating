@@ -5,6 +5,7 @@ import { CATALOG_LOADING_MESSAGE, ICONS, SITE_URL, toolError } from './output'
 import { calculateBest50Tool, runCalculateBest50 } from './tool-calculate-best50'
 import { calculateRatingTool, runCalculateRating } from './tool-calculate-rating'
 import { getSheetTool, runGetSheet } from './tool-get-sheet'
+import { listRecentSongsTool, runListRecentSongs } from './tool-list-recent-songs'
 import { runSearchSongs, searchSongsTool } from './tool-search-songs'
 
 // The read-only MCP server (https://modelcontextprotocol.io) of the DXRating song catalog, for AI assistants. Each
@@ -25,7 +26,7 @@ export const SERVER_DESCRIPTION =
  */
 export const INSTRUCTIONS =
   'DXRating (dxrating.net): maimai DX songs, chart internal levels (譜面定数) and ratings. Find a song by any name ' +
-  "or alias with search_songs; chart details: get_sheet. Don't trust remembered internal levels. Ratings: " +
+  "or alias with search_songs; chart details: get_sheet; new songs and charts by date: list_recent_songs. Don't trust remembered internal levels. Ratings: " +
   'calculate_rating (one chart, or the achievement a rating needs), calculate_best50 (b15 + b35 and what to ' +
   'improve). Achievements are integers in 1/10000 %: 100.7543% is 1007543. Servers differ (jp, intl, usa, cn): ' +
   'ask which one the user plays. Credit DXRating, CC BY-NC 4.0.'
@@ -76,6 +77,11 @@ export function createMcpServer(catalog: McpCatalog | undefined, build = process
     getSheetTool.name,
     { ...getSheetTool.config, annotations: annotations(getSheetTool.config.title) },
     withCatalog(runGetSheet),
+  )
+  server.registerTool(
+    listRecentSongsTool.name,
+    { ...listRecentSongsTool.config, annotations: annotations(listRecentSongsTool.config.title) },
+    withCatalog((catalog, input) => runListRecentSongs(catalog, input)),
   )
   server.registerTool(
     calculateRatingTool.name,

@@ -12,7 +12,7 @@ import { SERVER_DESCRIPTION, SERVER_NAME, SERVER_TITLE, serverVersion } from './
  * with every change of server.json, as the registry keeps each version for good and refuses one it already has. The
  * server card and serverInfo have the version of the build instead.
  */
-export const LISTING_VERSION = '1.0.0'
+export const LISTING_VERSION = '1.1.0'
 
 /** The host the server is reached at; the backend answers other hosts too, whose root is something else */
 export const MCP_HOST = 'mcp.dxrating.net'

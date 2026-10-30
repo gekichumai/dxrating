@@ -40,7 +40,7 @@ export const searchSongsOutput = {
       version: z.string().describe('Game version the song was added in'),
       matched: z
         .object({
-          kind: z.enum(['title', 'acronym', 'alias', 'artist']),
+          kind: z.enum(['title', 'alias', 'artist']),
           text: z.string(),
         })
         .describe('The name of the song the query matched'),
