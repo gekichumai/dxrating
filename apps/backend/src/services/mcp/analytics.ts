@@ -14,7 +14,7 @@ import { boundedToolName, classifyMcpClient, truncateBytes } from './telemetry'
  * result, the duration and outcome, the client (clientInfo, User-Agent class), the `via` of the URL, the country of
  * CF-IPCountry (and CF-IPCity / CF-Region when Cloudflare sends them, which it does not now).
  *
- * What it never holds: an IP address (no `$ip`, `$geoip_disable` so PostHog does not look up the server's address),
+ * What it never holds: an IP address (`$ip: null`, `$geoip_disable` so PostHog does not look up the server's address),
  * headers other than the User-Agent class, tool results, scores. Events make no person profile
  * (`$process_person_profile: false`). The distinct_id groups the calls of one client for a day only:
  *
@@ -203,6 +203,8 @@ export function buildMcpAnalyticsEvents(
     duration_ms: Math.round(context.durationMs),
     http_status: context.status,
     rate_limited: context.rateLimited ?? false,
+    // without a $ip property PostHog records the address of the sender (this server); null keeps it empty
+    $ip: null,
     $geoip_disable: true,
     $process_person_profile: false,
   }

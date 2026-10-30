@@ -56,7 +56,7 @@ async function exchange(body: unknown, now = new Date('2026-10-30T12:00:00Z')) {
 }
 
 const expectNoPrivateData = (serialized: string) => {
-  for (const forbidden of ['203.0.113', '162.158', 'top-secret', 'Bearer', 'cookie-secret', '"$ip"']) {
+  for (const forbidden of ['203.0.113', '162.158', 'top-secret', 'Bearer', 'cookie-secret', '"$ip":"']) {
     expect(serialized).not.toContain(forbidden)
   }
 }
@@ -92,6 +92,7 @@ describe('MCP analytics events', () => {
         outcome: 'ok',
         $geoip_disable: true,
         $process_person_profile: false,
+        $ip: null,
       },
     })
     expect(events[0]!.properties).not.toHaveProperty('city')
