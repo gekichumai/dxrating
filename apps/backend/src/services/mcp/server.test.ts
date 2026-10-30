@@ -53,6 +53,7 @@ describe('MCP server', () => {
     expect(tools.map((tool) => tool.name)).toEqual([
       'search_songs',
       'get_sheet',
+      'list_recent_songs',
       'calculate_rating',
       'calculate_best50',
     ])

@@ -224,6 +224,7 @@ const en: GuideText = {
           'Which song is "bbb"? List its charts with their levels.',
           "What is the internal level of PANDORA PARADOXXX's Re:MASTER on the JP, international and CN servers?",
           'Which charts of level 14 have the lowest internal level on the international server?',
+          'What songs and charts were added to the JP server in the last two weeks?',
           'What rating does 100.5% on the master chart of 系ぎて give, and what do I need for 300?',
           'Here are my best scores: … What is my Best 50 rating, and which charts should I improve first?',
           "Has the internal level of PANDORA PARADOXXX's master chart changed between versions?",
@@ -243,6 +244,7 @@ const en: GuideText = {
   tools: {
     search_songs: 'Finds songs by title, alias, nickname, romanization or artist, with the level of each chart',
     get_sheet: 'A song and its charts: internal level now and in past versions, notes, designer, servers, tags',
+    list_recent_songs: 'Songs and charts released recently, by date: new songs, and new charts of older songs',
     calculate_rating:
       'The rating of an achievement on a chart, the achievement a rating needs, the rating of each rank',
     calculate_best50: 'A rating from pasted scores: the new 15 and old 35, and the scores worth improving',
@@ -475,6 +477,7 @@ const ja: GuideText = {
           '「bbb」ってどの曲？ 各譜面のレベルも教えて。',
           'PANDORA PARADOXXX の Re:MASTER の譜面定数を、日本版・インターナショナル版・中国版で比べて。',
           'インターナショナル版で、レベル 14 の中で定数が一番低い譜面は？',
+          'この 2 週間で日本版に追加された新曲と新譜面は？',
           '系ぎて の MASTER で 100.5% だとレートはいくつ？ 300 にするには何％必要？',
           '私のベストスコアはこれ：… レートはいくつで、どの譜面から上げるといい？',
           'PANDORA PARADOXXX の MASTER の定数はバージョンごとに変わった？',
@@ -493,6 +496,7 @@ const ja: GuideText = {
   tools: {
     search_songs: '曲名・別名・愛称・ローマ字・アーティストで楽曲を探し、各譜面のレベルを返す',
     get_sheet: '楽曲と譜面の詳細：現在と過去のバージョンの譜面定数、ノーツ数、譜面作者、サーバー、タグ',
+    list_recent_songs: '最近追加された楽曲と譜面を日付ごとに：新曲と、既存曲の新譜面',
     calculate_rating: '譜面と達成率からレート、目標レートに必要な達成率、各ランクのレート',
     calculate_best50: '貼り付けたスコアからレート：新曲枠 15 と旧曲枠 35、伸ばすべき譜面',
   },
@@ -710,6 +714,7 @@ const zhHans: GuideText = {
           '「潘」是哪首歌？列出它各难度的等级。',
           'PANDORA PARADOXXX 的白谱定数在日服、国际服和国服分别是多少？',
           '国际服 14 级里定数最低的谱面有哪些？',
+          '国服最近一个月上了哪些新歌和新谱面？',
           '系ぎて 紫谱 100.5% 是多少 Rating？想拿 300 要打多少？',
           '这是我的最好成绩：…… 我的 Rating 是多少，先推哪些谱面？',
           'PANDORA PARADOXXX 紫谱的定数在各版本有没有变过？',
@@ -728,6 +733,7 @@ const zhHans: GuideText = {
   tools: {
     search_songs: '按曲名、别名、外号、罗马字或曲师搜歌，附带每张谱面的等级',
     get_sheet: '歌曲和谱面详情：当前和历代版本的定数、物量、谱师、所在服务器、标签',
+    list_recent_songs: '按日期列出最近上线的歌曲和谱面：新曲，以及老歌新增的谱面',
     calculate_rating: '某谱面某达成率的 Rating、达到目标 Rating 所需的达成率、各评级的 Rating',
     calculate_best50: '根据贴上的成绩算 Rating：新曲 B15 和旧曲 B35，以及值得推的谱面',
   },
@@ -940,6 +946,7 @@ const zhHant: GuideText = {
           '「潘」是哪首歌？列出它各難度的等級。',
           'PANDORA PARADOXXX 的白譜定數在日版、國際版和國服分別是多少？',
           '國際版 14 級裡定數最低的譜面有哪些？',
+          '國際版最近一個月上了哪些新歌和新譜面？',
           '系ぎて 紫譜 100.5% 是多少 Rating？想拿 300 要打多少？',
           '這是我的最佳成績：…… 我的 Rating 是多少，先推哪些譜面？',
           'PANDORA PARADOXXX 紫譜的定數在各版本有沒有變過？',
@@ -958,6 +965,7 @@ const zhHant: GuideText = {
   tools: {
     search_songs: '依曲名、別名、暱稱、羅馬字或曲師搜尋歌曲，附上每張譜面的等級',
     get_sheet: '歌曲和譜面詳情：目前和歷代版本的定數、物量、譜師、所在伺服器、標籤',
+    list_recent_songs: '依日期列出最近上線的歌曲和譜面：新曲，以及舊歌新增的譜面',
     calculate_rating: '某譜面某達成率的 Rating、達到目標 Rating 所需的達成率、各評級的 Rating',
     calculate_best50: '依貼上的成績算 Rating：新曲 B15 和舊曲 B35，以及值得推的譜面',
   },

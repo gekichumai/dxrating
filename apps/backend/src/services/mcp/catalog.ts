@@ -11,8 +11,11 @@ export type PublishedSheet = PublishedSong['sheets'][number]
 export type PublishedTag = PublishedCatalog['tags'][number]
 export type PublishedTagGroup = PublishedCatalog['tagGroups'][number]
 
-/** What a name of a song is: its title, a search acronym of the catalog, a community alias, or its artist. */
-export type NameKind = 'title' | 'acronym' | 'alias' | 'artist'
+/**
+ * What a name of a song is: its title, a community alias, or its artist. Aliases are both those the catalog imports
+ * (searchAcronyms: LXNS, yuzuchan, GCM-bot and the local list of the producer) and those users add on the site.
+ */
+export type NameKind = 'title' | 'alias' | 'artist'
 
 interface SongName {
   kind: NameKind
@@ -81,7 +84,7 @@ export function buildMcpCatalog(catalogRunId: string, published: PublishedCatalo
       names.push({ kind, text, key })
     }
     addName('title', song.title)
-    for (const acronym of song.searchAcronyms) addName('acronym', acronym)
+    for (const alias of song.searchAcronyms) addName('alias', alias)
     for (const alias of aliases) addName('alias', alias)
     if (song.artist) addName('artist', song.artist)
     return { song, aliases, names }
@@ -121,10 +124,9 @@ export interface SongMatch {
 }
 
 // The score of a match of each kind of name: a whole name beats the start of one, which beats a part of one; a
-// title beats an acronym or an alias, which beat an artist (who has many songs)
+// title beats an alias, which beats an artist (who has many songs)
 const SCORES: Record<NameKind, { exact: number; prefix: number; contains: number }> = {
   title: { exact: 100, prefix: 70, contains: 50 },
-  acronym: { exact: 90, prefix: 60, contains: 40 },
   alias: { exact: 90, prefix: 60, contains: 40 },
   artist: { exact: 35, prefix: 30, contains: 25 },
 }
