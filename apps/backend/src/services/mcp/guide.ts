@@ -44,23 +44,31 @@ const SNIPPETS: Record<string, string> = {
   'mcpservers.json': '{"mcpServers":{"dxrating":{"url":"{url}"}}}',
   // Cherry Studio takes a url without a type for the old SSE transport
   'streamable.json': '{"mcpServers":{"dxrating":{"type":"streamableHttp","url":"{url}"}}}',
-  'claude-code.sh': 'claude mcp add --transport http --scope user dxrating {url}',
+  'claude-code.sh': 'claude mcp add --transport http --scope user dxrating {url-sh}',
   'claude-code.json': '{"mcpServers":{"dxrating":{"type":"http","url":"{url}"}}}',
   'vscode.sh': `code --add-mcp '{"name":"dxrating","type":"http","url":"{url}"}'`,
   // .vscode/mcp.json and the user-profile mcp.json: servers, not mcpServers
   'vscode.json': '{"servers":{"dxrating":{"type":"http","url":"{url}"}}}',
-  'codex.sh': 'codex mcp add dxrating --url {url}',
+  'codex.sh': 'codex mcp add dxrating --url {url-sh}',
   'codex.toml': '[mcp_servers.dxrating]\nurl = "{url}"',
   // the project is the default scope of Gemini CLI
-  'gemini.sh': 'gemini mcp add --transport http -s user dxrating {url}',
+  'gemini.sh': 'gemini mcp add --transport http -s user dxrating {url-sh}',
   // in Gemini CLI, url is the old SSE transport, httpUrl Streamable HTTP
   'gemini.json': '{"mcpServers":{"dxrating":{"httpUrl":"{url}"}}}',
   // for apps that run local (stdio) servers only
   'mcp-remote.json':
     '{"mcpServers":{"dxrating":{"command":"npx","args":["-y","mcp-remote","{url}","--transport","http-only"]}}}',
   'curl.sh':
-    "curl -s {url} -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' " +
+    "curl -s {url-sh} -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' " +
     `-H 'Mcp-Protocol-Version: 2025-06-18' -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`,
+}
+
+/**
+ * A snippet with the endpoint filled in. {url-sh} is the endpoint as a word of a shell command: quoted when it has a
+ * query string, whose ? zsh would take for a glob.
+ */
+export function fillSnippet(snippet: string, url: string): string {
+  return snippet.replaceAll('{url-sh}', url.includes('?') ? `'${url}'` : url).replaceAll('{url}', url)
 }
 
 const base64 = (s: string) => Buffer.from(s).toString('base64')
@@ -90,8 +98,7 @@ const ONE_CLICK: Partial<Record<AppId, { name: string; link: (url: string) => st
   'cherry-studio': {
     name: 'Cherry Studio',
     link: (url) =>
-      'cherrystudio://mcp/install?servers=' +
-      encodeURIComponent(base64(SNIPPETS['streamable.json'].replaceAll('{url}', url))),
+      'cherrystudio://mcp/install?servers=' + encodeURIComponent(base64(fillSnippet(SNIPPETS['streamable.json'], url))),
   },
 }
 
@@ -99,7 +106,27 @@ const ONE_CLICK: Partial<Record<AppId, { name: string; link: (url: string) => st
  * The endpoint a one-click link installs: tagged ?via=guide-<app>, which the server reads to count the installs each
  * link brings (it never changes the answers). The copy-paste snippets keep the bare endpoint.
  */
-export const oneClickUrl = (id: string) => `${MCP_PUBLIC_URL}?via=guide-${id}`
+export const oneClickUrl = (id: string, origin?: string) =>
+  `${MCP_PUBLIC_URL}?via=${origin ? `${origin}.` : ''}guide-${id}`
+
+/**
+ * `?via=` of the guide itself: the page that sent the visitor here (dxrating-home, a blog, a chat bot). Kept only when it
+ * is ^[a-z0-9-]{1,40}$, else dropped (the guide is then the plain one).
+ *
+ * Attribution scheme: the origin is prefixed to the via of every endpoint URL the guide gives, joined by a dot (which
+ * an origin never contains):
+ *   one-click link of <app>              ?via=<origin>.guide-<app>   (guide-<app> without an origin)
+ *   Server URL, snippets, agent prompt   ?via=<origin>.guide         (no ?via without an origin)
+ * so `split(via, '.')[1]` is the origin and the rest how the guide installed it. /mcp keeps vias of up to 80 characters.
+ */
+export function sanitizeGuideVia(value: string | null | undefined): string | undefined {
+  if (!value) return undefined
+  const lower = value.trim().toLowerCase()
+  return /^[a-z0-9-]{1,40}$/.test(lower) ? lower : undefined
+}
+
+/** The endpoint the Server URL, the snippets and the prompt give: tagged <origin>.guide when there is an origin */
+export const guideEndpointUrl = (origin?: string) => (origin ? `${MCP_PUBLIC_URL}?via=${origin}.guide` : MCP_PUBLIC_URL)
 
 /** The tools the guide lists, in its order */
 export const GUIDE_TOOLS = Object.keys(GUIDE_TEXTS[0].tools)
@@ -107,13 +134,13 @@ export const GUIDE_TOOLS = Object.keys(GUIDE_TEXTS[0].tools)
 const PLACEHOLDER = /\{([a-z][a-z0-9.-]*)\}/g
 
 /** The values of the placeholders of the texts */
-function placeholders(text: GuideText): Map<string, string> {
-  const url = MCP_PUBLIC_URL
+function placeholders(text: GuideText, via?: string): Map<string, string> {
+  const url = guideEndpointUrl(via)
   const values = new Map<string, string>([
     ['url', url],
     ['guide', MCP_GUIDE_URL],
-    ['md', `${origin()}${GUIDE_MARKDOWN_PATH}?lang=${text.lang}`],
-    ['llms', `${origin()}${GUIDE_LLMS_PATH}`],
+    ['md', `${origin()}${GUIDE_MARKDOWN_PATH}?lang=${text.lang}${via ? `&via=${via}` : ''}`],
+    ['llms', `${origin()}${GUIDE_LLMS_PATH}${via ? `?via=${via}` : ''}`],
     ['card', MCP_SERVER_CARD_URL],
     ['site', SITE_URL],
     ['repo', REPOSITORY.url],
@@ -121,16 +148,16 @@ function placeholders(text: GuideText): Map<string, string> {
     ['tools', GUIDE_TOOLS.join(', ')],
     ['toolcount', String(GUIDE_TOOLS.length)],
   ])
-  for (const [name, snippet] of Object.entries(SNIPPETS)) values.set(name, snippet.replaceAll('{url}', url))
-  for (const [id, app] of Object.entries(ONE_CLICK)) values.set(`${id}.link`, app.link(oneClickUrl(id)))
+  for (const [name, snippet] of Object.entries(SNIPPETS)) values.set(name, fillSnippet(snippet, url))
+  for (const [id, app] of Object.entries(ONE_CLICK)) values.set(`${id}.link`, app.link(oneClickUrl(id, via)))
   return values
 }
 
 const origin = () => MCP_GUIDE_URL.replace(/\/$/, '')
 
 /** s with its placeholders filled in; an unknown one is a typo in a text, and fails the rendering */
-function expander(text: GuideText) {
-  const values = placeholders(text)
+function expander(text: GuideText, via?: string) {
+  const values = placeholders(text, via)
   return (s: string) =>
     s.replace(PLACEHOLDER, (match, name: string) => {
       const value = values.get(name)
@@ -140,35 +167,36 @@ function expander(text: GuideText) {
 }
 
 /** A snippet as a code block shows it: JSON indented */
-function snippetBlock(name: string): { lang: string; code: string } {
+function snippetBlock(name: string, url: string): { lang: string; code: string } {
   const snippet = SNIPPETS[name]
   if (snippet === undefined) throw new Error(`guide: unknown snippet ${name}`)
   const lang = name.slice(name.lastIndexOf('.') + 1)
-  const code = snippet.replaceAll('{url}', MCP_PUBLIC_URL)
+  const code = fillSnippet(snippet, url)
   return { lang, code: lang === 'json' ? JSON.stringify(JSON.parse(code), null, 2) : code }
 }
 
 // -- Markdown --
 
-function markdownBlocks(blocks: Block[], expand: (s: string) => string): string {
+function markdownBlocks(blocks: Block[], expand: (s: string) => string, url: string): string {
   return blocks
     .map((block) => {
       if ('p' in block) return expand(block.p)
       if ('items' in block) return block.items.map((item) => `- ${expand(item)}`).join('\n')
       if ('steps' in block) return block.steps.map((step, i) => `${i + 1}. ${expand(step)}`).join('\n')
-      const { lang, code } = snippetBlock(block.code)
+      const { lang, code } = snippetBlock(block.code, url)
       return `\`\`\`${lang}\n${code}\n\`\`\``
     })
     .join('\n\n')
 }
 
-function renderMarkdown(text: GuideText, llms: boolean): string {
-  const expand = expander(text)
-  const section = (s: Section) => `## ${s.heading}\n\n${markdownBlocks(s.blocks, expand)}`
+function renderMarkdown(text: GuideText, llms: boolean, via?: string): string {
+  const expand = expander(text, via)
+  const url = guideEndpointUrl(via)
+  const section = (s: Section) => `## ${s.heading}\n\n${markdownBlocks(s.blocks, expand, url)}`
   const app = (id: AppId) =>
-    `#### ${APP_NAMES[id]}\n\n${markdownBlocks(text.apps[id], expand)}\n\n${text.docs}${APP_DOCS[id]}`
+    `#### ${APP_NAMES[id]}\n\n${markdownBlocks(text.apps[id], expand, url)}\n\n${text.docs}${APP_DOCS[id]}`
   const oneClick = Object.entries(ONE_CLICK)
-    .map(([id, a]) => `[${text.addTo.replace('%s', a.name)}](${a.link(oneClickUrl(id))})`)
+    .map(([id, a]) => `[${text.addTo.replace('%s', a.name)}](${a.link(oneClickUrl(id, via))})`)
     .join(' · ')
   const parts = [
     `# ${text.title}`,
@@ -179,7 +207,7 @@ function renderMarkdown(text: GuideText, llms: boolean): string {
     expand(text.agentIntro),
     `\`\`\`text\n${expand(text.agentPrompt)}\n\`\`\``,
     `## ${text.installHeading}`,
-    ['| | |', '|---|---|', `| ${text.urlLabel} | \`${MCP_PUBLIC_URL}\` |`]
+    ['| | |', '|---|---|', `| ${text.urlLabel} | \`${url}\` |`]
       .concat(text.facts.map(([label, value]) => `| ${label} | ${expand(value)} |`))
       .join('\n'),
     expand(text.urlNote),
@@ -188,7 +216,7 @@ function renderMarkdown(text: GuideText, llms: boolean): string {
     ...CHAT_APPS.map(app),
     `### ${text.codingTools}`,
     ...CODING_TOOLS.map(app),
-    `### ${text.other.heading}\n\n${markdownBlocks(text.other.blocks, expand)}`,
+    `### ${text.other.heading}\n\n${markdownBlocks(text.other.blocks, expand, url)}`,
     section(text.tryIt),
     `## ${text.toolsHeading}`,
     expand(text.toolsIntro),
@@ -206,7 +234,9 @@ function renderMarkdown(text: GuideText, llms: boolean): string {
       ? []
       : [
           `${text.otherLanguages}: ` +
-            GUIDE_TEXTS.map((t) => `[${t.name}](${origin()}${GUIDE_MARKDOWN_PATH}?lang=${t.lang})`).join(' · '),
+            GUIDE_TEXTS.map(
+              (t) => `[${t.name}](${origin()}${GUIDE_MARKDOWN_PATH}?lang=${t.lang}${via ? `&via=${via}` : ''})`,
+            ).join(' · '),
         ]),
   ]
   return `${parts.join('\n\n')}\n`
@@ -239,7 +269,13 @@ function inlineHtml(s: string): string {
 
 /** Blocks as HTML; in a section of prompts (Try it), a list is of prompts to copy, and a paragraph led by a bold label
  * (**Check that it works:**) a callout */
-function htmlBlocks(blocks: Block[], expand: (s: string) => string, copy: string, prompts = false): string {
+function htmlBlocks(
+  blocks: Block[],
+  expand: (s: string) => string,
+  copy: string,
+  url: string,
+  prompts = false,
+): string {
   return blocks
     .map((block, i) => {
       if ('p' in block) {
@@ -252,7 +288,7 @@ function htmlBlocks(blocks: Block[], expand: (s: string) => string, copy: string
       if ('steps' in block)
         return `<ol class="steps">${block.steps.map((s) => `<li>${inlineHtml(expand(s))}</li>`).join('')}</ol>`
       const before = blocks[i - 1]
-      return codeHtml(block.code, before && 'p' in before ? before.p : '', copy)
+      return codeHtml(block.code, before && 'p' in before ? before.p : '', copy, url)
     })
     .join('\n')
 }
@@ -329,8 +365,8 @@ function codeLabel(lang: string, before: string): string {
 }
 
 /** A block of code: its label, a copy button, the code, each line a span that wraps under its indentation */
-function codeHtml(name: string, before: string, copy: string): string {
-  const { lang, code } = snippetBlock(name)
+function codeHtml(name: string, before: string, copy: string, url: string): string {
+  const { lang, code } = snippetBlock(name, url)
   const lines = code.split('\n').map((line) => {
     const spaces = line.length - line.trimStart().length
     return `<span class="ln i${Math.min(3, spaces >> 1)}">${' '.repeat(spaces)}${highlight(lang, line.trimStart())}</span>`
@@ -388,10 +424,11 @@ function firstSentence(s: string): [string, string] {
 
 const unlabel = (s: string) => s.replace(/\s*[:：]\s*$/, '')
 
-function renderHtml(text: GuideText): string {
-  const expand = expander(text)
+function renderHtml(text: GuideText, via?: string): string {
+  const expand = expander(text, via)
+  const url = guideEndpointUrl(via)
   const ui = text.ui
-  const blocks = (b: Block[], prompts = false) => htmlBlocks(b, expand, ui.copy, prompts)
+  const blocks = (b: Block[], prompts = false) => htmlBlocks(b, expand, ui.copy, url, prompts)
   const page = (t: GuideText) => `${MCP_GUIDE_URL}?lang=${t.lang}`
   const space = text.title.indexOf(' ')
   const [brand, rest] = [text.title.slice(0, space), text.title.slice(space + 1)]
@@ -400,7 +437,7 @@ function renderHtml(text: GuideText): string {
     `<section class="${cls}" id="${s.id}" aria-labelledby="${s.id}-h">\n${h2(s.id, s.heading)}\n<div class="sec-b">${body}</div>\n</section>`
   const langs = GUIDE_TEXTS.map(
     (t) =>
-      `<a href="?lang=${t.lang}" hreflang="${t.lang}" lang="${t.lang}"${t === text ? ' aria-current="page"' : ''}>` +
+      `<a href="?lang=${t.lang}${via ? `&amp;via=${via}` : ''}" hreflang="${t.lang}" lang="${t.lang}"${t === text ? ' aria-current="page"' : ''}>` +
       `<span class="ln">${escapeHtml(t.name)}</span><span class="ln-s" aria-hidden="true">${escapeHtml(t.ui.abbr)}</span></a>`,
   ).join('')
   const img = (size: number, cls = '') =>
@@ -440,7 +477,7 @@ function renderHtml(text: GuideText): string {
   }
   const oneClick = Object.entries(ONE_CLICK).map(
     ([id, a]) =>
-      `<a class="pill-btn" href="${escapeHtml(a.link(oneClickUrl(id)))}">${escapeHtml(text.addTo.replace('%s', a.name))}${icon('out')}</a>`,
+      `<a class="pill-btn" href="${escapeHtml(a.link(oneClickUrl(id, via)))}">${escapeHtml(text.addTo.replace('%s', a.name))}${icon('out')}</a>`,
   )
   const [l1, lrest] = firstSentence(expand(text.lead[0]))
   const prompt = expand(text.agentPrompt)
@@ -476,7 +513,7 @@ function renderHtml(text: GuideText): string {
     '<div class="connect">',
     '<section class="panel" aria-labelledby="url">',
     `<h2 class="kicker" id="url">${escapeHtml(text.urlLabel)}</h2>`,
-    `<div class="field" data-c="${MCP_PUBLIC_URL}"><code>${MCP_PUBLIC_URL}</code>${copyButton(ui.copy, 'solid')}</div>`,
+    `<div class="field" data-c="${escapeHtml(url)}"><code>${escapeHtml(url)}</code>${copyButton(ui.copy, 'solid')}</div>`,
     `<dl class="facts">${facts.join('')}</dl>`,
     `<p class="note">${inlineHtml(expand(text.urlNote))}</p>`,
     `<div class="oc"><h3 class="kicker">${escapeHtml(unlabel(text.oneClick))}</h3>`,
@@ -546,12 +583,27 @@ interface RenderedGuide {
 
 let rendered: RenderedGuide | undefined
 
-/** The guide in every language, rendered on first use */
-export function renderGuide(): RenderedGuide {
-  if (rendered) return rendered
-  const pages = new Map(GUIDE_TEXTS.map((t) => [t.lang, { html: renderHtml(t), markdown: renderMarkdown(t, false) }]))
-  rendered = { pages, llms: renderMarkdown(GUIDE_TEXTS[0], true) }
-  return rendered
+/** The guide of a via in every language */
+function renderAll(via?: string): RenderedGuide {
+  const pages = new Map(
+    GUIDE_TEXTS.map((t) => [t.lang, { html: renderHtml(t, via), markdown: renderMarkdown(t, false, via) }]),
+  )
+  return { pages, llms: renderMarkdown(GUIDE_TEXTS[0], true, via) }
+}
+
+/** The guides of the vias seen last, newest last: a few links bring nearly all visitors */
+const byVia = new Map<string, RenderedGuide>()
+const MAX_VIA_GUIDES = 64
+
+/** The guide in every language, rendered on first use; with an origin (see sanitizeGuideVia), its tagged variant */
+export function renderGuide(via?: string): RenderedGuide {
+  if (!via) return (rendered ??= renderAll())
+  let guide = byVia.get(via)
+  if (guide) byVia.delete(via)
+  else guide = renderAll(via)
+  byVia.set(via, guide)
+  if (byVia.size > MAX_VIA_GUIDES) byVia.delete(byVia.keys().next().value!)
+  return guide
 }
 
 /** The language of a request: ?lang if the guide has it, else the best of Accept-Language, else English */
@@ -607,6 +659,18 @@ function text(body: string, contentType: string, cacheControl: string, headers: 
  * root is negotiated (HTML, or Markdown for agents asking for it, in the language of ?lang or Accept-Language);
  * /index.md?lang= is the Markdown of a language, /llms.txt the English Markdown with a preface for agents.
  */
+/** What a GET of a page of the guide is: its format, language and origin; undefined for anything else */
+export function guideView(request: Request): { format: string; lang: string; via: string | undefined } | undefined {
+  if (request.method !== 'GET' || !isMcpHost(request.headers)) return undefined
+  const url = new URL(request.url)
+  const format = { '/': 'html', [GUIDE_MARKDOWN_PATH]: 'markdown', [GUIDE_LLMS_PATH]: 'llms' }[url.pathname]
+  if (!format) return undefined
+  const lang =
+    format === 'llms' ? 'en' : guideLanguage(url.searchParams.get('lang'), request.headers.get('accept-language'))
+  const negotiated = format === 'html' ? prefersText(request.headers.get('accept')) : undefined
+  return { format: negotiated ?? format, lang, via: sanitizeGuideVia(url.searchParams.get('via')) }
+}
+
 export function guideResponse(request: Request): Response | undefined {
   if (!isMcpHost(request.headers)) return undefined
   const url = new URL(request.url)
@@ -628,10 +692,13 @@ export function guideResponse(request: Request): Response | undefined {
   }
   if (request.method !== 'GET' && request.method !== 'HEAD') return undefined
 
-  const guide = renderGuide()
+  const via = sanitizeGuideVia(url.searchParams.get('via'))
+  const guide = renderGuide(via)
   const lang = guideLanguage(url.searchParams.get('lang'), request.headers.get('accept-language'))
   const page = guide.pages.get(lang)!
   const html = `${MCP_GUIDE_URL}?lang=${lang}`
+  // navigational alternates keep the origin; canonical links do not
+  const viaParam = via ? `&via=${via}` : ''
   let response: ReturnType<typeof text>
   if (path === GUIDE_ROBOTS_PATH) {
     response = text(ROBOTS, 'text/plain; charset=utf-8', 'public, max-age=86400')
@@ -656,7 +723,7 @@ export function guideResponse(request: Request): Response | undefined {
   } else {
     // the root varies by Accept and Accept-Language: private keeps the variants out of shared caches
     const negotiated = { 'Content-Language': lang, Vary: 'Accept, Accept-Language' }
-    const markdownLink = `<${origin()}${GUIDE_MARKDOWN_PATH}?lang=${lang}>; rel="alternate"; type="text/markdown"`
+    const markdownLink = `<${origin()}${GUIDE_MARKDOWN_PATH}?lang=${lang}${viaParam}>; rel="alternate"; type="text/markdown"`
     const kind = prefersText(request.headers.get('accept'))
     response =
       kind === undefined
@@ -670,7 +737,10 @@ export function guideResponse(request: Request): Response | undefined {
             page.markdown,
             kind === 'markdown' ? 'text/markdown; charset=utf-8' : 'text/plain; charset=utf-8',
             'private, max-age=300',
-            { ...negotiated, Link: `<${html}>; rel="alternate"; type="text/html", ${LICENSE_LINK}, ${CARD_LINK}` },
+            {
+              ...negotiated,
+              Link: `<${html}${viaParam}>; rel="alternate"; type="text/html", ${LICENSE_LINK}, ${CARD_LINK}`,
+            },
           )
   }
   return new Response(request.method === 'HEAD' ? null : response.body, { headers: response.headers })

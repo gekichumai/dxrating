@@ -51,11 +51,65 @@ export function scrubText(value: string, maxChars = MAX_FREE_TEXT_CHARS): string
   return Array.from(scrubbed).slice(0, maxChars).join('')
 }
 
-/** `?via=` of the endpoint URL: which link installed the server. Absent: undefined; not [a-z0-9-_.]{1,32}: other */
+/**
+ * `?via=` of the endpoint URL: which link installed the server. Absent: undefined; not [a-z0-9-_.]{1,80}: other. 80
+ * leaves room for the guide's <origin>.guide-<app> (guide.ts: an origin of up to 40 characters).
+ */
 export function sanitizeVia(value: string | null | undefined): string | undefined {
   if (value === null || value === undefined || value === '') return undefined
   const lower = value.trim().toLowerCase()
-  return /^[a-z0-9_.-]{1,32}$/.test(lower) ? lower : 'other'
+  return /^[a-z0-9_.-]{1,80}$/.test(lower) ? lower : 'other'
+}
+
+/** A view of the setup guide (guide.ts) */
+export interface GuideViewContext {
+  readonly headers: Headers
+  /** The address of the client, used only for the distinct_id */
+  readonly clientAddress: string | undefined
+  /** The origin of ?via= of the guide, already sanitized */
+  readonly via: string | undefined
+  readonly lang: string
+  /** html, markdown or llms */
+  readonly format: string
+  readonly deployment: string
+}
+
+const AI_CRAWLER =
+  /GPTBot|OAI-SearchBot|ClaudeBot|Claude-SearchBot|anthropic-ai|PerplexityBot|Google-Extended|CCBot|Bytespider|Amazonbot|meta-externalagent/i
+
+/** Whether a request is a prefetch or a crawler's, which are not views */
+export function isPrefetchOrBot(headers: Headers): boolean {
+  const purpose = `${headers.get('sec-purpose') ?? ''} ${headers.get('purpose') ?? ''} ${headers.get('x-moz') ?? ''}`
+  const userAgent = header(headers, 'user-agent')
+  return (
+    /prefetch|prerender/i.test(purpose) ||
+    classifyUserAgent(userAgent) === 'bot' ||
+    // crawlers of AI companies, which classifyUserAgent counts as agents; a user's agent fetching the page still counts
+    AI_CRAWLER.test(userAgent ?? '')
+  )
+}
+
+/** The `mcp_guide_viewed` event of a view; the same distinct_id scheme as the endpoint (no client name) */
+export function buildGuideViewEvent(context: GuideViewContext, secret: string, now = new Date()): PostHogEvent {
+  const userAgent = header(context.headers, 'user-agent')
+  const country = header(context.headers, 'cf-ipcountry')
+  return {
+    event: 'mcp_guide_viewed',
+    distinct_id: dailyDistinctId(secret, now, { ipPrefix: ipPrefix(context.clientAddress), userAgent }),
+    timestamp: now.toISOString(),
+    properties: {
+      platform: 'mcp',
+      deployment: context.deployment,
+      via: context.via ?? null,
+      lang: context.lang,
+      format: context.format,
+      ua_class: classifyUserAgent(userAgent),
+      ...(country && country !== 'XX' ? { country } : {}),
+      $ip: null,
+      $geoip_disable: true,
+      $process_person_profile: false,
+    },
+  }
 }
 
 /** The /24 of an IPv4 address or the /48 of an IPv6 address; undefined when it is not an address */
@@ -273,6 +327,8 @@ export interface McpAnalytics {
   readonly enabled: boolean
   /** Queues the events of one exchange; never throws, never waits */
   capture(context: McpAnalyticsContext, requestBody: unknown, responseBody: unknown): void
+  /** Queues an mcp_guide_viewed event, under the same sampling and daily cap; never throws, never waits */
+  captureGuideView(context: GuideViewContext): void
   /** Sends what is queued; resolves (never rejects) when the batch is sent, failed or timed out */
   flush(): Promise<void>
   shutdown(): Promise<void>
@@ -331,43 +387,54 @@ export function createMcpAnalytics(options: McpAnalyticsOptions): McpAnalytics {
     enabled: !!apiKey,
     stats,
     capture(context, requestBody, responseBody) {
-      if (!apiKey) return
-      try {
-        if (sampleRate < 1 && random() >= sampleRate) return
-        const at = now()
-        const events = buildMcpAnalyticsEvents(
+      enqueue((at) =>
+        buildMcpAnalyticsEvents(
           { ...context, deployment: options.deployment ?? context.deployment },
           requestBody,
           responseBody,
           secret,
           at,
-        )
-        if (dailyCap > 0) {
-          const today = utcDate(at)
-          if (today !== day) {
-            day = today
-            sentToday = 0
-          }
-          const room = Math.max(0, dailyCap - sentToday)
-          if (events.length > room) stats.dropped += events.length - room
-          events.splice(room)
-          sentToday += events.length
-        }
-        queue.push(...events)
-        if (queue.length > maxQueue) {
-          stats.dropped += queue.length - maxQueue
-          queue = queue.slice(-maxQueue)
-        }
-        if (queue.length >= flushAt) void flush()
-      } catch {
-        // analytics never fails a request
-      }
+        ),
+      )
+    },
+    captureGuideView(context) {
+      enqueue((at) => [
+        buildGuideViewEvent({ ...context, deployment: options.deployment ?? context.deployment }, secret, at),
+      ])
     },
     flush,
     async shutdown() {
       if (timer) clearInterval(timer)
       await flush()
     },
+  }
+
+  function enqueue(build: (at: Date) => PostHogEvent[]) {
+    if (!apiKey) return
+    try {
+      if (sampleRate < 1 && random() >= sampleRate) return
+      const at = now()
+      const events = build(at)
+      if (dailyCap > 0) {
+        const today = utcDate(at)
+        if (today !== day) {
+          day = today
+          sentToday = 0
+        }
+        const room = Math.max(0, dailyCap - sentToday)
+        if (events.length > room) stats.dropped += events.length - room
+        events.splice(room)
+        sentToday += events.length
+      }
+      queue.push(...events)
+      if (queue.length > maxQueue) {
+        stats.dropped += queue.length - maxQueue
+        queue = queue.slice(-maxQueue)
+      }
+      if (queue.length >= flushAt) void flush()
+    } catch {
+      // analytics never fails a request
+    }
   }
 }
 
