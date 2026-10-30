@@ -56,7 +56,9 @@ import {
 import { guideResponse, isMcpHost } from './services/mcp/guide'
 import { API_DOCS_CSP, API_DOCS_HTML, API_JSON_CSP, isJsonContentType } from './services/api-docs'
 import { MCP_SERVER_CARD_PATH, serverCardResponse } from './services/mcp/listing'
-import { McpUsage, observeMcpRequest, rateLimitedTelemetry } from './services/mcp/telemetry'
+import { McpUsage, observeMcpRequest, rateLimitedTelemetry, reportMcpInternalError } from './services/mcp/telemetry'
+import { McpAnalyticsService, mcpLogFields, sanitizeVia } from './services/mcp/analytics'
+import { clientAddress } from './services/mcp/client-key'
 class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
   readonly operation: string
   readonly cause: unknown
@@ -341,13 +343,18 @@ const mcpRateLimiter = createRateLimiter(MCP_RATE_LIMIT)
 app.on(['GET', 'POST', 'DELETE'], MCP_PATH, (c) => {
   const socketAddress = (c.env as { incoming?: { socket?: { remoteAddress?: string } } } | undefined)?.incoming?.socket
     ?.remoteAddress
-  const retryAfter = mcpRateLimiter.take(clientKey(c.req.raw.headers, socketAddress))
+  const headers = c.req.raw.headers
+  const retryAfter = mcpRateLimiter.take(clientKey(headers, socketAddress))
+  const address = clientAddress(headers, socketAddress)
+  const via = sanitizeVia(c.req.query('via'))
   return runApp(
     Effect.gen(function* () {
       const usage = yield* McpUsage
+      const analytics = yield* McpAnalyticsService
       if (retryAfter > 0) {
-        const telemetry = rateLimitedTelemetry(c.req.raw.headers)
+        const telemetry = rateLimitedTelemetry(headers)
         c.get('log')?.set(telemetry.event)
+        c.get('log')?.set(mcpLogFields({ headers, clientAddress: address, via }))
         yield* usage.record(telemetry)
         return rateLimited(retryAfter)
       }
@@ -356,13 +363,28 @@ app.on(['GET', 'POST', 'DELETE'], MCP_PATH, (c) => {
       const catalog = yield* Effect.flatMap(McpCatalogSource, (source) => source.current).pipe(
         Effect.orElseSucceed(() => undefined),
       )
-      const { response, telemetry } = yield* Effect.tryPromise({
+      const { response, telemetry, requestBody, responseBody } = yield* Effect.tryPromise({
         try: () => observeMcpRequest(c.req.raw, (request) => handleMcpRequest(request, catalog)),
         catch: (cause) => new HttpAdapterError({ operation: 'Handle MCP request', cause }),
       })
+      c.get('log')?.set(mcpLogFields({ headers, clientAddress: address, via, requestBody }))
       if (telemetry) {
         c.get('log')?.set(telemetry.event)
         yield* usage.record(telemetry)
+        reportMcpInternalError(telemetry, address, via)
+        // queued only: the response never waits for PostHog
+        analytics.capture(
+          {
+            headers,
+            clientAddress: address,
+            via,
+            durationMs: telemetry.durationMs,
+            status: response.status,
+            deployment: process.env.NODE_ENV ?? 'development',
+          },
+          requestBody,
+          responseBody,
+        )
       }
       return response
     }),

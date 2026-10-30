@@ -48,7 +48,8 @@ const COMMUNITY_LINKS: {
 
 // The MCP server lets AI assistants (Claude, ChatGPT, Cursor…) query DXRating. It links to the
 // human-readable setup guide; the endpoint itself lives at /mcp.
-const MCP_GUIDE_URL = 'https://mcp.dxrating.net/'
+// ?via= tells the MCP server's analytics which link brought a visitor; the guide page ignores it.
+const MCP_GUIDE_URL = 'https://mcp.dxrating.net/?via=dxrating-home'
 // Public API base, OpenAPI spec, docs and MCP links for developers.
 const DEVELOPERS_URL = '/developers'
 

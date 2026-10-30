@@ -104,6 +104,8 @@ Optional:
 - `ASSETS_LOCAL_CACHE_DIR` — Local disk cache directory for oneshot renderer assets
 - `ASSETS_REMOTE_URL` — Remote asset server URL (default: `https://shama.dxrating.net`)
 - `VAULT_SECRET_PATH` — Optional vault secrets file
+- `MCP_ANALYTICS_SECRET` — HMAC secret of the daily-rotating MCP analytics distinct_id (random per process if unset)
+- `MCP_POSTHOG_KEY`, `MCP_POSTHOG_HOST`, `MCP_ANALYTICS_SAMPLE_RATE`, `MCP_ANALYTICS_DAILY_CAP` — MCP PostHog events (see `src/services/mcp/analytics.ts`)
 
 ## Deployment
 
