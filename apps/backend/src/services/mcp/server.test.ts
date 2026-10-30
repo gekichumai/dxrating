@@ -2,7 +2,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { afterEach, describe, expect, it } from 'vitest'
 import { buildMcpCatalog, type McpCatalog } from './catalog'
-import { createMcpServer, INSTRUCTIONS, SERVER_NAME, serverVersion } from './server'
+import { createMcpServer, INSTRUCTIONS, MCP_TOOL_NAMES, SERVER_NAME, serverVersion } from './server'
 import {
   HIBANA,
   HIBANA_MASTER,
@@ -57,6 +57,8 @@ describe('MCP server', () => {
       'calculate_rating',
       'calculate_best50',
     ])
+    // the names telemetry records, else it counts a tool as other
+    expect(MCP_TOOL_NAMES).toEqual(tools.map((tool) => tool.name))
     for (const tool of tools) {
       expect(INSTRUCTIONS).toContain(tool.name)
       expect(tool.annotations).toMatchObject({
