@@ -1,4 +1,3 @@
-import { MCP_TOOL_NAMES } from './server'
 import { describe, expect, it } from 'vitest'
 import { buildMcpCatalog } from './catalog'
 import { handleMcpRequest } from './http'
