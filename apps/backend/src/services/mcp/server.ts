@@ -18,6 +18,7 @@ import { runSearchSongs, searchSongsTool } from './tool-search-songs'
 export const MCP_TOOL_NAMES: readonly string[] = [
   searchSongsTool.name,
   getSheetTool.name,
+  listRecentSongsTool.name,
   calculateRatingTool.name,
   calculateBest50Tool.name,
 ]
