@@ -53,11 +53,11 @@ import {
   MCP_RATE_LIMIT,
   rateLimited,
 } from './services/mcp/http'
-import { guideResponse, isMcpHost } from './services/mcp/guide'
+import { guideResponse, guideView, isMcpHost } from './services/mcp/guide'
 import { API_DOCS_CSP, API_DOCS_HTML, API_JSON_CSP, isJsonContentType } from './services/api-docs'
 import { MCP_SERVER_CARD_PATH, serverCardResponse } from './services/mcp/listing'
 import { McpUsage, observeMcpRequest, rateLimitedTelemetry, reportMcpInternalError } from './services/mcp/telemetry'
-import { McpAnalyticsService, mcpLogFields, sanitizeVia } from './services/mcp/analytics'
+import { isPrefetchOrBot, McpAnalyticsService, mcpLogFields, sanitizeVia } from './services/mcp/analytics'
 import { clientAddress } from './services/mcp/client-key'
 class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
   readonly operation: string
@@ -301,7 +301,29 @@ app.use('*', (c, next) =>
 
 // The setup guide of the MCP server, on its host only (mcp.dxrating.net): its
 // root, /index.md, /llms.txt and /robots.txt. Other hosts fall through.
-app.use('*', async (c, next) => guideResponse(c.req.raw) ?? next())
+app.use('*', async (c, next) => {
+  const response = guideResponse(c.req.raw)
+  if (!response) return next()
+  const view = response.ok ? guideView(c.req.raw) : undefined
+  const headers = c.req.raw.headers
+  if (view && !isPrefetchOrBot(headers)) {
+    const socketAddress = (c.env as { incoming?: { socket?: { remoteAddress?: string } } } | undefined)?.incoming
+      ?.socket?.remoteAddress
+    const address = clientAddress(headers, socketAddress)
+    // queued only, after the response: a failure of analytics never reaches the visitor
+    void runApp(
+      Effect.map(McpAnalyticsService, (analytics) =>
+        analytics.captureGuideView({
+          headers,
+          clientAddress: address,
+          ...view,
+          deployment: process.env.NODE_ENV ?? 'development',
+        }),
+      ),
+    ).catch(() => undefined)
+  }
+  return response
+})
 
 // A conservative Content-Security-Policy for the JSON responses of the API, which load and run nothing; /docs sets
 // its own. The MCP host is left alone: its guide sets its own hashed policy, and answers before this middleware.
