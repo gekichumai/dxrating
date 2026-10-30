@@ -255762,7 +255762,7 @@
             "title": "魔法仕掛けのファンタジア",
             "artist": "igel",
             "bpm": 280.0,
-            "imageName": "b546c6d80257206f97bf76ac2d7eda94020383910ad689f8fc81aeaa57eb8b26",
+            "imageName": "dd49eb4d5bb8ec7ab0510a0012e9901eb5414bb7267dc619bd5a13321433444b",
             "isNew": true,
             "isLocked": true,
             "sheets": [
@@ -255784,7 +255784,7 @@
                         "jp": true,
                         "intl": false,
                         "usa": false,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -255812,7 +255812,7 @@
                         "jp": true,
                         "intl": false,
                         "usa": false,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -255840,7 +255840,7 @@
                         "jp": true,
                         "intl": false,
                         "usa": false,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -255868,7 +255868,7 @@
                         "jp": true,
                         "intl": false,
                         "usa": false,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -255886,6 +255886,127 @@
                 "魔法士",
                 "魔法机关幻想曲"
             ]
+        },
+        {
+            "songId": "Happy Halloween",
+            "category": "niconico＆ボーカロイド",
+            "title": "Happy Halloween",
+            "artist": "Junky feat. 鏡音リン",
+            "bpm": null,
+            "imageName": "77d790976e3b4cac5c594fc767d1f087b5ebaa64b3cac840508922436c6b3b40",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "2",
+                    "internalLevelValue": 2.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-29"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "5",
+                    "internalLevelValue": 5.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-29"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "9+",
+                    "internalLevelValue": 9.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-29"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13",
+                    "internalLevelValue": 13.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-29"
+                }
+            ],
+            "searchAcronyms": []
         }
     ],
     "categories": [
@@ -256119,5 +256240,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-10-29T14:56:01.619885631+00:00"
+    "updateTime": "2026-10-30T01:00:12.554041416+00:00"
 }
