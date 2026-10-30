@@ -140,7 +140,7 @@ function placeholders(text: GuideText, via?: string): Map<string, string> {
     ['url', url],
     ['guide', MCP_GUIDE_URL],
     ['md', `${origin()}${GUIDE_MARKDOWN_PATH}?lang=${text.lang}${via ? `&via=${via}` : ''}`],
-    ['llms', `${origin()}${GUIDE_LLMS_PATH}`],
+    ['llms', `${origin()}${GUIDE_LLMS_PATH}${via ? `?via=${via}` : ''}`],
     ['card', MCP_SERVER_CARD_URL],
     ['site', SITE_URL],
     ['repo', REPOSITORY.url],
@@ -234,7 +234,9 @@ function renderMarkdown(text: GuideText, llms: boolean, via?: string): string {
       ? []
       : [
           `${text.otherLanguages}: ` +
-            GUIDE_TEXTS.map((t) => `[${t.name}](${origin()}${GUIDE_MARKDOWN_PATH}?lang=${t.lang})`).join(' · '),
+            GUIDE_TEXTS.map(
+              (t) => `[${t.name}](${origin()}${GUIDE_MARKDOWN_PATH}?lang=${t.lang}${via ? `&via=${via}` : ''})`,
+            ).join(' · '),
         ]),
   ]
   return `${parts.join('\n\n')}\n`
@@ -695,6 +697,8 @@ export function guideResponse(request: Request): Response | undefined {
   const lang = guideLanguage(url.searchParams.get('lang'), request.headers.get('accept-language'))
   const page = guide.pages.get(lang)!
   const html = `${MCP_GUIDE_URL}?lang=${lang}`
+  // navigational alternates keep the origin; canonical links do not
+  const viaParam = via ? `&via=${via}` : ''
   let response: ReturnType<typeof text>
   if (path === GUIDE_ROBOTS_PATH) {
     response = text(ROBOTS, 'text/plain; charset=utf-8', 'public, max-age=86400')
@@ -719,7 +723,7 @@ export function guideResponse(request: Request): Response | undefined {
   } else {
     // the root varies by Accept and Accept-Language: private keeps the variants out of shared caches
     const negotiated = { 'Content-Language': lang, Vary: 'Accept, Accept-Language' }
-    const markdownLink = `<${origin()}${GUIDE_MARKDOWN_PATH}?lang=${lang}>; rel="alternate"; type="text/markdown"`
+    const markdownLink = `<${origin()}${GUIDE_MARKDOWN_PATH}?lang=${lang}${viaParam}>; rel="alternate"; type="text/markdown"`
     const kind = prefersText(request.headers.get('accept'))
     response =
       kind === undefined
@@ -733,7 +737,10 @@ export function guideResponse(request: Request): Response | undefined {
             page.markdown,
             kind === 'markdown' ? 'text/markdown; charset=utf-8' : 'text/plain; charset=utf-8',
             'private, max-age=300',
-            { ...negotiated, Link: `<${html}>; rel="alternate"; type="text/html", ${LICENSE_LINK}, ${CARD_LINK}` },
+            {
+              ...negotiated,
+              Link: `<${html}${viaParam}>; rel="alternate"; type="text/html", ${LICENSE_LINK}, ${CARD_LINK}`,
+            },
           )
   }
   return new Response(request.method === 'HEAD' ? null : response.body, { headers: response.headers })

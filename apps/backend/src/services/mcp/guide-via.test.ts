@@ -90,6 +90,29 @@ describe('guide ?via=', () => {
     }
   })
 
+  it('keeps the origin on every link to another page of the guide', async () => {
+    const pages = [`/?via=${ORIGIN}&lang=ja`, `/index.md?lang=ja&via=${ORIGIN}`, `/?via=${ORIGIN}`]
+    const links = new Set<string>()
+    for (const path of pages) {
+      const response = get(
+        path,
+        path.startsWith('/index') ? {} : { accept: path.endsWith('ja') ? 'text/html' : 'text/markdown' },
+      )
+      const body = unescape(await response.text())
+      for (const m of `${body} ${response.headers.get('link')}`.matchAll(
+        /https:\/\/mcp\.dxrating\.net\/(?:index\.md|llms\.txt)[^\s)>"'`,<]*/g,
+      )) {
+        links.add(m[0])
+      }
+    }
+    expect(links.size).toBeGreaterThan(4)
+    for (const link of links) {
+      expect(new URL(link).searchParams.get('via')).toBe(ORIGIN)
+      const md = await get(link.replace('https://mcp.dxrating.net', ''), { accept: 'text/markdown' }).text()
+      expect(md).toContain(`\`${TAGGED}\``)
+    }
+  })
+
   it('ignores an invalid via', async () => {
     const plain = await get('/?lang=en').text()
     for (const bad of ['a.b', '<script>', 'x'.repeat(41), 'a%20b']) {
@@ -167,6 +190,10 @@ describe('mcp_guide_viewed', () => {
   it('skips prefetches and crawlers', () => {
     expect(isPrefetchOrBot(new Headers({ 'sec-purpose': 'prefetch' }))).toBe(true)
     expect(isPrefetchOrBot(new Headers({ 'user-agent': 'Googlebot/2.1' }))).toBe(true)
+    for (const ua of ['GPTBot/1.3', 'ClaudeBot/1.0', 'OAI-SearchBot/1.3', 'CCBot/2.0']) {
+      expect(isPrefetchOrBot(new Headers({ 'user-agent': ua }))).toBe(true)
+    }
+    expect(isPrefetchOrBot(new Headers({ 'user-agent': 'Claude-User/1.0' }))).toBe(false)
     expect(isPrefetchOrBot(headers)).toBe(false)
   })
 })

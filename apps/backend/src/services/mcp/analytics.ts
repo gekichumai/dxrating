@@ -74,10 +74,19 @@ export interface GuideViewContext {
   readonly deployment: string
 }
 
+const AI_CRAWLER =
+  /GPTBot|OAI-SearchBot|ClaudeBot|Claude-SearchBot|anthropic-ai|PerplexityBot|Google-Extended|CCBot|Bytespider|Amazonbot|meta-externalagent/i
+
 /** Whether a request is a prefetch or a crawler's, which are not views */
 export function isPrefetchOrBot(headers: Headers): boolean {
   const purpose = `${headers.get('sec-purpose') ?? ''} ${headers.get('purpose') ?? ''} ${headers.get('x-moz') ?? ''}`
-  return /prefetch|prerender/i.test(purpose) || classifyUserAgent(header(headers, 'user-agent')) === 'bot'
+  const userAgent = header(headers, 'user-agent')
+  return (
+    /prefetch|prerender/i.test(purpose) ||
+    classifyUserAgent(userAgent) === 'bot' ||
+    // crawlers of AI companies, which classifyUserAgent counts as agents; a user's agent fetching the page still counts
+    AI_CRAWLER.test(userAgent ?? '')
+  )
 }
 
 /** The `mcp_guide_viewed` event of a view; the same distinct_id scheme as the endpoint (no client name) */
