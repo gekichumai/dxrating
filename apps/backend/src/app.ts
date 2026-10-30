@@ -56,6 +56,7 @@ import {
 import { guideResponse, isMcpHost } from './services/mcp/guide'
 import { API_DOCS_CSP, API_DOCS_HTML, API_JSON_CSP, isJsonContentType } from './services/api-docs'
 import { MCP_SERVER_CARD_PATH, serverCardResponse } from './services/mcp/listing'
+import { McpUsage, observeMcpRequest, rateLimitedTelemetry } from './services/mcp/telemetry'
 class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
   readonly operation: string
   readonly cause: unknown
@@ -338,19 +339,32 @@ app.on('HEAD', '/.well-known/api-catalog', (c) => {
 const mcpRateLimiter = createRateLimiter(MCP_RATE_LIMIT)
 
 app.on(['GET', 'POST', 'DELETE'], MCP_PATH, (c) => {
-  const retryAfter = mcpRateLimiter.take(clientKey(c.req.raw.headers))
-  if (retryAfter > 0) return rateLimited(retryAfter)
+  const socketAddress = (c.env as { incoming?: { socket?: { remoteAddress?: string } } } | undefined)?.incoming?.socket
+    ?.remoteAddress
+  const retryAfter = mcpRateLimiter.take(clientKey(c.req.raw.headers, socketAddress))
   return runApp(
     Effect.gen(function* () {
+      const usage = yield* McpUsage
+      if (retryAfter > 0) {
+        const telemetry = rateLimitedTelemetry(c.req.raw.headers)
+        c.get('log')?.set(telemetry.event)
+        yield* usage.record(telemetry)
+        return rateLimited(retryAfter)
+      }
       // Before the first catalog is loaded the server still answers, and its
       // tools say that the data is loading.
       const catalog = yield* Effect.flatMap(McpCatalogSource, (source) => source.current).pipe(
         Effect.orElseSucceed(() => undefined),
       )
-      return yield* Effect.tryPromise({
-        try: () => handleMcpRequest(c.req.raw, catalog),
+      const { response, telemetry } = yield* Effect.tryPromise({
+        try: () => observeMcpRequest(c.req.raw, (request) => handleMcpRequest(request, catalog)),
         catch: (cause) => new HttpAdapterError({ operation: 'Handle MCP request', cause }),
       })
+      if (telemetry) {
+        c.get('log')?.set(telemetry.event)
+        yield* usage.record(telemetry)
+      }
+      return response
     }),
     { signal: c.req.raw.signal },
   )

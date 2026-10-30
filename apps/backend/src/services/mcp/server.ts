@@ -13,6 +13,14 @@ import { runSearchSongs, searchSongsTool } from './tool-search-songs'
 // server.json and the server card, guide.ts the setup guide at the root of the host.
 
 /** The name of the server for programs, as the MCP Registry will list it */
+/** The names of the tools the server registers: telemetry keeps these and folds any other name into `other` */
+export const MCP_TOOL_NAMES: readonly string[] = [
+  searchSongsTool.name,
+  getSheetTool.name,
+  calculateRatingTool.name,
+  calculateBest50Tool.name,
+]
+
 export const SERVER_NAME = 'net.dxrating/dxrating'
 export const SERVER_TITLE = 'DXRating'
 /** What the server is, in 100 characters at most (the limit of the registry) */

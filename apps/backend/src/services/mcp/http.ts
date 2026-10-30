@@ -84,15 +84,7 @@ export function createRateLimiter({ limit, windowMs }: { limit: number; windowMs
 
 export const MCP_RATE_LIMIT = { limit: 300, windowMs: 60_000 }
 
-/** The client of a request: the address Cloudflare saw, else the first forwarded address */
-export function clientKey(headers: Headers): string {
-  return (
-    headers.get('cf-connecting-ip')?.trim() ||
-    headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    headers.get('x-real-ip')?.trim() ||
-    'unknown'
-  )
-}
+export { clientKey } from './client-key'
 
 export function rateLimited(retryAfterSeconds: number): Response {
   return jsonRpcError(429, -32000, `Too many requests. Retry in ${retryAfterSeconds} seconds.`, {
