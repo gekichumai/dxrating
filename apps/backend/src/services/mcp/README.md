@@ -29,21 +29,26 @@ Guide view, then initialize, then a tool call, by origin. The distinct_id of a b
 so the funnel is per origin, not per person:
 
 ```sql
-WITH
-  splitByChar('.', coalesce(properties.via, '')) AS parts,
-  if(event = 'mcp_guide_viewed', coalesce(properties.via, '(none)'),
-     if(length(parts) > 1, parts[1],
-        if(parts[1] = '' OR startsWith(parts[1], 'guide'), '(none)', parts[1]))) AS origin
 SELECT
   origin,
   countIf(event = 'mcp_guide_viewed') AS guide_views,
   uniqIf(distinct_id, event = 'mcp_initialize') AS clients_initialized,
   uniqIf(distinct_id, event = 'mcp_tool_called') AS clients_calling_tools,
   countIf(event = 'mcp_tool_called') AS tool_calls
-FROM events
-WHERE event IN ('mcp_guide_viewed', 'mcp_initialize', 'mcp_tool_called')
-  AND properties.deployment = 'production'
-  AND timestamp > now() - INTERVAL 30 DAY
+FROM (
+  SELECT
+    event,
+    distinct_id,
+    coalesce(properties.via, '') AS via,
+    splitByChar('.', via) AS parts,
+    if(event = 'mcp_guide_viewed', if(via = '', '(none)', via),
+       if(length(parts) > 1, parts[1],
+          if(via = '' OR startsWith(via, 'guide'), '(none)', via))) AS origin
+  FROM events
+  WHERE event IN ('mcp_guide_viewed', 'mcp_initialize', 'mcp_tool_called')
+    AND properties.deployment = 'production'
+    AND timestamp > now() - INTERVAL 30 DAY
+)
 GROUP BY origin
-ORDER BY guide_views DESC
+ORDER BY guide_views DESC, clients_initialized DESC
 ```
