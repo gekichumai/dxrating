@@ -9,6 +9,7 @@ import {
   rateLimitedTelemetry,
   truncateBytes,
 } from './telemetry'
+import { MCP_TOOL_NAMES } from './server'
 import { publishedCatalog } from './test-fixture'
 
 const catalog = buildMcpCatalog('1', publishedCatalog)
@@ -77,7 +78,7 @@ describe('MCP telemetry', () => {
     const mcp = telemetry.event.mcp as Record<string, any>
     expect(mcp.method.name).toBe('tools/list')
     expect(mcp.protocol.version).toBe('2025-06-18')
-    expect(mcp.result.count).toBe(4)
+    expect(mcp.result.count).toBe(MCP_TOOL_NAMES.length)
     expect(mcp.result.bytes).toBeGreaterThan(100)
     expect(typeof mcp.duration_ms).toBe('number')
   })
@@ -177,6 +178,12 @@ describe('MCP telemetry', () => {
       expect(bucket.clientClass).toBe('other')
     }
     expect(buckets.find((b) => b.outcome === 'rate_limited')?.count).toBe(1)
+  })
+
+  it('knows every registered tool, so none is folded into other', async () => {
+    const response = await handleMcpRequest(post({ jsonrpc: '2.0', id: 1, method: 'tools/list' }), catalog)
+    const names = ((await response.json()).result.tools as { name: string }[]).map((t) => t.name)
+    expect([...MCP_TOOL_NAMES].sort()).toEqual(names.sort())
   })
 
   it('leaves the response untouched', async () => {
