@@ -11,6 +11,7 @@ import { AppConfigLive, type AppConfig } from './config'
 import { DatabaseLive, type Database } from './db/index'
 import { createRequestRunner } from './request-runner'
 import { ApiUsageLive, type ApiUsage } from './services/api-usage'
+import { McpUsageLive, type McpUsage } from './services/mcp/telemetry'
 import { ApplicationCacheLive, type ApplicationCache } from './services/cache'
 import { HttpClientLive, type HttpClient } from './services/http-client'
 import { TracingLive, withActiveRequestSpan } from './tracing'
@@ -20,6 +21,7 @@ export const ApplicationLive = Layer.mergeAll(
   DatabaseLive,
   ApplicationCacheLive,
   ApiUsageLive,
+  McpUsageLive,
   HttpClientLive,
   AuthenticationLive.pipe(Layer.provide(Layer.merge(AppConfigLive, DatabaseLive))),
   CatalogIdentitiesLive.pipe(Layer.provide(DatabaseLive)),
@@ -31,6 +33,7 @@ export type ApplicationServices =
   | Database
   | ApplicationCache
   | ApiUsage
+  | McpUsage
   | HttpClient
   | Authentication
   | CatalogIdentities
