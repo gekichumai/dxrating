@@ -10,8 +10,9 @@ import { MCP_TOOL_NAMES } from './server'
  * conventions (mcp.method.name, gen_ai.tool.name, jsonrpc.request.id, mcp.protocol.version, ...), and adds one count
  * to an in-process rollup flushed to Sentry metrics once a minute with bounded labels only.
  *
- * Deliberately absent: addresses (or any hash or prefix of them), location, tool arguments and search text, tool
- * results, headers other than the protocol version and a client class derived from the User-Agent.
+ * The metric labels hold none of the address, location, arguments or results. The wide event gets those (address,
+ * country, User-Agent, full tool arguments) from analytics.ts mcpLogFields, for Sentry only; PostHog gets the
+ * scrubbed, address-free events of analytics.ts.
  */
 
 export const MCP_USAGE_FLUSH_INTERVAL = '1 minute'
@@ -245,7 +246,13 @@ async function readCapped(body: ReadableStream<Uint8Array> | null): Promise<stri
 export async function observeMcpRequest(
   request: Request,
   handle: (request: Request) => Promise<Response>,
-): Promise<{ response: Response; telemetry: McpRequestTelemetry | undefined }> {
+): Promise<{
+  response: Response
+  telemetry: McpRequestTelemetry | undefined
+  /** The parsed bodies, for the analytics and the Sentry log; undefined when they could not be read */
+  requestBody?: unknown
+  responseBody?: unknown
+}> {
   const startedAt = performance.now()
   const requestText = request.method === 'POST' && request.body ? readCapped(request.clone().body) : Promise.resolve('')
   const response = await handle(request)
@@ -253,15 +260,17 @@ export async function observeMcpRequest(
   try {
     const isJson = response.headers.get('content-type')?.includes('application/json') ?? false
     const responseText = isJson ? await response.clone().text() : undefined
+    const requestBody = parseJson(await requestText)
+    const responseBody = responseText === undefined ? undefined : parseJson(responseText)
     const telemetry = describeMcpExchange({
       headers: request.headers,
-      requestBody: parseJson(await requestText),
+      requestBody,
       status: response.status,
-      responseBody: responseText === undefined ? undefined : parseJson(responseText),
+      responseBody,
       responseBytes: responseText === undefined ? undefined : new TextEncoder().encode(responseText).length,
       durationMs,
     })
-    return { response, telemetry }
+    return { response, telemetry, requestBody, responseBody }
   } catch {
     return { response, telemetry: undefined }
   }
@@ -359,3 +368,21 @@ export const makeMcpUsageLayer = (emit: (buckets: readonly McpUsageBucket[]) => 
   )
 
 export const McpUsageLive = makeMcpUsageLayer()
+/**
+ * An internal error (-32603) of an MCP request, captured in Sentry with the MCP context; other RPC errors are the
+ * client's (bad params, unknown method) and stay in the logs.
+ */
+export function reportMcpInternalError(
+  telemetry: McpRequestTelemetry,
+  address: string | undefined,
+  via: string | undefined,
+) {
+  const mcp = telemetry.event.mcp as { error?: { code?: number; message?: string } } | undefined
+  if (mcp?.error?.code !== -32603) return
+  Sentry.withScope((scope) => {
+    scope.setContext('mcp', { ...telemetry.event, via })
+    scope.setTags({ 'mcp.method.name': telemetry.method, 'gen_ai.tool.name': telemetry.tool, 'mcp.via': via ?? 'none' })
+    if (address) scope.setUser({ ip_address: address })
+    Sentry.captureMessage(`MCP internal error: ${mcp.error?.message ?? 'unknown'}`, 'error')
+  })
+}

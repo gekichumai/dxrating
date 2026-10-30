@@ -56,10 +56,12 @@ describe('guide', () => {
     const json = [...html.matchAll(/<div class="code code-json" data-c="([^"]*)">/g)].map(([, c]) => unescape(c))
     expect(json.length).toBeGreaterThan(5)
     for (const code of json) expect(() => JSON.parse(code)).not.toThrow()
-    const endpoint = encodeURIComponent(MCP_PUBLIC_URL)
+    const endpoint = encodeURIComponent(`${MCP_PUBLIC_URL}?via=guide-claude`)
     expect(html).toContain(`connectorUrl=${endpoint}`)
     const cursor = html.match(/cursor\.com\/en\/install-mcp\?name=dxrating&amp;config=([^"]+)/)![1]
-    expect(JSON.parse(Buffer.from(decodeURIComponent(cursor), 'base64').toString())).toEqual({ url: MCP_PUBLIC_URL })
+    expect(JSON.parse(Buffer.from(decodeURIComponent(cursor), 'base64').toString())).toEqual({
+      url: `${MCP_PUBLIC_URL}?via=guide-cursor`,
+    })
   })
 
   it('picks the language of ?lang, else of Accept-Language', () => {

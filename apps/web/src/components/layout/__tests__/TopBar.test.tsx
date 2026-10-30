@@ -90,7 +90,7 @@ describe('TopBar', () => {
         .map((item) => item.textContent),
     ).toEqual(['Discord', 'QQ group', 'GitHub', 'AI assistants (MCP)', 'Developers & API'])
     expect(within(menu).getByRole('menuitem', { name: 'AI assistants (MCP)' }).getAttribute('href')).toBe(
-      'https://mcp.dxrating.net/',
+      'https://mcp.dxrating.net/?via=dxrating-home',
     )
     expect(within(menu).getByRole('menuitem', { name: 'Developers & API' }).getAttribute('href')).toBe('/developers')
   })
@@ -106,7 +106,7 @@ describe('TopBar', () => {
       screen
         .getByRole('link', { name: 'Use DXRating in AI assistants like Claude, ChatGPT and Cursor (MCP server)' })
         .getAttribute('href'),
-    ).toBe('https://mcp.dxrating.net/')
+    ).toBe('https://mcp.dxrating.net/?via=dxrating-home')
   })
 
   it('links to the developer page next to the MCP entry', () => {

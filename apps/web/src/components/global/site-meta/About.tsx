@@ -82,7 +82,11 @@ export const About = () => {
                 dxrating.net/developers
               </AboutLink>
 
-              <AboutLink href="https://mcp.dxrating.net/" startAdornment={<McpLogo />} label={t('about:mcp-server')}>
+              <AboutLink
+                href="https://mcp.dxrating.net/?via=dxrating-about"
+                startAdornment={<McpLogo />}
+                label={t('about:mcp-server')}
+              >
                 mcp.dxrating.net
               </AboutLink>
 

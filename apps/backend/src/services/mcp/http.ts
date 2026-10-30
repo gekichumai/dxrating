@@ -1,3 +1,4 @@
+import { Sentry } from '../../lib/functions/sentry'
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
 import type { McpCatalog } from './catalog'
 import { MCP_GUIDE_URL } from './listing'
@@ -41,7 +42,11 @@ export async function handleMcpRequest(request: Request, catalog: McpCatalog | u
   const length = Number(request.headers.get('content-length') ?? 0)
   if (length > MCP_MAX_BODY_BYTES) return jsonRpcError(413, -32600, 'Request body too large')
 
-  const server = createMcpServer(catalog)
+  // a span per MCP message with the OpenTelemetry MCP attributes (mcp.method.name, gen_ai.tool.name, ...), the
+  // arguments and the results; without a Sentry client (development, tests) the server is left as it is
+  const server = Sentry.getClient()
+    ? Sentry.wrapMcpServerWithSentry(createMcpServer(catalog), { recordInputs: true, recordOutputs: true })
+    : createMcpServer(catalog)
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,

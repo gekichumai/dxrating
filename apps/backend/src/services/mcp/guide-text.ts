@@ -288,12 +288,17 @@ const en: GuideText = {
     blocks: [
       {
         items: [
-          'No account, no key, no cookies. This page loads no third-party scripts and has no analytics.',
+          'No account, no key, no cookies. This page loads no third-party scripts.',
           'The server only receives what your assistant sends it: the tool name and its arguments, such as a song ' +
             'name or the scores you pasted. It never sees your conversation, and it does not store your scores.',
-          'For each request we log the time, the path, the status, how long it took and the request headers, which ' +
-            'include the IP address and the User-Agent, but not the body with the tool arguments. The logs go to our ' +
-            'monitoring provider (Sentry) and are used only to run the service and stop abuse.',
+          'For each request we log the time, the status, how long it took, the tool called and its arguments ' +
+            '(including the search text), the client app (name, version, User-Agent), your IP address and the ' +
+            'approximate location derived from it (country). These logs go to our error and monitoring provider ' +
+            '(Sentry), are kept under its retention, and are used only to run the service and stop abuse.',
+          'We also send anonymous usage analytics to PostHog: the tool called, the client app, the country, and ' +
+            'the arguments with search text cut to 64 characters, email addresses and long numbers removed, and no ' +
+            'scores. They hold no IP address and no person profile; requests are grouped only by a key that changes ' +
+            'every day.',
           'Requests pass through Cloudflare, which processes them under its own terms.',
         ],
       },
@@ -536,11 +541,15 @@ const ja: GuideText = {
     blocks: [
       {
         items: [
-          'アカウント、キー、Cookie はありません。このページは外部のスクリプトを読み込まず、アクセス解析もしていません。',
+          'アカウント、キー、Cookie はありません。このページは外部のスクリプトを読み込みません。',
           'サーバーが受け取るのはアシスタントが送るもの、つまりツール名と引数（曲名や貼り付けたスコアなど）だけです。会話は見えず、' +
             'スコアも保存しません。',
-          'リクエストごとに時刻、パス、ステータス、所要時間、リクエストヘッダー（IP アドレスと User-Agent を含む）を記録します。' +
-            'ツールの引数が入る本文は記録しません。記録は監視サービス（Sentry）に送られ、運用と不正利用の防止にだけ使います。',
+          'リクエストごとに時刻、ステータス、所要時間、呼ばれたツールとその引数（検索語を含む）、クライアントアプリ（名前、' +
+            'バージョン、User-Agent）、IP アドレスとそこから推定したおおよその位置（国）を記録します。記録はエラー・監視サービス' +
+            '（Sentry）に送られ、その保存期間に従って保持され、運用と不正利用の防止にだけ使います。',
+          'また、匿名の利用統計を PostHog に送ります。呼ばれたツール、クライアントアプリ、国、そして引数（検索語は 64 文字までに' +
+            '切り詰め、メールアドレスと長い数字は削除、スコアは含めない）です。IP アドレスや個人プロファイルは含まず、リクエストは' +
+            '毎日変わるキーでのみまとめられます。',
           'リクエストは Cloudflare を通り、Cloudflare の規約に従って処理されます。',
         ],
       },
@@ -773,10 +782,12 @@ const zhHans: GuideText = {
     blocks: [
       {
         items: [
-          '没有账号、没有 Key、没有 Cookie。本页不加载任何第三方脚本，也没有统计分析。',
+          '没有账号、没有 Key、没有 Cookie。本页不加载任何第三方脚本。',
           '服务器只收到助手发来的内容：工具名和参数，比如曲名或你贴的成绩。它看不到你的对话，也不会保存你的成绩。',
-          '每个请求会记录时间、路径、状态码、耗时和请求头（包括 IP 地址和 User-Agent），但不记录包含工具参数的请求体。日志发送到' +
-            '我们的监控服务（Sentry），只用于运维和防止滥用。',
+          '每个请求会记录时间、状态码、耗时、调用的工具及其参数（包括搜索词）、客户端应用（名称、版本、User-Agent）、IP 地址及' +
+            '由此推断的大致位置（国家）。这些日志发送到我们的错误与监控服务（Sentry），按其保留期限保存，只用于运维和防止滥用。',
+          '我们还会向 PostHog 发送匿名使用统计：调用的工具、客户端应用、国家，以及参数（搜索词截断到 64 个字符，删除邮箱地址和' +
+            '长数字，不含成绩）。其中没有 IP 地址，也不建立个人档案；请求只按一个每天更换的标识归类。',
           '请求会经过 Cloudflare，由 Cloudflare 按其条款处理。',
         ],
       },
@@ -1005,10 +1016,12 @@ const zhHant: GuideText = {
     blocks: [
       {
         items: [
-          '沒有帳號、沒有 Key、沒有 Cookie。本頁不載入任何第三方指令碼，也沒有流量分析。',
+          '沒有帳號、沒有 Key、沒有 Cookie。本頁不載入任何第三方指令碼。',
           '伺服器只收到助理送來的內容：工具名稱和參數，例如曲名或你貼上的成績。它看不到你的對話，也不會儲存你的成績。',
-          '每個請求會記錄時間、路徑、狀態碼、耗時和請求標頭（包括 IP 位址和 User-Agent），但不記錄包含工具參數的請求內容。記錄會' +
-            '送到我們的監控服務（Sentry），只用於維運和防止濫用。',
+          '每個請求會記錄時間、狀態碼、耗時、呼叫的工具及其參數（包括搜尋詞）、用戶端應用程式（名稱、版本、User-Agent）、IP 位址' +
+            '及由此推斷的大致位置（國家）。這些記錄會送到我們的錯誤與監控服務（Sentry），依其保留期限保存，只用於維運和防止濫用。',
+          '我們也會向 PostHog 傳送匿名使用統計：呼叫的工具、用戶端應用程式、國家，以及參數（搜尋詞截斷至 64 個字元，刪除電子郵件' +
+            '地址和長數字，不含成績）。其中沒有 IP 位址，也不建立個人檔案；請求只依一個每天更換的識別碼歸類。',
           '請求會經過 Cloudflare，由 Cloudflare 依其條款處理。',
         ],
       },

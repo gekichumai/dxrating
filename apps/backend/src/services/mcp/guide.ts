@@ -95,6 +95,12 @@ const ONE_CLICK: Partial<Record<AppId, { name: string; link: (url: string) => st
   },
 }
 
+/**
+ * The endpoint a one-click link installs: tagged ?via=guide-<app>, which the server reads to count the installs each
+ * link brings (it never changes the answers). The copy-paste snippets keep the bare endpoint.
+ */
+export const oneClickUrl = (id: string) => `${MCP_PUBLIC_URL}?via=guide-${id}`
+
 /** The tools the guide lists, in its order */
 export const GUIDE_TOOLS = Object.keys(GUIDE_TEXTS[0].tools)
 
@@ -116,7 +122,7 @@ function placeholders(text: GuideText): Map<string, string> {
     ['toolcount', String(GUIDE_TOOLS.length)],
   ])
   for (const [name, snippet] of Object.entries(SNIPPETS)) values.set(name, snippet.replaceAll('{url}', url))
-  for (const [id, app] of Object.entries(ONE_CLICK)) values.set(`${id}.link`, app.link(url))
+  for (const [id, app] of Object.entries(ONE_CLICK)) values.set(`${id}.link`, app.link(oneClickUrl(id)))
   return values
 }
 
@@ -162,7 +168,7 @@ function renderMarkdown(text: GuideText, llms: boolean): string {
   const app = (id: AppId) =>
     `#### ${APP_NAMES[id]}\n\n${markdownBlocks(text.apps[id], expand)}\n\n${text.docs}${APP_DOCS[id]}`
   const oneClick = Object.entries(ONE_CLICK)
-    .map(([, a]) => `[${text.addTo.replace('%s', a.name)}](${a.link(MCP_PUBLIC_URL)})`)
+    .map(([id, a]) => `[${text.addTo.replace('%s', a.name)}](${a.link(oneClickUrl(id))})`)
     .join(' · ')
   const parts = [
     `# ${text.title}`,
@@ -432,9 +438,9 @@ function renderHtml(text: GuideText): string {
       `<span>${escapeHtml(docs.replace(/^https:\/\//, ''))}</span>${icon('out')}</a></p>`
     return panel(id, name, `${blocks(text.apps[id])}\n${link}`, qualifier)
   }
-  const oneClick = Object.values(ONE_CLICK).map(
-    (a) =>
-      `<a class="pill-btn" href="${escapeHtml(a.link(MCP_PUBLIC_URL))}">${escapeHtml(text.addTo.replace('%s', a.name))}${icon('out')}</a>`,
+  const oneClick = Object.entries(ONE_CLICK).map(
+    ([id, a]) =>
+      `<a class="pill-btn" href="${escapeHtml(a.link(oneClickUrl(id)))}">${escapeHtml(text.addTo.replace('%s', a.name))}${icon('out')}</a>`,
   )
   const [l1, lrest] = firstSentence(expand(text.lead[0]))
   const prompt = expand(text.agentPrompt)

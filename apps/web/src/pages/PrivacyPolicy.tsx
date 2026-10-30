@@ -38,6 +38,9 @@ export const PrivacyPolicy = () => {
       <h2>{t('privacy.analytics.heading')}</h2>
       <p>{t('privacy.analytics.body')}</p>
 
+      <h2>{t('privacy.mcp.heading')}</h2>
+      <p>{t('privacy.mcp.body')}</p>
+
       <h2>{t('privacy.cookies.heading')}</h2>
       <p>{t('privacy.cookies.body')}</p>
 

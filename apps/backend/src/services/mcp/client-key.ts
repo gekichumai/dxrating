@@ -82,11 +82,17 @@ const keyOf = (value: string | null | undefined): string | undefined => {
  * socket address is the client. IPv6 clients are keyed by their /64.
  */
 export function clientKey(headers: Headers, socketAddress?: string): string {
+  const address = clientAddress(headers, socketAddress)
+  return keyOf(address) ?? 'unknown'
+}
+
+/** The full address of the client, by the same trust rules as clientKey; undefined when none is known */
+export function clientAddress(headers: Headers, socketAddress?: string): string | undefined {
   const forwarded = headers.get('x-forwarded-for')
   const hop = forwarded ? forwarded.split(',').at(-1) : socketAddress
   if (isCloudflareAddress(hop)) {
-    const client = keyOf(headers.get('cf-connecting-ip'))
-    if (client) return client
+    const client = parseAddress(headers.get('cf-connecting-ip'))
+    if (client) return client.address
   }
-  return keyOf(hop) ?? keyOf(socketAddress) ?? 'unknown'
+  return parseAddress(hop)?.address ?? parseAddress(socketAddress)?.address
 }
