@@ -1,3 +1,4 @@
+import { MCP_TOOL_NAMES } from './server'
 import { describe, expect, it } from 'vitest'
 import { buildMcpCatalog } from './catalog'
 import { handleMcpRequest } from './http'
@@ -77,7 +78,7 @@ describe('MCP telemetry', () => {
     const mcp = telemetry.event.mcp as Record<string, any>
     expect(mcp.method.name).toBe('tools/list')
     expect(mcp.protocol.version).toBe('2025-06-18')
-    expect(mcp.result.count).toBe(4)
+    expect(mcp.result.count).toBe(MCP_TOOL_NAMES.length)
     expect(mcp.result.bytes).toBeGreaterThan(100)
     expect(typeof mcp.duration_ms).toBe('number')
   })
