@@ -13,7 +13,6 @@ import { runSearchSongs, searchSongsTool } from './tool-search-songs'
 // catalog.ts the catalog and its search, loader.ts the loading of the catalog, http.ts the endpoint, listing.ts
 // server.json and the server card, guide.ts the setup guide at the root of the host.
 
-/** The name of the server for programs, as the MCP Registry will list it */
 /** The names of the tools the server registers: telemetry keeps these and folds any other name into `other` */
 export const MCP_TOOL_NAMES: readonly string[] = [
   searchSongsTool.name,
@@ -23,6 +22,7 @@ export const MCP_TOOL_NAMES: readonly string[] = [
   calculateBest50Tool.name,
 ]
 
+/** The name of the server for programs, as the MCP Registry will list it */
 export const SERVER_NAME = 'net.dxrating/dxrating'
 export const SERVER_TITLE = 'DXRating'
 /** What the server is, in 100 characters at most (the limit of the registry) */
