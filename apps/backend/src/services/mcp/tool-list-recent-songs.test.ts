@@ -140,6 +140,9 @@ describe('list_recent_songs', () => {
   it('says what is wrong with an argument', () => {
     expect(run({ since: '2026-10-01', days: 3 }).isError).toBe(true)
     expect(run({ since: '2026-13-45' }).isError).toBe(true)
+    expect(run({ since: '2026-02-30' }).isError).toBe(true)
+    expect(run({ since: '2026-02-29' }).isError).toBe(true)
+    expect(run({ since: '2028-02-29' }).isError).toBeFalsy()
     const server = run({ server: 'eu' })
     expect(server.isError).toBe(true)
     expect((server.content[0] as { text: string }).text).toContain('jp, intl, usa, cn')

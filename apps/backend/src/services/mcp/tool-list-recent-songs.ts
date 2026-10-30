@@ -99,6 +99,12 @@ type ReleasedSong = z.infer<typeof releasedSongSchema>
 const releaseDateOf = (sheet: PublishedSheet, versionDates: Map<string, string>) =>
   sheet.releaseDate ?? versionDates.get(sheet.version)
 
+/** Whether a YYYY-MM-DD text is a day of the calendar: not 2026-02-30 or 2026-02-29, which Date.parse rolls over */
+const isCalendarDate = (text: string) => {
+  const time = Date.parse(`${text}T00:00:00Z`)
+  return !Number.isNaN(time) && new Date(time).toISOString().slice(0, 10) === text
+}
+
 /** The day, YYYY-MM-DD in UTC, days before now */
 const daysBefore = (now: Date, days: number) => new Date(now.getTime() - days * 86_400_000).toISOString().slice(0, 10)
 
@@ -113,7 +119,7 @@ export function runListRecentSongs(
   now = new Date(),
 ) {
   if (sinceArg !== undefined && days !== undefined) return toolError('Give since or days, not both.')
-  if (sinceArg !== undefined && Number.isNaN(Date.parse(`${sinceArg}T00:00:00Z`))) {
+  if (sinceArg !== undefined && !isCalendarDate(sinceArg)) {
     return toolError(`since ${JSON.stringify(sinceArg)} is not a date: give YYYY-MM-DD.`)
   }
   const parsed = parseServer(catalog, serverArg)
