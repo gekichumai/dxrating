@@ -255928,7 +255928,7 @@
                     "type": "dx",
                     "difficulty": "advanced",
                     "level": "5",
-                    "internalLevelValue": 5.0,
+                    "internalLevelValue": 5.8,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255955,7 +255955,7 @@
                     "type": "dx",
                     "difficulty": "expert",
                     "level": "9+",
-                    "internalLevelValue": 9.6,
+                    "internalLevelValue": 9.8,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -255982,7 +255982,7 @@
                     "type": "dx",
                     "difficulty": "master",
                     "level": "13",
-                    "internalLevelValue": 13.0,
+                    "internalLevelValue": 13.5,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": null,
@@ -256240,5 +256240,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-10-30T01:00:12.554041416+00:00"
+    "updateTime": "2026-10-31T19:01:25.240438743+00:00"
 }
