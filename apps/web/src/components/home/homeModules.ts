@@ -53,6 +53,7 @@ export type HomeFeature = { id: HomeFeatureId; to: NonNullable<LinkProps['to']> 
 
 export const HOME_FEATURES: readonly HomeFeature[] = [
   { id: 'rating', to: '/rating' },
+  { id: 'plates', to: '/plates' },
   { id: 'constants', to: '/constants' },
   { id: 'recent', to: '/charts/recent' },
   { id: 'trending', to: '/charts/trending' },
