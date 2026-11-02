@@ -11,3 +11,7 @@ export {
 } from './src/song-catalog.ts'
 export type { SongCatalog, SongCatalogSource } from './src/song-catalog.ts'
 export * from './src/types.ts'
+export * from './src/plates.ts'
+export * from './src/recommend.ts'
+export * from './src/tolerance.ts'
+export * from './src/toplists.ts'
