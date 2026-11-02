@@ -768,8 +768,35 @@
     "rating.table.title": "レート早見表",
     "rating.table.description": "選んだ定数と前後の定数で、ランクごとのレートを一覧にしています。"
   },
-  "recommend": {},
-  "random": {},
+  "recommend": {
+    "title": "レート上げおすすめ",
+    "description": "次の達成率ラインに届くとベスト50のレートが一番伸びる譜面です。",
+    "demo": "デモスコアを表示中",
+    "empty": "スコアがまだありません。レート計算でスコアを追加・インポートするとおすすめが表示されます。",
+    "go-to-rating": "レート計算を開く",
+    "stats.total": "レート",
+    "stats.b15-floor": "新曲枠(B15)ボーダー",
+    "stats.b35-floor": "旧曲枠(B35)ボーダー",
+    "new": "新曲枠(B15)",
+    "old": "旧曲枠(B35)",
+    "none": "今のところ伸ばせる譜面はありません。",
+    "unplayed": "未プレイ",
+    "gain": "レート +{{gain}}"
+  },
+  "random": {
+    "title": "ランダム選曲",
+    "description": "種別・難易度・レベル・バージョンで絞り込んで、譜面をランダムに選びます。",
+    "filters.type": "種別",
+    "filters.difficulty": "難易度",
+    "filters.level": "レベル {{min}}〜{{max}}",
+    "filters.version": "バージョン",
+    "filters.all-versions": "すべてのバージョン",
+    "roll": "選曲する",
+    "pool-size_one": "対象 {{count}} 譜面",
+    "pool-size_other": "対象 {{count}} 譜面",
+    "no-result": "条件に合う譜面がありません。",
+    "open-chart": "譜面を見る"
+  },
   "home": {
     "tab-label": "ホーム",
     "stats.title": "あなたのスコア",

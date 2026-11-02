@@ -768,8 +768,35 @@
     "rating.table.title": "Rating 对照表",
     "rating.table.description": "所选定数及相邻定数在各评级下的 Rating。"
   },
-  "recommend": {},
-  "random": {},
+  "recommend": {
+    "title": "上分推荐",
+    "description": "达到下一个达成率门槛后，最能提升 Best 50 Rating 的谱面。",
+    "demo": "正在显示示例成绩",
+    "empty": "还没有成绩。请在 Rating 计算器中添加或导入成绩。",
+    "go-to-rating": "打开 Rating 计算器",
+    "stats.total": "Rating",
+    "stats.b15-floor": "新曲 (B15) 门槛",
+    "stats.b35-floor": "旧曲 (B35) 门槛",
+    "new": "新曲 (B15)",
+    "old": "旧曲 (B35)",
+    "none": "目前没有可提升的谱面。",
+    "unplayed": "未游玩",
+    "gain": "Rating +{{gain}}"
+  },
+  "random": {
+    "title": "随机选曲",
+    "description": "按类型、难度、等级和版本筛选，随机挑选一张谱面。",
+    "filters.type": "类型",
+    "filters.difficulty": "难度",
+    "filters.level": "等级 {{min}} 至 {{max}}",
+    "filters.version": "版本",
+    "filters.all-versions": "所有版本",
+    "roll": "抽一首",
+    "pool-size_one": "符合 {{count}} 张谱面",
+    "pool-size_other": "符合 {{count}} 张谱面",
+    "no-result": "没有符合条件的谱面。",
+    "open-chart": "查看谱面"
+  },
   "home": {
     "tab-label": "首页",
     "stats.title": "我的成绩",
