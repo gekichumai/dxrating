@@ -76,7 +76,7 @@ export const RandomChartPage: FC = () => {
                 variant={filters.types.includes(type) ? 'filled' : 'outlined'}
                 onClick={() => update({ types: toggle(filters.types, type) })}
                 aria-pressed={filters.types.includes(type)}
-                className="rounded-lg"
+                className="!rounded-lg"
               />
             ))}
           </div>
@@ -92,12 +92,21 @@ export const RandomChartPage: FC = () => {
                   key={difficulty}
                   label={DIFFICULTIES[difficulty].title}
                   variant={selected ? 'filled' : 'outlined'}
-                  onClick={() => update({ difficulties: toggle(filters.difficulties, difficulty) })}
+                  onClick={() =>
+                    update({
+                      difficulties: toggle(filters.difficulties, difficulty),
+                    })
+                  }
                   aria-pressed={selected}
-                  className="rounded-lg"
+                  className="!rounded-lg"
                   sx={{
                     borderColor: DIFFICULTIES[difficulty].color,
-                    ...(selected ? { backgroundColor: DIFFICULTIES[difficulty].color, color: '#fff' } : {}),
+                    ...(selected
+                      ? {
+                          backgroundColor: DIFFICULTIES[difficulty].color,
+                          color: '#fff',
+                        }
+                      : {}),
                   }}
                 />
               )
@@ -107,7 +116,10 @@ export const RandomChartPage: FC = () => {
 
         <div className="flex flex-col gap-1">
           <span id="random-level-label" className="text-sm font-semibold">
-            {t('random:filters.level', { min: filters.minLevel, max: filters.maxLevel })}
+            {t('random:filters.level', {
+              min: filters.minLevel,
+              max: filters.maxLevel,
+            })}
           </span>
           <Slider
             className="mx-2 w-auto"
@@ -159,29 +171,37 @@ export const RandomChartPage: FC = () => {
         </div>
       </MaterialSurface>
 
-      {result === null && <MaterialSurface className="p-4 text-sm">{t('random:no-result')}</MaterialSurface>}
-      {result && (
-        <MaterialSurface className="p-4" aria-live="polite">
-          <Link to={buildSheetPath(result)} className="flex flex-col gap-1 text-inherit no-underline hover:opacity-80">
-            <span className="text-lg font-bold">{result.title}</span>
-            <span className="text-sm opacity-70">{result.artist}</span>
-            <span className="flex flex-wrap items-center gap-2 text-sm">
-              <span>{getSheetTypeDisplayName(result.type, locale)}</span>
-              <span
-                className="font-semibold"
-                style={{ color: DIFFICULTIES[result.difficulty as DifficultyEnum]?.color }}
-              >
-                {DIFFICULTIES[result.difficulty as DifficultyEnum]?.title ?? result.difficulty}
+      {/* The live region stays mounted so each new roll is announced */}
+      <div aria-live="polite" className="flex flex-col">
+        {result === null && <MaterialSurface className="p-4 text-sm">{t('random:no-result')}</MaterialSurface>}
+        {result && (
+          <MaterialSurface className="p-4">
+            <Link
+              to={buildSheetPath(result)}
+              className="flex flex-col gap-1 text-inherit no-underline hover:opacity-80"
+            >
+              <span className="text-lg font-bold">{result.title}</span>
+              <span className="text-sm opacity-70">{result.artist}</span>
+              <span className="flex flex-wrap items-center gap-2 text-sm">
+                <span>{getSheetTypeDisplayName(result.type, locale)}</span>
+                <span
+                  className="font-semibold"
+                  style={{
+                    color: DIFFICULTIES[result.difficulty as DifficultyEnum]?.color,
+                  }}
+                >
+                  {DIFFICULTIES[result.difficulty as DifficultyEnum]?.title ?? result.difficulty}
+                </span>
+                <span className="tabular-nums">
+                  {result.level} ({result.internalLevelValue.toFixed(1)})
+                </span>
+                <span className="opacity-70">{result.version}</span>
               </span>
-              <span className="tabular-nums">
-                {result.level} ({result.internalLevelValue.toFixed(1)})
-              </span>
-              <span className="opacity-70">{result.version}</span>
-            </span>
-            <span className="text-sm text-blue-600 dark:text-blue-400">{t('random:open-chart')}</span>
-          </Link>
-        </MaterialSurface>
-      )}
+              <span className="text-sm text-blue-600 dark:text-blue-400">{t('random:open-chart')}</span>
+            </Link>
+          </MaterialSurface>
+        )}
+      </div>
     </div>
   )
 }
