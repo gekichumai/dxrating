@@ -640,3 +640,26 @@ export function buildVersionPageSeo(
 
   return { ...seo, structuredData }
 }
+/** SEO for the public calculator pages under /tools (tools:<tool>.seo-title / seo-description) */
+export function buildToolPageSeo(locale: SupportedLocale, tool: 'tolerance' | 'rating') {
+  const seo = buildCollectionSeo(
+    locale,
+    `/tools/${tool}`,
+    t(locale, `tools:${tool}.seo-title`),
+    t(locale, `tools:${tool}.seo-description`),
+  )
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    '@id': `${seo.url}#webapp`,
+    url: seo.url,
+    name: t(locale, `tools:${tool}.title`),
+    description: seo.description,
+    applicationCategory: 'UtilityApplication',
+    operatingSystem: 'Any',
+    inLanguage: locale,
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  }
+  return { ...seo, structuredData }
+}

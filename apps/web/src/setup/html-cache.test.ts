@@ -79,4 +79,9 @@ describe('stored HTML round trip', () => {
     expect(body).not.toContain('OLD+nonce==')
     expect(body).toBe('<meta property="csp-nonce" content="NEW/nonce=="/><script nonce="NEW/nonce==">x</script>')
   })
+
+  it('caches the public tool pages', () => {
+    expect(getHtmlCacheKey(request('/tools/rating'), 'abc')).not.toBeNull()
+    expect(getHtmlCacheKey(request('/tools/tolerance?sheet=dsht_abc'), 'abc')).not.toBeNull()
+  })
 })
