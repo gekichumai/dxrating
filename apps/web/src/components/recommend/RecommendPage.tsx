@@ -43,7 +43,10 @@ export const RecommendPage: FC = () => {
         comboFlag: entry.comboFlag,
         syncFlag: entry.syncFlag,
       })
-      recordMap.set(entry.sheetId, { achievementRate: entry.achievementRate, comboFlag: entry.comboFlag })
+      recordMap.set(entry.sheetId, {
+        achievementRate: entry.achievementRate,
+        comboFlag: entry.comboFlag,
+      })
     }
     const best50 = calculateBest50({ catalog, version, region, entries })
     const suggestions = recommendRatingRaises({
@@ -54,13 +57,14 @@ export const RecommendPage: FC = () => {
       region,
       limit: Number.POSITIVE_INFINITY,
     })
-    const floorOf = (list: typeof best50.b15) =>
-      list.length === 0 ? 0 : Math.min(...list.map((item) => item.rating.ratingAwardValue))
+    // Same rule as recommendRatingRaises: a bucket that is not full yet has a floor of 0
+    const floorOf = (list: typeof best50.b15, size: number) =>
+      list.length < size ? 0 : Math.min(...list.map((item) => item.rating.ratingAwardValue))
     return {
       b15: suggestions.filter((item) => item.bucket === 'b15').slice(0, PER_BUCKET),
       b35: suggestions.filter((item) => item.bucket === 'b35').slice(0, PER_BUCKET),
-      b15Floor: floorOf(best50.b15),
-      b35Floor: floorOf(best50.b35),
+      b15Floor: floorOf(best50.b15, 15),
+      b35Floor: floorOf(best50.b35, 35),
       total: best50.statistics.b50Sum,
       hasRecords: entries.length > 0,
     }
@@ -117,7 +121,10 @@ const Stat: FC<{ label: string; value: number }> = ({ label, value }) => (
   </div>
 )
 
-const RecommendSection: FC<{ title: string; items: RatingRecommendation[] }> = ({ title, items }) => {
+const RecommendSection: FC<{
+  title: string
+  items: RatingRecommendation[]
+}> = ({ title, items }) => {
   const { t, i18n } = useTranslation(['recommend'])
   const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
   return (
