@@ -734,5 +734,27 @@
     "features.trending.description": "いま注目の譜面",
     "features.versions.title": "バージョン",
     "features.versions.description": "バージョン別の収録曲"
+  },
+  "completion": {
+    "title": "自分の達成状況",
+    "target": "目標",
+    "rate": "Lv.{{level}} {{target}} 達成率：{{percent}}%",
+    "summary-line": "達成 {{done}}・未達成 {{pending}}・未プレイ {{unplayed}}（全{{total}}譜面中 {{percent}}%）",
+    "filter": "表示する譜面",
+    "filter-all": "すべて {{count}}",
+    "status.done": "達成 {{count}}",
+    "status.pending": "未達成 {{count}}",
+    "status.unplayed": "未プレイ {{count}}",
+    "col-mine": "自分",
+    "empty": "スコアを取り込むと、どの譜面をクリアしたか表示されます。",
+    "empty-link": "レーティング計算機を開く",
+    "demo": "デモ用のスコアを表示しています。",
+    "progress-link": "全レベルの達成状況",
+    "share-title": "Lv.{{level}} {{target}} 達成表",
+    "progress.title": "達成状況まとめ",
+    "progress.intro": "レベルごと・ランクごとにクリアした譜面数をまとめています。数字を選ぶと、その目標で定数表を開きます。",
+    "progress.level": "レベル",
+    "progress.played": "プレイ済み",
+    "progress.cell-label": "Lv.{{level}} {{target}}：{{total}}譜面中 {{count}}"
   }
 }
