@@ -3,6 +3,7 @@ import { ClientOnly, createFileRoute } from '@tanstack/react-router'
 import { isToplistKind, isToplistSort, type ToplistSort } from '@/components/toplists/toplistData'
 import type { ToplistKind } from '@/lib/analytics'
 import { ToplistsPage } from '@/pages/ToplistsPage'
+import { buildToplistsSeo, resolveSeoLocale } from '@/utils/seo'
 
 export interface ToplistSearch {
   tab?: ToplistKind
@@ -20,9 +21,7 @@ export const validateToplistSearch = (search: Record<string, unknown>): ToplistS
 export const Route = createFileRoute('/me/records')({
   ssr: true,
   validateSearch: validateToplistSearch,
-  head: () => ({
-    meta: [{ title: 'Top records · DXRating' }, { name: 'robots', content: 'noindex' }],
-  }),
+  head: ({ match, matches }) => buildToplistsSeo(resolveSeoLocale([match, ...matches])),
   component: RecordsRouteComponent,
 })
 

@@ -640,3 +640,10 @@ export function buildVersionPageSeo(
 
   return { ...seo, structuredData }
 }
+
+/** Per-user top lists (`/me/records`): titled but never indexed */
+export function buildToplistsSeo(locale: SupportedLocale) {
+  return {
+    meta: [{ title: formatSeoTitle(t(locale, 'toplists:title')) }, { name: 'robots', content: 'noindex' }],
+  }
+}
