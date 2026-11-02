@@ -23,6 +23,7 @@ const CACHEABLE_PATHS = new Set([
   '/charts/recent',
   '/constants',
   '/versions',
+  '/rating',
   '/developers',
   '/privacy-policy',
   '/terms-of-service',

@@ -203,16 +203,47 @@ export function buildTrendingChartsSeo(locale: SupportedLocale) {
 export function buildRatingSeo(locale: SupportedLocale) {
   const title = formatSeoTitle(t(locale, 'root:pages.rating.seo-title'))
   const description = t(locale, 'root:pages.rating.seo-description')
+  const url = 'https://dxrating.net/rating'
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        '@id': `${url}#app`,
+        name: t(locale, 'root:pages.rating.seo-title'),
+        description,
+        url,
+        applicationCategory: 'GameApplication',
+        operatingSystem: 'Any',
+        inLanguage: locale,
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        isPartOf: { '@id': 'https://dxrating.net/#website' },
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${url}#faq`,
+        inLanguage: locale,
+        // Mirrors the visible FAQ in RatingExplainer
+        mainEntity: ['1', '2', '3', '4'].map((key) => ({
+          '@type': 'Question',
+          name: t(locale, `rating-explainer:faq.q${key}`),
+          acceptedAnswer: { '@type': 'Answer', text: t(locale, `rating-explainer:faq.a${key}`) },
+        })),
+      },
+    ],
+  }
 
   return {
     title,
     description,
+    structuredData,
     meta: [
       { title },
       { name: 'description', content: description },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
-      { property: 'og:url', content: 'https://dxrating.net/rating' },
+      { property: 'og:url', content: url },
       { property: 'og:type', content: 'website' },
       { property: 'og:locale', content: OG_LOCALES[locale] },
       { name: 'twitter:card', content: 'summary' },

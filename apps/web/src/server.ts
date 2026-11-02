@@ -13,6 +13,7 @@ import {
   toStoredHtmlResponse,
 } from './setup/html-cache'
 import { appendVaryHeader, detectServerLocale } from './setup/locale'
+import { trailingSlashRedirect } from './setup/trailing-slash'
 import { finishServerTimingSpan, setServerTimingHeader, startServerTimingSpan } from './setup/server-timing'
 
 type WorkerExecutionContext = { waitUntil(promise: Promise<unknown>): void }
@@ -69,7 +70,7 @@ async function handleWithHtmlCache(request: Request, env: unknown, ctx: WorkerEx
 const requestHandler: ServerEntry = wrapFetchWithSentry({
   fetch(request, ...rest: unknown[]) {
     const [env, ctx] = rest as [unknown, WorkerExecutionContext | undefined]
-    return handleWithHtmlCache(request, env, ctx)
+    return trailingSlashRedirect(request) ?? handleWithHtmlCache(request, env, ctx)
   },
 })
 
