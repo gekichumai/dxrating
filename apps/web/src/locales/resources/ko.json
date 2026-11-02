@@ -649,5 +649,16 @@
     "index.intro": "버전을 선택하면 추가된 모든 곡과 채보를 볼 수 있습니다.",
     "index.count": "{{songs}}곡 · 채보 {{charts}}개",
     "chart-link": "{{version}} 신곡 목록"
-  }
+  },
+  "share": {
+    "image.button": "이미지로 공유",
+    "image.downloaded": "이미지를 저장했습니다",
+    "image.failed": "이미지를 만들 수 없습니다"
+  },
+  "plates": {},
+  "toplists": {},
+  "tools": {},
+  "recommend": {},
+  "random": {},
+  "home": {}
 }

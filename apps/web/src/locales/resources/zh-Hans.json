@@ -649,5 +649,16 @@
     "index.intro": "选择版本，查看该版本新增的全部曲目与谱面。",
     "index.count": "{{songs}} 首・{{charts}} 张谱面",
     "chart-link": "{{version}} 新曲一览"
-  }
+  },
+  "share": {
+    "image.button": "分享图片",
+    "image.downloaded": "图片已保存",
+    "image.failed": "无法生成图片"
+  },
+  "plates": {},
+  "toplists": {},
+  "tools": {},
+  "recommend": {},
+  "random": {},
+  "home": {}
 }

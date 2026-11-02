@@ -649,5 +649,16 @@
     "index.intro": "バージョンを選ぶと、追加された楽曲と譜面をすべて確認できます。",
     "index.count": "{{songs}} 曲・{{charts}} 譜面",
     "chart-link": "{{version}} の新曲一覧"
-  }
+  },
+  "share": {
+    "image.button": "画像で共有",
+    "image.downloaded": "画像を保存しました",
+    "image.failed": "画像を作成できませんでした"
+  },
+  "plates": {},
+  "toplists": {},
+  "tools": {},
+  "recommend": {},
+  "random": {},
+  "home": {}
 }

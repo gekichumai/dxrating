@@ -63,6 +63,11 @@ export default defineConfig({
   shortcuts: {
     'flex-container':
       'flex flex-col items-center justify-center py-4 gap-4 max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
+    // Translucent material (like the tab bar): never a flat solid fill
+    'material-surface':
+      'rounded-xl border border-solid border-black/8 bg-white/55 shadow-sm backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-zinc-900/45',
+    'material-surface-thin':
+      'rounded-xl border border-solid border-black/6 bg-white/35 backdrop-blur-md backdrop-saturate-150 dark:border-white/8 dark:bg-zinc-900/30',
     'chunks-horizontal-2': 'flex flex-col md:flex-row items-center justify-center gap-2 w-full',
   },
   presets: [
