@@ -8,28 +8,27 @@ describe('DevelopersPage', () => {
     initI18n()
   })
 
-  it('renders authoritative API and agent discovery resources', () => {
+  it('offers the MCP server and the REST API, each with one primary action', () => {
     render(<DevelopersPage />)
 
-    expect(screen.getByRole('heading', { level: 1, name: 'DXRating API and agent resources' })).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'https://miruku.dxrating.net/api/v1' }).getAttribute('href')).toBe(
-      'https://miruku.dxrating.net/api/v1',
-    )
-    expect(screen.getByRole('link', { name: 'https://miruku.dxrating.net/spec.json' }).getAttribute('href')).toBe(
+    expect(screen.getByRole('heading', { level: 1, name: 'Build with DXRating' })).toBeTruthy()
+    expect(screen.getByText('https://mcp.dxrating.net/mcp')).toBeTruthy()
+    expect(screen.getByText('https://miruku.dxrating.net/api/v1')).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Set up MCP' }).getAttribute('href')).toContain('https://mcp.dxrating.net/')
+    expect(screen.getByRole('link', { name: 'API docs' }).getAttribute('href')).toBe('https://miruku.dxrating.net/docs')
+    expect(screen.getByRole('link', { name: 'OpenAPI' }).getAttribute('href')).toBe(
       'https://miruku.dxrating.net/spec.json',
     )
-    expect(screen.getByRole('link', { name: 'https://dxrating.net/.well-known/api-catalog' })).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'https://dxrating.net/llms.txt' })).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'https://mcp.dxrating.net/mcp' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'dxdata' }).getAttribute('href')).toBe(
+      'https://miruku.dxrating.net/api/v1/dxdata',
+    )
   })
 
-  it('states the dxdata license and how to credit it', () => {
+  it('states data terms and how to credit DXRating', () => {
     render(<DevelopersPage />)
 
-    expect(screen.getByRole('heading', { level: 2, name: 'Data license' })).toBeTruthy()
-    expect(screen.getByText('Data from DXRating (dxrating.net), CC BY-NC 4.0')).toBeTruthy()
-    expect(
-      screen.getByRole('link', { name: 'https://creativecommons.org/licenses/by-nc/4.0/' }).getAttribute('href'),
-    ).toBe('https://creativecommons.org/licenses/by-nc/4.0/')
+    expect(screen.getByRole('heading', { level: 2, name: 'Terms' })).toBeTruthy()
+    expect(screen.getByText('Data from DXRating (dxrating.net)')).toBeTruthy()
+    expect(screen.queryByText(/CC BY-NC/)).toBeNull()
   })
 })
