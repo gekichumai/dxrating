@@ -11,11 +11,16 @@ import { buildConstantTableSeo, resolveSeoLocale } from '@/utils/seo'
 
 export const Route = createFileRoute('/constants/$level')({
   ssr: true,
-  loader: async ({ params }) => {
+  loader: async ({ params, location }) => {
     const level = parseConstantTableSlug(params.level)
     if (!level) throw notFound()
     if (params.level !== constantTableSlug(level)) {
-      throw redirect({ to: '/constants/$level', params: { level: constantTableSlug(level) }, statusCode: 308 })
+      throw redirect({
+        to: '/constants/$level',
+        params: { level: constantTableSlug(level) },
+        search: location.search,
+        statusCode: 308,
+      })
     }
 
     return { table: buildConstantTable(await getCatalogDocument(), level) }

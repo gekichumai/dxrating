@@ -591,8 +591,8 @@
   },
   "constants": {
     "title": "maimai DX Lv.{{level}} Internal Level Table",
-    "seo-title": "maimai DX Lv.{{level}} Internal Level (Constant) Table {{min}}–{{max}}",
-    "seo-description": "All {{count}} maimai DX charts at level {{level}}, sorted by internal level ({{min}}–{{max}}), with SSS+ / SSS rating, notes and version. Updated from the DXRating catalog.",
+    "seo-title": "maimai DX Lv.{{level}} Constant Table ({{min}}–{{max}})",
+    "seo-description": "All {{count}} maimai DX Lv.{{level}} charts by internal level ({{min}}–{{max}}), with SSS+ / SSS rating, notes and version.",
     "intro": "{{count}} DX and Standard charts at level {{level}}, from internal level {{max}} down to {{min}}. The rating columns show the single-chart rating at 100.5% (SSS+) and 100.0% (SSS).",
     "group": "Internal level {{constant}}",
     "group-count": "{{count}} charts",
