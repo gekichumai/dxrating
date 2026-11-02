@@ -28,6 +28,8 @@ const CACHEABLE_PATHS = new Set([
   '/privacy-policy',
   '/terms-of-service',
   '/plates',
+  '/tools/tolerance',
+  '/tools/rating',
 ])
 const CACHEABLE_PATH_PREFIXES = ['/songs/', '/constants/', '/versions/', '/plates/']
 

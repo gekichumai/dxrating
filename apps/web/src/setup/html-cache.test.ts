@@ -87,4 +87,9 @@ describe('getHtmlCacheKey plates', () => {
       'https://dxrating.net/__html-cache/abc/en/plates/kagami-shin?region=cn',
     )
   })
+
+  it('caches the public tool pages', () => {
+    expect(getHtmlCacheKey(request('/tools/rating'), 'abc')).not.toBeNull()
+    expect(getHtmlCacheKey(request('/tools/tolerance?sheet=dsht_abc'), 'abc')).not.toBeNull()
+  })
 })
