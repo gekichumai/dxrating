@@ -47,6 +47,10 @@ vi.mock('@/components/tools/ToleranceCalculator', () => ({
   ToleranceCalculator: () => <section data-testid="tolerance-calculator" />,
 }))
 
+vi.mock('@/components/song/hub/SongChartsTable', () => ({
+  SongChartsTable: () => <section aria-label="All charts" />,
+}))
+
 describe('SongPage', () => {
   beforeAll(() => {
     initI18n()

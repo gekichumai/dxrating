@@ -178,7 +178,16 @@
     "seo.fact.designer": "譜面作者 {{value}}",
     "seo.fact.version": "{{value}} 追加",
     "seo.fact-separator": "・",
-    "seo.description-basic": "{{title}} / {{artist}} - {{sheetLabel}} の譜面詳細、譜面定数、ノーツ数 - DXRating。"
+    "seo.description-basic": "{{title}} / {{artist}} - {{sheetLabel}} の譜面詳細、譜面定数、ノーツ数 - DXRating。",
+    "hub.title": "全譜面",
+    "hub.column.chart": "譜面",
+    "hub.column.level": "レベル",
+    "hub.column.constant": "定数",
+    "hub.column.notes": "ノーツ数",
+    "hub.column.designer": "譜面作者",
+    "hub.column.my-score": "自分のスコア",
+    "hub.notes-breakdown": "TAP {{tap}} / HOLD {{hold}} / SLIDE {{slide}} / TOUCH {{touch}} / BREAK {{break}}",
+    "hub.raise-hint": "{{target}}%でレート+{{gain}}"
   },
   "about": {
     "title": "当サイトについて",

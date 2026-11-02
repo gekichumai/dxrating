@@ -19,6 +19,7 @@ import { buildSheetPath } from '../components/sheet/sheetLinks'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { getVisibleSongPageSheets } from './songPageSheets'
 import { ToleranceCalculator } from '@/components/tools/ToleranceCalculator'
+import { SongChartsTable } from '../components/song/hub/SongChartsTable'
 
 const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 
@@ -132,6 +133,8 @@ export const SongPage: FC = () => {
           })
         }
       />
+
+      <SongChartsTable songId={song.id} sheets={flattenedSheets} activeSheetId={activeSheet?.id} />
 
       {visibleSheets.map((sheet) => (
         <div key={sheet.id}>
