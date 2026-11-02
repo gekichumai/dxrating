@@ -97,7 +97,7 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
       </div>
 
       <span className="sr-only">{t('completion:summary-line', { ...summary, percent })}</span>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('completion:filter')}>
         {FILTERS.map((filter) => (
           <Chip
             key={filter}
