@@ -768,8 +768,39 @@
     "rating.table.title": "Rating 對照表",
     "rating.table.description": "所選定數及相鄰定數在各評級下的 Rating。"
   },
-  "recommend": {},
-  "random": {},
+  "recommend": {
+    "title": "上分推薦",
+    "description": "達到下一個達成率門檻後，最能提升 Best 50 Rating 的譜面。",
+    "demo": "正在顯示示範成績",
+    "empty": "尚無成績。請在 Rating 計算器中新增或匯入成績。",
+    "go-to-rating": "開啟 Rating 計算器",
+    "stats": {
+      "total": "Rating",
+      "b15-floor": "新曲 (B15) 門檻",
+      "b35-floor": "舊曲 (B35) 門檻"
+    },
+    "new": "新曲 (B15)",
+    "old": "舊曲 (B35)",
+    "none": "目前沒有可提升的譜面。",
+    "unplayed": "未遊玩",
+    "gain": "Rating +{{gain}}"
+  },
+  "random": {
+    "title": "隨機選曲",
+    "description": "依類型、難度、等級與版本篩選，隨機挑選一張譜面。",
+    "filters": {
+      "type": "類型",
+      "difficulty": "難度",
+      "level": "等級 {{min}} 至 {{max}}",
+      "version": "版本",
+      "all-versions": "所有版本"
+    },
+    "roll": "抽一首",
+    "pool-size_one": "符合 {{count}} 張譜面",
+    "pool-size_other": "符合 {{count}} 張譜面",
+    "no-result": "沒有符合條件的譜面。",
+    "open-chart": "查看譜面"
+  },
   "home": {
     "tab-label": "首頁",
     "stats.title": "我的成績",
