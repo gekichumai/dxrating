@@ -1,5 +1,6 @@
 import { ClientOnly, createFileRoute } from '@tanstack/react-router'
 import { CircularProgress } from '@mui/material'
+import { RatingViewContext, type RatingView } from '@/components/rating/useRatingEntries'
 import { RatingExplainer } from '@/components/rating/RatingExplainer'
 import { RatingCalculator } from '@/pages/RatingCalculator'
 import { buildRatingSeo, resolveSeoLocale } from '@/utils/seo'
@@ -7,6 +8,8 @@ import { buildRatingSeo, resolveSeoLocale } from '@/utils/seo'
 export const Route = createFileRoute('/rating')({
   // The calculator reads the visitor's saved scores, so only it waits for the browser; the explainer is SSR'd
   ssr: true,
+  validateSearch: (search: Record<string, unknown>): { view?: RatingView } =>
+    search.view === 'ap50' ? { view: 'ap50' } : {},
   head: ({ match, matches }) => {
     const seo = buildRatingSeo(resolveSeoLocale([match, ...matches]))
 
@@ -19,6 +22,7 @@ export const Route = createFileRoute('/rating')({
 })
 
 function RatingRouteComponent() {
+  const { view = 'b50' } = Route.useSearch()
   return (
     <>
       <ClientOnly
@@ -28,7 +32,9 @@ function RatingRouteComponent() {
           </div>
         }
       >
-        <RatingCalculator />
+        <RatingViewContext.Provider value={view}>
+          <RatingCalculator />
+        </RatingViewContext.Provider>
       </ClientOnly>
       <RatingExplainer />
     </>

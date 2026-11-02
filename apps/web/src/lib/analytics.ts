@@ -80,7 +80,7 @@ type AnalyticsEventProperties = {
     sheet_id: string
   }
   rating_calculator_view_changed: {
-    setting: 'compact_mode' | 'show_only_b50'
+    setting: 'compact_mode' | 'show_only_b50' | 'ap50'
     enabled: boolean
   }
   rating_exported: {
