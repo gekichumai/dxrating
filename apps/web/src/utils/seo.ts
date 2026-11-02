@@ -556,3 +556,56 @@ export function buildConstantTableSeo(
 
   return { ...seo, structuredData }
 }
+export function buildVersionIndexSeo(locale: SupportedLocale) {
+  return buildCollectionSeo(
+    locale,
+    '/versions',
+    t(locale, 'versions:index.seo-title'),
+    t(locale, 'versions:index.seo-description'),
+  )
+}
+
+export function buildVersionPageSeo(
+  locale: SupportedLocale,
+  page: { version: string; path: string; songs: number; charts: number },
+) {
+  const values = { version: page.version, songs: page.songs, charts: page.charts }
+  const seo = buildCollectionSeo(
+    locale,
+    page.path,
+    t(locale, 'versions:seo-title', values),
+    t(locale, 'versions:seo-description', values),
+  )
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        '@id': `${seo.url}#webpage`,
+        url: seo.url,
+        name: t(locale, 'versions:title', values),
+        description: seo.description,
+        inLanguage: locale,
+        isPartOf: { '@id': 'https://dxrating.net/#website' },
+        breadcrumb: { '@id': `${seo.url}#breadcrumb` },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${seo.url}#breadcrumb`,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'DXRating', item: 'https://dxrating.net/' },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: t(locale, 'versions:breadcrumb'),
+            item: 'https://dxrating.net/versions',
+          },
+          { '@type': 'ListItem', position: 3, name: page.version, item: seo.url },
+        ],
+      },
+    ],
+  }
+
+  return { ...seo, structuredData }
+}

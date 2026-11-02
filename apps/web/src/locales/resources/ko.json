@@ -609,5 +609,22 @@
     "index.level-count": "채보 {{count}}개 · {{min}}–{{max}}",
     "breadcrumb": "상수표",
     "chart-link": "Lv.{{level}} 상수표"
+  },
+  "versions": {
+    "title": "maimai DX {{version}} 신곡·추가 채보",
+    "seo-title": "maimai DX {{version}} 신곡 목록 (상수 포함)",
+    "seo-description": "maimai DX {{version}}에 추가된 {{songs}}곡, {{charts}}개 채보를 배포일 순으로 정리. EXPERT / MASTER / Re:MASTER 레벨과 상수 포함.",
+    "intro": "{{version}}에는 {{songs}}곡, DX·스탠다드 채보 {{charts}}개가 추가되었습니다. 각 행에 EXPERT, MASTER, Re:MASTER 레벨과 상수를 표시합니다.",
+    "date-unknown": "배포일 미상",
+    "new-chart-only": "채보 추가",
+    "col.song": "곡",
+    "other-versions": "다른 버전",
+    "breadcrumb": "버전",
+    "index.title": "maimai DX 버전별 신곡",
+    "index.seo-title": "maimai DX 버전별 신곡 목록",
+    "index.seo-description": "maimai DX 모든 버전의 신곡과 추가 채보를 상수와 함께 정리.",
+    "index.intro": "버전을 선택하면 추가된 모든 곡과 채보를 볼 수 있습니다.",
+    "index.count": "{{songs}}곡 · 채보 {{charts}}개",
+    "chart-link": "{{version}} 신곡 목록"
   }
 }

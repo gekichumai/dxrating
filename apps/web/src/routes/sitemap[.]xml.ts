@@ -3,6 +3,7 @@ import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { getCatalogDocument } from '@/catalog/catalogSource'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import { CONSTANT_TABLE_LEVELS, constantTablePath } from '@/components/chartDiscovery/constantTables'
+import { VERSION_PAGE_VERSIONS, versionPagePath } from '@/components/chartDiscovery/versionPages'
 import { buildLocalizedUrl } from '@/utils/alternateLinks'
 import { SUPPORTED_LOCALES } from '@/setup/locale'
 
@@ -39,7 +40,12 @@ const alternatesXml = (path: string) =>
 
 const lastmodXml = (releaseDate?: string) => (releaseDate ? `\n    <lastmod>${escapeXml(releaseDate)}</lastmod>` : '')
 
-const constantTableEntries = ['/constants', ...CONSTANT_TABLE_LEVELS.map(constantTablePath)]
+const constantTableEntries = [
+  '/constants',
+  ...CONSTANT_TABLE_LEVELS.map(constantTablePath),
+  '/versions',
+  ...VERSION_PAGE_VERSIONS.map(versionPagePath),
+]
   .map(
     (path) => `
   <url>
