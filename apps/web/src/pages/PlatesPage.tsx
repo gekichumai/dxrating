@@ -34,15 +34,39 @@ const useLocale = (): SupportedLocale => {
 const regionHref = (path: string, region: PlateRegion) =>
   region === DEFAULT_PLATE_REGION ? path : `${path}?region=${region}`
 
-/** Records keyed by sheet ID, in the shape the plate rules read */
+const COMBO_RANK: Record<NonNullable<PlateRecord['comboFlag']>, number> = { fc: 1, fcp: 2, ap: 3, app: 4 }
+const SYNC_RANK: Record<NonNullable<PlateRecord['syncFlag']>, number> = { sync: 1, fs: 2, fsp: 3, fsd: 4, fsdp: 5 }
+const rankOf = <K extends string>(ranks: Record<K, number>, flag: K | null | undefined) => (flag ? ranks[flag] : 0)
+
+/**
+ * Records keyed by sheet ID, in the shape the plate rules read. Duplicate entries of a sheet are merged field by
+ * field (best achievement, best combo, best sync): an AP with a lower score still counts for 神.
+ * Empty until mounted, so the first client render matches the user-agnostic server (and edge-cached) HTML.
+ */
 const usePlateRecords = () => {
-  const { bySheetId, entries, isDemo } = useUserRecords()
+  const { entries, isDemo } = useUserRecords()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const records = useMemo(() => {
     const map = new Map<string, PlateRecord>()
-    for (const [sheetId, record] of bySheetId) map.set(sheetId, record.entry)
+    if (!mounted) return map
+    for (const entry of entries) {
+      const existing = map.get(entry.sheetId)
+      map.set(entry.sheetId, {
+        achievementRate: Math.max(existing?.achievementRate ?? 0, entry.achievementRate),
+        comboFlag:
+          rankOf(COMBO_RANK, entry.comboFlag) > rankOf(COMBO_RANK, existing?.comboFlag)
+            ? entry.comboFlag
+            : (existing?.comboFlag ?? null),
+        syncFlag:
+          rankOf(SYNC_RANK, entry.syncFlag) > rankOf(SYNC_RANK, existing?.syncFlag)
+            ? entry.syncFlag
+            : (existing?.syncFlag ?? null),
+      })
+    }
     return map
-  }, [bySheetId])
-  return { records, hasRecords: entries.length > 0, isDemo }
+  }, [entries, mounted])
+  return { records, ready: mounted, hasRecords: mounted && entries.length > 0, isDemo: mounted && isDemo }
 }
 
 const Breadcrumb: FC<{ leaf?: string }> = ({ leaf }) => {
@@ -217,7 +241,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
   const versions =
     data.versions.length > 2 ? `${data.versions[0]} – ${data.versions.at(-1)}` : data.versions.join(' / ')
   const values = { plate: name, charts: data.charts.length, sheets: data.totalSheets, versions }
-  const { records, hasRecords, isDemo } = usePlateRecords()
+  const { records, ready, hasRecords, isDemo } = usePlateRecords()
   const progress = useMemo(() => evaluatePlatePage(data, records), [data, records])
 
   const [remainingOnly, setRemainingOnly] = useState(false)
@@ -226,7 +250,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
   // Fire once per plate after mount, when the client overlay is known
   const viewedPlate = useRef<string | null>(null)
   useEffect(() => {
-    if (viewedPlate.current === data.plateId) return
+    if (!ready || viewedPlate.current === data.plateId) return
     viewedPlate.current = data.plateId
     captureAnalyticsEvent('plate_viewed', {
       plate_id: data.plateId,
@@ -234,7 +258,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
       completed_charts: progress.completedCharts,
       total_charts: progress.totalCharts,
     })
-  }, [data.plateId, data.region, progress])
+  }, [ready, data.plateId, data.region, progress])
 
   const visible = useMemo(() => {
     const byChart = new Map(progress.charts.map((status) => [status.chart, status]))
@@ -429,6 +453,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                               }
                             >
                               {sheet.level}
+                              {met && <span className="sr-only"> {t('plates:done')}</span>}
                             </span>
                           )
                         })}
