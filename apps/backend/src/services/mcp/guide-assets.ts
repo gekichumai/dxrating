@@ -138,9 +138,11 @@ h2 a::after{content:"#";margin-left:.3em;color:var(--mut);opacity:0}
 .app-p:focus-visible{outline-offset:10px;outline-color:color-mix(in srgb,var(--acc) 60%,transparent)}
 .app-p h3{margin:0 0 16px;font-size:20px;line-height:1.3;font-weight:600}
 .app-p h3 .q{display:block;margin-top:2px;font-size:14px;font-weight:400;color:var(--mut)}
-/* with the tabs, the selected one names the app: its heading keeps the qualifier only */
+/* with the tabs, the selected one names the app: its heading keeps the qualifier only (printed, every panel shows, with its name) */
+@media screen{
 .js .app-p h3 .nm,.js .app-p h3:not(:has(.q)){position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .js .app-p h3 .q{margin:0}
+}
 .app-p h4{margin:24px 0 10px;font-size:16px;line-height:1.3;font-weight:600}
 .app-p h3+h4{margin-top:0}
 .app-p>p{margin:0 0 14px;max-width:72ch;color:var(--ink2)}
