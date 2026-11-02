@@ -21,11 +21,12 @@ const CACHEABLE_PATHS = new Set([
   '/',
   '/search',
   '/charts/recent',
+  '/constants',
   '/developers',
   '/privacy-policy',
   '/terms-of-service',
 ])
-const CACHEABLE_PATH_PREFIXES = ['/songs/']
+const CACHEABLE_PATH_PREFIXES = ['/songs/', '/constants/']
 
 const isCacheablePath = (pathname: string) =>
   CACHEABLE_PATHS.has(pathname) || CACHEABLE_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))

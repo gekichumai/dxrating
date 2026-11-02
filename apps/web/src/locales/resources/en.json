@@ -597,5 +597,29 @@
     "io.clear.dialog.message": "This permanently removes all records from this browser. Export them first if you want a backup.",
     "io.clear.dialog.cancel": "Cancel",
     "io.clear.dialog.confirm": "Clear all records"
+  },
+  "constants": {
+    "title": "maimai DX Lv.{{level}} Internal Level Table",
+    "seo-title": "maimai DX Lv.{{level}} Constant Table ({{min}}–{{max}})",
+    "seo-description": "All {{count}} maimai DX Lv.{{level}} charts by internal level ({{min}}–{{max}}), with SSS+ / SSS rating, notes and version.",
+    "intro": "{{count}} DX and Standard charts at level {{level}}, from internal level {{max}} down to {{min}}. The rating columns show the single-chart rating at 100.5% (SSS+) and 100.0% (SSS).",
+    "group": "Internal level {{constant}}",
+    "group-count": "{{count}} charts",
+    "col.song": "Song",
+    "col.chart": "Chart",
+    "col.version": "Version",
+    "col.notes": "Notes",
+    "col.sssp": "SSS+",
+    "col.sss": "SSS",
+    "col.regions": "Servers",
+    "other-levels": "Other levels",
+    "index.title": "maimai DX Internal Level Tables",
+    "index.seo-title": "maimai DX Internal Level (Constant) Tables by Level",
+    "index.seo-description": "maimai DX internal level (chart constant) tables for every level from 10 to 15, with single-chart ratings at SSS+ and SSS.",
+    "index.intro": "Pick a level to see every chart sorted by internal level.",
+    "index.level": "Lv.{{level}}",
+    "index.level-count": "{{count}} charts · {{min}}–{{max}}",
+    "breadcrumb": "Internal level tables",
+    "chart-link": "Lv.{{level}} internal level table"
   }
 }

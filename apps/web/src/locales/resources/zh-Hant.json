@@ -597,5 +597,29 @@
     "io.clear.dialog.message": "這將從此瀏覽器永久刪除所有記錄。如需備份，請先匯出。",
     "io.clear.dialog.cancel": "取消",
     "io.clear.dialog.confirm": "清空所有記錄"
+  },
+  "constants": {
+    "title": "maimai DX Lv.{{level}} 譜面定數表",
+    "seo-title": "maimai DX Lv.{{level}} 譜面定數表（{{min}}–{{max}}）",
+    "seo-description": "maimai DX Lv.{{level}} 全部 {{count}} 張譜面依定數排序（{{min}}–{{max}}），附 SSS+／SSS 單曲 Rating、音符數與收錄版本，依 DXRating 資料自動更新。",
+    "intro": "Lv.{{level}} 的 DX 與標準譜面共 {{count}} 張，依定數 {{max}} 至 {{min}} 排序。Rating 欄為達成率 100.5%（SSS+）與 100.0%（SSS）的單曲 Rating。",
+    "group": "定數 {{constant}}",
+    "group-count": "{{count}} 張譜面",
+    "col.song": "曲目",
+    "col.chart": "譜面",
+    "col.version": "版本",
+    "col.notes": "音符數",
+    "col.sssp": "SSS+",
+    "col.sss": "SSS",
+    "col.regions": "收錄",
+    "other-levels": "其他等級",
+    "index.title": "maimai DX 譜面定數表",
+    "index.seo-title": "maimai DX 譜面定數表（依等級）",
+    "index.seo-description": "maimai DX Lv.10–15 各等級的譜面定數表，附 SSS+／SSS 單曲 Rating。",
+    "index.intro": "選擇等級，查看該等級所有譜面的定數排序。",
+    "index.level": "Lv.{{level}}",
+    "index.level-count": "{{count}} 張譜面・{{min}}–{{max}}",
+    "breadcrumb": "譜面定數表",
+    "chart-link": "Lv.{{level}} 譜面定數表"
   }
 }

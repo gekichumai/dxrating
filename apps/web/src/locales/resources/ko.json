@@ -597,5 +597,29 @@
     "io.clear.dialog.message": "이 브라우저에서 모든 기록이 영구적으로 삭제됩니다. 백업이 필요하면 먼저 내보내세요.",
     "io.clear.dialog.cancel": "취소",
     "io.clear.dialog.confirm": "모든 기록 지우기"
+  },
+  "constants": {
+    "title": "maimai DX Lv.{{level}} 상수표",
+    "seo-title": "maimai DX Lv.{{level}} 상수표 ({{min}}–{{max}})",
+    "seo-description": "maimai DX Lv.{{level}} 채보 {{count}}개를 상수 순({{min}}–{{max}})으로 정리. SSS+ / SSS 단일 레이팅, 노트 수, 수록 버전 포함. DXRating 데이터로 자동 갱신.",
+    "intro": "Lv.{{level}}의 DX·스탠다드 채보 {{count}}개를 상수 {{max}}부터 {{min}}까지 정리했습니다. 레이팅 열은 달성률 100.5%(SSS+)와 100.0%(SSS)의 단일 레이팅입니다.",
+    "group": "상수 {{constant}}",
+    "group-count": "채보 {{count}}개",
+    "col.song": "곡",
+    "col.chart": "채보",
+    "col.version": "버전",
+    "col.notes": "노트 수",
+    "col.sssp": "SSS+",
+    "col.sss": "SSS",
+    "col.regions": "수록",
+    "other-levels": "다른 레벨",
+    "index.title": "maimai DX 상수표",
+    "index.seo-title": "maimai DX 상수표 (레벨별)",
+    "index.seo-description": "maimai DX Lv.10–15 레벨별 상수표. SSS+ / SSS 단일 레이팅 포함.",
+    "index.intro": "레벨을 선택하면 해당 레벨의 모든 채보를 상수 순으로 볼 수 있습니다.",
+    "index.level": "Lv.{{level}}",
+    "index.level-count": "채보 {{count}}개 · {{min}}–{{max}}",
+    "breadcrumb": "상수표",
+    "chart-link": "Lv.{{level}} 상수표"
   }
 }
