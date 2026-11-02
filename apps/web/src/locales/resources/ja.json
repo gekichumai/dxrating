@@ -12,7 +12,7 @@
     "pages.trending.seo-title": "トレンド譜面",
     "pages.trending.seo-description": "DXRating で現在よく見られている maimai DX 譜面ページを確認できます。",
     "pages.trending.icon-label": "トレンド譜面",
-    "pages.rating.title": "レーテイング計算",
+    "pages.rating.title": "レーティング計算",
     "pages.rating.seo-title": "maimai でらっくす レーティング計算（ベスト50・単曲レート）",
     "pages.rating.seo-description": "maimai でらっくす のレーティングとベスト50（新曲枠15・旧曲枠35）をスコアから計算。maimai でらっくす NET・LXNS からインポート、単曲レートの計算式とランク係数表、譜面定数付き。",
     "seo.description": "DXRating は maimai DX Rating の分析ツールです。譜面詳細などの機能も提供しています。",
