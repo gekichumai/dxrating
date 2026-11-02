@@ -45,7 +45,6 @@ export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
 
     return {
       meta: seo.meta,
-      links: seo.links,
       scripts: [
         {
           type: 'application/ld+json',
