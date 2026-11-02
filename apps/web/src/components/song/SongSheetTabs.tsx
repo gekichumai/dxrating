@@ -1,6 +1,6 @@
 import { type DifficultyEnum, type Sheet, TypeEnum } from '@gekichumai/dxdata'
 import { Tab, Tabs } from '@mui/material'
-import { type FC, useMemo } from 'react'
+import { type FC, type MouseEvent, type SyntheticEvent, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DIFFICULTIES } from '../../models/difficulties'
 import { DIFFICULTY_ORDER } from '../../models/constants'
@@ -13,6 +13,18 @@ export interface SongSheetTabsProps {
   activeDifficulty: DifficultyEnum
   onTypeChange: (type: TypeEnum) => void
   onDifficultyChange: (difficulty: DifficultyEnum) => void
+  /** The chart page a tab opens: the tabs are real links so crawlers (and new-tab clicks) reach sibling charts */
+  hrefFor: (type: TypeEnum, difficulty?: DifficultyEnum) => string
+}
+
+// Plain clicks switch in-app through onChange; modified clicks keep the browser's default (new tab, copy link)
+const isModifiedClick = (event: SyntheticEvent) => {
+  const mouse = event as MouseEvent
+  return Boolean(mouse.metaKey || mouse.ctrlKey || mouse.shiftKey || mouse.altKey || (mouse.button ?? 0) !== 0)
+}
+
+const keepModifiedClicks = (event: MouseEvent) => {
+  if (!isModifiedClick(event)) event.preventDefault()
 }
 
 const renderTypeTabLabel = (type: TypeEnum, label: string, altText: string) => {
@@ -38,6 +50,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
   activeDifficulty,
   onTypeChange,
   onDifficultyChange,
+  hrefFor,
 }) => {
   const { t } = useTranslation(['song', 'sheet'])
 
@@ -50,7 +63,10 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
     <div className="flex flex-col gap-1">
       <Tabs
         value={activeType}
-        onChange={(_, v) => onTypeChange(v)}
+        onChange={(event, v) => {
+          if (isModifiedClick(event)) return
+          onTypeChange(v)
+        }}
         variant="scrollable"
         scrollButtons="auto"
         classes={{
@@ -65,6 +81,9 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
             <Tab
               key={type}
               value={type}
+              component="a"
+              href={hrefFor(type)}
+              onClick={keepModifiedClicks}
               label={renderTypeTabLabel(type, label, altText)}
               classes={{
                 selected: '!text-white font-bold',
@@ -77,7 +96,10 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
 
       <Tabs
         value={activeDifficulty}
-        onChange={(_, v) => onDifficultyChange(v)}
+        onChange={(event, v) => {
+          if (isModifiedClick(event)) return
+          onDifficultyChange(v)
+        }}
         variant="scrollable"
         scrollButtons="auto"
         classes={{
@@ -95,6 +117,9 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
             <Tab
               key={difficulty}
               value={difficulty}
+              component="a"
+              href={hrefFor(activeType, difficulty)}
+              onClick={keepModifiedClicks}
               label={config.title}
               classes={{
                 root: '!py-0 !min-h-2rem !h-2rem !text-xs',

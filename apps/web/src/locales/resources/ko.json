@@ -169,7 +169,16 @@
     "type.std": "스탠다드",
     "type.utage": "宴会場",
     "type.utage2p": "버디",
-    "seo.description": "{{artist}}의 {{title}} - DXRating에서 {{sheetLabel}} 채보 상세 정보, 내부 레벨과 노트 수를 확인하세요."
+    "seo.description": "{{artist}}의 {{title}} maimai DX {{sheetLabel}} 채보 (Lv.{{level}}). {{facts}}. DXRating에서 달성률별 레이팅, 상수 변화와 모든 난이도를 확인하세요.",
+    "seo.title": "{{title}} {{sheetLabel}} 상수 {{constant}} - maimai DX 채보 | DXRating",
+    "seo.title-no-constant": "{{title}} {{sheetLabel}} Lv.{{level}} - maimai DX 채보 | DXRating",
+    "seo.fact.constant": "내부 레벨 {{value}}",
+    "seo.fact.notes": "노트 수 {{value}}",
+    "seo.fact.bpm": "BPM {{value}}",
+    "seo.fact.designer": "채보 제작 {{value}}",
+    "seo.fact.version": "{{value}} 수록",
+    "seo.fact-separator": ", ",
+    "seo.description-basic": "{{artist}}의 {{title}} - DXRating에서 {{sheetLabel}} 채보 상세 정보, 내부 레벨과 노트 수를 확인하세요."
   },
   "about": {
     "title": "정보",
