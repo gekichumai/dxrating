@@ -97,7 +97,8 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
       </div>
 
       <span className="sr-only">{t('completion:summary-line', { ...summary, percent })}</span>
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('completion:filter')}>
+      <fieldset className="m-0 p-0 border-0 min-w-0 flex flex-wrap items-center gap-2">
+        <legend className="sr-only">{t('completion:filter')}</legend>
         {FILTERS.map((filter) => (
           <Chip
             key={filter}
@@ -117,7 +118,7 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
         <a href="/me/progress" className="ml-auto text-sm">
           {t('completion:progress-link')}
         </a>
-      </div>
+      </fieldset>
     </MaterialSurface>
   )
 }
