@@ -633,7 +633,9 @@
     "faq.q3": "점수는 어떻게 추가하나요?",
     "faq.a3": "maimai DX NET 또는 LXNS에서 가져오거나 채보 검색에서 직접 추가할 수 있습니다. 로그인하지 않으면 점수는 브라우저에만 저장됩니다.",
     "faq.q4": "게임 내 레이팅과 다른 이유는?",
-    "faq.a4": "선택한 버전과 서버가 게임과 같은지 확인하세요. 새 채보는 추가된 버전에서만 B15에 들어가며, 상수는 버전마다 바뀔 수 있습니다."
+    "faq.a4": "선택한 버전과 서버가 게임과 같은지 확인하세요. 새 채보는 추가된 버전에서만 B15에 들어가며, 상수는 버전마다 바뀔 수 있습니다.",
+    "single-chart.hint": "보면 하나의 레이팅만 알고 싶다면 단곡 레이팅 계산기를 사용하세요.",
+    "single-chart.link": "단곡 레이팅 계산기"
   },
   "versions": {
     "title": "maimai DX {{version}} 신곡·추가 채보",
@@ -748,9 +750,9 @@
     "tolerance.search-placeholder": "곡 검색",
     "tolerance.no-results": "채보를 찾을 수 없습니다",
     "tolerance.pick-a-chart": "위에서 곡을 검색하고 채보를 고르세요.",
-    "rating.title": "레이팅 계산기",
-    "rating.seo-title": "maimai DX 레이팅 계산기 (상수 + 달성률)",
-    "rating.seo-description": "보면 상수와 달성률로 maimai DX 단곡 레이팅을 계산하고, 목표 레이팅에 필요한 달성률과 상수별 레이팅 표를 확인하세요.",
+    "rating.title": "단곡 레이팅 계산기",
+    "rating.seo-title": "maimai DX 단곡 레이팅 계산기 (보면 상수 × 달성률)",
+    "rating.seo-description": "보면 상수와 달성률로 maimai DX 단곡 레이팅을 계산하는 단곡 레이팅 계산기입니다. 목표 단곡 레이팅에 필요한 달성률 역산과 상수별 레이팅 표도 제공합니다.",
     "rating.intro": "단곡 레이팅, 목표 레이팅에 필요한 달성률, 상수별 레이팅 표를 제공합니다.",
     "rating.internal-level": "보면 상수",
     "rating.level-invalid": "{{min}}에서 {{max}} 사이의 상수를 입력하세요",

@@ -633,7 +633,9 @@
     "faq.q3": "如何加入我的成績？",
     "faq.a3": "可從 maimai DX NET 或 LXNS 匯入，或在譜面搜尋中手動加入。未登入時，成績只會儲存在你的瀏覽器中。",
     "faq.q4": "為什麼和遊戲內的 Rating 不一樣？",
-    "faq.a4": "請確認所選的版本與伺服器和遊戲一致。只有在新增該譜面的版本中，它才會計入 B15；譜面定數也可能隨版本調整。"
+    "faq.a4": "請確認所選的版本與伺服器和遊戲一致。只有在新增該譜面的版本中，它才會計入 B15；譜面定數也可能隨版本調整。",
+    "single-chart.hint": "只想算一張譜面的 Rating？請使用單曲 Rating 計算器。",
+    "single-chart.link": "單曲 Rating 計算器"
   },
   "versions": {
     "title": "maimai DX {{version}} 新曲與新增譜面",
@@ -748,9 +750,9 @@
     "tolerance.search-placeholder": "搜尋歌曲",
     "tolerance.no-results": "找不到譜面",
     "tolerance.pick-a-chart": "在上方搜尋歌曲並選擇譜面。",
-    "rating.title": "Rating 計算器",
-    "rating.seo-title": "maimai DX Rating 計算器（定數 + 達成率）",
-    "rating.seo-description": "根據定數和達成率計算 maimai DX 單曲 Rating，反推達到目標 Rating 所需的達成率，並查看各定數的 Rating 對照表。",
+    "rating.title": "單曲 Rating 計算器",
+    "rating.seo-title": "舞萌DX 單曲 Rating 計算器（定數 × 達成率）",
+    "rating.seo-description": "舞萌DX（maimai DX）單曲 Rating 計算器：由定數和達成率算出單張譜面的 Rating，反推目標單曲 Rating 所需達成率，並查看各定數的 Rating 對照表。",
     "rating.intro": "單曲 Rating、目標 Rating 所需達成率，以及依定數的 Rating 對照表。",
     "rating.internal-level": "定數",
     "rating.level-invalid": "請輸入 {{min}} 到 {{max}} 之間的定數",

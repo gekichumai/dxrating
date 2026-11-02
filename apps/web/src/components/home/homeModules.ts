@@ -57,6 +57,8 @@ export const HOME_FEATURES: readonly HomeFeature[] = [
   { id: 'constants', to: '/constants' },
   { id: 'level_progress', to: '/me/progress' },
   { id: 'toplists', to: '/me/records' },
+  { id: 'tolerance', to: '/tools/tolerance' },
+  { id: 'rating_tools', to: '/tools/rating' },
   { id: 'recent', to: '/charts/recent' },
   { id: 'trending', to: '/charts/trending' },
   { id: 'versions', to: '/versions' },
