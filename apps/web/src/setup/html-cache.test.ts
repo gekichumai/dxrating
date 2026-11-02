@@ -80,3 +80,11 @@ describe('stored HTML round trip', () => {
     expect(body).toBe('<meta property="csp-nonce" content="NEW/nonce=="/><script nonce="NEW/nonce==">x</script>')
   })
 })
+describe('getHtmlCacheKey plates', () => {
+  it('caches plate pages: the user overlay is client-only', () => {
+    expect(getHtmlCacheKey(request('/plates'), 'abc')).toBe('https://dxrating.net/__html-cache/abc/en/plates')
+    expect(getHtmlCacheKey(request('/plates/kagami-shin?region=cn'), 'abc')).toBe(
+      'https://dxrating.net/__html-cache/abc/en/plates/kagami-shin?region=cn',
+    )
+  })
+})
