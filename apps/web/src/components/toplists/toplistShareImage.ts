@@ -68,7 +68,8 @@ export function drawToplistShareImage(
         context.fillText(fitText(context, row.sheet.title, textWidth), textX, y + 10)
         context.font = '12px Torus, system-ui, sans-serif'
         context.fillStyle = 'rgba(255, 255, 255, 0.7)'
-        const flag = row.entry.comboFlag ? ` ${COMBO_LABELS[row.entry.comboFlag]}` : ''
+        const comboLabel = row.entry.comboFlag ? COMBO_LABELS[row.entry.comboFlag] : undefined
+        const flag = comboLabel ? ` ${comboLabel}` : ''
         context.fillText(
           `${row.sheet.type.toUpperCase()} ${row.sheet.internalLevelValue.toFixed(1)}${flag}`,
           textX,
