@@ -11,7 +11,7 @@ import { getSongCatalog } from '@gekichumai/maimai-domain'
 import { IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
-import { type FC, useCallback, useId, useMemo, useState, useTransition } from 'react'
+import { type FC, type ReactNode, useCallback, useId, useMemo, useState, useTransition } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useEffectOnce, useUpdateEffect } from 'react-use'
 import IconMdiClose from '~icons/mdi/close'
@@ -50,6 +50,8 @@ const skeletonWidths = Array.from({ length: 20 }).map((_, index) => 5.5 + (index
 type SearchParams = ReturnType<typeof searchRouteApi.useSearch>
 type SheetListProps = {
   seedSheets?: readonly SearchQuerySeedSheet[]
+  /** Hub modules shown under the search box while no query is entered */
+  hub?: ReactNode
 }
 
 const summarizeSortFilter = (form: SheetSortFilterForm) => {
@@ -224,10 +226,11 @@ const computeSortFilteredSheets = (
   return sortFilteredResults
 }
 
-const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly SearchQuerySeedSheet[] }> = ({
-  search,
-  seedSheets,
-}) => {
+const SheetListInnerContent: FC<{
+  search: SearchParams
+  seedSheets: readonly SearchQuerySeedSheet[]
+  hub?: ReactNode
+}> = ({ search, seedSheets, hub }) => {
   const { t } = useTranslation(['sheet'])
   const { data: sheets, isLoading } = useSheets()
   const version = useAppContextDXDataVersion()
@@ -424,6 +427,8 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
           }}
         />
 
+        {!inputQuery && hub}
+
         <div className="text-sm rounded-full shadow-lg px-4 py-2 bg-blue-200 relative overflow-hidden select-none font-bold">
           <div
             className="absolute -inset-4 bg-blue-900/20 -skew-x-8 translate-x-4 transition-width"
@@ -486,8 +491,8 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
   )
 }
 
-export const SheetList: FC<SheetListProps> = ({ seedSheets = [] }) => {
+export const SheetList: FC<SheetListProps> = ({ seedSheets = [], hub }) => {
   const search = searchRouteApi.useSearch()
 
-  return <SheetListInnerContent search={search} seedSheets={seedSheets} />
+  return <SheetListInnerContent search={search} seedSheets={seedSheets} hub={hub} />
 }

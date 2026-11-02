@@ -24,7 +24,7 @@ describe('top nav links', () => {
     expect(APP_TAB_LINKS).toEqual([
       { value: 'recent', href: '/charts/recent', labelKey: 'root:pages.recent.icon-label' },
       { value: 'trending', href: '/charts/trending', labelKey: 'root:pages.trending.icon-label' },
-      { value: 'search', href: '/', labelKey: 'root:pages.search.title' },
+      { value: 'search', href: '/', labelKey: 'home:tab-label' },
       { value: 'rating', href: '/rating', labelKey: 'root:pages.rating.title' },
     ])
   })
