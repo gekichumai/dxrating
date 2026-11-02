@@ -178,7 +178,16 @@
     "seo.fact.designer": "譜師 {{value}}",
     "seo.fact.version": "收錄於 {{value}}",
     "seo.fact-separator": "、",
-    "seo.description-basic": "{{title}} / {{artist}} - {{sheetLabel}} 譜面詳情、譜面定數與音符數 - DXRating。"
+    "seo.description-basic": "{{title}} / {{artist}} - {{sheetLabel}} 譜面詳情、譜面定數與音符數 - DXRating。",
+    "hub.title": "所有譜面",
+    "hub.column.chart": "譜面",
+    "hub.column.level": "等級",
+    "hub.column.constant": "定數",
+    "hub.column.notes": "物量",
+    "hub.column.designer": "譜師",
+    "hub.column.my-score": "我的成績",
+    "hub.notes-breakdown": "TAP {{tap}} / HOLD {{hold}} / SLIDE {{slide}} / TOUCH {{touch}} / BREAK {{break}}",
+    "hub.raise-hint": "達成 {{target}}% 可 +{{gain}} Rating"
   },
   "about": {
     "title": "關於本站",

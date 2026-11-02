@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next'
 import { buildSheetPath } from '../components/sheet/sheetLinks'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { getVisibleSongPageSheets } from './songPageSheets'
+import { SongChartsTable } from '../components/song/hub/SongChartsTable'
 
 const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 
@@ -137,6 +138,8 @@ export const SongPage: FC = () => {
           <SongSheetContent sheet={sheet} isActive />
         </div>
       ))}
+
+      <SongChartsTable songId={song.id} sheets={flattenedSheets} activeSheetId={activeSheet?.id} />
 
       {constantTableLevel && (
         <a href={constantTablePath(constantTableLevel)} className="self-start text-sm text-slate-700">

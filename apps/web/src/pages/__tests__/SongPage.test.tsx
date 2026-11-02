@@ -43,6 +43,10 @@ vi.mock('@/components/song/SongSheetContent', () => ({
   ),
 }))
 
+vi.mock('@/components/song/hub/SongChartsTable', () => ({
+  SongChartsTable: () => <section aria-label="All charts" />,
+}))
+
 describe('SongPage', () => {
   beforeAll(() => {
     initI18n()

@@ -178,7 +178,16 @@
     "seo.fact.designer": "charted by {{value}}",
     "seo.fact.version": "added in {{value}}",
     "seo.fact-separator": ", ",
-    "seo.description-basic": "{{title}} by {{artist}} - {{sheetLabel}} chart details, internal levels, and note counts on DXRating."
+    "seo.description-basic": "{{title}} by {{artist}} - {{sheetLabel}} chart details, internal levels, and note counts on DXRating.",
+    "hub.title": "All charts",
+    "hub.column.chart": "Chart",
+    "hub.column.level": "Level",
+    "hub.column.constant": "Constant",
+    "hub.column.notes": "Notes",
+    "hub.column.designer": "Charter",
+    "hub.column.my-score": "My score",
+    "hub.notes-breakdown": "TAP {{tap}} / HOLD {{hold}} / SLIDE {{slide}} / TOUCH {{touch}} / BREAK {{break}}",
+    "hub.raise-hint": "{{target}}% for +{{gain}} rating"
   },
   "about": {
     "title": "About",

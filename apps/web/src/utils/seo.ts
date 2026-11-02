@@ -19,7 +19,8 @@ type SeoRouteMatch = {
 
 type JsonLdNode = Record<string, unknown>
 
-type StructuredDataSong = Pick<Song, 'artist' | 'bpm' | 'category' | 'id' | 'imageName' | 'title'>
+type StructuredDataSong = Pick<Song, 'artist' | 'bpm' | 'category' | 'id' | 'imageName' | 'title'> &
+  Partial<Pick<Song, 'searchAcronyms'>>
 
 type StructuredDataSheet = Pick<
   Sheet,
@@ -476,6 +477,7 @@ export function buildSongSheetStructuredData(
       '@type': 'MusicRecording',
       '@id': songId,
       name: song.title,
+      ...(song.searchAcronyms?.length ? { alternateName: [...new Set(song.searchAcronyms)] } : {}),
       byArtist: {
         '@type': 'MusicGroup',
         name: song.artist,
