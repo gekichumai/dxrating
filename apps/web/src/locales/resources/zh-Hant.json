@@ -632,5 +632,22 @@
     "faq.a3": "可從 maimai DX NET 或 LXNS 匯入，或在譜面搜尋中手動加入。未登入時，成績只會儲存在你的瀏覽器中。",
     "faq.q4": "為什麼和遊戲內的 Rating 不一樣？",
     "faq.a4": "請確認所選的版本與伺服器和遊戲一致。只有在新增該譜面的版本中，它才會計入 B15；譜面定數也可能隨版本調整。"
+  },
+  "versions": {
+    "title": "maimai DX {{version}} 新曲與新增譜面",
+    "seo-title": "maimai DX {{version}} 新曲一覽（附譜面定數）",
+    "seo-description": "maimai DX {{version}} 新增的全部 {{songs}} 首曲目、{{charts}} 張譜面，依上線日期排列，附 EXPERT／MASTER／Re:MASTER 等級與定數。",
+    "intro": "{{version}} 共新增 {{songs}} 首曲目、{{charts}} 張 DX 與標準譜面。每列列出 EXPERT、MASTER、Re:MASTER 的等級與定數。",
+    "date-unknown": "上線日期不明",
+    "new-chart-only": "新增譜面",
+    "col.song": "曲目",
+    "other-versions": "其他版本",
+    "breadcrumb": "版本",
+    "index.title": "maimai DX 各版本新曲",
+    "index.seo-title": "maimai DX 各版本新曲一覽",
+    "index.seo-description": "maimai DX 每個版本的新曲與新增譜面，附譜面定數。",
+    "index.intro": "選擇版本，查看該版本新增的所有曲目與譜面。",
+    "index.count": "{{songs}} 首・{{charts}} 張譜面",
+    "chart-link": "{{version}} 新曲一覽"
   }
 }

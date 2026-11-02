@@ -632,5 +632,22 @@
     "faq.a3": "可以从 maimai DX NET 或落雪（LXNS）导入，也可以在谱面搜索里手动添加。不登录时成绩只保存在浏览器里。",
     "faq.q4": "为什么和游戏里的 Rating 不一样？",
     "faq.a4": "请确认所选版本和服务器与游戏一致。新谱面只在它新增的那个版本计入 B15，定数也可能随版本调整。"
+  },
+  "versions": {
+    "title": "舞萌DX {{version}} 新曲与新增谱面",
+    "seo-title": "舞萌DX / maimai DX {{version}} 新曲一览（附定数）",
+    "seo-description": "舞萌DX（maimai DX）{{version}} 新增的全部 {{songs}} 首曲目、{{charts}} 张谱面，按上线日期排列，附 EXPERT／MASTER／Re:MASTER 等级与定数。",
+    "intro": "{{version}} 共新增 {{songs}} 首曲目、{{charts}} 张 DX 与标准谱面。每行列出紫谱、红谱和白谱的等级与定数。",
+    "date-unknown": "上线日期未知",
+    "new-chart-only": "新增谱面",
+    "col.song": "曲目",
+    "other-versions": "其他版本",
+    "breadcrumb": "版本",
+    "index.title": "舞萌DX 各版本新曲",
+    "index.seo-title": "舞萌DX / maimai DX 各版本新曲一览",
+    "index.seo-description": "舞萌DX（maimai DX）每个版本的新曲与新增谱面，附谱面定数。",
+    "index.intro": "选择版本，查看该版本新增的全部曲目与谱面。",
+    "index.count": "{{songs}} 首・{{charts}} 张谱面",
+    "chart-link": "{{version}} 新曲一览"
   }
 }

@@ -632,5 +632,22 @@
     "faq.a3": "maimai でらっくす NET または LXNS からインポートするか、譜面検索から手動で追加できます。ログインしない限り、スコアはブラウザ内にのみ保存されます。",
     "faq.q4": "ゲーム内のレートと違うのはなぜですか？",
     "faq.a4": "選択中のバージョンとサーバーがゲームと一致しているか確認してください。新曲枠に入るのは追加されたバージョンの譜面だけで、譜面定数はバージョン間で変わることがあります。"
+  },
+  "versions": {
+    "title": "maimai でらっくす {{version}} 新曲・追加譜面一覧",
+    "seo-title": "maimai でらっくす {{version}} 新曲一覧（譜面定数付き）",
+    "seo-description": "maimai でらっくす {{version}} で追加された全{{songs}}曲・{{charts}}譜面を配信日順に一覧。EXPERT・MASTER・Re:MASTER のレベルと譜面定数付き。",
+    "intro": "{{version}} では {{songs}} 曲、でらっくす・スタンダード譜面 {{charts}} 件が追加されました。各行に EXPERT・MASTER・Re:MASTER のレベルと譜面定数を掲載しています。",
+    "date-unknown": "配信日不明",
+    "new-chart-only": "譜面追加",
+    "col.song": "楽曲",
+    "other-versions": "他のバージョン",
+    "breadcrumb": "バージョン別",
+    "index.title": "maimai でらっくす バージョン別 新曲一覧",
+    "index.seo-title": "maimai でらっくす バージョン別 新曲一覧",
+    "index.seo-description": "maimai でらっくす の全バージョンの新曲・追加譜面を譜面定数付きで一覧。",
+    "index.intro": "バージョンを選ぶと、追加された楽曲と譜面をすべて確認できます。",
+    "index.count": "{{songs}} 曲・{{charts}} 譜面",
+    "chart-link": "{{version}} の新曲一覧"
   }
 }

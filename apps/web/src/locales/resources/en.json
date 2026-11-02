@@ -632,5 +632,22 @@
     "faq.a3": "Import them from maimai DX NET or LXNS, or add charts by hand from the search. Scores stay in your browser unless you sign in.",
     "faq.q4": "Why is my in-game rating different?",
     "faq.a4": "Check that the selected version and server match the game. New-version charts only count toward B15 in the version they were added in, and internal levels can change between versions."
+  },
+  "versions": {
+    "title": "maimai DX {{version}} New Songs and Charts",
+    "seo-title": "maimai DX {{version}} New Songs & Internal Levels",
+    "seo-description": "All {{songs}} songs and {{charts}} charts added in maimai DX {{version}}, by release date, with EXPERT / MASTER / Re:MASTER levels and internal levels.",
+    "intro": "{{songs}} songs and {{charts}} DX and Standard charts were added in {{version}}. Each row shows the EXPERT, MASTER and Re:MASTER levels with their internal levels.",
+    "date-unknown": "Release date unknown",
+    "new-chart-only": "new chart",
+    "col.song": "Song",
+    "other-versions": "Other versions",
+    "breadcrumb": "Versions",
+    "index.title": "maimai DX New Songs by Version",
+    "index.seo-title": "maimai DX New Songs by Version",
+    "index.seo-description": "Every maimai DX version with its new songs and charts and their internal levels, from maimai to the latest version.",
+    "index.intro": "Pick a version to see every song and chart it added.",
+    "index.count": "{{songs}} songs · {{charts}} charts",
+    "chart-link": "New in {{version}}"
   }
 }

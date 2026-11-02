@@ -13,6 +13,7 @@ import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
 import { constantTableLevelOf, constantTablePath } from '@/components/chartDiscovery/constantTables'
+import { versionPagePath, versionSlug } from '@/components/chartDiscovery/versionPages'
 import { useTranslation } from 'react-i18next'
 import { buildSheetPath } from '../components/sheet/sheetLinks'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
@@ -23,7 +24,7 @@ const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 export const SongPage: FC = () => {
   const { songId, type, difficulty } = routeApi.useParams()
   const navigate = useNavigate()
-  const { t } = useTranslation(['constants'])
+  const { t } = useTranslation(['constants', 'versions'])
   const catalogDocument = useCatalogDocument()
   const catalog = useSongCatalog()
   const { data: serverAliases } = useServerAliases()
@@ -140,6 +141,12 @@ export const SongPage: FC = () => {
       {constantTableLevel && (
         <a href={constantTablePath(constantTableLevel)} className="self-start text-sm text-slate-700">
           {t('constants:chart-link', { level: constantTableLevel })} →
+        </a>
+      )}
+
+      {activeSheet && versionSlug(activeSheet.version) && (
+        <a href={versionPagePath(activeSheet.version)} className="self-start text-sm text-slate-700">
+          {t('versions:chart-link', { version: activeSheet.version })} →
         </a>
       )}
     </div>
