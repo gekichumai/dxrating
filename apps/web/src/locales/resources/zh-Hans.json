@@ -588,5 +588,29 @@
     "io.clear.dialog.message": "这将从此浏览器永久删除所有记录。如需备份，请先导出。",
     "io.clear.dialog.cancel": "取消",
     "io.clear.dialog.confirm": "清空所有记录"
+  },
+  "constants": {
+    "title": "舞萌DX Lv.{{level}} 定数表",
+    "seo-title": "舞萌DX / maimai DX Lv.{{level}} 定数表（{{min}}–{{max}}）",
+    "seo-description": "舞萌DX（maimai DX）Lv.{{level}} 全部 {{count}} 张谱面按定数排序（{{min}}–{{max}}），附 SSS+／SSS 单曲 Rating、物量与收录版本，依 DXRating 数据自动更新。",
+    "intro": "Lv.{{level}} 的 DX 与标准谱面共 {{count}} 张，按定数 {{max}} 到 {{min}} 排列。Rating 列为达成率 100.5%（SSS+）与 100.0%（SSS）时的单曲 Rating。",
+    "group": "定数 {{constant}}",
+    "group-count": "{{count}} 张谱面",
+    "col.song": "曲目",
+    "col.chart": "谱面",
+    "col.version": "版本",
+    "col.notes": "物量",
+    "col.sssp": "SSS+",
+    "col.sss": "SSS",
+    "col.regions": "收录",
+    "other-levels": "其他等级",
+    "index.title": "舞萌DX 定数表",
+    "index.seo-title": "舞萌DX / maimai DX 定数表（按等级）",
+    "index.seo-description": "舞萌DX（maimai DX）Lv.10–15 各等级定数表，附 SSS+／SSS 单曲 Rating。",
+    "index.intro": "选择等级，查看该等级全部谱面的定数排序。",
+    "index.level": "Lv.{{level}}",
+    "index.level-count": "{{count}} 张谱面・{{min}}–{{max}}",
+    "breadcrumb": "定数表",
+    "chart-link": "Lv.{{level}} 定数表"
   }
 }

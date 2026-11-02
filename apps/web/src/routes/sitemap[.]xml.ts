@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { getCatalogDocument } from '@/catalog/catalogSource'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
+import { CONSTANT_TABLE_LEVELS, constantTablePath } from '@/components/chartDiscovery/constantTables'
 import { buildLocalizedUrl } from '@/utils/alternateLinks'
 import { SUPPORTED_LOCALES } from '@/setup/locale'
 
@@ -37,6 +38,17 @@ const alternatesXml = (path: string) =>
   ].join('')
 
 const lastmodXml = (releaseDate?: string) => (releaseDate ? `\n    <lastmod>${escapeXml(releaseDate)}</lastmod>` : '')
+
+const constantTableEntries = ['/constants', ...CONSTANT_TABLE_LEVELS.map(constantTablePath)]
+  .map(
+    (path) => `
+  <url>
+    <loc>${urlLoc(path)}</loc>${alternatesXml(path)}
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>`,
+  )
+  .join('')
 
 export function buildSitemap(songs: SitemapSong[]) {
   const sheetEntries = songs
@@ -87,7 +99,7 @@ export function buildSitemap(songs: SitemapSong[]) {
     <loc>${urlLoc('/developers')}</loc>${alternatesXml('/developers')}
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>${sheetEntries}
+  </url>${constantTableEntries}${sheetEntries}
 </urlset>`
 }
 

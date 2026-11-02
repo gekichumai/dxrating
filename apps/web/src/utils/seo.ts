@@ -431,3 +431,79 @@ export function buildSongSheetStructuredData(
     '@graph': graph,
   }
 }
+const buildCollectionSeo = (locale: SupportedLocale, path: string, rawTitle: string, description: string) => {
+  const title = formatSeoTitle(rawTitle)
+  const url = `https://dxrating.net${path}`
+
+  return {
+    title,
+    description,
+    url,
+    meta: [
+      { title },
+      { name: 'description', content: description },
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:url', content: url },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:locale', content: OG_LOCALES[locale] },
+      { name: 'twitter:card', content: 'summary' },
+      { name: 'twitter:title', content: title },
+      { name: 'twitter:description', content: description },
+    ] satisfies SeoMeta[],
+  }
+}
+
+export function buildConstantTableIndexSeo(locale: SupportedLocale) {
+  return buildCollectionSeo(
+    locale,
+    '/constants',
+    t(locale, 'constants:index.seo-title'),
+    t(locale, 'constants:index.seo-description'),
+  )
+}
+
+export function buildConstantTableSeo(
+  locale: SupportedLocale,
+  table: { level: string; path: string; count: number; min: string; max: string },
+) {
+  const values = { level: table.level, count: table.count, min: table.min, max: table.max }
+  const seo = buildCollectionSeo(
+    locale,
+    table.path,
+    t(locale, 'constants:seo-title', values),
+    t(locale, 'constants:seo-description', values),
+  )
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        '@id': `${seo.url}#webpage`,
+        url: seo.url,
+        name: t(locale, 'constants:title', values),
+        description: seo.description,
+        inLanguage: locale,
+        isPartOf: { '@id': 'https://dxrating.net/#website' },
+        breadcrumb: { '@id': `${seo.url}#breadcrumb` },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${seo.url}#breadcrumb`,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'DXRating', item: 'https://dxrating.net/' },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: t(locale, 'constants:breadcrumb'),
+            item: 'https://dxrating.net/constants',
+          },
+          { '@type': 'ListItem', position: 3, name: `Lv.${table.level}`, item: seo.url },
+        ],
+      },
+    ],
+  }
+
+  return { ...seo, structuredData }
+}

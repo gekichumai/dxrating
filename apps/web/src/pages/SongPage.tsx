@@ -12,6 +12,8 @@ import { type FlattenedSheet, getSearchAcronymsWithServerAliases } from '../song
 import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
+import { constantTableLevelOf, constantTablePath } from '@/components/chartDiscovery/constantTables'
+import { useTranslation } from 'react-i18next'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { getVisibleSongPageSheets } from './songPageSheets'
 
@@ -20,6 +22,7 @@ const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 export const SongPage: FC = () => {
   const { songId, type, difficulty } = routeApi.useParams()
   const navigate = useNavigate()
+  const { t } = useTranslation(['constants'])
   const catalogDocument = useCatalogDocument()
   const catalog = useSongCatalog()
   const { data: serverAliases } = useServerAliases()
@@ -62,6 +65,7 @@ export const SongPage: FC = () => {
     (sheet) => sheet.type === activeType && sheet.difficulty === activeDifficulty,
   )
   const headerSheet = activeSheet ?? flattenedSheets[0]
+  const constantTableLevel = activeSheet ? constantTableLevelOf(activeSheet.level) : null
   const visibleSheets = getVisibleSongPageSheets(flattenedSheets, activeType, activeDifficulty)
 
   const handleTypeChange = (newType: TypeEnum) => {
@@ -124,6 +128,12 @@ export const SongPage: FC = () => {
           <SongSheetContent sheet={sheet} isActive />
         </div>
       ))}
+
+      {constantTableLevel && (
+        <a href={constantTablePath(constantTableLevel)} className="self-start text-sm text-slate-700">
+          {t('constants:chart-link', { level: constantTableLevel })} →
+        </a>
+      )}
     </div>
   )
 }

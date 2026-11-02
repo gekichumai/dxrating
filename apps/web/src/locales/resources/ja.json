@@ -588,5 +588,29 @@
     "io.clear.dialog.message": "このブラウザから全ての記録が完全に削除されます。バックアップが必要な場合は、先にエクスポートしてください。",
     "io.clear.dialog.cancel": "キャンセル",
     "io.clear.dialog.confirm": "全ての記録をクリア"
+  },
+  "constants": {
+    "title": "maimai でらっくす Lv.{{level}} 譜面定数表",
+    "seo-title": "maimai でらっくす Lv.{{level}} 譜面定数表（{{min}}〜{{max}}）",
+    "seo-description": "maimai でらっくす Lv.{{level}} の全{{count}}譜面を譜面定数順（{{min}}〜{{max}}）に一覧。SSS+／SSS の単曲レート、ノーツ数、追加バージョン付き。DXRating のデータから自動更新。",
+    "intro": "Lv.{{level}} のでらっくす・スタンダード譜面 {{count}} 件を、譜面定数 {{max}} から {{min}} の順に掲載しています。レート列は達成率 100.5%（SSS+）と 100.0%（SSS）での単曲レートです。",
+    "group": "譜面定数 {{constant}}",
+    "group-count": "{{count}} 譜面",
+    "col.song": "楽曲",
+    "col.chart": "譜面",
+    "col.version": "バージョン",
+    "col.notes": "ノーツ数",
+    "col.sssp": "SSS+",
+    "col.sss": "SSS",
+    "col.regions": "収録",
+    "other-levels": "他のレベル",
+    "index.title": "maimai でらっくす 譜面定数表",
+    "index.seo-title": "maimai でらっくす 譜面定数表（レベル別一覧）",
+    "index.seo-description": "maimai でらっくす の譜面定数表を Lv.10〜15 のレベル別に掲載。SSS+／SSS の単曲レート付き。",
+    "index.intro": "レベルを選ぶと、その全譜面を譜面定数順に確認できます。",
+    "index.level": "Lv.{{level}}",
+    "index.level-count": "{{count}} 譜面・{{min}}〜{{max}}",
+    "breadcrumb": "譜面定数表",
+    "chart-link": "Lv.{{level}} 譜面定数表"
   }
 }
