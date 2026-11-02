@@ -658,7 +658,38 @@
   "plates": {},
   "toplists": {},
   "tools": {},
-  "recommend": {},
-  "random": {},
+  "recommend": {
+    "title": "Rating raise picks",
+    "description": "Charts where the next achievement step adds the most rating to your Best 50.",
+    "demo": "Showing demo scores.",
+    "empty": "No scores yet. Add or import scores in the rating calculator to see picks.",
+    "go-to-rating": "Open the rating calculator",
+    "stats": {
+      "total": "Rating",
+      "b15-floor": "New (B15) floor",
+      "b35-floor": "Old (B35) floor"
+    },
+    "new": "New charts (B15)",
+    "old": "Old charts (B35)",
+    "none": "Nothing to raise here right now.",
+    "unplayed": "Not played",
+    "gain": "+{{gain}} rating"
+  },
+  "random": {
+    "title": "Random chart",
+    "description": "Pick a random chart by type, difficulty, level and version.",
+    "filters": {
+      "type": "Type",
+      "difficulty": "Difficulty",
+      "level": "Level {{min}} to {{max}}",
+      "version": "Version",
+      "all-versions": "All versions"
+    },
+    "roll": "Roll",
+    "pool-size_one": "{{count}} chart matches",
+    "pool-size_other": "{{count}} charts match",
+    "no-result": "No chart matches these filters.",
+    "open-chart": "Open chart"
+  },
   "home": {}
 }

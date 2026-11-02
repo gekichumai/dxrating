@@ -658,7 +658,38 @@
   "plates": {},
   "toplists": {},
   "tools": {},
-  "recommend": {},
-  "random": {},
+  "recommend": {
+    "title": "레이팅 상승 추천",
+    "description": "다음 달성률 단계에 도달하면 베스트 50 레이팅이 가장 많이 오르는 채보입니다.",
+    "demo": "데모 점수를 표시 중",
+    "empty": "아직 점수가 없습니다. 레이팅 계산기에서 점수를 추가하거나 가져오세요.",
+    "go-to-rating": "레이팅 계산기 열기",
+    "stats": {
+      "total": "레이팅",
+      "b15-floor": "신곡 (B15) 하한",
+      "b35-floor": "구곡 (B35) 하한"
+    },
+    "new": "신곡 (B15)",
+    "old": "구곡 (B35)",
+    "none": "지금은 올릴 채보가 없습니다.",
+    "unplayed": "미플레이",
+    "gain": "레이팅 +{{gain}}"
+  },
+  "random": {
+    "title": "랜덤 선곡",
+    "description": "종류, 난이도, 레벨, 버전으로 걸러서 채보를 무작위로 고릅니다.",
+    "filters": {
+      "type": "종류",
+      "difficulty": "난이도",
+      "level": "레벨 {{min}}~{{max}}",
+      "version": "버전",
+      "all-versions": "모든 버전"
+    },
+    "roll": "뽑기",
+    "pool-size_one": "{{count}}개 채보 해당",
+    "pool-size_other": "{{count}}개 채보 해당",
+    "no-result": "조건에 맞는 채보가 없습니다.",
+    "open-chart": "채보 보기"
+  },
   "home": {}
 }
