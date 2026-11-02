@@ -4,6 +4,7 @@ import { getCatalogDocument } from '@/catalog/catalogSource'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import { CONSTANT_TABLE_LEVELS, constantTablePath } from '@/components/chartDiscovery/constantTables'
 import { VERSION_PAGE_VERSIONS, versionPagePath } from '@/components/chartDiscovery/versionPages'
+import { listIndexablePlateIds, platePath } from '@/components/plates/plateData'
 import { buildLocalizedUrl } from '@/utils/alternateLinks'
 import { SUPPORTED_LOCALES } from '@/setup/locale'
 
@@ -52,6 +53,17 @@ const constantTableEntries = [
     <loc>${urlLoc(path)}</loc>${alternatesXml(path)}
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+  </url>`,
+  )
+  .join('')
+
+const plateEntries = ['/plates', ...listIndexablePlateIds().map(platePath)]
+  .map(
+    (path) => `
+  <url>
+    <loc>${urlLoc(path)}</loc>${alternatesXml(path)}
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>`,
   )
   .join('')
@@ -105,7 +117,7 @@ export function buildSitemap(songs: SitemapSong[]) {
     <loc>${urlLoc('/developers')}</loc>${alternatesXml('/developers')}
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>${constantTableEntries}${sheetEntries}
+  </url>${constantTableEntries}${plateEntries}${sheetEntries}
 </urlset>`
 }
 
