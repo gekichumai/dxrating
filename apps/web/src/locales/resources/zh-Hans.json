@@ -169,7 +169,7 @@
     "type.std": "标准",
     "type.utage": "宴",
     "type.utage2p": "Buddy",
-    "seo.description": "{{title}}（{{artist}}）舞萌DX / maimai DX {{sheetLabel}} 谱面（Lv.{{level}}）。{{facts}}。在 DXRating 查看各达成率的单曲 Rating、定数变化与全部难度。",
+    "seo.description": "{{title}}（{{artist}}）{{sheetLabel}} 谱面（Lv.{{level}}）。{{facts}}。在 DXRating 查看舞萌DX 各达成率的单曲 Rating、定数变化与全部难度。",
     "seo.title": "{{title}} {{sheetLabel}} 定数 {{constant}} - 舞萌DX 谱面 | DXRating",
     "seo.title-no-constant": "{{title}} {{sheetLabel}} Lv.{{level}} - 舞萌DX 谱面 | DXRating",
     "seo.fact.constant": "谱面定数 {{value}}",
