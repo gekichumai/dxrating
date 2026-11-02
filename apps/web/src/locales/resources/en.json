@@ -169,7 +169,7 @@
     "type.std": "Standard",
     "type.utage": "Utage",
     "type.utage2p": "Buddy",
-    "seo.description": "{{title}} by {{artist}}: maimai DX {{sheetLabel}} chart, level {{level}}. {{facts}}. Rating by achievement, constant history and every difficulty on DXRating.",
+    "seo.description": "{{title}} by {{artist}}: maimai {{sheetLabel}} chart, level {{level}}. {{facts}}. Rating table and all difficulties on DXRating.",
     "seo.title": "{{title}} {{sheetLabel}} {{level}} ({{constant}}) - maimai DX Chart | DXRating",
     "seo.title-no-constant": "{{title}} {{sheetLabel}} Lv.{{level}} - maimai DX Chart | DXRating",
     "seo.fact.constant": "Internal level {{value}}",
