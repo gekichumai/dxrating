@@ -13,14 +13,13 @@ describe('buildRootHeadLinks', () => {
     )
   })
 
-  it('retains the current-route alternate links', () => {
-    const links = buildRootHeadLinks({ pathname: '/search', search: { q: '宴' } })
+  it('retains the current-route alternate and canonical links without search params', () => {
+    const links = buildRootHeadLinks({ pathname: '/rating', search: { q: '宴', locale: 'ja' } })
 
-    expect(links).toContainEqual({
-      rel: 'alternate',
-      hrefLang: 'ja',
-      href: 'https://dxrating.net/search?q=%E5%AE%B4&locale=ja',
-    })
+    expect(links).toContainEqual({ rel: 'alternate', hrefLang: 'ja', href: 'https://dxrating.net/rating?locale=ja' })
+    expect(links.filter((link) => link.rel === 'canonical')).toEqual([
+      { rel: 'canonical', href: 'https://dxrating.net/rating?locale=ja' },
+    ])
   })
 
   it('publishes API and agent discovery relations in the final document head', () => {

@@ -25,7 +25,6 @@ export const Route = createFileRoute('/charts/trending')({
 
     return {
       meta: seo.meta,
-      links: seo.links,
     }
   },
   component: TrendingRouteComponent,

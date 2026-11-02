@@ -131,7 +131,6 @@ export function buildSearchSeo(locale: SupportedLocale) {
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
     ] satisfies SeoMeta[],
-    links: [{ rel: 'canonical', href: 'https://dxrating.net/' }],
   }
 }
 
@@ -154,7 +153,6 @@ export function buildDevelopersSeo(locale: SupportedLocale) {
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
     ] satisfies SeoMeta[],
-    links: [{ rel: 'canonical', href: 'https://dxrating.net/developers' }],
   }
 }
 
@@ -177,7 +175,6 @@ export function buildRecentChartsSeo(locale: SupportedLocale) {
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
     ] satisfies SeoMeta[],
-    links: [{ rel: 'canonical', href: 'https://dxrating.net/charts/recent' }],
   }
 }
 
@@ -200,7 +197,6 @@ export function buildTrendingChartsSeo(locale: SupportedLocale) {
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
     ] satisfies SeoMeta[],
-    links: [{ rel: 'canonical', href: 'https://dxrating.net/charts/trending' }],
   }
 }
 
@@ -223,7 +219,6 @@ export function buildRatingSeo(locale: SupportedLocale) {
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
     ] satisfies SeoMeta[],
-    links: [{ rel: 'canonical', href: 'https://dxrating.net/rating' }],
   }
 }
 
@@ -297,7 +292,6 @@ export function buildSongSheetSeo(
       { name: 'twitter:image', content: socialImage },
       { name: 'twitter:image:alt', content: socialImageAlt },
     ] satisfies SeoMeta[],
-    links: [{ rel: 'canonical', href: url }],
   }
 }
 

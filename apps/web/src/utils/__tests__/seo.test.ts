@@ -48,7 +48,6 @@ describe('SEO localization', () => {
     const seo = buildDevelopersSeo('ja')
 
     expect(seo.title).toBe('開発者向け API - DXRating')
-    expect(seo.links).toContainEqual({ rel: 'canonical', href: 'https://dxrating.net/developers' })
     expect(seo.meta).toContainEqual({ property: 'og:url', content: 'https://dxrating.net/developers' })
   })
 

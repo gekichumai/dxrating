@@ -60,7 +60,6 @@ export const Route = createFileRoute('/')({
 
     return {
       meta: seo.meta,
-      links: seo.links,
     }
   },
   validateSearch: validateSearchParams,

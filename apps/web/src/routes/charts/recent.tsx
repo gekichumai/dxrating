@@ -14,7 +14,6 @@ export const Route = createFileRoute('/charts/recent')({
 
     return {
       meta: seo.meta,
-      links: seo.links,
     }
   },
   component: RecentRouteComponent,
