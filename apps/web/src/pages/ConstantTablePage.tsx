@@ -86,8 +86,8 @@ export const ConstantTablePage: FC<{ table: ConstantTable }> = ({ table }) => {
                   <th className="px-2 py-1 font-normal">{t('constants:col.chart')}</th>
                   <th className="px-2 py-1 font-normal hidden sm:table-cell">{t('constants:col.version')}</th>
                   <th className="px-2 py-1 font-normal text-right hidden sm:table-cell">{t('constants:col.notes')}</th>
-                  <th className="px-2 py-1 font-normal text-right">{t('constants:col.sssp')}</th>
-                  <th className="px-4 py-1 font-normal text-right">{t('constants:col.sss')}</th>
+                  <th className="pl-2 pr-4 sm:pr-2 py-1 font-normal text-right">{t('constants:col.sssp')}</th>
+                  <th className="px-4 py-1 font-normal text-right hidden sm:table-cell">{t('constants:col.sss')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -109,8 +109,8 @@ export const ConstantTablePage: FC<{ table: ConstantTable }> = ({ table }) => {
                     <td className="px-2 py-1.5 text-right tabular-nums hidden sm:table-cell">
                       {chart.notes?.toLocaleString('en-US') ?? '-'}
                     </td>
-                    <td className="px-2 py-1.5 text-right tabular-nums">{chart.ratingSssPlus}</td>
-                    <td className="px-4 py-1.5 text-right tabular-nums">{chart.ratingSss}</td>
+                    <td className="pl-2 pr-4 sm:pr-2 py-1.5 text-right tabular-nums">{chart.ratingSssPlus}</td>
+                    <td className="px-4 py-1.5 text-right tabular-nums hidden sm:table-cell">{chart.ratingSss}</td>
                   </tr>
                 ))}
               </tbody>
