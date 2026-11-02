@@ -1,5 +1,6 @@
 export * from './src/best50.ts'
 export * from './src/import-normalizers.ts'
+export * from './src/judgement-inverse.ts'
 export * from './src/legacy-migration.ts'
 export * from './src/sheet-identity.ts'
 export {
