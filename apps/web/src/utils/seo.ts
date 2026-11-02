@@ -227,6 +227,57 @@ export function buildRatingSeo(locale: SupportedLocale) {
   }
 }
 
+type SongSheetSeoSheet = {
+  type: TypeEnum
+  difficulty: DifficultyEnum | string
+} & Partial<Pick<Sheet, 'internalLevelValue' | 'level' | 'noteCounts' | 'noteDesigner' | 'version'>>
+
+const formatConstant = (sheet: SongSheetSeoSheet) =>
+  sheet.internalLevelValue && sheet.internalLevelValue > 0 ? sheet.internalLevelValue.toFixed(1) : null
+
+/**
+ * Chart page titles lead with what people search for: the song, the chart and its internal level (譜面定数).
+ * Sheets without level data (tests, partial catalog slices) keep the plain `<title> [<chart>]` form.
+ */
+function buildSongSheetTitle(song: { title: string }, sheet: SongSheetSeoSheet, locale: SupportedLocale) {
+  if (!sheet.level) return getSheetPageTitle(song, sheet, locale)
+
+  const constant = formatConstant(sheet)
+  const values = { title: song.title, sheetLabel: getSheetTitleLabel(sheet, locale), level: sheet.level, constant }
+  return t(locale, constant ? 'song:seo.title' : 'song:seo.title-no-constant', values)
+}
+
+function buildSongSheetDescription(
+  song: { title: string; artist: string; bpm?: number | null },
+  sheet: SongSheetSeoSheet,
+  sheetLabel: string,
+  locale: SupportedLocale,
+) {
+  if (!sheet.level) {
+    return t(locale, 'song:seo.description-basic', { title: song.title, artist: song.artist, sheetLabel })
+  }
+
+  const constant = formatConstant(sheet)
+  const facts = [
+    constant && t(locale, 'song:seo.fact.constant', { value: constant }),
+    sheet.noteCounts?.total &&
+      t(locale, 'song:seo.fact.notes', { value: sheet.noteCounts.total.toLocaleString('en-US') }),
+    song.bpm && t(locale, 'song:seo.fact.bpm', { value: song.bpm }),
+    sheet.noteDesigner &&
+      sheet.noteDesigner !== '-' &&
+      t(locale, 'song:seo.fact.designer', { value: sheet.noteDesigner }),
+    sheet.version && t(locale, 'song:seo.fact.version', { value: sheet.version }),
+  ].filter(Boolean)
+
+  return t(locale, 'song:seo.description', {
+    title: song.title,
+    artist: song.artist,
+    sheetLabel,
+    level: sheet.level,
+    facts: facts.join(t(locale, 'song:seo.fact-separator')),
+  })
+}
+
 export function buildSongSheetSeo(
   song: {
     title: string
@@ -234,20 +285,17 @@ export function buildSongSheetSeo(
     category: string
     imageName: string
     id: string
+    bpm?: number | null
   },
   sheet: {
     type: TypeEnum
     difficulty: DifficultyEnum | string
-  },
+  } & Partial<Pick<Sheet, 'internalLevelValue' | 'level' | 'noteCounts' | 'noteDesigner' | 'version'>>,
   locale: SupportedLocale,
 ) {
   const sheetLabel = getSheetTitleLabel(sheet, locale)
-  const title = getSheetPageTitle(song, sheet, locale)
-  const description = t(locale, 'song:seo.description', {
-    title: song.title,
-    artist: song.artist,
-    sheetLabel,
-  })
+  const title = buildSongSheetTitle(song, sheet, locale)
+  const description = buildSongSheetDescription(song, sheet, sheetLabel, locale)
   const image = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
   const socialImage = buildChartOgImageUrl({
     songId: song.id,
@@ -382,7 +430,7 @@ export function buildSongSheetStructuredData(
         {
           '@type': 'ListItem',
           position: 2,
-          name: seo.title,
+          name: `${song.title} ${sheetLabel}`,
           item: chartUrl,
         },
       ],
@@ -400,11 +448,11 @@ export function buildSongSheetStructuredData(
       mainEntity: { '@id': chartId },
     },
     {
-      '@type': 'MusicComposition',
+      '@type': 'MusicRecording',
       '@id': songId,
       name: song.title,
-      composer: {
-        '@type': 'Person',
+      byArtist: {
+        '@type': 'MusicGroup',
         name: song.artist,
       },
       image: `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`,
@@ -428,6 +476,8 @@ export function buildSongSheetStructuredData(
       about: { '@id': songId },
       isPartOf: { '@id': pageId },
       measurementTechnique: 'maimai DX chart metadata',
+      license: 'https://creativecommons.org/licenses/by-nc/4.0/',
+      creator: { '@type': 'Organization', name: 'DXRating', url: 'https://dxrating.net' },
       additionalProperty,
     },
   ]

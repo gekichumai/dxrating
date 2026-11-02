@@ -128,9 +128,9 @@ describe('SEO localization', () => {
           '@type': 'BreadcrumbList',
         }),
         expect.objectContaining({
-          '@type': 'MusicComposition',
+          '@type': 'MusicRecording',
           name: 'Test Song',
-          composer: expect.objectContaining({ name: 'Test Artist' }),
+          byArtist: expect.objectContaining({ name: 'Test Artist' }),
         }),
         expect.objectContaining({
           '@type': 'Dataset',
@@ -150,6 +150,37 @@ describe('SEO localization', () => {
           ]),
         }),
       ]),
+    )
+  })
+
+  it('puts the internal level in chart titles and the chart facts in descriptions, per locale', () => {
+    const song = {
+      title: 'Sky Trails',
+      artist: 'La prière',
+      category: 'maimai',
+      imageName: 'x',
+      id: 'dsng_x',
+      bpm: 171,
+    }
+    const sheet = {
+      type: TypeEnum.DX,
+      difficulty: DifficultyEnum.Master,
+      level: '14+',
+      internalLevelValue: 14.7,
+      noteDesigner: 'Designer',
+      noteCounts: { tap: 1, hold: 1, slide: 1, touch: 1, break: 1, total: 1052 },
+      version: VersionEnum.CiRCLEPLUS,
+    }
+
+    expect(buildSongSheetSeo(song, sheet, 'ja').title).toBe(
+      'Sky Trails でらっくす MASTER 譜面定数14.7 | maimai でらっくす - DXRating',
+    )
+    expect(buildSongSheetSeo(song, sheet, 'en').title).toBe(
+      'Sky Trails DX MASTER 14+ (14.7) - maimai DX Chart | DXRating',
+    )
+    expect(buildSongSheetSeo(song, sheet, 'ja').description).toContain('譜面定数 14.7・ノーツ数 1,052・BPM 171')
+    expect(buildSongSheetSeo(song, { ...sheet, internalLevelValue: 0 }, 'zh-Hant').title).toBe(
+      'Sky Trails DX MASTER Lv.14+｜maimai DX 譜面 - DXRating',
     )
   })
 })

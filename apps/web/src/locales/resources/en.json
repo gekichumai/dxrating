@@ -169,7 +169,16 @@
     "type.std": "Standard",
     "type.utage": "Utage",
     "type.utage2p": "Buddy",
-    "seo.description": "{{title}} by {{artist}} - {{sheetLabel}} chart details, internal levels, and note counts on DXRating."
+    "seo.description": "{{title}} by {{artist}}: maimai DX {{sheetLabel}} chart, level {{level}}. {{facts}}. Rating by achievement, constant history and every difficulty on DXRating.",
+    "seo.title": "{{title}} {{sheetLabel}} {{level}} ({{constant}}) - maimai DX Chart | DXRating",
+    "seo.title-no-constant": "{{title}} {{sheetLabel}} Lv.{{level}} - maimai DX Chart | DXRating",
+    "seo.fact.constant": "Internal level {{value}}",
+    "seo.fact.notes": "{{value}} notes",
+    "seo.fact.bpm": "BPM {{value}}",
+    "seo.fact.designer": "charted by {{value}}",
+    "seo.fact.version": "added in {{value}}",
+    "seo.fact-separator": ", ",
+    "seo.description-basic": "{{title}} by {{artist}} - {{sheetLabel}} chart details, internal levels, and note counts on DXRating."
   },
   "about": {
     "title": "About",
