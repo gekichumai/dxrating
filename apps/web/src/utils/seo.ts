@@ -470,7 +470,6 @@ export function buildSongSheetStructuredData(
       about: { '@id': songId },
       isPartOf: { '@id': pageId },
       measurementTechnique: 'maimai DX chart metadata',
-      license: 'https://creativecommons.org/licenses/by-nc/4.0/',
       creator: { '@type': 'Organization', name: 'DXRating', url: 'https://dxrating.net' },
       additionalProperty,
     },
