@@ -178,7 +178,16 @@
     "seo.fact.designer": "채보 제작 {{value}}",
     "seo.fact.version": "{{value}} 수록",
     "seo.fact-separator": ", ",
-    "seo.description-basic": "{{artist}}의 {{title}} - DXRating에서 {{sheetLabel}} 채보 상세 정보, 내부 레벨과 노트 수를 확인하세요."
+    "seo.description-basic": "{{artist}}의 {{title}} - DXRating에서 {{sheetLabel}} 채보 상세 정보, 내부 레벨과 노트 수를 확인하세요.",
+    "hub.title": "전체 채보",
+    "hub.column.chart": "채보",
+    "hub.column.level": "레벨",
+    "hub.column.constant": "상수",
+    "hub.column.notes": "노트 수",
+    "hub.column.designer": "채보 제작자",
+    "hub.column.my-score": "내 기록",
+    "hub.notes-breakdown": "TAP {{tap}} / HOLD {{hold}} / SLIDE {{slide}} / TOUCH {{touch}} / BREAK {{break}}",
+    "hub.raise-hint": "{{target}}% 달성 시 레이팅 +{{gain}}"
   },
   "about": {
     "title": "정보",

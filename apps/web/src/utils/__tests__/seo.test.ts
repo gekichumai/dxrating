@@ -88,6 +88,7 @@ describe('SEO localization', () => {
         imageName: 'test-song',
         id: 'test-song',
         bpm: 180,
+        searchAcronyms: ['ts', 'テスト', 'ts'],
       },
       {
         type: TypeEnum.DX,
@@ -129,6 +130,7 @@ describe('SEO localization', () => {
         expect.objectContaining({
           '@type': 'MusicRecording',
           name: 'Test Song',
+          alternateName: ['ts', 'テスト'],
           byArtist: expect.objectContaining({ name: 'Test Artist' }),
         }),
         expect.objectContaining({

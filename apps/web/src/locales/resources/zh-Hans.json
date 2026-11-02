@@ -178,7 +178,16 @@
     "seo.fact.designer": "谱师 {{value}}",
     "seo.fact.version": "收录于 {{value}}",
     "seo.fact-separator": "、",
-    "seo.description-basic": "{{title}} / {{artist}} - {{sheetLabel}} 谱面详情、谱面定数与音符数 - DXRating。"
+    "seo.description-basic": "{{title}} / {{artist}} - {{sheetLabel}} 谱面详情、谱面定数与音符数 - DXRating。",
+    "hub.title": "所有谱面",
+    "hub.column.chart": "谱面",
+    "hub.column.level": "等级",
+    "hub.column.constant": "定数",
+    "hub.column.notes": "物量",
+    "hub.column.designer": "谱师",
+    "hub.column.my-score": "我的成绩",
+    "hub.notes-breakdown": "TAP {{tap}} / HOLD {{hold}} / SLIDE {{slide}} / TOUCH {{touch}} / BREAK {{break}}",
+    "hub.raise-hint": "达成 {{target}}% 可 +{{gain}} Rating"
   },
   "about": {
     "title": "关于本站",
