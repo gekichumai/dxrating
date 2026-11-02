@@ -46,7 +46,9 @@ const QuickStats: FC = () => {
   const stats = useHomeQuickStats()
   if (!stats) return null
   const script = (i18n.resolvedLanguage ?? i18n.language).startsWith('zh-Hans') ? 'zh' : 'ja'
-  const floor = stats.b35Floor ?? stats.b15Floor
+  // The B50 floor is the lowest entry across both buckets
+  const floors = [stats.b15Floor, stats.b35Floor].filter((value): value is number => value !== null)
+  const floor = floors.length > 0 ? Math.min(...floors) : null
 
   return (
     <section className="flex flex-col gap-2" aria-labelledby="home-quick-stats">
