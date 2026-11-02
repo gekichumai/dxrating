@@ -117,18 +117,22 @@ describe('guide page', () => {
     }
   })
 
-  it('links to anchors it has, each id once, a tab for every app', () => {
+  it('links to anchors it has, each id once, a tab for the main apps and one for the others', () => {
     for (const [lang, { html }] of pages) {
       const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(([, id]) => id)
       expect(new Set(ids).size, lang).toBe(ids.length)
       for (const [, id] of html.matchAll(/href="#([^"]+)"/g)) expect(ids, `${lang} #${id}`).toContain(id)
       const tabs = [...html.matchAll(/<a class="tab" href="#([^"]+)"/g)].map(([, id]) => id)
       const panels = [...html.matchAll(/<section class="app-p" id="([^"]+)"/g)].map(([, id]) => id)
-      expect(tabs, lang).toEqual([...CHAT_APPS, ...CODING_TOOLS, 'other'])
+      expect(tabs, lang).toEqual(['claude', 'chatgpt', 'claude-code', 'cursor', 'vscode', 'codex', 'other'])
       expect(panels, lang).toEqual(tabs)
-      for (const id of ['agent', 'install', 'try', 'tools', 'data', 'limits', 'privacy', 'troubleshooting', 'links']) {
-        expect(ids, lang).toContain(id)
-      }
+      // the apps without a tab of their own are in the last one, with their documentation
+      const other = html.slice(html.indexOf('<section class="app-p" id="other"'))
+      for (const id of ['cherry-studio', 'gemini-cli'] as const) expect(other, `${lang} ${id}`).toContain(APP_DOCS[id])
+      for (const id of ['install', 'tools', 'advanced', 'agent', 'troubleshooting']) expect(ids, lang).toContain(id)
+      // the rest is in the Markdown guide, which the footer links to
+      for (const id of ['try', 'data', 'limits', 'privacy', 'links']) expect(ids, lang).not.toContain(id)
+      expect(html, lang).toMatch(/<footer[\s\S]*href="https:\/\/mcp\.dxrating\.net\/index\.md\?lang=/)
     }
   })
 
@@ -149,7 +153,7 @@ describe('guide page', () => {
     for (const [lang, { html }] of pages) {
       const texts = [...html.matchAll(/data-c="([^"]*)"/g)].map(([, c]) => unescape(c))
       expect(html.match(/<button type="button" class="cp[ "]/g)?.length, lang).toBe(texts.length)
-      expect(texts.length, lang).toBeGreaterThan(20)
+      expect(texts.length, lang).toBeGreaterThan(10)
       for (const text of texts) {
         expect(text, lang).not.toBe('')
         expect(text, lang).not.toMatch(/[<>`]|\*\*/)

@@ -410,16 +410,16 @@ const SPRITE =
   '<symbol id="i-out" viewBox="0 0 16 16"><path d="M6 4h6v6M12 4l-8 8"/></symbol></svg>'
 const icon = (id: string) => `<svg class="i" aria-hidden="true"><use href="#i-${id}"/></svg>`
 
+/** The apps of the picker of the HTML page, the most used first; the others share its last tab */
+const PICKER_APPS: AppId[] = ['claude', 'chatgpt', 'claude-code', 'cursor', 'vscode', 'codex']
+const OTHER_APPS = [...CHAT_APPS, ...CODING_TOOLS].filter((id) => !PICKER_APPS.includes(id))
+/** The apps the last paragraphs of the other tab name, the same in every language */
+const OTHER_APPS_LABEL = 'Trae · Kiro · LM Studio · Windsurf · JetBrains AI Assistant'
+
 /** An app's name and the qualifier in its brackets: Claude (claude.ai, Claude Desktop, Claude mobile) */
 function appName(id: AppId): { name: string; qualifier?: string } {
   const m = APP_NAMES[id].match(/^(.+?) \((.+)\)$/)
   return m ? { name: m[1], qualifier: m[2] } : { name: APP_NAMES[id] }
-}
-
-/** The first sentence of a paragraph, and the rest */
-function firstSentence(s: string): [string, string] {
-  const m = s.match(/^(.+?(?:\.(?=\s)|。))\s*(.*)$/s)
-  return m ? [m[1], m[2]] : ['', s]
 }
 
 const unlabel = (s: string) => s.replace(/\s*[:：]\s*$/, '')
@@ -462,27 +462,27 @@ function renderHtml(text: GuideText, via?: string): string {
     `<style>${GUIDE_STYLE_CSS}</style>`,
   ]
   const tab = (id: string, name: string) => `<a class="tab" href="#${id}">${escapeHtml(name)}</a>`
-  const group = (label: string, tabs: string[]) =>
-    `<div class="grp"><span class="grp-l">${escapeHtml(label)}</span><div class="seg">${tabs.join('')}</div></div>`
   const panel = (id: string, name: string, body: string, qualifier?: string) =>
-    `<section class="app-p" id="${id}" aria-labelledby="${id}-h"><h3 id="${id}-h">${escapeHtml(name)}` +
+    `<section class="app-p" id="${id}" aria-labelledby="${id}-h"><h3 id="${id}-h"><span class="nm">${escapeHtml(name)}</span>` +
     `${qualifier ? ` <span class="q">${escapeHtml(qualifier)}</span>` : ''}</h3>\n${body}</section>`
+  const docsLink = (id: AppId) =>
+    `<p class="docs"><span>${escapeHtml(unlabel(text.docs))}</span> <a href="${escapeHtml(APP_DOCS[id])}">` +
+    `<span>${escapeHtml(APP_DOCS[id].replace(/^https:\/\//, ''))}</span>${icon('out')}</a></p>`
   const app = (id: AppId) => {
     const { name, qualifier } = appName(id)
-    const docs = APP_DOCS[id]
-    const link =
-      `<p class="docs"><span>${escapeHtml(unlabel(text.docs))}</span> <a href="${escapeHtml(docs)}">` +
-      `<span>${escapeHtml(docs.replace(/^https:\/\//, ''))}</span>${icon('out')}</a></p>`
-    return panel(id, name, `${blocks(text.apps[id])}\n${link}`, qualifier)
+    return panel(id, name, `${blocks(text.apps[id])}\n${docsLink(id)}`, qualifier)
   }
-  const oneClick = Object.entries(ONE_CLICK).map(
-    ([id, a]) =>
-      `<a class="pill-btn" href="${escapeHtml(a.link(oneClickUrl(id, via)))}">${escapeHtml(text.addTo.replace('%s', a.name))}${icon('out')}</a>`,
+  // the apps few use share the last tab, each under its name, then any other app
+  const others = panel(
+    text.other.id,
+    text.other.heading,
+    OTHER_APPS.map((id) => `<h4>${escapeHtml(APP_NAMES[id])}</h4>\n${blocks(text.apps[id])}\n${docsLink(id)}`).join(
+      '\n',
+    ) + `\n<h4>${escapeHtml(OTHER_APPS_LABEL)}</h4>\n${blocks(text.other.blocks)}`,
   )
-  const [l1, lrest] = firstSentence(expand(text.lead[0]))
   const prompt = expand(text.agentPrompt)
   const tools = GUIDE_TOOLS.map(
-    (name) => `<li class="panel"><h3><code>${name}</code></h3><p>${inlineHtml(expand(text.tools[name]))}</p></li>`,
+    (name) => `<li><code>${name}</code><span>${inlineHtml(expand(text.tools[name]))}</span></li>`,
   )
   const facts = text.facts.map(
     ([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${inlineHtml(expand(value))}</dd></div>`,
@@ -493,74 +493,50 @@ function renderHtml(text: GuideText, via?: string): string {
     '<header class="bar"><div class="in">',
     `<div class="mark"><a class="home" href="${SITE_URL}/" aria-label="${escapeHtml(ui.home)}">${img(30)}` +
       `<span>${escapeHtml(brand)}</span></a><span class="chip">MCP</span></div>`,
-    `<nav class="jump" aria-label="${escapeHtml(ui.pageNav)}"><a href="#install">${escapeHtml(text.installHeading)}</a>` +
-      `<a href="#tools">${escapeHtml(text.toolsHeading)}</a>` +
-      `<a href="#troubleshooting">${escapeHtml(text.troubleshooting.heading)}</a></nav>`,
-    `<div class="bar-r"><a class="md" href="${escapeHtml(expand('{md}'))}" type="text/markdown">${escapeHtml(ui.markdown)}</a>` +
-      `<nav class="langs" aria-label="${escapeHtml(ui.langNav)}">${langs}</nav></div>`,
+    `<nav class="langs" aria-label="${escapeHtml(ui.langNav)}">${langs}</nav>`,
     '</div></header>',
     '<main id="main" class="in">',
     '<section class="hero" aria-labelledby="title">',
-    img(76, 'app'),
     `<h1 id="title">${escapeHtml(brand)} <span class="h1-b">${escapeHtml(rest)}</span></h1>`,
-    `<p class="lead">${l1 ? `<span class="l1">${inlineHtml(l1)}</span>` : ''}${inlineHtml(lrest)}</p>`,
-    ...text.lead.slice(1).map((p) => `<p class="aside">${inlineHtml(expand(p))}</p>`),
-    `<ul class="badges">${text.badges
+    `<p class="pitch">${inlineHtml(expand(text.pitch))}</p>`,
+    `<p class="badges">${text.badges
       .split(' · ')
-      .map((b) => `<li>${icon('check')}${escapeHtml(b)}</li>`)
-      .join('')}</ul>`,
+      .map((b) => `<span>${icon('check')}${escapeHtml(b)}</span>`)
+      .join('')}</p>`,
     '</section>',
-    '<div class="connect">',
-    '<section class="panel" aria-labelledby="url">',
+    '<section class="panel setup" id="install" aria-labelledby="url">',
     `<h2 class="kicker" id="url">${escapeHtml(text.urlLabel)}</h2>`,
     `<div class="field" data-c="${escapeHtml(url)}"><code>${escapeHtml(url)}</code>${copyButton(ui.copy, 'solid')}</div>`,
+    `<nav class="clients" aria-label="${escapeHtml(ui.appNav)}" data-tabs><div class="seg">` +
+      [...PICKER_APPS.map((id) => tab(id, appName(id).name)), tab(text.other.id, ui.otherTab)].join('') +
+      '</div></nav>',
+    '<div class="apps">',
+    ...PICKER_APPS.map(app),
+    others,
+    '</div>',
+    '</section>',
+    section({ id: 'tools', heading: ui.canDo, blocks: [] }, `<ul class="tools">${tools.join('')}</ul>`),
+    '<details class="adv panel" id="advanced">',
+    `<summary>${escapeHtml(ui.advanced)}</summary>`,
+    '<div class="adv-b">',
     `<dl class="facts">${facts.join('')}</dl>`,
     `<p class="note">${inlineHtml(expand(text.urlNote))}</p>`,
-    `<div class="oc"><h3 class="kicker">${escapeHtml(unlabel(text.oneClick))}</h3>`,
-    `<div class="oc-g">${oneClick.join('')}</div>`,
-    `<p class="note">${inlineHtml(expand(text.oneClickNote))}</p></div>`,
-    '</section>',
-    `<section class="panel agent" id="agent" aria-labelledby="agent-h" data-c="${escapeHtml(prompt)}">`,
-    `<h2 id="agent-h">${escapeHtml(text.agentHeading)}</h2>`,
+    `<section class="agent" id="agent" aria-labelledby="agent-h" data-c="${escapeHtml(prompt)}">`,
+    `<h3 id="agent-h">${escapeHtml(text.agentHeading)}</h3>`,
     `<p class="note">${inlineHtml(expand(text.agentIntro))}</p>`,
     `<pre class="prompt"><code>${escapeHtml(prompt)}</code></pre>`,
     copyButton(ui.copyPrompt, 'cta'),
     '</section>',
+    `<section id="${text.troubleshooting.id}" aria-labelledby="${text.troubleshooting.id}-h">` +
+      `<h3 id="${text.troubleshooting.id}-h">${escapeHtml(text.troubleshooting.heading)}</h3>` +
+      `<div class="sec-b">${blocks(text.troubleshooting.blocks)}</div></section>`,
     '</div>',
-    `<section class="sec" id="install" aria-labelledby="install-h">`,
-    h2('install', text.installHeading),
-    `<nav class="clients" aria-label="${escapeHtml(ui.appNav)}" data-tabs>`,
-    group(
-      text.chatApps,
-      CHAT_APPS.map((id) => tab(id, appName(id).name)),
-    ),
-    group(text.codingTools, [
-      ...CODING_TOOLS.map((id) => tab(id, appName(id).name)),
-      tab(text.other.id, text.other.heading),
-    ]),
-    '</nav>',
-    '<div class="apps panel">',
-    ...CHAT_APPS.map(app),
-    ...CODING_TOOLS.map(app),
-    panel(text.other.id, text.other.heading, blocks(text.other.blocks)),
-    '</div>',
-    '</section>',
-    section(text.tryIt, blocks(text.tryIt.blocks, true)),
-    section(
-      { id: 'tools', heading: text.toolsHeading, blocks: [] },
-      `<p>${inlineHtml(expand(text.toolsIntro))}</p><ul class="tools">${tools.join('')}</ul>`,
-    ),
-    '<div class="trio">',
-    section(text.data, undefined, 'sec panel'),
-    section(text.limits, undefined, 'sec panel'),
-    section(text.privacy, undefined, 'sec panel'),
-    '</div>',
-    section(text.troubleshooting),
-    section(text.links),
+    '</details>',
     '</main>',
     '<footer class="foot"><div class="in">',
-    `<div><p class="foot-b">${img(22)}${escapeHtml(brand)} <span class="chip">MCP</span></p><p>${inlineHtml(expand(text.footer))}</p></div>`,
-    `<p class="foot-l">${langs}</p>`,
+    `<p class="foot-n"><a href="${escapeHtml(expand('{md}'))}" type="text/markdown">${escapeHtml(ui.fullGuide)}</a>` +
+      `<a href="${escapeHtml(expand('{llms}'))}">llms.txt</a><a href="${escapeHtml(REPOSITORY.url)}">GitHub</a></p>`,
+    `<p>${inlineHtml(expand(text.footer))}</p>`,
     '</div></footer>',
     '<div id="live" class="sr" aria-live="polite"></div>',
     `<script>${GUIDE_SCRIPT_JS}</script>`,
