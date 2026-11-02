@@ -14,6 +14,7 @@ import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
 import { constantTableLevelOf, constantTablePath } from '@/components/chartDiscovery/constantTables'
 import { useTranslation } from 'react-i18next'
+import { buildSheetPath } from '../components/sheet/sheetLinks'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { getVisibleSongPageSheets } from './songPageSheets'
 
@@ -121,6 +122,13 @@ export const SongPage: FC = () => {
         activeDifficulty={activeDifficulty}
         onTypeChange={handleTypeChange}
         onDifficultyChange={handleDifficultyChange}
+        hrefFor={(sheetType, sheetDifficulty) =>
+          buildSheetPath({
+            songId,
+            type: sheetType,
+            difficulty: sheetDifficulty ?? getHighestDifficulty(flattenedSheets.filter((s) => s.type === sheetType)),
+          })
+        }
       />
 
       {visibleSheets.map((sheet) => (

@@ -42,6 +42,7 @@ describe('SongSheetTabs', () => {
         activeDifficulty={DifficultyEnum.Master}
         onTypeChange={vi.fn()}
         onDifficultyChange={vi.fn()}
+        hrefFor={() => '/songs/s/dx/master'}
       />,
     )
 
@@ -67,6 +68,7 @@ describe('SongSheetTabs', () => {
         activeDifficulty={DifficultyEnum.Master}
         onTypeChange={vi.fn()}
         onDifficultyChange={vi.fn()}
+        hrefFor={() => '/songs/s/dx/master'}
       />,
     )
 

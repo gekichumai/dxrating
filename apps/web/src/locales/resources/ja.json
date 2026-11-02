@@ -169,7 +169,16 @@
     "type.std": "スタンダード",
     "type.utage": "宴",
     "type.utage2p": "バディ",
-    "seo.description": "{{title}} / {{artist}} - {{sheetLabel}} の譜面詳細、譜面定数、ノーツ数 - DXRating。"
+    "seo.description": "{{title}}（{{artist}}）の {{sheetLabel}} 譜面（Lv.{{level}}）。{{facts}}。maimai でらっくす の達成率別単曲レート、定数の推移、全難易度を DXRating で確認できます。",
+    "seo.title": "{{title}} {{sheetLabel}} 譜面定数{{constant}} | maimai でらっくす - DXRating",
+    "seo.title-no-constant": "{{title}} {{sheetLabel}} Lv.{{level}} 譜面 | maimai でらっくす - DXRating",
+    "seo.fact.constant": "譜面定数 {{value}}",
+    "seo.fact.notes": "ノーツ数 {{value}}",
+    "seo.fact.bpm": "BPM {{value}}",
+    "seo.fact.designer": "譜面作者 {{value}}",
+    "seo.fact.version": "{{value}} 追加",
+    "seo.fact-separator": "・",
+    "seo.description-basic": "{{title}} / {{artist}} - {{sheetLabel}} の譜面詳細、譜面定数、ノーツ数 - DXRating。"
   },
   "about": {
     "title": "当サイトについて",

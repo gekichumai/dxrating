@@ -169,7 +169,16 @@
     "type.std": "标准",
     "type.utage": "宴",
     "type.utage2p": "Buddy",
-    "seo.description": "{{title}} / {{artist}} - {{sheetLabel}} 谱面详情、谱面定数与音符数 - DXRating。"
+    "seo.description": "{{title}}（{{artist}}）{{sheetLabel}} 谱面（Lv.{{level}}）。{{facts}}。在 DXRating 查看舞萌DX 各达成率的单曲 Rating、定数变化与全部难度。",
+    "seo.title": "{{title}} {{sheetLabel}} 定数 {{constant}} - 舞萌DX 谱面 | DXRating",
+    "seo.title-no-constant": "{{title}} {{sheetLabel}} Lv.{{level}} - 舞萌DX 谱面 | DXRating",
+    "seo.fact.constant": "谱面定数 {{value}}",
+    "seo.fact.notes": "物量 {{value}}",
+    "seo.fact.bpm": "BPM {{value}}",
+    "seo.fact.designer": "谱师 {{value}}",
+    "seo.fact.version": "收录于 {{value}}",
+    "seo.fact-separator": "、",
+    "seo.description-basic": "{{title}} / {{artist}} - {{sheetLabel}} 谱面详情、谱面定数与音符数 - DXRating。"
   },
   "about": {
     "title": "关于本站",
