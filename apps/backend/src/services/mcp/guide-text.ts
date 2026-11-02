@@ -24,6 +24,8 @@ export interface GuideText {
   /** The description of the page, for search results and link previews */
   description: string
   lead: string[]
+  /** The one line at the top of the HTML page: what the server does, where */
+  pitch: string
   badges: string
   agentHeading: string
   agentIntro: string
@@ -73,6 +75,14 @@ export interface GuideUi {
   copy: string
   copied: string
   copyPrompt: string
+  /** The label of the last tab of the apps, the others */
+  otherTab: string
+  /** The label of the list of the tools on the HTML page */
+  canDo: string
+  /** The disclosure of the rest: the prompt for an agent, the connection details, troubleshooting */
+  advanced: string
+  /** The link to the whole guide, in Markdown */
+  fullGuide: string
 }
 
 /** The names of the apps, the same in every language */
@@ -112,6 +122,7 @@ const en: GuideText = {
       'internal levels (譜面定数) on the JP, international, USA and CN servers, and work out ratings and Best 50.',
     'MCP (Model Context Protocol) is the standard way AI apps connect to outside tools.',
   ],
+  pitch: 'maimai DX songs, internal levels and ratings, right in Claude, ChatGPT, Cursor and other AI apps.',
   badges: 'Free · No account · No API key · Read-only',
   agentHeading: 'Let your agent set it up',
   agentIntro: 'Paste this into Claude Code, Codex, Cursor or another coding agent:',
@@ -356,6 +367,10 @@ const en: GuideText = {
     copy: 'Copy',
     copied: 'Copied',
     copyPrompt: 'Copy prompt for your agent',
+    otherTab: 'Others',
+    canDo: 'What it can do',
+    advanced: 'Advanced',
+    fullGuide: 'Full guide',
   },
 }
 
@@ -372,6 +387,7 @@ const ja: GuideText = {
       'レーティングやベスト枠（Best 50）を計算できます。',
     'MCP（Model Context Protocol）は、AI アプリが外部のツールにつながるための標準の仕組みです。',
   ],
+  pitch: 'maimai DX の楽曲・譜面定数・レーティングを、Claude、ChatGPT、Cursor などの AI アプリから。',
   badges: '無料 · アカウント不要 · API キー不要 · 読み取り専用',
   agentHeading: 'エージェントに設定してもらう',
   agentIntro: 'Claude Code、Codex、Cursor などのコーディングエージェントに貼り付けてください：',
@@ -605,6 +621,10 @@ const ja: GuideText = {
     copy: 'コピー',
     copied: 'コピーしました',
     copyPrompt: 'エージェント用プロンプトをコピー',
+    otherTab: 'その他',
+    canDo: 'できること',
+    advanced: '詳細設定',
+    fullGuide: '完全版ガイド',
   },
 }
 
@@ -620,6 +640,7 @@ const zhHans: GuideText = {
       '查 DXRating（dxrating.net）的歌曲和谱面，查日服、国际服、美服和国服的定数（譜面定数），并计算 Rating 和 B50。',
     'MCP（Model Context Protocol）是 AI 应用连接外部工具的标准方式。',
   ],
+  pitch: '在 Claude、ChatGPT、Cursor 等 AI 应用里直接查 maimai DX 的歌曲、定数和 Rating。',
   badges: '免费 · 无需账号 · 无需 API Key · 只读',
   agentHeading: '让你的 Agent 来装',
   agentIntro: '把下面这段粘贴给 Claude Code、Codex、Cursor 等编程 Agent：',
@@ -839,6 +860,10 @@ const zhHans: GuideText = {
     copy: '复制',
     copied: '已复制',
     copyPrompt: '复制给 AI 的安装指令',
+    otherTab: '其他',
+    canDo: '能做什么',
+    advanced: '高级',
+    fullGuide: '完整指南',
   },
 }
 
@@ -854,6 +879,7 @@ const zhHant: GuideText = {
       '別名查詢 DXRating（dxrating.net）的歌曲和譜面，查日版、國際版、美版和國服的定數（譜面定数），並計算 Rating 和 B50。',
     'MCP（Model Context Protocol）是 AI 應用程式連接外部工具的標準方式。',
   ],
+  pitch: '在 Claude、ChatGPT、Cursor 等 AI 應用裡直接查 maimai DX 的歌曲、定數和 Rating。',
   badges: '免費 · 不需帳號 · 不需 API Key · 唯讀',
   agentHeading: '讓你的 Agent 來設定',
   agentIntro: '把下面這段貼給 Claude Code、Codex、Cursor 等程式 Agent：',
@@ -1074,6 +1100,10 @@ const zhHant: GuideText = {
     copy: '複製',
     copied: '已複製',
     copyPrompt: '複製給 AI 的安裝指令',
+    otherTab: '其他',
+    canDo: '能做什麼',
+    advanced: '進階',
+    fullGuide: '完整指南',
   },
 }
 
