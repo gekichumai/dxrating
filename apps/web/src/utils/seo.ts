@@ -640,3 +640,9 @@ export function buildVersionPageSeo(
 
   return { ...seo, structuredData }
 }
+/** Per-user achievement summary (`/me/progress`): titled but never indexed */
+export function buildProgressSummarySeo(locale: SupportedLocale) {
+  return {
+    meta: [{ title: formatSeoTitle(t(locale, 'completion:progress.title')) }, { name: 'robots', content: 'noindex' }],
+  }
+}
