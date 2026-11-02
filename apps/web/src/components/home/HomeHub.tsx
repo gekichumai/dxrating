@@ -69,26 +69,19 @@ const QuickStats: FC = () => {
             <span className="text-xl font-bold tabular-nums">{floor ?? '—'}</span>
           </MaterialSurface>
         </Link>
-        {stats.nearestPlate ? (
-          <Link
-            to={`/plates/${stats.nearestPlate.plate.id}` as never}
-            onClick={() => trackClick('quick_stats', 'nearest_plate')}
-            className="no-underline text-inherit"
-          >
-            <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5 transition hover:bg-white/70 dark:hover:bg-zinc-800/60">
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">{t('home:stats.nearest-plate')}</span>
+        <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5">
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">{t('home:stats.nearest-plate')}</span>
+          {stats.nearestPlate ? (
+            <>
               <span className="truncate text-xl font-bold">{plateName(stats.nearestPlate.plate, script)}</span>
               <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
                 {stats.nearestPlate.completedSheets} / {stats.nearestPlate.totalSheets}
               </span>
-            </MaterialSurface>
-          </Link>
-        ) : (
-          <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5">
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">{t('home:stats.nearest-plate')}</span>
+            </>
+          ) : (
             <span className="text-xl font-bold">—</span>
-          </MaterialSurface>
-        )}
+          )}
+        </MaterialSurface>
       </div>
     </section>
   )
@@ -153,8 +146,7 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
             return (
               <li key={feature.id}>
                 <Link
-                  to={feature.to as never}
-                  search={feature.search as never}
+                  to={feature.to}
                   onClick={() => trackClick('feature', feature.id)}
                   className="block h-full text-inherit no-underline"
                 >

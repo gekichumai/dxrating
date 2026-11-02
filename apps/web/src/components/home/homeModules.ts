@@ -1,4 +1,5 @@
 import type { SongCatalogDocument } from '@gekichumai/dxdata'
+import type { LinkProps } from '@tanstack/react-router'
 import { buildRecentChartLinks } from '@/components/chartDiscovery/recentCharts'
 
 export const HOME_RECENT_SONG_LIMIT = 8
@@ -47,18 +48,12 @@ export type HomeFeatureId =
   | 'trending'
   | 'versions'
 
-export type HomeFeature = { id: HomeFeatureId; to: string; search?: Record<string, string> }
+/** `to` is checked against the generated route tree, so a card can only point at a route that exists */
+export type HomeFeature = { id: HomeFeatureId; to: NonNullable<LinkProps['to']> }
 
 export const HOME_FEATURES: readonly HomeFeature[] = [
   { id: 'rating', to: '/rating' },
-  { id: 'plates', to: '/plates' },
   { id: 'constants', to: '/constants' },
-  { id: 'level_progress', to: '/me/progress' },
-  { id: 'toplists', to: '/me/records' },
-  { id: 'recommend', to: '/me/recommend' },
-  { id: 'tolerance', to: '/tools/tolerance' },
-  { id: 'rating_tools', to: '/tools/rating' },
-  { id: 'random', to: '/random' },
   { id: 'recent', to: '/charts/recent' },
   { id: 'trending', to: '/charts/trending' },
   { id: 'versions', to: '/versions' },
