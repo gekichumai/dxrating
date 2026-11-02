@@ -24,13 +24,11 @@ describe('DevelopersPage', () => {
     )
   })
 
-  it('states the dxdata license and how to credit it', () => {
+  it('states data terms and how to credit DXRating', () => {
     render(<DevelopersPage />)
 
     expect(screen.getByRole('heading', { level: 2, name: 'Terms' })).toBeTruthy()
-    expect(screen.getByText('Data from DXRating (dxrating.net), CC BY-NC 4.0')).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'CC BY-NC 4.0' }).getAttribute('href')).toBe(
-      'https://creativecommons.org/licenses/by-nc/4.0/',
-    )
+    expect(screen.getByText('Data from DXRating (dxrating.net)')).toBeTruthy()
+    expect(screen.queryByText(/CC BY-NC/)).toBeNull()
   })
 })

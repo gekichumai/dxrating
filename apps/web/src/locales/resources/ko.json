@@ -203,7 +203,7 @@
   },
   "developers": {
     "seo-title": "개발자: MCP 서버와 API",
-    "seo-description": "DXRating의 maimai DX 데이터로 개발하세요. AI 어시스턴트를 MCP 서버에 연결하거나 공개 REST API를 호출할 수 있습니다. 데이터는 CC BY-NC 4.0입니다.",
+    "seo-description": "DXRating의 maimai DX 데이터로 개발하세요. AI 어시스턴트를 MCP 서버에 연결하거나 공개 REST API를 호출할 수 있습니다.",
     "title": "DXRating으로 개발하기",
     "description": "maimai DX 곡, 채보, 보면 상수를 AI 어시스턴트와 직접 만든 코드에서.",
     "mcp.title": "MCP 서버",
@@ -215,8 +215,8 @@
     "api.endpoint": "Base URL",
     "api.action": "API 문서",
     "terms.title": "이용 조건",
-    "terms.license": "라이선스",
-    "terms.license-description": "곡·채보 데이터(dxdata)는 출처를 표기하면 비상업적 용도로 자유롭게 사용할 수 있습니다.",
+    "terms.data": "데이터",
+    "terms.data-description": "곡, 재킷, 채보의 권리는 SEGA와 각 권리자에게 있으며 DXRating은 저작권을 주장하지 않습니다. 자유롭게 사용할 수 있으며, 공개할 때는 DXRating 출처를 표기해 주세요.",
     "terms.credit": "출처 표기",
     "terms.limits": "요청 제한",
     "terms.limits-description": "MCP: 클라이언트당 분당 300회. REST API: 고정 한도는 없지만 캐시와 ETag를 사용하고 dxdata를 반복해서 내려받지 마세요."

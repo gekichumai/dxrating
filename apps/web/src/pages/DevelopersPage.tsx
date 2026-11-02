@@ -10,8 +10,7 @@ const MCP_ENDPOINT = 'https://mcp.dxrating.net/mcp'
 const MCP_GUIDE_URL = 'https://mcp.dxrating.net/?via=dxrating-developers'
 const API_BASE = 'https://miruku.dxrating.net/api/v1'
 const API_DOCS_URL = 'https://miruku.dxrating.net/docs'
-const DATA_LICENSE_URL = 'https://creativecommons.org/licenses/by-nc/4.0/'
-const ATTRIBUTION_LINE = 'Data from DXRating (dxrating.net), CC BY-NC 4.0'
+const ATTRIBUTION_LINE = 'Data from DXRating (dxrating.net)'
 
 const externalLinkProps = { target: '_blank', rel: 'noopener noreferrer' } as const
 
@@ -38,10 +37,7 @@ const Option = ({
   action,
   links,
 }: OptionProps) => (
-  <section
-    aria-labelledby={id}
-    className="flex flex-col rounded-2xl border border-solid border-black/10 bg-white p-5 md:p-6 shadow-sm"
-  >
+  <section aria-labelledby={id} className="flex flex-col px-5 py-6 md:p-8">
     <div className="flex items-center gap-3">
       <span
         className={clsx(
@@ -107,74 +103,66 @@ export const DevelopersPage = () => {
       itemScope
       itemType="https://schema.org/WebPage"
     >
-      <header className="rounded-2xl bg-white/85 px-5 py-6 md:px-8 md:py-8 shadow-sm backdrop-blur">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-balance" itemProp="name">
-          {t('developers:title')}
-        </h1>
-        <p
-          className="mt-3 max-w-2xl text-base md:text-lg leading-relaxed text-zinc-600 text-pretty"
-          itemProp="description"
+      <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+        <header className="px-5 pt-7 pb-6 md:px-8 md:pt-10 md:pb-8 bg-zinc-50/80 border-b border-solid border-x-0 border-t-0 border-zinc-200">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-balance" itemProp="name">
+            {t('developers:title')}
+          </h1>
+          <p
+            className="mt-3 max-w-2xl text-base md:text-lg leading-relaxed text-zinc-600 text-pretty"
+            itemProp="description"
+          >
+            {t('developers:description')}
+          </p>
+        </header>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-solid divide-zinc-200">
+          <Option
+            id="developers-mcp"
+            Icon={McpLogo}
+            iconClassName="bg-white text-black"
+            title={t('developers:mcp.title')}
+            description={t('developers:mcp.description')}
+            endpointLabel={t('developers:mcp.endpoint')}
+            endpoint={MCP_ENDPOINT}
+            action={{ label: t('developers:mcp.action'), href: MCP_GUIDE_URL }}
+            links={[]}
+          />
+          <Option
+            id="developers-api"
+            Icon={MdiCodeBraces}
+            iconClassName="bg-slate-900 text-white"
+            title={t('developers:api.title')}
+            description={t('developers:api.description')}
+            endpointLabel={t('developers:api.endpoint')}
+            endpoint={API_BASE}
+            action={{ label: t('developers:api.action'), href: API_DOCS_URL }}
+            links={[
+              { label: 'OpenAPI', href: 'https://miruku.dxrating.net/spec.json' },
+              { label: 'dxdata', href: `${API_BASE}/dxdata` },
+              { label: 'llms.txt', href: 'https://dxrating.net/llms.txt' },
+            ]}
+          />
+        </div>
+
+        <section
+          aria-labelledby="developers-terms"
+          className="px-5 py-6 md:p-8 border-t border-solid border-x-0 border-b-0 border-zinc-200"
         >
-          {t('developers:description')}
-        </p>
-      </header>
-
-      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Option
-          id="developers-mcp"
-          Icon={McpLogo}
-          iconClassName="bg-white text-black"
-          title={t('developers:mcp.title')}
-          description={t('developers:mcp.description')}
-          endpointLabel={t('developers:mcp.endpoint')}
-          endpoint={MCP_ENDPOINT}
-          action={{ label: t('developers:mcp.action'), href: MCP_GUIDE_URL }}
-          links={[]}
-        />
-        <Option
-          id="developers-api"
-          Icon={MdiCodeBraces}
-          iconClassName="bg-slate-900 text-white"
-          title={t('developers:api.title')}
-          description={t('developers:api.description')}
-          endpointLabel={t('developers:api.endpoint')}
-          endpoint={API_BASE}
-          action={{ label: t('developers:api.action'), href: API_DOCS_URL }}
-          links={[
-            { label: 'OpenAPI', href: 'https://miruku.dxrating.net/spec.json' },
-            { label: 'dxdata', href: `${API_BASE}/dxdata` },
-            { label: 'llms.txt', href: 'https://dxrating.net/llms.txt' },
-          ]}
-        />
-      </div>
-
-      <section
-        aria-labelledby="developers-terms"
-        className="mt-4 rounded-2xl border border-solid border-black/10 bg-white p-5 md:p-6 shadow-sm"
-      >
-        <h2 id="developers-terms" className="text-xl font-semibold tracking-tight">
-          {t('developers:terms.title')}
-        </h2>
-        <dl className="mt-4 divide-y divide-solid divide-x-0 divide-zinc-200">
-          <Term title={t('developers:terms.license')}>
-            {t('developers:terms.license-description')}{' '}
-            <a
-              href={DATA_LICENSE_URL}
-              target="_blank"
-              rel="noopener noreferrer license"
-              className="font-medium text-zinc-900 underline decoration-zinc-300 underline-offset-4"
-            >
-              CC BY-NC 4.0
-            </a>
-          </Term>
-          <Term title={t('developers:terms.credit')}>
-            <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[13px] text-zinc-900">
-              {ATTRIBUTION_LINE}
-            </code>
-          </Term>
-          <Term title={t('developers:terms.limits')}>{t('developers:terms.limits-description')}</Term>
-        </dl>
-      </section>
+          <h2 id="developers-terms" className="text-xl font-semibold tracking-tight">
+            {t('developers:terms.title')}
+          </h2>
+          <dl className="mt-4 divide-y divide-solid divide-x-0 divide-zinc-200">
+            <Term title={t('developers:terms.data')}>{t('developers:terms.data-description')}</Term>
+            <Term title={t('developers:terms.credit')}>
+              <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[13px] text-zinc-900">
+                {ATTRIBUTION_LINE}
+              </code>
+            </Term>
+            <Term title={t('developers:terms.limits')}>{t('developers:terms.limits-description')}</Term>
+          </dl>
+        </section>
+      </article>
     </div>
   )
 }

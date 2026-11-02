@@ -203,7 +203,7 @@
   },
   "developers": {
     "seo-title": "开发者：MCP 服务器与 API",
-    "seo-description": "使用 DXRating 的 maimai DX 数据：将 AI 助手连接到 MCP 服务器，或调用公开 REST API。数据采用 CC BY-NC 4.0。",
+    "seo-description": "使用 DXRating 的 maimai DX 数据：将 AI 助手连接到 MCP 服务器，或调用公开 REST API。",
     "title": "用 DXRating 开发",
     "description": "maimai DX 的歌曲、谱面与定数，供 AI 助手和你自己的程序使用。",
     "mcp.title": "MCP 服务器",
@@ -215,8 +215,8 @@
     "api.endpoint": "Base URL",
     "api.action": "API 文档",
     "terms.title": "使用条款",
-    "terms.license": "许可",
-    "terms.license-description": "歌曲与谱面数据（dxdata）可在注明出处的前提下免费用于非商业用途。",
+    "terms.data": "数据",
+    "terms.data-description": "歌曲、曲绘与谱面的权利属于 SEGA 及各权利人，DXRating 不主张著作权。可自由使用；公开发布时请注明来源 DXRating。",
     "terms.credit": "署名示例",
     "terms.limits": "速率限制",
     "terms.limits-description": "MCP：每个客户端每分钟 300 次请求。REST API：无硬性上限，但请做好缓存并使用 ETag，避免重复下载 dxdata。"

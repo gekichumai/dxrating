@@ -203,7 +203,7 @@
   },
   "developers": {
     "seo-title": "開発者向け: MCP サーバーと API",
-    "seo-description": "DXRating の maimai DX データを活用。AI アシスタントを MCP サーバーに接続するか、公開 REST API を使えます。データは CC BY-NC 4.0。",
+    "seo-description": "DXRating の maimai DX データを活用。AI アシスタントを MCP サーバーに接続するか、公開 REST API を使えます。",
     "title": "DXRating で開発する",
     "description": "maimai DX の楽曲・譜面・譜面定数を、AI アシスタントや自作ツールから。",
     "mcp.title": "MCP サーバー",
@@ -215,8 +215,8 @@
     "api.endpoint": "ベース URL",
     "api.action": "API ドキュメント",
     "terms.title": "利用条件",
-    "terms.license": "ライセンス",
-    "terms.license-description": "楽曲・譜面データ（dxdata）は、クレジット表記のうえ非商用で自由に使えます。",
+    "terms.data": "データ",
+    "terms.data-description": "楽曲・ジャケット・譜面の権利は SEGA および各権利者に帰属し、DXRating は著作権を主張しません。自由に使えます。公開する場合は DXRating のクレジット表記をお願いします。",
     "terms.credit": "クレジット表記",
     "terms.limits": "レート制限",
     "terms.limits-description": "MCP：クライアントごとに毎分 300 リクエスト。REST API：上限はありませんが、キャッシュと ETag を使い、dxdata の再取得は控えてください。"

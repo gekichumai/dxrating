@@ -203,7 +203,7 @@
   },
   "developers": {
     "seo-title": "Developers: MCP server and API",
-    "seo-description": "Build on DXRating's maimai DX data: connect an AI assistant to the MCP server, or call the public REST API. Data is CC BY-NC 4.0.",
+    "seo-description": "Build on DXRating's maimai DX data: connect an AI assistant to the MCP server, or call the public REST API.",
     "title": "Build with DXRating",
     "description": "maimai DX songs, charts and internal levels, for AI assistants and your own code.",
     "mcp.title": "MCP server",
@@ -215,8 +215,8 @@
     "api.endpoint": "Base URL",
     "api.action": "API docs",
     "terms.title": "Terms",
-    "terms.license": "License",
-    "terms.license-description": "Song and chart data (dxdata) is free for non-commercial use with credit.",
+    "terms.data": "Data",
+    "terms.data-description": "Song titles, artwork and charts belong to SEGA and their rights holders; DXRating claims no copyright over them. Free to use. If you publish something built on it, please credit DXRating.",
     "terms.credit": "Credit line",
     "terms.limits": "Rate limits",
     "terms.limits-description": "MCP: 300 requests per minute per client. REST API: no hard limit, but please cache and use ETag instead of re-downloading dxdata."
