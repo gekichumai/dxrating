@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import IconMdiCheck from '~icons/mdi/check'
 import { useCloudSaveStatus, useCloudSaveUi } from '@/models/scores/CloudSaveUiContext'
 import { LoadError } from './LoadError'
-import { formatLocalDate } from './provenanceLabel'
+import { formatLocalDate, labelSeparator } from './provenanceLabel'
 import './cloud-save.css'
 
 const REGION_LABELS: Record<SaveDTO['region'], string> = {
@@ -68,6 +68,7 @@ export const SaveSelector: FC = () => {
   }
 
   const activeId = cloud.controller.saveId
+  const separator = labelSeparator(i18n.language)
   return (
     <ul className="m-0 flex list-none flex-col gap-1 p-0" aria-label={t('rating-calculator:cloud-save.saves.title')}>
       {state.saves.map((save) => {
@@ -102,7 +103,19 @@ export const SaveSelector: FC = () => {
                     {region}
                   </span>
                 </span>
-                <span className="text-xs text-zinc-600 tabular-nums">{details.join(' · ')}</span>
+                {/* Each detail stays on one line ("last synced 2026-11-02" never breaks inside the date) and carries
+                    its separator, so a wrapped line starts with "·" instead of the line above ending in one */}
+                <span className="text-xs text-zinc-600 tabular-nums">
+                  {details.map((detail, index) => (
+                    <span key={index}>
+                      {index > 0 && separator.startsWith(' ') && ' '}
+                      <span className="whitespace-nowrap">
+                        {index > 0 && separator.trimStart()}
+                        {detail}
+                      </span>
+                    </span>
+                  ))}
+                </span>
               </span>
               {active && <IconMdiCheck className="size-5 shrink-0 text-zinc-700" aria-hidden />}
             </button>

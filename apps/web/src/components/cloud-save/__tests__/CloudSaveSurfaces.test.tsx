@@ -207,17 +207,26 @@ describe('SyncStatusIndicator', () => {
     expect(within(dialog).getByText('Syncing… · 3 changes waiting to sync').closest('output')).toBeNull()
   })
 
-  it('below 375px shrinks like the header icon buttons and leaves the count to its label', () => {
+  it('shows one number, the issue count, and leaves the pending count to its label', () => {
+    for (const state of ['syncing', 'offline', 'error'] as const) {
+      const { ui } = demo(state)
+      const { unmount } = render(<SyncStatusIndicator />, { wrapper: withCloud(ui) })
+      const button = screen.getByRole('button', { name: /3 changes waiting to sync, 3 sync issues$/ })
+      // 3 pending changes and 3 issues: the "3" appears once, on the issues badge
+      expect(within(button).getAllByText('3')).toHaveLength(1)
+      expect(within(button).getByText('3').className).toContain('bg-amber-700')
+      unmount()
+    }
+  })
+
+  it('keeps one size in every state and shrinks below 375px like the header icon buttons', () => {
     const { ui } = demo('offline')
     render(<SyncStatusIndicator />, { wrapper: withCloud(ui) })
     const button = screen.getByRole('button')
-    expect(button.className).toMatch(/(^| )px-1\.5( |$)/)
-    expect(button.className).toContain('2xs:px-2')
+    expect(button.className).toMatch(/(^| )size-8( |$)/)
+    expect(button.className).toContain('2xs:size-9')
     expect(button.className).toContain('2xs:mr-1')
     expect(button.className).not.toMatch(/(^| )mr-1( |$)/)
-    const count = within(button).getByText('3', { selector: 'span:not(.bg-amber-700)' })
-    expect(count.className).toContain('hidden')
-    expect(count.className).toContain('2xs:inline')
   })
 })
 
@@ -233,6 +242,8 @@ describe('SaveSelector', () => {
     expect(options[0]?.textContent).toContain('Main card')
     expect(options[0]?.textContent).toContain('JP')
     expect(options[0]?.textContent).toContain('1,287 records · B50 15,992 · last synced 2026-11-02')
+    // Each detail stays on one line: the date never breaks away from "last synced"
+    expect(within(options[0]!).getByText('· last synced 2026-11-02').className).toContain('whitespace-nowrap')
     expect(options[1]?.textContent).toContain('Intl')
     expect(options[1]?.textContent).not.toContain('B50')
 

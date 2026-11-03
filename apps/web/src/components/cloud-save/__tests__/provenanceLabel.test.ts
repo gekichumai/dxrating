@@ -2,7 +2,7 @@ import type { Provenance } from '@gekichumai/maimai-domain'
 import i18n from 'i18next'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
-import { describeProvenance, shortAccountId } from '../provenanceLabel'
+import { describeProvenance, labelSeparator, shortAccountId } from '../provenanceLabel'
 
 const base: Provenance = {
   source: 'manual',
@@ -87,12 +87,42 @@ describe('describeProvenance', () => {
     )
   })
 
-  it('translates the wording', async () => {
+  it('translates the wording, joined with the full-width middle dot in Japanese and Chinese', async () => {
     await i18n.changeLanguage('zh-Hans')
-    expect(describeProvenance(verified({ sourceAccountId: '123456789' }), t as never).text).toBe(
-      '已验证 · maimai NET (JP) · 好友码 1234… · 2026-11-02 抓取',
+    expect(describeProvenance(verified({ sourceAccountId: '123456789' }), t as never, 'zh-Hans').text).toBe(
+      '已验证・maimai NET (JP)・好友码 1234…・2026-11-02 抓取',
+    )
+    await i18n.changeLanguage('ja')
+    // No space after the full-width bracket: the bracket and the dot carry their own spacing
+    expect(
+      describeProvenance(
+        { ...base, source: 'dxrating-json', claimedSource: 'lxns', entryMethod: 'file' },
+        t as never,
+        'ja',
+      ).text,
+    ).toBe('ファイルから（自己申告：LXNS）・未検証')
+    await i18n.changeLanguage('zh-Hant')
+    expect(describeProvenance({ ...base, source: 'aqua-dx', entryMethod: 'file' }, t as never, 'zh-Hant').text).toBe(
+      '來自檔案（AquaDX）・未驗證',
     )
     await i18n.changeLanguage('en')
+  })
+})
+
+describe('labelSeparator', () => {
+  it('spaces a middle dot in Latin and Korean text', () => {
+    expect(labelSeparator('en')).toBe(' · ')
+    expect(labelSeparator('ko')).toBe(' · ')
+    expect(labelSeparator(undefined)).toBe(' · ')
+  })
+
+  it('uses the full-width middle dot, unspaced, in Japanese and Chinese', () => {
+    for (const language of ['ja', 'ja-JP', 'zh-Hans', 'zh-Hant', 'zh']) expect(labelSeparator(language)).toBe('・')
+  })
+
+  it('does not mistake other languages for CJK', () => {
+    expect(labelSeparator('jav')).toBe(' · ')
+    expect(labelSeparator('zha')).toBe(' · ')
   })
 })
 

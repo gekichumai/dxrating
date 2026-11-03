@@ -10,7 +10,7 @@ export type ProvenanceKind = 'verified' | 'file' | 'manual' | 'edited'
 
 export interface ProvenanceLabel {
   kind: ProvenanceKind
-  /** The full sentence: "Verified · maimai NET (JP) · friend code 1234… · fetched 2026-11-02" */
+  /** The full sentence: "Verified · maimai NET (JP) · friend code 1234… · fetched 2026-11-02" (`・` in ja and zh) */
   text: string
 }
 
@@ -51,8 +51,16 @@ export function formatLocalDate(iso: string): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
-export function describeProvenance(provenance: Provenance, t: TFunction): ProvenanceLabel {
-  const separator = ' · '
+/**
+ * The joiner between the parts of a label. Latin scripts space a middle dot; Japanese and Chinese use the full-width
+ * middle dot, which carries its own spacing, so nothing doubles the gap a full-width bracket already leaves.
+ */
+export function labelSeparator(language: string | undefined): string {
+  return /^(ja|zh)(-|$)/i.test(language ?? '') ? '・' : ' · '
+}
+
+export function describeProvenance(provenance: Provenance, t: TFunction, language?: string): ProvenanceLabel {
+  const separator = labelSeparator(language)
   if (provenance.verification === 'verified') {
     const parts = [t('rating-calculator:cloud-save.provenance.verified'), sourceName(provenance.source)]
     const account = shortAccountId(provenance.sourceAccountId)

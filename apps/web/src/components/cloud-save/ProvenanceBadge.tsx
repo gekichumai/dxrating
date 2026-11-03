@@ -34,8 +34,8 @@ const ICON_TONES: Record<ProvenanceKind, string> = {
 
 /** The provenance sentence of a record, as a badge (record detail) */
 export const ProvenanceBadge: FC<{ provenance: Provenance; className?: string }> = ({ provenance, className }) => {
-  const { t } = useTranslation(['rating-calculator'])
-  const label = useMemo(() => describeProvenance(provenance, t), [provenance, t])
+  const { t, i18n } = useTranslation(['rating-calculator'])
+  const label = useMemo(() => describeProvenance(provenance, t, i18n.language), [provenance, t, i18n.language])
   const Icon = ICONS[label.kind]
   return (
     <span
@@ -65,8 +65,11 @@ export const RecordProvenanceBadge: FC<{ sheetId: string; className?: string }> 
  */
 export const RecordProvenanceIcon: FC<{ sheetId: string; className?: string }> = ({ sheetId, className }) => {
   const provenance = useCloudRecordProvenance(sheetId)
-  const { t } = useTranslation(['rating-calculator'])
-  const label = useMemo(() => (provenance ? describeProvenance(provenance, t) : null), [provenance, t])
+  const { t, i18n } = useTranslation(['rating-calculator'])
+  const label = useMemo(
+    () => (provenance ? describeProvenance(provenance, t, i18n.language) : null),
+    [provenance, t, i18n.language],
+  )
   if (!label || label.kind === 'manual') return null
   const Icon = ICONS[label.kind]
   return (
