@@ -1,5 +1,5 @@
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
-import { buildSongCatalog } from '@gekichumai/maimai-domain'
+import { buildSongCatalog, calculateBest50, recommendRatingRaises } from '@gekichumai/maimai-domain'
 import { act } from '@testing-library/react'
 import { hydrateRoot } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
@@ -81,5 +81,46 @@ describe('toRatingEntries', () => {
     expect(entries).toHaveLength(2)
     expect(entries[1]!.source).toEqual({ provider: 'diving-fish', best50Bucket: 'b15' })
     expect(entries[0]!.identity).toBeDefined()
+  })
+})
+describe('grouped bucket hints agree with calculateBest50', () => {
+  const version = 'PRiSM' as never
+  const cnCatalog = buildSongCatalog(catalogSnapshot, version)
+  const cnMasters = cnCatalog.sheets.filter(
+    (s) => s.difficulty === 'master' && s.serverIds.includes('cn') && s.isRatingEligible,
+  )
+  const fillers = cnMasters.filter((s) => s.version === 'PRiSM' && s.internalLevelValue >= 13).slice(0, 15)
+  // An old chart: B35 by version, B15 by the provider hint on its lower-scoring duplicate
+  const target = cnMasters.find(
+    (s) => s.version === 'FiNALE' && s.internalLevelValue >= 12 && s.internalLevelValue < 13,
+  )!
+  const hint = { divingFish: { ratingEligibility: 'b15' as const } }
+
+  it.each([
+    ['hinted duplicate last', false],
+    ['hinted duplicate first', true],
+  ])('prefers a Diving Fish hint over a non-hinted source (%s)', (_case, hintedFirst) => {
+    const high: PlayEntry = { sheetId: target.id, achievementRate: 99, source: { provider: 'lxns' } as never }
+    const low: PlayEntry = { sheetId: target.id, achievementRate: 98, providerConfig: hint }
+    const entries: PlayEntry[] = [
+      ...fillers.map((s) => ({ sheetId: s.id, achievementRate: 100.5, providerConfig: hint })),
+      ...(hintedFirst ? [low, high] : [high, low]),
+    ]
+    const ratingEntries = toRatingEntries(entries, cnCatalog)
+    const best50 = calculateBest50({ catalog: cnCatalog, version, region: 'cn', entries: ratingEntries })
+    expect(best50.b15).toHaveLength(15)
+    const grouped = groupUserRecords(entries, (id) => cnCatalog.getById(id))
+    expect(grouped.get(target.id)!.source).toEqual({ provider: 'diving-fish', best50Bucket: 'b15' })
+    const records = new Map([...grouped].map(([id, r]) => [id, { ...r.entry, source: r.source }]))
+    const [rec] = recommendRatingRaises({ sheets: [target], best50, records, version, region: 'cn' })
+    const recalculated = (rate: number) =>
+      calculateBest50({
+        catalog: cnCatalog,
+        version,
+        region: 'cn',
+        entries: [...ratingEntries, { ...ratingEntries.at(-1)!, achievementRate: rate, source: undefined }],
+      }).statistics.b50Sum - best50.statistics.b50Sum
+    if (rec) expect(rec.gain).toBe(recalculated(rec.targetAchievement))
+    else expect(recalculated(100.5)).toBe(0)
   })
 })
