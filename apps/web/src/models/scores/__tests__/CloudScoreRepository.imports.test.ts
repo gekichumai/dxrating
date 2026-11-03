@@ -1,14 +1,20 @@
-import type { ImportJobDTO, ImportRecordInput, ImportResultDTO } from '@gekichumai/api-contract'
+import {
+  type ImportJobDTO,
+  type ImportRecordInput,
+  ImportRecordSchema,
+  type ImportResultDTO,
+} from '@gekichumai/api-contract'
 import type { Provenance } from '@gekichumai/maimai-domain'
 import { IDBFactory } from 'fake-indexeddb'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { PlayEntry } from '../../../components/rating/RatingCalculatorAddEntryForm'
 import {
   autoNetImportKey,
-  canonicalImportBody,
+  chunkPayloadSha256,
   CloudClearNotSentError,
   CloudImportHttpError,
   entriesToImportRecords,
+  ImportAlreadyRunningError,
   NothingToImportError,
   ServerImportFailedError,
   ServerImportsDisabledError,
@@ -71,6 +77,8 @@ class FakeImportsServer {
   serverRecords: { sheetId: string; achievement: number }[] = [{ sheetId: SHEET_A, achievement: 1005000 }]
   /** Polls of a running job left before it finishes */
   runningPolls = 0
+  /** Sheet IDs the server rejects on its own (as if its catalog did not know them) */
+  readonly unknownSheets = new Set<string>()
   private nextJob = 1
 
   constructor(private readonly records: FakeCloudSaveServer) {}
@@ -79,17 +87,36 @@ class FakeImportsServer {
     client: async (input) => {
       this.call('client', input)
       const job = this.jobFor(input.idempotencyKey, input.source as ImportJobDTO['source'], 'client', input.trigger)
+      // As the server: every record validated with the strict schema, counts added up over the chunks
+      const next = { ...job.counts, fetched: job.counts.fetched + input.records.length }
       for (const record of input.records) {
-        const value = record as Record<string, unknown>
-        this.records.put(value.sheetId as string, value.achievement as number, {
+        const parsed = ImportRecordSchema.safeParse(record)
+        if (!parsed.success) {
+          next.rejected++
+          continue
+        }
+        const value = parsed.data
+        if (this.unknownSheets.has(value.sheetId)) {
+          next.skippedUnknownSheet++
+          continue
+        }
+        const existing = this.records.records.get(value.sheetId)
+        const live = existing && existing.deletedAt === null ? existing : null
+        if (live && live.achievement !== null && live.achievement >= value.achievement) {
+          next.unchanged++
+          continue
+        }
+        if (live) next.improved++
+        else next.inserted++
+        this.records.put(value.sheetId, value.achievement, {
           ...manualProvenance(),
           source: input.source as Provenance['source'],
-          claimedSource: (value.claimedSource as string | null) ?? null,
+          claimedSource: value.claimedSource ?? null,
           entryMethod: 'file',
           importJobId: job.id,
         })
       }
-      job.counts = counts({ fetched: job.counts.fetched + input.records.length })
+      job.counts = next
       if (input.chunkIndex === input.chunkCount - 1) job.status = 'succeeded'
       return this.result(job)
     },
@@ -113,9 +140,13 @@ class FakeImportsServer {
     },
   }
 
-  /** A job of another action (another tab, the automatic import) that is still running */
-  startRunning(source: ImportJobDTO['source']): ImportJobDTO {
-    const job = this.jobFor(`other-${this.nextJob}`, source, 'server', 'auto')
+  /**
+   * A job of another action (another tab, the automatic import) that is still running: `auto` with no account yet
+   * unless `overrides` say otherwise
+   */
+  startRunning(source: ImportJobDTO['source'], overrides: Partial<ImportJobDTO> = {}): ImportJobDTO {
+    const job = this.jobFor(`other-${this.nextJob}`, source, 'server', overrides.trigger ?? 'auto')
+    Object.assign(job, overrides)
     return job
   }
 
@@ -265,9 +296,9 @@ describe('CloudScoreRepository file imports (client-imports)', () => {
       sourceAccountId: null,
     })
     expect(input.idempotencyKey).toMatch(/^[A-Za-z0-9][\w.:-]{7,127}$/)
-    // The canonical body's hash, as a cross-check
+    // The chunk's canonical hash, as the server computes it, as a cross-check
     const records = entriesToImportRecords(entries, { source: 'aqua-dx', claimedSource: null }).records
-    expect(input.rawPayloadSha256).toBe(await sha256Hex(canonicalImportBody(records)))
+    expect(input.rawPayloadSha256).toBe(await chunkPayloadSha256(records))
     // No provenance claims beyond the claimed provider (none for a file's own source)
     for (const record of input.records as ImportRecordInput[]) {
       expect(Object.keys(record).sort()).toEqual(
@@ -346,7 +377,11 @@ describe('CloudScoreRepository file imports (client-imports)', () => {
       [1, 2, 1],
     ])
     expect(new Set(chunks.map((chunk) => chunk.idempotencyKey)).size).toBe(1)
-    expect(new Set(chunks.map((chunk) => chunk.rawPayloadSha256)).size).toBe(1)
+    // Each chunk carries the hash of its own records, as the server hashes each chunk
+    for (const chunk of chunks) {
+      expect(chunk.rawPayloadSha256).toBe(await chunkPayloadSha256(chunk.records as never))
+    }
+    expect(chunks[0]!.rawPayloadSha256).not.toBe(chunks[1]!.rawPayloadSha256)
     expect(imports.jobs.size).toBe(1)
     expect(repository.entries()).toHaveLength(5001)
   })
@@ -423,6 +458,76 @@ describe('CloudScoreRepository file imports (client-imports)', () => {
       { source: 'dxrating-json', mode: 'merge' },
     )
     expect(result).toMatchObject({ count: 1, skipped: 1 })
+  })
+
+  it("never clears the save when no record passes the server's schema, and says so", async () => {
+    server.put(SHEET_B, 990000)
+    const repository = await openRepository()
+
+    // Converts fine, but the server's ImportRecordSchema caps the DX score at 100000
+    const error = await repository
+      .applyImport([{ sheetId: SHEET_A, achievementRate: 99, dxScore: 100001 }], {
+        source: 'aqua-dx',
+        mode: 'replace',
+      })
+      .catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(NothingToImportError)
+    expect(error).toMatchObject({ skipped: 0, rejected: 1 })
+    expect(server.mutateCalls).toEqual([])
+    expect(routes()).toEqual([])
+    expect(repository.entries().map((entry) => entry.sheetId)).toEqual([SHEET_B])
+  })
+
+  it('clears, then uploads only the records that pass, reporting what the server did', async () => {
+    const [sheetC] = sheetIds(1)
+    server.put(SHEET_B, 990000)
+    const repository = await openRepository()
+
+    const result = await repository.applyImport(
+      [
+        { sheetId: SHEET_A, achievementRate: 99, dxScore: 2400 },
+        { sheetId: sheetC!, achievementRate: 98, dxScore: 100001 },
+        { sheetId: 'retired song__dxrt__dx__dxrt__master', achievementRate: 97 },
+      ],
+      { source: 'aqua-dx', mode: 'replace' },
+    )
+
+    expect(server.mutateCalls.flat().map((mutation) => [mutation.op, mutation.sheetId])).toEqual([['delete', SHEET_B]])
+    const uploads = imports.calls.filter((call) => call.route === 'client')
+    expect(uploads).toHaveLength(1)
+    expect((uploads[0]!.input.records as ImportRecordInput[]).map((record) => record.sheetId)).toEqual([SHEET_A])
+    expect(result).toMatchObject({
+      count: 1,
+      skipped: 1,
+      rejected: 1,
+      job: { counts: expect.objectContaining({ fetched: 1, inserted: 1, rejected: 0 }) },
+    })
+    expect(repository.entries().map((entry) => entry.sheetId)).toEqual([SHEET_A])
+  })
+
+  it("reports the server's counts for a merge, not the number of records sent", async () => {
+    server.put(SHEET_A, 1005000)
+    const [sheetC] = sheetIds(1)
+    imports.unknownSheets.add(sheetC!)
+    const repository = await openRepository()
+
+    const result = await repository.applyImport(
+      [
+        { sheetId: SHEET_A, achievementRate: 99 },
+        { sheetId: SHEET_B, achievementRate: 99 },
+        { sheetId: sheetC!, achievementRate: 99 },
+      ],
+      { source: 'mu-net', mode: 'merge' },
+    )
+
+    // 3 sent: 1 new, 1 kept the better score already saved, 1 unknown to the server
+    expect(result).toMatchObject({
+      count: 2,
+      skipped: 1,
+      rejected: 0,
+      job: { counts: expect.objectContaining({ fetched: 3, inserted: 1, unchanged: 1, skippedUnknownSheet: 1 }) },
+    })
   })
 
   it('imports nothing when the clear cannot reach the server', async () => {
@@ -590,7 +695,8 @@ describe('CloudScoreRepository server imports', () => {
 
   it('attaches to the running job on 409 IMPORT_IN_PROGRESS and polls it', async () => {
     const repository = await openRepository()
-    const running = imports.startRunning('lxns')
+    // LXNS: always the user's one linked account; the same trigger makes it the same import
+    const running = imports.startRunning('lxns', { trigger: 'user' })
     imports.runningPolls = 2
     imports.failures.push({
       status: 409,
@@ -607,9 +713,102 @@ describe('CloudScoreRepository server imports', () => {
     expect(repository.entries()).toHaveLength(1)
   })
 
+  it('never adopts an automatic LXNS job for a user import: waits for it, then runs its own', async () => {
+    const repository = await openRepository()
+    const running = imports.startRunning('lxns')
+    imports.runningPolls = 1
+    imports.failures.push({ status: 409, code: 'CONFLICT', data: { reason: 'IMPORT_IN_PROGRESS', jobId: running.id } })
+
+    const progress = await collect(repository.runServerImport('lxns', { idempotencyKey: 'key-lxns-own' }))
+
+    expect(routes()).toEqual(['lxns', 'get', 'get', 'lxns'])
+    expect(imports.calls.filter((call) => call.route === 'lxns').map((call) => call.input.idempotencyKey)).toEqual([
+      'key-lxns-own',
+      'key-lxns-own',
+    ])
+    const job = progress.at(-1)?.job
+    expect(job?.id).not.toBe(running.id)
+    expect(job?.id).toBe(imports.jobByKey.get('key-lxns-own'))
+  })
+
+  it('never reports a Diving-Fish job of another account as this import', async () => {
+    const repository = await openRepository()
+    const running = imports.startRunning('diving-fish', {
+      trigger: 'user',
+      sourceAccountKind: 'df_username',
+      sourceAccountId: 'bob',
+    })
+    imports.failures.push({ status: 409, code: 'CONFLICT', data: { reason: 'IMPORT_IN_PROGRESS', jobId: running.id } })
+
+    const progress = await collect(
+      repository.runServerImport('diving-fish', { username: 'alice', idempotencyKey: 'key-df-alice' }),
+    )
+
+    // Waited for bob's job, then sent alice's request once more with the same key
+    expect(routes()).toEqual(['divingFish', 'get', 'divingFish'])
+    expect(imports.calls.filter((call) => call.route === 'divingFish').map((call) => call.input)).toEqual([
+      expect.objectContaining({ idempotencyKey: 'key-df-alice', username: 'alice' }),
+      expect.objectContaining({ idempotencyKey: 'key-df-alice', username: 'alice' }),
+    ])
+    const job = progress.at(-1)?.job
+    expect(job?.id).not.toBe(running.id)
+    expect(job?.id).toBe(imports.jobByKey.get('key-df-alice'))
+  })
+
+  it('tells the user another import is running when the source is still busy after waiting once', async () => {
+    const repository = await openRepository()
+    const first = imports.startRunning('diving-fish', {
+      trigger: 'user',
+      sourceAccountKind: 'df_username',
+      sourceAccountId: 'bob',
+    })
+    const conflict = (jobId: string) => ({
+      status: 409,
+      code: 'CONFLICT',
+      data: { reason: 'IMPORT_IN_PROGRESS', jobId },
+    })
+    imports.failures.push(conflict(first.id))
+    imports.api.get = async (input) => {
+      imports.calls.push({ route: 'get', input })
+      // bob's job ends, and another one of the source starts before alice's request is sent again
+      imports.failures.push(conflict('dimp_other'))
+      return { ...first, status: 'succeeded', counts: counts({ inserted: 9 }) }
+    }
+
+    const progress: ImportProgress[] = []
+    const error = await (async () => {
+      for await (const item of repository.runServerImport('diving-fish', { username: 'alice' })) progress.push(item)
+    })().catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(ImportAlreadyRunningError)
+    expect(error).toBeInstanceOf(ServerImportFailedError)
+    expect(progress.some((item) => item.stage === 'done' || item.job)).toBe(false)
+    expect(routes()).toEqual(['divingFish', 'get', 'divingFish'])
+  })
+
+  it('still attaches to a running Diving-Fish job of the same account and trigger', async () => {
+    const repository = await openRepository()
+    const running = imports.startRunning('diving-fish', {
+      trigger: 'user',
+      sourceAccountKind: 'df_username',
+      sourceAccountId: 'alice',
+    })
+    imports.runningPolls = 1
+    imports.failures.push({ status: 409, code: 'CONFLICT', data: { reason: 'IMPORT_IN_PROGRESS', jobId: running.id } })
+
+    const progress = await collect(repository.runServerImport('diving-fish', { username: ' alice ' }))
+
+    expect(routes()).toEqual(['divingFish', 'get', 'get'])
+    expect(progress.at(-1)).toMatchObject({ stage: 'done', job: { id: running.id, status: 'succeeded' } })
+  })
+
   it('throws when the job fails', async () => {
     const repository = await openRepository()
-    const running = imports.startRunning('diving-fish')
+    const running = imports.startRunning('diving-fish', {
+      trigger: 'user',
+      sourceAccountKind: 'df_username',
+      sourceAccountId: 'demo',
+    })
     imports.failures.push({ status: 409, code: 'CONFLICT', data: { reason: 'IMPORT_IN_PROGRESS', jobId: running.id } })
     imports.api.get = async () => ({ ...running, status: 'failed', errorCode: 'upstream_unavailable' })
 
@@ -671,8 +870,12 @@ describe('CloudScoreRepository server imports', () => {
     expect(net.requests[0]!.body.idempotencyKey).toBe(net.requests[1]!.body.idempotencyKey)
   })
 
-  it('attaches to a running NET job when the stream answers 409', async () => {
-    const running = imports.startRunning('maimai-net-jp')
+  it('attaches to a running NET job of the same SEGA ID and trigger when the stream answers 409', async () => {
+    const running = imports.startRunning('maimai-net-jp', {
+      trigger: 'user',
+      sourceAccountKind: 'segaid_hash',
+      sourceAccountId: (await sha256Hex('jp:a'))!,
+    })
     const net = imports.netTransport(
       () => new CloudImportHttpError(409, 'CONFLICT', { reason: 'IMPORT_IN_PROGRESS', jobId: running.id }),
     )
@@ -683,6 +886,31 @@ describe('CloudScoreRepository server imports', () => {
     expect(net.requests).toHaveLength(1)
     expect(routes()).toEqual(['get'])
     expect(progress.at(-1)?.job?.id).toBe(running.id)
+  })
+
+  it('never reports a NET job of another account as this import: waits, then streams its own', async () => {
+    // Another NET account of the same region, recorded by its friend code
+    const running = imports.startRunning('maimai-net-jp', {
+      trigger: 'user',
+      sourceAccountKind: 'friend_code',
+      sourceAccountId: '000111222333444',
+    })
+    const net = imports.netTransport((request, attempt) =>
+      attempt === 1
+        ? new CloudImportHttpError(409, 'CONFLICT', { reason: 'IMPORT_IN_PROGRESS', jobId: running.id })
+        : [{ type: 'done', result: { job: imports.runNetJob(request.body.idempotencyKey, 'jp'), revision: 1 } }],
+    )
+    const repository = await openRepository({ netImport: net.transport })
+
+    const progress = await collect(
+      repository.runServerImport('maimai-net', { region: 'jp', id: 'a', password: 'b', idempotencyKey: 'key-net-a' }),
+    )
+
+    expect(net.requests.map((request) => request.body.idempotencyKey)).toEqual(['key-net-a', 'key-net-a'])
+    expect(routes()).toEqual(['get'])
+    const job = progress.at(-1)?.job
+    expect(job?.id).not.toBe(running.id)
+    expect(job?.id).toBe(imports.jobByKey.get('key-net-a'))
   })
 
   it('reports the NET error event as a failed import without retrying', async () => {

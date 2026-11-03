@@ -13,16 +13,20 @@ import { decideManualMutation, type ManualEntryMethod } from '@gekichumai/maimai
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
 import { FETCH_STATE_PROGRESS, isFetchNetRecordProgressState } from '../../components/rating/io/import/netImportStages'
 import {
-  canonicalImportBody,
   chunkImportRecords,
+  chunkPayloadSha256,
   CloudClearNotSentError,
   clientImportPlan,
   entriesToImportRecords,
+  ImportAlreadyRunningError,
+  importedCount,
   importInProgressJobId,
   isRetryableImportError,
+  isSameServerImport,
   newIdempotencyKey,
   NothingToImportError,
   ServerImportFailedError,
+  type ServerImportIdentity,
   ServerImportsDisabledError,
   sha256Hex,
 } from './cloudImports'
@@ -406,9 +410,13 @@ export class CloudScoreRepository implements WebScoreRepository {
 
   /**
    * Uploads entries read from a file to `client-imports` (§7.3) as one job: `trigger: 'user'`, one idempotency key
-   * for every chunk of 5000 and every retry, the canonical body's SHA-256 as a cross-check. Then pulls what the job
+   * for every chunk of 5000 and every retry, each chunk's canonical SHA-256 as a cross-check. Then pulls what the job
    * wrote. A `replace` import clears the save first (§5.3 rule 5): the revision-guarded deletes of {@link clear}
    * must reach the server before the upload starts, or nothing is imported.
+   *
+   * Every record is validated with the server's strict `ImportRecordSchema` first: those it would reject are never
+   * sent, and an import where none passes throws {@link NothingToImportError} before anything is cleared. The result
+   * counts what the server did (`count`: the records the save now holds from this import), not what was sent.
    *
    * Records of maimai NET, LXNS and Diving-Fish are refused unless server imports are off (§7.4): the server fetches
    * those itself ({@link runServerImport}).
@@ -417,11 +425,11 @@ export class CloudScoreRepository implements WebScoreRepository {
     const plan = clientImportPlan(meta.source, this.serverImportsEnabled, meta.claimedSource)
     if (!plan) throw new UnsupportedScoreOperationError(`Uploading records from ${meta.source}`, this.kind)
     const imports = this.requireImports()
-    const { records, skipped } = entriesToImportRecords(entries, plan)
-    // Checked before the clear: an import with nothing to upload never empties the save
+    const { records, skipped, rejected } = entriesToImportRecords(entries, plan)
+    // Checked before the clear: an import none of whose records the server accepts never empties the save
     if (records.length === 0) {
-      if (entries.length > 0) throw new NothingToImportError(skipped)
-      return { count: 0, skipped }
+      if (entries.length > 0) throw new NothingToImportError(skipped, rejected)
+      return { count: 0, skipped, rejected }
     }
     if (meta.mode === 'replace') await this.clearBeforeImport()
 
@@ -429,9 +437,10 @@ export class CloudScoreRepository implements WebScoreRepository {
     const trigger = meta.trigger ?? 'user'
     const idempotencyKey = meta.idempotencyKey ?? newIdempotencyKey()
     const chunks = chunkImportRecords(records)
-    const rawPayloadSha256 = await sha256Hex(canonicalImportBody(records))
     let result: ImportResultDTO | null = null
     for (const [chunkIndex, chunk] of chunks.entries()) {
+      // What the server hashes for this chunk: its accepted records, which are all of them
+      const rawPayloadSha256 = await chunkPayloadSha256(chunk)
       const send = () =>
         this.withImportRetries(() =>
           imports.client({
@@ -451,7 +460,8 @@ export class CloudScoreRepository implements WebScoreRepository {
           result = await send()
           break
         } catch (error) {
-          // Another import of the save is running (another tab, another device): wait for it, then send this one
+          // Another import of the save is running (another tab, another device): wait for it, then send this one.
+          // Its job is never reported as this one's
           const running = importInProgressJobId(error)
           if (!running || attempt >= IMPORT_MAX_ATTEMPTS || this.disposed) throw error
           await this.waitForJob(running)
@@ -462,15 +472,25 @@ export class CloudScoreRepository implements WebScoreRepository {
     if (job.status === 'running') job = await this.waitForJob(job.id)
     await this.notifyImportJobCompleted()
     if (job.status === 'failed') throw new ServerImportFailedError(job.errorCode ?? 'failed', job)
-    return { count: records.length, skipped, job }
+    return {
+      count: importedCount(job.counts),
+      skipped: skipped + job.counts.skippedUnknownSheet,
+      rejected: rejected + job.counts.rejected,
+      job,
+    }
   }
 
   /**
    * Runs an import on the server and yields its progress (§7.1, §8.3). One idempotency key for the whole action
    * (`args.idempotencyKey`, or a fresh UUID): a dropped connection, a 5xx or a 429 sends the request again with it,
-   * so the server never runs the import twice. A 409 `IMPORT_IN_PROGRESS` attaches to the running job and polls
-   * it. When the job is done the save is pulled (the records come from the server, never from this client); the
-   * last progress (`done`) carries the job. A failed job throws {@link ServerImportFailedError}.
+   * so the server never runs the import twice. When the job is done the save is pulled (the records come from the
+   * server, never from this client); the last progress (`done`) carries the job. A failed job throws
+   * {@link ServerImportFailedError}.
+   *
+   * A 409 `IMPORT_IN_PROGRESS` names another job of the same source on the save. It is waited for, and adopted only
+   * when it is the same import: the same trigger and source account ({@link isSameServerImport}). Otherwise it is
+   * never reported as this import: the request is sent once more with the same key, and a second 409 throws
+   * {@link ImportAlreadyRunningError}.
    */
   async *runServerImport<K extends ServerImportKind>(
     kind: K,
@@ -480,36 +500,55 @@ export class CloudScoreRepository implements WebScoreRepository {
     const imports = this.requireImports()
     const idempotencyKey = args.idempotencyKey ?? newIdempotencyKey()
     const trigger = args.trigger ?? 'user'
+    const identity = await serverImportIdentity(kind, args, trigger)
+
+    const start = (): Promise<StartedImport> | AsyncGenerator<ImportProgress, StartedImport> => {
+      if (kind === 'maimai-net') {
+        const netArgs = args as ServerImportArgs['maimai-net']
+        return this.runNetImport({
+          idempotencyKey,
+          trigger,
+          region: netArgs.region,
+          id: netArgs.id,
+          password: netArgs.password,
+        })
+      }
+      return this.withImportRetries(() => {
+        if (kind === 'lxns') return imports.lxns({ id: this.saveId, idempotencyKey, trigger })
+        const dfArgs = args as ServerImportArgs['diving-fish']
+        return imports.divingFish({
+          id: this.saveId,
+          idempotencyKey,
+          trigger,
+          ...(dfArgs.username ? { username: dfArgs.username } : { qq: dfArgs.qq }),
+        })
+      }).then(
+        (result): StartedImport => ({ job: result.job }),
+        (error: unknown): StartedImport => {
+          const running = importInProgressJobId(error)
+          if (!running) throw error
+          return { runningJobId: running }
+        },
+      )
+    }
 
     let job: ImportJobDTO
-    if (kind === 'maimai-net') {
-      const netArgs = args as ServerImportArgs['maimai-net']
-      job = yield* this.runNetImport({
-        idempotencyKey,
-        trigger,
-        region: netArgs.region,
-        id: netArgs.id,
-        password: netArgs.password,
-      })
-    } else {
-      let attached: string | null = null
-      try {
-        const result = await this.withImportRetries(() => {
-          if (kind === 'lxns') return imports.lxns({ id: this.saveId, idempotencyKey, trigger })
-          const dfArgs = args as ServerImportArgs['diving-fish']
-          return imports.divingFish({
-            id: this.saveId,
-            idempotencyKey,
-            trigger,
-            ...(dfArgs.username ? { username: dfArgs.username } : { qq: dfArgs.qq }),
-          })
-        })
-        job = result.job
-      } catch (error) {
-        attached = importInProgressJobId(error)
-        if (!attached) throw error
-        job = { id: attached, status: 'running' } as ImportJobDTO
+    for (let sent = 1; ; sent++) {
+      const pending = start()
+      const started = pending instanceof Promise ? await pending : yield* pending
+      if ('job' in started) {
+        job = started.job
+        break
       }
+      // A second 409 after waiting once: another import keeps the source busy
+      if (sent > 1) throw new ImportAlreadyRunningError(null)
+      yield { stage: 'waiting', progress: 0.5 }
+      const other = await this.waitForJob(started.runningJobId)
+      if (isSameServerImport(other, identity)) {
+        job = other
+        break
+      }
+      // Another account's or trigger's job, finished now: this import has not run yet, so it is sent once more
     }
 
     if (job.status === 'running') {
@@ -532,14 +571,14 @@ export class CloudScoreRepository implements WebScoreRepository {
     return this.options.imports
   }
 
-  /** The NET stream, sent again with the same key when it drops; a 409 attaches to the running job */
+  /** The NET stream, sent again with the same key when it drops; a 409 names the running job */
   private async *runNetImport(body: {
     idempotencyKey: string
     trigger: 'user' | 'auto'
     region: 'jp' | 'intl'
     id: string
     password: string
-  }): AsyncGenerator<ImportProgress, ImportJobDTO> {
+  }): AsyncGenerator<ImportProgress, StartedImport> {
     const transport = this.options.netImport
     if (!transport) throw new UnsupportedScoreOperationError('maimai NET import', this.kind)
     for (let attempt = 1; ; attempt++) {
@@ -555,7 +594,7 @@ export class CloudScoreRepository implements WebScoreRepository {
               ),
             }
           } else if (event.type === 'done') {
-            return event.result.job
+            return { job: event.result.job }
           } else {
             throw new ServerImportFailedError(event.code, null, event.message)
           }
@@ -564,7 +603,7 @@ export class CloudScoreRepository implements WebScoreRepository {
       } catch (error) {
         if (error instanceof ServerImportFailedError) throw error
         const running = importInProgressJobId(error)
-        if (running) return { id: running, status: 'running' } as ImportJobDTO
+        if (running) return { runningJobId: running }
         const retry = isRetryableImportError(error)
         if (!retry.retry || attempt >= IMPORT_MAX_ATTEMPTS || this.disposed) throw error
         await delay(retry.afterMs ?? this.retryDelay(attempt))
@@ -1267,6 +1306,35 @@ export class CloudScoreRepository implements WebScoreRepository {
 type PullOutcome = { kind: 'ok' } | { kind: 'mismatch'; report: ChecksumMismatchReport }
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+
+/** A server import request's answer: its own job, or the other job of the source a 409 named */
+type StartedImport = { job: ImportJobDTO } | { runningJobId: string }
+
+/**
+ * The trigger and source account the server will record on the job of this request, as far as the client knows
+ * them: the Diving-Fish username (trimmed, as the server does) or QQ; LXNS is always the user's one linked account;
+ * a maimai NET job records the SEGA ID hash only when it cannot read the friend code, which the client never knows,
+ * so a NET job of another request is adopted only when it recorded this SEGA ID's hash.
+ */
+async function serverImportIdentity<K extends ServerImportKind>(
+  kind: K,
+  args: ServerImportArgs[K],
+  trigger: 'user' | 'auto',
+): Promise<ServerImportIdentity> {
+  if (kind === 'lxns') return { trigger, account: 'linked' }
+  if (kind === 'diving-fish') {
+    const dfArgs = args as ServerImportArgs['diving-fish']
+    return {
+      trigger,
+      account: dfArgs.username
+        ? { kind: 'df_username', id: dfArgs.username.trim() }
+        : { kind: 'df_qq', id: dfArgs.qq ?? '' },
+    }
+  }
+  const netArgs = args as ServerImportArgs['maimai-net']
+  const hash = await sha256Hex(`${netArgs.region}:${netArgs.id}`)
+  return { trigger, account: hash ? { kind: 'segaid_hash', id: hash } : null }
+}
 
 type PendingChange =
   | { op: 'set'; sheetId: string; value: NonNullable<OutboxEntry['value']>; entryMethod: ManualEntryMethod }

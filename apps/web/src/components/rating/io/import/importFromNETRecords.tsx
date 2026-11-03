@@ -22,7 +22,7 @@ import {
   isFetchNetRecordProgressState,
 } from './netImportStages'
 import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
-import { ServerImportFailedError } from '@/models/scores/cloudImports'
+import { ImportAlreadyRunningError, ServerImportFailedError } from '@/models/scores/cloudImports'
 
 const ERROR_CODE_I18N = NET_IMPORT_ERROR_I18N
 
@@ -305,9 +305,15 @@ export const importFromNETRecords = async (
     const title =
       error instanceof NetImportError
         ? t(ERROR_CODE_I18N[error.code])
-        : t('rating-calculator:io.import.net-records.errors.unknown')
+        : error instanceof ImportAlreadyRunningError
+          ? t('rating-calculator:cloud-save.import.errors.already-running')
+          : t('rating-calculator:io.import.net-records.errors.unknown')
     const translatedDetail = error instanceof NetImportError ? ERROR_CODE_DETAIL_I18N[error.code] : undefined
-    const subtitle = translatedDetail ? t(translatedDetail) : unexpectedErrorSubtitle(error)
+    const subtitle = translatedDetail
+      ? t(translatedDetail)
+      : error instanceof ImportAlreadyRunningError
+        ? null
+        : unexpectedErrorSubtitle(error)
 
     netImportProgress.finish(
       'error',

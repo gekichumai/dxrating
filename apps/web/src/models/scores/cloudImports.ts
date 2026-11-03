@@ -1,10 +1,18 @@
 import {
+  canonicalJson,
   CLOUD_SAVE_MAX_IMPORT_CHUNKS,
   CLOUD_SAVE_MAX_IMPORT_RECORDS,
+  type ImportCountsDTO,
   type ImportJobDTO,
   type ImportRecord,
+  ImportRecordSchema,
 } from '@gekichumai/api-contract'
-import { type ClientImportSource, PUBLIC_SHEET_ID_PATTERN, toAchievementInt } from '@gekichumai/maimai-domain'
+import {
+  type ClientImportSource,
+  type SourceAccountKind,
+  PUBLIC_SHEET_ID_PATTERN,
+  toAchievementInt,
+} from '@gekichumai/maimai-domain'
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
 import type { ImportEntrySource } from './ScoreRepository'
 
@@ -57,17 +65,22 @@ export function clientImportPlan(
 }
 
 /**
- * The records of an upload: one per chart (the best achievement of duplicates, the first on a tie), public sheet
- * IDs and valid achievements only. Provenance never leaves the device: a record claims at most its provider.
- * `skipped` counts the entries left out (no public sheet ID, no valid achievement), `duplicates` the entries folded
- * into another of the same chart.
+ * The records of an upload: one per chart (the best achievement of duplicates, the first on a tie), each one exactly
+ * as the server's strict `ImportRecordSchema` parses it. Provenance never leaves the device: a record claims at most
+ * its provider.
+ * - `skipped` counts the entries left out before validation: no public sheet ID, or no valid achievement;
+ * - `rejected` counts the entries the server would reject (`ImportRecordSchema` fails: a DX score out of range, a
+ *   claimed source it does not accept…). They are never sent, so a "clear, then import" only clears for records that
+ *   can be imported;
+ * - `duplicates` counts the valid entries folded into another of the same chart.
  */
 export function entriesToImportRecords(
   entries: readonly PlayEntry[],
   plan: ClientImportPlan,
-): { records: ImportRecord[]; skipped: number; duplicates: number } {
+): { records: ImportRecord[]; skipped: number; rejected: number; duplicates: number } {
   const bySheetId = new Map<string, ImportRecord>()
   let skipped = 0
+  let rejected = 0
   let duplicates = 0
   for (const entry of entries) {
     const achievement = typeof entry.achievementRate === 'number' ? toAchievementInt(entry.achievementRate) : null
@@ -79,7 +92,7 @@ export function entriesToImportRecords(
     const provider: string | undefined = entry.source?.provider
     const claimedSource =
       plan.claimedSource ?? (plan.source === 'dxrating-json' && provider && provider !== 'demo' ? provider : null)
-    const record: ImportRecord = {
+    const parsed = ImportRecordSchema.safeParse({
       sheetId: entry.sheetId,
       achievement,
       comboFlag: entry.comboFlag ?? null,
@@ -88,12 +101,17 @@ export function entriesToImportRecords(
       best50Bucket: entry.source?.best50Bucket ?? null,
       providerRecordId: entry.source?.providerId ? String(entry.source.providerId).slice(0, 128) : null,
       claimedSource,
+    } satisfies ImportRecord)
+    if (!parsed.success) {
+      rejected++
+      continue
     }
-    const existing = bySheetId.get(entry.sheetId)
+    const record = parsed.data
+    const existing = bySheetId.get(record.sheetId)
     if (existing) duplicates++
-    if (!existing || record.achievement > existing.achievement) bySheetId.set(entry.sheetId, record)
+    if (!existing || record.achievement > existing.achievement) bySheetId.set(record.sheetId, record)
   }
-  return { records: [...bySheetId.values()], skipped, duplicates }
+  return { records: [...bySheetId.values()], skipped, rejected, duplicates }
 }
 
 /** Splits an upload into `client-imports` chunks of at most 5000 records (§7.3) */
@@ -110,27 +128,20 @@ export function chunkImportRecords(records: readonly ImportRecord[]): ImportReco
   return chunks
 }
 
-const CANONICAL_RECORD_KEYS = [
-  'sheetId',
-  'achievement',
-  'comboFlag',
-  'syncFlag',
-  'dxScore',
-  'best50Bucket',
-  'providerRecordId',
-  'claimedSource',
-] as const satisfies (keyof ImportRecord)[]
-
 /**
- * The canonical body of an upload: every record sorted by sheet ID, its keys in a fixed order, absent values as
- * `null`. Its SHA-256 goes with each chunk as `rawPayloadSha256`, which the server compares with the hash it computes
- * itself (a cross-check only, §4.5, §7.3).
+ * The `rawPayloadSha256` of one `client-imports` chunk: the SHA-256 of the canonical JSON (keys sorted recursively,
+ * records in the order sent) of its records, exactly what the server hashes for the chunk's accepted records
+ * (`canonicalSha256` in the backend, through the shared `canonicalJson`). The records must be what
+ * `ImportRecordSchema` parsed ({@link entriesToImportRecords}), so the server accepts every one and hashes the same
+ * values. `null` where SubtleCrypto is unavailable (the hash is an optional cross-check, §4.5, §7.3).
  */
-export function canonicalImportBody(records: readonly ImportRecord[]): string {
-  const sorted = [...records].sort((a, b) => (a.sheetId < b.sheetId ? -1 : a.sheetId > b.sheetId ? 1 : 0))
-  return JSON.stringify(
-    sorted.map((record) => Object.fromEntries(CANONICAL_RECORD_KEYS.map((key) => [key, record[key] ?? null]))),
-  )
+export function chunkPayloadSha256(records: readonly ImportRecord[]): Promise<string | null> {
+  return canonicalSha256Hex(records)
+}
+
+/** SHA-256 hex of the shared canonical JSON of `value`, the web side of the backend's `canonicalSha256` */
+export function canonicalSha256Hex(value: unknown): Promise<string | null> {
+  return sha256Hex(canonicalJson(value))
 }
 
 /** SHA-256 in hex through SubtleCrypto; `null` where it is unavailable (the hash is optional) */
@@ -153,6 +164,36 @@ export const AUTO_NET_IMPORT_BUCKET_MS = 15 * 60 * 1000
 /** The key of the automatic maimai NET import of a save: one per 15-minute window (§5.5) */
 export function autoNetImportKey(saveId: string, now: number = Date.now()): string {
   return `auto-net-${saveId}-${Math.floor(now / AUTO_NET_IMPORT_BUCKET_MS)}`
+}
+
+/**
+ * Whose server import a request is, to tell it from another job of the same source the server answered 409
+ * `IMPORT_IN_PROGRESS` with (another tab, another device, the automatic import):
+ * - `account`: the source account the server records on the job (`sourceAccountKind`/`sourceAccountId`), when the
+ *   client can know it; `'linked'` when the server resolves it from the user's one linked account (LXNS); `null`
+ *   when it cannot be known, so no other job is ever this request's;
+ * - `trigger`: `auto` never revives what the user deleted (§5.3), so a `user` request is never another `auto` job.
+ */
+export interface ServerImportIdentity {
+  trigger: ImportJobDTO['trigger']
+  account: { kind: SourceAccountKind; id: string } | 'linked' | null
+}
+
+/**
+ * Whether `job` is the import `identity` asked for, so its result is this request's. A job whose account is not
+ * known yet (a server job records it once it has fetched) or cannot be compared (a maimai NET friend code) is not:
+ * the caller waits for it and sends its own request again.
+ */
+export function isSameServerImport(job: ImportJobDTO, identity: ServerImportIdentity): boolean {
+  if (job.trigger !== identity.trigger) return false
+  if (identity.account === 'linked') return true
+  if (identity.account === null) return false
+  return job.sourceAccountKind === identity.account.kind && job.sourceAccountId === identity.account.id
+}
+
+/** The best of what an import job did, as the UI reports it */
+export function importedCount(counts: ImportCountsDTO): number {
+  return counts.inserted + counts.improved + counts.provenanceUpgraded + counts.unchanged + counts.keptUserEdit
 }
 
 // --- Errors ---
@@ -203,6 +244,9 @@ export function isRetryableImportError(error: unknown): { retry: boolean; afterM
   return { retry: code === 'INTERNAL_SERVER_ERROR' || code === 'BAD_GATEWAY' || code === 'SERVICE_UNAVAILABLE' }
 }
 
+/** The code of {@link ImportAlreadyRunningError} */
+export const IMPORT_IN_PROGRESS = 'IMPORT_IN_PROGRESS'
+
 /** A server import job that ended `failed` (or the NET stream's `error` event) */
 export class ServerImportFailedError extends Error {
   constructor(
@@ -225,12 +269,17 @@ export class CloudClearNotSentError extends Error {
 }
 
 /**
- * None of the entries can be uploaded (no public sheet ID, or no valid achievement): nothing was sent, and a
+ * None of the entries can be uploaded (no public sheet ID, no valid achievement, or a record the server's
+ * `ImportRecordSchema` rejects): nothing was sent, and a
  * "clear, then import" left the save as it was
  */
 export class NothingToImportError extends Error {
-  constructor(readonly skipped: number) {
-    super('None of these records match a chart; nothing was imported')
+  constructor(
+    readonly skipped: number,
+    /** Entries the server would reject (`ImportRecordSchema`): an out-of-range value, a claim it does not accept */
+    readonly rejected: number = 0,
+  ) {
+    super('None of these records can be imported; nothing was imported')
     this.name = 'NothingToImportError'
   }
 }
@@ -240,5 +289,20 @@ export class ServerImportsDisabledError extends Error {
   constructor() {
     super('Server imports are turned off')
     this.name = 'ServerImportsDisabledError'
+  }
+}
+/**
+ * Another import of the same source was running on the save, for another account or trigger, and was still (or
+ * again) running when this request was sent once more: this import did not run. Its job is never reported as this
+ * one's. A {@link ServerImportFailedError} with the code `IMPORT_IN_PROGRESS`, so every server import UI says so.
+ */
+export class ImportAlreadyRunningError extends ServerImportFailedError {
+  constructor(job: ImportJobDTO | null) {
+    super(
+      IMPORT_IN_PROGRESS,
+      job,
+      'Another import of this source is running on this save; try again when it has finished',
+    )
+    this.name = 'ImportAlreadyRunningError'
   }
 }

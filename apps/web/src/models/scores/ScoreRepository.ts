@@ -63,10 +63,15 @@ export interface ImportMeta {
 }
 
 export interface ImportResult {
-  /** Entries in the import (cloud saves: the records uploaded) */
+  /**
+   * Entries in the import. Cloud saves: what the server reports it took (inserted, improved, upgraded, unchanged, or
+   * kept behind the user's own edit), never the number of records sent
+   */
   count: number
-  /** Cloud saves: entries left out of the upload (no chart matches their sheet ID, or no valid achievement) */
+  /** Cloud saves: entries left out (no chart matches their sheet ID, or no valid achievement) */
   skipped?: number
+  /** Cloud saves: entries the server's import schema rejects (an out-of-range value…), never sent or not taken */
+  rejected?: number
   /** Cloud saves: the import job the server recorded */
   job?: ImportJobDTO
 }

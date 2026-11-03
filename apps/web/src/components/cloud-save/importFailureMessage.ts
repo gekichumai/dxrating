@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next'
 import { NET_IMPORT_ERROR_I18N, isNetImportErrorCode } from '@/components/rating/io/import/netImportErrorFeedback'
+import { IMPORT_IN_PROGRESS } from '@/models/scores/cloudImports'
 
 /**
  * What went wrong with a cloud import, in words: the maimai NET codes have their own messages, a job the server gave
@@ -8,6 +9,7 @@ import { NET_IMPORT_ERROR_I18N, isNetImportErrorCode } from '@/components/rating
 export function importFailureMessage(code: string | null | undefined, t: TFunction): string {
   if (code && isNetImportErrorCode(code)) return t(NET_IMPORT_ERROR_I18N[code])
   if (code === 'abandoned') return t('rating-calculator:cloud-save.import.errors.abandoned')
+  if (code === IMPORT_IN_PROGRESS) return t('rating-calculator:cloud-save.import.errors.already-running')
   return t('rating-calculator:cloud-save.import.errors.generic')
 }
 /** Short reasons for the import history: the job is in the past, so no "try again" */

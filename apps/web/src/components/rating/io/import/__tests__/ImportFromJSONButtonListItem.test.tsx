@@ -153,13 +153,30 @@ describe('ImportFromJSONButtonListItem', () => {
       { sheetId: 'dsht_23456789ab', achievementRate: 101.5 },
     ]
 
-    it('counts the records uploaded and says how many were left out', async () => {
-      renderCloud(async () => ({ count: 2, skipped: 1 }))
+    it('counts what the server took and says how many were left out', async () => {
+      renderCloud(async () => ({ count: 2, skipped: 1, rejected: 1 }))
       await importFile(JSON.stringify(entries))
       await act(async () => fireEvent.click(await screen.findByRole('button', { name: 'Import' })))
 
       await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith('Imported 2 records'))
-      expect(toast).toHaveBeenCalledWith("1 record didn't match a chart and wasn't imported.", expect.anything())
+      expect(toast).toHaveBeenCalledWith("1 record didn't match a chart and wasn't imported.")
+      expect(toast).toHaveBeenCalledWith(
+        "1 record has a value that can't be saved, such as a DX score out of range, and wasn't imported.",
+      )
+    })
+
+    it("shows an error and never clears the save when no record passes the server's schema", async () => {
+      const cloud = renderCloud(async () => ({ count: 1 }))
+      await importFile(JSON.stringify([{ sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100.5, dxScore: 100001 }]))
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith(
+          "None of these records can be imported: they match no chart or have values out of range. Your cloud save wasn't changed.",
+        ),
+      )
+      expect(screen.queryByRole('dialog')).toBeNull()
+      expect(cloud.applyImport).not.toHaveBeenCalled()
+      expect(toastSuccess).not.toHaveBeenCalled()
     })
 
     it('says nothing was imported, and the save kept, when no record matches a chart', async () => {
@@ -171,7 +188,7 @@ describe('ImportFromJSONButtonListItem', () => {
 
       await waitFor(() =>
         expect(toastError).toHaveBeenCalledWith(
-          "None of these records match a chart, so nothing was imported. Your cloud save wasn't changed.",
+          "None of these records can be imported: they match no chart or have values out of range. Your cloud save wasn't changed.",
         ),
       )
       expect(toastSuccess).not.toHaveBeenCalled()

@@ -48,6 +48,11 @@ export const CloudImportConfirmDialog: FC = () => {
             <DialogContentText className="text-pretty">
               {t('rating-calculator:cloud-save.import-confirm.description')}
             </DialogContentText>
+            {request.leftOut > 0 && (
+              <Alert severity="info" className="mt-3 text-pretty">
+                {t('rating-calculator:cloud-save.import-confirm.left-out', { count: request.leftOut })}
+              </Alert>
+            )}
           </DialogContent>
           <DialogActions className="flex-wrap gap-1">
             {/* The destructive path away from the primary action */}
