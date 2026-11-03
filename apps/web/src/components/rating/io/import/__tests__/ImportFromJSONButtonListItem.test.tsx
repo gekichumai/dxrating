@@ -307,5 +307,29 @@ describe('ImportFromJSONButtonListItem', () => {
       // Nothing of the file's verification, job or account goes to the server
       expect(JSON.stringify(records)).not.toMatch(/verified|dimp_|123456789012345|fetchedBy/)
     })
+
+    it('cancelling the save picker imports nothing and says nothing', async () => {
+      cleanup()
+      const entriesBefore = repository.entries()
+      render(
+        <ScoreRepositoryContext.Provider value={repository}>
+          <ImportFromJSONButtonListItem onClose={() => {}} />
+          <ExportSavePickerDialog />
+        </ScoreRepositoryContext.Provider>,
+      )
+
+      await importFile(exportFile([MAIN, save('dsav_intl', 'Intl', [record('dsht_23456789ab', 1000000, 'lxns')])]))
+      expect(await screen.findByRole('button', { name: /^Main/ })).toBeTruthy()
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+      await waitFor(() => expect(screen.queryByRole('button', { name: /^Main/ })).toBeNull())
+      // Let anything the cancel would have started settle
+      await act(async () => {})
+      expect(repository.entries()).toEqual(entriesBefore)
+      expect(window.localStorage.getItem('rating-calculator-entries')).toBe(JSON.stringify(SAVED))
+      expect(toastSuccess).not.toHaveBeenCalled()
+      expect(toastError).not.toHaveBeenCalled()
+      expect(toast).not.toHaveBeenCalled()
+    })
   })
 })

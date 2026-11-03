@@ -46,16 +46,19 @@ export const ExportSavePickerDialog: FC = () => {
             <li key={save.id}>
               <button
                 type="button"
-                className="cloud-save-save-option flex w-full cursor-pointer items-center gap-2 rounded-lg border-none bg-transparent px-3 py-2 text-left"
+                className="cloud-save-save-option flex w-full cursor-pointer items-start gap-2 rounded-lg border-none bg-transparent px-3 py-2 text-left"
                 onClick={() => request.resolve(save)}
               >
-                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-zinc-900">{save.name}</span>
+                {/* Wraps instead of clipping: names can be long, and two can share a prefix */}
+                <span className="min-w-0 flex-1 break-words text-pretty text-sm font-semibold text-zinc-900">
+                  {save.name}
+                </span>
                 {REGION_LABELS[save.region] && (
-                  <span className="shrink-0 rounded-sm bg-zinc-900/8 px-1.5 py-0.5 text-[0.6875rem] font-semibold leading-none text-zinc-700">
+                  <span className="mt-0.5 shrink-0 rounded-sm bg-zinc-900/8 px-1.5 py-0.5 text-[0.6875rem] font-semibold leading-none text-zinc-700">
                     {REGION_LABELS[save.region]}
                   </span>
                 )}
-                <span className="shrink-0 text-xs text-zinc-600 tabular-nums">
+                <span className="mt-0.5 shrink-0 text-xs text-zinc-600 tabular-nums">
                   {t('rating-calculator:cloud-save.saves.records', {
                     count: save.entries.length,
                     formatted: numberFormat.format(save.entries.length),

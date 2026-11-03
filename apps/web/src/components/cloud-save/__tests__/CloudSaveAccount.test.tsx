@@ -1,7 +1,7 @@
 import type { ImportJobDTO, SaveDTO, UserFeatures } from '@gekichumai/api-contract'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import i18n from 'i18next'
-import type { ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
 import { type ActiveSave, ActiveSaveContext } from '@/models/scores/ActiveSaveContext'
@@ -315,7 +315,11 @@ describe('CloudMigrationDialog: a cloud save from another device', () => {
         name: 'Replace cloud with this device',
       }),
     )
-    expect(screen.getByText(/“Phone” has no records\. It will get the 2 records on this device/)).toBeTruthy()
+    expect(
+      screen.getByText(
+        /“Phone” has no records\. It will get the 2 records from this device, and your other devices will get the change too\./,
+      ),
+    ).toBeTruthy()
   })
 
   it('merges by default', async () => {
@@ -494,7 +498,8 @@ describe('CloudSaveOptIn', () => {
     })
     expect(cloudActions.optIn).not.toHaveBeenCalled()
     expect(within(dialog).getByText(/provider account IDs/)).toBeTruthy()
-    expect(within(dialog).getByText(/Kept until you delete them/)).toBeTruthy()
+    expect(within(dialog).getByText(/rating snapshots your devices save/)).toBeTruthy()
+    expect(within(dialog).getByText(/Kept until you delete them.*up to 100 rating snapshots/)).toBeTruthy()
     expect(within(dialog).getByText('Your SEGA ID password is never stored.')).toBeTruthy()
     // Nothing promises a way out that does not exist yet
     expect(within(dialog).getByText(/can’t turn the beta off in the app yet/)).toBeTruthy()
@@ -504,7 +509,7 @@ describe('CloudSaveOptIn', () => {
 
     await waitFor(() => expect(save.refreshFeatures).toHaveBeenCalledTimes(1))
     expect(cloudActions.optIn).toHaveBeenCalledWith(CLOUD_SAVE_CONSENT_VERSION)
-    expect(CLOUD_SAVE_CONSENT_VERSION).toBe('2026-11-cloud-save-v1')
+    expect(CLOUD_SAVE_CONSENT_VERSION).toBe('2026-11-cloud-save-v2')
     expect(captured()).toEqual([{ name: 'cloudsave_enabled', properties: { via: 'opt_in' } }])
   })
 
@@ -658,6 +663,35 @@ describe('CloudSaveSection', () => {
     expect(screen.getByRole('switch', { name: 'Cloud save (beta)' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Download my data' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Back up to cloud' })).toBeNull()
+  })
+
+  it('after the opt-in, the focus goes to the section heading, not the page, as the switch goes', async () => {
+    const cloudActions = actions()
+    const Account = () => {
+      const [features, setFeatures] = useState<UserFeatures>(FEATURES_OPT_IN)
+      const save = activeSave({ features, refreshFeatures: () => setFeatures(FEATURES_ON) })
+      return (
+        <ActiveSaveContext.Provider value={save}>
+          <CloudSaveActionsContext.Provider value={cloudActions}>
+            <div>
+              <CloudSaveSection />
+            </div>
+          </CloudSaveActionsContext.Provider>
+        </ActiveSaveContext.Provider>
+      )
+    }
+    render(<Account />)
+    const toggle = screen.getByRole('switch', { name: 'Cloud save (beta)' })
+    toggle.focus()
+    fireEvent.click(toggle)
+    const consent = await screen.findByRole('dialog', { name: 'Turn on cloud save (beta)?' })
+    fireEvent.click(within(consent).getByRole('button', { name: 'Agree and turn on' }))
+
+    await waitFor(() => expect(screen.queryByRole('switch')).toBeNull())
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1, name: 'Cloud save' })),
+    )
+    expect(screen.getByRole('button', { name: 'Download my data' })).toBeTruthy()
   })
 
   it('with cloud save off, or signed out: nothing', () => {

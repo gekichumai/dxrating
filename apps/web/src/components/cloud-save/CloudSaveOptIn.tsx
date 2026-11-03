@@ -1,9 +1,10 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Switch } from '@mui/material'
-import { type FC, type ReactNode, useId, useState } from 'react'
+import { type FC, type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Trans, useTranslation } from 'react-i18next'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useActiveSave } from '@/models/scores/ActiveSaveContext'
+import { focusMigrationReturnTarget } from '@/models/scores/CloudMigrationContext'
 import { CLOUD_SAVE_CONSENT_VERSION, useCloudSaveActions } from '@/models/scores/cloudSaveActions'
 import './cloud-save.css'
 
@@ -77,9 +78,7 @@ export const CloudSaveConsentDialog: FC<{
         >
           {t('rating-calculator:cloud-save.opt-in.agree')}
         </Button>
-        <span role="status" className="sr-only">
-          {busy ? t('rating-calculator:cloud-save.opt-in.sending') : ''}
-        </span>
+        <output className="sr-only">{busy ? t('rating-calculator:cloud-save.opt-in.sending') : ''}</output>
       </DialogActions>
     </Dialog>
   )
@@ -98,7 +97,24 @@ export const CloudSaveOptIn: FC = () => {
   const [busy, setBusy] = useState(false)
   const switchId = useId()
   const descriptionId = useId()
-  if (!activeSave.features?.optInAvailable) return null
+  const rootRef = useRef<HTMLDivElement>(null)
+  // Set by a successful opt-in: where the switch was, for the focus once the switch goes
+  const focusScopeAfterOptIn = useRef<Element | null | undefined>(undefined)
+  const optInAvailable = activeSave.features?.optInAvailable === true
+
+  // The features read again after the opt-in no longer offer it, and the switch (which had the focus back from the
+  // consent dialog) goes with it: the focus moves to the section's heading, which stays, instead of the page
+  useEffect(() => {
+    const scope = focusScopeAfterOptIn.current
+    if (optInAvailable || scope === undefined) return
+    focusScopeAfterOptIn.current = undefined
+    // Unless the user already moved it somewhere that stays
+    const active = document.activeElement
+    if (active && active !== document.body && active.isConnected) return
+    focusMigrationReturnTarget(scope)
+  }, [optInAvailable])
+
+  if (!optInAvailable) return null
 
   const agree = async () => {
     setBusy(true)
@@ -106,6 +122,7 @@ export const CloudSaveOptIn: FC = () => {
       await actions.optIn(CLOUD_SAVE_CONSENT_VERSION)
       captureAnalyticsEvent('cloudsave_enabled', { via: 'opt_in' })
       setConsentOpen(false)
+      focusScopeAfterOptIn.current = rootRef.current?.parentElement ?? null
       toast.success(t('rating-calculator:cloud-save.opt-in.success'), {
         id: 'cloud-save-opt-in',
       })
@@ -121,7 +138,7 @@ export const CloudSaveOptIn: FC = () => {
   }
 
   return (
-    <div className="flex items-start gap-3 rounded-lg bg-zinc-900/4 p-3">
+    <div ref={rootRef} className="flex items-start gap-3 rounded-lg bg-zinc-900/4 p-3">
       <div className="min-w-0 flex-1">
         <label htmlFor={switchId} className="block cursor-pointer text-sm font-semibold text-zinc-900">
           {t('rating-calculator:cloud-save.opt-in.title')}

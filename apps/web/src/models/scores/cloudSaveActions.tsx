@@ -9,7 +9,7 @@ import type { CloudMigrationApi } from './cloudMigration'
  */
 
 /** The privacy terms version the opt-in consent text describes; bump it with the text */
-export const CLOUD_SAVE_CONSENT_VERSION = '2026-11-cloud-save-v1'
+export const CLOUD_SAVE_CONSENT_VERSION = '2026-11-cloud-save-v2'
 
 export interface CloudSaveExportFile {
   blob: Blob

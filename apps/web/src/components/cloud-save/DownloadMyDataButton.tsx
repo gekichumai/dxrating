@@ -52,9 +52,7 @@ export const DownloadMyDataButton: FC = () => {
         {busy ? t('rating-calculator:cloud-save.export.preparing') : t('rating-calculator:cloud-save.export.button')}
       </Button>
       {/* Read out while the button keeps the focus */}
-      <span role="status" className="sr-only">
-        {busy ? t('rating-calculator:cloud-save.export.preparing') : ''}
-      </span>
+      <output className="sr-only">{busy ? t('rating-calculator:cloud-save.export.preparing') : ''}</output>
     </div>
   )
 }
