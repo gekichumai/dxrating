@@ -46,6 +46,16 @@ export function toRatingEntries(entries: readonly PlayEntry[], catalog: SongCata
   })
 }
 
+const hasBucketHint = (source: RatingEntry['source']) =>
+  source?.provider === 'diving-fish' && source.best50Bucket !== undefined
+
+/** An authoritative bucket hint from any duplicate wins (as in calculateBest50), then the preferred entry's source */
+function chooseSource(preferred: RatingEntry['source'], other: RatingEntry['source']): RatingEntry['source'] {
+  if (hasBucketHint(preferred)) return preferred
+  if (hasBucketHint(other)) return other
+  return preferred ?? other
+}
+
 /** One record per sheet: the highest-achievement entry, with each flag aggregated independently */
 export function groupUserRecords(
   entries: readonly PlayEntry[],
@@ -76,7 +86,10 @@ export function groupUserRecords(
         comboFlag: strongest(COMBO_RANK, existing.best.comboFlag, entry.comboFlag ?? null),
         syncFlag: strongest(SYNC_RANK, existing.best.syncFlag, entry.syncFlag ?? null),
       },
-      source: (higher ? playEntrySource(entry) : existing.source) ?? existing.source ?? playEntrySource(entry),
+      source: chooseSource(
+        higher ? playEntrySource(entry) : existing.source,
+        higher ? existing.source : playEntrySource(entry),
+      ),
     })
   }
   return bySheetId
