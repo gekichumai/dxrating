@@ -1,6 +1,8 @@
+import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import { useRatingEntries } from '@/components/rating/useRatingEntries'
 import { authClient } from '@/lib/auth-client'
 import { identifyAnalyticsUser, registerAnalyticsContext, resetAnalyticsUser } from '@/lib/analytics'
+import type { DXVersion, Region } from '@/models/context/AppContext'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { type FC, memo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -39,9 +41,11 @@ const SideEffectorLocaleMeta: FC = () => {
 const SideEffectorAutoImportRating: FC = () => {
   const { modifyEntries } = useRatingCalculatorContext()
   const { t } = useTranslation()
-  const appVersion = useAppContextDXDataVersion()
+  // An import resolves records against the catalog: run it once the complete catalog has loaded
+  const catalog = useCompleteSongCatalog()
 
   useEffect(() => {
+    if (!catalog) return
     const mode = (() => {
       try {
         const mode = localStorage.getItem('rating-auto-import-from-net')
@@ -82,16 +86,16 @@ const SideEffectorAutoImportRating: FC = () => {
       }
     }
 
-    importFromNETRecords(appVersion, modifyEntries, mode)
-  }, [appVersion])
+    importFromNETRecords(catalog, modifyEntries, mode)
+  }, [catalog])
 
   return null
 }
 
 const SideEffectorAnalyticsContext: FC<{
   userId?: string
-  version: string
-  region: string
+  version: DXVersion
+  region: Region
   language: string
   rating: number
   entryCount: number
@@ -120,7 +124,7 @@ const SideEffectorAnalytics: FC = () => {
   const { data, isPending } = authClient.useSession()
   const { version, region } = useAppContext()
   const { i18n } = useTranslation()
-  const { statistics, allEntries } = useRatingEntries()
+  const { isLoading: entriesLoading, statistics, allEntries } = useRatingEntries()
 
   const properties = {
     userId: data?.user.id,
@@ -131,7 +135,8 @@ const SideEffectorAnalytics: FC = () => {
     entryCount: allEntries.length,
   }
 
-  if (isPending) return null
+  // Register the rating once the entries are resolved, not the empty lists of the catalog's loading
+  if (isPending || entriesLoading) return null
 
   return (
     <SideEffectorAnalyticsContext

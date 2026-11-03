@@ -1,4 +1,4 @@
-import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum, type DXData } from '@gekichumai/dxdata'
+import { CategoryEnum, DifficultyEnum, ServerEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
 import {
   normalizeAquaDxRows,
@@ -8,19 +8,17 @@ import {
   normalizeMaimaiNetRecords,
   normalizeMuNetRows,
 } from '../import-normalizers'
-import { buildSongCatalog } from '../song-catalog'
+import { buildSongCatalog, type SongCatalogSource } from '../song-catalog'
 
-const data: DXData = {
-  updateTime: '2026-05-17T00:00:00.000Z',
-  categories: [],
+const SONG_A_MASTER = 'dsht_23456789ab'
+
+const data: SongCatalogSource = {
   versions: [],
-  types: [],
-  difficulties: [],
-  regions: [],
   songs: [
     {
-      songId: 'Song A',
+      id: 'dsng_23456789ab',
       title: 'Song A',
+      version: VersionEnum.CiRCLEPLUS,
       artist: 'Artist',
       bpm: 120,
       category: CategoryEnum.Maimai,
@@ -30,14 +28,14 @@ const data: DXData = {
       searchAcronyms: [],
       sheets: [
         {
+          id: SONG_A_MASTER,
           internalId: 10001,
           type: TypeEnum.DX,
           difficulty: DifficultyEnum.Master,
           level: '13',
           internalLevelValue: 13,
-          noteDesigner: null,
           noteCounts: { tap: 1, hold: 1, slide: 1, touch: 1, break: 1, total: 5 },
-          regions: { jp: true, intl: true, cn: true },
+          serverIds: [ServerEnum.JP, ServerEnum.INTL, ServerEnum.USA, ServerEnum.CN],
           isSpecial: false,
           version: VersionEnum.CiRCLEPLUS,
         },
@@ -75,7 +73,7 @@ describe('Rating Import normalizers', () => {
     ])
 
     expect(result.entries).toHaveLength(1)
-    expect(result.entries[0]!.sheetId).toBe('Song A__dxrt__dx__dxrt__master')
+    expect(result.entries[0]!.sheetId).toBe(SONG_A_MASTER)
     expect(result.entries[0]!.comboFlag).toBe('ap')
     expect(result.entries[0]!.syncFlag).toBe('fsdp')
     expect(result.warnings).toHaveLength(1)
@@ -119,7 +117,7 @@ describe('Rating Import normalizers', () => {
         songs: [
           {
             ...data.songs[0]!,
-            songId: 'internal-song-a',
+            id: 'internal-song-a',
             title: 'Visible Song A',
           },
         ],
@@ -145,12 +143,12 @@ describe('Rating Import normalizers', () => {
         songs: [
           {
             ...data.songs[0]!,
-            songId: 'song-a-1',
+            id: 'song-a-1',
             title: 'Shared Visible Title',
           },
           {
             ...data.songs[0]!,
-            songId: 'song-a-2',
+            id: 'song-a-2',
             title: 'Shared Visible Title',
             sheets: [{ ...data.songs[0]!.sheets[0]!, internalId: 10002 }],
           },
@@ -321,13 +319,13 @@ describe('Rating Import normalizers', () => {
         songs: [
           {
             ...data.songs[0]!,
-            songId: 'link-original',
+            id: 'link-original',
             title: 'Link',
             sheets: [{ ...data.songs[0]!.sheets[0]!, internalId: 383, type: TypeEnum.STD }],
           },
           {
             ...data.songs[0]!,
-            songId: 'link-cover',
+            id: 'link-cover',
             title: 'Link',
             sheets: [{ ...data.songs[0]!.sheets[0]!, internalId: 384, type: TypeEnum.STD }],
           },
@@ -370,6 +368,41 @@ describe('Rating Import normalizers', () => {
 
     expect(result.entries).toHaveLength(1)
     expect(result.entries[0]!.identity.difficulty).toBe(DifficultyEnum.Master)
+  })
+
+  it('resolves provider map names of songs sharing a title through their legacy song ID', () => {
+    const linkCatalog = buildSongCatalog(
+      {
+        ...data,
+        songs: [
+          {
+            ...data.songs[0]!,
+            id: 'dsng_linkoriginl',
+            title: 'Link',
+            sheets: [
+              { ...data.songs[0]!.sheets[0]!, id: 'dsht_linkoriginl', type: TypeEnum.STD, internalId: undefined },
+            ],
+          },
+          {
+            ...data.songs[0]!,
+            id: 'dsng_linkcoverxx',
+            title: 'Link',
+            sheets: [
+              { ...data.songs[0]!.sheets[0]!, id: 'dsht_linkcoverxx', type: TypeEnum.STD, internalId: undefined },
+            ],
+          },
+        ],
+      },
+      VersionEnum.CiRCLEPLUS,
+    )
+    const map = { 'not-numeric': { name: 'Link' } }
+    const rows = [{ musicId: 'not-numeric', level: 3, achievement: 1005000 }]
+
+    expect(normalizeAquaDxRows(linkCatalog, rows, map).entries).toHaveLength(0)
+    expect(
+      normalizeAquaDxRows(linkCatalog, rows, map, { Link: 'dsng_linkoriginl', 'Link (2)': 'dsng_linkcoverxx' })
+        .entries[0]?.sheetId,
+    ).toBe('dsht_linkoriginl')
   })
 
   it('skips AquaDX rows with provider map version 24000 before internal id fallback', () => {

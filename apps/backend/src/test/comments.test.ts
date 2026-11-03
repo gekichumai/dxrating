@@ -1,7 +1,13 @@
 beforeAll(setupTestServer)
 afterAll(teardownTestServer)
 import { pool } from '../db/index'
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
+
+const { captureMessage } = vi.hoisted(() => ({ captureMessage: vi.fn() }))
+vi.mock('@sentry/node', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@sentry/node')>()
+  return { ...original, captureMessage }
+})
 import {
   setupTestServer,
   teardownTestServer,
@@ -179,7 +185,16 @@ describe('Comment safety', () => {
     expect((await act('', first, 'report')).status).toBe(401)
     expect((await act(author, first, 'report')).status).toBe(400)
     expect((await act(viewer, 99999999, 'report')).status).toBe(404)
+    captureMessage.mockClear()
     expect((await act(viewer, first, 'report')).status).toBe(200)
+    expect(captureMessage).toHaveBeenCalledWith(
+      `Comment reported: #${first}`,
+      expect.objectContaining({
+        level: 'warning',
+        fingerprint: ['comment-moderation', String(first)],
+        tags: expect.objectContaining({ moderation_action: 'report' }),
+      }),
+    )
     expect((await act(viewer, first, 'report')).status).toBe(200)
     expect((await pool.query('SELECT * FROM comment_reports')).rows).toHaveLength(1)
     const freshSession = extractSessionCookie(await signIn('viewer@example.com', 'password123'))

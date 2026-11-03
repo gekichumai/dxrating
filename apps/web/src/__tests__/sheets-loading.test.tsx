@@ -5,7 +5,8 @@ import { renderToString } from 'react-dom/server'
 import { SWRConfig } from 'swr'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CombinedTags } from '../models/useCombinedTags'
-import { getFlattenedSheetsForVersion, useSheets, useSongs, type ServerAlias } from '../songs'
+import { useSheets, useSongs, type ServerAlias } from '../songs'
+import { getSnapshotFlattenedSheets as getFlattenedSheetsForVersion } from '../test-utils/catalog'
 
 const state = vi.hoisted(() => ({
   version: 'MAGiCAL' as string,
@@ -43,20 +44,29 @@ const tagsFor = (tagId: number): CombinedTags => {
   return {
     tags: [],
     tagGroups: [],
-    tagSongs: [{ song_id: sheet.songId, sheet_type: sheet.type, sheet_difficulty: sheet.difficulty, tag_id: tagId }],
+    tagSongs: [
+      {
+        song_id: sheet.songId,
+        sheet_id: sheet.id,
+        sheet_type: sheet.type,
+        sheet_difficulty: sheet.difficulty,
+        tag_id: tagId,
+      },
+    ],
   } as CombinedTags
 }
 
 describe('sheet catalog availability', () => {
-  it('renders bundled songs and charts immediately, including on the server', () => {
+  it('renders the complete catalog once it has loaded, and no sheets during SSR', () => {
     const { result } = renderHook(() => ({ sheets: useSheets(), songs: useSongs() }), { wrapper })
     expect(result.current.sheets.data?.length).toBeGreaterThan(0)
     expect(result.current.songs.data?.length).toBeGreaterThan(0)
+    // Server renders (and hydration) render from the page's catalog slice; every sheet waits for the complete catalog
     function ServerCatalog() {
-      const { data } = useSheets()
-      return <output>{data?.length ?? 'missing'}</output>
+      const { data, isLoading } = useSheets()
+      return <output>{isLoading ? 'loading' : data?.length}</output>
     }
-    expect(renderToString(<ServerCatalog />)).not.toContain('missing')
+    expect(renderToString(<ServerCatalog />)).toContain('loading')
   })
 
   it('never clears existing sheets when tags and aliases arrive independently', async () => {
@@ -115,14 +125,14 @@ describe('sheet catalog availability', () => {
     state.tags = tagsFor(22)
     state.aliases = [{ song_id: songId, name: 'edited alias' }]
     rerender()
-    expect(result.current.data[0]!.tags).toEqual([22])
-    expect(result.current.data[0]!.searchAcronyms).toContain('edited alias')
-    expect(result.current.data[0]!.searchAcronyms).not.toContain('old alias')
+    expect(result.current.data![0]!.tags).toEqual([22])
+    expect(result.current.data![0]!.searchAcronyms).toContain('edited alias')
+    expect(result.current.data![0]!.searchAcronyms).not.toContain('old alias')
     state.tags = { tags: [], tagGroups: [], tagSongs: [] }
     state.aliases = []
     rerender()
-    expect(result.current.data[0]!.tags).toEqual([])
-    expect(result.current.data[0]!.searchAcronyms).not.toContain('edited alias')
+    expect(result.current.data![0]!.tags).toEqual([])
+    expect(result.current.data![0]!.searchAcronyms).not.toContain('edited alias')
   })
 
   it('switches directly to the selected version without retaining a stale catalog', async () => {

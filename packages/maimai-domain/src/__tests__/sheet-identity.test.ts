@@ -1,7 +1,13 @@
 import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
-import { formatSheetIdentity, parseSheetIdentity, sameSheetIdentity } from '../sheet-identity'
-import type { SheetIdentity } from '../types'
+import {
+  formatLegacySheetId,
+  isPublicSheetId,
+  isPublicSongId,
+  parseLegacySheetId,
+  sameSheetIdentity,
+} from '../sheet-identity'
+import type { LegacySheetIdentity, SheetIdentity } from '../types'
 
 function assertSheetIdentityTypes(): void {
   const standard: SheetIdentity = {
@@ -29,44 +35,54 @@ function assertSheetIdentityTypes(): void {
 void assertSheetIdentityTypes
 
 describe('Sheet Identity', () => {
-  it('formats identity with the existing DXRating separator', () => {
+  it('recognizes public song and sheet IDs', () => {
+    expect(isPublicSongId('dsng_kkx38yfx4t')).toBe(true)
+    expect(isPublicSheetId('dsht_2bk5ptsbwy')).toBe(true)
+    expect(isPublicSheetId('dsng_kkx38yfx4t')).toBe(false)
+    // the public alphabet has no 0, 1, i, l, o or u
+    expect(isPublicSheetId('dsht_2bk5ptsbw0')).toBe(false)
+    expect(isPublicSheetId('君の知らない物語__dxrt__dx__dxrt__master')).toBe(false)
+  })
+
+  it('formats legacy sheet IDs with the DXRating separator', () => {
     expect(
-      formatSheetIdentity({
-        songId: '君の知らない物語',
+      formatLegacySheetId({
+        legacySongId: '君の知らない物語',
         type: TypeEnum.DX,
         difficulty: DifficultyEnum.Master,
       }),
     ).toBe('君の知らない物語__dxrt__dx__dxrt__master')
   })
 
-  it('parses a formatted identity back into parts', () => {
-    expect(parseSheetIdentity('song-a__dxrt__std__dxrt__expert')).toEqual({
-      songId: 'song-a',
+  it('parses a legacy sheet ID back into parts', () => {
+    expect(parseLegacySheetId('song-a__dxrt__std__dxrt__expert')).toEqual({
+      legacySongId: 'song-a',
       type: TypeEnum.STD,
       difficulty: DifficultyEnum.Expert,
     })
   })
 
-  it('round-trips UTAGE identities with custom difficulty labels', () => {
-    const identity: SheetIdentity = {
-      songId: 'utage-song',
+  it('round-trips UTAGE legacy sheet IDs with custom difficulty labels', () => {
+    const identity: LegacySheetIdentity = {
+      legacySongId: 'utage-song',
       type: TypeEnum.UTAGE,
       difficulty: '【協】',
     }
 
-    expect(parseSheetIdentity(formatSheetIdentity(identity))).toEqual(identity)
-    expect(parseSheetIdentity('utage-2p-song__dxrt__utage2p__dxrt__【奏】')).toEqual({
-      songId: 'utage-2p-song',
+    expect(parseLegacySheetId(formatLegacySheetId(identity))).toEqual(identity)
+    expect(parseLegacySheetId('utage-2p-song__dxrt__utage2p__dxrt__【奏】')).toEqual({
+      legacySongId: 'utage-2p-song',
       type: TypeEnum.UTAGE2P,
       difficulty: '【奏】',
     })
   })
 
-  it('returns null for malformed identity strings', () => {
-    expect(parseSheetIdentity('song-a/std/expert')).toBeNull()
-    expect(parseSheetIdentity('song-a__dxrt__bad__dxrt__expert')).toBeNull()
-    expect(parseSheetIdentity('song-a__dxrt__dx__dxrt__bad')).toBeNull()
-    expect(parseSheetIdentity('song-a__dxrt__dx__dxrt__【協】')).toBeNull()
+  it('returns null for malformed legacy sheet IDs', () => {
+    expect(parseLegacySheetId('song-a/std/expert')).toBeNull()
+    expect(parseLegacySheetId('song-a__dxrt__bad__dxrt__expert')).toBeNull()
+    expect(parseLegacySheetId('song-a__dxrt__dx__dxrt__bad')).toBeNull()
+    expect(parseLegacySheetId('song-a__dxrt__dx__dxrt__【協】')).toBeNull()
+    expect(parseLegacySheetId('dsht_2bk5ptsbwy')).toBeNull()
   })
 
   it('compares identities by song id, type, and difficulty', () => {

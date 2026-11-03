@@ -1,11 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { type DifficultyEnum, type TypeEnum, dxdata } from '@gekichumai/dxdata'
+import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import { getCatalogDocument } from '@/catalog/catalogSource'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
+import { CONSTANT_TABLE_LEVELS, constantTablePath } from '@/components/chartDiscovery/constantTables'
+import { VERSION_PAGE_VERSIONS, versionPagePath } from '@/components/chartDiscovery/versionPages'
+import { buildLocalizedUrl } from '@/utils/alternateLinks'
+import { SUPPORTED_LOCALES } from '@/setup/locale'
 
 const BASE_URL = 'https://dxrating.net'
 
 type SitemapSong = {
-  songId: string
+  id: string
   sheets?: {
     type: TypeEnum
     difficulty: DifficultyEnum
@@ -23,65 +28,84 @@ const escapeXml = (value: string) =>
 
 const urlLoc = (path: string) => escapeXml(`${BASE_URL}${path}`)
 
+// The same hreflang cluster the pages declare (see buildAlternateLinks)
+const alternatesXml = (path: string) =>
+  [
+    `\n    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(buildLocalizedUrl({ pathname: path }))}"/>`,
+    ...SUPPORTED_LOCALES.map(
+      (locale) =>
+        `\n    <xhtml:link rel="alternate" hreflang="${locale}" href="${escapeXml(buildLocalizedUrl({ pathname: path }, locale))}"/>`,
+    ),
+  ].join('')
+
 const lastmodXml = (releaseDate?: string) => (releaseDate ? `\n    <lastmod>${escapeXml(releaseDate)}</lastmod>` : '')
+
+const constantTableEntries = [
+  '/constants',
+  ...CONSTANT_TABLE_LEVELS.map(constantTablePath),
+  '/versions',
+  ...VERSION_PAGE_VERSIONS.map(versionPagePath),
+]
+  .map(
+    (path) => `
+  <url>
+    <loc>${urlLoc(path)}</loc>${alternatesXml(path)}
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>`,
+  )
+  .join('')
 
 export function buildSitemap(songs: SitemapSong[]) {
   const sheetEntries = songs
     .flatMap((song) =>
       (song.sheets ?? []).map((sheet) => ({
-        songId: song.songId,
+        songId: song.id,
         sheet,
       })),
     )
     .sort((a, b) => (b.sheet.releaseDate ?? '').localeCompare(a.sheet.releaseDate ?? ''))
+    .map(({ songId, sheet }) => ({
+      sheet,
+      path: buildSheetPath({ songId, type: sheet.type, difficulty: sheet.difficulty }),
+    }))
     .map(
-      ({ songId, sheet }) => `
+      ({ sheet, path }) => `
   <url>
-    <loc>${urlLoc(
-      buildSheetPath({
-        songId,
-        type: sheet.type,
-        difficulty: sheet.difficulty,
-      }),
-    )}</loc>${lastmodXml(sheet.releaseDate)}
-	    <changefreq>monthly</changefreq>
-	    <priority>0.7</priority>
-	  </url>`,
+    <loc>${urlLoc(path)}</loc>${alternatesXml(path)}${lastmodXml(sheet.releaseDate)}
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>`,
     )
     .join('')
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>${urlLoc('/')}</loc>
+    <loc>${urlLoc('/')}</loc>${alternatesXml('/')}
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>${urlLoc('/search')}</loc>
+    <loc>${urlLoc('/charts/recent')}</loc>${alternatesXml('/charts/recent')}
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>${urlLoc('/charts/recent')}</loc>
+    <loc>${urlLoc('/charts/trending')}</loc>${alternatesXml('/charts/trending')}
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>${urlLoc('/charts/trending')}</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${urlLoc('/rating')}</loc>
+    <loc>${urlLoc('/rating')}</loc>${alternatesXml('/rating')}
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>${urlLoc('/developers')}</loc>
+    <loc>${urlLoc('/developers')}</loc>${alternatesXml('/developers')}
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>${sheetEntries}
+  </url>${constantTableEntries}${sheetEntries}
 </urlset>`
 }
 
@@ -89,7 +113,7 @@ export const Route = createFileRoute('/sitemap.xml')({
   server: {
     handlers: {
       GET: async () => {
-        const sitemap = buildSitemap(dxdata.songs)
+        const sitemap = buildSitemap((await getCatalogDocument()).songs)
 
         return new Response(sitemap, {
           headers: {

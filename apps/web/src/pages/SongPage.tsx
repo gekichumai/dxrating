@@ -1,16 +1,21 @@
-import { DifficultyEnum, TypeEnum, dxdata } from '@gekichumai/dxdata'
+import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { IconButton } from '@mui/material'
 import { type FC, useMemo } from 'react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import MdiArrowLeft from '~icons/mdi/arrow-left'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { TYPE_ORDER, getHighestDifficulty } from '../models/constants'
-import { useAppContextDXDataVersion } from '../models/context/useAppContext'
 import { useServerAliases } from '../models/useServerAliases'
-import { type FlattenedSheet, canonicalId, getSearchAcronymsWithServerAliases } from '../songs'
+import { useCatalogDocument, useSongCatalog } from '@/catalog/CatalogContext'
+import { findSongById } from '@/catalog/songLookup'
+import { type FlattenedSheet, getSearchAcronymsWithServerAliases } from '../songs'
 import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
+import { constantTableLevelOf, constantTablePath } from '@/components/chartDiscovery/constantTables'
+import { versionPagePath, versionSlug } from '@/components/chartDiscovery/versionPages'
+import { useTranslation } from 'react-i18next'
+import { buildSheetPath } from '../components/sheet/sheetLinks'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { getVisibleSongPageSheets } from './songPageSheets'
 
@@ -19,44 +24,37 @@ const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 export const SongPage: FC = () => {
   const { songId, type, difficulty } = routeApi.useParams()
   const navigate = useNavigate()
-  const appVersion = useAppContextDXDataVersion()
+  const { t } = useTranslation(['constants', 'versions'])
+  const catalogDocument = useCatalogDocument()
+  const catalog = useSongCatalog()
   const { data: serverAliases } = useServerAliases()
 
   const song = useMemo(() => {
     if (!songId) return null
-    return dxdata.songs.find((s) => s.songId === songId) ?? null
-  }, [songId])
+    return findSongById(catalogDocument, songId) ?? null
+  }, [catalogDocument, songId])
 
   const searchAcronyms = useMemo(() => {
     if (!song) return []
-    return getSearchAcronymsWithServerAliases(song, serverAliases)
+    return getSearchAcronymsWithServerAliases({ songId: song.id, searchAcronyms: song.searchAcronyms }, serverAliases)
   }, [song, serverAliases])
 
   const flattenedSheets = useMemo<FlattenedSheet[]>(() => {
     if (!song) return []
-    return song.sheets.map((sheet) => {
-      const isTypeUtage = sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P
-      const identity = {
-        songId: song.songId,
-        type: sheet.type,
-        difficulty: sheet.difficulty,
-      }
-      return {
-        ...song,
-        ...sheet,
-        id: canonicalId(song, sheet),
-        identity,
-        searchAcronyms,
-        isTypeUtage,
-        isRatingEligible: !isTypeUtage,
-        tags: [],
-        releaseDateTimestamp: sheetReleaseDateTimestamp(sheet.releaseDate),
-        internalLevelValue: sheet.multiverInternalLevelValue
-          ? (sheet.multiverInternalLevelValue[appVersion] ?? sheet.internalLevelValue)
-          : sheet.internalLevelValue,
-      } as FlattenedSheet
+    return song.sheets.flatMap((sheet) => {
+      const versioned = catalog.getById(sheet.id)
+      if (!versioned) return []
+      return [
+        {
+          ...versioned,
+          difficulty: versioned.difficulty as DifficultyEnum,
+          searchAcronyms,
+          tags: [],
+          releaseDateTimestamp: sheetReleaseDateTimestamp(sheet.releaseDate),
+        },
+      ]
     })
-  }, [song, searchAcronyms, appVersion])
+  }, [song, catalog, searchAcronyms])
 
   const availableTypes = useMemo(() => {
     const typeSet = new Set(flattenedSheets.map((s) => s.type))
@@ -69,6 +67,7 @@ export const SongPage: FC = () => {
     (sheet) => sheet.type === activeType && sheet.difficulty === activeDifficulty,
   )
   const headerSheet = activeSheet ?? flattenedSheets[0]
+  const constantTableLevel = activeSheet ? constantTableLevelOf(activeSheet.level) : null
   const visibleSheets = getVisibleSongPageSheets(flattenedSheets, activeType, activeDifficulty)
 
   const handleTypeChange = (newType: TypeEnum) => {
@@ -101,7 +100,7 @@ export const SongPage: FC = () => {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
       <a
-        href="/search"
+        href="/"
         onClick={(e) => {
           if (window.history.length > 1 && document.referrer.startsWith(window.location.origin)) {
             e.preventDefault()
@@ -124,6 +123,13 @@ export const SongPage: FC = () => {
         activeDifficulty={activeDifficulty}
         onTypeChange={handleTypeChange}
         onDifficultyChange={handleDifficultyChange}
+        hrefFor={(sheetType, sheetDifficulty) =>
+          buildSheetPath({
+            songId,
+            type: sheetType,
+            difficulty: sheetDifficulty ?? getHighestDifficulty(flattenedSheets.filter((s) => s.type === sheetType)),
+          })
+        }
       />
 
       {visibleSheets.map((sheet) => (
@@ -131,6 +137,18 @@ export const SongPage: FC = () => {
           <SongSheetContent sheet={sheet} isActive />
         </div>
       ))}
+
+      {constantTableLevel && (
+        <a href={constantTablePath(constantTableLevel)} className="self-start text-sm text-slate-700">
+          {t('constants:chart-link', { level: constantTableLevel })} →
+        </a>
+      )}
+
+      {activeSheet && versionSlug(activeSheet.version) && (
+        <a href={versionPagePath(activeSheet.version)} className="self-start text-sm text-slate-700">
+          {t('versions:chart-link', { version: activeSheet.version })} →
+        </a>
+      )}
     </div>
   )
 }

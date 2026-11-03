@@ -1,3 +1,4 @@
+import type { ServerEnum } from '@gekichumai/dxdata'
 import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { render, screen } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
@@ -34,22 +35,9 @@ function makeSheet(type: TypeEnum): FlattenedSheet {
     difficulty: DifficultyEnum.Master,
     level: '13',
     internalLevelValue: 13,
-    noteDesigner: null,
-    noteCounts: {
-      tap: null,
-      hold: null,
-      slide: null,
-      touch: null,
-      break: null,
-      total: null,
-    },
-    regions: {
-      jp: true,
-      intl: true,
-      cn: true,
-    },
+    noteCounts: {},
+    serverIds: ['jp', 'intl', 'usa', 'cn'] as ServerEnum[],
     version: VersionEnum.CiRCLEPLUS,
-    sheets: [],
     isSpecial: false,
     isLocked: false,
     isTypeUtage: type === TypeEnum.UTAGE || type === TypeEnum.UTAGE2P,

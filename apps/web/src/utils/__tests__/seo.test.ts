@@ -1,4 +1,4 @@
-import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
+import { CategoryEnum, DifficultyEnum, ServerEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
 import {
   buildDevelopersSeo,
@@ -47,8 +47,7 @@ describe('SEO localization', () => {
   it('builds localized developer API metadata', () => {
     const seo = buildDevelopersSeo('ja')
 
-    expect(seo.title).toBe('開発者向け API - DXRating')
-    expect(seo.links).toContainEqual({ rel: 'canonical', href: 'https://dxrating.net/developers' })
+    expect(seo.title).toBe('開発者向け: MCP サーバーと API - DXRating')
     expect(seo.meta).toContainEqual({ property: 'og:url', content: 'https://dxrating.net/developers' })
   })
 
@@ -59,7 +58,7 @@ describe('SEO localization', () => {
         artist: 'Test Artist',
         category: 'POPSアニメ',
         imageName: 'test-song',
-        songId: 'test-song',
+        id: 'test-song',
       },
       {
         type: TypeEnum.STD,
@@ -87,7 +86,7 @@ describe('SEO localization', () => {
         artist: 'Test Artist',
         category: CategoryEnum.Maimai,
         imageName: 'test-song',
-        songId: 'test-song',
+        id: 'test-song',
         bpm: 180,
       },
       {
@@ -105,11 +104,7 @@ describe('SEO localization', () => {
           break: 10,
           total: 700,
         },
-        regions: {
-          jp: true,
-          intl: true,
-          cn: false,
-        },
+        serverIds: [ServerEnum.JP, ServerEnum.INTL, ServerEnum.USA],
         version: VersionEnum.CiRCLEPLUS,
       },
       'en',
@@ -124,7 +119,7 @@ describe('SEO localization', () => {
           '@type': 'WebSite',
           potentialAction: expect.objectContaining({
             '@type': 'SearchAction',
-            target: 'https://dxrating.net/search?q={search_term_string}',
+            target: 'https://dxrating.net/?q={search_term_string}',
             'query-input': 'required name=search_term_string',
           }),
         }),
@@ -132,9 +127,9 @@ describe('SEO localization', () => {
           '@type': 'BreadcrumbList',
         }),
         expect.objectContaining({
-          '@type': 'MusicComposition',
+          '@type': 'MusicRecording',
           name: 'Test Song',
-          composer: expect.objectContaining({ name: 'Test Artist' }),
+          byArtist: expect.objectContaining({ name: 'Test Artist' }),
         }),
         expect.objectContaining({
           '@type': 'Dataset',
@@ -154,6 +149,37 @@ describe('SEO localization', () => {
           ]),
         }),
       ]),
+    )
+  })
+
+  it('puts the internal level in chart titles and the chart facts in descriptions, per locale', () => {
+    const song = {
+      title: 'Sky Trails',
+      artist: 'La prière',
+      category: 'maimai',
+      imageName: 'x',
+      id: 'dsng_x',
+      bpm: 171,
+    }
+    const sheet = {
+      type: TypeEnum.DX,
+      difficulty: DifficultyEnum.Master,
+      level: '14+',
+      internalLevelValue: 14.7,
+      noteDesigner: 'Designer',
+      noteCounts: { tap: 1, hold: 1, slide: 1, touch: 1, break: 1, total: 1052 },
+      version: VersionEnum.CiRCLEPLUS,
+    }
+
+    expect(buildSongSheetSeo(song, sheet, 'ja').title).toBe(
+      'Sky Trails でらっくす MASTER 譜面定数14.7 | maimai でらっくす - DXRating',
+    )
+    expect(buildSongSheetSeo(song, sheet, 'en').title).toBe(
+      'Sky Trails DX MASTER 14+ (14.7) - maimai DX Chart | DXRating',
+    )
+    expect(buildSongSheetSeo(song, sheet, 'ja').description).toContain('譜面定数 14.7・ノーツ数 1,052・BPM 171')
+    expect(buildSongSheetSeo(song, { ...sheet, internalLevelValue: 0 }, 'zh-Hant').title).toBe(
+      'Sky Trails DX MASTER Lv.14+｜maimai DX 譜面 - DXRating',
     )
   })
 })

@@ -2,7 +2,10 @@ import { VersionEnum } from '@gekichumai/dxdata'
 import { RenderQueueFullError } from '@gekichumai/oneshot-renderer'
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { handler } from '../services/functions/oneshot-renderer/index'
+import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
+import { createOneshotHandler } from '../services/functions/oneshot-renderer/index'
+
+const handler = createOneshotHandler(async () => ({ revision: 'test', document: catalogSnapshot }))
 
 const { render } = vi.hoisted(() => ({ render: vi.fn() }))
 vi.mock('@gekichumai/oneshot-renderer', async (importOriginal) => ({

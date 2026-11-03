@@ -1,8 +1,10 @@
 import { DifficultyEnum } from '@gekichumai/dxdata'
+import { LEGACY_SONG_IDS } from '@gekichumai/dxdata/legacy-song-ids'
+import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { describe, expect, it } from 'vitest'
 import type { SortPredicate } from '../../components/sheet/SheetSortFilter'
 import type { FlattenedSheet } from '../../songs'
-import { compareSheetsBySorts } from '../sheetSorting'
+import { compareSheetsBySorts, getSongCatalogPositions } from '../sheetSorting'
 
 const releaseDateDescending: SortPredicate[] = [{ descriptor: 'releaseDate', direction: 'desc' }]
 
@@ -34,13 +36,16 @@ describe('compareSheetsBySorts', () => {
   })
 
   it('orders the reported same-day catalog batch with the latest song first', () => {
-    const batch = ['Broomstick adventure!', '無彩色のディストピア', 'Manifold Hypothesis', 'Inverted World'].map(
-      (songId) => sheet(songId, Date.parse('2026-08-21')),
-    )
+    const titles = ['Broomstick adventure!', '無彩色のディストピア', 'Manifold Hypothesis', 'Inverted World']
+    const titleBySongId = new Map(titles.map((title) => [LEGACY_SONG_IDS[title]!, title]))
+    const batch = [...titleBySongId.keys()].map((songId) => sheet(songId, Date.parse('2026-08-21')))
+    const positions = getSongCatalogPositions(catalogSnapshot)
 
-    expect(batch.sort((a, b) => compareSheetsBySorts(a, b, releaseDateDescending)).map(({ songId }) => songId)).toEqual(
-      ['Inverted World', 'Manifold Hypothesis', '無彩色のディストピア', 'Broomstick adventure!'],
-    )
+    expect(
+      batch
+        .sort((a, b) => compareSheetsBySorts(a, b, releaseDateDescending, positions))
+        .map(({ songId }) => titleBySongId.get(songId)),
+    ).toEqual(['Inverted World', 'Manifold Hypothesis', '無彩色のディストピア', 'Broomstick adventure!'])
   })
 
   it('follows ascending release-date direction for the catalog tie-break', () => {

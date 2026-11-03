@@ -1,15 +1,23 @@
-import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum, type Sheet, type Song } from '@gekichumai/dxdata'
-import { formatSheetIdentity } from '@gekichumai/maimai-domain'
+import {
+  CategoryEnum,
+  type ServerEnum,
+  DifficultyEnum,
+  TypeEnum,
+  VersionEnum,
+  type Sheet,
+  type Song,
+} from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
 import { buildTrendingChartLinks } from '../trendingCharts'
 
 const makeSong = (
   songId: string,
   sheets: Song['sheets'],
-  overrides: Partial<Omit<Song, 'sheets' | 'songId'>> = {},
+  overrides: Partial<Omit<Song, 'sheets' | 'id'>> = {},
 ): Song => ({
-  songId,
+  id: songId,
   title: songId,
+  version: VersionEnum.CiRCLEPLUS,
   artist: `${songId} artist`,
   category: CategoryEnum.Maimai,
   imageName: songId,
@@ -22,26 +30,16 @@ const makeSong = (
 })
 
 const makeSheet = (id: string, overrides: Partial<Sheet> = {}): Sheet => ({
+  id: `sheet-${id}`,
   internalId: Number(id),
   type: TypeEnum.DX,
   difficulty: DifficultyEnum.Master,
   level: '13+',
   internalLevelValue: 13.7,
   version: VersionEnum.CiRCLEPLUS,
-  noteCounts: {
-    tap: null,
-    hold: null,
-    slide: null,
-    touch: null,
-    break: null,
-    total: null,
-  },
+  noteCounts: {},
   noteDesigner: '',
-  regions: {
-    jp: true,
-    intl: true,
-    cn: true,
-  },
+  serverIds: ['jp', 'intl', 'usa', 'cn'] as ServerEnum[],
   isSpecial: false,
   ...overrides,
 })
@@ -72,11 +70,7 @@ describe('buildTrendingChartLinks', () => {
     expect(links.map((link) => link.songId)).toEqual(['second', 'popular'])
     expect(links.map((link) => link.href)).toEqual(['/songs/second/dx/master', '/songs/popular/dx/master'])
     expect(links[0]).toMatchObject({
-      id: formatSheetIdentity({
-        songId: 'second',
-        type: TypeEnum.DX,
-        difficulty: DifficultyEnum.Master,
-      }),
+      id: 'sheet-3',
       identity: {
         songId: 'second',
         type: TypeEnum.DX,

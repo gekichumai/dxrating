@@ -134,7 +134,7 @@ const TransparentPaper = styled(Paper)(() => ({
 }))
 
 export const RatingCalculator = () => {
-  const { modifyEntries } = useRatingCalculatorContext()
+  const { entries, modifyEntries } = useRatingCalculatorContext()
   const { data: sheets } = useSheets()
   const [showOnlyB50, setShowOnlyB50] = useState(false)
   const [compactMode, setCompactMode] = useState(false)
@@ -144,7 +144,8 @@ export const RatingCalculator = () => {
 
   const onSubmit = useCallback(
     (entry: PlayEntry) => {
-      const existingEntry = allEntries.find((existingEntry) => existingEntry.sheetId === entry.sheetId)
+      // The saved entries, not the resolved ones: those are empty while the catalog loads
+      const existingEntry = entries.find((existingEntry) => existingEntry.sheetId === entry.sheetId)
       if (existingEntry) {
         modifyEntries.updateFirst((existingEntry) => existingEntry.sheetId === entry.sheetId, entry)
       } else modifyEntries.push(entry)
@@ -154,14 +155,14 @@ export const RatingCalculator = () => {
         captureAnalyticsEvent('rating_calculator_entry_saved', {
           action: existingEntry ? 'updated' : 'added',
           achievement_rate_band: achievementRateBand(entry.achievementRate),
-          entry_count: existingEntry ? allEntries.length : allEntries.length + 1,
+          entry_count: existingEntry ? entries.length : entries.length + 1,
           song_id: sheet.songId,
           sheet_type: sheet.type,
           sheet_difficulty: sheet.difficulty,
         })
       }
     },
-    [allEntries, modifyEntries, sheets],
+    [entries, modifyEntries, sheets],
   )
 
   if (!sheets) return null

@@ -1,4 +1,13 @@
-import { CategoryEnum, DifficultyEnum, TypeEnum, VERSION_ID_MAP, VersionEnum, dxdata } from '@gekichumai/dxdata'
+import {
+  CategoryEnum,
+  DifficultyEnum,
+  type Song,
+  type SongCatalogDocument,
+  type TypeEnum,
+  VERSION_ID_MAP,
+  VersionEnum,
+} from '@gekichumai/dxdata'
+import { getSongCatalog } from '@gekichumai/maimai-domain'
 import { IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
@@ -11,7 +20,7 @@ import { ResponsiveDialog } from '../components/global/ResponsiveDialog'
 import { SearchQuerySeedList } from '../components/sheet/SearchQuerySeedList'
 import type { SearchQuerySeedSheet } from '../components/sheet/searchQuerySeed'
 import { SheetDialogContent } from '../components/sheet/SheetDialogContent'
-import { SheetListContainer } from '../components/sheet/SheetListContainer'
+import { SHEET_LIST_FIRST_SCREEN_ROWS, SheetListContainer } from '../components/sheet/SheetListContainer'
 import {
   getDefaultSheetSortFilterForm,
   SheetSortFilter,
@@ -20,13 +29,16 @@ import {
 } from '../components/sheet/SheetSortFilter'
 import { SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
 import { captureAnalyticsEvent } from '../lib/analytics'
+import { DXVersionToDXDataVersionEnumMap, getDefaultAppContext } from '../models/context/AppContext'
 import { useAppContextDXDataVersion } from '../models/context/useAppContext'
-import { type FlattenedSheet, canonicalIdFromParts, useFilteredSheets, useSheets } from '../songs'
+import { readFavoriteSheetIds } from '../models/favorite'
+import { useCatalogDocument, useSongCatalog } from '../catalog/CatalogContext'
+import { type FlattenedSheet, getFlattenedSheets, useFilteredSheets, useSheets } from '../songs'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { sheetMatchesDifficultyFilter } from './sheetDifficultyFilter'
-import { compareSheetsBySorts } from './sheetSorting'
+import { compareSheetsBySorts, getSongCatalogPositions } from './sheetSorting'
 
-const searchRouteApi = getRouteApi('/search')
+const searchRouteApi = getRouteApi('/')
 
 const chainEvery =
   <T,>(...fns: ((arg: T) => boolean | undefined)[]) =>
@@ -88,6 +100,130 @@ const SheetSearchAnalytics: FC<{
   return null
 }
 
+// Filtering and sorting the full catalog is the bulk of a home page render. The inputs are stable references (the cached
+// catalog plus a serializable form), so keep the last result and reuse it across remounts and SSR requests.
+let lastSortFilterResult:
+  | {
+      results: FlattenedSheet[]
+      key: string
+      version: VersionEnum
+      positions: ReadonlyMap<string, number>
+      sheets: FlattenedSheet[]
+    }
+  | undefined
+
+const getSortFilteredSheets = (
+  results: FlattenedSheet[],
+  sortFilterOptions: SheetSortFilterForm | undefined,
+  inputQuery: string,
+  version: VersionEnum,
+  songCatalogPositions: ReadonlyMap<string, number>,
+): FlattenedSheet[] => {
+  // Favorites live in localStorage and can change between calls, so that path is never cached.
+  const cacheable = !sortFilterOptions?.filters.favoritesOnly
+  const key = cacheable ? JSON.stringify([inputQuery, sortFilterOptions ?? null]) : ''
+  if (
+    cacheable &&
+    lastSortFilterResult?.results === results &&
+    lastSortFilterResult.version === version &&
+    lastSortFilterResult.positions === songCatalogPositions &&
+    lastSortFilterResult.key === key
+  ) {
+    return lastSortFilterResult.sheets
+  }
+
+  const sheets = computeSortFilteredSheets(results, sortFilterOptions, inputQuery, version, songCatalogPositions)
+  if (cacheable) lastSortFilterResult = { results, key, version, positions: songCatalogPositions, sheets }
+  return sheets
+}
+
+/** The rows a list without a query shows first: what SSR and the first client render show from the page's slice */
+export const getSheetListFirstScreen = (
+  document: SongCatalogDocument,
+  version: VersionEnum = DXVersionToDXDataVersionEnumMap[getDefaultAppContext().version],
+  sortFilterOptions: SheetSortFilterForm | undefined = getDefaultSheetSortFilterForm(),
+): FlattenedSheet[] =>
+  computeSortFilteredSheets(
+    getFlattenedSheets(getSongCatalog(document, version)),
+    sortFilterOptions,
+    '',
+    version,
+    getSongCatalogPositions(document),
+  ).slice(0, SHEET_LIST_FIRST_SCREEN_ROWS)
+
+/**
+ * The songs of the default list's first rows, for the home page's catalog slice. Ranked within the slice they come out
+ * in the same order: the slice holds every song of those rows, in catalog order.
+ */
+export const getSheetListFirstScreenSongs = (document: SongCatalogDocument): Song[] => {
+  const songIds = new Set(getSheetListFirstScreen(document).map((row) => row.songId))
+  return document.songs.filter((song) => songIds.has(song.id))
+}
+
+const computeSortFilteredSheets = (
+  results: FlattenedSheet[],
+  sortFilterOptions: SheetSortFilterForm | undefined,
+  inputQuery: string,
+  version: VersionEnum,
+  songCatalogPositions: ReadonlyMap<string, number>,
+): FlattenedSheet[] => {
+  let sortFilteredResults: FlattenedSheet[] = results
+  if (sortFilterOptions) {
+    const currentVersionId = VERSION_ID_MAP.get(version) ?? 0
+    const validVersions = Array.from(VERSION_ID_MAP.entries())
+      .filter(([, id]) => id <= currentVersionId)
+      .map(([v]) => v)
+    const favoriteSheetIds = sortFilterOptions.filters.favoritesOnly ? new Set<string>(readFavoriteSheetIds()) : null
+    sortFilteredResults = results.filter((sheet) => {
+      return chainEvery<FlattenedSheet>(
+        (v) => !!v,
+        (v) => {
+          if (sortFilterOptions.filters.internalLevelValue) {
+            const { min, max } = sortFilterOptions.filters.internalLevelValue
+            return v.internalLevelValue >= min && v.internalLevelValue <= max
+          }
+          return true
+        },
+        (v) => {
+          if (sortFilterOptions.filters.versions) {
+            const versions = sortFilterOptions.filters.versions.filter((v) => validVersions.includes(v))
+            return versions.includes(v.version)
+          }
+          return true
+        },
+        (v) => {
+          if (sortFilterOptions.filters.tags.length) {
+            const tags = sortFilterOptions.filters.tags
+            return tags.every((tag) => v.tags.includes(tag))
+          }
+          return true
+        },
+
+        (v) => {
+          if (sortFilterOptions.filters.categories) {
+            const categories = sortFilterOptions.filters.categories
+            return categories.some((category) => v.category.includes(category))
+          }
+          return true
+        },
+
+        (v) => sheetMatchesDifficultyFilter(v, sortFilterOptions.filters.difficulties),
+
+        (v) => {
+          if (favoriteSheetIds) {
+            return favoriteSheetIds.has(v.id)
+          }
+          return true
+        },
+      )(sheet)
+    })
+    if (!inputQuery) {
+      sortFilteredResults.sort((a, b) => compareSheetsBySorts(a, b, sortFilterOptions.sorts, songCatalogPositions))
+    }
+  }
+  return sortFilteredResults
+}
+
 const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly SearchQuerySeedSheet[] }> = ({
   search,
   seedSheets,
@@ -118,7 +254,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
     (nextQuery: string) => {
       setInputQuery(nextQuery)
       navigate({
-        to: '/search',
+        to: '/',
         search: (prev: Record<string, unknown>) => ({
           ...prev,
           q: nextQuery || undefined,
@@ -136,34 +272,32 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
     })
   }, [])
 
+  const catalog = useSongCatalog()
+  const catalogDocument = useCatalogDocument()
+  const songCatalogPositions = getSongCatalogPositions(catalogDocument)
   const activeSheet = useMemo<FlattenedSheet | null>(() => {
     const { songId, type, difficulty } = search
     if (!songId || !type || !difficulty) return null
-    const song = dxdata.songs.find((s) => s.songId === songId)
-    if (!song) return null
-    const sheet = song.sheets.find((s) => s.type === type && s.difficulty === difficulty)
-    if (!sheet) return null
-    const isTypeUtage = sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P
+    const versioned = catalog.getByIdentity({
+      songId,
+      type: type as TypeEnum,
+      difficulty: difficulty as DifficultyEnum,
+    })
+    if (!versioned) return null
     return {
-      ...song,
-      ...sheet,
-      id: canonicalIdFromParts(songId, type as TypeEnum, difficulty as DifficultyEnum),
-      searchAcronyms: song.searchAcronyms,
-      isTypeUtage,
-      isRatingEligible: !isTypeUtage,
-      releaseDateTimestamp: sheetReleaseDateTimestamp(sheet.releaseDate),
-      internalLevelValue: sheet.multiverInternalLevelValue
-        ? (sheet.multiverInternalLevelValue[version] ?? sheet.internalLevelValue)
-        : sheet.internalLevelValue,
-    } as FlattenedSheet
-  }, [search, version])
+      ...versioned,
+      difficulty: versioned.difficulty as DifficultyEnum,
+      releaseDateTimestamp: sheetReleaseDateTimestamp(versioned.releaseDate),
+      tags: [],
+    }
+  }, [search, catalog])
   const activeSheetId = activeSheet?.id ?? null
 
   const handleSheetDialogChange = useCallback(
     (sheet: FlattenedSheet | null) => {
       if (sheet) {
         navigate({
-          to: '/search',
+          to: '/',
           search: (prev: Record<string, unknown>) => ({
             ...prev,
             songId: sheet.songId,
@@ -178,7 +312,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
         })
       } else {
         navigate({
-          to: '/search',
+          to: '/',
           search: (prev: Record<string, unknown>) => {
             const { songId: _, type: __, difficulty: ___, ...rest } = prev
             return rest
@@ -192,62 +326,13 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
 
   const { filteredResults, elapsed: filteringElapsed } = useMemo(() => {
     const startTime = performance.now()
-    let sortFilteredResults: FlattenedSheet[] = results
-    if (sortFilterOptions) {
-      const currentVersionId = VERSION_ID_MAP.get(version) ?? 0
-      const validVersions = Array.from(VERSION_ID_MAP.entries())
-        .filter(([, id]) => id <= currentVersionId)
-        .map(([v]) => v)
-      const favoriteSheetIds = sortFilterOptions.filters.favoritesOnly
-        ? new Set<string>(JSON.parse(localStorage.getItem('favorite-sheets') ?? '[]'))
-        : null
-      sortFilteredResults = results.filter((sheet) => {
-        return chainEvery<FlattenedSheet>(
-          (v) => !!v,
-          (v) => {
-            if (sortFilterOptions.filters.internalLevelValue) {
-              const { min, max } = sortFilterOptions.filters.internalLevelValue
-              return v.internalLevelValue >= min && v.internalLevelValue <= max
-            }
-            return true
-          },
-          (v) => {
-            if (sortFilterOptions.filters.versions) {
-              const versions = sortFilterOptions.filters.versions.filter((v) => validVersions.includes(v))
-              return versions.includes(v.version)
-            }
-            return true
-          },
-          (v) => {
-            if (sortFilterOptions.filters.tags.length) {
-              const tags = sortFilterOptions.filters.tags
-              return tags.every((tag) => v.tags.includes(tag))
-            }
-            return true
-          },
-
-          (v) => {
-            if (sortFilterOptions.filters.categories) {
-              const categories = sortFilterOptions.filters.categories
-              return categories.some((category) => v.category.includes(category))
-            }
-            return true
-          },
-
-          (v) => sheetMatchesDifficultyFilter(v, sortFilterOptions.filters.difficulties),
-
-          (v) => {
-            if (favoriteSheetIds) {
-              return favoriteSheetIds.has(v.id)
-            }
-            return true
-          },
-        )(sheet)
-      })
-      if (!inputQuery) {
-        sortFilteredResults.sort((a, b) => compareSheetsBySorts(a, b, sortFilterOptions.sorts))
-      }
-    }
+    const sortFilteredResults = getSortFilteredSheets(
+      results,
+      sortFilterOptions,
+      inputQuery,
+      version,
+      songCatalogPositions,
+    )
     const elapsed = performance.now() - startTime
     Sentry.metrics.distribution('sheet_filter.duration', elapsed, {
       unit: 'millisecond',
@@ -258,8 +343,14 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
       filteredResults: sortFilteredResults,
       elapsed,
     }
-  }, [results, sortFilterOptions, inputQuery, version])
+  }, [results, sortFilterOptions, inputQuery, version, songCatalogPositions])
   const showSeedResults = isLoading && inputQuery && seedSheets.length > 0
+  // Until the complete catalog loads (and during SSR), the default list shows its first rows from the page's slice
+  const firstScreenSheets = useMemo(
+    () => (isLoading && !inputQuery ? getSheetListFirstScreen(catalogDocument, version, sortFilterOptions) : null),
+    [isLoading, inputQuery, catalogDocument, version, sortFilterOptions],
+  )
+  const listSheets = isLoading ? (firstScreenSheets?.length ? firstScreenSheets : null) : filteredResults
   const summaryTotal = sheets?.length ?? filteredResults.length
   const summaryProgress = summaryTotal > 0 ? filteredResults.length / summaryTotal : 0
 
@@ -352,7 +443,7 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
           </div>
         </div>
 
-        {isLoading ? (
+        {!listSheets ? (
           showSeedResults ? (
             <SearchQuerySeedList sheets={seedSheets} />
           ) : (
@@ -382,12 +473,12 @@ const SheetListInnerContent: FC<{ search: SearchParams; seedSheets: readonly Sea
           )
         ) : (
           <SheetListContainer
-            sheets={filteredResults}
+            sheets={listSheets}
             activeSheetId={activeSheetId}
             onSheetDialogChange={handleSheetDialogChange}
             analyticsSource="search_results"
             analyticsQueryPresent={!!inputQuery}
-            analyticsResultCount={filteredResults.length}
+            analyticsResultCount={listSheets.length}
           />
         )}
       </div>

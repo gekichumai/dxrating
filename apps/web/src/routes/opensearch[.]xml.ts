@@ -11,7 +11,7 @@ export function buildOpenSearchDescription() {
   <Description>Search maimai DX songs and charts on DXRating.</Description>
   <Tags>maimai maimaiDX DXRating songs charts rating</Tags>
   <Image height="16" width="16" type="image/x-icon">${ICON_URL}</Image>
-  <Url type="text/html" method="get" template="${BASE_URL}/search?q={searchTerms}" />
+  <Url type="text/html" method="get" template="${BASE_URL}/?q={searchTerms}" />
   <Url type="application/opensearchdescription+xml" rel="self" template="${BASE_URL}/opensearch.xml" />
   <InputEncoding>UTF-8</InputEncoding>
   <Language>*</Language>

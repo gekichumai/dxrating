@@ -1,5 +1,5 @@
 import type { JSX } from 'react'
-import { LOCALE_QUERY_PARAM, SUPPORTED_LOCALES, type SupportedLocale } from '@/setup/locale'
+import { LOCALE_QUERY_PARAM, SUPPORTED_LOCALES, toSupportedLocale, type SupportedLocale } from '@/setup/locale'
 
 const SITE_URL = 'https://dxrating.net'
 
@@ -40,15 +40,32 @@ export const buildLocalizedUrl = ({ pathname, search = {} }: AlternateLinkLocati
   return url.toString()
 }
 
-export const buildAlternateLinks = (location: AlternateLinkLocation): AlternateLink[] => [
-  {
-    rel: 'alternate',
-    hrefLang: 'x-default',
-    href: buildLocalizedUrl(location),
-  },
-  ...SUPPORTED_LOCALES.map((locale) => ({
-    rel: 'alternate',
-    hrefLang: locale,
-    href: buildLocalizedUrl(location, locale),
-  })),
-]
+/**
+ * The canonical and hreflang links of a page. Each `?locale=` variant is its own canonical URL: the locale variants
+ * render different text, so pointing them all at the unparameterized URL contradicted the hreflang cluster and
+ * Google indexed them on its own anyway. The unparameterized URL (content negotiated by cookie / Accept-Language)
+ * is the x-default. Query parameters other than `locale` (search filters, `?q=`) never make a separate page.
+ */
+export const buildAlternateLinks = ({ pathname, search }: AlternateLinkLocation): AlternateLink[] => {
+  const page = { pathname }
+  const explicitLocale = toSupportedLocale(
+    typeof search?.[LOCALE_QUERY_PARAM] === 'string' ? (search[LOCALE_QUERY_PARAM] as string) : undefined,
+  )
+
+  return [
+    {
+      rel: 'alternate',
+      hrefLang: 'x-default',
+      href: buildLocalizedUrl(page),
+    },
+    ...SUPPORTED_LOCALES.map((locale) => ({
+      rel: 'alternate',
+      hrefLang: locale,
+      href: buildLocalizedUrl(page, locale),
+    })),
+    {
+      rel: 'canonical',
+      href: buildLocalizedUrl(page, explicitLocale ?? undefined),
+    },
+  ]
+}

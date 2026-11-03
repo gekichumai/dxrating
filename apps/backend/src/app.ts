@@ -1,6 +1,7 @@
 import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { createMiddleware } from 'hono/factory'
+import { routePath } from 'hono/route'
 import { cors } from 'hono/cors'
 import { RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
@@ -10,7 +11,8 @@ import { HttpBody } from 'effect/http'
 import { appRuntime, runApp, superviseApp } from './runtime'
 import { HttpClient } from './services/http-client'
 import { getBuildInfo } from './version'
-import { handler as oneshotRenderer } from './services/functions/oneshot-renderer/index'
+import type { SongCatalogSource } from '@gekichumai/maimai-domain'
+import { createOneshotHandler } from './services/functions/oneshot-renderer/index'
 import {
   v0Handler as fetchNetRecordsV0Handler,
   v1Handler as fetchNetRecordsV1Handler,
@@ -31,6 +33,32 @@ import { Database } from './db/index'
 import { createDxdataEffect, createPostgresDxdataEffects, DXDATA_CORS_OPTIONS, DXDATA_PATH } from './services/dxdata'
 import { addPublishedDxdataToOpenApi } from './services/dxdata-openapi'
 import { addPublicApiExamplesToOpenApi } from './services/openapi-examples'
+import {
+  API_CLIENT_HEADER,
+  ApiUsage,
+  classifyCaller,
+  classifyUserAgent,
+  createRouteResolver,
+  isTrackedApiPath,
+  readClientId,
+} from './services/api-usage'
+import { appContract } from './contract'
+import { McpCatalogSource } from './services/application'
+import {
+  clientKey,
+  createRateLimiter,
+  handleMcpRequest,
+  MCP_CORS_OPTIONS,
+  MCP_PATH,
+  MCP_RATE_LIMIT,
+  rateLimited,
+} from './services/mcp/http'
+import { guideResponse, guideView, isMcpHost } from './services/mcp/guide'
+import { API_DOCS_CSP, API_DOCS_HTML, API_JSON_CSP, isJsonContentType } from './services/api-docs'
+import { MCP_SERVER_CARD_PATH, serverCardResponse } from './services/mcp/listing'
+import { McpUsage, observeMcpRequest, rateLimitedTelemetry, reportMcpInternalError } from './services/mcp/telemetry'
+import { isPrefetchOrBot, McpAnalyticsService, mcpLogFields, sanitizeVia } from './services/mcp/analytics'
+import { clientAddress } from './services/mcp/client-key'
 class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
   readonly operation: string
   readonly cause: unknown
@@ -172,7 +200,7 @@ const apiCors = cors({
 
     return null
   },
-  allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response'],
+  allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response', API_CLIENT_HEADER],
   allowMethods: ['POST', 'GET', 'OPTIONS'],
   exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],
   maxAge: 600,
@@ -180,11 +208,17 @@ const apiCors = cors({
 })
 
 const publicStaticCatalogCors = cors(DXDATA_CORS_OPTIONS)
+const mcpCors = cors(MCP_CORS_OPTIONS)
 
 // Static catalog responses are credential-independent, allowing one public
-// representation per URL to be safely shared by browsers and the CDN.
+// representation per URL to be safely shared by browsers and the CDN. The MCP
+// server is read-only and takes no credentials, so any origin may call it.
 app.use('*', (c, next) =>
-  PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path) ? publicStaticCatalogCors(c, next) : apiCors(c, next),
+  PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)
+    ? publicStaticCatalogCors(c, next)
+    : c.req.path === MCP_PATH || c.req.path === MCP_SERVER_CARD_PATH
+      ? mcpCors(c, next)
+      : apiCors(c, next),
 )
 
 // Request logging
@@ -205,6 +239,48 @@ app.use(
   }) as unknown as MiddlewareHandler,
 )
 
+// API usage accounting: classify each request by route template and caller,
+// attach the result to the request wide event, and add it to the per-minute
+// rollup flushed by the ApiUsage service.
+const resolveApiRoute = createRouteResolver(appContract)
+
+app.use('*', (c, next) => {
+  if (!isTrackedApiPath(c.req.path)) return next()
+
+  const startedAt = performance.now()
+  return runApp(
+    Effect.gen(function* () {
+      const usage = yield* ApiUsage
+      // Evaluated after `next()`: `routePath(c)` then names the handler that
+      // produced the response, not merely the last route pattern that matched.
+      const record = Effect.suspend(() => {
+        const request = {
+          route: resolveApiRoute(c.req.method, c.req.path, routePath(c)),
+          method: c.req.method,
+          status: c.res.status,
+          caller: classifyCaller(c.req.header('origin'), c.req.header('referer')),
+          userAgentClass: classifyUserAgent(c.req.header('user-agent')),
+          clientId: readClientId(c.req.header(API_CLIENT_HEADER)),
+        }
+        c.get('log')?.set({
+          api: {
+            route: request.route,
+            caller: request.caller,
+            ua_class: request.userAgentClass,
+            client_id: request.clientId,
+          },
+        })
+        return usage.record(request, performance.now() - startedAt)
+      })
+      yield* Effect.tryPromise({
+        try: next,
+        catch: (cause) => new HttpAdapterError({ operation: 'Run API usage middleware', cause }),
+      }).pipe(Effect.ensuring(record))
+    }),
+    { signal: c.req.raw.signal },
+  )
+})
+
 // Set X-DXRating-Request-ID response header
 app.use('*', (c, next) =>
   runApp(
@@ -223,6 +299,47 @@ app.use('*', (c, next) =>
   ),
 )
 
+// The setup guide of the MCP server, on its host only (mcp.dxrating.net): its
+// root, /index.md, /llms.txt and /robots.txt. Other hosts fall through.
+app.use('*', async (c, next) => {
+  const response = guideResponse(c.req.raw)
+  if (!response) return next()
+  const view = response.ok ? guideView(c.req.raw) : undefined
+  const headers = c.req.raw.headers
+  if (view && !isPrefetchOrBot(headers)) {
+    const socketAddress = (c.env as { incoming?: { socket?: { remoteAddress?: string } } } | undefined)?.incoming
+      ?.socket?.remoteAddress
+    const address = clientAddress(headers, socketAddress)
+    // queued only, after the response: a failure of analytics never reaches the visitor
+    void runApp(
+      Effect.map(McpAnalyticsService, (analytics) =>
+        analytics.captureGuideView({
+          headers,
+          clientAddress: address,
+          ...view,
+          deployment: process.env.NODE_ENV ?? 'development',
+        }),
+      ),
+    ).catch(() => undefined)
+  }
+  return response
+})
+
+// A conservative Content-Security-Policy for the JSON responses of the API, which load and run nothing; /docs sets
+// its own. The MCP host is left alone: its guide sets its own hashed policy, and answers before this middleware.
+app.use('*', async (c, next) => {
+  await next()
+  if (isMcpHost(c.req.raw.headers) || c.res.headers.has('Content-Security-Policy')) return
+  if (!isJsonContentType(c.res.headers.get('Content-Type'))) return
+  try {
+    c.res.headers.set('Content-Security-Policy', API_JSON_CSP)
+  } catch {
+    // The headers of a response passed through from fetch are immutable.
+    c.res = new Response(c.res.body, c.res)
+    c.res.headers.set('Content-Security-Policy', API_JSON_CSP)
+  }
+})
+
 // Root redirect to docs
 app.get('/', (c) => c.redirect('/docs'))
 
@@ -239,6 +356,66 @@ app.on('HEAD', '/.well-known/api-catalog', (c) => {
   setApiCatalogHeaders(c)
   return c.body(null, 200)
 })
+
+// MCP server for AI assistants: read-only, stateless, no authentication. Its
+// catalog is in memory (McpCatalogSource), so tool calls do not query the
+// database beyond a check of the publication pointer once a minute.
+const mcpRateLimiter = createRateLimiter(MCP_RATE_LIMIT)
+
+app.on(['GET', 'POST', 'DELETE'], MCP_PATH, (c) => {
+  const socketAddress = (c.env as { incoming?: { socket?: { remoteAddress?: string } } } | undefined)?.incoming?.socket
+    ?.remoteAddress
+  const headers = c.req.raw.headers
+  const retryAfter = mcpRateLimiter.take(clientKey(headers, socketAddress))
+  const address = clientAddress(headers, socketAddress)
+  const via = sanitizeVia(c.req.query('via'))
+  return runApp(
+    Effect.gen(function* () {
+      const usage = yield* McpUsage
+      const analytics = yield* McpAnalyticsService
+      if (retryAfter > 0) {
+        const telemetry = rateLimitedTelemetry(headers)
+        c.get('log')?.set(telemetry.event)
+        c.get('log')?.set(mcpLogFields({ headers, clientAddress: address, via }))
+        yield* usage.record(telemetry)
+        return rateLimited(retryAfter)
+      }
+      // Before the first catalog is loaded the server still answers, and its
+      // tools say that the data is loading.
+      const catalog = yield* Effect.flatMap(McpCatalogSource, (source) => source.current).pipe(
+        Effect.orElseSucceed(() => undefined),
+      )
+      const { response, telemetry, requestBody, responseBody } = yield* Effect.tryPromise({
+        try: () => observeMcpRequest(c.req.raw, (request) => handleMcpRequest(request, catalog)),
+        catch: (cause) => new HttpAdapterError({ operation: 'Handle MCP request', cause }),
+      })
+      c.get('log')?.set(mcpLogFields({ headers, clientAddress: address, via, requestBody }))
+      if (telemetry) {
+        c.get('log')?.set(telemetry.event)
+        yield* usage.record(telemetry)
+        reportMcpInternalError(telemetry, address, via)
+        // queued only: the response never waits for PostHog
+        analytics.capture(
+          {
+            headers,
+            clientAddress: address,
+            via,
+            durationMs: telemetry.durationMs,
+            status: response.status,
+            deployment: process.env.NODE_ENV ?? 'development',
+          },
+          requestBody,
+          responseBody,
+        )
+      }
+      return response
+    }),
+    { signal: c.req.raw.signal },
+  )
+})
+
+// The MCP Server Card, which clients and directories fetch before connecting
+app.on(['GET', 'HEAD'], MCP_SERVER_CARD_PATH, (c) => serverCardResponse(c.req.method))
 
 // Build provenance endpoint
 app.get('/version', (c) =>
@@ -333,7 +510,16 @@ app.post('/api/v1/monitoring/tunnel', (c) =>
 // Functions
 app.post('/functions/fetch-net-records/v0', verifyParams, fetchNetRecordsV0Handler)
 app.post('/functions/fetch-net-records/v1/:region', verifyParams, fetchNetRecordsV1Handler)
-app.post('/functions/render-oneshot/v0', oneshotRenderer)
+app.post(
+  '/functions/render-oneshot/v0',
+  createOneshotHandler(() =>
+    runApp(
+      Effect.flatMap(McpCatalogSource, (source) => source.current).pipe(
+        Effect.map((catalog) => ({ revision: catalog.catalogRunId, document: catalog.document as SongCatalogSource })),
+      ),
+    ),
+  ),
+)
 
 // LXNS OAuth callback (direct Hono route — must be before oRPC catch-all since it redirects)
 app.get('/api/v1/io/import/lxns/oauth_callback', (c) =>
@@ -608,32 +794,9 @@ app.get('/spec.json', (c) =>
 
 // Serve Scalar API documentation
 app.get('/docs', (c) => {
-  const html = `
-    <!doctype html>
-    <html>
-      <head>
-        <title>DXRating API</title>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="robots" content="noindex, nofollow" />
-      </head>
-      <body>
-        <div id="app"></div>
-        <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
-        <script>
-          Scalar.createApiReference('#app', {
-            url: '/spec.json',
-            authentication: {
-              securitySchemes: {
-                bearerAuth: {},
-              },
-            },
-          })
-        </script>
-      </body>
-    </html>
-  `
-  return c.html(html)
+  c.header('Content-Security-Policy', API_DOCS_CSP)
+  c.header('X-Frame-Options', 'DENY')
+  return c.html(API_DOCS_HTML)
 })
 
 export { app }

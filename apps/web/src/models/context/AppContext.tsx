@@ -53,7 +53,8 @@ export const AppContext = createContext<AppContext>({
   },
 })
 
-function getDefaultAppContext(): AppContextStates {
+/** The version and region of server renders and of the first client render, before stored preferences apply */
+export function getDefaultAppContext(): AppContextStates {
   return {
     version: 'magical',
     region: 'jp',
@@ -70,7 +71,7 @@ function isAppContextStates(value: unknown): value is AppContextStates {
   )
 }
 
-function readStoredAppContext(): AppContextStates {
+export function readStoredAppContext(): AppContextStates {
   if (typeof window === 'undefined') return getDefaultAppContext()
 
   try {

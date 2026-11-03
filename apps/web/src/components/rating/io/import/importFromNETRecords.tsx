@@ -1,5 +1,5 @@
 import type { VersionEnum } from '@gekichumai/dxdata'
-import { getDxdataSongCatalog, normalizeMaimaiNetRecords } from '@gekichumai/maimai-domain'
+import { normalizeMaimaiNetRecords, type SongCatalog } from '@gekichumai/maimai-domain'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import * as Sentry from '@sentry/tanstackstart-react'
 import cloneDeep from 'lodash-es/cloneDeep'
@@ -130,7 +130,7 @@ export const NET_IMPORT_COOLDOWN_MS = 15 * 60 * 1000 // 15 minutes
 let importInFlight = false
 
 export const importFromNETRecords = async (
-  appVersion: VersionEnum,
+  catalog: SongCatalog,
   modifyEntries: ListActions<PlayEntry>,
   mode: 'merge' | 'replace',
   onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
@@ -143,7 +143,6 @@ export const importFromNETRecords = async (
   importInFlight = true
   const importStart = performance.now()
   const trigger = authParams ? 'manual' : 'automatic'
-  captureAnalyticsEvent('netimport_started', { mode, trigger })
   captureAnalyticsEvent('rating_import_started', {
     source: 'maimai_net',
     mode,
@@ -180,7 +179,7 @@ export const importFromNETRecords = async (
       onProgress?.(state, progress)
       netImportProgress.update({ status: 'running', stage: state, progress })
     })
-    const importResult = normalizeMaimaiNetRecords(getDxdataSongCatalog(appVersion), data.music)
+    const importResult = normalizeMaimaiNetRecords(catalog, data.music)
     const entries = importResultToPlayEntries(importResult)
     for (const warning of importResult.warnings) {
       console.warn('[importFromNETRecords]', warning.message, warning.row)
@@ -243,14 +242,6 @@ export const importFromNETRecords = async (
     localStorage.setItem(NET_IMPORT_LAST_SUCCESS_KEY, Date.now().toString())
 
     const duration = performance.now() - importStart
-    captureAnalyticsEvent('netimport_succeeded', {
-      region,
-      count: entries.length,
-      mode,
-      duration_ms: duration,
-      warning_count: importResult.warnings.length,
-      trigger,
-    })
     captureAnalyticsEvent('rating_import_succeeded', {
       source: 'maimai_net',
       duration_ms: duration,

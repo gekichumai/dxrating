@@ -1,4 +1,4 @@
-import { type DifficultyEnum, type Regions, TypeEnum } from '@gekichumai/dxdata'
+import { type DifficultyEnum, type ServerEnum, TypeEnum } from '@gekichumai/dxdata'
 import { ListItemButton, ListItemSecondaryAction, ListItemText, type ListItemTextProps } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, type HTMLAttributes, type ImgHTMLAttributes, memo, type ReactNode, useState } from 'react'
@@ -90,7 +90,7 @@ export const SheetListItem: FC<{
           }}
           disableGutters={!isLargeDevice}
           className={clsx(
-            'w-full cursor-pointer transition duration-500 hover:duration-25 !px-4 no-underline text-inherit',
+            'w-full cursor-pointer transition-colors duration-150 hover:duration-25 !px-4 no-underline text-inherit',
             open && '!bg-zinc-300/80',
             className,
           )}
@@ -203,11 +203,11 @@ const SheetInternalLevelValue: FC<{ value: number }> = ({ value }) => {
 
 export const SheetDifficulty: FC<{
   difficulty?: DifficultyEnum
-  regions?: Regions
+  serverIds?: readonly ServerEnum[]
   isLocked?: boolean
-}> = ({ difficulty, regions, isLocked }) => {
+}> = ({ difficulty, serverIds, isLocked }) => {
   const difficultyConfig = difficulty ? DIFFICULTIES[difficulty] : undefined
-  const allUnavailable = Object.values(regions ?? {}).every((v) => !v)
+  const allUnavailable = (serverIds ?? []).length === 0
   return difficultyConfig ? (
     <span
       className="rounded-full px-2 text-sm shadow-[0.0625rem_0.125rem_0_0_#0b38714D] leading-relaxed translate-y-[-0.125rem] text-white inline-flex items-center"
@@ -280,7 +280,7 @@ export interface SheetListItemSummaryProps {
   type: TypeEnum
   difficulty: DifficultyEnum
   version?: string
-  regions?: Regions
+  serverIds?: readonly ServerEnum[]
   isLocked?: boolean
   artist?: ReactNode
   metadata?: ReactNode
@@ -297,7 +297,7 @@ export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
     type,
     difficulty,
     version,
-    regions,
+    serverIds,
     isLocked,
     artist,
     metadata,
@@ -323,7 +323,7 @@ export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
           </span>
           <div className="flex items-center gap-2 shrink-0">
             <SheetType type={type} difficulty={difficulty} />
-            <SheetDifficulty difficulty={difficulty} regions={regions} isLocked={isLocked} />
+            <SheetDifficulty difficulty={difficulty} serverIds={serverIds} isLocked={isLocked} />
           </div>
         </TitleElement>
 
@@ -359,7 +359,7 @@ export const SheetImage: FC<
         key={name}
         src={`https://shama.dxrating.net/images/cover/v2/${name}.jpg`}
         className={clsx(
-          'overflow-hidden',
+          'overflow-hidden outline outline-1 -outline-offset-1 outline-black/10',
           match(size)
             .with('small', () => 'h-8 w-8 min-w-[2rem] min-h-[2rem] rounded-sm')
             .with('medium', () => 'h-12 w-12 min-w-[3rem] min-h-[3rem] rounded')
@@ -416,7 +416,7 @@ export const SheetTitle: FC<SheetTitleProps> = ({
         </span>
         <div className="flex items-center gap-2 shrink-0">
           <SheetType type={type} difficulty={difficulty} />
-          <SheetDifficulty difficulty={difficulty} regions={sheet.regions} isLocked={sheet.isLocked} />
+          <SheetDifficulty difficulty={difficulty} serverIds={sheet.serverIds} isLocked={sheet.isLocked} />
         </div>
       </h3>
 

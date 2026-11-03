@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/tanstackstart-react'
 import { createRouter } from '@tanstack/react-router'
+import { getGlobalStartContext } from '@tanstack/react-start'
 import { routeTree } from './routeTree.gen'
 import { initI18n } from './setup/init-i18n'
 
@@ -9,6 +10,8 @@ export function getRouter() {
   const router = createRouter({
     routeTree,
     scrollRestoration: true,
+    // On the client, the router reads the nonce back from the `csp-nonce` meta tag it renders.
+    ssr: { nonce: readServerCspNonce() },
   })
 
   if (!router.isServer) {
@@ -23,8 +26,16 @@ export function getRouter() {
           shouldCreateSpanForRequest: () => true,
         }),
       ],
-      tracePropagationTargets: ['localhost', /^\//, /^https?:\/\/dxrating\.net/, /^https?:\/\/miruku\.dxrating\.net/],
+      // Not the song catalog: trace headers would make its revalidation fail the API's CORS preflight
+      tracePropagationTargets: [
+        'localhost',
+        /^\//,
+        /^https?:\/\/dxrating\.net/,
+        /^https?:\/\/miruku\.dxrating\.net\/(?!api\/v1\/dxdata)/,
+      ],
       tracesSampleRate: 0.2,
+      // Sends what the app logs with Sentry.logger (saved-data migrations, catalog API fallbacks); nothing else
+      enableLogs: true,
       ignoreErrors: [
         'top.GLOBALS',
         'originalCreateNotification',
@@ -62,6 +73,17 @@ export function getRouter() {
   }
 
   return router
+}
+
+/** The nonce of the Content-Security-Policy of the response being rendered (start.ts), on the server only */
+function readServerCspNonce(): string | undefined {
+  try {
+    const context = getGlobalStartContext() as { cspNonce?: unknown } | undefined
+    return typeof context?.cspNonce === 'string' ? context.cspNonce : undefined
+  } catch {
+    // Outside a request (no start context), there is no page to render.
+    return undefined
+  }
 }
 
 declare module '@tanstack/react-router' {

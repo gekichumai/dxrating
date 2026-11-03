@@ -163,6 +163,16 @@ describe('Health & Basic Endpoints', () => {
     expect(res.status).toBe(200)
     const html = await res.text()
     expect(html).toContain('DXRating API')
+    const csp = res.headers.get('content-security-policy')
+    expect(csp).toContain("default-src 'none'")
+    expect(csp).toContain("frame-ancestors 'none'")
+    expect(csp).not.toContain("'unsafe-eval'")
+    expect(res.headers.get('x-frame-options')).toBe('DENY')
+  })
+
+  it('JSON responses carry a Content-Security-Policy that allows nothing', async () => {
+    const res = await fetch(`${getBaseUrl()}/health`)
+    expect(res.headers.get('content-security-policy')).toBe("default-src 'none'; frame-ancestors 'none'")
   })
 
   it('GET /version returns build metadata', async () => {

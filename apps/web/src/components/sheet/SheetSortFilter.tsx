@@ -14,6 +14,7 @@ import {
   Paper,
 } from '@mui/material'
 import clsx from 'clsx'
+import { useReducedMotion } from 'framer-motion'
 import { type FC, useContext, useEffect, useId, useState, useTransition } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -328,7 +329,7 @@ export const SheetSortFilterTrigger: FC<{
         variant="outlined"
         color="inherit"
         className={clsx(
-          'relative !min-h-[56px] !min-w-[6.25rem] shrink-0 !px-3 !py-1.5 !normal-case transition-all duration-300',
+          'relative !min-h-[56px] !min-w-[6.25rem] shrink-0 !px-3 !py-1.5 !normal-case transition-[background-color,border-color,box-shadow] duration-150',
           '!flex !items-center !justify-center gap-1.5 !text-zinc-900 shadow-sm backdrop-blur-sm',
           expanded ? '!border-zinc-500 !bg-gray-200' : '!border-zinc-400/70 !bg-white/70 hover:!bg-white/90',
           className,
@@ -344,7 +345,10 @@ export const SheetSortFilterTrigger: FC<{
           <span className="whitespace-nowrap">{t('sheet:sort.title')}</span>
         </span>
         <MdiChevronDownIcon
-          className={clsx('h-4 w-4 shrink-0 transition-transform duration-300', expanded && 'transform rotate-180')}
+          className={clsx(
+            'h-4 w-4 shrink-0 motion-safe:transition-transform duration-300',
+            expanded && 'transform rotate-180',
+          )}
         />
         {pending && <CircularProgress disableShrink className="absolute right-1 top-1 !h-3 !w-3" />}
       </Button>
@@ -354,7 +358,7 @@ export const SheetSortFilterTrigger: FC<{
   return (
     <ButtonBase
       className={clsx(
-        'px-4 w-full flex items-center transition-all duration-300',
+        'px-4 w-full flex items-center transition-[background-color,padding] duration-300 motion-reduce:transition-[background-color]',
         expanded ? 'bg-gray-200 py-4' : 'bg-gray-100 py-3',
         className,
       )}
@@ -365,7 +369,9 @@ export const SheetSortFilterTrigger: FC<{
       <div className="text-xl font-bold tracking-tight leading-none">{t('sheet:sort-and-filter.title')}</div>
       {pending && <CircularProgress disableShrink className="ml-2 !h-4 !w-4" />}
       <div className="flex-1" />
-      <MdiChevronDownIcon className={clsx('w-6 h-6 transition-transform', expanded && 'transform rotate-180')} />
+      <MdiChevronDownIcon
+        className={clsx('w-6 h-6 motion-safe:transition-transform', expanded && 'transform rotate-180')}
+      />
     </ButtonBase>
   )
 }
@@ -385,6 +391,8 @@ const SheetSortFilterFormContent: FC<{
   const resolvedContentId = contentId ?? generatedContentId
   const expanded = controlledExpanded ?? uncontrolledExpanded
   const [contentMotionVisible, setContentMotionVisible] = useState(expanded)
+  // the height animates only where motion is welcome, and closes faster than it opens
+  const collapseTimeout = useReducedMotion() ? 0 : { enter: 275, exit: 150 }
 
   useEffect(() => {
     if (!expanded) {
@@ -419,10 +427,11 @@ const SheetSortFilterFormContent: FC<{
   }
 
   const contentMotionClassName = clsx(
-    'origin-top transition-[opacity,transform,filter] duration-[275ms] ease-[cubic-bezier(0.2,0,0,1)]',
+    'origin-top transition-[opacity,transform,filter] ease-[cubic-bezier(0.2,0,0,1)]',
+    // the panel moves only where motion is welcome; otherwise it only fades. Closing is shorter than opening
     contentMotionVisible
-      ? 'opacity-100 translate-y-0 scale-100 blur-0'
-      : 'opacity-0 -translate-y-1 scale-[0.995] blur-[1px]',
+      ? 'opacity-100 translate-y-0 scale-100 blur-0 duration-[275ms]'
+      : 'opacity-0 motion-safe:-translate-y-1 motion-safe:scale-[0.995] motion-safe:blur-[1px] duration-150',
   )
 
   const collapsibleInner = (
@@ -481,14 +490,14 @@ const SheetSortFilterFormContent: FC<{
             pending={pending}
           />
 
-          <Collapse className="w-full" in={expanded} timeout={275} unmountOnExit>
+          <Collapse className="w-full" in={expanded} timeout={collapseTimeout} unmountOnExit>
             <div id={resolvedContentId} className={contentMotionClassName}>
               {collapsibleInner}
             </div>
           </Collapse>
         </Paper>
       ) : (
-        <Collapse className="w-full" in={expanded} timeout={275} unmountOnExit>
+        <Collapse className="w-full" in={expanded} timeout={collapseTimeout} unmountOnExit>
           <Paper className="w-full flex flex-col overflow-hidden">
             <div id={resolvedContentId} className={contentMotionClassName}>
               {collapsibleInner}

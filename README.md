@@ -86,7 +86,7 @@ a single deployment authority.
 
 ## Prerequisites
 
-- **Node.js** 26.10.0
+- **Node.js** 26.12.1
 - **pnpm** 10.30.3+
 - **Docker** (for running PostgreSQL locally)
 
@@ -163,7 +163,7 @@ pnpm --filter @gekichumai/dxrating-web test   # Web unit tests
 
 ## License
 
-[MIT](LICENSE)
+The code is [MIT](LICENSE). The dxdata song and chart data ([`packages/dxdata`](packages/dxdata), `/api/v1/dxdata`) is [CC BY-NC 4.0](packages/dxdata/LICENSE): credit DXRating and don't use it commercially.
 
 ## Security
 

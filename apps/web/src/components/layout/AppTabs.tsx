@@ -53,7 +53,7 @@ export const AppTabs: FC = () => {
         value={selectedTab}
         classes={{
           root: '!min-h-2.5rem',
-          indicator: '!h-full !rounded-lg z-0',
+          indicator: '!h-full !rounded-xl z-0',
         }}
       >
         {APP_TAB_LINKS.map((link) => {
@@ -91,7 +91,7 @@ export const AppTabs: FC = () => {
               viewTransition
               classes={{
                 selected: '!text-white font-bold text-shadow-md',
-                root: `!rounded-lg transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem ${
+                root: `!rounded-xl transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem ${
                   isIconOnlyTab ? '!min-w-2.5rem !w-2.5rem !px-0' : ''
                 }`,
               }}

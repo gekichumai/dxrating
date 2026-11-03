@@ -1,18 +1,22 @@
+import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { describe, expect, it } from 'vitest'
 import { buildLlmsTxt } from '../llms[.]txt'
 
 describe('buildLlmsTxt', () => {
   it('publishes a concise machine-readable map for AI systems', () => {
-    const llms = buildLlmsTxt()
+    const llms = buildLlmsTxt(catalogSnapshot.updatedAt)
 
     expect(llms).toContain('# DXRating')
     expect(llms).toContain('https://dxrating.net/sitemap.xml')
     expect(llms).toContain('https://dxrating.net/opensearch.xml')
+    expect(llms).toContain('https://mcp.dxrating.net/mcp')
     expect(llms).toContain('https://dxrating.net/developers')
     expect(llms).toContain('https://dxrating.net/.well-known/api-catalog')
     expect(llms).toContain('https://dxrating.net/charts/recent')
     expect(llms).toContain('https://dxrating.net/charts/trending')
-    expect(llms).toContain('https://dxrating.net/search?q=')
+    expect(llms).toContain('https://dxrating.net/?q=')
+    expect(llms).toContain('CC BY-NC 4.0')
+    expect(llms).toContain('Data from DXRating (dxrating.net), CC BY-NC 4.0')
     expect(llms).toContain('https://dxrating.net/songs/{songId}/{type}/{difficulty}')
     expect(llms).toContain('https://miruku.dxrating.net/spec.json')
     expect(llms).toContain('https://miruku.dxrating.net/docs')

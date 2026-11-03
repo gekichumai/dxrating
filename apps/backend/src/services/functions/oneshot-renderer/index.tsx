@@ -1,11 +1,15 @@
 import { Effect, Data } from 'effect'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
+import { LEGACY_SONG_IDS } from '@gekichumai/dxdata/legacy-song-ids'
 import {
   calculateBest50,
   calculateRatingAward,
-  getDxdataSongCatalog,
+  getSongCatalog,
+  resolveLegacySheetId,
   type Best50Bucket,
   type RatingAward,
+  type SongCatalog,
+  type SongCatalogSource,
   type VersionedSheet,
 } from '@gekichumai/maimai-domain'
 import type { Context } from 'hono'
@@ -112,12 +116,14 @@ export const isRenderableRatingSheet = (sheet: VersionedSheet): sheet is Flatten
   )
 }
 
-const getFlattenedSheet = (version: VersionEnum, sheetId: string): FlattenedSheet | null => {
-  const sheet = getDxdataSongCatalog(version).getById(sheetId)
+// Clients send public sheet IDs (dsht_…); clients from before them send legacy sheet IDs, resolved the same way
+const getFlattenedSheet = (catalog: SongCatalog, sheetId: string): FlattenedSheet | null => {
+  const publicSheetId = resolveLegacySheetId(catalog, sheetId, LEGACY_SONG_IDS)
+  const sheet = publicSheetId ? catalog.getById(publicSheetId) : null
   return sheet && isRenderableRatingSheet(sheet) ? sheet : null
 }
 
-export const enrichEntries = (entries: PlayEntry[], version: VersionEnum): RenderData[] => {
+export const enrichEntries = (entries: PlayEntry[], catalog: SongCatalog): RenderData[] => {
   return entries.flatMap((entry) => {
     // check data validity
     if (
@@ -138,13 +144,14 @@ export const enrichEntries = (entries: PlayEntry[], version: VersionEnum): Rende
       return []
     }
 
-    const sheet = getFlattenedSheet(version, entry.sheetId)
+    const sheet = getFlattenedSheet(catalog, entry.sheetId)
     if (!sheet) {
       return []
     }
     return [
       {
         ...entry,
+        sheetId: sheet.id,
         sheet: {
           ...sheet,
           internalLevelValue: entry.sheetOverrides?.internalLevelValue ?? sheet.internalLevelValue,
@@ -173,11 +180,11 @@ export const prepareCalculatedEntries = (
     b15: PlayEntry[]
     b35: PlayEntry[]
   },
-  version: VersionEnum,
+  catalog: SongCatalog,
 ): { b15: RenderData[]; b35: RenderData[] } => {
   const prepared = {
-    b15: enrichEntries(calculatedEntries.b15, version),
-    b35: enrichEntries(calculatedEntries.b35, version),
+    b15: enrichEntries(calculatedEntries.b15, catalog),
+    b35: enrichEntries(calculatedEntries.b35, catalog),
   }
 
   prepared.b15.sort((a, b) => {
@@ -218,13 +225,13 @@ const deduplicateRawBest50Candidates = (candidates: RawBest50Candidate[]): RawBe
 
 export const calculateEntries = (
   entries: PlayEntry[],
-  version: VersionEnum,
+  catalog: SongCatalog,
   region: Region,
 ): { b15: RenderData[]; b35: RenderData[] } => {
-  const catalog = getDxdataSongCatalog(version)
+  const { version } = catalog
   const candidates = deduplicateRawBest50Candidates(
     entries.flatMap((entry, index): RawBest50Candidate[] => {
-      const renderData = enrichEntries([entry], version)[0]
+      const renderData = enrichEntries([entry], catalog)[0]
       if (!renderData) return []
 
       const best50 = calculateBest50({
@@ -270,8 +277,24 @@ export const calculateEntries = (
   }
 }
 
-type OneshotRequest = z.infer<typeof requestBodySchema>
-let service: { source: string; render: ReturnType<typeof createRenderService<OneshotRequest>> } | undefined
+export type OneshotRequest = z.infer<typeof requestBodySchema>
+
+/** A request with the catalog to render it from */
+interface OneshotJob {
+  body: OneshotRequest
+  /** Identifies the catalog, so renders of one request against different catalogs are cached apart */
+  catalogRevision: string
+  catalog: SongCatalogSource
+}
+
+// The render service caches by the JSON of its input: the catalog is kept out of it (and represented by its revision)
+const createOneshotJob = (body: OneshotRequest, catalog: { revision: string; document: SongCatalogSource }) =>
+  Object.defineProperty({ body, catalogRevision: catalog.revision } as OneshotJob, 'catalog', {
+    value: catalog.document,
+    enumerable: false,
+  })
+
+let service: { source: string; render: ReturnType<typeof createRenderService<OneshotJob>> } | undefined
 
 const getRenderService = () => {
   const source = getAssetSourceKey()
@@ -283,14 +306,15 @@ const getRenderService = () => {
     })
     service = {
       source,
-      render: createRenderService((body: OneshotRequest, options) =>
+      render: createRenderService(({ body, catalog: document }: OneshotJob, options) =>
         Effect.runPromise(
           Effect.scoped(
             Effect.gen(function* () {
               const start = performance.now()
+              const catalog = getSongCatalog(document, body.version)
               const data = body.calculatedEntries
-                ? prepareCalculatedEntries(body.calculatedEntries, body.version)
-                : calculateEntries(body.entries ?? [], body.version, body.region)
+                ? prepareCalculatedEntries(body.calculatedEntries, catalog)
+                : calculateEntries(body.entries ?? [], catalog, body.region)
               const calc = performance.now() - start
               const result = yield* Effect.tryPromise({
                 try: () =>
@@ -316,9 +340,10 @@ const getRenderService = () => {
 export const renderOneshotEffect = (
   body: OneshotRequest,
   options: { format: 'svg' | 'png' | 'jpeg'; width?: number },
+  catalog: { revision: string; document: SongCatalogSource },
 ) =>
   Effect.tryPromise({
-    try: () => getRenderService()(body, options),
+    try: () => getRenderService()(createOneshotJob(body, catalog), options),
     catch: (cause) =>
       cause instanceof RenderQueueFullError
         ? new OneshotQueueFullError({ cause })
@@ -327,71 +352,96 @@ export const renderOneshotEffect = (
           : new OneshotRenderError({ operation: 'render oneshot image', cause }),
   })
 
-export const handler = (c: Context): Promise<Response> => {
-  const queryDemo = c.req.query('demo')
-  const queryPixelated = c.req.query('pixelated')
-  const queryFormat = c.req.query('format')
-  const queryWidth = c.req.query('width')
-  const format = queryPixelated ? (queryFormat === 'png' ? 'png' : 'jpeg') : 'svg'
-  const program = Effect.gen(function* () {
-    const input = queryDemo
-      ? {
-          entries: demo,
-          version: VersionEnum.PRiSMPLUS,
-          region: 'jp' as const,
-          playerCollection: { name: 'お友達', icon: 0 },
-          calculatedEntries: undefined,
-        }
-      : yield* Effect.tryPromise({
-          try: () => c.req.json(),
-          catch: (cause) => new OneshotRenderError({ operation: 'read oneshot request', cause }),
-        })
-    const body = yield* Effect.try({
-      try: () => requestBodySchema.parse(input),
-      catch: (cause) =>
-        cause instanceof z.ZodError ? cause : new OneshotRenderError({ operation: 'validate oneshot request', cause }),
-    })
-    const result = yield* renderOneshotEffect(body, {
-      format,
-      width: queryWidth === undefined ? undefined : Number.parseInt(queryWidth),
-    })
-    if (result.cache === 'MISS') {
-      c.header(
-        'Server-Timing',
-        Object.entries(result.timings)
-          .map(([name, duration]) => `${name};dur=${duration.toFixed(1)}`)
-          .join(', '),
+/** The published catalog the renderer resolves sheets from; see McpCatalogSource */
+export type OneshotCatalogLoader = () => Promise<{ revision: string; document: SongCatalogSource }>
+
+export class OneshotCatalogUnavailableError extends Data.TaggedError('OneshotCatalogUnavailableError')<{
+  readonly cause: unknown
+}> {}
+
+export const createOneshotHandler =
+  (loadCatalog: OneshotCatalogLoader) =>
+  (c: Context): Promise<Response> => {
+    const queryDemo = c.req.query('demo')
+    const queryPixelated = c.req.query('pixelated')
+    const queryFormat = c.req.query('format')
+    const queryWidth = c.req.query('width')
+    const format = queryPixelated ? (queryFormat === 'png' ? 'png' : 'jpeg') : 'svg'
+    const program = Effect.gen(function* () {
+      const input = queryDemo
+        ? {
+            entries: demo,
+            version: VersionEnum.PRiSMPLUS,
+            region: 'jp' as const,
+            playerCollection: { name: 'お友達', icon: 0 },
+            calculatedEntries: undefined,
+          }
+        : yield* Effect.tryPromise({
+            try: () => c.req.json(),
+            catch: (cause) => new OneshotRenderError({ operation: 'read oneshot request', cause }),
+          })
+      const body = yield* Effect.try({
+        try: () => requestBodySchema.parse(input),
+        catch: (cause) =>
+          cause instanceof z.ZodError
+            ? cause
+            : new OneshotRenderError({ operation: 'validate oneshot request', cause }),
+      })
+      const catalog = yield* Effect.tryPromise({
+        try: loadCatalog,
+        catch: (cause) => new OneshotCatalogUnavailableError({ cause }),
+      })
+      const result = yield* renderOneshotEffect(
+        body,
+        {
+          format,
+          width: queryWidth === undefined ? undefined : Number.parseInt(queryWidth),
+        },
+        catalog,
       )
-      for (const [name, duration] of Object.entries(result.timings)) {
-        Sentry.metrics.distribution(`oneshot_render.stage.${name}`, duration, {
-          unit: 'millisecond',
-          attributes: { format },
-        })
+      if (result.cache === 'MISS') {
+        c.header(
+          'Server-Timing',
+          Object.entries(result.timings)
+            .map(([name, duration]) => `${name};dur=${duration.toFixed(1)}`)
+            .join(', '),
+        )
+        for (const [name, duration] of Object.entries(result.timings)) {
+          Sentry.metrics.distribution(`oneshot_render.stage.${name}`, duration, {
+            unit: 'millisecond',
+            attributes: { format },
+          })
+        }
+      } else {
+        c.header('Server-Timing', `cache;desc="${result.cache.toLowerCase()}"`)
       }
-    } else {
-      c.header('Server-Timing', `cache;desc="${result.cache.toLowerCase()}"`)
-    }
-    c.header('Content-Type', result.contentType)
-    c.header('X-Cache', result.cache)
-    return c.body(result.body)
-  }).pipe(
-    Effect.catch((error) => {
-      if (error instanceof OneshotQueueFullError) {
-        return Effect.sync(() => {
-          c.header('Retry-After', '1')
-          return c.text(error.message, 503)
-        })
-      }
-      return Effect.sync(() =>
-        Sentry.withScope((scope: Scope) => {
-          scope.setContext('function', { name: 'renderOneshot' })
-          scope.setContext('parameters', { demo: !!queryDemo, format, width: queryWidth })
-          Sentry.captureException(error)
-        }),
-      ).pipe(Effect.andThen(Effect.fail(error)))
-    }),
-  )
-  return Sentry.startSpan({ name: 'renderOneshot', op: 'function' }, () =>
-    Effect.runPromise(Effect.scoped(program), { signal: c.req.raw.signal }),
-  )
-}
+      c.header('Content-Type', result.contentType)
+      c.header('X-Cache', result.cache)
+      return c.body(result.body)
+    }).pipe(
+      Effect.catch((error) => {
+        if (error instanceof OneshotCatalogUnavailableError) {
+          return Effect.sync(() => {
+            c.header('Retry-After', '5')
+            return c.text('The song catalog is still loading', 503)
+          })
+        }
+        if (error instanceof OneshotQueueFullError) {
+          return Effect.sync(() => {
+            c.header('Retry-After', '1')
+            return c.text(error.message, 503)
+          })
+        }
+        return Effect.sync(() =>
+          Sentry.withScope((scope: Scope) => {
+            scope.setContext('function', { name: 'renderOneshot' })
+            scope.setContext('parameters', { demo: !!queryDemo, format, width: queryWidth })
+            Sentry.captureException(error)
+          }),
+        ).pipe(Effect.andThen(Effect.fail(error)))
+      }),
+    )
+    return Sentry.startSpan({ name: 'renderOneshot', op: 'function' }, () =>
+      Effect.runPromise(Effect.scoped(program), { signal: c.req.raw.signal }),
+    )
+  }

@@ -1,4 +1,5 @@
-import { dxdataUpdateTime, VersionEnum } from '@gekichumai/dxdata'
+import { VersionEnum } from '@gekichumai/dxdata'
+import { useCatalogDocument } from '@/catalog/CatalogContext'
 import { IconButton } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, type PropsWithChildren, type ReactNode, useState } from 'react'
@@ -8,6 +9,7 @@ import MdiApi from '~icons/mdi/api'
 import MdiInformation from '~icons/mdi/information'
 import MdiTwitter from '~icons/mdi/twitter'
 import MdiWeb from '~icons/mdi/web'
+import McpLogo from '~icons/simple-icons/modelcontextprotocol'
 import { BUNDLE } from '../../../utils/bundle'
 import { useTime } from '../../../utils/useTime'
 import { ResponsiveDialog } from '../ResponsiveDialog'
@@ -51,7 +53,7 @@ export const About = () => {
   const [expanded, setExpanded] = useState(false)
 
   const buildTime = useTime(BUNDLE.buildTime)
-  const updateTime = useTime(dxdataUpdateTime)
+  const updateTime = useTime(useCatalogDocument().updatedAt)
 
   return (
     <>
@@ -78,6 +80,14 @@ export const About = () => {
                 label={t('about:developers-api')}
               >
                 dxrating.net/developers
+              </AboutLink>
+
+              <AboutLink
+                href="https://mcp.dxrating.net/?via=dxrating-about"
+                startAdornment={<McpLogo />}
+                label={t('about:mcp-server')}
+              >
+                mcp.dxrating.net
               </AboutLink>
 
               <AboutLink

@@ -5,22 +5,35 @@ export const SECURITY_REPORT_ENDPOINT_GROUP = 'csp-endpoint'
 
 const REPORT_TO_MAX_AGE_SECONDS = 10886400
 
+// Enforced since 2026-10 after running in Report-Only mode from 2026-05.
+//
+// script-src: every inline script on the page is rendered by TanStack Router (dehydrated state, stream barrier, the
+// module entry) and carries the per-request nonce (router `ssr.nonce`, see router.tsx). 'unsafe-inline' only remains
+// as a fallback for browsers without nonce support (CSP Level 1): browsers that understand the nonce ignore it.
+// 'wasm-unsafe-eval' lets sql.js compile its WebAssembly module (Aqua SQLite import); nothing on the client needs
+// 'unsafe-eval' (zod's eval probe is turned off with `jitless`, see zod-jitless.ts).
+//
+// style-src keeps 'unsafe-inline': Emotion (MUI) injects <style> elements at runtime and components use style
+// attributes, neither of which can carry a nonce. A nonce must therefore never be added to style-src, where it
+// would disable 'unsafe-inline'.
+//
+// frame-ancestors 'none' matches X-Frame-Options: DENY, which browsers already enforce.
 const CSP_DIRECTIVES = [
   ['default-src', ["'self'"]],
   ['base-uri', ["'self'"]],
   ['object-src', ["'none'"]],
-  ['frame-ancestors', ["'self'"]],
+  ['frame-ancestors', ["'none'"]],
   ['form-action', ["'self'"]],
   [
     'script-src',
     [
       "'self'",
       "'unsafe-inline'",
-      "'unsafe-eval'",
       "'wasm-unsafe-eval'",
+      // Turnstile
       'https://challenges.cloudflare.com',
+      // PostHog (reverse proxy): remote config and lazily loaded extensions
       'https://razu.dxrating.net',
-      'https://sql.js.org',
     ],
   ],
   ['style-src', ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com']],
@@ -45,9 +58,7 @@ const CSP_DIRECTIVES = [
       'https://razu.dxrating.net',
       'https://shama.dxrating.net',
       'https://www.diving-fish.com',
-      'https://o4506648698683392.ingest.us.sentry.io',
       'https://challenges.cloudflare.com',
-      'https://sql.js.org',
       'https://fonts.googleapis.com',
       'https://fonts.gstatic.com',
     ],
@@ -59,8 +70,54 @@ const CSP_DIRECTIVES = [
   ['media-src', ["'self'", 'https://shama.dxrating.net']],
 ] as const
 
-function buildContentSecurityPolicyReportOnlyHeader() {
-  const policy = CSP_DIRECTIVES.map(([directive, sources]) => `${directive} ${sources.join(' ')}`)
+export interface SecurityHeaderOptions {
+  /** The per-request nonce of the inline scripts of the page, if it renders any */
+  nonce?: string
+  /** The backend the client of this build calls (VITE_BACKEND_URL), e.g. http://localhost:3000 in development */
+  backendUrl?: string
+  /** Report violations of the policy without enforcing it (the development server, whose own scripts carry no nonce) */
+  reportOnly?: boolean
+}
+
+const defaultSecurityHeaderOptions = (): SecurityHeaderOptions => ({
+  backendUrl: import.meta.env.VITE_BACKEND_URL,
+  reportOnly: import.meta.env.DEV,
+})
+
+const originOf = (url: string | undefined) => {
+  if (!url) return undefined
+  try {
+    const { origin } = new URL(url)
+    return origin === 'null' ? undefined : origin
+  } catch {
+    return undefined
+  }
+}
+
+/** A fresh nonce for the Content-Security-Policy of one response: 128 random bits, base64 */
+export function createCspNonce() {
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  return btoa(String.fromCharCode(...bytes))
+}
+
+export function buildContentSecurityPolicy({
+  nonce,
+  backendUrl,
+  strictDynamic = false,
+}: SecurityHeaderOptions & { strictDynamic?: boolean } = {}) {
+  const backendOrigin = originOf(backendUrl)
+  const policy = CSP_DIRECTIVES.map(([directive, sources]) => {
+    const allSources: string[] = [...sources]
+    if (directive === 'script-src' && nonce) {
+      allSources.splice(1, 0, `'nonce-${nonce}'`, ...(strictDynamic ? ["'strict-dynamic'"] : []))
+    }
+    // The API and auth requests of the client go to the backend of the build, which is not always production's.
+    if (directive === 'connect-src' && backendOrigin && !allSources.includes(backendOrigin)) {
+      allSources.push(backendOrigin)
+    }
+    return `${directive} ${allSources.join(' ')}`
+  })
 
   policy.push(`report-uri ${SENTRY_SECURITY_REPORT_ENDPOINT}`)
   policy.push(`report-to ${SECURITY_REPORT_ENDPOINT_GROUP}`)
@@ -68,13 +125,13 @@ function buildContentSecurityPolicyReportOnlyHeader() {
   return policy.join('; ')
 }
 
-export function buildSecurityReportHeaders() {
-  return {
+export function buildSecurityHeaders(securityOptions: SecurityHeaderOptions = {}) {
+  const options = { ...defaultSecurityHeaderOptions(), ...securityOptions }
+  const headers: Record<string, string> = {
     'X-Frame-Options': 'DENY',
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy': 'geolocation=(), camera=(), microphone=()',
-    'Content-Security-Policy-Report-Only': buildContentSecurityPolicyReportOnlyHeader(),
     'Report-To': JSON.stringify({
       group: SECURITY_REPORT_ENDPOINT_GROUP,
       max_age: REPORT_TO_MAX_AGE_SECONDS,
@@ -83,10 +140,26 @@ export function buildSecurityReportHeaders() {
     }),
     'Reporting-Endpoints': `${SECURITY_REPORT_ENDPOINT_GROUP}="${SENTRY_SECURITY_REPORT_ENDPOINT}"`,
   }
+
+  if (options.reportOnly) {
+    headers['Content-Security-Policy-Report-Only'] = buildContentSecurityPolicy(options)
+    return headers
+  }
+
+  headers['Content-Security-Policy'] = buildContentSecurityPolicy(options)
+
+  // Trial of 'strict-dynamic' (scripts are trusted by nonce, and the scripts they load, rather than by host), in
+  // Report-Only mode beside the enforced policy: it passed a headless browse of the app, but reports from real
+  // browsers should come back clean before it is enforced.
+  if (options.nonce) {
+    headers['Content-Security-Policy-Report-Only'] = buildContentSecurityPolicy({ ...options, strictDynamic: true })
+  }
+
+  return headers
 }
 
-export function applySecurityReportHeaders(headers: Headers) {
-  for (const [name, value] of Object.entries(buildSecurityReportHeaders())) {
+export function applySecurityHeaders(headers: Headers, options: SecurityHeaderOptions = {}) {
+  for (const [name, value] of Object.entries(buildSecurityHeaders(options))) {
     headers.set(name, value)
   }
 }

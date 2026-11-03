@@ -1,3 +1,4 @@
+import type { ServerEnum } from '@gekichumai/dxdata'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { render, screen, within } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
@@ -16,11 +17,7 @@ const charts = [
     level: '13+',
     internalLevelValue: 13.7,
     version: VersionEnum.CiRCLEPLUS,
-    regions: {
-      jp: true,
-      intl: true,
-      cn: true,
-    },
+    serverIds: ['jp', 'intl', 'usa', 'cn'] as ServerEnum[],
     isLocked: false,
     isTypeUtage: false,
     releaseDate: '2025-05-01',

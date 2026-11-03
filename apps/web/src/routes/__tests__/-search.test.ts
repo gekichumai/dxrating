@@ -1,28 +1,37 @@
-import { describe, expect, it, vi } from 'vitest'
-import { SEARCH_QUERY_MAX_LENGTH } from '@/components/sheet/searchQuerySeed'
-import { Route, loadSearchRouteData, validateSearchParams } from '../search'
+import { isRedirect } from '@tanstack/react-router'
+import { describe, expect, it } from 'vitest'
+import { Route } from '../search'
 
-vi.mock('@/pages/SheetList', () => ({
-  SheetList: () => null,
-}))
+const redirectFromSearch = (searchStr = '', hash = '') => {
+  try {
+    Route.options.beforeLoad?.({ location: { searchStr, hash } } as never)
+  } catch (error) {
+    expect(isRedirect(error)).toBe(true)
+    return error as Response & { options: { href: string; statusCode?: number } }
+  }
+
+  throw new Error('Expected the /search route to redirect')
+}
 
 describe('/search route', () => {
-  it('renders during SSR so direct query URLs can show seeded results', () => {
-    expect(Route.options.ssr).toBe(true)
+  it('runs during SSR so the server redirects instead of rendering an empty outlet', () => {
+    expect(Route.options.ssr).not.toBe(false)
   })
 
-  it('loads seed sheets for a prefilled query parameter', () => {
-    const { seedSheets } = loadSearchRouteData({ q: '螺旋' })
+  // Parsed TanStack locations carry the hash without its leading `#`.
+  it('permanently redirects to the home page, keeping the query and hash', () => {
+    const redirect = redirectFromSearch('?q=pandora&locale=ja', 'songs')
 
-    expect(seedSheets.map((sheet) => sheet.title)).toContain('ガラテアの螺旋')
-    expect(seedSheets[0]?.path).toMatch(/^\/songs\//)
+    expect(redirect.options.href).toBe('/?q=pandora&locale=ja#songs')
+    expect(redirect.options.statusCode).toBe(301)
+    expect(redirect.headers.get('Location')).toBe('/?q=pandora&locale=ja#songs')
   })
 
-  it('rejects oversized queries before loading search results', () => {
-    const oversizedQuery = 'a'.repeat(SEARCH_QUERY_MAX_LENGTH + 1)
+  it('keeps a fragment-only URL as a fragment', () => {
+    expect(redirectFromSearch('', 'main-content').options.href).toBe('/#main-content')
+  })
 
-    expect(Route.options.validateSearch).toBe(validateSearchParams)
-    expect(() => validateSearchParams({ q: oversizedQuery })).toThrow(RangeError)
-    expect(() => loadSearchRouteData({ q: oversizedQuery })).toThrow(RangeError)
+  it('redirects a bare /search to the home page', () => {
+    expect(redirectFromSearch().headers.get('Location')).toBe('/')
   })
 })

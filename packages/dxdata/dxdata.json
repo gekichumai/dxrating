@@ -13255,10 +13255,10 @@
             "songId": "Can Do",
             "category": "POPS＆アニメ",
             "title": "Can Do",
-            "artist": "GRANRODEO[PV]",
+            "artist": "GRANRODEO",
             "bpm": 200.0,
-            "imageName": "07efedcb40d494ac2678b09bbc4cc4ac7269630feb58157fb1f549871084ce21",
-            "isNew": false,
+            "imageName": "8b9126e45c74148e046cb5c814c8750639b48c8c4491aa73497dfa1fdf770d75",
+            "isNew": true,
             "isLocked": false,
             "sheets": [
                 {
@@ -13268,15 +13268,15 @@
                     "internalLevelValue": 4.0,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": 135,
-                        "hold": 6,
-                        "slide": 3,
+                        "tap": 146,
+                        "hold": 8,
+                        "slide": 4,
                         "touch": null,
-                        "break": 7,
-                        "total": 151
+                        "break": 4,
+                        "total": 162
                     },
                     "regions": {
-                        "jp": false,
+                        "jp": true,
                         "intl": false,
                         "usa": false,
                         "cn": false
@@ -13285,26 +13285,26 @@
                         "intl": {}
                     },
                     "isSpecial": false,
-                    "version": "ORANGE PLUS",
+                    "version": "MAGiCAL",
                     "internalId": 397,
-                    "releaseDate": "2015-04-16"
+                    "releaseDate": "2026-10-16"
                 },
                 {
                     "type": "std",
                     "difficulty": "advanced",
-                    "level": "6",
-                    "internalLevelValue": 6.0,
+                    "level": "7+",
+                    "internalLevelValue": 7.7,
                     "noteDesigner": "-",
                     "noteCounts": {
-                        "tap": 273,
-                        "hold": 9,
-                        "slide": 5,
+                        "tap": 199,
+                        "hold": 22,
+                        "slide": 6,
                         "touch": null,
-                        "break": 12,
-                        "total": 299
+                        "break": 6,
+                        "total": 233
                     },
                     "regions": {
-                        "jp": false,
+                        "jp": true,
                         "intl": false,
                         "usa": false,
                         "cn": false
@@ -13313,26 +13313,26 @@
                         "intl": {}
                     },
                     "isSpecial": false,
-                    "version": "ORANGE PLUS",
+                    "version": "MAGiCAL",
                     "internalId": 397,
-                    "releaseDate": "2015-04-16"
+                    "releaseDate": "2026-10-16"
                 },
                 {
                     "type": "std",
                     "difficulty": "expert",
-                    "level": "9",
-                    "internalLevelValue": 9.0,
-                    "noteDesigner": "Jack",
+                    "level": "10+",
+                    "internalLevelValue": 10.8,
+                    "noteDesigner": "はっぴー",
                     "noteCounts": {
-                        "tap": 368,
-                        "hold": 14,
-                        "slide": 19,
+                        "tap": 337,
+                        "hold": 33,
+                        "slide": 25,
                         "touch": null,
-                        "break": 22,
-                        "total": 423
+                        "break": 20,
+                        "total": 415
                     },
                     "regions": {
-                        "jp": false,
+                        "jp": true,
                         "intl": false,
                         "usa": false,
                         "cn": false
@@ -13341,15 +13341,15 @@
                         "intl": {}
                     },
                     "isSpecial": false,
-                    "version": "ORANGE PLUS",
+                    "version": "MAGiCAL",
                     "internalId": 397,
-                    "releaseDate": "2015-04-16"
+                    "releaseDate": "2026-10-16"
                 },
                 {
                     "type": "std",
                     "difficulty": "master",
-                    "level": "11+",
-                    "internalLevelValue": 11.6,
+                    "level": "13",
+                    "internalLevelValue": 13.4,
                     "noteDesigner": "mai-Star",
                     "noteCounts": {
                         "tap": 446,
@@ -13360,7 +13360,7 @@
                         "total": 581
                     },
                     "regions": {
-                        "jp": false,
+                        "jp": true,
                         "intl": false,
                         "usa": false,
                         "cn": false
@@ -13369,9 +13369,37 @@
                         "intl": {}
                     },
                     "isSpecial": false,
-                    "version": "ORANGE PLUS",
+                    "version": "MAGiCAL",
                     "internalId": 397,
-                    "releaseDate": "2015-04-16"
+                    "releaseDate": "2026-10-16"
+                },
+                {
+                    "type": "std",
+                    "difficulty": "remaster",
+                    "level": "13+",
+                    "internalLevelValue": 13.7,
+                    "noteDesigner": "Luxizhel",
+                    "noteCounts": {
+                        "tap": 446,
+                        "hold": 19,
+                        "slide": 106,
+                        "touch": null,
+                        "break": 43,
+                        "total": 614
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "internalId": 397,
+                    "releaseDate": "2026-10-16"
                 }
             ],
             "searchAcronyms": []
@@ -25708,6 +25736,7 @@
                 }
             ],
             "searchAcronyms": [
+                "朋友的酒",
                 "未来"
             ]
         },
@@ -29659,7 +29688,8 @@
             ],
             "searchAcronyms": [
                 "橙色的夏天",
-                "自行车"
+                "自行车",
+                "骑自行车的女人"
             ]
         },
         {
@@ -44168,7 +44198,8 @@
                 "Angels with Burning Hearts",
                 "Burning Angel",
                 "Burning Hearts",
-                "炎之天使"
+                "炎之天使",
+                "烧心"
             ]
         },
         {
@@ -46010,6 +46041,7 @@
                 "Marisa Stole the Precious Thing",
                 "大便",
                 "大盗魔理沙",
+                "魔理沙偷东西",
                 "魔理沙大变",
                 "魔理沙大变盗",
                 "魔理沙大盗",
@@ -61294,7 +61326,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "骑自行车的男人"
+            ]
         },
         {
             "songId": "BETTER CHOICE",
@@ -103107,6 +103141,7 @@
                 "妄想",
                 "妄想感伤",
                 "妄想感伤代偿联盟",
+                "朱总快乐曲",
                 "盲肠肝脏大肠年龄",
                 "阿姨压一压",
                 "阿姨压一压～"
@@ -117283,6 +117318,7 @@
             "searchAcronyms": [
                 "🍆💳🐶",
                 "fantastic clear!",
+                "gdp2",
                 "mr为什么能自选两首",
                 "qz",
                 "qzingo",
@@ -117311,7 +117347,8 @@
                 "茄子",
                 "茄子卡狗",
                 "茄皇",
-                "茄皇争夺战"
+                "茄皇争夺战",
+                "黑猫白猫打架"
             ]
         },
         {
@@ -154854,6 +154891,7 @@
                 "商场跑圈",
                 "打交",
                 "星星保卫战",
+                "特大",
                 "绕着商场跑一圈",
                 "舞立方体验票",
                 "鼓手模拟器"
@@ -156548,7 +156586,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "甜蜜时光"
+            ]
         },
         {
             "songId": "紅星ミゼラブル～廃憶編",
@@ -159872,6 +159912,7 @@
                 "Trackmaker",
                 "内向都是作曲家",
                 "室内系",
+                "室内系的trackmaker",
                 "户外潘",
                 "法修散打"
             ]
@@ -173419,6 +173460,7 @@
                 "Scarlet Police",
                 "Scarlet Police on Ghetto Patrol",
                 "东方警察",
+                "两小儿辩日",
                 "尾杀大b圈",
                 "斯卡雷特警察",
                 "蕾米琪露诺斗舞",
@@ -177754,6 +177796,7 @@
             "searchAcronyms": [
                 "laur老婆唱歌",
                 "let's miracle hardcore",
+                "来吧！奇迹☆hardcore！",
                 "老二老婆"
             ]
         },
@@ -201058,6 +201101,7 @@
                 "kop5决赛曲",
                 "tsunagite",
                 "ysk泡温泉",
+                "ysk泡温泉1",
                 "两个舞神六个尖",
                 "两舞神六个a",
                 "两舞神直播越级",
@@ -201077,7 +201121,8 @@
                 "玉玉症好了",
                 "白丝",
                 "系",
-                "系接头"
+                "系接头",
+                "舞神后退"
             ]
         },
         {
@@ -202578,6 +202623,7 @@
             "searchAcronyms": [
                 "200个绝赞",
                 "yamero",
+                "互联网呀快离开",
                 "互联网毁了我",
                 "地雷女不要啊",
                 "快远离互联网",
@@ -202853,6 +202899,7 @@
             ],
             "searchAcronyms": [
                 "Kyoufuu All Back",
+                "强风",
                 "强风大背头",
                 "歌爱雪切菜"
             ]
@@ -217371,6 +217418,7 @@
             "searchAcronyms": [
                 "ultratrailer",
                 "炒鱼糕片",
+                "超予告编",
                 "超预告篇"
             ]
         },
@@ -220840,6 +220888,7 @@
                 "红13累死日本舞神",
                 "雨×(1+路+相+彐)",
                 "雨雨雨雨",
+                "雨露均沾",
                 "黑门守门员"
             ]
         },
@@ -225562,6 +225611,7 @@
                 }
             ],
             "searchAcronyms": [
+                "又忙一天",
                 "忙ー日",
                 "忙一天",
                 "忙了一天",
@@ -226696,6 +226746,7 @@
             ],
             "searchAcronyms": [
                 "300绝赞2",
+                "别样的卡牌大战",
                 "卡牌大师",
                 "绝赞管够",
                 "超燃卡牌决斗",
@@ -228794,7 +228845,9 @@
             "searchAcronyms": [
                 "🇺🇸",
                 "2个14守一个13+",
-                "美国人"
+                "棱镜塔守门员",
+                "美国人",
+                "美国佬"
             ]
         },
         {
@@ -229464,6 +229517,7 @@
             ],
             "searchAcronyms": [
                 "后潘",
+                "开盒之后",
                 "潘多拉之后",
                 "玉玉症之后"
             ]
@@ -229640,13 +229694,21 @@
                 "100円",
                 "100日元",
                 "error0010",
+                "kaleid scope",
                 "kop奖金回收计划",
+                "sega财神确认",
+                "xaleidscopix",
                 "xx",
+                "ysk泡温泉2",
                 "万花筒",
                 "五万日元",
                 "别笑你也过不了第二关",
+                "压力巨大",
+                "叉叉",
                 "射雕英雄传",
+                "新手教程3",
                 "百元之恋",
+                "舞神后退2",
                 "起床战争"
             ]
         },
@@ -229786,8 +229848,10 @@
             "searchAcronyms": [
                 "refrain",
                 "track 2/1",
+                "包饺子",
                 "咏人2",
                 "咏人不知2",
+                "女同和好",
                 "曲目 2/1",
                 "相信彩虹2",
                 "酸栗贴贴"
@@ -231635,7 +231699,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "没一个是人"
+            ]
         },
         {
             "songId": "Leave All Behind",
@@ -231768,7 +231834,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "lab"
+            ]
         },
         {
             "songId": "Retribution ～ Cycle of Redemption ～",
@@ -231903,7 +231971,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "报应sp"
+            ]
         },
         {
             "songId": "Luminescence",
@@ -232033,7 +232103,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "冷光"
+            ]
         },
         {
             "songId": "CiRCLE CAMPAiGN",
@@ -234959,7 +235031,8 @@
             "searchAcronyms": [
                 "hb",
                 "猛冲男孩",
-                "超级大手"
+                "超级大手",
+                "魔爪"
             ]
         },
         {
@@ -247720,8 +247793,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247748,8 +247821,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247776,8 +247849,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247804,8 +247877,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247848,8 +247921,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247876,8 +247949,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247904,8 +247977,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247932,8 +248005,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -247963,8 +248036,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248007,8 +248080,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248035,8 +248108,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248066,8 +248139,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248094,8 +248167,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248138,8 +248211,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -248180,8 +248253,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -250366,8 +250439,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -250394,8 +250467,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -250422,8 +250495,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -250450,8 +250523,8 @@
                     },
                     "regions": {
                         "jp": true,
-                        "intl": false,
-                        "usa": false,
+                        "intl": true,
+                        "usa": true,
                         "cn": false
                     },
                     "regionOverrides": {
@@ -254647,7 +254720,10 @@
                     },
                     "isSpecial": false,
                     "version": "MAGiCAL",
-                    "releaseDate": "2026-09-25"
+                    "releaseDate": "2026-09-25",
+                    "multiverInternalLevelValue": {
+                        "MAGiCAL": 6.8
+                    }
                 },
                 {
                     "type": "dx",
@@ -255131,7 +255207,10 @@
                     },
                     "isSpecial": false,
                     "version": "MAGiCAL",
-                    "releaseDate": "2026-10-02"
+                    "releaseDate": "2026-10-02",
+                    "multiverInternalLevelValue": {
+                        "MAGiCAL": 6.3
+                    }
                 },
                 {
                     "type": "dx",
@@ -255431,6 +255510,503 @@
                 }
             ],
             "searchAcronyms": []
+        },
+        {
+            "songId": "ChaosBlue",
+            "category": "POPS＆アニメ",
+            "title": "ChaosBlue",
+            "artist": "GRANRODEO",
+            "bpm": 126.0,
+            "imageName": "b67c5bba26f89af4e9f13445adf431e1e43259243aeccaf30cc6c17f607df1d9",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 134,
+                        "hold": 12,
+                        "slide": 4,
+                        "touch": 6,
+                        "break": 6,
+                        "total": 162
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 204,
+                        "hold": 17,
+                        "slide": 8,
+                        "touch": 29,
+                        "break": 4,
+                        "total": 262
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10",
+                    "internalLevelValue": 10.0,
+                    "noteDesigner": "サファ太",
+                    "noteCounts": {
+                        "tap": 291,
+                        "hold": 28,
+                        "slide": 37,
+                        "touch": 12,
+                        "break": 48,
+                        "total": 416
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13",
+                    "internalLevelValue": 13.4,
+                    "noteDesigner": "ぴちネコ",
+                    "noteCounts": {
+                        "tap": 411,
+                        "hold": 62,
+                        "slide": 80,
+                        "touch": 85,
+                        "break": 70,
+                        "total": 708
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "GO GO PARADISE!!",
+            "category": "POPS＆アニメ",
+            "title": "GO GO PARADISE!!",
+            "artist": "GRANRODEO",
+            "bpm": 154.0,
+            "imageName": "41d7ec9686b04b8b14aed7ee5ac526434191814592e3a08bbc17caf65e25db8d",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "3",
+                    "internalLevelValue": 3.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 172,
+                        "hold": 10,
+                        "slide": 5,
+                        "touch": 8,
+                        "break": 5,
+                        "total": 200
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "6",
+                    "internalLevelValue": 6.6,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 280,
+                        "hold": 16,
+                        "slide": 7,
+                        "touch": 21,
+                        "break": 8,
+                        "total": 332
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16",
+                    "multiverInternalLevelValue": {
+                        "MAGiCAL": 6.5
+                    }
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "10",
+                    "internalLevelValue": 10.5,
+                    "noteDesigner": "発光ビーバー",
+                    "noteCounts": {
+                        "tap": 380,
+                        "hold": 37,
+                        "slide": 40,
+                        "touch": 27,
+                        "break": 26,
+                        "total": 510
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13",
+                    "internalLevelValue": 13.3,
+                    "noteDesigner": "けんけん法師",
+                    "noteCounts": {
+                        "tap": 561,
+                        "hold": 27,
+                        "slide": 109,
+                        "touch": 56,
+                        "break": 53,
+                        "total": 806
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-16"
+                }
+            ],
+            "searchAcronyms": []
+        },
+        {
+            "songId": "魔法仕掛けのファンタジア",
+            "category": "maimai",
+            "title": "魔法仕掛けのファンタジア",
+            "artist": "igel",
+            "bpm": 280.0,
+            "imageName": "dd49eb4d5bb8ec7ab0510a0012e9901eb5414bb7267dc619bd5a13321433444b",
+            "isNew": true,
+            "isLocked": true,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "5",
+                    "internalLevelValue": 5.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 164,
+                        "hold": 15,
+                        "slide": 8,
+                        "touch": 15,
+                        "break": 4,
+                        "total": 206
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": true
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "internalId": 2025,
+                    "releaseDate": "2026-10-29"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "8",
+                    "internalLevelValue": 8.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": 248,
+                        "hold": 8,
+                        "slide": 18,
+                        "touch": 15,
+                        "break": 2,
+                        "total": 291
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": true
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "internalId": 2025,
+                    "releaseDate": "2026-10-29"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "12",
+                    "internalLevelValue": 12.2,
+                    "noteDesigner": "アマリリス",
+                    "noteCounts": {
+                        "tap": 477,
+                        "hold": 50,
+                        "slide": 50,
+                        "touch": 4,
+                        "break": 36,
+                        "total": 617
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": true
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "internalId": 2025,
+                    "releaseDate": "2026-10-29"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "14+",
+                    "internalLevelValue": 14.8,
+                    "noteDesigner": "lynx magical symphony",
+                    "noteCounts": {
+                        "tap": 620,
+                        "hold": 97,
+                        "slide": 87,
+                        "touch": 105,
+                        "break": 146,
+                        "total": 1055
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": true
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "internalId": 2025,
+                    "releaseDate": "2026-10-29"
+                }
+            ],
+            "searchAcronyms": [
+                "wec2026",
+                "wec2026决胜曲",
+                "比日本人快",
+                "魔法士",
+                "魔法机关幻想曲"
+            ]
+        },
+        {
+            "songId": "Happy Halloween",
+            "category": "niconico＆ボーカロイド",
+            "title": "Happy Halloween",
+            "artist": "Junky feat. 鏡音リン",
+            "bpm": null,
+            "imageName": "77d790976e3b4cac5c594fc767d1f087b5ebaa64b3cac840508922436c6b3b40",
+            "isNew": true,
+            "isLocked": false,
+            "sheets": [
+                {
+                    "type": "dx",
+                    "difficulty": "basic",
+                    "level": "2",
+                    "internalLevelValue": 2.0,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-29"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "advanced",
+                    "level": "5",
+                    "internalLevelValue": 5.8,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-29"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "expert",
+                    "level": "9+",
+                    "internalLevelValue": 9.8,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-29"
+                },
+                {
+                    "type": "dx",
+                    "difficulty": "master",
+                    "level": "13",
+                    "internalLevelValue": 13.5,
+                    "noteDesigner": "-",
+                    "noteCounts": {
+                        "tap": null,
+                        "hold": null,
+                        "slide": null,
+                        "touch": null,
+                        "break": null,
+                        "total": null
+                    },
+                    "regions": {
+                        "jp": true,
+                        "intl": false,
+                        "usa": false,
+                        "cn": false
+                    },
+                    "regionOverrides": {
+                        "intl": {}
+                    },
+                    "isSpecial": false,
+                    "version": "MAGiCAL",
+                    "releaseDate": "2026-10-29"
+                }
+            ],
+            "searchAcronyms": []
         }
     ],
     "categories": [
@@ -255664,5 +256240,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-10-07T08:00:13.286825778+00:00"
+    "updateTime": "2026-10-31T19:01:25.240438743+00:00"
 }

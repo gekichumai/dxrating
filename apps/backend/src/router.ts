@@ -29,7 +29,7 @@ import type { BackendAuth } from './auth'
 import { AppConfig } from './config'
 import { renderChartOgImageOutputEffect } from './services/functions/chart-og-image/index'
 import { CatalogIdentityError } from './services/catalog-identities'
-import { CatalogIdentities } from './services/application'
+import { CatalogIdentities, McpCatalogSource } from './services/application'
 
 export interface ApiContext
   extends
@@ -203,10 +203,14 @@ const moderateComment = Effect.fn('Comments.moderate')(function* (
 ) {
   if (!viewerId) return yield* Effect.fail(new ORPCError('UNAUTHORIZED'))
   const database = yield* Database
-  return yield* database.transaction((tx) =>
+  const result = yield* database.transaction((tx) =>
     Effect.gen(function* () {
       const [comment] = yield* database.query('Comments.findAuthor', () =>
-        tx.select({ authorId: comments.created_by }).from(comments).where(eq(comments.id, commentId)).for('share'),
+        tx
+          .select({ authorId: comments.created_by, content: comments.content })
+          .from(comments)
+          .where(eq(comments.id, commentId))
+          .for('share'),
       )
       if (!comment) return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Comment not found' }))
       if (comment.authorId === viewerId)
@@ -222,9 +226,20 @@ const moderateComment = Effect.fn('Comments.moderate')(function* (
           tx.insert(userBlocks).values({ blocker_id: viewerId, blocked_id: comment.authorId }).onConflictDoNothing(),
         )
       }
-      return { success: true, author_id: comment.authorId }
+      return { success: true, author_id: comment.authorId, content: comment.content }
     }),
   )
+  // Every report/block reaches the operator (App Review guideline 1.2): one Sentry issue per
+  // comment, so the first report alerts and repeats group under it. Triage with moderate-comments.ts.
+  yield* Effect.sync(() =>
+    Sentry.captureMessage(`Comment ${action === 'block' ? 'author blocked' : 'reported'}: #${commentId}`, {
+      level: 'warning',
+      fingerprint: ['comment-moderation', String(commentId)],
+      tags: { moderation_action: action, comment_id: String(commentId) },
+      extra: { commentId, authorId: result.author_id, reporterId: viewerId, content: result.content.slice(0, 500) },
+    }),
+  )
+  return { success: result.success, author_id: result.author_id }
 })
 
 const commentsHandler = {
@@ -809,7 +824,25 @@ const arcadesHandler = {
 const chartOgImageHandler = {
   render: os.chartOgImage.render.handler(
     handlerGen(function* ({ input }) {
-      const output = yield* renderChartOgImageOutputEffect(input)
+      const catalogIdentities = yield* CatalogIdentities
+      const catalogSource = yield* McpCatalogSource
+      const catalog = yield* catalogSource.current.pipe(
+        Effect.mapError(
+          (cause) => new ORPCError('SERVICE_UNAVAILABLE', { message: 'The song catalog is still loading', cause }),
+        ),
+      )
+      // Pages link the public song ID; legacy song IDs stay valid for images that were indexed before.
+      const lookupSong = (songId: string) =>
+        Effect.gen(function* () {
+          const published = catalog.songsById.get(songId)
+          if (published) return published.song
+          // a public ID the published catalog lacks names no song; only legacy IDs need the identity mapping
+          if (songId.startsWith('dsng_') || songId.startsWith('dsht_')) return null
+          const publicIds = yield* withCatalogIdentityErrors(catalogIdentities.translateSongIdsToPublic([songId]))
+          const publicId = publicIds.get(songId)
+          return (publicId === undefined ? undefined : catalog.songsById.get(publicId)?.song) ?? null
+        })
+      const output = yield* renderChartOgImageOutputEffect(input, lookupSong)
       if (!output) {
         return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Chart not found' }))
       }

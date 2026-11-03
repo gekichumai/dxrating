@@ -8,6 +8,8 @@ on:
     paths:
       - 'apps/backend/**'
       - 'packages/**'
+      # The retired catalog file the dxdata daemon still pushes; the backend no longer reads it
+      - '!packages/dxdata/dxdata.json'
       - '.dockerignore'
       - '.github/workflows/backend.yml'
       - '.github/workflows/dxdata-producer-contract.yml'
@@ -17,6 +19,8 @@ on:
     paths:
       - 'apps/backend/**'
       - 'packages/**'
+      # The retired catalog file the dxdata daemon still pushes; the backend no longer reads it
+      - '!packages/dxdata/dxdata.json'
       - '.dockerignore'
       - '.github/workflows/backend.yml'
       - '.github/workflows/dxdata-producer-contract.yml'

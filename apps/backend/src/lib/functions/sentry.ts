@@ -67,7 +67,9 @@ export function initSentry() {
       Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
     ],
     // Performance monitoring
-    tracesSampleRate: environment === 'production' ? 0.1 : 1.0,
+    // Every MCP request is traced (a span per MCP message); the rest at 10%
+    tracesSampler: ({ name, inheritOrSampleWith }) =>
+      /\/mcp(?:\?|$|\s)/.test(name) ? 1.0 : inheritOrSampleWith(environment === 'production' ? 0.1 : 1.0),
     // Configure which errors to capture
     beforeSend(event, hint) {
       return shouldCaptureSentryError(hint.originalException) ? event : null

@@ -1,10 +1,10 @@
 import {
   DifficultyEnum,
   TypeEnum,
-  dxdata,
-  type Regions,
+  type ServerEnum,
   type Sheet,
   type Song,
+  type SongCatalogDocument,
   type VersionEnum,
 } from '@gekichumai/dxdata'
 import { buildLatestReleaseDateByVersion, resolveReleaseDateTimestamp } from '@gekichumai/maimai-domain'
@@ -23,7 +23,7 @@ export type RecentChartLink = {
   level: string
   internalLevelValue: number
   version: VersionEnum
-  regions: Regions
+  serverIds: ServerEnum[]
   isLocked: boolean
   isTypeUtage: boolean
   releaseDate?: string
@@ -54,7 +54,7 @@ const toRecentChartLink = (
   sheet: Sheet,
   latestReleaseDateByVersion: ReadonlyMap<string, string>,
 ): RecentChartLink => ({
-  songId: song.songId,
+  songId: song.id,
   title: song.title,
   artist: song.artist,
   imageName: song.imageName,
@@ -63,21 +63,21 @@ const toRecentChartLink = (
   level: sheet.level,
   internalLevelValue: sheet.internalLevelValue,
   version: sheet.version,
-  regions: sheet.regions,
+  serverIds: sheet.serverIds,
   isLocked: song.isLocked,
   isTypeUtage: sheet.type === TypeEnum.UTAGE || sheet.type === TypeEnum.UTAGE2P,
   releaseDate: sheet.releaseDate,
   releaseDateTimestamp:
     resolveReleaseDateTimestamp(sheet.releaseDate, sheet.version, latestReleaseDateByVersion) ??
     sheetReleaseDateTimestamp(sheet.releaseDate),
-  href: buildSheetPath({ songId: song.songId, type: sheet.type, difficulty: sheet.difficulty }),
+  href: buildSheetPath({ songId: song.id, type: sheet.type, difficulty: sheet.difficulty }),
 })
 
-const createRecentChartLinks = (songs: readonly Song[]) => {
+const createRecentChartLinks = (document: SongCatalogDocument, songs: readonly Song[]) => {
   // Keep version metadata from the full catalog so version launch dates can
   // backfill when a custom song list has no dated sheets for a version.
   const latestReleaseDateByVersion = buildLatestReleaseDateByVersion({
-    ...dxdata,
+    versions: document.versions,
     songs: songs as Song[],
   })
   return songs
@@ -87,11 +87,15 @@ const createRecentChartLinks = (songs: readonly Song[]) => {
     .slice(0, RECENT_CHART_LIMIT)
 }
 
-let defaultRecentChartLinks: RecentChartLink[] | null = null
+const defaultRecentChartLinks = new WeakMap<SongCatalogDocument, RecentChartLink[]>()
 
-export const buildRecentChartLinks = (songs?: readonly Song[]): RecentChartLink[] => {
-  if (songs) return createRecentChartLinks(songs)
+export const buildRecentChartLinks = (document: SongCatalogDocument, songs?: readonly Song[]): RecentChartLink[] => {
+  if (songs) return createRecentChartLinks(document, songs)
 
-  defaultRecentChartLinks ??= createRecentChartLinks(dxdata.songs)
-  return defaultRecentChartLinks.slice()
+  let links = defaultRecentChartLinks.get(document)
+  if (!links) {
+    links = createRecentChartLinks(document, document.songs)
+    defaultRecentChartLinks.set(document, links)
+  }
+  return links.slice()
 }

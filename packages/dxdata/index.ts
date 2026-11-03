@@ -1,17 +1,23 @@
-import dxdataJson from './dxdata.json' with { type: 'json' }
+// Enums, constants and types of the DXRating song catalog. The catalog itself is the document served at
+// https://miruku.dxrating.net/api/v1/dxdata (schema: dxdata-assembly-line contracts/song-catalog/v1). Nothing here
+// imports catalog data, so client bundles can use these freely; the snapshot the SSR worker renders from lives in
+// ./snapshot.ts and must only be imported from server code.
 
-export const dxdata = dxdataJson as DXData
-
-export const dxdataUpdateTime = dxdata.updateTime
-
-export interface DXData {
-  songs: Song[]
+/** The catalog document of the dxdata API (`schemaVersion` 1) */
+export interface SongCatalogDocument {
+  schemaVersion: 1
+  /** When the producer built this catalog (RFC 3339) */
+  updatedAt: string
   categories: CategoryElement[]
   versions: VersionElement[]
   types: TypeElement[]
   difficulties: DifficultyElement[]
-  regions: Region[]
-  updateTime: string
+  servers: CatalogServer[]
+  songs: Song[]
+  tagGroups: CatalogTagGroup[]
+  tags: CatalogTag[]
+  tagSongs: CatalogTagSong[]
+  aliases: CatalogAlias[]
 }
 
 export interface CategoryElement {
@@ -33,7 +39,7 @@ export type CategoryEnum = (typeof CategoryEnum)[keyof typeof CategoryEnum]
 export interface DifficultyElement {
   difficulty: DifficultyEnum
   name: string
-  color: string
+  color?: string
 }
 
 export const DifficultyEnum = {
@@ -46,53 +52,99 @@ export const DifficultyEnum = {
 
 export type DifficultyEnum = (typeof DifficultyEnum)[keyof typeof DifficultyEnum]
 
-export interface Region {
-  region: string
+/** The game servers (regions) a sheet can be available on */
+export const ServerEnum = {
+  JP: 'jp',
+  INTL: 'intl',
+  USA: 'usa',
+  CN: 'cn',
+} as const
+
+export type ServerEnum = (typeof ServerEnum)[keyof typeof ServerEnum]
+
+export interface CatalogServer {
+  id: ServerEnum
   name: string
 }
 
 export interface Song {
-  songId: string
-  searchAcronyms: string[]
+  /** Stable public song ID, `dsng_` followed by 10 characters */
+  id: string
   category: CategoryEnum
   title: string
   artist: string
-  bpm: number | null
+  bpm?: number
   imageName: string
+  /** The version the song first appeared in */
+  version: VersionEnum
   isNew: boolean
   isLocked: boolean
   sheets: Sheet[]
+  searchAcronyms: string[]
 }
 
 export interface Sheet {
-  internalId?: number
+  /** Stable public sheet ID, `dsht_` followed by 10 characters */
+  id: string
   type: TypeEnum
-  releaseDate?: string
+  /** A standard difficulty, or the 【…】 label of a Utage sheet */
   difficulty: DifficultyEnum
   level: string
   internalLevelValue: number
-  multiverInternalLevelValue?: Record<VersionEnum, number>
-  noteDesigner: null | string
+  multiverInternalLevelValue?: Partial<Record<VersionEnum, number>>
+  noteDesigner?: string
   noteCounts: NoteCounts
-  regions: Regions
+  /** The servers the sheet is playable on */
+  serverIds: ServerEnum[]
+  /** Server-specific values that differ from the sheet's own */
+  serverOverrides?: Partial<Record<ServerEnum, ServerOverride>>
   isSpecial: boolean
   version: VersionEnum
+  internalId?: number
+  releaseDate?: string
   comment?: string
 }
 
-export interface NoteCounts {
-  tap: number | null
-  hold: number | null
-  slide: number | null
-  touch: number | null
-  break: number | null
-  total: number | null
+export interface ServerOverride {
+  level?: string
+  levelValue?: number
+  version?: VersionEnum
 }
 
-export interface Regions {
-  jp: boolean
-  intl: boolean
-  cn: boolean
+/** Note counts of a sheet; a count the catalog does not know is absent */
+export interface NoteCounts {
+  tap?: number
+  hold?: number
+  slide?: number
+  touch?: number
+  break?: number
+  total?: number
+}
+
+export interface CatalogTagGroup {
+  id: number
+  localized_name: Record<string, string>
+  color: string
+}
+
+export interface CatalogTag {
+  id: number
+  localized_name: Record<string, string>
+  localized_description: Record<string, string>
+  group_id?: number
+}
+
+export interface CatalogTagSong {
+  song_id: string
+  sheet_id: string
+  sheet_type: string
+  sheet_difficulty: string
+  tag_id: number
+}
+
+export interface CatalogAlias {
+  song_id: string
+  name: string
 }
 
 export const TypeEnum = {
@@ -218,14 +270,14 @@ export const MULTIVER_AVAILABLE_VERSIONS = Array.from(VERSION_ID_MAP.entries())
 export interface TypeElement {
   type: TypeEnum
   name: string
-  abbr: string
+  abbr?: string
   iconUrl?: string
   iconHeight?: number
 }
 
 export interface VersionElement {
   version: VersionEnum
-  abbr: string
-  /** Version launch date (YYYY-MM-DD), when present in dxdata.json */
+  abbr?: string
+  /** Version launch date (YYYY-MM-DD), when the catalog knows it */
   releaseDate?: string
 }

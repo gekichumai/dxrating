@@ -9,7 +9,6 @@ export const Route = createFileRoute('/developers')({
 
     return {
       meta: seo.meta,
-      links: seo.links,
     }
   },
   component: DevelopersPage,

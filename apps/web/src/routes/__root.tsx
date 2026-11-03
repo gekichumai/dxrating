@@ -21,10 +21,13 @@ import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCusto
 import { RegionVersionUpdatePrompt } from '@/components/global/preferences/RegionVersionUpdatePrompt'
 import { AppContextProvider } from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
+import { CatalogProvider } from '@/catalog/CatalogContext'
+import { loadCatalogMeta } from '@/catalog/catalogSource'
 import { createServerI18n } from '@/setup/init-i18n'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
+import { ZOD_JITLESS_INLINE_SCRIPT } from '@/setup/zod-jitless'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
 import 'virtual:uno.css'
 
@@ -50,6 +53,9 @@ export const Route = createRootRoute({
       { context: ctx.context },
     ]),
   }),
+  // The catalog fields every page renders with; the songs a page needs come from its own loader (see CatalogProvider)
+  loader: async () => ({ catalogMeta: await loadCatalogMeta() }),
+  shouldReload: false,
   head: ({ match, matches }) => {
     const locale = resolveSeoLocale([match, ...matches])
     const includeRootTitle = !matches.some((match) => String(match.routeId) === SONG_DETAIL_ROUTE_ID)
@@ -72,6 +78,7 @@ export const Route = createRootRoute({
         pathname: matches[matches.length - 1]?.pathname ?? '/',
         search: matches[matches.length - 1]?.search,
       }),
+      scripts: [{ children: ZOD_JITLESS_INLINE_SCRIPT }],
     }
   },
   component: RootComponent,
@@ -123,9 +130,9 @@ function OAuthErrorHandler() {
     const error = params.get('error')
     if (!error) return
 
-    const key = `auth:oauth-error.${error}` as const
+    const key = `auth:user-profile.oauth-error.${error}` as const
     const message = t(key, { defaultValue: '' })
-    toast.error(message || t('auth:oauth-error.default', { error }), { id: 'oauth-error' })
+    toast.error(message || t('auth:user-profile.oauth-error.default', { error }), { id: 'oauth-error' })
 
     params.delete('error')
     params.delete('error_description')
@@ -147,22 +154,24 @@ function RootComponent() {
       <I18nextProvider i18n={routeI18n}>
         <AppContextProvider>
           <RootDocument>
-            <QueryClientProvider client={queryClient}>
-              <VersionCustomizedThemeProvider>
-                <RatingCalculatorContextProvider>
-                  <PostHogProvider client={posthog}>
-                    <NetImportSettingsProvider>
-                      <SideEffector />
-                      <CustomizedToaster />
-                      <NetImportProgress />
-                      <OAuthErrorHandler />
-                      <RegionVersionUpdatePrompt />
-                      <AppLayout />
-                    </NetImportSettingsProvider>
-                  </PostHogProvider>
-                </RatingCalculatorContextProvider>
-              </VersionCustomizedThemeProvider>
-            </QueryClientProvider>
+            <CatalogProvider>
+              <QueryClientProvider client={queryClient}>
+                <VersionCustomizedThemeProvider>
+                  <RatingCalculatorContextProvider>
+                    <PostHogProvider client={posthog}>
+                      <NetImportSettingsProvider>
+                        <SideEffector />
+                        <CustomizedToaster />
+                        <NetImportProgress />
+                        <OAuthErrorHandler />
+                        <RegionVersionUpdatePrompt />
+                        <AppLayout />
+                      </NetImportSettingsProvider>
+                    </PostHogProvider>
+                  </RatingCalculatorContextProvider>
+                </VersionCustomizedThemeProvider>
+              </QueryClientProvider>
+            </CatalogProvider>
           </RootDocument>
         </AppContextProvider>
       </I18nextProvider>

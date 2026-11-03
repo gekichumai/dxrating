@@ -166,7 +166,7 @@ const RenderToOneShotImageDialogContent = () => {
 
 export const RenderToOneShotImageButton: FC = () => {
   const { t } = useTranslation()
-  const { b15Entries, b35Entries, allEntries } = useRatingEntries()
+  const { isLoading, b15Entries, b35Entries, allEntries } = useRatingEntries()
   const [open, setOpen] = useState(false)
 
   return (
@@ -182,6 +182,7 @@ export const RenderToOneShotImageButton: FC = () => {
         }}
         variant="contained"
         color="primary"
+        disabled={isLoading}
         startIcon={<IconMdiImage />}
       >
         {t('rating-calculator:io.export.oneshot-image.button')}

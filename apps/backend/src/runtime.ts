@@ -1,10 +1,18 @@
 import { Layer, ManagedRuntime } from 'effect'
 import { Authentication, AuthenticationLive } from './auth'
-import { CatalogIdentities, CatalogIdentitiesLive } from './services/application'
+import {
+  CatalogIdentities,
+  CatalogIdentitiesLive,
+  McpCatalogSource,
+  McpCatalogSourceLive,
+} from './services/application'
 import { BuildInformation, BuildInformationLive } from './version'
 import { AppConfigLive, type AppConfig } from './config'
 import { DatabaseLive, type Database } from './db/index'
 import { createRequestRunner } from './request-runner'
+import { ApiUsageLive, type ApiUsage } from './services/api-usage'
+import { McpUsageLive, type McpUsage } from './services/mcp/telemetry'
+import { McpAnalyticsLive, type McpAnalyticsService } from './services/mcp/analytics'
 import { ApplicationCacheLive, type ApplicationCache } from './services/cache'
 import { HttpClientLive, type HttpClient } from './services/http-client'
 import { TracingLive, withActiveRequestSpan } from './tracing'
@@ -13,18 +21,26 @@ export const ApplicationLive = Layer.mergeAll(
   AppConfigLive,
   DatabaseLive,
   ApplicationCacheLive,
+  ApiUsageLive,
+  McpUsageLive,
+  McpAnalyticsLive,
   HttpClientLive,
   AuthenticationLive.pipe(Layer.provide(Layer.merge(AppConfigLive, DatabaseLive))),
   CatalogIdentitiesLive.pipe(Layer.provide(DatabaseLive)),
+  McpCatalogSourceLive.pipe(Layer.provide(DatabaseLive)),
   BuildInformationLive.pipe(Layer.provide(HttpClientLive)),
 ).pipe(Layer.provideMerge(TracingLive))
 export type ApplicationServices =
   | AppConfig
   | Database
   | ApplicationCache
+  | ApiUsage
+  | McpUsage
+  | McpAnalyticsService
   | HttpClient
   | Authentication
   | CatalogIdentities
+  | McpCatalogSource
   | BuildInformation
 export const appRuntime = ManagedRuntime.make(ApplicationLive)
 

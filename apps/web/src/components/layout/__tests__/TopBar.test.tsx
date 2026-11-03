@@ -12,7 +12,15 @@ vi.mock('~icons/simple-icons/discord', () => ({
   default: ({ className }: { className?: string }) => <svg className={className} />,
 }))
 
+vi.mock('~icons/simple-icons/modelcontextprotocol', () => ({
+  default: ({ className }: { className?: string }) => <svg className={className} />,
+}))
+
 vi.mock('~icons/simple-icons/qq', () => ({
+  default: ({ className }: { className?: string }) => <svg className={className} />,
+}))
+
+vi.mock('~icons/mdi/code-braces', () => ({
   default: ({ className }: { className?: string }) => <svg className={className} />,
 }))
 
@@ -80,7 +88,37 @@ describe('TopBar', () => {
       within(menu)
         .getAllByRole('menuitem')
         .map((item) => item.textContent),
-    ).toEqual(['Discord', 'QQ group', 'GitHub'])
+    ).toEqual(['Discord', 'QQ group', 'GitHub', 'AI assistants (MCP)', 'Developers & API'])
+    expect(within(menu).getByRole('menuitem', { name: 'AI assistants (MCP)' }).getAttribute('href')).toBe(
+      'https://mcp.dxrating.net/?via=dxrating-home',
+    )
+    expect(within(menu).getByRole('menuitem', { name: 'Developers & API' }).getAttribute('href')).toBe('/developers')
+  })
+
+  it('links to the MCP setup guide with a descriptive label', () => {
+    render(
+      <AppContextProvider>
+        <TopBar />
+      </AppContextProvider>,
+    )
+
+    expect(
+      screen
+        .getByRole('link', { name: 'Use DXRating in AI assistants like Claude, ChatGPT and Cursor (MCP server)' })
+        .getAttribute('href'),
+    ).toBe('https://mcp.dxrating.net/?via=dxrating-home')
+  })
+
+  it('links to the developer page next to the MCP entry', () => {
+    render(
+      <AppContextProvider>
+        <TopBar />
+      </AppContextProvider>,
+    )
+
+    expect(
+      screen.getByRole('link', { name: 'Developers: public API, OpenAPI spec and docs' }).getAttribute('href'),
+    ).toBe('/developers')
   })
 
   it('uses a higher contrast version stamp over the themed header color', () => {

@@ -1,3 +1,4 @@
+import { useCatalogDocument } from '@/catalog/CatalogContext'
 import { Alert, Button, CircularProgress, Skeleton } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, type FC } from 'react'
@@ -19,6 +20,7 @@ const toAbsoluteChartUrl = (href: string) => new URL(href, siteUrl).toString()
 
 export const buildTrendingQueryOptions = (initialTrendingData?: TrendingData, isServerRender = import.meta.env.SSR) =>
   orpc.analytics.trending.queryOptions({
+    input: { idScheme: 'public' },
     ...(isServerRender || !initialTrendingData ? {} : { initialData: initialTrendingData }),
     enabled: !isServerRender,
     staleTime: trendingQueryStaleTime,
@@ -57,7 +59,11 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
   const trendingQuery = useQuery(buildTrendingQueryOptions(initialTrendingData, isServerRender))
   const trendingData = isServerRender ? initialTrendingData : trendingQuery.data
   const trendingResults = trendingData?.results
-  const charts = useMemo(() => (trendingResults ? buildTrendingChartLinks(trendingResults) : []), [trendingResults])
+  const { songs } = useCatalogDocument()
+  const charts = useMemo(
+    () => (trendingResults ? buildTrendingChartLinks(trendingResults, songs) : []),
+    [trendingResults, songs],
+  )
   const hasDateRange = !!trendingData?.dateFrom && !!trendingData?.dateTo
   const isLoading = (isServerRender && !initialTrendingData) || trendingQuery.isLoading
 

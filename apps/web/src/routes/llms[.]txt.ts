@@ -1,7 +1,7 @@
-import { dxdataUpdateTime } from '@gekichumai/dxdata'
 import { createFileRoute } from '@tanstack/react-router'
+import { getCatalogDocument } from '@/catalog/catalogSource'
 
-export function buildLlmsTxt() {
+export function buildLlmsTxt(catalogUpdatedAt: string) {
   return `# DXRating
 
 DXRating is a maimai DX rating calculator and chart database. It provides canonical chart pages, localized metadata, score/rating tools, tags, comments, aliases, and chart facts such as difficulty, internal level, note counts, regions, release dates, and designers.
@@ -12,18 +12,22 @@ DXRating is a maimai DX rating calculator and chart database. It provides canoni
 - Developer and agent entry point: https://dxrating.net/developers
 - Recent chart discovery: https://dxrating.net/charts/recent
 - Trending chart discovery: https://dxrating.net/charts/trending
-- Interactive song and chart search: https://dxrating.net/search?q=
+- Interactive song and chart search: https://dxrating.net/?q=
 - Rating calculator: https://dxrating.net/rating
 - Sitemap: https://dxrating.net/sitemap.xml
 - OpenSearch description: https://dxrating.net/opensearch.xml
 - API base: https://miruku.dxrating.net/api/v1
+- Song catalog (JSON, every song and chart): https://miruku.dxrating.net/api/v1/dxdata
 - API catalog: https://dxrating.net/.well-known/api-catalog
 - API specification: https://miruku.dxrating.net/spec.json
 - API documentation: https://miruku.dxrating.net/docs
+- MCP server (Model Context Protocol, for AI assistants): https://mcp.dxrating.net/mcp
+- MCP server setup guide: https://mcp.dxrating.net/
 
 ## URL Patterns
 
 - Canonical chart page: https://dxrating.net/songs/{songId}/{type}/{difficulty}
+- Song IDs are the stable public IDs of the song catalog (dsng_ followed by 10 characters); links that use a song's title redirect to its canonical page
 - Chart types: dx, std, utage, utage2p
 - Difficulties: basic, advanced, expert, master, remaster
 - Chart Open Graph image: https://miruku.dxrating.net/api/v1/songs/{songId}/{type}/{difficulty}/og-image
@@ -34,13 +38,14 @@ Languages: English, Japanese, Korean, Simplified Chinese, Traditional Chinese.
 
 ## Data Notes
 
-- Song and chart metadata is generated from the repository's dxdata package.
-- Data update time: ${dxdataUpdateTime}
+- Song and chart metadata is the DXRating song catalog, served at https://miruku.dxrating.net/api/v1/dxdata.
+- Data update time: ${catalogUpdatedAt}
 - User-generated community data may include tags, comments, and aliases.
+- License: dxdata song and chart data is CC BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/). Credit it as "Data from DXRating (dxrating.net), CC BY-NC 4.0" and don't use it commercially. DXRating's code is MIT.
 
 ## Citation Guidance
 
-Prefer citing canonical chart URLs when answering chart-specific questions. Use /charts/recent for crawlable recent chart discovery, /charts/trending for popular chart discovery, and /search?q= for interactive keyword search, but use the /songs/{songId}/{type}/{difficulty} page as the source for a specific chart's level, internal level, notes, regions, release date, designer, image, and rating table.
+Prefer citing canonical chart URLs when answering chart-specific questions. Use /charts/recent for crawlable recent chart discovery, /charts/trending for popular chart discovery, and /?q= for interactive keyword search, but use the /songs/{songId}/{type}/{difficulty} page as the source for a specific chart's level, internal level, notes, regions, release date, designer, image, and rating table.
 `
 }
 
@@ -48,7 +53,7 @@ export const Route = createFileRoute('/llms.txt')({
   server: {
     handlers: {
       GET: async () =>
-        new Response(buildLlmsTxt(), {
+        new Response(buildLlmsTxt((await getCatalogDocument()).updatedAt), {
           headers: {
             'Content-Type': 'text/markdown; charset=utf-8',
             'Cache-Control': 'public, max-age=86400',

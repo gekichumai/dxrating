@@ -2,10 +2,19 @@
   "name": "@gekichumai/dxdata",
   "version": "1.6.0",
   "private": true,
-  "license": "MIT",
+  "license": "CC-BY-NC-4.0",
   "type": "module",
   "main": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./snapshot": "./snapshot.ts",
+    "./snapshot.json": "./snapshot.json",
+    "./legacy-song-ids": "./legacy-song-ids.ts"
+  },
   "publishConfig": {
     "access": "public"
+  },
+  "scripts": {
+    "snapshot:refresh": "node scripts/refresh-snapshot.ts"
   }
 }

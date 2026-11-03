@@ -126,7 +126,7 @@ export function calculateBest50({
   const calculated = deduplicateEntries(
     entries.flatMap((entry): BucketAwareCalculatedRatingEntry[] => {
       const sheet = catalog.getById(entry.sheetId)
-      if (!sheet || !sheet.isRatingEligible || !isAvailableInRegion(sheet.regions, region)) return []
+      if (!sheet || !sheet.isRatingEligible || !isAvailableInRegion(sheet.serverIds, region)) return []
       const rating = calculateRatingAward(sheet.internalLevelValue, entry.achievementRate, entry.comboFlag)
       return [
         {
@@ -170,8 +170,8 @@ export function calculateBest50({
   return { allEntries, b15, b35, statistics: calculateStatistics(b15, b35) }
 }
 
-function isAvailableInRegion(regions: { jp: boolean; intl: boolean; cn: boolean }, region: Region): boolean {
-  return region === '_generic' || regions[region]
+function isAvailableInRegion(serverIds: readonly string[], region: Region): boolean {
+  return region === '_generic' || serverIds.includes(region)
 }
 
 function getEntryBucket(
@@ -211,7 +211,7 @@ function hasAuthoritativeBucketHint(
   return region === 'cn' && entry.source?.provider === 'diving-fish' && entry.source.best50Bucket !== undefined
 }
 
-function isB15Sheet(sheetVersion: Version, appVersion: Version, region: Region): boolean {
+export function isB15Sheet(sheetVersion: Version, appVersion: Version, region: Region): boolean {
   if (region === '_generic') return sheetVersion === appVersion
   const appVersionId = VERSION_ID_MAP.get(appVersion)
   const sheetVersionId = VERSION_ID_MAP.get(sheetVersion)
@@ -222,7 +222,7 @@ function isB15Sheet(sheetVersion: Version, appVersion: Version, region: Region):
     : appVersionId === sheetVersionId
 }
 
-function isB35Sheet(sheetVersion: Version, appVersion: Version, region: Region): boolean {
+export function isB35Sheet(sheetVersion: Version, appVersion: Version, region: Region): boolean {
   if (region === '_generic') return sheetVersion !== appVersion
   const appVersionId = VERSION_ID_MAP.get(appVersion)
   const sheetVersionId = VERSION_ID_MAP.get(sheetVersion)
