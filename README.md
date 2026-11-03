@@ -163,7 +163,7 @@ pnpm --filter @gekichumai/dxrating-web test   # Web unit tests
 
 ## License
 
-The code is [MIT](LICENSE). The dxdata song and chart data ([`packages/dxdata`](packages/dxdata), `/api/v1/dxdata`) is [CC BY-NC 4.0](packages/dxdata/LICENSE): credit DXRating and don't use it commercially.
+The code is [MIT](LICENSE). The dxdata song and chart data ([`packages/dxdata`](packages/dxdata), `/api/v1/dxdata`) is free to use, and credit is appreciated: "Data from DXRating (dxrating.net)". See the [data notice](packages/dxdata/LICENSE). Song titles, artwork and charts belong to SEGA and their rights holders.
 
 ## Security
 

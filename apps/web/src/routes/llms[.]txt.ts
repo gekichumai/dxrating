@@ -41,7 +41,7 @@ Languages: English, Japanese, Korean, Simplified Chinese, Traditional Chinese.
 - Song and chart metadata is the DXRating song catalog, served at https://miruku.dxrating.net/api/v1/dxdata.
 - Data update time: ${catalogUpdatedAt}
 - User-generated community data may include tags, comments, and aliases.
-- License: dxdata song and chart data is CC BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/). Credit it as "Data from DXRating (dxrating.net), CC BY-NC 4.0" and don't use it commercially. DXRating's code is MIT.
+- Using the data: dxdata song and chart data is free to use, including commercially. Credit is appreciated: "Data from DXRating (dxrating.net)". Song titles, artwork and charts belong to SEGA and their rights holders. DXRating's code is MIT.
 
 ## Citation Guidance
 

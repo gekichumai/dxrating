@@ -615,7 +615,6 @@ export function isMcpHost(headers: Headers): boolean {
   return host.replace(/:\d+$/, '') === MCP_HOST
 }
 
-const LICENSE_LINK = '<https://creativecommons.org/licenses/by-nc/4.0/>; rel="license"'
 const CARD_LINK = `<${MCP_SERVER_CARD_URL}>; rel="service-desc"; type="application/mcp-server-card+json"`
 
 /** Whether a request prefers Markdown or plain text to HTML, as agents fetching the page do */
@@ -681,7 +680,7 @@ export function guideResponse(request: Request): Response | undefined {
   } else if (path === GUIDE_LLMS_PATH) {
     response = text(guide.llms, 'text/plain; charset=utf-8', 'public, max-age=3600', {
       'Content-Language': 'en',
-      Link: `${LICENSE_LINK}, ${CARD_LINK}`,
+      Link: CARD_LINK,
     })
   } else if (path === GUIDE_MARKDOWN_PATH) {
     // the same for every request to its URL when ?lang names the language; else negotiated, as the root is
@@ -693,7 +692,7 @@ export function guideResponse(request: Request): Response | undefined {
       {
         'Content-Language': lang,
         ...(byQuery ? {} : { Vary: 'Accept-Language' }),
-        Link: `<${html}>; rel="canonical", ${LICENSE_LINK}, ${CARD_LINK}`,
+        Link: `<${html}>; rel="canonical", ${CARD_LINK}`,
       },
     )
   } else {
@@ -707,7 +706,7 @@ export function guideResponse(request: Request): Response | undefined {
             ...negotiated,
             'Content-Security-Policy': GUIDE_CSP,
             'X-Content-Type-Options': 'nosniff',
-            Link: `${markdownLink}, ${LICENSE_LINK}, ${CARD_LINK}`,
+            Link: `${markdownLink}, ${CARD_LINK}`,
           })
         : text(
             page.markdown,
@@ -715,7 +714,7 @@ export function guideResponse(request: Request): Response | undefined {
             'private, max-age=300',
             {
               ...negotiated,
-              Link: `<${html}${viaParam}>; rel="alternate"; type="text/html", ${LICENSE_LINK}, ${CARD_LINK}`,
+              Link: `<${html}${viaParam}>; rel="alternate"; type="text/html", ${CARD_LINK}`,
             },
           )
   }

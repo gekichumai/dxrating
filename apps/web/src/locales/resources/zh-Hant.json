@@ -216,7 +216,7 @@
     "api.action": "API 文件",
     "terms.title": "使用條款",
     "terms.data": "資料",
-    "terms.data-description": "歌曲、曲繪與譜面的權利屬於 SEGA 及各權利人，DXRating 不主張著作權。可自由使用；公開發布時請註明來源 DXRating。",
+    "terms.data-description": "可自由使用，包括商用；歡迎註明來源。歌曲、曲繪與譜面的權利屬於 SEGA 及各權利人，DXRating 不主張著作權。",
     "terms.credit": "署名範例",
     "terms.limits": "速率限制",
     "terms.limits-description": "MCP：每個用戶端每分鐘 300 次請求。REST API：無硬性上限，但請做好快取並使用 ETag，避免重複下載 dxdata。"

@@ -262,7 +262,7 @@ const en: GuideText = {
   },
   data: {
     id: 'data',
-    heading: 'Data and license',
+    heading: 'Data and credit',
     blocks: [
       {
         items: [
@@ -273,8 +273,8 @@ const en: GuideText = {
             '`1007543`. Your assistant converts them for you.',
           'Ratings follow the game: Best 50 is the 15 best charts of the current version plus the 35 best of older ' +
             "ones. AP and AP+ add 1 to a chart's rating.",
-          'License: [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/), for non-commercial use with ' +
-            'credit: `Data: DXRating (https://dxrating.net), CC BY-NC 4.0`. The server asks assistants to include it.',
+          'Free to use. Credit is appreciated: `Data from DXRating (dxrating.net)`. The server asks assistants to ' +
+            'include it. Song titles, artwork and charts belong to SEGA and their rights holders.',
         ],
       },
     ],
@@ -523,7 +523,7 @@ const ja: GuideText = {
   },
   data: {
     id: 'data',
-    heading: 'データとライセンス',
+    heading: 'データとクレジット',
     blocks: [
       {
         items: [
@@ -531,8 +531,8 @@ const ja: GuideText = {
             'によって違うことがあります：jp（日本）、intl（インターナショナル）、usa、cn。アシスタントがどれか聞くか、jp を使います。',
           'ツールが受け取り返す達成率は 1/10000 % 単位の整数です：100.7543% は `1007543`。変換はアシスタントがします。',
           'レートはゲームと同じ計算です：ベスト枠は現行バージョンの上位 15 譜面と、それ以前の上位 35 譜面。AP と AP+ は 1 加算されます。',
-          'ライセンス：[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)。非営利で、クレジット ' +
-            '`Data: DXRating (https://dxrating.net), CC BY-NC 4.0` を付けて使えます。サーバーはアシスタントにこれを付けるよう伝えています。',
+          '自由に使えます。クレジット `Data from DXRating (dxrating.net)` を付けてもらえると嬉しいです。サーバーはアシスタントに' +
+            'これを付けるよう伝えています。楽曲名・ジャケット・譜面の権利は SEGA と各権利者にあります。',
         ],
       },
     ],
@@ -769,7 +769,7 @@ const zhHans: GuideText = {
   },
   data: {
     id: 'data',
-    heading: '数据和许可',
+    heading: '数据和署名',
     blocks: [
       {
         items: [
@@ -777,8 +777,8 @@ const zhHans: GuideText = {
             'usa（美服）和 cn（国服）。助手会问你玩哪个服，否则用 jp。',
           '工具收发的达成率是以 1/10000 % 为单位的整数：100.7543% 就是 `1007543`。助手会帮你换算。',
           'Rating 按游戏规则算：B50 是当前版本最好的 15 张谱面加上旧版本最好的 35 张。AP 和 AP+ 每张谱面加 1。',
-          '许可：[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)，可非商业使用，需注明 ' +
-            '`Data: DXRating (https://dxrating.net), CC BY-NC 4.0`。服务器会提醒助手附上这一行。',
+          '可以自由使用，欢迎注明 `Data from DXRating (dxrating.net)`。服务器会提醒助手附上这一行。' +
+            '曲名、封面和谱面的权利属于 SEGA 及各权利方。',
         ],
       },
     ],
@@ -1008,7 +1008,7 @@ const zhHant: GuideText = {
   },
   data: {
     id: 'data',
-    heading: '資料與授權',
+    heading: '資料與署名',
     blocks: [
       {
         items: [
@@ -1016,8 +1016,8 @@ const zhHant: GuideText = {
             'usa（美版）和 cn（國服）。助理會問你玩哪個版本，否則用 jp。',
           '工具收發的達成率是以 1/10000 % 為單位的整數：100.7543% 就是 `1007543`。助理會幫你換算。',
           'Rating 依遊戲規則計算：B50 是目前版本最好的 15 張譜面加上舊版本最好的 35 張。AP 和 AP+ 每張譜面加 1。',
-          '授權：[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)，可非商業使用，需註明 ' +
-            '`Data: DXRating (https://dxrating.net), CC BY-NC 4.0`。伺服器會提醒助理附上這一行。',
+          '可以自由使用，歡迎註明 `Data from DXRating (dxrating.net)`。伺服器會提醒助理附上這一行。' +
+            '曲名、封面和譜面的權利屬於 SEGA 及各權利方。',
         ],
       },
     ],
@@ -1113,8 +1113,8 @@ export const GUIDE_TEXTS: readonly GuideText[] = [en, ja, zhHans, zhHant]
 /** The preface of llms.txt, for agents */
 export const LLMS_PREFACE = [
   '> Read-only remote MCP server for maimai DX song data, internal levels and ratings (jp, intl, usa, cn servers). ' +
-    'URL: {url} · Streamable HTTP · no authentication · {toolcount} tools. Data: CC BY-NC 4.0, credit "Data: ' +
-    'DXRating (https://dxrating.net), CC BY-NC 4.0". Achievements are integers in 1/10000 %: 100.7543% is 1007543.',
+    'URL: {url} · Streamable HTTP · no authentication · {toolcount} tools. Data: free to use, credit ' +
+    'appreciated: "Data from DXRating (dxrating.net)". Achievements are integers in 1/10000 %: 100.7543% is 1007543.',
   'If you are an AI agent asked to connect this server: use the exact URL above (it ends in /mcp), pick the section ' +
     'for the client you run in, add it at user/global scope, then list the tools ({tools}) to verify.',
 ]

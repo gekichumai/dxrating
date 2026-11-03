@@ -2,23 +2,19 @@
 
 The maimai DX song and chart data behind DXRating. The same data is also served at `https://miruku.dxrating.net/api/v1/dxdata`.
 
-## License
+## Using the data
 
-The data (`dxdata.json` and the `/api/v1/dxdata` catalog) is licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/); the full text is in [LICENSE](LICENSE). The TypeScript helpers here are code, so they're MIT like the rest of the repo.
+The data (`dxdata.json` and the `/api/v1/dxdata` catalog) is free to use, in tools, bots, sites, spreadsheets and commercial projects alike. Credit is appreciated; something like this is plenty:
 
-In short:
+> Data from DXRating (dxrating.net)
 
-- Use it in your tools, bots, sites and spreadsheets, go for it.
-- Give credit. Something like this is plenty:
+A link back to https://dxrating.net is welcome too. The short notice is in [LICENSE](LICENSE). The TypeScript helpers here are code, so they're MIT like the rest of the repo.
 
-  > Data from DXRating (dxrating.net), CC BY-NC 4.0
+Song titles, jackets, charts and other game content belong to SEGA and their rights holders.
 
-  A link back to https://dxrating.net is appreciated.
-- Don't use it commercially. If you have something in mind, open an issue and ask first.
+Song IDs (`dsng_…`) and sheet IDs (`dsht_…`) are stable and never reused. See the [API stability policy](https://dxrating.net/developers#api-stability) for what that covers.
 
-Song titles, jackets and other game content belong to SEGA and the respective rights holders. The license only covers what we've put together on top.
-
-> 简单说：数据是 CC BY-NC 4.0，用的时候注明出处（比如「Data from DXRating (dxrating.net), CC BY-NC 4.0」），别拿去商用就行。
+> 简单说：数据可以随便用（包括商用），欢迎注明「Data from DXRating (dxrating.net)」。曲名、封面和谱面的权利属于 SEGA 及各权利方。
 
 ## Acknowledgements
 

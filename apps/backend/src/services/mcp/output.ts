@@ -8,23 +8,19 @@ import type { McpCatalog, PublishedSheet } from './catalog'
 export const SITE_URL = 'https://dxrating.net'
 /** The icon of the site, for clients and directories to show */
 export const ICONS = [{ src: 'https://shama.dxrating.net/favicon/pack/v1/apple-touch-icon.png', mimeType: 'image/png' }]
-export const DATA_LICENSE = 'CC BY-NC 4.0'
-export const DATA_LICENSE_URL = 'https://creativecommons.org/licenses/by-nc/4.0/'
+/** The data is free to use; credit is appreciated, not required. Terms: https://dxrating.net/developers */
+export const ATTRIBUTION = 'Data from DXRating (dxrating.net)'
 
 export const sourceSchema = z.object({
   name: z.literal('DXRating'),
   url: z.string(),
-  license: z.literal(DATA_LICENSE),
-  licenseUrl: z.string(),
   attribution: z.string(),
 })
 
 export const source: z.infer<typeof sourceSchema> = {
   name: 'DXRating',
   url: SITE_URL,
-  license: DATA_LICENSE,
-  licenseUrl: DATA_LICENSE_URL,
-  attribution: `Data: DXRating (${SITE_URL}), ${DATA_LICENSE}`,
+  attribution: ATTRIBUTION,
 }
 
 /** The languages of the localized names (tags), as the web app has them */

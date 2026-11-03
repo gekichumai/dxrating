@@ -216,7 +216,7 @@
     "api.action": "API ドキュメント",
     "terms.title": "利用条件",
     "terms.data": "データ",
-    "terms.data-description": "楽曲・ジャケット・譜面の権利は SEGA および各権利者に帰属し、DXRating は著作権を主張しません。自由に使えます。公開する場合は DXRating のクレジット表記をお願いします。",
+    "terms.data-description": "商用を含めて自由に使えます。クレジット表記があると嬉しいです。楽曲・ジャケット・譜面の権利は SEGA および各権利者に帰属し、DXRating は著作権を主張しません。",
     "terms.credit": "クレジット表記",
     "terms.limits": "レート制限",
     "terms.limits-description": "MCP：クライアントごとに毎分 300 リクエスト。REST API：上限はありませんが、キャッシュと ETag を使い、dxdata の再取得は控えてください。"

@@ -216,7 +216,7 @@
     "api.action": "API docs",
     "terms.title": "Terms",
     "terms.data": "Data",
-    "terms.data-description": "Song titles, artwork and charts belong to SEGA and their rights holders; DXRating claims no copyright over them. Free to use. If you publish something built on it, please credit DXRating.",
+    "terms.data-description": "Free to use, including commercially. Credit is appreciated. Song titles, artwork and charts belong to SEGA and their rights holders; DXRating claims no copyright over them.",
     "terms.credit": "Credit line",
     "terms.limits": "Rate limits",
     "terms.limits-description": "MCP: 300 requests per minute per client. REST API: no hard limit, but please cache and use ETag instead of re-downloading dxdata."

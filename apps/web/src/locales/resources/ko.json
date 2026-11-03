@@ -216,7 +216,7 @@
     "api.action": "API 문서",
     "terms.title": "이용 조건",
     "terms.data": "데이터",
-    "terms.data-description": "곡, 재킷, 채보의 권리는 SEGA와 각 권리자에게 있으며 DXRating은 저작권을 주장하지 않습니다. 자유롭게 사용할 수 있으며, 공개할 때는 DXRating 출처를 표기해 주세요.",
+    "terms.data-description": "상업적 용도를 포함해 자유롭게 사용할 수 있습니다. 출처를 표기해 주시면 감사하겠습니다. 곡, 재킷, 채보의 권리는 SEGA와 각 권리자에게 있으며 DXRating은 저작권을 주장하지 않습니다.",
     "terms.credit": "출처 표기",
     "terms.limits": "요청 제한",
     "terms.limits-description": "MCP: 클라이언트당 분당 300회. REST API: 고정 한도는 없지만 캐시와 ETag를 사용하고 dxdata를 반복해서 내려받지 마세요."
