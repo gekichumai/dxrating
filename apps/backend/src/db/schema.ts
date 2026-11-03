@@ -298,7 +298,10 @@ export const scoreRecords = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.save_id, table.sheet_id] }),
-    // NO ACTION (the default) is safe when one statement cascades both sides.
+    // NO ACTION (the default) is safe when one statement cascades both sides, which holds
+    // only if the job and the record share save_id (and so user_id). The FK does not
+    // enforce that, so every write path must use a job from the record's own save;
+    // otherwise deleting the job's save or user is blocked.
     foreignKey({
       name: 'score_records_import_job_id_fetched_by_fkey',
       columns: [table.import_job_id, table.fetched_by],
