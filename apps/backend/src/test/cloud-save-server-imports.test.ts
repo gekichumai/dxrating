@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { Effect, Exit } from 'effect'
 import pg from 'pg'
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // config.ts reads the environment once, at import
 vi.hoisted(() => {
@@ -438,6 +438,78 @@ describe('maimai NET server import', () => {
       )
       .toBe('succeeded')
     expect(await records(user.saveId)).toHaveLength(3)
+  })
+
+  describe('when starting the job fails or is interrupted', () => {
+    /** Makes the insert of the job with `idempotencyKey` sleep, then raise when `fail` */
+    const sabotageJobInsert = async (idempotencyKey: string, options: { sleepSeconds?: number; fail?: boolean }) => {
+      await pool.query(`
+        CREATE OR REPLACE FUNCTION test_sabotage_job_insert() RETURNS trigger AS $$
+        BEGIN
+          IF NEW.idempotency_key = '${idempotencyKey}' THEN
+            PERFORM pg_sleep(${options.sleepSeconds ?? 0});
+            ${options.fail ? "RAISE EXCEPTION 'synthetic database failure';" : ''}
+          END IF;
+          RETURN NEW;
+        END $$ LANGUAGE plpgsql`)
+      await pool.query(`DROP TRIGGER IF EXISTS test_sabotage_job_insert ON score_import_jobs`)
+      await pool.query(
+        `CREATE TRIGGER test_sabotage_job_insert BEFORE INSERT ON score_import_jobs
+         FOR EACH ROW EXECUTE FUNCTION test_sabotage_job_insert()`,
+      )
+    }
+    afterEach(async () => {
+      await pool.query(`DROP TRIGGER IF EXISTS test_sabotage_job_insert ON score_import_jobs`)
+      await pool.query(`DROP FUNCTION IF EXISTS test_sabotage_job_insert()`)
+    })
+
+    it('gives the slots back when the job cannot be started, so the user can import again', async () => {
+      const user = await newUser()
+      const headers = { 'X-Forwarded-For': '198.51.100.13' }
+      const body = netBody()
+      await sabotageJobInsert(body.idempotencyKey, { fail: true })
+      const failed = await postNetImport(user.cookie, user.saveId, body, { headers })
+      expect(failed.status).toBe(500)
+      expect(failed.text).not.toContain(PASSWORD)
+      expect(runningNetImports()).toBe(0)
+
+      upstream.net = createFakeNet({ id: SEGA_ID, password: PASSWORD, records: NET_RECORDS }).fetch
+      const next = await postNetImport(user.cookie, user.saveId, netBody(), { headers })
+      expect(next.status).toBe(200)
+      expect(next.events.at(-1)!.event).toBe('done')
+      expect(runningNetImports()).toBe(0)
+    })
+
+    it('gives the slots back and fails the job when the client leaves while the job starts', async () => {
+      const user = await newUser()
+      const headers = { 'X-Forwarded-For': '198.51.100.14' }
+      const body = netBody()
+      await sabotageJobInsert(body.idempotencyKey, { sleepSeconds: 0.6 })
+      upstream.net = createFakeNet({ id: SEGA_ID, password: PASSWORD, records: NET_RECORDS }).fetch
+      const client = new AbortController()
+      const request = postNetImport(user.cookie, user.saveId, body, { headers, signal: client.signal }).catch(
+        () => null,
+      )
+      await expect.poll(() => runningNetImports()).toBe(1)
+      client.abort()
+      await request
+      await expect.poll(() => runningNetImports(), { timeout: 5000 }).toBe(0)
+      await expect
+        .poll(
+          async () =>
+            (
+              await pool.query(`SELECT status, error_code FROM score_import_jobs WHERE idempotency_key = $1`, [
+                body.idempotencyKey,
+              ])
+            ).rows[0],
+          { timeout: 5000 },
+        )
+        .toMatchObject({ status: 'failed', error_code: 'interrupted' })
+      expect(await records(user.saveId)).toHaveLength(0)
+
+      const next = await postNetImport(user.cookie, user.saveId, netBody(), { headers })
+      expect(next.events.at(-1)!.event).toBe('done')
+    })
   })
 
   it('limits one address to 30 NET imports an hour', async () => {
