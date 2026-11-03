@@ -43,7 +43,9 @@ import { uuidv7 } from './uuidv7'
  *    the user's intent into a {@link SyncIssue} that can be applied again with a new baseline
  *    ({@link CloudScoreRepository.reapplyIssue}); `rejected` becomes an issue;
  * 3. pull the changes since `lastSyncedRevision` until `hasMore` is false; `resetRequired` (the cursor is older than
- *    the tombstone horizon, §5.6) refetches everything from 0 and rebuilds the cache;
+ *    the tombstone horizon, §5.6) refetches everything from 0 and rebuilds the cache. A full pull (a first sync, a
+ *    reset, a checksum mismatch) asks for `mode: 'full'` on every page, so its later pages, whose cursor is routinely
+ *    below the horizon, are never reset; it commits only once its last page is in;
  * 4. lay the outbox entries still pending over the pulled records again;
  * 5. compare the last page's checksum with the cache; a mismatch refetches everything once and is reported.
  *
@@ -59,9 +61,15 @@ import { uuidv7 } from './uuidv7'
  * into a cloud save run on the server (PR 9), so {@link applyImport} is not available here yet.
  */
 
+/**
+ * `incremental`: the changes after `since`, reset when `since` is older than the tombstone horizon. `full`: a page of
+ * a full pull, never reset by the horizon (§5.6)
+ */
+export type ChangesMode = 'incremental' | 'full'
+
 /** The cloud save routes this repository calls, the shape of `privateApiClient.cloudSave.records` */
 export interface CloudSaveRecordsApi {
-  changes(input: { id: string; since: number; limit: number }): Promise<ChangesDTO>
+  changes(input: { id: string; since: number; limit: number; mode?: ChangesMode }): Promise<ChangesDTO>
   mutate(input: { id: string; mutations: MutationItemInput[] }): Promise<MutationsResultDTO>
 }
 
@@ -113,6 +121,8 @@ export const SYNC_DEBOUNCE_MS = 2_000
 export const SYNC_INTERVAL_MS = 60_000
 export const SYNC_BACKOFF_MIN_MS = 2_000
 export const SYNC_BACKOFF_MAX_MS = 5 * 60_000
+/** How many times a full pull starts over from 0 after a reset before the cycle fails (and backs off) */
+export const FULL_PULL_MAX_ATTEMPTS = 3
 /** How long signing out or turning cloud save off waits for the outbox to flush */
 export const FLUSH_TIMEOUT_MS = 3_000
 
@@ -654,68 +664,116 @@ export class CloudScoreRepository implements WebScoreRepository {
   }
 
   private async pull() {
-    const outcome = await this.pullFrom(this.meta.lastSyncedRevision, false)
+    // Nothing synced yet: a full pull, so its later pages are never reset by the horizon
+    if (this.meta.lastSyncedRevision === 0) {
+      const outcome = await this.pullFull()
+      if (outcome.kind === 'mismatch') {
+        this.reportMismatch(outcome.report)
+        await this.pullFull()
+      }
+      return
+    }
+    const outcome = await this.pullIncremental(this.meta.lastSyncedRevision)
     if (outcome.kind === 'reset') {
-      await this.pullFrom(0, true)
+      await this.pullFull()
       return
     }
     if (outcome.kind === 'mismatch') {
       this.reportMismatch(outcome.report)
       // One full refetch; a mismatch after it is not chased further this cycle
-      await this.pullFrom(0, true)
+      await this.pullFull()
     }
   }
 
-  private async pullFrom(
-    since: number,
-    full: boolean,
-  ): Promise<{ kind: 'ok' } | { kind: 'reset' } | { kind: 'mismatch'; report: ChecksumMismatchReport }> {
-    const collected = full ? new Map<string, RecordDTO>() : this.serverRecords
+  /**
+   * The changes after `since`, each page kept as it comes (revisions are unique per row and strictly increasing,
+   * §5.2). A reset, on any page, hands over to a full pull.
+   */
+  private async pullIncremental(since: number): Promise<PullOutcome | { kind: 'reset' }> {
     let cursor = since
-    let checksum: ChangesDTO['checksum'] = null
     for (;;) {
       if (this.disposed) return { kind: 'ok' }
-      const page = await this.api.changes({ id: this.saveId, since: cursor, limit: CLOUD_SAVE_MAX_CHANGES_LIMIT })
-      if (page.resetRequired && !full) return { kind: 'reset' }
-      for (const record of page.records) upsertNewer(collected, record)
+      const page = await this.api.changes({
+        id: this.saveId,
+        since: cursor,
+        limit: CLOUD_SAVE_MAX_CHANGES_LIMIT,
+        mode: 'incremental',
+      })
+      if (page.resetRequired) return { kind: 'reset' }
+      for (const record of page.records) upsertNewer(this.serverRecords, record)
       const advanced = page.nextSince > cursor
       cursor = Math.max(cursor, page.nextSince)
-      if (!full) {
-        // Each page is safe to keep: revisions are unique per row and strictly increasing (§5.2)
-        this.meta = { saveId: this.saveId, lastSyncedRevision: cursor }
-        const meta = this.meta
-        await this.persist((database) => database.write({ putRecords: page.records, meta }))
-      }
+      this.meta = { saveId: this.saveId, lastSyncedRevision: cursor }
+      const meta = this.meta
+      await this.persist((database) => database.write({ putRecords: page.records, meta }))
       if (!page.hasMore || !advanced) {
-        checksum = page.checksum
-        break
+        this.refresh()
+        return this.compareChecksum(page.checksum, this.serverRecords.values())
       }
     }
+  }
 
-    if (full) {
+  /**
+   * Every live record, from 0, with `mode: 'full'` on every page. Nothing is committed (records or cursor) until the
+   * last page is in: a reset in the middle (the server should never send one in full mode) starts over from 0, and
+   * after {@link FULL_PULL_MAX_ATTEMPTS} the cycle fails and backs off rather than keep a partial save.
+   */
+  private async pullFull(): Promise<PullOutcome> {
+    for (let attempt = 1; ; attempt++) {
+      const collected = new Map<string, RecordDTO>()
+      let cursor = 0
+      let checksum: ChangesDTO['checksum'] = null
+      let reset = false
+      for (;;) {
+        if (this.disposed) return { kind: 'ok' }
+        const page = await this.api.changes({
+          id: this.saveId,
+          since: cursor,
+          limit: CLOUD_SAVE_MAX_CHANGES_LIMIT,
+          mode: 'full',
+        })
+        if (page.resetRequired) {
+          reset = true
+          break
+        }
+        for (const record of page.records) upsertNewer(collected, record)
+        const advanced = page.nextSince > cursor
+        cursor = Math.max(cursor, page.nextSince)
+        if (!page.hasMore || !advanced) {
+          checksum = page.checksum
+          break
+        }
+      }
+      if (reset) {
+        if (attempt >= FULL_PULL_MAX_ATTEMPTS) throw new Error('The server kept resetting a full pull')
+        continue
+      }
+
       this.serverRecords = collected
       this.meta = { saveId: this.saveId, lastSyncedRevision: cursor }
       const meta = this.meta
       const records = [...collected.values()]
-      await this.persist((database) => database.write({ replaceRecords: true, putRecords: records, meta }))
+      await this.persist((database) =>
+        database.write({ replaceRecords: { throughRevision: cursor }, putRecords: records, meta }),
+      )
+      this.refresh()
+      return this.compareChecksum(checksum, collected.values())
     }
-    this.refresh()
+  }
 
-    if (checksum) {
-      const actual = checksumOf(collected.values())
-      if (actual.count !== checksum.count || actual.sumAchievement !== checksum.sumAchievement) {
-        return {
-          kind: 'mismatch',
-          report: {
-            expectedCount: checksum.count,
-            expectedSumAchievement: checksum.sumAchievement,
-            actualCount: actual.count,
-            actualSumAchievement: actual.sumAchievement,
-          },
-        }
-      }
+  private compareChecksum(checksum: ChangesDTO['checksum'], records: Iterable<RecordDTO>): PullOutcome {
+    if (!checksum) return { kind: 'ok' }
+    const actual = checksumOf(records)
+    if (actual.count === checksum.count && actual.sumAchievement === checksum.sumAchievement) return { kind: 'ok' }
+    return {
+      kind: 'mismatch',
+      report: {
+        expectedCount: checksum.count,
+        expectedSumAchievement: checksum.sumAchievement,
+        actualCount: actual.count,
+        actualSumAchievement: actual.sumAchievement,
+      },
     }
-    return { kind: 'ok' }
   }
 
   // --- Local state ---
@@ -900,6 +958,8 @@ export class CloudScoreRepository implements WebScoreRepository {
     for (const listener of [...this.listeners]) listener()
   }
 }
+
+type PullOutcome = { kind: 'ok' } | { kind: 'mismatch'; report: ChecksumMismatchReport }
 
 type PendingChange =
   | { op: 'set'; sheetId: string; value: NonNullable<OutboxEntry['value']>; entryMethod: ManualEntryMethod }

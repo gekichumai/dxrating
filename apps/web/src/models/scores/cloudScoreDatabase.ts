@@ -49,10 +49,24 @@ export interface CloudScoreSnapshot {
   issues: SyncIssue[]
 }
 
-/** One atomic write; applied in the order of its fields */
+/**
+ * One atomic write; applied in the order of its fields.
+ *
+ * Server records are revision-guarded inside the transaction: a record (or tombstone) is written only when its
+ * `revision` is at least the cached one. Without Web Locks every tab syncs on its own, so a push result one tab got
+ * late must never overwrite a newer record another tab already cached: the shared cursor has moved past it, so no
+ * later pull would bring the newer one back, and the `count`/`sumAchievement` checksum (all the contract carries)
+ * cannot tell two revisions of one record with the same achievement apart. With the guard the cache only ever moves
+ * forward per record, so a record is stale only until the pull that covers its newer revision.
+ */
 export interface CloudScoreWrite {
-  /** Clears the save's `records` first (full refetch) */
-  replaceRecords?: boolean
+  /**
+   * A full refetch: drops the save's cached records up to `throughRevision` (the cursor of the full pull) that
+   * `putRecords` does not hold. Records cached with a higher revision (another tab wrote them after the pull's
+   * snapshot) are kept.
+   */
+  replaceRecords?: { throughRevision: number }
+  /** Each written only if it is not older than the cached record */
   putRecords?: readonly RecordDTO[]
   /** Returns the entries with their `seq` assigned */
   addOutbox?: readonly OutboxEntry[]
@@ -152,19 +166,33 @@ export class CloudScoreDatabase {
     const outbox = transaction.objectStore('outbox')
     const issues = transaction.objectStore('issues')
 
-    const putRecords = () => {
-      for (const record of write.putRecords ?? [])
-        records.put({ ...record, saveId: this.saveId } satisfies StoredRecord)
+    const incoming = new Map<string, RecordDTO>()
+    for (const record of write.putRecords ?? []) {
+      const existing = incoming.get(record.sheetId)
+      if (!existing || record.revision >= existing.revision) incoming.set(record.sheetId, record)
+    }
+    // Read what is cached and write in the same transaction: no other tab can write in between
+    const putIfNotOlder = (record: RecordDTO, existing: StoredRecord | undefined) => {
+      if (existing && existing.revision > record.revision) return
+      records.put({ ...record, saveId: this.saveId } satisfies StoredRecord)
     }
     if (write.replaceRecords) {
-      // This save's records only; the puts follow once they are gone
-      const keys = records.index(SAVE_INDEX).getAllKeys(this.saveId)
-      keys.onsuccess = () => {
-        for (const key of keys.result) records.delete(key)
-        putRecords()
+      const { throughRevision } = write.replaceRecords
+      const cached = records.index(SAVE_INDEX).getAll(this.saveId) as IDBRequest<StoredRecord[]>
+      cached.onsuccess = () => {
+        const bySheetId = new Map(cached.result.map((record) => [record.sheetId, record]))
+        for (const record of cached.result) {
+          if (!incoming.has(record.sheetId) && record.revision <= throughRevision) {
+            records.delete([this.saveId, record.sheetId])
+          }
+        }
+        for (const record of incoming.values()) putIfNotOlder(record, bySheetId.get(record.sheetId))
       }
     } else {
-      putRecords()
+      for (const record of incoming.values()) {
+        const cached = records.get([this.saveId, record.sheetId]) as IDBRequest<StoredRecord | undefined>
+        cached.onsuccess = () => putIfNotOlder(record, cached.result)
+      }
     }
 
     const added: Promise<OutboxEntry>[] = []

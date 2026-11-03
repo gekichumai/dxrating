@@ -366,6 +366,142 @@ describe('CloudScoreRepository', () => {
     expect(repository.status).toMatchObject({ pendingCount: 1, lastSyncedRevision: 3 })
   })
 
+  it('keeps every page of a full pull in full mode, so a purged tombstone horizon never cuts it short', async () => {
+    server.pageSize = 1
+    server.put(SHEET_A, 1000000)
+    server.put(SHEET_B, 990000)
+    // A chart deleted long ago, its tombstone purged: the horizon is above the cursor of the first pages
+    server.put('dsht_dddddddddd', 970000, manualProvenance(), { deletedAt: '2026-08-01T00:00:00.000Z' })
+    server.purge('dsht_dddddddddd')
+    server.put(SHEET_C, 980000)
+    expect(server.tombstoneHorizon).toBe(3)
+    const reportChecksumMismatch = vi.fn()
+    const repository = await openRepository({ reportChecksumMismatch })
+
+    await repository.sync()
+
+    expect(server.changesCalls).toEqual([0, 1, 2])
+    expect(server.changesModes).toEqual(['full', 'full', 'full'])
+    expect(repository.entries().map((entry) => entry.sheetId)).toEqual([SHEET_A, SHEET_B, SHEET_C])
+    expect(repository.status).toMatchObject({ state: 'idle', lastSyncedRevision: 4 })
+    expect(reportChecksumMismatch).not.toHaveBeenCalled()
+
+    // A device whose cursor fell below the horizon restarts as a full pull, every page of it in full mode
+    const behind = await openRepository({ saveId: 'dsav_two', api: server.api })
+    const database = await CloudScoreDatabase.open('user-1', 'dsav_two', factory)
+    await database.write({ meta: { saveId: 'dsav_two', lastSyncedRevision: 1 } })
+    database.close()
+    const changesBefore = server.changesCalls.length
+    await behind.sync()
+    expect(server.changesCalls.slice(changesBefore)).toEqual([1, 0, 1, 2])
+    expect(server.changesModes.slice(changesBefore)).toEqual(['incremental', 'full', 'full', 'full'])
+    expect(behind.entries().map((entry) => entry.sheetId)).toEqual([SHEET_A, SHEET_B, SHEET_C])
+    expect(behind.status.lastSyncedRevision).toBe(4)
+
+    // Both survive a reload, complete
+    await unload(repository)
+    expect((await openRepository()).entries()).toHaveLength(3)
+  })
+
+  it('starts a full pull over from 0 when it is reset midway, and never commits a partial one', async () => {
+    server.pageSize = 1
+    server.put(SHEET_A, 1000000)
+    server.put(SHEET_B, 990000)
+    server.put(SHEET_C, 980000)
+    let resets = 1
+    const api = {
+      ...server.api,
+      changes: async (input: Parameters<typeof server.api.changes>[0]) => {
+        const page = await server.api.changes(input)
+        // A continuation page reset (which the server never sends in full mode)
+        if (input.since > 0 && resets > 0) {
+          resets--
+          return { ...page, records: [], nextSince: 0, hasMore: false, resetRequired: true, checksum: null }
+        }
+        return page
+      },
+    }
+    const repository = await openRepository({ api })
+
+    await repository.sync()
+    expect(server.changesCalls).toEqual([0, 1, 0, 1, 2])
+    expect(repository.entries()).toHaveLength(3)
+    expect(repository.status).toMatchObject({ state: 'idle', lastSyncedRevision: 3 })
+
+    // Reset on every attempt: the cycle fails, and nothing of it is kept
+    resets = Number.POSITIVE_INFINITY
+    const fresh = await openRepository({ saveId: 'dsav_two', api })
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    await fresh.sync()
+    expect(fresh.status).toMatchObject({ state: 'error', lastSyncedRevision: 0 })
+    expect(fresh.entries()).toEqual([])
+    const database = await CloudScoreDatabase.open('user-1', 'dsav_two', factory)
+    const snapshot = await database.read()
+    database.close()
+    expect(snapshot.records).toEqual([])
+    expect(snapshot.meta.lastSyncedRevision).toBe(0)
+  })
+
+  it('never lets a delayed acknowledgement in one tab regress a newer record another tab cached', async () => {
+    server.put(SHEET_A, 990000)
+    let releaseAck!: () => void
+    const ackHeld = new Promise<void>((resolve) => {
+      releaseAck = resolve
+    })
+    let mutated!: () => void
+    const mutateReached = new Promise<void>((resolve) => {
+      mutated = resolve
+    })
+    let tabAOffline = false
+    // Tab A's acknowledgement arrives late, and its pull after it fails
+    const tabAApi = {
+      changes: async (input: Parameters<typeof server.api.changes>[0]) => {
+        if (tabAOffline) throw offline()
+        return server.api.changes(input)
+      },
+      mutate: async (input: Parameters<typeof server.api.mutate>[0]) => {
+        const result = await server.api.mutate(input)
+        mutated()
+        await ackHeld
+        return result
+      },
+    }
+    // No Web Locks: both tabs sync on their own
+    const tabA = await openRepository({ api: tabAApi })
+    const tabB = await openRepository()
+    await tabA.sync()
+    await tabB.sync()
+
+    tabA.setManual({ sheetId: SHEET_A, achievementRate: 99.5 }, 'typed')
+    tabAOffline = true
+    const tabASync = tabA.sync()
+    await mutateReached
+    // Applied as revision 2; then an import elsewhere verifies the same achievement as revision 3
+    server.put(SHEET_A, 995000, verifiedProvenance(), { comboFlag: 'fc' })
+    await tabB.sync()
+    expect(tabB.status.lastSyncedRevision).toBe(3)
+
+    releaseAck()
+    await tabASync
+    expect(tabA.status.state).toBe('offline')
+
+    const database = await CloudScoreDatabase.open('user-1', 'dsav_one', factory)
+    const snapshot = await database.read()
+    database.close()
+    expect(snapshot.records).toEqual([expect.objectContaining({ sheetId: SHEET_A, revision: 3, comboFlag: 'fc' })])
+
+    // A reload and a sync keep the newer record: the cursor has passed it, and the checksum matches either way
+    await unload(tabA)
+    await unload(tabB)
+    const reportChecksumMismatch = vi.fn()
+    const reopened = await openRepository({ reportChecksumMismatch })
+    await reopened.sync()
+    expect(reopened.entries()).toEqual([
+      expect.objectContaining({ sheetId: SHEET_A, achievementRate: 99.5, comboFlag: 'fc' }),
+    ])
+    expect(reportChecksumMismatch).not.toHaveBeenCalled()
+  })
+
   it('refetches everything once and reports a checksum mismatch without identifiers', async () => {
     server.put(SHEET_A, 990000)
     const reportChecksumMismatch = vi.fn()
