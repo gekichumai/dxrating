@@ -30,18 +30,34 @@ import { getSongCatalog } from '@gekichumai/maimai-domain'
 const posthog = vi.hoisted(() => ({ capture: vi.fn() }))
 vi.mock('posthog-js', () => ({ default: posthog }))
 
-const { toast } = vi.hoisted(() => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }) }))
+const { toast } = vi.hoisted(() => ({
+  toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
+}))
 vi.mock('react-hot-toast', () => ({ default: toast }))
 
 const SHEET_A = 'dsht_e5nsvt8k2a'
 const SHEET_B = 'dsht_5mk3yr8gme'
 const ENTRIES: PlayEntry[] = [
-  { sheetId: SHEET_A, achievementRate: 100.5, comboFlag: 'ap', syncFlag: null, source: { provider: 'lxns' } },
+  {
+    sheetId: SHEET_A,
+    achievementRate: 100.5,
+    comboFlag: 'ap',
+    syncFlag: null,
+    source: { provider: 'lxns' },
+  },
   { sheetId: SHEET_B, achievementRate: 99 },
 ]
 
-const FEATURES_ON: UserFeatures = { cloudSave: true, serverImports: true, optInAvailable: false }
-const FEATURES_OPT_IN: UserFeatures = { cloudSave: false, serverImports: false, optInAvailable: true }
+const FEATURES_ON: UserFeatures = {
+  cloudSave: true,
+  serverImports: true,
+  optInAvailable: false,
+}
+const FEATURES_OPT_IN: UserFeatures = {
+  cloudSave: false,
+  serverImports: false,
+  optInAvailable: true,
+}
 
 const job = (fields: Partial<ImportJobDTO> = {}): ImportJobDTO => ({
   id: 'dimp_1',
@@ -92,7 +108,10 @@ function migrationApi(saves: SaveDTO[] = []) {
       ...existingSave({ id: 'dsav_new', revision: 0, recordCount: 0 }),
       ...input,
     })),
-    clientImport: vi.fn(async (input: { id: string }) => ({ job: job({ saveId: input.id }), revision: 1 })),
+    clientImport: vi.fn(async (input: { id: string }) => ({
+      job: job({ saveId: input.id }),
+      revision: 1,
+    })),
     replace: vi.fn(async (input: { id: string; ifRevision: number }) => ({
       job: job({ saveId: input.id, trigger: 'user' }),
       revision: input.ifRevision + 1,
@@ -136,7 +155,11 @@ function renderDialog(api: CloudMigrationApi) {
 }
 
 /** Every captured event, by name */
-const captured = () => posthog.capture.mock.calls.map(([name, properties]) => ({ name, properties }))
+const captured = () =>
+  posthog.capture.mock.calls.map(([name, properties]) => ({
+    name,
+    properties,
+  }))
 
 /** Account, save, job and chart IDs, names and credentials never reach analytics */
 function expectNoIdentifiers() {
@@ -163,20 +186,26 @@ describe('CloudMigrationDialog: no cloud save yet', () => {
     const api = migrationApi()
     const { onActivate } = renderDialog(api)
 
-    const backUp = await screen.findByRole('button', { name: 'Back up to cloud' })
+    const backUp = await screen.findByRole('button', {
+      name: 'Back up to cloud',
+    })
     expect(api.createSave).not.toHaveBeenCalled()
     // Previously imported records are not verified: the user is told how to get verified ones
     expect(screen.getByText(/saved as “not verified”/)).toBeTruthy()
     fireEvent.click(backUp)
 
     await screen.findByText('2 records are now in your cloud save.')
-    expect(api.createSave).toHaveBeenCalledWith({ name: 'My scores', region: 'intl', clientProfileKey: 'web-local' })
+    expect(api.createSave).toHaveBeenCalledWith({
+      name: 'My scores',
+      region: 'intl',
+      clientProfileKey: 'web-local',
+    })
     expect(api.clientImport).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'dsav_new',
         source: 'legacy-local',
         trigger: 'migration',
-        idempotencyKey: expect.stringMatching(/^migrate-[\w-]+-web-local$/),
+        idempotencyKey: expect.stringMatching(/^migrate-[\w-]+-web-local-[0-9a-f]{16}$/),
       }),
     )
     expect(onActivate).toHaveBeenCalledWith('dsav_new')
@@ -187,15 +216,26 @@ describe('CloudMigrationDialog: no cloud save yet', () => {
       'cloudsave_migration_succeeded',
       'cloudsave_enabled',
     ])
-    expect(captured()[0]!.properties).toEqual({ mode: 'fresh', record_count: 2 })
-    expect(captured()[1]!.properties).toEqual({ mode: 'fresh', record_count: 2, duration_ms: expect.any(Number) })
+    expect(captured()[0]!.properties).toEqual({
+      mode: 'fresh',
+      record_count: 2,
+    })
+    expect(captured()[1]!.properties).toEqual({
+      mode: 'fresh',
+      record_count: 2,
+      duration_ms: expect.any(Number),
+    })
     expect(captured()[2]!.properties).toEqual({ via: 'migration' })
     expectNoIdentifiers()
   })
 
   it('offers a retry with the same key after a failure, and reports the failure by code only', async () => {
     const api = migrationApi()
-    api.clientImport.mockRejectedValueOnce({ status: 400, code: 'BAD_REQUEST', message: 'user-1 dsav_new' })
+    api.clientImport.mockRejectedValueOnce({
+      status: 400,
+      code: 'BAD_REQUEST',
+      message: 'user-1 dsav_new',
+    })
     const { onActivate } = renderDialog(api)
 
     fireEvent.click(await screen.findByRole('button', { name: 'Back up to cloud' }))
@@ -211,27 +251,95 @@ describe('CloudMigrationDialog: no cloud save yet', () => {
     expect(keys[0]).toBe(keys[1])
     expect(onActivate).toHaveBeenCalledWith('dsav_new')
     const failed = captured().find((event) => event.name === 'cloudsave_migration_failed')
-    expect(failed?.properties).toEqual({ mode: 'fresh', error_code: 'http_400', duration_ms: expect.any(Number) })
+    expect(failed?.properties).toEqual({
+      mode: 'fresh',
+      error_code: 'http_400',
+      duration_ms: expect.any(Number),
+    })
     expectNoIdentifiers()
   })
 })
 
+describe('CloudMigrationDialog: failures a retry cannot fix', () => {
+  it('the save limit says what to do instead, with no retry', async () => {
+    const api = migrationApi()
+    api.createSave.mockRejectedValue({
+      status: 409,
+      code: 'CONFLICT',
+      data: { reason: 'SAVE_LIMIT', limit: 10 },
+    })
+    const { onClose } = renderDialog(api)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Back up to cloud' }))
+    expect(await screen.findByText(/switch the game region to that save’s region/)).toBeTruthy()
+    expect(screen.getByText('Nothing on this device was changed.')).toBeTruthy()
+    expect(screen.queryByText(/try again at any time/)).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(onClose).toHaveBeenCalled()
+  })
+
+  it('nothing to upload: no retry either', async () => {
+    const api = migrationApi()
+    const onClose = vi.fn()
+    render(
+      <CloudMigrationDialog
+        open
+        onClose={onClose}
+        entries={[{ sheetId: 'legacy__dxrt__x', achievementRate: 99 }]}
+        region="intl"
+        api={api}
+        storage={window.localStorage}
+        onActivate={vi.fn()}
+      />,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Back up to cloud' }))
+    await screen.findByText('Couldn’t back up')
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
+    expect(api.clientImport).not.toHaveBeenCalled()
+  })
+})
+
 describe('CloudMigrationDialog: a cloud save from another device', () => {
+  it('counts the cloud records in words of their own', async () => {
+    renderDialog(migrationApi([existingSave({ recordCount: 1 })]))
+    expect(await screen.findByText('“Phone” (JP) has 1 record. This device has 2 records.')).toBeTruthy()
+  })
+
+  it('a replace over an empty cloud save says so instead of "all 0 records"', async () => {
+    renderDialog(migrationApi([existingSave({ recordCount: 0 })]))
+    fireEvent.click(await screen.findByRole('button', { name: 'Advanced' }))
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Replace cloud with this device',
+      }),
+    )
+    expect(screen.getByText(/“Phone” has no records\. It will get the 2 records on this device/)).toBeTruthy()
+  })
+
   it('merges by default', async () => {
     const api = migrationApi([existingSave()])
     const { onActivate } = renderDialog(api)
 
     expect(await screen.findByText('You already have a cloud save')).toBeTruthy()
-    expect((screen.getByRole('radio', { name: /Merge \(keep the best of both\)/ }) as HTMLInputElement).checked).toBe(
-      true,
-    )
+    expect(
+      (
+        screen.getByRole('radio', {
+          name: /Merge \(keep the best of both\)/,
+        }) as HTMLInputElement
+      ).checked,
+    ).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: 'Merge' }))
 
     await screen.findByText('Backed up')
     expect(api.createSave).not.toHaveBeenCalled()
     expect(api.clientImport).toHaveBeenCalledWith(expect.objectContaining({ id: 'dsav_other', trigger: 'migration' }))
     expect(onActivate).toHaveBeenCalledWith('dsav_other')
-    expect(captured()[0]!.properties).toEqual({ mode: 'merge', record_count: 2 })
+    expect(captured()[0]!.properties).toEqual({
+      mode: 'merge',
+      record_count: 2,
+    })
   })
 
   it('"use cloud only" uploads nothing and keeps a backup', async () => {
@@ -242,21 +350,35 @@ describe('CloudMigrationDialog: a cloud save from another device', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Use cloud save' }))
 
     await screen.findByText('This device now uses your cloud save.')
+    // Nothing was uploaded: no "backed up" wording
+    expect(screen.getByText('Now using your cloud save')).toBeTruthy()
+    expect(screen.queryByText('Backed up')).toBeNull()
     expect(api.clientImport).not.toHaveBeenCalled()
     expect(api.replace).not.toHaveBeenCalled()
     expect(onActivate).toHaveBeenCalledWith('dsav_other')
     expect(window.localStorage.getItem(CLOUD_BACKUP_STORAGE_KEY)).not.toBeNull()
-    expect(captured()[0]!.properties).toEqual({ mode: 'cloud_only', record_count: 0 })
+    expect(captured()[0]!.properties).toEqual({
+      mode: 'cloud_only',
+      record_count: 0,
+    })
   })
 
   it('replaces only after a second confirmation, and asks again when the save changed (412)', async () => {
     const saves = [existingSave()]
     const api = migrationApi(saves)
-    api.replace.mockRejectedValueOnce({ status: 412, code: 'PRECONDITION_FAILED', data: { revision: 9 } })
+    api.replace.mockRejectedValueOnce({
+      status: 412,
+      code: 'PRECONDITION_FAILED',
+      data: { revision: 9 },
+    })
     const { onActivate } = renderDialog(api)
 
     fireEvent.click(await screen.findByRole('button', { name: 'Advanced' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Replace cloud with this device' }))
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Replace cloud with this device',
+      }),
+    )
     expect(api.replace).not.toHaveBeenCalled()
     expect(screen.getByText('Replace the cloud save?')).toBeTruthy()
 
@@ -269,12 +391,19 @@ describe('CloudMigrationDialog: a cloud save from another device', () => {
     expect(onActivate).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Advanced' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Replace cloud with this device' }))
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Replace cloud with this device',
+      }),
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Replace cloud save' }))
 
     await screen.findByText('Backed up')
     expect(api.replace).toHaveBeenLastCalledWith(
-      expect.objectContaining({ ifRevision: 9, idempotencyKey: expect.stringMatching(/-r9$/) }),
+      expect.objectContaining({
+        ifRevision: 9,
+        idempotencyKey: expect.stringMatching(/-r9$/),
+      }),
     )
     expect(onActivate).toHaveBeenCalledWith('dsav_other')
     expect(captured().filter((event) => event.name === 'cloudsave_migration_failed')[0]!.properties).toMatchObject({
@@ -317,7 +446,10 @@ function actions(overrides: Partial<CloudSaveActions> = {}): CloudSaveActions {
   return {
     migration: migrationApi(),
     optIn: vi.fn(async () => FEATURES_ON),
-    exportData: vi.fn(async () => ({ blob: new Blob(['{}']), fileName: 'dxrating-cloud-export-x.json' })),
+    exportData: vi.fn(async () => ({
+      blob: new Blob(['{}']),
+      fileName: 'dxrating-cloud-export-x.json',
+    })),
     ...overrides,
   }
 }
@@ -330,6 +462,26 @@ function withAccount(save: ActiveSave, cloudActions: CloudSaveActions) {
   )
 }
 
+describe('CloudMigrationPrompt focus', () => {
+  it('"Not now" moves the focus to the Import menu before the prompt goes', () => {
+    const offer = { available: true, localCount: 2, open: vi.fn() }
+    render(
+      <CloudMigrationContext.Provider value={offer}>
+        <div>
+          <button type="button" data-cloud-migration-focus-return="">
+            Import
+          </button>
+          <CloudMigrationPrompt />
+        </div>
+      </CloudMigrationContext.Provider>,
+    )
+    const close = screen.getByRole('button', { name: 'Not now' })
+    close.focus()
+    fireEvent.click(close)
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Import' }))
+  })
+})
+
 describe('CloudSaveOptIn', () => {
   it('shows the consent text, records the consent version, then reads the features again', async () => {
     const save = activeSave({ features: FEATURES_OPT_IN })
@@ -337,7 +489,9 @@ describe('CloudSaveOptIn', () => {
     render(<CloudSaveOptIn />, { wrapper: withAccount(save, cloudActions) })
 
     fireEvent.click(screen.getByRole('switch', { name: 'Cloud save (beta)' }))
-    const dialog = await screen.findByRole('dialog', { name: 'Turn on cloud save (beta)?' })
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Turn on cloud save (beta)?',
+    })
     expect(cloudActions.optIn).not.toHaveBeenCalled()
     expect(within(dialog).getByText(/provider account IDs/)).toBeTruthy()
     expect(within(dialog).getByText(/Kept until you delete them/)).toBeTruthy()
@@ -379,8 +533,12 @@ describe('CloudSaveOptIn', () => {
 
 describe('"Download my data"', () => {
   it('downloads GET /me/export as a file', async () => {
-    const blob = new Blob(['{"format":"dxrating-cloud-save-export"}'], { type: 'application/json' })
-    const cloudActions = actions({ exportData: vi.fn(async () => ({ blob, fileName: 'export.json' })) })
+    const blob = new Blob(['{"format":"dxrating-cloud-save-export"}'], {
+      type: 'application/json',
+    })
+    const cloudActions = actions({
+      exportData: vi.fn(async () => ({ blob, fileName: 'export.json' })),
+    })
     const createObjectURL = vi.fn(() => 'blob:export')
     Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() })
     const clicked: HTMLAnchorElement[] = []
@@ -388,7 +546,9 @@ describe('"Download my data"', () => {
       clicked.push(this)
     })
     try {
-      render(<DownloadMyDataButton />, { wrapper: withAccount(activeSave(), cloudActions) })
+      render(<DownloadMyDataButton />, {
+        wrapper: withAccount(activeSave(), cloudActions),
+      })
       fireEvent.click(screen.getByRole('button', { name: 'Download my data' }))
 
       await waitFor(() => expect(clicked).toHaveLength(1))
@@ -401,13 +561,52 @@ describe('"Download my data"', () => {
     }
   })
 
+  it('keeps the focus while preparing, says so politely, and ignores a second press', async () => {
+    let finish!: (value: { blob: Blob; fileName: string }) => void
+    const exportData = vi.fn(() => new Promise<{ blob: Blob; fileName: string }>((resolve) => (finish = resolve)))
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    Object.assign(URL, {
+      createObjectURL: vi.fn(() => 'blob:x'),
+      revokeObjectURL: vi.fn(),
+    })
+    try {
+      render(<DownloadMyDataButton />, {
+        wrapper: withAccount(activeSave(), actions({ exportData })),
+      })
+      const button = screen.getByRole('button', { name: 'Download my data' })
+      button.focus()
+      fireEvent.click(button)
+
+      const busy = await screen.findByRole('button', { name: 'Preparing…' })
+      expect(busy).toBe(button)
+      expect(busy.hasAttribute('disabled')).toBe(false)
+      expect(busy.getAttribute('aria-disabled')).toBe('true')
+      expect(document.activeElement).toBe(busy)
+      expect(screen.getByRole('status').textContent).toBe('Preparing…')
+      fireEvent.click(busy)
+      expect(exportData).toHaveBeenCalledTimes(1)
+
+      await act(async () => finish({ blob: new Blob(['{}']), fileName: 'x.json' }))
+      expect(await screen.findByRole('button', { name: 'Download my data' })).toBe(button)
+      expect(screen.getByRole('status').textContent).toBe('')
+    } finally {
+      click.mockRestore()
+    }
+  })
+
   it('says when the daily limit is reached', async () => {
     const cloudActions = actions({
       exportData: vi.fn(async () => {
-        throw { status: 429, code: 'TOO_MANY_REQUESTS', data: { retryAfterSeconds: 60 } }
+        throw {
+          status: 429,
+          code: 'TOO_MANY_REQUESTS',
+          data: { retryAfterSeconds: 60 },
+        }
       }),
     })
-    render(<DownloadMyDataButton />, { wrapper: withAccount(activeSave(), cloudActions) })
+    render(<DownloadMyDataButton />, {
+      wrapper: withAccount(activeSave(), cloudActions),
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Download my data' }))
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/several times today/), expect.anything()),
@@ -415,15 +614,23 @@ describe('"Download my data"', () => {
   })
 
   it('turns the oRPC answer into a file', async () => {
-    expect(exportFileName({ 'content-disposition': 'attachment; filename="dxrating-cloud-export-1.json"' })).toBe(
-      'dxrating-cloud-export-1.json',
-    )
+    expect(
+      exportFileName({
+        'content-disposition': 'attachment; filename="dxrating-cloud-export-1.json"',
+      }),
+    ).toBe('dxrating-cloud-export-1.json')
     expect(exportFileName({}, new Date('2026-11-03T00:00:00.000Z'))).toBe(
       'dxrating-cloud-export-2026-11-03T00-00-00-000Z.json',
     )
     // A parsed JSON body is written back as JSON; a blob is used as it is
-    const parsed = exportBodyToBlob({ format: 'dxrating-cloud-save-export', saves: [] })
-    expect(JSON.parse(await parsed.text())).toEqual({ format: 'dxrating-cloud-save-export', saves: [] })
+    const parsed = exportBodyToBlob({
+      format: 'dxrating-cloud-save-export',
+      saves: [],
+    })
+    expect(JSON.parse(await parsed.text())).toEqual({
+      format: 'dxrating-cloud-save-export',
+      saves: [],
+    })
     const blob = new Blob(['x'])
     expect(exportBodyToBlob(blob)).toBe(blob)
   })
@@ -445,7 +652,9 @@ describe('CloudSaveSection', () => {
   })
 
   it('with the opt-in offered: only the opt-in, no export of data that is not there', () => {
-    render(<CloudSaveSection />, { wrapper: withAccount(activeSave({ features: FEATURES_OPT_IN }), actions()) })
+    render(<CloudSaveSection />, {
+      wrapper: withAccount(activeSave({ features: FEATURES_OPT_IN }), actions()),
+    })
     expect(screen.getByRole('switch', { name: 'Cloud save (beta)' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Download my data' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Back up to cloud' })).toBeNull()
@@ -453,10 +662,18 @@ describe('CloudSaveSection', () => {
 
   it('with cloud save off, or signed out: nothing', () => {
     for (const save of [
-      activeSave({ features: { cloudSave: false, serverImports: false, optInAvailable: false } }),
+      activeSave({
+        features: {
+          cloudSave: false,
+          serverImports: false,
+          optInAvailable: false,
+        },
+      }),
       activeSave({ userId: null, features: null }),
     ]) {
-      const { container, unmount } = render(<CloudSaveSection />, { wrapper: withAccount(save, actions()) })
+      const { container, unmount } = render(<CloudSaveSection />, {
+        wrapper: withAccount(save, actions()),
+      })
       expect(container.innerHTML).toBe('')
       unmount()
     }

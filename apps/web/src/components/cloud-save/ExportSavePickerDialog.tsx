@@ -4,7 +4,11 @@ import { useTranslation } from 'react-i18next'
 import { exportSavePicker } from './exportSavePicker'
 import './cloud-save.css'
 
-const REGION_LABELS: Record<string, string> = { jp: 'JP', intl: 'Intl', cn: 'CN' }
+const REGION_LABELS: Record<string, string> = {
+  jp: 'JP',
+  intl: 'Intl',
+  cn: 'CN',
+}
 
 /** Answers `exportSavePicker.request()`: which save of a "Download my data" file to import */
 export const ExportSavePickerDialog: FC = () => {
@@ -21,7 +25,17 @@ export const ExportSavePickerDialog: FC = () => {
   const cancel = () => request.resolve(null)
 
   return (
-    <Dialog open onClose={cancel} maxWidth="xs" fullWidth aria-labelledby={titleId}>
+    <Dialog
+      open
+      onClose={cancel}
+      maxWidth="xs"
+      fullWidth
+      aria-labelledby={titleId}
+      PaperProps={{
+        className: 'cloud-save-surface',
+        sx: { borderRadius: '0.75rem' },
+      }}
+    >
       <DialogTitle id={titleId}>{t('rating-calculator:cloud-save.export-import.pick-title')}</DialogTitle>
       <DialogContent className="flex flex-col gap-3">
         <DialogContentText className="text-pretty">

@@ -35,7 +35,10 @@ export const CloudSaveConsentDialog: FC<{
       maxWidth="xs"
       fullWidth
       aria-labelledby={titleId}
-      PaperProps={{ className: 'cloud-save-surface', sx: { borderRadius: '0.75rem' } }}
+      PaperProps={{
+        className: 'cloud-save-surface',
+        sx: { borderRadius: '0.75rem' },
+      }}
     >
       <DialogTitle id={titleId} className="text-pretty">
         {t('rating-calculator:cloud-save.opt-in.consent-title')}
@@ -64,9 +67,19 @@ export const CloudSaveConsentDialog: FC<{
         <Button onClick={onCancel} disabled={busy}>
           {t('rating-calculator:cloud-save.import-confirm.cancel')}
         </Button>
-        <Button variant="contained" onClick={onAgree} disabled={busy} aria-busy={busy || undefined}>
+        {/* Stays focusable while the consent is sent (aria-disabled): a second press does nothing */}
+        <Button
+          variant="contained"
+          onClick={busy ? undefined : onAgree}
+          aria-disabled={busy || undefined}
+          aria-busy={busy || undefined}
+          className={busy ? 'cursor-progress opacity-60' : undefined}
+        >
           {t('rating-calculator:cloud-save.opt-in.agree')}
         </Button>
+        <span role="status" className="sr-only">
+          {busy ? t('rating-calculator:cloud-save.opt-in.sending') : ''}
+        </span>
       </DialogActions>
     </Dialog>
   )
@@ -93,11 +106,15 @@ export const CloudSaveOptIn: FC = () => {
       await actions.optIn(CLOUD_SAVE_CONSENT_VERSION)
       captureAnalyticsEvent('cloudsave_enabled', { via: 'opt_in' })
       setConsentOpen(false)
-      toast.success(t('rating-calculator:cloud-save.opt-in.success'), { id: 'cloud-save-opt-in' })
+      toast.success(t('rating-calculator:cloud-save.opt-in.success'), {
+        id: 'cloud-save-opt-in',
+      })
       // The cached features say "off": read them again, which shows the cloud save surfaces
       activeSave.refreshFeatures()
     } catch {
-      toast.error(t('rating-calculator:cloud-save.opt-in.error'), { id: 'cloud-save-opt-in' })
+      toast.error(t('rating-calculator:cloud-save.opt-in.error'), {
+        id: 'cloud-save-opt-in',
+      })
     } finally {
       setBusy(false)
     }

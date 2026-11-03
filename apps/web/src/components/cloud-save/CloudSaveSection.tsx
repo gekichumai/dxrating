@@ -11,7 +11,11 @@ import { ImportHistoryList } from './ImportHistoryList'
 import { SaveSelector } from './SaveSelector'
 import { SyncIssuesList } from './SyncIssuesList'
 
-const Group: FC<{ title: string; description?: string; children: ReactNode }> = ({ title, description, children }) => {
+const Group: FC<{
+  title: string
+  description?: string
+  children: ReactNode
+}> = ({ title, description, children }) => {
   const id = useId()
   return (
     <section className="flex flex-col gap-2" aria-labelledby={id}>
@@ -51,7 +55,10 @@ export const CloudSaveSection: FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-lg font-bold m-0">{t('rating-calculator:cloud-save.title')}</h1>
+        {/* Takes the focus when "Back up to cloud" goes away (the migration made a cloud save active) */}
+        <h1 className="text-lg font-bold m-0 outline-none" tabIndex={-1} data-cloud-migration-focus-return="">
+          {t('rating-calculator:cloud-save.title')}
+        </h1>
         <p className="text-sm text-zinc-500 m-0">{t('rating-calculator:cloud-save.description')}</p>
       </div>
       <CloudSaveOptIn />

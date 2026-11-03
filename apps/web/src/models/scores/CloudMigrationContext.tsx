@@ -8,6 +8,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from 'react'
@@ -36,7 +37,11 @@ export interface CloudMigrationOffer {
   open(): void
 }
 
-const OFFER_OFF: CloudMigrationOffer = { available: false, localCount: 0, open: () => {} }
+const OFFER_OFF: CloudMigrationOffer = {
+  available: false,
+  localCount: 0,
+  open: () => {},
+}
 
 export const CloudMigrationContext = createContext<CloudMigrationOffer>(OFFER_OFF)
 
@@ -64,6 +69,29 @@ function browserLocalStorage(): Storage | null {
 }
 
 const EMPTY: readonly PlayEntry[] = []
+
+/**
+ * Marks a control that stays when the migration offer goes, to take the focus from the offer's controls (the Import
+ * menu button, the account menu's cloud save heading)
+ */
+export const MIGRATION_FOCUS_RETURN_ATTRIBUTE = 'data-cloud-migration-focus-return'
+
+/**
+ * Moves the focus to the nearest control marked {@link MIGRATION_FOCUS_RETURN_ATTRIBUTE}: within `scope` (the menu
+ * or the panel the offer was in) while it is still there, else anywhere on the page. For when the focused control
+ * is about to go (the offer was dismissed, or the migration made a cloud save active).
+ */
+export function focusMigrationReturnTarget(scope: Element | null) {
+  if (typeof document === 'undefined') return
+  const selector = `[${MIGRATION_FOCUS_RETURN_ATTRIBUTE}]`
+  const target =
+    (scope?.isConnected ? scope.querySelector<HTMLElement>(selector) : null) ??
+    document.querySelector<HTMLElement>(selector)
+  target?.focus()
+}
+
+const focusScopeOf = (element: Element | null) =>
+  element?.closest('[role="dialog"], [role="presentation"], .MuiAlert-root') ?? null
 
 export const CloudMigrationProvider: FC<PropsWithChildren<{ localRepository: LocalEntriesSource }>> = ({
   localRepository,
@@ -97,7 +125,23 @@ export const CloudMigrationProvider: FC<PropsWithChildren<{ localRepository: Loc
     if (!userId || features?.cloudSave !== true) setDialogOpen(false)
   }, [userId, features?.cloudSave])
 
-  const open = useCallback(() => setDialogOpen(true), [])
+  // The control that opened the dialog is gone once the migration made a cloud save active: the focus goes to a
+  // control that stays, near where it was, instead of falling back to the page
+  const opener = useRef<{ element: HTMLElement | null; scope: Element | null }>({ element: null, scope: null })
+  const open = useCallback(() => {
+    const element = typeof document === 'undefined' ? null : (document.activeElement as HTMLElement | null)
+    opener.current = { element, scope: focusScopeOf(element) }
+    setDialogOpen(true)
+  }, [])
+  const close = useCallback(() => {
+    setDialogOpen(false)
+    const { element, scope } = opener.current
+    // After the dialog unmounted and gave the focus back
+    setTimeout(() => {
+      // Gone, or never focused (a click that does not focus buttons, as in Safari)
+      if (!element?.isConnected || element === document.body) focusMigrationReturnTarget(scope)
+    }, 0)
+  }, [])
   const offer = useMemo<CloudMigrationOffer>(
     () => (available ? { available, localCount: localEntries.length, open } : OFFER_OFF),
     [available, localEntries.length, open],
@@ -110,7 +154,7 @@ export const CloudMigrationProvider: FC<PropsWithChildren<{ localRepository: Loc
         <Suspense fallback={null}>
           <CloudMigrationDialog
             open
-            onClose={() => setDialogOpen(false)}
+            onClose={close}
             entries={localEntries}
             region={region}
             api={actions.migration}

@@ -17,11 +17,15 @@ export const DownloadMyDataButton: FC = () => {
   const [busy, setBusy] = useState(false)
 
   const download = async () => {
+    // Stays focusable while busy (aria-disabled): a second press does nothing
+    if (busy) return
     setBusy(true)
     try {
       const { blob, fileName } = await actions.exportData()
       saveBlobAsFile(blob, fileName)
-      toast.success(t('rating-calculator:cloud-save.export.success'), { id: 'cloud-export' })
+      toast.success(t('rating-calculator:cloud-save.export.success'), {
+        id: 'cloud-export',
+      })
     } catch (error) {
       toast.error(
         isRateLimited(error)
@@ -41,11 +45,16 @@ export const DownloadMyDataButton: FC = () => {
         variant="outlined"
         startIcon={<IconMdiDownload aria-hidden />}
         onClick={() => void download()}
-        disabled={busy}
+        aria-disabled={busy || undefined}
         aria-busy={busy || undefined}
+        className={busy ? 'cursor-progress opacity-60' : undefined}
       >
         {busy ? t('rating-calculator:cloud-save.export.preparing') : t('rating-calculator:cloud-save.export.button')}
       </Button>
+      {/* Read out while the button keeps the focus */}
+      <span role="status" className="sr-only">
+        {busy ? t('rating-calculator:cloud-save.export.preparing') : ''}
+      </span>
     </div>
   )
 }

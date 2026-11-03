@@ -24,12 +24,30 @@ import { FakeCloudSaveServer } from './fakeCloudSaveServer'
 const posthog = vi.hoisted(() => ({ capture: vi.fn() }))
 vi.mock('posthog-js', () => ({ default: posthog }))
 vi.mock('react-hot-toast', () => ({
-  default: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), dismiss: vi.fn() }),
+  default: Object.assign(vi.fn(), {
+    success: vi.fn(),
+    error: vi.fn(),
+    dismiss: vi.fn(),
+  }),
 }))
 
-const FEATURES_ON: UserFeatures = { cloudSave: true, serverImports: true, optInAvailable: false }
-const FEATURES_OPT_IN: UserFeatures = { cloudSave: false, serverImports: false, optInAvailable: true }
-const LOCAL = [{ sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100.5, source: { provider: 'lxns' } }]
+const FEATURES_ON: UserFeatures = {
+  cloudSave: true,
+  serverImports: true,
+  optInAvailable: false,
+}
+const FEATURES_OPT_IN: UserFeatures = {
+  cloudSave: false,
+  serverImports: false,
+  optInAvailable: true,
+}
+const LOCAL = [
+  {
+    sheetId: 'dsht_e5nsvt8k2a',
+    achievementRate: 100.5,
+    source: { provider: 'lxns' },
+  },
+]
 
 const newSave: SaveDTO = {
   id: 'dsav_new',
@@ -68,7 +86,9 @@ function dependencies(userId: string | null, features: UserFeatures | null, save
   } satisfies ActiveSaveDependencies
 }
 
-function migrationApi(): { [K in keyof CloudMigrationApi]: ReturnType<typeof vi.fn> & CloudMigrationApi[K] } {
+function migrationApi(): {
+  [K in keyof CloudMigrationApi]: ReturnType<typeof vi.fn> & CloudMigrationApi[K]
+} {
   return {
     listSaves: vi.fn(async () => []),
     createSave: vi.fn(async () => newSave),
@@ -120,7 +140,10 @@ function cloudActions(migration = migrationApi()): CloudSaveActions & { migratio
   return {
     migration,
     optIn: vi.fn(async () => FEATURES_ON),
-    exportData: vi.fn(async () => ({ blob: new Blob(['{}']), fileName: 'x.json' })),
+    exportData: vi.fn(async () => ({
+      blob: new Blob(['{}']),
+      fileName: 'x.json',
+    })),
   }
 }
 
@@ -215,12 +238,17 @@ describe('the first sign-in migration offer', () => {
     const Wrapper = wrapper(deps, actions)
     render(
       <Wrapper>
+        <button type="button" data-cloud-migration-focus-return="">
+          Import
+        </button>
         <CloudMigrationPrompt />
       </Wrapper>,
     )
     await settle()
 
-    const prompt = await screen.findByRole('button', { name: 'Back up to cloud' })
+    const prompt = await screen.findByRole('button', {
+      name: 'Back up to cloud',
+    })
     expect(actions.migration.listSaves).not.toHaveBeenCalled()
     expect(actions.migration.createSave).not.toHaveBeenCalled()
 
@@ -230,7 +258,11 @@ describe('the first sign-in migration offer', () => {
     await screen.findByText('Backed up')
 
     expect(actions.migration.clientImport).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'dsav_new', source: 'legacy-local', trigger: 'migration' }),
+      expect.objectContaining({
+        id: 'dsav_new',
+        source: 'legacy-local',
+        trigger: 'migration',
+      }),
     )
     await waitFor(() =>
       expect(deps.openCloudRepository).toHaveBeenCalledWith(expect.objectContaining({ saveId: 'dsav_new' })),
@@ -240,6 +272,10 @@ describe('the first sign-in migration offer', () => {
     expect(JSON.parse(window.localStorage.getItem('rating-calculator-entries')!)).toEqual(LOCAL)
     // The offer is gone: a cloud save is chosen
     await waitFor(() => expect(screen.queryByRole('region', { name: 'Back up to cloud' })).toBeNull())
+
+    // The button that opened the dialog went with the offer: closing gives the focus to a control that stays
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Import' })))
   })
 })
 
@@ -248,7 +284,9 @@ describe('the beta opt-in', () => {
     let features = FEATURES_OPT_IN
     const deps = dependencies('user-1', null)
     deps.fetchFeatures.mockImplementation(async () => features)
-    const { result } = renderHook(() => useActiveSave(), { wrapper: wrapper(deps, cloudActions()) })
+    const { result } = renderHook(() => useActiveSave(), {
+      wrapper: wrapper(deps, cloudActions()),
+    })
     await settle()
     expect(result.current.features).toEqual(FEATURES_OPT_IN)
 

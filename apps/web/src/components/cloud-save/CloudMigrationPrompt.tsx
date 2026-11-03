@@ -1,9 +1,9 @@
 import { Button, IconButton } from '@mui/material'
-import { type FC, useState } from 'react'
+import { type FC, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import IconMdiClose from '~icons/mdi/close'
 import IconMdiCloudUploadOutline from '~icons/mdi/cloud-upload-outline'
-import { useCloudMigrationOffer } from '@/models/scores/CloudMigrationContext'
+import { focusMigrationReturnTarget, useCloudMigrationOffer } from '@/models/scores/CloudMigrationContext'
 
 const DISMISSED_KEY = 'dxr-cloud-migration-prompt-dismissed'
 
@@ -24,9 +24,12 @@ export const CloudMigrationPrompt: FC = () => {
   const { t, i18n } = useTranslation(['rating-calculator'])
   const offer = useCloudMigrationOffer()
   const [dismissed, setDismissed] = useState(readDismissed)
+  const sectionRef = useRef<HTMLElement>(null)
   if (!offer.available || dismissed) return null
 
   const dismiss = () => {
+    // The close button goes with the prompt: the focus moves to a control nearby (the Import menu) first
+    focusMigrationReturnTarget(sectionRef.current?.parentElement ?? null)
     setDismissed(true)
     try {
       window.sessionStorage.setItem(DISMISSED_KEY, '1')
@@ -36,21 +39,31 @@ export const CloudMigrationPrompt: FC = () => {
   }
 
   return (
+    // Narrow screens: the question takes the first row and the button the second, the close button stays top-end;
+    // from `sm` everything sits on one row
     <section
-      className="mt-3 flex items-center gap-3 rounded-lg bg-white/50 px-3 py-2 ring-1 ring-inset ring-zinc-900/8"
+      ref={sectionRef}
+      className="mt-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-lg bg-white/50 px-3 py-2 ring-1 ring-inset ring-zinc-900/8 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto]"
       aria-label={t('rating-calculator:cloud-save.migration.title')}
     >
       <IconMdiCloudUploadOutline className="size-5 shrink-0 text-zinc-700" aria-hidden />
-      <p className="m-0 min-w-0 flex-1 text-sm text-zinc-800 text-pretty">
+      <p className="m-0 min-w-0 text-sm text-zinc-800 text-pretty">
         {t('rating-calculator:cloud-save.migration.prompt', {
           count: offer.localCount,
           formatted: new Intl.NumberFormat(i18n.language).format(offer.localCount),
         })}
       </p>
-      <Button size="small" variant="contained" className="shrink-0" onClick={offer.open}>
-        {t('rating-calculator:cloud-save.migration.back-up')}
-      </Button>
-      <IconButton size="small" onClick={dismiss} aria-label={t('rating-calculator:cloud-save.migration.not-now')}>
+      <div className="col-span-3 col-start-1 row-start-2 flex justify-end sm:col-span-1 sm:col-start-3 sm:row-start-1">
+        <Button size="small" variant="contained" onClick={offer.open}>
+          {t('rating-calculator:cloud-save.migration.back-up')}
+        </Button>
+      </div>
+      <IconButton
+        size="small"
+        onClick={dismiss}
+        aria-label={t('rating-calculator:cloud-save.migration.not-now')}
+        className="col-start-3 row-start-1 sm:col-start-4"
+      >
         <IconMdiClose className="size-4" aria-hidden />
       </IconButton>
     </section>

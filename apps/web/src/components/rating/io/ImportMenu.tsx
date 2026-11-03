@@ -41,6 +41,8 @@ export const ImportMenu: FC = () => {
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
         variant="outlined"
+        // Takes the focus when the cloud backup prompt below goes away
+        data-cloud-migration-focus-return=""
       >
         {t('rating-calculator:io.import.button')}
       </Button>
