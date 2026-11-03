@@ -42,7 +42,9 @@ export interface CleanupReport {
  * 1. Tombstones deleted more than 90 days ago are hard-deleted, save by save: the save is locked `FOR UPDATE` like
  *    any writer (writers lock the save before its records, so the order cannot deadlock), its tombstones are deleted
  *    and `tombstone_horizon` moves to the highest purged revision. A client whose cursor is older then gets
- *    `resetRequired`.
+ *    `resetRequired`. Known limitation of the design (§4.6, §5.3 rule 2): once a tombstone is purged, the next
+ *    import that still carries the chart inserts it again, whatever its trigger, so a deletion only stays sticky
+ *    against automatic imports for the 90 days.
  * 2. Events beyond the newest 20 per (save, sheet) are deleted.
  * 3. `score_mutations` ledger rows older than 30 days are deleted.
  * 4. Saves soft-deleted more than 30 days ago are hard-deleted (their rows cascade).

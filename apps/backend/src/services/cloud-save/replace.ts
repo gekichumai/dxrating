@@ -43,8 +43,9 @@ export interface ReplaceInput {
  * 5. Every live record not in the payload becomes a tombstone (`delete` event), except records of a sheet the payload
  *    listed with invalid values (`rejected`): those are left alone rather than deleted because of a typo.
  *
- * Counts: `inserted` (new or revived), `improved` (any value overwritten, better or worse), `provenanceUpgraded`
- * (same value, now from this upload), `unchanged`, `rejected`. Deletions are not counted; the revision shows them.
+ * Counts (replace semantics, not merge outcomes): `inserted` (new or revived), `improved` (any live record rewritten,
+ * with a better, worse or the same value), `unchanged`, `rejected`; never `provenanceUpgraded`, as a replace never
+ * raises the verification. Every rewrite logs `import_applied`. Deletions are not counted; the revision shows them.
  */
 export const replaceRecords = (database: DatabaseService, userId: string, saveId: string, input: ReplaceInput) =>
   database.transaction(() =>
@@ -103,14 +104,16 @@ export const replaceRecords = (database: DatabaseService, userId: string, saveId
           continue
         }
         const valueChanged = !live || !sameValue(before, next)
-        counts[!live ? 'inserted' : valueChanged ? 'improved' : 'provenanceUpgraded'] += 1
+        // A replace never raises the verification (everything becomes client_reported): a same-value rewrite is an
+        // overwrite like any other, not a provenance upgrade
+        counts[live ? 'improved' : 'inserted'] += 1
         writer.apply(record.sheetId, {
           before,
           next,
           bumpRevision: true,
           valueChanged,
           liveDelta: live ? 0 : 1,
-          eventKind: live && !valueChanged ? 'provenance_upgraded' : 'import_applied',
+          eventKind: 'import_applied',
         })
       }
 
@@ -123,6 +126,8 @@ export const replaceRecords = (database: DatabaseService, userId: string, saveId
           valueChanged: false,
           liveDelta: -1,
           eventKind: 'delete',
+          // the replace deleted it, not the manual edit that last set it
+          clientMutationId: null,
         })
       }
 
