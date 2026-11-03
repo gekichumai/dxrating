@@ -38,8 +38,8 @@ export const RandomChartPage: FC = () => {
   const [result, setResult] = useState<VersionedSheet | null | undefined>(undefined)
 
   const pool = useMemo(
-    () => (catalog ? filterRandomPool(catalog.sheets, filters, region) : []),
-    [catalog, filters, region],
+    () => (catalog ? filterRandomPool(catalog.sheets, filters, region, versionCatalog.version) : []),
+    [catalog, filters, region, versionCatalog.version],
   )
   const versions = useMemo(() => {
     const appVersionIndex = VERSION_SORT_ORDER.indexOf(versionCatalog.version)

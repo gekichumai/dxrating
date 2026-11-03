@@ -1,4 +1,4 @@
-import { DifficultyEnum, TypeEnum, type VersionEnum } from '@gekichumai/dxdata'
+import { DifficultyEnum, TypeEnum, VERSION_SORT_ORDER, type VersionEnum } from '@gekichumai/dxdata'
 import type { Region, VersionedSheet } from '@gekichumai/maimai-domain'
 
 export const RANDOM_TYPES = [TypeEnum.DX, TypeEnum.STD] as const
@@ -43,7 +43,10 @@ export function filterRandomPool(
   sheets: readonly VersionedSheet[],
   filters: RandomChartFilters,
   region: Region,
+  /** The selected game version: charts introduced after it do not exist there */
+  maxVersion?: VersionEnum,
 ): VersionedSheet[] {
+  const maxVersionIndex = maxVersion ? VERSION_SORT_ORDER.indexOf(maxVersion) : -1
   const types = new Set<string>(filters.types)
   const difficulties = new Set<string>(filters.difficulties)
   const versions = new Set<string>(filters.versions)
@@ -54,6 +57,7 @@ export function filterRandomPool(
       (types.size === 0 || types.has(sheet.type)) &&
       (difficulties.size === 0 || difficulties.has(sheet.difficulty)) &&
       (versions.size === 0 || versions.has(sheet.version)) &&
+      (maxVersionIndex < 0 || VERSION_SORT_ORDER.indexOf(sheet.version) <= maxVersionIndex) &&
       sheet.internalLevelValue >= filters.minLevel &&
       // A level of 14+ is 14.6..14.9, so the upper bound covers the whole integer level
       sheet.internalLevelValue < filters.maxLevel + 1,
