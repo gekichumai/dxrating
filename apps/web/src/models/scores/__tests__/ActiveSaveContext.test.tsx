@@ -176,6 +176,36 @@ describe('ActiveSaveContext', () => {
     expect(anonymous.result.current.cloudSaveUi).toBeNull()
   })
 
+  it('decides on the local save when /me/features never answers, so the work that waits for it still runs', async () => {
+    writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
+    const deps = dependencies('user-1', {
+      fetchFeatures: vi.fn(() => new Promise<UserFeatures | null>(() => {})),
+      decisionTimeoutMs: 30,
+    })
+
+    const { result } = renderActiveSave(deps)
+    await waitFor(() => expect(result.current.activeSave.decided).toBe(true))
+
+    expect(result.current.activeSave.kind).toBe('local')
+    expect(deps.listSaves).not.toHaveBeenCalled()
+    expect(deps.openCloudRepository).not.toHaveBeenCalled()
+  })
+
+  it('decides on the local save when the save list never answers', async () => {
+    writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
+    const deps = dependencies('user-1', {
+      fetchFeatures: vi.fn(async () => FEATURES_ON),
+      listSaves: vi.fn(() => new Promise<SaveDTO[]>(() => {})),
+      decisionTimeoutMs: 30,
+    })
+
+    const { result } = renderActiveSave(deps)
+    await waitFor(() => expect(result.current.activeSave.decided).toBe(true))
+
+    expect(result.current.activeSave.kind).toBe('local')
+    expect(deps.openCloudRepository).not.toHaveBeenCalled()
+  })
+
   it('opens the cloud save with the serverImports flag and exposes it to the cloud save surfaces', async () => {
     writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
     const deps = dependencies('user-1', {

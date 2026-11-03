@@ -73,6 +73,31 @@ export interface ActiveSaveDependencies {
   /** `GET /saves` */
   listSaves(): Promise<readonly SaveDTO[]>
   openCloudRepository(options: OpenCloudRepositoryOptions): Promise<CloudScoreRepository>
+  /** How long `/me/features` and `GET /saves` may take before the local save is used; {@link DECISION_TIMEOUT_MS} */
+  decisionTimeoutMs?: number
+}
+
+/**
+ * A decision that is still waiting on the network after this long uses the local save, so work that waits for it
+ * (the automatic maimai NET import) runs as it did before cloud save
+ */
+export const DECISION_TIMEOUT_MS = 5_000
+
+class DecisionTimeoutError extends Error {
+  constructor() {
+    super('The active save decision timed out')
+    this.name = 'DecisionTimeoutError'
+  }
+}
+
+function withDecisionTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeout: ReturnType<typeof setTimeout> | undefined
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      timeout = setTimeout(() => reject(new DecisionTimeoutError()), timeoutMs)
+    }),
+  ]).finally(() => clearTimeout(timeout))
 }
 
 const isNotFound = (error: unknown) =>
@@ -224,8 +249,9 @@ export function useActiveSaveDecision(): ActiveSave {
       if (!cancelled) setCloudRepository(null)
     }
 
+    const timeoutMs = dependencies.decisionTimeoutMs ?? DECISION_TIMEOUT_MS
     void (async () => {
-      const features = await getUserFeatures(userId, dependencies.fetchFeatures)
+      const features = await withDecisionTimeout(getUserFeatures(userId, dependencies.fetchFeatures), timeoutMs)
       if (cancelled) return
       const saveId = readActiveSaveId(storage, userId)
       if (!features.cloudSave || !saveId) return fallBackToLocal()
@@ -233,7 +259,7 @@ export function useActiveSaveDecision(): ActiveSave {
       const current = cloudRef.current
       if (current && current.userId === userId && current.saveId === saveId) return
 
-      const saves = await dependencies.listSaves()
+      const saves = await withDecisionTimeout(dependencies.listSaves(), timeoutMs)
       if (cancelled) return
       if (!saves.some((save) => save.id === saveId)) {
         writeActiveSaveId(storage, userId, null)

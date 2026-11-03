@@ -40,7 +40,8 @@ const SideEffectorLocaleMeta: FC = () => {
   return null
 }
 
-const SideEffectorAutoImportRating: FC = () => {
+/** @internal Exported for tests */
+export const SideEffectorAutoImportRating: FC = () => {
   const repository = useScoreRepository()
   const activeSave = useActiveSave()
   const { t } = useTranslation()
