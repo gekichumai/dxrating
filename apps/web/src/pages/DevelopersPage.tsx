@@ -55,7 +55,7 @@ const Option = ({
 
     <div className="mt-5">
       <div className="text-xs font-medium text-zinc-500">{endpointLabel}</div>
-      <code className="mt-1 block overflow-x-auto whitespace-nowrap rounded-lg bg-zinc-100 px-3 py-2 font-mono text-[13px] text-zinc-900">
+      <code className="mt-1 block overflow-x-auto whitespace-nowrap rounded-md bg-black/5 px-3 py-2 font-mono text-[13px] text-zinc-900">
         {endpoint}
       </code>
     </div>
@@ -103,8 +103,8 @@ export const DevelopersPage = () => {
       itemScope
       itemType="https://schema.org/WebPage"
     >
-      <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
-        <header className="px-5 pt-7 pb-6 md:px-8 md:pt-10 md:pb-8 bg-zinc-50/80 border-b border-solid border-x-0 border-t-0 border-zinc-200">
+      <article className="overflow-hidden rounded-xl border border-solid border-white/60 bg-white/60 shadow-[0_8px_32px_rgba(15,60,50,0.12)] backdrop-blur-xl backdrop-saturate-150">
+        <header className="px-5 pt-7 pb-6 md:px-8 md:pt-10 md:pb-8 border-b border-solid border-x-0 border-t-0 border-black/8">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-balance" itemProp="name">
             {t('developers:title')}
           </h1>
@@ -116,7 +116,7 @@ export const DevelopersPage = () => {
           </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-solid divide-zinc-200">
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-solid divide-black/8">
           <Option
             id="developers-mcp"
             Icon={McpLogo}
@@ -147,15 +147,15 @@ export const DevelopersPage = () => {
 
         <section
           aria-labelledby="developers-terms"
-          className="px-5 py-6 md:p-8 border-t border-solid border-x-0 border-b-0 border-zinc-200"
+          className="px-5 py-6 md:p-8 border-t border-solid border-x-0 border-b-0 border-black/8"
         >
           <h2 id="developers-terms" className="text-xl font-semibold tracking-tight">
             {t('developers:terms.title')}
           </h2>
-          <dl className="mt-4 divide-y divide-solid divide-x-0 divide-zinc-200">
+          <dl className="mt-4 divide-y divide-solid divide-x-0 divide-black/8">
             <Term title={t('developers:terms.data')}>{t('developers:terms.data-description')}</Term>
             <Term title={t('developers:terms.credit')}>
-              <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[13px] text-zinc-900">
+              <code className="rounded bg-black/5 px-1.5 py-0.5 font-mono text-[13px] text-zinc-900">
                 {ATTRIBUTION_LINE}
               </code>
             </Term>
