@@ -21,6 +21,7 @@ import {
   importInProgressJobId,
   isRetryableImportError,
   newIdempotencyKey,
+  NothingToImportError,
   ServerImportFailedError,
   ServerImportsDisabledError,
   sha256Hex,
@@ -416,9 +417,13 @@ export class CloudScoreRepository implements WebScoreRepository {
     const plan = clientImportPlan(meta.source, this.serverImportsEnabled, meta.claimedSource)
     if (!plan) throw new UnsupportedScoreOperationError(`Uploading records from ${meta.source}`, this.kind)
     const imports = this.requireImports()
-    const { records } = entriesToImportRecords(entries, plan)
+    const { records, skipped } = entriesToImportRecords(entries, plan)
+    // Checked before the clear: an import with nothing to upload never empties the save
+    if (records.length === 0) {
+      if (entries.length > 0) throw new NothingToImportError(skipped)
+      return { count: 0, skipped }
+    }
     if (meta.mode === 'replace') await this.clearBeforeImport()
-    if (records.length === 0) return { count: 0 }
 
     // `auto` (the automatic maimai NET import of the §7.4 fallback) never brings back what the user deleted (§5.3)
     const trigger = meta.trigger ?? 'user'
@@ -457,7 +462,7 @@ export class CloudScoreRepository implements WebScoreRepository {
     if (job.status === 'running') job = await this.waitForJob(job.id)
     await this.notifyImportJobCompleted()
     if (job.status === 'failed') throw new ServerImportFailedError(job.errorCode ?? 'failed', job)
-    return { count: records.length, job }
+    return { count: records.length, skipped, job }
   }
 
   /**

@@ -22,7 +22,7 @@ describe('clientImportPlan', () => {
 
 describe('entriesToImportRecords', () => {
   it('keeps one record per chart (the best), public sheet IDs and valid achievements only', () => {
-    const { records, skipped } = entriesToImportRecords(
+    const { records, skipped, duplicates } = entriesToImportRecords(
       [
         { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 99 },
         { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100.5, comboFlag: 'ap', dxScore: 2400 },
@@ -36,7 +36,8 @@ describe('entriesToImportRecords', () => {
       ],
       { source: 'dxrating-json', claimedSource: null },
     )
-    expect(skipped).toBe(3)
+    expect(skipped).toBe(2)
+    expect(duplicates).toBe(1)
     expect(records).toEqual([
       {
         sheetId: 'dsht_e5nsvt8k2a',

@@ -50,7 +50,7 @@ export const SaveSelector: FC = () => {
   if (state.kind === 'loading') {
     return (
       <output className="flex items-center gap-2 py-2 text-sm text-zinc-500">
-        <CircularProgress size="1rem" />
+        <CircularProgress size="1rem" aria-hidden />
         {t('rating-calculator:cloud-save.saves.loading')}
       </output>
     )

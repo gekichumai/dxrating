@@ -6,6 +6,7 @@ import MdiJson from '~icons/mdi/code-json'
 import { useWebHaptics } from 'web-haptics/react'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { createRatingImportTracker } from '@/lib/analytics'
+import { NothingToImportError } from '@/models/scores/cloudImports'
 import { parseRatingFile } from '@/models/scores/ratingEntriesFile'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importFileEntries } from './cloudImport'
@@ -51,13 +52,24 @@ export const ImportFromJSONButtonListItem: FC<{
               if (!parsed.success) throw parsed.error
               const { entries } = parsed
               // A cloud save asks to merge or clear first; `null`: the user cancelled
-              if (!(await importFileEntries(repository, entries, { source: 'dxrating-json', mode: 'replace' }))) return
-              analytics.succeeded(entries.length)
+              const result = await importFileEntries(repository, entries, { source: 'dxrating-json', mode: 'replace' })
+              if (!result) return
+              // A cloud save counts what it uploaded: entries that match no chart are left out
+              analytics.succeeded(result.count)
               haptic.trigger('success')
-              toast.success(t('rating-calculator:io.import.json.success', { count: entries.length }))
+              toast.success(t('rating-calculator:io.import.json.success', { count: result.count }))
+              if (result.skipped) {
+                toast(t('rating-calculator:cloud-save.import.skipped', { count: result.skipped }), {
+                  id: 'cloud-import-skipped',
+                })
+              }
             } catch (error) {
               analytics.failed('invalid_file')
-              toast.error(t('rating-calculator:io.import.json.error', { error: formatErrorMessage(error) }))
+              toast.error(
+                error instanceof NothingToImportError
+                  ? t('rating-calculator:cloud-save.import.errors.nothing-to-import')
+                  : t('rating-calculator:io.import.json.error', { error: formatErrorMessage(error) }),
+              )
             }
           }
           reader.readAsText(file)

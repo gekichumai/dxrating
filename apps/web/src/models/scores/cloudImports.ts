@@ -59,13 +59,16 @@ export function clientImportPlan(
 /**
  * The records of an upload: one per chart (the best achievement of duplicates, the first on a tie), public sheet
  * IDs and valid achievements only. Provenance never leaves the device: a record claims at most its provider.
+ * `skipped` counts the entries left out (no public sheet ID, no valid achievement), `duplicates` the entries folded
+ * into another of the same chart.
  */
 export function entriesToImportRecords(
   entries: readonly PlayEntry[],
   plan: ClientImportPlan,
-): { records: ImportRecord[]; skipped: number } {
+): { records: ImportRecord[]; skipped: number; duplicates: number } {
   const bySheetId = new Map<string, ImportRecord>()
   let skipped = 0
+  let duplicates = 0
   for (const entry of entries) {
     const achievement = typeof entry.achievementRate === 'number' ? toAchievementInt(entry.achievementRate) : null
     if (achievement === null || typeof entry.sheetId !== 'string' || !PUBLIC_SHEET_ID_PATTERN.test(entry.sheetId)) {
@@ -87,10 +90,10 @@ export function entriesToImportRecords(
       claimedSource,
     }
     const existing = bySheetId.get(entry.sheetId)
-    if (existing) skipped++
+    if (existing) duplicates++
     if (!existing || record.achievement > existing.achievement) bySheetId.set(entry.sheetId, record)
   }
-  return { records: [...bySheetId.values()], skipped }
+  return { records: [...bySheetId.values()], skipped, duplicates }
 }
 
 /** Splits an upload into `client-imports` chunks of at most 5000 records (§7.3) */
@@ -218,6 +221,17 @@ export class CloudClearNotSentError extends Error {
   constructor() {
     super('The save could not be cleared on the server; nothing was imported')
     this.name = 'CloudClearNotSentError'
+  }
+}
+
+/**
+ * None of the entries can be uploaded (no public sheet ID, or no valid achievement): nothing was sent, and a
+ * "clear, then import" left the save as it was
+ */
+export class NothingToImportError extends Error {
+  constructor(readonly skipped: number) {
+    super('None of these records match a chart; nothing was imported')
+    this.name = 'NothingToImportError'
   }
 }
 
