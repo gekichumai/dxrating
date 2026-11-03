@@ -1,6 +1,6 @@
 import type { ImportJobDTO, ImportRecord, ImportResultDTO, SaveDTO } from '@gekichumai/api-contract'
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
-import { RATING_ENTRIES_STORAGE_KEY } from '../../catalog/savedDataMigration'
+import { migrateLegacyImportEntries, RATING_ENTRIES_STORAGE_KEY } from '../../catalog/savedDataMigration'
 import type { Region } from '../context/AppContext'
 import {
   canonicalImportBody,
@@ -125,22 +125,31 @@ export async function migrationKeyTag(text: string): Promise<string> {
 interface MigrationAttempt {
   tag: string
   nonce: string | null
+  /** The attempt's job succeeded: a later run with the same tag is a new request, not a retry of this one */
+  done?: boolean
 }
 
-/** The nonce of the stored attempt with this tag; another tag starts a new attempt (without a nonce) */
+/**
+ * The nonce of the stored attempt with this tag while it is unfinished (a retry resumes its key). Another tag starts
+ * a new attempt (without a nonce); the same tag after a finished attempt starts one under a new nonce, so a new
+ * backup of the same records is uploaded again instead of answered with the old job (the save may have lost records
+ * since, by a delete or a replace from another device).
+ */
 function resumeAttempt(storage: Storage | null, tag: string): MigrationAttempt {
+  let finished = false
   try {
     const parsed = JSON.parse(storage?.getItem(MIGRATION_ATTEMPT_STORAGE_KEY) ?? 'null') as Partial<MigrationAttempt>
     if (
       parsed?.tag === tag &&
       (parsed.nonce === null || (typeof parsed.nonce === 'string' && /^\w{1,16}$/.test(parsed.nonce)))
     ) {
-      return { tag, nonce: parsed.nonce }
+      if (!parsed.done) return { tag, nonce: parsed.nonce }
+      finished = true
     }
   } catch {
     // Unreadable: a new attempt
   }
-  const attempt = { tag, nonce: null }
+  const attempt: MigrationAttempt = { tag, nonce: finished ? newNonce() : null }
   saveAttempt(storage, attempt)
   return attempt
 }
@@ -266,6 +275,12 @@ export interface MigrationOptions {
   retryDelayMs?: number
   /** How often a running job is polled, 2 s by default */
   pollIntervalMs?: number
+  /**
+   * Moves entries still on legacy sheet IDs to public ones before they are uploaded (the local save migrates its own
+   * copy as it reads them, once the complete catalog has loaded, which may be after the user asked for the backup);
+   * {@link migrateLegacyImportEntries} by default, which loads nothing when no entry is on a legacy ID
+   */
+  migrateLegacyEntries?: (entries: PlayEntry[]) => Promise<PlayEntry[]>
 }
 
 export interface MigrationOutcome {
@@ -333,7 +348,9 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
     return { saveId: options.target.id, uploaded: 0, skipped: 0, job: null }
   }
 
-  const { records, skipped } = entriesToImportRecords(options.entries as PlayEntry[], {
+  const migrateLegacy = options.migrateLegacyEntries ?? migrateLegacyImportEntries
+  const entries = await migrateLegacy([...options.entries])
+  const { records, skipped } = entriesToImportRecords(entries, {
     source: 'legacy-local',
     claimedSource: null,
   })
@@ -436,6 +453,7 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
     job = await upload()
   }
   if (job.status === 'failed') throw new ServerImportFailedError(job.errorCode ?? 'failed', job)
+  saveAttempt(storage, { ...attempt, done: true })
   return { saveId, uploaded: records.length, skipped, job }
 }
 

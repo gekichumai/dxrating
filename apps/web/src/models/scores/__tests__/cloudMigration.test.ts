@@ -384,10 +384,12 @@ describe('runCloudMigration: no cloud save yet', () => {
     expect(outcome.job?.id).not.toBe(abandoned)
     expect(server.records.get(outcome.saveId)!.size).toBe(5001)
 
-    // And a retry after that resumes the new key, not the abandoned one
+    // And a backup after that one finished is a new request: neither the abandoned key nor the finished one
     const sent = uploadKeys().length
     await migrate({ entries })
-    expect(new Set(uploadKeys().slice(sent))).toEqual(new Set([keys.at(-1)]))
+    const later = new Set(uploadKeys().slice(sent))
+    expect(later.size).toBe(1)
+    expect(keys).not.toContain([...later][0])
   })
 
   it('uploads again into a new save once the first one was deleted', async () => {
@@ -417,14 +419,41 @@ describe('runCloudMigration: no cloud save yet', () => {
     expect(server.records.get(save.id)!.has(added.sheetId)).toBe(true)
   })
 
-  it('a repeated run after success changes nothing (the job answers as it was)', async () => {
+  it('a new backup after a finished one uploads again, even with the same records', async () => {
     const first = await migrate()
-    const revision = server.saves[0]!.revision
+    // Records the save lost since (a delete, or a replace from another device that kept the save)
+    server.records.get(first.saveId)!.clear()
+
     const second = await migrate()
 
     expect(second.saveId).toBe(first.saveId)
-    expect(second.job?.id).toBe(first.job?.id)
-    expect(server.saves[0]!.revision).toBe(revision)
+    expect(second.job?.id).not.toBe(first.job?.id)
+    expect(second.job?.status).toBe('succeeded')
+    expect(server.records.get(first.saveId)!.size).toBe(3)
+    const keys = uploadKeys()
+    expect(new Set(keys).size).toBe(2)
+    expect(keys.at(-1)).toMatch(/^migrate-device-1234-web-local-[0-9a-f]{16}-\w{8}$/)
+
+    // And the one after that is new again
+    const third = await migrate()
+    expect(third.job?.id).not.toBe(second.job?.id)
+    expect(new Set(uploadKeys()).size).toBe(3)
+  })
+
+  it('moves entries still on legacy sheet IDs to public ones before uploading them', async () => {
+    const legacy = 'legacysong__dxrt__dx__dxrt__master'
+    const seen: string[][] = []
+    const outcome = await migrate({
+      entries: [...ENTRIES, { sheetId: legacy, achievementRate: 99.5 }],
+      migrateLegacyEntries: async (entries) => {
+        seen.push(entries.map((entry) => entry.sheetId))
+        return entries.map((entry) => (entry.sheetId === legacy ? { ...entry, sheetId: sheetIds(1)[0]! } : entry))
+      },
+    })
+
+    expect(seen).toEqual([[SHEET_A, SHEET_B, SHEET_C, legacy]])
+    expect(outcome.uploaded).toBe(4)
+    expect(server.records.get(outcome.saveId)!.get(sheetIds(1)[0]!)?.achievement).toBe(995000)
   })
 
   it('waits for an import already running on the save, then sends the chunk again', async () => {
