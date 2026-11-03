@@ -3,8 +3,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { authClient } from '../../lib/auth-client'
-import type { CloudScoreRepository, CloudScoreRepositoryOptions } from './CloudScoreRepository'
-import { type FetchUserFeatures, getUserFeatures } from './userFeatures'
+import type { CloudScoreRepository, CloudScoreRepositoryOptions, CloudSyncStopReason } from './CloudScoreRepository'
+import { clearUserFeaturesCache, type FetchUserFeatures, getUserFeatures } from './userFeatures'
 
 /**
  * Which save the visitor works on (design §8.2, the simplified #181): the local save, or a cloud save.
@@ -172,6 +172,9 @@ export function useActiveSaveDecision(): ActiveSave {
   const [selectionVersion, setSelectionVersion] = useState(0)
   const cloudRef = useRef<CloudScoreRepository | null>(null)
   cloudRef.current = cloudRepository
+  // Read when a toast shows, not a reason to decide again
+  const tRef = useRef(t)
+  tRef.current = t
 
   useEffect(() => {
     // The session is still loading: keep what is shown
@@ -207,11 +210,26 @@ export function useActiveSaveDecision(): ActiveSave {
       if (cancelled) return
       if (!saves.some((save) => save.id === saveId)) {
         writeActiveSaveId(storage, userId, null)
-        toast(t('rating-calculator:cloud-save.save-missing'), { id: 'cloud-save-missing' })
+        toast(tRef.current('rating-calculator:cloud-save.save-missing'), { id: 'cloud-save-missing' })
         return fallBackToLocal()
       }
 
-      const repository = await dependencies.openCloudRepository({ userId, saveId })
+      let opened: CloudScoreRepository | null = null
+      // Syncing stopped for good mid-session (§8.2, §12): the save is gone or cloud save was turned off (404), or the
+      // session ended (401). Back to the local save; the outbox stays in the user's database
+      const onStopped = (reason: CloudSyncStopReason) => {
+        // A disposed repository never reports: this one is still the active one, or about to be
+        if (!opened) return
+        if (reason === 'not-found') {
+          writeActiveSaveId(storage, userId, null)
+          // The features may have been turned off: ask again on the next decision
+          clearUserFeaturesCache()
+          toast(tRef.current('rating-calculator:cloud-save.save-missing'), { id: 'cloud-save-missing' })
+        }
+        setCloudRepository((current) => (current === opened ? null : current))
+      }
+      const repository = await dependencies.openCloudRepository({ userId, saveId, onStopped })
+      opened = repository
       if (cancelled) {
         void repository.dispose({ flushTimeoutMs: 0 })
         return
@@ -227,7 +245,7 @@ export function useActiveSaveDecision(): ActiveSave {
     return () => {
       cancelled = true
     }
-  }, [userId, selectionVersion, dependencies, t])
+  }, [userId, selectionVersion, dependencies])
 
   // A repository that is no longer active stops syncing; what it could not send stays in its outbox
   useEffect(() => {
