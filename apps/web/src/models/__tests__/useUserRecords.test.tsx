@@ -124,3 +124,59 @@ describe('grouped bucket hints agree with calculateBest50', () => {
     else expect(recalculated(100.5)).toBe(0)
   })
 })
+describe('conflicting bucket hints across duplicates', () => {
+  const version = 'PRiSM' as never
+  const cnCatalog = buildSongCatalog(catalogSnapshot, version)
+  const cnMasters = cnCatalog.sheets.filter(
+    (s) => s.difficulty === 'master' && s.serverIds.includes('cn') && s.isRatingEligible,
+  )
+  const fillers = cnMasters.filter((s) => s.version === 'PRiSM' && s.internalLevelValue >= 13).slice(0, 15)
+  const target = cnMasters.find(
+    (s) => s.version === 'FiNALE' && s.internalLevelValue >= 12 && s.internalLevelValue < 13,
+  )!
+
+  it.each([
+    ['AP/B15 last', false],
+    ['AP/B15 first', true],
+  ])('keeps the hint calculateBest50 uses (%s)', (_case, apFirst) => {
+    const fc: PlayEntry = {
+      sheetId: target.id,
+      achievementRate: 99,
+      comboFlag: 'fc',
+      providerConfig: { divingFish: { ratingEligibility: 'b35' } },
+    }
+    const ap: PlayEntry = {
+      sheetId: target.id,
+      achievementRate: 99,
+      comboFlag: 'ap',
+      providerConfig: { divingFish: { ratingEligibility: 'b15' } },
+    }
+    const entries: PlayEntry[] = [
+      ...fillers.map((s) => ({
+        sheetId: s.id,
+        achievementRate: 100.5,
+        providerConfig: { divingFish: { ratingEligibility: 'b15' as const } },
+      })),
+      ...(apFirst ? [ap, fc] : [fc, ap]),
+    ]
+    const ratingEntries = toRatingEntries(entries, cnCatalog)
+    const best50 = calculateBest50({ catalog: cnCatalog, version, region: 'cn', entries: ratingEntries })
+    expect(best50.b15).toHaveLength(15)
+    const grouped = groupUserRecords(entries, (id) => cnCatalog.getById(id))
+    // The AP entry rates one point higher: calculateBest50 keeps its B15 hint
+    expect(grouped.get(target.id)!.source).toEqual({ provider: 'diving-fish', best50Bucket: 'b15' })
+    const records = new Map([...grouped].map(([id, r]) => [id, { ...r.entry, source: r.source }]))
+    const recs = recommendRatingRaises({ sheets: [target], best50, records, version, region: 'cn' })
+    const recalculated = (rate: number, comboFlag: PlayEntry['comboFlag']) =>
+      calculateBest50({
+        catalog: cnCatalog,
+        version,
+        region: 'cn',
+        entries: [...ratingEntries, { ...ratingEntries.at(-1)!, achievementRate: rate, comboFlag, source: undefined }],
+      }).statistics.b50Sum - best50.statistics.b50Sum
+    for (const rec of recs)
+      expect(rec.gain).toBe(recalculated(rec.targetAchievement, records.get(target.id)!.comboFlag))
+    expect(recalculated(99.5, 'fc')).toBe(0)
+    expect(recs).toEqual([])
+  })
+})
