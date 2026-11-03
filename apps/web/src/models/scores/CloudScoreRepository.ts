@@ -1,0 +1,864 @@
+import {
+  CLOUD_SAVE_MAX_CHANGES_LIMIT,
+  CLOUD_SAVE_MAX_MUTATIONS,
+  type ChangesDTO,
+  type MutationItemInput,
+  type MutationsResultDTO,
+  type RecordDTO,
+} from '@gekichumai/api-contract'
+import { decideManualMutation, type ManualEntryMethod } from '@gekichumai/maimai-domain'
+import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
+import { CloudScoreDatabase, type CloudScoreMeta, type OutboxEntry } from './cloudScoreDatabase'
+import {
+  checksumOf,
+  type CloudRecord,
+  cloudRecordToPlayEntry,
+  cloudRecordToScoreRecord,
+  manualEntryToSetValue,
+  recordFromDTO,
+} from './cloudScoreMapping'
+import type { SheetIdentityResolver } from './LocalScoreRepository'
+import {
+  type ImportMeta,
+  type ImportProgress,
+  type ImportResult,
+  type ManualEntry,
+  type ScoreRecord,
+  type ScoreRepositoryStatus,
+  type ServerImportKind,
+  type SyncIssue,
+  UnsupportedScoreOperationError,
+  type WebScoreRepository,
+} from './ScoreRepository'
+import { uuidv7 } from './uuidv7'
+
+/**
+ * A cloud save (meta#17, design §5.7, §8.1): the server's records cached in IndexedDB, with local changes applied
+ * optimistically and queued in a persistent outbox until the server acknowledges them.
+ *
+ * Sync cycle (one at a time, and one tab at a time through the `dxr-scores-sync` Web Lock):
+ * 1. push the outbox of this save in creation order, at most 500 mutations a request, each with the revision of
+ *    the record the user saw (`basedOnRevision`) and its persisted UUIDv7 `mutationId` (retries are idempotent);
+ * 2. apply the results: `applied`/`noop` take the returned record; `superseded` keeps the server's record and turns
+ *    the user's intent into a {@link SyncIssue} that can be applied again with a new baseline
+ *    ({@link CloudScoreRepository.reapplyIssue}); `rejected` becomes an issue;
+ * 3. pull the changes since `lastSyncedRevision` until `hasMore` is false; `resetRequired` (the cursor is older than
+ *    the tombstone horizon, §5.6) refetches everything from 0 and rebuilds the cache;
+ * 4. lay the outbox entries still pending over the pulled records again;
+ * 5. compare the last page's checksum with the cache; a mismatch refetches everything once and is reported.
+ *
+ * Triggers: 2 s after the last write, coming back online, the page becoming visible or focused, the repository
+ * starting (sign-in), {@link CloudScoreRepository.notifyImportJobCompleted}, and every 60 s while visible.
+ * Failures back off exponentially from 2 s to 5 min; a 429 waits for its `retryAfterSeconds`. A 404 (cloud save
+ * turned off, save deleted) or 401 (signed out) stops syncing and keeps the outbox.
+ *
+ * The outbox is never dropped: not on sign-out, not when cloud save is turned off. It lives in the user's own
+ * database (`dxr-cloud-v1-<userId>`), so another user signing in on this browser never sends it.
+ *
+ * This repository only ever sends the user's manual changes. It never uploads records it pulled (§8.3): imports
+ * into a cloud save run on the server (PR 9), so {@link applyImport} is not available here yet.
+ */
+
+/** The cloud save routes this repository calls, the shape of `privateApiClient.cloudSave.records` */
+export interface CloudSaveRecordsApi {
+  changes(input: { id: string; since: number; limit: number }): Promise<ChangesDTO>
+  mutate(input: { id: string; mutations: MutationItemInput[] }): Promise<MutationsResultDTO>
+}
+
+export interface ChecksumMismatchReport {
+  expectedCount: number
+  expectedSumAchievement: number
+  actualCount: number
+  actualSumAchievement: number
+}
+
+/** The parts of `BroadcastChannel` this repository uses */
+export interface ScoreBroadcastChannel {
+  postMessage(message: unknown): void
+  onmessage: ((event: MessageEvent) => void) | null
+  close(): void
+}
+
+/** The parts of `navigator.locks` this repository uses */
+export interface ScoreSyncLocks {
+  request<T>(name: string, options: { ifAvailable: true }, callback: (lock: unknown) => Promise<T>): Promise<T>
+}
+
+export interface CloudScoreRepositoryOptions {
+  userId: string
+  saveId: string
+  api: CloudSaveRecordsApi
+  /** `indexedDB` by default */
+  indexedDB?: IDBFactory
+  /** `navigator.locks` by default; without it every tab syncs on its own (pushes stay idempotent) */
+  locks?: ScoreSyncLocks | null
+  /** `new BroadcastChannel(name)` by default; without it other tabs see changes on their next sync */
+  createChannel?: ((name: string) => ScoreBroadcastChannel) | null
+  reportChecksumMismatch?: (report: ChecksumMismatchReport) => void
+  /** Called when syncing stops for good (404 or 401) */
+  onStopped?: (reason: CloudSyncStopReason) => void
+  /** The page whose events trigger syncs; the current `window` by default */
+  eventTarget?: Pick<Window, 'addEventListener' | 'removeEventListener'> | null
+  /** Whether the page is visible; `document.visibilityState` by default */
+  isVisible?: () => boolean
+}
+
+export type CloudSyncStopReason = 'not-found' | 'unauthorized'
+
+export const SCORE_SYNC_LOCK_NAME = 'dxr-scores-sync'
+export const SCORE_BROADCAST_CHANNEL_NAME = 'dxr-scores'
+export const SYNC_DEBOUNCE_MS = 2_000
+export const SYNC_INTERVAL_MS = 60_000
+export const SYNC_BACKOFF_MIN_MS = 2_000
+export const SYNC_BACKOFF_MAX_MS = 5 * 60_000
+/** How long signing out or turning cloud save off waits for the outbox to flush */
+export const FLUSH_TIMEOUT_MS = 3_000
+
+interface BroadcastMessage {
+  type: 'changed'
+  userId: string
+  saveId: string
+}
+
+type SyncFailure =
+  | { kind: 'stop'; reason: CloudSyncStopReason }
+  | { kind: 'rate-limited'; retryAfterMs: number }
+  | { kind: 'retry'; offline: boolean }
+
+/** Sorts a failed request into stop (404, 401), rate limited (429) and retry (anything else) */
+export function classifySyncError(error: unknown): SyncFailure {
+  const status = typeof error === 'object' && error !== null && 'status' in error ? error.status : undefined
+  const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : undefined
+  if (status === 404 || code === 'NOT_FOUND') return { kind: 'stop', reason: 'not-found' }
+  if (status === 401 || code === 'UNAUTHORIZED') return { kind: 'stop', reason: 'unauthorized' }
+  if (status === 429 || code === 'TOO_MANY_REQUESTS') {
+    const data = typeof error === 'object' && error !== null && 'data' in error ? error.data : undefined
+    const seconds =
+      typeof data === 'object' && data !== null && 'retryAfterSeconds' in data ? Number(data.retryAfterSeconds) : NaN
+    return { kind: 'rate-limited', retryAfterMs: Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : NaN }
+  }
+  const offline = typeof navigator !== 'undefined' && navigator.onLine === false
+  return { kind: 'retry', offline: offline || error instanceof TypeError }
+}
+
+export function backoffDelay(failures: number): number {
+  return Math.min(SYNC_BACKOFF_MIN_MS * 2 ** Math.max(0, failures - 1), SYNC_BACKOFF_MAX_MS)
+}
+
+const EMPTY_ISSUES: readonly SyncIssue[] = Object.freeze([])
+
+function defaultLocks(): ScoreSyncLocks | null {
+  if (typeof navigator === 'undefined' || !('locks' in navigator) || !navigator.locks) return null
+  return navigator.locks as unknown as ScoreSyncLocks
+}
+
+function defaultChannel(name: string): ScoreBroadcastChannel | null {
+  if (typeof BroadcastChannel === 'undefined') return null
+  return new BroadcastChannel(name)
+}
+
+function upsertNewer(records: Map<string, RecordDTO>, record: RecordDTO) {
+  const existing = records.get(record.sheetId)
+  if (!existing || record.revision >= existing.revision) records.set(record.sheetId, record)
+}
+
+export class CloudScoreRepository implements WebScoreRepository {
+  readonly kind = 'cloud' as const
+  readonly userId: string
+  readonly saveId: string
+
+  private serverRecords = new Map<string, RecordDTO>()
+  private outbox: OutboxEntry[] = []
+  private issues: SyncIssue[] = []
+  private meta: CloudScoreMeta
+
+  private view = new Map<string, CloudRecord>()
+  private records: readonly ScoreRecord[] | null = null
+  private recordsBySheetId: Map<string, ScoreRecord> | null = null
+  private playEntries: readonly PlayEntry[] | null = null
+  private resolveIdentity: SheetIdentityResolver | null = null
+
+  private currentStatus: ScoreRepositoryStatus
+  private state: ScoreRepositoryStatus['state'] = 'idle'
+  private isReady = false
+  private readonly listeners = new Set<() => void>()
+
+  private queue: Promise<unknown> = Promise.resolve()
+  private running: Promise<void> | null = null
+  private rerun = false
+  private failures = 0
+  /** The last failure was a 429: its wait is honoured even when the page comes back online */
+  private rateLimited = false
+  private backoffUntil = 0
+  private stopReason: CloudSyncStopReason | null = null
+  private disposed = false
+  private debounceTimer: ReturnType<typeof setTimeout> | null = null
+  private retryTimer: ReturnType<typeof setTimeout> | null = null
+  private intervalTimer: ReturnType<typeof setInterval> | null = null
+  private channel: ScoreBroadcastChannel | null = null
+  private removeListeners: (() => void) | null = null
+
+  private readonly api: CloudSaveRecordsApi
+  private readonly locks: ScoreSyncLocks | null
+  private readonly reportMismatch: (report: ChecksumMismatchReport) => void
+  private readonly onStopped: ((reason: CloudSyncStopReason) => void) | undefined
+  private readonly isVisible: () => boolean
+
+  private constructor(
+    private readonly database: CloudScoreDatabase,
+    private readonly options: CloudScoreRepositoryOptions,
+  ) {
+    this.userId = options.userId
+    this.saveId = options.saveId
+    this.api = options.api
+    this.locks = options.locks === undefined ? defaultLocks() : options.locks
+    this.reportMismatch = options.reportChecksumMismatch ?? (() => {})
+    this.onStopped = options.onStopped
+    this.isVisible =
+      options.isVisible ?? (() => typeof document === 'undefined' || document.visibilityState !== 'hidden')
+    this.meta = { saveId: options.saveId, lastSyncedRevision: 0 }
+    this.currentStatus = this.buildStatus()
+  }
+
+  /** Opens the user's database and loads the cached save; call {@link start} to begin syncing */
+  static async open(options: CloudScoreRepositoryOptions): Promise<CloudScoreRepository> {
+    const database = await CloudScoreDatabase.open(options.userId, options.indexedDB)
+    const repository = new CloudScoreRepository(database, options)
+    await repository.reload()
+    return repository
+  }
+
+  // --- Reads ---
+
+  get ready(): boolean {
+    return this.isReady
+  }
+
+  get status(): ScoreRepositoryStatus {
+    return this.currentStatus
+  }
+
+  /** Why syncing stopped, or `null` while it runs */
+  get stoppedReason(): CloudSyncStopReason | null {
+    return this.stopReason
+  }
+
+  list(): readonly ScoreRecord[] {
+    if (!this.records) {
+      const bySheetId = new Map<string, ScoreRecord>()
+      for (const record of this.view.values()) {
+        if (record.deletedAt !== null) continue
+        const identity = this.resolveIdentity?.(record.sheetId)
+        if (identity) bySheetId.set(record.sheetId, cloudRecordToScoreRecord(record, identity))
+      }
+      this.records = Object.freeze([...bySheetId.values()])
+      this.recordsBySheetId = bySheetId
+    }
+    return this.records
+  }
+
+  get(sheetId: string): ScoreRecord | undefined {
+    this.list()
+    return this.recordsBySheetId!.get(sheetId)
+  }
+
+  /** Every live record as a calculator entry, including charts the catalog does not know (yet) */
+  entries(): readonly PlayEntry[] {
+    if (!this.playEntries) {
+      const entries: PlayEntry[] = []
+      for (const record of this.view.values()) {
+        if (record.deletedAt === null) {
+          entries.push(cloudRecordToPlayEntry(record, this.resolveIdentity?.(record.sheetId)))
+        }
+      }
+      this.playEntries = Object.freeze(entries)
+    }
+    return this.playEntries
+  }
+
+  subscribe(cb: () => void): () => void {
+    this.listeners.add(cb)
+    return () => {
+      this.listeners.delete(cb)
+    }
+  }
+
+  setIdentityResolver(resolveIdentity: SheetIdentityResolver | null) {
+    if (this.resolveIdentity === resolveIdentity) return
+    this.resolveIdentity = resolveIdentity
+    this.invalidateDerived()
+    this.notify()
+  }
+
+  /** A cloud save holds one record per chart, so there are no duplicates to rank; kept for interface parity */
+  setInternalLevelResolver(_resolveInternalLevel: unknown) {}
+
+  // --- Writes ---
+
+  setManual(entry: ManualEntry, method: ManualEntryMethod): void {
+    const value = manualEntryToSetValue(entry)
+    this.enqueue([{ op: 'set', sheetId: entry.sheetId, value, entryMethod: method }])
+  }
+
+  delete(sheetIds: string[]): void {
+    const live = sheetIds.filter((sheetId) => this.view.get(sheetId)?.deletedAt === null)
+    this.enqueue(live.map((sheetId) => ({ op: 'delete', sheetId, entryMethod: 'typed' })))
+  }
+
+  /**
+   * Deletes every record, each guarded by the revision this device has of it: a record the server has since
+   * verified anew is kept and reported as a superseded issue instead (§5.4). Nothing is deleted locally only.
+   */
+  clear(): void {
+    this.delete([...this.view.keys()])
+  }
+
+  /** Imports into a cloud save run on the server (`client-imports`, server imports): wired by the next change */
+  async applyImport(_entries: PlayEntry[], meta: ImportMeta): Promise<ImportResult> {
+    throw new UnsupportedScoreOperationError(`Import from ${meta.source}`, this.kind)
+  }
+
+  runServerImport(kind: ServerImportKind, _args: Record<string, unknown>): AsyncIterable<ImportProgress> {
+    throw new UnsupportedScoreOperationError(`Server import (${kind})`, this.kind)
+  }
+
+  /**
+   * @internal The `modifyEntries` compatibility adapter: the difference to `entries` as manual changes (sets of the
+   * changed charts, deletes of the removed ones)
+   */
+  replaceEntries(entries: readonly PlayEntry[]) {
+    const current = new Map(this.entries().map((entry) => [entry.sheetId, entry]))
+    const next = new Map(entries.map((entry) => [entry.sheetId, entry]))
+    const changes: PendingChange[] = []
+    for (const [sheetId, entry] of next) {
+      const existing = current.get(sheetId)
+      if (
+        existing &&
+        existing.achievementRate === entry.achievementRate &&
+        (existing.comboFlag ?? null) === (entry.comboFlag ?? null) &&
+        (existing.syncFlag ?? null) === (entry.syncFlag ?? null)
+      ) {
+        continue
+      }
+      changes.push({ op: 'set', sheetId, value: manualEntryToSetValue(entry), entryMethod: 'typed' })
+    }
+    for (const sheetId of current.keys()) {
+      if (!next.has(sheetId)) changes.push({ op: 'delete', sheetId, entryMethod: 'typed' })
+    }
+    this.enqueue(changes)
+  }
+
+  /**
+   * Applies the intent of an issue again, on purpose: over the record the server has now (a new baseline), so a
+   * `set` overrides even a verified record and makes it `user_edited` (§5.4)
+   */
+  reapplyIssue(issueId: string): void {
+    const issue = this.issues.find((candidate) => candidate.id === issueId)
+    if (!issue) return
+    this.issues = this.issues.filter((candidate) => candidate.id !== issueId)
+    this.persist((database) => database.write({ deleteIssues: [issueId] }))
+    const { intent } = issue
+    if (intent.op === 'set' && intent.value) {
+      this.enqueue([{ op: 'set', sheetId: issue.sheetId, value: intent.value, entryMethod: intent.entryMethod }])
+    } else if (intent.op === 'delete') {
+      this.enqueue([{ op: 'delete', sheetId: issue.sheetId, entryMethod: intent.entryMethod }])
+    } else {
+      this.refresh()
+    }
+  }
+
+  /** Forgets an issue, keeping the server's record */
+  dismissIssue(issueId: string): void {
+    if (!this.issues.some((issue) => issue.id === issueId)) return
+    this.issues = this.issues.filter((issue) => issue.id !== issueId)
+    this.persist((database) => database.write({ deleteIssues: [issueId] }))
+    this.refresh()
+  }
+
+  // --- Sync ---
+
+  /** Starts listening to the sync triggers and runs the first sync (the sign-in trigger) */
+  start() {
+    if (this.disposed || this.removeListeners) return
+    const createChannel = this.options.createChannel === undefined ? defaultChannel : this.options.createChannel
+    this.channel = createChannel?.(SCORE_BROADCAST_CHANNEL_NAME) ?? null
+    if (this.channel) {
+      this.channel.onmessage = (event) => this.onBroadcast(event.data)
+    }
+
+    const target = this.options.eventTarget === undefined ? globalThis.window : this.options.eventTarget
+    const onOnline = () => {
+      // Back online: retry now, unless the server asked to wait (429)
+      if (!this.rateLimited) {
+        this.failures = 0
+        this.backoffUntil = 0
+        if (this.retryTimer) clearTimeout(this.retryTimer)
+        this.retryTimer = null
+      }
+      void this.sync()
+    }
+    const onVisible = () => {
+      if (this.isVisible()) void this.sync()
+    }
+    if (target) {
+      target.addEventListener('online', onOnline)
+      target.addEventListener('focus', onVisible)
+    }
+    const visibilityTarget = typeof document === 'undefined' ? null : document
+    visibilityTarget?.addEventListener('visibilitychange', onVisible)
+    this.intervalTimer = setInterval(() => {
+      if (this.isVisible()) void this.sync()
+    }, SYNC_INTERVAL_MS)
+
+    this.removeListeners = () => {
+      if (target) {
+        target.removeEventListener('online', onOnline)
+        target.removeEventListener('focus', onVisible)
+      }
+      visibilityTarget?.removeEventListener('visibilitychange', onVisible)
+    }
+
+    void this.sync()
+  }
+
+  /** Resolves once no sync cycle runs (tests, and callers that want the result of a write) */
+  async idle(): Promise<void> {
+    while (this.running) await this.running
+  }
+
+  /** The hook for import jobs: pull what a finished job wrote */
+  notifyImportJobCompleted(): Promise<void> {
+    return this.sync()
+  }
+
+  /**
+   * Runs a sync cycle now (or joins the running one, which then runs once more). Resolves when done; never
+   * rejects. Waits out a backoff: the retry timer runs the cycle then.
+   */
+  sync(): Promise<void> {
+    if (this.disposed || this.stopReason) return Promise.resolve()
+    if (this.backoffUntil > Date.now()) return Promise.resolve()
+    if (this.running) {
+      this.rerun = true
+      return this.running
+    }
+    this.running = (async () => {
+      do {
+        this.rerun = false
+        await this.runLockedCycle()
+      } while (this.rerun && !this.disposed && !this.stopReason && this.backoffUntil <= Date.now())
+    })().finally(() => {
+      this.running = null
+    })
+    return this.running
+  }
+
+  /**
+   * Tries to send the outbox now, waiting at most `timeoutMs` (signing out, cloud save turned off). Resolves `true`
+   * when nothing of this save is left in the outbox. A pending 429 wait is honoured.
+   */
+  async flush(timeoutMs: number = FLUSH_TIMEOUT_MS): Promise<boolean> {
+    if (this.pendingEntries().length === 0) return true
+    if (this.disposed || this.stopReason) return false
+    if (!this.rateLimited) this.backoffUntil = 0
+    let timeout: ReturnType<typeof setTimeout> | undefined
+    await Promise.race([
+      this.sync(),
+      new Promise<void>((resolve) => {
+        timeout = setTimeout(resolve, timeoutMs)
+      }),
+    ])
+    clearTimeout(timeout)
+    return this.pendingEntries().length === 0
+  }
+
+  /**
+   * Stops syncing and closes the database: signing out, cloud save turned off, another save chosen. Tries to send
+   * the outbox first, for at most `flushTimeoutMs`; what is not sent stays in the outbox for the next sign-in of
+   * the same user.
+   */
+  async dispose({ flushTimeoutMs = FLUSH_TIMEOUT_MS }: { flushTimeoutMs?: number } = {}): Promise<void> {
+    if (this.disposed) return
+    if (flushTimeoutMs > 0) await this.flush(flushTimeoutMs)
+    this.disposed = true
+    this.clearTimers()
+    this.removeListeners?.()
+    this.removeListeners = null
+    if (this.channel) {
+      this.channel.onmessage = null
+      this.channel.close()
+      this.channel = null
+    }
+    this.listeners.clear()
+    // A cycle cut off by the timeout fails on the closed database; its writes are idempotent on the next start
+    await this.queue.catch(() => {})
+    this.database.close()
+  }
+
+  private async runLockedCycle() {
+    if (!this.locks) return this.runCycle()
+    await this.locks.request(SCORE_SYNC_LOCK_NAME, { ifAvailable: true }, async (lock) => {
+      // Another tab is syncing: it pushes this tab's outbox too (it is shared) and broadcasts the result
+      if (!lock) return
+      await this.runCycle()
+    })
+  }
+
+  private async runCycle() {
+    this.setState('syncing')
+    try {
+      // Changes other tabs made since the last broadcast
+      await this.reload()
+      await this.push()
+      await this.pull()
+      // The outbox entries added while this cycle ran stay on top of the pulled records
+      await this.reload()
+      this.failures = 0
+      this.rateLimited = false
+      this.setState('idle')
+      this.broadcast()
+    } catch (error) {
+      this.handleFailure(error)
+    } finally {
+      if (!this.isReady && !this.disposed) {
+        this.isReady = true
+        this.notify()
+      }
+    }
+  }
+
+  private handleFailure(error: unknown) {
+    if (this.disposed) return
+    const failure = classifySyncError(error)
+    switch (failure.kind) {
+      case 'stop':
+        this.stopReason = failure.reason
+        this.clearTimers()
+        this.setState('error')
+        this.onStopped?.(failure.reason)
+        return
+      case 'rate-limited': {
+        this.failures++
+        this.rateLimited = true
+        const delay = Number.isNaN(failure.retryAfterMs) ? backoffDelay(this.failures) : failure.retryAfterMs
+        this.scheduleRetry(delay)
+        // Not an error (§5.7): the pending changes wait
+        this.setState('idle')
+        return
+      }
+      case 'retry':
+        this.failures++
+        this.scheduleRetry(backoffDelay(this.failures))
+        this.setState(failure.offline ? 'offline' : 'error')
+        if (!failure.offline) console.warn('[cloud-save] Sync failed, retrying', error)
+        return
+    }
+  }
+
+  private scheduleRetry(delay: number) {
+    this.backoffUntil = Date.now() + delay
+    if (this.retryTimer) clearTimeout(this.retryTimer)
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null
+      this.backoffUntil = 0
+      void this.sync()
+    }, delay)
+  }
+
+  private scheduleDebouncedSync() {
+    if (this.disposed || this.stopReason) return
+    if (this.debounceTimer) clearTimeout(this.debounceTimer)
+    this.debounceTimer = setTimeout(() => {
+      this.debounceTimer = null
+      void this.sync()
+    }, SYNC_DEBOUNCE_MS)
+  }
+
+  private clearTimers() {
+    if (this.debounceTimer) clearTimeout(this.debounceTimer)
+    if (this.retryTimer) clearTimeout(this.retryTimer)
+    if (this.intervalTimer) clearInterval(this.intervalTimer)
+    this.debounceTimer = null
+    this.retryTimer = null
+    this.intervalTimer = null
+  }
+
+  private async push() {
+    const pending = this.pendingEntries()
+    for (let start = 0; start < pending.length; start += CLOUD_SAVE_MAX_MUTATIONS) {
+      if (this.disposed) return
+      const batch = pending.slice(start, start + CLOUD_SAVE_MAX_MUTATIONS)
+      const response = await this.api.mutate({ id: this.saveId, mutations: batch.map(toWireMutation) })
+      const results = new Map(response.results.map((result) => [result.mutationId, result]))
+
+      const putRecords: RecordDTO[] = []
+      const putIssues: SyncIssue[] = []
+      const acknowledged: string[] = []
+      for (const entry of batch) {
+        const result = results.get(entry.mutationId)
+        // No answer for it: it stays in the outbox and goes out again with the next push
+        if (!result) continue
+        acknowledged.push(entry.mutationId)
+        if (result.record) {
+          putRecords.push(result.record)
+          upsertNewer(this.serverRecords, result.record)
+        }
+        if (result.status === 'superseded' || result.status === 'rejected') {
+          putIssues.push(issueOf(entry, result.status, result.reason))
+        }
+      }
+
+      const done = new Set(acknowledged)
+      this.outbox = this.outbox.filter((entry) => !done.has(entry.mutationId))
+      this.issues = [...this.issues, ...putIssues]
+      await this.persist((database) => database.write({ putRecords, putIssues, deleteOutbox: acknowledged }))
+      this.refresh()
+    }
+  }
+
+  private async pull() {
+    const outcome = await this.pullFrom(this.meta.lastSyncedRevision, false)
+    if (outcome.kind === 'reset') {
+      await this.pullFrom(0, true)
+      return
+    }
+    if (outcome.kind === 'mismatch') {
+      this.reportMismatch(outcome.report)
+      // One full refetch; a mismatch after it is not chased further this cycle
+      await this.pullFrom(0, true)
+    }
+  }
+
+  private async pullFrom(
+    since: number,
+    full: boolean,
+  ): Promise<{ kind: 'ok' } | { kind: 'reset' } | { kind: 'mismatch'; report: ChecksumMismatchReport }> {
+    const collected = full ? new Map<string, RecordDTO>() : this.serverRecords
+    let cursor = since
+    let checksum: ChangesDTO['checksum'] = null
+    for (;;) {
+      if (this.disposed) return { kind: 'ok' }
+      const page = await this.api.changes({ id: this.saveId, since: cursor, limit: CLOUD_SAVE_MAX_CHANGES_LIMIT })
+      if (page.resetRequired && !full) return { kind: 'reset' }
+      for (const record of page.records) upsertNewer(collected, record)
+      const advanced = page.nextSince > cursor
+      cursor = Math.max(cursor, page.nextSince)
+      if (!full) {
+        // Each page is safe to keep: revisions are unique per row and strictly increasing (§5.2)
+        this.meta = { saveId: this.saveId, lastSyncedRevision: cursor }
+        const meta = this.meta
+        await this.persist((database) => database.write({ putRecords: page.records, meta }))
+      }
+      if (!page.hasMore || !advanced) {
+        checksum = page.checksum
+        break
+      }
+    }
+
+    if (full) {
+      this.serverRecords = collected
+      this.meta = { saveId: this.saveId, lastSyncedRevision: cursor }
+      const meta = this.meta
+      const records = [...collected.values()]
+      await this.persist((database) => database.write({ replaceRecords: true, putRecords: records, meta }))
+    }
+    this.refresh()
+
+    if (checksum) {
+      const actual = checksumOf(this.serverRecords.values())
+      if (actual.count !== checksum.count || actual.sumAchievement !== checksum.sumAchievement) {
+        return {
+          kind: 'mismatch',
+          report: {
+            expectedCount: checksum.count,
+            expectedSumAchievement: checksum.sumAchievement,
+            actualCount: actual.count,
+            actualSumAchievement: actual.sumAchievement,
+          },
+        }
+      }
+    }
+    return { kind: 'ok' }
+  }
+
+  // --- Local state ---
+
+  private enqueue(changes: PendingChange[]) {
+    if (changes.length === 0) return
+    const clientEditedAt = new Date().toISOString()
+    const entries: OutboxEntry[] = changes.map((change) => ({
+      mutationId: uuidv7(),
+      saveId: this.saveId,
+      op: change.op,
+      sheetId: change.sheetId,
+      // The revision of the record as the user saw it: the server rebases on it (§5.4)
+      basedOnRevision: this.serverRecords.get(change.sheetId)?.revision ?? 0,
+      ...(change.op === 'set' ? { value: change.value } : {}),
+      entryMethod: change.entryMethod,
+      clientEditedAt,
+    }))
+    this.outbox = [...this.outbox, ...entries]
+    this.refresh()
+    void this.persist(async (database) => {
+      const added = await database.write({ addOutbox: entries })
+      // Keep the creation order IndexedDB assigned, so a reload sorts them the same way
+      const seqById = new Map(added.map((entry) => [entry.mutationId, entry.seq]))
+      this.outbox = this.outbox.map((entry) =>
+        seqById.has(entry.mutationId) ? { ...entry, seq: seqById.get(entry.mutationId) } : entry,
+      )
+      this.broadcast()
+    })
+    this.scheduleDebouncedSync()
+  }
+
+  /** Reads everything back from IndexedDB (other tabs write there too) */
+  private reload(): Promise<void> {
+    return this.persist(async (database) => {
+      const snapshot = await database.read()
+      if (snapshot.meta.saveId !== this.saveId) {
+        // The cache holds another save: start this one from scratch (the other save's outbox entries stay)
+        this.serverRecords = new Map()
+        this.meta = { saveId: this.saveId, lastSyncedRevision: 0 }
+        const meta = this.meta
+        await database.write({ replaceRecords: true, meta })
+      } else {
+        this.serverRecords = new Map(snapshot.records.map((record) => [record.sheetId, record]))
+        this.meta = snapshot.meta
+      }
+      this.outbox = snapshot.outbox
+      this.issues = snapshot.issues
+      // A save synced before shows its cache right away; a new one waits for its first sync
+      if (!this.isReady && this.meta.lastSyncedRevision > 0) this.isReady = true
+      this.refresh()
+    })
+  }
+
+  private persist<T>(task: (database: CloudScoreDatabase) => Promise<T>): Promise<T> {
+    const run = this.queue.then(() => task(this.database))
+    this.queue = run.catch(() => {})
+    return run
+  }
+
+  private onBroadcast(message: unknown) {
+    const data = message as Partial<BroadcastMessage> | null
+    if (!data || data.type !== 'changed' || data.userId !== this.userId || data.saveId !== this.saveId) return
+    void this.reload()
+      .then(() => {
+        // Another tab queued changes and may not hold the lock: the lock holder pushes them
+        if (this.pendingEntries().length > 0) this.scheduleDebouncedSync()
+      })
+      .catch(() => {})
+  }
+
+  private broadcast() {
+    if (this.disposed) return
+    const message: BroadcastMessage = { type: 'changed', userId: this.userId, saveId: this.saveId }
+    try {
+      this.channel?.postMessage(message)
+    } catch {
+      // A closed channel: other tabs catch up on their next sync
+    }
+  }
+
+  private pendingEntries(): OutboxEntry[] {
+    return this.outbox.filter((entry) => entry.saveId === this.saveId)
+  }
+
+  /** The server's records with the pending outbox entries laid over them, as the server would apply them */
+  private rebuildView() {
+    const view = new Map<string, CloudRecord>()
+    // In revision order, so every tab and every reload lists the records the same way
+    const byRevision = [...this.serverRecords.values()].sort((a, b) => a.revision - b.revision)
+    for (const record of byRevision) view.set(record.sheetId, recordFromDTO(record))
+    for (const entry of this.pendingEntries()) {
+      const existing = view.get(entry.sheetId) ?? null
+      // Optimistic: over the record this device has, so nothing is superseded locally
+      const decision = decideManualMutation(
+        existing,
+        entry.op === 'set' && entry.value
+          ? {
+              op: 'set',
+              basedOnRevision: existing?.revision ?? 0,
+              value: entry.value,
+              entryMethod: entry.entryMethod,
+            }
+          : { op: 'delete', basedOnRevision: existing?.revision ?? 0 },
+      )
+      if (decision.status !== 'applied' || !decision.next) continue
+      const { deleted, ...fields } = decision.next
+      view.set(entry.sheetId, {
+        ...fields,
+        sheetId: entry.sheetId,
+        revision: existing?.revision ?? 0,
+        deletedAt: deleted ? entry.clientEditedAt : null,
+        pending: true,
+      })
+    }
+    this.view = view
+  }
+
+  private refresh() {
+    this.rebuildView()
+    this.invalidateDerived()
+    this.currentStatus = this.buildStatus()
+    this.notify()
+  }
+
+  private setState(state: ScoreRepositoryStatus['state']) {
+    if (this.state === state) return
+    this.state = state
+    this.currentStatus = this.buildStatus()
+    this.notify()
+  }
+
+  private buildStatus(): ScoreRepositoryStatus {
+    return Object.freeze({
+      state: this.state,
+      pendingCount: this.pendingEntries().length,
+      lastSyncedRevision: this.meta.lastSyncedRevision,
+      issues: this.issues.length ? Object.freeze([...this.issues]) : EMPTY_ISSUES,
+    })
+  }
+
+  private invalidateDerived() {
+    this.records = null
+    this.recordsBySheetId = null
+    this.playEntries = null
+  }
+
+  private notify() {
+    if (this.disposed) return
+    for (const listener of [...this.listeners]) listener()
+  }
+}
+
+type PendingChange =
+  | { op: 'set'; sheetId: string; value: NonNullable<OutboxEntry['value']>; entryMethod: ManualEntryMethod }
+  | { op: 'delete'; sheetId: string; entryMethod: ManualEntryMethod }
+
+function toWireMutation(entry: OutboxEntry): MutationItemInput {
+  return {
+    mutationId: entry.mutationId,
+    op: entry.op,
+    sheetId: entry.sheetId,
+    basedOnRevision: entry.basedOnRevision,
+    clientEditedAt: entry.clientEditedAt,
+    entryMethod: entry.entryMethod,
+    ...(entry.op === 'set' && entry.value ? { value: entry.value } : {}),
+  }
+}
+
+function issueOf(entry: OutboxEntry, kind: SyncIssue['kind'], reason: string | null): SyncIssue {
+  return {
+    id: entry.mutationId,
+    sheetId: entry.sheetId,
+    kind,
+    reason: reason ?? (kind === 'superseded' ? 'newer-verified-record' : 'rejected'),
+    intent: {
+      op: entry.op,
+      ...(entry.value ? { value: entry.value } : {}),
+      entryMethod: entry.entryMethod,
+    },
+    createdAt: new Date().toISOString(),
+  }
+}

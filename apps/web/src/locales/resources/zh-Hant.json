@@ -602,7 +602,8 @@
     "io.clear.dialog.warning": "警告",
     "io.clear.dialog.message": "這將從此瀏覽器永久刪除所有記錄。如需備份，請先匯出。",
     "io.clear.dialog.cancel": "取消",
-    "io.clear.dialog.confirm": "清空所有記錄"
+    "io.clear.dialog.confirm": "清空所有記錄",
+    "cloud-save.save-missing": "找不到你的雲端存檔，本裝置將使用本機存檔。"
   },
   "constants": {
     "title": "maimai DX Lv.{{level}} 譜面定數表",
