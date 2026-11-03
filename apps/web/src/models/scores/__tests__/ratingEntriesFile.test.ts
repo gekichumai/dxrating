@@ -32,6 +32,18 @@ describe('parseRatingFile', () => {
     expect(parseRatingFile(JSON.stringify(entries))).toEqual({ success: true, entries })
   })
 
+  it('keeps entries an earlier add form saved with an achievement out of range or not a number', () => {
+    // `NaN` from an empty field is written as `null`; the range was not checked
+    const entries = [
+      { sheetId: 'dsht_5mk3yr8gme', achievementRate: null },
+      { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 150 },
+      { sheetId: 'dsht_23456789ab', achievementRate: 101.5 },
+      { sheetId: 'dsht_mpd82wyms9', achievementRate: -1 },
+      { sheetId: 'dsht_5mk3yr8gme', achievementRate: 99.5 },
+    ]
+    expect(parseRatingFile(JSON.stringify(entries))).toEqual({ success: true, entries })
+  })
+
   it('accepts an empty list', () => {
     expect(parseRatingFile('[]')).toEqual({ success: true, entries: [] })
   })
@@ -66,8 +78,7 @@ describe('parseRatingFile', () => {
     ['an entry without a sheet ID', [{ achievementRate: 99 }]],
     ['an empty sheet ID', [{ sheetId: '', achievementRate: 99 }]],
     ['an achievement as text', [{ sheetId: 'dsht_5mk3yr8gme', achievementRate: '99.5' }]],
-    ['an achievement above 101 %', [{ sheetId: 'dsht_5mk3yr8gme', achievementRate: 101.0001 }]],
-    ['a negative achievement', [{ sheetId: 'dsht_5mk3yr8gme', achievementRate: -1 }]],
+    ['an entry without an achievement', [{ sheetId: 'dsht_5mk3yr8gme' }]],
     ['an entry that is not an object', [{ sheetId: 'dsht_5mk3yr8gme', achievementRate: 99 }, 42]],
   ])('rejects %s, importing nothing', (_, value) => {
     expect(parseRatingFile(JSON.stringify(value))).toMatchObject({ success: false, reason: 'invalid-structure' })

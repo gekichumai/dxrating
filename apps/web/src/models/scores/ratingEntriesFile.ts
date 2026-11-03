@@ -5,6 +5,11 @@ import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntry
  * The rating files DXRating exports ("all records" and "Best 50" JSON): an array of saved entries. Files of every
  * past version import as they did. Unknown fields are kept; a malformed optional field (an unknown FC/FS flag, a
  * broken identity or source) is dropped instead of failing the whole file, as the calculator never relied on it.
+ *
+ * The achievement must be a number, but its range is not checked: earlier versions of the add form saved what was
+ * typed (an empty field as `NaN`, written as `null`, and values outside 0..101), and the "all records" export writes
+ * the save as it is. Such entries import unchanged, as before, so a save and its export keep round-tripping; they
+ * never make a valid record (`LocalScoreRepository` leaves them out of `list()`).
  */
 
 const COMBO_FLAGS = ['fc', 'fcp', 'ap', 'app'] as const
@@ -35,7 +40,7 @@ const ProviderConfigSchema = z.looseObject({
 
 export const RatingFileEntrySchema = z.looseObject({
   sheetId: z.string().min(1),
-  achievementRate: z.number().min(0).max(101),
+  achievementRate: z.number().nullable(),
   identity: optionalDropped(IdentitySchema),
   comboFlag: optionalDropped(z.enum(COMBO_FLAGS).nullable()),
   syncFlag: optionalDropped(z.enum(SYNC_FLAGS).nullable()),

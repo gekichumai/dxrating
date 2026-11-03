@@ -67,6 +67,47 @@ describe('ImportFromJSONButtonListItem', () => {
     expect(window.localStorage.getItem('rating-calculator-entries')).toBe(JSON.stringify(entries))
   })
 
+  it('imports an "all records" export of a save with entries of every kind back as it was', async () => {
+    // What the "all records" export writes: the saved entries as they are
+    const saved = [
+      { sheetId: 'dsht_5mk3yr8gme', achievementRate: 99.1 },
+      {
+        sheetId: 'dsht_e5nsvt8k2a',
+        identity: { songId: 'dsng_kkx38yfx4t', type: 'dx', difficulty: 'master' },
+        achievementRate: 100.5432,
+        comboFlag: 'ap',
+        syncFlag: 'fsd',
+        source: { provider: 'maimai-net', providerSongName: '君の知らない物語' },
+      },
+      {
+        sheetId: 'dsht_mpd82wyms9',
+        achievementRate: 97.12345,
+        comboFlag: null,
+        syncFlag: null,
+        dxScore: 1234,
+        source: { provider: 'diving-fish', providerId: 11451, providerSongName: 'Link', best50Bucket: 'b35' },
+        providerConfig: { divingFish: { ratingEligibility: 'b35' } },
+      },
+      {
+        sheetId: '君の知らない物語__dxrt__std__dxrt__expert',
+        identity: { songId: '君の知らない物語', type: 'std', difficulty: 'expert' },
+        achievementRate: 98,
+      },
+      { sheetId: 'retired song__dxrt__dx__dxrt__master', achievementRate: 97 },
+      // typed into earlier add forms: out of range, and an empty field (`NaN`, written as `null`)
+      { sheetId: 'dsht_23456789ab', achievementRate: 101.5 },
+      { sheetId: 'dsht_3456789abc', achievementRate: Number.NaN },
+    ]
+    const exported = JSON.stringify(saved)
+    repository.clear()
+
+    await importFile(exported)
+
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith('Imported 7 records'))
+    expect(toastError).not.toHaveBeenCalled()
+    expect(JSON.parse(window.localStorage.getItem('rating-calculator-entries')!)).toEqual(JSON.parse(exported))
+  })
+
   it('tells the visitor a file is not a rating file and keeps the save', async () => {
     await importFile(JSON.stringify({ userMusicDetailList: [] }))
 
