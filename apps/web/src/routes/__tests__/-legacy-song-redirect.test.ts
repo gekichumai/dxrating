@@ -105,3 +105,12 @@ describe('resolveLegacySheetPathRedirect', () => {
     expect(LEGACY_SHEET_PATH_REDIRECT_STATUS_CODE).toBe(308)
   })
 })
+
+describe('legacy redirects keep the locale variant', () => {
+  it('carries a supported ?locale= and drops anything else', () => {
+    expect(resolveLegacySheetPathRedirect('dsng_x', 'dx', 'master', { locale: 'ja', q: 'x' })).toMatchObject({
+      search: { locale: 'ja' },
+    })
+    expect(resolveLegacySheetPathRedirect('dsng_x', 'dx', 'master', { locale: 'fr' })).not.toHaveProperty('search')
+  })
+})
