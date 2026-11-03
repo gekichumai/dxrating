@@ -64,9 +64,9 @@ export interface ClientImportChunkResult {
  *   repeated application would be harmless.
  * - The job succeeds when its last missing chunk is applied (normally chunk `chunkCount - 1`); counts add up over
  *   the chunks.
- * - `raw_payload_sha256` is computed by the server: each record carries the hash of the canonical JSON of the chunk
- *   records it came in; the job's is that hash for a single chunk, or the hash of the chunk hashes in order. The
- *   client's `rawPayloadSha256` is only compared with the chunk hash.
+ * - `raw_payload_sha256` is computed by the server: each record carries the hash of the canonical JSON of the chunk's
+ *   accepted (validated) records; the job's is that hash for a single chunk, or the hash of the chunk hashes in
+ *   order. The client's `rawPayloadSha256` is only compared with the chunk hash.
  * - The content short-circuit (§5.5) applies to single-chunk automatic and migration uploads.
  * - Records failing {@link ImportRecordSchema} (a bad sheet ID, an out-of-range value, a `demo` claim) count as
  *   `rejected`; the claimed provider of each record is stored as `claimed_source`.
@@ -80,7 +80,17 @@ export const applyClientImportChunk = (
   saveTransaction(database, () =>
     Effect.gen(function* () {
       const save = yield* lockSave(database, userId, saveId)
-      const chunkSha = canonicalSha256(input.records)
+      // Validate before hashing: only accepted, normalized records are hashed, so a malformed record (e.g. a value
+      // nested past the canonical depth guard) is rejected alone instead of failing the chunk, and every replay of
+      // the chunk hashes the same records
+      const records: MergeRecord[] = []
+      let rejected = 0
+      for (const item of input.records) {
+        const parsed = ImportRecordSchema.safeParse(item)
+        if (parsed.success) records.push(parsed.data)
+        else rejected += 1
+      }
+      const chunkSha = canonicalSha256(records)
       const hashMismatch = input.rawPayloadSha256 != null && input.rawPayloadSha256 !== chunkSha
 
       const started = yield* startImportJob(database, {
@@ -116,14 +126,6 @@ export const applyClientImportChunk = (
         return yield* new CloudSaveBadRequest({ message: 'chunkCount differs from the earlier chunks of this import' })
       }
       if (chunks.received[String(input.chunkIndex)] !== undefined) return replay()
-
-      const records: MergeRecord[] = []
-      let rejected = 0
-      for (const item of input.records) {
-        const parsed = ImportRecordSchema.safeParse(item)
-        if (parsed.success) records.push(parsed.data)
-        else rejected += 1
-      }
 
       let counts: ImportCountsDTO
       if (input.chunkCount === 1 && (yield* shouldShortCircuit(database, job, save.revision))) {

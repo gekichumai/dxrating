@@ -201,6 +201,30 @@ describe('client imports', () => {
     expect(mixed.body.job.counts).toMatchObject({ fetched: 3, inserted: 1, rejected: 2 })
   })
 
+  it('rejects a deeply nested record alone and applies the rest of the chunk (raw body through the route)', async () => {
+    const user = await newUser()
+    const nested = `${'{"a":'.repeat(40)}1${'}'.repeat(40)}`
+    const valid = record(2)
+    const body = (idempotencyKey: string) =>
+      `{"idempotencyKey":"${idempotencyKey}","source":"aqua-dx","trigger":"user","records":[{"sheetId":"${sheetId(1)}","achievement":${nested},"comboFlag":null,"syncFlag":null},${JSON.stringify(valid)}]}`
+    const idempotencyKey = `nested-${randomUUID()}`
+    const response = await api(user.cookie, 'POST', `/saves/${user.saveId}/client-imports`, body(idempotencyKey))
+    expect(response.status).toBe(200)
+    expect(response.body.job).toMatchObject({
+      status: 'succeeded',
+      counts: { fetched: 2, inserted: 1, rejected: 1 },
+      // the hash covers the accepted records only
+      rawPayloadSha256: canonicalSha256([valid]),
+    })
+    const rows = await stored(user.saveId)
+    expect(rows.map((r) => [r.sheet_id, r.raw_payload_sha256])).toEqual([[sheetId(2), canonicalSha256([valid])]])
+
+    // a replay of the same chunk hashes the same records and answers the job as it is
+    const replay = await api(user.cookie, 'POST', `/saves/${user.saveId}/client-imports`, body(idempotencyKey))
+    expect(replay.status).toBe(200)
+    expect(replay.body).toEqual(response.body)
+  })
+
   it('short-circuits an unchanged automatic upload', async () => {
     const user = await newUser()
     const records = [record(1), record(2)]
