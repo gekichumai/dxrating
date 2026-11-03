@@ -439,7 +439,7 @@ function importMergeVectors(): Obj[] {
   {
     const job = serverJob('auto')
     const existing = existingRecord('verifiedNet')
-    const incoming = incomingRecord('equal')
+    const incoming = incomingRecord('equal', { dxScore: 2400, providerRecordId: '42' })
     add(
       'equal / stored verified from the same source → unchanged, refresh job reference without bump',
       existing,
@@ -459,6 +459,35 @@ function importMergeVectors(): Obj[] {
         liveDelta: 0,
         eventKind: null,
       }),
+    )
+    // The record may only point at the new job if its payload supports every stored provider value
+    const changed = incomingRecord('equal', { dxScore: 2500, providerRecordId: '42' })
+    add(
+      'equal / stored verified from the same source / provider reports another dxScore → provenanceUpgraded, new values and job',
+      existing,
+      changed,
+      job,
+      expectImport('provenanceUpgraded', {
+        next: asNext(existing, { dxScore: 2500, providerRecordId: '42', provenance: jobProvenance(job, changed) }),
+        bumpRevision: true,
+        valueChanged: false,
+        liveDelta: 0,
+        eventKind: 'provenance_upgraded',
+      }),
+    )
+    add(
+      'equal / stored verified from the same source / payload without dxScore → unchanged, keep the old job as evidence',
+      existing,
+      incomingRecord('equal', { dxScore: null, providerRecordId: '42' }),
+      job,
+      untouched('unchanged'),
+    )
+    add(
+      'equal / stored verified from the same source / payload without providerRecordId → unchanged, keep the old job',
+      existing,
+      incomingRecord('equal', { dxScore: 2400, providerRecordId: null }),
+      job,
+      untouched('unchanged'),
     )
     add(
       'worse / stored verified from the same source → unchanged, no refresh',
@@ -709,7 +738,7 @@ function importMergeVectors(): Obj[] {
     add(
       'Diving-Fish / equal / stored same-source verified b15 → b35 refresh with bump',
       sameSource,
-      incomingRecord('equal', { best50Bucket: 'b35' }),
+      incomingRecord('equal', { best50Bucket: 'b35', dxScore: 2400, providerRecordId: '42' }),
       dfJob('auto'),
       provenanceUpgraded(
         asNext(sameSource, {

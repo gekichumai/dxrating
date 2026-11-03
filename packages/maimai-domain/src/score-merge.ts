@@ -228,26 +228,49 @@ export function decideImportMerge(
       (existing.provenance.verification !== 'verified' || sameOrigin)
     ) {
       if (existing.provenance.verification === 'verified') {
-        // Same source and account: the new job fetched this exact value again
+        // Same source and account: the new job fetched this exact score again. The record may only point at the new
+        // job if that job's payload supports every provider value the record keeps (§5.3).
+        const support = [
+          [current.dxScore, incoming.dxScore ?? null],
+          [current.providerRecordId, incoming.providerRecordId ?? null],
+        ] as const
+        if (support.some(([stored, fetched]) => stored !== null && fetched === null)) {
+          // The new payload omits a value the record holds: keep the job that fetched it as the evidence
+        } else if (support.some(([stored, fetched]) => stored !== null && fetched !== stored)) {
+          // The provider now reports different values for the same score: take them, with the new job as evidence.
+          // Clients must see the change, so the revision moves.
+          outcome = 'provenanceUpgraded'
+          bumpRevision = true
+          next = {
+            ...next,
+            dxScore: incoming.dxScore ?? null,
+            providerRecordId: incoming.providerRecordId ?? null,
+            provenance: importProvenance(job, incoming),
+          }
+        } else {
+          // Every stored value is in the new payload; fill the gaps it adds (no revision bump, §5.3)
+          next = {
+            ...next,
+            dxScore: incoming.dxScore ?? null,
+            providerRecordId: incoming.providerRecordId ?? null,
+            provenance: {
+              ...next.provenance,
+              importJobId: job.id,
+              fetchedAt: job.fetchedAt ?? null,
+              rawPayloadSha256: job.rawPayloadSha256 ?? null,
+            },
+          }
+        }
+      } else {
+        // Backfill only from a job of the same trust level (never client data into a verified record), and
+        // `providerRecordId` only from the provider whose id namespace the record is in
         next = {
           ...next,
-          provenance: {
-            ...next.provenance,
-            importJobId: job.id,
-            fetchedAt: job.fetchedAt ?? null,
-            rawPayloadSha256: job.rawPayloadSha256 ?? null,
-          },
+          dxScore: next.dxScore ?? incoming.dxScore ?? null,
+          providerRecordId:
+            next.providerRecordId ??
+            (existing.provenance.source === job.source ? (incoming.providerRecordId ?? null) : null),
         }
-      }
-
-      // Backfill only from a job of the same trust level (never client data into a verified record), and
-      // `providerRecordId` only from the provider whose id namespace the record is in
-      next = {
-        ...next,
-        dxScore: next.dxScore ?? incoming.dxScore ?? null,
-        providerRecordId:
-          next.providerRecordId ??
-          (existing.provenance.source === job.source ? (incoming.providerRecordId ?? null) : null),
       }
     }
   }
