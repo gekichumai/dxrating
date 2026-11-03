@@ -4,10 +4,11 @@ import { resolveSongRouteParam } from '@/catalog/songLookup'
 import { SongPage } from '@/pages/SongPage'
 import { buildSongSheetSeo, buildSongSheetStructuredData, formatSeoTitle, resolveSeoLocale } from '@/utils/seo'
 import { createServerI18n } from '@/setup/init-i18n'
+import { keepLocaleSearch } from '@/setup/locale'
 
 export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
   ssr: true,
-  loader: async ({ params }) => {
+  loader: async ({ params, location }) => {
     const resolution = await resolveSongRouteParam(await getCatalogDocument(), params.songId)
     if (!resolution) {
       throw notFound()
@@ -17,6 +18,7 @@ export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
       throw redirect({
         to: '/songs/$songId/$type/$difficulty',
         params: { songId: resolution.redirectSongId, type: params.type, difficulty: params.difficulty },
+        ...keepLocaleSearch(location.search),
         statusCode: 308,
         replace: true,
       })
