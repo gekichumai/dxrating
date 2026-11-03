@@ -250,6 +250,8 @@ describe('CloudScoreRepository', () => {
           op: 'set',
           value: { achievement: 985000, comboFlag: null, syncFlag: null, dxScore: null },
           entryMethod: 'typed',
+          // When the user made the change, not when its result came back (§5.4: value, method, time)
+          clientEditedAt: server.mutateCalls[0]![0]!.clientEditedAt,
         },
       }),
     ])
@@ -289,6 +291,54 @@ describe('CloudScoreRepository', () => {
     reloaded.dismissIssue(reloaded.status.issues[0]!.id)
     expect(reloaded.status.issues).toEqual([])
     expect(reloaded.entries()).toEqual([])
+  })
+
+  it('keeps a dismissed issue gone when a reload had already read it', async () => {
+    let channel: ScoreBroadcastChannel | null = null
+    const createChannel = () => {
+      channel = { onmessage: null, postMessage() {}, close() {} }
+      return channel
+    }
+    const repository = await openRepository({ createChannel })
+    server.respondOnce = (mutations) => ({
+      revision: 0,
+      results: mutations.map((mutation) => ({
+        mutationId: mutation.mutationId,
+        status: 'rejected',
+        record: null,
+        reason: 'invalid-achievement',
+      })),
+    })
+    repository.setManual({ sheetId: SHEET_A, achievementRate: 99 }, 'typed')
+    repository.start()
+    await repository.idle()
+    const issueId = repository.status.issues[0]!.id
+
+    // A broadcast reload reads the issue, and is held there until the dismissal
+    const original = CloudScoreDatabase.prototype.read
+    let release: (() => void) | null = null
+    const read = vi
+      .spyOn(CloudScoreDatabase.prototype, 'read')
+      .mockImplementationOnce(async function (this: CloudScoreDatabase) {
+        const snapshot = await original.call(this)
+        await new Promise<void>((resolve) => (release = resolve))
+        return snapshot
+      })
+    const seen: string[][] = []
+    repository.subscribe(() => seen.push(repository.status.issues.map((issue) => issue.id)))
+    channel!.onmessage?.({ data: { type: 'changed', userId: 'user-1', saveId: 'dsav_one' } } as MessageEvent)
+    await vi.waitFor(() => expect(release).not.toBeNull())
+
+    repository.dismissIssue(issueId)
+    release!()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    read.mockRestore()
+
+    expect(seen.length).toBeGreaterThan(0)
+    expect(seen.every((ids) => !ids.includes(issueId))).toBe(true)
+    expect(repository.status.issues).toEqual([])
+    await unload(repository)
+    expect((await openRepository()).status.issues).toEqual([])
   })
 
   it('rebuilds the cache from revision 0 when the server requires a reset, keeping pending changes', async () => {
@@ -548,6 +598,83 @@ describe('CloudScoreRepository', () => {
     await unload(other)
 
     expect((await openRepository()).status.pendingCount).toBe(1)
+  })
+
+  it('keeps the caches of two saves of the same user apart, when two tabs work on them at once', async () => {
+    const serverB = new FakeCloudSaveServer()
+    server.pageSize = 1
+    server.put(SHEET_A, 1000000)
+    server.put(SHEET_B, 990000)
+    serverB.put(SHEET_C, 980000)
+    let tabB: CloudScoreRepository | null = null
+    // Tab B syncs save B between tab A's pages
+    server.onChanges = () => {
+      if (server.changesCalls.at(-1) === 1) void tabB?.sync()
+    }
+    const reportChecksumMismatch = vi.fn()
+    const tabA = await openRepository({ reportChecksumMismatch })
+    tabB = await openRepository({ saveId: 'dsav_other', api: serverB.api, reportChecksumMismatch })
+
+    await tabA.sync()
+    await tabB.idle()
+    expect(reportChecksumMismatch).not.toHaveBeenCalled()
+    expect(tabA.entries().map((entry) => entry.sheetId)).toEqual([SHEET_A, SHEET_B])
+    expect(tabB.entries().map((entry) => entry.sheetId)).toEqual([SHEET_C])
+
+    // A push result of save A lands in save A's cache only
+    tabA.setManual({ sheetId: SHEET_C, achievementRate: 97 }, 'typed')
+    await tabA.sync()
+    await tabB.sync()
+    expect(tabB.entries()).toEqual([expect.objectContaining({ sheetId: SHEET_C, achievementRate: 98 })])
+    expect(serverB.mutateCalls).toEqual([])
+
+    // Both caches survive a reload, and neither refetches
+    await unload(tabA)
+    await unload(tabB)
+    const changesBefore = server.changesCalls.length
+    const reopenedA = await openRepository()
+    const reopenedB = await openRepository({ saveId: 'dsav_other', api: serverB.api })
+    expect(reopenedA.ready).toBe(true)
+    expect(reopenedA.entries().map((entry) => entry.sheetId)).toEqual([SHEET_A, SHEET_B, SHEET_C])
+    expect(reopenedB.entries().map((entry) => entry.sheetId)).toEqual([SHEET_C])
+    await reopenedA.sync()
+    expect(server.changesCalls.slice(changesBefore)).toEqual([reopenedA.status.lastSyncedRevision])
+  })
+
+  it('drops a version 1 cache on upgrade, keeping its outbox and issues', async () => {
+    server.put(SHEET_A, 1000000)
+    await new Promise<void>((resolve, reject) => {
+      const request = factory.open('dxr-cloud-v1-user-1', 1)
+      request.onupgradeneeded = () => {
+        const db = request.result
+        db.createObjectStore('records', { keyPath: 'sheetId' }).put({ sheetId: SHEET_B, revision: 9 })
+        const outbox = db.createObjectStore('outbox', { keyPath: 'seq', autoIncrement: true })
+        outbox.createIndex('mutationId', 'mutationId', { unique: true })
+        outbox.add({
+          mutationId: '0195f000-0000-7000-8000-000000000001',
+          saveId: 'dsav_one',
+          op: 'set',
+          sheetId: SHEET_C,
+          basedOnRevision: 0,
+          value: { achievement: 990000, comboFlag: null, syncFlag: null, dxScore: null },
+          entryMethod: 'typed',
+          clientEditedAt: '2026-11-01T00:00:00.000Z',
+        })
+        db.createObjectStore('meta').put({ saveId: 'dsav_one', lastSyncedRevision: 9 }, 'state')
+        db.createObjectStore('issues', { keyPath: 'id' })
+      }
+      request.onsuccess = () => {
+        request.result.close()
+        resolve()
+      }
+      request.onerror = () => reject(request.error)
+    })
+
+    const repository = await openRepository()
+    expect(repository.status).toMatchObject({ pendingCount: 1, lastSyncedRevision: 0 })
+    await repository.sync()
+    expect(server.changesCalls[0]).toBe(0)
+    expect(repository.entries().map((entry) => entry.sheetId)).toEqual([SHEET_A, SHEET_C])
   })
 
   it('flushes on dispose, waiting at most 3 s, and keeps what it could not send', async () => {

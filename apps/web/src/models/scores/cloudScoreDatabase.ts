@@ -3,18 +3,20 @@ import type { RecordDTO, SetValue } from '@gekichumai/api-contract'
 import type { SyncIssue } from './ScoreRepository'
 
 /**
- * The IndexedDB cache of one user's cloud save (design §8.1): `dxr-cloud-v1-<userId>`, so one user's records, outbox
- * and issues never mix with another's. A small promise wrapper over the raw API (no dependency).
+ * The IndexedDB cache of one user's cloud saves (design §8.1): `dxr-cloud-v1-<userId>`, so one user's records, outbox
+ * and issues never mix with another's. A small promise wrapper over the raw API (no dependency). An instance reads and
+ * writes the cache of one save: two tabs on different saves of the same user never touch each other's records.
  *
- * - `records`: the server's records (tombstones included) of the save in `meta.saveId`, by sheet ID
+ * - `records`: the server's records (tombstones included), by `[saveId, sheetId]`
  * - `outbox`: mutations not yet acknowledged by the server, in creation order (auto-increment `seq`), each with the
  *   save it belongs to; never deleted on logout or when cloud save is turned off (§5.7)
- * - `meta`: `{ saveId, lastSyncedRevision }` under the key `state`
+ * - `meta`: `{ saveId, lastSyncedRevision }` under the save's ID
  * - `issues`: sync issues (superseded or rejected mutations), by ID, each with the save it belongs to; kept for
  *   other saves like their outbox entries
  */
 
-export const CLOUD_SCORE_DB_VERSION = 1
+/** 2: `records` and `meta` keyed by save (version 1 held one save's cache; it is dropped and refetched) */
+export const CLOUD_SCORE_DB_VERSION = 2
 
 export const cloudScoreDatabaseName = (userId: string) => `dxr-cloud-v1-${userId}`
 
@@ -49,7 +51,7 @@ export interface CloudScoreSnapshot {
 
 /** One atomic write; applied in the order of its fields */
 export interface CloudScoreWrite {
-  /** Clears `records` first (full refetch, another save) */
+  /** Clears the save's `records` first (full refetch) */
   replaceRecords?: boolean
   putRecords?: readonly RecordDTO[]
   /** Returns the entries with their `seq` assigned */
@@ -61,7 +63,10 @@ export interface CloudScoreWrite {
 }
 
 const STORES = ['records', 'outbox', 'meta', 'issues'] as const
-const META_KEY = 'state'
+const SAVE_INDEX = 'saveId'
+
+/** A record as stored: with the save it belongs to */
+type StoredRecord = RecordDTO & { saveId: string }
 
 function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -79,14 +84,30 @@ function transactionDone(transaction: IDBTransaction): Promise<void> {
 }
 
 export class CloudScoreDatabase {
-  private constructor(private readonly db: IDBDatabase) {}
+  private constructor(
+    private readonly db: IDBDatabase,
+    readonly saveId: string,
+  ) {}
 
-  static async open(userId: string, factory: IDBFactory = globalThis.indexedDB): Promise<CloudScoreDatabase> {
+  /** Opens the user's database, reading and writing the cache of `saveId` */
+  static async open(
+    userId: string,
+    saveId: string,
+    factory: IDBFactory = globalThis.indexedDB,
+  ): Promise<CloudScoreDatabase> {
     if (!factory) throw new Error('IndexedDB is not available')
     const request = factory.open(cloudScoreDatabaseName(userId), CLOUD_SCORE_DB_VERSION)
-    request.onupgradeneeded = () => {
+    request.onupgradeneeded = (event) => {
       const db = request.result
-      if (!db.objectStoreNames.contains('records')) db.createObjectStore('records', { keyPath: 'sheetId' })
+      // Version 1 kept one save's cache under a single key: a cache only, refetched from the server
+      if (event.oldVersion < 2) {
+        if (db.objectStoreNames.contains('records')) db.deleteObjectStore('records')
+        if (db.objectStoreNames.contains('meta')) db.deleteObjectStore('meta')
+      }
+      if (!db.objectStoreNames.contains('records')) {
+        const records = db.createObjectStore('records', { keyPath: ['saveId', 'sheetId'] })
+        records.createIndex(SAVE_INDEX, 'saveId')
+      }
       if (!db.objectStoreNames.contains('outbox')) {
         const outbox = db.createObjectStore('outbox', { keyPath: 'seq', autoIncrement: true })
         outbox.createIndex('mutationId', 'mutationId', { unique: true })
@@ -97,20 +118,22 @@ export class CloudScoreDatabase {
     const db = await requestToPromise(request)
     // Another tab upgrading the schema later: let it, this tab reopens on its next load
     db.onversionchange = () => db.close()
-    return new CloudScoreDatabase(db)
+    return new CloudScoreDatabase(db, saveId)
   }
 
   async read(): Promise<CloudScoreSnapshot> {
     const transaction = this.db.transaction([...STORES], 'readonly')
     const [records, outbox, meta, issues] = await Promise.all([
-      requestToPromise(transaction.objectStore('records').getAll() as IDBRequest<RecordDTO[]>),
+      requestToPromise(
+        transaction.objectStore('records').index(SAVE_INDEX).getAll(this.saveId) as IDBRequest<StoredRecord[]>,
+      ),
       requestToPromise(transaction.objectStore('outbox').getAll() as IDBRequest<OutboxEntry[]>),
-      requestToPromise(transaction.objectStore('meta').get(META_KEY) as IDBRequest<CloudScoreMeta | undefined>),
+      requestToPromise(transaction.objectStore('meta').get(this.saveId) as IDBRequest<CloudScoreMeta | undefined>),
       requestToPromise(transaction.objectStore('issues').getAll() as IDBRequest<SyncIssue[]>),
     ])
     return {
-      meta: meta ?? { saveId: null, lastSyncedRevision: 0 },
-      records,
+      meta: meta ?? { saveId: this.saveId, lastSyncedRevision: 0 },
+      records: records.map(({ saveId: _saveId, ...record }) => record),
       outbox: outbox.sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0)),
       issues: issues.sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     }
@@ -129,8 +152,20 @@ export class CloudScoreDatabase {
     const outbox = transaction.objectStore('outbox')
     const issues = transaction.objectStore('issues')
 
-    if (write.replaceRecords) records.clear()
-    for (const record of write.putRecords ?? []) records.put(record)
+    const putRecords = () => {
+      for (const record of write.putRecords ?? [])
+        records.put({ ...record, saveId: this.saveId } satisfies StoredRecord)
+    }
+    if (write.replaceRecords) {
+      // This save's records only; the puts follow once they are gone
+      const keys = records.index(SAVE_INDEX).getAllKeys(this.saveId)
+      keys.onsuccess = () => {
+        for (const key of keys.result) records.delete(key)
+        putRecords()
+      }
+    } else {
+      putRecords()
+    }
 
     const added: Promise<OutboxEntry>[] = []
     for (const entry of write.addOutbox ?? []) {
@@ -149,7 +184,7 @@ export class CloudScoreDatabase {
 
     for (const issue of write.putIssues ?? []) issues.put(issue)
     for (const id of write.deleteIssues ?? []) issues.delete(id)
-    if (write.meta) transaction.objectStore('meta').put(write.meta, META_KEY)
+    if (write.meta) transaction.objectStore('meta').put({ ...write.meta, saveId: this.saveId }, this.saveId)
 
     const [addedEntries] = await Promise.all([Promise.all(added), done])
     return addedEntries
