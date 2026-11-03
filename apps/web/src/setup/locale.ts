@@ -26,6 +26,16 @@ export function toSupportedLocale(lng: string | null | undefined): SupportedLoca
   return null
 }
 
+/**
+ * The `?locale=` of a URL's search, for redirects that must keep the language variant (each variant is its own
+ * canonical URL). Empty when the search has no supported locale.
+ */
+export function keepLocaleSearch(search: unknown): { search?: { locale: SupportedLocale } } {
+  if (typeof search !== 'object' || search === null) return {}
+  const locale = toSupportedLocale((search as Record<string, unknown>)[LOCALE_QUERY_PARAM] as string | undefined)
+  return locale ? { search: { locale } } : {}
+}
+
 export function normalizeDetectedLanguage(lng: string) {
   return toSupportedLocale(lng) ?? DEFAULT_LOCALE
 }
