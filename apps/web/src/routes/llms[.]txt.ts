@@ -9,7 +9,7 @@ DXRating is a maimai DX rating calculator and chart database. It provides canoni
 ## Start Here: the Song Catalog
 
 - https://miruku.dxrating.net/api/v1/dxdata returns every song, chart (sheet), internal level, version, tag and alias as one JSON document. No account or API key.
-- Song IDs (dsng_...) and sheet IDs (dsht_...) are permanent and never reused; removed charts stay in the catalog with an empty serverIds list.
+- Song IDs (dsng_...) and sheet IDs (dsht_...) are permanent and never reused; songs and charts removed from the game stay in the catalog with an empty serverIds list.
 - Caching: the response has a strong ETag; revalidate with If-None-Match (304 while unchanged), or use HEAD for headers only. Browser cache 5 minutes, shared caches 6 hours. The catalog changes at most about once a day.
 
 ## Canonical Resources
@@ -52,11 +52,11 @@ Languages: English, Japanese, Korean, Simplified Chinese, Traditional Chinese.
 ## API Stability (v1 is stable)
 
 - Policy: https://dxrating.net/developers#api-stability
-- Within v1, changes are additive only (new endpoints, optional parameters, response fields, enum values). Ignore unknown fields. Removing or renaming anything, or changing a type or meaning, is breaking.
+- Within v1, changes are additive only (new endpoints, optional parameters, response fields, enum values). Ignore unknown fields and enum values. Removing or renaming anything, or changing a type or meaning, is breaking; correcting data values (internal levels, titles, dates, server availability) is not.
 - Deprecations get at least 6 months' notice, a changelog entry, and Deprecation (RFC 9745) and Sunset (RFC 8594) response headers.
 - Breaking changes go into /api/v2; v1 keeps working for at least 12 months after v2 is stable.
-- Covered: endpoints that need no sign-in. Endpoints that need a DXRating account are for DXRating's own apps.
-- Rate limits: REST has no hard limit; cache and revalidate with If-None-Match (dxdata, tags, aliases and arcade venues send ETags). MCP: 300 requests per minute per client.
+- Covered: dxdata, tags, aliases and arcades (no sign-in). Trending and chart images are best-effort. Endpoints that need a DXRating account are for DXRating's own apps.
+- Rate limits: REST has no hard limit; cache and revalidate with If-None-Match (dxdata, tags, aliases and arcade venues send ETags). MCP: about 300 requests per minute per client.
 - Changelog (subscribe for notifications): https://github.com/gekichumai/dxrating/issues/427
 - Support: https://github.com/gekichumai/dxrating/issues
 

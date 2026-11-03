@@ -388,7 +388,7 @@ export const addPublishedDxdataToOpenApi = (document: OpenAPI.OpenAPIObject): Op
           'snapshot. Most integrations need only this endpoint.',
         '',
         '**IDs.** `songs[].id` (`dsng_…`) and `songs[].sheets[].id` (`dsht_…`) are permanent and never reused. ' +
-          'Removed charts stay in the catalog with an empty `serverIds` list.',
+          'Songs and charts removed from the game stay in the catalog with an empty `serverIds` list.',
         '',
         '**Caching.** The body changes only when a new catalog is published (usually once a day or less). Each ' +
           'response has a strong `ETag` (the SHA-256 of the body). Browsers may cache it for 5 minutes, shared ' +

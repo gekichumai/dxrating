@@ -13,16 +13,16 @@ export const API_INFO_DESCRIPTION = `The public API of [DXRating](https://dxrati
 
 ## Stability (v1 is stable)
 
-- **Additive only.** Within v1 we only add: endpoints, optional parameters, response fields, enum values, songs, tags and aliases. Ignore fields you don't know.
+- **Additive only.** Within v1 we only add: endpoints, optional parameters, response fields, enum values, songs, tags and aliases. Ignore fields and enum values you don't know. Correcting data (internal levels, titles, dates, server availability) is not a breaking change.
 - **Breaking changes** (removing or renaming an endpoint, parameter or field, changing a type or meaning, requiring auth where none was needed) only come with a new version, or after a deprecation.
 - **Deprecation:** at least 6 months' notice. Deprecated endpoints send \`Deprecation\` (RFC 9745) and \`Sunset\` (RFC 8594) headers, and each deprecation is announced in the [changelog](${API_CHANGELOG_URL}).
 - **v2**, if it ever comes, lives at \`/api/v2\`; v1 keeps working for at least 12 months after v2 is stable.
-- **IDs are permanent.** Song IDs (\`dsng_…\`) and sheet IDs (\`dsht_…\`) never change meaning and are never reused. Removed songs stay in the catalog.
-- **Scope:** the endpoints that need no sign-in. Endpoints that need a DXRating account (comments, tag attaching, alias submission, score import) exist for DXRating's own apps and can change at any time.
+- **IDs are permanent.** Song IDs (\`dsng_…\`) and sheet IDs (\`dsht_…\`) are never reused. Songs and charts removed from the game stay in the catalog with an empty \`serverIds\` list. Merges and splits keep one existing ID and are announced in the changelog.
+- **Scope:** DX Data, Tags, Aliases and Arcades (no sign-in needed). Analytics and chart images are best-effort. Endpoints that need a DXRating account (comments, tag attaching, alias submission, score import) exist for DXRating's own apps and can change at any time.
 
 ## Limits and caching
 
-No API key. REST has no hard rate limit today: cache responses and revalidate with \`If-None-Match\` (\`/dxdata\`, \`/tags\`, \`/aliases\` and \`/arcades/venues\` send ETags) instead of re-downloading. The MCP server (\`https://mcp.dxrating.net/mcp\`) allows 300 requests per minute per client.
+No API key. REST has no hard rate limit today: cache responses and revalidate with \`If-None-Match\` (\`/dxdata\`, \`/tags\`, \`/aliases\` and \`/arcades/venues\` send ETags) instead of re-downloading. The MCP server (\`https://mcp.dxrating.net/mcp\`) allows about 300 requests per minute per client.
 
 ## Data and credit
 
@@ -53,6 +53,16 @@ export const applyApiPolicyToOpenApi = (document: OpenAPI.OpenAPIObject): OpenAP
     description: API_INFO_DESCRIPTION,
     contact: { name: 'DXRating on GitHub', url: API_SUPPORT_URL },
   }
+  // Responses gain fields within v1, so a validator generated from the spec must not reject unknown properties.
+  const loosen = (node: unknown): void => {
+    if (Array.isArray(node)) return node.forEach(loosen)
+    if (node === null || typeof node !== 'object') return
+    const record = node as Record<string, unknown>
+    if (record.additionalProperties === false) delete record.additionalProperties
+    Object.values(record).forEach(loosen)
+  }
+  loosen(document.components?.schemas)
+  loosen(document.paths)
   document.externalDocs = { description: 'API stability policy', url: API_POLICY_URL }
   const named = new Set(TAGS.map((tag) => tag.name))
   const others = new Set<string>()
