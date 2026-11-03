@@ -29,8 +29,10 @@ import {
 const backendDirectory = path.resolve(import.meta.dirname, '../..')
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
 
-const session = async (email: string) => {
+// Email/password sign-up leaves the address unverified; `verified` stands in for an OAuth-verified account.
+const session = async (email: string, { verified = false } = {}) => {
   await signUp(email, 'password123', email.split('@')[0]!)
+  if (verified) await pool.query('UPDATE "user" SET email_verified = true WHERE email = $1', [email.toLowerCase()])
   const cookie = extractSessionCookie(await signIn(email, 'password123'))
   const user = await pool.query<{ id: string }>('SELECT id FROM "user" WHERE email = $1', [email.toLowerCase()])
   return { cookie, userId: user.rows[0]!.id }
@@ -87,13 +89,26 @@ describe('feature flags (CLOUD_SAVE_MODE=optin)', () => {
     await expect(callGated(undefined)).rejects.toMatchObject({ code: 'UNAUTHORIZED' })
   })
 
-  it('enables allowlisted emails without a row', async () => {
-    const { cookie, userId } = await session('allowed@example.com')
+  it('enables verified allowlisted emails without a row', async () => {
+    const { cookie, userId } = await session('allowed@example.com', { verified: true })
     const response = await features(cookie)
     expect(response.status).toBe(200)
-    expect(response.headers.get('cache-control') ?? '').not.toContain('public')
+    expect(response.headers.get('cache-control')).toBe('private, no-store')
+    expect(response.headers.get('cdn-cache-control')).toBe('no-store')
+    expect(response.headers.get('cloudflare-cdn-cache-control')).toBe('no-store')
     expect(await response.json()).toEqual({ cloudSave: true, serverImports: false, optInAvailable: false })
     expect(await callGated(userId)).toBe('reached')
+  })
+
+  it('ignores the allowlist for an unverified sign-up', async () => {
+    const { cookie, userId } = await session('other-owner@example.com')
+    expect(await (await features(cookie)).json()).toEqual({
+      cloudSave: false,
+      serverImports: false,
+      optInAvailable: true,
+    })
+    await expect(callGated(userId)).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    expect(flagSet('cloud_save', 'other-owner@example.com', 'on')).toContain('(email NOT verified)')
   })
 
   it('keeps others off until they opt in, then records the consent', async () => {

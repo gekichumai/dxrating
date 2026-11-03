@@ -17,8 +17,9 @@ const settings = (cloudSaveMode: CloudSaveMode, overrides: Partial<FeatureFlagSe
   serverImports: true,
   ...overrides,
 })
-const stranger: UserFlagState = { email: 'someone@example.com', overrides: {} }
-const owner: UserFlagState = { email: 'Owner@Example.com', overrides: {} }
+const stranger: UserFlagState = { email: 'someone@example.com', emailVerified: true, overrides: {} }
+const owner: UserFlagState = { email: 'Owner@Example.com', emailVerified: true, overrides: {} }
+const nobody: UserFlagState = { email: null, emailVerified: false, overrides: {} }
 const withRow = (state: UserFlagState, enabled: boolean, flag: 'cloud_save' | 'server_imports' = 'cloud_save') => ({
   ...state,
   overrides: { ...state.overrides, [flag]: enabled },
@@ -53,7 +54,19 @@ describe('feature flag precedence', () => {
     expect(resolveFeatureFlag('cloud_save', settings('allowlist'), owner)).toBe(true)
     expect(resolveFeatureFlag('cloud_save', settings('optin'), owner)).toBe(true)
     expect(resolveFeatureFlag('cloud_save', settings('allowlist'), stranger)).toBe(false)
-    expect(resolveFeatureFlag('cloud_save', settings('allowlist'), { email: null, overrides: {} })).toBe(false)
+    expect(resolveFeatureFlag('cloud_save', settings('allowlist'), nobody)).toBe(false)
+  })
+
+  it('ignores the allowlist for an unverified email', () => {
+    const claimed = { ...owner, emailVerified: false }
+    expect(resolveFeatureFlag('cloud_save', settings('allowlist'), claimed)).toBe(false)
+    expect(resolveUserFeatures(settings('optin'), claimed)).toEqual({
+      cloudSave: false,
+      serverImports: false,
+      optInAvailable: true,
+    })
+    // An administrator's row still applies.
+    expect(resolveFeatureFlag('cloud_save', settings('allowlist'), withRow(claimed, true))).toBe(true)
   })
 
   it('keeps optin mode off without a row and offers the opt-in', () => {
@@ -70,7 +83,7 @@ describe('feature flag precedence', () => {
 
   it('enables everyone in on mode', () => {
     expect(resolveFeatureFlag('cloud_save', settings('on'), stranger)).toBe(true)
-    expect(resolveFeatureFlag('cloud_save', settings('on'), { email: null, overrides: {} })).toBe(true)
+    expect(resolveFeatureFlag('cloud_save', settings('on'), nobody)).toBe(true)
     expect(resolveUserFeatures(settings('on'), stranger).optInAvailable).toBe(false)
   })
 
@@ -97,12 +110,12 @@ const fakeStore = (initial: Record<string, UserFlagState>) => {
     load: (userId) =>
       Effect.sync(() => {
         calls.load += 1
-        return states.get(userId) ?? { email: null, overrides: {} }
+        return states.get(userId) ?? nobody
       }),
     recordOptIn: (userId, consentVersion) =>
       Effect.sync(() => {
         calls.optIns.push([userId, consentVersion])
-        const state = states.get(userId) ?? { email: null, overrides: {} }
+        const state = states.get(userId) ?? nobody
         states.set(userId, withRow(state, true))
       }),
   }
