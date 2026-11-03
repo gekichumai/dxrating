@@ -4,12 +4,14 @@ import {
   listPlates,
   type PlateDefinition,
   type PlateRegion,
-  type RatingEntry,
+  type SongCatalog,
 } from '@gekichumai/maimai-domain'
+import type { Song, VersionEnum } from '@gekichumai/dxdata'
 import { useMemo } from 'react'
 import { useCompleteCatalogDocument, useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
-import { useUserRecords } from '@/models/useUserRecords'
+import type { Region } from '@/models/context/AppContext'
+import { type UserRecords, useUserRecords } from '@/models/useUserRecords'
 
 export interface HomeQuickStats {
   rating: number
@@ -22,52 +24,62 @@ export interface HomeQuickStats {
 
 /** Client-only summary of the user's scores; null when there are none */
 export function useHomeQuickStats(): HomeQuickStats | null {
-  const { records, isDemo } = useUserRecords()
+  const { records, ratingEntries, isDemo } = useUserRecords()
   // The complete catalog only: the page's slice would undercount plates and the B50
   const catalog = useCompleteSongCatalog()
   const document = useCompleteCatalogDocument()
   const version = useAppContextDXDataVersion()
   const { region } = useAppContext()
 
-  return useMemo(() => {
-    if (records.length === 0 || !catalog || !document) return null
-    const entries = records.flatMap(({ entry, sheet }): RatingEntry[] => {
-      const identity = entry.identity ?? sheet?.identity
-      return identity
-        ? [
-            {
-              sheetId: entry.sheetId,
-              identity,
-              achievementRate: entry.achievementRate,
-              comboFlag: entry.comboFlag,
-              syncFlag: entry.syncFlag,
-            },
-          ]
-        : []
-    })
-    const best50 = calculateBest50({ catalog, version, region, entries })
-    const finite = (value: number) => (Number.isFinite(value) && value > 0 ? value : null)
+  return useMemo(
+    () =>
+      catalog && document
+        ? computeHomeQuickStats({ records, ratingEntries, isDemo, catalog, songs: document.songs, version, region })
+        : null,
+    [records, ratingEntries, isDemo, catalog, document, version, region],
+  )
+}
 
-    const plateRegion: PlateRegion = region === 'cn' || region === 'intl' ? region : 'jp'
-    const plateRecords = new Map(records.map(({ entry }) => [entry.sheetId, entry]))
-    let nearestPlate: HomeQuickStats['nearestPlate'] = null
-    let bestRatio = -1
-    for (const plate of listPlates(plateRegion)) {
-      const progress = evaluatePlate({ songs: document.songs, plate, region: plateRegion, records: plateRecords })
-      if (progress.totalSheets === 0 || progress.completedSheets >= progress.totalSheets) continue
-      const ratio = progress.completedSheets / progress.totalSheets
-      if (ratio > bestRatio) {
-        bestRatio = ratio
-        nearestPlate = { plate, completedSheets: progress.completedSheets, totalSheets: progress.totalSheets }
-      }
-    }
+export function computeHomeQuickStats({
+  records,
+  ratingEntries,
+  isDemo,
+  catalog,
+  songs,
+  version,
+  region,
+}: {
+  records: UserRecords['records']
+  ratingEntries: UserRecords['ratingEntries']
+  isDemo: boolean
+  catalog: SongCatalog
+  songs: readonly Song[]
+  version: VersionEnum
+  region: Region
+}): HomeQuickStats | null {
+  if (records.length === 0) return null
+  const best50 = calculateBest50({ catalog, version, region, entries: ratingEntries })
+  const finite = (value: number) => (Number.isFinite(value) && value > 0 ? value : null)
 
-    return {
-      rating: best50.statistics.b50Sum,
-      b15Floor: finite(best50.statistics.b15Min),
-      b35Floor: finite(best50.statistics.b35Min),
-      nearestPlate: bestRatio > 0 ? nearestPlate : null,
-      isDemo,
+  const plateRegion: PlateRegion = region === 'cn' || region === 'intl' ? region : 'jp'
+  const plateRecords = new Map(records.map(({ entry, best }) => [entry.sheetId, best]))
+  let nearestPlate: HomeQuickStats['nearestPlate'] = null
+  let bestRatio = -1
+  for (const plate of listPlates(plateRegion)) {
+    const progress = evaluatePlate({ songs, plate, region: plateRegion, records: plateRecords })
+    if (progress.totalSheets === 0 || progress.completedSheets >= progress.totalSheets) continue
+    const ratio = progress.completedSheets / progress.totalSheets
+    if (ratio > bestRatio) {
+      bestRatio = ratio
+      nearestPlate = { plate, completedSheets: progress.completedSheets, totalSheets: progress.totalSheets }
     }
-  }, [records, isDemo, catalog, document, version, region])
+  }
+
+  return {
+    rating: best50.statistics.b50Sum,
+    b15Floor: finite(best50.statistics.b15Min),
+    b35Floor: finite(best50.statistics.b35Min),
+    nearestPlate: bestRatio > 0 ? nearestPlate : null,
+    isDemo,
+  }
 }
