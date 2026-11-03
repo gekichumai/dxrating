@@ -78,7 +78,7 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
                 summary,
                 title: t('completion:share-title', { level: table.level, target: targetLabel }),
                 summaryLine: t('completion:summary-line', { ...summary, percent }),
-                recordOf: (sheetId) => overlay.records.get(sheetId)?.entry,
+                recordOf: (sheetId) => overlay.records.get(sheetId)?.best,
                 imageNameOf: (sheetId) => catalog.getById(sheetId)?.imageName,
               })
             }

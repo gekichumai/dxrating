@@ -782,6 +782,7 @@
     "progress.intro": "레벨별, 랭크별로 클리어한 채보 수입니다. 숫자를 누르면 해당 목표로 정수표를 엽니다.",
     "progress.level": "레벨",
     "progress.played": "플레이함",
-    "progress.cell-label": "Lv.{{level}} {{target}}: {{total}}개 중 {{count}}개"
+    "progress.cell-label": "Lv.{{level}} {{target}}: {{total}}개 중 {{count}}개",
+    "progress.loading": "채보 목록을 불러오는 중… 모든 채보를 불러오면 집계가 표시됩니다."
   }
 }

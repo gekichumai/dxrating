@@ -782,6 +782,7 @@
     "progress.intro": "レベルごと・ランクごとにクリアした譜面数をまとめています。数字を選ぶと、その目標で定数表を開きます。",
     "progress.level": "レベル",
     "progress.played": "プレイ済み",
-    "progress.cell-label": "Lv.{{level}} {{target}}：{{total}}譜面中 {{count}}"
+    "progress.cell-label": "Lv.{{level}} {{target}}：{{total}}譜面中 {{count}}",
+    "progress.loading": "譜面一覧を読み込み中… すべての譜面を読み込むと集計を表示します。"
   }
 }
