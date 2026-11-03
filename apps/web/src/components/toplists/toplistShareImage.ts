@@ -19,6 +19,23 @@ const HEADER = 76
 
 const COMBO_LABELS: Record<string, string> = { fc: 'FC', fcp: 'FC+', ap: 'AP', app: 'AP+' }
 
+const DIFFICULTY_LABELS: Record<string, string> = {
+  basic: 'BAS',
+  advanced: 'ADV',
+  expert: 'EXP',
+  master: 'MAS',
+  remaster: 'Re:MAS',
+}
+
+/** Second card line: type, difficulty and level identify the chart (a song can have two charts at one level) */
+export function toplistCardDetail(row: Pick<ToplistRow, 'sheet' | 'entry'>): string {
+  const comboLabel = row.entry.comboFlag ? COMBO_LABELS[row.entry.comboFlag] : undefined
+  const difficulty = DIFFICULTY_LABELS[row.sheet.difficulty] ?? row.sheet.difficulty.toUpperCase()
+  return [row.sheet.type.toUpperCase(), difficulty, row.sheet.internalLevelValue.toFixed(1), comboLabel]
+    .filter(Boolean)
+    .join(' ')
+}
+
 export function drawToplistShareImage(
   rows: readonly ToplistRow[],
   { title, subtitle }: { title: string; subtitle?: string },
@@ -68,13 +85,7 @@ export function drawToplistShareImage(
         context.fillText(fitText(context, row.sheet.title, textWidth), textX, y + 10)
         context.font = '12px Torus, system-ui, sans-serif'
         context.fillStyle = 'rgba(255, 255, 255, 0.7)'
-        const comboLabel = row.entry.comboFlag ? COMBO_LABELS[row.entry.comboFlag] : undefined
-        const flag = comboLabel ? ` ${comboLabel}` : ''
-        context.fillText(
-          `${row.sheet.type.toUpperCase()} ${row.sheet.internalLevelValue.toFixed(1)}${flag}`,
-          textX,
-          y + 30,
-        )
+        context.fillText(toplistCardDetail(row), textX, y + 30)
         context.fillStyle = '#ffffff'
         context.font = 'bold 13px Torus, system-ui, sans-serif'
         context.fillText(`${row.entry.achievementRate.toFixed(4)}%`, textX, y + 48)

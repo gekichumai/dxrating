@@ -180,8 +180,24 @@ function getEntryBucket(
   region: Region,
 ): Best50Bucket | null {
   if (entry.authoritativeBest50Hint) return entry.authoritativeBest50Hint.bucket
-  if (isB15Sheet(entry.sheet.version, appVersion, region)) return 'b15'
-  if (isB35Sheet(entry.sheet.version, appVersion, region)) return 'b35'
+  return resolveBest50Bucket(entry.sheet.version, appVersion, region)
+}
+
+/**
+ * The B50 bucket a chart competes in: an authoritative provider hint (CN Diving Fish imports) wins, otherwise the
+ * chart version decides. The single rule shared by `calculateBest50` and features that project gains onto it.
+ */
+export function resolveBest50Bucket(
+  sheetVersion: Version,
+  appVersion: Version,
+  region: Region,
+  source?: RatingEntry['source'],
+): Best50Bucket | null {
+  if (region === 'cn' && source?.provider === 'diving-fish' && source.best50Bucket !== undefined) {
+    return source.best50Bucket
+  }
+  if (isB15Sheet(sheetVersion, appVersion, region)) return 'b15'
+  if (isB35Sheet(sheetVersion, appVersion, region)) return 'b35'
   return null
 }
 

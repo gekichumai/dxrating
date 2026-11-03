@@ -825,6 +825,7 @@
     "progress.intro": "各等级在各评级下已完成的谱面数。点击数字即可以该目标打开定数表。",
     "progress.level": "等级",
     "progress.played": "已游玩",
-    "progress.cell-label": "Lv.{{level}} {{target}}：{{count}} / {{total}}"
+    "progress.cell-label": "Lv.{{level}} {{target}}：{{count}} / {{total}}",
+    "progress.loading": "正在加载谱面列表… 全部谱面加载完成后显示统计。"
   }
 }

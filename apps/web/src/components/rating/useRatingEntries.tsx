@@ -86,14 +86,13 @@ export const calculateWebRatingEntries = ({
               achievementRate: entry.achievementRate,
               comboFlag: entry.comboFlag,
               syncFlag: entry.syncFlag,
-              // A provider's own B50 bucket describes its B50, not the AP50
-              source:
-                !apOnly && entry.providerConfig?.divingFish?.ratingEligibility
-                  ? {
-                      provider: 'diving-fish' as const,
-                      best50Bucket: entry.providerConfig.divingFish.ratingEligibility,
-                    }
-                  : undefined,
+              // The provider's bucket is the chart's B15/B35 eligibility: AP50 keeps it, only the input is filtered
+              source: entry.providerConfig?.divingFish?.ratingEligibility
+                ? {
+                    provider: 'diving-fish' as const,
+                    best50Bucket: entry.providerConfig.divingFish.ratingEligibility,
+                  }
+                : undefined,
             }
           : null,
       },
