@@ -8,6 +8,7 @@ import IconMdiCloudOffOutline from '~icons/mdi/cloud-off-outline'
 import IconMdiCloudSyncOutline from '~icons/mdi/cloud-sync-outline'
 import { useCloudSaveStatus } from '@/models/scores/CloudSaveUiContext'
 import type { ScoreRepositoryStatus } from '@/models/scores/ScoreRepository'
+import { labelSeparator } from './provenanceLabel'
 import { SyncIssuesList } from './SyncIssuesList'
 import './cloud-save.css'
 
@@ -23,7 +24,7 @@ const STATE_ICONS: Record<ScoreRepositoryStatus['state'], FC<{ className?: strin
  * sent and the sync issues. Renders nothing on the local save.
  */
 export const SyncStatusIndicator: FC = () => {
-  const { t } = useTranslation(['rating-calculator'])
+  const { t, i18n } = useTranslation(['rating-calculator'])
   const status = useCloudSaveStatus()
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const popoverId = useId()
@@ -51,17 +52,13 @@ export const SyncStatusIndicator: FC = () => {
         aria-haspopup="dialog"
         aria-expanded={anchorEl ? 'true' : 'false'}
         aria-controls={anchorEl ? popoverId : undefined}
-        // Below 375px it shrinks like the header's icon buttons and drops the count (still in its label), so the row
-        // stays clear of the logo
-        className="cloud-save-status-button relative flex h-8 min-w-8 items-center justify-center gap-1 rounded-full bg-white/35 px-1.5 text-black/75 2xs:mr-1 2xs:h-9 2xs:min-w-9 2xs:px-2"
+        // One number only: the badge counts sync issues, the ones that need the user. Changes waiting to sync are in
+        // the label and the popover, so the pill keeps one width and the header row stays clear of the logo. Below
+        // 375px it shrinks like the header's icon buttons.
+        className="cloud-save-status-button relative flex size-8 items-center justify-center rounded-full bg-white/35 text-black/75 2xs:mr-1 2xs:size-9"
         data-sync-state={state}
       >
         <Icon className={clsx('size-5', state === 'syncing' && 'cloud-save-pulse')} aria-hidden />
-        {pendingCount > 0 && (
-          <span className="hidden text-xs font-semibold tabular-nums 2xs:inline" aria-hidden>
-            {pendingCount}
-          </span>
-        )}
         {issues.length > 0 && (
           <span
             className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-700 px-1 text-[0.625rem] font-bold leading-none text-white shadow-sm tabular-nums"
@@ -95,7 +92,9 @@ export const SyncStatusIndicator: FC = () => {
             <div className="min-w-0">
               <div className="text-sm font-semibold text-zinc-900">{t('rating-calculator:cloud-save.title')}</div>
               {/* Not a live region: the sync cycles would be read out while the popover is open */}
-              <p className="m-0 text-xs text-zinc-600">{[stateText, pendingText].filter(Boolean).join(' · ')}</p>
+              <p className="m-0 text-xs text-zinc-600">
+                {[stateText, pendingText].filter(Boolean).join(labelSeparator(i18n.language))}
+              </p>
             </div>
           </div>
           {/* The header's announcement is hidden while the popover is open (a modal): the same one, here */}

@@ -15,6 +15,7 @@ import { Logo } from '../global/Logo'
 import { LocaleSelector } from '../global/preferences/LocaleSelector'
 import { UserChip } from '../global/preferences/UserChip'
 import { About } from '../global/site-meta/About'
+import { useCloudSaveStatus } from '../../models/scores/CloudSaveUiContext'
 import { SyncStatusIndicator } from '../cloud-save/SyncStatusIndicator'
 
 const COMMUNITY_LINKS: {
@@ -65,7 +66,9 @@ const DEVELOPER_PILL_SEGMENT_CLASS_NAME =
 
 // Small screens fold the community links into one menu so the header stays a single row; the
 // overlapping brand badges keep the entry point as recognizable as the full row on desktop.
-const CommunityMenu = () => {
+// `compact` makes room for the cloud save's sync pill below 480px: only the three community badges, stacked tighter,
+// and no MCP badge (the menu still lists it). From 480px up there is room for the full trigger either way.
+const CommunityMenu = ({ compact = false }: { compact?: boolean }) => {
   const { t } = useTranslation(['root'])
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
 
@@ -77,26 +80,34 @@ const CommunityMenu = () => {
         title={t('root:external-links.community')}
         aria-haspopup="menu"
         aria-expanded={anchorEl ? 'true' : undefined}
-        className="2xs:mr-1 flex items-center gap-0.5 rounded-full bg-white/35 hover:bg-white/50 p-0.5 2xs:p-1 transition-colors"
+        className={clsx(
+          '2xs:mr-1 flex items-center gap-0.5 rounded-full bg-white/35 hover:bg-white/50 p-0.5 transition-colors',
+          compact ? 'xs:p-1' : '2xs:p-1',
+        )}
+        data-compact={compact ? 'true' : undefined}
       >
         {COMMUNITY_LINKS.map(({ key, Icon, brandClassName }, index) => (
           <span
             key={key}
             className={clsx(
-              'flex size-6 2xs:size-7 items-center justify-center rounded-full',
+              'flex items-center justify-center rounded-full',
+              compact ? 'size-5 2xs:size-6 xs:size-7' : 'size-6 2xs:size-7',
               BRAND_BADGE_CLASS_NAME,
               brandClassName,
-              index > 0 && '-ml-3 2xs:-ml-2.5',
+              index > 0 && (compact ? '-ml-3.5 2xs:-ml-4 xs:-ml-2.5' : '-ml-3 2xs:-ml-2.5'),
             )}
+            // Stacked this tightly, only the top badge shows whole: keep Discord, the first link, on top
+            style={compact ? { position: 'relative', zIndex: COMMUNITY_LINKS.length - index } : undefined}
           >
-            <Icon className="size-3.5" />
+            <Icon className={compact ? 'size-3 2xs:size-3.5' : 'size-3.5'} />
           </span>
         ))}
         {/* The MCP badge takes the chevron's place on 375–479px phones so the pill stays as wide as before;
             below 375px there is no room for either, and the menu still lists MCP. */}
         <span
           className={clsx(
-            'hidden 2xs:flex size-7 items-center justify-center rounded-full -ml-2.5',
+            'hidden size-7 items-center justify-center rounded-full -ml-2.5',
+            compact ? 'xs:flex' : '2xs:flex',
             MCP_BADGE_CLASS_NAME,
           )}
         >
@@ -182,6 +193,8 @@ export const TopBar = ({
 }) => {
   const versionTheme = useVersionTheme()
   const { t } = useTranslation(['root'])
+  // The sync pill only renders on a cloud save; without it the header is exactly the local-save layout
+  const hasSyncPill = useCloudSaveStatus() != null
 
   return (
     <div
@@ -196,8 +209,15 @@ export const TopBar = ({
           </div>
         </div>
 
-        {/* Tighter icon buttons below 375px keep the row from colliding with the logo. */}
-        <div className="flex items-center shrink-0 [&_.MuiIconButton-root]:p-1.5 2xs:[&_.MuiIconButton-root]:p-2">
+        {/* Tighter icon buttons below 375px keep the row from colliding with the logo; with the sync pill they
+            tighten once more there, so the five controls still fit a 320px screen. */}
+        <div
+          className={clsx(
+            'flex items-center shrink-0 2xs:[&_.MuiIconButton-root]:p-2',
+            hasSyncPill ? '[&_.MuiIconButton-root]:p-1' : '[&_.MuiIconButton-root]:p-1.5',
+          )}
+          data-sync-pill={hasSyncPill ? 'true' : undefined}
+        >
           <div className="hidden sm:flex items-center gap-2">
             {/* MCP and the developer API share one pill so the "for developers / AI" entries read as a group. */}
             <div className="mr-1 flex h-9 items-center rounded-full bg-white/35 p-0.5">
@@ -244,12 +264,12 @@ export const TopBar = ({
           </div>
 
           <div className="sm:hidden">
-            <CommunityMenu />
+            <CommunityMenu compact={hasSyncPill} />
           </div>
 
           <LocaleSelector />
           <About />
-          {/* Cloud saves only */}
+          {/* Cloud saves only: see hasSyncPill */}
           <SyncStatusIndicator />
           <UserChip />
         </div>
