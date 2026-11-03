@@ -7,7 +7,10 @@
 export type CloudImportChoice = 'merge' | 'replace'
 
 export interface CloudImportConfirmRequest {
+  /** The records that will be imported */
   count: number
+  /** Entries that will be left out: no chart matches them, or the server rejects a value */
+  leftOut: number
   resolve: (choice: CloudImportChoice | null) => void
 }
 
@@ -36,13 +39,14 @@ export const cloudImportConfirm = {
     }
   },
   /** Resolves the user's choice, or `null` when they cancel */
-  request(count: number): Promise<CloudImportChoice | null> {
+  request(count: number, leftOut = 0): Promise<CloudImportChoice | null> {
     if (hosts === 0) return Promise.resolve('merge')
     // A newer request replaces an unanswered one, which is cancelled
     pending?.resolve(null)
     return new Promise((resolve) => {
       const request: CloudImportConfirmRequest = {
         count,
+        leftOut,
         resolve: (choice) => {
           if (pending === request) pending = null
           resolve(choice)

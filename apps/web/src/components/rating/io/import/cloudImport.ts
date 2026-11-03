@@ -3,6 +3,12 @@ import type { TFunction } from 'i18next'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { migrateLegacyImportEntries } from '@/catalog/savedDataMigration'
 import { cloudImportConfirm } from '@/components/cloud-save/cloudImportConfirm'
+import {
+  clientImportPlan,
+  entriesToImportRecords,
+  ImportAlreadyRunningError,
+  NothingToImportError,
+} from '@/models/scores/cloudImports'
 import type {
   ImportMeta,
   ImportProgress,
@@ -30,9 +36,10 @@ export function importPath(repository: Pick<ScoreRepository, 'kind' | 'serverImp
 
 /**
  * Imports entries read from a file. On a cloud save, entries of an old rating file move to public sheet IDs first,
- * then the user chooses to merge or to clear the save first (§5.3 rule 5); `null` when they cancel. A file with
- * nothing to upload throws `NothingToImportError` and leaves the save as it was. On the local save, exactly the call
- * it always was.
+ * then the user chooses to merge or to clear the save first (§5.3 rule 5); `null` when they cancel. The entries are
+ * validated as the server will before asking: the dialog says how many will be left out, and a file none of whose
+ * records can be imported throws `NothingToImportError` without asking, leaving the save as it was. On the local
+ * save, exactly the call it always was.
  */
 export async function importFileEntries(
   repository: ScoreRepository,
@@ -42,7 +49,16 @@ export async function importFileEntries(
 ): Promise<ImportResult | null> {
   if (repository.kind !== 'cloud') return repository.applyImport(entries, meta)
   const migrated = await migrate(entries)
-  const choice = await cloudImportConfirm.request(migrated.length)
+  const plan = clientImportPlan(meta.source, repository.serverImportsEnabled !== false, meta.claimedSource)
+  let importable = migrated.length
+  let leftOut = 0
+  if (plan) {
+    const { records, skipped, rejected } = entriesToImportRecords(migrated, plan)
+    if (records.length === 0 && migrated.length > 0) throw new NothingToImportError(skipped, rejected)
+    importable = records.length
+    leftOut = skipped + rejected
+  }
+  const choice = await cloudImportConfirm.request(importable, leftOut)
   if (!choice) return null
   return repository.applyImport(migrated, { ...meta, mode: choice })
 }
@@ -84,4 +100,19 @@ export function summarizeImportJob(job: ImportJobDTO, t: TFunction): string {
     .filter((key) => job.counts[key] > 0)
     .map((key) => t(`rating-calculator:cloud-save.history.counts.${key}`, { count: job.counts[key] }))
   return parts.length ? parts.join(' · ') : t('rating-calculator:cloud-save.history.counts.none')
+}
+/**
+ * Toasts what a cloud file import left out: entries that match no chart, and entries the server's import schema
+ * rejects (an out-of-range value…). Nothing for the local save.
+ */
+export function announceImportLeftOut(result: ImportResult, t: TFunction, notify: (message: string) => void) {
+  if (result.skipped) notify(t('rating-calculator:cloud-save.import.skipped', { count: result.skipped }))
+  if (result.rejected) notify(t('rating-calculator:cloud-save.import.rejected', { count: result.rejected }))
+}
+
+/** What to tell the user about a cloud import error they can act on; `null` for any other error */
+export function cloudImportErrorMessage(error: unknown, t: TFunction): string | null {
+  if (error instanceof NothingToImportError) return t('rating-calculator:cloud-save.import.errors.nothing-to-import')
+  if (error instanceof ImportAlreadyRunningError) return t('rating-calculator:cloud-save.import.errors.already-running')
+  return null
 }

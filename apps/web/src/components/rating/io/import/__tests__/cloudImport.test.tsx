@@ -25,6 +25,7 @@ vi.mock('@microsoft/fetch-event-source', () => ({ fetchEventSource: vi.fn() }))
 
 const catalog = getSongCatalog(catalogSnapshot, VersionEnum.PRiSMPLUS)
 const ENTRY = { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100.5 }
+const OTHER_ENTRY = { sheetId: 'dsht_5mk3yr8gme', achievementRate: 99 }
 
 const job: ImportJobDTO = {
   id: 'dimp_1',
@@ -142,7 +143,7 @@ describe('importFileEntries', () => {
   it('clears the cloud save first only after a second confirmation', async () => {
     render(<CloudImportConfirmDialog />)
     const { repository } = fakeCloud()
-    const pending = importFileEntries(repository, [ENTRY, ENTRY], { source: 'mu-net', mode: 'replace' })
+    const pending = importFileEntries(repository, [ENTRY, OTHER_ENTRY], { source: 'mu-net', mode: 'replace' })
 
     // The destructive path is not next to the primary action
     const buttons = (await screen.findAllByRole('button')).map((button) => button.textContent)
@@ -157,7 +158,40 @@ describe('importFileEntries', () => {
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Clear and import' })))
 
     await pending
-    expect(repository.applyImport).toHaveBeenCalledWith([ENTRY, ENTRY], { source: 'mu-net', mode: 'replace' })
+    expect(repository.applyImport).toHaveBeenCalledWith([ENTRY, OTHER_ENTRY], { source: 'mu-net', mode: 'replace' })
+  })
+
+  it('counts only what can be imported, and says up front how many entries will be left out', async () => {
+    render(<CloudImportConfirmDialog />)
+    const { repository } = fakeCloud()
+    const pending = importFileEntries(
+      repository,
+      [
+        ENTRY,
+        { ...OTHER_ENTRY, dxScore: 100001 },
+        { sheetId: 'retired song__dxrt__dx__dxrt__master', achievementRate: 9 },
+      ],
+      { source: 'aqua-dx', mode: 'replace' },
+    )
+
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog.textContent).toContain('Import 1 score into your cloud save?')
+    expect(dialog.textContent).toContain(
+      "2 records can't be imported because they match no chart or have values out of range. They will be left out.",
+    )
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Cancel' })))
+    await expect(pending).resolves.toBeNull()
+  })
+
+  it("never offers to clear the save when no entry passes the server's schema", async () => {
+    render(<CloudImportConfirmDialog />)
+    const { repository } = fakeCloud()
+
+    await expect(
+      importFileEntries(repository, [{ ...ENTRY, dxScore: 100001 }], { source: 'aqua-dx', mode: 'replace' }),
+    ).rejects.toMatchObject({ name: 'NothingToImportError', rejected: 1 })
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(repository.applyImport).not.toHaveBeenCalled()
   })
 
   it('imports nothing when the user cancels', async () => {

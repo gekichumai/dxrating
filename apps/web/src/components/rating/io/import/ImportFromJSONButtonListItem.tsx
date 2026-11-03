@@ -6,10 +6,9 @@ import MdiJson from '~icons/mdi/code-json'
 import { useWebHaptics } from 'web-haptics/react'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { createRatingImportTracker } from '@/lib/analytics'
-import { NothingToImportError } from '@/models/scores/cloudImports'
 import { parseRatingFile } from '@/models/scores/ratingEntriesFile'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
-import { importFileEntries } from './cloudImport'
+import { announceImportLeftOut, cloudImportErrorMessage, importFileEntries } from './cloudImport'
 
 export const ImportFromJSONButtonListItem: FC<{
   onClose: () => void
@@ -54,21 +53,16 @@ export const ImportFromJSONButtonListItem: FC<{
               // A cloud save asks to merge or clear first; `null`: the user cancelled
               const result = await importFileEntries(repository, entries, { source: 'dxrating-json', mode: 'replace' })
               if (!result) return
-              // A cloud save counts what it uploaded: entries that match no chart are left out
+              // A cloud save counts what the server took: entries that match no chart or that it rejects are left out
               analytics.succeeded(result.count)
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.json.success', { count: result.count }))
-              if (result.skipped) {
-                toast(t('rating-calculator:cloud-save.import.skipped', { count: result.skipped }), {
-                  id: 'cloud-import-skipped',
-                })
-              }
+              announceImportLeftOut(result, t, (message) => toast(message))
             } catch (error) {
               analytics.failed('invalid_file')
               toast.error(
-                error instanceof NothingToImportError
-                  ? t('rating-calculator:cloud-save.import.errors.nothing-to-import')
-                  : t('rating-calculator:io.import.json.error', { error: formatErrorMessage(error) }),
+                cloudImportErrorMessage(error, t) ??
+                  t('rating-calculator:io.import.json.error', { error: formatErrorMessage(error) }),
               )
             }
           }

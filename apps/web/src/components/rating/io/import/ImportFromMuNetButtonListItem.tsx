@@ -11,7 +11,7 @@ import { useWebHaptics } from 'web-haptics/react'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
-import { importFileEntries } from './cloudImport'
+import { announceImportLeftOut, cloudImportErrorMessage, importFileEntries } from './cloudImport'
 
 const MuNetUserMusicDetailSchema = z.object({
   musicId: z.number(),
@@ -78,17 +78,22 @@ export const ImportFromMuNetButtonListItem: FC<{
                 console.warn('[ImportFromMuNetButtonListItem]', warning.message, warning.row)
               }
 
-              if (!(await importFileEntries(repository, entries, { source: 'mu-net', mode: 'replace' }))) return
-              analytics.succeeded(entries.length, importResult.warnings.length)
+              const result = await importFileEntries(repository, entries, { source: 'mu-net', mode: 'replace' })
+              // A cloud save asks to merge or clear first; `null`: the user cancelled
+              if (!result) return
+              analytics.succeeded(result.count, importResult.warnings.length)
               haptic.trigger('success')
-              toast.success(t('rating-calculator:io.import.mu-net.success', { count: entries.length }))
+              // A cloud save counts what the server took, not what was sent
+              toast.success(t('rating-calculator:io.import.mu-net.success', { count: result.count }))
+              announceImportLeftOut(result, t, (message) => toast(message))
             } catch (error) {
               analytics.failed('invalid_file')
               console.error(error)
               toast.error(
-                t('rating-calculator:io.import.mu-net.error', {
-                  error: error instanceof Error ? error.message : 'Unknown error',
-                }),
+                cloudImportErrorMessage(error, t) ??
+                  t('rating-calculator:io.import.mu-net.error', {
+                    error: error instanceof Error ? error.message : 'Unknown error',
+                  }),
               )
             }
           }
