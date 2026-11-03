@@ -3,6 +3,7 @@ import { isIP } from 'node:net'
 import { Context, Effect, Layer } from 'effect'
 import { classifyUserAgent } from '../api-usage'
 import { boundedToolName, classifyMcpClient, truncateBytes } from './telemetry'
+import { scrubAnalyticsEvent } from '../../lib/credential-hygiene'
 
 /**
  * Product analytics of the MCP endpoint, sent to PostHog (project 65078): one event per JSON-RPC message of a request,
@@ -414,7 +415,8 @@ export function createMcpAnalytics(options: McpAnalyticsOptions): McpAnalytics {
     try {
       if (sampleRate < 1 && random() >= sampleRate) return
       const at = now()
-      const events = build(at)
+      // never a credential property, whatever a builder was given (design §7.2)
+      const events = build(at).map(scrubAnalyticsEvent)
       if (dailyCap > 0) {
         const today = utcDate(at)
         if (today !== day) {

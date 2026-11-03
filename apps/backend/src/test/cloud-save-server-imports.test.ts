@@ -1,0 +1,631 @@
+import { createHash, randomUUID } from 'node:crypto'
+import pg from 'pg'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+
+// config.ts reads the environment once, at import
+vi.hoisted(() => {
+  process.env.CLOUD_SAVE_MODE = 'allowlist'
+  process.env.SERVER_IMPORTS = 'on'
+  process.env.LXNS_CLIENT_ID = 'synthetic-client'
+  process.env.LXNS_CLIENT_SECRET = 'synthetic-secret'
+})
+
+// Every upstream is synthetic: maimai NET behind the NET client's undici fetch, LXNS and Diving-Fish behind the global
+// fetch of the Effect HTTP client (the local test server passes through)
+const upstream = vi.hoisted(() => {
+  const realFetch = globalThis.fetch
+  const state = {
+    net: undefined as undefined | ((url: string, init?: RequestInit) => Promise<Response>),
+    http: undefined as
+      | undefined
+      | ((url: URL, init?: RequestInit) => Promise<Response | undefined> | Response | undefined),
+    httpCalls: [] as string[],
+  }
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(input instanceof Request ? input.url : String(input))
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return realFetch(input, init)
+    state.httpCalls.push(`${init?.method ?? 'GET'} ${url.href}`)
+    const response = await state.http?.(url, init)
+    if (response) return response
+    throw new Error(`Unexpected upstream request ${url.href}`)
+  }) as typeof fetch
+  return state
+})
+
+vi.mock('undici', async (original) => {
+  const actual = await original<typeof import('undici')>()
+  return {
+    ...actual,
+    fetch: (input: string | URL, init?: RequestInit) =>
+      upstream.net ? upstream.net(String(input), init) : Promise.reject(new Error('Unexpected maimai NET request')),
+  }
+})
+
+// The published catalog is not in the test database: imports resolve through the bundled snapshot
+vi.mock('../services/cloud-save/import-catalog', async () => {
+  const { Effect } = await import('effect')
+  const { getSongCatalog } = await import('@gekichumai/maimai-domain')
+  const { catalogSnapshot } = await import('@gekichumai/dxdata/snapshot')
+  const { VersionEnum } = await import('@gekichumai/dxdata')
+  return {
+    importCatalog: Effect.sync(() => getSongCatalog(catalogSnapshot, VersionEnum.MAGiCAL)),
+    ImportCatalogUnavailable: class ImportCatalogUnavailable extends Error {},
+  }
+})
+
+import { canonicalSha256 } from '../services/cloud-save/jobs'
+import { runDatabase, session, api, sheetId } from './cloud-save-helpers'
+import { startImportJob } from '../services/cloud-save/jobs'
+import {
+  CHARTS,
+  createFakeNet,
+  divingFishChart,
+  lxnsEnvelope,
+  lxnsScore,
+  netRecord,
+  postNetImport,
+} from './server-import-fixtures'
+import { cleanDatabase, getBaseUrl, setupTestServer, teardownTestServer } from './setup'
+
+const SEGA_ID = 'synthetic-sega-id'
+const PASSWORD = 'synthetic-password-1'
+const FRIEND_CODE = '9012345678901'
+
+let pool: pg.Pool
+let email = 0
+
+const newUser = async (options: { serverImports?: boolean } = {}) => {
+  const user = await session(pool, `server-import-${++email}-${randomUUID().slice(0, 8)}@example.com`)
+  if (options.serverImports === false) {
+    await pool.query(
+      `INSERT INTO feature_flag_overrides (flag, user_id, enabled, source) VALUES ('server_imports', $1, false, 'admin')`,
+      [user.userId],
+    )
+  }
+  const save = await api(user.cookie, 'POST', '/saves', { name: 'JP', region: 'jp' })
+  expect(save.status).toBe(200)
+  return { ...user, saveId: save.body.id as string }
+}
+
+const key = () => `test-${randomUUID()}`
+
+const netBody = (overrides: Record<string, unknown> = {}) => ({
+  idempotencyKey: key(),
+  trigger: 'user',
+  region: 'jp',
+  id: SEGA_ID,
+  password: PASSWORD,
+  ...overrides,
+})
+
+const records = async (saveId: string) =>
+  (
+    await pool.query(
+      `SELECT sheet_id, achievement, combo_flag, sync_flag, dx_score, best50_bucket, source, fetched_by, verification,
+         entry_method, source_account_id, import_job_id, raw_payload_sha256, fetched_at, revision
+       FROM score_records WHERE save_id = $1 ORDER BY sheet_id`,
+      [saveId],
+    )
+  ).rows
+
+const jobRow = async (jobId: string) =>
+  (await pool.query(`SELECT * FROM score_import_jobs WHERE id = $1`, [jobId])).rows[0]
+
+const saveRevision = async (saveId: string) =>
+  Number((await pool.query(`SELECT revision FROM score_saves WHERE id = $1`, [saveId])).rows[0].revision)
+
+const eventCount = async (saveId: string) =>
+  Number((await pool.query(`SELECT count(*) FROM score_record_events WHERE save_id = $1`, [saveId])).rows[0].count)
+
+const NET_RECORDS = [
+  netRecord(CHARTS.kiminoDxMaster, '100.5000%', ['fc', 'fs']),
+  netRecord(CHARTS.kiminoStdMaster, '99.1234%'),
+  netRecord(CHARTS.ourFightingStdBasic, '101.0000%', ['applus']),
+  // not in the catalog
+  { title: 'A song the catalog does not know', type: 'dx' as const, difficulty: 'master' as const, rate: '98.0000%' },
+]
+
+beforeAll(async () => {
+  await setupTestServer()
+  pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+})
+
+afterAll(async () => {
+  await pool.end()
+  await teardownTestServer()
+})
+
+beforeEach(async () => {
+  await cleanDatabase()
+  upstream.net = undefined
+  upstream.http = undefined
+  upstream.httpCalls.length = 0
+})
+
+describe('maimai NET server import', () => {
+  it('writes verified records straight into the save, with the friend code as source account', async () => {
+    const user = await newUser()
+    const net = createFakeNet({ id: SEGA_ID, password: PASSWORD, friendCode: FRIEND_CODE, records: NET_RECORDS })
+    upstream.net = net.fetch
+
+    const response = await postNetImport(user.cookie, user.saveId, netBody())
+    expect(response.status).toBe(200)
+    const states = response.events.filter((e) => e.event === 'progress').map((e) => e.data.state)
+    expect(states).toEqual([
+      'auth:in-progress',
+      'auth:succeeded',
+      'fetch:music:in-progress:basic',
+      'fetch:music:in-progress:advanced',
+      'fetch:music:in-progress:expert',
+      'fetch:music:in-progress:master',
+      'fetch:music:in-progress:remaster',
+      'fetch:music:in-progress:utage',
+      'fetch:music:completed',
+      'concluded',
+    ])
+    const done = response.events.at(-1)!
+    expect(done.event).toBe('done')
+    expect(done.data.job).toMatchObject({
+      source: 'maimai-net-jp',
+      fetchedBy: 'server',
+      trigger: 'user',
+      status: 'succeeded',
+      sourceAccountId: FRIEND_CODE,
+      sourceAccountKind: 'friend_code',
+      errorCode: null,
+      counts: { fetched: 4, inserted: 3, skippedUnknownSheet: 1, rejected: 0 },
+    })
+    expect(done.data.revision).toBe(3)
+
+    const job = await jobRow(done.data.job.id)
+    expect(job.fetched_at).toBeInstanceOf(Date)
+    expect(job.fetched_at.getTime()).toBeGreaterThanOrEqual(job.started_at.getTime())
+    expect(job.raw_payload_sha256).toMatch(/^[0-9a-f]{64}$/)
+    const stored = await records(user.saveId)
+    expect(stored).toHaveLength(3)
+    for (const record of stored) {
+      expect(record).toMatchObject({
+        source: 'maimai-net-jp',
+        fetched_by: 'server',
+        verification: 'verified',
+        entry_method: 'import',
+        source_account_id: FRIEND_CODE,
+        import_job_id: job.id,
+        raw_payload_sha256: job.raw_payload_sha256,
+      })
+      expect(record.fetched_at.getTime()).toBe(job.fetched_at.getTime())
+    }
+    expect(stored.find((r) => r.sheet_id === CHARTS.kiminoDxMaster.sheetId)).toMatchObject({
+      achievement: 1005000,
+      combo_flag: 'fc',
+      sync_flag: 'fs',
+      dx_score: 1234,
+    })
+    expect(stored.find((r) => r.sheet_id === CHARTS.ourFightingStdBasic.sheetId)).toMatchObject({
+      achievement: 1010000,
+      combo_flag: 'app',
+    })
+    // the recent page is not fetched, nor anything after the music pages
+    expect(net.calls.filter((call) => call.includes('/record') && !call.includes('musicGenre'))).toEqual([])
+
+    const pulled = await api(user.cookie, 'GET', `/saves/${user.saveId}/changes?since=0`)
+    expect(pulled.body.records.map((r: any) => r.provenance.verification)).toEqual(['verified', 'verified', 'verified'])
+  })
+
+  it('falls back to a hash of the SEGA ID when the friend code page cannot be read', async () => {
+    const user = await newUser()
+    upstream.net = createFakeNet({ id: SEGA_ID, password: PASSWORD, friendCode: null, records: NET_RECORDS }).fetch
+    const response = await postNetImport(user.cookie, user.saveId, netBody({ region: 'intl' }))
+    const done = response.events.at(-1)!
+    expect(done.event).toBe('done')
+    const expected = createHash('sha256').update(`intl:${SEGA_ID}`).digest('hex')
+    expect(done.data.job).toMatchObject({
+      source: 'maimai-net-intl',
+      sourceAccountId: expected,
+      sourceAccountKind: 'segaid_hash',
+    })
+    expect((await records(user.saveId)).every((r) => r.source_account_id === expected)).toBe(true)
+  })
+
+  it('is all or nothing: a difficulty page that still fails after the retries fails the job and writes nothing', async () => {
+    const user = await newUser()
+    await api(user.cookie, 'POST', `/saves/${user.saveId}/mutations`, {
+      mutations: [
+        {
+          mutationId: '01890a5d-ac96-7a2b-8f00-000000000001',
+          op: 'set',
+          sheetId: sheetId(1),
+          value: { achievement: 990000, comboFlag: null, syncFlag: null },
+          entryMethod: 'typed',
+        },
+      ],
+    })
+    const revision = await saveRevision(user.saveId)
+    const events = await eventCount(user.saveId)
+    const net = createFakeNet({
+      id: SEGA_ID,
+      password: PASSWORD,
+      friendCode: FRIEND_CODE,
+      records: NET_RECORDS,
+      failDifficulty: 3,
+    })
+    upstream.net = net.fetch
+
+    const response = await postNetImport(user.cookie, user.saveId, netBody())
+    const last = response.events.at(-1)!
+    expect(last.event).toBe('error')
+    expect(last.data).toMatchObject({ code: 'UPSTREAM_ERROR', jobId: expect.stringMatching(/^dimp_/) })
+    // the #368 retry: the master page was asked three times
+    expect(net.calls.filter((call) => call.includes('musicGenre'))).toHaveLength(3 + 3)
+    const job = await jobRow(last.data.jobId)
+    expect(job).toMatchObject({ status: 'failed', error_code: 'upstream_error' })
+    expect(job.finished_at).toBeInstanceOf(Date)
+    expect(await records(user.saveId)).toHaveLength(1)
+    expect(await saveRevision(user.saveId)).toBe(revision)
+    expect(await eventCount(user.saveId)).toBe(events)
+  })
+
+  it('fails on wrong credentials with a fixed message and no job writes', async () => {
+    const user = await newUser()
+    upstream.net = createFakeNet({ id: SEGA_ID, password: PASSWORD }).fetch
+    const response = await postNetImport(user.cookie, user.saveId, netBody({ password: 'wrong-password' }))
+    const last = response.events.at(-1)!
+    expect(last).toMatchObject({ event: 'error', data: { code: 'INVALID_CREDENTIALS' } })
+    expect(await jobRow(last.data.jobId)).toMatchObject({ status: 'failed', error_code: 'invalid_credentials' })
+    expect(await records(user.saveId)).toHaveLength(0)
+  })
+
+  it('answers 409 IMPORT_IN_PROGRESS with the running job, and replays an idempotency key', async () => {
+    const user = await newUser()
+    const running = await runDatabase((database) =>
+      startImportJob(database, {
+        userId: user.userId,
+        saveId: user.saveId,
+        source: 'maimai-net-jp',
+        trigger: 'user',
+        idempotencyKey: key(),
+      }),
+    )
+    upstream.net = createFakeNet({ id: SEGA_ID, password: PASSWORD, records: NET_RECORDS }).fetch
+    const conflict = await postNetImport(user.cookie, user.saveId, netBody())
+    expect(conflict.status).toBe(409)
+    expect(conflict.json).toMatchObject({
+      code: 'CONFLICT',
+      data: { reason: 'IMPORT_IN_PROGRESS', jobId: running.job.id },
+    })
+    // another source of the same save is not blocked
+    const intl = await postNetImport(user.cookie, user.saveId, netBody({ region: 'intl' }))
+    expect(intl.events.at(-1)!.event).toBe('done')
+
+    // replaying the intl key answers the same job without fetching again
+    await pool.query(`UPDATE score_import_jobs SET status = 'failed' WHERE id = $1`, [running.job.id])
+    const body = netBody({ region: 'jp' })
+    const net = createFakeNet({ id: SEGA_ID, password: PASSWORD, records: NET_RECORDS })
+    upstream.net = net.fetch
+    const first = await postNetImport(user.cookie, user.saveId, body)
+    const calls = net.calls.length
+    const replay = await postNetImport(user.cookie, user.saveId, body)
+    expect(replay.events).toEqual([{ event: 'done', data: first.events.at(-1)!.data }])
+    expect(net.calls.length).toBe(calls)
+  })
+
+  it('short-circuits an automatic import of an unchanged payload', async () => {
+    const user = await newUser()
+    upstream.net = createFakeNet({
+      id: SEGA_ID,
+      password: PASSWORD,
+      friendCode: FRIEND_CODE,
+      records: NET_RECORDS,
+    }).fetch
+    const first = (await postNetImport(user.cookie, user.saveId, netBody({ trigger: 'auto' }))).events.at(-1)!
+    expect(first.data.job.counts.inserted).toBe(3)
+    const revision = await saveRevision(user.saveId)
+    const events = await eventCount(user.saveId)
+
+    const second = (await postNetImport(user.cookie, user.saveId, netBody({ trigger: 'auto' }))).events.at(-1)!
+    expect(second.data.job).toMatchObject({
+      status: 'succeeded',
+      rawPayloadSha256: first.data.job.rawPayloadSha256,
+      counts: { fetched: 4, unchanged: 3, inserted: 0, skippedUnknownSheet: 1 },
+    })
+    expect(await saveRevision(user.saveId)).toBe(revision)
+    expect(await eventCount(user.saveId)).toBe(events)
+    // the records still point at the first job: nothing was written
+    expect((await records(user.saveId)).every((r) => r.import_job_id === first.data.job.id)).toBe(true)
+  })
+
+  it('validates the body without echoing it, and needs a session', async () => {
+    const user = await newUser()
+    const invalid = await postNetImport(user.cookie, user.saveId, netBody({ region: 'cn' }))
+    expect(invalid.status).toBe(400)
+    expect(invalid.text).not.toContain(PASSWORD)
+    expect(invalid.text).not.toContain(SEGA_ID)
+    const extra = await postNetImport(user.cookie, user.saveId, netBody({ verification: 'verified' }))
+    expect(extra.status).toBe(400)
+    const anonymous = await fetch(`${getBaseUrl()}/api/v1/saves/${user.saveId}/imports/maimai-net`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(netBody()),
+    })
+    expect(anonymous.status).toBe(401)
+    const other = await newUser()
+    expect((await postNetImport(other.cookie, user.saveId, netBody())).status).toBe(404)
+  })
+
+  it('limits each user to 6 NET imports an hour with 429 and Retry-After', async () => {
+    const user = await newUser()
+    upstream.net = createFakeNet({ id: SEGA_ID, password: PASSWORD }).fetch
+    for (let i = 0; i < 6; i++) {
+      const response = await postNetImport(user.cookie, user.saveId, netBody({ password: 'wrong-password' }))
+      expect(response.status).toBe(200)
+    }
+    const limited = await postNetImport(user.cookie, user.saveId, netBody({ password: 'wrong-password' }))
+    expect(limited.status).toBe(429)
+    expect(Number(limited.headers.get('retry-after'))).toBeGreaterThan(0)
+    expect(limited.json).toMatchObject({ code: 'TOO_MANY_REQUESTS', data: { retryAfterSeconds: expect.any(Number) } })
+  })
+})
+
+describe('LXNS server import', () => {
+  const seedToken = (userId: string, expiresAt: Date) =>
+    pool.query(
+      `INSERT INTO lxns_oauth_tokens (user_id, access_token, refresh_token, expires_at, scope)
+       VALUES ($1, 'old-access', 'old-refresh', $2, 'read_user_profile read_player')`,
+      [userId, expiresAt.toISOString()],
+    )
+
+  const scores = [lxnsScore(CHARTS.kiminoDxMaster, 100.5), lxnsScore(CHARTS.kiminoDxExpert, 97.12345)]
+
+  const lxnsUpstream = (options: { accessToken: string; onRefresh?: (body: any) => void }) => {
+    upstream.http = async (url, init) => {
+      if (url.href === 'https://maimai.lxns.net/api/v0/oauth/token') {
+        options.onRefresh?.(await new Response(init?.body).json())
+        return lxnsEnvelope({
+          access_token: options.accessToken,
+          refresh_token: 'new-refresh',
+          token_type: 'Bearer',
+          expires_in: 3600,
+          scope: 'read_user_profile read_player',
+        })
+      }
+      const authorization = new Headers(init?.headers).get('authorization')
+      if (authorization !== `Bearer ${options.accessToken}`) return new Response('unauthorized', { status: 401 })
+      if (url.pathname === '/api/v0/user/maimai/player') return lxnsEnvelope({ name: 'SYNTH', friend_code: 123456789 })
+      if (url.pathname === '/api/v0/user/maimai/player/scores') return lxnsEnvelope(scores)
+      return undefined
+    }
+  }
+
+  it('refreshes an expired token, then imports verified records with the LXNS friend code', async () => {
+    const user = await newUser()
+    await seedToken(user.userId, new Date(Date.now() - 60_000))
+    let refreshed: any
+    lxnsUpstream({ accessToken: 'new-access', onRefresh: (body) => (refreshed = body) })
+
+    const response = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/lxns`, {
+      idempotencyKey: key(),
+      trigger: 'user',
+    })
+    expect(response.status).toBe(200)
+    expect(refreshed).toMatchObject({ grant_type: 'refresh_token', refresh_token: 'old-refresh' })
+    expect(
+      (await pool.query(`SELECT access_token, refresh_token FROM lxns_oauth_tokens WHERE user_id = $1`, [user.userId]))
+        .rows[0],
+    ).toEqual({ access_token: 'new-access', refresh_token: 'new-refresh' })
+    expect(response.body.job).toMatchObject({
+      source: 'lxns',
+      status: 'succeeded',
+      sourceAccountId: '123456789',
+      sourceAccountKind: 'lxns_friend_code',
+      rawPayloadSha256: canonicalSha256(scores),
+      counts: { fetched: 2, inserted: 2 },
+    })
+    const stored = await records(user.saveId)
+    expect(stored.map((r) => [r.sheet_id, r.achievement, r.verification, r.source_account_id])).toEqual(
+      [
+        [CHARTS.kiminoDxExpert.sheetId, 971234, 'verified', '123456789'],
+        [CHARTS.kiminoDxMaster.sheetId, 1005000, 'verified', '123456789'],
+      ].sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
+    )
+  })
+
+  it('fails the job without a connection', async () => {
+    const user = await newUser()
+    const response = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/lxns`, {
+      idempotencyKey: key(),
+      trigger: 'auto',
+    })
+    expect(response.status).toBe(200)
+    expect(response.body.job).toMatchObject({ status: 'failed', errorCode: 'not_connected' })
+    expect(await records(user.saveId)).toHaveLength(0)
+    expect(upstream.httpCalls).toEqual([])
+  })
+
+  it('answers 409 while a job of the source runs, and replays the key', async () => {
+    const user = await newUser()
+    await seedToken(user.userId, new Date(Date.now() + 3_600_000))
+    lxnsUpstream({ accessToken: 'old-access' })
+    const body = { idempotencyKey: key(), trigger: 'user' }
+    const first = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/lxns`, body)
+    const calls = upstream.httpCalls.length
+    const replay = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/lxns`, body)
+    expect(replay.body.job).toEqual(first.body.job)
+    expect(upstream.httpCalls.length).toBe(calls)
+
+    const running = await runDatabase((database) =>
+      startImportJob(database, {
+        userId: user.userId,
+        saveId: user.saveId,
+        source: 'lxns',
+        trigger: 'user',
+        idempotencyKey: key(),
+      }),
+    )
+    const conflict = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/lxns`, {
+      idempotencyKey: key(),
+      trigger: 'user',
+    })
+    expect(conflict.status).toBe(409)
+    expect(conflict.body).toMatchObject({ data: { reason: 'IMPORT_IN_PROGRESS', jobId: running.job.id } })
+  })
+
+  it('fails a job left running for 15 minutes instead of answering 409 forever', async () => {
+    const user = await newUser()
+    await seedToken(user.userId, new Date(Date.now() + 3_600_000))
+    lxnsUpstream({ accessToken: 'old-access' })
+    const stale = await runDatabase((database) =>
+      startImportJob(database, {
+        userId: user.userId,
+        saveId: user.saveId,
+        source: 'lxns',
+        trigger: 'user',
+        idempotencyKey: key(),
+      }),
+    )
+    await pool.query(`UPDATE score_import_jobs SET started_at = now() - interval '16 minutes' WHERE id = $1`, [
+      stale.job.id,
+    ])
+    const response = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/lxns`, {
+      idempotencyKey: key(),
+      trigger: 'user',
+    })
+    expect(response.body.job.status).toBe('succeeded')
+    expect(await jobRow(stale.job.id)).toMatchObject({ status: 'failed', error_code: 'abandoned' })
+  })
+})
+
+describe('Diving-Fish server import', () => {
+  it('imports the public B50 as verified records and keeps each best 50 bucket', async () => {
+    const user = await newUser()
+    let requested: any
+    const charts = {
+      dx: [divingFishChart(CHARTS.kiminoDxMaster, 100.6)],
+      sd: [divingFishChart(CHARTS.kiminoStdMaster, 99.5), divingFishChart(CHARTS.ourFightingStdBasic, 98)],
+    }
+    upstream.http = async (url, init) => {
+      if (url.href !== 'https://www.diving-fish.com/api/maimaidxprober/query/player') return undefined
+      requested = await new Response(init?.body).json()
+      return Response.json({ nickname: 'SYNTH', rating: 12345, username: 'synth', charts })
+    }
+    const response = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/diving-fish`, {
+      idempotencyKey: key(),
+      trigger: 'user',
+      username: 'synth',
+    })
+    expect(response.status).toBe(200)
+    expect(requested).toEqual({ b50: 1, username: 'synth' })
+    expect(response.body.job).toMatchObject({
+      source: 'diving-fish',
+      status: 'succeeded',
+      sourceAccountId: 'synth',
+      sourceAccountKind: 'df_username',
+      rawPayloadSha256: canonicalSha256(charts),
+      counts: { fetched: 3, inserted: 3 },
+    })
+    const stored = await records(user.saveId)
+    const bucketOf = (sheet: string) => stored.find((r) => r.sheet_id === sheet)?.best50_bucket
+    expect(bucketOf(CHARTS.kiminoDxMaster.sheetId)).toBe('b15')
+    expect(bucketOf(CHARTS.kiminoStdMaster.sheetId)).toBe('b35')
+    expect(bucketOf(CHARTS.ourFightingStdBasic.sheetId)).toBe('b35')
+    expect(stored.every((r) => r.verification === 'verified' && r.fetched_by === 'server')).toBe(true)
+  })
+
+  it('queries by QQ and fails the job for an unknown player', async () => {
+    const user = await newUser()
+    let requested: any
+    upstream.http = async (_url, init) => {
+      requested = await new Response(init?.body).json()
+      return Response.json({ message: 'user not exists' }, { status: 400 })
+    }
+    const response = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/diving-fish`, {
+      idempotencyKey: key(),
+      trigger: 'user',
+      qq: '123456789',
+    })
+    expect(requested).toEqual({ b50: 1, qq: '123456789' })
+    expect(response.body.job).toMatchObject({ status: 'failed', errorCode: 'not_found', sourceAccountKind: null })
+    expect(await records(user.saveId)).toHaveLength(0)
+  })
+
+  it('limits LXNS and Diving-Fish imports to 12 an hour per user', async () => {
+    const user = await newUser()
+    upstream.http = () => Response.json({}, { status: 400 })
+    const call = () =>
+      api(user.cookie, 'POST', `/saves/${user.saveId}/imports/diving-fish`, {
+        idempotencyKey: key(),
+        trigger: 'user',
+        username: 'synth',
+      })
+    for (let i = 0; i < 12; i++) expect((await call()).status).toBe(200)
+    const limited = await call()
+    expect(limited.status).toBe(429)
+    expect(limited.headers.get('retry-after')).toBeTruthy()
+  })
+})
+
+describe('server import flags and provenance', () => {
+  it('answers 404 on the three server import routes while server imports are off for the user', async () => {
+    const user = await newUser({ serverImports: false })
+    upstream.net = createFakeNet({ id: SEGA_ID, password: PASSWORD, records: NET_RECORDS }).fetch
+    expect((await postNetImport(user.cookie, user.saveId, netBody())).status).toBe(404)
+    for (const [path, body] of [
+      ['lxns', { idempotencyKey: key(), trigger: 'user' }],
+      ['diving-fish', { idempotencyKey: key(), trigger: 'user', username: 'synth' }],
+    ] as const) {
+      const response = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/${path}`, body)
+      expect(response.status, path).toBe(404)
+    }
+    expect(upstream.httpCalls).toEqual([])
+    // the legacy paths keep working, and client imports stay available (client_reported)
+    const legacy = await fetch(`${getBaseUrl()}/functions/fetch-net-records/v0`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: SEGA_ID, password: PASSWORD, region: 'jp' }),
+    })
+    expect(legacy.status).toBe(200)
+    expect((await legacy.json()).musicRecords).toHaveLength(NET_RECORDS.length)
+    const client = await api(user.cookie, 'POST', `/saves/${user.saveId}/client-imports`, {
+      idempotencyKey: key(),
+      source: 'dxrating-json',
+      trigger: 'user',
+      records: [{ sheetId: CHARTS.kiminoDxMaster.sheetId, achievement: 1005000, comboFlag: null, syncFlag: null }],
+    })
+    expect(client.status).toBe(200)
+    expect((await records(user.saveId))[0]).toMatchObject({ verification: 'client_reported', fetched_by: 'client' })
+  })
+
+  it('marks records verified only from server jobs: a client upload of the same chart stays client_reported', async () => {
+    const user = await newUser()
+    const client = await api(user.cookie, 'POST', `/saves/${user.saveId}/client-imports`, {
+      idempotencyKey: key(),
+      source: 'dxrating-json',
+      trigger: 'user',
+      records: [
+        {
+          sheetId: CHARTS.kiminoDxMaster.sheetId,
+          achievement: 1009000,
+          comboFlag: 'ap',
+          syncFlag: null,
+          claimedSource: 'maimai-net',
+        },
+      ],
+    })
+    expect(client.body.job).toMatchObject({ fetchedBy: 'client', status: 'succeeded' })
+    upstream.net = createFakeNet({ id: SEGA_ID, password: PASSWORD, records: NET_RECORDS }).fetch
+    await postNetImport(user.cookie, user.saveId, netBody())
+    const stored = await records(user.saveId)
+    // the better client value is kept, unverified; the charts only the server fetched are verified
+    expect(stored.find((r) => r.sheet_id === CHARTS.kiminoDxMaster.sheetId)).toMatchObject({
+      achievement: 1009000,
+      verification: 'client_reported',
+      source: 'dxrating-json',
+    })
+    expect(stored.filter((r) => r.verification === 'verified')).toHaveLength(2)
+    expect(stored.filter((r) => r.verification === 'verified').every((r) => r.fetched_by === 'server')).toBe(true)
+  })
+
+  it('keeps the server import routes out of the public spec', async () => {
+    const spec = JSON.stringify(await (await fetch(`${getBaseUrl()}/spec.json`)).json())
+    expect(spec).not.toMatch(/\/saves|imports\/lxns|imports\/diving-fish|client-imports|\/imports\//)
+  })
+})

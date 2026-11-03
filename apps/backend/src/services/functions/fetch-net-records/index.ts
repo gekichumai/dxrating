@@ -8,6 +8,7 @@ import {
   type StateUpdateCallback,
 } from '../../../lib/functions/client'
 import { Sentry, type Scope } from '../../../lib/functions/sentry'
+import { holdCredentials, scrubString } from '../../../lib/credential-hygiene'
 import { runApp } from '../../../runtime'
 
 export class NetStreamError extends Data.TaggedError('NetStreamError')<{
@@ -84,6 +85,9 @@ export const v0Handler = (c: Context) => {
 export const v1Handler = (c: Context) => {
   const region = c.get('region') as 'jp' | 'intl'
   return streamSSE(c, async (stream) => {
+    // the credentials are filtered from telemetry while the stream runs (design §7.2)
+    const authParams = c.get('authParams') as AuthParams
+    const releaseCredentials = holdCredentials([authParams.id, authParams.password])
     const disconnected = new AbortController()
     stream.onAbort(() => disconnected.abort())
     const signal = AbortSignal.any([c.req.raw.signal, disconnected.signal])
@@ -132,7 +136,7 @@ export const v1Handler = (c: Context) => {
                 event: 'error',
                 data: JSON.stringify({
                   code: error instanceof NetImportError ? error.code : 'UNKNOWN_ERROR',
-                  error: error instanceof Error ? error.message : 'internal server error',
+                  error: error instanceof Error ? scrubString(error.message) : 'internal server error',
                 }),
               }),
             catch: (cause) => new NetStreamError({ operation: 'write NET import error', cause }),
@@ -153,6 +157,8 @@ export const v1Handler = (c: Context) => {
       if (!signal.aborted && !interrupted) {
         throw error
       }
+    } finally {
+      releaseCredentials()
     }
   })
 }

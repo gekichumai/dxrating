@@ -2,6 +2,7 @@ import { Clock, Duration, Effect, Schedule } from 'effect'
 import { log } from 'evlog'
 import { Database } from '../../db/index'
 import { RECORD_EVENTS_KEPT } from './changes'
+import { sweepAbandonedImportJobs } from './jobs'
 import { trimSnapshots } from './saves'
 
 type DatabaseService = typeof Database.Service
@@ -34,6 +35,8 @@ export interface CleanupReport {
   mutationsPurged: number
   savesPurged: number
   snapshotsPurged: number
+  /** Import jobs still running after 15 minutes, failed as `abandoned` */
+  jobsAbandoned: number
 }
 
 /**
@@ -51,6 +54,7 @@ export interface CleanupReport {
  * 3. `score_mutations` ledger rows older than 30 days are deleted.
  * 4. Saves soft-deleted more than 30 days ago are hard-deleted (their rows cascade).
  * 5. Snapshots beyond the newest 100 per save are deleted.
+ * 6. Import jobs still running 15 minutes after they started are failed (`abandoned`, design §7.1).
  */
 export const runCloudSaveCleanup = (database: DatabaseService, now: Date) =>
   Effect.gen(function* () {
@@ -61,6 +65,7 @@ export const runCloudSaveCleanup = (database: DatabaseService, now: Date) =>
       mutationsPurged: 0,
       savesPurged: 0,
       snapshotsPurged: 0,
+      jobsAbandoned: 0,
     }
     const tombstoneCutoff = new Date(now.getTime() - CLOUD_SAVE_RETENTION.tombstoneMs)
 
@@ -173,7 +178,11 @@ export const runCloudSaveCleanup = (database: DatabaseService, now: Date) =>
     if (!saves.locked) return report
 
     const snapshots = yield* step(trimSnapshots(database, null))
-    if (snapshots.locked) report.snapshotsPurged = snapshots.value
+    if (!snapshots.locked) return report
+    report.snapshotsPurged = snapshots.value
+
+    const abandoned = yield* step(sweepAbandonedImportJobs(database, now))
+    if (abandoned.locked) report.jobsAbandoned = abandoned.value
     return report
   })
 
@@ -206,3 +215,13 @@ export const cloudSaveCleanupLoop = scheduleCleanup(
     return yield* runCloudSaveCleanup(database, new Date(now))
   }),
 )
+/**
+ * The startup sweeper (design §7.1): no job of a previous process can still be running, so every job running for
+ * more than 15 minutes is failed (`abandoned`) before the server accepts requests' imports.
+ */
+export const sweepAbandonedImportJobsAtStartup = Effect.gen(function* () {
+  const database = yield* Database
+  const swept = yield* sweepAbandonedImportJobs(database)
+  if (swept > 0) yield* Effect.sync(() => log.info({ action: 'import.sweep', jobsAbandoned: swept }))
+  return swept
+})

@@ -435,7 +435,10 @@ export const ClientImportInputSchema = z
     sourceAccountId: SourceAccountIdSchema.nullish(),
     /** Client-claimed */
     fetchedAt: TimestampSchema.nullish(),
-    /** Compared with the hash the server computes, never stored as is */
+    /**
+     * sha256 hex of the canonical JSON (object keys sorted) of this chunk's `records`. Only compared with the hash the
+     * server computes over the same records (a mismatch is counted, never an error); never stored as is.
+     */
     rawPayloadSha256: PayloadSha256Schema.nullish(),
     chunkIndex: z
       .number()
