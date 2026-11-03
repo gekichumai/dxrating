@@ -1,4 +1,13 @@
-import type { ComboFlag, RatingEntry, SongCatalog, SyncFlag, VersionedSheet } from '@gekichumai/maimai-domain'
+import {
+  type Best50Bucket,
+  type ComboFlag,
+  calculateRatingAward,
+  preferBest50Hint,
+  type RatingEntry,
+  type SongCatalog,
+  type SyncFlag,
+  type VersionedSheet,
+} from '@gekichumai/maimai-domain'
 import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
 
 export interface UserRecord {
@@ -46,14 +55,35 @@ export function toRatingEntries(entries: readonly PlayEntry[], catalog: SongCata
   })
 }
 
-const hasBucketHint = (source: RatingEntry['source']) =>
-  source?.provider === 'diving-fish' && source.best50Bucket !== undefined
+const hintOf = (source: RatingEntry['source']) =>
+  source?.provider === 'diving-fish' && source.best50Bucket !== undefined ? source.best50Bucket : null
 
-/** An authoritative bucket hint from any duplicate wins (as in calculateBest50), then the preferred entry's source */
-function chooseSource(preferred: RatingEntry['source'], other: RatingEntry['source']): RatingEntry['source'] {
-  if (hasBucketHint(preferred)) return preferred
-  if (hasBucketHint(other)) return other
-  return preferred ?? other
+/**
+ * The source a grouped record keeps: among duplicates carrying an authoritative bucket hint, the one
+ * `calculateBest50` would pick (`preferBest50Hint`); without any hint, the preferred entry's source.
+ */
+function chooseSource(
+  preferred: { source: RatingEntry['source']; entry: PlayEntry },
+  other: { source: RatingEntry['source']; entry: PlayEntry },
+  sheet: VersionedSheet | null,
+): RatingEntry['source'] {
+  const a = hintOf(preferred.source)
+  const b = hintOf(other.source)
+  if (a && b) {
+    const candidate = (bucket: Best50Bucket, entry: PlayEntry) => ({
+      bucket,
+      achievementRate: entry.achievementRate,
+      ratingAwardValue: sheet
+        ? calculateRatingAward(sheet.internalLevelValue, entry.achievementRate, entry.comboFlag).ratingAwardValue
+        : 0,
+    })
+    return preferBest50Hint(candidate(a, preferred.entry), candidate(b, other.entry)) === 'a'
+      ? preferred.source
+      : other.source
+  }
+  if (a) return preferred.source
+  if (b) return other.source
+  return preferred.source ?? other.source
 }
 
 /** One record per sheet: the highest-achievement entry, with each flag aggregated independently */
@@ -62,6 +92,8 @@ export function groupUserRecords(
   getSheet: (sheetId: string) => VersionedSheet | null,
 ): Map<string, UserRecord> {
   const bySheetId = new Map<string, UserRecord>()
+  // The entry each record's source came from, to rank conflicting hints by its rating
+  const sourceEntry = new Map<string, PlayEntry>()
   for (const entry of entries) {
     const existing = bySheetId.get(entry.sheetId)
     if (!existing) {
@@ -75,6 +107,7 @@ export function groupUserRecords(
         },
         source: playEntrySource(entry),
       })
+      sourceEntry.set(entry.sheetId, entry)
       continue
     }
     const higher = entry.achievementRate > existing.entry.achievementRate
@@ -86,11 +119,15 @@ export function groupUserRecords(
         comboFlag: strongest(COMBO_RANK, existing.best.comboFlag, entry.comboFlag ?? null),
         syncFlag: strongest(SYNC_RANK, existing.best.syncFlag, entry.syncFlag ?? null),
       },
-      source: chooseSource(
-        higher ? playEntrySource(entry) : existing.source,
-        higher ? existing.source : playEntrySource(entry),
-      ),
+      source: undefined,
     })
+    const current = { source: existing.source, entry: sourceEntry.get(entry.sheetId)! }
+    const incoming = { source: playEntrySource(entry), entry }
+    const chosen = higher
+      ? chooseSource(incoming, current, existing.sheet)
+      : chooseSource(current, incoming, existing.sheet)
+    bySheetId.get(entry.sheetId)!.source = chosen
+    sourceEntry.set(entry.sheetId, chosen === incoming.source ? entry : current.entry)
   }
   return bySheetId
 }
