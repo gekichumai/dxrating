@@ -187,7 +187,17 @@
     "hub.column.designer": "谱师",
     "hub.column.my-score": "我的成绩",
     "hub.notes-breakdown": "TAP {{tap}} / HOLD {{hold}} / SLIDE {{slide}} / TOUCH {{touch}} / BREAK {{break}}",
-    "hub.raise-hint": "达成 {{target}}% 可 +{{gain}} Rating"
+    "hub.raise-hint": "达成 {{target}}% 可 +{{gain}} Rating",
+    "seo.hub-title": "{{title}} 谱面定数・BPM {{bpm}} - 舞萌DX | DXRating",
+    "seo.hub-title-no-bpm": "{{title}} 谱面定数 - 舞萌DX | DXRating",
+    "seo.hub-description": "{{title}}（{{artist}}）的舞萌DX 全部谱面：等级、谱面定数、音符数与谱师{{bpmFact}}。尽在 DXRating。",
+    "seo.hub-bpm-fact": "，BPM {{bpm}}",
+    "hub.artist": "曲师",
+    "hub.bpm": "BPM",
+    "hub.version": "版本",
+    "hub.aliases": "别名",
+    "hub.all-charts-link": "本曲全部谱面",
+    "hub.breadcrumb-label": "面包屑导航"
   },
   "about": {
     "title": "关于本站",

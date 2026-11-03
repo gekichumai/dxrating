@@ -33,7 +33,8 @@ import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
 
-const SONG_DETAIL_ROUTE_ID = '/songs/$songId/$type/$difficulty'
+// Routes whose head sets the full page title themselves
+const SELF_TITLED_ROUTE_IDS = new Set(['/songs/$songId/$type/$difficulty', '/songs_/$songId'])
 
 const fallbackElement = (
   <div className="flex items-center justify-center h-50% w-full p-6">
@@ -58,7 +59,7 @@ export const Route = createRootRoute({
   shouldReload: false,
   head: ({ match, matches }) => {
     const locale = resolveSeoLocale([match, ...matches])
-    const includeRootTitle = !matches.some((match) => String(match.routeId) === SONG_DETAIL_ROUTE_ID)
+    const includeRootTitle = !matches.some((match) => SELF_TITLED_ROUTE_IDS.has(String(match.routeId)))
 
     return {
       meta: [

@@ -76,4 +76,13 @@ describe('buildSitemap plates', () => {
       expect(sitemap).toContain(`hreflang="ja" href="https://dxrating.net${path}?locale=ja"`)
     }
   })
+
+  it('lists one hub URL per song with its hreflang cluster', () => {
+    const sitemap = buildSitemap([
+      { id: 'dsng_hub', sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Master }] },
+    ])
+
+    expect(sitemap).toContain('<loc>https://dxrating.net/songs/dsng_hub</loc>')
+    expect(sitemap).toContain('hreflang="ja" href="https://dxrating.net/songs/dsng_hub?locale=ja"')
+  })
 })

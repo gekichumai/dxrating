@@ -187,7 +187,17 @@
     "hub.column.designer": "Charter",
     "hub.column.my-score": "My score",
     "hub.notes-breakdown": "TAP {{tap}} / HOLD {{hold}} / SLIDE {{slide}} / TOUCH {{touch}} / BREAK {{break}}",
-    "hub.raise-hint": "{{target}}% for +{{gain}} rating"
+    "hub.raise-hint": "{{target}}% for +{{gain}} rating",
+    "seo.hub-title": "{{title}} – maimai DX charts, BPM {{bpm}} | DXRating",
+    "seo.hub-title-no-bpm": "{{title}} – maimai DX charts | DXRating",
+    "seo.hub-description": "{{title}} by {{artist}}: every maimai DX chart with levels, internal levels (constants), note counts and chart designers{{bpmFact}}. On DXRating.",
+    "seo.hub-bpm-fact": ", BPM {{bpm}}",
+    "hub.artist": "Artist",
+    "hub.bpm": "BPM",
+    "hub.version": "Version",
+    "hub.aliases": "Aliases",
+    "hub.all-charts-link": "All charts of this song",
+    "hub.breadcrumb-label": "Breadcrumb"
   },
   "about": {
     "title": "About",
