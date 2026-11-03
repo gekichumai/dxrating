@@ -239,6 +239,59 @@ describe('credential hygiene of the maimai NET routes', () => {
     }
   })
 
+  it('answers a malformed body with 400 and sends neither credential to Sentry, logs or the response', async () => {
+    const segaId = 'leakmalformed-id-41c7'
+    const password = 'leakpw-3e9a'
+    const raw = async (path: string, body: string, contentType = 'application/json') => {
+      const response = await fetch(`${getBaseUrl()}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': contentType },
+        body,
+      })
+      return { status: response.status, text: await response.text() }
+    }
+    const bodies: Array<[string, string]> = [
+      // a single-quoted password and an unquoted SEGA ID: V8's SyntaxError quotes the text around the bad token
+      [`{"region":"intl","id":"${segaId}","password":'${password}'}`, 'application/json'],
+      [`{"region":"intl","id":${segaId},"password":"${password}"}`, 'application/json'],
+      [`region=intl&id=${segaId}&password=${password}`, 'application/x-www-form-urlencoded'],
+    ]
+    const before = envelopes.length
+    const consoleBefore = consoleLines.length
+    const answers: string[] = []
+    for (const [body, contentType] of bodies) {
+      for (const path of ['/functions/fetch-net-records/v0', '/functions/fetch-net-records/v1/intl']) {
+        const response = await raw(path, body, contentType)
+        expect(response.status, `${path} ${body}`).toBe(400)
+        answers.push(response.text)
+      }
+    }
+    // the oRPC procedure answers its own 400 to malformed JSON (it reads a form body as a valid input); the new route
+    // needs a session first
+    for (const [body, contentType] of bodies.slice(0, 2)) {
+      const response = await raw('/api/v1/io/import/maimai-net', body, contentType)
+      expect(response.status).toBeGreaterThanOrEqual(400)
+      expect(response.status, `${contentType} ${body}`).toBeLessThan(500)
+      answers.push(response.text)
+    }
+    const user = await session(pool, `hygiene-malformed-${randomUUID().slice(0, 8)}@example.com`)
+    const save = await api(user.cookie, 'POST', '/saves', { name: 'JP', region: 'jp' })
+    for (const [body, contentType] of bodies) {
+      const response = await fetch(`${getBaseUrl()}/api/v1/saves/${save.body.id as string}/imports/maimai-net`, {
+        method: 'POST',
+        headers: { 'Content-Type': contentType, Cookie: user.cookie },
+        body,
+      })
+      expect(response.status).toBe(400)
+      answers.push(await response.text())
+    }
+    await Sentry.flush(5000)
+    for (const text of [...envelopes.slice(before), ...consoleLines.slice(consoleBefore), ...answers]) {
+      expect(text.includes(segaId), `carries the SEGA ID: ${text.slice(0, 300)}`).toBe(false)
+      expect(text.includes(password), `carries the password: ${text.slice(0, 300)}`).toBe(false)
+    }
+  })
+
   it('lets go of the credentials of finished requests after the grace period', async () => {
     const { holdCredentials } = await import('../lib/credential-hygiene')
     vi.useFakeTimers()
