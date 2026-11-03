@@ -1,0 +1,234 @@
+import { ProcedureContract, type AnyContractRouter } from '@orpc/contract'
+import { getOpenAPIMeta, OpenAPIGenerator } from '@orpc/openapi'
+import { ZodToJsonSchemaConverter } from '@orpc/zod'
+import { describe, expect, it } from 'vitest'
+import { publicAppContract, publicContractRoutes } from '../contract.ts'
+import {
+  ClientImportInputSchema,
+  cloudSaveContract,
+  CreateSaveInputSchema,
+  DivingFishImportInputSchema,
+  ImportRecordSchema,
+  MutationsInputSchema,
+  NetImportInputSchema,
+  ReplaceInputSchema,
+  SetValueSchema,
+} from '../private/cloud-save.ts'
+
+const procedures = (router: AnyContractRouter, path: string[] = []): Array<[string, AnyContractRouter]> =>
+  router instanceof ProcedureContract
+    ? [[path.join('.'), router]]
+    : Object.entries(router).flatMap(([key, value]) => procedures(value as AnyContractRouter, [...path, key]))
+
+const isInternal = (contract: unknown) => getOpenAPIMeta(contract as never)?.tags?.includes('internal') ?? false
+
+const generateSpec = (router: AnyContractRouter, publicOnly: boolean) =>
+  new OpenAPIGenerator({ converters: [new ZodToJsonSchemaConverter()] }).generate(router, {
+    version: '3.1.1',
+    base: { info: { title: 'DXRating API', version: '1.0.0' } },
+    // The same filter as /spec.json in apps/backend/src/app.ts
+    filter: publicOnly ? (contract) => !isInternal(contract) : undefined,
+  })
+
+const saveId = 'dsav_test-save-1'
+const sheetId = 'dsht_23456789ab'
+const mutationId = '01927b5e-8f3a-7c2d-9e4f-0123456789ab'
+const record = { sheetId, achievement: 1005432, comboFlag: 'fc', syncFlag: null }
+const clientImport = {
+  id: saveId,
+  idempotencyKey: 'import-0192-7b5e',
+  source: 'dxrating-json',
+  trigger: 'user',
+  records: [record],
+}
+
+describe('cloudSaveContract', () => {
+  it('has every §5.1 route except /me/features, all tagged internal and cloud-save', () => {
+    const entries = procedures(cloudSaveContract)
+    expect(entries.map(([path, contract]) => `${getOpenAPIMeta(contract as never)?.method} ${path}`)).toEqual([
+      'GET saves.list',
+      'POST saves.create',
+      'PATCH saves.update',
+      'DELETE saves.delete',
+      'GET records.changes',
+      'POST records.mutate',
+      'GET records.events',
+      'POST records.replace',
+      'POST imports.client',
+      'POST imports.lxns',
+      'POST imports.divingFish',
+      'GET imports.get',
+      'GET imports.list',
+      'POST snapshots.create',
+      'GET snapshots.list',
+      'GET export',
+    ])
+    for (const [, contract] of entries) {
+      expect(getOpenAPIMeta(contract as never)?.tags).toEqual(['internal', 'cloud-save'])
+      expect(getOpenAPIMeta(contract as never)?.path).not.toMatch(/^\/me\/features/)
+    }
+  })
+
+  it('stays out of the public contract', () => {
+    expect('cloudSave' in publicContractRoutes).toBe(false)
+    expect('cloudSave' in publicAppContract).toBe(false)
+    const publicPaths = procedures(publicAppContract).map(([, contract]) => getOpenAPIMeta(contract as never)?.path)
+    for (const path of publicPaths) expect(path).not.toMatch(/^\/(saves|imports|me\/export)/)
+  })
+
+  it('leaves no cloud-save path or tag in the public OpenAPI document', async () => {
+    const router = { ...publicContractRoutes, cloudSave: cloudSaveContract }
+
+    // Control: without the filter the routes are there, so the assertions below are not vacuous
+    const full = JSON.stringify(await generateSpec(router, false))
+    expect(full).toContain('"/saves/{id}/changes"')
+    expect(full).toContain('cloud-save')
+
+    const spec = await generateSpec(router, true)
+    const paths = Object.keys(spec.paths ?? {})
+    expect(paths.length).toBeGreaterThan(0)
+    for (const path of paths) {
+      expect(path).not.toMatch(/^\/(saves|imports|me\/export|me\/features)/)
+    }
+    expect(JSON.stringify(spec)).not.toContain('cloud-save')
+    expect(JSON.stringify(spec)).not.toContain('"internal"')
+  })
+})
+
+describe('provenance claims are never trusted', () => {
+  it('rejects provenance fields on records, set values and requests', () => {
+    expect(ImportRecordSchema.safeParse(record).success).toBe(true)
+    for (const key of ['fetchedBy', 'verification', 'source', 'importJobId', 'rawPayloadSha256', 'entryMethod']) {
+      expect(ImportRecordSchema.safeParse({ ...record, [key]: 'server' }).success, key).toBe(false)
+      expect(
+        SetValueSchema.safeParse({ achievement: 1000000, comboFlag: null, syncFlag: null, [key]: 'x' }).success,
+        key,
+      ).toBe(false)
+    }
+    expect(ClientImportInputSchema.safeParse(clientImport).success).toBe(true)
+    expect(ClientImportInputSchema.safeParse({ ...clientImport, fetchedBy: 'server' }).success).toBe(false)
+    expect(ClientImportInputSchema.safeParse({ ...clientImport, verification: 'verified' }).success).toBe(false)
+    expect(
+      MutationsInputSchema.safeParse({
+        id: saveId,
+        mutations: [
+          {
+            mutationId,
+            op: 'set',
+            sheetId,
+            entryMethod: 'typed',
+            value: { achievement: 1000000, comboFlag: null, syncFlag: null },
+            verification: 'verified',
+          },
+        ],
+      }).success,
+    ).toBe(false)
+    expect(
+      ReplaceInputSchema.safeParse({
+        id: saveId,
+        ifRevision: 3,
+        idempotencyKey: 'replace-0001',
+        source: 'dxrating-json',
+        records: [{ ...record, fetchedBy: 'server' }],
+      }).success,
+    ).toBe(false)
+  })
+
+  it('accepts only client sources on client-imports, storing claimed providers separately', () => {
+    for (const source of ['aqua-dx', 'mu-net', 'aqua-sqlite', 'dxrating-json', 'legacy-local']) {
+      expect(ClientImportInputSchema.safeParse({ ...clientImport, source }).success, source).toBe(true)
+    }
+    for (const source of ['demo', 'maimai-net-jp', 'maimai-net-intl', 'lxns', 'diving-fish', 'manual', 'maimai-net']) {
+      expect(ClientImportInputSchema.safeParse({ ...clientImport, source }).success, source).toBe(false)
+      expect(
+        ReplaceInputSchema.safeParse({ id: saveId, ifRevision: 0, idempotencyKey: 'replace-0001', source, records: [] })
+          .success,
+        source,
+      ).toBe(false)
+    }
+    const claimed = ClientImportInputSchema.parse({ ...clientImport, records: [{ ...record, claimedSource: 'lxns' }] })
+    expect(claimed.records[0]?.claimedSource).toBe('lxns')
+    expect(claimed.source).toBe('dxrating-json')
+  })
+})
+
+describe('input validation', () => {
+  it('validates sheet IDs and integer achievements', () => {
+    for (const bad of ['dsht_1234567890', 'dsht_23456789a', 'song__dxrt__dx__master', '']) {
+      expect(ImportRecordSchema.safeParse({ ...record, sheetId: bad }).success, bad).toBe(false)
+    }
+    for (const achievement of [0, 1010000]) {
+      expect(ImportRecordSchema.safeParse({ ...record, achievement }).success).toBe(true)
+    }
+    for (const achievement of [-1, 1010001, 100.5432, Number.NaN]) {
+      expect(ImportRecordSchema.safeParse({ ...record, achievement }).success, String(achievement)).toBe(false)
+    }
+    expect(ImportRecordSchema.safeParse({ ...record, comboFlag: 'fdx' }).success).toBe(false)
+  })
+
+  it('limits mutations to 500 and requires UUIDv7 IDs', () => {
+    const del = (i: number) => ({
+      mutationId: `01927b5e-8f3a-7c2d-9e4f-${i.toString(16).padStart(12, '0')}`,
+      op: 'delete',
+      sheetId,
+    })
+    expect(
+      MutationsInputSchema.safeParse({ id: saveId, mutations: Array.from({ length: 500 }, (_, i) => del(i)) }).success,
+    ).toBe(true)
+    expect(
+      MutationsInputSchema.safeParse({ id: saveId, mutations: Array.from({ length: 501 }, (_, i) => del(i)) }).success,
+    ).toBe(false)
+    expect(MutationsInputSchema.safeParse({ id: saveId, mutations: [] }).success).toBe(false)
+    expect(
+      MutationsInputSchema.safeParse({ id: saveId, mutations: [{ ...del(0), mutationId: crypto.randomUUID() }] })
+        .success,
+    ).toBe(false)
+    expect(
+      MutationsInputSchema.safeParse({
+        id: saveId,
+        mutations: [
+          { ...del(0), op: 'set', entryMethod: 'import', value: { achievement: 1, comboFlag: null, syncFlag: null } },
+        ],
+      }).success,
+    ).toBe(false)
+  })
+
+  it('limits client-import chunks to 5000 records', () => {
+    const records = (n: number) => Array.from({ length: n }, () => record)
+    expect(ClientImportInputSchema.safeParse({ ...clientImport, records: records(5000) }).success).toBe(true)
+    expect(ClientImportInputSchema.safeParse({ ...clientImport, records: records(5001) }).success).toBe(false)
+    expect(ClientImportInputSchema.parse(clientImport)).toMatchObject({ chunkIndex: 0, chunkCount: 1 })
+    expect(ClientImportInputSchema.safeParse({ ...clientImport, chunkIndex: 2, chunkCount: 4 }).success).toBe(true)
+    expect(ClientImportInputSchema.safeParse({ ...clientImport, chunkIndex: 4, chunkCount: 4 }).success).toBe(false)
+  })
+
+  it('validates idempotency keys', () => {
+    for (const key of ['auto-net-dsav_abc-1730620800', 'migrate-device1-preset-japan', crypto.randomUUID()]) {
+      expect(ClientImportInputSchema.safeParse({ ...clientImport, idempotencyKey: key }).success, key).toBe(true)
+    }
+    for (const key of ['', 'short', 'has space in it', '-leading-dash', 'x'.repeat(129)]) {
+      expect(ClientImportInputSchema.safeParse({ ...clientImport, idempotencyKey: key }).success, key).toBe(false)
+    }
+  })
+
+  it('validates server import and save inputs', () => {
+    const df = { id: saveId, idempotencyKey: 'import-df-0001', trigger: 'user' }
+    expect(DivingFishImportInputSchema.safeParse({ ...df, username: 'player' }).success).toBe(true)
+    expect(DivingFishImportInputSchema.safeParse({ ...df, qq: '123456' }).success).toBe(true)
+    expect(DivingFishImportInputSchema.safeParse(df).success).toBe(false)
+    expect(DivingFishImportInputSchema.safeParse({ ...df, username: 'player', qq: '123456' }).success).toBe(false)
+    expect(DivingFishImportInputSchema.safeParse({ ...df, username: 'player', trigger: 'migration' }).success).toBe(
+      false,
+    )
+
+    const net = { idempotencyKey: 'import-net-0001', trigger: 'user', region: 'jp', id: 'segaid', password: 'secret' }
+    expect(NetImportInputSchema.safeParse(net).success).toBe(true)
+    expect(NetImportInputSchema.safeParse({ ...net, region: 'cn' }).success).toBe(false)
+    expect(NetImportInputSchema.safeParse({ ...net, fetchedBy: 'server' }).success).toBe(false)
+
+    expect(CreateSaveInputSchema.safeParse({ name: 'Main', region: 'jp' }).success).toBe(true)
+    expect(CreateSaveInputSchema.safeParse({ name: 'Main', region: 'kr' }).success).toBe(false)
+    expect(CreateSaveInputSchema.safeParse({ name: ' ', region: 'jp' }).success).toBe(false)
+    expect(CreateSaveInputSchema.safeParse({ name: 'Main', region: 'jp', revision: 5 }).success).toBe(false)
+  })
+})

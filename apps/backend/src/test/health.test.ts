@@ -134,6 +134,11 @@ describe('Health & Basic Endpoints', () => {
     expect(spec.tags[0].name).toBe('DX Data')
     expect(Object.keys(spec.paths)[0]).toBe('/dxdata')
     expect(JSON.stringify(spec)).not.toContain('"additionalProperties":false')
+    // cloud save is first-party only (meta#17 §5.1): its routes are tagged internal
+    for (const path of Object.keys(spec.paths)) {
+      expect(path).not.toMatch(/^\/(saves|imports|me\/export|me\/features)(\/|$)/)
+    }
+    expect(JSON.stringify(spec)).not.toContain('cloud-save')
 
     const dxdata = spec.paths['/dxdata']
     expect(dxdata.get).toMatchObject({

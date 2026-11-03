@@ -10,12 +10,14 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@gekichumai/maimai-domain": "workspace:*",
     "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@orpc/zod": "catalog:",
     "@types/node": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

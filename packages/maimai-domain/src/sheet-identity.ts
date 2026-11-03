@@ -3,7 +3,8 @@ import type { LegacySheetIdentity, SheetIdentity, UtageDifficultyLabel } from '.
 
 const PUBLIC_ID_ALPHABET = '23456789abcdefghjkmnpqrstvwxyz'
 const PUBLIC_SONG_ID_PATTERN = new RegExp(`^dsng_[${PUBLIC_ID_ALPHABET}]{10}$`)
-const PUBLIC_SHEET_ID_PATTERN = new RegExp(`^dsht_[${PUBLIC_ID_ALPHABET}]{10}$`)
+/** Public sheet ID (`dsht_` + 10 characters of the public ID alphabet); `score_records.sheet_id` CHECKs the same */
+export const PUBLIC_SHEET_ID_PATTERN = new RegExp(`^dsht_[${PUBLIC_ID_ALPHABET}]{10}$`)
 
 export const isPublicSongId = (value: string): boolean => PUBLIC_SONG_ID_PATTERN.test(value)
 export const isPublicSheetId = (value: string): boolean => PUBLIC_SHEET_ID_PATTERN.test(value)
