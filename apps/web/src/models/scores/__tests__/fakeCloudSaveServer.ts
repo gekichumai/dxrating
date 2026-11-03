@@ -12,7 +12,7 @@ import {
   type ManualSetValue,
   type Provenance,
 } from '@gekichumai/maimai-domain'
-import type { CloudSaveRecordsApi } from '../CloudScoreRepository'
+import type { ChangesMode, CloudSaveRecordsApi } from '../CloudScoreRepository'
 
 /**
  * An in-memory cloud save server for the web tests: per-row revisions (§5.2), the manual mutation rules of
@@ -54,10 +54,13 @@ export class FakeCloudSaveServer {
   revision = 0
   readonly records = new Map<string, RecordDTO>()
   readonly mutateCalls: MutationItemInput[][] = []
+  /** The `since` of every `changes` call */
   readonly changesCalls: number[] = []
+  /** The `mode` of every `changes` call */
+  readonly changesModes: ChangesMode[] = []
   /** Thrown, in order, by the next calls (either route) */
   readonly failures: unknown[] = []
-  /** Pulls from a revision below this answer `resetRequired` */
+  /** Incremental pulls from a revision below this answer `resetRequired`; {@link purge} moves it like the cleanup */
   tombstoneHorizon = 0
   /** Page size, whatever the client asks */
   pageSize = 1000
@@ -95,17 +98,21 @@ export class FakeCloudSaveServer {
     return record
   }
 
-  /** Removes a row entirely (a purged tombstone) */
+  /** Removes a row entirely (a purged tombstone): the horizon moves to the highest purged revision */
   purge(sheetId: string) {
+    const record = this.records.get(sheetId)
+    if (!record) return
     this.records.delete(sheetId)
+    this.tombstoneHorizon = Math.max(this.tombstoneHorizon, record.revision)
   }
 
   readonly api: CloudSaveRecordsApi = {
-    changes: async ({ since, limit }) => {
+    changes: async ({ since, limit, mode = 'incremental' }) => {
       this.changesCalls.push(since)
+      this.changesModes.push(mode)
       this.onChanges?.()
       this.throwFailure()
-      return this.changes(since, Math.min(limit, this.pageSize))
+      return this.changes(since, Math.min(limit, this.pageSize), mode)
     },
     mutate: async ({ mutations }) => {
       this.mutateCalls.push(mutations)
@@ -134,17 +141,19 @@ export class FakeCloudSaveServer {
     if (this.failures.length) throw this.failures.shift()
   }
 
-  private changes(since: number, limit: number): ChangesDTO {
-    if (since > 0 && since < this.tombstoneHorizon) {
+  /** `pullChanges` of the backend (apps/backend/src/services/cloud-save/changes.ts), row for row */
+  private changes(since: number, limit: number, mode: ChangesMode): ChangesDTO {
+    if (since > 0 && (since > this.revision || (mode === 'incremental' && since < this.tombstoneHorizon))) {
       return {
         records: [],
-        nextSince: since,
+        nextSince: 0,
         hasMore: false,
         revision: this.revision,
         resetRequired: true,
         checksum: null,
       }
     }
+    // `since = 0`: live rows only; later pages (either mode): live rows and tombstones
     const rows = [...this.records.values()]
       .filter((record) => record.revision > since && (since > 0 || record.deletedAt === null))
       .sort((a, b) => a.revision - b.revision)
@@ -157,7 +166,8 @@ export class FakeCloudSaveServer {
     }
     return {
       records: page,
-      nextSince: page.length ? page[page.length - 1]!.revision : since,
+      // The last page resumes at the save's revision, past purged tombstones
+      nextSince: hasMore ? page[page.length - 1]!.revision : this.revision,
       hasMore,
       revision: this.revision,
       resetRequired: false,
