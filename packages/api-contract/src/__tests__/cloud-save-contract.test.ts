@@ -204,6 +204,9 @@ describe('input validation', () => {
       { ...valid, basedOnRevision: '5' },
       { ...valid, op: 'set', entryMethod: 'typed', value: { achievement: '1005432', comboFlag: null, syncFlag: null } },
       { ...valid, op: 'set', entryMethod: 'typed', value: { comboFlag: null, syncFlag: null } },
+      { ...valid, op: 'set', entryMethod: 'typed', value: null },
+      { ...valid, op: 'set', entryMethod: 'typed', value: 'broken' },
+      { ...valid, op: 'set', entryMethod: 'typed', value: [] },
     ]
     const input = MutationsInputSchema.parse({ id: saveId, mutations: [...malformed, valid] })
     expect(input.mutations.map((mutation) => MutationSchema.safeParse(mutation).success)).toEqual([
@@ -219,6 +222,9 @@ describe('input validation', () => {
     expect(MutationsInputSchema.safeParse({ id: saveId, mutations: [{ ...valid, mutationId: 42 }] }).success).toBe(
       false,
     )
+    // A provenance claim inside the value object fails the request too
+    const claimed = { ...valid, op: 'set', entryMethod: 'typed', value: { achievement: 1, verification: 'verified' } }
+    expect(MutationsInputSchema.safeParse({ id: saveId, mutations: [valid, claimed] }).success).toBe(false)
   })
 
   it('accepts uploads with malformed records, which the handler counts as rejected', () => {

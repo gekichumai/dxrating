@@ -349,13 +349,22 @@ export const MutationItemInputSchema = z.strictObject({
   sheetId: z.unknown().optional(),
   basedOnRevision: z.unknown().optional(),
   clientEditedAt: z.unknown().optional(),
+  // An object value keeps strict keys, so provenance claims inside it still fail the request; any other type is left to
+  // the per-item check
   value: z
-    .strictObject({
-      achievement: z.unknown().optional(),
-      comboFlag: z.unknown().optional(),
-      syncFlag: z.unknown().optional(),
-      dxScore: z.unknown().optional(),
-    })
+    .union([
+      z.strictObject({
+        achievement: z.unknown().optional(),
+        comboFlag: z.unknown().optional(),
+        syncFlag: z.unknown().optional(),
+        dxScore: z.unknown().optional(),
+      }),
+      z.null(),
+      z.string(),
+      z.number(),
+      z.boolean(),
+      z.array(z.unknown()),
+    ])
     .optional(),
   entryMethod: z.unknown().optional(),
 })
