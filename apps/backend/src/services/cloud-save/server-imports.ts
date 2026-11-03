@@ -24,7 +24,7 @@ import {
   type ImportJobRow,
 } from './jobs'
 import { completeImportJob, type MergeRecord } from './merge'
-import { findSave } from './saves'
+import { findSave, saveTransaction } from './saves'
 
 type DatabaseService = typeof Database.Service
 
@@ -82,6 +82,10 @@ export interface ServerImportStart {
  * Starts a server job (design §7.1): the save must be the user's (404 otherwise); a job with the same idempotency
  * key is a replay, and a key that names a job of another save or source is `CloudSaveBadRequest` (400); a running job
  * of the same source on the save is `ImportInProgress` (409).
+ *
+ * It runs in a {@link saveTransaction}: the job insert takes a key-share lock on the save row, and while another
+ * writer holds the save `FOR UPDATE` that wait is bounded by the save lock timeout and ends in `CloudSaveBusy` (429,
+ * retryable), so a request never holds its pool connection (and a NET import its slot) waiting without end.
  */
 export const beginServerImport = (
   database: DatabaseService,
@@ -93,26 +97,28 @@ export const beginServerImport = (
     idempotencyKey: string
   },
 ) =>
-  Effect.gen(function* () {
-    const save = yield* findSave(database, input.userId, input.saveId)
-    const started = yield* startImportJob(database, {
-      userId: input.userId,
-      saveId: save.id,
-      source: input.source,
-      trigger: input.trigger,
-      idempotencyKey: input.idempotencyKey,
-    })
-    // a key is the user's: one that already names an import of another save or source is a client bug, not a replay
-    if (started.job.save_id !== save.id || started.job.source !== input.source) {
-      return yield* new CloudSaveBadRequest({ message: 'The idempotency key belongs to another import' })
-    }
-    return {
-      userId: input.userId,
-      job: started.job,
-      replayed: started.replayed,
-      revision: Number(save.revision),
-    } satisfies ServerImportStart
-  })
+  saveTransaction(database, () =>
+    Effect.gen(function* () {
+      const save = yield* findSave(database, input.userId, input.saveId)
+      const started = yield* startImportJob(database, {
+        userId: input.userId,
+        saveId: save.id,
+        source: input.source,
+        trigger: input.trigger,
+        idempotencyKey: input.idempotencyKey,
+      })
+      // a key is the user's: one that already names an import of another save or source is a client bug, not a replay
+      if (started.job.save_id !== save.id || started.job.source !== input.source) {
+        return yield* new CloudSaveBadRequest({ message: 'The idempotency key belongs to another import' })
+      }
+      return {
+        userId: input.userId,
+        job: started.job,
+        replayed: started.replayed,
+        revision: Number(save.revision),
+      } satisfies ServerImportStart
+    }),
+  )
 
 /** The import counts of normalizer warnings: unknown charts (and UTAGE, which no save stores) vs. invalid values */
 export function warningCounts(warnings: readonly ImportWarning[]) {
@@ -177,7 +183,8 @@ const loadJob = (database: DatabaseService, jobId: string) =>
  *
  * All or nothing: if anything fails (the fetch, after its own retries; the catalog; the merge transaction, which
  * rolls back), the job is marked `failed` with an error code and no record is written. An interrupted job (server
- * shutdown) is marked `failed` (`interrupted`) too.
+ * shutdown, a caller's abort) is marked `failed` (`interrupted`) too, by an interruption finalizer, and the
+ * interruption is let through.
  *
  * Observability (§12.3): a span `import.job` (source, status, duration), the metric `import.skipped_unknown_sheet`,
  * and one evlog line per job with its ID, source and counts (never an account ID).
@@ -276,7 +283,13 @@ export const runServerImport = <R>(
       }),
     )
     return outcome
-  }).pipe(Effect.withSpan('import.job', { attributes: { 'import.source': job.source } }))
+  }).pipe(
+    // An interruption from outside (shutdown, a caller's abort) skips everything after `Effect.exit(work)` above.
+    // This finalizer still fails the job (`interrupted`) once `work` has unwound, which rolls back an active merge
+    // transaction first; it runs before the runtime disposes of the database and lets the interruption through.
+    Effect.onInterrupt(() => failInterruptedImport(database, job.id)),
+    Effect.withSpan('import.job', { attributes: { 'import.source': job.source } }),
+  )
 }
 
 /**

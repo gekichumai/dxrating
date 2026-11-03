@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { Effect, Exit } from 'effect'
+import { Effect, Exit, Option } from 'effect'
 import pg from 'pg'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -71,7 +71,16 @@ vi.mock('../services/cloud-save/import-catalog', async () => {
 import { canonicalSha256 } from '../services/cloud-save/jobs'
 import { NET_IMPORT_GLOBAL_CONCURRENCY, runningNetImports } from '../services/cloud-save/net-import-route'
 import { cloudSaveRateLimits } from '../services/rate-limit'
-import { beginServerImport, failInterruptedImport } from '../services/cloud-save/server-imports'
+import { CloudSaveBusy } from '../services/cloud-save/errors'
+import { SAVE_LOCK_TIMEOUT_MS } from '../services/cloud-save/saves'
+import {
+  beginServerImport,
+  failInterruptedImport,
+  runServerImport,
+  type UpstreamFetch,
+} from '../services/cloud-save/server-imports'
+import { Database } from '../db/index'
+import { appRuntime } from '../runtime'
 import { runDatabase, session, api, sheetId } from './cloud-save-helpers'
 import { startImportJob } from '../services/cloud-save/jobs'
 import {
@@ -856,6 +865,82 @@ describe('server import flags and provenance', () => {
     await pool.query(`UPDATE score_import_jobs SET status = 'succeeded' WHERE id = $1`, [finished.job.id])
     await runDatabase((database) => failInterruptedImport(database, finished.job.id))
     expect(await jobRow(finished.job.id)).toMatchObject({ status: 'succeeded', error_code: null })
+  })
+
+  it('answers busy within the lock timeout when another writer holds the save, before any upstream fetch', async () => {
+    const user = await newUser()
+    const holder = await pool.connect()
+    try {
+      await holder.query('BEGIN')
+      await holder.query(`SELECT id FROM score_saves WHERE id = $1 FOR UPDATE`, [user.saveId])
+
+      const startedAt = Date.now()
+      const exit = await appRuntime.runPromiseExit(
+        Effect.flatMap(Database, (database) =>
+          beginServerImport(database, {
+            userId: user.userId,
+            saveId: user.saveId,
+            source: 'lxns',
+            trigger: 'user',
+            idempotencyKey: key(),
+          }),
+        ),
+      )
+      const elapsed = Date.now() - startedAt
+      expect(Option.getOrUndefined(Exit.findErrorOption(exit))).toBeInstanceOf(CloudSaveBusy)
+      expect(elapsed).toBeGreaterThanOrEqual(SAVE_LOCK_TIMEOUT_MS - 500)
+      expect(elapsed).toBeLessThan(SAVE_LOCK_TIMEOUT_MS + 3000)
+
+      // the NET route answers 429 with Retry-After, gives its slots back and fetches nothing
+      let netCalls = 0
+      const fake = createFakeNet({ id: SEGA_ID, password: PASSWORD, records: NET_RECORDS }).fetch
+      upstream.net = (url, init) => {
+        netCalls += 1
+        return fake(url, init)
+      }
+      const busy = await postNetImport(user.cookie, user.saveId, netBody(), {
+        headers: { 'X-Forwarded-For': '198.51.100.21' },
+      })
+      expect(busy.status).toBe(429)
+      expect(busy.headers.get('retry-after')).toBe('1')
+      expect(busy.json).toMatchObject({ code: 'TOO_MANY_REQUESTS' })
+      expect(netCalls).toBe(0)
+      expect(runningNetImports()).toBe(0)
+    } finally {
+      await holder.query('ROLLBACK')
+      holder.release()
+    }
+    expect((await pool.query(`SELECT count(*)::integer AS n FROM score_import_jobs`)).rows[0].n).toBe(0)
+  })
+
+  it('fails a running job as interrupted when the runner is aborted from outside', async () => {
+    const user = await newUser()
+    const started = await runDatabase((database) =>
+      beginServerImport(database, {
+        userId: user.userId,
+        saveId: user.saveId,
+        source: 'lxns',
+        trigger: 'user',
+        idempotencyKey: key(),
+      }),
+    )
+    let signalEntered = () => {}
+    const entered = new Promise<void>((resolve) => {
+      signalEntered = resolve
+    })
+    const fetch: Effect.Effect<UpstreamFetch> = Effect.sync(() => signalEntered()).pipe(Effect.andThen(Effect.never))
+    const abort = new AbortController()
+    const run = appRuntime.runPromiseExit(
+      Effect.flatMap(Database, (database) => runServerImport(database, started, fetch, { timeout: '1 minute' })),
+      { signal: abort.signal },
+    )
+    await entered
+    expect(await jobRow(started.job.id)).toMatchObject({ status: 'running' })
+    abort.abort()
+    const exit = await run
+    expect(Exit.hasInterrupts(exit)).toBe(true)
+    expect(await jobRow(started.job.id)).toMatchObject({ status: 'failed', error_code: 'interrupted' })
+    expect(await records(user.saveId)).toHaveLength(0)
   })
 
   it('refuses an idempotency key that already names an import of another source or save', async () => {

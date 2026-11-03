@@ -18,7 +18,7 @@ import { runApp } from '../../runtime'
 import { FeatureFlags } from '../feature-flags'
 import { clientKey } from '../mcp/client-key'
 import { cloudSaveRateLimits } from '../rate-limit'
-import { CloudSaveBadRequest, CloudSaveNotFound, ImportInProgress } from './errors'
+import { CloudSaveBadRequest, CloudSaveBusy, CloudSaveNotFound, ImportInProgress } from './errors'
 import {
   beginServerImport,
   failInterruptedImport,
@@ -37,6 +37,8 @@ export const NET_IMPORT_USER_CONCURRENCY = 1
 const NET_IMPORT_TIMEOUT = '10 minutes'
 const USER_BUSY_RETRY_AFTER_SECONDS = 5
 const GLOBAL_BUSY_RETRY_AFTER_SECONDS = 15
+/** Another writer held the save past the lock timeout while the job started (as the other cloud save writes) */
+const SAVE_BUSY_RETRY_AFTER_SECONDS = 1
 
 let globalRunning = 0
 const userRunning = new Map<string, number>()
@@ -83,8 +85,9 @@ const badRequest = (issues: readonly { path: readonly PropertyKey[]; code: strin
  * Before the stream (JSON errors): session (401) -> `cloud_save` and `server_imports` (404 when off) -> body (400)
  * -> per-user (6/h, 30/day) and per-address (30/h) limits, one running NET import per user, at most
  * {@link NET_IMPORT_GLOBAL_CONCURRENCY} at once (429 with `Retry-After`) -> the save (404) -> the job: a running job of
- * the same source is 409 `IMPORT_IN_PROGRESS` with its ID. A replayed idempotency key streams `done` with the job as
- * it is (it may still be running: poll `GET /imports/{id}`).
+ * the same source is 409 `IMPORT_IN_PROGRESS` with its ID, and a save another writer keeps locked past the lock
+ * timeout is 429 with `Retry-After` (the slots are given back, nothing is fetched). A replayed idempotency key
+ * streams `done` with the job as it is (it may still be running: poll `GET /imports/{id}`).
  *
  * Then the stream: `progress` events (the states of the legacy route), and `done` `{job, revision}` or `error`
  * `{code, message, jobId}`. The job runs to its end even if the client disconnects (it polls the job instead); a
@@ -193,6 +196,8 @@ export const netImportHandler = (c: Context) => {
           if (error instanceof CloudSaveBadRequest) {
             return orpcErrorResponse(new ORPCError('BAD_REQUEST', { message: error.message }))
           }
+          // the save stayed locked past the lock timeout: retryable, and nothing was fetched yet
+          if (error instanceof CloudSaveBusy) return tooManyRequests(SAVE_BUSY_RETRY_AFTER_SECONDS)
           if (error instanceof ImportInProgress) {
             return orpcErrorResponse(
               new ORPCError('CONFLICT', {

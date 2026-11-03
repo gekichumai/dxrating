@@ -124,7 +124,8 @@ export const shouldShortCircuit = (
       previous.raw_payload_sha256 === job.raw_payload_sha256 &&
       previous.save_revision !== null &&
       previous.save_revision === String(saveRevision) &&
-      (options.skippedUnknownSheet === undefined || (previous.skipped_unknown_sheet ?? 0) === options.skippedUnknownSheet)
+      (options.skippedUnknownSheet === undefined ||
+        (previous.skipped_unknown_sheet ?? 0) === options.skippedUnknownSheet)
     )
   })
 
