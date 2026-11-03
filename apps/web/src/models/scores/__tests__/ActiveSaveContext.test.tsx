@@ -172,7 +172,9 @@ describe('ActiveSaveContext', () => {
     const { result } = renderActiveSave(deps)
 
     await waitFor(() => expect(result.current.repository.kind).toBe('cloud'))
-    expect(deps.openCloudRepository).toHaveBeenCalledWith({ userId: 'user-1', saveId: 'dsav_main' })
+    expect(deps.openCloudRepository).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'user-1', saveId: 'dsav_main' }),
+    )
     expect(result.current.activeSave).toMatchObject({ kind: 'cloud', saveId: 'dsav_main' })
     await waitFor(() =>
       expect(result.current.repository.entries()).toEqual([
@@ -243,18 +245,74 @@ describe('ActiveSaveContext', () => {
     await waitFor(() => expect(result.current.repository.kind).toBe('cloud'))
     const userOneRepository = result.current.activeSave.cloudRepository!
     await waitFor(() => expect(userOneRepository.entries()).toHaveLength(1))
+    // User A has a change the server has not taken yet
+    server.failures.push(new TypeError('Failed to fetch'))
+    userOneRepository.setManual({ sheetId: 'dsht_e5nsvt8k2a', achievementRate: 99 }, 'typed')
+    await userOneRepository.sync()
+    expect(userOneRepository.status.pendingCount).toBe(1)
+    const userOneMutationId = server.mutateCalls[0]![0]!.mutationId
+    server.failures.length = 0
 
     userId = 'user-2'
     rerender()
 
     await waitFor(() => expect(result.current.repository.kind).toBe('local'))
     expect(result.current.activeSave.cloudRepository).toBeNull()
-    // Disposed without a flush: the session is user B's now
-    expect(server.mutateCalls).toEqual([])
+    // Disposed without a flush: the session is user B's now, so user A's change is not sent with it
+    await settle()
+    expect(server.mutateCalls).toHaveLength(1)
 
     await waitFor(() => expect(releaseSaves).not.toBeNull())
     releaseSaves!()
     await waitFor(() => expect(result.current.activeSave.saveId).toBe('dsav_two'))
     expect(result.current.activeSave.cloudRepository!.userId).toBe('user-2')
+    expect(server.mutateCalls.flat().filter((mutation) => mutation.mutationId === userOneMutationId)).toHaveLength(1)
+
+    // User A's change waits in their outbox for their next sign-in
+    const userOneAgain = await CloudScoreRepository.open({
+      userId: 'user-1',
+      saveId: 'dsav_main',
+      api: server.api,
+      indexedDB: factory,
+      locks: null,
+      createChannel: null,
+      eventTarget: null,
+    })
+    repositories.push(userOneAgain)
+    expect(userOneAgain.status.pendingCount).toBe(1)
+  })
+
+  it.each([
+    ['not-found', { status: 404, code: 'NOT_FOUND' }],
+    ['unauthorized', { status: 401, code: 'UNAUTHORIZED' }],
+  ] as const)('falls back to the local save when syncing stops mid-session (%s)', async (reason, error) => {
+    window.localStorage.setItem('rating-calculator-entries', JSON.stringify([{ sheetId: 'local', achievementRate: 9 }]))
+    writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
+    const deps = dependencies('user-1', {
+      fetchFeatures: vi.fn(async () => FEATURES_ON),
+      listSaves: vi.fn(async () => [save('dsav_main')]),
+    })
+
+    const { result } = renderActiveSave(deps)
+    await waitFor(() => expect(result.current.repository.kind).toBe('cloud'))
+    const repository = result.current.activeSave.cloudRepository!
+    await repository.idle()
+
+    // The save is deleted, cloud save is turned off, or the session expires
+    server.failures.push(error)
+    void repository.sync()
+
+    await waitFor(() => expect(result.current.repository.kind).toBe('local'))
+    expect(repository.stoppedReason).toBe(reason)
+    expect(result.current.repository.entries()).toEqual([expect.objectContaining({ sheetId: 'local' })])
+    if (reason === 'not-found') {
+      expect(toast).toHaveBeenCalledWith(expect.any(String), { id: 'cloud-save-missing' })
+      expect(readActiveSaveId(window.localStorage, 'user-1')).toBeNull()
+      // The features are asked again: the switch may have been turned off
+      expect(window.sessionStorage.getItem('dxr-features:user-1')).toBeNull()
+    } else {
+      expect(toast).not.toHaveBeenCalled()
+      expect(readActiveSaveId(window.localStorage, 'user-1')).toBe('dsav_main')
+    }
   })
 })
