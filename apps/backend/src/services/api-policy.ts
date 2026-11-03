@@ -1,4 +1,4 @@
-import type { OpenAPI } from '@orpc/openapi'
+import type * as OpenAPI from '@openapi-spec/types/v3.1'
 
 // The stability policy of /api/v1, as the API reference states it, and the order of the reference. The full policy is
 // on /developers, in every language of the site; this is its English summary for the spec and Scalar.
@@ -74,7 +74,9 @@ export const applyApiPolicyToOpenApi = (document: OpenAPI.OpenAPIObject): OpenAP
   document.tags = [...TAGS, ...[...others].map((name) => ({ name }))]
 
   const order = (path: string) => {
-    const operation = Object.values(document.paths?.[path] ?? {})[0] as OpenAPI.OperationObject | undefined
+    const operation = Object.values((document.paths as Record<string, object> | undefined)?.[path] ?? {})[0] as
+      | OpenAPI.OperationObject
+      | undefined
     const index = document.tags!.findIndex((tag) => tag.name === operation?.tags?.[0])
     return index === -1 ? document.tags!.length : index
   }
