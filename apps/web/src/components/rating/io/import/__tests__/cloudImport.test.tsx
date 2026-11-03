@@ -16,6 +16,7 @@ import type {
   ServerImportKind,
 } from '@/models/scores/ScoreRepository'
 import { initI18n } from '@/setup/init-i18n'
+import { migrateLegacyImportEntries } from '@/catalog/savedDataMigration'
 import { importFallbackEntries, importFileEntries, importPath } from '../cloudImport'
 import { importFromNETRecords } from '../importFromNETRecords'
 import { netImportProgress } from '../netImportProgressStore'
@@ -114,6 +115,28 @@ describe('importFileEntries', () => {
 
     await expect(pending).resolves.toEqual({ count: 1 })
     expect(repository.applyImport).toHaveBeenCalledWith([ENTRY], { source: 'aqua-dx', mode: 'merge' })
+  })
+
+  it('moves the legacy sheet IDs of an old rating file to public ones before a cloud save sees them', async () => {
+    render(<CloudImportConfirmDialog />)
+    const { repository } = fakeCloud()
+    const legacy = { sheetId: '君の知らない物語__dxrt__std__dxrt__expert', achievementRate: 98 }
+    const unknown = { sheetId: 'retired song__dxrt__dx__dxrt__master', achievementRate: 97 }
+    const pending = importFileEntries(
+      repository,
+      [ENTRY, legacy, unknown],
+      { source: 'dxrating-json', mode: 'replace' },
+      (entries) => migrateLegacyImportEntries(entries, async () => catalogSnapshot),
+    )
+
+    await act(async () => fireEvent.click(await screen.findByRole('button', { name: 'Import' })))
+    await pending
+
+    const [uploaded] = repository.applyImport.mock.calls[0]! as [{ sheetId: string }[]]
+    expect(uploaded[0]).toEqual(ENTRY)
+    expect(uploaded[1]?.sheetId).toMatch(/^dsht_/)
+    // No chart matches: it keeps its ID, and the upload leaves it out
+    expect(uploaded[2]?.sheetId).toBe(unknown.sheetId)
   })
 
   it('clears the cloud save first only after a second confirmation', async () => {

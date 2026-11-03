@@ -3,7 +3,7 @@ import { CircularProgress } from '@mui/material'
 import { type FC, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCloudSaveUi } from '@/models/scores/CloudSaveUiContext'
-import { importFailureMessage } from './importFailureMessage'
+import { importHistoryFailure } from './importFailureMessage'
 import { LoadError } from './LoadError'
 import { sourceName } from './provenanceLabel'
 
@@ -55,7 +55,7 @@ export const ImportHistoryList: FC = () => {
   if (state.kind === 'loading') {
     return (
       <output className="flex items-center gap-2 py-2 text-sm text-zinc-500">
-        <CircularProgress size="1rem" />
+        <CircularProgress size="1rem" aria-hidden />
         {t('rating-calculator:cloud-save.history.loading')}
       </output>
     )
@@ -80,7 +80,7 @@ export const ImportHistoryList: FC = () => {
         )
         const status =
           job.status === 'failed'
-            ? t('rating-calculator:cloud-save.history.failed', { reason: importFailureMessage(job.errorCode, t) })
+            ? importHistoryFailure(job.errorCode, t)
             : job.status === 'running'
               ? t('rating-calculator:cloud-save.history.running')
               : null
@@ -88,7 +88,12 @@ export const ImportHistoryList: FC = () => {
         return (
           <li key={job.id} className="flex flex-col gap-0.5 py-2" data-job-status={job.status}>
             <div className="flex flex-wrap items-baseline gap-x-2">
-              <span className="text-sm font-semibold text-zinc-900">{sourceName(job.source)}</span>
+              <span className="text-sm font-semibold text-zinc-900">
+                {/* What this browser uploaded itself (§7.4 fallback, migration): never named as a verified provider */}
+                {job.source === 'legacy-local'
+                  ? t('rating-calculator:cloud-save.provenance.from-device')
+                  : sourceName(job.source)}
+              </span>
               <span className="text-xs text-zinc-500">
                 {t(`rating-calculator:cloud-save.history.trigger.${job.trigger}`)}
                 {Number.isNaN(startedAt) ? '' : ` · ${format.format(new Date(startedAt))}`}

@@ -1,6 +1,7 @@
 import type { ImportJobDTO } from '@gekichumai/api-contract'
 import type { TFunction } from 'i18next'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import { migrateLegacyImportEntries } from '@/catalog/savedDataMigration'
 import { cloudImportConfirm } from '@/components/cloud-save/cloudImportConfirm'
 import type {
   ImportMeta,
@@ -28,18 +29,22 @@ export function importPath(repository: Pick<ScoreRepository, 'kind' | 'serverImp
 }
 
 /**
- * Imports entries read from a file. On a cloud save the user first chooses to merge or to clear the save first
- * (§5.3 rule 5); `null` when they cancel. On the local save, exactly the call it always was.
+ * Imports entries read from a file. On a cloud save, entries of an old rating file move to public sheet IDs first,
+ * then the user chooses to merge or to clear the save first (§5.3 rule 5); `null` when they cancel. A file with
+ * nothing to upload throws `NothingToImportError` and leaves the save as it was. On the local save, exactly the call
+ * it always was.
  */
 export async function importFileEntries(
   repository: ScoreRepository,
   entries: PlayEntry[],
   meta: ImportMeta,
+  migrate: (entries: PlayEntry[]) => Promise<PlayEntry[]> = migrateLegacyImportEntries,
 ): Promise<ImportResult | null> {
   if (repository.kind !== 'cloud') return repository.applyImport(entries, meta)
-  const choice = await cloudImportConfirm.request(entries.length)
+  const migrated = await migrate(entries)
+  const choice = await cloudImportConfirm.request(migrated.length)
   if (!choice) return null
-  return repository.applyImport(entries, { ...meta, mode: choice })
+  return repository.applyImport(migrated, { ...meta, mode: choice })
 }
 
 /**

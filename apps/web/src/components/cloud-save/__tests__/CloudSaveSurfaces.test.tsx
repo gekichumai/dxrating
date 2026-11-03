@@ -113,6 +113,18 @@ describe('SyncIssuesList', () => {
     expect(within(items[2]!).queryByRole('button', { name: 'Use my value anyway' })).toBeNull()
   })
 
+  it('truncates only the song title, keeping the chart, with the whole title in a tooltip', () => {
+    const { repository, ui } = demo()
+    render(<SyncIssuesList />, { wrapper: withCloud(ui) })
+    const sheet = catalog.getById(repository.status.issues[0]!.sheetId)!
+    const title = screen.getAllByTitle(sheet.title)[0]!
+    expect(title.className).toContain('truncate')
+    const chart = title.nextElementSibling!
+    expect(chart.className).toContain('shrink-0')
+    expect(chart.className).not.toContain('truncate')
+    expect(chart.textContent).toBe(`· ${sheet.type.toUpperCase()} ${sheet.difficulty.toUpperCase()}`)
+  })
+
   it('applies an intent again or dismisses it', () => {
     const { repository, ui } = demo()
     const reapply = vi.spyOn(repository, 'reapplyIssue')
@@ -182,6 +194,31 @@ describe('SyncStatusIndicator', () => {
     expect(dialog?.textContent).toContain('Offline · 3 changes waiting to sync')
     expect(within(dialog).getAllByRole('listitem')).toHaveLength(3)
   })
+
+  it('while open, announces what the header does and not every sync', () => {
+    const { ui } = demo('syncing')
+    render(<SyncStatusIndicator />, { wrapper: withCloud(ui) })
+    fireEvent.click(screen.getByRole('button'))
+    const dialog = screen.getByRole('dialog', { name: 'Cloud save' })
+    const regions = within(dialog).getAllByRole('status')
+    expect(regions).toHaveLength(1)
+    expect(regions[0]?.textContent).toBe('3 sync issues')
+    // The state line is plain text
+    expect(within(dialog).getByText('Syncing… · 3 changes waiting to sync').closest('output')).toBeNull()
+  })
+
+  it('below 375px shrinks like the header icon buttons and leaves the count to its label', () => {
+    const { ui } = demo('offline')
+    render(<SyncStatusIndicator />, { wrapper: withCloud(ui) })
+    const button = screen.getByRole('button')
+    expect(button.className).toMatch(/(^| )px-1\.5( |$)/)
+    expect(button.className).toContain('2xs:px-2')
+    expect(button.className).toContain('2xs:mr-1')
+    expect(button.className).not.toMatch(/(^| )mr-1( |$)/)
+    const count = within(button).getByText('3', { selector: 'span:not(.bg-amber-700)' })
+    expect(count.className).toContain('hidden')
+    expect(count.className).toContain('2xs:inline')
+  })
 })
 
 describe('SaveSelector', () => {
@@ -219,6 +256,15 @@ describe('SaveSelector', () => {
     expect(listSaves).toHaveBeenCalledTimes(2)
   })
 
+  it('hides the loading spinner from assistive technology: the text names the state', () => {
+    const { ui } = demo()
+    const { container } = render(<SaveSelector />, {
+      wrapper: withCloud({ ...ui, listSaves: () => new Promise(() => {}) }),
+    })
+    expect(screen.getByRole('status').textContent).toBe('Loading saves…')
+    expect(container.querySelector('[role="progressbar"]')?.closest('[aria-hidden="true"]')).not.toBeNull()
+  })
+
   it('says when there are no saves yet', async () => {
     const { ui } = demo()
     render(<SaveSelector />, { wrapper: withCloud({ ...ui, listSaves: async () => [] }) })
@@ -235,12 +281,45 @@ describe('ImportHistoryList', () => {
     expect(items).toHaveLength(4)
     expect(items[0]?.textContent).toContain('maimai NET (JP)')
     expect(items[0]?.textContent).toContain('Automatic')
-    expect(items[0]?.textContent).toContain('3 new · 5 improved · 1278 unchanged · 1 kept your edit')
+    // Formatted like the save list's counts
+    expect(items[0]?.textContent).toContain('3 new · 5 improved · 1,278 unchanged · 1 kept your edit')
     expect(items[1]?.textContent).toContain('210 now verified')
     expect(items[2]?.textContent).toContain('20 unknown charts')
-    // In words, never the bare code
-    expect(items[3]?.textContent).toContain('Failed: Unable to sign in. Check your SEGA ID and password.')
+    // In a few words, never the bare code, and no "try again" for a job in the past
+    expect(items[3]?.textContent).toContain("Didn't finish: maimai NET sign-in failed")
     expect(items[3]?.textContent).not.toContain('INVALID_CREDENTIALS')
+    expect(items[3]?.textContent).not.toMatch(/try again/i)
+  })
+
+  it('names uploads of this browser as such, and counts one chart in the singular', async () => {
+    const { repository, ui } = demo()
+    const [first, , , failed] = await repository.listImportJobs()
+    vi.spyOn(repository, 'listImportJobs').mockResolvedValue([
+      {
+        ...first!,
+        source: 'legacy-local',
+        trigger: 'user',
+        counts: { ...first!.counts, inserted: 0, improved: 0, unchanged: 0, keptUserEdit: 0, skippedUnknownSheet: 1 },
+      },
+      { ...failed!, id: 'dimp_abandoned', errorCode: 'abandoned' },
+      { ...failed!, id: 'dimp_other', errorCode: 'INTERNAL' },
+    ])
+    render(<ImportHistoryList />, { wrapper: withCloud(ui) })
+    const items = await screen.findAllByRole('listitem')
+    expect(items[0]?.textContent).toContain('From this device')
+    expect(items[0]?.textContent).not.toContain('legacy-local')
+    expect(items[0]?.textContent).toContain('1 unknown chart')
+    expect(items[0]?.textContent).not.toContain('1 unknown charts')
+    expect(items[1]?.textContent).toContain('Stopped before it finished')
+    expect(items[2]?.textContent).toContain("Didn't finish")
+  })
+
+  it('hides the loading spinner from assistive technology: the text names the state', () => {
+    const { repository, ui } = demo()
+    vi.spyOn(repository, 'listImportJobs').mockReturnValue(new Promise(() => {}))
+    const { container } = render(<ImportHistoryList />, { wrapper: withCloud(ui) })
+    expect(screen.getByRole('status').textContent).toBe('Loading imports…')
+    expect(container.querySelector('[role="progressbar"]')?.closest('[aria-hidden="true"]')).not.toBeNull()
   })
 
   it('loads the history again on "Try again" after a failure', async () => {

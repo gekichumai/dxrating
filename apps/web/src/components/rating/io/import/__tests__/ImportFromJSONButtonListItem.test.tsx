@@ -1,15 +1,22 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
 import { LocalScoreRepository } from '@/models/scores/LocalScoreRepository'
 import { ScoreRepositoryContext } from '@/models/scores/useScoreRepository'
+import { CloudImportConfirmDialog } from '@/components/cloud-save/CloudImportConfirmDialog'
+import { NothingToImportError } from '@/models/scores/cloudImports'
+import type { ScoreRepository } from '@/models/scores/ScoreRepository'
 import { ImportFromJSONButtonListItem } from '../ImportFromJSONButtonListItem'
 
-const { toastError, toastSuccess } = vi.hoisted(() => ({ toastError: vi.fn(), toastSuccess: vi.fn() }))
+const { toast, toastError, toastSuccess } = vi.hoisted(() => ({
+  toast: vi.fn(),
+  toastError: vi.fn(),
+  toastSuccess: vi.fn(),
+}))
 
 vi.mock('react-hot-toast', () => ({
-  default: { error: toastError, success: toastSuccess },
+  default: Object.assign(toast, { error: toastError, success: toastSuccess }),
 }))
 
 vi.mock('web-haptics/react', () => ({
@@ -125,5 +132,49 @@ describe('ImportFromJSONButtonListItem', () => {
     await waitFor(() => expect(toastError).toHaveBeenCalledTimes(1))
     expect(toastError.mock.calls[0]![0]).toMatch(/^Failed to import: /)
     expect(repository.entries()).toEqual(SAVED)
+  })
+
+  describe('on a cloud save', () => {
+    function renderCloud(applyImport: ScoreRepository['applyImport']) {
+      cleanup()
+      const cloud = { kind: 'cloud', serverImportsEnabled: true, applyImport: vi.fn(applyImport) }
+      render(
+        <ScoreRepositoryContext.Provider value={cloud as never}>
+          <ImportFromJSONButtonListItem onClose={() => {}} />
+          <CloudImportConfirmDialog />
+        </ScoreRepositoryContext.Provider>,
+      )
+      return cloud
+    }
+
+    const entries = [
+      { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100.5 },
+      { sheetId: 'dsht_5mk3yr8gme', achievementRate: 99 },
+      { sheetId: 'dsht_23456789ab', achievementRate: 101.5 },
+    ]
+
+    it('counts the records uploaded and says how many were left out', async () => {
+      renderCloud(async () => ({ count: 2, skipped: 1 }))
+      await importFile(JSON.stringify(entries))
+      await act(async () => fireEvent.click(await screen.findByRole('button', { name: 'Import' })))
+
+      await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith('Imported 2 records'))
+      expect(toast).toHaveBeenCalledWith("1 record didn't match a chart and wasn't imported.", expect.anything())
+    })
+
+    it('says nothing was imported, and the save kept, when no record matches a chart', async () => {
+      renderCloud(async () => {
+        throw new NothingToImportError(3)
+      })
+      await importFile(JSON.stringify(entries))
+      await act(async () => fireEvent.click(await screen.findByRole('button', { name: 'Import' })))
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith(
+          "None of these records match a chart, so nothing was imported. Your cloud save wasn't changed.",
+        ),
+      )
+      expect(toastSuccess).not.toHaveBeenCalled()
+    })
   })
 })

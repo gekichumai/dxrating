@@ -63,8 +63,10 @@ export interface ImportMeta {
 }
 
 export interface ImportResult {
-  /** Entries in the import */
+  /** Entries in the import (cloud saves: the records uploaded) */
   count: number
+  /** Cloud saves: entries left out of the upload (no chart matches their sheet ID, or no valid achievement) */
+  skipped?: number
   /** Cloud saves: the import job the server recorded */
   job?: ImportJobDTO
 }

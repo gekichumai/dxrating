@@ -64,8 +64,18 @@ const SyncIssueItem: FC<{ issue: SyncIssue; onReapply: () => void; onDismiss: ()
       className="flex flex-col gap-1.5 rounded-md bg-white/60 p-2.5 ring-1 ring-inset ring-black/6"
       aria-labelledby={titleId}
     >
-      <div id={titleId} className="min-w-0 truncate text-sm font-semibold text-zinc-900">
-        {sheet ? `${sheet.title} · ${sheet.type.toUpperCase()} ${sheet.difficulty.toUpperCase()}` : issue.sheetId}
+      {/* Only the song title truncates (whole in its tooltip): the chart, which tells issues of one song apart, stays */}
+      <div id={titleId} className="flex min-w-0 items-baseline gap-1 text-sm font-semibold text-zinc-900">
+        {sheet ? (
+          <>
+            <span className="min-w-0 truncate" title={sheet.title}>
+              {sheet.title}
+            </span>{' '}
+            <span className="shrink-0 whitespace-nowrap">{`· ${sheet.type.toUpperCase()} ${sheet.difficulty.toUpperCase()}`}</span>
+          </>
+        ) : (
+          <span className="min-w-0 truncate">{issue.sheetId}</span>
+        )}
       </div>
       <div className="text-xs text-zinc-700">
         {t('rating-calculator:cloud-save.issues.your-value', { value })}

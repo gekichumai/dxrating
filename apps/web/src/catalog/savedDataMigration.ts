@@ -3,11 +3,13 @@ import {
   getSongCatalog,
   isLegacySheetId,
   migrateLegacySheetIds,
+  migrateLegacySheetRecords,
   type LegacyMigrationResult,
   type SheetReferencingRecord,
 } from '@gekichumai/maimai-domain'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { FAVORITE_SHEETS_STORAGE_KEY, writeFavoriteSheetIds } from '@/models/favorite'
+import { getCatalogDocument } from './catalogSource'
 import { loadLegacySongIds } from './legacySongIds'
 
 // Saved data from before public sheet IDs names sheets by legacy sheet ID (`<legacy song ID>__dxrt__<type>__dxrt__
@@ -25,6 +27,20 @@ export const hasLegacySheetRecords = (records: readonly SheetReferencingRecord[]
 
 // Sheet identity does not depend on the game version, so any version's catalog resolves the same sheets
 export const getMigrationCatalog = (document: SongCatalogDocument) => getSongCatalog(document, VersionEnum.MAGiCAL)
+
+/**
+ * Moves the entries of an old rating file to public sheet IDs before they go to a cloud save, which holds nothing
+ * else (the local save migrates them after the import, as it reads them). Entries no sheet matches keep their
+ * legacy ID, and the upload leaves them out.
+ */
+export async function migrateLegacyImportEntries<T extends SheetReferencingRecord>(
+  entries: T[],
+  loadDocument: () => Promise<SongCatalogDocument> = getCatalogDocument,
+): Promise<T[]> {
+  if (!hasLegacySheetRecords(entries)) return entries
+  const [document, legacySongIds] = await Promise.all([loadDocument(), loadLegacySongIds()])
+  return migrateLegacySheetRecords(entries, getMigrationCatalog(document), legacySongIds).records
+}
 
 /** Moves the favorites saved in localStorage to public sheet IDs */
 export async function migrateStoredFavoriteSheetIds(storage: Storage, document: SongCatalogDocument) {

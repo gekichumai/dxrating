@@ -9,6 +9,7 @@ import {
   CloudClearNotSentError,
   CloudImportHttpError,
   entriesToImportRecords,
+  NothingToImportError,
   ServerImportFailedError,
   ServerImportsDisabledError,
   sha256Hex,
@@ -392,6 +393,36 @@ describe('CloudScoreRepository file imports (client-imports)', () => {
 
     expect(order).toEqual(['mutate:delete', 'client'])
     expect(repository.entries().map((entry) => entry.sheetId)).toEqual([SHEET_A])
+  })
+
+  it('never clears the save for an import with nothing to upload', async () => {
+    server.put(SHEET_B, 990000)
+    const repository = await openRepository()
+
+    // An old rating file whose legacy sheet IDs no chart matched
+    await expect(
+      repository.applyImport([{ sheetId: 'retired song__dxrt__dx__dxrt__master', achievementRate: 99 }], {
+        source: 'dxrating-json',
+        mode: 'replace',
+      }),
+    ).rejects.toBeInstanceOf(NothingToImportError)
+
+    expect(server.mutateCalls).toEqual([])
+    expect(routes()).toEqual([])
+    expect(repository.entries().map((entry) => entry.sheetId)).toEqual([SHEET_B])
+  })
+
+  it('reports the records it uploaded and the entries it left out', async () => {
+    const repository = await openRepository()
+    const result = await repository.applyImport(
+      [
+        { sheetId: SHEET_A, achievementRate: 99 },
+        { sheetId: SHEET_A, achievementRate: 98 },
+        { sheetId: 'retired song__dxrt__dx__dxrt__master', achievementRate: 99 },
+      ],
+      { source: 'dxrating-json', mode: 'merge' },
+    )
+    expect(result).toMatchObject({ count: 1, skipped: 1 })
   })
 
   it('imports nothing when the clear cannot reach the server', async () => {

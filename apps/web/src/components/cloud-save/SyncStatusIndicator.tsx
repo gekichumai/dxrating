@@ -51,12 +51,14 @@ export const SyncStatusIndicator: FC = () => {
         aria-haspopup="dialog"
         aria-expanded={anchorEl ? 'true' : 'false'}
         aria-controls={anchorEl ? popoverId : undefined}
-        className="cloud-save-status-button relative mr-1 flex h-9 min-w-9 items-center justify-center gap-1 rounded-full bg-white/35 px-2 text-black/75"
+        // Below 375px it shrinks like the header's icon buttons and drops the count (still in its label), so the row
+        // stays clear of the logo
+        className="cloud-save-status-button relative flex h-8 min-w-8 items-center justify-center gap-1 rounded-full bg-white/35 px-1.5 text-black/75 2xs:mr-1 2xs:h-9 2xs:min-w-9 2xs:px-2"
         data-sync-state={state}
       >
         <Icon className={clsx('size-5', state === 'syncing' && 'cloud-save-pulse')} aria-hidden />
         {pendingCount > 0 && (
-          <span className="text-xs font-semibold tabular-nums" aria-hidden>
+          <span className="hidden text-xs font-semibold tabular-nums 2xs:inline" aria-hidden>
             {pendingCount}
           </span>
         )}
@@ -92,11 +94,12 @@ export const SyncStatusIndicator: FC = () => {
             <Icon className="size-5 shrink-0 text-zinc-600" aria-hidden />
             <div className="min-w-0">
               <div className="text-sm font-semibold text-zinc-900">{t('rating-calculator:cloud-save.title')}</div>
-              <output className="block text-xs text-zinc-600">
-                {[stateText, pendingText].filter(Boolean).join(' · ')}
-              </output>
+              {/* Not a live region: the sync cycles would be read out while the popover is open */}
+              <p className="m-0 text-xs text-zinc-600">{[stateText, pendingText].filter(Boolean).join(' · ')}</p>
             </div>
           </div>
+          {/* The header's announcement is hidden while the popover is open (a modal): the same one, here */}
+          <output className="sr-only">{announcement}</output>
           <h3 className="m-0 mt-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
             {t('rating-calculator:cloud-save.issues.title')}
           </h3>
