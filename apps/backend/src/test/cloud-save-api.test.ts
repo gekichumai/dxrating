@@ -8,7 +8,8 @@ vi.hoisted(() => {
 })
 
 import { runCloudSaveCleanup } from '../services/cloud-save/cleanup'
-import { CLOUD_SAVE_MAX_RECORDS_PER_SAVE } from '../services/cloud-save/limits'
+import { canonicalSha256 } from '../services/cloud-save/jobs'
+import { CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES, CLOUD_SAVE_MAX_RECORDS_PER_SAVE } from '../services/cloud-save/limits'
 import {
   api,
   deleteMutation,
@@ -558,12 +559,81 @@ describe('cloud save API (design §5)', () => {
       const ledger = await pool.query('SELECT count(*)::integer AS n FROM score_mutations WHERE save_id = $1', [
         save.id,
       ])
-      expect(ledger.rows[0].n).toBe(8)
+      // every item but the one with an invalid mutation ID, which never reaches the ledger
+      expect(ledger.rows[0].n).toBe(7)
 
       // a no-op set writes nothing
       const noop = await mutate(user.cookie, save.id, [setMutation(sheetId(1), 1001000, { basedOnRevision: 4 })])
       expect(noop.body.results[0]).toMatchObject({ status: 'noop', record: { revision: 3 } })
       expect(noop.body.revision).toBe(4)
+    })
+
+    it('rejects a mutation ID that is not a UUIDv7 (even with NUL) without the ledger, and applies its siblings', async () => {
+      const user = await session(pool, 'nul-id@example.com')
+      const save = await newSave(user.cookie)
+      const valid = setMutation(sheetId(1), 1000000)
+      const batch = [{ ...setMutation(sheetId(2), 1000000), mutationId: '\u0000' }, valid]
+      const response = await mutate(user.cookie, save.id, batch)
+      expect(response.status).toBe(200)
+      expect(response.body).toMatchObject({
+        revision: 1,
+        results: [
+          { mutationId: '\u0000', status: 'rejected', record: null, reason: 'invalid-mutation-id' },
+          { mutationId: valid.mutationId, status: 'applied', record: { achievement: 1000000, revision: 1 } },
+        ],
+      })
+      expect(await record(save.id, sheetId(1))).toMatchObject({ achievement: 1000000, revision: 1 })
+      expect(await record(save.id, sheetId(2))).toBeUndefined()
+      const ledger = await pool.query('SELECT mutation_id FROM score_mutations WHERE save_id = $1', [save.id])
+      expect(ledger.rows).toEqual([{ mutation_id: valid.mutationId }])
+
+      // a retry answers the same, and the valid mutation is not applied again
+      const replay = await mutate(user.cookie, save.id, batch)
+      expect(replay.status).toBe(200)
+      expect(replay.body).toEqual(response.body)
+      expect(
+        (await pool.query('SELECT revision::integer FROM score_saves WHERE id = $1', [save.id])).rows[0].revision,
+      ).toBe(1)
+    })
+
+    it('merges an identical automatic import again once a manual edit changed the save since', async () => {
+      const user = await session(pool, 'short-circuit@example.com')
+      const save = await newSave(user.cookie)
+      const target = sheetId(30)
+      const payload = [{ sheetId: target, achievement: 1000000, comboFlag: null, syncFlag: null }]
+      const options = { trigger: 'auto' as const, sourceAccountId: 'friend-sc', sha: 'c'.repeat(64) }
+      const first = await importRecords(user.userId, save.id, 'lxns', payload, options)
+      expect(first.job.counts).toMatchObject({ inserted: 1 })
+      expect(first.job.counts).not.toHaveProperty('saveRevision')
+
+      const downgraded = await mutate(user.cookie, save.id, [
+        setMutation(target, 900000, { basedOnRevision: first.revision }),
+      ])
+      expect(downgraded.body.results[0]).toMatchObject({ status: 'applied', record: { achievement: 900000 } })
+      expect(downgraded.body.revision).toBe(first.revision + 1)
+
+      const again = await importRecords(user.userId, save.id, 'lxns', payload, options)
+      expect(again.job.counts).toMatchObject({ fetched: 1, improved: 1, unchanged: 0 })
+      expect(again.revision).toBe(downgraded.body.revision + 1)
+      expect(await record(save.id, target)).toMatchObject({
+        achievement: 1000000,
+        verification: 'verified',
+        source: 'lxns',
+        fetched_by: 'server',
+        import_job_id: again.job.id,
+        revision: again.revision,
+      })
+      const timeline = await api(user.cookie, 'GET', `/saves/${save.id}/records/${target}/events`)
+      expect(timeline.body.map((event: { kind: string }) => event.kind)).toEqual([
+        'import_applied',
+        'manual_set',
+        'import_applied',
+      ])
+
+      // the save has not changed since that job: the same payload short-circuits
+      const unchanged = await importRecords(user.userId, save.id, 'lxns', payload, options)
+      expect(unchanged.job.counts).toMatchObject({ fetched: 1, unchanged: 1, improved: 0 })
+      expect(unchanged.revision).toBe(again.revision)
     })
 
     it('rejects provenance claims in a mutation with 400', async () => {
@@ -859,6 +929,25 @@ describe('cloud save API (design §5)', () => {
       const replay = await api(user.cookie, 'POST', `/saves/${save.id}/replace`, body)
       expect(replay.status).toBe(200)
       expect(replay.body).toEqual(replaced.body)
+    })
+
+    it('counts a deeply nested record as rejected, never a stack overflow (raw body through the route)', async () => {
+      const user = await session(pool, 'replace-nested@example.com')
+      const save = await newSave(user.cookie)
+      const depth = 20_000
+      const nested = `${'['.repeat(depth)}1${']'.repeat(depth)}`
+      const body = `{"ifRevision":0,"idempotencyKey":"replace-nested-1","source":"dxrating-json","records":[{"sheetId":"${sheetId(1)}","achievement":${nested},"comboFlag":null,"syncFlag":null},{"sheetId":"${sheetId(2)}","achievement":1000000,"comboFlag":null,"syncFlag":null}]}`
+      expect(body.length).toBeLessThan(CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES)
+      const response = await api(user.cookie, 'POST', `/saves/${save.id}/replace`, body)
+      expect(response.status).toBe(200)
+      expect(response.body.job.counts).toMatchObject({ fetched: 2, inserted: 1, rejected: 1 })
+      // the hash covers the validated records only
+      expect(response.body.job.rawPayloadSha256).toBe(
+        canonicalSha256([{ sheetId: sheetId(2), achievement: 1000000, comboFlag: null, syncFlag: null }]),
+      )
+      expect(await record(save.id, sheetId(2))).toMatchObject({ achievement: 1000000 })
+      expect(await record(save.id, sheetId(1))).toBeUndefined()
+      expect(() => canonicalSha256(JSON.parse(nested))).toThrow(RangeError)
     })
 
     it('logs a same-value replace over a verified record as an overwrite, not a provenance upgrade', async () => {

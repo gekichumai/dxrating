@@ -1,4 +1,5 @@
 import {
+  MutationIdSchema,
   MutationSchema,
   type MutationItemInput,
   type MutationResultDTO,
@@ -87,6 +88,9 @@ export interface MutationBatchStats {
 /**
  * Applies a batch of manual mutations to a save (§5.4, §5.5), in one transaction holding the save `FOR UPDATE`.
  *
+ * - An item whose `mutationId` is not a UUIDv7 (`MutationIdSchema`) is `rejected` (`invalid-mutation-id`) with its ID
+ *   echoed back; that ID never reaches the ledger (lookup or insert), so arbitrary strings (NUL included) cannot fail
+ *   the batch, and its valid siblings proceed.
  * - A mutation ID found in the `score_mutations` ledger (or earlier in the batch) returns the stored result; nothing
  *   is applied again.
  * - Every other item is validated, then decided with `decideManualMutation` against the record as the batch has
@@ -110,11 +114,16 @@ export const applyMutations = (
         `SELECT pg_advisory_xact_lock(hashtext('cloudsave:mutations:' || $1))`,
         [userId],
       )
-      const { rows: ledger } = yield* database.raw<{ mutation_id: string; result: MutationResultDTO }>(
-        'CloudSave.readMutationLedger',
-        `SELECT mutation_id, result FROM score_mutations WHERE user_id = $1 AND mutation_id = ANY($2::text[])`,
-        [userId, [...new Set(items.map((item) => item.mutationId))]],
-      )
+      const validId = items.map((item) => MutationIdSchema.safeParse(item.mutationId).success)
+      const ledgerIds = [...new Set(items.filter((_, index) => validId[index]).map((item) => item.mutationId))]
+      const { rows: ledger } =
+        ledgerIds.length === 0
+          ? { rows: [] }
+          : yield* database.raw<{ mutation_id: string; result: MutationResultDTO }>(
+              'CloudSave.readMutationLedger',
+              `SELECT mutation_id, result FROM score_mutations WHERE user_id = $1 AND mutation_id = ANY($2::text[])`,
+              [userId, ledgerIds],
+            )
       const known = new Map(ledger.map((row) => [row.mutation_id, row.result]))
 
       const parsed = items.map(parseMutation)
@@ -129,6 +138,12 @@ export const applyMutations = (
       const results: MutationResultDTO[] = []
       const fresh: MutationResultDTO[] = []
       items.forEach((item, index) => {
+        if (!validId[index]) {
+          // Not stored in the ledger (and not looked up): the same item always answers the same anyway
+          stats.statuses.rejected += 1
+          results.push({ mutationId: item.mutationId, status: 'rejected', record: null, reason: 'invalid-mutation-id' })
+          return
+        }
         const stored = known.get(item.mutationId)
         if (stored) {
           stats.replayed += 1

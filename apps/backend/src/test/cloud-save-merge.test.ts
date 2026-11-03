@@ -314,8 +314,8 @@ describe('cloud save merge module (shared vectors, applied to the database)', ()
     })
     expect(otherAccount.job.counts).toMatchObject({ improved: 3 })
 
-    // the user deletes a record; the same payload again: an automatic job short-circuits (the deletion stays), a
-    // user-started one merges and revives it (§5.3 rule 2)
+    // the user deletes a record; the same payload again: the save changed since the last job, so an automatic job
+    // merges, and the deletion stays (§5.3 rule 2); a user-started one merges and revives it
     const deleted = await runDatabase((database) =>
       applyMutations(database, USER, 'dsav_hash', [deleteMutation(sheetId(2), otherAccount.revision)]),
     )
@@ -325,7 +325,7 @@ describe('cloud save merge module (shared vectors, applied to the database)', ()
       sourceAccountId: 'friend-2',
       sha: 'b'.repeat(64),
     })
-    expect(auto.job.counts).toMatchObject({ fetched: 3, unchanged: 3, inserted: 0, skippedDeleted: 0 })
+    expect(auto.job.counts).toMatchObject({ fetched: 3, unchanged: 2, inserted: 0, skippedDeleted: 1 })
     expect(auto.revision).toBe(deleted.result.revision)
     const tombstone = await pool.query(
       `SELECT deleted_at IS NOT NULL AS deleted FROM score_records WHERE save_id = 'dsav_hash' AND sheet_id = $1`,

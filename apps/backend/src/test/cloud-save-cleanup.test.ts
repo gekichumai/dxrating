@@ -186,6 +186,22 @@ describe('cloud save cleanup', () => {
     expect((await cleanup()).ran).toBe(true)
   })
 
+  it('purges every save soft-deleted past 30 days in one pass, beyond one statement batch of 100', async () => {
+    await pool.query(
+      `INSERT INTO score_saves (id, user_id, name, region, deleted_at)
+       SELECT 'dsav_bulk_' || lpad(n::text, 3, '0'), $1, 'bulk', 'jp', $2 FROM generate_series(1, 150) AS n`,
+      [USER, daysBefore(45)],
+    )
+    const report = await cleanup()
+    // the 150 seeded saves and dsav_gone
+    expect(report.savesPurged).toBe(151)
+    expect(await count(`score_saves WHERE deleted_at < $1`, [daysBefore(30)])).toBe(0)
+    expect((await pool.query(`SELECT id FROM score_saves ORDER BY id`)).rows.map((row) => row.id)).toEqual([
+      'dsav_live',
+      'dsav_recently_gone',
+    ])
+  })
+
   it('lets two concurrent passes purge each tombstone exactly once', async () => {
     const [a, b] = await Promise.all([cleanup(), cleanup()])
     expect(a.tombstonesPurged + b.tombstonesPurged).toBe(2)
