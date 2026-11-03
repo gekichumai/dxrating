@@ -18,9 +18,10 @@ import { runApp } from '../../runtime'
 import { FeatureFlags } from '../feature-flags'
 import { clientKey } from '../mcp/client-key'
 import { cloudSaveRateLimits } from '../rate-limit'
-import { CloudSaveNotFound, ImportInProgress } from './errors'
+import { CloudSaveBadRequest, CloudSaveNotFound, ImportInProgress } from './errors'
 import {
   beginServerImport,
+  failInterruptedImport,
   replayOutcome,
   runServerImport,
   type ServerImportErrorCode,
@@ -92,8 +93,10 @@ const badRequest = (issues: readonly { path: readonly PropertyKey[]; code: strin
  * The SEGA ID and password live in this request only: held for log scrubbing while it runs, never stored, never
  * logged, never echoed (design §7.2).
  */
-export const netImportHandler = (c: Context) =>
-  runApp(
+export const netImportHandler = (c: Context) => {
+  /** A job this request started and has not handed over to the stream yet (failed if the request is interrupted) */
+  let pendingJob: { database: typeof Database.Service; id: string } | null = null
+  return runApp(
     Effect.gen(function* () {
       const auth = yield* Authentication
       const session = yield* auth.session(c.req.raw.headers)
@@ -165,11 +168,23 @@ export const netImportHandler = (c: Context) =>
           source: input.region === 'jp' ? 'maimai-net-jp' : 'maimai-net-intl',
           trigger: input.trigger,
           idempotencyKey: input.idempotencyKey,
-        }).pipe(Effect.result)
+        }).pipe(
+          Effect.tap((started) =>
+            Effect.sync(() => {
+              if (!started.replayed) pendingJob = { database, id: started.job.id }
+            }),
+          ),
+          // the job row and `pendingJob` are set together: an interruption cannot fall between them
+          Effect.uninterruptible,
+          Effect.result,
+        )
         if (Result.isFailure(begun)) {
           refund()
           const error = begun.failure
           if (error instanceof CloudSaveNotFound) return orpcErrorResponse(new ORPCError('NOT_FOUND'))
+          if (error instanceof CloudSaveBadRequest) {
+            return orpcErrorResponse(new ORPCError('BAD_REQUEST', { message: error.message }))
+          }
           if (error instanceof ImportInProgress) {
             return orpcErrorResponse(
               new ORPCError('CONFLICT', {
@@ -190,6 +205,7 @@ export const netImportHandler = (c: Context) =>
         }
 
         handedOver = true
+        pendingJob = null
         return streamSSE(c, async (stream) => {
           let open = true
           stream.onAbort(() => {
@@ -230,7 +246,8 @@ export const netImportHandler = (c: Context) =>
               })
             }
           } catch {
-            // interrupted by a shutdown: the job is already failed (`interrupted`)
+            // interrupted by a shutdown: the job is already failed (`interrupted`). If the shutdown came before
+            // the job could start here, the runtime runs nothing more and the sweeper fails it later (`abandoned`).
             await send('error', {
               code: 'INTERRUPTED',
               message: 'The server is restarting. Nothing was imported.',
@@ -247,9 +264,18 @@ export const netImportHandler = (c: Context) =>
           release()
         }
       }
-    }),
+    }).pipe(
+      Effect.onInterrupt(() =>
+        Effect.suspend(() => {
+          const job = pendingJob
+          pendingJob = null
+          return job ? failInterruptedImport(job.database, job.id) : Effect.void
+        }),
+      ),
+    ),
     { signal: c.req.raw.signal },
   )
+}
 
 const credentialsOf = (input: NetImportInput) => ({ id: input.id, password: input.password })
 

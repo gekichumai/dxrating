@@ -11,7 +11,7 @@ import * as Sentry from '@sentry/node'
 import { Cause, Clock, Data, Duration, Effect, Exit } from 'effect'
 import { log } from 'evlog'
 import type { Database } from '../../db/index'
-import { CloudSaveBusy, CloudSaveNotFound } from './errors'
+import { CloudSaveBadRequest, CloudSaveBusy, CloudSaveNotFound } from './errors'
 import { importCatalog } from './import-catalog'
 import {
   canonicalSha256,
@@ -80,7 +80,8 @@ export interface ServerImportStart {
 
 /**
  * Starts a server job (design §7.1): the save must be the user's (404 otherwise); a job with the same idempotency
- * key is a replay; a running job of the same source on the save is `ImportInProgress` (409).
+ * key is a replay, and a key that names a job of another save or source is `CloudSaveBadRequest` (400); a running job
+ * of the same source on the save is `ImportInProgress` (409).
  */
 export const beginServerImport = (
   database: DatabaseService,
@@ -101,6 +102,10 @@ export const beginServerImport = (
       trigger: input.trigger,
       idempotencyKey: input.idempotencyKey,
     })
+    // a key is the user's: one that already names an import of another save or source is a client bug, not a replay
+    if (started.job.save_id !== save.id || started.job.source !== input.source) {
+      return yield* new CloudSaveBadRequest({ message: 'The idempotency key belongs to another import' })
+    }
     return {
       userId: input.userId,
       job: started.job,
@@ -273,6 +278,17 @@ export const runServerImport = <R>(
     return outcome
   }).pipe(Effect.withSpan('import.job', { attributes: { 'import.source': job.source } }))
 }
+
+/**
+ * Fails a started job as `interrupted` if it is still running: the request was interrupted (client disconnect,
+ * shutdown) after the job row was committed but before {@link runServerImport} took it over, which would otherwise
+ * leave it running, and blocking its source on the save, until the sweeper fails it 15 minutes later.
+ */
+export const failInterruptedImport = (database: DatabaseService, jobId: string) =>
+  finishImportJob(database, jobId, { status: 'failed', counts: {}, errorCode: 'interrupted' }).pipe(
+    Effect.ignore,
+    Effect.uninterruptible,
+  )
 
 /** The answer of a replayed job: the job as it is now and the save's revision */
 export const replayOutcome = (started: ServerImportStart): ServerImportOutcome => ({

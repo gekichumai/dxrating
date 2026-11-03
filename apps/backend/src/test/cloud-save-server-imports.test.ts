@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
+import { Effect, Exit } from 'effect'
 import pg from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -41,19 +42,36 @@ vi.mock('undici', async (original) => {
   }
 })
 
+/** Song titles the import catalog leaves out (a catalog that has not caught up with the game yet) */
+const catalogState = vi.hoisted(() => ({ missingTitles: new Set<string>() }))
+
 // The published catalog is not in the test database: imports resolve through the bundled snapshot
 vi.mock('../services/cloud-save/import-catalog', async () => {
   const { Effect } = await import('effect')
   const { getSongCatalog } = await import('@gekichumai/maimai-domain')
   const { catalogSnapshot } = await import('@gekichumai/dxdata/snapshot')
   const { VersionEnum } = await import('@gekichumai/dxdata')
+  const full = getSongCatalog(catalogSnapshot, VersionEnum.MAGiCAL)
   return {
-    importCatalog: Effect.sync(() => getSongCatalog(catalogSnapshot, VersionEnum.MAGiCAL)),
+    importCatalog: Effect.sync(() =>
+      catalogState.missingTitles.size === 0
+        ? full
+        : getSongCatalog(
+            {
+              ...catalogSnapshot,
+              songs: catalogSnapshot.songs.filter((song) => !catalogState.missingTitles.has(song.title)),
+            },
+            VersionEnum.MAGiCAL,
+          ),
+    ),
     ImportCatalogUnavailable: class ImportCatalogUnavailable extends Error {},
   }
 })
 
 import { canonicalSha256 } from '../services/cloud-save/jobs'
+import { NET_IMPORT_GLOBAL_CONCURRENCY, runningNetImports } from '../services/cloud-save/net-import-route'
+import { cloudSaveRateLimits } from '../services/rate-limit'
+import { beginServerImport, failInterruptedImport } from '../services/cloud-save/server-imports'
 import { runDatabase, session, api, sheetId } from './cloud-save-helpers'
 import { startImportJob } from '../services/cloud-save/jobs'
 import {
@@ -140,6 +158,7 @@ beforeEach(async () => {
   upstream.net = undefined
   upstream.http = undefined
   upstream.httpCalls.length = 0
+  catalogState.missingTitles.clear()
 })
 
 describe('maimai NET server import', () => {
@@ -364,6 +383,118 @@ describe('maimai NET server import', () => {
     expect(Number(limited.headers.get('retry-after'))).toBeGreaterThan(0)
     expect(limited.json).toMatchObject({ code: 'TOO_MANY_REQUESTS', data: { retryAfterSeconds: expect.any(Number) } })
   })
+
+  it('lets one NET import per user and four in total run at once, and gives busy requests their units back', async () => {
+    const headers = { 'X-Forwarded-For': '198.51.100.10' }
+    let open!: () => void
+    const gate = new Promise<void>((resolve) => (open = resolve))
+    upstream.net = createFakeNet({ id: SEGA_ID, password: PASSWORD, records: NET_RECORDS, gate }).fetch
+    const users = [await newUser(), await newUser(), await newUser(), await newUser()]
+    const running = users.map((user) => postNetImport(user.cookie, user.saveId, netBody(), { headers }))
+    await expect.poll(() => runningNetImports()).toBe(NET_IMPORT_GLOBAL_CONCURRENCY)
+
+    // the same user, another region: one NET import per user
+    const sameUser = await postNetImport(users[0]!.cookie, users[0]!.saveId, netBody({ region: 'intl' }), { headers })
+    expect(sameUser.status).toBe(429)
+    expect(sameUser.headers.get('retry-after')).toBe('5')
+    // a fifth user: four in total
+    const fifth = await newUser()
+    const global = await postNetImport(fifth.cookie, fifth.saveId, netBody(), { headers })
+    expect(global.status).toBe(429)
+    expect(global.headers.get('retry-after')).toBe('15')
+
+    open()
+    for (const response of await Promise.all(running)) expect(response.events.at(-1)!.event).toBe('done')
+    expect(runningNetImports()).toBe(0)
+    // the busy requests did no work: user 0 used one unit of 6, the fifth user none
+    expect(cloudSaveRateLimits.netImports.take(users[0]!.userId, 5)).toBe(0)
+    expect(cloudSaveRateLimits.netImports.take(fifth.userId, 6)).toBe(0)
+  })
+
+  it('runs a NET import to its end and frees its slots when the client leaves the stream', async () => {
+    const user = await newUser()
+    let open!: () => void
+    const gate = new Promise<void>((resolve) => (open = resolve))
+    const net = createFakeNet({ id: SEGA_ID, password: PASSWORD, records: NET_RECORDS, gate })
+    upstream.net = net.fetch
+    const client = new AbortController()
+    const body = netBody()
+    const request = postNetImport(user.cookie, user.saveId, body, {
+      headers: { 'X-Forwarded-For': '198.51.100.11' },
+      signal: client.signal,
+    }).catch(() => null)
+    await expect.poll(() => net.calls.some((call) => call.includes('/record/musicGenre/'))).toBe(true)
+    expect(runningNetImports()).toBe(1)
+    client.abort()
+    await request
+    open()
+    await expect.poll(() => runningNetImports()).toBe(0)
+    // the job ran to its end without the client
+    await expect
+      .poll(
+        async () =>
+          (await pool.query(`SELECT status FROM score_import_jobs WHERE idempotency_key = $1`, [body.idempotencyKey]))
+            .rows[0]?.status,
+      )
+      .toBe('succeeded')
+    expect(await records(user.saveId)).toHaveLength(3)
+  })
+
+  it('limits one address to 30 NET imports an hour', async () => {
+    const headers = { 'X-Forwarded-For': '198.51.100.12' }
+    upstream.net = createFakeNet({ id: SEGA_ID, password: PASSWORD }).fetch
+    for (let u = 0; u < 6; u++) {
+      const user = await newUser()
+      for (let i = 0; i < 5; i++) {
+        const response = await postNetImport(user.cookie, user.saveId, netBody({ password: 'wrong-password' }), {
+          headers,
+        })
+        expect(response.status).toBe(200)
+      }
+    }
+    const user = await newUser()
+    const limited = await postNetImport(user.cookie, user.saveId, netBody({ password: 'wrong-password' }), {
+      headers,
+    })
+    expect(limited.status).toBe(429)
+    expect(Number(limited.headers.get('retry-after'))).toBeGreaterThan(0)
+    // another address is not limited
+    expect(
+      (
+        await postNetImport(user.cookie, user.saveId, netBody({ password: 'wrong-password' }), {
+          headers: { 'X-Forwarded-For': '198.51.100.13' },
+        })
+      ).status,
+    ).toBe(200)
+    // the user's own budget was given back when the address turned the request away: one unit of 6 used
+    expect(cloudSaveRateLimits.netImports.take(user.userId, 5)).toBe(0)
+  })
+
+  it('imports the charts a lagging catalog skipped once it knows them, though the payload is unchanged', async () => {
+    const user = await newUser()
+    upstream.net = createFakeNet({
+      id: SEGA_ID,
+      password: PASSWORD,
+      friendCode: FRIEND_CODE,
+      records: NET_RECORDS,
+    }).fetch
+    catalogState.missingTitles.add(CHARTS.ourFightingStdBasic.title)
+    const first = (await postNetImport(user.cookie, user.saveId, netBody({ trigger: 'auto' }))).events.at(-1)!
+    expect(first.data.job.counts).toMatchObject({ inserted: 2, skippedUnknownSheet: 2 })
+
+    // the catalog catches up: the same payload now resolves one more chart, so the job merges
+    catalogState.missingTitles.clear()
+    const second = (await postNetImport(user.cookie, user.saveId, netBody({ trigger: 'auto' }))).events.at(-1)!
+    expect(second.data.job.rawPayloadSha256).toBe(first.data.job.rawPayloadSha256)
+    expect(second.data.job.counts).toMatchObject({ inserted: 1, unchanged: 2, skippedUnknownSheet: 1 })
+    expect((await records(user.saveId)).map((r) => r.sheet_id)).toContain(CHARTS.ourFightingStdBasic.sheetId)
+
+    // and with nothing new resolved, the next one short-circuits again
+    const revision = await saveRevision(user.saveId)
+    const third = (await postNetImport(user.cookie, user.saveId, netBody({ trigger: 'auto' }))).events.at(-1)!
+    expect(third.data.job.counts).toMatchObject({ inserted: 0, unchanged: 3, skippedUnknownSheet: 1 })
+    expect(await saveRevision(user.saveId)).toBe(revision)
+  })
 })
 
 describe('LXNS server import', () => {
@@ -492,6 +623,69 @@ describe('LXNS server import', () => {
     expect(response.body.job.status).toBe('succeeded')
     expect(await jobRow(stale.job.id)).toMatchObject({ status: 'failed', error_code: 'abandoned' })
   })
+
+  it('gives the rate limit unit back on replays and on 409 IMPORT_IN_PROGRESS', async () => {
+    const user = await newUser()
+    await seedToken(user.userId, new Date(Date.now() + 3_600_000))
+    lxnsUpstream({ accessToken: 'old-access' })
+    const body = { idempotencyKey: key(), trigger: 'user' }
+    expect((await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/lxns`, body)).status).toBe(200)
+    for (let i = 0; i < 12; i++) {
+      expect((await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/lxns`, body)).status).toBe(200)
+    }
+    await runDatabase((database) =>
+      startImportJob(database, {
+        userId: user.userId,
+        saveId: user.saveId,
+        source: 'lxns',
+        trigger: 'auto',
+        idempotencyKey: key(),
+      }),
+    )
+    for (let i = 0; i < 12; i++) {
+      const conflict = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/lxns`, {
+        idempotencyKey: key(),
+        trigger: 'auto',
+      })
+      expect(conflict.status).toBe(409)
+    }
+    // one unit of 12 used: the first import
+    expect(cloudSaveRateLimits.serverImports.take(user.userId, 11)).toBe(0)
+  })
+
+  it('lets one user run one LXNS or Diving-Fish import at a time', async () => {
+    const user = await newUser()
+    await seedToken(user.userId, new Date(Date.now() + 3_600_000))
+    let open!: () => void
+    const gate = new Promise<void>((resolve) => (open = resolve))
+    lxnsUpstream({ accessToken: 'old-access' })
+    const lxns = upstream.http!
+    upstream.http = async (url, init) => {
+      if (url.pathname === '/api/v0/user/maimai/player/scores') await gate
+      if (url.hostname === 'www.diving-fish.com') return Response.json({ message: 'user not exists' }, { status: 400 })
+      return lxns(url, init)
+    }
+    const stalled = api(user.cookie, 'POST', `/saves/${user.saveId}/imports/lxns`, {
+      idempotencyKey: key(),
+      trigger: 'user',
+    })
+    await expect.poll(() => upstream.httpCalls.some((call) => call.includes('/player/scores'))).toBe(true)
+    const divingFish = () =>
+      api(user.cookie, 'POST', `/saves/${user.saveId}/imports/diving-fish`, {
+        idempotencyKey: key(),
+        trigger: 'user',
+        username: 'synth',
+      })
+    const busy = await divingFish()
+    expect(busy.status).toBe(429)
+    expect(busy.headers.get('retry-after')).toBeTruthy()
+    open()
+    expect((await stalled).body.job.status).toBe('succeeded')
+    // the slot is free again
+    expect((await divingFish()).status).toBe(200)
+    // the busy request gave its unit back: two of 12 used
+    expect(cloudSaveRateLimits.serverImports.take(user.userId, 10)).toBe(0)
+  })
 })
 
 describe('Diving-Fish server import', () => {
@@ -564,6 +758,77 @@ describe('Diving-Fish server import', () => {
 })
 
 describe('server import flags and provenance', () => {
+  it('fails a started job that an interruption kept from running, and leaves a finished one alone', async () => {
+    const user = await newUser()
+    const start = (source: 'lxns' | 'diving-fish') =>
+      runDatabase((database) =>
+        beginServerImport(database, {
+          userId: user.userId,
+          saveId: user.saveId,
+          source,
+          trigger: 'user',
+          idempotencyKey: key(),
+        }),
+      )
+    // interrupted between the job row and the hand-over
+    const interrupted = await start('lxns')
+    const exit = await runDatabase((database) =>
+      Effect.exit(Effect.interrupt.pipe(Effect.onInterrupt(() => failInterruptedImport(database, interrupted.job.id)))),
+    )
+    expect(Exit.hasInterrupts(exit)).toBe(true)
+    expect(await jobRow(interrupted.job.id)).toMatchObject({ status: 'failed', error_code: 'interrupted' })
+    // the source is free again: no 409 for 15 minutes
+    expect((await start('lxns')).replayed).toBe(false)
+
+    const finished = await start('diving-fish')
+    await pool.query(`UPDATE score_import_jobs SET status = 'succeeded' WHERE id = $1`, [finished.job.id])
+    await runDatabase((database) => failInterruptedImport(database, finished.job.id))
+    expect(await jobRow(finished.job.id)).toMatchObject({ status: 'succeeded', error_code: null })
+  })
+
+  it('refuses an idempotency key that already names an import of another source or save', async () => {
+    const user = await newUser()
+    const other = await api(user.cookie, 'POST', '/saves', { name: 'Other', region: 'jp' })
+    upstream.http = (url) =>
+      url.hostname === 'www.diving-fish.com'
+        ? Response.json({ nickname: 'SYNTH', rating: 1, username: 'synth', charts: { dx: [], sd: [] } })
+        : undefined
+    const reused = key()
+    const first = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/diving-fish`, {
+      idempotencyKey: reused,
+      trigger: 'user',
+      username: 'synth',
+    })
+    expect(first.status).toBe(200)
+    const calls = upstream.httpCalls.length
+    upstream.net = createFakeNet({ id: SEGA_ID, password: PASSWORD, records: NET_RECORDS }).fetch
+
+    const lxns = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/lxns`, {
+      idempotencyKey: reused,
+      trigger: 'user',
+    })
+    expect(lxns.status).toBe(400)
+    const net = await postNetImport(user.cookie, user.saveId, netBody({ idempotencyKey: reused }), {
+      headers: { 'X-Forwarded-For': '198.51.100.14' },
+    })
+    expect(net.status).toBe(400)
+    expect(net.json).toMatchObject({ code: 'BAD_REQUEST' })
+    const otherSave = await api(user.cookie, 'POST', `/saves/${other.body.id}/imports/diving-fish`, {
+      idempotencyKey: reused,
+      trigger: 'user',
+      username: 'synth',
+    })
+    expect(otherSave.status).toBe(400)
+    // nothing was fetched, and the same source and save still replays
+    expect(upstream.httpCalls.length).toBe(calls)
+    const replay = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/diving-fish`, {
+      idempotencyKey: reused,
+      trigger: 'user',
+      username: 'synth',
+    })
+    expect(replay.body.job).toEqual(first.body.job)
+    expect((await pool.query(`SELECT count(*)::integer AS n FROM score_import_jobs`)).rows[0].n).toBe(1)
+  })
   it('answers 404 on the three server import routes while server imports are off for the user', async () => {
     const user = await newUser({ serverImports: false })
     upstream.net = createFakeNet({ id: SEGA_ID, password: PASSWORD, records: NET_RECORDS }).fetch
