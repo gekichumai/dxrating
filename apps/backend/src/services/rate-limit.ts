@@ -49,6 +49,15 @@ export function createRateLimiter({ limit, windowMs }: RateLimitWindow) {
     consume(key: string, cost = 1, now = Date.now()): void {
       current(key, now).count += cost
     },
+    /**
+     * Gives back `cost` units counted at `takenAt`, while the window they were counted in is still the current one
+     * (a later window does not get them)
+     */
+    refund(key: string, cost: number, takenAt: number, now = Date.now()): void {
+      const window = windows.get(key)
+      if (!window || window.start > takenAt || now - window.start >= windowMs) return
+      window.count = Math.max(0, window.count - cost)
+    },
   }
 }
 
@@ -67,6 +76,10 @@ export function createKeyedRateLimit(windows: readonly RateLimitWindow[]) {
       if (wait > 0) return wait
       for (const limiter of limiters) limiter.consume(key, cost, now)
       return 0
+    },
+    /** Gives back a request `take` allowed at `takenAt` (e.g. one turned away as busy, which did no work) */
+    refund(key: string, cost: number, takenAt: number, now = Date.now()): void {
+      for (const limiter of limiters) limiter.refund(key, cost, takenAt, now)
     },
   }
 }
@@ -90,6 +103,10 @@ export const CLOUD_SAVE_RATE_LIMITS = {
   /** Mutations (items) across requests */
   mutationItems: [{ limit: 50_000, windowMs: DAY }],
   replace: [{ limit: 5, windowMs: DAY }],
+  /** `client-imports` requests (chunks count one each) */
+  clientImports: [{ limit: 10, windowMs: HOUR }],
+  /** LXNS and Diving Fish imports together */
+  serverImports: [{ limit: 12, windowMs: HOUR }],
   export: [{ limit: 5, windowMs: DAY }],
 } as const satisfies Record<string, readonly RateLimitWindow[]>
 

@@ -17,7 +17,7 @@ import {
   type ImportJobRow,
 } from './jobs'
 import { RecordWriter, toExistingRecord, WRITE_BATCH_SIZE, type LockedSave } from './records'
-import { lockSave } from './saves'
+import { lockSave, saveTransaction } from './saves'
 
 type DatabaseService = typeof Database.Service
 
@@ -41,7 +41,8 @@ export interface MergeResult {
  * statement, each bump taking the next revision. Events are written for effective changes only.
  *
  * Counts: `fetched` is the number of records; each record adds one to the key of its decision. A sheet ID that is not
- * a public sheet ID counts as `rejected` (normalizers should have dropped it).
+ * a public sheet ID counts as `rejected` (normalizers should have dropped it), and so does a record of a new chart
+ * once the save stores `CLOUD_SAVE_MAX_RECORDS_PER_SAVE` records.
  */
 export const applyImportRecords = (
   database: DatabaseService,
@@ -52,6 +53,7 @@ export const applyImportRecords = (
   Effect.gen(function* () {
     const counts: ImportCountsDTO = { ...EMPTY_COUNTS, fetched: records.length }
     const writer = new RecordWriter(database, save)
+    yield* writer.loadStoredCount()
     for (let offset = 0; offset < records.length; offset += WRITE_BATCH_SIZE) {
       const batch = records.slice(offset, offset + WRITE_BATCH_SIZE)
       const valid = batch.filter((record) => isPublicSheetId(record.sheetId))
@@ -60,6 +62,11 @@ export const applyImportRecords = (
       for (const record of valid) {
         const before = writer.get(record.sheetId)
         const decision = decideImportMerge(before === null ? null : toExistingRecord(before), record, job)
+        if (before === null && decision.next !== null && writer.remainingCapacity() === 0) {
+          // the save is full (CLOUD_SAVE_MAX_RECORDS_PER_SAVE): a new chart is refused
+          counts.rejected += 1
+          continue
+        }
         counts[decision.countKey] += 1
         if (decision.next === null) continue
         writer.apply(record.sheetId, {
@@ -112,7 +119,7 @@ export const completeImportJob = (
     extraCounts?: Partial<ImportCountsDTO>
   },
 ) =>
-  database.transaction(() =>
+  saveTransaction(database, () =>
     Effect.gen(function* () {
       const save = yield* lockSave(database, input.userId, input.saveId)
       const { rows } = yield* database.raw<ImportJobRow>(

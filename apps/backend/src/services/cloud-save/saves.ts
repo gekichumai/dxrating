@@ -46,9 +46,25 @@ const busyOnLockTimeout = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
   effect.pipe(Effect.mapError((error) => (isLockNotAvailable(error) ? new CloudSaveBusy() : error)))
 
 /**
+ * The transaction of a cloud save write path: every lock wait in it (the save row, the mutation ledger, the import
+ * job rows, ...) is bounded by {@link SAVE_LOCK_TIMEOUT_MS}, and one that runs out fails the whole transaction with
+ * `CloudSaveBusy` (429, retryable) rather than a database error.
+ */
+export const saveTransaction = <A, E, R>(database: DatabaseService, evaluate: () => Effect.Effect<A, E, R>) =>
+  busyOnLockTimeout(
+    database.transaction(() =>
+      Effect.gen(function* () {
+        yield* setLockTimeout(database)
+        return yield* evaluate()
+      }),
+    ),
+  )
+
+/**
  * Locks the user's live save `FOR UPDATE` (§5.2). Every save write path runs inside a transaction that starts with
  * this; another user's save, a deleted one and a missing one are the same `CloudSaveNotFound`. The wait for the lock
- * (and every later lock wait of the transaction) is bounded by {@link SAVE_LOCK_TIMEOUT_MS}: `CloudSaveBusy` after.
+ * is bounded by {@link SAVE_LOCK_TIMEOUT_MS} (`CloudSaveBusy` after); run it in a {@link saveTransaction} so the
+ * transaction's later lock waits are too.
  */
 export const lockSave = (database: DatabaseService, userId: string, saveId: string) =>
   Effect.gen(function* () {
@@ -195,9 +211,8 @@ export interface CreateSaveInput {
  * user serializes concurrent creations, so neither check races.
  */
 export const createSave = (database: DatabaseService, userId: string, input: CreateSaveInput) =>
-  database.transaction(() =>
+  saveTransaction(database, () =>
     Effect.gen(function* () {
-      yield* setLockTimeout(database)
       yield* busyOnLockTimeout(
         database.raw('CloudSave.lockUserSaves', `SELECT pg_advisory_xact_lock(hashtext('cloudsave:saves:' || $1))`, [
           userId,
@@ -238,37 +253,41 @@ export const updateSave = (
   saveId: string,
   input: { name?: string; gameVersion?: string | null },
 ) =>
-  Effect.gen(function* () {
-    const { rows } = yield* database.raw<SaveRow>(
-      'CloudSave.updateSave',
-      `UPDATE score_saves AS s SET
+  saveTransaction(database, () =>
+    Effect.gen(function* () {
+      const { rows } = yield* database.raw<SaveRow>(
+        'CloudSave.updateSave',
+        `UPDATE score_saves AS s SET
          name = COALESCE($3, s.name),
          game_version = CASE WHEN $4::boolean THEN $5 ELSE s.game_version END,
          updated_at = now()
        WHERE s.id = $1 AND s.user_id = $2 AND s.deleted_at IS NULL
        RETURNING ${SAVE_COLUMNS}`,
-      [saveId, userId, input.name ?? null, input.gameVersion !== undefined, input.gameVersion ?? null],
-    )
-    const row = rows[0]
-    if (!row) return yield* new CloudSaveNotFound()
-    return yield* saveDTO(database, row)
-  })
+        [saveId, userId, input.name ?? null, input.gameVersion !== undefined, input.gameVersion ?? null],
+      )
+      const row = rows[0]
+      if (!row) return yield* new CloudSaveNotFound()
+      return yield* saveDTO(database, row)
+    }),
+  )
 
 /**
  * Soft-deletes a save: it disappears from every route at once, frees its `clientProfileKey`, and the daily cleanup
  * hard-deletes it (and everything in it) after 30 days.
  */
 export const deleteSave = (database: DatabaseService, userId: string, saveId: string) =>
-  Effect.gen(function* () {
-    const { rows } = yield* database.raw<{ id: string }>(
-      'CloudSave.deleteSave',
-      `UPDATE score_saves SET deleted_at = now(), updated_at = now()
+  saveTransaction(database, () =>
+    Effect.gen(function* () {
+      const { rows } = yield* database.raw<{ id: string }>(
+        'CloudSave.deleteSave',
+        `UPDATE score_saves SET deleted_at = now(), updated_at = now()
        WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL RETURNING id`,
-      [saveId, userId],
-    )
-    if (!rows[0]) return yield* new CloudSaveNotFound()
-    return { success: true }
-  })
+        [saveId, userId],
+      )
+      if (!rows[0]) return yield* new CloudSaveNotFound()
+      return { success: true }
+    }),
+  )
 
 export interface CreateSnapshotInput {
   atRevision: number
@@ -287,7 +306,7 @@ export interface CreateSnapshotInput {
  * oldest are dropped. `atRevision` cannot be ahead of the save.
  */
 export const createSnapshot = (database: DatabaseService, userId: string, saveId: string, input: CreateSnapshotInput) =>
-  database.transaction(() =>
+  saveTransaction(database, () =>
     Effect.gen(function* () {
       const save = yield* lockSave(database, userId, saveId)
       if (input.atRevision > save.revision) {

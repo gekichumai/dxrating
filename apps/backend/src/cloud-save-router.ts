@@ -217,9 +217,24 @@ const notYet = function* () {
 }
 
 const importsHandler = {
-  client: cloudSave.imports.client.use(session).use(feature).handler(handlerGen(notYet)),
-  lxns: cloudSave.imports.lxns.use(session).use(feature).handler(handlerGen(notYet)),
-  divingFish: cloudSave.imports.divingFish.use(session).use(feature).handler(handlerGen(notYet)),
+  client: cloudSave.imports.client
+    .use(session)
+    .use(feature)
+    .use(limit('clientImports'))
+    .use(writes)
+    .handler(handlerGen(notYet)),
+  lxns: cloudSave.imports.lxns
+    .use(session)
+    .use(feature)
+    .use(limit('serverImports'))
+    .use(writes)
+    .handler(handlerGen(notYet)),
+  divingFish: cloudSave.imports.divingFish
+    .use(session)
+    .use(feature)
+    .use(limit('serverImports'))
+    .use(writes)
+    .handler(handlerGen(notYet)),
   get: cloudSave.imports.get
     .use(session)
     .use(feature)
