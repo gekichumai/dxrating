@@ -18,7 +18,13 @@ export interface HomeQuickStats {
   /** Lowest rating in the B35 (current-version entries are in B15); null while the bucket is empty */
   b35Floor: number | null
   b15Floor: number | null
-  nearestPlate: { plate: PlateDefinition; completedSheets: number; totalSheets: number } | null
+  nearestPlate: {
+    plate: PlateDefinition
+    /** The server the progress was computed for; the plate link must open the same one */
+    region: PlateRegion
+    completedSheets: number
+    totalSheets: number
+  } | null
   isDemo: boolean
 }
 
@@ -71,7 +77,12 @@ export function computeHomeQuickStats({
     const ratio = progress.completedSheets / progress.totalSheets
     if (ratio > bestRatio) {
       bestRatio = ratio
-      nearestPlate = { plate, completedSheets: progress.completedSheets, totalSheets: progress.totalSheets }
+      nearestPlate = {
+        plate,
+        region: plateRegion,
+        completedSheets: progress.completedSheets,
+        totalSheets: progress.totalSheets,
+      }
     }
   }
 

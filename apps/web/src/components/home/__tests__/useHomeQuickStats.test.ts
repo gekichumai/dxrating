@@ -42,6 +42,8 @@ describe('computeHomeQuickStats', () => {
     expect(stats.rating).toBe(calculator.statistics.b50Sum)
     expect(stats.b35Floor).toBe(calculator.statistics.b35Min)
     expect(stats.b15Floor).toBeNull()
+    // The nearest-plate link opens the server the progress was computed for
+    expect(stats.nearestPlate?.region).toBe('cn')
   })
 })
 
