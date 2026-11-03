@@ -64,6 +64,18 @@ export const EMPTY_COUNTS: ImportCountsDTO = {
   rejected: 0,
 }
 
+/** The counts of a job row: every key of {@link EMPTY_COUNTS}, nothing else (the column also holds chunk state) */
+export function countsOf(
+  stored: Partial<ImportCountsDTO> | Record<string, unknown> | null | undefined,
+): ImportCountsDTO {
+  const counts = { ...EMPTY_COUNTS }
+  for (const key of Object.keys(EMPTY_COUNTS) as (keyof ImportCountsDTO)[]) {
+    const value = (stored as Record<string, unknown> | null | undefined)?.[key]
+    if (typeof value === 'number') counts[key] = value
+  }
+  return counts
+}
+
 export function toImportJobDTO(row: ImportJobRow): ImportJobDTO {
   return {
     id: row.id,
@@ -191,7 +203,12 @@ export const startImportJob = (database: DatabaseService, input: StartImportJobI
       if (existing[0]) return { job: existing[0], replayed: true }
 
       const running = yield* findRunningJob(database, input.saveId, input.source)
-      if (running) return yield* new ImportInProgress({ jobId: running })
+      if (running) {
+        // A job left running past the abandonment age (a crashed process, a client that never sent its last
+        // chunk) no longer blocks the save: it is failed and the insert tried again
+        if (yield* abandonImportJob(database, running)) continue
+        return yield* new ImportInProgress({ jobId: running })
+      }
       // The conflicting job finished in between: try again
     }
     return yield* Effect.die(new Error('Could not start an import job after 3 attempts'))
@@ -264,4 +281,64 @@ export const listImportJobs = (database: DatabaseService, userId: string, saveId
       [saveId, userId, limit],
     ),
     ({ rows }) => rows.map(toImportJobDTO),
+  )
+/** A running job older than this is abandoned (design §7.1): the startup sweeper and the cleanup fail it */
+export const IMPORT_JOB_ABANDONED_AFTER_MS = 15 * 60_000
+
+/** Fails the job with `abandoned` if it is still running and older than the abandonment age; whether it did */
+const abandonImportJob = (database: DatabaseService, jobId: string) =>
+  Effect.map(
+    database.raw<{ id: string }>(
+      'CloudSave.abandonImportJob',
+      `UPDATE score_import_jobs SET status = 'failed', error_code = 'abandoned', finished_at = now()
+       WHERE id = $1 AND status = 'running' AND started_at < now() - make_interval(secs => $2::double precision)
+       RETURNING id`,
+      [jobId, IMPORT_JOB_ABANDONED_AFTER_MS / 1000],
+    ),
+    ({ rows }) => rows.length > 0,
+  )
+
+/**
+ * Fails every job still running after {@link IMPORT_JOB_ABANDONED_AFTER_MS} with `error_code='abandoned'` (design
+ * §7.1): run at startup, when no job of a previous process can still be running, and by the daily cleanup.
+ * Returns the number of jobs failed.
+ */
+export const sweepAbandonedImportJobs = (database: DatabaseService, now?: Date) =>
+  Effect.map(
+    database.raw<{ n: number }>(
+      'CloudSave.sweepAbandonedImportJobs',
+      `WITH swept AS (
+         UPDATE score_import_jobs SET status = 'failed', error_code = 'abandoned', finished_at = now()
+         WHERE status = 'running'
+           AND started_at < COALESCE($2::timestamptz, now()) - make_interval(secs => $1::double precision)
+         RETURNING 1
+       ) SELECT count(*)::integer AS n FROM swept`,
+      [IMPORT_JOB_ABANDONED_AFTER_MS / 1000, now ?? null],
+    ),
+    ({ rows }) => rows[0]?.n ?? 0,
+  )
+
+/**
+ * Records what a server job fetched, before it merges: the server clock when the upstream answered, the payload
+ * hash and the source account. Only a running job changes; whether it did.
+ */
+export const recordJobFetch = (
+  database: DatabaseService,
+  jobId: string,
+  fetch: {
+    fetchedAt: Date
+    rawPayloadSha256: string
+    sourceAccountId: string | null
+    sourceAccountKind: SourceAccountKind | null
+  },
+) =>
+  Effect.map(
+    database.raw<{ id: string }>(
+      'CloudSave.recordJobFetch',
+      `UPDATE score_import_jobs SET fetched_at = $2, raw_payload_sha256 = $3, source_account_id = $4,
+         source_account_kind = $5
+       WHERE id = $1 AND status = 'running' RETURNING id`,
+      [jobId, fetch.fetchedAt, fetch.rawPayloadSha256, fetch.sourceAccountId, fetch.sourceAccountKind],
+    ),
+    ({ rows }) => rows.length > 0,
   )

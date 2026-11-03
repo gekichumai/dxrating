@@ -8,7 +8,7 @@ import { app } from './app'
 import { config } from './config'
 import { serve } from './lifecycle'
 import { appRuntime, runApp, shutdownApp } from './runtime'
-import { cloudSaveCleanupLoop } from './services/cloud-save/cleanup'
+import { cloudSaveCleanupLoop, sweepAbandonedImportJobsAtStartup } from './services/cloud-save/cleanup'
 
 runMain(
   Effect.scoped(
@@ -20,7 +20,12 @@ runMain(
       // The daily cloud save cleanup runs under the request runner, so shutdown interrupts it and waits for it to
       // roll back; it only runs while cloud save is not switched off.
       if (config.featureFlags.cloudSaveMode !== 'off') {
-        void runApp(cloudSaveCleanupLoop).catch(() => undefined)
+        // Jobs a previous process left running are failed first (design §7.1); a failure only delays them to the
+        // daily cleanup
+        void runApp(sweepAbandonedImportJobsAtStartup)
+          .catch(() => undefined)
+          .then(() => runApp(cloudSaveCleanupLoop))
+          .catch(() => undefined)
       }
       const address = server.address()
       yield* Effect.logInfo(`Server is running on port ${typeof address === 'object' ? address?.port : config.port}`)

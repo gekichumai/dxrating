@@ -107,6 +107,13 @@ export const CLOUD_SAVE_RATE_LIMITS = {
   clientImports: [{ limit: 10, windowMs: HOUR }],
   /** LXNS and Diving Fish imports together */
   serverImports: [{ limit: 12, windowMs: HOUR }],
+  /** maimai NET imports per user (JP and intl together) */
+  netImports: [
+    { limit: 6, windowMs: HOUR },
+    { limit: 30, windowMs: DAY },
+  ],
+  /** maimai NET imports per client address (keyed by address, not user) */
+  netImportsByAddress: [{ limit: 30, windowMs: HOUR }],
   export: [{ limit: 5, windowMs: DAY }],
 } as const satisfies Record<string, readonly RateLimitWindow[]>
 

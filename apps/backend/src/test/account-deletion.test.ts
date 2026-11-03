@@ -4,9 +4,48 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 // config.ts reads the environment once, at import: cloud save is on for everyone in this file.
 vi.hoisted(() => {
   process.env.CLOUD_SAVE_MODE = 'on'
+  process.env.SERVER_IMPORTS = 'on'
 })
 
-import { api, deleteMutation, importRecords, setMutation, sheetId } from './cloud-save-helpers'
+// A stubbed LXNS behind the global fetch of the Effect HTTP client (the local test server passes through)
+vi.hoisted(() => {
+  const realFetch = globalThis.fetch
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(input instanceof Request ? input.url : String(input))
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return realFetch(input, init)
+    const envelope = (data: unknown) => Response.json({ success: true, code: 200, data })
+    if (url.href === 'https://maimai.lxns.net/api/v0/user/maimai/player') return envelope({ friend_code: 123456789 })
+    if (url.href === 'https://maimai.lxns.net/api/v0/user/maimai/player/scores') {
+      return envelope([
+        {
+          id: 181,
+          song_name: '君の知らない物語',
+          level: '12',
+          level_index: 3,
+          achievements: 100.5,
+          fc: null,
+          fs: null,
+          type: 'dx',
+        },
+      ])
+    }
+    throw new Error(`Unexpected upstream request ${url.href}`)
+  }) as typeof fetch
+})
+
+// The published catalog is not in the test database: imports resolve through the bundled snapshot
+vi.mock('../services/cloud-save/import-catalog', async () => {
+  const { Effect } = await import('effect')
+  const { getSongCatalog } = await import('@gekichumai/maimai-domain')
+  const { catalogSnapshot } = await import('@gekichumai/dxdata/snapshot')
+  const { VersionEnum } = await import('@gekichumai/dxdata')
+  return {
+    importCatalog: Effect.sync(() => getSongCatalog(catalogSnapshot, VersionEnum.MAGiCAL)),
+    ImportCatalogUnavailable: class ImportCatalogUnavailable extends Error {},
+  }
+})
+
+import { api, deleteMutation, setMutation, sheetId } from './cloud-save-helpers'
 import {
   authenticatedFetch,
   cleanDatabase,
@@ -115,8 +154,8 @@ describe('Account deletion', () => {
     }
   })
 
-  // Design §11.1: cloud save data created through the API is gone with the account. The stubbed LXNS server import
-  // joins this test with design PR 6; until then the client job runs through the shared merge module.
+  // Design §11.1: cloud save data created through the API (a save, a stubbed LXNS server import, mutations, a snapshot)
+  // is gone with the account.
   it('deletes every cloud save row of the account created through the API', async () => {
     await signUp('delete@example.com', 'password123', 'Delete Me')
     await signUp('survivor@example.com', 'password123', 'Survivor')
@@ -156,9 +195,17 @@ describe('Account deletion', () => {
           gameVersion: 'prism',
         })
         expect(snapshot.status).toBe(200)
-        await importRecords(userId, saveId, 'dxrating-json', [
-          { sheetId: sheetId(3), achievement: 1005000, comboFlag: null, syncFlag: null, claimedSource: 'lxns' },
-        ])
+        await pool.query(
+          `INSERT INTO lxns_oauth_tokens (user_id, access_token, refresh_token, expires_at, scope)
+           VALUES ($1, 'synthetic-access', 'synthetic-refresh', now() + interval '1 hour', 'read_user_profile read_player')`,
+          [userId],
+        )
+        const lxns = await api(sessionCookie, 'POST', `/saves/${saveId}/imports/lxns`, {
+          idempotencyKey: `lxns-${userId}`,
+          trigger: 'user',
+        })
+        expect(lxns.status).toBe(200)
+        expect(lxns.body.job).toMatchObject({ status: 'succeeded', counts: { inserted: 1 } })
       }
       await seed(cookie, deletedUserId)
       await seed(survivorCookie, survivorId)
@@ -171,13 +218,14 @@ describe('Account deletion', () => {
               (SELECT count(*)::integer FROM score_saves WHERE user_id = $1) AS saves,
               (SELECT count(*)::integer FROM score_import_jobs WHERE user_id = $1) AS jobs,
               (SELECT count(*)::integer FROM score_records WHERE user_id = $1) AS records,
+              (SELECT count(*)::integer FROM score_records WHERE user_id = $1 AND verification = 'verified') AS verified,
               (SELECT count(*)::integer FROM score_record_events WHERE user_id = $1) AS events,
               (SELECT count(*)::integer FROM score_mutations WHERE user_id = $1) AS mutations,
               (SELECT count(*)::integer FROM score_save_snapshots WHERE user_id = $1) AS snapshots`,
             [userId],
           )
         ).rows[0]
-      const seeded = { flags: 1, saves: 1, jobs: 1, records: 3, events: 4, mutations: 3, snapshots: 1 }
+      const seeded = { flags: 1, saves: 1, jobs: 1, records: 3, verified: 1, events: 4, mutations: 3, snapshots: 1 }
       expect(await counts(deletedUserId)).toEqual(seeded)
 
       const response = await authenticatedFetch(`${getBaseUrl()}/api/auth/delete-user`, cookie, {
@@ -192,6 +240,7 @@ describe('Account deletion', () => {
         saves: 0,
         jobs: 0,
         records: 0,
+        verified: 0,
         events: 0,
         mutations: 0,
         snapshots: 0,

@@ -131,6 +131,7 @@ describe('cloud save cleanup', () => {
       mutationsPurged: 1,
       savesPurged: 1,
       snapshotsPurged: 5,
+      jobsAbandoned: 0,
     } satisfies CleanupReport)
 
     const { rows } = await pool.query(
@@ -165,6 +166,7 @@ describe('cloud save cleanup', () => {
       mutationsPurged: 0,
       savesPurged: 0,
       snapshotsPurged: 0,
+      jobsAbandoned: 0,
     })
     expect(
       (await pool.query(`SELECT tombstone_horizon::integer AS horizon FROM score_saves WHERE id = 'dsav_live'`))
@@ -224,6 +226,7 @@ describe('cloud save cleanup schedule', () => {
           mutationsPurged: 0,
           savesPurged: 0,
           snapshotsPurged: 0,
+          jobsAbandoned: 0,
         }
       })
       const fiber = yield* Effect.forkChild(scheduleCleanup(pass))
@@ -258,6 +261,7 @@ describe('cloud save cleanup and shutdown', () => {
         mutationsPurged: 0,
         savesPurged: 0,
         snapshotsPurged: 0,
+        jobsAbandoned: 0,
       }),
     )
     // no initial delay here: the loop is what index.ts runs under runApp
