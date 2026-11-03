@@ -1,4 +1,10 @@
-import { DifficultyEnum, type SongCatalogDocument, type TypeEnum, type VersionEnum } from '@gekichumai/dxdata'
+import {
+  DifficultyEnum,
+  type Sheet,
+  type SongCatalogDocument,
+  type TypeEnum,
+  type VersionEnum,
+} from '@gekichumai/dxdata'
 import {
   buildPlateCharts,
   findPlate,
@@ -65,6 +71,17 @@ export interface PlatePageData {
   totalSheets: number
 }
 
+/** A sheet's level on a server: each field of its server override wins independently over the base value */
+export function levelOn(sheet: Sheet, region: PlateRegion): { level: string; levelValue: number } {
+  const override = sheet.serverOverrides?.[region]
+  return { level: override?.level ?? sheet.level, levelValue: override?.levelValue ?? sheet.internalLevelValue }
+}
+
+/** Search of a plate link: the default server stays implicit so the canonical URL is kept */
+export const plateRegionSearch = (region: PlateRegion): { region: PlateRegion | undefined } => ({
+  region: region === DEFAULT_PLATE_REGION ? undefined : region,
+})
+
 export function buildPlatePageData(
   document: SongCatalogDocument,
   region: PlateRegion,
@@ -83,13 +100,13 @@ export function buildPlatePageData(
         imageName: chart.song.imageName,
         type: chart.type,
         version: chart.version,
-        level: master?.level ?? '-',
-        levelValue: master?.internalLevelValue ?? 0,
+        level: master ? levelOn(master, region).level : '-',
+        levelValue: master ? levelOn(master, region).levelValue : 0,
         sheets: chart.requiredSheets.map((sheet) => ({
           id: sheet.id,
           difficulty: sheet.difficulty,
-          level: sheet.level,
-          internalLevelValue: sheet.internalLevelValue,
+          level: levelOn(sheet, region).level,
+          internalLevelValue: levelOn(sheet, region).levelValue,
         })),
       }
     })
