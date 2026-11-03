@@ -40,13 +40,19 @@ export interface ClientImportPlan {
  * - a file (AquaDX, mu-net, Aqua SQLite, DXRating JSON) uploads as its own file source; a DXRating JSON keeps the
  *   provider each entry names as the record's `claimedSource`;
  * - records fetched from maimai NET, LXNS or Diving-Fish upload only in the §7.4 fallback (server imports turned
- *   off), as `legacy-local` claiming the provider. They are `client_reported`, never verified. `null` otherwise:
+ *   off), as `legacy-local` claiming the provider (`claimedSource`, e.g. `maimai-net-jp`; the source otherwise). They are `client_reported`, never verified. `null` otherwise:
  *   the server imports them itself.
  */
-export function clientImportPlan(source: ImportEntrySource, serverImportsEnabled: boolean): ClientImportPlan | null {
+export function clientImportPlan(
+  source: ImportEntrySource,
+  serverImportsEnabled: boolean,
+  claimedSource?: string,
+): ClientImportPlan | null {
   const fileSource = CLIENT_SOURCE_BY_FILE_SOURCE[source]
   if (fileSource) return { source: fileSource, claimedSource: null }
-  if (isServerFetchedSource(source) && !serverImportsEnabled) return { source: 'legacy-local', claimedSource: source }
+  if (isServerFetchedSource(source) && !serverImportsEnabled) {
+    return { source: 'legacy-local', claimedSource: claimedSource ?? source }
+  }
   return null
 }
 

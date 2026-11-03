@@ -6,6 +6,7 @@ import type { PlayEntry } from '../../../components/rating/RatingCalculatorAddEn
 import {
   autoNetImportKey,
   canonicalImportBody,
+  CloudClearNotSentError,
   CloudImportHttpError,
   entriesToImportRecords,
   ServerImportFailedError,
@@ -428,6 +429,91 @@ describe('CloudScoreRepository file imports (client-imports)', () => {
     expect((imports.calls[0]!.input.records as ImportRecordInput[])[0]!.claimedSource).toBe('lxns')
     expect(server.records.get(SHEET_A)?.provenance.verification).toBe('client_reported')
     await expect(collect(repository.runServerImport('lxns', {}))).rejects.toBeInstanceOf(ServerImportsDisabledError)
+  })
+})
+
+describe('CloudScoreRepository imports: triggers, conflicts and "clear first"', () => {
+  it('uploads the automatic maimai NET fallback as an auto job under its window key, claiming the region', async () => {
+    const repository = await openRepository({ serverImports: false })
+    const key = autoNetImportKey('dsav_one')
+
+    await repository.applyImport([{ sheetId: SHEET_A, achievementRate: 99 }], {
+      source: 'maimai-net',
+      mode: 'merge',
+      claimedSource: 'maimai-net-jp',
+      trigger: 'auto',
+      idempotencyKey: key,
+    })
+
+    // `auto` never revives what the user deleted (§5.3); one key per save and 15 minutes (§5.5)
+    expect(imports.calls[0]!.input).toMatchObject({ source: 'legacy-local', trigger: 'auto', idempotencyKey: key })
+    expect((imports.calls[0]!.input.records as ImportRecordInput[])[0]!.claimedSource).toBe('maimai-net-jp')
+  })
+
+  it('waits for an import already running on the save, then sends the upload again with the same key', async () => {
+    const repository = await openRepository()
+    const running = imports.startRunning('lxns')
+    imports.runningPolls = 1
+    imports.failures.push({ status: 409, code: 'CONFLICT', data: { reason: 'IMPORT_IN_PROGRESS', jobId: running.id } })
+
+    const result = await repository.applyImport([{ sheetId: SHEET_B, achievementRate: 99 }], {
+      source: 'aqua-dx',
+      mode: 'merge',
+    })
+
+    expect(routes()).toEqual(['client', 'get', 'get', 'client'])
+    const uploads = imports.calls.filter((call) => call.route === 'client')
+    expect(uploads[0]!.input.idempotencyKey).toBe(uploads[1]!.input.idempotencyKey)
+    expect(result).toMatchObject({ count: 1, job: { status: 'succeeded', source: 'aqua-dx' } })
+    expect(repository.entries().map((entry) => entry.sheetId)).toContain(SHEET_B)
+  })
+
+  it('pulls before "clear first", so a device that has not synced yet still clears the whole save', async () => {
+    server.put(SHEET_B, 990000)
+    // Opened, never synced: this device knows nothing of the save yet
+    const repository = await CloudScoreRepository.open({
+      userId: 'user-1',
+      saveId: 'dsav_one',
+      api: server.api,
+      imports: imports.api,
+      indexedDB: factory,
+      locks: null,
+      createChannel: null,
+      eventTarget: null,
+      visibilityTarget: null,
+      isVisible: () => true,
+      importPollIntervalMs: 0,
+      importRetryDelayMs: 0,
+    })
+    opened.push(repository)
+    expect(repository.entries()).toEqual([])
+
+    await repository.applyImport([{ sheetId: SHEET_A, achievementRate: 99 }], { source: 'aqua-dx', mode: 'replace' })
+
+    expect(server.mutateCalls.flat().map((mutation) => [mutation.op, mutation.sheetId])).toEqual([['delete', SHEET_B]])
+    expect(repository.entries().map((entry) => entry.sheetId)).toEqual([SHEET_A])
+  })
+
+  it('also clears what another device wrote since the last pull', async () => {
+    const repository = await openRepository()
+    server.put(SHEET_B, 990000)
+
+    await repository.applyImport([{ sheetId: SHEET_A, achievementRate: 99 }], { source: 'aqua-dx', mode: 'replace' })
+
+    expect(server.mutateCalls.flat().map((mutation) => mutation.sheetId)).toEqual([SHEET_B])
+    expect(repository.entries().map((entry) => entry.sheetId)).toEqual([SHEET_A])
+  })
+
+  it('imports nothing when the pull before "clear first" fails', async () => {
+    server.put(SHEET_B, 990000)
+    const repository = await openRepository()
+    server.failures.push(new TypeError('Failed to fetch'))
+
+    await expect(
+      repository.applyImport([{ sheetId: SHEET_A, achievementRate: 99 }], { source: 'aqua-dx', mode: 'replace' }),
+    ).rejects.toBeInstanceOf(CloudClearNotSentError)
+    expect(server.mutateCalls).toEqual([])
+    expect(routes()).toEqual([])
   })
 })
 

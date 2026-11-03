@@ -51,6 +51,15 @@ export interface ImportMeta {
    * shown beyond a short prefix
    */
   claimedAccountId?: string
+  /**
+   * Cloud saves: the provider every record claims in the §7.4 fallback (e.g. `maimai-net-jp`); the source's own
+   * name when absent
+   */
+  claimedSource?: string
+  /** Cloud saves: `auto` for the automatic maimai NET import (it never revives a deleted record, §5.3); `user` by default */
+  trigger?: 'user' | 'auto'
+  /** Cloud saves: the import's idempotency key (`autoNetImportKey` for the automatic import); a fresh one by default */
+  idempotencyKey?: string
 }
 
 export interface ImportResult {

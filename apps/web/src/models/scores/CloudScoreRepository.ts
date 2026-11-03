@@ -188,6 +188,8 @@ export const FLUSH_TIMEOUT_MS = 3_000
 export const CLEAR_BEFORE_IMPORT_TIMEOUT_MS = 15_000
 /** Attempts of one import request (the same idempotency key each time) */
 export const IMPORT_MAX_ATTEMPTS = 3
+/** How soon "clear first" asks again for a pull another tab was running */
+const PULL_NOW_RETRY_MS = 250
 /** A running job is given up on after this long (the server marks it abandoned after 15 min, §7.1) */
 export const IMPORT_POLL_TIMEOUT_MS = 16 * 60_000
 
@@ -271,6 +273,8 @@ export class CloudScoreRepository implements WebScoreRepository {
   /** The last failure was a 429: its wait is honoured even when the page comes back online */
   private rateLimited = false
   private backoffUntil = 0
+  /** Sync cycles this tab ran to the end (pushed and pulled) */
+  private completedCycles = 0
   private stopReason: CloudSyncStopReason | null = null
   private disposed = false
   private debounceTimer: ReturnType<typeof setTimeout> | null = null
@@ -409,31 +413,45 @@ export class CloudScoreRepository implements WebScoreRepository {
    * those itself ({@link runServerImport}).
    */
   async applyImport(entries: PlayEntry[], meta: ImportMeta): Promise<ImportResult> {
-    const plan = clientImportPlan(meta.source, this.serverImportsEnabled)
+    const plan = clientImportPlan(meta.source, this.serverImportsEnabled, meta.claimedSource)
     if (!plan) throw new UnsupportedScoreOperationError(`Uploading records from ${meta.source}`, this.kind)
     const imports = this.requireImports()
     const { records } = entriesToImportRecords(entries, plan)
     if (meta.mode === 'replace') await this.clearBeforeImport()
     if (records.length === 0) return { count: 0 }
 
-    const idempotencyKey = newIdempotencyKey()
+    // `auto` (the automatic maimai NET import of the §7.4 fallback) never brings back what the user deleted (§5.3)
+    const trigger = meta.trigger ?? 'user'
+    const idempotencyKey = meta.idempotencyKey ?? newIdempotencyKey()
     const chunks = chunkImportRecords(records)
     const rawPayloadSha256 = await sha256Hex(canonicalImportBody(records))
     let result: ImportResultDTO | null = null
     for (const [chunkIndex, chunk] of chunks.entries()) {
-      result = await this.withImportRetries(() =>
-        imports.client({
-          id: this.saveId,
-          idempotencyKey,
-          source: plan.source,
-          trigger: 'user',
-          sourceAccountId: meta.claimedAccountId ?? null,
-          rawPayloadSha256,
-          chunkIndex,
-          chunkCount: chunks.length,
-          records: chunk,
-        }),
-      )
+      const send = () =>
+        this.withImportRetries(() =>
+          imports.client({
+            id: this.saveId,
+            idempotencyKey,
+            source: plan.source,
+            trigger,
+            sourceAccountId: meta.claimedAccountId ?? null,
+            rawPayloadSha256,
+            chunkIndex,
+            chunkCount: chunks.length,
+            records: chunk,
+          }),
+        )
+      for (let attempt = 1; ; attempt++) {
+        try {
+          result = await send()
+          break
+        } catch (error) {
+          // Another import of the save is running (another tab, another device): wait for it, then send this one
+          const running = importInProgressJobId(error)
+          if (!running || attempt >= IMPORT_MAX_ATTEMPTS || this.disposed) throw error
+          await this.waitForJob(running)
+        }
+      }
     }
     let job = result!.job
     if (job.status === 'running') job = await this.waitForJob(job.id)
@@ -582,9 +600,41 @@ export class CloudScoreRepository implements WebScoreRepository {
   /** The "clear" half of a cloud "replace" import: every delete must reach the server before the upload */
   private async clearBeforeImport() {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new CloudClearNotSentError()
+    const deadline = Date.now() + CLEAR_BEFORE_IMPORT_TIMEOUT_MS
+    // What to delete is what the server has now: before the first pull this device knows nothing of the save, and
+    // other devices may have written since the last one
+    if (!(await this.pullNow(deadline))) throw new CloudClearNotSentError()
     this.clear()
-    const sent = await this.flush(CLEAR_BEFORE_IMPORT_TIMEOUT_MS)
+    const sent = await this.flush(Math.max(0, deadline - Date.now()))
     if (!sent) throw new CloudClearNotSentError()
+  }
+
+  /**
+   * Runs sync cycles until one has pulled to the latest revision, by `deadline`. `false` when none could: offline,
+   * a failure waiting out its backoff, syncing stopped. Another tab holding the sync lock is waited for.
+   */
+  private async pullNow(deadline: number): Promise<boolean> {
+    // A cycle already running may have pulled before the call: the one after it counts
+    const target = this.completedCycles + (this.running ? 2 : 1)
+    if (!this.rateLimited) this.backoffUntil = 0
+    while (this.completedCycles < target) {
+      if (this.disposed || this.stopReason || this.backoffUntil > Date.now()) return false
+      const remaining = deadline - Date.now()
+      if (remaining <= 0) return false
+      let timeout: ReturnType<typeof setTimeout> | undefined
+      const cycle = this.sync()
+      const finished = await Promise.race([
+        cycle.then(() => true),
+        new Promise<boolean>((resolve) => {
+          timeout = setTimeout(() => resolve(false), remaining)
+        }),
+      ])
+      clearTimeout(timeout)
+      if (!finished) return false
+      // The cycle ran in another tab (the lock was taken): try again shortly, with the lock free
+      if (this.completedCycles < target) await delay(Math.min(PULL_NOW_RETRY_MS, Math.max(0, deadline - Date.now())))
+    }
+    return true
   }
 
   /**
@@ -804,6 +854,7 @@ export class CloudScoreRepository implements WebScoreRepository {
       await this.persistUnsaved()
       await this.push()
       await this.pull()
+      this.completedCycles++
       // The outbox entries added while this cycle ran stay on top of the pulled records
       await this.reload()
       this.failures = 0
