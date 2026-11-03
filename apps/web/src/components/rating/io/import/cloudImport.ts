@@ -44,14 +44,16 @@ export async function importFileEntries(
 
 /**
  * Provider records the browser fetched itself, on a cloud save with server imports off (the §7.4 fallback): merged,
- * never replacing the save. Uploaded as `client_reported`.
+ * never replacing the save. Uploaded as `client_reported`. The automatic maimai NET import passes `trigger: 'auto'`
+ * and its key, so it never brings back what the user deleted and tabs in the same 15 minutes share one job (§5.3, §5.5).
  */
 export function importFallbackEntries(
   repository: ScoreRepository,
   entries: PlayEntry[],
   source: ImportMeta['source'],
+  options: Pick<ImportMeta, 'claimedSource' | 'trigger' | 'idempotencyKey'> = {},
 ): Promise<ImportResult> {
-  return repository.applyImport(entries, { source, mode: 'merge' })
+  return repository.applyImport(entries, { ...options, source, mode: 'merge' })
 }
 
 /** Runs a server import to its end, reporting progress; resolves the finished job */

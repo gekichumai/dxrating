@@ -7,7 +7,13 @@ import { WebHaptics } from 'web-haptics'
 import type { ScoreRepository } from '@/models/scores/ScoreRepository'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
-import { NetImportError, type NetImportErrorCode, unexpectedErrorSubtitle } from './netImportErrorFeedback'
+import {
+  NET_IMPORT_ERROR_I18N,
+  NetImportError,
+  type NetImportErrorCode,
+  isNetImportErrorCode,
+  unexpectedErrorSubtitle,
+} from './netImportErrorFeedback'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { netImportProgress } from './netImportProgressStore'
 import {
@@ -18,14 +24,7 @@ import {
 import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
 import { ServerImportFailedError } from '@/models/scores/cloudImports'
 
-const ERROR_CODE_I18N: Record<NetImportErrorCode, string> = {
-  NET_MAINTENANCE: 'rating-calculator:io.import.net-records.errors.maintenance',
-  INVALID_CREDENTIALS: 'rating-calculator:io.import.net-records.errors.invalid-credentials',
-  AIME_CARD_UNAVAILABLE: 'rating-calculator:io.import.net-records.errors.aime-card-unavailable',
-  UNKNOWN_ERROR: 'rating-calculator:io.import.net-records.errors.unknown',
-  INTERNAL_ERROR: 'rating-calculator:io.import.net-records.errors.internal',
-  TOKEN_ERROR: 'rating-calculator:io.import.net-records.errors.token',
-}
+const ERROR_CODE_I18N = NET_IMPORT_ERROR_I18N
 
 const ERROR_CODE_DETAIL_I18N: Partial<Record<NetImportErrorCode, string>> = {
   AIME_CARD_UNAVAILABLE: 'rating-calculator:io.import.net-records.errors.aime-card-unavailable-detail',
@@ -72,8 +71,8 @@ const fetchNetRecords = async (
           resolve(data)
         } else if (event === 'error') {
           const parsed = JSON.parse(message.data) as { code?: string; error?: string }
-          if (parsed.code && parsed.code in ERROR_CODE_I18N) {
-            reject(new NetImportError(parsed.code as NetImportErrorCode, parsed.error))
+          if (parsed.code && isNetImportErrorCode(parsed.code)) {
+            reject(new NetImportError(parsed.code, parsed.error))
           } else {
             reject(new Error(parsed.error ?? 'unknown error'))
           }
@@ -182,8 +181,8 @@ export const importFromNETRecords = async (
         },
       ).catch((error: unknown) => {
         // The stream's error codes are the ones the old route reports
-        if (error instanceof ServerImportFailedError && error.code in ERROR_CODE_I18N) {
-          throw new NetImportError(error.code as NetImportErrorCode, error.message)
+        if (error instanceof ServerImportFailedError && isNetImportErrorCode(error.code)) {
+          throw new NetImportError(error.code, error.message)
         }
         throw error
       })
@@ -227,7 +226,11 @@ export const importFromNETRecords = async (
     if (path === 'client-fallback') {
       // A cloud save with server imports off (§7.4): the one case where this page uploads what it fetched. The
       // records are client_reported and never shown as verified
-      await importFallbackEntries(repository, entries, 'maimai-net')
+      await importFallbackEntries(repository, entries, 'maimai-net', {
+        claimedSource: `maimai-net-${region}`,
+        trigger: cloud?.trigger ?? (authParams ? 'user' : 'auto'),
+        idempotencyKey: cloud?.idempotencyKey,
+      })
     } else {
       // merge: a higher achievement replaces the saved values of its chart
       await repository.applyImport(entries, { source: 'maimai-net', mode })
