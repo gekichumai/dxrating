@@ -687,6 +687,7 @@
     "cloud-save.import-confirm.left-out_one": "{{count, number}} 件の記録は該当する譜面がないか、範囲外の値を含むためインポートできません。これらは除外されます。",
     "cloud-save.import-confirm.left-out_other": "{{count, number}} 件の記録は該当する譜面がないか、範囲外の値を含むためインポートできません。これらは除外されます。",
     "cloud-save.import.errors.already-running": "このソースからの別のインポートがクラウドセーブで実行中です。終わってからもう一度お試しください。",
+    "cloud-save.import.errors.too-large": "このファイルは大きすぎて一度にインポートできません。クラウドセーブは変更されていません。",
     "cloud-save.history.failure.generic": "完了しませんでした",
     "cloud-save.history.failure.abandoned": "途中で止まりました",
     "cloud-save.history.failure.maintenance": "完了しませんでした：maimai NET がメンテナンス中でした",

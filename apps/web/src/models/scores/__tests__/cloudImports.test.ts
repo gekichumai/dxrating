@@ -4,7 +4,11 @@ import { describe, expect, it } from 'vitest'
 import type { PlayEntry } from '../../../components/rating/RatingCalculatorAddEntryForm'
 import {
   canonicalSha256Hex,
+  chunkImportRecords,
   chunkPayloadSha256,
+  CLIENT_IMPORT_BODY_LIMIT_BYTES,
+  clientImportBody,
+  ImportTooLargeError,
   clientImportPlan,
   entriesToImportRecords,
   importInProgressJobId,
@@ -104,6 +108,71 @@ describe('entriesToImportRecords', () => {
   })
 })
 
+describe('chunkImportRecords', () => {
+  const envelope = {
+    id: 'dsav_one',
+    idempotencyKey: 'key-1',
+    source: 'dxrating-json',
+    trigger: 'user',
+    sourceAccountId: null,
+  }
+  const record = (index: number, providerRecordId: string | null = null) =>
+    ImportRecordSchema.parse({
+      sheetId: `dsht_${index
+        .toString(36)
+        .padStart(10, '2')
+        .replace(/[01ilou]/g, '2')}`,
+      achievement: 1000000,
+      comboFlag: null,
+      syncFlag: null,
+      dxScore: null,
+      best50Bucket: null,
+      providerRecordId,
+      claimedSource: null,
+    })
+  const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength
+
+  it('keeps every exact request body under the limit, deterministically', () => {
+    const records = Array.from({ length: 5000 }, (_, index) => record(index, '譜'.repeat(128)))
+    const chunks = chunkImportRecords(records, envelope)
+    expect(chunks.length).toBeGreaterThan(1)
+    expect(chunks.flat()).toEqual(records)
+    for (const [chunkIndex, chunk] of chunks.entries()) {
+      const body = clientImportBody(
+        { ...envelope, rawPayloadSha256: 'f'.repeat(64) },
+        { chunkIndex, chunkCount: chunks.length, records: chunk },
+      )
+      expect(bytes(body)).toBeLessThanOrEqual(CLIENT_IMPORT_BODY_LIMIT_BYTES)
+    }
+    // A retry of the same key sends the same chunks
+    expect(chunkImportRecords(records, envelope)).toEqual(chunks)
+  })
+
+  it('still splits at 5000 records when the bodies are small', () => {
+    const records = Array.from({ length: 5001 }, (_, index) => record(index))
+    expect(chunkImportRecords(records, envelope).map((chunk) => chunk.length)).toEqual([5000, 1])
+  })
+
+  it('throws before anything is sent for a record alone over the limit, or too many chunks', () => {
+    const records = [record(1, '譜'.repeat(128))]
+    const envelopeBytes = bytes(
+      clientImportBody(
+        { ...envelope, rawPayloadSha256: 'f'.repeat(64) },
+        { chunkIndex: 9, chunkCount: 10, records: [] },
+      ),
+    )
+    expect(() => chunkImportRecords(records, envelope, envelopeBytes + 10)).toThrow(
+      expect.objectContaining({ reason: 'record-too-large' }),
+    )
+    const many = Array.from({ length: 11 }, (_, index) => record(index))
+    const oneRecordEach = envelopeBytes + bytes(many[0])
+    expect(() => chunkImportRecords(many, envelope, oneRecordEach)).toThrow(ImportTooLargeError)
+    expect(() => chunkImportRecords(many, envelope, oneRecordEach)).toThrow(
+      expect.objectContaining({ reason: 'too-many-chunks' }),
+    )
+  })
+})
+
 describe('rawPayloadSha256 (cross-check with the server)', () => {
   const entries: PlayEntry[] = [
     {
@@ -164,7 +233,6 @@ describe('isSameServerImport', () => {
     // Not known yet: never adopted
     expect(isSameServerImport(job({}), identity)).toBe(false)
     expect(isSameServerImport(job({}), { trigger: 'user', account: null })).toBe(false)
-    expect(isSameServerImport(job({}), { trigger: 'user', account: 'linked' })).toBe(true)
   })
 })
 

@@ -14,6 +14,7 @@ import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntry
 import { FETCH_STATE_PROGRESS, isFetchNetRecordProgressState } from '../../components/rating/io/import/netImportStages'
 import {
   chunkImportRecords,
+  clientImportBody,
   chunkPayloadSha256,
   CloudClearNotSentError,
   clientImportPlan,
@@ -410,7 +411,9 @@ export class CloudScoreRepository implements WebScoreRepository {
 
   /**
    * Uploads entries read from a file to `client-imports` (§7.3) as one job: `trigger: 'user'`, one idempotency key
-   * for every chunk of 5000 and every retry, each chunk's canonical SHA-256 as a cross-check. Then pulls what the job
+   * for every chunk and every retry, each chunk's canonical SHA-256 as a cross-check. Chunks hold at most 5000 records
+   * and a body under the route's 2 MiB limit; all of them are built before anything is cleared
+   * ({@link chunkImportRecords} throws `ImportTooLargeError` for an upload that cannot fit). Then pulls what the job
    * wrote. A `replace` import clears the save first (§5.3 rule 5): the revision-guarded deletes of {@link clear}
    * must reach the server before the upload starts, or nothing is imported.
    *
@@ -431,29 +434,32 @@ export class CloudScoreRepository implements WebScoreRepository {
       if (entries.length > 0) throw new NothingToImportError(skipped, rejected)
       return { count: 0, skipped, rejected }
     }
-    if (meta.mode === 'replace') await this.clearBeforeImport()
-
     // `auto` (the automatic maimai NET import of the §7.4 fallback) never brings back what the user deleted (§5.3)
     const trigger = meta.trigger ?? 'user'
     const idempotencyKey = meta.idempotencyKey ?? newIdempotencyKey()
-    const chunks = chunkImportRecords(records)
+    const envelope = {
+      id: this.saveId,
+      idempotencyKey,
+      source: plan.source,
+      trigger,
+      sourceAccountId: meta.claimedAccountId ?? null,
+    }
+    // Every chunk is built and size-checked before the clear: an upload that cannot be sent never empties the save
+    const chunks = chunkImportRecords(records, envelope)
+    if (meta.mode === 'replace') await this.clearBeforeImport()
+
     let result: ImportResultDTO | null = null
     for (const [chunkIndex, chunk] of chunks.entries()) {
       // What the server hashes for this chunk: its accepted records, which are all of them
       const rawPayloadSha256 = await chunkPayloadSha256(chunk)
       const send = () =>
         this.withImportRetries(() =>
-          imports.client({
-            id: this.saveId,
-            idempotencyKey,
-            source: plan.source,
-            trigger,
-            sourceAccountId: meta.claimedAccountId ?? null,
-            rawPayloadSha256,
-            chunkIndex,
-            chunkCount: chunks.length,
-            records: chunk,
-          }),
+          imports.client(
+            clientImportBody(
+              { ...envelope, rawPayloadSha256 },
+              { chunkIndex, chunkCount: chunks.length, records: chunk },
+            ),
+          ),
         )
       for (let attempt = 1; ; attempt++) {
         try {
@@ -488,7 +494,8 @@ export class CloudScoreRepository implements WebScoreRepository {
    * {@link ServerImportFailedError}.
    *
    * A 409 `IMPORT_IN_PROGRESS` names another job of the same source on the save. It is waited for, and adopted only
-   * when it is the same import: the same trigger and source account ({@link isSameServerImport}). Otherwise it is
+   * when it is the same import: the same trigger and source account ({@link isSameServerImport}); an LXNS job never
+   * is, since the linked account may have changed while it ran. Otherwise it is
    * never reported as this import: the request is sent once more with the same key, and a second 409 throws
    * {@link ImportAlreadyRunningError}.
    */
@@ -1312,7 +1319,8 @@ type StartedImport = { job: ImportJobDTO } | { runningJobId: string }
 
 /**
  * The trigger and source account the server will record on the job of this request, as far as the client knows
- * them: the Diving-Fish username (trimmed, as the server does) or QQ; LXNS is always the user's one linked account;
+ * them: the Diving-Fish username (trimmed, as the server does) or QQ; LXNS never (its job of another request is
+ * waited for, never adopted);
  * a maimai NET job records the SEGA ID hash only when it cannot read the friend code, which the client never knows,
  * so a NET job of another request is adopted only when it recorded this SEGA ID's hash.
  */
@@ -1321,7 +1329,8 @@ async function serverImportIdentity<K extends ServerImportKind>(
   args: ServerImportArgs[K],
   trigger: 'user' | 'auto',
 ): Promise<ServerImportIdentity> {
-  if (kind === 'lxns') return { trigger, account: 'linked' }
+  // The linked LXNS account may have been relinked while another job ran: the client cannot know whose that job is
+  if (kind === 'lxns') return { trigger, account: null }
   if (kind === 'diving-fish') {
     const dfArgs = args as ServerImportArgs['diving-fish']
     return {

@@ -685,6 +685,7 @@
     "cloud-save.import-confirm.left-out_one": "{{count, number}} record can't be imported because it matches no chart or has a value out of range. It will be left out.",
     "cloud-save.import-confirm.left-out_other": "{{count, number}} records can't be imported because they match no chart or have values out of range. They will be left out.",
     "cloud-save.import.errors.already-running": "Another import from this source is running on your cloud save. Try again when it finishes.",
+    "cloud-save.import.errors.too-large": "This file is too large to upload in one import. Your cloud save wasn't changed.",
     "cloud-save.history.failure.generic": "Didn't finish",
     "cloud-save.history.failure.abandoned": "Stopped before it finished",
     "cloud-save.history.failure.maintenance": "Didn't finish: maimai NET was under maintenance",
