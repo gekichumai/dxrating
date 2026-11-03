@@ -1,0 +1,48 @@
+/* Cloud save surfaces: translucent material like the tab bar; hover feedback only where a pointer can hover */
+
+.cloud-save-surface {
+  background-color: rgb(255 255 255 / 78%);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border: 1px solid rgb(255 255 255 / 60%);
+  box-shadow:
+    0 8px 32px rgb(15 23 42 / 14%),
+    0 0 0 1px rgb(15 23 42 / 6%);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .cloud-save-surface {
+    background-color: rgb(255 255 255 / 96%);
+  }
+}
+
+.cloud-save-status-button {
+  transition: background-color 150ms ease;
+}
+
+@media (hover: hover) {
+  .cloud-save-status-button:hover {
+    background-color: rgb(255 255 255 / 50%);
+  }
+  .cloud-save-save-option:hover:not([aria-current='true']) {
+    background-color: rgb(15 23 42 / 4%);
+  }
+}
+
+.cloud-save-status-button:focus-visible,
+.cloud-save-save-option:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cloud-save-spin {
+    animation: cloud-save-spin 1.2s linear infinite;
+  }
+}
+
+@keyframes cloud-save-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

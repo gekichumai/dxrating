@@ -24,6 +24,7 @@ import { WebHaptics } from 'web-haptics'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
+import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
 
 const haptics = new WebHaptics()
 
@@ -67,6 +68,19 @@ const LxnsImportDialogContent: FC<{
     const importStart = performance.now()
     const analytics = createRatingImportTracker('lxns')
     try {
+      const path = importPath(repository)
+      if (path === 'server') {
+        // A cloud save: the server fetches from LXNS and keeps the records verified; this page pulls them after
+        const job = await runServerImportToEnd(repository, 'lxns', {})
+        analytics.succeeded(job.counts.fetched, 0)
+        haptics.trigger('success')
+        toast.success(
+          t('rating-calculator:cloud-save.import.success', { source: 'LXNS', summary: summarizeImportJob(job, t) }),
+        )
+        onClose()
+        return
+      }
+
       const result = await apiClient.lxns.start()
 
       const importResult = normalizeLxnsScores(await loadCatalog(), result.scores)
@@ -75,7 +89,12 @@ const LxnsImportDialogContent: FC<{
         console.warn('[ImportFromLxnsButtonListItem]', warning.message, warning.row)
       }
 
-      await repository.applyImport(entries, { source: 'lxns', mode: 'replace' })
+      if (path === 'client-fallback') {
+        // Server imports are off (§7.4): uploaded as client_reported, never verified
+        await importFallbackEntries(repository, entries, 'lxns')
+      } else {
+        await repository.applyImport(entries, { source: 'lxns', mode: 'replace' })
+      }
       analytics.succeeded(entries.length, importResult.warnings.length)
       haptics.trigger('success')
       toast.success(t('rating-calculator:io.import.lxns.success', { count: entries.length }))

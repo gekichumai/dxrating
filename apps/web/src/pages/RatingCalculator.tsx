@@ -42,6 +42,7 @@ import {
 import IconMdiArrowDown from '~icons/mdi/arrow-down'
 import IconMdiTrashCan from '~icons/mdi/trash-can'
 import { BetaBadge } from '../components/global/BetaBadge'
+import { RecordProvenanceIcon } from '../components/cloud-save/ProvenanceBadge'
 import {
   type ComboFlag,
   type PlayEntry,
@@ -363,7 +364,11 @@ const RatingChartCell: FC<{ row: Row<Entry>; compactMode: boolean }> = ({ row, c
 const RatingCalculatorAchievementRateCell: FC<{
   row: Row<Entry>
 }> = ({ row }) => (
-  <span className="font-sans tracking-wide tabular-nums">{row.original.achievementRate.toFixed(4)}%</span>
+  <>
+    <span className="font-sans tracking-wide tabular-nums">{row.original.achievementRate.toFixed(4)}%</span>
+    {/* Cloud saves only: where the score came from */}
+    <RecordProvenanceIcon sheetId={row.original.sheetId} className="rating-provenance-icon ms-1" />
+  </>
 )
 
 const RATING_COLUMN_IDS = ['chart', 'includedIn', 'comboFlag', 'syncFlag', 'achievementRate', 'rating', 'actions']

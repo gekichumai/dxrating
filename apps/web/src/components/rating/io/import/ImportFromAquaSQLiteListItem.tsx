@@ -35,6 +35,7 @@ import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
+import { importFileEntries } from './cloudImport'
 
 export const ImportFromAquaSQLiteListItem: FC<{
   onClose: () => void
@@ -232,10 +233,18 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
             variant="contained"
             onClick={async () => {
               const analytics = createRatingImportTracker('aqua_sqlite')
-              await repository.applyImport(
+              const result = await importFileEntries(
+                repository,
                 records.map((record) => record.entry),
-                { source: 'aqua-sqlite', mode: 'replace' },
+                // A cloud save keeps the Aqua user ID as the account the file claims
+                {
+                  source: 'aqua-sqlite',
+                  mode: 'replace',
+                  claimedAccountId: String(selectedUser?.id ?? '') || undefined,
+                },
               )
+              // A cloud save asks to merge or clear first; `null`: the user cancelled
+              if (!result) return
               analytics.succeeded(records.length, warnings.length)
 
               haptic.trigger('success')

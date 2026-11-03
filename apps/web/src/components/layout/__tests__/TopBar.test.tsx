@@ -3,6 +3,7 @@ import { initI18n } from '@/setup/init-i18n'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { TopBar } from '../TopBar'
+import { type CloudSaveUi, CloudSaveUiContext } from '@/models/scores/CloudSaveUiContext'
 
 vi.mock('~icons/mdi/github', () => ({
   default: ({ className }: { className?: string }) => <svg className={className} />,
@@ -129,5 +130,40 @@ describe('TopBar', () => {
     )
 
     expect(screen.getByText(/v1\.6\.138/).className).toContain('text-black/75')
+  })
+
+  it('shows no sync status on the local save', () => {
+    render(
+      <AppContextProvider>
+        <TopBar />
+      </AppContextProvider>,
+    )
+    expect(screen.queryByRole('button', { name: /^Cloud save/ })).toBeNull()
+  })
+
+  it('shows the sync status while a cloud save is active', () => {
+    const status = { state: 'offline', pendingCount: 2, lastSyncedRevision: 3, issues: [] } as const
+    const ui = {
+      controller: {
+        kind: 'cloud',
+        saveId: 'dsav_main',
+        status,
+        subscribe: () => () => {},
+        get: () => undefined,
+        reapplyIssue: () => {},
+        dismissIssue: () => {},
+        listImportJobs: async () => [],
+      },
+      listSaves: async () => [],
+      setActiveSaveId: () => {},
+    } satisfies CloudSaveUi
+    render(
+      <AppContextProvider>
+        <CloudSaveUiContext.Provider value={ui}>
+          <TopBar />
+        </CloudSaveUiContext.Provider>
+      </AppContextProvider>,
+    )
+    expect(screen.getByRole('button', { name: 'Cloud save, Offline, 2 changes waiting to sync' })).toBeTruthy()
   })
 })

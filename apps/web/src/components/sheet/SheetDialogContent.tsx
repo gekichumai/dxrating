@@ -17,6 +17,7 @@ import {
   TextField,
 } from '@mui/material'
 import clsx from 'clsx'
+import { RecordProvenanceBadge } from '../cloud-save/ProvenanceBadge'
 import { type FC, type PropsWithChildren, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
@@ -242,6 +243,9 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
       <div className="flex flex-wrap gap-1">
         <SheetTags sheet={sheet} />
       </div>
+
+      {/* Opened from a saved score of a cloud save: where that score came from */}
+      {currentAchievementRate !== undefined && <RecordProvenanceBadge sheetId={sheet.id} className="self-start" />}
 
       <div className="flex items-center">
         <IconMdiSearchWeb className="mr-2" />

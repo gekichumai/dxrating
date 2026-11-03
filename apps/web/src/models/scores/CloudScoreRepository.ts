@@ -2,12 +2,30 @@ import {
   CLOUD_SAVE_MAX_CHANGES_LIMIT,
   CLOUD_SAVE_MAX_MUTATIONS,
   type ChangesDTO,
+  type ImportJobDTO,
+  type ImportRecordInput,
+  type ImportResultDTO,
   type MutationItemInput,
   type MutationsResultDTO,
   type RecordDTO,
 } from '@gekichumai/api-contract'
 import { decideManualMutation, type ManualEntryMethod } from '@gekichumai/maimai-domain'
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
+import { FETCH_STATE_PROGRESS, isFetchNetRecordProgressState } from '../../components/rating/io/import/netImportStages'
+import {
+  canonicalImportBody,
+  chunkImportRecords,
+  CloudClearNotSentError,
+  clientImportPlan,
+  entriesToImportRecords,
+  importInProgressJobId,
+  isRetryableImportError,
+  newIdempotencyKey,
+  ServerImportFailedError,
+  ServerImportsDisabledError,
+  sha256Hex,
+} from './cloudImports'
+import type { NetImportStreamEvent, NetImportTransport } from './cloudNetImport'
 import { CloudScoreDatabase, type CloudScoreMeta, type OutboxEntry } from './cloudScoreDatabase'
 import {
   checksumOf,
@@ -25,6 +43,7 @@ import {
   type ManualEntry,
   type ScoreRecord,
   type ScoreRepositoryStatus,
+  type ServerImportArgs,
   type ServerImportKind,
   type SyncIssue,
   UnsupportedScoreOperationError,
@@ -57,8 +76,12 @@ import { uuidv7 } from './uuidv7'
  * The outbox is never dropped: not on sign-out, not when cloud save is turned off. It lives in the user's own
  * database (`dxr-cloud-v1-<userId>`), so another user signing in on this browser never sends it.
  *
- * This repository only ever sends the user's manual changes. It never uploads records it pulled (§8.3): imports
- * into a cloud save run on the server (PR 9), so {@link applyImport} is not available here yet.
+ * Imports (§7, §8.3): maimai NET, LXNS and Diving-Fish run on the server ({@link runServerImport}); the client only
+ * starts the job and then pulls what it wrote, so it never uploads a record it pulled or a server fetched. Files
+ * (AquaDX, mu-net, Aqua SQLite, DXRating JSON) are read here and uploaded to `client-imports` ({@link applyImport}),
+ * as `client_reported`. The one exception is the §7.4 fallback: with server imports turned off for the user, records
+ * the browser fetched from those providers the old way upload as `legacy-local`, claiming the provider; they stay
+ * `client_reported` and are never shown as verified.
  */
 
 /**
@@ -66,6 +89,32 @@ import { uuidv7 } from './uuidv7'
  * a full pull, never reset by the horizon (§5.6)
  */
 export type ChangesMode = 'incremental' | 'full'
+
+/** The import routes this repository calls, the shape of `privateApiClient.cloudSave.imports` */
+export interface CloudSaveImportsApi {
+  client(input: {
+    id: string
+    idempotencyKey: string
+    source: string
+    trigger: 'user' | 'auto' | 'migration'
+    sourceAccountId?: string | null
+    fetchedAt?: string | null
+    rawPayloadSha256?: string | null
+    chunkIndex: number
+    chunkCount: number
+    records: ImportRecordInput[]
+  }): Promise<ImportResultDTO>
+  lxns(input: { id: string; idempotencyKey: string; trigger: 'user' | 'auto' }): Promise<ImportResultDTO>
+  divingFish(input: {
+    id: string
+    idempotencyKey: string
+    trigger: 'user' | 'auto'
+    username?: string
+    qq?: string
+  }): Promise<ImportResultDTO>
+  get(input: { jobId: string }): Promise<ImportJobDTO>
+  list(input: { id: string; limit: number }): Promise<ImportJobDTO[]>
+}
 
 /** The cloud save routes this repository calls, the shape of `privateApiClient.cloudSave.records` */
 export interface CloudSaveRecordsApi {
@@ -111,6 +160,16 @@ export interface CloudScoreRepositoryOptions {
   visibilityTarget?: Pick<Document, 'addEventListener' | 'removeEventListener'> | null
   /** Whether the page is visible; `document.visibilityState` by default */
   isVisible?: () => boolean
+  /** The import routes; without them imports fail */
+  imports?: CloudSaveImportsApi
+  /** The maimai NET import stream */
+  netImport?: NetImportTransport
+  /** `serverImports` of `/me/features`: `false` turns on the §7.4 fallback */
+  serverImports?: boolean
+  /** How often a running import job is polled; 2 s by default */
+  importPollIntervalMs?: number
+  /** The first wait before an import request is sent again; doubles each time, 1 s by default */
+  importRetryDelayMs?: number
 }
 
 export type CloudSyncStopReason = 'not-found' | 'unauthorized'
@@ -125,6 +184,12 @@ export const SYNC_BACKOFF_MAX_MS = 5 * 60_000
 export const FULL_PULL_MAX_ATTEMPTS = 3
 /** How long signing out or turning cloud save off waits for the outbox to flush */
 export const FLUSH_TIMEOUT_MS = 3_000
+/** How long "clear, then import" waits for the clear to reach the server */
+export const CLEAR_BEFORE_IMPORT_TIMEOUT_MS = 15_000
+/** Attempts of one import request (the same idempotency key each time) */
+export const IMPORT_MAX_ATTEMPTS = 3
+/** A running job is given up on after this long (the server marks it abandoned after 15 min, §7.1) */
+export const IMPORT_POLL_TIMEOUT_MS = 16 * 60_000
 
 interface BroadcastMessage {
   type: 'changed'
@@ -329,13 +394,197 @@ export class CloudScoreRepository implements WebScoreRepository {
     this.delete([...this.view.keys()])
   }
 
-  /** Imports into a cloud save run on the server (`client-imports`, server imports): wired by the next change */
-  async applyImport(_entries: PlayEntry[], meta: ImportMeta): Promise<ImportResult> {
-    throw new UnsupportedScoreOperationError(`Import from ${meta.source}`, this.kind)
+  /** Whether the server runs imports for the user (`serverImports`); `false` is the §7.4 fallback */
+  get serverImportsEnabled(): boolean {
+    return this.options.serverImports ?? true
   }
 
-  runServerImport(kind: ServerImportKind, _args: Record<string, unknown>): AsyncIterable<ImportProgress> {
-    throw new UnsupportedScoreOperationError(`Server import (${kind})`, this.kind)
+  /**
+   * Uploads entries read from a file to `client-imports` (§7.3) as one job: `trigger: 'user'`, one idempotency key
+   * for every chunk of 5000 and every retry, the canonical body's SHA-256 as a cross-check. Then pulls what the job
+   * wrote. A `replace` import clears the save first (§5.3 rule 5): the revision-guarded deletes of {@link clear}
+   * must reach the server before the upload starts, or nothing is imported.
+   *
+   * Records of maimai NET, LXNS and Diving-Fish are refused unless server imports are off (§7.4): the server fetches
+   * those itself ({@link runServerImport}).
+   */
+  async applyImport(entries: PlayEntry[], meta: ImportMeta): Promise<ImportResult> {
+    const plan = clientImportPlan(meta.source, this.serverImportsEnabled)
+    if (!plan) throw new UnsupportedScoreOperationError(`Uploading records from ${meta.source}`, this.kind)
+    const imports = this.requireImports()
+    const { records } = entriesToImportRecords(entries, plan)
+    if (meta.mode === 'replace') await this.clearBeforeImport()
+    if (records.length === 0) return { count: 0 }
+
+    const idempotencyKey = newIdempotencyKey()
+    const chunks = chunkImportRecords(records)
+    const rawPayloadSha256 = await sha256Hex(canonicalImportBody(records))
+    let result: ImportResultDTO | null = null
+    for (const [chunkIndex, chunk] of chunks.entries()) {
+      result = await this.withImportRetries(() =>
+        imports.client({
+          id: this.saveId,
+          idempotencyKey,
+          source: plan.source,
+          trigger: 'user',
+          sourceAccountId: meta.claimedAccountId ?? null,
+          rawPayloadSha256,
+          chunkIndex,
+          chunkCount: chunks.length,
+          records: chunk,
+        }),
+      )
+    }
+    let job = result!.job
+    if (job.status === 'running') job = await this.waitForJob(job.id)
+    await this.notifyImportJobCompleted()
+    if (job.status === 'failed') throw new ServerImportFailedError(job.errorCode ?? 'failed', job)
+    return { count: records.length, job }
+  }
+
+  /**
+   * Runs an import on the server and yields its progress (§7.1, §8.3). One idempotency key for the whole action
+   * (`args.idempotencyKey`, or a fresh UUID): a dropped connection, a 5xx or a 429 sends the request again with it,
+   * so the server never runs the import twice. A 409 `IMPORT_IN_PROGRESS` attaches to the running job and polls
+   * it. When the job is done the save is pulled (the records come from the server, never from this client); the
+   * last progress (`done`) carries the job. A failed job throws {@link ServerImportFailedError}.
+   */
+  async *runServerImport<K extends ServerImportKind>(
+    kind: K,
+    args: ServerImportArgs[K],
+  ): AsyncGenerator<ImportProgress> {
+    if (!this.serverImportsEnabled) throw new ServerImportsDisabledError()
+    const imports = this.requireImports()
+    const idempotencyKey = args.idempotencyKey ?? newIdempotencyKey()
+    const trigger = args.trigger ?? 'user'
+
+    let job: ImportJobDTO
+    if (kind === 'maimai-net') {
+      const netArgs = args as ServerImportArgs['maimai-net']
+      job = yield* this.runNetImport({
+        idempotencyKey,
+        trigger,
+        region: netArgs.region,
+        id: netArgs.id,
+        password: netArgs.password,
+      })
+    } else {
+      let attached: string | null = null
+      try {
+        const result = await this.withImportRetries(() => {
+          if (kind === 'lxns') return imports.lxns({ id: this.saveId, idempotencyKey, trigger })
+          const dfArgs = args as ServerImportArgs['diving-fish']
+          return imports.divingFish({
+            id: this.saveId,
+            idempotencyKey,
+            trigger,
+            ...(dfArgs.username ? { username: dfArgs.username } : { qq: dfArgs.qq }),
+          })
+        })
+        job = result.job
+      } catch (error) {
+        attached = importInProgressJobId(error)
+        if (!attached) throw error
+        job = { id: attached, status: 'running' } as ImportJobDTO
+      }
+    }
+
+    if (job.status === 'running') {
+      yield { stage: 'waiting', progress: 0.5 }
+      job = await this.waitForJob(job.id)
+    }
+    if (job.status === 'failed') throw new ServerImportFailedError(job.errorCode ?? 'failed', job)
+    yield { stage: 'pulling', progress: 1, job }
+    await this.notifyImportJobCompleted()
+    yield { stage: 'done', progress: 1, job }
+  }
+
+  /** The save's recent import jobs, newest first (`GET /saves/{id}/imports`) */
+  listImportJobs(limit = 20): Promise<ImportJobDTO[]> {
+    return this.requireImports().list({ id: this.saveId, limit })
+  }
+
+  private requireImports(): CloudSaveImportsApi {
+    if (!this.options.imports) throw new UnsupportedScoreOperationError('Import', this.kind)
+    return this.options.imports
+  }
+
+  /** The NET stream, sent again with the same key when it drops; a 409 attaches to the running job */
+  private async *runNetImport(body: {
+    idempotencyKey: string
+    trigger: 'user' | 'auto'
+    region: 'jp' | 'intl'
+    id: string
+    password: string
+  }): AsyncGenerator<ImportProgress, ImportJobDTO> {
+    const transport = this.options.netImport
+    if (!transport) throw new UnsupportedScoreOperationError('maimai NET import', this.kind)
+    for (let attempt = 1; ; attempt++) {
+      try {
+        for await (const event of transport({ saveId: this.saveId, body }) as AsyncIterable<NetImportStreamEvent>) {
+          if (event.type === 'progress') {
+            yield {
+              stage: event.state,
+              // The job is not done when the fetch is: merging and pulling still follow
+              progress: Math.min(
+                isFetchNetRecordProgressState(event.state) ? FETCH_STATE_PROGRESS[event.state] : 0.5,
+                0.95,
+              ),
+            }
+          } else if (event.type === 'done') {
+            return event.result.job
+          } else {
+            throw new ServerImportFailedError(event.code, null, event.message)
+          }
+        }
+        throw new TypeError('The import stream closed early')
+      } catch (error) {
+        if (error instanceof ServerImportFailedError) throw error
+        const running = importInProgressJobId(error)
+        if (running) return { id: running, status: 'running' } as ImportJobDTO
+        const retry = isRetryableImportError(error)
+        if (!retry.retry || attempt >= IMPORT_MAX_ATTEMPTS || this.disposed) throw error
+        await delay(retry.afterMs ?? this.retryDelay(attempt))
+      }
+    }
+  }
+
+  /** Sends an import request again with the same key on a dropped connection, a 5xx or a 429 */
+  private async withImportRetries<T>(request: () => Promise<T>): Promise<T> {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await request()
+      } catch (error) {
+        const retry = isRetryableImportError(error)
+        if (!retry.retry || attempt >= IMPORT_MAX_ATTEMPTS || this.disposed) throw error
+        await delay(retry.afterMs ?? this.retryDelay(attempt))
+      }
+    }
+  }
+
+  private retryDelay(attempt: number) {
+    return (this.options.importRetryDelayMs ?? 1_000) * 2 ** (attempt - 1)
+  }
+
+  /** Polls a running job (`GET /imports/{jobId}`) until it has finished */
+  private async waitForJob(jobId: string): Promise<ImportJobDTO> {
+    const imports = this.requireImports()
+    const interval = this.options.importPollIntervalMs ?? 2_000
+    const deadline = Date.now() + IMPORT_POLL_TIMEOUT_MS
+    for (;;) {
+      const job = await this.withImportRetries(() => imports.get({ jobId }))
+      if (job.status !== 'running') return job
+      if (Date.now() > deadline || this.disposed) throw new ServerImportFailedError('abandoned', job)
+      await delay(interval)
+    }
+  }
+
+  /** The "clear" half of a cloud "replace" import: every delete must reach the server before the upload */
+  private async clearBeforeImport() {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new CloudClearNotSentError()
+    this.clear()
+    const sent = await this.flush(CLEAR_BEFORE_IMPORT_TIMEOUT_MS)
+    if (!sent) throw new CloudClearNotSentError()
   }
 
   /**
@@ -960,6 +1209,8 @@ export class CloudScoreRepository implements WebScoreRepository {
 }
 
 type PullOutcome = { kind: 'ok' } | { kind: 'mismatch'; report: ChecksumMismatchReport }
+
+const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
 type PendingChange =
   | { op: 'set'; sheetId: string; value: NonNullable<OutboxEntry['value']>; entryMethod: ManualEntryMethod }

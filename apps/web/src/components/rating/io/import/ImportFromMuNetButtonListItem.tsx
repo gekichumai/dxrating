@@ -11,6 +11,7 @@ import { useWebHaptics } from 'web-haptics/react'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
+import { importFileEntries } from './cloudImport'
 
 const MuNetUserMusicDetailSchema = z.object({
   musicId: z.number(),
@@ -77,7 +78,7 @@ export const ImportFromMuNetButtonListItem: FC<{
                 console.warn('[ImportFromMuNetButtonListItem]', warning.message, warning.row)
               }
 
-              await repository.applyImport(entries, { source: 'mu-net', mode: 'replace' })
+              if (!(await importFileEntries(repository, entries, { source: 'mu-net', mode: 'replace' }))) return
               analytics.succeeded(entries.length, importResult.warnings.length)
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.mu-net.success', { count: entries.length }))
