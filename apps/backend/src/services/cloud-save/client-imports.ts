@@ -126,7 +126,7 @@ export const applyClientImportChunk = (
       }
 
       let counts: ImportCountsDTO
-      if (input.chunkCount === 1 && (yield* shouldShortCircuit(database, job))) {
+      if (input.chunkCount === 1 && (yield* shouldShortCircuit(database, job, save.revision))) {
         counts = countsOf({ fetched: input.records.length, unchanged: records.length, rejected })
       } else {
         const merged = yield* applyImportRecords(
@@ -154,7 +154,17 @@ export const applyClientImportChunk = (
            finished_at = CASE WHEN $3 THEN now() ELSE finished_at END,
            raw_payload_sha256 = COALESCE($4, raw_payload_sha256)
          WHERE id = $1 RETURNING ${IMPORT_JOB_COLUMNS}`,
-        [job.id, JSON.stringify({ ...counts, chunks: { count: chunks.count, received } }), complete, finalSha],
+        [
+          job.id,
+          // A finished job records the save revision it left behind, for the content short-circuit (§5.5)
+          JSON.stringify({
+            ...counts,
+            chunks: { count: chunks.count, received },
+            ...(complete ? { saveRevision: save.revision } : {}),
+          }),
+          complete,
+          finalSha,
+        ],
       )
       return {
         result: { job: toImportJobDTO(updated[0]!), revision: save.revision },
