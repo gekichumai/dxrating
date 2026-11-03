@@ -38,7 +38,7 @@ export const INSTRUCTIONS =
   "or alias with search_songs; chart details: get_sheet; new songs and charts by date: list_recent_songs. Don't trust remembered internal levels. Ratings: " +
   'calculate_rating (one chart, or the achievement a rating needs), calculate_best50 (b15 + b35 and what to ' +
   'improve). Achievements are integers in 1/10000 %: 100.7543% is 1007543. Servers differ (jp, intl, usa, cn): ' +
-  'ask which one the user plays. Credit DXRating, CC BY-NC 4.0.'
+  'ask which one the user plays. Credit: Data from DXRating (dxrating.net).'
 
 /** Every tool only reads the catalog, and the same arguments give the same result until the catalog changes. */
 const annotations = (title: string): ToolAnnotations => ({

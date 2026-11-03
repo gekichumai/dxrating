@@ -99,7 +99,11 @@ describe('MCP server', () => {
         ],
       })
       expect(content.dataAsOf).toBe(publishedCatalog.updatedAt)
-      expect(content.source.license).toBe('CC BY-NC 4.0')
+      expect(content.source).toEqual({
+        name: 'DXRating',
+        url: 'https://dxrating.net',
+        attribution: 'Data from DXRating (dxrating.net)',
+      })
       // clients that read text only get the same
       expect(JSON.parse(text(result))).toEqual(content)
     })
