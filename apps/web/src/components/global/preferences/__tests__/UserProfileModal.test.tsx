@@ -41,6 +41,9 @@ describe('UserProfileModal', () => {
       cloudRepository: null,
       setActiveSaveId: () => {},
       listSaves: async () => [],
+      userId: 'user-1',
+      features: null,
+      refreshFeatures: () => {},
       flushBeforeSignOut: () =>
         new Promise<void>((resolve) => {
           order.push('flush')
@@ -93,6 +96,37 @@ describe('UserProfileModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cloud save' }))
     expect(await screen.findByRole('region', { name: 'Saves' })).toBeTruthy()
     expect((await screen.findAllByText('Main card')).length).toBeGreaterThan(0)
+  })
+
+  it('lists the cloud save section when the server enables cloud save or offers the beta, on the local save too', () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const base: ActiveSave = {
+      kind: 'local',
+      decided: true,
+      saveId: null,
+      cloudRepository: null,
+      setActiveSaveId: () => {},
+      listSaves: async () => [],
+      flushBeforeSignOut: async () => {},
+      userId: 'user-1',
+      features: null,
+      refreshFeatures: () => {},
+    }
+    for (const [features, listed] of [
+      [{ cloudSave: true, serverImports: true, optInAvailable: false }, true],
+      [{ cloudSave: false, serverImports: false, optInAvailable: true }, true],
+      [{ cloudSave: false, serverImports: false, optInAvailable: false }, false],
+    ] as const) {
+      const view = render(
+        <QueryClientProvider client={queryClient}>
+          <ActiveSaveContext.Provider value={{ ...base, features }}>
+            <UserProfileModal open onClose={() => {}} />
+          </ActiveSaveContext.Provider>
+        </QueryClientProvider>,
+      )
+      expect(screen.queryByRole('button', { name: 'Cloud save' }) !== null).toBe(listed)
+      view.unmount()
+    }
   })
 
   it('on phones, scrolls the section tabs sideways instead of squeezing four labels into one row', () => {

@@ -28,6 +28,7 @@ import { LocalScoreRepository } from '../scores/LocalScoreRepository'
 import { ScoreRepositoryContext } from '../scores/useScoreRepository'
 import { type CloudSaveUi, CloudSaveUiContext } from '../scores/CloudSaveUiContext'
 import { CloudSaveDemoBoundary } from '../scores/CloudSaveDemoBoundary'
+import { CloudMigrationProvider } from '../scores/CloudMigrationContext'
 
 /**
  * The rating calculator's view of the score repository, kept source compatible: `entries` are the saved entries and
@@ -180,7 +181,10 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
       <ScoreRepositoryContext.Provider value={repository}>
         <CloudSaveUiContext.Provider value={cloudSaveUi}>
           <RatingCalculatorContext.Provider value={value}>
-            <CloudSaveDemoBoundary>{children}</CloudSaveDemoBoundary>
+            {/* Offers the first sign-in migration of the local save; nothing for anonymous visitors or with cloud save off */}
+            <CloudMigrationProvider localRepository={localRepository}>
+              <CloudSaveDemoBoundary>{children}</CloudSaveDemoBoundary>
+            </CloudMigrationProvider>
           </RatingCalculatorContext.Provider>
         </CloudSaveUiContext.Provider>
       </ScoreRepositoryContext.Provider>

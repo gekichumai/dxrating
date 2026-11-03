@@ -9,6 +9,8 @@ import { createRatingImportTracker } from '@/lib/analytics'
 import { parseRatingFile } from '@/models/scores/ratingEntriesFile'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { announceImportLeftOut, cloudImportErrorMessage, importFileEntries } from './cloudImport'
+import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import { exportSavePicker } from '@/components/cloud-save/exportSavePicker'
 
 export const ImportFromJSONButtonListItem: FC<{
   onClose: () => void
@@ -49,7 +51,17 @@ export const ImportFromJSONButtonListItem: FC<{
             }
             try {
               if (!parsed.success) throw parsed.error
-              const { entries } = parsed
+              let entries: PlayEntry[]
+              let fromCloudExport = false
+              if ('cloudExport' in parsed) {
+                // "Download my data": one save's records, as a rating file; their provenance is only claimed now
+                const save = await exportSavePicker.request(parsed.cloudExport)
+                if (!save) return
+                entries = save.entries
+                fromCloudExport = true
+              } else {
+                entries = parsed.entries
+              }
               // A cloud save asks to merge or clear first; `null`: the user cancelled
               const result = await importFileEntries(repository, entries, { source: 'dxrating-json', mode: 'replace' })
               if (!result) return
@@ -58,6 +70,12 @@ export const ImportFromJSONButtonListItem: FC<{
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.json.success', { count: result.count }))
               announceImportLeftOut(result, t, (message) => toast(message))
+              if (fromCloudExport) {
+                toast(t('rating-calculator:cloud-save.export-import.claimed-only'), {
+                  id: 'cloud-export-claimed-only',
+                  duration: 8_000,
+                })
+              }
             } catch (error) {
               analytics.failed('invalid_file')
               toast.error(

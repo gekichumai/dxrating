@@ -2,6 +2,7 @@ import type { ImportJobDTO, SaveDTO, UserFeatures } from '@gekichumai/api-contra
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import { captureAnalyticsEvent } from '../../lib/analytics'
 import { authClient } from '../../lib/auth-client'
 import type { CloudScoreRepository, CloudScoreRepositoryOptions, CloudSyncStopReason } from './CloudScoreRepository'
 import { clearUserFeaturesCache, type FetchUserFeatures, getUserFeatures } from './userFeatures'
@@ -13,8 +14,8 @@ import { clearUserFeaturesCache, type FetchUserFeatures, getUserFeatures } from 
  * - the visitor is signed in;
  * - `GET /me/features` says `cloudSave` (the only request this adds for signed-in users while the flag is off; none
  *   for anonymous visitors);
- * - `localStorage['active-save-id']` names a save for this user (creating saves and the first sign-in migration
- *   come later, so for now it is set only by {@link ActiveSave.setActiveSaveId}, e.g. from the dev console);
+ * - `localStorage['active-save-id']` names a save for this user (set by {@link ActiveSave.setActiveSaveId}: the first
+ *   sign-in migration, the save selector, or the dev console);
  * - that save is in the user's list (`GET /saves`). A save that is gone falls back to the local save with a toast.
  *
  * Everything else uses the local save, exactly as before. The repository classes and the private API client load
@@ -136,6 +137,12 @@ export const defaultActiveSaveDependencies: ActiveSaveDependencies = {
         list: (input) => imports.list(input) as Promise<ImportJobDTO[]>,
       },
       netImport: streamNetImport,
+      // The source and who fetched it, nothing else (§12.3)
+      onImportJobFinished: ({ status, source, fetchedBy }) =>
+        captureAnalyticsEvent(status === 'succeeded' ? 'import_job_succeeded' : 'import_job_failed', {
+          source,
+          fetched_by: fetchedBy,
+        }),
       // Counts and sums only: no user, save or chart identifiers
       reportChecksumMismatch: (report) => {
         Sentry.metrics.count('cloudsave.checksum_mismatch', 1)
@@ -169,6 +176,15 @@ export interface ActiveSave {
   flushBeforeSignOut(): Promise<void>
   /** The signed-in user's cloud saves (`GET /saves`), for the save selector */
   listSaves(): Promise<readonly SaveDTO[]>
+  /** The signed-in user's ID; `null` when signed out, `undefined` while the session loads */
+  userId: string | null | undefined
+  /**
+   * What `GET /me/features` answered for the signed-in user; `null` when signed out or until it answers. Every
+   * cloud save surface (the first sign-in migration, the beta opt-in, "Download my data") renders only on it.
+   */
+  features: UserFeatures | null
+  /** Forgets the cached features and decides again (after opting in to the beta) */
+  refreshFeatures(): void
 }
 
 export const ActiveSaveContext = createContext<ActiveSave>({
@@ -179,6 +195,9 @@ export const ActiveSaveContext = createContext<ActiveSave>({
   setActiveSaveId: () => {},
   flushBeforeSignOut: async () => {},
   listSaves: async () => [],
+  userId: null,
+  features: null,
+  refreshFeatures: () => {},
 })
 
 export const useActiveSave = (): ActiveSave => useContext(ActiveSaveContext)
@@ -214,6 +233,8 @@ export function useActiveSaveDecision(): ActiveSave {
   // The decision this render shows is final for the session and selection (see `ActiveSave.decided`)
   const decisionKey = userId === undefined ? undefined : userId === null ? 'anonymous' : `${userId}:${selectionVersion}`
   const [decidedKey, setDecidedKey] = useState<string | null>(null)
+  // Kept with the user they were read for: never shown to another user
+  const [featuresState, setFeaturesState] = useState<{ userId: string; features: UserFeatures } | null>(null)
 
   useEffect(() => {
     // The session is still loading: keep what is shown
@@ -252,6 +273,9 @@ export function useActiveSaveDecision(): ActiveSave {
     void (async () => {
       const features = await getUserFeatures(userId, dependencies.fetchFeatures)
       if (cancelled) return
+      setFeaturesState((current) =>
+        current?.userId === userId && sameFeatures(current.features, features) ? current : { userId, features },
+      )
       const saveId = readActiveSaveId(storage, userId)
       if (!features.cloudSave || !saveId) return fallBackToLocal()
 
@@ -343,7 +367,13 @@ export function useActiveSaveDecision(): ActiveSave {
 
   const listSaves = useCallback(() => dependencies.listSaves(), [dependencies])
 
+  const refreshFeatures = useCallback(() => {
+    clearUserFeaturesCache()
+    setSelectionVersion((version) => version + 1)
+  }, [])
+
   const decided = decisionKey !== undefined && decidedKey === decisionKey
+  const features = userId && featuresState?.userId === userId ? featuresState.features : null
 
   return useMemo(
     () => ({
@@ -354,7 +384,13 @@ export function useActiveSaveDecision(): ActiveSave {
       setActiveSaveId,
       flushBeforeSignOut,
       listSaves,
+      userId,
+      features,
+      refreshFeatures,
     }),
-    [cloudRepository, decided, setActiveSaveId, flushBeforeSignOut, listSaves],
+    [cloudRepository, decided, setActiveSaveId, flushBeforeSignOut, listSaves, userId, features, refreshFeatures],
   )
 }
+
+const sameFeatures = (a: UserFeatures, b: UserFeatures) =>
+  a.cloudSave === b.cloudSave && a.serverImports === b.serverImports && a.optInAvailable === b.optInAvailable

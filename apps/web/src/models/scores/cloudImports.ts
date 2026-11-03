@@ -64,10 +64,13 @@ export function clientImportPlan(
   return null
 }
 
+/** What `claimedSource` accepts (`ClaimedSourceSchema`); a provider name that is not one is left out, not sent */
+const CLAIMED_SOURCE_PATTERN = /^[\w.-]{1,64}$/
+
 /**
  * The records of an upload: one per chart (the best achievement of duplicates, the first on a tie), each one exactly
  * as the server's strict `ImportRecordSchema` parses it. Provenance never leaves the device: a record claims at most
- * its provider.
+ * its provider (a DXRating JSON file and the first sign-in migration claim the provider each entry names).
  * - `skipped` counts the entries left out before validation: no public sheet ID, or no valid achievement;
  * - `rejected` counts the entries the server would reject (`ImportRecordSchema` fails: a DX score out of range, a
  *   claimed source it does not accept…). They are never sent, so a "clear, then import" only clears for records that
@@ -90,8 +93,12 @@ export function entriesToImportRecords(
     }
     // Demo data is never synced, not even as a claim
     const provider: string | undefined = entry.source?.provider
+    const claimsEntryProvider = plan.source === 'dxrating-json' || plan.source === 'legacy-local'
     const claimedSource =
-      plan.claimedSource ?? (plan.source === 'dxrating-json' && provider && provider !== 'demo' ? provider : null)
+      plan.claimedSource ??
+      (claimsEntryProvider && provider && provider !== 'demo' && CLAIMED_SOURCE_PATTERN.test(provider)
+        ? provider
+        : null)
     const parsed = ImportRecordSchema.safeParse({
       sheetId: entry.sheetId,
       achievement,
