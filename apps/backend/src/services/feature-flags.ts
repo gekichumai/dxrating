@@ -20,6 +20,11 @@ export interface FeatureFlagSettings {
 /** What the database knows about one user: their email and their override rows. */
 export interface UserFlagState {
   readonly email: string | null
+  /**
+   * Email/password sign-up does not verify addresses, so anyone can register an
+   * allowlisted address nobody has claimed yet; only a verified email matches the allowlist.
+   */
+  readonly emailVerified: boolean
   readonly overrides: Partial<Record<FeatureFlag, boolean>>
 }
 
@@ -37,14 +42,16 @@ const MAX_CACHED_USERS = 10_000
  * Cloud save precedence:
  * 1. `CLOUD_SAVE_MODE=off` is the kill switch and overrides everything.
  * 2. A `feature_flag_overrides` row decides for its user (`enabled=false` turns one user off).
- * 3. An email in `CLOUD_SAVE_ALLOWLIST_EMAILS` turns the feature on.
+ * 3. A verified email in `CLOUD_SAVE_ALLOWLIST_EMAILS` turns the feature on. Unverified
+ *    accounts on the allowlist need a `flag:set` row instead.
  * 4. Otherwise the mode decides: `on` enables everyone; `allowlist` and `optin` enable nobody.
  */
 const resolveCloudSave = (settings: FeatureFlagSettings, state: UserFlagState): boolean => {
   if (settings.cloudSaveMode === 'off') return false
   const override = state.overrides.cloud_save
   if (override !== undefined) return override
-  if (state.email !== null && settings.cloudSaveAllowlistEmails.includes(state.email.toLowerCase())) return true
+  const allowlisted = state.email !== null && settings.cloudSaveAllowlistEmails.includes(state.email.toLowerCase())
+  if (allowlisted && state.emailVerified) return true
   return settings.cloudSaveMode === 'on'
 }
 
@@ -97,7 +104,7 @@ export class FeatureFlags extends Context.Service<
   }
 >()('dxrating/FeatureFlags') {}
 
-const EMPTY_STATE: UserFlagState = { email: null, overrides: {} }
+const EMPTY_STATE: UserFlagState = { email: null, emailVerified: false, overrides: {} }
 
 export const makeFeatureFlags = (settings: FeatureFlagSettings, store: FeatureFlagStore) => {
   const cache = new Map<string, { state: UserFlagState; expiresAt: number }>()
@@ -148,7 +155,12 @@ export const makePostgresFeatureFlagStore = (database: typeof Database.Service):
     database
       .query('FeatureFlags.load', (db) =>
         db
-          .select({ email: user.email, flag: featureFlagOverrides.flag, enabled: featureFlagOverrides.enabled })
+          .select({
+            email: user.email,
+            emailVerified: user.emailVerified,
+            flag: featureFlagOverrides.flag,
+            enabled: featureFlagOverrides.enabled,
+          })
           .from(user)
           .leftJoin(featureFlagOverrides, eq(featureFlagOverrides.user_id, user.id))
           .where(eq(user.id, userId)),
@@ -159,7 +171,7 @@ export const makePostgresFeatureFlagStore = (database: typeof Database.Service):
           for (const row of rows) {
             if (row.flag !== null && row.enabled !== null && isFeatureFlag(row.flag)) overrides[row.flag] = row.enabled
           }
-          return { email: rows[0]?.email ?? null, overrides }
+          return { email: rows[0]?.email ?? null, emailVerified: rows[0]?.emailVerified ?? false, overrides }
         }),
       ),
   recordOptIn: (userId, consentVersion) =>

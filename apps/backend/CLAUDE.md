@@ -108,7 +108,7 @@ Optional:
 - `MCP_ANALYTICS_SECRET` — HMAC secret of the daily-rotating MCP analytics distinct_id (random per process if unset)
 - `MCP_POSTHOG_KEY`, `MCP_POSTHOG_HOST`, `MCP_ANALYTICS_SAMPLE_RATE`, `MCP_ANALYTICS_DAILY_CAP` — MCP PostHog events (see `src/services/mcp/analytics.ts`)
 - `CLOUD_SAVE_MODE` — `off` (default) | `allowlist` | `optin` | `on`; see "Feature flags" below
-- `CLOUD_SAVE_ALLOWLIST_EMAILS` — Comma-separated emails that get cloud save while the mode is not `off`
+- `CLOUD_SAVE_ALLOWLIST_EMAILS` — Comma-separated emails that get cloud save while the mode is not `off` (verified emails only; email/password sign-ups are unverified, so grant those with `flag:set`)
 - `SERVER_IMPORTS` — `off` (default) | `on`; server-side imports into cloud saves
 
 ## Feature flags (cloud save, gekichumai/meta#17)
@@ -119,7 +119,7 @@ and caches each user's state in memory for 60 seconds. Precedence for
 
 1. `CLOUD_SAVE_MODE=off` is the kill switch and overrides everything.
 2. A `feature_flag_overrides` row decides for its user (`enabled=false` turns one user off).
-3. An email in `CLOUD_SAVE_ALLOWLIST_EMAILS` turns it on.
+3. A verified email in `CLOUD_SAVE_ALLOWLIST_EMAILS` turns it on.
 4. Otherwise `on` enables everyone; `allowlist` and `optin` enable nobody.
 
 `server_imports` additionally needs `SERVER_IMPORTS=on` and cloud save; an
