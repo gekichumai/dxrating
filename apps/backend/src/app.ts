@@ -3,7 +3,6 @@ import { HTTPException } from 'hono/http-exception'
 import { createMiddleware } from 'hono/factory'
 import { routePath } from 'hono/route'
 import { cors } from 'hono/cors'
-import { bodyLimit } from 'hono/body-limit'
 import { etag, RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
 import { Authentication } from './auth'
@@ -73,18 +72,72 @@ class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
 
 const app = new Hono<EvlogVariables>()
 
-const cloudSaveBodyLimit = bodyLimit({ maxSize: CLOUD_SAVE_BODY_LIMIT_BYTES })
-const largeCloudSaveBodyLimit = bodyLimit({ maxSize: CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES })
-const isLargeCloudSaveUpload = (path: string) => /^\/api\/v1\/saves\/[^/]+\/(replace|client-imports)$/.test(path)
-
 /** An oRPC-shaped error response (with the v1 `status` field) for routes served outside the oRPC handler */
 const orpcErrorResponse = (error: ORPCError<string, unknown>, headers: Record<string, string> = {}) => {
-  const status = COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500
+  const status =
+    error.code === 'PAYLOAD_TOO_LARGE'
+      ? 413
+      : (COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500)
   return new Response(JSON.stringify({ ...error.toJSON(), status }), {
     status,
     headers: { 'Content-Type': 'application/json', ...headers },
   })
 }
+
+/**
+ * Refuses request bodies over `maxSize` bytes with an oRPC-shaped 413: at once when `Content-Length` says so,
+ * otherwise (a chunked upload) by counting the bytes as the handler reads them and answering 413 in place of
+ * whatever the handler made of the cut-off body.
+ */
+const cloudSaveBodyLimitOf = (maxSize: number) =>
+  createMiddleware(async (c, next) => {
+    const tooLarge = () => {
+      // The rest of the upload is not read: close the connection after the answer (Node), so a client does not send
+      // its next request on a connection the server is about to drop
+      const outgoing = (c.env as { outgoing?: { shouldKeepAlive?: boolean } } | undefined)?.outgoing
+      if (outgoing) outgoing.shouldKeepAlive = false
+      return orpcErrorResponse(
+        new ORPCError('PAYLOAD_TOO_LARGE', { message: `The request body is over ${maxSize} bytes` }),
+      )
+    }
+    const body = c.req.raw.body
+    if (!body) return next()
+    const contentLength = c.req.raw.headers.get('content-length')
+    if (contentLength !== null && !c.req.raw.headers.has('transfer-encoding')) {
+      if (Number.parseInt(contentLength, 10) > maxSize) return tooLarge()
+      return next()
+    }
+    let size = 0
+    let exceeded = false
+    const counted = body.pipeThrough(
+      new TransformStream<Uint8Array, Uint8Array>({
+        transform(chunk, controller) {
+          size += chunk.byteLength
+          if (size > maxSize) {
+            exceeded = true
+            controller.error(new Error('Payload Too Large'))
+            return
+          }
+          controller.enqueue(chunk)
+        },
+      }),
+    )
+    c.req.raw = new Request(c.req.raw, { body: counted, duplex: 'half' } as RequestInit)
+    await next()
+    if (exceeded) {
+      // keep the headers other middleware set, but not the body headers of the handler's answer
+      const previous = c.res
+      const response = tooLarge()
+      for (const [key, value] of previous.headers) {
+        if (key !== 'content-type' && key !== 'content-length' && key !== 'set-cookie') response.headers.set(key, value)
+      }
+      c.res = undefined
+      c.res = response
+    }
+  })
+const cloudSaveBodyLimit = cloudSaveBodyLimitOf(CLOUD_SAVE_BODY_LIMIT_BYTES)
+const largeCloudSaveBodyLimit = cloudSaveBodyLimitOf(CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES)
+const isLargeCloudSaveUpload = (path: string) => /^\/api\/v1\/saves\/[^/]+\/(replace|client-imports)$/.test(path)
 
 const API_CATALOG_PROFILE_URL = 'https://www.rfc-editor.org/info/rfc9727'
 const API_CATALOG_CONTENT_TYPE = `application/linkset+json; profile="${API_CATALOG_PROFILE_URL}"`
@@ -779,7 +832,8 @@ for (const path of ['/api/v1/saves', '/api/v1/saves/*', '/api/v1/imports/*', '/a
 
 // The cloud save export streams (§11.3): it is answered here, ahead of the oRPC handler, with the same session,
 // feature flag and rate limit rules as the `cloudSave.export` procedure.
-app.get('/api/v1/me/export', (c) =>
+// Both spellings: the oRPC router would also match `/me/export/`, and only this route streams.
+const streamExport = (c: Context) =>
   runApp(
     Effect.gen(function* () {
       const auth = yield* Authentication
@@ -817,8 +871,8 @@ app.get('/api/v1/me/export', (c) =>
       return new Response(body, { status: 200, headers: exportHeaders(exportedAt) })
     }),
     { signal: c.req.raw.signal },
-  ),
-)
+  )
+for (const path of ['/api/v1/me/export', '/api/v1/me/export/']) app.get(path, streamExport)
 
 app.all('/api/v1/*', (c) =>
   runApp(

@@ -14,7 +14,7 @@ import {
 import { Effect } from 'effect'
 import type { Database } from '../../db/index'
 import { RecordWriter, toExistingRecord, toRecordDTO } from './records'
-import { lockSave } from './saves'
+import { lockSave, saveTransaction } from './saves'
 
 type DatabaseService = typeof Database.Service
 
@@ -31,6 +31,8 @@ export type MutationRejection =
   | 'invalid-based-on-revision'
   | 'invalid-client-edited-at'
   | 'invalid-mutation'
+  /** A new chart, and the save already stores `CLOUD_SAVE_MAX_RECORDS_PER_SAVE` records */
+  | 'record-limit'
 
 const VALUE_REJECTIONS: Record<string, MutationRejection> = {
   achievement: 'invalid-achievement',
@@ -57,7 +59,7 @@ type ParsedMutation =
  */
 export function parseMutation(item: MutationItemInput): ParsedMutation {
   const candidate =
-    item.op === 'set' && item.value
+    item.op === 'set' && typeof item.value === 'object' && item.value !== null && !Array.isArray(item.value)
       ? {
           ...item,
           value: { ...item.value, comboFlag: item.value.comboFlag ?? null, syncFlag: item.value.syncFlag ?? null },
@@ -98,9 +100,16 @@ export const applyMutations = (
   saveId: string,
   items: readonly MutationItemInput[],
 ) =>
-  database.transaction(() =>
+  saveTransaction(database, () =>
     Effect.gen(function* () {
       const save = yield* lockSave(database, userId, saveId)
+      // The ledger is per user, not per save: batches of the user's other saves wait here, so the ledger read below
+      // sees every committed result and the ledger insert never waits on (or silently loses to) a concurrent batch
+      yield* database.raw(
+        'CloudSave.lockMutationLedger',
+        `SELECT pg_advisory_xact_lock(hashtext('cloudsave:mutations:' || $1))`,
+        [userId],
+      )
       const { rows: ledger } = yield* database.raw<{ mutation_id: string; result: MutationResultDTO }>(
         'CloudSave.readMutationLedger',
         `SELECT mutation_id, result FROM score_mutations WHERE user_id = $1 AND mutation_id = ANY($2::text[])`,
@@ -111,6 +120,7 @@ export const applyMutations = (
       const parsed = items.map(parseMutation)
       const writer = new RecordWriter(database, save)
       yield* writer.load(parsed.flatMap((entry) => (entry.ok ? [entry.mutation.sheetId] : [])))
+      yield* writer.loadStoredCount()
 
       const stats: MutationBatchStats = {
         statuses: { applied: 0, superseded: 0, noop: 0, rejected: 0 },
@@ -206,6 +216,9 @@ function decide(writer: RecordWriter, mutationId: string, parsed: ParsedMutation
       return { mutationId, status: 'superseded', record: current, reason: null }
     }
     case 'applied': {
+      if (before === null && writer.remainingCapacity() === 0) {
+        return { mutationId, status: 'rejected', record: null, reason: 'record-limit' }
+      }
       const state = writer.apply(mutation.sheetId, {
         before,
         next: decision.next!,

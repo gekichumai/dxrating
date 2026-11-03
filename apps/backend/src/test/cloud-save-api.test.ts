@@ -1,3 +1,4 @@
+import http from 'node:http'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 // config.ts reads the environment once, at import: cloud save is on only for users with a flag row.
@@ -7,6 +8,7 @@ vi.hoisted(() => {
 })
 
 import { runCloudSaveCleanup } from '../services/cloud-save/cleanup'
+import { CLOUD_SAVE_MAX_RECORDS_PER_SAVE } from '../services/cloud-save/limits'
 import {
   api,
   deleteMutation,
@@ -218,12 +220,150 @@ describe('cloud save API (design §5)', () => {
         }
         await holder.query('ROLLBACK')
       } finally {
+        await holder.query('ROLLBACK')
         holder.release()
       }
       const after = await mutate(user.cookie, save.id, [setMutation(sheetId(1), 1000000)])
       expect(after.status).toBe(200)
       expect(after.body.results[0].status).toBe('applied')
     }, 20_000)
+    it('bounds the lock waits of rename, delete and the mutation ledger, and keeps busy answers off the budgets', async () => {
+      const user = await session(pool, 'busy-budget@example.com')
+      const save = await newSave(user.cookie)
+      const replaceBody = (key: string) => ({
+        ifRevision: 0,
+        idempotencyKey: key,
+        source: 'dxrating-json',
+        records: [],
+      })
+      const holder = await pool.connect()
+      try {
+        await holder.query('BEGIN')
+        await holder.query('SELECT 1 FROM score_saves WHERE id = $1 FOR UPDATE', [save.id])
+        // rename and delete wait on the save row (and hold both write slots) until the lock timeout
+        const rename = api(user.cookie, 'PATCH', `/saves/${save.id}`, { name: 'renamed' })
+        const remove = api(user.cookie, 'DELETE', `/saves/${save.id}`)
+        await new Promise((resolve) => setTimeout(resolve, 300))
+        // turned away at once: too many writes in flight
+        for (let i = 0; i < 6; i++) {
+          const busy = await api(user.cookie, 'POST', `/saves/${save.id}/replace`, replaceBody(`busy-a-${i}`))
+          expect(busy.status).toBe(429)
+          expect(busy.headers.get('retry-after')).toBe('1')
+        }
+        const startedAt = Date.now()
+        for (const answer of await Promise.all([rename, remove])) {
+          expect(answer.status).toBe(429)
+          expect(answer.body).toMatchObject({ code: 'TOO_MANY_REQUESTS', data: { retryAfterSeconds: 1 } })
+        }
+        // lock_timeout bounds each lock wait: the second waiter first waits behind the first one, then on the
+        // holder, so it gives up after up to two timeouts
+        expect(Date.now() - startedAt).toBeLessThan(12_000)
+        // turned away after the lock timeout
+        const locked = await api(user.cookie, 'POST', `/saves/${save.id}/replace`, replaceBody('busy-b-key'))
+        expect(locked.status, JSON.stringify(locked.body)).toBe(429)
+        expect(locked.body).toMatchObject({ data: { retryAfterSeconds: 1 } })
+        await holder.query('ROLLBACK')
+      } finally {
+        await holder.query('ROLLBACK')
+        holder.release()
+      }
+      // none of the 7 busy replaces used the 5-a-day budget
+      for (let i = 0; i < 5; i++) {
+        const served = await api(user.cookie, 'POST', `/saves/${save.id}/replace`, replaceBody(`served-${i}`))
+        expect(served.status, `replace ${i}`).toBe(200)
+      }
+      expect((await api(user.cookie, 'POST', `/saves/${save.id}/replace`, replaceBody('over-key-1'))).status).toBe(429)
+      expect((await api(user.cookie, 'PATCH', `/saves/${save.id}`, { name: 'renamed' })).status).toBe(200)
+      expect((await api(user.cookie, 'DELETE', `/saves/${save.id}`)).status).toBe(200)
+    }, 40_000)
+
+    it('answers a ledger row held by a batch of another save as busy, not as a server error', async () => {
+      const user = await session(pool, 'ledger-busy@example.com')
+      const a = await newSave(user.cookie, { name: 'A' })
+      const b = await newSave(user.cookie, { name: 'B' })
+      const mutation = setMutation(sheetId(1), 1000000)
+      const holder = await pool.connect()
+      try {
+        await holder.query('BEGIN')
+        await holder.query(
+          `INSERT INTO score_mutations (user_id, mutation_id, save_id, result, created_at) VALUES ($1, $2, $3, $4, now())`,
+          [user.userId, mutation.mutationId, a.id, JSON.stringify({ mutationId: mutation.mutationId, status: 'noop' })],
+        )
+        const answer = await mutate(user.cookie, b.id, [mutation])
+        expect(answer.status).toBe(429)
+        expect(answer.body).toMatchObject({ code: 'TOO_MANY_REQUESTS', data: { retryAfterSeconds: 1 } })
+        await holder.query('ROLLBACK')
+      } finally {
+        await holder.query('ROLLBACK')
+        holder.release()
+      }
+      // batches with the same mutation ID on two saves at once: one applies it, the other replays its result
+      const again = setMutation(sheetId(2), 1000000)
+      const answers = await Promise.all([mutate(user.cookie, a.id, [again]), mutate(user.cookie, b.id, [again])])
+      expect(answers.map((answer) => answer.status)).toEqual([200, 200])
+      expect(answers.map((answer) => answer.body.results[0])).toEqual([
+        answers[0]!.body.results[0],
+        answers[0]!.body.results[0],
+      ])
+    }, 20_000)
+
+    it('answers 413 to a chunked upload over the body limit', async () => {
+      const user = await session(pool, 'chunked@example.com')
+      const save = await newSave(user.cookie)
+      // node:http without keep-alive: the server answers before reading the whole upload, so the connection is done
+      const chunked = (text: string) =>
+        new Promise<{ status: number; body: any; connection?: string }>((resolve, reject) => {
+          const request = http.request(
+            `${getBaseUrl()}/api/v1/saves/${save.id}/mutations`,
+            {
+              method: 'POST',
+              agent: false,
+              headers: { 'Content-Type': 'application/json', Cookie: user.cookie, 'Transfer-Encoding': 'chunked' },
+            },
+            (response) => {
+              let data = ''
+              response.setEncoding('utf8')
+              response.on('data', (chunk: string) => (data += chunk))
+              response.on('end', () =>
+                resolve({
+                  status: response.statusCode ?? 0,
+                  body: JSON.parse(data),
+                  connection: response.headers.connection,
+                }),
+              )
+            },
+          )
+          request.on('error', reject)
+          for (let offset = 0; offset < text.length; offset += 64 * 1024)
+            request.write(text.slice(offset, offset + 64 * 1024))
+          request.end()
+        })
+      const big = await chunked(
+        JSON.stringify({ mutations: [{ ...setMutation(sheetId(1), 1000000), padding: 'x'.repeat(3_000_000) }] }),
+      )
+      expect(big.status).toBe(413)
+      expect(big.body).toMatchObject({ code: 'PAYLOAD_TOO_LARGE', status: 413 })
+      expect(big.connection).toBe('close')
+      const small = await chunked(JSON.stringify({ mutations: [setMutation(sheetId(1), 1000000)] }))
+      expect(small.status).toBe(200)
+    })
+
+    it('limits the import routes per user', async () => {
+      const user = await session(pool, 'import-limits@example.com')
+      const save = await newSave(user.cookie)
+      const body = (i: number) => ({
+        idempotencyKey: `import-limit-${i}`,
+        source: 'dxrating-json',
+        trigger: 'user',
+        records: [{ sheetId: sheetId(1), achievement: 1000000, comboFlag: null, syncFlag: null }],
+      })
+      for (let i = 0; i < 10; i++) {
+        expect((await api(user.cookie, 'POST', `/saves/${save.id}/client-imports`, body(i))).status).not.toBe(429)
+      }
+      const limited = await api(user.cookie, 'POST', `/saves/${save.id}/client-imports`, body(10))
+      expect(limited.status).toBe(429)
+      expect(limited.headers.get('retry-after')).toBeTruthy()
+    })
   })
 
   describe('saves', () => {
@@ -581,8 +721,15 @@ describe('cloud save API (design §5)', () => {
       })
       expect(replaced.status).toBe(200)
       expect(await latestEvent(sheetId(1))).toEqual({ kind: 'import_applied', client_mutation_id: null })
-      expect(await clientFields(sheetId(2))).toMatchObject({ client_mutation_id: null, deleted: true })
+      expect(await clientFields(sheetId(2))).toMatchObject({
+        client_mutation_id: null,
+        client_edited_at: null,
+        deleted: true,
+      })
       expect(await latestEvent(sheetId(2))).toEqual({ kind: 'delete', client_mutation_id: null })
+      const pulled = await api(user.cookie, 'GET', `/saves/${save.id}/changes?since=${upgraded.revision}`)
+      const tombstone = pulled.body.records.find((r: { sheetId: string }) => r.sheetId === sheetId(2))
+      expect(tombstone).toMatchObject({ deletedAt: expect.any(String), clientEditedAt: null })
     })
   })
 
@@ -820,7 +967,66 @@ describe('cloud save API (design §5)', () => {
       ])
       expect(exported.snapshots).toEqual([expect.objectContaining({ b50Sum: 3 })])
       expect(JSON.stringify(document)).not.toContain(user.userId)
+
+      // the trailing-slash spelling is the same streaming route, not the in-memory procedure
+      const slashed = await fetch(`${getBaseUrl()}/api/v1/me/export/`, { headers: { Cookie: user.cookie } })
+      expect(slashed.status).toBe(200)
+      expect(slashed.headers.get('content-type')).toBe(response.headers.get('content-type'))
+      expect(slashed.headers.get('content-disposition')).toMatch(/^attachment; filename="dxrating-cloud-export-/)
+      expect((await slashed.json()).saves).toHaveLength(1)
     })
+  })
+
+  describe('record limit', () => {
+    it('refuses new charts once a save stores CLOUD_SAVE_MAX_RECORDS_PER_SAVE records', async () => {
+      const user = await session(pool, 'record-limit@example.com')
+      const save = await newSave(user.cookie)
+      // the save holds the limit (one tombstone among them), written directly
+      const sheets = Array.from({ length: CLOUD_SAVE_MAX_RECORDS_PER_SAVE }, (_, i) => sheetId(i))
+      await pool.query(
+        `INSERT INTO score_records (save_id, sheet_id, user_id, achievement, source, fetched_by, verification,
+           entry_method, revision, deleted_at)
+         SELECT $1, s.sheet_id, $2, 1000000, 'manual', 'client', 'client_reported', 'typed', 1,
+           CASE WHEN s.sheet_id = $4 THEN now() END
+         FROM unnest($3::text[]) AS s(sheet_id)`,
+        [save.id, user.userId, sheets, sheets[0]],
+      )
+      await pool.query(`UPDATE score_saves SET revision = 1, record_count = $2 WHERE id = $1`, [
+        save.id,
+        sheets.length - 1,
+      ])
+
+      const outside = sheetId(CLOUD_SAVE_MAX_RECORDS_PER_SAVE + 1)
+      const answer = await mutate(user.cookie, save.id, [
+        setMutation(outside, 1000000),
+        setMutation(sheetId(5), 1005000),
+        setMutation(sheetId(0), 1005000),
+      ])
+      expect(answer.status).toBe(200)
+      expect(answer.body.results.map((r: { status: string; reason: string | null }) => [r.status, r.reason])).toEqual([
+        ['rejected', 'record-limit'],
+        ['applied', null],
+        // reviving a tombstone needs no new row
+        ['applied', null],
+      ])
+      expect(await record(save.id, outside)).toBeUndefined()
+
+      const imported = await importRecords(user.userId, save.id, 'dxrating-json', [
+        { sheetId: outside, achievement: 1000000, comboFlag: null, syncFlag: null },
+        { sheetId: sheetId(6), achievement: 1006000, comboFlag: null, syncFlag: null },
+      ])
+      expect(imported.job.counts).toMatchObject({ fetched: 2, rejected: 1, improved: 1, inserted: 0 })
+      expect(await record(save.id, outside)).toBeUndefined()
+
+      const replaced = await api(user.cookie, 'POST', `/saves/${save.id}/replace`, {
+        ifRevision: imported.revision,
+        idempotencyKey: 'record-limit-replace',
+        source: 'dxrating-json',
+        records: [{ sheetId: outside, achievement: 1000000, comboFlag: null, syncFlag: null }],
+      })
+      expect(replaced.status).toBe(400)
+      expect(await record(save.id, outside)).toBeUndefined()
+    }, 30_000)
   })
 
   it('accepts PATCH and DELETE from the web origin (CORS)', async () => {

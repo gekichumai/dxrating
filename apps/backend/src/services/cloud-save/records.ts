@@ -14,6 +14,7 @@ import type {
 } from '@gekichumai/maimai-domain'
 import { Effect } from 'effect'
 import type { Database } from '../../db/index'
+import { CLOUD_SAVE_MAX_RECORDS_PER_SAVE } from './limits'
 
 type DatabaseService = typeof Database.Service
 
@@ -268,6 +269,10 @@ export class RecordWriter {
   private readonly states = new Map<string, RecordState | null>()
   private readonly dirty = new Set<string>()
   private events: RecordEvent[] = []
+  /** Rows of the save (live and tombstones) before this writer, once {@link RecordWriter.loadStoredCount} ran */
+  private stored: number | null = null
+  /** Rows this writer created */
+  private created = 0
 
   constructor(
     private readonly database: DatabaseService,
@@ -275,6 +280,24 @@ export class RecordWriter {
   ) {
     this.startRevision = save.revision
     this.revision = save.revision
+  }
+
+  /** Counts the save's stored rows, for {@link RecordWriter.canCreate} */
+  loadStoredCount() {
+    return Effect.gen({ self: this }, function* () {
+      const { rows } = yield* this.database.raw<{ count: number }>(
+        'CloudSave.countRecords',
+        `SELECT count(*)::integer AS count FROM score_records WHERE save_id = $1`,
+        [this.save.id],
+      )
+      this.stored = rows[0]?.count ?? 0
+    })
+  }
+
+  /** How many more rows the save can store ({@link CLOUD_SAVE_MAX_RECORDS_PER_SAVE}); needs `loadStoredCount` */
+  remainingCapacity(): number {
+    if (this.stored === null) throw new Error('loadStoredCount must run first')
+    return Math.max(0, CLOUD_SAVE_MAX_RECORDS_PER_SAVE - this.stored - this.created)
   }
 
   /** Loads the stored records of `sheetIds` that are not loaded yet */
@@ -332,6 +355,7 @@ export class RecordWriter {
   /** Applies a decision to a loaded record and returns its new state */
   apply(sheetId: string, change: RecordChange): RecordState {
     const before = change.before
+    if (before === null) this.created += 1
     const now = this.save.now
     const { next } = change
     // The client fields name the manual edit behind the current value and provenance: they carry over only when
