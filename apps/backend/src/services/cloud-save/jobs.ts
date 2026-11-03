@@ -78,9 +78,19 @@ export function toImportJobDTO(row: ImportJobRow): ImportJobDTO {
     fetchedAt: row.fetched_at?.toISOString() ?? null,
     finishedAt: row.finished_at?.toISOString() ?? null,
     rawPayloadSha256: row.raw_payload_sha256,
-    counts: { ...EMPTY_COUNTS, ...row.counts },
+    counts: countsOf(row.counts),
     errorCode: row.error_code,
   }
+}
+
+/** The public counts of a job row; other keys of the `counts` column (`saveRevision`) stay internal */
+function countsOf(stored: Partial<ImportCountsDTO> | null): ImportCountsDTO {
+  const counts = { ...EMPTY_COUNTS }
+  for (const key of Object.keys(EMPTY_COUNTS) as (keyof ImportCountsDTO)[]) {
+    const value = stored?.[key]
+    if (typeof value === 'number') counts[key] = value
+  }
+  return counts
 }
 
 /** The job as `decideImportMerge` reads it */
@@ -97,26 +107,33 @@ export function toMergeJob(row: ImportJobRow): ScoreImportJob {
   }
 }
 
-/** sha256 hex of the canonical JSON (object keys sorted) of `value` (§4.2 `raw_payload_sha256`) */
+/** Deepest nesting {@link canonicalJson} accepts; hashed values are validated records, a few levels deep */
+export const CANONICAL_MAX_DEPTH = 32
+
+/**
+ * sha256 hex of the canonical JSON (object keys sorted) of `value` (§4.2 `raw_payload_sha256`). Only hash validated,
+ * normalized values: anything nested deeper than {@link CANONICAL_MAX_DEPTH} levels throws instead of recursing.
+ */
 export function canonicalSha256(value: unknown): string {
   return createHash('sha256').update(canonicalJson(value)).digest('hex')
 }
 
 export function canonicalJson(value: unknown): string {
-  return JSON.stringify(canonicalize(value))
+  return JSON.stringify(canonicalize(value, 0))
 }
 
-function canonicalize(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(canonicalize)
-  if (value !== null && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.keys(value)
-        .sort()
-        .filter((key) => (value as Record<string, unknown>)[key] !== undefined)
-        .map((key) => [key, canonicalize((value as Record<string, unknown>)[key])]),
-    )
+function canonicalize(value: unknown, depth: number): unknown {
+  if (value === null || typeof value !== 'object') return value
+  if (depth >= CANONICAL_MAX_DEPTH) {
+    throw new RangeError(`canonicalJson: value nested deeper than ${CANONICAL_MAX_DEPTH} levels`)
   }
-  return value
+  if (Array.isArray(value)) return value.map((item) => canonicalize(item, depth + 1))
+  return Object.fromEntries(
+    Object.keys(value)
+      .sort()
+      .filter((key) => (value as Record<string, unknown>)[key] !== undefined)
+      .map((key) => [key, canonicalize((value as Record<string, unknown>)[key], depth + 1)]),
+  )
 }
 
 export interface StartImportJobInput {
@@ -191,18 +208,34 @@ export const findRunningJob = (database: DatabaseService, saveId: string, source
     ({ rows }) => rows[0]?.id ?? null,
   )
 
-/** Ends a job; only a running job changes */
+/**
+ * Ends a job; only a running job changes. `saveRevision` (the save's revision once the job is applied, in the same
+ * transaction) is kept in the `counts` column, internal: the content short-circuit (§5.5) only trusts a previous
+ * job's payload hash while the save is still at that revision.
+ */
 export const finishImportJob = (
   database: DatabaseService,
   jobId: string,
-  outcome: { status: 'succeeded' | 'failed'; counts: Partial<ImportCountsDTO>; errorCode?: string | null },
+  outcome: {
+    status: 'succeeded' | 'failed'
+    counts: Partial<ImportCountsDTO>
+    errorCode?: string | null
+    saveRevision?: number | null
+  },
 ) =>
   Effect.map(
     database.raw<ImportJobRow>(
       'CloudSave.finishImportJob',
       `UPDATE score_import_jobs SET status = $2, counts = $3::jsonb, error_code = $4, finished_at = now()
        WHERE id = $1 AND status = 'running' RETURNING ${IMPORT_JOB_COLUMNS}`,
-      [jobId, outcome.status, JSON.stringify(outcome.counts), outcome.errorCode ?? null],
+      [
+        jobId,
+        outcome.status,
+        JSON.stringify(
+          outcome.saveRevision == null ? outcome.counts : { ...outcome.counts, saveRevision: outcome.saveRevision },
+        ),
+        outcome.errorCode ?? null,
+      ],
     ),
     ({ rows }) => rows[0] ?? null,
   )

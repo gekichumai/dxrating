@@ -86,26 +86,34 @@ export const applyImportRecords = (
 
 /**
  * The content short-circuit (§5.5): whether the latest succeeded job of the same save, source and source account
- * has the same payload hash. Only automatic and migration jobs take it: a user-started import still merges, so it
- * can revive records deleted since (§5.3 deletion rule 2), which an "everything unchanged" answer would skip.
+ * has the same payload hash, and the save has not changed since that job completed (its revision is still the one
+ * the job recorded, `counts.saveRevision`). Any later write (a manual edit, another import) makes the full merge
+ * run, as the domain rules may decide differently against the changed records. Only automatic and migration jobs
+ * take it: a user-started import still merges, so it can revive records deleted since (§5.3 deletion rule 2).
  */
-export const shouldShortCircuit = (database: DatabaseService, job: ImportJobRow) =>
+export const shouldShortCircuit = (database: DatabaseService, job: ImportJobRow, saveRevision: number) =>
   Effect.gen(function* () {
     if (job.trigger === 'user' || job.raw_payload_sha256 === null) return false
-    const { rows } = yield* database.raw<{ raw_payload_sha256: string | null }>(
+    const { rows } = yield* database.raw<{ raw_payload_sha256: string | null; save_revision: string | null }>(
       'CloudSave.previousJobHash',
-      `SELECT raw_payload_sha256 FROM score_import_jobs
+      `SELECT raw_payload_sha256, counts->>'saveRevision' AS save_revision FROM score_import_jobs
        WHERE save_id = $1 AND source = $2 AND source_account_id IS NOT DISTINCT FROM $3
          AND status = 'succeeded' AND id <> $4
        ORDER BY finished_at DESC NULLS LAST, started_at DESC LIMIT 1`,
       [job.save_id, job.source, job.source_account_id, job.id],
     )
-    return rows[0]?.raw_payload_sha256 === job.raw_payload_sha256
+    const previous = rows[0]
+    return (
+      previous !== undefined &&
+      previous.raw_payload_sha256 === job.raw_payload_sha256 &&
+      previous.save_revision !== null &&
+      previous.save_revision === String(saveRevision)
+    )
   })
 
 /**
  * Completes a running import job: in one transaction, locks the save, merges `records` (or short-circuits an
- * unchanged payload, which writes no record, event or revision) and marks the job `succeeded` with its counts.
+ * unchanged payload on an unchanged save, which writes no record, event or revision) and marks the job `succeeded` with its counts.
  * `extraCounts` adds what the caller counted before merging (`skippedUnknownSheet`, `rejected`, and their share of
  * `fetched`).
  */
@@ -132,7 +140,7 @@ export const completeImportJob = (
       if (!jobRow) return yield* new CloudSaveNotFound()
 
       let counts: ImportCountsDTO
-      if (yield* shouldShortCircuit(database, jobRow)) {
+      if (yield* shouldShortCircuit(database, jobRow, save.revision)) {
         counts = { ...EMPTY_COUNTS, fetched: input.records.length, unchanged: input.records.length }
       } else {
         counts = (yield* applyImportRecords(database, save, toMergeJob(jobRow), input.records)).counts
@@ -140,7 +148,11 @@ export const completeImportJob = (
       for (const [key, value] of Object.entries(input.extraCounts ?? {})) {
         counts[key as keyof ImportCountsDTO] += value ?? 0
       }
-      const finished = yield* finishImportJob(database, jobRow.id, { status: 'succeeded', counts })
+      const finished = yield* finishImportJob(database, jobRow.id, {
+        status: 'succeeded',
+        counts,
+        saveRevision: save.revision,
+      })
       return { job: toImportJobDTO(finished!), revision: save.revision }
     }),
   )

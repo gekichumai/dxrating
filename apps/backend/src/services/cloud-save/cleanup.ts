@@ -20,6 +20,8 @@ export const CLOUD_SAVE_RETENTION = {
 const SAVES_PER_TRANSACTION = 50
 /** Rows deleted per statement by the bulk steps */
 const DELETE_BATCH = 10_000
+/** Saves hard-deleted per statement (each cascades to all its rows, so far fewer per transaction) */
+const SAVE_DELETE_BATCH = 100
 
 /** `pg_try_advisory_xact_lock` key of the cleanup; one instance runs it at a time */
 export const CLOUD_SAVE_CLEANUP_LOCK = 0x0d5a7e01
@@ -115,8 +117,8 @@ export const runCloudSaveCleanup = (database: DatabaseService, now: Date) =>
       afterSave = batch.value.last
     }
 
-    // 2-5. Bulk deletes, in bounded statements
-    const repeat = (operation: string, text: string, values: readonly unknown[]) =>
+    // 2-5. Bulk deletes, in bounded statements of at most `batchSize` rows each; a full batch means there may be more
+    const repeat = (operation: string, batchSize: number, text: string, values: readonly unknown[]) =>
       Effect.gen(function* () {
         let total = 0
         for (;;) {
@@ -125,12 +127,13 @@ export const runCloudSaveCleanup = (database: DatabaseService, now: Date) =>
           )
           if (!result.locked) return { locked: false, total }
           total += result.value
-          if (result.value < DELETE_BATCH) return { locked: true, total }
+          if (result.value < batchSize) return { locked: true, total }
         }
       })
 
     const events = yield* repeat(
       'CloudSave.purgeEvents',
+      DELETE_BATCH,
       `WITH doomed AS (
          SELECT id FROM (
            SELECT id, row_number() OVER (PARTITION BY save_id, sheet_id ORDER BY id DESC) AS position
@@ -145,6 +148,7 @@ export const runCloudSaveCleanup = (database: DatabaseService, now: Date) =>
 
     const mutations = yield* repeat(
       'CloudSave.purgeMutations',
+      DELETE_BATCH,
       `WITH deleted AS (
          DELETE FROM score_mutations WHERE ctid IN (
            SELECT ctid FROM score_mutations WHERE created_at < $1 LIMIT ${DELETE_BATCH}
@@ -157,9 +161,10 @@ export const runCloudSaveCleanup = (database: DatabaseService, now: Date) =>
 
     const saves = yield* repeat(
       'CloudSave.purgeDeletedSaves',
+      SAVE_DELETE_BATCH,
       `WITH deleted AS (
          DELETE FROM score_saves WHERE id IN (
-           SELECT id FROM score_saves WHERE deleted_at < $1 ORDER BY id LIMIT 100
+           SELECT id FROM score_saves WHERE deleted_at < $1 ORDER BY id LIMIT ${SAVE_DELETE_BATCH}
          ) RETURNING 1
        ) SELECT count(*)::integer AS n FROM deleted`,
       [new Date(now.getTime() - CLOUD_SAVE_RETENTION.deletedSaveMs)],

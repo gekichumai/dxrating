@@ -54,6 +54,8 @@ export const replaceRecords = (database: DatabaseService, userId: string, saveId
       const save = yield* lockSave(database, userId, saveId)
 
       const valid = new Map<string, ImportRecord>()
+      // Only validated, normalized records are hashed: a rejected item may be anything the body limit allows
+      const accepted: ImportRecord[] = []
       const rejectedSheets = new Set<string>()
       let rejected = 0
       for (const item of input.records) {
@@ -63,6 +65,7 @@ export const replaceRecords = (database: DatabaseService, userId: string, saveId
           if (typeof item.sheetId === 'string') rejectedSheets.add(item.sheetId)
           continue
         }
+        accepted.push(parsed.data)
         const previous = valid.get(parsed.data.sheetId)
         if (!previous || compareScore(parsed.data, previous) > 0) valid.set(parsed.data.sheetId, parsed.data)
       }
@@ -73,7 +76,7 @@ export const replaceRecords = (database: DatabaseService, userId: string, saveId
         source: input.source,
         trigger: 'user',
         idempotencyKey: input.idempotencyKey,
-        rawPayloadSha256: canonicalSha256(input.records),
+        rawPayloadSha256: canonicalSha256(accepted),
       })
       if (started.replayed) {
         return { job: toImportJobDTO(started.job), revision: save.revision } satisfies ImportResultDTO
@@ -141,7 +144,11 @@ export const replaceRecords = (database: DatabaseService, userId: string, saveId
       }
 
       yield* writer.finish()
-      const finished = yield* finishImportJob(database, started.job.id, { status: 'succeeded', counts })
+      const finished = yield* finishImportJob(database, started.job.id, {
+        status: 'succeeded',
+        counts,
+        saveRevision: save.revision,
+      })
       return { job: toImportJobDTO(finished!), revision: save.revision } satisfies ImportResultDTO
     }),
   )
