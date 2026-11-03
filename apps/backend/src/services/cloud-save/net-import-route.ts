@@ -122,7 +122,15 @@ export const netImportHandler = (c: Context) => {
       const release = holdCredentials([input.id, input.password])
       let handedOver = false
       let releaseSlots = () => {}
-      try {
+      // An Effect finalizer, not a JS `finally`: it also runs when the work below fails or is interrupted at a
+      // `yield*`, where a generator's `finally` never runs and the slots and held credentials would leak
+      const releaseUnlessHandedOver = Effect.sync(() => {
+        if (!handedOver) {
+          releaseSlots()
+          release()
+        }
+      })
+      return yield* Effect.gen(function* () {
         // Limits: counted first, given back when the request ends up doing no work
         const takenAt = Date.now()
         const userWait = cloudSaveRateLimits.netImports.take(userId, 1, takenAt)
@@ -258,12 +266,7 @@ export const netImportHandler = (c: Context) => {
             release()
           }
         })
-      } finally {
-        if (!handedOver) {
-          releaseSlots()
-          release()
-        }
-      }
+      }).pipe(Effect.ensuring(releaseUnlessHandedOver))
     }).pipe(
       Effect.onInterrupt(() =>
         Effect.suspend(() => {
