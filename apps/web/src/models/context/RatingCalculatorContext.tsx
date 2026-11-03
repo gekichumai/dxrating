@@ -12,7 +12,7 @@ import {
 } from 'react'
 import type { ListActions } from 'react-use/lib/useList'
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
-import { useCatalogDocument, useCompleteCatalogDocument } from '../../catalog/CatalogContext'
+import { useCatalogDocument, useCompleteCatalogDocument, useSongCatalog } from '../../catalog/CatalogContext'
 import { loadLegacySongIds } from '../../catalog/legacySongIds'
 import {
   backUpBeforeMigration,
@@ -122,6 +122,12 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
     const catalog = getMigrationCatalog(catalogDocument)
     repository.setIdentityResolver((sheetId) => catalog.getById(sheetId)?.identity)
   }, [repository, catalogDocument])
+
+  // Duplicate entries of a chart keep the best 50 hint the calculator keeps: ranked by rating, under the selected version
+  const songCatalog = useSongCatalog()
+  useEffect(() => {
+    repository.setInternalLevelResolver((sheetId) => songCatalog.getById(sheetId)?.internalLevelValue)
+  }, [repository, songCatalog])
 
   // Migrations resolve saved sheet IDs against the catalog: they wait for the complete one
   const completeCatalogDocument = useCompleteCatalogDocument()

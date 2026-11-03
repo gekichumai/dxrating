@@ -12,7 +12,7 @@ import {
   UnsupportedScoreOperationError,
   type WebScoreRepository,
 } from './ScoreRepository'
-import { collapseScoreRecordList } from './collapseScoreRecords'
+import { collapseScoreRecordList, type InternalLevelResolver } from './collapseScoreRecords'
 
 /** The identity of a sheet in the catalog, or nothing while the catalog is loading or the sheet is unknown */
 export type SheetIdentityResolver = (sheetId: string) => SheetIdentity | null | undefined
@@ -59,7 +59,11 @@ export function playEntryToScoreRecord(
     comboFlag: entry.comboFlag ?? null,
     syncFlag: entry.syncFlag ?? null,
     dxScore: typeof entry.dxScore === 'number' ? entry.dxScore : null,
-    best50Bucket: entry.providerConfig?.divingFish?.ratingEligibility ?? entry.source?.best50Bucket ?? null,
+    // Only Diving-Fish reports the best 50 bucket, and `calculateBest50` honours no other provider's hint
+    best50Bucket:
+      entry.providerConfig?.divingFish?.ratingEligibility ??
+      (entry.source?.provider === 'diving-fish' ? entry.source.best50Bucket : undefined) ??
+      null,
     provenance: null,
   }
 }
@@ -105,6 +109,7 @@ export class LocalScoreRepository implements WebScoreRepository {
   private records: readonly ScoreRecord[] | null = null
   private recordsBySheetId: Map<string, ScoreRecord> | null = null
   private resolveIdentity: SheetIdentityResolver | null = null
+  private resolveInternalLevel: InternalLevelResolver | null = null
   private readonly listeners = new Set<() => void>()
 
   constructor(private readonly storage: Storage | null) {
@@ -130,7 +135,7 @@ export class LocalScoreRepository implements WebScoreRepository {
         const record = playEntryToScoreRecord(entry, this.resolveIdentity)
         if (record) records.push(record)
       }
-      const bySheetId = collapseScoreRecordList(records)
+      const bySheetId = collapseScoreRecordList(records, this.resolveInternalLevel)
       this.records = Object.freeze([...bySheetId.values()])
       this.recordsBySheetId = bySheetId
     }
@@ -153,6 +158,14 @@ export class LocalScoreRepository implements WebScoreRepository {
   setIdentityResolver(resolveIdentity: SheetIdentityResolver | null) {
     if (this.resolveIdentity === resolveIdentity) return
     this.resolveIdentity = resolveIdentity
+    this.invalidateRecords()
+    this.notify()
+  }
+
+  /** Ranks the best 50 hints of duplicate entries by rating (`collapseScoreRecords`); by achievement without it */
+  setInternalLevelResolver(resolveInternalLevel: InternalLevelResolver | null) {
+    if (this.resolveInternalLevel === resolveInternalLevel) return
+    this.resolveInternalLevel = resolveInternalLevel
     this.invalidateRecords()
     this.notify()
   }
