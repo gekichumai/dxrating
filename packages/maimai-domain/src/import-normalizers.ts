@@ -1,5 +1,6 @@
 import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { match } from 'ts-pattern'
+import { toAchievementInt } from './achievement.ts'
 import type { SongCatalog } from './song-catalog'
 import type {
   Best50Bucket,
@@ -15,6 +16,52 @@ import type {
 export interface RatingImportResult {
   entries: RatingEntry[]
   warnings: ImportWarning[]
+}
+
+/** A normalized entry with its achievement as an integer in 1/10000 % (see `achievement.ts`) */
+export type RatingEntryWithAchievementInt = RatingEntry & { achievementInt: number }
+
+export interface RatingImportResultWithAchievementInt {
+  entries: RatingEntryWithAchievementInt[]
+  warnings: ImportWarning[]
+}
+
+/**
+ * The integer achievement (1/10000 %) of a normalized entry, or `null` when it is out of range. Exact for every
+ * normalizer: integer-scaled sources (maimai NET, AquaDX, MuNET, Aqua SQLite) round-trip unchanged, and float
+ * sources (LXNS, Diving-Fish) round half-even on the decimal the provider sent.
+ */
+export function ratingEntryAchievementInt(entry: Pick<RatingEntry, 'achievementRate'>): number | null {
+  return toAchievementInt(entry.achievementRate)
+}
+
+/**
+ * Adds `achievementInt` to the entries of a normalizer result, for cloud-save imports. The result of the
+ * normalizer itself is left as is; an entry whose achievement has no valid integer becomes an
+ * `invalid-achievement` warning.
+ */
+export function withAchievementInt(result: RatingImportResult): RatingImportResultWithAchievementInt {
+  const entries: RatingEntryWithAchievementInt[] = []
+  const warnings = [...result.warnings]
+
+  for (const entry of result.entries) {
+    const achievementInt = ratingEntryAchievementInt(entry)
+    if (achievementInt === null) {
+      const provider = entry.source?.provider
+      if (provider) {
+        warnings.push({
+          provider,
+          code: 'invalid-achievement',
+          message: `Invalid ${provider} achievement: ${String(entry.achievementRate)}`,
+          row: entry,
+        })
+      }
+      continue
+    }
+    entries.push({ ...entry, achievementInt })
+  }
+
+  return { entries, warnings }
 }
 
 type ImportRowResult = { entry: RatingEntry } | { warning: ImportWarning } | { skipped: true }

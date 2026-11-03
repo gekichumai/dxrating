@@ -1,0 +1,217 @@
+{
+  "$comment": "manualVerification(existing) returns expected {verification, editedFromJobId}. Records: {achievement (int, 1/10000 %), comboFlag, syncFlag, dxScore, best50Bucket, providerRecordId, provenance{source, claimedSource, fetchedBy, verification, entryMethod, sourceAccountId, importJobId, rawPayloadSha256, fetchedAt, editedFromJobId}}; stored records add revision and deletedAt (tombstone when non-null); expected.next adds deleted instead (null next = nothing written). Timestamps are ISO 8601 and compared as instants.",
+  "version": 1,
+  "cases": [
+    {
+      "name": "no record",
+      "existing": null,
+      "expected": {
+        "verification": "client_reported",
+        "editedFromJobId": null
+      }
+    },
+    {
+      "name": "tombstone of an import",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 2400,
+        "best50Bucket": null,
+        "providerRecordId": "42",
+        "provenance": {
+          "source": "lxns",
+          "claimedSource": null,
+          "fetchedBy": "server",
+          "verification": "verified",
+          "entryMethod": "import",
+          "sourceAccountId": "lxns-friend-code",
+          "importJobId": "dimp_prev_lxns",
+          "rawPayloadSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "fetchedAt": "2026-11-01T00:00:00.000Z",
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": "2026-11-01T00:00:00.000Z"
+      },
+      "expected": {
+        "verification": "client_reported",
+        "editedFromJobId": null
+      }
+    },
+    {
+      "name": "tombstone of a user edit",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": null,
+        "best50Bucket": null,
+        "providerRecordId": null,
+        "provenance": {
+          "source": "manual",
+          "claimedSource": null,
+          "fetchedBy": "client",
+          "verification": "user_edited",
+          "entryMethod": "typed",
+          "sourceAccountId": null,
+          "importJobId": null,
+          "rawPayloadSha256": null,
+          "fetchedAt": null,
+          "editedFromJobId": "dimp_prev_lxns"
+        },
+        "revision": 10,
+        "deletedAt": "2026-11-01T00:00:00.000Z"
+      },
+      "expected": {
+        "verification": "client_reported",
+        "editedFromJobId": null
+      }
+    },
+    {
+      "name": "manual client_reported",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": null,
+        "best50Bucket": null,
+        "providerRecordId": null,
+        "provenance": {
+          "source": "manual",
+          "claimedSource": null,
+          "fetchedBy": "client",
+          "verification": "client_reported",
+          "entryMethod": "keypad",
+          "sourceAccountId": null,
+          "importJobId": null,
+          "rawPayloadSha256": null,
+          "fetchedAt": null,
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "expected": {
+        "verification": "client_reported",
+        "editedFromJobId": null
+      }
+    },
+    {
+      "name": "verified import",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 2400,
+        "best50Bucket": null,
+        "providerRecordId": "42",
+        "provenance": {
+          "source": "lxns",
+          "claimedSource": null,
+          "fetchedBy": "server",
+          "verification": "verified",
+          "entryMethod": "import",
+          "sourceAccountId": "lxns-friend-code",
+          "importJobId": "dimp_prev_lxns",
+          "rawPayloadSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "fetchedAt": "2026-11-01T00:00:00.000Z",
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "expected": {
+        "verification": "user_edited",
+        "editedFromJobId": "dimp_prev_lxns"
+      }
+    },
+    {
+      "name": "client_reported import",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 2400,
+        "best50Bucket": null,
+        "providerRecordId": "42",
+        "provenance": {
+          "source": "dxrating-json",
+          "claimedSource": "lxns",
+          "fetchedBy": "client",
+          "verification": "client_reported",
+          "entryMethod": "file",
+          "sourceAccountId": null,
+          "importJobId": "dimp_prev_json",
+          "rawPayloadSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "fetchedAt": "2026-10-30T00:00:00.000Z",
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "expected": {
+        "verification": "user_edited",
+        "editedFromJobId": "dimp_prev_json"
+      }
+    },
+    {
+      "name": "user_edited keeps the job it overrode",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": null,
+        "best50Bucket": null,
+        "providerRecordId": null,
+        "provenance": {
+          "source": "manual",
+          "claimedSource": null,
+          "fetchedBy": "client",
+          "verification": "user_edited",
+          "entryMethod": "typed",
+          "sourceAccountId": null,
+          "importJobId": null,
+          "rawPayloadSha256": null,
+          "fetchedAt": null,
+          "editedFromJobId": "dimp_prev_lxns"
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "expected": {
+        "verification": "user_edited",
+        "editedFromJobId": "dimp_prev_lxns"
+      }
+    },
+    {
+      "name": "user_edited without a job",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": null,
+        "best50Bucket": null,
+        "providerRecordId": null,
+        "provenance": {
+          "source": "manual",
+          "claimedSource": null,
+          "fetchedBy": "client",
+          "verification": "user_edited",
+          "entryMethod": "typed",
+          "sourceAccountId": null,
+          "importJobId": null,
+          "rawPayloadSha256": null,
+          "fetchedAt": null,
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "expected": {
+        "verification": "user_edited",
+        "editedFromJobId": null
+      }
+    }
+  ]
+}
