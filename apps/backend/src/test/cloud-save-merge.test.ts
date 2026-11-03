@@ -5,8 +5,10 @@ import { pullChanges } from '../services/cloud-save/changes'
 import { ImportInProgress } from '../services/cloud-save/errors'
 import { startImportJob } from '../services/cloud-save/jobs'
 import { applyImportRecords, type MergeRecord } from '../services/cloud-save/merge'
+import { completeImportJob } from '../services/cloud-save/merge'
+import { applyMutations } from '../services/cloud-save/mutations'
 import { lockSave } from '../services/cloud-save/saves'
-import { importRecords, runDatabase, sheetId, testPool } from './cloud-save-helpers'
+import { deleteMutation, importRecords, runDatabase, sheetId, testPool } from './cloud-save-helpers'
 import { cleanDatabase, setupTestServer, teardownTestServer } from './setup'
 
 interface VectorProvenance {
@@ -311,13 +313,46 @@ describe('cloud save merge module (shared vectors, applied to the database)', ()
       sha: 'b'.repeat(64),
     })
     expect(otherAccount.job.counts).toMatchObject({ improved: 3 })
+
+    // the user deletes a record; the same payload again: an automatic job short-circuits (the deletion stays), a
+    // user-started one merges and revives it (§5.3 rule 2)
+    const deleted = await runDatabase((database) =>
+      applyMutations(database, USER, 'dsav_hash', [deleteMutation(sheetId(2), otherAccount.revision)]),
+    )
+    expect(deleted.result.results[0]!.status).toBe('applied')
+    const auto = await importRecords(USER, 'dsav_hash', 'lxns', changed, {
+      trigger: 'auto',
+      sourceAccountId: 'friend-2',
+      sha: 'b'.repeat(64),
+    })
+    expect(auto.job.counts).toMatchObject({ fetched: 3, unchanged: 3, inserted: 0, skippedDeleted: 0 })
+    expect(auto.revision).toBe(deleted.result.revision)
+    const tombstone = await pool.query(
+      `SELECT deleted_at IS NOT NULL AS deleted FROM score_records WHERE save_id = 'dsav_hash' AND sheet_id = $1`,
+      [sheetId(2)],
+    )
+    expect(tombstone.rows).toEqual([{ deleted: true }])
+
     const user = await importRecords(USER, 'dsav_hash', 'lxns', changed, {
       trigger: 'user',
       sourceAccountId: 'friend-2',
       sha: 'b'.repeat(64),
     })
-    expect(user.job.counts.unchanged).toBe(3)
-    expect(user.job.counts.fetched).toBe(3)
+    expect(user.job.counts).toMatchObject({ fetched: 3, inserted: 1, unchanged: 2 })
+    expect(user.revision).toBe(deleted.result.revision + 1)
+    const revived = await pool.query(
+      `SELECT revision, deleted_at FROM score_records WHERE save_id = 'dsav_hash' AND sheet_id = $1`,
+      [sheetId(2)],
+    )
+    expect(revived.rows).toEqual([{ revision: String(user.revision), deleted_at: null }])
+    const lastEvent = await pool.query(
+      `SELECT kind, import_job_id FROM score_record_events WHERE save_id = 'dsav_hash' AND sheet_id = $1
+       ORDER BY id DESC LIMIT 1`,
+      [sheetId(2)],
+    )
+    expect(lastEvent.rows).toEqual([{ kind: 'import_applied', import_job_id: user.job.id }])
+    const saves = await pool.query(`SELECT record_count FROM score_saves WHERE id = 'dsav_hash'`)
+    expect(saves.rows).toEqual([{ record_count: 3 }])
   })
 
   it('allows one running job per save and source (409 helper) and replays idempotency keys', async () => {
@@ -356,17 +391,49 @@ describe('cloud save merge module (shared vectors, applied to the database)', ()
       comboFlag: null,
       syncFlag: null,
     })
-    await importRecords(USER, 'dsav_sticky', 'lxns', [value(1, 1000000), value(2, 1000000), value(3, 1000000)], {
-      trigger: 'auto',
+    const state = async () => {
+      const { rows: saves } = await pool.query(
+        `SELECT revision, record_count FROM score_saves WHERE id = 'dsav_sticky'`,
+      )
+      const { rows } = await pool.query(
+        `SELECT sheet_id, revision, deleted_at IS NOT NULL AS deleted FROM score_records WHERE save_id = 'dsav_sticky'
+         ORDER BY sheet_id`,
+      )
+      return {
+        revision: Number(saves[0].revision),
+        recordCount: saves[0].record_count as number,
+        records: rows.map((row) => ({ sheetId: row.sheet_id, revision: Number(row.revision), deleted: row.deleted })),
+      }
+    }
+    const imported = await importRecords(
+      USER,
+      'dsav_sticky',
+      'lxns',
+      [value(1, 1000000), value(2, 1000000), value(3, 1000000)],
+      { trigger: 'auto' },
+    )
+    // the user deletes all three through the mutation path (tombstones keep the deleted value)
+    const deleted = await runDatabase((database) =>
+      applyMutations(
+        database,
+        USER,
+        'dsav_sticky',
+        [1, 2, 3].map((n) => deleteMutation(sheetId(n), imported.revision)),
+      ),
+    )
+    expect(deleted.result.results.map((result) => result.status)).toEqual(['applied', 'applied', 'applied'])
+    expect(await state()).toEqual({
+      revision: 6,
+      recordCount: 0,
+      records: [1, 2, 3].map((n) => ({ sheetId: sheetId(n), revision: 3 + n, deleted: true })),
     })
-    // the user deletes all three (tombstones keep the deleted value)
-    await pool.query(`UPDATE score_records SET deleted_at = now() - interval '1 minute' WHERE save_id = 'dsav_sticky'`)
 
     const auto = await importRecords(USER, 'dsav_sticky', 'lxns', [value(1, 1000000), value(2, 990000)], {
       trigger: 'auto',
       sha: 'c'.repeat(64),
     })
     expect(auto.job.counts).toMatchObject({ skippedDeleted: 2, inserted: 0 })
+    expect(auto.revision).toBe(6)
     const better = await importRecords(USER, 'dsav_sticky', 'lxns', [value(2, 1001000)], {
       trigger: 'auto',
       sha: 'd'.repeat(64),
@@ -377,8 +444,18 @@ describe('cloud save merge module (shared vectors, applied to the database)', ()
       sha: 'e'.repeat(64),
     })
     expect(user.job.counts).toMatchObject({ inserted: 1 })
+    // each revival takes a new revision and counts as live again
+    expect(await state()).toEqual({
+      revision: 8,
+      recordCount: 2,
+      records: [
+        { sheetId: sheetId(1), revision: 8, deleted: false },
+        { sheetId: sheetId(2), revision: 7, deleted: false },
+        { sheetId: sheetId(3), revision: 6, deleted: true },
+      ],
+    })
 
-    // a deletion while the job ran wins even over a user import
+    // a deletion while the job ran wins even over a user import: the job starts, then the user deletes
     const { job } = await runDatabase((database) =>
       startImportJob(database, {
         userId: USER,
@@ -390,22 +467,22 @@ describe('cloud save merge module (shared vectors, applied to the database)', ()
         rawPayloadSha256: 'f'.repeat(64),
       }),
     )
-    await pool.query(`UPDATE score_import_jobs SET started_at = now() - interval '10 seconds' WHERE id = $1`, [job.id])
-    await pool.query(`UPDATE score_records SET deleted_at = now() WHERE save_id = 'dsav_sticky' AND sheet_id = $1`, [
-      sheetId(1),
-    ])
-    const { completeImportJob } = await import('../services/cloud-save/merge')
     const during = await runDatabase((database) =>
+      applyMutations(database, USER, 'dsav_sticky', [deleteMutation(sheetId(1), 8)]),
+    )
+    expect(during.result.results[0]!.status).toBe('applied')
+    const completed = await runDatabase((database) =>
       completeImportJob(database, { userId: USER, saveId: 'dsav_sticky', jobId: job.id, records: [value(1, 1010000)] }),
     )
-    expect(during.job.counts).toMatchObject({ skippedDeleted: 1 })
-    const { rows } = await pool.query(
-      `SELECT sheet_id, deleted_at IS NOT NULL AS deleted FROM score_records WHERE save_id = 'dsav_sticky' ORDER BY sheet_id`,
-    )
-    expect(rows).toEqual([
-      { sheet_id: sheetId(1), deleted: true },
-      { sheet_id: sheetId(2), deleted: false },
-      { sheet_id: sheetId(3), deleted: true },
-    ])
+    expect(completed.job.counts).toMatchObject({ skippedDeleted: 1 })
+    expect(await state()).toEqual({
+      revision: 9,
+      recordCount: 1,
+      records: [
+        { sheetId: sheetId(1), revision: 9, deleted: true },
+        { sheetId: sheetId(2), revision: 7, deleted: false },
+        { sheetId: sheetId(3), revision: 6, deleted: true },
+      ],
+    })
   })
 })

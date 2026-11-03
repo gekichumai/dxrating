@@ -66,6 +66,10 @@ export const CLOUD_SAVE_MAX_REPLACE_RECORDS = 10000
 export const CLOUD_SAVE_MAX_IMPORT_CHUNKS = 10
 /** Maximum records per `changes` page */
 export const CLOUD_SAVE_MAX_CHANGES_LIMIT = 1000
+/** Maximum nesting depth of a snapshot's opaque `detail` (the object itself is depth 1) */
+export const CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_DEPTH = 16
+/** Maximum length of a snapshot's `detail` serialized as JSON */
+export const CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH = 32 * 1024
 
 // --- Identifiers and values ---
 
@@ -217,7 +221,10 @@ export type ChecksumDTO = z.output<typeof ChecksumDTOSchema>
 export const ChangesDTOSchema = z.object({
   /** Ordered by revision; tombstones included */
   records: z.array(RecordDTOSchema),
-  /** The highest revision of this page (`since` when the page is empty) */
+  /**
+   * The cursor of the next pull: the highest revision of this page, or the save's revision on the last page (so a
+   * finished pull, even of a save whose newest changes were purged tombstones, resumes past the tombstone horizon)
+   */
   nextSince: RevisionSchema,
   hasMore: z.boolean(),
   /** The save's current revision */
@@ -296,9 +303,18 @@ export const UpdateSaveInputSchema = z
 
 export const SaveIdInputSchema = z.strictObject(SaveIdParamSchema)
 
+/**
+ * `incremental` (default): changes after `since`, tombstones included; `resetRequired` when `since` is older than the
+ * tombstone horizon (§5.6). `full`: a full pull (§5.6). `since = 0` is always a full pull (live records only); its
+ * later pages pass `mode=full` with the previous `nextSince`, so they are never reset by the horizon (they include
+ * the tombstones of records deleted while paging).
+ */
+export const ChangesModeSchema = z.enum(['incremental', 'full'])
+
 export const ChangesInputSchema = z.strictObject({
   ...SaveIdParamSchema,
   since: z.coerce.number().pipe(RevisionSchema).default(0),
+  mode: ChangesModeSchema.default('incremental'),
   limit: z.coerce.number().int().min(1).max(CLOUD_SAVE_MAX_CHANGES_LIMIT).default(CLOUD_SAVE_MAX_CHANGES_LIMIT),
 })
 
@@ -468,6 +484,32 @@ export const RecordEventsInputSchema = z.strictObject({
   sheetId: CloudSaveSheetIdSchema,
 })
 
+/**
+ * Whether `value` stays within the snapshot detail bounds. Walks iteratively (no recursion) and checks the depth and
+ * the number of values before anything recursive (`z.json()`, `JSON.stringify`) touches it, so a deeply nested body
+ * is a 400 rather than a stack overflow.
+ */
+function isBoundedSnapshotDetail(value: unknown): boolean {
+  const pending: [unknown, number][] = [[value, 1]]
+  let visited = 0
+  while (pending.length > 0) {
+    const [current, depth] = pending.pop()!
+    // every value takes at least one character of the JSON
+    if (++visited > CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH) return false
+    if (typeof current !== 'object' || current === null) continue
+    if (depth > CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_DEPTH) return false
+    for (const child of Array.isArray(current) ? current : Object.values(current)) pending.push([child, depth + 1])
+  }
+  return (JSON.stringify(value) ?? '').length <= CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH
+}
+
+/** A snapshot's opaque `detail`: a JSON object of bounded depth and size */
+export const SnapshotDetailSchema = z
+  .custom<unknown>(isBoundedSnapshotDetail, {
+    message: `detail must be JSON nested at most ${CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_DEPTH} deep and at most ${CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH} characters long`,
+  })
+  .pipe(z.record(z.string(), z.json()))
+
 export const CreateSnapshotInputSchema = z.strictObject({
   ...SaveIdParamSchema,
   atRevision: RevisionSchema,
@@ -476,7 +518,7 @@ export const CreateSnapshotInputSchema = z.strictObject({
   b50Sum: CountSchema,
   recordCount: CountSchema,
   gameVersion: GameVersionSchema,
-  detail: z.record(z.string(), z.json()).optional(),
+  detail: SnapshotDetailSchema.optional(),
 })
 
 export const ListSnapshotsInputSchema = z.strictObject({

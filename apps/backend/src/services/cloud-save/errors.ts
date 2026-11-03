@@ -16,3 +16,16 @@ export class RevisionPreconditionFailed extends Data.TaggedError('RevisionPrecon
 
 /** A request the contract accepts but the save cannot (e.g. a snapshot ahead of the save's revision) */
 export class CloudSaveBadRequest extends Data.TaggedError('CloudSaveBadRequest')<{ readonly message: string }> {}
+
+/** The save stayed locked by another writer longer than the lock timeout (§5.2); retryable (429) */
+export class CloudSaveBusy extends Data.TaggedError('CloudSaveBusy')<{}> {}
+
+/** Whether `error` (or one of its causes) is Postgres `lock_not_available` (55P03, e.g. `lock_timeout`) */
+export function isLockNotAvailable(error: unknown): boolean {
+  let current: unknown = error
+  for (let depth = 0; depth < 6 && typeof current === 'object' && current !== null; depth++) {
+    if ((current as { code?: unknown }).code === '55P03') return true
+    current = (current as { cause?: unknown }).cause
+  }
+  return false
+}

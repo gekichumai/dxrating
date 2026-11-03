@@ -5,11 +5,12 @@ import { Clock, Effect } from 'effect'
 import { log } from 'evlog'
 import { appContract } from './contract'
 import { Database } from './db/index'
-import { rateLimit, requireFeature, requireSession } from './orpc-middleware'
+import { rateLimit, requireFeature, requireSession, writeConcurrency } from './orpc-middleware'
 import type { ApiContext } from './router'
 import { listRecordEvents, pullChanges } from './services/cloud-save/changes'
 import {
   CloudSaveBadRequest,
+  CloudSaveBusy,
   CloudSaveLimitReached,
   CloudSaveNotFound,
   ImportInProgress,
@@ -31,6 +32,10 @@ import {
 import { cloudSaveRateLimits } from './services/rate-limit'
 
 const os = implement(appContract).$context<ApiContext>()
+
+/** Write requests one user may have in flight across the cloud save write routes (§7.1, §11.4) */
+export const CLOUD_SAVE_WRITE_CONCURRENCY = 2
+const SAVE_BUSY_RETRY_AFTER_SECONDS = 1
 const cloudSave = os.cloudSave
 
 /** Maps the cloud save failures to the contract's errors (design §5.1); other errors pass through */
@@ -40,6 +45,7 @@ type CloudSaveFailure =
   | ImportInProgress
   | RevisionPreconditionFailed
   | CloudSaveBadRequest
+  | CloudSaveBusy
 
 export function toCloudSaveApiError<E>(error: E): Exclude<E, CloudSaveFailure> | ORPCError<string, unknown> {
   if (error instanceof CloudSaveNotFound) return new ORPCError('NOT_FOUND')
@@ -59,6 +65,13 @@ export function toCloudSaveApiError<E>(error: E): Exclude<E, CloudSaveFailure> |
     return new ORPCError('PRECONDITION_FAILED', { message: 'The save changed', data: { revision: error.revision } })
   }
   if (error instanceof CloudSaveBadRequest) return new ORPCError('BAD_REQUEST', { message: error.message })
+  if (error instanceof CloudSaveBusy) {
+    // retryable like a rate limit; `writeConcurrency` adds the Retry-After header
+    return new ORPCError('TOO_MANY_REQUESTS', {
+      message: 'The save is busy. Retry shortly.',
+      data: { retryAfterSeconds: SAVE_BUSY_RETRY_AFTER_SECONDS },
+    })
+  }
   return error as Exclude<E, CloudSaveFailure>
 }
 
@@ -68,6 +81,8 @@ const apiErrors = <A, E, R>(effect: Effect.Effect<A, E, R>) => effect.pipe(Effec
 const session = requireSession
 const feature = requireFeature('cloud_save')
 const limit = (name: keyof typeof cloudSaveRateLimits) => rateLimit(cloudSaveRateLimits[name])
+// Write routes also run at most CLOUD_SAVE_WRITE_CONCURRENCY at a time per user (a waiting writer holds a connection)
+const writes = writeConcurrency(CLOUD_SAVE_WRITE_CONCURRENCY)
 
 const savesHandler = {
   list: cloudSave.saves.list
@@ -84,6 +99,7 @@ const savesHandler = {
     .use(session)
     .use(feature)
     .use(limit('createSave'))
+    .use(writes)
     .handler(
       handlerGen(function* ({ context, input }) {
         const database = yield* Database
@@ -94,6 +110,7 @@ const savesHandler = {
     .use(session)
     .use(feature)
     .use(limit('default'))
+    .use(writes)
     .handler(
       handlerGen(function* ({ context, input }) {
         const database = yield* Database
@@ -106,6 +123,7 @@ const savesHandler = {
     .use(session)
     .use(feature)
     .use(limit('default'))
+    .use(writes)
     .handler(
       handlerGen(function* ({ context, input }) {
         const database = yield* Database
@@ -122,7 +140,7 @@ const recordsHandler = {
     .handler(
       handlerGen(function* ({ context, input }) {
         const database = yield* Database
-        return yield* apiErrors(pullChanges(database, context.user.id, input.id, input.since, input.limit))
+        return yield* apiErrors(pullChanges(database, context.user.id, input.id, input.since, input.limit, input.mode))
       }),
     ),
   mutate: cloudSave.records.mutate
@@ -130,6 +148,7 @@ const recordsHandler = {
     .use(feature)
     .use(limit('mutations'))
     .use(rateLimit(cloudSaveRateLimits.mutationItems, (input: { mutations: unknown[] }) => input.mutations.length))
+    .use(writes)
     .handler(
       handlerGen(function* ({ context, input }) {
         const database = yield* Database
@@ -175,6 +194,7 @@ const recordsHandler = {
     .use(session)
     .use(feature)
     .use(limit('replace'))
+    .use(writes)
     .handler(
       handlerGen(function* ({ context, input }) {
         const database = yield* Database
@@ -228,6 +248,7 @@ const snapshotsHandler = {
     .use(session)
     .use(feature)
     .use(limit('default'))
+    .use(writes)
     .handler(
       handlerGen(function* ({ context, input }) {
         const database = yield* Database

@@ -2,7 +2,13 @@ import { randomBytes } from 'node:crypto'
 import { CLOUD_SAVE_MAX_SAVES, type SaveDTO, type SnapshotDTO } from '@gekichumai/api-contract'
 import { Effect } from 'effect'
 import type { Database } from '../../db/index'
-import { CloudSaveBadRequest, CloudSaveLimitReached, CloudSaveNotFound } from './errors'
+import {
+  CloudSaveBadRequest,
+  CloudSaveBusy,
+  CloudSaveLimitReached,
+  CloudSaveNotFound,
+  isLockNotAvailable,
+} from './errors'
 import type { LockedSave } from './records'
 
 type DatabaseService = typeof Database.Service
@@ -26,22 +32,40 @@ export const SNAPSHOT_WINDOW_MS = 10 * 60_000
 export const MAX_SNAPSHOTS_PER_SAVE = 100
 
 /**
+ * How long a writer waits for a lock (the save row, the per-user save-creation lock) before giving up with
+ * `CloudSaveBusy` (429): a waiting writer holds one of the few pool connections (§7.1), so the wait is bounded.
+ */
+export const SAVE_LOCK_TIMEOUT_MS = 5000
+
+/** Bounds the lock waits of the rest of the current transaction to {@link SAVE_LOCK_TIMEOUT_MS} */
+const setLockTimeout = (database: DatabaseService) =>
+  database.raw('CloudSave.lockTimeout', `SET LOCAL lock_timeout = '${SAVE_LOCK_TIMEOUT_MS}ms'`)
+
+/** Turns a lock wait that ran out (`lock_not_available`) into `CloudSaveBusy` */
+const busyOnLockTimeout = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+  effect.pipe(Effect.mapError((error) => (isLockNotAvailable(error) ? new CloudSaveBusy() : error)))
+
+/**
  * Locks the user's live save `FOR UPDATE` (§5.2). Every save write path runs inside a transaction that starts with
- * this; another user's save, a deleted one and a missing one are the same `CloudSaveNotFound`.
+ * this; another user's save, a deleted one and a missing one are the same `CloudSaveNotFound`. The wait for the lock
+ * (and every later lock wait of the transaction) is bounded by {@link SAVE_LOCK_TIMEOUT_MS}: `CloudSaveBusy` after.
  */
 export const lockSave = (database: DatabaseService, userId: string, saveId: string) =>
   Effect.gen(function* () {
-    const { rows } = yield* database.raw<{
-      id: string
-      user_id: string
-      revision: bigint
-      record_count: number
-      now: Date
-    }>(
-      'CloudSave.lockSave',
-      `SELECT id, user_id, revision, record_count, now() AS now FROM score_saves
+    yield* setLockTimeout(database)
+    const { rows } = yield* busyOnLockTimeout(
+      database.raw<{
+        id: string
+        user_id: string
+        revision: bigint
+        record_count: number
+        now: Date
+      }>(
+        'CloudSave.lockSave',
+        `SELECT id, user_id, revision, record_count, now() AS now FROM score_saves
        WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL FOR UPDATE`,
-      [saveId, userId],
+        [saveId, userId],
+      ),
     )
     const row = rows[0]
     if (!row) return yield* new CloudSaveNotFound()
@@ -173,10 +197,11 @@ export interface CreateSaveInput {
 export const createSave = (database: DatabaseService, userId: string, input: CreateSaveInput) =>
   database.transaction(() =>
     Effect.gen(function* () {
-      yield* database.raw(
-        'CloudSave.lockUserSaves',
-        `SELECT pg_advisory_xact_lock(hashtext('cloudsave:saves:' || $1))`,
-        [userId],
+      yield* setLockTimeout(database)
+      yield* busyOnLockTimeout(
+        database.raw('CloudSave.lockUserSaves', `SELECT pg_advisory_xact_lock(hashtext('cloudsave:saves:' || $1))`, [
+          userId,
+        ]),
       )
       const clientProfileKey = input.clientProfileKey ?? null
       if (clientProfileKey !== null) {

@@ -94,7 +94,7 @@ export const setMutation = (
 
 export const deleteMutation = (sheet: string, basedOnRevision?: number) => ({
   mutationId: uuidv7(),
-  op: 'delete',
+  op: 'delete' as const,
   sheetId: sheet,
   ...(basedOnRevision === undefined ? {} : { basedOnRevision }),
 })

@@ -245,7 +245,10 @@ export interface RecordChange {
   valueChanged: boolean
   liveDelta: number
   eventKind: ScoreRecordEventKind | null
-  /** Set for manual mutations */
+  /**
+   * Set for manual mutations. Omitted: kept when neither the value nor the origin (source, verification) changes,
+   * cleared otherwise.
+   */
   clientMutationId?: string | null
   clientEditedAt?: Date | null
 }
@@ -331,6 +334,14 @@ export class RecordWriter {
     const before = change.before
     const now = this.save.now
     const { next } = change
+    // The client fields name the manual edit behind the current value and provenance: they carry over only when
+    // neither changed (a silent refresh); a new value or a new origin (an import upgrading a manual record, a
+    // replace) clears them
+    const sameOrigin =
+      before !== null &&
+      !change.valueChanged &&
+      before.provenance.source === next.provenance.source &&
+      before.provenance.verification === next.provenance.verification
     const state: RecordState = {
       sheetId,
       achievement: next.achievement,
@@ -345,15 +356,15 @@ export class RecordWriter {
       clientMutationId:
         change.clientMutationId !== undefined
           ? change.clientMutationId
-          : change.valueChanged
-            ? null
-            : (before?.clientMutationId ?? null),
+          : sameOrigin
+            ? (before?.clientMutationId ?? null)
+            : null,
       clientEditedAt:
         change.clientEditedAt !== undefined
           ? change.clientEditedAt
-          : change.valueChanged
-            ? null
-            : (before?.clientEditedAt ?? null),
+          : sameOrigin
+            ? (before?.clientEditedAt ?? null)
+            : null,
       deletedAt: next.deleted ? (before?.deletedAt ?? now) : null,
     }
     this.states.set(sheetId, state)

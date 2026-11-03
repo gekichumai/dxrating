@@ -57,3 +57,38 @@ export const rateLimit = <TInput = unknown>(limit: KeyedRateLimit, cost?: (input
     }
     return next()
   })
+const RETRY_AFTER_BUSY_SECONDS = 1
+
+/**
+ * Lets each signed-in user run at most `limit` requests through the routes that use it at a time: one more answers
+ * 429 TOO_MANY_REQUESTS (`Retry-After: 1`) instead of queueing on a database connection. Also sets `Retry-After` on
+ * any TOO_MANY_REQUESTS the procedure itself fails with (`{ retryAfterSeconds }`). Use after `rateLimit`.
+ */
+export const writeConcurrency = (limit: number) => {
+  const inFlight = new Map<string, number>()
+  return os.$context<SessionApiContext>().middleware(async ({ context, next }) => {
+    const key = context.user.id
+    const running = inFlight.get(key) ?? 0
+    if (running >= limit) {
+      context.resHeaders?.set('Retry-After', String(RETRY_AFTER_BUSY_SECONDS))
+      throw new ORPCError('TOO_MANY_REQUESTS', {
+        message: `Too many requests. Retry in ${RETRY_AFTER_BUSY_SECONDS} seconds.`,
+        data: { retryAfterSeconds: RETRY_AFTER_BUSY_SECONDS },
+      })
+    }
+    inFlight.set(key, running + 1)
+    try {
+      return await next()
+    } catch (error) {
+      if (error instanceof ORPCError && error.code === 'TOO_MANY_REQUESTS') {
+        const seconds = (error.data as { retryAfterSeconds?: unknown } | undefined)?.retryAfterSeconds
+        if (typeof seconds === 'number') context.resHeaders?.set('Retry-After', String(seconds))
+      }
+      throw error
+    } finally {
+      const left = (inFlight.get(key) ?? 1) - 1
+      if (left > 0) inFlight.set(key, left)
+      else inFlight.delete(key)
+    }
+  })
+}

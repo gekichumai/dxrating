@@ -22,21 +22,32 @@ export const RECORD_EVENTS_KEPT = 20
  *
  * - `since = 0` is a full pull: live records only, no tombstones (a client rebuilding its cache needs none).
  * - `since > 0` is incremental: live records and tombstones with `revision > since`, ordered by revision.
- * - `resetRequired`: `since > 0` and either older than the save's tombstone horizon (a purged tombstone may be
- *   missing) or ahead of the save's revision (the client's cursor does not belong to this save). The page is then
- *   empty (`nextSince = 0`, `hasMore = false`, no checksum) and the client pulls again from `since = 0` (live rows),
- *   rebuilds its cache from it and rebases its outbox.
- * - `nextSince` is the highest revision of the page (`since` when empty); `hasMore` says another page follows.
+ * - `mode = 'full'` with `since > 0` continues a full pull: the same rows as incremental, but never reset by the
+ *   tombstone horizon. The first page held no tombstone at all, so a purged one cannot be missing; live rows keep
+ *   their old revisions, so the cursor of a full pull's later pages is routinely below the horizon.
+ * - `resetRequired`: `since > 0` and either ahead of the save's revision (the client's cursor does not belong to this
+ *   save) or, for an incremental pull, older than the save's tombstone horizon (a purged tombstone may be missing).
+ *   The page is then empty (`nextSince = 0`, `hasMore = false`, no checksum) and the client pulls again from
+ *   `since = 0` (live rows), rebuilds its cache from it and rebases its outbox.
+ * - `nextSince` is the highest revision of the page; on the last page it is the save's revision (read in the same
+ *   snapshot), so a finished pull resumes at or past the horizon. `hasMore` says another page follows.
  * - `checksum` (`count`, `sumAchievement` of live records) comes with the last page only, from the same snapshot.
  */
-export const pullChanges = (database: DatabaseService, userId: string, saveId: string, since: number, limit: number) =>
+export const pullChanges = (
+  database: DatabaseService,
+  userId: string,
+  saveId: string,
+  since: number,
+  limit: number,
+  mode: 'incremental' | 'full' = 'incremental',
+) =>
   database.transaction(() =>
     Effect.gen(function* () {
       yield* database.raw('CloudSave.repeatableRead', 'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ')
       const save = yield* findSave(database, userId, saveId)
       const revision = Number(save.revision)
       const horizon = Number(save.tombstone_horizon)
-      if (since > 0 && (since < horizon || since > revision)) {
+      if (since > 0 && (since > revision || (mode === 'incremental' && since < horizon))) {
         return {
           records: [],
           nextSince: 0,
@@ -68,7 +79,7 @@ export const pullChanges = (database: DatabaseService, userId: string, saveId: s
       }
       return {
         records,
-        nextSince: records.length > 0 ? records[records.length - 1]!.revision : since,
+        nextSince: hasMore ? records[records.length - 1]!.revision : revision,
         hasMore,
         revision,
         resetRequired: false,

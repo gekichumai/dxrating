@@ -154,7 +154,76 @@ describe('cloud save API (design §5)', () => {
       })
       // ~1.5 MB: accepted by the 2 MB limit
       expect(replace.status).toBe(200)
+      // over 2 MB: refused on both large-upload routes
+      const huge = records.map((r) => ({ ...r, claimedSource: 'x'.repeat(200) }))
+      const tooBig = await api(user.cookie, 'POST', `/saves/${save.id}/replace`, {
+        ifRevision: 10_000,
+        idempotencyKey: 'replace-body-2',
+        source: 'dxrating-json',
+        records: huge,
+      })
+      expect(tooBig.status).toBe(413)
+      const importTooBig = await api(user.cookie, 'POST', `/saves/${save.id}/client-imports`, {
+        idempotencyKey: 'import-body-1',
+        source: 'dxrating-json',
+        trigger: 'user',
+        records: huge,
+      })
+      expect(importTooBig.status).toBe(413)
     })
+
+    it('refuses a deeply nested snapshot detail with 400 before any middleware, never a 500', async () => {
+      const off = await session(pool, 'nested-off@example.com', { cloudSave: false })
+      const on = await session(pool, 'nested-on@example.com')
+      const save = await newSave(on.cookie)
+      const depth = 200_000
+      const body = `{"atRevision":0,"b15Sum":0,"b35Sum":0,"b50Sum":0,"recordCount":0,"gameVersion":"prism","detail":{"a":${'['.repeat(depth)}1${']'.repeat(depth)}}}`
+      for (const cookie of [null, off.cookie, on.cookie]) {
+        const response = await api(cookie, 'POST', `/saves/${save.id}/snapshots`, body)
+        expect([400, 401, 404], String(response.status)).toContain(response.status)
+      }
+      const oversized = await api(on.cookie, 'POST', `/saves/${save.id}/snapshots`, {
+        atRevision: 0,
+        b15Sum: 0,
+        b35Sum: 0,
+        b50Sum: 0,
+        recordCount: 0,
+        gameVersion: 'prism',
+        detail: { a: 'x'.repeat(40_000) },
+      })
+      expect(oversized.status).toBe(400)
+    })
+
+    it('bounds lock waits and concurrent writes per user with a retryable 429', async () => {
+      const user = await session(pool, 'busy@example.com')
+      const other = await session(pool, 'not-busy@example.com')
+      const save = await newSave(user.cookie)
+      const holder = await pool.connect()
+      try {
+        await holder.query('BEGIN')
+        await holder.query('SELECT 1 FROM score_saves WHERE id = $1 FOR UPDATE', [save.id])
+        const startedAt = Date.now()
+        const writes = Array.from({ length: 4 }, (_, i) =>
+          mutate(user.cookie, save.id, [setMutation(sheetId(i), 1000000)]),
+        )
+        // other users are served while this one's writers wait
+        const elsewhere = await api(other.cookie, 'GET', '/saves')
+        expect(elsewhere.status).toBe(200)
+        expect(Date.now() - startedAt).toBeLessThan(3000)
+        const answers = await Promise.all(writes)
+        expect(answers.map((answer) => answer.status)).toEqual([429, 429, 429, 429])
+        for (const answer of answers) {
+          expect(answer.body).toMatchObject({ code: 'TOO_MANY_REQUESTS', data: { retryAfterSeconds: 1 } })
+          expect(answer.headers.get('retry-after')).toBe('1')
+        }
+        await holder.query('ROLLBACK')
+      } finally {
+        holder.release()
+      }
+      const after = await mutate(user.cookie, save.id, [setMutation(sheetId(1), 1000000)])
+      expect(after.status).toBe(200)
+      expect(after.body.results[0].status).toBe('applied')
+    }, 20_000)
   })
 
   describe('saves', () => {
@@ -455,6 +524,66 @@ describe('cloud save API (design §5)', () => {
         editedFromJobId: null,
       })
     })
+
+    it('drops the manual edit fields when an import or a replace takes over a record with the same value', async () => {
+      const user = await session(pool, 'takeover@example.com')
+      const save = await newSave(user.cookie)
+      const clientFields = async (sheet: string) =>
+        (
+          await pool.query(
+            `SELECT client_mutation_id, client_edited_at, verification, deleted_at IS NOT NULL AS deleted
+             FROM score_records WHERE save_id = $1 AND sheet_id = $2`,
+            [save.id, sheet],
+          )
+        ).rows[0]
+      const latestEvent = async (sheet: string) =>
+        (
+          await pool.query(
+            `SELECT kind, client_mutation_id FROM score_record_events WHERE save_id = $1 AND sheet_id = $2
+             ORDER BY id DESC LIMIT 1`,
+            [save.id, sheet],
+          )
+        ).rows[0]
+      const edits = [1, 2].map((n) => ({
+        ...setMutation(sheetId(n), 1005000),
+        clientEditedAt: '2026-11-01T00:00:00.000Z',
+      }))
+      expect((await mutate(user.cookie, save.id, edits)).body.results.map((r: { status: string }) => r.status)).toEqual(
+        ['applied', 'applied'],
+      )
+      expect(await clientFields(sheetId(1))).toMatchObject({
+        client_mutation_id: edits[0]!.mutationId,
+        client_edited_at: new Date('2026-11-01T00:00:00.000Z'),
+      })
+
+      // a server import of the same value upgrades sheet 1: verified, no client edit left
+      const upgraded = await importRecords(user.userId, save.id, 'maimai-net-jp', [
+        { sheetId: sheetId(1), achievement: 1005000, comboFlag: null, syncFlag: null },
+      ])
+      expect(upgraded.job.counts.provenanceUpgraded).toBe(1)
+      expect(await clientFields(sheetId(1))).toEqual({
+        client_mutation_id: null,
+        client_edited_at: null,
+        verification: 'verified',
+        deleted: false,
+      })
+      expect(await latestEvent(sheetId(1))).toEqual({ kind: 'provenance_upgraded', client_mutation_id: null })
+      const changes = await api(user.cookie, 'GET', `/saves/${save.id}/changes?since=0`)
+      const dto = changes.body.records.find((r: { sheetId: string }) => r.sheetId === sheetId(1))
+      expect(dto.clientEditedAt).toBeNull()
+
+      // a replace rewrites sheet 1 (same value) and deletes sheet 2: neither is attributed to the old edit
+      const replaced = await api(user.cookie, 'POST', `/saves/${save.id}/replace`, {
+        ifRevision: upgraded.revision,
+        idempotencyKey: 'takeover-replace',
+        source: 'dxrating-json',
+        records: [{ sheetId: sheetId(1), achievement: 1005000, comboFlag: null, syncFlag: null }],
+      })
+      expect(replaced.status).toBe(200)
+      expect(await latestEvent(sheetId(1))).toEqual({ kind: 'import_applied', client_mutation_id: null })
+      expect(await clientFields(sheetId(2))).toMatchObject({ client_mutation_id: null, deleted: true })
+      expect(await latestEvent(sheetId(2))).toEqual({ kind: 'delete', client_mutation_id: null })
+    })
   })
 
   describe('changes', () => {
@@ -470,7 +599,8 @@ describe('cloud save API (design §5)', () => {
 
       const full = await api(user.cookie, 'GET', `/saves/${save.id}/changes?since=0`)
       expect(full.body).toMatchObject({
-        nextSince: 3,
+        // the last page resumes at the save's revision
+        nextSince: 4,
         hasMore: false,
         revision: 4,
         resetRequired: false,
@@ -503,7 +633,28 @@ describe('cloud save API (design §5)', () => {
       const ahead = await api(user.cookie, 'GET', `/saves/${save.id}/changes?since=5`)
       expect(ahead.body.resetRequired).toBe(true)
       const rebuilt = await api(user.cookie, 'GET', `/saves/${save.id}/changes?since=0`)
-      expect(rebuilt.body).toMatchObject({ resetRequired: false, checksum: { count: 2 } })
+      expect(rebuilt.body).toMatchObject({ resetRequired: false, checksum: { count: 2 }, nextSince: 4 })
+
+      // a paged full pull finishes although its cursor stays below the horizon (live rows keep old revisions)
+      const pages: { records: { sheetId: string }[]; resetRequired: boolean; nextSince: number }[] = []
+      let since = 0
+      for (let guard = 0; guard < 5; guard++) {
+        const mode = since === 0 ? '' : '&mode=full'
+        const page = await api(user.cookie, 'GET', `/saves/${save.id}/changes?since=${since}&limit=1${mode}`)
+        expect(page.status).toBe(200)
+        pages.push(page.body)
+        since = page.body.nextSince
+        if (!page.body.hasMore) break
+      }
+      expect(pages.map((page) => page.resetRequired)).toEqual([false, false])
+      expect(pages.flatMap((page) => page.records.map((r) => r.sheetId))).toEqual([sheetId(1), sheetId(3)])
+      expect(pages.map((page) => page.nextSince)).toEqual([1, 4])
+      // the cursor it ends with pulls incrementally without a reset
+      const after = await api(user.cookie, 'GET', `/saves/${save.id}/changes?since=${since}`)
+      expect(after.body).toMatchObject({ resetRequired: false, records: [] })
+      // an incremental pull from the same low cursor still resets
+      expect((await api(user.cookie, 'GET', `/saves/${save.id}/changes?since=1`)).body.resetRequired).toBe(true)
+      expect((await api(user.cookie, 'GET', `/saves/${save.id}/changes?since=1&mode=bogus`)).status).toBe(400)
     })
   })
 
@@ -561,6 +712,25 @@ describe('cloud save API (design §5)', () => {
       const replay = await api(user.cookie, 'POST', `/saves/${save.id}/replace`, body)
       expect(replay.status).toBe(200)
       expect(replay.body).toEqual(replaced.body)
+    })
+
+    it('logs a same-value replace over a verified record as an overwrite, not a provenance upgrade', async () => {
+      const user = await session(pool, 'replace-same@example.com')
+      const save = await newSave(user.cookie)
+      await importRecords(user.userId, save.id, 'lxns', [
+        { sheetId: sheetId(1), achievement: 1005000, comboFlag: null, syncFlag: null },
+      ])
+      const replaced = await api(user.cookie, 'POST', `/saves/${save.id}/replace`, {
+        ifRevision: 1,
+        idempotencyKey: 'replace-same-1',
+        source: 'dxrating-json',
+        records: [{ sheetId: sheetId(1), achievement: 1005000, comboFlag: null, syncFlag: null }],
+      })
+      expect(replaced.status).toBe(200)
+      expect(replaced.body.job.counts).toMatchObject({ improved: 1, provenanceUpgraded: 0, unchanged: 0 })
+      expect(await record(save.id, sheetId(1))).toMatchObject({ verification: 'client_reported', revision: 2 })
+      const events = await api(user.cookie, 'GET', `/saves/${save.id}/records/${sheetId(1)}/events`)
+      expect(events.body.map((event: { kind: string }) => event.kind)).toEqual(['import_applied', 'import_applied'])
     })
   })
 

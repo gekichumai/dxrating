@@ -146,7 +146,8 @@ node dist/flag-set.js cloud_save owner@example.com off   # in the production ima
 
 ### Cloud save services (`src/services/cloud-save/`)
 
-- Every write locks the save row `FOR UPDATE` (`lockSave`) and goes through `RecordWriter` (`records.ts`): each
+- Every write locks the save row `FOR UPDATE` (`lockSave`, waits bounded by `lock_timeout` 5 s -> `CloudSaveBusy`,
+  429) and goes through `RecordWriter` (`records.ts`): each
   bumped row takes the next revision (`save.revision + k`), statements hold at most 1000 rows, and events are written
   for effective changes only (plus the domain's `superseded` event for a superseded manual edit). Ownership is always `user_id`-scoped; another user's save is a plain 404.
 - `merge.ts` applies `@gekichumai/maimai-domain` `decideImportMerge` (shared by server and client jobs, PR 6);
@@ -157,7 +158,12 @@ node dist/flag-set.js cloud_save owner@example.com off   # in the production ima
   soft-deleted > 30 days, snapshots beyond 100 per save. A transaction-scoped advisory lock keeps it to one
   instance at a time.
 - Limits (`src/services/rate-limit.ts`, in memory per instance): `rateLimit` oRPC middleware answers 429 with
-  `Retry-After`; bodies are capped at 1 MB (2 MB for `replace` / `client-imports`).
+  `Retry-After`; `writeConcurrency` lets a user run at most 2 write requests at a time (429 beyond), so waiting
+  writers cannot take the whole 5-connection pool; bodies are capped at 1 MB (2 MB for `replace` /
+  `client-imports`: a replace carries a whole save, up to 10000 records); snapshot `detail` is at most 16 deep and
+  32 KB of JSON.
+- `changes`: `since=0` is a full pull; its later pages pass `mode=full` (never reset by the tombstone horizon); the
+  last page's `nextSince` is the save's revision.
 
 ### Backup gate and rollback
 
