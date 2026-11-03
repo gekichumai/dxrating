@@ -7,6 +7,7 @@ import {
   clientImportPlan,
   entriesToImportRecords,
   ImportAlreadyRunningError,
+  ImportTooLargeError,
   NothingToImportError,
 } from '@/models/scores/cloudImports'
 import type {
@@ -114,5 +115,6 @@ export function announceImportLeftOut(result: ImportResult, t: TFunction, notify
 export function cloudImportErrorMessage(error: unknown, t: TFunction): string | null {
   if (error instanceof NothingToImportError) return t('rating-calculator:cloud-save.import.errors.nothing-to-import')
   if (error instanceof ImportAlreadyRunningError) return t('rating-calculator:cloud-save.import.errors.already-running')
+  if (error instanceof ImportTooLargeError) return t('rating-calculator:cloud-save.import.errors.too-large')
   return null
 }

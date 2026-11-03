@@ -11,6 +11,7 @@ import type { PlayEntry } from '../../../components/rating/RatingCalculatorAddEn
 import {
   autoNetImportKey,
   chunkPayloadSha256,
+  CLIENT_IMPORT_BODY_LIMIT_BYTES,
   CloudClearNotSentError,
   CloudImportHttpError,
   entriesToImportRecords,
@@ -386,6 +387,65 @@ describe('CloudScoreRepository file imports (client-imports)', () => {
     expect(repository.entries()).toHaveLength(5001)
   })
 
+  it('splits by body size too, and builds every chunk before "clear first" (5000 CJK provider IDs)', async () => {
+    server.put(SHEET_B, 990000)
+    const repository = await openRepository()
+    const order: string[] = []
+    const mutate = server.api.mutate
+    server.api.mutate = async (input) => {
+      order.push('mutate')
+      return mutate(input)
+    }
+    const client = imports.api.client
+    imports.api.client = async (input) => {
+      order.push('client')
+      return client(input)
+    }
+    // 128 three-byte characters per provider ID: 5000 of them are over the 2 MiB body limit in one request
+    const providerId = '譜'.repeat(128)
+    const ids = sheetIds(5000)
+    await repository.applyImport(
+      ids.map((sheetId) => ({ sheetId, achievementRate: 98, source: { provider: 'lxns', providerId } })),
+      { source: 'dxrating-json', mode: 'replace' },
+    )
+
+    const chunks = imports.calls.filter((call) => call.route === 'client').map((call) => call.input)
+    expect(chunks.length).toBeGreaterThan(1)
+    expect(chunks.map((chunk) => chunk.chunkIndex)).toEqual(chunks.map((_, index) => index))
+    expect(chunks.every((chunk) => chunk.chunkCount === chunks.length)).toBe(true)
+    expect(chunks.reduce((total, chunk) => total + (chunk.records as unknown[]).length, 0)).toBe(5000)
+    for (const chunk of chunks) {
+      expect(new TextEncoder().encode(JSON.stringify(chunk)).byteLength).toBeLessThanOrEqual(
+        CLIENT_IMPORT_BODY_LIMIT_BYTES,
+      )
+      expect(chunk.rawPayloadSha256).toBe(await chunkPayloadSha256(chunk.records as never))
+    }
+    expect(new Set(chunks.map((chunk) => chunk.idempotencyKey)).size).toBe(1)
+    // One clear, then every chunk
+    expect(order).toEqual(['mutate', ...chunks.map(() => 'client')])
+    expect(repository.entries()).toHaveLength(5000)
+  })
+
+  it('leaves the save untouched when the upload cannot fit in the most chunks an import takes', async () => {
+    server.put(SHEET_B, 990000)
+    const repository = await openRepository()
+    const providerId = '譜'.repeat(128)
+    const entries = sheetIds(45000).map((sheetId) => ({
+      sheetId,
+      achievementRate: 98,
+      source: { provider: 'lxns' as const, providerId },
+    }))
+
+    await expect(repository.applyImport(entries, { source: 'dxrating-json', mode: 'replace' })).rejects.toMatchObject({
+      name: 'ImportTooLargeError',
+      reason: 'too-many-chunks',
+    })
+
+    expect(server.mutateCalls).toEqual([])
+    expect(routes()).toEqual([])
+    expect(repository.entries().map((entry) => entry.sheetId)).toEqual([SHEET_B])
+  })
+
   it('sends a failed chunk again with the same key (idempotent retry)', async () => {
     const repository = await openRepository()
     imports.failures.push(new TypeError('Failed to fetch'), { status: 503, code: 'SERVICE_UNAVAILABLE' })
@@ -693,9 +753,9 @@ describe('CloudScoreRepository server imports', () => {
     expect(imports.jobs.size).toBe(1)
   })
 
-  it('attaches to the running job on 409 IMPORT_IN_PROGRESS and polls it', async () => {
+  it('never adopts an LXNS job of the same trigger: waits for it, then sends its own request again', async () => {
     const repository = await openRepository()
-    // LXNS: always the user's one linked account; the same trigger makes it the same import
+    // The linked LXNS account may have been relinked while this job ran: it may be another account's
     const running = imports.startRunning('lxns', { trigger: 'user' })
     imports.runningPolls = 2
     imports.failures.push({
@@ -704,17 +764,26 @@ describe('CloudScoreRepository server imports', () => {
       data: { reason: 'IMPORT_IN_PROGRESS', jobId: running.id },
     })
 
-    const progress = await collect(repository.runServerImport('lxns', {}))
+    const progress = await collect(repository.runServerImport('lxns', { idempotencyKey: 'key-lxns-same' }))
 
-    expect(routes()).toEqual(['lxns', 'get', 'get', 'get'])
-    expect(imports.calls.slice(1).every((call) => call.input.jobId === running.id)).toBe(true)
+    expect(routes()).toEqual(['lxns', 'get', 'get', 'get', 'lxns'])
+    expect(imports.calls.filter((call) => call.route === 'get').every((call) => call.input.jobId === running.id)).toBe(
+      true,
+    )
+    expect(imports.calls.filter((call) => call.route === 'lxns').map((call) => call.input.idempotencyKey)).toEqual([
+      'key-lxns-same',
+      'key-lxns-same',
+    ])
     expect(progress.map((item) => item.stage)).toEqual(['waiting', 'pulling', 'done'])
-    expect(progress.at(-1)?.job?.id).toBe(running.id)
+    const job = progress.at(-1)?.job
+    expect(job?.id).not.toBe(running.id)
+    expect(job?.id).toBe(imports.jobByKey.get('key-lxns-same'))
     expect(repository.entries()).toHaveLength(1)
   })
 
   it('never adopts an automatic LXNS job for a user import: waits for it, then runs its own', async () => {
     const repository = await openRepository()
+    // Another trigger, as well as possibly another linked account: never this import
     const running = imports.startRunning('lxns')
     imports.runningPolls = 1
     imports.failures.push({ status: 409, code: 'CONFLICT', data: { reason: 'IMPORT_IN_PROGRESS', jobId: running.id } })

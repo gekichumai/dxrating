@@ -687,6 +687,7 @@
     "cloud-save.import-confirm.left-out_one": "有 {{count, number}} 条记录没有对应的谱面或含有超出范围的值，无法导入，将被略过。",
     "cloud-save.import-confirm.left-out_other": "有 {{count, number}} 条记录没有对应的谱面或含有超出范围的值，无法导入，将被略过。",
     "cloud-save.import.errors.already-running": "云存档中正在进行来自该来源的另一次导入，请在其完成后重试。",
+    "cloud-save.import.errors.too-large": "该文件过大，无法一次导入。云存档未作改动。",
     "cloud-save.history.failure.generic": "未完成",
     "cloud-save.history.failure.abandoned": "中途停止",
     "cloud-save.history.failure.maintenance": "未完成：maimai NET 正在维护",

@@ -114,16 +114,102 @@ export function entriesToImportRecords(
   return { records: [...bySheetId.values()], skipped, rejected, duplicates }
 }
 
-/** Splits an upload into `client-imports` chunks of at most 5000 records (§7.3) */
-export function chunkImportRecords(records: readonly ImportRecord[]): ImportRecord[][] {
-  const chunks: ImportRecord[][] = []
-  for (let start = 0; start < records.length; start += CLOUD_SAVE_MAX_IMPORT_RECORDS) {
-    chunks.push(records.slice(start, start + CLOUD_SAVE_MAX_IMPORT_RECORDS))
+/**
+ * The most bytes one `client-imports` request body may hold: the backend takes 2 MiB on that route
+ * (`CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES`, the cloud-save body-limit middleware in `apps/backend/src/app.ts`); the
+ * rest is a safety margin.
+ */
+export const CLIENT_IMPORT_BODY_LIMIT_BYTES = Math.floor(1.9 * 1024 * 1024)
+
+/** The job fields every `client-imports` chunk repeats: the request input without `chunkIndex`, `chunkCount`, `records` */
+export interface ClientImportEnvelope {
+  id: string
+  idempotencyKey: string
+  source: string
+  trigger: string
+  sourceAccountId: string | null
+  rawPayloadSha256?: string | null
+}
+
+/** The exact JSON body of one `client-imports` request (UTF-8 bytes): what {@link chunkImportRecords} bounds */
+export function clientImportBody<E extends ClientImportEnvelope, R extends readonly ImportRecord[]>(
+  envelope: E,
+  chunk: { chunkIndex: number; chunkCount: number; records: R },
+): E & { chunkIndex: number; chunkCount: number; records: R } {
+  return { ...envelope, ...chunk }
+}
+
+const utf8 = new TextEncoder()
+function jsonBytes(value: unknown): number {
+  return utf8.encode(JSON.stringify(value)).byteLength
+}
+
+/** An upload that cannot be sent within the limits of `client-imports`; thrown before anything is cleared */
+export class ImportTooLargeError extends Error {
+  constructor(
+    readonly reason: 'record-too-large' | 'too-many-chunks',
+    message: string,
+  ) {
+    super(message)
+    this.name = 'ImportTooLargeError'
   }
+}
+
+/**
+ * Splits an upload into `client-imports` chunks (§7.3), each within both limits: at most 5000 records, and a request
+ * body (`envelope` included) of at most {@link CLIENT_IMPORT_BODY_LIMIT_BYTES} in UTF-8. Deterministic: the same
+ * records and envelope give the same chunks, so every retry of the key sends the same `chunkIndex`/`chunkCount`.
+ *
+ * Measured with the largest `chunkIndex`/`chunkCount` and a full hash in the envelope, then checked against the
+ * exact body of each chunk. Throws {@link ImportTooLargeError} when one record alone is over the limit or the
+ * upload needs more than {@link CLOUD_SAVE_MAX_IMPORT_CHUNKS} chunks.
+ */
+export function chunkImportRecords(
+  records: readonly ImportRecord[],
+  envelope: ClientImportEnvelope,
+  limitBytes: number = CLIENT_IMPORT_BODY_LIMIT_BYTES,
+): ImportRecord[][] {
+  // The body with no records: every record adds its JSON, and a comma after the first
+  const emptyBytes = jsonBytes(
+    clientImportBody(
+      { ...envelope, rawPayloadSha256: '0'.repeat(64) },
+      { chunkIndex: CLOUD_SAVE_MAX_IMPORT_CHUNKS - 1, chunkCount: CLOUD_SAVE_MAX_IMPORT_CHUNKS, records: [] },
+    ),
+  )
+  const chunks: ImportRecord[][] = []
+  let chunk: ImportRecord[] = []
+  let bytes = emptyBytes
+  for (const record of records) {
+    const recordBytes = jsonBytes(record)
+    if (emptyBytes + recordBytes > limitBytes) {
+      throw new ImportTooLargeError(
+        'record-too-large',
+        `The record of ${record.sheetId} alone is over the ${limitBytes}-byte upload limit`,
+      )
+    }
+    const added = (chunk.length ? 1 : 0) + recordBytes
+    if (chunk.length >= CLOUD_SAVE_MAX_IMPORT_RECORDS || bytes + added > limitBytes) {
+      chunks.push(chunk)
+      chunk = []
+      bytes = emptyBytes
+    }
+    bytes += (chunk.length ? 1 : 0) + recordBytes
+    chunk.push(record)
+  }
+  if (chunk.length) chunks.push(chunk)
   if (chunks.length > CLOUD_SAVE_MAX_IMPORT_CHUNKS) {
-    throw new RangeError(
-      `An import holds at most ${CLOUD_SAVE_MAX_IMPORT_CHUNKS * CLOUD_SAVE_MAX_IMPORT_RECORDS} records`,
+    throw new ImportTooLargeError(
+      'too-many-chunks',
+      `This upload needs ${chunks.length} requests; an import takes at most ${CLOUD_SAVE_MAX_IMPORT_CHUNKS}`,
     )
+  }
+  // The exact bodies, as sent
+  for (const [chunkIndex, records] of chunks.entries()) {
+    const body = clientImportBody(
+      { ...envelope, rawPayloadSha256: '0'.repeat(64) },
+      { chunkIndex, chunkCount: chunks.length, records },
+    )
+    if (jsonBytes(body) > limitBytes) throw new RangeError(`Chunk ${chunkIndex} is over the upload limit`)
   }
   return chunks
 }
@@ -170,23 +256,24 @@ export function autoNetImportKey(saveId: string, now: number = Date.now()): stri
  * Whose server import a request is, to tell it from another job of the same source the server answered 409
  * `IMPORT_IN_PROGRESS` with (another tab, another device, the automatic import):
  * - `account`: the source account the server records on the job (`sourceAccountKind`/`sourceAccountId`), when the
- *   client can know it; `'linked'` when the server resolves it from the user's one linked account (LXNS); `null`
- *   when it cannot be known, so no other job is ever this request's;
+ *   client can know it; `null` when it cannot be known, so no other job is ever this request's. LXNS is always
+ *   `null`: the server resolves it from the user's linked account, which may have been relinked to another account
+ *   while a job of the old one ran;
  * - `trigger`: `auto` never revives what the user deleted (§5.3), so a `user` request is never another `auto` job.
  */
 export interface ServerImportIdentity {
   trigger: ImportJobDTO['trigger']
-  account: { kind: SourceAccountKind; id: string } | 'linked' | null
+  account: { kind: SourceAccountKind; id: string } | null
 }
 
 /**
  * Whether `job` is the import `identity` asked for, so its result is this request's. A job whose account is not
- * known yet (a server job records it once it has fetched) or cannot be compared (a maimai NET friend code) is not:
+ * known yet (a server job records it once it has fetched) or cannot be compared (a maimai NET friend code, an LXNS
+ * linked account) is not:
  * the caller waits for it and sends its own request again.
  */
 export function isSameServerImport(job: ImportJobDTO, identity: ServerImportIdentity): boolean {
   if (job.trigger !== identity.trigger) return false
-  if (identity.account === 'linked') return true
   if (identity.account === null) return false
   return job.sourceAccountKind === identity.account.kind && job.sourceAccountId === identity.account.id
 }

@@ -687,6 +687,7 @@
     "cloud-save.import-confirm.left-out_one": "有 {{count, number}} 筆紀錄沒有對應的譜面或含有超出範圍的值，無法匯入，將被略過。",
     "cloud-save.import-confirm.left-out_other": "有 {{count, number}} 筆紀錄沒有對應的譜面或含有超出範圍的值，無法匯入，將被略過。",
     "cloud-save.import.errors.already-running": "雲端存檔中正在進行來自此來源的另一次匯入，請在完成後再試一次。",
+    "cloud-save.import.errors.too-large": "此檔案過大，無法一次匯入。雲端存檔未作變更。",
     "cloud-save.history.failure.generic": "未完成",
     "cloud-save.history.failure.abandoned": "中途停止",
     "cloud-save.history.failure.maintenance": "未完成：maimai NET 正在維護",
