@@ -153,6 +153,7 @@ export function normalizeLxnsScores(catalog: SongCatalog, rows: LxnsScoreRow[]):
           achievementRate: achievement.rate,
           comboFlag: normalizeCombo(row.fc),
           syncFlag: normalizeSync(row.fs),
+          ...dxScoreField(row.dxScore),
           source: { provider: 'lxns', providerId: row.id, providerSongName: row.songName },
         },
       }
@@ -197,6 +198,7 @@ export function normalizeMaimaiNetRecords(catalog: SongCatalog, rows: MaimaiNetR
           achievementRate: achievement.rate,
           comboFlag: extractNetCombo(row.achievement.flags),
           syncFlag: extractNetSync(row.achievement.flags),
+          ...dxScoreField(row.achievement.dxScore?.achieved),
           source: { provider: 'maimai-net', providerSongName: row.sheet.songId },
         },
       }
@@ -213,6 +215,7 @@ export interface DivingFishRow {
   title: string
   type: string
   song_id: number
+  dxScore?: number
 }
 
 export function normalizeDivingFishRows(catalog: SongCatalog, rows: DivingFishRow[]): RatingImportResult {
@@ -242,6 +245,7 @@ export function normalizeDivingFishRows(catalog: SongCatalog, rows: DivingFishRo
           achievementRate: achievement.rate,
           comboFlag: normalizeCombo(row.fc),
           syncFlag: normalizeSync(row.fs),
+          ...dxScoreField(row.dxScore),
           source: {
             provider: 'diving-fish',
             providerId: row.song_id,
@@ -485,6 +489,11 @@ function mergeSource(base: RatingEntry['source'], fallback: RatingEntry['source'
     providerSongName: base.providerSongName ?? fallback.providerSongName,
     best50Bucket: base.best50Bucket ?? fallback.best50Bucket,
   }
+}
+
+/** `{ dxScore }` when the provider reported a DX score (a non-negative integer), otherwise nothing */
+function dxScoreField(value: unknown): { dxScore?: number } {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? { dxScore: value } : {}
 }
 
 function normalizeCombo(value: string | null): ComboFlag {
