@@ -56,6 +56,8 @@ class FakeMigrationServer {
   readonly records = new Map<string, Map<string, ImportRecord>>()
   readonly jobs = new Map<string, ImportJobDTO>()
   readonly jobByKey = new Map<string, string>()
+  /** The chunks each client import job received */
+  readonly received = new Map<string, Set<number>>()
   readonly calls: { route: string; input: Record<string, unknown> }[] = []
   /** Thrown, in order, by the next calls */
   readonly failures: unknown[] = []
@@ -74,9 +76,19 @@ class FakeMigrationServer {
       const existing = this.saves.find((save) => save.clientProfileKey === input.clientProfileKey)
       if (existing) return { ...existing }
       if (this.saves.length >= this.saveLimit) {
-        throw { status: 409, code: 'CONFLICT', data: { reason: 'SAVE_LIMIT', limit: this.saveLimit } }
+        throw {
+          status: 409,
+          code: 'CONFLICT',
+          data: { reason: 'SAVE_LIMIT', limit: this.saveLimit },
+        }
       }
-      return { ...this.addSave({ name: input.name, region: input.region, clientProfileKey: input.clientProfileKey }) }
+      return {
+        ...this.addSave({
+          name: input.name,
+          region: input.region,
+          clientProfileKey: input.clientProfileKey,
+        }),
+      }
     },
     clientImport: async (input) => {
       this.call('clientImport', input)
@@ -88,14 +100,18 @@ class FakeMigrationServer {
         job = this.job(input.id, 'legacy-local', input.trigger)
         this.jobByKey.set(input.idempotencyKey, job.id)
       }
-      if (job.status === 'running') {
+      const received = this.received.get(job.id) ?? new Set<number>()
+      this.received.set(job.id, received)
+      // A chunk the job already received, or any chunk of a job that ended, answers the job as it is
+      if (job.status === 'running' && !received.has(input.chunkIndex)) {
+        received.add(input.chunkIndex)
         const records = this.records.get(input.id)!
         for (const record of input.records) {
           const current = records.get(record.sheetId)
           if (!current || current.achievement < record.achievement) records.set(record.sheetId, record)
         }
         job.counts = counts(job.counts.fetched + input.records.length)
-        if (input.chunkIndex === input.chunkCount - 1) job.status = 'succeeded'
+        if (received.size === input.chunkCount) job.status = 'succeeded'
         save.revision++
         save.recordCount = records.size
       }
@@ -104,14 +120,22 @@ class FakeMigrationServer {
     replace: async (input) => {
       this.call('replace', input)
       const save = this.saves.find((candidate) => candidate.id === input.id)!
+      // As the backend: a known key answers its job, whatever its save
+      const replayed = this.jobs.get(this.jobByKey.get(input.idempotencyKey) ?? '')
+      if (replayed) return { job: { ...replayed }, revision: save.revision }
       if (input.ifRevision !== save.revision) {
-        throw { status: 412, code: 'PRECONDITION_FAILED', data: { revision: save.revision } }
+        throw {
+          status: 412,
+          code: 'PRECONDITION_FAILED',
+          data: { revision: save.revision },
+        }
       }
       this.records.set(input.id, new Map(input.records.map((record) => [record.sheetId, record])))
       save.revision++
       save.recordCount = input.records.length
       const job = this.job(input.id, 'legacy-local', 'user')
       job.status = 'succeeded'
+      this.jobByKey.set(input.idempotencyKey, job.id)
       return { job: { ...job }, revision: save.revision }
     },
     getImportJob: async (jobId) => {
@@ -139,6 +163,17 @@ class FakeMigrationServer {
     this.saves.push(save)
     this.records.set(save.id, new Map())
     return save
+  }
+
+  /** What the server does to a client job left running for 15 minutes */
+  abandon(jobId: string) {
+    const job = this.jobs.get(jobId)!
+    job.status = 'failed'
+    job.errorCode = 'abandoned'
+  }
+
+  deleteSave(saveId: string) {
+    this.saves = this.saves.filter((save) => save.id !== saveId)
   }
 
   /** A job of another action that is still running on the save */
@@ -170,17 +205,30 @@ class FakeMigrationServer {
   }
 
   private call(route: string, input: object) {
-    this.calls.push({ route, input: structuredClone(input) as Record<string, unknown> })
+    this.calls.push({
+      route,
+      input: structuredClone(input) as Record<string, unknown>,
+    })
     if (this.failures.length) throw this.failures.shift()
   }
 }
 
 const ENTRIES: PlayEntry[] = [
-  { sheetId: SHEET_A, achievementRate: 100.5, comboFlag: 'ap', syncFlag: null, source: { provider: 'maimai-net' } },
+  {
+    sheetId: SHEET_A,
+    achievementRate: 100.5,
+    comboFlag: 'ap',
+    syncFlag: null,
+    source: { provider: 'maimai-net' },
+  },
   // Typed in by hand: no provider to claim
   { sheetId: SHEET_B, achievementRate: 99 },
   // Demo data is never synced, not even as a claim
-  { sheetId: SHEET_C, achievementRate: 98, source: { provider: 'demo' as never } },
+  {
+    sheetId: SHEET_C,
+    achievementRate: 98,
+    source: { provider: 'demo' as never },
+  },
 ]
 
 let server: FakeMigrationServer
@@ -213,16 +261,20 @@ describe('runCloudMigration: no cloud save yet', () => {
     const outcome = await migrate()
 
     expect(server.routes()).toEqual(['createSave', 'clientImport'])
-    expect(server.calls[0]!.input).toEqual({ name: 'My scores', region: 'intl', clientProfileKey: 'web-local' })
+    expect(server.calls[0]!.input).toEqual({
+      name: 'My scores',
+      region: 'intl',
+      clientProfileKey: 'web-local',
+    })
     const upload = server.calls[1]!.input
     expect(upload).toMatchObject({
       id: outcome.saveId,
-      idempotencyKey: 'migrate-device-1234-web-local',
       source: 'legacy-local',
       trigger: 'migration',
       chunkIndex: 0,
       chunkCount: 1,
     })
+    expect(upload.idempotencyKey).toMatch(/^migrate-device-1234-web-local-[0-9a-f]{16}$/)
     expect(upload.rawPayloadSha256).toMatch(/^[0-9a-f]{64}$/)
     // Each record claims its entry's provider at most; never any other provenance
     const records = upload.records as ImportRecord[]
@@ -235,11 +287,18 @@ describe('runCloudMigration: no cloud save yet', () => {
       expect(Object.keys(record)).not.toContain('verification')
       expect(Object.keys(record)).not.toContain('fetchedBy')
     }
-    expect(outcome).toMatchObject({ uploaded: 3, skipped: 0, job: { status: 'succeeded', trigger: 'migration' } })
+    expect(outcome).toMatchObject({
+      uploaded: 3,
+      skipped: 0,
+      job: { status: 'succeeded', trigger: 'migration' },
+    })
   })
 
   it('chunks more than 5000 records under one key', async () => {
-    const entries = sheetIds(5001).map((sheetId) => ({ sheetId, achievementRate: 97 }))
+    const entries = sheetIds(5001).map((sheetId) => ({
+      sheetId,
+      achievementRate: 97,
+    }))
     await migrate({ entries })
 
     const uploads = server.calls.filter((call) => call.route === 'clientImport').map((call) => call.input)
@@ -256,7 +315,10 @@ describe('runCloudMigration: no cloud save yet', () => {
     let failing = 3
     server.api.clientImport = async (input) => {
       if (failing-- > 0) {
-        server.calls.push({ route: 'clientImport', input: structuredClone(input) })
+        server.calls.push({
+          route: 'clientImport',
+          input: structuredClone(input),
+        })
         throw new TypeError('offline')
       }
       return first(input)
@@ -270,8 +332,89 @@ describe('runCloudMigration: no cloud save yet', () => {
     expect(server.saves).toHaveLength(1)
     expect(outcome.saveId).toBe(server.saves[0]!.id)
     const keys = server.calls.filter((call) => call.route === 'clientImport').map((call) => call.input.idempotencyKey)
-    expect(new Set(keys)).toEqual(new Set(['migrate-device-1234-web-local']))
+    expect(new Set(keys).size).toBe(1)
     expect(server.records.get(outcome.saveId)!.size).toBe(3)
+  })
+
+  const uploadKeys = () =>
+    server.calls.filter((call) => call.route === 'clientImport').map((call) => call.input.idempotencyKey as string)
+
+  it('resumes an interrupted chunked upload under the same key', async () => {
+    const entries = sheetIds(5001).map((sheetId) => ({
+      sheetId,
+      achievementRate: 97,
+    }))
+    const original = server.api.clientImport
+    server.api.clientImport = async (input) => {
+      if (input.chunkIndex === 1) throw { status: 400, code: 'BAD_REQUEST' }
+      return original(input)
+    }
+    await expect(migrate({ entries })).rejects.toBeTruthy()
+    server.api.clientImport = original
+
+    const outcome = await migrate({ entries })
+
+    expect(new Set(uploadKeys()).size).toBe(1)
+    expect(outcome.job?.status).toBe('succeeded')
+    expect(server.records.get(outcome.saveId)!.size).toBe(5001)
+  })
+
+  it('starts over under a new key once the interrupted upload was abandoned', async () => {
+    const entries = sheetIds(5001).map((sheetId) => ({
+      sheetId,
+      achievementRate: 97,
+    }))
+    const original = server.api.clientImport
+    server.api.clientImport = async (input) => {
+      if (input.chunkIndex === 1) throw { status: 400, code: 'BAD_REQUEST' }
+      return original(input)
+    }
+    await expect(migrate({ entries })).rejects.toBeTruthy()
+    server.api.clientImport = original
+    // The tab was closed; 15 minutes later the server gave the job up
+    const [abandoned] = server.jobs.keys()
+    server.abandon(abandoned!)
+
+    const outcome = await migrate({ entries })
+
+    const keys = uploadKeys()
+    expect(new Set(keys).size).toBe(2)
+    expect(keys.at(-1)).toMatch(/^migrate-device-1234-web-local-[0-9a-f]{16}-\w{8}$/)
+    expect(outcome.job).toMatchObject({ status: 'succeeded' })
+    expect(outcome.job?.id).not.toBe(abandoned)
+    expect(server.records.get(outcome.saveId)!.size).toBe(5001)
+
+    // And a retry after that resumes the new key, not the abandoned one
+    const sent = uploadKeys().length
+    await migrate({ entries })
+    expect(new Set(uploadKeys().slice(sent))).toEqual(new Set([keys.at(-1)]))
+  })
+
+  it('uploads again into a new save once the first one was deleted', async () => {
+    const first = await migrate()
+    server.deleteSave(first.saveId)
+
+    const second = await migrate()
+
+    expect(second.saveId).not.toBe(first.saveId)
+    expect(second.job?.id).not.toBe(first.job?.id)
+    expect(second.job?.saveId).toBe(second.saveId)
+    expect(server.records.get(second.saveId)!.size).toBe(3)
+  })
+
+  it('uploads entries added since an earlier migration', async () => {
+    const save = server.addSave({ clientProfileKey: 'web-local' })
+    const first = await migrate({ mode: 'merge', target: save })
+    const added: PlayEntry = { sheetId: sheetIds(1)[0]!, achievementRate: 97 }
+
+    const second = await migrate({
+      mode: 'merge',
+      target: save,
+      entries: [...ENTRIES, added],
+    })
+
+    expect(second.job?.id).not.toBe(first.job?.id)
+    expect(server.records.get(save.id)!.has(added.sheetId)).toBe(true)
   })
 
   it('a repeated run after success changes nothing (the job answers as it was)', async () => {
@@ -293,7 +436,11 @@ describe('runCloudMigration: no cloud save yet', () => {
     server.api.clientImport = async (input) => {
       if (!conflicted) {
         conflicted = true
-        throw { status: 409, code: 'CONFLICT', data: { reason: 'IMPORT_IN_PROGRESS', jobId: running.id } }
+        throw {
+          status: 409,
+          code: 'CONFLICT',
+          data: { reason: 'IMPORT_IN_PROGRESS', jobId: running.id },
+        }
       }
       return original(input)
     }
@@ -310,20 +457,30 @@ describe('runCloudMigration: no cloud save yet', () => {
   })
 
   it('sends nothing when no entry can be uploaded', async () => {
-    await expect(migrate({ entries: [{ sheetId: 'legacy__dxrt__x', achievementRate: 99 }] })).rejects.toBeInstanceOf(
-      NothingToImportError,
-    )
+    await expect(
+      migrate({
+        entries: [{ sheetId: 'legacy__dxrt__x', achievementRate: 99 }],
+      }),
+    ).rejects.toBeInstanceOf(NothingToImportError)
     expect(server.calls).toEqual([])
   })
 })
 
 describe('runCloudMigration: a cloud save made on another device', () => {
   it('merges into it with the same upload', async () => {
-    const save = server.addSave({ clientProfileKey: 'web-local', recordCount: 10, revision: 7 })
+    const save = server.addSave({
+      clientProfileKey: 'web-local',
+      recordCount: 10,
+      revision: 7,
+    })
     const outcome = await migrate({ mode: 'merge', target: save })
 
     expect(server.routes()).toEqual(['clientImport'])
-    expect(server.calls[0]!.input).toMatchObject({ id: save.id, trigger: 'migration', source: 'legacy-local' })
+    expect(server.calls[0]!.input).toMatchObject({
+      id: save.id,
+      trigger: 'migration',
+      source: 'legacy-local',
+    })
     expect(outcome.saveId).toBe(save.id)
   })
 
@@ -332,7 +489,12 @@ describe('runCloudMigration: a cloud save made on another device', () => {
     const outcome = await migrate({ mode: 'cloud-only', target: save })
 
     expect(server.calls).toEqual([])
-    expect(outcome).toEqual({ saveId: save.id, uploaded: 0, skipped: 0, job: null })
+    expect(outcome).toEqual({
+      saveId: save.id,
+      uploaded: 0,
+      skipped: 0,
+      job: null,
+    })
     expect(storage.getItem(CLOUD_BACKUP_STORAGE_KEY)).not.toBeNull()
     // The local save stays as the signed-out save
     expect(storage.getItem('rating-calculator-entries')).toBe(JSON.stringify(ENTRIES))
@@ -346,7 +508,7 @@ describe('runCloudMigration: a cloud save made on another device', () => {
     expect(server.calls[0]!.input).toMatchObject({
       id: save.id,
       ifRevision: 7,
-      idempotencyKey: 'migrate-replace-device-1234-web-local-r7',
+      idempotencyKey: expect.stringMatching(/^migrate-replace-device-1234-web-local-[0-9a-f]{16}-r7$/),
       source: 'legacy-local',
     })
     expect(server.records.get(save.id)!.size).toBe(3)
@@ -367,9 +529,29 @@ describe('runCloudMigration: a cloud save made on another device', () => {
     await migrate({ mode: 'replace', target: { ...seen, revision: 9 } })
     expect(server.calls.at(-1)!.input).toMatchObject({
       ifRevision: 9,
-      idempotencyKey: 'migrate-replace-device-1234-web-local-r9',
+      idempotencyKey: expect.stringMatching(/-r9$/),
     })
     expect(server.records.get(save.id)!.size).toBe(3)
+  })
+
+  it('replaces another save at the same revision as a new request', async () => {
+    const first = server.addSave({
+      clientProfileKey: 'web-local',
+      revision: 4,
+    })
+    await migrate({ mode: 'replace', target: first })
+    server.deleteSave(first.id)
+    const second = server.addSave({
+      clientProfileKey: 'web-local',
+      revision: 4,
+    })
+
+    const outcome = await migrate({ mode: 'replace', target: second })
+
+    const [a, b] = server.calls.filter((call) => call.route === 'replace').map((call) => call.input.idempotencyKey)
+    expect(a).not.toBe(b)
+    expect(outcome.job?.saveId).toBe(second.id)
+    expect(server.records.get(second.id)!.size).toBe(3)
   })
 })
 
@@ -389,9 +571,19 @@ describe('findMigrationTarget', () => {
   })
 
   it('matches the web-local save first, then the newest save of the region', () => {
-    const webLocal = save({ id: 'dsav_web', region: 'intl', clientProfileKey: 'web-local' })
-    const jpOld = save({ id: 'dsav_old', updatedAt: '2026-10-01T00:00:00.000Z' })
-    const jpNew = save({ id: 'dsav_new', updatedAt: '2026-11-02T00:00:00.000Z' })
+    const webLocal = save({
+      id: 'dsav_web',
+      region: 'intl',
+      clientProfileKey: 'web-local',
+    })
+    const jpOld = save({
+      id: 'dsav_old',
+      updatedAt: '2026-10-01T00:00:00.000Z',
+    })
+    const jpNew = save({
+      id: 'dsav_new',
+      updatedAt: '2026-11-02T00:00:00.000Z',
+    })
 
     expect(findMigrationTarget([jpOld, webLocal, jpNew], 'jp')?.id).toBe('dsav_web')
     expect(findMigrationTarget([jpOld, jpNew], 'jp')?.id).toBe('dsav_new')
@@ -404,7 +596,10 @@ describe('the local backup', () => {
   it('copies the local save with the time, once, and keeps the original', () => {
     expect(backUpLocalSaveBeforeCloud(storage, NOW)).toBe(true)
     const backup = JSON.parse(storage.getItem(CLOUD_BACKUP_STORAGE_KEY)!)
-    expect(backup).toEqual({ backedUpAt: '2026-11-03T00:00:00.000Z', value: JSON.stringify(ENTRIES) })
+    expect(backup).toEqual({
+      backedUpAt: '2026-11-03T00:00:00.000Z',
+      value: JSON.stringify(ENTRIES),
+    })
 
     // A retry keeps the first copy
     storage.setItem('rating-calculator-entries', '[]')

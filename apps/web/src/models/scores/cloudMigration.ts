@@ -18,14 +18,15 @@ import {
  * cloud save, only when they ask for it ("Back up to cloud"), never on its own.
  *
  * - No cloud save yet: `POST /saves` (idempotent through `clientProfileKey: 'web-local'`), then `client-imports`
- *   (`source: 'legacy-local'`, `trigger: 'migration'`, key `migrate-<deviceId>-web-local`), chunked. Every record is
+ *   (`source: 'legacy-local'`, `trigger: 'migration'`, key `migrate-<deviceId>-web-local-<tag>`), chunked. Every record is
  *   `client_reported` and claims the provider its entry names; the server sets the entry method (§10.3).
  * - A cloud save another device already made: merge into it the same way (the default), use the cloud save only, or,
  *   after a second confirmation, replace it with this device's save (`/replace` with `ifRevision`).
  *
  * Before anything is sent, the local save is copied to `rating-calculator-entries.pre-cloud-backup` (kept 30 days,
  * like the `.legacy-backup` of the sheet ID migration); the local save itself stays, as the save used when signed
- * out. Every step can run again: a retry reuses the same keys, and a failure leaves nothing to clean up (§10.6).
+ * out. Every step can run again: a retry of the same upload reuses its keys, and a failure leaves nothing to clean up
+ * (§10.6).
  */
 
 /** The `clientProfileKey` of the web's one local save */
@@ -87,15 +88,72 @@ function randomId(): string {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-/** The key of the migration upload: the same on every retry from this device (§10.3) */
-export const migrationImportKey = (deviceId: string) => `migrate-${deviceId}-${WEB_LOCAL_PROFILE_KEY}`
+/** The upload attempt this browser is on (its content tag and nonce), so a retry resumes it (§10.6) */
+export const MIGRATION_ATTEMPT_STORAGE_KEY = 'dxr-cloud-migration-attempt'
 
 /**
- * The key of a "replace the cloud save" from this device, at the revision the user confirmed: a retry of the same
- * confirmation reuses it, a confirmation over a newer revision is a new request
+ * The key of the migration upload: `migrate-<deviceId>-web-local-<tag>`, where the tag hashes the target save's ID
+ * and every record sent. A retry of the same upload reuses it (and resumes its chunks); a migration into another
+ * save (the first one was deleted) or with other records is a new import. `nonce`: a fresh start of the same
+ * upload after its earlier job ended without finishing (abandoned after an interruption).
  */
-export const migrationReplaceKey = (deviceId: string, ifRevision: number) =>
-  `migrate-replace-${deviceId}-${WEB_LOCAL_PROFILE_KEY}-r${ifRevision}`
+export const migrationImportKey = (deviceId: string, tag: string, nonce: string | null = null) =>
+  `migrate-${deviceId}-${WEB_LOCAL_PROFILE_KEY}-${tag}${nonce ? `-${nonce}` : ''}`
+
+/**
+ * The key of a "replace the cloud save" from this device, of that save (`saveTag`, a hash of its ID) at the revision
+ * the user confirmed: a retry of the same confirmation reuses it; a confirmation over a newer revision, or over
+ * another save, is a new request
+ */
+export const migrationReplaceKey = (deviceId: string, saveTag: string, ifRevision: number) =>
+  `migrate-replace-${deviceId}-${WEB_LOCAL_PROFILE_KEY}-${saveTag}-r${ifRevision}`
+
+/** 16 hex characters identifying `text` in a key: SHA-256 where available, else two FNV-1a hashes */
+export async function migrationKeyTag(text: string): Promise<string> {
+  const sha = await sha256Hex(text)
+  if (sha) return sha.slice(0, 16)
+  let a = 0x811c9dc5
+  let b = 0x01000193
+  for (let index = 0; index < text.length; index++) {
+    const code = text.charCodeAt(index)
+    a = Math.imul(a ^ code, 0x01000193) >>> 0
+    b = Math.imul(b ^ code, 0x811c9dc5) >>> 0
+  }
+  return a.toString(16).padStart(8, '0') + b.toString(16).padStart(8, '0')
+}
+
+interface MigrationAttempt {
+  tag: string
+  nonce: string | null
+}
+
+/** The nonce of the stored attempt with this tag; another tag starts a new attempt (without a nonce) */
+function resumeAttempt(storage: Storage | null, tag: string): MigrationAttempt {
+  try {
+    const parsed = JSON.parse(storage?.getItem(MIGRATION_ATTEMPT_STORAGE_KEY) ?? 'null') as Partial<MigrationAttempt>
+    if (
+      parsed?.tag === tag &&
+      (parsed.nonce === null || (typeof parsed.nonce === 'string' && /^\w{1,16}$/.test(parsed.nonce)))
+    ) {
+      return { tag, nonce: parsed.nonce }
+    }
+  } catch {
+    // Unreadable: a new attempt
+  }
+  const attempt = { tag, nonce: null }
+  saveAttempt(storage, attempt)
+  return attempt
+}
+
+function saveAttempt(storage: Storage | null, attempt: MigrationAttempt) {
+  try {
+    storage?.setItem(MIGRATION_ATTEMPT_STORAGE_KEY, JSON.stringify(attempt))
+  } catch {
+    // A refused storage: this page still uses it
+  }
+}
+
+const newNonce = () => randomId().replace(/-/g, '').slice(0, 8)
 
 // --- The local backup ---
 
@@ -135,7 +193,10 @@ export function backUpLocalSaveBeforeCloud(storage: Storage | null, now: number 
     if (value === null) return false
     const existing = readCloudBackup(storage)
     if (existing && !isExpired(existing, now)) return true
-    const backup: CloudBackup = { backedUpAt: new Date(now).toISOString(), value }
+    const backup: CloudBackup = {
+      backedUpAt: new Date(now).toISOString(),
+      value,
+    }
     storage.setItem(CLOUD_BACKUP_STORAGE_KEY, JSON.stringify(backup))
     return true
   } catch {
@@ -281,17 +342,23 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
   if (mode === 'replace') {
     const target = options.target
     if (!target) throw new Error('No cloud save to replace')
+    const saveTag = await migrationKeyTag(target.id)
     try {
       const result = await withRetries(() =>
         api.replace({
           id: target.id,
           ifRevision: target.revision,
-          idempotencyKey: migrationReplaceKey(options.deviceId, target.revision),
+          idempotencyKey: migrationReplaceKey(options.deviceId, saveTag, target.revision),
           source: 'legacy-local',
           records,
         }),
       )
-      return { saveId: target.id, uploaded: records.length, skipped, job: result.job }
+      return {
+        saveId: target.id,
+        uploaded: records.length,
+        skipped,
+        job: result.job,
+      }
     } catch (error) {
       if (isPreconditionFailed(error)) {
         const revision = Number(field(field(error, 'data'), 'revision'))
@@ -309,7 +376,11 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
     try {
       // Idempotent: a retry, or another tab doing the same, gets the save the first request made
       const save = await withRetries(() =>
-        api.createSave({ name: options.name, region: options.region, clientProfileKey: WEB_LOCAL_PROFILE_KEY }),
+        api.createSave({
+          name: options.name,
+          region: options.region,
+          clientProfileKey: WEB_LOCAL_PROFILE_KEY,
+        }),
       )
       saveId = save.id
     } catch (error) {
@@ -318,36 +389,52 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
     }
   }
 
-  const idempotencyKey = migrationImportKey(options.deviceId)
   const chunks = chunkImportRecords(records)
-  let result: ImportResultDTO | null = null
-  for (const [chunkIndex, chunk] of chunks.entries()) {
-    const rawPayloadSha256 = await sha256Hex(canonicalImportBody(chunk))
-    for (let attempt = 1; ; attempt++) {
-      try {
-        result = await withRetries(() =>
-          api.clientImport({
-            id: saveId,
-            idempotencyKey,
-            source: 'legacy-local',
-            trigger: 'migration',
-            rawPayloadSha256,
-            chunkIndex,
-            chunkCount: chunks.length,
-            records: chunk,
-          }),
-        )
-        break
-      } catch (error) {
-        // Another import of the save is running (another tab, another device): wait for it, then send this chunk
-        const running = importInProgressJobId(error)
-        if (!running || attempt >= ATTEMPTS) throw error
-        await waitForJob(running)
+  const hashes = await Promise.all(chunks.map((chunk) => sha256Hex(canonicalImportBody(chunk))))
+  const attempt = resumeAttempt(storage, await migrationKeyTag(`${saveId}\n${canonicalImportBody(records)}`))
+
+  /** Sends every chunk under the attempt's key; stops early when the key's job already ended (a replay) */
+  const upload = async (): Promise<ImportJobDTO> => {
+    const idempotencyKey = migrationImportKey(options.deviceId, attempt.tag, attempt.nonce)
+    let job: ImportJobDTO | null = null
+    for (const [chunkIndex, chunk] of chunks.entries()) {
+      for (let tries = 1; ; tries++) {
+        try {
+          const result = await withRetries(() =>
+            api.clientImport({
+              id: saveId,
+              idempotencyKey,
+              source: 'legacy-local',
+              trigger: 'migration',
+              rawPayloadSha256: hashes[chunkIndex] ?? null,
+              chunkIndex,
+              chunkCount: chunks.length,
+              records: chunk,
+            }),
+          )
+          job = result.job
+          break
+        } catch (error) {
+          // Another import of the save is running (another tab, another device): wait for it, then send this chunk
+          const running = importInProgressJobId(error)
+          if (!running || tries >= ATTEMPTS) throw error
+          await waitForJob(running)
+        }
       }
+      if (job.status !== 'running') break
     }
+    if (job!.status === 'running') job = await waitForJob(job!.id)
+    return job!
   }
-  let job = result!.job
-  if (job.status === 'running') job = await waitForJob(job.id)
+
+  let job = await upload()
+  if (job.status === 'failed') {
+    // The key's job ended unfinished (an interrupted upload abandoned by the server): start this upload over under
+    // a new key, once; merging keeps the best, so records the old job applied are harmless to send again
+    attempt.nonce = newNonce()
+    saveAttempt(storage, attempt)
+    job = await upload()
+  }
   if (job.status === 'failed') throw new ServerImportFailedError(job.errorCode ?? 'failed', job)
   return { saveId, uploaded: records.length, skipped, job }
 }
