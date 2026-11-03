@@ -94,4 +94,26 @@ describe('UserProfileModal', () => {
     expect(await screen.findByRole('region', { name: 'Saves' })).toBeTruthy()
     expect((await screen.findAllByText('Main card')).length).toBeGreaterThan(0)
   })
+
+  it('on phones, scrolls the section tabs sideways instead of squeezing four labels into one row', () => {
+    const width = window.innerWidth
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
+    try {
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      const { ui } = createDemoCloudSave(getSongCatalog(catalogSnapshot, VersionEnum.PRiSMPLUS))
+      render(
+        <QueryClientProvider client={queryClient}>
+          <CloudSaveUiContext.Provider value={ui}>
+            <UserProfileModal open onClose={() => {}} />
+          </CloudSaveUiContext.Provider>
+        </QueryClientProvider>,
+      )
+      const tab = screen.getByRole('button', { name: 'Cloud save' })
+      expect(tab.className).toContain('whitespace-nowrap')
+      expect(tab.parentElement?.className).toContain('overflow-x-auto')
+      expect(tab.parentElement?.children).toHaveLength(4)
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
+    }
+  })
 })

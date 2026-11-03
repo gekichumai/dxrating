@@ -146,6 +146,34 @@ describe('SyncStatusIndicator', () => {
     expect(button?.getAttribute('data-sync-state')).toBe(state)
   })
 
+  it('marks the issue count with white text on a fill dark enough to read', () => {
+    const { ui } = demo()
+    const { container } = render(<SyncStatusIndicator />, { wrapper: withCloud(ui) })
+    const badge = container.querySelector('.bg-amber-700')
+    expect(badge?.textContent).toBe('3')
+    expect(container.querySelector('.bg-amber-500')).toBeNull()
+  })
+
+  it('keeps the cloud still while syncing (no rotating glyph)', () => {
+    const { ui } = demo('syncing')
+    const { container } = render(<SyncStatusIndicator />, { wrapper: withCloud(ui) })
+    expect(container.querySelector('.cloud-save-pulse')).not.toBeNull()
+    expect(container.querySelector('.cloud-save-spin')).toBeNull()
+  })
+
+  it('announces offline, errors and issues in a live region, not every sync', () => {
+    for (const [state, text] of [
+      ['syncing', '3 sync issues'],
+      ['offline', 'Offline, 3 sync issues'],
+      ['error', "Can't sync right now, 3 sync issues"],
+    ] as const) {
+      const { ui } = demo(state)
+      const { unmount } = render(<SyncStatusIndicator />, { wrapper: withCloud(ui) })
+      expect(screen.getByRole('status').textContent).toBe(text)
+      unmount()
+    }
+  })
+
   it('opens the sync issues', () => {
     const { ui } = demo('offline')
     render(<SyncStatusIndicator />, { wrapper: withCloud(ui) })
@@ -179,10 +207,23 @@ describe('SaveSelector', () => {
     await waitFor(() => expect(screen.getAllByRole('button')[1]?.getAttribute('aria-current')).toBe('true'))
   })
 
-  it('says so when the saves cannot load', async () => {
+  it('says so when the saves cannot load, and loads them again on "Try again"', async () => {
     const { ui } = demo()
-    render(<SaveSelector />, { wrapper: withCloud({ ...ui, listSaves: () => Promise.reject(new Error('offline')) }) })
-    expect(await screen.findByText("Couldn't load your saves. Try again later.")).toBeTruthy()
+    const listSaves = vi.fn(ui.listSaves).mockRejectedValueOnce(new Error('offline'))
+    render(<SaveSelector />, { wrapper: withCloud({ ...ui, listSaves }) })
+    expect((await screen.findByRole('alert')).textContent).toBe("Couldn't load your saves.")
+
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findAllByRole('button', { current: true })).toHaveLength(1)
+    expect(listSaves).toHaveBeenCalledTimes(2)
+  })
+
+  it('says when there are no saves yet', async () => {
+    const { ui } = demo()
+    render(<SaveSelector />, { wrapper: withCloud({ ...ui, listSaves: async () => [] }) })
+    expect(await screen.findByText('No cloud saves yet.')).toBeTruthy()
+    expect(screen.queryByRole('list')).toBeNull()
   })
 })
 
@@ -197,7 +238,21 @@ describe('ImportHistoryList', () => {
     expect(items[0]?.textContent).toContain('3 new · 5 improved · 1278 unchanged · 1 kept your edit')
     expect(items[1]?.textContent).toContain('210 now verified')
     expect(items[2]?.textContent).toContain('20 unknown charts')
-    expect(items[3]?.textContent).toContain('Failed (INVALID_CREDENTIALS)')
+    // In words, never the bare code
+    expect(items[3]?.textContent).toContain('Failed: Unable to sign in. Check your SEGA ID and password.')
+    expect(items[3]?.textContent).not.toContain('INVALID_CREDENTIALS')
+  })
+
+  it('loads the history again on "Try again" after a failure', async () => {
+    const { repository, ui } = demo()
+    const listImportJobs = vi.spyOn(repository, 'listImportJobs').mockRejectedValueOnce(new Error('offline'))
+    render(<ImportHistoryList />, { wrapper: withCloud(ui) })
+    expect((await screen.findByRole('alert')).textContent).toBe("Couldn't load the import history.")
+
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findAllByRole('listitem')).toHaveLength(4)
+    expect(listImportJobs).toHaveBeenCalledTimes(2)
   })
 })
 

@@ -74,9 +74,15 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
         isLargeDevice ? 'w-56 shrink-0 p-6 pr-4 justify-between' : 'flex-row gap-2 p-3 pb-2',
       )}
     >
-      <div className={clsx('flex flex-col gap-4', !isLargeDevice && 'flex-row gap-2 flex-1')}>
+      <div className={clsx('flex flex-col gap-4', !isLargeDevice && 'flex-row gap-2 flex-1 min-w-0')}>
         {isLargeDevice && <h1 className="text-xl font-bold m-0 px-3">{t('auth:user-profile.title')}</h1>}
-        <div className={clsx('flex flex-col gap-0.5', !isLargeDevice && 'flex-row gap-1')}>
+        {/* Phones: one row that scrolls sideways when the labels do not fit (four sections, long CJK labels) */}
+        <div
+          className={clsx(
+            'flex flex-col gap-0.5',
+            !isLargeDevice && 'flex-row gap-1 flex-1 min-w-0 overflow-x-auto overscroll-x-contain',
+          )}
+        >
           {sections.map(({ key, icon: Icon, labelKey }) => (
             <button
               key={key}
@@ -87,7 +93,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
                 activeSection === key
                   ? 'bg-zinc-200/70 dark:bg-zinc-700/70 text-zinc-900 dark:text-white'
                   : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-700 dark:hover:text-zinc-300',
-                !isLargeDevice && 'flex-1 justify-center',
+                !isLargeDevice && 'flex-1 justify-center whitespace-nowrap',
               )}
             >
               <Icon className="text-base" />

@@ -37,6 +37,10 @@ export const SyncStatusIndicator: FC = () => {
   const issuesText =
     issues.length > 0 ? t('rating-calculator:cloud-save.status.issues', { count: issues.length }) : null
   const label = [t('rating-calculator:cloud-save.title'), stateText, pendingText, issuesText].filter(Boolean).join(', ')
+  // Announced when it changes: a sync that stopped working and new issues, not every "Syncing…"
+  const announcement = [state === 'offline' || state === 'error' ? stateText : null, issuesText]
+    .filter(Boolean)
+    .join(', ')
 
   return (
     <>
@@ -50,7 +54,7 @@ export const SyncStatusIndicator: FC = () => {
         className="cloud-save-status-button relative mr-1 flex h-9 min-w-9 items-center justify-center gap-1 rounded-full bg-white/35 px-2 text-black/75"
         data-sync-state={state}
       >
-        <Icon className={clsx('size-5', state === 'syncing' && 'cloud-save-spin')} aria-hidden />
+        <Icon className={clsx('size-5', state === 'syncing' && 'cloud-save-pulse')} aria-hidden />
         {pendingCount > 0 && (
           <span className="text-xs font-semibold tabular-nums" aria-hidden>
             {pendingCount}
@@ -58,13 +62,14 @@ export const SyncStatusIndicator: FC = () => {
         )}
         {issues.length > 0 && (
           <span
-            className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[0.625rem] font-bold leading-none text-white shadow-sm tabular-nums"
+            className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-700 px-1 text-[0.625rem] font-bold leading-none text-white shadow-sm tabular-nums"
             aria-hidden
           >
             {issues.length}
           </span>
         )}
       </ButtonBase>
+      <output className="sr-only">{announcement}</output>
 
       <Popover
         id={popoverId}

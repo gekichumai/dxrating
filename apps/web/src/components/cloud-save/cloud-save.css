@@ -35,14 +35,15 @@
   outline-offset: 2px;
 }
 
+/* Syncing: the cloud stays put and breathes; a rotating cloud outline reads as a broken icon */
 @media (prefers-reduced-motion: no-preference) {
-  .cloud-save-spin {
-    animation: cloud-save-spin 1.2s linear infinite;
+  .cloud-save-pulse {
+    animation: cloud-save-pulse 1.6s ease-in-out infinite;
   }
 }
 
-@keyframes cloud-save-spin {
-  to {
-    transform: rotate(360deg);
+@keyframes cloud-save-pulse {
+  50% {
+    opacity: 0.4;
   }
 }
