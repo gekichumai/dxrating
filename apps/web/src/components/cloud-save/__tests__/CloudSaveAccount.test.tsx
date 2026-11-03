@@ -1,7 +1,7 @@
 import type { ImportJobDTO, SaveDTO, UserFeatures } from '@gekichumai/api-contract'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import i18n from 'i18next'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, StrictMode, useState } from 'react'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
 import { type ActiveSave, ActiveSaveContext } from '@/models/scores/ActiveSaveContext'
@@ -227,6 +227,24 @@ describe('CloudMigrationDialog: no cloud save yet', () => {
     })
     expect(captured()[2]!.properties).toEqual({ via: 'migration' })
     expectNoIdentifiers()
+  })
+
+  it('leaves the loading step under StrictMode (its effects run twice in dev)', async () => {
+    const api = migrationApi()
+    render(
+      <StrictMode>
+        <CloudMigrationDialog
+          open
+          onClose={vi.fn()}
+          entries={ENTRIES}
+          region="intl"
+          api={api}
+          storage={window.localStorage}
+          onActivate={vi.fn()}
+        />
+      </StrictMode>,
+    )
+    expect(await screen.findByRole('button', { name: 'Back up to cloud' })).toBeTruthy()
   })
 
   it('offers a retry with the same key after a failure, and reports the failure by code only', async () => {

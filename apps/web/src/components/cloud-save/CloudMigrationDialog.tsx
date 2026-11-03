@@ -112,12 +112,13 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
   const deviceId = useMemo(() => getDeviceId(storage), [storage])
   const headingRef = useRef<HTMLHeadingElement>(null)
   const mounted = useRef(true)
-  useEffect(
-    () => () => {
+  // Set again on every mount: StrictMode (dev) runs the cleanup once before the real mount
+  useEffect(() => {
+    mounted.current = true
+    return () => {
       mounted.current = false
-    },
-    [],
-  )
+    }
+  }, [])
 
   const loadSaves = useCallback(
     async (changed = false) => {
