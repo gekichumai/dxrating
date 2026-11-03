@@ -80,6 +80,8 @@ export interface SyncIssue {
     op: 'set' | 'delete'
     value?: { achievement: number; comboFlag: ComboFlag | null; syncFlag: SyncFlag | null; dxScore?: number | null }
     entryMethod: ManualEntryMethod
+    /** Device clock, when the user made the change (it may have been sent much later) */
+    clientEditedAt?: string
   }
   /** Device clock, when the issue was recorded */
   createdAt: string

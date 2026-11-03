@@ -228,7 +228,7 @@ export class CloudScoreRepository implements WebScoreRepository {
 
   /** Opens the user's database and loads the cached save; call {@link start} to begin syncing */
   static async open(options: CloudScoreRepositoryOptions): Promise<CloudScoreRepository> {
-    const database = await CloudScoreDatabase.open(options.userId, options.indexedDB)
+    const database = await CloudScoreDatabase.open(options.userId, options.saveId, options.indexedDB)
     const repository = new CloudScoreRepository(database, options)
     await repository.reload()
     return repository
@@ -373,8 +373,7 @@ export class CloudScoreRepository implements WebScoreRepository {
     if (change) {
       this.enqueue([change], [issueId])
     } else {
-      this.persist((database) => database.write({ deleteIssues: [issueId] })).catch(() => {})
-      this.refresh()
+      this.forgetIssue(issueId)
     }
   }
 
@@ -382,8 +381,16 @@ export class CloudScoreRepository implements WebScoreRepository {
   dismissIssue(issueId: string): void {
     if (!this.saveIssues().some((issue) => issue.id === issueId)) return
     this.issues = this.issues.filter((issue) => issue.id !== issueId)
-    this.persist((database) => database.write({ deleteIssues: [issueId] })).catch(() => {})
+    this.forgetIssue(issueId)
+  }
+
+  /** Deletes an issue the way an issue applied again is: a reload that read it before the write never brings it back */
+  private forgetIssue(issueId: string) {
+    this.unsavedIssueDeletions.add(issueId)
     this.refresh()
+    this.persistUnsaved().catch((error: unknown) => {
+      console.warn('[cloud-save] Could not forget the issue, retrying with the next sync', error)
+    })
   }
 
   // --- Sync ---
@@ -766,17 +773,10 @@ export class CloudScoreRepository implements WebScoreRepository {
   /** Reads everything back from IndexedDB (other tabs write there too) */
   private reload(): Promise<void> {
     return this.persist(async (database) => {
+      // The cache of this save only: another tab on another save of the same user keeps its own
       const snapshot = await database.read()
-      if (snapshot.meta.saveId !== this.saveId) {
-        // The cache holds another save: start this one from scratch (the other save's outbox entries stay)
-        this.serverRecords = new Map()
-        this.meta = { saveId: this.saveId, lastSyncedRevision: 0 }
-        const meta = this.meta
-        await database.write({ replaceRecords: true, meta })
-      } else {
-        this.serverRecords = new Map(snapshot.records.map((record) => [record.sheetId, record]))
-        this.meta = snapshot.meta
-      }
+      this.serverRecords = new Map(snapshot.records.map((record) => [record.sheetId, record]))
+      this.meta = snapshot.meta
       // Changes queued in this tab whose write has not landed yet stay on top (after the stored ones)
       const stored = new Set(snapshot.outbox.map((entry) => entry.mutationId))
       const unsaved = this.outbox.filter((entry) => this.unsaved.has(entry.mutationId) && !stored.has(entry.mutationId))
@@ -928,6 +928,7 @@ function issueOf(entry: OutboxEntry, kind: SyncIssue['kind'], reason: string | n
       op: entry.op,
       ...(entry.value ? { value: entry.value } : {}),
       entryMethod: entry.entryMethod,
+      clientEditedAt: entry.clientEditedAt,
     },
     createdAt: new Date().toISOString(),
   }
