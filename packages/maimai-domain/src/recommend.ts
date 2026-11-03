@@ -1,13 +1,15 @@
 /** Rating-raise suggestions (上分推荐): charts where a reachable achievement step beats the B50 floor */
 import type { VersionEnum } from '@gekichumai/dxdata'
-import { type Best50Result, calculateRatingAward, isB15Sheet, isB35Sheet } from './best50.ts'
-import type { ComboFlag, Region, VersionedSheet } from './types'
+import { type Best50Result, calculateRatingAward, resolveBest50Bucket } from './best50.ts'
+import type { ComboFlag, RatingEntry, Region, VersionedSheet } from './types'
 
 export const RECOMMEND_TARGETS = [97, 98, 99, 99.5, 100, 100.5] as const
 
 export interface RecommendRecord {
   achievementRate: number
   comboFlag?: ComboFlag
+  /** Import metadata; a CN Diving Fish bucket hint decides the bucket as in `calculateBest50` */
+  source?: RatingEntry['source']
 }
 
 export interface RatingRecommendation {
@@ -45,7 +47,10 @@ export function recommendRatingRaises({
   limit?: number
 }): RatingRecommendation[] {
   const inBest = new Map(
-    [...best50.b15, ...best50.b35].map((entry) => [entry.entry.sheetId, entry.rating.ratingAwardValue]),
+    [...best50.b15, ...best50.b35].map((entry) => [
+      entry.entry.sheetId,
+      { rating: entry.rating.ratingAwardValue, bucket: entry.bucket! },
+    ]),
   )
   const floor = (bucket: 'b15' | 'b35') => {
     const list = best50[bucket]
@@ -58,22 +63,22 @@ export function recommendRatingRaises({
     if (!sheet.isRatingEligible) continue
     if (region !== '_generic' && !sheet.serverIds.includes(region)) continue
     if (sheet.internalLevelValue < minLevel || sheet.internalLevelValue > maxLevel) continue
-    const bucket = isB15Sheet(sheet.version, version, region)
-      ? 'b15'
-      : isB35Sheet(sheet.version, version, region)
-        ? 'b35'
-        : null
-    if (!bucket) continue
     const record = records.get(sheet.id)
+    const best = inBest.get(sheet.id)
+    // A chart in B50 stays in its bucket; otherwise the same rule as calculateBest50 (provider hints included)
+    const bucket = best?.bucket ?? resolveBest50Bucket(sheet.version, version, region, record?.source)
+    if (!bucket) continue
     const current = record?.achievementRate ?? null
+    // An existing AP / AP+ keeps its bonus point; no bonus is assumed for charts without one
+    const comboFlag = record?.comboFlag
     const currentRating = record
-      ? calculateRatingAward(sheet.internalLevelValue, record.achievementRate).ratingAwardValue
+      ? calculateRatingAward(sheet.internalLevelValue, record.achievementRate, comboFlag).ratingAwardValue
       : 0
-    const baseline = inBest.get(sheet.id) ?? floors[bucket]
+    const baseline = best?.rating ?? floors[bucket]
     for (const target of targets) {
       if (current !== null && current >= target) continue
-      const targetRating = calculateRatingAward(sheet.internalLevelValue, target).ratingAwardValue
-      const gain = targetRating - Math.max(baseline, inBest.has(sheet.id) ? 0 : currentRating)
+      const targetRating = calculateRatingAward(sheet.internalLevelValue, target, comboFlag).ratingAwardValue
+      const gain = targetRating - Math.max(baseline, best ? 0 : currentRating)
       if (gain > 0) {
         result.push({
           sheet,

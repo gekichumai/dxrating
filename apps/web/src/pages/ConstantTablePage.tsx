@@ -135,7 +135,7 @@ export const ConstantTablePage: FC<{ table: ConstantTable }> = ({ table }) => {
                       <td className="px-4 py-1.5 text-right tabular-nums hidden sm:table-cell">{chart.ratingSss}</td>
                       {overlay.active && (
                         <td className="pl-2 pr-4 py-1.5 text-right">
-                          <CompletionBadges record={overlay.records.get(chart.sheetId)?.entry} />
+                          <CompletionBadges record={overlay.records.get(chart.sheetId)?.best} />
                         </td>
                       )}
                     </tr>

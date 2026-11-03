@@ -205,6 +205,19 @@ function isOnServer(sheet: Sheet, region: PlateRegion): boolean {
   return sheet.serverIds.includes(region)
 }
 
+/** maimai DX launch (JP): a Re:MASTER released on or after it was added in the DX era */
+const DX_LAUNCH_DATE = '2019-07-11'
+
+/**
+ * Whether a Re:MASTER is part of the in-game `舞ReMASTER` list. dxdata keeps the song's SD version on a Re:MASTER
+ * added in the DX era (`JACKY [Remix]`, `源平大戦絵巻テーマソング`, ...), so the version alone is not enough: the
+ * sheet's release date, when known, must also predate DX. Checked against YuzuChaN's `舞ReMASTER` list.
+ */
+function isSdEraRemaster(sheet: Sheet, region: PlateRegion): boolean {
+  if (!SD_VERSION_SET.has(sheetVersionOn(sheet, region))) return false
+  return !sheet.releaseDate || sheet.releaseDate < DX_LAUNCH_DATE
+}
+
 /** One song chart set (a song's SD or DX charts) and the sheets of it a plate needs */
 export interface PlateChart {
   song: Song
@@ -230,10 +243,7 @@ export function buildPlateCharts(songs: readonly Song[], group: PlateVersionGrou
       const version = earliestVersion(base.map((sheet) => sheetVersionOn(sheet, region)))
       if (!versions.has(version)) continue
       const remaster = group.includesRemaster
-        ? sheets.filter(
-            (sheet) =>
-              sheet.difficulty === DifficultyEnum.ReMaster && SD_VERSION_SET.has(sheetVersionOn(sheet, region)),
-          )
+        ? sheets.filter((sheet) => sheet.difficulty === DifficultyEnum.ReMaster && isSdEraRemaster(sheet, region))
         : []
       charts.push({ song, type, version, requiredSheets: [...sortByDifficulty(base), ...remaster] })
     }
@@ -274,6 +284,26 @@ function sortByDifficulty(sheets: Sheet[]): Sheet[] {
   return [...sheets].sort((a, b) => BASE_DIFFICULTIES.indexOf(a.difficulty) - BASE_DIFFICULTIES.indexOf(b.difficulty))
 }
 
+const plateChartsCache = new WeakMap<readonly Song[], Map<PlateVersionGroup, Map<PlateRegion, PlateChart[]>>>()
+
+/**
+ * `buildPlateCharts`, cached per song list, group and region: the chart sets only depend on the catalog, so
+ * evaluating every plate (home summary, plate list) scans the catalog once per group instead of once per call.
+ */
+export function getPlateCharts(
+  songs: readonly Song[],
+  group: PlateVersionGroup,
+  region: PlateRegion,
+): readonly PlateChart[] {
+  let byGroup = plateChartsCache.get(songs)
+  if (!byGroup) plateChartsCache.set(songs, (byGroup = new Map()))
+  let byRegion = byGroup.get(group)
+  if (!byRegion) byGroup.set(group, (byRegion = new Map()))
+  let charts = byRegion.get(region)
+  if (!charts) byRegion.set(region, (charts = buildPlateCharts(songs, group, region)))
+  return charts
+}
+
 export interface PlateSheetProgress {
   sheet: Sheet
   record: PlateRecord | undefined
@@ -309,7 +339,7 @@ export function evaluatePlate({
   region: PlateRegion
   records: ReadonlyMap<string, PlateRecord>
 }): PlateProgress {
-  const charts = buildPlateCharts(songs, plate.group, region).map((chart): PlateChartProgress => {
+  const charts = getPlateCharts(songs, plate.group, region).map((chart): PlateChartProgress => {
     const sheets = chart.requiredSheets.map((sheet) => {
       const record = records.get(sheet.id)
       return { sheet, record, met: meetsPlateCondition(plate.kind, record) }

@@ -1,4 +1,5 @@
 import { CategoryEnum, DifficultyEnum, type Sheet, type Song, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
+import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { describe, expect, it } from 'vitest'
 import {
   buildPlateCharts,
@@ -161,5 +162,32 @@ describe('evaluatePlate', () => {
     const sho = evaluatePlate({ songs, plate: findPlate('cn', 'kuma-sho')!, region: 'cn', records })
     expect(sho.completedCharts).toBe(1)
     expect(sho.completedSheets).toBe(5)
+  })
+})
+describe('舞ReMASTER membership on the bundled snapshot', () => {
+  const mai = getPlateVersionGroups('jp').find((x) => x.id === 'mai')!
+  const charts = buildPlateCharts(catalogSnapshot.songs, mai, 'jp')
+  const required = new Set(charts.flatMap((c) => c.requiredSheets.map((sheet) => sheet.id)))
+  it('excludes DX-era Re:MASTERs that keep the SD song version', () => {
+    // JACKY [Remix] (2020) and 源平大戦絵巻テーマソング (2022): version `maimai`, not in the in-game 舞ReMASTER list
+    expect(required.has('dsht_dwpg7aq3ar')).toBe(false)
+    expect(required.has('dsht_zr62nhjq85')).toBe(false)
+    const jacky = charts.find((c) => c.requiredSheets.some((sheet) => sheet.id === 'dsht_dwpg7aq3ar'))
+    expect(jacky).toBeUndefined()
+  })
+  it('keeps SD-era Re:MASTERs', () => {
+    // POP TEAM EPIC / ようこそジャパリパークへ Re:MASTER: released in the SD era
+    const sdRemasters = catalogSnapshot.songs.flatMap((song) =>
+      song.sheets.filter(
+        (sheet) =>
+          sheet.difficulty === DifficultyEnum.ReMaster &&
+          sheet.serverIds.includes('jp') &&
+          sheet.releaseDate !== undefined &&
+          sheet.releaseDate < '2019-07-11' &&
+          ['maimai', 'MiLK PLUS', 'FiNALE'].includes(sheet.version),
+      ),
+    )
+    expect(sdRemasters.length).toBeGreaterThan(0)
+    for (const sheet of sdRemasters) expect(required.has(sheet.id)).toBe(true)
   })
 })
