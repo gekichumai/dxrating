@@ -102,4 +102,44 @@ describe('credential hygiene', () => {
     expect(calls).toEqual([[{ body: { id: FILTERED, password: FILTERED, region: 'jp' } }]])
     expect(logger.getContext()).toEqual({ ok: true })
   })
+
+  it('scrubs credential query parameters in span data, trace data and breadcrumb queries', () => {
+    const callback = '/api/v1/io/import/lxns/oauth_callback?code=OAUTHCODE&state=STATEVAL'
+    const event = scrubSentryEvent({
+      transaction: 'GET /api/v1/io/import/lxns/oauth_callback',
+      request: { url: `https://miruku.dxrating.net${callback}` },
+      contexts: {
+        trace: {
+          data: {
+            'http.target': callback,
+            'http.url': `https://miruku.dxrating.net${callback}`,
+            'url.full': `https://miruku.dxrating.net${callback}`,
+          },
+        },
+      },
+      spans: [
+        {
+          description: 'GET https://maimaidx-eng.com/maimai-mobile/?ssid=SECRETSESSION123',
+          data: {
+            'url.full': 'https://maimaidx-eng.com/maimai-mobile/?ssid=SECRETSESSION123',
+            'url.query': '?ssid=SECRETSESSION123',
+            'http.query': 'ssid=SECRETSESSION123',
+          },
+        },
+      ],
+    })
+    const text = JSON.stringify(event)
+    for (const secret of ['OAUTHCODE', 'STATEVAL', 'SECRETSESSION123']) expect(text).not.toContain(secret)
+    expect(event.contexts.trace.data['http.target']).toBe(
+      `/api/v1/io/import/lxns/oauth_callback?code=${FILTERED}&state=${FILTERED}`,
+    )
+    expect(event.spans[0]!.data['url.query']).toBe(`?ssid=${FILTERED}`)
+
+    const crumb = scrubSentryBreadcrumb({
+      data: { url: 'https://maimaidx-eng.com/maimai-mobile/', 'http.query': '?ssid=SECRETSESSION123' },
+    })
+    expect(crumb.data).toEqual({ url: 'https://maimaidx-eng.com/maimai-mobile/', 'http.query': `?ssid=${FILTERED}` })
+    // a parameter merely ending in a credential name stays
+    expect(scrubUrl('/x?zipcode=1&ssid=a')).toBe(`/x?zipcode=1&ssid=${FILTERED}`)
+  })
 })

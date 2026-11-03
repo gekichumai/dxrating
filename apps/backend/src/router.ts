@@ -431,6 +431,7 @@ const aliasesHandler = {
 }
 
 import { withMaimaiNETClient } from './lib/functions/client'
+import { holdCredentials } from './lib/credential-hygiene'
 import * as lxnsService from './services/lxns/index'
 
 const TrendingSeriesSchema = Schema.Struct({
@@ -859,15 +860,21 @@ const maimaiHandler = {
   fetchRecords: os.maimai.fetchRecords.handler(
     handlerGen(function* ({ input }) {
       const { id, password, region } = input
-      return yield* withMaimaiNETClient(region, (client) =>
-        Effect.gen(function* () {
-          yield* client.loginEffect({ id, password })
-          const [recentRecords, musicRecords] = yield* Effect.all(
-            [client.fetchRecentRecordsEffect(), client.fetchMusicRecordsEffect()],
-            { concurrency: 'unbounded' },
-          )
-          return { recentRecords, musicRecords }
-        }),
+      // Filtered from telemetry while the request runs, whatever the body's framing (design §7.2)
+      return yield* Effect.acquireUseRelease(
+        Effect.sync(() => holdCredentials([id, password])),
+        () =>
+          withMaimaiNETClient(region, (client) =>
+            Effect.gen(function* () {
+              yield* client.loginEffect({ id, password })
+              const [recentRecords, musicRecords] = yield* Effect.all(
+                [client.fetchRecentRecordsEffect(), client.fetchMusicRecordsEffect()],
+                { concurrency: 'unbounded' },
+              )
+              return { recentRecords, musicRecords }
+            }),
+          ),
+        (release) => Effect.sync(release),
       )
     }),
   ),

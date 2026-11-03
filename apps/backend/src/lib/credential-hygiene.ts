@@ -35,8 +35,29 @@ const CREDENTIAL_KEYS = new Set([
 /** Keys that hold the SEGA ID on the maimai NET routes (`id` in their bodies, `sid` in the intl login form) */
 const NET_ROUTE_CREDENTIAL_KEYS = new Set(['id', 'sid'])
 
-/** Query parameters whose values are secrets (the LXNS OAuth callback's `code`, tokens) */
-const CREDENTIAL_QUERY_PARAMETERS = new Set(['code', 'state', 'password', 'access_token', 'refresh_token', 'token'])
+/**
+ * Query parameters whose values are secrets: the LXNS OAuth callback's `code` and `state`, tokens, and `ssid`, the
+ * session hand-off token of the intl maimai NET login redirect
+ */
+const CREDENTIAL_QUERY_PARAMETERS = new Set([
+  'code',
+  'state',
+  'password',
+  'access_token',
+  'refresh_token',
+  'token',
+  'ssid',
+])
+
+/**
+ * A credential query parameter inside any string: a URL (`url.full`, `http.target`, a span description, an error
+ * message quoting a URL) or a bare query, with or without its `?` (`http.query`, `url.query`). The value runs to the
+ * next `&`, `#`, quote, angle bracket or whitespace.
+ */
+const CREDENTIAL_QUERY_PATTERN = new RegExp(
+  `(^|[?&])(${[...CREDENTIAL_QUERY_PARAMETERS].map((name) => name.replace(/_/g, '(?:_|%5F)')).join('|')})=[^&#\\s"'<>]*`,
+  'gi',
+)
 
 const normalizeKey = (key: string) => key.toLowerCase().replace(/[-_]/g, '')
 
@@ -108,10 +129,10 @@ export function holdCredentials(values: Iterable<string | undefined | null>): ()
 /** Number of credential values registered right now (tests) */
 export const heldCredentialCount = () => activeSecrets.size
 
-/** `value` with every registered credential replaced */
+/** `value` with every registered credential and the values of credential query parameters replaced */
 export function scrubString(value: string): string {
-  if (activeSecrets.size === 0) return value
-  let result = value
+  let result = value.includes('=') ? value.replace(CREDENTIAL_QUERY_PATTERN, `$1$2=${FILTERED}`) : value
+  if (activeSecrets.size === 0) return result
   // longest first, so a password containing the SEGA ID is replaced whole
   for (const secret of [...activeSecrets.keys()].sort((a, b) => b.length - a.length)) {
     if (result.includes(secret)) result = result.split(secret).join(FILTERED)

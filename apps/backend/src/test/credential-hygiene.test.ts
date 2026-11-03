@@ -195,6 +195,50 @@ describe('credential hygiene of the maimai NET routes', () => {
     expect(responses.some((text) => text.includes('[Filtered]'))).toBe(true)
   })
 
+  it('filters the credentials of a chunked body (no Content-Length) on the legacy JSON routes', async () => {
+    const chunked = async (path: string, body: unknown) => {
+      const bytes = new TextEncoder().encode(JSON.stringify(body))
+      const response = await fetch(`${getBaseUrl()}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(bytes.slice(0, 10))
+            controller.enqueue(bytes.slice(10))
+            controller.close()
+          },
+        }),
+        duplex: 'half',
+      } as RequestInit)
+      const text = await response.text()
+      return { status: response.status, text }
+    }
+    // credentials of their own, so the earlier requests' grace period cannot filter them
+    const segaId = 'leaktest-chunked-id-52d1'
+    const password = 'leaktest-chunked-pass-0be4'
+    // the SEGA ID is right, the password wrong: the intl error page echoes the SEGA ID
+    const loginError = { region: 'intl', id: segaId, password }
+    const net = () => createFakeNet({ id: segaId, password: 'synthetic-right-password' }).fetch
+    const before = envelopes.length
+    const consoleBefore = consoleLines.length
+    upstream.net = net()
+    const v0 = await chunked('/functions/fetch-net-records/v0', loginError)
+    expect(v0.status).toBe(500)
+    upstream.net = net()
+    const orpc = await chunked('/api/v1/io/import/maimai-net', loginError)
+    expect(orpc.status).toBeGreaterThanOrEqual(400)
+    await Sentry.flush(5000)
+    const sent = envelopes.slice(before)
+    const logged = consoleLines.slice(consoleBefore)
+    expect(sent.length).toBeGreaterThan(0)
+    // the intl error page echoed the credentials into the error, which was filtered rather than absent
+    expect([...sent, ...logged].some((text) => text.includes('[Filtered]'))).toBe(true)
+    for (const text of [...sent, ...logged, v0.text, orpc.text]) {
+      expect(text.includes(segaId), `carries the SEGA ID: ${text.slice(0, 300)}`).toBe(false)
+      expect(text.includes(password), `carries the password: ${text.slice(0, 300)}`).toBe(false)
+    }
+  })
+
   it('lets go of the credentials of finished requests after the grace period', async () => {
     const { holdCredentials } = await import('../lib/credential-hygiene')
     vi.useFakeTimers()
