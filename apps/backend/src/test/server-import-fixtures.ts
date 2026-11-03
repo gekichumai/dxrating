@@ -186,11 +186,17 @@ export function parseSse(text: string): SseEvent[] {
 }
 
 /** Posts a NET import; the parsed events when the answer is a stream, the JSON otherwise */
-export async function postNetImport(cookie: string, saveId: string, body: Record<string, unknown>) {
+export async function postNetImport(
+  cookie: string,
+  saveId: string,
+  body: Record<string, unknown>,
+  options: { headers?: Record<string, string>; signal?: AbortSignal } = {},
+) {
   const response = await authenticatedFetch(`${getBaseUrl()}/api/v1/saves/${saveId}/imports/maimai-net`, cookie, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...options.headers },
     body: JSON.stringify(body),
+    signal: options.signal,
   })
   const text = await response.text()
   const stream = response.headers.get('content-type')?.includes('text/event-stream') ?? false

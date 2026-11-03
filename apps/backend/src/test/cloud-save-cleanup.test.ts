@@ -8,8 +8,10 @@ import {
   CLOUD_SAVE_CLEANUP_LOCK,
   runCloudSaveCleanup,
   scheduleCleanup,
+  sweepAbandonedImportJobsAtStartup,
   type CleanupReport,
 } from '../services/cloud-save/cleanup'
+import { appRuntime } from '../runtime'
 import { createRequestRunner } from '../request-runner'
 import { runDatabase, sheetId, testPool } from './cloud-save-helpers'
 import { cleanDatabase, setupTestServer, teardownTestServer } from './setup'
@@ -52,6 +54,22 @@ const event = (saveId: string, n: number) =>
     fetched_by: 'client',
     verification: 'client_reported',
   })
+
+const importJob = (id: string, source: string, startedAt: Date, saveId = 'dsav_live') =>
+  insert('score_import_jobs', {
+    id,
+    user_id: USER,
+    save_id: saveId,
+    source,
+    fetched_by: 'server',
+    trigger: 'auto',
+    idempotency_key: id,
+    status: 'running',
+    started_at: startedAt,
+  })
+
+const jobStates = async () =>
+  (await pool.query(`SELECT id, status, error_code FROM score_import_jobs ORDER BY id`)).rows
 
 const count = async (sql: string, values: unknown[] = []) =>
   (await pool.query<{ n: number }>(`SELECT count(*)::integer AS n FROM ${sql}`, values)).rows[0]!.n
@@ -107,6 +125,9 @@ describe('cloud save cleanup', () => {
       result: '{}',
       created_at: daysBefore(29),
     })
+    // import jobs still running: one for 16 minutes (abandoned), one for 5
+    await importJob('dimp_cleanup_stale', 'lxns', new Date(NOW.getTime() - 16 * 60_000))
+    await importJob('dimp_cleanup_recent', 'diving-fish', new Date(NOW.getTime() - 5 * 60_000))
     for (let i = 0; i < 105; i++) {
       await insert('score_save_snapshots', {
         save_id: 'dsav_live',
@@ -131,8 +152,12 @@ describe('cloud save cleanup', () => {
       mutationsPurged: 1,
       savesPurged: 1,
       snapshotsPurged: 5,
-      jobsAbandoned: 0,
+      jobsAbandoned: 1,
     } satisfies CleanupReport)
+    expect(await jobStates()).toEqual([
+      { id: 'dimp_cleanup_recent', status: 'running', error_code: null },
+      { id: 'dimp_cleanup_stale', status: 'failed', error_code: 'abandoned' },
+    ])
 
     const { rows } = await pool.query(
       `SELECT sheet_id FROM score_records WHERE save_id = 'dsav_live' ORDER BY sheet_id`,
@@ -202,6 +227,24 @@ describe('cloud save cleanup', () => {
       'dsav_live',
       'dsav_recently_gone',
     ])
+  })
+
+  it('fails the jobs a previous process left running at startup, and only those older than 15 minutes', async () => {
+    await pool.query(`DELETE FROM score_import_jobs`)
+    await pool.query(
+      `INSERT INTO score_import_jobs (id, user_id, save_id, source, fetched_by, trigger, idempotency_key, status, started_at)
+       VALUES ('dimp_startup_stale', $1, 'dsav_live', 'maimai-net-jp', 'server', 'user', 'k1', 'running', now() - interval '16 minutes'),
+              ('dimp_startup_recent', $1, 'dsav_live', 'maimai-net-intl', 'server', 'user', 'k2', 'running', now() - interval '5 minutes'),
+              ('dimp_startup_done', $1, 'dsav_live', 'lxns', 'server', 'user', 'k3', 'succeeded', now() - interval '1 hour')`,
+      [USER],
+    )
+    expect(await appRuntime.runPromise(sweepAbandonedImportJobsAtStartup)).toBe(1)
+    expect(await jobStates()).toEqual([
+      { id: 'dimp_startup_done', status: 'succeeded', error_code: null },
+      { id: 'dimp_startup_recent', status: 'running', error_code: null },
+      { id: 'dimp_startup_stale', status: 'failed', error_code: 'abandoned' },
+    ])
+    expect(await appRuntime.runPromise(sweepAbandonedImportJobsAtStartup)).toBe(0)
   })
 
   it('lets two concurrent passes purge each tombstone exactly once', async () => {

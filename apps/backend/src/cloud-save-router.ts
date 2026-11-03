@@ -33,6 +33,7 @@ import { cloudSaveRateLimits } from './services/rate-limit'
 import { applyClientImportChunk } from './services/cloud-save/client-imports'
 import {
   beginServerImport,
+  failInterruptedImport,
   replayOutcome,
   runServerImport,
   type ServerImportFailure,
@@ -233,29 +234,37 @@ const API_IMPORT_TIMEOUT = '2 minutes'
  * answer is the job, succeeded or failed (`errorCode` tells why; a failed job wrote nothing).
  */
 const serverImport = <R>(
-  userId: string,
+  context: { user: { id: string }; refundRateLimit: () => void },
   input: { id: string; idempotencyKey: string; trigger: 'user' | 'auto' },
   source: 'lxns' | 'diving-fish',
   fetch: Effect.Effect<UpstreamFetch, ServerImportFailure, R>,
 ) =>
-  Effect.gen(function* () {
-    const database = yield* Database
-    const started = yield* apiErrors(
-      beginServerImport(database, {
-        userId,
-        saveId: input.id,
-        source,
-        trigger: input.trigger,
-        idempotencyKey: input.idempotencyKey,
-      }),
-    )
-    if (started.replayed) {
-      const { job, revision } = replayOutcome(started)
+  // Starting and handing over are one unit: an interruption in between fails the new job (`interrupted`) instead of
+  // leaving it running
+  Effect.uninterruptibleMask((restore) =>
+    Effect.gen(function* () {
+      const database = yield* Database
+      const started = yield* apiErrors(
+        beginServerImport(database, {
+          userId: context.user.id,
+          saveId: input.id,
+          source,
+          trigger: input.trigger,
+          idempotencyKey: input.idempotencyKey,
+        }),
+      )
+      if (started.replayed) {
+        // nothing was fetched: the request gives its rate limit unit back, as the NET route does
+        context.refundRateLimit()
+        const { job, revision } = replayOutcome(started)
+        return { job, revision }
+      }
+      const { job, revision } = yield* restore(
+        runServerImport(database, started, fetch, { timeout: API_IMPORT_TIMEOUT }),
+      ).pipe(Effect.onInterrupt(() => failInterruptedImport(database, started.job.id)))
       return { job, revision }
-    }
-    const { job, revision } = yield* runServerImport(database, started, fetch, { timeout: API_IMPORT_TIMEOUT })
-    return { job, revision }
-  })
+    }),
+  )
 
 const importsHandler = {
   client: cloudSave.imports.client
@@ -275,6 +284,8 @@ const importsHandler = {
             attributes: { 'import.source': input.source, 'import.fetched_by': 'client' },
           }),
         )
+        // a replayed chunk wrote nothing: it gives its rate limit unit back
+        if (replayed) context.refundRateLimit()
         const durationMs = (yield* Clock.currentTimeMillis) - startedAt
         yield* Effect.sync(() => {
           if (hashMismatch)
@@ -306,7 +317,7 @@ const importsHandler = {
     .use(serverImportSlot)
     .handler(
       handlerGen(function* ({ context, input }) {
-        return yield* serverImport(context.user.id, input, 'lxns', fetchLxnsImport(context.user.id))
+        return yield* serverImport(context, input, 'lxns', fetchLxnsImport(context.user.id))
       }),
     ),
   divingFish: cloudSave.imports.divingFish
@@ -318,7 +329,7 @@ const importsHandler = {
     .handler(
       handlerGen(function* ({ context, input }) {
         const query = input.username !== undefined ? { username: input.username } : { qq: input.qq! }
-        return yield* serverImport(context.user.id, input, 'diving-fish', fetchDivingFishImport(query))
+        return yield* serverImport(context, input, 'diving-fish', fetchDivingFishImport(query))
       }),
     ),
   get: cloudSave.imports.get

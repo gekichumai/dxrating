@@ -90,13 +90,29 @@ export const applyImportRecords = (
  * the job recorded, `counts.saveRevision`). Any later write (a manual edit, another import) makes the full merge
  * run, as the domain rules may decide differently against the changed records. Only automatic and migration jobs
  * take it: a user-started import still merges, so it can revive records deleted since (§5.3 deletion rule 2).
+ *
+ * A server job resolves the upstream payload through the catalog, so the same payload can resolve to more charts
+ * once the catalog learns a new one. It passes `skippedUnknownSheet` (the records it could not resolve this time):
+ * the short-circuit also needs the previous job to have skipped exactly as many, otherwise the job merges and the
+ * newly known charts land in the save.
  */
-export const shouldShortCircuit = (database: DatabaseService, job: ImportJobRow, saveRevision: number) =>
+export const shouldShortCircuit = (
+  database: DatabaseService,
+  job: ImportJobRow,
+  saveRevision: number,
+  options: { skippedUnknownSheet?: number } = {},
+) =>
   Effect.gen(function* () {
     if (job.trigger === 'user' || job.raw_payload_sha256 === null) return false
-    const { rows } = yield* database.raw<{ raw_payload_sha256: string | null; save_revision: string | null }>(
+    const { rows } = yield* database.raw<{
+      raw_payload_sha256: string | null
+      save_revision: string | null
+      skipped_unknown_sheet: number | null
+    }>(
       'CloudSave.previousJobHash',
-      `SELECT raw_payload_sha256, counts->>'saveRevision' AS save_revision FROM score_import_jobs
+      `SELECT raw_payload_sha256, counts->>'saveRevision' AS save_revision,
+         (counts->>'skippedUnknownSheet')::integer AS skipped_unknown_sheet
+       FROM score_import_jobs
        WHERE save_id = $1 AND source = $2 AND source_account_id IS NOT DISTINCT FROM $3
          AND status = 'succeeded' AND id <> $4
        ORDER BY finished_at DESC NULLS LAST, started_at DESC LIMIT 1`,
@@ -107,7 +123,8 @@ export const shouldShortCircuit = (database: DatabaseService, job: ImportJobRow,
       previous !== undefined &&
       previous.raw_payload_sha256 === job.raw_payload_sha256 &&
       previous.save_revision !== null &&
-      previous.save_revision === String(saveRevision)
+      previous.save_revision === String(saveRevision) &&
+      (options.skippedUnknownSheet === undefined || (previous.skipped_unknown_sheet ?? 0) === options.skippedUnknownSheet)
     )
   })
 
@@ -140,7 +157,11 @@ export const completeImportJob = (
       if (!jobRow) return yield* new CloudSaveNotFound()
 
       let counts: ImportCountsDTO
-      if (yield* shouldShortCircuit(database, jobRow, save.revision)) {
+      if (
+        yield* shouldShortCircuit(database, jobRow, save.revision, {
+          skippedUnknownSheet: input.extraCounts?.skippedUnknownSheet,
+        })
+      ) {
         counts = { ...EMPTY_COUNTS, fetched: input.records.length, unchanged: input.records.length }
       } else {
         counts = (yield* applyImportRecords(database, save, toMergeJob(jobRow), input.records)).counts
