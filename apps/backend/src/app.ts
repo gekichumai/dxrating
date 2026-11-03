@@ -3,10 +3,11 @@ import { HTTPException } from 'hono/http-exception'
 import { createMiddleware } from 'hono/factory'
 import { routePath } from 'hono/route'
 import { cors } from 'hono/cors'
+import { bodyLimit } from 'hono/body-limit'
 import { etag, RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
 import { Authentication } from './auth'
-import { Data, Effect, Option } from 'effect'
+import { Clock, Data, Effect, Option } from 'effect'
 import { HttpBody } from 'effect/http'
 import { appRuntime, runApp, superviseApp } from './runtime'
 import { HttpClient } from './services/http-client'
@@ -27,7 +28,7 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { COMMON_ERROR_STATUS_MAP, OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { RequestHeadersHandlerPlugin, ResponseHeadersHandlerPlugin } from '@orpc/server/plugins'
-import { onError } from '@orpc/server'
+import { onError, ORPCError } from '@orpc/server'
 import { Sentry, shouldCaptureSentryError } from './lib/functions/sentry'
 import { Database } from './db/index'
 import { createDxdataEffect, createPostgresDxdataEffects, DXDATA_CORS_OPTIONS, DXDATA_PATH } from './services/dxdata'
@@ -61,12 +62,29 @@ import { MCP_SERVER_CARD_PATH, serverCardResponse } from './services/mcp/listing
 import { McpUsage, observeMcpRequest, rateLimitedTelemetry, reportMcpInternalError } from './services/mcp/telemetry'
 import { isPrefetchOrBot, McpAnalyticsService, mcpLogFields, sanitizeVia } from './services/mcp/analytics'
 import { clientAddress } from './services/mcp/client-key'
+import { FeatureFlags } from './services/feature-flags'
+import { cloudSaveRateLimits } from './services/rate-limit'
+import { exportChunks, exportHeaders } from './services/cloud-save/export'
+import { CLOUD_SAVE_BODY_LIMIT_BYTES, CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES } from './services/cloud-save/limits'
 class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
   readonly operation: string
   readonly cause: unknown
 }> {}
 
 const app = new Hono<EvlogVariables>()
+
+const cloudSaveBodyLimit = bodyLimit({ maxSize: CLOUD_SAVE_BODY_LIMIT_BYTES })
+const largeCloudSaveBodyLimit = bodyLimit({ maxSize: CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES })
+const isLargeCloudSaveUpload = (path: string) => /^\/api\/v1\/saves\/[^/]+\/(replace|client-imports)$/.test(path)
+
+/** An oRPC-shaped error response (with the v1 `status` field) for routes served outside the oRPC handler */
+const orpcErrorResponse = (error: ORPCError<string, unknown>, headers: Record<string, string> = {}) => {
+  const status = COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500
+  return new Response(JSON.stringify({ ...error.toJSON(), status }), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...headers },
+  })
+}
 
 const API_CATALOG_PROFILE_URL = 'https://www.rfc-editor.org/info/rfc9727'
 const API_CATALOG_CONTENT_TYPE = `application/linkset+json; profile="${API_CATALOG_PROFILE_URL}"`
@@ -203,7 +221,8 @@ const apiCors = cors({
     return null
   },
   allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response', API_CLIENT_HEADER],
-  allowMethods: ['POST', 'GET', 'OPTIONS'],
+  // PATCH and DELETE: cloud save routes (rename and delete a save)
+  allowMethods: ['POST', 'GET', 'PATCH', 'DELETE', 'OPTIONS'],
   exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],
   maxAge: 600,
   credentials: true,
@@ -740,9 +759,66 @@ const viewerPrivateCacheHeaders = createMiddleware((c, next) =>
     { signal: c.req.raw.signal },
   ),
 )
-for (const path of ['/api/v1/comments', '/api/v1/me', '/api/v1/me/*']) {
+for (const path of [
+  '/api/v1/comments',
+  '/api/v1/me',
+  '/api/v1/me/*',
+  '/api/v1/saves',
+  '/api/v1/saves/*',
+  '/api/v1/imports/*',
+]) {
   app.use(path, viewerPrivateCacheHeaders)
 }
+
+// Cloud save request bodies (design §11.4): 2 MB for whole-save uploads, 1 MB for everything else.
+for (const path of ['/api/v1/saves', '/api/v1/saves/*', '/api/v1/imports/*', '/api/v1/me/*']) {
+  app.use(path, (c, next) =>
+    (isLargeCloudSaveUpload(c.req.path) ? largeCloudSaveBodyLimit : cloudSaveBodyLimit)(c, next),
+  )
+}
+
+// The cloud save export streams (§11.3): it is answered here, ahead of the oRPC handler, with the same session,
+// feature flag and rate limit rules as the `cloudSave.export` procedure.
+app.get('/api/v1/me/export', (c) =>
+  runApp(
+    Effect.gen(function* () {
+      const auth = yield* Authentication
+      const session = yield* auth.session(c.req.raw.headers)
+      if (!session?.user) return orpcErrorResponse(new ORPCError('UNAUTHORIZED'))
+      const featureFlags = yield* FeatureFlags
+      if (!(yield* featureFlags.isEnabled('cloud_save', session.user.id))) {
+        return orpcErrorResponse(new ORPCError('NOT_FOUND'))
+      }
+      const retryAfterSeconds = cloudSaveRateLimits.export.take(session.user.id)
+      if (retryAfterSeconds > 0) {
+        return orpcErrorResponse(
+          new ORPCError('TOO_MANY_REQUESTS', {
+            message: `Too many requests. Retry in ${retryAfterSeconds} seconds.`,
+            data: { retryAfterSeconds },
+          }),
+          { 'Retry-After': String(retryAfterSeconds) },
+        )
+      }
+      const database = yield* Database
+      const exportedAt = new Date(yield* Clock.currentTimeMillis)
+      const signal = c.req.raw.signal
+      const chunks = exportChunks((effect) => runApp(effect, { signal }), database, session.user.id, exportedAt)
+      const encoder = new TextEncoder()
+      const body = new ReadableStream<Uint8Array>({
+        async pull(controller) {
+          const next = await chunks.next()
+          if (next.done) controller.close()
+          else controller.enqueue(encoder.encode(next.value))
+        },
+        async cancel() {
+          await chunks.return(undefined)
+        },
+      })
+      return new Response(body, { status: 200, headers: exportHeaders(exportedAt) })
+    }),
+    { signal: c.req.raw.signal },
+  ),
+)
 
 app.all('/api/v1/*', (c) =>
   runApp(
