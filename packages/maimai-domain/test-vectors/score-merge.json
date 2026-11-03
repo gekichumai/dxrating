@@ -2688,9 +2688,9 @@
           "achievement": 1005000,
           "comboFlag": "fc",
           "syncFlag": "fs",
-          "dxScore": 2400,
+          "dxScore": 2410,
           "best50Bucket": null,
-          "providerRecordId": "42",
+          "providerRecordId": "43",
           "provenance": {
             "source": "maimai-net-jp",
             "claimedSource": null,
@@ -2761,9 +2761,9 @@
           "achievement": 1005000,
           "comboFlag": "fc",
           "syncFlag": "fs",
-          "dxScore": 2400,
+          "dxScore": 2410,
           "best50Bucket": null,
-          "providerRecordId": "42",
+          "providerRecordId": "43",
           "provenance": {
             "source": "maimai-net-jp",
             "claimedSource": null,
@@ -2834,9 +2834,9 @@
           "achievement": 1005000,
           "comboFlag": "fc",
           "syncFlag": "fs",
-          "dxScore": 2400,
+          "dxScore": 2410,
           "best50Bucket": null,
-          "providerRecordId": "42",
+          "providerRecordId": "43",
           "provenance": {
             "source": "maimai-net-jp",
             "claimedSource": null,
@@ -5575,7 +5575,7 @@
       }
     },
     {
-      "name": "equal / stored verified from the same source but different account still refreshes",
+      "name": "equal / stored verified from the same source but a different account → unchanged, nothing written",
       "existing": {
         "achievement": 1005000,
         "comboFlag": "fc",
@@ -5620,13 +5620,119 @@
       "expected": {
         "outcome": "unchanged",
         "countKey": "unchanged",
+        "next": null,
+        "bumpRevision": false,
+        "valueChanged": false,
+        "liveDelta": 0,
+        "eventKind": null
+      }
+    },
+    {
+      "name": "equal / stored verified from the same source, job without account → unchanged, nothing written",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 2400,
+        "best50Bucket": null,
+        "providerRecordId": "42",
+        "provenance": {
+          "source": "maimai-net-jp",
+          "claimedSource": null,
+          "fetchedBy": "server",
+          "verification": "verified",
+          "entryMethod": "import",
+          "sourceAccountId": "123456789012345",
+          "importJobId": "dimp_prev_net",
+          "rawPayloadSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "fetchedAt": "2026-11-01T00:00:00.000Z",
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "incoming": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 2410,
+        "best50Bucket": null,
+        "providerRecordId": "43",
+        "claimedSource": "lxns"
+      },
+      "job": {
+        "id": "dimp_server",
+        "source": "maimai-net-jp",
+        "fetchedBy": "server",
+        "trigger": "user",
+        "startedAt": "2026-11-03T12:00:00.000Z",
+        "fetchedAt": "2026-11-03T12:00:05.000Z",
+        "rawPayloadSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "sourceAccountId": null
+      },
+      "expected": {
+        "outcome": "unchanged",
+        "countKey": "unchanged",
+        "next": null,
+        "bumpRevision": false,
+        "valueChanged": false,
+        "liveDelta": 0,
+        "eventKind": null
+      }
+    },
+    {
+      "name": "equal / stored verified missing dxScore / same source and account → backfill and refresh without bump",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": null,
+        "best50Bucket": null,
+        "providerRecordId": null,
+        "provenance": {
+          "source": "maimai-net-jp",
+          "claimedSource": null,
+          "fetchedBy": "server",
+          "verification": "verified",
+          "entryMethod": "import",
+          "sourceAccountId": "123456789012345",
+          "importJobId": "dimp_prev_net",
+          "rawPayloadSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "fetchedAt": "2026-11-01T00:00:00.000Z",
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "incoming": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 2410,
+        "best50Bucket": null,
+        "providerRecordId": "43",
+        "claimedSource": "lxns"
+      },
+      "job": {
+        "id": "dimp_server",
+        "source": "maimai-net-jp",
+        "fetchedBy": "server",
+        "trigger": "auto",
+        "startedAt": "2026-11-03T12:00:00.000Z",
+        "fetchedAt": "2026-11-03T12:00:05.000Z",
+        "rawPayloadSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "sourceAccountId": "123456789012345"
+      },
+      "expected": {
+        "outcome": "unchanged",
+        "countKey": "unchanged",
         "next": {
           "achievement": 1005000,
           "comboFlag": "fc",
           "syncFlag": "fs",
-          "dxScore": 2400,
+          "dxScore": 2410,
           "best50Bucket": null,
-          "providerRecordId": "42",
+          "providerRecordId": "43",
           "provenance": {
             "source": "maimai-net-jp",
             "claimedSource": null,
@@ -5648,7 +5754,418 @@
       }
     },
     {
-      "name": "equal / stored client_reported missing dxScore and providerRecordId / client job → unchanged with backfill",
+      "name": "equal / stored verified missing dxScore / client job / trigger user → unchanged, nothing written",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": null,
+        "best50Bucket": null,
+        "providerRecordId": null,
+        "provenance": {
+          "source": "maimai-net-jp",
+          "claimedSource": null,
+          "fetchedBy": "server",
+          "verification": "verified",
+          "entryMethod": "import",
+          "sourceAccountId": "123456789012345",
+          "importJobId": "dimp_prev_net",
+          "rawPayloadSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "fetchedAt": "2026-11-01T00:00:00.000Z",
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "incoming": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 9999,
+        "best50Bucket": null,
+        "providerRecordId": "forged",
+        "claimedSource": "lxns"
+      },
+      "job": {
+        "id": "dimp_client",
+        "source": "aqua-dx",
+        "fetchedBy": "client",
+        "trigger": "user",
+        "startedAt": "2026-11-03T12:00:00.000Z",
+        "fetchedAt": "2026-11-02T08:00:00.000Z",
+        "rawPayloadSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "sourceAccountId": "claimed-account"
+      },
+      "expected": {
+        "outcome": "unchanged",
+        "countKey": "unchanged",
+        "next": null,
+        "bumpRevision": false,
+        "valueChanged": false,
+        "liveDelta": 0,
+        "eventKind": null
+      }
+    },
+    {
+      "name": "equal / stored verified missing dxScore / client job / trigger auto → unchanged, nothing written",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": null,
+        "best50Bucket": null,
+        "providerRecordId": null,
+        "provenance": {
+          "source": "maimai-net-jp",
+          "claimedSource": null,
+          "fetchedBy": "server",
+          "verification": "verified",
+          "entryMethod": "import",
+          "sourceAccountId": "123456789012345",
+          "importJobId": "dimp_prev_net",
+          "rawPayloadSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "fetchedAt": "2026-11-01T00:00:00.000Z",
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "incoming": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 9999,
+        "best50Bucket": null,
+        "providerRecordId": "forged",
+        "claimedSource": "lxns"
+      },
+      "job": {
+        "id": "dimp_client",
+        "source": "aqua-dx",
+        "fetchedBy": "client",
+        "trigger": "auto",
+        "startedAt": "2026-11-03T12:00:00.000Z",
+        "fetchedAt": "2026-11-02T08:00:00.000Z",
+        "rawPayloadSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "sourceAccountId": "claimed-account"
+      },
+      "expected": {
+        "outcome": "unchanged",
+        "countKey": "unchanged",
+        "next": null,
+        "bumpRevision": false,
+        "valueChanged": false,
+        "liveDelta": 0,
+        "eventKind": null
+      }
+    },
+    {
+      "name": "equal / stored verified missing dxScore / client job / trigger migration → unchanged, nothing written",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": null,
+        "best50Bucket": null,
+        "providerRecordId": null,
+        "provenance": {
+          "source": "maimai-net-jp",
+          "claimedSource": null,
+          "fetchedBy": "server",
+          "verification": "verified",
+          "entryMethod": "import",
+          "sourceAccountId": "123456789012345",
+          "importJobId": "dimp_prev_net",
+          "rawPayloadSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "fetchedAt": "2026-11-01T00:00:00.000Z",
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "incoming": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 9999,
+        "best50Bucket": null,
+        "providerRecordId": "forged",
+        "claimedSource": "lxns"
+      },
+      "job": {
+        "id": "dimp_client",
+        "source": "legacy-local",
+        "fetchedBy": "client",
+        "trigger": "migration",
+        "startedAt": "2026-11-03T12:00:00.000Z",
+        "fetchedAt": "2026-11-02T08:00:00.000Z",
+        "rawPayloadSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "sourceAccountId": "claimed-account"
+      },
+      "expected": {
+        "outcome": "unchanged",
+        "countKey": "unchanged",
+        "next": null,
+        "bumpRevision": false,
+        "valueChanged": false,
+        "liveDelta": 0,
+        "eventKind": null
+      }
+    },
+    {
+      "name": "equal / stored verified missing dxScore / server job from another source → unchanged, nothing written",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": null,
+        "best50Bucket": null,
+        "providerRecordId": null,
+        "provenance": {
+          "source": "maimai-net-jp",
+          "claimedSource": null,
+          "fetchedBy": "server",
+          "verification": "verified",
+          "entryMethod": "import",
+          "sourceAccountId": "123456789012345",
+          "importJobId": "dimp_prev_net",
+          "rawPayloadSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "fetchedAt": "2026-11-01T00:00:00.000Z",
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "incoming": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 2410,
+        "best50Bucket": null,
+        "providerRecordId": "43",
+        "claimedSource": "lxns"
+      },
+      "job": {
+        "id": "dimp_lxns",
+        "source": "lxns",
+        "fetchedBy": "server",
+        "trigger": "auto",
+        "startedAt": "2026-11-03T12:00:00.000Z",
+        "fetchedAt": "2026-11-03T12:00:05.000Z",
+        "rawPayloadSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "sourceAccountId": "lxns-friend-code"
+      },
+      "expected": {
+        "outcome": "unchanged",
+        "countKey": "unchanged",
+        "next": null,
+        "bumpRevision": false,
+        "valueChanged": false,
+        "liveDelta": 0,
+        "eventKind": null
+      }
+    },
+    {
+      "name": "equal / stored verified missing dxScore / same source, other account → unchanged, nothing written",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": null,
+        "best50Bucket": null,
+        "providerRecordId": null,
+        "provenance": {
+          "source": "maimai-net-jp",
+          "claimedSource": null,
+          "fetchedBy": "server",
+          "verification": "verified",
+          "entryMethod": "import",
+          "sourceAccountId": "123456789012345",
+          "importJobId": "dimp_prev_net",
+          "rawPayloadSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "fetchedAt": "2026-11-01T00:00:00.000Z",
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "incoming": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 2410,
+        "best50Bucket": null,
+        "providerRecordId": "43",
+        "claimedSource": "lxns"
+      },
+      "job": {
+        "id": "dimp_server",
+        "source": "maimai-net-jp",
+        "fetchedBy": "server",
+        "trigger": "auto",
+        "startedAt": "2026-11-03T12:00:00.000Z",
+        "fetchedAt": "2026-11-03T12:00:05.000Z",
+        "rawPayloadSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "sourceAccountId": "other-friend-code"
+      },
+      "expected": {
+        "outcome": "unchanged",
+        "countKey": "unchanged",
+        "next": null,
+        "bumpRevision": false,
+        "valueChanged": false,
+        "liveDelta": 0,
+        "eventKind": null
+      }
+    },
+    {
+      "name": "equal / stored client_reported with another dxScore / server job → provenanceUpgraded, server values win",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 99999,
+        "best50Bucket": "b15",
+        "providerRecordId": "evil",
+        "provenance": {
+          "source": "dxrating-json",
+          "claimedSource": "lxns",
+          "fetchedBy": "client",
+          "verification": "client_reported",
+          "entryMethod": "file",
+          "sourceAccountId": null,
+          "importJobId": "dimp_prev_json",
+          "rawPayloadSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "fetchedAt": "2026-10-30T00:00:00.000Z",
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "incoming": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 2400,
+        "best50Bucket": null,
+        "providerRecordId": "42",
+        "claimedSource": "lxns"
+      },
+      "job": {
+        "id": "dimp_server",
+        "source": "maimai-net-jp",
+        "fetchedBy": "server",
+        "trigger": "auto",
+        "startedAt": "2026-11-03T12:00:00.000Z",
+        "fetchedAt": "2026-11-03T12:00:05.000Z",
+        "rawPayloadSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "sourceAccountId": "123456789012345"
+      },
+      "expected": {
+        "outcome": "provenanceUpgraded",
+        "countKey": "provenanceUpgraded",
+        "next": {
+          "achievement": 1005000,
+          "comboFlag": "fc",
+          "syncFlag": "fs",
+          "dxScore": 2400,
+          "best50Bucket": null,
+          "providerRecordId": "42",
+          "provenance": {
+            "source": "maimai-net-jp",
+            "claimedSource": null,
+            "fetchedBy": "server",
+            "verification": "verified",
+            "entryMethod": "import",
+            "sourceAccountId": "123456789012345",
+            "importJobId": "dimp_server",
+            "rawPayloadSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "fetchedAt": "2026-11-03T12:00:05.000Z",
+            "editedFromJobId": null
+          },
+          "deleted": false
+        },
+        "bumpRevision": true,
+        "valueChanged": false,
+        "liveDelta": 0,
+        "eventKind": "provenance_upgraded"
+      }
+    },
+    {
+      "name": "equal / stored client_reported with dxScore / server job without dxScore → provenanceUpgraded, cleared",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 99999,
+        "best50Bucket": "b15",
+        "providerRecordId": "evil",
+        "provenance": {
+          "source": "dxrating-json",
+          "claimedSource": "lxns",
+          "fetchedBy": "client",
+          "verification": "client_reported",
+          "entryMethod": "file",
+          "sourceAccountId": null,
+          "importJobId": "dimp_prev_json",
+          "rawPayloadSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "fetchedAt": "2026-10-30T00:00:00.000Z",
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "incoming": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": null,
+        "best50Bucket": null,
+        "providerRecordId": null,
+        "claimedSource": "lxns"
+      },
+      "job": {
+        "id": "dimp_server",
+        "source": "maimai-net-jp",
+        "fetchedBy": "server",
+        "trigger": "auto",
+        "startedAt": "2026-11-03T12:00:00.000Z",
+        "fetchedAt": "2026-11-03T12:00:05.000Z",
+        "rawPayloadSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "sourceAccountId": "123456789012345"
+      },
+      "expected": {
+        "outcome": "provenanceUpgraded",
+        "countKey": "provenanceUpgraded",
+        "next": {
+          "achievement": 1005000,
+          "comboFlag": "fc",
+          "syncFlag": "fs",
+          "dxScore": null,
+          "best50Bucket": null,
+          "providerRecordId": null,
+          "provenance": {
+            "source": "maimai-net-jp",
+            "claimedSource": null,
+            "fetchedBy": "server",
+            "verification": "verified",
+            "entryMethod": "import",
+            "sourceAccountId": "123456789012345",
+            "importJobId": "dimp_server",
+            "rawPayloadSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "fetchedAt": "2026-11-03T12:00:05.000Z",
+            "editedFromJobId": null
+          },
+          "deleted": false
+        },
+        "bumpRevision": true,
+        "valueChanged": false,
+        "liveDelta": 0,
+        "eventKind": "provenance_upgraded"
+      }
+    },
+    {
+      "name": "equal / stored client_reported missing dxScore and providerRecordId / client job of another source → dxScore only",
       "existing": {
         "achievement": 1005000,
         "comboFlag": "fc",
@@ -5683,6 +6200,79 @@
       "job": {
         "id": "dimp_client",
         "source": "aqua-dx",
+        "fetchedBy": "client",
+        "trigger": "auto",
+        "startedAt": "2026-11-03T12:00:00.000Z",
+        "fetchedAt": "2026-11-02T08:00:00.000Z",
+        "rawPayloadSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "sourceAccountId": "claimed-account"
+      },
+      "expected": {
+        "outcome": "unchanged",
+        "countKey": "unchanged",
+        "next": {
+          "achievement": 1005000,
+          "comboFlag": "fc",
+          "syncFlag": "fs",
+          "dxScore": 2410,
+          "best50Bucket": null,
+          "providerRecordId": null,
+          "provenance": {
+            "source": "dxrating-json",
+            "claimedSource": "lxns",
+            "fetchedBy": "client",
+            "verification": "client_reported",
+            "entryMethod": "file",
+            "sourceAccountId": null,
+            "importJobId": "dimp_prev_json",
+            "rawPayloadSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "fetchedAt": "2026-10-30T00:00:00.000Z",
+            "editedFromJobId": null
+          },
+          "deleted": false
+        },
+        "bumpRevision": false,
+        "valueChanged": false,
+        "liveDelta": 0,
+        "eventKind": null
+      }
+    },
+    {
+      "name": "equal / stored client_reported missing dxScore and providerRecordId / client job of the same source → backfill both",
+      "existing": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": null,
+        "best50Bucket": null,
+        "providerRecordId": null,
+        "provenance": {
+          "source": "dxrating-json",
+          "claimedSource": "lxns",
+          "fetchedBy": "client",
+          "verification": "client_reported",
+          "entryMethod": "file",
+          "sourceAccountId": null,
+          "importJobId": "dimp_prev_json",
+          "rawPayloadSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "fetchedAt": "2026-10-30T00:00:00.000Z",
+          "editedFromJobId": null
+        },
+        "revision": 10,
+        "deletedAt": null
+      },
+      "incoming": {
+        "achievement": 1005000,
+        "comboFlag": "fc",
+        "syncFlag": "fs",
+        "dxScore": 2410,
+        "best50Bucket": null,
+        "providerRecordId": "43",
+        "claimedSource": "lxns"
+      },
+      "job": {
+        "id": "dimp_client",
+        "source": "dxrating-json",
         "fetchedBy": "client",
         "trigger": "auto",
         "startedAt": "2026-11-03T12:00:00.000Z",
@@ -6026,7 +6616,7 @@
       }
     },
     {
-      "name": "equal / stored manual client_reported / client job → unchanged with backfill",
+      "name": "equal / stored manual client_reported / client job → unchanged, dxScore backfill only",
       "existing": {
         "achievement": 1005000,
         "comboFlag": "fc",
@@ -6077,7 +6667,7 @@
           "syncFlag": "fs",
           "dxScore": 2410,
           "best50Bucket": null,
-          "providerRecordId": "43",
+          "providerRecordId": null,
           "provenance": {
             "source": "manual",
             "claimedSource": null,
@@ -6400,9 +6990,9 @@
           "achievement": 1005000,
           "comboFlag": "fc",
           "syncFlag": "fs",
-          "dxScore": 2400,
+          "dxScore": 2410,
           "best50Bucket": "b15",
-          "providerRecordId": "42",
+          "providerRecordId": "43",
           "provenance": {
             "source": "diving-fish",
             "claimedSource": null,

@@ -247,6 +247,17 @@ function asNext(existing: Obj, overrides: Obj = {}): Obj {
   return { ...fields, deleted: deletedAt !== null, ...overrides }
 }
 
+/** An equal-score verification upgrade: provenance and dxScore / bucket / providerRecordId all come from the job */
+function upgradedFrom(existing: Obj, job: Obj, incoming: Obj, overrides: Obj = {}): Obj {
+  return asNext(existing, {
+    dxScore: incoming.dxScore ?? null,
+    best50Bucket: incoming.best50Bucket ?? null,
+    providerRecordId: incoming.providerRecordId ?? null,
+    provenance: jobProvenance(job, incoming),
+    ...overrides,
+  })
+}
+
 const APPLIED = { bumpRevision: true, valueChanged: true, eventKind: 'import_applied' }
 const NOTHING = { next: null, bumpRevision: false, valueChanged: false, liveDelta: 0, eventKind: null }
 
@@ -369,7 +380,8 @@ function importMergeVectors(): Obj[] {
           } else if (stored === 'user_edited') {
             expected = untouched('keptUserEdit')
           } else if (comparison === 'equal' && stored === 'client_reported' && jobKind === 'server') {
-            expected = provenanceUpgraded(asNext(existing, { provenance: jobProvenance(job, incoming) }))
+            // The verified record takes every field from the server job, never the client's values
+            expected = provenanceUpgraded(upgradedFrom(existing, job, incoming))
           } else {
             // Equal or worse with no verification gain; the stored dxScore / providerRecordId are already set
             expected = untouched('unchanged')
@@ -456,12 +468,35 @@ function importMergeVectors(): Obj[] {
       untouched('unchanged'),
     )
     add(
-      'equal / stored verified from the same source but different account still refreshes',
+      'equal / stored verified from the same source but a different account → unchanged, nothing written',
       existing,
       incoming,
       serverJob('user', { sourceAccountId: 'other-friend-code' }),
+      untouched('unchanged'),
+    )
+    add(
+      'equal / stored verified from the same source, job without account → unchanged, nothing written',
+      existing,
+      incoming,
+      serverJob('user', { sourceAccountId: null }),
+      untouched('unchanged'),
+    )
+  }
+
+  // A verified record is only backfilled by a job of the same source and account, which refreshes it anyway
+  {
+    const missing = existingRecord('verifiedNet', { dxScore: null, providerRecordId: null })
+    const incoming = incomingRecord('equal')
+    const job = serverJob('auto')
+    add(
+      'equal / stored verified missing dxScore / same source and account → backfill and refresh without bump',
+      missing,
+      incoming,
+      job,
       expectImport('unchanged', {
-        next: asNext(existing, {
+        next: asNext(missing, {
+          dxScore: 2410,
+          providerRecordId: '43',
           provenance: {
             ...EXISTING_PROVENANCE.verifiedNet!,
             importJobId: job.id!,
@@ -475,6 +510,51 @@ function importMergeVectors(): Obj[] {
         eventKind: null,
       }),
     )
+    for (const trigger of triggers) {
+      add(
+        `equal / stored verified missing dxScore / client job / trigger ${trigger} → unchanged, nothing written`,
+        missing,
+        incomingRecord('equal', { dxScore: 9999, providerRecordId: 'forged' }),
+        clientJob(trigger),
+        untouched('unchanged'),
+      )
+    }
+    add(
+      'equal / stored verified missing dxScore / server job from another source → unchanged, nothing written',
+      missing,
+      incoming,
+      serverJob('auto', { id: 'dimp_lxns', source: 'lxns', sourceAccountId: 'lxns-friend-code' }),
+      untouched('unchanged'),
+    )
+    add(
+      'equal / stored verified missing dxScore / same source, other account → unchanged, nothing written',
+      missing,
+      incoming,
+      serverJob('auto', { sourceAccountId: 'other-friend-code' }),
+      untouched('unchanged'),
+    )
+  }
+
+  // A verification upgrade never keeps client-supplied values under the verified provenance
+  {
+    const forged = existingRecord('client_reported', { dxScore: 99999, providerRecordId: 'evil', best50Bucket: 'b15' })
+    const job = serverJob('auto')
+    const incoming = incomingRecord('equal', { dxScore: 2400, providerRecordId: '42' })
+    add(
+      'equal / stored client_reported with another dxScore / server job → provenanceUpgraded, server values win',
+      forged,
+      incoming,
+      job,
+      provenanceUpgraded(upgradedFrom(forged, job, incoming)),
+    )
+    const bare = incomingRecord('equal', { dxScore: null, providerRecordId: null })
+    add(
+      'equal / stored client_reported with dxScore / server job without dxScore → provenanceUpgraded, cleared',
+      forged,
+      bare,
+      job,
+      provenanceUpgraded(upgradedFrom(forged, job, bare)),
+    )
   }
 
   // Backfill of missing dxScore / providerRecordId on equal scores, without bump
@@ -483,10 +563,23 @@ function importMergeVectors(): Obj[] {
     const job = clientJob('auto')
     const incoming = incomingRecord('equal')
     add(
-      'equal / stored client_reported missing dxScore and providerRecordId / client job → unchanged with backfill',
+      'equal / stored client_reported missing dxScore and providerRecordId / client job of another source → dxScore only',
       existing,
       incoming,
       job,
+      expectImport('unchanged', {
+        next: asNext(existing, { dxScore: 2410 }),
+        bumpRevision: false,
+        valueChanged: false,
+        liveDelta: 0,
+        eventKind: null,
+      }),
+    )
+    add(
+      'equal / stored client_reported missing dxScore and providerRecordId / client job of the same source → backfill both',
+      existing,
+      incoming,
+      clientJob('auto', { source: 'dxrating-json' }),
       expectImport('unchanged', {
         next: asNext(existing, { dxScore: 2410, providerRecordId: '43' }),
         bumpRevision: false,
@@ -546,12 +639,12 @@ function importMergeVectors(): Obj[] {
       ),
     )
     add(
-      'equal / stored manual client_reported / client job → unchanged with backfill',
+      'equal / stored manual client_reported / client job → unchanged, dxScore backfill only',
       existing,
       incoming,
       clientJob('user'),
       expectImport('unchanged', {
-        next: asNext(existing, { dxScore: 2410, providerRecordId: '43' }),
+        next: asNext(existing, { dxScore: 2410 }),
         bumpRevision: false,
         valueChanged: false,
         liveDelta: 0,
@@ -607,12 +700,7 @@ function importMergeVectors(): Obj[] {
       clientReported,
       incomingRecord('equal', { best50Bucket: 'b15' }),
       dfJob('auto'),
-      provenanceUpgraded(
-        asNext(clientReported, {
-          best50Bucket: 'b15',
-          provenance: jobProvenance(dfJob('auto'), incomingRecord('equal')),
-        }),
-      ),
+      provenanceUpgraded(upgradedFrom(clientReported, dfJob('auto'), incomingRecord('equal', { best50Bucket: 'b15' }))),
     )
     const sameSource = existingRecord('verified', {
       best50Bucket: 'b15',
@@ -762,7 +850,8 @@ function manualMutationVectors(): Obj[] {
       achievement: value.achievement!,
       comboFlag: value.comboFlag ?? null,
       syncFlag: value.syncFlag ?? null,
-      dxScore: value.dxScore ?? null,
+      // A manual set clears dxScore (§5.4, like iOS applyManualScore)
+      dxScore: null,
       best50Bucket: null,
       providerRecordId: null,
       provenance: provenance({
@@ -800,7 +889,7 @@ function manualMutationVectors(): Obj[] {
   {
     const mutation = set(990000, { entryMethod: 'keypad', value: { comboFlag: 'fc', syncFlag: 'sync', dxScore: 1800 } })
     add(
-      'set without record → client_reported, keeps dxScore',
+      'set without record → client_reported, dxScore cleared',
       null,
       mutation,
       applied(manualNext(mutation, 'client_reported', null), 'manual_set', 1),
@@ -901,10 +990,10 @@ function manualMutationVectors(): Obj[] {
     add('set of the stored value and dxScore → noop', existingRecord('verified'), sameDx, notApplied('noop'))
     const otherDx = set(1005000, { basedOnRevision: 10, value: { comboFlag: 'fc', syncFlag: 'fs', dxScore: 2300 } })
     add(
-      'set of the stored value with another dxScore → applied, user_edited',
+      'set of the stored value with another dxScore → noop (dxScore is not stored by a manual set)',
       existingRecord('verified'),
       otherDx,
-      applied(manualNext(otherDx, 'user_edited', 'dimp_prev_lxns'), 'manual_set', 0),
+      notApplied('noop'),
     )
     const worseCurrent = set(990000, { basedOnRevision: 10 })
     add(

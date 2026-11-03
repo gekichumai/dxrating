@@ -69,7 +69,11 @@ Conventions shared by all files:
 `job` is `{id, source, fetchedBy, trigger, startedAt, fetchedAt, rawPayloadSha256, sourceAccountId}`; `incoming` is
 `{achievement, comboFlag, syncFlag, dxScore, best50Bucket, providerRecordId, claimedSource}`. `mutation` is
 `{op: "set", value: {achievement, comboFlag, syncFlag, dxScore?}, entryMethod, basedOnRevision?}` or
-`{op: "delete", basedOnRevision?}`; a missing or `null` `basedOnRevision` means baseline 0.
+`{op: "delete", basedOnRevision?}`; a missing or `null` `basedOnRevision` means baseline 0. A manual `set` validates
+`value.dxScore` but never stores it (the result's `dxScore` is `null`, as in iOS `applyManualScore`).
+
+`decideImportMerge` vectors only cover valid input: an incoming record with an achievement outside 0..1010000, an
+unknown combo or sync flag, or a negative or fractional `dxScore` is a programming error (throw), not a vector.
 
 Enum values:
 

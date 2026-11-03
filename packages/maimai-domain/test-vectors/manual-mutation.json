@@ -3,7 +3,7 @@
   "version": 1,
   "cases": [
     {
-      "name": "set without record → client_reported, keeps dxScore",
+      "name": "set without record → client_reported, dxScore cleared",
       "existing": null,
       "mutation": {
         "op": "set",
@@ -22,7 +22,7 @@
           "achievement": 990000,
           "comboFlag": "fc",
           "syncFlag": "sync",
-          "dxScore": 1800,
+          "dxScore": null,
           "best50Bucket": null,
           "providerRecordId": null,
           "provenance": {
@@ -844,7 +844,7 @@
       }
     },
     {
-      "name": "set of the stored value with another dxScore → applied, user_edited",
+      "name": "set of the stored value with another dxScore → noop (dxScore is not stored by a manual set)",
       "existing": {
         "achievement": 1005000,
         "comboFlag": "fc",
@@ -879,33 +879,13 @@
         "basedOnRevision": 10
       },
       "expected": {
-        "status": "applied",
+        "status": "noop",
         "reason": null,
-        "next": {
-          "achievement": 1005000,
-          "comboFlag": "fc",
-          "syncFlag": "fs",
-          "dxScore": 2300,
-          "best50Bucket": null,
-          "providerRecordId": null,
-          "provenance": {
-            "source": "manual",
-            "claimedSource": null,
-            "fetchedBy": "client",
-            "verification": "user_edited",
-            "entryMethod": "typed",
-            "sourceAccountId": null,
-            "importJobId": null,
-            "rawPayloadSha256": null,
-            "fetchedAt": null,
-            "editedFromJobId": "dimp_prev_lxns"
-          },
-          "deleted": false
-        },
-        "bumpRevision": true,
-        "valueChanged": true,
+        "next": null,
+        "bumpRevision": false,
+        "valueChanged": false,
         "liveDelta": 0,
-        "eventKind": "manual_set"
+        "eventKind": null
       }
     },
     {

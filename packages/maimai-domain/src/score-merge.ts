@@ -151,14 +151,20 @@ export interface ImportMergeDecision {
  * - Tombstone: skipped when deleted at or after the job started; otherwise revived only when the incoming score is
  *   strictly better than the value the tombstone kept, or the job was started by the user (`trigger = 'user'`).
  * - Live record: a strictly better score replaces value and provenance (even a `user_edited` one). An equal score
- *   upgrades a non-`user_edited` record's provenance when its verification ranks higher, silently refreshes the
- *   job reference of a same-source `verified` record, and backfills a missing `dxScore` / `providerRecordId`
- *   (except into `user_edited` records). Anything else keeps the stored record.
+ *   into a non-`user_edited` record:
+ *   - upgrades the provenance when the job's verification ranks higher, taking `dxScore`, `best50Bucket` and
+ *     `providerRecordId` from the job too (null when it has none), so a verified record never carries
+ *     client-supplied values;
+ *   - at equal verification, backfills a missing `dxScore` (and a missing `providerRecordId` from the same source);
+ *     into a `verified` record only from the same source and source account, which also silently refreshes the
+ *     job reference. A client job never writes into a `verified` record.
+ *   Anything else keeps the stored record.
  * - Diving-Fish jobs always refresh `best50Bucket` of a live non-manual record that is not replaced, as a
  *   revision-bumping provenance-only update.
  *
- * Throws on an inconsistent job (a source/`fetchedBy` mismatch, or a server job without hash or fetch time):
- * those are programming errors, never user input.
+ * Throws on an inconsistent job (a source/`fetchedBy` mismatch, or a server job without hash or fetch time) and on
+ * an invalid incoming record (achievement, flags or dxScore out of range): import normalizers must drop or reject
+ * those before merging.
  */
 export function decideImportMerge(
   existing: ExistingScoreRecord | null,
@@ -166,9 +172,7 @@ export function decideImportMerge(
   job: ScoreImportJob,
 ): ImportMergeDecision {
   assertJob(job)
-  if (!isAchievementInt(incoming.achievement)) {
-    throw new RangeError(`Incoming achievement must be an integer in 0..1010000: ${String(incoming.achievement)}`)
-  }
+  assertIncoming(incoming)
 
   const replacement = (): NextScoreRecord => ({
     achievement: incoming.achievement,
@@ -203,34 +207,48 @@ export function decideImportMerge(
   let bumpRevision = false
 
   if (comparison === 0 && !isUserEdited) {
+    const sameOrigin =
+      existing.provenance.source === job.source &&
+      (existing.provenance.sourceAccountId ?? null) === (job.sourceAccountId ?? null)
+
     if (VERIFICATION_RANK[incomingVerification] > VERIFICATION_RANK[existing.provenance.verification]) {
+      // The record now attests to what the upgrading job fetched, so every field the job provides comes from it
+      // and nothing the weaker source supplied is carried over under the stronger provenance
       outcome = 'provenanceUpgraded'
       bumpRevision = true
       next = {
         ...next,
+        dxScore: incoming.dxScore ?? null,
+        best50Bucket: incoming.best50Bucket ?? null,
+        providerRecordId: incoming.providerRecordId ?? null,
         provenance: importProvenance(job, incoming),
-        best50Bucket: incoming.best50Bucket ?? next.best50Bucket,
       }
     } else if (
-      existing.provenance.verification === 'verified' &&
-      incomingVerification === 'verified' &&
-      existing.provenance.source === job.source
+      VERIFICATION_RANK[incomingVerification] === VERIFICATION_RANK[existing.provenance.verification] &&
+      (existing.provenance.verification !== 'verified' || sameOrigin)
     ) {
+      if (existing.provenance.verification === 'verified') {
+        // Same source and account: the new job fetched this exact value again
+        next = {
+          ...next,
+          provenance: {
+            ...next.provenance,
+            importJobId: job.id,
+            fetchedAt: job.fetchedAt ?? null,
+            rawPayloadSha256: job.rawPayloadSha256 ?? null,
+          },
+        }
+      }
+
+      // Backfill only from a job of the same trust level (never client data into a verified record), and
+      // `providerRecordId` only from the provider whose id namespace the record is in
       next = {
         ...next,
-        provenance: {
-          ...next.provenance,
-          importJobId: job.id,
-          fetchedAt: job.fetchedAt ?? null,
-          rawPayloadSha256: job.rawPayloadSha256 ?? null,
-        },
+        dxScore: next.dxScore ?? incoming.dxScore ?? null,
+        providerRecordId:
+          next.providerRecordId ??
+          (existing.provenance.source === job.source ? (incoming.providerRecordId ?? null) : null),
       }
-    }
-
-    next = {
-      ...next,
-      dxScore: next.dxScore ?? incoming.dxScore ?? null,
-      providerRecordId: next.providerRecordId ?? incoming.providerRecordId ?? null,
     }
   }
 
@@ -360,8 +378,9 @@ export interface ManualMutationDecision {
  * - Over a record changed after the baseline that is not `verified`: `applied` (latest intent wins).
  * - Over a `verified` record changed after the baseline: a `set` applies only when strictly better; a `delete` is
  *   always `superseded`.
- * - `set` of the value a live record already has (same achievement and flags, and the same or no `dxScore`), and
- *   `delete` of nothing or of a tombstone: `noop`, so a no-op never strips `verified`.
+ * - `set` of the value a live record already has (same achievement and flags), and `delete` of nothing or of a
+ *   tombstone: `noop`, so a no-op never strips `verified`.
+ * - An applied `set` clears `dxScore` like iOS `applyManualScore`; `value.dxScore` is only validated.
  * - Invalid values: `rejected`. Sheet ID validation is the caller's.
  */
 export function decideManualMutation(
@@ -389,9 +408,7 @@ export function decideManualMutation(
 
   const value = mutation.value
   if (live) {
-    const sameValue =
-      compareScore(value, existing) === 0 && (value.dxScore == null || value.dxScore === existing.dxScore)
-    if (sameValue) return manualOutcome('noop', null)
+    if (compareScore(value, existing) === 0) return manualOutcome('noop', null)
 
     if (
       existing.revision > baseline &&
@@ -407,7 +424,8 @@ export function decideManualMutation(
     achievement: value.achievement,
     comboFlag: value.comboFlag ?? null,
     syncFlag: value.syncFlag ?? null,
-    dxScore: value.dxScore ?? null,
+    // A manual set clears dxScore like iOS applyManualScore (§5.4); `value.dxScore` is validated but not stored
+    dxScore: null,
     best50Bucket: null,
     providerRecordId: null,
     provenance: {
@@ -462,6 +480,21 @@ function validateMutation(mutation: ManualMutation): ManualMutationRejection | n
   if (value.dxScore != null && (!Number.isSafeInteger(value.dxScore) || value.dxScore < 0)) return 'invalid-dx-score'
   if (!(MANUAL_ENTRY_METHODS as readonly string[]).includes(mutation.entryMethod)) return 'invalid-entry-method'
   return null
+}
+
+function assertIncoming(incoming: IncomingScoreRecord): void {
+  if (!isAchievementInt(incoming.achievement)) {
+    throw new RangeError(`Incoming achievement must be an integer in 0..1010000: ${String(incoming.achievement)}`)
+  }
+  if (incoming.comboFlag != null && !Object.hasOwn(COMBO_RANK, incoming.comboFlag)) {
+    throw new RangeError(`Incoming combo flag is unknown: ${String(incoming.comboFlag)}`)
+  }
+  if (incoming.syncFlag != null && !Object.hasOwn(SYNC_RANK, incoming.syncFlag)) {
+    throw new RangeError(`Incoming sync flag is unknown: ${String(incoming.syncFlag)}`)
+  }
+  if (incoming.dxScore != null && (!Number.isSafeInteger(incoming.dxScore) || incoming.dxScore < 0)) {
+    throw new RangeError(`Incoming dxScore must be a non-negative integer: ${String(incoming.dxScore)}`)
+  }
 }
 
 function applied(outcome: 'inserted' | 'revived' | 'improved', next: NextScoreRecord): ImportMergeDecision {

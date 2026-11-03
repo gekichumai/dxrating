@@ -97,6 +97,17 @@ describe('decideImportMerge', () => {
     expect(() => decideImportMerge(null, { achievement: 1010001 }, job)).toThrow(RangeError)
   })
 
+  it('rejects unknown flags and invalid dxScore instead of ranking them as none', () => {
+    const bogus = (fields: Record<string, unknown>) => ({ achievement: 1, ...fields }) as IncomingScoreRecord
+    expect(() => decideImportMerge(null, bogus({ comboFlag: 'bogus' }), job)).toThrow(RangeError)
+    expect(() => decideImportMerge(null, bogus({ syncFlag: 'bogus' }), job)).toThrow(RangeError)
+    expect(() => decideImportMerge(null, bogus({ dxScore: -1 }), job)).toThrow(RangeError)
+    expect(() => decideImportMerge(null, bogus({ dxScore: 1.5 }), job)).toThrow(RangeError)
+    expect(decideImportMerge(null, bogus({ comboFlag: null, syncFlag: null, dxScore: 0 }), job).outcome).toBe(
+      'inserted',
+    )
+  })
+
   it('rejects invalid timestamps', () => {
     expect(() => decideImportMerge(null, { achievement: 1 }, { ...job, startedAt: 'yesterday' })).toThrow(RangeError)
   })
