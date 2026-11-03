@@ -73,32 +73,20 @@ export interface ActiveSaveDependencies {
   /** `GET /saves` */
   listSaves(): Promise<readonly SaveDTO[]>
   openCloudRepository(options: OpenCloudRepositoryOptions): Promise<CloudScoreRepository>
-  /** How long `/me/features` and `GET /saves` may take before the local save is used; {@link DECISION_TIMEOUT_MS} */
+  /** How long the decision may wait on the network before it stops holding work back; {@link DECISION_TIMEOUT_MS} */
   decisionTimeoutMs?: number
 }
 
 /**
- * A decision that is still waiting on the network after this long uses the local save, so work that waits for it
- * (the automatic maimai NET import) runs as it did before cloud save
+ * How long the decision may wait on the network before it stops holding back the work that waits for it (§8.2).
+ * With no cloud save chosen the answer can only be the local save: it is final then, so the automatic maimai NET
+ * import runs as it did before cloud save. With a cloud save chosen the requests keep going and the cloud save opens
+ * when they answer; until then the visitor is told that changes stay in this browser, and the automatic import waits.
  */
 export const DECISION_TIMEOUT_MS = 5_000
 
-class DecisionTimeoutError extends Error {
-  constructor() {
-    super('The active save decision timed out')
-    this.name = 'DecisionTimeoutError'
-  }
-}
-
-function withDecisionTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
-  let timeout: ReturnType<typeof setTimeout> | undefined
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) => {
-      timeout = setTimeout(() => reject(new DecisionTimeoutError()), timeoutMs)
-    }),
-  ]).finally(() => clearTimeout(timeout))
-}
+/** The toast shown while a chosen cloud save cannot be reached; dismissed once the decision is made */
+const UNREACHABLE_TOAST_ID = 'cloud-save-unreachable'
 
 const isNotFound = (error: unknown) =>
   typeof error === 'object' &&
@@ -163,8 +151,9 @@ export interface ActiveSave {
   kind: 'local' | 'cloud'
   /**
    * Whether the choice between the local save and a cloud save is made for the current session (signed out: once
-   * the session has loaded; signed in: once `/me/features`, and for a cloud save the save list, have answered).
-   * Work that must go to the right save, such as the automatic maimai NET import, waits for it.
+   * the session has loaded; signed in: once `/me/features`, and for a cloud save the save list, have answered, or
+   * after {@link DECISION_TIMEOUT_MS} when no cloud save is chosen). Work that must go to the right save, such as the
+   * automatic maimai NET import, waits for it.
    */
   decided: boolean
   /** The active cloud save, `null` for the local save */
@@ -249,9 +238,19 @@ export function useActiveSaveDecision(): ActiveSave {
       if (!cancelled) setCloudRepository(null)
     }
 
-    const timeoutMs = dependencies.decisionTimeoutMs ?? DECISION_TIMEOUT_MS
+    // A stalled network does not end the decision: the requests keep going (see DECISION_TIMEOUT_MS)
+    let settled = false
+    const timeout = setTimeout(() => {
+      if (cancelled || settled) return
+      if (!readActiveSaveId(storage, userId)) {
+        setDecidedKey(key)
+        return
+      }
+      toast(tRef.current('rating-calculator:cloud-save.unreachable'), { id: UNREACHABLE_TOAST_ID, duration: 8_000 })
+    }, dependencies.decisionTimeoutMs ?? DECISION_TIMEOUT_MS)
+
     void (async () => {
-      const features = await withDecisionTimeout(getUserFeatures(userId, dependencies.fetchFeatures), timeoutMs)
+      const features = await getUserFeatures(userId, dependencies.fetchFeatures)
       if (cancelled) return
       const saveId = readActiveSaveId(storage, userId)
       if (!features.cloudSave || !saveId) return fallBackToLocal()
@@ -259,7 +258,7 @@ export function useActiveSaveDecision(): ActiveSave {
       const current = cloudRef.current
       if (current && current.userId === userId && current.saveId === saveId) return
 
-      const saves = await withDecisionTimeout(dependencies.listSaves(), timeoutMs)
+      const saves = await dependencies.listSaves()
       if (cancelled) return
       if (!saves.some((save) => save.id === saveId)) {
         writeActiveSaveId(storage, userId, null)
@@ -301,11 +300,15 @@ export function useActiveSaveDecision(): ActiveSave {
         fallBackToLocal()
       })
       .finally(() => {
+        settled = true
+        clearTimeout(timeout)
+        toast.dismiss(UNREACHABLE_TOAST_ID)
         if (!cancelled) setDecidedKey(key)
       })
 
     return () => {
       cancelled = true
+      clearTimeout(timeout)
     }
   }, [userId, selectionVersion, dependencies])
 
