@@ -83,4 +83,56 @@ describe('parseRatingFile', () => {
   ])('rejects %s, importing nothing', (_, value) => {
     expect(parseRatingFile(JSON.stringify(value))).toMatchObject({ success: false, reason: 'invalid-structure' })
   })
+
+  it('reads a "Download my data" file as its saves, and an export with no records as not a rating file', () => {
+    const file = {
+      format: 'dxrating-cloud-save-export',
+      version: 1,
+      saves: [
+        {
+          id: 'dsav_a',
+          name: 'Main',
+          region: 'intl',
+          records: [
+            {
+              sheetId: 'dsht_5mk3yr8gme',
+              achievement: 1005432,
+              achievementRate: 100.5432,
+              comboFlag: 'fcp',
+              syncFlag: 'fs',
+              dxScore: 2100,
+              best50Bucket: 'b15',
+              providerRecordId: '42',
+              provenance: { source: 'diving-fish', claimedSource: null, verification: 'verified' },
+            },
+            { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 'broken' },
+          ],
+        },
+      ],
+    }
+    expect(parseRatingFile(JSON.stringify(file))).toEqual({
+      success: true,
+      cloudExport: [
+        {
+          id: 'dsav_a',
+          name: 'Main',
+          region: 'intl',
+          entries: [
+            {
+              sheetId: 'dsht_5mk3yr8gme',
+              achievementRate: 100.5432,
+              comboFlag: 'fcp',
+              syncFlag: 'fs',
+              dxScore: 2100,
+              source: { provider: 'diving-fish', providerId: '42', best50Bucket: 'b15' },
+            },
+          ],
+        },
+      ],
+    })
+    expect(parseRatingFile(JSON.stringify({ ...file, saves: [] }))).toMatchObject({
+      success: false,
+      reason: 'invalid-structure',
+    })
+  })
 })
