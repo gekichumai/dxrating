@@ -45,7 +45,7 @@ import {
 } from './services/api-usage'
 import { appContract } from './contract'
 import { CLOUD_SAVE_NET_IMPORT_ROUTE, isPublicSpecProcedure } from '@gekichumai/api-contract'
-import { credentialHygiene } from './lib/credential-hygiene'
+import { credentialHygiene, holdCredentials } from './lib/credential-hygiene'
 import { netImportHandler } from './services/cloud-save/net-import-route'
 import { McpCatalogSource } from './services/application'
 import {
@@ -533,10 +533,13 @@ const verifyParams = createMiddleware((c, next) =>
 
       c.set('authParams', { id: result.data.id, password: result.data.password })
       c.set('region', result.data.region)
+      // Filtered from telemetry while the handler runs, whatever the body's framing (design §7.2): the middleware's
+      // read-ahead only sees small bodies with a Content-Length. Streaming handlers hold their own.
+      const releaseCredentials = holdCredentials([result.data.id, result.data.password])
       return yield* Effect.tryPromise({
         try: next,
         catch: (cause) => new HttpAdapterError({ operation: 'Run NET handler', cause }),
-      })
+      }).pipe(Effect.ensuring(Effect.sync(releaseCredentials)))
     }),
     { signal: c.req.raw.signal },
   ),
