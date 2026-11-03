@@ -9,6 +9,7 @@ import {
   type ScoreSyncLocks,
   SYNC_BACKOFF_MAX_MS,
 } from '../CloudScoreRepository'
+import { CloudScoreDatabase } from '../cloudScoreDatabase'
 import { UnsupportedScoreOperationError } from '../ScoreRepository'
 import { FakeCloudSaveServer, manualProvenance, verifiedProvenance } from './fakeCloudSaveServer'
 
@@ -49,6 +50,7 @@ beforeEach(() => {
 
 afterEach(async () => {
   vi.useRealTimers()
+  vi.restoreAllMocks()
   await Promise.all(opened.splice(0).map(unload))
 })
 
@@ -457,11 +459,14 @@ describe('CloudScoreRepository', () => {
     const locks = { request } as unknown as ScoreSyncLocks
     const repository = await openRepository({ locks })
     repository.setManual({ sheetId: SHEET_A, achievementRate: 99 }, 'typed')
+    expect(repository.ready).toBe(false)
 
     await repository.sync()
     expect(request).toHaveBeenCalledWith('dxr-scores-sync', { ifAvailable: true }, expect.any(Function))
     expect(server.mutateCalls).toHaveLength(0)
     expect(server.changesCalls).toHaveLength(0)
+    // Another tab syncs the shared cache: this one shows it, even for an empty save (no revision to wait for)
+    expect(repository.ready).toBe(true)
 
     held = false
     await repository.sync()
@@ -598,5 +603,221 @@ describe('CloudScoreRepository', () => {
     await repository.sync()
     expect(server.mutateCalls).toEqual([])
     expect(repository.entries()).toHaveLength(1)
+  })
+
+  it('scopes issues to the save they were made on', async () => {
+    const saveA = await openRepository()
+    server.respondOnce = (mutations) => ({
+      revision: 0,
+      results: mutations.map((mutation) => ({
+        mutationId: mutation.mutationId,
+        status: 'rejected',
+        record: null,
+        reason: 'invalid-achievement',
+      })),
+    })
+    saveA.setManual({ sheetId: SHEET_A, achievementRate: 99 }, 'typed')
+    await saveA.sync()
+    expect(saveA.status.issues).toEqual([expect.objectContaining({ saveId: 'dsav_one', sheetId: SHEET_A })])
+    const issueId = saveA.status.issues[0]!.id
+    await unload(saveA)
+
+    const saveB = await openRepository({ saveId: 'dsav_other' })
+    await saveB.sync()
+    expect(saveB.status.issues).toEqual([])
+    // An issue of save A is neither applied to nor dismissed from save B
+    saveB.reapplyIssue(issueId)
+    saveB.dismissIssue(issueId)
+    expect(saveB.status.pendingCount).toBe(0)
+    await saveB.sync()
+    expect(server.mutateCalls).toHaveLength(1)
+    await unload(saveB)
+
+    expect((await openRepository()).status.issues).toEqual([expect.objectContaining({ id: issueId })])
+  })
+
+  it('applies an issue again in one write: the intent moves from the issues to the outbox atomically', async () => {
+    const repository = await openRepository()
+    server.respondOnce = (mutations) => ({
+      revision: 0,
+      results: mutations.map((mutation) => ({
+        mutationId: mutation.mutationId,
+        status: 'rejected',
+        record: null,
+        reason: 'invalid-achievement',
+      })),
+    })
+    repository.setManual({ sheetId: SHEET_A, achievementRate: 99 }, 'typed')
+    await repository.sync()
+    const issueId = repository.status.issues[0]!.id
+
+    const write = vi.spyOn(CloudScoreDatabase.prototype, 'write')
+    repository.reapplyIssue(issueId)
+    await repository.idle()
+    await vi.waitFor(() => expect(write).toHaveBeenCalled())
+
+    expect(write).toHaveBeenCalledTimes(1)
+    expect(write.mock.calls[0]![0]).toMatchObject({
+      addOutbox: [expect.objectContaining({ op: 'set', sheetId: SHEET_A })],
+      deleteIssues: [issueId],
+    })
+    write.mockRestore()
+    await unload(repository)
+    const reloaded = await openRepository()
+    expect(reloaded.status).toMatchObject({ pendingCount: 1, issues: [] })
+  })
+
+  it('keeps a change IndexedDB refused on screen, shows an error, and stores it before the next push', async () => {
+    const repository = await openRepository()
+    await repository.sync()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const original = CloudScoreDatabase.prototype.write
+    const write = vi
+      .spyOn(CloudScoreDatabase.prototype, 'write')
+      .mockImplementationOnce(() => Promise.reject(new DOMException('Quota exceeded', 'QuotaExceededError')))
+      .mockImplementation(function (this: CloudScoreDatabase, ...args) {
+        return original.apply(this, args)
+      })
+
+    repository.setManual({ sheetId: SHEET_A, achievementRate: 99 }, 'typed')
+    await vi.waitFor(() => expect(repository.status.state).toBe('error'))
+    expect(repository.status.pendingCount).toBe(1)
+
+    await repository.sync()
+
+    expect(server.mutateCalls).toEqual([[expect.objectContaining({ op: 'set', sheetId: SHEET_A })]])
+    expect(repository.status).toMatchObject({ state: 'idle', pendingCount: 0 })
+    expect(repository.entries()).toEqual([expect.objectContaining({ sheetId: SHEET_A, achievementRate: 99 })])
+    write.mockRestore()
+    warn.mockRestore()
+  })
+
+  it('keeps a change made while a reload runs on screen', async () => {
+    let channel: ScoreBroadcastChannel | null = null
+    const createChannel = () => {
+      channel = { onmessage: null, postMessage() {}, close() {} }
+      return channel
+    }
+    const repository = await openRepository({ createChannel })
+    repository.start()
+    await repository.idle()
+
+    const counts: number[] = []
+    repository.subscribe(() => counts.push(repository.status.pendingCount))
+    // Another tab's broadcast queues a reload; this tab writes before it has read the cache
+    channel!.onmessage?.({ data: { type: 'changed', userId: 'user-1', saveId: 'dsav_one' } } as MessageEvent)
+    repository.setManual({ sheetId: SHEET_A, achievementRate: 99 }, 'typed')
+    await vi.waitFor(() => expect(counts.length).toBeGreaterThanOrEqual(2))
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    expect(counts.every((count) => count === 1)).toBe(true)
+    expect(repository.entries()).toEqual([expect.objectContaining({ sheetId: SHEET_A })])
+  })
+
+  it('does not swap the records out under a pull when another tab broadcasts between pages', async () => {
+    server.pageSize = 1
+    server.put(SHEET_A, 1000000)
+    server.put(SHEET_B, 990000)
+    server.put(SHEET_C, 980000)
+    let channel: ScoreBroadcastChannel | null = null
+    const createChannel = () => {
+      channel = { onmessage: null, postMessage() {}, close() {} }
+      return channel
+    }
+    const reportChecksumMismatch = vi.fn()
+    const repository = await openRepository({ createChannel, reportChecksumMismatch })
+    server.onChanges = () => {
+      if (server.changesCalls.at(-1) === 1) {
+        channel!.onmessage?.({ data: { type: 'changed', userId: 'user-1', saveId: 'dsav_one' } } as MessageEvent)
+      }
+    }
+
+    repository.start()
+    await repository.idle()
+
+    expect(reportChecksumMismatch).not.toHaveBeenCalled()
+    expect(server.changesCalls.slice(0, 3)).toEqual([0, 1, 2])
+    expect(repository.entries()).toHaveLength(3)
+  })
+
+  it('saves a change of the DX score alone through the calculator adapter', async () => {
+    server.put(SHEET_A, 990000, manualProvenance(), { dxScore: 1000 })
+    const repository = await openRepository()
+    await repository.sync()
+
+    repository.replaceEntries([{ ...repository.entries()[0]!, dxScore: 1200 }])
+    await repository.sync()
+
+    expect(server.mutateCalls).toEqual([
+      [expect.objectContaining({ op: 'set', sheetId: SHEET_A, value: expect.objectContaining({ dxScore: 1200 }) })],
+    ])
+    repository.replaceEntries([...repository.entries()])
+    await repository.sync()
+    expect(server.mutateCalls).toHaveLength(1)
+  })
+
+  it('retries at once when the page comes back online after a failure', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] })
+    const target = new EventTarget()
+    const repository = await openRepository({ eventTarget: target as unknown as Window })
+    server.failures.push(offline(), offline())
+    repository.start()
+    await repository.idle()
+    await vi.advanceTimersByTimeAsync(2_000)
+    await repository.idle()
+    expect(repository.status.state).toBe('offline')
+    expect(server.changesCalls).toHaveLength(2)
+    // Backing off 4 s now; a sync before then waits
+    await repository.sync()
+    expect(server.changesCalls).toHaveLength(2)
+
+    target.dispatchEvent(new Event('online'))
+    await repository.idle()
+
+    expect(server.changesCalls).toHaveLength(3)
+    expect(repository.status.state).toBe('idle')
+  })
+
+  it("honours a 429's wait when the page comes back online", async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] })
+    const target = new EventTarget()
+    const repository = await openRepository({ eventTarget: target as unknown as Window })
+    server.failures.push({ status: 429, code: 'TOO_MANY_REQUESTS', data: { retryAfterSeconds: 30 } })
+    repository.start()
+    await repository.idle()
+    expect(server.changesCalls).toHaveLength(1)
+
+    target.dispatchEvent(new Event('online'))
+    await repository.idle()
+    expect(server.changesCalls).toHaveLength(1)
+
+    await vi.advanceTimersByTimeAsync(30_000)
+    await repository.idle()
+    expect(server.changesCalls).toHaveLength(2)
+  })
+
+  it('syncs when the page becomes visible, not when it is hidden', async () => {
+    let visible = false
+    const visibilityTarget = new EventTarget()
+    const repository = await openRepository({
+      isVisible: () => visible,
+      visibilityTarget: visibilityTarget as unknown as Document,
+    })
+    repository.start()
+    await repository.idle()
+    expect(server.changesCalls).toHaveLength(1)
+
+    visibilityTarget.dispatchEvent(new Event('visibilitychange'))
+    await repository.idle()
+    expect(server.changesCalls).toHaveLength(1)
+
+    visible = true
+    visibilityTarget.dispatchEvent(new Event('visibilitychange'))
+    await repository.idle()
+    expect(server.changesCalls).toHaveLength(2)
+
+    await unload(repository)
+    visibilityTarget.dispatchEvent(new Event('visibilitychange'))
+    expect(server.changesCalls).toHaveLength(2)
   })
 })

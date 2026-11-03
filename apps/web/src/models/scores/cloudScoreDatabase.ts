@@ -10,7 +10,8 @@ import type { SyncIssue } from './ScoreRepository'
  * - `outbox`: mutations not yet acknowledged by the server, in creation order (auto-increment `seq`), each with the
  *   save it belongs to; never deleted on logout or when cloud save is turned off (§5.7)
  * - `meta`: `{ saveId, lastSyncedRevision }` under the key `state`
- * - `issues`: sync issues (superseded or rejected mutations), by ID
+ * - `issues`: sync issues (superseded or rejected mutations), by ID, each with the save it belongs to; kept for
+ *   other saves like their outbox entries
  */
 
 export const CLOUD_SCORE_DB_VERSION = 1

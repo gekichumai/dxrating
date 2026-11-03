@@ -67,6 +67,8 @@ export interface ImportProgress {
 export interface SyncIssue {
   /** The ID of the mutation that carried the intent */
   id: string
+  /** The save the intent was made on: an issue is shown and applied again only there (§5.4, §8.1) */
+  saveId: string
   sheetId: string
   /**
    * `superseded`: the server kept a newer verified record, returned with the result. `rejected`: the server refused
