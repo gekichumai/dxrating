@@ -14,10 +14,11 @@ import {
 } from '@gekichumai/maimai-domain'
 import { Effect } from 'effect'
 import type { Database } from '../../db/index'
-import { RevisionPreconditionFailed } from './errors'
+import { CloudSaveBadRequest, RevisionPreconditionFailed } from './errors'
+import { CLOUD_SAVE_MAX_RECORDS_PER_SAVE } from './limits'
 import { canonicalSha256, EMPTY_COUNTS, finishImportJob, startImportJob, toImportJobDTO, toMergeJob } from './jobs'
 import { RecordWriter, type RecordState } from './records'
-import { lockSave } from './saves'
+import { lockSave, saveTransaction } from './saves'
 
 type DatabaseService = typeof Database.Service
 
@@ -48,7 +49,7 @@ export interface ReplaceInput {
  * raises the verification. Every rewrite logs `import_applied`. Deletions are not counted; the revision shows them.
  */
 export const replaceRecords = (database: DatabaseService, userId: string, saveId: string, input: ReplaceInput) =>
-  database.transaction(() =>
+  saveTransaction(database, () =>
     Effect.gen(function* () {
       const save = yield* lockSave(database, userId, saveId)
 
@@ -59,7 +60,7 @@ export const replaceRecords = (database: DatabaseService, userId: string, saveId
         const parsed = ImportRecordSchema.safeParse(item)
         if (!parsed.success || !isPublicSheetId(parsed.data.sheetId)) {
           rejected += 1
-          rejectedSheets.add(item.sheetId)
+          if (typeof item.sheetId === 'string') rejectedSheets.add(item.sheetId)
           continue
         }
         const previous = valid.get(parsed.data.sheetId)
@@ -85,6 +86,13 @@ export const replaceRecords = (database: DatabaseService, userId: string, saveId
       const counts: ImportCountsDTO = { ...EMPTY_COUNTS, fetched: input.records.length, rejected }
       const writer = new RecordWriter(database, save)
       yield* writer.loadAll()
+      yield* writer.loadStoredCount()
+      const created = [...valid.keys()].filter((sheetId) => writer.find(sheetId) === null).length
+      if (created > writer.remainingCapacity()) {
+        return yield* new CloudSaveBadRequest({
+          message: `The save would store more than ${CLOUD_SAVE_MAX_RECORDS_PER_SAVE} records`,
+        })
+      }
 
       for (const record of valid.values()) {
         const before = writer.find(record.sheetId)
@@ -128,6 +136,7 @@ export const replaceRecords = (database: DatabaseService, userId: string, saveId
           eventKind: 'delete',
           // the replace deleted it, not the manual edit that last set it
           clientMutationId: null,
+          clientEditedAt: null,
         })
       }
 
