@@ -2,8 +2,6 @@ import { useNetImportSettings } from './import/NetImportSettingsContext'
 import { Button, Divider, Menu } from '@mui/material'
 import { type FC, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ListActions } from 'react-use/lib/useList'
-import type { PlayEntry } from '../RatingCalculatorAddEntryForm'
 import { ImportFromAquaDxButtonListItem } from './import/ImportFromAquaDxButtonListItem.tsx'
 import { ImportFromAquaSQLiteListItem } from './import/ImportFromAquaSQLiteListItem'
 import { ImportFromDivingFishButtonListItem } from './import/ImportFromDivingFishButtonListItem'
@@ -12,9 +10,7 @@ import { ImportFromLxnsButtonListItem } from './import/ImportFromLxnsButtonListI
 import { ImportFromMuNetButtonListItem } from './import/ImportFromMuNetButtonListItem'
 import { ImportFromNETRecordsListItem } from './import/ImportFromNETRecordsListItem'
 
-export const ImportMenu: FC<{
-  modifyEntries: ListActions<PlayEntry>
-}> = ({ modifyEntries }) => {
+export const ImportMenu: FC = () => {
   const { isOpen: settingsOpen, openSettings } = useNetImportSettings()
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
@@ -62,14 +58,14 @@ export const ImportMenu: FC<{
             openSettings(triggerRef.current)
           }}
         />
-        <ImportFromDivingFishButtonListItem modifyEntries={modifyEntries} onClose={handleClose} />
-        <ImportFromLxnsButtonListItem modifyEntries={modifyEntries} onClose={handleClose} />
+        <ImportFromDivingFishButtonListItem onClose={handleClose} />
+        <ImportFromLxnsButtonListItem onClose={handleClose} />
         <Divider />
 
-        <ImportFromJSONButtonListItem modifyEntries={modifyEntries} onClose={handleClose} />
-        <ImportFromAquaDxButtonListItem modifyEntries={modifyEntries} onClose={handleClose} />
-        <ImportFromMuNetButtonListItem modifyEntries={modifyEntries} onClose={handleClose} />
-        <ImportFromAquaSQLiteListItem modifyEntries={modifyEntries} onClose={handleClose} />
+        <ImportFromJSONButtonListItem onClose={handleClose} />
+        <ImportFromAquaDxButtonListItem onClose={handleClose} />
+        <ImportFromMuNetButtonListItem onClose={handleClose} />
+        <ImportFromAquaSQLiteListItem onClose={handleClose} />
       </Menu>
     </>
   )

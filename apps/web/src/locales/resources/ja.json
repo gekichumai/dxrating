@@ -521,6 +521,7 @@
     "io.import.json.title": "DXRating JSONから読み込み...",
     "io.import.json.success": "{{count}}件のエントリーを読み込みしました",
     "io.import.json.error": "読み込みに失敗しました：{{error}}",
+    "io.import.json.invalid-file": "このファイルは DXRating のレーティングエクスポートではありません。何も読み込まれていません。",
     "io.import.net-records.settings.button": "自動読み込み",
     "io.import.net-records.settings.title": "自動読み込みの設定",
     "io.import.net-records.floating.running": "スコアをインポート中",

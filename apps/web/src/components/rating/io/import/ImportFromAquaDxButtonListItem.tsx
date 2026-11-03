@@ -5,10 +5,9 @@ import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
 import type { FC } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import type { ListActions } from 'react-use/lib/useList'
 import MdiEarthArrowDown from '~icons/mdi/earth-arrow-down'
 import { useWebHaptics } from 'web-haptics/react'
-import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
 
@@ -19,10 +18,10 @@ type AquaDxExportMusicDetail = {
 }
 
 export const ImportFromAquaDxButtonListItem: FC<{
-  modifyEntries: ListActions<PlayEntry>
   onClose: () => void
-}> = ({ modifyEntries, onClose }) => {
+}> = ({ onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
+  const repository = useScoreRepository()
   const haptic = useWebHaptics()
   const loadCatalog = useSongCatalogLoader()
 
@@ -66,7 +65,7 @@ export const ImportFromAquaDxButtonListItem: FC<{
                 console.warn('[ImportFromAquaDxButtonListItem]', warning.message, warning.row)
               }
 
-              modifyEntries.set(entries)
+              await repository.applyImport(entries, { source: 'aqua-dx', mode: 'replace' })
               analytics.succeeded(entries.length, importResult.warnings.length)
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.aqua-dx.success', { count: entries.length }))

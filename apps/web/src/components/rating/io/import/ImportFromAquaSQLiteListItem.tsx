@@ -20,7 +20,6 @@ import {
 import { type FC, useCallback, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import type { ListActions } from 'react-use/lib/useList'
 import sqljs, { type Database } from 'sql.js'
 // The binary of the installed sql.js, served with the app: sql.js.org only hosts the latest build, under another
 // name than the browser build of the package asks for (sql-wasm-browser.wasm), and the versions must match.
@@ -33,13 +32,13 @@ import { FadedImage } from '../../../global/FadedImage'
 import { SheetListItemContent } from '../../../sheet/SheetListItem'
 import { useWebHaptics } from 'web-haptics/react'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
 
 export const ImportFromAquaSQLiteListItem: FC<{
-  modifyEntries: ListActions<PlayEntry>
   onClose: () => void
-}> = ({ modifyEntries, onClose }) => {
+}> = ({ onClose }) => {
   const { t } = useTranslation(['rating-calculator', 'global'])
   const [db, setDb] = useState<Database | null>(null)
   const handleClose = useCallback(() => {
@@ -51,7 +50,7 @@ export const ImportFromAquaSQLiteListItem: FC<{
     <>
       {db && (
         <Dialog open={true} onClose={handleClose}>
-          <ImportFromAquaSQLiteDatabaseContent db={db} modifyEntries={modifyEntries} onClose={handleClose} />
+          <ImportFromAquaSQLiteDatabaseContent db={db} onClose={handleClose} />
         </Dialog>
       )}
 
@@ -131,10 +130,10 @@ type AquaFilteredMappedEntry = {
 
 const ImportFromAquaSQLiteDatabaseContent: FC<{
   db: Database
-  modifyEntries: ListActions<PlayEntry>
   onClose?: () => void
-}> = ({ db, modifyEntries, onClose }) => {
+}> = ({ db, onClose }) => {
   const { t } = useTranslation(['rating-calculator', 'global'])
+  const repository = useScoreRepository()
   const haptic = useWebHaptics()
   const users = useMemo(() => {
     try {
@@ -231,9 +230,12 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
           <Button
             color="primary"
             variant="contained"
-            onClick={() => {
+            onClick={async () => {
               const analytics = createRatingImportTracker('aqua_sqlite')
-              modifyEntries.set(records.map((record) => record.entry))
+              await repository.applyImport(
+                records.map((record) => record.entry),
+                { source: 'aqua-sqlite', mode: 'replace' },
+              )
               analytics.succeeded(records.length, warnings.length)
 
               haptic.trigger('success')

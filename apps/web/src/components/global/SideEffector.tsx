@@ -7,7 +7,7 @@ import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useA
 import { type FC, memo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useEffectOnce } from 'react-use'
-import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
+import { useScoreRepository } from '../../models/scores/useScoreRepository'
 import { useVersionTheme } from '../../utils/useVersionTheme'
 import toast from 'react-hot-toast'
 import IconMdiCached from '~icons/mdi/cached'
@@ -39,7 +39,7 @@ const SideEffectorLocaleMeta: FC = () => {
 }
 
 const SideEffectorAutoImportRating: FC = () => {
-  const { modifyEntries } = useRatingCalculatorContext()
+  const repository = useScoreRepository()
   const { t } = useTranslation()
   // An import resolves records against the catalog: run it once the complete catalog has loaded
   const catalog = useCompleteSongCatalog()
@@ -86,7 +86,7 @@ const SideEffectorAutoImportRating: FC = () => {
       }
     }
 
-    importFromNETRecords(catalog, modifyEntries, mode)
+    importFromNETRecords(catalog, repository, mode)
   }, [catalog])
 
   return null

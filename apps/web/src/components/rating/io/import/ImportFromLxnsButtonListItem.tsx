@@ -15,14 +15,13 @@ import {
 import { type FC, useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import type { ListActions } from 'react-use/lib/useList'
 import CarbonCloud from '~icons/carbon/cloud'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { useAuth } from '../../../../hooks/useAuth'
 import { apiClient } from '../../../../lib/orpc'
 import { WebHaptics } from 'web-haptics'
-import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
 
@@ -31,10 +30,10 @@ const haptics = new WebHaptics()
 type ConnectionState = 'loading' | 'not-connected' | 'connected' | 'connecting' | 'importing' | 'error'
 
 const LxnsImportDialogContent: FC<{
-  modifyEntries: ListActions<PlayEntry>
   onClose: () => void
-}> = ({ modifyEntries, onClose }) => {
+}> = ({ onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
+  const repository = useScoreRepository()
   const loadCatalog = useSongCatalogLoader()
   const [state, setState] = useState<ConnectionState>('loading')
 
@@ -76,7 +75,7 @@ const LxnsImportDialogContent: FC<{
         console.warn('[ImportFromLxnsButtonListItem]', warning.message, warning.row)
       }
 
-      modifyEntries.set(entries)
+      await repository.applyImport(entries, { source: 'lxns', mode: 'replace' })
       analytics.succeeded(entries.length, importResult.warnings.length)
       haptics.trigger('success')
       toast.success(t('rating-calculator:io.import.lxns.success', { count: entries.length }))
@@ -174,9 +173,8 @@ const LxnsImportDialogContent: FC<{
 }
 
 export const ImportFromLxnsButtonListItem: FC<{
-  modifyEntries: ListActions<PlayEntry>
   onClose: () => void
-}> = ({ modifyEntries, onClose }) => {
+}> = ({ onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
   const { isAuthenticated } = useAuth()
   const [open, setOpen] = useState(false)
@@ -213,7 +211,7 @@ export const ImportFromLxnsButtonListItem: FC<{
 
       {open && (
         <Dialog open={open} onClose={handleClose}>
-          <LxnsImportDialogContent modifyEntries={modifyEntries} onClose={handleClose} />
+          <LxnsImportDialogContent onClose={handleClose} />
         </Dialog>
       )}
     </>

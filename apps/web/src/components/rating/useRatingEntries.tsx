@@ -11,11 +11,11 @@ import * as Sentry from '@sentry/tanstackstart-react'
 import { useSongCatalog } from '../../catalog/CatalogContext'
 import { useMemo } from 'react'
 import type { Region } from '../../models/context/AppContext'
-import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
 import { useAppContext, useAppContextDXDataVersion } from '../../models/context/useAppContext'
 import type { Entry } from '../../pages/RatingCalculator'
 import { type FlattenedSheet, useSheets } from '../../songs'
 import type { PlayEntry } from './RatingCalculatorAddEntryForm'
+import { useScoreEntries } from '@/models/scores/useScoreRepository'
 
 export type RatingCalculatorEntry = Entry & {
   sheet: FlattenedSheet
@@ -54,7 +54,7 @@ export const calculateWebRatingEntries = ({
   appVersion,
   region,
 }: {
-  entries: PlayEntry[]
+  entries: readonly PlayEntry[]
   sheets: FlattenedSheet[] | undefined
   catalog: SongCatalog
   appVersion: VersionEnum
@@ -149,7 +149,7 @@ function toWebStatistics(
 export const useRatingEntries = (): UseRatingEntriesReturn => {
   const appVersion = useAppContextDXDataVersion()
   const { region } = useAppContext()
-  const { entries } = useRatingCalculatorContext()
+  const entries = useScoreEntries()
   const { data: sheets } = useSheets()
   const catalog = useSongCatalog()
 

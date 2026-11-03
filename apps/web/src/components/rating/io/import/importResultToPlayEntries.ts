@@ -8,6 +8,7 @@ export function importResultToPlayEntries(result: RatingImportResult): PlayEntry
     achievementRate: entry.achievementRate,
     comboFlag: entry.comboFlag,
     syncFlag: entry.syncFlag,
+    ...(entry.dxScore === undefined ? {} : { dxScore: entry.dxScore }),
     source: entry.source,
     providerConfig:
       entry.source?.provider === 'diving-fish'
