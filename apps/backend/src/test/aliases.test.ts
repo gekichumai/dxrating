@@ -28,6 +28,16 @@ describe('Aliases API', () => {
     expect(body).toEqual([])
   })
 
+  it('GET /api/v1/aliases sends an ETag and answers a matching If-None-Match with 304', async () => {
+    const res = await fetch(`${getBaseUrl()}/api/v1/aliases`)
+    const tag = res.headers.get('ETag')
+    expect(tag).toBeTruthy()
+    await res.arrayBuffer()
+
+    const revalidated = await fetch(`${getBaseUrl()}/api/v1/aliases`, { headers: { 'If-None-Match': tag! } })
+    expect(revalidated.status).toBe(304)
+  })
+
   it('POST /api/v1/aliases requires authentication', async () => {
     const res = await fetch(`${getBaseUrl()}/api/v1/aliases`, {
       method: 'POST',

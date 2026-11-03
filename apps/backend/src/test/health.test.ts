@@ -127,6 +127,13 @@ describe('Health & Basic Endpoints', () => {
     expect(spec.info).toBeDefined()
     expect(spec.info.title).toBe('DXRating API')
     expect(spec.paths).toBeDefined()
+    expect(spec.info.description).not.toMatch(/beta/i)
+    expect(spec.info.description).toContain('https://dxrating.net/developers#api-stability')
+    expect(spec.externalDocs.url).toBe('https://dxrating.net/developers#api-stability')
+    // the catalog comes first, in the tags and in the paths
+    expect(spec.tags[0].name).toBe('DX Data')
+    expect(Object.keys(spec.paths)[0]).toBe('/dxdata')
+    expect(JSON.stringify(spec)).not.toContain('"additionalProperties":false')
 
     const dxdata = spec.paths['/dxdata']
     expect(dxdata.get).toMatchObject({

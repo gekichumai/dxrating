@@ -17,6 +17,8 @@ describe('buildLlmsTxt', () => {
     expect(llms).toContain('https://dxrating.net/?q=')
     expect(llms).toContain('Data from DXRating (dxrating.net)')
     expect(llms).not.toContain('CC BY-NC')
+    expect(llms).toContain('https://dxrating.net/developers#api-stability')
+    expect(llms.indexOf('/api/v1/dxdata')).toBeLessThan(llms.indexOf('## Canonical Resources'))
     expect(llms).toContain('https://dxrating.net/songs/{songId}/{type}/{difficulty}')
     expect(llms).toContain('https://miruku.dxrating.net/spec.json')
     expect(llms).toContain('https://miruku.dxrating.net/docs')

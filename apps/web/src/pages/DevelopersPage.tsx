@@ -10,6 +10,9 @@ const MCP_ENDPOINT = 'https://mcp.dxrating.net/mcp'
 const MCP_GUIDE_URL = 'https://mcp.dxrating.net/?via=dxrating-developers'
 const API_BASE = 'https://miruku.dxrating.net/api/v1'
 const API_DOCS_URL = 'https://miruku.dxrating.net/docs'
+const DXDATA_URL = `${API_BASE}/dxdata`
+const API_CHANGELOG_URL = 'https://github.com/gekichumai/dxrating/issues/427'
+const API_SUPPORT_URL = 'https://github.com/gekichumai/dxrating/issues'
 const ATTRIBUTION_LINE = 'Data from DXRating (dxrating.net)'
 
 const externalLinkProps = { target: '_blank', rel: 'noopener noreferrer' } as const
@@ -83,6 +86,16 @@ const Option = ({
   </section>
 )
 
+const InlineLink = ({ href, children }: { href: string; children: ReactNode }) => (
+  <a
+    href={href}
+    {...externalLinkProps}
+    className="font-medium text-zinc-900 underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-500"
+  >
+    {children}
+  </a>
+)
+
 const Term = ({ title, children }: { title: string; children: ReactNode }) => (
   <div className="grid gap-1 py-4 first:pt-0 last:pb-0 md:grid-cols-[9rem_minmax(0,1fr)] md:gap-6">
     <dt className="text-sm font-semibold text-zinc-950">{title}</dt>
@@ -135,11 +148,11 @@ export const DevelopersPage = () => {
             title={t('developers:api.title')}
             description={t('developers:api.description')}
             endpointLabel={t('developers:api.endpoint')}
-            endpoint={API_BASE}
+            endpoint={DXDATA_URL}
             action={{ label: t('developers:api.action'), href: API_DOCS_URL }}
             links={[
               { label: 'OpenAPI', href: 'https://miruku.dxrating.net/spec.json' },
-              { label: 'dxdata', href: `${API_BASE}/dxdata` },
+              { label: t('developers:api.changelog'), href: API_CHANGELOG_URL },
               { label: 'llms.txt', href: 'https://dxrating.net/llms.txt' },
             ]}
           />
@@ -160,6 +173,32 @@ export const DevelopersPage = () => {
               </code>
             </Term>
             <Term title={t('developers:terms.limits')}>{t('developers:terms.limits-description')}</Term>
+          </dl>
+        </section>
+
+        <section
+          id="api-stability"
+          aria-labelledby="developers-api-stability"
+          className="scroll-mt-20 px-5 py-6 md:p-8 border-t border-solid border-x-0 border-b-0 border-black/8"
+        >
+          <h2 id="developers-api-stability" className="text-xl font-semibold tracking-tight">
+            {t('developers:policy.title')}
+          </h2>
+          <p className="mt-2 text-[15px] leading-relaxed text-zinc-600 text-pretty">{t('developers:policy.intro')}</p>
+          <dl className="mt-4 divide-y divide-solid divide-x-0 divide-black/8">
+            {(['compat', 'deprecation', 'versions', 'ids', 'scope'] as const).map((key) => (
+              <Term key={key} title={t(`developers:policy.${key}`)}>
+                {t(`developers:policy.${key}-description`)}
+              </Term>
+            ))}
+            <Term title={t('developers:policy.updates')}>
+              {t('developers:policy.updates-description')}{' '}
+              <InlineLink href={API_CHANGELOG_URL}>{t('developers:api.changelog')}</InlineLink>
+            </Term>
+            <Term title={t('developers:policy.support')}>
+              {t('developers:policy.support-description')}{' '}
+              <InlineLink href={API_SUPPORT_URL}>github.com/gekichumai/dxrating</InlineLink>
+            </Term>
           </dl>
         </section>
       </article>
