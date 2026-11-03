@@ -177,3 +177,27 @@ All user-visible strings must use `useTranslation()` from `react-i18next`. Add t
 - **Backend** → Docker container via Coolify (auto-deployed on push to `main`)
 - **CI/CD** → GitHub Actions (`.github/workflows/`): `release.yml`, `backend.yml`, `preview.yml`
 - CI auto-tags versions on `main` push via `release-dispatcher.yml`.
+
+## Collaboration Rules (owner-set)
+
+These apply to every agent and contributor. The tracking issues and the full context live in gekichumai/meta: conventions are in meta#16, and each workstream has its own issue linked from meta#10. Read the relevant issue before you start, link your PRs to it, and keep its checklist current.
+
+### Merging
+- **Only SEO work may be merged and deployed by an agent on its own.**
+- Everything else goes up as a PR and waits for the owner's review: features, redesigns, sync and storage, docs, dependency changes. Don't merge, deploy, change production data or flip feature flags.
+- For dependent PRs, use `gh stack` where it makes sense. Check it's installed first (`gh stack --help`). If it isn't, chain base branches by hand, and put the order (n/N) and prev/next PR links in each PR body.
+- Every workstream needs an issue in gekichumai/meta. If you start something that has none, create it.
+
+### Visuals in PRs
+- Any PR that changes something visual **must embed** at least one image or video **inline in the PR body**. Use a BEFORE | AFTER table covering the relevant devices, light and dark, and locales. A link to a sheet somewhere else isn't enough.
+- Host the assets on the `pr-assets` branch of gekichumai/meta (never on main) at `<repo>/<pr-number>/<file>`. meta is private, so embed `https://github.com/gekichumai/meta/blob/pr-assets/<path>?raw=true`, because `raw.githubusercontent.com` returns 404. For video, link an MP4 and also embed a GIF or a poster frame.
+- Use demo or synthetic data only. Never show real user data or anyone's personal photos.
+
+### Design
+- Keep corner radii modest and consistent. Never use large ones.
+- Don't use large flat solid-colour backgrounds. Use translucent material surfaces like the existing tab bar.
+
+### Production
+- Production is read-only for agents: no sign-ups and no writes to real users' data. Test with fixtures, local databases or demo accounts.
+- The web CSP is enforced with per-request nonces. Don't loosen it or add third-party origins without a stated reason.
+- Imported scores need provenance. Data the server fetches from the source (maimai NET, LXNS, Diving-Fish) goes straight into server storage with a provenance record, never server → client → server. A manual edit by the user strips the verified provenance. See meta#17.
