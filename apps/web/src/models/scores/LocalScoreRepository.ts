@@ -12,6 +12,7 @@ import {
   UnsupportedScoreOperationError,
   type WebScoreRepository,
 } from './ScoreRepository'
+import { collapseScoreRecordList } from './collapseScoreRecords'
 
 /** The identity of a sheet in the catalog, or nothing while the catalog is loading or the sheet is unknown */
 export type SheetIdentityResolver = (sheetId: string) => SheetIdentity | null | undefined
@@ -97,6 +98,8 @@ export function mergeImportedEntries(current: readonly PlayEntry[], imported: re
 export class LocalScoreRepository implements WebScoreRepository {
   readonly kind = 'local' as const
   readonly status = LOCAL_STATUS
+  /** The save is read synchronously when the repository is created */
+  readonly ready = true
 
   private currentEntries: readonly PlayEntry[]
   private records: readonly ScoreRecord[] | null = null
@@ -108,22 +111,27 @@ export class LocalScoreRepository implements WebScoreRepository {
     this.currentEntries = readStoredEntries(storage)
   }
 
+  /** A save that lives in memory only, starting with `entries` (fixtures for dev and preview demos, tests) */
+  static inMemory(entries: readonly PlayEntry[]): LocalScoreRepository {
+    const repository = new LocalScoreRepository(null)
+    repository.currentEntries = entries
+    return repository
+  }
+
   entries(): readonly PlayEntry[] {
     return this.currentEntries
   }
 
+  /** One record per chart: duplicate entries of a chart are collapsed field by field (`collapseScoreRecords`) */
   list(): readonly ScoreRecord[] {
     if (!this.records) {
       const records: ScoreRecord[] = []
-      const bySheetId = new Map<string, ScoreRecord>()
       for (const entry of this.currentEntries) {
         const record = playEntryToScoreRecord(entry, this.resolveIdentity)
-        if (!record) continue
-        records.push(record)
-        // The first entry of a chart wins, as everywhere else that looks entries up by sheet ID
-        if (!bySheetId.has(record.sheetId)) bySheetId.set(record.sheetId, record)
+        if (record) records.push(record)
       }
-      this.records = Object.freeze(records)
+      const bySheetId = collapseScoreRecordList(records)
+      this.records = Object.freeze([...bySheetId.values()])
       this.recordsBySheetId = bySheetId
     }
     return this.records

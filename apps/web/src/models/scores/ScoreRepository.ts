@@ -74,8 +74,17 @@ export interface ScoreRepositoryStatus {
 
 export interface ScoreRepository {
   readonly kind: 'local' | 'cloud'
-  /** Stable between changes, so it can be a `useSyncExternalStore` snapshot */
+  /**
+   * Whether the save has loaded (the local save: always, it is read when the repository is created; a cloud save:
+   * after its first fetch). Readers in components use `useScoreReadState()`, which also waits for hydration.
+   */
+  readonly ready: boolean
+  /**
+   * Exactly one record per chart (sheet ID), each field at its best across the saved entries of the chart. Stable
+   * between changes, so it can be a `useSyncExternalStore` snapshot.
+   */
   list(): readonly ScoreRecord[]
+  /** The record of a chart, the same one `list()` holds */
   get(sheetId: string): ScoreRecord | undefined
   subscribe(cb: () => void): () => void
   setManual(entry: ManualEntry, method: ManualEntryMethod): void
