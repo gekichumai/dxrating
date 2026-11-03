@@ -861,6 +861,7 @@
     "progress.intro": "How many charts of each level you have cleared at each grade. Select a number to open that level's table with the target set.",
     "progress.level": "Level",
     "progress.played": "Played",
-    "progress.cell-label": "Lv.{{level}} {{target}}: {{count}} of {{total}}"
+    "progress.cell-label": "Lv.{{level}} {{target}}: {{count}} of {{total}}",
+    "progress.loading": "Loading the chart list… Totals appear once every chart is loaded."
   }
 }

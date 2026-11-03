@@ -4,8 +4,9 @@ import {
   type RatingEntry,
   type RatingRecommendation,
   type RecommendRecord,
+  type SongCatalog,
 } from '@gekichumai/maimai-domain'
-import type { DifficultyEnum } from '@gekichumai/dxdata'
+import type { DifficultyEnum, VersionEnum } from '@gekichumai/dxdata'
 import { CircularProgress } from '@mui/material'
 import { Link } from '@tanstack/react-router'
 import { type FC, useEffect, useMemo, useRef } from 'react'
@@ -17,58 +18,68 @@ import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { DIFFICULTIES } from '@/models/difficulties'
-import { useUserRecords } from '@/models/useUserRecords'
+import type { Region } from '@/models/context/AppContext'
+import { type UserRecords, useUserRecords } from '@/models/useUserRecords'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 
 const PER_BUCKET = 20
+
+/**
+ * B50 from every stored entry (rating-aware deduplication and import bucket hints are left to the domain, as in
+ * the calculator); per-chart records only drive the recommendation lookup.
+ */
+export function computeRecommendations({
+  catalog,
+  ratingEntries,
+  records,
+  version,
+  region,
+}: {
+  catalog: SongCatalog
+  ratingEntries: RatingEntry[]
+  records: UserRecords['records']
+  version: VersionEnum
+  region: Region
+}) {
+  const recordMap = new Map<string, RecommendRecord>(
+    records.map(({ entry, source }) => [
+      entry.sheetId,
+      { achievementRate: entry.achievementRate, comboFlag: entry.comboFlag, source },
+    ]),
+  )
+  const best50 = calculateBest50({ catalog, version, region, entries: ratingEntries })
+  const suggestions = recommendRatingRaises({
+    sheets: catalog.sheets,
+    best50,
+    records: recordMap,
+    version,
+    region,
+    limit: Number.POSITIVE_INFINITY,
+  })
+  // Same rule as recommendRatingRaises: a bucket that is not full yet has a floor of 0
+  const floorOf = (list: typeof best50.b15, size: number) =>
+    list.length < size ? 0 : Math.min(...list.map((item) => item.rating.ratingAwardValue))
+  return {
+    b15: suggestions.filter((item) => item.bucket === 'b15').slice(0, PER_BUCKET),
+    b35: suggestions.filter((item) => item.bucket === 'b35').slice(0, PER_BUCKET),
+    b15Floor: floorOf(best50.b15, 15),
+    b35Floor: floorOf(best50.b35, 35),
+    total: best50.statistics.b50Sum,
+    hasRecords: ratingEntries.length > 0,
+  }
+}
 
 export const RecommendPage: FC = () => {
   const { t } = useTranslation(['recommend'])
   const { region } = useAppContext()
   const version = useAppContextDXDataVersion()
   const catalog = useCompleteSongCatalog()
-  const { records, isDemo } = useUserRecords()
+  const { records, ratingEntries, isDemo } = useUserRecords()
 
-  const result = useMemo(() => {
-    if (!catalog) return null
-    const entries: RatingEntry[] = []
-    const recordMap = new Map<string, RecommendRecord>()
-    for (const { entry } of records) {
-      const identity = entry.identity ?? catalog.getById(entry.sheetId)?.identity
-      if (!identity) continue
-      entries.push({
-        sheetId: entry.sheetId,
-        identity,
-        achievementRate: entry.achievementRate,
-        comboFlag: entry.comboFlag,
-        syncFlag: entry.syncFlag,
-      })
-      recordMap.set(entry.sheetId, {
-        achievementRate: entry.achievementRate,
-        comboFlag: entry.comboFlag,
-      })
-    }
-    const best50 = calculateBest50({ catalog, version, region, entries })
-    const suggestions = recommendRatingRaises({
-      sheets: catalog.sheets,
-      best50,
-      records: recordMap,
-      version,
-      region,
-      limit: Number.POSITIVE_INFINITY,
-    })
-    // Same rule as recommendRatingRaises: a bucket that is not full yet has a floor of 0
-    const floorOf = (list: typeof best50.b15, size: number) =>
-      list.length < size ? 0 : Math.min(...list.map((item) => item.rating.ratingAwardValue))
-    return {
-      b15: suggestions.filter((item) => item.bucket === 'b15').slice(0, PER_BUCKET),
-      b35: suggestions.filter((item) => item.bucket === 'b35').slice(0, PER_BUCKET),
-      b15Floor: floorOf(best50.b15, 15),
-      b35Floor: floorOf(best50.b35, 35),
-      total: best50.statistics.b50Sum,
-      hasRecords: entries.length > 0,
-    }
-  }, [catalog, records, version, region])
+  const result = useMemo(
+    () => (catalog ? computeRecommendations({ catalog, ratingEntries, records, version, region }) : null),
+    [catalog, ratingEntries, records, version, region],
+  )
 
   const reported = useRef(false)
   useEffect(() => {

@@ -21,7 +21,18 @@ export type ToleranceSelectedSheet = {
   noteCounts?: NoteCounts
 }
 
-const MAX_RESULTS = 8
+/** Songs shown in the picker; every chart of a shown song stays listed, so no difficulty is unreachable */
+const MAX_RESULT_SONGS = 4
+
+export function limitResultsBySong<T extends { songId: string }>(results: readonly T[], maxSongs: number): T[] {
+  const songs = new Set<string>()
+  return results.filter((result) => {
+    if (songs.has(result.songId)) return true
+    if (songs.size >= maxSongs) return false
+    songs.add(result.songId)
+    return true
+  })
+}
 
 const sheetLabel = (sheet: { type: string; difficulty: string; internalLevelValue: number }) =>
   `${sheet.type.toUpperCase()} ${sheet.difficulty.toUpperCase()} ${sheet.internalLevelValue.toFixed(1)}`
@@ -31,7 +42,7 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
   const [query, setQuery] = useState('')
   const deferredQuery = useDeferredValue(query.trim())
   const { results } = useFilteredSheets(deferredQuery)
-  const visibleResults = deferredQuery ? results.slice(0, MAX_RESULTS) : []
+  const visibleResults = deferredQuery ? limitResultsBySong(results, MAX_RESULT_SONGS) : []
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-6 pb-global flex flex-col gap-4">
