@@ -90,10 +90,10 @@ export interface CompletionSummary {
 /** Done / played-but-not-done / unplayed counts of a set of sheets */
 export function summarizeCompletion(
   sheetIds: readonly string[],
-  records: ReadonlyMap<string, { entry: CompletionRecord }>,
+  records: ReadonlyMap<string, { best: CompletionRecord }>,
   target: CompletionTarget,
 ): CompletionSummary {
   const summary: CompletionSummary = { total: sheetIds.length, done: 0, pending: 0, unplayed: 0 }
-  for (const sheetId of sheetIds) summary[completionStatus(records.get(sheetId)?.entry, target)]++
+  for (const sheetId of sheetIds) summary[completionStatus(records.get(sheetId)?.best, target)]++
   return summary
 }

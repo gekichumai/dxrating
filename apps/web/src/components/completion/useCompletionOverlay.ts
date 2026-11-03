@@ -72,7 +72,7 @@ export function useCompletionOverlay(table: ConstantTable): CompletionOverlaySta
     })
   }, [active, table.level, target, summary])
 
-  const statusOf = (sheetId: string) => completionStatus(records.get(sheetId)?.entry, target)
+  const statusOf = (sheetId: string) => completionStatus(records.get(sheetId)?.best, target)
 
   return {
     mounted,

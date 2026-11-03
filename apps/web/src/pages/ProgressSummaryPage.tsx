@@ -2,7 +2,7 @@ import { TypeEnum } from '@gekichumai/dxdata'
 import type { VersionedSheet } from '@gekichumai/maimai-domain'
 import { type FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSongCatalog } from '@/catalog/CatalogContext'
+import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import {
   CONSTANT_TABLE_LEVELS,
   type ConstantTableLevel,
@@ -35,7 +35,7 @@ export interface ProgressRow {
 
 export function buildProgressRows(
   sheets: readonly VersionedSheet[],
-  records: ReadonlyMap<string, { entry: Parameters<typeof meetsTarget>[0] & object }>,
+  records: ReadonlyMap<string, { best: Parameters<typeof meetsTarget>[0] & object }>,
 ): ProgressRow[] {
   const rows = new Map<string, ProgressRow>(
     CONSTANT_TABLE_LEVELS.map((level) => [
@@ -52,7 +52,7 @@ export function buildProgressRows(
     const row = rows.get(sheet.level)
     if (!row || !isTableSheet(sheet)) continue
     row.total++
-    const record = records.get(sheet.id)?.entry
+    const record = records.get(sheet.id)?.best
     if (!record) continue
     row.played++
     for (const column of PROGRESS_COLUMNS) if (meetsTarget(record, column)) row.counts[column]++
@@ -65,9 +65,10 @@ const targetHref = (level: ConstantTableLevel, target: CompletionTarget) =>
 
 export const ProgressSummaryPage: FC = () => {
   const { t } = useTranslation(['completion'])
-  const catalog = useSongCatalog()
+  // Totals need every chart: the route's catalog slice has none, so wait for the complete catalog
+  const catalog = useCompleteSongCatalog()
   const { bySheetId, isDemo } = useUserRecords()
-  const rows = useMemo(() => buildProgressRows(catalog.sheets, bySheetId), [catalog, bySheetId])
+  const rows = useMemo(() => (catalog ? buildProgressRows(catalog.sheets, bySheetId) : null), [catalog, bySheetId])
 
   return (
     <div className="flex-container w-full max-w-5xl px-4 pb-global">
@@ -82,6 +83,10 @@ export const ProgressSummaryPage: FC = () => {
           <MaterialSurface variant="thin" className="px-4 py-3 text-sm flex flex-wrap gap-x-3 gap-y-1">
             <span>{t('completion:empty')}</span>
             <a href="/rating">{t('completion:empty-link')}</a>
+          </MaterialSurface>
+        ) : !rows ? (
+          <MaterialSurface variant="thin" className="px-4 py-3 text-sm">
+            <output>{t('completion:progress.loading')}</output>
           </MaterialSurface>
         ) : (
           <MaterialSurface className="w-full overflow-x-auto">

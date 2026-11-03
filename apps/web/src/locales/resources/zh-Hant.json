@@ -755,6 +755,7 @@
     "progress.intro": "各等級在各評級下已完成的譜面數。點選數字即可以該目標開啟定數表。",
     "progress.level": "等級",
     "progress.played": "已遊玩",
-    "progress.cell-label": "Lv.{{level}} {{target}}：{{count}} / {{total}}"
+    "progress.cell-label": "Lv.{{level}} {{target}}：{{count}} / {{total}}",
+    "progress.loading": "正在載入譜面列表… 全部譜面載入完成後顯示統計。"
   }
 }
