@@ -247,6 +247,14 @@ export function scrubSentryEvent<T extends object>(input: T): T {
     if (key === 'breadcrumbs') continue
     event[key] = scrubValue(event[key], { netRoute })
   }
+  // A JSON parse error quotes the text around the bad token, which on a credential route can be a credential that no
+  // request has registered yet (it never parsed): drop its message whole
+  if (isCredentialPath(path)) {
+    const exception = event.exception as { values?: Array<{ type?: string; value?: string }> } | undefined
+    for (const entry of exception?.values ?? []) {
+      if (entry.type === 'SyntaxError' && entry.value !== undefined) entry.value = FILTERED
+    }
+  }
   return input
 }
 

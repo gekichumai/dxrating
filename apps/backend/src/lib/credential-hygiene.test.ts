@@ -87,6 +87,25 @@ describe('credential hygiene', () => {
     expect(other.request.data).toEqual({ name: 't', password: FILTERED })
   })
 
+  it('drops the message of a JSON parse error on a credential route, which quotes the body', () => {
+    const exception = () => ({
+      values: [
+        { type: 'SyntaxError', value: `Unexpected token ''', ..."password":'pw7leak'}" is not valid JSON` },
+        { type: 'Error', value: 'outer' },
+      ],
+    })
+    const event = scrubSentryEvent({
+      request: { url: 'https://miruku.dxrating.net/functions/fetch-net-records/v0' },
+      exception: exception(),
+    })
+    expect(event.exception.values).toEqual([
+      { type: 'SyntaxError', value: FILTERED },
+      { type: 'Error', value: 'outer' },
+    ])
+    const other = scrubSentryEvent({ request: { url: 'https://x/api/v1/tags' }, exception: exception() })
+    expect(other.exception.values[0]!.value).toContain('is not valid JSON')
+  })
+
   it('scrubs breadcrumbs, URLs, analytics events and logger calls', () => {
     expect(scrubSentryBreadcrumb({ data: { Authorization: 'Bearer t' } }).data).toEqual({ Authorization: FILTERED })
     expect(scrubUrl('/cb?code=abc&x=1')).toBe(`/cb?code=${FILTERED}&x=1`)

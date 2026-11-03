@@ -520,13 +520,16 @@ const authParamsSchema = z.object({
 const verifyParams = createMiddleware((c, next) =>
   runApp(
     Effect.gen(function* () {
+      // A body that is not JSON is a plain 400, its parse error dropped: V8's SyntaxError quotes the text around the
+      // bad token, which can be the SEGA ID or password (design §7.2)
       const body = yield* Effect.tryPromise({
-        try: () => c.req.json(),
-        catch: (cause) => new HttpAdapterError({ operation: 'Read NET parameters', cause }),
-      })
-      const region = c.req.param('region') ?? body.region
+        try: () => c.req.json<unknown>(),
+        catch: () => null,
+      }).pipe(Effect.orElseSucceed(() => undefined))
+      const fields = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>
+      const region = c.req.param('region') ?? fields.region
 
-      const result = authParamsSchema.safeParse({ id: body.id, password: body.password, region })
+      const result = authParamsSchema.safeParse({ id: fields.id, password: fields.password, region })
       if (!result.success) {
         return c.json({ error: 'Invalid parameters', details: result.error.issues }, 400)
       }
