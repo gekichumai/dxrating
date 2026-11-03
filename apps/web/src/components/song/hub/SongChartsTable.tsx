@@ -4,7 +4,7 @@ import { Link } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSongCatalog } from '@/catalog/CatalogContext'
+import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { SheetDifficulty } from '@/components/sheet/SheetListItem'
 import { captureAnalyticsEvent } from '@/lib/analytics'
@@ -22,7 +22,8 @@ export const SongChartsTable: FC<{
   activeSheetId?: string
 }> = ({ songId, sheets, activeSheetId }) => {
   const { t } = useTranslation(['song'])
-  const catalog = useSongCatalog()
+  // Rating hints need every scored chart: the route slice holds only this song, so wait for the complete catalog
+  const completeCatalog = useCompleteSongCatalog()
   const { region } = useAppContext()
   const version = useAppContextDXDataVersion()
   const { entries, bySheetId } = useUserRecords()
@@ -31,13 +32,13 @@ export const SongChartsTable: FC<{
   useEffect(() => setMounted(true), [])
 
   const raises = useMemo(() => {
-    if (!mounted || entries.length === 0) return new Map()
+    if (!mounted || entries.length === 0 || !completeCatalog) return new Map()
     const songSheets = sheets.flatMap((sheet): VersionedSheet[] => {
-      const versioned = catalog.getById(sheet.id)
+      const versioned = completeCatalog.getById(sheet.id)
       return versioned ? [versioned] : []
     })
-    return computeSongHubRaises({ songSheets, entries, catalog, version, region })
-  }, [mounted, entries, sheets, catalog, version, region])
+    return computeSongHubRaises({ songSheets, entries, catalog: completeCatalog, version, region })
+  }, [mounted, entries, sheets, completeCatalog, version, region])
 
   const hasRecords = mounted && sheets.some((sheet) => bySheetId.has(sheet.id))
 
@@ -113,7 +114,11 @@ export const SongChartsTable: FC<{
                   </td>
                   <td className="px-1 py-1.5 max-w-40 truncate">{sheet.noteDesigner ?? '—'}</td>
                   <td className="px-1 py-1.5 whitespace-nowrap">
-                    {record ? <span className="font-medium">{formatAchievement(record.entry.achievementRate)}</span> : '—'}
+                    {record ? (
+                      <span className="font-medium">{formatAchievement(record.entry.achievementRate)}</span>
+                    ) : (
+                      '—'
+                    )}
                     {raise && (
                       <div className="text-xs text-emerald-700 dark:text-emerald-400">
                         {t('song:hub.raise-hint', { target: raise.targetAchievement, gain: raise.gain })}
