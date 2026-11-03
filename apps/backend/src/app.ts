@@ -3,7 +3,7 @@ import { HTTPException } from 'hono/http-exception'
 import { createMiddleware } from 'hono/factory'
 import { routePath } from 'hono/route'
 import { cors } from 'hono/cors'
-import { RETAINED_304_HEADERS } from 'hono/etag'
+import { etag, RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
 import { Authentication } from './auth'
 import { Data, Effect, Option } from 'effect'
@@ -32,6 +32,7 @@ import { Sentry, shouldCaptureSentryError } from './lib/functions/sentry'
 import { Database } from './db/index'
 import { createDxdataEffect, createPostgresDxdataEffects, DXDATA_CORS_OPTIONS, DXDATA_PATH } from './services/dxdata'
 import { addPublishedDxdataToOpenApi } from './services/dxdata-openapi'
+import { applyApiPolicyToOpenApi } from './services/api-policy'
 import { addPublicApiExamplesToOpenApi } from './services/openapi-examples'
 import {
   API_CLIENT_HEADER,
@@ -715,6 +716,13 @@ app.get(ARCADE_VENUES_PATH, arcadeVenuesEtag, arcadeVenuesCacheHeaders, (c) =>
   ),
 )
 
+// The tag and alias lists are the same for every viewer, and bots poll them; an ETag lets a poller revalidate with
+// If-None-Match and get a 304 instead of the whole list. The API stability policy asks clients to do so.
+const publicListEtag = etag()
+for (const path of ['/api/v1/tags', '/api/v1/aliases']) {
+  app.on(['GET', 'HEAD'], path, publicListEtag)
+}
+
 // Comment responses depend on the signed-in viewer and must never enter a shared cache.
 app.use('/api/v1/comments', (c, next) =>
   runApp(
@@ -768,8 +776,6 @@ app.get('/spec.json', (c) =>
               info: {
                 title: 'DXRating API',
                 version: '1.0.0',
-                description:
-                  '> **Public Beta**: This API is in public beta and may not be finalized before the end of May 2026. Breaking changes are expected.\n\nOpenAPI for DXRating.net',
               },
               servers: [{ url: '/api/v1' }],
               security: [{ bearerAuth: [] }],
@@ -786,7 +792,7 @@ app.get('/spec.json', (c) =>
           }),
         catch: (cause) => new HttpAdapterError({ operation: 'Generate OpenAPI specification', cause }),
       })
-      return c.json(addPublicApiExamplesToOpenApi(addPublishedDxdataToOpenApi(spec)))
+      return c.json(applyApiPolicyToOpenApi(addPublicApiExamplesToOpenApi(addPublishedDxdataToOpenApi(spec))))
     }),
     { signal: c.req.raw.signal },
   ),

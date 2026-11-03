@@ -382,8 +382,28 @@ export const addPublishedDxdataToOpenApi = (document: OpenAPI.OpenAPIObject): Op
     get: {
       operationId: 'getPublishedDxdataCatalog',
       summary: 'Get the complete published DX data catalog',
-      description:
-        'Returns one schema-versioned, null-free immutable catalog document, including the tag and alias snapshot. Use `If-None-Match` or HEAD to avoid downloading an unchanged catalog.',
+      description: [
+        'The whole DXRating catalog in one schema-versioned, null-free document: every song and sheet (chart) with ' +
+          'levels, internal levels per server, note counts, versions and release dates, plus the tag and alias ' +
+          'snapshot. Most integrations need only this endpoint.',
+        '',
+        '**IDs.** `songs[].id` (`dsng_…`) and `songs[].sheets[].id` (`dsht_…`) are permanent and never reused. ' +
+          'Removed charts stay in the catalog with an empty `serverIds` list.',
+        '',
+        '**Caching.** The body changes only when a new catalog is published (usually once a day or less). Each ' +
+          'response has a strong `ETag` (the SHA-256 of the body). Browsers may cache it for 5 minutes, shared ' +
+          'caches for 6 hours. Poll at most every few minutes, and send the last `ETag` as `If-None-Match`: an ' +
+          'unchanged catalog costs a bodiless `304`. `HEAD` returns the same headers without the ~4 MB body.',
+        '',
+        '```sh',
+        'curl -sD headers.txt -o dxdata.json https://miruku.dxrating.net/api/v1/dxdata',
+        'curl -s -o /dev/null -w "%{http_code}\\n" \\',
+        '  -H "If-None-Match: $(grep -i ^etag headers.txt | cut -d" " -f2 | tr -d \'\\r\')" \\',
+        '  https://miruku.dxrating.net/api/v1/dxdata   # 304 while unchanged',
+        '```',
+        '',
+        'Credit is appreciated: "Data from DXRating (dxrating.net)".',
+      ].join('\n'),
       tags: ['DX Data'],
       security: [],
       parameters: [conditionalRequestParameter],
