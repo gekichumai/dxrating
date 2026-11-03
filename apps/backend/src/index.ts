@@ -7,7 +7,8 @@ import { runMain } from '@effect/platform-node/NodeRuntime'
 import { app } from './app'
 import { config } from './config'
 import { serve } from './lifecycle'
-import { appRuntime, shutdownApp } from './runtime'
+import { appRuntime, runApp, shutdownApp } from './runtime'
+import { cloudSaveCleanupLoop } from './services/cloud-save/cleanup'
 
 runMain(
   Effect.scoped(
@@ -16,6 +17,11 @@ runMain(
       yield* Effect.addFinalizer(() => Effect.promise(shutdownApp))
       yield* appRuntime.contextEffect
       const server = yield* serve({ fetch: app.fetch, port: config.port })
+      // The daily cloud save cleanup runs under the request runner, so shutdown interrupts it and waits for it to
+      // roll back; it only runs while cloud save is not switched off.
+      if (config.featureFlags.cloudSaveMode !== 'off') {
+        void runApp(cloudSaveCleanupLoop).catch(() => undefined)
+      }
       const address = server.address()
       yield* Effect.logInfo(`Server is running on port ${typeof address === 'object' ? address?.port : config.port}`)
       return yield* Effect.never

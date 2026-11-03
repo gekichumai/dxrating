@@ -32,6 +32,7 @@ import { CatalogIdentityError } from './services/catalog-identities'
 import { CatalogIdentities, McpCatalogSource } from './services/application'
 import { CloudSaveOptInError, FeatureFlags } from './services/feature-flags'
 import { requireSession } from './orpc-middleware'
+import { cloudSaveHandler } from './cloud-save-router'
 
 export interface ApiContext
   extends
@@ -957,4 +958,5 @@ export const appRouter = os.router({
   maimai: maimaiHandler,
   lxns: lxnsHandler,
   features: featuresHandler,
+  cloudSave: cloudSaveHandler,
 })

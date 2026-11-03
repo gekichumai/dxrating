@@ -3,6 +3,7 @@ import { handlerGen } from '@orpc/experimental-effect'
 import { Effect } from 'effect'
 import type { ApiContext } from './router'
 import { FeatureFlags, type FeatureFlag } from './services/feature-flags'
+import type { KeyedRateLimit } from './services/rate-limit'
 
 export type SessionUser = NonNullable<ApiContext['user']>
 export type SessionApiContext = ApiContext & { user: SessionUser }
@@ -39,3 +40,20 @@ export const requireFeature = (flag: FeatureFlag) => {
     return options.next()
   })
 }
+/**
+ * Rate limits the signed-in user (design §11.4): 429 TOO_MANY_REQUESTS with `{ retryAfterSeconds }` and a
+ * `Retry-After` header once `limit` is exhausted. `cost` counts a request as several units (e.g. the mutations of a
+ * batch). Use after `requireSession` and `requireFeature`, so a disabled feature stays a 404.
+ */
+export const rateLimit = <TInput = unknown>(limit: KeyedRateLimit, cost?: (input: TInput) => number) =>
+  os.$context<SessionApiContext>().middleware(({ context, next }, input: TInput) => {
+    const retryAfterSeconds = limit.take(context.user.id, cost ? cost(input) : 1)
+    if (retryAfterSeconds > 0) {
+      context.resHeaders?.set('Retry-After', String(retryAfterSeconds))
+      throw new ORPCError('TOO_MANY_REQUESTS', {
+        message: `Too many requests. Retry in ${retryAfterSeconds} seconds.`,
+        data: { retryAfterSeconds },
+      })
+    }
+    return next()
+  })
