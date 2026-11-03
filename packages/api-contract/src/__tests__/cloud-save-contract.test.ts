@@ -198,6 +198,12 @@ describe('input validation', () => {
       { ...valid, op: 'set', entryMethod: 'typed', value: { achievement: 1, comboFlag: 'fdx', syncFlag: null } },
       { ...valid, op: 'set', entryMethod: 'typed' },
       { ...valid, basedOnRevision: -1 },
+      // Wrong-typed or missing values are per-item too, so a bad queued mutation can't block its siblings
+      { ...valid, op: 'upsert' },
+      { ...valid, sheetId: 42 },
+      { ...valid, basedOnRevision: '5' },
+      { ...valid, op: 'set', entryMethod: 'typed', value: { achievement: '1005432', comboFlag: null, syncFlag: null } },
+      { ...valid, op: 'set', entryMethod: 'typed', value: { comboFlag: null, syncFlag: null } },
     ]
     const input = MutationsInputSchema.parse({ id: saveId, mutations: [...malformed, valid] })
     expect(input.mutations.map((mutation) => MutationSchema.safeParse(mutation).success)).toEqual([
@@ -210,7 +216,9 @@ describe('input validation', () => {
         false,
       )
     }
-    expect(MutationsInputSchema.safeParse({ id: saveId, mutations: [{ ...valid, op: 'upsert' }] }).success).toBe(false)
+    expect(MutationsInputSchema.safeParse({ id: saveId, mutations: [{ ...valid, mutationId: 42 }] }).success).toBe(
+      false,
+    )
   })
 
   it('accepts uploads with malformed records, which the handler counts as rejected', () => {
@@ -220,6 +228,10 @@ describe('input validation', () => {
       { ...record, achievement: 100.5432 },
       { ...record, comboFlag: 'fdx' },
       { ...record, claimedSource: 'demo' },
+      { ...record, achievement: null },
+      { ...record, achievement: '1005432' },
+      { ...record, sheetId: undefined },
+      { ...record, dxScore: 'x' },
     ]
     const input = ClientImportInputSchema.parse({ ...clientImport, records: [...malformed, record] })
     expect(input.records.map((r) => ImportRecordSchema.safeParse(r).success)).toEqual([

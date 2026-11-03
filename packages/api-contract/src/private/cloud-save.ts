@@ -338,25 +338,26 @@ export const MutationSchema = z.discriminatedUnion('op', [SetMutationSchema, Del
 export type Mutation = z.output<typeof MutationSchema>
 
 /**
- * One mutation as the route accepts it: the keys of {@link MutationSchema}, still strict, with loose values. The
+ * One mutation as the route accepts it: the keys of {@link MutationSchema}, still strict, with values of any type
+ * (only `mutationId` is checked, so the result can name the mutation). The
  * handler validates it with {@link MutationSchema}; a failure is that mutation's `rejected` result, not a 400 for the
  * batch (§5.4).
  */
 export const MutationItemInputSchema = z.strictObject({
   mutationId: z.string().min(1).max(64),
-  op: z.enum(['set', 'delete']),
-  sheetId: z.string().max(64),
-  basedOnRevision: z.number().nullish(),
-  clientEditedAt: z.string().max(64).nullish(),
+  op: z.unknown().optional(),
+  sheetId: z.unknown().optional(),
+  basedOnRevision: z.unknown().optional(),
+  clientEditedAt: z.unknown().optional(),
   value: z
     .strictObject({
-      achievement: z.number(),
-      comboFlag: z.string().max(16).nullish(),
-      syncFlag: z.string().max(16).nullish(),
-      dxScore: z.number().nullish(),
+      achievement: z.unknown().optional(),
+      comboFlag: z.unknown().optional(),
+      syncFlag: z.unknown().optional(),
+      dxScore: z.unknown().optional(),
     })
     .optional(),
-  entryMethod: z.string().max(32).optional(),
+  entryMethod: z.unknown().optional(),
 })
 export type MutationItemInput = z.output<typeof MutationItemInputSchema>
 
@@ -384,14 +385,14 @@ export type ImportRecord = z.output<typeof ImportRecordSchema>
  * `rejected` instead of failing the upload.
  */
 export const ImportRecordInputSchema = z.strictObject({
-  sheetId: z.string().max(64),
-  achievement: z.number(),
-  comboFlag: z.string().max(16).nullish(),
-  syncFlag: z.string().max(16).nullish(),
-  dxScore: z.number().nullish(),
-  best50Bucket: z.string().max(16).nullish(),
-  providerRecordId: z.string().max(256).nullish(),
-  claimedSource: z.string().max(64).nullish(),
+  sheetId: z.unknown().optional(),
+  achievement: z.unknown().optional(),
+  comboFlag: z.unknown().optional(),
+  syncFlag: z.unknown().optional(),
+  dxScore: z.unknown().optional(),
+  best50Bucket: z.unknown().optional(),
+  providerRecordId: z.unknown().optional(),
+  claimedSource: z.unknown().optional(),
 })
 export type ImportRecordInput = z.output<typeof ImportRecordInputSchema>
 
