@@ -602,7 +602,8 @@
     "io.clear.dialog.warning": "Warning",
     "io.clear.dialog.message": "This permanently removes all records from this browser. Export them first if you want a backup.",
     "io.clear.dialog.cancel": "Cancel",
-    "io.clear.dialog.confirm": "Clear all records"
+    "io.clear.dialog.confirm": "Clear all records",
+    "cloud-save.save-missing": "Your cloud save could not be found, so this device is using its local save."
   },
   "constants": {
     "title": "maimai DX Lv.{{level}} Internal Level Table",

@@ -93,6 +93,7 @@
     "@vitejs/plugin-react": "^5.2.0",
     "@vitest/ui": "5.0.2",
     "esno": "catalog:",
+    "fake-indexeddb": "^6.2.6",
     "i18next-pseudo": "^2.2.1",
     "react-grab": "^0.1.32",
     "typescript": "catalog:",

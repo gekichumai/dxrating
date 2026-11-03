@@ -602,7 +602,8 @@
     "io.clear.dialog.warning": "警告",
     "io.clear.dialog.message": "このブラウザから全ての記録が完全に削除されます。バックアップが必要な場合は、先にエクスポートしてください。",
     "io.clear.dialog.cancel": "キャンセル",
-    "io.clear.dialog.confirm": "全ての記録をクリア"
+    "io.clear.dialog.confirm": "全ての記録をクリア",
+    "cloud-save.save-missing": "クラウドセーブが見つからないため、この端末のローカルセーブを使用しています。"
   },
   "constants": {
     "title": "maimai でらっくす Lv.{{level}} 譜面定数表",
