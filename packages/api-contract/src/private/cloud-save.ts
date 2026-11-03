@@ -26,7 +26,13 @@ import { z } from 'zod'
  *
  * The server never trusts a client's provenance claims: every input object is strict, so `fetchedBy`,
  * `verification`, `source` on a record or any other unknown key is a 400 validation error. `client-imports`
- * accepts only client sources; a provider a file claims goes into `claimedSource`. `demo` is not a source at all.
+ * accepts only client sources; a provider a file claims goes into `claimedSource`. `demo` is not a source at all,
+ * nor a claimed one.
+ *
+ * Batch inputs (mutations, client-import and replace records) are strict about keys but loose about each item's
+ * values: one malformed item must not fail the batch (§5.4), or a queued outbox entry would block every later one
+ * (§5.7). The handler validates each item with {@link MutationSchema} / {@link ImportRecordSchema} and answers a
+ * failing mutation `rejected` with a reason, or counts a failing record as `rejected` in the job counts.
  *
  * Errors use the standard oRPC codes (their HTTP statuses need no custom status map) and carry a `reason` where one
  * code covers several cases:
@@ -48,8 +54,14 @@ export const CLOUD_SAVE_ROUTE_TAGS = ['internal', 'cloud-save']
 export const CLOUD_SAVE_MAX_SAVES = 10
 /** Maximum mutations per request (§5.1, §11.4) */
 export const CLOUD_SAVE_MAX_MUTATIONS = 500
-/** Maximum records per `client-imports` chunk or `replace` request (§5.1, §7.3) */
+/** Maximum records per `client-imports` chunk (§5.1, §7.3, §11.4) */
 export const CLOUD_SAVE_MAX_IMPORT_RECORDS = 5000
+/**
+ * Maximum records per `replace` request. A save holds at most one record per sheet, and the catalog has more than
+ * 5000 sheets (7405 in 2026-11), so a replace must carry a whole save in one request: it cannot be chunked, as every
+ * call checks and bumps `ifRevision`. Needs the 2 MB body limit of `client-imports` (§11.4).
+ */
+export const CLOUD_SAVE_MAX_REPLACE_RECORDS = 10000
 /** Maximum chunks of one client import (5000 × 10 covers every chart of the catalog) */
 export const CLOUD_SAVE_MAX_IMPORT_CHUNKS = 10
 /** Maximum records per `changes` page */
@@ -78,7 +90,10 @@ export const Best50BucketSchema = z.enum(['b15', 'b35']) satisfies z.ZodType<Bes
 export const DxScoreSchema = z.number().int().min(0).max(100000)
 export const ProviderRecordIdSchema = z.string().min(1).max(128)
 /** A provider a client upload claims (e.g. `lxns` inside a DXRating JSON); stored as `claimed_source` only */
-export const ClaimedSourceSchema = z.string().regex(/^[\w.-]{1,64}$/)
+export const ClaimedSourceSchema = z
+  .string()
+  .regex(/^[\w.-]{1,64}$/)
+  .refine((source) => source.toLowerCase() !== 'demo', { message: 'demo data is never synced' })
 export const SourceAccountIdSchema = z.string().trim().min(1).max(128)
 export const PayloadSha256Schema = z.string().regex(/^[0-9a-f]{64}$/)
 export const CloudSaveRegionSchema = z.enum(['jp', 'intl', 'cn', '_generic'])
@@ -322,9 +337,32 @@ export const DeleteMutationSchema = z.strictObject({
 export const MutationSchema = z.discriminatedUnion('op', [SetMutationSchema, DeleteMutationSchema])
 export type Mutation = z.output<typeof MutationSchema>
 
+/**
+ * One mutation as the route accepts it: the keys of {@link MutationSchema}, still strict, with loose values. The
+ * handler validates it with {@link MutationSchema}; a failure is that mutation's `rejected` result, not a 400 for the
+ * batch (§5.4).
+ */
+export const MutationItemInputSchema = z.strictObject({
+  mutationId: z.string().min(1).max(64),
+  op: z.enum(['set', 'delete']),
+  sheetId: z.string().max(64),
+  basedOnRevision: z.number().nullish(),
+  clientEditedAt: z.string().max(64).nullish(),
+  value: z
+    .strictObject({
+      achievement: z.number(),
+      comboFlag: z.string().max(16).nullish(),
+      syncFlag: z.string().max(16).nullish(),
+      dxScore: z.number().nullish(),
+    })
+    .optional(),
+  entryMethod: z.string().max(32).optional(),
+})
+export type MutationItemInput = z.output<typeof MutationItemInputSchema>
+
 export const MutationsInputSchema = z.strictObject({
   ...SaveIdParamSchema,
-  mutations: z.array(MutationSchema).min(1).max(CLOUD_SAVE_MAX_MUTATIONS),
+  mutations: z.array(MutationItemInputSchema).min(1).max(CLOUD_SAVE_MAX_MUTATIONS),
 })
 
 /** One record of a client upload; no provenance fields other than the claimed provider */
@@ -339,6 +377,23 @@ export const ImportRecordSchema = z.strictObject({
   claimedSource: ClaimedSourceSchema.nullish(),
 })
 export type ImportRecord = z.output<typeof ImportRecordSchema>
+
+/**
+ * One uploaded record as `client-imports` and `replace` accept it: the keys of {@link ImportRecordSchema}, still
+ * strict, with loose values. The handler validates each with {@link ImportRecordSchema} and counts a failure as
+ * `rejected` instead of failing the upload.
+ */
+export const ImportRecordInputSchema = z.strictObject({
+  sheetId: z.string().max(64),
+  achievement: z.number(),
+  comboFlag: z.string().max(16).nullish(),
+  syncFlag: z.string().max(16).nullish(),
+  dxScore: z.number().nullish(),
+  best50Bucket: z.string().max(16).nullish(),
+  providerRecordId: z.string().max(256).nullish(),
+  claimedSource: z.string().max(64).nullish(),
+})
+export type ImportRecordInput = z.output<typeof ImportRecordInputSchema>
 
 /**
  * A client upload (§7.3). More than 5000 records go in chunks: every chunk repeats the `idempotencyKey` and the
@@ -363,7 +418,7 @@ export const ClientImportInputSchema = z
       .max(CLOUD_SAVE_MAX_IMPORT_CHUNKS - 1)
       .default(0),
     chunkCount: z.number().int().min(1).max(CLOUD_SAVE_MAX_IMPORT_CHUNKS).default(1),
-    records: z.array(ImportRecordSchema).min(1).max(CLOUD_SAVE_MAX_IMPORT_RECORDS),
+    records: z.array(ImportRecordInputSchema).min(1).max(CLOUD_SAVE_MAX_IMPORT_RECORDS),
   })
   .refine((input) => input.chunkIndex < input.chunkCount, {
     message: 'chunkIndex must be less than chunkCount',
@@ -421,14 +476,15 @@ export const ListSnapshotsInputSchema = z.strictObject({
 
 /**
  * Replaces every record of a save with `records`, all `client_reported` (§5.1). Clients call it only after the user
- * explicitly confirms; a stale `ifRevision` is a 412.
+ * explicitly confirms; a stale `ifRevision` is a 412. Records failing {@link ImportRecordSchema} are dropped and counted
+ * as `rejected`.
  */
 export const ReplaceInputSchema = z.strictObject({
   ...SaveIdParamSchema,
   ifRevision: RevisionSchema,
   idempotencyKey: IdempotencyKeySchema,
   source: ClientImportSourceSchema,
-  records: z.array(ImportRecordSchema).max(CLOUD_SAVE_MAX_IMPORT_RECORDS),
+  records: z.array(ImportRecordInputSchema).max(CLOUD_SAVE_MAX_REPLACE_RECORDS),
 })
 
 // --- Errors ---

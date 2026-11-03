@@ -3,12 +3,14 @@ import { getOpenAPIMeta, OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { describe, expect, it } from 'vitest'
 import { publicAppContract, publicContractRoutes } from '../contract.ts'
+import { isPublicSpecProcedure } from '../spec-filter.ts'
 import {
   ClientImportInputSchema,
   cloudSaveContract,
   CreateSaveInputSchema,
   DivingFishImportInputSchema,
   ImportRecordSchema,
+  MutationSchema,
   MutationsInputSchema,
   NetImportInputSchema,
   ReplaceInputSchema,
@@ -20,14 +22,12 @@ const procedures = (router: AnyContractRouter, path: string[] = []): Array<[stri
     ? [[path.join('.'), router]]
     : Object.entries(router).flatMap(([key, value]) => procedures(value as AnyContractRouter, [...path, key]))
 
-const isInternal = (contract: unknown) => getOpenAPIMeta(contract as never)?.tags?.includes('internal') ?? false
-
 const generateSpec = (router: AnyContractRouter, publicOnly: boolean) =>
   new OpenAPIGenerator({ converters: [new ZodToJsonSchemaConverter()] }).generate(router, {
     version: '3.1.1',
     base: { info: { title: 'DXRating API', version: '1.0.0' } },
-    // The same filter as /spec.json in apps/backend/src/app.ts
-    filter: publicOnly ? (contract) => !isInternal(contract) : undefined,
+    // The filter /spec.json uses in apps/backend/src/app.ts
+    filter: publicOnly ? isPublicSpecProcedure : undefined,
   })
 
 const saveId = 'dsav_test-save-1'
@@ -146,6 +146,11 @@ describe('provenance claims are never trusted', () => {
         source,
       ).toBe(false)
     }
+    // demo data is never synced, not even as a claimed provider (§9.5)
+    for (const claimedSource of ['demo', 'Demo']) {
+      const demo = { ...record, claimedSource }
+      expect(ImportRecordSchema.safeParse(demo).success, claimedSource).toBe(false)
+    }
     const claimed = ClientImportInputSchema.parse({ ...clientImport, records: [{ ...record, claimedSource: 'lxns' }] })
     expect(claimed.records[0]?.claimedSource).toBe('lxns')
     expect(claimed.source).toBe('dxrating-json')
@@ -179,18 +184,61 @@ describe('input validation', () => {
       MutationsInputSchema.safeParse({ id: saveId, mutations: Array.from({ length: 501 }, (_, i) => del(i)) }).success,
     ).toBe(false)
     expect(MutationsInputSchema.safeParse({ id: saveId, mutations: [] }).success).toBe(false)
+    expect(MutationSchema.safeParse(del(0)).success).toBe(true)
+    expect(MutationSchema.safeParse({ ...del(0), mutationId: crypto.randomUUID() }).success).toBe(false)
+  })
+
+  it('accepts a batch with malformed mutations, which the handler rejects one by one (§5.4)', () => {
+    const valid = { mutationId, op: 'delete', sheetId }
+    const malformed = [
+      { ...valid, mutationId: crypto.randomUUID() },
+      { ...valid, sheetId: 'song__dxrt__dx__master' },
+      { ...valid, op: 'set', entryMethod: 'typed', value: { achievement: 1010001, comboFlag: null, syncFlag: null } },
+      { ...valid, op: 'set', entryMethod: 'import', value: { achievement: 1, comboFlag: null, syncFlag: null } },
+      { ...valid, op: 'set', entryMethod: 'typed', value: { achievement: 1, comboFlag: 'fdx', syncFlag: null } },
+      { ...valid, op: 'set', entryMethod: 'typed' },
+      { ...valid, basedOnRevision: -1 },
+    ]
+    const input = MutationsInputSchema.parse({ id: saveId, mutations: [...malformed, valid] })
+    expect(input.mutations.map((mutation) => MutationSchema.safeParse(mutation).success)).toEqual([
+      ...malformed.map(() => false),
+      true,
+    ])
+    // Unknown keys, provenance claims among them, still fail the batch
+    for (const key of ['verification', 'fetchedBy', 'source']) {
+      expect(MutationsInputSchema.safeParse({ id: saveId, mutations: [valid, { ...valid, [key]: 'x' }] }).success).toBe(
+        false,
+      )
+    }
+    expect(MutationsInputSchema.safeParse({ id: saveId, mutations: [{ ...valid, op: 'upsert' }] }).success).toBe(false)
+  })
+
+  it('accepts uploads with malformed records, which the handler counts as rejected', () => {
+    const malformed = [
+      { ...record, sheetId: 'dsht_1234567890' },
+      { ...record, achievement: 1010001 },
+      { ...record, achievement: 100.5432 },
+      { ...record, comboFlag: 'fdx' },
+      { ...record, claimedSource: 'demo' },
+    ]
+    const input = ClientImportInputSchema.parse({ ...clientImport, records: [...malformed, record] })
+    expect(input.records.map((r) => ImportRecordSchema.safeParse(r).success)).toEqual([
+      ...malformed.map(() => false),
+      true,
+    ])
+    const replace = { id: saveId, ifRevision: 3, idempotencyKey: 'replace-0001', source: 'dxrating-json' }
+    expect(ReplaceInputSchema.safeParse({ ...replace, records: [...malformed, record] }).success).toBe(true)
+    // Unknown keys still fail the upload
     expect(
-      MutationsInputSchema.safeParse({ id: saveId, mutations: [{ ...del(0), mutationId: crypto.randomUUID() }] })
-        .success,
+      ClientImportInputSchema.safeParse({ ...clientImport, records: [{ ...record, verification: 'x' }] }).success,
     ).toBe(false)
-    expect(
-      MutationsInputSchema.safeParse({
-        id: saveId,
-        mutations: [
-          { ...del(0), op: 'set', entryMethod: 'import', value: { achievement: 1, comboFlag: null, syncFlag: null } },
-        ],
-      }).success,
-    ).toBe(false)
+  })
+
+  it('lets replace carry a whole save in one request', () => {
+    const replace = { id: saveId, ifRevision: 3, idempotencyKey: 'replace-0001', source: 'dxrating-json' }
+    const records = (n: number) => Array.from({ length: n }, () => record)
+    expect(ReplaceInputSchema.safeParse({ ...replace, records: records(10000) }).success).toBe(true)
+    expect(ReplaceInputSchema.safeParse({ ...replace, records: records(10001) }).success).toBe(false)
   })
 
   it('limits client-import chunks to 5000 records', () => {

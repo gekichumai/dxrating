@@ -134,7 +134,9 @@ describe('Health & Basic Endpoints', () => {
     expect(spec.tags[0].name).toBe('DX Data')
     expect(Object.keys(spec.paths)[0]).toBe('/dxdata')
     expect(JSON.stringify(spec)).not.toContain('"additionalProperties":false')
-    // cloud save is first-party only (meta#17 §5.1): its routes are tagged internal
+    // cloud save is first-party only (meta#17 §5.1): its routes are tagged internal. The router serves them from
+    // PR 5 on; until then the filter itself (isPublicSpecProcedure, shared with app.ts) is proven against the cloud
+    // save contract, with an unfiltered control, in packages/api-contract cloud-save-contract.test.ts
     for (const path of Object.keys(spec.paths)) {
       expect(path).not.toMatch(/^\/(saves|imports|me\/export|me\/features)(\/|$)/)
     }

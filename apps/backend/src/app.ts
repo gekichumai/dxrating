@@ -24,7 +24,7 @@ import { appRouter, type ApiContext } from './router'
 import { exchangeCodeForTokens } from './services/lxns/index'
 import { AppConfig } from './config'
 import { OpenAPIHandler } from '@orpc/openapi/fetch'
-import { COMMON_ERROR_STATUS_MAP, getOpenAPIMeta, OpenAPIGenerator } from '@orpc/openapi'
+import { COMMON_ERROR_STATUS_MAP, OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { RequestHeadersHandlerPlugin, ResponseHeadersHandlerPlugin } from '@orpc/server/plugins'
 import { onError } from '@orpc/server'
@@ -44,6 +44,7 @@ import {
   readClientId,
 } from './services/api-usage'
 import { appContract } from './contract'
+import { isPublicSpecProcedure } from '@gekichumai/api-contract'
 import { McpCatalogSource } from './services/application'
 import {
   clientKey,
@@ -788,7 +789,7 @@ app.get('/spec.json', (c) =>
                 },
               },
             },
-            filter: (contract) => !getOpenAPIMeta(contract)?.tags?.includes('internal'),
+            filter: isPublicSpecProcedure,
           }),
         catch: (cause) => new HttpAdapterError({ operation: 'Generate OpenAPI specification', cause }),
       })
