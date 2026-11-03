@@ -183,9 +183,9 @@ All user-visible strings must use `useTranslation()` from `react-i18next`. Add t
 These apply to every agent and contributor. The tracking issues and the full context live in gekichumai/meta: conventions are in meta#16, and each workstream has its own issue linked from meta#10. Read the relevant issue before you start, link your PRs to it, and keep its checklist current.
 
 ### Merging
-- **Only SEO work may be merged and deployed by an agent on its own.**
-- Everything else goes up as a PR and waits for the owner's review: features, redesigns, sync and storage, docs, dependency changes. Don't merge, deploy, change production data or flip feature flags.
-- For dependent PRs, use `gh stack` where it makes sense. Check it's installed first (`gh stack --help`). If it isn't, chain base branches by hand, and put the order (n/N) and prev/next PR links in each PR body.
+- **Default: merge, deploy, watch, then roll back or hotfix if something breaks.** Don't ask for approval on each item. This covers fixes, small changes, SEO, and docs and convention updates.
+- **Exception:** the large workstreams the owner has reserved for review. These stay as PRs, stacked where needed, until the owner says go: cloud save (meta#17), bot feature parity (meta#18), photo score entry (meta#19), the iPad redesign (meta#20), competitive research (meta#22), and new features or redesigns of similar size. For these, don't merge, don't deploy, don't upload to TestFlight, and don't change production data or flip feature flags.
+- For dependent PRs, use `gh stack` where it makes sense. Check it's installed first (`gh stack --help`). If it isn't, chain base branches by hand and put the order (n/N) plus prev/next links in each PR body.
 - Every workstream needs an issue in gekichumai/meta. If you start something that has none, create it.
 
 ### Visuals in PRs
