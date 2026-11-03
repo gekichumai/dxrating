@@ -64,7 +64,10 @@ export const EMPTY_COUNTS: ImportCountsDTO = {
   rejected: 0,
 }
 
-/** The counts of a job row: every key of {@link EMPTY_COUNTS}, nothing else (the column also holds chunk state) */
+/**
+ * The public counts of a job row: every key of {@link EMPTY_COUNTS}, nothing else. The column also holds internal
+ * state (client-import `chunks`, `saveRevision`), which stays out of DTOs and exports.
+ */
 export function countsOf(
   stored: Partial<ImportCountsDTO> | Record<string, unknown> | null | undefined,
 ): ImportCountsDTO {
@@ -93,16 +96,6 @@ export function toImportJobDTO(row: ImportJobRow): ImportJobDTO {
     counts: countsOf(row.counts),
     errorCode: row.error_code,
   }
-}
-
-/** The public counts of a job row; other keys of the `counts` column (`saveRevision`) stay internal */
-function countsOf(stored: Partial<ImportCountsDTO> | null): ImportCountsDTO {
-  const counts = { ...EMPTY_COUNTS }
-  for (const key of Object.keys(EMPTY_COUNTS) as (keyof ImportCountsDTO)[]) {
-    const value = stored?.[key]
-    if (typeof value === 'number') counts[key] = value
-  }
-  return counts
 }
 
 /** The job as `decideImportMerge` reads it */
