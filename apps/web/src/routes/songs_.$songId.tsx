@@ -2,6 +2,7 @@ import { DifficultyEnum, type Song, TypeEnum } from '@gekichumai/dxdata'
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 import { getCatalogDocument } from '@/catalog/catalogSource'
 import { findSongById, resolveSongRouteParam } from '@/catalog/songLookup'
+import { keepLocaleSearch } from '@/setup/locale'
 
 type SongSearchParams = {
   type?: string
@@ -48,7 +49,12 @@ const getLegacySheetParams = (song: Song, requestedType?: string, requestedDiffi
   return getDefaultSheetParams(song)
 }
 
-export const resolveLegacySongRouteRedirect = (song: Song, requestedType?: string, requestedDifficulty?: string) => {
+export const resolveLegacySongRouteRedirect = (
+  song: Song,
+  requestedType?: string,
+  requestedDifficulty?: string,
+  currentSearch?: unknown,
+) => {
   const { type, difficulty } = getLegacySheetParams(song, requestedType, requestedDifficulty)
   return {
     to: '/songs/$songId/$type/$difficulty' as const,
@@ -57,6 +63,7 @@ export const resolveLegacySongRouteRedirect = (song: Song, requestedType?: strin
       type,
       difficulty,
     },
+    ...keepLocaleSearch(currentSearch),
     statusCode: LEGACY_SONG_ROUTE_REDIRECT_STATUS_CODE,
     replace: true,
   }
@@ -68,7 +75,7 @@ export const Route = createFileRoute('/songs_/$songId')({
     type: typeof search.type === 'string' ? search.type : undefined,
     difficulty: typeof search.difficulty === 'string' ? search.difficulty : undefined,
   }),
-  beforeLoad: async ({ params, search }) => {
+  beforeLoad: async ({ params, search, location }) => {
     const catalogDocument = await getCatalogDocument()
     const resolution = await resolveSongRouteParam(catalogDocument, params.songId)
     const song =
@@ -77,6 +84,6 @@ export const Route = createFileRoute('/songs_/$songId')({
       throw notFound()
     }
 
-    throw redirect(resolveLegacySongRouteRedirect(song, search.type, search.difficulty))
+    throw redirect(resolveLegacySongRouteRedirect(song, search.type, search.difficulty, location.search))
   },
 })
