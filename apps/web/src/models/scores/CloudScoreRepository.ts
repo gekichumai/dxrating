@@ -99,6 +99,8 @@ export interface CloudScoreRepositoryOptions {
   onStopped?: (reason: CloudSyncStopReason) => void
   /** The page whose events trigger syncs; the current `window` by default */
   eventTarget?: Pick<Window, 'addEventListener' | 'removeEventListener'> | null
+  /** Where `visibilitychange` fires; the current `document` by default */
+  visibilityTarget?: Pick<Document, 'addEventListener' | 'removeEventListener'> | null
   /** Whether the page is visible; `document.visibilityState` by default */
   isVisible?: () => boolean
 }
@@ -169,6 +171,10 @@ export class CloudScoreRepository implements WebScoreRepository {
 
   private serverRecords = new Map<string, RecordDTO>()
   private outbox: OutboxEntry[] = []
+  /** Outbox entries of this tab not written to IndexedDB yet, by mutation ID */
+  private readonly unsaved = new Map<string, OutboxEntry>()
+  /** Issues applied again whose deletion is written with their outbox entry */
+  private readonly unsavedIssueDeletions = new Set<string>()
   private issues: SyncIssue[] = []
   private meta: CloudScoreMeta
 
@@ -336,7 +342,8 @@ export class CloudScoreRepository implements WebScoreRepository {
         existing &&
         existing.achievementRate === entry.achievementRate &&
         (existing.comboFlag ?? null) === (entry.comboFlag ?? null) &&
-        (existing.syncFlag ?? null) === (entry.syncFlag ?? null)
+        (existing.syncFlag ?? null) === (entry.syncFlag ?? null) &&
+        (existing.dxScore ?? null) === (entry.dxScore ?? null)
       ) {
         continue
       }
@@ -353,25 +360,29 @@ export class CloudScoreRepository implements WebScoreRepository {
    * `set` overrides even a verified record and makes it `user_edited` (§5.4)
    */
   reapplyIssue(issueId: string): void {
-    const issue = this.issues.find((candidate) => candidate.id === issueId)
+    const issue = this.saveIssues().find((candidate) => candidate.id === issueId)
     if (!issue) return
-    this.issues = this.issues.filter((candidate) => candidate.id !== issueId)
-    this.persist((database) => database.write({ deleteIssues: [issueId] }))
     const { intent } = issue
-    if (intent.op === 'set' && intent.value) {
-      this.enqueue([{ op: 'set', sheetId: issue.sheetId, value: intent.value, entryMethod: intent.entryMethod }])
-    } else if (intent.op === 'delete') {
-      this.enqueue([{ op: 'delete', sheetId: issue.sheetId, entryMethod: intent.entryMethod }])
+    const change: PendingChange | null =
+      intent.op === 'set' && intent.value
+        ? { op: 'set', sheetId: issue.sheetId, value: intent.value, entryMethod: intent.entryMethod }
+        : intent.op === 'delete'
+          ? { op: 'delete', sheetId: issue.sheetId, entryMethod: intent.entryMethod }
+          : null
+    this.issues = this.issues.filter((candidate) => candidate.id !== issueId)
+    if (change) {
+      this.enqueue([change], [issueId])
     } else {
+      this.persist((database) => database.write({ deleteIssues: [issueId] })).catch(() => {})
       this.refresh()
     }
   }
 
   /** Forgets an issue, keeping the server's record */
   dismissIssue(issueId: string): void {
-    if (!this.issues.some((issue) => issue.id === issueId)) return
+    if (!this.saveIssues().some((issue) => issue.id === issueId)) return
     this.issues = this.issues.filter((issue) => issue.id !== issueId)
-    this.persist((database) => database.write({ deleteIssues: [issueId] }))
+    this.persist((database) => database.write({ deleteIssues: [issueId] })).catch(() => {})
     this.refresh()
   }
 
@@ -404,7 +415,12 @@ export class CloudScoreRepository implements WebScoreRepository {
       target.addEventListener('online', onOnline)
       target.addEventListener('focus', onVisible)
     }
-    const visibilityTarget = typeof document === 'undefined' ? null : document
+    const visibilityTarget =
+      this.options.visibilityTarget === undefined
+        ? typeof document === 'undefined'
+          ? null
+          : document
+        : this.options.visibilityTarget
     visibilityTarget?.addEventListener('visibilitychange', onVisible)
     this.intervalTimer = setInterval(() => {
       if (this.isVisible()) void this.sync()
@@ -498,8 +514,17 @@ export class CloudScoreRepository implements WebScoreRepository {
   private async runLockedCycle() {
     if (!this.locks) return this.runCycle()
     await this.locks.request(SCORE_SYNC_LOCK_NAME, { ifAvailable: true }, async (lock) => {
-      // Another tab is syncing: it pushes this tab's outbox too (it is shared) and broadcasts the result
-      if (!lock) return
+      // Another tab is syncing: it pushes this tab's outbox too (it is shared) and broadcasts the result. This tab
+      // shows the shared cache as it is, and is ready even when the save is empty (no revision to wait for)
+      if (!lock) {
+        try {
+          await this.reload()
+        } catch (error) {
+          console.warn('[cloud-save] Could not read the cache', error)
+        }
+        this.markReady()
+        return
+      }
       await this.runCycle()
     })
   }
@@ -509,6 +534,8 @@ export class CloudScoreRepository implements WebScoreRepository {
     try {
       // Changes other tabs made since the last broadcast
       await this.reload()
+      // A change IndexedDB refused earlier is stored before anything is sent
+      await this.persistUnsaved()
       await this.push()
       await this.pull()
       // The outbox entries added while this cycle ran stay on top of the pulled records
@@ -520,11 +547,14 @@ export class CloudScoreRepository implements WebScoreRepository {
     } catch (error) {
       this.handleFailure(error)
     } finally {
-      if (!this.isReady && !this.disposed) {
-        this.isReady = true
-        this.notify()
-      }
+      this.markReady()
     }
+  }
+
+  private markReady() {
+    if (this.isReady || this.disposed) return
+    this.isReady = true
+    this.notify()
   }
 
   private handleFailure(error: unknown) {
@@ -665,7 +695,7 @@ export class CloudScoreRepository implements WebScoreRepository {
     this.refresh()
 
     if (checksum) {
-      const actual = checksumOf(this.serverRecords.values())
+      const actual = checksumOf(collected.values())
       if (actual.count !== checksum.count || actual.sumAchievement !== checksum.sumAchievement) {
         return {
           kind: 'mismatch',
@@ -683,7 +713,7 @@ export class CloudScoreRepository implements WebScoreRepository {
 
   // --- Local state ---
 
-  private enqueue(changes: PendingChange[]) {
+  private enqueue(changes: PendingChange[], deleteIssues: readonly string[] = []) {
     if (changes.length === 0) return
     const clientEditedAt = new Date().toISOString()
     const entries: OutboxEntry[] = changes.map((change) => ({
@@ -698,17 +728,39 @@ export class CloudScoreRepository implements WebScoreRepository {
       clientEditedAt,
     }))
     this.outbox = [...this.outbox, ...entries]
+    for (const entry of entries) this.unsaved.set(entry.mutationId, entry)
+    for (const issueId of deleteIssues) this.unsavedIssueDeletions.add(issueId)
     this.refresh()
-    void this.persist(async (database) => {
-      const added = await database.write({ addOutbox: entries })
+    this.persistUnsaved().then(
+      () => this.broadcast(),
+      (error: unknown) => {
+        // Kept in memory (and on screen) until a write succeeds: the next sync cycle writes it first, and fails,
+        // showing the error state, while IndexedDB refuses it
+        console.warn('[cloud-save] Could not queue the change, retrying with the next sync', error)
+        if (!this.disposed) this.setState('error')
+      },
+    )
+    this.scheduleDebouncedSync()
+  }
+
+  /**
+   * Writes the outbox entries not in IndexedDB yet, with the issues they replace, in one transaction: an intent
+   * applied again is never gone from both the issues and the outbox (§5.4)
+   */
+  private persistUnsaved(): Promise<void> {
+    return this.persist(async (database) => {
+      const pending = [...this.unsaved.values()]
+      const deleteIssues = [...this.unsavedIssueDeletions]
+      if (pending.length === 0 && deleteIssues.length === 0) return
+      const added = await database.write({ addOutbox: pending, deleteIssues })
+      for (const entry of pending) this.unsaved.delete(entry.mutationId)
+      for (const issueId of deleteIssues) this.unsavedIssueDeletions.delete(issueId)
       // Keep the creation order IndexedDB assigned, so a reload sorts them the same way
       const seqById = new Map(added.map((entry) => [entry.mutationId, entry.seq]))
       this.outbox = this.outbox.map((entry) =>
         seqById.has(entry.mutationId) ? { ...entry, seq: seqById.get(entry.mutationId) } : entry,
       )
-      this.broadcast()
     })
-    this.scheduleDebouncedSync()
   }
 
   /** Reads everything back from IndexedDB (other tabs write there too) */
@@ -725,8 +777,11 @@ export class CloudScoreRepository implements WebScoreRepository {
         this.serverRecords = new Map(snapshot.records.map((record) => [record.sheetId, record]))
         this.meta = snapshot.meta
       }
-      this.outbox = snapshot.outbox
-      this.issues = snapshot.issues
+      // Changes queued in this tab whose write has not landed yet stay on top (after the stored ones)
+      const stored = new Set(snapshot.outbox.map((entry) => entry.mutationId))
+      const unsaved = this.outbox.filter((entry) => this.unsaved.has(entry.mutationId) && !stored.has(entry.mutationId))
+      this.outbox = [...snapshot.outbox, ...unsaved]
+      this.issues = snapshot.issues.filter((issue) => !this.unsavedIssueDeletions.has(issue.id))
       // A save synced before shows its cache right away; a new one waits for its first sync
       if (!this.isReady && this.meta.lastSyncedRevision > 0) this.isReady = true
       this.refresh()
@@ -742,6 +797,12 @@ export class CloudScoreRepository implements WebScoreRepository {
   private onBroadcast(message: unknown) {
     const data = message as Partial<BroadcastMessage> | null
     if (!data || data.type !== 'changed' || data.userId !== this.userId || data.saveId !== this.saveId) return
+    // A cycle is running: a reload now would swap the records it is pulling into (and bring back entries it is
+    // acknowledging). Run once more instead; the next cycle starts with a reload
+    if (this.running) {
+      this.rerun = true
+      return
+    }
     void this.reload()
       .then(() => {
         // Another tab queued changes and may not hold the lock: the lock holder pushes them
@@ -762,6 +823,11 @@ export class CloudScoreRepository implements WebScoreRepository {
 
   private pendingEntries(): OutboxEntry[] {
     return this.outbox.filter((entry) => entry.saveId === this.saveId)
+  }
+
+  /** The issues of this save; other saves' issues stay in the database for when they are active again */
+  private saveIssues(): SyncIssue[] {
+    return this.issues.filter((issue) => issue.saveId === this.saveId)
   }
 
   /** The server's records with the pending outbox entries laid over them, as the server would apply them */
@@ -816,7 +882,10 @@ export class CloudScoreRepository implements WebScoreRepository {
       state: this.state,
       pendingCount: this.pendingEntries().length,
       lastSyncedRevision: this.meta.lastSyncedRevision,
-      issues: this.issues.length ? Object.freeze([...this.issues]) : EMPTY_ISSUES,
+      issues: (() => {
+        const issues = this.saveIssues()
+        return issues.length ? Object.freeze(issues) : EMPTY_ISSUES
+      })(),
     })
   }
 
@@ -851,6 +920,7 @@ function toWireMutation(entry: OutboxEntry): MutationItemInput {
 function issueOf(entry: OutboxEntry, kind: SyncIssue['kind'], reason: string | null): SyncIssue {
   return {
     id: entry.mutationId,
+    saveId: entry.saveId,
     sheetId: entry.sheetId,
     kind,
     reason: reason ?? (kind === 'superseded' ? 'newer-verified-record' : 'rejected'),
