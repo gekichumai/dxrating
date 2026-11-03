@@ -176,8 +176,7 @@ describe('ActiveSaveContext', () => {
     expect(anonymous.result.current.cloudSaveUi).toBeNull()
   })
 
-  it('decides on the local save when /me/features never answers, so the work that waits for it still runs', async () => {
-    writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
+  it('decides on the local save when /me/features stalls and no cloud save is chosen', async () => {
     const deps = dependencies('user-1', {
       fetchFeatures: vi.fn(() => new Promise<UserFeatures | null>(() => {})),
       decisionTimeoutMs: 30,
@@ -188,22 +187,50 @@ describe('ActiveSaveContext', () => {
 
     expect(result.current.activeSave.kind).toBe('local')
     expect(deps.listSaves).not.toHaveBeenCalled()
-    expect(deps.openCloudRepository).not.toHaveBeenCalled()
+    expect(toast).not.toHaveBeenCalled()
   })
 
-  it('decides on the local save when the save list never answers', async () => {
+  it('keeps waiting for a chosen cloud save when the network stalls, and says so', async () => {
     writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
     const deps = dependencies('user-1', {
-      fetchFeatures: vi.fn(async () => FEATURES_ON),
-      listSaves: vi.fn(() => new Promise<SaveDTO[]>(() => {})),
+      fetchFeatures: vi.fn(() => new Promise<UserFeatures | null>(() => {})),
       decisionTimeoutMs: 30,
     })
 
     const { result } = renderActiveSave(deps)
-    await waitFor(() => expect(result.current.activeSave.decided).toBe(true))
+    await waitFor(() =>
+      expect(toast).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ id: 'cloud-save-unreachable' })),
+    )
 
-    expect(result.current.activeSave.kind).toBe('local')
+    // The automatic import still waits: it must not go to the local save while the cloud save may yet open
+    expect(result.current.activeSave).toMatchObject({ kind: 'local', decided: false })
     expect(deps.openCloudRepository).not.toHaveBeenCalled()
+  })
+
+  it('opens the chosen cloud save when the save list answers after the timeout', async () => {
+    writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
+    let resolveSaves: (saves: SaveDTO[]) => void = () => {}
+    const deps = dependencies('user-1', {
+      fetchFeatures: vi.fn(async () => FEATURES_ON),
+      listSaves: vi.fn(
+        () =>
+          new Promise<SaveDTO[]>((resolve) => {
+            resolveSaves = resolve
+          }),
+      ),
+      decisionTimeoutMs: 30,
+    })
+
+    const { result } = renderActiveSave(deps)
+    await waitFor(() =>
+      expect(toast).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ id: 'cloud-save-unreachable' })),
+    )
+    expect(result.current.activeSave.decided).toBe(false)
+
+    resolveSaves([save('dsav_main')])
+    await waitFor(() =>
+      expect(result.current.activeSave).toMatchObject({ kind: 'cloud', decided: true, saveId: 'dsav_main' }),
+    )
   })
 
   it('opens the cloud save with the serverImports flag and exposes it to the cloud save surfaces', async () => {
