@@ -222,4 +222,39 @@ describe('ActiveSaveContext', () => {
     // The active save stays chosen for the next sign-in
     expect(readActiveSaveId(window.localStorage, 'user-1')).toBe('dsav_main')
   })
+
+  it("drops the previous user's cloud save at once when another user signs in without a sign-out", async () => {
+    server.put('dsht_e5nsvt8k2a', 1005000)
+    writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
+    writeActiveSaveId(window.localStorage, 'user-2', 'dsav_two')
+    let userId = 'user-1'
+    let releaseSaves: (() => void) | null = null
+    const deps = dependencies('user-1', {
+      useSessionUserId: () => userId,
+      fetchFeatures: vi.fn(async () => FEATURES_ON),
+      listSaves: vi.fn(async () => {
+        // User B's save list is slow: user A's save must not be shown meanwhile
+        if (userId === 'user-2') await new Promise<void>((resolve) => (releaseSaves = resolve))
+        return [save('dsav_main'), save('dsav_two')]
+      }),
+    })
+
+    const { result, rerender } = renderActiveSave(deps)
+    await waitFor(() => expect(result.current.repository.kind).toBe('cloud'))
+    const userOneRepository = result.current.activeSave.cloudRepository!
+    await waitFor(() => expect(userOneRepository.entries()).toHaveLength(1))
+
+    userId = 'user-2'
+    rerender()
+
+    await waitFor(() => expect(result.current.repository.kind).toBe('local'))
+    expect(result.current.activeSave.cloudRepository).toBeNull()
+    // Disposed without a flush: the session is user B's now
+    expect(server.mutateCalls).toEqual([])
+
+    await waitFor(() => expect(releaseSaves).not.toBeNull())
+    releaseSaves!()
+    await waitFor(() => expect(result.current.activeSave.saveId).toBe('dsav_two'))
+    expect(result.current.activeSave.cloudRepository!.userId).toBe('user-2')
+  })
 })

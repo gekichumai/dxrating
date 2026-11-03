@@ -180,6 +180,13 @@ export function useActiveSaveDecision(): ActiveSave {
       setCloudRepository(null)
       return
     }
+    // Another user signed in without a sign-out in between: never show the previous user's save to them, nor queue
+    // their changes in it. No flush either, the session is no longer the previous user's
+    const previous = cloudRef.current
+    if (previous && previous.userId !== userId) {
+      void previous.dispose({ flushTimeoutMs: 0 })
+      setCloudRepository(null)
+    }
 
     let cancelled = false
     const storage = browserLocalStorage()
