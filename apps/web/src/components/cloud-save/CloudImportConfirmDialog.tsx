@@ -1,5 +1,5 @@
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
-import { type FC, useEffect, useId, useState, useSyncExternalStore } from 'react'
+import { type FC, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cloudImportConfirm } from './cloudImportConfirm'
 
@@ -17,8 +17,22 @@ export const CloudImportConfirmDialog: FC = () => {
   const [step, setStep] = useState<'choose' | 'confirm-clear'>('choose')
   const titleId = useId()
 
+  // The heading of the step shown, focused when the step changes: the button that changed it is gone
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const stepChanged = useRef(false)
+
   useEffect(() => cloudImportConfirm.registerHost(), [])
   useEffect(() => setStep('choose'), [request])
+  useEffect(() => {
+    if (!stepChanged.current) return
+    stepChanged.current = false
+    headingRef.current?.focus()
+  }, [step])
+
+  const goTo = (next: typeof step) => {
+    stepChanged.current = true
+    setStep(next)
+  }
 
   if (!request) return null
   const cancel = () => request.resolve(null)
@@ -27,7 +41,7 @@ export const CloudImportConfirmDialog: FC = () => {
     <Dialog open onClose={cancel} maxWidth="xs" fullWidth aria-labelledby={titleId}>
       {step === 'choose' ? (
         <>
-          <DialogTitle id={titleId}>
+          <DialogTitle id={titleId} ref={headingRef} tabIndex={-1} className="outline-none">
             {t('rating-calculator:cloud-save.import-confirm.title', { count: request.count })}
           </DialogTitle>
           <DialogContent>
@@ -36,11 +50,12 @@ export const CloudImportConfirmDialog: FC = () => {
             </DialogContentText>
           </DialogContent>
           <DialogActions className="flex-wrap gap-1">
-            <Button onClick={cancel}>{t('rating-calculator:cloud-save.import-confirm.cancel')}</Button>
-            <div className="flex-1" />
-            <Button color="error" onClick={() => setStep('confirm-clear')}>
+            {/* The destructive path away from the primary action */}
+            <Button color="error" onClick={() => goTo('confirm-clear')}>
               {t('rating-calculator:cloud-save.import-confirm.clear-first')}
             </Button>
+            <div className="flex-1" />
+            <Button onClick={cancel}>{t('rating-calculator:cloud-save.import-confirm.cancel')}</Button>
             <Button variant="contained" onClick={() => request.resolve('merge')}>
               {t('rating-calculator:cloud-save.import-confirm.merge')}
             </Button>
@@ -48,14 +63,16 @@ export const CloudImportConfirmDialog: FC = () => {
         </>
       ) : (
         <>
-          <DialogTitle id={titleId}>{t('rating-calculator:cloud-save.import-confirm.clear-title')}</DialogTitle>
+          <DialogTitle id={titleId} ref={headingRef} tabIndex={-1} className="outline-none">
+            {t('rating-calculator:cloud-save.import-confirm.clear-title')}
+          </DialogTitle>
           <DialogContent>
             <Alert severity="warning" className="text-pretty">
               {t('rating-calculator:cloud-save.import-confirm.clear-description')}
             </Alert>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setStep('choose')}>{t('rating-calculator:cloud-save.import-confirm.back')}</Button>
+            <Button onClick={() => goTo('choose')}>{t('rating-calculator:cloud-save.import-confirm.back')}</Button>
             <Button color="error" variant="contained" onClick={() => request.resolve('replace')}>
               {t('rating-calculator:cloud-save.import-confirm.clear-confirm')}
             </Button>

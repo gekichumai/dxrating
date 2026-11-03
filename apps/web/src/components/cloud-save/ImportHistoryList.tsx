@@ -3,6 +3,8 @@ import { CircularProgress } from '@mui/material'
 import { type FC, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCloudSaveUi } from '@/models/scores/CloudSaveUiContext'
+import { importFailureMessage } from './importFailureMessage'
+import { LoadError } from './LoadError'
 import { sourceName } from './provenanceLabel'
 
 /** The counts shown for a job, in this order; zeros are left out */
@@ -33,6 +35,9 @@ export const ImportHistoryList: FC = () => {
     }
   }, [i18n.language])
 
+  // Bumped by "Try again" after a failed load
+  const [attempt, setAttempt] = useState(0)
+
   useEffect(() => {
     if (!controller) return
     let cancelled = false
@@ -44,7 +49,7 @@ export const ImportHistoryList: FC = () => {
     return () => {
       cancelled = true
     }
-  }, [controller])
+  }, [controller, attempt])
 
   if (!controller) return null
   if (state.kind === 'loading') {
@@ -56,7 +61,12 @@ export const ImportHistoryList: FC = () => {
     )
   }
   if (state.kind === 'error') {
-    return <p className="m-0 text-sm text-red-700">{t('rating-calculator:cloud-save.history.error')}</p>
+    return (
+      <LoadError
+        message={t('rating-calculator:cloud-save.history.error')}
+        onRetry={() => setAttempt((value) => value + 1)}
+      />
+    )
   }
   if (state.jobs.length === 0) {
     return <p className="m-0 text-sm text-zinc-500">{t('rating-calculator:cloud-save.history.empty')}</p>
@@ -70,7 +80,7 @@ export const ImportHistoryList: FC = () => {
         )
         const status =
           job.status === 'failed'
-            ? t('rating-calculator:cloud-save.history.failed', { code: job.errorCode ?? '?' })
+            ? t('rating-calculator:cloud-save.history.failed', { reason: importFailureMessage(job.errorCode, t) })
             : job.status === 'running'
               ? t('rating-calculator:cloud-save.history.running')
               : null

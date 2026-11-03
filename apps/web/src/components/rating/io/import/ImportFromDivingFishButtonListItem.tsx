@@ -31,6 +31,8 @@ import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
 import type { ImportJobDTO } from '@gekichumai/api-contract'
 import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
+import { importFailureMessage } from '@/components/cloud-save/importFailureMessage'
+import { ServerImportFailedError } from '@/models/scores/cloudImports'
 
 const haptics = new WebHaptics()
 
@@ -50,6 +52,8 @@ type DivingFishImportMessages = {
   success: (count: number) => string
   /** A cloud save: what the server's job changed */
   serverSuccess: (job: ImportJobDTO) => string
+  /** A cloud save: the failed job's code in words */
+  serverError?: (code: string) => string
   error: (error: string) => string
 }
 
@@ -158,7 +162,12 @@ const fetchDivingFish = async (
       error instanceof Error && error.message === 'No Diving Fish Profile' ? 'missing_profile' : 'provider_error',
     )
     console.error('There was a problem with the fetch operation:', error)
-    toast.error(messages.error(String(formatErrorMessage(error))), {
+    // A cloud save's server import that failed: what happened in words, not its code
+    const message =
+      error instanceof ServerImportFailedError
+        ? (messages.serverError?.(error.code) ?? messages.error(''))
+        : messages.error(String(formatErrorMessage(error)))
+    toast.error(message, {
       id: toastId,
     })
   }
@@ -256,6 +265,7 @@ export const ImportDivingFishDialogContent: FC<{
                     source: 'Diving-Fish',
                     summary: summarizeImportJob(job, t),
                   }),
+                serverError: (code) => importFailureMessage(code, t),
                 error: (error) => t('rating-calculator:io.import.diving-fish.error', { error }),
               })
               onClose()

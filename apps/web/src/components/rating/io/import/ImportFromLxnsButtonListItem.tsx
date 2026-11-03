@@ -25,6 +25,8 @@ import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
 import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
+import { importFailureMessage } from '@/components/cloud-save/importFailureMessage'
+import { ServerImportFailedError } from '@/models/scores/cloudImports'
 
 const haptics = new WebHaptics()
 
@@ -106,6 +108,13 @@ const LxnsImportDialogContent: FC<{
       onClose()
     } catch (error) {
       Sentry.metrics.count('lxns_import.failure', 1)
+      if (error instanceof ServerImportFailedError) {
+        // A cloud save's server import that failed: what happened in words, not its code
+        analytics.failed('provider_error')
+        toast.error(importFailureMessage(error.code, t))
+        setState('connected')
+        return
+      }
       const msg = String(formatErrorMessage(error))
       if (msg.includes('expired') || msg.includes('reconnect') || msg.includes('authorize')) {
         analytics.failed('reconnect_required')

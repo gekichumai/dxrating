@@ -5,6 +5,7 @@ import { type FC, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import IconMdiCheck from '~icons/mdi/check'
 import { useCloudSaveStatus, useCloudSaveUi } from '@/models/scores/CloudSaveUiContext'
+import { LoadError } from './LoadError'
 import { formatLocalDate } from './provenanceLabel'
 import './cloud-save.css'
 
@@ -29,6 +30,9 @@ export const SaveSelector: FC = () => {
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
   const numberFormat = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language])
 
+  // Bumped by "Try again" after a failed load
+  const [attempt, setAttempt] = useState(0)
+
   useEffect(() => {
     if (!cloud) return
     let cancelled = false
@@ -40,7 +44,7 @@ export const SaveSelector: FC = () => {
     return () => {
       cancelled = true
     }
-  }, [cloud])
+  }, [cloud, attempt])
 
   if (!cloud) return null
   if (state.kind === 'loading') {
@@ -52,7 +56,15 @@ export const SaveSelector: FC = () => {
     )
   }
   if (state.kind === 'error') {
-    return <p className="m-0 text-sm text-red-700">{t('rating-calculator:cloud-save.saves.error')}</p>
+    return (
+      <LoadError
+        message={t('rating-calculator:cloud-save.saves.error')}
+        onRetry={() => setAttempt((value) => value + 1)}
+      />
+    )
+  }
+  if (state.saves.length === 0) {
+    return <p className="m-0 text-sm text-zinc-500">{t('rating-calculator:cloud-save.saves.empty')}</p>
   }
 
   const activeId = cloud.controller.saveId

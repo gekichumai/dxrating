@@ -6,7 +6,8 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import i18n from 'i18next'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { CloudImportConfirmDialog } from '@/components/cloud-save/CloudImportConfirmDialog'
-import { autoNetImportKey } from '@/models/scores/cloudImports'
+import { fetchEventSource } from '@microsoft/fetch-event-source'
+import { autoNetImportKey, ServerImportFailedError } from '@/models/scores/cloudImports'
 import { LocalScoreRepository } from '@/models/scores/LocalScoreRepository'
 import type {
   ImportProgress,
@@ -52,7 +53,7 @@ const job: ImportJobDTO = {
 }
 
 /** A cloud repository whose calls are recorded */
-function fakeCloud(serverImportsEnabled = true) {
+function fakeCloud(serverImportsEnabled = true, failure?: Error) {
   const serverImports: { kind: ServerImportKind; args: unknown }[] = []
   const repository = {
     kind: 'cloud',
@@ -64,6 +65,7 @@ function fakeCloud(serverImportsEnabled = true) {
     ): AsyncGenerator<ImportProgress> {
       serverImports.push({ kind, args })
       yield { stage: 'auth:in-progress', progress: 0.1 }
+      if (failure) throw failure
       yield { stage: 'done', progress: 1, job }
     },
   } as unknown as ScoreRepository & { applyImport: ReturnType<typeof vi.fn> }
@@ -119,8 +121,16 @@ describe('importFileEntries', () => {
     const { repository } = fakeCloud()
     const pending = importFileEntries(repository, [ENTRY, ENTRY], { source: 'mu-net', mode: 'replace' })
 
-    await act(async () => fireEvent.click(await screen.findByRole('button', { name: 'Clear save first…' })))
+    // The destructive path is not next to the primary action
+    const buttons = (await screen.findAllByRole('button')).map((button) => button.textContent)
+    expect(buttons).toEqual(['Clear save first…', 'Cancel', 'Import'])
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Clear save first…' })))
     expect(screen.getByRole('dialog').textContent).toContain('Clear the save, then import?')
+    // Focus moves to the new step's heading, not to the page
+    expect(document.activeElement?.textContent).toBe('Clear the save, then import?')
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Back' })))
+    expect(document.activeElement?.textContent).toBe('Import 2 scores into your cloud save?')
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Clear save first…' })))
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Clear and import' })))
 
     await pending
@@ -177,5 +187,44 @@ describe('importFromNETRecords on a cloud save', () => {
     expect(serverImports[0]).toMatchObject({ kind: 'maimai-net', args: { region: 'intl', trigger: 'user' } })
     expect((serverImports[0]!.args as { idempotencyKey?: string }).idempotencyKey).toBeUndefined()
     expect(repository.applyImport).not.toHaveBeenCalled()
+  })
+
+  it('shows the maimai NET message of a failed server job, not its code', async () => {
+    const { repository } = fakeCloud(true, new ServerImportFailedError('INVALID_CREDENTIALS', null))
+
+    await importFromNETRecords(catalog, repository, 'merge', undefined, { region: 'jp', username: 'a', password: 'b' })
+
+    const snapshot = netImportProgress.getSnapshot()
+    expect(snapshot?.status).toBe('error')
+    render(<>{snapshot?.message}</>)
+    expect(screen.getByText('Unable to sign in. Check your SEGA ID and password.')).toBeTruthy()
+    expect(document.body.textContent).not.toContain('INVALID_CREDENTIALS')
+    expect(repository.applyImport).not.toHaveBeenCalled()
+  })
+
+  it('with server imports off, fetches in the browser and merges as an auto job claiming the region (§7.4)', async () => {
+    localStorage.setItem('import-net-records', JSON.stringify({ region: 'jp', username: 'sega', password: 'pw' }))
+    vi.mocked(fetchEventSource).mockImplementationOnce(async (_url, options) => {
+      await options.onopen?.(new Response(null, { status: 200 }))
+      options.onmessage?.({ id: '', event: 'data', data: JSON.stringify({ music: [], recent: [] }) })
+    })
+    const { repository, serverImports } = fakeCloud(false)
+    const key = autoNetImportKey('dsav_one')
+
+    await importFromNETRecords(catalog, repository, 'replace', undefined, undefined, {
+      trigger: 'auto',
+      idempotencyKey: key,
+    })
+
+    expect(serverImports).toEqual([])
+    // Never `replace`: the fallback merges, and `auto` keeps the user's deletes (§5.3)
+    expect(repository.applyImport).toHaveBeenCalledWith([], {
+      source: 'maimai-net',
+      mode: 'merge',
+      claimedSource: 'maimai-net-jp',
+      trigger: 'auto',
+      idempotencyKey: key,
+    })
+    expect(netImportProgress.getSnapshot()?.status).toBe('success')
   })
 })
