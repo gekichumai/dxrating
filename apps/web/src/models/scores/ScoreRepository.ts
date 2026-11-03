@@ -1,3 +1,4 @@
+import type { ImportJobDTO } from '@gekichumai/api-contract'
 import type {
   Best50Bucket,
   ComboFlag,
@@ -45,19 +46,49 @@ export interface ImportMeta {
    * values of its chart when its achievement is higher (the maimai NET merge).
    */
   mode: 'replace' | 'merge'
+  /**
+   * Cloud saves: the account ID the file claims (e.g. the Aqua user of an SQLite file). Stored as claimed, never
+   * shown beyond a short prefix
+   */
+  claimedAccountId?: string
 }
 
 export interface ImportResult {
   /** Entries in the import */
   count: number
+  /** Cloud saves: the import job the server recorded */
+  job?: ImportJobDTO
 }
 
 export type ServerImportKind = 'maimai-net' | 'lxns' | 'diving-fish'
 
+/** What every server import accepts */
+interface ServerImportCommonArgs {
+  /**
+   * One key per user action (§5.5): a retry of the same action reuses it, so the server never runs it twice. A
+   * fresh UUID when omitted
+   */
+  idempotencyKey?: string
+  /** `user` (default): the user asked for it; `auto`: the automatic maimai NET import */
+  trigger?: 'user' | 'auto'
+}
+
+export interface ServerImportArgs {
+  'maimai-net': ServerImportCommonArgs & { region: 'jp' | 'intl'; id: string; password: string }
+  lxns: ServerImportCommonArgs
+  'diving-fish': ServerImportCommonArgs & ({ username: string; qq?: never } | { qq: string; username?: never })
+}
+
 export interface ImportProgress {
+  /**
+   * maimai NET: the upstream state (`auth:in-progress`, `fetch:music:in-progress:master`…); every import: `waiting`
+   * (attached to a job that is already running), `pulling` (the job is done, its records are being pulled), `done`
+   */
   stage: string
   /** 0 to 1 */
   progress: number
+  /** Set on the last progress (`done`): the finished job */
+  job?: ImportJobDTO
 }
 
 /**
@@ -116,8 +147,13 @@ export interface ScoreRepository {
   /** File and browser-side provider imports */
   applyImport(entries: PlayEntry[], meta: ImportMeta): Promise<ImportResult>
   /** Imports the server fetches into a cloud save; the local save cannot run them */
-  runServerImport(kind: ServerImportKind, args: Record<string, unknown>): AsyncIterable<ImportProgress>
+  runServerImport<K extends ServerImportKind>(kind: K, args: ServerImportArgs[K]): AsyncIterable<ImportProgress>
   readonly status: ScoreRepositoryStatus
+  /**
+   * Cloud saves: whether the server runs maimai NET, LXNS and Diving-Fish imports for the user (`serverImports`).
+   * `false` is the §7.4 fallback, where the browser fetches them and uploads them as `client_reported`
+   */
+  readonly serverImportsEnabled?: boolean
 }
 
 /**

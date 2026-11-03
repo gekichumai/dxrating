@@ -15,6 +15,7 @@ import { Logo } from '../global/Logo'
 import { LocaleSelector } from '../global/preferences/LocaleSelector'
 import { UserChip } from '../global/preferences/UserChip'
 import { About } from '../global/site-meta/About'
+import { SyncStatusIndicator } from '../cloud-save/SyncStatusIndicator'
 
 const COMMUNITY_LINKS: {
   key: 'discord' | 'qq' | 'github'
@@ -248,6 +249,8 @@ export const TopBar = ({
 
           <LocaleSelector />
           <About />
+          {/* Cloud saves only */}
+          <SyncStatusIndicator />
           <UserChip />
         </div>
       </div>

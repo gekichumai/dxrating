@@ -29,6 +29,8 @@ import type { ScoreRepository } from '@/models/scores/ScoreRepository'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
+import type { ImportJobDTO } from '@gekichumai/api-contract'
+import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
 
 const haptics = new WebHaptics()
 
@@ -46,6 +48,8 @@ type DivingFishRequestBody = {
 type DivingFishImportMessages = {
   loading: string
   success: (count: number) => string
+  /** A cloud save: what the server's job changed */
+  serverSuccess: (job: ImportJobDTO) => string
   error: (error: string) => string
 }
 
@@ -90,6 +94,22 @@ const fetchDivingFish = async (
   const toastId = toast.loading(messages.loading)
   const analytics = createRatingImportTracker('diving_fish')
   try {
+    const path = importPath(repository)
+    if (path === 'server') {
+      // A cloud save: the server queries Diving-Fish and keeps the records verified; this page pulls them after
+      const profile = divingFishProfile?.username
+        ? { username: divingFishProfile.username }
+        : divingFishProfile?.qq
+          ? { qq: divingFishProfile.qq }
+          : null
+      if (!profile) throw new Error('No Diving Fish Profile')
+      const job = await runServerImportToEnd(repository, 'diving-fish', profile)
+      analytics.succeeded(job.counts.fetched, 0)
+      haptics.trigger('success')
+      toast.success(messages.serverSuccess(job), { id: toastId })
+      return
+    }
+
     const body: DivingFishRequestBody = {
       b50: 1,
     }
@@ -122,7 +142,12 @@ const fetchDivingFish = async (
       console.warn('[ImportFromDivingFishButtonListItem]', warning.message, warning.row)
     }
 
-    await repository.applyImport(entries, { source: 'diving-fish', mode: 'replace' })
+    if (path === 'client-fallback') {
+      // Server imports are off (§7.4): uploaded as client_reported, never verified
+      await importFallbackEntries(repository, entries, 'diving-fish')
+    } else {
+      await repository.applyImport(entries, { source: 'diving-fish', mode: 'replace' })
+    }
     analytics.succeeded(entries.length, importResult.warnings.length)
     haptics.trigger('success')
     toast.success(messages.success(entries.length), {
@@ -226,6 +251,11 @@ export const ImportDivingFishDialogContent: FC<{
               await fetchDivingFish(await loadCatalog(), divingFishConfig!, repository, {
                 loading: t('rating-calculator:io.import.diving-fish.loading'),
                 success: (count) => t('rating-calculator:io.import.diving-fish.success', { count }),
+                serverSuccess: (job) =>
+                  t('rating-calculator:cloud-save.import.success', {
+                    source: 'Diving-Fish',
+                    summary: summarizeImportJob(job, t),
+                  }),
                 error: (error) => t('rating-calculator:io.import.diving-fish.error', { error }),
               })
               onClose()

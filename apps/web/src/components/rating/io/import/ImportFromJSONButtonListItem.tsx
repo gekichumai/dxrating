@@ -8,6 +8,7 @@ import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { createRatingImportTracker } from '@/lib/analytics'
 import { parseRatingFile } from '@/models/scores/ratingEntriesFile'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
+import { importFileEntries } from './cloudImport'
 
 export const ImportFromJSONButtonListItem: FC<{
   onClose: () => void
@@ -49,7 +50,8 @@ export const ImportFromJSONButtonListItem: FC<{
             try {
               if (!parsed.success) throw parsed.error
               const { entries } = parsed
-              await repository.applyImport(entries, { source: 'dxrating-json', mode: 'replace' })
+              // A cloud save asks to merge or clear first; `null`: the user cancelled
+              if (!(await importFileEntries(repository, entries, { source: 'dxrating-json', mode: 'replace' }))) return
               analytics.succeeded(entries.length)
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.json.success', { count: entries.length }))

@@ -253,6 +253,10 @@
     font-size: 13px;
     letter-spacing: -0.3px;
   }
+  /* Cloud saves: no room beside the achievement on phones; the chart dialog shows the provenance */
+  .rating-table .rating-provenance-icon {
+    display: none;
+  }
   .rating-table-sort {
     flex-wrap: wrap;
     justify-content: flex-end;

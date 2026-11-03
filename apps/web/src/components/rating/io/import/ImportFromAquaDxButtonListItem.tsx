@@ -10,6 +10,7 @@ import { useWebHaptics } from 'web-haptics/react'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
+import { importFileEntries } from './cloudImport'
 
 type AquaDxExportMusicDetail = {
   musicId: string | number
@@ -65,7 +66,7 @@ export const ImportFromAquaDxButtonListItem: FC<{
                 console.warn('[ImportFromAquaDxButtonListItem]', warning.message, warning.row)
               }
 
-              await repository.applyImport(entries, { source: 'aqua-dx', mode: 'replace' })
+              if (!(await importFileEntries(repository, entries, { source: 'aqua-dx', mode: 'replace' }))) return
               analytics.succeeded(entries.length, importResult.warnings.length)
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.aqua-dx.success', { count: entries.length }))

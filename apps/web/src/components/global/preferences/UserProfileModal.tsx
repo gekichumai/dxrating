@@ -9,6 +9,9 @@ import IconMdiClose from '~icons/mdi/close'
 import IconMdiLogout from '~icons/mdi/logout'
 import IconMdiLinkVariant from '~icons/mdi/link-variant'
 import IconMdiShield from '~icons/mdi/shield-outline'
+import IconMdiCloudOutline from '~icons/mdi/cloud-outline'
+import { CloudSaveSection } from '../../cloud-save/CloudSaveSection'
+import { useCloudSaveUi } from '@/models/scores/CloudSaveUiContext'
 import { authClient } from '../../../lib/auth-client'
 import { useActiveSave } from '@/models/scores/ActiveSaveContext'
 import { useIsLargeDevice } from '../../../utils/breakpoints'
@@ -17,7 +20,7 @@ import { ConnectedAccountsSection } from './ConnectedAccountsSection'
 import { ProfileSection } from './ProfileSection'
 import { SecuritySection } from './SecuritySection'
 
-type Section = 'profile' | 'accounts' | 'security'
+type Section = 'profile' | 'accounts' | 'security' | 'cloud-save'
 
 const SECTIONS: { key: Section; icon: FC<{ className?: string }>; labelKey: string }[] = [
   { key: 'profile', icon: IconMdiAccount, labelKey: 'auth:user-profile.profile' },
@@ -25,11 +28,22 @@ const SECTIONS: { key: Section; icon: FC<{ className?: string }>; labelKey: stri
   { key: 'security', icon: IconMdiShield, labelKey: 'auth:user-profile.security' },
 ]
 
+// Only while a cloud save is active
+const CLOUD_SAVE_SECTION = {
+  key: 'cloud-save',
+  icon: IconMdiCloudOutline,
+  labelKey: 'rating-calculator:cloud-save.title',
+} as const
+
 const TRANSITION = { duration: 0.2, ease: [0.4, 0, 0.2, 1] as const }
 
 const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const { t } = useTranslation(['auth'])
-  const [activeSection, setActiveSection] = useState<Section>('profile')
+  const cloudSave = useCloudSaveUi()
+  const sections = cloudSave ? [...SECTIONS, CLOUD_SAVE_SECTION] : SECTIONS
+  const [selectedSection, setActiveSection] = useState<Section>('profile')
+  // The cloud save section goes away with the cloud save
+  const activeSection = sections.some((section) => section.key === selectedSection) ? selectedSection : 'profile'
   const [direction, setDirection] = useState(0)
   const isLargeDevice = useIsLargeDevice()
   const { data: sessionData } = authClient.useSession()
@@ -37,8 +51,8 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const activeSave = useActiveSave()
 
   const handleSectionChange = (section: Section) => {
-    const currentIdx = SECTIONS.findIndex((s) => s.key === activeSection)
-    const nextIdx = SECTIONS.findIndex((s) => s.key === section)
+    const currentIdx = sections.findIndex((s) => s.key === activeSection)
+    const nextIdx = sections.findIndex((s) => s.key === section)
     setDirection(nextIdx > currentIdx ? 1 : -1)
     setActiveSection(section)
   }
@@ -63,7 +77,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
       <div className={clsx('flex flex-col gap-4', !isLargeDevice && 'flex-row gap-2 flex-1')}>
         {isLargeDevice && <h1 className="text-xl font-bold m-0 px-3">{t('auth:user-profile.title')}</h1>}
         <div className={clsx('flex flex-col gap-0.5', !isLargeDevice && 'flex-row gap-1')}>
-          {SECTIONS.map(({ key, icon: Icon, labelKey }) => (
+          {sections.map(({ key, icon: Icon, labelKey }) => (
             <button
               key={key}
               type="button"
@@ -116,6 +130,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
         >
           {activeSection === 'profile' && <ProfileSection />}
           {activeSection === 'accounts' && <ConnectedAccountsSection />}
+          {activeSection === 'cloud-save' && <CloudSaveSection />}
           {activeSection === 'security' && (
             <SecuritySection currentSessionToken={sessionData?.session?.token} idPrefix="account-dialog" />
           )}
