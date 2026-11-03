@@ -15,6 +15,8 @@ import {
   index,
   unique,
   check,
+  foreignKey,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import { relations } from 'drizzle-orm/_relations'
@@ -170,6 +172,243 @@ export const featureFlagOverrides = pgTable(
     index('feature_flag_overrides_user_idx').on(table.user_id),
     check('feature_flag_overrides_source_check', sql`${table.source} in ('admin', 'opt_in')`),
   ],
+)
+
+// --- Cloud Save ---
+//
+// Design: gekichumai/meta docs-zh/design/cloud-save.md §4.2. Every enumeration
+// is text + CHECK rather than pgEnum: source lists grow and ALTER TYPE cannot
+// be rolled back. Every table cascades from "user" so account deletion
+// removes all of it. Rollback notes: apps/backend/CLAUDE.md.
+
+const timestamptz = (name: string) => timestamp(name, { withTimezone: true })
+
+export const scoreSaves = pgTable(
+  'score_saves',
+  {
+    id: text('id').primaryKey(), // 'dsav_' + nanoid
+    user_id: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    region: text('region').notNull(),
+    game_version: text('game_version'), // NULL follows the client
+    client_profile_key: text('client_profile_key'), // iOS profileID or 'web-local'
+    revision: bigint('revision', { mode: 'number' }).notNull().default(0),
+    tombstone_horizon: bigint('tombstone_horizon', { mode: 'number' }).notNull().default(0),
+    record_count: integer('record_count').notNull().default(0),
+    created_at: timestamptz('created_at').defaultNow().notNull(),
+    updated_at: timestamptz('updated_at').defaultNow().notNull(),
+    deleted_at: timestamptz('deleted_at'), // soft delete
+  },
+  (table) => [
+    check('score_saves_name_check', sql`char_length(${table.name}) BETWEEN 1 AND 64`),
+    check('score_saves_region_check', sql`${table.region} IN ('jp', 'intl', 'cn', '_generic')`),
+    index('score_saves_user_idx')
+      .on(table.user_id)
+      .where(sql`${table.deleted_at} IS NULL`),
+    uniqueIndex('score_saves_user_profile_key')
+      .on(table.user_id, table.client_profile_key)
+      .where(sql`${table.deleted_at} IS NULL AND ${table.client_profile_key} IS NOT NULL`),
+  ],
+)
+
+export const scoreImportJobs = pgTable(
+  'score_import_jobs',
+  {
+    id: text('id').primaryKey(), // 'dimp_' + nanoid
+    user_id: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    save_id: text('save_id')
+      .notNull()
+      .references(() => scoreSaves.id, { onDelete: 'cascade' }),
+    source: text('source').notNull(),
+    fetched_by: text('fetched_by').notNull(),
+    // Friend code, LXNS friend code, Diving-Fish username or QQ; client jobs store the claimed value.
+    source_account_id: text('source_account_id'),
+    source_account_kind: text('source_account_kind'),
+    trigger: text('trigger').notNull(),
+    idempotency_key: text('idempotency_key').notNull(),
+    status: text('status').notNull(),
+    started_at: timestamptz('started_at').defaultNow().notNull(), // server clock
+    fetched_at: timestamptz('fetched_at'), // server: upstream response complete; client: claimed
+    finished_at: timestamptz('finished_at'),
+    raw_payload_sha256: text('raw_payload_sha256'), // sha256 hex of canonical (key-sorted) JSON
+    counts: jsonb('counts').$type<Record<string, number>>().notNull().default({}),
+    error_code: text('error_code'),
+  },
+  (table) => [
+    check(
+      'score_import_jobs_source_check',
+      sql`${table.source} IN ('maimai-net-jp', 'maimai-net-intl', 'lxns', 'diving-fish', 'aqua-dx', 'mu-net', 'aqua-sqlite', 'dxrating-json', 'legacy-local')`,
+    ),
+    check('score_import_jobs_fetched_by_check', sql`${table.fetched_by} IN ('server', 'client')`),
+    check(
+      'score_import_jobs_source_account_kind_check',
+      sql`${table.source_account_kind} IN ('friend_code', 'lxns_friend_code', 'df_username', 'df_qq', 'segaid_hash', 'claimed')`,
+    ),
+    check('score_import_jobs_trigger_check', sql`${table.trigger} IN ('user', 'auto', 'migration')`),
+    check('score_import_jobs_status_check', sql`${table.status} IN ('running', 'succeeded', 'failed')`),
+    unique('score_import_jobs_user_id_idempotency_key_key').on(table.user_id, table.idempotency_key),
+    // Target of the composite foreign key from score_records.
+    unique('score_import_jobs_id_fetched_by_key').on(table.id, table.fetched_by),
+    index('score_import_jobs_save_idx').on(table.save_id, table.started_at.desc().nullsFirst()),
+    // At most one running job per (save, source).
+    uniqueIndex('score_import_jobs_one_running')
+      .on(table.save_id, table.source)
+      .where(sql`${table.status} = 'running'`),
+  ],
+)
+
+export const scoreRecords = pgTable(
+  'score_records',
+  {
+    save_id: text('save_id')
+      .notNull()
+      .references(() => scoreSaves.id, { onDelete: 'cascade' }),
+    // Same pattern as isPublicSheetId in packages/maimai-domain/src/sheet-identity.ts.
+    sheet_id: text('sheet_id').notNull(),
+    user_id: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    achievement: integer('achievement').notNull(), // 1/10000 %
+    combo_flag: text('combo_flag'),
+    sync_flag: text('sync_flag'),
+    dx_score: integer('dx_score'),
+    best50_bucket: text('best50_bucket'),
+    provider_record_id: text('provider_record_id'),
+    // Provenance of the value currently held.
+    source: text('source').notNull(), // a job source, or 'manual'
+    claimed_source: text('claimed_source'), // provider claimed by a client file; shown as claimed only
+    fetched_by: text('fetched_by').notNull(),
+    verification: text('verification').notNull(),
+    entry_method: text('entry_method').notNull(),
+    source_account_id: text('source_account_id'),
+    import_job_id: text('import_job_id'),
+    raw_payload_sha256: text('raw_payload_sha256'),
+    fetched_at: timestamptz('fetched_at'),
+    edited_from_job_id: text('edited_from_job_id'), // the import job a user edit replaced (audit)
+    // Sync.
+    revision: bigint('revision', { mode: 'number' }).notNull(),
+    client_mutation_id: text('client_mutation_id'),
+    value_changed_at: timestamptz('value_changed_at').defaultNow().notNull(), // server clock
+    client_edited_at: timestamptz('client_edited_at'), // device-reported, display only
+    deleted_at: timestamptz('deleted_at'), // tombstone; keeps the deleted value
+  },
+  (table) => [
+    primaryKey({ columns: [table.save_id, table.sheet_id] }),
+    // NO ACTION (the default) is safe when one statement cascades both sides.
+    foreignKey({
+      name: 'score_records_import_job_id_fetched_by_fkey',
+      columns: [table.import_job_id, table.fetched_by],
+      foreignColumns: [scoreImportJobs.id, scoreImportJobs.fetched_by],
+    }),
+    check('score_records_sheet_id_check', sql`${table.sheet_id} ~ '^dsht_[23456789abcdefghjkmnpqrstvwxyz]{10}$'`),
+    check('score_records_achievement_check', sql`${table.achievement} BETWEEN 0 AND 1010000`),
+    check('score_records_combo_flag_check', sql`${table.combo_flag} IN ('fc', 'fcp', 'ap', 'app')`),
+    check('score_records_sync_flag_check', sql`${table.sync_flag} IN ('fs', 'fsp', 'fsd', 'fsdp', 'sync')`),
+    check('score_records_dx_score_check', sql`${table.dx_score} >= 0`),
+    check('score_records_best50_bucket_check', sql`${table.best50_bucket} IN ('b15', 'b35')`),
+    check('score_records_fetched_by_check', sql`${table.fetched_by} IN ('server', 'client')`),
+    check(
+      'score_records_verification_check',
+      sql`${table.verification} IN ('verified', 'client_reported', 'user_edited')`,
+    ),
+    check(
+      'score_records_entry_method_check',
+      sql`${table.entry_method} IN ('import', 'typed', 'keypad', 'photo', 'file', 'migration')`,
+    ),
+    // Only a server job that fetched from the source can produce a verified record.
+    check(
+      'score_records_verified_check',
+      sql`${table.verification} <> 'verified' OR (${table.fetched_by} = 'server' AND ${table.import_job_id} IS NOT NULL AND ${table.raw_payload_sha256} IS NOT NULL AND ${table.fetched_at} IS NOT NULL)`,
+    ),
+    check('score_records_manual_check', sql`${table.source} <> 'manual' OR ${table.verification} <> 'verified'`),
+    check('score_records_source_check', sql`${table.source} <> 'demo'`),
+    index('score_records_cursor_idx').on(table.save_id, table.revision),
+    index('score_records_user_idx').on(table.user_id),
+  ],
+)
+
+// Value and provenance changes that took effect (never `unchanged`, to avoid write amplification).
+// Retention: at most 20 per (save_id, sheet_id).
+export const scoreRecordEvents = pgTable(
+  'score_record_events',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    save_id: text('save_id')
+      .notNull()
+      .references(() => scoreSaves.id, { onDelete: 'cascade' }),
+    user_id: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    sheet_id: text('sheet_id').notNull(),
+    kind: text('kind').notNull(),
+    achievement: integer('achievement'),
+    combo_flag: text('combo_flag'),
+    sync_flag: text('sync_flag'),
+    dx_score: integer('dx_score'),
+    best50_bucket: text('best50_bucket'),
+    source: text('source').notNull(),
+    claimed_source: text('claimed_source'),
+    fetched_by: text('fetched_by').notNull(),
+    verification: text('verification').notNull(),
+    entry_method: text('entry_method'),
+    source_account_id: text('source_account_id'),
+    import_job_id: text('import_job_id'),
+    raw_payload_sha256: text('raw_payload_sha256'),
+    fetched_at: timestamptz('fetched_at'),
+    client_mutation_id: text('client_mutation_id'),
+    created_at: timestamptz('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    check(
+      'score_record_events_kind_check',
+      sql`${table.kind} IN ('import_applied', 'provenance_upgraded', 'manual_set', 'delete', 'restore', 'superseded')`,
+    ),
+    index('score_record_events_sheet_idx').on(table.save_id, table.sheet_id, table.id.desc().nullsFirst()),
+  ],
+)
+
+// Idempotency ledger of client mutations (30-day TTL).
+export const scoreMutations = pgTable(
+  'score_mutations',
+  {
+    user_id: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    mutation_id: text('mutation_id').notNull(), // client UUIDv7, persisted when queued
+    save_id: text('save_id')
+      .notNull()
+      .references(() => scoreSaves.id, { onDelete: 'cascade' }),
+    result: jsonb('result').notNull(),
+    created_at: timestamptz('created_at').defaultNow().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.user_id, table.mutation_id] })],
+)
+
+// Rating snapshots computed by clients after a sync (#184).
+export const scoreSaveSnapshots = pgTable(
+  'score_save_snapshots',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    save_id: text('save_id')
+      .notNull()
+      .references(() => scoreSaves.id, { onDelete: 'cascade' }),
+    user_id: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    at_revision: bigint('at_revision', { mode: 'number' }).notNull(),
+    b15_sum: integer('b15_sum').notNull(),
+    b35_sum: integer('b35_sum').notNull(),
+    b50_sum: integer('b50_sum').notNull(),
+    record_count: integer('record_count').notNull(),
+    game_version: text('game_version').notNull(),
+    detail: jsonb('detail'), // opaque, computed by the client
+    created_at: timestamptz('created_at').defaultNow().notNull(),
+  },
+  (table) => [index('score_save_snapshots_save_idx').on(table.save_id, table.created_at.desc().nullsFirst())],
 )
 
 // --- Arcade Location Tables ---
