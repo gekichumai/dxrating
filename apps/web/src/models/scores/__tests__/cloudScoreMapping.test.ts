@@ -59,9 +59,13 @@ describe('cloud score mapping', () => {
     const read = cloudRecordToScoreRecord(backedUp, IDENTITY)
     expect(read.best50Bucket).toBe('b15')
     expect(read.provenance?.verification).toBe('client_reported')
-    expect(
-      cloudRecordToScoreRecord(recordFromDTO(dto({ provenance: manualProvenance() })), IDENTITY).best50Bucket,
-    ).toBeNull()
+    // The calculator's entry keeps it too, without claiming a provider
+    const entry = cloudRecordToPlayEntry(backedUp, IDENTITY)
+    expect(entry.providerConfig).toEqual({ divingFish: { ratingEligibility: 'b15' } })
+    expect(entry.source).toBeUndefined()
+    const manual = recordFromDTO(dto({ provenance: manualProvenance() }))
+    expect(cloudRecordToScoreRecord(manual, IDENTITY).best50Bucket).toBeNull()
+    expect(cloudRecordToPlayEntry(manual, IDENTITY).providerConfig).toBeUndefined()
   })
 
   it('maps a RecordDTO to the calculator entry format', () => {
@@ -73,6 +77,8 @@ describe('cloud score mapping', () => {
       syncFlag: 'fsd',
       dxScore: 2345,
       source: { provider: 'diving-fish', providerId: '12345', best50Bucket: 'b15' },
+      // Where the calculator reads the hint, as a local Diving-Fish import stores it
+      providerConfig: { divingFish: { ratingEligibility: 'b15' } },
     })
     expect(
       cloudRecordToPlayEntry(
