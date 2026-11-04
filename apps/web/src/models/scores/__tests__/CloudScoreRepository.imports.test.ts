@@ -1026,7 +1026,12 @@ describe('CloudScoreRepository import job reports (analytics, §12.3)', () => {
       onImportJobFinished: (report) => reports.push(report),
       netImport: net.transport,
     })
-    const running = imports.startRunning('diving-fish')
+    // The same Diving-Fish account's job is the user's import: it is adopted, and its failure reported
+    const running = imports.startRunning('diving-fish', {
+      trigger: 'user',
+      sourceAccountKind: 'df_username',
+      sourceAccountId: 'demo',
+    })
     imports.failures.push({ status: 409, code: 'CONFLICT', data: { reason: 'IMPORT_IN_PROGRESS', jobId: running.id } })
     imports.api.get = async () => ({ ...running, status: 'failed', errorCode: 'upstream_unavailable' })
 

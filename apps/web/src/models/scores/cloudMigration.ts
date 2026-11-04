@@ -1,10 +1,11 @@
+import { canonicalJson } from '@gekichumai/api-contract'
 import type { ImportJobDTO, ImportRecord, ImportResultDTO, SaveDTO } from '@gekichumai/api-contract'
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
 import { migrateLegacyImportEntries, RATING_ENTRIES_STORAGE_KEY } from '../../catalog/savedDataMigration'
 import type { Region } from '../context/AppContext'
 import {
-  canonicalImportBody,
   chunkImportRecords,
+  chunkPayloadSha256,
   entriesToImportRecords,
   importInProgressJobId,
   isRetryableImportError,
@@ -406,13 +407,16 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
     }
   }
 
-  const chunks = chunkImportRecords(records)
-  const hashes = await Promise.all(chunks.map((chunk) => sha256Hex(canonicalImportBody(chunk))))
-  const attempt = resumeAttempt(storage, await migrationKeyTag(`${saveId}\n${canonicalImportBody(records)}`))
+  // The same records in any order are the same upload
+  const bySheetId = [...records].sort((a, b) => (a.sheetId < b.sheetId ? -1 : a.sheetId > b.sheetId ? 1 : 0))
+  const attempt = resumeAttempt(storage, await migrationKeyTag(`${saveId}\n${canonicalJson(bySheetId)}`))
 
   /** Sends every chunk under the attempt's key; stops early when the key's job already ended (a replay) */
   const upload = async (): Promise<ImportJobDTO> => {
     const idempotencyKey = migrationImportKey(options.deviceId, attempt.tag, attempt.nonce)
+    const envelope = { id: saveId, idempotencyKey, source: 'legacy-local', trigger: 'migration', sourceAccountId: null }
+    const chunks = chunkImportRecords(records, envelope)
+    const hashes = await Promise.all(chunks.map((chunk) => chunkPayloadSha256(chunk)))
     let job: ImportJobDTO | null = null
     for (const [chunkIndex, chunk] of chunks.entries()) {
       for (let tries = 1; ; tries++) {
