@@ -85,4 +85,22 @@ describe('cloud save demo (?demoCloudSave=1)', () => {
     )
     expect(await screen.findByRole('dialog', { name: 'Turn on cloud save (beta)?' }, { timeout: 3000 })).toBeTruthy()
   })
+
+  it('opens "Use a cloud save" over the demo saves, on an empty local save (choose-save)', async () => {
+    expect(
+      requestedCloudSaveDemoFlow('http://localhost:5173/rating?demoCloudSave=1&demoCloudSaveFlow=choose-save'),
+    ).toBe('choose-save')
+    expect(
+      requestedCloudSaveDemoFlow('https://dxrating.net/rating?demoCloudSave=1&demoCloudSaveFlow=choose-save'),
+    ).toBeNull()
+
+    render(
+      <CloudSaveDemoBoundary url="http://localhost:5173/rating?demoCloudSave=1&demoCloudSaveFlow=choose-save">
+        <Probe />
+      </CloudSaveDemoBoundary>,
+    )
+    const dialog = await screen.findByRole('dialog', { name: 'Choose a cloud save' }, { timeout: 3000 })
+    expect((await within(dialog).findAllByRole('button')).length).toBeGreaterThan(1)
+    expect(screen.getByRole('status', { hidden: true }).textContent).toBe('local local')
+  })
 })

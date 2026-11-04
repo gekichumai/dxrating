@@ -205,7 +205,7 @@ describe('CloudMigrationDialog: no cloud save yet', () => {
         id: 'dsav_new',
         source: 'legacy-local',
         trigger: 'migration',
-        idempotencyKey: expect.stringMatching(/^migrate-[\w-]+-web-local-[0-9a-f]{16}$/),
+        idempotencyKey: expect.stringMatching(/^migrate-[\w-]+-web-local-[0-9a-f]{16}-\w{8}$/),
       }),
     )
     expect(onActivate).toHaveBeenCalledWith('dsav_new')

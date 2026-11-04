@@ -448,8 +448,11 @@ export function createDemoCloudSave(
     },
   }
 }
-/** The dev demo flows of `?demoCloudSaveFlow=` (screenshots of the migration dialog and the beta opt-in) */
-export type DemoCloudSaveFlow = 'migrate' | 'migrate-existing' | 'opt-in'
+/**
+ * The dev demo flows of `?demoCloudSaveFlow=` (screenshots of the migration dialog, the beta opt-in and "Use a cloud
+ * save")
+ */
+export type DemoCloudSaveFlow = 'migrate' | 'migrate-existing' | 'opt-in' | 'choose-save'
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 

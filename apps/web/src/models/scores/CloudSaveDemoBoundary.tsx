@@ -7,6 +7,7 @@ import { CloudMigrationContext, type CloudMigrationOffer, useCloudMigrationOffer
 import { type CloudSaveActions, CloudSaveActionsContext, useCloudSaveActions } from './cloudSaveActions'
 import { type CloudSaveUi, CloudSaveUiContext, useCloudSaveUi } from './CloudSaveUiContext'
 import type { DemoCloudSaveFlow, DemoCloudSaveState } from './demoCloudSave'
+import { LocalScoreRepository } from './LocalScoreRepository'
 import type { WebScoreRepository } from './ScoreRepository'
 import { isScoreRepositoryOverrideAllowed, ScoreRepositoryOverrideProvider, useHydrated } from './useScoreRepository'
 
@@ -15,7 +16,9 @@ import { isScoreRepositoryOverrideAllowed, ScoreRepositoryOverrideProvider, useH
  * save with every kind of provenance, sync issues, saves and import history; `&demoCloudSaveState=offline` (or
  * `syncing`, `error`) shows that sync state. `&demoCloudSaveFlow=migrate` (no cloud save yet), `migrate-existing` (a
  * save another device made) or `opt-in` opens the first sign-in migration dialog or the beta consent, over in-memory
- * requests (the account menu's cloud save section also shows the opt-in switch). Nothing leaves the browser. Production hosts and the native shell ignore
+ * requests (the account menu's cloud save section also shows the opt-in switch). `choose-save` opens "Use a cloud
+ * save" as on an empty browser (no local records, no cloud save chosen), listing the demo's saves; choosing one
+ * changes nothing. Nothing leaves the browser. Production hosts and the native shell ignore
  * it (the `?demoScores=1` host check), and it applies after hydration only, so server-rendered HTML never changes.
  */
 
@@ -23,7 +26,7 @@ export const DEMO_CLOUD_SAVE_PARAM = 'demoCloudSave'
 export const DEMO_CLOUD_SAVE_STATE_PARAM = 'demoCloudSaveState'
 export const DEMO_CLOUD_SAVE_FLOW_PARAM = 'demoCloudSaveFlow'
 
-const DEMO_FLOWS: readonly DemoCloudSaveFlow[] = ['migrate', 'migrate-existing', 'opt-in']
+const DEMO_FLOWS: readonly DemoCloudSaveFlow[] = ['migrate', 'migrate-existing', 'opt-in', 'choose-save']
 
 /** The demo flow a page URL asks for (with `demoCloudSave=1` on a host that may show demos), or `null` */
 export function requestedCloudSaveDemoFlow(url: string): DemoCloudSaveFlow | null {
@@ -37,6 +40,15 @@ const CloudMigrationDialog = lazy(() =>
     default: module.CloudMigrationDialog,
   })),
 )
+
+const ChooseCloudSaveDialog = lazy(() =>
+  import('../../components/cloud-save/ChooseCloudSaveDialog').then((module) => ({
+    default: module.ChooseCloudSaveDialog,
+  })),
+)
+
+/** The choose-save flow is of an empty browser: nothing to back up */
+const NO_OFFER: CloudMigrationOffer = { available: false, localCount: 0, open: () => {} }
 
 const DEMO_STATES: readonly DemoCloudSaveState[] = ['idle', 'syncing', 'offline', 'error']
 
@@ -90,24 +102,41 @@ export const CloudSaveDemoBoundary: FC<PropsWithChildren<{ url?: string }>> = ({
   const parentOffer = useCloudMigrationOffer()
   const [flowDialogOpen, setFlowDialogOpen] = useState(true)
   const isMigrationFlow = flow === 'migrate' || flow === 'migrate-existing'
+  const isChooseFlow = flow === 'choose-save'
+  const cloudSaveOn = isMigrationFlow || isChooseFlow
   const demoEntries = useMemo(() => (demo ? demo.repository.entries() : []), [demo])
+  // The choose-save flow is of an empty browser: an empty local save, whatever this browser has
+  const emptyLocal = useMemo(() => (isChooseFlow ? LocalScoreRepository.inMemory([]) : null), [isChooseFlow])
 
-  // The migration flows show a local save with no cloud save chosen; the opt-in flow, a user the beta is offered to
+  // The migration and choose-save flows show a local save with no cloud save chosen; the opt-in flow, a user the
+  // beta is offered to. The choose-save flow lists the demo's saves, and choosing one changes nothing.
   const activeSave = useMemo(() => {
     if (!demo || !flow) return parentActiveSave
     return {
       ...parentActiveSave,
       userId: parentActiveSave.userId ?? 'demo',
-      features: { cloudSave: isMigrationFlow, serverImports: isMigrationFlow, optInAvailable: flow === 'opt-in' },
+      features: { cloudSave: cloudSaveOn, serverImports: cloudSaveOn, optInAvailable: flow === 'opt-in' },
       refreshFeatures: () => {},
+      ...(isChooseFlow
+        ? {
+            kind: 'local' as const,
+            decided: true,
+            saveId: null,
+            cloudRepository: null,
+            listSaves: demo.ui.listSaves,
+            setActiveSaveId: () => {},
+          }
+        : {}),
     }
-  }, [demo, flow, isMigrationFlow, parentActiveSave])
+  }, [demo, flow, cloudSaveOn, isChooseFlow, parentActiveSave])
   const offer = useMemo<CloudMigrationOffer>(
     () =>
       demo && isMigrationFlow
         ? { available: true, localCount: demoEntries.length, open: () => setFlowDialogOpen(true) }
-        : parentOffer,
-    [demo, isMigrationFlow, demoEntries.length, parentOffer],
+        : demo && isChooseFlow
+          ? NO_OFFER
+          : parentOffer,
+    [demo, isMigrationFlow, isChooseFlow, demoEntries.length, parentOffer],
   )
 
   // The same tree either way, so a demo arriving after hydration does not remount the page
@@ -115,14 +144,24 @@ export const CloudSaveDemoBoundary: FC<PropsWithChildren<{ url?: string }>> = ({
     <ActiveSaveContext.Provider value={activeSave}>
       <CloudSaveActionsContext.Provider value={demo?.actions ?? parentActions}>
         <CloudMigrationContext.Provider value={offer}>
-          <ScoreRepositoryOverrideProvider repository={demo?.repository} url={pageUrl ?? undefined}>
+          <ScoreRepositoryOverrideProvider
+            repository={demo ? (emptyLocal ?? demo.repository) : undefined}
+            url={pageUrl ?? undefined}
+          >
             <CloudSaveUiContext.Provider value={flow ? parentUi : (demo?.ui ?? parentUi)}>
               {children}
             </CloudSaveUiContext.Provider>
           </ScoreRepositoryOverrideProvider>
           {demo?.actions && flowDialogOpen && (
             <Suspense fallback={null}>
-              {isMigrationFlow ? (
+              {isChooseFlow ? (
+                <ChooseCloudSaveDialog
+                  open
+                  onClose={() => setFlowDialogOpen(false)}
+                  listSaves={demo.ui.listSaves}
+                  onChoose={() => {}}
+                />
+              ) : isMigrationFlow ? (
                 <CloudMigrationDialog
                   open
                   onClose={() => setFlowDialogOpen(false)}

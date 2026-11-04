@@ -134,9 +134,13 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
 
   // Duplicate entries of a chart keep the best 50 hint the calculator keeps: ranked by rating, under the selected version
   const songCatalog = useSongCatalog()
+  const resolveInternalLevel = useCallback(
+    (sheetId: string) => songCatalog.getById(sheetId)?.internalLevelValue,
+    [songCatalog],
+  )
   useEffect(() => {
-    repository.setInternalLevelResolver((sheetId) => songCatalog.getById(sheetId)?.internalLevelValue)
-  }, [repository, songCatalog])
+    repository.setInternalLevelResolver(resolveInternalLevel)
+  }, [repository, resolveInternalLevel])
 
   // Migrations resolve saved sheet IDs against the catalog: they wait for the complete one
   const completeCatalogDocument = useCompleteCatalogDocument()
@@ -182,7 +186,7 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
         <CloudSaveUiContext.Provider value={cloudSaveUi}>
           <RatingCalculatorContext.Provider value={value}>
             {/* Offers the first sign-in migration of the local save; nothing for anonymous visitors or with cloud save off */}
-            <CloudMigrationProvider localRepository={localRepository}>
+            <CloudMigrationProvider localRepository={localRepository} resolveInternalLevel={resolveInternalLevel}>
               <CloudSaveDemoBoundary>{children}</CloudSaveDemoBoundary>
             </CloudMigrationProvider>
           </RatingCalculatorContext.Provider>

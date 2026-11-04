@@ -17,6 +17,7 @@ import { useAppContext } from '../context/useAppContext'
 import { readActiveSaveId, useActiveSave } from './ActiveSaveContext'
 import { useCloudSaveActions } from './cloudSaveActions'
 import { pruneExpiredCloudBackup } from './cloudMigration'
+import type { InternalLevelResolver } from './collapseScoreRecords'
 
 /**
  * Whether to offer the first sign-in migration (design §10) and how to start it. It is offered, never run, when all
@@ -93,10 +94,13 @@ export function focusMigrationReturnTarget(scope: Element | null) {
 const focusScopeOf = (element: Element | null) =>
   element?.closest('[role="dialog"], [role="presentation"], .MuiAlert-root') ?? null
 
-export const CloudMigrationProvider: FC<PropsWithChildren<{ localRepository: LocalEntriesSource }>> = ({
-  localRepository,
-  children,
-}) => {
+export const CloudMigrationProvider: FC<
+  PropsWithChildren<{
+    localRepository: LocalEntriesSource
+    /** The calculator's internal level resolver, so duplicate entries are uploaded as the calculator reads them */
+    resolveInternalLevel?: InternalLevelResolver | null
+  }>
+> = ({ localRepository, resolveInternalLevel, children }) => {
   const activeSave = useActiveSave()
   const actions = useCloudSaveActions()
   const { region } = useAppContext()
@@ -159,6 +163,7 @@ export const CloudMigrationProvider: FC<PropsWithChildren<{ localRepository: Loc
             region={region}
             api={actions.migration}
             storage={storage}
+            resolveInternalLevel={resolveInternalLevel}
             onActivate={(saveId) => setActiveSaveId(saveId)}
           />
         </Suspense>

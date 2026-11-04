@@ -20,6 +20,7 @@ import { captureAnalyticsEvent, type CloudSaveMigrationMode } from '@/lib/analyt
 import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
 import type { Region } from '@/models/context/AppContext'
 import { NothingToImportError } from '@/models/scores/cloudImports'
+import type { InternalLevelResolver } from '@/models/scores/collapseScoreRecords'
 import {
   type CloudMigrationApi,
   findMigrationTarget,
@@ -55,6 +56,8 @@ export interface CloudMigrationDialogProps {
   region: Region
   api: CloudMigrationApi
   storage: Storage | null
+  /** The calculator's internal level resolver (duplicate entries keep the best 50 hint the calculator keeps) */
+  resolveInternalLevel?: InternalLevelResolver | null
   /** Makes the save active (`ActiveSave.setActiveSaveId`) */
   onActivate(saveId: string): void
 }
@@ -99,6 +102,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
   region,
   api,
   storage,
+  resolveInternalLevel,
   onActivate,
 }) => {
   const { t, i18n } = useTranslation(['rating-calculator'])
@@ -162,6 +166,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
         target,
         deviceId,
         storage,
+        resolveInternalLevel,
       })
       captureAnalyticsEvent('cloudsave_migration_succeeded', {
         mode: ANALYTICS_MODE[mode],

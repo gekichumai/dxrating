@@ -274,13 +274,15 @@ describe('runCloudMigration: no cloud save yet', () => {
       chunkIndex: 0,
       chunkCount: 1,
     })
-    expect(upload.idempotencyKey).toMatch(/^migrate-device-1234-web-local-[0-9a-f]{16}$/)
+    // Every backup the user starts has its own nonce
+    expect(upload.idempotencyKey).toMatch(/^migrate-device-1234-web-local-[0-9a-f]{16}-\w{8}$/)
     expect(upload.rawPayloadSha256).toMatch(/^[0-9a-f]{64}$/)
     // Each record claims its entry's provider at most; never any other provenance
     const records = upload.records as ImportRecord[]
+    // In sheet ID order, the order the upload's key hashes
     expect(records.map((record) => [record.sheetId, record.claimedSource])).toEqual([
-      [SHEET_A, 'maimai-net'],
       [SHEET_B, null],
+      [SHEET_A, 'maimai-net'],
       [SHEET_C, null],
     ])
     for (const record of records) {
@@ -438,6 +440,131 @@ describe('runCloudMigration: no cloud save yet', () => {
     const third = await migrate()
     expect(third.job?.id).not.toBe(second.job?.id)
     expect(new Set(uploadKeys()).size).toBe(3)
+  })
+
+  it('resumes in the same chunks when the entries were reordered before the retry', async () => {
+    const entries = sheetIds(5001).map((sheetId) => ({
+      sheetId,
+      achievementRate: 97,
+    }))
+    const original = server.api.clientImport
+    server.api.clientImport = async (input) => {
+      if (input.chunkIndex === 1) throw { status: 400, code: 'BAD_REQUEST' }
+      return original(input)
+    }
+    await expect(migrate({ entries })).rejects.toBeTruthy()
+    server.api.clientImport = original
+    expect(server.records.get(server.saves[0]!.id)!.size).toBe(5000)
+
+    // The local save changed its order since (a sort, an edit), not its records: the same upload, resumed
+    const outcome = await migrate({ entries: [...entries].reverse() })
+
+    expect(new Set(uploadKeys()).size).toBe(1)
+    expect(outcome.job?.status).toBe('succeeded')
+    const stored = server.records.get(outcome.saveId)!
+    expect(stored.size).toBe(5001)
+    for (const { sheetId } of entries) expect(stored.has(sheetId)).toBe(true)
+  })
+
+  it('uploads a backup again when its records equal an older, finished one (A, then B, then A)', async () => {
+    const save = server.addSave({ clientProfileKey: 'web-local' })
+    const contentA: PlayEntry[] = [{ sheetId: SHEET_A, achievementRate: 100.5 }]
+    const contentB: PlayEntry[] = [...contentA, { sheetId: SHEET_B, achievementRate: 99 }]
+    const first = await migrate({ mode: 'merge', target: save, entries: contentA })
+    await migrate({ mode: 'merge', target: save, entries: contentB })
+    // Another device replaces the save, lowering the chart's score
+    await server.api.replace({
+      id: save.id,
+      ifRevision: server.saves[0]!.revision,
+      idempotencyKey: 'other-device-replace',
+      source: 'legacy-local',
+      records: [
+        {
+          sheetId: SHEET_A,
+          achievement: 990000,
+          comboFlag: null,
+          syncFlag: null,
+          dxScore: null,
+          best50Bucket: null,
+          providerRecordId: null,
+          claimedSource: null,
+        },
+      ],
+    })
+
+    const third = await migrate({ mode: 'merge', target: save, entries: contentA })
+
+    expect(third.job?.id).not.toBe(first.job?.id)
+    expect(third.job?.status).toBe('succeeded')
+    expect(new Set(uploadKeys()).size).toBe(3)
+    expect(server.records.get(save.id)!.get(SHEET_A)?.achievement).toBe(1005000)
+  })
+
+  it('collapses duplicate entries of a chart as the rating calculator reads them', async () => {
+    const outcome = await migrate({
+      entries: [
+        // The highest achievement, without flags, from maimai NET
+        {
+          sheetId: SHEET_A,
+          achievementRate: 100.5,
+          source: { provider: 'maimai-net', providerId: 'net-1' },
+        },
+        // The strongest flags on a lower score, from Diving-Fish, with its b35 hint
+        {
+          sheetId: SHEET_A,
+          achievementRate: 100,
+          comboFlag: 'ap',
+          syncFlag: 'fsdp',
+          source: { provider: 'diving-fish', providerId: 'df-1', best50Bucket: 'b35' },
+        },
+        // The highest DX score, and the hint the calculator keeps: the AP row's rating with its bonus, a higher
+        // achievement
+        {
+          sheetId: SHEET_A,
+          achievementRate: 100.4,
+          comboFlag: 'fc',
+          dxScore: 2400,
+          source: { provider: 'diving-fish', providerId: 'df-2', best50Bucket: 'b15' },
+        },
+        { sheetId: SHEET_A, achievementRate: 99, dxScore: 2100 },
+        // Duplicates of one provider keep its claim
+        { sheetId: SHEET_B, achievementRate: 99, source: { provider: 'lxns' } },
+        { sheetId: SHEET_B, achievementRate: 98, comboFlag: 'fcp', source: { provider: 'lxns' } },
+        { sheetId: SHEET_C, achievementRate: 97 },
+      ],
+      resolveInternalLevel: () => 13.5,
+    })
+
+    const records = server.calls.find((call) => call.route === 'clientImport')!.input.records as ImportRecord[]
+    expect(
+      [...records].sort(
+        (a, b) => [SHEET_A, SHEET_B, SHEET_C].indexOf(a.sheetId) - [SHEET_A, SHEET_B, SHEET_C].indexOf(b.sheetId),
+      ),
+    ).toEqual([
+      {
+        sheetId: SHEET_A,
+        achievement: 1005000,
+        comboFlag: 'ap',
+        syncFlag: 'fsdp',
+        dxScore: 2400,
+        best50Bucket: 'b15',
+        // The rows name different providers (and one none): the collapsed record claims none
+        providerRecordId: null,
+        claimedSource: null,
+      },
+      {
+        sheetId: SHEET_B,
+        achievement: 990000,
+        comboFlag: 'fcp',
+        syncFlag: null,
+        dxScore: null,
+        best50Bucket: null,
+        providerRecordId: null,
+        claimedSource: 'lxns',
+      },
+      expect.objectContaining({ sheetId: SHEET_C, achievement: 970000 }),
+    ])
+    expect(outcome).toMatchObject({ uploaded: 3, skipped: 0 })
   })
 
   it('moves entries still on legacy sheet IDs to public ones before uploading them', async () => {

@@ -1,5 +1,6 @@
 import { canonicalJson } from '@gekichumai/api-contract'
 import type { ImportJobDTO, ImportRecord, ImportResultDTO, SaveDTO } from '@gekichumai/api-contract'
+import type { SheetIdentity } from '@gekichumai/maimai-domain'
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
 import { migrateLegacyImportEntries, RATING_ENTRIES_STORAGE_KEY } from '../../catalog/savedDataMigration'
 import type { Region } from '../context/AppContext'
@@ -13,13 +14,16 @@ import {
   ServerImportFailedError,
   sha256Hex,
 } from './cloudImports'
+import { collapseScoreRecordList, type InternalLevelResolver } from './collapseScoreRecords'
+import { playEntryToScoreRecord } from './LocalScoreRepository'
+import type { ScoreRecord } from './ScoreRepository'
 
 /**
  * The first sign-in migration of the web (meta#17, design §10, the revised #183): the visitor's local save goes to a
  * cloud save, only when they ask for it ("Back up to cloud"), never on its own.
  *
  * - No cloud save yet: `POST /saves` (idempotent through `clientProfileKey: 'web-local'`), then `client-imports`
- *   (`source: 'legacy-local'`, `trigger: 'migration'`, key `migrate-<deviceId>-web-local-<tag>`), chunked. Every record is
+ *   (`source: 'legacy-local'`, `trigger: 'migration'`, key `migrate-<deviceId>-web-local-<tag>-<nonce>`), chunked. Every record is
  *   `client_reported` and claims the provider its entry names; the server sets the entry method (§10.3).
  * - A cloud save another device already made: merge into it the same way (the default), use the cloud save only, or,
  *   after a second confirmation, replace it with this device's save (`/replace` with `ifRevision`).
@@ -93,12 +97,13 @@ function randomId(): string {
 export const MIGRATION_ATTEMPT_STORAGE_KEY = 'dxr-cloud-migration-attempt'
 
 /**
- * The key of the migration upload: `migrate-<deviceId>-web-local-<tag>`, where the tag hashes the target save's ID
+ * The key of the migration upload: `migrate-<deviceId>-web-local-<tag>-<nonce>`, where the tag hashes the target save's ID
  * and every record sent. A retry of the same upload reuses it (and resumes its chunks); a migration into another
- * save (the first one was deleted) or with other records is a new import. `nonce`: a fresh start of the same
- * upload after its earlier job ended without finishing (abandoned after an interruption).
+ * save (the first one was deleted) or with other records is a new import. `nonce`: random per backup the user
+ * starts (see `resumeAttempt`), and new again when the same upload starts over after its earlier job ended without
+ * finishing (abandoned after an interruption).
  */
-export const migrationImportKey = (deviceId: string, tag: string, nonce: string | null = null) =>
+export const migrationImportKey = (deviceId: string, tag: string, nonce: string | null) =>
   `migrate-${deviceId}-${WEB_LOCAL_PROFILE_KEY}-${tag}${nonce ? `-${nonce}` : ''}`
 
 /**
@@ -125,32 +130,32 @@ export async function migrationKeyTag(text: string): Promise<string> {
 
 interface MigrationAttempt {
   tag: string
+  /** `null` only in an attempt stored before every attempt had one; it is still resumed as it is */
   nonce: string | null
   /** The attempt's job succeeded: a later run with the same tag is a new request, not a retry of this one */
   done?: boolean
 }
 
 /**
- * The nonce of the stored attempt with this tag while it is unfinished (a retry resumes its key). Another tag starts
- * a new attempt (without a nonce); the same tag after a finished attempt starts one under a new nonce, so a new
- * backup of the same records is uploaded again instead of answered with the old job (the save may have lost records
- * since, by a delete or a replace from another device).
+ * The attempt of this upload: the stored one while it has this tag and is unfinished (a retry resumes its key and
+ * its chunks), else a new one under a fresh random nonce. So every new backup the user starts is uploaded, never
+ * answered with an older job, even when its records equal those of an earlier attempt that is no longer the stored
+ * one (A, then B, then A again): the save may have lost records since, by a delete or a replace from another device.
  */
 function resumeAttempt(storage: Storage | null, tag: string): MigrationAttempt {
-  let finished = false
   try {
     const parsed = JSON.parse(storage?.getItem(MIGRATION_ATTEMPT_STORAGE_KEY) ?? 'null') as Partial<MigrationAttempt>
     if (
       parsed?.tag === tag &&
+      !parsed.done &&
       (parsed.nonce === null || (typeof parsed.nonce === 'string' && /^\w{1,16}$/.test(parsed.nonce)))
     ) {
-      if (!parsed.done) return { tag, nonce: parsed.nonce }
-      finished = true
+      return { tag, nonce: parsed.nonce }
     }
   } catch {
     // Unreadable: a new attempt
   }
-  const attempt: MigrationAttempt = { tag, nonce: finished ? newNonce() : null }
+  const attempt: MigrationAttempt = { tag, nonce: newNonce() }
   saveAttempt(storage, attempt)
   return attempt
 }
@@ -241,6 +246,80 @@ export function findMigrationTarget(saves: readonly SaveDTO[], region: Region): 
   return sameRegion[0] ?? null
 }
 
+// --- The records ---
+
+/** Never read: the collapse keeps the identity of a record without looking at it */
+const UNREAD_IDENTITY = Object.freeze({}) as SheetIdentity
+
+/**
+ * The records of the migration upload: one per chart, with the values the local save shows for it. Duplicate
+ * entries of a chart are collapsed as the rating calculator reads them (`collapseScoreRecordList`, as
+ * `LocalScoreRepository.list` does): the higher achievement, the stronger combo and sync flags and the higher DX
+ * score each on their own, and the best 50 hint the calculator keeps (a Diving-Fish one, ranked by the record that
+ * carries it, under `resolveInternalLevel`). A chart with one entry is sent as `entriesToImportRecords` makes it.
+ *
+ * Provenance is never elevated by the collapse: the collapsed record claims a provider (and a provider record ID)
+ * only when every entry of the chart claims the same one; when they differ, or some claim none, it claims none.
+ * `skipped` counts what `entriesToImportRecords` skips; an entry the server would reject takes no part in the
+ * collapse, as it would not be sent.
+ */
+export function migrationImportRecords(
+  entries: readonly PlayEntry[],
+  resolveInternalLevel?: InternalLevelResolver | null,
+): { records: ImportRecord[]; skipped: number } {
+  const plan = { source: 'legacy-local', claimedSource: null } as const
+  const bySheetId = new Map<string, { entry: PlayEntry; record: ImportRecord }[]>()
+  let skipped = 0
+  for (const entry of entries) {
+    const converted = entriesToImportRecords([entry], plan)
+    skipped += converted.skipped
+    const record = converted.records[0]
+    if (!record) continue
+    const rows = bySheetId.get(record.sheetId)
+    if (rows) rows.push({ entry, record })
+    else bySheetId.set(record.sheetId, [{ entry, record }])
+  }
+
+  const records: ImportRecord[] = []
+  for (const [sheetId, rows] of bySheetId) {
+    if (rows.length === 1) {
+      records.push(rows[0]!.record)
+      continue
+    }
+    const scoreRecords = rows.map(({ entry, record }): ScoreRecord => {
+      const local = playEntryToScoreRecord(entry, () => UNREAD_IDENTITY)
+      return {
+        sheetId,
+        identity: UNREAD_IDENTITY,
+        achievement: record.achievement,
+        achievementRate: entry.achievementRate,
+        comboFlag: record.comboFlag,
+        syncFlag: record.syncFlag,
+        dxScore: record.dxScore ?? null,
+        // The hint the calculator honours (Diving-Fish only), not every provider's
+        best50Bucket: local?.best50Bucket ?? null,
+        provenance: null,
+      }
+    })
+    const collapsed = collapseScoreRecordList(scoreRecords, resolveInternalLevel).get(sheetId)!
+    const shared = <K extends 'claimedSource' | 'providerRecordId'>(key: K) => {
+      const first = rows[0]!.record[key] ?? null
+      return rows.every(({ record }) => (record[key] ?? null) === first) ? first : null
+    }
+    records.push({
+      sheetId,
+      achievement: collapsed.achievement,
+      comboFlag: collapsed.comboFlag,
+      syncFlag: collapsed.syncFlag,
+      dxScore: collapsed.dxScore,
+      best50Bucket: collapsed.best50Bucket,
+      providerRecordId: shared('providerRecordId'),
+      claimedSource: shared('claimedSource'),
+    })
+  }
+  return { records, skipped }
+}
+
 // --- Running it ---
 
 /** The cloud save changed after the user looked at it: `/replace` answered 412 with its current revision */
@@ -282,6 +361,11 @@ export interface MigrationOptions {
    * {@link migrateLegacyImportEntries} by default, which loads nothing when no entry is on a legacy ID
    */
   migrateLegacyEntries?: (entries: PlayEntry[]) => Promise<PlayEntry[]>
+  /**
+   * The internal level of a chart under the selected version (the rating calculator's resolver), to pick the best 50
+   * hint of duplicate entries as the calculator does; without it, the calculator's fallback order for an unknown level
+   */
+  resolveInternalLevel?: InternalLevelResolver | null
 }
 
 export interface MigrationOutcome {
@@ -351,10 +435,7 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
 
   const migrateLegacy = options.migrateLegacyEntries ?? migrateLegacyImportEntries
   const entries = await migrateLegacy([...options.entries])
-  const { records, skipped } = entriesToImportRecords(entries, {
-    source: 'legacy-local',
-    claimedSource: null,
-  })
+  const { records, skipped } = migrationImportRecords(entries, options.resolveInternalLevel)
   if (records.length === 0) throw new NothingToImportError(skipped)
 
   if (mode === 'replace') {
@@ -407,7 +488,8 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
     }
   }
 
-  // The same records in any order are the same upload
+  // The same records in any order are the same upload: the tag and the chunks both use this one order, so a key
+  // always names the same chunk contents and boundaries (the server replays a chunk index it already received)
   const bySheetId = [...records].sort((a, b) => (a.sheetId < b.sheetId ? -1 : a.sheetId > b.sheetId ? 1 : 0))
   const attempt = resumeAttempt(storage, await migrationKeyTag(`${saveId}\n${canonicalJson(bySheetId)}`))
 
@@ -415,7 +497,7 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
   const upload = async (): Promise<ImportJobDTO> => {
     const idempotencyKey = migrationImportKey(options.deviceId, attempt.tag, attempt.nonce)
     const envelope = { id: saveId, idempotencyKey, source: 'legacy-local', trigger: 'migration', sourceAccountId: null }
-    const chunks = chunkImportRecords(records, envelope)
+    const chunks = chunkImportRecords(bySheetId, envelope)
     const hashes = await Promise.all(chunks.map((chunk) => chunkPayloadSha256(chunk)))
     let job: ImportJobDTO | null = null
     for (const [chunkIndex, chunk] of chunks.entries()) {

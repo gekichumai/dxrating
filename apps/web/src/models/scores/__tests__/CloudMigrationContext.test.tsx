@@ -279,6 +279,108 @@ describe('the first sign-in migration offer', () => {
   })
 })
 
+describe('choosing an existing cloud save on an empty browser', () => {
+  const existingSave: SaveDTO = {
+    ...newSave,
+    id: 'dsav_existing',
+    name: 'Phone',
+    region: 'intl',
+    clientProfileKey: null,
+    recordCount: 42,
+  }
+
+  beforeEach(() => {
+    window.localStorage.removeItem('rating-calculator-entries')
+  })
+
+  it('lists the saves only once asked, and activates the one chosen without uploading anything', async () => {
+    const deps = dependencies('user-1', FEATURES_ON, () => [existingSave])
+    // The section of the active save lists its imports, a route these tests do not fake
+    const open = deps.openCloudRepository.getMockImplementation()!
+    deps.openCloudRepository.mockImplementation(async (options) => {
+      const repository = await open(options)
+      vi.spyOn(repository, 'listImportJobs').mockResolvedValue([])
+      return repository
+    })
+    const actions = cloudActions()
+    const Wrapper = wrapper(deps, actions)
+    render(
+      <Wrapper>
+        <CloudSaveSection />
+      </Wrapper>,
+    )
+    await settle()
+
+    expect(screen.queryByRole('button', { name: 'Back up to cloud' })).toBeNull()
+    const entryPoint = await screen.findByRole('button', { name: 'Use a cloud save' })
+    expect(deps.listSaves).not.toHaveBeenCalled()
+
+    entryPoint.focus()
+    fireEvent.click(entryPoint)
+    const dialog = await screen.findByRole('dialog', { name: 'Choose a cloud save' })
+    const option = await within(dialog).findByRole('button', { name: /Phone/ })
+    expect(option.textContent).toContain('Intl')
+    expect(option.textContent).toContain('42 records')
+    expect(deps.listSaves).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(option)
+
+    await waitFor(() =>
+      expect(deps.openCloudRepository).toHaveBeenCalledWith(expect.objectContaining({ saveId: 'dsav_existing' })),
+    )
+    expect(JSON.parse(window.localStorage.getItem(ACTIVE_SAVE_STORAGE_KEY)!)).toEqual({ 'user-1': 'dsav_existing' })
+    // The save selector of the active save replaces the entry point, and the focus goes to the section's heading
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Use a cloud save' })).toBeNull())
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Cloud save' })))
+    expect(actions.migration.listSaves).not.toHaveBeenCalled()
+    expect(actions.migration.createSave).not.toHaveBeenCalled()
+    expect(actions.migration.clientImport).not.toHaveBeenCalled()
+    expect(window.localStorage.getItem('rating-calculator-entries')).toBeNull()
+  })
+
+  it('says so when the account has no saves, and offers nothing to upload', async () => {
+    const deps = dependencies('user-1', FEATURES_ON, () => [])
+    const actions = cloudActions()
+    const Wrapper = wrapper(deps, actions)
+    render(
+      <Wrapper>
+        <CloudSaveSection />
+      </Wrapper>,
+    )
+    await settle()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Use a cloud save' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Choose a cloud save' })
+    await within(dialog).findByText(/Your account has no cloud saves yet/)
+    expect(
+      within(dialog)
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(['Cancel'])
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(deps.openCloudRepository).not.toHaveBeenCalled()
+    expect(actions.migration.createSave).not.toHaveBeenCalled()
+    expect(actions.migration.clientImport).not.toHaveBeenCalled()
+    expect(window.localStorage.getItem(ACTIVE_SAVE_STORAGE_KEY)).toBeNull()
+  })
+
+  it('shows nothing with cloud save off', async () => {
+    const deps = dependencies('user-1', null, () => [existingSave])
+    const Wrapper = wrapper(deps, cloudActions())
+    const { container } = render(
+      <Wrapper>
+        <CloudSaveSection />
+      </Wrapper>,
+    )
+    await settle()
+
+    expect(container.innerHTML).toBe('')
+    expect(deps.listSaves).not.toHaveBeenCalled()
+  })
+})
+
 describe('the beta opt-in', () => {
   it('after opting in, forgets the cached features and decides again', async () => {
     let features = FEATURES_OPT_IN
