@@ -1,7 +1,9 @@
 import type { ImportJobDTO, ImportRecord, SaveDTO } from '@gekichumai/api-contract'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { PlayEntry } from '../../../components/rating/RatingCalculatorAddEntryForm'
+import { decideImportMerge } from '@gekichumai/maimai-domain'
 import { NothingToImportError } from '../cloudImports'
+import { type CloudRecord, cloudRecordToScoreRecord } from '../cloudScoreMapping'
 import {
   backUpLocalSaveBeforeCloud,
   CLOUD_BACKUP_STORAGE_KEY,
@@ -565,6 +567,33 @@ describe('runCloudMigration: no cloud save yet', () => {
       expect.objectContaining({ sheetId: SHEET_C, achievement: 970000 }),
     ])
     expect(outcome).toMatchObject({ uploaded: 3, skipped: 0 })
+
+    // Stored by the server's merge and read back from the cloud, the calculator's hint survives, unverified
+    const uploaded = records.find((record) => record.sheetId === SHEET_A)!
+    const decision = decideImportMerge(null, uploaded, {
+      id: 'dimp_mig',
+      source: 'legacy-local',
+      fetchedBy: 'client',
+      trigger: 'migration',
+      startedAt: '2026-11-03T00:00:00.000Z',
+    })
+    expect(decision.next).not.toBeNull()
+    const next = decision.next!
+    const read = cloudRecordToScoreRecord(
+      {
+        sheetId: SHEET_A,
+        achievement: next.achievement,
+        comboFlag: next.comboFlag,
+        syncFlag: next.syncFlag,
+        dxScore: next.dxScore,
+        best50Bucket: next.best50Bucket,
+        providerRecordId: next.providerRecordId,
+        provenance: next.provenance,
+      } as CloudRecord,
+      { songId: 'dsng_test', type: 'dx', difficulty: 'master' },
+    )
+    expect(read).toMatchObject({ best50Bucket: 'b15', comboFlag: 'ap', syncFlag: 'fsdp', dxScore: 2400 })
+    expect(read.provenance?.verification).toBe('client_reported')
   })
 
   it('moves entries still on legacy sheet IDs to public ones before uploading them', async () => {

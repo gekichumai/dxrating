@@ -610,7 +610,7 @@
     "cloud-save.save-missing": "Your cloud save could not be found, so this device is using its local save.",
     "cloud-save.title": "Cloud save",
     "cloud-save.description": "Your scores are stored on DXRating and stay in sync across your devices.",
-    "cloud-save.description-inactive": "Back up your scores to DXRating to keep them in sync across your devices.",
+    "cloud-save.description-inactive": "Keep your scores in your DXRating account and use them on all your devices.",
     "cloud-save.provenance.verified": "Verified",
     "cloud-save.provenance.friend-code": "friend code {{id}}",
     "cloud-save.provenance.account": "account {{id}}",

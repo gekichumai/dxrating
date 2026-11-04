@@ -62,8 +62,13 @@ export function cloudRecordToScoreRecord(record: CloudRecord, identity: SheetIde
     comboFlag: record.comboFlag,
     syncFlag: record.syncFlag,
     dxScore: record.dxScore,
-    // `calculateBest50` honours Diving-Fish hints only, as the local save does (`playEntryToScoreRecord`)
-    best50Bucket: record.provenance.source === 'diving-fish' ? record.best50Bucket : null,
+    // `calculateBest50` honours Diving-Fish hints only, as the local save does (`playEntryToScoreRecord`). A
+    // `legacy-local` record carries a hint only where the device's calculator honoured one (clients send Diving-Fish
+    // hints only), so it keeps reading the same; the hint never changes the record's verification
+    best50Bucket:
+      record.provenance.source === 'diving-fish' || record.provenance.source === 'legacy-local'
+        ? record.best50Bucket
+        : null,
     provenance: record.provenance,
   }
 }

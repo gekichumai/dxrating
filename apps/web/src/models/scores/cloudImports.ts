@@ -105,7 +105,8 @@ export function entriesToImportRecords(
       comboFlag: entry.comboFlag ?? null,
       syncFlag: entry.syncFlag ?? null,
       dxScore: typeof entry.dxScore === 'number' && Number.isInteger(entry.dxScore) ? entry.dxScore : null,
-      best50Bucket: entry.source?.best50Bucket ?? null,
+      // The hint the calculator honours (Diving-Fish only): a record never carries one the device ignored
+      best50Bucket: provider === 'diving-fish' ? (entry.source?.best50Bucket ?? null) : null,
       providerRecordId: entry.source?.providerId ? String(entry.source.providerId).slice(0, 128) : null,
       claimedSource,
     } satisfies ImportRecord)

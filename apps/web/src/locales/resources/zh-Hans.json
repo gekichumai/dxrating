@@ -610,7 +610,7 @@
     "cloud-save.save-missing": "找不到你的云存档，本设备将使用本地存档。",
     "cloud-save.title": "云存档",
     "cloud-save.description": "你的成绩保存在 DXRating 上，并在所有设备间同步。",
-    "cloud-save.description-inactive": "将成绩备份到 DXRating，即可在多台设备间同步。",
+    "cloud-save.description-inactive": "将成绩保存在 DXRating 账号中，在所有设备上使用。",
     "cloud-save.provenance.verified": "已验证",
     "cloud-save.provenance.friend-code": "好友码 {{id}}",
     "cloud-save.provenance.account": "账号 {{id}}",

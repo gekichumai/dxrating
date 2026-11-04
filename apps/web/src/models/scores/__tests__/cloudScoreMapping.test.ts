@@ -50,6 +50,20 @@ describe('cloud score mapping', () => {
     expect(cloudRecordToPlayEntry(net, IDENTITY).source).toEqual({ provider: 'maimai-net', providerId: '12345' })
   })
 
+  it('keeps the best 50 hint of a backed-up (legacy-local) record, still client_reported', () => {
+    const backedUp = recordFromDTO(
+      dto({
+        provenance: manualProvenance({ source: 'legacy-local', entryMethod: 'migration', importJobId: 'dimp_mig' }),
+      }),
+    )
+    const read = cloudRecordToScoreRecord(backedUp, IDENTITY)
+    expect(read.best50Bucket).toBe('b15')
+    expect(read.provenance?.verification).toBe('client_reported')
+    expect(
+      cloudRecordToScoreRecord(recordFromDTO(dto({ provenance: manualProvenance() })), IDENTITY).best50Bucket,
+    ).toBeNull()
+  })
+
   it('maps a RecordDTO to the calculator entry format', () => {
     expect(cloudRecordToPlayEntry(recordFromDTO(dto()), IDENTITY)).toEqual({
       sheetId: 'dsht_e5nsvt8k2a',
