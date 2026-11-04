@@ -610,6 +610,7 @@
     "cloud-save.save-missing": "クラウドセーブが見つからないため、この端末のローカルセーブを使用しています。",
     "cloud-save.title": "クラウドセーブ",
     "cloud-save.description": "スコアは DXRating に保存され、すべての端末で同期されます。",
+    "cloud-save.description-inactive": "スコアを DXRating にバックアップすると、端末間で同期できます。",
     "cloud-save.provenance.verified": "検証済み",
     "cloud-save.provenance.friend-code": "フレンドコード {{id}}",
     "cloud-save.provenance.account": "アカウント {{id}}",

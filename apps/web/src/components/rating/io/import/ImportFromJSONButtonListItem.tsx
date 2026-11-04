@@ -70,7 +70,8 @@ export const ImportFromJSONButtonListItem: FC<{
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.json.success', { count: result.count }))
               announceImportLeftOut(result, t, (message) => toast(message))
-              if (fromCloudExport) {
+              // Only a cloud save verifies records; a local save keeps the provider each entry names
+              if (fromCloudExport && repository.kind === 'cloud') {
                 toast(t('rating-calculator:cloud-save.export-import.claimed-only'), {
                   id: 'cloud-export-claimed-only',
                   duration: 8_000,

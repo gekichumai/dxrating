@@ -275,7 +275,8 @@ describe('ImportFromJSONButtonListItem', () => {
           source: { provider: 'lxns' },
         },
       ])
-      expect(toast).toHaveBeenCalledWith(expect.stringMatching(/not verified/), expect.anything())
+      // A local save verifies nothing: no "not verified" notice
+      expect(toast).not.toHaveBeenCalledWith(expect.stringMatching(/not verified/), expect.anything())
     })
 
     it('uploads to a cloud save as a DXRating JSON file: client_reported, the provider only claimed', async () => {
@@ -306,6 +307,7 @@ describe('ImportFromJSONButtonListItem', () => {
       ])
       // Nothing of the file's verification, job or account goes to the server
       expect(JSON.stringify(records)).not.toMatch(/verified|dimp_|123456789012345|fetchedBy/)
+      await waitFor(() => expect(toast).toHaveBeenCalledWith(expect.stringMatching(/not verified/), expect.anything()))
     })
 
     it('cancelling the save picker imports nothing and says nothing', async () => {

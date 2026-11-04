@@ -59,7 +59,10 @@ export const CloudSaveSection: FC = () => {
         <h1 className="text-lg font-bold m-0 outline-none" tabIndex={-1} data-cloud-migration-focus-return="">
           {t('rating-calculator:cloud-save.title')}
         </h1>
-        <p className="text-sm text-zinc-500 m-0">{t('rating-calculator:cloud-save.description')}</p>
+        <p className="text-sm text-zinc-500 m-0">
+          {/* Nothing is in sync until a cloud save is active */}
+          {t(cloud ? 'rating-calculator:cloud-save.description' : 'rating-calculator:cloud-save.description-inactive')}
+        </p>
       </div>
       <CloudSaveOptIn />
       {migration.available && (

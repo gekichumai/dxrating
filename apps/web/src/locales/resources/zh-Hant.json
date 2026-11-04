@@ -610,6 +610,7 @@
     "cloud-save.save-missing": "找不到你的雲端存檔，本裝置將使用本機存檔。",
     "cloud-save.title": "雲端存檔",
     "cloud-save.description": "你的成績儲存在 DXRating 上，並在所有裝置間同步。",
+    "cloud-save.description-inactive": "將成績備份到 DXRating，即可在多台裝置間同步。",
     "cloud-save.provenance.verified": "已驗證",
     "cloud-save.provenance.friend-code": "好友代碼 {{id}}",
     "cloud-save.provenance.account": "帳號 {{id}}",
