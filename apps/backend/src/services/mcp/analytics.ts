@@ -6,7 +6,8 @@ import { boundedToolName, classifyMcpClient, truncateBytes } from './telemetry'
 
 /**
  * Product analytics of the MCP endpoint, sent to PostHog (project 65078): one event per JSON-RPC message of a request,
- * `mcp_initialize`, `mcp_tools_list` and `mcp_tool_called`.
+ * `mcp_initialize`, `mcp_server_discover`, `mcp_tools_list` and `mcp_tool_called`. 2025-era clients open with
+ * initialize; 2026-07-28 clients have no initialize and may open with server/discover, or go straight to tools/list.
  *
  * What an event holds: the method or tool, a whitelist of its arguments (free text such as the search query cut to 64
  * characters with email addresses and runs of 6+ digits removed; enum-like arguments such as server or difficulty;
@@ -210,6 +211,8 @@ function clientInfo(params: JsonObject | undefined): { name?: string; version?: 
 
 const EVENT_OF_METHOD: Record<string, string> = {
   initialize: 'mcp_initialize',
+  // 2026-07-28: the optional probe a client may open with in place of initialize
+  'server/discover': 'mcp_server_discover',
   'tools/list': 'mcp_tools_list',
   'tools/call': 'mcp_tool_called',
 }
@@ -217,7 +220,7 @@ const EVENT_OF_METHOD: Record<string, string> = {
 const byteLength = (value: unknown) => new TextEncoder().encode(JSON.stringify(value) ?? '').length
 
 /**
- * The PostHog events of one exchange: one per initialize, tools/list or tools/call message (other methods and
+ * The PostHog events of one exchange: one per initialize, server/discover, tools/list or tools/call message (other methods and
  * notifications are left out). Of a tool call, the arguments are read through argumentProperties only.
  */
 export function buildMcpAnalyticsEvents(
