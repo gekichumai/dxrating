@@ -76,6 +76,8 @@ export interface RatingEntry {
   achievementRate: number
   comboFlag?: ComboFlag
   syncFlag?: SyncFlag
+  /** The DX score of the play, when the source reports one */
+  dxScore?: number
   source?: {
     provider: ImportProvider
     providerId?: string | number

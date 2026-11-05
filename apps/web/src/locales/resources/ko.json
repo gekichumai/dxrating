@@ -521,6 +521,7 @@
     "io.import.json.title": "DXRating JSON에서 가져오기...",
     "io.import.json.success": "{{count}}개 항목을 가져왔습니다",
     "io.import.json.error": "가져오지 못했습니다: {{error}}",
+    "io.import.json.invalid-file": "DXRating 레이팅 내보내기 파일이 아닙니다. 아무것도 가져오지 않았습니다.",
     "io.import.net-records.settings.button": "자동 가져오기",
     "io.import.net-records.settings.title": "자동 가져오기 설정",
     "io.import.net-records.floating.running": "기록 가져오는 중",

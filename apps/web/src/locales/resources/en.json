@@ -521,6 +521,7 @@
     "io.import.json.title": "Import from DXRating JSON...",
     "io.import.json.success": "Imported {{count}} records",
     "io.import.json.error": "Failed to import: {{error}}",
+    "io.import.json.invalid-file": "This file isn't a DXRating rating export. Nothing was imported.",
     "io.import.net-records.settings.button": "Auto-import",
     "io.import.net-records.settings.title": "Auto-import settings",
     "io.import.net-records.floating.running": "Importing records",

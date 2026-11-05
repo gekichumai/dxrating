@@ -63,7 +63,8 @@ interface BucketAwareCalculatedRatingEntry extends CalculatedRatingEntry {
   authoritativeBest50Hint: AuthoritativeBest50Hint | null
 }
 
-interface AuthoritativeBest50Hint {
+/** A Diving-Fish best 50 bucket hint, with the rating and achievement of the play that carries it */
+export interface AuthoritativeBest50Hint {
   bucket: Best50Bucket
   rating: RatingAward
   achievementRate: number
@@ -257,7 +258,11 @@ function deduplicateEntries(entries: BucketAwareCalculatedRatingEntry[]): Bucket
   return Array.from(bestBySheetId.values())
 }
 
-function chooseAuthoritativeBest50Hint(
+/**
+ * The hint kept for a chart with several plays carrying one: the higher rating (AP bonus included), then the higher
+ * achievement, then `b15`. A missing hint never wins over a present one.
+ */
+export function chooseAuthoritativeBest50Hint(
   a: AuthoritativeBest50Hint | null,
   b: AuthoritativeBest50Hint | null,
 ): AuthoritativeBest50Hint | null {

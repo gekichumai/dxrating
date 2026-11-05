@@ -2,11 +2,9 @@ import type { VersionEnum } from '@gekichumai/dxdata'
 import { normalizeMaimaiNetRecords, type SongCatalog } from '@gekichumai/maimai-domain'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import * as Sentry from '@sentry/tanstackstart-react'
-import cloneDeep from 'lodash-es/cloneDeep'
 import i18n from 'i18next'
-import type { ListActions } from 'react-use/lib/useList'
 import { WebHaptics } from 'web-haptics'
-import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import type { ScoreRepository } from '@/models/scores/ScoreRepository'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { NetImportError, type NetImportErrorCode, unexpectedErrorSubtitle } from './netImportErrorFeedback'
@@ -131,7 +129,7 @@ let importInFlight = false
 
 export const importFromNETRecords = async (
   catalog: SongCatalog,
-  modifyEntries: ListActions<PlayEntry>,
+  repository: ScoreRepository,
   mode: 'merge' | 'replace',
   onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
   authParams?: AuthParams,
@@ -187,24 +185,8 @@ export const importFromNETRecords = async (
 
     console.log(entries, mode)
 
-    if (mode === 'replace') {
-      modifyEntries.set(entries)
-    } else if (mode === 'merge') {
-      modifyEntries.set((prev) => {
-        const cloned = cloneDeep(prev)
-        for (const entry of entries) {
-          const existed = cloned.find((item) => item.sheetId === entry.sheetId)
-          if (!existed) {
-            cloned.push(entry)
-          } else if (entry.achievementRate > existed.achievementRate) {
-            existed.achievementRate = entry.achievementRate
-            existed.comboFlag = entry.comboFlag
-            existed.syncFlag = entry.syncFlag
-          }
-        }
-        return cloned
-      })
-    }
+    // merge: a higher achievement replaces the saved values of its chart
+    await repository.applyImport(entries, { source: 'maimai-net', mode })
 
     const lastRecord = data.recent.at(0)
     const lastRecordPlayedAt = lastRecord?.play.timestamp ? new Date(lastRecord.play.timestamp).toLocaleString() : null

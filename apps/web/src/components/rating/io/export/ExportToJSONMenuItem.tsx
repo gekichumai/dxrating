@@ -4,8 +4,8 @@ import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import IconMdiFile from '~icons/mdi/file'
 import { captureAnalyticsEvent } from '@/lib/analytics'
-import { useRatingCalculatorContext } from '../../../../models/context/RatingCalculatorContext'
 import { type RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
+import { useScoreEntries } from '@/models/scores/useScoreRepository'
 
 const saveAsJsonFile = (data: string, t: (key: string, opts?: Record<string, string>) => string) => {
   const blob = new Blob([data], { type: 'application/json' })
@@ -21,7 +21,7 @@ const saveAsJsonFile = (data: string, t: (key: string, opts?: Record<string, str
 }
 
 export const ExportToJSONMenuItem: FC = () => {
-  const { entries } = useRatingCalculatorContext()
+  const entries = useScoreEntries()
   const { isLoading, b15Entries, b35Entries } = useRatingEntries()
   const { t } = useTranslation(['rating-calculator'])
 

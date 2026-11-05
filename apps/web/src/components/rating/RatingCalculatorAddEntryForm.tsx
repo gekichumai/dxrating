@@ -17,10 +17,10 @@ import { useTranslation } from 'react-i18next'
 import { Virtuoso } from 'react-virtuoso'
 import IconMdiReplace from '~icons/mdi/find-replace'
 import IconMdiPlus from '~icons/mdi/plus'
-import { useRatingCalculatorContext } from '../../models/context/RatingCalculatorContext'
 import { type FlattenedSheet, formatSheetToString, useSheets, useSheetsSearchEngine } from '../../songs'
 import { calculateRating } from '../../utils/rating'
 import { SheetListItemContent } from '../sheet/SheetListItem'
+import { useScoreEntries } from '@/models/scores/useScoreRepository'
 
 export interface PlayEntryProviderConfig {
   divingFish?: {
@@ -71,7 +71,7 @@ export const RatingCalculatorAddEntryForm: FC<{
     setAchievementRateError(null)
   }, [])
 
-  const { entries } = useRatingCalculatorContext()
+  const entries = useScoreEntries()
   const found = useMemo(() => {
     return entries?.find((entry) => entry.sheetId === selectedSheet?.id)
   }, [entries, selectedSheet])

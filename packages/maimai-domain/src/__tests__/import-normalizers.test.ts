@@ -511,4 +511,59 @@ describe('Rating Import normalizers', () => {
     expect(result.warnings).toHaveLength(1)
     expect(result.warnings[0]!.code).toBe('invalid-achievement')
   })
+
+  it('keeps the DX score a provider reports, and leaves it out when there is none', () => {
+    const divingFish = normalizeDivingFishRows(catalog, [
+      {
+        achievements: 100.5,
+        fc: null,
+        fs: null,
+        level_index: 3,
+        title: 'Song A',
+        type: 'dx',
+        song_id: 123,
+        dxScore: 1234,
+      },
+    ])
+    const lxns = normalizeLxnsScores(catalog, [
+      {
+        id: 1,
+        songName: 'Song A',
+        level: '13',
+        levelIndex: 3,
+        achievements: 100.5,
+        fc: null,
+        fs: null,
+        type: 'dx',
+        dxScore: 1000,
+      },
+    ])
+    const net = normalizeMaimaiNetRecords(catalog, [
+      {
+        sheet: { songId: 'Song A', type: 'dx', difficulty: 'master' },
+        achievement: { rate: 1005000, dxScore: { achieved: 987, total: 1200 }, flags: [] },
+      },
+    ])
+    const withoutDxScore = normalizeDivingFishRows(catalog, [
+      { achievements: 100.5, fc: null, fs: null, level_index: 3, title: 'Song A', type: 'dx', song_id: 123 },
+    ])
+    const invalidDxScore = normalizeDivingFishRows(catalog, [
+      {
+        achievements: 100.5,
+        fc: null,
+        fs: null,
+        level_index: 3,
+        title: 'Song A',
+        type: 'dx',
+        song_id: 123,
+        dxScore: -1,
+      },
+    ])
+
+    expect(divingFish.entries[0]!.dxScore).toBe(1234)
+    expect(lxns.entries[0]!.dxScore).toBe(1000)
+    expect(net.entries[0]!.dxScore).toBe(987)
+    expect(withoutDxScore.entries[0]).not.toHaveProperty('dxScore')
+    expect(invalidDxScore.entries[0]).not.toHaveProperty('dxScore')
+  })
 })

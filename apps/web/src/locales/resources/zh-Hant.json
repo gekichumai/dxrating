@@ -594,6 +594,7 @@
     "io.import.aqua-sqlite.user-icon-alt": "{{name}} 的 Aqua SQLite 用戶圖示",
     "io.import.aqua-sqlite.import-action": "匯入",
     "io.import.json.error": "匯入失敗：{{error}}",
+    "io.import.json.invalid-file": "此檔案不是 DXRating 匯出的成績檔案，未匯入任何內容。",
     "io.import.json.success": "成功匯入 {{count}} 條記錄",
     "io.import.json.title": "從 DXRating 匯出的 JSON 匯入...",
     "io.clear.button": "清空",

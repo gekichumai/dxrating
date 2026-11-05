@@ -521,6 +521,7 @@
     "io.import.json.title": "从 DXRating 导出的 JSON 导入...",
     "io.import.json.success": "成功导入 {{count}} 条记录",
     "io.import.json.error": "导入失败: {{error}}",
+    "io.import.json.invalid-file": "该文件不是 DXRating 导出的成绩文件，未导入任何内容。",
     "io.import.net-records.settings.button": "自动导入",
     "io.import.net-records.settings.title": "自动导入设置",
     "io.import.net-records.floating.running": "正在导入成绩",

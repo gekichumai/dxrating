@@ -1,17 +1,14 @@
 import { Alert, AlertTitle, Button, Dialog, DialogActions, DialogContent, DialogTitle, Grow } from '@mui/material'
 import { type FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ListActions } from 'react-use/lib/useList'
 import { captureAnalyticsEvent } from '@/lib/analytics'
-import { useRatingCalculatorContext } from '@/models/context/RatingCalculatorContext'
-import type { PlayEntry } from '../RatingCalculatorAddEntryForm'
+import { useScoreEntries, useScoreRepository } from '@/models/scores/useScoreRepository'
 
-export const ClearButton: FC<{
-  modifyEntries: ListActions<PlayEntry>
-}> = ({ modifyEntries }) => {
+export const ClearButton: FC = () => {
+  const repository = useScoreRepository()
   const [dialogOpen, setDialogOpen] = useState(false)
   const { t } = useTranslation(['rating-calculator'])
-  const { entries } = useRatingCalculatorContext()
+  const entries = useScoreEntries()
 
   return (
     <>
@@ -34,7 +31,7 @@ export const ClearButton: FC<{
               captureAnalyticsEvent('rating_calculator_cleared', {
                 entry_count: entries.length,
               })
-              modifyEntries.clear()
+              repository.clear()
             }}
           >
             {t('rating-calculator:io.clear.dialog.confirm')}

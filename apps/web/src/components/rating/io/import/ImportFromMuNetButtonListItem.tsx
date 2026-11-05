@@ -5,11 +5,10 @@ import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
 import type { FC } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import type { ListActions } from 'react-use/lib/useList'
 import { z } from 'zod'
 import MdiEarthArrowDown from '~icons/mdi/earth-arrow-down'
 import { useWebHaptics } from 'web-haptics/react'
-import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
+import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
 
@@ -24,10 +23,10 @@ const MuNetExportSchema = z.object({
 })
 
 export const ImportFromMuNetButtonListItem: FC<{
-  modifyEntries: ListActions<PlayEntry>
   onClose: () => void
-}> = ({ modifyEntries, onClose }) => {
+}> = ({ onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
+  const repository = useScoreRepository()
   const haptic = useWebHaptics()
   const loadCatalog = useSongCatalogLoader()
 
@@ -78,7 +77,7 @@ export const ImportFromMuNetButtonListItem: FC<{
                 console.warn('[ImportFromMuNetButtonListItem]', warning.message, warning.row)
               }
 
-              modifyEntries.set(entries)
+              await repository.applyImport(entries, { source: 'mu-net', mode: 'replace' })
               analytics.succeeded(entries.length, importResult.warnings.length)
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.mu-net.success', { count: entries.length }))

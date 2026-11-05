@@ -26,7 +26,7 @@ import IconMdiHelpCircleOutline from '~icons/mdi/help-circle-outline'
 import { importFromNETRecords } from './importFromNETRecords'
 import { NetImportAutoImportOptions } from './NetImportAutoImportOptions'
 
-import { useRatingCalculatorContext } from '@/models/context/RatingCalculatorContext'
+import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { netImportProgress } from './netImportProgressStore'
 
 export function NetImportSettingsDialog({
@@ -73,7 +73,7 @@ function readSavedCredentials() {
 type AutoImportMode = boolean | 'replace' | 'merge'
 
 const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { modifyEntries } = useRatingCalculatorContext()
+  const repository = useScoreRepository()
   const progress = useSyncExternalStore(
     netImportProgress.subscribe,
     netImportProgress.getSnapshot,
@@ -109,7 +109,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
     // The import reports its own progress; it starts once the complete catalog is there
     void loadCatalog()
       .then((catalog) =>
-        importFromNETRecords(catalog, modifyEntries, mappedAutoImport || 'replace', undefined, {
+        importFromNETRecords(catalog, repository, mappedAutoImport || 'replace', undefined, {
           region,
           username,
           password,

@@ -31,7 +31,6 @@ import {
 import clsx from 'clsx'
 import { type FC, memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ListActions } from 'react-use/lib/useList'
 import {
   type ItemProps,
   type ScrollerProps,
@@ -57,7 +56,7 @@ import { ImportMenu } from '../components/rating/io/ImportMenu'
 import { RenderToOneShotImageButton } from '../components/rating/io/export/RenderToOneShotImageButton'
 import { useRatingEntries } from '../components/rating/useRatingEntries'
 import { SheetListItem, SheetListItemContent } from '../components/sheet/SheetListItem'
-import { useRatingCalculatorContext } from '../models/context/RatingCalculatorContext'
+import { useScoreEntries, useScoreRepository } from '../models/scores/useScoreRepository'
 import { achievementRateBand, captureAnalyticsEvent } from '../lib/analytics'
 import { type FlattenedSheet, useSheets } from '../songs'
 import type { Rating } from '../utils/rating'
@@ -77,17 +76,17 @@ export interface Entry {
 const columnHelper = createColumnHelper<Entry>()
 
 const RatingCalculatorRowActions: FC<{
-  modifyEntries: ListActions<PlayEntry>
   entry: PlayEntry
-}> = ({ modifyEntries, entry }) => {
+}> = ({ entry }) => {
+  const repository = useScoreRepository()
   const { data: sheets } = useSheets()
   const [dialogOpen, setDialogOpen] = useState(false)
-  const { entries } = useRatingCalculatorContext()
+  const entries = useScoreEntries()
   const { t } = useTranslation(['rating-calculator'])
 
   const handleClick = useCallback(() => {
-    modifyEntries.filter((existingEntry) => existingEntry.sheetId !== entry.sheetId)
-  }, [modifyEntries, entry.sheetId])
+    repository.delete([entry.sheetId])
+  }, [repository, entry.sheetId])
 
   const sheet = useMemo(() => sheets?.find((sheet) => sheet.id === entry.sheetId), [sheets, entry.sheetId])
 
@@ -134,7 +133,8 @@ const TransparentPaper = styled(Paper)(() => ({
 }))
 
 export const RatingCalculator = () => {
-  const { entries, modifyEntries } = useRatingCalculatorContext()
+  const entries = useScoreEntries()
+  const repository = useScoreRepository()
   const { data: sheets } = useSheets()
   const [showOnlyB50, setShowOnlyB50] = useState(false)
   const [compactMode, setCompactMode] = useState(false)
@@ -146,9 +146,7 @@ export const RatingCalculator = () => {
     (entry: PlayEntry) => {
       // The saved entries, not the resolved ones: those are empty while the catalog loads
       const existingEntry = entries.find((existingEntry) => existingEntry.sheetId === entry.sheetId)
-      if (existingEntry) {
-        modifyEntries.updateFirst((existingEntry) => existingEntry.sheetId === entry.sheetId, entry)
-      } else modifyEntries.push(entry)
+      repository.setManual(entry, 'typed')
 
       const sheet = sheets?.find((sheet) => sheet.id === entry.sheetId)
       if (sheet) {
@@ -162,7 +160,7 @@ export const RatingCalculator = () => {
         })
       }
     },
-    [entries, modifyEntries, sheets],
+    [entries, repository, sheets],
   )
 
   if (!sheets) return null
@@ -196,13 +194,13 @@ export const RatingCalculator = () => {
 
             <div className="flex flex-wrap items-center gap-2 mt-2">
               <div className="flex items-center gap-2">
-                <ImportMenu modifyEntries={modifyEntries} />
+                <ImportMenu />
                 <NetImportSettingsButton />
               </div>
               <div className="flex flex-1 items-center gap-2">
                 <ExportMenu />
                 <div className="flex-1" />
-                <ClearButton modifyEntries={modifyEntries} />
+                <ClearButton />
               </div>
             </div>
           </Alert>
@@ -430,7 +428,6 @@ const RatingCalculatorTableRowContent: FC<{
 
 function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMode: boolean; showOnlyB50: boolean }) {
   const { allEntries } = useRatingEntries()
-  const { modifyEntries } = useRatingCalculatorContext()
   const { t } = useTranslation(['rating-calculator'])
 
   const [sorting, setSorting] = useState<SortingState>([
@@ -488,7 +485,7 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
           <div className="rating-value-cell">
             <RatingCalculatorRatingCell row={row} />
             <span className="rating-mobile-action">
-              <RatingCalculatorRowActions entry={row.original} modifyEntries={modifyEntries} />
+              <RatingCalculatorRowActions entry={row.original} />
             </span>
           </div>
         ),
@@ -501,10 +498,10 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
       columnHelper.display({
         id: 'actions',
         header: t('rating-calculator:table.headers.actions'),
-        cell: ({ row }) => <RatingCalculatorRowActions entry={row.original} modifyEntries={modifyEntries} />,
+        cell: ({ row }) => <RatingCalculatorRowActions entry={row.original} />,
       }),
     ],
-    [modifyEntries, compactMode, t],
+    [compactMode, t],
   )
 
   const data = useMemo(() => {
