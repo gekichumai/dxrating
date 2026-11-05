@@ -7,7 +7,7 @@ import {
   type AuthParams,
   type StateUpdateCallback,
 } from '../../../lib/functions/client'
-import { Sentry, type Scope } from '../../../lib/functions/sentry'
+import { netErrorTags, Sentry, type Scope } from '../../../lib/functions/sentry'
 import { runApp } from '../../../runtime'
 
 export class NetStreamError extends Data.TaggedError('NetStreamError')<{
@@ -26,7 +26,7 @@ const reportError = (failure: unknown, region: string, streaming: boolean) => {
     scope.setContext('function', { name: streaming ? 'fetchNetRecords_v1' : 'fetchNetRecords_v0' })
     scope.setContext('parameters', { region })
     scope.setContext('endpoint', { name: streaming ? 'MaimaiNET (SSE)' : 'MaimaiNET' })
-    if (error.message.includes('response redirects to error page')) scope.setFingerprint(['net-error-redirect'])
+    scope.setTags({ 'net.region': region, ...netErrorTags(error) })
     Sentry.captureException(error)
   })
 }
@@ -122,7 +122,11 @@ export const v1Handler = (c: Context) => {
         Effect.gen(function* () {
           yield* Effect.sync(() => {
             Sentry.metrics.count('net_fetch.failure', 1, {
-              attributes: { region, error_code: error instanceof NetImportError ? error.code : 'unknown' },
+              attributes: {
+                region,
+                error_code: error instanceof NetImportError ? error.code : 'unknown',
+                step: (error instanceof NetImportError && error.step) || 'unknown',
+              },
             })
             reportError(error, region, true)
           })
