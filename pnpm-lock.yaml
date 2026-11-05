@@ -545,6 +545,9 @@ importers:
 
   packages/api-contract:
     dependencies:
+      '@gekichumai/maimai-domain':
+        specifier: workspace:*
+        version: link:../maimai-domain
       '@orpc/client':
         specifier: 'catalog:'
         version: 2.0.0-beta.40
@@ -558,6 +561,9 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
     devDependencies:
+      '@orpc/zod':
+        specifier: 'catalog:'
+        version: 2.0.0-beta.40(crossws@0.4.5(srvx@0.11.15))(zod@4.6.5)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.0
