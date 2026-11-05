@@ -33,11 +33,14 @@ How a client opens depends on its protocol era:
 - 2025-era clients send `initialize`, then their calls. Only `initialize` names the client, so the daily distinct_id of
   the initialize (which hashes the client name) differs from that of the calls after it.
 - 2026-07-28 clients have no `initialize`. They may probe with `server/discover` (`mcp_server_discover`), which is
-  optional, or go straight to `tools/list` or `tools/call`. Every request names the client in `_meta`, so all events of
-  such a client share one distinct_id.
+  optional, or go straight to `tools/list` or `tools/call`. A request may name the client in `_meta` (`clientInfo` is
+  optional in the spec); clients that send it on every request, as the SDKs do, keep one distinct_id for all their
+  events, while a client that sends it on some requests only gets one id with it and one without.
 
 So a client is **connected** on its `mcp_initialize` or `mcp_server_discover`, or on any event whose `protocol_version`
-is 2026-07-28 or later. Don't count `mcp_initialize` alone: it misses every 2026-07-28 client.
+is 2026-07-28 or later. Don't count `mcp_initialize` alone: it misses every 2026-07-28 client. The counts are
+approximate daily pseudonymous ones: a client that names itself inconsistently counts more than once, and clients behind
+one address prefix and User-Agent that send no name count once.
 
 ## Funnel per origin (HogQL)
 
@@ -61,7 +64,7 @@ FROM (
     if(event = 'mcp_guide_viewed', if(via = '', '(none)', via),
        if(length(parts) > 1, parts[1],
           if(via = '' OR startsWith(via, 'guide'), '(none)', via))) AS origin,
-    -- 2026-07-28 and later: no initialize, the client is named on every request
+    -- 2026-07-28 and later: no initialize; any request opens a client (approximate, see above)
     coalesce(properties.protocol_version, '') >= '2026' AS modern,
     event IN ('mcp_initialize', 'mcp_server_discover')
       OR (modern AND event IN ('mcp_tools_list', 'mcp_tool_called')) AS connected
