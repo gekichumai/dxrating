@@ -7,6 +7,8 @@ import {
   normalizeLxnsScores,
   normalizeMaimaiNetRecords,
   normalizeMuNetRows,
+  ratingEntryAchievementInt,
+  withAchievementInt,
 } from '../import-normalizers'
 import { buildSongCatalog, type SongCatalogSource } from '../song-catalog'
 
@@ -470,5 +472,43 @@ describe('Rating Import normalizers', () => {
     expect(result.entries).toHaveLength(1)
     expect(result.entries[0]!.comboFlag).toBe('app')
     expect(result.entries[0]!.syncFlag).toBe('fsdp')
+  })
+
+  it('adds integer achievements without changing the normalizer output', () => {
+    const lxns = normalizeLxnsScores(catalog, [
+      { id: 1, songName: 'Song A', level: '13', levelIndex: 3, achievements: 97.12345, fc: null, fs: null, type: 'dx' },
+    ])
+    expect(lxns.entries[0]).not.toHaveProperty('achievementInt')
+    expect(lxns.entries[0]!.achievementRate).toBe(97.12345)
+
+    const withInt = withAchievementInt(lxns)
+    expect(withInt.entries).toEqual([{ ...lxns.entries[0], achievementInt: 971234 }])
+    expect(withInt.warnings).toEqual(lxns.warnings)
+
+    const net = normalizeMaimaiNetRecords(catalog, [
+      {
+        sheet: { songId: 'Song A', type: 'dx', difficulty: 'master' },
+        achievement: { rate: 1008427, dxScore: { achieved: 1, total: 2 }, flags: [] },
+      },
+    ])
+    expect(withAchievementInt(net).entries[0]!.achievementInt).toBe(1008427)
+    expect(ratingEntryAchievementInt({ achievementRate: 100.5432 })).toBe(1005432)
+  })
+
+  it('turns entries without a valid integer achievement into warnings', () => {
+    const result = withAchievementInt({
+      entries: [
+        {
+          sheetId: SONG_A_MASTER,
+          identity: { songId: 'dsng_23456789ab', type: TypeEnum.DX, difficulty: DifficultyEnum.Master },
+          achievementRate: 101.5,
+          source: { provider: 'lxns' },
+        },
+      ],
+      warnings: [],
+    })
+    expect(result.entries).toEqual([])
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]!.code).toBe('invalid-achievement')
   })
 })
