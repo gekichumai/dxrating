@@ -194,9 +194,10 @@ export interface PostHogEvent {
 
 const header = (headers: Headers, name: string) => headers.get(name)?.trim() || undefined
 
-/** clientInfo of an initialize (or of params._meta) */
+/** clientInfo of an initialize, else of params._meta (2026-07-28 requests carry it there on every request) */
 function clientInfo(params: JsonObject | undefined): { name?: string; version?: string } {
-  for (const info of [params?.clientInfo, isObject(params?._meta) ? params._meta.clientInfo : undefined]) {
+  const meta = isObject(params?._meta) ? params._meta : undefined
+  for (const info of [params?.clientInfo, meta?.['io.modelcontextprotocol/clientInfo'], meta?.clientInfo]) {
     if (isObject(info) && typeof info.name === 'string') {
       return {
         name: truncateBytes(info.name, MAX_CLIENT_BYTES),
