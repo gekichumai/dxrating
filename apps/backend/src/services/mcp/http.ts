@@ -16,7 +16,16 @@ export const MCP_MAX_BODY_BYTES = 64 * 1024
 export const MCP_CORS_OPTIONS = {
   // no credentials and no writes: any page may call it, as browser-based MCP clients do
   origin: '*',
-  allowHeaders: ['Content-Type', 'Accept', 'Mcp-Protocol-Version', 'Mcp-Session-Id', 'Last-Event-ID'],
+  // Mcp-Method and Mcp-Name mirror the method and tool of 2026-07-28 requests, which must carry them
+  allowHeaders: [
+    'Content-Type',
+    'Accept',
+    'Mcp-Protocol-Version',
+    'Mcp-Method',
+    'Mcp-Name',
+    'Mcp-Session-Id',
+    'Last-Event-ID',
+  ],
   allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   exposeHeaders: ['Mcp-Session-Id', 'Mcp-Protocol-Version'],
   maxAge: 86400,
