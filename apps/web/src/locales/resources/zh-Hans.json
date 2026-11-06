@@ -1044,7 +1044,19 @@
     "tolerance.judgement.perfect100": "100落",
     "tolerance.judgement.great": "GREAT",
     "tolerance.judgement.good": "GOOD",
-    "tolerance.judgement.miss": "MISS"
+    "tolerance.judgement.miss": "MISS",
+    "tolerance.penalty.title": "每个音符扣多少",
+    "tolerance.penalty.intro": "在这张谱面上，一个音符出现该判定时扣掉的达成率（其余全部 CRITICAL PERFECT）。绝赞分成基础分和 1% 额外分两部分显示。",
+    "tolerance.penalty.base": "基础分",
+    "tolerance.penalty.bonus": "额外分",
+    "tolerance.penalty.total": "每个",
+    "tolerance.penalty.in-greats-col": "TAP GREAT 换算",
+    "tolerance.penalty.in-greats": "＝ {{value}} 个 TAP GREAT",
+    "tolerance.penalty.bonus-only": "仅扣额外分",
+    "tolerance.penalty.great-grade": "GREAT {{score}}",
+    "tolerance.penalty.judgement": "判定",
+    "tolerance.penalty.base-part": "基础 −{{value}}%",
+    "tolerance.penalty.bonus-part": "额外 −{{value}}%"
   },
   "recommend": {
     "title": "上分推荐",

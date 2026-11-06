@@ -1044,7 +1044,19 @@
     "tolerance.judgement.perfect100": "−100",
     "tolerance.judgement.great": "GREAT",
     "tolerance.judgement.good": "GOOD",
-    "tolerance.judgement.miss": "MISS"
+    "tolerance.judgement.miss": "MISS",
+    "tolerance.penalty.title": "Cost per note",
+    "tolerance.penalty.intro": "What one note of each judgement costs on this chart, with every other note CRITICAL PERFECT. A BREAK loses base score and part of the 1% BREAK bonus, shown separately.",
+    "tolerance.penalty.base": "Base",
+    "tolerance.penalty.bonus": "Bonus",
+    "tolerance.penalty.total": "Per note",
+    "tolerance.penalty.in-greats-col": "In TAP GREATs",
+    "tolerance.penalty.in-greats": "= TAP GREAT ×{{value}}",
+    "tolerance.penalty.bonus-only": "bonus only",
+    "tolerance.penalty.great-grade": "GREAT {{score}}",
+    "tolerance.penalty.judgement": "Judgement",
+    "tolerance.penalty.base-part": "base −{{value}}%",
+    "tolerance.penalty.bonus-part": "bonus −{{value}}%"
   },
   "recommend": {
     "title": "Rating boosts",

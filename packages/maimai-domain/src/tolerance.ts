@@ -316,3 +316,74 @@ export function evaluateBudget(counts: ToleranceNoteCounts, target: number, pick
   const achievement = calculateAchievement(counts, judgements)
   return { usedLoss, remainingLoss: allowedLoss - usedLoss, achievement, pass: achievement >= target - EPSILON }
 }
+/** Every judgement one note can get short of CRITICAL PERFECT; BREAK GREAT is split into its three grades */
+export type PenaltyJudgement = RegularJudgement | Exclude<BreakJudgement, 'criticalPerfect'>
+
+export const BREAK_PENALTY_JUDGEMENTS: readonly Exclude<BreakJudgement, 'criticalPerfect'>[] = [
+  'perfect50',
+  'perfect100',
+  'great',
+  'great2',
+  'great3',
+  'good',
+  'miss',
+]
+
+export interface NotePenalty {
+  type: ToleranceNoteType
+  judgement: PenaltyJudgement
+  /** BREAK GREAT grade, as its base score out of 2500 (2000 / 1500 / 1250); undefined elsewhere */
+  breakBase?: number
+  /** Achievement (in %) lost from the base score (the first 100%) */
+  base: number
+  /** Achievement (in %) lost from the BREAK bonus (the extra 1%); 0 for other note types */
+  bonus: number
+  /** base + bonus: what one such note costs, with every other note CRITICAL PERFECT */
+  total: number
+  /** total in TAP GREATs */
+  inTapGreats: number
+}
+
+/**
+ * What one note of each judgement costs on this chart. The base score splits 100% over the chart's weighted notes
+ * (TAP and TOUCH 1, HOLD 2, SLIDE 3, BREAK 5, i.e. base score / 500); the BREAK bonus splits 1% evenly over its BREAKs.
+ */
+export function perNotePenalties(counts: ToleranceNoteCounts): NotePenalty[] {
+  const baseTotal = totalBaseScore(counts)
+  if (baseTotal === 0) return []
+  const percent = (score: number) => (score / baseTotal) * 100
+  const tapGreat = percent(NOTE_BASE_SCORE.tap * (1 - REGULAR_KEPT.great))
+  const entry = (
+    type: ToleranceNoteType,
+    judgement: PenaltyJudgement,
+    base: number,
+    bonus: number,
+    breakBase?: number,
+  ): NotePenalty => ({
+    type,
+    judgement,
+    ...(breakBase === undefined ? {} : { breakBase }),
+    base,
+    bonus,
+    total: base + bonus,
+    inTapGreats: (base + bonus) / tapGreat,
+  })
+  const regular = REGULAR_NOTE_TYPES.filter((type) => counts[type] > 0).flatMap((type) =>
+    REGULAR_JUDGEMENTS.map((judgement) =>
+      entry(type, judgement, percent(NOTE_BASE_SCORE[type] * (1 - REGULAR_KEPT[judgement])), 0),
+    ),
+  )
+  const breaks =
+    counts.break > 0
+      ? BREAK_PENALTY_JUDGEMENTS.map((judgement) =>
+          entry(
+            'break',
+            judgement,
+            percent(NOTE_BASE_SCORE.break - BREAK_BASE[judgement]),
+            (1 - BREAK_BONUS[judgement]) / counts.break,
+            judgement.startsWith('great') ? BREAK_BASE[judgement] : undefined,
+          ),
+        )
+      : []
+  return [...regular, ...breaks]
+}

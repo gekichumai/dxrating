@@ -1044,7 +1044,19 @@
     "tolerance.judgement.perfect100": "−100",
     "tolerance.judgement.great": "GREAT",
     "tolerance.judgement.good": "GOOD",
-    "tolerance.judgement.miss": "MISS"
+    "tolerance.judgement.miss": "MISS",
+    "tolerance.penalty.title": "노트 1개당 감소",
+    "tolerance.penalty.intro": "이 채보에서 노트 1개가 해당 판정을 받을 때 깎이는 달성률입니다(나머지는 모두 CRITICAL PERFECT). BREAK는 기본 점수와 1% 보너스로 나눠 표시합니다.",
+    "tolerance.penalty.base": "기본",
+    "tolerance.penalty.bonus": "보너스",
+    "tolerance.penalty.total": "1개당",
+    "tolerance.penalty.in-greats-col": "TAP GREAT 환산",
+    "tolerance.penalty.in-greats": "= TAP GREAT {{value}}개",
+    "tolerance.penalty.bonus-only": "보너스만",
+    "tolerance.penalty.great-grade": "GREAT {{score}}",
+    "tolerance.penalty.judgement": "판정",
+    "tolerance.penalty.base-part": "기본 −{{value}}%",
+    "tolerance.penalty.bonus-part": "보너스 −{{value}}%"
   },
   "recommend": {
     "title": "레이팅 추천",

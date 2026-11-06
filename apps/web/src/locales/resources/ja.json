@@ -1044,7 +1044,19 @@
     "tolerance.judgement.perfect100": "100落",
     "tolerance.judgement.great": "GREAT",
     "tolerance.judgement.good": "GOOD",
-    "tolerance.judgement.miss": "MISS"
+    "tolerance.judgement.miss": "MISS",
+    "tolerance.penalty.title": "1 ノーツあたりの減少",
+    "tolerance.penalty.intro": "この譜面で 1 ノーツがその判定になったときに減る達成率です（ほかはすべて CRITICAL PERFECT）。BREAK は基本スコア分と、1% のボーナス分に分けて示します。",
+    "tolerance.penalty.base": "基本",
+    "tolerance.penalty.bonus": "ボーナス",
+    "tolerance.penalty.total": "1 ノーツ",
+    "tolerance.penalty.in-greats-col": "TAP GREAT 換算",
+    "tolerance.penalty.in-greats": "＝ TAP GREAT {{value}} 個",
+    "tolerance.penalty.bonus-only": "ボーナスのみ",
+    "tolerance.penalty.great-grade": "GREAT {{score}}",
+    "tolerance.penalty.judgement": "判定",
+    "tolerance.penalty.base-part": "基本 −{{value}}%",
+    "tolerance.penalty.bonus-part": "ボーナス −{{value}}%"
   },
   "recommend": {
     "title": "レート上げ候補",

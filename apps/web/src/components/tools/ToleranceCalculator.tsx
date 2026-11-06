@@ -5,9 +5,11 @@ import {
   type BudgetPicks,
   type BudgetRow,
   type RegularJudgement,
+  type NotePenalty,
   type ToleranceNoteType,
   calculateToleranceBudget,
   evaluateBudget,
+  perNotePenalties,
   toToleranceNoteCounts,
 } from '@gekichumai/maimai-domain'
 import { Chip, FormHelperText, InputAdornment, TextField } from '@mui/material'
@@ -62,6 +64,7 @@ export const ToleranceCalculator: FC<{
     () => (counts && valid ? calculateToleranceBudget(counts, target) : null),
     [counts, valid, target],
   )
+  const penalties = useMemo(() => (counts ? perNotePenalties(counts) : []), [counts])
   const evaluation = useMemo(
     () => (counts && valid ? evaluateBudget(counts, target, picks) : null),
     [counts, valid, target, picks],
@@ -182,6 +185,8 @@ export const ToleranceCalculator: FC<{
                 hasPicks={hasPicks}
                 onReset={() => setPicks({})}
               />
+
+              <NotePenalties penalties={penalties} percent={(value) => number(value, 4)} rate={rate} />
 
               <div className="flex flex-col gap-2">
                 <div className="flex flex-col gap-0.5">
@@ -409,5 +414,123 @@ const JudgementCell: FC<{
           : t('tools:tolerance.grid.solo', { count: cell.soloMax })}
       </span>
     </div>
+  )
+}
+/**
+ * What one note of each judgement costs on this chart, next to the budget it is spent from. TAP / HOLD / SLIDE / TOUCH
+ * get a small table each; BREAK shows every grade and splits the cost into base score and BREAK bonus.
+ */
+const NotePenalties: FC<{
+  penalties: NotePenalty[]
+  percent: (value: number) => string
+  rate: (value: number) => string
+}> = ({ penalties, percent, rate }) => {
+  const { t } = useTranslation(['tools'])
+  if (penalties.length === 0) return null
+  const types = [...new Set(penalties.map((p) => p.type))]
+  const regular = types.filter((type) => type !== 'break')
+  const breaks = penalties.filter((p) => p.type === 'break')
+  const cost = (value: number) => (value > 0 ? `−${percent(value)}%` : `${percent(0)}%`)
+  const label = (p: NotePenalty) =>
+    p.breakBase !== undefined
+      ? t('tools:tolerance.penalty.great-grade', { score: p.breakBase })
+      : t(`tools:tolerance.judgement.${p.judgement}`)
+  // Narrow cards use the grid's short "×n" (one costs n TAP GREATs); wide ones spell it out
+  const inGreats = (p: NotePenalty) => (
+    <>
+      <span className="whitespace-nowrap @[30rem]:hidden">
+        {t('tools:tolerance.grid.rate', { value: rate(p.inTapGreats) })}
+      </span>
+      <span className="hidden @[30rem]:inline">
+        {t('tools:tolerance.penalty.in-greats', { value: rate(p.inTapGreats) })}
+      </span>
+    </>
+  )
+  return (
+    <section aria-labelledby="tolerance-penalty-heading" className="flex flex-col gap-2">
+      <div className="flex flex-col gap-0.5">
+        <h3 id="tolerance-penalty-heading" className="m-0 text-sm font-semibold">
+          {t('tools:tolerance.penalty.title')}
+        </h3>
+        <p className="m-0 text-xs text-secondary text-pretty">{t('tools:tolerance.penalty.intro')}</p>
+      </div>
+      <div className="grid gap-2 @[30rem]:grid-cols-2">
+        {regular.map((type) => (
+          <table key={type} className="glass-inset w-full border-collapse text-sm num">
+            <caption className="px-2.5 pt-1.5 text-left text-xs font-semibold">
+              {t(`tools:tolerance.type.${type}`)}
+            </caption>
+            <tbody>
+              {penalties
+                .filter((p) => p.type === type)
+                .map((p) => (
+                  <tr key={p.judgement}>
+                    <th scope="row" className="w-[5.5rem] px-2.5 py-0.5 text-left text-xs font-medium">
+                      {label(p)}
+                    </th>
+                    <td className="px-1 py-0.5 text-right font-semibold whitespace-nowrap">{cost(p.total)}</td>
+                    <td className="px-2.5 py-0.5 text-right text-xs text-secondary">{inGreats(p)}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        ))}
+      </div>
+      {breaks.length > 0 && (
+        <table className="glass-inset w-full border-collapse text-sm num">
+          <caption className="px-2.5 pt-1.5 text-left text-xs font-semibold">{t('tools:tolerance.type.break')}</caption>
+          <thead>
+            <tr className="text-xs text-secondary">
+              <th scope="col" className="px-2.5 py-0.5 text-left font-medium">
+                {t('tools:tolerance.penalty.judgement')}
+              </th>
+              <th scope="col" className="hidden px-1 py-0.5 text-right font-medium @[30rem]:table-cell">
+                {t('tools:tolerance.penalty.base')}
+              </th>
+              <th scope="col" className="hidden px-1 py-0.5 text-right font-medium @[30rem]:table-cell">
+                {t('tools:tolerance.penalty.bonus')}
+              </th>
+              <th scope="col" className="px-1 py-0.5 text-right font-medium">
+                {t('tools:tolerance.penalty.total')}
+              </th>
+              <th scope="col" className="px-2.5 py-0.5 text-right font-medium">
+                <span className="whitespace-nowrap @[30rem]:hidden">TAP GREAT</span>
+                <span className="hidden @[30rem]:inline">{t('tools:tolerance.penalty.in-greats-col')}</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {breaks.map((p) => (
+              <tr key={p.judgement} className="align-top">
+                <th scope="row" className="px-2.5 py-0.5 text-left text-xs font-medium whitespace-nowrap">
+                  {label(p)}
+                </th>
+                <td className="hidden px-1 py-0.5 text-right text-secondary @[30rem]:table-cell">{cost(p.base)}</td>
+                <td className="hidden px-1 py-0.5 text-right text-secondary @[30rem]:table-cell">{cost(p.bonus)}</td>
+                <td className="px-1 py-0.5 text-right">
+                  <span className="block font-semibold whitespace-nowrap">{cost(p.total)}</span>
+                  {/* Narrow cards drop the base / bonus columns; the split moves under the total */}
+                  <span className="block text-[0.6875rem] leading-tight text-secondary @[30rem]:hidden">
+                    {p.base > 0 ? (
+                      <>
+                        <span className="block">
+                          {t('tools:tolerance.penalty.base-part', { value: percent(p.base) })}
+                        </span>
+                        <span className="block">
+                          {t('tools:tolerance.penalty.bonus-part', { value: percent(p.bonus) })}
+                        </span>
+                      </>
+                    ) : (
+                      t('tools:tolerance.penalty.bonus-only')
+                    )}
+                  </span>
+                </td>
+                <td className="px-2.5 py-0.5 text-right text-xs text-secondary">{inGreats(p)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
   )
 }
