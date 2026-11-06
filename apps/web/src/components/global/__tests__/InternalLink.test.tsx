@@ -137,6 +137,43 @@ describe('InternalLink', () => {
     vi.useRealTimers()
   })
 
+  it('moves the feedback to a second link clicked before the first page loads', async () => {
+    vi.useFakeTimers()
+    // The router chains a replaced navigation's promise to its replacement, so neither settles until the last loads
+    let finish!: () => void
+    const pageLoaded = new Promise<void>((resolve) => (finish = resolve))
+    navigate.mockImplementation(() => pageLoaded)
+    render(
+      <>
+        <InternalLink href="/a">A</InternalLink>
+        <InternalLink href="/b">B</InternalLink>
+      </>,
+    )
+    const a = screen.getByRole('link', { name: 'A' })
+    const b = screen.getByRole('link', { name: 'B' })
+
+    fireEvent.click(a, { button: 0 })
+    await act(async () => {
+      vi.advanceTimersByTime(NAVIGATION_FEEDBACK_DELAY_MS)
+    })
+    expect(a.getAttribute('aria-busy')).toBe('true')
+
+    fireEvent.click(b, { button: 0 })
+    await act(async () => {
+      vi.advanceTimersByTime(NAVIGATION_FEEDBACK_DELAY_MS)
+    })
+    expect(a.hasAttribute('aria-busy')).toBe(false)
+    expect(b.getAttribute('aria-busy')).toBe('true')
+    expect(screen.getAllByTestId('link-pending-spinner')).toHaveLength(1)
+
+    await act(async () => {
+      finish()
+    })
+    expect(screen.queryByTestId('link-pending-spinner')).toBeNull()
+    navigate.mockReset()
+    vi.useRealTimers()
+  })
+
   it('shows no spinner for a navigation faster than the delay', async () => {
     vi.useFakeTimers()
     render(<InternalLink href="/versions">Versions</InternalLink>)

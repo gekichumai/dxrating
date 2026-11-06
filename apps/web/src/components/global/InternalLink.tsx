@@ -11,6 +11,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react'
 import { createPortal } from 'react-dom'
 import { NAVIGATION_FEEDBACK_DELAY_MS } from '@/components/layout/NavigationProgress'
@@ -49,6 +50,20 @@ export const isPlainNavigationClick = (event: MouseEvent<HTMLAnchorElement>) => 
   )
 }
 
+/** The latest navigation any InternalLink started, page-wide */
+let latestLinkNavigation = 0
+const linkNavigationListeners = new Set<() => void>()
+const startLinkNavigation = () => {
+  latestLinkNavigation += 1
+  for (const listener of linkNavigationListeners) listener()
+  return latestLinkNavigation
+}
+const getLatestLinkNavigation = () => latestLinkNavigation
+const subscribeLinkNavigations = (listener: () => void) => {
+  linkNavigationListeners.add(listener)
+  return () => linkNavigationListeners.delete(listener)
+}
+
 /**
  * An anchor whose internal `href` navigates through the router. The markup stays a real `<a href>` (crawlable, opens
  * in a new tab), and a plain click moves to the page without reloading the document. While that navigation loads
@@ -61,19 +76,23 @@ export const InternalLink = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<H
     const router = useRouter({ warn: false })
     const anchorRef = useRef<HTMLAnchorElement>(null)
     useImperativeHandle(ref, () => anchorRef.current as HTMLAnchorElement)
-    const [navigating, setNavigating] = useState(false)
-    const navigationId = useRef(0)
+    // The id of this link's own navigation, if it started one. Only the latest link navigation on the page shows its
+    // feedback: clicking another link before this one's page loads moves the spinner there at once (the router chains
+    // the replaced navigation's promise to the new one, so this one's would otherwise settle only when that loads)
+    const [navigationId, setNavigationId] = useState<number>()
+    const latestNavigationId = useSyncExternalStore(subscribeLinkNavigations, getLatestLinkNavigation, () => 0)
+    const navigating = navigationId !== undefined && navigationId === latestNavigationId
 
     const handleClick = useCallback(
       (event: MouseEvent<HTMLAnchorElement>) => {
         onClick?.(event)
         if (!router || !isClientRoutableHref(href) || !isPlainNavigationClick(event)) return
         event.preventDefault()
-        const id = ++navigationId.current
-        setNavigating(true)
-        // Settles once the next page has loaded (or a later navigation replaced this one)
+        const id = startLinkNavigation()
+        setNavigationId(id)
+        // Settles once the next page has loaded (or once a navigation that replaced this one has)
         void Promise.resolve(router.navigate({ href })).finally(() => {
-          if (navigationId.current === id) setNavigating(false)
+          setNavigationId((current) => (current === id ? undefined : current))
         })
       },
       [href, onClick, router],
