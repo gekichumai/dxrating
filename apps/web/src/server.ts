@@ -79,8 +79,8 @@ const requestHandler: ServerEntry = wrapFetchWithSentry({
 export default Sentry.withSentry(
   () => ({
     dsn: 'https://9346c04036724f129e00a750c8ab9415@o4506648698683392.ingest.us.sentry.io/4511398317064192',
-    // The Vite plugin injects the same release used for artifact uploads.
-    release: (globalThis as { SENTRY_RELEASE?: { id?: string } }).SENTRY_RELEASE?.id,
+    // The same release the Vite plugin uses for artifact uploads (see vite.config.ts)
+    release: import.meta.env.VITE_SENTRY_RELEASE || undefined,
     environment: import.meta.env.VITE_SENTRY_ENVIRONMENT ?? 'development',
     enabled: import.meta.env.PROD,
     tracesSampleRate: 0.2,
