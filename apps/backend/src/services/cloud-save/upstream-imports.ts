@@ -16,7 +16,7 @@ import {
   type StateUpdateCallback,
 } from '../../lib/functions/client'
 import { HttpClient } from '../http-client'
-import { fetchPlayer, fetchPlayerScores, LxnsError } from '../lxns/index'
+import { fetchPlayerWithScores, LxnsError } from '../lxns/index'
 import { ServerImportFailure, type ServerImportErrorCode, type UpstreamFetch } from './server-imports'
 
 // --- maimai NET ---
@@ -85,12 +85,11 @@ const lxnsFailure = (error: unknown) => {
 
 /**
  * Fetches an LXNS import with the user's stored OAuth connection (refreshed as the LXNS service does): the player,
- * whose friend code is the source account, then every score.
+ * whose friend code is the source account, then every score, both with one access token.
  */
 export const fetchLxnsImport = (userId: string) =>
   Effect.gen(function* () {
-    const player = yield* fetchPlayer(userId)
-    const scores = yield* fetchPlayerScores(userId)
+    const { player, scores } = yield* fetchPlayerWithScores(userId)
     return {
       payload: scores,
       normalize: (catalog) =>
@@ -158,6 +157,7 @@ export const fetchDivingFishImport = (query: DivingFishQuery) =>
     if (!parsed.success) return yield* new ServerImportFailure({ code: 'invalid_response' })
     const rows: DivingFishRow[] = []
     let invalid = 0
+    let masked = 0
     for (const [bucket, charts] of [
       ['b15', parsed.data.charts.dx],
       ['b35', parsed.data.charts.sd],
@@ -168,10 +168,20 @@ export const fetchDivingFishImport = (query: DivingFishQuery) =>
           invalid += 1
           continue
         }
+        // The public B50 applies the player's score mask (an AP at 100.6% comes back as 101%) and says nothing about
+        // it, but a masked row has no DX score. A played chart with an achievement always has one (short of a play of
+        // nothing but Goods), so such a row is left out as rejected rather than stored as an exact verified score that
+        // keep-best merging would never lower again
+        if (row.data.achievements > 0 && !row.data.dxScore) {
+          masked += 1
+          continue
+        }
         rows.push({ ...row.data, fc: row.data.fc || null, fs: row.data.fs || null, bucket })
       }
     }
-    if (invalid > 0 && rows.length === 0) return yield* new ServerImportFailure({ code: 'invalid_response' })
+    if (invalid > 0 && rows.length === 0 && masked === 0) {
+      return yield* new ServerImportFailure({ code: 'invalid_response' })
+    }
     return {
       payload: parsed.data.charts,
       normalize: (catalog) => {
@@ -183,7 +193,13 @@ export const fetchDivingFishImport = (query: DivingFishQuery) =>
           message: 'Malformed Diving-Fish row',
           row: null,
         }))
-        return { entries: result.entries, warnings: [...result.warnings, ...malformed] }
+        const hidden = Array.from({ length: masked }, () => ({
+          provider: 'diving-fish' as const,
+          code: 'invalid-achievement' as const,
+          message: 'Diving-Fish row without a DX score (score mask): the achievement may be rounded',
+          row: null,
+        }))
+        return { entries: result.entries, warnings: [...result.warnings, ...malformed, ...hidden] }
       },
       sourceAccountId: 'username' in query ? query.username : query.qq,
       sourceAccountKind: 'username' in query ? 'df_username' : 'df_qq',
