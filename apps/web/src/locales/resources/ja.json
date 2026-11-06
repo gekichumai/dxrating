@@ -983,7 +983,11 @@
     "rating.reverse.result": "必要な達成率",
     "rating.reverse.unreachable": "届きません",
     "rating.table.title": "レート早見表",
-    "rating.table.description": "選んだ定数と前後の定数で、ランクごとのレートを一覧にしています。"
+    "rating.table.description": "選んだ定数と前後の定数で、ランクごとのレートを一覧にしています。",
+    "tolerance.search-another": "ほかの譜面を選ぶ",
+    "tolerance.open-page": "専用ページで開く",
+    "tolerance.sheet-seo-title": "{{title}} {{sheetLabel}} の許容ミス計算",
+    "tolerance.sheet-seo-description": "{{title}} {{sheetLabel}} で SSS+ などの目標達成率に届くために、GREAT・GOOD・MISS が何個まで許されるかをノーツ種別ごとに計算します。BREAK 50 / 100 落ちの換算にも対応。"
   },
   "recommend": {
     "title": "レート上げ候補",

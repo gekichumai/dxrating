@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { getCatalogDocument } from '@/catalog/catalogSource'
-import { loadToleranceSheet, validateToleranceSearch } from '../tools/tolerance'
+import { buildSheetTolerancePath } from '@/components/sheet/sheetLinks'
+import { loadToleranceSheet, toToleranceSheet, validateToleranceSearch } from '../tools/tolerance'
 
 describe('/tools/tolerance', () => {
   it('only accepts public sheet IDs', () => {
@@ -17,5 +18,29 @@ describe('/tools/tolerance', () => {
     expect(loaded).toMatchObject({ id: sheet.id, songId: song.id, title: song.title, type: sheet.type })
     expect(await loadToleranceSheet('dsht_doesnotexist')).toBeNull()
     expect(await loadToleranceSheet(undefined)).toBeNull()
+  })
+})
+
+describe('/songs/$songId/$type/$difficulty/tolerance', () => {
+  it('is the path the picker and the chart page link to', () => {
+    expect(buildSheetTolerancePath({ songId: 'dsng_abc', type: 'dx', difficulty: 'master' })).toBe(
+      '/songs/dsng_abc/dx/master/tolerance',
+    )
+  })
+
+  it('builds the calculator sheet from the catalog song', async () => {
+    const document = await getCatalogDocument()
+    const song = document.songs[0]!
+    const sheet = song.sheets[0]!
+    expect(toToleranceSheet(song, sheet)).toEqual({
+      id: sheet.id,
+      songId: song.id,
+      title: song.title,
+      imageName: song.imageName,
+      type: sheet.type,
+      difficulty: sheet.difficulty,
+      internalLevelValue: sheet.internalLevelValue,
+      noteCounts: sheet.noteCounts,
+    })
   })
 })

@@ -983,7 +983,11 @@
     "rating.reverse.result": "所需达成率",
     "rating.reverse.unreachable": "无法达到",
     "rating.table.title": "Rating 对照表",
-    "rating.table.description": "所选定数及相邻定数在各评级下的 Rating。"
+    "rating.table.description": "所选定数及相邻定数在各评级下的 Rating。",
+    "tolerance.search-another": "选择其他谱面",
+    "tolerance.open-page": "在单独页面打开",
+    "tolerance.sheet-seo-title": "{{title}} {{sheetLabel}} 容错计算",
+    "tolerance.sheet-seo-description": "计算 {{title}} {{sheetLabel}} 在达成 SSS+ 等目标达成率时，各类音符最多可以出现多少个 GREAT、GOOD、MISS，并换算 BREAK 50 / 100 落。"
   },
   "recommend": {
     "title": "上分推荐",
