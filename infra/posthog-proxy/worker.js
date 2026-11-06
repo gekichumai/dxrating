@@ -45,14 +45,44 @@ function verifyOrigin(request) {
 // when its body carries this project's token; browsers always send an Origin
 // on these cross-origin POSTs, so other websites still hit the allow-list.
 const PROJECT_TOKEN = "phc_Hw7FM2D1vSwummp0D3O13Z6biV6udw5bKIcq4BJQxH7"
+// Both limits are enforced while the stream is read, so an oversized upload or
+// a gzip bomb is cancelled instead of being buffered or expanded in full.
 const MAX_NATIVE_BODY_BYTES = 1024 * 1024
+const MAX_DECODED_BODY_BYTES = 4 * 1024 * 1024
+
+// Reads at most `limit` bytes from `stream`. Returns null, after cancelling the
+// stream, as soon as it yields more than that.
+async function readLimited(stream, limit) {
+  const reader = stream.getReader()
+  const chunks = []
+  let total = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    total += value.byteLength
+    if (total > limit) {
+      await reader.cancel().catch(() => {})
+      return null
+    }
+    chunks.push(value)
+  }
+  const bytes = new Uint8Array(total)
+  let offset = 0
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return bytes
+}
 
 async function readPayloadText(bytes, contentEncoding) {
+  let decoded = bytes
   if (contentEncoding && contentEncoding.toLowerCase().includes("gzip")) {
     const stream = new Response(bytes).body.pipeThrough(new DecompressionStream("gzip"))
-    return await new Response(stream).text()
+    decoded = await readLimited(stream, MAX_DECODED_BODY_BYTES)
+    if (!decoded) return null
   }
-  return new TextDecoder().decode(bytes)
+  return new TextDecoder().decode(decoded)
 }
 
 function tokenFromPayload(text) {
@@ -77,11 +107,17 @@ function tokenFromPayload(text) {
 // this project's token, or null to reject it.
 async function verifyNativeRequest(request) {
   if (request.headers.has("origin") || request.method !== "POST") return null
-  const bytes = await request.arrayBuffer()
-  if (bytes.byteLength === 0 || bytes.byteLength > MAX_NATIVE_BODY_BYTES) return null
+  const declaredLength = Number(request.headers.get("content-length"))
+  if (declaredLength > MAX_NATIVE_BODY_BYTES) return null
+  if (!request.body) return null
   let token
+  let bytes
   try {
-    token = tokenFromPayload(await readPayloadText(bytes, request.headers.get("content-encoding")))
+    bytes = await readLimited(request.body, MAX_NATIVE_BODY_BYTES)
+    if (!bytes || bytes.byteLength === 0) return null
+    const text = await readPayloadText(bytes, request.headers.get("content-encoding"))
+    if (text === null) return null
+    token = tokenFromPayload(text)
   } catch {
     return null
   }
