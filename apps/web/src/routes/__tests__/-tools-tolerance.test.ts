@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { getCatalogDocument } from '@/catalog/catalogSource'
 import { buildSheetTolerancePath } from '@/components/sheet/sheetLinks'
-import { loadToleranceSheet, toToleranceSheet, validateToleranceSearch } from '../tools/tolerance'
+import { Route, loadToleranceSheet, toToleranceSheet, validateToleranceSearch } from '../tools/tolerance'
 
 describe('/tools/tolerance', () => {
   it('only accepts public sheet IDs', () => {
@@ -42,5 +42,34 @@ describe('/songs/$songId/$type/$difficulty/tolerance', () => {
       internalLevelValue: sheet.internalLevelValue,
       noteCounts: sheet.noteCounts,
     })
+  })
+})
+
+describe('/tools/tolerance?sheet= (legacy links)', () => {
+  const redirectFor = async (search: Record<string, unknown>) => {
+    const document = await getCatalogDocument()
+    const song = document.songs[0]!
+    const sheet = song.sheets[0]!
+    const loader = Route.options.loader as unknown as (ctx: unknown) => Promise<unknown>
+    const thrown = await loader({ deps: { sheet: sheet.id }, location: { search } }).catch((error: unknown) => error)
+    return { song, sheet, options: (thrown as { options: Record<string, unknown> }).options }
+  }
+
+  it('redirects permanently to the chart calculator, keeping a supported locale', async () => {
+    const { song, sheet, options } = await redirectFor({ sheet: 'x', locale: 'ja' })
+    expect(options).toMatchObject({
+      to: '/songs/$songId/$type/$difficulty/tolerance',
+      params: { songId: song.id, type: sheet.type, difficulty: sheet.difficulty },
+      search: { locale: 'ja' },
+      statusCode: 308,
+    })
+  })
+
+  it('ignores a locale the router parsed as a non-string', async () => {
+    for (const locale of [123, true, ['ja'], { ja: 1 }]) {
+      const { options } = await redirectFor({ locale })
+      expect(options.statusCode).toBe(308)
+      expect(options.search).toBeUndefined()
+    }
   })
 })
