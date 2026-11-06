@@ -101,9 +101,10 @@ html[data-theme='dark'] body::after {
 html[data-theme='dark'] .glass-bar {
   background-image: linear-gradient(
     to bottom,
-    var(--accent) 0,
-    var(--accent) env(safe-area-inset-top),
+    var(--accent-band) 0,
+    var(--accent-band) env(safe-area-inset-top),
     color-mix(in oklab, var(--accent) 30%, rgb(18 18 22 / 0.55)) calc(env(safe-area-inset-top) + 0.01px),
-    color-mix(in oklab, var(--accent) 10%, rgb(18 18 22 / 0)) 100%
+    color-mix(in oklab, var(--accent) 10%, rgb(18 18 22 / 0.2)) 70%,
+    transparent 100%
   );
 }

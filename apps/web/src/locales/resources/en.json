@@ -1,6 +1,7 @@
 {
   "root": {
     "skip-to-content": "Skip to content",
+    "primary-navigation": "Main",
     "pages.search.title": "Search charts",
     "pages.search.seo-title": "Charts & Songs",
     "pages.search.seo-description": "Browse all maimai DX charts by song title, artist, or difficulty. View internal levels, note counts, and detailed chart information.",
@@ -34,8 +35,8 @@
     "magical-data-coming-soon": "MAGiCAL data for Japan is coming soon. Chart data currently reflects the previous version."
   },
   "settings": {
-    "version-and-region.select": "Select DXData version and region",
-    "version-and-region.select-generic": "Or select a DXData version and use the \"Generic\" region",
+    "version-and-region.select": "Choose game version and region",
+    "version-and-region.select-generic": "Or choose a version only, with the \"Generic\" region",
     "version-and-region.info": "Different data versions and regions correspond to different internal level values, song visibilities and rating eligibilities.",
     "version-and-region.logo-alt": "{{version}} logo",
     "language.select": "Select language",

@@ -1,6 +1,7 @@
 {
   "root": {
     "skip-to-content": "跳至主要內容",
+    "primary-navigation": "主要導覽",
     "pages.search.title": "搜尋譜面",
     "pages.search.seo-title": "搜尋譜面",
     "pages.search.seo-description": "按歌曲名、藝術家或難度瀏覽所有 maimai DX 譜面，查看譜面定數、音符數和詳細譜面資訊。",
@@ -39,8 +40,8 @@
     "region.intl": "國際",
     "region.cn": "中國大陸",
     "region._generic": "通用",
-    "version-and-region.select": "選擇 DXData 數據版本與伺服器",
-    "version-and-region.select-generic": "或僅選擇 DXData 數據版本",
+    "version-and-region.select": "選擇遊戲版本與伺服器",
+    "version-and-region.select-generic": "或僅選擇遊戲版本（伺服器為「通用」）",
     "version-and-region.info": "不同的數據版本與服務器對應了不同的樂曲與譜面定數可見性",
     "version-and-region.logo-alt": "{{version}} 標誌",
     "language.select": "選擇語言",

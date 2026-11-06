@@ -59,15 +59,27 @@ describe('AppTabs', () => {
     routerState.resolvedLocation = { pathname: '/rating' }
   })
 
-  it('selects the current route tab and captures deliberate navigation', () => {
+  it('renders a navigation landmark of links with every link in the tab order', () => {
     render(<AppTabs />)
 
-    const ratingTab = screen.getByRole('tab', { name: 'My rating' })
+    const nav = screen.getByRole('navigation', { name: 'Main' })
+    const links = within(nav).getAllByRole('link')
 
-    expect(ratingTab.getAttribute('aria-selected')).toBe('true')
+    expect(links).toHaveLength(4)
+    expect(screen.queryByRole('tab')).toBeNull()
+    for (const link of links) expect(link.getAttribute('tabindex')).toBeNull()
+  })
+
+  it('marks the current route link and captures deliberate navigation', () => {
+    render(<AppTabs />)
+
+    const ratingTab = screen.getByRole('link', { name: 'My rating' })
+
+    expect(ratingTab.getAttribute('aria-current')).toBe('page')
+    expect(ratingTab.hasAttribute('data-selected')).toBe(true)
     expect(capture).not.toHaveBeenCalled()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Home' }))
+    fireEvent.click(screen.getByRole('link', { name: 'Home' }))
     expect(capture).toHaveBeenCalledWith('tab_switched', {
       tab: 'search',
       source: 'top_navigation',
@@ -81,12 +93,12 @@ describe('AppTabs', () => {
 
     render(<AppTabs />)
 
-    const searchTab = screen.getByRole('tab', { name: 'Home' })
-    const ratingTab = screen.getByRole('tab', { name: 'My rating' })
+    const searchTab = screen.getByRole('link', { name: 'Home' })
+    const ratingTab = screen.getByRole('link', { name: 'My rating' })
 
-    expect(searchTab.getAttribute('aria-selected')).toBe('true')
+    expect(searchTab.hasAttribute('data-selected')).toBe(true)
     expect(searchTab.getAttribute('aria-busy')).toBe('true')
-    expect(ratingTab.getAttribute('aria-selected')).toBe('false')
+    expect(ratingTab.hasAttribute('data-selected')).toBe(false)
     expect(within(searchTab).getByRole('progressbar')).toBeTruthy()
 
     const originalLabel = within(searchTab).getByText('Home')
@@ -102,9 +114,9 @@ describe('AppTabs', () => {
 
     render(<AppTabs />)
 
-    const recentTab = screen.getByRole('tab', { name: 'Recently updated charts' })
+    const recentTab = screen.getByRole('link', { name: 'Recently updated charts' })
 
-    expect(recentTab.getAttribute('aria-selected')).toBe('true')
+    expect(recentTab.hasAttribute('data-selected')).toBe(true)
     expect(recentTab.getAttribute('aria-busy')).toBe('true')
     expect(recentTab.querySelector('.relative > span')?.className).toContain('inline-flex')
     expect(recentTab.querySelector('.relative > span')?.className).toContain('h-5')
@@ -117,9 +129,9 @@ describe('AppTabs', () => {
 
     render(<AppTabs />)
 
-    const ratingTab = screen.getByRole('tab', { name: 'My rating' })
+    const ratingTab = screen.getByRole('link', { name: 'My rating' })
 
-    expect(ratingTab.getAttribute('aria-selected')).toBe('true')
+    expect(ratingTab.getAttribute('aria-current')).toBe('page')
     expect(screen.queryByRole('progressbar')).toBeNull()
   })
 })

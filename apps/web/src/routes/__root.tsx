@@ -1,10 +1,11 @@
-import { HeadContent, Outlet, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
+import { HeadContent, Outlet, Scripts, createRootRoute, useLocation, useRouter } from '@tanstack/react-router'
 import { CircularProgress } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import i18n from 'i18next'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
-import { type CSSProperties, Suspense, useEffect, useMemo } from 'react'
+import clsx from 'clsx'
+import { type CSSProperties, Suspense, useEffect, useMemo, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import { NetImportSettingsProvider } from '@/components/rating/io/import/NetImportSettingsContext'
@@ -25,7 +26,7 @@ import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculat
 import { CatalogProvider } from '@/catalog/CatalogContext'
 import { loadCatalogMeta } from '@/catalog/catalogSource'
 import { createServerI18n } from '@/setup/init-i18n'
-import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
+import { buildNotFoundSeoMeta, buildRootSeoMeta, resolveRootHeadState, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import { useThemeColorSync } from '@/utils/useThemeColorSync'
@@ -35,9 +36,6 @@ import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } f
 import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
-
-// Routes whose head sets the full page title themselves
-const SELF_TITLED_ROUTE_IDS = new Set(['/songs/$songId/$type/$difficulty', '/songs_/$songId'])
 
 const fallbackElement = (
   <div className="flex items-center justify-center h-50% w-full p-6">
@@ -62,7 +60,7 @@ export const Route = createRootRoute({
   shouldReload: false,
   head: ({ match, matches }) => {
     const locale = resolveSeoLocale([match, ...matches])
-    const includeRootTitle = !matches.some((match) => SELF_TITLED_ROUTE_IDS.has(String(match.routeId)))
+    const { isNotFound, includeRootTitle } = resolveRootHeadState(match, matches)
 
     return {
       meta: [
@@ -72,6 +70,7 @@ export const Route = createRootRoute({
           content: 'width=device-width, initial-scale=1.0, viewport-fit=cover',
         },
         ...buildRootSeoMeta(locale, { includeTitle: includeRootTitle }),
+        ...(isNotFound ? buildNotFoundSeoMeta(locale) : []),
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         {
           name: 'msapplication-config',
@@ -89,41 +88,65 @@ export const Route = createRootRoute({
   component: RootComponent,
 })
 
+const isLegalPath = (pathname: string) => pathname === '/privacy-policy' || pathname === '/terms-of-service'
+
+/**
+ * The site header: one tinted-glass band (accent solid only behind the status bar) holding the top row and, on app
+ * pages, the version switcher and primary navigation. The switcher is full size on the home page only; inner pages get
+ * the compact row so their content starts near the top.
+ */
 function RootLayout() {
-  const location = useLocation()
+  const { pathname } = useLocation()
 
-  const pathname = location.pathname
-
-  const isPrivacyPolicy = pathname === '/privacy-policy' || pathname === '/terms-of-service'
+  const isLegalPage = isLegalPath(pathname)
   const isDevelopersPage = pathname === '/developers'
   const isSongPage = pathname.startsWith('/songs/')
-  const showTabs = !isSongPage && !isPrivacyPolicy && !isDevelopersPage
+  const showAppChrome = !isDevelopersPage && !isLegalPage
+  const showTabs = showAppChrome && !isSongPage
+  const compact = pathname !== '/'
 
   return (
-    <>
-      {/* Constrain the sticky tint source to its own height so the header still scrolls away. */}
-      <div>
-        <TopBar standalone={isPrivacyPolicy || isDevelopersPage} transparent={isPrivacyPolicy} />
-      </div>
-      {!isDevelopersPage && !isPrivacyPolicy && (
+    <header className="glass-bar pb-3 sm:pb-4">
+      <TopBar />
+      {showAppChrome && (
         <div
-          className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-4 pb-4"
-          style={{
-            backgroundImage: `linear-gradient(
-    to bottom,
-    var(--accent-band),
-    var(--accent-band) env(safe-area-inset-top),
-    transparent
-  )
-`,
-          }}
+          className={clsx(
+            'page-gutter flex items-center justify-center pt-3',
+            compact ? 'flex-row flex-wrap gap-2 md:gap-3' : 'app-chrome--full flex-col gap-3 sm:pt-4',
+          )}
         >
-          <VersionRegionSwitcher />
+          <VersionRegionSwitcher compact={compact} />
           {showTabs && <AppTabs />}
         </div>
       )}
-    </>
+    </header>
   )
+}
+
+/** Moves focus to the new page's main landmark and announces its title after a client-side navigation */
+function RouteChangeAnnouncer() {
+  const router = useRouter()
+  const announcerRef = useRef<HTMLOutputElement>(null)
+
+  useEffect(
+    () =>
+      router.subscribe('onResolved', ({ fromLocation, toLocation }) => {
+        // Query-only changes (typing in search, filters) keep focus where it is
+        if (!fromLocation || fromLocation.pathname === toLocation.pathname) return
+        // Two frames: the head (document.title) updates after the route resolves
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            const main = document.getElementById('main-content')
+            if (main && !main.contains(document.activeElement)) main.focus({ preventScroll: true })
+            if (announcerRef.current) announcerRef.current.textContent = document.title
+          }),
+        )
+      }),
+    [router],
+  )
+
+  // <output> is an implicit polite status region; it is in the DOM from the first render, before any text is set
+  return <output ref={announcerRef} aria-live="polite" aria-atomic="true" className="sr-only" />
 }
 
 function OAuthErrorHandler() {
@@ -186,29 +209,31 @@ function RootComponent() {
 
 function AppLayout() {
   const { t } = useTranslation(['root'])
-  const versionTheme = useVersionTheme()
   const { pathname } = useLocation()
-  const isLegalPage = pathname === '/privacy-policy' || pathname === '/terms-of-service'
+  const isLegalPage = isLegalPath(pathname)
 
   return (
     <div className="h-full w-full relative">
       <a href="#main-content" className="skip-to-content">
         {t('root:skip-to-content')}
       </a>
+      <RouteChangeAnnouncer />
       <VersionBackground />
 
-      {isLegalPage && (
-        <div
-          aria-hidden="true"
-          className="fixed inset-0 pointer-events-none"
-          style={{ background: `color-mix(in srgb, ${versionTheme.accentColor} 10%, rgb(var(--surface-rgb) / 0.95))` }}
-        />
-      )}
       <div className="h-full w-full relative">
         <Suspense fallback={fallbackElement}>
           <RootLayout />
           <main id="main-content" tabIndex={-1}>
-            <Outlet />
+            {isLegalPage ? (
+              // Legal text reads on one glass sheet instead of a full-viewport white overlay
+              <div className="page-gutter pb-global">
+                <div className="glass mx-auto max-w-[808px]">
+                  <Outlet />
+                </div>
+              </div>
+            ) : (
+              <Outlet />
+            )}
           </main>
         </Suspense>
       </div>

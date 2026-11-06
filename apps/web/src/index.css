@@ -212,3 +212,67 @@ html {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
+/* Select comboboxes are not ButtonBase. MUI's input reset (a generated class plus :focus, inserted after this file)
+   removes their outline, so the doubled class outranks it whatever the stylesheet order */
+.MuiSelect-select.MuiSelect-select:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Route changes move focus to <main> by script (it has tabIndex -1); it never takes keyboard focus, so no ring */
+#main-content:focus {
+  outline: none;
+}
+
+/* Version switcher: a large logo over the region chip on the home page; a small logo beside it on inner pages and on
+   phones in landscape, where the header would otherwise fill most of the first screen */
+.version-switcher__value {
+  flex-direction: column;
+}
+
+.version-switcher__logo {
+  height: 6rem;
+}
+
+@media (min-width: 640px) {
+  .version-switcher__logo {
+    height: 8rem;
+  }
+}
+
+.version-switcher--compact .version-switcher__value {
+  flex-direction: row;
+}
+
+.version-switcher--compact .version-switcher__logo {
+  height: 2.125rem;
+}
+
+@media (max-height: 540px) {
+  .version-switcher .version-switcher__value {
+    flex-direction: row;
+  }
+
+  .version-switcher .version-switcher__logo {
+    height: 2.125rem;
+  }
+
+  /* Outranks the utility classes, which UnoCSS scopes under body */
+  html body .app-chrome--full {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+@media (forced-colors: active) {
+  .version-background {
+    display: none;
+  }
+
+  /* The selected navigation item is a fill; forced colours would drop it, so it takes the system highlight */
+  .app-nav [data-selected] {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+}

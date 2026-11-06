@@ -338,3 +338,9 @@ html[data-preference-wipe] .magical-background__art {
     transition: none;
   }
 }
+/* Forced colours keep only text backplates: art behind the (now opaque) surfaces would just be noise */
+@media (forced-colors: active) {
+  .magical-background {
+    display: none;
+  }
+}
