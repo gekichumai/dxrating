@@ -8,8 +8,10 @@ import type { ImportEntrySource, ImportMeta } from './ScoreRepository'
  * back as it was.
  *
  * Local only. The snapshot holds the visitor's own local entries, which carry no provenance, and it never leaves the
- * browser; a cloud save restores its server-side snapshots instead (cloud save design, meta#17), so nothing fetched by
- * the server ever comes back through the client.
+ * browser. A cloud save takes no such snapshot: writing local entries back into it would send records server → client
+ * → server and strip their provenance (meta#17). Its imports only merge (never lower or remove a score, design §5.3),
+ * and an undo there would have to be server-side, from the import job's record events. Not to be confused with the
+ * design's `score_save_snapshots`, which are rating summaries, not restorable saves.
  */
 
 export const IMPORT_UNDO_STORAGE_KEY = 'rating-calculator-import-undo'
