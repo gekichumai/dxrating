@@ -27,7 +27,7 @@ async function envelopesFor(options: Partial<Sentry.CloudflareOptions>) {
       },
     } as Parameters<typeof Sentry.withSentry>[1],
   ) as unknown as { fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> }
-  await handler.fetch(
+  const response = await handler.fetch(
     new Request(callbackUrl),
     {},
     {
@@ -37,6 +37,8 @@ async function envelopesFor(options: Partial<Sentry.CloudflareOptions>) {
       passThroughOnException: () => undefined,
     },
   )
+  // The SDK ends the root span once the body is consumed; only then is the transaction sent
+  await response.text()
   await Promise.all(waits)
   await Sentry.flush(2000)
   return sent.join('\n')
@@ -45,11 +47,13 @@ async function envelopesFor(options: Partial<Sentry.CloudflareOptions>) {
 describe('worker Sentry with sentryScrubOptions', () => {
   it('the SDK does send the callback query by default (the probe is live)', async () => {
     const sent = await envelopesFor({})
+    expect(sent).toContain('"type":"transaction"')
     expect(sent).toContain('synthetic-code')
   })
 
   it('sends no OAuth code or state once the options are applied', async () => {
     const sent = await envelopesFor(sentryScrubOptions)
+    expect(sent).toContain('"type":"transaction"')
     expect(sent).toContain('oauth_callback')
     expect(sent).toContain('locale=ja')
     expect(sent).not.toContain('synthetic-code')
