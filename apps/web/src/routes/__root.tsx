@@ -27,6 +27,7 @@ import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculat
 import { CatalogProvider } from '@/catalog/CatalogContext'
 import { loadCatalogMeta } from '@/catalog/catalogSource'
 import { createServerI18n } from '@/setup/init-i18n'
+import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { buildNotFoundSeoMeta, buildRootSeoMeta, resolveRootHeadState, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
@@ -198,29 +199,31 @@ function RootComponent() {
   return (
     <RenderEnvironmentProvider renderedAt={renderedAt}>
       <I18nextProvider i18n={routeI18n}>
-        <AppContextProvider>
-          <RootDocument>
-            <CatalogProvider>
-              <QueryClientProvider client={queryClient}>
-                <VersionCustomizedThemeProvider>
-                  <RatingCalculatorContextProvider>
-                    <PostHogProvider client={posthog}>
-                      <NetImportSettingsProvider>
-                        <SideEffector />
-                        <CustomizedToaster />
-                        <NetImportProgress />
-                        <ImportReviewHost />
-                        <OAuthErrorHandler />
-                        <RegionVersionUpdatePrompt />
-                        <AppLayout />
-                      </NetImportSettingsProvider>
-                    </PostHogProvider>
-                  </RatingCalculatorContextProvider>
-                </VersionCustomizedThemeProvider>
-              </QueryClientProvider>
-            </CatalogProvider>
-          </RootDocument>
-        </AppContextProvider>
+        <LocaleProvider initialLocale={locale}>
+          <AppContextProvider>
+            <RootDocument>
+              <CatalogProvider>
+                <QueryClientProvider client={queryClient}>
+                  <VersionCustomizedThemeProvider>
+                    <RatingCalculatorContextProvider>
+                      <PostHogProvider client={posthog}>
+                        <NetImportSettingsProvider>
+                          <SideEffector />
+                          <CustomizedToaster />
+                          <NetImportProgress />
+                          <ImportReviewHost />
+                          <OAuthErrorHandler />
+                          <RegionVersionUpdatePrompt />
+                          <AppLayout />
+                        </NetImportSettingsProvider>
+                      </PostHogProvider>
+                    </RatingCalculatorContextProvider>
+                  </VersionCustomizedThemeProvider>
+                </QueryClientProvider>
+              </CatalogProvider>
+            </RootDocument>
+          </AppContextProvider>
+        </LocaleProvider>
       </I18nextProvider>
     </RenderEnvironmentProvider>
   )

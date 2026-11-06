@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { createServerI18n } from '@/setup/init-i18n'
 import { LocaleSelector } from '../LocaleSelector'
 
@@ -27,7 +28,9 @@ describe('LocaleSelector wipe', () => {
     vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as MediaQueryList)
     render(
       <I18nextProvider i18n={i18n}>
-        <LocaleSelector />
+        <LocaleProvider initialLocale="en">
+          <LocaleSelector />
+        </LocaleProvider>
       </I18nextProvider>,
     )
     fireEvent.click(screen.getByRole('button', { name: 'Select language' }))
@@ -42,7 +45,9 @@ describe('LocaleSelector wipe', () => {
     Object.defineProperty(document, 'startViewTransition', { configurable: true, value: start })
     render(
       <I18nextProvider i18n={createServerI18n('en')}>
-        <LocaleSelector />
+        <LocaleProvider initialLocale="en">
+          <LocaleSelector />
+        </LocaleProvider>
       </I18nextProvider>,
     )
     fireEvent.click(screen.getByRole('button', { name: 'Select language' }))
