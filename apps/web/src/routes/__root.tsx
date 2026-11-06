@@ -156,10 +156,18 @@ function OAuthErrorHandler() {
     const params = new URLSearchParams(window.location.search)
     const error = params.get('error')
     if (!error) return
+    // The LXNS import callback carries its own ?status=error&error=… and explains it on the page
+    if (window.location.pathname === '/io/import/lxns/oauth_callback') return
 
-    const key = `auth:user-profile.oauth-error.${error}` as const
-    const message = t(key, { defaultValue: '' })
-    toast.error(message || t('auth:user-profile.oauth-error.default', { error }), { id: 'oauth-error' })
+    // The raw provider code means nothing to people: keep it in the console for debugging, show plain copy
+    console.warn('[oauth] sign-in returned an error', error, params.get('error_description') ?? '')
+    if (error === 'access_denied') {
+      // Cancelling at the provider is a choice, not a failure
+      toast(t('auth:user-profile.oauth-error.access_denied'), { id: 'oauth-error' })
+    } else {
+      const message = t(`auth:user-profile.oauth-error.${error}` as const, { defaultValue: '' })
+      toast.error(message || t('auth:user-profile.oauth-error.default'), { id: 'oauth-error' })
+    }
 
     params.delete('error')
     params.delete('error_description')
