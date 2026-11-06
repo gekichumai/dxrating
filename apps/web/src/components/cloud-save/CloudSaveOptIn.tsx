@@ -10,7 +10,7 @@ import './cloud-save.css'
 
 /** The privacy policy, in a new tab so the consent stays open; its text comes from the translation */
 const PrivacyPolicyLink: FC<{ children?: ReactNode }> = ({ children }) => (
-  <a href="/privacy-policy" target="_blank" rel="noopener" className="text-inherit underline">
+  <a href="/privacy-policy#privacy-cloud" target="_blank" rel="noopener" className="link">
     {children}
   </a>
 )
