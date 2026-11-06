@@ -18,6 +18,13 @@ const REPORT_TO_MAX_AGE_SECONDS = 10886400
 // would disable 'unsafe-inline'.
 //
 // frame-ancestors 'none' matches X-Frame-Options: DENY, which browsers already enforce.
+//
+// Cloudflare Speed Brain adds a `Speculation-Rules: "/cdn-cgi/speculation"` response header. Chromium 131+ exempts
+// rules loaded through that header from CSP (HTML spec: "Content Security Policy does not apply to the loading of rule
+// sets via that header"). Chromium 121-130 still checks the fetch against script-src, where the same-origin 'self'
+// allows it in the enforced policy. Under 'strict-dynamic' those versions ignore 'self', and a header fetch can carry
+// neither a nonce nor a hash, so the Report-Only trial below reports it (DXRATING-WEB-75). No source expression fixes
+// that ('inline-speculation-rules' only covers inline <script type=speculationrules>), so nothing is added for it.
 const CSP_DIRECTIVES = [
   ['default-src', ["'self'"]],
   ['base-uri', ["'self'"]],
