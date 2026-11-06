@@ -1,3 +1,4 @@
+import clsx from 'clsx'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { VersionEnum } from '@gekichumai/dxdata'
@@ -11,23 +12,50 @@ import {
   DIFFICULTY_SHORT,
   difficultyTextClassName,
   difficultyTextStyle,
-  SegmentedNav,
 } from '@/components/completion/TableChrome'
+import { VersionLogo } from '@/components/version/VersionLogo'
+import { VersionEraPager, VersionPairGrid } from '@/components/version/VersionPairList'
+import { pairVersionsByEra, versionEraOf } from '@/components/version/versionEras'
 import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 
-const VersionNav: FC<{ current?: VersionEnum; labelledBy?: string }> = ({ current, labelledBy }) => (
-  <SegmentedNav
-    labelledBy={labelledBy}
-    items={VERSION_PAGE_VERSIONS.map((version) => ({
-      key: version,
-      href: versionPagePath(version),
-      label: version,
-      current: version === current,
-    }))}
-  />
-)
+const tileClassName = (current: boolean) =>
+  clsx(
+    'flex items-center gap-3 min-w-0 h-full no-underline text-fg-1 rounded-[var(--radius-md)] transition-shadow duration-[var(--duration-fast)] ease-[var(--ease-out)]',
+    current
+      ? 'glass ring-2 ring-[var(--accent)] ring-inset'
+      : 'glass hover:shadow-[var(--shadow-1-hover)] focus-visible:shadow-[var(--shadow-1-hover)]',
+  )
+
+/** The other versions, compact: logo and name in rows of base | PLUS, on the page of the current version's era */
+const VersionNav: FC<{ current: VersionEnum; labelledBy: string }> = ({ current, labelledBy }) => {
+  const { t } = useTranslation(['versions'])
+
+  return (
+    <nav aria-labelledby={labelledBy}>
+      <VersionEraPager label={t('versions:era.label')} defaultEra={versionEraOf(current)}>
+        {(era) => (
+          <VersionPairGrid
+            className="gap-x-4 sm:grid-cols-2 lg:grid-cols-4"
+            pairs={pairVersionsByEra(VERSION_PAGE_VERSIONS, era)}
+            renderVersion={(version) => (
+              <a
+                key={version}
+                href={versionPagePath(version)}
+                aria-current={version === current ? 'page' : undefined}
+                title={version}
+                className={clsx(tileClassName(version === current), 'justify-center p-1')}
+              >
+                <VersionLogo version={version} className="h-9 text-[0.625rem]" />
+              </a>
+            )}
+          />
+        )}
+      </VersionEraPager>
+    </nav>
+  )
+}
 
 export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
   const { i18n, t } = useTranslation(['versions'])
@@ -39,7 +67,10 @@ export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
       <div className="w-full flex flex-col gap-4">
         <header className="w-full flex flex-col gap-2">
           <Breadcrumb items={[{ href: '/versions', label: t('versions:breadcrumb') }, { label: page.version }]} />
-          <h1 className="page-title m-0 [word-break:auto-phrase]">{t('versions:title', values)}</h1>
+          <div className="flex items-center gap-3">
+            <VersionLogo version={page.version} decorative className="h-14 sm:h-16 text-sm" />
+            <h1 className="page-title m-0 [word-break:auto-phrase]">{t('versions:title', values)}</h1>
+          </div>
           <p className="page-description m-0">{t('versions:intro', values)}</p>
         </header>
 
@@ -115,28 +146,43 @@ export type VersionSummary = { version: VersionEnum; songs: number; charts: numb
 
 export const VersionIndexPage: FC<{ versions: VersionSummary[] }> = ({ versions }) => {
   const { t } = useTranslation(['versions'])
+  const summaries = new Map(versions.map((entry) => [entry.version, entry]))
+  const listed = versions.map((entry) => entry.version)
 
   return (
-    <div className="flex-container w-full max-w-5xl px-4 pb-global">
+    <div className="flex-container w-full max-w-6xl px-4 pb-global">
       <div className="w-full flex flex-col gap-4">
         <header className="flex flex-col gap-2">
           <Breadcrumb items={[{ label: t('versions:breadcrumb') }]} />
           <h1 className="page-title m-0 [word-break:auto-phrase]">{t('versions:index.title')}</h1>
           <p className="page-description m-0">{t('versions:index.intro')}</p>
         </header>
-        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3 list-none p-0 m-0">
-          {versions.map((entry) => (
-            <li key={entry.version}>
-              <a
-                href={versionPagePath(entry.version)}
-                className="glass block h-full p-4 no-underline text-fg-1 transition-shadow duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:shadow-[var(--shadow-1-hover)]"
-              >
-                <div className="text-lg font-semibold">{entry.version}</div>
-                <div className="text-xs text-fg-2 num">{t('versions:index.count', entry)}</div>
-              </a>
-            </li>
-          ))}
-        </ul>
+        <VersionEraPager label={t('versions:era.label')}>
+          {(era) => (
+            <VersionPairGrid
+              className="gap-y-3 lg:grid-cols-2 lg:gap-x-6"
+              pairs={pairVersionsByEra(listed, era)}
+              renderVersion={(version) => {
+                const entry = summaries.get(version)
+                return (
+                  <a
+                    key={version}
+                    href={versionPagePath(version)}
+                    className={clsx(tileClassName(false), 'max-sm:flex-col max-sm:gap-1 p-2 sm:p-3')}
+                  >
+                    <VersionLogo version={version} decorative className="h-12 sm:h-14 lg:h-12 text-xs" />
+                    <span className="flex min-w-0 flex-col max-sm:items-center max-sm:text-center">
+                      <span className="text-sm sm:text-base font-semibold [overflow-wrap:anywhere]" translate="no">
+                        {version}
+                      </span>
+                      {entry && <span className="text-xs text-fg-2 num">{t('versions:index.count', entry)}</span>}
+                    </span>
+                  </a>
+                )
+              }}
+            />
+          )}
+        </VersionEraPager>
       </div>
     </div>
   )

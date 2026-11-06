@@ -1,12 +1,19 @@
 import { plateName } from '@gekichumai/maimai-domain'
 import { Link } from '@tanstack/react-router'
 import { type FC, useEffect, useState } from 'react'
+import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import { SheetImage } from '@/components/sheet/SheetListItem'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { plateRegionSearch } from '@/components/plates/plateData'
-import { HOME_FEATURES, type HomeFeatureId, type HomeRecentSong } from './homeModules'
+import {
+  HOME_FEATURES,
+  HOME_RECENT_SONG_LIMIT_LG,
+  HOME_RECENT_SONG_LIMIT_MOBILE,
+  type HomeFeatureId,
+  type HomeRecentSong,
+} from './homeModules'
 import { useHomeQuickStats } from './useHomeQuickStats'
 import IconMdiTrophyOutline from '~icons/mdi/trophy-outline'
 import IconMdiCardAccountDetailsStarOutline from '~icons/mdi/card-account-details-star-outline'
@@ -125,12 +132,21 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
               {t('home:recent.see-all')}
             </Link>
           </div>
-          {/* Sized to its covers on wide screens instead of leaving a wide empty panel; covers sit 12px in, so they keep
-              their own radius */}
-          <MaterialSurface className="w-fit max-w-full overflow-x-auto overscroll-x-contain">
-            <ul className="m-0 flex list-none gap-3 p-3">
-              {recentSongs.map((song) => (
-                <li key={song.songId} className="w-20 shrink-0">
+          {/* Phones scroll one row of 8 covers; from lg the strip spans the hub as a one-row grid and shows more covers
+              (10 at lg, 13 at xl, as many as fit a row). Hidden by CSS, not matchMedia, so SSR stays deterministic.
+              Covers sit 12px in, so they keep their own radius */}
+          <MaterialSurface className="w-full overflow-x-auto overscroll-x-contain lg:overflow-visible">
+            <ul className="m-0 flex list-none gap-3 p-3 lg:grid lg:grid-cols-[repeat(auto-fill,minmax(5rem,1fr))]">
+              {recentSongs.map((song, index) => (
+                <li
+                  key={song.songId}
+                  className={clsx(
+                    'w-20 shrink-0',
+                    index >= HOME_RECENT_SONG_LIMIT_LG
+                      ? 'hidden xl:block'
+                      : index >= HOME_RECENT_SONG_LIMIT_MOBILE && 'hidden lg:block',
+                  )}
+                >
                   <Link
                     to="/songs/$songId"
                     params={{ songId: song.songId }}
@@ -155,14 +171,14 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
       <nav className="flex flex-col gap-2" aria-labelledby="home-features">
         <SectionTitle id="home-features">{t('home:features.title')}</SectionTitle>
         {/* On phones two scrolling rows keep the search results near the top; wider screens get the full grid */}
-        <ul className="m-0 grid list-none grid-flow-col grid-rows-2 auto-cols-[minmax(10.5rem,46%)] gap-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory p-0 pb-1 sm:grid-flow-row sm:grid-rows-none sm:auto-cols-auto sm:grid-cols-3 sm:overflow-visible sm:pb-0 lg:grid-cols-4">
+        <ul className="m-0 grid list-none grid-flow-col grid-rows-2 auto-cols-[minmax(10.5rem,46%)] gap-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory p-0 pb-1 sm:grid-flow-row sm:grid-rows-none sm:auto-cols-auto sm:grid-cols-3 sm:overflow-visible sm:pb-0 lg:grid-cols-4 xl:grid-cols-6">
           {HOME_FEATURES.map((feature) => {
             const Icon = FEATURE_ICONS[feature.id]
             return (
               <li key={feature.id} className="snap-start">
                 <Link to={feature.to} onClick={() => trackClick('feature', feature.id)} className={CARD_LINK}>
                   <MaterialSurface className={`flex h-full items-start gap-2.5 px-3 py-2.5 ${CARD_SURFACE}`}>
-                    <Icon aria-hidden="true" className="mt-0.5 shrink-0 text-lg text-accent-strong" />
+                    <Icon aria-hidden="true" className="size-5 shrink-0 text-accent-strong" />
                     <span className="flex min-w-0 flex-col">
                       <span className="text-sm font-semibold">{t(`home:features.${feature.id}.title`)}</span>
                       <span className="text-xs text-fg-2 text-pretty">

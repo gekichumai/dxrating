@@ -1,0 +1,18 @@
+/* The home page's header row on desktop. Below 1024px the full version switcher (a large logo over the region chip)
+   sits centred above the navigation. From 1024px both share one row: a 48px logo beside the chip on the left, the
+   navigation on the right, so the search and the first sheets start above the fold. Two classes each, to outrank the
+   single-class .version-switcher rules in index.css. */
+@media (min-width: 1024px) {
+  html body .app-chrome--full {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .app-chrome--full .version-switcher__value {
+    flex-direction: row;
+  }
+
+  .app-chrome--full .version-switcher__logo {
+    height: 3rem;
+  }
+}
