@@ -354,7 +354,7 @@ describe('catalog identity service', () => {
       [retired, current],
       [current, retired],
     ]) {
-      await expect(identities.translateTagSongsToPublic(order, sumScores)).resolves.toEqual([
+      await expect(Effect.runPromise(identities.translateTagSongsToPublic(order, sumScores))).resolves.toEqual([
         { song_id: SONG_A, sheet_id: SHEET_A, sheet_type: 'dx', sheet_difficulty: 'master', tag_id: 1, score: 1 },
       ])
     }

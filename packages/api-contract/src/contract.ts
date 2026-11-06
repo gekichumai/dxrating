@@ -360,40 +360,48 @@ export const publicContractRoutes = {
       .input(TagSongAttachSchema)
       .output(z.object({ id: z.number() })),
     sheetTags: oc
-      .route({
-        method: 'GET',
-        path: '/tags/sheet',
-        summary: 'List tag associations for a single sheet, including buried ones, with vote breakdowns',
-        tags: ['Tags'],
-        spec: (spec) => ({ ...spec, security: [] }),
-      })
+      .meta(
+        openapi({
+          method: 'GET',
+          path: '/tags/sheet',
+          summary: 'List tag associations for a single sheet, including buried ones, with vote breakdowns',
+          tags: ['Tags'],
+          spec: (spec) => ({ ...spec, security: [] }),
+        }),
+      )
       .input(SheetTagsInputSchema)
       .output(z.array(SheetTagSongSchema)),
     vote: oc
-      .route({
-        method: 'POST',
-        path: '/tags/vote',
-        summary: 'Cast or change a vote on a tag-sheet association',
-        tags: ['Tags'],
-      })
+      .meta(
+        openapi({
+          method: 'POST',
+          path: '/tags/vote',
+          summary: 'Cast or change a vote on a tag-sheet association',
+          tags: ['Tags'],
+        }),
+      )
       .input(TagSongVoteInputSchema)
       .output(TagSongVoteResultSchema),
     userVotes: oc
-      .route({
-        method: 'GET',
-        path: '/tags/user-votes',
-        summary: "Get the current user's votes for a set of tag-sheet associations",
-        tags: ['Tags'],
-      })
+      .meta(
+        openapi({
+          method: 'GET',
+          path: '/tags/user-votes',
+          summary: "Get the current user's votes for a set of tag-sheet associations",
+          tags: ['Tags'],
+        }),
+      )
       .input(TagSongUserVotesInputSchema)
       .output(TagSongUserVotesResponseSchema),
     detach: oc
-      .route({
-        method: 'POST',
-        path: '/tags/detach',
-        summary: 'Remove a tag-sheet association created by the current user',
-        tags: ['Tags'],
-      })
+      .meta(
+        openapi({
+          method: 'POST',
+          path: '/tags/detach',
+          summary: 'Remove a tag-sheet association created by the current user',
+          tags: ['Tags'],
+        }),
+      )
       .input(TagSongDetachInputSchema)
       .output(TagSongDetachResultSchema),
   },
