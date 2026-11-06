@@ -2,6 +2,7 @@ import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RecentChartLink } from '@/components/chartDiscovery/recentCharts'
 import { SheetListItemContentView, SheetListItemSummary } from '@/components/sheet/SheetListItem'
+import { SHEET_ROW_INSET } from '@/components/sheet/sheetRowLayout'
 import { getSheetTitleLabel } from '@/components/song/sheetDisplay'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 import { formatSheetReleaseDateParts, sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
@@ -20,7 +21,7 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
 
   return (
     <div
-      className="flex-container w-full max-w-5xl px-4 pb-global"
+      className="flex-container w-full max-w-5xl lg:max-w-7xl px-4 pb-global"
       itemScope
       itemType="https://schema.org/CollectionPage"
     >
@@ -35,8 +36,9 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
         </header>
 
         <ol
-          // Rows are --radius-md at a 4px inset, so they nest in the panel's --radius-lg
-          className="glass m-0 w-full list-none p-1"
+          // Rows are --radius-md at a 4px inset, so they nest in the panel's --radius-lg. From lg the rows fill two
+          // columns (three from 2xl) in reading order, so the page uses the width instead of a narrow strip
+          className="glass m-0 w-full list-none p-1 lg:grid lg:grid-cols-2 lg:gap-x-2 2xl:grid-cols-3"
           itemProp="mainEntity"
           itemScope
           itemType="https://schema.org/ItemList"
@@ -57,7 +59,7 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
                 <meta itemProp="position" content={String(index + 1)} />
                 <link itemProp="url" href={chartUrl} />
                 <a
-                  className="block rounded-[var(--radius-md)] px-2 md:px-3 text-fg-1 no-underline transition-colors duration-150 hover:bg-black/4 focus-visible:outline-offset-[-2px]"
+                  className={`block rounded-[var(--radius-md)] ${SHEET_ROW_INSET} text-fg-1 no-underline transition-colors duration-150 hover:bg-black/4 focus-visible:outline-offset-[-2px]`}
                   href={chart.href}
                 >
                   <article className="block" itemScope itemType="https://schema.org/MusicRecording" itemID={chartUrl}>
@@ -88,7 +90,6 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
                         title={chart.title}
                         type={chart.type}
                         difficulty={chart.difficulty}
-                        version={chart.version}
                         serverIds={chart.serverIds}
                         isLocked={chart.isLocked}
                         titleElement="h2"
@@ -100,22 +101,32 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
                           itemType: 'https://schema.org/MusicGroup',
                         }}
                         metadata={
-                          chart.releaseDate && (
-                            <time
-                              className="text-xs text-fg-2 tabular-nums"
-                              dateTime={chart.releaseDate}
-                              itemProp="datePublished"
-                            >
-                              {/* The date alone (no "days ago"), so the cached page never goes stale */}
-                              {
-                                formatSheetReleaseDateParts(
-                                  chart.releaseDate,
-                                  locale,
-                                  sheetReleaseDateTimestamp(chart.releaseDate),
-                                ).absoluteDate
-                              }
-                            </time>
-                          )
+                          // Version and date are two lines on phones and one ("ver. X · date") from lg, which keeps the
+                          // two-column rows short
+                          <div className="flex flex-col lg:flex-row lg:flex-wrap lg:items-baseline lg:gap-x-1.5 text-fg-2">
+                            {chart.version && <span className="text-sm">ver. {chart.version}</span>}
+                            {chart.version && chart.releaseDate && (
+                              <span aria-hidden="true" className="hidden lg:inline text-sm">
+                                ·
+                              </span>
+                            )}
+                            {chart.releaseDate && (
+                              <time
+                                className="text-xs lg:text-sm tabular-nums"
+                                dateTime={chart.releaseDate}
+                                itemProp="datePublished"
+                              >
+                                {/* The date alone (no "days ago"), so the cached page never goes stale */}
+                                {
+                                  formatSheetReleaseDateParts(
+                                    chart.releaseDate,
+                                    locale,
+                                    sheetReleaseDateTimestamp(chart.releaseDate),
+                                  ).absoluteDate
+                                }
+                              </time>
+                            )}
+                          </div>
                         }
                       />
                     </SheetListItemContentView>
