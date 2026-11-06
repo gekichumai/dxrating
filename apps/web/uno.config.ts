@@ -97,6 +97,15 @@ export default defineConfig({
     link: 'text-accent-strong underline decoration-1 underline-offset-2 hover:decoration-2',
     // Secondary text: never zinc-400/500 or opacity, which fail contrast on glass
     'text-secondary': 'text-fg-2',
+    // Page frame: one gutter (with the safe-area insets) and one header treatment for every content page
+    'page-gutter':
+      'w-full max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
+    'page-title': 'text-2xl sm:text-3xl font-semibold leading-tight tracking-[-0.01em] text-fg-1 text-balance',
+    'page-description': 'text-sm sm:text-base leading-normal text-fg-2 text-pretty max-w-[65ch]',
+    // Section heading inside a page or glass panel
+    'section-title': 'text-base font-semibold leading-snug text-fg-1',
+    // Numbers that change or line up
+    num: 'tabular-nums',
     'chunks-horizontal-2': 'flex flex-col md:flex-row items-center justify-center gap-2 w-full',
   },
   presets: [
