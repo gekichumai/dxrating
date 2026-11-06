@@ -1,6 +1,6 @@
 import type { NoteCounts, TypeEnum } from '@gekichumai/dxdata'
 import { InputAdornment, TextField } from '@mui/material'
-import { Link } from '@tanstack/react-router'
+import { Link, useSearch } from '@tanstack/react-router'
 import { type FC, useDeferredValue, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MdiMagnify from '~icons/mdi/magnify'
@@ -11,6 +11,7 @@ import { buildSheetPath, songHubPath } from '@/components/sheet/sheetLinks'
 import { ToleranceCalculator } from '@/components/tools/ToleranceCalculator'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useFilteredSheets } from '@/songs'
+import { keepLocaleSearch } from '@/setup/locale'
 
 export type ToleranceSelectedSheet = {
   id: string
@@ -207,6 +208,7 @@ const EXAMPLE_CHART = { songId: 'にゃーにゃー冒険譚', type: 'dx', diffi
  */
 const ChartPagesNote: FC = () => {
   const { t } = useTranslation(['tools'])
+  const search = useSearch({ strict: false })
   return (
     <MaterialSurface as="aside" aria-labelledby="tolerance-chart-pages" className="flex items-center gap-4 p-3">
       <ChartPageMiniature />
@@ -215,9 +217,11 @@ const ChartPagesNote: FC = () => {
           {t('tools:tolerance.chart-pages.title')}
         </h2>
         <p className="m-0 text-sm text-secondary text-pretty">{t('tools:tolerance.chart-pages.body')}</p>
+        {/* The chart page itself, where the card lives, keeping the visitor's ?locale= variant */}
         <Link
-          to="/songs/$songId/$type/$difficulty/tolerance"
+          to="/songs/$songId/$type/$difficulty"
           params={{ songId: EXAMPLE_CHART.songId, type: EXAMPLE_CHART.type, difficulty: EXAMPLE_CHART.difficulty }}
+          {...keepLocaleSearch(search)}
           className="link self-start text-sm"
         >
           {t('tools:tolerance.chart-pages.example')}{' '}
