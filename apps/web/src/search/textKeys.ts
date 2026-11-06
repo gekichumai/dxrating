@@ -242,6 +242,8 @@ const ROMAJI_FOLDS: [RegExp, string][] = [
   [/dzu/gu, 'zu'],
   [/du/gu, 'zu'],
   [/fu/gu, 'hu'],
+  // を is typed as both "o" and "wo"
+  [/wo/gu, 'o'],
   [/f(?=[aeio])/gu, 'h'],
   [/v(?=[aeiou])/gu, 'b'],
   [/l/gu, 'r'],

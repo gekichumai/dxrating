@@ -38,6 +38,11 @@ describe('skeletonKey', () => {
     expect(skeletonKey('チューリング')).toBe(skeletonKey('churingu'))
   })
 
+  it('accepts both spellings of を', () => {
+    expect(skeletonKey('mariawohagemase')).toBe(skeletonKey('マリアをはげませ'))
+    expect(skeletonKey('mariaohagemase')).toBe(skeletonKey('マリアをはげませ'))
+  })
+
   it('keeps small tsu as a doubled consonant', () => {
     expect(skeletonKey('かった')).toBe(skeletonKey('katta'))
     expect(skeletonKey('マッチ')).toBe(skeletonKey('matchi'))

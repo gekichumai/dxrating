@@ -20,6 +20,14 @@ describe('sheet search ranking on the catalog snapshot', () => {
     expect(topTitles('neko')[0]).toBe('ネ！コ！')
   })
 
+  it('finds a kana title typed with "wo" for を', () => {
+    expect(topTitles('mariawohagemase')[0]).toBe('マリアをはげませ')
+  })
+
+  it('keeps fuzzy matches even when many songs match by name', () => {
+    expect(search('night').map((sheet) => sheet.title)).toContain('AMAZING MIGHTYYYY!!!!')
+  })
+
   it('puts the exact title first', () => {
     expect(topTitles('Link', 1)).toEqual(['Link'])
     expect(topTitles('系ぎて', 1)).toEqual(['系ぎて'])

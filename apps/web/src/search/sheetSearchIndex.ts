@@ -28,12 +28,6 @@ const Tier = {
   Fuzzy: 8,
 } as const
 
-/**
- * Fuse is most of the query time. With this many songs already matched by name, its fuzzy matches would only rank
- * after them, so it is skipped.
- */
-const FUZZY_SKIP_AFTER = 20
-
 /** Skeleton matching needs a few letters, or one-letter queries would match every romanised title */
 const MIN_SKELETON_PREFIX = 2
 const MIN_SKELETON_CONTAINS = 3
@@ -235,7 +229,8 @@ export function searchSheetsIndex(index: SheetsSearchIndex, trimmedTerm: string)
   }
 
   // Fuse's ranking breaks ties inside a tier and adds fuzzy matches for typos
-  const fuseResults = matchedSongs.size >= FUZZY_SKIP_AFTER ? [] : fuse.search(trimmedTerm)
+  // The result list is unbounded and filtered afterwards (favourites, levels), so fuzzy matches are always kept
+  const fuseResults = fuse.search(trimmedTerm)
   const fuseRank = new Map(fuseResults.map((result, rank) => [result.item.id, rank]))
 
   // Stable sort keeps the catalog order of sheets within a song and between equal songs
