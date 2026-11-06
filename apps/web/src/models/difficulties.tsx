@@ -12,10 +12,20 @@ import { DifficultyEnum } from '@gekichumai/dxdata'
  */
 export const DIFFICULTIES: Record<
   DifficultyEnum,
-  { title: string; color: string; solid: string; ink: string; inkDark: string; dark?: boolean }
+  {
+    title: string
+    /** The name in compact pills (`DifficultyLevelBadge`), where every row gets the width of the longest one */
+    shortTitle: string
+    color: string
+    solid: string
+    ink: string
+    inkDark: string
+    dark?: boolean
+  }
 > = {
   [DifficultyEnum.Basic]: {
     title: 'BASIC',
+    shortTitle: 'BASIC',
     color: '#22bb5b',
     solid: '#008829',
     ink: '#007715',
@@ -23,6 +33,7 @@ export const DIFFICULTIES: Record<
   },
   [DifficultyEnum.Advanced]: {
     title: 'ADVANCED',
+    shortTitle: 'ADV',
     color: '#fb9c2d',
     solid: '#b55c00',
     ink: '#a54d00',
@@ -30,6 +41,7 @@ export const DIFFICULTIES: Record<
   },
   [DifficultyEnum.Expert]: {
     title: 'EXPERT',
+    shortTitle: 'EXPERT',
     color: '#f64861',
     solid: '#dc2c4d',
     ink: '#ca0f3f',
@@ -37,6 +49,7 @@ export const DIFFICULTIES: Record<
   },
   [DifficultyEnum.Master]: {
     title: 'MASTER',
+    shortTitle: 'MASTER',
     color: '#9e45e2',
     solid: '#9e45e2',
     ink: '#9034d3',
@@ -45,6 +58,7 @@ export const DIFFICULTIES: Record<
   },
   [DifficultyEnum.ReMaster]: {
     title: 'Re:MASTER',
+    shortTitle: 'Re:MAS',
     color: '#ba67f8',
     solid: '#9f4bdb',
     ink: '#903aca',
