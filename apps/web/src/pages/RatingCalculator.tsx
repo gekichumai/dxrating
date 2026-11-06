@@ -20,6 +20,7 @@ import {
 } from '@mui/material'
 import {
   type Row,
+  type SortDirection,
   type SortingState,
   createColumnHelper,
   flexRender,
@@ -28,7 +29,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import clsx from 'clsx'
-import { type FC, memo, useCallback, useMemo, useState } from 'react'
+import { type FC, type ReactNode, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   type ItemProps,
@@ -82,15 +83,6 @@ const ROW_HEIGHTS = { base: 88, desktop: 56 } as const
 
 /** The desktop breakpoint of rating-table.css; keep the two in sync */
 const DESKTOP_QUERY = '(min-width: 1024px)'
-
-const DEFAULT_SORTING: SortingState = [
-  { id: 'includedIn', desc: true },
-  { id: 'rating', desc: true },
-]
-
-const isDefaultSorting = (sorting: SortingState) =>
-  sorting.length === DEFAULT_SORTING.length &&
-  sorting.every((sort, index) => sort.id === DEFAULT_SORTING[index]?.id && sort.desc === DEFAULT_SORTING[index]?.desc)
 
 const columnHelper = createColumnHelper<Entry>()
 
@@ -146,13 +138,8 @@ const RatingCalculatorRowActions: FC<{
   )
 }
 
-// The table sits on the records panel's glass: Paper is themed as a glass overlay, so clear its border and blur too,
-// or a second box (with its own edge under the add form) shows inside the panel
 const TransparentPaper = styled(Paper)(() => ({
   backgroundColor: 'transparent',
-  backdropFilter: 'none',
-  WebkitBackdropFilter: 'none',
-  border: 0,
   boxShadow: 'none',
 }))
 
@@ -265,9 +252,10 @@ export const RatingCalculator = () => {
           </Alert>
         )}
         <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
-        <RatingCalculatorTableContent showOnlyB50={showOnlyB50} />
-
-        {allEntries.length === 0 && (
+        {/* With no records, the column headers would only frame an empty table */}
+        {allEntries.length > 0 ? (
+          <RatingCalculatorTableContent showOnlyB50={showOnlyB50} />
+        ) : (
           <div className="w-full text-sm py-8 px-4 text-center">{t('rating-calculator:table.no-entries')}</div>
         )}
       </div>
@@ -476,13 +464,49 @@ const RatingCalculatorTableRowContent: FC<{
   )
 }
 
+/**
+ * A column header: the label, then a small chevron in the text colour when the column is sorted. The priority number
+ * is a superscript, shown only while more than one column is sorted. An unsorted sortable column shows a faint chevron
+ * on hover and focus only.
+ */
+const RatingTableSortButton: FC<{
+  label: ReactNode
+  canSort: boolean
+  sorted: false | SortDirection
+  priority: number | null
+  onClick?: (event: unknown) => void
+}> = ({ label, canSort, sorted, priority, onClick }) => {
+  const { t } = useTranslation(['rating-calculator'])
+  return (
+    <button
+      type="button"
+      className="rating-table-sort"
+      data-sorted={sorted || undefined}
+      disabled={!canSort}
+      onClick={onClick}
+    >
+      <span className="rating-table-sort-label">{label}</span>
+      {canSort && (
+        <span className="rating-table-sort-indicator" aria-hidden="true">
+          <IconMdiChevronDown className={clsx('rating-table-sort-chevron', sorted === 'asc' && 'rotate-180')} />
+          {sorted && priority !== null && <sup className="rating-table-sort-priority">{priority}</sup>}
+        </span>
+      )}
+      {sorted && priority !== null && (
+        <span className="sr-only">{t('rating-calculator:table.sort-priority', { n: priority })}</span>
+      )}
+    </button>
+  )
+}
+
 function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean }) {
   const { allEntries } = useRatingEntries()
   const { t } = useTranslation(['rating-calculator'])
 
-  const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING)
-  // The default order (bucket, then rating) needs no numbers; the priority shows once the user builds a multi-sort
-  const showSortPriority = sorting.length > 1 && !isDefaultSorting(sorting)
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'includedIn', desc: true },
+    { id: 'rating', desc: true },
+  ])
 
   const columns = useMemo(
     () => [
@@ -596,68 +620,66 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
 
   // False on the first render (as on the server), then follows the viewport; the CSS sets the row height to match
   const isDesktop = useMediaQuery(DESKTOP_QUERY)
-  const breakpoint = isDesktop ? 'desktop' : 'base'
+  const rowHeight = ROW_HEIGHTS[isDesktop ? 'desktop' : 'base']
+
+  // The header sits on the records panel like the form above it; only once it sticks over the rows does it take the
+  // glass material and a shadow. A sentinel just above the table scrolls out of view at that moment.
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const [headerStuck, setHeaderStuck] = useState(false)
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry) setHeaderStuck(!entry.isIntersecting && entry.boundingClientRect.top < 0)
+    })
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [])
 
   return (
-    <TableVirtuoso<Row<Entry>>
-      // Virtuoso caches item measurements; a breakpoint change must discard the previous row heights.
-      key={breakpoint}
-      useWindowScroll
-      fixedItemHeight={ROW_HEIGHTS[breakpoint]}
-      computeItemKey={(_, row) => row.original.sheetId}
-      data={table.getRowModel().rows}
-      className="w-full"
-      increaseViewportBy={400}
-      overscan={10}
-      components={TableComponents}
-      fixedHeaderContent={() =>
-        table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) => {
-              return (
-                <TableCell
-                  key={header.id}
-                  colSpan={header.colSpan}
-                  className={`rating-col--${header.column.id} group`}
-                  scope="col"
-                  sortDirection={header.column.getIsSorted() || false}
-                >
-                  {header.isPlaceholder ? null : (
-                    <button
-                      type="button"
-                      className="rating-table-sort"
-                      data-sorted={header.column.getIsSorted() || undefined}
-                      disabled={!header.column.getCanSort()}
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      <span className="rating-table-sort-label">
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                      </span>
-                      {header.column.getCanSort() && (
-                        // A quiet chevron in the text colour; the priority shows as a superscript only when
-                        // several columns are sorted
-                        <span className="rating-table-sort-indicator" aria-hidden="true">
-                          <IconMdiChevronDown className="rating-table-sort-chevron" />
-                          {header.column.getIsSorted() && showSortPriority && (
-                            <sup className="rating-table-sort-priority">{header.column.getSortIndex() + 1}</sup>
-                          )}
-                        </span>
-                      )}
-                      {header.column.getIsSorted() && sorting.length > 1 && (
-                        // Screen readers hear the priority even for the default order
-                        <span className="sr-only">
-                          {t('rating-calculator:table.sort-priority', { n: header.column.getSortIndex() + 1 })}
-                        </span>
-                      )}
-                    </button>
-                  )}
-                </TableCell>
-              )
-            })}
-          </TableRow>
-        ))
-      }
-      itemContent={getItemContent}
-    />
+    <div className="rating-table-wrap" data-stuck={headerStuck || undefined}>
+      <div ref={sentinelRef} className="rating-table-sentinel" aria-hidden="true" />
+      <TableVirtuoso<Row<Entry>>
+        // Virtuoso caches item measurements; a breakpoint change must discard the previous row heights.
+        key={isDesktop ? 'desktop' : 'base'}
+        useWindowScroll
+        fixedItemHeight={rowHeight}
+        computeItemKey={(_, row) => row.original.sheetId}
+        data={table.getRowModel().rows}
+        className="w-full"
+        increaseViewportBy={400}
+        overscan={10}
+        components={TableComponents}
+        fixedHeaderContent={() =>
+          table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                return (
+                  <TableCell
+                    key={header.id}
+                    colSpan={header.colSpan}
+                    className={`rating-col--${header.column.id}`}
+                    scope="col"
+                    sortDirection={header.column.getIsSorted() || false}
+                  >
+                    {header.isPlaceholder ? null : (
+                      <RatingTableSortButton
+                        label={flexRender(header.column.columnDef.header, header.getContext())}
+                        canSort={header.column.getCanSort()}
+                        sorted={header.column.getIsSorted()}
+                        // The priority only means something when more than one column is sorted
+                        priority={sorting.length > 1 ? header.column.getSortIndex() + 1 : null}
+                        onClick={header.column.getToggleSortingHandler()}
+                      />
+                    )}
+                  </TableCell>
+                )
+              })}
+            </TableRow>
+          ))
+        }
+        itemContent={getItemContent}
+      />
+    </div>
   )
 }
