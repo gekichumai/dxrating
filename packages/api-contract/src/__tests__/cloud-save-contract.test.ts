@@ -174,6 +174,11 @@ describe('input validation', () => {
     expect(ImportRecordSchema.safeParse({ ...record, comboFlag: 'fdx' }).success).toBe(false)
   })
 
+  it('refuses U+0000, which PostgreSQL text and JSONB cannot store', () => {
+    expect(ImportRecordSchema.safeParse({ ...record, providerRecordId: '123' }).success).toBe(true)
+    expect(ImportRecordSchema.safeParse({ ...record, providerRecordId: '1\u00002' }).success).toBe(false)
+  })
+
   it('limits mutations to 500 and requires UUIDv7 IDs', () => {
     const del = (i: number) => ({
       mutationId: `01927b5e-8f3a-7c2d-9e4f-${i.toString(16).padStart(12, '0')}`,
