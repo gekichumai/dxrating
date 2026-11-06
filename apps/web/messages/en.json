@@ -1283,7 +1283,6 @@
   "home_features_trending_description": "Charts people view now",
   "home_features_versions_title": "Versions",
   "home_features_versions_description": "Songs by game version",
-  "home_backToHome": "Back to Home",
   "completion_title": "Your progress",
   "completion_target": "Target",
   "completion_rate": "Lv.{level} {target} rate: {percent}%",

@@ -111,9 +111,6 @@ const QuickStats: FC = () => {
   )
 }
 
-/** Marks a link from the home page, so the page it opens offers a way back (BackToHomeLink) */
-const FROM_HOME_STATE = { fromHome: true }
-
 export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recentSongs }) => {
   const { t } = useTranslation(['home', 'sheet'])
   // Scores live on the client only: the server and cached HTML stay user-agnostic
@@ -157,7 +154,6 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
             </SectionTitle>
             <Link
               to="/charts/recent"
-              state={FROM_HOME_STATE}
               onClick={() => trackClick('recent', 'see_all')}
               className="inline-flex min-h-6 items-center rounded-[var(--radius-sm)] px-2 text-sm font-semibold text-accent-strong no-underline hover:underline"
             >
@@ -217,13 +213,7 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
             const Icon = FEATURE_ICONS[feature.id]
             return (
               <li key={feature.id} className="snap-start">
-                <Link
-                  to={feature.to}
-                  // New charts is the same list as "See all" above, so it offers the same way back
-                  state={feature.id === 'recent' ? FROM_HOME_STATE : undefined}
-                  onClick={() => trackClick('feature', feature.id)}
-                  className={CARD_LINK}
-                >
+                <Link to={feature.to} onClick={() => trackClick('feature', feature.id)} className={CARD_LINK}>
                   <MaterialSurface className={`flex h-full items-start gap-2.5 px-3 py-2.5 ${CARD_SURFACE}`}>
                     <Icon aria-hidden="true" className="size-5 shrink-0 text-accent-strong" />
                     <span className="flex min-w-0 flex-col">

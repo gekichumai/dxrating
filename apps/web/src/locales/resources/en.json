@@ -1136,8 +1136,7 @@
     "features.trending.title": "Trending",
     "features.trending.description": "Charts people view now",
     "features.versions.title": "Versions",
-    "features.versions.description": "Songs by game version",
-    "back-to-home": "Back to Home"
+    "features.versions.description": "Songs by game version"
   },
   "completion": {
     "title": "Your progress",

@@ -1,4 +1,4 @@
-import { type FC, type ReactNode, useId } from 'react'
+import { type FC, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RecentChartLink } from '@/components/chartDiscovery/recentCharts'
 import { SheetListItemContentView, SheetListItemSummary } from '@/components/sheet/SheetListItem'
@@ -9,8 +9,6 @@ import { formatSheetReleaseDateParts, sheetReleaseDateTimestamp } from '@/utils/
 
 type RecentPageProps = {
   charts: readonly RecentChartLink[]
-  /** Shown above the title, such as the way back to the home page (BackToHomeLink) */
-  backLink?: ReactNode
 }
 
 const siteUrl = 'https://dxrating.net'
@@ -47,7 +45,7 @@ export const groupRecentCharts = (charts: readonly RecentChartLink[]): RecentCha
   return [...groups.values()]
 }
 
-export const RecentPage: FC<RecentPageProps> = ({ charts, backLink }) => {
+export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
   const { i18n, t } = useTranslation(['sheet', 'toplists'])
   const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
   const groups = groupRecentCharts(charts)
@@ -60,7 +58,6 @@ export const RecentPage: FC<RecentPageProps> = ({ charts, backLink }) => {
     >
       <div className="w-full flex flex-col gap-4">
         <header className="w-full flex flex-col gap-2">
-          {backLink}
           <h1 className="page-title m-0" itemProp="name">
             {t('sheet:chart-discovery.recent.title')}
           </h1>

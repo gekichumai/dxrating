@@ -5,17 +5,12 @@ import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
 import { HomeHub } from '../HomeHub'
 
-const linkStates = vi.hoisted(() => new Map<string, unknown>())
-
 vi.mock('@tanstack/react-router', () => ({
-  Link: ({ to, state, children, ...props }: { to: string; state?: unknown; children: ReactNode }) => {
-    if (state) linkStates.set(to, state)
-    return (
-      <a href={to} {...props}>
-        {children}
-      </a>
-    )
-  },
+  Link: ({ to, children, ...props }: { to: string; children: ReactNode }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
 }))
 
 vi.mock('../useHomeQuickStats', () => ({ useHomeQuickStats: () => null }))
@@ -51,9 +46,4 @@ describe('HomeHub', () => {
     expect(content.className).toContain('hidden sm:block')
   })
 
-  it('marks its links to the new charts list so that page offers a way back', () => {
-    render(<HomeHub recentSongs={recentSongs} />)
-
-    expect(linkStates.get('/charts/recent')).toEqual({ fromHome: true })
-  })
 })

@@ -1283,7 +1283,6 @@
   "home_features_trending_description": "지금 많이 보는 보면",
   "home_features_versions_title": "버전",
   "home_features_versions_description": "버전별 수록곡",
-  "home_backToHome": "홈으로 돌아가기",
   "completion_title": "내 진행도",
   "completion_target": "목표",
   "completion_rate": "Lv.{level} {target} 달성률: {percent}%",

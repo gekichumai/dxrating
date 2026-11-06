@@ -1136,8 +1136,7 @@
     "features.trending.title": "熱門",
     "features.trending.description": "大家正在看的譜面",
     "features.versions.title": "版本",
-    "features.versions.description": "依版本瀏覽曲目",
-    "back-to-home": "返回首頁"
+    "features.versions.description": "依版本瀏覽曲目"
   },
   "completion": {
     "title": "你的進度",

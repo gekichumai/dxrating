@@ -1136,8 +1136,7 @@
     "features.trending.title": "トレンド",
     "features.trending.description": "いま注目の譜面",
     "features.versions.title": "バージョン",
-    "features.versions.description": "バージョン別の収録曲",
-    "back-to-home": "ホームに戻る"
+    "features.versions.description": "バージョン別の収録曲"
   },
   "completion": {
     "title": "あなたの達成状況",

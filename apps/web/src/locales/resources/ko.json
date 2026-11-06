@@ -1136,8 +1136,7 @@
     "features.trending.title": "인기",
     "features.trending.description": "지금 많이 보는 보면",
     "features.versions.title": "버전",
-    "features.versions.description": "버전별 수록곡",
-    "back-to-home": "홈으로 돌아가기"
+    "features.versions.description": "버전별 수록곡"
   },
   "completion": {
     "title": "내 진행도",

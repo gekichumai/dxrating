@@ -1283,7 +1283,6 @@
   "home_features_trending_description": "大家正在看的谱面",
   "home_features_versions_title": "版本",
   "home_features_versions_description": "按版本浏览曲目",
-  "home_backToHome": "返回首页",
   "completion_title": "你的进度",
   "completion_target": "目标",
   "completion_rate": "Lv.{level} {target} 达成率：{percent}%",
