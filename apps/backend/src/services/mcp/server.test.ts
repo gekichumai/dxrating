@@ -1,5 +1,5 @@
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
+import { Client } from '@modelcontextprotocol/client'
+import { InMemoryTransport } from '@modelcontextprotocol/server'
 import { afterEach, describe, expect, it } from 'vitest'
 import { buildMcpCatalog, type McpCatalog } from './catalog'
 import { createMcpServer, INSTRUCTIONS, MCP_TOOL_NAMES, SERVER_NAME, serverVersion } from './server'

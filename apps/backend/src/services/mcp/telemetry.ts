@@ -19,6 +19,8 @@ export const MCP_USAGE_FLUSH_INTERVAL = '1 minute'
 
 const KNOWN_METHODS = new Set([
   'initialize',
+  'server/discover',
+  'subscriptions/listen',
   'ping',
   'tools/list',
   'tools/call',
@@ -97,7 +99,9 @@ const protocolVersion = (value: unknown) =>
 
 /** The clientInfo of an initialize, else the client reported in params._meta */
 function clientInfo(params: JsonObject | undefined): { name?: string; version?: string } {
-  const candidates = [params?.clientInfo, isObject(params?._meta) ? params._meta.clientInfo : undefined]
+  // initialize has it in params; 2026-07-28 requests in _meta under io.modelcontextprotocol/clientInfo
+  const meta = isObject(params?._meta) ? params._meta : undefined
+  const candidates = [params?.clientInfo, meta?.['io.modelcontextprotocol/clientInfo'], meta?.clientInfo]
   for (const info of candidates) {
     if (isObject(info) && typeof info.name === 'string') {
       return {

@@ -4,6 +4,8 @@ import {
   buildDevelopersSeo,
   buildRootSeoMeta,
   buildSearchSeo,
+  buildSongHubSeo,
+  buildSongHubTitle,
   buildSongSheetSeo,
   buildSongSheetStructuredData,
   resolveSeoLocale,
@@ -88,6 +90,7 @@ describe('SEO localization', () => {
         imageName: 'test-song',
         id: 'test-song',
         bpm: 180,
+        searchAcronyms: ['ts', 'テスト', 'ts'],
       },
       {
         type: TypeEnum.DX,
@@ -129,6 +132,7 @@ describe('SEO localization', () => {
         expect.objectContaining({
           '@type': 'MusicRecording',
           name: 'Test Song',
+          alternateName: ['ts', 'テスト'],
           byArtist: expect.objectContaining({ name: 'Test Artist' }),
         }),
         expect.objectContaining({
@@ -181,5 +185,91 @@ describe('SEO localization', () => {
     expect(buildSongSheetSeo(song, { ...sheet, internalLevelValue: 0 }, 'zh-Hant').title).toBe(
       'Sky Trails DX MASTER Lv.14+｜maimai DX 譜面 - DXRating',
     )
+  })
+})
+describe('song hub SEO', () => {
+  const song = {
+    id: 'dsng_test',
+    title: 'Test Song',
+    artist: 'Test Artist',
+    category: CategoryEnum.Maimai,
+    imageName: 'test-song',
+    bpm: 180,
+    aliases: ['ts', 'テスト', 'ts', 'Test Song'],
+  }
+
+  it('puts the BPM in the title in every locale', () => {
+    expect(buildSongHubTitle(song, 'ja')).toBe('Test Song 譜面定数・BPM180 | maimai でらっくす - DXRating')
+    expect(buildSongHubTitle(song, 'en')).toBe('Test Song – maimai DX charts, BPM 180 | DXRating')
+    expect(buildSongHubTitle(song, 'zh-Hans')).toBe('Test Song 谱面定数・BPM 180 - 舞萌DX | DXRating')
+    expect(buildSongHubTitle(song, 'zh-Hant')).toBe('Test Song 譜面定數・BPM 180｜maimai DX - DXRating')
+    expect(buildSongHubTitle(song, 'ko')).toBe('Test Song 채보 상수·BPM 180 - maimai DX | DXRating')
+  })
+
+  it('falls back to a title without BPM when the song has none', () => {
+    expect(buildSongHubTitle({ title: 'Test Song', bpm: null }, 'ja')).toBe(
+      'Test Song 譜面定数 | maimai でらっくす - DXRating',
+    )
+    expect(buildSongHubTitle({ title: 'Test Song' }, 'en')).toBe('Test Song – maimai DX charts | DXRating')
+    expect(buildSongHubSeo({ ...song, bpm: undefined }, 'en').description).not.toContain('BPM')
+  })
+
+  it('builds hub meta and a MusicRecording with the aliases as alternateName', () => {
+    const seo = buildSongHubSeo(song, 'en')
+    expect(seo.url).toBe('https://dxrating.net/songs/dsng_test')
+    expect(seo.meta).toContainEqual({ title: seo.title })
+    expect(seo.meta).toContainEqual({ property: 'og:url', content: 'https://dxrating.net/songs/dsng_test' })
+    expect(seo.description).toContain('BPM 180')
+    expect(seo.structuredData['@graph']).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          '@type': 'MusicRecording',
+          name: 'Test Song',
+          alternateName: ['ts', 'テスト'],
+          byArtist: expect.objectContaining({ name: 'Test Artist' }),
+        }),
+        expect.objectContaining({
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            expect.objectContaining({ position: 1, item: 'https://dxrating.net/' }),
+            expect.objectContaining({ position: 2, name: 'Test Song', item: 'https://dxrating.net/songs/dsng_test' }),
+          ],
+        }),
+      ]),
+    )
+  })
+})
+
+describe('chart page breadcrumb', () => {
+  it('goes DXRating > song hub > chart, and keeps the chart title', () => {
+    const song = {
+      title: 'Test Song',
+      artist: 'Test Artist',
+      category: CategoryEnum.Maimai,
+      imageName: 'test-song',
+      id: 'dsng_test',
+      bpm: 180,
+    }
+    const sheet = {
+      type: TypeEnum.DX,
+      difficulty: DifficultyEnum.Master,
+      level: '13+',
+      internalLevelValue: 13.7,
+      noteCounts: { total: 700 },
+      serverIds: [ServerEnum.JP],
+      version: VersionEnum.CiRCLEPLUS,
+    }
+    const graph = buildSongSheetStructuredData(song, sheet, 'en')['@graph']
+    const breadcrumb = graph.find((node) => node['@type'] === 'BreadcrumbList')
+    expect(breadcrumb?.itemListElement).toEqual([
+      expect.objectContaining({ position: 1, name: 'DXRating', item: 'https://dxrating.net/' }),
+      expect.objectContaining({ position: 2, name: 'Test Song', item: 'https://dxrating.net/songs/dsng_test' }),
+      expect.objectContaining({
+        position: 3,
+        name: 'DX MASTER',
+        item: 'https://dxrating.net/songs/dsng_test/dx/master',
+      }),
+    ])
+    expect(buildSongSheetSeo(song, sheet, 'en').title).not.toContain('BPM')
   })
 })

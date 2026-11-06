@@ -1,23 +1,46 @@
-import { IconButton } from '@mui/material'
+import { IconButton, useMediaQuery } from '@mui/material'
 import IconMdiClose from '~icons/mdi/close'
 import type { FC } from 'react'
 import toast, { ToastBar, Toaster } from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 
 export const CustomizedToaster: FC = () => {
+  const { t: translate } = useTranslation(['global'])
+  // Same 768px breakpoint as useIsLargeDevice; false on the server and the first client render, so SSR markup matches
+  const isLargeDevice = useMediaQuery('(min-width: 768px)')
+
   return (
     <Toaster
+      // Phones: at the bottom, clear of the header's sign-in button. Larger screens: top-right, below the header
+      position={isLargeDevice ? 'top-right' : 'bottom-center'}
       toastOptions={{
-        className: 'font-bold pr-1 py-2 rounded-xl',
+        // Glass overlay material (src/styles/tokens.css); inline so it wins over react-hot-toast's own styles
+        style: {
+          backgroundColor: 'var(--glass-overlay-bg)',
+          backdropFilter: 'var(--glass-blur)',
+          WebkitBackdropFilter: 'var(--glass-blur)',
+          border: '1px solid var(--glass-border)',
+          boxShadow: 'var(--glass-highlight), var(--shadow-overlay)',
+          borderRadius: 'var(--radius-lg)',
+          color: 'var(--fg-1)',
+          fontSize: '0.875rem',
+          lineHeight: 1.45,
+          maxWidth: '26rem',
+          padding: '0.5rem 0.25rem 0.5rem 0.75rem',
+        },
+        // Errors carry the recovery step, so they stay until dismissed
         error: {
-          duration: 10e3,
+          duration: Number.POSITIVE_INFINITY,
         },
         success: {
-          duration: 5e3,
+          duration: 6e3,
         },
       }}
-      containerStyle={{
-        marginTop: 'calc(env(safe-area-inset-top) + 1rem)',
-      }}
+      containerStyle={
+        isLargeDevice
+          ? { top: 'calc(env(safe-area-inset-top) + 5rem)', right: 'calc(env(safe-area-inset-right) + 1rem)' }
+          : { bottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }
+      }
     >
       {(t) => (
         <ToastBar toast={t}>
@@ -26,8 +49,14 @@ export const CustomizedToaster: FC = () => {
               {icon}
               {message}
               {t.type !== 'loading' && (
-                <IconButton size="small" onClick={() => toast.dismiss(t.id)}>
-                  <IconMdiClose />
+                <IconButton
+                  size="small"
+                  onClick={() => toast.dismiss(t.id)}
+                  aria-label={translate('global:toast.dismiss')}
+                  title={translate('global:toast.dismiss')}
+                  className="!self-start !text-fg-2"
+                >
+                  <IconMdiClose aria-hidden="true" />
                 </IconButton>
               )}
             </>

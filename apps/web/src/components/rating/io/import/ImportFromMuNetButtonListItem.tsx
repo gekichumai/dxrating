@@ -9,6 +9,7 @@ import { z } from 'zod'
 import MdiEarthArrowDown from '~icons/mdi/earth-arrow-down'
 import { useWebHaptics } from 'web-haptics/react'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
+import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
 
@@ -77,7 +78,17 @@ export const ImportFromMuNetButtonListItem: FC<{
                 console.warn('[ImportFromMuNetButtonListItem]', warning.message, warning.row)
               }
 
-              await repository.applyImport(entries, { source: 'mu-net', mode: 'replace' })
+              const { applied } = await reviewAndApplyImport(
+                repository,
+                entries,
+                { source: 'mu-net', mode: 'replace' },
+                { trigger: 'manual' },
+              )
+              if (!applied) {
+                analytics.failed('cancelled_by_user')
+                toast(t('rating-calculator:io.import.review.cancelled'), { id: 'import-review-cancelled' })
+                return
+              }
               analytics.succeeded(entries.length, importResult.warnings.length)
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.mu-net.success', { count: entries.length }))

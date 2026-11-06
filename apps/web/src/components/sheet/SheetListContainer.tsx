@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import { useCallback } from 'react'
 import { type ItemContent, Virtuoso } from 'react-virtuoso'
 import type { FlattenedSheet } from '../../songs'
+import { MaterialSurface } from '../global/MaterialSurface'
 import { SheetListItem, type SheetListItemAnalyticsProps } from './SheetListItem'
 
 /** The rows a list renders before it can measure the viewport: all a server render shows */
@@ -52,15 +53,21 @@ export const SheetListContainer = ({
   )
 
   return (
-    <div className={clsx('w-full', listContainerClassName)}>
-      <Virtuoso
-        useWindowScroll
-        data={sheets}
-        itemContent={ItemContent}
-        className="w-full min-h-[100lvh]"
-        increaseViewportBy={500}
-        initialItemCount={Math.min(sheets.length, SHEET_LIST_FIRST_SCREEN_ROWS)}
-      />
+    // The outer box keeps the page height steady while results change; the glass panel hugs the rows, which sit at a
+    // 4px inset so their 8px radius nests in its 12px one
+    <div className={clsx('w-full min-h-[100lvh]', listContainerClassName)}>
+      {sheets.length > 0 && (
+        <MaterialSurface className="w-full p-1">
+          <Virtuoso
+            useWindowScroll
+            data={sheets}
+            itemContent={ItemContent}
+            className="w-full"
+            increaseViewportBy={500}
+            initialItemCount={Math.min(sheets.length, SHEET_LIST_FIRST_SCREEN_ROWS)}
+          />
+        </MaterialSurface>
+      )}
     </div>
   )
 }

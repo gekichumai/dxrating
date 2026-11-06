@@ -9,11 +9,12 @@ export const SearchQuerySeedList: FC<{ sheets: readonly SearchQuerySeedSheet[] }
   if (sheets.length === 0) return null
 
   return (
-    <ol className="w-full" data-testid="search-query-seed-list">
+    <ol className="glass m-0 w-full list-none p-1" data-testid="search-query-seed-list">
       {sheets.map((sheet) => (
         <li key={`${sheet.songId}-${sheet.type}-${sheet.difficulty}`}>
           <a
-            className="block w-full cursor-pointer transition-colors duration-150 hover:duration-25 px-4 no-underline text-inherit hover:bg-zinc-300/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
+            // Rows match the virtualised list: --radius-md at a 4px inset, and the global focus ring drawn inside
+            className="block w-full cursor-pointer rounded-[var(--radius-md)] px-2 md:px-3 no-underline text-inherit transition-colors duration-150 hover:duration-25 hover:bg-black/4 focus-visible:outline-offset-[-2px]"
             href={sheet.path}
           >
             <SheetListItemContentView

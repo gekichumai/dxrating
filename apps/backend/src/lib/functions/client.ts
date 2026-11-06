@@ -1,4 +1,4 @@
-import { Effect, Data, Schedule } from 'effect'
+import { Effect, Data, Option, Schedule } from 'effect'
 
 export class NetRequestError extends Data.TaggedError('NetRequestError')<{
   readonly operation: string
@@ -11,7 +11,7 @@ export class NetRequestError extends Data.TaggedError('NetRequestError')<{
 
 import cookie from 'cookie'
 import tls from 'node:tls'
-import { DOMParser } from 'xmldom-qsa'
+import { DOMParser, XMLSerializer } from 'xmldom-qsa'
 import { URLS } from './URLS'
 
 import { Agent, Headers, type RequestInit, fetch } from 'undici'
@@ -38,13 +38,126 @@ export type NetImportErrorCode =
   | 'INTERNAL_ERROR'
   | 'TOKEN_ERROR'
 
+/**
+ * The request of an import that failed, for Sentry: derived from the URL path alone (never the URL, which may carry a
+ * session id), so it is a small fixed set
+ */
+export type NetStep =
+  | 'login_page'
+  | 'login_submit'
+  | 'login_callback'
+  | 'aime_list'
+  | 'aime_select'
+  | 'home'
+  | 'record_recent'
+  | `record_music_${string}`
+  | 'other'
+
+export interface NetImportErrorDetails {
+  /** The request that failed */
+  readonly step?: NetStep
+  /** The ERROR CODE maimai NET showed on its error page, digits only */
+  readonly netErrorCode?: string
+  /**
+   * What SEGA's page said when it refused the request: its error text or title, and whether it showed a captcha.
+   * The submitted ID, e-mail addresses and long digit runs are removed (pageSignals).
+   */
+  readonly upstreamMessage?: string
+}
+
 export class NetImportError extends Data.TaggedError('NetImportError')<{
   readonly code: NetImportErrorCode
   readonly message: string
+  readonly step?: NetStep
+  readonly netErrorCode?: string
+  readonly upstreamMessage?: string
 }> {
-  constructor(code: NetImportErrorCode, message?: string) {
-    super({ code, message: message ?? code })
+  constructor(code: NetImportErrorCode, message?: string, details: NetImportErrorDetails = {}) {
+    super({ code, message: message ?? code, ...details })
   }
+}
+
+const MUSIC_DIFFICULTY_NAMES: Record<string, string> = {
+  '0': 'basic',
+  '1': 'advanced',
+  '2': 'expert',
+  '3': 'master',
+  '4': 'remaster',
+  '10': 'utage',
+}
+
+export function netStepOf(url: string): NetStep {
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    return 'other'
+  }
+  const path = parsed.pathname
+  if (path.startsWith('/common_auth/login/sid')) return 'login_submit'
+  if (path.startsWith('/common_auth/login')) return 'login_page'
+  if (path.endsWith('/maimai-mobile/submit/')) return 'login_submit'
+  if (path.includes('/aimeList/submit')) return 'aime_select'
+  if (path.includes('/aimeList')) return 'aime_list'
+  if (path.endsWith('/maimai-mobile/home/')) return 'home'
+  if (path.includes('/record/musicGenre/search')) {
+    return `record_music_${MUSIC_DIFFICULTY_NAMES[parsed.searchParams.get('diff') ?? ''] ?? 'other'}`
+  }
+  if (/\/maimai-mobile\/record\/?$/.test(path)) return 'record_recent'
+  // the international SEGA ID callback (?ssid=...) and the JP login page
+  if (/\/maimai-mobile\/?$/.test(path)) return parsed.searchParams.has('ssid') ? 'login_callback' : 'login_page'
+  return 'other'
+}
+
+/** The ERROR CODE of a maimai NET error page ("ERROR CODE：100001"), digits only; nothing else of the page is kept */
+export function parseNetErrorCode(html: string): string | undefined {
+  return /ERROR\s*CODE\s*[：:]\s*(\d{1,10})/i.exec(html)?.[1]
+}
+
+/** What we know an error page's code means, for the person importing; other codes get a generic message */
+const NET_ERROR_MESSAGES: Record<string, string> = {
+  '100001':
+    'maimai NET ended the session and asked to log in again (ERROR CODE 100001). Try again in a few minutes. If it keeps happening, log in to maimai NET in a browser once, then retry.',
+}
+
+export function netErrorPageMessage(netErrorCode: string | undefined): string {
+  if (!netErrorCode) return 'maimai NET redirected the request to its error page.'
+  return NET_ERROR_MESSAGES[netErrorCode] ?? `maimai NET showed its error page (ERROR CODE ${netErrorCode}).`
+}
+
+const MAINTENANCE_MESSAGE = 'maimai NET or the SEGA ID login is under maintenance.'
+
+const CAPTCHA_MARKERS = [
+  'g-recaptcha',
+  'recaptcha/api',
+  'hcaptcha',
+  'challenges.cloudflare.com/turnstile',
+  'cf-turnstile',
+]
+
+/**
+ * A short description of a SEGA page that refused a request, for diagnosis: its #error text (else its title), and a
+ * captcha if one is on it. Never the form, the URL or anything typed: the submitted ID, e-mail addresses and runs of 6+
+ * digits are removed, and the result is cut to 200 characters.
+ */
+export function pageSignals(html: string, submittedId?: string): string | undefined {
+  // never throws: it only describes a failure, so an empty or broken page has no signals rather than a defect
+  let dom: Document | undefined
+  try {
+    dom = html.trim() ? new DOMParser({ errorHandler: () => {} }).parseFromString(html, 'text/html') : undefined
+  } catch {
+    dom = undefined
+  }
+  const text = (selector: string) => dom?.querySelector(selector)?.textContent?.replace(/\s+/g, ' ').trim() || undefined
+  const parts = [
+    text('#error') ?? text('.error') ?? text('title'),
+    CAPTCHA_MARKERS.some((marker) => html.includes(marker)) ? 'captcha' : undefined,
+  ].filter((part): part is string => Boolean(part))
+  if (parts.length === 0) return undefined
+  let signals = parts.join(' | ')
+  if (submittedId) signals = signals.split(submittedId).join('[id]')
+  signals = signals.replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, '[email]').replace(/\d{6,}/g, '[number]')
+  return Array.from(signals).slice(0, 200).join('')
 }
 
 export const NODE_ELEMENT_NODE = 1
@@ -200,7 +313,8 @@ export class Client {
     this.#cookies.delete(hostname)
   }
 
-  fetchEffect = (url: string, init?: RequestInit, errorRedirectCode: NetImportErrorCode = 'UNKNOWN_ERROR') =>
+  /** One request with the cookies of the client, no redirect followed */
+  protected requestEffect = (url: string, init?: RequestInit) =>
     Effect.gen({ self: this }, function* () {
       const requestURL = yield* parseNetResponse(() => new URL(url))
       const cookies = this.getCookies(requestURL.hostname)
@@ -223,17 +337,56 @@ export class Client {
         catch: (cause) => new NetRequestError({ operation: 'request maimai NET', cause }),
       })
       this.setCookie(requestURL.hostname, res.headers)
-      if (res.status === 302 && URLS.CHECKLIST.ERROR.includes(res.headers.get('location') ?? '')) {
-        yield* Effect.tryPromise({
-          try: () => res.body?.cancel() ?? Promise.resolve(),
-          catch: (cause) => new NetRequestError({ operation: 'release maimai NET response', cause }),
-        })
+      return res
+    })
+
+  protected releaseEffect = (res: { body?: { cancel(): Promise<void> } | null }) =>
+    Effect.tryPromise({
+      try: () => res.body?.cancel() ?? Promise.resolve(),
+      catch: (cause) => new NetRequestError({ operation: 'release maimai NET response', cause }),
+    })
+
+  /**
+   * The ERROR CODE of the error page a request was redirected to: the page is requested once with the session cookies
+   * and only the code is kept. A failure to read it never hides the error itself.
+   */
+  protected errorPageCodeEffect = (location: string) =>
+    Effect.gen({ self: this }, function* () {
+      const page = yield* this.requestEffect(location)
+      const text = yield* Effect.tryPromise({
+        try: () => page.text(),
+        catch: (cause) => new NetRequestError({ operation: 'read maimai NET error page', cause }),
+      })
+      return parseNetErrorCode(text)
+    }).pipe(Effect.timeout('5 seconds'), Effect.option, Effect.map(Option.getOrUndefined))
+
+  fetchEffect = (url: string, init?: RequestInit, errorRedirectCode: NetImportErrorCode = 'UNKNOWN_ERROR') =>
+    Effect.gen({ self: this }, function* () {
+      const step = netStepOf(url)
+      const res = yield* this.requestEffect(url, init)
+      const location = res.headers.get('location') ?? ''
+      // maimai NET answers 503 during emergency maintenance; the Aime gateway and NET redirect to a maintenance page
+      if (
+        res.status === 503 ||
+        (res.status >= 300 && res.status < 400 && URLS.CHECKLIST.MAINTENANCE_REDIRECT.test(location))
+      ) {
+        yield* this.releaseEffect(res)
+        return yield* Effect.fail(new NetImportError('NET_MAINTENANCE', MAINTENANCE_MESSAGE, { step }))
+      }
+      if (res.status === 302 && URLS.CHECKLIST.ERROR.includes(location)) {
+        yield* this.releaseEffect(res)
+        // the code tells a rejected password from a refusal of another kind (DXRATING-BACKEND-1W, the 11-01 outage)
+        const netErrorCode =
+          errorRedirectCode === 'AIME_CARD_UNAVAILABLE' ? undefined : yield* this.errorPageCodeEffect(location)
         return yield* Effect.fail(
           new NetImportError(
             errorRedirectCode,
             errorRedirectCode === 'AIME_CARD_UNAVAILABLE'
               ? 'SEGA ID authentication succeeded, but maimai NET did not provide a usable Aime card.'
-              : 'maimai NET redirected the request to its error page.',
+              : errorRedirectCode === 'INVALID_CREDENTIALS'
+                ? 'maimai NET rejected the SEGA ID login.'
+                : netErrorPageMessage(netErrorCode),
+            { step, netErrorCode },
           ),
         )
       }
@@ -247,7 +400,7 @@ export class Client {
         try: () => res.text(),
         catch: (cause) => new NetRequestError({ operation: 'read maimai NET response', cause }),
       })
-      yield* this.checkMaintenanceEffect(text)
+      yield* this.checkMaintenanceEffect(text, netStepOf(url))
       return yield* Effect.try({
         try: () => new DOMParser({ errorHandler: () => {} }).parseFromString(text, 'text/html'),
         catch: () => new NetImportError('INTERNAL_ERROR', 'failed to parse record page'),
@@ -271,9 +424,9 @@ export class Client {
       catch: (cause) => new NetRequestError({ operation: 'publish maimai NET progress', cause }),
     })
 
-  protected checkMaintenanceEffect = (text: string) =>
+  protected checkMaintenanceEffect = (text: string, step?: NetStep) =>
     Effect.try({
-      try: () => this.checkMaintenance(text),
+      try: () => this.checkMaintenance(text, step),
       catch: (error) => (error instanceof NetImportError ? error : new NetImportError('INTERNAL_ERROR')),
     })
 
@@ -287,9 +440,9 @@ export class Client {
       catch: (cause) => new NetRequestError({ operation: 'close maimai NET connections', cause }),
     })
 
-  checkMaintenance(text: string) {
+  checkMaintenance(text: string, step?: NetStep) {
     if (URLS.CHECKLIST.MAINTENANCE.some((m) => text.includes(m))) {
-      throw new NetImportError('NET_MAINTENANCE')
+      throw new NetImportError('NET_MAINTENANCE', MAINTENANCE_MESSAGE, { step })
     }
   }
 }
@@ -301,7 +454,12 @@ export class MaimaiNETJpClient extends Client {
 
       const loginPage = yield* this.fetchAsDOMEffect(URLS.JP.LOGIN_PAGE)
       const loginPageToken = loginPage?.querySelector('input[name="token"]')?.attributes.getNamedItem('value')?.value
-      if (!loginPageToken) return yield* Effect.fail(new NetImportError('TOKEN_ERROR'))
+      if (!loginPageToken) {
+        const upstreamMessage = yield* Effect.sync(() =>
+          loginPage ? pageSignals(new XMLSerializer().serializeToString(loginPage)) : undefined,
+        )
+        return yield* Effect.fail(new NetImportError('TOKEN_ERROR', undefined, { step: 'login_page', upstreamMessage }))
+      }
 
       const login = yield* this.fetchEffect(
         URLS.JP.LOGIN_ENDPOINT,
@@ -394,10 +552,15 @@ export class MaimaiNETIntlClient extends Client {
         }),
       })
       if (loginResponse.status !== 302) {
+        const page = yield* Effect.tryPromise({
+          try: () => loginResponse.text(),
+          catch: (cause) => new NetRequestError({ operation: 'read maimai NET login response', cause }),
+        })
         return yield* Effect.fail(
           new NetImportError(
             'INTERNAL_ERROR',
             `unexpected login response status: ${loginResponse.status} ${URLS.INTL.LOGIN_ENDPOINT}`,
+            { step: 'login_submit', upstreamMessage: pageSignals(page, id) },
           ),
         )
       }
@@ -407,7 +570,7 @@ export class MaimaiNETIntlClient extends Client {
         catch: (cause) => new NetRequestError({ operation: 'release maimai NET login response', cause }),
       })
       if (!redirectURL) {
-        return yield* Effect.fail(new NetImportError('INVALID_CREDENTIALS'))
+        return yield* Effect.fail(new NetImportError('INVALID_CREDENTIALS', undefined, { step: 'login_submit' }))
       }
 
       const redirectDestinationResponse = yield* this.fetchEffect(redirectURL, undefined, 'AIME_CARD_UNAVAILABLE')
@@ -416,14 +579,19 @@ export class MaimaiNETIntlClient extends Client {
         try: () => redirectDestinationResponse.text(),
         catch: (cause) => new NetRequestError({ operation: 'read maimai NET login response', cause }),
       })
-      yield* this.checkMaintenanceEffect(redirectDestinationText)
+      yield* this.checkMaintenanceEffect(redirectDestinationText, 'login_callback')
 
       if (redirectURL.startsWith('https://lng-tgk-aime-gw.am-all.net/common_auth/login')) {
         const textDom = yield* parseNetResponse(() =>
           new DOMParser({ errorHandler: () => {} }).parseFromString(redirectDestinationText, 'text/html'),
         )
         const errorString = textDom.querySelector('#error')?.textContent?.trim() ?? undefined
-        return yield* Effect.fail(new NetImportError('INVALID_CREDENTIALS', errorString))
+        return yield* Effect.fail(
+          new NetImportError('INVALID_CREDENTIALS', errorString, {
+            step: 'login_submit',
+            upstreamMessage: pageSignals(redirectDestinationText, id),
+          }),
+        )
       }
 
       yield* this.progress('auth:succeeded')
@@ -475,3 +643,22 @@ export const withMaimaiNETClient = <A, E, R>(
       (client) => client.disposeEffect().pipe(Effect.orDie),
     ).pipe(Effect.flatMap(use)),
   )
+export type NetGatewayStatus = 'ok' | 'maintenance' | 'unknown'
+
+/**
+ * Whether the region's login page is reachable or in SEGA's maintenance, from one anonymous request with no
+ * credentials (the same detection as a real import). Never fails: anything else, including a timeout, is `unknown`.
+ */
+export const gatewayStatusEffect = (client: MaimaiNETJpClient | MaimaiNETIntlClient, region: 'jp' | 'intl') =>
+  client.fetchAsDOMEffect(region === 'jp' ? URLS.JP.LOGIN_PAGE : URLS.INTL.LOGIN_PAGE).pipe(
+    Effect.as<NetGatewayStatus>('ok'),
+    Effect.timeout('8 seconds'),
+    Effect.catch((error) =>
+      Effect.succeed<NetGatewayStatus>(
+        error instanceof NetImportError && error.code === 'NET_MAINTENANCE' ? 'maintenance' : 'unknown',
+      ),
+    ),
+  )
+
+export const netGatewayStatusEffect = (region: 'jp' | 'intl') =>
+  withMaimaiNETClient(region, (client) => gatewayStatusEffect(client, region))
