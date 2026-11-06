@@ -58,7 +58,8 @@
     "version-update.description": "{{region}} now has {{latest}}. Switch your data version from {{current}} to {{latest}}?",
     "version-update.confirm": "Use {{latest}}",
     "version-update.keep": "Keep {{current}}",
-    "version-update.later": "Not now"
+    "version-update.later": "Not now",
+    "version-and-region.regional": "Latest version in each region"
   },
   "sheet": {
     "sort.remove": "Remove sort rule {{index}}",
@@ -868,7 +869,15 @@
     "era.dx": "DX",
     "era.classic": "Classic",
     "era.dx-range": "2019–",
-    "era.classic-range": "2012–2018"
+    "era.classic-range": "2012–2018",
+    "picker.title": "Choose versions",
+    "picker.all": "All versions",
+    "picker.none": "No versions",
+    "picker.more": "+{{count}}",
+    "picker.select-all": "Select all",
+    "picker.clear": "Clear",
+    "picker.done": "Done",
+    "picker.selected-count": "{{count}} of {{total}} selected"
   },
   "share": {
     "image.button": "Share image",

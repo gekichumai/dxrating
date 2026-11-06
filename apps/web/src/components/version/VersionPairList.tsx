@@ -78,11 +78,13 @@ export const VersionEraPager: FC<{
 export const VersionPairGrid: FC<{
   pairs: VersionPair[]
   renderVersion: (version: VersionEnum) => ReactNode
+  /** The rows are layout only, inside a list of their own (a listbox of options) */
+  presentational?: boolean
   className?: string
-}> = ({ pairs, renderVersion, className }) => (
-  <ul className={clsx('m-0 p-0 list-none grid gap-2', className)}>
+}> = ({ pairs, renderVersion, presentational, className }) => (
+  <ul role={presentational ? 'none' : undefined} className={clsx('m-0 p-0 list-none grid gap-2', className)}>
     {pairs.map((pair) => (
-      <li key={pair.key} className="grid grid-cols-2 gap-1.5">
+      <li key={pair.key} role={presentational ? 'none' : undefined} className="grid grid-cols-2 gap-1.5">
         {pair.base ? renderVersion(pair.base) : <span aria-hidden />}
         {pair.plus ? renderVersion(pair.plus) : <span aria-hidden />}
       </li>

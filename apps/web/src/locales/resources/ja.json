@@ -58,7 +58,8 @@
     "version-update.description": "{{region}}では{{latest}}が利用できます。データバージョンを{{current}}から{{latest}}に切り替えますか？",
     "version-update.confirm": "{{latest}}に切り替える",
     "version-update.keep": "{{current}}を使い続ける",
-    "version-update.later": "後で"
+    "version-update.later": "後で",
+    "version-and-region.regional": "各地域の最新バージョン"
   },
   "sheet": {
     "sort.remove": "並べ替え条件 {{index}} を削除",
@@ -868,7 +869,15 @@
     "era.dx": "でらっくす",
     "era.classic": "旧筐体",
     "era.dx-range": "2019–",
-    "era.classic-range": "2012–2018"
+    "era.classic-range": "2012–2018",
+    "picker.title": "バージョンを選択",
+    "picker.all": "すべてのバージョン",
+    "picker.none": "バージョンなし",
+    "picker.more": "+{{count}}",
+    "picker.select-all": "すべて選択",
+    "picker.clear": "クリア",
+    "picker.done": "完了",
+    "picker.selected-count": "{{total}} 件中 {{count}} 件を選択"
   },
   "share": {
     "image.button": "画像で共有",

@@ -1,6 +1,6 @@
 import { VERSION_SORT_ORDER, type DifficultyEnum, type TypeEnum, type VersionEnum } from '@gekichumai/dxdata'
 import { calculateBest50, type VersionedSheet } from '@gekichumai/maimai-domain'
-import { Button, Chip, CircularProgress, Collapse, MenuItem, TextField } from '@mui/material'
+import { Button, Chip, CircularProgress, Collapse } from '@mui/material'
 import { Link } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { type FC, useEffect, useId, useMemo, useRef, useState } from 'react'
@@ -10,6 +10,7 @@ import { useSongCatalog, useCompleteSongCatalog } from '@/catalog/CatalogContext
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { difficultyTextStyle, ScorePageFrame, ScorePageHeader } from '@/components/scores/ScorePage'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
+import { VersionMultiSelect } from '@/components/version/VersionPicker'
 import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
@@ -102,7 +103,7 @@ export const RandomChartPage: FC = () => {
   )
   const versions = useMemo(() => {
     const appVersionIndex = VERSION_SORT_ORDER.indexOf(versionCatalog.version)
-    return VERSION_SORT_ORDER.filter((_, index) => appVersionIndex < 0 || index <= appVersionIndex)
+    return VERSION_SORT_ORDER.filter((_, index) => appVersionIndex < 0 || index <= appVersionIndex) as VersionEnum[]
   }, [versionCatalog.version])
 
   const roll = () => {
@@ -216,28 +217,19 @@ export const RandomChartPage: FC = () => {
                   </div>
                 </fieldset>
 
-                <TextField
-                  select
-                  size="small"
-                  label={t('random:filters.version')}
-                  value={filters.versions}
-                  SelectProps={{
-                    multiple: true,
-                    displayEmpty: true,
-                    renderValue: (selected: unknown) =>
-                      (selected as string[]).length === 0
-                        ? t('random:filters.all-versions')
-                        : (selected as string[]).join(', '),
-                  }}
-                  InputLabelProps={{ shrink: true }}
-                  onChange={(event) => update({ versions: event.target.value as unknown as VersionEnum[] })}
-                >
-                  {versions.map((version) => (
-                    <MenuItem key={version} value={version}>
-                      {version}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-semibold">{t('random:filters.version')}</span>
+                  {/* No versions chosen means every version, so choosing all or none both clear the filter */}
+                  <VersionMultiSelect
+                    available={versions}
+                    value={filters.versions.length === 0 ? versions : filters.versions}
+                    label={t('random:filters.version')}
+                    allLabel={t('random:filters.all-versions')}
+                    onChange={(next: VersionEnum[]) =>
+                      update({ versions: next.length === versions.length ? [] : next })
+                    }
+                  />
+                </div>
               </div>
             </Collapse>
           </div>

@@ -17,8 +17,21 @@ export const ResponsiveDialog: FC<{
   labelledBy?: string
   /** The content renders its own close button (e.g. in a header row with other actions), so the shared one is left out */
   hideCloseButton?: boolean
+  /** Runs once the close transition has finished and the dialog is off screen */
+  onExited?: () => void
   children?: () => ReactNode
-}> = ({ open, setOpen, maxWidth = 'md', disableClose, drawerHeight, title, labelledBy, hideCloseButton, children }) => {
+}> = ({
+  open,
+  setOpen,
+  maxWidth = 'md',
+  disableClose,
+  drawerHeight,
+  title,
+  labelledBy,
+  hideCloseButton,
+  onExited,
+  children,
+}) => {
   const { t } = useTranslation(['global'])
   const isLargeDevice = useIsLargeDevice()
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
@@ -86,6 +99,7 @@ export const ResponsiveDialog: FC<{
           maxWidth={maxWidth}
           fullWidth
           TransitionComponent={reducedMotion ? Fade : Grow}
+          TransitionProps={{ onExited }}
           aria-labelledby={titleId}
         >
           <DialogContent>
@@ -106,6 +120,7 @@ export const ResponsiveDialog: FC<{
           onClose={() => !disableClose && setOpen(false)}
           onOpen={() => setOpen(true)}
           transitionDuration={reducedMotion ? 150 : undefined}
+          SlideProps={{ onExited }}
           sx={{
             '& .MuiDrawer-paper': {
               height: drawerHeight ?? 'calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 4rem)',
