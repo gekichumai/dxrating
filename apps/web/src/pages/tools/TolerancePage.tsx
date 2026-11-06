@@ -48,8 +48,8 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
     <div className="w-full max-w-2xl mx-auto px-4 py-6 pb-global flex flex-col gap-4">
       <header className="flex flex-col gap-2">
         <h1 className="m-0 text-3xl font-bold">{t('tools:tolerance.title')}</h1>
-        <p className="m-0 text-sm text-slate-700 dark:text-slate-300">{t('tools:tolerance.intro')}</p>
-        <Link to="/tools/rating" className="self-start text-sm text-slate-700 dark:text-slate-300">
+        <p className="m-0 text-sm text-slate-700">{t('tools:tolerance.intro')}</p>
+        <Link to="/tools/rating" className="self-start text-sm text-slate-700">
           {t('tools:rating.title')} →
         </Link>
       </header>
@@ -78,14 +78,12 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
                   to="/tools/tolerance"
                   search={{ sheet: result.id }}
                   onClick={() => setQuery('')}
-                  className="flex items-center gap-3 rounded-lg px-2 py-1.5 no-underline text-inherit hover:bg-black/5 dark:hover:bg-white/8"
+                  className="flex items-center gap-3 rounded-lg px-2 py-1.5 no-underline text-inherit hover:bg-black/5"
                 >
                   <SheetImage name={result.imageName} size="small" alt="" />
                   <span className="flex flex-col min-w-0">
                     <span className="truncate text-sm font-medium">{result.title}</span>
-                    <span className="text-xs text-slate-600 dark:text-slate-400 tabular-nums">
-                      {sheetLabel(result)}
-                    </span>
+                    <span className="text-xs text-slate-600 tabular-nums">{sheetLabel(result)}</span>
                   </span>
                 </Link>
               </li>
@@ -93,7 +91,7 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
           </ul>
         )}
         {deferredQuery && visibleResults.length === 0 && (
-          <p className="m-0 px-1 text-sm text-slate-600 dark:text-slate-400">{t('tools:tolerance.no-results')}</p>
+          <p className="m-0 px-1 text-sm text-slate-600">{t('tools:tolerance.no-results')}</p>
         )}
       </MaterialSurface>
 
@@ -108,13 +106,13 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
               >
                 {sheet.title}
               </a>
-              <span className="text-xs text-slate-600 dark:text-slate-400 tabular-nums">{sheetLabel(sheet)}</span>
+              <span className="text-xs text-slate-600 tabular-nums">{sheetLabel(sheet)}</span>
             </div>
           </MaterialSurface>
           <ToleranceCalculator key={sheet.id} sheet={sheet} source="tool_page" />
         </>
       ) : (
-        <p className="m-0 text-sm text-slate-600 dark:text-slate-400">{t('tools:tolerance.pick-a-chart')}</p>
+        <p className="m-0 text-sm text-slate-600">{t('tools:tolerance.pick-a-chart')}</p>
       )}
     </div>
   )

@@ -1,0 +1,190 @@
+/*
+ * Design tokens: the tinted-glass material and the semantic colours, radii, elevation and focus ring built on it.
+ *
+ * Surfaces are translucent material tinted by the game version's accent (backdrop blur plus a subtle tint), never
+ * large flat solid fills. Use the UnoCSS shortcuts in uno.config.ts (`glass`, `glass-thin`, `glass-inset`,
+ * `glass-overlay`, `glass-bar`) or MUI, whose Paper, Menu, Dialog, Drawer, Tooltip and Alert are themed onto the same
+ * tokens in VersionCustomizedThemeProvider. Per-version accent values are set on <html> by the root route
+ * (--accent, --accent-strong); everything else derives from them here.
+ *
+ * Radius scale (outer = inner + inset + border where a surface wraps another at an even inset up to 24px):
+ *   --radius-xs 4px   tiny badges inside chips
+ *   --radius-sm 6px   inline tags and badges
+ *   --radius-md 8px   controls: buttons, inputs, chips, list rows, menu items (MUI shape.borderRadius)
+ *   --radius-lg 12px  glass panels and cards; containers holding md items at a 4px inset (8 + 4)
+ *   --radius-xl 16px  overlays: dialogs, drawers, menus and popovers with a 4px list inset around md items
+ *   9999px            only for avatars and genuinely round controls
+ * Panels whose content sits at a 12px+ padding are separate surfaces and keep their own token.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Fallbacks for the per-version values the root route sets inline */
+  --accent: #178c72;
+  --accent-strong: #00745b;
+  --on-accent: #fff;
+  --accent-subtle: color-mix(in oklab, var(--accent) 14%, transparent);
+
+  /* Text, measured on glass over every version background: fg-1 ≥ 14:1, fg-2 ≥ 6:1 (never zinc-400/500 for text) */
+  --fg-1: #18181b;
+  --fg-2: #52525b;
+  --danger: #b91c1c;
+
+  /* Glass levels */
+  --glass-tint: color-mix(in oklab, var(--accent) 7%, transparent);
+  --glass-bg: color-mix(in oklab, var(--accent) 7%, rgb(255 255 255 / 0.62));
+  --glass-thin-bg: color-mix(in oklab, var(--accent) 6%, rgb(255 255 255 / 0.42));
+  --glass-inset-bg: rgb(255 255 255 / 0.5);
+  --glass-overlay-bg: color-mix(in oklab, var(--accent) 5%, rgb(255 255 255 / 0.84));
+  --glass-border: rgb(0 0 0 / 0.08);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.55);
+  --glass-blur: blur(24px) saturate(1.5);
+  --glass-blur-thin: blur(12px) saturate(1.5);
+
+  /* Radius */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Elevation: a 1px ring plus lift; overlays get a deeper ambient shadow */
+  --shadow-1: 0 0 0 1px rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.06), 0 2px 4px 0 rgb(0 0 0 / 0.04);
+  --shadow-1-hover: 0 0 0 1px rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.08), 0 2px 4px 0 rgb(0 0 0 / 0.06);
+  --shadow-overlay: 0 0 0 1px rgb(0 0 0 / 0.06), 0 8px 24px -6px rgb(0 0 0 / 0.16), 0 2px 6px rgb(0 0 0 / 0.06);
+
+  /* Focus: a dark ring with a light halo, ≥3:1 on glass, on the accent and on the background art */
+  --focus-ring: #18181b;
+  --focus-halo: 0 0 0 4px rgb(255 255 255 / 0.9);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 150ms;
+}
+
+/* Without color-mix(), fall back to untinted translucency instead of a transparent (invalid) background */
+@supports not (color: color-mix(in oklab, red, blue)) {
+  :root {
+    --accent-subtle: rgb(0 0 0 / 0.06);
+    --glass-tint: transparent;
+    --glass-bg: rgb(255 255 255 / 0.66);
+    --glass-thin-bg: rgb(255 255 255 / 0.46);
+    --glass-overlay-bg: rgb(255 255 255 / 0.88);
+  }
+}
+
+/* Less transparency or more contrast: the same tint, nearly opaque, with a stronger edge */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-bg: color-mix(in oklab, var(--accent) 6%, rgb(255 255 255 / 0.95));
+    --glass-thin-bg: color-mix(in oklab, var(--accent) 6%, rgb(255 255 255 / 0.92));
+    --glass-inset-bg: rgb(255 255 255 / 0.9);
+    --glass-overlay-bg: color-mix(in oklab, var(--accent) 4%, rgb(255 255 255 / 0.97));
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --fg-2: #3f3f46;
+    --glass-bg: color-mix(in oklab, var(--accent) 4%, rgb(255 255 255 / 0.94));
+    --glass-thin-bg: color-mix(in oklab, var(--accent) 4%, rgb(255 255 255 / 0.9));
+    --glass-inset-bg: rgb(255 255 255 / 0.92);
+    --glass-overlay-bg: rgb(255 255 255 / 0.98);
+    --glass-border: rgb(0 0 0 / 0.4);
+  }
+}
+
+/* The glass material itself. The shortcuts in uno.config.ts pair these with radius and padding utilities. */
+.surface-glass,
+.surface-glass-thin,
+.surface-glass-overlay,
+.surface-glass-bar {
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+.surface-glass {
+  background-color: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight), var(--shadow-1);
+}
+
+.surface-glass-thin {
+  background-color: var(--glass-thin-bg);
+  border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: var(--glass-blur-thin);
+  backdrop-filter: var(--glass-blur-thin);
+}
+
+/* Nested on another glass surface: no second blur (stacked backdrop filters cost a lot and add nothing) */
+.surface-glass-inset {
+  background-color: var(--glass-inset-bg);
+  border: 1px solid var(--glass-border);
+}
+
+.surface-glass-overlay {
+  background-color: var(--glass-overlay-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight), var(--shadow-overlay);
+}
+
+/* The header: accent-tinted glass that fades into the page, with the accent kept solid behind the status bar */
+.surface-glass-bar {
+  background-image: linear-gradient(
+    to bottom,
+    var(--accent) 0,
+    var(--accent) env(safe-area-inset-top),
+    color-mix(in oklab, var(--accent) 38%, rgb(255 255 255 / 0.3)) calc(env(safe-area-inset-top) + 0.01px),
+    color-mix(in oklab, var(--accent) 12%, rgb(255 255 255 / 0)) 100%
+  );
+}
+
+@media (forced-colors: active) {
+  .surface-glass,
+  .surface-glass-thin,
+  .surface-glass-inset,
+  .surface-glass-overlay {
+    background: Canvas;
+    border-color: CanvasText;
+  }
+
+  .surface-glass-bar {
+    background: Canvas;
+    border-bottom: 1px solid CanvasText;
+  }
+}
+
+/* One focus ring everywhere; outlines follow border-radius */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline-color: Highlight;
+  }
+}
+
+/* Set on elements carrying a lang attribute (the document, and song titles via lang="ja"); descendants inherit.
+   Japanese titles need the Japanese glyph forms even when the page locale is Chinese; Korean breaks between words */
+[lang|='ja'] {
+  font-family:
+    Torus, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Noto Sans JP', 'Noto Sans CJK JP', Meiryo,
+    system-ui, sans-serif;
+}
+
+[lang='zh-Hans'] {
+  font-family:
+    Torus, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans CJK SC', system-ui,
+    sans-serif;
+}
+
+[lang='zh-Hant'] {
+  font-family: Torus, 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', system-ui, sans-serif;
+}
+
+[lang|='ko'] {
+  word-break: keep-all;
+}

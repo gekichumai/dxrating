@@ -96,7 +96,7 @@ export const RecommendPage: FC = () => {
       <header className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold">{t('recommend:title')}</h1>
         <p className="text-sm opacity-70">{t('recommend:description')}</p>
-        {isDemo && <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">{t('recommend:demo')}</p>}
+        {isDemo && <p className="text-xs font-semibold text-amber-700">{t('recommend:demo')}</p>}
       </header>
 
       {!result ? (
@@ -106,7 +106,7 @@ export const RecommendPage: FC = () => {
       ) : !result.hasRecords ? (
         <MaterialSurface className="flex flex-col gap-2 p-4 text-sm">
           <p className="m-0">{t('recommend:empty')}</p>
-          <Link to="/rating" className="text-blue-600 dark:text-blue-400">
+          <Link to="/rating" className="text-blue-600">
             {t('recommend:go-to-rating')}
           </Link>
         </MaterialSurface>
@@ -172,7 +172,7 @@ const RecommendSection: FC<{
                         {' → '}
                         <strong>{item.targetAchievement}%</strong>
                       </span>
-                      <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                      <span className="text-xs font-semibold text-emerald-700">
                         {t('recommend:gain', { gain: item.gain })}
                       </span>
                     </span>

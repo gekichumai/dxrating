@@ -52,7 +52,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const sidebar = (
     <div
       className={clsx(
-        'flex flex-col gap-6 bg-zinc-50 dark:bg-zinc-900/60',
+        'flex flex-col gap-6 bg-zinc-50',
         isLargeDevice ? 'w-56 shrink-0 p-6 pr-4 justify-between' : 'flex-row gap-2 p-3 pb-2',
       )}
     >
@@ -67,8 +67,8 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
               className={clsx(
                 'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer border-none bg-transparent w-full text-left',
                 activeSection === key
-                  ? 'bg-zinc-200/70 dark:bg-zinc-700/70 text-zinc-900 dark:text-white'
-                  : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-700 dark:hover:text-zinc-300',
+                  ? 'bg-zinc-200/70 text-zinc-900'
+                  : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700',
                 !isLargeDevice && 'flex-1 justify-center',
               )}
             >
@@ -83,7 +83,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
         <button
           type="button"
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-red-500 transition-colors cursor-pointer border-none bg-transparent w-full text-left"
+          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-zinc-500 hover:bg-zinc-100 hover:text-red-500 transition-colors cursor-pointer border-none bg-transparent w-full text-left"
         >
           <IconMdiLogout className="text-base" />
           <span>{t('auth:logout.label')}</span>
@@ -151,7 +151,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
             <button
               type="button"
               onClick={handleLogout}
-              className="flex items-center justify-center gap-2 w-full py-2 rounded-md text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer border-none bg-transparent"
+              className="flex items-center justify-center gap-2 w-full py-2 rounded-md text-sm font-medium text-red-500 hover:bg-red-50 transition-colors cursor-pointer border-none bg-transparent"
             >
               <IconMdiLogout className="text-base" />
               <span>{t('auth:logout.label')}</span>

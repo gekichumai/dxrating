@@ -77,8 +77,8 @@ export const SongChartsTable: FC<{
                 <tr
                   key={sheet.id}
                   className={clsx(
-                    'border-t border-solid border-0 border-black/8 dark:border-white/10',
-                    sheet.id === activeSheetId && 'bg-black/4 dark:bg-white/6',
+                    'border-t border-solid border-0 border-black/8',
+                    sheet.id === activeSheetId && 'bg-black/4',
                   )}
                 >
                   <td className="px-1 py-1.5 whitespace-nowrap">
@@ -120,7 +120,7 @@ export const SongChartsTable: FC<{
                       '—'
                     )}
                     {raise && (
-                      <div className="text-xs text-emerald-700 dark:text-emerald-400">
+                      <div className="text-xs text-emerald-700">
                         {t('song:hub.raise-hint', { target: raise.targetAchievement, gain: raise.gain })}
                       </div>
                     )}

@@ -197,7 +197,7 @@ export const RandomChartPage: FC = () => {
                 </span>
                 <span className="opacity-70">{result.version}</span>
               </span>
-              <span className="text-sm text-blue-600 dark:text-blue-400">{t('random:open-chart')}</span>
+              <span className="text-sm text-blue-600">{t('random:open-chart')}</span>
             </Link>
           </MaterialSurface>
         )}

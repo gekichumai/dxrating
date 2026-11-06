@@ -39,7 +39,7 @@ export const ProfileSection: FC = () => {
 
       {/* Profile row */}
       <div className="flex flex-col gap-6">
-        <div className="flex items-center gap-4 border-b border-zinc-200 dark:border-zinc-700 pb-6">
+        <div className="flex items-center gap-4 border-b border-zinc-200 pb-6">
           <ProfileImage
             email={user?.email}
             image={user?.image}
@@ -53,9 +53,7 @@ export const ProfileSection: FC = () => {
 
         {/* Display name */}
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            {t('auth:user-profile.display-name')}
-          </label>
+          <label className="text-sm font-medium text-zinc-600">{t('auth:user-profile.display-name')}</label>
           {isPending ? (
             <Skeleton variant="rounded" height={40} />
           ) : (
@@ -75,7 +73,7 @@ export const ProfileSection: FC = () => {
 
         {/* Email */}
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{t('auth:user-profile.email')}</label>
+          <label className="text-sm font-medium text-zinc-600">{t('auth:user-profile.email')}</label>
           {isPending ? (
             <Skeleton variant="rounded" height={40} />
           ) : (

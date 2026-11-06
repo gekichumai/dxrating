@@ -39,7 +39,7 @@ const FEATURE_ICONS: Record<HomeFeatureId, FC<{ className?: string }>> = {
 const trackClick = (module: string, target?: string) => captureAnalyticsEvent('home_module_clicked', { module, target })
 
 const SectionTitle: FC<{ children: React.ReactNode }> = ({ children }) => (
-  <h2 className="m-0 px-1 text-sm font-bold tracking-wide text-zinc-600 dark:text-zinc-300">{children}</h2>
+  <h2 className="m-0 px-1 text-sm font-bold tracking-wide text-zinc-600">{children}</h2>
 )
 
 const QuickStats: FC = () => {
@@ -59,14 +59,14 @@ const QuickStats: FC = () => {
       </SectionTitle>
       <div className="grid grid-cols-3 gap-2">
         <Link to="/rating" onClick={() => trackClick('quick_stats', 'rating')} className="no-underline text-inherit">
-          <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5 transition hover:bg-white/70 dark:hover:bg-zinc-800/60">
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">{t('home:stats.rating')}</span>
+          <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5 transition hover:bg-white/70">
+            <span className="text-xs text-zinc-500">{t('home:stats.rating')}</span>
             <span className="text-xl font-bold tabular-nums">{stats.rating}</span>
           </MaterialSurface>
         </Link>
         <Link to="/rating" onClick={() => trackClick('quick_stats', 'b50_floor')} className="no-underline text-inherit">
-          <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5 transition hover:bg-white/70 dark:hover:bg-zinc-800/60">
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">{t('home:stats.b50-floor')}</span>
+          <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5 transition hover:bg-white/70">
+            <span className="text-xs text-zinc-500">{t('home:stats.b50-floor')}</span>
             <span className="text-xl font-bold tabular-nums">{floor ?? '—'}</span>
           </MaterialSurface>
         </Link>
@@ -78,17 +78,17 @@ const QuickStats: FC = () => {
             onClick={() => trackClick('quick_stats', 'nearest_plate')}
             className="no-underline text-inherit"
           >
-            <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5 transition hover:bg-white/70 dark:hover:bg-zinc-800/60">
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">{t('home:stats.nearest-plate')}</span>
+            <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5 transition hover:bg-white/70">
+              <span className="text-xs text-zinc-500">{t('home:stats.nearest-plate')}</span>
               <span className="truncate text-xl font-bold">{plateName(stats.nearestPlate.plate, script)}</span>
-              <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
+              <span className="text-xs tabular-nums text-zinc-500">
                 {stats.nearestPlate.completedSheets} / {stats.nearestPlate.totalSheets}
               </span>
             </MaterialSurface>
           </Link>
         ) : (
           <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5">
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">{t('home:stats.nearest-plate')}</span>
+            <span className="text-xs text-zinc-500">{t('home:stats.nearest-plate')}</span>
             <span className="text-xl font-bold">—</span>
           </MaterialSurface>
         )}
@@ -116,7 +116,7 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
             <Link
               to="/charts/recent"
               onClick={() => trackClick('recent', 'see_all')}
-              className="px-1 text-xs font-bold text-blue-700 no-underline dark:text-blue-300"
+              className="px-1 text-xs font-bold text-blue-700 no-underline"
             >
               {t('home:recent.see-all')}
             </Link>
@@ -160,13 +160,11 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
                   onClick={() => trackClick('feature', feature.id)}
                   className="block h-full text-inherit no-underline"
                 >
-                  <MaterialSurface className="flex h-full items-start gap-2.5 px-3 py-2.5 transition hover:bg-white/70 dark:hover:bg-zinc-800/60">
-                    <Icon className="mt-0.5 shrink-0 text-lg text-blue-700 dark:text-blue-300" />
+                  <MaterialSurface className="flex h-full items-start gap-2.5 px-3 py-2.5 transition hover:bg-white/70">
+                    <Icon className="mt-0.5 shrink-0 text-lg text-blue-700" />
                     <span className="flex min-w-0 flex-col">
                       <span className="text-sm font-bold">{t(`home:features.${feature.id}.title`)}</span>
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                        {t(`home:features.${feature.id}.description`)}
-                      </span>
+                      <span className="text-xs text-zinc-500">{t(`home:features.${feature.id}.description`)}</span>
                     </span>
                   </MaterialSurface>
                 </Link>

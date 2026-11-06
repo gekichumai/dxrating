@@ -61,7 +61,7 @@ const ToolSection: FC<{ id: string; title: string; description: string; children
       <h2 id={id} className="m-0 text-lg font-bold">
         {title}
       </h2>
-      <p className="m-0 text-xs text-slate-600 dark:text-slate-400">{description}</p>
+      <p className="m-0 text-xs text-slate-600">{description}</p>
     </div>
     {children}
   </MaterialSurface>
@@ -69,7 +69,7 @@ const ToolSection: FC<{ id: string; title: string; description: string; children
 
 const Result: FC<{ label: string; children: ReactNode }> = ({ label, children }) => (
   <div className="flex flex-col gap-0.5" aria-live="polite">
-    <span className="text-xs text-slate-600 dark:text-slate-400">{label}</span>
+    <span className="text-xs text-slate-600">{label}</span>
     <span className="text-2xl font-bold tabular-nums">{children}</span>
   </div>
 )
@@ -116,9 +116,7 @@ const RatingForAchievement: FC = () => {
         {award ? (
           <>
             {award.ratingAwardValue}{' '}
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-              {award.rank.toUpperCase().replace('P', '+')}
-            </span>
+            <span className="text-sm font-medium text-slate-600">{award.rank.toUpperCase().replace('P', '+')}</span>
           </>
         ) : (
           '—'
@@ -204,7 +202,7 @@ const RatingTable: FC = () => {
           <table className="w-full border-collapse text-sm tabular-nums">
             <caption className="sr-only">{t('tools:rating.table.title')}</caption>
             <thead>
-              <tr className="text-xs text-slate-600 dark:text-slate-400">
+              <tr className="text-xs text-slate-600">
                 <th scope="col" className="px-3 py-2 text-left font-medium">
                   {t('tools:rating.achievement')}
                 </th>
@@ -221,7 +219,7 @@ const RatingTable: FC = () => {
             </thead>
             <tbody>
               {RATING_TABLE_ACHIEVEMENTS.map((achievement) => (
-                <tr key={achievement} className="border-t border-t-solid border-black/6 dark:border-white/8">
+                <tr key={achievement} className="border-t border-t-solid border-black/6">
                   <th scope="row" className="px-3 py-2 text-left font-medium">
                     {achievement}%{' '}
                     <span className="text-xs font-normal text-slate-500">
@@ -253,8 +251,8 @@ export const RatingToolPage: FC = () => {
     <div className="w-full max-w-2xl mx-auto px-4 py-6 pb-global flex flex-col gap-4">
       <header className="flex flex-col gap-2">
         <h1 className="m-0 text-3xl font-bold">{t('tools:rating.title')}</h1>
-        <p className="m-0 text-sm text-slate-700 dark:text-slate-300">{t('tools:rating.intro')}</p>
-        <Link to="/tools/tolerance" className="self-start text-sm text-slate-700 dark:text-slate-300">
+        <p className="m-0 text-sm text-slate-700">{t('tools:rating.intro')}</p>
+        <Link to="/tools/tolerance" className="self-start text-sm text-slate-700">
           {t('tools:tolerance.title')} →
         </Link>
       </header>

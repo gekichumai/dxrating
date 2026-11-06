@@ -34,6 +34,20 @@ export default defineConfig({
     ],
   ],
   theme: {
+    // Semantic colours from src/styles/tokens.css: `text-fg-2`, `text-accent-strong`, `bg-accent-subtle`, …
+    colors: {
+      accent: {
+        DEFAULT: 'var(--accent)',
+        strong: 'var(--accent-strong)',
+        subtle: 'var(--accent-subtle)',
+      },
+      'on-accent': 'var(--on-accent)',
+      fg: {
+        1: 'var(--fg-1)',
+        2: 'var(--fg-2)',
+      },
+      danger: 'var(--danger)',
+    },
     fontFamily: {
       mono: '"IBM Plex Mono", "JetBrains Mono", Menlo, Consolas, Courier, monospace',
     },
@@ -63,11 +77,22 @@ export default defineConfig({
   shortcuts: {
     'flex-container':
       'flex flex-col items-center justify-center py-4 gap-4 max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
-    // Translucent material (like the tab bar): never a flat solid fill
-    'material-surface':
-      'rounded-xl border border-solid border-black/8 bg-white/55 shadow-sm backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-zinc-900/45',
-    'material-surface-thin':
-      'rounded-xl border border-solid border-black/6 bg-white/35 backdrop-blur-md backdrop-saturate-150 dark:border-white/8 dark:bg-zinc-900/30',
+    // Tinted-glass surfaces (src/styles/tokens.css): never a flat solid fill.
+    // glass: page panels and cards. glass-thin: lighter, for controls floating on the background (tab bar).
+    // glass-inset: nested inside another glass surface (no second blur). glass-overlay: dialogs, menus, popovers.
+    glass: 'surface-glass rounded-[var(--radius-lg)]',
+    'glass-thin': 'surface-glass-thin rounded-[var(--radius-lg)]',
+    'glass-inset': 'surface-glass-inset rounded-[var(--radius-md)]',
+    'glass-overlay': 'surface-glass-overlay rounded-[var(--radius-xl)]',
+    // The header: accent-tinted glass fading into the page, accent kept solid behind the status bar
+    'glass-bar': 'surface-glass-bar',
+    // Kept as aliases for existing call sites
+    'material-surface': 'surface-glass rounded-[var(--radius-lg)]',
+    'material-surface-thin': 'surface-glass-thin rounded-[var(--radius-lg)]',
+    // An inline link that reads as a link: accent text that passes 4.5:1 on glass, underlined
+    link: 'text-accent-strong underline decoration-1 underline-offset-2 hover:decoration-2',
+    // Secondary text: never zinc-400/500 or opacity, which fail contrast on glass
+    'text-secondary': 'text-fg-2',
     'chunks-horizontal-2': 'flex flex-col md:flex-row items-center justify-center gap-2 w-full',
   },
   presets: [

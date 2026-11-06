@@ -37,7 +37,7 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
   const percent = completionPercent(summary.done, summary.total)
   const segments = [
     { key: 'done', value: summary.done, className: 'bg-violet-500' },
-    { key: 'pending', value: summary.pending, className: 'bg-violet-300/60 dark:bg-violet-300/40' },
+    { key: 'pending', value: summary.pending, className: 'bg-violet-300/60' },
   ]
 
   return (
@@ -86,7 +86,7 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
         </div>
       </div>
 
-      <div className="flex h-2 w-full overflow-hidden rounded-full bg-black/8 dark:bg-white/10" aria-hidden="true">
+      <div className="flex h-2 w-full overflow-hidden rounded-full bg-black/8" aria-hidden="true">
         {segments.map((segment) => (
           <div
             key={segment.key}

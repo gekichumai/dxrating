@@ -233,7 +233,7 @@ const PasskeysSubsection: FC = () => {
           {passkeys.map((pk) => {
             const info = getPasskeyInfo(pk)
             return (
-              <div key={pk.id} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
+              <div key={pk.id} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-zinc-50">
                 {info.icon ? (
                   <img src={info.icon} alt="" className="size-5 shrink-0" />
                 ) : (
@@ -345,10 +345,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string }> = ({ currentSessio
           {sessions.map((session) => {
             const isCurrent = session.token === currentSessionToken
             return (
-              <div
-                key={session.id}
-                className="flex items-center gap-3 py-2 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50"
-              >
+              <div key={session.id} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-zinc-50">
                 <IconMdiDevices className="text-lg text-zinc-400 shrink-0" />
                 <div className="flex flex-col flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -401,11 +398,11 @@ export const SecuritySection: FC<{ currentSessionToken?: string; idPrefix?: stri
 
       <PasswordSubsection idPrefix={idPrefix} />
 
-      <div className="h-px bg-zinc-200 dark:bg-zinc-700" />
+      <div className="h-px bg-zinc-200" />
 
       <PasskeysSubsection />
 
-      <div className="h-px bg-zinc-200 dark:bg-zinc-700" />
+      <div className="h-px bg-zinc-200" />
 
       <DevicesSubsection currentSessionToken={currentSessionToken} />
     </div>
