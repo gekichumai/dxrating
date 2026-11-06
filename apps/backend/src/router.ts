@@ -37,6 +37,8 @@ export interface ApiContext
     RequestHeadersHandlerPluginContext,
     ResponseHeadersHandlerPluginContext {
   user?: BackendAuth['$Infer']['Session']['user']
+  /** The same signed-in user, as the only value `withViewer` accepts (gdp-ts `ViewerIs`) */
+  viewer?: SessionViewer
   signal?: AbortSignal
 }
 
@@ -429,7 +431,8 @@ const aliasesHandler = {
 
 import { netGatewayStatusEffect, withMaimaiNETClient, type NetGatewayStatus } from './lib/functions/client'
 import { recordNetFailure, recordNetSuccess } from './services/functions/fetch-net-records/telemetry'
-import * as lxnsService from './services/lxns/index'
+import * as lxnsService from './services/lxns/viewer'
+import { withViewer, type SessionViewer } from './proofs/viewer-is'
 
 const TrendingSeriesSchema = Schema.Struct({
   breakdown_value: Schema.optional(Schema.Unknown),
@@ -917,16 +920,23 @@ const maimaiNetHandler = {
 const lxnsHandler = {
   authorize: os.lxns.authorize.handler(
     handlerGen(function* ({ context }) {
-      const user = context.user
-      if (!user) return yield* new UnauthorizedError()
-      const url = yield* lxnsService.generateAuthorizationUrl(user.id)
+      const viewer = context.viewer
+      if (!viewer) return yield* new UnauthorizedError()
+      const url = yield* withViewer(viewer, (named, proof) => lxnsService.generateAuthorizationUrl(named, proof))
       return { url }
     }),
   ),
   // The OAuth callback forwards code and state to the web (or the iOS app), which completes here with its own session.
   complete: os.lxns.complete.handler(
     handlerGen(function* ({ input, context }) {
-      yield* lxnsService.completeAuthorization(context.user?.id, input.code, input.state).pipe(
+      const viewer = context.viewer
+      yield* (
+        viewer
+          ? withViewer(viewer, (named, proof) =>
+              lxnsService.completeAuthorization(named, proof, input.code, input.state),
+            )
+          : lxnsService.discardAuthorization(input.code, input.state)
+      ).pipe(
         // A stale, replayed or forged state is the caller's problem (400), not a server failure
         Effect.catchTag('LxnsStateInvalid', (error) =>
           Effect.fail(new ORPCError('BAD_REQUEST', { message: error.message, data: { reason: 'invalid_state' } })),
@@ -944,16 +954,18 @@ const lxnsHandler = {
   ),
   status: os.lxns.status.handler(
     handlerGen(function* ({ context }) {
-      const user = context.user
-      if (!user) return yield* new UnauthorizedError()
-      return yield* lxnsService.getConnectionStatus(user.id)
+      const viewer = context.viewer
+      if (!viewer) return yield* new UnauthorizedError()
+      return yield* withViewer(viewer, (named, proof) => lxnsService.getConnectionStatus(named, proof))
     }),
   ),
   start: os.lxns.start.handler(
     handlerGen(function* ({ context }) {
-      const user = context.user
-      if (!user) return yield* new UnauthorizedError()
-      const [duration, rawScores] = yield* Effect.timed(lxnsService.fetchPlayerScores(user.id))
+      const viewer = context.viewer
+      if (!viewer) return yield* new UnauthorizedError()
+      const [duration, rawScores] = yield* Effect.timed(
+        withViewer(viewer, (named, proof) => lxnsService.fetchPlayerScores(named, proof)),
+      )
       yield* Effect.sync(() =>
         Sentry.metrics.distribution('lxns_fetch.duration', Duration.toMillis(duration), {
           unit: 'millisecond',
@@ -976,9 +988,9 @@ const lxnsHandler = {
   ),
   disconnect: os.lxns.disconnect.handler(
     handlerGen(function* ({ context }) {
-      const user = context.user
-      if (!user) return yield* new UnauthorizedError()
-      yield* lxnsService.disconnect(user.id)
+      const viewer = context.viewer
+      if (!viewer) return yield* new UnauthorizedError()
+      yield* withViewer(viewer, (named, proof) => lxnsService.disconnect(named, proof))
       return { success: true }
     }),
   ),
