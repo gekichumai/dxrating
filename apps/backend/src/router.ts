@@ -77,6 +77,16 @@ type TagsListResult = {
 }
 
 type AliasListResult = Array<{ song_id: string; name: string }>
+
+const uniqueAliases = (aliases: AliasListResult): AliasListResult => {
+  const seen = new Set<string>()
+  return aliases.filter((alias) => {
+    const key = `${alias.song_id}\u0000${alias.name}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
 type TrendingCacheResult = {
   results: Array<{ songId: string; count: number }>
   dateFrom: string
@@ -374,14 +384,17 @@ const aliasesHandler = {
       } else {
         yield* Effect.sync(() => Sentry.metrics.count('cache.miss', 1, { attributes: { key: 'aliases:list' } }))
 
-        result = yield* database.query('Aliases.list', (db) =>
+        const rows = yield* database.query('Aliases.list', (db) =>
           db
             .select({
               song_id: songAliases.song_id,
               name: songAliases.name,
             })
-            .from(songAliases),
+            .from(songAliases)
+            .orderBy(songAliases.id),
         )
+        // The same name can be submitted for a song more than once; list it once, in submission order
+        result = uniqueAliases(rows)
 
         yield* cache.set('aliases:list', result)
       }
@@ -390,10 +403,13 @@ const aliasesHandler = {
         const publicIds = yield* withCatalogIdentityErrors(
           catalogIdentities.translateSongIdsToPublic(result.map((alias) => alias.song_id)),
         )
-        return result.flatMap((alias) => {
-          const songId = publicIds.get(alias.song_id)
-          return songId === undefined ? [] : [{ ...alias, song_id: songId }]
-        })
+        // Legacy ids of a renamed song share one public id, so their aliases can coincide after translation
+        return uniqueAliases(
+          result.flatMap((alias) => {
+            const songId = publicIds.get(alias.song_id)
+            return songId === undefined ? [] : [{ ...alias, song_id: songId }]
+          }),
+        )
       }
       return result
     }),
