@@ -534,7 +534,6 @@
     "auto-save.saved-records": "已保存的记录（{{count}} 条）",
     "quick-actions.title": "快捷操作",
     "quick-actions.show-only-b50": "仅显示 B50",
-    "quick-actions.compact-mode": "紧凑模式",
     "table.no-entries": "暂无记录。请导入成绩或添加谱面来计算 Rating。",
     "table.headers.chart": "谱面",
     "table.headers.included-in": "收录于",
@@ -1057,6 +1056,9 @@
     "pool-size_one": "符合 {{count}} 张谱面",
     "pool-size_other": "符合 {{count}} 张谱面",
     "no-result": "没有符合条件的谱面。",
+    "placeholder.title": "抽到的谱面会显示在这里",
+    "placeholder.hint_one": "点击「抽一首」，从 {{count}} 张符合条件的谱面中抽取。",
+    "placeholder.hint_other": "点击「抽一首」，从 {{count}} 张符合条件的谱面中抽取。",
     "open-chart": "查看谱面"
   },
   "home": {

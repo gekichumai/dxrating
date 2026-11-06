@@ -54,7 +54,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
     <>
       <LoginDialog />
       <MotionButtonBase
-        className="h-6 glass-inset inline-flex self-start items-center justify-center gap-1 px-2 cursor-pointer text-fg-1 hover:bg-white/80 active:bg-black/6 transition-colors duration-150 mt-2"
+        className="h-6 glass-inset inline-flex self-start items-center justify-center gap-1 px-2 cursor-pointer text-fg-1 hover:bg-white/80 active:bg-black/6 transition-colors duration-150 mt-1 -ml-2"
         onClick={() => {
           setOpen(true)
           captureAnalyticsEvent('add_sheet_alt_name_button_clicked', {

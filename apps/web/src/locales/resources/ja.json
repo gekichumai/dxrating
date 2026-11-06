@@ -534,7 +534,6 @@
     "auto-save.saved-records": "保存済みの記録（{{count}}件）",
     "quick-actions.title": "クイックアクション",
     "quick-actions.show-only-b50": "B50のみを表示",
-    "quick-actions.compact-mode": "コンパクトモード",
     "table.no-entries": "記録がまだありません。スコアを読み込むか、譜面を追加してレーティングを計算してください。",
     "table.headers.chart": "譜面",
     "table.headers.included-in": "収録",
@@ -1057,6 +1056,9 @@
     "pool-size_one": "対象 {{count}} 譜面",
     "pool-size_other": "対象 {{count}} 譜面",
     "no-result": "条件に合う譜面がありません。",
+    "placeholder.title": "ここに譜面が表示されます",
+    "placeholder.hint_one": "「選曲する」を押すと、条件に合う {{count}} 譜面が表示されます。",
+    "placeholder.hint_other": "「選曲する」を押すと、条件に合う {{count}} 譜面から 1 つ選びます。",
     "open-chart": "譜面を見る"
   },
   "home": {
