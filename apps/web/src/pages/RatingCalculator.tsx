@@ -86,6 +86,16 @@ const DESKTOP_QUERY = '(min-width: 1024px)'
 
 const columnHelper = createColumnHelper<Entry>()
 
+/** Bucket first, then rating: the B50 order */
+const DEFAULT_SORTING: SortingState = [
+  { id: 'includedIn', desc: true },
+  { id: 'rating', desc: true },
+]
+
+const isDefaultSorting = (sorting: SortingState) =>
+  sorting.length === DEFAULT_SORTING.length &&
+  sorting.every((sort, index) => sort.id === DEFAULT_SORTING[index]?.id && sort.desc === DEFAULT_SORTING[index]?.desc)
+
 const RatingCalculatorRowActions: FC<{
   entry: PlayEntry
 }> = ({ entry }) => {
@@ -466,30 +476,37 @@ const RatingCalculatorTableRowContent: FC<{
 
 /**
  * A column header: the label, then a small chevron in the text colour when the column is sorted. The priority number
- * is a superscript, shown only while more than one column is sorted. An unsorted sortable column shows a faint chevron
- * on hover and focus only.
+ * is a superscript, shown only for a multi-column sort other than the default order. An unsorted sortable column
+ * shows a faint chevron on hover and focus only.
  */
 const RatingTableSortButton: FC<{
   label: ReactNode
   canSort: boolean
   sorted: false | SortDirection
   priority: number | null
+  /** Draw the priority superscript; screen readers hear the priority either way */
+  showPriority: boolean
+  /** A secondary key of the default order: drawn like an unsorted column */
+  quiet: boolean
   onClick?: (event: unknown) => void
-}> = ({ label, canSort, sorted, priority, onClick }) => {
+}> = ({ label, canSort, sorted, priority, showPriority, quiet, onClick }) => {
   const { t } = useTranslation(['rating-calculator'])
+  const shownSorted = quiet ? false : sorted
   return (
     <button
       type="button"
       className="rating-table-sort"
-      data-sorted={sorted || undefined}
+      data-sorted={shownSorted || undefined}
       disabled={!canSort}
       onClick={onClick}
     >
       <span className="rating-table-sort-label">{label}</span>
       {canSort && (
         <span className="rating-table-sort-indicator" aria-hidden="true">
-          <IconMdiChevronDown className={clsx('rating-table-sort-chevron', sorted === 'asc' && 'rotate-180')} />
-          {sorted && priority !== null && <sup className="rating-table-sort-priority">{priority}</sup>}
+          <IconMdiChevronDown className={clsx('rating-table-sort-chevron', shownSorted === 'asc' && 'rotate-180')} />
+          {shownSorted && showPriority && priority !== null && (
+            <sup className="rating-table-sort-priority">{priority}</sup>
+          )}
         </span>
       )}
       {sorted && priority !== null && (
@@ -503,10 +520,8 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
   const { allEntries } = useRatingEntries()
   const { t } = useTranslation(['rating-calculator'])
 
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: 'includedIn', desc: true },
-    { id: 'rating', desc: true },
-  ])
+  const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING)
+  const defaultSorting = isDefaultSorting(sorting)
 
   const columns = useMemo(
     () => [
@@ -674,6 +689,10 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
                         sorted={header.column.getIsSorted()}
                         // The priority only means something when more than one column is sorted
                         priority={sorting.length > 1 ? header.column.getSortIndex() + 1 : null}
+                        // The default order (bucket, then rating) reads as a plain bucket sort: one chevron, no
+                        // numbers. A multi-sort the user builds shows its order as superscripts
+                        showPriority={!defaultSorting}
+                        quiet={defaultSorting && header.column.getSortIndex() > 0}
                         onClick={header.column.getToggleSortingHandler()}
                       />
                     )}
