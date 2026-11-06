@@ -52,7 +52,7 @@ describe('shareImageFile', () => {
 describe('copyImage', () => {
   it('writes a PNG clipboard item', async () => {
     const write = vi.fn(async () => {})
-    vi.stubGlobal('ClipboardItem', class {})
+    vi.stubGlobal('ClipboardItem', vi.fn())
     Object.defineProperty(navigator, 'clipboard', { value: { write }, configurable: true })
     await copyImage(new Blob(['x'], { type: 'image/png' }))
     expect(write).toHaveBeenCalledOnce()
@@ -62,11 +62,9 @@ describe('copyImage', () => {
     const items: Record<string, Promise<Blob>>[] = []
     vi.stubGlobal(
       'ClipboardItem',
-      class {
-        constructor(entries: Record<string, Promise<Blob>>) {
-          items.push(entries)
-        }
-      },
+      vi.fn(function (entries: Record<string, Promise<Blob>>) {
+        items.push(entries)
+      }),
     )
     vi.stubGlobal('createImageBitmap', async () => ({ width: 2, height: 2, close: () => {} }))
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage: () => {} } as never)
