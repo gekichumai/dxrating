@@ -1147,6 +1147,12 @@
     "progress.import": "スコアをインポート",
     "progress.loading-scores": "スコアを読み込み中…",
     "progress.cell-label": "Lv.{{level}} {{target}}：{{total}}譜面中 {{count}}",
-    "progress.loading": "譜面一覧を読み込み中… すべての譜面を読み込むと集計を表示します。"
+    "progress.loading": "譜面一覧を読み込み中… すべての譜面を読み込むと集計を表示します。",
+    "progress.dx.title": "でらっくスコアの☆",
+    "progress.dx.intro": "レベルごとに、でらっくスコアの☆（最大値の85%・90%・93%・95%・97%）に届いた譜面数です。でらっくスコアが記録されているプレーだけを数えます。",
+    "progress.dx.with-score": "スコア記録あり",
+    "progress.dx.average": "平均",
+    "progress.dx.star": "✦{{star}}以上",
+    "progress.dx.cell-label": "Lv.{{level}} ✦{{star}}以上：{{total}}譜面中{{count}}"
   }
 }
