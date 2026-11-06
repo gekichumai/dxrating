@@ -187,7 +187,7 @@ export const ImportFromLxnsButtonListItem: FC<{
   onClose: () => void
 }> = ({ onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, openLoginDialog, LoginDialog } = useAuth()
   const [open, setOpen] = useState(false)
 
   const handleClose = () => {
@@ -197,10 +197,12 @@ export const ImportFromLxnsButtonListItem: FC<{
 
   return (
     <>
+      {/* Signed out, the item opens sign-in instead of being a dead end; the menu stays open, so the item is ready
+          to use once signed in */}
       <MenuItem
-        disabled={!isAuthenticated}
         onClick={() => {
-          setOpen(true)
+          if (isAuthenticated) setOpen(true)
+          else openLoginDialog()
         }}
       >
         <ListItemIcon>
@@ -220,6 +222,7 @@ export const ImportFromLxnsButtonListItem: FC<{
         />
       </MenuItem>
 
+      {!isAuthenticated && <LoginDialog />}
       {open && (
         <Dialog open={open} onClose={handleClose}>
           <LxnsImportDialogContent onClose={handleClose} />
