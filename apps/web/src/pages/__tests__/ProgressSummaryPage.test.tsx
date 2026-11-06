@@ -83,4 +83,12 @@ describe('ProgressSummaryPage', () => {
     ])
     expect(buildDxStarRows(sheets, records).find((r) => r.level === '13')!.averagePercent).toBe(93.85)
   })
+
+  it('keeps an exact share on its boundary despite float error', () => {
+    const sheets = [
+      { id: 'a', level: '10+', type: 'dx', internalLevelValue: 10.7, serverIds: ['jp'], noteCounts: { total: 375 } },
+    ] as never
+    const records = new Map([['a', { best: { dxScore: 1071 } }]])
+    expect(buildDxStarRows(sheets, records).find((r) => r.level === '10+')!.averagePercent).toBe(95.2)
+  })
 })

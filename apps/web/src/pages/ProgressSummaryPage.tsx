@@ -107,7 +107,9 @@ export function buildDxStarRows(
   }
   return [...rows.values()].map(({ percentSum, ...row }) => ({
     ...row,
-    averagePercent: row.withDxScore ? Math.floor((percentSum / row.withDxScore) * 100) / 100 : null,
+    // Truncate to two decimals, with a tolerance far below 0.01% so float noise can't pull an exact value such as
+    // 95.2 (1071 / 1125) down to 95.19
+    averagePercent: row.withDxScore ? Math.floor((percentSum / row.withDxScore) * 100 + 1e-7) / 100 : null,
   }))
 }
 
