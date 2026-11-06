@@ -16,6 +16,7 @@
   },
   "plugins": ["react", "typescript", "jsx-a11y", "import"],
   "ignorePatterns": [
+    "apps/web/src/paraglide",
     "dist",
     ".turbo",
     "node_modules",

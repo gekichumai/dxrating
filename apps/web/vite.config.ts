@@ -1,4 +1,6 @@
 import { cloudflare } from '@cloudflare/vite-plugin'
+import { paraglideVitePlugin } from '@inlang/paraglide-js'
+import { PARAGLIDE_OPTIONS } from './paraglide.options.ts'
 import { sentryTanstackStart } from '@sentry/tanstackstart-react/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
@@ -186,6 +188,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    paraglideVitePlugin(PARAGLIDE_OPTIONS),
     dxdataJsonParse(),
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
     UnoCSS(),
