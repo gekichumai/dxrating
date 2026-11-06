@@ -1,4 +1,5 @@
 import { CircularProgress } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { ClientOnly, createFileRoute } from '@tanstack/react-router'
 import { isToplistKind, isToplistSort, type ToplistSort } from '@/components/toplists/toplistData'
 import type { ToplistKind } from '@/lib/analytics'
@@ -26,11 +27,12 @@ export const Route = createFileRoute('/me/records')({
 })
 
 function RecordsRouteComponent() {
+  const { t } = useTranslation()
   return (
     <ClientOnly
       fallback={
         <div className="flex items-center justify-center w-full min-h-60vh">
-          <CircularProgress size="2rem" disableShrink />
+          <CircularProgress size="2rem" disableShrink aria-label={t('toplists:loading')} />
         </div>
       }
     >
