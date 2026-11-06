@@ -1,6 +1,6 @@
 import { Divider, IconButton, ListItemIcon, ListItemText, ListSubheader, Menu, MenuItem } from '@mui/material'
 import { useColorScheme } from '@mui/material/styles'
-import { type ComponentType, useState } from 'react'
+import { type ComponentType, type ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import type { ThemeMode } from '@/setup/theme-script'
@@ -10,7 +10,7 @@ import MdiThemeLightDark from '~icons/mdi/theme-light-dark'
 import MdiTune from '~icons/mdi/tune-variant'
 import MdiWeatherNight from '~icons/mdi/weather-night'
 import MdiWhiteBalanceSunny from '~icons/mdi/white-balance-sunny'
-import { LocaleMenuItems } from './LocaleSelector'
+import { useLocaleMenuItems } from './LocaleSelector'
 
 const MODES: { value: ThemeMode; Icon: ComponentType<{ className?: string }> }[] = [
   { value: 'light', Icon: MdiWhiteBalanceSunny },
@@ -19,11 +19,12 @@ const MODES: { value: ThemeMode; Icon: ComponentType<{ className?: string }> }[]
 ]
 
 /**
- * Light / dark / system as menu items. MUI's CssVarsProvider remembers the choice (localStorage, the key the pre-paint
+ * Light / dark / system as menu item elements. A hook returning the elements rather than a wrapper component, so the
+ * items stay MenuList's direct children: MenuList gives the selected one autoFocus and the roving tabIndex. MUI's CssVarsProvider remembers the choice (localStorage, the key the pre-paint
  * script in setup/theme-script.ts reads), follows the OS while on "system", and sets <html data-theme>. Menus render
  * only when opened, so reading the stored mode here never reaches the server render.
  */
-export const ThemeMenuItems = ({ onClose }: { onClose: () => void }) => {
+export const useThemeMenuItems = (onClose: () => void): ReactElement[] => {
   const { t } = useTranslation(['settings'])
   const { mode, setMode } = useColorScheme()
   const current: ThemeMode = mode ?? 'system'
@@ -57,6 +58,7 @@ export const ThemeMenuItems = ({ onClose }: { onClose: () => void }) => {
 export const ThemeSelector = () => {
   const { t } = useTranslation(['settings'])
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const themeItems = useThemeMenuItems(() => setAnchorEl(null))
 
   return (
     <>
@@ -70,7 +72,7 @@ export const ThemeSelector = () => {
       </IconButton>
 
       <Menu transitionDuration={0} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-        <ThemeMenuItems onClose={() => setAnchorEl(null)} />
+        {themeItems}
       </Menu>
     </>
   )
@@ -84,6 +86,8 @@ export const DisplayPreferencesMenu = () => {
   const { t } = useTranslation(['settings'])
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const close = () => setAnchorEl(null)
+  const localeItems = useLocaleMenuItems(close)
+  const themeItems = useThemeMenuItems(close)
 
   return (
     <>
@@ -98,10 +102,10 @@ export const DisplayPreferencesMenu = () => {
 
       <Menu transitionDuration={0} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={close}>
         <ListSubheader>{t('settings:language.select')}</ListSubheader>
-        <LocaleMenuItems onClose={close} />
+        {localeItems}
         <Divider />
         <ListSubheader>{t('settings:theme.select')}</ListSubheader>
-        <ThemeMenuItems onClose={close} />
+        {themeItems}
       </Menu>
     </>
   )
