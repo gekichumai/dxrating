@@ -192,7 +192,7 @@ export const RatingCalculator = () => {
   if (!sheets) return null
 
   return (
-    <div className="rating-calculator flex-container w-full pb-global">
+    <div className="rating-calculator flex-container score-page-width w-full pb-global">
       <div className="rating-overview">
         <section className="glass rating-summary px-4 py-3" aria-labelledby="rating-breakdown-title">
           <RatingCalculatorStatistics titleId="rating-breakdown-title" />

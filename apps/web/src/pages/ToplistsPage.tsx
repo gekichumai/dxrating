@@ -216,7 +216,8 @@ export const ToplistsPage: FC = () => {
 
 /**
  * Desktop columns: position, jacket, title, chart, achievement, rank, lamps, (DX score), rating. The header and every
- * row share one template so the columns line up; the DX score column only appears when some row has one.
+ * row share one template so the columns line up; the DX score column only appears when some row has one. The title
+ * and artist stop at 28rem, so on the 1536px score-page width long artist names do not run across the extra space.
  */
 const DESKTOP_GRID =
   'lg:grid lg:items-center lg:gap-x-4 lg:grid-cols-[2rem_2.5rem_minmax(0,1fr)_10.5rem_6.5rem_3.5rem_6.5rem_3.5rem]'
@@ -333,7 +334,7 @@ const ToplistItem: FC<{ row: ToplistRow; sheet: FlattenedSheet; position: number
             height={40}
             className="size-10 rounded-[var(--radius-sm)] outline outline-1 outline-black/10 -outline-offset-1"
           />
-          <span className="flex flex-col min-w-0">
+          <span className="flex flex-col min-w-0 max-w-[28rem]">
             <span lang="ja" className="truncate font-semibold leading-tight text-fg-1" title={sheet.title}>
               {sheet.title}
             </span>

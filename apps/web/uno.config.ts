@@ -110,6 +110,9 @@ export default defineConfig({
     ])
   },
   shortcuts: {
+    // One desktop width for the score pages (/me/*, /rating, /plates): 1280 up to a 1600px viewport, then 1536 so
+    // the rating sidebar and B50 table get room on large screens. Change it here, never per page
+    'score-page-width': 'max-w-7xl min-[1600px]:max-w-[96rem]',
     'flex-container':
       'flex flex-col items-center justify-center py-4 gap-4 max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
     // Tinted-glass surfaces: the material is defined on these class names in src/styles/tokens.css (shortcuts cannot

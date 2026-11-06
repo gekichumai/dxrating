@@ -649,10 +649,8 @@
     top: 16px;
   }
 }
+/* The page widens to 1536 here through the shared score-page-width shortcut (uno.config.ts) */
 @media (min-width: 1600px) {
-  .rating-calculator.flex-container {
-    max-width: 1536px;
-  }
   .rating-table thead th {
     padding-inline: 8px;
     font-size: 0.875rem;

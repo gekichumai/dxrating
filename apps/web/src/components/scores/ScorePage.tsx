@@ -10,13 +10,14 @@ import { DIFFICULTIES } from '@/models/difficulties'
  * padding matches `flex-container` (py-4), so the heading sits at the same height as on the chart list pages.
  *
  * `me` is the one width for every `/me/*` page (records, progress, recommend), so moving between them never shifts
- * the content: a readable column on tablets, where the records list is still cards, and room for the records table's
- * desktop columns from `lg`. Every new `/me` page uses it; do not give one its own width.
+ * the content: a readable column on tablets, where the records list is still cards, and from `lg` the shared
+ * `score-page-width` (uno.config.ts) that /rating and /plates also use, so all score pages have one desktop width and
+ * heading edge. Every new `/me` page uses it; do not give one its own width.
  */
 const FRAME_WIDTHS = {
   '3xl': 'max-w-3xl',
   '5xl': 'max-w-5xl',
-  me: 'max-w-3xl lg:max-w-6xl',
+  me: 'max-lg:max-w-3xl score-page-width',
 } as const
 
 export const ScorePageFrame: FC<{ width?: keyof typeof FRAME_WIDTHS; children: ReactNode }> = ({
