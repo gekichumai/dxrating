@@ -1,26 +1,66 @@
 import { Chip } from '@mui/material'
-import IconMdiTag from '~icons/mdi/tag'
 import { AnimatePresence, motion } from 'framer-motion'
-import { type CSSProperties, type FC, useMemo } from 'react'
+import { type CSSProperties, type FC, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import IconMdiTag from '~icons/mdi/tag'
+import { useAuth } from '../../../hooks/useAuth'
 import type { FlattenedSheet } from '../../../songs'
 import { deriveColor } from '../../../utils/color'
-import { MotionButtonBase, MotionTooltip } from '../../../utils/motion'
-import { chipPresenceTransitions } from '../sheetMotion'
+import { MotionButtonBase } from '../../../utils/motion'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
-import { Markdown } from '../../global/Markdown'
+import { chipPresenceTransitions } from '../sheetMotion'
 import { SheetTagsAddButton } from './SheetTagsAddButton'
-import { useSheetTags } from './useSheetTags'
+import { TagVotePopover } from './TagVotePopover'
+import { type SheetTagEntry, useSheetTagsDetailed, useUserTagVotes } from './useSheetTagsDetailed'
 
 export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+  const { t } = useTranslation(['sheet'])
   const localizeMessage = useLocalizedMessageTranslation()
-  const { data, isLoading } = useSheetTags(sheet)
+  const { user } = useAuth()
+  const { data, isLoading, mutate } = useSheetTagsDetailed(sheet)
+  const [selected, setSelected] = useState<{ id: number; anchorEl: HTMLElement } | null>(null)
+  const [hiddenExpanded, setHiddenExpanded] = useState(false)
+
+  const tagSongIds = useMemo(() => data.map((entry) => entry.id), [data])
+  const { data: userVotes, mutate: mutateUserVotes } = useUserTagVotes(tagSongIds)
+
+  const visible = data.filter((entry) => !entry.hidden)
+  const hidden = data.filter((entry) => entry.hidden)
+  // Resolved from the live list rather than captured on click, so the popover
+  // reflects vote counts as soon as they are revalidated.
+  const selectedEntry = selected ? data.find((entry) => entry.id === selected.id) : undefined
 
   const addButton = useMemo(() => {
     return <SheetTagsAddButton key="add-button" sheet={sheet} />
   }, [sheet])
 
+  const onChanged = () => {
+    void mutate()
+    void mutateUserVotes()
+  }
+
+  const renderChip = (entry: SheetTagEntry) => (
+    <motion.div key={entry.id} {...chipPresenceTransitions}>
+      <Chip
+        label={localizeMessage(entry.tag.localized_name)}
+        size="small"
+        aria-haspopup="dialog"
+        // Group colours are pastels: dark mode's light chip text would vanish on them
+        className="cursor-pointer px-0.5 dark:!text-[var(--tag-fg)]"
+        style={
+          {
+            backgroundColor: entry.group?.color,
+            '--tag-fg': entry.group?.color ? deriveColor(entry.group.color, 'text') : undefined,
+            opacity: entry.hidden ? 0.6 : undefined,
+          } as CSSProperties
+        }
+        onClick={(event) => setSelected({ id: entry.id, anchorEl: event.currentTarget })}
+      />
+    </motion.div>
+  )
+
   const inner = () => {
-    if (isLoading || !data) {
+    if (isLoading) {
       return (
         <MotionButtonBase
           {...chipPresenceTransitions}
@@ -31,48 +71,21 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       )
     }
 
-    if (data.length === 0) {
-      return <>{addButton}</>
-    }
-
     return (
       <>
-        {data.map((tag) => (
-          <MotionTooltip
+        {visible.map(renderChip)}
+        {hiddenExpanded && hidden.map(renderChip)}
+
+        {hidden.length > 0 && !hiddenExpanded && (
+          <MotionButtonBase
+            key="hidden-tags"
             {...chipPresenceTransitions}
-            key={tag.id}
-            title={<Markdown content={localizeMessage(tag.localized_description)} />}
-            arrow
-            slotProps={{
-              popper: {
-                modifiers: [
-                  {
-                    name: 'offset',
-                    options: {
-                      offset: [0, -8],
-                    },
-                  },
-                ],
-              },
-            }}
+            className="h-6 rounded-[var(--radius-md)] border border-dashed border-black/20 px-2 text-xs text-fg-2 transition-colors hover:bg-black/5"
+            onClick={() => setHiddenExpanded(true)}
           >
-            <Chip
-              key={tag.id}
-              label={localizeMessage(tag.localized_name)}
-              size="small"
-              // Focusable, so the description tooltip also opens from the keyboard (MUI Tooltip opens on focus)
-              tabIndex={0}
-              // Group colours are pastels: dark mode's light chip text would vanish on them
-              className="cursor-help px-0.5 dark:!text-[var(--tag-fg)]"
-              style={
-                {
-                  backgroundColor: tag.group?.color,
-                  '--tag-fg': tag.group?.color ? deriveColor(tag.group.color, 'text') : undefined,
-                } as CSSProperties
-              }
-            />
-          </MotionTooltip>
-        ))}
+            {t('sheet:tags.vote.hidden-tags', { count: hidden.length })}
+          </MotionButtonBase>
+        )}
 
         {addButton}
       </>
@@ -80,14 +93,25 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   }
 
   return (
-    <div className="flex items-center gap-1">
-      <div className="flex flex-1 items-center gap-1">
+    <div className="flex items-start gap-1">
+      <div className="flex h-6 flex-1 items-center gap-1">
         <IconMdiTag aria-hidden="true" className="mr-1 text-fg-2" />
       </div>
 
-      <motion.div layoutRoot className="flex flex-wrap gap-1">
+      <motion.div layoutRoot className="flex flex-wrap items-center gap-1">
         <AnimatePresence mode="popLayout">{inner()}</AnimatePresence>
       </motion.div>
+
+      {selected && selectedEntry && (
+        <TagVotePopover
+          entry={selectedEntry}
+          anchorEl={selected.anchorEl}
+          userVote={userVotes[String(selectedEntry.id)] ?? null}
+          currentUserId={user?.id}
+          onClose={() => setSelected(null)}
+          onChanged={onChanged}
+        />
+      )}
     </div>
   )
 }
