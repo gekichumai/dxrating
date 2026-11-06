@@ -71,11 +71,13 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
   return (
     <MaterialSurface as="header" className="p-3 flex flex-col gap-3">
-      <div className="flex items-start gap-3">
+      {/* Expanded, the cover leaves no usable width for the title on phones, so the metadata wraps below it
+          once its column would drop under 12rem */}
+      <div className={`flex items-start gap-3 ${imgExpanded ? 'flex-wrap' : ''}`}>
         <motion.button
           type="button"
           className="shrink-0 p-0 m-0 border-0 bg-black/5 rounded-[var(--radius-md)] overflow-hidden outline outline-1 -outline-offset-1 outline-black/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] flex items-center justify-center"
-          style={{ cursor: imgExpanded ? 'zoom-out' : 'zoom-in' }}
+          style={{ cursor: imgExpanded ? 'zoom-out' : 'zoom-in', maxWidth: '100%' }}
           initial={false}
           animate={{ width: coverSize, height: coverSize }}
           transition={reduceMotion ? { duration: 0 } : { type: 'spring', duration: 0.3, bounce: 0 }}
@@ -96,7 +98,7 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           )}
         </motion.button>
 
-        <div className="flex flex-col gap-1 flex-1 min-w-0">
+        <div className={`flex flex-col gap-1 flex-1 min-w-0 ${imgExpanded ? 'basis-[12rem]' : ''}`}>
           <div className="flex items-start gap-1">
             <h1
               lang="ja"
