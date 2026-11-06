@@ -150,7 +150,7 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
   }, [document, hasRecords, groups, region, records])
 
   return (
-    <div className="flex-container w-full max-w-5xl px-4 pb-global">
+    <div className="flex-container w-full max-w-7xl px-4 pb-global">
       <div className="w-full flex flex-col gap-4">
         <header className="flex flex-col gap-2">
           <PlateBreadcrumb region={region} />
@@ -159,10 +159,10 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
           <RegionSwitch path="/plates" region={region} />
         </header>
 
-        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 list-none p-0 m-0">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 list-none p-0 m-0">
           {groups.map((group) => (
             <li key={group.id}>
-              <MaterialSurface className="p-3 flex flex-col gap-2 h-full">
+              <MaterialSurface className="p-3 xl:p-2.5 flex flex-col gap-2 h-full">
                 <div className="flex items-baseline gap-2">
                   <h2 className="m-0 text-2xl font-semibold text-fg-1">{group[script]}</h2>
                   <span className="text-xs text-fg-2 truncate">
@@ -171,7 +171,7 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
                       : group.versions.join(' / ')}
                   </span>
                   {group.unverified && (
-                    <span className="ms-auto shrink-0 text-xs px-1.5 py-0.5 rounded-[var(--radius-sm)] border border-solid border-amber-600/40 text-amber-800">
+                    <span className="ms-auto self-center shrink-0 text-xs px-1.5 py-0.5 rounded-[var(--radius-sm)] border border-solid border-amber-600/40 text-amber-800">
                       {t('plates:unverified')}
                     </span>
                   )}
@@ -183,7 +183,7 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
                       <a
                         key={plate.id}
                         href={regionHref(platePath(plate.id), region)}
-                        className="glass-inset px-2 py-1.5 no-underline flex flex-col gap-1 transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:bg-surface/80"
+                        className="glass-inset px-2 xl:px-1.5 py-1.5 no-underline flex flex-col gap-1 transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:bg-surface/80"
                       >
                         <span className="text-sm font-semibold text-fg-1">{plate.names[script]}</span>
                         {percent !== undefined ? (
@@ -192,7 +192,9 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
                             <span className="text-xs num text-fg-2">{formatPercent(percent)}</span>
                           </>
                         ) : (
-                          <span className="text-xs text-fg-2">{t(`plates:condition-short.${plate.kind}`)}</span>
+                          <span className="text-xs text-fg-2 [text-wrap:balance]">
+                            {t(`plates:condition-short.${plate.kind}`)}
+                          </span>
                         )}
                       </a>
                     )
@@ -278,7 +280,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
   const hasRemaster = data.charts.some((chart) => chart.sheets.some((s) => s.difficulty === DifficultyEnum.ReMaster))
 
   return (
-    <div className="flex-container w-full max-w-5xl px-4 pb-global">
+    <div className="flex-container w-full max-w-7xl px-4 pb-global">
       <div className="w-full flex flex-col gap-4">
         <header className="flex flex-col gap-2">
           <PlateBreadcrumb leaf={name} region={data.region} />
@@ -287,118 +289,121 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
           <RegionSwitch path={platePath(data.plateId)} region={data.region} />
         </header>
 
-        <MaterialSurface as="section" aria-labelledby="plate-condition" className="p-4 flex flex-col gap-2">
-          <h2 id="plate-condition" className="section-title m-0">
-            {t('plates:condition.title')}
-          </h2>
-          <p className="text-sm font-semibold text-fg-1 m-0">{t(`plates:condition.${data.kind}`)}</p>
-          <p className="text-xs text-fg-2 m-0">{t('plates:condition.scope')}</p>
-          {data.includesRemaster && <p className="text-xs text-fg-2 m-0">{t('plates:condition.remaster')}</p>}
-          {data.charts.some((chart) => chart.remasterDiffersByServer) && (
-            <p className="text-xs text-fg-2 m-0">{t('plates:condition.remaster-variant')}</p>
-          )}
-          {data.region === 'cn' && data.versions.length === 2 && !data.includesRemaster && (
-            <p className="text-xs text-fg-2 m-0">{t('plates:condition.cn-merged')}</p>
-          )}
-          {data.unverified && <p className="text-xs text-amber-800 m-0">{t('plates:condition.unverified')}</p>}
-        </MaterialSurface>
-
-        <MaterialSurface as="section" aria-labelledby="plate-progress" className="p-4 flex flex-col gap-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h2 id="plate-progress" className="section-title m-0">
-              {t('plates:progress.title')}
+        {/* Side by side on desktop: two short cards, each with a readable line length */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          <MaterialSurface as="section" aria-labelledby="plate-condition" className="p-4 flex flex-col gap-2">
+            <h2 id="plate-condition" className="section-title m-0">
+              {t('plates:condition.title')}
             </h2>
-            {isDemo && (
-              <span className="text-xs px-1.5 py-0.5 rounded-[var(--radius-sm)] border border-solid border-sky-600/40 text-sky-800">
-                {t('plates:progress.demo')}
-              </span>
+            <p className="text-sm font-semibold text-fg-1 m-0">{t(`plates:condition.${data.kind}`)}</p>
+            <p className="text-xs text-fg-2 m-0">{t('plates:condition.scope')}</p>
+            {data.includesRemaster && <p className="text-xs text-fg-2 m-0">{t('plates:condition.remaster')}</p>}
+            {data.charts.some((chart) => chart.remasterDiffersByServer) && (
+              <p className="text-xs text-fg-2 m-0">{t('plates:condition.remaster-variant')}</p>
             )}
-            {hasRecords && (
-              <ShareImageButton
-                size="small"
-                className="ms-auto!"
-                filename={`dxrating-plate-${data.plateId}.png`}
-                shareTitle={t('plates:share.title', { plate: name })}
-                imageAlt={t('plates:share.alt', { plate: name })}
-                getImage={() =>
-                  buildPlateShareImage({
-                    plateName: name,
-                    kind: data.kind,
-                    progress,
-                    records,
-                    labels: {
-                      subtitle: t('plates:share.subtitle', {
-                        versions,
-                        condition: t(`plates:condition-short.${data.kind}`),
-                      }),
-                      // The count the headline percentage is computed from (charts, not finished songs)
-                      progress: t('plates:progress.sheets', {
-                        done: progress.completedSheets,
-                        total: progress.totalSheets,
-                      }),
-                      percent: formatPercent(percent),
-                      remaining: t('plates:share.remaining-count', {
-                        count: progress.totalSheets - progress.completedSheets,
-                      }),
-                      order: t('plates:share.order'),
-                      unplayed: t('plates:share.unplayed'),
-                      more: (count) => t('plates:share.more', { count }),
-                      allDone: t('plates:share.all-done'),
-                    },
-                  })
-                }
-                onExported={(outcome) =>
-                  captureAnalyticsEvent('plate_share_exported', { plate_id: data.plateId, outcome })
-                }
-              />
+            {data.region === 'cn' && data.versions.length === 2 && !data.includesRemaster && (
+              <p className="text-xs text-fg-2 m-0">{t('plates:condition.cn-merged')}</p>
             )}
-          </div>
-          {hasRecords ? (
-            <>
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="text-3xl font-semibold num tracking-[-0.01em] text-fg-1">
-                  {formatPercent(percent)}
+            {data.unverified && <p className="text-xs text-amber-800 m-0">{t('plates:condition.unverified')}</p>}
+          </MaterialSurface>
+
+          <MaterialSurface as="section" aria-labelledby="plate-progress" className="p-4 flex flex-col gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 id="plate-progress" className="section-title m-0">
+                {t('plates:progress.title')}
+              </h2>
+              {isDemo && (
+                <span className="text-xs px-1.5 py-0.5 rounded-[var(--radius-sm)] border border-solid border-sky-600/40 text-sky-800">
+                  {t('plates:progress.demo')}
                 </span>
-                <span className="text-sm text-fg-2 num">
-                  <span className="whitespace-nowrap">
-                    {t('plates:progress.sheets', { done: progress.completedSheets, total: progress.totalSheets })}
+              )}
+              {hasRecords && (
+                <ShareImageButton
+                  size="small"
+                  className="ms-auto!"
+                  filename={`dxrating-plate-${data.plateId}.png`}
+                  shareTitle={t('plates:share.title', { plate: name })}
+                  imageAlt={t('plates:share.alt', { plate: name })}
+                  getImage={() =>
+                    buildPlateShareImage({
+                      plateName: name,
+                      kind: data.kind,
+                      progress,
+                      records,
+                      labels: {
+                        subtitle: t('plates:share.subtitle', {
+                          versions,
+                          condition: t(`plates:condition-short.${data.kind}`),
+                        }),
+                        // The count the headline percentage is computed from (charts, not finished songs)
+                        progress: t('plates:progress.sheets', {
+                          done: progress.completedSheets,
+                          total: progress.totalSheets,
+                        }),
+                        percent: formatPercent(percent),
+                        remaining: t('plates:share.remaining-count', {
+                          count: progress.totalSheets - progress.completedSheets,
+                        }),
+                        order: t('plates:share.order'),
+                        unplayed: t('plates:share.unplayed'),
+                        more: (count) => t('plates:share.more', { count }),
+                        allDone: t('plates:share.all-done'),
+                      },
+                    })
+                  }
+                  onExported={(outcome) =>
+                    captureAnalyticsEvent('plate_share_exported', { plate_id: data.plateId, outcome })
+                  }
+                />
+              )}
+            </div>
+            {hasRecords ? (
+              <>
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="text-3xl font-semibold num tracking-[-0.01em] text-fg-1">
+                    {formatPercent(percent)}
                   </span>
-                  {' · '}
-                  <span className="whitespace-nowrap">
-                    {t('plates:progress.charts', { done: progress.completedCharts, total: progress.totalCharts })}
+                  <span className="text-sm text-fg-2 num">
+                    <span className="whitespace-nowrap">
+                      {t('plates:progress.sheets', { done: progress.completedSheets, total: progress.totalSheets })}
+                    </span>
+                    {' · '}
+                    <span className="whitespace-nowrap">
+                      {t('plates:progress.charts', { done: progress.completedCharts, total: progress.totalCharts })}
+                    </span>
                   </span>
-                </span>
-              </div>
-              <ProgressBar percent={percent} />
-            </>
-          ) : (
-            <p className="text-sm text-fg-2 m-0">
-              {t('plates:progress.empty')}{' '}
-              <a href="/rating" className="link">
-                {t('plates:progress.import')}
-              </a>
-            </p>
-          )}
-          <div className="flex flex-wrap items-center gap-2">
-            <FilterChip active={remainingOnly} onClick={() => setRemainingOnly((value) => !value)}>
-              {t('plates:filter.remaining')}
-            </FilterChip>
-            <span className="w-px h-4 bg-black/12 mx-1" aria-hidden />
-            <FilterChip active={difficulty === null} onClick={() => setDifficulty(null)}>
-              {t('plates:filter.all')}
-            </FilterChip>
-            {DIFFICULTY_FILTERS.filter((d) => d !== DifficultyEnum.ReMaster || hasRemaster).map((d) => (
-              <FilterChip
-                key={d}
-                active={difficulty === d}
-                solid={DIFFICULTIES[d].solid}
-                onClick={() => setDifficulty(difficulty === d ? null : d)}
-              >
-                {DIFFICULTIES[d].title}
+                </div>
+                <ProgressBar percent={percent} />
+              </>
+            ) : (
+              <p className="text-sm text-fg-2 m-0">
+                {t('plates:progress.empty')}{' '}
+                <a href="/rating" className="link">
+                  {t('plates:progress.import')}
+                </a>
+              </p>
+            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <FilterChip active={remainingOnly} onClick={() => setRemainingOnly((value) => !value)}>
+                {t('plates:filter.remaining')}
               </FilterChip>
-            ))}
-          </div>
-        </MaterialSurface>
+              <span className="w-px h-4 bg-black/12 mx-1" aria-hidden />
+              <FilterChip active={difficulty === null} onClick={() => setDifficulty(null)}>
+                {t('plates:filter.all')}
+              </FilterChip>
+              {DIFFICULTY_FILTERS.filter((d) => d !== DifficultyEnum.ReMaster || hasRemaster).map((d) => (
+                <FilterChip
+                  key={d}
+                  active={difficulty === d}
+                  solid={DIFFICULTIES[d].solid}
+                  onClick={() => setDifficulty(difficulty === d ? null : d)}
+                >
+                  {DIFFICULTIES[d].title}
+                </FilterChip>
+              ))}
+            </div>
+          </MaterialSurface>
+        </div>
 
         {visible.map((group) => (
           <MaterialSurface
@@ -423,7 +428,8 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
             {group.charts.length === 0 ? (
               <p className="px-4 py-3 text-sm text-fg-2 m-0">{t('plates:all-done')}</p>
             ) : (
-              <ul className="list-none m-0 p-0 divide-y divide-black/5">
+              // One column of rows below lg; two columns on desktop, with the row borders drawn per cell
+              <ul className="list-none m-0 p-0 divide-y divide-black/5 lg:divide-y-0 lg:grid lg:grid-cols-2 lg:-mb-px">
                 {group.charts.map((status) => {
                   const { chart } = status
                   const sheets = difficulty ? chart.sheets.filter((s) => s.difficulty === difficulty) : chart.sheets
@@ -431,7 +437,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                   return (
                     <li
                       key={`${chart.songId}-${chart.type}`}
-                      className="flex flex-wrap xs:flex-nowrap items-center gap-x-3 gap-y-1.5 px-4 py-2"
+                      className="flex flex-wrap xs:flex-nowrap items-center gap-x-3 gap-y-1.5 px-4 py-2 lg:border-b lg:border-solid lg:border-black/5 lg:odd:border-e"
                     >
                       <img
                         src={coverImageUrl(chart.imageName)}

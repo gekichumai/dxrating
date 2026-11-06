@@ -234,3 +234,29 @@ html[lang='zh-Hant'],
 :lang(ja) :is(h1, h2, h3) {
   word-break: auto-phrase;
 }
+/*
+ * Status-bar backdrop. With viewport-fit=cover the page runs under the iOS status bar, and the header scrolls away
+ * with the page, so scrolled content (the navigation pill, cards) would show through behind the clock and battery.
+ * A fixed strip exactly as tall as the top safe area keeps --accent-band behind the status bar at every scroll
+ * position, the colour the theme-color meta and the header's own top band already use. Zero height where there is no
+ * inset (desktop, Android Chrome), so it only exists on notched and Dynamic Island screens.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 1250;
+  height: env(safe-area-inset-top, 0px);
+  pointer-events: none;
+  background-color: color-mix(in oklab, var(--accent-band) 86%, transparent);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  backdrop-filter: blur(12px) saturate(1.4);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  body::before {
+    background-color: var(--accent-band);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
