@@ -756,5 +756,28 @@
     "features.trending.description": "Charts people view now",
     "features.versions.title": "Versions",
     "features.versions.description": "Songs by game version"
+  },
+  "completion": {
+    "title": "My completion",
+    "target": "Target",
+    "rate": "Lv.{{level}} {{target}} rate: {{percent}}%",
+    "summary-line": "{{done}} done · {{pending}} not yet · {{unplayed}} unplayed ({{percent}}% of {{total}})",
+    "filter": "Show charts",
+    "filter-all": "All {{count}}",
+    "status.done": "Done {{count}}",
+    "status.pending": "Not yet {{count}}",
+    "status.unplayed": "Unplayed {{count}}",
+    "col-mine": "Mine",
+    "empty": "Import your scores to see which charts you have cleared.",
+    "empty-link": "Open the rating calculator",
+    "demo": "Showing demo scores.",
+    "progress-link": "Progress across all levels",
+    "share-title": "Lv.{{level}} {{target}} completion",
+    "progress.title": "Achievement summary",
+    "progress.intro": "How many charts of each level you have cleared at each grade. Select a number to open that level's table with the target set.",
+    "progress.level": "Level",
+    "progress.played": "Played",
+    "progress.cell-label": "Lv.{{level}} {{target}}: {{count}} of {{total}}",
+    "progress.loading": "Loading the chart list… Totals appear once every chart is loaded."
   }
 }

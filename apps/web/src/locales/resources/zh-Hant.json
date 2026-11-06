@@ -756,5 +756,28 @@
     "features.trending.description": "大家正在看的譜面",
     "features.versions.title": "版本",
     "features.versions.description": "依版本瀏覽曲目"
+  },
+  "completion": {
+    "title": "我的完成度",
+    "target": "目標",
+    "rate": "Lv.{{level}} {{target}} 達成率：{{percent}}%",
+    "summary-line": "已完成 {{done}}・未完成 {{pending}}・未遊玩 {{unplayed}}（共 {{total}} 譜面，{{percent}}%）",
+    "filter": "顯示譜面",
+    "filter-all": "全部 {{count}}",
+    "status.done": "已完成 {{count}}",
+    "status.pending": "未完成 {{count}}",
+    "status.unplayed": "未遊玩 {{count}}",
+    "col-mine": "我的",
+    "empty": "匯入成績後即可查看已完成的譜面。",
+    "empty-link": "開啟 Rating 計算機",
+    "demo": "正在顯示示範成績。",
+    "progress-link": "所有等級的進度",
+    "share-title": "Lv.{{level}} {{target}} 完成表",
+    "progress.title": "成績彙總",
+    "progress.intro": "各等級在各評級下已完成的譜面數。點選數字即可以該目標開啟定數表。",
+    "progress.level": "等級",
+    "progress.played": "已遊玩",
+    "progress.cell-label": "Lv.{{level}} {{target}}：{{count}} / {{total}}",
+    "progress.loading": "正在載入譜面列表… 全部譜面載入完成後顯示統計。"
   }
 }

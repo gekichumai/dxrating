@@ -756,5 +756,28 @@
     "features.trending.description": "지금 많이 보는 보면",
     "features.versions.title": "버전",
     "features.versions.description": "버전별 수록곡"
+  },
+  "completion": {
+    "title": "내 달성 현황",
+    "target": "목표",
+    "rate": "Lv.{{level}} {{target}} 달성률: {{percent}}%",
+    "summary-line": "달성 {{done}} · 미달성 {{pending}} · 미플레이 {{unplayed}} (전체 {{total}}개 중 {{percent}}%)",
+    "filter": "표시할 채보",
+    "filter-all": "전체 {{count}}",
+    "status.done": "달성 {{count}}",
+    "status.pending": "미달성 {{count}}",
+    "status.unplayed": "미플레이 {{count}}",
+    "col-mine": "내 기록",
+    "empty": "점수를 가져오면 클리어한 채보를 확인할 수 있습니다.",
+    "empty-link": "레이팅 계산기 열기",
+    "demo": "데모 점수를 표시하고 있습니다.",
+    "progress-link": "전체 레벨 진행 상황",
+    "share-title": "Lv.{{level}} {{target}} 달성표",
+    "progress.title": "성과 요약",
+    "progress.intro": "레벨별, 랭크별로 클리어한 채보 수입니다. 숫자를 누르면 해당 목표로 정수표를 엽니다.",
+    "progress.level": "레벨",
+    "progress.played": "플레이함",
+    "progress.cell-label": "Lv.{{level}} {{target}}: {{total}}개 중 {{count}}개",
+    "progress.loading": "채보 목록을 불러오는 중… 모든 채보를 불러오면 집계가 표시됩니다."
   }
 }
