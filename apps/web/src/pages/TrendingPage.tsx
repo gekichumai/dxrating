@@ -5,6 +5,7 @@ import { useMemo, type FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { buildTrendingChartLinks } from '@/components/chartDiscovery/trendingCharts'
 import { SheetListItem } from '@/components/sheet/SheetListItem'
+import { SHEET_ROW_INSET, SHEET_ROW_INSET_IMPORTANT } from '@/components/sheet/sheetRowLayout'
 import { orpc, type RouterOutputs } from '@/lib/orpc'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 import { formatSheetReleaseDateParts, sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
@@ -32,10 +33,13 @@ export const buildTrendingQueryOptions = (initialTrendingData?: TrendingData, is
 const formatTrendingDate = (date: string, locale: string) =>
   formatSheetReleaseDateParts(date, locale, sheetReleaseDateTimestamp(date)).absoluteDate
 
+// From lg the list fills two columns in rank order (#1 and #2 share the first line)
+const TRENDING_LIST_GRID = 'lg:grid lg:grid-cols-2 lg:gap-x-2'
+
 const TrendingChartsSkeleton: FC<{ label: string }> = ({ label }) => (
-  <div aria-busy="true" aria-label={label} className="glass w-full p-1" role="status">
-    {Array.from({ length: 6 }, (_, index) => (
-      <div className="w-full px-2 md:px-3 py-1" key={index}>
+  <div aria-busy="true" aria-label={label} className={`glass w-full p-1 ${TRENDING_LIST_GRID}`} role="status">
+    {Array.from({ length: 8 }, (_, index) => (
+      <div className={`w-full ${SHEET_ROW_INSET} py-1`} key={index}>
         <div className="flex items-center w-full p-1 gap-2 tabular-nums relative">
           <Skeleton variant="rounded" className="!h-12 !w-12 !min-w-[3rem] !rounded" />
           <div className="ml-2 flex-1 min-w-0">
@@ -76,7 +80,7 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
 
   return (
     <div
-      className="flex-container w-full max-w-5xl px-4 pb-global"
+      className="flex-container w-full max-w-5xl lg:max-w-7xl px-4 pb-global"
       itemScope
       itemType="https://schema.org/CollectionPage"
     >
@@ -127,7 +131,7 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
           <TrendingChartsSkeleton label={t('sheet:chart-discovery.trending.loading')} />
         ) : trendingQuery.isError ? null : charts.length > 0 ? (
           <ol
-            className="glass w-full list-none p-1 m-0"
+            className={`glass w-full list-none p-1 m-0 ${TRENDING_LIST_GRID}`}
             itemProp="mainEntity"
             itemScope
             itemType="https://schema.org/ItemList"
@@ -167,7 +171,20 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
                       <meta itemProp="value" content={chart.level} />
                     </span>
                     {chart.releaseDate && <meta itemProp="datePublished" content={chart.releaseDate} />}
-                    <SheetListItem sheet={chart} analytics={{ source: 'trending', position: index + 1 }} />
+                    <SheetListItem
+                      sheet={chart}
+                      analytics={{ source: 'trending', position: index + 1 }}
+                      insetClassName={SHEET_ROW_INSET_IMPORTANT}
+                      // Two columns hide the ranking's order, so from lg each row shows its rank (the list is an ol)
+                      startAdornment={
+                        <span
+                          aria-hidden="true"
+                          className="hidden lg:block w-5 mr-1 shrink-0 text-right text-sm font-semibold tabular-nums text-fg-2"
+                        >
+                          {index + 1}
+                        </span>
+                      }
+                    />
                   </div>
                 </li>
               )

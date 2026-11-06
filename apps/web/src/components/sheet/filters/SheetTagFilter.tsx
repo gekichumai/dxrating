@@ -107,7 +107,8 @@ const SheetTagFilterInput = ({ value, onChange }: { value: number[]; onChange: (
         popper: { modifiers: [{ name: 'offset', options: { offset: [0, -8] } }] },
       }}
     >
-      <span>
+      {/* Sized to the 24px chip, so tag rows share the genre and version chip rhythm */}
+      <span className="inline-flex items-center leading-none">
         <SheetTagFilterInputTag
           label={localizeMessage(e.localized_name)}
           count={e.count ?? '--'}
