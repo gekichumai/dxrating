@@ -136,7 +136,8 @@ export const TopBar = () => {
     <div className="page-gutter flex items-center justify-between gap-2 pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:pt-[calc(env(safe-area-inset-top)+1rem)]">
       <div className="flex flex-col items-start justify-center gap-1 select-none relative min-w-0">
         <Logo />
-        <div className="text-xs text-fg-2 leading-none whitespace-nowrap num">
+        {/* fg-1, not fg-2: the header tint over the background art leaves fg-2 near 4.3:1 at this 12px size */}
+        <div className="text-xs text-fg-1 leading-none whitespace-nowrap num">
           {BUNDLE.version ?? 'unknown'} (<RelativeTime time={BUNDLE.buildTime} length="short" />)
         </div>
       </div>

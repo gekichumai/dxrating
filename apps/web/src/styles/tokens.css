@@ -146,14 +146,14 @@
   box-shadow: var(--glass-highlight), var(--shadow-overlay);
 }
 
-/* The header: an accent tint that fades out into the page, with the accent kept solid behind the status bar. No
-   backdrop blur: the header scrolls with the page, and a blur that stops at its bottom edge draws a hard seam. Its
-   controls are glass themselves */
+/* The header: an accent tint that fades out into the page, with --accent-band kept solid behind the status bar so it
+   matches the theme-color meta (useThemeColorSync) in both themes. No backdrop blur: the header scrolls with the page,
+   and a blur that stops at its bottom edge draws a hard seam. Its controls are glass themselves */
 .glass-bar {
   background-image: linear-gradient(
     to bottom,
-    var(--accent) 0,
-    var(--accent) env(safe-area-inset-top),
+    var(--accent-band) 0,
+    var(--accent-band) env(safe-area-inset-top),
     color-mix(in oklab, var(--accent) 38%, rgb(255 255 255 / 0.3)) calc(env(safe-area-inset-top) + 0.01px),
     color-mix(in oklab, var(--accent) 16%, rgb(255 255 255 / 0.12)) 70%,
     transparent 100%
@@ -165,8 +165,8 @@
   .glass-bar {
     background-image: linear-gradient(
       to bottom,
-      var(--accent) 0,
-      var(--accent) env(safe-area-inset-top),
+      var(--accent-band) 0,
+      var(--accent-band) env(safe-area-inset-top),
       color-mix(in oklab, var(--accent) 24%, rgb(255 255 255 / 0.95)) calc(env(safe-area-inset-top) + 0.01px),
       color-mix(in oklab, var(--accent) 8%, rgb(255 255 255 / 0.6)) 85%,
       transparent 100%
