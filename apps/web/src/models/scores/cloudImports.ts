@@ -9,6 +9,7 @@ import {
 } from '@gekichumai/api-contract'
 import {
   type ClientImportSource,
+  compareScore,
   type SourceAccountKind,
   PUBLIC_SHEET_ID_PATTERN,
   toAchievementInt,
@@ -117,7 +118,9 @@ export function entriesToImportRecords(
     const record = parsed.data
     const existing = bySheetId.get(record.sheetId)
     if (existing) duplicates++
-    if (!existing || record.achievement > existing.achievement) bySheetId.set(record.sheetId, record)
+    // The server's score order (achievement, then combo, then sync): an equal achievement with a better flag wins,
+    // whatever the order of the file
+    if (!existing || compareScore(record, existing) > 0) bySheetId.set(record.sheetId, record)
   }
   return { records: [...bySheetId.values()], skipped, rejected, duplicates }
 }

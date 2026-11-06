@@ -95,6 +95,22 @@ describe('entriesToImportRecords', () => {
     ])
   })
 
+  it('keeps the better flags of duplicates with an equal achievement, in either order', () => {
+    const pick = (entries: PlayEntry[]) =>
+      entriesToImportRecords(entries, { source: 'dxrating-json', claimedSource: null }).records.map((record) => [
+        record.comboFlag,
+        record.syncFlag,
+      ])
+    const fc: PlayEntry = { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100, comboFlag: 'fc' }
+    const ap: PlayEntry = { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100, comboFlag: 'ap' }
+    expect(pick([fc, ap])).toEqual([['ap', null]])
+    expect(pick([ap, fc])).toEqual([['ap', null]])
+    const fs: PlayEntry = { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100, syncFlag: 'fs' }
+    const fsdp: PlayEntry = { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100, syncFlag: 'fsdp' }
+    expect(pick([fs, fsdp])).toEqual([[null, 'fsdp']])
+    expect(pick([fsdp, fs])).toEqual([[null, 'fsdp']])
+  })
+
   it('never keeps an entry the server would reject, and counts it apart from the skipped ones', () => {
     const { records, skipped, rejected } = entriesToImportRecords(
       [
