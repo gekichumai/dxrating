@@ -43,7 +43,7 @@ const StepButton: FC<{ label: string; disabled: boolean; onClick: () => void; ch
     disabled={disabled}
     onClick={onClick}
     className={clsx(
-      'glass-inset inline-flex size-11 shrink-0 items-center justify-center border border-solid border-[var(--glass-border)] text-fg-1',
+      'inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border-none bg-transparent text-fg-1',
       'cursor-pointer transition-colors duration-[var(--duration-fast)] outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)]',
       'hover:bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] disabled:cursor-default disabled:opacity-40',
     )}
@@ -94,7 +94,7 @@ export const LevelRangePicker: FC<{
     const atHigh = end === 'min' ? value >= range.max : value >= RANGE_CEILING
     return (
       <fieldset
-        className="m-0 flex min-w-0 items-center justify-center gap-0.5 border-none p-0 sm:gap-1.5"
+        className="glass-inset m-0 flex min-w-0 items-center justify-between gap-0.5 rounded-[var(--radius-md)] border border-solid border-[var(--glass-border)] p-0.5"
         aria-label={t(`random:range.${end}`)}
       >
         <StepButton
@@ -175,7 +175,7 @@ export const LevelRangePicker: FC<{
       {/* The range in large type, each end with its own steppers: the main control on a phone */}
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1">
         {endControl('min')}
-        <span aria-hidden className="text-2xl text-fg-2">
+        <span aria-hidden className="px-0.5 text-xl text-fg-2">
           –
         </span>
         {endControl('max')}
