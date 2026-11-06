@@ -239,6 +239,9 @@ export function isB15Sheet(sheetVersion: Version, appVersion: Version, region: R
   const appVersionId = VERSION_ID_MAP.get(appVersion)
   const sheetVersionId = VERSION_ID_MAP.get(sheetVersion)
   if (appVersionId === undefined || sheetVersionId === undefined) return false
+  // intl and cn get some charts later than Japan: one whose Japanese version is newer than the server's was added
+  // there during the current version, so it is new there
+  if (region !== 'jp' && sheetVersionId > appVersionId) return true
   const useCircleB15 = appVersionId >= VERSION_ID_MAP.get(VersionEnum.CiRCLE)!
   return useCircleB15
     ? appVersionId === sheetVersionId || appVersionId === sheetVersionId + 1
