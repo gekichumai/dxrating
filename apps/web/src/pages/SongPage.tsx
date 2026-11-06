@@ -1,11 +1,10 @@
 import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
-import { IconButton } from '@mui/material'
-import { type FC, type MouseEvent, useMemo } from 'react'
+import { type FC, useMemo } from 'react'
 import { Link, getRouteApi, useNavigate } from '@tanstack/react-router'
-import MdiArrowLeft from '~icons/mdi/arrow-left'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { TYPE_ORDER, getHighestDifficulty } from '../models/constants'
+import { SongBackLink } from '../components/song/SongBackLink'
 import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent, SongSheetSummary } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
@@ -54,6 +53,8 @@ export const SongPage: FC = () => {
         difficulty: getHighestDifficulty(sheetsOfType),
       },
       ...localeSearch,
+      // The chart tabs switch within one page: replacing the entry keeps Back (and the back arrow) leaving the song
+      replace: true,
     })
   }
 
@@ -66,6 +67,8 @@ export const SongPage: FC = () => {
         difficulty: newDifficulty,
       },
       ...localeSearch,
+      // The chart tabs switch within one page: replacing the entry keeps Back (and the back arrow) leaving the song
+      replace: true,
     })
   }
 
@@ -75,21 +78,7 @@ export const SongPage: FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-6 pb-global flex flex-col gap-4">
-      <IconButton
-        component={LinkBehavior}
-        href="/"
-        size="small"
-        aria-label={t('song:back')}
-        onClick={(e: MouseEvent<HTMLAnchorElement>) => {
-          if (window.history.length > 1 && document.referrer.startsWith(window.location.origin)) {
-            e.preventDefault()
-            window.history.back()
-          }
-        }}
-        className="self-start -ml-2 -mb-2"
-      >
-        <MdiArrowLeft aria-hidden />
-      </IconButton>
+      <SongBackLink search={search} className="self-start -ml-2 -mb-2" />
 
       {headerSheet && <SongHeader sheet={headerSheet} />}
 

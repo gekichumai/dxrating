@@ -20,13 +20,13 @@ const routeState = vi.hoisted(() => ({
 }))
 
 vi.mock('@tanstack/react-router', () => ({
-  // InternalLink: no router in these tests, so links render as plain anchors
-  useRouter: () => undefined,
   getRouteApi: () => ({
     useParams: () => routeState.params,
     useSearch: () => routeState.search,
   }),
   useNavigate: () => routeState.navigate,
+  useCanGoBack: () => false,
+  useRouter: () => ({ history: { back: vi.fn() }, navigate: vi.fn() }),
   Link: ({
     children,
     params,
@@ -118,6 +118,7 @@ describe('SongPage', () => {
     expect(routeState.navigate).toHaveBeenCalledWith(
       expect.objectContaining({ params: expect.objectContaining({ difficulty: 'expert' }), search: { locale: 'ja' } }),
     )
+    expect(screen.getByRole('link', { name: 'Back' }).getAttribute('href')).toBe('/?locale=ja')
     expect(screen.getByRole('link', { name: /All charts of this song/ }).getAttribute('href')).toBe(
       '/songs/dsng_d3kkdkrcqj?locale=ja',
     )
@@ -129,5 +130,12 @@ describe('SongPage', () => {
     expect(routeState.tabs?.hrefFor('dx', 'expert')).toBe('/songs/dsng_d3kkdkrcqj/dx/expert')
     routeState.tabs?.onDifficultyChange('expert')
     expect(routeState.navigate.mock.calls[0]?.[0]).not.toHaveProperty('search')
+  })
+
+  it('replaces the history entry when switching charts, so Back leaves the song', () => {
+    render(<SongPage />)
+
+    routeState.tabs?.onDifficultyChange('expert')
+    expect(routeState.navigate).toHaveBeenCalledWith(expect.objectContaining({ replace: true }))
   })
 })

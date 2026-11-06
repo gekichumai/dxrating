@@ -10,13 +10,9 @@ import { difficultyInkClassName } from '@/utils/difficultyInk'
 import { InternalLink } from '@/components/global/InternalLink'
 
 /** Short difficulty names shown next to levels, so a level never depends on its colour alone */
-export const DIFFICULTY_SHORT: Record<DifficultyEnum, string> = {
-  [DifficultyEnum.Basic]: 'BAS',
-  [DifficultyEnum.Advanced]: 'ADV',
-  [DifficultyEnum.Expert]: 'EXP',
-  [DifficultyEnum.Master]: 'MAS',
-  [DifficultyEnum.ReMaster]: 'Re:M',
-}
+export const DIFFICULTY_SHORT: Record<DifficultyEnum, string> = Object.fromEntries(
+  Object.entries(DIFFICULTIES).map(([difficulty, entry]) => [difficulty, entry.shortTitle]),
+) as Record<DifficultyEnum, string>
 
 /**
  * Difficulty-coloured text that passes 4.5:1: `ink` on light glass, `inkDark` in the dark theme, switched through CSS

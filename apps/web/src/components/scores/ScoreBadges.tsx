@@ -5,7 +5,8 @@ import type { CSSProperties, FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { achievementRankLabel, COMBO_LABELS, SYNC_LABELS } from '@/components/completion/completion'
 import { getSheetTypeAltTextKey } from '@/components/sheet/sheetTypeAssets'
-import { DIFFICULTIES } from '@/models/difficulties'
+import { FixedWidthText } from '@/components/global/FixedWidthText'
+import { DIFFICULTIES, DIFFICULTY_SHORT_TITLES } from '@/models/difficulties'
 
 /**
  * Score badges shared with the iOS app (DesignSystem/DXBadges.swift and ChartIndicators.swift): the same words and
@@ -106,35 +107,15 @@ export const SheetTypeBadge: FC<{ type: TypeEnum; className?: string }> = ({ typ
   )
 }
 
-const DIFFICULTY_SHORT_TITLES = Object.values(DIFFICULTIES).map((entry) => entry.shortTitle)
 /** Utage sheets carry their 【…】 label as the difficulty; the pill shows 宴 and keeps the label for screen readers */
 const UTAGE_SHORT_TITLE = '宴'
 /** The widest internal level, with tabular numbers: every constant segment takes this width */
 const LEVEL_WIDTH_SAMPLE = '00.0'
 
 /**
- * Text that takes the width of the widest of `sizers`, so a column of these lines up whatever each one says. The sizers
- * share one grid cell with the text, hidden, which keeps the width right in any font without a measured constant.
- */
-const FixedWidthText: FC<{ text: string; sizers: readonly string[]; className?: string }> = ({
-  text,
-  sizers,
-  className,
-}) => (
-  <span className={clsx('inline-grid', className)}>
-    {sizers.map((sizer) => (
-      <span key={sizer} aria-hidden className="invisible col-start-1 row-start-1">
-        {sizer}
-      </span>
-    ))}
-    <span className="col-start-1 row-start-1">{text}</span>
-  </span>
-)
-
-/**
  * The difficulty name on its solid colour, followed by the internal level on a tint of the same colour, like the iOS
  * app's two-tone difficulty pill. Both halves have a fixed width (the longest short name, the widest level), so in a
- * list the level and whatever follows the pill line up on every row. Short names (ADV, Re:MAS) keep it compact; the
+ * list the level and whatever follows the pill line up on every row. Short names (BAS … Re:MAS) keep it compact; the
  * full name is in the title and read out to screen readers.
  */
 export const DifficultyLevelBadge: FC<{ difficulty: string; level: string; className?: string }> = ({
