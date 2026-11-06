@@ -854,8 +854,15 @@
   },
   "share": {
     "image.button": "이미지로 공유",
-    "image.downloaded": "이미지를 저장했습니다",
-    "image.failed": "이미지를 만들 수 없습니다. 다시 시도하세요."
+    "image.failed": "이미지를 만들 수 없습니다. 다시 시도하세요.",
+    "image.viewer-title": "공유 이미지",
+    "image.hint": "휴대폰에서는 이미지를 길게 눌러 저장하거나 복사할 수 있습니다. 컴퓨터에서는 마우스 오른쪽 버튼을 누르거나 위 버튼을 사용하세요.",
+    "image.download": "이미지 저장",
+    "image.copy": "이미지 복사",
+    "image.share": "공유…",
+    "image.copied": "이미지를 복사했습니다",
+    "image.copy-failed": "이미지를 복사하지 못했습니다. 저장해 주세요.",
+    "image.share-failed": "공유 시트를 열지 못했습니다. 이미지를 저장해 주세요."
   },
   "plates": {
     "breadcrumb": "플레이트",
@@ -906,7 +913,13 @@
     "condition-short.hasha": "A 랭크 클리어",
     "other-plates": "다른 플레이트",
     "share.title": "{{plate}} 진행도",
-    "share.remaining": "아직 남은 채보"
+    "share.alt": "{{plate}} 달성 현황: 남은 채보",
+    "share.subtitle": "{{versions}} · 조건 {{condition}}",
+    "share.remaining-count": "남은 채보 {{count}}개",
+    "share.order": "달성에 가까운 순",
+    "share.unplayed": "미플레이",
+    "share.more": "외 {{count}}곡",
+    "share.all-done": "모든 채보를 달성했습니다!"
   },
   "toplists": {
     "title": "최고 기록",

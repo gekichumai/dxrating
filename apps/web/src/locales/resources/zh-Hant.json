@@ -854,8 +854,15 @@
   },
   "share": {
     "image.button": "分享圖片",
-    "image.downloaded": "圖片已儲存",
-    "image.failed": "無法產生圖片，請再試一次。"
+    "image.failed": "無法產生圖片，請再試一次。",
+    "image.viewer-title": "分享圖片",
+    "image.hint": "在手機上長按圖片即可儲存或複製；在電腦上可按右鍵，或使用上方按鈕。",
+    "image.download": "儲存圖片",
+    "image.copy": "複製圖片",
+    "image.share": "分享…",
+    "image.copied": "已複製圖片",
+    "image.copy-failed": "無法複製圖片，請改為儲存。",
+    "image.share-failed": "無法開啟分享面板，請改為儲存圖片。"
   },
   "plates": {
     "breadcrumb": "牌子",
@@ -906,7 +913,13 @@
     "condition-short.hasha": "A 評價通關",
     "other-plates": "其他牌子",
     "share.title": "{{plate}} 進度",
-    "share.remaining": "未達成的譜面"
+    "share.alt": "{{plate}} 完成進度：未達成的譜面",
+    "share.subtitle": "{{versions}} · 條件 {{condition}}",
+    "share.remaining-count": "未達成 {{count}} 張譜面",
+    "share.order": "依接近完成排序",
+    "share.unplayed": "未遊玩",
+    "share.more": "另有 {{count}} 首",
+    "share.all-done": "所有譜面皆已達成！"
   },
   "toplists": {
     "title": "成績排行",

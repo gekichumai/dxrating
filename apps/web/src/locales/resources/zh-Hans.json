@@ -854,8 +854,15 @@
   },
   "share": {
     "image.button": "分享图片",
-    "image.downloaded": "图片已保存",
-    "image.failed": "无法生成图片，请重试。"
+    "image.failed": "无法生成图片，请重试。",
+    "image.viewer-title": "分享图片",
+    "image.hint": "在手机上长按图片即可保存或复制；在电脑上可右键点击图片，或使用上方按钮。",
+    "image.download": "保存图片",
+    "image.copy": "复制图片",
+    "image.share": "分享…",
+    "image.copied": "已复制图片",
+    "image.copy-failed": "无法复制图片，请改为保存。",
+    "image.share-failed": "无法打开分享面板，请改为保存图片。"
   },
   "plates": {
     "breadcrumb": "牌子",
@@ -906,7 +913,13 @@
     "condition-short.hasha": "A 评级通关",
     "other-plates": "其他牌子",
     "share.title": "{{plate}}进度",
-    "share.remaining": "未达成的谱面"
+    "share.alt": "{{plate}} 完成进度：未达成的谱面",
+    "share.subtitle": "{{versions}} · 条件 {{condition}}",
+    "share.remaining-count": "未达成 {{count}} 张谱面",
+    "share.order": "按接近完成排序",
+    "share.unplayed": "未游玩",
+    "share.more": "另有 {{count}} 首",
+    "share.all-done": "所有谱面均已达成！"
   },
   "toplists": {
     "title": "成绩排行",

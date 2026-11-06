@@ -16,6 +16,7 @@ import { useAppContext, useAppContextDXDataVersion } from '../../../../models/co
 import { useRatingEntries } from '../../useRatingEntries'
 import { mapCalculatedEntryForOneShot } from './oneshotPayload'
 import { captureAnalyticsEvent } from '@/lib/analytics'
+import { ShareImageActions, useObjectUrl } from '@/components/global/ShareImageViewer'
 
 const useElapsedTime = (isLoading: boolean) => {
   const startTime = useRef<number | null>(null)
@@ -89,7 +90,7 @@ const RenderToOneShotImageDialogContent: FC<{ onClose: () => void }> = ({ onClos
           unit: 'millisecond',
         })
 
-        return URL.createObjectURL(blob)
+        return blob
       } catch (error) {
         const duration = performance.now() - from
         captureAnalyticsEvent('oneshot_render_failed', {
@@ -111,6 +112,7 @@ const RenderToOneShotImageDialogContent: FC<{ onClose: () => void }> = ({ onClos
     },
   )
   const elapsedTime = useElapsedTime(isValidating)
+  const imageUrl = useObjectUrl(data)
 
   return (
     <>
@@ -145,12 +147,24 @@ const RenderToOneShotImageDialogContent: FC<{ onClose: () => void }> = ({ onClos
               {t('rating-calculator:io.export.oneshot-image.dialog.error')}
             </p>
           ) : (
-            <img
-              src={data}
-              alt={t('rating-calculator:io.export.oneshot-image.preview-alt')}
-              className="rounded-[var(--radius-md)]"
-              style={{ boxShadow: 'var(--shadow-overlay)' }}
-            />
+            imageUrl && (
+              <img
+                src={imageUrl}
+                alt={t('rating-calculator:io.export.oneshot-image.preview-alt')}
+                className="block w-full h-auto rounded-[var(--radius-md)] [-webkit-touch-callout:default]"
+                style={{ boxShadow: 'var(--shadow-overlay)' }}
+              />
+            )
+          )}
+
+          {data && !isValidating && !error && (
+            <div className="mt-4">
+              <ShareImageActions
+                blob={data}
+                filename="dxrating-b50.png"
+                shareTitle={t('rating-calculator:io.export.oneshot-image.dialog.title')}
+              />
+            </div>
           )}
 
           <div className="text-secondary mt-4 flex flex-col gap-1">

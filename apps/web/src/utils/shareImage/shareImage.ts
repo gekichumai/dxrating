@@ -109,20 +109,33 @@ export function drawRoundedImage(
   context.restore()
 }
 
-export type ShareOutcome = 'shared' | 'downloaded' | 'cancelled'
+export type ShareOutcome = 'shared' | 'cancelled' | 'failed'
 
-/** Opens the Web Share sheet with the PNG when the browser can share files, otherwise downloads it */
-export async function shareOrDownloadImage(blob: Blob, filename: string, title?: string): Promise<ShareOutcome> {
-  const file = new File([blob], filename, { type: 'image/png' })
-  if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title })
-      return 'shared'
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return 'cancelled'
-      // Fall back to a download when sharing fails for any other reason
-    }
+const pngFile = (blob: Blob, filename: string) => new File([blob], filename, { type: 'image/png' })
+
+/** Whether the system share sheet can take this PNG (mobile browsers, Safari, Edge on Windows) */
+export function canShareImageFile(blob: Blob, filename: string): boolean {
+  if (typeof navigator === 'undefined' || typeof File === 'undefined') return false
+  try {
+    return !!navigator.canShare?.({ files: [pngFile(blob, filename)] })
+  } catch {
+    return false
   }
+}
+
+/** Opens the system share sheet with the PNG; call it only when `canShareImageFile` is true */
+export async function shareImageFile(blob: Blob, filename: string, title?: string): Promise<ShareOutcome> {
+  try {
+    await navigator.share({ files: [pngFile(blob, filename)], title })
+    return 'shared'
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') return 'cancelled'
+    return 'failed'
+  }
+}
+
+/** Saves the PNG through a download link */
+export function downloadImage(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = url
@@ -131,5 +144,13 @@ export async function shareOrDownloadImage(blob: Blob, filename: string, title?:
   anchor.click()
   anchor.remove()
   setTimeout(() => URL.revokeObjectURL(url), 10_000)
-  return 'downloaded'
+}
+
+/** Whether the async clipboard can take an image (Chromium, Safari, Firefox 127+) */
+export const canCopyImage = () =>
+  typeof navigator !== 'undefined' && typeof ClipboardItem !== 'undefined' && !!navigator.clipboard?.write
+
+/** Puts the PNG on the clipboard */
+export async function copyImage(blob: Blob) {
+  await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
 }

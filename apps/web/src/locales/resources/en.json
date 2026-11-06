@@ -854,8 +854,15 @@
   },
   "share": {
     "image.button": "Share image",
-    "image.downloaded": "Image saved",
-    "image.failed": "Unable to create the image. Try again."
+    "image.failed": "Unable to create the image. Try again.",
+    "image.viewer-title": "Share image",
+    "image.hint": "On a phone, press and hold the image to save or copy it. On a computer, right-click it or use the buttons above.",
+    "image.download": "Save image",
+    "image.copy": "Copy image",
+    "image.share": "Share…",
+    "image.copied": "Image copied",
+    "image.copy-failed": "Couldn't copy the image. Save it instead.",
+    "image.share-failed": "Couldn't open the share sheet. Save the image instead."
   },
   "plates": {
     "breadcrumb": "Plates",
@@ -906,7 +913,13 @@
     "condition-short.hasha": "Rank A clear",
     "other-plates": "Other plates",
     "share.title": "{{plate}} progress",
-    "share.remaining": "Still to clear"
+    "share.alt": "{{plate}} progress: the charts still to clear",
+    "share.subtitle": "{{versions}} · Needs {{condition}}",
+    "share.remaining-count": "Still to clear: {{count}} charts",
+    "share.order": "Closest first",
+    "share.unplayed": "Unplayed",
+    "share.more": "+{{count}} more songs",
+    "share.all-done": "Every chart cleared!"
   },
   "toplists": {
     "title": "Top records",

@@ -2,23 +2,27 @@ import { Button, type ButtonProps, CircularProgress } from '@mui/material'
 import { type FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import MdiShareVariant from '~icons/mdi/share-variant'
+import MdiImage from '~icons/mdi/image-outline'
 import type { ShareImageOutcome } from '@/lib/analytics'
-import { renderShareImage, type ShareImageSpec, shareOrDownloadImage } from '@/utils/shareImage/shareImage'
+import { renderShareImage, type ShareImageSpec } from '@/utils/shareImage/shareImage'
+import { ShareImageViewer } from './ShareImageViewer'
 
 export interface ShareImageButtonProps extends Omit<ButtonProps, 'onClick'> {
   /** Builds the image spec when clicked, so heavy drawing data is only gathered on demand */
   getImage: () => ShareImageSpec | Promise<ShareImageSpec>
   filename: string
   shareTitle?: string
+  /** Alt text of the preview */
+  imageAlt?: string
   onExported?: (outcome: ShareImageOutcome) => void
 }
 
-/** Renders a canvas share image and opens the share sheet, or downloads the PNG where sharing files is unsupported */
+/** Renders a canvas share image and shows it in a viewer with save, copy and share actions */
 export const ShareImageButton: FC<ShareImageButtonProps> = ({
   getImage,
   filename,
   shareTitle,
+  imageAlt,
   onExported,
   children,
   disabled,
@@ -26,14 +30,15 @@ export const ShareImageButton: FC<ShareImageButtonProps> = ({
 }) => {
   const { t } = useTranslation(['share'])
   const [busy, setBusy] = useState(false)
+  const [blob, setBlob] = useState<Blob | null>(null)
+  const [open, setOpen] = useState(false)
 
   const handleClick = async () => {
     setBusy(true)
     try {
-      const blob = await renderShareImage(await getImage())
-      const outcome = await shareOrDownloadImage(blob, filename, shareTitle)
-      if (outcome === 'downloaded') toast.success(t('share:image.downloaded'))
-      onExported?.(outcome)
+      setBlob(await renderShareImage(await getImage()))
+      setOpen(true)
+      onExported?.('viewed')
     } catch (error) {
       console.error(error)
       toast.error(t('share:image.failed'))
@@ -44,21 +49,32 @@ export const ShareImageButton: FC<ShareImageButtonProps> = ({
   }
 
   return (
-    <Button
-      variant="outlined"
-      startIcon={
-        busy ? (
-          <CircularProgress size="1rem" color="inherit" aria-hidden="true" />
-        ) : (
-          <MdiShareVariant aria-hidden="true" />
-        )
-      }
-      disabled={disabled || busy}
-      aria-busy={busy || undefined}
-      onClick={() => void handleClick()}
-      {...buttonProps}
-    >
-      {children ?? t('share:image.button')}
-    </Button>
+    <>
+      <Button
+        variant="outlined"
+        startIcon={
+          busy ? <CircularProgress size="1rem" color="inherit" aria-hidden="true" /> : <MdiImage aria-hidden="true" />
+        }
+        disabled={disabled || busy}
+        aria-busy={busy || undefined}
+        aria-haspopup="dialog"
+        onClick={() => void handleClick()}
+        {...buttonProps}
+      >
+        {children ?? t('share:image.button')}
+      </Button>
+      {blob && (
+        <ShareImageViewer
+          open={open}
+          onClose={() => setOpen(false)}
+          blob={blob}
+          filename={filename}
+          shareTitle={shareTitle}
+          title={shareTitle}
+          alt={imageAlt ?? shareTitle ?? t('share:image.viewer-title')}
+          onOutcome={onExported}
+        />
+      )}
+    </>
   )
 }
