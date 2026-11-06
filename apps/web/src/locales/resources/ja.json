@@ -142,7 +142,6 @@
     "filter.difficulty.gesture-hint.tap-hold": "のみ",
     "sort.title": "並べ替え",
     "sort.add": "並べ替えを追加",
-    "sort.predicate": "述語#{{index}}",
     "sort.by": "並べ替え",
     "sort.then-by": "次に",
     "sort.release-date.asc": "配信日（旧→新）",

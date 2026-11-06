@@ -486,7 +486,10 @@ const SheetSortFilterFormContent: FC<{
             </p>
           )}
         </div>
-        <SheetSortSelect control={control} />
+        {/* A search orders results by relevance and ignores the sort, so the controls are inert until it is cleared */}
+        <div inert={queryActive} className={clsx(queryActive && 'opacity-50')}>
+          <SheetSortSelect control={control} />
+        </div>
       </section>
     </div>
   )

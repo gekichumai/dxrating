@@ -142,7 +142,6 @@
     "filter.difficulty.gesture-hint.tap-hold": "선택",
     "sort.title": "정렬",
     "sort.add": "정렬 기준 추가",
-    "sort.predicate": "정렬 기준 #{{index}}",
     "sort.by": "정렬 기준",
     "sort.then-by": "다음 기준",
     "sort.release-date.asc": "출시일 (오래된 순)",

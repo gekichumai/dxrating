@@ -81,8 +81,9 @@ const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
  * song page) it is a plain h2.
  */
 const SheetDialogTitleHeading: FC<{ className?: string; children?: ReactNode }> = ({ className, children }) => (
-  <DialogTitle component="h2" className={clsx('!m-0 !p-0 !font-[inherit] !text-[length:inherit]', className)}>
-    {children}
+  // The reset is on the h2 and the title's own size and layout on an inner span, so the reset can't override them
+  <DialogTitle component="h2" className="min-w-0" sx={{ m: 0, p: 0, font: 'inherit', letterSpacing: 'inherit' }}>
+    <span className={className}>{children}</span>
   </DialogTitle>
 )
 

@@ -142,7 +142,6 @@
     "filter.difficulty.gesture-hint.tap-hold": "单选",
     "sort.title": "排序",
     "sort.add": "添加排序规则",
-    "sort.predicate": "规则 #{{index}}",
     "sort.by": "排序方式",
     "sort.then-by": "其次按",
     "sort.internal-level-value.asc": "谱面定数 (低→高)",

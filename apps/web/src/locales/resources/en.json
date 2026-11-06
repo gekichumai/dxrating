@@ -142,7 +142,6 @@
     "filter.difficulty.gesture-hint.tap-hold": "Select",
     "sort.title": "Sort",
     "sort.add": "Add sort",
-    "sort.predicate": "Predicate #{{index}}",
     "sort.by": "Sort by",
     "sort.then-by": "Then by",
     "sort.release-date.asc": "Release date (old → new)",
