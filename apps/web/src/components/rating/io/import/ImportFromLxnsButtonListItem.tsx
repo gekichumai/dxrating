@@ -120,6 +120,16 @@ const LxnsImportDialogContent: FC<{
       onClose()
     } catch (error) {
       Sentry.metrics.count('lxns_import.failure', 1)
+      if (
+        error instanceof ServerImportFailedError &&
+        (error.code === 'connection_expired' || error.code === 'not_connected')
+      ) {
+        // The server dropped the connection (its token could not be refreshed) or has none: connect again
+        analytics.failed('reconnect_required')
+        toast.error(t('rating-calculator:io.import.lxns.reconnect-required'))
+        setState('not-connected')
+        return
+      }
       if (error instanceof ServerImportFailedError) {
         // A cloud save's server import that failed: what happened in words, not its code
         analytics.failed('provider_error')
