@@ -91,7 +91,8 @@ export const AppTabs: FC = () => {
               }}
               viewTransition
               classes={{
-                selected: '!text-white font-bold text-shadow-md',
+                // The dark indicator is the lightened accent: it carries --on-accent, not white
+                selected: '!text-white font-bold text-shadow-md dark:!text-[var(--on-accent)] dark:text-shadow-none',
                 root: `!rounded-xl transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem ${
                   isIconOnlyTab ? '!min-w-2.5rem !w-2.5rem !px-0' : ''
                 }`,

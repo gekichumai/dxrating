@@ -320,43 +320,43 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                       <TableCell>{sheet.bpm}</TableCell>
                     </TableRow>
 
-                    <TableRow className="bg-gray-1">
+                    <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
                       <TableCell>{t('sheet:details.chart-designer')}</TableCell>
                       <TableCell>{sheet.noteDesigner}</TableCell>
                     </TableRow>
 
                     {(sheet.noteCounts.tap ?? 0) > 0 && (
                       <>
-                        <TableRow className="bg-gray-1">
+                        <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
                           <TableCell colSpan={2}>{t('sheet:details.notes-statistics.title')}</TableCell>
                         </TableRow>
 
-                        <TableRow className="bg-gray-1">
+                        <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
                           <TableCell>— {t('sheet:details.notes-statistics.tap')}</TableCell>
                           <TableCell>{sheet.noteCounts.tap ?? 0}</TableCell>
                         </TableRow>
 
-                        <TableRow className="bg-gray-1">
+                        <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
                           <TableCell>— {t('sheet:details.notes-statistics.hold')}</TableCell>
                           <TableCell>{sheet.noteCounts.hold ?? 0}</TableCell>
                         </TableRow>
 
-                        <TableRow className="bg-gray-1">
+                        <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
                           <TableCell>— {t('sheet:details.notes-statistics.slide')}</TableCell>
                           <TableCell>{sheet.noteCounts.slide ?? 0}</TableCell>
                         </TableRow>
 
-                        <TableRow className="bg-gray-1">
+                        <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
                           <TableCell>— {t('sheet:details.notes-statistics.touch')}</TableCell>
                           <TableCell>{sheet.noteCounts.touch ?? 0}</TableCell>
                         </TableRow>
 
-                        <TableRow className="bg-gray-1">
+                        <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
                           <TableCell>— {t('sheet:details.notes-statistics.break')}</TableCell>
                           <TableCell>{sheet.noteCounts.break ?? 0}</TableCell>
                         </TableRow>
 
-                        <TableRow className="bg-gray-1">
+                        <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
                           <TableCell>— {t('sheet:details.notes-statistics.total')}</TableCell>
                           <TableCell>{sheet.noteCounts.total?.toLocaleString('en-US')}</TableCell>
                         </TableRow>
@@ -392,7 +392,8 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                     <div
                       className={clsx(
                         'uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs inline-flex',
-                        sheet.isLocked ? '!bg-yellow-500' : '!bg-gray-500',
+                        // gray-500 lightens in dark; keep the light fill under white text
+                        sheet.isLocked ? '!bg-yellow-500' : '!bg-gray-500 dark:!bg-[#6b7280]',
                       )}
                     >
                       {sheet.isLocked ? t('global:locked') : t('global:available')}
@@ -444,7 +445,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                         sx={{
                           '&:last-child td, &:last-child th': { border: 0 },
                         }}
-                        className={clsx(isCurrentAchievementRateRow && 'bg-amber')}
+                        className={clsx(isCurrentAchievementRateRow && 'bg-amber dark:bg-[rgb(251_191_36/0.22)]')}
                       >
                         <TableCell component="th" scope="row">
                           <div className={clsx('flex items-center font-sans')}>
@@ -552,7 +553,10 @@ const SheetInternalLevelHistory: FC<{
               {multiverInternalLevelValues.map(({ version, available }) => (
                 <TableCell
                   key={version}
-                  className={clsx(appVersion === version && 'bg-amber-200', !available && 'opacity-50')}
+                  className={clsx(
+                    appVersion === version && 'bg-amber-200 dark:bg-[rgb(251_191_36/0.2)]',
+                    !available && 'opacity-50',
+                  )}
                 >
                   <img
                     src={
@@ -573,7 +577,10 @@ const SheetInternalLevelHistory: FC<{
               {multiverInternalLevelValues.map(({ version, internalLevelValue, available, delta }) => (
                 <TableCell
                   key={version}
-                  className={clsx(appVersion === version && 'bg-amber-200', !available && 'opacity-50')}
+                  className={clsx(
+                    appVersion === version && 'bg-amber-200 dark:bg-[rgb(251_191_36/0.2)]',
+                    !available && 'opacity-50',
+                  )}
                 >
                   {internalLevelValue === undefined ? (
                     <div className="text-zinc-500 select-none">{available ? '—' : '／'}</div>

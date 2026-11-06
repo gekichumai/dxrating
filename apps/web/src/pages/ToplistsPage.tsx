@@ -20,6 +20,7 @@ import { captureAnalyticsEvent } from '@/lib/analytics'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useUserRecords } from '@/models/useUserRecords'
 import { type FlattenedSheet, useSheets } from '@/songs'
+import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
 
 const COMBO_LABELS: Record<string, string> = { fc: 'FC', fcp: 'FC+', ap: 'AP', app: 'AP+' }
 const SYNC_LABELS: Record<string, string> = { sync: 'SYNC', fs: 'FS', fsp: 'FS+', fsd: 'FDX', fsdp: 'FDX+' }
@@ -179,7 +180,9 @@ const ToplistItem: FC<{ row: ToplistRow; sheet: FlattenedSheet; position: number
           <span className="flex flex-col min-w-0 flex-1">
             <span className="truncate font-bold text-sm">{sheet.title}</span>
             <span className="text-xs flex gap-2 opacity-80">
-              <span style={{ color: difficulty?.color }}>{difficulty?.title ?? sheet.difficulty}</span>
+              <span className={difficultyInkClassName} style={difficultyInkStyle(sheet.difficulty)}>
+                {difficulty?.title ?? sheet.difficulty}
+              </span>
               <span>
                 {sheet.type.toUpperCase()} · {sheet.internalLevelValue.toFixed(1)}
               </span>

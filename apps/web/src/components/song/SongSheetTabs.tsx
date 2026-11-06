@@ -1,3 +1,5 @@
+import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
+import clsx from 'clsx'
 import { type DifficultyEnum, type Sheet, TypeEnum } from '@gekichumai/dxdata'
 import { Tab, Tabs } from '@mui/material'
 import { type FC, type MouseEvent, type SyntheticEvent, useMemo } from 'react'
@@ -86,7 +88,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
               onClick={keepModifiedClicks}
               label={renderTypeTabLabel(type, label, altText)}
               classes={{
-                selected: '!text-white font-bold',
+                selected: '!text-white font-bold dark:!text-[var(--on-accent)]',
                 root: '!rounded-lg z-1 !py-0 !min-h-2.25rem !h-2.25rem !text-sm',
               }}
             />
@@ -122,11 +124,12 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
               onClick={keepModifiedClicks}
               label={config.title}
               classes={{
-                root: '!py-0 !min-h-2rem !h-2rem !text-xs',
+                root: clsx(
+                  '!py-0 !min-h-2rem !h-2rem !text-xs',
+                  activeDifficulty === difficulty && difficultyInkClassName,
+                ),
               }}
-              style={{
-                color: activeDifficulty === difficulty ? config.color : undefined,
-              }}
+              style={activeDifficulty === difficulty ? difficultyInkStyle(difficulty) : undefined}
             />
           )
         })}

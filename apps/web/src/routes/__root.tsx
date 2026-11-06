@@ -27,6 +27,7 @@ import { createServerI18n } from '@/setup/init-i18n'
 import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
+import { useThemeColorSync } from '@/utils/useThemeColorSync'
 import { ZOD_JITLESS_INLINE_SCRIPT } from '@/setup/zod-jitless'
 import { THEME_INLINE_SCRIPT } from '@/setup/theme-script'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
@@ -215,6 +216,7 @@ function AppLayout() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const theme = useVersionTheme()
+  useThemeColorSync(theme.accentColor)
   const { locale, renderedAt } = Route.useRouteContext()
 
   return (

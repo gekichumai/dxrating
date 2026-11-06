@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import Color from 'colorjs.io'
 import * as d3 from 'd3'
 import { Button } from '@mui/material'
 import compact from 'lodash-es/compact'
@@ -136,6 +137,28 @@ function RatingCalculatorStatisticsOverview({ className, style, ref }: RatingCal
   )
 }
 
+/** The `data-theme` on <html>, read after mount and kept in sync, so the chart can redraw for the theme. Null on the server and in the first render */
+const useDocumentTheme = () => {
+  const [theme, setTheme] = useState<string | null>(null)
+  useEffect(() => {
+    const root = document.documentElement
+    const read = () => setTheme(root.getAttribute('data-theme'))
+    read()
+    const observer = new MutationObserver(read)
+    observer.observe(root, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.disconnect()
+  }, [])
+  return theme
+}
+
+/** The average line's colour: a deeper shade of the bar on the light theme, a lighter one on the dark theme so it stays visible */
+const averageLineColor = (color: string, dark: boolean) => {
+  if (!dark) return deriveColor(color, 'overlay')
+  const c = new Color(color)
+  c.lch.l = Math.min(100, (c.lch.l ?? 0) + 20)
+  return c.display()
+}
+
 const Histogram: FC<{
   b15Values: number[]
   b35Values: number[]
@@ -144,8 +167,11 @@ const Histogram: FC<{
   const theme = useVersionTheme()
   const [containerRef, containerRect] = useMeasure<HTMLDivElement>()
   const id = useRef(makeId(12)).current
+  const documentTheme = useDocumentTheme()
 
   const draw = () => {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark'
+
     // set the dimensions and margins of the graph
     const margin = { top: 20, right: 10, bottom: 20, left: 25 }
     const width = containerRect.width - margin.left - margin.right
@@ -249,6 +275,7 @@ const Histogram: FC<{
       .text((d) => (d.y2 === 0 ? '' : d.y2))
       .style('text-anchor', 'middle')
       .style('font-size', '12px')
+      .style('fill', 'currentColor')
 
     // Append a vertical line to highlight the average
     const drawAverageLine = (avg: number, text: string, color: string) => {
@@ -266,18 +293,19 @@ const Histogram: FC<{
         .attr('y', y(0))
         .text(text)
         .style('font-size', '12px')
+        .style('fill', 'currentColor')
         .attr('transform', `rotate(-90, ${x(avg)}, ${y(0)}), translate(2, -2)`)
     }
 
     drawAverageLine(
       b15Avg,
       t('rating-calculator:statistics.b15-avg', { value: b15Avg.toFixed(2) }),
-      deriveColor('#3b82f6', 'overlay'),
+      averageLineColor('#3b82f6', dark),
     )
     drawAverageLine(
       b35Avg,
       t('rating-calculator:statistics.b35-avg', { value: b35Avg.toFixed(2) }),
-      deriveColor(theme.accentColor, 'overlay'),
+      averageLineColor(theme.accentColor, dark),
     )
   }
 
@@ -287,7 +315,7 @@ const Histogram: FC<{
     return () => {
       d3.select(`#${id}`).selectAll('*').remove()
     }
-  }, [id, containerRect, b15Values, b35Values])
+  }, [id, containerRect, b15Values, b35Values, documentTheme])
 
   return (
     <div className="flex flex-col gap-2" ref={containerRef}>

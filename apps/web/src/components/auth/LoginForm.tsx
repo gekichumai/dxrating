@@ -170,7 +170,11 @@ export const LoginForm = ({
             type="button"
             variant={isLastUsed('github') ? 'contained' : 'outlined'}
             startIcon={
-              pendingProvider === 'github' ? <CircularProgress size={20} /> : <IconLogosGithub className="w-5 h-5" />
+              pendingProvider === 'github' ? (
+                <CircularProgress size={20} />
+              ) : (
+                <IconLogosGithub className="w-5 h-5 dark:invert" />
+              )
             }
             endIcon={
               isLastUsed('github') ? (

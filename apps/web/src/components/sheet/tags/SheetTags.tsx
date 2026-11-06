@@ -1,8 +1,9 @@
 import { Chip } from '@mui/material'
 import IconMdiTag from '~icons/mdi/tag'
 import { AnimatePresence, motion } from 'framer-motion'
-import { type FC, useMemo } from 'react'
+import { type CSSProperties, type FC, useMemo } from 'react'
 import type { FlattenedSheet } from '../../../songs'
+import { deriveColor } from '../../../utils/color'
 import { MotionButtonBase, MotionTooltip } from '../../../utils/motion'
 import { zoomTransitions } from '../../../utils/motionConstants'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
@@ -72,10 +73,14 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
               key={tag.id}
               label={localizeMessage(tag.localized_name)}
               size="small"
-              className="cursor-help px-0.5"
-              style={{
-                backgroundColor: tag.group?.color,
-              }}
+              // Group colours are pastels: dark mode's light chip text would vanish on them
+              className="cursor-help px-0.5 dark:!text-[var(--tag-fg)]"
+              style={
+                {
+                  backgroundColor: tag.group?.color,
+                  '--tag-fg': tag.group?.color ? deriveColor(tag.group.color, 'text') : undefined,
+                } as CSSProperties
+              }
             />
           </MotionTooltip>
         ))}

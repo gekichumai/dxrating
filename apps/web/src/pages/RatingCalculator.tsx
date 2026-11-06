@@ -63,6 +63,7 @@ import { type FlattenedSheet, useSheets } from '../songs'
 import type { Rating } from '../utils/rating'
 import { DIFFICULTIES } from '../models/difficulties'
 import './rating-table.css'
+import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
 
 export interface Entry {
   sheet: FlattenedSheet
@@ -371,7 +372,9 @@ const RatingChartCell: FC<{ row: Row<Entry>; compactMode: boolean }> = ({ row, c
           {sheet.title}
         </span>
         <span className="rating-chart-meta">
-          <span style={{ color: difficulty?.color }}>{difficulty?.title ?? sheet.difficulty}</span>
+          <span className={difficultyInkClassName} style={difficultyInkStyle(sheet.difficulty)}>
+            {difficulty?.title ?? sheet.difficulty}
+          </span>
           <span>
             {sheet.type.toUpperCase()} ·{' '}
             {sheet.isTypeUtage ? sheet.level : (sheet.internalLevelValue?.toFixed(1) ?? sheet.level)}

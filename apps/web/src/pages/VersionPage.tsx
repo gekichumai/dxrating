@@ -9,6 +9,7 @@ import {
 import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
+import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
 
 const VersionNav: FC<{ current?: VersionEnum }> = ({ current }) => {
   const { t } = useTranslation(['versions'])
@@ -22,7 +23,8 @@ const VersionNav: FC<{ current?: VersionEnum }> = ({ current }) => {
           aria-current={version === current ? 'page' : undefined}
           className={`px-3 py-1 rounded-full text-xs no-underline border ${
             version === current
-              ? 'bg-slate-900 text-white border-slate-900'
+              ? // The adaptive slate fill turns light in dark: invert the label with it (literal: slate mirrors)
+                'bg-slate-900 text-white dark:text-[#0f172a] border-slate-900'
               : 'bg-white/90 text-slate-900 border-slate-300 hover:bg-slate-100'
           }`}
         >
@@ -96,8 +98,8 @@ export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
                         <a
                           key={chart.difficulty}
                           href={chart.href}
-                          className="no-underline whitespace-nowrap"
-                          style={{ color: DIFFICULTIES[chart.difficulty]?.color }}
+                          className={`no-underline whitespace-nowrap ${difficultyInkClassName}`}
+                          style={difficultyInkStyle(chart.difficulty)}
                           title={DIFFICULTIES[chart.difficulty]?.title}
                         >
                           {chart.level}

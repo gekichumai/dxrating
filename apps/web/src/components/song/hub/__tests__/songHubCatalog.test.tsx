@@ -14,7 +14,9 @@ import { SongChartsTable } from '../SongChartsTable'
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-    <a href="/" className={className}>{children}</a>
+    <a href="/" className={className}>
+      {children}
+    </a>
   ),
 }))
 vi.mock('@/models/context/useAppContext', () => ({

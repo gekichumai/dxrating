@@ -7,7 +7,7 @@ export function NotFoundContent() {
 
   return (
     <div className="mx-auto flex min-h-80 w-full max-w-2xl items-center justify-center px-4 py-12 text-zinc-950">
-      <section className="flex w-full flex-col items-center gap-5 rounded-lg bg-white/82 px-6 py-8 text-center shadow-[0_18px_45px_rgba(24,16,48,0.18),0_1px_0_rgba(255,255,255,0.65)_inset] backdrop-blur-md sm:px-8">
+      <section className="flex w-full flex-col items-center gap-5 rounded-lg bg-white/82 px-6 py-8 text-center shadow-[0_18px_45px_rgba(24,16,48,0.18),0_1px_0_rgba(255,255,255,0.65)_inset] backdrop-blur-md sm:px-8 dark:bg-[var(--glass-bg)] dark:shadow-[var(--glass-highlight),var(--shadow-overlay)] dark:border dark:border-solid dark:border-[var(--glass-border)]">
         <div className="flex h-12 min-w-12 items-center justify-center rounded-full bg-black/8 px-3 text-sm font-bold tracking-[0.12em] text-black/65">
           404
         </div>

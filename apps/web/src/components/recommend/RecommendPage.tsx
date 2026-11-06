@@ -21,6 +21,7 @@ import { DIFFICULTIES } from '@/models/difficulties'
 import type { Region } from '@/models/context/AppContext'
 import { type UserRecords, useUserRecords } from '@/models/useUserRecords'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
+import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
 
 const PER_BUCKET = 20
 
@@ -158,7 +159,10 @@ const RecommendSection: FC<{
                       <span className="truncate font-semibold">{item.sheet.title}</span>
                       <span className="flex flex-wrap gap-2 text-xs">
                         <span>{getSheetTypeDisplayName(item.sheet.type, locale)}</span>
-                        <span className="font-semibold" style={{ color: difficulty?.color }}>
+                        <span
+                          className={`font-semibold ${difficultyInkClassName}`}
+                          style={difficultyInkStyle(item.sheet.difficulty)}
+                        >
                           {difficulty?.title ?? item.sheet.difficulty}
                         </span>
                         <span className="tabular-nums">{item.sheet.internalLevelValue.toFixed(1)}</span>

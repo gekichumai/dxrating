@@ -9,8 +9,8 @@ import { CompletionBadges } from '@/components/completion/CompletionBadges'
 import { CompletionToolbar } from '@/components/completion/CompletionToolbar'
 import { useCompletionOverlay } from '@/components/completion/useCompletionOverlay'
 import { getSheetTitleLabel } from '@/components/song/sheetDisplay'
-import { DIFFICULTIES } from '@/models/difficulties'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
+import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
 
 export const constantTableRange = (table: ConstantTable) => ({
   max: table.groups[0]?.constant ?? '-',
@@ -29,7 +29,8 @@ const LevelNav: FC<{ current?: string }> = ({ current }) => {
           aria-current={level === current ? 'page' : undefined}
           className={`px-3 py-1 rounded-full text-sm no-underline border ${
             level === current
-              ? 'bg-slate-900 text-white border-slate-900'
+              ? // The adaptive slate fill turns light in dark: invert the label with it (literal: slate mirrors)
+                'bg-slate-900 text-white dark:text-[#0f172a] border-slate-900'
               : 'bg-white/90 text-slate-900 border-slate-300 hover:bg-slate-100'
           }`}
         >
@@ -122,8 +123,8 @@ export const ConstantTablePage: FC<{ table: ConstantTable }> = ({ table }) => {
                         <div className="text-xs text-slate-600">{chart.artist}</div>
                       </td>
                       <td
-                        className="px-2 py-1.5 whitespace-nowrap"
-                        style={{ color: DIFFICULTIES[chart.difficulty]?.color }}
+                        className={`px-2 py-1.5 whitespace-nowrap ${difficultyInkClassName}`}
+                        style={difficultyInkStyle(chart.difficulty)}
                       >
                         {getSheetTitleLabel(chart, locale)}
                       </td>

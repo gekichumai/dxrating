@@ -36,6 +36,11 @@ vi.mock('../../global/preferences/LocaleSelector', () => ({
   LocaleSelector: () => <button type="button" aria-label="Language" />,
 }))
 
+// ThemeSelector needs MUI's CssVarsProvider; its own behaviour is not under test here
+vi.mock('../../global/preferences/ThemeSelector', () => ({
+  ThemeSelector: () => <button type="button" aria-label="Appearance" />,
+}))
+
 vi.mock('../../global/preferences/UserChip', () => ({
   UserChip: () => <button type="button" aria-label="User profile" />,
 }))
