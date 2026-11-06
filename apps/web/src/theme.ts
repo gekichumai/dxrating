@@ -20,6 +20,11 @@ export interface Theme {
    * tinted glass over the canvas: for text, links, focus rings and fills that carry white text
    */
   accentStrongColor: string
+  /**
+   * The dark-mode counterpart of accentStrongColor: the accent lightened in OKLCH (hue and chroma kept) until it
+   * reaches at least 5.2:1 against dark glass, and 4.5:1 for the dark text that fills of it carry (--on-accent)
+   */
+  accentStrongDarkColor: string
   disabled?: boolean
 }
 
@@ -30,6 +35,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#178C72',
     accentStrongColor: '#00745b',
+    accentStrongDarkColor: '#41a98e',
     canvasColor: '#bdebdc',
   },
   [VersionEnum.FESTiVALPLUS]: {
@@ -40,6 +46,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/festival-plus-1024x.jpg'],
     accentColor: '#c8a8f9',
     accentStrongColor: '#7556a0',
+    accentStrongDarkColor: '#c8a8f9',
   },
   [VersionEnum.BUDDiES]: {
     background: {
@@ -49,6 +56,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/buddies-1024x.jpg'],
     accentColor: '#FAAE29',
     accentStrongColor: '#9a5400',
+    accentStrongDarkColor: '#faae29',
   },
   [VersionEnum.BUDDiESPLUS]: {
     background: {
@@ -58,6 +66,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/buddies-1024x.jpg'],
     accentColor: '#FAAE29',
     accentStrongColor: '#9a5400',
+    accentStrongDarkColor: '#faae29',
   },
   [VersionEnum.PRiSM]: {
     background: {
@@ -68,6 +77,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#6368C7',
     accentStrongColor: '#585cba',
+    accentStrongDarkColor: '#8890f3',
   },
   [VersionEnum.PRiSMPLUS]: {
     background: {
@@ -78,6 +88,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#6368C7',
     accentStrongColor: '#585cba',
+    accentStrongDarkColor: '#8890f3',
   },
   [VersionEnum.CiRCLE]: {
     background: {
@@ -87,6 +98,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#EF67A4',
     accentStrongColor: '#b53172',
+    accentStrongDarkColor: '#f169a6',
   },
   [VersionEnum.CiRCLEPLUS]: {
     background: {
@@ -96,5 +108,6 @@ export const VERSION_THEME: Record<string, Theme> = {
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#EF67A4',
     accentStrongColor: '#b53172',
+    accentStrongDarkColor: '#f169a6',
   },
 }

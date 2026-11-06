@@ -267,7 +267,7 @@ const SegaIDImportGuide: FC<{ region: 'intl' | 'jp' }> = ({ region }) => {
   const aimeURL = region === 'jp' ? 'https://maimaidx.jp/maimai-mobile/' : 'https://maimaidx-eng.com/maimai-mobile/'
 
   return (
-    <div className="mb-2 rounded-2xl border border-blue-200/70 bg-blue-50/60 p-2">
+    <div className="mb-2 rounded-2xl border border-blue-200/70 bg-blue-50/60 p-2 dark:border-[rgb(96_165_250/0.3)] dark:bg-[rgb(59_130_246/0.1)]">
       <div className="flex items-start gap-3 px-3 pb-1 pt-2">
         <IconMdiHelpCircleOutline className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
         <div>
@@ -344,7 +344,8 @@ const HelpSteps: FC<{ steps: string[] }> = ({ steps }) => (
   <ol className="m-0 flex list-none flex-col gap-2 p-0">
     {steps.map((step, index) => (
       <li key={step} className="flex items-start gap-2 text-sm text-zinc-700">
-        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+        {/* Literal blue-600: the adaptive scale lightens blue-600 on the dark theme, where the white numeral would lose contrast */}
+        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-xs font-bold text-white">
           {index + 1}
         </span>
         <span>{step}</span>

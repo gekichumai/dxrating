@@ -1,3 +1,4 @@
+import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
 import { VERSION_SORT_ORDER, type DifficultyEnum, type TypeEnum, type VersionEnum } from '@gekichumai/dxdata'
 import type { VersionedSheet } from '@gekichumai/maimai-domain'
 import { Button, Chip, CircularProgress, MenuItem, Slider, TextField } from '@mui/material'
@@ -185,10 +186,8 @@ export const RandomChartPage: FC = () => {
               <span className="flex flex-wrap items-center gap-2 text-sm">
                 <span>{getSheetTypeDisplayName(result.type, locale)}</span>
                 <span
-                  className="font-semibold"
-                  style={{
-                    color: DIFFICULTIES[result.difficulty as DifficultyEnum]?.color,
-                  }}
+                  className={`font-semibold ${difficultyInkClassName}`}
+                  style={difficultyInkStyle(result.difficulty)}
                 >
                   {DIFFICULTIES[result.difficulty as DifficultyEnum]?.title ?? result.difficulty}
                 </span>

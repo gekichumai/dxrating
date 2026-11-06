@@ -1,5 +1,6 @@
 @import '@unocss/reset/tailwind-compat.css';
 @import './styles/tokens.css';
+@import './styles/dark.css';
 
 :root {
   /* Hiragino Maru Gothic Pro, */

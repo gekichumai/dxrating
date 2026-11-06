@@ -171,6 +171,8 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
                   fullWidth
                   startIcon={<IconMdiCogOutline />}
                   aria-haspopup="dialog"
+                  // MUI's grey scale does not follow the theme: an inset glass fill on the dark theme instead of near-white
+                  className="dark:!bg-[var(--glass-inset-bg)] dark:hover:!bg-[rgb(255_255_255/0.1)]"
                   sx={{
                     minHeight: 44,
                     justifyContent: 'flex-start',

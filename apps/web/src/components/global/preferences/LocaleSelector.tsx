@@ -1,6 +1,6 @@
-import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material'
+import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem, type MenuItemProps } from '@mui/material'
 import { flushSync } from 'react-dom'
-import { type FC, type PropsWithChildren, useState } from 'react'
+import { type FC, type PropsWithChildren, type ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { persistClientLocalePreference, type SupportedLocale } from '@/setup/locale'
 import { captureAnalyticsEvent } from '@/lib/analytics'
@@ -8,13 +8,18 @@ import MdiCheck from '~icons/mdi/check'
 import MdiTranslate from '~icons/mdi/translate'
 import { startViewTransition, wipeOriginFromClick } from '../../../utils/startViewTransition'
 
-const LocaleSelectorItem: FC<
-  PropsWithChildren<{ locale: SupportedLocale; selected?: boolean; onClose: () => void }>
-> = ({ locale, selected, onClose, children }) => {
+// MenuList passes autoFocus and tabIndex to its direct children (keyboard focus on open, roving tab stop): they are
+// forwarded to the MenuItem through `rest`
+export const LocaleSelectorItem: FC<
+  PropsWithChildren<
+    { locale: SupportedLocale; selected?: boolean; onClose: () => void } & Omit<MenuItemProps, 'onClick'>
+  >
+> = ({ locale, selected, onClose, children, ...rest }) => {
   const { i18n } = useTranslation()
 
   return (
     <MenuItem
+      {...rest}
       lang={locale}
       selected={selected}
       onClick={(event) => {
@@ -43,7 +48,7 @@ const LocaleSelectorItem: FC<
   )
 }
 
-const LOCALES = [
+export const LOCALES = [
   { value: 'en', label: 'English' },
   { value: 'ja', label: '日本語' },
   { value: 'ko', label: '한국어' },
@@ -51,9 +56,24 @@ const LOCALES = [
   { value: 'zh-Hant', label: '繁體中文' },
 ] as const
 
+/**
+ * The language choices as menu item elements, for LocaleSelector and the combined phone menu (DisplayPreferencesMenu).
+ * A hook returning the elements rather than a wrapper component, so the items stay MenuList's direct children and get
+ * its keyboard focus handling.
+ */
+export const useLocaleMenuItems = (onClose: () => void): ReactElement[] => {
+  const { i18n } = useTranslation()
+  return LOCALES.map(({ value, label }) => (
+    <LocaleSelectorItem locale={value} selected={i18n.language === value} key={value} onClose={onClose}>
+      {label}
+    </LocaleSelectorItem>
+  ))
+}
+
 export const LocaleSelector = () => {
-  const { i18n, t } = useTranslation(['settings'])
+  const { t } = useTranslation(['settings'])
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const localeItems = useLocaleMenuItems(() => setAnchorEl(null))
 
   return (
     <>
@@ -66,16 +86,7 @@ export const LocaleSelector = () => {
       </IconButton>
 
       <Menu transitionDuration={0} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-        {LOCALES.map(({ value, label }) => (
-          <LocaleSelectorItem
-            locale={value}
-            selected={i18n.language === value}
-            key={value}
-            onClose={() => setAnchorEl(null)}
-          >
-            {label}
-          </LocaleSelectorItem>
-        ))}
+        {localeItems}
       </Menu>
     </>
   )

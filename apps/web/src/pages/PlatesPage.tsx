@@ -25,6 +25,7 @@ import { DIFFICULTIES } from '@/models/difficulties'
 import { useUserRecords } from '@/models/useUserRecords'
 import { DEFAULT_LOCALE, type SupportedLocale, toSupportedLocale } from '@/setup/locale'
 import { coverImageUrl } from '@/utils/shareImage/shareImage'
+import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
 
 const useLocale = (): SupportedLocale => {
   const { i18n } = useTranslation()
@@ -220,7 +221,10 @@ const FilterChip: FC<{ active: boolean; onClick: () => void; children: React.Rea
     aria-pressed={active}
     onClick={onClick}
     className={`px-3 py-1 rounded-lg text-xs cursor-pointer border border-solid transition-colors ${
-      active ? 'border-transparent bg-slate-900/85 text-white' : 'border-black/8 bg-white/40 text-slate-800'
+      active
+        ? // The adaptive slate fill turns light in dark: invert the label with it (literal: slate mirrors)
+          'border-transparent bg-slate-900/85 text-white dark:text-[#0f172a]'
+        : 'border-black/8 bg-white/40 text-slate-800'
     }`}
     style={active && color ? { backgroundColor: color, color: '#fff' } : undefined}
   >
@@ -427,15 +431,16 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                         {sheets.map((sheet) => {
                           const met = status.met.get(sheet.id)
                           const color = DIFFICULTIES[sheet.difficulty]?.color
+                          const ink = difficultyInkStyle(sheet.difficulty)
                           return (
                             <span
                               key={sheet.id}
                               title={`${DIFFICULTIES[sheet.difficulty]?.title} ${sheet.level}${met ? ` · ${t('plates:done')}` : ''}`}
-                              className="min-w-7 px-1 h-6 rounded-md text-[11px] font-bold tabular-nums inline-flex items-center justify-center border border-solid"
+                              className={`min-w-7 px-1 h-6 rounded-md text-[11px] font-bold tabular-nums inline-flex items-center justify-center border border-solid ${met ? '' : difficultyInkClassName}`}
                               style={
                                 met
                                   ? { backgroundColor: color, borderColor: color, color: '#fff' }
-                                  : { borderColor: color, color }
+                                  : { ...ink, borderColor: color }
                               }
                             >
                               {sheet.level}

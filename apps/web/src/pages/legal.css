@@ -77,3 +77,11 @@
   outline: 2px solid currentColor;
   outline-offset: 4px;
 }
+
+/* Dark theme: the fixed ink colours above are for light pages */
+html[data-theme='dark'] .legal-document {
+  color: var(--fg-1);
+}
+html[data-theme='dark'] .legal-title p {
+  color: var(--fg-2);
+}

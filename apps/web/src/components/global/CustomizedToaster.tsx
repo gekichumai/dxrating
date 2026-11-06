@@ -7,7 +7,9 @@ export const CustomizedToaster: FC = () => {
   return (
     <Toaster
       toastOptions={{
-        className: 'font-bold pr-1 py-2 rounded-xl',
+        // react-hot-toast paints a white bar inline; dark mode swaps it for the overlay glass
+        className:
+          'font-bold pr-1 py-2 rounded-xl dark:!bg-[var(--glass-overlay-bg)] dark:!text-[var(--fg-1)] dark:[backdrop-filter:var(--glass-blur)] dark:border dark:border-solid dark:border-[var(--glass-border)]',
         error: {
           duration: 10e3,
         },

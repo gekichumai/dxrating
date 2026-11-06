@@ -1,7 +1,12 @@
-import { Fade, createTheme, ThemeProvider, useMediaQuery } from '@mui/material'
+import { Fade, useMediaQuery } from '@mui/material'
+import {
+  Experimental_CssVarsProvider as CssVarsProvider,
+  experimental_extendTheme as extendTheme,
+} from '@mui/material/styles'
 import { MotionConfig } from 'framer-motion'
 import { type FC, type PropsWithChildren, useMemo } from 'react'
 import { useVersionTheme } from '../../utils/useVersionTheme'
+import { THEME_ATTRIBUTE, THEME_COLOR_SCHEME_STORAGE_KEY, THEME_MODE_STORAGE_KEY } from '@/setup/theme-script'
 
 // MUI surfaces on the tinted-glass tokens in src/styles/tokens.css, so dialogs, menus, popovers, drawers, tooltips
 // and alerts match the rest of the app instead of opaque white paper
@@ -25,7 +30,10 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({ 
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)', { noSsr: false })
 
   const theme = useMemo(() => {
-    return createTheme({
+    // Both colour schemes become CSS variables keyed off <html data-theme> (set before paint by theme-script.ts), so
+    // the server and the first client render produce the same markup whichever theme is showing. Palette colours
+    // must be literal here (MUI derives channels from them); they mirror --fg-1/--fg-2 in tokens.css and dark.css.
+    return extendTheme({
       shape: {
         // --radius-md: controls (buttons, inputs, chips, list rows, menu items)
         borderRadius: 8,
@@ -41,15 +49,36 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({ 
           fontWeight: 600,
         },
       },
-      palette: {
-        primary: {
-          // The strong accent passes 4.5:1 for white text on it and for it as text on glass, in every version
-          main: versionTheme.accentStrongColor,
-          contrastText: '#fff',
+      colorSchemes: {
+        light: {
+          palette: {
+            primary: {
+              // The strong accent passes 4.5:1 for white text on it and for it as text on glass, in every version
+              main: versionTheme.accentStrongColor,
+              contrastText: '#fff',
+            },
+            text: {
+              primary: '#18181b',
+              secondary: '#52525b',
+            },
+          },
         },
-        text: {
-          primary: '#18181b',
-          secondary: '#52525b',
+        dark: {
+          palette: {
+            primary: {
+              // Lightened for dark glass; fills of it carry dark text (--on-accent), ≥4.5:1 in every version
+              main: versionTheme.accentStrongDarkColor,
+              contrastText: '#111114',
+            },
+            text: {
+              primary: '#f4f4f5',
+              secondary: '#b4b4bd',
+            },
+            background: {
+              default: '#0f0f12',
+              paper: '#1a1a1f',
+            },
+          },
         },
       },
       components: {
@@ -119,6 +148,10 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({ 
           styleOverrides: {
             tooltip: {
               backgroundColor: 'rgb(24 24 27 / 0.86)',
+              [`[${THEME_ATTRIBUTE}="dark"] &`]: {
+                backgroundColor: 'rgb(63 63 70 / 0.92)',
+                border: '1px solid rgb(255 255 255 / 0.1)',
+              },
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
               borderRadius: 'var(--radius-sm)',
@@ -164,8 +197,15 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({ 
   }, [versionTheme, reducedMotion])
 
   return (
-    <ThemeProvider theme={theme}>
+    <CssVarsProvider
+      theme={theme}
+      attribute={THEME_ATTRIBUTE}
+      modeStorageKey={THEME_MODE_STORAGE_KEY}
+      colorSchemeStorageKey={THEME_COLOR_SCHEME_STORAGE_KEY}
+      defaultMode="system"
+      disableTransitionOnChange
+    >
       <MotionConfig reducedMotion="user">{children}</MotionConfig>
-    </ThemeProvider>
+    </CssVarsProvider>
   )
 }

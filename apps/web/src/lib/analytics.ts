@@ -51,6 +51,10 @@ type AnalyticsEventProperties = {
     locale: string
     previous_locale: string
   }
+  theme_selector_item_clicked: {
+    mode: string
+    previous_mode: string
+  }
   oneshot_render_button_clicked: {
     entry_count: number
     b15_count: number

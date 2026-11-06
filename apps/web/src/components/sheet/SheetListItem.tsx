@@ -215,13 +215,13 @@ export const SheetDifficulty: FC<{
     >
       {allUnavailable && (
         <MdiTrashCan
-          className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-white rounded-full"
+          className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-[#fff] rounded-full"
           style={{ color: difficultyConfig.color }}
         />
       )}
       {isLocked && (
         <MdiLock
-          className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-white rounded-full"
+          className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-[#fff] rounded-full"
           style={{ color: difficultyConfig.color }}
         />
       )}
@@ -428,7 +428,7 @@ export const SheetTitle: FC<SheetTitleProps> = ({
       )}
 
       {sheet.isTypeUtage && (
-        <span className="text-sm text-zinc-600 px-1.5 py-0.5 gap-1 bg-amber/75 inline-flex self-start rounded-md">
+        <span className="text-sm text-zinc-600 dark:text-[#3f3f46] px-1.5 py-0.5 gap-1 bg-amber/75 inline-flex self-start rounded-md">
           <MdiComment className="h-3 w-3 flex-shrink-0 mt-1.125" />
           <span>{sheet.comment}</span>
         </span>

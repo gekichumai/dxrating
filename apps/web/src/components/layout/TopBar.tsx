@@ -10,9 +10,9 @@ import McpLogo from '~icons/simple-icons/modelcontextprotocol'
 import QqLogo from '~icons/simple-icons/qq'
 import { BUNDLE } from '../../utils/bundle'
 import { RelativeTime } from '../../utils/useTime'
-import { useVersionTheme } from '../../utils/useVersionTheme'
 import { Logo } from '../global/Logo'
 import { LocaleSelector } from '../global/preferences/LocaleSelector'
+import { DisplayPreferencesMenu, ThemeSelector } from '../global/preferences/ThemeSelector'
 import { UserChip } from '../global/preferences/UserChip'
 import { About } from '../global/site-meta/About'
 
@@ -42,7 +42,7 @@ const COMMUNITY_LINKS: {
     shortLabel: 'GitHub',
     href: 'https://github.com/gekichumai/dxrating',
     Icon: MdiGithub,
-    brandClassName: 'bg-zinc-800 hover:bg-zinc-700',
+    brandClassName: 'bg-[#27272a] hover:bg-[#3f3f46]',
   },
 ]
 
@@ -56,7 +56,8 @@ const DEVELOPERS_URL = '/developers'
 const BRAND_BADGE_CLASS_NAME = 'text-white border-1 border-solid border-black/20 shadow'
 // MCP has no brand color; a white badge with the black logo keeps it distinct from the community links.
 const MCP_BADGE_CLASS_NAME = 'bg-white text-black border-1 border-solid border-black/20 shadow'
-const API_BADGE_CLASS_NAME = 'bg-slate-900 text-white border-1 border-solid border-black/20 shadow'
+// Literal fill (not the adaptive slate scale, which lightens in dark mode): it carries white text in both themes
+const API_BADGE_CLASS_NAME = 'bg-[#0f172a] text-white border-1 border-solid border-black/20 shadow'
 
 // One segment of the MCP / API pill on wider screens.
 const DEVELOPER_PILL_SEGMENT_CLASS_NAME =
@@ -179,13 +180,12 @@ export const TopBar = ({
   standalone?: boolean
   transparent?: boolean
 }) => {
-  const versionTheme = useVersionTheme()
   const { t } = useTranslation(['root'])
 
   return (
     <div
       className={`sticky top-0${standalone ? ' pb-4' : ''}`}
-      style={{ background: transparent ? undefined : versionTheme.accentColor }}
+      style={{ background: transparent ? undefined : 'var(--accent-band)' }}
     >
       <div className="flex items-center justify-between gap-2 pt-[calc(env(safe-area-inset-top)+1rem)] max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+0.75rem)] 2xs:pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+0.5rem)]">
         <div className="flex flex-col items-start justify-center gap-1 select-none relative min-w-0">
@@ -246,7 +246,14 @@ export const TopBar = ({
             <CommunityMenu />
           </div>
 
-          <LocaleSelector />
+          {/* Phones get one combined language + appearance button so the row keeps its width (DisplayPreferencesMenu) */}
+          <div className="hidden sm:contents">
+            <LocaleSelector />
+            <ThemeSelector />
+          </div>
+          <div className="contents sm:hidden">
+            <DisplayPreferencesMenu />
+          </div>
           <About />
           <UserChip />
         </div>

@@ -1,6 +1,6 @@
 import { Chip, Dialog, Grow } from '@mui/material'
 import clsx from 'clsx'
-import { type FC, useState } from 'react'
+import { type CSSProperties, type FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
@@ -120,13 +120,17 @@ const SheetTagsAddDialog: FC<{
                           onClick={() => addTag(tag.id)}
                           disabled={pending || exists}
                           className={clsx(
-                            'rounded-lg border border-solid',
+                            // Group colours are pastels: dark mode's light chip text would vanish on them
+                            'rounded-lg border border-solid dark:!text-[var(--tag-fg)]',
                             pending && 'animate-pulse -animate-delay-1000',
                           )}
-                          style={{
-                            backgroundColor: tag.group?.color,
-                            borderColor: deriveColor(tag.group?.color ?? '#000', 'border'),
-                          }}
+                          style={
+                            {
+                              backgroundColor: tag.group?.color,
+                              borderColor: deriveColor(tag.group?.color ?? '#000', 'border'),
+                              '--tag-fg': tag.group?.color ? deriveColor(tag.group.color, 'text') : undefined,
+                            } as CSSProperties
+                          }
                         />
                       </MotionTooltip>
                     )

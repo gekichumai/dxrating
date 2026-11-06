@@ -67,7 +67,7 @@ const Option = ({
       <a
         href={action.href}
         {...externalLinkProps}
-        className="inline-flex h-10 items-center gap-1.5 rounded-full bg-zinc-900 px-4 text-sm font-semibold text-white! no-underline transition-colors hover:bg-zinc-700"
+        className="inline-flex h-10 items-center gap-1.5 rounded-full bg-zinc-900 px-4 text-sm font-semibold text-white! dark:text-[#18181b]! no-underline transition-colors hover:bg-zinc-700"
       >
         {action.label}
         <MdiArrowTopRight className="size-4" />
@@ -144,7 +144,8 @@ export const DevelopersPage = () => {
           <Option
             id="developers-api"
             Icon={MdiCodeBraces}
-            iconClassName="bg-slate-900 text-white"
+            // The adaptive slate fill turns light in dark: invert the glyph with it (literal: slate mirrors)
+            iconClassName="bg-slate-900 text-white dark:text-[#0f172a]"
             title={t('developers:api.title')}
             description={t('developers:api.description')}
             endpointLabel={t('developers:api.endpoint')}

@@ -5,7 +5,8 @@
  * large flat solid fills. Use the UnoCSS shortcuts in uno.config.ts (`glass`, `glass-thin`, `glass-inset`,
  * `glass-overlay`, `glass-bar`) or MUI, whose Paper, Menu, Dialog, Drawer, Tooltip and Alert are themed onto the same
  * tokens in VersionCustomizedThemeProvider. Per-version accent values are set on <html> by the root route
- * (--accent, --accent-strong); everything else derives from them here.
+ * (--accent, --accent-strong-light, --accent-strong-dark); everything else derives from them here. Dark values are in
+ * dark.css.
  *
  * Radius scale (outer = inner + inset + border where a surface wraps another at an even inset up to 24px):
  *   --radius-xs 4px   tiny badges inside chips
@@ -22,9 +23,11 @@
 
   /* Fallbacks for the per-version values the root route sets inline */
   --accent: #178c72;
-  --accent-strong: #00745b;
+  --accent-strong: var(--accent-strong-light, #00745b);
   --on-accent: #fff;
   --accent-subtle: color-mix(in oklab, var(--accent) 14%, transparent);
+  /* The solid accent band behind the header and the version switcher; dark.css deepens it to carry light text */
+  --accent-band: var(--accent);
 
   /* Text, measured on glass over every version background: fg-1 ≥ 14:1, fg-2 ≥ 6:1 (never zinc-400/500 for text) */
   --fg-1: #18181b;
@@ -33,6 +36,10 @@
   /* Status fills that carry white text (>=4.5:1): availability, unlock, success and warning badges */
   --status-positive: #047857;
   --status-warning: #b45309;
+
+  /* What `bg-white/…` and `text-black/…` utilities resolve to; dark.css swaps them (uno.config.ts postprocess) */
+  --surface-rgb: 255 255 255;
+  --ink-rgb: 0 0 0;
 
   /* Glass levels */
   --glass-tint: color-mix(in oklab, var(--accent) 7%, transparent);
