@@ -2,7 +2,12 @@ import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import type { LinkProps } from '@tanstack/react-router'
 import { buildRecentChartLinks } from '@/components/chartDiscovery/recentCharts'
 
-export const HOME_RECENT_SONG_LIMIT = 8
+/** Covers shown below lg, where the strip scrolls one row */
+export const HOME_RECENT_SONG_LIMIT_MOBILE = 8
+/** Covers shown from lg to xl (a 968px row fits 10) */
+export const HOME_RECENT_SONG_LIMIT_LG = 10
+/** Covers rendered in total; all show from xl, where the 1248px hub fits 13 in one row */
+export const HOME_RECENT_SONG_LIMIT = 13
 
 export type HomeRecentSong = {
   songId: string

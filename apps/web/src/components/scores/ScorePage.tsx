@@ -6,14 +6,18 @@ import { DIFFICULTIES } from '@/models/difficulties'
 
 /**
  * Shared frame for the score-derived pages (top records, level progress, rating boosts, random chart), so they line
- * up at the same width, gutter and heading position, and show empty and demo states the same way.
+ * up at the same width, gutter and heading position, and show empty and demo states the same way. `wide` is for
+ * tables that gain columns on desktop.
  */
-export const ScorePageFrame: FC<{ width?: '3xl' | '5xl'; children: ReactNode }> = ({ width = '3xl', children }) => (
+export const ScorePageFrame: FC<{ width?: '3xl' | '5xl' | 'wide'; children: ReactNode }> = ({
+  width = '3xl',
+  children,
+}) => (
   <div
     className={clsx(
       'mx-auto w-full flex flex-col gap-4 pt-2 pb-global',
       'pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
-      width === '5xl' ? 'max-w-5xl' : 'max-w-3xl',
+      width === 'wide' ? 'max-w-3xl lg:max-w-6xl' : width === '5xl' ? 'max-w-5xl' : 'max-w-3xl',
     )}
   >
     {children}

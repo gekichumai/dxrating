@@ -472,9 +472,14 @@
     "terms.heading6": "停止使用服務",
     "terms.heading7": "服務提供與變更",
     "legal.back": "返回",
+    "legal.toc": "目錄",
     "account-security.title": "帳號安全性",
     "account-security.sign-in-description": "登入後即可管理密碼、通行密鑰和已登入的裝置。",
     "account-security.loading": "正在載入帳號",
+    "account-security.feature-password": "修改密碼",
+    "account-security.feature-passkeys": "新增通行密鑰，免密碼即可登入",
+    "account-security.feature-devices": "查看已登入的裝置，並讓其他裝置登出",
+    "account-security.features-label": "可以在這裡做的事",
     "privacy.title": "隱私權政策",
     "privacy.updated": "最後更新：2026年10月30日",
     "privacy.intro.heading": "簡介",
@@ -535,6 +540,8 @@
     "table.headers.included-in": "收錄於",
     "table.headers.combo": "連擊",
     "table.headers.sync": "同步",
+    "table.headers.internal-level": "定數",
+    "table.headers.dx-score": "DX 分數",
     "table.headers.achievement-rate": "完成率",
     "table.headers.rating": "評分",
     "table.headers.actions": "操作",
@@ -810,7 +817,11 @@
     "index.level-count-single": "{{count}} 張譜面・{{value}}",
     "breadcrumb": "譜面定數表",
     "breadcrumb-label": "導覽路徑",
-    "chart-link": "Lv.{{level}} 譜面定數表"
+    "chart-link": "Lv.{{level}} 譜面定數表",
+    "view.label": "顯示方式",
+    "view.grid": "封面",
+    "view.table": "表格",
+    "jump-label": "跳至定數"
   },
   "rating-explainer": {
     "title": "maimai DX Rating 如何計算",
@@ -861,8 +872,15 @@
   },
   "share": {
     "image.button": "分享圖片",
-    "image.downloaded": "圖片已儲存",
-    "image.failed": "無法產生圖片，請再試一次。"
+    "image.failed": "無法產生圖片，請再試一次。",
+    "image.viewer-title": "分享圖片",
+    "image.hint": "在手機上長按圖片即可儲存或複製；在電腦上可按右鍵，或使用上方按鈕。",
+    "image.download": "儲存圖片",
+    "image.copy": "複製圖片",
+    "image.share": "分享…",
+    "image.copied": "已複製圖片",
+    "image.copy-failed": "無法複製圖片，請改為儲存。",
+    "image.share-failed": "無法開啟分享面板，請改為儲存圖片。"
   },
   "plates": {
     "breadcrumb": "牌子",
@@ -913,7 +931,13 @@
     "condition-short.hasha": "A 評價通關",
     "other-plates": "其他牌子",
     "share.title": "{{plate}} 進度",
-    "share.remaining": "未達成的譜面"
+    "share.alt": "{{plate}} 完成進度：未達成的譜面",
+    "share.subtitle": "{{versions}} · 條件 {{condition}}",
+    "share.remaining-count": "未達成 {{count}} 張譜面",
+    "share.order": "依接近完成排序",
+    "share.unplayed": "未遊玩",
+    "share.more": "另有 {{count}} 首",
+    "share.all-done": "所有譜面皆已達成！"
   },
   "toplists": {
     "title": "成績排行",
@@ -943,6 +967,13 @@
     "empty.dx_score": "已儲存的成績中沒有 DX 分數。從 maimai DX NET、LXNS 或 Diving-Fish 重新匯入即可補上。",
     "empty.import": "匯入成績",
     "rating-value": "Rating {{rating}}",
+    "columns.song": "樂曲",
+    "columns.chart": "譜面",
+    "columns.achievement": "達成率",
+    "columns.rank": "評級",
+    "columns.lamps": "連擊 · 同步",
+    "columns.dx_score": "DX 分數",
+    "columns.rating": "Rating",
     "loading": "正在載入成績…",
     "entry-link": "成績排行"
   },
@@ -990,7 +1021,11 @@
     "rating.reverse.result": "所需達成率",
     "rating.reverse.unreachable": "無法達到",
     "rating.table.title": "Rating 對照表",
-    "rating.table.description": "所選定數及相鄰定數在各評級下的 Rating。"
+    "rating.table.description": "所選定數及相鄰定數在各評級下的 Rating。",
+    "tolerance.search-another": "選擇其他譜面",
+    "tolerance.open-page": "在獨立頁面開啟",
+    "tolerance.sheet-seo-title": "{{title}} {{sheetLabel}} 容錯計算",
+    "tolerance.sheet-seo-description": "計算 {{title}} {{sheetLabel}} 在達成 SSS+ 等目標達成率時，各類音符最多可以出現多少個 GREAT、GOOD、MISS，並換算 BREAK 50 / 100 落。"
   },
   "recommend": {
     "title": "上分推薦",
