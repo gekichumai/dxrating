@@ -29,17 +29,22 @@ function RatingRouteComponent() {
     <>
       {/* The calculator renders in the browser only; the page heading is server-rendered so the outline starts here */}
       <h1 className="sr-only">{t('rating-calculator:page-title')}</h1>
-      <ClientOnly
-        fallback={
-          <div className="flex items-center justify-center w-full min-h-60vh">
-            <CircularProgress size="2rem" disableShrink aria-label={t('rating-calculator:loading')} />
-          </div>
-        }
-      >
-        <RatingViewContext.Provider value={view}>
-          <RatingCalculator />
-        </RatingViewContext.Provider>
-      </ClientOnly>
+      {/* The server cannot know whether the visitor has records, so it reserves about a viewport for the calculator.
+          The explainer then starts below the fold in the server render, while the catalog loads and once the
+          calculator (empty or not) is in, so it never moves inside the viewport (CLS) */}
+      <div className="flex flex-col min-h-[calc(100svh-6rem)]">
+        <ClientOnly
+          fallback={
+            <div className="flex flex-1 items-start justify-center w-full pt-[30svh]">
+              <CircularProgress size="2rem" disableShrink aria-label={t('rating-calculator:loading')} />
+            </div>
+          }
+        >
+          <RatingViewContext.Provider value={view}>
+            <RatingCalculator />
+          </RatingViewContext.Provider>
+        </ClientOnly>
+      </div>
       <RatingExplainer />
     </>
   )
