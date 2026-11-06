@@ -47,6 +47,9 @@ const LevelNav: FC<{ current?: string }> = ({ current }) => {
   )
 }
 
+/** Fragment of an internal level's section, the target of the jump links in both views */
+const constantAnchor = (constant: string) => `c${constant.replace('.', '-')}`
+
 type ConstantChart = ConstantTable['groups'][number]['charts'][number]
 
 const ConstantGroupTable: FC<{
@@ -66,7 +69,11 @@ const ConstantGroupTable: FC<{
   const headingId = `constant-${constant}`
 
   return (
-    <section aria-labelledby={headingId} className="glass w-full overflow-hidden">
+    <section
+      aria-labelledby={headingId}
+      id={constantAnchor(constant)}
+      className="glass w-full overflow-hidden scroll-mt-2"
+    >
       <div className="flex items-baseline justify-between gap-2 px-4 py-2 border-b border-b-solid border-[var(--glass-border)]">
         <h2 id={headingId} className="m-0 text-lg font-semibold text-fg-1">
           {t('constants:group', { constant })}
@@ -169,7 +176,6 @@ function useConstantTableView() {
 }
 
 const TYPE_SHORT: Partial<Record<ConstantChart['type'], string>> = { dx: 'DX', std: 'STD' }
-const constantAnchor = (constant: string) => `c${constant.replace('.', '-')}`
 
 const coverSrc = (imageName: string) => `https://shama.dxrating.net/images/cover/v2/${imageName}.jpg`
 
