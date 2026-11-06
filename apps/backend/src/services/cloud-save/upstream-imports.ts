@@ -168,11 +168,11 @@ export const fetchDivingFishImport = (query: DivingFishQuery) =>
           invalid += 1
           continue
         }
-        // The public B50 applies the player's score mask (an AP at 100.6% comes back as 101%) and says nothing about
-        // it, but a masked row has no DX score. A played chart with an achievement always has one (short of a play of
-        // nothing but Goods), so such a row is left out as rejected rather than stored as an exact verified score that
+        // The public B50 applies the player's score mask (an AP at 100.6% comes back as 101%, anything under 10% as 0%)
+        // and says nothing about it, but a masked row has no DX score. A real play has one (short of nothing but Goods
+        // or Misses), so such a row is left out as rejected rather than stored as an exact verified score that
         // keep-best merging would never lower again
-        if (row.data.achievements > 0 && !row.data.dxScore) {
+        if (!row.data.dxScore) {
           masked += 1
           continue
         }
