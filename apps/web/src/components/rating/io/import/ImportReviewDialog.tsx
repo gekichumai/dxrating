@@ -61,7 +61,7 @@ const RiskyChangeRow: FC<{ change: ImportChange; sheet: VersionedSheet | null | 
           →
         </span>
         {change.after ? (
-          <span className="text-danger">
+          <span className="text-status-warning">
             <ScoreSummary score={change.after} />
           </span>
         ) : (
@@ -88,6 +88,8 @@ export const ImportReviewDialog: FC<ImportReviewDialogProps> = ({ plan, trigger,
   const catalog = useCompleteSongCatalog()
   const source = importSourceLabel(t, plan.meta.source)
   const risky = plan.risky.length > 0
+  // Removing a chart is destructive (danger); lowering a score is a risk (warning)
+  const removes = plan.counts.removed > 0
   const changes = planChangesSave(plan)
   const undoHours = Math.round(IMPORT_UNDO_WINDOW_MS / 3_600_000)
 
@@ -110,19 +112,35 @@ export const ImportReviewDialog: FC<ImportReviewDialogProps> = ({ plan, trigger,
         <dl className="grid grid-cols-3 gap-2 sm:grid-cols-5">
           {COUNT_KINDS.map((kind) => {
             const count = plan.counts[kind]
-            const danger = (kind === 'lowered' || kind === 'removed') && count > 0
+            const tone = count === 0 ? null : kind === 'removed' ? 'danger' : kind === 'lowered' ? 'warning' : null
             return (
               <div
                 key={kind}
                 className={clsx(
                   'glass-inset flex flex-col gap-0.5 px-3 py-2',
-                  danger && 'outline outline-1 outline-[color-mix(in_oklab,var(--danger)_45%,transparent)]',
+                  tone === 'danger' && 'outline outline-1 outline-[color-mix(in_oklab,var(--danger)_45%,transparent)]',
+                  tone === 'warning' &&
+                    'outline outline-1 outline-[color-mix(in_oklab,var(--status-warning)_45%,transparent)]',
                 )}
               >
-                <dt className={clsx('text-xs', danger ? 'text-danger font-semibold' : 'text-secondary')}>
+                <dt
+                  className={clsx(
+                    'text-xs',
+                    tone === 'danger'
+                      ? 'text-danger font-semibold'
+                      : tone === 'warning'
+                        ? 'text-status-warning font-semibold'
+                        : 'text-secondary',
+                  )}
+                >
                   {t(`rating-calculator:io.import.review.count.${kind}`)}
                 </dt>
-                <dd className={clsx('num text-xl font-semibold leading-tight', danger ? 'text-danger' : 'text-fg-1')}>
+                <dd
+                  className={clsx(
+                    'num text-xl font-semibold leading-tight',
+                    tone === 'danger' ? 'text-danger' : tone === 'warning' ? 'text-status-warning' : 'text-fg-1',
+                  )}
+                >
                   {count}
                 </dd>
               </div>
@@ -132,7 +150,10 @@ export const ImportReviewDialog: FC<ImportReviewDialogProps> = ({ plan, trigger,
 
         {risky ? (
           <section aria-labelledby={`${titleId}-risky`} className="flex flex-col gap-2">
-            <h3 id={`${titleId}-risky`} className="section-title text-danger">
+            <h3
+              id={`${titleId}-risky`}
+              className={clsx('section-title', removes ? 'text-danger' : 'text-status-warning')}
+            >
               {t('rating-calculator:io.import.review.risky.title', { count: plan.risky.length })}
             </h3>
             <ul className="glass-inset max-h-64 overflow-auto overscroll-contain px-3 py-2 divide-y divide-[var(--glass-border)]">
@@ -147,7 +168,7 @@ export const ImportReviewDialog: FC<ImportReviewDialogProps> = ({ plan, trigger,
             )}
           </section>
         ) : (
-          <p className="text-sm text-[var(--status-positive)]">
+          <p className="text-sm text-status-positive">
             {changes
               ? t('rating-calculator:io.import.review.safe')
               : t('rating-calculator:io.import.review.no-changes')}
@@ -162,7 +183,7 @@ export const ImportReviewDialog: FC<ImportReviewDialogProps> = ({ plan, trigger,
         <Button onClick={onCancel} color="inherit">
           {t('rating-calculator:io.import.review.cancel')}
         </Button>
-        <Button onClick={onConfirm} variant="contained" color={risky ? 'error' : 'primary'}>
+        <Button onClick={onConfirm} variant="contained" color={removes ? 'error' : 'primary'}>
           {risky
             ? t('rating-calculator:io.import.review.confirm-risky')
             : t('rating-calculator:io.import.review.confirm')}
