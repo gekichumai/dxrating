@@ -87,8 +87,9 @@ const VERSION_GENERIC_REGIONS: VersionRegion[] = [
 /**
  * The game version and region picker. The full size (a large version logo over the region chip) is for the home page;
  * `compact` puts a small logo beside the chip so inner pages start with their content. Phones in landscape always get
- * the compact layout (index.css). It opens the shared version picker: the latest release of each region first, then
- * every version in base | PLUS pairs for the "Generic" region.
+ * the compact layout (index.css), and so does the home page from 1024px (components/layout/app-chrome.css). It opens
+ * the shared version picker: the latest release of each region first, then every version in base | PLUS pairs for the
+ * "Generic" region.
  */
 export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = false }) => {
   const triggerRef = useRef<HTMLButtonElement>(null)
