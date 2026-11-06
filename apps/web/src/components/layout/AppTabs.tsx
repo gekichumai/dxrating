@@ -10,6 +10,7 @@ import {
   getActiveAppTabValue,
   getPendingAppTabValue,
 } from '@/routes/-top-nav-links'
+import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 
 interface AppTabContentProps {
@@ -48,7 +49,7 @@ export const AppTabs: FC = () => {
   const selectedTab = pendingTab || activeTab
 
   return (
-    <div className="rounded-xl bg-zinc-900/10 !min-h-2.5rem flex items-center overflow-hidden">
+    <MaterialSurface variant="thin" className="!min-h-2.5rem flex items-center overflow-hidden">
       <Tabs
         value={selectedTab}
         classes={{
@@ -100,6 +101,6 @@ export const AppTabs: FC = () => {
           )
         })}
       </Tabs>
-    </div>
+    </MaterialSurface>
   )
 }

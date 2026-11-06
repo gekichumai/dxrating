@@ -671,5 +671,16 @@
     "index.intro": "Pick a version to see every song and chart it added.",
     "index.count": "{{songs}} songs · {{charts}} charts",
     "chart-link": "New in {{version}}"
-  }
+  },
+  "share": {
+    "image.button": "Share image",
+    "image.downloaded": "Image saved",
+    "image.failed": "Could not create the image"
+  },
+  "plates": {},
+  "toplists": {},
+  "tools": {},
+  "recommend": {},
+  "random": {},
+  "home": {}
 }
