@@ -126,11 +126,11 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
             </Link>
           </div>
           {/* Sized to its covers on wide screens instead of leaving a wide empty panel; covers sit 12px in, so they keep
-              their own radius */}
-          <MaterialSurface className="w-fit max-w-full overflow-x-auto overscroll-x-contain">
+              their own radius. Scrolling snaps cover by cover, each stopping at that same 12px inset. */}
+          <MaterialSurface className="w-fit max-w-full overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-3">
             <ul className="m-0 flex list-none gap-3 p-3">
               {recentSongs.map((song) => (
-                <li key={song.songId} className="w-20 shrink-0">
+                <li key={song.songId} className="w-20 shrink-0 snap-start">
                   <Link
                     to="/songs/$songId"
                     params={{ songId: song.songId }}
