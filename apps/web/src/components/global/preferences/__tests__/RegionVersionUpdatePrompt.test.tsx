@@ -58,19 +58,21 @@ describe('regional version updates', () => {
     expect(JSON.parse(storage.get('app-context')!)).toEqual({ version: 'magical', region: 'jp' })
   })
 
-  it('retains a declined version and does not ask again on reload', () => {
+  it('retains a declined version and does not ask again on reload', async () => {
     saveSelection('circle', 'intl')
     const view = mount()
     fireEvent.click(screen.getByRole('button', { name: 'Keep CiRCLE' }))
     expect(screen.getByRole('status', { hidden: true }).textContent).toBe('circle:intl')
-    expect(screen.getByRole('combobox').textContent).toContain('International')
+    expect(screen.getByRole('button', { name: /^Choose game version and region/ }).textContent).toContain(
+      'International',
+    )
     view.unmount()
     mount()
     expect(screen.queryByRole('region')).toBeNull()
     expect(screen.getByRole('status', { hidden: true }).textContent).toBe('circle:intl')
-    fireEvent.mouseDown(screen.getByRole('combobox'))
-    expect(screen.getByRole('option', { name: 'CiRCLE · International' })).toBeTruthy()
-    expect(screen.getByRole('option', { name: /CiRCLE PLUS.*International/ })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /^Choose game version and region/ }))
+    expect(await screen.findByRole('option', { name: 'CiRCLE International', selected: true })).toBeTruthy()
+    expect(await screen.findByRole('option', { name: /CiRCLE PLUS.*International/ })).toBeTruthy()
   })
 
   it('is not modal: Escape leaves it open, and closing it only hides it for this visit', () => {

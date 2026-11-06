@@ -14,15 +14,15 @@ describe('VersionRegionSwitcher', () => {
     initI18n()
   })
 
-  it('offers the current regional releases', () => {
+  it('offers the current regional releases', async () => {
     render(
       <AppContextProvider>
         <VersionRegionSwitcher />
       </AppContextProvider>,
     )
-    fireEvent.mouseDown(screen.getByRole('combobox'))
-    expect(screen.getByRole('option', { name: /MAGiCAL.*Japan/i })).toBeTruthy()
-    expect(screen.getByRole('option', { name: /CiRCLE PLUS.*International/i })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /^Choose game version and region/ }))
+    expect(await screen.findByRole('option', { name: /MAGiCAL.*Japan/i })).toBeTruthy()
+    expect(await screen.findByRole('option', { name: /CiRCLE PLUS.*International/i })).toBeTruthy()
   })
 
   it('names the selected version-region combobox and its logo image', () => {
@@ -32,7 +32,7 @@ describe('VersionRegionSwitcher', () => {
       </AppContextProvider>,
     )
 
-    expect(screen.getByRole('combobox', { name: 'Choose game version and region' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^Choose game version and region: MAGiCAL · Japan$/ })).toBeTruthy()
     expect(screen.getByRole('img', { name: 'MAGiCAL logo' }).getAttribute('fetchpriority')).toBe('high')
   })
 })
