@@ -1,7 +1,7 @@
 import { VERSION_SORT_ORDER, type DifficultyEnum, type TypeEnum, type VersionEnum } from '@gekichumai/dxdata'
 import { calculateBest50, type VersionedSheet } from '@gekichumai/maimai-domain'
 import { Button, Chip, CircularProgress, Collapse } from '@mui/material'
-import { Link } from '@tanstack/react-router'
+import { Link, getRouteApi, useNavigate } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { type FC, useEffect, useId, useMemo, useRef, useState } from 'react'
 import IconMdiChevronDown from '~icons/mdi/chevron-down'
@@ -20,6 +20,7 @@ import { LevelRangePicker } from './LevelRangePicker'
 import { type LevelRange, RANGE_FLOOR } from './levelRange'
 import { computePushRange } from './pushRange'
 import {
+  findRolledChart,
   countActiveFilters,
   DEFAULT_RANDOM_FILTERS,
   filterRandomPool,
@@ -29,6 +30,8 @@ import {
   type RandomChartFilters,
 } from './randomChart'
 import { readStoredRange, writeStoredRange } from './rangeStorage'
+
+const routeApi = getRouteApi('/random')
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 
@@ -105,9 +108,20 @@ export const RandomChartPage: FC = () => {
     return VERSION_SORT_ORDER.filter((_, index) => appVersionIndex < 0 || index <= appVersionIndex) as VersionEnum[]
   }, [versionCatalog.version])
 
+  // The rolled chart lives in ?chart= (replacing the entry, so rolls do not pile up in history): Back from the chart
+  // page, or a reload, shows it again. Restored after mount, once the catalog is in; the server renders no result.
+  const { chart } = routeApi.useSearch()
+  const navigate = useNavigate()
+  useEffect(() => {
+    if (!catalog || !chart || result !== undefined) return
+    const restored = findRolledChart(catalog.sheets, chart)
+    if (restored) setResult(restored)
+  }, [catalog, chart, result])
+
   const roll = () => {
     const picked = pickRandom(pool)
     setResult(picked)
+    void navigate({ to: '/random', search: (prev) => ({ ...prev, chart: picked?.id }), replace: true })
     captureAnalyticsEvent('random_chart_rolled', {
       filter_count: countActiveFilters(filters),
       result_found: picked !== null,

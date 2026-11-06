@@ -66,3 +66,10 @@ export function pickRandom<T>(pool: readonly T[], random: () => number = Math.ra
   if (pool.length === 0) return null
   return pool[Math.min(pool.length - 1, Math.floor(random() * pool.length))] ?? null
 }
+/** A public sheet ID (dsht_…) from `?chart=`, or undefined */
+export const parseRolledChartParam = (value: unknown): string | undefined =>
+  typeof value === 'string' && /^dsht_[A-Za-z0-9]{1,32}$/.test(value) ? value : undefined
+
+/** The chart a `?chart=` link names, or null when the catalog has no such sheet */
+export const findRolledChart = <S extends { id: string }>(sheets: readonly S[], id: string | undefined): S | null =>
+  (id && sheets.find((sheet) => sheet.id === id)) || null

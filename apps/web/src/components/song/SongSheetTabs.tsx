@@ -172,7 +172,9 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
                 label={config?.title ?? difficulty}
                 classes={{
                   root: clsx(
-                    '!py-0 !min-h-2.5rem !h-2.5rem !min-w-0 !px-3 !text-xs !tracking-wide',
+                    // 8px sides below sm: all five difficulties, Re:MASTER included, fit a 390px phone; narrower screens
+                    // scroll the row behind its edge fade
+                    '!py-0 !min-h-2.5rem !h-2.5rem !min-w-0 !px-2 sm:!px-3 !text-xs !tracking-wide',
                     selected ? '!font-semibold' : '!text-fg-2',
                   ),
                 }}
