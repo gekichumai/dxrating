@@ -57,9 +57,6 @@ const indexName = (value: string): IndexedName => {
   return { normalized, compact: compactKey(value), skeleton: skeletonKey(value), suffixes: wordSuffixes(normalized) }
 }
 
-/** Optional readings a catalog song may carry (hiragana) */
-type SongWithReadings = Song & { reading?: string | null }
-
 export function buildSheetsSearchIndex(
   songs: readonly Song[] | null | undefined,
   availableSheets: readonly FlattenedSheet[],
@@ -75,8 +72,7 @@ export function buildSheetsSearchIndex(
 
   const indexedSongs: IndexedSong[] = (songs ?? []).map((song, order) => {
     const aliases = aliasesOf(song).map(indexName)
-    const reading = (song as SongWithReadings).reading
-    const readings = reading ? [indexName(reading)] : []
+    const readings = song.reading ? [indexName(song.reading)] : []
     const title = indexName(song.title)
     const named = [title, ...aliases, ...readings]
     return {
