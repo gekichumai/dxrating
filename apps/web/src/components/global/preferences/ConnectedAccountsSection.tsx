@@ -6,6 +6,7 @@ import IconLogosGithub from '~icons/logos/github-icon'
 import IconLogosGoogle from '~icons/logos/google-icon'
 import IconMdiLinkVariant from '~icons/mdi/link-variant'
 import { authClient } from '../../../lib/auth-client'
+import { formatErrorMessage } from '../../../utils/formatErrorMessage'
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 
 interface AccountItem {
@@ -72,8 +73,8 @@ export const ConnectedAccountsSection: FC = () => {
       await authClient.unlinkAccount({ accountId: account.id })
       toast.success(t('auth:user-profile.accounts.disconnected'))
       setAccounts((prev) => prev.filter((a) => a.providerId !== providerId))
-    } catch (e: any) {
-      toast.error(t('auth:user-profile.accounts.error', { error: e.message }))
+    } catch (e: unknown) {
+      toast.error(t('auth:user-profile.accounts.error', { error: formatErrorMessage(e) }))
     } finally {
       setDisconnectingProvider(null)
     }
@@ -86,14 +87,15 @@ export const ConnectedAccountsSection: FC = () => {
         title={t('auth:user-profile.accounts.confirm-disconnect-title')}
         description={t('auth:user-profile.accounts.confirm-disconnect-description')}
         confirmLabel={t('auth:user-profile.accounts.confirm-disconnect-button')}
+        confirmColor="error"
         cancelLabel={t('auth:user-profile.confirm-cancel')}
         onConfirm={confirmDisconnect.onConfirm}
         onCancel={confirmDisconnect.onCancel}
       />
 
       <div className="flex flex-col gap-1">
-        <h1 className="text-lg font-bold m-0">{t('auth:user-profile.accounts.title')}</h1>
-        <p className="text-sm text-zinc-500 m-0">{t('auth:user-profile.accounts.description')}</p>
+        <h3 className="text-lg font-semibold leading-snug text-fg-1 m-0">{t('auth:user-profile.accounts.title')}</h3>
+        <p className="text-sm text-fg-2 m-0">{t('auth:user-profile.accounts.description')}</p>
       </div>
 
       {loading ? (
@@ -105,15 +107,18 @@ export const ConnectedAccountsSection: FC = () => {
           {PROVIDERS.map(({ id, icon: Icon, labelKey }) => {
             const connected = socialAccounts.find((a) => a.providerId === id)
             const canDisconnect = totalMethods > 1
+            const statusId = `connected-account-${id}-status`
 
             return (
-              <div key={id} className="flex items-center gap-3 py-3 px-4 rounded-lg bg-zinc-50">
-                <Icon className="w-5 h-5 shrink-0" />
+              <div key={id} className="glass-inset flex items-center gap-3 py-3 px-4">
+                <Icon className="w-5 h-5 shrink-0" aria-hidden="true" />
                 <div className="flex flex-col flex-1 min-w-0">
-                  <span className="text-sm font-medium">{t(labelKey)}</span>
-                  <span className="text-xs text-zinc-400">
+                  <span className="text-sm font-semibold text-fg-1">{t(labelKey)}</span>
+                  <span id={statusId} className="text-xs text-fg-2 text-pretty">
                     {connected
-                      ? t('auth:user-profile.accounts.connected')
+                      ? canDisconnect
+                        ? t('auth:user-profile.accounts.connected')
+                        : t('auth:user-profile.accounts.disconnect-unavailable')
                       : t('auth:user-profile.accounts.not-connected')}
                   </span>
                 </div>
@@ -122,6 +127,7 @@ export const ConnectedAccountsSection: FC = () => {
                     size="small"
                     onClick={() => handleDisconnect(id)}
                     disabled={!canDisconnect || disconnectingProvider === id}
+                    aria-describedby={statusId}
                     color="error"
                     variant="text"
                     className="!text-xs !shrink-0"
@@ -152,11 +158,11 @@ export const ConnectedAccountsSection: FC = () => {
           })}
 
           {/* Email/password info */}
-          <div className="flex items-center gap-3 py-3 px-4 rounded-lg bg-zinc-50">
-            <IconMdiLinkVariant className="w-5 h-5 shrink-0 text-zinc-400" />
+          <div className="glass-inset flex items-center gap-3 py-3 px-4">
+            <IconMdiLinkVariant className="w-5 h-5 shrink-0 text-fg-2" aria-hidden="true" />
             <div className="flex flex-col flex-1 min-w-0">
-              <span className="text-sm font-medium">{t('auth:user-profile.accounts.email-password')}</span>
-              <span className="text-xs text-zinc-400">
+              <span className="text-sm font-semibold text-fg-1">{t('auth:user-profile.accounts.email-password')}</span>
+              <span className="text-xs text-fg-2">
                 {hasCredentialAccount
                   ? t('auth:user-profile.accounts.connected')
                   : t('auth:user-profile.accounts.not-connected')}

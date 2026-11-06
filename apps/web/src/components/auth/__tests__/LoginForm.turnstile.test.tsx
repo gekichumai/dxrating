@@ -54,16 +54,17 @@ describe('LoginForm Turnstile across a theme change', () => {
 
     expect(widget.theme).toBe('light')
     act(() => widget.onSuccess?.('light-token'))
-    await waitFor(() => expect(submit().disabled).toBe(false))
 
     // The theme changes: the widget is recreated dark and the light widget's token must not be submitted
     page.theme = 'dark'
     rerender(<LoginForm />)
     expect(widget.theme).toBe('dark')
-    expect(submit().disabled).toBe(true)
+    // Submit stays enabled (validation happens on submit), but without a token from the new widget nothing is sent
+    fireEvent.click(submit())
+    await screen.findByText(/security check/i)
+    expect(emailSignIn).not.toHaveBeenCalled()
 
     act(() => widget.onSuccess?.('dark-token'))
-    await waitFor(() => expect(submit().disabled).toBe(false))
     fireEvent.click(submit())
 
     await waitFor(() => expect(emailSignIn).toHaveBeenCalledTimes(1))

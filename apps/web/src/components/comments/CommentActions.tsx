@@ -86,10 +86,16 @@ export function CommentActions({ comment }: { comment: Comment }) {
           <DialogContentText>{action ? t(`comments.safety.${action}-description`) : ''}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button disabled={pending} onClick={() => setAction(null)}>
+          {/* Blocking can't be undone yet, so Cancel takes focus and the confirm action carries the danger colour */}
+          <Button disabled={pending} onClick={() => setAction(null)} color="inherit" autoFocus={action === 'block'}>
             {t('comments.safety.cancel')}
           </Button>
-          <Button disabled={pending} onClick={submit}>
+          <Button
+            disabled={pending}
+            onClick={submit}
+            variant="contained"
+            color={action === 'block' ? 'error' : 'primary'}
+          >
             {action ? t(`comments.safety.${action}`) : ''}
           </Button>
         </DialogActions>
