@@ -127,13 +127,13 @@ describe('TopBar', () => {
     ).toBe('/developers')
   })
 
-  it('uses a higher contrast version stamp over the themed header color', () => {
+  it('uses the secondary text token for the version stamp on the glass header', () => {
     render(
       <AppContextProvider>
         <TopBar />
       </AppContextProvider>,
     )
 
-    expect(screen.getByText(/v1\.6\.138/).className).toContain('text-black/75')
+    expect(screen.getByText(/v1\.6\.138/).className).toContain('text-fg-2')
   })
 })

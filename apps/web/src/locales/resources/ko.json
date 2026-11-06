@@ -1,6 +1,7 @@
 {
   "root": {
     "skip-to-content": "본문으로 건너뛰기",
+    "primary-navigation": "주요 메뉴",
     "pages.search.title": "채보 검색",
     "pages.search.seo-title": "채보 및 곡",
     "pages.search.seo-description": "곡명, 아티스트 또는 난이도로 모든 maimai DX 채보를 검색하세요. 내부 레벨, 노트 수와 상세 채보 정보를 확인할 수 있습니다.",
@@ -34,8 +35,8 @@
     "magical-data-coming-soon": "일본판 MAGiCAL 데이터가 곧 업데이트됩니다. 현재 채보 데이터는 이전 버전 기준입니다."
   },
   "settings": {
-    "version-and-region.select": "DXData 버전 및 지역 선택",
-    "version-and-region.select-generic": "또는 DXData 버전을 선택하고 \"일반\" 지역을 사용하세요",
+    "version-and-region.select": "게임 버전 및 지역 선택",
+    "version-and-region.select-generic": "또는 버전만 선택하고 \"일반\" 지역을 사용하세요",
     "version-and-region.info": "데이터 버전과 지역에 따라 내부 레벨, 곡 공개 여부와 Rating 대상 여부가 달라집니다.",
     "version-and-region.logo-alt": "{{version}} 로고",
     "language.select": "언어 선택",

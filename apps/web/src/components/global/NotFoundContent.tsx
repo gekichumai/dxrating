@@ -6,27 +6,18 @@ export function NotFoundContent() {
   const { t } = useTranslation(['root'])
 
   return (
-    <div className="mx-auto flex min-h-80 w-full max-w-2xl items-center justify-center px-4 py-12 text-zinc-950">
-      <section className="flex w-full flex-col items-center gap-5 rounded-lg bg-white/82 px-6 py-8 text-center shadow-[0_18px_45px_rgba(24,16,48,0.18),0_1px_0_rgba(255,255,255,0.65)_inset] backdrop-blur-md sm:px-8 dark:bg-[var(--glass-bg)] dark:shadow-[var(--glass-highlight),var(--shadow-overlay)] dark:border dark:border-solid dark:border-[var(--glass-border)]">
-        <div className="flex h-12 min-w-12 items-center justify-center rounded-full bg-black/8 px-3 text-sm font-bold tracking-[0.12em] text-black/65">
+    <div className="page-gutter flex min-h-80 items-center justify-center py-12">
+      <section className="glass flex w-full max-w-2xl flex-col items-center gap-5 px-6 py-8 text-center sm:px-8">
+        <div className="flex h-8 items-center justify-center glass-inset px-3 text-sm font-semibold tracking-[0.05em] text-fg-2 num">
           404
         </div>
 
         <div className="flex flex-col items-center gap-2">
-          <h1 className="m-0 text-balance text-3xl font-bold leading-tight text-black/85 sm:text-4xl">
-            {t('root:not-found.title')}
-          </h1>
-          <p className="m-0 max-w-sm text-pretty text-base leading-6 text-black/62">
-            {t('root:not-found.description')}
-          </p>
+          <h1 className="page-title m-0 sm:text-4xl">{t('root:not-found.title')}</h1>
+          <p className="page-description m-0 max-w-sm">{t('root:not-found.description')}</p>
         </div>
 
-        <Button
-          variant="contained"
-          href="/"
-          startIcon={<Home className="size-4" aria-hidden="true" />}
-          className="min-h-10 rounded-lg px-5 shadow-lg shadow-black/15 transition-[transform,box-shadow] duration-150 ease-out active:scale-[0.96]"
-        >
+        <Button variant="contained" href="/" startIcon={<Home className="size-4" aria-hidden="true" />}>
           {t('root:not-found.back-to-home')}
         </Button>
       </section>

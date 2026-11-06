@@ -1,6 +1,7 @@
 {
   "root": {
     "skip-to-content": "本文へスキップ",
+    "primary-navigation": "メイン",
     "pages.search.title": "譜面検索",
     "pages.search.seo-title": "譜面検索",
     "pages.search.seo-description": "maimai DX の譜面を、楽曲名、アーティスト、難易度から検索できます。譜面定数、ノーツ数、詳しい譜面情報も確認できます。",
@@ -40,8 +41,8 @@
     "region.cn": "中国",
     "region._generic": "通用",
     "version-and-region.info": "異なるバージョンと地域を選ぶと、配信されている楽曲と内部定数を表示されます",
-    "version-and-region.select": "バージョンと地域を選択ください",
-    "version-and-region.select-generic": "まだ、バージョンのみを選んでください",
+    "version-and-region.select": "ゲームバージョンと地域を選択",
+    "version-and-region.select-generic": "またはバージョンのみを選択（地域は「通用」）",
     "version-and-region.logo-alt": "{{version}} ロゴ",
     "language.select": "言語を選択",
     "theme.select": "外観",

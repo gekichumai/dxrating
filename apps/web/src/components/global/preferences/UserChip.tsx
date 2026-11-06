@@ -40,7 +40,7 @@ export const ProfileImage: FC<{
   ) : (
     <img
       src={src}
-      className="shrink-0 rounded-full bg-gray-4 shadow"
+      className="shrink-0 rounded-full bg-accent-subtle outline outline-1 outline-black/10 -outline-offset-1"
       style={{
         width: size,
         height: size,
@@ -76,10 +76,8 @@ export const UserChip: FC = () => {
       <UserProfileModal open={open === 'profile'} onClose={() => setOpen(null)} />
 
       {pending ? (
-        <div className="p-2 text-[1.5rem]">
-          <div className="h-[1.2em] w-[1.2em] px-[0.1em] -mt-[0.1em] text-black/54">
-            <CircularProgress disableShrink size="1em" color="inherit" />
-          </div>
+        <div className="flex size-9 items-center justify-center text-fg-2">
+          <CircularProgress disableShrink size="1.125rem" color="inherit" />
         </div>
       ) : (
         <IconButton

@@ -114,8 +114,7 @@
 .material-surface,
 .glass-thin,
 .material-surface-thin,
-.glass-overlay,
-.glass-bar {
+.glass-overlay {
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
 }
@@ -147,15 +146,32 @@
   box-shadow: var(--glass-highlight), var(--shadow-overlay);
 }
 
-/* The header: accent-tinted glass that fades into the page, with the accent kept solid behind the status bar */
+/* The header: an accent tint that fades out into the page, with the accent kept solid behind the status bar. No
+   backdrop blur: the header scrolls with the page, and a blur that stops at its bottom edge draws a hard seam. Its
+   controls are glass themselves */
 .glass-bar {
   background-image: linear-gradient(
     to bottom,
     var(--accent) 0,
     var(--accent) env(safe-area-inset-top),
     color-mix(in oklab, var(--accent) 38%, rgb(255 255 255 / 0.3)) calc(env(safe-area-inset-top) + 0.01px),
-    color-mix(in oklab, var(--accent) 12%, rgb(255 255 255 / 0)) 100%
+    color-mix(in oklab, var(--accent) 16%, rgb(255 255 255 / 0.12)) 70%,
+    transparent 100%
   );
+}
+
+/* With less transparency, the header tint fades into a nearly opaque sheet instead of the background art */
+@media (prefers-reduced-transparency: reduce) {
+  .glass-bar {
+    background-image: linear-gradient(
+      to bottom,
+      var(--accent) 0,
+      var(--accent) env(safe-area-inset-top),
+      color-mix(in oklab, var(--accent) 24%, rgb(255 255 255 / 0.95)) calc(env(safe-area-inset-top) + 0.01px),
+      color-mix(in oklab, var(--accent) 8%, rgb(255 255 255 / 0.6)) 85%,
+      transparent 100%
+    );
+  }
 }
 
 @media (forced-colors: active) {
@@ -210,4 +226,11 @@ html[lang='zh-Hant'],
 
 [lang|='ko'] {
   word-break: keep-all;
+  /* keep-all must not push a long Latin token or URL past a 320px screen */
+  overflow-wrap: break-word;
+}
+
+/* Japanese headings break between phrases, not mid-word (Chrome 119+; others ignore it) */
+:lang(ja) :is(h1, h2, h3) {
+  word-break: auto-phrase;
 }
