@@ -14,6 +14,7 @@
     "packages/dxdata/legacy-song-ids.json",
     "scripts/annotator/*.json",
     "packages/maimai-domain/test-vectors/*.json",
+    "apps/web/src/search-eval/*.json",
     "apps/backend/drizzle",
     ".github",
     ".superset",
