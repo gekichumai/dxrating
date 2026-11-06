@@ -449,6 +449,14 @@ const SheetListInnerContent: FC<{
 
         {!inputQuery && hub}
 
+        {/* What the page is, in words: the hub above is links and covers, which say little to a first-time visitor
+            or a crawler. Hidden while a query runs, like the hub; the query comes from the URL, so SSR matches. */}
+        {!inputQuery && (
+          <p className="m-0 max-w-[72ch] self-start px-1 text-sm leading-relaxed text-fg-2 text-pretty">
+            {t('root:pages.search.introduction')}
+          </p>
+        )}
+
         <div className="glass-thin relative overflow-hidden px-4 py-2 text-sm font-semibold text-fg-1">
           <div
             aria-hidden="true"

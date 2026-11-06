@@ -1,6 +1,6 @@
 import { Chip } from '@mui/material'
 import IconMdiTag from '~icons/mdi/tag'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'motion/react'
 import { type CSSProperties, type FC, useMemo } from 'react'
 import type { FlattenedSheet } from '../../../songs'
 import { deriveColor } from '../../../utils/color'

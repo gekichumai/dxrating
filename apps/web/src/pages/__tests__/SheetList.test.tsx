@@ -1,3 +1,4 @@
+import i18n from 'i18next'
 import type { ServerEnum } from '@gekichumai/dxdata'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { fireEvent, render, screen, type RenderResult } from '@testing-library/react'
@@ -125,6 +126,15 @@ describe('SheetList', () => {
     expect(renderToString(<SheetList />)).toContain('newer,older')
     render(<SheetList />)
     expect(screen.getByTestId('sheet-list').textContent).toBe('newer,older')
+  })
+
+  it('introduces the page in the server render when there is no query, and drops it for a query', () => {
+    const intro = i18n.t('root:pages.search.introduction')
+    expect(intro).toMatch(/maimai DX/)
+    expect(renderToString(<SheetList />)).toContain(intro)
+
+    routeState.search = { q: 'test' }
+    expect(renderToString(<SheetList />)).not.toContain(intro)
   })
 
   it('uses the route query immediately and shows seeded results while sheets load', () => {

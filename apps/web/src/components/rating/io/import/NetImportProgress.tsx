@@ -1,5 +1,5 @@
 import { Button, ClickAwayListener } from '@mui/material'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useId, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import IconMdiCheck from '~icons/mdi/check'

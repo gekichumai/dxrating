@@ -26,6 +26,7 @@ import {
 } from '@/components/toplists/toplistData'
 import { drawToplistShareImage } from '@/components/toplists/toplistShareImage'
 import { captureAnalyticsEvent } from '@/lib/analytics'
+import { DxScoreProgressText } from '@/components/scores/DxScoreProgressText'
 import { useUserRecords } from '@/models/useUserRecords'
 import { type FlattenedSheet, useSheets } from '@/songs'
 
@@ -104,6 +105,7 @@ export const ToplistsPage: FC = () => {
           variant="scrollable"
           scrollButtons="auto"
           allowScrollButtonsMobile
+          classes={{ scroller: 'scroll-fade-x' }}
           aria-label={t('toplists:title')}
           sx={{ '& .MuiTabs-scrollButtons.Mui-disabled': { width: 0, opacity: 0 } }}
         >
@@ -244,18 +246,15 @@ const ToplistColumnHeader: FC<{ showDxScore: boolean }> = ({ showDxScore }) => {
   )
 }
 
-/** `compact` drops the maximum, for the narrow phone row */
+/** `compact` is the phone row: the share of the maximum and the stars, without the raw score */
 const DxScoreText: FC<{ row: ToplistRow; compact?: boolean }> = ({ row, compact = false }) =>
   row.dxScore !== null && row.dxScoreMax ? (
-    <>
-      {compact ? row.dxScore : `${row.dxScore} / ${row.dxScoreMax}`}
-      {row.dxStars > 0 && (
-        <span className="ml-1 text-[#8A5A00] dark:text-[#F2C94C]">
-          <span aria-hidden>{'✦'.repeat(row.dxStars)}</span>
-          <span className="sr-only">{`${row.dxStars}★`}</span>
-        </span>
-      )}
-    </>
+    <DxScoreProgressText
+      dxScore={row.dxScore}
+      max={row.dxScoreMax}
+      layout={compact ? 'compact' : 'stacked'}
+      align="end"
+    />
   ) : (
     <span aria-hidden>–</span>
   )

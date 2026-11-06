@@ -11,16 +11,34 @@ const routeState = vi.hoisted(() => ({
     type: 'dx',
     difficulty: 'basic',
   },
+  search: {} as Record<string, unknown>,
   navigate: vi.fn(),
+  tabs: null as null | {
+    hrefFor: (type: string, difficulty?: string) => string
+    onDifficultyChange: (difficulty: string) => void
+  },
 }))
 
 vi.mock('@tanstack/react-router', () => ({
   getRouteApi: () => ({
     useParams: () => routeState.params,
+    useSearch: () => routeState.search,
   }),
   useNavigate: () => routeState.navigate,
-  Link: ({ children, params, to }: { children: React.ReactNode; params: { songId: string }; to: string }) => (
-    <a href={to.replace('$songId', params.songId)}>{children}</a>
+  Link: ({
+    children,
+    params,
+    to,
+    search,
+  }: {
+    children: React.ReactNode
+    params: { songId: string }
+    to: string
+    search?: { locale?: string }
+  }) => (
+    <a href={`${to.replace('$songId', params.songId)}${search?.locale ? `?locale=${search.locale}` : ''}`}>
+      {children}
+    </a>
   ),
 }))
 
@@ -37,7 +55,10 @@ vi.mock('@/components/song/SongHeader', () => ({
 }))
 
 vi.mock('@/components/song/SongSheetTabs', () => ({
-  SongSheetTabs: () => <nav aria-label="Sheet tabs" />,
+  SongSheetTabs: (props: NonNullable<typeof routeState.tabs>) => {
+    routeState.tabs = props
+    return <nav aria-label="Sheet tabs" />
+  },
 }))
 
 vi.mock('@/components/song/SongSheetContent', () => ({
@@ -58,6 +79,8 @@ describe('SongPage', () => {
 
   beforeEach(() => {
     document.head.innerHTML = '<title>Route-owned title</title>'
+    routeState.search = {}
+    routeState.navigate.mockReset()
   })
 
   it('lets route metadata own the document title', () => {
@@ -82,5 +105,27 @@ describe('SongPage', () => {
     const hubLink = screen.getByRole('link', { name: /All charts of this song/ })
     expect(hubLink.getAttribute('href')).toBe('/songs/dsng_d3kkdkrcqj')
     expect(screen.queryByRole('table')).toBeNull()
+  })
+
+  it('keeps the URL locale when switching charts', () => {
+    routeState.search = { locale: 'ja' }
+    render(<SongPage />)
+
+    expect(routeState.tabs?.hrefFor('dx', 'expert')).toBe('/songs/dsng_d3kkdkrcqj/dx/expert?locale=ja')
+    routeState.tabs?.onDifficultyChange('expert')
+    expect(routeState.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({ params: expect.objectContaining({ difficulty: 'expert' }), search: { locale: 'ja' } }),
+    )
+    expect(screen.getByRole('link', { name: /All charts of this song/ }).getAttribute('href')).toBe(
+      '/songs/dsng_d3kkdkrcqj?locale=ja',
+    )
+  })
+
+  it('adds no locale to chart links when the URL has none', () => {
+    render(<SongPage />)
+
+    expect(routeState.tabs?.hrefFor('dx', 'expert')).toBe('/songs/dsng_d3kkdkrcqj/dx/expert')
+    routeState.tabs?.onDifficultyChange('expert')
+    expect(routeState.navigate.mock.calls[0]?.[0]).not.toHaveProperty('search')
   })
 })

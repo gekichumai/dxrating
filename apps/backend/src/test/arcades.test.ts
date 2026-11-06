@@ -318,10 +318,10 @@ describe('Arcades API', () => {
       'public, max-age=300, stale-while-revalidate=60, stale-if-error=86400',
     )
     expect(response.headers.get('cdn-cache-control')).toBe(
-      'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800',
+      'public, max-age=300, stale-while-revalidate=86400, stale-if-error=604800',
     )
     expect(response.headers.get('cloudflare-cdn-cache-control')).toBe(
-      'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800',
+      'public, max-age=300, stale-while-revalidate=86400, stale-if-error=604800',
     )
     expect(response.headers.get('access-control-allow-origin')).toBe('*')
     expect(response.headers.has('access-control-allow-credentials')).toBe(false)
