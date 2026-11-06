@@ -128,7 +128,7 @@ export const ProgressSummaryPage: FC = () => {
   const dxRows = useMemo(() => (catalog ? buildDxStarRows(catalog.sheets, bySheetId) : null), [catalog, bySheetId])
 
   return (
-    <ScorePageFrame width="5xl">
+    <ScorePageFrame width="me">
       <ScorePageHeader title={t('completion:progress.title')} description={t('completion:progress.intro')}>
         {isDemo && <DemoScoresNotice className="mt-3">{t('completion:demo')}</DemoScoresNotice>}
       </ScorePageHeader>

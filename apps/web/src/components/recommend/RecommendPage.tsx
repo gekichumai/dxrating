@@ -101,7 +101,7 @@ export const RecommendPage: FC = () => {
   }, [result])
 
   return (
-    <ScorePageFrame width="6xl">
+    <ScorePageFrame width="me">
       <ScorePageHeader title={t('recommend:title')} description={t('recommend:description')}>
         {isDemo && <DemoScoresNotice className="mt-3">{t('recommend:demo')}</DemoScoresNotice>}
       </ScorePageHeader>
