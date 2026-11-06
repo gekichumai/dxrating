@@ -306,9 +306,10 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                   buildPlateShareImage({
                     plateName: name,
                     subtitle: versions,
-                    progressLabel: t('plates:progress.charts', {
-                      done: progress.completedCharts,
-                      total: progress.totalCharts,
+                    // The count the headline percentage is computed from (charts, not finished songs)
+                    progressLabel: t('plates:progress.sheets', {
+                      done: progress.completedSheets,
+                      total: progress.totalSheets,
                     }),
                     remainingLabel: t('plates:share.remaining'),
                     percentLabel: formatPercent(percent),
