@@ -14,6 +14,9 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
   const listId = useId()
 
   useEffect(() => {
+    // Overflow is measured against the collapsed height only. Expanded, the list fits its own box, so measuring
+    // then would clear the flag and unmount the focused "Show fewer" button; keep the collapsed reading instead.
+    if (expanded) return
     const element = listRef.current
     if (!element) return
     const measure = () => setOverflowing(element.scrollHeight > element.clientHeight + 1)
@@ -21,7 +24,7 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
     const observer = new ResizeObserver(measure)
     observer.observe(element)
     return () => observer.disconnect()
-  }, [altNames])
+  }, [altNames, expanded])
 
   const collapsed = !expanded && overflowing
 
@@ -72,7 +75,7 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
         ))}
       </div>
 
-      {(overflowing || expanded) && (
+      {overflowing && (
         <button
           type="button"
           aria-expanded={expanded}

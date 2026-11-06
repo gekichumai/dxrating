@@ -341,7 +341,10 @@ export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
           <span className="flex flex-col min-w-0">
             <span
               {...titleTextProps}
-              className={clsx('leading-tight [text-wrap:pretty] [word-break:auto-phrase]', titleTextProps?.className)}
+              className={clsx(
+                'leading-tight [text-wrap:pretty] [word-break:auto-phrase] [overflow-wrap:anywhere]',
+                titleTextProps?.className,
+              )}
             >
               {title}
             </span>
@@ -428,7 +431,9 @@ export const SheetTitle: FC<SheetTitleProps> = ({
       <div className="flex items-start gap-1">
         <Heading className={clsx('flex flex-col md:flex-row md:items-start gap-x-2 gap-y-1 min-w-0', className)}>
           <span className="flex flex-col min-w-0">
-            <span className="leading-tight [text-wrap:pretty] [word-break:auto-phrase]">{title}</span>
+            <span className="leading-tight [text-wrap:pretty] [word-break:auto-phrase] [overflow-wrap:anywhere]">
+              {title}
+            </span>
           </span>
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
             <SheetType type={type} difficulty={difficulty} />
