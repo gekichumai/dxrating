@@ -442,7 +442,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                               className={clsx(
                                 'inline-flex items-center gap-0.5 rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xs font-semibold uppercase tracking-[0.05em]',
                                 available
-                                  ? 'bg-status-positive text-white'
+                                  ? 'bg-status-positive text-on-accent'
                                   : 'border border-solid border-black/25 text-fg-2 line-through',
                               )}
                             >
@@ -464,7 +464,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                     </TableCell>
                     <TableCell>
                       {sheet.isLocked ? (
-                        <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] bg-status-warning px-1.5 py-0.5 text-xs font-semibold text-white">
+                        <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] bg-status-warning px-1.5 py-0.5 text-xs font-semibold text-on-accent">
                           <IconMdiLock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                           {t('sheet:details.unlock.required')}
                         </span>
