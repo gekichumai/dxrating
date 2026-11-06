@@ -92,13 +92,19 @@ export const ComboFlagSchema = z.enum(['fc', 'fcp', 'ap', 'app']).nullable() sat
 export const SyncFlagSchema = z.enum(['fs', 'fsp', 'fsd', 'fsdp', 'sync']).nullable() satisfies z.ZodType<SyncFlag>
 export const Best50BucketSchema = z.enum(['b15', 'b35']) satisfies z.ZodType<Best50Bucket>
 export const DxScoreSchema = z.number().int().min(0).max(100000)
-export const ProviderRecordIdSchema = z.string().min(1).max(128)
+/**
+ * PostgreSQL text and JSONB cannot hold U+0000, so a free-form string that reaches the database rejects it here: the
+ * request (or the one import item) is a validation error, never a 500 that rolls back the rest of the write.
+ */
+const NO_NUL = /^[^\u0000]*$/
+const NO_NUL_MESSAGE = 'must not contain U+0000'
+export const ProviderRecordIdSchema = z.string().min(1).max(128).regex(NO_NUL, NO_NUL_MESSAGE)
 /** A provider a client upload claims (e.g. `lxns` inside a DXRating JSON); stored as `claimed_source` only */
 export const ClaimedSourceSchema = z
   .string()
   .regex(/^[\w.-]{1,64}$/)
   .refine((source) => source.toLowerCase() !== 'demo', { message: 'demo data is never synced' })
-export const SourceAccountIdSchema = z.string().trim().min(1).max(128)
+export const SourceAccountIdSchema = z.string().trim().min(1).max(128).regex(NO_NUL, NO_NUL_MESSAGE)
 export const PayloadSha256Schema = z.string().regex(/^[0-9a-f]{64}$/)
 export const CloudSaveRegionSchema = z.enum(['jp', 'intl', 'cn', '_generic'])
 /** dxdata version slug (`festival-plus` … `circle-plus`) */
@@ -106,6 +112,7 @@ export const GameVersionSchema = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   .max(32)
+export const SaveNameSchema = z.string().trim().min(1).max(64).regex(NO_NUL, NO_NUL_MESSAGE)
 export const ClientProfileKeySchema = z.string().regex(/^[\w.-]{1,64}$/)
 export const RevisionSchema = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
 const TimestampSchema = z.iso.datetime({ offset: true })
@@ -283,7 +290,7 @@ export type RecordEventDTO = z.output<typeof RecordEventDTOSchema>
 // --- Inputs (all strict) ---
 
 export const CreateSaveInputSchema = z.strictObject({
-  name: z.string().trim().min(1).max(64),
+  name: SaveNameSchema,
   region: CloudSaveRegionSchema,
   gameVersion: GameVersionSchema.nullish(),
   /** iOS profile ID or Web `web-local`; creating a save with a key that already has one returns that save */
@@ -293,7 +300,7 @@ export const CreateSaveInputSchema = z.strictObject({
 export const UpdateSaveInputSchema = z
   .strictObject({
     ...SaveIdParamSchema,
-    name: z.string().trim().min(1).max(64).optional(),
+    name: SaveNameSchema.optional(),
     /** `null` clears it (follow the client's version) */
     gameVersion: GameVersionSchema.nullish(),
   })
@@ -499,17 +506,19 @@ function isBoundedSnapshotDetail(value: unknown): boolean {
     const [current, depth] = pending.pop()!
     // every value takes at least one character of the JSON
     if (++visited > CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH) return false
+    if (typeof current === 'string' && !NO_NUL.test(current)) return false
     if (typeof current !== 'object' || current === null) continue
     if (depth > CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_DEPTH) return false
+    if (!Array.isArray(current) && Object.keys(current).some((key) => !NO_NUL.test(key))) return false
     for (const child of Array.isArray(current) ? current : Object.values(current)) pending.push([child, depth + 1])
   }
   return (JSON.stringify(value) ?? '').length <= CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH
 }
 
-/** A snapshot's opaque `detail`: a JSON object of bounded depth and size */
+/** A snapshot's opaque `detail`: a JSON object of bounded depth and size, without U+0000 in its keys or strings */
 export const SnapshotDetailSchema = z
   .custom<unknown>(isBoundedSnapshotDetail, {
-    message: `detail must be JSON nested at most ${CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_DEPTH} deep and at most ${CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH} characters long`,
+    message: `detail must be JSON nested at most ${CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_DEPTH} deep and at most ${CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH} characters long, without U+0000`,
   })
   .pipe(z.record(z.string(), z.json()))
 

@@ -197,6 +197,41 @@ describe('cloud save API (design §5)', () => {
       expect(oversized.status).toBe(400)
     })
 
+    it('rejects U+0000 per item and in snapshot detail and save names, never a 500', async () => {
+      const user = await session(pool, 'nul@example.com')
+      const save = await newSave(user.cookie)
+      const replaced = await api(user.cookie, 'POST', `/saves/${save.id}/replace`, {
+        ifRevision: 0,
+        idempotencyKey: 'replace-nul-1',
+        source: 'dxrating-json',
+        records: [
+          { sheetId: sheetId(1), achievement: 1000000, comboFlag: null, syncFlag: null, providerRecordId: 'a\u0000b' },
+          { sheetId: sheetId(2), achievement: 1005000, comboFlag: null, syncFlag: null },
+        ],
+      })
+      // the NUL record alone is rejected; its valid sibling commits
+      expect(replaced.status).toBe(200)
+      expect(replaced.body.job.counts).toMatchObject({ inserted: 1, rejected: 1 })
+      expect(await record(save.id, sheetId(1))).toBeUndefined()
+      expect(await record(save.id, sheetId(2))).toMatchObject({ achievement: 1005000, deleted_at: null })
+
+      const snapshot = (detail: unknown) =>
+        api(user.cookie, 'POST', `/saves/${save.id}/snapshots`, {
+          atRevision: 0,
+          b15Sum: 0,
+          b35Sum: 0,
+          b50Sum: 0,
+          recordCount: 0,
+          gameVersion: 'prism',
+          detail,
+        })
+      expect((await snapshot({ a: '\u0000' })).status).toBe(400)
+      expect((await snapshot({ 'a\u0000': 1 })).status).toBe(400)
+      expect((await snapshot({ a: ['ok', { b: 'x\u0000' }] })).status).toBe(400)
+      expect((await api(user.cookie, 'POST', '/saves', { name: 'JP\u0000', region: 'jp' })).status).toBe(400)
+      expect((await api(user.cookie, 'PATCH', `/saves/${save.id}`, { name: 'JP\u0000' })).status).toBe(400)
+    })
+
     it('bounds lock waits and concurrent writes per user with a retryable 429', async () => {
       const user = await session(pool, 'busy@example.com')
       const other = await session(pool, 'not-busy@example.com')
