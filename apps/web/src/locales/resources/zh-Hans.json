@@ -536,6 +536,8 @@
     "table.headers.included-in": "收录于",
     "table.headers.combo": "连击",
     "table.headers.sync": "同步",
+    "table.headers.internal-level": "定数",
+    "table.headers.dx-score": "DX 分数",
     "table.headers.achievement-rate": "完成率",
     "table.headers.rating": "评分",
     "table.headers.actions": "操作",
