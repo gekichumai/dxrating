@@ -335,7 +335,7 @@ const BudgetPanel: FC<{
 }
 
 const stepButton =
-  'inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border-0 bg-transparent p-0 text-fg-1 hover:bg-[color-mix(in_oklab,var(--fg-1)_8%,transparent)] disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent'
+  'inline-flex h-7 flex-1 @[20rem]:w-7 @[20rem]:flex-none shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border-0 bg-transparent p-0 text-fg-1 hover:bg-[color-mix(in_oklab,var(--fg-1)_8%,transparent)] disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent'
 
 const JudgementCell: FC<{
   typeLabel: string
@@ -362,7 +362,9 @@ const JudgementCell: FC<{
       )}
     >
       <span className={`px-1 text-[0.6875rem] font-semibold text-secondary @[34rem]:sr-only`}>{judgementLabel}</span>
-      <div className="flex items-center gap-0.5">
+      {/* Under 20rem of card (a 320px phone) the count takes its own line and − / + share the one below, so the digits
+          never get squeezed out; wider, they sit on one line */}
+      <div className="flex flex-wrap items-center gap-0.5 @[20rem]:flex-nowrap">
         <button
           type="button"
           className={stepButton}
@@ -383,7 +385,7 @@ const JudgementCell: FC<{
             onChange(Number.isFinite(parsed) ? parsed : 0)
           }}
           onFocus={(event) => event.target.select()}
-          className="w-full min-w-0 rounded-[var(--radius-sm)] border-0 bg-transparent p-0 text-center text-base font-semibold num text-fg-1 placeholder:text-fg-2 placeholder:font-normal focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-[var(--accent)]"
+          className="order-first basis-full w-full min-w-0 rounded-[var(--radius-sm)] border-0 bg-transparent p-0 text-center @[20rem]:order-none @[20rem]:basis-auto text-base font-semibold num text-fg-1 placeholder:text-fg-2 placeholder:font-normal focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-[var(--accent)]"
         />
         <button
           type="button"
