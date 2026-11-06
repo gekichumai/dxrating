@@ -16,6 +16,7 @@ import { buildSheetPath } from '../components/sheet/sheetLinks'
 import { getVisibleSongPageSheets } from './songPageSheets'
 import { useSongSheets } from './useSongSheets'
 import { ToleranceCalculator } from '@/components/tools/ToleranceCalculator'
+import { InternalLink, LinkBehavior } from '@/components/global/InternalLink'
 
 const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 
@@ -121,17 +122,17 @@ export const SongPage: FC = () => {
       {(constantTableLevel || (activeSheet && versionSlug(activeSheet.version))) && (
         <nav className="flex flex-col gap-2 text-sm" aria-label={t('song:related-pages')}>
           {constantTableLevel && (
-            <a href={constantTablePath(constantTableLevel)} className="link self-start">
+            <InternalLink href={constantTablePath(constantTableLevel)} className="link self-start">
               {t('constants:chart-link', { level: constantTableLevel })}
               <span aria-hidden> →</span>
-            </a>
+            </InternalLink>
           )}
 
           {activeSheet && versionSlug(activeSheet.version) && (
-            <a href={versionPagePath(activeSheet.version)} className="link self-start">
+            <InternalLink href={versionPagePath(activeSheet.version)} className="link self-start">
               {t('versions:chart-link', { version: activeSheet.version })}
               <span aria-hidden> →</span>
-            </a>
+            </InternalLink>
           )}
         </nav>
       )}

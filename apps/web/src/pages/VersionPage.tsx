@@ -19,6 +19,7 @@ import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { InternalLink } from '@/components/global/InternalLink'
 
 const tileClassName = (current: boolean) =>
   clsx(
@@ -38,7 +39,7 @@ const VersionNav: FC<{ current: VersionEnum; labelledBy: string }> = ({ current,
             className="gap-x-4 sm:grid-cols-2 lg:grid-cols-4"
             pairs={pairVersionsByEra(VERSION_PAGE_VERSIONS, era)}
             renderVersion={(version) => (
-              <a
+              <InternalLink
                 key={version}
                 href={versionPagePath(version)}
                 aria-current={version === current ? 'page' : undefined}
@@ -46,7 +47,7 @@ const VersionNav: FC<{ current: VersionEnum; labelledBy: string }> = ({ current,
                 className={clsx(tileClassName(version === current), 'justify-center p-1')}
               >
                 <VersionLogo version={version} className="h-9 text-[0.625rem]" />
-              </a>
+              </InternalLink>
             )}
           />
         )}
@@ -94,13 +95,13 @@ export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
                     className="px-4 py-2 flex flex-wrap items-center gap-x-4 gap-y-1"
                   >
                     <div className="min-w-0 flex-1 basis-48">
-                      <a
+                      <InternalLink
                         href={row.href}
                         lang="ja"
                         className="text-fg-1 font-semibold no-underline hover:underline underline-offset-2 [overflow-wrap:anywhere]"
                       >
                         {row.title}
-                      </a>
+                      </InternalLink>
                       <div className="text-xs text-fg-2">
                         {getSheetTypeDisplayName(row.type, locale)} · <span lang="ja">{row.artist}</span>
                         {row.isNewChartOnly && ` · ${m.versions_newChartOnly({}, { locale })}`}
@@ -108,7 +109,7 @@ export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
                     </div>
                     <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm num">
                       {row.charts.map((chart) => (
-                        <a
+                        <InternalLink
                           key={chart.difficulty}
                           href={chart.href}
                           className={`no-underline hover:underline underline-offset-2 whitespace-nowrap ${difficultyTextClassName}`}
@@ -120,7 +121,7 @@ export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
                           <span className="sr-only">{DIFFICULTIES[chart.difficulty]?.title} </span>
                           <span className="font-semibold">{chart.level}</span>
                           {chart.constant && <span className="text-xs text-fg-2"> ({chart.constant})</span>}
-                        </a>
+                        </InternalLink>
                       ))}
                     </div>
                   </li>
@@ -164,7 +165,7 @@ export const VersionIndexPage: FC<{ versions: VersionSummary[] }> = ({ versions 
               renderVersion={(version) => {
                 const entry = summaries.get(version)
                 return (
-                  <a
+                  <InternalLink
                     key={version}
                     href={versionPagePath(version)}
                     className={clsx(tileClassName(false), 'max-sm:flex-col max-sm:gap-1 p-2 sm:p-3')}
@@ -178,7 +179,7 @@ export const VersionIndexPage: FC<{ versions: VersionSummary[] }> = ({ versions 
                         <span className="text-xs text-fg-2 num">{m.versions_index_count(entry, { locale })}</span>
                       )}
                     </span>
-                  </a>
+                  </InternalLink>
                 )
               }}
             />
