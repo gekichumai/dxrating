@@ -17,19 +17,20 @@ const ICONS: Record<ProvenanceKind, FC<{ className?: string }>> = {
   edited: IconMdiPencilOutline,
 }
 
-// Tinted, translucent surfaces: readable on the light rows and the dialog alike
+// Tinted, translucent surfaces on the status tokens: readable on the rows and the dialog, light and dark
 const TONES: Record<ProvenanceKind, string> = {
-  verified: 'bg-emerald-500/12 text-emerald-800 ring-emerald-700/20',
-  file: 'bg-amber-500/12 text-amber-900 ring-amber-700/20',
-  manual: 'bg-zinc-500/10 text-zinc-700 ring-zinc-600/20',
-  edited: 'bg-zinc-500/10 text-zinc-700 ring-zinc-600/20',
+  verified:
+    'bg-[color-mix(in_oklab,var(--status-positive)_12%,transparent)] text-status-positive ring-[color-mix(in_oklab,var(--status-positive)_30%,transparent)]',
+  file: 'bg-[color-mix(in_oklab,var(--status-warning)_12%,transparent)] text-status-warning ring-[color-mix(in_oklab,var(--status-warning)_30%,transparent)]',
+  manual: 'bg-black/5 text-fg-2 ring-black/12',
+  edited: 'bg-black/5 text-fg-2 ring-black/12',
 }
 
 const ICON_TONES: Record<ProvenanceKind, string> = {
-  verified: 'text-emerald-600',
-  file: 'text-amber-600',
-  manual: 'text-zinc-500',
-  edited: 'text-zinc-500',
+  verified: 'text-status-positive',
+  file: 'text-status-warning',
+  manual: 'text-fg-2',
+  edited: 'text-fg-2',
 }
 
 /** The provenance sentence of a record, as a badge (record detail) */
@@ -40,7 +41,7 @@ export const ProvenanceBadge: FC<{ provenance: Provenance; className?: string }>
   return (
     <span
       className={clsx(
-        'inline-flex max-w-full items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium leading-tight ring-1 ring-inset',
+        'inline-flex max-w-full items-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-1 text-xs font-medium leading-tight ring-1 ring-inset',
         TONES[label.kind],
         className,
       )}

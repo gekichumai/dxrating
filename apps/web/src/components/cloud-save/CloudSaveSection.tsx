@@ -11,10 +11,10 @@ const Group: FC<{ title: string; description?: string; children: ReactNode }> = 
   return (
     <section className="flex flex-col gap-2" aria-labelledby={id}>
       <div className="flex flex-col gap-0.5">
-        <h2 id={id} className="m-0 text-sm font-semibold text-zinc-800">
+        <h2 id={id} className="m-0 text-sm font-semibold text-fg-1">
           {title}
         </h2>
-        {description && <p className="m-0 text-xs text-zinc-500 text-pretty">{description}</p>}
+        {description && <p className="m-0 text-xs text-fg-2 text-pretty">{description}</p>}
       </div>
       {children}
     </section>
@@ -30,7 +30,7 @@ export const CloudSaveSection: FC = () => {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-lg font-bold m-0">{t('rating-calculator:cloud-save.title')}</h1>
-        <p className="text-sm text-zinc-500 m-0">{t('rating-calculator:cloud-save.description')}</p>
+        <p className="text-sm text-fg-2 m-0">{t('rating-calculator:cloud-save.description')}</p>
       </div>
       <Group
         title={t('rating-calculator:cloud-save.saves.title')}

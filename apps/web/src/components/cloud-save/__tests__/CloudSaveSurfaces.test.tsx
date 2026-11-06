@@ -158,12 +158,12 @@ describe('SyncStatusIndicator', () => {
     expect(button?.getAttribute('data-sync-state')).toBe(state)
   })
 
-  it('marks the issue count with white text on a fill dark enough to read', () => {
+  it('marks the issue count on the warning status fill with its on-accent text, readable light and dark', () => {
     const { ui } = demo()
     const { container } = render(<SyncStatusIndicator />, { wrapper: withCloud(ui) })
-    const badge = container.querySelector('.bg-amber-700')
+    const badge = container.querySelector('.bg-status-warning')
     expect(badge?.textContent).toBe('3')
-    expect(container.querySelector('.bg-amber-500')).toBeNull()
+    expect(badge?.className).toContain('text-on-accent')
   })
 
   it('keeps the cloud still while syncing (no rotating glyph)', () => {
@@ -214,19 +214,21 @@ describe('SyncStatusIndicator', () => {
       const button = screen.getByRole('button', { name: /3 changes waiting to sync, 3 sync issues$/ })
       // 3 pending changes and 3 issues: the "3" appears once, on the issues badge
       expect(within(button).getAllByText('3')).toHaveLength(1)
-      expect(within(button).getByText('3').className).toContain('bg-amber-700')
+      expect(within(button).getByText('3').className).toContain('bg-status-warning')
       unmount()
     }
   })
 
-  it('keeps one size in every state and shrinks below 375px like the header icon buttons', () => {
-    const { ui } = demo('offline')
-    render(<SyncStatusIndicator />, { wrapper: withCloud(ui) })
-    const button = screen.getByRole('button')
-    expect(button.className).toMatch(/(^| )size-8( |$)/)
-    expect(button.className).toContain('2xs:size-9')
-    expect(button.className).toContain('2xs:mr-1')
-    expect(button.className).not.toMatch(/(^| )mr-1( |$)/)
+  it('keeps one size in every state: the 36px round action of the header pill', () => {
+    for (const state of ['idle', 'syncing', 'offline', 'error'] as const) {
+      const { ui } = demo(state)
+      const { unmount } = render(<SyncStatusIndicator />, { wrapper: withCloud(ui) })
+      const button = screen.getByRole('button')
+      expect(button.className).toMatch(/(^| )size-9( |$)/)
+      expect(button.className).toContain('rounded-full')
+      expect(button.className).toContain('text-fg-1')
+      unmount()
+    }
   })
 })
 

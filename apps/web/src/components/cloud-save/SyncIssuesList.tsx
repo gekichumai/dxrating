@@ -60,12 +60,9 @@ const SyncIssueItem: FC<{ issue: SyncIssue; onReapply: () => void; onDismiss: ()
   const titleId = `sync-issue-${issue.id}`
 
   return (
-    <li
-      className="flex flex-col gap-1.5 rounded-md bg-white/60 p-2.5 ring-1 ring-inset ring-black/6"
-      aria-labelledby={titleId}
-    >
+    <li className="flex flex-col gap-1.5 glass-inset p-2.5" aria-labelledby={titleId}>
       {/* Only the song title truncates (whole in its tooltip): the chart, which tells issues of one song apart, stays */}
-      <div id={titleId} className="flex min-w-0 items-baseline gap-1 text-sm font-semibold text-zinc-900">
+      <div id={titleId} className="flex min-w-0 items-baseline gap-1 text-sm font-semibold text-fg-1">
         {sheet ? (
           <>
             <span className="min-w-0 truncate" title={sheet.title}>
@@ -77,15 +74,15 @@ const SyncIssueItem: FC<{ issue: SyncIssue; onReapply: () => void; onDismiss: ()
           <span className="min-w-0 truncate">{issue.sheetId}</span>
         )}
       </div>
-      <div className="text-xs text-zinc-700">
+      <div className="text-xs text-fg-2">
         {t('rating-calculator:cloud-save.issues.your-value', { value })}
-        <span className="text-zinc-500">
+        <span className="text-fg-2">
           {' · '}
           {method}
           {time && ` · ${time}`}
         </span>
       </div>
-      <p className="m-0 text-xs text-zinc-600 text-pretty">
+      <p className="m-0 text-xs text-fg-2 text-pretty">
         {issue.kind === 'superseded'
           ? t('rating-calculator:cloud-save.issues.superseded')
           : t('rating-calculator:cloud-save.issues.rejected')}
@@ -112,9 +109,7 @@ export const SyncIssuesList: FC<{ emptyClassName?: string }> = ({ emptyClassName
   if (!cloud || !status) return null
   if (status.issues.length === 0) {
     return (
-      <p className={clsx('m-0 text-sm text-zinc-500', emptyClassName)}>
-        {t('rating-calculator:cloud-save.issues.empty')}
-      </p>
+      <p className={clsx('m-0 text-sm text-fg-2', emptyClassName)}>{t('rating-calculator:cloud-save.issues.empty')}</p>
     )
   }
   return (
