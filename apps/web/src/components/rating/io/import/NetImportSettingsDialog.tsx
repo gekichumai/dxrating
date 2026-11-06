@@ -25,6 +25,8 @@ import IconMdiChevronDown from '~icons/mdi/chevron-down'
 import IconMdiHelpCircleOutline from '~icons/mdi/help-circle-outline'
 import { importFromNETRecords } from './importFromNETRecords'
 import { NetImportAutoImportOptions } from './NetImportAutoImportOptions'
+import { NetMaintenanceNotice } from './NetMaintenanceNotice'
+import { useMaimaiNetStatus } from './useMaimaiNetStatus'
 
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { netImportProgress } from './netImportProgressStore'
@@ -90,6 +92,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
     .with('false', () => false as const)
     .otherwise((value) => value)
   const loadCatalog = useSongCatalogLoader()
+  const maintenance = useMaimaiNetStatus(true)
 
   const updateForm = (patch: Partial<typeof form>) => {
     const next = { ...form, ...patch }
@@ -126,6 +129,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
       </DialogTitle>
       <DialogContent>
         <DialogContentText component="div" className="flex flex-col items-stretch gap-4 py-2">
+          <NetMaintenanceNotice region={region} maintenance={maintenance[region]} />
           <FormControl>
             <TextField
               label={t('rating-calculator:io.import.net-records.dialog.region.label')}

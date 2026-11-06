@@ -427,7 +427,7 @@ const aliasesHandler = {
   ),
 }
 
-import { withMaimaiNETClient } from './lib/functions/client'
+import { netGatewayStatusEffect, withMaimaiNETClient, type NetGatewayStatus } from './lib/functions/client'
 import { recordNetFailure, recordNetSuccess } from './services/functions/fetch-net-records/telemetry'
 import * as lxnsService from './services/lxns/index'
 
@@ -881,6 +881,28 @@ const maimaiHandler = {
   ),
 }
 
+const maimaiNetHandler = {
+  // The import UI warns before people try while SEGA's maintenance is on. Checked at most every 5 minutes per region,
+  // with one anonymous request to the login page.
+  status: os.maimaiNet.status.handler(
+    handlerGen(function* () {
+      const cache = yield* ApplicationCache
+      const regionStatus = Effect.fn('Maimai.netStatus')(function* (region: 'intl' | 'jp') {
+        const key = `net-status:${region}`
+        const cached = yield* cache.get<{ status: NetGatewayStatus; checkedAt: string }>(key)
+        if (cached) return cached
+        const status = yield* netGatewayStatusEffect(region)
+        const checkedAt = new Date(yield* Clock.currentTimeMillis).toISOString()
+        const result = { status, checkedAt }
+        yield* cache.set(key, result, 5 * 60 * 1000)
+        return result
+      })
+      const [intl, jp] = yield* Effect.all([regionStatus('intl'), regionStatus('jp')], { concurrency: 'unbounded' })
+      return { intl, jp }
+    }),
+  ),
+}
+
 const lxnsHandler = {
   authorize: os.lxns.authorize.handler(
     handlerGen(function* ({ context }) {
@@ -940,5 +962,6 @@ export const appRouter = os.router({
   arcades: arcadesHandler,
   chartOgImage: chartOgImageHandler,
   maimai: maimaiHandler,
+  maimaiNet: maimaiNetHandler,
   lxns: lxnsHandler,
 })

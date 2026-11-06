@@ -21,6 +21,7 @@ const ERROR_CODE_I18N: Record<NetImportErrorCode, string> = {
 }
 
 const ERROR_CODE_DETAIL_I18N: Partial<Record<NetImportErrorCode, string>> = {
+  NET_MAINTENANCE: 'rating-calculator:io.import.net-records.errors.maintenance-detail',
   AIME_CARD_UNAVAILABLE: 'rating-calculator:io.import.net-records.errors.aime-card-unavailable-detail',
 }
 
