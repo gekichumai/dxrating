@@ -16,7 +16,7 @@ import {
   TextField,
 } from '@mui/material'
 import clsx from 'clsx'
-import { MotionConfig } from 'framer-motion'
+import { MotionConfig } from 'motion/react'
 import { type FC, type PropsWithChildren, type ReactNode, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'

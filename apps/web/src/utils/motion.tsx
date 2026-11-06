@@ -12,7 +12,7 @@ import {
   Tooltip,
   type TooltipProps,
 } from '@mui/material'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 
 export const MotionButtonBase = motion((props: ButtonBaseProps & { ref?: React.Ref<HTMLButtonElement> }) => (
   <ButtonBase {...props} />

@@ -1,6 +1,6 @@
 import { Dialog, Fade, Grow, IconButton, SwipeableDrawer, useMediaQuery } from '@mui/material'
 import clsx from 'clsx'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'motion/react'
 import { type FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
