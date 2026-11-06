@@ -3,34 +3,41 @@
  * the same hue, so the pill reads as distinct actions rather than one row of black icons. The hue comes from the
  * element's --tint (light) and --tint-dark (dark) custom properties (components/layout/headerTints.ts).
  *
- * Contrast: every --tint is ≥ 3:1 as a glyph against its own wash over light glass, and every --tint-dark ≥ 3:1
- * over dark glass (WCAG 1.4.11, non-text UI). The washes are 18–22% of the hue: tints, never solid fills.
+ * Contrast: each glyph stays ≥ 3:1 against its own wash over the header glass, at rest and on hover, in both themes
+ * (WCAG 1.4.11, non-text UI), including the account button's per-version accent (__tests__/headerTints.test.ts).
+ * The washes are 14–26% of the hue: tints, never solid fills.
  */
 
 .header-tint {
-  --tint-ink: var(--tint);
-  --tint-wash: 18%;
-  --tint-wash-hover: 28%;
+  /* The glyph is the hue deepened a little at rest and more on hover; the wash is the plain hue */
+  --tint-base: var(--tint);
+  --tint-ink: color-mix(in srgb, var(--tint) 86%, #000);
+  --tint-ink-hover: color-mix(in srgb, var(--tint) 70%, #000);
+  --tint-wash: 14%;
+  --tint-wash-hover: 22%;
 }
 
 html[data-theme='dark'] .header-tint {
-  --tint-ink: var(--tint-dark);
-  --tint-wash: 22%;
-  --tint-wash-hover: 32%;
+  --tint-base: var(--tint-dark);
+  --tint-ink: color-mix(in srgb, var(--tint-dark) 80%, #fff);
+  --tint-ink-hover: color-mix(in srgb, var(--tint-dark) 62%, #fff);
+  --tint-wash: 16%;
+  --tint-wash-hover: 26%;
 }
 
 /* A tinted control: the element itself (.header-tint-target) or the MUI icon button a wrapper contains */
 .header-tint.header-tint-target,
 .header-tint .MuiIconButton-root {
   color: var(--tint-ink);
-  background-color: color-mix(in oklab, var(--tint-ink) var(--tint-wash), transparent);
-  transition-property: background-color;
+  background-color: color-mix(in srgb, var(--tint-base) var(--tint-wash), transparent);
+  transition-property: background-color, color;
   transition-duration: var(--duration-fast);
 }
 
 .header-tint.header-tint-target:hover,
 .header-tint .MuiIconButton-root:hover {
-  background-color: color-mix(in oklab, var(--tint-ink) var(--tint-wash-hover), transparent);
+  color: var(--tint-ink-hover);
+  background-color: color-mix(in srgb, var(--tint-base) var(--tint-wash-hover), transparent);
 }
 
 /*
