@@ -243,8 +243,9 @@ html {
   outline: none;
 }
 
-/* Version switcher: a large logo over the region chip on the home page; a small logo beside it on inner pages and on
-   phones in landscape, where the header would otherwise fill most of the first screen */
+/* Version switcher: a large logo over the region chip on the home page; a small logo beside it on inner pages, on
+   phones in landscape, where the header would otherwise fill most of the first screen, and on desktop
+   (components/layout/app-chrome.css) */
 .version-switcher__value {
   flex-direction: column;
 }
