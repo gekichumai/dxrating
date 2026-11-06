@@ -1,6 +1,7 @@
 import { DifficultyEnum } from '@gekichumai/dxdata'
 import type { PlateKind, PlateRecord, PlateRegion } from '@gekichumai/maimai-domain'
-import { type FC, useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from '@tanstack/react-router'
+import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCompleteCatalogDocument } from '@/catalog/CatalogContext'
 import {
   Breadcrumb,
@@ -13,12 +14,13 @@ import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { ShareImageButton } from '@/components/global/ShareImageButton'
 import {
   buildPlatePageData,
-  DEFAULT_PLATE_REGION,
   evaluatePlatePage,
   groupPlateChartsByLevel,
   PLATE_REGIONS,
   type PlateIndexGroup,
   type PlatePageData,
+  plateExistsInRegion,
+  plateRegionToFollow,
   platePath,
   plateScript,
   progressPercent,
@@ -27,6 +29,7 @@ import { buildPlateShareImage } from '@/components/plates/plateShareImage'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { captureAnalyticsEvent } from '@/lib/analytics'
+import { useAppContext } from '@/models/context/useAppContext'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useUserRecords } from '@/models/useUserRecords'
 import { coverImageUrl } from '@/utils/shareImage/shareImage'
@@ -35,8 +38,45 @@ import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
 import { InternalLink } from '@/components/global/InternalLink'
 
-const regionHref = (path: string, region: PlateRegion) =>
-  region === DEFAULT_PLATE_REGION ? path : `${path}?region=${region}`
+// Links within Plates always name their region, Japan included: a link without one follows the header's region (see
+// useFollowSiteRegion), so a deliberate Japan tab, card or breadcrumb would bounce back. Canonical URLs ignore it.
+const regionHref = (path: string, region: PlateRegion) => `${path}?region=${region}`
+
+/**
+ * Keeps the page on the header's region. A URL that names a region (a tab click, a shared link) is kept on load; one
+ * that does not follows the region the visitor picked in the header, and a later header switch moves the page too.
+ * Client-only, after mount: the server and edge-cached HTML always show the URL's region (Japan without one).
+ */
+export const useFollowSiteRegion = ({
+  region,
+  explicit,
+  available = () => true,
+}: {
+  region: PlateRegion
+  explicit: boolean
+  available?: (candidate: PlateRegion) => boolean
+}) => {
+  const { region: siteRegion, hydrated } = useAppContext()
+  const router = useRouter()
+  // Until the context has applied the stored choice, its region is the server default, not the visitor's
+  const previous = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!hydrated) return
+    // A header switch moves the page even off an explicit URL; otherwise only a URL without a region follows
+    // (on load, and when history brings one back while the page stays mounted)
+    const switched = previous.current !== null && previous.current !== siteRegion
+    previous.current = siteRegion
+
+    const target = plateRegionToFollow({ siteRegion, current: region, onLoad: !switched, explicit, available })
+    if (!target) return
+    // Keeps the URL's other parameters, such as ?locale=. Always a replace: following the header is not a step of
+    // its own, so Back leaves Plates instead of landing on a URL that shows another region than the header
+    const url = new URL(window.location.href)
+    url.searchParams.set('region', target)
+    void router.navigate({ href: `${url.pathname}${url.search}${url.hash}`, replace: true })
+  }, [siteRegion, hydrated, region, explicit, available, router])
+}
 
 const PLATE_REGION_LABELS = {
   jp: m.plates_region_jp,
@@ -145,7 +185,12 @@ const ProgressBar: FC<{ percent: number; className?: string }> = ({ percent, cla
   </div>
 )
 
-export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[] }> = ({ region, groups }) => {
+export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]; explicitRegion?: boolean }> = ({
+  region,
+  groups,
+  explicitRegion = false,
+}) => {
+  useFollowSiteRegion({ region, explicit: explicitRegion })
   const locale = useLocale()
   const script = plateScript(locale)
   const document = useCompleteCatalogDocument()
@@ -249,7 +294,13 @@ const RemasterVariantLabel: FC = () => {
   )
 }
 
-export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
+export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = ({ data, explicitRegion = false }) => {
+  const plateAvailable = useCallback((region: PlateRegion) => plateExistsInRegion(region, data.plateId), [data.plateId])
+  useFollowSiteRegion({
+    region: data.region,
+    explicit: explicitRegion,
+    available: plateAvailable,
+  })
   const locale = useLocale()
   const name = data.names[plateScript(locale)]
   const versions =

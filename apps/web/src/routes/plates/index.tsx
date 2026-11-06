@@ -21,5 +21,6 @@ export const Route = createFileRoute('/plates/')({
 
 function PlateIndexRouteComponent() {
   const { region, groups } = Route.useLoaderData()
-  return <PlateIndexPage region={region} groups={groups} />
+  const search = Route.useSearch()
+  return <PlateIndexPage region={region} groups={groups} explicitRegion={search.region !== undefined} />
 }
