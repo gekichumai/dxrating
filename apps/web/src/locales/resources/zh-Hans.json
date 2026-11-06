@@ -809,7 +809,11 @@
     "index.level-count-single": "{{count}} 张谱面・{{value}}",
     "breadcrumb": "定数表",
     "breadcrumb-label": "面包屑导航",
-    "chart-link": "Lv.{{level}} 定数表"
+    "chart-link": "Lv.{{level}} 定数表",
+    "view.label": "显示方式",
+    "view.grid": "封面",
+    "view.table": "表格",
+    "jump-label": "跳转到定数"
   },
   "rating-explainer": {
     "title": "舞萌DX Rating 怎么算",

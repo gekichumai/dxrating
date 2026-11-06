@@ -809,7 +809,11 @@
     "index.level-count-single": "{{count}} 張譜面・{{value}}",
     "breadcrumb": "譜面定數表",
     "breadcrumb-label": "導覽路徑",
-    "chart-link": "Lv.{{level}} 譜面定數表"
+    "chart-link": "Lv.{{level}} 譜面定數表",
+    "view.label": "顯示方式",
+    "view.grid": "封面",
+    "view.table": "表格",
+    "jump-label": "跳至定數"
   },
   "rating-explainer": {
     "title": "maimai DX Rating 如何計算",

@@ -809,7 +809,11 @@
     "index.level-count-single": "{{count}} 譜面・{{value}}",
     "breadcrumb": "譜面定数表",
     "breadcrumb-label": "パンくずリスト",
-    "chart-link": "Lv.{{level}} 譜面定数表"
+    "chart-link": "Lv.{{level}} 譜面定数表",
+    "view.label": "表示",
+    "view.grid": "ジャケット",
+    "view.table": "表",
+    "jump-label": "譜面定数へ移動"
   },
   "rating-explainer": {
     "title": "maimai でらっくす のレーティングの仕組み",
