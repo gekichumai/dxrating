@@ -151,14 +151,23 @@ const successHeaders = (metadata: PublishedDxdataMetadata) =>
     Vary: 'Accept-Encoding',
   })
 
-/** Whether the request accepts Brotli: `br` is listed with a non-zero quality, or `*` is */
-export const acceptsBrotli = (acceptEncoding: string | undefined) =>
-  acceptEncoding?.split(',').some((entry) => {
+/**
+ * Whether the request accepts Brotli. An explicit `br` entry decides; `*` only covers codings the request does not
+ * list (RFC 9110 §12.5.3), so `br;q=0, *` rejects Brotli
+ */
+export const acceptsBrotli = (acceptEncoding: string | undefined) => {
+  let wildcard: number | undefined
+  for (const entry of acceptEncoding?.split(',') ?? []) {
     const [coding, ...params] = entry.trim().toLowerCase().split(';')
-    if (coding?.trim() !== 'br' && coding?.trim() !== '*') return false
-    const quality = params.map((param) => /^\s*q\s*=\s*([\d.]+)\s*$/.exec(param)?.[1]).find((q) => q !== undefined)
-    return quality === undefined || Number(quality) > 0
-  }) === true
+    const name = coding?.trim()
+    if (name !== 'br' && name !== '*') continue
+    const q = params.map((param) => /^\s*q\s*=\s*([\d.]+)\s*$/.exec(param)?.[1]).find((value) => value !== undefined)
+    const quality = q === undefined ? 1 : Number(q)
+    if (name === 'br') return quality > 0
+    wildcard = quality
+  }
+  return wildcard !== undefined && wildcard > 0
+}
 
 /**
  * Compresses a catalog body with Brotli at the highest quality on the libuv thread pool, so the event loop keeps
@@ -189,7 +198,7 @@ export const createDxdataEffect = <E, R, H extends Env = Env>(
   reportError: (error: unknown, context: Context<H>) => void = () => {},
 ) => {
   // The Brotli body of the published catalog, one at a time: a new publication replaces it
-  let compressed: { bodySha256: string; body: Promise<Buffer> } | undefined
+  let compressed: { bodySha256: string; body: Promise<Buffer>; byteLength?: number } | undefined
   const compressedBody = (metadata: PublishedDxdataMetadata) =>
     Effect.gen(function* () {
       if (compressed?.bodySha256 !== metadata.bodySha256) {
@@ -197,7 +206,14 @@ export const createDxdataEffect = <E, R, H extends Env = Env>(
         if (body === undefined) return undefined
         // Another request may have started it while this one read the body
         if (compressed?.bodySha256 !== metadata.bodySha256) {
-          compressed = { bodySha256: metadata.bodySha256, body: compressCatalogBody(body) }
+          const entry: NonNullable<typeof compressed> = {
+            bodySha256: metadata.bodySha256,
+            body: compressCatalogBody(body).then((encoded) => {
+              entry.byteLength = encoded.byteLength
+              return encoded
+            }),
+          }
+          compressed = entry
         }
       }
       const entry = compressed
@@ -219,6 +235,15 @@ export const createDxdataEffect = <E, R, H extends Env = Env>(
         catch: (cause) => new DxdataDecodeError({ operation: 'encode published catalog headers', cause }),
       })
       const etag = headers.get('ETag')!
+      const brotli = acceptsBrotli(c.req.header('Accept-Encoding'))
+      if (brotli) {
+        // HEAD and 304 describe the Brotli GET: its length once it is compressed, else none, since compressing only to
+        // answer a metadata request would defeat it
+        headers.set('Content-Encoding', 'br')
+        const byteLength = compressed?.bodySha256 === metadata.bodySha256 ? compressed.byteLength : undefined
+        if (byteLength === undefined) headers.delete('Content-Length')
+        else headers.set('Content-Length', byteLength.toString())
+      }
       if (ifNoneMatchMatches(c.req.header('If-None-Match'), etag)) {
         return new Response(null, { status: 304, statusText: 'Not Modified', headers })
       }
@@ -226,12 +251,11 @@ export const createDxdataEffect = <E, R, H extends Env = Env>(
       // The edge asks the origin for `gzip, br` and keeps the first encoding it gets for the ETag's lifetime, so the
       // response waits for the Brotli body rather than hand the edge an uncompressed copy it would keep until the next
       // publication. Only the first request after a publication waits, and the edge serves its stale copy meanwhile.
-      if (acceptsBrotli(c.req.header('Accept-Encoding'))) {
-        const brotli = yield* compressedBody(metadata)
-        if (brotli === undefined) return uncachedError(c, 'DX data catalog is unavailable', 503)
-        headers.set('Content-Encoding', 'br')
-        headers.set('Content-Length', brotli.byteLength.toString())
-        return new Response(new Uint8Array(brotli), { status: 200, headers })
+      if (brotli) {
+        const encoded = yield* compressedBody(metadata)
+        if (encoded === undefined) return uncachedError(c, 'DX data catalog is unavailable', 503)
+        headers.set('Content-Length', encoded.byteLength.toString())
+        return new Response(new Uint8Array(encoded), { status: 200, headers })
       }
       const body = yield* store.getSnapshotBody(metadata.catalogRunId, metadata.bodySha256)
       if (body === undefined) return uncachedError(c, 'DX data catalog is unavailable', 503)

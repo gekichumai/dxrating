@@ -125,6 +125,32 @@ describe('DX data catalog endpoint', () => {
     expect(calls).toEqual(['metadata', 'body', 'metadata'])
   })
 
+  it('describes the Brotli GET in HEAD and 304, without compressing for them', async () => {
+    const { calls, store } = createStore()
+    const app = createApp(store)
+    const br = { 'Accept-Encoding': 'gzip, br' }
+
+    const headBefore = await app.request(DXDATA_PATH, { method: 'HEAD', headers: br })
+    expect(headBefore.headers.get('content-encoding')).toBe('br')
+    expect(headBefore.headers.has('content-length')).toBe(false)
+    expect(calls).toEqual(['metadata'])
+
+    const get = await app.request(DXDATA_PATH, { headers: br })
+    const encodedLength = (await get.arrayBuffer()).byteLength.toString()
+
+    const head = await app.request(DXDATA_PATH, { method: 'HEAD', headers: br })
+    const notModified = await app.request(DXDATA_PATH, { headers: { ...br, 'If-None-Match': ETAG } })
+    for (const response of [head, notModified]) {
+      expect(response.headers.get('content-encoding')).toBe('br')
+      expect(response.headers.get('content-length')).toBe(encodedLength)
+    }
+    expect(notModified.status).toBe(304)
+
+    const identityHead = await app.request(DXDATA_PATH, { method: 'HEAD' })
+    expect(identityHead.headers.has('content-encoding')).toBe(false)
+    expect(identityHead.headers.get('content-length')).toBe(Buffer.byteLength(BODY).toString())
+  })
+
   it('compresses again once a new body is published', async () => {
     const calls: string[] = []
     let current = { metadata, body: BODY }
@@ -149,6 +175,10 @@ describe('DX data catalog endpoint', () => {
     ['*', true],
     ['gzip', false],
     ['br;q=0', false],
+    ['br;q=0, *', false],
+    ['*, br;q=0', false],
+    ['*;q=0', false],
+    ['gzip, *', true],
     ['identity', false],
     [undefined, false],
   ])('reads Accept-Encoding %j as accepting Brotli: %s', (header, expected) => {
