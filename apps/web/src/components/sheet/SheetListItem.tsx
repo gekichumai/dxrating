@@ -1,12 +1,21 @@
 import { type DifficultyEnum, type ServerEnum, TypeEnum } from '@gekichumai/dxdata'
-import { ListItemButton, ListItemSecondaryAction, ListItemText, type ListItemTextProps } from '@mui/material'
+import { IconButton, ListItemButton, ListItemText, type ListItemTextProps } from '@mui/material'
 import clsx from 'clsx'
-import { type FC, type HTMLAttributes, type ImgHTMLAttributes, memo, type ReactNode, useState } from 'react'
+import {
+  type ElementType,
+  type FC,
+  type HTMLAttributes,
+  type ImgHTMLAttributes,
+  memo,
+  type ReactNode,
+  useState,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import { useWebHaptics } from 'web-haptics/react'
 import toast from 'react-hot-toast'
 import { match } from 'ts-pattern'
 import MdiComment from '~icons/mdi/comment'
+import MdiContentCopy from '~icons/mdi/content-copy'
 import MdiLock from '~icons/mdi/lock'
 import MdiTrashCan from '~icons/mdi/trash-can'
 import { DIFFICULTIES } from '../../models/difficulties'
@@ -92,10 +101,11 @@ export const SheetListItem: FC<{
           className={clsx(
             'w-full cursor-pointer transition-colors duration-150 hover:duration-25 !px-4 no-underline text-inherit',
             '[&_.MuiListItemSecondaryAction-root]:right-0 md:[&_.MuiListItemSecondaryAction-root]:right-4',
-            open && '!bg-zinc-300/80',
+            open && '!bg-accent-subtle',
             className,
           )}
-          sx={{ borderRadius: 1 }}
+          // --radius-md rows inside a list surface with a 4px inset: 8 + 4 = the surface's 12
+          sx={{ borderRadius: 'var(--radius-md)' }}
         >
           {children ?? <SheetListItemContent sheet={sheet} size={size} {...SheetListItemContentProps} />}
         </ListItemButton>
@@ -145,17 +155,18 @@ export const SheetListItemContentView: FC<SheetListItemContentViewProps> = memo(
       <div className={clsx('flex items-center w-full p-1 gap-2 tabular-nums relative', className)} {...rest}>
         {enableSheetImage && imageName && imageAlt && <SheetImage name={imageName} size={size} alt={imageAlt} />}
 
-        <ListItemText {...ListItemTextProps} className={clsx('ml-2 pr-12', ListItemTextProps?.className)}>
+        <ListItemText {...ListItemTextProps} className={clsx('ml-2 min-w-0', ListItemTextProps?.className)}>
           {children}
         </ListItemText>
 
-        <ListItemSecondaryAction>
+        {/* A flex child rather than an absolutely positioned action, so long titles and badges can never run under it */}
+        <div className="ml-auto shrink-0 pl-2">
           {isTypeUtage ? (
-            <span className="font-bold tracking-tighter tabular-nums text-lg text-zinc-600">{level}</span>
+            <span className="font-semibold tabular-nums text-lg text-fg-2">{level}</span>
           ) : (
             <SheetInternalLevelValue value={internalLevelValue} />
           )}
-        </ListItemSecondaryAction>
+        </div>
       </div>
     )
   },
@@ -182,7 +193,7 @@ export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
         <SheetTitle
           {...SheetTitleProps}
           sheet={sheet}
-          className={clsx('font-bold', size === 'small' ? 'text-sm' : 'text-lg', SheetTitleProps?.className)}
+          className={clsx('font-semibold', size === 'small' ? 'text-sm' : 'text-lg', SheetTitleProps?.className)}
         />
       </SheetListItemContentView>
     )
@@ -195,9 +206,9 @@ const SheetInternalLevelValue: FC<{ value: number }> = ({ value }) => {
   const decimalPart = value - wholePart
 
   return (
-    <div className="font-bold tracking-tighter tabular-nums">
-      <span className="text-lg text-zinc-600">{wholePart}.</span>
-      <span className="text-xl">{decimalPart.toFixed(1).split('.')[1]}</span>
+    <div className="font-semibold tabular-nums">
+      <span className="text-lg text-fg-2">{wholePart}.</span>
+      <span className="text-xl text-fg-1">{decimalPart.toFixed(1).split('.')[1]}</span>
     </div>
   )
 }
@@ -207,24 +218,34 @@ export const SheetDifficulty: FC<{
   serverIds?: readonly ServerEnum[]
   isLocked?: boolean
 }> = ({ difficulty, serverIds, isLocked }) => {
+  const { t } = useTranslation(['sheet'])
   const difficultyConfig = difficulty ? DIFFICULTIES[difficulty] : undefined
   const allUnavailable = (serverIds ?? []).length === 0
+  // The `solid` role carries white text at 4.5:1 or more; the brand colour itself only passes for MASTER
   return difficultyConfig ? (
     <span
-      className="rounded-full px-2 text-sm shadow-[0.0625rem_0.125rem_0_0_#0b38714D] leading-relaxed translate-y-[-0.125rem] text-white inline-flex items-center"
-      style={{ backgroundColor: difficultyConfig.color }}
+      className="rounded-[var(--radius-sm)] px-2 text-sm font-semibold shadow-[0_1px_0_0_rgb(0_0_0/0.15)] leading-relaxed translate-y-[-0.125rem] text-white inline-flex items-center"
+      style={{ backgroundColor: difficultyConfig.solid }}
     >
       {allUnavailable && (
-        <MdiTrashCan
-          className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-[#fff] rounded-full"
-          style={{ color: difficultyConfig.color }}
-        />
+        <>
+          <MdiTrashCan
+            aria-hidden="true"
+            className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-[#fff] rounded-full"
+            style={{ color: difficultyConfig.solid }}
+          />
+          <span className="sr-only">{t('sheet:badge.unavailable')}</span>
+        </>
       )}
       {isLocked && (
-        <MdiLock
-          className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-[#fff] rounded-full"
-          style={{ color: difficultyConfig.color }}
-        />
+        <>
+          <MdiLock
+            aria-hidden="true"
+            className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-[#fff] rounded-full"
+            style={{ color: difficultyConfig.solid }}
+          />
+          <span className="sr-only">{t('sheet:badge.locked')}</span>
+        </>
       )}
       {difficultyConfig.title}
     </span>
@@ -313,30 +334,33 @@ export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
         <TitleElement
           {...titleProps}
           className={clsx(
-            'flex flex-col md:flex-row md:items-start gap-x-2 gap-y-1 font-bold text-lg',
+            'flex flex-col md:flex-row md:items-start gap-x-2 gap-y-1 font-semibold text-lg',
             titleProps?.className,
           )}
         >
-          <span className="flex flex-col">
-            <span {...titleTextProps} className={clsx('leading-tight', titleTextProps?.className)}>
+          <span className="flex flex-col min-w-0">
+            <span
+              {...titleTextProps}
+              className={clsx('leading-tight [text-wrap:pretty] [word-break:auto-phrase]', titleTextProps?.className)}
+            >
               {title}
             </span>
           </span>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
             <SheetType type={type} difficulty={difficulty} />
             <SheetDifficulty difficulty={difficulty} serverIds={serverIds} isLocked={isLocked} />
           </div>
         </TitleElement>
 
         {artist && (
-          <p {...artistProps} className={clsx('text-sm text-zinc-600 truncate', artistProps?.className)}>
+          <p {...artistProps} className={clsx('text-sm text-fg-2 truncate', artistProps?.className)}>
             {artist}
           </p>
         )}
 
         {version && (
           <div className="text-sm">
-            <span className="text-zinc-600">ver. {version}</span>
+            <span className="text-fg-2">ver. {version}</span>
           </div>
         )}
 
@@ -362,12 +386,12 @@ export const SheetImage: FC<
         className={clsx(
           'overflow-hidden outline outline-1 -outline-offset-1 outline-black/10',
           match(size)
-            .with('small', () => 'h-8 w-8 min-w-[2rem] min-h-[2rem] rounded-sm')
-            .with('medium', () => 'h-12 w-12 min-w-[3rem] min-h-[3rem] rounded')
-            .with('large', () => 'h-16 w-16 min-w-[4rem] min-h-[4rem] rounded-lg')
+            .with('small', () => 'h-8 w-8 min-w-[2rem] min-h-[2rem] rounded-[var(--radius-xs)]')
+            .with('medium', () => 'h-12 w-12 min-w-[3rem] min-h-[3rem] rounded-[var(--radius-xs)]')
+            .with('large', () => 'h-16 w-16 min-w-[4rem] min-h-[4rem] rounded-[var(--radius-md)]')
             .exhaustive(),
         )}
-        placeholderClassName="bg-slate-300/50"
+        placeholderClassName="bg-black/6"
         alt={alt}
         loading="lazy"
         {...props}
@@ -383,6 +407,8 @@ export interface SheetTitleProps {
   enableAltNames?: boolean
   enableClickToCopy?: boolean
   enableVersion?: boolean
+  /** The heading element: `h3` in lists; the sheet dialog passes its labelled dialog title */
+  headingComponent?: ElementType
 
   className?: string
 }
@@ -392,37 +418,43 @@ export const SheetTitle: FC<SheetTitleProps> = ({
   enableAltNames,
   enableClickToCopy,
   enableVersion = true,
+  headingComponent: Heading = 'h3',
   className,
 }) => {
   const { t } = useTranslation(['sheet'])
   const { title, searchAcronyms, difficulty, type, version } = sheet
   return (
     <div className="flex flex-col">
-      <h3 className={clsx('flex flex-col md:flex-row md:items-start gap-x-2 gap-y-1', className)}>
-        <span className="flex flex-col">
-          <span
-            className="leading-tight cursor-pointer"
-            {...(enableClickToCopy && {
-              onClick: () => {
-                navigator.clipboard.writeText(title)
-                toast.success(t('sheet:copy-title.toast-success'), {
-                  id: `copy-sheet-title-${title}`,
-                })
-              },
-              title: t('sheet:copy-title.tooltip'),
-            })}
-          >
-            {title}
+      <div className="flex items-start gap-1">
+        <Heading className={clsx('flex flex-col md:flex-row md:items-start gap-x-2 gap-y-1 min-w-0', className)}>
+          <span className="flex flex-col min-w-0">
+            <span className="leading-tight [text-wrap:pretty] [word-break:auto-phrase]">{title}</span>
           </span>
-        </span>
-        <div className="flex items-center gap-2 shrink-0">
-          <SheetType type={type} difficulty={difficulty} />
-          <SheetDifficulty difficulty={difficulty} serverIds={sheet.serverIds} isLocked={sheet.isLocked} />
-        </div>
-      </h3>
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+            <SheetType type={type} difficulty={difficulty} />
+            <SheetDifficulty difficulty={difficulty} serverIds={sheet.serverIds} isLocked={sheet.isLocked} />
+          </span>
+        </Heading>
+        {enableClickToCopy && (
+          <IconButton
+            size="small"
+            className="shrink-0 !-mt-1"
+            aria-label={t('sheet:copy-title.tooltip')}
+            title={t('sheet:copy-title.tooltip')}
+            onClick={() => {
+              navigator.clipboard.writeText(title)
+              toast.success(t('sheet:copy-title.toast-success'), {
+                id: `copy-sheet-title-${title}`,
+              })
+            }}
+          >
+            <MdiContentCopy aria-hidden="true" className="h-4 w-4" />
+          </IconButton>
+        )}
+      </div>
 
       {enableAltNames && (
-        <div className="w-full font-bold flex flex-col">
+        <div className="w-full font-semibold flex flex-col">
           {(searchAcronyms?.length ?? 0) > 0 && <SheetAltNames altNames={searchAcronyms!} />}
           <AddSheetAltNameButton sheet={sheet} />
         </div>
@@ -430,14 +462,14 @@ export const SheetTitle: FC<SheetTitleProps> = ({
 
       {sheet.isTypeUtage && (
         <span className="text-sm text-zinc-600 dark:text-[#3f3f46] px-1.5 py-0.5 gap-1 bg-amber/75 inline-flex self-start rounded-md">
-          <MdiComment className="h-3 w-3 flex-shrink-0 mt-1.125" />
+          <MdiComment aria-hidden="true" className="h-3 w-3 flex-shrink-0 mt-1.125" />
           <span>{sheet.comment}</span>
         </span>
       )}
 
       {enableVersion && (
         <div className="text-sm">
-          <span className="text-zinc-600">ver. {version}</span>
+          <span className="text-fg-2">ver. {version}</span>
         </div>
       )}
     </div>

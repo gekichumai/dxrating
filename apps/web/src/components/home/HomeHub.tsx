@@ -21,7 +21,7 @@ import IconMdiNewBox from '~icons/mdi/new-box'
 import IconMdiFire from '~icons/mdi/fire'
 import IconMdiHistory from '~icons/mdi/history'
 
-const FEATURE_ICONS: Record<HomeFeatureId, FC<{ className?: string }>> = {
+const FEATURE_ICONS: Record<HomeFeatureId, FC<{ className?: string; 'aria-hidden'?: 'true' }>> = {
   rating: IconMdiTrophyOutline,
   plates: IconMdiCardAccountDetailsStarOutline,
   constants: IconMdiTable,
@@ -38,9 +38,15 @@ const FEATURE_ICONS: Record<HomeFeatureId, FC<{ className?: string }>> = {
 
 const trackClick = (module: string, target?: string) => captureAnalyticsEvent('home_module_clicked', { module, target })
 
-const SectionTitle: FC<{ children: React.ReactNode }> = ({ children }) => (
-  <h2 className="m-0 px-1 text-sm font-bold tracking-wide text-zinc-600">{children}</h2>
+const SectionTitle: FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => (
+  <h2 id={id} className="section-title m-0 px-1">
+    {children}
+  </h2>
 )
+
+// Cards are whole links: the link carries the card's radius so the focus ring follows its corners
+const CARD_LINK = 'block h-full rounded-[var(--radius-lg)] text-inherit no-underline'
+const CARD_SURFACE = 'transition-[background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-white/70'
 
 const QuickStats: FC = () => {
   const { t, i18n } = useTranslation(['home'])
@@ -53,21 +59,21 @@ const QuickStats: FC = () => {
 
   return (
     <section className="flex flex-col gap-2" aria-labelledby="home-quick-stats">
-      <SectionTitle>
-        <span id="home-quick-stats">{t('home:stats.title')}</span>
-        {stats.isDemo && <span className="ml-2 text-xs font-normal opacity-70">{t('home:stats.demo')}</span>}
-      </SectionTitle>
+      <div className="flex items-baseline gap-2">
+        <SectionTitle id="home-quick-stats">{t('home:stats.title')}</SectionTitle>
+        {stats.isDemo && <span className="text-xs text-fg-2">{t('home:stats.demo')}</span>}
+      </div>
       <div className="grid grid-cols-3 gap-2">
-        <Link to="/rating" onClick={() => trackClick('quick_stats', 'rating')} className="no-underline text-inherit">
-          <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5 transition hover:bg-white/70">
-            <span className="text-xs text-zinc-500">{t('home:stats.rating')}</span>
-            <span className="text-xl font-bold tabular-nums">{stats.rating}</span>
+        <Link to="/rating" onClick={() => trackClick('quick_stats', 'rating')} className={CARD_LINK}>
+          <MaterialSurface className={`flex h-full flex-col gap-0.5 px-3 py-2.5 ${CARD_SURFACE}`}>
+            <span className="text-xs text-fg-2">{t('home:stats.rating')}</span>
+            <span className="text-xl font-semibold tabular-nums">{stats.rating}</span>
           </MaterialSurface>
         </Link>
-        <Link to="/rating" onClick={() => trackClick('quick_stats', 'b50_floor')} className="no-underline text-inherit">
-          <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5 transition hover:bg-white/70">
-            <span className="text-xs text-zinc-500">{t('home:stats.b50-floor')}</span>
-            <span className="text-xl font-bold tabular-nums">{floor ?? '—'}</span>
+        <Link to="/rating" onClick={() => trackClick('quick_stats', 'b50_floor')} className={CARD_LINK}>
+          <MaterialSurface className={`flex h-full flex-col gap-0.5 px-3 py-2.5 ${CARD_SURFACE}`}>
+            <span className="text-xs text-fg-2">{t('home:stats.b50-floor')}</span>
+            <span className="text-xl font-semibold tabular-nums">{floor ?? '—'}</span>
           </MaterialSurface>
         </Link>
         {stats.nearestPlate ? (
@@ -76,20 +82,20 @@ const QuickStats: FC = () => {
             params={{ plate: stats.nearestPlate.plate.id }}
             search={plateRegionSearch(stats.nearestPlate.region)}
             onClick={() => trackClick('quick_stats', 'nearest_plate')}
-            className="no-underline text-inherit"
+            className={CARD_LINK}
           >
-            <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5 transition hover:bg-white/70">
-              <span className="text-xs text-zinc-500">{t('home:stats.nearest-plate')}</span>
-              <span className="truncate text-xl font-bold">{plateName(stats.nearestPlate.plate, script)}</span>
-              <span className="text-xs tabular-nums text-zinc-500">
+            <MaterialSurface className={`flex h-full flex-col gap-0.5 px-3 py-2.5 ${CARD_SURFACE}`}>
+              <span className="text-xs text-fg-2">{t('home:stats.nearest-plate')}</span>
+              <span className="truncate text-xl font-semibold">{plateName(stats.nearestPlate.plate, script)}</span>
+              <span className="text-xs tabular-nums text-fg-2">
                 {stats.nearestPlate.completedSheets} / {stats.nearestPlate.totalSheets}
               </span>
             </MaterialSurface>
           </Link>
         ) : (
           <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5">
-            <span className="text-xs text-zinc-500">{t('home:stats.nearest-plate')}</span>
-            <span className="text-xl font-bold">—</span>
+            <span className="text-xs text-fg-2">{t('home:stats.nearest-plate')}</span>
+            <span className="text-xl font-semibold">—</span>
           </MaterialSurface>
         )}
       </div>
@@ -109,19 +115,19 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
 
       {recentSongs.length > 0 && (
         <section className="flex flex-col gap-2" aria-labelledby="home-recent">
-          <div className="flex items-baseline justify-between gap-2">
-            <SectionTitle>
-              <span id="home-recent">{t('home:recent.title')}</span>
-            </SectionTitle>
+          <div className="flex items-center justify-between gap-2">
+            <SectionTitle id="home-recent">{t('home:recent.title')}</SectionTitle>
             <Link
               to="/charts/recent"
               onClick={() => trackClick('recent', 'see_all')}
-              className="px-1 text-xs font-bold text-blue-700 no-underline"
+              className="inline-flex min-h-6 items-center rounded-[var(--radius-sm)] px-2 text-sm font-semibold text-accent-strong no-underline hover:underline"
             >
               {t('home:recent.see-all')}
             </Link>
           </div>
-          <MaterialSurface className="overflow-x-auto">
+          {/* Sized to its covers on wide screens instead of leaving a wide empty panel; covers sit 12px in, so they keep
+              their own radius */}
+          <MaterialSurface className="w-fit max-w-full overflow-x-auto overscroll-x-contain">
             <ul className="m-0 flex list-none gap-3 p-3">
               {recentSongs.map((song) => (
                 <li key={song.songId} className="w-20 shrink-0">
@@ -129,15 +135,15 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
                     to="/songs/$songId"
                     params={{ songId: song.songId }}
                     onClick={() => trackClick('recent', song.songId)}
-                    className="flex flex-col gap-1 text-inherit no-underline"
+                    className="flex flex-col gap-1 rounded-[var(--radius-md)] text-inherit no-underline"
                   >
                     <SheetImage
                       name={song.imageName}
                       size="large"
                       alt={t('sheet:cover-art-alt', { title: song.title })}
-                      className="h-20 w-20 rounded-lg overflow-hidden outline outline-1 -outline-offset-1 outline-black/10"
+                      className="h-20 w-20 rounded-[var(--radius-md)] overflow-hidden outline outline-1 -outline-offset-1 outline-black/10"
                     />
-                    <span className="line-clamp-2 text-xs leading-tight">{song.title}</span>
+                    <span className="line-clamp-2 text-xs leading-snug [word-break:auto-phrase]">{song.title}</span>
                   </Link>
                 </li>
               ))}
@@ -147,24 +153,21 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
       )}
 
       <nav className="flex flex-col gap-2" aria-labelledby="home-features">
-        <SectionTitle>
-          <span id="home-features">{t('home:features.title')}</span>
-        </SectionTitle>
-        <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-3 lg:grid-cols-4">
+        <SectionTitle id="home-features">{t('home:features.title')}</SectionTitle>
+        {/* On phones two scrolling rows keep the search results near the top; wider screens get the full grid */}
+        <ul className="m-0 grid list-none grid-flow-col grid-rows-2 auto-cols-[minmax(10.5rem,46%)] gap-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory p-0 pb-1 sm:grid-flow-row sm:grid-rows-none sm:auto-cols-auto sm:grid-cols-3 sm:overflow-visible sm:pb-0 lg:grid-cols-4">
           {HOME_FEATURES.map((feature) => {
             const Icon = FEATURE_ICONS[feature.id]
             return (
-              <li key={feature.id}>
-                <Link
-                  to={feature.to}
-                  onClick={() => trackClick('feature', feature.id)}
-                  className="block h-full text-inherit no-underline"
-                >
-                  <MaterialSurface className="flex h-full items-start gap-2.5 px-3 py-2.5 transition hover:bg-white/70">
-                    <Icon className="mt-0.5 shrink-0 text-lg text-blue-700" />
+              <li key={feature.id} className="snap-start">
+                <Link to={feature.to} onClick={() => trackClick('feature', feature.id)} className={CARD_LINK}>
+                  <MaterialSurface className={`flex h-full items-start gap-2.5 px-3 py-2.5 ${CARD_SURFACE}`}>
+                    <Icon aria-hidden="true" className="mt-0.5 shrink-0 text-lg text-accent-strong" />
                     <span className="flex min-w-0 flex-col">
-                      <span className="text-sm font-bold">{t(`home:features.${feature.id}.title`)}</span>
-                      <span className="text-xs text-zinc-500">{t(`home:features.${feature.id}.description`)}</span>
+                      <span className="text-sm font-semibold">{t(`home:features.${feature.id}.title`)}</span>
+                      <span className="text-xs text-fg-2 text-pretty">
+                        {t(`home:features.${feature.id}.description`)}
+                      </span>
                     </span>
                   </MaterialSurface>
                 </Link>

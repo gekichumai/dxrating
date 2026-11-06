@@ -15,7 +15,8 @@ import { type FC, type ReactNode, useCallback, useId, useMemo, useState, useTran
 import { useTranslation } from 'react-i18next'
 import { useEffectOnce, useUpdateEffect } from 'react-use'
 import IconMdiClose from '~icons/mdi/close'
-import MdiIconInfo from '~icons/mdi/information'
+import MdiIconInfo from '~icons/mdi/information-outline'
+import { MaterialSurface } from '../components/global/MaterialSurface'
 import { ResponsiveDialog } from '../components/global/ResponsiveDialog'
 import { SearchQuerySeedList } from '../components/sheet/SearchQuerySeedList'
 import type { SearchQuerySeedSheet } from '../components/sheet/searchQuerySeed'
@@ -231,7 +232,7 @@ const SheetListInnerContent: FC<{
   seedSheets: readonly SearchQuerySeedSheet[]
   hub?: ReactNode
 }> = ({ search, seedSheets, hub }) => {
-  const { t } = useTranslation(['sheet'])
+  const { t, i18n } = useTranslation(['sheet', 'root'])
   const { data: sheets, isLoading } = useSheets()
   const version = useAppContextDXDataVersion()
   const [sortFilterOptions, setSortFilterOptions] = useState<SheetSortFilterForm>(getDefaultSheetSortFilterForm)
@@ -356,6 +357,10 @@ const SheetListInnerContent: FC<{
   const listSheets = isLoading ? (firstScreenSheets?.length ? firstScreenSheets : null) : filteredResults
   const summaryTotal = sheets?.length ?? filteredResults.length
   const summaryProgress = summaryTotal > 0 ? filteredResults.length / summaryTotal : 0
+  // The locale comes from the request (cookie or header), so server and client format counts identically
+  const numberFormat = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language])
+  const summaryFound = isLoading ? '…' : numberFormat.format(filteredResults.length)
+  const summaryCount = isLoading ? '…' : numberFormat.format(sheets?.length ?? 0)
 
   return (
     <SheetDetailsContextProvider queryActive={!!inputQuery}>
@@ -369,13 +374,17 @@ const SheetListInnerContent: FC<{
         />
       )}
       <div className="flex-container pb-global">
+        <h1 className="sr-only">{t('root:pages.search.title')}</h1>
+
         <ResponsiveDialog
           open={!!activeSheet}
           setOpen={(open) => {
             if (!open) handleSheetDialogChange(null)
           }}
         >
-          {() => activeSheet && <SheetDialogContent sheet={activeSheet} />}
+          {() =>
+            activeSheet && <SheetDialogContent sheet={activeSheet} onClose={() => handleSheetDialogChange(null)} />
+          }
         </ResponsiveDialog>
 
         <div className="flex w-full items-stretch gap-2">
@@ -395,6 +404,14 @@ const SheetListInnerContent: FC<{
             variant="outlined"
             value={inputQuery}
             fullWidth
+            // Over the background art the field needs the blurred material, not just the inset tint
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: 'var(--glass-thin-bg)',
+                backdropFilter: 'var(--glass-blur-thin)',
+                WebkitBackdropFilter: 'var(--glass-blur-thin)',
+              },
+            }}
             onChange={(e) => {
               updateQuery(e.target.value)
             }}
@@ -409,8 +426,9 @@ const SheetListInnerContent: FC<{
                     })
                   }}
                   size="small"
+                  aria-label={t('sheet:search-clear')}
                 >
-                  <IconMdiClose />
+                  <IconMdiClose aria-hidden="true" />
                 </IconButton>
               ),
             }}
@@ -429,53 +447,63 @@ const SheetListInnerContent: FC<{
 
         {!inputQuery && hub}
 
-        <div className="text-sm rounded-full shadow-lg px-4 py-2 bg-blue-200 relative overflow-hidden select-none font-bold">
+        <div className="glass-thin relative overflow-hidden px-4 py-2 text-sm font-semibold text-fg-1">
           <div
-            className="absolute -inset-4 bg-blue-900/20 -skew-x-8 translate-x-4 transition-width"
-            style={{
-              width: `${summaryProgress * 100}%`,
-            }}
+            aria-hidden="true"
+            className="absolute inset-0 origin-left bg-accent-subtle transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none"
+            style={{ transform: `scaleX(${summaryProgress})` }}
           />
-          <div className="relative z-1 flex items-center gap-2">
-            <MdiIconInfo className="text-blue-900" />
-            <div className="text-blue-900">
+          <div className="relative z-1 flex items-center gap-2" aria-hidden="true">
+            <MdiIconInfo className="shrink-0 text-accent-strong" />
+            <div className="tabular-nums">
               {t('sheet:search-summary', {
-                found: isLoading ? '...' : filteredResults.length,
-                total: isLoading ? '...' : sheets?.length,
-                elapsed: hydrated ? (searchElapsed + filteringElapsed).toFixed(1) : '...',
+                found: summaryFound,
+                total: summaryCount,
+                elapsed: hydrated ? (searchElapsed + filteringElapsed).toFixed(1) : '…',
               })}
             </div>
           </div>
+          {/* Rendered empty first and always mounted, so each new count is announced politely */}
+          <output aria-live="polite" className="sr-only">
+            {hydrated && !isLoading
+              ? t('sheet:search-summary-status', { found: summaryFound, total: summaryCount })
+              : ''}
+          </output>
         </div>
 
         {!listSheets ? (
           showSeedResults ? (
             <SearchQuerySeedList sheets={seedSheets} />
           ) : (
-            <div className="flex flex-col w-full">
+            <MaterialSurface className="flex flex-col w-full p-1" aria-hidden="true">
               {skeletonWidths.map((width, i) => (
                 <div
-                  className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] px-5 py-2"
+                  className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] px-3 py-2"
                   // oxlint-disable-next-line react/no-array-index-key -- index is stable
                   key={i}
                   style={{
                     animationDelay: `${i * 40}ms`,
                   }}
                 >
-                  <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] rounded bg-slate-6/50" />
+                  <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] rounded-[var(--radius-xs)] bg-black/8" />
                   <div className="flex flex-col gap-1">
-                    <div className="bg-slate-5/50 h-5 mb-1" style={{ width: `${width}rem` }}>
+                    <div className="bg-black/8 h-5 mb-1 rounded-[var(--radius-xs)]" style={{ width: `${width}rem` }}>
                       &nbsp;
                     </div>
-                    <div className="w-24 bg-slate-3/50 h-3">&nbsp;</div>
+                    <div className="w-24 bg-black/5 h-3 rounded-[var(--radius-xs)]">&nbsp;</div>
                   </div>
 
                   <div className="flex-1" />
-                  <div className="w-10 bg-slate-5/50 h-6 mr-2">&nbsp;</div>
+                  <div className="w-10 bg-black/8 h-6 mr-2 rounded-[var(--radius-xs)]">&nbsp;</div>
                 </div>
               ))}
-            </div>
+            </MaterialSurface>
           )
+        ) : listSheets.length === 0 ? (
+          <MaterialSurface className="flex w-full flex-col items-center gap-1 px-4 py-8 text-center">
+            <p className="m-0 text-base font-semibold text-fg-1">{t('sheet:search-empty.title')}</p>
+            <p className="m-0 max-w-[50ch] text-sm text-fg-2 text-pretty">{t('sheet:search-empty.description')}</p>
+          </MaterialSurface>
         ) : (
           <SheetListContainer
             sheets={listSheets}
