@@ -104,7 +104,8 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
                   <button
                     type="button"
                     onClick={() => handleSectionChange(key)}
-                    aria-current={selected ? 'page' : undefined}
+                    // A section of this dialog, not a page, so the current item is `true`
+                    aria-current={selected ? 'true' : undefined}
                     className={clsx(
                       NAV_ITEM_CLASS,
                       selected

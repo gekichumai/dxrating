@@ -332,7 +332,11 @@ export const LoginForm = ({
           <Turnstile
             ref={turnstileRef}
             siteKey={TURNSTILE_SITE_KEY}
-            onSuccess={setTurnstileToken}
+            onSuccess={(token) => {
+              setTurnstileToken(token)
+              // The "wait for the security check" message is stale once the check passes
+              setError((current) => (current === t('auth:form.captcha-pending') ? null : current))
+            }}
             onExpire={() => setTurnstileToken(null)}
             // The widget's iframe takes a theme option rather than CSS: follow the page theme, OS preference until known
             options={{ size: 'flexible', theme: turnstileTheme, appearance: 'interaction-only' }}
