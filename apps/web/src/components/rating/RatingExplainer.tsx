@@ -4,6 +4,7 @@ import type { FC } from 'react'
 import type { PlainMessage } from '@/i18n/message'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { InternalLink } from '@/components/global/InternalLink'
 
 const EXAMPLE_CONSTANT = 14.7
 
@@ -116,9 +117,9 @@ export const RatingExplainer: FC = () => {
           { locale },
         )}
       </p>
-      <a href="/constants" className="link self-start text-base">
+      <InternalLink href="/constants" className="link self-start text-base">
         {m.ratingExplainer_constants_link({}, { locale })}
-      </a>
+      </InternalLink>
 
       <h3 className="text-lg font-bold m-0">{m.ratingExplainer_faq_title({}, { locale })}</h3>
       <dl className="m-0 flex flex-col gap-3">

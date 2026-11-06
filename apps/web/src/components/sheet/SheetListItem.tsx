@@ -31,6 +31,7 @@ import { SHEET_TABLE_ROW_COLUMNS, SheetRowLayoutContext, useSheetRowLayout } fro
 import { getSheetTypeAltText, SHEET_TYPE_IMAGES, SHEET_TYPE_UTAGE_2P_END_ADORNMENT_IMAGE } from './sheetTypeAssets'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { LinkBehavior } from '@/components/global/InternalLink'
 
 export interface SheetListItemAnalyticsProps {
   source: SheetViewSource
@@ -88,7 +89,7 @@ export const SheetListItem: FC<{
         )}
 
         <ListItemButton
-          component="a"
+          component={LinkBehavior}
           href={buildSheetPath(sheet)}
           onClick={(e) => {
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return

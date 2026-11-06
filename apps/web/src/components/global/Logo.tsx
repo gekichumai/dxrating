@@ -1,7 +1,8 @@
+import { InternalLink } from '@/components/global/InternalLink'
 export const Logo = () => {
   return (
-    <a href="/" className="text-lg font-semibold text-fg-1 leading-none no-underline">
+    <InternalLink href="/" className="text-lg font-semibold text-fg-1 leading-none no-underline">
       DXRating.net
-    </a>
+    </InternalLink>
   )
 }

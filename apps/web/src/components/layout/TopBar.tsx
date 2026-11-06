@@ -19,6 +19,7 @@ import { type HeaderTint, headerTintStyle } from './headerTints'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
+import { LinkBehavior } from '@/components/global/InternalLink'
 
 // Every header action keeps a hue of its own: a coloured glyph on a soft wash of it (styles/header-tints.css). The
 // community links are their solid brand discs with a white logo, as before the glass pill
@@ -121,7 +122,7 @@ const CommunityMenu = () => {
         {COMMUNITY_LINKS.map(({ key, label, shortLabel, href, Icon, tint }) => (
           <MenuItem
             key={key}
-            component="a"
+            component={LinkBehavior}
             href={href}
             target="_blank"
             rel="noopener"
@@ -136,7 +137,7 @@ const CommunityMenu = () => {
         ))}
         <Divider />
         <MenuItem
-          component="a"
+          component={LinkBehavior}
           href={MCP_GUIDE_URL}
           target="_blank"
           rel="noopener"
@@ -149,7 +150,7 @@ const CommunityMenu = () => {
           <ListItemText>{m.root_externalLinks_mcpShort({}, { locale })}</ListItemText>
         </MenuItem>
         <MenuItem
-          component="a"
+          component={LinkBehavior}
           href={DEVELOPERS_URL}
           title={m.root_externalLinks_developers({}, { locale })}
           onClick={() => setAnchorEl(null)}
@@ -181,7 +182,7 @@ export const TopBar = () => {
       <div className="glass-thin !rounded-full flex items-center shrink-0 p-[3px] gap-0.5 [&_.MuiIconButton-root]:size-9 [&_.MuiIconButton-root]:p-0 [&_.MuiIconButton-root]:text-xl">
         <div className="hidden sm:flex items-center gap-0.5">
           <ButtonBase
-            component="a"
+            component={LinkBehavior}
             href={MCP_GUIDE_URL}
             target="_blank"
             rel="noopener"
@@ -194,7 +195,7 @@ export const TopBar = () => {
             MCP
           </ButtonBase>
           <ButtonBase
-            component="a"
+            component={LinkBehavior}
             href={DEVELOPERS_URL}
             aria-label={m.root_externalLinks_developers({}, { locale })}
             title={m.root_externalLinks_developers({}, { locale })}
@@ -208,7 +209,7 @@ export const TopBar = () => {
           {COMMUNITY_LINKS.map(({ key, label, href, Icon, tint }) => (
             <ButtonBase
               key={key}
-              component="a"
+              component={LinkBehavior}
               href={href}
               target="_blank"
               rel="noopener"

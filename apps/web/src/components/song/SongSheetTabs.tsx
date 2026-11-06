@@ -8,6 +8,7 @@ import { DIFFICULTY_ORDER } from '../../models/constants'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
+import { LinkBehavior } from '@/components/global/InternalLink'
 
 export interface SongSheetTabsProps {
   sheets: Sheet[]
@@ -102,7 +103,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
                 <Tab
                   key={type}
                   value={type}
-                  component="a"
+                  component={LinkBehavior}
                   href={hrefFor(type)}
                   onClick={keepModifiedClicks}
                   onKeyDown={activateOnSpace}
@@ -164,7 +165,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
               <Tab
                 key={difficulty}
                 value={difficulty}
-                component="a"
+                component={LinkBehavior}
                 href={hrefFor(activeType, difficulty)}
                 onClick={keepModifiedClicks}
                 onKeyDown={activateOnSpace}

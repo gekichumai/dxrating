@@ -7,7 +7,11 @@ import { initI18n } from '@/setup/init-i18n'
 const mocks = vi.hoisted(() => ({ complete: vi.fn(), navigate: vi.fn() }))
 
 vi.mock('@/lib/orpc', () => ({ apiClient: { lxns: { complete: mocks.complete } } }))
-vi.mock('@tanstack/react-router', () => ({ useNavigate: () => mocks.navigate }))
+vi.mock('@tanstack/react-router', () => ({
+  // InternalLink: no router in these tests, so links render as plain anchors
+  useRouter: () => undefined,
+  useNavigate: () => mocks.navigate,
+}))
 
 import { LxnsOauthCallback } from '../LxnsOauthCallback'
 

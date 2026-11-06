@@ -13,6 +13,8 @@ import { computeSongHubRaises } from '../songHubRaise'
 import { SongChartsTable } from '../SongChartsTable'
 
 vi.mock('@tanstack/react-router', () => ({
+  // InternalLink: no router in these tests, so links render as plain anchors
+  useRouter: () => undefined,
   Link: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <a href="/" className={className}>
       {children}
