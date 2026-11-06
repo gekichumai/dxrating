@@ -19,6 +19,7 @@ import { VersionRegionSwitcher } from '@/components/global/preferences/VersionRe
 import { AppTabs } from '@/components/layout/AppTabs'
 import { ThemedBody } from '@/components/layout/ThemedBody'
 import { useResolvedPathname } from '@/components/layout/useResolvedPathname'
+import { NavigationProgress } from '@/components/layout/NavigationProgress'
 import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
 import { RegionVersionUpdatePrompt } from '@/components/global/preferences/RegionVersionUpdatePrompt'
@@ -41,6 +42,7 @@ import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } f
 import '@/index.css'
 import 'virtual:uno.css'
 import '@/components/layout/app-chrome.css'
+import '@/components/layout/navigation-feedback.css'
 import '@/pages/rating-table.css'
 import '@/pages/legal.css'
 import type { PlainMessage } from '@/i18n/message'
@@ -251,6 +253,7 @@ function AppLayout() {
         {m.root_skipToContent({}, { locale })}
       </a>
       <RouteChangeAnnouncer />
+      <NavigationProgress />
       <VersionBackground />
 
       <div className="h-full w-full relative">
