@@ -14,6 +14,7 @@ import { chipPresenceTransitions } from '../sheetMotion'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
 import { Markdown } from '../../global/Markdown'
 import { SheetListItemContent } from '../SheetListItem'
+import { withAttachedTag } from '../../../models/useCombinedTags'
 import { useSheetTags } from './useSheetTags'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
@@ -57,7 +58,17 @@ const SheetTagsAddDialog: FC<{
       toast.success(m.sheet_tags_add_toastSuccess({}, { locale }), {
         id: `tag-add-success:${tagId}`,
       })
-      mutateExistingTags()
+      void mutateExistingTags(
+        (current) =>
+          withAttachedTag(current, {
+            song_id: sheet.songId,
+            sheet_id: sheet.id,
+            sheet_type: sheet.type,
+            sheet_difficulty: sheet.difficulty,
+            tag_id: tagId,
+          }),
+        { revalidate: false },
+      )
     } catch (error) {
       console.error('Failed to add tag', error)
 

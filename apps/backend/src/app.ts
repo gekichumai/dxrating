@@ -87,6 +87,30 @@ const ARCADE_VENUES_RETAINED_304_HEADERS = [
   'access-control-expose-headers',
 ]
 const PUBLIC_STATIC_CATALOG_PATHS = new Set([ARCADE_VENUES_PATH, DXDATA_PATH])
+// The tag and alias lists are public data that the edge shares between every caller. The edge ignores
+// `Vary: Origin`, so a cached copy must not carry one caller's reflected origin: reads answer `*` without
+// credentials, like the catalog. Writes on the same paths (POST /aliases) keep the credentialed API CORS.
+const PUBLIC_LIST_PATHS = new Set(['/api/v1/tags', '/api/v1/aliases'])
+// Browsers always revalidate, which the edge answers with a 304, so a client that refetches right after its own
+// write is never held on a copy in its own cache. The edge keeps a copy for a minute and then revalidates it in the
+// background, so a new tag or alias reaches everyone within a few minutes; mutations also clear the server cache.
+const PUBLIC_LIST_BROWSER_CACHE_CONTROL = 'public, no-cache'
+const PUBLIC_LIST_CDN_CACHE_CONTROL = 'public, max-age=60, stale-while-revalidate=300, stale-if-error=86400'
+const PUBLIC_LIST_RETAINED_304_HEADERS = [
+  ...RETAINED_304_HEADERS,
+  'cdn-cache-control',
+  'cloudflare-cdn-cache-control',
+  'cache-tag',
+  'access-control-allow-origin',
+  'access-control-expose-headers',
+]
+const isPublicListRead = (c: Context) => {
+  if (!PUBLIC_LIST_PATHS.has(c.req.path)) return false
+  if (c.req.method === 'GET' || c.req.method === 'HEAD') return true
+  if (c.req.method !== 'OPTIONS') return false
+  const requested = c.req.header('Access-Control-Request-Method')?.toUpperCase()
+  return requested === undefined || requested === 'GET' || requested === 'HEAD'
+}
 
 const getFirstHeaderValue = (value: string | undefined) => value?.split(',')[0]?.trim() || undefined
 
@@ -229,6 +253,14 @@ const apiCors = cors({
 })
 
 const publicStaticCatalogCors = cors(DXDATA_CORS_OPTIONS)
+const publicListCors = cors({
+  origin: '*',
+  // The web sends Sentry trace headers to the API (router.tsx tracePropagationTargets)
+  allowHeaders: ['Content-Type', 'If-None-Match', 'sentry-trace', 'baggage', API_CLIENT_HEADER],
+  allowMethods: ['GET', 'HEAD', 'OPTIONS'],
+  exposeHeaders: ['Content-Length', 'ETag', 'X-DXRating-Request-ID'],
+  maxAge: 86400,
+})
 const mcpCors = cors(MCP_CORS_OPTIONS)
 
 // While the server drains on shutdown, readiness (/health) fails and new requests are refused; in-flight ones finish.
@@ -240,9 +272,11 @@ app.use('*', refuseWhileDraining)
 app.use('*', (c, next) =>
   PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)
     ? publicStaticCatalogCors(c, next)
-    : c.req.path === MCP_PATH || c.req.path === MCP_SERVER_CARD_PATH
-      ? mcpCors(c, next)
-      : apiCors(c, next),
+    : isPublicListRead(c)
+      ? publicListCors(c, next)
+      : c.req.path === MCP_PATH || c.req.path === MCP_SERVER_CARD_PATH
+        ? mcpCors(c, next)
+        : apiCors(c, next),
 )
 
 // Request logging
@@ -735,10 +769,19 @@ app.get(ARCADE_VENUES_PATH, arcadeVenuesEtag, arcadeVenuesCacheHeaders, (c) =>
 )
 
 // The tag and alias lists are the same for every viewer, and bots poll them; an ETag lets a poller revalidate with
-// If-None-Match and get a 304 instead of the whole list. The API stability policy asks clients to do so.
-const publicListEtag = etag()
-for (const path of ['/api/v1/tags', '/api/v1/aliases']) {
-  app.on(['GET', 'HEAD'], path, publicListEtag)
+// If-None-Match and get a 304 instead of the whole list. The API stability policy asks clients to do so. The edge
+// keeps them as well (see PUBLIC_LIST_CDN_CACHE_CONTROL), so the 304 keeps the headers it needs to renew its copy.
+const publicListEtag = etag({ retainedHeaders: PUBLIC_LIST_RETAINED_304_HEADERS })
+const publicListCacheHeaders = createMiddleware(async (c, next) => {
+  await next()
+  if (c.res.status !== 200) return
+  c.header('Cache-Control', PUBLIC_LIST_BROWSER_CACHE_CONTROL)
+  c.header('CDN-Cache-Control', PUBLIC_LIST_CDN_CACHE_CONTROL)
+  c.header('Cloudflare-CDN-Cache-Control', PUBLIC_LIST_CDN_CACHE_CONTROL)
+  c.header('Cache-Tag', c.req.path === '/api/v1/tags' ? 'tags' : 'aliases')
+})
+for (const path of PUBLIC_LIST_PATHS) {
+  app.on(['GET', 'HEAD'], path, publicListEtag, publicListCacheHeaders)
 }
 
 // Comment responses depend on the signed-in viewer and must never enter a shared cache.
