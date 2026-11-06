@@ -576,7 +576,7 @@ const openAPIGenerator = new OpenAPIGenerator({
 
 app.get('/robots.txt', (c) => c.text('User-agent: *\\nDisallow: /'))
 
-const dxdataStore = createPostgresDxdataEffects((text, values) =>
+export const dxdataStore = createPostgresDxdataEffects((text, values) =>
   Effect.flatMap(Database, (database) => database.raw('Read published catalog', text, values)),
 )
 const dxdataHandler = createDxdataEffect(dxdataStore, (error, c: Context<EvlogVariables>) => {

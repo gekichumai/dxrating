@@ -2,12 +2,17 @@ import { initSentry } from './lib/functions/sentry'
 initSentry()
 
 import './logger'
+import * as Sentry from '@sentry/node'
 import { Effect } from 'effect'
 import { runMain } from '@effect/platform-node/NodeRuntime'
-import { app } from './app'
+import { app, dxdataStore } from './app'
 import { config } from './config'
 import { serve } from './lifecycle'
 import { appRuntime, shutdownApp } from './runtime'
+import { API_CLIENT_HEADER } from './services/api-usage'
+import { DXDATA_PATH } from './services/dxdata'
+import { EdgeCacheError, requestEdgeCache, watchEdgeCache } from './services/edge-cache'
+import { HttpClientLive } from './services/http-client'
 
 runMain(
   Effect.scoped(
@@ -18,6 +23,36 @@ runMain(
       const server = yield* serve({ fetch: app.fetch, port: config.port })
       const address = server.address()
       yield* Effect.logInfo(`Server is running on port ${typeof address === 'object' ? address?.port : config.port}`)
+      const edgeCache = config.edgeCache
+      if (edgeCache) {
+        const context = yield* appRuntime.contextEffect
+        yield* Effect.forkScoped(
+          watchEdgeCache({
+            readPublishedSha256: Effect.map(dxdataStore.getPublishedMetadata(), (metadata) => metadata?.bodySha256),
+            // The same request the edge makes, so the catalog's Brotli body is ready before the edge asks for it
+            warmCatalog: Effect.tryPromise({
+              try: async () => {
+                const response = await app.request(DXDATA_PATH, {
+                  headers: { 'Accept-Encoding': 'gzip, br', [API_CLIENT_HEADER]: 'dxrating-edge-cache' },
+                })
+                await response.arrayBuffer()
+                if (response.status !== 200) throw new Error(`Catalog warm-up answered ${response.status}`)
+              },
+              catch: (cause) => new EdgeCacheError({ operation: 'Warm the catalog', cause }),
+            }),
+            request: (action, tags) =>
+              requestEdgeCache(edgeCache, action, tags).pipe(
+                // The entry point owns this client; it is not part of the request runtime
+                // @effect-diagnostics-next-line strictEffectProvide:off
+                Effect.provide(HttpClientLive),
+              ),
+            reportError: (error) =>
+              Effect.sync(() => {
+                Sentry.captureException(error, { tags: { component: 'edge-cache' } })
+              }),
+          }).pipe(Effect.provideContext(context)),
+        )
+      }
       return yield* Effect.never
     }),
   ),
