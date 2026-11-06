@@ -39,11 +39,11 @@ export const CloudMigrationPrompt: FC = () => {
   }
 
   return (
-    // Narrow screens: the question takes the first row and the button the second, the close button stays top-end;
-    // from `sm` everything sits on one row
+    // The question takes the first row and the button the second, the close button stays top-end: the records panel
+    // is a narrow sidebar on desktop too, so one row would squeeze the question
     <section
       ref={sectionRef}
-      className="mt-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 glass-inset px-3 py-2 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto]"
+      className="mt-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 glass-inset px-3 py-2"
       aria-label={t('rating-calculator:cloud-save.migration.title')}
     >
       <IconMdiCloudUploadOutline className="size-5 shrink-0 text-fg-2" aria-hidden />
@@ -53,7 +53,7 @@ export const CloudMigrationPrompt: FC = () => {
           formatted: new Intl.NumberFormat(i18n.language).format(offer.localCount),
         })}
       </p>
-      <div className="col-span-3 col-start-1 row-start-2 flex justify-end sm:col-span-1 sm:col-start-3 sm:row-start-1">
+      <div className="col-span-3 col-start-1 row-start-2 flex justify-end">
         <Button size="small" variant="contained" onClick={offer.open}>
           {t('rating-calculator:cloud-save.migration.back-up')}
         </Button>
@@ -62,7 +62,7 @@ export const CloudMigrationPrompt: FC = () => {
         size="small"
         onClick={dismiss}
         aria-label={t('rating-calculator:cloud-save.migration.not-now')}
-        className="col-start-3 row-start-1 sm:col-start-4"
+        className="col-start-3 row-start-1"
       >
         <IconMdiClose className="size-4" aria-hidden />
       </IconButton>
