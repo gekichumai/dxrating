@@ -439,7 +439,7 @@ function RatingCalculatorTableBody({ ref, ...props }: TableBodyProps & { ref?: R
 }
 
 const RatingCalculatorTableRow: FC<ItemProps<Row<Entry>>> = ({ item, ...props }) => (
-  <TableRow {...props} className="rating-table-row tabular-nums" data-bucket={item.original.includedIn ?? 'none'} />
+  <TableRow {...props} className="rating-table-row num" data-bucket={item.original.includedIn ?? 'none'} />
 )
 
 function RatingCalculatorScroller({ ref, ...props }: ScrollerProps & { ref?: React.Ref<HTMLDivElement> }) {

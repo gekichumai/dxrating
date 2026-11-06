@@ -27,7 +27,7 @@ const RatingCalculatorStatisticsFactItem: FC<{
 }> = ({ size, label, value, className }) => (
   <div className={clsx('flex flex-col items-start gap-1 min-w-0', className)}>
     <div
-      className={clsx('num font-semibold leading-[1.1] tracking-[-0.01em]', {
+      className={clsx('display-num font-semibold leading-[1.1] tracking-[-0.01em]', {
         'text-4xl': size === 'lg',
         'text-3xl': size === 'md',
       })}

@@ -172,7 +172,7 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
                     </span>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <span className="font-semibold tabular-nums">{internalLevelValue?.toFixed(1)}</span>
+                      <span className="font-semibold num">{internalLevelValue?.toFixed(1)}</span>
                       {delta !== undefined && <DeltaArrow delta={delta} />}
                     </div>
                   )}
@@ -280,7 +280,7 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
                   {comment.display_name ?? t('sheet:comments.anonymous')}
                 </span>
                 <CommentActions comment={comment} />
-                <time className="text-xs ml-auto tabular-nums" dateTime={comment.created_at}>
+                <time className="text-xs ml-auto num" dateTime={comment.created_at}>
                   {dateFormat.format(new Date(comment.created_at))}
                 </time>
               </div>
@@ -336,12 +336,12 @@ export const SongSheetSummary: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         {sheet.isTypeUtage ? (
           <>
             <UtageKindBadge sheet={sheet} />
-            <span className="text-2xl font-semibold leading-tight tabular-nums text-fg-1">{sheet.level}</span>
+            <span className="text-2xl font-semibold leading-tight display-num text-fg-1">{sheet.level}</span>
           </>
         ) : (
           <>
             <SheetDifficulty difficulty={sheet.difficulty} serverIds={sheet.serverIds} isLocked={sheet.isLocked} />
-            <span className="text-2xl font-semibold leading-tight tabular-nums text-fg-1">
+            <span className="text-2xl font-semibold leading-tight display-num text-fg-1">
               {sheet.internalLevelValue.toFixed(1)}
             </span>
           </>
@@ -430,7 +430,7 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
         )}
 
         <Section title={t('sheet:details.title')}>
-          <Table size="small" sx={tableSx} className="tabular-nums">
+          <Table size="small" sx={tableSx} className="num">
             <TableBody>
               <DetailRow label={t('sheet:details.category')}>
                 <span lang="ja">{sheet.category}</span>

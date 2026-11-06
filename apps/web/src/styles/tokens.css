@@ -16,6 +16,17 @@
  *   --radius-xl 16px  overlays: dialogs, drawers, menus and popovers with a 4px list inset around md items
  *   9999px            only for avatars and genuinely round controls
  * Panels whose content sits at a 12px+ padding are separate surfaces and keep their own token.
+ *
+ * Numbers (uno.config.ts rules; the faces are in index.css):
+ *   --font-sans       the locale's text stack, Torus first. Set on :root and on every [lang] rule below
+ *   --font-numeric    'DXR Numeric' (Nunito digits, tabular by default) in front of --font-sans
+ *   `num`             numbers below 20px (text-xs … text-lg): table cells, achievements, ratings in rows,
+ *                     constants, note counts, DX scores, deltas, counts. Sets --font-numeric and tabular-nums, so
+ *                     columns line up and live values do not jitter. Only digits and % + , - . / : ± × – — − switch
+ *                     font; letters and CJK stay on --font-sans
+ *   `display-num`     headline numbers at 20px and up (text-xl …): the player rating on home and on the rating
+ *                     page, the level and constant in a chart header, big stat tiles. Keeps the brand font. Torus
+ *                     has no tnum, so never put `tabular-nums` on it: it does nothing
  */
 
 :root {
@@ -207,21 +218,30 @@
    Japanese titles need the Japanese glyph forms even when the page locale is Chinese; Korean breaks between words */
 html[lang|='ja'],
 [lang|='ja'] {
-  font-family:
+  --font-sans:
     Torus, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Noto Sans JP', 'Noto Sans CJK JP', Meiryo,
     system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 html[lang='zh-Hans'],
 [lang='zh-Hans'] {
-  font-family:
+  --font-sans:
     Torus, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans CJK SC', system-ui,
     sans-serif;
+  font-family: var(--font-sans);
 }
 
 html[lang='zh-Hant'],
 [lang='zh-Hant'] {
-  font-family: Torus, 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', system-ui, sans-serif;
+  --font-sans: Torus, 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', system-ui, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Declared wherever --font-sans changes, so `num` falls back to that element's locale stack, not the root's */
+:root,
+[lang] {
+  --font-numeric: 'DXR Numeric', var(--font-sans);
 }
 
 [lang|='ko'] {

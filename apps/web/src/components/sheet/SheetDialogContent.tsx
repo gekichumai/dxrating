@@ -93,7 +93,7 @@ const CommentCreatedAt: FC<{ createdAt: string }> = ({ createdAt }) => {
   )
 
   return (
-    <time className="text-xs ml-auto tabular-nums" dateTime={createdAt}>
+    <time className="text-xs ml-auto num" dateTime={createdAt}>
       {formattedDate}
     </time>
   )
@@ -361,52 +361,42 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                             <TableCell component="th" scope="row" className="!pl-8">
                               {t('sheet:details.notes-statistics.tap')}
                             </TableCell>
-                            <TableCell className="tabular-nums">
-                              {numberFormat.format(sheet.noteCounts.tap ?? 0)}
-                            </TableCell>
+                            <TableCell className="num">{numberFormat.format(sheet.noteCounts.tap ?? 0)}</TableCell>
                           </TableRow>
 
                           <TableRow>
                             <TableCell component="th" scope="row" className="!pl-8">
                               {t('sheet:details.notes-statistics.hold')}
                             </TableCell>
-                            <TableCell className="tabular-nums">
-                              {numberFormat.format(sheet.noteCounts.hold ?? 0)}
-                            </TableCell>
+                            <TableCell className="num">{numberFormat.format(sheet.noteCounts.hold ?? 0)}</TableCell>
                           </TableRow>
 
                           <TableRow>
                             <TableCell component="th" scope="row" className="!pl-8">
                               {t('sheet:details.notes-statistics.slide')}
                             </TableCell>
-                            <TableCell className="tabular-nums">
-                              {numberFormat.format(sheet.noteCounts.slide ?? 0)}
-                            </TableCell>
+                            <TableCell className="num">{numberFormat.format(sheet.noteCounts.slide ?? 0)}</TableCell>
                           </TableRow>
 
                           <TableRow>
                             <TableCell component="th" scope="row" className="!pl-8">
                               {t('sheet:details.notes-statistics.touch')}
                             </TableCell>
-                            <TableCell className="tabular-nums">
-                              {numberFormat.format(sheet.noteCounts.touch ?? 0)}
-                            </TableCell>
+                            <TableCell className="num">{numberFormat.format(sheet.noteCounts.touch ?? 0)}</TableCell>
                           </TableRow>
 
                           <TableRow>
                             <TableCell component="th" scope="row" className="!pl-8">
                               {t('sheet:details.notes-statistics.break')}
                             </TableCell>
-                            <TableCell className="tabular-nums">
-                              {numberFormat.format(sheet.noteCounts.break ?? 0)}
-                            </TableCell>
+                            <TableCell className="num">{numberFormat.format(sheet.noteCounts.break ?? 0)}</TableCell>
                           </TableRow>
 
                           <TableRow>
                             <TableCell component="th" scope="row" className="!pl-8">
                               {t('sheet:details.notes-statistics.total')}
                             </TableCell>
-                            <TableCell className="tabular-nums font-semibold">
+                            <TableCell className="num font-semibold">
                               {sheet.noteCounts.total === undefined || sheet.noteCounts.total === null
                                 ? '—'
                                 : numberFormat.format(sheet.noteCounts.total)}
@@ -588,7 +578,7 @@ const SheetInternalLevelHistory: FC<{
                     <div className="text-fg-2">{available ? '—' : '／'}</div>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <span className="font-semibold tabular-nums">{internalLevelValue?.toFixed(1)}</span>
+                      <span className="font-semibold num">{internalLevelValue?.toFixed(1)}</span>
                       {delta !== undefined && <DeltaArrow delta={delta} />}
                     </div>
                   )}

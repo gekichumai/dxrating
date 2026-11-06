@@ -2,6 +2,7 @@ import type { JSX } from 'react'
 import { buildAlternateLinks } from '@/utils/alternateLinks'
 import { AGENT_DISCOVERY_RELATIONS } from '@/setup/agent-discovery'
 import appCss from '@/index.css?url'
+import numericFont from '@/assets/fonts/nunito-numeric.woff2?url'
 
 type RootHeadLocation = {
   pathname: string
@@ -27,6 +28,8 @@ export const buildRootHeadLinks = ({ pathname, search }: RootHeadLocation): Head
     href: 'https://shama.dxrating.net/fonts/Torus-SemiBold.woff2',
     crossOrigin: 'anonymous',
   },
+  // The `num` digits (index.css). Same-origin, so no preconnect; preloading it keeps numbers from swapping after paint
+  { rel: 'preload', as: 'font', type: 'font/woff2', href: numericFont, crossOrigin: 'anonymous' },
   {
     rel: 'preload',
     as: 'image',

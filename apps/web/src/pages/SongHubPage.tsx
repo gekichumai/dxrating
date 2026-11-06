@@ -66,7 +66,7 @@ export const SongHubPage: FC = () => {
             {facts.map((fact) => (
               <div key={fact.key} className="contents" data-testid={`song-hub-${fact.key}`}>
                 <dt className="text-fg-2">{fact.label}</dt>
-                <dd className="m-0 min-w-0 break-words tabular-nums text-fg-1">{fact.value}</dd>
+                <dd className="m-0 min-w-0 break-words num text-fg-1">{fact.value}</dd>
               </div>
             ))}
             {aliases.length > 0 && (

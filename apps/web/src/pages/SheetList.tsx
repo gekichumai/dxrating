@@ -457,7 +457,7 @@ const SheetListInnerContent: FC<{
           />
           <div className="relative z-1 flex items-center gap-2" aria-hidden="true">
             <MdiIconInfo className="shrink-0 text-accent-strong" />
-            <div className="tabular-nums">
+            <div className="num">
               {t('sheet:search-summary', {
                 found: summaryFound,
                 total: summaryCount,

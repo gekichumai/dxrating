@@ -156,7 +156,7 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
                       <output className="text-sm text-secondary">
                         {t(`${prefix}floating.stage.${progress.stage.replaceAll(':', '-')}`)}
                       </output>
-                      <span className="shrink-0 text-xl leading-6 font-bold tabular-nums">
+                      <span className="shrink-0 text-xl leading-6 font-bold display-num">
                         {percent}
                         <span className="text-sm text-secondary">%</span>
                       </span>

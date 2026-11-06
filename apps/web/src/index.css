@@ -5,7 +5,8 @@
 
 :root {
   /* Hiragino Maru Gothic Pro, */
-  font-family: Torus, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-sans: Torus, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   color: var(--fg-1);
   line-height: 1.5;
   font-weight: 400;
@@ -26,6 +27,23 @@
   font-weight: 100 500;
   font-style: normal;
   font-display: swap;
+}
+
+/* Digits for `num` (tokens.css, Numbers). Torus has no tnum feature and its digits are proportional, so small numbers
+   come from a self-hosted Nunito subset whose digits are tabular by default. unicode-range keeps letters, CJK and
+   spaces on the locale font. size-adjust matches Torus's digit height (0.659em vs 0.713em) and the overrides give it
+   Torus's line box (ascent 1.0em, descent 0.2em), so swapping it in changes neither row heights nor baselines. */
+@font-face {
+  font-family: 'DXR Numeric';
+  src: url('./assets/fonts/nunito-numeric.woff2') format('woff2');
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0025, U+002B-002F, U+0030-003A, U+00B1, U+00D7, U+2013-2014, U+2212;
+  size-adjust: 92.4%;
+  ascent-override: 108.2%;
+  descent-override: 21.6%;
+  line-gap-override: 0%;
 }
 
 /* Keep route-managed head stylesheets same-origin. React 19 represents newly

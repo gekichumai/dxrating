@@ -60,7 +60,7 @@ export const SongChartsTable: FC<{
         {t('song:hub.title')}
       </h2>
       <div className="relative overflow-x-auto -mx-1">
-        <table className="w-full border-collapse text-sm tabular-nums text-fg-1">
+        <table className="w-full border-collapse text-sm num text-fg-1">
           <thead>
             <tr className="text-left text-xs text-fg-2">
               <th className="px-1 py-1 font-normal whitespace-nowrap">{t('song:hub.column.chart')}</th>

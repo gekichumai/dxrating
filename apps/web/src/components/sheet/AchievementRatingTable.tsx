@@ -11,7 +11,7 @@ export const SheetAchievementRate: FC<{ value: number }> = ({ value }) => {
   const decimal = value % 1
 
   return (
-    <span className="inline-flex items-center tabular-nums">
+    <span className="inline-flex items-center num">
       <span className="font-semibold">{integer}</span>
       <span>.</span>
       <span className={clsx(decimal === 0 && 'text-fg-2')}>{decimal.toFixed(4).slice(2)}</span>
@@ -42,7 +42,7 @@ export const AchievementRatingTable: FC<{ internalLevelValue: number; currentAch
     }, [internalLevelValue, currentAchievementRate])
 
     return (
-      <table className="w-full max-w-[26rem] border-collapse tabular-nums text-sm text-fg-1">
+      <table className="w-full max-w-[26rem] border-collapse num text-sm text-fg-1">
         <thead>
           <tr className="text-xs text-fg-2">
             <th scope="col" colSpan={2} className="px-2 pb-1.5 text-start font-normal">
