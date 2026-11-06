@@ -154,8 +154,12 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
 
       <nav className="flex flex-col gap-2" aria-labelledby="home-features">
         <SectionTitle id="home-features">{t('home:features.title')}</SectionTitle>
-        {/* On phones two scrolling rows keep the search results near the top; wider screens get the full grid */}
-        <ul className="m-0 grid list-none grid-flow-col grid-rows-2 auto-cols-[minmax(10.5rem,46%)] gap-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory p-0 pb-1 sm:grid-flow-row sm:grid-rows-none sm:auto-cols-auto sm:grid-cols-3 sm:overflow-visible sm:pb-0 lg:grid-cols-4">
+        {/*
+          On phones two scrolling rows keep the search results near the top; wider screens get the full grid. A scroller
+          clips on both axes, so it gets a 4px gutter (offset by an equal negative margin, so the cards stay aligned
+          with the rest of the page) that holds the cards' border, shadow and 3px focus outline.
+        */}
+        <ul className="-m-1 grid list-none grid-flow-col grid-rows-2 auto-cols-[minmax(10.5rem,46%)] gap-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-1 p-1 pb-2 sm:m-0 sm:grid-flow-row sm:grid-rows-none sm:auto-cols-auto sm:grid-cols-3 sm:overflow-visible sm:p-0 lg:grid-cols-4">
           {HOME_FEATURES.map((feature) => {
             const Icon = FEATURE_ICONS[feature.id]
             return (
