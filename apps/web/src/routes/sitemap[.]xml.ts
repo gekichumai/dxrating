@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { getCatalogDocument } from '@/catalog/catalogSource'
-import { buildSheetPath } from '@/components/sheet/sheetLinks'
+import { buildSheetPath, songHubPath } from '@/components/sheet/sheetLinks'
 import { CONSTANT_TABLE_LEVELS, constantTablePath } from '@/components/chartDiscovery/constantTables'
 import { VERSION_PAGE_VERSIONS, versionPagePath } from '@/components/chartDiscovery/versionPages'
 import { listIndexablePlateIds, platePath } from '@/components/plates/plateData'
@@ -102,6 +102,19 @@ export function buildSitemap(songs: SitemapSong[]) {
     )
     .join('')
 
+  // One hub per song (`/songs/<id>`): every chart of the song in one table
+  const songHubEntries = songs
+    .map((song) => songHubPath(song.id))
+    .map(
+      (path) => `
+  <url>
+    <loc>${urlLoc(path)}</loc>${alternatesXml(path)}
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>`,
+    )
+    .join('')
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
@@ -133,7 +146,7 @@ export function buildSitemap(songs: SitemapSong[]) {
     <loc>${urlLoc('/random')}</loc>${alternatesXml('/random')}
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
-  </url>${toolEntries}${constantTableEntries}${plateEntries}${sheetEntries}
+  </url>${toolEntries}${constantTableEntries}${plateEntries}${songHubEntries}${sheetEntries}
 </urlset>`
 }
 

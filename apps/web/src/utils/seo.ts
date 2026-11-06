@@ -2,7 +2,7 @@ import { ServerEnum, TypeEnum, type DifficultyEnum, type NoteCounts, type Sheet,
 import type { SupportedLocale } from '@/setup/locale'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 import { createServerI18n } from '@/setup/init-i18n'
-import { buildSheetLink } from '@/components/sheet/sheetLinks'
+import { buildSheetLink, songHubPath } from '@/components/sheet/sheetLinks'
 import { getSheetPageTitle, getSheetTitleLabel, getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { buildChartOgImageAlt, buildChartOgImageUrl } from '@/routes/-chart-og-meta'
 
@@ -19,7 +19,8 @@ type SeoRouteMatch = {
 
 type JsonLdNode = Record<string, unknown>
 
-type StructuredDataSong = Pick<Song, 'artist' | 'bpm' | 'category' | 'id' | 'imageName' | 'title'>
+type StructuredDataSong = Pick<Song, 'artist' | 'bpm' | 'category' | 'id' | 'imageName' | 'title'> &
+  Partial<Pick<Song, 'searchAcronyms'>>
 
 type StructuredDataSheet = Pick<
   Sheet,
@@ -374,6 +375,95 @@ export function buildSongSheetSeo(
   }
 }
 
+const songHubUrl = (songId: string) => `https://dxrating.net${songHubPath(songId)}`
+
+type SongHubSeoSong = Pick<Song, 'artist' | 'category' | 'id' | 'imageName' | 'title'> & {
+  bpm?: number | null
+  aliases?: readonly string[]
+}
+
+/** Song hub titles carry the BPM, since "<song> bpm" is a common search; without a BPM they fall back to the song alone */
+export function buildSongHubTitle(song: { title: string; bpm?: number | null }, locale: SupportedLocale) {
+  return song.bpm
+    ? t(locale, 'song:seo.hub-title', { title: song.title, bpm: song.bpm })
+    : t(locale, 'song:seo.hub-title-no-bpm', { title: song.title })
+}
+
+export function buildSongHubSeo(song: SongHubSeoSong, locale: SupportedLocale) {
+  const title = buildSongHubTitle(song, locale)
+  const description = t(locale, 'song:seo.hub-description', {
+    title: song.title,
+    artist: song.artist,
+    bpmFact: song.bpm ? t(locale, 'song:seo.hub-bpm-fact', { bpm: song.bpm }) : '',
+  })
+  const image = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
+  const url = songHubUrl(song.id)
+  const websiteId = 'https://dxrating.net/#website'
+  const pageId = `${url}#webpage`
+  const breadcrumbId = `${url}#breadcrumb`
+  const recordingId = `${url}#song`
+  const aliases = [...new Set(song.aliases ?? [])].filter((alias) => alias && alias !== song.title)
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': pageId,
+        url,
+        name: title,
+        description,
+        image,
+        inLanguage: locale,
+        isPartOf: { '@id': websiteId },
+        breadcrumb: { '@id': breadcrumbId },
+        mainEntity: { '@id': recordingId },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': breadcrumbId,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'DXRating', item: 'https://dxrating.net/' },
+          { '@type': 'ListItem', position: 2, name: song.title, item: url },
+        ],
+      },
+      {
+        '@type': 'MusicRecording',
+        '@id': recordingId,
+        name: song.title,
+        ...(aliases.length ? { alternateName: aliases } : {}),
+        byArtist: { '@type': 'MusicGroup', name: song.artist },
+        image,
+        url,
+        genre: song.category,
+        ...(song.bpm ? { additionalProperty: [propertyValue('BPM', song.bpm)] } : {}),
+      },
+    ],
+  }
+
+  return {
+    title,
+    description,
+    url,
+    image,
+    structuredData,
+    meta: [
+      { title },
+      { name: 'description', content: description },
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:image', content: image },
+      { property: 'og:url', content: url },
+      { property: 'og:type', content: 'music.song' },
+      { property: 'og:locale', content: OG_LOCALES[locale] },
+      { name: 'twitter:card', content: 'summary' },
+      { name: 'twitter:title', content: title },
+      { name: 'twitter:description', content: description },
+      { name: 'twitter:image', content: image },
+    ] satisfies SeoMeta[],
+  }
+}
+
 const propertyValue = (name: string, value: unknown): JsonLdNode | null => {
   if (value === null || value === undefined || value === '') return null
 
@@ -455,7 +545,13 @@ export function buildSongSheetStructuredData(
         {
           '@type': 'ListItem',
           position: 2,
-          name: `${song.title} ${sheetLabel}`,
+          name: song.title,
+          item: songHubUrl(song.id),
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: sheetLabel,
           item: chartUrl,
         },
       ],
@@ -476,6 +572,7 @@ export function buildSongSheetStructuredData(
       '@type': 'MusicRecording',
       '@id': songId,
       name: song.title,
+      ...(song.searchAcronyms?.length ? { alternateName: [...new Set(song.searchAcronyms)] } : {}),
       byArtist: {
         '@type': 'MusicGroup',
         name: song.artist,

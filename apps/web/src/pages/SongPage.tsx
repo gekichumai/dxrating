@@ -1,14 +1,10 @@
 import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { IconButton } from '@mui/material'
 import { type FC, useMemo } from 'react'
-import { getRouteApi, useNavigate } from '@tanstack/react-router'
+import { Link, getRouteApi, useNavigate } from '@tanstack/react-router'
 import MdiArrowLeft from '~icons/mdi/arrow-left'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { TYPE_ORDER, getHighestDifficulty } from '../models/constants'
-import { useServerAliases } from '../models/useServerAliases'
-import { useCatalogDocument, useSongCatalog } from '@/catalog/CatalogContext'
-import { findSongById } from '@/catalog/songLookup'
-import { type FlattenedSheet, getSearchAcronymsWithServerAliases } from '../songs'
 import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
@@ -16,8 +12,8 @@ import { constantTableLevelOf, constantTablePath } from '@/components/chartDisco
 import { versionPagePath, versionSlug } from '@/components/chartDiscovery/versionPages'
 import { useTranslation } from 'react-i18next'
 import { buildSheetPath } from '../components/sheet/sheetLinks'
-import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { getVisibleSongPageSheets } from './songPageSheets'
+import { useSongSheets } from './useSongSheets'
 import { ToleranceCalculator } from '@/components/tools/ToleranceCalculator'
 
 const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
@@ -25,37 +21,8 @@ const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 export const SongPage: FC = () => {
   const { songId, type, difficulty } = routeApi.useParams()
   const navigate = useNavigate()
-  const { t } = useTranslation(['constants', 'versions'])
-  const catalogDocument = useCatalogDocument()
-  const catalog = useSongCatalog()
-  const { data: serverAliases } = useServerAliases()
-
-  const song = useMemo(() => {
-    if (!songId) return null
-    return findSongById(catalogDocument, songId) ?? null
-  }, [catalogDocument, songId])
-
-  const searchAcronyms = useMemo(() => {
-    if (!song) return []
-    return getSearchAcronymsWithServerAliases({ songId: song.id, searchAcronyms: song.searchAcronyms }, serverAliases)
-  }, [song, serverAliases])
-
-  const flattenedSheets = useMemo<FlattenedSheet[]>(() => {
-    if (!song) return []
-    return song.sheets.flatMap((sheet) => {
-      const versioned = catalog.getById(sheet.id)
-      if (!versioned) return []
-      return [
-        {
-          ...versioned,
-          difficulty: versioned.difficulty as DifficultyEnum,
-          searchAcronyms,
-          tags: [],
-          releaseDateTimestamp: sheetReleaseDateTimestamp(sheet.releaseDate),
-        },
-      ]
-    })
-  }, [song, catalog, searchAcronyms])
+  const { t } = useTranslation(['constants', 'versions', 'song'])
+  const { song, flattenedSheets } = useSongSheets(songId)
 
   const availableTypes = useMemo(() => {
     const typeSet = new Set(flattenedSheets.map((s) => s.type))
@@ -132,6 +99,10 @@ export const SongPage: FC = () => {
           })
         }
       />
+
+      <Link to="/songs/$songId" params={{ songId: song.id }} className="self-start text-sm text-slate-700">
+        {t('song:hub.all-charts-link')} →
+      </Link>
 
       {visibleSheets.map((sheet) => (
         <div key={sheet.id}>

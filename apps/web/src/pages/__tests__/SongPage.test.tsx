@@ -19,6 +19,9 @@ vi.mock('@tanstack/react-router', () => ({
     useParams: () => routeState.params,
   }),
   useNavigate: () => routeState.navigate,
+  Link: ({ children, params, to }: { children: React.ReactNode; params: { songId: string }; to: string }) => (
+    <a href={to.replace('$songId', params.songId)}>{children}</a>
+  ),
 }))
 
 vi.mock('@/models/context/useAppContext', () => ({
@@ -68,5 +71,13 @@ describe('SongPage', () => {
     const { container } = render(<SongPage />)
 
     expect(container.querySelector('a')?.getAttribute('href')).toBe('/')
+  })
+
+  it('links to the song hub instead of repeating the all-charts table', () => {
+    render(<SongPage />)
+
+    const hubLink = screen.getByRole('link', { name: /All charts of this song/ })
+    expect(hubLink.getAttribute('href')).toBe('/songs/dsng_d3kkdkrcqj')
+    expect(screen.queryByRole('table')).toBeNull()
   })
 })
