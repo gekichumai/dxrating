@@ -442,7 +442,7 @@ export const publicContractRoutes = {
           path: '/io/import/lxns/complete',
           summary: 'Finish connecting LXNS with the code and state from the OAuth callback',
           description:
-            'Requires the session of the user who started the authorization. The state is consumed on every call; a different or missing session fails with FORBIDDEN or UNAUTHORIZED (`data.reason: session_mismatch | not_signed_in`) and saves nothing.',
+            'Requires the session of the user who started the authorization. The state is consumed on every call; a different or missing session fails with FORBIDDEN or UNAUTHORIZED (`data.reason: session_mismatch | not_signed_in`) and saves nothing. An unknown, reused or expired state fails with BAD_REQUEST (`data.reason: invalid_state`).',
           tags: ['Import'],
         }),
       )
