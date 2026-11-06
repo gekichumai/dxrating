@@ -88,7 +88,8 @@ export const applyImportRecords = (
  * The content short-circuit (§5.5): whether the latest succeeded job of the same save, source and source account
  * has the same payload hash, and the save has not changed since that job completed (its revision is still the one
  * the job recorded, `counts.saveRevision`). Any later write (a manual edit, another import) makes the full merge
- * run, as the domain rules may decide differently against the changed records. Only automatic and migration jobs
+ * run, as the domain rules may decide differently against the changed records. The cleanup's tombstone purge drops
+ * `counts.saveRevision` from the save's jobs for the same reason. Only automatic and migration jobs
  * take it: a user-started import still merges, so it can revive records deleted since (§5.3 deletion rule 2).
  *
  * A server job resolves the upstream payload through the catalog, so the same payload can resolve to more charts
