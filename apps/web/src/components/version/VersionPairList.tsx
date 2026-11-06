@@ -111,16 +111,16 @@ export const VersionEraSections: FC<{
   className?: string
   children: (era: VersionEra) => ReactNode
 }> = ({ idPrefix, headingLevel: Heading = 'h2', jumpNav, className, children }) => {
-  const { t } = useTranslation(['versions'])
+  const locale = useLocale()
 
   return (
     <div className={clsx('flex flex-col gap-5', className)}>
       {jumpNav && (
-        <nav aria-label={t('versions:era.label')} className={`${segmentedTrack} self-start`}>
+        <nav aria-label={m.versions_era_label({}, { locale })} className={`${segmentedTrack} self-start`}>
           {VERSION_ERAS.map((era) => (
             <a key={era} href={`#${idPrefix}-${era}`} className={clsx(segmentedItem(false), 'gap-1.5')}>
-              <span>{t(`versions:era.${era}`)}</span>
-              <span className="text-xs num text-fg-2">{t(`versions:era.${era}-range`)}</span>
+              <span>{ERA_LABELS[era]({}, { locale })}</span>
+              <span className="text-xs num text-fg-2">{ERA_RANGES[era]({}, { locale })}</span>
             </a>
           ))}
         </nav>
@@ -133,8 +133,8 @@ export const VersionEraSections: FC<{
           className="flex flex-col gap-2 scroll-mt-2"
         >
           <Heading id={`${idPrefix}-${era}-heading`} className="m-0 flex items-baseline gap-2 section-title">
-            <span>{t(`versions:era.${era}`)}</span>
-            <span className="text-sm font-normal text-fg-2 num">{t(`versions:era.${era}-range`)}</span>
+            <span>{ERA_LABELS[era]({}, { locale })}</span>
+            <span className="text-sm font-normal text-fg-2 num">{ERA_RANGES[era]({}, { locale })}</span>
           </Heading>
           {children(era)}
         </section>

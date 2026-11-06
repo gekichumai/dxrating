@@ -69,7 +69,10 @@ function declaresName(scope: ts.Node, name: string, ignoreImports = false): bool
       found = true
       return
     }
-    if ((ts.isFunctionDeclaration(node) || (!ignoreImports && ts.isImportSpecifier(node))) && node.name?.text === name) {
+    if (
+      (ts.isFunctionDeclaration(node) || (!ignoreImports && ts.isImportSpecifier(node))) &&
+      node.name?.text === name
+    ) {
       found = true
       return
     }
