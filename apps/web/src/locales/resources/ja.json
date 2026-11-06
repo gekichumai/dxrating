@@ -214,7 +214,11 @@
     "comments.safety.block-success": "投稿者をブロックし、コメントを非表示にしました。",
     "comments.safety.error": "保存できませんでした。接続を確認して、もう一度お試しください。",
     "dx-score.stars": "でらっくスコア ☆{{stars}}",
-    "dx-score.to-next-star": "✦{{stars}}まであと{{remaining}}"
+    "dx-score.to-next-star": "✦{{stars}}まであと{{remaining}}",
+    "layout.label": "レイアウト",
+    "layout.list": "リスト",
+    "layout.grid": "グリッド",
+    "favorite.marked": "お気に入り"
   },
   "song": {
     "not-found.title": "楽曲が見つかりません",
@@ -1132,7 +1136,8 @@
     "features.trending.title": "トレンド",
     "features.trending.description": "いま注目の譜面",
     "features.versions.title": "バージョン",
-    "features.versions.description": "バージョン別の収録曲"
+    "features.versions.description": "バージョン別の収録曲",
+    "back-to-home": "ホームに戻る"
   },
   "completion": {
     "title": "あなたの達成状況",

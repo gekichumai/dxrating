@@ -11,6 +11,7 @@ import { getSongCatalog } from '@gekichumai/maimai-domain'
 import { IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
+import clsx from 'clsx'
 import { type FC, type ReactNode, useCallback, useId, useMemo, useState, useTransition } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useEffectOnce, useUpdateEffect } from 'react-use'
@@ -21,7 +22,10 @@ import { ResponsiveDialog } from '../components/global/ResponsiveDialog'
 import { SearchQuerySeedList } from '../components/sheet/SearchQuerySeedList'
 import type { SearchQuerySeedSheet } from '../components/sheet/searchQuerySeed'
 import { SheetDialogContent } from '../components/sheet/SheetDialogContent'
+import { SheetGridContainer, SheetGridSkeleton } from '../components/sheet/SheetGridContainer'
 import { SHEET_LIST_FIRST_SCREEN_ROWS, SheetListContainer } from '../components/sheet/SheetListContainer'
+import { SheetListLayoutToggle } from '../components/sheet/SheetListLayoutToggle'
+import { type SheetListLayout, useSheetListLayout } from '../components/sheet/sheetListLayout'
 import { SheetRowLayoutContext } from '../components/sheet/sheetRowLayout'
 import {
   getDefaultSheetSortFilterForm,
@@ -48,6 +52,43 @@ const chainEvery =
     fns.every((fn) => fn(arg))
 
 const skeletonWidths = Array.from({ length: 20 }).map((_, index) => 5.5 + (index % 7) * 0.8)
+
+/**
+ * Where each layout shows. Once the layout is known only that one renders. Before that (the server render and
+ * hydration, see useSheetListLayout) both render and CSS shows the default for the width, so the cached HTML suits
+ * every screen and nothing moves when hydration settles it. The `lg` breakpoint matches SHEET_GRID_DEFAULT_MEDIA_QUERY.
+ */
+const layoutSlots = (layout: SheetListLayout | null) => ({
+  list: layout === 'grid' ? null : clsx('w-full', layout === null && 'lg:hidden'),
+  grid: layout === 'list' ? null : clsx('w-full', layout === null && 'hidden lg:block'),
+})
+
+const SheetListSkeleton: FC = () => (
+  <MaterialSurface className="flex flex-col w-full p-1" aria-hidden="true">
+    {skeletonWidths.map((width, i) => (
+      <div
+        // 78px stacked rows, then the 56px one-line table rows of SheetListContainer from lg
+        className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] lg:h-14 px-3 py-2"
+        // oxlint-disable-next-line react/no-array-index-key -- index is stable
+        key={i}
+        style={{
+          animationDelay: `${i * 40}ms`,
+        }}
+      >
+        <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] lg:h-10 lg:w-10 lg:min-w-10 lg:min-h-10 rounded-[var(--radius-xs)] bg-black/8" />
+        <div className="flex flex-col gap-1">
+          <div className="bg-black/8 h-5 mb-1 rounded-[var(--radius-xs)]" style={{ width: `${width}rem` }}>
+            &nbsp;
+          </div>
+          <div className="w-24 bg-black/5 h-3 rounded-[var(--radius-xs)]">&nbsp;</div>
+        </div>
+
+        <div className="flex-1" />
+        <div className="w-10 bg-black/8 h-6 mr-2 rounded-[var(--radius-xs)]">&nbsp;</div>
+      </div>
+    ))}
+  </MaterialSurface>
+)
 
 type SearchParams = ReturnType<typeof searchRouteApi.useSearch>
 type SheetListProps = {
@@ -242,6 +283,15 @@ const SheetListInnerContent: FC<{
   const [hydrated, setHydrated] = useState(false)
   const sortFilterContentId = useId()
   const navigate = useNavigate()
+  const [layout, setLayout] = useSheetListLayout()
+  const slots = layoutSlots(layout)
+  const changeLayout = useCallback(
+    (next: SheetListLayout) => {
+      if (layout) captureAnalyticsEvent('sheet_list_layout_changed', { layout: next, previous_layout: layout })
+      setLayout(next)
+    },
+    [layout, setLayout],
+  )
 
   const query = search.q ?? ''
   const [inputQuery, setInputQuery] = useState(query)
@@ -457,28 +507,33 @@ const SheetListInnerContent: FC<{
           </p>
         )}
 
-        <div className="glass-thin relative overflow-hidden px-4 py-2 text-sm font-semibold text-fg-1">
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 origin-left bg-accent-subtle transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none"
-            style={{ transform: `scaleX(${summaryProgress})` }}
-          />
-          <div className="relative z-1 flex items-center gap-2" aria-hidden="true">
-            <MdiIconInfo className="shrink-0 text-accent-strong" />
-            <div className="num">
-              {t('sheet:search-summary', {
-                found: summaryFound,
-                total: summaryCount,
-                elapsed: hydrated ? (searchElapsed + filteringElapsed).toFixed(1) : '…',
-              })}
+        {/* The result count, with the list / grid switch beside it, as in the iOS app's results header */}
+        <div className="flex w-full items-stretch gap-2">
+          <div className="glass-thin relative min-w-0 flex-1 overflow-hidden px-4 py-2 text-sm font-semibold text-fg-1">
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 origin-left bg-accent-subtle transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none"
+              style={{ transform: `scaleX(${summaryProgress})` }}
+            />
+            <div className="relative z-1 flex h-full items-center gap-2" aria-hidden="true">
+              <MdiIconInfo className="shrink-0 text-accent-strong" />
+              <div className="min-w-0 num">
+                {t('sheet:search-summary', {
+                  found: summaryFound,
+                  total: summaryCount,
+                  elapsed: hydrated ? (searchElapsed + filteringElapsed).toFixed(1) : '…',
+                })}
+              </div>
             </div>
+            {/* Rendered empty first and always mounted, so each new count is announced politely */}
+            <output aria-live="polite" className="sr-only">
+              {hydrated && !isLoading
+                ? t('sheet:search-summary-status', { found: summaryFound, total: summaryCount })
+                : ''}
+            </output>
           </div>
-          {/* Rendered empty first and always mounted, so each new count is announced politely */}
-          <output aria-live="polite" className="sr-only">
-            {hydrated && !isLoading
-              ? t('sheet:search-summary-status', { found: summaryFound, total: summaryCount })
-              : ''}
-          </output>
+
+          <SheetListLayoutToggle layout={layout} onChange={changeLayout} />
         </div>
 
         {!listSheets ? (
@@ -488,30 +543,18 @@ const SheetListInnerContent: FC<{
               <SearchQuerySeedList sheets={seedSheets} />
             </SheetRowLayoutContext.Provider>
           ) : (
-            <MaterialSurface className="flex flex-col w-full p-1" aria-hidden="true">
-              {skeletonWidths.map((width, i) => (
-                <div
-                  // 78px stacked rows, then the 56px one-line table rows of SheetListContainer from lg
-                  className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] lg:h-14 px-3 py-2"
-                  // oxlint-disable-next-line react/no-array-index-key -- index is stable
-                  key={i}
-                  style={{
-                    animationDelay: `${i * 40}ms`,
-                  }}
-                >
-                  <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] lg:h-10 lg:w-10 lg:min-w-10 lg:min-h-10 rounded-[var(--radius-xs)] bg-black/8" />
-                  <div className="flex flex-col gap-1">
-                    <div className="bg-black/8 h-5 mb-1 rounded-[var(--radius-xs)]" style={{ width: `${width}rem` }}>
-                      &nbsp;
-                    </div>
-                    <div className="w-24 bg-black/5 h-3 rounded-[var(--radius-xs)]">&nbsp;</div>
-                  </div>
-
-                  <div className="flex-1" />
-                  <div className="w-10 bg-black/8 h-6 mr-2 rounded-[var(--radius-xs)]">&nbsp;</div>
+            <>
+              {slots.list !== null && (
+                <div className={slots.list}>
+                  <SheetListSkeleton />
                 </div>
-              ))}
-            </MaterialSurface>
+              )}
+              {slots.grid !== null && (
+                <div className={slots.grid}>
+                  <SheetGridSkeleton />
+                </div>
+              )}
+            </>
           )
         ) : listSheets.length === 0 ? (
           <MaterialSurface className="flex w-full flex-col items-center gap-1 px-4 py-8 text-center">
@@ -519,14 +562,34 @@ const SheetListInnerContent: FC<{
             <p className="m-0 max-w-[50ch] text-sm text-fg-2 text-pretty">{t('sheet:search-empty.description')}</p>
           </MaterialSurface>
         ) : (
-          <SheetListContainer
-            sheets={listSheets}
-            activeSheetId={activeSheetId}
-            onSheetDialogChange={handleSheetDialogChange}
-            analyticsSource="search_results"
-            analyticsQueryPresent={!!inputQuery}
-            analyticsResultCount={listSheets.length}
-          />
+          // Each layout keeps its own slot, so the one that stays when the other drops out after hydration is not
+          // remounted
+          <>
+            {slots.list !== null && (
+              <div className={slots.list}>
+                <SheetListContainer
+                  sheets={listSheets}
+                  activeSheetId={activeSheetId}
+                  onSheetDialogChange={handleSheetDialogChange}
+                  analyticsSource="search_results"
+                  analyticsQueryPresent={!!inputQuery}
+                  analyticsResultCount={listSheets.length}
+                />
+              </div>
+            )}
+            {slots.grid !== null && (
+              <div className={slots.grid}>
+                <SheetGridContainer
+                  sheets={listSheets}
+                  activeSheetId={activeSheetId}
+                  onSheetDialogChange={handleSheetDialogChange}
+                  analyticsSource="search_results"
+                  analyticsQueryPresent={!!inputQuery}
+                  analyticsResultCount={listSheets.length}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </SheetDetailsContextProvider>

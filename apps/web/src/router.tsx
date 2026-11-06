@@ -94,4 +94,9 @@ declare module '@tanstack/react-router' {
   interface Register {
     router: ReturnType<typeof getRouter>
   }
+
+  interface HistoryState {
+    /** Set by the home page's links to a list it previews, so that page can offer a way back (BackToHomeLink) */
+    fromHome?: boolean
+  }
 }

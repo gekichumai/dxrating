@@ -37,6 +37,25 @@ export interface SheetListItemAnalyticsProps {
   resultCount?: number
 }
 
+/** Records that a chart was opened from a list row or a grid tile */
+export const captureSheetContentViewed = (sheet: FlattenedSheet, analytics?: SheetListItemAnalyticsProps) =>
+  captureAnalyticsEvent('sheet_content_viewed', {
+    song_id: sheet.songId,
+    sheet_type: sheet.type,
+    sheet_difficulty: sheet.difficulty,
+    source: analytics?.source ?? 'unknown',
+    position: analytics?.position,
+    query_present: analytics?.queryPresent,
+    result_count: analytics?.resultCount,
+    sheet_version: sheet.version,
+    internal_level: sheet.internalLevelValue,
+    is_rating_eligible: sheet.isRatingEligible,
+  })
+
+/** A link click the page handles itself; modified and middle clicks keep the browser's own behaviour */
+export const isPlainLinkClick = (event: { metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; button: number }) =>
+  !(event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1)
+
 export const SheetListItem: FC<{
   size?: 'small' | 'medium'
   className?: string
@@ -89,22 +108,11 @@ export const SheetListItem: FC<{
           component="a"
           href={buildSheetPath(sheet)}
           onClick={(e) => {
-            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return
+            if (!isPlainLinkClick(e)) return
             e.preventDefault()
             setOpen(true)
             haptic.trigger('medium')
-            captureAnalyticsEvent('sheet_content_viewed', {
-              song_id: sheet.songId,
-              sheet_type: sheet.type,
-              sheet_difficulty: sheet.difficulty,
-              source: analytics?.source ?? 'unknown',
-              position: analytics?.position,
-              query_present: analytics?.queryPresent,
-              result_count: analytics?.resultCount,
-              sheet_version: sheet.version,
-              internal_level: sheet.internalLevelValue,
-              is_rating_eligible: sheet.isRatingEligible,
-            })
+            captureSheetContentViewed(sheet, analytics)
           }}
           // Horizontal padding comes from CSS classes (!px-4 unless the list passes its own inset). Gutters must not depend
           // on the viewport in JS (a window-width hook renders "mobile" on the server and changed the class during
@@ -314,31 +322,50 @@ export const SheetDifficulty: FC<{
   ) : null
 }
 
-const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({ type, difficulty }) => {
+/**
+ * The chart-type badge, with the in-game artwork. `compact` is the size for a grid tile's jacket: 18px tall, and 14px
+ * for a Utage 2P chart, whose two-part artwork would otherwise be wider than a phone's three-column tile.
+ */
+export const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum; compact?: boolean }> = ({
+  type,
+  difficulty,
+  compact = false,
+}) => {
   const { t } = useTranslation(['sheet'])
   const isUtage = type === TypeEnum.UTAGE || type === TypeEnum.UTAGE2P
   const altText = t(getSheetTypeAltTextKey(type))
 
   if (isUtage) {
     const isUtage2P = type === TypeEnum.UTAGE2P
+    // The artwork is 95.875 × 26 and the 2P end overlaps it by 27px; the compact sizes keep those proportions
+    const artworkSize = !compact ? 'h-26px w-95.875px' : isUtage2P ? 'h-[14px] w-[51.6px]' : 'h-[18px] w-[66.4px]'
 
     return (
       <div className="inline-flex items-center">
-        <div className="relative h-26px w-95.875px flex items-center justify-center text-center select-none">
+        <div className={clsx('relative flex items-center justify-center text-center select-none', artworkSize)}>
           <img
             src={SHEET_TYPE_IMAGES[TypeEnum.UTAGE]}
             alt={altText}
             className="absolute inset-0 h-full w-full object-contain touch-callout-none"
             draggable={false}
           />
-          <span aria-hidden="true" className="relative text-shadow-[0_0_0.5rem_#FFFFFF99] text-white text-xs">
+          <span
+            aria-hidden="true"
+            className={clsx(
+              'relative text-shadow-[0_0_0.5rem_#FFFFFF99] text-white',
+              !compact ? 'text-xs' : isUtage2P ? 'text-[0.5rem] leading-none' : 'text-[0.5625rem] leading-none',
+            )}
+          >
             {difficulty.replace(/[【】]/g, '')}
           </span>
         </div>
         {isUtage2P && (
           <img
             src={SHEET_TYPE_UTAGE_2P_END_ADORNMENT_IMAGE}
-            className="h-26px w-95.875px ml-[-27px] touch-callout-none"
+            className={clsx(
+              'touch-callout-none',
+              compact ? 'h-[14px] w-[51.6px] ml-[-14.5px]' : 'h-26px w-95.875px ml-[-27px]',
+            )}
             alt=""
             aria-hidden="true"
             draggable={false}
@@ -352,7 +379,7 @@ const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({ type, d
     <img
       key={type}
       src={SHEET_TYPE_IMAGES[type]}
-      className="h-26px w-70px touch-callout-none"
+      className={clsx('touch-callout-none', compact ? 'h-[18px] w-[48.5px]' : 'h-26px w-70px')}
       alt={altText}
       draggable={false}
     />
@@ -481,6 +508,9 @@ export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
 )
 SheetListItemSummary.displayName = 'SheetListItemSummary'
 
+/** A song's cover art by its image name */
+export const sheetCoverSrc = (imageName: string) => `https://shama.dxrating.net/images/cover/v2/${imageName}.jpg`
+
 export const SheetImage: FC<
   Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt'> & {
     name: string
@@ -492,7 +522,7 @@ export const SheetImage: FC<
     return (
       <FadedImage
         key={name}
-        src={`https://shama.dxrating.net/images/cover/v2/${name}.jpg`}
+        src={sheetCoverSrc(name)}
         className={clsx(
           'overflow-hidden outline outline-1 -outline-offset-1 outline-black/10',
           match(size)

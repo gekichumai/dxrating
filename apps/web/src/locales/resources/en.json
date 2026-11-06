@@ -214,7 +214,11 @@
     "comments.safety.block-success": "Author blocked. Their comments are now hidden.",
     "comments.safety.error": "Unable to save this. Check your connection and try again.",
     "dx-score.stars": "{{stars}} DX score stars",
-    "dx-score.to-next-star": "{{remaining}} more DX score for ✦{{stars}}"
+    "dx-score.to-next-star": "{{remaining}} more DX score for ✦{{stars}}",
+    "layout.label": "Layout",
+    "layout.list": "List",
+    "layout.grid": "Grid",
+    "favorite.marked": "Favorite"
   },
   "song": {
     "not-found.title": "Song not found",
@@ -1132,7 +1136,8 @@
     "features.trending.title": "Trending",
     "features.trending.description": "Charts people view now",
     "features.versions.title": "Versions",
-    "features.versions.description": "Songs by game version"
+    "features.versions.description": "Songs by game version",
+    "back-to-home": "Back to Home"
   },
   "completion": {
     "title": "Your progress",

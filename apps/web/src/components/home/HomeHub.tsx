@@ -1,6 +1,6 @@
 import { plateName } from '@gekichumai/maimai-domain'
 import { Link } from '@tanstack/react-router'
-import { type FC, useEffect, useState } from 'react'
+import { type FC, useEffect, useId, useState } from 'react'
 import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import { SheetImage } from '@/components/sheet/SheetListItem'
@@ -27,6 +27,7 @@ import IconMdiDiceMultipleOutline from '~icons/mdi/dice-multiple-outline'
 import IconMdiNewBox from '~icons/mdi/new-box'
 import IconMdiFire from '~icons/mdi/fire'
 import IconMdiHistory from '~icons/mdi/history'
+import IconMdiChevronDown from '~icons/mdi/chevron-down'
 
 const FEATURE_ICONS: Record<HomeFeatureId, FC<{ className?: string; 'aria-hidden'?: 'true' }>> = {
   rating: IconMdiTrophyOutline,
@@ -110,11 +111,18 @@ const QuickStats: FC = () => {
   )
 }
 
+/** Marks a link from the home page, so the page it opens offers a way back (BackToHomeLink) */
+const FROM_HOME_STATE = { fromHome: true }
+
 export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recentSongs }) => {
   const { t } = useTranslation(['home', 'sheet'])
   // Scores live on the client only: the server and cached HTML stay user-agnostic
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
+  // Below sm the new charts start folded, so the search results sit higher on a phone; wider screens always show them
+  const [recentExpanded, setRecentExpanded] = useState(false)
+  const recentContentId = useId()
+  const recentTitle = t('home:recent.title')
 
   return (
     <div className="flex w-full flex-col gap-4" data-testid="home-hub">
@@ -123,9 +131,33 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
       {recentSongs.length > 0 && (
         <section className="flex flex-col gap-2" aria-labelledby="home-recent">
           <div className="flex items-center justify-between gap-2">
-            <SectionTitle id="home-recent">{t('home:recent.title')}</SectionTitle>
+            <SectionTitle id="home-recent">
+              {/* The heading holds a disclosure button below sm and plain text from sm. The hidden one is display:
+                  none, so the heading's name is the title either way. CSS, not matchMedia, so SSR stays deterministic */}
+              <button
+                type="button"
+                aria-expanded={recentExpanded}
+                aria-controls={recentContentId}
+                onClick={() => {
+                  trackClick('recent', recentExpanded ? 'collapse' : 'expand')
+                  setRecentExpanded((expanded) => !expanded)
+                }}
+                className="-mx-1 inline-flex min-h-8 cursor-pointer items-center gap-1 rounded-[var(--radius-sm)] border-0 bg-transparent px-1 text-inherit font-inherit sm:hidden"
+              >
+                {recentTitle}
+                <IconMdiChevronDown
+                  aria-hidden="true"
+                  className={clsx(
+                    'size-5 text-fg-2 transition-transform duration-[var(--duration-fast)] ease-[var(--ease-out)] motion-reduce:transition-none',
+                    recentExpanded && 'rotate-180',
+                  )}
+                />
+              </button>
+              <span className="hidden sm:inline">{recentTitle}</span>
+            </SectionTitle>
             <Link
               to="/charts/recent"
+              state={FROM_HOME_STATE}
               onClick={() => trackClick('recent', 'see_all')}
               className="inline-flex min-h-6 items-center rounded-[var(--radius-sm)] px-2 text-sm font-semibold text-accent-strong no-underline hover:underline"
             >
@@ -136,7 +168,7 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
               (10 at lg, 13 at xl, as many as fit a row). Hidden by CSS, not matchMedia, so SSR stays deterministic.
               Covers sit 12px in, so they keep their own radius. On phones the row snaps cover by cover, each stopping at
               that 12px inset, and fades at an edge that has more covers past it (scroll-fade-x). */}
-          <MaterialSurface className="w-full">
+          <MaterialSurface id={recentContentId} className={clsx('w-full', !recentExpanded && 'hidden sm:block')}>
             <div className="scroll-fade-x overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-3 lg:scroll-fade-x-none lg:overflow-visible lg:snap-none">
               <ul className="m-0 flex list-none gap-3 p-3 lg:grid lg:grid-cols-[repeat(auto-fill,minmax(5rem,1fr))]">
                 {recentSongs.map((song, index) => (
@@ -185,7 +217,13 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
             const Icon = FEATURE_ICONS[feature.id]
             return (
               <li key={feature.id} className="snap-start">
-                <Link to={feature.to} onClick={() => trackClick('feature', feature.id)} className={CARD_LINK}>
+                <Link
+                  to={feature.to}
+                  // New charts is the same list as "See all" above, so it offers the same way back
+                  state={feature.id === 'recent' ? FROM_HOME_STATE : undefined}
+                  onClick={() => trackClick('feature', feature.id)}
+                  className={CARD_LINK}
+                >
                   <MaterialSurface className={`flex h-full items-start gap-2.5 px-3 py-2.5 ${CARD_SURFACE}`}>
                     <Icon aria-hidden="true" className="size-5 shrink-0 text-accent-strong" />
                     <span className="flex min-w-0 flex-col">
