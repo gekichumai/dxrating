@@ -184,7 +184,7 @@ export const SheetListItemContentView: FC<SheetListItemContentViewProps> = memo(
             name={imageName}
             size={size}
             alt={imageAlt}
-            className={clsx(isTable && 'lg:!h-10 lg:!w-10 lg:!min-h-10 lg:!min-w-10')}
+            className={clsx(isTable && 'lg:col-start-1 lg:row-start-1 lg:!h-10 lg:!w-10 lg:!min-h-10 lg:!min-w-10')}
           />
         )}
 
@@ -200,7 +200,12 @@ export const SheetListItemContentView: FC<SheetListItemContentViewProps> = memo(
         </ListItemText>
 
         {/* A flex child rather than an absolutely positioned action, so long titles and badges can never run under it */}
-        <div className={clsx('ml-auto shrink-0 pl-2', isTable && 'lg:order-5 lg:ml-0 lg:pl-0 lg:justify-self-end')}>
+        <div
+          className={clsx(
+            'ml-auto shrink-0 pl-2',
+            isTable && 'lg:col-start-6 lg:row-start-1 lg:ml-0 lg:pl-0 lg:justify-self-end',
+          )}
+        >
           {isTypeUtage ? (
             <span className="font-semibold tabular-nums text-lg text-fg-2">{level}</span>
           ) : (
@@ -425,7 +430,7 @@ export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
             titleProps?.className,
           )}
         >
-          <span className="flex flex-col min-w-0">
+          <span className={clsx('flex flex-col min-w-0', isTable && 'lg:col-start-2 lg:row-start-1')}>
             <span
               {...titleTextProps}
               // A table row clamps the title to two lines, so the full title shows on hover
@@ -439,7 +444,7 @@ export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
               {title}
             </span>
           </span>
-          <div className={clsx(SHEET_BADGES_CLASS, isTable && 'lg:order-4')}>
+          <div className={clsx(SHEET_BADGES_CLASS, isTable && 'lg:col-start-5 lg:row-start-1')}>
             <SheetType type={type} difficulty={difficulty} />
             <SheetDifficulty difficulty={difficulty} serverIds={serverIds} isLocked={isLocked} />
           </div>
@@ -448,7 +453,11 @@ export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
         {artist && (
           <p
             {...artistProps}
-            className={clsx('text-sm text-fg-2 truncate', isTable && 'lg:order-2 lg:m-0', artistProps?.className)}
+            className={clsx(
+              'text-sm text-fg-2 truncate',
+              isTable && 'lg:col-start-3 lg:row-start-1 lg:m-0',
+              artistProps?.className,
+            )}
           >
             {artist}
           </p>
@@ -456,7 +465,7 @@ export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
 
         {(version || metadata) && (
           // One cell for the version and any extra lines, so a table row keeps a single column for them
-          <div className={clsx('flex flex-col min-w-0', isTable && 'lg:order-3')}>
+          <div className={clsx('flex flex-col min-w-0', isTable && 'lg:col-start-4 lg:row-start-1')}>
             {version && (
               <div className={clsx('text-sm', isTable && 'lg:truncate')}>
                 <span className="text-fg-2">ver. {version}</span>
