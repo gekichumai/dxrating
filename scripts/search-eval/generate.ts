@@ -118,7 +118,8 @@ function scriptOf(value: string): Script {
     (char) =>
       /\p{L}/u.test(char) &&
       !/[A-Za-z]/u.test(char) &&
-      !/\p{Script=Han}|\p{Script=Hiragana}|\p{Script=Katakana}/u.test(char),
+      // Script_Extensions, so the long-vowel mark ー (Script=Common) counts as kana
+      !/\p{scx=Han}|\p{scx=Hiragana}|\p{scx=Katakana}/u.test(char),
   ).length
   const symbols = [...text].filter((char) => /[\p{S}]/u.test(char) || /[^\p{L}\p{N}\s\p{P}]/u.test(char)).length
   if (exotic > 0 || symbols >= 2) return 'symbol'
@@ -166,7 +167,26 @@ function readingOf(tokenizer: Tokenizer, title: string, officialKana: string | u
 }
 
 function romajiOf(reading: Reading, style: RomajiStyle, longVowels: 'keep' | 'drop', separator: string) {
-  return reading.tokens
+  // The analyser can split a word before a long-vowel mark (リ/バ/ー/ブ) or after a small tsu (アッ/タ). Move those
+  // marks across the boundary so each token romanises with the context it needs (ribaabu, atta).
+  const tokens = reading.tokens.map((token) => ({ ...token }))
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]!
+    if (token.latin) continue
+    const previous = tokens[i - 1]
+    const leadingMarks = token.reading.match(/^ー+/u)?.[0]
+    if (leadingMarks && previous && !previous.latin) {
+      previous.reading += leadingMarks
+      token.reading = token.reading.slice(leadingMarks.length)
+    }
+    const next = tokens[i + 1]
+    if (/ッ$/u.test(token.reading) && next && !next.latin) {
+      token.reading = token.reading.slice(0, -1)
+      next.reading = `ッ${next.reading}`
+    }
+  }
+  return tokens
+    .filter((token) => token.reading)
     .map((token) => (token.latin ? token.reading.toLowerCase() : kanaToRomaji(token.reading, style, longVowels)))
     .join(separator)
     .replace(/\s+/gu, ' ')
