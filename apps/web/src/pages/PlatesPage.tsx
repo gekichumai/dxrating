@@ -1,6 +1,7 @@
 import { DifficultyEnum } from '@gekichumai/dxdata'
 import type { PlateRecord, PlateRegion } from '@gekichumai/maimai-domain'
-import { type FC, useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from '@tanstack/react-router'
+import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCompleteCatalogDocument } from '@/catalog/CatalogContext'
 import {
@@ -20,6 +21,8 @@ import {
   PLATE_REGIONS,
   type PlateIndexGroup,
   type PlatePageData,
+  plateExistsInRegion,
+  plateRegionToFollow,
   platePath,
   plateScript,
   progressPercent,
@@ -28,6 +31,8 @@ import { buildPlateShareImage } from '@/components/plates/plateShareImage'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { captureAnalyticsEvent } from '@/lib/analytics'
+import { readStoredAppContext } from '@/models/context/AppContext'
+import { useAppContext } from '@/models/context/useAppContext'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useUserRecords } from '@/models/useUserRecords'
 import { DEFAULT_LOCALE, type SupportedLocale, toSupportedLocale } from '@/setup/locale'
@@ -40,6 +45,48 @@ const useLocale = (): SupportedLocale => {
 
 const regionHref = (path: string, region: PlateRegion) =>
   region === DEFAULT_PLATE_REGION ? path : `${path}?region=${region}`
+
+/**
+ * Keeps the page on the header's region. A URL that names a region (a tab click, a shared link) is kept on load; one
+ * that does not follows the region the visitor picked in the header, and a later header switch moves the page too.
+ * Client-only, after mount: the server and edge-cached HTML always show the URL's region (Japan without one).
+ */
+const useFollowSiteRegion = ({
+  region,
+  explicit,
+  available = () => true,
+}: {
+  region: PlateRegion
+  explicit: boolean
+  available?: (candidate: PlateRegion) => boolean
+}) => {
+  const { region: siteRegion } = useAppContext()
+  const router = useRouter()
+  // The context starts on the server default and applies the stored choice in an effect; until it has, its region
+  // is not the visitor's
+  const stored = useRef<string | null>(null)
+  const synced = useRef(false)
+  const previous = useRef<string | null>(null)
+
+  useEffect(() => {
+    stored.current ??= readStoredAppContext().region
+    if (!synced.current) {
+      if (siteRegion !== stored.current) return
+      synced.current = true
+    }
+    const first = previous.current === null
+    if (!first && previous.current === siteRegion) return
+    previous.current = siteRegion
+
+    const target = plateRegionToFollow({ siteRegion, current: region, onLoad: first, explicit, available })
+    if (!target) return
+    // Keeps the URL's other parameters, such as ?locale=
+    const url = new URL(window.location.href)
+    if (target === DEFAULT_PLATE_REGION) url.searchParams.delete('region')
+    else url.searchParams.set('region', target)
+    void router.navigate({ href: `${url.pathname}${url.search}${url.hash}`, replace: first })
+  }, [siteRegion, region, explicit, available, router])
+}
 
 const COMBO_RANK: Record<NonNullable<PlateRecord['comboFlag']>, number> = { fc: 1, fcp: 2, ap: 3, app: 4 }
 const SYNC_RANK: Record<NonNullable<PlateRecord['syncFlag']>, number> = { sync: 1, fs: 2, fsp: 3, fsd: 4, fsdp: 5 }
@@ -126,8 +173,13 @@ const ProgressBar: FC<{ percent: number; className?: string }> = ({ percent, cla
   </div>
 )
 
-export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[] }> = ({ region, groups }) => {
+export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]; explicitRegion?: boolean }> = ({
+  region,
+  groups,
+  explicitRegion = false,
+}) => {
   const { t } = useTranslation(['plates'])
+  useFollowSiteRegion({ region, explicit: explicitRegion })
   const locale = useLocale()
   const script = plateScript(locale)
   const document = useCompleteCatalogDocument()
@@ -231,8 +283,14 @@ const RemasterVariantLabel: FC = () => {
   )
 }
 
-export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
+export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = ({ data, explicitRegion = false }) => {
   const { t } = useTranslation(['plates'])
+  const plateAvailable = useCallback((region: PlateRegion) => plateExistsInRegion(region, data.plateId), [data.plateId])
+  useFollowSiteRegion({
+    region: data.region,
+    explicit: explicitRegion,
+    available: plateAvailable,
+  })
   const locale = useLocale()
   const name = data.names[plateScript(locale)]
   const versions =
