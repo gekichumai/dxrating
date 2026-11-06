@@ -332,6 +332,12 @@ html {
   );
 }
 
+/* While keyboard focus is inside, drop the fade: snapping can rest a focused item inside the faded edge, which would
+   dim its label and focus ring. Through the variable, so the end-only variant follows too. */
+.scroll-fade-x:has(:focus-visible) {
+  --scroll-fade-x-mask: none;
+}
+
 @supports (animation-timeline: scroll()) {
   .scroll-fade-x {
     animation: scroll-fade-x linear both;

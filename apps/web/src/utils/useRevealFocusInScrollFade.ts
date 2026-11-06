@@ -2,8 +2,9 @@ import { useEffect } from 'react'
 
 /**
  * Keyboard focus inside a `scroll-fade-x` scroller: bring the focused element fully into view. Browsers leave an
- * element that is already partly visible where it is, which can park it under the faded edge with its focus ring
- * masked away. Only for keyboard focus (`:focus-visible`), so a click never shifts the row.
+ * element that is already partly visible where it is, cut off at the edge. The fade itself is dropped while keyboard
+ * focus is inside (index.css), so the revealed item and its focus ring keep full contrast. Only for keyboard focus
+ * (`:focus-visible`), so a click never shifts the row.
  */
 export function useRevealFocusInScrollFade() {
   useEffect(() => {
