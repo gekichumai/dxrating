@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { Dialog, Menu, MenuList, TextField } from '@mui/material'
-import { useState } from 'react'
+import { type ReactElement, useState } from 'react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
 import { ImportFromLxnsButtonListItem } from '../ImportFromLxnsButtonListItem'
@@ -11,7 +11,7 @@ const { auth } = vi.hoisted(() => ({
     isAuthenticated: false,
     loginOpen: false,
     openLoginDialog: vi.fn(),
-    LoginDialog: (() => null) as () => JSX.Element | null,
+    LoginDialog: (() => null) as () => ReactElement | null,
   },
 }))
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => auth }))
