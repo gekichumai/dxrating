@@ -94,7 +94,7 @@ describe('global auto-import settings', () => {
   ] as const)('signs in to the maimai NET of the site region (%s) when nothing is saved', (siteRegion, netRegion) => {
     site.region = siteRegion
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
-    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import from maimai NET…' }))
     fireEvent.change(screen.getByLabelText('SEGA ID'), { target: { value: 'fixture' } })
     fireEvent.change(screen.getByLabelText('SEGA ID password'), { target: { value: 'fixture-password' } })
     fireEvent.click(screen.getByRole('checkbox', { name: /Remember credentials/ }))
