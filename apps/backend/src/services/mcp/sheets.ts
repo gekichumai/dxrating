@@ -1,4 +1,5 @@
 import { VERSION_ID_MAP } from '@gekichumai/dxdata'
+import { LATEST_REGION_VERSIONS, type Region } from '@gekichumai/maimai-domain'
 import { resolveSongReference, searchKey, type CatalogSong, type McpCatalog, type PublishedSheet } from './catalog'
 
 // Finding the charts a tool is asked about, and what a chart is on a server: what get_sheet and the rating tools share.
@@ -111,8 +112,19 @@ export const isRatingEligible = (sheet: PublishedSheet) => sheet.type !== 'utage
 /** The order of a game version, or undefined for one the code does not know yet */
 export const versionOrder = (version: string): number | undefined => VERSION_ID_MAP.get(version)
 
-/** The newest game version a server has a chart of: the version its players play, as the catalog knows it */
+/** The rating region of a server: usa plays the international version */
+export function serverRegion(server: string): Exclude<Region, '_generic'> | undefined {
+  if (server === 'usa') return 'intl'
+  return server === 'jp' || server === 'intl' || server === 'cn' ? server : undefined
+}
+
+/**
+ * The version a server's players play: the shared per-region table, so CN is PRiSM PLUS even though CN also has a few
+ * charts whose Japanese version is newer. Other servers fall back to the newest version the catalog has a chart of.
+ */
 export function currentVersion(catalog: McpCatalog, server: string): string | undefined {
+  const region = serverRegion(server)
+  if (region) return LATEST_REGION_VERSIONS[region]
   let newest: { version: string; order: number } | undefined
   for (const { song } of catalog.songs) {
     for (const sheet of song.sheets) {
