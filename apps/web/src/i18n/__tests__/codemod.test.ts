@@ -57,7 +57,7 @@ export const AutoImport = () => {
       `export const Effect = () => {
   const locale = useLocale()
   useEffect(() => {
-    document.title = m.root_notFound_title({}, { locale })
+    document.title = new Intl.DateTimeFormat(locale).format(updatedAt)
   }, [catalog])
   return null
 }

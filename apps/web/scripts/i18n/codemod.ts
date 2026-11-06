@@ -363,7 +363,7 @@ export function addLocaleDeps(file: string, source: string): { output: string; f
     if (declaresName(fn, 'locale', true) && !ts.isArrowFunction(fn)) return false
     let found = false
     const visit = (node: ts.Node) => {
-      if (found) return
+      if (found || stripped.has(node)) return
       if (ts.isIdentifier(node) && node.text === 'locale') {
         const parent = node.parent
         const isPropertyName =
@@ -379,6 +379,7 @@ export function addLocaleDeps(file: string, source: string): { output: string; f
   }
   // `m.key(inputs, { locale })` inside an effect: the effect may outlive a language switch (a mount-only effect, an
   // async continuation), so let the client runtime resolve the locale when the message fires
+  const stripped = new Set<ts.Node>()
   const stripEffectLocales = (fn: ts.Node) => {
     const visitInner = (node: ts.Node) => {
       if (
@@ -396,6 +397,7 @@ export function addLocaleDeps(file: string, source: string): { output: string; f
           options.properties[0].name.text === 'locale'
         ) {
           edits.push({ start: node.arguments[0].getEnd(), end: options.getEnd(), text: '' })
+          stripped.add(options)
         }
       }
       ts.forEachChild(node, visitInner)
@@ -407,6 +409,18 @@ export function addLocaleDeps(file: string, source: string): { output: string; f
       const fn = node.arguments[0]
       if (fn && (ts.isArrowFunction(fn) || ts.isFunctionExpression(fn))) {
         stripEffectLocales(fn)
+        const deps = node.arguments[1]
+        const listed =
+          deps &&
+          ts.isArrayLiteralExpression(deps) &&
+          deps.elements.some((element) => ts.isIdentifier(element) && element.text === 'locale')
+        if (!listed && readsLocale(fn)) {
+          findings.push({
+            file: path.relative(webRoot, file),
+            line: sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1,
+            reason: `${hookName(node)}() reads locale without listing it; hand-port so a switch can't leave it stale`,
+          })
+        }
         ts.forEachChild(node, visit)
         return
       }
