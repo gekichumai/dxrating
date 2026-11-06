@@ -1,6 +1,6 @@
 import type { DifficultyEnum } from '@gekichumai/dxdata'
 import type { VersionedSheet } from '@gekichumai/maimai-domain'
-import { Link } from '@tanstack/react-router'
+import { Link, useSearch } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -8,6 +8,7 @@ import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { SheetDifficulty } from '@/components/sheet/SheetListItem'
 import { captureAnalyticsEvent } from '@/lib/analytics'
+import { keepLocaleSearch } from '@/setup/locale'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { useUserRecords } from '@/models/useUserRecords'
 import type { FlattenedSheet } from '@/songs'
@@ -15,13 +16,18 @@ import { computeSongHubRaises } from './songHubRaise'
 
 const formatAchievement = (value: number) => `${value.toFixed(4)}%`
 
+// Per-type note counts get their own columns on wide screens (xl+), where the table has room for them
+const NOTE_TYPES = ['tap', 'hold', 'slide', 'touch', 'break'] as const
+
 /** Every chart of a song in one table, with the user's own score and the next rating step (client only) */
 export const SongChartsTable: FC<{
   songId: string
   sheets: readonly FlattenedSheet[]
   activeSheetId?: string
 }> = ({ songId, sheets, activeSheetId }) => {
-  const { t } = useTranslation(['song'])
+  const { t } = useTranslation(['song', 'sheet'])
+  // Chart links stay on the hub URL's language variant (each `?locale=` variant is its own canonical page)
+  const localeSearch = keepLocaleSearch(useSearch({ strict: false }))
   // Rating hints need every scored chart: the route slice holds only this song, so wait for the complete catalog
   const completeCatalog = useCompleteSongCatalog()
   const { region } = useAppContext()
@@ -56,20 +62,25 @@ export const SongChartsTable: FC<{
       <h2 id="song-hub-charts-heading" className="section-title m-0">
         {t('song:hub.title')}
       </h2>
-      <div className="relative overflow-x-auto -mx-1">
+      <div className="scroll-fade-x relative overflow-x-auto -mx-1">
         <table className="w-full border-collapse text-sm tabular-nums text-fg-1">
           <thead>
             <tr className="text-left text-xs text-fg-2">
               <th className="px-1 py-1 font-normal whitespace-nowrap">{t('song:hub.column.chart')}</th>
-              <th className="px-1 py-1 font-normal whitespace-nowrap">{t('song:hub.column.level')}</th>
-              <th className="px-1 py-1 font-normal whitespace-nowrap">{t('song:hub.column.constant')}</th>
-              <th className="hidden sm:table-cell px-1 py-1 font-normal whitespace-nowrap">
+              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">{t('song:hub.column.level')}</th>
+              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">{t('song:hub.column.constant')}</th>
+              <th className="hidden sm:table-cell px-1 py-1 font-normal whitespace-nowrap text-right">
                 {t('song:hub.column.notes')}
               </th>
-              <th className="hidden sm:table-cell px-1 py-1 font-normal whitespace-nowrap">
+              {NOTE_TYPES.map((noteType) => (
+                <th key={noteType} className="hidden xl:table-cell px-1 py-1 font-normal whitespace-nowrap text-right">
+                  {t(`sheet:details.notes-statistics.${noteType}`)}
+                </th>
+              ))}
+              <th className="hidden sm:table-cell pl-3 pr-1 py-1 font-normal whitespace-nowrap">
                 {t('song:hub.column.designer')}
               </th>
-              <th className="px-1 py-1 font-normal whitespace-nowrap">{t('song:hub.column.my-score')}</th>
+              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">{t('song:hub.column.my-score')}</th>
             </tr>
           </thead>
           <tbody>
@@ -92,6 +103,7 @@ export const SongChartsTable: FC<{
                     <Link
                       to="/songs/$songId/$type/$difficulty"
                       params={{ songId, type: sheet.type, difficulty: sheet.difficulty }}
+                      {...localeSearch}
                       className="inline-flex items-center gap-1 no-underline text-inherit rounded-[var(--radius-sm)] after:absolute after:inset-0 after:content-['']"
                     >
                       <span className="inline-block sm:w-[6.5em] shrink-0 text-xs text-fg-2">
@@ -101,17 +113,28 @@ export const SongChartsTable: FC<{
                       {unavailableEverywhere && <span className="sr-only">{t('song:hub.unavailable-everywhere')}</span>}
                     </Link>
                   </td>
-                  <td className="px-1 py-1.5">{sheet.level}</td>
-                  <td className="px-1 py-1.5">
+                  <td className="px-1 py-1.5 text-right">{sheet.level}</td>
+                  <td className="px-1 py-1.5 text-right">
                     {sheet.isRatingEligible && sheet.internalLevelValue > 0 ? sheet.internalLevelValue.toFixed(1) : '—'}
                   </td>
-                  <td className="hidden sm:table-cell px-1 py-1.5 whitespace-nowrap">
+                  <td className="hidden sm:table-cell px-1 py-1.5 whitespace-nowrap text-right">
                     {noteCounts?.total ? noteCounts.total.toLocaleString('en-US') : '—'}
                   </td>
-                  <td className="hidden sm:table-cell px-1 py-1.5 max-w-40 truncate" title={designer}>
+                  {NOTE_TYPES.map((noteType) => (
+                    <td
+                      key={noteType}
+                      className="hidden xl:table-cell px-1 py-1.5 whitespace-nowrap text-right text-fg-2"
+                    >
+                      {noteCounts?.total ? (noteCounts[noteType] ?? 0).toLocaleString('en-US') : '—'}
+                    </td>
+                  ))}
+                  <td
+                    className="hidden sm:table-cell pl-3 pr-1 py-1.5 max-w-40 lg:max-w-none truncate"
+                    title={designer}
+                  >
                     <span translate="no">{designer}</span>
                   </td>
-                  <td className="px-1 py-1.5 whitespace-nowrap">
+                  <td className="px-1 py-1.5 whitespace-nowrap text-right">
                     {record ? (
                       <span className="font-semibold">{formatAchievement(record.entry.achievementRate)}</span>
                     ) : (

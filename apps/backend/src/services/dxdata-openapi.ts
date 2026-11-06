@@ -392,7 +392,7 @@ export const addPublishedDxdataToOpenApi = (document: OpenAPI.OpenAPIObject): Op
         '',
         '**Caching.** The body changes only when a new catalog is published (usually once a day or less). Each ' +
           'response has a strong `ETag` (the SHA-256 of the body). Browsers may cache it for 5 minutes, shared ' +
-          'caches for 6 hours. Poll at most every few minutes, and send the last `ETag` as `If-None-Match`: an ' +
+          'caches for 1 minute before they revalidate. Poll at most every few minutes, and send the last `ETag` as `If-None-Match`: an ' +
           'unchanged catalog costs a bodiless `304`. `HEAD` returns the same headers without the ~4 MB body.',
         '',
         '```sh',

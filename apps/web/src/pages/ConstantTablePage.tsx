@@ -60,7 +60,7 @@ const ConstantGroupTable: FC<{
   locale: SupportedLocale
 }> = ({ constant, total, charts, overlay, locale }) => {
   const { t } = useTranslation(['constants', 'completion'])
-  const { ref, overflowing, scrolled, fade } = useHorizontalOverflow<HTMLDivElement>()
+  const { ref, overflowing, scrolled } = useHorizontalOverflow<HTMLDivElement>()
   const number = useMemo(() => new Intl.NumberFormat(locale), [locale])
   // Only when the table actually scrolls: the song column stays put, on an opaque tint of the glass
   const sticky = overflowing
@@ -80,7 +80,7 @@ const ConstantGroupTable: FC<{
         </h2>
         <span className="text-xs text-fg-2 num">{t('constants:group-count', { count: total })}</span>
       </div>
-      <div ref={ref} className={`overflow-x-auto [overscroll-behavior-x:contain] ${fade}`}>
+      <div ref={ref} className="scroll-fade-x scroll-fade-x-end-only overflow-x-auto [overscroll-behavior-x:contain]">
         <table className="w-full text-sm border-collapse">
           <thead className="text-xs text-fg-2 text-left">
             <tr>

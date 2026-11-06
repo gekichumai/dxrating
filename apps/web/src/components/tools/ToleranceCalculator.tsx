@@ -1,6 +1,6 @@
 import type { NoteCounts } from '@gekichumai/dxdata'
 import { toToleranceNoteCounts } from '@gekichumai/maimai-domain'
-import { Chip, InputAdornment, TextField } from '@mui/material'
+import { Chip, FormHelperText, InputAdornment, TextField } from '@mui/material'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from '@tanstack/react-router'
@@ -82,32 +82,42 @@ export const ToleranceCalculator: FC<{
         <p className="m-0 text-sm text-secondary">{t('tools:tolerance.no-note-counts')}</p>
       ) : (
         <>
-          <div className="flex flex-col gap-2">
-            <TextField
-              label={t('tools:tolerance.target')}
-              value={input}
-              onChange={(event) => update(event.target.value)}
-              size="small"
-              inputProps={{ inputMode: 'decimal' }}
-              InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
-              error={!valid}
-              helperText={valid ? undefined : t('tools:tolerance.target-invalid')}
-              className="max-w-48"
-            />
-            <fieldset className="m-0 p-0 border-0 flex flex-wrap gap-1.5">
-              <legend className="sr-only">{t('tools:tolerance.presets')}</legend>
-              {TOLERANCE_TARGET_PRESETS.map((preset) => (
-                <Chip
-                  key={preset}
-                  label={`${preset}%`}
-                  size="small"
-                  color={target === preset ? 'primary' : 'default'}
-                  variant={target === preset ? 'filled' : 'outlined'}
-                  aria-pressed={target === preset}
-                  onClick={() => update(String(preset))}
-                />
-              ))}
-            </fieldset>
+          {/* Field and presets share a row at sm+; the error text sits under the row so the chips never shift */}
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <TextField
+                label={t('tools:tolerance.target')}
+                value={input}
+                onChange={(event) => update(event.target.value)}
+                size="small"
+                inputProps={{
+                  inputMode: 'decimal',
+                  'aria-describedby': valid ? undefined : 'tolerance-target-error',
+                }}
+                InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
+                error={!valid}
+                className="max-w-48 sm:shrink-0"
+              />
+              <fieldset className="m-0 p-0 border-0 flex flex-wrap gap-1.5">
+                <legend className="sr-only">{t('tools:tolerance.presets')}</legend>
+                {TOLERANCE_TARGET_PRESETS.map((preset) => (
+                  <Chip
+                    key={preset}
+                    label={`${preset}%`}
+                    size="small"
+                    color={target === preset ? 'primary' : 'default'}
+                    variant={target === preset ? 'filled' : 'outlined'}
+                    aria-pressed={target === preset}
+                    onClick={() => update(String(preset))}
+                  />
+                ))}
+              </fieldset>
+            </div>
+            {!valid && (
+              <FormHelperText id="tolerance-target-error" error className="m-0 mx-3.5">
+                {t('tools:tolerance.target-invalid')}
+              </FormHelperText>
+            )}
           </div>
 
           {/* Always mounted, so the first result is announced as well */}
@@ -119,38 +129,40 @@ export const ToleranceCalculator: FC<{
               <p className="m-0 text-sm tabular-nums">
                 {t('tools:tolerance.allowed-loss', { value: result.allowedLoss.toFixed(4) })}
               </p>
-              <MaterialSurface variant="thin" className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm tabular-nums">
-                  <thead>
-                    <tr className="text-left text-xs text-secondary">
-                      <th scope="col" className="px-3 py-2 font-medium">
-                        {t('tools:tolerance.note-type')}
-                      </th>
-                      <th scope="col" className="px-3 py-2 font-medium text-right">
-                        GREAT
-                      </th>
-                      <th scope="col" className="px-3 py-2 font-medium text-right">
-                        GOOD
-                      </th>
-                      <th scope="col" className="px-3 py-2 font-medium text-right">
-                        MISS
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <tr key={row.type} className="border-t border-t-solid border-black/6">
-                        <th scope="row" className="px-3 py-2 text-left font-medium">
-                          {t(`tools:tolerance.type.${row.type}`)}{' '}
-                          <span className="text-xs font-normal text-secondary">×{formatCount(row.count)}</span>
+              <MaterialSurface variant="thin" className="overflow-hidden">
+                <div className="scroll-fade-x overflow-x-auto">
+                  <table className="w-full border-collapse text-sm tabular-nums">
+                    <thead>
+                      <tr className="text-left text-xs text-secondary">
+                        <th scope="col" className="px-3 py-2 font-medium">
+                          {t('tools:tolerance.note-type')}
                         </th>
-                        <td className="px-3 py-2 text-right">{formatCount(row.great)}</td>
-                        <td className="px-3 py-2 text-right">{formatCount(row.good)}</td>
-                        <td className="px-3 py-2 text-right">{formatCount(row.miss)}</td>
+                        <th scope="col" className="px-3 py-2 font-medium text-right">
+                          GREAT
+                        </th>
+                        <th scope="col" className="px-3 py-2 font-medium text-right">
+                          GOOD
+                        </th>
+                        <th scope="col" className="px-3 py-2 font-medium text-right">
+                          MISS
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {rows.map((row) => (
+                        <tr key={row.type} className="border-t border-t-solid border-black/6">
+                          <th scope="row" className="px-3 py-2 text-left font-medium">
+                            {t(`tools:tolerance.type.${row.type}`)}{' '}
+                            <span className="text-xs font-normal text-secondary">×{formatCount(row.count)}</span>
+                          </th>
+                          <td className="px-3 py-2 text-right">{formatCount(row.great)}</td>
+                          <td className="px-3 py-2 text-right">{formatCount(row.good)}</td>
+                          <td className="px-3 py-2 text-right">{formatCount(row.miss)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </MaterialSurface>
               {counts.break > 0 && (
                 <dl className="m-0 grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
@@ -172,7 +184,8 @@ export const ToleranceCalculator: FC<{
 }
 
 const BreakStat: FC<{ label: string; value: string }> = ({ label, value }) => (
-  <MaterialSurface variant="thin" className="flex flex-col gap-0.5 px-3 py-2">
+  // Cards stretch to the tallest label in their row; pinning each value to the bottom keeps the values aligned
+  <MaterialSurface variant="thin" className="flex flex-col justify-between gap-0.5 px-3 py-2">
     <dt className="text-xs text-secondary">{label}</dt>
     <dd className="m-0 text-base font-bold tabular-nums">{value}</dd>
   </MaterialSurface>

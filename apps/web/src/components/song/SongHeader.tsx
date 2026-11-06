@@ -1,5 +1,5 @@
 import { Button, ButtonGroup, IconButton, Tooltip } from '@mui/material'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion } from 'motion/react'
 import { type FC, type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'

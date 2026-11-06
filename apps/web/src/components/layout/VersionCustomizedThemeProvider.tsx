@@ -3,7 +3,7 @@ import {
   Experimental_CssVarsProvider as CssVarsProvider,
   experimental_extendTheme as extendTheme,
 } from '@mui/material/styles'
-import { MotionConfig } from 'framer-motion'
+import { MotionConfig } from 'motion/react'
 import { type FC, type PropsWithChildren, useMemo } from 'react'
 import { useVersionTheme } from '../../utils/useVersionTheme'
 import { THEME_ATTRIBUTE, THEME_COLOR_SCHEME_STORAGE_KEY, THEME_MODE_STORAGE_KEY } from '@/setup/theme-script'
@@ -26,7 +26,7 @@ const alertTint = (color: string) => ({
 
 export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({ children }) => {
   const versionTheme = useVersionTheme()
-  // Under reduced motion, overlays fade instead of scaling or sliding; framer-motion follows the same preference
+  // Under reduced motion, overlays fade instead of scaling or sliding; Motion follows the same preference
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)', { noSsr: false })
 
   const theme = useMemo(() => {
