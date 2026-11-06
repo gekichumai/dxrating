@@ -8,6 +8,7 @@ import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { createRatingImportTracker } from '@/lib/analytics'
 import { parseRatingFile } from '@/models/scores/ratingEntriesFile'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
+import { reviewAndApplyImport } from '@/models/scores/importReview'
 
 export const ImportFromJSONButtonListItem: FC<{
   onClose: () => void
@@ -49,7 +50,17 @@ export const ImportFromJSONButtonListItem: FC<{
             try {
               if (!parsed.success) throw parsed.error
               const { entries } = parsed
-              await repository.applyImport(entries, { source: 'dxrating-json', mode: 'replace' })
+              const { applied } = await reviewAndApplyImport(
+                repository,
+                entries,
+                { source: 'dxrating-json', mode: 'replace' },
+                { trigger: 'manual' },
+              )
+              if (!applied) {
+                analytics.failed('cancelled_by_user')
+                toast(t('rating-calculator:io.import.review.cancelled'), { id: 'import-review-cancelled' })
+                return
+              }
               analytics.succeeded(entries.length)
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.json.success', { count: entries.length }))

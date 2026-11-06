@@ -36,6 +36,12 @@ vi.mock('../../global/preferences/LocaleSelector', () => ({
   LocaleSelector: () => <button type="button" aria-label="Language" />,
 }))
 
+// ThemeSelector needs MUI's CssVarsProvider; its own behaviour is not under test here
+vi.mock('../../global/preferences/ThemeSelector', () => ({
+  ThemeSelector: () => <button type="button" aria-label="Appearance" />,
+  DisplayPreferencesMenu: () => <button type="button" aria-label="Language and appearance" />,
+}))
+
 vi.mock('../../global/preferences/UserChip', () => ({
   UserChip: () => <button type="button" aria-label="User profile" />,
 }))
@@ -121,13 +127,13 @@ describe('TopBar', () => {
     ).toBe('/developers')
   })
 
-  it('uses a higher contrast version stamp over the themed header color', () => {
+  it('uses the primary text token for the version stamp on the tinted header', () => {
     render(
       <AppContextProvider>
         <TopBar />
       </AppContextProvider>,
     )
 
-    expect(screen.getByText(/v1\.6\.138/).className).toContain('text-black/75')
+    expect(screen.getByText(/v1\.6\.138/).className).toContain('text-fg-1')
   })
 })

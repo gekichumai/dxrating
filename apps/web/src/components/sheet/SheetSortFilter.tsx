@@ -11,16 +11,17 @@ import {
   DialogContentText,
   DialogTitle,
   Grow,
-  Paper,
 } from '@mui/material'
 import clsx from 'clsx'
-import { useReducedMotion } from 'framer-motion'
+import { MotionConfig, useReducedMotion } from 'framer-motion'
 import { type FC, useContext, useEffect, useId, useState, useTransition } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { useEffectOnce } from 'react-use'
 import MdiChevronDownIcon from '~icons/mdi/chevron-down'
 import MdiFilterIcon from '~icons/mdi/filter'
+import MdiInformationOutline from '~icons/mdi/information-outline'
+import MdiRestore from '~icons/mdi/restore'
 import { SheetDetailsContext } from '../../models/context/SheetDetailsContext'
 import type { FlattenedSheet } from '../../songs'
 import { SheetSortSelect } from './SheetSortSelect'
@@ -306,7 +307,15 @@ const SheetSortFilterFormReset: FC<{
         </DialogActions>
       </Dialog>
 
-      <Button variant="outlined" color="error" onClick={() => setOpenDialog(true)} size="small">
+      {/* Resetting is undoable by hand and confirmed first, so only the dialog's confirm button is red */}
+      <Button
+        variant="outlined"
+        color="inherit"
+        className="!border-black/25"
+        startIcon={<MdiRestore aria-hidden="true" />}
+        onClick={() => setOpenDialog(true)}
+        size="small"
+      >
         {t('sheet:sort-and-filter.reset.button')}
       </Button>
     </>
@@ -329,9 +338,12 @@ export const SheetSortFilterTrigger: FC<{
         variant="outlined"
         color="inherit"
         className={clsx(
-          'relative !min-h-[56px] !min-w-[6.25rem] shrink-0 !px-3 !py-1.5 !normal-case transition-[background-color,border-color,box-shadow] duration-150',
-          '!flex !items-center !justify-center gap-1.5 !text-zinc-900 shadow-sm backdrop-blur-sm',
-          expanded ? '!border-zinc-500 !bg-gray-200' : '!border-zinc-400/70 !bg-white/70 hover:!bg-white/90',
+          'relative !min-h-[56px] !min-w-[6.25rem] shrink-0 !px-3 !py-1.5 transition-[background-color,border-color] duration-150',
+          '!flex !items-center !justify-center gap-1.5 !text-fg-1 backdrop-blur-[12px] backdrop-saturate-150',
+          // Same material and edge as the search field beside it; open, it takes the accent tint and edge
+          expanded
+            ? '!border-accent-strong !bg-accent-subtle'
+            : '!border-black/25 !bg-[var(--glass-thin-bg)] hover:!border-black/60',
           className,
         )}
         aria-label={t('sheet:sort-and-filter.title')}
@@ -339,12 +351,13 @@ export const SheetSortFilterTrigger: FC<{
         aria-expanded={expanded}
         onClick={onToggle}
       >
-        <MdiFilterIcon className="h-5 w-5 shrink-0" />
-        <span className="flex flex-col text-left text-[0.7rem] font-bold leading-[0.9rem] tracking-normal">
+        <MdiFilterIcon aria-hidden="true" className="h-5 w-5 shrink-0" />
+        <span className="flex flex-col text-left text-xs font-semibold leading-tight">
           <span className="whitespace-nowrap">{t('sheet:filter.title')}</span>
           <span className="whitespace-nowrap">{t('sheet:sort.title')}</span>
         </span>
         <MdiChevronDownIcon
+          aria-hidden="true"
           className={clsx(
             'h-4 w-4 shrink-0 motion-safe:transition-transform duration-300',
             expanded && 'transform rotate-180',
@@ -359,17 +372,18 @@ export const SheetSortFilterTrigger: FC<{
     <ButtonBase
       className={clsx(
         'px-4 w-full flex items-center transition-[background-color,padding] duration-300 motion-reduce:transition-[background-color]',
-        expanded ? 'bg-gray-200 py-4' : 'bg-gray-100 py-3',
+        expanded ? 'bg-accent-subtle py-4' : 'hover:bg-black/4 py-3',
         className,
       )}
       aria-controls={contentId}
       aria-expanded={expanded}
       onClick={onToggle}
     >
-      <div className="text-xl font-bold tracking-tight leading-none">{t('sheet:sort-and-filter.title')}</div>
+      <div className="text-xl font-semibold leading-none">{t('sheet:sort-and-filter.title')}</div>
       {pending && <CircularProgress disableShrink className="ml-2 !h-4 !w-4" />}
       <div className="flex-1" />
       <MdiChevronDownIcon
+        aria-hidden="true"
         className={clsx('w-6 h-6 motion-safe:transition-transform', expanded && 'transform rotate-180')}
       />
     </ButtonBase>
@@ -435,9 +449,12 @@ const SheetSortFilterFormContent: FC<{
   )
 
   const collapsibleInner = (
-    <div className="p-2 w-full flex flex-col gap-4">
-      <div className="p-2 flex flex-col gap-4">
-        <div className="flex">
+    <div className="p-4 w-full flex flex-col gap-6">
+      <section className="flex flex-col gap-4" aria-labelledby={`${resolvedContentId}-filter`}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 id={`${resolvedContentId}-filter`} className="m-0 text-xl font-semibold leading-tight">
+            {t('sheet:filter.title')}
+          </h2>
           <SheetSortFilterFormReset
             onReset={() => {
               reset(getDefaultSheetSortFilterForm())
@@ -445,11 +462,7 @@ const SheetSortFilterFormContent: FC<{
             }}
           />
         </div>
-
-        <div className="text-xl font-bold tracking-tighter">
-          <span className="whitespace-nowrap">{t('sheet:filter.title')}</span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
           <SheetTagFilter control={control} reset={() => resetByFilter('tags')} />
           <SheetInternalLevelFilter control={control} reset={() => resetByFilter('internalLevelValue')} />
           <SheetCategoryFilter control={control} reset={() => resetByFilter('categories')} />
@@ -457,32 +470,37 @@ const SheetSortFilterFormContent: FC<{
           <SheetVersionFilter control={control} reset={() => resetByFilter('versions')} />
           <SheetFavoritesFilter control={control} reset={() => resetByFilter('favoritesOnly')} />
         </div>
-      </div>
+      </section>
 
-      <div
-        className={clsx(
-          'p-2 flex flex-col gap-4 rounded-lg',
-          queryActive && 'bg-gray-200 pointer-events-none saturation-0 shadow-[inset_0_1px_8px] shadow-gray-300',
-        )}
-      >
-        <div className="text-xl font-bold tracking-tighter flex items-center">
-          <div className="whitespace-nowrap leading-none">{t('sheet:sort.title')}</div>
+      <div className="h-px w-full bg-[var(--glass-border)]" />
+
+      <section className="flex flex-col gap-4" aria-labelledby={`${resolvedContentId}-sort`}>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h2 id={`${resolvedContentId}-sort`} className="m-0 text-xl font-semibold leading-tight">
+            {t('sheet:sort.title')}
+          </h2>
           {queryActive && (
-            <div className="px-1.5 py-1 rounded-md bg-gray-200 text-xs ml-2 leading-tight tracking-tight text-zinc-600 shadow-[0_1px_8px] shadow-gray-300">
+            <p className="m-0 inline-flex items-center gap-1 text-sm text-fg-2">
+              <MdiInformationOutline aria-hidden="true" className="shrink-0" />
               {t('sheet:sort.temporarily-disabled')}
-            </div>
+            </p>
           )}
         </div>
-        <SheetSortSelect control={control} />
-      </div>
+        {/* A search orders results by relevance and ignores the sort, so the controls are inert until it is cleared */}
+        <div inert={queryActive} className={clsx(queryActive && 'opacity-50')}>
+          <SheetSortSelect control={control} />
+        </div>
+      </section>
     </div>
   )
 
   return (
-    <>
+    // Under reduced motion the sort and slider springs become instant
+    <MotionConfig reducedMotion="user">
       {import.meta.env.DEV && <DevTool control={control} />}
       {showDefaultTrigger ? (
-        <Paper className="w-full flex flex-col overflow-hidden">
+        // The page panel material, not the overlay Paper: this sits in the page flow
+        <div className="glass w-full flex flex-col overflow-hidden">
           <SheetSortFilterTrigger
             expanded={expanded}
             contentId={resolvedContentId}
@@ -495,16 +513,16 @@ const SheetSortFilterFormContent: FC<{
               {collapsibleInner}
             </div>
           </Collapse>
-        </Paper>
+        </div>
       ) : (
         <Collapse className="w-full" in={expanded} timeout={collapseTimeout} unmountOnExit>
-          <Paper className="w-full flex flex-col overflow-hidden">
+          <div className="glass w-full flex flex-col overflow-hidden">
             <div id={resolvedContentId} className={contentMotionClassName}>
               {collapsibleInner}
             </div>
-          </Paper>
+          </div>
         </Collapse>
       )}
-    </>
+    </MotionConfig>
   )
 }

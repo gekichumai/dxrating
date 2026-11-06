@@ -19,6 +19,9 @@ vi.mock('@tanstack/react-router', () => ({
     useParams: () => routeState.params,
   }),
   useNavigate: () => routeState.navigate,
+  Link: ({ children, params, to }: { children: React.ReactNode; params: { songId: string }; to: string }) => (
+    <a href={to.replace('$songId', params.songId)}>{children}</a>
+  ),
 }))
 
 vi.mock('@/models/context/useAppContext', () => ({
@@ -41,6 +44,11 @@ vi.mock('@/components/song/SongSheetContent', () => ({
   SongSheetContent: ({ sheet }: { sheet: { difficulty: string } }) => (
     <section data-testid="sheet-content">{sheet.difficulty}</section>
   ),
+  SongSheetSummary: () => <div data-testid="sheet-summary" />,
+}))
+
+vi.mock('@/components/tools/ToleranceCalculator', () => ({
+  ToleranceCalculator: () => <section data-testid="tolerance-calculator" />,
 }))
 
 describe('SongPage', () => {
@@ -63,6 +71,16 @@ describe('SongPage', () => {
   it('uses the home page (chart search) as the client fallback for the back link', () => {
     const { container } = render(<SongPage />)
 
-    expect(container.querySelector('a')?.getAttribute('href')).toBe('/')
+    const back = container.querySelector('a')
+    expect(back?.getAttribute('href')).toBe('/')
+    expect(back?.getAttribute('aria-label')).toBe('Back')
+  })
+
+  it('links to the song hub instead of repeating the all-charts table', () => {
+    render(<SongPage />)
+
+    const hubLink = screen.getByRole('link', { name: /All charts of this song/ })
+    expect(hubLink.getAttribute('href')).toBe('/songs/dsng_d3kkdkrcqj')
+    expect(screen.queryByRole('table')).toBeNull()
   })
 })

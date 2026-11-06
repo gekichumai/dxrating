@@ -2,11 +2,16 @@ import { DifficultyEnum, type Song, TypeEnum } from '@gekichumai/dxdata'
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 import { getCatalogDocument } from '@/catalog/catalogSource'
 import { findSongById, resolveSongRouteParam } from '@/catalog/songLookup'
-import { keepLocaleSearch } from '@/setup/locale'
+import { type SupportedLocale, keepLocaleSearch, toSupportedLocale } from '@/setup/locale'
+import { SongHubPage } from '@/pages/SongHubPage'
+import { createServerI18n } from '@/setup/init-i18n'
+import { getSearchAcronymsWithServerAliases } from '@/songs'
+import { buildSongHubSeo, formatSeoTitle, resolveSeoLocale } from '@/utils/seo'
 
 type SongSearchParams = {
   type?: string
   difficulty?: string
+  locale?: SupportedLocale
 }
 
 export const LEGACY_SONG_ROUTE_REDIRECT_STATUS_CODE = 308
@@ -69,21 +74,66 @@ export const resolveLegacySongRouteRedirect = (
   }
 }
 
+/** Old `?type=&difficulty=` links still go to that chart; a bare `/songs/<id>` renders the hub */
+export const hasLegacySheetQuery = (search: SongSearchParams) => Boolean(search.type || search.difficulty)
+
+/** A legacy song ID moves to its public ID's hub, keeping the locale variant */
+export const resolveLegacySongHubRedirect = (redirectSongId: string, currentSearch?: unknown) => ({
+  to: '/songs/$songId' as const,
+  params: { songId: redirectSongId },
+  ...keepLocaleSearch(currentSearch),
+  statusCode: LEGACY_SONG_ROUTE_REDIRECT_STATUS_CODE,
+  replace: true,
+})
+
 export const Route = createFileRoute('/songs_/$songId')({
   ssr: true,
   validateSearch: (search: Record<string, unknown>): SongSearchParams => ({
     type: typeof search.type === 'string' ? search.type : undefined,
     difficulty: typeof search.difficulty === 'string' ? search.difficulty : undefined,
+    locale: toSupportedLocale(typeof search.locale === 'string' ? search.locale : undefined) ?? undefined,
   }),
   beforeLoad: async ({ params, search, location }) => {
     const catalogDocument = await getCatalogDocument()
     const resolution = await resolveSongRouteParam(catalogDocument, params.songId)
-    const song =
-      resolution && ('song' in resolution ? resolution.song : findSongById(catalogDocument, resolution.redirectSongId))
-    if (!song) {
+    if (!resolution) {
       throw notFound()
     }
-
-    throw redirect(resolveLegacySongRouteRedirect(song, search.type, search.difficulty, location.search))
+    if (hasLegacySheetQuery(search)) {
+      const song = 'song' in resolution ? resolution.song : findSongById(catalogDocument, resolution.redirectSongId)
+      if (!song) throw notFound()
+      throw redirect(resolveLegacySongRouteRedirect(song, search.type, search.difficulty, location.search))
+    }
+    if ('redirectSongId' in resolution) {
+      throw redirect(resolveLegacySongHubRedirect(resolution.redirectSongId, location.search))
+    }
   },
+  loader: async ({ params }) => {
+    const resolution = await resolveSongRouteParam(await getCatalogDocument(), params.songId)
+    if (!resolution || !('song' in resolution)) {
+      throw notFound()
+    }
+    const { song } = resolution
+    // The song is the page's catalog slice: SSR and hydration render it before the complete catalog loads
+    return { song, catalogSongs: [song] }
+  },
+  head: ({ loaderData, match, matches }) => {
+    const locale = resolveSeoLocale([match, ...matches])
+    const song = loaderData?.song
+    if (!song) {
+      return { meta: [{ title: formatSeoTitle(createServerI18n(locale).t('song:not-found.title')) }] }
+    }
+    const seo = buildSongHubSeo(
+      {
+        ...song,
+        aliases: getSearchAcronymsWithServerAliases({ songId: song.id, searchAcronyms: song.searchAcronyms }),
+      },
+      locale,
+    )
+    return {
+      meta: seo.meta,
+      scripts: [{ type: 'application/ld+json', children: JSON.stringify(seo.structuredData) }],
+    }
+  },
+  component: SongHubPage,
 })

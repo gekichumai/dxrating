@@ -1,4 +1,4 @@
-import { Alert, AlertTitle, Button, Dialog, DialogActions, DialogContent, DialogTitle, Grow } from '@mui/material'
+import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
 import { type FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { captureAnalyticsEvent } from '@/lib/analytics'
@@ -12,13 +12,10 @@ export const ClearButton: FC = () => {
 
   return (
     <>
-      <Dialog TransitionComponent={Grow} open={dialogOpen} onClose={() => setDialogOpen(false)}>
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
         <DialogTitle>{t('rating-calculator:io.clear.dialog.title')}</DialogTitle>
         <DialogContent className="min-w-[20rem]">
-          <Alert severity="warning">
-            <AlertTitle>{t('rating-calculator:io.clear.dialog.warning')}</AlertTitle>
-            {t('rating-calculator:io.clear.dialog.message')}
-          </Alert>
+          <Alert severity="warning">{t('rating-calculator:io.clear.dialog.message', { count: entries.length })}</Alert>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>{t('rating-calculator:io.clear.dialog.cancel')}</Button>

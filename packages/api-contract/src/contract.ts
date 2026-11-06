@@ -12,6 +12,13 @@ export const LocalizedStringSchema = z
   .record(z.string(), z.string())
   .describe('Localized string. Keys are language codes: "en", "ja", "zh-Hans", "zh-Hant"')
 
+export const MaimaiNetRegionStatusSchema = z.object({
+  status: z.enum(['ok', 'maintenance', 'unknown']),
+  checkedAt: z.string(),
+})
+export const MaimaiNetStatusSchema = z.object({ intl: MaimaiNetRegionStatusSchema, jp: MaimaiNetRegionStatusSchema })
+export type MaimaiNetStatus = z.infer<typeof MaimaiNetStatusSchema>
+
 export const TagSchema = z.object({
   id: z.number(),
   localized_name: LocalizedStringSchema,
@@ -402,6 +409,20 @@ export const publicContractRoutes = {
       )
       .input(ArcadeVenueDetailInputSchema)
       .output(ArcadeVenueSchema),
+  },
+  maimaiNet: {
+    // Anonymous: whether SEGA's login pages are up, so the import UI can warn before anyone types credentials
+    status: oc
+      .meta(
+        openapi({
+          method: 'GET',
+          path: '/io/import/maimai-net/status',
+          summary: 'Whether each maimai NET region is reachable or under SEGA maintenance',
+          tags: ['Import'],
+          spec: (spec) => ({ ...spec, security: [] }),
+        }),
+      )
+      .output(MaimaiNetStatusSchema),
   },
   lxns: {
     authorize: oc

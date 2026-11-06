@@ -2,6 +2,7 @@ import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import IconMdiConnection from '~icons/mdi/connection'
 import { ImportRegionSupportTag } from './ImportRegionSupportTag'
+import { useMaimaiNetStatus } from './useMaimaiNetStatus'
 
 interface AchievementRecord {
   sheet: {
@@ -29,6 +30,8 @@ export type RecentRecord = AchievementRecord & {
 
 export const ImportFromNETRecordsListItem = ({ onSelect }: { onSelect: () => void }) => {
   const { t } = useTranslation(['rating-calculator'])
+  // The menu mounts this only while it is open
+  const maintenance = useMaimaiNetStatus(true)
   return (
     <MenuItem className="max-w-xl" onClick={onSelect}>
       <ListItemIcon>
@@ -37,10 +40,10 @@ export const ImportFromNETRecordsListItem = ({ onSelect }: { onSelect: () => voi
       <ListItemText
         primary={t('rating-calculator:io.import.net-records.title')}
         secondary={
-          <div className="flex gap-1">
-            <ImportRegionSupportTag region="intl" />
-            <ImportRegionSupportTag region="jp" />
-          </div>
+          <span className="flex gap-1">
+            <ImportRegionSupportTag region="intl" maintenance={maintenance.intl} />
+            <ImportRegionSupportTag region="jp" maintenance={maintenance.jp} />
+          </span>
         }
       />
     </MenuItem>

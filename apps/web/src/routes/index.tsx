@@ -6,6 +6,8 @@ import { resolveLegacySongId } from '@/catalog/songLookup'
 import type { Song } from '@gekichumai/dxdata'
 import { getSheetListFirstScreenSongs, SheetList } from '@/pages/SheetList'
 import { buildSearchSeo, resolveSeoLocale } from '@/utils/seo'
+import { HomeHub } from '@/components/home/HomeHub'
+import { buildHomeRecentSongs, type HomeRecentSong } from '@/components/home/homeModules'
 import {
   buildSearchQuerySeedSheets,
   SEARCH_QUERY_MAX_LENGTH,
@@ -23,6 +25,8 @@ type SearchLoaderData = {
   seedSheets: SearchQuerySeedSheet[]
   /** The page's catalog slice: the songs of the default list's first rows */
   catalogSongs: Song[]
+  /** Hub module: newest songs (user-agnostic, rendered during SSR) */
+  recentSongs: HomeRecentSong[]
 }
 
 const searchString = (value: unknown) => {
@@ -41,9 +45,13 @@ const searchString = (value: unknown) => {
 
 export const loadSearchRouteData = async ({ q }: SearchParams): Promise<SearchLoaderData> => {
   const document = await getCatalogDocument()
-  if (q) return { seedSheets: buildSearchQuerySeedSheets(q, document), catalogSongs: [] }
+  if (q) return { seedSheets: buildSearchQuerySeedSheets(q, document), catalogSongs: [], recentSongs: [] }
   // Only server renders (and the hydration that follows) render from the slice; the browser has the complete catalog
-  return { seedSheets: [], catalogSongs: import.meta.env.SSR ? getSheetListFirstScreenSongs(document) : [] }
+  return {
+    seedSheets: [],
+    catalogSongs: import.meta.env.SSR ? getSheetListFirstScreenSongs(document) : [],
+    recentSongs: buildHomeRecentSongs(document),
+  }
 }
 
 export const validateSearchParams = (search: Record<string, unknown>): SearchParams => ({
@@ -85,5 +93,10 @@ export const Route = createFileRoute('/')({
 function SearchRouteComponent() {
   const loaderData = Route.useLoaderData() as SearchLoaderData | undefined
 
-  return <SheetList seedSheets={loaderData?.seedSheets ?? []} />
+  return (
+    <SheetList
+      seedSheets={loaderData?.seedSheets ?? []}
+      hub={<HomeHub recentSongs={loaderData?.recentSongs ?? []} />}
+    />
+  )
 }

@@ -115,7 +115,7 @@ describe('TrendingPage', () => {
     expect(html).toContain('itemType="https://schema.org/ListItem"')
     expect(html).toContain('itemType="https://schema.org/MusicRecording"')
     expect(html).toContain('Song A')
-    expect(html).not.toContain('Loading trending charts...')
+    expect(html).not.toContain('Loading trending charts…')
   })
 
   it('does not seed React Query initialData while rendering on the server', () => {
@@ -151,8 +151,8 @@ describe('TrendingPage', () => {
 
     render(<TrendingPage />)
 
-    expect(screen.queryByText('Loading trending charts...')).toBeNull()
-    expect(screen.getByRole('status', { name: 'Loading trending charts...' })).toBeTruthy()
+    expect(screen.queryByText('Loading trending charts…')).toBeNull()
+    expect(screen.getByRole('status', { name: 'Loading trending charts…' })).toBeTruthy()
     expect(document.querySelectorAll('.MuiSkeleton-root').length).toBeGreaterThan(0)
     expect(mocks.buildTrendingChartLinks).not.toHaveBeenCalled()
   })

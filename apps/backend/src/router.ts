@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/node'
 import { ORPCError, implement } from '@orpc/server'
 import { appContract } from './contract'
 import { Database } from './db/index'
-import { Clock, Data, Duration, Effect, Schema } from 'effect'
+import { Clock, Data, Duration, Effect, Schema, Semaphore } from 'effect'
 import { HttpBody, HttpClientResponse } from 'effect/http'
 import type { RequestHeadersHandlerPluginContext, ResponseHeadersHandlerPluginContext } from '@orpc/server/plugins'
 import type { ApplicationServices } from './runtime'
@@ -430,7 +430,8 @@ const aliasesHandler = {
   ),
 }
 
-import { withMaimaiNETClient } from './lib/functions/client'
+import { netGatewayStatusEffect, withMaimaiNETClient, type NetGatewayStatus } from './lib/functions/client'
+import { recordNetFailure, recordNetSuccess } from './services/functions/fetch-net-records/telemetry'
 import * as lxnsService from './services/lxns/index'
 
 const TrendingSeriesSchema = Schema.Struct({
@@ -859,7 +860,8 @@ const maimaiHandler = {
   fetchRecords: os.maimai.fetchRecords.handler(
     handlerGen(function* ({ input }) {
       const { id, password, region } = input
-      return yield* withMaimaiNETClient(region, (client) =>
+      const startedAt = yield* Clock.currentTimeMillis
+      const records = yield* withMaimaiNETClient(region, (client) =>
         Effect.gen(function* () {
           yield* client.loginEffect({ id, password })
           const [recentRecords, musicRecords] = yield* Effect.all(
@@ -868,7 +870,49 @@ const maimaiHandler = {
           )
           return { recentRecords, musicRecords }
         }),
+      ).pipe(Effect.tapError((error) => Effect.sync(() => recordNetFailure(region, 'api', error))))
+      const finishedAt = yield* Clock.currentTimeMillis
+      yield* Effect.sync(() =>
+        recordNetSuccess(region, 'api', {
+          durationMs: finishedAt - startedAt,
+          recent: records.recentRecords.length,
+          music: records.musicRecords.length,
+        }),
       )
+      return records
+    }),
+  ),
+}
+
+// One probe per region at a time: concurrent callers on a cold or expired cache wait for it and read its result
+const netStatusProbeLocks = { intl: Semaphore.makeUnsafe(1), jp: Semaphore.makeUnsafe(1) }
+
+const maimaiNetHandler = {
+  // The import UI warns before people try while SEGA's maintenance is on. Checked at most every 5 minutes per region,
+  // with one anonymous request to the login page.
+  status: os.maimaiNet.status.handler(
+    handlerGen(function* () {
+      const cache = yield* ApplicationCache
+      const regionStatus = Effect.fn('Maimai.netStatus')(function* (region: 'intl' | 'jp') {
+        const key = `net-status:${region}`
+        type Cached = { status: NetGatewayStatus; checkedAt: string }
+        const cached = yield* cache.get<Cached>(key)
+        if (cached) return cached
+        return yield* Semaphore.withPermit(
+          netStatusProbeLocks[region],
+          Effect.gen(function* () {
+            const settled = yield* cache.get<Cached>(key)
+            if (settled) return settled
+            const status = yield* netGatewayStatusEffect(region)
+            const checkedAt = new Date(yield* Clock.currentTimeMillis).toISOString()
+            const result: Cached = { status, checkedAt }
+            yield* cache.set(key, result, 5 * 60 * 1000)
+            return result
+          }),
+        )
+      })
+      const [intl, jp] = yield* Effect.all([regionStatus('intl'), regionStatus('jp')], { concurrency: 'unbounded' })
+      return { intl, jp }
     }),
   ),
 }
@@ -956,6 +1000,7 @@ export const appRouter = os.router({
   arcades: arcadesHandler,
   chartOgImage: chartOgImageHandler,
   maimai: maimaiHandler,
+  maimaiNet: maimaiNetHandler,
   lxns: lxnsHandler,
   features: featuresHandler,
   cloudSave: cloudSaveHandler,
