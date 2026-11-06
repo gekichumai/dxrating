@@ -42,12 +42,9 @@ const findDialogSheet = (
   if (!song || !sheet) return undefined
   return {
     song: { title: song.title },
-    sheet: {
-      type: sheet.type,
-      difficulty: sheet.difficulty,
-      level: sheet.level,
-      internalLevelValue: sheet.internalLevelValue,
-    },
+    // No internal level: the dialog shows the one of the visitor's game version (multiver), which only the client
+    // knows, so the title names the chart and its level and leaves the constant to the dialog
+    sheet: { type: sheet.type, difficulty: sheet.difficulty, level: sheet.level },
   }
 }
 
