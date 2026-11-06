@@ -1,5 +1,6 @@
 import type { Named } from '@gdp-ts/core'
-import type { ViewerIs } from '../../proofs/viewer-is'
+import { Effect } from 'effect'
+import { viewerId, type ViewerIs } from '../../proofs/viewer-is'
 import * as lxns from './index'
 
 /*
@@ -12,20 +13,21 @@ import * as lxns from './index'
 
 export { LxnsError, LxnsStateMismatch } from './index'
 
-export const generateAuthorizationUrl = <U>(viewer: Named<U, string>, _proof: ViewerIs<U>) =>
-  lxns.generateAuthorizationUrl(viewer.value)
+export const generateAuthorizationUrl = <U>(viewer: Named<U, string>, proof: ViewerIs<U>) =>
+  Effect.suspend(() => lxns.generateAuthorizationUrl(viewerId(viewer, proof)))
 
 /** Saves tokens only when `state` was issued to the viewer; the state is consumed either way. */
-export const completeAuthorization = <U>(viewer: Named<U, string>, _proof: ViewerIs<U>, code: string, state: string) =>
-  lxns.completeAuthorization(viewer.value, code, state)
+export const completeAuthorization = <U>(viewer: Named<U, string>, proof: ViewerIs<U>, code: string, state: string) =>
+  Effect.suspend(() => lxns.completeAuthorization(viewerId(viewer, proof), code, state))
 
 /** Without a viewer: consumes `state`, saves nothing, and fails with `LxnsStateMismatch` (`signedIn: false`). */
 export const discardAuthorization = (code: string, state: string) => lxns.completeAuthorization(undefined, code, state)
 
-export const getConnectionStatus = <U>(viewer: Named<U, string>, _proof: ViewerIs<U>) =>
-  lxns.getConnectionStatus(viewer.value)
+export const getConnectionStatus = <U>(viewer: Named<U, string>, proof: ViewerIs<U>) =>
+  Effect.suspend(() => lxns.getConnectionStatus(viewerId(viewer, proof)))
 
-export const fetchPlayerScores = <U>(viewer: Named<U, string>, _proof: ViewerIs<U>) =>
-  lxns.fetchPlayerScores(viewer.value)
+export const fetchPlayerScores = <U>(viewer: Named<U, string>, proof: ViewerIs<U>) =>
+  Effect.suspend(() => lxns.fetchPlayerScores(viewerId(viewer, proof)))
 
-export const disconnect = <U>(viewer: Named<U, string>, _proof: ViewerIs<U>) => lxns.disconnect(viewer.value)
+export const disconnect = <U>(viewer: Named<U, string>, proof: ViewerIs<U>) =>
+  Effect.suspend(() => lxns.disconnect(viewerId(viewer, proof)))

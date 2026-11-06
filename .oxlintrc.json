@@ -78,7 +78,7 @@
       }
     },
     {
-      "files": ["apps/backend/src/services/lxns/**", "apps/backend/src/test/**"],
+      "files": ["apps/backend/src/services/lxns/**"],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -112,6 +112,22 @@
               {
                 "regex": "(^|/)lxns(/index)?(\\.ts)?$",
                 "message": "Use services/lxns/viewer: its functions demand a ViewerIs proof (gdp-ts)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/backend/src/test/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
               }
             ]
           }

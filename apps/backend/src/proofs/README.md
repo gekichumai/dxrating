@@ -24,6 +24,10 @@ raw id, another user's proof or no proof is a type error. The pattern and its li
 literal nor a spread copy with another `id` type-checks. Only `viewerFromSession` makes one, and oxlint
 (`no-restricted-imports` with `importNames`) allows importing it in `app.ts` alone, where the request's session is read.
 
+`Named` itself is structural, so a spread copy (`{ ...viewer, value: input.userId }`) still type-checks. The facade
+therefore reads the id through `viewerId(viewer, proof)`, which accepts only the exact value `withViewer` handed out
+(a module-private `WeakSet`) and throws otherwise (`src/test/viewer-is.test.ts`).
+
 `services/lxns/index.ts` keeps the raw `userId: string` implementations. oxlint allows imports of it (any spelling:
 `./lxns`, `./lxns/index`, `./lxns/index.ts`) only from `services/lxns/` and tests.
 

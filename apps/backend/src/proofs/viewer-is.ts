@@ -29,7 +29,22 @@ export function viewerFromSession(user: SessionUser): SessionViewer {
   return new SessionViewer(user.id)
 }
 
+/**
+ * The `Named` values `withViewer` handed out. `Named` is structural, so `{ ...viewer, value: input.userId }` keeps the
+ * proof-compatible type; `viewerId` rejects such a copy at runtime (TypeScript cannot, see gdp-ts limits).
+ */
+const namedViewers = new WeakSet<object>()
+
 /** Names the viewer's id and proves it is the viewer, for `k` only. */
 export function withViewer<R>(viewer: SessionViewer, k: <U>(viewer: Named<U, string>, proof: ViewerIs<U>) => R): R {
-  return name(viewer.id, (named) => k(named, ViewerIs.prove(named)))
+  return name(viewer.id, (named) => {
+    namedViewers.add(named)
+    return k(named, ViewerIs.prove(named))
+  })
+}
+
+/** The proved viewer's id. Throws (a defect) for a `Named` that `withViewer` did not hand out, such as a spread copy. */
+export function viewerId<U>(viewer: Named<U, string>, _proof: ViewerIs<U>): string {
+  if (!namedViewers.has(viewer)) throw new Error('ViewerIs: this viewer was not named by withViewer')
+  return viewer.value
 }
