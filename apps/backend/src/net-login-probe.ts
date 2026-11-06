@@ -12,8 +12,9 @@ import { lookup } from 'node:dns/promises'
 import { createInterface } from 'node:readline/promises'
 import { Writable } from 'node:stream'
 import { fetch } from 'undici'
-import { MaimaiNETIntlClient, MaimaiNETJpClient, NetImportError } from './lib/functions/client'
+import { MaimaiNETIntlClient, MaimaiNETJpClient } from './lib/functions/client'
 import { URLS } from './lib/functions/URLS'
+import { describeProbeResult, type ProbeResult } from './net-login-probe-output'
 
 type Region = 'intl' | 'jp'
 
@@ -126,36 +127,19 @@ async function main() {
   console.log(`maimai NET login probe (${region}) at ${new Date().toISOString()}`)
   await network(region)
 
-  let [id = '', password = ''] = await askHidden(['SEGA ID (hidden): ', 'Password (hidden): '])
-  const scrub = (text: string) => (id ? text.split(id).join('[id]') : text).replace(/\?[^\s"]*/g, '?…')
-
+  const [id = '', password = ''] = await askHidden(['SEGA ID (hidden): ', 'Password (hidden): '])
   const client = region === 'intl' ? new TracedIntlClient() : new TracedJpClient()
   console.log('requests:')
-  const result = await Effect.runPromise(
+  const result: ProbeResult = await Effect.runPromise(
     Effect.gen(function* () {
       yield* client.loginEffect({ id, password })
       const recent = yield* client.fetchRecentRecordsEffect()
       return { ok: true as const, recent: recent.length }
     }).pipe(Effect.catch((error: unknown) => Effect.succeed({ ok: false as const, error }))),
   )
-  id = ''
-  password = ''
-
-  if (result.ok) {
-    console.log(`RESULT: success, logged in and read ${result.recent} recent records`)
-    return
-  }
-  const { error } = result
-  if (error instanceof NetImportError) {
-    console.log(
-      `RESULT: ${error.code} step=${error.step ?? '-'} net_error_code=${error.netErrorCode ?? '-'} message=${JSON.stringify(scrub(error.message))} upstream=${JSON.stringify(error.upstreamMessage ?? '-')}`,
-    )
-  } else {
-    const field = (name: string): unknown => (typeof error === 'object' && error ? Reflect.get(error, name) : undefined)
-    const cause = field('cause')
-    const detail = cause instanceof Error ? `${cause.name}: ${cause.message}` : String(cause ?? error)
-    console.log(`RESULT: ${String(field('_tag') ?? 'error')} ${String(field('operation') ?? '')} ${scrub(detail)}`)
-  }
+  // sanitised while the submitted ID is still known; nothing keeps the answers after main returns
+  console.log(describeProbeResult(result, id))
+  if (result.ok) return
   process.exitCode = 1
 }
 
