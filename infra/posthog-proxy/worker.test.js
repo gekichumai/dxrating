@@ -72,6 +72,25 @@ test('no-Origin gzip JSON with the token is forwarded with encoded bytes and hea
   assert.equal(forwarded[0].headers.get('content-encoding'), 'gzip')
 })
 
+test('no-Origin posthog-ios gzip batch is forwarded unchanged', async () => {
+  // Shape posthog-ios sends to /batch/: gzip JSON with api_key, batch and sent_at.
+  const events = Array.from({ length: 50 }, (_, i) => ({
+    event: 'screen_viewed',
+    distinct_id: 'demo-device',
+    timestamp: '2026-11-06T00:00:00.000Z',
+    uuid: `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+    properties: { $lib: 'posthog-ios', $lib_version: '3.0.0', $screen_name: 'RatingCalculator', $os: 'iOS' },
+  }))
+  const gz = gzipSync(JSON.stringify({ api_key: TOKEN, batch: events, sent_at: '2026-11-06T00:00:01.000Z' }))
+  const headers = { 'content-encoding': 'gzip', 'content-type': 'application/json', 'user-agent': 'posthog-ios/3.0.0' }
+  const res = await worker.fetch(post(gz, headers), {}, {})
+  assert.equal(res.status, 200)
+  assert.equal(forwarded.length, 1)
+  assert.equal(forwarded[0].url, 'https://us.i.posthog.com/batch/')
+  assert.deepEqual(forwarded[0].body, new Uint8Array(gz))
+  for (const [name, value] of Object.entries(headers)) assert.equal(forwarded[0].headers.get(name), value)
+})
+
 test('no-Origin form body with the token is forwarded', async () => {
   const body = 'data=' + encodeURIComponent(btoa(JSON.stringify({ token: TOKEN })))
   const res = await worker.fetch(post(body, { 'content-type': 'application/x-www-form-urlencoded' }), {}, {})
