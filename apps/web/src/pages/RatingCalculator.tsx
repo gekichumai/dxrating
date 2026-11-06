@@ -629,9 +629,14 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
   useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel || typeof IntersectionObserver === 'undefined') return
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry) setHeaderStuck(!entry.isIntersecting && entry.boundingClientRect.top < 0)
-    })
+    // The root reaches far below the viewport, so the sentinel counts as intersecting anywhere from the top edge down.
+    // Crossing the top edge is then the only transition, and a scroll jump past the whole viewport still reports it.
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry) setHeaderStuck(!entry.isIntersecting && entry.boundingClientRect.top < 0)
+      },
+      { rootMargin: '0px 0px 1000000px 0px' },
+    )
     observer.observe(sentinel)
     return () => observer.disconnect()
   }, [])
