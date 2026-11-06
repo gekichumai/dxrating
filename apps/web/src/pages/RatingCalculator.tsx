@@ -38,9 +38,8 @@ import {
   type TableProps,
   TableVirtuoso,
 } from 'react-virtuoso'
-import IconMdiArrowDown from '~icons/mdi/arrow-down'
+import IconMdiChevronDown from '~icons/mdi/chevron-down'
 import IconMdiTrashCan from '~icons/mdi/trash-can'
-import { BetaBadge } from '../components/global/BetaBadge'
 import {
   type ComboFlag,
   type PlayEntry,
@@ -79,13 +78,19 @@ export interface Entry {
 }
 
 /** Row heights in px: denser on desktop, where the table has the width to keep each row on one line */
-const ROW_HEIGHTS = {
-  comfortable: { base: 88, desktop: 56 },
-  compact: { base: 72, desktop: 44 },
-} as const
+const ROW_HEIGHTS = { base: 88, desktop: 56 } as const
 
 /** The desktop breakpoint of rating-table.css; keep the two in sync */
 const DESKTOP_QUERY = '(min-width: 1024px)'
+
+const DEFAULT_SORTING: SortingState = [
+  { id: 'includedIn', desc: true },
+  { id: 'rating', desc: true },
+]
+
+const isDefaultSorting = (sorting: SortingState) =>
+  sorting.length === DEFAULT_SORTING.length &&
+  sorting.every((sort, index) => sort.id === DEFAULT_SORTING[index]?.id && sort.desc === DEFAULT_SORTING[index]?.desc)
 
 const columnHelper = createColumnHelper<Entry>()
 
@@ -141,8 +146,13 @@ const RatingCalculatorRowActions: FC<{
   )
 }
 
+// The table sits on the records panel's glass: Paper is themed as a glass overlay, so clear its border and blur too,
+// or a second box (with its own edge under the add form) shows inside the panel
 const TransparentPaper = styled(Paper)(() => ({
   backgroundColor: 'transparent',
+  backdropFilter: 'none',
+  WebkitBackdropFilter: 'none',
+  border: 0,
   boxShadow: 'none',
 }))
 
@@ -153,7 +163,6 @@ export const RatingCalculator = () => {
   const [showOnlyB50, setShowOnlyB50] = useState(false)
   const ratingView = useRatingView()
   const navigate = useNavigate()
-  const [compactMode, setCompactMode] = useState(false)
   const { t } = useTranslation(['rating-calculator'])
 
   const { allEntries } = useRatingEntries()
@@ -211,7 +220,7 @@ export const RatingCalculator = () => {
         </div>
       </div>
 
-      <div className={clsx('glass rating-records w-full', compactMode && 'rating-records--compact')}>
+      <div className="glass rating-records w-full">
         <div className="rating-table-controls" role="group" aria-label={t('rating-calculator:quick-actions.title')}>
           <FormControlLabel
             control={
@@ -229,28 +238,6 @@ export const RatingCalculator = () => {
               />
             }
             label={t('rating-calculator:quick-actions.show-only-b50')}
-          />
-
-          <FormControlLabel
-            control={
-              <Switch
-                sx={switchFocusRing}
-                checked={compactMode}
-                onChange={() => {
-                  const enabled = !compactMode
-                  setCompactMode(enabled)
-                  captureAnalyticsEvent('rating_calculator_view_changed', {
-                    setting: 'compact_mode',
-                    enabled,
-                  })
-                }}
-              />
-            }
-            label={
-              <div className="flex items-center gap-1 leading-none">
-                {t('rating-calculator:quick-actions.compact-mode')} <BetaBadge />
-              </div>
-            }
           />
 
           <FormControlLabel
@@ -278,7 +265,7 @@ export const RatingCalculator = () => {
           </Alert>
         )}
         <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
-        <RatingCalculatorTableContent compactMode={compactMode} showOnlyB50={showOnlyB50} />
+        <RatingCalculatorTableContent showOnlyB50={showOnlyB50} />
 
         {allEntries.length === 0 && (
           <div className="w-full text-sm py-8 px-4 text-center">{t('rating-calculator:table.no-entries')}</div>
@@ -355,7 +342,7 @@ const RatingCalculatorSyncFlagCell: FC<{
 })
 RatingCalculatorSyncFlagCell.displayName = 'memo(RatingCalculatorSyncFlagCell)'
 
-const RatingChartCell: FC<{ row: Row<Entry>; compactMode: boolean }> = ({ row, compactMode }) => {
+const RatingChartCell: FC<{ row: Row<Entry> }> = ({ row }) => {
   const { sheet, achievementRate } = row.original
   const difficulty = DIFFICULTIES[sheet.difficulty as keyof typeof DIFFICULTIES]
   return (
@@ -365,16 +352,14 @@ const RatingChartCell: FC<{ row: Row<Entry>; compactMode: boolean }> = ({ row, c
       analytics={{ source: 'rating_calculator' }}
       SheetDialogContentProps={{ currentAchievementRate: achievementRate }}
     >
-      {!compactMode && (
-        <img
-          className="rating-chart-cover"
-          src={`https://shama.dxrating.net/images/cover/v2/${sheet.imageName}.jpg`}
-          alt=""
-          loading="lazy"
-          width={40}
-          height={40}
-        />
-      )}
+      <img
+        className="rating-chart-cover"
+        src={`https://shama.dxrating.net/images/cover/v2/${sheet.imageName}.jpg`}
+        alt=""
+        loading="lazy"
+        width={40}
+        height={40}
+      />
       <span className="rating-chart-copy">
         <span className="rating-chart-title" title={sheet.title} lang="ja" translate="no">
           {sheet.title}
@@ -491,21 +476,20 @@ const RatingCalculatorTableRowContent: FC<{
   )
 }
 
-function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMode: boolean; showOnlyB50: boolean }) {
+function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean }) {
   const { allEntries } = useRatingEntries()
   const { t } = useTranslation(['rating-calculator'])
 
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: 'includedIn', desc: true },
-    { id: 'rating', desc: true },
-  ])
+  const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING)
+  // The default order (bucket, then rating) needs no numbers; the priority shows once the user builds a multi-sort
+  const showSortPriority = sorting.length > 1 && !isDefaultSorting(sorting)
 
   const columns = useMemo(
     () => [
       columnHelper.display({
         id: 'chart',
         header: t('rating-calculator:table.headers.chart'),
-        cell: ({ row }) => <RatingChartCell row={row} compactMode={compactMode} />,
+        cell: ({ row }) => <RatingChartCell row={row} />,
         meta: {
           cellProps: {
             padding: 'none',
@@ -578,7 +562,7 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
         cell: ({ row }) => <RatingCalculatorRowActions entry={row.original} />,
       }),
     ],
-    [compactMode, t],
+    [t],
   )
 
   const data = useMemo(() => {
@@ -612,15 +596,14 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
 
   // False on the first render (as on the server), then follows the viewport; the CSS sets the row height to match
   const isDesktop = useMediaQuery(DESKTOP_QUERY)
-  const density = compactMode ? 'compact' : 'comfortable'
-  const rowHeight = ROW_HEIGHTS[density][isDesktop ? 'desktop' : 'base']
+  const breakpoint = isDesktop ? 'desktop' : 'base'
 
   return (
     <TableVirtuoso<Row<Entry>>
-      // Virtuoso caches item measurements; a density or breakpoint change must discard the previous row heights.
-      key={`${density}-${isDesktop ? 'desktop' : 'base'}`}
+      // Virtuoso caches item measurements; a breakpoint change must discard the previous row heights.
+      key={breakpoint}
       useWindowScroll
-      fixedItemHeight={rowHeight}
+      fixedItemHeight={ROW_HEIGHTS[breakpoint]}
       computeItemKey={(_, row) => row.original.sheetId}
       data={table.getRowModel().rows}
       className="w-full"
@@ -643,43 +626,29 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
                     <button
                       type="button"
                       className="rating-table-sort"
+                      data-sorted={header.column.getIsSorted() || undefined}
                       disabled={!header.column.getCanSort()}
                       onClick={header.column.getToggleSortingHandler()}
                     >
-                      <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
-                      <div
-                        className={clsx(
-                          'inline-flex items-center overflow-hidden relative',
-                          header.column.getIsSorted() && 'bg-accent-strong text-on-accent rounded-full',
-                        )}
-                      >
-                        <IconMdiArrowDown
-                          aria-hidden="true"
-                          className={clsx(
-                            'ml-1 mr-0.5 transition-[rotate,transform,opacity] duration-150 motion-reduce:transition-none',
-                            {
-                              asc: 'inline-flex rotate-180',
-                              desc: 'inline-flex rotate-0',
-                              none: header.column.getCanSort()
-                                ? 'inline-flex opacity-0 group-hover:opacity-70'
-                                : 'hidden',
-                            }[(header.column.getIsSorted() as string) || 'none'],
+                      <span className="rating-table-sort-label">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </span>
+                      {header.column.getCanSort() && (
+                        // A quiet chevron in the text colour; the priority shows as a superscript only when
+                        // several columns are sorted
+                        <span className="rating-table-sort-indicator" aria-hidden="true">
+                          <IconMdiChevronDown className="rating-table-sort-chevron" />
+                          {header.column.getIsSorted() && showSortPriority && (
+                            <sup className="rating-table-sort-priority">{header.column.getSortIndex() + 1}</sup>
                           )}
-                        />
-                        {header.column.getIsSorted() && sorting.length > 1 && (
-                          <>
-                            <span
-                              aria-hidden="true"
-                              className="inline-flex items-center justify-center text-sm px-2 font-bold"
-                            >
-                              {header.column.getSortIndex() + 1}
-                            </span>
-                            <span className="sr-only">
-                              {t('rating-calculator:table.sort-priority', { n: header.column.getSortIndex() + 1 })}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                        </span>
+                      )}
+                      {header.column.getIsSorted() && sorting.length > 1 && (
+                        // Screen readers hear the priority even for the default order
+                        <span className="sr-only">
+                          {t('rating-calculator:table.sort-priority', { n: header.column.getSortIndex() + 1 })}
+                        </span>
+                      )}
                     </button>
                   )}
                 </TableCell>

@@ -2,10 +2,6 @@
   --rating-row-height: 88px;
 }
 
-.rating-records--compact {
-  --rating-row-height: 72px;
-}
-
 .rating-table {
   width: 100%;
   border-spacing: 0;
@@ -37,6 +33,10 @@
 .rating-table thead th {
   position: relative;
   padding: 8px;
+  /* Labels that wrap on phones grow upward, so every column's last line shares one baseline */
+  vertical-align: bottom;
+  color: var(--fg-2);
+  font-weight: 500;
   /* Sticky over the rows: the glass material, so the header stays legible without a flat fill */
   background: var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -52,13 +52,64 @@
   color: inherit;
   border-radius: var(--radius-xs);
   display: flex;
-  align-items: center;
-  gap: 3px;
+  align-items: last baseline;
+  justify-content: inherit;
+  gap: 2px;
   min-height: 36px;
   width: 100%;
   text-align: inherit;
   font: inherit;
-  line-height: 1.2;
+  line-height: 1.25;
+}
+
+/* The sorted column reads a little stronger; its label and chevron take the primary text colour */
+.rating-table-sort[data-sorted] {
+  color: var(--fg-1);
+  font-weight: 600;
+}
+
+.rating-table-sort-label {
+  min-width: 0;
+}
+
+/* A quiet chevron in the text colour, shown at rest only on sorted columns */
+.rating-table-sort-indicator {
+  display: inline-flex;
+  align-items: baseline;
+  flex-shrink: 0;
+}
+.rating-table-sort-chevron {
+  width: 1em;
+  height: 1em;
+  align-self: center;
+  transition:
+    rotate 150ms var(--ease-out),
+    opacity 150ms var(--ease-out);
+}
+.rating-table-sort[data-sorted='asc'] .rating-table-sort-chevron {
+  rotate: 180deg;
+}
+.rating-table-sort:not([data-sorted]) .rating-table-sort-indicator {
+  display: none;
+}
+.rating-table-sort:not([data-sorted]):hover .rating-table-sort-indicator,
+.rating-table-sort:not([data-sorted]):focus-visible .rating-table-sort-indicator {
+  display: inline-flex;
+  opacity: 0.55;
+}
+/* Shown only when several columns are sorted: the column's place in the sort order */
+.rating-table-sort-priority {
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: super;
+  margin-inline-start: 1px;
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rating-table-sort-chevron {
+    transition: none;
+  }
 }
 
 .rating-table-sort:enabled {
@@ -81,10 +132,6 @@
 
 .rating-table-sort:disabled {
   opacity: 1;
-}
-
-.rating-table-sort > div > span {
-  padding: 0 3px;
 }
 
 .rating-table-sort:focus-visible {
@@ -148,10 +195,6 @@
   font-weight: 600;
 }
 
-.rating-records--compact .rating-chart-title {
-  -webkit-line-clamp: 1;
-}
-
 .rating-chart-meta {
   display: flex;
   flex-wrap: wrap;
@@ -186,8 +229,9 @@
     display: none;
   }
 
+  /* Room for a three-character CJK label and its chevron on one line */
   .rating-table .rating-col--includedIn {
-    width: 50px;
+    width: 64px;
     text-align: center;
   }
   .rating-table td.rating-col--includedIn > span {
@@ -264,19 +308,13 @@
     letter-spacing: -0.02em;
   }
   .rating-table-sort {
-    flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 2px;
   }
   .rating-col--chart .rating-table-sort {
     justify-content: flex-start;
   }
   .rating-col--includedIn .rating-table-sort {
     justify-content: center;
-  }
-  .rating-table-sort > div,
-  .rating-table-sort > div > span {
-    font-size: 0.75rem;
   }
 }
 
@@ -297,30 +335,20 @@
 .rating-table-row[data-bucket='b35'] {
   background: rgb(var(--c-cyan-100) / 55%);
 }
-.rating-table-sort svg {
-  margin: 0;
-  flex-shrink: 0;
-}
 
 @media (min-width: 768px) {
-  .rating-table-sort > span {
-    min-width: 0;
+  /* Every label fits on one line here, so the header row centres them */
+  .rating-table thead th {
+    vertical-align: middle;
+  }
+  .rating-table-sort {
+    align-items: center;
+  }
+  /* One line on wider screens: a long label truncates before the chevron does */
+  .rating-table-sort-label {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-  /* The sort arrow and priority badge keep their size; a long label truncates first */
-  .rating-table-sort > div {
-    flex-shrink: 0;
-  }
-  /* The hover arrow of an unsorted column takes no room until the header is hovered or focused, so a short column
-     shows its whole label at rest */
-  .rating-table-sort > div:not(.rounded-full) {
-    max-width: 0;
-  }
-  .group:hover .rating-table-sort > div,
-  .rating-table-sort:focus-visible > div {
-    max-width: none;
   }
   .rating-table .rating-col--includedIn {
     width: 96px;
@@ -340,18 +368,12 @@
   .rating-records {
     --rating-row-height: 56px;
   }
-  .rating-records--compact {
-    --rating-row-height: 44px;
-  }
   .rating-table .rating-col--achievementRate {
     width: 156px;
   }
   .rating-table .rating-chart-link {
     container-type: inline-size;
     padding-block: 6px !important;
-  }
-  .rating-records--compact .rating-table .rating-chart-link {
-    padding-block: 4px !important;
   }
   .rating-chart-cover {
     flex-basis: 36px;
@@ -361,11 +383,7 @@
   .rating-chart-copy {
     gap: 2px;
   }
-  .rating-records--compact .rating-chart-copy {
-    gap: 1px;
-  }
-  .rating-chart-title,
-  .rating-records--compact .rating-chart-title {
+  .rating-chart-title {
     display: block;
     -webkit-line-clamp: unset;
     white-space: nowrap;
@@ -382,7 +400,7 @@
     height: 36px;
   }
   /* A column of trash buttons needs no visible heading; the label stays for screen readers */
-  .rating-table th.rating-col--actions .rating-table-sort > span {
+  .rating-table th.rating-col--actions .rating-table-sort-label {
     position: absolute;
     width: 1px;
     height: 1px;
