@@ -790,7 +790,9 @@
     "io.clear.dialog.cancel": "取消",
     "io.clear.dialog.confirm": "清空所有記錄",
     "quick-actions.ap50": "AP50（僅 AP / AP+）",
-    "quick-actions.ap50-hint": "AP50 檢視：只用 AP 與 AP+ 成績計算 B50。"
+    "quick-actions.ap50-hint": "AP50 檢視：只用 AP 與 AP+ 成績計算 B50。",
+    "table.next-target.next": "達到 {{achievement}}% 可得 {{rating}}（B50 +{{gain}}）",
+    "table.next-target.ap": "AP 可得 {{rating}}（B50 +{{gain}}）"
   },
   "constants": {
     "title": "maimai DX Lv.{{level}} 譜面定數表",
