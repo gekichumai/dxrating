@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "543784f6-8ff8-4f5f-8751-180e16cb7cc3",
+  "id": "c93a01ac-1299-44e9-b422-478856094577",
   "prevIds": [
     "90a2b552-342f-4620-b6df-ee35c46bd5c3"
   ],
@@ -2986,6 +2986,19 @@
       "table": "tag_song_votes"
     },
     {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "tag_song_votes"
+    },
+    {
       "type": "bigserial",
       "typeSchema": null,
       "notNull": true,
@@ -4503,7 +4516,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "tag_song_id",
+          "value": "user_id",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -4515,7 +4528,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "tag_song_votes_tag_song_id_idx",
+      "name": "tag_song_votes_user_id_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "tag_song_votes"

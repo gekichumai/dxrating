@@ -66,11 +66,14 @@ export const tagSongVotes = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     value: smallint('value').notNull(),
+    updated_at: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => [
+    // Leads with tag_song_id, so it also serves lookups by association.
     unique('tag_song_votes_tag_song_id_user_id_unique').on(table.tag_song_id, table.user_id),
     check('tag_song_votes_value_check', sql`${table.value} in (-1, 1)`),
-    index('tag_song_votes_tag_song_id_idx').on(table.tag_song_id),
+    // For "my votes" lookups and the user delete cascade.
+    index('tag_song_votes_user_id_idx').on(table.user_id),
   ],
 )
 

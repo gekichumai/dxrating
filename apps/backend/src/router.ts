@@ -409,7 +409,7 @@ const tagsHandler = {
                 .values({ tag_song_id: group.canonical.id, user_id: user.id, value: input.value })
                 .onConflictDoUpdate({
                   target: [tagSongVotes.tag_song_id, tagSongVotes.user_id],
-                  set: { value: input.value },
+                  set: { value: input.value, updated_at: sql`now()` },
                 }),
             )
           }),

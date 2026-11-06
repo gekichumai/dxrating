@@ -174,8 +174,25 @@ describe('Tag voting and removal', () => {
     const tagSongId = await attachTag(creator, tagId)
 
     await vote(voter, tagSongId, 1)
+    // Backdate the first vote so the change is visible in updated_at.
+    await withPool((pool) =>
+      pool.query(
+        `UPDATE tag_song_votes SET created_at = now() - interval '1 day', updated_at = now() - interval '1 day'
+         WHERE tag_song_id = $1 AND user_id = $2`,
+        [tagSongId, voter.id],
+      ),
+    )
     const res = await vote(voter, tagSongId, -1)
     expect(await res.json()).toMatchObject({ upvotes: 1, downvotes: 1, score: 0, userVote: -1 })
+
+    const { rows } = await withPool((pool) =>
+      pool.query<{ fresh: boolean; created_kept: boolean }>(
+        `SELECT updated_at > now() - interval '1 minute' AS fresh, created_at < now() - interval '1 hour' AS created_kept
+         FROM tag_song_votes WHERE tag_song_id = $1 AND user_id = $2`,
+        [tagSongId, voter.id],
+      ),
+    )
+    expect(rows[0]).toEqual({ fresh: true, created_kept: true })
   })
 
   it('hides buried associations from the global list but not from the sheet endpoint', async () => {
