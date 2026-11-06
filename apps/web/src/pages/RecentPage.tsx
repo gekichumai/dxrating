@@ -1,4 +1,4 @@
-import type { FC } from 'react'
+import { type FC, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RecentChartLink } from '@/components/chartDiscovery/recentCharts'
 import { SheetListItemContentView, SheetListItemSummary } from '@/components/sheet/SheetListItem'
@@ -22,24 +22,27 @@ type RecentChartGroup = {
   charts: { chart: RecentChartLink; position: number }[]
 }
 
-/** Consecutive charts that share a release date (or, undated, a version) form one group, in the list's order */
-const groupRecentCharts = (charts: readonly RecentChartLink[]): RecentChartGroup[] => {
-  const groups: RecentChartGroup[] = []
-  charts.forEach((chart, index) => {
+/**
+ * One group per release date (or, for undated charts, per version), in the order each is first seen. Undated charts
+ * sort by a fallback timestamp, so they can fall between two charts of the same date; a Map keeps that date to one
+ * section. Positions are numbered in the order the groups render, so the ItemList stays continuous.
+ */
+export const groupRecentCharts = (charts: readonly RecentChartLink[]): RecentChartGroup[] => {
+  const groups = new Map<string, RecentChartGroup>()
+  for (const chart of charts) {
     const key = chart.releaseDate ? `date-${chart.releaseDate}` : `version-${chart.version}`
-    const last = groups.at(-1)
-    if (last?.key === key) {
-      last.charts.push({ chart, position: index + 1 })
+    const group = groups.get(key)
+    if (group) {
+      group.charts.push({ chart, position: 0 })
     } else {
-      groups.push({
-        key,
-        releaseDate: chart.releaseDate,
-        version: chart.version,
-        charts: [{ chart, position: index + 1 }],
-      })
+      groups.set(key, { key, releaseDate: chart.releaseDate, version: chart.version, charts: [{ chart, position: 0 }] })
     }
-  })
-  return groups
+  }
+  let position = 0
+  for (const group of groups.values()) {
+    for (const entry of group.charts) entry.position = ++position
+  }
+  return [...groups.values()]
 }
 
 export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
@@ -86,7 +89,7 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
 
 const RecentChartGroupSection: FC<{ group: RecentChartGroup; locale: SupportedLocale }> = ({ group, locale }) => {
   const { t } = useTranslation(['toplists'])
-  const headingId = `recent-${group.key}`
+  const headingId = `${useId()}recent-${group.key}`
 
   return (
     <section aria-labelledby={headingId} className="flex w-full flex-col gap-2">

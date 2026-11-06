@@ -527,6 +527,68 @@
 .rating-statistics {
   min-width: 0;
 }
+/* The empty state: what the page does, then the ways to get scores in. Steps sit side by side once each has room */
+.rating-onboarding {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  container-type: inline-size;
+}
+.rating-onboarding-steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rating-onboarding-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  gap: 8px 12px;
+  padding: 16px;
+}
+.rating-onboarding-step-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  font-size: 20px;
+  color: var(--accent-strong);
+  background-color: color-mix(in oklab, var(--accent) 16%, transparent);
+}
+.rating-onboarding-step-action {
+  grid-column: 2;
+  align-self: end;
+}
+.rating-onboarding-step-action .MuiButton-root {
+  max-width: 100%;
+}
+/* The recommended source: a hairline of the accent, never a solid fill */
+.rating-onboarding-step[data-recommended] {
+  border-color: color-mix(in oklab, var(--accent) 45%, transparent);
+}
+@container (min-width: 48rem) {
+  .rating-onboarding {
+    padding: 24px;
+  }
+  .rating-onboarding-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .rating-onboarding-step {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+  }
+  .rating-onboarding-step-action {
+    grid-column: 1;
+    padding-top: 4px;
+  }
+}
 .rating-table-controls {
   display: flex;
   flex-wrap: wrap;
@@ -647,40 +709,6 @@
   .rating-overview {
     position: sticky;
     top: 16px;
-  }
-}
-@media (min-width: 1600px) {
-  .rating-calculator.flex-container {
-    max-width: 1536px;
-  }
-  .rating-table thead th {
-    padding-inline: 8px;
-    font-size: 0.875rem;
-  }
-  .rating-table-row > td {
-    padding-inline: 8px;
-  }
-  .rating-table .rating-col--includedIn {
-    width: 96px;
-  }
-  .rating-table .rating-col--internalLevel {
-    width: 64px;
-  }
-  .rating-table .rating-col--actions {
-    width: 64px;
-  }
-  .rating-table .rating-col--comboFlag,
-  .rating-table .rating-col--syncFlag {
-    width: 80px;
-  }
-  .rating-table .rating-col--dxScore {
-    width: 96px;
-  }
-  .rating-table .rating-col--achievementRate {
-    width: 156px;
-  }
-  .rating-table .rating-col--rating {
-    width: 136px;
   }
 }
 @media (max-width: 400px) {

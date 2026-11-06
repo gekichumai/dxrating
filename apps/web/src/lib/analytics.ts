@@ -83,6 +83,9 @@ type AnalyticsEventProperties = {
     entry_count_before: number
     sheet_id: string
   }
+  rating_onboarding_action_clicked: {
+    action: 'maimai_net' | 'manual'
+  }
   rating_calculator_view_changed: {
     setting: 'show_only_b50' | 'ap50'
     enabled: boolean

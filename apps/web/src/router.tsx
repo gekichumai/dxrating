@@ -15,14 +15,14 @@ export function getRouter() {
     ssr: { nonce: readServerCspNonce() },
   })
 
-  if (!router.isServer) {
+  // Only CI release and preview builds have a release; local builds never initialise Sentry
+  if (!router.isServer && import.meta.env.VITE_SENTRY_RELEASE) {
     Sentry.init({
       dsn: 'https://9346c04036724f129e00a750c8ab9415@o4506648698683392.ingest.us.sentry.io/4511398317064192',
       tunnel: `${import.meta.env.VITE_BACKEND_URL}/api/v1/monitoring/tunnel`,
       // The same release the Vite plugin uses for artifact uploads (see vite.config.ts)
-      release: import.meta.env.VITE_SENTRY_RELEASE || undefined,
+      release: import.meta.env.VITE_SENTRY_RELEASE,
       environment: import.meta.env.VITE_SENTRY_ENVIRONMENT ?? 'development',
-      enabled: import.meta.env.PROD,
       integrations: [
         Sentry.tanstackRouterBrowserTracingIntegration(router, {
           shouldCreateSpanForRequest: () => true,

@@ -106,9 +106,36 @@ export const SheetTypeBadge: FC<{ type: TypeEnum; className?: string }> = ({ typ
   )
 }
 
+const DIFFICULTY_SHORT_TITLES = Object.values(DIFFICULTIES).map((entry) => entry.shortTitle)
+/** Utage sheets carry their 【…】 label as the difficulty; the pill shows 宴 and keeps the label for screen readers */
+const UTAGE_SHORT_TITLE = '宴'
+/** The widest internal level, with tabular numbers: every constant segment takes this width */
+const LEVEL_WIDTH_SAMPLE = '00.0'
+
+/**
+ * Text that takes the width of the widest of `sizers`, so a column of these lines up whatever each one says. The sizers
+ * share one grid cell with the text, hidden, which keeps the width right in any font without a measured constant.
+ */
+const FixedWidthText: FC<{ text: string; sizers: readonly string[]; className?: string }> = ({
+  text,
+  sizers,
+  className,
+}) => (
+  <span className={clsx('inline-grid', className)}>
+    {sizers.map((sizer) => (
+      <span key={sizer} aria-hidden className="invisible col-start-1 row-start-1">
+        {sizer}
+      </span>
+    ))}
+    <span className="col-start-1 row-start-1">{text}</span>
+  </span>
+)
+
 /**
  * The difficulty name on its solid colour, followed by the internal level on a tint of the same colour, like the iOS
- * app's two-tone difficulty pill
+ * app's two-tone difficulty pill. Both halves have a fixed width (the longest short name, the widest level), so in a
+ * list the level and whatever follows the pill line up on every row. Short names (ADV, Re:MAS) keep it compact; the
+ * full name is in the title and read out to screen readers.
  */
 export const DifficultyLevelBadge: FC<{ difficulty: string; level: string; className?: string }> = ({
   difficulty,
@@ -117,6 +144,8 @@ export const DifficultyLevelBadge: FC<{ difficulty: string; level: string; class
 }) => {
   const entry = DIFFICULTIES[difficulty as keyof typeof DIFFICULTIES]
   const solid = entry?.solid ?? '#6B7280'
+  const fullTitle = entry?.title ?? difficulty
+  const shortTitle = entry?.shortTitle ?? UTAGE_SHORT_TITLE
   return (
     <span
       className={clsx(
@@ -125,13 +154,22 @@ export const DifficultyLevelBadge: FC<{ difficulty: string; level: string; class
         className,
       )}
       style={{ '--difficulty-solid': solid } as CSSProperties}
+      title={`${fullTitle} ${level}`}
     >
-      <span className="flex items-center bg-[var(--difficulty-solid)] px-1.5 tracking-[0.02em] text-white">
-        {entry?.title ?? difficulty}
+      <span aria-hidden className="flex items-center bg-[var(--difficulty-solid)] px-1.5 tracking-[0.02em] text-white">
+        <FixedWidthText
+          text={shortTitle}
+          sizers={[...DIFFICULTY_SHORT_TITLES, UTAGE_SHORT_TITLE]}
+          className="justify-items-center"
+        />
       </span>
-      <span className="flex items-center px-1.5 text-fg-1 num bg-[color-mix(in_oklab,var(--difficulty-solid)_14%,transparent)] dark:bg-[color-mix(in_oklab,var(--difficulty-solid)_30%,transparent)]">
-        {level}
+      <span
+        aria-hidden
+        className="flex items-center px-1.5 text-fg-1 num bg-[color-mix(in_oklab,var(--difficulty-solid)_14%,transparent)] dark:bg-[color-mix(in_oklab,var(--difficulty-solid)_30%,transparent)]"
+      >
+        <FixedWidthText text={level} sizers={[LEVEL_WIDTH_SAMPLE]} className="justify-items-end" />
       </span>
+      <span className="sr-only">{`${fullTitle} ${level}`}</span>
     </span>
   )
 }

@@ -61,6 +61,9 @@ export const generateAuthorizationUrl = Effect.fn('Lxns.generateAuthorizationUrl
   return `${LXNS_BASE}/oauth/authorize?${params.toString()}`
 })
 
+/** The OAuth state is unknown, already used, or expired: the authorization has to start over. */
+export class LxnsStateInvalid extends Data.TaggedError('LxnsStateInvalid')<{ readonly message: string }> {}
+
 /**
  * The OAuth state was issued to another DXRating user than the one completing it (`signedIn: true`), or nobody is
  * signed in (`signedIn: false`). The state is consumed either way and no token is saved.
@@ -87,10 +90,10 @@ export const completeAuthorization = Effect.fn('Lxns.completeAuthorization')(fun
   const [stateRow] = yield* database.query('Consume LXNS OAuth state', (db) =>
     db.delete(lxnsOauthStates).where(eq(lxnsOauthStates.state, state)).returning(),
   )
-  if (!stateRow) return yield* Effect.fail(new LxnsError({ message: 'Invalid or expired OAuth state' }))
+  if (!stateRow) return yield* new LxnsStateInvalid({ message: 'Invalid or expired OAuth state' })
   const timestamp = yield* Clock.currentTimeMillis
   if (timestamp - stateRow.created_at.getTime() > STATE_TTL_MS) {
-    return yield* Effect.fail(new LxnsError({ message: 'OAuth state expired' }))
+    return yield* new LxnsStateInvalid({ message: 'OAuth state expired' })
   }
   if (viewerId === undefined) {
     return yield* new LxnsStateMismatch({ message: 'Sign in to finish connecting LXNS', signedIn: false })
