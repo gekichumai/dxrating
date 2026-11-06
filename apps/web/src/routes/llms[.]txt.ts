@@ -10,7 +10,7 @@ DXRating is a maimai DX rating calculator and chart database. It provides canoni
 
 - https://miruku.dxrating.net/api/v1/dxdata returns every song, chart (sheet), internal level, version, tag and alias as one JSON document. No account or API key.
 - Song IDs (dsng_...) and sheet IDs (dsht_...) are permanent and never reused; songs and charts removed from the game stay in the catalog with an empty serverIds list.
-- Caching: the response has a strong ETag; revalidate with If-None-Match (304 while unchanged), or use HEAD for headers only. Browser cache 5 minutes, shared caches 6 hours. The catalog changes at most about once a day.
+- Caching: the response has a strong ETag; revalidate with If-None-Match (304 while unchanged), or use HEAD for headers only. Browser cache 5 minutes, shared caches 1 minute before they revalidate. The catalog changes at most about once a day.
 
 ## Canonical Resources
 

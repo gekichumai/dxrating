@@ -97,7 +97,15 @@ describe('DX data catalog endpoint', () => {
     expect(await response.text()).toBe('')
     expect(response.headers.get('etag')).toBe(ETAG)
     expect(response.headers.get('cache-control')).toBe(DXDATA_BROWSER_CACHE_CONTROL)
+    expect(response.headers.get('cdn-cache-control')).toBe(DXDATA_CDN_CACHE_CONTROL)
+    expect(response.headers.get('cache-tag')).toBe('dxdata')
     expect(calls).toEqual(['metadata'])
+  })
+
+  it('lets the edge revalidate within a minute, since nothing purges it on publish', () => {
+    const maxAge = Number(/(?:^|,\s*)max-age=(\d+)/.exec(DXDATA_CDN_CACHE_CONTROL)?.[1])
+    expect(maxAge).toBeLessThanOrEqual(60)
+    expect(DXDATA_CDN_CACHE_CONTROL).toMatch(/stale-while-revalidate=\d+/)
   })
 
   it('answers HEAD from metadata without querying the body', async () => {

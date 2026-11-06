@@ -38,6 +38,16 @@ export function keepLocaleSearch(search: unknown): { search?: { locale: Supporte
   return locale ? { search: { locale } } : {}
 }
 
+/**
+ * `path` with the `?locale=` of a URL's search appended, for plain `href`s between pages of one language variant.
+ * Only the URL's own locale is carried (not the resolved one), so the markup depends on the URL alone and stays the
+ * same between the server render, the edge HTML cache and hydration.
+ */
+export function withLocaleQuery(path: string, search: unknown): string {
+  const kept = keepLocaleSearch(search).search
+  return kept ? `${path}?${LOCALE_QUERY_PARAM}=${encodeURIComponent(kept.locale)}` : path
+}
+
 export function normalizeDetectedLanguage(lng: string) {
   return toSupportedLocale(lng) ?? DEFAULT_LOCALE
 }

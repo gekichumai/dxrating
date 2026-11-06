@@ -24,17 +24,21 @@ describe('filterRandomPool', () => {
     sheet({ id: 'e', isTypeUtage: true }),
   ]
 
-  it('applies level range inclusively over the whole upper level', () => {
-    const ids = filterRandomPool(sheets, { ...DEFAULT_RANDOM_FILTERS, minLevel: 12, maxLevel: 14 }, 'jp').map(
-      (s) => s.id,
-    )
-    expect(ids).toEqual(['a', 'b'])
+  it('applies the level range inclusively at both ends, in 0.1 steps', () => {
+    const ids = (min: number, max: number) =>
+      filterRandomPool(sheets, { ...DEFAULT_RANDOM_FILTERS, range: { min, max } }, 'jp').map((s) => s.id)
+    expect(ids(120, 149)).toEqual(['a', 'b'])
+    expect(ids(135, 135)).toEqual(['a'])
+    expect(ids(136, 148)).toEqual([])
+    expect(ids(119, 119)).toEqual(['c'])
   })
 
   it('filters by type and region, never utage', () => {
-    const ids = filterRandomPool(sheets, { ...DEFAULT_RANDOM_FILTERS, minLevel: 1, types: [TypeEnum.DX] }, 'jp').map(
-      (s) => s.id,
-    )
+    const ids = filterRandomPool(
+      sheets,
+      { ...DEFAULT_RANDOM_FILTERS, range: { min: 10, max: 150 }, types: [TypeEnum.DX] },
+      'jp',
+    ).map((s) => s.id)
     expect(ids).toEqual(['a', 'c'])
   })
 })
@@ -48,7 +52,7 @@ describe('pickRandom', () => {
 
 describe('countActiveFilters', () => {
   it('counts the level range only when narrowed', () => {
-    expect(countActiveFilters({ ...DEFAULT_RANDOM_FILTERS, minLevel: 1, maxLevel: 15 })).toBe(0)
+    expect(countActiveFilters({ ...DEFAULT_RANDOM_FILTERS, range: { min: 10, max: 150 } })).toBe(0)
     expect(countActiveFilters(DEFAULT_RANDOM_FILTERS)).toBe(1)
   })
 })

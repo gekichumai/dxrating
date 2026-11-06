@@ -1,6 +1,6 @@
 import type { DifficultyEnum } from '@gekichumai/dxdata'
 import type { VersionedSheet } from '@gekichumai/maimai-domain'
-import { Link } from '@tanstack/react-router'
+import { Link, useSearch } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -8,6 +8,7 @@ import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { SheetDifficulty } from '@/components/sheet/SheetListItem'
 import { captureAnalyticsEvent } from '@/lib/analytics'
+import { keepLocaleSearch } from '@/setup/locale'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { useUserRecords } from '@/models/useUserRecords'
 import type { FlattenedSheet } from '@/songs'
@@ -25,6 +26,8 @@ export const SongChartsTable: FC<{
   activeSheetId?: string
 }> = ({ songId, sheets, activeSheetId }) => {
   const { t } = useTranslation(['song', 'sheet'])
+  // Chart links stay on the hub URL's language variant (each `?locale=` variant is its own canonical page)
+  const localeSearch = keepLocaleSearch(useSearch({ strict: false }))
   // Rating hints need every scored chart: the route slice holds only this song, so wait for the complete catalog
   const completeCatalog = useCompleteSongCatalog()
   const { region } = useAppContext()
@@ -100,6 +103,7 @@ export const SongChartsTable: FC<{
                     <Link
                       to="/songs/$songId/$type/$difficulty"
                       params={{ songId, type: sheet.type, difficulty: sheet.difficulty }}
+                      {...localeSearch}
                       className="inline-flex items-center gap-1 no-underline text-inherit rounded-[var(--radius-sm)] after:absolute after:inset-0 after:content-['']"
                     >
                       <span className="inline-block sm:w-[6.5em] shrink-0 text-xs text-fg-2">
