@@ -123,8 +123,13 @@ export function entriesToImportRecords(
     const existing = bySheetId.get(record.sheetId)
     if (existing) duplicates++
     // The server's score order (achievement, then combo, then sync): an equal achievement with a better flag wins,
-    // whatever the order of the file
-    if (!existing || compareScore(record, existing) > 0) bySheetId.set(record.sheetId, record)
+    // whatever the order of the file. An equal score keeps a DX score only the other entry knows, as the server's
+    // merge backfills it
+    const order = existing ? compareScore(record, existing) : 1
+    if (order > 0) bySheetId.set(record.sheetId, record)
+    else if (order === 0 && existing!.dxScore == null && record.dxScore != null) {
+      bySheetId.set(record.sheetId, { ...existing!, dxScore: record.dxScore })
+    }
   }
   return { records: [...bySheetId.values()], skipped, rejected, duplicates }
 }

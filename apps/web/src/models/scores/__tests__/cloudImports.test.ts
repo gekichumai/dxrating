@@ -111,6 +111,17 @@ describe('entriesToImportRecords', () => {
     expect(pick([fsdp, fs])).toEqual([[null, 'fsdp']])
   })
 
+  it('keeps a DX score only one of two equal duplicates knows, in either order', () => {
+    const dx = (entries: PlayEntry[]) =>
+      entriesToImportRecords(entries, { source: 'dxrating-json', claimedSource: null }).records.map(
+        (record) => record.dxScore,
+      )
+    const bare: PlayEntry = { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100 }
+    const withDx: PlayEntry = { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100, dxScore: 2400 }
+    expect(dx([bare, withDx])).toEqual([2400])
+    expect(dx([withDx, bare])).toEqual([2400])
+  })
+
   it('never keeps an entry the server would reject, and counts it apart from the skipped ones', () => {
     const { records, skipped, rejected } = entriesToImportRecords(
       [
