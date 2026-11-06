@@ -59,7 +59,7 @@ export const SongChartsTable: FC<{
       <h2 id="song-hub-charts-heading" className="section-title m-0">
         {t('song:hub.title')}
       </h2>
-      <div className="relative overflow-x-auto -mx-1">
+      <div className="scroll-fade-x relative overflow-x-auto -mx-1">
         <table className="w-full border-collapse text-sm tabular-nums text-fg-1">
           <thead>
             <tr className="text-left text-xs text-fg-2">

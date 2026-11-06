@@ -104,6 +104,7 @@ export const ToplistsPage: FC = () => {
           variant="scrollable"
           scrollButtons="auto"
           allowScrollButtonsMobile
+          classes={{ scroller: 'scroll-fade-x' }}
           aria-label={t('toplists:title')}
           sx={{ '& .MuiTabs-scrollButtons.Mui-disabled': { width: 0, opacity: 0 } }}
         >
