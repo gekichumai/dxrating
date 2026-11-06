@@ -63,16 +63,18 @@ export const useFollowSiteRegion = ({
 
   useEffect(() => {
     if (!hydrated) return
-    const first = previous.current === null
-    if (!first && previous.current === siteRegion) return
+    // A header switch moves the page even off an explicit URL; otherwise only a URL without a region follows
+    // (on load, and when history brings one back while the page stays mounted)
+    const switched = previous.current !== null && previous.current !== siteRegion
     previous.current = siteRegion
 
-    const target = plateRegionToFollow({ siteRegion, current: region, onLoad: first, explicit, available })
+    const target = plateRegionToFollow({ siteRegion, current: region, onLoad: !switched, explicit, available })
     if (!target) return
-    // Keeps the URL's other parameters, such as ?locale=
+    // Keeps the URL's other parameters, such as ?locale=. Always a replace: following the header is not a step of
+    // its own, so Back leaves Plates instead of landing on a URL that shows another region than the header
     const url = new URL(window.location.href)
     url.searchParams.set('region', target)
-    void router.navigate({ href: `${url.pathname}${url.search}${url.hash}`, replace: first })
+    void router.navigate({ href: `${url.pathname}${url.search}${url.hash}`, replace: true })
   }, [siteRegion, hydrated, region, explicit, available, router])
 }
 

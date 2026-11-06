@@ -40,7 +40,7 @@ describe('Plates following the header region', () => {
 
     context.region = 'cn'
     hook.rerender({ region: 'intl', explicit: true })
-    expect(navigate).toHaveBeenCalledWith({ href: '/plates?region=cn', replace: false })
+    expect(navigate).toHaveBeenCalledWith({ href: '/plates?region=cn', replace: true })
   })
 
   it('keeps a region the URL names on load, and the other query parameters on a switch', () => {
@@ -52,6 +52,18 @@ describe('Plates following the header region', () => {
 
     context.region = 'cn'
     hook.rerender({ region: 'jp', explicit: true })
-    expect(navigate).toHaveBeenCalledWith({ href: '/plates?region=cn&locale=ja', replace: false })
+    expect(navigate).toHaveBeenCalledWith({ href: '/plates?region=cn&locale=ja', replace: true })
+  })
+
+  it('follows again when history brings back a URL without a region while the page stays mounted', () => {
+    context.region = 'intl'
+    context.hydrated = true
+    const hook = render({ region: 'intl', explicit: true })
+    expect(navigate).not.toHaveBeenCalled()
+
+    // Back to /plates: the loader renders Japan, the header still says International
+    window.history.replaceState(null, '', '/plates')
+    hook.rerender({ region: 'jp', explicit: false })
+    expect(navigate).toHaveBeenCalledWith({ href: '/plates?region=intl', replace: true })
   })
 })
