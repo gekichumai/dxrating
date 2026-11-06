@@ -197,7 +197,7 @@ describe('cloud save API (design §5)', () => {
       expect(oversized.status).toBe(400)
     })
 
-    it('rejects U+0000 per item and in snapshot detail and save names, never a 500', async () => {
+    it('rejects U+0000, lone surrogates and out-of-range counts with a validation error, never a 500', async () => {
       const user = await session(pool, 'nul@example.com')
       const save = await newSave(user.cookie)
       const replaced = await api(user.cookie, 'POST', `/saves/${save.id}/replace`, {
@@ -207,12 +207,14 @@ describe('cloud save API (design §5)', () => {
         records: [
           { sheetId: sheetId(1), achievement: 1000000, comboFlag: null, syncFlag: null, providerRecordId: 'a\u0000b' },
           { sheetId: sheetId(2), achievement: 1005000, comboFlag: null, syncFlag: null },
+          { sheetId: sheetId(3), achievement: 1000000, comboFlag: null, syncFlag: null, providerRecordId: '\ud800' },
         ],
       })
-      // the NUL record alone is rejected; its valid sibling commits
+      // the NUL and lone-surrogate records alone are rejected; their valid sibling commits
       expect(replaced.status).toBe(200)
-      expect(replaced.body.job.counts).toMatchObject({ inserted: 1, rejected: 1 })
+      expect(replaced.body.job.counts).toMatchObject({ inserted: 1, rejected: 2 })
       expect(await record(save.id, sheetId(1))).toBeUndefined()
+      expect(await record(save.id, sheetId(3))).toBeUndefined()
       expect(await record(save.id, sheetId(2))).toMatchObject({ achievement: 1005000, deleted_at: null })
 
       const snapshot = (detail: unknown) =>
@@ -228,6 +230,19 @@ describe('cloud save API (design §5)', () => {
       expect((await snapshot({ a: '\u0000' })).status).toBe(400)
       expect((await snapshot({ 'a\u0000': 1 })).status).toBe(400)
       expect((await snapshot({ a: ['ok', { b: 'x\u0000' }] })).status).toBe(400)
+      // an unpaired surrogate is refused the same way, a paired one is fine
+      expect((await snapshot({ a: '\ud800' })).status).toBe(400)
+      expect((await snapshot({ a: '\ud83c\udfb5' })).status).toBe(200)
+      // counts beyond the integer columns are a 400 too
+      const huge = await api(user.cookie, 'POST', `/saves/${save.id}/snapshots`, {
+        atRevision: 0,
+        b15Sum: 2_147_483_648,
+        b35Sum: 0,
+        b50Sum: 0,
+        recordCount: 0,
+        gameVersion: 'prism',
+      })
+      expect(huge.status).toBe(400)
       expect((await api(user.cookie, 'POST', '/saves', { name: 'JP\u0000', region: 'jp' })).status).toBe(400)
       expect((await api(user.cookie, 'PATCH', `/saves/${save.id}`, { name: 'JP\u0000' })).status).toBe(400)
     })
