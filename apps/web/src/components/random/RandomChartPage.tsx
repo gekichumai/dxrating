@@ -1,0 +1,207 @@
+import { VERSION_SORT_ORDER, type DifficultyEnum, type TypeEnum, type VersionEnum } from '@gekichumai/dxdata'
+import type { VersionedSheet } from '@gekichumai/maimai-domain'
+import { Button, Chip, CircularProgress, MenuItem, Slider, TextField } from '@mui/material'
+import { Link } from '@tanstack/react-router'
+import { type FC, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useSongCatalog, useCompleteSongCatalog } from '@/catalog/CatalogContext'
+import { MaterialSurface } from '@/components/global/MaterialSurface'
+import { buildSheetPath } from '@/components/sheet/sheetLinks'
+import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
+import { captureAnalyticsEvent } from '@/lib/analytics'
+import { useAppContext } from '@/models/context/useAppContext'
+import { DIFFICULTIES } from '@/models/difficulties'
+import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
+import {
+  countActiveFilters,
+  DEFAULT_RANDOM_FILTERS,
+  filterRandomPool,
+  pickRandom,
+  RANDOM_DIFFICULTIES,
+  RANDOM_LEVEL_MAX,
+  RANDOM_LEVEL_MIN,
+  RANDOM_TYPES,
+  type RandomChartFilters,
+} from './randomChart'
+
+const toggle = <T,>(list: readonly T[], value: T): T[] =>
+  list.includes(value) ? list.filter((item) => item !== value) : [...list, value]
+
+export const RandomChartPage: FC = () => {
+  const { t, i18n } = useTranslation(['random'])
+  const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
+  const { region } = useAppContext()
+  const catalog = useCompleteSongCatalog()
+  // The selected version's catalog is only needed for the version list, which is the same in every slice
+  const versionCatalog = useSongCatalog()
+  const [filters, setFilters] = useState<RandomChartFilters>(DEFAULT_RANDOM_FILTERS)
+  const [result, setResult] = useState<VersionedSheet | null | undefined>(undefined)
+
+  const pool = useMemo(
+    () => (catalog ? filterRandomPool(catalog.sheets, filters, region, versionCatalog.version) : []),
+    [catalog, filters, region, versionCatalog.version],
+  )
+  const versions = useMemo(() => {
+    const appVersionIndex = VERSION_SORT_ORDER.indexOf(versionCatalog.version)
+    return VERSION_SORT_ORDER.filter((_, index) => appVersionIndex < 0 || index <= appVersionIndex)
+  }, [versionCatalog.version])
+
+  const roll = () => {
+    const picked = pickRandom(pool)
+    setResult(picked)
+    captureAnalyticsEvent('random_chart_rolled', {
+      filter_count: countActiveFilters(filters),
+      result_found: picked !== null,
+    })
+  }
+
+  const update = (patch: Partial<RandomChartFilters>) => setFilters((current) => ({ ...current, ...patch }))
+
+  return (
+    <div className="mx-auto w-full max-w-3xl flex flex-col gap-4 px-4 pb-global">
+      <header className="flex flex-col gap-1">
+        <h1 className="text-3xl font-bold">{t('random:title')}</h1>
+        <p className="text-sm opacity-70">{t('random:description')}</p>
+      </header>
+
+      <MaterialSurface className="flex flex-col gap-4 p-4">
+        <fieldset className="flex flex-col gap-2 border-none p-0 m-0">
+          <legend className="mb-2 text-sm font-semibold">{t('random:filters.type')}</legend>
+          <div className="flex flex-wrap gap-2">
+            {RANDOM_TYPES.map((type: TypeEnum) => (
+              <Chip
+                key={type}
+                label={getSheetTypeDisplayName(type, locale)}
+                color={filters.types.includes(type) ? 'primary' : 'default'}
+                variant={filters.types.includes(type) ? 'filled' : 'outlined'}
+                onClick={() => update({ types: toggle(filters.types, type) })}
+                aria-pressed={filters.types.includes(type)}
+                className="!rounded-lg"
+              />
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset className="flex flex-col gap-2 border-none p-0 m-0">
+          <legend className="mb-2 text-sm font-semibold">{t('random:filters.difficulty')}</legend>
+          <div className="flex flex-wrap gap-2">
+            {RANDOM_DIFFICULTIES.map((difficulty: DifficultyEnum) => {
+              const selected = filters.difficulties.includes(difficulty)
+              return (
+                <Chip
+                  key={difficulty}
+                  label={DIFFICULTIES[difficulty].title}
+                  variant={selected ? 'filled' : 'outlined'}
+                  onClick={() =>
+                    update({
+                      difficulties: toggle(filters.difficulties, difficulty),
+                    })
+                  }
+                  aria-pressed={selected}
+                  className="!rounded-lg"
+                  sx={{
+                    borderColor: DIFFICULTIES[difficulty].color,
+                    ...(selected
+                      ? {
+                          backgroundColor: DIFFICULTIES[difficulty].color,
+                          color: '#fff',
+                        }
+                      : {}),
+                  }}
+                />
+              )
+            })}
+          </div>
+        </fieldset>
+
+        <div className="flex flex-col gap-1">
+          <span id="random-level-label" className="text-sm font-semibold">
+            {t('random:filters.level', {
+              min: filters.minLevel,
+              max: filters.maxLevel,
+            })}
+          </span>
+          <Slider
+            className="mx-2 w-auto"
+            aria-labelledby="random-level-label"
+            value={[filters.minLevel, filters.maxLevel]}
+            min={RANDOM_LEVEL_MIN}
+            max={RANDOM_LEVEL_MAX}
+            step={1}
+            marks
+            valueLabelDisplay="auto"
+            disableSwap
+            onChange={(_, value) => {
+              const [minLevel, maxLevel] = value as number[]
+              update({ minLevel: minLevel!, maxLevel: maxLevel! })
+            }}
+          />
+        </div>
+
+        <TextField
+          select
+          size="small"
+          label={t('random:filters.version')}
+          value={filters.versions}
+          SelectProps={{
+            multiple: true,
+            displayEmpty: true,
+            renderValue: (selected: unknown) =>
+              (selected as string[]).length === 0
+                ? t('random:filters.all-versions')
+                : (selected as string[]).join(', '),
+          }}
+          InputLabelProps={{ shrink: true }}
+          onChange={(event) => update({ versions: event.target.value as unknown as VersionEnum[] })}
+        >
+          {versions.map((version) => (
+            <MenuItem key={version} value={version}>
+              {version}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="contained" size="large" onClick={roll} disabled={!catalog || pool.length === 0}>
+            {t('random:roll')}
+          </Button>
+          <span className="text-sm opacity-70" aria-live="polite">
+            {catalog ? t('random:pool-size', { count: pool.length }) : <CircularProgress size="1rem" />}
+          </span>
+        </div>
+      </MaterialSurface>
+
+      {/* The live region stays mounted so each new roll is announced */}
+      <div aria-live="polite" className="flex flex-col">
+        {result === null && <MaterialSurface className="p-4 text-sm">{t('random:no-result')}</MaterialSurface>}
+        {result && (
+          <MaterialSurface className="p-4">
+            <Link
+              to={buildSheetPath(result)}
+              className="flex flex-col gap-1 text-inherit no-underline hover:opacity-80"
+            >
+              <span className="text-lg font-bold">{result.title}</span>
+              <span className="text-sm opacity-70">{result.artist}</span>
+              <span className="flex flex-wrap items-center gap-2 text-sm">
+                <span>{getSheetTypeDisplayName(result.type, locale)}</span>
+                <span
+                  className="font-semibold"
+                  style={{
+                    color: DIFFICULTIES[result.difficulty as DifficultyEnum]?.color,
+                  }}
+                >
+                  {DIFFICULTIES[result.difficulty as DifficultyEnum]?.title ?? result.difficulty}
+                </span>
+                <span className="tabular-nums">
+                  {result.level} ({result.internalLevelValue.toFixed(1)})
+                </span>
+                <span className="opacity-70">{result.version}</span>
+              </span>
+              <span className="text-sm text-blue-600 dark:text-blue-400">{t('random:open-chart')}</span>
+            </Link>
+          </MaterialSurface>
+        )}
+      </div>
+    </div>
+  )
+}

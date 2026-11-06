@@ -128,6 +128,11 @@ export function buildSitemap(songs: SitemapSong[]) {
     <loc>${urlLoc('/developers')}</loc>${alternatesXml('/developers')}
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${urlLoc('/random')}</loc>${alternatesXml('/random')}
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>${toolEntries}${constantTableEntries}${plateEntries}${sheetEntries}
 </urlset>`
 }

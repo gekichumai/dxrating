@@ -86,4 +86,40 @@ describe('i18n initialization', () => {
       'PRiSM PLUS 版本標誌',
     )
   })
+
+  it('keeps namespace entries flat because keySeparator is disabled', () => {
+    for (const locale of SUPPORTED_LOCALES) {
+      for (const [namespace, entries] of Object.entries(i18nResources[locale])) {
+        const nested = Object.entries(entries as Record<string, unknown>)
+          .filter(([, value]) => value !== null && typeof value === 'object')
+          .map(([key]) => key)
+        expect(nested, `${locale}/${namespace} has nested keys`).toEqual([])
+      }
+    }
+  })
+
+  it('resolves random and recommend page strings in every locale', () => {
+    const keys = [
+      'random:title',
+      'random:filters.type',
+      'random:filters.difficulty',
+      'random:filters.level',
+      'random:filters.version',
+      'random:filters.all-versions',
+      'recommend:title',
+      'recommend:stats.total',
+      'recommend:stats.b15-floor',
+      'recommend:stats.b35-floor',
+    ]
+
+    for (const locale of SUPPORTED_LOCALES) {
+      const i18nInstance = createServerI18n(locale)
+      for (const key of keys) {
+        const value = i18nInstance.t(key)
+        expect(value, `${locale} ${key}`).not.toBe(key)
+        expect(value, `${locale} ${key}`).not.toBe(key.split(':')[1])
+        expect(value, `${locale} ${key}`).toBeTruthy()
+      }
+    }
+  })
 })
