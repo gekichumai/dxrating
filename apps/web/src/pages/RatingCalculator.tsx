@@ -188,16 +188,11 @@ export const RatingCalculator = () => {
               <RenderToOneShotImageButton />
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              <div className="flex items-center gap-2">
-                <ImportMenu />
-                <NetImportSettingsButton />
-              </div>
-              <div className="flex flex-1 items-center gap-2">
-                <ExportMenu />
-                <div className="flex-1" />
-                <ClearButton />
-              </div>
+            <div className="rating-io-actions mt-2">
+              <ImportMenu />
+              <NetImportSettingsButton />
+              <ExportMenu />
+              <ClearButton />
             </div>
           </section>
           <ImportUndoBanner />
