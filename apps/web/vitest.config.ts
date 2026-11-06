@@ -22,7 +22,11 @@ export default defineConfig({
   },
   test: {
     environment: 'happy-dom',
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: [
+      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      // The search recall eval takes about a minute, so it runs only through `pnpm search:eval`
+      ...(process.env.SEARCH_EVAL ? ['src/search-eval/*.eval.ts'] : []),
+    ],
     globals: true,
     setupFiles: ['src/test-utils/setup-catalog.ts'],
   },
