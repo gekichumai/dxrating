@@ -8,11 +8,11 @@ export const BetaBadge = ({ className }: { className?: string }) => {
   return (
     <div
       className={clsx(
-        'bg-gray-200 rounded-full px-2 py-1 text-xs flex items-center gap-1 select-none leading-none',
+        'glass-inset !rounded-full px-2 py-1 text-xs font-semibold text-fg-1 flex items-center gap-1 select-none leading-none',
         className,
       )}
     >
-      <MdiBeta />
+      <MdiBeta aria-hidden />
       <span>{t('global:beta')}</span>
     </div>
   )

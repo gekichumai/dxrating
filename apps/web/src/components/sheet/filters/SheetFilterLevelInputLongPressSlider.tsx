@@ -98,7 +98,7 @@ export const SheetFilterInternalLevelInputLongPressSlider = ({
               ))}
               {value !== undefined && value >= min && value <= max && (
                 <div
-                  className="h-8 w-8 rounded-full bg-gray-600/80 text-white flex items-center justify-center absolute left-0 text-xs left-1"
+                  className="h-8 w-8 rounded-full bg-gray-600/80 dark:bg-[rgb(75_85_99/0.8)] text-white flex items-center justify-center absolute left-0 text-xs left-1"
                   style={{
                     top: `${indicatorPosition}px`,
                   }}

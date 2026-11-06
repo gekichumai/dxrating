@@ -1,5 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import type { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js'
+import { McpServer, type CallToolResult, type ToolAnnotations } from '@modelcontextprotocol/server'
 import type { McpCatalog } from './catalog'
 import { CATALOG_LOADING_MESSAGE, ICONS, SITE_URL, toolError } from './output'
 import { calculateBest50Tool, runCalculateBest50 } from './tool-calculate-best50'

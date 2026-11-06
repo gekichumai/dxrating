@@ -1,9 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { getCatalogDocument } from '@/catalog/catalogSource'
-import { buildSheetPath } from '@/components/sheet/sheetLinks'
+import { buildSheetPath, songHubPath } from '@/components/sheet/sheetLinks'
 import { CONSTANT_TABLE_LEVELS, constantTablePath } from '@/components/chartDiscovery/constantTables'
 import { VERSION_PAGE_VERSIONS, versionPagePath } from '@/components/chartDiscovery/versionPages'
+import { listIndexablePlateIds, platePath } from '@/components/plates/plateData'
 import { buildLocalizedUrl } from '@/utils/alternateLinks'
 import { SUPPORTED_LOCALES } from '@/setup/locale'
 
@@ -56,6 +57,28 @@ const constantTableEntries = [
   )
   .join('')
 
+const plateEntries = ['/plates', ...listIndexablePlateIds().map(platePath)]
+  .map(
+    (path) => `
+  <url>
+    <loc>${urlLoc(path)}</loc>${alternatesXml(path)}
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`,
+  )
+  .join('')
+
+const toolEntries = ['/tools/tolerance', '/tools/rating']
+  .map(
+    (path) => `
+  <url>
+    <loc>${urlLoc(path)}</loc>${alternatesXml(path)}
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>`,
+  )
+  .join('')
+
 export function buildSitemap(songs: SitemapSong[]) {
   const sheetEntries = songs
     .flatMap((song) =>
@@ -75,6 +98,19 @@ export function buildSitemap(songs: SitemapSong[]) {
     <loc>${urlLoc(path)}</loc>${alternatesXml(path)}${lastmodXml(sheet.releaseDate)}
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+  </url>`,
+    )
+    .join('')
+
+  // One hub per song (`/songs/<id>`): every chart of the song in one table
+  const songHubEntries = songs
+    .map((song) => songHubPath(song.id))
+    .map(
+      (path) => `
+  <url>
+    <loc>${urlLoc(path)}</loc>${alternatesXml(path)}
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>`,
     )
     .join('')
@@ -105,7 +141,12 @@ export function buildSitemap(songs: SitemapSong[]) {
     <loc>${urlLoc('/developers')}</loc>${alternatesXml('/developers')}
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>${constantTableEntries}${sheetEntries}
+  </url>
+  <url>
+    <loc>${urlLoc('/random')}</loc>${alternatesXml('/random')}
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>${toolEntries}${constantTableEntries}${plateEntries}${songHubEntries}${sheetEntries}
 </urlset>`
 }
 

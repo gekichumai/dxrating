@@ -24,6 +24,8 @@ export const constantTableLevelOf = (level: string): ConstantTableLevel | null =
   CONSTANT_TABLE_LEVELS.find((candidate) => candidate === level) ?? null
 
 export type ConstantTableChart = {
+  /** Public sheet ID, joins the user's records in the completion overlay */
+  sheetId: string
   songId: string
   title: string
   artist: string
@@ -67,6 +69,7 @@ export function buildConstantTable(document: SongCatalogDocument, level: Constan
       if (sheet.level !== level || !(sheet.internalLevelValue > 0) || sheet.serverIds.length === 0) continue
 
       charts.push({
+        sheetId: sheet.id,
         songId: song.id,
         title: song.title,
         artist: song.artist,

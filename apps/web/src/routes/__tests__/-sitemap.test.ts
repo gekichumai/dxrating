@@ -61,3 +61,28 @@ describe('buildSitemap', () => {
     expect(sitemap).not.toContain('<lastmod>undefined</lastmod>')
   })
 })
+describe('buildSitemap plates', () => {
+  it('lists the plate index and plate pages with hreflang alternates', () => {
+    const sitemap = buildSitemap([])
+    expect(sitemap).toContain('<loc>https://dxrating.net/plates</loc>')
+    expect(sitemap).toContain('<loc>https://dxrating.net/plates/kagami-shin</loc>')
+    expect(sitemap).not.toContain('/plates/shin-ver-sho<')
+  })
+
+  it('lists the public tool pages with hreflang alternates', () => {
+    const sitemap = buildSitemap([])
+    for (const path of ['/tools/tolerance', '/tools/rating']) {
+      expect(sitemap).toContain(`<loc>https://dxrating.net${path}</loc>`)
+      expect(sitemap).toContain(`hreflang="ja" href="https://dxrating.net${path}?locale=ja"`)
+    }
+  })
+
+  it('lists one hub URL per song with its hreflang cluster', () => {
+    const sitemap = buildSitemap([
+      { id: 'dsng_hub', sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Master }] },
+    ])
+
+    expect(sitemap).toContain('<loc>https://dxrating.net/songs/dsng_hub</loc>')
+    expect(sitemap).toContain('hreflang="ja" href="https://dxrating.net/songs/dsng_hub?locale=ja"')
+  })
+})

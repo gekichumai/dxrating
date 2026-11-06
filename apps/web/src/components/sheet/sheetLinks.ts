@@ -16,3 +16,6 @@ export const buildSheetLink = (
   const url = new URL(buildSheetPath(sheet), origin)
   return url.toString()
 }
+
+/** Path of a song's hub page (`/songs/<id>`): every chart of the song in one table */
+export const songHubPath = (songId: string): string => `/songs/${encodeURIComponent(songId)}`

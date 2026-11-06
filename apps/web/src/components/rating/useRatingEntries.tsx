@@ -9,11 +9,12 @@ import {
 } from '@gekichumai/maimai-domain'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { useSongCatalog } from '../../catalog/CatalogContext'
-import { useMemo } from 'react'
+import { createContext, useContext, useMemo } from 'react'
 import type { Region } from '../../models/context/AppContext'
 import { useAppContext, useAppContextDXDataVersion } from '../../models/context/useAppContext'
 import type { Entry } from '../../pages/RatingCalculator'
 import { type FlattenedSheet, useSheets } from '../../songs'
+import { isAllPerfect } from '../toplists/toplistData'
 import type { PlayEntry } from './RatingCalculatorAddEntryForm'
 import { useScoreEntries } from '@/models/scores/useScoreRepository'
 
@@ -47,8 +48,14 @@ interface NormalizedWebRatingEntry {
   ratingEntry: RatingEntry | null
 }
 
+/** `ap50` computes the B50 from AP / AP+ records only; provided by the /rating page (`?view=ap50`) */
+export type RatingView = 'b50' | 'ap50'
+export const RatingViewContext = createContext<RatingView>('b50')
+export const useRatingView = () => useContext(RatingViewContext)
+
 export const calculateWebRatingEntries = ({
   entries,
+  apOnly = false,
   sheets,
   catalog,
   appVersion,
@@ -59,7 +66,9 @@ export const calculateWebRatingEntries = ({
   catalog: SongCatalog
   appVersion: VersionEnum
   region: Region
+  apOnly?: boolean
 }): UseRatingEntriesReturn => {
+  if (apOnly) entries = entries.filter(isAllPerfect)
   const sheetsById = new Map(sheets?.map((sheet) => [sheet.id, sheet]) ?? [])
   const normalizedEntries = entries.flatMap((entry): NormalizedWebRatingEntry[] => {
     const sheet = sheetsById.get(entry.sheetId)
@@ -77,6 +86,7 @@ export const calculateWebRatingEntries = ({
               achievementRate: entry.achievementRate,
               comboFlag: entry.comboFlag,
               syncFlag: entry.syncFlag,
+              // The provider's bucket is the chart's B15/B35 eligibility: AP50 keeps it, only the input is filtered
               source: entry.providerConfig?.divingFish?.ratingEligibility
                 ? {
                     provider: 'diving-fish' as const,
@@ -152,6 +162,7 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
   const entries = useScoreEntries()
   const { data: sheets } = useSheets()
   const catalog = useSongCatalog()
+  const apOnly = useRatingView() === 'ap50'
 
   const { allEntries, b15Entries, b35Entries, statistics } = useMemo(() => {
     const computeStart = performance.now()
@@ -162,6 +173,7 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
       catalog,
       appVersion,
       region,
+      apOnly,
     })
 
     Sentry.metrics.distribution('rating_calculation.duration', performance.now() - computeStart, {
@@ -170,7 +182,7 @@ export const useRatingEntries = (): UseRatingEntriesReturn => {
     })
 
     return result
-  }, [entries, sheets, catalog, appVersion, region])
+  }, [entries, sheets, catalog, appVersion, region, apOnly])
 
   return { isLoading: !sheets, allEntries, b15Entries, b35Entries, statistics }
 }

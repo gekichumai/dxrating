@@ -36,13 +36,21 @@ const SheetCategoryFilterInputCategory = ({
       aria-pressed={selected}
       className="rounded-lg overflow-hidden"
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          onToggle()
-        }
+        if (e.key !== 'Enter' && e.key !== ' ') return
+        e.preventDefault()
+        // Shift+Enter is the keyboard path to "select only", which pointers get by holding
+        if (e.shiftKey) onOnly()
+        else onToggle()
       }}
       focusRipple
     >
-      <Chip label={category} color={selected ? 'primary' : 'default'} size="small" className="!rounded-lg" />
+      <Chip
+        label={category}
+        color={selected ? 'primary' : 'default'}
+        variant={selected ? 'filled' : 'outlined'}
+        size="small"
+        className="!rounded-lg"
+      />
     </ButtonBase>
   )
 }
