@@ -124,9 +124,12 @@ export const CloudMigrationProvider: FC<
     localEntries.length > 0 &&
     !readActiveSaveId(storage, userId)
 
-  // A sign-out, or cloud save turned off, closes the dialog
+  // A sign-out, another account, or cloud save turned off closes the dialog, which stops a migration it runs
+  const openedFor = useRef<string | null>(null)
   useEffect(() => {
-    if (!userId || features?.cloudSave !== true) setDialogOpen(false)
+    if (!userId || features?.cloudSave !== true || (openedFor.current !== null && openedFor.current !== userId)) {
+      setDialogOpen(false)
+    }
   }, [userId, features?.cloudSave])
 
   // The control that opened the dialog is gone once the migration made a cloud save active: the focus goes to a
@@ -135,8 +138,9 @@ export const CloudMigrationProvider: FC<
   const open = useCallback(() => {
     const element = typeof document === 'undefined' ? null : (document.activeElement as HTMLElement | null)
     opener.current = { element, scope: focusScopeOf(element) }
+    openedFor.current = userId ?? null
     setDialogOpen(true)
-  }, [])
+  }, [userId])
   const close = useCallback(() => {
     setDialogOpen(false)
     const { element, scope } = opener.current
@@ -154,9 +158,12 @@ export const CloudMigrationProvider: FC<
   return (
     <CloudMigrationContext.Provider value={offer}>
       {children}
-      {dialogOpen && userId && (
+      {dialogOpen && userId && userId === openedFor.current && (
         <Suspense fallback={null}>
           <CloudMigrationDialog
+            // Another account never inherits this dialog (nor a migration it runs)
+            key={userId}
+            userId={userId}
             open
             onClose={close}
             entries={localEntries}

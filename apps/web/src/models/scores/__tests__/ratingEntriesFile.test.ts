@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseRatingFile } from '../ratingEntriesFile'
+import { entriesToImportRecords } from '../cloudImports'
 
 describe('parseRatingFile', () => {
   it('accepts an "all records" export as it was written, extra fields included', () => {
@@ -125,10 +126,48 @@ describe('parseRatingFile', () => {
               syncFlag: 'fs',
               dxScore: 2100,
               source: { provider: 'diving-fish', providerId: '42', best50Bucket: 'b15' },
+              // Where the calculator reads the hint
+              providerConfig: { divingFish: { ratingEligibility: 'b15' } },
             },
           ],
         },
       ],
+    })
+    // A backed-up record keeps its device's hint without claiming a provider; re-imported into a cloud save, both
+    // keep it
+    const backedUp = parseRatingFile(
+      JSON.stringify({
+        ...file,
+        saves: [
+          {
+            id: 'dsav_b',
+            name: 'Main',
+            region: 'cn',
+            records: [
+              {
+                sheetId: 'dsht_e5nsvt8k2a',
+                achievementRate: 99,
+                best50Bucket: 'b35',
+                provenance: { source: 'legacy-local', claimedSource: null, verification: 'client_reported' },
+              },
+            ],
+          },
+        ],
+      }),
+    )
+    const entries = backedUp.success && 'cloudExport' in backedUp ? backedUp.cloudExport![0]!.entries : []
+    expect(entries).toEqual([
+      {
+        sheetId: 'dsht_e5nsvt8k2a',
+        achievementRate: 99,
+        comboFlag: null,
+        syncFlag: null,
+        providerConfig: { divingFish: { ratingEligibility: 'b35' } },
+      },
+    ])
+    expect(entriesToImportRecords(entries, { source: 'dxrating-json', claimedSource: null }).records[0]).toMatchObject({
+      best50Bucket: 'b35',
+      claimedSource: null,
     })
     expect(parseRatingFile(JSON.stringify({ ...file, saves: [] }))).toMatchObject({
       success: false,

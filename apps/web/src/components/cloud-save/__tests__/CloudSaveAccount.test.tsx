@@ -229,6 +229,38 @@ describe('CloudMigrationDialog: no cloud save yet', () => {
     expectNoIdentifiers()
   })
 
+  it('stops a running backup when the dialog goes (sign-out, another account): no upload, nothing activated', async () => {
+    const api = migrationApi()
+    let created: (() => void) | null = null
+    const createSave = api.createSave.getMockImplementation()!
+    api.createSave.mockImplementation(async (input) => {
+      await new Promise<void>((resolve) => (created = resolve))
+      return createSave(input)
+    })
+    const onActivate = vi.fn()
+    const { unmount } = render(
+      <CloudMigrationDialog
+        open
+        onClose={vi.fn()}
+        entries={ENTRIES}
+        region="intl"
+        api={api}
+        storage={window.localStorage}
+        onActivate={onActivate}
+        userId="user-1"
+      />,
+    )
+    fireEvent.click(await screen.findByRole('button', { name: 'Back up to cloud' }))
+    await waitFor(() => expect(created).not.toBeNull())
+
+    unmount()
+    created!()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    expect(api.clientImport).not.toHaveBeenCalled()
+    expect(onActivate).not.toHaveBeenCalled()
+  })
+
   it('leaves the loading step under StrictMode (its effects run twice in dev)', async () => {
     const api = migrationApi()
     render(

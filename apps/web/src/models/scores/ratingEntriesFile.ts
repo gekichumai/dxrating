@@ -137,6 +137,12 @@ function exportRecordToEntry(record: z.output<typeof CloudExportRecordSchema>): 
     if (record.providerRecordId) entry.source.providerId = record.providerRecordId
     if (record.best50Bucket) entry.source.best50Bucket = record.best50Bucket
   }
+  // The calculator reads the best 50 hint from `providerConfig` (as `cloudRecordToPlayEntry` writes it): a
+  // Diving-Fish record, or a backed-up one that kept its device's hint without claiming a provider
+  const hintSource = record.provenance?.source
+  if (record.best50Bucket && (hintSource === 'diving-fish' || hintSource === 'legacy-local')) {
+    entry.providerConfig = { divingFish: { ratingEligibility: record.best50Bucket } }
+  }
   return entry
 }
 

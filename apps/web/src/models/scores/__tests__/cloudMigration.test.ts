@@ -12,7 +12,9 @@ import {
   DEVICE_ID_STORAGE_KEY,
   findMigrationTarget,
   getDeviceId,
+  MigrationCancelledError,
   MigrationConflictError,
+  migrationImportRecords,
   migrationErrorCode,
   pruneExpiredCloudBackup,
   runCloudMigration,
@@ -132,11 +134,20 @@ class FakeMigrationServer {
           data: { revision: save.revision },
         }
       }
-      this.records.set(input.id, new Map(input.records.map((record) => [record.sheetId, record])))
-      save.revision++
+      const next = new Map(input.records.map((record) => [record.sheetId, record]))
+      const current = this.records.get(input.id)!
+      // As the backend: a replace that changes nothing writes nothing, and the revision stays
+      const unchanged =
+        current.size === next.size &&
+        [...next].every(([sheetId, record]) => JSON.stringify(current.get(sheetId)) === JSON.stringify(record))
+      this.records.set(input.id, next)
+      if (!unchanged) save.revision++
       save.recordCount = input.records.length
       const job = this.job(input.id, 'legacy-local', 'user')
       job.status = 'succeeded'
+      job.counts = unchanged
+        ? { ...counts(input.records.length), inserted: 0, unchanged: input.records.length }
+        : counts(input.records.length)
       this.jobByKey.set(input.idempotencyKey, job.id)
       return { job: { ...job }, revision: save.revision }
     },
@@ -737,6 +748,78 @@ describe('runCloudMigration: a cloud save made on another device', () => {
     expect(a).not.toBe(b)
     expect(outcome.job?.saveId).toBe(second.id)
     expect(server.records.get(second.id)!.size).toBe(3)
+  })
+})
+
+describe('runCloudMigration: review fixes', () => {
+  it('applies other records confirmed at an unchanged revision after a no-op replace (its answer lost)', async () => {
+    const save = server.addSave({ clientProfileKey: 'web-local', revision: 7 })
+    await migrate({ mode: 'replace', target: save })
+    const revision = server.saves[0]!.revision
+    // The same replace again changes nothing (the revision stays), and its answer is lost
+    server.failures.push(new TypeError('Failed to fetch'))
+    await migrate({ mode: 'replace', target: { ...save, revision } }).catch(() => {})
+    expect(server.saves[0]!.revision).toBe(revision)
+
+    // Changed scores, confirmed over that same revision: a new request, applied
+    const changed: PlayEntry[] = [{ sheetId: SHEET_A, achievementRate: 100.7 }]
+    await migrate({ mode: 'replace', target: { ...save, revision }, entries: changed })
+    const keys = server.calls.filter((call) => call.route === 'replace').map((call) => call.input.idempotencyKey)
+    expect(new Set(keys.slice(1)).size).toBe(2)
+    expect([...server.records.get(save.id)!.values()].map((record) => record.achievement)).toEqual([1007000])
+  })
+
+  it('reports what the job kept, and every entry left out on this device or by the server', async () => {
+    const entries: PlayEntry[] = [
+      { sheetId: SHEET_A, achievementRate: 100.5 },
+      // The server would reject this DX score: left out on this device
+      { sheetId: SHEET_B, achievementRate: 99, dxScore: 100001 },
+      { sheetId: SHEET_C, achievementRate: 98 },
+    ]
+    const clientImport = server.api.clientImport
+    server.api.clientImport = async (input) => {
+      const result = await clientImport(input)
+      // The cloud save had C deleted: the merge skips it
+      return { ...result, job: { ...result.job, counts: { ...counts(2), inserted: 1, skippedDeleted: 1 } } }
+    }
+    const outcome = await migrate({ entries })
+    expect(outcome).toMatchObject({ uploaded: 1, skipped: 2 })
+  })
+
+  it('keeps the best 50 hint a single entry stores in providerConfig', () => {
+    const { records } = migrationImportRecords([
+      { sheetId: SHEET_A, achievementRate: 99, providerConfig: { divingFish: { ratingEligibility: 'b35' } } },
+    ])
+    expect(records).toEqual([expect.objectContaining({ sheetId: SHEET_A, best50Bucket: 'b35', claimedSource: null })])
+  })
+
+  it('sends nothing for another account: the session changed before the first write', async () => {
+    const api = { ...server.api, currentUserId: async () => 'user-b' }
+    const error = await migrate({ api, userId: 'user-a' }).catch((caught: unknown) => caught)
+    expect(error).toBeInstanceOf(MigrationCancelledError)
+    expect(server.routes()).toEqual([])
+    expect(server.saves).toHaveLength(0)
+  })
+
+  it('stops between requests once aborted (the dialog closed), and sends nothing more', async () => {
+    const controller = new AbortController()
+    let account = 'user-a'
+    const createSave = server.api.createSave
+    const api: CloudMigrationApi = {
+      ...server.api,
+      currentUserId: async () => account,
+      createSave: async (input) => {
+        const save = await createSave(input)
+        // Another account signs in while the save is created; this tab closes the dialog
+        account = 'user-b'
+        controller.abort()
+        return save
+      },
+    }
+    const error = await migrate({ api, userId: 'user-a', signal: controller.signal }).catch((caught: unknown) => caught)
+    expect(error).toBeInstanceOf(MigrationCancelledError)
+    expect(server.routes()).toEqual(['createSave'])
+    expect(migrationErrorCode(error)).toBe('cancelled')
   })
 })
 

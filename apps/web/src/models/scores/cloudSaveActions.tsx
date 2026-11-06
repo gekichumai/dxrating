@@ -1,5 +1,6 @@
 import type { ImportJobDTO, ImportResultDTO, SaveDTO, UserFeatures } from '@gekichumai/api-contract'
 import { createContext, useContext } from 'react'
+import { authClient } from '../../lib/auth-client'
 import type { CloudMigrationApi } from './cloudMigration'
 
 /**
@@ -67,6 +68,11 @@ export const defaultCloudSaveActions: CloudSaveActions = {
     async getImportJob(jobId) {
       const client = await loadPrivateApi()
       return (await client.cloudSave.imports.get({ jobId })) as ImportJobDTO
+    },
+    async currentUserId() {
+      // Asked of the server: another tab may have signed another account in on this browser
+      const { data } = await authClient.getSession({ query: { disableCookieCache: true } })
+      return data?.user.id ?? null
     },
   },
   async optIn(consentVersion) {

@@ -25,6 +25,7 @@ import {
   type CloudMigrationApi,
   findMigrationTarget,
   getDeviceId,
+  MigrationCancelledError,
   MigrationConflictError,
   migrationErrorCode,
   type MigrationMode,
@@ -60,6 +61,11 @@ export interface CloudMigrationDialogProps {
   resolveInternalLevel?: InternalLevelResolver | null
   /** Makes the save active (`ActiveSave.setActiveSaveId`) */
   onActivate(saveId: string): void
+  /**
+   * The signed-in account that opens the dialog: the migration only writes while the session is still this account,
+   * and stops when the dialog closes
+   */
+  userId?: string
 }
 
 type ExistingChoice = 'merge' | 'cloud-only'
@@ -104,6 +110,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
   storage,
   resolveInternalLevel,
   onActivate,
+  userId,
 }) => {
   const { t, i18n } = useTranslation(['rating-calculator'])
   const titleId = useId()
@@ -116,11 +123,15 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
   const deviceId = useMemo(() => getDeviceId(storage), [storage])
   const headingRef = useRef<HTMLHeadingElement>(null)
   const mounted = useRef(true)
+  /** Aborted when the dialog goes: a migration it started sends nothing more and activates nothing */
+  const running = useRef<AbortController | null>(null)
   // Set again on every mount: StrictMode (dev) runs the cleanup once before the real mount
   useEffect(() => {
     mounted.current = true
     return () => {
       mounted.current = false
+      running.current?.abort()
+      running.current = null
     }
   }, [])
 
@@ -156,6 +167,9 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
       mode: ANALYTICS_MODE[mode],
       record_count: recordCount,
     })
+    running.current?.abort()
+    const controller = new AbortController()
+    running.current = controller
     try {
       const outcome = await runCloudMigration({
         api,
@@ -167,7 +181,11 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
         deviceId,
         storage,
         resolveInternalLevel,
+        userId,
+        signal: controller.signal,
       })
+      // Closed (signed out, another account) while the last request was answered: nothing is activated
+      if (controller.signal.aborted) throw new MigrationCancelledError()
       captureAnalyticsEvent('cloudsave_migration_succeeded', {
         mode: ANALYTICS_MODE[mode],
         record_count: outcome.uploaded,
@@ -188,7 +206,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
         error_code: migrationErrorCode(error),
         duration_ms: Math.round(performance.now() - startedAt),
       })
-      if (!mounted.current) return
+      if (!mounted.current || controller.signal.aborted) return
       if (error instanceof MigrationConflictError) {
         // Another device wrote to the save after it was loaded: show it as it is now, and ask again
         await loadSaves(true)

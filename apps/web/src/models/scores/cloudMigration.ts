@@ -8,6 +8,7 @@ import {
   chunkImportRecords,
   chunkPayloadSha256,
   entriesToImportRecords,
+  importedCount,
   importInProgressJobId,
   isRetryableImportError,
   NothingToImportError,
@@ -65,6 +66,11 @@ export interface CloudMigrationApi {
     records: ImportRecord[]
   }): Promise<ImportResultDTO>
   getImportJob(jobId: string): Promise<ImportJobDTO>
+  /**
+   * The account the browser's session belongs to now, asked of the server (not a cached session): every write
+   * request carries the current session cookie, which another tab may have switched to another account
+   */
+  currentUserId?(): Promise<string | null>
 }
 
 // --- This device ---
@@ -107,12 +113,14 @@ export const migrationImportKey = (deviceId: string, tag: string, nonce: string 
   `migrate-${deviceId}-${WEB_LOCAL_PROFILE_KEY}-${tag}${nonce ? `-${nonce}` : ''}`
 
 /**
- * The key of a "replace the cloud save" from this device, of that save (`saveTag`, a hash of its ID) at the revision
- * the user confirmed: a retry of the same confirmation reuses it; a confirmation over a newer revision, or over
- * another save, is a new request
+ * The key of a "replace the cloud save" from this device, of that save with these records (`tag`, a hash of the
+ * save's ID and every record sent) at the revision the user confirmed: a retry of the same confirmation reuses it; a
+ * confirmation over a newer revision, over another save, or with other records is a new request. The records are
+ * in it because a replace that changes nothing leaves the revision as it was: without them, other records confirmed
+ * at that revision would replay the earlier job and never be applied
  */
-export const migrationReplaceKey = (deviceId: string, saveTag: string, ifRevision: number) =>
-  `migrate-replace-${deviceId}-${WEB_LOCAL_PROFILE_KEY}-${saveTag}-r${ifRevision}`
+export const migrationReplaceKey = (deviceId: string, tag: string, ifRevision: number) =>
+  `migrate-replace-${deviceId}-${WEB_LOCAL_PROFILE_KEY}-${tag}-r${ifRevision}`
 
 /** 16 hex characters identifying `text` in a key: SHA-256 where available, else two FNV-1a hashes */
 export async function migrationKeyTag(text: string): Promise<string> {
@@ -260,8 +268,8 @@ const UNREAD_IDENTITY = Object.freeze({}) as SheetIdentity
  *
  * Provenance is never elevated by the collapse: the collapsed record claims a provider (and a provider record ID)
  * only when every entry of the chart claims the same one; when they differ, or some claim none, it claims none.
- * `skipped` counts what `entriesToImportRecords` skips; an entry the server would reject takes no part in the
- * collapse, as it would not be sent.
+ * `skipped` counts what `entriesToImportRecords` skips or the server would reject; such an entry takes no part in
+ * the collapse, as it would not be sent.
  */
 export function migrationImportRecords(
   entries: readonly PlayEntry[],
@@ -272,7 +280,7 @@ export function migrationImportRecords(
   let skipped = 0
   for (const entry of entries) {
     const converted = entriesToImportRecords([entry], plan)
-    skipped += converted.skipped
+    skipped += converted.skipped + converted.rejected
     const record = converted.records[0]
     if (!record) continue
     const rows = bySheetId.get(record.sheetId)
@@ -330,6 +338,17 @@ export class MigrationConflictError extends Error {
   }
 }
 
+/**
+ * The migration stopped before its next request: the dialog closed, or the session is no longer the account that
+ * started it (signed out, or another account signed in, maybe in another tab)
+ */
+export class MigrationCancelledError extends Error {
+  constructor() {
+    super('The migration was cancelled')
+    this.name = 'MigrationCancelledError'
+  }
+}
+
 /** `POST /saves` answered 409: the user has as many saves as allowed */
 export class SaveLimitError extends Error {
   constructor() {
@@ -350,6 +369,13 @@ export interface MigrationOptions {
   target?: SaveDTO | null
   deviceId: string
   storage: Storage | null
+  /**
+   * The account that started the migration. With {@link CloudMigrationApi.currentUserId}, every write first checks
+   * that the session is still this account, and the migration stops ({@link MigrationCancelledError}) otherwise
+   */
+  userId?: string
+  /** Aborted when the migration must stop (the dialog closed, the session changed): no request is sent after it */
+  signal?: AbortSignal
   now?: () => number
   /** The first wait before a request is sent again; doubles each time, 1 s by default */
   retryDelayMs?: number
@@ -371,18 +397,37 @@ export interface MigrationOptions {
 export interface MigrationOutcome {
   /** The save to make active */
   saveId: string
-  /** Records sent (0 for `cloud-only`) */
+  /** Records the cloud save holds from this upload, as the job reports them (0 for `cloud-only`) */
   uploaded: number
-  /** Entries left out (no public sheet ID or no valid achievement) */
+  /**
+   * Entries left out: on this device (no public sheet ID, no valid achievement, a value the server would reject)
+   * and by the server (rejected, an unknown chart, a chart deleted in the cloud save, a full save)
+   */
   skipped: number
   job: ImportJobDTO | null
 }
+
+/** What the job did not keep of the upload */
+const serverOmissions = (job: ImportJobDTO) =>
+  job.counts.rejected + job.counts.skippedDeleted + job.counts.skippedUnknownSheet
 
 const ATTEMPTS = 3
 /** How long a running import of the save is waited for */
 const JOB_WAIT_MS = 16 * 60_000
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+const delay = (ms: number, signal?: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) return reject(new MigrationCancelledError())
+    const onAbort = () => {
+      clearTimeout(timer)
+      reject(new MigrationCancelledError())
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort)
+      resolve()
+    }, ms)
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
 
 const field = (value: unknown, key: string): unknown =>
   typeof value === 'object' && value !== null && key in value ? (value as Record<string, unknown>)[key] : undefined
@@ -399,18 +444,32 @@ const isPreconditionFailed = (error: unknown) =>
  * be uploaded, {@link SaveLimitError}, {@link MigrationConflictError} (replace only), or the request's error.
  */
 export async function runCloudMigration(options: MigrationOptions): Promise<MigrationOutcome> {
-  const { api, mode, storage } = options
+  const { api, mode, storage, signal } = options
   const now = options.now ?? Date.now
   const retryDelayMs = options.retryDelayMs ?? 1_000
 
-  const withRetries = async <T>(request: () => Promise<T>): Promise<T> => {
+  const ensureActive = () => {
+    if (signal?.aborted) throw new MigrationCancelledError()
+  }
+  /** Before a write: the migration still runs, and the session is still the account that started it */
+  const ensureSameAccount = async () => {
+    ensureActive()
+    if (options.userId === undefined || !api.currentUserId) return
+    const current = await api.currentUserId()
+    ensureActive()
+    if (current !== options.userId) throw new MigrationCancelledError()
+  }
+
+  const withRetries = async <T>(request: () => Promise<T>, { write = false } = {}): Promise<T> => {
     for (let attempt = 1; ; attempt++) {
+      if (write) await ensureSameAccount()
+      else ensureActive()
       try {
         return await request()
       } catch (error) {
         const retry = isRetryableImportError(error)
         if (!retry.retry || attempt >= ATTEMPTS) throw error
-        await delay(retry.afterMs ?? retryDelayMs * 2 ** (attempt - 1))
+        await delay(retry.afterMs ?? retryDelayMs * 2 ** (attempt - 1), signal)
       }
     }
   }
@@ -421,7 +480,7 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
       const job = await withRetries(() => api.getImportJob(jobId))
       if (job.status !== 'running') return job
       if (now() > deadline) throw new ServerImportFailedError('abandoned', job)
-      await delay(options.pollIntervalMs ?? 2_000)
+      await delay(options.pollIntervalMs ?? 2_000, signal)
     }
   }
 
@@ -435,27 +494,36 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
 
   const migrateLegacy = options.migrateLegacyEntries ?? migrateLegacyImportEntries
   const entries = await migrateLegacy([...options.entries])
+  ensureActive()
   const { records, skipped } = migrationImportRecords(entries, options.resolveInternalLevel)
   if (records.length === 0) throw new NothingToImportError(skipped)
+
+  // The same records in any order are the same upload: keys and chunks both use this one order, so a key always
+  // names the same contents (the server replays a key it already received)
+  const bySheetId = [...records].sort((a, b) => (a.sheetId < b.sheetId ? -1 : a.sheetId > b.sheetId ? 1 : 0))
 
   if (mode === 'replace') {
     const target = options.target
     if (!target) throw new Error('No cloud save to replace')
-    const saveTag = await migrationKeyTag(target.id)
+    const replaceTag = await migrationKeyTag(`${target.id}\n${canonicalJson(bySheetId)}`)
     try {
-      const result = await withRetries(() =>
-        api.replace({
-          id: target.id,
-          ifRevision: target.revision,
-          idempotencyKey: migrationReplaceKey(options.deviceId, saveTag, target.revision),
-          source: 'legacy-local',
-          records,
-        }),
+      const result = await withRetries(
+        () =>
+          api.replace({
+            id: target.id,
+            ifRevision: target.revision,
+            idempotencyKey: migrationReplaceKey(options.deviceId, replaceTag, target.revision),
+            source: 'legacy-local',
+            records: bySheetId,
+          }),
+        { write: true },
       )
+      if (result.job.status === 'failed')
+        throw new ServerImportFailedError(result.job.errorCode ?? 'failed', result.job)
       return {
         saveId: target.id,
-        uploaded: records.length,
-        skipped,
+        uploaded: importedCount(result.job.counts),
+        skipped: skipped + serverOmissions(result.job),
         job: result.job,
       }
     } catch (error) {
@@ -474,12 +542,14 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
   } else {
     try {
       // Idempotent: a retry, or another tab doing the same, gets the save the first request made
-      const save = await withRetries(() =>
-        api.createSave({
-          name: options.name,
-          region: options.region,
-          clientProfileKey: WEB_LOCAL_PROFILE_KEY,
-        }),
+      const save = await withRetries(
+        () =>
+          api.createSave({
+            name: options.name,
+            region: options.region,
+            clientProfileKey: WEB_LOCAL_PROFILE_KEY,
+          }),
+        { write: true },
       )
       saveId = save.id
     } catch (error) {
@@ -488,9 +558,6 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
     }
   }
 
-  // The same records in any order are the same upload: the tag and the chunks both use this one order, so a key
-  // always names the same chunk contents and boundaries (the server replays a chunk index it already received)
-  const bySheetId = [...records].sort((a, b) => (a.sheetId < b.sheetId ? -1 : a.sheetId > b.sheetId ? 1 : 0))
   const attempt = resumeAttempt(storage, await migrationKeyTag(`${saveId}\n${canonicalJson(bySheetId)}`))
 
   /** Sends every chunk under the attempt's key; stops early when the key's job already ended (a replay) */
@@ -503,17 +570,19 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
     for (const [chunkIndex, chunk] of chunks.entries()) {
       for (let tries = 1; ; tries++) {
         try {
-          const result = await withRetries(() =>
-            api.clientImport({
-              id: saveId,
-              idempotencyKey,
-              source: 'legacy-local',
-              trigger: 'migration',
-              rawPayloadSha256: hashes[chunkIndex] ?? null,
-              chunkIndex,
-              chunkCount: chunks.length,
-              records: chunk,
-            }),
+          const result = await withRetries(
+            () =>
+              api.clientImport({
+                id: saveId,
+                idempotencyKey,
+                source: 'legacy-local',
+                trigger: 'migration',
+                rawPayloadSha256: hashes[chunkIndex] ?? null,
+                chunkIndex,
+                chunkCount: chunks.length,
+                records: chunk,
+              }),
+            { write: true },
           )
           job = result.job
           break
@@ -540,12 +609,13 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
   }
   if (job.status === 'failed') throw new ServerImportFailedError(job.errorCode ?? 'failed', job)
   saveAttempt(storage, { ...attempt, done: true })
-  return { saveId, uploaded: records.length, skipped, job }
+  return { saveId, uploaded: importedCount(job.counts), skipped: skipped + serverOmissions(job), job }
 }
 
 /** A short code for analytics: never a message, an ID or a value */
 export function migrationErrorCode(error: unknown): string {
   if (error instanceof MigrationConflictError) return 'conflict'
+  if (error instanceof MigrationCancelledError) return 'cancelled'
   if (error instanceof SaveLimitError) return 'save_limit'
   if (error instanceof NothingToImportError) return 'nothing_to_import'
   if (error instanceof ServerImportFailedError) return error.code === 'abandoned' ? 'abandoned' : 'job_failed'
