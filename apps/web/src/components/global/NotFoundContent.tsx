@@ -14,10 +14,17 @@ export function NotFoundContent() {
 
         <div className="flex flex-col items-center gap-2">
           <h1 className="page-title m-0 sm:text-4xl">{t('root:not-found.title')}</h1>
-          <p className="page-description m-0 max-w-sm">{t('root:not-found.description')}</p>
+          <p className="page-description m-0 max-w-md text-balance [word-break:auto-phrase]">
+            {t('root:not-found.description')}
+          </p>
         </div>
 
-        <Button variant="contained" href="/" startIcon={<Home className="size-4" aria-hidden="true" />}>
+        <Button
+          variant="contained"
+          href="/"
+          className="!min-h-10"
+          startIcon={<Home className="size-4" aria-hidden="true" />}
+        >
           {t('root:not-found.back-to-home')}
         </Button>
       </section>

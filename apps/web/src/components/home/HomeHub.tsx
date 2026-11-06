@@ -1,12 +1,20 @@
 import { plateName } from '@gekichumai/maimai-domain'
 import { Link } from '@tanstack/react-router'
 import { type FC, useEffect, useState } from 'react'
+import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import { SheetImage } from '@/components/sheet/SheetListItem'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
+import { useHorizontalOverflow } from '@/components/completion/TableChrome'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { plateRegionSearch } from '@/components/plates/plateData'
-import { HOME_FEATURES, type HomeFeatureId, type HomeRecentSong } from './homeModules'
+import {
+  HOME_FEATURES,
+  HOME_RECENT_SONG_LIMIT_LG,
+  HOME_RECENT_SONG_LIMIT_MOBILE,
+  type HomeFeatureId,
+  type HomeRecentSong,
+} from './homeModules'
 import { useHomeQuickStats } from './useHomeQuickStats'
 import IconMdiTrophyOutline from '~icons/mdi/trophy-outline'
 import IconMdiCardAccountDetailsStarOutline from '~icons/mdi/card-account-details-star-outline'
@@ -105,6 +113,7 @@ const QuickStats: FC = () => {
 
 export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recentSongs }) => {
   const { t } = useTranslation(['home', 'sheet'])
+  const recentScroller = useHorizontalOverflow<HTMLDivElement>()
   // Scores live on the client only: the server and cached HTML stay user-agnostic
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
@@ -125,29 +134,47 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
               {t('home:recent.see-all')}
             </Link>
           </div>
-          {/* Sized to its covers on wide screens instead of leaving a wide empty panel; covers sit 12px in, so they keep
-              their own radius. Scrolling snaps cover by cover, each stopping at that same 12px inset. */}
-          <MaterialSurface className="w-fit max-w-full overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-3">
-            <ul className="m-0 flex list-none gap-3 p-3">
-              {recentSongs.map((song) => (
-                <li key={song.songId} className="w-20 shrink-0 snap-start">
-                  <Link
-                    to="/songs/$songId"
-                    params={{ songId: song.songId }}
-                    onClick={() => trackClick('recent', song.songId)}
-                    className="flex flex-col gap-1 rounded-[var(--radius-md)] text-inherit no-underline"
+          {/* Phones scroll one row of 8 covers; from lg the strip spans the hub as a one-row grid and shows more covers
+              (10 at lg, 13 at xl, as many as fit a row). Hidden by CSS, not matchMedia, so SSR stays deterministic.
+              Covers sit 12px in, so they keep their own radius. On phones the row snaps cover by cover, each stopping at
+              that 12px inset, and fades at an edge that has more covers past it. */}
+          <MaterialSurface className="w-full">
+            <div
+              ref={recentScroller.ref}
+              className={clsx(
+                'overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-3 lg:overflow-visible lg:snap-none',
+                recentScroller.fade,
+              )}
+            >
+              <ul className="m-0 flex list-none gap-3 p-3 lg:grid lg:grid-cols-[repeat(auto-fill,minmax(5rem,1fr))]">
+                {recentSongs.map((song, index) => (
+                  <li
+                    key={song.songId}
+                    className={clsx(
+                      'w-20 shrink-0 snap-start',
+                      index >= HOME_RECENT_SONG_LIMIT_LG
+                        ? 'hidden xl:block'
+                        : index >= HOME_RECENT_SONG_LIMIT_MOBILE && 'hidden lg:block',
+                    )}
                   >
-                    <SheetImage
-                      name={song.imageName}
-                      size="large"
-                      alt={t('sheet:cover-art-alt', { title: song.title })}
-                      className="h-20 w-20 rounded-[var(--radius-md)] overflow-hidden outline outline-1 -outline-offset-1 outline-black/10"
-                    />
-                    <span className="line-clamp-2 text-xs leading-snug [word-break:auto-phrase]">{song.title}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+                    <Link
+                      to="/songs/$songId"
+                      params={{ songId: song.songId }}
+                      onClick={() => trackClick('recent', song.songId)}
+                      className="flex flex-col gap-1 rounded-[var(--radius-md)] text-inherit no-underline"
+                    >
+                      <SheetImage
+                        name={song.imageName}
+                        size="large"
+                        alt={t('sheet:cover-art-alt', { title: song.title })}
+                        className="h-20 w-20 rounded-[var(--radius-md)] overflow-hidden outline outline-1 -outline-offset-1 outline-black/10"
+                      />
+                      <span className="line-clamp-2 text-xs leading-snug [word-break:auto-phrase]">{song.title}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </MaterialSurface>
         </section>
       )}
@@ -155,18 +182,20 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
       <nav className="flex flex-col gap-2" aria-labelledby="home-features">
         <SectionTitle id="home-features">{t('home:features.title')}</SectionTitle>
         {/*
-          On phones two scrolling rows keep the search results near the top; wider screens get the full grid. A scroller
-          clips on both axes, so it gets a 4px gutter (offset by an equal negative margin, so the cards stay aligned
-          with the rest of the page) that holds the cards' border, shadow and 3px focus outline.
+          On phones two scrolling rows keep the search results near the top; wider screens get the full grid. The phone
+          scroller bleeds to the screen edges (-mx-4 against the page's 16px gutter) and snaps with a 16px scroll padding,
+          so a resting card lines up with the section title and the next column runs off the screen edge, not sliced
+          at the gutter. A scroller clips on both axes, so 4px of vertical padding (offset by a negative margin) holds
+          the cards' border, shadow and 3px focus outline.
         */}
-        <ul className="-m-1 grid list-none grid-flow-col grid-rows-2 auto-cols-[minmax(10.5rem,46%)] gap-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-1 p-1 pb-2 sm:m-0 sm:grid-flow-row sm:grid-rows-none sm:auto-cols-auto sm:grid-cols-3 sm:overflow-visible sm:p-0 lg:grid-cols-4">
+        <ul className="-mx-4 -my-1 grid list-none grid-flow-col grid-rows-2 auto-cols-[minmax(10.5rem,46%)] gap-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-4 px-4 py-1 pb-2 sm:m-0 sm:grid-flow-row sm:grid-rows-none sm:auto-cols-auto sm:grid-cols-3 sm:overflow-visible sm:p-0 lg:grid-cols-4 xl:grid-cols-6">
           {HOME_FEATURES.map((feature) => {
             const Icon = FEATURE_ICONS[feature.id]
             return (
               <li key={feature.id} className="snap-start">
                 <Link to={feature.to} onClick={() => trackClick('feature', feature.id)} className={CARD_LINK}>
                   <MaterialSurface className={`flex h-full items-start gap-2.5 px-3 py-2.5 ${CARD_SURFACE}`}>
-                    <Icon aria-hidden="true" className="mt-0.5 shrink-0 text-lg text-accent-strong" />
+                    <Icon aria-hidden="true" className="size-5 shrink-0 text-accent-strong" />
                     <span className="flex min-w-0 flex-col">
                       <span className="text-sm font-semibold">{t(`home:features.${feature.id}.title`)}</span>
                       <span className="text-xs text-fg-2 text-pretty">
