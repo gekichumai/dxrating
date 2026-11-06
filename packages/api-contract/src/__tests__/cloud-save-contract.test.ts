@@ -174,9 +174,12 @@ describe('input validation', () => {
     expect(ImportRecordSchema.safeParse({ ...record, comboFlag: 'fdx' }).success).toBe(false)
   })
 
-  it('refuses U+0000, which PostgreSQL text and JSONB cannot store', () => {
+  it('refuses U+0000 and lone surrogates, which PostgreSQL text and JSONB cannot store', () => {
     expect(ImportRecordSchema.safeParse({ ...record, providerRecordId: '123' }).success).toBe(true)
     expect(ImportRecordSchema.safeParse({ ...record, providerRecordId: '1\u00002' }).success).toBe(false)
+    expect(ImportRecordSchema.safeParse({ ...record, providerRecordId: '1\ud800' }).success).toBe(false)
+    expect(ImportRecordSchema.safeParse({ ...record, providerRecordId: '\udc00' }).success).toBe(false)
+    expect(ImportRecordSchema.safeParse({ ...record, providerRecordId: '\ud83c\udfb5' }).success).toBe(true)
   })
 
   it('limits mutations to 500 and requires UUIDv7 IDs', () => {
