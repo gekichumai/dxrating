@@ -1,18 +1,19 @@
-import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
 import { VERSION_SORT_ORDER, type DifficultyEnum, type TypeEnum, type VersionEnum } from '@gekichumai/dxdata'
 import type { VersionedSheet } from '@gekichumai/maimai-domain'
 import { Button, Chip, CircularProgress, MenuItem, Slider, TextField } from '@mui/material'
 import { Link } from '@tanstack/react-router'
-import { type FC, useMemo, useState } from 'react'
+import { type FC, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSongCatalog, useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
+import { difficultyTextStyle, ScorePageFrame, ScorePageHeader } from '@/components/scores/ScorePage'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useAppContext } from '@/models/context/useAppContext'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
+import { difficultyInkClassName } from '@/utils/difficultyInk'
 import {
   countActiveFilters,
   DEFAULT_RANDOM_FILTERS,
@@ -24,6 +25,23 @@ import {
   RANDOM_TYPES,
   type RandomChartFilters,
 } from './randomChart'
+
+/**
+ * The value once it has stopped changing for `delay` ms, so a slider drag is announced once, not on every step. The
+ * first value after `null` (still loading) is taken at once, so the count never shows a stale 0 after loading.
+ */
+function useSettled<T>(value: T | null, delay: number): T | null {
+  const [settled, setSettled] = useState(value)
+  useEffect(() => {
+    if (settled === null || value === null) {
+      setSettled(value)
+      return
+    }
+    const timer = setTimeout(() => setSettled(value), delay)
+    return () => clearTimeout(timer)
+  }, [value, delay, settled])
+  return settled
+}
 
 const toggle = <T,>(list: readonly T[], value: T): T[] =>
   list.includes(value) ? list.filter((item) => item !== value) : [...list, value]
@@ -56,14 +74,13 @@ export const RandomChartPage: FC = () => {
     })
   }
 
+  const settledPoolSize = useSettled(catalog ? pool.length : null, 500)
+
   const update = (patch: Partial<RandomChartFilters>) => setFilters((current) => ({ ...current, ...patch }))
 
   return (
-    <div className="mx-auto w-full max-w-3xl flex flex-col gap-4 px-4 pb-global">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold">{t('random:title')}</h1>
-        <p className="text-sm opacity-70">{t('random:description')}</p>
-      </header>
+    <ScorePageFrame>
+      <ScorePageHeader title={t('random:title')} description={t('random:description')} />
 
       <MaterialSurface className="flex flex-col gap-4 p-4">
         <fieldset className="flex flex-col gap-2 border-none p-0 m-0">
@@ -101,13 +118,15 @@ export const RandomChartPage: FC = () => {
                   aria-pressed={selected}
                   className="!rounded-lg"
                   sx={{
-                    borderColor: DIFFICULTIES[difficulty].color,
+                    // Selected: the darker fill that carries white text at 4.5:1
                     ...(selected
                       ? {
-                          backgroundColor: DIFFICULTIES[difficulty].color,
-                          color: '#fff',
+                          backgroundColor: DIFFICULTIES[difficulty].solid,
+                          borderColor: DIFFICULTIES[difficulty].solid,
+                          color: 'common.white',
+                          '&:hover': { backgroundColor: DIFFICULTIES[difficulty].solid, filter: 'brightness(0.92)' },
                         }
-                      : {}),
+                      : { borderColor: DIFFICULTIES[difficulty].color, color: 'var(--fg-1)' }),
                   }}
                 />
               )
@@ -166,41 +185,62 @@ export const RandomChartPage: FC = () => {
           <Button variant="contained" size="large" onClick={roll} disabled={!catalog || pool.length === 0}>
             {t('random:roll')}
           </Button>
-          <span className="text-sm opacity-70" aria-live="polite">
-            {catalog ? t('random:pool-size', { count: pool.length }) : <CircularProgress size="1rem" />}
-          </span>
+          <output className="text-sm text-fg-2 num">
+            {settledPoolSize !== null ? (
+              t('random:pool-size', { count: settledPoolSize })
+            ) : (
+              <CircularProgress size="1rem" aria-label={t('random:loading')} />
+            )}
+          </output>
         </div>
       </MaterialSurface>
 
       {/* The live region stays mounted so each new roll is announced */}
       <div aria-live="polite" className="flex flex-col">
-        {result === null && <MaterialSurface className="p-4 text-sm">{t('random:no-result')}</MaterialSurface>}
+        {result === null && (
+          <MaterialSurface className="p-4 text-sm text-fg-1">{t('random:no-result')}</MaterialSurface>
+        )}
         {result && (
-          <MaterialSurface className="p-4">
+          <MaterialSurface className="p-1">
             <Link
               to={buildSheetPath(result)}
-              className="flex flex-col gap-1 text-inherit no-underline hover:opacity-80"
+              className="flex items-start gap-3 rounded-[var(--radius-md)] p-3 text-fg-1 no-underline outline-offset-[-2px] transition-colors duration-[var(--duration-fast)] hover:bg-black/4"
             >
-              <span className="text-lg font-bold">{result.title}</span>
-              <span className="text-sm opacity-70">{result.artist}</span>
-              <span className="flex flex-wrap items-center gap-2 text-sm">
-                <span>{getSheetTypeDisplayName(result.type, locale)}</span>
-                <span
-                  className={`font-semibold ${difficultyInkClassName}`}
-                  style={difficultyInkStyle(result.difficulty)}
-                >
-                  {DIFFICULTIES[result.difficulty as DifficultyEnum]?.title ?? result.difficulty}
+              <img
+                src={`https://shama.dxrating.net/images/cover/v2/${result.imageName}.jpg`}
+                alt=""
+                width={64}
+                height={64}
+                className="size-16 shrink-0 rounded-[var(--radius-md)] outline outline-1 outline-black/10 -outline-offset-1"
+              />
+              <span className="flex min-w-0 flex-1 flex-col gap-1">
+                <span lang="ja" className="text-lg font-semibold leading-snug break-words">
+                  {result.title}
                 </span>
-                <span className="tabular-nums">
-                  {result.level} ({result.internalLevelValue.toFixed(1)})
+                <span lang="ja" className="text-sm text-fg-2 break-words">
+                  {result.artist}
                 </span>
-                <span className="opacity-70">{result.version}</span>
+                <span className="flex flex-wrap items-center gap-x-2 text-sm">
+                  <span
+                    className={`whitespace-nowrap font-semibold ${difficultyInkClassName}`}
+                    style={difficultyTextStyle(result.difficulty)}
+                  >
+                    {DIFFICULTIES[result.difficulty as DifficultyEnum]?.title ?? result.difficulty}
+                  </span>
+                  <span className="whitespace-nowrap">{getSheetTypeDisplayName(result.type, locale)}</span>
+                  <span className="whitespace-nowrap num">
+                    {result.level} ({result.internalLevelValue.toFixed(1)})
+                  </span>
+                  <span className="whitespace-nowrap text-fg-2">{result.version}</span>
+                </span>
+                <span className="mt-1 text-sm font-semibold text-accent-strong underline decoration-1 underline-offset-2">
+                  {t('random:open-chart')}
+                </span>
               </span>
-              <span className="text-sm text-blue-600">{t('random:open-chart')}</span>
             </Link>
           </MaterialSurface>
         )}
       </div>
-    </div>
+    </ScorePageFrame>
   )
 }

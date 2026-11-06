@@ -21,7 +21,6 @@ import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useLocalStorage } from 'react-use'
 import CarbonFish from '~icons/carbon/fish'
-import AlertIcon from '~icons/material-symbols/warning'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { WebHaptics } from 'web-haptics'
 import type { ComboFlag, SyncFlag } from '../../RatingCalculatorAddEntryForm'
@@ -171,9 +170,9 @@ export const ImportDivingFishDialogContent: FC<{
     <>
       <DialogTitle>{t('rating-calculator:io.import.diving-fish.title')}</DialogTitle>
       <DialogContent className="flex flex-col items-start gap-2">
-        <div className="text-sm text-zinc-5 mb-2">{t('rating-calculator:io.import.diving-fish.description')}</div>
+        <div className="text-sm text-secondary mb-2">{t('rating-calculator:io.import.diving-fish.description')}</div>
 
-        <Alert severity="error" icon={<AlertIcon />} className="font-bold w-full">
+        <Alert severity="warning" className="w-full">
           <AlertTitle>{t('rating-calculator:io.import.diving-fish.warning.title')}</AlertTitle>
           {t('rating-calculator:io.import.diving-fish.warning.description')}
         </Alert>
@@ -189,6 +188,14 @@ export const ImportDivingFishDialogContent: FC<{
             })
           }}
           data-attr="diving-fish-profile.username"
+          error={invalidReason === 'excessive'}
+          helperText={
+            invalidReason === 'missing'
+              ? t('rating-calculator:io.import.diving-fish.missing-profile-info')
+              : invalidReason === 'excessive'
+                ? t('rating-calculator:io.import.diving-fish.only-one-of-the-two-fields-should-be-filled')
+                : undefined
+          }
           autoComplete="off"
           autoCapitalize="off"
           autoCorrect="off"
@@ -196,7 +203,7 @@ export const ImportDivingFishDialogContent: FC<{
 
         <div className="w-full flex items-center gap-2 select-none">
           <div className="h-px w-full bg-zinc-200" />
-          <span className="text-sm text-zinc-5 whitespace-nowrap">
+          <span className="text-sm text-secondary whitespace-nowrap uppercase tracking-[0.05em]">
             {t('rating-calculator:io.import.diving-fish.or')}
           </span>
           <div className="h-px w-full bg-zinc-200" />
@@ -213,13 +220,14 @@ export const ImportDivingFishDialogContent: FC<{
             })
           }}
           data-attr="diving-fish-profile.qq"
+          error={invalidReason === 'excessive'}
           autoComplete="off"
           autoCapitalize="off"
           autoCorrect="off"
         />
 
         {busy && (
-          <div className="w-full flex justify-center items-center py-4 bg-white/70 rounded absolute inset-0 z-100 backdrop-blur-sm">
+          <div className="w-full flex justify-center items-center py-4 bg-white/70 rounded-[inherit] absolute inset-0 z-100 backdrop-blur-sm">
             <CircularProgress size="1rem" />
           </div>
         )}
@@ -246,22 +254,13 @@ export const ImportDivingFishDialogContent: FC<{
               setBusy(false)
             }
           }}
-          disabled={!!invalidReason || busy}
+          disabled={busy}
           variant="contained"
         >
           {busy ? (
             <div className="flex gap-2 items-center">
               <CircularProgress size="1rem" />
               <span>{t('rating-calculator:io.import.diving-fish.importing')}</span>
-            </div>
-          ) : invalidReason ? (
-            <div className="flex flex-col gap-1 items-end py-1">
-              <span className="leading-none">{t('rating-calculator:io.import.diving-fish.import')}</span>
-              <span className="text-xs opacity-50 leading-none">
-                {invalidReason === 'missing'
-                  ? t('rating-calculator:io.import.diving-fish.missing-profile-info')
-                  : t('rating-calculator:io.import.diving-fish.only-one-of-the-two-fields-should-be-filled')}
-              </span>
             </div>
           ) : (
             t('rating-calculator:io.import.diving-fish.import')
@@ -296,9 +295,9 @@ export const ImportFromDivingFishButtonListItem: FC<{
         <ListItemText
           primary={t('rating-calculator:io.import.diving-fish.title')}
           secondary={
-            <div className="flex gap-1">
+            <span className="flex gap-1">
               <ImportRegionSupportTag region="cn" />
-            </div>
+            </span>
           }
         />
       </MenuItem>

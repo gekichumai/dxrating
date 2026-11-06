@@ -1,10 +1,19 @@
-import { Alert, FormControl, InputLabel, MenuItem, Select, Tab, Tabs } from '@mui/material'
-import { Link, useNavigate, useSearch } from '@tanstack/react-router'
+import { FormControl, InputLabel, MenuItem, Select, Tab, Tabs, type TabsActions } from '@mui/material'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { type FC, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { ShareImageButton } from '@/components/global/ShareImageButton'
+import {
+  DemoScoresNotice,
+  ImportScoresLink,
+  NoScoresState,
+  ScorePageFrame,
+  ScorePageHeader,
+  difficultyTextStyle,
+} from '@/components/scores/ScorePage'
 import { SheetListItem } from '@/components/sheet/SheetListItem'
+import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import {
   buildToplist,
   defaultSortOf,
@@ -19,8 +28,9 @@ import { drawToplistShareImage } from '@/components/toplists/toplistShareImage'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useUserRecords } from '@/models/useUserRecords'
+import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 import { type FlattenedSheet, useSheets } from '@/songs'
-import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
+import { difficultyInkClassName } from '@/utils/difficultyInk'
 
 const COMBO_LABELS: Record<string, string> = { fc: 'FC', fcp: 'FC+', ap: 'AP', app: 'AP+' }
 const SYNC_LABELS: Record<string, string> = { sync: 'SYNC', fs: 'FS', fsp: 'FS+', fsd: 'FDX', fsdp: 'FDX+' }
@@ -51,23 +61,54 @@ export const ToplistsPage: FC = () => {
 
   const tabLabel = t(`toplists:tabs.${kind}`)
 
-  return (
-    <div className="mx-auto w-full max-w-3xl px-4 pb-global flex flex-col gap-3">
-      <header className="flex flex-col gap-1 pt-2">
-        <h1 className="text-2xl font-bold m-0">{t('toplists:title')}</h1>
-        <p className="text-sm opacity-70 m-0">{t('toplists:description')}</p>
-      </header>
+  // Tab widths change once Torus loads: re-measure so a deep-linked tab scrolls fully into view
+  const tabsActions = useRef<TabsActions>(null)
+  useEffect(() => {
+    let cancelled = false
+    void document.fonts?.ready.then(() => {
+      if (cancelled) return
+      tabsActions.current?.updateIndicator()
+      tabsActions.current?.updateScrollButtons()
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
-      {isDemo && <Alert severity="warning">{t('toplists:demo')}</Alert>}
+  const header = (
+    <ScorePageHeader title={t('toplists:title')} description={t('toplists:description')}>
+      {isDemo && <DemoScoresNotice className="mt-3">{t('toplists:demo')}</DemoScoresNotice>}
+    </ScorePageHeader>
+  )
+
+  // Nothing imported yet: no tabs, filters or share to act on, only the way to get scores in
+  if (sheets && records.length === 0) {
+    return (
+      <ScorePageFrame>
+        {header}
+        <NoScoresState
+          title={t('toplists:empty.title')}
+          description={t('toplists:empty.no-scores')}
+          action={<ImportScoresLink>{t('toplists:empty.import')}</ImportScoresLink>}
+        />
+      </ScorePageFrame>
+    )
+  }
+
+  return (
+    <ScorePageFrame>
+      {header}
 
       <MaterialSurface variant="thin" className="overflow-hidden">
         <Tabs
+          action={tabsActions}
           value={kind}
           onChange={(_, value) => void navigate({ search: { tab: value, level }, replace: true })}
           variant="scrollable"
           scrollButtons="auto"
           allowScrollButtonsMobile
           aria-label={t('toplists:title')}
+          sx={{ '& .MuiTabs-scrollButtons.Mui-disabled': { width: 0, opacity: 0 } }}
         >
           {TOPLIST_KINDS.map((item) => (
             <Tab key={item} value={item} label={t(`toplists:tabs.${item}`)} className="min-w-0 px-3" />
@@ -114,7 +155,7 @@ export const ToplistsPage: FC = () => {
             ))}
           </Select>
         </FormControl>
-        <span className="text-sm opacity-70 tabular-nums">{t('toplists:count', { count: rows.length })}</span>
+        <output className="text-sm text-fg-2 num">{t('toplists:count', { count: rows.length })}</output>
         <div className="flex-1" />
         <ShareImageButton
           size="small"
@@ -132,14 +173,15 @@ export const ToplistsPage: FC = () => {
       </MaterialSurface>
 
       {!sheets ? null : rows.length === 0 ? (
-        <MaterialSurface className="p-6 text-center text-sm flex flex-col items-center gap-2">
-          <span>{kind === 'dx_score' ? t('toplists:empty.dx_score') : t('toplists:empty.default')}</span>
-          {records.length === 0 && (
-            <Link to="/rating" className="underline">
-              {t('toplists:empty.import')}
-            </Link>
-          )}
-        </MaterialSurface>
+        kind === 'dx_score' ? (
+          <NoScoresState
+            title={t('toplists:empty.dx_score-title')}
+            description={t('toplists:empty.dx_score')}
+            action={<ImportScoresLink>{t('toplists:empty.import')}</ImportScoresLink>}
+          />
+        ) : (
+          <MaterialSurface className="p-4 text-sm text-fg-2">{t('toplists:empty.default')}</MaterialSurface>
+        )
       ) : (
         <MaterialSurface as="ol" className="list-none m-0 p-1 flex flex-col">
           {rows.map((row, index) => {
@@ -148,11 +190,13 @@ export const ToplistsPage: FC = () => {
           })}
         </MaterialSurface>
       )}
-    </div>
+    </ScorePageFrame>
   )
 }
 
 const ToplistItem: FC<{ row: ToplistRow; sheet: FlattenedSheet; position: number }> = ({ row, sheet, position }) => {
+  const { t, i18n } = useTranslation(['toplists'])
+  const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
   const difficulty = DIFFICULTIES[sheet.difficulty as keyof typeof DIFFICULTIES]
   const flags = [
     row.entry.comboFlag && COMBO_LABELS[row.entry.comboFlag],
@@ -168,34 +212,40 @@ const ToplistItem: FC<{ row: ToplistRow; sheet: FlattenedSheet; position: number
         SheetDialogContentProps={{ currentAchievementRate: row.entry.achievementRate }}
       >
         <div className="flex items-center gap-3 w-full min-w-0 py-1">
-          <span className="w-7 shrink-0 text-right text-xs opacity-60 tabular-nums">{position}</span>
+          <span className="w-7 shrink-0 text-right text-xs text-fg-2 num">{position}</span>
           <img
             src={`https://shama.dxrating.net/images/cover/v2/${sheet.imageName}.jpg`}
             alt=""
             loading="lazy"
             width={44}
             height={44}
-            className="size-11 shrink-0 rounded-lg"
+            className="size-11 shrink-0 rounded-[var(--radius-md)] outline outline-1 outline-black/10 -outline-offset-1"
           />
           <span className="flex flex-col min-w-0 flex-1">
-            <span className="truncate font-bold text-sm">{sheet.title}</span>
-            <span className="text-xs flex gap-2 opacity-80">
-              <span className={difficultyInkClassName} style={difficultyInkStyle(sheet.difficulty)}>
+            <span lang="ja" className="truncate font-semibold text-sm text-fg-1">
+              {sheet.title}
+            </span>
+            <span className="text-xs flex flex-wrap gap-x-2 gap-y-0 text-fg-2">
+              <span
+                className={`whitespace-nowrap font-semibold ${difficultyInkClassName}`}
+                style={difficultyTextStyle(sheet.difficulty)}
+              >
                 {difficulty?.title ?? sheet.difficulty}
               </span>
-              <span>
-                {sheet.type.toUpperCase()} · {sheet.internalLevelValue.toFixed(1)}
-              </span>
-              {flags.length > 0 && <span className="font-bold">{flags.join(' / ')}</span>}
+              <span className="whitespace-nowrap">{getSheetTypeDisplayName(sheet.type, locale)}</span>
+              <span className="whitespace-nowrap num">{sheet.internalLevelValue.toFixed(1)}</span>
+              {flags.length > 0 && (
+                <span className="whitespace-nowrap font-semibold text-fg-1">{flags.join(' / ')}</span>
+              )}
             </span>
           </span>
-          <span className="flex flex-col items-end shrink-0 tabular-nums">
-            <span className="font-bold text-sm">{row.entry.achievementRate.toFixed(4)}%</span>
-            <span className="text-xs opacity-70">
+          <span className="flex flex-col items-end shrink-0 num">
+            <span className="font-semibold text-sm text-fg-1">{row.entry.achievementRate.toFixed(4)}%</span>
+            <span className="text-xs text-fg-2 whitespace-nowrap">
               {row.dxScore !== null && row.dxScoreMax
                 ? `${row.dxScore} / ${row.dxScoreMax} ${'✦'.repeat(row.dxStars)}`
                 : row.rating !== null
-                  ? `${row.rating}`
+                  ? t('toplists:rating-value', { rating: row.rating })
                   : ''}
             </span>
           </span>

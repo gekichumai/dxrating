@@ -57,8 +57,8 @@ describe('floating NET import progress', () => {
     fireEvent.click(trigger)
     expect(screen.queryByRole('radio')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Auto-import settings' }))
-    expect(screen.getByRole('dialog', { name: 'Auto-import settings' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Importing...' }).hasAttribute('disabled')).toBe(true)
+    expect(screen.getByRole('dialog', { name: 'Import from maimai NET' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Importing…' }).hasAttribute('disabled')).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     await waitFor(() => expect(document.activeElement).toBe(trigger))
@@ -84,7 +84,7 @@ describe('floating NET import progress', () => {
 describe('global auto-import settings', () => {
   it('sets up remembered credentials and auto-import without starting an import', async () => {
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
-    const trigger = screen.getByRole('button', { name: 'Auto-import' })
+    const trigger = screen.getByRole('button', { name: 'maimai NET settings' })
     fireEvent.click(trigger)
     for (const radio of screen.getAllByRole('radio')) expect(radio.hasAttribute('disabled')).toBe(true)
     fireEvent.change(screen.getByLabelText('SEGA ID'), { target: { value: 'fixture' } })
@@ -114,14 +114,14 @@ describe('global auto-import settings', () => {
         <NetImportSettingsButton />
       </NetImportSettingsProvider>,
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Auto-import' }))
+    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
     rerender(
       <NetImportSettingsProvider>
         <p>Another page</p>
       </NetImportSettingsProvider>,
     )
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
-    expect(screen.getByRole('dialog', { name: 'Auto-import settings' })).toBeTruthy()
+    expect(screen.getByRole('dialog', { name: 'Import from maimai NET' })).toBeTruthy()
   })
 
   it('reads current settings on reopen and disables auto-import with a boolean', async () => {
@@ -130,11 +130,11 @@ describe('global auto-import settings', () => {
       JSON.stringify({ region: 'jp', username: 'fixture', password: 'fixture' }),
     )
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
-    fireEvent.click(screen.getByRole('button', { name: 'Auto-import' }))
+    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     localStorage.setItem('rating-auto-import-from-net', '"merge"')
-    fireEvent.click(screen.getByRole('button', { name: 'Auto-import' }))
+    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
     expect((screen.getByRole('radio', { name: /^Merge/ }) as HTMLInputElement).checked).toBe(true)
     fireEvent.click(screen.getByRole('radio', { name: 'Disabled' }))
     expect(localStorage.getItem('rating-auto-import-from-net')).toBe('false')
@@ -147,7 +147,7 @@ describe('global auto-import settings', () => {
     )
     localStorage.setItem('rating-auto-import-from-net', '"merge"')
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
-    fireEvent.click(screen.getByRole('button', { name: 'Auto-import' }))
+    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
     fireEvent.click(screen.getByRole('button', { name: /Re-import now/ }))
     // the import starts once the complete catalog is there
     await waitFor(() =>
@@ -170,7 +170,7 @@ describe('global auto-import settings', () => {
 describe('SEGA maintenance notice', () => {
   const openSettings = () => {
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
-    fireEvent.click(screen.getByRole('button', { name: 'Auto-import' }))
+    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
   }
 
   it('warns before anyone types credentials while the selected region is in maintenance, until dismissed', async () => {

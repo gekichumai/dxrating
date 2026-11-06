@@ -63,11 +63,11 @@ export const ToleranceCalculator: FC<{
         <Heading id="tolerance-heading" className="m-0 text-lg font-bold">
           {t('tools:tolerance.section-title')}
         </Heading>
-        <p className="m-0 text-xs text-slate-600">{t('tools:tolerance.section-intro')}</p>
+        <p className="m-0 text-xs text-secondary">{t('tools:tolerance.section-intro')}</p>
       </div>
 
       {!counts ? (
-        <p className="m-0 text-sm text-slate-600">{t('tools:tolerance.no-note-counts')}</p>
+        <p className="m-0 text-sm text-secondary">{t('tools:tolerance.no-note-counts')}</p>
       ) : (
         <>
           <div className="flex flex-col gap-2">
@@ -91,21 +91,26 @@ export const ToleranceCalculator: FC<{
                   size="small"
                   color={target === preset ? 'primary' : 'default'}
                   variant={target === preset ? 'filled' : 'outlined'}
+                  aria-pressed={target === preset}
                   onClick={() => update(String(preset))}
                 />
               ))}
             </fieldset>
           </div>
 
+          {/* Always mounted, so the first result is announced as well */}
+          <p role="status" className="sr-only">
+            {result ? t('tools:tolerance.allowed-loss', { value: result.allowedLoss.toFixed(4) }) : ''}
+          </p>
           {result && (
-            <div className="flex flex-col gap-3" aria-live="polite">
+            <div className="flex flex-col gap-3">
               <p className="m-0 text-sm tabular-nums">
                 {t('tools:tolerance.allowed-loss', { value: result.allowedLoss.toFixed(4) })}
               </p>
               <MaterialSurface variant="thin" className="overflow-x-auto">
                 <table className="w-full border-collapse text-sm tabular-nums">
                   <thead>
-                    <tr className="text-left text-xs text-slate-600">
+                    <tr className="text-left text-xs text-secondary">
                       <th scope="col" className="px-3 py-2 font-medium">
                         {t('tools:tolerance.note-type')}
                       </th>
@@ -125,7 +130,7 @@ export const ToleranceCalculator: FC<{
                       <tr key={row.type} className="border-t border-t-solid border-black/6">
                         <th scope="row" className="px-3 py-2 text-left font-medium">
                           {t(`tools:tolerance.type.${row.type}`)}{' '}
-                          <span className="text-xs font-normal text-slate-500">×{formatCount(row.count)}</span>
+                          <span className="text-xs font-normal text-secondary">×{formatCount(row.count)}</span>
                         </th>
                         <td className="px-3 py-2 text-right">{formatCount(row.great)}</td>
                         <td className="px-3 py-2 text-right">{formatCount(row.good)}</td>
@@ -145,7 +150,7 @@ export const ToleranceCalculator: FC<{
                   />
                 </dl>
               )}
-              <p className="m-0 text-xs text-slate-500">{t('tools:tolerance.footnote')}</p>
+              <p className="m-0 text-xs text-secondary">{t('tools:tolerance.footnote')}</p>
             </div>
           )}
         </>
@@ -156,7 +161,7 @@ export const ToleranceCalculator: FC<{
 
 const BreakStat: FC<{ label: string; value: string }> = ({ label, value }) => (
   <MaterialSurface variant="thin" className="flex flex-col gap-0.5 px-3 py-2">
-    <dt className="text-xs text-slate-600">{label}</dt>
+    <dt className="text-xs text-secondary">{label}</dt>
     <dd className="m-0 text-base font-bold tabular-nums">{value}</dd>
   </MaterialSurface>
 )

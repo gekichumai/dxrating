@@ -1,16 +1,23 @@
-import type { FC } from 'react'
+import { type FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import MdiCheckCircle from '~icons/mdi/check-circle'
 import {
   CONSTANT_TABLE_LEVELS,
   constantTablePath,
   type ConstantTable,
 } from '@/components/chartDiscovery/constantTables'
+import {
+  Breadcrumb,
+  difficultyTextClassName,
+  difficultyTextStyle,
+  SegmentedNav,
+  useHorizontalOverflow,
+} from '@/components/completion/TableChrome'
 import { CompletionBadges } from '@/components/completion/CompletionBadges'
 import { CompletionToolbar } from '@/components/completion/CompletionToolbar'
 import { useCompletionOverlay } from '@/components/completion/useCompletionOverlay'
 import { getSheetTitleLabel } from '@/components/song/sheetDisplay'
-import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
-import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
+import { DEFAULT_LOCALE, type SupportedLocale, toSupportedLocale } from '@/setup/locale'
 
 export const constantTableRange = (table: ConstantTable) => ({
   max: table.groups[0]?.constant ?? '-',
@@ -21,23 +28,113 @@ const LevelNav: FC<{ current?: string }> = ({ current }) => {
   const { t } = useTranslation(['constants'])
 
   return (
-    <nav aria-label={t('constants:other-levels')} className="flex flex-wrap gap-2">
-      {CONSTANT_TABLE_LEVELS.map((level) => (
-        <a
-          key={level}
-          href={constantTablePath(level)}
-          aria-current={level === current ? 'page' : undefined}
-          className={`px-3 py-1 rounded-full text-sm no-underline border ${
-            level === current
-              ? // The adaptive slate fill turns light in dark: invert the label with it (literal: slate mirrors)
-                'bg-slate-900 text-white dark:text-[#0f172a] border-slate-900'
-              : 'bg-white/90 text-slate-900 border-slate-300 hover:bg-slate-100'
-          }`}
-        >
-          Lv.{level}
-        </a>
-      ))}
-    </nav>
+    <SegmentedNav
+      label={t('constants:other-levels')}
+      items={CONSTANT_TABLE_LEVELS.map((level) => ({
+        key: level,
+        href: constantTablePath(level),
+        label: `Lv.${level}`,
+        current: level === current,
+      }))}
+    />
+  )
+}
+
+type ConstantChart = ConstantTable['groups'][number]['charts'][number]
+
+const ConstantGroup: FC<{
+  constant: string
+  total: number
+  charts: ConstantChart[]
+  overlay: ReturnType<typeof useCompletionOverlay>
+  locale: SupportedLocale
+}> = ({ constant, total, charts, overlay, locale }) => {
+  const { t } = useTranslation(['constants', 'completion'])
+  const { ref, overflowing, scrolled, fade } = useHorizontalOverflow<HTMLDivElement>()
+  const number = useMemo(() => new Intl.NumberFormat(locale), [locale])
+  // Only when the table actually scrolls: the song column stays put, on an opaque tint of the glass
+  const sticky = overflowing
+    ? `sticky left-0 z-1 bg-[color-mix(in_oklab,var(--accent)_5%,rgb(var(--surface-rgb)))] ${scrolled ? 'shadow-[1px_0_0_var(--glass-border)]' : ''}`
+    : ''
+  const headingId = `constant-${constant}`
+
+  return (
+    <section aria-labelledby={headingId} className="glass w-full overflow-hidden">
+      <div className="flex items-baseline justify-between gap-2 px-4 py-2 border-b border-b-solid border-[var(--glass-border)]">
+        <h2 id={headingId} className="m-0 text-lg font-semibold text-fg-1">
+          {t('constants:group', { constant })}
+        </h2>
+        <span className="text-xs text-fg-2 num">{t('constants:group-count', { count: total })}</span>
+      </div>
+      <div ref={ref} className={`overflow-x-auto [overscroll-behavior-x:contain] ${fade}`}>
+        <table className="w-full text-sm border-collapse">
+          <thead className="text-xs text-fg-2 text-left">
+            <tr>
+              <th className={`px-4 py-1 font-normal ${sticky}`}>{t('constants:col.song')}</th>
+              <th className="px-2 py-1 font-normal hidden sm:table-cell">{t('constants:col.chart')}</th>
+              <th className="px-2 py-1 font-normal hidden sm:table-cell">{t('constants:col.version')}</th>
+              <th className="px-2 py-1 font-normal text-right hidden sm:table-cell">{t('constants:col.notes')}</th>
+              <th className="pl-2 pr-4 sm:pr-2 py-1 font-normal text-right">{t('constants:col.sssp')}</th>
+              <th className="px-4 py-1 font-normal text-right hidden sm:table-cell">{t('constants:col.sss')}</th>
+              {overlay.active && <th className="pl-2 pr-4 py-1 font-normal text-right">{t('completion:col-mine')}</th>}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-black/5">
+            {charts.map((chart) => {
+              const done = overlay.active && overlay.statusOf(chart.sheetId) === 'done'
+              const ink = difficultyTextStyle(chart.difficulty)
+              return (
+                <tr
+                  key={chart.href}
+                  className={done ? 'bg-[color-mix(in_oklab,var(--status-positive)_7%,transparent)]' : undefined}
+                >
+                  <td className={`px-4 py-1.5 ${sticky}`}>
+                    <a
+                      href={chart.href}
+                      lang="ja"
+                      className="text-fg-1 font-semibold no-underline hover:underline underline-offset-2 [overflow-wrap:anywhere]"
+                    >
+                      {chart.title}
+                    </a>
+                    <div lang="ja" className="text-xs text-fg-2 [overflow-wrap:anywhere]">
+                      {chart.artist}
+                    </div>
+                    <div className={`sm:hidden text-xs font-semibold ${difficultyTextClassName}`} style={ink}>
+                      {getSheetTitleLabel(chart, locale)}
+                    </div>
+                  </td>
+                  <td
+                    className={`px-2 py-1.5 whitespace-nowrap font-semibold hidden sm:table-cell ${difficultyTextClassName}`}
+                    style={ink}
+                  >
+                    {getSheetTitleLabel(chart, locale)}
+                  </td>
+                  <td className="px-2 py-1.5 text-xs text-fg-2 hidden sm:table-cell">{chart.version}</td>
+                  <td className="px-2 py-1.5 text-right num hidden sm:table-cell">
+                    {chart.notes === undefined || chart.notes === null ? '–' : number.format(chart.notes)}
+                  </td>
+                  <td className="pl-2 pr-4 sm:pr-2 py-1.5 text-right num">{chart.ratingSssPlus}</td>
+                  <td className="px-4 py-1.5 text-right num hidden sm:table-cell">{chart.ratingSss}</td>
+                  {overlay.active && (
+                    <td className="pl-2 pr-4 py-1.5 text-right">
+                      <span className="inline-flex items-center justify-end gap-1">
+                        {done && (
+                          <>
+                            <MdiCheckCircle className="size-4 shrink-0 text-emerald-700" aria-hidden />
+                            <span className="sr-only">{t('completion:status-done-sr')}</span>
+                          </>
+                        )}
+                        <CompletionBadges record={overlay.records.get(chart.sheetId)?.best} />
+                      </span>
+                    </td>
+                  )}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
   )
 }
 
@@ -52,19 +149,11 @@ export const ConstantTablePage: FC<{ table: ConstantTable }> = ({ table }) => {
     <div className="flex-container w-full max-w-5xl px-4 pb-global">
       <div className="w-full flex flex-col gap-4">
         <header className="w-full flex flex-col gap-2">
-          <nav className="text-xs text-slate-600" aria-label="Breadcrumb">
-            <a href="/" className="text-inherit">
-              DXRating
-            </a>
-            {' › '}
-            <a href="/constants" className="text-inherit">
-              {t('constants:breadcrumb')}
-            </a>
-            {' › '}
-            <span>Lv.{table.level}</span>
-          </nav>
-          <h1 className="text-3xl font-bold text-slate-950">{t('constants:title', { level: table.level })}</h1>
-          <p className="text-sm text-slate-700">
+          <Breadcrumb
+            items={[{ href: '/constants', label: t('constants:breadcrumb') }, { label: `Lv.${table.level}` }]}
+          />
+          <h1 className="page-title m-0 [word-break:auto-phrase]">{t('constants:title', { level: table.level })}</h1>
+          <p className="page-description m-0">
             {t('constants:intro', { level: table.level, count: table.chartCount, ...range })}
           </p>
           <LevelNav current={table.level} />
@@ -76,81 +165,16 @@ export const ConstantTablePage: FC<{ table: ConstantTable }> = ({ table }) => {
           const charts = group.charts.filter((chart) => overlay.isVisible(chart.sheetId))
           if (charts.length === 0) return null
           return (
-            <section
+            <ConstantGroup
               key={group.constant}
-              aria-labelledby={`constant-${group.constant}`}
-              className="w-full bg-white/90 border border-slate-200 rounded-lg shadow-sm overflow-x-auto"
-            >
-              <h2
-                id={`constant-${group.constant}`}
-                className="flex items-baseline justify-between gap-2 px-4 py-2 m-0 text-lg font-bold text-slate-950 border-b border-slate-200"
-              >
-                <span>{t('constants:group', { constant: group.constant })}</span>
-                <span className="text-xs font-normal text-slate-600">
-                  {t('constants:group-count', { count: group.charts.length })}
-                </span>
-              </h2>
-              <table className="w-full text-sm border-collapse">
-                <thead className="text-xs text-slate-600 text-left">
-                  <tr>
-                    <th className="px-4 py-1 font-normal">{t('constants:col.song')}</th>
-                    <th className="px-2 py-1 font-normal">{t('constants:col.chart')}</th>
-                    <th className="px-2 py-1 font-normal hidden sm:table-cell">{t('constants:col.version')}</th>
-                    <th className="px-2 py-1 font-normal text-right hidden sm:table-cell">
-                      {t('constants:col.notes')}
-                    </th>
-                    <th className="pl-2 pr-4 sm:pr-2 py-1 font-normal text-right">{t('constants:col.sssp')}</th>
-                    <th className="px-4 py-1 font-normal text-right hidden sm:table-cell">{t('constants:col.sss')}</th>
-                    {overlay.active && (
-                      <th className="pl-2 pr-4 py-1 font-normal text-right">{t('completion:col-mine')}</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {charts.map((chart) => (
-                    <tr
-                      key={chart.href}
-                      className={
-                        overlay.active && overlay.statusOf(chart.sheetId) !== 'done'
-                          ? 'opacity-45 transition-opacity'
-                          : undefined
-                      }
-                    >
-                      <td className="px-4 py-1.5">
-                        <a href={chart.href} className="text-slate-950 font-medium">
-                          {chart.title}
-                        </a>
-                        <div className="text-xs text-slate-600">{chart.artist}</div>
-                      </td>
-                      <td
-                        className={`px-2 py-1.5 whitespace-nowrap ${difficultyInkClassName}`}
-                        style={difficultyInkStyle(chart.difficulty)}
-                      >
-                        {getSheetTitleLabel(chart, locale)}
-                      </td>
-                      <td className="px-2 py-1.5 text-xs text-slate-700 hidden sm:table-cell">{chart.version}</td>
-                      <td className="px-2 py-1.5 text-right tabular-nums hidden sm:table-cell">
-                        {chart.notes?.toLocaleString('en-US') ?? '-'}
-                      </td>
-                      <td className="pl-2 pr-4 sm:pr-2 py-1.5 text-right tabular-nums">{chart.ratingSssPlus}</td>
-                      <td className="px-4 py-1.5 text-right tabular-nums hidden sm:table-cell">{chart.ratingSss}</td>
-                      {overlay.active && (
-                        <td className="pl-2 pr-4 py-1.5 text-right">
-                          <CompletionBadges record={overlay.records.get(chart.sheetId)?.best} />
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
+              constant={group.constant}
+              total={group.charts.length}
+              charts={charts}
+              overlay={overlay}
+              locale={locale}
+            />
           )
         })}
-
-        <footer className="flex flex-col gap-2">
-          <h2 className="text-base font-bold text-slate-950 m-0">{t('constants:other-levels')}</h2>
-          <LevelNav current={table.level} />
-        </footer>
       </div>
     </div>
   )
@@ -170,18 +194,23 @@ export const ConstantTableIndexPage: FC<{ tables: ConstantTableSummary[] }> = ({
     <div className="flex-container w-full max-w-5xl px-4 pb-global">
       <div className="w-full flex flex-col gap-4">
         <header className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-slate-950">{t('constants:index.title')}</h1>
-          <p className="text-sm text-slate-700">{t('constants:index.intro')}</p>
+          <Breadcrumb items={[{ label: t('constants:breadcrumb') }]} />
+          <h1 className="page-title m-0 [word-break:auto-phrase]">{t('constants:index.title')}</h1>
+          <p className="page-description m-0">{t('constants:index.intro')}</p>
         </header>
         <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3 list-none p-0 m-0">
           {tables.map((table) => (
             <li key={table.level}>
               <a
                 href={constantTablePath(table.level)}
-                className="block p-4 bg-white/90 border border-slate-200 rounded-lg shadow-sm no-underline text-slate-950 hover:bg-slate-100"
+                className="glass block h-full p-4 no-underline text-fg-1 transition-shadow duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:shadow-[var(--shadow-1-hover)]"
               >
-                <div className="text-xl font-bold">{t('constants:index.level', { level: table.level })}</div>
-                <div className="text-xs text-slate-600">{t('constants:index.level-count', table)}</div>
+                <div className="text-xl font-semibold">{t('constants:index.level', { level: table.level })}</div>
+                <div className="text-xs text-fg-2 num">
+                  {table.min === table.max
+                    ? t('constants:index.level-count-single', { count: table.count, value: table.min })
+                    : t('constants:index.level-count', table)}
+                </div>
               </a>
             </li>
           ))}

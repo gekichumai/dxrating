@@ -88,6 +88,27 @@ export function formatSeoTitle(title: string) {
   return `${title} - DXRating`
 }
 
+// Routes whose head sets the full page title themselves
+const SELF_TITLED_ROUTE_IDS = new Set(['/songs/$songId/$type/$difficulty', '/songs_/$songId'])
+
+type RootHeadMatch = { routeId?: unknown; status?: string; globalNotFound?: boolean }
+
+/**
+ * The root head's title and robots state. A 404 (no route matched, or a loader threw notFound()) renders at the root,
+ * so the root gives it the not-found title and `noindex`. A loader's notFound() marks only the finalized root `match`:
+ * `matches` is the array from before loading. Self-titled routes own the title only of a page that rendered.
+ */
+export function resolveRootHeadState(match: RootHeadMatch, matches: readonly RootHeadMatch[]) {
+  const isNotFound = [match, ...matches].some((m) => m.status === 'notFound' || m.globalNotFound === true)
+  const includeRootTitle = !isNotFound && !matches.some((m) => SELF_TITLED_ROUTE_IDS.has(String(m.routeId)))
+  return { isNotFound, includeRootTitle }
+}
+
+/** The not-found page's title and `noindex` */
+export function buildNotFoundSeoMeta(locale: SupportedLocale): SeoMeta[] {
+  return [{ title: formatSeoTitle(t(locale, 'root:not-found.title')) }, { name: 'robots', content: 'noindex' }]
+}
+
 export function buildRootSeoMeta(locale: SupportedLocale, options: { includeTitle?: boolean } = {}): SeoMeta[] {
   const includeTitle = options.includeTitle ?? true
   const title = 'DXRating'

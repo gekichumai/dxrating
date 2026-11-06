@@ -44,15 +44,19 @@ const SheetDifficultyFilterInputDifficulty = ({
       aria-pressed={selected}
       className="rounded-lg overflow-hidden"
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          onToggle()
-        }
+        if (e.key !== 'Enter' && e.key !== ' ') return
+        e.preventDefault()
+        // Shift+Enter is the keyboard path to "select only", which pointers get by holding
+        if (e.shiftKey) onOnly()
+        else onToggle()
       }}
       focusRipple
     >
       <Chip
         label={DIFFICULTIES[difficulty]}
         color={selected ? 'primary' : 'default'}
+        // Filled when selected, outlined when not: the state does not rest on colour alone
+        variant={selected ? 'filled' : 'outlined'}
         size="small"
         className="!rounded-lg"
       />

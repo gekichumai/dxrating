@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { type FC, type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
+import { RANK_LABELS } from '@/components/rating/RatingExplainer'
 import {
   MAX_INTERNAL_LEVEL,
   MIN_INTERNAL_LEVEL,
@@ -13,6 +14,8 @@ import {
   ratingFor,
 } from '@/components/tools/ratingTools'
 import { type RatingToolKind, captureAnalyticsEvent } from '@/lib/analytics'
+
+const rankLabel = (rank: string) => RANK_LABELS[rank] ?? rank.toUpperCase()
 
 const validLevel = (value: number | null): value is number =>
   value !== null && value >= MIN_INTERNAL_LEVEL && value <= MAX_INTERNAL_LEVEL
@@ -61,18 +64,41 @@ const ToolSection: FC<{ id: string; title: string; description: string; children
       <h2 id={id} className="m-0 text-lg font-bold">
         {title}
       </h2>
-      <p className="m-0 text-xs text-slate-600">{description}</p>
+      <p className="m-0 text-sm text-secondary">{description}</p>
     </div>
     {children}
   </MaterialSurface>
 )
 
-const Result: FC<{ label: string; children: ReactNode }> = ({ label, children }) => (
-  <div className="flex flex-col gap-0.5" aria-live="polite">
-    <span className="text-xs text-slate-600">{label}</span>
-    <span className="text-2xl font-bold tabular-nums">{children}</span>
-  </div>
-)
+/** The value `announce` describes, once typing has settled (the same 800ms as analytics), so a screen reader hears the
+ result once instead of on every keystroke. The region is always mounted, so its first update is announced too */
+function useSettled(value: string) {
+  const [settled, setSettled] = useState('')
+  const first = useRef(true)
+  useEffect(() => {
+    // Nothing to announce before the visitor has changed an input
+    if (first.current) {
+      first.current = false
+      return
+    }
+    const timer = setTimeout(() => setSettled(value), 800)
+    return () => clearTimeout(timer)
+  }, [value])
+  return settled
+}
+
+const Result: FC<{ label: string; announce: string; children: ReactNode }> = ({ label, announce, children }) => {
+  const settled = useSettled(`${label}: ${announce}`)
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-sm text-secondary">{label}</span>
+      <span className="text-2xl font-bold num">{children}</span>
+      <p role="status" className="sr-only">
+        {settled}
+      </p>
+    </div>
+  )
+}
 
 const RatingForAchievement: FC = () => {
   const { t } = useTranslation(['tools'])
@@ -109,14 +135,17 @@ const RatingForAchievement: FC = () => {
           inputProps={{ inputMode: 'decimal' }}
           InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
           error={!achievementValid}
+          helperText={achievementValid ? undefined : t('tools:rating.achievement-invalid')}
           className="flex-1 min-w-32"
         />
       </div>
-      <Result label={t('tools:rating.forward.result')}>
+      <Result
+        label={t('tools:rating.forward.result')}
+        announce={award ? `${award.ratingAwardValue} ${rankLabel(award.rank)}` : '—'}
+      >
         {award ? (
           <>
-            {award.ratingAwardValue}{' '}
-            <span className="text-sm font-medium text-slate-600">{award.rank.toUpperCase().replace('P', '+')}</span>
+            {award.ratingAwardValue} <span className="text-sm font-medium text-secondary">{rankLabel(award.rank)}</span>
           </>
         ) : (
           '—'
@@ -136,6 +165,7 @@ const AchievementForRating: FC = () => {
   const touch = useRatingToolAnalytics('achievement_for_rating', level, [targetValid ? target : null])
   const ready = validLevel(level) && targetValid
   const needed = ready ? minimumAchievementForRating(level, target) : null
+  const neededText = !ready ? '—' : needed === null ? t('tools:rating.reverse.unreachable') : `${needed.toFixed(4)}%`
 
   return (
     <ToolSection
@@ -161,11 +191,12 @@ const AchievementForRating: FC = () => {
           size="small"
           inputProps={{ inputMode: 'numeric' }}
           error={!targetValid}
+          helperText={targetValid ? undefined : t('tools:rating.target-invalid')}
           className="flex-1 min-w-32"
         />
       </div>
-      <Result label={t('tools:rating.reverse.result')}>
-        {!ready ? '—' : needed === null ? t('tools:rating.reverse.unreachable') : `${needed.toFixed(4)}%`}
+      <Result label={t('tools:rating.reverse.result')} announce={neededText}>
+        {neededText}
       </Result>
     </ToolSection>
   )
@@ -202,7 +233,7 @@ const RatingTable: FC = () => {
           <table className="w-full border-collapse text-sm tabular-nums">
             <caption className="sr-only">{t('tools:rating.table.title')}</caption>
             <thead>
-              <tr className="text-xs text-slate-600">
+              <tr className="text-xs text-secondary">
                 <th scope="col" className="px-3 py-2 text-left font-medium">
                   {t('tools:rating.achievement')}
                 </th>
@@ -222,8 +253,8 @@ const RatingTable: FC = () => {
                 <tr key={achievement} className="border-t border-t-solid border-black/6">
                   <th scope="row" className="px-3 py-2 text-left font-medium">
                     {achievement}%{' '}
-                    <span className="text-xs font-normal text-slate-500">
-                      {ratingFor(1, achievement).rank.toUpperCase().replace('P', '+')}
+                    <span className="text-xs font-normal text-secondary">
+                      {rankLabel(ratingFor(1, achievement).rank)}
                     </span>
                   </th>
                   {levels.map((value) => (
@@ -250,9 +281,9 @@ export const RatingToolPage: FC = () => {
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-6 pb-global flex flex-col gap-4">
       <header className="flex flex-col gap-2">
-        <h1 className="m-0 text-3xl font-bold">{t('tools:rating.title')}</h1>
-        <p className="m-0 text-sm text-slate-700">{t('tools:rating.intro')}</p>
-        <Link to="/tools/tolerance" className="self-start text-sm text-slate-700">
+        <h1 className="page-title m-0">{t('tools:rating.title')}</h1>
+        <p className="page-description m-0">{t('tools:rating.intro')}</p>
+        <Link to="/tools/tolerance" className="link self-start text-sm">
           {t('tools:tolerance.title')} →
         </Link>
       </header>

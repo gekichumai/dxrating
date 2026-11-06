@@ -1,5 +1,6 @@
-import { CircularProgress, Tab, Tabs, Tooltip } from '@mui/material'
+import { CircularProgress, Tooltip } from '@mui/material'
 import { Link, useLocation, useRouterState } from '@tanstack/react-router'
+import clsx from 'clsx'
 import { type FC, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import MdiTrendingUpIcon from '~icons/mdi/trending-up'
@@ -10,7 +11,6 @@ import {
   getActiveAppTabValue,
   getPendingAppTabValue,
 } from '@/routes/-top-nav-links'
-import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 
 interface AppTabContentProps {
@@ -20,11 +20,10 @@ interface AppTabContentProps {
 }
 
 const AppTabContent: FC<AppTabContentProps> = ({ children, fixedSize = false, pending }) => (
-  // Before hydration, MUI renders the indicator inside the selected tab.
-  <span className={`relative z-1 inline-flex items-center justify-center ${fixedSize ? 'h-5 w-5' : ''}`}>
+  <span className={clsx('relative inline-flex items-center justify-center', fixedSize && 'h-5 w-5')}>
     <span
       aria-hidden={pending ? true : undefined}
-      className={`inline-flex items-center justify-center ${fixedSize ? 'h-5 w-5' : ''}`}
+      className={clsx('inline-flex items-center justify-center', fixedSize && 'h-5 w-5')}
       style={pending ? { visibility: 'hidden' } : undefined}
     >
       {children}
@@ -37,6 +36,11 @@ const AppTabContent: FC<AppTabContentProps> = ({ children, fixedSize = false, pe
   </span>
 )
 
+/**
+ * The primary navigation: a segmented control of plain links. Each is in the tab order and the current page carries
+ * aria-current, unlike ARIA tabs, which imply an in-page tab panel and hide all but the selected link from Tab.
+ * The container is 12px glass with a 3px padding and a 1px border around 8px links (8 + 3 + 1 = 12).
+ */
 export const AppTabs: FC = () => {
   const { t } = useTranslation(['root'])
   const location = useLocation()
@@ -49,40 +53,23 @@ export const AppTabs: FC = () => {
   const selectedTab = pendingTab || activeTab
 
   return (
-    <MaterialSurface variant="thin" className="!min-h-2.5rem flex items-center overflow-hidden">
-      <Tabs
-        value={selectedTab}
-        classes={{
-          root: '!min-h-2.5rem',
-          indicator: '!h-full !rounded-xl z-0',
-        }}
-      >
+    <nav aria-label={t('root:primary-navigation')} className="app-nav glass-thin flex items-center p-[3px]">
+      <ul className="flex items-center gap-0.5 list-none m-0 p-0">
         {APP_TAB_LINKS.map((link) => {
           const label = t(link.labelKey)
+          const isSelected = selectedTab === link.value
           const isPendingTab = pendingTab === link.value
           const isIconOnlyTab = CHART_DISCOVERY_NAV_LINKS.some((chartLink) => chartLink.value === link.value)
           const Icon =
             link.value === 'recent' ? MdiUpdateIcon : link.value === 'trending' ? MdiTrendingUpIcon : undefined
 
-          return (
-            <Tab
-              key={link.value}
+          const anchor = (
+            <Link
+              to={link.href}
+              aria-current={activeTab === link.value ? 'page' : undefined}
               aria-busy={isPendingTab ? true : undefined}
               aria-label={isIconOnlyTab || isPendingTab ? label : undefined}
-              component={Link}
-              icon={
-                isIconOnlyTab && Icon ? (
-                  <AppTabContent fixedSize pending={isPendingTab}>
-                    <Tooltip title={label}>
-                      <span className="inline-flex h-5 w-5 items-center justify-center leading-none">
-                        <Icon className="block text-lg" />
-                      </span>
-                    </Tooltip>
-                  </AppTabContent>
-                ) : undefined
-              }
-              label={isIconOnlyTab ? undefined : <AppTabContent pending={isPendingTab}>{label}</AppTabContent>}
-              to={link.href}
+              data-selected={isSelected ? '' : undefined}
               onClick={() => {
                 captureAnalyticsEvent('tab_switched', {
                   tab: link.value,
@@ -90,18 +77,30 @@ export const AppTabs: FC = () => {
                 })
               }}
               viewTransition
-              classes={{
-                // The dark indicator is the lightened accent: it carries --on-accent, not white
-                selected: '!text-white font-bold text-shadow-md dark:!text-[var(--on-accent)] dark:text-shadow-none',
-                root: `!rounded-xl transition-colors z-1 !py-0 !min-h-2.5rem !h-2.5rem ${
-                  isIconOnlyTab ? '!min-w-2.5rem !w-2.5rem !px-0' : ''
-                }`,
-              }}
-              value={link.value}
-            />
+              className={clsx(
+                'flex h-10 items-center justify-center rounded-[var(--radius-md)] text-sm font-semibold leading-none whitespace-nowrap no-underline select-none',
+                '[transition-property:background-color,color] duration-[var(--duration-fast)] ease-[var(--ease-out)] [-webkit-tap-highlight-color:transparent]',
+                isIconOnlyTab ? 'w-10' : 'px-4',
+                isSelected ? 'bg-accent-strong text-on-accent' : 'text-fg-2 hover:bg-white/55 hover:text-fg-1',
+              )}
+            >
+              {isIconOnlyTab && Icon ? (
+                <AppTabContent fixedSize pending={isPendingTab}>
+                  <Icon aria-hidden className="block text-lg" />
+                </AppTabContent>
+              ) : (
+                <AppTabContent pending={isPendingTab}>{label}</AppTabContent>
+              )}
+            </Link>
+          )
+
+          return (
+            <li key={link.value} className="flex">
+              {isIconOnlyTab ? <Tooltip title={label}>{anchor}</Tooltip> : anchor}
+            </li>
           )
         })}
-      </Tabs>
-    </MaterialSurface>
+      </ul>
+    </nav>
   )
 }

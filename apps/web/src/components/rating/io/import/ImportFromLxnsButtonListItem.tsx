@@ -133,7 +133,7 @@ const LxnsImportDialogContent: FC<{
 
         {state === 'not-connected' && (
           <>
-            <p className="text-sm text-zinc-500">{t('rating-calculator:io.import.lxns.description')}</p>
+            <p className="text-sm text-secondary">{t('rating-calculator:io.import.lxns.description')}</p>
           </>
         )}
 
@@ -144,14 +144,14 @@ const LxnsImportDialogContent: FC<{
         {state === 'connecting' && (
           <div className="w-full flex justify-center items-center gap-2 py-4">
             <CircularProgress size="1rem" />
-            <span className="text-sm text-zinc-500">{t('rating-calculator:io.import.lxns.connecting')}</span>
+            <span className="text-sm text-secondary">{t('rating-calculator:io.import.lxns.connecting')}</span>
           </div>
         )}
 
         {state === 'importing' && (
           <div className="w-full flex justify-center items-center gap-2 py-4">
             <CircularProgress size="1rem" />
-            <span className="text-sm text-zinc-500">{t('rating-calculator:io.import.lxns.importing')}</span>
+            <span className="text-sm text-secondary">{t('rating-calculator:io.import.lxns.importing')}</span>
           </div>
         )}
       </DialogContent>
@@ -210,9 +210,9 @@ export const ImportFromLxnsButtonListItem: FC<{
           primary={t('rating-calculator:io.import.lxns.title')}
           secondary={
             isAuthenticated ? (
-              <div className="flex gap-1">
+              <span className="flex gap-1">
                 <ImportRegionSupportTag region="cn" />
-              </div>
+              </span>
             ) : (
               t('rating-calculator:io.import.lxns.login-required')
             )

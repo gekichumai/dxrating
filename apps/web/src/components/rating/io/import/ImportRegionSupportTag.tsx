@@ -8,13 +8,13 @@ export const ImportRegionSupportTag: FC<{
 }> = ({ region, maintenance = false }) => {
   const { t } = useTranslation(['rating-calculator'])
   return (
-    <div
-      className={`text-xs ${maintenance ? 'bg-amber-200 text-amber-900' : 'bg-green-200 text-green-800'} rounded-full px-1.5 py-1 inline-flex gap-1 leading-none font-mono font-medium`}
+    <span
+      className={`text-xs ${maintenance ? 'bg-amber-200 text-amber-900' : 'bg-green-200 text-green-800'} rounded-full px-1.5 py-1 inline-flex gap-1 leading-none font-semibold`}
     >
       {region.toUpperCase()}
       {maintenance && (
         <span className="font-sans">{t('rating-calculator:io.import.net-records.maintenance-notice.tag')}</span>
       )}
-    </div>
+    </span>
   )
 }

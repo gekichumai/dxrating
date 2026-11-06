@@ -82,7 +82,7 @@ describe('ImportFromJSONButtonListItem', () => {
     expect(dialog.textContent).toContain('1 chart would get a lower score or be removed')
     fireEvent.click(screen.getByRole('button', { name: 'Import anyway' }))
 
-    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith('Imported 1 records'))
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith('Imported 1 record'))
     expect(repository.entries()).toEqual(entries)
     expect(window.localStorage.getItem('rating-calculator-entries')).toBe(JSON.stringify(entries))
     expect(JSON.parse(window.localStorage.getItem('rating-calculator-import-undo')!).previousEntries).toEqual(SAVED)
@@ -157,7 +157,7 @@ describe('ImportFromJSONButtonListItem', () => {
     await importFile('not json')
 
     await waitFor(() => expect(toastError).toHaveBeenCalledTimes(1))
-    expect(toastError.mock.calls[0]![0]).toMatch(/^Failed to import: /)
+    expect(toastError.mock.calls[0]![0]).toMatch(/^Unable to import this file\. /)
     expect(repository.entries()).toEqual(SAVED)
   })
 })

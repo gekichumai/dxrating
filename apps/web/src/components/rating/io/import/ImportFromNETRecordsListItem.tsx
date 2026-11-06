@@ -40,10 +40,10 @@ export const ImportFromNETRecordsListItem = ({ onSelect }: { onSelect: () => voi
       <ListItemText
         primary={t('rating-calculator:io.import.net-records.title')}
         secondary={
-          <div className="flex gap-1">
+          <span className="flex gap-1">
             <ImportRegionSupportTag region="intl" maintenance={maintenance.intl} />
             <ImportRegionSupportTag region="jp" maintenance={maintenance.jp} />
-          </div>
+          </span>
         }
       />
     </MenuItem>
