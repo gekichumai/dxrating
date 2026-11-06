@@ -20,6 +20,7 @@ import { AppTabs } from '@/components/layout/AppTabs'
 import { ThemedBody } from '@/components/layout/ThemedBody'
 import { useResolvedPathname } from '@/components/layout/useResolvedPathname'
 import { NavigationProgress } from '@/components/layout/NavigationProgress'
+import { NavigationOriginTracker } from '@/components/layout/navigationOrigins'
 import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
 import { RegionVersionUpdatePrompt } from '@/components/global/preferences/RegionVersionUpdatePrompt'
@@ -254,6 +255,7 @@ function AppLayout() {
       </a>
       <RouteChangeAnnouncer />
       <NavigationProgress />
+      <NavigationOriginTracker />
       <VersionBackground />
 
       <div className="h-full w-full relative">
