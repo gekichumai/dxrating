@@ -72,7 +72,9 @@ const API_CATALOG_PROFILE_URL = 'https://www.rfc-editor.org/info/rfc9727'
 const API_CATALOG_CONTENT_TYPE = `application/linkset+json; profile="${API_CATALOG_PROFILE_URL}"`
 const ARCADE_VENUES_PATH = '/api/v1/arcades/venues'
 const ARCADE_VENUES_BROWSER_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=60, stale-if-error=86400'
-const ARCADE_VENUES_CDN_CACHE_CONTROL = 'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800'
+// Nothing purges the edge when venues change, so it revalidates every 5 minutes in the background with the ETag.
+// Longer than dxdata's 60s because each revalidation rebuilds and hashes the full body to compare ETags.
+const ARCADE_VENUES_CDN_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=86400, stale-if-error=604800'
 const ARCADE_VENUES_RETAINED_304_HEADERS = [
   ...RETAINED_304_HEADERS,
   'last-modified',
