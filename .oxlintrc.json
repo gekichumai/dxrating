@@ -16,6 +16,7 @@
   },
   "plugins": ["react", "typescript", "jsx-a11y", "import"],
   "ignorePatterns": [
+    "apps/web/src/paraglide",
     "dist",
     ".turbo",
     "node_modules",
@@ -40,6 +41,104 @@
           }
         ]
       }
+    },
+    {
+      "files": ["apps/backend/src/**/*.ts", "apps/backend/src/**/*.tsx"],
+      "rules": {
+        "gdp-ts/no-define-proof": "error",
+        "gdp-ts/no-proof-assertion": "error",
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              },
+              {
+                "regex": "(^|/)lxns(/index)?(\\.ts)?$",
+                "message": "Use services/lxns/viewer: its functions demand a ViewerIs proof (gdp-ts)."
+              },
+              {
+                "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
+                "importNames": ["viewerFromSession"],
+                "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/backend/src/proofs/**"],
+      "rules": {
+        "gdp-ts/no-define-proof": "off",
+        "gdp-ts/no-proof-assertion": "off",
+        "gdp-ts/no-exported-prover": "error"
+      }
+    },
+    {
+      "files": ["apps/backend/src/services/lxns/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              },
+              {
+                "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
+                "importNames": ["viewerFromSession"],
+                "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/backend/src/app.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              },
+              {
+                "regex": "(^|/)lxns(/index)?(\\.ts)?$",
+                "message": "Use services/lxns/viewer: its functions demand a ViewerIs proof (gdp-ts)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/backend/src/test/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "jsPlugins": [
+    {
+      "name": "gdp-ts",
+      "specifier": "@gdp-ts/core/lint/plugin"
     }
   ]
 }

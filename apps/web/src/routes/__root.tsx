@@ -27,6 +27,7 @@ import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculat
 import { CatalogProvider } from '@/catalog/CatalogContext'
 import { loadCatalogMeta } from '@/catalog/catalogSource'
 import { createServerI18n } from '@/setup/init-i18n'
+import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { buildNotFoundSeoMeta, buildRootSeoMeta, resolveRootHeadState, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
@@ -100,9 +101,10 @@ const isLegalPath = (pathname: string) => pathname === '/privacy-policy' || path
 
 /**
  * The site header: one tinted-glass band (accent solid only behind the status bar) holding the top row and, on app
- * pages, the version switcher and primary navigation. The switcher is full size on the home page only; inner pages get
- * the compact row so their content starts near the top. Keyed on the page on screen, not the pending destination, so
- * the header keeps its size until the next page renders (useResolvedPathname).
+ * pages, the version switcher and primary navigation. Below 1024px the switcher is full size on the home page only;
+ * inner pages get the compact row so their content starts near the top. From 1024px every page gets the same row, so
+ * the navigation stays in place between pages. Keyed on the page on screen, not the pending destination, so the
+ * header keeps its size until the next page renders (useResolvedPathname).
  */
 function RootLayout() {
   const pathname = useResolvedPathname()
@@ -110,9 +112,7 @@ function RootLayout() {
 
   const isLegalPage = isLegalPath(pathname)
   const isDevelopersPage = pathname === '/developers'
-  const isSongPage = pathname.startsWith('/songs/')
   const showAppChrome = !isDevelopersPage && !isLegalPage
-  const showTabs = showAppChrome && !isSongPage
   const compact = pathname !== '/'
 
   return (
@@ -121,13 +121,14 @@ function RootLayout() {
       {showAppChrome && (
         <div
           className={clsx(
-            'page-gutter flex items-center justify-center pt-3',
-            // app-chrome--full becomes one row from 1024px (components/layout/app-chrome.css)
-            compact ? 'flex-row flex-wrap gap-2 md:gap-3' : 'app-chrome--full flex-col gap-3 sm:pt-4',
+            // From 1024px one row on every page: the switcher on the left, the navigation on the right, under the site
+            // name and the action pill. The home page's switcher takes the compact size there (layout/app-chrome.css)
+            'page-gutter flex items-center justify-center pt-3 lg:flex-row lg:flex-nowrap lg:justify-between',
+            compact ? 'flex-row flex-wrap gap-2 md:gap-3' : 'app-chrome--full flex-col gap-3 sm:pt-4 lg:pt-3',
           )}
         >
           <VersionRegionSwitcher compact={compact} />
-          {showTabs && <AppTabs />}
+          {showAppChrome && <AppTabs />}
         </div>
       )}
     </header>
@@ -198,29 +199,31 @@ function RootComponent() {
   return (
     <RenderEnvironmentProvider renderedAt={renderedAt}>
       <I18nextProvider i18n={routeI18n}>
-        <AppContextProvider>
-          <RootDocument>
-            <CatalogProvider>
-              <QueryClientProvider client={queryClient}>
-                <VersionCustomizedThemeProvider>
-                  <RatingCalculatorContextProvider>
-                    <PostHogProvider client={posthog}>
-                      <NetImportSettingsProvider>
-                        <SideEffector />
-                        <CustomizedToaster />
-                        <NetImportProgress />
-                        <ImportReviewHost />
-                        <OAuthErrorHandler />
-                        <RegionVersionUpdatePrompt />
-                        <AppLayout />
-                      </NetImportSettingsProvider>
-                    </PostHogProvider>
-                  </RatingCalculatorContextProvider>
-                </VersionCustomizedThemeProvider>
-              </QueryClientProvider>
-            </CatalogProvider>
-          </RootDocument>
-        </AppContextProvider>
+        <LocaleProvider initialLocale={locale}>
+          <AppContextProvider>
+            <RootDocument>
+              <CatalogProvider>
+                <QueryClientProvider client={queryClient}>
+                  <VersionCustomizedThemeProvider>
+                    <RatingCalculatorContextProvider>
+                      <PostHogProvider client={posthog}>
+                        <NetImportSettingsProvider>
+                          <SideEffector />
+                          <CustomizedToaster />
+                          <NetImportProgress />
+                          <ImportReviewHost />
+                          <OAuthErrorHandler />
+                          <RegionVersionUpdatePrompt />
+                          <AppLayout />
+                        </NetImportSettingsProvider>
+                      </PostHogProvider>
+                    </RatingCalculatorContextProvider>
+                  </VersionCustomizedThemeProvider>
+                </QueryClientProvider>
+              </CatalogProvider>
+            </RootDocument>
+          </AppContextProvider>
+        </LocaleProvider>
       </I18nextProvider>
     </RenderEnvironmentProvider>
   )

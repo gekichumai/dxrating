@@ -1,10 +1,10 @@
-import type { FC } from 'react'
+import { type FC, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RecentChartLink } from '@/components/chartDiscovery/recentCharts'
 import { SheetListItemContentView, SheetListItemSummary } from '@/components/sheet/SheetListItem'
-import { SHEET_ROW_INSET } from '@/components/sheet/sheetRowLayout'
+import { SHEET_ROW_INSET, SheetRowLayoutContext } from '@/components/sheet/sheetRowLayout'
 import { getSheetTitleLabel } from '@/components/song/sheetDisplay'
-import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
+import { DEFAULT_LOCALE, type SupportedLocale, toSupportedLocale } from '@/setup/locale'
 import { formatSheetReleaseDateParts, sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
 
 type RecentPageProps = {
@@ -15,9 +15,40 @@ const siteUrl = 'https://dxrating.net'
 
 const toAbsoluteChartUrl = (href: string) => new URL(href, siteUrl).toString()
 
+type RecentChartGroup = {
+  key: string
+  releaseDate?: string
+  version: string
+  charts: { chart: RecentChartLink; position: number }[]
+}
+
+/**
+ * One group per release date (or, for undated charts, per version), in the order each is first seen. Undated charts
+ * sort by a fallback timestamp, so they can fall between two charts of the same date; a Map keeps that date to one
+ * section. Positions are numbered in the order the groups render, so the ItemList stays continuous.
+ */
+export const groupRecentCharts = (charts: readonly RecentChartLink[]): RecentChartGroup[] => {
+  const groups = new Map<string, RecentChartGroup>()
+  for (const chart of charts) {
+    const key = chart.releaseDate ? `date-${chart.releaseDate}` : `version-${chart.version}`
+    const group = groups.get(key)
+    if (group) {
+      group.charts.push({ chart, position: 0 })
+    } else {
+      groups.set(key, { key, releaseDate: chart.releaseDate, version: chart.version, charts: [{ chart, position: 0 }] })
+    }
+  }
+  let position = 0
+  for (const group of groups.values()) {
+    for (const entry of group.charts) entry.position = ++position
+  }
+  return [...groups.values()]
+}
+
 export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
-  const { i18n, t } = useTranslation(['sheet'])
+  const { i18n, t } = useTranslation(['sheet', 'toplists'])
   const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
+  const groups = groupRecentCharts(charts)
 
   return (
     <div
@@ -35,108 +66,128 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
           </p>
         </header>
 
-        <ol
-          // Rows are --radius-md at a 4px inset, so they nest in the panel's --radius-lg. From lg the rows fill two
-          // columns (three from 2xl) in reading order, so the page uses the width instead of a narrow strip
-          className="glass m-0 w-full list-none p-1 lg:grid lg:grid-cols-2 lg:gap-x-2 2xl:grid-cols-3"
+        {/* One list for the page's structured data; on screen the charts are grouped by release date. Every row uses
+            the table layout, so from lg each chart is one 56px line of fixed columns (art | title | artist | version |
+            type + difficulty | level) that lines up with every other row; below lg the rows stack as before */}
+        <div
+          className="w-full flex flex-col gap-4"
           itemProp="mainEntity"
           itemScope
           itemType="https://schema.org/ItemList"
         >
           <meta itemProp="numberOfItems" content={String(charts.length)} />
-          {charts.map((chart, index) => {
-            const chartUrl = toAbsoluteChartUrl(chart.href)
-            const sheetLabel = getSheetTitleLabel(chart, locale)
-            const levelLabel = t('sheet:chart-discovery.level', { level: chart.level })
-
-            return (
-              <li
-                key={`${chart.songId}-${chart.type}-${chart.difficulty}`}
-                itemProp="itemListElement"
-                itemScope
-                itemType="https://schema.org/ListItem"
-              >
-                <meta itemProp="position" content={String(index + 1)} />
-                <link itemProp="url" href={chartUrl} />
-                <a
-                  className={`block rounded-[var(--radius-md)] ${SHEET_ROW_INSET} text-fg-1 no-underline transition-colors duration-150 hover:bg-black/4 focus-visible:outline-offset-[-2px]`}
-                  href={chart.href}
-                >
-                  <article className="block" itemScope itemType="https://schema.org/MusicRecording" itemID={chartUrl}>
-                    <link itemProp="url" href={chartUrl} />
-                    <meta itemProp="identifier" content={`${chart.songId}/${chart.type}/${chart.difficulty}`} />
-                    <meta itemProp="additionalType" content="maimai DX chart" />
-                    <span itemProp="additionalProperty" itemScope itemType="https://schema.org/PropertyValue">
-                      <meta itemProp="name" content="Chart type" />
-                      <meta itemProp="value" content={chart.type} />
-                    </span>
-                    <span itemProp="additionalProperty" itemScope itemType="https://schema.org/PropertyValue">
-                      <meta itemProp="name" content="Difficulty" />
-                      <meta itemProp="value" content={chart.difficulty} />
-                    </span>
-                    <span itemProp="additionalProperty" itemScope itemType="https://schema.org/PropertyValue">
-                      <meta itemProp="name" content="Level" />
-                      <meta itemProp="value" content={chart.level} />
-                    </span>
-                    <meta itemProp="description" content={`${sheetLabel} ${levelLabel}`} />
-                    <SheetListItemContentView
-                      level={chart.level}
-                      internalLevelValue={chart.internalLevelValue}
-                      isTypeUtage={chart.isTypeUtage}
-                      imageName={chart.imageName}
-                      imageAlt={t('sheet:cover-art-alt', { title: chart.title })}
-                    >
-                      <SheetListItemSummary
-                        title={chart.title}
-                        type={chart.type}
-                        difficulty={chart.difficulty}
-                        serverIds={chart.serverIds}
-                        isLocked={chart.isLocked}
-                        titleElement="h2"
-                        titleTextProps={{ itemProp: 'name' }}
-                        artist={<span itemProp="name">{chart.artist}</span>}
-                        artistProps={{
-                          itemProp: 'byArtist',
-                          itemScope: true,
-                          itemType: 'https://schema.org/MusicGroup',
-                        }}
-                        metadata={
-                          // Version and date are two lines on phones and one ("ver. X · date") from lg, which keeps the
-                          // two-column rows short
-                          <div className="flex flex-col lg:flex-row lg:flex-wrap lg:items-baseline lg:gap-x-1.5 text-fg-2">
-                            {chart.version && <span className="text-sm">ver. {chart.version}</span>}
-                            {chart.version && chart.releaseDate && (
-                              <span aria-hidden="true" className="hidden lg:inline text-sm">
-                                ·
-                              </span>
-                            )}
-                            {chart.releaseDate && (
-                              <time
-                                className="text-xs lg:text-sm num"
-                                dateTime={chart.releaseDate}
-                                itemProp="datePublished"
-                              >
-                                {/* The date alone (no "days ago"), so the cached page never goes stale */}
-                                {
-                                  formatSheetReleaseDateParts(
-                                    chart.releaseDate,
-                                    locale,
-                                    sheetReleaseDateTimestamp(chart.releaseDate),
-                                  ).absoluteDate
-                                }
-                              </time>
-                            )}
-                          </div>
-                        }
-                      />
-                    </SheetListItemContentView>
-                  </article>
-                </a>
-              </li>
-            )
-          })}
-        </ol>
+          <SheetRowLayoutContext.Provider value="table">
+            {groups.map((group) => (
+              <RecentChartGroupSection key={group.key} group={group} locale={locale} />
+            ))}
+          </SheetRowLayoutContext.Provider>
+        </div>
       </div>
     </div>
+  )
+}
+
+const RecentChartGroupSection: FC<{ group: RecentChartGroup; locale: SupportedLocale }> = ({ group, locale }) => {
+  const { t } = useTranslation(['toplists'])
+  const headingId = `${useId()}recent-${group.key}`
+
+  return (
+    <section aria-labelledby={headingId} className="flex w-full flex-col gap-2">
+      {/* Sticky over the rows, so it takes the denser overlay tint and the full blur: rows passing under it must not
+          read through */}
+      <div className="glass-thin sticky top-1 z-2 flex items-baseline justify-between gap-2 px-3 py-1.5 bg-[var(--glass-overlay-bg)] [-webkit-backdrop-filter:var(--glass-blur)] [backdrop-filter:var(--glass-blur)]">
+        <h2 id={headingId} className="m-0 text-base font-semibold text-fg-1 num">
+          {group.releaseDate ? (
+            <time dateTime={group.releaseDate}>
+              {/* The date alone (no "days ago"), so the cached page never goes stale */}
+              {
+                formatSheetReleaseDateParts(group.releaseDate, locale, sheetReleaseDateTimestamp(group.releaseDate))
+                  .absoluteDate
+              }
+            </time>
+          ) : (
+            `ver. ${group.version}`
+          )}
+        </h2>
+        <span className="text-xs text-fg-2 num">{t('toplists:count', { count: group.charts.length })}</span>
+      </div>
+      {/* Rows are --radius-md at a 4px inset, so they nest in the panel's --radius-lg */}
+      <ol className="glass m-0 w-full list-none p-1">
+        {group.charts.map(({ chart, position }) => (
+          <RecentChartRow
+            key={`${chart.songId}-${chart.type}-${chart.difficulty}`}
+            chart={chart}
+            position={position}
+            locale={locale}
+          />
+        ))}
+      </ol>
+    </section>
+  )
+}
+
+const RecentChartRow: FC<{ chart: RecentChartLink; position: number; locale: SupportedLocale }> = ({
+  chart,
+  position,
+  locale,
+}) => {
+  const { t } = useTranslation(['sheet'])
+  const chartUrl = toAbsoluteChartUrl(chart.href)
+  const sheetLabel = getSheetTitleLabel(chart, locale)
+  const levelLabel = t('sheet:chart-discovery.level', { level: chart.level })
+
+  return (
+    <li itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
+      <meta itemProp="position" content={String(position)} />
+      <link itemProp="url" href={chartUrl} />
+      <a
+        className={`block rounded-[var(--radius-md)] ${SHEET_ROW_INSET} text-fg-1 no-underline transition-colors duration-150 hover:bg-black/4 focus-visible:outline-offset-[-2px]`}
+        href={chart.href}
+      >
+        <article className="block" itemScope itemType="https://schema.org/MusicRecording" itemID={chartUrl}>
+          <link itemProp="url" href={chartUrl} />
+          <meta itemProp="identifier" content={`${chart.songId}/${chart.type}/${chart.difficulty}`} />
+          <meta itemProp="additionalType" content="maimai DX chart" />
+          {chart.releaseDate && <meta itemProp="datePublished" content={chart.releaseDate} />}
+          <span itemProp="additionalProperty" itemScope itemType="https://schema.org/PropertyValue">
+            <meta itemProp="name" content="Chart type" />
+            <meta itemProp="value" content={chart.type} />
+          </span>
+          <span itemProp="additionalProperty" itemScope itemType="https://schema.org/PropertyValue">
+            <meta itemProp="name" content="Difficulty" />
+            <meta itemProp="value" content={chart.difficulty} />
+          </span>
+          <span itemProp="additionalProperty" itemScope itemType="https://schema.org/PropertyValue">
+            <meta itemProp="name" content="Level" />
+            <meta itemProp="value" content={chart.level} />
+          </span>
+          <meta itemProp="description" content={`${sheetLabel} ${levelLabel}`} />
+          <SheetListItemContentView
+            level={chart.level}
+            internalLevelValue={chart.internalLevelValue}
+            isTypeUtage={chart.isTypeUtage}
+            imageName={chart.imageName}
+            imageAlt={t('sheet:cover-art-alt', { title: chart.title })}
+          >
+            <SheetListItemSummary
+              title={chart.title}
+              type={chart.type}
+              difficulty={chart.difficulty}
+              version={chart.version}
+              serverIds={chart.serverIds}
+              isLocked={chart.isLocked}
+              titleElement="h3"
+              titleTextProps={{ itemProp: 'name' }}
+              artist={<span itemProp="name">{chart.artist}</span>}
+              artistProps={{
+                itemProp: 'byArtist',
+                itemScope: true,
+                itemType: 'https://schema.org/MusicGroup',
+              }}
+            />
+          </SheetListItemContentView>
+        </article>
+      </a>
+    </li>
   )
 }

@@ -37,6 +37,8 @@ export interface ApiContext
     RequestHeadersHandlerPluginContext,
     ResponseHeadersHandlerPluginContext {
   user?: BackendAuth['$Infer']['Session']['user']
+  /** The same signed-in user, as the only value `withViewer` accepts (gdp-ts `ViewerIs`) */
+  viewer?: SessionViewer
   signal?: AbortSignal
 }
 
@@ -429,7 +431,8 @@ const aliasesHandler = {
 
 import { netGatewayStatusEffect, withMaimaiNETClient, type NetGatewayStatus } from './lib/functions/client'
 import { recordNetFailure, recordNetSuccess } from './services/functions/fetch-net-records/telemetry'
-import * as lxnsService from './services/lxns/index'
+import * as lxnsService from './services/lxns/viewer'
+import { withViewer, type SessionViewer } from './proofs/viewer-is'
 
 const TrendingSeriesSchema = Schema.Struct({
   breakdown_value: Schema.optional(Schema.Unknown),
@@ -714,7 +717,23 @@ const arcadesHandler = {
     handlerGen(function* ({ input }) {
       const database = yield* Database
       const db = database.db
-      const filters: SQL[] = []
+      // A venue whose every installation went absent is closed, or came only from a source that is no longer crawled
+      // (such as the national Chinese list, gekichumai/meta#8). Venues without any installation rows stay listed.
+      const listedVenue = or(
+        notExists(
+          db
+            .select({ value: sql`1` })
+            .from(arcadeInstallations)
+            .where(eq(arcadeInstallations.venue_id, arcadeVenues.id)),
+        ),
+        exists(
+          db
+            .select({ value: sql`1` })
+            .from(arcadeInstallations)
+            .where(and(eq(arcadeInstallations.venue_id, arcadeVenues.id), isNull(arcadeInstallations.absent_since))),
+        ),
+      )!
+      const filters: SQL[] = [listedVenue]
 
       if (
         input.minLatitude !== undefined &&
@@ -773,7 +792,7 @@ const arcadesHandler = {
             db
               .select()
               .from(arcadeVenues)
-              .where(filters.length > 0 ? and(...filters) : undefined)
+              .where(and(...filters))
               .orderBy(asc(arcadeVenues.normalized_name), asc(arcadeVenues.id)),
           ),
           database.query('Arcades.listChains', (db) =>
@@ -789,7 +808,7 @@ const arcadesHandler = {
                   db
                     .select({ value: sql`1` })
                     .from(arcadeVenues)
-                    .where(eq(arcadeVenues.chain_id, arcadeChains.id)),
+                    .where(and(eq(arcadeVenues.chain_id, arcadeChains.id), listedVenue)),
                 ),
               )
               .orderBy(asc(arcadeChains.name), asc(arcadeChains.id)),
@@ -917,24 +936,52 @@ const maimaiNetHandler = {
 const lxnsHandler = {
   authorize: os.lxns.authorize.handler(
     handlerGen(function* ({ context }) {
-      const user = context.user
-      if (!user) return yield* new UnauthorizedError()
-      const url = yield* lxnsService.generateAuthorizationUrl(user.id)
+      const viewer = context.viewer
+      if (!viewer) return yield* new UnauthorizedError()
+      const url = yield* withViewer(viewer, (named, proof) => lxnsService.generateAuthorizationUrl(named, proof))
       return { url }
+    }),
+  ),
+  // The OAuth callback forwards code and state to the web (or the iOS app), which completes here with its own session.
+  complete: os.lxns.complete.handler(
+    handlerGen(function* ({ input, context }) {
+      const viewer = context.viewer
+      yield* (
+        viewer
+          ? withViewer(viewer, (named, proof) =>
+              lxnsService.completeAuthorization(named, proof, input.code, input.state),
+            )
+          : lxnsService.discardAuthorization(input.code, input.state)
+      ).pipe(
+        // A stale, replayed or forged state is the caller's problem (400), not a server failure
+        Effect.catchTag('LxnsStateInvalid', (error) =>
+          Effect.fail(new ORPCError('BAD_REQUEST', { message: error.message, data: { reason: 'invalid_state' } })),
+        ),
+        Effect.catchTag('LxnsStateMismatch', (error) =>
+          Effect.fail(
+            error.signedIn
+              ? new ORPCError('FORBIDDEN', { message: error.message, data: { reason: 'session_mismatch' } })
+              : new ORPCError('UNAUTHORIZED', { message: error.message, data: { reason: 'not_signed_in' } }),
+          ),
+        ),
+      )
+      return { success: true as const }
     }),
   ),
   status: os.lxns.status.handler(
     handlerGen(function* ({ context }) {
-      const user = context.user
-      if (!user) return yield* new UnauthorizedError()
-      return yield* lxnsService.getConnectionStatus(user.id)
+      const viewer = context.viewer
+      if (!viewer) return yield* new UnauthorizedError()
+      return yield* withViewer(viewer, (named, proof) => lxnsService.getConnectionStatus(named, proof))
     }),
   ),
   start: os.lxns.start.handler(
     handlerGen(function* ({ context }) {
-      const user = context.user
-      if (!user) return yield* new UnauthorizedError()
-      const [duration, rawScores] = yield* Effect.timed(lxnsService.fetchPlayerScores(user.id))
+      const viewer = context.viewer
+      if (!viewer) return yield* new UnauthorizedError()
+      const [duration, rawScores] = yield* Effect.timed(
+        withViewer(viewer, (named, proof) => lxnsService.fetchPlayerScores(named, proof)),
+      )
       yield* Effect.sync(() =>
         Sentry.metrics.distribution('lxns_fetch.duration', Duration.toMillis(duration), {
           unit: 'millisecond',
@@ -957,9 +1004,9 @@ const lxnsHandler = {
   ),
   disconnect: os.lxns.disconnect.handler(
     handlerGen(function* ({ context }) {
-      const user = context.user
-      if (!user) return yield* new UnauthorizedError()
-      yield* lxnsService.disconnect(user.id)
+      const viewer = context.viewer
+      if (!viewer) return yield* new UnauthorizedError()
+      yield* withViewer(viewer, (named, proof) => lxnsService.disconnect(named, proof))
       return { success: true }
     }),
   ),

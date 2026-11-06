@@ -91,3 +91,46 @@ export const VersionPairGrid: FC<{
     ))}
   </ul>
 )
+/**
+ * Both eras on the page at once, でらっくす first, each under its own heading: nothing is hidden behind a switch, so
+ * every version is visible and in the server HTML. `jumpNav` adds in-page anchor links to the two sections.
+ */
+export const VersionEraSections: FC<{
+  /** Prefix for the section anchors, e.g. `era` gives `#era-dx` and `#era-classic` */
+  idPrefix: string
+  headingLevel?: 'h2' | 'h3'
+  jumpNav?: boolean
+  className?: string
+  children: (era: VersionEra) => ReactNode
+}> = ({ idPrefix, headingLevel: Heading = 'h2', jumpNav, className, children }) => {
+  const { t } = useTranslation(['versions'])
+
+  return (
+    <div className={clsx('flex flex-col gap-5', className)}>
+      {jumpNav && (
+        <nav aria-label={t('versions:era.label')} className={`${segmentedTrack} self-start`}>
+          {VERSION_ERAS.map((era) => (
+            <a key={era} href={`#${idPrefix}-${era}`} className={clsx(segmentedItem(false), 'gap-1.5')}>
+              <span>{t(`versions:era.${era}`)}</span>
+              <span className="text-xs num text-fg-2">{t(`versions:era.${era}-range`)}</span>
+            </a>
+          ))}
+        </nav>
+      )}
+      {VERSION_ERAS.map((era) => (
+        <section
+          key={era}
+          id={`${idPrefix}-${era}`}
+          aria-labelledby={`${idPrefix}-${era}-heading`}
+          className="flex flex-col gap-2 scroll-mt-2"
+        >
+          <Heading id={`${idPrefix}-${era}-heading`} className="m-0 flex items-baseline gap-2 section-title">
+            <span>{t(`versions:era.${era}`)}</span>
+            <span className="text-sm font-normal text-fg-2 num">{t(`versions:era.${era}-range`)}</span>
+          </Heading>
+          {children(era)}
+        </section>
+      ))}
+    </div>
+  )
+}

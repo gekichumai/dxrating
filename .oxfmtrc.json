@@ -6,6 +6,7 @@
   "singleQuote": true,
   "trailingComma": "all",
   "ignorePatterns": [
+    "apps/web/src/paraglide",
     "dist",
     ".turbo",
     "node_modules",
