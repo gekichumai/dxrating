@@ -772,6 +772,7 @@
     "condition.hasha": "모든 대상 채보를 80.0000%(A 랭크) 이상으로 클리어합니다.",
     "condition.scope": "해당 버전에서 처음 나온 곡의 BASIC, ADVANCED, EXPERT, MASTER 채보가 대상입니다. 스탠다드와 DX 채보가 모두 있는 곡은 채보 종류별로 처음 나온 버전에 따라 따로 계산합니다.",
     "condition.remaster": "maimai DX 이전부터 있던 Re:MASTER 채보도 대상입니다.",
+    "condition.remaster-variant": "39, 妄想感傷代償連盟, ヒバナ의 Re:MASTER는 서버마다 다르지만 대상에 포함되며, 「Re:MASTER 차이」로 표시됩니다.",
     "condition.cn-merged": "중국판 舞萌DX는 1년에 한 버전으로 무인판과 PLUS를 합치므로, 두 플레이트가 같은 대상곡 목록을 씁니다.",
     "condition.unverified": "이 대상곡 목록은 아직 게임 내 목록과 대조하지 않았습니다.",
     "progress.title": "내 진행도",
@@ -787,6 +788,8 @@
     "all-done": "이 레벨의 채보를 모두 달성했습니다.",
     "done": "달성",
     "unverified": "미검증",
+    "remaster-variant.label": "Re:MASTER 차이",
+    "remaster-variant.description": "이 곡의 Re:MASTER는 서버마다 다르지만 이 플레이트에 포함됩니다.",
     "other-plates": "다른 플레이트",
     "share.title": "{{plate}} 진행도"
   },

@@ -772,6 +772,7 @@
     "condition.hasha": "所有譜面以 80.0000%（A 評價）或以上通關。",
     "condition.scope": "計入在這些版本首次登場的歌曲的 BASIC、ADVANCED、EXPERT、MASTER 譜面。同時有標準譜和 DX 譜的歌曲，按各譜面類型首次登場的版本分別計算。",
     "condition.remaster": "maimai DX 之前就已存在的 Re:MASTER 譜面也計入。",
+    "condition.remaster-variant": "39、妄想感傷代償連盟、ヒバナ 的 Re:MASTER 在各伺服器之間有差異，同樣計入，並標註為「Re:MASTER 差異」。",
     "condition.cn-merged": "國服的舞萌DX 每年一個版本，涵蓋本體和 PLUS，因此兩個牌子共用同一份曲目清單。",
     "condition.unverified": "這份曲目清單尚未與遊戲內清單核對。",
     "progress.title": "你的進度",
@@ -787,6 +788,8 @@
     "all-done": "這個等級的譜面已全部完成。",
     "done": "已完成",
     "unverified": "待核實",
+    "remaster-variant.label": "Re:MASTER 差異",
+    "remaster-variant.description": "這首歌的 Re:MASTER 在各伺服器之間有差異，仍計入此牌子。",
     "other-plates": "其他牌子",
     "share.title": "{{plate}} 進度"
   },

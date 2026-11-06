@@ -54,6 +54,8 @@ export interface PlatePageChart {
   level: string
   levelValue: number
   sheets: PlatePageSheet[]
+  /** Its Re:MASTER is one whose plate membership differs between servers; it counts and the page labels it */
+  remasterDiffersByServer: boolean
 }
 
 /** Lean, serialisable plate data for the SSR page (the user overlay is added on the client) */
@@ -108,6 +110,7 @@ export function buildPlatePageData(
           level: levelOn(sheet, region).level,
           internalLevelValue: levelOn(sheet, region).levelValue,
         })),
+        remasterDiffersByServer: chart.hasServerVariantRemaster,
       }
     })
     .sort((a, b) => b.levelValue - a.levelValue || a.title.localeCompare(b.title))

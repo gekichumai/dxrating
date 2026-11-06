@@ -11,6 +11,7 @@ import {
   type PlateKind,
   type PlateRecord,
   plateName,
+  SERVER_VARIANT_REMASTER_SHEET_IDS,
 } from '../plates'
 
 const BASE = [DifficultyEnum.Basic, DifficultyEnum.Advanced, DifficultyEnum.Expert, DifficultyEnum.Master]
@@ -189,5 +190,74 @@ describe('舞ReMASTER membership on the bundled snapshot', () => {
     )
     expect(sdRemasters.length).toBeGreaterThan(0)
     for (const sheet of sdRemasters) expect(required.has(sheet.id)).toBe(true)
+  })
+})
+describe('Re:MASTERs that differ between servers (meta#18)', () => {
+  // 39, 妄想感傷代償連盟, ヒバナ: owner decision 2026-11-06, they count toward 舞 and 覇者 on every server
+  const ids = [...SERVER_VARIANT_REMASTER_SHEET_IDS]
+  const regions = ['jp', 'intl', 'cn'] as const
+
+  it('lists the three charts by their public sheet IDs', () => {
+    const titles = ids.map((id) => {
+      const owner = catalogSnapshot.songs.find((s) => s.sheets.some((sheet) => sheet.id === id))
+      const remaster = owner?.sheets.find((sheet) => sheet.id === id)
+      expect(remaster?.difficulty).toBe(DifficultyEnum.ReMaster)
+      return owner?.title
+    })
+    expect(titles.sort()).toEqual(['39', 'ヒバナ', '妄想感傷代償連盟'].sort())
+  })
+
+  it.each(regions)('counts them toward 舞 and 覇 on %s and flags their chart sets', (region) => {
+    for (const groupId of ['mai', 'ha']) {
+      const group = getPlateVersionGroups(region).find((x) => x.id === groupId)!
+      const charts = buildPlateCharts(catalogSnapshot.songs, group, region)
+      for (const id of ids) {
+        const chart = charts.find((c) => c.requiredSheets.some((sheet) => sheet.id === id))
+        expect(chart, `${groupId} ${region} ${id}`).toBeDefined()
+        expect(chart!.hasServerVariantRemaster).toBe(true)
+      }
+      expect(charts.filter((c) => c.hasServerVariantRemaster)).toHaveLength(ids.length)
+    }
+  })
+
+  it('counts them in plate progress', () => {
+    const plate = findPlate('jp', 'mai-maimai')!
+    const fdx: PlateRecord = { achievementRate: 101, comboFlag: 'app', syncFlag: 'fsdp' }
+    const charts = buildPlateCharts(catalogSnapshot.songs, plate.group, 'jp').filter((c) => c.hasServerVariantRemaster)
+    const baseOnly = new Map<string, PlateRecord>(
+      charts.flatMap((c) =>
+        c.requiredSheets
+          .filter((sheet) => !SERVER_VARIANT_REMASTER_SHEET_IDS.has(sheet.id))
+          .map((sheet) => [sheet.id, fdx]),
+      ),
+    )
+    const without = evaluatePlate({ songs: catalogSnapshot.songs, plate, region: 'jp', records: baseOnly })
+    const all = new Map(baseOnly)
+    for (const id of ids) all.set(id, fdx)
+    const withRemaster = evaluatePlate({ songs: catalogSnapshot.songs, plate, region: 'jp', records: all })
+    expect(withRemaster.completedCharts - without.completedCharts).toBe(ids.length)
+    expect(withRemaster.completedSheets - without.completedSheets).toBe(ids.length)
+    expect(withRemaster.totalSheets).toBe(without.totalSheets)
+  })
+
+  it('does not add them to other plates or flag other charts', () => {
+    const kagayaki = getPlateVersionGroups('jp').find((x) => x.id === 'kagayaki')!
+    const charts = buildPlateCharts(catalogSnapshot.songs, kagayaki, 'jp')
+    expect(charts.some((c) => c.hasServerVariantRemaster)).toBe(false)
+    expect(
+      charts.flatMap((c) => c.requiredSheets).some((sheet) => SERVER_VARIANT_REMASTER_SHEET_IDS.has(sheet.id)),
+    ).toBe(false)
+  })
+
+  it('keeps a listed Re:MASTER even when its data would place it in the DX era', () => {
+    const id = ids[0]!
+    const pinned = song('pinned', [
+      ...base('pinned', TypeEnum.STD, VersionEnum.MiLK),
+      sheet('pinned', TypeEnum.STD, DifficultyEnum.ReMaster, VersionEnum.Splash, { id, releaseDate: '2020-01-01' }),
+    ])
+    const mai = getPlateVersionGroups('jp').find((x) => x.id === 'mai')!
+    const [chart] = buildPlateCharts([pinned], mai, 'jp')
+    expect(chart!.requiredSheets.map((s) => s.id)).toContain(id)
+    expect(chart!.hasServerVariantRemaster).toBe(true)
   })
 })

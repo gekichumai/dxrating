@@ -772,6 +772,7 @@
     "condition.hasha": "すべての対象譜面を 80.0000%（A ランク）以上でクリアする。",
     "condition.scope": "対象バージョンで初登場した楽曲の BASIC・ADVANCED・EXPERT・MASTER 譜面が対象です。スタンダード譜面とでらっくす譜面の両方がある楽曲は、譜面タイプごとに初登場バージョンで判定します。",
     "condition.remaster": "maimai DX より前から存在する Re:MASTER 譜面も対象です。",
+    "condition.remaster-variant": "39、妄想感傷代償連盟、ヒバナの Re:MASTER はサーバーによって異なりますが、対象に含まれます。該当曲には「Re:MASTER 差異」と表示します。",
     "condition.cn-merged": "中国版の舞萌DX は1年ごとに無印と PLUS をまとめた1バージョンのため、2つのプレートで対象曲が共通です。",
     "condition.unverified": "この対象曲リストはゲーム内のリストとまだ照合していません。",
     "progress.title": "あなたの達成状況",
@@ -787,6 +788,8 @@
     "all-done": "このレベルはすべて達成済みです。",
     "done": "達成",
     "unverified": "未検証",
+    "remaster-variant.label": "Re:MASTER 差異",
+    "remaster-variant.description": "この曲の Re:MASTER はサーバーによって異なりますが、このプレートの対象です。",
     "other-plates": "ほかのプレート",
     "share.title": "{{plate}} 達成状況"
   },
