@@ -3,7 +3,6 @@ import {
   calculateBest50,
   calculateRatingAward,
   nextRatingTarget,
-  resolveBest50Bucket,
   type Best50Result,
   type RatingAward,
   type RatingEntry,
@@ -112,11 +111,10 @@ export const calculateWebRatingEntries = ({
   const floors = { b15: bucketFloor(result.b15, 15), b35: bucketFloor(result.b35, 35) }
   const webEntries = normalizedEntries.map(({ originalEntry, sheet, ratingEntry }) => {
     const calculatedEntry = ratingEntry ? resultByRatingEntry.get(ratingEntry) : undefined
-    // A chart in the B50 has to beat its own rating; one outside it, the floor of the bucket it competes in. A
-    // duplicate play of a chart has no calculated entry, and no target of its own.
-    const bucket = calculatedEntry
-      ? (calculatedEntry.bucket ?? resolveBest50Bucket(sheet.version, appVersion, region, ratingEntry?.source))
-      : null
+    // A chart in the B50 has to beat its own rating; one outside it, the floor of the bucket it competes in, as
+    // `calculateBest50` resolved it (with a Diving-Fish hint kept from another play of the chart). A duplicate play of
+    // a chart has no calculated entry, and no target of its own.
+    const bucket = calculatedEntry ? (calculatedEntry.bucket ?? calculatedEntry.competingBucket ?? null) : null
     const baseline = calculatedEntry?.bucket ? calculatedEntry.rating.ratingAwardValue : bucket ? floors[bucket] : null
     return {
       ...originalEntry,
