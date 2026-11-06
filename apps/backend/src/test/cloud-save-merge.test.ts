@@ -2,6 +2,7 @@ import vectors from '@gekichumai/maimai-domain/test-vectors/score-merge.json' wi
 import { Effect, Result } from 'effect'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { pullChanges } from '../services/cloud-save/changes'
+import { runCloudSaveCleanup } from '../services/cloud-save/cleanup'
 import { ImportInProgress } from '../services/cloud-save/errors'
 import { startImportJob } from '../services/cloud-save/jobs'
 import { applyImportRecords, type MergeRecord } from '../services/cloud-save/merge'
@@ -353,6 +354,39 @@ describe('cloud save merge module (shared vectors, applied to the database)', ()
     expect(lastEvent.rows).toEqual([{ kind: 'import_applied', import_job_id: user.job.id }])
     const saves = await pool.query(`SELECT record_count FROM score_saves WHERE id = 'dsav_hash'`)
     expect(saves.rows).toEqual([{ record_count: 3 }])
+  })
+
+  it('does not short-circuit an automatic job past a tombstone the cleanup purged since', async () => {
+    await insert('score_saves', { id: 'dsav_purge', user_id: USER, name: 'purge', region: 'jp' })
+    const records = [1, 2].map((n) => ({ sheetId: sheetId(n), achievement: 1000000, comboFlag: null, syncFlag: null }))
+    const auto = () =>
+      importRecords(USER, 'dsav_purge', 'lxns', records, {
+        trigger: 'auto',
+        sourceAccountId: 'friend-1',
+        sha: 'c'.repeat(64),
+      })
+    const first = await auto()
+    expect(first.job.counts).toMatchObject({ inserted: 2 })
+    const deleted = await runDatabase((database) =>
+      applyMutations(database, USER, 'dsav_purge', [deleteMutation(sheetId(2), first.revision)]),
+    )
+    expect(deleted.result.results[0]!.status).toBe('applied')
+    // the identical payload skips the deletion, then takes the shortcut at that revision
+    expect((await auto()).job.counts).toMatchObject({ unchanged: 1, skippedDeleted: 1 })
+    expect((await auto()).job.counts).toMatchObject({ fetched: 2, unchanged: 2 })
+
+    // the tombstone ages past 90 days and the cleanup purges it: the save's revision does not move
+    await pool.query(
+      `UPDATE score_records SET deleted_at = now() - interval '100 days' WHERE save_id = 'dsav_purge' AND sheet_id = $1`,
+      [sheetId(2)],
+    )
+    const report = await runDatabase((database) => runCloudSaveCleanup(database, new Date()))
+    expect(report.tombstonesPurged).toBe(1)
+
+    // the same payload merges again, and with no tombstone left the record comes back
+    const after = await auto()
+    expect(after.job.counts).toMatchObject({ fetched: 2, unchanged: 1, inserted: 1 })
+    expect(after.revision).toBe(deleted.result.revision + 1)
   })
 
   it('allows one running job per save and source (409 helper) and replays idempotency keys', async () => {

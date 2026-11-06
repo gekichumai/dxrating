@@ -103,6 +103,11 @@ export const runCloudSaveCleanup = (database: DatabaseService, now: Date) =>
              ), moved AS (
                UPDATE score_saves s SET tombstone_horizon = GREATEST(s.tombstone_horizon, h.horizon)
                FROM horizons h WHERE s.id = h.save_id RETURNING h.purged
+             ), invalidated AS (
+               -- A purged tombstone changes what merging a payload does without moving the save's revision, so the
+               -- content short-circuit (merge.ts) must not trust a job recorded before it
+               UPDATE score_import_jobs j SET counts = j.counts - 'saveRevision'
+               FROM horizons h WHERE j.save_id = h.save_id AND j.status = 'succeeded' AND j.counts ? 'saveRevision'
              )
              SELECT coalesce(sum(purged), 0)::integer AS purged FROM moved`,
             [ids, tombstoneCutoff],
