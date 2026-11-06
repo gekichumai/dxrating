@@ -80,6 +80,7 @@ const CloudExportRecordSchema = z.looseObject({
     z.looseObject({
       source: z.string(),
       claimedSource: z.string().nullable().optional(),
+      fetchedBy: z.string().optional(),
     }),
   ),
 })
@@ -138,9 +139,13 @@ function exportRecordToEntry(record: z.output<typeof CloudExportRecordSchema>): 
     if (record.best50Bucket) entry.source.best50Bucket = record.best50Bucket
   }
   // The calculator reads the best 50 hint from `providerConfig` (as `cloudRecordToPlayEntry` writes it): a
-  // Diving-Fish record, or a backed-up one that kept its device's hint without claiming a provider
-  const hintSource = record.provenance?.source
-  if (record.best50Bucket && (hintSource === 'diving-fish' || hintSource === 'legacy-local')) {
+  // Diving-Fish record, or one a client uploaded (a backup, a rating file) that kept its device's hint without
+  // claiming a provider
+  const hint = record.provenance
+  if (
+    record.best50Bucket &&
+    (hint?.source === 'diving-fish' || hint?.source === 'legacy-local' || hint?.fetchedBy === 'client')
+  ) {
     entry.providerConfig = { divingFish: { ratingEligibility: record.best50Bucket } }
   }
   return entry

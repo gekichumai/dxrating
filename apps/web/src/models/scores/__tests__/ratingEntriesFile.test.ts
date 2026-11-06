@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { parseRatingFile } from '../ratingEntriesFile'
 import { entriesToImportRecords } from '../cloudImports'
+import { cloudRecordToPlayEntry, recordFromDTO } from '../cloudScoreMapping'
+import { manualProvenance } from './fakeCloudSaveServer'
 
 describe('parseRatingFile', () => {
   it('accepts an "all records" export as it was written, extra fields included', () => {
@@ -169,6 +171,45 @@ describe('parseRatingFile', () => {
       best50Bucket: 'b35',
       claimedSource: null,
     })
+    // Stored by that import as a client `dxrating-json` record, it reads back with the hint, and a later export of it
+    // restores the hint again
+    const stored = recordFromDTO({
+      sheetId: 'dsht_e5nsvt8k2a',
+      achievement: 990000,
+      comboFlag: null,
+      syncFlag: null,
+      dxScore: null,
+      best50Bucket: 'b35',
+      providerRecordId: null,
+      provenance: manualProvenance({ source: 'dxrating-json', entryMethod: 'import', importJobId: 'dimp_f' }),
+      revision: 1,
+      valueChangedAt: '2026-11-03T00:00:00.000Z',
+      clientEditedAt: null,
+      deletedAt: null,
+    })
+    expect(cloudRecordToPlayEntry(stored, null).providerConfig).toEqual({ divingFish: { ratingEligibility: 'b35' } })
+    const again = parseRatingFile(
+      JSON.stringify({
+        ...file,
+        saves: [
+          {
+            id: 'dsav_c',
+            name: 'Main',
+            region: 'cn',
+            records: [
+              {
+                sheetId: 'dsht_e5nsvt8k2a',
+                achievementRate: 99,
+                best50Bucket: 'b35',
+                provenance: { source: 'dxrating-json', fetchedBy: 'client', verification: 'client_reported' },
+              },
+            ],
+          },
+        ],
+      }),
+    )
+    const againEntries = again.success && 'cloudExport' in again ? again.cloudExport![0]!.entries : []
+    expect(againEntries[0]?.providerConfig).toEqual({ divingFish: { ratingEligibility: 'b35' } })
     expect(parseRatingFile(JSON.stringify({ ...file, saves: [] }))).toMatchObject({
       success: false,
       reason: 'invalid-structure',

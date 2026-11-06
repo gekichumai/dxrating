@@ -63,6 +63,14 @@ describe('cloud score mapping', () => {
     const entry = cloudRecordToPlayEntry(backedUp, IDENTITY)
     expect(entry.providerConfig).toEqual({ divingFish: { ratingEligibility: 'b15' } })
     expect(entry.source).toBeUndefined()
+    // A rating file re-imported into a cloud save (a "Download my data" restore) reads the same
+    const restored = recordFromDTO(
+      dto({ provenance: manualProvenance({ source: 'dxrating-json', entryMethod: 'import', importJobId: 'dimp_f' }) }),
+    )
+    expect(cloudRecordToScoreRecord(restored, IDENTITY).best50Bucket).toBe('b15')
+    expect(cloudRecordToPlayEntry(restored, IDENTITY).providerConfig).toEqual({
+      divingFish: { ratingEligibility: 'b15' },
+    })
     const manual = recordFromDTO(dto({ provenance: manualProvenance() }))
     expect(cloudRecordToScoreRecord(manual, IDENTITY).best50Bucket).toBeNull()
     expect(cloudRecordToPlayEntry(manual, IDENTITY).providerConfig).toBeUndefined()
