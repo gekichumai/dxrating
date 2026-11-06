@@ -272,7 +272,9 @@ export function useActiveSaveDecision(): ActiveSave {
       const onStopped = (reason: CloudSyncStopReason) => {
         // A disposed repository never reports: this one is still the active one, or about to be
         if (!opened) return
-        if (reason === 'not-found') {
+        // A save the user switched away from may still answer late (its outbox flushes on dispose): it never clears
+        // the selection of the save now chosen
+        if (reason === 'not-found' && readActiveSaveId(storage, userId) === saveId) {
           writeActiveSaveId(storage, userId, null)
           // The features may have been turned off: ask again on the next decision
           clearUserFeaturesCache()

@@ -353,6 +353,31 @@ describe('ActiveSaveContext', () => {
     expect(afterSwitch.every((render) => render.repositoryUser === null)).toBe(true)
   })
 
+  it('keeps the newly chosen save when the previous one reports late that it is gone', async () => {
+    writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
+    const stops = new Map<string, (reason: 'not-found') => void>()
+    const base = dependencies('user-1')
+    const deps = dependencies('user-1', {
+      fetchFeatures: vi.fn(async () => FEATURES_ON),
+      listSaves: vi.fn(async () => [save('dsav_main'), save('dsav_two')]),
+      openCloudRepository: vi.fn(async (options: Parameters<ActiveSaveDependencies['openCloudRepository']>[0]) => {
+        if (options.onStopped) stops.set(options.saveId, options.onStopped as (reason: 'not-found') => void)
+        return base.openCloudRepository(options)
+      }),
+    })
+    const { result } = renderActiveSave(deps)
+    await waitFor(() => expect(result.current.activeSave.saveId).toBe('dsav_main'))
+
+    result.current.activeSave.setActiveSaveId('dsav_two')
+    await waitFor(() => expect(result.current.activeSave.saveId).toBe('dsav_two'))
+    // The first save's last flush answers 404 only now
+    stops.get('dsav_main')!('not-found')
+    await settle()
+
+    expect(readActiveSaveId(window.localStorage, 'user-1')).toBe('dsav_two')
+    expect(result.current.activeSave.saveId).toBe('dsav_two')
+  })
+
   it('returns to the local save on sign-out', async () => {
     writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
     let userId: string | null = 'user-1'
