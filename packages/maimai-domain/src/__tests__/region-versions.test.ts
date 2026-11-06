@@ -41,6 +41,11 @@ describe('B15/B35 split at each region’s latest version', () => {
     })
   }
 
+  it('a past regional version leaves out charts newer than it', () => {
+    expect(resolveBest50Bucket(VersionEnum.PRiSMPLUS, VersionEnum.BUDDiES, 'intl')).toBeNull()
+    expect(resolveBest50Bucket(VersionEnum.CiRCLE, VersionEnum.PRiSM, 'cn')).toBeNull()
+  })
+
   it('JP still leaves a chart newer than the chosen version out of both buckets', () => {
     expect(resolveBest50Bucket(VersionEnum.MAGiCAL, VersionEnum.PRiSMPLUS, 'jp')).toBeNull()
   })
