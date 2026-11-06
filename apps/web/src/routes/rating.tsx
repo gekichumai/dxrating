@@ -1,5 +1,6 @@
 import { ClientOnly, createFileRoute } from '@tanstack/react-router'
 import { CircularProgress } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { RatingViewContext, type RatingView } from '@/components/rating/useRatingEntries'
 import { RatingExplainer } from '@/components/rating/RatingExplainer'
 import { RatingCalculator } from '@/pages/RatingCalculator'
@@ -23,12 +24,15 @@ export const Route = createFileRoute('/rating')({
 
 function RatingRouteComponent() {
   const { view = 'b50' } = Route.useSearch()
+  const { t } = useTranslation(['rating-calculator'])
   return (
     <>
+      {/* The calculator renders in the browser only; the page heading is server-rendered so the outline starts here */}
+      <h1 className="sr-only">{t('rating-calculator:page-title')}</h1>
       <ClientOnly
         fallback={
           <div className="flex items-center justify-center w-full min-h-60vh">
-            <CircularProgress size="2rem" disableShrink />
+            <CircularProgress size="2rem" disableShrink aria-label={t('rating-calculator:loading')} />
           </div>
         }
       >

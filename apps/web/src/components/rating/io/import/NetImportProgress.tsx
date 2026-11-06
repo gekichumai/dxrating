@@ -41,7 +41,11 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
       <motion.div
         layoutRoot
         className="fixed z-[1200] w-0"
-        style={{ top: 'calc(env(safe-area-inset-top) + 1rem)', right: 'calc(env(safe-area-inset-right) + 1rem)' }}
+        style={{
+          // Docked above the bottom edge, not over the header and its sign-in and info buttons
+          bottom: 'calc(env(safe-area-inset-bottom) + 1rem)',
+          right: 'calc(env(safe-area-inset-right) + 1rem)',
+        }}
         onKeyDown={(event) => {
           if (event.key === 'Escape' && expanded) {
             event.stopPropagation()
@@ -54,13 +58,12 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
           layout={!reducedMotion}
           initial={false}
           transition={transition}
-          className="absolute right-0 overflow-hidden bg-white text-zinc-800"
+          className="glass-overlay absolute bottom-0 right-0 overflow-hidden text-fg-1"
           style={{
             width: expanded
               ? 'min(360px, calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 2rem))'
               : 56,
-            borderRadius: expanded ? 24 : 28,
-            boxShadow: '0 0 0 1px rgb(0 0 0 / 0.06), 0 4px 12px rgb(0 0 0 / 0.08), 0 16px 48px rgb(0 0 0 / 0.12)',
+            borderRadius: expanded ? 'var(--radius-xl)' : 28,
           }}
         >
           <motion.div
@@ -92,7 +95,7 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
               aria-label={`${t(`${prefix}floating.${expanded ? 'collapse' : 'expand'}`)} — ${statusText}${running ? ` ${percent}%` : ''}`}
               aria-expanded={expanded}
               aria-controls={expanded ? panelId : undefined}
-              className={`relative flex shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent text-violet-600 hover:bg-violet-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-violet-600 rounded-full ${expanded ? 'size-12' : 'size-14'}`}
+              className={`relative flex shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent text-accent-strong hover:bg-accent-subtle focus-visible:outline-offset-[-4px] rounded-full ${expanded ? 'size-12' : 'size-14'}`}
               whileTap={reducedMotion ? undefined : { scale: 0.96 }}
             >
               <svg
@@ -101,7 +104,11 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
                 viewBox="0 0 36 36"
                 aria-hidden="true"
                 className={
-                  progress.status === 'error' ? 'text-red-500' : progress.status === 'success' ? 'text-green-600' : ''
+                  progress.status === 'error'
+                    ? 'text-danger'
+                    : progress.status === 'success'
+                      ? 'text-status-positive'
+                      : ''
                 }
               >
                 <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" strokeWidth="3" opacity="0.14" />
@@ -122,10 +129,10 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
                 />
               </svg>
               {progress.status === 'success' && (
-                <IconMdiCheck aria-hidden="true" className="absolute size-4 text-green-600" />
+                <IconMdiCheck aria-hidden="true" className="absolute size-4 text-status-positive" />
               )}
               {progress.status === 'error' && (
-                <IconMdiExclamation aria-hidden="true" className="absolute size-4 text-red-500" />
+                <IconMdiExclamation aria-hidden="true" className="absolute size-4 text-danger" />
               )}
             </motion.button>
           </motion.div>
@@ -146,18 +153,18 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
                 {running ? (
                   <div className="pb-4">
                     <div className="flex items-center justify-between gap-3 pb-3">
-                      <output className="text-sm text-zinc-500">
+                      <output className="text-sm text-secondary">
                         {t(`${prefix}floating.stage.${progress.stage.replaceAll(':', '-')}`)}
                       </output>
                       <span className="shrink-0 text-xl leading-6 font-bold tabular-nums">
                         {percent}
-                        <span className="text-sm text-zinc-400">%</span>
+                        <span className="text-sm text-secondary">%</span>
                       </span>
                     </div>
                     <progress aria-label={statusText} value={percent} max={100} className="sr-only" />
-                    <div aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-violet-100">
+                    <div aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-accent-subtle">
                       <motion.div
-                        className="h-full origin-left rounded-full bg-violet-500"
+                        className="h-full origin-left rounded-full bg-accent-strong"
                         initial={false}
                         animate={{ scaleX: percent / 100 }}
                         transition={{ duration: reducedMotion ? 0 : 0.3 }}
