@@ -23,6 +23,13 @@ interface LoginFormValues {
 
 type AuthProvider = 'google' | 'github' | 'passkey' | 'email'
 
+/** Id of the form's heading, stable across sign-in and sign-up, so a dialog around the form can take it as its name */
+export const loginFormTitleId = (idPrefix: string) => `${idPrefix}-auth-form-title`
+
+const LAST_USED_CHIP_CLASS = '!h-5 !text-xs !font-semibold'
+// On the filled (last used) button, the chip inverts so it doesn't vanish into the same accent fill
+const LAST_USED_BUTTON_CHIP_CLASS = `${LAST_USED_CHIP_CLASS} !bg-surface/90 !text-accent-strong`
+
 export const LoginForm = ({
   idPrefix = 'auth',
   onPendingChange,
@@ -38,7 +45,8 @@ export const LoginForm = ({
     handleSubmit: handleFormSubmit,
     formState: { errors, isValid },
   } = useForm<LoginFormValues>({
-    mode: 'onChange',
+    // Errors appear once a field is left or the form is submitted, not on the first keystroke
+    mode: 'onTouched',
     defaultValues: { email: '', password: '' },
   })
   const haptic = useWebHaptics()
@@ -70,9 +78,14 @@ export const LoginForm = ({
   const captchaHeaders = turnstileToken ? { 'x-captcha-response': turnstileToken } : undefined
   const waitingForTurnstile = !!TURNSTILE_SITE_KEY && !turnstileToken
   const buttonLoading = loading || (isValid && waitingForTurnstile)
-  const buttonDisabled = loading || !isValid || waitingForTurnstile
+  // Submit stays available so validation can run and focus the first invalid field; only a running request blocks it
+  const buttonDisabled = loading
 
   const onSubmit = async (data: LoginFormValues) => {
+    if (waitingForTurnstile) {
+      setError(t('auth:form.captcha-pending'))
+      return
+    }
     setActiveProvider('email')
     setError(null)
     try {
@@ -144,7 +157,7 @@ export const LoginForm = ({
     setTurnstileToken(null)
   }
 
-  const formTitleId = `${idPrefix}-${isSignUp ? 'sign-up' : 'sign-in'}-form-title`
+  const formTitleId = loginFormTitleId(idPrefix)
   const emailId = `${idPrefix}-${isSignUp ? 'sign-up' : 'sign-in'}-email`
   const passwordId = `${idPrefix}-${isSignUp ? 'sign-up' : 'sign-in'}-password`
 
@@ -157,18 +170,20 @@ export const LoginForm = ({
         noValidate
       >
         <div className="text-center mb-1">
-          <h2 id={formTitleId} className="text-xl font-bold m-0">
+          <h2 id={formTitleId} className="text-xl font-semibold leading-tight text-fg-1 m-0">
             {isSignUp ? t('auth:sign-up.title') : t('auth:form.title')}
           </h2>
-          <div className="text-sm text-zinc-500 mt-1">{t('auth:form.subtitle')}</div>
+          <p className="text-sm text-fg-2 mt-1 mb-0 text-pretty">
+            {isSignUp ? t('auth:sign-up.subtitle') : t('auth:form.subtitle')}
+          </p>
         </div>
 
-        <p className="m-0 text-center text-xs leading-relaxed text-zinc-500">
+        <p className="m-0 text-center text-xs leading-relaxed text-fg-2 text-pretty">
           <Trans
             t={t}
             i18nKey="auth:terms.notice"
             components={{
-              terms: <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="underline" />,
+              terms: <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="link" />,
             }}
           />
         </p>
@@ -189,12 +204,17 @@ export const LoginForm = ({
             }
             endIcon={
               isLastUsed('github') ? (
-                <Chip label={t('auth:form.last-used')} size="small" color="primary" className="!h-5 !text-[0.65rem]" />
+                <Chip
+                  label={t('auth:form.last-used')}
+                  size="small"
+                  color="primary"
+                  className={LAST_USED_BUTTON_CHIP_CLASS}
+                />
               ) : undefined
             }
             onClick={() => handleSocial('github')}
             disabled={loading}
-            className="!py-2.5 !text-sm !normal-case"
+            className="!py-2.5 !text-sm"
             fullWidth
           >
             {t('auth:form.continue-with-github')}
@@ -207,12 +227,17 @@ export const LoginForm = ({
             }
             endIcon={
               isLastUsed('google') ? (
-                <Chip label={t('auth:form.last-used')} size="small" color="primary" className="!h-5 !text-[0.65rem]" />
+                <Chip
+                  label={t('auth:form.last-used')}
+                  size="small"
+                  color="primary"
+                  className={LAST_USED_BUTTON_CHIP_CLASS}
+                />
               ) : undefined
             }
             onClick={() => handleSocial('google')}
             disabled={loading}
-            className="!py-2.5 !text-sm !normal-case"
+            className="!py-2.5 !text-sm"
             fullWidth
           >
             {t('auth:form.continue-with-google')}
@@ -230,13 +255,13 @@ export const LoginForm = ({
                     label={t('auth:form.last-used')}
                     size="small"
                     color="primary"
-                    className="!h-5 !text-[0.65rem]"
+                    className={LAST_USED_BUTTON_CHIP_CLASS}
                   />
                 ) : undefined
               }
               onClick={handlePasskey}
               disabled={loading}
-              className="!py-2.5 !text-sm !normal-case"
+              className="!py-2.5 !text-sm"
               fullWidth
             >
               {t('auth:form.sign-in-with-passkey')}
@@ -246,9 +271,9 @@ export const LoginForm = ({
 
         <Divider className="!my-1">
           {isLastUsed('email') ? (
-            <Chip label={t('auth:form.last-used')} size="small" color="primary" className="!h-5 !text-[0.65rem]" />
+            <Chip label={t('auth:form.last-used')} size="small" color="primary" className={LAST_USED_CHIP_CLASS} />
           ) : (
-            <span className="text-xs text-zinc-400">{t('auth:form.or')}</span>
+            <span className="text-xs text-fg-2">{t('auth:form.or')}</span>
           )}
         </Divider>
 
@@ -315,9 +340,16 @@ export const LoginForm = ({
           />
         )}
 
-        <Button type="submit" variant="contained" disabled={buttonDisabled} className="!py-2.5" fullWidth>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={buttonDisabled}
+          aria-busy={buttonLoading || undefined}
+          className="!py-2.5"
+          fullWidth
+        >
           {buttonLoading ? (
-            <CircularProgress size={20} />
+            <CircularProgress size={20} color="inherit" aria-label={t('auth:form.pending')} />
           ) : isSignUp ? (
             t('auth:sign-up.label')
           ) : (
@@ -331,7 +363,7 @@ export const LoginForm = ({
         variant="text"
         onClick={toggleView}
         disabled={loading}
-        className="!mt-2 !text-sm !normal-case"
+        className="!mt-2 !text-sm"
         fullWidth
         size="small"
       >

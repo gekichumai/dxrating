@@ -50,10 +50,10 @@ describe('regional version updates', () => {
     saveSelection('circle-plus', 'jp')
     mount()
     expect(screen.getByRole('status', { hidden: true }).textContent).toBe('circle-plus:jp')
-    expect(screen.getByRole('dialog').textContent).toContain('Japan now has MAGiCAL')
+    expect(screen.getByRole('region').textContent).toContain('Japan now has MAGiCAL')
     expect(JSON.parse(storage.get('app-context')!).version).toBe('circle-plus')
     fireEvent.click(screen.getByRole('button', { name: 'Use MAGiCAL' }))
-    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByRole('region')).toBeNull()
     expect(screen.getByRole('status', { hidden: true }).textContent).toBe('magical:jp')
     expect(JSON.parse(storage.get('app-context')!)).toEqual({ version: 'magical', region: 'jp' })
   })
@@ -66,11 +66,25 @@ describe('regional version updates', () => {
     expect(screen.getByRole('combobox').textContent).toContain('International')
     view.unmount()
     mount()
-    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByRole('region')).toBeNull()
     expect(screen.getByRole('status', { hidden: true }).textContent).toBe('circle:intl')
     fireEvent.mouseDown(screen.getByRole('combobox'))
     expect(screen.getByRole('option', { name: 'CiRCLE · International' })).toBeTruthy()
     expect(screen.getByRole('option', { name: /CiRCLE PLUS.*International/ })).toBeTruthy()
+  })
+
+  it('is not modal: Escape leaves it open, and closing it only hides it for this visit', () => {
+    saveSelection('circle-plus', 'jp')
+    const view = mount()
+    const prompt = screen.getByRole('region', { name: 'A newer version is available' })
+    fireEvent.keyDown(prompt, { key: 'Escape' })
+    expect(screen.getByRole('region')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Not now' }))
+    expect(screen.queryByRole('region')).toBeNull()
+    expect(storage.has('region-version-update-dismissed:jp:magical')).toBe(false)
+    view.unmount()
+    mount()
+    expect(screen.getByRole('region')).toBeTruthy()
   })
 
   it('asks for a new release even when an earlier release was declined', () => {
@@ -89,13 +103,13 @@ describe('regional version updates', () => {
   ] as const)('does not prompt for %s in %s', (version, region) => {
     saveSelection(version, region)
     mount()
-    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByRole('region')).toBeNull()
     expect(screen.getByRole('status', { hidden: true }).textContent).toBe(`${version}:${region}`)
   })
 
   it('does not prompt new visitors', () => {
     mount()
-    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByRole('region')).toBeNull()
   })
 
   it('allows declining and accepting when storage writes fail', () => {
@@ -105,7 +119,7 @@ describe('regional version updates', () => {
     }
     const view = mount()
     fireEvent.click(screen.getByRole('button', { name: 'Keep CiRCLE PLUS' }))
-    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByRole('region')).toBeNull()
     view.unmount()
     mount()
     fireEvent.click(screen.getByRole('button', { name: 'Use MAGiCAL' }))

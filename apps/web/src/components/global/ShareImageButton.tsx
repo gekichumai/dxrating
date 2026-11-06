@@ -46,8 +46,15 @@ export const ShareImageButton: FC<ShareImageButtonProps> = ({
   return (
     <Button
       variant="outlined"
-      startIcon={busy ? <CircularProgress size="1rem" color="inherit" /> : <MdiShareVariant />}
+      startIcon={
+        busy ? (
+          <CircularProgress size="1rem" color="inherit" aria-hidden="true" />
+        ) : (
+          <MdiShareVariant aria-hidden="true" />
+        )
+      }
       disabled={disabled || busy}
+      aria-busy={busy || undefined}
       onClick={() => void handleClick()}
       {...buttonProps}
     >
