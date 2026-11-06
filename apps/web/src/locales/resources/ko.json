@@ -472,9 +472,14 @@
     "terms.heading6": "서비스 이용 종료",
     "terms.heading7": "서비스 제공 및 변경",
     "legal.back": "뒤로",
+    "legal.toc": "목차",
     "account-security.title": "계정 보안",
     "account-security.sign-in-description": "로그인하면 비밀번호, 패스키, 로그인된 기기를 관리할 수 있습니다.",
     "account-security.loading": "계정을 불러오는 중",
+    "account-security.feature-password": "비밀번호 변경",
+    "account-security.feature-passkeys": "패스키를 추가해 비밀번호 없이 로그인",
+    "account-security.feature-devices": "로그인된 기기를 확인하고 다른 기기에서 로그아웃",
+    "account-security.features-label": "이 페이지에서 할 수 있는 일",
     "privacy.title": "개인정보 처리방침",
     "privacy.updated": "최종 업데이트: 2026년 10월 30일",
     "privacy.intro.heading": "소개",
@@ -535,6 +540,8 @@
     "table.headers.included-in": "포함 대상",
     "table.headers.combo": "콤보",
     "table.headers.sync": "싱크",
+    "table.headers.internal-level": "상수",
+    "table.headers.dx-score": "DX 스코어",
     "table.headers.achievement-rate": "달성률",
     "table.headers.rating": "Rating",
     "table.headers.actions": "작업",
@@ -809,7 +816,11 @@
     "index.level-count-single": "채보 {{count}}개 · {{value}}",
     "breadcrumb": "상수표",
     "breadcrumb-label": "이동 경로",
-    "chart-link": "Lv.{{level}} 상수표"
+    "chart-link": "Lv.{{level}} 상수표",
+    "view.label": "보기",
+    "view.grid": "재킷",
+    "view.table": "표",
+    "jump-label": "상수로 이동"
   },
   "rating-explainer": {
     "title": "maimai DX 레이팅 계산 방법",
@@ -860,8 +871,15 @@
   },
   "share": {
     "image.button": "이미지로 공유",
-    "image.downloaded": "이미지를 저장했습니다",
-    "image.failed": "이미지를 만들 수 없습니다. 다시 시도하세요."
+    "image.failed": "이미지를 만들 수 없습니다. 다시 시도하세요.",
+    "image.viewer-title": "공유 이미지",
+    "image.hint": "휴대폰에서는 이미지를 길게 눌러 저장하거나 복사할 수 있습니다. 컴퓨터에서는 마우스 오른쪽 버튼을 누르거나 위 버튼을 사용하세요.",
+    "image.download": "이미지 저장",
+    "image.copy": "이미지 복사",
+    "image.share": "공유…",
+    "image.copied": "이미지를 복사했습니다",
+    "image.copy-failed": "이미지를 복사하지 못했습니다. 저장해 주세요.",
+    "image.share-failed": "공유 시트를 열지 못했습니다. 이미지를 저장해 주세요."
   },
   "plates": {
     "breadcrumb": "플레이트",
@@ -912,7 +930,13 @@
     "condition-short.hasha": "A 랭크 클리어",
     "other-plates": "다른 플레이트",
     "share.title": "{{plate}} 진행도",
-    "share.remaining": "아직 남은 채보"
+    "share.alt": "{{plate}} 달성 현황: 남은 채보",
+    "share.subtitle": "{{versions}} · 조건 {{condition}}",
+    "share.remaining-count": "남은 채보 {{count}}개",
+    "share.order": "달성에 가까운 순",
+    "share.unplayed": "미플레이",
+    "share.more": "외 {{count}}곡",
+    "share.all-done": "모든 채보를 달성했습니다!"
   },
   "toplists": {
     "title": "최고 기록",
@@ -942,6 +966,13 @@
     "empty.dx_score": "저장된 점수에 DX 스코어가 없습니다. maimai DX NET, LXNS 또는 Diving-Fish에서 다시 가져오면 추가됩니다.",
     "empty.import": "점수 가져오기",
     "rating-value": "레이팅 {{rating}}",
+    "columns.song": "곡",
+    "columns.chart": "보면",
+    "columns.achievement": "달성률",
+    "columns.rank": "랭크",
+    "columns.lamps": "콤보 · 싱크",
+    "columns.dx_score": "DX 스코어",
+    "columns.rating": "레이팅",
     "loading": "점수를 불러오는 중…",
     "entry-link": "최고 기록"
   },
@@ -989,7 +1020,11 @@
     "rating.reverse.result": "필요한 달성률",
     "rating.reverse.unreachable": "도달 불가",
     "rating.table.title": "레이팅 표",
-    "rating.table.description": "선택한 상수와 인접 상수의 랭크별 레이팅입니다."
+    "rating.table.description": "선택한 상수와 인접 상수의 랭크별 레이팅입니다.",
+    "tolerance.search-another": "다른 채보 선택",
+    "tolerance.open-page": "별도 페이지로 열기",
+    "tolerance.sheet-seo-title": "{{title}} {{sheetLabel}} 허용 미스 계산",
+    "tolerance.sheet-seo-description": "{{title}} {{sheetLabel}}에서 SSS+ 등 목표 달성률을 넘기기 위해 GREAT·GOOD·MISS를 노트 종류별로 몇 개까지 낼 수 있는지 계산합니다. BREAK 50 / 100 감점 환산 포함."
   },
   "recommend": {
     "title": "레이팅 추천",
