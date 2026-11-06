@@ -518,6 +518,9 @@ importers:
       esno:
         specifier: 'catalog:'
         version: 4.8.0
+      fake-indexeddb:
+        specifier: ^6.2.6
+        version: 6.2.6
       i18next-pseudo:
         specifier: ^2.2.1
         version: 2.2.1
@@ -5340,6 +5343,10 @@ packages:
 
   exsolve@1.1.0:
     resolution: {integrity: sha512-D+42+T12DdIlJM3uepa55qGiL3sYdLBOxIl2ifQCzCHz4c7eiolaHsi3BIqEr7JxBzxv2pYZQX9kw16ziMcEmw==}
+
+  fake-indexeddb@6.2.6:
+    resolution: {integrity: sha512-ihhmr0KoET51jT8R4YhbUYuLLvr1qqO6INISygtN16i8loR8kAxtAUr4+EKHTSMjL+lggaAn4OC7DRqzrNgnuQ==}
+    engines: {node: '>=18'}
 
   fast-check@3.23.2:
     resolution: {integrity: sha512-h5+1OzzfCC3Ef7VbtKdcv7zsstUQwUDlYpUTvjeUsJAssPgLn7QzbboPtL5ro04Mq0rPOsMzl7q5hIbRs2wD1A==}
@@ -11930,6 +11937,8 @@ snapshots:
   exsolve@1.0.8: {}
 
   exsolve@1.1.0: {}
+
+  fake-indexeddb@6.2.6: {}
 
   fast-check@3.23.2:
     dependencies:

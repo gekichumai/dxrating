@@ -788,6 +788,7 @@
     "io.clear.dialog.message": "這將從此瀏覽器永久刪除所有記錄。如需備份，請先匯出。",
     "io.clear.dialog.cancel": "取消",
     "io.clear.dialog.confirm": "清空所有記錄",
+    "cloud-save.save-missing": "找不到你的雲端存檔，本裝置將使用本機存檔。",
     "quick-actions.ap50": "AP50（僅 AP / AP+）",
     "quick-actions.ap50-hint": "AP50 檢視：只用 AP 與 AP+ 成績計算 B50。"
   },

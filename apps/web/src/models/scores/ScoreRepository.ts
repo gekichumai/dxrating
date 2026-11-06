@@ -60,9 +60,31 @@ export interface ImportProgress {
   progress: number
 }
 
+/**
+ * A change the server did not take (cloud saves, design §5.4). The user's intent is kept so it can be applied again
+ * on purpose, over the record the server kept.
+ */
 export interface SyncIssue {
+  /** The ID of the mutation that carried the intent */
+  id: string
+  /** The save the intent was made on: an issue is shown and applied again only there (§5.4, §8.1) */
+  saveId: string
   sheetId: string
+  /**
+   * `superseded`: the server kept a newer verified record, returned with the result. `rejected`: the server refused
+   * the value (`reason` says why).
+   */
+  kind: 'superseded' | 'rejected'
   reason: string
+  intent: {
+    op: 'set' | 'delete'
+    value?: { achievement: number; comboFlag: ComboFlag | null; syncFlag: SyncFlag | null; dxScore?: number | null }
+    entryMethod: ManualEntryMethod
+    /** Device clock, when the user made the change (it may have been sent much later) */
+    clientEditedAt?: string
+  }
+  /** Device clock, when the issue was recorded */
+  createdAt: string
 }
 
 export interface ScoreRepositoryStatus {

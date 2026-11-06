@@ -788,6 +788,7 @@
     "io.clear.dialog.message": "このブラウザから全ての記録が完全に削除されます。バックアップが必要な場合は、先にエクスポートしてください。",
     "io.clear.dialog.cancel": "キャンセル",
     "io.clear.dialog.confirm": "全ての記録をクリア",
+    "cloud-save.save-missing": "クラウドセーブが見つからないため、この端末のローカルセーブを使用しています。",
     "quick-actions.ap50": "AP50（AP / AP+ のみ）",
     "quick-actions.ap50-hint": "AP50 表示：AP・AP+ の記録だけでベスト枠を計算しています。"
   },

@@ -24,6 +24,6 @@ export default defineConfig({
     environment: 'happy-dom',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     globals: true,
-    setupFiles: ['src/test-utils/setup-catalog.ts'],
+    setupFiles: ['src/test-utils/setup-catalog.ts', 'src/test-utils/setup-auth.ts'],
   },
 })

@@ -788,6 +788,7 @@
     "io.clear.dialog.message": "这将从此浏览器永久删除所有记录。如需备份，请先导出。",
     "io.clear.dialog.cancel": "取消",
     "io.clear.dialog.confirm": "清空所有记录",
+    "cloud-save.save-missing": "找不到你的云存档，本设备将使用本地存档。",
     "quick-actions.ap50": "AP50（仅 AP / AP+）",
     "quick-actions.ap50-hint": "AP50 视图：仅用 AP 和 AP+ 成绩计算 B50。"
   },

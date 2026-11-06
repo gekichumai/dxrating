@@ -788,6 +788,7 @@
     "io.clear.dialog.message": "이 브라우저에서 모든 기록이 영구적으로 삭제됩니다. 백업이 필요하면 먼저 내보내세요.",
     "io.clear.dialog.cancel": "취소",
     "io.clear.dialog.confirm": "모든 기록 지우기",
+    "cloud-save.save-missing": "클라우드 저장 데이터를 찾을 수 없어 이 기기의 로컬 저장 데이터를 사용합니다.",
     "quick-actions.ap50": "AP50 (AP / AP+만)",
     "quick-actions.ap50-hint": "AP50 보기: AP와 AP+ 기록만으로 B50을 계산합니다."
   },
