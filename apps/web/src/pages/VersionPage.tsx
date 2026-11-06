@@ -14,8 +14,8 @@ import {
   difficultyTextStyle,
 } from '@/components/completion/TableChrome'
 import { VersionLogo } from '@/components/version/VersionLogo'
-import { VersionEraPager, VersionPairGrid } from '@/components/version/VersionPairList'
-import { pairVersionsByEra, versionEraOf } from '@/components/version/versionEras'
+import { VersionEraSections, VersionPairGrid } from '@/components/version/VersionPairList'
+import { pairVersionsByEra } from '@/components/version/versionEras'
 import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
@@ -30,11 +30,9 @@ const tileClassName = (current: boolean) =>
 
 /** The other versions, compact: logo and name in rows of base | PLUS, on the page of the current version's era */
 const VersionNav: FC<{ current: VersionEnum; labelledBy: string }> = ({ current, labelledBy }) => {
-  const { t } = useTranslation(['versions'])
-
   return (
     <nav aria-labelledby={labelledBy}>
-      <VersionEraPager label={t('versions:era.label')} defaultEra={versionEraOf(current)}>
+      <VersionEraSections idPrefix="other-versions-era" headingLevel="h3" className="gap-4">
         {(era) => (
           <VersionPairGrid
             className="gap-x-4 sm:grid-cols-2 lg:grid-cols-4"
@@ -52,7 +50,7 @@ const VersionNav: FC<{ current: VersionEnum; labelledBy: string }> = ({ current,
             )}
           />
         )}
-      </VersionEraPager>
+      </VersionEraSections>
     </nav>
   )
 }
@@ -157,7 +155,7 @@ export const VersionIndexPage: FC<{ versions: VersionSummary[] }> = ({ versions 
           <h1 className="page-title m-0 [word-break:auto-phrase]">{t('versions:index.title')}</h1>
           <p className="page-description m-0">{t('versions:index.intro')}</p>
         </header>
-        <VersionEraPager label={t('versions:era.label')}>
+        <VersionEraSections idPrefix="era" jumpNav>
           {(era) => (
             <VersionPairGrid
               className="gap-y-3 lg:grid-cols-2 lg:gap-x-6"
@@ -182,7 +180,7 @@ export const VersionIndexPage: FC<{ versions: VersionSummary[] }> = ({ versions 
               }}
             />
           )}
-        </VersionEraPager>
+        </VersionEraSections>
       </div>
     </div>
   )
