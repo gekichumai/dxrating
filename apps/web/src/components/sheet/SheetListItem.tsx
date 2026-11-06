@@ -27,6 +27,7 @@ import { AddSheetAltNameButton } from './AddSheetAltNameButton'
 import { SheetAltNames } from './SheetAltNames'
 import { SheetDialogContent, type SheetDialogContentProps } from './SheetDialogContent'
 import { buildSheetPath } from './sheetLinks'
+import { SHEET_TABLE_ROW_COLUMNS, SheetRowLayoutContext, useSheetRowLayout } from './sheetRowLayout'
 import { getSheetTypeAltTextKey, SHEET_TYPE_IMAGES, SHEET_TYPE_UTAGE_2P_END_ADORNMENT_IMAGE } from './sheetTypeAssets'
 
 export interface SheetListItemAnalyticsProps {
@@ -39,6 +40,10 @@ export interface SheetListItemAnalyticsProps {
 export const SheetListItem: FC<{
   size?: 'small' | 'medium'
   className?: string
+  /** The row's horizontal padding; it overrides MUI's own, so each class needs `!` */
+  insetClassName?: string
+  /** Shown before the row's content, such as a rank number */
+  startAdornment?: ReactNode
   children?: ReactNode
   sheet: FlattenedSheet
   dialogOpen?: boolean
@@ -51,6 +56,8 @@ export const SheetListItem: FC<{
   ({
     size = 'medium',
     className,
+    insetClassName = '!px-4',
+    startAdornment,
     children,
     sheet,
     dialogOpen,
@@ -60,6 +67,7 @@ export const SheetListItem: FC<{
     analytics,
   }) => {
     const haptic = useWebHaptics()
+    const isTable = useSheetRowLayout() === 'table'
     const [internalOpen, setInternalOpen] = useState(false)
 
     const isControlled = dialogOpen !== undefined
@@ -69,9 +77,12 @@ export const SheetListItem: FC<{
     return (
       <>
         {!isControlled && (
-          <ResponsiveDialog open={open} setOpen={setOpen} hideCloseButton>
-            {() => <SheetDialogContent sheet={sheet} onClose={() => setOpen(false)} {...SheetDialogContentProps} />}
-          </ResponsiveDialog>
+          // The dialog is a narrow surface: its rows stay stacked even when this list lays its rows out as a table
+          <SheetRowLayoutContext.Provider value="stacked">
+            <ResponsiveDialog open={open} setOpen={setOpen} hideCloseButton>
+              {() => <SheetDialogContent sheet={sheet} onClose={() => setOpen(false)} {...SheetDialogContentProps} />}
+            </ResponsiveDialog>
+          </SheetRowLayoutContext.Provider>
         )}
 
         <ListItemButton
@@ -95,11 +106,14 @@ export const SheetListItem: FC<{
               is_rating_eligible: sheet.isRatingEligible,
             })
           }}
-          // Horizontal padding is fixed by !px-4 at every width. Gutters must not depend on the viewport (a window-width
-          // hook renders "mobile" on the server and changed the class during hydration on wide screens), so the
-          // secondary action's offset that disableGutters used to set (0 on phones, 16px from md) is CSS instead
+          // Horizontal padding comes from CSS classes (!px-4 unless the list passes its own inset). Gutters must not depend
+          // on the viewport in JS (a window-width hook renders "mobile" on the server and changed the class during
+          // hydration on wide screens), so the secondary action's offset that disableGutters used to set (0 on phones,
+          // 16px from md) is CSS instead. A table row sets its own 56px height, so it drops MUI's vertical padding
           className={clsx(
-            'w-full cursor-pointer transition-colors duration-150 hover:duration-25 !px-4 no-underline text-inherit',
+            'w-full cursor-pointer transition-colors duration-150 hover:duration-25 no-underline text-inherit',
+            insetClassName,
+            isTable && 'lg:!py-0',
             '[&_.MuiListItemSecondaryAction-root]:right-0 md:[&_.MuiListItemSecondaryAction-root]:right-4',
             open && '!bg-accent-subtle',
             className,
@@ -107,6 +121,7 @@ export const SheetListItem: FC<{
           // --radius-md rows inside a list surface with a 4px inset: 8 + 4 = the surface's 12
           sx={{ borderRadius: 'var(--radius-md)' }}
         >
+          {startAdornment}
           {children ?? <SheetListItemContent sheet={sheet} size={size} {...SheetListItemContentProps} />}
         </ListItemButton>
       </>
@@ -151,16 +166,41 @@ export const SheetListItemContentView: FC<SheetListItemContentViewProps> = memo(
     ListItemTextProps,
     ...rest
   }) => {
-    return (
-      <div className={clsx('flex items-center w-full p-1 gap-2 tabular-nums relative', className)} {...rest}>
-        {enableSheetImage && imageName && imageAlt && <SheetImage name={imageName} size={size} alt={imageAlt} />}
+    const isTable = useSheetRowLayout() === 'table'
 
-        <ListItemText {...ListItemTextProps} className={clsx('ml-2 min-w-0', ListItemTextProps?.className)}>
+    return (
+      <div
+        className={clsx(
+          'flex items-center w-full p-1 gap-2 tabular-nums relative',
+          // From lg a table row is one 56px line of columns. ListItemText and the summary dissolve (display: contents),
+          // so the title, artist, version and badges become the grid's cells
+          isTable && [SHEET_TABLE_ROW_COLUMNS, 'lg:h-14 lg:py-0'],
+          className,
+        )}
+        {...rest}
+      >
+        {enableSheetImage && imageName && imageAlt && (
+          <SheetImage
+            name={imageName}
+            size={size}
+            alt={imageAlt}
+            className={clsx(isTable && 'lg:!h-10 lg:!w-10 lg:!min-h-10 lg:!min-w-10')}
+          />
+        )}
+
+        <ListItemText
+          {...ListItemTextProps}
+          className={clsx(
+            'ml-2 min-w-0',
+            isTable && 'lg:contents lg:[&>.MuiListItemText-primary]:contents',
+            ListItemTextProps?.className,
+          )}
+        >
           {children}
         </ListItemText>
 
         {/* A flex child rather than an absolutely positioned action, so long titles and badges can never run under it */}
-        <div className="ml-auto shrink-0 pl-2">
+        <div className={clsx('ml-auto shrink-0 pl-2', isTable && 'lg:order-5 lg:ml-0 lg:pl-0 lg:justify-self-end')}>
           {isTypeUtage ? (
             <span className="font-semibold tabular-nums text-lg text-fg-2">{level}</span>
           ) : (
@@ -176,6 +216,7 @@ SheetListItemContentView.displayName = 'SheetListItemContentView'
 export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
   ({ sheet, size = 'medium', className, enableSheetImage = true, SheetTitleProps, ListItemTextProps, ...rest }) => {
     const { t } = useTranslation(['sheet'])
+    const isTable = useSheetRowLayout() === 'table'
 
     return (
       <SheetListItemContentView
@@ -190,11 +231,27 @@ export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
         ListItemTextProps={ListItemTextProps}
         {...rest}
       >
-        <SheetTitle
-          {...SheetTitleProps}
-          sheet={sheet}
-          className={clsx('font-semibold', size === 'small' ? 'text-sm' : 'text-lg', SheetTitleProps?.className)}
-        />
+        {isTable ? (
+          // The same lines as SheetTitle below lg; the artist only joins in, as its own column, from lg
+          <SheetListItemSummary
+            title={sheet.title}
+            type={sheet.type}
+            difficulty={sheet.difficulty}
+            version={sheet.version}
+            serverIds={sheet.serverIds}
+            isLocked={sheet.isLocked}
+            artist={sheet.artist}
+            artistProps={{ className: 'hidden lg:block' }}
+            metadata={sheet.isTypeUtage ? <SheetUtageComment comment={sheet.comment} truncateOnTable /> : undefined}
+            titleProps={{ className: clsx(size === 'small' && '!text-sm') }}
+          />
+        ) : (
+          <SheetTitle
+            {...SheetTitleProps}
+            sheet={sheet}
+            className={clsx('font-semibold', size === 'small' ? 'text-sm' : 'text-lg', SheetTitleProps?.className)}
+          />
+        )}
       </SheetListItemContentView>
     )
   },
@@ -224,7 +281,7 @@ export const SheetDifficulty: FC<{
   // The `solid` role carries white text at 4.5:1 or more; the brand colour itself only passes for MASTER
   return difficultyConfig ? (
     <span
-      className="rounded-[var(--radius-sm)] px-2 text-sm font-semibold shadow-[0_1px_0_0_rgb(0_0_0/0.15)] leading-relaxed translate-y-[-0.125rem] text-white inline-flex items-center"
+      className="rounded-[var(--radius-sm)] px-2 text-sm font-semibold shadow-[0_1px_0_0_rgb(0_0_0/0.15)] leading-relaxed text-white inline-flex items-center"
       style={{ backgroundColor: difficultyConfig.solid }}
     >
       {allUnavailable && (
@@ -297,6 +354,31 @@ const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({ type, d
   )
 }
 
+/** A Utage chart's comment. In a table row it stays on one line (full text on hover) so the row keeps its height */
+const SheetUtageComment: FC<{ comment?: string; truncateOnTable?: boolean }> = ({ comment, truncateOnTable }) => (
+  <span
+    className={clsx(
+      'text-sm text-zinc-600 dark:text-[#3f3f46] px-1.5 py-0.5 gap-1 bg-amber/75 inline-flex self-start rounded-md',
+      truncateOnTable && 'lg:max-w-full',
+    )}
+    title={truncateOnTable ? comment : undefined}
+  >
+    <MdiComment aria-hidden="true" className="h-3 w-3 flex-shrink-0 mt-1.125" />
+    <span className={clsx(truncateOnTable && 'lg:truncate lg:min-w-0')}>{comment}</span>
+  </span>
+)
+
+/*
+ * The title line of a sheet. On phones the badges sit under the title. From md they follow it on the same line, and
+ * the title's line box matches the badges' 26px height, so the title's first line, the type image and the difficulty
+ * pill share one centre. A title too long to leave them room pushes the whole badge row onto the next line,
+ * left-aligned under it, instead of squeezing the badges into a stack at the far right.
+ */
+const SHEET_HEADING_CLASS = 'flex flex-col md:flex-row md:flex-wrap md:items-start gap-x-2 gap-y-1'
+const SHEET_TITLE_TEXT_CLASS =
+  'leading-tight md:leading-[26px] [text-wrap:pretty] [word-break:auto-phrase] [overflow-wrap:anywhere]'
+const SHEET_BADGES_CLASS = 'flex flex-wrap md:flex-nowrap md:shrink-0 items-center gap-x-2 gap-y-1 min-w-0'
+
 export interface SheetListItemSummaryProps {
   title: string
   type: TypeEnum
@@ -329,45 +411,61 @@ export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
     artistProps,
     className,
   }) => {
+    const isTable = useSheetRowLayout() === 'table'
+
     return (
-      <div className={clsx('flex flex-col', className)}>
+      <div className={clsx('flex flex-col', isTable && 'lg:contents', className)}>
         <TitleElement
           {...titleProps}
           className={clsx(
-            'flex flex-col md:flex-row md:items-start gap-x-2 gap-y-1 font-semibold text-lg',
+            SHEET_HEADING_CLASS,
+            'font-semibold text-lg',
+            // In a table row the heading dissolves, so its title and its badges become separate cells
+            isTable && 'lg:contents',
             titleProps?.className,
           )}
         >
           <span className="flex flex-col min-w-0">
             <span
               {...titleTextProps}
+              // A table row clamps the title to two lines, so the full title shows on hover
+              title={isTable ? title : titleTextProps?.title}
               className={clsx(
-                'leading-tight [text-wrap:pretty] [word-break:auto-phrase] [overflow-wrap:anywhere]',
+                SHEET_TITLE_TEXT_CLASS,
+                isTable && 'lg:line-clamp-2 lg:text-base lg:!leading-tight',
                 titleTextProps?.className,
               )}
             >
               {title}
             </span>
           </span>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+          <div className={clsx(SHEET_BADGES_CLASS, isTable && 'lg:order-4')}>
             <SheetType type={type} difficulty={difficulty} />
             <SheetDifficulty difficulty={difficulty} serverIds={serverIds} isLocked={isLocked} />
           </div>
         </TitleElement>
 
         {artist && (
-          <p {...artistProps} className={clsx('text-sm text-fg-2 truncate', artistProps?.className)}>
+          <p
+            {...artistProps}
+            className={clsx('text-sm text-fg-2 truncate', isTable && 'lg:order-2 lg:m-0', artistProps?.className)}
+          >
             {artist}
           </p>
         )}
 
-        {version && (
-          <div className="text-sm">
-            <span className="text-fg-2">ver. {version}</span>
+        {(version || metadata) && (
+          // One cell for the version and any extra lines, so a table row keeps a single column for them
+          <div className={clsx('flex flex-col min-w-0', isTable && 'lg:order-3')}>
+            {version && (
+              <div className={clsx('text-sm', isTable && 'lg:truncate')}>
+                <span className="text-fg-2">ver. {version}</span>
+              </div>
+            )}
+
+            {metadata}
           </div>
         )}
-
-        {metadata}
       </div>
     )
   },
@@ -381,7 +479,7 @@ export const SheetImage: FC<
     alt: string
   }
 > = memo(
-  ({ name, size = 'medium', alt, ...props }) => {
+  ({ name, size = 'medium', alt, className, ...props }) => {
     return (
       <FadedImage
         key={name}
@@ -393,6 +491,7 @@ export const SheetImage: FC<
             .with('medium', () => 'h-12 w-12 min-w-[3rem] min-h-[3rem] rounded-[var(--radius-xs)]')
             .with('large', () => 'h-16 w-16 min-w-[4rem] min-h-[4rem] rounded-[var(--radius-md)]')
             .exhaustive(),
+          className,
         )}
         placeholderClassName="bg-black/6"
         alt={alt}
@@ -401,7 +500,8 @@ export const SheetImage: FC<
       />
     )
   },
-  (prev, next) => prev.name === next.name && prev.size === next.size && prev.alt === next.alt,
+  (prev, next) =>
+    prev.name === next.name && prev.size === next.size && prev.alt === next.alt && prev.className === next.className,
 )
 
 export interface SheetTitleProps {
@@ -429,13 +529,11 @@ export const SheetTitle: FC<SheetTitleProps> = ({
   return (
     <div className="flex flex-col">
       <div className="flex items-start gap-1">
-        <Heading className={clsx('flex flex-col md:flex-row md:items-start gap-x-2 gap-y-1 min-w-0', className)}>
+        <Heading className={clsx(SHEET_HEADING_CLASS, 'min-w-0', className)}>
           <span className="flex flex-col min-w-0">
-            <span className="leading-tight [text-wrap:pretty] [word-break:auto-phrase] [overflow-wrap:anywhere]">
-              {title}
-            </span>
+            <span className={SHEET_TITLE_TEXT_CLASS}>{title}</span>
           </span>
-          <span className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+          <span className={SHEET_BADGES_CLASS}>
             <SheetType type={type} difficulty={difficulty} />
             <SheetDifficulty difficulty={difficulty} serverIds={sheet.serverIds} isLocked={sheet.isLocked} />
           </span>
@@ -465,12 +563,7 @@ export const SheetTitle: FC<SheetTitleProps> = ({
         </div>
       )}
 
-      {sheet.isTypeUtage && (
-        <span className="text-sm text-zinc-600 dark:text-[#3f3f46] px-1.5 py-0.5 gap-1 bg-amber/75 inline-flex self-start rounded-md">
-          <MdiComment aria-hidden="true" className="h-3 w-3 flex-shrink-0 mt-1.125" />
-          <span>{sheet.comment}</span>
-        </span>
-      )}
+      {sheet.isTypeUtage && <SheetUtageComment comment={sheet.comment} />}
 
       {enableVersion && (
         <div className="text-sm">
