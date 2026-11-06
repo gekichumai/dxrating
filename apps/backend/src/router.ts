@@ -923,6 +923,23 @@ const lxnsHandler = {
       return { url }
     }),
   ),
+  // The OAuth callback forwards code and state to the web (or the iOS app), which completes here with its own session.
+  complete: os.lxns.complete.handler(
+    handlerGen(function* ({ input, context }) {
+      yield* lxnsService
+        .completeAuthorization(context.user?.id, input.code, input.state)
+        .pipe(
+          Effect.catchTag('LxnsStateMismatch', (error) =>
+            Effect.fail(
+              error.signedIn
+                ? new ORPCError('FORBIDDEN', { message: error.message, data: { reason: 'session_mismatch' } })
+                : new ORPCError('UNAUTHORIZED', { message: error.message, data: { reason: 'not_signed_in' } }),
+            ),
+          ),
+        )
+      return { success: true as const }
+    }),
+  ),
   status: os.lxns.status.handler(
     handlerGen(function* ({ context }) {
       const user = context.user
