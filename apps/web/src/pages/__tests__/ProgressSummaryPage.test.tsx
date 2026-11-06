@@ -6,7 +6,7 @@ import { setLoadedCatalogDocumentForTests } from '@/catalog/clientCatalog'
 import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
 import { RatingCalculatorContext } from '@/models/context/RatingCalculatorContext'
 import { initI18n } from '@/setup/init-i18n'
-import { ProgressSummaryPage } from '../ProgressSummaryPage'
+import { buildDxStarRows, ProgressSummaryPage } from '../ProgressSummaryPage'
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, params, to }: { children: React.ReactNode; params?: { level: string }; to: string }) => (
@@ -55,5 +55,20 @@ describe('ProgressSummaryPage', () => {
     // played, then s, ss, sss, sssp, fc, ap, app, fsd
     expect(cells[0]).toMatch(/^1\/\d+$/)
     expect(cells.slice(1)).toEqual(['1', '1', '1', '0', '1', '1', '0', '1'])
+  })
+
+  it('counts DX score stars per level from the best DX score, cumulatively', () => {
+    const max = sheet.noteCounts.total! * 3
+    const records = new Map([[sheetId, { best: { dxScore: Math.ceil((max * 93) / 100) } }]])
+    const row = buildDxStarRows(
+      catalogSnapshot.songs.flatMap((song) =>
+        song.sheets.map((s) => ({ ...s, songId: song.id, title: song.title }) as never),
+      ),
+      records,
+    ).find((r) => r.level === sheet.level)!
+    expect(row.withDxScore).toBe(1)
+    expect(row.atLeast).toEqual([1, 1, 1, 0, 0])
+    expect(row.averagePercent).toBeGreaterThanOrEqual(93)
+    expect(row.averagePercent).toBeLessThan(93.1)
   })
 })

@@ -1138,6 +1138,12 @@
     "progress.import": "Import your scores",
     "progress.loading-scores": "Loading your scores…",
     "progress.cell-label": "Lv.{{level}} {{target}}: {{count}} of {{total}}",
-    "progress.loading": "Loading the chart list… Totals appear once every chart is loaded."
+    "progress.loading": "Loading the chart list… Totals appear once every chart is loaded.",
+    "progress.dx.title": "DX score stars",
+    "progress.dx.intro": "How many charts of each level reach each DX score star (85%, 90%, 93%, 95% and 97% of the maximum), counting only plays that report a DX score.",
+    "progress.dx.with-score": "With DX score",
+    "progress.dx.average": "Average",
+    "progress.dx.star": "✦{{star}} or above",
+    "progress.dx.cell-label": "Lv.{{level}} ✦{{star}} or above: {{count}} of {{total}}"
   }
 }

@@ -1138,6 +1138,12 @@
     "progress.import": "导入成绩",
     "progress.loading-scores": "正在加载成绩…",
     "progress.cell-label": "Lv.{{level}} {{target}}：{{count}} / {{total}}",
-    "progress.loading": "正在加载谱面列表… 全部谱面加载完成后显示统计。"
+    "progress.loading": "正在加载谱面列表… 全部谱面加载完成后显示统计。",
+    "progress.dx.title": "DX 分数星级",
+    "progress.dx.intro": "各等级达到每个 DX 分数星级（最高值的 85%、90%、93%、95%、97%）的谱面数，只计入记录了 DX 分数的游玩。",
+    "progress.dx.with-score": "有 DX 分数",
+    "progress.dx.average": "平均",
+    "progress.dx.star": "✦{{star}} 及以上",
+    "progress.dx.cell-label": "Lv.{{level}} ✦{{star}} 及以上：{{count}} / {{total}}"
   }
 }
