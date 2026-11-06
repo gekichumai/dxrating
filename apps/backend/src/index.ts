@@ -30,7 +30,7 @@ runMain(
         yield* Effect.forkScoped(
           watchEdgeCache({
             readPublishedSha256: Effect.map(dxdataStore.getPublishedMetadata(), (metadata) => metadata?.bodySha256),
-            // The same request the edge makes, so the catalog's Brotli body is ready before the edge asks for it
+            // The same request the edge makes: it starts the catalog's Brotli compression before the edge refills
             warmCatalog: Effect.tryPromise({
               try: async () => {
                 const response = await app.request(DXDATA_PATH, {
