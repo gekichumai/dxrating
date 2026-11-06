@@ -5,6 +5,7 @@ import { brotliDecompressSync } from 'node:zlib'
 import { describe, expect, it, vi } from 'vitest'
 import {
   acceptsBrotli,
+  compressCatalogBody,
   createDxdataEffect,
   createPostgresDxdataEffects,
   DXDATA_BROWSER_CACHE_CONTROL,
@@ -48,11 +49,15 @@ const createStore = (options?: { metadata?: typeof metadata; body?: string }) =>
   return { calls, store }
 }
 
-const createApp = (store: FixtureStore, reportError: (error: unknown) => void = () => {}) => {
+const createApp = (
+  store: FixtureStore,
+  reportError: (error: unknown) => void = () => {},
+  compress?: (body: string) => Promise<Buffer>,
+) => {
   const app = new Hono()
   app.use('*', cors(DXDATA_CORS_OPTIONS))
   // One handler for the app's lifetime, as in app.ts: it keeps the compressed body between requests
-  const handler = createDxdataEffect(store, reportError)
+  const handler = createDxdataEffect(store, reportError, compress)
   app.on(['GET', 'HEAD'], DXDATA_PATH, (context) => Effect.runPromise(handler(context)))
   return app
 }
@@ -175,6 +180,33 @@ describe('DX data catalog endpoint', () => {
     const identityNotModified = await app.request(DXDATA_PATH, { headers: { 'If-None-Match': ETAG } })
     expect(identityNotModified.status).toBe(304)
     expect(identityNotModified.headers.has('content-encoding')).toBe(false)
+  })
+
+  it('retries a failed compression even when the edge only revalidates', async () => {
+    const { store } = createStore()
+    const errors: unknown[] = []
+    let attempts = 0
+    const compress = async (body: string) => {
+      attempts++
+      if (attempts === 1) throw new Error('compression failed')
+      return compressCatalogBody(body)
+    }
+    const app = createApp(store, (error) => errors.push(error), compress)
+
+    await (await app.request(DXDATA_PATH, { headers: BROTLI })).arrayBuffer()
+    await new Promise((resolve) => setTimeout(resolve, 5))
+    expect(errors).toHaveLength(1)
+
+    // The edge revalidates its identity copy; with no compression running, this request starts one again
+    const revalidation = await app.request(DXDATA_PATH, { headers: { ...BROTLI, 'If-None-Match': ETAG } })
+    expect(revalidation.status).toBe(200)
+    await revalidation.arrayBuffer()
+    expect(attempts).toBe(2)
+
+    // While it runs, revalidations are answered with a 304 again, and then the Brotli body replaces the copy
+    const brotli = await untilBrotli(app)
+    expect(brotli.headers.get('etag')).toBe(BR_ETAG)
+    expect(attempts).toBe(2)
   })
 
   it('compresses again once a new body is published', async () => {

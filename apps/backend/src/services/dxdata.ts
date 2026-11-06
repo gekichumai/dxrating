@@ -196,6 +196,7 @@ export const createDxdataEffect = <E, R, H extends Env = Env>(
     getSnapshotBody: (catalogRunId: string, bodySha256: string) => Effect.Effect<string | undefined, E, R>
   },
   reportError: (error: unknown, context: Context<H>) => void = () => {},
+  compress: (body: string) => Promise<Buffer> = compressCatalogBody,
 ) => {
   // The Brotli body of the published catalog, one at a time: a new publication replaces it. `encoded` is set once
   // the compression has finished; until then requests get the identity body.
@@ -204,7 +205,7 @@ export const createDxdataEffect = <E, R, H extends Env = Env>(
     if (compressed?.bodySha256 === metadata.bodySha256) return
     const entry: NonNullable<typeof compressed> = { bodySha256: metadata.bodySha256 }
     compressed = entry
-    compressCatalogBody(body).then(
+    compress(body).then(
       (encoded) => {
         entry.encoded = encoded
       },
@@ -239,7 +240,13 @@ export const createDxdataEffect = <E, R, H extends Env = Env>(
         headers.set('Content-Encoding', 'br')
         headers.set('Content-Length', encoded.byteLength.toString())
       }
-      if (ifNoneMatchMatches(c.req.header('If-None-Match'), headers.get('ETag')!)) {
+      // No compression of this body is running here: after a restart, or after one failed. A matching conditional GET
+      // would end in a 304 and never start one, so the first such request takes the full path once instead
+      const startsCompression =
+        c.req.method === 'GET' &&
+        acceptsBrotli(c.req.header('Accept-Encoding')) &&
+        compressed?.bodySha256 !== metadata.bodySha256
+      if (!startsCompression && ifNoneMatchMatches(c.req.header('If-None-Match'), headers.get('ETag')!)) {
         return new Response(null, { status: 304, statusText: 'Not Modified', headers })
       }
       if (c.req.method === 'HEAD') return new Response(null, { status: 200, headers })
