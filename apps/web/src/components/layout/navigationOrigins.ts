@@ -11,20 +11,30 @@ const originByEntry = new Map<string, string>()
 const listeners = new Set<() => void>()
 let version = 0
 
-type LocationLike = { pathname: string; state: { __TSR_key?: string; key?: string } }
+type LocationLike = { pathname: string; state: { __TSR_key?: string; key?: string; __TSR_index?: number } }
 
 const entryKey = (location: LocationLike | undefined) => location?.state.__TSR_key ?? location?.state.key
 
 /**
- * Records the origin of a newly visited entry. Back and Forward revisit entries that already have one, which stays.
- * A navigation within one page (a replaced search) keeps the origin of the entry it replaces.
+ * Records where an entry was reached from, but only when that is certain: `from` sits right before it in the history
+ * stack (a push lands one index after the entry it left, and Forward does too). A replace within one page keeps the
+ * origin of the entry it replaces. Any other move (Back, a jump, an old entry revisited after a reload emptied this
+ * map) says nothing about the entry before the destination, so nothing is recorded and no way back is offered.
  */
 export const recordNavigationOrigin = (from: LocationLike | undefined, to: LocationLike) => {
   const toKey = entryKey(to)
-  if (!from || !toKey || originByEntry.has(toKey)) return
-  const fromKey = entryKey(from)
-  const inherited = from.pathname === to.pathname && fromKey ? originByEntry.get(fromKey) : undefined
-  originByEntry.set(toKey, inherited ?? from.pathname)
+  const fromIndex = from?.state.__TSR_index
+  const toIndex = to.state.__TSR_index
+  if (!from || !toKey || originByEntry.has(toKey) || fromIndex === undefined || toIndex === undefined) return
+  let origin: string | undefined
+  if (toIndex === fromIndex + 1) {
+    origin = from.pathname
+  } else if (toIndex === fromIndex && from.pathname === to.pathname) {
+    const fromKey = entryKey(from)
+    origin = fromKey ? originByEntry.get(fromKey) : undefined
+  }
+  if (origin === undefined) return
+  originByEntry.set(toKey, origin)
   version += 1
   for (const listener of listeners) listener()
 }
