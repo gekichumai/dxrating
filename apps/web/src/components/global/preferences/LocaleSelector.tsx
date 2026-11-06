@@ -1,13 +1,13 @@
 import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem, type MenuItemProps } from '@mui/material'
 import { flushSync } from 'react-dom'
 import { type FC, type PropsWithChildren, type ReactElement, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useSetLocale } from '@/i18n/LocaleProvider'
+import { useLocale, useSetLocale } from '@/i18n/LocaleProvider'
 import { persistClientLocalePreference, type SupportedLocale } from '@/setup/locale'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import MdiCheck from '~icons/mdi/check'
 import MdiTranslate from '~icons/mdi/translate'
 import { startViewTransition, wipeOriginFromClick } from '../../../utils/startViewTransition'
+import { m } from '@/paraglide/messages'
 
 // MenuList passes autoFocus and tabIndex to its direct children (keyboard focus on open, roving tab stop): they are
 // forwarded to the MenuItem through `rest`
@@ -16,7 +16,7 @@ export const LocaleSelectorItem: FC<
     { locale: SupportedLocale; selected?: boolean; onClose: () => void } & Omit<MenuItemProps, 'onClick'>
   >
 > = ({ locale, selected, onClose, children, ...rest }) => {
-  const { i18n } = useTranslation()
+  const currentLocale = useLocale()
   const setLocale = useSetLocale()
 
   return (
@@ -28,7 +28,7 @@ export const LocaleSelectorItem: FC<
         const origin = wipeOriginFromClick(event)
         flushSync(onClose)
         if (selected) return
-        const previousLocale = i18n.language
+        const previousLocale = currentLocale
         void startViewTransition(() => {
           persistClientLocalePreference(locale)
           const changed = setLocale(locale)
@@ -64,16 +64,16 @@ export const LOCALES = [
  * its keyboard focus handling.
  */
 export const useLocaleMenuItems = (onClose: () => void): ReactElement[] => {
-  const { i18n } = useTranslation()
+  const locale = useLocale()
   return LOCALES.map(({ value, label }) => (
-    <LocaleSelectorItem locale={value} selected={i18n.language === value} key={value} onClose={onClose}>
+    <LocaleSelectorItem locale={value} selected={locale === value} key={value} onClose={onClose}>
       {label}
     </LocaleSelectorItem>
   ))
 }
 
 export const LocaleSelector = () => {
-  const { t } = useTranslation(['settings'])
+  const locale = useLocale()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const localeItems = useLocaleMenuItems(() => setAnchorEl(null))
 
@@ -81,8 +81,8 @@ export const LocaleSelector = () => {
     <>
       <IconButton
         onClick={(e) => setAnchorEl(e.currentTarget)}
-        aria-label={t('settings:language.select')}
-        title={t('settings:language.select')}
+        aria-label={m.settings_language_select({}, { locale })}
+        title={m.settings_language_select({}, { locale })}
       >
         <MdiTranslate />
       </IconButton>

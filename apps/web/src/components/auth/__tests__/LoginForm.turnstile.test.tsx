@@ -67,9 +67,11 @@ vi.mock('@marsidev/react-turnstile', () => {
 })
 
 describe('LoginForm Turnstile across a widget replacement', () => {
-  beforeAll(() => {
+  // Loading LoginForm the first time compiles its message modules; keep that out of the per-test timeout
+  beforeAll(async () => {
     initI18n()
-  })
+    await import('../LoginForm')
+  }, 60_000)
   afterEach(() => {
     page.theme = 'light'
     viewport.narrow = false

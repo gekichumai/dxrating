@@ -1,11 +1,11 @@
 import type { FC } from 'react'
-import { useTranslation } from 'react-i18next'
 import type { RecentChartLink } from '@/components/chartDiscovery/recentCharts'
 import { SheetListItemContentView, SheetListItemSummary } from '@/components/sheet/SheetListItem'
 import { SHEET_ROW_INSET } from '@/components/sheet/sheetRowLayout'
 import { getSheetTitleLabel } from '@/components/song/sheetDisplay'
-import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 import { formatSheetReleaseDateParts, sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 type RecentPageProps = {
   charts: readonly RecentChartLink[]
@@ -16,8 +16,7 @@ const siteUrl = 'https://dxrating.net'
 const toAbsoluteChartUrl = (href: string) => new URL(href, siteUrl).toString()
 
 export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
-  const { i18n, t } = useTranslation(['sheet'])
-  const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
+  const locale = useLocale()
 
   return (
     <div
@@ -28,10 +27,10 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
       <div className="w-full flex flex-col gap-4">
         <header className="w-full flex flex-col gap-2">
           <h1 className="page-title m-0" itemProp="name">
-            {t('sheet:chart-discovery.recent.title')}
+            {m.sheet_chartDiscovery_recent_title({}, { locale })}
           </h1>
           <p className="page-description m-0" itemProp="description">
-            {t('sheet:chart-discovery.recent.description', { count: charts.length })}
+            {m.sheet_chartDiscovery_recent_description({ count: charts.length }, { locale })}
           </p>
         </header>
 
@@ -47,7 +46,7 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
           {charts.map((chart, index) => {
             const chartUrl = toAbsoluteChartUrl(chart.href)
             const sheetLabel = getSheetTitleLabel(chart, locale)
-            const levelLabel = t('sheet:chart-discovery.level', { level: chart.level })
+            const levelLabel = m.sheet_chartDiscovery_level({ level: chart.level }, { locale })
 
             return (
               <li
@@ -84,7 +83,7 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
                       internalLevelValue={chart.internalLevelValue}
                       isTypeUtage={chart.isTypeUtage}
                       imageName={chart.imageName}
-                      imageAlt={t('sheet:cover-art-alt', { title: chart.title })}
+                      imageAlt={m.sheet_coverArtAlt({ title: chart.title }, { locale })}
                     >
                       <SheetListItemSummary
                         title={chart.title}

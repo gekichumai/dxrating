@@ -4,7 +4,6 @@ import { Button, Chip, CircularProgress, Collapse } from '@mui/material'
 import { Link } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { type FC, useEffect, useId, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import IconMdiChevronDown from '~icons/mdi/chevron-down'
 import { useSongCatalog, useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
@@ -16,7 +15,6 @@ import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useUserRecords } from '@/models/useUserRecords'
-import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 import { difficultyInkClassName } from '@/utils/difficultyInk'
 import { LevelRangePicker } from './LevelRangePicker'
 import { type LevelRange, RANGE_FLOOR } from './levelRange'
@@ -31,6 +29,8 @@ import {
   type RandomChartFilters,
 } from './randomChart'
 import { readStoredRange, writeStoredRange } from './rangeStorage'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 /**
  * The value once it has stopped changing for `delay` ms, so a slider drag is announced once, not on every step. The
@@ -65,8 +65,7 @@ function usePushRange(): LevelRange | null {
 }
 
 export const RandomChartPage: FC = () => {
-  const { t, i18n } = useTranslation(['random'])
-  const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
+  const locale = useLocale()
   const { region } = useAppContext()
   const catalog = useCompleteSongCatalog()
   // The selected version's catalog is only needed for the version list, which is the same in every slice
@@ -130,7 +129,7 @@ export const RandomChartPage: FC = () => {
 
   return (
     <ScorePageFrame width="5xl">
-      <ScorePageHeader title={t('random:title')} description={t('random:description')} />
+      <ScorePageHeader title={m.random_title({}, { locale })} description={m.random_description({}, { locale })} />
 
       {/* Stacked below lg; on desktop the filters and the rolled chart sit side by side */}
       <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
@@ -158,7 +157,7 @@ export const RandomChartPage: FC = () => {
                   !moreFiltersOpen && '-rotate-90',
                 )}
               />
-              {t('random:more-filters')}
+              {m.random_moreFilters({}, { locale })}
               {extraFilterCount > 0 && (
                 <span className="rounded-[var(--radius-sm)] bg-accent-subtle px-1.5 text-xs leading-5 text-fg-1 num">
                   {extraFilterCount}
@@ -168,7 +167,7 @@ export const RandomChartPage: FC = () => {
             <Collapse in={moreFiltersOpen}>
               <div id={moreFiltersId} className="flex flex-col gap-4 pt-3">
                 <fieldset className="flex flex-col gap-2 border-none p-0 m-0">
-                  <legend className="mb-2 text-sm font-semibold">{t('random:filters.type')}</legend>
+                  <legend className="mb-2 text-sm font-semibold">{m.random_filters_type({}, { locale })}</legend>
                   <div className="flex flex-wrap gap-2">
                     {RANDOM_TYPES.map((type: TypeEnum) => (
                       <Chip
@@ -185,7 +184,7 @@ export const RandomChartPage: FC = () => {
                 </fieldset>
 
                 <fieldset className="flex flex-col gap-2 border-none p-0 m-0">
-                  <legend className="mb-2 text-sm font-semibold">{t('random:filters.difficulty')}</legend>
+                  <legend className="mb-2 text-sm font-semibold">{m.random_filters_difficulty({}, { locale })}</legend>
                   <div className="flex flex-wrap gap-2">
                     {RANDOM_DIFFICULTIES.map((difficulty: DifficultyEnum) => {
                       const selected = filters.difficulties.includes(difficulty)
@@ -218,13 +217,13 @@ export const RandomChartPage: FC = () => {
                 </fieldset>
 
                 <div className="flex flex-col gap-2">
-                  <span className="text-sm font-semibold">{t('random:filters.version')}</span>
+                  <span className="text-sm font-semibold">{m.random_filters_version({}, { locale })}</span>
                   {/* No versions chosen means every version, so choosing all or none both clear the filter */}
                   <VersionMultiSelect
                     available={versions}
                     value={filters.versions.length === 0 ? versions : filters.versions}
-                    label={t('random:filters.version')}
-                    allLabel={t('random:filters.all-versions')}
+                    label={m.random_filters_version({}, { locale })}
+                    allLabel={m.random_filters_allVersions({}, { locale })}
                     onChange={(next: VersionEnum[]) =>
                       update({ versions: next.length === versions.length ? [] : next })
                     }
@@ -236,20 +235,20 @@ export const RandomChartPage: FC = () => {
 
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="contained" size="large" onClick={roll} disabled={!catalog || pool.length === 0}>
-              {t('random:roll')}
+              {m.random_roll({}, { locale })}
             </Button>
             {catalog ? (
               <>
                 {/* The visible count follows every step; the announced one waits until the range settles */}
                 <span aria-hidden className="text-sm font-semibold text-fg-1 num">
-                  {t('random:pool-size', { count: pool.length })}
+                  {m.random_poolSize({ count: pool.length }, { locale })}
                 </span>
                 <output className="sr-only">
-                  {settledPoolSize !== null && t('random:pool-size', { count: settledPoolSize })}
+                  {settledPoolSize !== null && m.random_poolSize({ count: settledPoolSize }, { locale })}
                 </output>
               </>
             ) : (
-              <CircularProgress size="1rem" aria-label={t('random:loading')} />
+              <CircularProgress size="1rem" aria-label={m.random_loading({}, { locale })} />
             )}
           </div>
         </MaterialSurface>
@@ -258,18 +257,18 @@ export const RandomChartPage: FC = () => {
           {/* Desktop only, before the first roll: keeps the two columns balanced. Mobile shows nothing here, as before */}
           {result === undefined && (
             <MaterialSurface className="hidden lg:flex flex-col items-start gap-1 p-4">
-              <h2 className="section-title m-0">{t('random:placeholder.title')}</h2>
+              <h2 className="section-title m-0">{m.random_placeholder_title({}, { locale })}</h2>
               <p className="m-0 text-sm leading-normal text-fg-2 text-pretty">
                 {settledPoolSize !== null
-                  ? t('random:placeholder.hint', { count: settledPoolSize })
-                  : t('random:loading')}
+                  ? m.random_placeholder_hint({ count: settledPoolSize }, { locale })
+                  : m.random_loading({}, { locale })}
               </p>
             </MaterialSurface>
           )}
           {/* The live region stays mounted so each new roll is announced */}
           <div aria-live="polite" className="flex flex-col">
             {result === null && (
-              <MaterialSurface className="p-4 text-sm text-fg-1">{t('random:no-result')}</MaterialSurface>
+              <MaterialSurface className="p-4 text-sm text-fg-1">{m.random_noResult({}, { locale })}</MaterialSurface>
             )}
             {result && (
               <MaterialSurface className="p-1">
@@ -305,7 +304,7 @@ export const RandomChartPage: FC = () => {
                       <span className="whitespace-nowrap text-fg-2">{result.version}</span>
                     </span>
                     <span className="mt-1 text-sm font-semibold text-accent-strong underline decoration-1 underline-offset-2">
-                      {t('random:open-chart')}
+                      {m.random_openChart({}, { locale })}
                     </span>
                   </span>
                 </Link>

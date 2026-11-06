@@ -30,7 +30,6 @@ import {
 } from '@tanstack/react-table'
 import clsx from 'clsx'
 import { type FC, type ReactNode, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import {
   type ItemProps,
   type ScrollerProps,
@@ -67,6 +66,9 @@ import type { NextRatingTarget } from '@gekichumai/maimai-domain'
 import { DIFFICULTIES } from '../models/difficulties'
 import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
 import { switchFocusRing } from '../components/rating/focusRing'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
+import type { LocalizedString } from '@/paraglide/runtime'
 
 export interface Entry {
   sheet: FlattenedSheet
@@ -107,7 +109,7 @@ const RatingCalculatorRowActions: FC<{
   const { data: sheets } = useSheets()
   const [dialogOpen, setDialogOpen] = useState(false)
   const entries = useScoreEntries()
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
 
   const handleClick = useCallback(() => {
     repository.delete([entry.sheetId])
@@ -118,10 +120,12 @@ const RatingCalculatorRowActions: FC<{
   return (
     <>
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle>{t('rating-calculator:table.remove-dialog.title')}</DialogTitle>
+        <DialogTitle>{m.ratingCalculator_table_removeDialog_title({}, { locale })}</DialogTitle>
         <DialogContent>{sheet && <SheetListItemContent sheet={sheet} />}</DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>{t('rating-calculator:table.remove-dialog.cancel')}</Button>
+          <Button onClick={() => setDialogOpen(false)}>
+            {m.ratingCalculator_table_removeDialog_cancel({}, { locale })}
+          </Button>
 
           <Button
             color="error"
@@ -135,14 +139,14 @@ const RatingCalculatorRowActions: FC<{
               })
             }}
           >
-            {t('rating-calculator:table.remove-dialog.remove')}
+            {m.ratingCalculator_table_removeDialog_remove({}, { locale })}
           </Button>
         </DialogActions>
       </Dialog>
 
       <IconButton
         size="small"
-        aria-label={`${t('rating-calculator:table.remove-dialog.remove')} ${sheet?.title ?? ''}`}
+        aria-label={`${m.ratingCalculator_table_removeDialog_remove({}, { locale })} ${sheet?.title ?? ''}`}
         className="rating-row-remove"
         onClick={() => setDialogOpen(true)}
       >
@@ -164,7 +168,7 @@ export const RatingCalculator = () => {
   const [showOnlyB50, setShowOnlyB50] = useState(false)
   const ratingView = useRatingView()
   const navigate = useNavigate()
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
 
   const { allEntries } = useRatingEntries()
 
@@ -202,8 +206,8 @@ export const RatingCalculator = () => {
           <section className="glass w-full px-4 py-3" aria-labelledby="rating-records-title">
             <h2 id="rating-records-title" className="section-title m-0">
               {allEntries?.length
-                ? t('rating-calculator:auto-save.saved-records', { count: allEntries.length })
-                : t('rating-calculator:auto-save.title')}
+                ? m.ratingCalculator_autoSave_savedRecords({ count: allEntries.length }, { locale })
+                : m.ratingCalculator_autoSave_title({}, { locale })}
             </h2>
 
             <div className="rating-oneshot mt-2">
@@ -222,7 +226,11 @@ export const RatingCalculator = () => {
       </div>
 
       <div className="glass rating-records w-full">
-        <div className="rating-table-controls" role="group" aria-label={t('rating-calculator:quick-actions.title')}>
+        <div
+          className="rating-table-controls"
+          role="group"
+          aria-label={m.ratingCalculator_quickActions_title({}, { locale })}
+        >
           <FormControlLabel
             control={
               <Switch
@@ -238,7 +246,7 @@ export const RatingCalculator = () => {
                 }}
               />
             }
-            label={t('rating-calculator:quick-actions.show-only-b50')}
+            label={m.ratingCalculator_quickActions_showOnlyB50({}, { locale })}
           />
 
           <FormControlLabel
@@ -253,16 +261,16 @@ export const RatingCalculator = () => {
                 }}
               />
             }
-            label={t('rating-calculator:quick-actions.ap50')}
+            label={m.ratingCalculator_quickActions_ap50({}, { locale })}
           />
 
           <Button component={Link} to="/me/records" size="small" variant="text">
-            {t('toplists:entry-link')}
+            {m.toplists_entryLink({}, { locale })}
           </Button>
         </div>
         {ratingView === 'ap50' && (
           <Alert severity="info" className="mb-2">
-            {t('rating-calculator:quick-actions.ap50-hint')}
+            {m.ratingCalculator_quickActions_ap50Hint({}, { locale })}
           </Alert>
         )}
         <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
@@ -270,7 +278,9 @@ export const RatingCalculator = () => {
         {allEntries.length > 0 ? (
           <RatingCalculatorTableContent showOnlyB50={showOnlyB50} />
         ) : (
-          <div className="w-full text-sm py-8 px-4 text-center">{t('rating-calculator:table.no-entries')}</div>
+          <div className="w-full text-sm py-8 px-4 text-center">
+            {m.ratingCalculator_table_noEntries({}, { locale })}
+          </div>
         )}
       </div>
     </div>
@@ -455,24 +465,30 @@ const RatingCalculatorRatingCell: FC<{
 const RatingCalculatorNextTarget: FC<{
   row: Row<Entry>
 }> = ({ row }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const target = row.original.nextTarget
   if (!target) return null
   const parts = [
     target.next
-      ? t('rating-calculator:table.next-target.next', {
-          achievement: target.next.achievement.toFixed(4),
-          rating: target.next.rating,
-          gain: target.next.gain,
-        })
+      ? m.ratingCalculator_table_nextTarget_next(
+          {
+            achievement: target.next.achievement.toFixed(4),
+            rating: target.next.rating,
+            gain: target.next.gain,
+          },
+          { locale },
+        )
       : null,
     target.allPerfect
-      ? t('rating-calculator:table.next-target.ap', {
-          rating: target.allPerfect.rating,
-          gain: target.allPerfect.gain,
-        })
+      ? m.ratingCalculator_table_nextTarget_ap(
+          {
+            rating: target.allPerfect.rating,
+            gain: target.allPerfect.gain,
+          },
+          { locale },
+        )
       : null,
-  ].filter((part): part is string => part !== null)
+  ].filter((part): part is LocalizedString => part !== null)
   const description = parts.join(' · ')
   return (
     <span className="rating-next-target num" title={description}>
@@ -523,7 +539,7 @@ const RatingTableSortButton: FC<{
   quiet: boolean
   onClick?: (event: unknown) => void
 }> = ({ label, canSort, sorted, priority, showPriority, quiet, onClick }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const shownSorted = quiet ? false : sorted
   return (
     <button
@@ -543,7 +559,7 @@ const RatingTableSortButton: FC<{
         </span>
       )}
       {sorted && priority !== null && (
-        <span className="sr-only">{t('rating-calculator:table.sort-priority', { n: priority })}</span>
+        <span className="sr-only">{m.ratingCalculator_table_sortPriority({ n: priority }, { locale })}</span>
       )}
     </button>
   )
@@ -551,7 +567,7 @@ const RatingTableSortButton: FC<{
 
 function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean }) {
   const { allEntries } = useRatingEntries()
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
 
   const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING)
   const defaultSorting = isDefaultSorting(sorting)
@@ -560,7 +576,7 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
     () => [
       columnHelper.display({
         id: 'chart',
-        header: t('rating-calculator:table.headers.chart'),
+        header: m.ratingCalculator_table_headers_chart({}, { locale }),
         cell: ({ row }) => <RatingChartCell row={row} />,
         meta: {
           cellProps: {
@@ -570,13 +586,13 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
       }),
       columnHelper.accessor((entry) => entry.includedIn ?? undefined, {
         id: 'includedIn',
-        header: t('rating-calculator:table.headers.included-in'),
+        header: m.ratingCalculator_table_headers_includedIn({}, { locale }),
         cell: RatingCalculatorIncludedInCell,
         sortUndefined: 'last',
       }),
       columnHelper.accessor('comboFlag', {
         id: 'comboFlag',
-        header: t('rating-calculator:table.headers.combo'),
+        header: m.ratingCalculator_table_headers_combo({}, { locale }),
         cell: RatingCalculatorComboFlagCell,
         sortingFn: (a, b) => {
           const rankA = a.original.comboFlag ? COMBO_FLAG_CONFIG[a.original.comboFlag].rank : 0
@@ -586,7 +602,7 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
       }),
       columnHelper.accessor('syncFlag', {
         id: 'syncFlag',
-        header: t('rating-calculator:table.headers.sync'),
+        header: m.ratingCalculator_table_headers_sync({}, { locale }),
         cell: RatingCalculatorSyncFlagCell,
         sortingFn: (a, b) => {
           const rankA = a.original.syncFlag ? SYNC_FLAG_CONFIG[a.original.syncFlag].rank : 0
@@ -597,23 +613,23 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
       // Desktop only (hidden under 1024px in rating-table.css), like the combo and sync columns under 768px
       columnHelper.accessor((entry) => entry.sheet.internalLevelValue, {
         id: 'internalLevel',
-        header: t('rating-calculator:table.headers.internal-level'),
+        header: m.ratingCalculator_table_headers_internalLevel({}, { locale }),
         cell: RatingCalculatorInternalLevelCell,
       }),
       columnHelper.accessor((entry) => entry.dxScore, {
         id: 'dxScore',
-        header: t('rating-calculator:table.headers.dx-score'),
+        header: m.ratingCalculator_table_headers_dxScore({}, { locale }),
         cell: RatingCalculatorDxScoreCell,
         sortUndefined: 'last',
       }),
       columnHelper.accessor('achievementRate', {
         id: 'achievementRate',
-        header: t('rating-calculator:table.headers.achievement-rate'),
+        header: m.ratingCalculator_table_headers_achievementRate({}, { locale }),
         cell: RatingCalculatorAchievementRateCell,
       }),
       columnHelper.accessor('rating.ratingAwardValue', {
         id: 'rating',
-        header: t('rating-calculator:table.headers.rating'),
+        header: m.ratingCalculator_table_headers_rating({}, { locale }),
         cell: ({ row }) => (
           <div className="rating-value-cell">
             <span className="rating-value-stack">
@@ -633,11 +649,11 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
       }),
       columnHelper.display({
         id: 'actions',
-        header: t('rating-calculator:table.headers.actions'),
+        header: m.ratingCalculator_table_headers_actions({}, { locale }),
         cell: ({ row }) => <RatingCalculatorRowActions entry={row.original} />,
       }),
     ],
-    [t],
+    [locale],
   )
 
   const data = useMemo(() => {

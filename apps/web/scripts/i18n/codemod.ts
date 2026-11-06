@@ -33,7 +33,7 @@ export type Finding = { file: string; line: number; reason: string }
 function listFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const full = path.join(dir, name)
-    if (name === 'paraglide' || name === 'node_modules') return []
+    if (name === 'paraglide' || name === 'node_modules' || full === path.join(srcRoot, 'i18n')) return []
     if (statSync(full).isDirectory()) return listFiles(full)
     return /\.(ts|tsx)$/.test(name) && !name.endsWith('.d.ts') ? [full] : []
   })
@@ -57,7 +57,7 @@ function namespacesOf(call: ts.CallExpression): string[] | undefined {
   return undefined
 }
 
-function declaresName(scope: ts.Node, name: string): boolean {
+function declaresName(scope: ts.Node, name: string, ignoreImports = false): boolean {
   let found = false
   const visit = (node: ts.Node) => {
     if (found) return
@@ -69,7 +69,7 @@ function declaresName(scope: ts.Node, name: string): boolean {
       found = true
       return
     }
-    if ((ts.isFunctionDeclaration(node) || ts.isImportSpecifier(node)) && node.name?.text === name) {
+    if ((ts.isFunctionDeclaration(node) || (!ignoreImports && ts.isImportSpecifier(node))) && node.name?.text === name) {
       found = true
       return
     }
@@ -96,7 +96,8 @@ export function transformSource(file: string, source: string): { output: string;
     findings.push({ file: rel, line: sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1, reason })
   let usedMessages = false
   let usedLocaleHook = false
-  const fileDeclaresM = declaresName(sf, 'm')
+  // An existing `import { m } from '@/paraglide/messages'` is the binding we want
+  const fileDeclaresM = declaresName(sf, 'm', true)
 
   const declarations: ts.VariableDeclaration[] = []
   const collect = (node: ts.Node) => {

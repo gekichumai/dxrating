@@ -1,9 +1,17 @@
 import type { VersionEnum } from '@gekichumai/dxdata'
 import clsx from 'clsx'
 import { type FC, type KeyboardEvent, type ReactNode, useId, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { segmentedItem, segmentedTrack } from '@/components/completion/TableChrome'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
 import { VERSION_ERAS, type VersionEra, type VersionPair } from './versionEras'
+
+const ERA_LABELS = { dx: m.versions_era_dx, classic: m.versions_era_classic } satisfies Record<VersionEra, PlainMessage>
+const ERA_RANGES = {
+  dx: m.versions_era_dxRange,
+  classic: m.versions_era_classicRange,
+} satisfies Record<VersionEra, PlainMessage>
 
 /**
  * Two pages of versions, でらっくす and classic, behind a segmented tab control. Both pages are in the markup (the
@@ -17,7 +25,7 @@ export const VersionEraPager: FC<{
   className?: string
   children: (era: VersionEra) => ReactNode
 }> = ({ label, defaultEra = 'dx', badges, className, children }) => {
-  const { t } = useTranslation(['versions'])
+  const locale = useLocale()
   const [era, setEra] = useState<VersionEra>(defaultEra)
   const id = useId()
   const tabs = useRef<Partial<Record<VersionEra, HTMLButtonElement | null>>>({})
@@ -49,9 +57,9 @@ export const VersionEraPager: FC<{
             onClick={() => setEra(value)}
             className={clsx(segmentedItem(era === value), 'border-0 cursor-pointer font-inherit gap-1.5')}
           >
-            <span>{t(`versions:era.${value}`)}</span>
+            <span>{ERA_LABELS[value]({}, { locale })}</span>
             <span className={clsx('text-xs num', era === value ? 'opacity-85' : 'text-fg-2')}>
-              {badges?.[value] ?? t(`versions:era.${value}-range`)}
+              {badges?.[value] ?? ERA_RANGES[value]({}, { locale })}
             </span>
           </button>
         ))}

@@ -1,6 +1,5 @@
 import clsx from 'clsx'
 import type { FC } from 'react'
-import { useTranslation } from 'react-i18next'
 import type { VersionEnum } from '@gekichumai/dxdata'
 import {
   VERSION_PAGE_VERSIONS,
@@ -18,7 +17,8 @@ import { VersionEraSections, VersionPairGrid } from '@/components/version/Versio
 import { pairVersionsByEra } from '@/components/version/versionEras'
 import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { DIFFICULTIES } from '@/models/difficulties'
-import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const tileClassName = (current: boolean) =>
   clsx(
@@ -56,20 +56,21 @@ const VersionNav: FC<{ current: VersionEnum; labelledBy: string }> = ({ current,
 }
 
 export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
-  const { i18n, t } = useTranslation(['versions'])
-  const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
+  const locale = useLocale()
   const values = { version: page.version, songs: page.songCount, charts: page.chartCount }
 
   return (
     <div className="flex-container w-full max-w-5xl px-4 pb-global">
       <div className="w-full flex flex-col gap-4">
         <header className="w-full flex flex-col gap-2">
-          <Breadcrumb items={[{ href: '/versions', label: t('versions:breadcrumb') }, { label: page.version }]} />
+          <Breadcrumb
+            items={[{ href: '/versions', label: m.versions_breadcrumb({}, { locale }) }, { label: page.version }]}
+          />
           <div className="flex items-center gap-3">
             <VersionLogo version={page.version} decorative className="h-14 sm:h-16 text-sm" />
-            <h1 className="page-title m-0 [word-break:auto-phrase]">{t('versions:title', values)}</h1>
+            <h1 className="page-title m-0 [word-break:auto-phrase]">{m.versions_title(values, { locale })}</h1>
           </div>
-          <p className="page-description m-0">{t('versions:intro', values)}</p>
+          <p className="page-description m-0">{m.versions_intro(values, { locale })}</p>
         </header>
 
         {page.groups.map((group) => {
@@ -83,7 +84,7 @@ export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
                 {group.releaseDate ? (
                   <time dateTime={group.releaseDate}>{group.releaseDate}</time>
                 ) : (
-                  <span>{t('versions:date-unknown')}</span>
+                  <span>{m.versions_dateUnknown({}, { locale })}</span>
                 )}
               </h2>
               <ul className="list-none m-0 p-0 divide-y divide-black/5">
@@ -102,7 +103,7 @@ export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
                       </a>
                       <div className="text-xs text-fg-2">
                         {getSheetTypeDisplayName(row.type, locale)} · <span lang="ja">{row.artist}</span>
-                        {row.isNewChartOnly && ` · ${t('versions:new-chart-only')}`}
+                        {row.isNewChartOnly && ` · ${m.versions_newChartOnly({}, { locale })}`}
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm num">
@@ -131,7 +132,7 @@ export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
 
         <footer className="flex flex-col gap-2">
           <h2 id="other-versions" className="section-title m-0">
-            {t('versions:other-versions')}
+            {m.versions_otherVersions({}, { locale })}
           </h2>
           <VersionNav current={page.version} labelledBy="other-versions" />
         </footer>
@@ -143,7 +144,7 @@ export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
 export type VersionSummary = { version: VersionEnum; songs: number; charts: number }
 
 export const VersionIndexPage: FC<{ versions: VersionSummary[] }> = ({ versions }) => {
-  const { t } = useTranslation(['versions'])
+  const locale = useLocale()
   const summaries = new Map(versions.map((entry) => [entry.version, entry]))
   const listed = versions.map((entry) => entry.version)
 
@@ -151,9 +152,9 @@ export const VersionIndexPage: FC<{ versions: VersionSummary[] }> = ({ versions 
     <div className="flex-container w-full max-w-6xl px-4 pb-global">
       <div className="w-full flex flex-col gap-4">
         <header className="flex flex-col gap-2">
-          <Breadcrumb items={[{ label: t('versions:breadcrumb') }]} />
-          <h1 className="page-title m-0 [word-break:auto-phrase]">{t('versions:index.title')}</h1>
-          <p className="page-description m-0">{t('versions:index.intro')}</p>
+          <Breadcrumb items={[{ label: m.versions_breadcrumb({}, { locale }) }]} />
+          <h1 className="page-title m-0 [word-break:auto-phrase]">{m.versions_index_title({}, { locale })}</h1>
+          <p className="page-description m-0">{m.versions_index_intro({}, { locale })}</p>
         </header>
         <VersionEraSections idPrefix="era" jumpNav>
           {(era) => (
@@ -173,7 +174,9 @@ export const VersionIndexPage: FC<{ versions: VersionSummary[] }> = ({ versions 
                       <span className="text-sm sm:text-base font-semibold [overflow-wrap:anywhere]" translate="no">
                         {version}
                       </span>
-                      {entry && <span className="text-xs text-fg-2 num">{t('versions:index.count', entry)}</span>}
+                      {entry && (
+                        <span className="text-xs text-fg-2 num">{m.versions_index_count(entry, { locale })}</span>
+                      )}
                     </span>
                   </a>
                 )

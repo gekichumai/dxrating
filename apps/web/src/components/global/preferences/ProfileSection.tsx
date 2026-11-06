@@ -1,13 +1,14 @@
 import { Button, CircularProgress, Skeleton, TextField } from '@mui/material'
 import { type FC, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
 import { authClient } from '../../../lib/auth-client'
 import { ProfileImage } from './UserChip'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export const ProfileSection: FC<{ idPrefix?: string }> = ({ idPrefix = 'profile' }) => {
-  const { t } = useTranslation(['auth'])
+  const locale = useLocale()
   const { data: sessionData, isPending } = authClient.useSession()
   const user = sessionData?.user
   const [displayName, setDisplayName] = useState(() => user?.name ?? '')
@@ -27,10 +28,10 @@ export const ProfileSection: FC<{ idPrefix?: string }> = ({ idPrefix = 'profile'
       name: displayName,
     })
     if (error) {
-      toast.error(t('auth:update-display-name.toast-failed', { error: error.message }))
+      toast.error(m.auth_updateDisplayName_toastFailed({ error: error.message ?? '' }, { locale }))
       return
     }
-    toast.success(t('auth:update-display-name.toast-success', { name: displayName }))
+    toast.success(m.auth_updateDisplayName_toastSuccess({ name: displayName }, { locale }))
   }, [displayName])
 
   const displayNameId = `${idPrefix}-display-name`
@@ -41,7 +42,9 @@ export const ProfileSection: FC<{ idPrefix?: string }> = ({ idPrefix = 'profile'
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-1">
-        <h3 className="text-lg font-semibold leading-snug text-fg-1 m-0">{t('auth:user-profile.profile')}</h3>
+        <h3 className="text-lg font-semibold leading-snug text-fg-1 m-0">
+          {m.auth_userProfile_profile({}, { locale })}
+        </h3>
       </div>
 
       {/* Profile row */}
@@ -51,7 +54,10 @@ export const ProfileSection: FC<{ idPrefix?: string }> = ({ idPrefix = 'profile'
             email={user?.email}
             image={user?.image}
             size="4rem"
-            alt={t('auth:user-profile.avatar-alt', { name: user?.name || user?.email || t('auth:user-profile.title') })}
+            alt={m.auth_userProfile_avatarAlt(
+              { name: user?.name || user?.email || m.auth_userProfile_title({}, { locale }) },
+              { locale },
+            )}
           />
           <div className="flex flex-col gap-0.5 min-w-0">
             <div className="text-base font-semibold text-fg-1 truncate">{user?.name || user?.email}</div>
@@ -73,7 +79,7 @@ export const ProfileSection: FC<{ idPrefix?: string }> = ({ idPrefix = 'profile'
           }}
         >
           <label htmlFor={displayNameId} className="text-sm font-semibold text-fg-1">
-            {t('auth:user-profile.display-name')}
+            {m.auth_userProfile_displayName({}, { locale })}
           </label>
           {isPending ? (
             <Skeleton variant="rounded" height={40} />
@@ -90,7 +96,7 @@ export const ProfileSection: FC<{ idPrefix?: string }> = ({ idPrefix = 'profile'
                   if (e.target.value.trim() !== '') setShowRequired(false)
                 }}
                 error={displayNameError}
-                helperText={displayNameError ? t('auth:user-profile.display-name-required') : undefined}
+                helperText={displayNameError ? m.auth_userProfile_displayNameRequired({}, { locale }) : undefined}
                 size="small"
                 fullWidth
               />
@@ -103,9 +109,13 @@ export const ProfileSection: FC<{ idPrefix?: string }> = ({ idPrefix = 'profile'
                 className="!h-10 !shrink-0"
               >
                 {updateState.loading ? (
-                  <CircularProgress size="1.25rem" color="inherit" aria-label={t('auth:user-profile.saving')} />
+                  <CircularProgress
+                    size="1.25rem"
+                    color="inherit"
+                    aria-label={m.auth_userProfile_saving({}, { locale })}
+                  />
                 ) : (
-                  t('auth:user-profile.save')
+                  m.auth_userProfile_save({}, { locale })
                 )}
               </Button>
             </div>
@@ -115,7 +125,7 @@ export const ProfileSection: FC<{ idPrefix?: string }> = ({ idPrefix = 'profile'
         {/* Email */}
         <div className="flex flex-col gap-2">
           <label htmlFor={emailId} className="text-sm font-semibold text-fg-1">
-            {t('auth:user-profile.email')}
+            {m.auth_userProfile_email({}, { locale })}
           </label>
           {isPending ? (
             <Skeleton variant="rounded" height={40} />
