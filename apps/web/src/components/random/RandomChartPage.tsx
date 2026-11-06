@@ -20,7 +20,6 @@ import { LevelRangePicker } from './LevelRangePicker'
 import { type LevelRange, RANGE_FLOOR } from './levelRange'
 import { computePushRange } from './pushRange'
 import {
-  findRolledChart,
   countActiveFilters,
   DEFAULT_RANDOM_FILTERS,
   filterRandomPool,
@@ -30,6 +29,7 @@ import {
   type RandomChartFilters,
 } from './randomChart'
 import { readStoredRange, writeStoredRange } from './rangeStorage'
+import { useRestoreRolledChart } from './useRestoreRolledChart'
 
 const routeApi = getRouteApi('/random')
 import { useLocale } from '@/i18n/LocaleProvider'
@@ -112,16 +112,18 @@ export const RandomChartPage: FC = () => {
   // page, or a reload, shows it again. Restored after mount, once the catalog is in; the server renders no result.
   const { chart } = routeApi.useSearch()
   const navigate = useNavigate()
-  useEffect(() => {
-    if (!catalog || !chart || result !== undefined) return
-    const restored = findRolledChart(catalog.sheets, chart)
-    if (restored) setResult(restored)
-  }, [catalog, chart, result])
+  useRestoreRolledChart({ sheets: catalog?.sheets, chart, result, setResult })
 
   const roll = () => {
     const picked = pickRandom(pool)
     setResult(picked)
-    void navigate({ to: '/random', search: (prev) => ({ ...prev, chart: picked?.id }), replace: true })
+    void navigate({
+      to: '/random',
+      search: (prev) => ({ ...prev, chart: picked?.id }),
+      replace: true,
+      // Only the query changes: keep the controls and the new result where they are
+      resetScroll: false,
+    })
     captureAnalyticsEvent('random_chart_rolled', {
       filter_count: countActiveFilters(filters),
       result_found: picked !== null,
