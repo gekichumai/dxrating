@@ -300,6 +300,7 @@
     "terms.limits-description": "MCP：每个客户端每分钟约 300 次请求。REST API：没有硬性限制，但请缓存响应，并用 If-None-Match 重新验证。dxdata、标签、别名和机厅列表都会返回 ETag。",
     "api.changelog": "更新日志",
     "copied": "已复制",
+    "copy-failed": "无法复制。请选中 URL 手动复制。",
     "policy.title": "API 稳定性",
     "policy.intro": "API v1 已是稳定版。在它上面做工具、bot 或网站时，可以依赖下面这些承诺。",
     "policy.compat": "兼容性",

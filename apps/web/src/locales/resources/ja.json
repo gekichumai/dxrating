@@ -300,6 +300,7 @@
     "terms.limits-description": "MCP：クライアントごとに毎分約 300 リクエスト。REST API：上限は設けていませんが、レスポンスはキャッシュし、If-None-Match で再検証してください。dxdata・タグ・別名・店舗は ETag を返します。",
     "api.changelog": "変更履歴",
     "copied": "コピーしました",
+    "copy-failed": "コピーできませんでした。URL を選択して手動でコピーしてください。",
     "policy.title": "API の安定性",
     "policy.intro": "API v1 は安定版です。ツール・bot・サイトを作るときに当てにできることをまとめました。",
     "policy.compat": "互換性",

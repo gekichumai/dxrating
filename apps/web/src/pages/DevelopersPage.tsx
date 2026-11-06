@@ -1,6 +1,7 @@
 import { Button, IconButton, Tooltip } from '@mui/material'
 import clsx from 'clsx'
 import { type ComponentType, type ReactNode, useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import MdiArrowTopRight from '~icons/mdi/arrow-top-right'
 import MdiCheck from '~icons/mdi/check'
@@ -53,10 +54,13 @@ const CopyButton = ({ value, label }: { value: string; label: string }) => {
           size="small"
           aria-label={label}
           onClick={() => {
-            navigator.clipboard.writeText(value).then(
-              () => setCopied(true),
-              () => setCopied(false),
-            )
+            // The Clipboard API is missing in insecure contexts and can be refused: say so and give the manual route
+            const failed = () => {
+              setCopied(false)
+              toast.error(t('developers:copy-failed'), { id: 'developers-copy-failed' })
+            }
+            if (!navigator.clipboard) return failed()
+            navigator.clipboard.writeText(value).then(() => setCopied(true), failed)
           }}
           className="relative shrink-0 !text-fg-2"
         >

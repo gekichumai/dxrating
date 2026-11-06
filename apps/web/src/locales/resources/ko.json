@@ -300,6 +300,7 @@
     "terms.limits-description": "MCP: 클라이언트당 분당 약 300회. REST API: 고정 한도는 없지만 응답을 캐시하고 If-None-Match로 재검증해 주세요. dxdata, 태그, 별명, 오락실 목록은 ETag를 보냅니다.",
     "api.changelog": "변경 기록",
     "copied": "복사했습니다",
+    "copy-failed": "복사하지 못했습니다. URL을 선택해 직접 복사하세요.",
     "policy.title": "API 안정성",
     "policy.intro": "API v1은 안정 버전입니다. 도구, 봇, 사이트를 만들 때 믿고 쓸 수 있는 내용입니다.",
     "policy.compat": "호환성",

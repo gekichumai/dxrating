@@ -300,6 +300,7 @@
     "terms.limits-description": "MCP: about 300 requests per minute per client. REST API: no hard limit, but cache responses and revalidate with If-None-Match. dxdata, tags, aliases and arcade venues send ETags.",
     "api.changelog": "Changelog",
     "copied": "Copied",
+    "copy-failed": "Couldn’t copy. Select the URL and copy it by hand.",
     "policy.title": "API stability",
     "policy.intro": "API v1 is stable. If you build a tool, bot or site on it, this is what you can rely on.",
     "policy.compat": "Compatibility",
