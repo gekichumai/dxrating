@@ -3,9 +3,12 @@ import { type DifficultyEnum, type Sheet, TypeEnum } from '@gekichumai/dxdata'
 import { Tab, Tabs } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, type KeyboardEvent, type MouseEvent, type SyntheticEvent, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { DIFFICULTIES } from '../../models/difficulties'
 import { DIFFICULTY_ORDER } from '../../models/constants'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
+import { LinkBehavior } from '@/components/global/InternalLink'
 
 export interface SongSheetTabsProps {
   sheets: Sheet[]
@@ -41,6 +44,13 @@ const TYPE_SHORT_LABELS: Partial<Record<TypeEnum, string>> = {
   [TypeEnum.DX]: 'DX',
 }
 
+const TYPE_LABELS = {
+  [TypeEnum.DX]: m.song_type_dx,
+  [TypeEnum.STD]: m.song_type_std,
+  [TypeEnum.UTAGE]: m.song_type_utage,
+  [TypeEnum.UTAGE2P]: m.song_type_utage2p,
+} satisfies Record<TypeEnum, PlainMessage>
+
 const typeShortLabel = (type: TypeEnum, label: string) => TYPE_SHORT_LABELS[type] ?? label
 
 export const SongSheetTabs: FC<SongSheetTabsProps> = ({
@@ -52,7 +62,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
   onDifficultyChange,
   hrefFor,
 }) => {
-  const { t } = useTranslation(['song', 'sheet'])
+  const locale = useLocale()
 
   const difficultiesForActiveType = useMemo(() => {
     const diffSet = new Set(sheets.filter((s) => s.type === activeType).map((s) => s.difficulty))
@@ -78,7 +88,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
             }}
             variant="scrollable"
             scrollButtons={false}
-            aria-label={t('song:type-tabs-label')}
+            aria-label={m.song_typeTabsLabel({}, { locale })}
             classes={{
               root: '!min-h-8',
               scroller: 'scroll-fade-x',
@@ -87,13 +97,13 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
             }}
           >
             {availableTypes.map((type) => {
-              const label = t(`song:type.${type}`)
+              const label = TYPE_LABELS[type]({}, { locale })
               const selected = type === activeType
               return (
                 <Tab
                   key={type}
                   value={type}
-                  component="a"
+                  component={LinkBehavior}
                   href={hrefFor(type)}
                   onClick={keepModifiedClicks}
                   onKeyDown={activateOnSpace}
@@ -116,10 +126,12 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
           // One chart type: nothing to switch, so a plain badge says which one it is
           <span
             className="glass-inset !rounded-[var(--radius-sm)] self-start sm:self-center shrink-0 px-2 py-1 text-xs font-semibold tracking-wide text-fg-2"
-            title={t(`song:type.${availableTypes[0]}`)}
+            title={TYPE_LABELS[availableTypes[0]]({}, { locale })}
           >
-            <span aria-hidden="true">{typeShortLabel(availableTypes[0], t(`song:type.${availableTypes[0]}`))}</span>
-            <span className="sr-only">{t(`song:type.${availableTypes[0]}`)}</span>
+            <span aria-hidden="true">
+              {typeShortLabel(availableTypes[0], TYPE_LABELS[availableTypes[0]]({}, { locale }))}
+            </span>
+            <span className="sr-only">{TYPE_LABELS[availableTypes[0]]({}, { locale })}</span>
           </span>
         )
       )}
@@ -133,7 +145,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
           }}
           variant="scrollable"
           scrollButtons="auto"
-          aria-label={t('song:difficulty-tabs-label')}
+          aria-label={m.song_difficultyTabsLabel({}, { locale })}
           classes={{
             root: '!min-h-2.5rem min-w-0 flex-1 border-b border-solid border-0 border-black/8 sm:border-b-0',
             scroller: 'scroll-fade-x',
@@ -153,7 +165,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
               <Tab
                 key={difficulty}
                 value={difficulty}
-                component="a"
+                component={LinkBehavior}
                 href={hrefFor(activeType, difficulty)}
                 onClick={keepModifiedClicks}
                 onKeyDown={activateOnSpace}

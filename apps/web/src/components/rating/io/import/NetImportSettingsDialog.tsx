@@ -1,3 +1,4 @@
+import { ParaglideMessage } from '@inlang/paraglide-js-react'
 import { useSongCatalogLoader } from '@/catalog/CatalogContext'
 import {
   Button,
@@ -18,7 +19,6 @@ import {
   Typography,
 } from '@mui/material'
 import { type FC, useState, useSyncExternalStore } from 'react'
-import { Trans, useTranslation } from 'react-i18next'
 import { useLocalStorage } from 'react-use'
 import { match } from 'ts-pattern'
 import IconMdiChevronDown from '~icons/mdi/chevron-down'
@@ -33,6 +33,8 @@ import { useAppContext } from '@/models/context/useAppContext'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { toggleFocusRing } from '../../focusRing'
 import { netImportProgress } from './netImportProgressStore'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export function NetImportSettingsDialog({
   open,
@@ -89,7 +91,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   )
   const busy = progress?.status === 'running'
 
-  const { t } = useTranslation()
+  const locale = useLocale()
   const { region: siteRegion } = useAppContext()
   const [form, setForm] = useState(() => readSavedCredentials(siteRegion))
   const { region, username, password, remember } = form
@@ -132,31 +134,31 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   return (
     <>
       <DialogTitle id="net-import-settings-title">
-        {t('rating-calculator:io.import.net-records.dialog.title')}
+        {m.ratingCalculator_io_import_netRecords_dialog_title({}, { locale })}
       </DialogTitle>
       <DialogContent>
         <DialogContentText component="div" className="flex flex-col items-stretch gap-4 py-2">
           <NetMaintenanceNotice region={region} maintenance={maintenance[region]} />
           <FormControl>
             <TextField
-              label={t('rating-calculator:io.import.net-records.dialog.region.label')}
+              label={m.ratingCalculator_io_import_netRecords_dialog_region_label({}, { locale })}
               select
               value={region}
               onChange={(event) => updateForm({ region: event.target.value as 'intl' | 'jp' })}
             >
               <MenuItem value="intl">
                 <span>
-                  <span>{t('rating-calculator:io.import.net-records.dialog.region.intl.name')} </span>
+                  <span>{m.ratingCalculator_io_import_netRecords_dialog_region_intl_name({}, { locale })} </span>
                   <span className="text-secondary text-sm">
-                    {t('rating-calculator:io.import.net-records.dialog.region.intl.domain')}
+                    {m.ratingCalculator_io_import_netRecords_dialog_region_intl_domain({}, { locale })}
                   </span>
                 </span>
               </MenuItem>
               <MenuItem value="jp">
                 <span>
-                  <span>{t('rating-calculator:io.import.net-records.dialog.region.jp.name')} </span>
+                  <span>{m.ratingCalculator_io_import_netRecords_dialog_region_jp_name({}, { locale })} </span>
                   <span className="text-secondary text-sm">
-                    {t('rating-calculator:io.import.net-records.dialog.region.jp.domain')}
+                    {m.ratingCalculator_io_import_netRecords_dialog_region_jp_domain({}, { locale })}
                   </span>
                 </span>
               </MenuItem>
@@ -165,7 +167,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
 
           <FormControl>
             <TextField
-              label={t('rating-calculator:io.import.net-records.dialog.sega-id')}
+              label={m.ratingCalculator_io_import_netRecords_dialog_segaId({}, { locale })}
               value={username}
               onChange={(event) => updateForm({ username: event.target.value })}
               autoComplete="off"
@@ -179,7 +181,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
 
           <FormControl>
             <TextField
-              label={t('rating-calculator:io.import.net-records.dialog.sega-password')}
+              label={m.ratingCalculator_io_import_netRecords_dialog_segaPassword({}, { locale })}
               type="password"
               value={password}
               onChange={(event) => updateForm({ password: event.target.value })}
@@ -201,9 +203,9 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
             }
             label={
               <div className="flex flex-col">
-                <span>{t('rating-calculator:io.import.net-records.dialog.remember-credentials.label')}</span>
+                <span>{m.ratingCalculator_io_import_netRecords_dialog_rememberCredentials_label({}, { locale })}</span>
                 <span className="text-xs text-secondary">
-                  {t('rating-calculator:io.import.net-records.dialog.remember-credentials.description')}
+                  {m.ratingCalculator_io_import_netRecords_dialog_rememberCredentials_description({}, { locale })}
                 </span>
               </div>
             }
@@ -215,34 +217,44 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
             onChange={setAutoImport}
           />
 
-          <p className="text-xs text-secondary">{t('rating-calculator:io.import.net-records.floating.next-import')}</p>
+          <p className="text-xs text-secondary">
+            {m.ratingCalculator_io_import_netRecords_floating_nextImport({}, { locale })}
+          </p>
           <SegaIDImportGuide region={region} />
           <div className="h-px w-full bg-gray-200 my-2" />
 
           <div className="text-sm text-secondary [&>p]:mb-1">
             <p className="font-bold">
-              <Trans
-                t={t}
-                i18nKey="rating-calculator:io.import.net-records.dialog.security-notice.credentials"
-                components={{
-                  source: (
+              <ParaglideMessage
+                message={m.ratingCalculator_io_import_netRecords_dialog_securityNotice_credentials}
+                inputs={{}}
+                options={{ locale }}
+                markup={{
+                  source: ({ children }) => (
                     <a
                       href="https://github.com/gekichumai/dxrating/tree/main/apps/backend"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="underline"
-                    />
+                    >
+                      {children}
+                    </a>
                   ),
                 }}
               />
             </p>
 
             <p className="text-xs">
-              <Trans
-                t={t}
-                i18nKey="rating-calculator:io.import.net-records.dialog.security-notice.slsa"
-                components={{
-                  slsa: <a href="https://slsa.dev/" target="_blank" rel="noopener noreferrer" className="underline" />,
+              <ParaglideMessage
+                message={m.ratingCalculator_io_import_netRecords_dialog_securityNotice_slsa}
+                inputs={{}}
+                options={{ locale }}
+                markup={{
+                  slsa: ({ children }) => (
+                    <a href="https://slsa.dev/" target="_blank" rel="noopener noreferrer" className="underline">
+                      {children}
+                    </a>
+                  ),
                 }}
               />
             </p>
@@ -250,21 +262,23 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>{t('rating-calculator:io.import.net-records.dialog.actions.close')}</Button>
+        <Button onClick={onClose}>
+          {m.ratingCalculator_io_import_netRecords_dialog_actions_close({}, { locale })}
+        </Button>
         <Button onClick={handleImport} disabled={!username || !password || busy} variant="contained">
           {busy ? (
-            t('rating-calculator:io.import.net-records.dialog.actions.importing')
+            m.ratingCalculator_io_import_netRecords_dialog_actions_importing({}, { locale })
           ) : mappedAutoImport ? (
             <div className="flex flex-col gap-1 items-start py-1">
               <span className="leading-none">
-                {t('rating-calculator:io.import.net-records.dialog.actions.reimport.title')}
+                {m.ratingCalculator_io_import_netRecords_dialog_actions_reimport_title({}, { locale })}
               </span>
               <span className="text-xs leading-none">
-                {t('rating-calculator:io.import.net-records.dialog.actions.reimport.description')}
+                {m.ratingCalculator_io_import_netRecords_dialog_actions_reimport_description({}, { locale })}
               </span>
             </div>
           ) : (
-            t('rating-calculator:io.import.net-records.dialog.actions.import-once')
+            m.ratingCalculator_io_import_netRecords_dialog_actions_importOnce({}, { locale })
           )}
         </Button>
       </DialogActions>
@@ -273,7 +287,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
 }
 
 const SegaIDImportGuide: FC<{ region: 'intl' | 'jp' }> = ({ region }) => {
-  const { t } = useTranslation()
+  const locale = useLocale()
   const [expanded, setExpanded] = useState<string | false>(false)
   const aimeURL = region === 'jp' ? 'https://maimaidx.jp/maimai-mobile/' : 'https://maimaidx-eng.com/maimai-mobile/'
 
@@ -283,10 +297,10 @@ const SegaIDImportGuide: FC<{ region: 'intl' | 'jp' }> = ({ region }) => {
         <IconMdiHelpCircleOutline className="mt-0.5 h-5 w-5 shrink-0 text-accent-strong" />
         <div>
           <div className="font-semibold text-fg-1">
-            {t('rating-calculator:io.import.net-records.dialog.help.title')}
+            {m.ratingCalculator_io_import_netRecords_dialog_help_title({}, { locale })}
           </div>
           <div className="text-sm text-secondary">
-            {t('rating-calculator:io.import.net-records.dialog.help.description')}
+            {m.ratingCalculator_io_import_netRecords_dialog_help_description({}, { locale })}
           </div>
         </div>
       </div>
@@ -300,23 +314,23 @@ const SegaIDImportGuide: FC<{ region: 'intl' | 'jp' }> = ({ region }) => {
       >
         <AccordionSummary expandIcon={<IconMdiChevronDown />}>
           <Typography fontWeight={600} variant="body2">
-            {t('rating-calculator:io.import.net-records.dialog.help.register.title')}
+            {m.ratingCalculator_io_import_netRecords_dialog_help_register_title({}, { locale })}
           </Typography>
         </AccordionSummary>
         <AccordionDetails className="pt-0">
           <HelpSteps
             steps={[
-              t('rating-calculator:io.import.net-records.dialog.help.register.step1'),
-              t('rating-calculator:io.import.net-records.dialog.help.register.step2'),
-              t('rating-calculator:io.import.net-records.dialog.help.register.step3'),
+              m.ratingCalculator_io_import_netRecords_dialog_help_register_step1({}, { locale }),
+              m.ratingCalculator_io_import_netRecords_dialog_help_register_step2({}, { locale }),
+              m.ratingCalculator_io_import_netRecords_dialog_help_register_step3({}, { locale }),
             ]}
           />
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
             <MuiLink href="https://gw.sega.jp/gateway/create/create1.html" target="_blank" rel="noopener noreferrer">
-              {t('rating-calculator:io.import.net-records.dialog.help.links.sega-id')}
+              {m.ratingCalculator_io_import_netRecords_dialog_help_links_segaId({}, { locale })}
             </MuiLink>
             <MuiLink href={aimeURL} target="_blank" rel="noopener noreferrer">
-              {t('rating-calculator:io.import.net-records.dialog.help.links.aime')}
+              {m.ratingCalculator_io_import_netRecords_dialog_help_links_aime({}, { locale })}
             </MuiLink>
           </div>
         </AccordionDetails>
@@ -331,18 +345,18 @@ const SegaIDImportGuide: FC<{ region: 'intl' | 'jp' }> = ({ region }) => {
       >
         <AccordionSummary expandIcon={<IconMdiChevronDown />}>
           <Typography fontWeight={600} variant="body2">
-            {t('rating-calculator:io.import.net-records.dialog.help.oauth.title')}
+            {m.ratingCalculator_io_import_netRecords_dialog_help_oauth_title({}, { locale })}
           </Typography>
         </AccordionSummary>
         <AccordionDetails className="pt-0">
           <p className="mb-3 text-sm text-secondary">
-            {t('rating-calculator:io.import.net-records.dialog.help.oauth.description')}
+            {m.ratingCalculator_io_import_netRecords_dialog_help_oauth_description({}, { locale })}
           </p>
           <HelpSteps
             steps={[
-              t('rating-calculator:io.import.net-records.dialog.help.oauth.step1'),
-              t('rating-calculator:io.import.net-records.dialog.help.oauth.step2'),
-              t('rating-calculator:io.import.net-records.dialog.help.oauth.step3'),
+              m.ratingCalculator_io_import_netRecords_dialog_help_oauth_step1({}, { locale }),
+              m.ratingCalculator_io_import_netRecords_dialog_help_oauth_step2({}, { locale }),
+              m.ratingCalculator_io_import_netRecords_dialog_help_oauth_step3({}, { locale }),
             ]}
           />
         </AccordionDetails>

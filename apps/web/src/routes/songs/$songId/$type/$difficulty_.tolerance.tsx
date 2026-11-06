@@ -2,7 +2,7 @@ import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 import { getCatalogDocument } from '@/catalog/catalogSource'
 import { resolveSongRouteParam } from '@/catalog/songLookup'
 import { TolerancePage } from '@/pages/tools/TolerancePage'
-import { createServerI18n } from '@/setup/init-i18n'
+import { m } from '@/paraglide/messages'
 import { keepLocaleSearch } from '@/setup/locale'
 import { buildSheetToleranceSeo, formatSeoTitle, resolveSeoLocale } from '@/utils/seo'
 import { toToleranceSheet } from '../../../tools/tolerance'
@@ -31,7 +31,7 @@ export const Route = createFileRoute('/songs/$songId/$type/$difficulty_/toleranc
   head: ({ loaderData, match, matches }) => {
     const locale = resolveSeoLocale([match, ...matches])
     const sheet = loaderData?.sheet
-    if (!sheet) return { meta: [{ title: formatSeoTitle(createServerI18n(locale).t('song:not-found.title')) }] }
+    if (!sheet) return { meta: [{ title: formatSeoTitle(m.song_notFound_title({}, { locale })) }] }
 
     const seo = buildSheetToleranceSeo(locale, sheet)
     return {

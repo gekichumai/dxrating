@@ -1,5 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import toast from 'react-hot-toast'
+import { LocaleProvider, useSetLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 import { initI18n } from '@/setup/init-i18n'
 import { LoginForm } from '../LoginForm'
 
@@ -124,6 +127,35 @@ describe('LoginForm', () => {
       expect(isConditionalMediationAvailable).toHaveBeenCalledOnce()
       expect(passkeySignIn).toHaveBeenCalledWith({ autoFill: true })
     })
+  })
+
+  it('reports a conditional passkey sign-in in the language switched to while it was pending', async () => {
+    vi.stubGlobal('PublicKeyCredential', { isConditionalMediationAvailable: vi.fn().mockResolvedValue(true) })
+    let finish: (value: { error: null }) => void = () => {}
+    passkeySignIn.mockReturnValue(new Promise((resolve) => (finish = resolve)))
+    const SwitchToJapanese = () => {
+      const setLocale = useSetLocale()
+      return (
+        <button type="button" onClick={() => void setLocale('ja')}>
+          switch
+        </button>
+      )
+    }
+    render(
+      <LocaleProvider initialLocale="en">
+        <SwitchToJapanese />
+        <LoginForm />
+      </LocaleProvider>,
+    )
+    await waitFor(() => expect(passkeySignIn).toHaveBeenCalledWith({ autoFill: true }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'switch' }))
+    await screen.findByRole('button', { name: m.auth_form_continue({}, { locale: 'ja' }) })
+    finish({ error: null })
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(m.auth_login_toastSuccess({}, { locale: 'ja' })))
+    // Switching the language must not start another autofill request
+    expect(passkeySignIn).toHaveBeenCalledOnce()
   })
 
   it('keeps explicit passkey sign-in as a fallback', async () => {

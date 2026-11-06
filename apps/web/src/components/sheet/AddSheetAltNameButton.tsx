@@ -38,7 +38,15 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
       })
       setOpen(false)
       setNewAltName('')
-      mutate() // Trigger revalidation
+      // Show the new alias at once: the shared edge copy of the list can take a few minutes to include it
+      const created = { song_id: sheet.songId, name: newAltName.trim() }
+      void mutate(
+        (aliases) =>
+          aliases?.some((alias) => alias.song_id === created.song_id && alias.name === created.name)
+            ? aliases
+            : [...(aliases ?? []), created],
+        { revalidate: false },
+      )
     } catch (e: any) {
       captureAnalyticsEvent('sheet_alias_failed', {
         song_id: sheet.songId,

@@ -7,6 +7,7 @@ import { SheetImage } from '@/components/sheet/SheetListItem'
 import { SongBackLink } from '@/components/song/SongBackLink'
 import { SongChartsTable } from '@/components/song/hub/SongChartsTable'
 import { useSongSheets } from './useSongSheets'
+import { LinkBehavior } from '@/components/global/InternalLink'
 
 const routeApi = getRouteApi('/songs_/$songId')
 
