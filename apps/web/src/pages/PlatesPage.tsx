@@ -15,7 +15,6 @@ import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { ShareImageButton } from '@/components/global/ShareImageButton'
 import {
   buildPlatePageData,
-  DEFAULT_PLATE_REGION,
   evaluatePlatePage,
   groupPlateChartsByLevel,
   PLATE_REGIONS,
@@ -43,8 +42,9 @@ const useLocale = (): SupportedLocale => {
   return toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
 }
 
-const regionHref = (path: string, region: PlateRegion) =>
-  region === DEFAULT_PLATE_REGION ? path : `${path}?region=${region}`
+// Links within Plates always name their region, Japan included: a link without one follows the header's region (see
+// useFollowSiteRegion), so a deliberate Japan tab, card or breadcrumb would bounce back. Canonical URLs ignore it.
+const regionHref = (path: string, region: PlateRegion) => `${path}?region=${region}`
 
 /**
  * Keeps the page on the header's region. A URL that names a region (a tab click, a shared link) is kept on load; one
@@ -82,8 +82,7 @@ const useFollowSiteRegion = ({
     if (!target) return
     // Keeps the URL's other parameters, such as ?locale=
     const url = new URL(window.location.href)
-    if (target === DEFAULT_PLATE_REGION) url.searchParams.delete('region')
-    else url.searchParams.set('region', target)
+    url.searchParams.set('region', target)
     void router.navigate({ href: `${url.pathname}${url.search}${url.hash}`, replace: first })
   }, [siteRegion, region, explicit, available, router])
 }
