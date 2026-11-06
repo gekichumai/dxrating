@@ -534,7 +534,6 @@
     "auto-save.saved-records": "저장된 기록 ({{count}}개)",
     "quick-actions.title": "빠른 작업",
     "quick-actions.show-only-b50": "B50 항목만 표시",
-    "quick-actions.compact-mode": "간단히 표시",
     "table.no-entries": "아직 기록이 없습니다. 점수를 가져오거나 채보를 추가해 Rating을 계산하세요.",
     "table.headers.chart": "채보",
     "table.headers.included-in": "포함 대상",

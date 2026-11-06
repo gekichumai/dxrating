@@ -534,7 +534,6 @@
     "auto-save.saved-records": "已儲存的記錄（{{count}} 條）",
     "quick-actions.title": "快捷操作",
     "quick-actions.show-only-b50": "僅顯示 B50",
-    "quick-actions.compact-mode": "緊湊模式",
     "table.no-entries": "暫無記錄。請匯入成績或新增譜面來計算 Rating。",
     "table.headers.chart": "譜面",
     "table.headers.included-in": "收錄於",

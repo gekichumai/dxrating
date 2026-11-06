@@ -534,7 +534,6 @@
     "auto-save.saved-records": "已保存的记录（{{count}} 条）",
     "quick-actions.title": "快捷操作",
     "quick-actions.show-only-b50": "仅显示 B50",
-    "quick-actions.compact-mode": "紧凑模式",
     "table.no-entries": "暂无记录。请导入成绩或添加谱面来计算 Rating。",
     "table.headers.chart": "谱面",
     "table.headers.included-in": "收录于",
