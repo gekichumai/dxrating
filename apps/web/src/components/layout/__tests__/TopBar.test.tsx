@@ -187,6 +187,10 @@ describe('TopBar', () => {
     const community = screen.getByRole('button', { name: 'Community' }).closest('[data-sync-pill]')
     expect(community?.className).toContain('hidden')
     expect(community?.className).toContain('2xs:flex')
+    // From 375px up it stays one glyph: the brand discs and chevron never widen it while the sync pill is there
+    const communityButton = screen.getByRole('button', { name: 'Community' })
+    expect(communityButton.className).not.toContain('2xs:w-auto')
+    expect(communityButton.querySelector('[class*="2xs:flex"]')).toBeNull()
   })
 
   it('shows the sync status while a cloud save is active', () => {
