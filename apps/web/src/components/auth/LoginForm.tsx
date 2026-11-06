@@ -1,4 +1,5 @@
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
+import { useResolvedTheme } from '@/utils/useResolvedTheme'
 import { Alert, Button, Chip, CircularProgress, Divider, TextField } from '@mui/material'
 import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -48,6 +49,16 @@ export const LoginForm = ({
   const [error, setError] = useState<string | null>(null)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const turnstileRef = useRef<TurnstileInstance>(null)
+  const resolvedTheme = useResolvedTheme()
+  // A theme change recreates the Turnstile widget, and removing a widget fires no callback, so a token from the old
+  // widget would outlive it (and its expiry). Drop it whenever the widget's theme changes; submission waits for the
+  // replacement to succeed.
+  const turnstileTheme = resolvedTheme ?? 'auto'
+  const [tokenTheme, setTokenTheme] = useState(turnstileTheme)
+  if (tokenTheme !== turnstileTheme) {
+    setTokenTheme(turnstileTheme)
+    setTurnstileToken(null)
+  }
   const lastUsedMethod = authClient.getLastUsedLoginMethod() as AuthProvider | null
   const isLastUsed = (provider: AuthProvider) => lastUsedMethod === provider
 
@@ -298,7 +309,8 @@ export const LoginForm = ({
             siteKey={TURNSTILE_SITE_KEY}
             onSuccess={setTurnstileToken}
             onExpire={() => setTurnstileToken(null)}
-            options={{ size: 'flexible', theme: 'light', appearance: 'interaction-only' }}
+            // The widget's iframe takes a theme option rather than CSS: follow the page theme, OS preference until known
+            options={{ size: 'flexible', theme: turnstileTheme, appearance: 'interaction-only' }}
             style={{ borderRadius: 12, overflow: 'hidden' }}
           />
         )}
