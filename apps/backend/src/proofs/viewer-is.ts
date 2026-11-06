@@ -14,13 +14,21 @@ const ViewerIs = defineProof('ViewerIs')
 export interface ViewerIs<U> extends Proof<'ViewerIs', [U]> {}
 
 /**
- * The request's signed-in user, as `context.viewer`. The `#private` field makes it nominal: an object literal or a
+ * The request's signed-in user, as `context.viewer`. The `#id` private field makes it nominal: an object literal or a
  * spread copy (`{ ...viewer, id }`) is not a `SessionViewer`, and the class is exported as a type only, so the only
  * way to get one is `viewerFromSession`, which oxlint allows in app.ts alone (where the session is read).
  */
 class SessionViewer {
-  readonly #fromSession = true
-  constructor(readonly id: string) {}
+  // A true private field behind a getter, on a frozen instance: `Object.assign(viewer, { id })` or a write through
+  // a mutable alias throws instead of changing whose id `withViewer` proves.
+  readonly #id: string
+  constructor(id: string) {
+    this.#id = id
+    Object.freeze(this)
+  }
+  get id(): string {
+    return this.#id
+  }
 }
 export type { SessionViewer }
 

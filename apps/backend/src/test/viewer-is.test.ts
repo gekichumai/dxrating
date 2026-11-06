@@ -25,4 +25,14 @@ describe('ViewerIs', () => {
       ),
     ).toThrow('ViewerIs: this viewer was not named by withViewer')
   })
+
+  it('cannot have its id replaced after the session made it', () => {
+    const viewer = viewerFromSession(sessionUser)
+    expect(() => Object.assign(viewer, { id: 'someone-else' })).toThrow(TypeError)
+    const alias: { id: string } = viewer
+    expect(() => {
+      alias.id = 'someone-else'
+    }).toThrow(TypeError)
+    expect(withViewer(viewer, (named, proof) => viewerId(named, proof))).toBe('synthetic-viewer')
+  })
 })
