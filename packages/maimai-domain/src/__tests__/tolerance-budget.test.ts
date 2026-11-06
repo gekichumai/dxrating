@@ -91,4 +91,22 @@ describe('tolerance budget', () => {
     expect(perfect.inTapGreats).toBe(0)
     expect(byJudgement(perfect, 'break', 'perfect50')).toMatchObject({ soloMax: 0, soloAll: false })
   })
+
+  it('hand-checked: 10 TAP GREAT + 1 HOLD GOOD + 4 BREAK 50落 clears 100.5%, a second HOLD GOOD does not', () => {
+    // Lost base 10·100 + 1·500 = 1,500 → 0.352941%; lost bonus 4 · 0.25 / 20 = 0.05%
+    // 101 − 0.352941 − 0.05 = 100.597058 → the game shows 100.5970%, 0.097058% (4.12 TAP GREATs) left
+    const pass = evaluateBudget(counts, 100.5, { tap: { great: 10 }, hold: { good: 1 }, break: { perfect50: 4 } })
+    expect(pass.achievement).toBe(100.597)
+    expect(pass.pass).toBe(true)
+    expect(pass.remainingLoss / judgementLoss(counts, 'tap', 'great')).toBeCloseTo(4.125, 3)
+    expect(evaluateBudget(counts, 100.5, { tap: { great: 14 }, hold: { good: 1 }, break: { perfect50: 4 } }).pass).toBe(
+      true,
+    )
+    expect(evaluateBudget(counts, 100.5, { tap: { great: 15 }, hold: { good: 1 }, break: { perfect50: 4 } }).pass).toBe(
+      false,
+    )
+    const fail = evaluateBudget(counts, 100.5, { tap: { great: 10 }, hold: { good: 2 }, break: { perfect50: 4 } })
+    expect(fail.achievement).toBe(100.4794)
+    expect(fail.pass).toBe(false)
+  })
 })
