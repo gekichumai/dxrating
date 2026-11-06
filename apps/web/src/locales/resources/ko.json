@@ -809,7 +809,11 @@
     "index.level-count-single": "채보 {{count}}개 · {{value}}",
     "breadcrumb": "상수표",
     "breadcrumb-label": "이동 경로",
-    "chart-link": "Lv.{{level}} 상수표"
+    "chart-link": "Lv.{{level}} 상수표",
+    "view.label": "보기",
+    "view.grid": "재킷",
+    "view.table": "표",
+    "jump-label": "상수로 이동"
   },
   "rating-explainer": {
     "title": "maimai DX 레이팅 계산 방법",

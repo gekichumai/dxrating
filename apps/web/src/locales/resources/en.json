@@ -809,7 +809,11 @@
     "index.level-count-single": "{{count}} charts · {{value}}",
     "breadcrumb": "Internal level tables",
     "breadcrumb-label": "Breadcrumb",
-    "chart-link": "Lv.{{level}} internal level table"
+    "chart-link": "Lv.{{level}} internal level table",
+    "view.label": "View",
+    "view.grid": "Covers",
+    "view.table": "Table",
+    "jump-label": "Jump to an internal level"
   },
   "rating-explainer": {
     "title": "How maimai DX rating works",
