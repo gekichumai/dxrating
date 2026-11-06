@@ -5,6 +5,7 @@
     "pages.search.title": "Search charts",
     "pages.search.seo-title": "Charts & Songs",
     "pages.search.seo-description": "Browse all maimai DX charts by song title, artist, or difficulty. View internal levels, note counts, and detailed chart information.",
+    "pages.search.introduction": "DXRating is a maimai DX chart database and rating calculator. Search every song by title, artist, chart designer or alias, compare internal levels (chart constants), note counts and versions, then import your scores to follow your Best 50 rating.",
     "pages.recent.title": "New charts",
     "pages.recent.seo-title": "New charts",
     "pages.recent.seo-description": "Discover recently updated maimai DX chart pages on DXRating, excluding BASIC and ADVANCED charts.",

@@ -18,6 +18,7 @@ vi.mock('@tanstack/react-router', () => ({
       {children}
     </a>
   ),
+  useSearch: () => ({}),
 }))
 vi.mock('@/models/context/useAppContext', () => ({
   useAppContextDXDataVersion: () => 'PRiSM',

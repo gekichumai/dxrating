@@ -12,6 +12,7 @@ import { SongSheetTabs } from '../components/song/SongSheetTabs'
 import { constantTableLevelOf, constantTablePath } from '@/components/chartDiscovery/constantTables'
 import { versionPagePath, versionSlug } from '@/components/chartDiscovery/versionPages'
 import { useTranslation } from 'react-i18next'
+import { keepLocaleSearch, withLocaleQuery } from '@/setup/locale'
 import { buildSheetPath } from '../components/sheet/sheetLinks'
 import { getVisibleSongPageSheets } from './songPageSheets'
 import { useSongSheets } from './useSongSheets'
@@ -21,6 +22,9 @@ const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 
 export const SongPage: FC = () => {
   const { songId, type, difficulty } = routeApi.useParams()
+  // Switching charts stays on the URL's language variant (each `?locale=` variant is its own canonical page)
+  const search = routeApi.useSearch()
+  const localeSearch = keepLocaleSearch(search)
   const navigate = useNavigate()
   const { t } = useTranslation(['constants', 'versions', 'song'])
   const { song, flattenedSheets } = useSongSheets(songId)
@@ -48,6 +52,7 @@ export const SongPage: FC = () => {
         type: newType,
         difficulty: getHighestDifficulty(sheetsOfType),
       },
+      ...localeSearch,
     })
   }
 
@@ -59,6 +64,7 @@ export const SongPage: FC = () => {
         type: activeType,
         difficulty: newDifficulty,
       },
+      ...localeSearch,
     })
   }
 
@@ -95,11 +101,15 @@ export const SongPage: FC = () => {
           onTypeChange={handleTypeChange}
           onDifficultyChange={handleDifficultyChange}
           hrefFor={(sheetType, sheetDifficulty) =>
-            buildSheetPath({
-              songId,
-              type: sheetType,
-              difficulty: sheetDifficulty ?? getHighestDifficulty(flattenedSheets.filter((s) => s.type === sheetType)),
-            })
+            withLocaleQuery(
+              buildSheetPath({
+                songId,
+                type: sheetType,
+                difficulty:
+                  sheetDifficulty ?? getHighestDifficulty(flattenedSheets.filter((s) => s.type === sheetType)),
+              }),
+              search,
+            )
           }
         />
 
@@ -107,7 +117,7 @@ export const SongPage: FC = () => {
           <SongSheetSummary key={sheet.id} sheet={sheet} />
         ))}
 
-        <Link to="/songs/$songId" params={{ songId: song.id }} className="link self-start text-sm">
+        <Link to="/songs/$songId" params={{ songId: song.id }} {...localeSearch} className="link self-start text-sm">
           {t('song:hub.all-charts-link')}
           <span aria-hidden> →</span>
         </Link>
