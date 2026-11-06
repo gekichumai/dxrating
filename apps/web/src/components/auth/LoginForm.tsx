@@ -58,17 +58,19 @@ export const LoginForm = ({
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const turnstileRef = useRef<TurnstileInstance>(null)
   const resolvedTheme = useResolvedTheme()
-  // A theme change recreates the Turnstile widget, and removing a widget fires no callback, so a token from the old
-  // widget would outlive it (and its expiry). Drop it whenever the widget's theme changes; submission waits for the
-  // replacement to succeed.
   const turnstileTheme = resolvedTheme ?? 'auto'
-  const [tokenTheme, setTokenTheme] = useState(turnstileTheme)
-  if (tokenTheme !== turnstileTheme) {
-    setTokenTheme(turnstileTheme)
-    setTurnstileToken(null)
-  }
   // The flexible widget is at least 300px wide; below 360px viewports it would overflow the card, so use compact (150px)
   const turnstileCompact = useMediaQuery('(max-width: 359.98px)', { noSsr: true })
+  const turnstileSize = turnstileCompact ? 'compact' : 'flexible'
+  // A theme or size change recreates the Turnstile widget, and removing a widget fires no callback, so a token from the
+  // old widget would outlive it (and its expiry). Drop it whenever the widget is replaced; submission waits for the
+  // replacement to succeed.
+  const turnstileWidgetKey = `${turnstileTheme}-${turnstileSize}`
+  const [tokenWidgetKey, setTokenWidgetKey] = useState(turnstileWidgetKey)
+  if (tokenWidgetKey !== turnstileWidgetKey) {
+    setTokenWidgetKey(turnstileWidgetKey)
+    setTurnstileToken(null)
+  }
   const lastUsedMethod = authClient.getLastUsedLoginMethod() as AuthProvider | null
   const isLastUsed = (provider: AuthProvider) => lastUsedMethod === provider
 
@@ -332,7 +334,7 @@ export const LoginForm = ({
 
         {TURNSTILE_SITE_KEY && (
           <Turnstile
-            key={turnstileCompact ? 'compact' : 'flexible'}
+            key={turnstileWidgetKey}
             ref={turnstileRef}
             siteKey={TURNSTILE_SITE_KEY}
             onSuccess={(token) => {
@@ -342,7 +344,7 @@ export const LoginForm = ({
             }}
             onExpire={() => setTurnstileToken(null)}
             options={{
-              size: turnstileCompact ? 'compact' : 'flexible',
+              size: turnstileSize,
               // The widget's iframe takes a theme option rather than CSS: follow the page theme, OS preference until known
               theme: turnstileTheme,
               appearance: 'interaction-only',
