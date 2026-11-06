@@ -187,7 +187,7 @@ export const ImportFromLxnsButtonListItem: FC<{
   onClose: () => void
 }> = ({ onClose }) => {
   const { t } = useTranslation(['rating-calculator'])
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, openLoginDialog, LoginDialog } = useAuth()
   const [open, setOpen] = useState(false)
 
   const handleClose = () => {
@@ -197,10 +197,12 @@ export const ImportFromLxnsButtonListItem: FC<{
 
   return (
     <>
+      {/* Signed out, the item opens sign-in instead of being a dead end; the menu stays open, so the item is ready
+          to use once signed in */}
       <MenuItem
-        disabled={!isAuthenticated}
         onClick={() => {
-          setOpen(true)
+          if (isAuthenticated) setOpen(true)
+          else openLoginDialog()
         }}
       >
         <ListItemIcon>
@@ -220,6 +222,13 @@ export const ImportFromLxnsButtonListItem: FC<{
         />
       </MenuItem>
 
+      {/* The dialog is portalled, but its React events still bubble to the open import Menu, which closes on Tab
+          and would unmount the form mid-sign-in */}
+      {!isAuthenticated && (
+        <span className="contents" onKeyDown={(event) => event.stopPropagation()}>
+          <LoginDialog />
+        </span>
+      )}
       {open && (
         <Dialog open={open} onClose={handleClose}>
           <LxnsImportDialogContent onClose={handleClose} />
