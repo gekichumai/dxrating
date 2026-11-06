@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { SheetImage } from '@/components/sheet/SheetListItem'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { captureAnalyticsEvent } from '@/lib/analytics'
+import { plateRegionSearch } from '@/components/plates/plateData'
 import { HOME_FEATURES, type HomeFeatureId, type HomeRecentSong } from './homeModules'
 import { useHomeQuickStats } from './useHomeQuickStats'
 import IconMdiTrophyOutline from '~icons/mdi/trophy-outline'
@@ -69,19 +70,28 @@ const QuickStats: FC = () => {
             <span className="text-xl font-bold tabular-nums">{floor ?? '—'}</span>
           </MaterialSurface>
         </Link>
-        <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5">
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">{t('home:stats.nearest-plate')}</span>
-          {stats.nearestPlate ? (
-            <>
+        {stats.nearestPlate ? (
+          <Link
+            to="/plates/$plate"
+            params={{ plate: stats.nearestPlate.plate.id }}
+            search={plateRegionSearch(stats.nearestPlate.region)}
+            onClick={() => trackClick('quick_stats', 'nearest_plate')}
+            className="no-underline text-inherit"
+          >
+            <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5 transition hover:bg-white/70 dark:hover:bg-zinc-800/60">
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">{t('home:stats.nearest-plate')}</span>
               <span className="truncate text-xl font-bold">{plateName(stats.nearestPlate.plate, script)}</span>
               <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
                 {stats.nearestPlate.completedSheets} / {stats.nearestPlate.totalSheets}
               </span>
-            </>
-          ) : (
+            </MaterialSurface>
+          </Link>
+        ) : (
+          <MaterialSurface className="flex h-full flex-col gap-0.5 px-3 py-2.5">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">{t('home:stats.nearest-plate')}</span>
             <span className="text-xl font-bold">—</span>
-          )}
-        </MaterialSurface>
+          </MaterialSurface>
+        )}
       </div>
     </section>
   )

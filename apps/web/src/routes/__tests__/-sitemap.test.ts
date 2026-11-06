@@ -61,3 +61,11 @@ describe('buildSitemap', () => {
     expect(sitemap).not.toContain('<lastmod>undefined</lastmod>')
   })
 })
+describe('buildSitemap plates', () => {
+  it('lists the plate index and plate pages with hreflang alternates', () => {
+    const sitemap = buildSitemap([])
+    expect(sitemap).toContain('<loc>https://dxrating.net/plates</loc>')
+    expect(sitemap).toContain('<loc>https://dxrating.net/plates/kagami-shin</loc>')
+    expect(sitemap).not.toContain('/plates/shin-ver-sho<')
+  })
+})
