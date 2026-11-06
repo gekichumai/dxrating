@@ -275,6 +275,8 @@ export class CloudScoreRepository implements WebScoreRepository {
   private queue: Promise<unknown> = Promise.resolve()
   private running: Promise<void> | null = null
   private rerun = false
+  /** This cycle acknowledged an outbox entry or pulled a record: only then does it tell the other tabs */
+  private cycleChanged = false
   private failures = 0
   /** The last failure was a 429: its wait is honoured even when the page comes back online */
   private rateLimited = false
@@ -898,6 +900,7 @@ export class CloudScoreRepository implements WebScoreRepository {
 
   private async runCycle() {
     this.setState('syncing')
+    this.cycleChanged = false
     try {
       // Changes other tabs made since the last broadcast
       await this.reload()
@@ -911,7 +914,9 @@ export class CloudScoreRepository implements WebScoreRepository {
       this.failures = 0
       this.rateLimited = false
       this.setState('idle')
-      this.broadcast()
+      // An unchanged cycle stays quiet: its broadcast would make a syncing peer run once more, and two tabs would
+      // keep each other syncing (without Web Locks) though nothing changes
+      if (this.cycleChanged) this.broadcast()
     } catch (error) {
       this.handleFailure(error)
     } finally {
@@ -990,7 +995,7 @@ export class CloudScoreRepository implements WebScoreRepository {
       const results = new Map(response.results.map((result) => [result.mutationId, result]))
 
       const putRecords: RecordDTO[] = []
-      const putIssues: SyncIssue[] = []
+      const issues: SyncIssue[] = []
       const acknowledged: string[] = []
       for (const entry of batch) {
         const result = results.get(entry.mutationId)
@@ -1002,14 +1007,30 @@ export class CloudScoreRepository implements WebScoreRepository {
           upsertNewer(this.serverRecords, result.record)
         }
         if (result.status === 'superseded' || result.status === 'rejected') {
-          putIssues.push(issueOf(entry, result.status, result.reason))
+          issues.push(issueOf(entry, result.status, result.reason))
         }
       }
 
       const done = new Set(acknowledged)
+      if (done.size > 0) this.cycleChanged = true
       this.outbox = this.outbox.filter((entry) => !done.has(entry.mutationId))
-      this.issues = [...this.issues, ...putIssues]
-      await this.persist((database) => database.write({ putRecords, putIssues, deleteOutbox: acknowledged }))
+      const written = await this.persist(async (database) => {
+        // Run in the write queue, so a write of this tab's unsaved entries has landed or not started. An entry only
+        // this tab holds gets its issue as is (and is never written to the outbox now); a stored entry gets it only
+        // if this transaction removes it, so a duplicate acknowledgement of an entry another tab also sent cannot
+        // bring back an issue that tab's user dismissed or applied again
+        const ownIssues = issues.filter((issue) => this.unsaved.has(issue.id))
+        const sharedIssues = issues.filter((issue) => !this.unsaved.has(issue.id))
+        for (const mutationId of acknowledged) this.unsaved.delete(mutationId)
+        const { acknowledgedIssues } = await database.write({
+          putRecords,
+          putIssues: ownIssues,
+          acknowledgeIssues: sharedIssues,
+          deleteOutbox: acknowledged,
+        })
+        return [...ownIssues, ...acknowledgedIssues]
+      })
+      this.issues = [...this.issues, ...written]
       this.refresh()
     }
   }
@@ -1052,6 +1073,7 @@ export class CloudScoreRepository implements WebScoreRepository {
       })
       if (page.resetRequired) return { kind: 'reset' }
       for (const record of page.records) upsertNewer(this.serverRecords, record)
+      if (page.records.length > 0) this.cycleChanged = true
       const advanced = page.nextSince > cursor
       cursor = Math.max(cursor, page.nextSince)
       this.meta = { saveId: this.saveId, lastSyncedRevision: cursor }
@@ -1100,6 +1122,9 @@ export class CloudScoreRepository implements WebScoreRepository {
         continue
       }
 
+      if (cursor !== this.meta.lastSyncedRevision || !sameRevisions(this.serverRecords, collected)) {
+        this.cycleChanged = true
+      }
       this.serverRecords = collected
       this.meta = { saveId: this.saveId, lastSyncedRevision: cursor }
       const meta = this.meta
@@ -1137,8 +1162,10 @@ export class CloudScoreRepository implements WebScoreRepository {
       saveId: this.saveId,
       op: change.op,
       sheetId: change.sheetId,
-      // The revision of the record as the user saw it: the server rebases on it (§5.4)
-      basedOnRevision: this.serverRecords.get(change.sheetId)?.revision ?? 0,
+      // The revision of the record as the user saw it, from the published view: the server rebases on it (§5.4).
+      // Not `serverRecords`, which a multi-page pull advances before the view shows the new pages: a baseline the
+      // user never saw would let a stale edit overwrite a newer verified record without a `superseded` issue
+      basedOnRevision: this.view.get(change.sheetId)?.revision ?? 0,
       ...(change.op === 'set' ? { value: change.value } : {}),
       entryMethod: change.entryMethod,
       clientEditedAt,
@@ -1168,7 +1195,7 @@ export class CloudScoreRepository implements WebScoreRepository {
       const pending = [...this.unsaved.values()]
       const deleteIssues = [...this.unsavedIssueDeletions]
       if (pending.length === 0 && deleteIssues.length === 0) return
-      const added = await database.write({ addOutbox: pending, deleteIssues })
+      const { added } = await database.write({ addOutbox: pending, deleteIssues })
       for (const entry of pending) this.unsaved.delete(entry.mutationId)
       for (const issueId of deleteIssues) this.unsavedIssueDeletions.delete(issueId)
       // Keep the creation order IndexedDB assigned, so a reload sorts them the same way
@@ -1348,6 +1375,15 @@ async function serverImportIdentity<K extends ServerImportKind>(
 type PendingChange =
   | { op: 'set'; sheetId: string; value: NonNullable<OutboxEntry['value']>; entryMethod: ManualEntryMethod }
   | { op: 'delete'; sheetId: string; entryMethod: ManualEntryMethod }
+
+/** Whether two sets of server records hold the same charts at the same revisions (a revision names one value) */
+function sameRevisions(a: ReadonlyMap<string, RecordDTO>, b: ReadonlyMap<string, RecordDTO>): boolean {
+  if (a.size !== b.size) return false
+  for (const [sheetId, record] of a) {
+    if (b.get(sheetId)?.revision !== record.revision) return false
+  }
+  return true
+}
 
 function toWireMutation(entry: OutboxEntry): MutationItemInput {
   return {

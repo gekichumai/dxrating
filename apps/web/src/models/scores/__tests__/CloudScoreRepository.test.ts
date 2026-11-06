@@ -1069,3 +1069,152 @@ describe('CloudScoreRepository', () => {
     expect(server.changesCalls).toHaveLength(2)
   })
 })
+
+describe('CloudScoreRepository under concurrent tabs and slow pulls', () => {
+  /** A promise and its resolver */
+  const gate = () => {
+    let release!: () => void
+    const promise = new Promise<void>((resolve) => (release = resolve))
+    return { promise, release }
+  }
+
+  it('bases an edit on the record the user sees while later pages of a pull are still loading', async () => {
+    server.put(SHEET_A, 990000)
+    const held = gate()
+    const reached = gate()
+    let holdSince: number | null = null
+    const repository = await openRepository({
+      api: {
+        mutate: server.api.mutate,
+        changes: async (input) => {
+          if (input.since === holdSince) {
+            reached.release()
+            await held.promise
+          }
+          return server.api.changes(input)
+        },
+      },
+    })
+    await repository.sync()
+    expect(repository.status.lastSyncedRevision).toBe(1)
+
+    // The server now has a verified 100% for A (revision 2) and another record (revision 3), one per page
+    server.put(SHEET_A, 1000000, verifiedProvenance())
+    server.put(SHEET_B, 990000)
+    server.pageSize = 1
+    holdSince = 2
+    const syncing = repository.sync()
+    await reached.promise
+    // The first page is in, but the view still shows what the user saw: 99%
+    expect(repository.entries()).toEqual([expect.objectContaining({ sheetId: SHEET_A, achievementRate: 99 })])
+    repository.setManual({ sheetId: SHEET_A, achievementRate: 98 }, 'typed')
+    held.release()
+    await syncing
+    await repository.sync()
+
+    // Based on the 99% the user saw (revision 1): the server keeps the verified 100% and the edit becomes an issue
+    expect(server.mutateCalls.flat()[0]).toMatchObject({ sheetId: SHEET_A, basedOnRevision: 1 })
+    expect(server.records.get(SHEET_A)!.achievement).toBe(1000000)
+    expect(repository.status.issues).toEqual([expect.objectContaining({ sheetId: SHEET_A, kind: 'superseded' })])
+  })
+
+  it('never brings back a dismissed issue from a late duplicate acknowledgement of a shared outbox entry', async () => {
+    server.put(SHEET_A, 990000)
+    const held = gate()
+    const reached = gate()
+    let holdMutate = false
+    const tabA = await openRepository({
+      api: {
+        changes: server.api.changes,
+        mutate: async (input) => {
+          const result = await server.api.mutate(input)
+          if (holdMutate) {
+            reached.release()
+            await held.promise
+          }
+          return result
+        },
+      },
+    })
+    await tabA.sync()
+    tabA.setManual({ sheetId: SHEET_A, achievementRate: 98 }, 'typed')
+    // A verified record lands first: the edit is superseded
+    server.put(SHEET_A, 1000000, verifiedProvenance())
+    holdMutate = true
+    const tabASync = tabA.sync()
+    await reached.promise
+
+    // Tab B sends the same (shared) outbox entry, gets the issue and the user dismisses it
+    const tabB = await openRepository()
+    await tabB.sync()
+    expect(tabB.status.issues).toHaveLength(1)
+    tabB.dismissIssue(tabB.status.issues[0]!.id)
+    await tabB.sync()
+    expect(tabB.status.issues).toHaveLength(0)
+
+    // Tab A's answer arrives late: the entry is gone, so its issue is not written again
+    held.release()
+    await tabASync
+    expect(tabA.status.issues).toHaveLength(0)
+    const reopened = await openRepository()
+    expect(reopened.status.issues).toHaveLength(0)
+  })
+
+  it('lets two tabs without Web Locks go quiet once nothing changes', async () => {
+    const channels: ScoreBroadcastChannel[] = []
+    const createChannel = (): ScoreBroadcastChannel => {
+      const channel: ScoreBroadcastChannel = {
+        onmessage: null,
+        // Delivered later, as a real BroadcastChannel does
+        postMessage(message) {
+          for (const peer of channels) {
+            if (peer !== channel) setTimeout(() => peer.onmessage?.({ data: message } as MessageEvent), 0)
+          }
+        },
+        close() {
+          channels.splice(channels.indexOf(channel), 1)
+        },
+      }
+      channels.push(channel)
+      return channel
+    }
+    // Every pull waits until the test lets it through, one at a time
+    const waiting: (() => void)[] = []
+    let pulls = 0
+    const api = {
+      mutate: server.api.mutate,
+      changes: async (input: Parameters<typeof server.api.changes>[0]) => {
+        pulls++
+        await new Promise<void>((resolve) => waiting.push(resolve))
+        return server.api.changes(input)
+      },
+    }
+    const tabA = await openRepository({ api, createChannel })
+    const tabB = await openRepository({ api, createChannel })
+    tabA.start()
+    tabB.start()
+    // Both tabs sync, and each is asked once more while its pull waits
+    void tabA.sync()
+    void tabB.sync()
+    void tabA.sync()
+    void tabB.sync()
+
+    const nextPull = async () => {
+      for (let i = 0; i < 20; i++) {
+        if (waiting.length > 0) return waiting.shift()!
+        await new Promise((resolve) => setTimeout(resolve, 5))
+      }
+      return null
+    }
+    let released = 0
+    for (; released < 20; released++) {
+      const release = await nextPull()
+      if (!release) break
+      release()
+    }
+    // Two cycles each at most (the first and the one asked for); no pull answered after that asks for another
+    expect(released).toBeLessThanOrEqual(4)
+    expect(pulls).toBe(released)
+    await Promise.all([tabA.idle(), tabB.idle()])
+  })
+})
