@@ -8,7 +8,9 @@ import { SongHubPage } from '../SongHubPage'
 const routeState = vi.hoisted(() => ({ params: { songId: 'dsng_d3kkdkrcqj' } }))
 
 vi.mock('@tanstack/react-router', () => ({
-  getRouteApi: () => ({ useParams: () => routeState.params }),
+  getRouteApi: () => ({ useParams: () => routeState.params, useSearch: () => ({}) }),
+  useCanGoBack: () => false,
+  useRouter: () => ({ history: { back: vi.fn() }, navigate: vi.fn() }),
 }))
 
 vi.mock('@/models/context/useAppContext', () => ({

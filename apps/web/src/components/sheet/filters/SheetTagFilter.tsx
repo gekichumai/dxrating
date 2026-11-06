@@ -74,7 +74,7 @@ const SheetTagFilterInputTag = ({
         label={count}
         color="default"
         size="small"
-        className="!rounded-r-lg !rounded-l-none transition leading-none tabular-nums !bg-black/10"
+        className="!rounded-r-lg !rounded-l-none transition leading-none num !bg-black/10"
       />
     </ButtonBase>
   )

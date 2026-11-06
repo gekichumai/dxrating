@@ -6,9 +6,12 @@ import { cors } from 'hono/cors'
 import { etag, RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
 import { Authentication } from './auth'
+import { viewerFromSession } from './proofs/viewer-is'
 import { Data, Effect, Option } from 'effect'
 import { HttpBody } from 'effect/http'
 import { appRuntime, runApp, superviseApp } from './runtime'
+import { refuseWhileDraining } from './lifecycle'
+import { ClientClosedRequestError, isExpectedRequestEnd } from './request-runner'
 import { HttpClient } from './services/http-client'
 import { getBuildInfo } from './version'
 import type { SongCatalogSource } from '@gekichumai/maimai-domain'
@@ -21,7 +24,6 @@ import { evlog, type EvlogVariables } from 'evlog/hono'
 import type { MiddlewareHandler } from 'hono'
 import { drain } from './logger'
 import { appRouter, type ApiContext } from './router'
-import { exchangeCodeForTokens } from './services/lxns/index'
 import { AppConfig } from './config'
 import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { COMMON_ERROR_STATUS_MAP, OpenAPIGenerator } from '@orpc/openapi'
@@ -167,6 +169,18 @@ const setApiCatalogHeaders = (c: Context) => {
   )
 }
 
+/**
+ * A request that ended because the client closed the connection (nobody reads this response; 499 is nginx's code
+ * for it) or because the server is shutting down (503, so the proxy retries elsewhere). Logged at info, not sent to
+ * Sentry: neither is a server fault.
+ */
+const expectedRequestEnd = (c: Context, error: Error) => {
+  c.get('log')?.info({ request_end: error.name })
+  if (error instanceof ClientClosedRequestError) return c.body(null, 499 as 400)
+  c.header('Connection', 'close')
+  return c.json({ status: 'shutting_down' }, 503)
+}
+
 // Error handler
 app.onError((err, c) => {
   const log = c.get('log')
@@ -175,6 +189,9 @@ app.onError((err, c) => {
   if (err instanceof z.ZodError) {
     return c.json({ error: 'Validation error', details: err.issues, requestId }, 400)
   }
+
+  // The client left before the response finished, or shutdown stopped the request: expected, not reported.
+  if (isExpectedRequestEnd(err)) return expectedRequestEnd(c, err)
 
   log?.error(err)
   Sentry.captureException(err, { tags: { requestId } })
@@ -213,6 +230,9 @@ const apiCors = cors({
 
 const publicStaticCatalogCors = cors(DXDATA_CORS_OPTIONS)
 const mcpCors = cors(MCP_CORS_OPTIONS)
+
+// While the server drains on shutdown, readiness (/health) fails and new requests are refused; in-flight ones finish.
+app.use('*', refuseWhileDraining)
 
 // Static catalog responses are credential-independent, allowing one public
 // representation per URL to be safely shared by browsers and the CDN. The MCP
@@ -537,15 +557,9 @@ app.get('/api/v1/io/import/lxns/oauth_callback', (c) =>
       if (error || !code || !state) {
         return c.redirect(`${frontendCallback}?status=error&error=${encodeURIComponent(error || 'missing_params')}`)
       }
-      return yield* exchangeCodeForTokens(code, state).pipe(
-        Effect.map(() => c.redirect(`${frontendCallback}?status=success`)),
-        Effect.catch((error) =>
-          Effect.sync(() => {
-            c.get('log')?.error(error)
-            return c.redirect(`${frontendCallback}?status=error&error=exchange_failed`)
-          }),
-        ),
-      )
+      // Completing needs the session of the user who started the authorization, which this redirect from LXNS may
+      // not carry (the iOS app signs in with its own cookie store). The web page or the app calls lxns.complete.
+      return c.redirect(`${frontendCallback}?${new URLSearchParams({ code, state }).toString()}`)
     }),
     { signal: c.req.raw.signal },
   ),
@@ -690,6 +704,7 @@ const arcadeVenuesEtag = createMiddleware((c, next) =>
 // compatibility requests still receive validators, while the CDN Cache Rule
 // only marks the canonical query-less catalog eligible for edge storage.
 const reportApiError = (c: Context, error: unknown) => {
+  if (isExpectedRequestEnd(error)) return expectedRequestEnd(c, error as Error)
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
   log?.error(error instanceof Error ? error : new Error(String(error)))
@@ -757,6 +772,7 @@ app.all('/api/v1/*', (c) =>
               'effect/context': effectContext,
               'effect/wrap': superviseApi,
               user: session?.user,
+              viewer: session?.user ? viewerFromSession(session.user) : undefined,
               signal: c.req.raw.signal,
             },
           }),

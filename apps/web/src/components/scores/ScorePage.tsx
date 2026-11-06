@@ -6,15 +6,18 @@ import { DIFFICULTIES } from '@/models/difficulties'
 
 /**
  * Shared frame for the score-derived pages (top records, level progress, rating boosts, random chart), so they line
- * up at the same width, gutter and heading position, and show empty and demo states the same way. `wide` is for
- * tables that gain columns on desktop. On desktop the top padding matches `flex-container` (py-4), so the heading
- * sits at the same height as on the chart list pages.
+ * up at the same width, gutter and heading position, and show empty and demo states the same way. On desktop the top
+ * padding matches `flex-container` (py-4), so the heading sits at the same height as on the chart list pages.
+ *
+ * `me` is the one width for every `/me/*` page (records, progress, recommend), so moving between them never shifts
+ * the content: a readable column on tablets, where the records list is still cards, and from `lg` the site's
+ * `page-max-width` (uno.config.ts), the width the header, /rating and /plates use, so the heading lines up with the
+ * header logo. Every new `/me` page uses it; do not give one its own width.
  */
 const FRAME_WIDTHS = {
   '3xl': 'max-w-3xl',
   '5xl': 'max-w-5xl',
-  '6xl': 'max-w-6xl',
-  wide: 'max-w-3xl lg:max-w-6xl',
+  me: 'max-lg:max-w-3xl page-max-width',
 } as const
 
 export const ScorePageFrame: FC<{ width?: keyof typeof FRAME_WIDTHS; children: ReactNode }> = ({

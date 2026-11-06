@@ -101,7 +101,7 @@ export const RecommendPage: FC = () => {
   }, [result])
 
   return (
-    <ScorePageFrame width="6xl">
+    <ScorePageFrame width="me">
       <ScorePageHeader title={t('recommend:title')} description={t('recommend:description')}>
         {isDemo && <DemoScoresNotice className="mt-3">{t('recommend:demo')}</DemoScoresNotice>}
       </ScorePageHeader>
@@ -142,7 +142,7 @@ export const RecommendPage: FC = () => {
 const Stat: FC<{ label: string; value: number }> = ({ label, value }) => (
   <div className="flex flex-col gap-0.5 lg:flex-row lg:items-baseline lg:gap-2">
     <dt className="text-xs leading-tight text-fg-2 text-balance">{label}</dt>
-    <dd className="m-0 text-xl font-semibold num text-fg-1 lg:text-lg">{value}</dd>
+    <dd className="m-0 text-xl font-semibold display-num text-fg-1 lg:text-lg">{value}</dd>
   </div>
 )
 

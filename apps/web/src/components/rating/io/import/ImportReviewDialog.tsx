@@ -137,7 +137,7 @@ export const ImportReviewDialog: FC<ImportReviewDialogProps> = ({ plan, trigger,
                 </dt>
                 <dd
                   className={clsx(
-                    'num text-xl font-semibold leading-tight',
+                    'display-num text-xl font-semibold leading-tight',
                     tone === 'danger' ? 'text-danger' : tone === 'warning' ? 'text-status-warning' : 'text-fg-1',
                   )}
                 >

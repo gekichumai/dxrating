@@ -15,6 +15,7 @@ import {
 import { appendVaryHeader, detectServerLocale } from './setup/locale'
 import { trailingSlashRedirect } from './setup/trailing-slash'
 import { finishServerTimingSpan, setServerTimingHeader, startServerTimingSpan } from './setup/server-timing'
+import { sentryScrubOptions } from './lib/sentryScrub'
 
 type WorkerExecutionContext = { waitUntil(promise: Promise<unknown>): void }
 
@@ -79,11 +80,14 @@ const requestHandler: ServerEntry = wrapFetchWithSentry({
 export default Sentry.withSentry(
   () => ({
     dsn: 'https://9346c04036724f129e00a750c8ab9415@o4506648698683392.ingest.us.sentry.io/4511398317064192',
-    // The Vite plugin injects the same release used for artifact uploads.
-    release: (globalThis as { SENTRY_RELEASE?: { id?: string } }).SENTRY_RELEASE?.id,
+    // The same release the Vite plugin uses for artifact uploads (see vite.config.ts)
+    release: import.meta.env.VITE_SENTRY_RELEASE || undefined,
     environment: import.meta.env.VITE_SENTRY_ENVIRONMENT ?? 'development',
-    enabled: import.meta.env.PROD,
+    // Off unless this is a CI release or preview build (see src/setup/sentry-release.ts), so local runs send nothing
+    enabled: Boolean(import.meta.env.VITE_SENTRY_RELEASE),
     tracesSampleRate: 0.2,
+    // OAuth callbacks carry one-time code and state in the query
+    ...sentryScrubOptions,
   }),
   // The TanStack entry is not typed as a Cloudflare ExportedHandler, but it receives (request, env, ctx).
   createServerEntry(requestHandler) as unknown as Parameters<typeof Sentry.withSentry>[1],

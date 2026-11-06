@@ -287,7 +287,7 @@ const BudgetPanel: FC<{
     <MaterialSurface variant="thin" className="flex flex-col gap-2 p-3">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
         <span className="text-xs font-semibold text-secondary">{t('tools:tolerance.budget.label')}</span>
-        <span className="text-2xl font-bold num leading-tight">{allowed}%</span>
+        <span className="text-2xl font-bold display-num leading-tight">{allowed}%</span>
         <span className="text-sm num">{t('tools:tolerance.budget.in-greats', { value: allowedInGreats })}</span>
       </div>
       <div

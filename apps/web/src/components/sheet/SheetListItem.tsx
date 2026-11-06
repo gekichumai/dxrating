@@ -18,7 +18,8 @@ import MdiComment from '~icons/mdi/comment'
 import MdiContentCopy from '~icons/mdi/content-copy'
 import MdiLock from '~icons/mdi/lock'
 import MdiTrashCan from '~icons/mdi/trash-can'
-import { DIFFICULTIES } from '../../models/difficulties'
+import { DIFFICULTIES, DIFFICULTY_SHORT_TITLES } from '../../models/difficulties'
+import { FixedWidthText } from '../global/FixedWidthText'
 import { captureAnalyticsEvent, type SheetViewSource } from '../../lib/analytics'
 import type { FlattenedSheet } from '../../songs'
 import { FadedImage } from '../global/FadedImage'
@@ -171,7 +172,7 @@ export const SheetListItemContentView: FC<SheetListItemContentViewProps> = memo(
     return (
       <div
         className={clsx(
-          'flex items-center w-full p-1 gap-2 tabular-nums relative',
+          'flex items-center w-full p-1 gap-2 num relative',
           // From lg a table row is one 56px line of columns. ListItemText and the summary dissolve (display: contents),
           // so the title, artist, version and badges become the grid's cells
           isTable && [SHEET_TABLE_ROW_COLUMNS, 'lg:h-14 lg:py-0'],
@@ -207,7 +208,7 @@ export const SheetListItemContentView: FC<SheetListItemContentViewProps> = memo(
           )}
         >
           {isTypeUtage ? (
-            <span className="font-semibold tabular-nums text-lg text-fg-2">{level}</span>
+            <span className="font-semibold num text-lg text-fg-2">{level}</span>
           ) : (
             <SheetInternalLevelValue value={internalLevelValue} />
           )}
@@ -268,13 +269,18 @@ const SheetInternalLevelValue: FC<{ value: number }> = ({ value }) => {
   const decimalPart = value - wholePart
 
   return (
-    <div className="font-semibold tabular-nums">
+    <div className="font-semibold num">
       <span className="text-lg text-fg-2">{wholePart}.</span>
       <span className="text-xl text-fg-1">{decimalPart.toFixed(1).split('.')[1]}</span>
     </div>
   )
 }
 
+/**
+ * The difficulty on its solid colour, one width in every row: the lock or trash icon slot plus the longest short name
+ * (BAS … Re:MAS). A row without an icon centres its name across the whole pill, so locked, unavailable and playable
+ * charts all line up. The full name is in the title and read to screen readers.
+ */
 export const SheetDifficulty: FC<{
   difficulty?: DifficultyEnum
   serverIds?: readonly ServerEnum[]
@@ -283,35 +289,42 @@ export const SheetDifficulty: FC<{
   const { t } = useTranslation(['sheet'])
   const difficultyConfig = difficulty ? DIFFICULTIES[difficulty] : undefined
   const allUnavailable = (serverIds ?? []).length === 0
+  if (!difficultyConfig) return null
+  const Icon = allUnavailable ? MdiTrashCan : isLocked ? MdiLock : null
   // The `solid` role carries white text at 4.5:1 or more; the brand colour itself only passes for MASTER
-  return difficultyConfig ? (
+  return (
     <span
-      className="rounded-[var(--radius-sm)] px-2 text-sm font-semibold shadow-[0_1px_0_0_rgb(0_0_0/0.15)] leading-relaxed text-white inline-flex items-center"
+      className="inline-grid shrink-0 grid-cols-[1rem_auto] items-center gap-x-1 rounded-[var(--radius-sm)] px-1.5 text-sm font-semibold shadow-[0_1px_0_0_rgb(0_0_0/0.15)] leading-relaxed text-white"
       style={{ backgroundColor: difficultyConfig.solid }}
+      title={difficultyConfig.title}
     >
-      {allUnavailable && (
-        <>
-          <MdiTrashCan
-            aria-hidden="true"
-            className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-[#fff] rounded-full"
-            style={{ color: difficultyConfig.solid }}
-          />
-          <span className="sr-only">{t('sheet:badge.unavailable')}</span>
-        </>
+      {Icon && (
+        <Icon
+          aria-hidden="true"
+          className="col-start-1 row-start-1 h-4 w-4 p-0.5 bg-[#fff] rounded-full"
+          style={{ color: difficultyConfig.solid }}
+        />
       )}
-      {isLocked && (
-        <>
-          <MdiLock
-            aria-hidden="true"
-            className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-[#fff] rounded-full"
-            style={{ color: difficultyConfig.solid }}
-          />
-          <span className="sr-only">{t('sheet:badge.locked')}</span>
-        </>
+      {/* Sizes the name column in every row; it is the visible name only next to an icon */}
+      <FixedWidthText
+        text={difficultyConfig.shortTitle}
+        sizers={DIFFICULTY_SHORT_TITLES}
+        hidden={!Icon}
+        className="col-start-2 row-start-1 justify-items-center"
+        aria-hidden
+      />
+      {!Icon && (
+        <span aria-hidden className="col-span-2 col-start-1 row-start-1 text-center">
+          {difficultyConfig.shortTitle}
+        </span>
       )}
-      {difficultyConfig.title}
+      <span className="sr-only">
+        {difficultyConfig.title}
+        {allUnavailable && ` ${t('sheet:badge.unavailable')}`}
+        {isLocked && ` ${t('sheet:badge.locked')}`}
+      </span>
     </span>
-  ) : null
+  )
 }
 
 const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({ type, difficulty }) => {

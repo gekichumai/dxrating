@@ -2,6 +2,7 @@ import { Experimental_CssVarsProvider as CssVarsProvider } from '@mui/material/s
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { THEME_ATTRIBUTE, THEME_MODE_STORAGE_KEY } from '@/setup/theme-script'
 import { DisplayPreferencesMenu, ThemeSelector } from '../ThemeSelector'
 
@@ -9,7 +10,7 @@ vi.mock('@/lib/analytics', () => ({ captureAnalyticsEvent: vi.fn() }))
 
 const Providers = ({ children }: { children: ReactNode }) => (
   <CssVarsProvider attribute={THEME_ATTRIBUTE} modeStorageKey={THEME_MODE_STORAGE_KEY} defaultMode="system">
-    {children}
+    <LocaleProvider initialLocale="en">{children}</LocaleProvider>
   </CssVarsProvider>
 )
 

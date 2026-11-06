@@ -49,6 +49,7 @@ import {
   type SyncFlag,
 } from '../components/rating/RatingCalculatorAddEntryForm'
 import { RatingCalculatorStatistics } from '../components/rating/RatingCalculatorStatistics'
+import { RATING_ADD_ENTRY_ID, RatingOnboarding } from '../components/rating/RatingOnboarding'
 import { ClearButton } from '../components/rating/io/ClearButton'
 import { ExportMenu } from '../components/rating/io/ExportMenu'
 import { NetImportSettingsButton } from '../components/rating/io/import/NetImportSettingsButton'
@@ -191,6 +192,20 @@ export const RatingCalculator = () => {
 
   if (!sheets) return null
 
+  // No saved record at all: one onboarding panel and the add form, without the zero-filled statistics or the export,
+  // delete and view controls, which need records. Everything comes back with the first record.
+  if (entries.length === 0 && allEntries.length === 0) {
+    return (
+      <div className="rating-calculator rating-calculator--empty page-gutter py-4 pb-global">
+        <RatingOnboarding />
+        <ImportUndoBanner />
+        <div id={RATING_ADD_ENTRY_ID} className="glass rating-records w-full">
+          <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="rating-calculator flex-container w-full pb-global">
       <div className="rating-overview">
@@ -266,7 +281,8 @@ export const RatingCalculator = () => {
           </Alert>
         )}
         <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
-        {/* With no records, the column headers would only frame an empty table */}
+        {/* Saved records whose charts the catalog no longer has resolve to no rows; the column headers would only
+            frame an empty table */}
         {allEntries.length > 0 ? (
           <RatingCalculatorTableContent showOnlyB50={showOnlyB50} />
         ) : (
@@ -437,7 +453,7 @@ function RatingCalculatorTableBody({ ref, ...props }: TableBodyProps & { ref?: R
 }
 
 const RatingCalculatorTableRow: FC<ItemProps<Row<Entry>>> = ({ item, ...props }) => (
-  <TableRow {...props} className="rating-table-row tabular-nums" data-bucket={item.original.includedIn ?? 'none'} />
+  <TableRow {...props} className="rating-table-row num" data-bucket={item.original.includedIn ?? 'none'} />
 )
 
 function RatingCalculatorScroller({ ref, ...props }: ScrollerProps & { ref?: React.Ref<HTMLDivElement> }) {

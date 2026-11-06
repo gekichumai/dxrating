@@ -10,8 +10,11 @@
     "deploy": "wrangler deploy",
     "cf-typegen": "wrangler types",
     "test": "vitest",
+    "search:eval": "SEARCH_EVAL=1 SEARCH_EVAL_REPORT=search-eval.txt vitest run src/search-eval",
+    "search:eval:update": "SEARCH_EVAL=1 SEARCH_EVAL_UPDATE=1 SEARCH_EVAL_REPORT=search-eval.txt vitest run src/search-eval",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "i18n:convert": "node scripts/i18n/convert-i18next.ts"
   },
   "dependencies": {
     "@better-auth/passkey": "catalog:",
@@ -20,6 +23,7 @@
     "@gekichumai/api-contract": "workspace:*",
     "@gekichumai/dxdata": "workspace:*",
     "@gekichumai/maimai-domain": "workspace:*",
+    "@inlang/paraglide-js-react": "1.0.3",
     "@marsidev/react-turnstile": "^1.6.3",
     "@microsoft/fetch-event-source": "^2.0.1",
     "@mui/material": "^5.18.0",
@@ -81,6 +85,8 @@
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/ri": "^1.2.10",
     "@iconify-json/simple-icons": "^1.2.82",
+    "@inlang/paraglide-js": "2.29.3",
+    "@inlang/plugin-message-format": "4.5.0",
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
     "@types/d3": "^7.4.3",

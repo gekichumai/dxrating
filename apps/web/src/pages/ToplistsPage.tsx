@@ -80,7 +80,7 @@ export const ToplistsPage: FC = () => {
   // Nothing imported yet: no tabs, filters or share to act on, only the way to get scores in
   if (sheets && records.length === 0) {
     return (
-      <ScorePageFrame>
+      <ScorePageFrame width="me">
         {header}
         <NoScoresState
           title={t('toplists:empty.title')}
@@ -92,7 +92,7 @@ export const ToplistsPage: FC = () => {
   }
 
   return (
-    <ScorePageFrame width="wide">
+    <ScorePageFrame width="me">
       {header}
 
       {/* Tabs and filters share one bar; side by side on desktop, stacked on phones */}

@@ -15,6 +15,10 @@ const SURFACE_BLACK = /(?:^|[.:!\\-])(?:bg|border|divide|outline|ring|from|via|t
 export default defineConfig({
   rules: [
     ['font-rounded', { 'font-family': 'Torus' }],
+    // Numbers below 20px: tabular Nunito digits in front of the locale stack. Big headline numbers use `display-num`
+    // (the brand font). See "Numbers" in src/styles/tokens.css
+    ['num', { 'font-family': 'var(--font-numeric)', 'font-variant-numeric': 'tabular-nums' }],
+    ['display-num', { 'font-family': 'var(--font-sans)', 'font-variant-numeric': 'normal' }],
     [
       'p-safe',
       {
@@ -106,8 +110,11 @@ export default defineConfig({
     ])
   },
   shortcuts: {
+    // The one page width: the header (page-gutter), flex-container pages such as /rating and /plates, and the /me
+    // frame all use it, so their content edges line up with the header at every width. Change it here, never per page
+    'page-max-width': 'max-w-7xl',
     'flex-container':
-      'flex flex-col items-center justify-center py-4 gap-4 max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
+      'flex flex-col items-center justify-center py-4 gap-4 page-max-width mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
     // Tinted-glass surfaces: the material is defined on these class names in src/styles/tokens.css (shortcuts cannot
     // expand stylesheet classes), the shortcuts add the radius. Never a flat solid fill. glass-bar (header) is CSS only.
     // glass: page panels and cards. glass-thin: lighter, for controls floating on the background (tab bar).
@@ -125,13 +132,11 @@ export default defineConfig({
     'text-secondary': 'text-fg-2',
     // Page frame: one gutter (with the safe-area insets) and one header treatment for every content page
     'page-gutter':
-      'w-full max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
+      'w-full page-max-width mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
     'page-title': 'text-2xl sm:text-3xl font-semibold leading-tight tracking-[-0.01em] text-fg-1 text-balance',
     'page-description': 'text-sm sm:text-base leading-normal text-fg-2 text-pretty max-w-[65ch]',
     // Section heading inside a page or glass panel
     'section-title': 'text-base font-semibold leading-snug text-fg-1',
-    // Numbers that change or line up
-    num: 'tabular-nums',
     'chunks-horizontal-2': 'flex flex-col md:flex-row items-center justify-center gap-2 w-full',
   },
   presets: [

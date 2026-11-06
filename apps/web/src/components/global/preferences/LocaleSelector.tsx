@@ -2,6 +2,7 @@ import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem, type MenuItemPr
 import { flushSync } from 'react-dom'
 import { type FC, type PropsWithChildren, type ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSetLocale } from '@/i18n/LocaleProvider'
 import { persistClientLocalePreference, type SupportedLocale } from '@/setup/locale'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import MdiCheck from '~icons/mdi/check'
@@ -16,6 +17,7 @@ export const LocaleSelectorItem: FC<
   >
 > = ({ locale, selected, onClose, children, ...rest }) => {
   const { i18n } = useTranslation()
+  const setLocale = useSetLocale()
 
   return (
     <MenuItem
@@ -29,12 +31,12 @@ export const LocaleSelectorItem: FC<
         const previousLocale = i18n.language
         void startViewTransition(() => {
           persistClientLocalePreference(locale)
-          const changed = i18n.changeLanguage(locale)
+          const changed = setLocale(locale)
           captureAnalyticsEvent('locale_selector_item_clicked', {
             locale,
             previous_locale: previousLocale,
           })
-          return changed.then(() => {})
+          return changed
         }, origin)
       }}
     >

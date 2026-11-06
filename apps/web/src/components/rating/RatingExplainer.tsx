@@ -42,7 +42,7 @@ export const RatingExplainer: FC = () => {
     // One column under 1024px; on desktop the prose runs on the left and the rank table stays in view on the right,
     // as wide as the calculator above it
     <section
-      className="w-full max-w-3xl lg:max-w-7xl min-[1600px]:max-w-[1536px] mx-auto px-4 py-6 flex flex-col gap-4 text-fg-1 lg:grid lg:grid-cols-[minmax(0,65ch)_minmax(340px,1fr)] lg:gap-x-8 lg:items-start"
+      className="w-full max-w-3xl lg:max-w-7xl mx-auto px-4 py-6 flex flex-col gap-4 text-fg-1 lg:grid lg:grid-cols-[minmax(0,65ch)_minmax(340px,1fr)] lg:gap-x-8 lg:items-start"
       aria-labelledby="rating-explainer"
     >
       <h2 id="rating-explainer" className="text-2xl font-bold m-0 lg:col-span-2">
@@ -77,9 +77,9 @@ export const RatingExplainer: FC = () => {
               {RANK_COEFFICIENT_ROWS.map((row) => (
                 <tr key={row.label}>
                   <td className="px-4 py-1.5 font-bold">{row.label}</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">{row.achievement.toFixed(1)}%</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">{row.coefficient.toFixed(1)}</td>
-                  <td className="px-4 py-1.5 text-right tabular-nums">{row.rating}</td>
+                  <td className="px-2 py-1.5 text-right num">{row.achievement.toFixed(1)}%</td>
+                  <td className="px-2 py-1.5 text-right num">{row.coefficient.toFixed(1)}</td>
+                  <td className="px-4 py-1.5 text-right num">{row.rating}</td>
                 </tr>
               ))}
             </tbody>

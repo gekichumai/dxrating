@@ -67,9 +67,12 @@ vi.mock('@marsidev/react-turnstile', () => {
 })
 
 describe('LoginForm Turnstile across a widget replacement', () => {
-  beforeAll(() => {
+  // The first import of LoginForm transforms its whole module graph, which takes seconds when the full suite runs in
+  // parallel; do it once here instead of inside the 5s per-test timeout
+  beforeAll(async () => {
     initI18n()
-  })
+    await import('../LoginForm')
+  }, 60_000)
   afterEach(() => {
     page.theme = 'light'
     viewport.narrow = false
