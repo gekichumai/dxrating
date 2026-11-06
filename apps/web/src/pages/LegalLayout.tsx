@@ -2,7 +2,6 @@ import { useCanGoBack, useRouter } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import './legal.css'
 
 export interface LegalSection {
   /** The id of the section's h2 in the document */
