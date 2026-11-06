@@ -159,6 +159,8 @@ export const ToplistsPage: FC = () => {
         <div className="flex-1" />
         <ShareImageButton
           size="small"
+          // Same 40px height as the small selects beside it, so the outlines line up
+          sx={{ minHeight: 40 }}
           disabled={rows.length === 0}
           filename={`dxrating-${kind}.png`}
           shareTitle={tabLabel}

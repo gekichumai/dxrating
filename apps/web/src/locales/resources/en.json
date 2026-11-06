@@ -1015,6 +1015,9 @@
     "pool-size_one": "{{count}} chart matches",
     "pool-size_other": "{{count}} charts match",
     "no-result": "No chart matches these filters.",
+    "placeholder.title": "Your chart shows here",
+    "placeholder.hint_one": "Press Roll to get the one matching chart.",
+    "placeholder.hint_other": "Press Roll to pick one of {{count}} matching charts.",
     "open-chart": "Open chart"
   },
   "home": {
