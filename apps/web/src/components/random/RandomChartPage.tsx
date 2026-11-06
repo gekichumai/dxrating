@@ -92,6 +92,8 @@ export const RandomChartPage: FC = () => {
     if (!pushRange || rangeSource.current !== 'default') return
     rangeSource.current = 'push'
     setFilters((current) => ({ ...current, range: pushRange }))
+    // A beginner's push range can sit below 9: open the extended scale so the slider shows its real bounds
+    if (pushRange.min < RANGE_FLOOR) setShowBelow9(true)
   }, [pushRange])
 
   const pool = useMemo(

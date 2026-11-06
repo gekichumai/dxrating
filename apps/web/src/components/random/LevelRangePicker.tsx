@@ -71,6 +71,13 @@ export const LevelRangePicker: FC<{
     onChange(normalizeRange(next, floor))
   }
 
+  /** A preset (the push range) keeps its real bounds: one below 9 opens the extended scale instead of being clamped */
+  const applyPreset = (preset: LevelRange) => {
+    if (preset.min < RANGE_FLOOR && !showBelow9) onShowBelow9Change(true)
+    setAnchor(null)
+    onChange(normalizeRange(preset, RANGE_FLOOR_EXTENDED))
+  }
+
   const onChip = (chip: LevelChip) => {
     if (anchor && anchor !== chip) {
       setAnchor(null)
@@ -127,7 +134,7 @@ export const LevelRangePicker: FC<{
           <button
             type="button"
             aria-pressed={isSameRange(range, pushRange)}
-            onClick={() => set(pushRange)}
+            onClick={() => applyPreset(pushRange)}
             className={chipClassName(isSameRange(range, pushRange) ? 'push-on' : 'push-off')}
           >
             {t('random:range.push')}
@@ -173,9 +180,10 @@ export const LevelRangePicker: FC<{
       </p>
 
       {/* The range in large type, each end with its own steppers: the main control on a phone */}
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1">
+      {/* Side by side from 400px; below that the two ends do not fit with 44px steppers, so each gets its own row */}
+      <div className="grid grid-cols-1 items-center gap-2 min-[400px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] min-[400px]:gap-1">
         {endControl('min')}
-        <span aria-hidden className="px-0.5 text-xl text-fg-2">
+        <span aria-hidden className="hidden px-0.5 text-xl text-fg-2 min-[400px]:inline">
           –
         </span>
         {endControl('max')}
