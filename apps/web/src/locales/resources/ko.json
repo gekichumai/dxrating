@@ -43,6 +43,7 @@
     "theme.light": "라이트",
     "theme.dark": "다크",
     "theme.system": "시스템 설정",
+    "display-preferences.select": "언어 및 화면 모드",
     "region.title": "지역: {{region}}",
     "region.jp": "일본",
     "region.intl": "해외",

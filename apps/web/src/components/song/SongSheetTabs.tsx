@@ -1,5 +1,4 @@
-import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
-import clsx from 'clsx'
+import { difficultyInkStyle } from '@/utils/difficultyInk'
 import { type DifficultyEnum, type Sheet, TypeEnum } from '@gekichumai/dxdata'
 import { Tab, Tabs } from '@mui/material'
 import { type FC, type MouseEvent, type SyntheticEvent, useMemo } from 'react'
@@ -123,13 +122,15 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
               href={hrefFor(activeType, difficulty)}
               onClick={keepModifiedClicks}
               label={config.title}
-              classes={{
-                root: clsx(
-                  '!py-0 !min-h-2rem !h-2rem !text-xs',
-                  activeDifficulty === difficulty && difficultyInkClassName,
-                ),
-              }}
-              style={activeDifficulty === difficulty ? difficultyInkStyle(difficulty) : undefined}
+              classes={{ root: '!py-0 !min-h-2rem !h-2rem !text-xs' }}
+              // Inline so the brand colour beats MUI's selected-tab colour in light; dark swaps in inkDark (!important
+              // beats the inline value) through the variables set by difficultyInkStyle
+              className={activeDifficulty === difficulty ? 'dark:!text-[var(--difficulty-ink-dark)]' : undefined}
+              style={
+                activeDifficulty === difficulty
+                  ? { ...difficultyInkStyle(difficulty), color: 'var(--difficulty-ink)' }
+                  : undefined
+              }
             />
           )
         })}

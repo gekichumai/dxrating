@@ -48,6 +48,7 @@
     "theme.light": "淺色",
     "theme.dark": "深色",
     "theme.system": "跟隨系統",
+    "display-preferences.select": "語言和外觀",
     "import-provider.diving-fish.qq": "綁定到水魚查分器的 QQ",
     "import-provider.diving-fish.title": "水魚查分器",
     "import-provider.diving-fish.username": "水魚查分器的用戶名",

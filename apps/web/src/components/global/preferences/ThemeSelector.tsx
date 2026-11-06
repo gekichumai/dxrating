@@ -1,4 +1,4 @@
-import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material'
+import { Divider, IconButton, ListItemIcon, ListItemText, ListSubheader, Menu, MenuItem } from '@mui/material'
 import { useColorScheme } from '@mui/material/styles'
 import { type ComponentType, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -7,8 +7,10 @@ import type { ThemeMode } from '@/setup/theme-script'
 import MdiCheck from '~icons/mdi/check'
 import MdiMonitor from '~icons/mdi/monitor'
 import MdiThemeLightDark from '~icons/mdi/theme-light-dark'
+import MdiTune from '~icons/mdi/tune-variant'
 import MdiWeatherNight from '~icons/mdi/weather-night'
 import MdiWhiteBalanceSunny from '~icons/mdi/white-balance-sunny'
+import { LocaleMenuItems } from './LocaleSelector'
 
 const MODES: { value: ThemeMode; Icon: ComponentType<{ className?: string }> }[] = [
   { value: 'light', Icon: MdiWhiteBalanceSunny },
@@ -17,15 +19,44 @@ const MODES: { value: ThemeMode; Icon: ComponentType<{ className?: string }> }[]
 ]
 
 /**
- * Light / dark / system. MUI's CssVarsProvider remembers the choice (localStorage, the key the pre-paint script in
- * setup/theme-script.ts reads), follows the OS while on "system", and sets <html data-theme>. The button's icon is the
- * same in every theme so the server render and the first client render match.
+ * Light / dark / system as menu items. MUI's CssVarsProvider remembers the choice (localStorage, the key the pre-paint
+ * script in setup/theme-script.ts reads), follows the OS while on "system", and sets <html data-theme>. Menus render
+ * only when opened, so reading the stored mode here never reaches the server render.
  */
-export const ThemeSelector = () => {
+export const ThemeMenuItems = ({ onClose }: { onClose: () => void }) => {
   const { t } = useTranslation(['settings'])
   const { mode, setMode } = useColorScheme()
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const current: ThemeMode = mode ?? 'system'
+
+  return MODES.map(({ value, Icon }) => {
+    const selected = current === value
+    return (
+      <MenuItem
+        key={value}
+        selected={selected}
+        aria-checked={selected}
+        role="menuitemradio"
+        onClick={() => {
+          onClose()
+          if (selected) return
+          setMode(value)
+          captureAnalyticsEvent('theme_selector_item_clicked', { mode: value, previous_mode: current })
+        }}
+      >
+        <ListItemIcon>
+          <Icon className="size-5" />
+        </ListItemIcon>
+        <ListItemText>{t(`settings:theme.${value}`)}</ListItemText>
+        {selected && <MdiCheck className="ml-3 size-4 text-accent-strong" aria-hidden />}
+      </MenuItem>
+    )
+  })
+}
+
+/** The header's appearance button (sm and up). Its icon is the same in every theme so SSR and hydration match. */
+export const ThemeSelector = () => {
+  const { t } = useTranslation(['settings'])
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
 
   return (
     <>
@@ -39,29 +70,38 @@ export const ThemeSelector = () => {
       </IconButton>
 
       <Menu transitionDuration={0} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-        {MODES.map(({ value, Icon }) => {
-          const selected = current === value
-          return (
-            <MenuItem
-              key={value}
-              selected={selected}
-              aria-checked={selected}
-              role="menuitemradio"
-              onClick={() => {
-                setAnchorEl(null)
-                if (selected) return
-                setMode(value)
-                captureAnalyticsEvent('theme_selector_item_clicked', { mode: value, previous_mode: current })
-              }}
-            >
-              <ListItemIcon>
-                <Icon className="size-5" />
-              </ListItemIcon>
-              <ListItemText>{t(`settings:theme.${value}`)}</ListItemText>
-              {selected && <MdiCheck className="ml-3 size-4 text-accent-strong" aria-hidden />}
-            </MenuItem>
-          )
-        })}
+        <ThemeMenuItems onClose={() => setAnchorEl(null)} />
+      </Menu>
+    </>
+  )
+}
+
+/**
+ * Phones (below sm): language and appearance share one header button, so adding the theme control does not push the
+ * community pill over the logo.
+ */
+export const DisplayPreferencesMenu = () => {
+  const { t } = useTranslation(['settings'])
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const close = () => setAnchorEl(null)
+
+  return (
+    <>
+      <IconButton
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        aria-label={t('settings:display-preferences.select')}
+        title={t('settings:display-preferences.select')}
+        aria-haspopup="menu"
+      >
+        <MdiTune />
+      </IconButton>
+
+      <Menu transitionDuration={0} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={close}>
+        <ListSubheader>{t('settings:language.select')}</ListSubheader>
+        <LocaleMenuItems onClose={close} />
+        <Divider />
+        <ListSubheader>{t('settings:theme.select')}</ListSubheader>
+        <ThemeMenuItems onClose={close} />
       </Menu>
     </>
   )

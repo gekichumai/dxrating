@@ -12,7 +12,7 @@ import { BUNDLE } from '../../utils/bundle'
 import { RelativeTime } from '../../utils/useTime'
 import { Logo } from '../global/Logo'
 import { LocaleSelector } from '../global/preferences/LocaleSelector'
-import { ThemeSelector } from '../global/preferences/ThemeSelector'
+import { DisplayPreferencesMenu, ThemeSelector } from '../global/preferences/ThemeSelector'
 import { UserChip } from '../global/preferences/UserChip'
 import { About } from '../global/site-meta/About'
 
@@ -246,8 +246,14 @@ export const TopBar = ({
             <CommunityMenu />
           </div>
 
-          <LocaleSelector />
-          <ThemeSelector />
+          {/* Phones get one combined language + appearance button so the row keeps its width (DisplayPreferencesMenu) */}
+          <div className="hidden sm:contents">
+            <LocaleSelector />
+            <ThemeSelector />
+          </div>
+          <div className="contents sm:hidden">
+            <DisplayPreferencesMenu />
+          </div>
           <About />
           <UserChip />
         </div>

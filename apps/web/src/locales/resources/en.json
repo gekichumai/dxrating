@@ -43,6 +43,7 @@
     "theme.light": "Light",
     "theme.dark": "Dark",
     "theme.system": "System",
+    "display-preferences.select": "Language and appearance",
     "region.title": "Region: {{region}}",
     "region.jp": "Japan",
     "region.intl": "International",
