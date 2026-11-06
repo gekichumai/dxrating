@@ -15,7 +15,7 @@ import {
 import { appendVaryHeader, detectServerLocale } from './setup/locale'
 import { trailingSlashRedirect } from './setup/trailing-slash'
 import { finishServerTimingSpan, setServerTimingHeader, startServerTimingSpan } from './setup/server-timing'
-import { scrubBreadcrumb, scrubEvent } from './lib/sentryScrub'
+import { sentryScrubOptions } from './lib/sentryScrub'
 
 type WorkerExecutionContext = { waitUntil(promise: Promise<unknown>): void }
 
@@ -86,9 +86,7 @@ export default Sentry.withSentry(
     enabled: import.meta.env.PROD,
     tracesSampleRate: 0.2,
     // OAuth callbacks carry one-time code and state in the query
-    beforeSend: scrubEvent,
-    beforeSendTransaction: scrubEvent,
-    beforeBreadcrumb: scrubBreadcrumb,
+    ...sentryScrubOptions,
   }),
   // The TanStack entry is not typed as a Cloudflare ExportedHandler, but it receives (request, env, ctx).
   createServerEntry(requestHandler) as unknown as Parameters<typeof Sentry.withSentry>[1],

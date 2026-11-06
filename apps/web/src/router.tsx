@@ -3,7 +3,7 @@ import { createRouter } from '@tanstack/react-router'
 import { getGlobalStartContext } from '@tanstack/react-start'
 import { routeTree } from './routeTree.gen'
 import { initI18n } from './setup/init-i18n'
-import { scrubBreadcrumb, scrubEvent } from './lib/sentryScrub'
+import { sentryScrubOptions } from './lib/sentryScrub'
 
 initI18n()
 
@@ -36,9 +36,7 @@ export function getRouter() {
       ],
       tracesSampleRate: 0.2,
       // OAuth callbacks carry one-time code and state in the query
-      beforeSend: scrubEvent,
-      beforeSendTransaction: scrubEvent,
-      beforeBreadcrumb: scrubBreadcrumb,
+      ...sentryScrubOptions,
       // Sends what the app logs with Sentry.logger (saved-data migrations, catalog API fallbacks); nothing else
       enableLogs: true,
       ignoreErrors: [

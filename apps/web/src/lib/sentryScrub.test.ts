@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { scrubBreadcrumb, scrubEvent, scrubUrl } from './sentryScrub'
+import { scrubBreadcrumb, scrubEvent, scrubSpan, scrubUrl } from './sentryScrub'
 
 const callback = 'https://dxrating.net/io/import/lxns/oauth_callback?code=synthetic-code&state=synthetic-state'
 
@@ -29,6 +29,25 @@ describe('Sentry scrubbing of OAuth callback parameters', () => {
       request: { query_string: [['code', '[Filtered]']] },
     })
     expect(scrubBreadcrumb({ data: { url: `${callback}#x` } }).data?.url).not.toContain('synthetic')
+  })
+
+  it('filters trace attributes and spans (url.full, url.query, http.target)', () => {
+    const event = scrubEvent({
+      contexts: {
+        trace: {
+          data: {
+            'url.full': callback,
+            'url.query': '?code=synthetic-code&state=synthetic-state',
+            'http.target': '/io/import/lxns/oauth_callback?code=synthetic-code',
+            'http.method': 'GET',
+          },
+        },
+      },
+      spans: [{ description: `GET ${callback}`, data: { 'url.full': callback } }],
+    })
+    expect(JSON.stringify(event)).not.toMatch(/synthetic-(code|state)/)
+    expect(event.contexts?.trace?.data?.['http.method']).toBe('GET')
+    expect(scrubSpan({ description: `GET ${callback}` }).description).toMatch(/^GET https:\/\/dxrating\.net\/io/)
   })
 
   it('leaves other URLs alone', () => {

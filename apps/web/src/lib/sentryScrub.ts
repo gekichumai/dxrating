@@ -48,11 +48,38 @@ export function scrubBreadcrumb<B extends ScrubbableBreadcrumb>(breadcrumb: B): 
   return { ...breadcrumb, data }
 }
 
+/** Span and trace attributes (`url.full`, `url.query`, `http.target`, `http.query`, …) carry the request URL too */
+function scrubData(data: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(data).map(([key, value]) => {
+      if (typeof value !== 'string') return [key, value]
+      if (/query$/i.test(key)) return [key, scrubQueryString(value)]
+      return [key, scrubText(value)]
+    }),
+  )
+}
+
+/** Transaction names and span descriptions look like `GET /path?query`: scrub only the URL part */
+const scrubText = (text: string) => (text.includes('?') ? text.replace(/\S*\?\S*/g, scrubUrl) : text)
+
+type ScrubbableSpan = { description?: string; data?: Record<string, unknown> }
+
+/** For `beforeSendSpan` */
+export function scrubSpan<S extends ScrubbableSpan>(span: S): S {
+  return {
+    ...span,
+    ...(span.description ? { description: scrubText(span.description) } : {}),
+    ...(span.data ? { data: scrubData(span.data) } : {}),
+  }
+}
+
 type ScrubbableEvent = {
   request?: { url?: string; query_string?: QueryString }
   breadcrumbs?: ScrubbableBreadcrumb[]
   transaction?: string
   tags?: Record<string, unknown>
+  contexts?: { trace?: { data?: Record<string, unknown> } & Record<string, unknown> } & Record<string, unknown>
+  spans?: ScrubbableSpan[]
 }
 
 /** For `beforeSend` and `beforeSendTransaction` */
@@ -66,9 +93,22 @@ export function scrubEvent<E extends ScrubbableEvent>(event: E): E {
     }
   }
   if (scrubbed.breadcrumbs) scrubbed.breadcrumbs = scrubbed.breadcrumbs.map(scrubBreadcrumb)
-  // Transaction names look like `GET /path?query`: scrub only the URL part
-  if (scrubbed.transaction) scrubbed.transaction = scrubbed.transaction.replace(/\S*\?\S*/g, scrubUrl)
-  if (scrubbed.tags && typeof scrubbed.tags.url === 'string')
-    scrubbed.tags = { ...scrubbed.tags, url: scrubUrl(scrubbed.tags.url) }
+  if (scrubbed.transaction) scrubbed.transaction = scrubText(scrubbed.transaction)
+  if (scrubbed.tags) scrubbed.tags = scrubData(scrubbed.tags)
+  if (scrubbed.contexts?.trace?.data) {
+    scrubbed.contexts = {
+      ...scrubbed.contexts,
+      trace: { ...scrubbed.contexts.trace, data: scrubData(scrubbed.contexts.trace.data) },
+    }
+  }
+  if (scrubbed.spans) scrubbed.spans = scrubbed.spans.map(scrubSpan)
   return scrubbed
+}
+
+/** Spread into every `Sentry.init` (worker and browser) */
+export const sentryScrubOptions = {
+  beforeSend: scrubEvent,
+  beforeSendTransaction: scrubEvent,
+  beforeSendSpan: scrubSpan,
+  beforeBreadcrumb: scrubBreadcrumb,
 }
