@@ -100,6 +100,27 @@ describe('createImportUndoStore', () => {
     expect(localStorage.getItem(IMPORT_UNDO_STORAGE_KEY)).toBeNull()
   })
 
+  it('forgets a snapshot another tab removed or cleared', () => {
+    const first = createImportUndoStore(localStorage, () => 2_000)
+    const second = createImportUndoStore(localStorage, () => 2_000)
+    first.save(snapshot())
+    expect(second.get()).toEqual(snapshot())
+    const listener = vi.fn()
+    second.subscribe(listener)
+
+    first.clear()
+    window.dispatchEvent(new StorageEvent('storage', { key: IMPORT_UNDO_STORAGE_KEY, newValue: null }))
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(second.get()).toBeNull()
+
+    first.save(snapshot({ id: 'again' }))
+    window.dispatchEvent(new StorageEvent('storage', { key: IMPORT_UNDO_STORAGE_KEY }))
+    expect(second.get()?.id).toBe('again')
+    localStorage.clear()
+    window.dispatchEvent(new StorageEvent('storage', { key: null }))
+    expect(second.get()).toBeNull()
+  })
+
   it('lives in memory without a storage', () => {
     const store = createImportUndoStore(null, () => 2_000)
     expect(store.save(snapshot())).toEqual({ persisted: false })

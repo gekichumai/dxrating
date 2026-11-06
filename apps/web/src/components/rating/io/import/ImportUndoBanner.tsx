@@ -51,11 +51,10 @@ export const ImportUndoBanner: FC = () => {
 
   const handleUndo = useCallback(() => {
     setConfirming(false)
-    if (undoLastImport(repository)) {
-      toast.success(t('rating-calculator:io.import.undo.done'))
-    } else {
-      toast.error(t('rating-calculator:io.import.undo.expired'))
-    }
+    const result = undoLastImport(repository)
+    if (result === 'restored') toast.success(t('rating-calculator:io.import.undo.done'))
+    else if (result === 'failed') toast.error(t('rating-calculator:io.import.undo.failed'))
+    else toast.error(t('rating-calculator:io.import.undo.expired'))
   }, [repository, t])
 
   if (!store || !snapshot || snapshot.id === dismissedId) return null

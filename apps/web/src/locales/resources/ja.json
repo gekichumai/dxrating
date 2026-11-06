@@ -657,6 +657,7 @@
     "io.import.undo.dismiss": "閉じる",
     "io.import.undo.done": "読み込みを取り消しました。以前のスコアに戻りました。",
     "io.import.undo.expired": "この読み込みはもう取り消せません。",
+    "io.import.undo.failed": "ブラウザのストレージがいっぱいのため、以前のスコアを保存できませんでした。何も変更されていないので、もう一度お試しください。",
     "io.import.undo.confirm.title": "この読み込みを取り消しますか？",
     "io.import.undo.confirm.description": "{{source}} からの読み込み前の {{count}} 件の記録に戻します。",
     "io.import.undo.confirm.description_one": "{{source}} からの読み込み前の {{count}} 件の記録に戻します。",

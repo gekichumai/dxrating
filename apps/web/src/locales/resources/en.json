@@ -657,6 +657,7 @@
     "io.import.undo.dismiss": "Hide",
     "io.import.undo.done": "Import undone. Your earlier scores are back.",
     "io.import.undo.expired": "This import can no longer be undone.",
+    "io.import.undo.failed": "Your earlier scores couldn’t be saved because the browser storage is full. Nothing was changed, and you can try again.",
     "io.import.undo.confirm.title": "Undo this import?",
     "io.import.undo.confirm.description": "Your {{count}} records from before the {{source}} import will be restored.",
     "io.import.undo.confirm.description_one": "Your 1 record from before the {{source}} import will be restored.",

@@ -21,7 +21,8 @@ export interface ChartScore {
  * - `added`: a chart the save does not have
  * - `improved`: at least one field higher, none lower
  * - `unchanged`: every field the same
- * - `lowered`: at least one field lower (achievement, combo, sync or DX score), even when another is higher
+ * - `lowered`: at least one field lower (achievement, combo, sync or DX score, a dropped DX score included), even when
+ *   another is higher
  * - `removed`: a chart the import drops from the save (`replace` only)
  */
 export type ImportChangeKind = 'added' | 'improved' | 'unchanged' | 'lowered' | 'removed'
@@ -96,8 +97,14 @@ export function classifyChange(before: ChartScore, after: ChartScore): 'improved
     sign(after.achievementRate - before.achievementRate),
     sign(comboRank(after.comboFlag) - comboRank(before.comboFlag)),
     sign(syncRank(after.syncFlag) - syncRank(before.syncFlag)),
-    // A missing DX score is not a lower one: the source may not report it
-    before.dxScore !== null && after.dxScore !== null ? sign(after.dxScore - before.dxScore) : 0,
+    // A DX score the import drops is lost (the save is written as the import leaves it); one it adds is a gain
+    before.dxScore === null
+      ? after.dxScore === null
+        ? 0
+        : 1
+      : after.dxScore === null
+        ? -1
+        : sign(after.dxScore - before.dxScore),
   ]
   if (differences.includes(-1)) return 'lowered'
   if (differences.includes(1)) return 'improved'

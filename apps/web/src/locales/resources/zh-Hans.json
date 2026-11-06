@@ -657,6 +657,7 @@
     "io.import.undo.dismiss": "隐藏",
     "io.import.undo.done": "已撤销导入，之前的成绩已恢复。",
     "io.import.undo.expired": "此次导入已无法撤销。",
+    "io.import.undo.failed": "浏览器存储空间已满，无法保存之前的成绩。没有任何更改，你可以再试一次。",
     "io.import.undo.confirm.title": "撤销此次导入？",
     "io.import.undo.confirm.description": "将恢复从 {{source}} 导入之前的 {{count}} 条记录。",
     "io.import.undo.confirm.description_one": "将恢复从 {{source}} 导入之前的 {{count}} 条记录。",

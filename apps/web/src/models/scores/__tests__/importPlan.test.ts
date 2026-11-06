@@ -54,9 +54,14 @@ describe('classifyChange', () => {
     expect(classifyChange(score(99, { dxScore: 10 }), score(99, { dxScore: 11 }))).toBe('improved')
   })
 
-  it('reads identical scores as unchanged, and a missing DX score as no change', () => {
+  it('reads identical scores as unchanged', () => {
     expect(classifyChange(score(99, { syncFlag: 'fs' }), score(99, { syncFlag: 'fs' }))).toBe('unchanged')
-    expect(classifyChange(score(99, { dxScore: 1200 }), score(99))).toBe('unchanged')
+    expect(classifyChange(score(99), score(99))).toBe('unchanged')
+  })
+
+  it('reads a dropped DX score as lowered and a new one as improved', () => {
+    expect(classifyChange(score(100, { dxScore: 2000 }), score(100))).toBe('lowered')
+    expect(classifyChange(score(100), score(100, { dxScore: 2000 }))).toBe('improved')
   })
 
   it('reads any lower field as lowered, even with another one higher', () => {
@@ -108,6 +113,15 @@ describe('planImport', () => {
       source: 'maimai-net',
       mode: 'merge',
     })
+    expect(plan.risky).toMatchObject([{ sheetId: 'a', kind: 'lowered' }])
+  })
+
+  it('flags an import that would erase a saved DX score', () => {
+    const plan = planImport([entry('a', 100, { dxScore: 2000 })], [entry('a', 100)], {
+      source: 'aqua-dx',
+      mode: 'replace',
+    })
+    expect(planChangesSave(plan)).toBe(true)
     expect(plan.risky).toMatchObject([{ sheetId: 'a', kind: 'lowered' }])
   })
 

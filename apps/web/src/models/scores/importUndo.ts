@@ -97,7 +97,11 @@ export function createImportUndoStore(storage: Storage | null, now: () => number
       loaded = true
       try {
         const raw = storage.getItem(IMPORT_UNDO_STORAGE_KEY)
-        if (raw !== null) {
+        if (raw === null) {
+          // Removed (undone or replaced in another tab): a snapshot read before is gone too
+          memory = null
+          cache = null
+        } else {
           if (cache?.raw !== raw) {
             const parsed: unknown = JSON.parse(raw)
             cache = { raw, snapshot: isSnapshot(parsed) ? parsed : null }
@@ -126,10 +130,10 @@ export function createImportUndoStore(storage: Storage | null, now: () => number
 
   const expiresAt = (snapshot: ImportUndoSnapshot) => snapshot.createdAt + IMPORT_UNDO_WINDOW_MS
 
-  // Another tab imported or undid
+  // Another tab imported or undid (`key` is null when it cleared the whole storage)
   if (storage && typeof window !== 'undefined') {
     window.addEventListener('storage', (event) => {
-      if (event.key !== IMPORT_UNDO_STORAGE_KEY) return
+      if (event.key !== null && event.key !== IMPORT_UNDO_STORAGE_KEY) return
       loaded = false
       notify()
     })

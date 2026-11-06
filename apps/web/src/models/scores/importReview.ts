@@ -73,14 +73,6 @@ export const importReviewController = new ImportReviewController()
 
 const undoStores = new WeakMap<object, ImportUndoStore>()
 
-const browserStorage = (): Storage | null => {
-  try {
-    return typeof window === 'undefined' ? null : window.localStorage
-  } catch {
-    return null
-  }
-}
-
 /**
  * The undo store of a repository, or `null` when it cannot undo (a cloud save keeps its own snapshots). The visitor's
  * save keeps its snapshot in the browser storage; an in-memory save (demo, test) keeps it in memory.
@@ -89,7 +81,7 @@ export function getImportUndoStore(repository: ScoreRepository): ImportUndoStore
   if (!(repository instanceof LocalScoreRepository)) return null
   let store = undoStores.get(repository)
   if (!store) {
-    store = createImportUndoStore(repository.persistent ? browserStorage() : null)
+    store = createImportUndoStore(repository.storageArea)
     undoStores.set(repository, store)
   }
   return store
@@ -131,14 +123,20 @@ export async function reviewAndApplyImport(
     return { applied: true, plan, undoPersisted: false }
   }
 
-  const needsReview = trigger === 'manual' || isRiskyPlan(plan)
-  if (needsReview && !(await controller.requestReview(plan, trigger))) {
-    return { applied: false, plan, undoPersisted: false }
+  let latestEntries = previousEntries
+  let appliedPlan = plan
+  let needsReview = trigger === 'manual' || isRiskyPlan(plan)
+  for (;;) {
+    if (needsReview && !(await controller.requestReview(appliedPlan, trigger))) {
+      return { applied: false, plan: appliedPlan, undoPersisted: false }
+    }
+    if (repository.entries() === latestEntries) break
+    // The save changed while the preview was open (an automatic import, an edit): plan the import again, and ask
+    // again whenever it would now lower or remove a score the visitor has not seen in a preview
+    latestEntries = repository.entries()
+    appliedPlan = planImport(latestEntries, entries, meta)
+    needsReview = isRiskyPlan(appliedPlan)
   }
-
-  // The save may have changed while the preview was open (another tab, an automatic import): preview it again
-  const latestEntries = repository.entries()
-  const appliedPlan = latestEntries === previousEntries ? plan : planImport(latestEntries, entries, meta)
 
   await repository.applyImport(entries, meta)
   const snapshot: ImportUndoSnapshot = {
@@ -161,12 +159,26 @@ export function undoDiscardsLaterChanges(repository: WebScoreRepository, snapsho
   return !isSaveUnchangedSinceImport(snapshot, repository.entries())
 }
 
-/** Puts back the save from before the last import; `false` when there is nothing to undo */
-export function undoLastImport(repository: WebScoreRepository): boolean {
+/**
+ * - `restored`: the save from before the last import is back, and stored
+ * - `failed`: the storage refused it; the save and the undo stay as they were
+ * - `nothing`: there is no import to undo (none, expired, or undone in another tab)
+ */
+export type UndoImportResult = 'restored' | 'failed' | 'nothing'
+
+/** Puts back the save from before the last import */
+export function undoLastImport(repository: WebScoreRepository): UndoImportResult {
   const store = getImportUndoStore(repository)
   const snapshot = store?.get()
-  if (!store || !snapshot || !(repository instanceof LocalScoreRepository)) return false
-  repository.restoreImportSnapshot(snapshot.previousEntries)
+  if (!store || !snapshot || !(repository instanceof LocalScoreRepository)) return 'nothing'
+  if (repository.restoreImportSnapshot(snapshot.previousEntries)) {
+    store.clear()
+    return 'restored'
+  }
+  // The snapshot itself may hold the room the restored save needs: drop it and try again, and put it back when the
+  // storage still refuses (it fitted next to the current save before, and that save has not changed)
   store.clear()
-  return true
+  if (repository.restoreImportSnapshot(snapshot.previousEntries)) return 'restored'
+  store.save(snapshot)
+  return 'failed'
 }

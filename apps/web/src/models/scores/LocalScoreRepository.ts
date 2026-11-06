@@ -217,14 +217,31 @@ export class LocalScoreRepository implements WebScoreRepository {
     this.write(entries)
   }
 
-  /** Whether the save is kept in the browser storage (the visitor's save), not in memory only (demos, tests) */
-  get persistent(): boolean {
-    return this.storage !== null
+  /**
+   * @internal The storage the save is kept in: the visitor's save keeps its import undo next to it (`importReview`).
+   * `null` for a save in memory only (demos, tests).
+   */
+  get storageArea(): Storage | null {
+    return this.storage
   }
 
-  /** @internal Puts back the entries saved before an import (`importUndo`); the local save keeps no provenance */
-  restoreImportSnapshot(entries: readonly PlayEntry[]) {
-    this.write(entries)
+  /**
+   * @internal Puts back the entries saved before an import (`importUndo`); the local save keeps no provenance.
+   * Unlike other writes, a restore that the storage refuses changes nothing and returns `false`, so the undo snapshot
+   * is not given up for a restore that would be lost on reload.
+   */
+  restoreImportSnapshot(entries: readonly PlayEntry[]): boolean {
+    if (this.storage) {
+      try {
+        this.storage.setItem(RATING_ENTRIES_STORAGE_KEY, JSON.stringify(entries))
+      } catch {
+        return false
+      }
+    }
+    this.currentEntries = entries
+    this.invalidateRecords()
+    this.notify()
+    return true
   }
 
   /** @internal Wholesale replacement, for the `modifyEntries` compatibility adapter only */

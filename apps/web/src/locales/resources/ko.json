@@ -657,6 +657,7 @@
     "io.import.undo.dismiss": "숨기기",
     "io.import.undo.done": "가져오기를 되돌렸습니다. 이전 점수가 복원되었습니다.",
     "io.import.undo.expired": "이 가져오기는 더 이상 되돌릴 수 없습니다.",
+    "io.import.undo.failed": "브라우저 저장 공간이 가득 차서 이전 점수를 저장하지 못했습니다. 아무것도 바뀌지 않았으니 다시 시도해 주세요.",
     "io.import.undo.confirm.title": "이 가져오기를 되돌릴까요?",
     "io.import.undo.confirm.description": "{{source}} 가져오기 이전의 기록 {{count}}개로 복원합니다.",
     "io.import.undo.confirm.description_one": "{{source}} 가져오기 이전의 기록 {{count}}개로 복원합니다.",

@@ -657,6 +657,7 @@
     "io.import.undo.dismiss": "隱藏",
     "io.import.undo.done": "已撤銷匯入，之前的成績已恢復。",
     "io.import.undo.expired": "此次匯入已無法撤銷。",
+    "io.import.undo.failed": "瀏覽器儲存空間已滿，無法儲存之前的成績。沒有任何變更，你可以再試一次。",
     "io.import.undo.confirm.title": "撤銷此次匯入？",
     "io.import.undo.confirm.description": "將恢復從 {{source}} 匯入之前的 {{count}} 條記錄。",
     "io.import.undo.confirm.description_one": "將恢復從 {{source}} 匯入之前的 {{count}} 條記錄。",
