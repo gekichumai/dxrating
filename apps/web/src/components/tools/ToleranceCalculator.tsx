@@ -1,18 +1,27 @@
 import type { NoteCounts } from '@gekichumai/dxdata'
-import { toToleranceNoteCounts } from '@gekichumai/maimai-domain'
+import {
+  type BreakBudgetJudgement,
+  type BudgetJudgement,
+  type BudgetPicks,
+  type BudgetRow,
+  type RegularJudgement,
+  type ToleranceNoteType,
+  calculateToleranceBudget,
+  evaluateBudget,
+  toToleranceNoteCounts,
+} from '@gekichumai/maimai-domain'
 import { Chip, FormHelperText, InputAdornment, TextField } from '@mui/material'
+import { Link } from '@tanstack/react-router'
+import clsx from 'clsx'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from '@tanstack/react-router'
+import MdiCheckCircle from '~icons/mdi/check-circle'
+import MdiCloseCircle from '~icons/mdi/close-circle'
+import MdiMinus from '~icons/mdi/minus'
+import MdiPlus from '~icons/mdi/plus'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { captureAnalyticsEvent } from '@/lib/analytics'
-import {
-  MAX_ACHIEVEMENT,
-  TOLERANCE_TARGET_PRESETS,
-  calculateTolerance,
-  parseNumberInput,
-  toleranceRows,
-} from './ratingTools'
+import { MAX_ACHIEVEMENT, TOLERANCE_TARGET_PRESETS, parseNumberInput } from './ratingTools'
 
 export type ToleranceSheet = {
   songId: string
@@ -21,21 +30,42 @@ export type ToleranceSheet = {
   noteCounts?: NoteCounts
 }
 
-const formatCount = (value: number) => value.toLocaleString('en-US')
+type Judgement = RegularJudgement | BreakBudgetJudgement
 
+/** Grid columns from wide containers up: BREAK-only judgements first, so GREAT / GOOD / MISS line up for every row */
+const COLUMNS: readonly Judgement[] = ['perfect50', 'perfect100', 'great', 'good', 'miss']
+// At or above a 34rem container the rows share one column grid with a header (`@[34rem]:`); below it each row stacks.
+// The variant is written out in every class name: UnoCSS only generates classes it finds literally in the source.
+
+const pickCount = (picks: BudgetPicks, type: ToleranceNoteType, judgement: Judgement) => picks[type]?.[judgement] ?? 0
+const rowTotal = (picks: BudgetPicks, type: ToleranceNoteType) =>
+  Object.values(picks[type] ?? {}).reduce((sum, n) => sum + (n ?? 0), 0)
+
+/**
+ * The tolerance calculator as one budget: the margin a target leaves (101% - target), the price of every judgement on
+ * this chart in TAP GREATs, and a grid to try a combination of judgements against that margin.
+ */
 export const ToleranceCalculator: FC<{
   sheet: ToleranceSheet
   source: 'chart_page' | 'tool_page'
   /** Heading level: a section on the chart page, the main content on the tool page */
   headingAs?: 'h2' | 'h3'
 }> = ({ sheet, source, headingAs: Heading = 'h2' }) => {
-  const { t } = useTranslation(['tools'])
+  const { t, i18n } = useTranslation(['tools'])
+  const locale = i18n.resolvedLanguage ?? i18n.language
   const [input, setInput] = useState('100.5')
+  const [picks, setPicks] = useState<BudgetPicks>({})
   const counts = useMemo(() => toToleranceNoteCounts(sheet.noteCounts), [sheet.noteCounts])
   const target = parseNumberInput(input)
   const valid = target !== null && target > 0 && target <= MAX_ACHIEVEMENT
-  const result = useMemo(() => (counts && valid ? calculateTolerance(counts, target) : null), [counts, valid, target])
-  const rows = useMemo(() => (counts && result ? toleranceRows(counts, result) : []), [counts, result])
+  const budget = useMemo(
+    () => (counts && valid ? calculateToleranceBudget(counts, target) : null),
+    [counts, valid, target],
+  )
+  const evaluation = useMemo(
+    () => (counts && valid ? evaluateBudget(counts, target, picks) : null),
+    [counts, valid, target, picks],
+  )
 
   // Report a settled user-chosen target, not every keystroke or the default
   const touched = useRef(false)
@@ -58,8 +88,21 @@ export const ToleranceCalculator: FC<{
     setInput(value)
   }
 
+  const setPick = (row: BudgetRow, judgement: Judgement, value: number) => {
+    setPicks((previous) => {
+      const others = rowTotal(previous, row.type) - pickCount(previous, row.type, judgement)
+      const next = Math.max(0, Math.min(row.count - others, Math.floor(value)))
+      return { ...previous, [row.type]: { ...previous[row.type], [judgement]: next } }
+    })
+  }
+
+  const hasPicks = REGULAR_AND_BREAK.some((type) => rowTotal(picks, type) > 0)
+  const number = (value: number, digits: number) =>
+    value.toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits })
+  const rate = (value: number) => value.toLocaleString(locale, { maximumFractionDigits: 2 })
+
   return (
-    <MaterialSurface as="section" className="flex flex-col gap-3 p-4" aria-labelledby="tolerance-heading">
+    <MaterialSurface as="section" className="@container flex flex-col gap-3 p-4" aria-labelledby="tolerance-heading">
       <div className="flex flex-col gap-1">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <Heading id="tolerance-heading" className="m-0 text-lg font-bold">
@@ -75,7 +118,7 @@ export const ToleranceCalculator: FC<{
             </Link>
           )}
         </div>
-        <p className="m-0 text-xs text-secondary">{t('tools:tolerance.section-intro')}</p>
+        <p className="m-0 text-xs text-secondary text-pretty">{t('tools:tolerance.section-intro')}</p>
       </div>
 
       {!counts ? (
@@ -120,60 +163,87 @@ export const ToleranceCalculator: FC<{
             )}
           </div>
 
-          {/* Always mounted, so the first result is announced as well */}
-          <p role="status" className="sr-only">
-            {result ? t('tools:tolerance.allowed-loss', { value: result.allowedLoss.toFixed(4) }) : ''}
-          </p>
-          {result && (
-            <div className="flex flex-col gap-3">
-              <p className="m-0 text-sm tabular-nums">
-                {t('tools:tolerance.allowed-loss', { value: result.allowedLoss.toFixed(4) })}
-              </p>
-              <MaterialSurface variant="thin" className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm tabular-nums">
-                  <thead>
-                    <tr className="text-left text-xs text-secondary">
-                      <th scope="col" className="px-3 py-2 font-medium">
-                        {t('tools:tolerance.note-type')}
-                      </th>
-                      <th scope="col" className="px-3 py-2 font-medium text-right">
-                        GREAT
-                      </th>
-                      <th scope="col" className="px-3 py-2 font-medium text-right">
-                        GOOD
-                      </th>
-                      <th scope="col" className="px-3 py-2 font-medium text-right">
-                        MISS
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <tr key={row.type} className="border-t border-t-solid border-black/6">
-                        <th scope="row" className="px-3 py-2 text-left font-medium">
-                          {t(`tools:tolerance.type.${row.type}`)}{' '}
-                          <span className="text-xs font-normal text-secondary">×{formatCount(row.count)}</span>
-                        </th>
-                        <td className="px-3 py-2 text-right">{formatCount(row.great)}</td>
-                        <td className="px-3 py-2 text-right">{formatCount(row.good)}</td>
-                        <td className="px-3 py-2 text-right">{formatCount(row.miss)}</td>
-                      </tr>
+          {budget && evaluation && (
+            <>
+              <BudgetPanel
+                allowed={number(budget.allowedLoss, 4)}
+                allowedInGreats={number(budget.inTapGreats, 2)}
+                usedRatio={
+                  budget.allowedLoss > 0 ? evaluation.usedLoss / budget.allowedLoss : evaluation.usedLoss > 0 ? 2 : 0
+                }
+                remaining={number(Math.abs(evaluation.remainingLoss), 4)}
+                remainingInGreats={number(
+                  budget.tapGreatLoss > 0 ? Math.abs(evaluation.remainingLoss) / budget.tapGreatLoss : 0,
+                  2,
+                )}
+                over={evaluation.remainingLoss < -1e-9}
+                achievement={number(evaluation.achievement, 4)}
+                pass={evaluation.pass}
+                hasPicks={hasPicks}
+                onReset={() => setPicks({})}
+              />
+
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-0.5">
+                  <h3 className="m-0 text-sm font-semibold">{t('tools:tolerance.grid.title')}</h3>
+                  <p className="m-0 text-xs text-secondary text-pretty">{t('tools:tolerance.grid.legend')}</p>
+                </div>
+                <div
+                  className={clsx(
+                    'flex flex-col gap-3',
+                    `@[34rem]:grid @[34rem]:grid-cols-[minmax(4.5rem,auto)_repeat(5,minmax(0,1fr))] @[34rem]:gap-x-1.5 @[34rem]:gap-y-1.5`,
+                  )}
+                >
+                  {/* Column header, wide only; narrow cells carry their own judgement label */}
+                  <div aria-hidden className={`hidden @[34rem]:contents`}>
+                    <span className="self-end pb-0.5 text-xs text-secondary">{t('tools:tolerance.note-type')}</span>
+                    {COLUMNS.map((judgement) => (
+                      <span
+                        key={judgement}
+                        className="self-end pb-0.5 text-center text-xs font-semibold text-secondary"
+                      >
+                        {t(`tools:tolerance.judgement.${judgement}`)}
+                      </span>
                     ))}
-                  </tbody>
-                </table>
-              </MaterialSurface>
-              {counts.break > 0 && (
-                <dl className="m-0 grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-                  <BreakStat label={t('tools:tolerance.break-50')} value={formatCount(result.maxBreak50)} />
-                  <BreakStat label={t('tools:tolerance.break-100')} value={formatCount(result.maxBreak100)} />
-                  <BreakStat
-                    label={t('tools:tolerance.break-50-per-great')}
-                    value={result.break50PerTapGreat.toFixed(2)}
-                  />
-                </dl>
-              )}
-              <p className="m-0 text-xs text-secondary">{t('tools:tolerance.footnote')}</p>
-            </div>
+                  </div>
+
+                  {budget.rows.map((row) => {
+                    const left = row.count - rowTotal(picks, row.type)
+                    return (
+                      <div key={row.type} className="flex flex-col gap-1.5 @[34rem]:contents">
+                        <div
+                          className={`flex items-baseline gap-1.5 @[34rem]:self-center @[34rem]:flex-col @[34rem]:gap-0`}
+                        >
+                          <span className="text-sm font-semibold">{t(`tools:tolerance.type.${row.type}`)}</span>
+                          <span className="text-xs text-secondary num">×{row.count.toLocaleString(locale)}</span>
+                        </div>
+                        <div className={`grid grid-cols-3 gap-1.5 @[34rem]:contents`}>
+                          {COLUMNS.map((judgement) => {
+                            const cell = row.judgements.find((j) => j.judgement === judgement)
+                            if (!cell) return <span key={judgement} aria-hidden className={`hidden @[34rem]:block`} />
+                            const value = pickCount(picks, row.type, judgement)
+                            return (
+                              <JudgementCell
+                                key={judgement}
+                                typeLabel={t(`tools:tolerance.type.${row.type}`)}
+                                judgementLabel={t(`tools:tolerance.judgement.${judgement}`)}
+                                cell={cell}
+                                count={row.count}
+                                value={value}
+                                canAdd={left > 0}
+                                rate={rate(cell.inTapGreats)}
+                                onChange={(next) => setPick(row, judgement, next)}
+                              />
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+              <p className="m-0 text-xs text-secondary text-pretty">{t('tools:tolerance.footnote')}</p>
+            </>
           )}
         </>
       )}
@@ -181,10 +251,161 @@ export const ToleranceCalculator: FC<{
   )
 }
 
-const BreakStat: FC<{ label: string; value: string }> = ({ label, value }) => (
-  // Cards stretch to the tallest label in their row; pinning each value to the bottom keeps the values aligned
-  <MaterialSurface variant="thin" className="flex flex-col justify-between gap-0.5 px-3 py-2">
-    <dt className="text-xs text-secondary">{label}</dt>
-    <dd className="m-0 text-base font-bold tabular-nums">{value}</dd>
-  </MaterialSurface>
-)
+const REGULAR_AND_BREAK: readonly ToleranceNoteType[] = ['tap', 'hold', 'slide', 'touch', 'break']
+
+const BudgetPanel: FC<{
+  allowed: string
+  allowedInGreats: string
+  usedRatio: number
+  remaining: string
+  remainingInGreats: string
+  over: boolean
+  achievement: string
+  pass: boolean
+  hasPicks: boolean
+  onReset: () => void
+}> = ({
+  allowed,
+  allowedInGreats,
+  usedRatio,
+  remaining,
+  remainingInGreats,
+  over,
+  achievement,
+  pass,
+  hasPicks,
+  onReset,
+}) => {
+  const { t } = useTranslation(['tools'])
+  const ResultIcon = pass ? MdiCheckCircle : MdiCloseCircle
+  return (
+    <MaterialSurface variant="thin" className="flex flex-col gap-2 p-3">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+        <span className="text-xs font-semibold text-secondary">{t('tools:tolerance.budget.label')}</span>
+        <span className="text-2xl font-bold num leading-tight">{allowed}%</span>
+        <span className="text-sm num">{t('tools:tolerance.budget.in-greats', { value: allowedInGreats })}</span>
+      </div>
+      <div
+        aria-hidden
+        className="h-2 overflow-hidden rounded-full glass-inset !border-0 bg-[color-mix(in_oklab,var(--fg-2)_14%,transparent)]"
+      >
+        <div
+          className={clsx(
+            'h-full rounded-full transition-[width] duration-[var(--duration-fast)] ease-[var(--ease-out)]',
+            over ? 'bg-[var(--danger)]' : 'bg-accent-strong',
+          )}
+          style={{ width: `${Math.min(100, usedRatio * 100)}%` }}
+        />
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+        {/* Announced as the grid changes */}
+        <output className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm num">
+          <span className={clsx(over && 'font-semibold text-[var(--danger)]')}>
+            {t(over ? 'tools:tolerance.budget.over' : 'tools:tolerance.budget.remaining', {
+              value: remaining,
+              greats: remainingInGreats,
+            })}
+          </span>
+          <span
+            className={clsx(
+              'inline-flex items-center gap-1 rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xs font-semibold',
+              pass
+                ? 'bg-[color-mix(in_oklab,var(--status-positive)_16%,transparent)] text-[var(--status-positive)]'
+                : 'bg-[color-mix(in_oklab,var(--danger)_14%,transparent)] text-[var(--danger)]',
+            )}
+          >
+            <ResultIcon aria-hidden className="size-3.5 shrink-0" />
+            {t(pass ? 'tools:tolerance.budget.pass' : 'tools:tolerance.budget.fail', { achievement })}
+          </span>
+        </output>
+        {hasPicks ? (
+          <button
+            type="button"
+            onClick={onReset}
+            className="link cursor-pointer border-0 bg-transparent p-0 text-sm font-inherit"
+          >
+            {t('tools:tolerance.budget.reset')}
+          </button>
+        ) : (
+          <span className="text-xs text-secondary">{t('tools:tolerance.budget.hint')}</span>
+        )}
+      </div>
+    </MaterialSurface>
+  )
+}
+
+const stepButton =
+  'inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border-0 bg-transparent p-0 text-fg-1 hover:bg-[color-mix(in_oklab,var(--fg-1)_8%,transparent)] disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent'
+
+const JudgementCell: FC<{
+  typeLabel: string
+  judgementLabel: string
+  cell: BudgetJudgement
+  count: number
+  value: number
+  canAdd: boolean
+  rate: string
+  onChange: (value: number) => void
+}> = ({ typeLabel, judgementLabel, cell, count, value, canAdd, rate, onChange }) => {
+  const { t } = useTranslation(['tools'])
+  const name = `${typeLabel} ${judgementLabel}`
+  const soloClassName = cell.soloAll
+    ? 'text-[var(--status-positive)]'
+    : cell.soloMax === 0
+      ? 'text-[var(--danger)]'
+      : 'text-secondary'
+  return (
+    <div
+      className={clsx(
+        'flex min-w-0 flex-col gap-0.5 rounded-[var(--radius-md)] glass-inset px-1 py-1.5',
+        value > 0 && 'shadow-[inset_0_0_0_1.5px_var(--accent)]',
+      )}
+    >
+      <span className={`px-1 text-[0.6875rem] font-semibold text-secondary @[34rem]:sr-only`}>{judgementLabel}</span>
+      <div className="flex items-center gap-0.5">
+        <button
+          type="button"
+          className={stepButton}
+          aria-label={t('tools:tolerance.grid.decrease', { name })}
+          disabled={value <= 0}
+          onClick={() => onChange(value - 1)}
+        >
+          <MdiMinus aria-hidden className="size-4" />
+        </button>
+        <input
+          type="text"
+          inputMode="numeric"
+          aria-label={t('tools:tolerance.grid.count', { name })}
+          value={value === 0 ? '' : String(value)}
+          placeholder="0"
+          onChange={(event) => {
+            const parsed = Number.parseInt(event.target.value.replace(/[^\d]/g, '') || '0', 10)
+            onChange(Number.isFinite(parsed) ? parsed : 0)
+          }}
+          onFocus={(event) => event.target.select()}
+          className="w-full min-w-0 rounded-[var(--radius-sm)] border-0 bg-transparent p-0 text-center text-base font-semibold num text-fg-1 placeholder:text-fg-2 placeholder:font-normal focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-[var(--accent)]"
+        />
+        <button
+          type="button"
+          className={stepButton}
+          aria-label={t('tools:tolerance.grid.increase', { name })}
+          disabled={!canAdd}
+          onClick={() => onChange(value + 1)}
+        >
+          <MdiPlus aria-hidden className="size-4" />
+        </button>
+      </div>
+      <span
+        className="px-1 text-[0.6875rem] leading-tight text-secondary num"
+        title={t('tools:tolerance.grid.rate-title', { value: rate })}
+      >
+        {t('tools:tolerance.grid.rate', { value: rate })}
+      </span>
+      <span className={clsx('px-1 text-[0.6875rem] leading-tight num', soloClassName)}>
+        {cell.soloAll
+          ? t('tools:tolerance.grid.solo-all', { count })
+          : t('tools:tolerance.grid.solo', { count: cell.soloMax })}
+      </span>
+    </div>
+  )
+}

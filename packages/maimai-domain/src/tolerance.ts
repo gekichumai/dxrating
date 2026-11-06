@@ -161,3 +161,158 @@ export function calculateAchievement(counts: ToleranceNoteCounts, judgements: Ju
   const raw = ((base - lost) / base) * 100 + bonus
   return Math.floor(raw * 10000 + EPSILON) / 10000
 }
+/*
+ * Budget view of the tolerance: one achievement margin (`101 - target`), spent by judgements. Every judgement has a
+ * fixed price on a given chart, expressed in % and as an exchange rate against one TAP GREAT, the unit players count in.
+ * A combination passes while its total price fits the margin; that is the same as the game's truncated achievement
+ * reaching the target, because the target has at most four decimals.
+ */
+
+export type RegularJudgement = 'great' | 'good' | 'miss'
+/** BREAK judgements a player can count off a result screen. GREAT is priced at its lowest tier (1250), see below. */
+export type BreakBudgetJudgement = 'perfect50' | 'perfect100' | 'great' | 'good' | 'miss'
+export type RegularNoteType = Exclude<ToleranceNoteType, 'break'>
+
+export const REGULAR_JUDGEMENTS: readonly RegularJudgement[] = ['great', 'good', 'miss']
+export const BREAK_BUDGET_JUDGEMENTS: readonly BreakBudgetJudgement[] = [
+  'perfect50',
+  'perfect100',
+  'great',
+  'good',
+  'miss',
+]
+export const REGULAR_NOTE_TYPES: readonly RegularNoteType[] = ['tap', 'hold', 'slide', 'touch']
+
+const REGULAR_KEPT: Record<RegularJudgement, number> = { great: 0.8, good: 0.5, miss: 0 }
+/**
+ * The result screen shows one BREAK GREAT count, not its tier (2000 / 1500 / 1250), so a BREAK GREAT is priced at the
+ * lowest tier. The budget never says a combination passes when the game could say it fails.
+ */
+const BREAK_BUDGET_TIER: Record<BreakBudgetJudgement, BreakJudgement> = {
+  perfect50: 'perfect50',
+  perfect100: 'perfect100',
+  great: 'great3',
+  good: 'good',
+  miss: 'miss',
+}
+
+/** Achievement (in %) one judgement costs on this chart */
+export function judgementLoss(
+  counts: ToleranceNoteCounts,
+  type: ToleranceNoteType,
+  judgement: RegularJudgement | BreakBudgetJudgement,
+): number {
+  const base = totalBaseScore(counts)
+  if (base === 0) return 0
+  if (type !== 'break') {
+    const kept = REGULAR_KEPT[judgement as RegularJudgement]
+    return ((NOTE_BASE_SCORE[type] * (1 - kept)) / base) * 100
+  }
+  if (counts.break === 0) return 0
+  const tier = BREAK_BUDGET_TIER[judgement as BreakBudgetJudgement]
+  return ((2500 - BREAK_BASE[tier]) / base) * 100 + (1 - BREAK_BONUS[tier]) / counts.break
+}
+
+export interface BudgetJudgement {
+  judgement: RegularJudgement | BreakBudgetJudgement
+  /** Achievement (in %) one of these costs */
+  loss: number
+  /** The same price in TAP GREATs */
+  inTapGreats: number
+  /** Most of these the margin allows when every other note is CRITICAL PERFECT, capped at the note count */
+  soloMax: number
+  /** The cap is the note count: every note of this type can get this judgement and the target still holds */
+  soloAll: boolean
+}
+
+export interface BudgetRow {
+  type: ToleranceNoteType
+  count: number
+  judgements: BudgetJudgement[]
+}
+
+export interface ToleranceBudget {
+  target: number
+  /** The margin: 101 - target, in % */
+  allowedLoss: number
+  /** One TAP GREAT, in %: the exchange unit */
+  tapGreatLoss: number
+  /** The margin in TAP GREATs (fractional) */
+  inTapGreats: number
+  rows: BudgetRow[]
+  feasible: boolean
+}
+
+export function calculateToleranceBudget(counts: ToleranceNoteCounts, target: number): ToleranceBudget {
+  const allowedLoss = Math.max(0, 101 - target)
+  const tapGreatLoss = judgementLoss(counts, 'tap', 'great')
+  const price = (type: ToleranceNoteType, judgement: RegularJudgement | BreakBudgetJudgement): BudgetJudgement => {
+    const loss = judgementLoss(counts, type, judgement)
+    const count = counts[type]
+    const fit = loss > 0 ? Math.floor(allowedLoss / loss + EPSILON) : count
+    const soloMax = Math.min(count, fit)
+    return { judgement, loss, inTapGreats: tapGreatLoss > 0 ? loss / tapGreatLoss : 0, soloMax, soloAll: fit >= count }
+  }
+  const rows: BudgetRow[] = [
+    ...REGULAR_NOTE_TYPES.filter((type) => counts[type] > 0).map((type) => ({
+      type,
+      count: counts[type],
+      judgements: REGULAR_JUDGEMENTS.map((judgement) => price(type, judgement)),
+    })),
+    ...(counts.break > 0
+      ? [
+          {
+            type: 'break' as const,
+            count: counts.break,
+            judgements: BREAK_BUDGET_JUDGEMENTS.map((j) => price('break', j)),
+          },
+        ]
+      : []),
+  ]
+  return {
+    target,
+    allowedLoss,
+    tapGreatLoss,
+    inTapGreats: tapGreatLoss > 0 ? allowedLoss / tapGreatLoss : 0,
+    rows,
+    feasible: target <= 101 && totalBaseScore(counts) > 0,
+  }
+}
+
+/** Judgement counts entered by the player, per note type; everything not listed is CRITICAL PERFECT */
+export type BudgetPicks = Partial<
+  Record<ToleranceNoteType, Partial<Record<RegularJudgement | BreakBudgetJudgement, number>>>
+>
+
+export interface BudgetEvaluation {
+  /** Total price of the picks, in % */
+  usedLoss: number
+  /** Margin left (negative when over), in % */
+  remainingLoss: number
+  /** The game's achievement for the picks (truncated to four decimals) */
+  achievement: number
+  pass: boolean
+}
+
+export function evaluateBudget(counts: ToleranceNoteCounts, target: number, picks: BudgetPicks): BudgetEvaluation {
+  const allowedLoss = Math.max(0, 101 - target)
+  let usedLoss = 0
+  const judgements: Judgements = { great: {}, good: {}, miss: {}, break: {} }
+  for (const type of [...REGULAR_NOTE_TYPES, 'break'] as const) {
+    for (const [judgement, n] of Object.entries(picks[type] ?? {}) as [
+      RegularJudgement | BreakBudgetJudgement,
+      number,
+    ][]) {
+      if (!n) continue
+      usedLoss += n * judgementLoss(counts, type, judgement)
+      if (type === 'break') {
+        const tier = BREAK_BUDGET_TIER[judgement as BreakBudgetJudgement]
+        judgements.break![tier as Exclude<BreakJudgement, 'criticalPerfect'>] = n
+      } else {
+        judgements[judgement as RegularJudgement]![type] = n
+      }
+    }
+  }
+  const achievement = calculateAchievement(counts, judgements)
+  return { usedLoss, remainingLoss: allowedLoss - usedLoss, achievement, pass: achievement >= target - EPSILON }
+}
