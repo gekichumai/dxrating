@@ -35,11 +35,12 @@ const SHEET_GRID_SURFACE = 'w-full p-2 sm:p-3'
 const UTAGE_LEVEL_FILL = '#CC1F7A'
 
 const TILE_PILL =
-  'inline-flex h-5 items-center gap-1 rounded-[var(--radius-sm)] px-1.5 text-xs font-bold leading-none text-white num shadow-[0_1px_0_0_rgb(0_0_0/0.15)]'
+  'inline-flex h-5 items-center gap-0.5 rounded-[var(--radius-sm)] px-1 text-xs sm:gap-1 sm:px-1.5 font-bold leading-none text-white num shadow-[0_1px_0_0_rgb(0_0_0/0.15)]'
 
 /**
  * The difficulty as a short pill (MAS, Re:M): a tile is too narrow for the full name beside the chart constant. A
- * Utage chart has no constant, so its pill carries the level instead.
+ * Utage chart has no constant, so its pill carries the level instead. Below sm the pill is 6px tighter, so a locked
+ * Re:MAS still fits beside a 14.9 in a 360px phone's three-column tile.
  */
 const SheetGridDifficulty: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const { t } = useTranslation(['sheet'])

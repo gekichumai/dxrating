@@ -45,5 +45,4 @@ describe('HomeHub', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('false')
     expect(content.className).toContain('hidden sm:block')
   })
-
 })
