@@ -136,8 +136,6 @@
     "details.unlock-status.not-required": "Not required",
     "details.region-available": "{{region}}: available",
     "details.region-unavailable": "{{region}}: not available",
-    "details.achievement-to-rating.step": "{{value}} more than the row below",
-    "details.achievement-to-rating.step-label": "Gain",
     "details.unlock.label": "Unlock",
     "details.unlock.required": "Required",
     "details.unlock.not-required": "Not required",
