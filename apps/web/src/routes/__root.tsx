@@ -26,7 +26,7 @@ import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculat
 import { CatalogProvider } from '@/catalog/CatalogContext'
 import { loadCatalogMeta } from '@/catalog/catalogSource'
 import { createServerI18n } from '@/setup/init-i18n'
-import { buildRootSeoMeta, formatSeoTitle, resolveSeoLocale } from '@/utils/seo'
+import { buildNotFoundSeoMeta, buildRootSeoMeta, resolveRootHeadState, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import { useThemeColorSync } from '@/utils/useThemeColorSync'
@@ -36,9 +36,6 @@ import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } f
 import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
-
-// Routes whose head sets the full page title themselves
-const SELF_TITLED_ROUTE_IDS = new Set(['/songs/$songId/$type/$difficulty', '/songs_/$songId'])
 
 const fallbackElement = (
   <div className="flex items-center justify-center h-50% w-full p-6">
@@ -63,16 +60,7 @@ export const Route = createRootRoute({
   shouldReload: false,
   head: ({ match, matches }) => {
     const locale = resolveSeoLocale([match, ...matches])
-    const includeRootTitle = !matches.some((match) => SELF_TITLED_ROUTE_IDS.has(String(match.routeId)))
-    // A 404 (no route matched, or a loader threw notFound) gets its own title and stays out of the index
-    const isNotFound = matches.some((match) => match.status === 'notFound' || match.globalNotFound)
-    const notFoundMeta =
-      isNotFound && includeRootTitle
-        ? [
-            { title: formatSeoTitle(createServerI18n(locale).t('root:not-found.title')) },
-            { name: 'robots', content: 'noindex' },
-          ]
-        : []
+    const { isNotFound, includeRootTitle } = resolveRootHeadState(match, matches)
 
     return {
       meta: [
@@ -81,8 +69,8 @@ export const Route = createRootRoute({
           name: 'viewport',
           content: 'width=device-width, initial-scale=1.0, viewport-fit=cover',
         },
-        ...buildRootSeoMeta(locale, { includeTitle: includeRootTitle && !isNotFound }),
-        ...notFoundMeta,
+        ...buildRootSeoMeta(locale, { includeTitle: includeRootTitle }),
+        ...(isNotFound ? buildNotFoundSeoMeta(locale) : []),
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         {
           name: 'msapplication-config',

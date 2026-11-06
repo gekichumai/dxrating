@@ -212,8 +212,9 @@ html {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
-/* Select comboboxes are not ButtonBase; MUI's input reset removes their outline */
-.MuiSelect-select:focus-visible {
+/* Select comboboxes are not ButtonBase. MUI's input reset (a generated class plus :focus, inserted after this file)
+   removes their outline, so the doubled class outranks it whatever the stylesheet order */
+.MuiSelect-select.MuiSelect-select:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
