@@ -12,8 +12,9 @@ export type SheetTagSong = z.infer<typeof SheetTagSongSchema>
 export const sheetTagsDetailedKey = (sheet: Pick<FlattenedSheet, 'songId' | 'type' | 'difficulty'>) =>
   ['tags.sheetTags', sheet.songId, sheet.type, sheet.difficulty] as const
 
-export const userTagVotesKey = (tagSongIds: readonly number[]) =>
-  tagSongIds.length === 0 ? null : (['tags.userVotes', tagSongIds.join(',')] as const)
+/** Scoped to the signed-in account, so switching accounts never shows another user's votes. */
+export const userTagVotesKey = (userId: string | undefined, tagSongIds: readonly number[]) =>
+  !userId || tagSongIds.length === 0 ? null : (['tags.userVotes', userId, tagSongIds.join(',')] as const)
 
 /**
  * Per-sheet tag associations with their full vote breakdown, including the ones
@@ -71,7 +72,7 @@ export const useUserTagVotes = (tagSongIds: readonly number[]) => {
   const { data: sessionData } = authClient.useSession()
 
   const { data, mutate } = useSWR(
-    sessionData?.session ? userTagVotesKey(tagSongIds) : null,
+    userTagVotesKey(sessionData?.user?.id, tagSongIds),
     async () => client.tags.userVotes({ tagSongIds: [...tagSongIds] }),
     { revalidateOnFocus: false },
   )

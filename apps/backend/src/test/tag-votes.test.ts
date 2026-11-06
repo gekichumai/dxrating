@@ -112,6 +112,40 @@ describe('Tag voting and removal', () => {
     expect(globalTagSong.score).toBe(1)
   })
 
+  it('creates one association and one creator vote when the same tag is attached concurrently', async () => {
+    const creator = await createUser('vote-race@example.com', 'Racer')
+    const tagId = await createTag(creator.id, 'Raced')
+
+    // Slow each insert down so the concurrent requests overlap deterministically:
+    // without serialisation both would pass the existence check and insert.
+    await withPool((pool) =>
+      pool.query(`
+        CREATE FUNCTION tag_songs_slow_insert() RETURNS trigger AS $$
+        BEGIN PERFORM pg_sleep(0.3); RETURN NEW; END $$ LANGUAGE plpgsql;
+        CREATE TRIGGER tag_songs_slow_insert BEFORE INSERT ON tag_songs
+          FOR EACH ROW EXECUTE FUNCTION tag_songs_slow_insert();
+      `),
+    )
+    try {
+      const ids = await Promise.all([attachTag(creator, tagId), attachTag(creator, tagId), attachTag(creator, tagId)])
+      expect(new Set(ids).size).toBe(1)
+    } finally {
+      await withPool((pool) =>
+        pool.query(`DROP TRIGGER tag_songs_slow_insert ON tag_songs; DROP FUNCTION tag_songs_slow_insert();`),
+      )
+    }
+
+    const { rows } = await withPool((pool) =>
+      pool.query(
+        `SELECT count(DISTINCT ts.id)::int AS associations, count(v.id)::int AS votes
+         FROM tag_songs ts LEFT JOIN tag_song_votes v ON v.tag_song_id = ts.id WHERE ts.tag_id = $1`,
+        [tagId],
+      ),
+    )
+    expect(rows[0]).toEqual({ associations: 1, votes: 1 })
+    expect(await fetchSheetTags()).toMatchObject([{ tag_id: tagId, upvotes: 1, downvotes: 0, score: 1 }])
+  })
+
   it('rejects unauthenticated votes', async () => {
     const res = await fetch(`${getBaseUrl()}/api/v1/tags/vote`, {
       method: 'POST',

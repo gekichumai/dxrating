@@ -285,27 +285,41 @@ const tagsHandler = {
 
       const identity = yield* withCatalogIdentityErrors(catalogIdentities.resolveSheetInput(input))
 
-      const existing = yield* database.query('Tags.findAttachment', (db) =>
-        db
-          .select()
-          .from(tagSongs)
-          .where(
-            and(
-              inArray(tagSongs.song_id, identity.legacySongIds),
-              eq(tagSongs.sheet_type, identity.sheetType),
-              eq(tagSongs.sheet_difficulty, identity.sheetDifficulty),
-              eq(tagSongs.tag_id, input.tagId),
-            ),
-          )
-          .orderBy(tagSongs.id),
-      )
-
-      if (existing.length > 0) return { id: existing[0].id }
-
-      const res = yield* database
+      // tag_songs has no unique key over an association (legacy renames can split
+      // one across rows), so concurrent attaches are serialised per sheet and tag
+      // with a transaction-scoped advisory lock. The existence check runs under
+      // that lock, so a race can never create a second row and a second creator +1.
+      const lockKey = JSON.stringify([
+        'tags.attach',
+        identity.legacySongId,
+        identity.sheetType,
+        identity.sheetDifficulty,
+        input.tagId,
+      ])
+      const result = yield* database
         .transaction((tx) =>
           Effect.gen(function* () {
-            const inserted = yield* database.query('Tags.attach', () =>
+            yield* database.query('Tags.attachLock', () =>
+              tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`),
+            )
+            const existing = yield* database.query('Tags.findAttachment', () =>
+              tx
+                .select({ id: tagSongs.id })
+                .from(tagSongs)
+                .where(
+                  and(
+                    inArray(tagSongs.song_id, identity.legacySongIds),
+                    eq(tagSongs.sheet_type, identity.sheetType),
+                    eq(tagSongs.sheet_difficulty, identity.sheetDifficulty),
+                    eq(tagSongs.tag_id, input.tagId),
+                  ),
+                )
+                .orderBy(tagSongs.id)
+                .limit(1),
+            )
+            if (existing.length > 0) return { id: existing[0].id, created: false }
+
+            const [inserted] = yield* database.query('Tags.attach', () =>
               tx
                 .insert(tagSongs)
                 .values({
@@ -321,18 +335,18 @@ const tagsHandler = {
             yield* database.query('Tags.attachCreatorVote', () =>
               tx
                 .insert(tagSongVotes)
-                .values({ tag_song_id: inserted[0].id, user_id: user.id, value: 1 })
+                .values({ tag_song_id: inserted.id, user_id: user.id, value: 1 })
                 .onConflictDoNothing(),
             )
-            return inserted
+            return { id: inserted.id, created: true }
           }),
         )
         .pipe(
-          Effect.tap(() => cache.delete('tags:list')),
+          Effect.tap(({ created }) => (created ? cache.delete('tags:list') : Effect.void)),
           Effect.uninterruptible,
         )
 
-      return res[0]
+      return { id: result.id }
     }),
   ),
   sheetTags: os.tags.sheetTags.handler(
