@@ -16,7 +16,7 @@ function AccountSecurityPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pb-12 sm:px-6">
-      <section className="min-h-80 rounded-xl bg-white/95 p-6 shadow-lg backdrop-blur-sm dark:bg-zinc-900/95 sm:p-8">
+      <section className="min-h-80 rounded-xl bg-white/95 p-6 shadow-lg backdrop-blur-sm sm:p-8">
         {isPending ? (
           <div className="flex min-h-64 items-center justify-center" aria-busy="true">
             <CircularProgress size="2rem" />

@@ -8,19 +8,14 @@ export const CompletionBadges: FC<{ record: CompletionRecord | undefined }> = ({
   if (!record) return <span className="text-xs opacity-50">–</span>
   return (
     <span className="inline-flex flex-wrap justify-end gap-1">
-      <span
-        className={`${badge} bg-violet-500/15 text-violet-700 dark:text-violet-300`}
-        title={`${record.achievementRate.toFixed(4)}%`}
-      >
+      <span className={`${badge} bg-violet-500/15 text-violet-700`} title={`${record.achievementRate.toFixed(4)}%`}>
         {achievementRankLabel(record.achievementRate)}
       </span>
       {record.comboFlag && (
-        <span className={`${badge} bg-amber-500/15 text-amber-700 dark:text-amber-300`}>
-          {COMBO_LABELS[record.comboFlag]}
-        </span>
+        <span className={`${badge} bg-amber-500/15 text-amber-700`}>{COMBO_LABELS[record.comboFlag]}</span>
       )}
       {record.syncFlag && record.syncFlag !== 'sync' && (
-        <span className={`${badge} bg-sky-500/15 text-sky-700 dark:text-sky-300`}>{SYNC_LABELS[record.syncFlag]}</span>
+        <span className={`${badge} bg-sky-500/15 text-sky-700`}>{SYNC_LABELS[record.syncFlag]}</span>
       )}
     </span>
   )

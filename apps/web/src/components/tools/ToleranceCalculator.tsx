@@ -63,11 +63,11 @@ export const ToleranceCalculator: FC<{
         <Heading id="tolerance-heading" className="m-0 text-lg font-bold">
           {t('tools:tolerance.section-title')}
         </Heading>
-        <p className="m-0 text-xs text-slate-600 dark:text-slate-400">{t('tools:tolerance.section-intro')}</p>
+        <p className="m-0 text-xs text-slate-600">{t('tools:tolerance.section-intro')}</p>
       </div>
 
       {!counts ? (
-        <p className="m-0 text-sm text-slate-600 dark:text-slate-400">{t('tools:tolerance.no-note-counts')}</p>
+        <p className="m-0 text-sm text-slate-600">{t('tools:tolerance.no-note-counts')}</p>
       ) : (
         <>
           <div className="flex flex-col gap-2">
@@ -105,7 +105,7 @@ export const ToleranceCalculator: FC<{
               <MaterialSurface variant="thin" className="overflow-x-auto">
                 <table className="w-full border-collapse text-sm tabular-nums">
                   <thead>
-                    <tr className="text-left text-xs text-slate-600 dark:text-slate-400">
+                    <tr className="text-left text-xs text-slate-600">
                       <th scope="col" className="px-3 py-2 font-medium">
                         {t('tools:tolerance.note-type')}
                       </th>
@@ -122,7 +122,7 @@ export const ToleranceCalculator: FC<{
                   </thead>
                   <tbody>
                     {rows.map((row) => (
-                      <tr key={row.type} className="border-t border-t-solid border-black/6 dark:border-white/8">
+                      <tr key={row.type} className="border-t border-t-solid border-black/6">
                         <th scope="row" className="px-3 py-2 text-left font-medium">
                           {t(`tools:tolerance.type.${row.type}`)}{' '}
                           <span className="text-xs font-normal text-slate-500">×{formatCount(row.count)}</span>
@@ -156,7 +156,7 @@ export const ToleranceCalculator: FC<{
 
 const BreakStat: FC<{ label: string; value: string }> = ({ label, value }) => (
   <MaterialSurface variant="thin" className="flex flex-col gap-0.5 px-3 py-2">
-    <dt className="text-xs text-slate-600 dark:text-slate-400">{label}</dt>
+    <dt className="text-xs text-slate-600">{label}</dt>
     <dd className="m-0 text-base font-bold tabular-nums">{value}</dd>
   </MaterialSurface>
 )

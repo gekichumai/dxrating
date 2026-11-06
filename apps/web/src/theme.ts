@@ -13,7 +13,13 @@ export interface Theme {
   logo: Asset
   favicon: Asset
   canvasColor?: string
+  /** The version's brand colour: decoration only (backgrounds, tints, theme-color), never text or a text-bearing fill */
   accentColor: string
+  /**
+   * The accent darkened in OKLCH (hue and chroma kept) until it reaches at least 4.5:1 against white and against the
+   * tinted glass over the canvas: for text, links, focus rings and fills that carry white text
+   */
+  accentStrongColor: string
   disabled?: boolean
 }
 
@@ -23,6 +29,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     logo: { width: 604, height: 354, path: '/images/versions/magical/logo.webp', local: true },
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#178C72',
+    accentStrongColor: '#00745b',
     canvasColor: '#bdebdc',
   },
   [VersionEnum.FESTiVALPLUS]: {
@@ -32,6 +39,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     logo: assetpack['/images/version-logo/festival-plus.webp'],
     favicon: assetpack['/favicon/festival-plus-1024x.jpg'],
     accentColor: '#c8a8f9',
+    accentStrongColor: '#7556a0',
   },
   [VersionEnum.BUDDiES]: {
     background: {
@@ -40,6 +48,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     logo: assetpack['/images/version-logo/buddies.webp'],
     favicon: assetpack['/favicon/buddies-1024x.jpg'],
     accentColor: '#FAAE29',
+    accentStrongColor: '#9a5400',
   },
   [VersionEnum.BUDDiESPLUS]: {
     background: {
@@ -48,6 +57,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     logo: assetpack['/images/version-logo/buddies-plus.webp'],
     favicon: assetpack['/favicon/buddies-1024x.jpg'],
     accentColor: '#FAAE29',
+    accentStrongColor: '#9a5400',
   },
   [VersionEnum.PRiSM]: {
     background: {
@@ -57,6 +67,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     logo: assetpack['/images/version-logo/prism.webp'],
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#6368C7',
+    accentStrongColor: '#585cba',
   },
   [VersionEnum.PRiSMPLUS]: {
     background: {
@@ -66,6 +77,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     logo: assetpack['/images/version-logo/prism-plus.webp'],
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#6368C7',
+    accentStrongColor: '#585cba',
   },
   [VersionEnum.CiRCLE]: {
     background: {
@@ -74,6 +86,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     logo: assetpack['/images/version-logo/circle.webp'],
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#EF67A4',
+    accentStrongColor: '#b53172',
   },
   [VersionEnum.CiRCLEPLUS]: {
     background: {
@@ -82,5 +95,6 @@ export const VERSION_THEME: Record<string, Theme> = {
     logo: assetpack['/images/version-logo/circle-plus.webp'],
     favicon: assetpack['/favicon/prism-1024x.jpg'],
     accentColor: '#EF67A4',
+    accentStrongColor: '#b53172',
   },
 }

@@ -222,6 +222,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       style={
         {
           '--theme-accent': theme.accentColor,
+          // Design tokens (src/styles/tokens.css) derive every surface tint and accent role from these two
+          '--accent': theme.accentColor,
+          '--accent-strong': theme.accentStrongColor,
           '--theme-canvas': theme.canvasColor ?? theme.accentColor,
         } as CSSProperties
       }

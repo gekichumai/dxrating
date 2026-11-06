@@ -108,10 +108,7 @@ export const ProgressSummaryPage: FC = () => {
               </thead>
               <tbody>
                 {rows.map((row) => (
-                  <tr
-                    key={row.level}
-                    className="border-t border-solid border-black/6 dark:border-white/8 border-x-0 border-b-0"
-                  >
+                  <tr key={row.level} className="border-t border-solid border-black/6 border-x-0 border-b-0">
                     <th scope="row" className="px-3 py-2 text-left whitespace-nowrap">
                       <a href={constantTablePath(row.level)}>Lv.{row.level}</a>
                     </th>

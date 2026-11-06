@@ -267,14 +267,14 @@ const SegaIDImportGuide: FC<{ region: 'intl' | 'jp' }> = ({ region }) => {
   const aimeURL = region === 'jp' ? 'https://maimaidx.jp/maimai-mobile/' : 'https://maimaidx-eng.com/maimai-mobile/'
 
   return (
-    <div className="mb-2 rounded-2xl border border-blue-200/70 bg-blue-50/60 p-2 dark:border-blue-900/60 dark:bg-blue-950/25">
+    <div className="mb-2 rounded-2xl border border-blue-200/70 bg-blue-50/60 p-2">
       <div className="flex items-start gap-3 px-3 pb-1 pt-2">
-        <IconMdiHelpCircleOutline className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-300" />
+        <IconMdiHelpCircleOutline className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
         <div>
-          <div className="font-semibold text-zinc-900 dark:text-zinc-100">
+          <div className="font-semibold text-zinc-900">
             {t('rating-calculator:io.import.net-records.dialog.help.title')}
           </div>
-          <div className="text-sm text-zinc-600 dark:text-zinc-300">
+          <div className="text-sm text-zinc-600">
             {t('rating-calculator:io.import.net-records.dialog.help.description')}
           </div>
         </div>
@@ -324,7 +324,7 @@ const SegaIDImportGuide: FC<{ region: 'intl' | 'jp' }> = ({ region }) => {
           </Typography>
         </AccordionSummary>
         <AccordionDetails className="pt-0">
-          <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-300">
+          <p className="mb-3 text-sm text-zinc-600">
             {t('rating-calculator:io.import.net-records.dialog.help.oauth.description')}
           </p>
           <HelpSteps
@@ -343,8 +343,8 @@ const SegaIDImportGuide: FC<{ region: 'intl' | 'jp' }> = ({ region }) => {
 const HelpSteps: FC<{ steps: string[] }> = ({ steps }) => (
   <ol className="m-0 flex list-none flex-col gap-2 p-0">
     {steps.map((step, index) => (
-      <li key={step} className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-200">
-        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white dark:bg-blue-400 dark:text-blue-950">
+      <li key={step} className="flex items-start gap-2 text-sm text-zinc-700">
+        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
           {index + 1}
         </span>
         <span>{step}</span>

@@ -72,7 +72,7 @@ const usePlateRecords = () => {
 const Breadcrumb: FC<{ leaf?: string }> = ({ leaf }) => {
   const { t } = useTranslation(['plates'])
   return (
-    <nav className="text-xs text-slate-600 dark:text-slate-400" aria-label="Breadcrumb">
+    <nav className="text-xs text-slate-600" aria-label="Breadcrumb">
       <a href="/" className="text-inherit">
         DXRating
       </a>
@@ -102,9 +102,7 @@ const RegionSwitch: FC<{ path: string; region: PlateRegion }> = ({ path, region 
           href={regionHref(path, candidate)}
           aria-current={candidate === region ? 'page' : undefined}
           className={`px-3 py-1 rounded-lg text-sm no-underline ${
-            candidate === region
-              ? 'bg-white/80 dark:bg-white/15 text-slate-950 dark:text-white font-bold shadow-sm'
-              : 'text-slate-700 dark:text-slate-300 hover:bg-white/40 dark:hover:bg-white/8'
+            candidate === region ? 'bg-white/80 text-slate-950 font-bold shadow-sm' : 'text-slate-700 hover:bg-white/40'
           }`}
         >
           {t(`plates:region.${candidate}`)}
@@ -115,7 +113,7 @@ const RegionSwitch: FC<{ path: string; region: PlateRegion }> = ({ path, region 
 }
 
 const ProgressBar: FC<{ percent: number; className?: string }> = ({ percent, className }) => (
-  <div className={`h-2 rounded-full bg-black/8 dark:bg-white/10 overflow-hidden ${className ?? ''}`}>
+  <div className={`h-2 rounded-full bg-black/8 overflow-hidden ${className ?? ''}`}>
     <div
       className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-[width]"
       style={{ width: `${Math.min(100, percent)}%` }}
@@ -150,8 +148,8 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
       <div className="w-full flex flex-col gap-4">
         <header className="flex flex-col gap-2">
           <Breadcrumb />
-          <h1 className="text-3xl font-bold text-slate-950 dark:text-white m-0">{t('plates:index.title')}</h1>
-          <p className="text-sm text-slate-700 dark:text-slate-300 m-0">{t('plates:index.intro')}</p>
+          <h1 className="text-3xl font-bold text-slate-950 m-0">{t('plates:index.title')}</h1>
+          <p className="text-sm text-slate-700 m-0">{t('plates:index.intro')}</p>
           <RegionSwitch path="/plates" region={region} />
         </header>
 
@@ -160,14 +158,14 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
             <li key={group.id}>
               <MaterialSurface className="p-3 flex flex-col gap-2 h-full">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-slate-950 dark:text-white">{group[script]}</span>
-                  <span className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                  <span className="text-2xl font-bold text-slate-950">{group[script]}</span>
+                  <span className="text-xs text-slate-600 truncate">
                     {group.versions.length > 2
                       ? `${group.versions[0]} – ${group.versions.at(-1)}`
                       : group.versions.join(' / ')}
                   </span>
                   {group.unverified && (
-                    <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-md border border-solid border-amber-500/40 text-amber-700 dark:text-amber-300">
+                    <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-md border border-solid border-amber-500/40 text-amber-700">
                       {t('plates:unverified')}
                     </span>
                   )}
@@ -179,15 +177,13 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
                       <a
                         key={plate.id}
                         href={regionHref(platePath(plate.id), region)}
-                        className="material-surface-thin rounded-lg! px-2 py-1.5 no-underline flex flex-col gap-1 hover:bg-white/60 dark:hover:bg-white/8 transition-colors"
+                        className="material-surface-thin rounded-lg! px-2 py-1.5 no-underline flex flex-col gap-1 hover:bg-white/60 transition-colors"
                       >
-                        <span className="text-sm font-bold text-slate-950 dark:text-white">{plate.names[script]}</span>
+                        <span className="text-sm font-bold text-slate-950">{plate.names[script]}</span>
                         {percent !== undefined ? (
                           <>
                             <ProgressBar percent={percent} className="h-1!" />
-                            <span className="text-[11px] tabular-nums text-slate-600 dark:text-slate-400">
-                              {percent.toFixed(1)}%
-                            </span>
+                            <span className="text-[11px] tabular-nums text-slate-600">{percent.toFixed(1)}%</span>
                           </>
                         ) : (
                           <span className="text-[11px] text-slate-500">{PLATE_KIND_LABELS[plate.kind][script]}</span>
@@ -224,9 +220,7 @@ const FilterChip: FC<{ active: boolean; onClick: () => void; children: React.Rea
     aria-pressed={active}
     onClick={onClick}
     className={`px-3 py-1 rounded-lg text-xs cursor-pointer border border-solid transition-colors ${
-      active
-        ? 'border-transparent bg-slate-900/85 text-white dark:bg-white/85 dark:text-slate-950'
-        : 'border-black/8 dark:border-white/10 bg-white/40 dark:bg-white/5 text-slate-800 dark:text-slate-200'
+      active ? 'border-transparent bg-slate-900/85 text-white' : 'border-black/8 bg-white/40 text-slate-800'
     }`}
     style={active && color ? { backgroundColor: color, color: '#fff' } : undefined}
   >
@@ -285,37 +279,31 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
       <div className="w-full flex flex-col gap-4">
         <header className="flex flex-col gap-2">
           <Breadcrumb leaf={name} />
-          <h1 className="text-3xl font-bold text-slate-950 dark:text-white m-0">{t('plates:title', values)}</h1>
-          <p className="text-sm text-slate-700 dark:text-slate-300 m-0">{t('plates:intro', values)}</p>
+          <h1 className="text-3xl font-bold text-slate-950 m-0">{t('plates:title', values)}</h1>
+          <p className="text-sm text-slate-700 m-0">{t('plates:intro', values)}</p>
           <RegionSwitch path={platePath(data.plateId)} region={data.region} />
         </header>
 
         <MaterialSurface as="section" aria-labelledby="plate-condition" className="p-4 flex flex-col gap-2">
-          <h2 id="plate-condition" className="text-base font-bold text-slate-950 dark:text-white m-0">
+          <h2 id="plate-condition" className="text-base font-bold text-slate-950 m-0">
             {t('plates:condition.title')}
           </h2>
-          <p className="text-sm font-medium text-slate-900 dark:text-slate-100 m-0">
-            {t(`plates:condition.${data.kind}`)}
-          </p>
-          <p className="text-xs text-slate-700 dark:text-slate-300 m-0">{t('plates:condition.scope')}</p>
-          {data.includesRemaster && (
-            <p className="text-xs text-slate-700 dark:text-slate-300 m-0">{t('plates:condition.remaster')}</p>
-          )}
+          <p className="text-sm font-medium text-slate-900 m-0">{t(`plates:condition.${data.kind}`)}</p>
+          <p className="text-xs text-slate-700 m-0">{t('plates:condition.scope')}</p>
+          {data.includesRemaster && <p className="text-xs text-slate-700 m-0">{t('plates:condition.remaster')}</p>}
           {data.region === 'cn' && data.versions.length === 2 && !data.includesRemaster && (
-            <p className="text-xs text-slate-700 dark:text-slate-300 m-0">{t('plates:condition.cn-merged')}</p>
+            <p className="text-xs text-slate-700 m-0">{t('plates:condition.cn-merged')}</p>
           )}
-          {data.unverified && (
-            <p className="text-xs text-amber-700 dark:text-amber-300 m-0">{t('plates:condition.unverified')}</p>
-          )}
+          {data.unverified && <p className="text-xs text-amber-700 m-0">{t('plates:condition.unverified')}</p>}
         </MaterialSurface>
 
         <MaterialSurface as="section" aria-labelledby="plate-progress" className="p-4 flex flex-col gap-3">
           <div className="flex items-center gap-3 flex-wrap">
-            <h2 id="plate-progress" className="text-base font-bold text-slate-950 dark:text-white m-0">
+            <h2 id="plate-progress" className="text-base font-bold text-slate-950 m-0">
               {t('plates:progress.title')}
             </h2>
             {isDemo && (
-              <span className="text-[11px] px-1.5 py-0.5 rounded-md border border-solid border-sky-500/40 text-sky-700 dark:text-sky-300">
+              <span className="text-[11px] px-1.5 py-0.5 rounded-md border border-solid border-sky-500/40 text-sky-700">
                 {t('plates:progress.demo')}
               </span>
             )}
@@ -345,10 +333,8 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
           {hasRecords ? (
             <>
               <div className="flex items-baseline gap-3">
-                <span className="text-3xl font-bold tabular-nums text-slate-950 dark:text-white">
-                  {percent.toFixed(1)}%
-                </span>
-                <span className="text-sm text-slate-700 dark:text-slate-300 tabular-nums">
+                <span className="text-3xl font-bold tabular-nums text-slate-950">{percent.toFixed(1)}%</span>
+                <span className="text-sm text-slate-700 tabular-nums">
                   {t('plates:progress.charts', { done: progress.completedCharts, total: progress.totalCharts })}
                   {' · '}
                   {t('plates:progress.sheets', { done: progress.completedSheets, total: progress.totalSheets })}
@@ -357,7 +343,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
               <ProgressBar percent={percent} />
             </>
           ) : (
-            <p className="text-sm text-slate-700 dark:text-slate-300 m-0">
+            <p className="text-sm text-slate-700 m-0">
               {t('plates:progress.empty')}{' '}
               <a href="/rating" className="font-medium">
                 {t('plates:progress.import')}
@@ -368,7 +354,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
             <FilterChip active={remainingOnly} onClick={() => setRemainingOnly((value) => !value)}>
               {t('plates:filter.remaining')}
             </FilterChip>
-            <span className="w-px h-4 bg-black/10 dark:bg-white/15 mx-1" aria-hidden />
+            <span className="w-px h-4 bg-black/10 mx-1" aria-hidden />
             <FilterChip active={difficulty === null} onClick={() => setDifficulty(null)}>
               {t('plates:filter.all')}
             </FilterChip>
@@ -394,19 +380,19 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
           >
             <h2
               id={`plate-level-${group.level}`}
-              className="flex items-baseline justify-between gap-2 px-4 py-2 m-0 text-lg font-bold text-slate-950 dark:text-white border-b border-b-solid border-black/6 dark:border-white/8"
+              className="flex items-baseline justify-between gap-2 px-4 py-2 m-0 text-lg font-bold text-slate-950 border-b border-b-solid border-black/6"
             >
               <span>Lv.{group.level}</span>
               {hasRecords && (
-                <span className="text-xs font-normal tabular-nums text-slate-600 dark:text-slate-400">
+                <span className="text-xs font-normal tabular-nums text-slate-600">
                   {t('plates:group-count', { done: group.done, total: group.total })}
                 </span>
               )}
             </h2>
             {group.charts.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 m-0">{t('plates:all-done')}</p>
+              <p className="px-4 py-3 text-sm text-slate-600 m-0">{t('plates:all-done')}</p>
             ) : (
-              <ul className="list-none m-0 p-0 divide-y divide-black/5 dark:divide-white/6">
+              <ul className="list-none m-0 p-0 divide-y divide-black/5">
                 {group.charts.map((status) => {
                   const { chart } = status
                   const sheets = difficulty ? chart.sheets.filter((s) => s.difficulty === difficulty) : chart.sheets
@@ -429,11 +415,11 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                             type: chart.type,
                             difficulty: sheets.at(-1)?.difficulty ?? DifficultyEnum.Master,
                           })}
-                          className="block truncate text-sm font-medium text-slate-950 dark:text-white no-underline hover:underline"
+                          className="block truncate text-sm font-medium text-slate-950 no-underline hover:underline"
                         >
                           {chart.title}
                         </a>
-                        <div className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                        <div className="text-xs text-slate-600 truncate">
                           {getSheetTypeDisplayName(chart.type, locale)} · {chart.version}
                         </div>
                       </div>

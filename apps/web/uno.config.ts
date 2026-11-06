@@ -34,6 +34,24 @@ export default defineConfig({
     ],
   ],
   theme: {
+    // Semantic colours from src/styles/tokens.css: `text-fg-2`, `text-accent-strong`, `bg-accent-subtle`, …
+    colors: {
+      accent: {
+        DEFAULT: 'var(--accent)',
+        strong: 'var(--accent-strong)',
+        subtle: 'var(--accent-subtle)',
+      },
+      'on-accent': 'var(--on-accent)',
+      fg: {
+        1: 'var(--fg-1)',
+        2: 'var(--fg-2)',
+      },
+      danger: 'var(--danger)',
+      status: {
+        positive: 'var(--status-positive)',
+        warning: 'var(--status-warning)',
+      },
+    },
     fontFamily: {
       mono: '"IBM Plex Mono", "JetBrains Mono", Menlo, Consolas, Courier, monospace',
     },
@@ -63,11 +81,30 @@ export default defineConfig({
   shortcuts: {
     'flex-container':
       'flex flex-col items-center justify-center py-4 gap-4 max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
-    // Translucent material (like the tab bar): never a flat solid fill
-    'material-surface':
-      'rounded-xl border border-solid border-black/8 bg-white/55 shadow-sm backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-zinc-900/45',
-    'material-surface-thin':
-      'rounded-xl border border-solid border-black/6 bg-white/35 backdrop-blur-md backdrop-saturate-150 dark:border-white/8 dark:bg-zinc-900/30',
+    // Tinted-glass surfaces: the material is defined on these class names in src/styles/tokens.css (shortcuts cannot
+    // expand stylesheet classes), the shortcuts add the radius. Never a flat solid fill. glass-bar (header) is CSS only.
+    // glass: page panels and cards. glass-thin: lighter, for controls floating on the background (tab bar).
+    // glass-inset: nested inside another glass surface (no second blur). glass-overlay: dialogs, menus, popovers.
+    glass: 'rounded-[var(--radius-lg)]',
+    'glass-thin': 'rounded-[var(--radius-lg)]',
+    'glass-inset': 'rounded-[var(--radius-md)]',
+    'glass-overlay': 'rounded-[var(--radius-xl)]',
+    // Kept as aliases for existing call sites
+    'material-surface': 'rounded-[var(--radius-lg)]',
+    'material-surface-thin': 'rounded-[var(--radius-lg)]',
+    // An inline link that reads as a link: accent text that passes 4.5:1 on glass, underlined
+    link: 'text-accent-strong underline decoration-1 underline-offset-2 hover:decoration-2',
+    // Secondary text: never zinc-400/500 or opacity, which fail contrast on glass
+    'text-secondary': 'text-fg-2',
+    // Page frame: one gutter (with the safe-area insets) and one header treatment for every content page
+    'page-gutter':
+      'w-full max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
+    'page-title': 'text-2xl sm:text-3xl font-semibold leading-tight tracking-[-0.01em] text-fg-1 text-balance',
+    'page-description': 'text-sm sm:text-base leading-normal text-fg-2 text-pretty max-w-[65ch]',
+    // Section heading inside a page or glass panel
+    'section-title': 'text-base font-semibold leading-snug text-fg-1',
+    // Numbers that change or line up
+    num: 'tabular-nums',
     'chunks-horizontal-2': 'flex flex-col md:flex-row items-center justify-center gap-2 w-full',
   },
   presets: [

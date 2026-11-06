@@ -1,8 +1,10 @@
 @import '@unocss/reset/tailwind-compat.css';
+@import './styles/tokens.css';
 
 :root {
   /* Hiragino Maru Gothic Pro, */
   font-family: Torus, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  color: var(--fg-1);
   line-height: 1.5;
   font-weight: 400;
 
@@ -18,7 +20,8 @@
   src:
     url('https://shama.dxrating.net/fonts/Torus-Regular.woff2') format('woff2'),
     url('https://shama.dxrating.net/fonts/Torus-Regular.woff') format('woff');
-  font-weight: normal;
+  /* Only Regular and SemiBold ship: 500 resolves to Regular and 700 to SemiBold instead of a fallback face */
+  font-weight: 100 500;
   font-style: normal;
   font-display: swap;
 }
@@ -63,7 +66,7 @@
   src:
     url('https://shama.dxrating.net/fonts/Torus-SemiBold.woff2') format('woff2'),
     url('https://shama.dxrating.net/fonts/Torus-SemiBold.woff') format('woff');
-  font-weight: 600;
+  font-weight: 600 900;
   font-style: normal;
   font-display: swap;
 }
@@ -176,7 +179,7 @@ html[data-preference-wipe]::view-transition-new(root) {
 /* Native scrollbar geometry keeps keyboard, touch, and OS behavior intact. */
 html {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--theme-accent) 65%, black) var(--theme-canvas);
+  scrollbar-color: color-mix(in srgb, var(--accent) 65%, black) var(--theme-canvas);
 }
 
 @media (forced-colors: active) {
@@ -202,7 +205,9 @@ html {
   outline: auto;
 }
 
-.MuiButtonBase-root:focus-visible {
-  outline: auto;
+/* Switches, checkboxes and radios focus a hidden input; MUI marks their ButtonBase with .Mui-focusVisible */
+.MuiButtonBase-root:focus-visible,
+.MuiButtonBase-root.Mui-focusVisible {
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
