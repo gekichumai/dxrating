@@ -87,9 +87,11 @@ export const SheetListItem: FC<{
             })
           }}
           // Horizontal padding is fixed by !px-4 at every width. Gutters must not depend on the viewport (a window-width
-          // hook renders "mobile" on the server and changed the class during hydration on wide screens).
+          // hook renders "mobile" on the server and changed the class during hydration on wide screens), so the
+          // secondary action's offset that disableGutters used to set (0 on phones, 16px from md) is CSS instead
           className={clsx(
             'w-full cursor-pointer transition-colors duration-150 hover:duration-25 !px-4 no-underline text-inherit',
+            '[&_.MuiListItemSecondaryAction-root]:right-0 md:[&_.MuiListItemSecondaryAction-root]:right-4',
             open && '!bg-zinc-300/80',
             className,
           )}
