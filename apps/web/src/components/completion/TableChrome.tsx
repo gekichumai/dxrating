@@ -1,6 +1,6 @@
 /**
  * Shared chrome of the data-table pages (constants, versions, plates): breadcrumb, segmented navigation, toggle
- * chips and the horizontal scroller with its overflow cue. One selected treatment everywhere: the accent fill.
+ * chips and the horizontal scroller's overflow state. One selected treatment everywhere: the accent fill.
  */
 import { DifficultyEnum } from '@gekichumai/dxdata'
 import { type CSSProperties, type FC, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
@@ -110,8 +110,8 @@ export const Breadcrumb: FC<{ items: { href?: string; label: ReactNode }[] }> = 
 type Overflow = { start: boolean; end: boolean }
 
 /**
- * Horizontal scroller for a table that may not fit: fades the edge that hides content and reports overflow, so key
- * columns can turn sticky. Server and first client render report no overflow (deterministic SSR).
+ * Horizontal scroller for a table that may not fit: reports overflow, so key columns can turn sticky. The edge fade
+ * itself is the `scroll-fade-x` class (index.css). Server and first client render report no overflow (deterministic SSR).
  */
 export const useHorizontalOverflow = <T extends HTMLElement>() => {
   const ref = useRef<T>(null)
@@ -139,14 +139,5 @@ export const useHorizontalOverflow = <T extends HTMLElement>() => {
     }
   }, [measure])
 
-  const fade =
-    overflow.start && overflow.end
-      ? '[mask-image:linear-gradient(to_right,transparent,#000_24px,#000_calc(100%-24px),transparent)]'
-      : overflow.end
-        ? '[mask-image:linear-gradient(to_right,#000_calc(100%-24px),transparent)]'
-        : overflow.start
-          ? '[mask-image:linear-gradient(to_right,transparent,#000_24px)]'
-          : ''
-
-  return { ref, overflowing: overflow.start || overflow.end, scrolled: overflow.start, fade }
+  return { ref, overflowing: overflow.start || overflow.end, scrolled: overflow.start }
 }

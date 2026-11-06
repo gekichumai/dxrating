@@ -76,7 +76,6 @@
     "details.bpm": "BPM",
     "details.category": "カテゴリー",
     "details.chart-designer": "譜面作者",
-    "details.credits": "一部のデータは <link /> から取得されています",
     "details.notes-statistics.break": "ブレイク",
     "details.notes-statistics.hold": "ホールド",
     "details.notes-statistics.slide": "スライド",
@@ -95,8 +94,6 @@
     "details.unlock-status.not-required": "不要",
     "details.region-available": "{{region}}：配信中",
     "details.region-unavailable": "{{region}}：未配信",
-    "details.achievement-to-rating.step": "下の行より{{value}}高い",
-    "details.achievement-to-rating.step-label": "差分",
     "details.unlock.label": "解禁",
     "details.unlock.required": "必要",
     "details.unlock.not-required": "不要",
@@ -214,7 +211,9 @@
     "comments.safety.cancel": "キャンセル",
     "comments.safety.report-success": "通報し、コメントを非表示にしました。",
     "comments.safety.block-success": "投稿者をブロックし、コメントを非表示にしました。",
-    "comments.safety.error": "保存できませんでした。接続を確認して、もう一度お試しください。"
+    "comments.safety.error": "保存できませんでした。接続を確認して、もう一度お試しください。",
+    "dx-score.stars": "でらっくスコア ☆{{stars}}",
+    "dx-score.to-next-star": "✦{{stars}}まであと{{remaining}}"
   },
   "song": {
     "not-found.title": "楽曲が見つかりません",
@@ -790,7 +789,9 @@
     "io.clear.dialog.cancel": "キャンセル",
     "io.clear.dialog.confirm": "全ての記録をクリア",
     "quick-actions.ap50": "AP50（AP / AP+ のみ）",
-    "quick-actions.ap50-hint": "AP50 表示：AP・AP+ の記録だけでベスト枠を計算しています。"
+    "quick-actions.ap50-hint": "AP50 表示：AP・AP+ の記録だけでベスト枠を計算しています。",
+    "table.next-target.next": "{{achievement}}% でレート値 {{rating}}（B50 +{{gain}}）",
+    "table.next-target.ap": "AP でレート値 {{rating}}（B50 +{{gain}}）"
   },
   "constants": {
     "title": "maimai でらっくす Lv.{{level}} 譜面定数表",

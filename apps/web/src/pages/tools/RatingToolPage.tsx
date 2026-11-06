@@ -253,46 +253,48 @@ const RatingTable: FC = () => {
       }
     >
       {levels.length > 0 && (
-        <MaterialSurface variant="thin" className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm tabular-nums">
-            <caption className="sr-only">{t('tools:rating.table.title')}</caption>
-            <thead>
-              <tr className="text-xs text-secondary">
-                <th scope="col" className="px-3 py-2 text-left font-medium">
-                  {t('tools:rating.achievement')}
-                </th>
-                {levels.map((value) => (
-                  <th
-                    key={value}
-                    scope="col"
-                    className={`px-3 py-2 text-right font-medium ${value === clampInternalLevel(level!) ? 'text-inherit font-bold' : ''}`}
-                  >
-                    {value.toFixed(1)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {RATING_TABLE_ACHIEVEMENTS.map((achievement) => (
-                <tr key={achievement} className="border-t border-t-solid border-black/6">
-                  <th scope="row" className="px-3 py-2 text-left font-medium">
-                    {achievement}%{' '}
-                    <span className="text-xs font-normal text-secondary">
-                      {rankLabel(ratingFor(1, achievement).rank)}
-                    </span>
+        <MaterialSurface variant="thin" className="overflow-hidden">
+          <div className="scroll-fade-x overflow-x-auto">
+            <table className="w-full border-collapse text-sm tabular-nums">
+              <caption className="sr-only">{t('tools:rating.table.title')}</caption>
+              <thead>
+                <tr className="text-xs text-secondary">
+                  <th scope="col" className="px-3 py-2 text-left font-medium">
+                    {t('tools:rating.achievement')}
                   </th>
                   {levels.map((value) => (
-                    <td
+                    <th
                       key={value}
-                      className={`px-3 py-2 text-right ${value === clampInternalLevel(level!) ? 'font-bold' : ''}`}
+                      scope="col"
+                      className={`px-3 py-2 text-right font-medium ${value === clampInternalLevel(level!) ? 'text-inherit font-bold' : ''}`}
                     >
-                      {ratingFor(value, achievement).ratingAwardValue}
-                    </td>
+                      {value.toFixed(1)}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {RATING_TABLE_ACHIEVEMENTS.map((achievement) => (
+                  <tr key={achievement} className="border-t border-t-solid border-black/6">
+                    <th scope="row" className="px-3 py-2 text-left font-medium">
+                      {achievement}%{' '}
+                      <span className="text-xs font-normal text-secondary">
+                        {rankLabel(ratingFor(1, achievement).rank)}
+                      </span>
+                    </th>
+                    {levels.map((value) => (
+                      <td
+                        key={value}
+                        className={`px-3 py-2 text-right ${value === clampInternalLevel(level!) ? 'font-bold' : ''}`}
+                      >
+                        {ratingFor(value, achievement).ratingAwardValue}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </MaterialSurface>
       )}
     </ToolSection>

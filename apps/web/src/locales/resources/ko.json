@@ -126,7 +126,6 @@
     "details.regional-availability": "지역별 수록 여부",
     "details.available": "플레이 가능",
     "details.unavailable": "플레이 불가",
-    "details.credits": "일부 데이터 출처: <link />",
     "details.achievement-to-rating.title": "달성률 → Rating",
     "details.achievement-to-rating.achievement": "달성률",
     "details.achievement-to-rating.achievement-label": "달성률",
@@ -137,8 +136,6 @@
     "details.unlock-status.not-required": "불필요",
     "details.region-available": "{{region}}: 이용 가능",
     "details.region-unavailable": "{{region}}: 이용 불가",
-    "details.achievement-to-rating.step": "아래 행보다 {{value}} 높음",
-    "details.achievement-to-rating.step-label": "차이",
     "details.unlock.label": "해금",
     "details.unlock.required": "필요",
     "details.unlock.not-required": "필요 없음",
@@ -214,7 +211,9 @@
     "comments.safety.cancel": "취소",
     "comments.safety.report-success": "댓글을 신고하고 숨겼습니다.",
     "comments.safety.block-success": "작성자를 차단하고 댓글을 숨겼습니다.",
-    "comments.safety.error": "저장하지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요."
+    "comments.safety.error": "저장하지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.",
+    "dx-score.stars": "DX 스코어 별 {{stars}}개",
+    "dx-score.to-next-star": "✦{{stars}}까지 DX 스코어 {{remaining}} 남음"
   },
   "song": {
     "not-found.title": "곡을 찾을 수 없습니다",
@@ -790,7 +789,9 @@
     "io.clear.dialog.cancel": "취소",
     "io.clear.dialog.confirm": "모든 기록 지우기",
     "quick-actions.ap50": "AP50 (AP / AP+만)",
-    "quick-actions.ap50-hint": "AP50 보기: AP와 AP+ 기록만으로 B50을 계산합니다."
+    "quick-actions.ap50-hint": "AP50 보기: AP와 AP+ 기록만으로 B50을 계산합니다.",
+    "table.next-target.next": "{{achievement}}% 달성 시 {{rating}} (B50 +{{gain}})",
+    "table.next-target.ap": "AP 달성 시 {{rating}} (B50 +{{gain}})"
   },
   "constants": {
     "title": "maimai DX Lv.{{level}} 상수표",

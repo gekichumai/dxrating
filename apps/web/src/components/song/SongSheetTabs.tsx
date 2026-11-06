@@ -81,6 +81,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
             aria-label={t('song:type-tabs-label')}
             classes={{
               root: '!min-h-8',
+              scroller: 'scroll-fade-x',
               indicator:
                 '!h-full !rounded-[var(--radius-sm)] !bg-accent-subtle shadow-[inset_0_0_0_1px_var(--accent)] z-0',
             }}
@@ -135,6 +136,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
           aria-label={t('song:difficulty-tabs-label')}
           classes={{
             root: '!min-h-2.5rem min-w-0 flex-1 border-b border-solid border-0 border-black/8 sm:border-b-0',
+            scroller: 'scroll-fade-x',
           }}
           TabIndicatorProps={{
             style: {

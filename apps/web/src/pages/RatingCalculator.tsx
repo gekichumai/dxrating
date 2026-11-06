@@ -39,6 +39,7 @@ import {
   type TableProps,
   TableVirtuoso,
 } from 'react-virtuoso'
+import IconMdiArrowUp from '~icons/mdi/arrow-up'
 import IconMdiChevronDown from '~icons/mdi/chevron-down'
 import IconMdiTrashCan from '~icons/mdi/trash-can'
 import {
@@ -56,13 +57,14 @@ import { ImportUndoBanner } from '../components/rating/io/import/ImportUndoBanne
 import { RenderToOneShotImageButton } from '../components/rating/io/export/RenderToOneShotImageButton'
 import { useRatingEntries, useRatingView } from '../components/rating/useRatingEntries'
 import { Link, useNavigate } from '@tanstack/react-router'
+import { DxScoreProgressText } from '../components/scores/DxScoreProgressText'
 import { SheetListItem, SheetListItemContent } from '../components/sheet/SheetListItem'
 import { useScoreEntries, useScoreRepository } from '../models/scores/useScoreRepository'
 import { achievementRateBand, captureAnalyticsEvent } from '../lib/analytics'
 import { type FlattenedSheet, useSheets } from '../songs'
 import type { Rating } from '../utils/rating'
+import type { NextRatingTarget } from '@gekichumai/maimai-domain'
 import { DIFFICULTIES } from '../models/difficulties'
-import './rating-table.css'
 import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
 import { switchFocusRing } from '../components/rating/focusRing'
 
@@ -76,6 +78,8 @@ export interface Entry {
   /** The DX score of the play, when the source reports one */
   dxScore?: number
   includedIn: 'b15' | 'b35' | null
+  /** The next step up in the B50 for this chart; null when nothing adds a point (or it is a duplicate play) */
+  nextTarget?: NextRatingTarget | null
 }
 
 /** Row heights in px: denser on desktop, where the table has the width to keep each row on one line */
@@ -392,14 +396,8 @@ const RatingCalculatorDxScoreCell: FC<{
   row: Row<Entry>
 }> = ({ row }) => {
   const { dxScore, sheet } = row.original
-  if (dxScore === undefined) return <span className="text-secondary">—</span>
   const total = sheet.noteCounts.total
-  return (
-    <span className="num">
-      {dxScore}
-      {total ? <span className="text-xs text-secondary"> / {total * 3}</span> : null}
-    </span>
-  )
+  return <DxScoreProgressText dxScore={dxScore} max={total ? total * 3 : null} />
 }
 
 const RatingCalculatorAchievementRateCell: FC<{
@@ -449,6 +447,41 @@ function RatingCalculatorScroller({ ref, ...props }: ScrollerProps & { ref?: Rea
 const RatingCalculatorRatingCell: FC<{
   row: Row<Entry>
 }> = ({ row }) => <span className="num">{row.original.rating ? row.original.rating.ratingAwardValue : '-'}</span>
+
+/**
+ * Desktop: under the rating, the lowest achievement that adds a point to the B50 total (or "AP" once the score is
+ * capped). The tooltip, also read out, spells out the step and the AP value.
+ */
+const RatingCalculatorNextTarget: FC<{
+  row: Row<Entry>
+}> = ({ row }) => {
+  const { t } = useTranslation(['rating-calculator'])
+  const target = row.original.nextTarget
+  if (!target) return null
+  const parts = [
+    target.next
+      ? t('rating-calculator:table.next-target.next', {
+          achievement: target.next.achievement.toFixed(4),
+          rating: target.next.rating,
+          gain: target.next.gain,
+        })
+      : null,
+    target.allPerfect
+      ? t('rating-calculator:table.next-target.ap', {
+          rating: target.allPerfect.rating,
+          gain: target.allPerfect.gain,
+        })
+      : null,
+  ].filter((part): part is string => part !== null)
+  const description = parts.join(' · ')
+  return (
+    <span className="rating-next-target num" title={description}>
+      <IconMdiArrowUp aria-hidden className="rating-next-target-icon" />
+      <span aria-hidden>{target.next ? `${target.next.achievement.toFixed(4)}%` : 'AP'}</span>
+      <span className="sr-only">{description}</span>
+    </span>
+  )
+}
 
 const RatingCalculatorTableRowContent: FC<{
   row: Row<Entry>
@@ -583,7 +616,10 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
         header: t('rating-calculator:table.headers.rating'),
         cell: ({ row }) => (
           <div className="rating-value-cell">
-            <RatingCalculatorRatingCell row={row} />
+            <span className="rating-value-stack">
+              <RatingCalculatorRatingCell row={row} />
+              <RatingCalculatorNextTarget row={row} />
+            </span>
             <span className="rating-mobile-action">
               <RatingCalculatorRowActions entry={row.original} />
             </span>
