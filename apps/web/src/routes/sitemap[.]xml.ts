@@ -68,6 +68,17 @@ const plateEntries = ['/plates', ...listIndexablePlateIds().map(platePath)]
   )
   .join('')
 
+const toolEntries = ['/tools/tolerance', '/tools/rating']
+  .map(
+    (path) => `
+  <url>
+    <loc>${urlLoc(path)}</loc>${alternatesXml(path)}
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>`,
+  )
+  .join('')
+
 export function buildSitemap(songs: SitemapSong[]) {
   const sheetEntries = songs
     .flatMap((song) =>
@@ -117,7 +128,7 @@ export function buildSitemap(songs: SitemapSong[]) {
     <loc>${urlLoc('/developers')}</loc>${alternatesXml('/developers')}
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>${constantTableEntries}${plateEntries}${sheetEntries}
+  </url>${toolEntries}${constantTableEntries}${plateEntries}${sheetEntries}
 </urlset>`
 }
 

@@ -1,4 +1,5 @@
 import { calculateRatingAward, SCORE_COEFFICIENT_TABLE } from '@gekichumai/maimai-domain'
+import { Link } from '@tanstack/react-router'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -45,6 +46,12 @@ export const RatingExplainer: FC = () => {
         {t('rating-explainer:title')}
       </h2>
       <p className="m-0 text-sm leading-relaxed">{t('rating-explainer:intro')}</p>
+      <p className="m-0 text-sm leading-relaxed">
+        {t('rating-explainer:single-chart.hint')}{' '}
+        <Link to="/tools/rating" className="font-bold text-blue-700 underline">
+          {t('rating-explainer:single-chart.link')} →
+        </Link>
+      </p>
 
       <h3 className="text-lg font-bold text-slate-950 m-0">{t('rating-explainer:formula.title')}</h3>
       <p className="m-0 text-sm leading-relaxed">{t('rating-explainer:formula.body')}</p>

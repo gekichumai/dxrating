@@ -43,6 +43,10 @@ vi.mock('@/components/song/SongSheetContent', () => ({
   ),
 }))
 
+vi.mock('@/components/tools/ToleranceCalculator', () => ({
+  ToleranceCalculator: () => <section data-testid="tolerance-calculator" />,
+}))
+
 describe('SongPage', () => {
   beforeAll(() => {
     initI18n()

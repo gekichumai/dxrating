@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next'
 import { buildSheetPath } from '../components/sheet/sheetLinks'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { getVisibleSongPageSheets } from './songPageSheets'
+import { ToleranceCalculator } from '@/components/tools/ToleranceCalculator'
 
 const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 
@@ -137,6 +138,8 @@ export const SongPage: FC = () => {
           <SongSheetContent sheet={sheet} isActive />
         </div>
       ))}
+
+      {activeSheet && <ToleranceCalculator key={activeSheet.id} sheet={activeSheet} source="chart_page" />}
 
       {constantTableLevel && (
         <a href={constantTablePath(constantTableLevel)} className="self-start text-sm text-slate-700">

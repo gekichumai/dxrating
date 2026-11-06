@@ -68,4 +68,12 @@ describe('buildSitemap plates', () => {
     expect(sitemap).toContain('<loc>https://dxrating.net/plates/kagami-shin</loc>')
     expect(sitemap).not.toContain('/plates/shin-ver-sho<')
   })
+
+  it('lists the public tool pages with hreflang alternates', () => {
+    const sitemap = buildSitemap([])
+    for (const path of ['/tools/tolerance', '/tools/rating']) {
+      expect(sitemap).toContain(`<loc>https://dxrating.net${path}</loc>`)
+      expect(sitemap).toContain(`hreflang="ja" href="https://dxrating.net${path}?locale=ja"`)
+    }
+  })
 })
