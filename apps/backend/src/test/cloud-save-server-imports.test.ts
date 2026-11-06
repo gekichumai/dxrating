@@ -641,6 +641,36 @@ describe('LXNS server import', () => {
     )
   })
 
+  it('takes the player and the scores from one connection when the user reconnects meanwhile', async () => {
+    const user = await newUser()
+    await seedToken(user.userId, new Date(Date.now() + 3_600_000))
+    const authorizations: (string | null)[] = []
+    upstream.http = async (url, init) => {
+      const authorization = new Headers(init?.headers).get('authorization')
+      authorizations.push(authorization)
+      if (url.pathname === '/api/v0/user/maimai/player') {
+        // The user connects another LXNS account while the player request is answered
+        await pool.query(`UPDATE lxns_oauth_tokens SET access_token = 'account-b' WHERE user_id = $1`, [user.userId])
+        return lxnsEnvelope({ name: 'SYNTH', friend_code: 123456789 })
+      }
+      if (url.pathname === '/api/v0/user/maimai/player/scores') {
+        return authorization === 'Bearer old-access'
+          ? lxnsEnvelope(scores)
+          : lxnsEnvelope([lxnsScore(CHARTS.ourFightingStdBasic, 80)])
+      }
+      return undefined
+    }
+    const response = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/lxns`, {
+      idempotencyKey: key(),
+      trigger: 'user',
+    })
+    expect(response.body.job).toMatchObject({ status: 'succeeded', sourceAccountId: '123456789' })
+    expect(authorizations).toEqual(['Bearer old-access', 'Bearer old-access'])
+    expect((await records(user.saveId)).map((r) => r.sheet_id).sort()).toEqual(
+      [CHARTS.kiminoDxMaster.sheetId, CHARTS.kiminoDxExpert.sheetId].sort(),
+    )
+  })
+
   it('fails the job without a connection', async () => {
     const user = await newUser()
     const response = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/lxns`, {
@@ -803,6 +833,35 @@ describe('Diving-Fish server import', () => {
     expect(bucketOf(CHARTS.kiminoStdMaster.sheetId)).toBe('b35')
     expect(bucketOf(CHARTS.ourFightingStdBasic.sheetId)).toBe('b35')
     expect(stored.every((r) => r.verification === 'verified' && r.fetched_by === 'server')).toBe(true)
+  })
+
+  it('leaves out masked rows (no DX score), so a later exact import is not stuck below a rounded-up score', async () => {
+    const user = await newUser()
+    let charts: { dx: unknown[]; sd: unknown[] } = {
+      // The score mask: an AP at 100.6% comes back as 101% without a DX score
+      dx: [{ ...divingFishChart(CHARTS.kiminoDxMaster, 101), fc: 'ap', dxScore: 0 }],
+      sd: [],
+    }
+    upstream.http = async (url) =>
+      url.href === 'https://www.diving-fish.com/api/maimaidxprober/query/player'
+        ? Response.json({ nickname: 'SYNTH', rating: 12345, username: 'synth', charts })
+        : undefined
+    const run = () =>
+      api(user.cookie, 'POST', `/saves/${user.saveId}/imports/diving-fish`, {
+        idempotencyKey: key(),
+        trigger: 'user',
+        username: 'synth',
+      })
+
+    const masked = await run()
+    expect(masked.body.job).toMatchObject({ status: 'succeeded', counts: { fetched: 1, inserted: 0, rejected: 1 } })
+    expect(await records(user.saveId)).toHaveLength(0)
+
+    // Unmasked, the exact score is stored
+    charts = { dx: [{ ...divingFishChart(CHARTS.kiminoDxMaster, 100.6), fc: 'ap' }], sd: [] }
+    const exact = await run()
+    expect(exact.body.job).toMatchObject({ status: 'succeeded', counts: { inserted: 1 } })
+    expect((await records(user.saveId)).map((r) => [r.achievement, r.dx_score])).toEqual([[1006000, 1500]])
   })
 
   it('queries by QQ and fails the job for an unknown player', async () => {
