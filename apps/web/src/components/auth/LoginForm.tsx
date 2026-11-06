@@ -1,6 +1,6 @@
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { useResolvedTheme } from '@/utils/useResolvedTheme'
-import { Alert, Button, Chip, CircularProgress, Divider, TextField } from '@mui/material'
+import { Alert, Button, Chip, CircularProgress, Divider, TextField, useMediaQuery } from '@mui/material'
 import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -67,6 +67,8 @@ export const LoginForm = ({
     setTokenTheme(turnstileTheme)
     setTurnstileToken(null)
   }
+  // The flexible widget is at least 300px wide; below 360px viewports it would overflow the card, so use compact (150px)
+  const turnstileCompact = useMediaQuery('(max-width: 359.98px)', { noSsr: true })
   const lastUsedMethod = authClient.getLastUsedLoginMethod() as AuthProvider | null
   const isLastUsed = (provider: AuthProvider) => lastUsedMethod === provider
 
@@ -330,6 +332,7 @@ export const LoginForm = ({
 
         {TURNSTILE_SITE_KEY && (
           <Turnstile
+            key={turnstileCompact ? 'compact' : 'flexible'}
             ref={turnstileRef}
             siteKey={TURNSTILE_SITE_KEY}
             onSuccess={(token) => {
@@ -338,8 +341,12 @@ export const LoginForm = ({
               setError((current) => (current === t('auth:form.captcha-pending') ? null : current))
             }}
             onExpire={() => setTurnstileToken(null)}
-            // The widget's iframe takes a theme option rather than CSS: follow the page theme, OS preference until known
-            options={{ size: 'flexible', theme: turnstileTheme, appearance: 'interaction-only' }}
+            options={{
+              size: turnstileCompact ? 'compact' : 'flexible',
+              // The widget's iframe takes a theme option rather than CSS: follow the page theme, OS preference until known
+              theme: turnstileTheme,
+              appearance: 'interaction-only',
+            }}
             style={{ borderRadius: 12, overflow: 'hidden' }}
           />
         )}
