@@ -22,6 +22,7 @@ import { SearchQuerySeedList } from '../components/sheet/SearchQuerySeedList'
 import type { SearchQuerySeedSheet } from '../components/sheet/searchQuerySeed'
 import { SheetDialogContent } from '../components/sheet/SheetDialogContent'
 import { SHEET_LIST_FIRST_SCREEN_ROWS, SheetListContainer } from '../components/sheet/SheetListContainer'
+import { SheetRowLayoutContext } from '../components/sheet/sheetRowLayout'
 import {
   getDefaultSheetSortFilterForm,
   SheetSortFilter,
@@ -381,6 +382,7 @@ const SheetListInnerContent: FC<{
           setOpen={(open) => {
             if (!open) handleSheetDialogChange(null)
           }}
+          hideCloseButton
         >
           {() =>
             activeSheet && <SheetDialogContent sheet={activeSheet} onClose={() => handleSheetDialogChange(null)} />
@@ -473,19 +475,23 @@ const SheetListInnerContent: FC<{
 
         {!listSheets ? (
           showSeedResults ? (
-            <SearchQuerySeedList sheets={seedSheets} />
+            // The server-rendered rows take the same one-line table layout from lg as the list that replaces them
+            <SheetRowLayoutContext.Provider value="table">
+              <SearchQuerySeedList sheets={seedSheets} />
+            </SheetRowLayoutContext.Provider>
           ) : (
             <MaterialSurface className="flex flex-col w-full p-1" aria-hidden="true">
               {skeletonWidths.map((width, i) => (
                 <div
-                  className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] px-3 py-2"
+                  // 78px stacked rows, then the 56px one-line table rows of SheetListContainer from lg
+                  className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] lg:h-14 px-3 py-2"
                   // oxlint-disable-next-line react/no-array-index-key -- index is stable
                   key={i}
                   style={{
                     animationDelay: `${i * 40}ms`,
                   }}
                 >
-                  <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] rounded-[var(--radius-xs)] bg-black/8" />
+                  <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] lg:h-10 lg:w-10 lg:min-w-10 lg:min-h-10 rounded-[var(--radius-xs)] bg-black/8" />
                   <div className="flex flex-col gap-1">
                     <div className="bg-black/8 h-5 mb-1 rounded-[var(--radius-xs)]" style={{ width: `${width}rem` }}>
                       &nbsp;

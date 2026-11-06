@@ -323,18 +323,32 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                   className="ms-auto!"
                   filename={`dxrating-plate-${data.plateId}.png`}
                   shareTitle={t('plates:share.title', { plate: name })}
+                  imageAlt={t('plates:share.alt', { plate: name })}
                   getImage={() =>
                     buildPlateShareImage({
                       plateName: name,
-                      subtitle: versions,
-                      // The count the headline percentage is computed from (charts, not finished songs)
-                      progressLabel: t('plates:progress.sheets', {
-                        done: progress.completedSheets,
-                        total: progress.totalSheets,
-                      }),
-                      remainingLabel: t('plates:share.remaining'),
-                      percentLabel: formatPercent(percent),
+                      kind: data.kind,
                       progress,
+                      records,
+                      labels: {
+                        subtitle: t('plates:share.subtitle', {
+                          versions,
+                          condition: t(`plates:condition-short.${data.kind}`),
+                        }),
+                        // The count the headline percentage is computed from (charts, not finished songs)
+                        progress: t('plates:progress.sheets', {
+                          done: progress.completedSheets,
+                          total: progress.totalSheets,
+                        }),
+                        percent: formatPercent(percent),
+                        remaining: t('plates:share.remaining-count', {
+                          count: progress.totalSheets - progress.completedSheets,
+                        }),
+                        order: t('plates:share.order'),
+                        unplayed: t('plates:share.unplayed'),
+                        more: (count) => t('plates:share.more', { count }),
+                        allDone: t('plates:share.all-done'),
+                      },
                     })
                   }
                   onExported={(outcome) =>

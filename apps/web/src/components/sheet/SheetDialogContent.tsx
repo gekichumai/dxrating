@@ -6,7 +6,6 @@ import { MULTIVER_AVAILABLE_VERSIONS, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@
 import {
   Button,
   ButtonGroup,
-  Chip,
   CircularProgress,
   DialogTitle,
   Table,
@@ -34,14 +33,11 @@ import { useAuth } from '../../hooks/useAuth'
 import { useAppContextDXDataVersion } from '../../models/context/useAppContext'
 import type { FlattenedSheet } from '../../songs'
 import { formatSheetReleaseDateParts } from '../../utils/dateFormatting'
-import { calculateRating } from '../../utils/rating'
 import { useRenderedAt } from '../../utils/renderEnvironment'
-import { DXRank } from '../global/DXRank'
+import { AchievementRatingTable } from './AchievementRatingTable'
 import { SheetDialogContentHeader } from './SheetDialogContentHeader'
 import { SheetTitle } from './SheetListItem'
 import { SheetTags } from './tags/SheetTags'
-
-const PRESET_ACHIEVEMENT_RATES = [100.5, 100, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50]
 
 const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
   const { t } = useTranslation(['sheet'])
@@ -233,17 +229,6 @@ const externalLinkProps = { target: '_blank', rel: 'noopener noreferrer' } as co
 export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, currentAchievementRate, onClose }) => {
   const { t, i18n } = useTranslation(['sheet', 'global'])
   const numberFormat = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language])
-  const ratings = useMemo(() => {
-    const rates = [...PRESET_ACHIEVEMENT_RATES]
-    if (currentAchievementRate && !rates.includes(currentAchievementRate)) {
-      rates.push(currentAchievementRate)
-    }
-    rates.sort((a, b) => b - a)
-    return rates.map((rate) => ({
-      achievementRate: rate,
-      rating: calculateRating(sheet.internalLevelValue, rate),
-    }))
-  }, [sheet, currentAchievementRate])
 
   return (
     // Under reduced motion the cover, star and tag springs become instant; opacity fades remain
@@ -330,7 +315,10 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
           <div className="flex flex-col gap-1">
             <SectionHeader>{t('sheet:details.title')}</SectionHeader>
             <div>
-              <Table size="small" className="mb-4 [&_th]:w-[40%] [&_th]:font-normal [&_th]:[word-break:auto-phrase]">
+              <Table
+                size="small"
+                className="mb-4 [&_th]:w-[40%] sm:[&_th]:w-[11rem] [&_th]:!text-fg-2 [&_th]:font-normal [&_th]:[word-break:auto-phrase]"
+              >
                 <TableBody>
                   <TableRow>
                     <TableCell component="th" scope="row">
@@ -499,56 +487,10 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
           {!sheet.isTypeUtage && (
             <div className="flex flex-col gap-1">
               <SectionHeader>{t('sheet:details.achievement-to-rating.title')}</SectionHeader>
-              <div>
-                <Table className="tabular-nums" size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>{t('sheet:details.achievement-to-rating.achievement-label')}</TableCell>
-                      <TableCell>{t('sheet:details.achievement-to-rating.rating')}</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {ratings.map((rating, i) => {
-                      const nextRating = i === ratings.length - 1 ? null : ratings[i + 1]
-                      const isCurrentAchievementRateRow = rating.achievementRate === currentAchievementRate
-
-                      return (
-                        <TableRow
-                          key={rating.achievementRate}
-                          sx={{
-                            '&:last-child td, &:last-child th': { border: 0 },
-                          }}
-                          className={clsx(isCurrentAchievementRateRow && 'bg-amber dark:bg-[rgb(251_191_36/0.22)]')}
-                        >
-                          <TableCell component="th" scope="row">
-                            <div className={clsx('flex items-center font-sans')}>
-                              <DXRank rank={rating.rating.rank} className="h-8" />
-                              <SheetAchievementRate value={rating.achievementRate} />
-                              {isCurrentAchievementRateRow && (
-                                <Chip label={t('global:current')} size="small" className="ml-2" color="default" />
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="relative font-sans">
-                              <span className="font-semibold">{rating.rating.ratingAwardValue}</span>
-
-                              {nextRating && (
-                                <div className="absolute -bottom-5 -left-1 px-1 text-xs text-fg-2 bg-white/90 shadow-[var(--shadow-1)] rounded-[var(--radius-xs)]">
-                                  ↑{' '}
-                                  <span className="font-semibold">
-                                    {rating.rating.ratingAwardValue - nextRating.rating.ratingAwardValue}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+              <AchievementRatingTable
+                internalLevelValue={sheet.internalLevelValue}
+                currentAchievementRate={currentAchievementRate}
+              />
             </div>
           )}
         </div>
@@ -557,20 +499,6 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
   )
 })
 SheetDialogContent.displayName = 'memo(SheetDialogContent)'
-
-const SheetAchievementRate: FC<{ value: number }> = ({ value }) => {
-  const integer = Math.floor(value)
-  const decimal = value % 1
-
-  return (
-    <div className="inline-flex items-center">
-      <span className="font-semibold">{integer}</span>
-      <span>.</span>
-      <span className={clsx(decimal === 0 && 'text-fg-2')}>{decimal.toFixed(4).slice(2)}</span>
-      <span>%</span>
-    </div>
-  )
-}
 
 const SheetInternalLevelHistory: FC<{
   sheet: FlattenedSheet

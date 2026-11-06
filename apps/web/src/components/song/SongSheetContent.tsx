@@ -29,15 +29,12 @@ import { useAuth } from '../../hooks/useAuth'
 import { useAppContextDXDataVersion } from '../../models/context/useAppContext'
 import type { FlattenedSheet } from '../../songs'
 import { formatSheetReleaseDateParts } from '../../utils/dateFormatting'
-import { calculateRating } from '../../utils/rating'
 import { useRenderedAt } from '../../utils/renderEnvironment'
-import { DXRank } from '../global/DXRank'
 import { MaterialSurface } from '../global/MaterialSurface'
+import { AchievementRatingTable } from '../sheet/AchievementRatingTable'
 import { SheetTags } from '../sheet/tags/SheetTags'
 import { SheetDifficulty } from '../sheet/SheetListItem'
 import { SHEET_TYPE_IMAGES, getSheetTypeAltTextKey } from '../sheet/sheetTypeAssets'
-
-const PRESET_ACHIEVEMENT_RATES = [100.5, 100, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50]
 
 // Hairline dividers only: rows carry no fill, so the glass panel behind them stays the one surface
 const tableSx = {
@@ -88,20 +85,6 @@ const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
       className="w-6 h-6 touch-callout-none"
       draggable={false}
     />
-  )
-}
-
-const SheetAchievementRate: FC<{ value: number }> = ({ value }) => {
-  const integer = Math.floor(value)
-  const decimal = value % 1
-
-  return (
-    <span className="inline-flex items-center tabular-nums">
-      <span className="font-semibold">{integer}</span>
-      <span>.</span>
-      <span className={clsx(decimal === 0 && 'text-fg-2')}>{decimal.toFixed(4).slice(2)}</span>
-      <span>%</span>
-    </span>
   )
 }
 
@@ -436,16 +419,6 @@ const RegionalAvailability: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }> = memo(
   ({ sheet, isActive = true }) => {
     const { t } = useTranslation(['sheet', 'song', 'global'])
-    const ratings = useMemo(
-      () =>
-        [...PRESET_ACHIEVEMENT_RATES]
-          .sort((a, b) => b - a)
-          .map((rate) => ({
-            achievementRate: rate,
-            rating: calculateRating(sheet.internalLevelValue, rate),
-          })),
-      [sheet.internalLevelValue],
-    )
     const designer = sheet.noteDesigner && sheet.noteDesigner !== '-' ? sheet.noteDesigner : '—'
 
     return (
@@ -532,44 +505,7 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
 
         {!sheet.isTypeUtage && (
           <Section title={t('sheet:details.achievement-to-rating.title')}>
-            <Table className="tabular-nums" size="small" sx={tableSx}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t('sheet:details.achievement-to-rating.achievement')}</TableCell>
-                  <TableCell>{t('sheet:details.achievement-to-rating.rating')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {ratings.map((rating, i) => {
-                  const nextRating = i === ratings.length - 1 ? null : ratings[i + 1]
-                  const step = nextRating ? rating.rating.ratingAwardValue - nextRating.rating.ratingAwardValue : null
-
-                  return (
-                    <TableRow key={rating.achievementRate}>
-                      <TableCell component="th" scope="row" className="!font-normal">
-                        <div className="flex items-center gap-1">
-                          <DXRank rank={rating.rating.rank} className="h-8" />
-                          <SheetAchievementRate value={rating.achievementRate} />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">{rating.rating.ratingAwardValue}</span>
-                          {step !== null && (
-                            <span className="glass-inset rounded-[var(--radius-xs)] px-1 text-xs text-fg-2">
-                              <span aria-hidden>+{step}</span>
-                              <span className="sr-only">
-                                {t('sheet:details.achievement-to-rating.step', { value: step })}
-                              </span>
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+            <AchievementRatingTable internalLevelValue={sheet.internalLevelValue} />
           </Section>
         )}
       </>
