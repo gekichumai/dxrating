@@ -54,6 +54,9 @@ const DynamicSongSchema = z.strictObject({
   isLocked: z.boolean(),
   sheets: z.array(DynamicSheetSchema),
   searchAcronyms: z.array(z.string()),
+  // Hiragana reading of the title for search (gekichumai/meta#38). Only titles with kanji have one.
+  reading: z.string().min(1).optional(),
+  readingSource: z.enum(['override', 'verified', 'analyzer']).optional(),
 })
 
 const DynamicLocalizedStringSchema = z.record(z.string().min(1), z.string())
@@ -212,6 +215,8 @@ const publishedDxdataCatalogExample = {
         },
       ],
       searchAcronyms: [],
+      reading: 'ぜんせかいきょうつうりずむかんてすと',
+      readingSource: 'verified',
     },
     {
       id: 'dsng_phnye8rsgn',
