@@ -6,6 +6,7 @@ import { type FC, type HTMLAttributes, useEffect, useRef, useState } from 'react
 import { useTranslation } from 'react-i18next'
 import { useMeasure } from 'react-use'
 import { makeId } from '../../utils/random'
+import { estimateLabelWidth, placeAverageLabel } from './averageLabel'
 import { useRatingEntries } from './useRatingEntries'
 
 /**
@@ -260,15 +261,18 @@ const Histogram: FC<{
         .attr('stroke', color)
         .attr('stroke-width', 1.5)
         .attr('stroke-dasharray', '3 2')
-      const nearEnd = x(avg) > width * 0.7
-      svg
+      const label = svg
         .append('text')
-        .attr('x', x(avg) + (nearEnd ? -4 : 4))
         .attr('y', labelY)
         .text(text)
-        .style('text-anchor', nearEnd ? 'end' : 'start')
+        .style('text-anchor', 'start')
         .style('font-size', '0.75rem')
         .style('fill', 'currentColor')
+      // Measure the rendered label so it flips or clamps to stay inside the SVG, whatever the width or locale
+      const node = label.node()
+      const measured = node?.getComputedTextLength?.() ?? 0
+      const labelWidth = measured > 0 ? measured : estimateLabelWidth(text, 12)
+      label.attr('x', placeAverageLabel(x(avg), labelWidth, -margin.left, width + margin.right))
     }
 
     drawAverageLine(
