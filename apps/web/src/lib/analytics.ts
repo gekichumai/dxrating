@@ -18,7 +18,7 @@ export type SheetViewSource =
   | 'unknown'
 
 /** Where a share image was exported to */
-export type ShareImageOutcome = 'shared' | 'downloaded' | 'cancelled' | 'failed'
+export type ShareImageOutcome = 'viewed' | 'shared' | 'downloaded' | 'copied' | 'cancelled' | 'failed'
 export type ToplistKind = 'ap' | 'app' | 'fc' | 'fcp' | 'fdx' | 'fdxp' | 'highest' | 'dx_score'
 export type RatingToolKind = 'rating_for_achievement' | 'achievement_for_rating' | 'rating_table'
 export type RatingImportMode = 'merge' | 'replace'

@@ -1,4 +1,4 @@
-import { HeadContent, Outlet, Scripts, createRootRoute, useLocation, useRouter } from '@tanstack/react-router'
+import { HeadContent, Outlet, Scripts, createRootRoute, useRouter } from '@tanstack/react-router'
 import { CircularProgress } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import i18n from 'i18next'
@@ -18,6 +18,7 @@ import { VersionBackground } from '@/components/global/backgrounds/VersionBackgr
 import { VersionRegionSwitcher } from '@/components/global/preferences/VersionRegionSwitcher'
 import { AppTabs } from '@/components/layout/AppTabs'
 import { ThemedBody } from '@/components/layout/ThemedBody'
+import { useResolvedPathname } from '@/components/layout/useResolvedPathname'
 import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
 import { RegionVersionUpdatePrompt } from '@/components/global/preferences/RegionVersionUpdatePrompt'
@@ -34,6 +35,7 @@ import { ZOD_JITLESS_INLINE_SCRIPT } from '@/setup/zod-jitless'
 import { THEME_INLINE_SCRIPT } from '@/setup/theme-script'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
 import 'virtual:uno.css'
+import '@/components/layout/app-chrome.css'
 
 const queryClient = new QueryClient()
 
@@ -93,10 +95,11 @@ const isLegalPath = (pathname: string) => pathname === '/privacy-policy' || path
 /**
  * The site header: one tinted-glass band (accent solid only behind the status bar) holding the top row and, on app
  * pages, the version switcher and primary navigation. The switcher is full size on the home page only; inner pages get
- * the compact row so their content starts near the top.
+ * the compact row so their content starts near the top. Keyed on the page on screen, not the pending destination, so
+ * the header keeps its size until the next page renders (useResolvedPathname).
  */
 function RootLayout() {
-  const { pathname } = useLocation()
+  const pathname = useResolvedPathname()
 
   const isLegalPage = isLegalPath(pathname)
   const isDevelopersPage = pathname === '/developers'
@@ -112,6 +115,7 @@ function RootLayout() {
         <div
           className={clsx(
             'page-gutter flex items-center justify-center pt-3',
+            // app-chrome--full becomes one row from 1024px (components/layout/app-chrome.css)
             compact ? 'flex-row flex-wrap gap-2 md:gap-3' : 'app-chrome--full flex-col gap-3 sm:pt-4',
           )}
         >
@@ -217,7 +221,7 @@ function RootComponent() {
 
 function AppLayout() {
   const { t } = useTranslation(['root'])
-  const { pathname } = useLocation()
+  const pathname = useResolvedPathname()
   const isLegalPage = isLegalPath(pathname)
 
   return (
@@ -233,11 +237,9 @@ function AppLayout() {
           <RootLayout />
           <main id="main-content" tabIndex={-1}>
             {isLegalPage ? (
-              // Legal text reads on one glass sheet instead of a full-viewport white overlay
+              // LegalLayout draws the one glass reading card (and, on desktop, the contents sidebar beside it)
               <div className="page-gutter pb-global">
-                <div className="glass mx-auto max-w-[808px]">
-                  <Outlet />
-                </div>
+                <Outlet />
               </div>
             ) : (
               <Outlet />

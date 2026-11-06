@@ -90,6 +90,9 @@ describe('getHtmlCacheKey plates', () => {
 
   it('caches the public tool pages', () => {
     expect(getHtmlCacheKey(request('/tools/rating'), 'abc')).not.toBeNull()
-    expect(getHtmlCacheKey(request('/tools/tolerance?sheet=dsht_abc'), 'abc')).not.toBeNull()
+    expect(getHtmlCacheKey(request('/tools/tolerance'), 'abc')).not.toBeNull()
+    expect(getHtmlCacheKey(request('/songs/dsng_abc/dx/master/tolerance'), 'abc')).toBe(
+      'https://dxrating.net/__html-cache/abc/en/songs/dsng_abc/dx/master/tolerance',
+    )
   })
 })

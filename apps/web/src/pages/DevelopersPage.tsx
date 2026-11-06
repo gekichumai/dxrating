@@ -1,6 +1,6 @@
 import { Button, IconButton, Tooltip } from '@mui/material'
 import clsx from 'clsx'
-import { type ComponentType, type ReactNode, useEffect, useState } from 'react'
+import { type ComponentType, Fragment, type ReactNode, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import MdiArrowTopRight from '~icons/mdi/arrow-top-right'
@@ -97,7 +97,9 @@ const Option = ({
   action,
   links,
 }: OptionProps) => (
-  <section aria-labelledby={id} className="flex flex-col px-5 py-6 md:p-8">
+  // From md the two options share the parent's row tracks (subgrid), so header, description, endpoint and actions line up
+  // across the columns even when one description runs a line longer
+  <section aria-labelledby={id} className="flex flex-col px-5 py-6 md:p-8 md:grid md:grid-rows-subgrid md:row-span-4">
     <div className="flex items-center gap-3">
       <span
         className={clsx(
@@ -115,10 +117,11 @@ const Option = ({
 
     <div className="mt-5">
       <div className="text-sm font-semibold text-fg-2">{endpointLabel}</div>
-      {/* The URL wraps rather than scrolls, so the whole value is visible when people copy it by hand */}
+      {/* The URL wraps rather than scrolls, so the whole value is visible when people copy it by hand. It prefers to
+          wrap after a path slash (<wbr>) and only breaks inside a segment when one alone is wider than the box. */}
       <div className="glass-inset mt-1.5 flex items-center gap-2 ps-3 pe-1 py-1">
         <code className="min-w-0 flex-1 py-1 font-mono text-[0.8125rem] leading-normal text-fg-1 [overflow-wrap:anywhere]">
-          {endpoint}
+          <BreakableUrl url={endpoint} />
         </code>
         <CopyButton value={endpoint} label={copyLabel} />
       </div>
@@ -144,6 +147,23 @@ const Option = ({
   </section>
 )
 
+/** A URL with a wrap opportunity after each path slash (not inside the `//` of the scheme) */
+const BreakableUrl = ({ url }: { url: string }) => {
+  const parts = url.split(/(?<=[^/]\/)(?!\/)/)
+  return (
+    <>
+      {parts.map((part, index) => (
+        // The parts of a fixed URL never reorder, so the index is a stable key
+        // oxlint-disable-next-line react/no-array-index-key -- index is stable
+        <Fragment key={index}>
+          {index > 0 && <wbr />}
+          {part}
+        </Fragment>
+      ))}
+    </>
+  )
+}
+
 const InlineLink = ({ href, children }: { href: string; children: ReactNode }) => (
   <a href={href} {...externalLinkProps} className="link font-semibold">
     {children}
@@ -151,8 +171,10 @@ const InlineLink = ({ href, children }: { href: string; children: ReactNode }) =
 )
 
 const Term = ({ title, children }: { title: string; children: ReactNode }) => (
-  <div className="grid gap-1 py-4 first:pt-0 last:pb-0 md:grid-cols-[9rem_minmax(0,1fr)] md:gap-6">
-    <dt className="text-sm font-semibold text-fg-1">{title}</dt>
+  // Side by side from md; at lg the sections sit in half-width columns, so the term stacks above its description again.
+  // Term and description share one line height so their first lines align.
+  <div className="grid gap-1 py-4 first:pt-0 last:pb-0 md:grid-cols-[9rem_minmax(0,1fr)] md:gap-6 lg:grid-cols-1 lg:gap-1">
+    <dt className="text-sm font-semibold text-fg-1 md:leading-relaxed">{title}</dt>
     <dd className="m-0 max-w-[68ch] text-sm leading-relaxed text-fg-2 text-pretty">{children}</dd>
   </div>
 )
@@ -164,7 +186,7 @@ export const DevelopersPage = () => {
     <div
       // Korean wraps at spaces; breaking inside words reads badly at phone widths.
       className={clsx(
-        'w-full max-w-4xl mx-auto px-4 pt-8 md:pt-14 pb-global text-fg-1',
+        'w-full max-w-4xl lg:max-w-6xl mx-auto px-4 pt-8 md:pt-14 pb-global text-fg-1',
         i18n.language === 'ko' && 'break-keep',
       )}
       itemScope
@@ -186,7 +208,7 @@ export const DevelopersPage = () => {
           </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-solid divide-black/8">
+        <div className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-[auto_auto_1fr_auto] divide-y md:divide-y-0 md:divide-x divide-solid divide-black/8">
           <Option
             id="developers-mcp"
             Icon={McpLogo}
@@ -217,52 +239,52 @@ export const DevelopersPage = () => {
           />
         </div>
 
-        <section
-          aria-labelledby="developers-terms"
-          className="px-5 py-6 md:p-8 border-t border-solid border-x-0 border-b-0 border-black/8"
-        >
-          <h2 id="developers-terms" className="m-0 text-xl font-semibold leading-snug tracking-[-0.01em] text-fg-1">
-            {t('developers:terms.title')}
-          </h2>
-          <dl className="mt-4 divide-y divide-solid divide-x-0 divide-black/8">
-            <Term title={t('developers:terms.data')}>{t('developers:terms.data-description')}</Term>
-            <Term title={t('developers:terms.credit')}>
-              <code className="glass-inset rounded-[var(--radius-sm)] px-1.5 py-0.5 font-mono text-[0.8125rem] text-fg-1">
-                {ATTRIBUTION_LINE}
-              </code>
-            </Term>
-            <Term title={t('developers:terms.limits')}>{t('developers:terms.limits-description')}</Term>
-          </dl>
-        </section>
-
-        <section
-          id="api-stability"
-          aria-labelledby="developers-api-stability"
-          className="scroll-mt-20 px-5 py-6 md:p-8 border-t border-solid border-x-0 border-b-0 border-black/8"
-        >
-          <h2
-            id="developers-api-stability"
-            className="m-0 text-xl font-semibold leading-snug tracking-[-0.01em] text-fg-1"
-          >
-            {t('developers:policy.title')}
-          </h2>
-          <p className="mt-2 text-base leading-relaxed text-fg-2 text-pretty">{t('developers:policy.intro')}</p>
-          <dl className="mt-4 divide-y divide-solid divide-x-0 divide-black/8">
-            {(['compat', 'deprecation', 'versions', 'ids', 'scope'] as const).map((key) => (
-              <Term key={key} title={t(`developers:policy.${key}`)}>
-                {t(`developers:policy.${key}-description`)}
+        {/* Stacked below lg; side by side from lg so both sections start above the fold on a laptop */}
+        <div className="border-t border-solid border-x-0 border-b-0 border-black/8 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] divide-y lg:divide-y-0 lg:divide-x divide-solid divide-black/8">
+          <section aria-labelledby="developers-terms" className="px-5 py-6 md:p-8">
+            <h2 id="developers-terms" className="m-0 text-xl font-semibold leading-snug tracking-[-0.01em] text-fg-1">
+              {t('developers:terms.title')}
+            </h2>
+            <dl className="mt-4 divide-y divide-solid divide-x-0 divide-black/8">
+              <Term title={t('developers:terms.data')}>{t('developers:terms.data-description')}</Term>
+              <Term title={t('developers:terms.credit')}>
+                <code className="glass-inset inline-block rounded-[var(--radius-sm)] px-1.5 py-0 align-top font-mono text-[0.8125rem] leading-[1.25rem] text-fg-1">
+                  {ATTRIBUTION_LINE}
+                </code>
               </Term>
-            ))}
-            <Term title={t('developers:policy.updates')}>
-              {t('developers:policy.updates-description')}{' '}
-              <InlineLink href={API_CHANGELOG_URL}>{t('developers:api.changelog')}</InlineLink>
-            </Term>
-            <Term title={t('developers:policy.support')}>
-              {t('developers:policy.support-description')}{' '}
-              <InlineLink href={API_SUPPORT_URL}>github.com/gekichumai/dxrating</InlineLink>
-            </Term>
-          </dl>
-        </section>
+              <Term title={t('developers:terms.limits')}>{t('developers:terms.limits-description')}</Term>
+            </dl>
+          </section>
+
+          <section
+            id="api-stability"
+            aria-labelledby="developers-api-stability"
+            className="scroll-mt-20 px-5 py-6 md:p-8"
+          >
+            <h2
+              id="developers-api-stability"
+              className="m-0 text-xl font-semibold leading-snug tracking-[-0.01em] text-fg-1"
+            >
+              {t('developers:policy.title')}
+            </h2>
+            <p className="mt-2 text-base leading-relaxed text-fg-2 text-pretty">{t('developers:policy.intro')}</p>
+            <dl className="mt-4 divide-y divide-solid divide-x-0 divide-black/8">
+              {(['compat', 'deprecation', 'versions', 'ids', 'scope'] as const).map((key) => (
+                <Term key={key} title={t(`developers:policy.${key}`)}>
+                  {t(`developers:policy.${key}-description`)}
+                </Term>
+              ))}
+              <Term title={t('developers:policy.updates')}>
+                {t('developers:policy.updates-description')}{' '}
+                <InlineLink href={API_CHANGELOG_URL}>{t('developers:api.changelog')}</InlineLink>
+              </Term>
+              <Term title={t('developers:policy.support')}>
+                {t('developers:policy.support-description')}{' '}
+                <InlineLink href={API_SUPPORT_URL}>github.com/gekichumai/dxrating</InlineLink>
+              </Term>
+            </dl>
+          </section>
+        </div>
       </article>
     </div>
   )
