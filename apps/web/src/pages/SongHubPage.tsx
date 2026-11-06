@@ -29,7 +29,8 @@ export const SongHubPage: FC = () => {
   ]
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
+    // Desktop (lg+): the song facts become a sticky left column and the charts table takes the rest of the width
+    <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4 lg:max-w-6xl lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start">
       <IconButton
         component="a"
         href="/"
@@ -41,19 +42,19 @@ export const SongHubPage: FC = () => {
             window.history.back()
           }
         }}
-        className="self-start -ml-2 -mb-2"
+        className="self-start justify-self-start -ml-2 -mb-2 lg:col-span-2"
       >
         <MdiArrowLeft aria-hidden />
       </IconButton>
 
-      <MaterialSurface as="header" className="p-3 flex gap-3 items-start">
+      <MaterialSurface as="header" className="p-3 flex gap-3 items-start lg:flex-col lg:sticky lg:top-4">
         <SheetImage
           name={song.imageName}
           size="large"
           alt={t('sheet:cover-art-alt', { title: song.title })}
-          className="h-20 w-20 shrink-0 rounded-lg overflow-hidden outline outline-1 -outline-offset-1 outline-black/10"
+          className="h-20 w-20 shrink-0 rounded-lg overflow-hidden outline outline-1 -outline-offset-1 outline-black/10 lg:w-full lg:h-auto lg:aspect-square"
         />
-        <div className="min-w-0 flex flex-col gap-1">
+        <div className="min-w-0 flex flex-col gap-1 lg:w-full">
           <h1
             lang="ja"
             translate="no"
