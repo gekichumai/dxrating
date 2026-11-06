@@ -717,7 +717,23 @@ const arcadesHandler = {
     handlerGen(function* ({ input }) {
       const database = yield* Database
       const db = database.db
-      const filters: SQL[] = []
+      // A venue whose every installation went absent is closed, or came only from a source that is no longer crawled
+      // (such as the national Chinese list, gekichumai/meta#8). Venues without any installation rows stay listed.
+      const listedVenue = or(
+        notExists(
+          db
+            .select({ value: sql`1` })
+            .from(arcadeInstallations)
+            .where(eq(arcadeInstallations.venue_id, arcadeVenues.id)),
+        ),
+        exists(
+          db
+            .select({ value: sql`1` })
+            .from(arcadeInstallations)
+            .where(and(eq(arcadeInstallations.venue_id, arcadeVenues.id), isNull(arcadeInstallations.absent_since))),
+        ),
+      )!
+      const filters: SQL[] = [listedVenue]
 
       if (
         input.minLatitude !== undefined &&
@@ -776,7 +792,7 @@ const arcadesHandler = {
             db
               .select()
               .from(arcadeVenues)
-              .where(filters.length > 0 ? and(...filters) : undefined)
+              .where(and(...filters))
               .orderBy(asc(arcadeVenues.normalized_name), asc(arcadeVenues.id)),
           ),
           database.query('Arcades.listChains', (db) =>
@@ -792,7 +808,7 @@ const arcadesHandler = {
                   db
                     .select({ value: sql`1` })
                     .from(arcadeVenues)
-                    .where(eq(arcadeVenues.chain_id, arcadeChains.id)),
+                    .where(and(eq(arcadeVenues.chain_id, arcadeChains.id), listedVenue)),
                 ),
               )
               .orderBy(asc(arcadeChains.name), asc(arcadeChains.id)),
