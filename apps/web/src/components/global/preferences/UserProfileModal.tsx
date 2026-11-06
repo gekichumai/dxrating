@@ -55,8 +55,6 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const activeSection = sections.some((section) => section.key === selectedSection) ? selectedSection : 'profile'
   const [direction, setDirection] = useState(0)
   const isLargeDevice = useIsLargeDevice()
-  // Phones with the cloud save section: four labels (long in CJK) scroll sideways rather than truncate
-  const scrollsSideways = !isLargeDevice && sections.length > SECTIONS.length
   const { data: sessionData } = authClient.useSession()
   const confirmLogout = useConfirmDialog()
   const activeSave = useActiveSave()
@@ -116,20 +114,11 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
           </div>
         )}
         <nav aria-label={t('auth:user-profile.sections')}>
-          {/* Phones: one row; with the cloud save section it scrolls sideways when the labels do not fit */}
-          <ul
-            className={clsx(
-              'm-0 p-0 list-none flex flex-col gap-0.5',
-              !isLargeDevice && 'flex-row gap-1 overflow-x-auto overscroll-x-contain',
-            )}
-          >
+          <ul className={clsx('m-0 p-0 list-none flex flex-col gap-0.5', !isLargeDevice && 'flex-row gap-1')}>
             {sections.map(({ key, icon: Icon, labelKey }) => {
               const selected = activeSection === key
               return (
-                <li
-                  key={key}
-                  className={clsx(!isLargeDevice && (scrollsSideways ? 'flex-1 shrink-0' : 'flex-1 min-w-0'))}
-                >
+                <li key={key} className={clsx(!isLargeDevice && 'flex-1 min-w-0')}>
                   <button
                     type="button"
                     onClick={() => handleSectionChange(key)}
@@ -141,7 +130,6 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
                         ? 'glass-inset shadow-[var(--shadow-1)] font-semibold text-fg-1'
                         : 'border-transparent bg-transparent text-fg-2 hover:bg-black/4 hover:text-fg-1',
                       !isLargeDevice && 'justify-center !gap-2 !px-2',
-                      scrollsSideways && 'whitespace-nowrap',
                     )}
                   >
                     {/* The accent bar marks the selected section alongside the weight change */}
