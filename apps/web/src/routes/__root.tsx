@@ -9,6 +9,7 @@ import toast from 'react-hot-toast'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import { NetImportSettingsProvider } from '@/components/rating/io/import/NetImportSettingsContext'
 import { NetImportProgress } from '@/components/rating/io/import/NetImportProgress'
+import { ImportReviewHost } from '@/components/rating/io/import/ImportReviewDialog'
 import { CustomizedToaster } from '@/components/global/CustomizedToaster'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { SideEffector } from '@/components/global/SideEffector'
@@ -164,6 +165,7 @@ function RootComponent() {
                         <SideEffector />
                         <CustomizedToaster />
                         <NetImportProgress />
+                        <ImportReviewHost />
                         <OAuthErrorHandler />
                         <RegionVersionUpdatePrompt />
                         <AppLayout />

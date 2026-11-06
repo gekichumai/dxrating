@@ -53,6 +53,7 @@ import { ClearButton } from '../components/rating/io/ClearButton'
 import { ExportMenu } from '../components/rating/io/ExportMenu'
 import { NetImportSettingsButton } from '../components/rating/io/import/NetImportSettingsButton'
 import { ImportMenu } from '../components/rating/io/ImportMenu'
+import { ImportUndoBanner } from '../components/rating/io/import/ImportUndoBanner'
 import { RenderToOneShotImageButton } from '../components/rating/io/export/RenderToOneShotImageButton'
 import { useRatingEntries, useRatingView } from '../components/rating/useRatingEntries'
 import { Link, useNavigate } from '@tanstack/react-router'
@@ -207,6 +208,7 @@ export const RatingCalculator = () => {
               </div>
             </div>
           </Alert>
+          <ImportUndoBanner />
         </div>
       </div>
 

@@ -22,6 +22,7 @@ import { useAuth } from '../../../../hooks/useAuth'
 import { apiClient } from '../../../../lib/orpc'
 import { WebHaptics } from 'web-haptics'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
+import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
 
@@ -75,7 +76,17 @@ const LxnsImportDialogContent: FC<{
         console.warn('[ImportFromLxnsButtonListItem]', warning.message, warning.row)
       }
 
-      await repository.applyImport(entries, { source: 'lxns', mode: 'replace' })
+      const { applied } = await reviewAndApplyImport(
+        repository,
+        entries,
+        { source: 'lxns', mode: 'replace' },
+        { trigger: 'manual' },
+      )
+      if (!applied) {
+        analytics.failed('cancelled_by_user')
+        setState('connected')
+        return
+      }
       analytics.succeeded(entries.length, importResult.warnings.length)
       haptics.trigger('success')
       toast.success(t('rating-calculator:io.import.lxns.success', { count: entries.length }))

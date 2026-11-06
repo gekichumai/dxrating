@@ -33,6 +33,7 @@ import { SheetListItemContent } from '../../../sheet/SheetListItem'
 import { useWebHaptics } from 'web-haptics/react'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
+import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
 
@@ -232,10 +233,16 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
             variant="contained"
             onClick={async () => {
               const analytics = createRatingImportTracker('aqua_sqlite')
-              await repository.applyImport(
+              const { applied } = await reviewAndApplyImport(
+                repository,
                 records.map((record) => record.entry),
                 { source: 'aqua-sqlite', mode: 'replace' },
+                { trigger: 'manual' },
               )
+              if (!applied) {
+                analytics.failed('cancelled_by_user')
+                return
+              }
               analytics.succeeded(records.length, warnings.length)
 
               haptic.trigger('success')
