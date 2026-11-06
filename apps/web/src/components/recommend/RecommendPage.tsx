@@ -101,7 +101,7 @@ export const RecommendPage: FC = () => {
   }, [result])
 
   return (
-    <ScorePageFrame>
+    <ScorePageFrame width="6xl">
       <ScorePageHeader title={t('recommend:title')} description={t('recommend:description')}>
         {isDemo && <DemoScoresNotice className="mt-3">{t('recommend:demo')}</DemoScoresNotice>}
       </ScorePageHeader>
@@ -118,24 +118,31 @@ export const RecommendPage: FC = () => {
         />
       ) : (
         <>
-          <MaterialSurface as="dl" className="m-0 grid grid-cols-3 items-end gap-2 p-4 text-center">
+          <MaterialSurface
+            as="dl"
+            className="m-0 grid grid-cols-3 items-end gap-2 p-4 text-center lg:items-baseline lg:gap-4 lg:p-3 lg:text-start"
+          >
             <Stat label={t('recommend:stats.total')} value={result.total} />
             <Stat label={t('recommend:stats.b15-floor')} value={result.b15Floor} />
             <Stat label={t('recommend:stats.b35-floor')} value={result.b35Floor} />
           </MaterialSurface>
-          <RecommendSection title={t('recommend:new')} items={result.b15} />
-          <RecommendSection title={t('recommend:old')} items={result.b35} />
+          {/* B15 and B35 side by side on desktop, so both lists start above the fold */}
+          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start">
+            <RecommendSection title={t('recommend:new')} items={result.b15} />
+            <RecommendSection title={t('recommend:old')} items={result.b35} />
+          </div>
         </>
       )}
     </ScorePageFrame>
   )
 }
 
-// Label above value; the grid aligns cell bottoms, so a label that wraps grows upwards and values stay level
+// Label above value; the grid aligns cell bottoms, so a label that wraps grows upwards and values stay level. On
+// desktop the strip is compact: label and value on one baseline, left-aligned
 const Stat: FC<{ label: string; value: number }> = ({ label, value }) => (
-  <div className="flex flex-col gap-0.5">
+  <div className="flex flex-col gap-0.5 lg:flex-row lg:items-baseline lg:gap-2">
     <dt className="text-xs leading-tight text-fg-2 text-balance">{label}</dt>
-    <dd className="m-0 text-xl font-semibold num text-fg-1">{value}</dd>
+    <dd className="m-0 text-xl font-semibold num text-fg-1 lg:text-lg">{value}</dd>
   </div>
 )
 

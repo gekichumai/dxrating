@@ -80,156 +80,172 @@ export const RandomChartPage: FC = () => {
   const update = (patch: Partial<RandomChartFilters>) => setFilters((current) => ({ ...current, ...patch }))
 
   return (
-    <ScorePageFrame>
+    <ScorePageFrame width="5xl">
       <ScorePageHeader title={t('random:title')} description={t('random:description')} />
 
-      <MaterialSurface className="flex flex-col gap-4 p-4">
-        <fieldset className="flex flex-col gap-2 border-none p-0 m-0">
-          <legend className="mb-2 text-sm font-semibold">{t('random:filters.type')}</legend>
-          <div className="flex flex-wrap gap-2">
-            {RANDOM_TYPES.map((type: TypeEnum) => (
-              <Chip
-                key={type}
-                label={getSheetTypeDisplayName(type, locale)}
-                color={filters.types.includes(type) ? 'primary' : 'default'}
-                variant={filters.types.includes(type) ? 'filled' : 'outlined'}
-                onClick={() => update({ types: toggle(filters.types, type) })}
-                aria-pressed={filters.types.includes(type)}
-                className="!rounded-lg"
-              />
-            ))}
-          </div>
-        </fieldset>
-
-        <fieldset className="flex flex-col gap-2 border-none p-0 m-0">
-          <legend className="mb-2 text-sm font-semibold">{t('random:filters.difficulty')}</legend>
-          <div className="flex flex-wrap gap-2">
-            {RANDOM_DIFFICULTIES.map((difficulty: DifficultyEnum) => {
-              const selected = filters.difficulties.includes(difficulty)
-              return (
+      {/* Stacked below lg; on desktop the filters and the rolled chart sit side by side */}
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
+        <MaterialSurface className="flex flex-col gap-4 p-4">
+          <fieldset className="flex flex-col gap-2 border-none p-0 m-0">
+            <legend className="mb-2 text-sm font-semibold">{t('random:filters.type')}</legend>
+            <div className="flex flex-wrap gap-2">
+              {RANDOM_TYPES.map((type: TypeEnum) => (
                 <Chip
-                  key={difficulty}
-                  label={DIFFICULTIES[difficulty].title}
-                  variant={selected ? 'filled' : 'outlined'}
-                  onClick={() =>
-                    update({
-                      difficulties: toggle(filters.difficulties, difficulty),
-                    })
-                  }
-                  aria-pressed={selected}
+                  key={type}
+                  label={getSheetTypeDisplayName(type, locale)}
+                  color={filters.types.includes(type) ? 'primary' : 'default'}
+                  variant={filters.types.includes(type) ? 'filled' : 'outlined'}
+                  onClick={() => update({ types: toggle(filters.types, type) })}
+                  aria-pressed={filters.types.includes(type)}
                   className="!rounded-lg"
-                  sx={{
-                    // Selected: the darker fill that carries white text at 4.5:1
-                    ...(selected
-                      ? {
-                          backgroundColor: DIFFICULTIES[difficulty].solid,
-                          borderColor: DIFFICULTIES[difficulty].solid,
-                          color: 'common.white',
-                          '&:hover': { backgroundColor: DIFFICULTIES[difficulty].solid, filter: 'brightness(0.92)' },
-                        }
-                      : { borderColor: DIFFICULTIES[difficulty].color, color: 'var(--fg-1)' }),
-                  }}
                 />
-              )
-            })}
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-2 border-none p-0 m-0">
+            <legend className="mb-2 text-sm font-semibold">{t('random:filters.difficulty')}</legend>
+            <div className="flex flex-wrap gap-2">
+              {RANDOM_DIFFICULTIES.map((difficulty: DifficultyEnum) => {
+                const selected = filters.difficulties.includes(difficulty)
+                return (
+                  <Chip
+                    key={difficulty}
+                    label={DIFFICULTIES[difficulty].title}
+                    variant={selected ? 'filled' : 'outlined'}
+                    onClick={() =>
+                      update({
+                        difficulties: toggle(filters.difficulties, difficulty),
+                      })
+                    }
+                    aria-pressed={selected}
+                    className="!rounded-lg"
+                    sx={{
+                      // Selected: the darker fill that carries white text at 4.5:1
+                      ...(selected
+                        ? {
+                            backgroundColor: DIFFICULTIES[difficulty].solid,
+                            borderColor: DIFFICULTIES[difficulty].solid,
+                            color: 'common.white',
+                            '&:hover': { backgroundColor: DIFFICULTIES[difficulty].solid, filter: 'brightness(0.92)' },
+                          }
+                        : { borderColor: DIFFICULTIES[difficulty].color, color: 'var(--fg-1)' }),
+                    }}
+                  />
+                )
+              })}
+            </div>
+          </fieldset>
+
+          <div className="flex flex-col gap-1">
+            <span id="random-level-label" className="text-sm font-semibold">
+              {t('random:filters.level', {
+                min: filters.minLevel,
+                max: filters.maxLevel,
+              })}
+            </span>
+            <Slider
+              className="mx-2 w-auto"
+              aria-labelledby="random-level-label"
+              value={[filters.minLevel, filters.maxLevel]}
+              min={RANDOM_LEVEL_MIN}
+              max={RANDOM_LEVEL_MAX}
+              step={1}
+              marks
+              valueLabelDisplay="auto"
+              disableSwap
+              onChange={(_, value) => {
+                const [minLevel, maxLevel] = value as number[]
+                update({ minLevel: minLevel!, maxLevel: maxLevel! })
+              }}
+            />
           </div>
-        </fieldset>
 
-        <div className="flex flex-col gap-1">
-          <span id="random-level-label" className="text-sm font-semibold">
-            {t('random:filters.level', {
-              min: filters.minLevel,
-              max: filters.maxLevel,
-            })}
-          </span>
-          <Slider
-            className="mx-2 w-auto"
-            aria-labelledby="random-level-label"
-            value={[filters.minLevel, filters.maxLevel]}
-            min={RANDOM_LEVEL_MIN}
-            max={RANDOM_LEVEL_MAX}
-            step={1}
-            marks
-            valueLabelDisplay="auto"
-            disableSwap
-            onChange={(_, value) => {
-              const [minLevel, maxLevel] = value as number[]
-              update({ minLevel: minLevel!, maxLevel: maxLevel! })
-            }}
-          />
-        </div>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-semibold">{t('random:filters.version')}</span>
+            {/* No versions chosen means every version, so choosing all or none both clear the filter */}
+            <VersionMultiSelect
+              available={versions}
+              value={filters.versions.length === 0 ? versions : filters.versions}
+              label={t('random:filters.version')}
+              allLabel={t('random:filters.all-versions')}
+              onChange={(next: VersionEnum[]) => update({ versions: next.length === versions.length ? [] : next })}
+            />
+          </div>
 
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-semibold">{t('random:filters.version')}</span>
-          {/* No versions chosen means every version, so choosing all or none both clear the filter */}
-          <VersionMultiSelect
-            available={versions}
-            value={filters.versions.length === 0 ? versions : filters.versions}
-            label={t('random:filters.version')}
-            allLabel={t('random:filters.all-versions')}
-            onChange={(next: VersionEnum[]) => update({ versions: next.length === versions.length ? [] : next })}
-          />
-        </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="contained" size="large" onClick={roll} disabled={!catalog || pool.length === 0}>
+              {t('random:roll')}
+            </Button>
+            <output className="text-sm text-fg-2 num">
+              {settledPoolSize !== null ? (
+                t('random:pool-size', { count: settledPoolSize })
+              ) : (
+                <CircularProgress size="1rem" aria-label={t('random:loading')} />
+              )}
+            </output>
+          </div>
+        </MaterialSurface>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Button variant="contained" size="large" onClick={roll} disabled={!catalog || pool.length === 0}>
-            {t('random:roll')}
-          </Button>
-          <output className="text-sm text-fg-2 num">
-            {settledPoolSize !== null ? (
-              t('random:pool-size', { count: settledPoolSize })
-            ) : (
-              <CircularProgress size="1rem" aria-label={t('random:loading')} />
+        <div className="flex flex-col lg:sticky lg:top-24">
+          {/* Desktop only, before the first roll: keeps the two columns balanced. Mobile shows nothing here, as before */}
+          {result === undefined && (
+            <MaterialSurface className="hidden lg:flex flex-col items-start gap-1 p-4">
+              <h2 className="section-title m-0">{t('random:placeholder.title')}</h2>
+              <p className="m-0 text-sm leading-normal text-fg-2 text-pretty">
+                {settledPoolSize !== null
+                  ? t('random:placeholder.hint', { count: settledPoolSize })
+                  : t('random:loading')}
+              </p>
+            </MaterialSurface>
+          )}
+          {/* The live region stays mounted so each new roll is announced */}
+          <div aria-live="polite" className="flex flex-col">
+            {result === null && (
+              <MaterialSurface className="p-4 text-sm text-fg-1">{t('random:no-result')}</MaterialSurface>
             )}
-          </output>
+            {result && (
+              <MaterialSurface className="p-1">
+                <Link
+                  to={buildSheetPath(result)}
+                  className="flex items-start gap-3 rounded-[var(--radius-md)] p-3 text-fg-1 no-underline outline-offset-[-2px] transition-colors duration-[var(--duration-fast)] hover:bg-black/4"
+                >
+                  <img
+                    src={`https://shama.dxrating.net/images/cover/v2/${result.imageName}.jpg`}
+                    alt=""
+                    width={64}
+                    height={64}
+                    className="size-16 shrink-0 rounded-[var(--radius-md)] outline outline-1 outline-black/10 -outline-offset-1"
+                  />
+                  <span className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span lang="ja" className="text-lg font-semibold leading-snug break-words">
+                      {result.title}
+                    </span>
+                    <span lang="ja" className="text-sm text-fg-2 break-words">
+                      {result.artist}
+                    </span>
+                    <span className="flex flex-wrap items-center gap-x-2 text-sm">
+                      <span
+                        className={`whitespace-nowrap font-semibold ${difficultyInkClassName}`}
+                        style={difficultyTextStyle(result.difficulty)}
+                      >
+                        {DIFFICULTIES[result.difficulty as DifficultyEnum]?.title ?? result.difficulty}
+                      </span>
+                      <span className="whitespace-nowrap">{getSheetTypeDisplayName(result.type, locale)}</span>
+                      <span className="whitespace-nowrap num">
+                        {result.level} ({result.internalLevelValue.toFixed(1)})
+                      </span>
+                      <span className="whitespace-nowrap text-fg-2">{result.version}</span>
+                    </span>
+                    <span className="mt-1 text-sm font-semibold text-accent-strong underline decoration-1 underline-offset-2">
+                      {t('random:open-chart')}
+                    </span>
+                  </span>
+                </Link>
+              </MaterialSurface>
+            )}
+          </div>
         </div>
-      </MaterialSurface>
-
-      {/* The live region stays mounted so each new roll is announced */}
-      <div aria-live="polite" className="flex flex-col">
-        {result === null && (
-          <MaterialSurface className="p-4 text-sm text-fg-1">{t('random:no-result')}</MaterialSurface>
-        )}
-        {result && (
-          <MaterialSurface className="p-1">
-            <Link
-              to={buildSheetPath(result)}
-              className="flex items-start gap-3 rounded-[var(--radius-md)] p-3 text-fg-1 no-underline outline-offset-[-2px] transition-colors duration-[var(--duration-fast)] hover:bg-black/4"
-            >
-              <img
-                src={`https://shama.dxrating.net/images/cover/v2/${result.imageName}.jpg`}
-                alt=""
-                width={64}
-                height={64}
-                className="size-16 shrink-0 rounded-[var(--radius-md)] outline outline-1 outline-black/10 -outline-offset-1"
-              />
-              <span className="flex min-w-0 flex-1 flex-col gap-1">
-                <span lang="ja" className="text-lg font-semibold leading-snug break-words">
-                  {result.title}
-                </span>
-                <span lang="ja" className="text-sm text-fg-2 break-words">
-                  {result.artist}
-                </span>
-                <span className="flex flex-wrap items-center gap-x-2 text-sm">
-                  <span
-                    className={`whitespace-nowrap font-semibold ${difficultyInkClassName}`}
-                    style={difficultyTextStyle(result.difficulty)}
-                  >
-                    {DIFFICULTIES[result.difficulty as DifficultyEnum]?.title ?? result.difficulty}
-                  </span>
-                  <span className="whitespace-nowrap">{getSheetTypeDisplayName(result.type, locale)}</span>
-                  <span className="whitespace-nowrap num">
-                    {result.level} ({result.internalLevelValue.toFixed(1)})
-                  </span>
-                  <span className="whitespace-nowrap text-fg-2">{result.version}</span>
-                </span>
-                <span className="mt-1 text-sm font-semibold text-accent-strong underline decoration-1 underline-offset-2">
-                  {t('random:open-chart')}
-                </span>
-              </span>
-            </Link>
-          </MaterialSurface>
-        )}
       </div>
     </ScorePageFrame>
   )

@@ -83,6 +83,8 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
           </TextField>
           <ShareImageButton
             size="small"
+            // Same 40px height as the small target select beside it
+            sx={{ minHeight: 40 }}
             filename={`dxrating-lv${table.level.replace('+', 'p')}-${target}.png`}
             shareTitle={t('completion:share-title', { level: table.level, target: targetLabel })}
             getImage={() =>
