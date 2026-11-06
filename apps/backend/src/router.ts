@@ -429,7 +429,8 @@ const aliasesHandler = {
 
 import { netGatewayStatusEffect, withMaimaiNETClient, type NetGatewayStatus } from './lib/functions/client'
 import { recordNetFailure, recordNetSuccess } from './services/functions/fetch-net-records/telemetry'
-import * as lxnsService from './services/lxns/index'
+import * as lxnsService from './services/lxns/viewer'
+import { withViewer } from './proofs/viewer-is'
 
 const TrendingSeriesSchema = Schema.Struct({
   breakdown_value: Schema.optional(Schema.Unknown),
@@ -919,7 +920,7 @@ const lxnsHandler = {
     handlerGen(function* ({ context }) {
       const user = context.user
       if (!user) return yield* new UnauthorizedError()
-      const url = yield* lxnsService.generateAuthorizationUrl(user.id)
+      const url = yield* withViewer(user, (viewer, proof) => lxnsService.generateAuthorizationUrl(viewer, proof))
       return { url }
     }),
   ),
@@ -946,14 +947,16 @@ const lxnsHandler = {
     handlerGen(function* ({ context }) {
       const user = context.user
       if (!user) return yield* new UnauthorizedError()
-      return yield* lxnsService.getConnectionStatus(user.id)
+      return yield* withViewer(user, (viewer, proof) => lxnsService.getConnectionStatus(viewer, proof))
     }),
   ),
   start: os.lxns.start.handler(
     handlerGen(function* ({ context }) {
       const user = context.user
       if (!user) return yield* new UnauthorizedError()
-      const [duration, rawScores] = yield* Effect.timed(lxnsService.fetchPlayerScores(user.id))
+      const [duration, rawScores] = yield* Effect.timed(
+        withViewer(user, (viewer, proof) => lxnsService.fetchPlayerScores(viewer, proof)),
+      )
       yield* Effect.sync(() =>
         Sentry.metrics.distribution('lxns_fetch.duration', Duration.toMillis(duration), {
           unit: 'millisecond',
@@ -978,7 +981,7 @@ const lxnsHandler = {
     handlerGen(function* ({ context }) {
       const user = context.user
       if (!user) return yield* new UnauthorizedError()
-      yield* lxnsService.disconnect(user.id)
+      yield* withViewer(user, (viewer, proof) => lxnsService.disconnect(viewer, proof))
       return { success: true }
     }),
   ),

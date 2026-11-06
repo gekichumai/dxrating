@@ -120,6 +120,9 @@ importers:
       '@effect/sql-pg':
         specifier: 4.0.0-rc.118
         version: 4.0.0-rc.118(effect@4.0.0-rc.118)
+      '@gdp-ts/core':
+        specifier: 0.1.0
+        version: 0.1.0(oxlint@1.64.0)(typescript@7.0.2)
       '@gekichumai/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
@@ -1535,6 +1538,20 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@gdp-ts/core@0.1.0':
+    resolution: {integrity: sha512-eH3PdZALOGZNv4m1L3Zz+cbMK6/g4AaRJbL7VXWFhZ9g8ukykjXRgMPPYoXvv/2cVcxBcl36d+7c3Z81BLqyLQ==}
+    peerDependencies:
+      eslint: '>=9'
+      oxlint: '>=1.86'
+      typescript: '>=5.4'
+    peerDependenciesMeta:
+      eslint:
+        optional: true
+      oxlint:
+        optional: true
+      typescript:
+        optional: true
 
   '@hexagon/base64@1.1.28':
     resolution: {integrity: sha512-lhqDEAvWixy3bZ+UOYbPwUbBkwBq5C1LAJ/xPC8Oi+lL54oyakv/npbA0aU2hgCsx/1NUd4IBvV03+aUBWxerw==}
@@ -7905,6 +7922,11 @@ snapshots:
 
   '@esbuild/win32-x64@0.28.2':
     optional: true
+
+  '@gdp-ts/core@0.1.0(oxlint@1.64.0)(typescript@7.0.2)':
+    optionalDependencies:
+      oxlint: 1.64.0
+      typescript: 7.0.2
 
   '@hexagon/base64@1.1.28': {}
 
