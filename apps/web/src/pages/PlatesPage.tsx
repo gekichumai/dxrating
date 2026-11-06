@@ -440,8 +440,8 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                         >
                           {chart.title}
                         </a>
-                        <div className="flex items-center gap-1.5 min-w-0 text-xs text-slate-600">
-                          <span className="truncate">
+                        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 min-w-0 text-xs text-slate-600">
+                          <span className="truncate shrink-0 max-w-full">
                             {getSheetTypeDisplayName(chart.type, locale)} · {chart.version}
                           </span>
                           {chart.remasterDiffersByServer && <RemasterVariantLabel />}
