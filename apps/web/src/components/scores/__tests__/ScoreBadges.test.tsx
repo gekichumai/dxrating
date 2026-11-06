@@ -48,6 +48,6 @@ describe('ScoreBadges', () => {
         ),
       ].map((node) => node.textContent)
     expect(sizers('basic')).toEqual(sizers('remaster'))
-    expect(sizers('basic')).toEqual(['BASIC', 'ADV', 'EXPERT', 'MASTER', 'Re:MAS', '宴', '00.0'])
+    expect(sizers('basic')).toEqual(['BAS', 'ADV', 'EXP', 'MAS', 'Re:MAS', '宴', '00.0'])
   })
 })
