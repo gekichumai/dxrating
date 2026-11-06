@@ -1,6 +1,7 @@
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { useResolvedTheme } from '@/utils/useResolvedTheme'
 import { Alert, Button, Chip, CircularProgress, Divider, TextField, useMediaQuery } from '@mui/material'
+import clsx from 'clsx'
 import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -34,10 +35,16 @@ export const LoginForm = ({
   idPrefix = 'auth',
   onPendingChange,
   onSuccess,
+  hideTitleFromMd = false,
 }: {
   idPrefix?: string
   onPendingChange?: (pending: boolean) => void
   onSuccess?: () => void
+  /**
+   * From md up, hides the sign-in heading visually but keeps it for screen readers (it still names the form), for a
+   * page that sets its own heading beside the form at that width
+   */
+  hideTitleFromMd?: boolean
 }) => {
   const { t } = useTranslation(['auth'])
   const {
@@ -173,7 +180,8 @@ export const LoginForm = ({
         onSubmit={handleFormSubmit(onSubmit)}
         noValidate
       >
-        <div className="text-center mb-1">
+        {/* A switch to sign-up still shows its heading, since the page around the form only talks about signing in */}
+        <div className={clsx('text-center mb-1', hideTitleFromMd && !isSignUp && 'md:sr-only')}>
           <h2 id={formTitleId} className="text-xl font-semibold leading-tight text-fg-1 m-0">
             {isSignUp ? t('auth:sign-up.title') : t('auth:form.title')}
           </h2>

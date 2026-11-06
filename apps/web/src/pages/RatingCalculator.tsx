@@ -16,6 +16,7 @@ import {
   TableHead,
   TableRow,
   styled,
+  useMediaQuery,
 } from '@mui/material'
 import {
   type Row,
@@ -72,8 +73,19 @@ export interface Entry {
   achievementRate: number
   comboFlag?: ComboFlag
   syncFlag?: SyncFlag
+  /** The DX score of the play, when the source reports one */
+  dxScore?: number
   includedIn: 'b15' | 'b35' | null
 }
+
+/** Row heights in px: denser on desktop, where the table has the width to keep each row on one line */
+const ROW_HEIGHTS = {
+  comfortable: { base: 88, desktop: 56 },
+  compact: { base: 72, desktop: 44 },
+} as const
+
+/** The desktop breakpoint of rating-table.css; keep the two in sync */
+const DESKTOP_QUERY = '(min-width: 1024px)'
 
 const columnHelper = createColumnHelper<Entry>()
 
@@ -313,8 +325,14 @@ const SYNC_FLAG_CONFIG: Record<NonNullable<SyncFlag>, { label: string; className
   fsdp: { label: 'FSD+', className: 'bg-fuchsia-200 text-fuchsia-900', rank: 5 },
 }
 
+// The same 24px box as the B15/B35 pill, so the chips in a row share a height and a centre line
 const FlagPill: FC<{ label: string; className: string }> = ({ label, className }) => (
-  <span className={clsx('rounded-full px-2 text-xs font-semibold leading-relaxed select-none', className)}>
+  <span
+    className={clsx(
+      'inline-flex items-center justify-center h-6 min-w-12 px-2 rounded-full text-xs font-semibold leading-none select-none',
+      className,
+    )}
+  >
     {label}
   </span>
 )
@@ -366,8 +384,9 @@ const RatingChartCell: FC<{ row: Row<Entry>; compactMode: boolean }> = ({ row, c
             {difficulty?.title ?? sheet.difficulty}
           </span>
           <span>
-            {sheet.type.toUpperCase()} ·{' '}
-            {sheet.isTypeUtage ? sheet.level : (sheet.internalLevelValue?.toFixed(1) ?? sheet.level)}
+            {sheet.type.toUpperCase()}
+            {/* Desktop has a column of its own for the level */}
+            <span className="rating-chart-meta-level"> · {sheetLevelLabel(sheet)}</span>
           </span>
         </span>
         <span className="rating-mobile-flags">
@@ -379,11 +398,42 @@ const RatingChartCell: FC<{ row: Row<Entry>; compactMode: boolean }> = ({ row, c
   )
 }
 
+const sheetLevelLabel = (sheet: FlattenedSheet) =>
+  sheet.isTypeUtage ? sheet.level : (sheet.internalLevelValue?.toFixed(1) ?? sheet.level)
+
+const RatingCalculatorInternalLevelCell: FC<{
+  row: Row<Entry>
+}> = ({ row }) => <span className="num">{sheetLevelLabel(row.original.sheet)}</span>
+
+const RatingCalculatorDxScoreCell: FC<{
+  row: Row<Entry>
+}> = ({ row }) => {
+  const { dxScore, sheet } = row.original
+  if (dxScore === undefined) return <span className="text-secondary">—</span>
+  const total = sheet.noteCounts.total
+  return (
+    <span className="num">
+      {dxScore}
+      {total ? <span className="text-xs text-secondary"> / {total * 3}</span> : null}
+    </span>
+  )
+}
+
 const RatingCalculatorAchievementRateCell: FC<{
   row: Row<Entry>
 }> = ({ row }) => <span className="num">{row.original.achievementRate.toFixed(4)}%</span>
 
-const RATING_COLUMN_IDS = ['chart', 'includedIn', 'comboFlag', 'syncFlag', 'achievementRate', 'rating', 'actions']
+const RATING_COLUMN_IDS = [
+  'chart',
+  'includedIn',
+  'comboFlag',
+  'syncFlag',
+  'internalLevel',
+  'dxScore',
+  'achievementRate',
+  'rating',
+  'actions',
+]
 
 const RatingCalculatorTable: FC<TableProps> = ({ children, style, ...props }) => (
   <Table
@@ -488,6 +538,18 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
           return rankA - rankB
         },
       }),
+      // Desktop only (hidden under 1024px in rating-table.css), like the combo and sync columns under 768px
+      columnHelper.accessor((entry) => entry.sheet.internalLevelValue, {
+        id: 'internalLevel',
+        header: t('rating-calculator:table.headers.internal-level'),
+        cell: RatingCalculatorInternalLevelCell,
+      }),
+      columnHelper.accessor((entry) => entry.dxScore, {
+        id: 'dxScore',
+        header: t('rating-calculator:table.headers.dx-score'),
+        cell: RatingCalculatorDxScoreCell,
+        sortUndefined: 'last',
+      }),
       columnHelper.accessor('achievementRate', {
         id: 'achievementRate',
         header: t('rating-calculator:table.headers.achievement-rate'),
@@ -548,12 +610,17 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
 
   const getItemContent = useCallback((_: number, row: Row<Entry>) => <RatingCalculatorTableRowContent row={row} />, [])
 
+  // False on the first render (as on the server), then follows the viewport; the CSS sets the row height to match
+  const isDesktop = useMediaQuery(DESKTOP_QUERY)
+  const density = compactMode ? 'compact' : 'comfortable'
+  const rowHeight = ROW_HEIGHTS[density][isDesktop ? 'desktop' : 'base']
+
   return (
     <TableVirtuoso<Row<Entry>>
-      // Virtuoso caches item measurements; a density change must discard the previous row heights.
-      key={compactMode ? 'compact' : 'comfortable'}
+      // Virtuoso caches item measurements; a density or breakpoint change must discard the previous row heights.
+      key={`${density}-${isDesktop ? 'desktop' : 'base'}`}
       useWindowScroll
-      fixedItemHeight={compactMode ? 72 : 88}
+      fixedItemHeight={rowHeight}
       computeItemKey={(_, row) => row.original.sheetId}
       data={table.getRowModel().rows}
       className="w-full"
