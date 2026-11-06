@@ -22,9 +22,12 @@ html[data-theme='dark'] {
   --fg-1: #f4f4f5;
   --fg-2: #b4b4bd;
   --danger: #f87171;
-  /* Fills that carry white text keep their light values: white on them is ≥4.5:1 in both themes */
-  --status-positive: #047857;
-  --status-warning: #b45309;
+  /*
+   * Status colours as text on dark glass (≥7.8:1): the light values are deep enough for white text on them but only
+   * ~3:1 as text on dark glass. A dark-mode fill of these carries dark text (--on-accent), not white.
+   */
+  --status-positive: #34d399;
+  --status-warning: #fbbf24;
 
   /* What `bg-white/…` and `text-black/…` utilities resolve to (uno.config.ts postprocess) */
   --surface-rgb: 30 30 35;
