@@ -25,6 +25,32 @@ const base = JSON.parse(readFileSync(path.join(srcRoot, 'locales/resources/en.js
 const idByKey = new Map(collectEntries(base).map((entry) => [entry.key, entry.id]))
 
 const HOOKS_WITH_DEPS = new Set(['useMemo', 'useCallback', 'useEffect', 'useLayoutEffect', 'useInsertionEffect'])
+// Effects never run during SSR, so messages inside them resolve the client locale when they fire, like i18next's `t`
+const EFFECT_HOOKS = new Set(['useEffect', 'useLayoutEffect', 'useInsertionEffect'])
+// Hooks that only memoize a value or callback: safe to recreate when the locale changes
+const MEMO_HOOKS = new Set(['useMemo', 'useCallback', 'useAsyncFn'])
+
+function hookName(call: ts.CallExpression): string {
+  const callee = call.expression
+  return ts.isIdentifier(callee) ? callee.text : ts.isPropertyAccessExpression(callee) ? callee.name.text : ''
+}
+
+/** Whether `node` sits inside the callback of an effect hook, below `scope`. */
+function insideEffect(node: ts.Node, scope: ts.Node): boolean {
+  for (let current = node.parent; current && current !== scope; current = current.parent) {
+    const parent = current.parent
+    if (
+      (ts.isArrowFunction(current) || ts.isFunctionExpression(current)) &&
+      parent &&
+      ts.isCallExpression(parent) &&
+      parent.arguments[0] === current &&
+      EFFECT_HOOKS.has(hookName(parent))
+    ) {
+      return true
+    }
+  }
+  return false
+}
 const UNSUPPORTED_OPTIONS = new Set(['defaultValue', 'ns', 'context', 'returnObjects', 'lng', 'lngs', 'keyPrefix'])
 
 type Edit = { start: number; end: number; text: string }
@@ -192,7 +218,8 @@ export function transformSource(file: string, source: string): { output: string;
                 nested.map((edit) => ({ ...edit, start: edit.start - start, end: edit.end - start })),
               )
             }
-            sink.push({ start: node.getStart(sf), end: node.getEnd(), text: `m.${id}(${inputs}, { locale })` })
+            const localeArg = insideEffect(node, scope) ? '' : ', { locale }'
+            sink.push({ start: node.getStart(sf), end: node.getEnd(), text: `m.${id}(${inputs}${localeArg})` })
             return
           }
         }
@@ -245,10 +272,12 @@ export function transformSource(file: string, source: string): { output: string;
       report(declaration, 'useTranslation() declared with other variables')
       continue
     }
+    // Keep the subscription (a re-render on a language switch) even when every message sits in an effect
+    const readsLocale = local.some((edit) => /\blocale\b/.test(edit.text))
     edits.push(...local, {
       start: statement.getStart(sf),
       end: statement.getStart(sf) + text.length,
-      text: 'const locale = useLocale()',
+      text: readsLocale ? 'const locale = useLocale()' : 'useLocale()',
     })
     usedLocaleHook = true
     if (local.some((edit) => edit.text.startsWith('m.'))) usedMessages = true
@@ -313,13 +342,15 @@ function fixImports(source: string, file: string, used: { usedMessages: boolean;
 }
 
 /**
- * Adds `locale` to the dependency list of every `use*` hook whose callback reads it: `useCallback(fn, [a])` →
- * `useCallback(fn, [a, locale])`. i18next's `t` followed the current language even from a stale closure; a message
+ * Adds `locale` to the dependency list of every memo hook (MEMO_HOOKS) whose callback reads it: `useCallback(fn, [a])`
+ * → `useCallback(fn, [a, locale])`. Other hooks (effects, custom hooks) are reported instead: a new dependency would
+ * make a language switch re-run them. i18next's `t` followed the current language even from a stale closure; a message
  * call bound to `{ locale }` does not, so a memoized callback must be recreated when the language switches in place.
  */
-export function addLocaleDeps(file: string, source: string): string {
+export function addLocaleDeps(file: string, source: string): { output: string; findings: Finding[] } {
   const sf = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
   const edits: Edit[] = []
+  const findings: Finding[] = []
   const readsLocale = (fn: ts.Node) => {
     if (declaresName(fn, 'locale', true) && !ts.isArrowFunction(fn)) return false
     let found = false
@@ -348,7 +379,13 @@ export function addLocaleDeps(file: string, source: string): string {
         const params = (fn as ts.ArrowFunction).parameters
         const shadowed = params.some((param) => declaresName(param, 'locale'))
         const listed = deps.elements.some((element) => ts.isIdentifier(element) && element.text === 'locale')
-        if (!shadowed && !listed && readsLocale(fn)) {
+        if (!shadowed && !listed && readsLocale(fn) && !MEMO_HOOKS.has(name)) {
+          findings.push({
+            file: path.relative(webRoot, file),
+            line: sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1,
+            reason: `${name}() reads locale without listing it; adding it could change when it runs`,
+          })
+        } else if (!shadowed && !listed && readsLocale(fn)) {
           const end = deps.getEnd() - 1
           const text = deps.elements.length ? (deps.elements.hasTrailingComma ? ' locale' : ', locale') : 'locale'
           edits.push({ start: end, end, text })
@@ -358,7 +395,7 @@ export function addLocaleDeps(file: string, source: string): string {
     ts.forEachChild(node, visit)
   }
   visit(sf)
-  return applyEdits(source, edits)
+  return { output: applyEdits(source, edits), findings }
 }
 
 if (import.meta.main) {
@@ -373,7 +410,9 @@ if (import.meta.main) {
   for (const file of files) {
     const source = readFileSync(file, 'utf8')
     const result = depsOnly ? { output: source, findings: [] } : transformSource(file, source)
-    result.output = addLocaleDeps(file, result.output)
+    const deps = addLocaleDeps(file, result.output)
+    result.output = deps.output
+    result.findings.push(...deps.findings)
     findings.push(...result.findings)
     if (result.output !== source) {
       changed++
