@@ -1,14 +1,16 @@
 import { Button } from '@mui/material'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { InternalLink, LinkBehavior, isClientRoutableHref } from '../InternalLink'
+import { NAVIGATION_FEEDBACK_DELAY_MS } from '@/components/layout/NavigationProgress'
+import { InternalLink, LinkBehavior, isClientRoutableHref, placeLinkSpinner } from '../InternalLink'
 
 const navigate = vi.fn()
 
 vi.mock('@tanstack/react-router', () => ({
   useRouter: () => ({ navigate }),
+  useRouterState: () => false,
 }))
 
 describe('isClientRoutableHref', () => {
@@ -111,6 +113,45 @@ describe('InternalLink', () => {
     expect(navigate).not.toHaveBeenCalled()
   })
 
+  it('shows a spinner beside the clicked link while its navigation loads, after the feedback delay', async () => {
+    vi.useFakeTimers()
+    let finish!: () => void
+    navigate.mockImplementationOnce(() => new Promise<void>((resolve) => (finish = resolve)))
+    render(<InternalLink href="/versions/magical">MAGiCAL</InternalLink>)
+    const link = screen.getByRole('link', { name: 'MAGiCAL' })
+
+    fireEvent.click(link, { button: 0 })
+    expect(link.getAttribute('aria-busy')).toBe('true')
+    expect(screen.queryByTestId('link-pending-spinner')).toBeNull()
+
+    await act(async () => {
+      vi.advanceTimersByTime(NAVIGATION_FEEDBACK_DELAY_MS)
+    })
+    expect(screen.getByTestId('link-pending-spinner')).toBeTruthy()
+
+    await act(async () => {
+      finish()
+    })
+    expect(screen.queryByTestId('link-pending-spinner')).toBeNull()
+    expect(link.hasAttribute('aria-busy')).toBe(false)
+    vi.useRealTimers()
+  })
+
+  it('shows no spinner for a navigation faster than the delay', async () => {
+    vi.useFakeTimers()
+    render(<InternalLink href="/versions">Versions</InternalLink>)
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('link'), { button: 0 })
+    })
+    await act(async () => {
+      vi.advanceTimersByTime(NAVIGATION_FEEDBACK_DELAY_MS * 2)
+    })
+
+    expect(screen.queryByTestId('link-pending-spinner')).toBeNull()
+    vi.useRealTimers()
+  })
+
   it('routes an MUI Button href when the theme sets LinkBehavior', () => {
     const theme = createTheme({ components: { MuiButtonBase: { defaultProps: { LinkComponent: LinkBehavior } } } })
     render(
@@ -124,5 +165,40 @@ describe('InternalLink', () => {
     fireEvent.click(link, { button: 0 })
 
     expect(navigate).toHaveBeenCalledWith({ href: '/' })
+  })
+})
+describe('placeLinkSpinner', () => {
+  const anchorWith = (display: string, rect: { left: number; right: number; top: number; height: number }) => {
+    const anchor = document.createElement('a')
+    anchor.style.display = display
+    document.body.append(anchor)
+    const box = { ...rect, bottom: rect.top + rect.height, width: rect.right - rect.left, x: rect.left, y: rect.top }
+    anchor.getBoundingClientRect = () => box as DOMRect
+    anchor.getClientRects = () => [box] as unknown as DOMRectList
+    return anchor
+  }
+
+  it('sits just past the end of an inline text link', () => {
+    expect(placeLinkSpinner(anchorWith('inline', { left: 10, right: 100, top: 20, height: 20 }), 390)).toEqual({
+      left: 106,
+      top: 30,
+      inset: false,
+    })
+  })
+
+  it('moves inside an inline link that ends at the window edge', () => {
+    expect(placeLinkSpinner(anchorWith('inline', { left: 300, right: 385, top: 20, height: 20 }), 390)).toEqual({
+      left: 371,
+      top: 30,
+      inset: true,
+    })
+  })
+
+  it('sits inside the top-right corner of a boxed link (a card, a row)', () => {
+    expect(placeLinkSpinner(anchorWith('block', { left: 16, right: 374, top: 100, height: 56 }), 390)).toEqual({
+      left: 352,
+      top: 115,
+      inset: true,
+    })
   })
 })
