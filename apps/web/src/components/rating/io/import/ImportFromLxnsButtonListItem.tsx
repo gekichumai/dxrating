@@ -222,7 +222,13 @@ export const ImportFromLxnsButtonListItem: FC<{
         />
       </MenuItem>
 
-      {!isAuthenticated && <LoginDialog />}
+      {/* The dialog is portalled, but its React events still bubble to the open import Menu, which closes on Tab
+          and would unmount the form mid-sign-in */}
+      {!isAuthenticated && (
+        <span className="contents" onKeyDown={(event) => event.stopPropagation()}>
+          <LoginDialog />
+        </span>
+      )}
       {open && (
         <Dialog open={open} onClose={handleClose}>
           <LxnsImportDialogContent onClose={handleClose} />
