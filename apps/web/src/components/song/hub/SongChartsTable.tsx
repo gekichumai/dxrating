@@ -5,6 +5,7 @@ import clsx from 'clsx'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
+import { FixedWidthText } from '@/components/global/FixedWidthText'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { SheetDifficulty } from '@/components/sheet/SheetListItem'
 import { captureAnalyticsEvent } from '@/lib/analytics'
@@ -47,6 +48,7 @@ export const SongChartsTable: FC<{
   }, [mounted, entries, sheets, completeCatalog, version, region])
 
   const hasRecords = mounted && sheets.some((sheet) => bySheetId.has(sheet.id))
+  const typeLabels = [...new Set(sheets.map((sheet) => t(`song:type.${sheet.type}`)))]
 
   const reportedSongId = useRef<string | null>(null)
   useEffect(() => {
@@ -106,9 +108,12 @@ export const SongChartsTable: FC<{
                       {...localeSearch}
                       className="inline-flex items-center gap-1 no-underline text-inherit rounded-[var(--radius-sm)] after:absolute after:inset-0 after:content-['']"
                     >
-                      <span className="inline-block sm:w-[6.5em] shrink-0 text-xs text-fg-2">
-                        {t(`song:type.${sheet.type}`)}
-                      </span>
+                      {/* As wide as the longest type name in this table, so every difficulty pill starts at the same x */}
+                      <FixedWidthText
+                        text={t(`song:type.${sheet.type}`)}
+                        sizers={typeLabels}
+                        className="shrink-0 text-xs text-fg-2"
+                      />
                       <SheetDifficulty difficulty={sheet.difficulty as DifficultyEnum} serverIds={sheet.serverIds} />
                       {unavailableEverywhere && <span className="sr-only">{t('song:hub.unavailable-everywhere')}</span>}
                     </Link>
