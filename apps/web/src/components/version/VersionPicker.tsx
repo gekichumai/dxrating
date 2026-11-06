@@ -339,17 +339,24 @@ export const VersionSelectionSummary: FC<{ selected: readonly VersionEnum[]; all
   const { t } = useTranslation(['versions'])
   if (all) return <span className="text-sm font-medium">{allLabel}</span>
   if (selected.length === 0) return <span className="text-sm text-fg-2">{t('versions:picker.none')}</span>
+  // Two logos on phones and three from sm up, so the logos, the count and the chevron never overlap at 320px. Both
+  // counts render and CSS picks one, which keeps SSR and the first client render identical.
   const shown = selected.slice(0, 3)
+  const more = (visible: number) =>
+    selected.length > visible ? t('versions:picker.more', { count: selected.length - visible }) : null
+  const phoneMore = more(2)
+  const wideMore = more(3)
   return (
     <span className="flex min-w-0 items-center gap-1.5">
-      {shown.map((version) => (
-        <VersionLogo key={version} version={version} decorative className="h-7 text-[0.5625rem]" />
-      ))}
-      {selected.length > shown.length && (
-        <span className="text-sm text-fg-2 num">
-          {t('versions:picker.more', { count: selected.length - shown.length })}
-        </span>
-      )}
+      <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+        {shown.map((version, index) => (
+          <span key={version} className={clsx('shrink-0', index === 2 ? 'hidden sm:flex' : 'flex')}>
+            <VersionLogo version={version} decorative className="h-7 text-[0.5625rem]" />
+          </span>
+        ))}
+      </span>
+      {phoneMore && <span className="shrink-0 text-sm text-fg-2 num sm:hidden">{phoneMore}</span>}
+      {wideMore && <span className="hidden shrink-0 text-sm text-fg-2 num sm:inline">{wideMore}</span>}
     </span>
   )
 }
