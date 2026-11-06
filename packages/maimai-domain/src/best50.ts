@@ -57,6 +57,11 @@ export interface CalculatedRatingEntry {
   sheet: VersionedSheet
   rating: RatingAward
   bucket: 'b15' | 'b35' | null
+  /**
+   * The bucket the chart competes in, whether or not it made the cut: a Diving-Fish hint (kept across duplicate plays
+   * of the chart) wins, otherwise the chart version decides. Null when the chart counts for neither bucket.
+   */
+  competingBucket?: Best50Bucket | null
 }
 
 interface BucketAwareCalculatedRatingEntry extends CalculatedRatingEntry {
@@ -164,6 +169,7 @@ export function calculateBest50({
       sheet: entry.sheet,
       rating: entry.rating,
       bucket: getSelectedBucket(b15Ids.has(entry.entry.sheetId), b35Ids.has(entry.entry.sheetId)),
+      competingBucket: getEntryBucket(entry, version, region),
     }),
   )
   const b15 = allEntries.filter((entry) => entry.bucket === 'b15').sort(byRatingDesc)

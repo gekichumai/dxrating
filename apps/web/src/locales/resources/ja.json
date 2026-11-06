@@ -789,7 +789,9 @@
     "io.clear.dialog.cancel": "キャンセル",
     "io.clear.dialog.confirm": "全ての記録をクリア",
     "quick-actions.ap50": "AP50（AP / AP+ のみ）",
-    "quick-actions.ap50-hint": "AP50 表示：AP・AP+ の記録だけでベスト枠を計算しています。"
+    "quick-actions.ap50-hint": "AP50 表示：AP・AP+ の記録だけでベスト枠を計算しています。",
+    "table.next-target.next": "{{achievement}}% でレート値 {{rating}}（B50 +{{gain}}）",
+    "table.next-target.ap": "AP でレート値 {{rating}}（B50 +{{gain}}）"
   },
   "constants": {
     "title": "maimai でらっくす Lv.{{level}} 譜面定数表",

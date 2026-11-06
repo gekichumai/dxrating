@@ -789,7 +789,9 @@
     "io.clear.dialog.cancel": "취소",
     "io.clear.dialog.confirm": "모든 기록 지우기",
     "quick-actions.ap50": "AP50 (AP / AP+만)",
-    "quick-actions.ap50-hint": "AP50 보기: AP와 AP+ 기록만으로 B50을 계산합니다."
+    "quick-actions.ap50-hint": "AP50 보기: AP와 AP+ 기록만으로 B50을 계산합니다.",
+    "table.next-target.next": "{{achievement}}% 달성 시 {{rating}} (B50 +{{gain}})",
+    "table.next-target.ap": "AP 달성 시 {{rating}} (B50 +{{gain}})"
   },
   "constants": {
     "title": "maimai DX Lv.{{level}} 상수표",
