@@ -43,6 +43,32 @@ const expectNoPrivateData = (serialized: string) => {
 }
 
 describe('MCP telemetry', () => {
+  it('describes a 2026-07-28 request, whose version and client are in _meta', async () => {
+    const { response, telemetry } = await observe(
+      post(
+        {
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'tools/list',
+          params: {
+            _meta: {
+              'io.modelcontextprotocol/protocolVersion': '2026-07-28',
+              'io.modelcontextprotocol/clientInfo': { name: 'claude-ai', version: '0.1.0' },
+              'io.modelcontextprotocol/clientCapabilities': {},
+            },
+          },
+        },
+        { 'Mcp-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/list' },
+      ),
+    )
+    expect(response.status).toBe(200)
+    expect(telemetry.outcome).toBe('ok')
+    expect(telemetry.clientClass).toBe('claude')
+    expect(telemetry.event).toMatchObject({
+      mcp: { method: { name: 'tools/list' }, protocol: { version: '2026-07-28' }, client: { name: 'claude-ai' } },
+    })
+  })
+
   it('describes an initialize', async () => {
     const { response, telemetry, serialized } = await observe(
       post({

@@ -25,8 +25,11 @@ import IconMdiChevronDown from '~icons/mdi/chevron-down'
 import IconMdiHelpCircleOutline from '~icons/mdi/help-circle-outline'
 import { importFromNETRecords } from './importFromNETRecords'
 import { NetImportAutoImportOptions } from './NetImportAutoImportOptions'
+import { NetMaintenanceNotice } from './NetMaintenanceNotice'
+import { useMaimaiNetStatus } from './useMaimaiNetStatus'
 
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
+import { toggleFocusRing } from '../../focusRing'
 import { netImportProgress } from './netImportProgressStore'
 
 export function NetImportSettingsDialog({
@@ -47,7 +50,6 @@ export function NetImportSettingsDialog({
       aria-labelledby="net-import-settings-title"
       disableRestoreFocus
       TransitionProps={{ onExited }}
-      PaperProps={{ sx: { borderRadius: 3 } }}
     >
       <NetImportSettingsContent onClose={onClose} />
     </Dialog>
@@ -90,6 +92,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
     .with('false', () => false as const)
     .otherwise((value) => value)
   const loadCatalog = useSongCatalogLoader()
+  const maintenance = useMaimaiNetStatus(true)
 
   const updateForm = (patch: Partial<typeof form>) => {
     const next = { ...form, ...patch }
@@ -122,10 +125,11 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   return (
     <>
       <DialogTitle id="net-import-settings-title">
-        {t('rating-calculator:io.import.net-records.settings.title')}
+        {t('rating-calculator:io.import.net-records.dialog.title')}
       </DialogTitle>
       <DialogContent>
         <DialogContentText component="div" className="flex flex-col items-stretch gap-4 py-2">
+          <NetMaintenanceNotice region={region} maintenance={maintenance[region]} />
           <FormControl>
             <TextField
               label={t('rating-calculator:io.import.net-records.dialog.region.label')}
@@ -136,7 +140,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
               <MenuItem value="intl">
                 <span>
                   <span>{t('rating-calculator:io.import.net-records.dialog.region.intl.name')} </span>
-                  <span className="text-zinc-4 text-sm">
+                  <span className="text-secondary text-sm">
                     {t('rating-calculator:io.import.net-records.dialog.region.intl.domain')}
                   </span>
                 </span>
@@ -144,7 +148,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
               <MenuItem value="jp">
                 <span>
                   <span>{t('rating-calculator:io.import.net-records.dialog.region.jp.name')} </span>
-                  <span className="text-zinc-4 text-sm">
+                  <span className="text-secondary text-sm">
                     {t('rating-calculator:io.import.net-records.dialog.region.jp.domain')}
                   </span>
                 </span>
@@ -182,12 +186,16 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
 
           <FormControlLabel
             control={
-              <Checkbox checked={remember} onChange={(event) => updateForm({ remember: event.target.checked })} />
+              <Checkbox
+                checked={remember}
+                onChange={(event) => updateForm({ remember: event.target.checked })}
+                sx={toggleFocusRing}
+              />
             }
             label={
               <div className="flex flex-col">
                 <span>{t('rating-calculator:io.import.net-records.dialog.remember-credentials.label')}</span>
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-secondary">
                   {t('rating-calculator:io.import.net-records.dialog.remember-credentials.description')}
                 </span>
               </div>
@@ -200,11 +208,11 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
             onChange={setAutoImport}
           />
 
-          <p className="text-xs text-zinc-500">{t('rating-calculator:io.import.net-records.floating.next-import')}</p>
+          <p className="text-xs text-secondary">{t('rating-calculator:io.import.net-records.floating.next-import')}</p>
           <SegaIDImportGuide region={region} />
           <div className="h-px w-full bg-gray-200 my-2" />
 
-          <div className="text-sm text-zinc-500 [&>p]:mb-1">
+          <div className="text-sm text-secondary [&>p]:mb-1">
             <p className="font-bold">
               <Trans
                 t={t}
@@ -222,7 +230,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
               />
             </p>
 
-            <p className="text-xs text-zinc-4">
+            <p className="text-xs">
               <Trans
                 t={t}
                 i18nKey="rating-calculator:io.import.net-records.dialog.security-notice.slsa"
@@ -244,7 +252,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
               <span className="leading-none">
                 {t('rating-calculator:io.import.net-records.dialog.actions.reimport.title')}
               </span>
-              <span className="text-xs opacity-50 leading-none">
+              <span className="text-xs leading-none">
                 {t('rating-calculator:io.import.net-records.dialog.actions.reimport.description')}
               </span>
             </div>
@@ -263,14 +271,14 @@ const SegaIDImportGuide: FC<{ region: 'intl' | 'jp' }> = ({ region }) => {
   const aimeURL = region === 'jp' ? 'https://maimaidx.jp/maimai-mobile/' : 'https://maimaidx-eng.com/maimai-mobile/'
 
   return (
-    <div className="mb-2 rounded-2xl border border-blue-200/70 bg-blue-50/60 p-2 dark:border-blue-900/60 dark:bg-blue-950/25">
+    <div className="glass-inset mb-2 p-1">
       <div className="flex items-start gap-3 px-3 pb-1 pt-2">
-        <IconMdiHelpCircleOutline className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-300" />
+        <IconMdiHelpCircleOutline className="mt-0.5 h-5 w-5 shrink-0 text-accent-strong" />
         <div>
-          <div className="font-semibold text-zinc-900 dark:text-zinc-100">
+          <div className="font-semibold text-fg-1">
             {t('rating-calculator:io.import.net-records.dialog.help.title')}
           </div>
-          <div className="text-sm text-zinc-600 dark:text-zinc-300">
+          <div className="text-sm text-secondary">
             {t('rating-calculator:io.import.net-records.dialog.help.description')}
           </div>
         </div>
@@ -320,7 +328,7 @@ const SegaIDImportGuide: FC<{ region: 'intl' | 'jp' }> = ({ region }) => {
           </Typography>
         </AccordionSummary>
         <AccordionDetails className="pt-0">
-          <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-300">
+          <p className="mb-3 text-sm text-secondary">
             {t('rating-calculator:io.import.net-records.dialog.help.oauth.description')}
           </p>
           <HelpSteps
@@ -339,8 +347,8 @@ const SegaIDImportGuide: FC<{ region: 'intl' | 'jp' }> = ({ region }) => {
 const HelpSteps: FC<{ steps: string[] }> = ({ steps }) => (
   <ol className="m-0 flex list-none flex-col gap-2 p-0">
     {steps.map((step, index) => (
-      <li key={step} className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-200">
-        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white dark:bg-blue-400 dark:text-blue-950">
+      <li key={step} className="flex items-start gap-2 text-sm text-fg-1">
+        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-strong text-xs font-bold text-on-accent">
           {index + 1}
         </span>
         <span>{step}</span>

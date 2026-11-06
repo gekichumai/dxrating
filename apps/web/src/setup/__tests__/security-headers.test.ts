@@ -130,6 +130,21 @@ describe('security headers', () => {
     expect(buildSecurityHeaders()).not.toHaveProperty('Content-Security-Policy-Report-Only')
   })
 
+  it('lets the enforced policy load the same-origin speculation rules of Cloudflare Speed Brain', () => {
+    // Chromium 121-130 check the `Speculation-Rules: "/cdn-cgi/speculation"` fetch against script-src; 'self'
+    // allows it as long as the enforced policy has no 'strict-dynamic', which would make the browser ignore 'self'.
+    const nonce = createCspNonce()
+    const enforcedScripts = getDirectiveSources(
+      buildSecurityHeaders({ nonce })['Content-Security-Policy'],
+      'script-src',
+    )
+
+    expect(enforcedScripts).toContain("'self'")
+    expect(enforcedScripts).not.toContain("'strict-dynamic'")
+    // Allowed without widening the policy: no wildcard and no extra origin for /cdn-cgi/.
+    expect(enforcedScripts.some((source) => source.includes('*') || source.includes('/cdn-cgi'))).toBe(false)
+  })
+
   it('applies the headers to a response without replacing unrelated headers', () => {
     const nonce = createCspNonce()
     const responseHeaders = new Headers({ 'Cache-Control': 'public, max-age=60' })

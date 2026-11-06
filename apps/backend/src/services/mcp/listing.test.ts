@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { SUPPORTED_PROTOCOL_VERSIONS } from '@modelcontextprotocol/sdk/types.js'
+import { SUPPORTED_PROTOCOL_VERSIONS } from '@modelcontextprotocol/server'
 import { describe, expect, it } from 'vitest'
 import { buildMcpCatalog } from './catalog'
 import { handleMcpRequest } from './http'
@@ -56,7 +56,7 @@ describe('server card', () => {
     expect(card.remotes[0]).toEqual({
       type: 'streamable-http',
       url: MCP_PUBLIC_URL,
-      supportedProtocolVersions: [...SUPPORTED_PROTOCOL_VERSIONS],
+      supportedProtocolVersions: ['2026-07-28', ...SUPPORTED_PROTOCOL_VERSIONS],
     })
     expect(mcpServerCard('main').version).toBe('0.0.0-dev')
   })

@@ -20,7 +20,7 @@ const ExternalLink: FC<PropsWithChildren<{ href: string; className?: string }>> 
     href={href}
     target="_blank"
     rel="noopener noreferrer"
-    className={clsx('inline-flex items-center gap-1 text-blue-600 hover:text-blue-500', className)}
+    className={clsx('link inline-flex items-center gap-1 break-all', className)}
   >
     {children}
   </a>
@@ -32,8 +32,8 @@ const AboutLink: FC<PropsWithChildren<{ href: string; startAdornment?: ReactNode
   label,
   children,
 }) => (
-  <li className="flex md:flex-row flex-col gap-1">
-    <span className="font-bold mr-2">{label}</span>
+  <li className="flex md:flex-row flex-col md:gap-3 gap-0.5">
+    <span className="font-semibold text-fg-1 md:w-60 md:shrink-0">{label}</span>
     <ExternalLink href={href}>
       {startAdornment}
       {children}
@@ -42,10 +42,10 @@ const AboutLink: FC<PropsWithChildren<{ href: string; startAdornment?: ReactNode
 )
 
 const AboutAttribute: FC<PropsWithChildren<{ label: ReactNode; value: ReactNode }>> = ({ label, value }) => (
-  <li className="flex flex-col items-start font-mono">
-    <span className="font-bold text-xs scale-75 origin-left-bottom text-zinc-400">{label}</span>
-    <span className="text-sm tracking-tight text-zinc-600">{value}</span>
-  </li>
+  <>
+    <dt className="text-xs font-semibold text-fg-2">{label}</dt>
+    <dd className="m-0 font-mono text-sm text-fg-1 num">{value}</dd>
+  </>
 )
 
 export const About = () => {
@@ -65,15 +65,13 @@ export const About = () => {
         aria-label={t('about:open')}
         title={t('about:open')}
       >
-        <MdiInformation />
+        <MdiInformation aria-hidden="true" />
       </IconButton>
 
-      <ResponsiveDialog open={expanded} setOpen={(opened) => setExpanded(opened)}>
+      <ResponsiveDialog open={expanded} setOpen={(opened) => setExpanded(opened)} title={t('about:title')}>
         {() => (
-          <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-bold">{t('about:title')}</h1>
-
-            <ul className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-6 text-sm">
+            <ul className="m-0 p-0 list-none flex flex-col gap-3 md:gap-2">
               <AboutLink
                 href="https://dxrating.net/developers"
                 startAdornment={<MdiApi />}
@@ -147,50 +145,54 @@ export const About = () => {
               </AboutLink>
             </ul>
 
-            <div className="flex flex-col items-start mt-24 gap-1">
-              <h5 className="text-base text-zinc-7">{t('about:disclaimer.title')}</h5>
+            <section className="flex flex-col items-start gap-1">
+              <h3 className="m-0 text-sm font-semibold text-fg-1">{t('about:disclaimer.title')}</h3>
 
-              <div className="text-sm text-zinc-6">
+              <div className="text-sm text-fg-2 max-w-[65ch] text-pretty">
                 {t('about:disclaimer.content')
                   .split('\n')
                   .map((line) => (
-                    <p key={line}>{line}</p>
+                    <p key={line} className="m-0">
+                      {line}
+                    </p>
                   ))}
               </div>
-            </div>
+            </section>
 
-            <div className="flex flex-col items-start mt-8 gap-1">
+            <div className="flex flex-col items-start gap-3">
               <img
-                className="h-12 w-auto touch-callout-none mb-2"
+                className="h-12 w-auto touch-callout-none"
                 src="https://shama.dxrating.net/images/version-adornment/buddies.png"
                 alt={t('about:version.logo-alt', { version: VersionEnum.BUDDiES })}
                 draggable={false}
               />
 
-              <AboutAttribute
-                label={t('about:version.commit')}
-                // value={BUNDLE.gitCommit?.slice(0, 7) || "unknown"}
-                value={
-                  BUNDLE.gitCommit ? (
-                    <ExternalLink href={`https://github.com/gekichumai/dxrating/commit/${BUNDLE.gitCommit}`}>
-                      {BUNDLE.gitCommit?.slice(0, 7) || 'unknown'}
-                    </ExternalLink>
-                  ) : (
-                    'unknown'
-                  )
-                }
-              />
+              <dl className="m-0 grid grid-cols-[auto_1fr] items-baseline gap-x-4 gap-y-1">
+                <AboutAttribute
+                  label={t('about:version.commit')}
+                  // value={BUNDLE.gitCommit?.slice(0, 7) || "unknown"}
+                  value={
+                    BUNDLE.gitCommit ? (
+                      <ExternalLink href={`https://github.com/gekichumai/dxrating/commit/${BUNDLE.gitCommit}`}>
+                        {BUNDLE.gitCommit?.slice(0, 7) || t('about:version.unknown')}
+                      </ExternalLink>
+                    ) : (
+                      t('about:version.unknown')
+                    )
+                  }
+                />
 
-              {BUNDLE.buildNumber !== undefined && (
-                <>
-                  {' '}
+                {BUNDLE.buildNumber !== undefined && (
                   <AboutAttribute label={t('about:version.build')} value={`#${BUNDLE.buildNumber}`} />
-                </>
-              )}
+                )}
 
-              <AboutAttribute label={t('about:version.build-time')} value={buildTime} />
+                <AboutAttribute
+                  label={t('about:version.build-time')}
+                  value={BUNDLE.buildTime ? buildTime : t('about:version.unknown')}
+                />
 
-              <AboutAttribute label={t('about:version.upstream-data-update-time')} value={updateTime} />
+                <AboutAttribute label={t('about:version.upstream-data-update-time')} value={updateTime} />
+              </dl>
             </div>
           </div>
         )}

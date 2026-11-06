@@ -7,9 +7,10 @@ import {
   type AuthParams,
   type StateUpdateCallback,
 } from '../../../lib/functions/client'
-import { Sentry, type Scope } from '../../../lib/functions/sentry'
+import { netErrorTags, Sentry, type Scope } from '../../../lib/functions/sentry'
 import { holdCredentials, scrubString } from '../../../lib/credential-hygiene'
 import { runApp } from '../../../runtime'
+import { recordNetFailure, recordNetSuccess } from './telemetry'
 
 export class NetStreamError extends Data.TaggedError('NetStreamError')<{
   readonly operation: string
@@ -27,7 +28,7 @@ const reportError = (failure: unknown, region: string, streaming: boolean) => {
     scope.setContext('function', { name: streaming ? 'fetchNetRecords_v1' : 'fetchNetRecords_v0' })
     scope.setContext('parameters', { region })
     scope.setContext('endpoint', { name: streaming ? 'MaimaiNET (SSE)' : 'MaimaiNET' })
-    if (error.message.includes('response redirects to error page')) scope.setFingerprint(['net-error-redirect'])
+    scope.setTags({ 'net.region': region, ...netErrorTags(error) })
     Sentry.captureException(error)
   })
 }
@@ -73,9 +74,25 @@ export const fetchNetRecordsEffect = (
 
 export const v0Handler = (c: Context) => {
   const region = c.get('region') as 'jp' | 'intl'
-  const program = fetchNetRecordsEffect(region, c.get('authParams')).pipe(
-    Effect.map(({ recent, music }) => c.json({ recentRecords: recent, musicRecords: music })),
-    Effect.tapError((error) => Effect.sync(() => reportError(error, region, false))),
+  const program = Effect.gen(function* () {
+    const startedAt = yield* Clock.currentTimeMillis
+    const { recent, music } = yield* fetchNetRecordsEffect(region, c.get('authParams'))
+    const finishedAt = yield* Clock.currentTimeMillis
+    yield* Effect.sync(() =>
+      recordNetSuccess(region, 'json', {
+        durationMs: finishedAt - startedAt,
+        recent: recent.length,
+        music: music.length,
+      }),
+    )
+    return c.json({ recentRecords: recent, musicRecords: music })
+  }).pipe(
+    Effect.tapError((error) =>
+      Effect.sync(() => {
+        recordNetFailure(region, 'json', error)
+        reportError(error, region, false)
+      }),
+    ),
   )
   return Sentry.startSpan({ name: 'fetchNetRecords_v0', op: 'function' }, () =>
     runApp(program, { signal: c.req.raw.signal }),
@@ -105,14 +122,13 @@ export const v1Handler = (c: Context) => {
       const startedAt = yield* Clock.currentTimeMillis
       const { recent, music } = yield* fetchNetRecordsEffect(region, c.get('authParams'), onProgress)
       const finishedAt = yield* Clock.currentTimeMillis
-      yield* Effect.sync(() => {
-        Sentry.metrics.distribution('net_fetch.duration', finishedAt - startedAt, {
-          unit: 'millisecond',
-          attributes: { region },
-        })
-        Sentry.metrics.distribution('net_fetch.music_records', music.length, { unit: 'none', attributes: { region } })
-        Sentry.metrics.distribution('net_fetch.recent_records', recent.length, { unit: 'none', attributes: { region } })
-      })
+      yield* Effect.sync(() =>
+        recordNetSuccess(region, 'sse', {
+          durationMs: finishedAt - startedAt,
+          recent: recent.length,
+          music: music.length,
+        }),
+      )
       yield* Effect.tryPromise({
         try: () => stream.writeSSE({ event: 'progress', data: JSON.stringify({ state: 'concluded' }) }),
         catch: (cause) => new NetStreamError({ operation: 'write NET import completion', cause }),
@@ -125,9 +141,7 @@ export const v1Handler = (c: Context) => {
       Effect.catch((error) =>
         Effect.gen(function* () {
           yield* Effect.sync(() => {
-            Sentry.metrics.count('net_fetch.failure', 1, {
-              attributes: { region, error_code: error instanceof NetImportError ? error.code : 'unknown' },
-            })
+            recordNetFailure(region, 'sse', error)
             reportError(error, region, true)
           })
           yield* Effect.tryPromise({

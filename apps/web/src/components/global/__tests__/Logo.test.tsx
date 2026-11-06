@@ -9,6 +9,6 @@ describe('Logo', () => {
     const logo = screen.getByRole('link', { name: 'DXRating.net' })
 
     expect(logo.getAttribute('href')).toBe('/')
-    expect(logo.className).toBe('text-lg font-bold text-black/70 leading-none')
+    expect(logo.className).toContain('text-fg-1')
   })
 })

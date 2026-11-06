@@ -3,7 +3,24 @@ import type { DXVersion, Region } from '@/models/context/AppContext'
 
 export type RatingImportSource = 'maimai_net' | 'diving_fish' | 'lxns' | 'json' | 'aqua_dx' | 'mu_net' | 'aqua_sqlite'
 
-export type SheetViewSource = 'search_results' | 'rating_calculator' | 'trending' | 'unknown'
+export type SheetViewSource =
+  | 'search_results'
+  | 'rating_calculator'
+  | 'trending'
+  | 'plate'
+  | 'completion_table'
+  | 'level_progress'
+  | 'toplist'
+  | 'recommend'
+  | 'random'
+  | 'home'
+  | 'song_hub'
+  | 'unknown'
+
+/** Where a share image was exported to */
+export type ShareImageOutcome = 'shared' | 'downloaded' | 'cancelled' | 'failed'
+export type ToplistKind = 'ap' | 'app' | 'fc' | 'fcp' | 'fdx' | 'fdxp' | 'highest' | 'dx_score'
+export type RatingToolKind = 'rating_for_achievement' | 'achievement_for_rating' | 'rating_table'
 export type RatingImportMode = 'merge' | 'replace'
 export type RatingImportTrigger = 'automatic' | 'manual'
 
@@ -34,6 +51,10 @@ type AnalyticsEventProperties = {
     locale: string
     previous_locale: string
   }
+  theme_selector_item_clicked: {
+    mode: string
+    previous_mode: string
+  }
   oneshot_render_button_clicked: {
     entry_count: number
     b15_count: number
@@ -63,7 +84,7 @@ type AnalyticsEventProperties = {
     sheet_id: string
   }
   rating_calculator_view_changed: {
-    setting: 'compact_mode' | 'show_only_b50'
+    setting: 'compact_mode' | 'show_only_b50' | 'ap50'
     enabled: boolean
   }
   rating_exported: {
@@ -129,6 +150,58 @@ type AnalyticsEventProperties = {
   tab_switched: {
     tab: string
     source: 'top_navigation'
+  }
+  plate_viewed: {
+    plate_id: string
+    region: AnalyticsRegion
+    completed_charts: number
+    total_charts: number
+  }
+  plate_share_exported: {
+    plate_id: string
+    outcome: ShareImageOutcome
+  }
+  completion_overlay_target_changed: {
+    level: string
+    target: string
+  }
+  level_progress_viewed: {
+    level: string
+    target: string
+    completed: number
+    total: number
+  }
+  toplist_viewed: {
+    kind: ToplistKind
+    count: number
+  }
+  toplist_share_exported: {
+    kind: ToplistKind
+    outcome: ShareImageOutcome
+  }
+  tolerance_calculated: SheetProperties & {
+    target_achievement: number
+    source: 'chart_page' | 'tool_page'
+  }
+  rating_tool_used: {
+    tool: RatingToolKind
+    internal_level: number
+  }
+  recommend_viewed: {
+    suggestion_count: number
+    b50_floor: number
+  }
+  random_chart_rolled: {
+    filter_count: number
+    result_found: boolean
+  }
+  home_module_clicked: {
+    module: string
+    target?: string
+  }
+  song_hub_viewed: {
+    song_id: string
+    has_records: boolean
   }
 }
 

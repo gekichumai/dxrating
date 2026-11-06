@@ -200,6 +200,12 @@ export const publicApiOperationExamples = {
     parameters: { id: arcadeVenue.id },
     response: arcadeVenue,
   },
+  'maimaiNet.status': {
+    response: {
+      intl: { status: 'maintenance', checkedAt: '2026-11-06T01:30:00.000Z' },
+      jp: { status: 'ok', checkedAt: '2026-11-06T01:30:00.000Z' },
+    },
+  },
   'lxns.authorize': {
     response: { url: lxnsAuthorizationUrl },
   },

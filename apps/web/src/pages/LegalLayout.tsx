@@ -1,3 +1,4 @@
+import { useCanGoBack, useRouter } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import './legal.css'
@@ -14,15 +15,18 @@ export function LegalLayout({
   children: ReactNode
 }) {
   const { t } = useTranslation('auth')
+  const router = useRouter()
+  // True only when the previous entry is a page of this app, so Back never leaves the site
+  const canGoBack = useCanGoBack()
   return (
     <div className="legal-page">
-      <div className="legal-document">
+      <div className="legal-document glass">
         <button
           className="legal-back"
           type="button"
           onClick={() => {
-            if (window.history.length > 1) window.history.back()
-            else window.location.assign('/')
+            if (canGoBack) router.history.back()
+            else void router.navigate({ to: '/' })
           }}
         >
           <svg

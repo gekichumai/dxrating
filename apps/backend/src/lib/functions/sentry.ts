@@ -13,6 +13,19 @@ import {
 // Export types for use in other files
 export type { Scope }
 
+/**
+ * Sentry tags of a maimai NET import failure: our code, the request that failed and the ERROR CODE NET showed. None
+ * holds a URL, credential or anything of the page beyond its error code.
+ */
+export function netErrorTags(error: unknown): Record<string, string> {
+  if (!(error instanceof NetImportError)) return {}
+  return {
+    'net.code': error.code,
+    ...(error.step ? { 'net.step': error.step } : {}),
+    ...(error.netErrorCode ? { 'net.error_code': error.netErrorCode } : {}),
+  }
+}
+
 export function shouldCaptureSentryError(error: unknown) {
   if (error instanceof ORPCError) {
     const status = COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500

@@ -1,6 +1,6 @@
 export const Logo = () => {
   return (
-    <a href="/" className="text-lg font-bold text-black/70 leading-none">
+    <a href="/" className="text-lg font-semibold text-fg-1 leading-none no-underline">
       DXRating.net
     </a>
   )

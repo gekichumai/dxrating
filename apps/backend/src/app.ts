@@ -28,7 +28,7 @@ import { COMMON_ERROR_STATUS_MAP, OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { RequestHeadersHandlerPlugin, ResponseHeadersHandlerPlugin } from '@orpc/server/plugins'
 import { onError, ORPCError } from '@orpc/server'
-import { Sentry, shouldCaptureSentryError } from './lib/functions/sentry'
+import { netErrorTags, Sentry, shouldCaptureSentryError } from './lib/functions/sentry'
 import { Database } from './db/index'
 import { createDxdataEffect, createPostgresDxdataEffects, DXDATA_CORS_OPTIONS, DXDATA_PATH } from './services/dxdata'
 import { addPublishedDxdataToOpenApi } from './services/dxdata-openapi'
@@ -648,7 +648,7 @@ const openAPIHandler = new OpenAPIHandler(appRouter, {
       const procedureName = path.join('.')
       console.error(`[oRPC] ${procedureName} failed:`, error)
       Sentry.captureException(error, {
-        tags: { 'orpc.procedure': procedureName },
+        tags: { 'orpc.procedure': procedureName, ...netErrorTags(error) },
       })
     }),
   ],

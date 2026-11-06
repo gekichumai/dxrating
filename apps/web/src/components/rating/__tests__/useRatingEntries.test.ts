@@ -119,4 +119,24 @@ describe('calculateWebRatingEntries', () => {
     expect(result.b15Entries[0]!.syncFlag).toBe(highEntry.syncFlag)
     expect(result.allEntries.find((entry) => entry.achievementRate === lowEntry.achievementRate)!.includedIn).toBeNull()
   })
+
+  it('keeps a CN Diving Fish bucket hint in AP50 when it disagrees with the chart version', () => {
+    // A CiRCLE PLUS chart would be B15 by version; the provider puts it in B35
+    const sheet = makeSheet('hinted')
+    const entries: PlayEntry[] = [
+      {
+        sheetId: 'hinted',
+        achievementRate: 100.5,
+        comboFlag: 'ap',
+        providerConfig: { divingFish: { ratingEligibility: 'b35' } },
+      },
+      { sheetId: 'hinted', achievementRate: 100.6, comboFlag: 'fc' },
+    ]
+    const args = { entries, sheets: [sheet], catalog: makeCatalog([sheet]), appVersion: VersionEnum.CiRCLEPLUS }
+    const b50 = calculateWebRatingEntries({ ...args, region: 'cn' })
+    const ap50 = calculateWebRatingEntries({ ...args, region: 'cn', apOnly: true })
+    expect(b50.b35Entries).toHaveLength(1)
+    expect(ap50.b15Entries).toHaveLength(0)
+    expect(ap50.b35Entries.map((entry) => entry.comboFlag)).toEqual(['ap'])
+  })
 })
