@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import MdiEarthArrowDown from '~icons/mdi/earth-arrow-down'
 import { useWebHaptics } from 'web-haptics/react'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
+import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
 
@@ -65,7 +66,17 @@ export const ImportFromAquaDxButtonListItem: FC<{
                 console.warn('[ImportFromAquaDxButtonListItem]', warning.message, warning.row)
               }
 
-              await repository.applyImport(entries, { source: 'aqua-dx', mode: 'replace' })
+              const { applied } = await reviewAndApplyImport(
+                repository,
+                entries,
+                { source: 'aqua-dx', mode: 'replace' },
+                { trigger: 'manual' },
+              )
+              if (!applied) {
+                analytics.failed('cancelled_by_user')
+                toast(t('rating-calculator:io.import.review.cancelled'), { id: 'import-review-cancelled' })
+                return
+              }
               analytics.succeeded(entries.length, importResult.warnings.length)
               haptic.trigger('success')
               toast.success(t('rating-calculator:io.import.aqua-dx.success', { count: entries.length }))

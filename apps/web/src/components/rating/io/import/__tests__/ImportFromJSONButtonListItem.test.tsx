@@ -1,16 +1,20 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
 import { LocalScoreRepository } from '@/models/scores/LocalScoreRepository'
 import { ScoreRepositoryContext } from '@/models/scores/useScoreRepository'
 import { ImportFromJSONButtonListItem } from '../ImportFromJSONButtonListItem'
+import { importReviewController } from '@/models/scores/importReview'
+import { ImportReviewHost } from '../ImportReviewDialog'
 
-const { toastError, toastSuccess } = vi.hoisted(() => ({ toastError: vi.fn(), toastSuccess: vi.fn() }))
+const { toast, toastError, toastSuccess } = vi.hoisted(() => {
+  const toastError = vi.fn()
+  const toastSuccess = vi.fn()
+  return { toastError, toastSuccess, toast: Object.assign(vi.fn(), { error: toastError, success: toastSuccess }) }
+})
 
-vi.mock('react-hot-toast', () => ({
-  default: { error: toastError, success: toastSuccess },
-}))
+vi.mock('react-hot-toast', () => ({ default: toast }))
 
 vi.mock('web-haptics/react', () => ({
   useWebHaptics: () => ({ trigger: vi.fn() }),
@@ -47,6 +51,11 @@ describe('ImportFromJSONButtonListItem', () => {
     initI18n()
   })
 
+  afterEach(() => {
+    // A preview a failed test left open
+    importReviewController.getRequest()?.resolve(false)
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
     window.localStorage.clear()
@@ -55,16 +64,40 @@ describe('ImportFromJSONButtonListItem', () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <ScoreRepositoryContext.Provider value={repository}>{children}</ScoreRepositoryContext.Provider>
     )
-    render(<ImportFromJSONButtonListItem onClose={() => {}} />, { wrapper })
+    render(
+      <>
+        <ImportFromJSONButtonListItem onClose={() => {}} />
+        <ImportReviewHost />
+      </>,
+      { wrapper },
+    )
   })
 
-  it('replaces the save with a valid rating file', async () => {
+  it('replaces the save with a valid rating file once the visitor confirms the preview', async () => {
     const entries = [{ sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100.5, comboFlag: 'ap', dxScore: 2000 }]
     await importFile(JSON.stringify(entries))
+
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog.textContent).toContain('Review import from DXRating file')
+    expect(dialog.textContent).toContain('1 chart would get a lower score or be removed')
+    fireEvent.click(screen.getByRole('button', { name: 'Import anyway' }))
 
     await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith('Imported 1 records'))
     expect(repository.entries()).toEqual(entries)
     expect(window.localStorage.getItem('rating-calculator-entries')).toBe(JSON.stringify(entries))
+    expect(JSON.parse(window.localStorage.getItem('rating-calculator-import-undo')!).previousEntries).toEqual(SAVED)
+  })
+
+  it('keeps the save when the visitor cancels the preview', async () => {
+    await importFile(JSON.stringify([{ sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100.5 }]))
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }))
+    await waitFor(() =>
+      expect(toast).toHaveBeenCalledWith('Import cancelled. Your saved scores are unchanged.', expect.anything()),
+    )
+    expect(toastSuccess).not.toHaveBeenCalled()
+    expect(repository.entries()).toEqual(SAVED)
+    expect(window.localStorage.getItem('rating-calculator-import-undo')).toBeNull()
   })
 
   it('imports an "all records" export of a save with entries of every kind back as it was', async () => {
@@ -102,6 +135,7 @@ describe('ImportFromJSONButtonListItem', () => {
     repository.clear()
 
     await importFile(exported)
+    fireEvent.click(await screen.findByRole('button', { name: 'Import' }))
 
     await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith('Imported 7 records'))
     expect(toastError).not.toHaveBeenCalled()

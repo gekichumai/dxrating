@@ -25,8 +25,9 @@ import AlertIcon from '~icons/material-symbols/warning'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { WebHaptics } from 'web-haptics'
 import type { ComboFlag, SyncFlag } from '../../RatingCalculatorAddEntryForm'
-import type { ScoreRepository } from '@/models/scores/ScoreRepository'
+import type { WebScoreRepository } from '@/models/scores/ScoreRepository'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
+import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
 
@@ -47,6 +48,7 @@ type DivingFishImportMessages = {
   loading: string
   success: (count: number) => string
   error: (error: string) => string
+  cancelled: string
 }
 
 export interface DivingFishResponseBody {
@@ -84,7 +86,7 @@ export interface Chart {
 const fetchDivingFish = async (
   catalog: SongCatalog,
   divingFishProfile: DivingFishProfile | null,
-  repository: ScoreRepository,
+  repository: WebScoreRepository,
   messages: DivingFishImportMessages,
 ) => {
   const toastId = toast.loading(messages.loading)
@@ -122,7 +124,17 @@ const fetchDivingFish = async (
       console.warn('[ImportFromDivingFishButtonListItem]', warning.message, warning.row)
     }
 
-    await repository.applyImport(entries, { source: 'diving-fish', mode: 'replace' })
+    const { applied } = await reviewAndApplyImport(
+      repository,
+      entries,
+      { source: 'diving-fish', mode: 'replace' },
+      { trigger: 'manual' },
+    )
+    if (!applied) {
+      analytics.failed('cancelled_by_user')
+      toast(messages.cancelled, { id: toastId })
+      return
+    }
     analytics.succeeded(entries.length, importResult.warnings.length)
     haptics.trigger('success')
     toast.success(messages.success(entries.length), {
@@ -227,6 +239,7 @@ export const ImportDivingFishDialogContent: FC<{
                 loading: t('rating-calculator:io.import.diving-fish.loading'),
                 success: (count) => t('rating-calculator:io.import.diving-fish.success', { count }),
                 error: (error) => t('rating-calculator:io.import.diving-fish.error', { error }),
+                cancelled: t('rating-calculator:io.import.review.cancelled'),
               })
               onClose()
             } finally {
