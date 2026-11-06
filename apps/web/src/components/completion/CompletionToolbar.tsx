@@ -1,17 +1,29 @@
 import { MenuItem, TextField } from '@mui/material'
 import { type FC, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useSongCatalog } from '@/catalog/CatalogContext'
 import type { ConstantTable } from '@/components/chartDiscovery/constantTables'
 import { FilterChip } from '@/components/completion/TableChrome'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { ShareImageButton } from '@/components/global/ShareImageButton'
-import { COMPLETION_TARGET_LABELS, COMPLETION_TARGETS, parseCompletionTarget } from './completion'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
+import {
+  COMPLETION_TARGET_LABELS,
+  COMPLETION_TARGETS,
+  type CompletionStatus,
+  parseCompletionTarget,
+} from './completion'
 import { buildCompletionShareImage } from './completionShareImage'
 import type { CompletionFilter, CompletionOverlayState } from './useCompletionOverlay'
 import { InternalLink } from '@/components/global/InternalLink'
 
 const FILTERS: CompletionFilter[] = ['all', 'pending', 'unplayed', 'done']
+
+const STATUS_LABELS = {
+  done: m.completion_status_done,
+  pending: m.completion_status_pending,
+  unplayed: m.completion_status_unplayed,
+} satisfies Record<CompletionStatus, typeof m.completion_status_done>
 
 export const completionPercent = (done: number, total: number) =>
   total > 0 ? Math.floor((done / total) * 1000) / 10 : 0
@@ -24,9 +36,8 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
   table,
   overlay,
 }) => {
-  const { i18n, t } = useTranslation(['completion'])
   const catalog = useSongCatalog()
-  const locale = i18n.resolvedLanguage ?? i18n.language
+  const locale = useLocale()
   const number = useMemo(
     () => new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
     [locale],
@@ -39,9 +50,9 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
         variant="thin"
         className="w-full min-h-[46px] px-4 py-3 text-sm text-fg-1 flex flex-wrap items-center gap-x-3 gap-y-1"
       >
-        <span>{t('completion:empty')}</span>
+        <span>{m.completion_empty({}, { locale })}</span>
         <InternalLink href="/rating" className="link">
-          {t('completion:empty-link')}
+          {m.completion_emptyLink({}, { locale })}
         </InternalLink>
       </MaterialSurface>
     )
@@ -56,19 +67,23 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
   ]
 
   return (
-    <MaterialSurface as="section" className="w-full p-4 flex flex-col gap-3" aria-label={t('completion:title')}>
+    <MaterialSurface
+      as="section"
+      className="w-full p-4 flex flex-col gap-3"
+      aria-label={m.completion_title({}, { locale })}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col">
-          <h2 className="section-title m-0">{t('completion:title')}</h2>
+          <h2 className="section-title m-0">{m.completion_title({}, { locale })}</h2>
           <span className="text-sm text-fg-2 num">
-            {t('completion:rate', { level: table.level, target: targetLabel, percent })}
+            {m.completion_rate({ level: table.level, target: targetLabel, percent }, { locale })}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <TextField
             select
             size="small"
-            label={t('completion:target')}
+            label={m.completion_target({}, { locale })}
             value={target}
             onChange={(event) => {
               const next = parseCompletionTarget(event.target.value)
@@ -87,14 +102,14 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
             // Same 40px height as the small target select beside it
             sx={{ minHeight: 40 }}
             filename={`dxrating-lv${table.level.replace('+', 'p')}-${target}.png`}
-            shareTitle={t('completion:share-title', { level: table.level, target: targetLabel })}
+            shareTitle={m.completion_shareTitle({ level: table.level, target: targetLabel }, { locale })}
             getImage={() =>
               buildCompletionShareImage({
                 table,
                 target,
                 summary,
-                title: t('completion:share-title', { level: table.level, target: targetLabel }),
-                summaryLine: t('completion:summary-line', { ...summary, percent }),
+                title: m.completion_shareTitle({ level: table.level, target: targetLabel }, { locale }),
+                summaryLine: m.completion_summaryLine({ ...summary, percent }, { locale }),
                 recordOf: (sheetId) => overlay.records.get(sheetId)?.best,
                 imageNameOf: (sheetId) => catalog.getById(sheetId)?.imageName,
               })
@@ -113,20 +128,20 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
         ))}
       </div>
 
-      <span className="sr-only">{t('completion:summary-line', { ...summary, percent })}</span>
+      <span className="sr-only">{m.completion_summaryLine({ ...summary, percent }, { locale })}</span>
       <fieldset className="m-0 p-0 border-0 min-w-0 flex flex-wrap items-center gap-2">
-        <legend className="sr-only">{t('completion:filter')}</legend>
+        <legend className="sr-only">{m.completion_filter({}, { locale })}</legend>
         {FILTERS.map((filter) => (
           <FilterChip key={filter} active={overlay.filter === filter} onClick={() => overlay.setFilter(filter)}>
             <span className="num">
               {filter === 'all'
-                ? t('completion:filter-all', { count: summary.total })
-                : t(`completion:status.${filter}`, { count: summary[filter] })}
+                ? m.completion_filterAll({ count: summary.total }, { locale })
+                : STATUS_LABELS[filter]({ count: summary[filter] }, { locale })}
             </span>
           </FilterChip>
         ))}
         <InternalLink href="/me/progress" className="link ms-auto text-sm">
-          {t('completion:progress-link')}
+          {m.completion_progressLink({}, { locale })}
         </InternalLink>
       </fieldset>
     </MaterialSurface>

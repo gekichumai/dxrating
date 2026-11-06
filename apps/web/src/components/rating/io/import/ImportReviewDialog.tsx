@@ -1,7 +1,6 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, useId, useSyncExternalStore } from 'react'
-import { useTranslation } from 'react-i18next'
 import { DIFFICULTIES } from '@/models/difficulties'
 import type { ChartScore, ImportChange, ImportChangeKind, ImportPlan } from '@/models/scores/importPlan'
 import { planChangesSave } from '@/models/scores/importPlan'
@@ -11,11 +10,22 @@ import type { DifficultyEnum } from '@gekichumai/dxdata'
 import type { VersionedSheet } from '@gekichumai/maimai-domain'
 import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import { importSourceLabel } from './importSourceLabel'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
 
 /** At most this many risky charts are listed; the rest are counted */
 const RISKY_LIST_LIMIT = 50
 
 const COUNT_KINDS: readonly ImportChangeKind[] = ['added', 'improved', 'unchanged', 'lowered', 'removed']
+
+const COUNT_LABELS = {
+  added: m.ratingCalculator_io_import_review_count_added,
+  improved: m.ratingCalculator_io_import_review_count_improved,
+  unchanged: m.ratingCalculator_io_import_review_count_unchanged,
+  lowered: m.ratingCalculator_io_import_review_count_lowered,
+  removed: m.ratingCalculator_io_import_review_count_removed,
+} satisfies Record<ImportChangeKind, PlainMessage>
 
 const formatAchievement = (score: ChartScore) => `${score.achievementRate.toFixed(4)}%`
 
@@ -33,7 +43,7 @@ const ScoreSummary: FC<{ score: ChartScore }> = ({ score }) => {
 }
 
 const RiskyChangeRow: FC<{ change: ImportChange; sheet: VersionedSheet | null | undefined }> = ({ change, sheet }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const difficulty = sheet ? DIFFICULTIES[sheet.difficulty as DifficultyEnum] : undefined
   return (
     <li className="flex flex-col gap-0.5 py-2 first:pt-0 last:pb-0 sm:flex-row sm:items-baseline sm:gap-3">
@@ -65,7 +75,9 @@ const RiskyChangeRow: FC<{ change: ImportChange; sheet: VersionedSheet | null | 
             <ScoreSummary score={change.after} />
           </span>
         ) : (
-          <span className="font-semibold text-danger">{t('rating-calculator:io.import.review.removed-chart')}</span>
+          <span className="font-semibold text-danger">
+            {m.ratingCalculator_io_import_review_removedChart({}, { locale })}
+          </span>
         )}
       </div>
     </li>
@@ -82,11 +94,11 @@ export interface ImportReviewDialogProps {
 
 /** The preview of an import: what it adds, raises, keeps, lowers and removes, and the risky charts by name */
 export const ImportReviewDialog: FC<ImportReviewDialogProps> = ({ plan, trigger, open, onConfirm, onCancel }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const titleId = useId()
   // The import has loaded the complete catalog; until it is there, charts show their sheet ID
   const catalog = useCompleteSongCatalog()
-  const source = importSourceLabel(t, plan.meta.source)
+  const source = importSourceLabel(locale, plan.meta.source)
   const risky = plan.risky.length > 0
   // Removing a chart is destructive (danger); lowering a score is a risk (warning)
   const removes = plan.counts.removed > 0
@@ -95,18 +107,15 @@ export const ImportReviewDialog: FC<ImportReviewDialogProps> = ({ plan, trigger,
 
   return (
     <Dialog open={open} onClose={onCancel} aria-labelledby={titleId} maxWidth="sm" fullWidth scroll="paper">
-      <DialogTitle id={titleId}>{t('rating-calculator:io.import.review.title', { source })}</DialogTitle>
+      <DialogTitle id={titleId}>{m.ratingCalculator_io_import_review_title({ source }, { locale })}</DialogTitle>
       <DialogContent dividers className="flex flex-col gap-4">
         {trigger === 'automatic' && (
-          <p className="text-sm text-fg-1">{t('rating-calculator:io.import.review.automatic-held')}</p>
+          <p className="text-sm text-fg-1">{m.ratingCalculator_io_import_review_automaticHeld({}, { locale })}</p>
         )}
         <p className="text-sm text-secondary text-pretty">
-          {t(
-            plan.meta.mode === 'merge'
-              ? 'rating-calculator:io.import.review.mode.merge'
-              : 'rating-calculator:io.import.review.mode.replace',
-            { count: plan.importedCount },
-          )}
+          {plan.meta.mode === 'merge'
+            ? m.ratingCalculator_io_import_review_mode_merge({ count: plan.importedCount }, { locale })
+            : m.ratingCalculator_io_import_review_mode_replace({ count: plan.importedCount }, { locale })}
         </p>
 
         <dl className="grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -133,7 +142,7 @@ export const ImportReviewDialog: FC<ImportReviewDialogProps> = ({ plan, trigger,
                         : 'text-secondary',
                   )}
                 >
-                  {t(`rating-calculator:io.import.review.count.${kind}`)}
+                  {COUNT_LABELS[kind]({}, { locale })}
                 </dt>
                 <dd
                   className={clsx(
@@ -154,7 +163,7 @@ export const ImportReviewDialog: FC<ImportReviewDialogProps> = ({ plan, trigger,
               id={`${titleId}-risky`}
               className={clsx('section-title', removes ? 'text-danger' : 'text-status-warning')}
             >
-              {t('rating-calculator:io.import.review.risky.title', { count: plan.risky.length })}
+              {m.ratingCalculator_io_import_review_risky_title({ count: plan.risky.length }, { locale })}
             </h3>
             <ul className="glass-inset max-h-64 overflow-auto overscroll-contain px-3 py-2 divide-y divide-[var(--glass-border)]">
               {plan.risky.slice(0, RISKY_LIST_LIMIT).map((change) => (
@@ -163,30 +172,33 @@ export const ImportReviewDialog: FC<ImportReviewDialogProps> = ({ plan, trigger,
             </ul>
             {plan.risky.length > RISKY_LIST_LIMIT && (
               <p className="text-xs text-secondary">
-                {t('rating-calculator:io.import.review.risky.more', { count: plan.risky.length - RISKY_LIST_LIMIT })}
+                {m.ratingCalculator_io_import_review_risky_more(
+                  { count: plan.risky.length - RISKY_LIST_LIMIT },
+                  { locale },
+                )}
               </p>
             )}
           </section>
         ) : (
           <p className="text-sm text-status-positive">
             {changes
-              ? t('rating-calculator:io.import.review.safe')
-              : t('rating-calculator:io.import.review.no-changes')}
+              ? m.ratingCalculator_io_import_review_safe({}, { locale })
+              : m.ratingCalculator_io_import_review_noChanges({}, { locale })}
           </p>
         )}
 
         <p className="text-xs text-secondary">
-          {t('rating-calculator:io.import.review.undo-hint', { count: undoHours })}
+          {m.ratingCalculator_io_import_review_undoHint({ count: undoHours }, { locale })}
         </p>
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancel} color="inherit">
-          {t('rating-calculator:io.import.review.cancel')}
+          {m.ratingCalculator_io_import_review_cancel({}, { locale })}
         </Button>
         <Button onClick={onConfirm} variant="contained" color={removes ? 'error' : 'primary'}>
           {risky
-            ? t('rating-calculator:io.import.review.confirm-risky')
-            : t('rating-calculator:io.import.review.confirm')}
+            ? m.ratingCalculator_io_import_review_confirmRisky({}, { locale })
+            : m.ratingCalculator_io_import_review_confirm({}, { locale })}
         </Button>
       </DialogActions>
     </Dialog>

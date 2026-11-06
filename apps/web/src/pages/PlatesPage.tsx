@@ -1,7 +1,6 @@
 import { DifficultyEnum } from '@gekichumai/dxdata'
-import type { PlateRecord, PlateRegion } from '@gekichumai/maimai-domain'
+import type { PlateKind, PlateRecord, PlateRegion } from '@gekichumai/maimai-domain'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useCompleteCatalogDocument } from '@/catalog/CatalogContext'
 import {
   Breadcrumb,
@@ -30,17 +29,36 @@ import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useUserRecords } from '@/models/useUserRecords'
-import { DEFAULT_LOCALE, type SupportedLocale, toSupportedLocale } from '@/setup/locale'
 import { coverImageUrl } from '@/utils/shareImage/shareImage'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
 import { InternalLink } from '@/components/global/InternalLink'
-
-const useLocale = (): SupportedLocale => {
-  const { i18n } = useTranslation()
-  return toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
-}
 
 const regionHref = (path: string, region: PlateRegion) =>
   region === DEFAULT_PLATE_REGION ? path : `${path}?region=${region}`
+
+const PLATE_REGION_LABELS = {
+  jp: m.plates_region_jp,
+  intl: m.plates_region_intl,
+  cn: m.plates_region_cn,
+} satisfies Record<PlateRegion, PlainMessage>
+
+const PLATE_CONDITIONS = {
+  kiwami: m.plates_condition_kiwami,
+  sho: m.plates_condition_sho,
+  shin: m.plates_condition_shin,
+  maimai: m.plates_condition_maimai,
+  hasha: m.plates_condition_hasha,
+} satisfies Record<PlateKind, PlainMessage>
+
+const PLATE_CONDITION_SHORT = {
+  kiwami: m.plates_conditionShort_kiwami,
+  sho: m.plates_conditionShort_sho,
+  shin: m.plates_conditionShort_shin,
+  maimai: m.plates_conditionShort_maimai,
+  hasha: m.plates_conditionShort_hasha,
+} satisfies Record<PlateKind, PlainMessage>
 
 const COMBO_RANK: Record<NonNullable<PlateRecord['comboFlag']>, number> = { fc: 1, fcp: 2, ap: 3, app: 4 }
 const SYNC_RANK: Record<NonNullable<PlateRecord['syncFlag']>, number> = { sync: 1, fs: 2, fsp: 3, fsd: 4, fsdp: 5 }
@@ -78,27 +96,27 @@ const usePlateRecords = () => {
 }
 
 const PlateBreadcrumb: FC<{ leaf?: string; region: PlateRegion }> = ({ leaf, region }) => {
-  const { t } = useTranslation(['plates'])
+  const locale = useLocale()
   return (
     <Breadcrumb
       items={
         leaf
-          ? [{ href: regionHref('/plates', region), label: t('plates:breadcrumb') }, { label: leaf }]
-          : [{ label: t('plates:breadcrumb') }]
+          ? [{ href: regionHref('/plates', region), label: m.plates_breadcrumb({}, { locale }) }, { label: leaf }]
+          : [{ label: m.plates_breadcrumb({}, { locale }) }]
       }
     />
   )
 }
 
 const RegionSwitch: FC<{ path: string; region: PlateRegion }> = ({ path, region }) => {
-  const { t } = useTranslation(['plates'])
+  const locale = useLocale()
   return (
     <SegmentedNav
-      label={t('plates:region.label')}
+      label={m.plates_region_label({}, { locale })}
       items={PLATE_REGIONS.map((candidate) => ({
         key: candidate,
         href: regionHref(path, candidate),
-        label: t(`plates:region.${candidate}`),
+        label: PLATE_REGION_LABELS[candidate]({}, { locale }),
         current: candidate === region,
       }))}
     />
@@ -128,7 +146,6 @@ const ProgressBar: FC<{ percent: number; className?: string }> = ({ percent, cla
 )
 
 export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[] }> = ({ region, groups }) => {
-  const { t } = useTranslation(['plates'])
   const locale = useLocale()
   const script = plateScript(locale)
   const document = useCompleteCatalogDocument()
@@ -155,8 +172,8 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
       <div className="w-full flex flex-col gap-4">
         <header className="flex flex-col gap-2">
           <PlateBreadcrumb region={region} />
-          <h1 className="page-title m-0 [word-break:auto-phrase]">{t('plates:index.title')}</h1>
-          <p className="page-description m-0">{t('plates:index.intro')}</p>
+          <h1 className="page-title m-0 [word-break:auto-phrase]">{m.plates_index_title({}, { locale })}</h1>
+          <p className="page-description m-0">{m.plates_index_intro({}, { locale })}</p>
           <RegionSwitch path="/plates" region={region} />
         </header>
 
@@ -173,7 +190,7 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
                   </span>
                   {group.unverified && (
                     <span className="ms-auto self-center shrink-0 text-xs px-1.5 py-0.5 rounded-[var(--radius-sm)] border border-solid border-amber-600/40 text-amber-800">
-                      {t('plates:unverified')}
+                      {m.plates_unverified({}, { locale })}
                     </span>
                   )}
                 </div>
@@ -194,7 +211,7 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
                           </>
                         ) : (
                           <span className="text-xs text-fg-2 [text-wrap:balance]">
-                            {t(`plates:condition-short.${plate.kind}`)}
+                            {PLATE_CONDITION_SHORT[plate.kind]({}, { locale })}
                           </span>
                         )}
                       </InternalLink>
@@ -220,20 +237,19 @@ const DIFFICULTY_FILTERS = [
 
 /** Marks a chart set whose Re:MASTER differs between servers: it still counts toward the plate (meta#18) */
 const RemasterVariantLabel: FC = () => {
-  const { t } = useTranslation(['plates'])
+  const locale = useLocale()
   return (
     <span
-      title={t('plates:remaster-variant.description')}
+      title={m.plates_remasterVariant_description({}, { locale })}
       className="min-w-0 max-w-full px-1.5 py-0.5 rounded-[var(--radius-sm)] text-xs font-medium [overflow-wrap:anywhere] text-accent-strong bg-accent-subtle border border-solid border-[color-mix(in_oklab,var(--accent-strong)_35%,transparent)]"
     >
-      {t('plates:remaster-variant.label')}
-      <span className="sr-only">: {t('plates:remaster-variant.description')}</span>
+      {m.plates_remasterVariant_label({}, { locale })}
+      <span className="sr-only">: {m.plates_remasterVariant_description({}, { locale })}</span>
     </span>
   )
 }
 
 export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
-  const { t } = useTranslation(['plates'])
   const locale = useLocale()
   const name = data.names[plateScript(locale)]
   const versions =
@@ -285,8 +301,8 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
       <div className="w-full flex flex-col gap-4">
         <header className="flex flex-col gap-2">
           <PlateBreadcrumb leaf={name} region={data.region} />
-          <h1 className="page-title m-0 [word-break:auto-phrase]">{t('plates:title', values)}</h1>
-          <p className="page-description m-0">{t('plates:intro', values)}</p>
+          <h1 className="page-title m-0 [word-break:auto-phrase]">{m.plates_title(values, { locale })}</h1>
+          <p className="page-description m-0">{m.plates_intro(values, { locale })}</p>
           <RegionSwitch path={platePath(data.plateId)} region={data.region} />
         </header>
 
@@ -294,28 +310,32 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
           <MaterialSurface as="section" aria-labelledby="plate-condition" className="p-4 flex flex-col gap-2">
             <h2 id="plate-condition" className="section-title m-0">
-              {t('plates:condition.title')}
+              {m.plates_condition_title({}, { locale })}
             </h2>
-            <p className="text-sm font-semibold text-fg-1 m-0">{t(`plates:condition.${data.kind}`)}</p>
-            <p className="text-xs text-fg-2 m-0">{t('plates:condition.scope')}</p>
-            {data.includesRemaster && <p className="text-xs text-fg-2 m-0">{t('plates:condition.remaster')}</p>}
+            <p className="text-sm font-semibold text-fg-1 m-0">{PLATE_CONDITIONS[data.kind]({}, { locale })}</p>
+            <p className="text-xs text-fg-2 m-0">{m.plates_condition_scope({}, { locale })}</p>
+            {data.includesRemaster && (
+              <p className="text-xs text-fg-2 m-0">{m.plates_condition_remaster({}, { locale })}</p>
+            )}
             {data.charts.some((chart) => chart.remasterDiffersByServer) && (
-              <p className="text-xs text-fg-2 m-0">{t('plates:condition.remaster-variant')}</p>
+              <p className="text-xs text-fg-2 m-0">{m.plates_condition_remasterVariant({}, { locale })}</p>
             )}
             {data.region === 'cn' && data.versions.length === 2 && !data.includesRemaster && (
-              <p className="text-xs text-fg-2 m-0">{t('plates:condition.cn-merged')}</p>
+              <p className="text-xs text-fg-2 m-0">{m.plates_condition_cnMerged({}, { locale })}</p>
             )}
-            {data.unverified && <p className="text-xs text-amber-800 m-0">{t('plates:condition.unverified')}</p>}
+            {data.unverified && (
+              <p className="text-xs text-amber-800 m-0">{m.plates_condition_unverified({}, { locale })}</p>
+            )}
           </MaterialSurface>
 
           <MaterialSurface as="section" aria-labelledby="plate-progress" className="p-4 flex flex-col gap-3">
             <div className="flex items-center gap-3 flex-wrap">
               <h2 id="plate-progress" className="section-title m-0">
-                {t('plates:progress.title')}
+                {m.plates_progress_title({}, { locale })}
               </h2>
               {isDemo && (
                 <span className="text-xs px-1.5 py-0.5 rounded-[var(--radius-sm)] border border-solid border-sky-600/40 text-sky-800">
-                  {t('plates:progress.demo')}
+                  {m.plates_progress_demo({}, { locale })}
                 </span>
               )}
               {hasRecords && (
@@ -323,8 +343,8 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                   size="small"
                   className="ms-auto!"
                   filename={`dxrating-plate-${data.plateId}.png`}
-                  shareTitle={t('plates:share.title', { plate: name })}
-                  imageAlt={t('plates:share.alt', { plate: name })}
+                  shareTitle={m.plates_share_title({ plate: name }, { locale })}
+                  imageAlt={m.plates_share_alt({ plate: name }, { locale })}
                   getImage={() =>
                     buildPlateShareImage({
                       plateName: name,
@@ -332,23 +352,32 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                       progress,
                       records,
                       labels: {
-                        subtitle: t('plates:share.subtitle', {
-                          versions,
-                          condition: t(`plates:condition-short.${data.kind}`),
-                        }),
+                        subtitle: m.plates_share_subtitle(
+                          {
+                            versions,
+                            condition: PLATE_CONDITION_SHORT[data.kind]({}, { locale }),
+                          },
+                          { locale },
+                        ),
                         // The count the headline percentage is computed from (charts, not finished songs)
-                        progress: t('plates:progress.sheets', {
-                          done: progress.completedSheets,
-                          total: progress.totalSheets,
-                        }),
+                        progress: m.plates_progress_sheets(
+                          {
+                            done: progress.completedSheets,
+                            total: progress.totalSheets,
+                          },
+                          { locale },
+                        ),
                         percent: formatPercent(percent),
-                        remaining: t('plates:share.remaining-count', {
-                          count: progress.totalSheets - progress.completedSheets,
-                        }),
-                        order: t('plates:share.order'),
-                        unplayed: t('plates:share.unplayed'),
-                        more: (count) => t('plates:share.more', { count }),
-                        allDone: t('plates:share.all-done'),
+                        remaining: m.plates_share_remainingCount(
+                          {
+                            count: progress.totalSheets - progress.completedSheets,
+                          },
+                          { locale },
+                        ),
+                        order: m.plates_share_order({}, { locale }),
+                        unplayed: m.plates_share_unplayed({}, { locale }),
+                        more: (count) => m.plates_share_more({ count }, { locale }),
+                        allDone: m.plates_share_allDone({}, { locale }),
                       },
                     })
                   }
@@ -366,11 +395,17 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                   </span>
                   <span className="text-sm text-fg-2 num">
                     <span className="whitespace-nowrap">
-                      {t('plates:progress.sheets', { done: progress.completedSheets, total: progress.totalSheets })}
+                      {m.plates_progress_sheets(
+                        { done: progress.completedSheets, total: progress.totalSheets },
+                        { locale },
+                      )}
                     </span>
                     {' · '}
                     <span className="whitespace-nowrap">
-                      {t('plates:progress.charts', { done: progress.completedCharts, total: progress.totalCharts })}
+                      {m.plates_progress_charts(
+                        { done: progress.completedCharts, total: progress.totalCharts },
+                        { locale },
+                      )}
                     </span>
                   </span>
                 </div>
@@ -378,19 +413,19 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
               </>
             ) : (
               <p className="text-sm text-fg-2 m-0">
-                {t('plates:progress.empty')}{' '}
+                {m.plates_progress_empty({}, { locale })}{' '}
                 <InternalLink href="/rating" className="link">
-                  {t('plates:progress.import')}
+                  {m.plates_progress_import({}, { locale })}
                 </InternalLink>
               </p>
             )}
             <div className="flex flex-wrap items-center gap-2">
               <FilterChip active={remainingOnly} onClick={() => setRemainingOnly((value) => !value)}>
-                {t('plates:filter.remaining')}
+                {m.plates_filter_remaining({}, { locale })}
               </FilterChip>
               <span className="w-px h-4 bg-black/12 mx-1" aria-hidden />
               <FilterChip active={difficulty === null} onClick={() => setDifficulty(null)}>
-                {t('plates:filter.all')}
+                {m.plates_filter_all({}, { locale })}
               </FilterChip>
               {DIFFICULTY_FILTERS.filter((d) => d !== DifficultyEnum.ReMaster || hasRemaster).map((d) => (
                 <FilterChip
@@ -419,15 +454,15 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
               </h2>
               {hasRecords && (
                 <span className="text-xs num text-fg-2">
-                  <span aria-hidden>{t('plates:group-count', { done: group.done, total: group.total })}</span>
+                  <span aria-hidden>{m.plates_groupCount({ done: group.done, total: group.total }, { locale })}</span>
                   <span className="sr-only">
-                    {t('plates:group-count-sr', { done: group.done, total: group.total })}
+                    {m.plates_groupCountSr({ done: group.done, total: group.total }, { locale })}
                   </span>
                 </span>
               )}
             </div>
             {group.charts.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-fg-2 m-0">{t('plates:all-done')}</p>
+              <p className="px-4 py-3 text-sm text-fg-2 m-0">{m.plates_allDone({}, { locale })}</p>
             ) : (
               // One column of rows below lg; two columns on desktop, with the row borders drawn per cell
               <ul className="list-none m-0 p-0 divide-y divide-black/5 lg:divide-y-0 lg:grid lg:grid-cols-2 lg:-mb-px">
@@ -476,7 +511,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                           return (
                             <span
                               key={sheet.id}
-                              title={`${title} ${sheet.level}${met ? ` · ${t('plates:done')}` : ''}`}
+                              title={`${title} ${sheet.level}${met ? ` · ${m.plates_done({}, { locale })}` : ''}`}
                               className={`min-w-8 px-1 h-6 rounded-[var(--radius-sm)] text-xs font-semibold num inline-flex items-center justify-center border ${
                                 sheet.difficulty === DifficultyEnum.ReMaster ? 'border-dashed' : 'border-solid'
                               } ${met ? '' : difficultyTextClassName}`}
@@ -488,7 +523,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                             >
                               <span className="sr-only">{title} </span>
                               {sheet.level}
-                              {met && <span className="sr-only"> {t('plates:done')}</span>}
+                              {met && <span className="sr-only"> {m.plates_done({}, { locale })}</span>}
                             </span>
                           )
                         })}
@@ -503,7 +538,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
 
         <footer className="flex flex-col gap-2">
           <InternalLink href={regionHref('/plates', data.region)} className="link self-start text-sm">
-            {t('plates:other-plates')}
+            {m.plates_otherPlates({}, { locale })}
             <span aria-hidden> →</span>
           </InternalLink>
         </footer>

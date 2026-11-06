@@ -1,10 +1,11 @@
 import { type FC, useId } from 'react'
-import { useTranslation } from 'react-i18next'
 import type { RecentChartLink } from '@/components/chartDiscovery/recentCharts'
 import { SheetListItemContentView, SheetListItemSummary } from '@/components/sheet/SheetListItem'
 import { SHEET_ROW_INSET, SheetRowLayoutContext } from '@/components/sheet/sheetRowLayout'
 import { getSheetTitleLabel } from '@/components/song/sheetDisplay'
-import { DEFAULT_LOCALE, type SupportedLocale, toSupportedLocale } from '@/setup/locale'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
+import type { SupportedLocale } from '@/setup/locale'
 import { formatSheetReleaseDateParts, sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
 import { InternalLink } from '@/components/global/InternalLink'
 
@@ -47,8 +48,7 @@ export const groupRecentCharts = (charts: readonly RecentChartLink[]): RecentCha
 }
 
 export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
-  const { i18n, t } = useTranslation(['sheet', 'toplists'])
-  const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
+  const locale = useLocale()
   const groups = groupRecentCharts(charts)
 
   return (
@@ -60,10 +60,10 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
       <div className="w-full flex flex-col gap-4">
         <header className="w-full flex flex-col gap-2">
           <h1 className="page-title m-0" itemProp="name">
-            {t('sheet:chart-discovery.recent.title')}
+            {m.sheet_chartDiscovery_recent_title({}, { locale })}
           </h1>
           <p className="page-description m-0" itemProp="description">
-            {t('sheet:chart-discovery.recent.description', { count: charts.length })}
+            {m.sheet_chartDiscovery_recent_description({ count: charts.length }, { locale })}
           </p>
         </header>
 
@@ -89,7 +89,6 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
 }
 
 const RecentChartGroupSection: FC<{ group: RecentChartGroup; locale: SupportedLocale }> = ({ group, locale }) => {
-  const { t } = useTranslation(['toplists'])
   const headingId = `${useId()}recent-${group.key}`
 
   return (
@@ -110,7 +109,7 @@ const RecentChartGroupSection: FC<{ group: RecentChartGroup; locale: SupportedLo
             `ver. ${group.version}`
           )}
         </h2>
-        <span className="text-xs text-fg-2 num">{t('toplists:count', { count: group.charts.length })}</span>
+        <span className="text-xs text-fg-2 num">{m.toplists_count({ count: group.charts.length }, { locale })}</span>
       </div>
       {/* Rows are --radius-md at a 4px inset, so they nest in the panel's --radius-lg */}
       <ol className="glass m-0 w-full list-none p-1">
@@ -132,10 +131,9 @@ const RecentChartRow: FC<{ chart: RecentChartLink; position: number; locale: Sup
   position,
   locale,
 }) => {
-  const { t } = useTranslation(['sheet'])
   const chartUrl = toAbsoluteChartUrl(chart.href)
   const sheetLabel = getSheetTitleLabel(chart, locale)
-  const levelLabel = t('sheet:chart-discovery.level', { level: chart.level })
+  const levelLabel = m.sheet_chartDiscovery_level({ level: chart.level }, { locale })
 
   return (
     <li itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
@@ -168,7 +166,7 @@ const RecentChartRow: FC<{ chart: RecentChartLink; position: number; locale: Sup
             internalLevelValue={chart.internalLevelValue}
             isTypeUtage={chart.isTypeUtage}
             imageName={chart.imageName}
-            imageAlt={t('sheet:cover-art-alt', { title: chart.title })}
+            imageAlt={m.sheet_coverArtAlt({ title: chart.title }, { locale })}
           >
             <SheetListItemSummary
               title={chart.title}

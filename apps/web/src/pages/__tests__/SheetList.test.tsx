@@ -1,4 +1,3 @@
-import i18n from 'i18next'
 import type { ServerEnum } from '@gekichumai/dxdata'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { fireEvent, render, screen, type RenderResult } from '@testing-library/react'
@@ -6,6 +5,8 @@ import type { ReactNode } from 'react'
 import { renderToString } from 'react-dom/server'
 import type { FlattenedSheet } from '@/songs'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { LocaleProvider } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 import { initI18n } from '@/setup/init-i18n'
 import { SheetList } from '../SheetList'
 
@@ -99,6 +100,17 @@ vi.mock('@/components/sheet/SheetSortFilter', async (importOriginal) => ({
   SheetSortFilterTrigger: () => <button type="button">Filter Sort</button>,
 }))
 
+const Providers = ({ children }: { children: ReactNode }) => (
+  <LocaleProvider initialLocale="en">{children}</LocaleProvider>
+)
+
+const renderPage = () =>
+  renderToString(
+    <Providers>
+      <SheetList />
+    </Providers>,
+  )
+
 describe('SheetList', () => {
   beforeAll(() => {
     initI18n()
@@ -125,18 +137,18 @@ describe('SheetList', () => {
       { ...sheet, id: 'older', songId: 'older', releaseDateTimestamp: 1 },
       { ...sheet, id: 'newer', songId: 'newer', releaseDateTimestamp: 2 },
     ]
-    expect(renderToString(<SheetList />)).toContain('newer,older')
-    render(<SheetList />)
+    expect(renderPage()).toContain('newer,older')
+    render(<SheetList />, { wrapper: Providers })
     expect(screen.getByTestId('sheet-list').textContent).toBe('newer,older')
   })
 
   it('introduces the page in the server render when there is no query, and drops it for a query', () => {
-    const intro = i18n.t('root:pages.search.introduction')
+    const intro = m.root_pages_search_introduction({}, { locale: 'en' })
     expect(intro).toMatch(/maimai DX/)
-    expect(renderToString(<SheetList />)).toContain(intro)
+    expect(renderPage()).toContain(intro)
 
     routeState.search = { q: 'test' }
-    expect(renderToString(<SheetList />)).not.toContain(intro)
+    expect(renderPage()).not.toContain(intro)
   })
 
   it('uses the route query immediately and shows seeded results while sheets load', () => {
@@ -163,6 +175,7 @@ describe('SheetList', () => {
           },
         ]}
       />,
+      { wrapper: Providers },
     )
 
     expect(sheetMocks.filteredTerms).toContain('螺旋')
@@ -178,7 +191,7 @@ describe('SheetList', () => {
       view.rerender(<SheetList />)
     }
 
-    view = render(<SheetList />)
+    view = render(<SheetList />, { wrapper: Providers })
 
     const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
     input.focus()
