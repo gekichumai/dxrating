@@ -864,8 +864,15 @@
   },
   "share": {
     "image.button": "画像で共有",
-    "image.downloaded": "画像を保存しました",
-    "image.failed": "画像を作成できませんでした。もう一度お試しください。"
+    "image.failed": "画像を作成できませんでした。もう一度お試しください。",
+    "image.viewer-title": "共有画像",
+    "image.hint": "スマートフォンでは画像を長押しして保存・コピーできます。パソコンでは右クリックするか、上のボタンを使ってください。",
+    "image.download": "画像を保存",
+    "image.copy": "画像をコピー",
+    "image.share": "共有…",
+    "image.copied": "画像をコピーしました",
+    "image.copy-failed": "画像をコピーできませんでした。保存してください。",
+    "image.share-failed": "共有シートを開けませんでした。画像を保存してください。"
   },
   "plates": {
     "breadcrumb": "称号プレート",
@@ -916,7 +923,13 @@
     "condition-short.hasha": "A ランクでクリア",
     "other-plates": "ほかのプレート",
     "share.title": "{{plate}} 達成状況",
-    "share.remaining": "未達成の譜面"
+    "share.alt": "{{plate}} の達成状況：未達成の譜面",
+    "share.subtitle": "{{versions}} · 条件 {{condition}}",
+    "share.remaining-count": "未達成 {{count}} 譜面",
+    "share.order": "達成に近い順",
+    "share.unplayed": "未プレイ",
+    "share.more": "ほか {{count}} 曲",
+    "share.all-done": "すべての譜面を達成しました！"
   },
   "toplists": {
     "title": "トップ記録",
