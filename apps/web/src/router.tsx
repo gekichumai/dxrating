@@ -3,6 +3,7 @@ import { createRouter } from '@tanstack/react-router'
 import { getGlobalStartContext } from '@tanstack/react-start'
 import { routeTree } from './routeTree.gen'
 import { initI18n } from './setup/init-i18n'
+import { scrubBreadcrumb, scrubEvent } from './lib/sentryScrub'
 
 initI18n()
 
@@ -34,6 +35,10 @@ export function getRouter() {
         /^https?:\/\/miruku\.dxrating\.net\/(?!api\/v1\/dxdata)/,
       ],
       tracesSampleRate: 0.2,
+      // OAuth callbacks carry one-time code and state in the query
+      beforeSend: scrubEvent,
+      beforeSendTransaction: scrubEvent,
+      beforeBreadcrumb: scrubBreadcrumb,
       // Sends what the app logs with Sentry.logger (saved-data migrations, catalog API fallbacks); nothing else
       enableLogs: true,
       ignoreErrors: [
