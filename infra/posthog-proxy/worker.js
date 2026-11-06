@@ -75,11 +75,59 @@ async function readLimited(stream, limit) {
   return bytes
 }
 
+// workerd's DecompressionStream expands each written chunk in full, queueing
+// all of its output before the reader sees any, and deflate can expand ~1000x.
+// So the gzip body is written 1 KiB at a time, and the next slice is written
+// only after the reader has drained the previous one's output. Each step then
+// adds about 1 MiB at most, and decoding stops once the decoded limit is hit.
+const GZIP_INPUT_SLICE_BYTES = 1024
+
+async function gunzipLimited(bytes, limit) {
+  const decompressor = new DecompressionStream("gzip")
+  const writer = decompressor.writable.getWriter()
+  const reader = decompressor.readable.getReader()
+  const chunks = []
+  let total = 0
+  let overLimit = false
+  const reading = (async () => {
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) return
+      total += value.byteLength
+      if (total > limit) {
+        overLimit = true
+        await reader.cancel().catch(() => {})
+        return
+      }
+      chunks.push(value)
+    }
+  })()
+  try {
+    for (let offset = 0; offset < bytes.byteLength && !overLimit; offset += GZIP_INPUT_SLICE_BYTES) {
+      await writer.write(bytes.subarray(offset, offset + GZIP_INPUT_SLICE_BYTES))
+      // Let the reader drain this slice's output before writing the next one.
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    }
+    if (overLimit) await writer.abort().catch(() => {})
+    else await writer.close()
+  } catch {
+    // Corrupt gzip or a cancelled reader: `reading` reports what happened.
+  }
+  await reading
+  if (overLimit) return null
+  const decoded = new Uint8Array(total)
+  let offset = 0
+  for (const chunk of chunks) {
+    decoded.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return decoded
+}
+
 async function readPayloadText(bytes, contentEncoding) {
   let decoded = bytes
   if (contentEncoding && contentEncoding.toLowerCase().includes("gzip")) {
-    const stream = new Response(bytes).body.pipeThrough(new DecompressionStream("gzip"))
-    decoded = await readLimited(stream, MAX_DECODED_BODY_BYTES)
+    decoded = await gunzipLimited(bytes, MAX_DECODED_BODY_BYTES)
     if (!decoded) return null
   }
   return new TextDecoder().decode(decoded)

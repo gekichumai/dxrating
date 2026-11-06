@@ -13,24 +13,43 @@ let forwarded
 const realFetch = globalThis.fetch
 const RealDecompressionStream = globalThis.DecompressionStream
 let decodedBytes
+let maxGzipInputChunk
+let gzipBytesWritten
 
 beforeEach(() => {
   forwarded = []
   decodedBytes = 0
+  maxGzipInputChunk = 0
+  gzipBytesWritten = 0
   globalThis.fetch = async (url, request) => {
     forwarded.push({ url, body: new Uint8Array(await request.arrayBuffer()), headers: request.headers })
     return new Response('ok')
   }
-  // Counts how many decompressed bytes the worker actually pulls.
+  // Counts the gzip bytes the worker writes into the decoder and the decoded
+  // bytes it reads back out.
   globalThis.DecompressionStream = function CountingDecompressionStream(format) {
     const inner = new RealDecompressionStream(format)
+    const innerWriter = inner.writable.getWriter()
+    const writable = new WritableStream({
+      write(chunk) {
+        gzipBytesWritten += chunk.byteLength
+        maxGzipInputChunk = Math.max(maxGzipInputChunk, chunk.byteLength)
+        return innerWriter.write(chunk)
+      },
+      close() {
+        return innerWriter.close()
+      },
+      abort(reason) {
+        return innerWriter.abort(reason)
+      },
+    })
     const counter = new TransformStream({
       transform(chunk, controller) {
         decodedBytes += chunk.byteLength
         controller.enqueue(chunk)
       },
     })
-    return { writable: inner.writable, readable: inner.readable.pipeThrough(counter) }
+    return { writable, readable: inner.readable.pipeThrough(counter) }
   }
 })
 
@@ -122,6 +141,10 @@ test('gzip bomb with an invalid token stops decompressing at the decoded limit',
   assert.equal(res.status, 403)
   assert.equal(forwarded.length, 0)
   assert.ok(decodedBytes <= 5 * MiB, `decompressed ${decodedBytes} bytes`)
+  // workerd expands a whole input chunk eagerly, so input must reach the decoder in small slices.
+  assert.ok(maxGzipInputChunk <= 1024, `fed the decoder a ${maxGzipInputChunk}-byte chunk`)
+  // ...and decoding must stop early instead of consuming the whole bomb.
+  assert.ok(gzipBytesWritten < bomb.byteLength / 2, `wrote ${gzipBytesWritten} of ${bomb.byteLength} gzip bytes`)
 })
 
 test('gzip bomb carrying the right token is still rejected once it expands past the limit', async () => {
