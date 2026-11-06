@@ -15,7 +15,7 @@ export const DIFFICULTIES: Record<
   DifficultyEnum,
   {
     title: string
-    /** The name in compact pills (`DifficultyLevelBadge`), where every row gets the width of the longest one */
+    /** The name in compact pills and labels (BAS, ADV, EXP, MAS, Re:MAS), where every row gets the width of the longest */
     shortTitle: string
     color: string
     solid: string
@@ -26,7 +26,7 @@ export const DIFFICULTIES: Record<
 > = {
   [DifficultyEnum.Basic]: {
     title: 'BASIC',
-    shortTitle: 'BASIC',
+    shortTitle: 'BAS',
     color: '#22bb5b',
     solid: '#008829',
     ink: '#007715',
@@ -42,7 +42,7 @@ export const DIFFICULTIES: Record<
   },
   [DifficultyEnum.Expert]: {
     title: 'EXPERT',
-    shortTitle: 'EXPERT',
+    shortTitle: 'EXP',
     color: '#f64861',
     solid: '#dc2c4d',
     ink: '#ca0f3f',
@@ -50,7 +50,7 @@ export const DIFFICULTIES: Record<
   },
   [DifficultyEnum.Master]: {
     title: 'MASTER',
-    shortTitle: 'MASTER',
+    shortTitle: 'MAS',
     color: '#9e45e2',
     solid: '#9e45e2',
     ink: '#9034d3',
@@ -66,3 +66,6 @@ export const DIFFICULTIES: Record<
     inkDark: '#d49bff',
   },
 }
+
+/** Every short name, the samples a fixed-width difficulty pill is sized by (`FixedWidthText`) */
+export const DIFFICULTY_SHORT_TITLES: readonly string[] = Object.values(DIFFICULTIES).map((entry) => entry.shortTitle)

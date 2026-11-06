@@ -81,6 +81,13 @@ export interface Song {
   isLocked: boolean
   sheets: Sheet[]
   searchAcronyms: string[]
+  /**
+   * Hiragana reading of the title for search: its Japanese words in hiragana, latin, digits and punctuation as
+   * written. Only titles with kanji have one; older catalogs have none.
+   */
+  reading?: string
+  /** Where `reading` came from: a hand-written override, the analyser confirmed by SEGA's title kana, or the analyser alone */
+  readingSource?: 'override' | 'verified' | 'analyzer'
 }
 
 export interface Sheet {
