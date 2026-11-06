@@ -28,6 +28,7 @@ import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import { ZOD_JITLESS_INLINE_SCRIPT } from '@/setup/zod-jitless'
+import { THEME_INLINE_SCRIPT } from '@/setup/theme-script'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
 import 'virtual:uno.css'
 
@@ -79,14 +80,14 @@ export const Route = createRootRoute({
         pathname: matches[matches.length - 1]?.pathname ?? '/',
         search: matches[matches.length - 1]?.search,
       }),
-      scripts: [{ children: ZOD_JITLESS_INLINE_SCRIPT }],
+      // The theme script first: it sets <html data-theme> before the body paints (setup/theme-script.ts)
+      scripts: [{ children: THEME_INLINE_SCRIPT }, { children: ZOD_JITLESS_INLINE_SCRIPT }],
     }
   },
   component: RootComponent,
 })
 
 function RootLayout() {
-  const versionTheme = useVersionTheme()
   const location = useLocation()
 
   const pathname = location.pathname
@@ -108,9 +109,9 @@ function RootLayout() {
           style={{
             backgroundImage: `linear-gradient(
     to bottom,
-    ${versionTheme.accentColor},
-    ${versionTheme.accentColor} env(safe-area-inset-top),
-    ${versionTheme.accentColor}00
+    var(--accent-band),
+    var(--accent-band) env(safe-area-inset-top),
+    transparent
   )
 `,
           }}
@@ -197,7 +198,7 @@ function AppLayout() {
         <div
           aria-hidden="true"
           className="fixed inset-0 pointer-events-none"
-          style={{ background: `color-mix(in srgb, ${versionTheme.accentColor} 10%, rgba(255, 255, 255, 0.95))` }}
+          style={{ background: `color-mix(in srgb, ${versionTheme.accentColor} 10%, rgb(var(--surface-rgb) / 0.95))` }}
         />
       )}
       <div className="h-full w-full relative">
@@ -219,12 +220,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang={locale}
+      // data-theme is set on this element by the pre-paint theme script before hydration and cannot be known on the
+      // server (the HTML is cached per locale and path): the one attribute React may not compare. Applies to <html>
+      // itself only, not to its children.
+      suppressHydrationWarning
       style={
         {
           '--theme-accent': theme.accentColor,
           // Design tokens (src/styles/tokens.css) derive every surface tint and accent role from these two
           '--accent': theme.accentColor,
-          '--accent-strong': theme.accentStrongColor,
+          '--accent-strong-light': theme.accentStrongColor,
+          '--accent-strong-dark': theme.accentStrongDarkColor,
           '--theme-canvas': theme.canvasColor ?? theme.accentColor,
         } as CSSProperties
       }

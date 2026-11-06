@@ -1,0 +1,106 @@
+/*
+ * Dark theme: the dark values of the design tokens in tokens.css.
+ *
+ * The theme is the `data-theme` attribute on <html> ("light" or "dark"), resolved before first paint by the inline
+ * script in src/setup/theme-script.ts from the remembered choice (light, dark or system) and prefers-color-scheme.
+ * MUI's CssVarsProvider and the UnoCSS `dark:` variant key off the same attribute, and the colour scales of UnoCSS
+ * utilities mirror under it (src/styles/adaptive-palette.ts). Light values live in tokens.css; only dark overrides
+ * belong here, on the same token names.
+ *
+ * Contrast targets on dark glass over the dimmed background art: fg-1 ≥ 14:1, fg-2 ≥ 6:1, accent-strong ≥ 5.2:1,
+ * and --on-accent ≥ 4.5:1 on accent-strong fills.
+ */
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  --accent-strong: var(--accent-strong-dark, #41a98e);
+  --on-accent: #111114;
+  --accent-subtle: color-mix(in oklab, var(--accent) 22%, transparent);
+  --accent-band: color-mix(in oklab, var(--accent) 42%, #121216);
+
+  --fg-1: #f4f4f5;
+  --fg-2: #b4b4bd;
+  --danger: #f87171;
+  /* Fills that carry white text keep their light values: white on them is ≥4.5:1 in both themes */
+  --status-positive: #047857;
+  --status-warning: #b45309;
+
+  /* What `bg-white/…` and `text-black/…` utilities resolve to (uno.config.ts postprocess) */
+  --surface-rgb: 30 30 35;
+  --ink-rgb: 255 255 255;
+
+  --glass-tint: color-mix(in oklab, var(--accent) 10%, transparent);
+  --glass-bg: color-mix(in oklab, var(--accent) 9%, rgb(22 22 26 / 0.7));
+  --glass-thin-bg: color-mix(in oklab, var(--accent) 8%, rgb(22 22 26 / 0.5));
+  --glass-inset-bg: rgb(255 255 255 / 0.06);
+  --glass-overlay-bg: color-mix(in oklab, var(--accent) 7%, rgb(26 26 31 / 0.9));
+  --glass-border: rgb(255 255 255 / 0.1);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.06);
+
+  --shadow-1: 0 0 0 1px rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.4), 0 2px 4px 0 rgb(0 0 0 / 0.3);
+  --shadow-1-hover: 0 0 0 1px rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.5), 0 2px 4px 0 rgb(0 0 0 / 0.4);
+  --shadow-overlay: 0 0 0 1px rgb(0 0 0 / 0.4), 0 8px 24px -6px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.3);
+
+  --focus-ring: #f4f4f5;
+  --focus-halo: 0 0 0 4px rgb(0 0 0 / 0.85);
+
+  /* The canvas behind the background art, and the scrim that dims the art so glass and text read on it */
+  --canvas-dark: #0f0f12;
+  --backdrop-scrim: rgb(12 12 15 / 0.74);
+}
+
+@supports not (color: color-mix(in oklab, red, blue)) {
+  html[data-theme='dark'] {
+    --accent-subtle: rgb(255 255 255 / 0.1);
+    --glass-tint: transparent;
+    --glass-bg: rgb(22 22 26 / 0.74);
+    --glass-thin-bg: rgb(22 22 26 / 0.54);
+    --glass-overlay-bg: rgb(26 26 31 / 0.92);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html[data-theme='dark'] {
+    --glass-bg: color-mix(in oklab, var(--accent) 6%, rgb(22 22 26 / 0.96));
+    --glass-thin-bg: color-mix(in oklab, var(--accent) 6%, rgb(22 22 26 / 0.94));
+    --glass-inset-bg: rgb(255 255 255 / 0.08);
+    --glass-overlay-bg: color-mix(in oklab, var(--accent) 4%, rgb(26 26 31 / 0.98));
+  }
+}
+
+@media (prefers-contrast: more) {
+  html[data-theme='dark'] {
+    --fg-2: #d4d4d8;
+    --glass-bg: color-mix(in oklab, var(--accent) 4%, rgb(18 18 21 / 0.95));
+    --glass-thin-bg: color-mix(in oklab, var(--accent) 4%, rgb(18 18 21 / 0.92));
+    --glass-inset-bg: rgb(255 255 255 / 0.1);
+    --glass-overlay-bg: rgb(22 22 26 / 0.98);
+    --glass-border: rgb(255 255 255 / 0.45);
+  }
+}
+
+/* The body's inline canvas colour is the version's pastel: replace it, and dim the background art under the scrim */
+html[data-theme='dark'] body {
+  background-color: var(--canvas-dark) !important;
+}
+
+html[data-theme='dark'] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--backdrop-scrim);
+}
+
+/* The header: the same accent-tinted glass fading into the page, mixed toward the dark surface instead of white */
+html[data-theme='dark'] .glass-bar {
+  background-image: linear-gradient(
+    to bottom,
+    var(--accent) 0,
+    var(--accent) env(safe-area-inset-top),
+    color-mix(in oklab, var(--accent) 30%, rgb(18 18 22 / 0.55)) calc(env(safe-area-inset-top) + 0.01px),
+    color-mix(in oklab, var(--accent) 10%, rgb(18 18 22 / 0)) 100%
+  );
+}
