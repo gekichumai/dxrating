@@ -30,7 +30,7 @@ export const SongHubPage: FC = () => {
 
   return (
     // Desktop (lg+): the song facts become a sticky left column and the charts table takes the rest of the width
-    <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4 lg:max-w-6xl lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start">
+    <div className="max-w-2xl mx-auto px-4 pt-6 pb-global flex flex-col gap-4 lg:max-w-6xl lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start">
       <IconButton
         component="a"
         href="/"
