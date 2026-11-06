@@ -77,6 +77,16 @@ type TagsListResult = {
 }
 
 type AliasListResult = Array<{ song_id: string; name: string }>
+
+const uniqueAliases = (aliases: AliasListResult): AliasListResult => {
+  const seen = new Set<string>()
+  return aliases.filter((alias) => {
+    const key = `${alias.song_id}\u0000${alias.name}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
 type TrendingCacheResult = {
   results: Array<{ songId: string; count: number }>
   dateFrom: string
@@ -374,14 +384,17 @@ const aliasesHandler = {
       } else {
         yield* Effect.sync(() => Sentry.metrics.count('cache.miss', 1, { attributes: { key: 'aliases:list' } }))
 
-        result = yield* database.query('Aliases.list', (db) =>
+        const rows = yield* database.query('Aliases.list', (db) =>
           db
             .select({
               song_id: songAliases.song_id,
               name: songAliases.name,
             })
-            .from(songAliases),
+            .from(songAliases)
+            .orderBy(songAliases.id),
         )
+        // The same name can be submitted for a song more than once; list it once, in submission order
+        result = uniqueAliases(rows)
 
         yield* cache.set('aliases:list', result)
       }
@@ -390,10 +403,13 @@ const aliasesHandler = {
         const publicIds = yield* withCatalogIdentityErrors(
           catalogIdentities.translateSongIdsToPublic(result.map((alias) => alias.song_id)),
         )
-        return result.flatMap((alias) => {
-          const songId = publicIds.get(alias.song_id)
-          return songId === undefined ? [] : [{ ...alias, song_id: songId }]
-        })
+        // Legacy ids of a renamed song share one public id, so their aliases can coincide after translation
+        return uniqueAliases(
+          result.flatMap((alias) => {
+            const songId = publicIds.get(alias.song_id)
+            return songId === undefined ? [] : [{ ...alias, song_id: songId }]
+          }),
+        )
       }
       return result
     }),
@@ -717,7 +733,23 @@ const arcadesHandler = {
     handlerGen(function* ({ input }) {
       const database = yield* Database
       const db = database.db
-      const filters: SQL[] = []
+      // A venue whose every installation went absent is closed, or came only from a source that is no longer crawled
+      // (such as the national Chinese list, gekichumai/meta#8). Venues without any installation rows stay listed.
+      const listedVenue = or(
+        notExists(
+          db
+            .select({ value: sql`1` })
+            .from(arcadeInstallations)
+            .where(eq(arcadeInstallations.venue_id, arcadeVenues.id)),
+        ),
+        exists(
+          db
+            .select({ value: sql`1` })
+            .from(arcadeInstallations)
+            .where(and(eq(arcadeInstallations.venue_id, arcadeVenues.id), isNull(arcadeInstallations.absent_since))),
+        ),
+      )!
+      const filters: SQL[] = [listedVenue]
 
       if (
         input.minLatitude !== undefined &&
@@ -776,7 +808,7 @@ const arcadesHandler = {
             db
               .select()
               .from(arcadeVenues)
-              .where(filters.length > 0 ? and(...filters) : undefined)
+              .where(and(...filters))
               .orderBy(asc(arcadeVenues.normalized_name), asc(arcadeVenues.id)),
           ),
           database.query('Arcades.listChains', (db) =>
@@ -792,7 +824,7 @@ const arcadesHandler = {
                   db
                     .select({ value: sql`1` })
                     .from(arcadeVenues)
-                    .where(eq(arcadeVenues.chain_id, arcadeChains.id)),
+                    .where(and(eq(arcadeVenues.chain_id, arcadeChains.id), listedVenue)),
                 ),
               )
               .orderBy(asc(arcadeChains.name), asc(arcadeChains.id)),

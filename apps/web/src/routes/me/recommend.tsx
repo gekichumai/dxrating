@@ -1,11 +1,11 @@
 import { ClientOnly, createFileRoute } from '@tanstack/react-router'
 import { RecommendPage } from '@/components/recommend/RecommendPage'
-import { createServerI18n } from '@/setup/init-i18n'
+import { m } from '@/paraglide/messages'
 import { formatSeoTitle, resolveSeoLocale } from '@/utils/seo'
 
 export const Route = createFileRoute('/me/recommend')({
   head: ({ match, matches }) => {
-    const title = formatSeoTitle(createServerI18n(resolveSeoLocale([match, ...matches])).t('recommend:title'))
+    const title = formatSeoTitle(m.recommend_title({}, { locale: resolveSeoLocale([match, ...matches]) }))
     // Per-user page: never indexed, never in the sitemap or the HTML cache
     return { meta: [{ title }, { name: 'robots', content: 'noindex' }] }
   },

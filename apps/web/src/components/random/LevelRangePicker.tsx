@@ -1,7 +1,6 @@
 import { FormControlLabel, Slider, Switch } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, useId, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import IconMdiMinus from '~icons/mdi/minus'
 import IconMdiPlus from '~icons/mdi/plus'
 import {
@@ -19,6 +18,8 @@ import {
   spanChips,
   stepRange,
 } from './levelRange'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const chipClassName = (state: 'inside' | 'partial' | 'none' | 'push-on' | 'push-off') =>
   clsx(
@@ -60,7 +61,7 @@ export const LevelRangePicker: FC<{
   /** Where an SSS+ raises the user's rating; null with no scores */
   pushRange: LevelRange | null
 }> = ({ range, onChange, showBelow9, onShowBelow9Change, pushRange }) => {
-  const { t } = useTranslation(['random'])
+  const locale = useLocale()
   const sliderLabelId = useId()
   const floor = showBelow9 ? RANGE_FLOOR_EXTENDED : RANGE_FLOOR
   // The first chip of a two-tap span; any other change of the range drops it
@@ -102,10 +103,10 @@ export const LevelRangePicker: FC<{
     return (
       <fieldset
         className="glass-inset m-0 flex min-w-0 items-center justify-between gap-0.5 rounded-[var(--radius-md)] border border-solid border-[var(--glass-border)] p-0.5"
-        aria-label={t(`random:range.${end}`)}
+        aria-label={end === 'min' ? m.random_range_min({}, { locale }) : m.random_range_max({}, { locale })}
       >
         <StepButton
-          label={t(`random:range.${end}-down`)}
+          label={end === 'min' ? m.random_range_minDown({}, { locale }) : m.random_range_maxDown({}, { locale })}
           disabled={atLow}
           onClick={() => set(stepRange(range, end, -1, floor))}
         >
@@ -115,7 +116,7 @@ export const LevelRangePicker: FC<{
           {formatTenths(value)}
         </span>
         <StepButton
-          label={t(`random:range.${end}-up`)}
+          label={end === 'min' ? m.random_range_minUp({}, { locale }) : m.random_range_maxUp({}, { locale })}
           disabled={atHigh}
           onClick={() => set(stepRange(range, end, 1, floor))}
         >
@@ -127,7 +128,7 @@ export const LevelRangePicker: FC<{
 
   return (
     <fieldset className="m-0 flex min-w-0 flex-col gap-3 border-none p-0">
-      <legend className="mb-2 p-0 text-sm font-semibold">{t('random:range.title')}</legend>
+      <legend className="mb-2 p-0 text-sm font-semibold">{m.random_range_title({}, { locale })}</legend>
 
       {pushRange && (
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -137,18 +138,18 @@ export const LevelRangePicker: FC<{
             onClick={() => applyPreset(pushRange)}
             className={chipClassName(isSameRange(range, pushRange) ? 'push-on' : 'push-off')}
           >
-            {t('random:range.push')}
+            {m.random_range_push({}, { locale })}
             <span className="font-normal text-fg-2">
               {formatTenths(pushRange.min)}–{formatTenths(pushRange.max)}
             </span>
           </button>
-          <span className="text-xs text-fg-2">{t('random:range.push-hint')}</span>
+          <span className="text-xs text-fg-2">{m.random_range_pushHint({}, { locale })}</span>
         </div>
       )}
 
       <fieldset
         className="m-0 grid min-w-0 grid-cols-5 gap-1.5 border-none p-0 sm:grid-cols-9"
-        aria-label={t('random:range.chips')}
+        aria-label={m.random_range_chips({}, { locale })}
       >
         {LEVEL_CHIPS.map((chip) => {
           const coverage = chipCoverage(chip, range)
@@ -158,11 +159,14 @@ export const LevelRangePicker: FC<{
               key={chip}
               type="button"
               aria-pressed={coverage === 'inside'}
-              aria-label={t('random:range.chip-aria', {
-                level: chip,
-                min: formatTenths(chipRange.min),
-                max: formatTenths(chipRange.max),
-              })}
+              aria-label={m.random_range_chipAria(
+                {
+                  level: chip,
+                  min: formatTenths(chipRange.min),
+                  max: formatTenths(chipRange.max),
+                },
+                { locale },
+              )}
               onClick={() => onChip(chip)}
               className={clsx(
                 chipClassName(coverage),
@@ -176,7 +180,7 @@ export const LevelRangePicker: FC<{
       </fieldset>
       {/* Mounted throughout so the hint is announced; it takes no room until the first chip of a span is tapped */}
       <p className={anchor ? '-mt-1 m-0 text-xs leading-4 text-fg-2' : 'sr-only'} aria-live="polite">
-        {anchor ? t('random:range.span-hint') : ''}
+        {anchor ? m.random_range_spanHint({}, { locale }) : ''}
       </p>
 
       {/* The range in large type, each end with its own steppers: the main control on a phone */}
@@ -191,7 +195,7 @@ export const LevelRangePicker: FC<{
 
       <div className="flex flex-col gap-1">
         <span id={sliderLabelId} className="sr-only">
-          {t('random:range.slider')}
+          {m.random_range_slider({}, { locale })}
         </span>
         <Slider
           className="mx-3 w-auto"
@@ -223,7 +227,7 @@ export const LevelRangePicker: FC<{
               }}
             />
           }
-          label={<span className="text-xs text-fg-2">{t('random:range.below-9')}</span>}
+          label={<span className="text-xs text-fg-2">{m.random_range_below9({}, { locale })}</span>}
         />
       </div>
     </fieldset>

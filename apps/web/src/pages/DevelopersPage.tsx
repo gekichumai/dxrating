@@ -2,12 +2,14 @@ import { Button, IconButton, Tooltip } from '@mui/material'
 import clsx from 'clsx'
 import { type ComponentType, Fragment, type ReactNode, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import MdiArrowTopRight from '~icons/mdi/arrow-top-right'
 import MdiCheck from '~icons/mdi/check'
 import MdiContentCopy from '~icons/mdi/content-copy'
 import MdiCodeBraces from '~icons/mdi/code-braces'
 import McpLogo from '~icons/simple-icons/modelcontextprotocol'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
 
 const MCP_ENDPOINT = 'https://mcp.dxrating.net/mcp'
 // ?via= tells the MCP server's analytics which link brought a visitor; the guide page ignores it.
@@ -38,7 +40,7 @@ const COPIED_RESET_MS = 2000
 
 /** Copies a URL; the icon cross-fades to a check and a polite status region says it worked */
 const CopyButton = ({ value, label }: { value: string; label: string }) => {
-  const { t } = useTranslation(['developers'])
+  const locale = useLocale()
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -57,7 +59,7 @@ const CopyButton = ({ value, label }: { value: string; label: string }) => {
             // The Clipboard API is missing in insecure contexts and can be refused: say so and give the manual route
             const failed = () => {
               setCopied(false)
-              toast.error(t('developers:copy-failed'), { id: 'developers-copy-failed' })
+              toast.error(m.developers_copyFailed({}, { locale }), { id: 'developers-copy-failed' })
             }
             if (!navigator.clipboard) return failed()
             navigator.clipboard.writeText(value).then(() => setCopied(true), failed)
@@ -80,7 +82,7 @@ const CopyButton = ({ value, label }: { value: string; label: string }) => {
           />
         </IconButton>
       </Tooltip>
-      <output className="sr-only">{copied ? t('developers:copied') : ''}</output>
+      <output className="sr-only">{copied ? m.developers_copied({}, { locale }) : ''}</output>
     </>
   )
 }
@@ -179,15 +181,27 @@ const Term = ({ title, children }: { title: string; children: ReactNode }) => (
   </div>
 )
 
+const POLICY_TERMS: { key: string; title: PlainMessage; description: PlainMessage }[] = [
+  { key: 'compat', title: m.developers_policy_compat, description: m.developers_policy_compatDescription },
+  {
+    key: 'deprecation',
+    title: m.developers_policy_deprecation,
+    description: m.developers_policy_deprecationDescription,
+  },
+  { key: 'versions', title: m.developers_policy_versions, description: m.developers_policy_versionsDescription },
+  { key: 'ids', title: m.developers_policy_ids, description: m.developers_policy_idsDescription },
+  { key: 'scope', title: m.developers_policy_scope, description: m.developers_policy_scopeDescription },
+]
+
 export const DevelopersPage = () => {
-  const { t, i18n } = useTranslation(['developers'])
+  const locale = useLocale()
 
   return (
     <div
       // Korean wraps at spaces; breaking inside words reads badly at phone widths.
       className={clsx(
         'w-full max-w-4xl lg:max-w-6xl mx-auto px-4 pt-8 md:pt-14 pb-global text-fg-1',
-        i18n.language === 'ko' && 'break-keep',
+        locale === 'ko' && 'break-keep',
       )}
       itemScope
       itemType="https://schema.org/WebPage"
@@ -198,13 +212,13 @@ export const DevelopersPage = () => {
             className="m-0 text-3xl md:text-4xl font-semibold leading-tight tracking-[-0.02em] text-fg-1 text-balance"
             itemProp="name"
           >
-            {t('developers:title')}
+            {m.developers_title({}, { locale })}
           </h1>
           <p
             className="mt-3 max-w-2xl text-base md:text-lg leading-relaxed text-fg-2 text-pretty"
             itemProp="description"
           >
-            {t('developers:description')}
+            {m.developers_description({}, { locale })}
           </p>
         </header>
 
@@ -213,27 +227,27 @@ export const DevelopersPage = () => {
             id="developers-mcp"
             Icon={McpLogo}
             iconClassName="bg-white text-fg-1"
-            title={t('developers:mcp.title')}
-            description={t('developers:mcp.description')}
-            endpointLabel={t('developers:mcp.endpoint')}
+            title={m.developers_mcp_title({}, { locale })}
+            description={m.developers_mcp_description({}, { locale })}
+            endpointLabel={m.developers_mcp_endpoint({}, { locale })}
             endpoint={MCP_ENDPOINT}
-            copyLabel={t('developers:mcp.copy')}
-            action={{ label: t('developers:mcp.action'), href: MCP_GUIDE_URL }}
+            copyLabel={m.developers_mcp_copy({}, { locale })}
+            action={{ label: m.developers_mcp_action({}, { locale }), href: MCP_GUIDE_URL }}
             links={[]}
           />
           <Option
             id="developers-api"
             Icon={MdiCodeBraces}
             iconClassName="bg-accent-strong text-on-accent"
-            title={t('developers:api.title')}
-            description={t('developers:api.description')}
-            endpointLabel={t('developers:api.endpoint')}
+            title={m.developers_api_title({}, { locale })}
+            description={m.developers_api_description({}, { locale })}
+            endpointLabel={m.developers_api_endpoint({}, { locale })}
             endpoint={DXDATA_URL}
-            copyLabel={t('developers:api.copy')}
-            action={{ label: t('developers:api.action'), href: API_DOCS_URL }}
+            copyLabel={m.developers_api_copy({}, { locale })}
+            action={{ label: m.developers_api_action({}, { locale }), href: API_DOCS_URL }}
             links={[
               { label: 'OpenAPI', href: 'https://miruku.dxrating.net/spec.json' },
-              { label: t('developers:api.changelog'), href: API_CHANGELOG_URL },
+              { label: m.developers_api_changelog({}, { locale }), href: API_CHANGELOG_URL },
               { label: 'llms.txt', href: 'https://dxrating.net/llms.txt' },
             ]}
           />
@@ -243,16 +257,20 @@ export const DevelopersPage = () => {
         <div className="border-t border-solid border-x-0 border-b-0 border-black/8 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] divide-y lg:divide-y-0 lg:divide-x divide-solid divide-black/8">
           <section aria-labelledby="developers-terms" className="px-5 py-6 md:p-8">
             <h2 id="developers-terms" className="m-0 text-xl font-semibold leading-snug tracking-[-0.01em] text-fg-1">
-              {t('developers:terms.title')}
+              {m.developers_terms_title({}, { locale })}
             </h2>
             <dl className="mt-4 divide-y divide-solid divide-x-0 divide-black/8">
-              <Term title={t('developers:terms.data')}>{t('developers:terms.data-description')}</Term>
-              <Term title={t('developers:terms.credit')}>
+              <Term title={m.developers_terms_data({}, { locale })}>
+                {m.developers_terms_dataDescription({}, { locale })}
+              </Term>
+              <Term title={m.developers_terms_credit({}, { locale })}>
                 <code className="glass-inset inline-block rounded-[var(--radius-sm)] px-1.5 py-0 align-top font-mono text-[0.8125rem] leading-[1.25rem] text-fg-1">
                   {ATTRIBUTION_LINE}
                 </code>
               </Term>
-              <Term title={t('developers:terms.limits')}>{t('developers:terms.limits-description')}</Term>
+              <Term title={m.developers_terms_limits({}, { locale })}>
+                {m.developers_terms_limitsDescription({}, { locale })}
+              </Term>
             </dl>
           </section>
 
@@ -265,21 +283,23 @@ export const DevelopersPage = () => {
               id="developers-api-stability"
               className="m-0 text-xl font-semibold leading-snug tracking-[-0.01em] text-fg-1"
             >
-              {t('developers:policy.title')}
+              {m.developers_policy_title({}, { locale })}
             </h2>
-            <p className="mt-2 text-base leading-relaxed text-fg-2 text-pretty">{t('developers:policy.intro')}</p>
+            <p className="mt-2 text-base leading-relaxed text-fg-2 text-pretty">
+              {m.developers_policy_intro({}, { locale })}
+            </p>
             <dl className="mt-4 divide-y divide-solid divide-x-0 divide-black/8">
-              {(['compat', 'deprecation', 'versions', 'ids', 'scope'] as const).map((key) => (
-                <Term key={key} title={t(`developers:policy.${key}`)}>
-                  {t(`developers:policy.${key}-description`)}
+              {POLICY_TERMS.map(({ key, title, description }) => (
+                <Term key={key} title={title({}, { locale })}>
+                  {description({}, { locale })}
                 </Term>
               ))}
-              <Term title={t('developers:policy.updates')}>
-                {t('developers:policy.updates-description')}{' '}
-                <InlineLink href={API_CHANGELOG_URL}>{t('developers:api.changelog')}</InlineLink>
+              <Term title={m.developers_policy_updates({}, { locale })}>
+                {m.developers_policy_updatesDescription({}, { locale })}{' '}
+                <InlineLink href={API_CHANGELOG_URL}>{m.developers_api_changelog({}, { locale })}</InlineLink>
               </Term>
-              <Term title={t('developers:policy.support')}>
-                {t('developers:policy.support-description')}{' '}
+              <Term title={m.developers_policy_support({}, { locale })}>
+                {m.developers_policy_supportDescription({}, { locale })}{' '}
                 <InlineLink href={API_SUPPORT_URL}>github.com/gekichumai/dxrating</InlineLink>
               </Term>
             </dl>

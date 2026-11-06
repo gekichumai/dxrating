@@ -15,7 +15,7 @@ describe('LevelRangePicker push preset', () => {
         pushRange={{ min: 77, max: 77 }}
       />,
     )
-    fireEvent.click(screen.getByRole('button', { name: /random:range.push/ }))
+    fireEvent.click(screen.getByRole('button', { name: /My push range/ }))
     expect(onShowBelow9Change).toHaveBeenCalledWith(true)
     expect(onChange).toHaveBeenCalledWith({ min: 77, max: 77 })
   })
@@ -32,7 +32,7 @@ describe('LevelRangePicker push preset', () => {
         pushRange={{ min: 131, max: 149 }}
       />,
     )
-    fireEvent.click(screen.getByRole('button', { name: /random:range.push/ }))
+    fireEvent.click(screen.getByRole('button', { name: /My push range/ }))
     expect(onShowBelow9Change).not.toHaveBeenCalled()
     expect(onChange).toHaveBeenCalledWith({ min: 131, max: 149 })
   })

@@ -31,6 +31,18 @@ describe('Tags API', () => {
     expect(body.tagSongs).toEqual([])
   })
 
+  it('GET /api/v1/tags is public and cacheable at the edge', async () => {
+    const res = await fetch(`${getBaseUrl()}/api/v1/tags`, {
+      headers: { Origin: 'https://dxrating.net' },
+    })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    expect(res.headers.get('Cache-Control')).toBe('public, no-cache')
+    expect(res.headers.get('CDN-Cache-Control')).toMatch(/^public, max-age=60, /)
+    expect(res.headers.get('Cache-Tag')).toBe('tags')
+    expect(res.headers.get('ETag')).toBeTruthy()
+  })
+
   it('POST /api/v1/tags/attach requires authentication', async () => {
     const res = await fetch(`${getBaseUrl()}/api/v1/tags/attach`, {
       method: 'POST',
