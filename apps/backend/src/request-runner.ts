@@ -1,4 +1,4 @@
-import { Effect, Exit, FiberSet, ManagedRuntime, Scope } from 'effect'
+import { Cause, Effect, Exit, FiberSet, ManagedRuntime, Scope } from 'effect'
 
 export class RequestRunnerClosedError extends Error {
   constructor() {
@@ -6,6 +6,23 @@ export class RequestRunnerClosedError extends Error {
     this.name = 'RequestRunnerClosedError'
   }
 }
+
+/**
+ * The client closed the connection before the response finished, so the request's work was interrupted. Expected
+ * (navigation, closed tabs, `keepalive` beacons on unload): not an error to report.
+ */
+export class ClientClosedRequestError extends Error {
+  constructor() {
+    super('Client closed the request')
+    this.name = 'ClientClosedRequestError'
+  }
+}
+
+/** Expected endings of a request that are not server errors: the client left, or the server is shutting down. */
+// Explicitly boolean: both classes are structurally plain Errors, so an inferred type predicate would narrow every
+// other Error to never.
+export const isExpectedRequestEnd = (error: unknown): boolean =>
+  error instanceof ClientClosedRequestError || error instanceof RequestRunnerClosedError
 
 /** Own foreign request entry points independently of the runtime's service scope. */
 export const createRequestRunner = <R, ER>(runtime: ManagedRuntime.ManagedRuntime<R, ER>) => {
@@ -35,12 +52,23 @@ export const createRequestRunner = <R, ER>(runtime: ManagedRuntime.ManagedRuntim
     else externalSignal?.addEventListener('abort', forwardAbort, { once: true })
 
     // Register before the runtime can execute user code or initiate a nested request.
-    const pending = Promise.resolve().then(() =>
-      runtime.runPromise(
-        Effect.suspend(() => (!accepting || controller.signal.aborted ? Effect.interrupt : Effect.scoped(effect))),
-        { signal: controller.signal },
-      ),
-    )
+    const pending = Promise.resolve()
+      .then(() =>
+        runtime.runPromiseExit(
+          Effect.suspend(() => (!accepting || controller.signal.aborted ? Effect.interrupt : Effect.scoped(effect))),
+          { signal: controller.signal },
+        ),
+      )
+      .then((exit) => {
+        if (Exit.isSuccess(exit)) return exit.value
+        // An interruption is expected when the client left or shutdown stopped the request; any other one is a bug
+        // and keeps the squashed error it always had.
+        if (Cause.hasInterruptsOnly(exit.cause)) {
+          if (externalSignal?.aborted) throw new ClientClosedRequestError()
+          if (!accepting) throw new RequestRunnerClosedError()
+        }
+        throw Cause.squash(exit.cause)
+      })
     active.set(controller, pending)
     const finished = () => {
       active.delete(controller)

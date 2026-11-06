@@ -86,6 +86,21 @@ describe('published DX data OpenAPI contract', () => {
     ).toBe(false)
   })
 
+  it('accepts an optional title reading with its source', () => {
+    const song = catalogFixture.songs[0]
+    const withReading = { ...song, reading: 'けいやくそんぐ', readingSource: 'verified' }
+    expect(PublishedDxdataCatalogSchema.parse({ ...catalogFixture, songs: [withReading] }).songs[0]).toEqual(
+      withReading,
+    )
+    expect(
+      PublishedDxdataCatalogSchema.safeParse({ ...catalogFixture, songs: [{ ...song, readingSource: 'guess' }] })
+        .success,
+    ).toBe(false)
+    expect(
+      PublishedDxdataCatalogSchema.safeParse({ ...catalogFixture, songs: [{ ...song, reading: null }] }).success,
+    ).toBe(false)
+  })
+
   it('adds discoverable GET and HEAD operations without defining a runtime handler', () => {
     const document: OpenAPI.OpenAPIObject = {
       openapi: '3.1.1',

@@ -1,4 +1,4 @@
-import { initSentry } from './lib/functions/sentry'
+import { initSentry, Sentry } from './lib/functions/sentry'
 initSentry()
 
 import './logger'
@@ -17,7 +17,9 @@ import { HttpClientLive } from './services/http-client'
 runMain(
   Effect.scoped(
     Effect.gen(function* () {
-      // Register the runtime first: the HTTP listener drains before its services close.
+      // Finalizers run in reverse: the HTTP listener drains (bounded by DRAIN_TIMEOUT_MS), then the runtime joins the
+      // remaining requests and closes its services (database pools), then Sentry sends what it buffered.
+      yield* Effect.addFinalizer(() => Effect.promise(() => Sentry.close(2000)))
       yield* Effect.addFinalizer(() => Effect.promise(shutdownApp))
       yield* appRuntime.contextEffect
       const server = yield* serve({ fetch: app.fetch, port: config.port })
