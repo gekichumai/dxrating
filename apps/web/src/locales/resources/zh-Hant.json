@@ -5,6 +5,7 @@
     "pages.search.title": "搜尋譜面",
     "pages.search.seo-title": "搜尋譜面",
     "pages.search.seo-description": "按歌曲名、藝術家或難度瀏覽所有 maimai DX 譜面，查看譜面定數、音符數和詳細譜面資訊。",
+    "pages.search.introduction": "DXRating 是 maimai DX 的譜面資料庫和評分計算器。可按曲名、曲師、譜師或別名搜尋全部歌曲，比較譜面定數、音符數和收錄版本；匯入成績後還能查看自己的 Best 50 評分。",
     "pages.recent.title": "新譜面",
     "pages.recent.seo-title": "新譜面",
     "pages.recent.seo-description": "在 DXRating 查看最近更新的 maimai DX 譜面頁面，不含 BASIC 與 ADVANCED 譜面。",

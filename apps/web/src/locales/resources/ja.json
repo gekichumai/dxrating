@@ -5,6 +5,7 @@
     "pages.search.title": "譜面検索",
     "pages.search.seo-title": "譜面検索",
     "pages.search.seo-description": "maimai DX の譜面を、楽曲名、アーティスト、難易度から検索できます。譜面定数、ノーツ数、詳しい譜面情報も確認できます。",
+    "pages.search.introduction": "DXRating は maimai DX の譜面データベースとレーティング計算ツールです。曲名・アーティスト・譜面作者・別名から全曲を検索し、譜面定数やノーツ数、収録バージョンを比べられます。スコアを取り込めば Best 50 のレーティングも確認できます。",
     "pages.recent.title": "新着譜面",
     "pages.recent.seo-title": "新着譜面",
     "pages.recent.seo-description": "DXRating で BASIC と ADVANCED を除く、最近更新された maimai DX 譜面ページを確認できます。",

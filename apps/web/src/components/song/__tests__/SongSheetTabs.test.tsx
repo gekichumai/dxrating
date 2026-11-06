@@ -1,5 +1,5 @@
 import { type ServerEnum, type Sheet, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import i18n from 'i18next'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
@@ -73,5 +73,29 @@ describe('SongSheetTabs', () => {
 
     expect(screen.queryByRole('tablist', { name: '譜面タイプ' })).toBeNull()
     expect(screen.getByText('でらっくす')).toBeTruthy()
+  })
+
+  it('activates a chart tab link with Space as well as Enter', () => {
+    const onDifficultyChange = vi.fn()
+    render(
+      <SongSheetTabs
+        sheets={[
+          makeSheet(TypeEnum.DX),
+          { ...makeSheet(TypeEnum.DX), id: 'expert', difficulty: DifficultyEnum.Expert },
+        ]}
+        availableTypes={[TypeEnum.DX]}
+        activeType={TypeEnum.DX}
+        activeDifficulty={DifficultyEnum.Master}
+        onTypeChange={vi.fn()}
+        onDifficultyChange={onDifficultyChange}
+        hrefFor={(type, difficulty) => `/songs/s/${type}/${difficulty}?locale=ja`}
+      />,
+    )
+
+    const expert = screen.getByRole('tab', { name: 'EXPERT' })
+    expect(expert.getAttribute('href')).toBe('/songs/s/dx/expert?locale=ja')
+    const notCancelled = fireEvent.keyDown(expert, { key: ' ' })
+    expect(notCancelled).toBe(false)
+    expect(onDifficultyChange).toHaveBeenCalledWith(DifficultyEnum.Expert)
   })
 })

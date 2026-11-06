@@ -5,6 +5,7 @@
     "pages.search.title": "채보 검색",
     "pages.search.seo-title": "채보 및 곡",
     "pages.search.seo-description": "곡명, 아티스트 또는 난이도로 모든 maimai DX 채보를 검색하세요. 내부 레벨, 노트 수와 상세 채보 정보를 확인할 수 있습니다.",
+    "pages.search.introduction": "DXRating은 maimai DX 채보 데이터베이스이자 레이팅 계산기입니다. 곡 제목, 아티스트, 채보 제작자, 별칭으로 모든 곡을 검색하고 보면 상수, 노트 수, 수록 버전을 비교할 수 있습니다. 기록을 가져오면 Best 50 레이팅도 확인할 수 있습니다.",
     "pages.recent.title": "새 채보",
     "pages.recent.seo-title": "새 채보",
     "pages.recent.seo-description": "BASIC과 ADVANCED를 제외하고 최근 업데이트된 maimai DX 채보 페이지를 DXRating에서 확인하세요.",
