@@ -54,7 +54,8 @@ import { ExportMenu } from '../components/rating/io/ExportMenu'
 import { NetImportSettingsButton } from '../components/rating/io/import/NetImportSettingsButton'
 import { ImportMenu } from '../components/rating/io/ImportMenu'
 import { RenderToOneShotImageButton } from '../components/rating/io/export/RenderToOneShotImageButton'
-import { useRatingEntries } from '../components/rating/useRatingEntries'
+import { useRatingEntries, useRatingView } from '../components/rating/useRatingEntries'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { SheetListItem, SheetListItemContent } from '../components/sheet/SheetListItem'
 import { useScoreEntries, useScoreRepository } from '../models/scores/useScoreRepository'
 import { achievementRateBand, captureAnalyticsEvent } from '../lib/analytics'
@@ -137,6 +138,8 @@ export const RatingCalculator = () => {
   const repository = useScoreRepository()
   const { data: sheets } = useSheets()
   const [showOnlyB50, setShowOnlyB50] = useState(false)
+  const ratingView = useRatingView()
+  const navigate = useNavigate()
   const [compactMode, setCompactMode] = useState(false)
   const { t } = useTranslation(['rating-calculator'])
 
@@ -246,7 +249,30 @@ export const RatingCalculator = () => {
               </div>
             }
           />
+
+          <FormControlLabel
+            control={
+              <Switch
+                checked={ratingView === 'ap50'}
+                onChange={() => {
+                  const enabled = ratingView !== 'ap50'
+                  void navigate({ to: '/rating', search: enabled ? { view: 'ap50' } : {}, replace: true })
+                  captureAnalyticsEvent('rating_calculator_view_changed', { setting: 'ap50', enabled })
+                }}
+              />
+            }
+            label={t('rating-calculator:quick-actions.ap50')}
+          />
+
+          <Button component={Link} to="/me/records" size="small" variant="text">
+            {t('toplists:entry-link')}
+          </Button>
         </div>
+        {ratingView === 'ap50' && (
+          <Alert severity="info" className="mb-2">
+            {t('rating-calculator:quick-actions.ap50-hint')}
+          </Alert>
+        )}
         <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
         <RatingCalculatorTableContent compactMode={compactMode} showOnlyB50={showOnlyB50} />
 

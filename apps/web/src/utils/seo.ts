@@ -646,3 +646,10 @@ export function buildProgressSummarySeo(locale: SupportedLocale) {
     meta: [{ title: formatSeoTitle(t(locale, 'completion:progress.title')) }, { name: 'robots', content: 'noindex' }],
   }
 }
+
+/** Per-user top lists (`/me/records`): titled but never indexed */
+export function buildToplistsSeo(locale: SupportedLocale) {
+  return {
+    meta: [{ title: formatSeoTitle(t(locale, 'toplists:title')) }, { name: 'robots', content: 'noindex' }],
+  }
+}
