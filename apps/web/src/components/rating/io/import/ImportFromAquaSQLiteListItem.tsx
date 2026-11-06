@@ -33,9 +33,9 @@ import { SheetListItemContent } from '../../../sheet/SheetListItem'
 import { useWebHaptics } from 'web-haptics/react'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
-import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
+import { announceImportLeftOut, cloudImportErrorMessage, importFileEntries } from './cloudImport'
 
 export const ImportFromAquaSQLiteListItem: FC<{
   onClose: () => void
@@ -234,20 +234,35 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
             variant="contained"
             onClick={async () => {
               const analytics = createRatingImportTracker('aqua_sqlite')
-              const { applied } = await reviewAndApplyImport(
-                repository,
-                records.map((record) => record.entry),
-                { source: 'aqua-sqlite', mode: 'replace' },
-                { trigger: 'manual' },
-              )
-              if (!applied) {
+              let result: Awaited<ReturnType<typeof importFileEntries>>
+              try {
+                result = await importFileEntries(
+                  repository,
+                  records.map((record) => record.entry),
+                  // A cloud save keeps the Aqua user ID as the account the file claims
+                  {
+                    source: 'aqua-sqlite',
+                    mode: 'replace',
+                    claimedAccountId: String(selectedUser?.id ?? '') || undefined,
+                  },
+                )
+              } catch (error) {
+                analytics.failed('invalid_file')
+                console.error(error)
+                toast.error(cloudImportErrorMessage(error, t) ?? String(formatErrorMessage(error)))
+                return
+              }
+              // `null`: the user cancelled the preview (local save) or the merge / clear-first choice (cloud save)
+              if (!result) {
                 analytics.failed('cancelled_by_user')
                 return
               }
-              analytics.succeeded(records.length, warnings.length)
+              analytics.succeeded(result.count, warnings.length)
 
               haptic.trigger('success')
-              toast.success(t('rating-calculator:io.import.aqua-sqlite.success', { count: records.length }))
+              // A cloud save counts what the server took, not what was sent
+              toast.success(t('rating-calculator:io.import.aqua-sqlite.success', { count: result.count }))
+              announceImportLeftOut(result, t, (message) => toast(message))
 
               onClose?.()
             }}

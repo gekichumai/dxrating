@@ -9,54 +9,32 @@ import { reviewAndApplyImport } from '@/models/scores/importReview'
 import type { WebScoreRepository } from '@/models/scores/ScoreRepository'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
-import { NetImportError, type NetImportErrorCode, unexpectedErrorSubtitle } from './netImportErrorFeedback'
+import {
+  NET_IMPORT_ERROR_I18N,
+  NetImportError,
+  type NetImportErrorCode,
+  isNetImportErrorCode,
+  netImportErrorCodeOf,
+  unexpectedErrorSubtitle,
+} from './netImportErrorFeedback'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { netImportProgress } from './netImportProgressStore'
+import {
+  FETCH_STATE_PROGRESS,
+  type FetchNetRecordProgressState,
+  isFetchNetRecordProgressState,
+} from './netImportStages'
+import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
+import { ImportAlreadyRunningError, ServerImportFailedError } from '@/models/scores/cloudImports'
 
-const ERROR_CODE_I18N: Record<NetImportErrorCode, string> = {
-  NET_MAINTENANCE: 'rating-calculator:io.import.net-records.errors.maintenance',
-  INVALID_CREDENTIALS: 'rating-calculator:io.import.net-records.errors.invalid-credentials',
-  AIME_CARD_UNAVAILABLE: 'rating-calculator:io.import.net-records.errors.aime-card-unavailable',
-  UNKNOWN_ERROR: 'rating-calculator:io.import.net-records.errors.unknown',
-  INTERNAL_ERROR: 'rating-calculator:io.import.net-records.errors.internal',
-  TOKEN_ERROR: 'rating-calculator:io.import.net-records.errors.token',
-}
+const ERROR_CODE_I18N = NET_IMPORT_ERROR_I18N
 
 const ERROR_CODE_DETAIL_I18N: Partial<Record<NetImportErrorCode, string>> = {
   NET_MAINTENANCE: 'rating-calculator:io.import.net-records.errors.maintenance-detail',
   AIME_CARD_UNAVAILABLE: 'rating-calculator:io.import.net-records.errors.aime-card-unavailable-detail',
 }
 
-export type FetchNetRecordProgressState =
-  | 'ready'
-  | 'auth:in-progress'
-  | 'auth:succeeded'
-  | 'fetch:recent:in-progress'
-  | 'fetch:recent:completed'
-  | 'fetch:music:in-progress:basic'
-  | 'fetch:music:in-progress:advanced'
-  | 'fetch:music:in-progress:expert'
-  | 'fetch:music:in-progress:master'
-  | 'fetch:music:in-progress:remaster'
-  | 'fetch:music:in-progress:utage'
-  | 'fetch:music:completed'
-  | 'concluded'
-
-const FETCH_STATE_PROGRESS: Record<FetchNetRecordProgressState, number> = {
-  ready: 0.01,
-  'auth:in-progress': 0.08,
-  'auth:succeeded': 0.2,
-  'fetch:recent:in-progress': 0.2,
-  'fetch:recent:completed': 0.3,
-  'fetch:music:in-progress:basic': 0.4,
-  'fetch:music:in-progress:advanced': 0.5,
-  'fetch:music:in-progress:expert': 0.6,
-  'fetch:music:in-progress:master': 0.7,
-  'fetch:music:in-progress:remaster': 0.8,
-  'fetch:music:in-progress:utage': 0.9,
-  'fetch:music:completed': 1,
-  concluded: 1,
-}
+export type { FetchNetRecordProgressState }
 
 interface AuthParams {
   region: 'jp' | 'intl'
@@ -97,8 +75,8 @@ const fetchNetRecords = async (
           resolve(data)
         } else if (event === 'error') {
           const parsed = JSON.parse(message.data) as { code?: string; error?: string }
-          if (parsed.code && parsed.code in ERROR_CODE_I18N) {
-            reject(new NetImportError(parsed.code as NetImportErrorCode, parsed.error))
+          if (parsed.code && isNetImportErrorCode(parsed.code)) {
+            reject(new NetImportError(parsed.code, parsed.error))
           } else {
             reject(new Error(parsed.error ?? 'unknown error'))
           }
@@ -130,12 +108,20 @@ export const NET_IMPORT_COOLDOWN_MS = 15 * 60 * 1000 // 15 minutes
 
 let importInFlight = false
 
+export interface CloudNetImportOptions {
+  /** `auto` for the automatic import; `user` when the user asked (the default with credentials passed in) */
+  trigger?: 'user' | 'auto'
+  /** The automatic import's key, one per save and 15 minutes (`autoNetImportKey`) */
+  idempotencyKey?: string
+}
+
 export const importFromNETRecords = async (
   catalog: SongCatalog,
   repository: WebScoreRepository,
   mode: 'merge' | 'replace',
   onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
   authParams?: AuthParams,
+  cloud?: CloudNetImportOptions,
 ) => {
   if (importInFlight) {
     console.warn('[importFromNETRecords] Import already in progress, skipping duplicate call')
@@ -176,6 +162,59 @@ export const importFromNETRecords = async (
       return
     }
     const { region, username, password } = params
+
+    const path = importPath(repository)
+    if (path === 'server') {
+      // A cloud save: the server signs in to maimai NET, fetches and merges the records (verified), and this page
+      // pulls them after. The same progress toast; the records never pass through the browser
+      let stage: FetchNetRecordProgressState = 'ready'
+      const job = await runServerImportToEnd(
+        repository,
+        'maimai-net',
+        {
+          region,
+          id: username,
+          password,
+          trigger: cloud?.trigger ?? (authParams ? 'user' : 'auto'),
+          idempotencyKey: cloud?.idempotencyKey,
+        },
+        (progress) => {
+          if (isFetchNetRecordProgressState(progress.stage)) stage = progress.stage
+          onProgress?.(stage, progress.progress)
+          netImportProgress.update({ status: 'running', stage, progress: progress.progress })
+        },
+      ).catch((error: unknown) => {
+        // The stream's error codes are the ones the old route reports; a replayed or polled job carries them in
+        // lowercase
+        const code = error instanceof ServerImportFailedError ? netImportErrorCodeOf(error.code) : null
+        if (code) throw new NetImportError(code, error instanceof Error ? error.message : undefined)
+        throw error
+      })
+      haptics.trigger('success')
+      netImportProgress.finish(
+        'success',
+        <div className="flex flex-col">
+          <span>
+            {t('rating-calculator:cloud-save.import.success', {
+              source: `maimai NET (${String(region).toUpperCase()})`,
+              summary: summarizeImportJob(job, t),
+            })}
+          </span>
+        </div>,
+      )
+      localStorage.setItem(NET_IMPORT_LAST_SUCCESS_KEY, Date.now().toString())
+      captureAnalyticsEvent('rating_import_succeeded', {
+        source: 'maimai_net',
+        duration_ms: performance.now() - importStart,
+        entry_count: job.counts.fetched,
+        warning_count: 0,
+        mode,
+        trigger,
+        region,
+      })
+      return
+    }
+
     const data = await fetchNetRecords({ region, username, password }, (state, progress) => {
       onProgress?.(state, progress)
       netImportProgress.update({ status: 'running', stage: state, progress })
@@ -186,25 +225,35 @@ export const importFromNETRecords = async (
       console.warn('[importFromNETRecords]', warning.message, warning.row)
     }
 
-    // merge: a higher achievement replaces the saved values of its chart. A manual import is always previewed; an
-    // automatic one only when it would lower or remove a saved score
-    const { applied } = await reviewAndApplyImport(
-      repository,
-      entries,
-      { source: 'maimai-net', mode },
-      { trigger: trigger === 'manual' ? 'manual' : 'automatic' },
-    )
-    if (!applied) {
-      captureAnalyticsEvent('rating_import_failed', {
-        source: 'maimai_net',
-        duration_ms: performance.now() - importStart,
-        error_code: 'cancelled_by_user',
-        mode,
-        trigger,
+    if (path === 'client-fallback') {
+      // A cloud save with server imports off (§7.4): the one case where this page uploads what it fetched. The
+      // records are client_reported and never shown as verified. It only merges, so it is not previewed
+      await importFallbackEntries(repository, entries, 'maimai-net', {
+        claimedSource: `maimai-net-${region}`,
+        trigger: cloud?.trigger ?? (authParams ? 'user' : 'auto'),
+        idempotencyKey: cloud?.idempotencyKey,
       })
-      netImportProgress.update(null)
-      toast(t('rating-calculator:io.import.review.cancelled'), { id: 'import-review-cancelled' })
-      return
+    } else {
+      // merge: a higher achievement replaces the saved values of its chart. A manual import is always previewed; an
+      // automatic one only when it would lower or remove a saved score
+      const { applied } = await reviewAndApplyImport(
+        repository,
+        entries,
+        { source: 'maimai-net', mode },
+        { trigger: trigger === 'manual' ? 'manual' : 'automatic' },
+      )
+      if (!applied) {
+        captureAnalyticsEvent('rating_import_failed', {
+          source: 'maimai_net',
+          duration_ms: performance.now() - importStart,
+          error_code: 'cancelled_by_user',
+          mode,
+          trigger,
+        })
+        netImportProgress.update(null)
+        toast(t('rating-calculator:io.import.review.cancelled'), { id: 'import-review-cancelled' })
+        return
+      }
     }
 
     const lastRecord = data.recent.at(0)
@@ -276,9 +325,15 @@ export const importFromNETRecords = async (
     const title =
       error instanceof NetImportError
         ? t(ERROR_CODE_I18N[error.code])
-        : t('rating-calculator:io.import.net-records.errors.unknown')
+        : error instanceof ImportAlreadyRunningError
+          ? t('rating-calculator:cloud-save.import.errors.already-running')
+          : t('rating-calculator:io.import.net-records.errors.unknown')
     const translatedDetail = error instanceof NetImportError ? ERROR_CODE_DETAIL_I18N[error.code] : undefined
-    const subtitle = translatedDetail ? t(translatedDetail) : unexpectedErrorSubtitle(error)
+    const subtitle = translatedDetail
+      ? t(translatedDetail)
+      : error instanceof ImportAlreadyRunningError
+        ? null
+        : unexpectedErrorSubtitle(error)
 
     netImportProgress.finish(
       'error',

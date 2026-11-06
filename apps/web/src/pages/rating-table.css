@@ -327,6 +327,10 @@
     font-size: 0.8125rem;
     letter-spacing: -0.02em;
   }
+  /* Cloud saves: no room beside the achievement on phones; the chart dialog shows the provenance */
+  .rating-table .rating-provenance-icon {
+    display: none;
+  }
   /* Narrow columns: the label may wrap, and the chevron follows its last line as text does */
   .rating-table-sort {
     display: block;

@@ -10,7 +10,6 @@ import {
   SYNC_BACKOFF_MAX_MS,
 } from '../CloudScoreRepository'
 import { CloudScoreDatabase } from '../cloudScoreDatabase'
-import { UnsupportedScoreOperationError } from '../ScoreRepository'
 import { FakeCloudSaveServer, manualProvenance, verifiedProvenance } from './fakeCloudSaveServer'
 
 const SHEET_A = 'dsht_e5nsvt8k2a'
@@ -852,20 +851,6 @@ describe('CloudScoreRepository', () => {
       expect.objectContaining({ op: 'delete', sheetId: SHEET_B, basedOnRevision: 2 }),
     ])
     expect(server.checksum()).toEqual({ count: 0, sumAchievement: 0 })
-  })
-
-  it('never uploads records it pulled: imports are not available until server imports land', async () => {
-    server.put(SHEET_A, 990000, manualProvenance())
-    const repository = await openRepository()
-    await repository.sync()
-
-    await expect(
-      repository.applyImport([{ sheetId: SHEET_B, achievementRate: 99 }], { source: 'aqua-dx', mode: 'merge' }),
-    ).rejects.toBeInstanceOf(UnsupportedScoreOperationError)
-    expect(() => repository.runServerImport('lxns', {})).toThrow(UnsupportedScoreOperationError)
-    await repository.sync()
-    expect(server.mutateCalls).toEqual([])
-    expect(repository.entries()).toHaveLength(1)
   })
 
   it('scopes issues to the save they were made on', async () => {

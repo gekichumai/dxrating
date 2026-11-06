@@ -1,4 +1,5 @@
 import { useNetImportSettings } from './import/NetImportSettingsContext'
+import { CloudImportConfirmDialog } from '../../cloud-save/CloudImportConfirmDialog'
 import { Button, Divider, Menu } from '@mui/material'
 import { type FC, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -27,6 +28,8 @@ export const ImportMenu: FC = () => {
 
   return (
     <>
+      {/* Asks how a file import goes into a cloud save; renders nothing otherwise */}
+      <CloudImportConfirmDialog />
       <Button
         ref={triggerRef}
         id={`button-${id}`}

@@ -8,6 +8,41 @@ export type NetImportErrorCode =
   | 'INTERNAL_ERROR'
   | 'TOKEN_ERROR'
 
+/** The message of each maimai NET error code */
+export const NET_IMPORT_ERROR_I18N: Record<NetImportErrorCode, string> = {
+  NET_MAINTENANCE: 'rating-calculator:io.import.net-records.errors.maintenance',
+  INVALID_CREDENTIALS: 'rating-calculator:io.import.net-records.errors.invalid-credentials',
+  AIME_CARD_UNAVAILABLE: 'rating-calculator:io.import.net-records.errors.aime-card-unavailable',
+  UNKNOWN_ERROR: 'rating-calculator:io.import.net-records.errors.unknown',
+  INTERNAL_ERROR: 'rating-calculator:io.import.net-records.errors.internal',
+  TOKEN_ERROR: 'rating-calculator:io.import.net-records.errors.token',
+}
+
+export function isNetImportErrorCode(code: string): code is NetImportErrorCode {
+  return Object.hasOwn(NET_IMPORT_ERROR_I18N, code)
+}
+
+/**
+ * The persisted error codes of a cloud save's NET import job (lowercase, as a replayed or polled job carries them)
+ * and the stream's codes they stand for
+ */
+const NET_JOB_ERROR_CODES: Record<string, NetImportErrorCode> = {
+  invalid_credentials: 'INVALID_CREDENTIALS',
+  net_maintenance: 'NET_MAINTENANCE',
+  aime_card_unavailable: 'AIME_CARD_UNAVAILABLE',
+  token_error: 'TOKEN_ERROR',
+}
+
+/**
+ * The NET error code of a failure, whether it came from the stream (`INVALID_CREDENTIALS`) or from the job a replay or
+ * a poll returned (`invalid_credentials`); `null` for any other code
+ */
+export function netImportErrorCodeOf(code: string | null | undefined): NetImportErrorCode | null {
+  if (!code) return null
+  if (isNetImportErrorCode(code)) return code
+  return Object.hasOwn(NET_JOB_ERROR_CODES, code) ? NET_JOB_ERROR_CODES[code]! : null
+}
+
 export class NetImportError extends Error {
   code: NetImportErrorCode
 

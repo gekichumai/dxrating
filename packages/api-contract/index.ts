@@ -1,3 +1,4 @@
+export * from './src/canonical-json.ts'
 export * from './src/contract.ts'
 export * from './src/error-response.ts'
 export * from './src/spec-filter.ts'

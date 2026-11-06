@@ -8,7 +8,7 @@ import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { createRatingImportTracker } from '@/lib/analytics'
 import { parseRatingFile } from '@/models/scores/ratingEntriesFile'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
-import { reviewAndApplyImport } from '@/models/scores/importReview'
+import { announceImportLeftOut, cloudImportErrorMessage, importFileEntries } from './cloudImport'
 
 export const ImportFromJSONButtonListItem: FC<{
   onClose: () => void
@@ -50,23 +50,24 @@ export const ImportFromJSONButtonListItem: FC<{
             try {
               if (!parsed.success) throw parsed.error
               const { entries } = parsed
-              const { applied } = await reviewAndApplyImport(
-                repository,
-                entries,
-                { source: 'dxrating-json', mode: 'replace' },
-                { trigger: 'manual' },
-              )
-              if (!applied) {
+              const result = await importFileEntries(repository, entries, { source: 'dxrating-json', mode: 'replace' })
+              // `null`: the user cancelled the preview (local save) or the merge / clear-first choice (cloud save)
+              if (!result) {
                 analytics.failed('cancelled_by_user')
                 toast(t('rating-calculator:io.import.review.cancelled'), { id: 'import-review-cancelled' })
                 return
               }
-              analytics.succeeded(entries.length)
+              // A cloud save counts what the server took: entries that match no chart or that it rejects are left out
+              analytics.succeeded(result.count)
               haptic.trigger('success')
-              toast.success(t('rating-calculator:io.import.json.success', { count: entries.length }))
+              toast.success(t('rating-calculator:io.import.json.success', { count: result.count }))
+              announceImportLeftOut(result, t, (message) => toast(message))
             } catch (error) {
               analytics.failed('invalid_file')
-              toast.error(t('rating-calculator:io.import.json.error', { error: formatErrorMessage(error) }))
+              toast.error(
+                cloudImportErrorMessage(error, t) ??
+                  t('rating-calculator:io.import.json.error', { error: formatErrorMessage(error) }),
+              )
             }
           }
           reader.readAsText(file)

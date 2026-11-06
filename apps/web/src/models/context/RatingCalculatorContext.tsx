@@ -26,6 +26,8 @@ import { ActiveSaveContext, useActiveSaveDecision } from '../scores/ActiveSaveCo
 import type { CloudScoreRepository } from '../scores/CloudScoreRepository'
 import { LocalScoreRepository } from '../scores/LocalScoreRepository'
 import { ScoreRepositoryContext } from '../scores/useScoreRepository'
+import { type CloudSaveUi, CloudSaveUiContext } from '../scores/CloudSaveUiContext'
+import { CloudSaveDemoBoundary } from '../scores/CloudSaveDemoBoundary'
 
 /**
  * The rating calculator's view of the score repository, kept source compatible: `entries` are the saved entries and
@@ -166,10 +168,21 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
 
   const value = useMemo(() => ({ entries, modifyEntries }), [entries, modifyEntries])
 
+  // The cloud save surfaces render only while a cloud save is active
+  const { cloudRepository, listSaves, setActiveSaveId } = activeSave
+  const cloudSaveUi = useMemo<CloudSaveUi | null>(
+    () => (cloudRepository ? { controller: cloudRepository, listSaves, setActiveSaveId } : null),
+    [cloudRepository, listSaves, setActiveSaveId],
+  )
+
   return (
     <ActiveSaveContext.Provider value={activeSave}>
       <ScoreRepositoryContext.Provider value={repository}>
-        <RatingCalculatorContext.Provider value={value}>{children}</RatingCalculatorContext.Provider>
+        <CloudSaveUiContext.Provider value={cloudSaveUi}>
+          <RatingCalculatorContext.Provider value={value}>
+            <CloudSaveDemoBoundary>{children}</CloudSaveDemoBoundary>
+          </RatingCalculatorContext.Provider>
+        </CloudSaveUiContext.Provider>
       </ScoreRepositoryContext.Provider>
     </ActiveSaveContext.Provider>
   )

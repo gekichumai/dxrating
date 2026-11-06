@@ -15,6 +15,7 @@ import {
 import { CloudScoreRepository } from '../CloudScoreRepository'
 import { clearUserFeaturesCache, FEATURES_OFF } from '../userFeatures'
 import { useScoreRepository } from '../useScoreRepository'
+import { useCloudSaveUi } from '../CloudSaveUiContext'
 import { FakeCloudSaveServer } from './fakeCloudSaveServer'
 
 const { toast } = vi.hoisted(() => ({ toast: vi.fn() }))
@@ -70,7 +71,10 @@ function renderActiveSave(deps: ActiveSaveDependencies) {
       <RatingCalculatorContextProvider>{children}</RatingCalculatorContextProvider>
     </ActiveSaveDependenciesContext.Provider>
   )
-  return renderHook(() => ({ repository: useScoreRepository(), activeSave: useActiveSave() }), { wrapper })
+  return renderHook(
+    () => ({ repository: useScoreRepository(), activeSave: useActiveSave(), cloudSaveUi: useCloudSaveUi() }),
+    { wrapper },
+  )
 }
 
 /** Lets the decision's promises settle */
@@ -146,6 +150,110 @@ describe('ActiveSaveContext', () => {
 
     expect(result.current.repository.kind).toBe('local')
     expect(deps.openCloudRepository).not.toHaveBeenCalled()
+  })
+
+  it('decides once the session and the features have answered, with no cloud save surfaces while local', async () => {
+    let resolveFeatures: (features: UserFeatures | null) => void = () => {}
+    const deps = dependencies('user-1', {
+      fetchFeatures: vi.fn(
+        () =>
+          new Promise<UserFeatures | null>((resolve) => {
+            resolveFeatures = resolve
+          }),
+      ),
+    })
+
+    const { result } = renderActiveSave(deps)
+    await settle()
+    expect(result.current.activeSave.decided).toBe(false)
+    resolveFeatures(null)
+    await waitFor(() => expect(result.current.activeSave.decided).toBe(true))
+    expect(result.current.activeSave.kind).toBe('local')
+    expect(result.current.cloudSaveUi).toBeNull()
+
+    const anonymous = renderActiveSave(dependencies(null))
+    await waitFor(() => expect(anonymous.result.current.activeSave.decided).toBe(true))
+    expect(anonymous.result.current.cloudSaveUi).toBeNull()
+  })
+
+  it('decides on the local save when /me/features stalls and no cloud save is chosen', async () => {
+    const deps = dependencies('user-1', {
+      fetchFeatures: vi.fn(() => new Promise<UserFeatures | null>(() => {})),
+      decisionTimeoutMs: 30,
+    })
+
+    const { result } = renderActiveSave(deps)
+    await waitFor(() => expect(result.current.activeSave.decided).toBe(true))
+
+    expect(result.current.activeSave.kind).toBe('local')
+    expect(deps.listSaves).not.toHaveBeenCalled()
+    expect(toast).not.toHaveBeenCalled()
+  })
+
+  it('keeps waiting for a chosen cloud save when the network stalls, and says so', async () => {
+    writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
+    const deps = dependencies('user-1', {
+      fetchFeatures: vi.fn(() => new Promise<UserFeatures | null>(() => {})),
+      decisionTimeoutMs: 30,
+    })
+
+    const { result } = renderActiveSave(deps)
+    await waitFor(() =>
+      expect(toast).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ id: 'cloud-save-unreachable' })),
+    )
+
+    // The automatic import still waits: it must not go to the local save while the cloud save may yet open
+    expect(result.current.activeSave).toMatchObject({ kind: 'local', decided: false })
+    expect(deps.openCloudRepository).not.toHaveBeenCalled()
+  })
+
+  it('opens the chosen cloud save when the save list answers after the timeout', async () => {
+    writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
+    let resolveSaves: (saves: SaveDTO[]) => void = () => {}
+    const deps = dependencies('user-1', {
+      fetchFeatures: vi.fn(async () => FEATURES_ON),
+      listSaves: vi.fn(
+        () =>
+          new Promise<SaveDTO[]>((resolve) => {
+            resolveSaves = resolve
+          }),
+      ),
+      decisionTimeoutMs: 30,
+    })
+
+    const { result } = renderActiveSave(deps)
+    await waitFor(() =>
+      expect(toast).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ id: 'cloud-save-unreachable' })),
+    )
+    expect(result.current.activeSave.decided).toBe(false)
+
+    resolveSaves([save('dsav_main')])
+    await waitFor(() =>
+      expect(result.current.activeSave).toMatchObject({ kind: 'cloud', decided: true, saveId: 'dsav_main' }),
+    )
+  })
+
+  it('opens the cloud save with the serverImports flag and exposes it to the cloud save surfaces', async () => {
+    writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
+    const deps = dependencies('user-1', {
+      fetchFeatures: vi.fn(async () => ({ ...FEATURES_ON, serverImports: false })),
+      listSaves: vi.fn(async () => [save('dsav_main'), save('dsav_second')]),
+    })
+
+    const { result } = renderActiveSave(deps)
+
+    await waitFor(() => expect(result.current.activeSave).toMatchObject({ kind: 'cloud', decided: true }))
+    expect(deps.openCloudRepository).toHaveBeenCalledWith(expect.objectContaining({ serverImports: false }))
+    expect(result.current.cloudSaveUi?.controller.saveId).toBe('dsav_main')
+    expect((await result.current.cloudSaveUi!.listSaves()).map((listed) => listed.id)).toEqual([
+      'dsav_main',
+      'dsav_second',
+    ])
+
+    // The save selector switches the active save
+    result.current.cloudSaveUi!.setActiveSaveId('dsav_second')
+    await waitFor(() => expect(result.current.cloudSaveUi?.controller.saveId).toBe('dsav_second'))
+    expect(readActiveSaveId(window.localStorage, 'user-1')).toBe('dsav_second')
   })
 
   it('stays local while cloud save is on but no save is active yet', async () => {

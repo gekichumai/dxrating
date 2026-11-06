@@ -25,6 +25,9 @@ import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
+import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
+import { importFailureMessage } from '@/components/cloud-save/importFailureMessage'
+import { ServerImportFailedError } from '@/models/scores/cloudImports'
 
 const haptics = new WebHaptics()
 
@@ -68,6 +71,19 @@ const LxnsImportDialogContent: FC<{
     const importStart = performance.now()
     const analytics = createRatingImportTracker('lxns')
     try {
+      const path = importPath(repository)
+      if (path === 'server') {
+        // A cloud save: the server fetches from LXNS and keeps the records verified; this page pulls them after
+        const job = await runServerImportToEnd(repository, 'lxns', {})
+        analytics.succeeded(job.counts.fetched, 0)
+        haptics.trigger('success')
+        toast.success(
+          t('rating-calculator:cloud-save.import.success', { source: 'LXNS', summary: summarizeImportJob(job, t) }),
+        )
+        onClose()
+        return
+      }
+
       const result = await apiClient.lxns.start()
 
       const importResult = normalizeLxnsScores(await loadCatalog(), result.scores)
@@ -76,16 +92,22 @@ const LxnsImportDialogContent: FC<{
         console.warn('[ImportFromLxnsButtonListItem]', warning.message, warning.row)
       }
 
-      const { applied } = await reviewAndApplyImport(
-        repository,
-        entries,
-        { source: 'lxns', mode: 'replace' },
-        { trigger: 'manual' },
-      )
-      if (!applied) {
-        analytics.failed('cancelled_by_user')
-        setState('connected')
-        return
+      if (path === 'client-fallback') {
+        // Server imports are off (§7.4): uploaded as client_reported, never verified
+        await importFallbackEntries(repository, entries, 'lxns')
+      } else {
+        // The local save: previewed and confirmed, and it can be undone (meta#35)
+        const { applied } = await reviewAndApplyImport(
+          repository,
+          entries,
+          { source: 'lxns', mode: 'replace' },
+          { trigger: 'manual' },
+        )
+        if (!applied) {
+          analytics.failed('cancelled_by_user')
+          setState('connected')
+          return
+        }
       }
       analytics.succeeded(entries.length, importResult.warnings.length)
       haptics.trigger('success')
@@ -98,6 +120,23 @@ const LxnsImportDialogContent: FC<{
       onClose()
     } catch (error) {
       Sentry.metrics.count('lxns_import.failure', 1)
+      if (
+        error instanceof ServerImportFailedError &&
+        (error.code === 'connection_expired' || error.code === 'not_connected')
+      ) {
+        // The server dropped the connection (its token could not be refreshed) or has none: connect again
+        analytics.failed('reconnect_required')
+        toast.error(t('rating-calculator:io.import.lxns.reconnect-required'))
+        setState('not-connected')
+        return
+      }
+      if (error instanceof ServerImportFailedError) {
+        // A cloud save's server import that failed: what happened in words, not its code
+        analytics.failed('provider_error')
+        toast.error(importFailureMessage(error.code, t))
+        setState('connected')
+        return
+      }
       const msg = String(formatErrorMessage(error))
       if (msg.includes('expired') || msg.includes('reconnect') || msg.includes('authorize')) {
         analytics.failed('reconnect_required')

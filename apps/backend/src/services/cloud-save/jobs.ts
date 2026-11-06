@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import type { ImportCountsDTO, ImportJobDTO } from '@gekichumai/api-contract'
+import { CANONICAL_MAX_DEPTH, canonicalJson, type ImportCountsDTO, type ImportJobDTO } from '@gekichumai/api-contract'
 import {
   fetchedByForSource,
   type ImportSource,
@@ -112,33 +112,15 @@ export function toMergeJob(row: ImportJobRow): ScoreImportJob {
   }
 }
 
-/** Deepest nesting {@link canonicalJson} accepts; hashed values are validated records, a few levels deep */
-export const CANONICAL_MAX_DEPTH = 32
+export { CANONICAL_MAX_DEPTH, canonicalJson }
 
 /**
- * sha256 hex of the canonical JSON (object keys sorted) of `value` (§4.2 `raw_payload_sha256`). Only hash validated,
- * normalized values: anything nested deeper than {@link CANONICAL_MAX_DEPTH} levels throws instead of recursing.
+ * sha256 hex of the canonical JSON (object keys sorted, the shared {@link canonicalJson}) of `value` (§4.2
+ * `raw_payload_sha256`). Only hash validated, normalized values: anything nested deeper than
+ * {@link CANONICAL_MAX_DEPTH} levels throws instead of recursing.
  */
 export function canonicalSha256(value: unknown): string {
   return createHash('sha256').update(canonicalJson(value)).digest('hex')
-}
-
-export function canonicalJson(value: unknown): string {
-  return JSON.stringify(canonicalize(value, 0))
-}
-
-function canonicalize(value: unknown, depth: number): unknown {
-  if (value === null || typeof value !== 'object') return value
-  if (depth >= CANONICAL_MAX_DEPTH) {
-    throw new RangeError(`canonicalJson: value nested deeper than ${CANONICAL_MAX_DEPTH} levels`)
-  }
-  if (Array.isArray(value)) return value.map((item) => canonicalize(item, depth + 1))
-  return Object.fromEntries(
-    Object.keys(value)
-      .sort()
-      .filter((key) => (value as Record<string, unknown>)[key] !== undefined)
-      .map((key) => [key, canonicalize((value as Record<string, unknown>)[key], depth + 1)]),
-  )
 }
 
 export interface StartImportJobInput {

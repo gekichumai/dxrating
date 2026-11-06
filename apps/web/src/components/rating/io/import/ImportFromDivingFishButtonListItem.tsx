@@ -29,6 +29,10 @@ import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
+import type { ImportJobDTO } from '@gekichumai/api-contract'
+import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
+import { importFailureMessage } from '@/components/cloud-save/importFailureMessage'
+import { ServerImportFailedError } from '@/models/scores/cloudImports'
 
 const haptics = new WebHaptics()
 
@@ -46,6 +50,10 @@ type DivingFishRequestBody = {
 type DivingFishImportMessages = {
   loading: string
   success: (count: number) => string
+  /** A cloud save: what the server's job changed */
+  serverSuccess: (job: ImportJobDTO) => string
+  /** A cloud save: the failed job's code in words */
+  serverError?: (code: string) => string
   error: (error: string) => string
   cancelled: string
 }
@@ -91,6 +99,22 @@ const fetchDivingFish = async (
   const toastId = toast.loading(messages.loading)
   const analytics = createRatingImportTracker('diving_fish')
   try {
+    const path = importPath(repository)
+    if (path === 'server') {
+      // A cloud save: the server queries Diving-Fish and keeps the records verified; this page pulls them after
+      const profile = divingFishProfile?.username
+        ? { username: divingFishProfile.username }
+        : divingFishProfile?.qq
+          ? { qq: divingFishProfile.qq }
+          : null
+      if (!profile) throw new Error('No Diving Fish Profile')
+      const job = await runServerImportToEnd(repository, 'diving-fish', profile)
+      analytics.succeeded(job.counts.fetched, 0)
+      haptics.trigger('success')
+      toast.success(messages.serverSuccess(job), { id: toastId })
+      return
+    }
+
     const body: DivingFishRequestBody = {
       b50: 1,
     }
@@ -123,16 +147,22 @@ const fetchDivingFish = async (
       console.warn('[ImportFromDivingFishButtonListItem]', warning.message, warning.row)
     }
 
-    const { applied } = await reviewAndApplyImport(
-      repository,
-      entries,
-      { source: 'diving-fish', mode: 'replace' },
-      { trigger: 'manual' },
-    )
-    if (!applied) {
-      analytics.failed('cancelled_by_user')
-      toast(messages.cancelled, { id: toastId })
-      return
+    if (path === 'client-fallback') {
+      // Server imports are off (§7.4): uploaded as client_reported, never verified
+      await importFallbackEntries(repository, entries, 'diving-fish')
+    } else {
+      // The local save: previewed and confirmed, and it can be undone (meta#35)
+      const { applied } = await reviewAndApplyImport(
+        repository,
+        entries,
+        { source: 'diving-fish', mode: 'replace' },
+        { trigger: 'manual' },
+      )
+      if (!applied) {
+        analytics.failed('cancelled_by_user')
+        toast(messages.cancelled, { id: toastId })
+        return
+      }
     }
     analytics.succeeded(entries.length, importResult.warnings.length)
     haptics.trigger('success')
@@ -144,7 +174,12 @@ const fetchDivingFish = async (
       error instanceof Error && error.message === 'No Diving Fish Profile' ? 'missing_profile' : 'provider_error',
     )
     console.error('There was a problem with the fetch operation:', error)
-    toast.error(messages.error(String(formatErrorMessage(error))), {
+    // A cloud save's server import that failed: what happened in words, not its code
+    const message =
+      error instanceof ServerImportFailedError
+        ? (messages.serverError?.(error.code) ?? messages.error(''))
+        : messages.error(String(formatErrorMessage(error)))
+    toast.error(message, {
       id: toastId,
     })
   }
@@ -246,6 +281,12 @@ export const ImportDivingFishDialogContent: FC<{
               await fetchDivingFish(await loadCatalog(), divingFishConfig!, repository, {
                 loading: t('rating-calculator:io.import.diving-fish.loading'),
                 success: (count) => t('rating-calculator:io.import.diving-fish.success', { count }),
+                serverSuccess: (job) =>
+                  t('rating-calculator:cloud-save.import.success', {
+                    source: 'Diving-Fish',
+                    summary: summarizeImportJob(job, t),
+                  }),
+                serverError: (code) => importFailureMessage(code, t),
                 error: (error) => t('rating-calculator:io.import.diving-fish.error', { error }),
                 cancelled: t('rating-calculator:io.import.review.cancelled'),
               })

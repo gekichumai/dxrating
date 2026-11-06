@@ -9,9 +9,9 @@ import { z } from 'zod'
 import MdiEarthArrowDown from '~icons/mdi/earth-arrow-down'
 import { useWebHaptics } from 'web-haptics/react'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
-import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
+import { announceImportLeftOut, cloudImportErrorMessage, importFileEntries } from './cloudImport'
 
 const MuNetUserMusicDetailSchema = z.object({
   musicId: z.number(),
@@ -78,27 +78,26 @@ export const ImportFromMuNetButtonListItem: FC<{
                 console.warn('[ImportFromMuNetButtonListItem]', warning.message, warning.row)
               }
 
-              const { applied } = await reviewAndApplyImport(
-                repository,
-                entries,
-                { source: 'mu-net', mode: 'replace' },
-                { trigger: 'manual' },
-              )
-              if (!applied) {
+              const result = await importFileEntries(repository, entries, { source: 'mu-net', mode: 'replace' })
+              // `null`: the user cancelled the preview (local save) or the merge / clear-first choice (cloud save)
+              if (!result) {
                 analytics.failed('cancelled_by_user')
                 toast(t('rating-calculator:io.import.review.cancelled'), { id: 'import-review-cancelled' })
                 return
               }
-              analytics.succeeded(entries.length, importResult.warnings.length)
+              analytics.succeeded(result.count, importResult.warnings.length)
               haptic.trigger('success')
-              toast.success(t('rating-calculator:io.import.mu-net.success', { count: entries.length }))
+              // A cloud save counts what the server took, not what was sent
+              toast.success(t('rating-calculator:io.import.mu-net.success', { count: result.count }))
+              announceImportLeftOut(result, t, (message) => toast(message))
             } catch (error) {
               analytics.failed('invalid_file')
               console.error(error)
               toast.error(
-                t('rating-calculator:io.import.mu-net.error', {
-                  error: error instanceof Error ? error.message : 'Unknown error',
-                }),
+                cloudImportErrorMessage(error, t) ??
+                  t('rating-calculator:io.import.mu-net.error', {
+                    error: error instanceof Error ? error.message : 'Unknown error',
+                  }),
               )
             }
           }
