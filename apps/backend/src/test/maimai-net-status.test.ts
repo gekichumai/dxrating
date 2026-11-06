@@ -6,7 +6,12 @@ const { probe } = vi.hoisted(() => ({ probe: vi.fn<(region: 'intl' | 'jp') => 'o
 vi.mock('../lib/functions/client', async (original) => {
   const actual = await original<typeof import('../lib/functions/client')>()
   const { Effect } = await import('effect')
-  return { ...actual, netGatewayStatusEffect: (region: 'intl' | 'jp') => Effect.sync(() => probe(region)) }
+  // slow like SEGA, so concurrent requests overlap while the probe is in flight
+  return {
+    ...actual,
+    netGatewayStatusEffect: (region: 'intl' | 'jp') =>
+      Effect.sleep('100 millis').pipe(Effect.andThen(Effect.sync(() => probe(region)))),
+  }
 })
 
 describe('GET /api/v1/io/import/maimai-net/status', () => {
@@ -26,7 +31,8 @@ describe('GET /api/v1/io/import/maimai-net/status', () => {
       return (await response.json()) as Record<'intl' | 'jp', { status: string; checkedAt: string }>
     }
 
-    const first = await read()
+    const [first, ...concurrent] = await Promise.all(Array.from({ length: 10 }, read))
+    for (const response of concurrent) expect(response).toEqual(first)
     expect(first.intl.status).toBe('maintenance')
     expect(first.jp.status).toBe('ok')
     expect(Number.isNaN(Date.parse(first.intl.checkedAt))).toBe(false)
