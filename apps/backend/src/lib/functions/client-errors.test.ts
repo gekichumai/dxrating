@@ -9,6 +9,7 @@ import {
   NetRequestError,
   netErrorPageMessage,
   netStepOf,
+  pageSignals,
   parseNetErrorCode,
 } from './client'
 import { netErrorTags, shouldCaptureSentryError } from './sentry'
@@ -155,5 +156,51 @@ describe('maimai NET error page', () => {
       message: 'maimai NET redirected the request to its error page.',
     })
     expect(error).toMatchObject({ netErrorCode: undefined })
+  })
+})
+describe('what SEGA said when it refused a login (the 2026-11-01 outage)', () => {
+  it('keeps the error text, flags a captcha, and removes the ID, e-mails and long numbers', () => {
+    const page =
+      '<html><head><title>Login</title><script src="https://www.google.com/recaptcha/api.js"></script></head>' +
+      '<body><div id="error">The SEGA ID player-123 or password is wrong (a@b.co, 1234567).</div></body></html>'
+    expect(pageSignals(page, 'player-123')).toBe('The SEGA ID [id] or password is wrong ([email], [number]). | captcha')
+    expect(pageSignals('<html><head><title>maimai DX NET</title></head></html>')).toBe('maimai DX NET')
+    expect(pageSignals('<html><body></body></html>')).toBeUndefined()
+  })
+
+  it('reads the error page code when JP rejects a login', async () => {
+    const jpErrorPage = 'https://maimaidx.jp/maimai-mobile/error/'
+    const { client } = stubbed(new MaimaiNETJpClient(), (url) => {
+      if (url === URLS.JP.LOGIN_PAGE) return html('<form><input name="token" value="t"></form>')
+      if (url === URLS.JP.LOGIN_ENDPOINT) return redirect(jpErrorPage)
+      return html('<div>ERROR CODE：200004</div>')
+    })
+    const error = await failure(client.loginEffect({ id: 'synthetic', password: 'synthetic' }))
+    expect(error).toMatchObject({ code: 'INVALID_CREDENTIALS', step: 'login_submit', netErrorCode: '200004' })
+    expect(shouldCaptureSentryError(error)).toBe(false)
+  })
+
+  it('describes the page when the international login form answers 200 instead of redirecting', async () => {
+    const { client } = stubbed(new MaimaiNETIntlClient(), (url) =>
+      url === URLS.INTL.LOGIN_PAGE
+        ? html('<form></form>')
+        : html('<html><head><title>Login</title></head><body><div class="cf-turnstile"></div></body></html>'),
+    )
+    const error = await failure(client.loginEffect({ id: 'synthetic', password: 'synthetic' }))
+    expect(error).toMatchObject({ code: 'INTERNAL_ERROR', step: 'login_submit', upstreamMessage: 'Login | captcha' })
+  })
+
+  it('records the gateway error text of an international rejection', async () => {
+    const { client } = stubbed(new MaimaiNETIntlClient(), (url) => {
+      if (url === URLS.INTL.LOGIN_PAGE) return html('<form></form>')
+      if (url === URLS.INTL.LOGIN_ENDPOINT) return redirect(`${URLS.INTL.LOGIN_PAGE}&e=1`)
+      return html('<div id="error">synthetic is locked. Try later.</div>')
+    })
+    const error = await failure(client.loginEffect({ id: 'synthetic', password: 'synthetic' }))
+    expect(error).toMatchObject({
+      code: 'INVALID_CREDENTIALS',
+      step: 'login_submit',
+      upstreamMessage: '[id] is locked. Try later.',
+    })
   })
 })

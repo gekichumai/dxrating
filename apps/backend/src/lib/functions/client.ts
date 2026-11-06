@@ -11,7 +11,7 @@ export class NetRequestError extends Data.TaggedError('NetRequestError')<{
 
 import cookie from 'cookie'
 import tls from 'node:tls'
-import { DOMParser } from 'xmldom-qsa'
+import { DOMParser, XMLSerializer } from 'xmldom-qsa'
 import { URLS } from './URLS'
 
 import { Agent, Headers, type RequestInit, fetch } from 'undici'
@@ -58,6 +58,11 @@ export interface NetImportErrorDetails {
   readonly step?: NetStep
   /** The ERROR CODE maimai NET showed on its error page, digits only */
   readonly netErrorCode?: string
+  /**
+   * What SEGA's page said when it refused the request: its error text or title, and whether it showed a captcha.
+   * The submitted ID, e-mail addresses and long digit runs are removed (pageSignals).
+   */
+  readonly upstreamMessage?: string
 }
 
 export class NetImportError extends Data.TaggedError('NetImportError')<{
@@ -65,6 +70,7 @@ export class NetImportError extends Data.TaggedError('NetImportError')<{
   readonly message: string
   readonly step?: NetStep
   readonly netErrorCode?: string
+  readonly upstreamMessage?: string
 }> {
   constructor(code: NetImportErrorCode, message?: string, details: NetImportErrorDetails = {}) {
     super({ code, message: message ?? code, ...details })
@@ -120,6 +126,33 @@ export function netErrorPageMessage(netErrorCode: string | undefined): string {
 }
 
 const MAINTENANCE_MESSAGE = 'maimai NET or the SEGA ID login is under maintenance.'
+
+const CAPTCHA_MARKERS = [
+  'g-recaptcha',
+  'recaptcha/api',
+  'hcaptcha',
+  'challenges.cloudflare.com/turnstile',
+  'cf-turnstile',
+]
+
+/**
+ * A short description of a SEGA page that refused a request, for diagnosis: its #error text (else its title), and a
+ * captcha if one is on it. Never the form, the URL or anything typed: the submitted ID, e-mail addresses and runs of 6+
+ * digits are removed, and the result is cut to 200 characters.
+ */
+export function pageSignals(html: string, submittedId?: string): string | undefined {
+  const dom = new DOMParser({ errorHandler: () => {} }).parseFromString(html, 'text/html')
+  const text = (selector: string) => dom.querySelector(selector)?.textContent?.replace(/\s+/g, ' ').trim() || undefined
+  const parts = [
+    text('#error') ?? text('.error') ?? text('title'),
+    CAPTCHA_MARKERS.some((marker) => html.includes(marker)) ? 'captcha' : undefined,
+  ].filter((part): part is string => Boolean(part))
+  if (parts.length === 0) return undefined
+  let signals = parts.join(' | ')
+  if (submittedId) signals = signals.split(submittedId).join('[id]')
+  signals = signals.replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, '[email]').replace(/\d{6,}/g, '[number]')
+  return Array.from(signals).slice(0, 200).join('')
+}
 
 export const NODE_ELEMENT_NODE = 1
 export const NODE_TEXT_NODE = 3
@@ -336,14 +369,17 @@ export class Client {
       }
       if (res.status === 302 && URLS.CHECKLIST.ERROR.includes(location)) {
         yield* this.releaseEffect(res)
+        // the code tells a rejected password from a refusal of another kind (DXRATING-BACKEND-1W, the 11-01 outage)
         const netErrorCode =
-          errorRedirectCode === 'UNKNOWN_ERROR' ? yield* this.errorPageCodeEffect(location) : undefined
+          errorRedirectCode === 'AIME_CARD_UNAVAILABLE' ? undefined : yield* this.errorPageCodeEffect(location)
         return yield* Effect.fail(
           new NetImportError(
             errorRedirectCode,
             errorRedirectCode === 'AIME_CARD_UNAVAILABLE'
               ? 'SEGA ID authentication succeeded, but maimai NET did not provide a usable Aime card.'
-              : netErrorPageMessage(netErrorCode),
+              : errorRedirectCode === 'INVALID_CREDENTIALS'
+                ? 'maimai NET rejected the SEGA ID login.'
+                : netErrorPageMessage(netErrorCode),
             { step, netErrorCode },
           ),
         )
@@ -412,8 +448,12 @@ export class MaimaiNETJpClient extends Client {
 
       const loginPage = yield* this.fetchAsDOMEffect(URLS.JP.LOGIN_PAGE)
       const loginPageToken = loginPage?.querySelector('input[name="token"]')?.attributes.getNamedItem('value')?.value
-      if (!loginPageToken)
-        return yield* Effect.fail(new NetImportError('TOKEN_ERROR', undefined, { step: 'login_page' }))
+      if (!loginPageToken) {
+        const upstreamMessage = yield* Effect.sync(() =>
+          loginPage ? pageSignals(new XMLSerializer().serializeToString(loginPage)) : undefined,
+        )
+        return yield* Effect.fail(new NetImportError('TOKEN_ERROR', undefined, { step: 'login_page', upstreamMessage }))
+      }
 
       const login = yield* this.fetchEffect(
         URLS.JP.LOGIN_ENDPOINT,
@@ -506,10 +546,15 @@ export class MaimaiNETIntlClient extends Client {
         }),
       })
       if (loginResponse.status !== 302) {
+        const page = yield* Effect.tryPromise({
+          try: () => loginResponse.text(),
+          catch: (cause) => new NetRequestError({ operation: 'read maimai NET login response', cause }),
+        })
         return yield* Effect.fail(
           new NetImportError(
             'INTERNAL_ERROR',
             `unexpected login response status: ${loginResponse.status} ${URLS.INTL.LOGIN_ENDPOINT}`,
+            { step: 'login_submit', upstreamMessage: pageSignals(page, id) },
           ),
         )
       }
@@ -519,7 +564,7 @@ export class MaimaiNETIntlClient extends Client {
         catch: (cause) => new NetRequestError({ operation: 'release maimai NET login response', cause }),
       })
       if (!redirectURL) {
-        return yield* Effect.fail(new NetImportError('INVALID_CREDENTIALS'))
+        return yield* Effect.fail(new NetImportError('INVALID_CREDENTIALS', undefined, { step: 'login_submit' }))
       }
 
       const redirectDestinationResponse = yield* this.fetchEffect(redirectURL, undefined, 'AIME_CARD_UNAVAILABLE')
@@ -535,7 +580,12 @@ export class MaimaiNETIntlClient extends Client {
           new DOMParser({ errorHandler: () => {} }).parseFromString(redirectDestinationText, 'text/html'),
         )
         const errorString = textDom.querySelector('#error')?.textContent?.trim() ?? undefined
-        return yield* Effect.fail(new NetImportError('INVALID_CREDENTIALS', errorString))
+        return yield* Effect.fail(
+          new NetImportError('INVALID_CREDENTIALS', errorString, {
+            step: 'login_submit',
+            upstreamMessage: pageSignals(redirectDestinationText, id),
+          }),
+        )
       }
 
       yield* this.progress('auth:succeeded')

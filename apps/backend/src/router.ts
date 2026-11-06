@@ -428,6 +428,7 @@ const aliasesHandler = {
 }
 
 import { withMaimaiNETClient } from './lib/functions/client'
+import { recordNetFailure, recordNetSuccess } from './services/functions/fetch-net-records/telemetry'
 import * as lxnsService from './services/lxns/index'
 
 const TrendingSeriesSchema = Schema.Struct({
@@ -856,7 +857,8 @@ const maimaiHandler = {
   fetchRecords: os.maimai.fetchRecords.handler(
     handlerGen(function* ({ input }) {
       const { id, password, region } = input
-      return yield* withMaimaiNETClient(region, (client) =>
+      const startedAt = yield* Clock.currentTimeMillis
+      const records = yield* withMaimaiNETClient(region, (client) =>
         Effect.gen(function* () {
           yield* client.loginEffect({ id, password })
           const [recentRecords, musicRecords] = yield* Effect.all(
@@ -865,7 +867,16 @@ const maimaiHandler = {
           )
           return { recentRecords, musicRecords }
         }),
+      ).pipe(Effect.tapError((error) => Effect.sync(() => recordNetFailure(region, 'api', error))))
+      const finishedAt = yield* Clock.currentTimeMillis
+      yield* Effect.sync(() =>
+        recordNetSuccess(region, 'api', {
+          durationMs: finishedAt - startedAt,
+          recent: records.recentRecords.length,
+          music: records.musicRecords.length,
+        }),
       )
+      return records
     }),
   ),
 }
