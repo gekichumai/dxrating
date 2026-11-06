@@ -937,6 +937,13 @@
     "empty.dx_score": "Your saved scores have no DX scores. Import again from maimai DX NET, LXNS or Diving-Fish to add them.",
     "empty.import": "Import your scores",
     "rating-value": "Rating {{rating}}",
+    "columns.song": "Song",
+    "columns.chart": "Chart",
+    "columns.achievement": "Achievement",
+    "columns.rank": "Rank",
+    "columns.lamps": "Combo · Sync",
+    "columns.dx_score": "DX score",
+    "columns.rating": "Rating",
     "loading": "Loading your scores…",
     "entry-link": "Top records"
   },

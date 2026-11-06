@@ -937,6 +937,13 @@
     "empty.dx_score": "已儲存的成績中沒有 DX 分數。從 maimai DX NET、LXNS 或 Diving-Fish 重新匯入即可補上。",
     "empty.import": "匯入成績",
     "rating-value": "Rating {{rating}}",
+    "columns.song": "樂曲",
+    "columns.chart": "譜面",
+    "columns.achievement": "達成率",
+    "columns.rank": "評級",
+    "columns.lamps": "連擊 · 同步",
+    "columns.dx_score": "DX 分數",
+    "columns.rating": "Rating",
     "loading": "正在載入成績…",
     "entry-link": "成績排行"
   },

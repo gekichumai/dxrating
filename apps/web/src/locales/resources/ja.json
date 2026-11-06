@@ -937,6 +937,13 @@
     "empty.dx_score": "保存されたスコアにはでらっくスコアがありません。maimai でらっくす NET・LXNS・Diving-Fish から再度インポートすると追加されます。",
     "empty.import": "スコアをインポート",
     "rating-value": "レート {{rating}}",
+    "columns.song": "楽曲",
+    "columns.chart": "譜面",
+    "columns.achievement": "達成率",
+    "columns.rank": "ランク",
+    "columns.lamps": "コンボ・シンク",
+    "columns.dx_score": "でらっくスコア",
+    "columns.rating": "レート",
     "loading": "スコアを読み込み中…",
     "entry-link": "トップ記録"
   },

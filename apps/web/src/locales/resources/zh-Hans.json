@@ -937,6 +937,13 @@
     "empty.dx_score": "已保存的成绩中没有 DX 分数。从 maimai DX NET、落雪 LXNS 或水鱼重新导入即可补上。",
     "empty.import": "导入成绩",
     "rating-value": "Rating {{rating}}",
+    "columns.song": "乐曲",
+    "columns.chart": "谱面",
+    "columns.achievement": "达成率",
+    "columns.rank": "评级",
+    "columns.lamps": "连击 · 同步",
+    "columns.dx_score": "DX 分数",
+    "columns.rating": "Rating",
     "loading": "正在加载成绩…",
     "entry-link": "成绩排行"
   },
