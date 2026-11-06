@@ -8,11 +8,19 @@ import { Sentry } from '../../../lib/functions/sentry'
 // - net_fetch.failure (counter) per failed import, with `outcome`: a slug of our error code. error_code stays for old
 //   queries, but Sentry scrubs its INVALID_CREDENTIALS value to [Filtered] (it contains "credentials"), so group by
 //   outcome instead.
+// - net_fetch.failure_without_success (counter) per failure, other than maintenance, while the region has had no
+//   success for NO_SUCCESS_WINDOW_MS: what the per-region "imports are down" monitors in Sentry count. The clock starts
+//   at process start, so a deploy does not alert by itself.
 // - A warning log per failure with the step, NET's ERROR CODE and what SEGA's page said (pageSignals in client.ts).
 //
 // None of it holds a URL, an address or anything the person typed.
 
 export type NetRoute = 'sse' | 'json' | 'api'
+
+/** How long a region may go without a successful import before its failures count as an outage */
+export const NO_SUCCESS_WINDOW_MS = 2 * 60 * 60 * 1000
+const processStartedAt = Date.now()
+const lastSuccessAt = new Map<string, number>()
 
 /** Our error codes as words Sentry's scrubber leaves alone */
 const OUTCOMES: Record<string, string> = {
@@ -33,6 +41,7 @@ export function recordNetSuccess(
   result: { durationMs: number; recent: number; music: number },
 ) {
   const attributes = { region, route }
+  lastSuccessAt.set(region, Date.now())
   Sentry.metrics.count('net_fetch.success', 1, { attributes })
   Sentry.metrics.distribution('net_fetch.duration', result.durationMs, { unit: 'millisecond', attributes })
   Sentry.metrics.distribution('net_fetch.music_records', result.music, { unit: 'none', attributes })
@@ -52,6 +61,10 @@ export function recordNetFailure(region: string, route: NetRoute, error: unknown
       net_error_code: net?.netErrorCode ?? 'none',
     },
   })
+  const sinceSuccess = Date.now() - (lastSuccessAt.get(region) ?? processStartedAt)
+  if (outcome !== 'maintenance' && sinceSuccess >= NO_SUCCESS_WINDOW_MS) {
+    Sentry.metrics.count('net_fetch.failure_without_success', 1, { attributes: { region, route, outcome } })
+  }
   Sentry.logger.warn('maimai NET import failed', {
     region,
     route,

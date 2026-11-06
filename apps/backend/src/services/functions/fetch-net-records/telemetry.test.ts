@@ -1,12 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { NetImportError } from '../../../lib/functions/client'
-import { netOutcome, recordNetFailure, recordNetSuccess } from './telemetry'
+import { NO_SUCCESS_WINDOW_MS, netOutcome, recordNetFailure, recordNetSuccess } from './telemetry'
 
 const { count, distribution, warn } = vi.hoisted(() => ({ count: vi.fn(), distribution: vi.fn(), warn: vi.fn() }))
 vi.mock('../../../lib/functions/sentry', () => ({ Sentry: { metrics: { count, distribution }, logger: { warn } } }))
 
 afterEach(() => {
   vi.clearAllMocks()
+  vi.useRealTimers()
 })
 
 describe('maimai NET import telemetry', () => {
@@ -50,5 +51,28 @@ describe('maimai NET import telemetry', () => {
       net_error_code: '200004',
       upstream_message: '[id] is locked',
     })
+  })
+
+  it('counts failures as an outage only after a region has gone the whole window without a success', () => {
+    const outage = () => count.mock.calls.filter(([name]) => name === 'net_fetch.failure_without_success')
+    vi.useFakeTimers({ now: Date.now() })
+    recordNetSuccess('intl', 'sse', { durationMs: 1, recent: 1, music: 1 })
+    recordNetFailure('intl', 'sse', new NetImportError('INVALID_CREDENTIALS'))
+    expect(outage()).toHaveLength(0)
+
+    vi.advanceTimersByTime(NO_SUCCESS_WINDOW_MS)
+    recordNetFailure('intl', 'sse', new NetImportError('INVALID_CREDENTIALS'))
+    recordNetFailure('intl', 'api', new NetImportError('NET_MAINTENANCE'))
+    expect(outage()).toEqual([
+      [
+        'net_fetch.failure_without_success',
+        1,
+        { attributes: { region: 'intl', route: 'sse', outcome: 'login_rejected' } },
+      ],
+    ])
+
+    recordNetSuccess('intl', 'api', { durationMs: 1, recent: 1, music: 1 })
+    recordNetFailure('intl', 'sse', new NetImportError('INVALID_CREDENTIALS'))
+    expect(outage()).toHaveLength(1)
   })
 })
