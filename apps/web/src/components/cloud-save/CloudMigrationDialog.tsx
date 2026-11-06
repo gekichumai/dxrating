@@ -218,7 +218,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
     </Alert>
   )
   const backupNote = (
-    <p className="m-0 text-xs text-zinc-600 text-pretty">{t('rating-calculator:cloud-save.migration.backup-note')}</p>
+    <p className="m-0 text-xs text-fg-2 text-pretty">{t('rating-calculator:cloud-save.migration.backup-note')}</p>
   )
 
   /** The records of a cloud save, in words ("1 record", "12 records") */
@@ -241,7 +241,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
         <>
           {title(t('rating-calculator:cloud-save.migration.title'))}
           <DialogContent>
-            <output className="flex items-center gap-2 py-2 text-sm text-zinc-600">
+            <output className="flex items-center gap-2 py-2 text-sm text-fg-2">
               <CircularProgress size="1rem" aria-hidden />
               {t('rating-calculator:cloud-save.saves.loading')}
             </output>
@@ -324,7 +324,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
                 label={
                   <span className="flex flex-col py-1">
                     <span className="text-sm font-semibold">{t('rating-calculator:cloud-save.migration.merge')}</span>
-                    <span className="text-xs text-zinc-600 text-pretty">
+                    <span className="text-xs text-fg-2 text-pretty">
                       {t('rating-calculator:cloud-save.migration.merge-description')}
                     </span>
                   </span>
@@ -338,7 +338,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
                     <span className="text-sm font-semibold">
                       {t('rating-calculator:cloud-save.migration.cloud-only')}
                     </span>
-                    <span className="text-xs text-zinc-600 text-pretty">
+                    <span className="text-xs text-fg-2 text-pretty">
                       {t('rating-calculator:cloud-save.migration.cloud-only-description')}
                     </span>
                   </span>
@@ -351,7 +351,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
               <Button
                 size="small"
                 color="inherit"
-                className="!text-zinc-600"
+                className="!text-fg-2"
                 aria-expanded={advancedOpen}
                 onClick={() => setAdvancedOpen((value) => !value)}
                 endIcon={
@@ -364,8 +364,8 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
                 {t('rating-calculator:cloud-save.migration.advanced')}
               </Button>
               <Collapse in={advancedOpen} unmountOnExit>
-                <div className="mt-2 flex flex-col items-start gap-2 rounded-lg bg-zinc-900/4 p-3">
-                  <p className="m-0 text-xs text-zinc-600 text-pretty">
+                <div className="mt-2 flex flex-col items-start gap-2 glass-inset p-3">
+                  <p className="m-0 text-xs text-fg-2 text-pretty">
                     {t('rating-calculator:cloud-save.migration.replace-description')}
                   </p>
                   <Button size="small" color="error" onClick={() => setStep({ kind: 'confirm-replace', target })}>
@@ -428,7 +428,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
               : t('rating-calculator:cloud-save.migration.running-title'),
           )}
           <DialogContent>
-            <output className="flex items-center gap-2 py-2 text-sm text-zinc-600">
+            <output className="flex items-center gap-2 py-2 text-sm text-fg-2">
               <CircularProgress size="1rem" aria-hidden />
               {step.mode === 'cloud-only'
                 ? t('rating-calculator:cloud-save.migration.switching')
@@ -456,7 +456,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
                   })}
             </DialogContentText>
             {step.skipped > 0 && (
-              <p className="m-0 text-xs text-zinc-600">
+              <p className="m-0 text-xs text-fg-2">
                 {t('rating-calculator:cloud-save.import.skipped', {
                   count: step.skipped,
                 })}
@@ -484,7 +484,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
             <Alert severity="error" className="text-pretty">
               {step.message}
             </Alert>
-            <p className="m-0 text-xs text-zinc-600 text-pretty">
+            <p className="m-0 text-xs text-fg-2 text-pretty">
               {step.retryable
                 ? t('rating-calculator:cloud-save.migration.error-safe')
                 : t('rating-calculator:cloud-save.migration.error-unchanged')}

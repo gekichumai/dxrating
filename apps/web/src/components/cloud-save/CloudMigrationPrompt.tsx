@@ -43,11 +43,11 @@ export const CloudMigrationPrompt: FC = () => {
     // from `sm` everything sits on one row
     <section
       ref={sectionRef}
-      className="mt-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-lg bg-white/50 px-3 py-2 ring-1 ring-inset ring-zinc-900/8 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto]"
+      className="mt-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 glass-inset px-3 py-2 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto]"
       aria-label={t('rating-calculator:cloud-save.migration.title')}
     >
-      <IconMdiCloudUploadOutline className="size-5 shrink-0 text-zinc-700" aria-hidden />
-      <p className="m-0 min-w-0 text-sm text-zinc-800 text-pretty">
+      <IconMdiCloudUploadOutline className="size-5 shrink-0 text-fg-2" aria-hidden />
+      <p className="m-0 min-w-0 text-sm text-fg-1 text-pretty">
         {t('rating-calculator:cloud-save.migration.prompt', {
           count: offer.localCount,
           formatted: new Intl.NumberFormat(i18n.language).format(offer.localCount),

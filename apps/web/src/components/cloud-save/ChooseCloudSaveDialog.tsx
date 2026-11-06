@@ -75,7 +75,7 @@ export const ChooseCloudSaveDialog: FC<ChooseCloudSaveDialogProps> = ({ open, on
           {t('rating-calculator:cloud-save.choose.dialog-description')}
         </DialogContentText>
         {state.kind === 'loading' ? (
-          <output className="flex items-center gap-2 py-2 text-sm text-zinc-500">
+          <output className="flex items-center gap-2 py-2 text-sm text-fg-2">
             <CircularProgress size="1rem" aria-hidden />
             {t('rating-calculator:cloud-save.saves.loading')}
           </output>
@@ -85,7 +85,7 @@ export const ChooseCloudSaveDialog: FC<ChooseCloudSaveDialogProps> = ({ open, on
             onRetry={() => setAttempt((value) => value + 1)}
           />
         ) : state.saves.length === 0 ? (
-          <p className="m-0 text-sm text-zinc-600 text-pretty">{t('rating-calculator:cloud-save.choose.empty')}</p>
+          <p className="m-0 text-sm text-fg-2 text-pretty">{t('rating-calculator:cloud-save.choose.empty')}</p>
         ) : (
           <SaveOptionList
             saves={state.saves}

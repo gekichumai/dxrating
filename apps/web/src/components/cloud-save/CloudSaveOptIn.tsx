@@ -45,17 +45,15 @@ export const CloudSaveConsentDialog: FC<{
         {t('rating-calculator:cloud-save.opt-in.consent-title')}
       </DialogTitle>
       <DialogContent className="flex flex-col gap-3">
-        <p className="m-0 text-sm text-zinc-700 text-pretty">
-          {t('rating-calculator:cloud-save.opt-in.consent-intro')}
-        </p>
-        <ul className="m-0 flex flex-col gap-2 ps-5 text-sm text-zinc-700">
+        <p className="m-0 text-sm text-fg-2 text-pretty">{t('rating-calculator:cloud-save.opt-in.consent-intro')}</p>
+        <ul className="m-0 flex flex-col gap-2 ps-5 text-sm text-fg-2">
           {points.map((point) => (
             <li key={point} className="text-pretty">
               {t(`rating-calculator:cloud-save.opt-in.consent-${point}`)}
             </li>
           ))}
         </ul>
-        <p className="m-0 text-xs text-zinc-600 text-pretty">
+        <p className="m-0 text-xs text-fg-2 text-pretty">
           <Trans
             i18nKey="rating-calculator:cloud-save.opt-in.consent-privacy"
             components={{
@@ -138,12 +136,12 @@ export const CloudSaveOptIn: FC = () => {
   }
 
   return (
-    <div ref={rootRef} className="flex items-start gap-3 rounded-lg bg-zinc-900/4 p-3">
+    <div ref={rootRef} className="flex items-start gap-3 glass-inset p-3">
       <div className="min-w-0 flex-1">
-        <label htmlFor={switchId} className="block cursor-pointer text-sm font-semibold text-zinc-900">
+        <label htmlFor={switchId} className="block cursor-pointer text-sm font-semibold text-fg-1">
           {t('rating-calculator:cloud-save.opt-in.title')}
         </label>
-        <p id={descriptionId} className="m-0 mt-0.5 text-xs text-zinc-600 text-pretty">
+        <p id={descriptionId} className="m-0 mt-0.5 text-xs text-fg-2 text-pretty">
           {t('rating-calculator:cloud-save.opt-in.description')}
         </p>
       </div>
