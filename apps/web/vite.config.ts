@@ -174,6 +174,8 @@ const catalogSnapshotUpdatedAt = (
 export default defineConfig({
   define: {
     'import.meta.env.VITE_CATALOG_SNAPSHOT_UPDATED_AT': JSON.stringify(catalogSnapshotUpdatedAt),
+    // The Sentry release, read by Sentry.init in src/router.tsx and src/server.ts. Only the modules that use it embed it.
+    'import.meta.env.VITE_SENTRY_RELEASE': JSON.stringify(process.env.SENTRY_RELEASE ?? ''),
   },
   server: {
     port: 5173,
@@ -196,6 +198,9 @@ export default defineConfig({
       authToken: process.env.SENTRY_AUTH_TOKEN,
       release: {
         name: process.env.SENTRY_RELEASE,
+        // Injecting the release puts it at the top of every chunk, so each release rehashes the vendor chunks too.
+        // Sentry.init sets the release from VITE_SENTRY_RELEASE instead; uploaded source maps match by debug ID.
+        inject: false,
         setCommits: process.env.SENTRY_AUTH_TOKEN ? { auto: true } : undefined,
       },
       sourcemaps: { filesToDeleteAfterUpload: ['./dist/**/*.map'] },
