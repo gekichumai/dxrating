@@ -850,7 +850,12 @@
     "index.seo-description": "maimai でらっくす の全バージョンの新曲・追加譜面を譜面定数付きで一覧。",
     "index.intro": "バージョンを選ぶと、追加された楽曲と譜面をすべて確認できます。",
     "index.count": "{{songs}} 曲・{{charts}} 譜面",
-    "chart-link": "{{version}} の新曲一覧"
+    "chart-link": "{{version}} の新曲一覧",
+    "era.label": "バージョンの世代",
+    "era.dx": "でらっくす",
+    "era.classic": "旧筐体",
+    "era.dx-range": "2019–",
+    "era.classic-range": "2012–2018"
   },
   "share": {
     "image.button": "画像で共有",

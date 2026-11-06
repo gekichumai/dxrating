@@ -850,7 +850,12 @@
     "index.seo-description": "Every maimai DX version with its new songs and charts and their internal levels, from maimai to the latest version.",
     "index.intro": "Pick a version to see every song and chart it added.",
     "index.count": "{{songs}} songs · {{charts}} charts",
-    "chart-link": "New in {{version}}"
+    "chart-link": "New in {{version}}",
+    "era.label": "Version era",
+    "era.dx": "DX",
+    "era.classic": "Classic",
+    "era.dx-range": "2019–",
+    "era.classic-range": "2012–2018"
   },
   "share": {
     "image.button": "Share image",
