@@ -56,6 +56,7 @@ import { ImportUndoBanner } from '../components/rating/io/import/ImportUndoBanne
 import { RenderToOneShotImageButton } from '../components/rating/io/export/RenderToOneShotImageButton'
 import { useRatingEntries, useRatingView } from '../components/rating/useRatingEntries'
 import { Link, useNavigate } from '@tanstack/react-router'
+import { DxScoreProgressText } from '../components/scores/DxScoreProgressText'
 import { SheetListItem, SheetListItemContent } from '../components/sheet/SheetListItem'
 import { useScoreEntries, useScoreRepository } from '../models/scores/useScoreRepository'
 import { achievementRateBand, captureAnalyticsEvent } from '../lib/analytics'
@@ -392,14 +393,8 @@ const RatingCalculatorDxScoreCell: FC<{
   row: Row<Entry>
 }> = ({ row }) => {
   const { dxScore, sheet } = row.original
-  if (dxScore === undefined) return <span className="text-secondary">—</span>
   const total = sheet.noteCounts.total
-  return (
-    <span className="num">
-      {dxScore}
-      {total ? <span className="text-xs text-secondary"> / {total * 3}</span> : null}
-    </span>
-  )
+  return <DxScoreProgressText dxScore={dxScore} max={total ? total * 3 : null} />
 }
 
 const RatingCalculatorAchievementRateCell: FC<{
