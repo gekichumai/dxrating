@@ -51,6 +51,7 @@ const tagsFor = (tagId: number): CombinedTags => {
         sheet_type: sheet.type,
         sheet_difficulty: sheet.difficulty,
         tag_id: tagId,
+        score: 1,
       },
     ],
   } as CombinedTags

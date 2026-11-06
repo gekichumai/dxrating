@@ -22,9 +22,10 @@ const VoteButton: FC<{
   active: boolean
   disabled: boolean
   label: string
+  count: number
   variant: 'up' | 'down'
   onClick: () => void
-}> = ({ active, disabled, label, variant, onClick }) => {
+}> = ({ active, disabled, label, count, variant, onClick }) => {
   const ActiveIcon = variant === 'up' ? IconMdiThumbUp : IconMdiThumbDown
   const InactiveIcon = variant === 'up' ? IconMdiThumbUpOutline : IconMdiThumbDownOutline
   const Icon = active ? ActiveIcon : InactiveIcon
@@ -32,21 +33,22 @@ const VoteButton: FC<{
   return (
     <ButtonBase
       className={clsx(
-        'flex items-center gap-1 rounded-lg border border-solid px-2 py-1 transition',
+        'h-8 min-w-14 inline-flex items-center justify-center gap-1.5 rounded-[var(--radius-md)] border border-solid px-2.5 text-sm transition-colors',
         active
           ? variant === 'up'
-            ? 'border-green-400 bg-green-50 text-green-700'
-            : 'border-red-400 bg-red-50 text-red-700'
-          : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-100',
+            ? 'border-green-300 bg-green-50 text-green-700'
+            : 'border-red-300 bg-red-50 text-red-700'
+          : 'border-black/10 text-fg-2 hover:bg-black/5',
         disabled && 'opacity-60',
       )}
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
       aria-pressed={active}
+      title={label}
     >
-      <Icon className="h-4 w-4" />
-      <span className="text-xs">{label}</span>
+      <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
+      <span className="num leading-none">{count}</span>
     </ButtonBase>
   )
 }
@@ -120,27 +122,30 @@ export const TagVotePopover: FC<{
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
         slotProps={{ paper: { className: 'rounded-lg' } }}
       >
-        <div className="flex max-w-xs flex-col gap-2 p-3">
+        <div className="flex w-72 max-w-[calc(100vw-2rem)] flex-col gap-2 p-3">
           <div className="flex items-center gap-2">
             <span
-              className="h-3 w-3 shrink-0 rounded-full"
-              style={{ backgroundColor: entry.group?.color ?? '#e5e7eb' }}
+              aria-hidden="true"
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: entry.group?.color ?? 'var(--fg-2)' }}
             />
-            <span className="text-sm font-bold">{localizeMessage(entry.tag.localized_name)}</span>
+            <span className="min-w-0 flex-1 truncate text-sm font-semibold text-fg-1">
+              {localizeMessage(entry.tag.localized_name)}
+            </span>
+            <span className="num shrink-0 text-xs text-fg-2">{t('sheet:tags.vote.score', { score: entry.score })}</span>
           </div>
 
-          <div className="text-xs text-gray-600">
+          <div className="text-xs leading-normal text-fg-2 [&_p]:my-0">
             <Markdown content={localizeMessage(entry.tag.localized_description)} />
           </div>
 
-          <div className="h-px w-full bg-gray-200" />
-
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <VoteButton
               variant="up"
               active={userVote === 1}
               disabled={pending}
               label={t('sheet:tags.vote.upvote')}
+              count={entry.upvotes}
               onClick={() => vote(1)}
             />
             <VoteButton
@@ -148,38 +153,32 @@ export const TagVotePopover: FC<{
               active={userVote === -1}
               disabled={pending}
               label={t('sheet:tags.vote.downvote')}
+              count={entry.downvotes}
               onClick={() => vote(-1)}
             />
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-gray-500 tabular-nums">
-            <span>{t('sheet:tags.vote.breakdown', { upvotes: entry.upvotes, downvotes: entry.downvotes })}</span>
-            <span className="ml-auto">{t('sheet:tags.vote.score', { score: entry.score })}</span>
+            {canDetach && (
+              <ButtonBase
+                className="ms-auto h-8 inline-flex items-center gap-1 rounded-[var(--radius-md)] px-2 text-sm text-[var(--danger)] transition-colors hover:bg-red-50"
+                onClick={detach}
+                disabled={pending}
+              >
+                <IconMdiTrashCanOutline aria-hidden="true" className="h-4 w-4" />
+                {t('sheet:tags.vote.remove')}
+              </ButtonBase>
+            )}
           </div>
 
           {!session && (
             <button
               type="button"
-              className="cursor-pointer border-none bg-transparent p-0 text-left text-xs text-zinc-600 underline underline-offset-2"
+              className="link cursor-pointer border-none bg-transparent p-0 text-left text-xs"
               onClick={openLoginDialog}
             >
               {t('sheet:tags.vote.login-required')}
             </button>
           )}
 
-          {isCreator &&
-            (canDetach ? (
-              <ButtonBase
-                className="flex items-center justify-center gap-1 rounded-lg border border-solid border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700 transition hover:bg-red-100"
-                onClick={detach}
-                disabled={pending}
-              >
-                <IconMdiTrashCanOutline className="h-4 w-4" />
-                {t('sheet:tags.vote.remove')}
-              </ButtonBase>
-            ) : (
-              <div className="text-xs text-gray-400">{t('sheet:tags.vote.remove-expired')}</div>
-            ))}
+          {isCreator && !canDetach && <div className="text-xs text-fg-2">{t('sheet:tags.vote.remove-expired')}</div>}
         </div>
       </Popover>
     </>

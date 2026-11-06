@@ -179,7 +179,6 @@
     "tags.vote.upvote": "贊成",
     "tags.vote.downvote": "反對",
     "tags.vote.score": "評分：{{score}}",
-    "tags.vote.breakdown": "+{{upvotes}} / −{{downvotes}}",
     "tags.vote.login-required": "登入或註冊帳號後即可為標籤投票。",
     "tags.vote.hidden-tags": "已隱藏 {{count}} 個",
     "tags.vote.remove": "移除",

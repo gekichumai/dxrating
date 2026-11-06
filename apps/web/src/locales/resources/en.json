@@ -179,7 +179,6 @@
     "tags.vote.upvote": "Upvote",
     "tags.vote.downvote": "Downvote",
     "tags.vote.score": "Score: {{score}}",
-    "tags.vote.breakdown": "+{{upvotes}} / −{{downvotes}}",
     "tags.vote.login-required": "Sign in or create an account to vote on tags.",
     "tags.vote.hidden-tags": "{{count}} hidden",
     "tags.vote.remove": "Remove",

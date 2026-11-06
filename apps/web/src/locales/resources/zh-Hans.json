@@ -179,7 +179,6 @@
     "tags.vote.upvote": "赞成",
     "tags.vote.downvote": "反对",
     "tags.vote.score": "评分：{{score}}",
-    "tags.vote.breakdown": "+{{upvotes}} / −{{downvotes}}",
     "tags.vote.login-required": "登录或注册账号后即可为标签投票。",
     "tags.vote.hidden-tags": "已隐藏 {{count}} 个",
     "tags.vote.remove": "移除",

@@ -1,23 +1,17 @@
 import { Chip } from '@mui/material'
 import { AnimatePresence, motion } from 'framer-motion'
-import { type FC, useMemo, useState } from 'react'
+import { type CSSProperties, type FC, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import IconMdiTag from '~icons/mdi/tag'
 import { useAuth } from '../../../hooks/useAuth'
 import type { FlattenedSheet } from '../../../songs'
+import { deriveColor } from '../../../utils/color'
 import { MotionButtonBase } from '../../../utils/motion'
-import { zoomTransitions } from '../../../utils/motionConstants'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
+import { chipPresenceTransitions } from '../sheetMotion'
 import { SheetTagsAddButton } from './SheetTagsAddButton'
 import { TagVotePopover } from './TagVotePopover'
 import { type SheetTagEntry, useSheetTagsDetailed, useUserTagVotes } from './useSheetTagsDetailed'
-
-const chipTransitions = {
-  exit: { scale: 0.9, opacity: 0 },
-  initial: { scale: 0, opacity: 0 },
-  animate: { scale: 1, opacity: 1 },
-  transition: { type: 'spring' as const, stiffness: 500, damping: 30 },
-}
 
 export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const { t } = useTranslation(['sheet'])
@@ -41,20 +35,25 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   }, [sheet])
 
   const onChanged = () => {
-    mutate()
-    mutateUserVotes()
+    void mutate()
+    void mutateUserVotes()
   }
 
   const renderChip = (entry: SheetTagEntry) => (
-    <motion.div key={entry.id} {...chipTransitions}>
+    <motion.div key={entry.id} {...chipPresenceTransitions}>
       <Chip
         label={localizeMessage(entry.tag.localized_name)}
         size="small"
-        className="cursor-pointer px-0.5"
-        style={{
-          backgroundColor: entry.group?.color,
-          opacity: entry.hidden ? 0.5 : undefined,
-        }}
+        aria-haspopup="dialog"
+        // Group colours are pastels: dark mode's light chip text would vanish on them
+        className="cursor-pointer px-0.5 dark:!text-[var(--tag-fg)]"
+        style={
+          {
+            backgroundColor: entry.group?.color,
+            '--tag-fg': entry.group?.color ? deriveColor(entry.group.color, 'text') : undefined,
+            opacity: entry.hidden ? 0.6 : undefined,
+          } as CSSProperties
+        }
         onClick={(event) => setSelected({ id: entry.id, anchorEl: event.currentTarget })}
       />
     </motion.div>
@@ -63,7 +62,12 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const inner = () => {
     if (isLoading) {
       return (
-        <MotionButtonBase {...zoomTransitions} className="h-6 w-16 bg-gray-200 rounded-lg animate-pulse" disabled />
+        <MotionButtonBase
+          {...chipPresenceTransitions}
+          className="h-6 w-16 bg-black/6 rounded-[var(--radius-md)] motion-safe:animate-pulse"
+          disabled
+          aria-hidden="true"
+        />
       )
     }
 
@@ -75,8 +79,8 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         {hidden.length > 0 && !hiddenExpanded && (
           <MotionButtonBase
             key="hidden-tags"
-            {...chipTransitions}
-            className="h-6 rounded-lg border-1 border-dashed border-gray-300 bg-transparent px-2 text-xs text-gray-500 cursor-pointer hover:bg-gray-100 transition"
+            {...chipPresenceTransitions}
+            className="h-6 rounded-[var(--radius-md)] border border-dashed border-black/20 px-2 text-xs text-fg-2 transition-colors hover:bg-black/5"
             onClick={() => setHiddenExpanded(true)}
           >
             {t('sheet:tags.vote.hidden-tags', { count: hidden.length })}
@@ -89,12 +93,12 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   }
 
   return (
-    <div className="flex items-center gap-1">
-      <div className="flex flex-1 items-center gap-1">
-        <IconMdiTag className="mr-1" />
+    <div className="flex items-start gap-1">
+      <div className="flex h-6 flex-1 items-center gap-1">
+        <IconMdiTag aria-hidden="true" className="mr-1 text-fg-2" />
       </div>
 
-      <motion.div layoutRoot className="flex flex-wrap gap-1">
+      <motion.div layoutRoot className="flex flex-wrap items-center gap-1">
         <AnimatePresence mode="popLayout">{inner()}</AnimatePresence>
       </motion.div>
 

@@ -179,7 +179,6 @@
     "tags.vote.upvote": "추천",
     "tags.vote.downvote": "비추천",
     "tags.vote.score": "점수: {{score}}",
-    "tags.vote.breakdown": "+{{upvotes}} / −{{downvotes}}",
     "tags.vote.login-required": "태그에 투표하려면 로그인하거나 계정을 만드세요.",
     "tags.vote.hidden-tags": "숨김 {{count}}개",
     "tags.vote.remove": "삭제",

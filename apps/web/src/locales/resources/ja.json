@@ -179,7 +179,6 @@
     "tags.vote.upvote": "賛成",
     "tags.vote.downvote": "反対",
     "tags.vote.score": "スコア: {{score}}",
-    "tags.vote.breakdown": "+{{upvotes}} / −{{downvotes}}",
     "tags.vote.login-required": "タグに投票するにはログインまたは登録してください。",
     "tags.vote.hidden-tags": "非表示 {{count}} 件",
     "tags.vote.remove": "削除",
