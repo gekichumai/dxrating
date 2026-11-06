@@ -17,6 +17,7 @@ import { DisplayPreferencesMenu, ThemeSelector } from '../global/preferences/The
 import { UserChip } from '../global/preferences/UserChip'
 import { About } from '../global/site-meta/About'
 import { SyncStatusIndicator } from '../cloud-save/SyncStatusIndicator'
+import { useCloudSaveStatus } from '../../models/scores/CloudSaveUiContext'
 
 // Community glyphs are monochrome (text-fg-1) like every other header action: the saturated brand discs were the
 // loudest colour in the bar for the least important links
@@ -132,6 +133,8 @@ const CommunityMenu = () => {
 /** The header's top row: the site name and build on the left, one glass pill of actions on the right. */
 export const TopBar = () => {
   const { t } = useTranslation(['root'])
+  // The sync pill only renders on a cloud save; without it the header is exactly the local-save layout
+  const hasSyncPill = useCloudSaveStatus() != null
 
   return (
     <div className="page-gutter flex items-center justify-between gap-2 pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:pt-[calc(env(safe-area-inset-top)+1rem)]">
@@ -185,7 +188,12 @@ export const TopBar = () => {
           {PILL_DIVIDER}
         </div>
 
-        <div className="flex sm:hidden">
+        {/* Below 375px a cloud save's sync pill takes the community menu's place, so the pill keeps the local-save
+            width and clears the logo (320px phones). The menu is back from 375px up */}
+        <div
+          className={hasSyncPill ? 'hidden 2xs:flex sm:hidden' : 'flex sm:hidden'}
+          data-sync-pill={hasSyncPill ? 'true' : undefined}
+        >
           <CommunityMenu />
         </div>
 

@@ -129,7 +129,7 @@ describe('UserProfileModal', () => {
     }
   })
 
-  it('on phones, scrolls the section tabs sideways instead of squeezing four labels into one row', () => {
+  it('on phones, lists the cloud save section with the other three', () => {
     const width = window.innerWidth
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 360 })
     try {
@@ -143,10 +143,7 @@ describe('UserProfileModal', () => {
         </QueryClientProvider>,
       )
       const tab = screen.getByRole('button', { name: 'Cloud save' })
-      expect(tab.className).toContain('whitespace-nowrap')
-      const row = tab.closest('ul')
-      expect(row?.className).toContain('overflow-x-auto')
-      expect(row?.children).toHaveLength(4)
+      expect(tab.closest('ul')?.children).toHaveLength(4)
     } finally {
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
     }

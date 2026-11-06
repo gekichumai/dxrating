@@ -181,6 +181,10 @@ describe('TopBar', () => {
     expect(sync.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(sync.className).toContain('size-9')
     for (const name of ['Community', 'About DXRating']) expect(screen.getByRole('button', { name })).toBeTruthy()
+    // Below 375px the sync pill takes the community menu's place, so the pill keeps the local-save width
+    const community = screen.getByRole('button', { name: 'Community' }).closest('[data-sync-pill]')
+    expect(community?.className).toContain('hidden')
+    expect(community?.className).toContain('2xs:flex')
   })
 
   it('shows the sync status while a cloud save is active', () => {
