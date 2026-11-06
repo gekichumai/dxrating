@@ -50,6 +50,16 @@ export const isPlainNavigationClick = (event: MouseEvent<HTMLAnchorElement>) => 
   )
 }
 
+/** A path without its search and hash, decoded, so the router's location and an href compare equal */
+const pathnameOf = (path: string) => {
+  const pathname = path.split(/[?#]/, 1)[0]
+  try {
+    return decodeURI(pathname)
+  } catch {
+    return pathname
+  }
+}
+
 /** The latest navigation any InternalLink started, page-wide */
 let latestLinkNavigation = 0
 const linkNavigationListeners = new Set<() => void>()
@@ -82,6 +92,17 @@ export const InternalLink = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<H
     const [navigationId, setNavigationId] = useState<number>()
     const latestNavigationId = useSyncExternalStore(subscribeLinkNavigations, getLatestLinkNavigation, () => 0)
     const navigating = navigationId !== undefined && navigationId === latestNavigationId
+
+    // Any other navigation that starts towards somewhere else (a tab-bar Link, Back, a programmatic navigate) also
+    // abandons this one, so its feedback clears then rather than when that navigation finishes
+    const pending = navigationId !== undefined
+    useEffect(() => {
+      if (!router || !pending || !href) return undefined
+      const target = pathnameOf(href)
+      return router.subscribe('onBeforeLoad', ({ toLocation }) => {
+        if (pathnameOf(toLocation.pathname) !== target) setNavigationId(undefined)
+      })
+    }, [router, pending, href])
 
     const handleClick = useCallback(
       (event: MouseEvent<HTMLAnchorElement>) => {

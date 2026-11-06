@@ -7,9 +7,19 @@ import { NAVIGATION_FEEDBACK_DELAY_MS } from '@/components/layout/NavigationProg
 import { InternalLink, LinkBehavior, isClientRoutableHref, placeLinkSpinner } from '../InternalLink'
 
 const navigate = vi.fn()
+const routerListeners = new Map<string, Set<(event: { toLocation: { pathname: string } }) => void>>()
+const subscribe = (type: string, listener: (event: { toLocation: { pathname: string } }) => void) => {
+  const set = routerListeners.get(type) ?? new Set()
+  set.add(listener)
+  routerListeners.set(type, set)
+  return () => set.delete(listener)
+}
+const emitRouter = (type: string, pathname: string) => {
+  for (const listener of routerListeners.get(type) ?? []) listener({ toLocation: { pathname } })
+}
 
 vi.mock('@tanstack/react-router', () => ({
-  useRouter: () => ({ navigate }),
+  useRouter: () => ({ navigate, subscribe }),
   useRouterState: () => false,
 }))
 
@@ -169,6 +179,27 @@ describe('InternalLink', () => {
     await act(async () => {
       finish()
     })
+    expect(screen.queryByTestId('link-pending-spinner')).toBeNull()
+    navigate.mockReset()
+    vi.useRealTimers()
+  })
+
+  it('clears the feedback when another navigation (a tab-bar Link, Back) heads somewhere else', async () => {
+    vi.useFakeTimers()
+    navigate.mockImplementation(() => new Promise<void>(() => {}))
+    render(<InternalLink href="/versions/circle">CiRCLE</InternalLink>)
+    const link = screen.getByRole('link', { name: 'CiRCLE' })
+
+    fireEvent.click(link, { button: 0 })
+    await act(async () => {
+      vi.advanceTimersByTime(NAVIGATION_FEEDBACK_DELAY_MS)
+    })
+    // Its own load starting does not count
+    act(() => emitRouter('onBeforeLoad', '/versions/circle'))
+    expect(link.getAttribute('aria-busy')).toBe('true')
+
+    act(() => emitRouter('onBeforeLoad', '/charts/recent'))
+    expect(link.hasAttribute('aria-busy')).toBe(false)
     expect(screen.queryByTestId('link-pending-spinner')).toBeNull()
     navigate.mockReset()
     vi.useRealTimers()
