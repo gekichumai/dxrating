@@ -1056,6 +1056,9 @@
     "pool-size_one": "符合 {{count}} 张谱面",
     "pool-size_other": "符合 {{count}} 张谱面",
     "no-result": "没有符合条件的谱面。",
+    "placeholder.title": "抽到的谱面会显示在这里",
+    "placeholder.hint_one": "点击「抽一首」，从 {{count}} 张符合条件的谱面中抽取。",
+    "placeholder.hint_other": "点击「抽一首」，从 {{count}} 张符合条件的谱面中抽取。",
     "open-chart": "查看谱面"
   },
   "home": {

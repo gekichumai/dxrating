@@ -1056,6 +1056,9 @@
     "pool-size_one": "{{count}}개 채보 해당",
     "pool-size_other": "{{count}}개 채보 해당",
     "no-result": "조건에 맞는 채보가 없습니다.",
+    "placeholder.title": "여기에 채보가 표시됩니다",
+    "placeholder.hint_one": "\"뽑기\"를 누르면 조건에 맞는 {{count}}개 채보가 표시됩니다.",
+    "placeholder.hint_other": "\"뽑기\"를 누르면 조건에 맞는 {{count}}개 채보 중 하나를 고릅니다.",
     "open-chart": "채보 보기"
   },
   "home": {
