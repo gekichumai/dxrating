@@ -69,7 +69,12 @@ export const loadSearchRouteData = async (search: SearchParams): Promise<SearchL
   const document = await getCatalogDocument()
   const dialogSheet = findDialogSheet(document, search)
   if (search.q)
-    return { seedSheets: buildSearchQuerySeedSheets(search.q, document), catalogSongs: [], recentSongs: [], dialogSheet }
+    return {
+      seedSheets: buildSearchQuerySeedSheets(search.q, document),
+      catalogSongs: [],
+      recentSongs: [],
+      dialogSheet,
+    }
   // Only server renders (and the hydration that follows) render from the slice; the browser has the complete catalog
   return {
     seedSheets: [],

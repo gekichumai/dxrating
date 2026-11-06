@@ -219,6 +219,7 @@
     }
   ],
   "sheet_aliases_showLess": "折りたたむ",
+  "sheet_aliases_copy": "別名をコピー",
   "sheet_aliases_dialogTitle": "別名を追加する",
   "sheet_aliases_inputLabel": "別名",
   "sheet_aliases_adding": "追加中…",

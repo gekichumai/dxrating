@@ -219,6 +219,7 @@
     }
   ],
   "sheet_aliases_showLess": "Show fewer",
+  "sheet_aliases_copy": "Copy alias",
   "sheet_aliases_dialogTitle": "Add an alias",
   "sheet_aliases_inputLabel": "Alias",
   "sheet_aliases_adding": "Adding…",
