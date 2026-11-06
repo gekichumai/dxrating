@@ -212,7 +212,9 @@
     "comments.safety.cancel": "Cancel",
     "comments.safety.report-success": "Comment reported and hidden.",
     "comments.safety.block-success": "Author blocked. Their comments are now hidden.",
-    "comments.safety.error": "Unable to save this. Check your connection and try again."
+    "comments.safety.error": "Unable to save this. Check your connection and try again.",
+    "dx-score.stars": "{{stars}} DX score stars",
+    "dx-score.to-next-star": "{{remaining}} more DX score for ✦{{stars}}"
   },
   "song": {
     "not-found.title": "Song not found",

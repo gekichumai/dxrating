@@ -212,7 +212,9 @@
     "comments.safety.cancel": "取消",
     "comments.safety.report-success": "已举报并隐藏评论。",
     "comments.safety.block-success": "已屏蔽作者，其评论已隐藏。",
-    "comments.safety.error": "保存失败。请检查网络连接后重试。"
+    "comments.safety.error": "保存失败。请检查网络连接后重试。",
+    "dx-score.stars": "DX 分数 {{stars}} 星",
+    "dx-score.to-next-star": "距 ✦{{stars}} 还差 {{remaining}} DX 分"
   },
   "song": {
     "not-found.title": "未找到歌曲",
