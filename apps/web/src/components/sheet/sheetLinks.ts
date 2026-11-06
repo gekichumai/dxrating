@@ -9,6 +9,9 @@ type SheetLinkTarget = {
 export const buildSheetPath = (sheet: SheetLinkTarget): string =>
   `/songs/${encodeURIComponent(sheet.songId)}/${encodeURIComponent(sheet.type)}/${encodeURIComponent(sheet.difficulty)}`
 
+/** Path of a chart's tolerance calculator (`/songs/<id>/<type>/<difficulty>/tolerance`) */
+export const buildSheetTolerancePath = (sheet: SheetLinkTarget): string => `${buildSheetPath(sheet)}/tolerance`
+
 export const buildSheetLink = (
   sheet: SheetLinkTarget,
   origin = typeof window === 'undefined' ? 'https://dxrating.net' : window.location.origin,

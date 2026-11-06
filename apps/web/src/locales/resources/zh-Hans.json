@@ -472,9 +472,14 @@
     "terms.heading6": "停止使用服务",
     "terms.heading7": "服务提供与变更",
     "legal.back": "返回",
+    "legal.toc": "目录",
     "account-security.title": "账号安全",
     "account-security.sign-in-description": "登录后即可管理密码、通行密钥和已登录的设备。",
     "account-security.loading": "正在加载账号",
+    "account-security.feature-password": "修改密码",
+    "account-security.feature-passkeys": "添加通行密钥，无需密码即可登录",
+    "account-security.feature-devices": "查看已登录的设备，并让其他设备退出登录",
+    "account-security.features-label": "可以在这里做的事",
     "privacy.title": "隐私政策",
     "privacy.updated": "最后更新：2026年10月30日",
     "privacy.intro.heading": "简介",
@@ -535,6 +540,8 @@
     "table.headers.included-in": "收录于",
     "table.headers.combo": "连击",
     "table.headers.sync": "同步",
+    "table.headers.internal-level": "定数",
+    "table.headers.dx-score": "DX 分数",
     "table.headers.achievement-rate": "完成率",
     "table.headers.rating": "评分",
     "table.headers.actions": "操作",
@@ -809,7 +816,11 @@
     "index.level-count-single": "{{count}} 张谱面・{{value}}",
     "breadcrumb": "定数表",
     "breadcrumb-label": "面包屑导航",
-    "chart-link": "Lv.{{level}} 定数表"
+    "chart-link": "Lv.{{level}} 定数表",
+    "view.label": "显示方式",
+    "view.grid": "封面",
+    "view.table": "表格",
+    "jump-label": "跳转到定数"
   },
   "rating-explainer": {
     "title": "舞萌DX Rating 怎么算",
@@ -860,8 +871,15 @@
   },
   "share": {
     "image.button": "分享图片",
-    "image.downloaded": "图片已保存",
-    "image.failed": "无法生成图片，请重试。"
+    "image.failed": "无法生成图片，请重试。",
+    "image.viewer-title": "分享图片",
+    "image.hint": "在手机上长按图片即可保存或复制；在电脑上可右键点击图片，或使用上方按钮。",
+    "image.download": "保存图片",
+    "image.copy": "复制图片",
+    "image.share": "分享…",
+    "image.copied": "已复制图片",
+    "image.copy-failed": "无法复制图片，请改为保存。",
+    "image.share-failed": "无法打开分享面板，请改为保存图片。"
   },
   "plates": {
     "breadcrumb": "牌子",
@@ -912,7 +930,13 @@
     "condition-short.hasha": "A 评级通关",
     "other-plates": "其他牌子",
     "share.title": "{{plate}}进度",
-    "share.remaining": "未达成的谱面"
+    "share.alt": "{{plate}} 完成进度：未达成的谱面",
+    "share.subtitle": "{{versions}} · 条件 {{condition}}",
+    "share.remaining-count": "未达成 {{count}} 张谱面",
+    "share.order": "按接近完成排序",
+    "share.unplayed": "未游玩",
+    "share.more": "另有 {{count}} 首",
+    "share.all-done": "所有谱面均已达成！"
   },
   "toplists": {
     "title": "成绩排行",
@@ -942,6 +966,13 @@
     "empty.dx_score": "已保存的成绩中没有 DX 分数。从 maimai DX NET、落雪 LXNS 或水鱼重新导入即可补上。",
     "empty.import": "导入成绩",
     "rating-value": "Rating {{rating}}",
+    "columns.song": "乐曲",
+    "columns.chart": "谱面",
+    "columns.achievement": "达成率",
+    "columns.rank": "评级",
+    "columns.lamps": "连击 · 同步",
+    "columns.dx_score": "DX 分数",
+    "columns.rating": "Rating",
     "loading": "正在加载成绩…",
     "entry-link": "成绩排行"
   },
@@ -989,7 +1020,11 @@
     "rating.reverse.result": "所需达成率",
     "rating.reverse.unreachable": "无法达到",
     "rating.table.title": "Rating 对照表",
-    "rating.table.description": "所选定数及相邻定数在各评级下的 Rating。"
+    "rating.table.description": "所选定数及相邻定数在各评级下的 Rating。",
+    "tolerance.search-another": "选择其他谱面",
+    "tolerance.open-page": "在单独页面打开",
+    "tolerance.sheet-seo-title": "{{title}} {{sheetLabel}} 容错计算",
+    "tolerance.sheet-seo-description": "计算 {{title}} {{sheetLabel}} 在达成 SSS+ 等目标达成率时，各类音符最多可以出现多少个 GREAT、GOOD、MISS，并换算 BREAK 50 / 100 落。"
   },
   "recommend": {
     "title": "上分推荐",
