@@ -942,6 +942,13 @@
     "empty.dx_score": "저장된 점수에 DX 스코어가 없습니다. maimai DX NET, LXNS 또는 Diving-Fish에서 다시 가져오면 추가됩니다.",
     "empty.import": "점수 가져오기",
     "rating-value": "레이팅 {{rating}}",
+    "columns.song": "곡",
+    "columns.chart": "보면",
+    "columns.achievement": "달성률",
+    "columns.rank": "랭크",
+    "columns.lamps": "콤보 · 싱크",
+    "columns.dx_score": "DX 스코어",
+    "columns.rating": "레이팅",
     "loading": "점수를 불러오는 중…",
     "entry-link": "최고 기록"
   },
