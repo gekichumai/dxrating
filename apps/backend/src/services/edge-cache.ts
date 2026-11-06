@@ -17,6 +17,9 @@ export const EDGE_CACHE_CHECK_INTERVAL = Duration.seconds(60)
  * `purge_cache` drops the stored objects, so the next request is a miss. `invalidate_cache` only marks them stale:
  * the edge keeps serving them (stale-while-revalidate) while it revalidates with the ETag.
  */
+/** While checks keep failing, every this many failures is reported (about hourly at the default interval) */
+export const FAILURE_REPORT_EVERY = 60
+
 export type EdgeCacheAction = 'purge_cache' | 'invalidate_cache'
 
 export interface EdgeCacheCredentials {
@@ -59,7 +62,8 @@ export const requestEdgeCache = Effect.fn('EdgeCache.request')(function* (
  * - When the published catalog changes, it warms the new body and invalidates `dxdata`. The edge keeps serving the
  *   previous catalog while it fetches the new one.
  *
- * A failed step is reported and retried at the next check, without stopping the watcher.
+ * A failed step is retried at the next check, without stopping the watcher. The first failure of a streak is reported,
+ * then one in {@link FAILURE_REPORT_EVERY}.
  */
 export const watchEdgeCache = <E1, R1, E2, R2, E3, R3>(options: {
   readonly readPublishedSha256: Effect.Effect<string | undefined, E1, R1>
@@ -71,6 +75,8 @@ export const watchEdgeCache = <E1, R1, E2, R2, E3, R3>(options: {
   Effect.gen(function* () {
     let purgedAtStartup = false
     let announcedSha256: string | undefined
+    // A lasting failure (a revoked token, the database down) is reported when it starts and then about hourly
+    let failedChecks = 0
     const check = Effect.gen(function* () {
       const sha256 = yield* options.readPublishedSha256
       if (purgedAtStartup && (sha256 === undefined || sha256 === announcedSha256)) return
@@ -82,6 +88,9 @@ export const watchEdgeCache = <E1, R1, E2, R2, E3, R3>(options: {
         yield* options.request('invalidate_cache', ['dxdata'])
       }
       announcedSha256 = sha256
-    }).pipe(Effect.catch((error) => options.reportError(error)))
+    }).pipe(
+      Effect.tap(() => Effect.sync(() => void (failedChecks = 0))),
+      Effect.catch((error) => (failedChecks++ % FAILURE_REPORT_EVERY === 0 ? options.reportError(error) : Effect.void)),
+    )
     yield* Effect.repeat(check, Schedule.spaced(options.interval ?? EDGE_CACHE_CHECK_INTERVAL))
   })

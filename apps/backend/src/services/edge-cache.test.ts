@@ -54,7 +54,15 @@ describe('edge cache watcher', () => {
   it('reports a failed step and tries it again at the next check', async () => {
     const { events, errors } = await runWatcher(['a', 'fail', 'a', 'a'], { failRequests: 1 })
     expect(events).toEqual(['warm', 'warm', `purge_cache:${EDGE_CACHE_TAGS.join(',')}`])
-    expect(errors).toHaveLength(2)
+    // Two failed checks in a row are one streak, reported once
+    expect(errors).toHaveLength(1)
+  })
+})
+
+describe('edge cache watcher failure reports', () => {
+  it('reports the first failure of a streak, not every check', async () => {
+    const { errors } = await runWatcher(['fail', 'fail', 'fail', 'fail', 'fail'])
+    expect(errors).toHaveLength(1)
   })
 })
 
