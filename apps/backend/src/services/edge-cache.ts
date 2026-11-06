@@ -57,8 +57,8 @@ export const requestEdgeCache = Effect.fn('EdgeCache.request')(function* (
  * Keeps the Cloudflare edge in step with the origin, since nothing else tells it about a change:
  *
  * - At startup (a deploy), it purges every public tag, so header and encoding changes reach the edge at once instead
- *   of after the old objects' TTL. It first warms the catalog, so the refill after the purge is not held up by the
- *   catalog's Brotli compression.
+ *   of after the old objects' TTL. It first warms the catalog, which starts its Brotli compression; the edge refills
+ *   with the identity body and picks up the Brotli one at its next revalidation.
  * - When the published catalog changes, it warms the new body and invalidates `dxdata`. The edge keeps serving the
  *   previous catalog while it fetches the new one.
  *

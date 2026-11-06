@@ -197,35 +197,28 @@ export const createDxdataEffect = <E, R, H extends Env = Env>(
   },
   reportError: (error: unknown, context: Context<H>) => void = () => {},
 ) => {
-  // The Brotli body of the published catalog, one at a time: a new publication replaces it
-  let compressed: { bodySha256: string; body: Promise<Buffer>; byteLength?: number } | undefined
-  const compressedBody = (metadata: PublishedDxdataMetadata) =>
-    Effect.gen(function* () {
-      if (compressed?.bodySha256 !== metadata.bodySha256) {
-        const body = yield* store.getSnapshotBody(metadata.catalogRunId, metadata.bodySha256)
-        if (body === undefined) return undefined
-        // Another request may have started it while this one read the body
-        if (compressed?.bodySha256 !== metadata.bodySha256) {
-          const entry: NonNullable<typeof compressed> = {
-            bodySha256: metadata.bodySha256,
-            body: compressCatalogBody(body).then((encoded) => {
-              entry.byteLength = encoded.byteLength
-              return encoded
-            }),
-          }
-          compressed = entry
+  // The Brotli body of the published catalog, one at a time: a new publication replaces it. `encoded` is set once
+  // the compression has finished; until then requests get the identity body.
+  let compressed: { bodySha256: string; encoded?: Buffer } | undefined
+  const startCompression = (metadata: PublishedDxdataMetadata, body: string, c: Context<H>) => {
+    if (compressed?.bodySha256 === metadata.bodySha256) return
+    const entry: NonNullable<typeof compressed> = { bodySha256: metadata.bodySha256 }
+    compressed = entry
+    compressCatalogBody(body).then(
+      (encoded) => {
+        entry.encoded = encoded
+      },
+      (cause: unknown) => {
+        // Try again on the next request rather than keep a failed compression
+        if (compressed === entry) compressed = undefined
+        try {
+          reportError(new DxdataDecodeError({ operation: 'compress published catalog body', cause }), c)
+        } catch {
+          /* Reporting must not fail the compression bookkeeping. */
         }
-      }
-      const entry = compressed
-      return yield* Effect.tryPromise({
-        try: () => entry.body,
-        catch: (cause) => {
-          // Try again on the next request rather than keep a failed compression
-          if (compressed === entry) compressed = undefined
-          return new DxdataDecodeError({ operation: 'compress published catalog body', cause })
-        },
-      })
-    })
+      },
+    )
+  }
   return (c: Context<H>) =>
     Effect.gen(function* () {
       const metadata = yield* store.getPublishedMetadata()
@@ -234,31 +227,28 @@ export const createDxdataEffect = <E, R, H extends Env = Env>(
         try: () => successHeaders(metadata),
         catch: (cause) => new DxdataDecodeError({ operation: 'encode published catalog headers', cause }),
       })
-      const etag = headers.get('ETag')!
-      const brotli = acceptsBrotli(c.req.header('Accept-Encoding'))
-      if (brotli) {
-        // HEAD and 304 describe the Brotli GET: its length once it is compressed, else none, since compressing only to
-        // answer a metadata request would defeat it
+      // The Brotli body is its own representation with its own ETag, so a cache holding the identity body (from before
+      // the compression finished, or from before this change) gets the Brotli body on its next revalidation instead of
+      // a 304 that would relabel its identity bytes. HEAD, 304 and GET always describe the same representation.
+      const encoded =
+        acceptsBrotli(c.req.header('Accept-Encoding')) && compressed?.bodySha256 === metadata.bodySha256
+          ? compressed.encoded
+          : undefined
+      if (encoded) {
+        headers.set('ETag', `"${metadata.bodySha256}.br"`)
         headers.set('Content-Encoding', 'br')
-        const byteLength = compressed?.bodySha256 === metadata.bodySha256 ? compressed.byteLength : undefined
-        if (byteLength === undefined) headers.delete('Content-Length')
-        else headers.set('Content-Length', byteLength.toString())
+        headers.set('Content-Length', encoded.byteLength.toString())
       }
-      if (ifNoneMatchMatches(c.req.header('If-None-Match'), etag)) {
+      if (ifNoneMatchMatches(c.req.header('If-None-Match'), headers.get('ETag')!)) {
         return new Response(null, { status: 304, statusText: 'Not Modified', headers })
       }
       if (c.req.method === 'HEAD') return new Response(null, { status: 200, headers })
-      // The edge asks the origin for `gzip, br` and keeps the first encoding it gets for the ETag's lifetime, so the
-      // response waits for the Brotli body rather than hand the edge an uncompressed copy it would keep until the next
-      // publication. Only the first request after a publication waits, and the edge serves its stale copy meanwhile.
-      if (brotli) {
-        const encoded = yield* compressedBody(metadata)
-        if (encoded === undefined) return uncachedError(c, 'DX data catalog is unavailable', 503)
-        headers.set('Content-Length', encoded.byteLength.toString())
-        return new Response(new Uint8Array(encoded), { status: 200, headers })
-      }
+      if (encoded) return new Response(new Uint8Array(encoded), { status: 200, headers })
       const body = yield* store.getSnapshotBody(metadata.catalogRunId, metadata.bodySha256)
       if (body === undefined) return uncachedError(c, 'DX data catalog is unavailable', 503)
+      // Compressing takes about 10 s; this response does not wait for it, and the edge picks up the Brotli body
+      // when it next revalidates (within a minute)
+      startCompression(metadata, body, c)
       return new Response(body, { status: 200, headers })
     }).pipe(
       Effect.catch((error) =>

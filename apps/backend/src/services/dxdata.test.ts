@@ -106,49 +106,75 @@ describe('DX data catalog endpoint', () => {
     expect(calls).toEqual(['metadata'])
   })
 
-  it('serves a Brotli body to a caller that accepts it, compressed once per published body', async () => {
+  const BROTLI = { 'Accept-Encoding': 'gzip, br' }
+  const BR_ETAG = `"${BODY_SHA256}.br"`
+
+  /** Requests until the Brotli body is served: the first GET only starts the compression */
+  const untilBrotli = async (app: Hono) => {
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const response = await app.request(DXDATA_PATH, { headers: BROTLI })
+      if (response.headers.get('content-encoding') === 'br') return response
+      await response.arrayBuffer()
+      await new Promise((resolve) => setTimeout(resolve, 5))
+    }
+    throw new Error('the Brotli body was never served')
+  }
+
+  it('serves the identity body at once and the Brotli body, under its own ETag, once compressed', async () => {
     const { calls, store } = createStore()
     const app = createApp(store)
-    const first = await app.request(DXDATA_PATH, { headers: { 'Accept-Encoding': 'gzip, br' } })
-
-    expect(first.status).toBe(200)
-    expect(first.headers.get('content-encoding')).toBe('br')
+    const first = await app.request(DXDATA_PATH, { headers: BROTLI })
+    expect(first.headers.has('content-encoding')).toBe(false)
     expect(first.headers.get('etag')).toBe(ETAG)
-    expect(first.headers.get('vary')).toBe('Accept-Encoding')
-    const encoded = Buffer.from(await first.arrayBuffer())
-    expect(first.headers.get('content-length')).toBe(encoded.byteLength.toString())
-    expect(brotliDecompressSync(encoded).toString()).toBe(BODY)
+    expect(await first.text()).toBe(BODY)
 
-    const second = await app.request(DXDATA_PATH, { headers: { 'Accept-Encoding': 'br' } })
-    expect(Buffer.from(await second.arrayBuffer()).equals(encoded)).toBe(true)
-    // The body is read once, for the first compression
-    expect(calls).toEqual(['metadata', 'body', 'metadata'])
+    const brotli = await untilBrotli(app)
+    expect(brotli.status).toBe(200)
+    expect(brotli.headers.get('etag')).toBe(BR_ETAG)
+    expect(brotli.headers.get('vary')).toBe('Accept-Encoding')
+    const encoded = Buffer.from(await brotli.arrayBuffer())
+    expect(brotli.headers.get('content-length')).toBe(encoded.byteLength.toString())
+    expect(brotliDecompressSync(encoded).toString()).toBe(BODY)
+    // Once compressed, Brotli responses no longer read the stored body
+    const bodyReads = calls.filter((call) => call === 'body').length
+    await (await app.request(DXDATA_PATH, { headers: BROTLI })).arrayBuffer()
+    expect(calls.filter((call) => call === 'body')).toHaveLength(bodyReads)
+
+    const identity = await app.request(DXDATA_PATH)
+    expect(identity.headers.has('content-encoding')).toBe(false)
+    expect(identity.headers.get('etag')).toBe(ETAG)
+    expect(await identity.text()).toBe(BODY)
   })
 
-  it('describes the Brotli GET in HEAD and 304, without compressing for them', async () => {
+  it('answers HEAD and 304 for the representation a GET would send, never relabelling a cached identity body', async () => {
     const { calls, store } = createStore()
     const app = createApp(store)
-    const br = { 'Accept-Encoding': 'gzip, br' }
 
-    const headBefore = await app.request(DXDATA_PATH, { method: 'HEAD', headers: br })
-    expect(headBefore.headers.get('content-encoding')).toBe('br')
-    expect(headBefore.headers.has('content-length')).toBe(false)
+    const headBefore = await app.request(DXDATA_PATH, { method: 'HEAD', headers: BROTLI })
+    expect(headBefore.headers.has('content-encoding')).toBe(false)
+    expect(headBefore.headers.get('content-length')).toBe(Buffer.byteLength(BODY).toString())
     expect(calls).toEqual(['metadata'])
 
-    const get = await app.request(DXDATA_PATH, { headers: br })
-    const encodedLength = (await get.arrayBuffer()).byteLength.toString()
+    const encodedLength = (await (await untilBrotli(app)).arrayBuffer()).byteLength.toString()
 
-    const head = await app.request(DXDATA_PATH, { method: 'HEAD', headers: br })
-    const notModified = await app.request(DXDATA_PATH, { headers: { ...br, 'If-None-Match': ETAG } })
+    const head = await app.request(DXDATA_PATH, { method: 'HEAD', headers: BROTLI })
+    const notModified = await app.request(DXDATA_PATH, { headers: { ...BROTLI, 'If-None-Match': BR_ETAG } })
+    expect(notModified.status).toBe(304)
     for (const response of [head, notModified]) {
+      expect(response.headers.get('etag')).toBe(BR_ETAG)
       expect(response.headers.get('content-encoding')).toBe('br')
       expect(response.headers.get('content-length')).toBe(encodedLength)
     }
-    expect(notModified.status).toBe(304)
 
-    const identityHead = await app.request(DXDATA_PATH, { method: 'HEAD' })
-    expect(identityHead.headers.has('content-encoding')).toBe(false)
-    expect(identityHead.headers.get('content-length')).toBe(Buffer.byteLength(BODY).toString())
+    // A cache holding the identity body revalidates with its ETag and gets the Brotli body, not a 304
+    const upgraded = await app.request(DXDATA_PATH, { headers: { ...BROTLI, 'If-None-Match': ETAG } })
+    expect(upgraded.status).toBe(200)
+    expect(upgraded.headers.get('content-encoding')).toBe('br')
+    expect(brotliDecompressSync(Buffer.from(await upgraded.arrayBuffer())).toString()).toBe(BODY)
+
+    const identityNotModified = await app.request(DXDATA_PATH, { headers: { 'If-None-Match': ETAG } })
+    expect(identityNotModified.status).toBe(304)
+    expect(identityNotModified.headers.has('content-encoding')).toBe(false)
   })
 
   it('compresses again once a new body is published', async () => {
@@ -159,14 +185,16 @@ describe('DX data catalog endpoint', () => {
       getSnapshotBody: () => Effect.sync(() => (calls.push('body'), current.body)),
     }
     const app = createApp(store)
-    await (await app.request(DXDATA_PATH, { headers: { 'Accept-Encoding': 'br' } })).arrayBuffer()
+    await (await untilBrotli(app)).arrayBuffer()
 
     const next = '{"songs":[1]}'
     current = { metadata: { ...metadata, bodySha256: 'c'.repeat(64), byteLength: next.length.toString() }, body: next }
-    const response = await app.request(DXDATA_PATH, { headers: { 'Accept-Encoding': 'br' } })
-    expect(response.headers.get('etag')).toBe(`"${'c'.repeat(64)}"`)
+    const first = await app.request(DXDATA_PATH, { headers: BROTLI })
+    expect(first.headers.has('content-encoding')).toBe(false)
+    expect(await first.text()).toBe(next)
+    const response = await untilBrotli(app)
+    expect(response.headers.get('etag')).toBe(`"${'c'.repeat(64)}.br"`)
     expect(brotliDecompressSync(Buffer.from(await response.arrayBuffer())).toString()).toBe(next)
-    expect(calls.filter((call) => call === 'body')).toHaveLength(2)
   })
 
   it.each([
