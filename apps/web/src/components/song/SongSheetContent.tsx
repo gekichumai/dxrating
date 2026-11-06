@@ -366,7 +366,11 @@ export const SongSheetSummary: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
 const DetailRow: FC<PropsWithChildren<{ label: ReactNode; indent?: boolean }>> = ({ label, indent, children }) => (
   <TableRow>
-    <TableCell component="th" scope="row" className={clsx('w-2/5 !font-normal !text-fg-2', indent && '!pl-4')}>
+    <TableCell
+      component="th"
+      scope="row"
+      className={clsx('w-2/5 lg:w-[9em] lg:whitespace-nowrap !font-normal !text-fg-2', indent && '!pl-4')}
+    >
       {label}
     </TableCell>
     <TableCell>{children}</TableCell>
