@@ -150,7 +150,7 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
   }, [document, hasRecords, groups, region, records])
 
   return (
-    <div className="flex-container score-page-width w-full px-4 pb-global">
+    <div className="flex-container w-full max-w-7xl px-4 pb-global">
       <div className="w-full flex flex-col gap-4">
         <header className="flex flex-col gap-2">
           <PlateBreadcrumb region={region} />
@@ -280,7 +280,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
   const hasRemaster = data.charts.some((chart) => chart.sheets.some((s) => s.difficulty === DifficultyEnum.ReMaster))
 
   return (
-    <div className="flex-container score-page-width w-full px-4 pb-global">
+    <div className="flex-container w-full max-w-7xl px-4 pb-global">
       <div className="w-full flex flex-col gap-4">
         <header className="flex flex-col gap-2">
           <PlateBreadcrumb leaf={name} region={data.region} />
