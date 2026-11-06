@@ -191,6 +191,7 @@
     "aliases.show-all_one": "顯示全部 {{count}} 個別名",
     "aliases.show-all_other": "顯示全部 {{count}} 個別名",
     "aliases.show-less": "收合",
+    "aliases.copy": "複製別名",
     "aliases.dialog-title": "添加別名",
     "aliases.input-label": "別名",
     "aliases.adding": "添加中…",

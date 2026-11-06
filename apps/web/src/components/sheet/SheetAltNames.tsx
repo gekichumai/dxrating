@@ -42,26 +42,15 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
               type="button"
               // While the list is clipped, Tab skips the aliases (some are hidden); "Show all" reveals them first
               tabIndex={collapsed ? -1 : undefined}
-              className="cursor-pointer rounded-[var(--radius-xs)] border-0 bg-transparent p-0 text-inherit font-inherit text-left"
+              // Copies the alias, so it reads as a control: a dotted underline on hover and focus
+              className="cursor-copy rounded-[var(--radius-xs)] border-0 bg-transparent p-0 text-inherit font-inherit text-left decoration-dotted underline-offset-2 hover:underline focus-visible:underline"
+              title={t('sheet:aliases.copy')}
               onClick={() => {
-                if (altName.length > 50) {
-                  const sanitizedAltName = altName.trim()
-                  navigator.clipboard.writeText(`${sanitizedAltName}是什么歌`)
-                  toast.success(t('sheet:copy-alt-name.toast-success', { content: `${sanitizedAltName}是什么歌` }), {
-                    id: `copy-sheet-alt-name-${altName}`,
-                  })
-                } else {
-                  const sanitizedAltName = altName
-                    .trim()
-                    .replace(/[\s|\n|，|。|！|@|；|《|》|？|：|【|】|（|）|、|·|~|!|#|%|&|*|(|)|{|}|\\[|\\]|\\|]/g, '-')
-                  navigator.clipboard.writeText(`https://${sanitizedAltName}.是什么歌.com`)
-                  toast.success(
-                    t('sheet:copy-alt-name.toast-success', { content: `${sanitizedAltName}.是什么歌.com` }),
-                    {
-                      id: `copy-sheet-alt-name-${altName}`,
-                    },
-                  )
-                }
+                const alias = altName.trim()
+                void navigator.clipboard?.writeText(alias)
+                toast.success(t('sheet:copy-alt-name.toast-success', { content: alias }), {
+                  id: `copy-sheet-alt-name-${altName}`,
+                })
               }}
             >
               {altName}

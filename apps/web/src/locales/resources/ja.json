@@ -191,6 +191,7 @@
     "aliases.show-all_one": "すべての別名を表示（{{count}} 件）",
     "aliases.show-all_other": "すべての別名を表示（{{count}} 件）",
     "aliases.show-less": "折りたたむ",
+    "aliases.copy": "別名をコピー",
     "aliases.dialog-title": "別名を追加する",
     "aliases.input-label": "別名",
     "aliases.adding": "追加中…",

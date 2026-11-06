@@ -191,6 +191,7 @@
     "aliases.show-all_one": "Show {{count}} alias",
     "aliases.show-all_other": "Show all {{count}} aliases",
     "aliases.show-less": "Show fewer",
+    "aliases.copy": "Copy alias",
     "aliases.dialog-title": "Add an alias",
     "aliases.input-label": "Alias",
     "aliases.adding": "Adding…",

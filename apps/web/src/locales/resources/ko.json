@@ -191,6 +191,7 @@
     "aliases.show-all_one": "별칭 {{count}}개 모두 보기",
     "aliases.show-all_other": "별칭 {{count}}개 모두 보기",
     "aliases.show-less": "접기",
+    "aliases.copy": "별칭 복사",
     "aliases.dialog-title": "별칭 추가",
     "aliases.input-label": "별칭",
     "aliases.adding": "추가 중…",
