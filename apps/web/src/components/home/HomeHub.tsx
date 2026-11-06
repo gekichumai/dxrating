@@ -74,13 +74,13 @@ const QuickStats: FC = () => {
         <Link to="/rating" onClick={() => trackClick('quick_stats', 'rating')} className={CARD_LINK}>
           <MaterialSurface className={`flex h-full flex-col gap-0.5 px-3 py-2.5 ${CARD_SURFACE}`}>
             <span className="text-xs text-fg-2">{t('home:stats.rating')}</span>
-            <span className="text-xl font-semibold tabular-nums">{stats.rating}</span>
+            <span className="text-xl font-semibold display-num">{stats.rating}</span>
           </MaterialSurface>
         </Link>
         <Link to="/rating" onClick={() => trackClick('quick_stats', 'b50_floor')} className={CARD_LINK}>
           <MaterialSurface className={`flex h-full flex-col gap-0.5 px-3 py-2.5 ${CARD_SURFACE}`}>
             <span className="text-xs text-fg-2">{t('home:stats.b50-floor')}</span>
-            <span className="text-xl font-semibold tabular-nums">{floor ?? '—'}</span>
+            <span className="text-xl font-semibold display-num">{floor ?? '—'}</span>
           </MaterialSurface>
         </Link>
         {stats.nearestPlate ? (
@@ -94,7 +94,7 @@ const QuickStats: FC = () => {
             <MaterialSurface className={`flex h-full flex-col gap-0.5 px-3 py-2.5 ${CARD_SURFACE}`}>
               <span className="text-xs text-fg-2">{t('home:stats.nearest-plate')}</span>
               <span className="truncate text-xl font-semibold">{plateName(stats.nearestPlate.plate, script)}</span>
-              <span className="text-xs tabular-nums text-fg-2">
+              <span className="text-xs num text-fg-2">
                 {stats.nearestPlate.completedSheets} / {stats.nearestPlate.totalSheets}
               </span>
             </MaterialSurface>

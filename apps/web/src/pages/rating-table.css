@@ -112,6 +112,8 @@
   font-weight: 600;
   line-height: 1;
   vertical-align: super;
+  /* Same as the `num` utility (uno.config.ts) */
+  font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums;
 }
 

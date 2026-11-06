@@ -15,6 +15,10 @@ const SURFACE_BLACK = /(?:^|[.:!\\-])(?:bg|border|divide|outline|ring|from|via|t
 export default defineConfig({
   rules: [
     ['font-rounded', { 'font-family': 'Torus' }],
+    // Numbers below 20px: tabular Nunito digits in front of the locale stack. Big headline numbers use `display-num`
+    // (the brand font). See "Numbers" in src/styles/tokens.css
+    ['num', { 'font-family': 'var(--font-numeric)', 'font-variant-numeric': 'tabular-nums' }],
+    ['display-num', { 'font-family': 'var(--font-sans)', 'font-variant-numeric': 'normal' }],
     [
       'p-safe',
       {
@@ -130,8 +134,6 @@ export default defineConfig({
     'page-description': 'text-sm sm:text-base leading-normal text-fg-2 text-pretty max-w-[65ch]',
     // Section heading inside a page or glass panel
     'section-title': 'text-base font-semibold leading-snug text-fg-1',
-    // Numbers that change or line up
-    num: 'tabular-nums',
     'chunks-horizontal-2': 'flex flex-col md:flex-row items-center justify-center gap-2 w-full',
   },
   presets: [

@@ -40,9 +40,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet; onClose?: () 
       <div className="flex flex-col">
         <div className="flex items-start">
           {/* The game's internal chart ID; charts too new to have one known yet show nothing */}
-          {typeof sheet.internalId === 'number' && (
-            <div className="text-xs text-fg-2 tabular-nums">#{sheet.internalId}</div>
-          )}
+          {typeof sheet.internalId === 'number' && <div className="text-xs text-fg-2 num">#{sheet.internalId}</div>}
 
           <div className="flex-1" />
 
@@ -148,7 +146,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet; onClose?: () 
 
           <div className="flex-1" />
 
-          <div className="text-4xl font-semibold tabular-nums text-fg-2 leading-none">
+          <div className="text-4xl font-semibold display-num text-fg-2 leading-none">
             {sheet.isTypeUtage ? sheet.level : sheet.internalLevelValue.toFixed(1)}
           </div>
         </div>

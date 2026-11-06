@@ -171,7 +171,7 @@ export const SheetListItemContentView: FC<SheetListItemContentViewProps> = memo(
     return (
       <div
         className={clsx(
-          'flex items-center w-full p-1 gap-2 tabular-nums relative',
+          'flex items-center w-full p-1 gap-2 num relative',
           // From lg a table row is one 56px line of columns. ListItemText and the summary dissolve (display: contents),
           // so the title, artist, version and badges become the grid's cells
           isTable && [SHEET_TABLE_ROW_COLUMNS, 'lg:h-14 lg:py-0'],
@@ -207,7 +207,7 @@ export const SheetListItemContentView: FC<SheetListItemContentViewProps> = memo(
           )}
         >
           {isTypeUtage ? (
-            <span className="font-semibold tabular-nums text-lg text-fg-2">{level}</span>
+            <span className="font-semibold num text-lg text-fg-2">{level}</span>
           ) : (
             <SheetInternalLevelValue value={internalLevelValue} />
           )}
@@ -268,7 +268,7 @@ const SheetInternalLevelValue: FC<{ value: number }> = ({ value }) => {
   const decimalPart = value - wholePart
 
   return (
-    <div className="font-semibold tabular-nums">
+    <div className="font-semibold num">
       <span className="text-lg text-fg-2">{wholePart}.</span>
       <span className="text-xl text-fg-1">{decimalPart.toFixed(1).split('.')[1]}</span>
     </div>

@@ -107,7 +107,7 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
                   <span lang="ja" translate="no" className="truncate text-sm font-medium">
                     {result.title}
                   </span>
-                  <span className="text-xs text-secondary tabular-nums">{sheetLabel(result)}</span>
+                  <span className="text-xs text-secondary num">{sheetLabel(result)}</span>
                 </span>
               </Link>
             </li>
@@ -132,7 +132,7 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
                       params={{ songId: result.songId, type: result.type, difficulty: result.difficulty }}
                       onClick={() => setQuery('')}
                       aria-current={sheet?.id === result.id ? 'page' : undefined}
-                      className={`inline-flex items-center rounded-[var(--radius-md)] border border-solid border-[var(--glass-border)] px-2 py-0.5 text-xs leading-5 tabular-nums no-underline text-inherit hover:bg-black/5 ${sheet?.id === result.id ? 'font-bold' : ''}`}
+                      className={`inline-flex items-center rounded-[var(--radius-md)] border border-solid border-[var(--glass-border)] px-2 py-0.5 text-xs leading-5 num no-underline text-inherit hover:bg-black/5 ${sheet?.id === result.id ? 'font-bold' : ''}`}
                     >
                       {sheetLabel(result)}
                     </Link>
@@ -186,7 +186,7 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
             <a href={sheetPath} lang="ja" translate="no" className="link font-bold [overflow-wrap:anywhere]">
               {sheet.title}
             </a>
-            <span className="text-xs text-secondary tabular-nums">{sheetLabel(sheet)}</span>
+            <span className="text-xs text-secondary num">{sheetLabel(sheet)}</span>
           </div>
         </MaterialSurface>
         <div className="lg:col-start-2 lg:row-start-1 lg:row-span-2">

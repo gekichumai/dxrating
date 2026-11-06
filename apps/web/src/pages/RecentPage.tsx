@@ -112,7 +112,7 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
                             )}
                             {chart.releaseDate && (
                               <time
-                                className="text-xs lg:text-sm tabular-nums"
+                                className="text-xs lg:text-sm num"
                                 dateTime={chart.releaseDate}
                                 itemProp="datePublished"
                               >

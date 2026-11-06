@@ -111,7 +111,7 @@ export const LevelRangePicker: FC<{
         >
           <IconMdiMinus aria-hidden className="size-5" />
         </StepButton>
-        <span className="min-w-[3.25ch] text-center text-[1.75rem] font-semibold leading-none tracking-[-0.01em] num sm:text-3xl">
+        <span className="min-w-[3.25ch] text-center text-[1.75rem] font-semibold leading-none tracking-[-0.01em] display-num sm:text-3xl">
           {formatTenths(value)}
         </span>
         <StepButton

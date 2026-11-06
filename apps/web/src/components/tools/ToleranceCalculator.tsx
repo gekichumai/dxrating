@@ -126,12 +126,12 @@ export const ToleranceCalculator: FC<{
           </p>
           {result && (
             <div className="flex flex-col gap-3">
-              <p className="m-0 text-sm tabular-nums">
+              <p className="m-0 text-sm num">
                 {t('tools:tolerance.allowed-loss', { value: result.allowedLoss.toFixed(4) })}
               </p>
               <MaterialSurface variant="thin" className="overflow-hidden">
                 <div className="scroll-fade-x overflow-x-auto">
-                  <table className="w-full border-collapse text-sm tabular-nums">
+                  <table className="w-full border-collapse text-sm num">
                     <thead>
                       <tr className="text-left text-xs text-secondary">
                         <th scope="col" className="px-3 py-2 font-medium">
@@ -187,6 +187,6 @@ const BreakStat: FC<{ label: string; value: string }> = ({ label, value }) => (
   // Cards stretch to the tallest label in their row; pinning each value to the bottom keeps the values aligned
   <MaterialSurface variant="thin" className="flex flex-col justify-between gap-0.5 px-3 py-2">
     <dt className="text-xs text-secondary">{label}</dt>
-    <dd className="m-0 text-base font-bold tabular-nums">{value}</dd>
+    <dd className="m-0 text-base font-bold num">{value}</dd>
   </MaterialSurface>
 )

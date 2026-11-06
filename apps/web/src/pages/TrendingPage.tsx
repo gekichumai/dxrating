@@ -40,7 +40,7 @@ const TrendingChartsSkeleton: FC<{ label: string }> = ({ label }) => (
   <div aria-busy="true" aria-label={label} className={`glass w-full p-1 ${TRENDING_LIST_GRID}`} role="status">
     {Array.from({ length: 8 }, (_, index) => (
       <div className={`w-full ${SHEET_ROW_INSET} py-1`} key={index}>
-        <div className="flex items-center w-full p-1 gap-2 tabular-nums relative">
+        <div className="flex items-center w-full p-1 gap-2 num relative">
           <Skeleton variant="rounded" className="!h-12 !w-12 !min-w-[3rem] !rounded" />
           <div className="ml-2 flex-1 min-w-0">
             <div className="flex flex-col gap-2">
@@ -179,7 +179,7 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
                       startAdornment={
                         <span
                           aria-hidden="true"
-                          className="hidden lg:block w-5 mr-1 shrink-0 text-right text-sm font-semibold tabular-nums text-fg-2"
+                          className="hidden lg:block w-5 mr-1 shrink-0 text-right text-sm font-semibold num text-fg-2"
                         >
                           {index + 1}
                         </span>

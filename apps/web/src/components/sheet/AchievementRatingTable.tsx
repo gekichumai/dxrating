@@ -53,7 +53,7 @@ const RatingColumn: FC<{
   const { t } = useTranslation(['sheet', 'global'])
 
   return (
-    <table className="w-full border-collapse tabular-nums text-sm text-fg-1">
+    <table className="w-full border-collapse num text-sm text-fg-1">
       <thead className={clsx(headerVisibleOnlyWhenSplit && 'sr-only @[34rem]:not-sr-only')}>
         <tr className="text-xs text-fg-2">
           <th scope="col" colSpan={2} className="px-2 pb-1 text-start font-normal">

@@ -142,7 +142,7 @@ export const RecommendPage: FC = () => {
 const Stat: FC<{ label: string; value: number }> = ({ label, value }) => (
   <div className="flex flex-col gap-0.5 lg:flex-row lg:items-baseline lg:gap-2">
     <dt className="text-xs leading-tight text-fg-2 text-balance">{label}</dt>
-    <dd className="m-0 text-xl font-semibold num text-fg-1 lg:text-lg">{value}</dd>
+    <dd className="m-0 text-xl font-semibold display-num text-fg-1 lg:text-lg">{value}</dd>
   </div>
 )
 

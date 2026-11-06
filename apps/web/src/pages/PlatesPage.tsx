@@ -360,7 +360,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
             {hasRecords ? (
               <>
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="text-3xl font-semibold num tracking-[-0.01em] text-fg-1">
+                  <span className="text-3xl font-semibold display-num tracking-[-0.01em] text-fg-1">
                     {formatPercent(percent)}
                   </span>
                   <span className="text-sm text-fg-2 num">

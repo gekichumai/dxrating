@@ -114,7 +114,7 @@ const Result: FC<{ label: string; announce: string; children: ReactNode }> = ({ 
   return (
     <div className="flex flex-col gap-0.5">
       <span className="text-sm text-secondary">{label}</span>
-      <span className="text-2xl font-bold num">{children}</span>
+      <span className="text-2xl font-bold display-num">{children}</span>
       <p role="status" className="sr-only">
         {settled}
       </p>
@@ -255,7 +255,7 @@ const RatingTable: FC = () => {
       {levels.length > 0 && (
         <MaterialSurface variant="thin" className="overflow-hidden">
           <div className="scroll-fade-x overflow-x-auto">
-            <table className="w-full border-collapse text-sm tabular-nums">
+            <table className="w-full border-collapse text-sm num">
               <caption className="sr-only">{t('tools:rating.table.title')}</caption>
               <thead>
                 <tr className="text-xs text-secondary">

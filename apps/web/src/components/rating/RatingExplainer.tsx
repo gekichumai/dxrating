@@ -77,9 +77,9 @@ export const RatingExplainer: FC = () => {
               {RANK_COEFFICIENT_ROWS.map((row) => (
                 <tr key={row.label}>
                   <td className="px-4 py-1.5 font-bold">{row.label}</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">{row.achievement.toFixed(1)}%</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">{row.coefficient.toFixed(1)}</td>
-                  <td className="px-4 py-1.5 text-right tabular-nums">{row.rating}</td>
+                  <td className="px-2 py-1.5 text-right num">{row.achievement.toFixed(1)}%</td>
+                  <td className="px-2 py-1.5 text-right num">{row.coefficient.toFixed(1)}</td>
+                  <td className="px-4 py-1.5 text-right num">{row.rating}</td>
                 </tr>
               ))}
             </tbody>
