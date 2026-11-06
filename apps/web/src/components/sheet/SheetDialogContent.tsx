@@ -1,5 +1,4 @@
 import { SERVER_BADGE_ORDER } from '@/models/constants'
-import { getArcadeSongsUrl } from '@/catalog/arcadeSongs'
 import { CommentActions } from '../comments/CommentActions'
 import { filterComments, useCommentVisibility } from '../comments/commentVisibility'
 import { MULTIVER_AVAILABLE_VERSIONS, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@gekichumai/dxdata'
@@ -18,7 +17,7 @@ import {
 import clsx from 'clsx'
 import { MotionConfig } from 'motion/react'
 import { type FC, type PropsWithChildren, type ReactNode, memo, useEffect, useMemo, useRef, useState } from 'react'
-import { Trans, useTranslation } from 'react-i18next'
+import { useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
 import useSWR from 'swr'
 import { match } from 'ts-pattern'
@@ -463,19 +462,6 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                   </TableRow>
                 </TableBody>
               </Table>
-
-              <div className="mt-4 text-xs text-fg-2 text-right">
-                <Trans
-                  i18nKey="sheet:details.credits"
-                  components={{
-                    link: (
-                      <a href={getArcadeSongsUrl(sheet)} {...externalLinkProps} className="link">
-                        arcade-songs.zetaraku.dev
-                      </a>
-                    ),
-                  }}
-                />
-              </div>
             </div>
           </div>
 
