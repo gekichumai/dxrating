@@ -27,6 +27,12 @@
 .rating-table .rating-col--actions {
   width: 64px;
 }
+.rating-table .rating-col--internalLevel {
+  width: 64px;
+}
+.rating-table .rating-col--dxScore {
+  width: 96px;
+}
 
 .rating-table thead th {
   position: relative;
@@ -233,6 +239,8 @@
   }
   .rating-table .rating-mobile-flags > * {
     width: auto;
+    min-width: 0;
+    height: 16px;
     padding: 0 6px;
     font-size: 0.75rem;
     line-height: 1.33;
@@ -296,7 +304,107 @@
 
 @media (min-width: 768px) {
   .rating-table-sort > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  /* The sort arrow and priority badge keep their size; a long label truncates first */
+  .rating-table-sort > div {
+    flex-shrink: 0;
+  }
+  /* The hover arrow of an unsorted column takes no room until the header is hovered or focused, so a short column
+     shows its whole label at rest */
+  .rating-table-sort > div:not(.rounded-full) {
+    max-width: 0;
+  }
+  .group:hover .rating-table-sort > div,
+  .rating-table-sort:focus-visible > div {
+    max-width: none;
+  }
+  .rating-table .rating-col--includedIn {
+    width: 96px;
+  }
+}
+
+/* The level and DX score columns need the desktop width; under it the level stays in the chart meta */
+@media (max-width: 1023px) {
+  .rating-table .rating-col--internalLevel,
+  .rating-table .rating-col--dxScore {
+    display: none;
+  }
+}
+
+/* Desktop: one-line rows. Keep the heights in sync with ROW_HEIGHTS in RatingCalculator.tsx */
+@media (min-width: 1024px) {
+  .rating-records {
+    --rating-row-height: 56px;
+  }
+  .rating-records--compact {
+    --rating-row-height: 44px;
+  }
+  .rating-table .rating-col--achievementRate {
+    width: 156px;
+  }
+  .rating-table .rating-chart-link {
+    container-type: inline-size;
+    padding-block: 6px !important;
+  }
+  .rating-records--compact .rating-table .rating-chart-link {
+    padding-block: 4px !important;
+  }
+  .rating-chart-cover {
+    flex-basis: 36px;
+    width: 36px;
+    height: 36px;
+  }
+  .rating-chart-copy {
+    gap: 2px;
+  }
+  .rating-records--compact .rating-chart-copy {
+    gap: 1px;
+  }
+  .rating-chart-title,
+  .rating-records--compact .rating-chart-title {
+    display: block;
+    -webkit-line-clamp: unset;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .rating-chart-meta {
+    flex-wrap: nowrap;
+  }
+  .rating-chart-meta-level {
+    display: none;
+  }
+  .rating-table .rating-row-remove {
+    width: 36px;
+    height: 36px;
+  }
+  /* A column of trash buttons needs no visible heading; the label stays for screen readers */
+  .rating-table th.rating-col--actions .rating-table-sort > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* A wide chart cell puts the difficulty and type on the title's line */
+@container (min-width: 420px) {
+  .rating-chart-copy {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .rating-chart-title {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  .rating-chart-meta {
+    flex: 0 0 auto;
   }
 }
 .rating-calculator {
@@ -385,13 +493,95 @@
 .rating-table .rating-chart-link {
   padding-inline-start: 16px !important;
 }
+/* Wide desktop: the overview becomes a sidebar beside the records, so the first rows sit at the top of the page */
 @media (min-width: 1280px) {
-  .rating-statistics .rating-statistics-overview {
+  .rating-calculator.flex-container {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: 360px minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
   }
+  .rating-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* The total on one line with its label; B15 and B35 stack below it */
   .rating-statistics-overview > :first-child {
-    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .rating-statistics-overview .text-3xl {
+    font-size: 1.5rem;
+  }
+  /* The sidebar leaves the table less width: tighter fixed columns and header text, so the chart titles keep room */
+  .rating-table thead th {
+    padding-inline: 6px;
+    font-size: 0.8125rem;
+  }
+  .rating-table-row > td {
+    padding-inline: 6px;
+  }
+  .rating-table .rating-col--includedIn {
+    width: 88px;
+  }
+  .rating-table .rating-col--comboFlag,
+  .rating-table .rating-col--syncFlag {
+    width: 64px;
+  }
+  .rating-table .rating-col--internalLevel {
+    width: 56px;
+  }
+  .rating-table .rating-col--dxScore {
+    width: 88px;
+  }
+  .rating-table .rating-col--achievementRate {
+    width: 112px;
+  }
+  .rating-table .rating-col--rating {
+    width: 128px;
+  }
+  .rating-table .rating-col--actions {
+    width: 48px;
+  }
+}
+@media (min-width: 1280px) and (min-height: 760px) {
+  .rating-overview {
+    position: sticky;
+    top: 16px;
+  }
+}
+@media (min-width: 1600px) {
+  .rating-calculator.flex-container {
+    max-width: 1536px;
+  }
+  .rating-table thead th {
+    padding-inline: 8px;
+    font-size: 0.875rem;
+  }
+  .rating-table-row > td {
+    padding-inline: 8px;
+  }
+  .rating-table .rating-col--includedIn {
+    width: 96px;
+  }
+  .rating-table .rating-col--internalLevel {
+    width: 64px;
+  }
+  .rating-table .rating-col--actions {
+    width: 64px;
+  }
+  .rating-table .rating-col--comboFlag,
+  .rating-table .rating-col--syncFlag {
+    width: 80px;
+  }
+  .rating-table .rating-col--dxScore {
+    width: 96px;
+  }
+  .rating-table .rating-col--achievementRate {
+    width: 156px;
+  }
+  .rating-table .rating-col--rating {
+    width: 136px;
   }
 }
 @media (max-width: 400px) {

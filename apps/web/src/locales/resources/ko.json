@@ -534,6 +534,8 @@
     "table.headers.included-in": "포함 대상",
     "table.headers.combo": "콤보",
     "table.headers.sync": "싱크",
+    "table.headers.internal-level": "상수",
+    "table.headers.dx-score": "DX 스코어",
     "table.headers.achievement-rate": "달성률",
     "table.headers.rating": "Rating",
     "table.headers.actions": "작업",

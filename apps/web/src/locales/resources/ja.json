@@ -534,6 +534,8 @@
     "table.headers.included-in": "収録",
     "table.headers.combo": "コンボ",
     "table.headers.sync": "シンク",
+    "table.headers.internal-level": "定数",
+    "table.headers.dx-score": "DXスコア",
     "table.headers.achievement-rate": "達成率",
     "table.headers.rating": "レーティング",
     "table.headers.actions": "操作",

@@ -534,6 +534,8 @@
     "table.headers.included-in": "Bucket",
     "table.headers.combo": "Combo",
     "table.headers.sync": "Sync",
+    "table.headers.internal-level": "Const.",
+    "table.headers.dx-score": "DX score",
     "table.headers.achievement-rate": "Achievement rate",
     "table.headers.rating": "Rating",
     "table.headers.actions": "Actions",
