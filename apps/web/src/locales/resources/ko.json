@@ -1056,7 +1056,11 @@
     "tolerance.penalty.great-grade": "GREAT {{score}}",
     "tolerance.penalty.judgement": "판정",
     "tolerance.penalty.base-part": "기본 −{{value}}%",
-    "tolerance.penalty.bonus-part": "보너스 −{{value}}%"
+    "tolerance.penalty.bonus-part": "보너스 −{{value}}%",
+    "tolerance.chart-link": "이 채보의 허용 판정 계산",
+    "tolerance.chart-pages.title": "모든 채보 페이지에도 있어요",
+    "tolerance.chart-pages.body": "모든 채보 페이지에 그 채보에 맞춘 허용 판정 카드가 있습니다.",
+    "tolerance.chart-pages.example": "예시 보기:"
   },
   "recommend": {
     "title": "레이팅 추천",

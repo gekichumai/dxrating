@@ -1056,7 +1056,11 @@
     "tolerance.penalty.great-grade": "GREAT {{score}}",
     "tolerance.penalty.judgement": "判定",
     "tolerance.penalty.base-part": "基本 −{{value}}%",
-    "tolerance.penalty.bonus-part": "ボーナス −{{value}}%"
+    "tolerance.penalty.bonus-part": "ボーナス −{{value}}%",
+    "tolerance.chart-link": "この譜面の許容ミス計算",
+    "tolerance.chart-pages.title": "曲ページでも使えます",
+    "tolerance.chart-pages.body": "どの譜面のページにも、その譜面用の「許容ミス」カードがあります。",
+    "tolerance.chart-pages.example": "例："
   },
   "recommend": {
     "title": "レート上げ候補",

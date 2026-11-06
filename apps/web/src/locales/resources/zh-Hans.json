@@ -1056,7 +1056,11 @@
     "tolerance.penalty.great-grade": "GREAT {{score}}",
     "tolerance.penalty.judgement": "判定",
     "tolerance.penalty.base-part": "基础 −{{value}}%",
-    "tolerance.penalty.bonus-part": "额外 −{{value}}%"
+    "tolerance.penalty.bonus-part": "额外 −{{value}}%",
+    "tolerance.chart-link": "这张谱面的分数线",
+    "tolerance.chart-pages.title": "每个谱面页面都有",
+    "tolerance.chart-pages.body": "每张谱面的详情页都有一张为该谱面准备好的分数线卡片。",
+    "tolerance.chart-pages.example": "看看例子："
   },
   "recommend": {
     "title": "上分推荐",

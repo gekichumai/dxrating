@@ -1056,7 +1056,11 @@
     "tolerance.penalty.great-grade": "GREAT {{score}}",
     "tolerance.penalty.judgement": "Judgement",
     "tolerance.penalty.base-part": "base −{{value}}%",
-    "tolerance.penalty.bonus-part": "bonus −{{value}}%"
+    "tolerance.penalty.bonus-part": "bonus −{{value}}%",
+    "tolerance.chart-link": "Score tolerance for this chart",
+    "tolerance.chart-pages.title": "Also on every chart page",
+    "tolerance.chart-pages.body": "Each chart's page has its own score tolerance card, already set up for that chart.",
+    "tolerance.chart-pages.example": "See an example:"
   },
   "recommend": {
     "title": "Rating boosts",
