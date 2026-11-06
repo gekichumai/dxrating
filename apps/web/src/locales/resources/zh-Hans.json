@@ -851,7 +851,12 @@
     "index.seo-description": "舞萌DX（maimai DX）每个版本的新曲与新增谱面，附谱面定数。",
     "index.intro": "选择版本，查看该版本新增的全部曲目与谱面。",
     "index.count": "{{songs}} 首・{{charts}} 张谱面",
-    "chart-link": "{{version}} 新曲一览"
+    "chart-link": "{{version}} 新曲一览",
+    "era.label": "版本世代",
+    "era.dx": "DX",
+    "era.classic": "旧框",
+    "era.dx-range": "2019–",
+    "era.classic-range": "2012–2018"
   },
   "share": {
     "image.button": "分享图片",
