@@ -101,7 +101,7 @@ export const RecommendPage: FC = () => {
   }, [result])
 
   return (
-    <ScorePageFrame width="6xl">
+    <ScorePageFrame width="me">
       <ScorePageHeader title={m.recommend_title({}, { locale })} description={m.recommend_description({}, { locale })}>
         {isDemo && <DemoScoresNotice className="mt-3">{m.recommend_demo({}, { locale })}</DemoScoresNotice>}
       </ScorePageHeader>

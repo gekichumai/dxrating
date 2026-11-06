@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import UnoCSS from 'unocss/vite'
 import Icons from 'unplugin-icons/vite'
+import { resolveSentryRelease } from './src/setup/sentry-release'
 import { defineConfig, type Plugin } from 'vite'
 
 // Emit the song catalog in the Worker bundle as JSON.parse("...") instead of a multi-megabyte object literal. V8 parses
@@ -173,11 +174,14 @@ const catalogSnapshotUpdatedAt = (
   }
 ).updatedAt
 
+const sentryRelease = resolveSentryRelease(process.env)
+
 export default defineConfig({
   define: {
     'import.meta.env.VITE_CATALOG_SNAPSHOT_UPDATED_AT': JSON.stringify(catalogSnapshotUpdatedAt),
     // The Sentry release, read by Sentry.init in src/router.tsx and src/server.ts. Only the modules that use it embed it.
-    'import.meta.env.VITE_SENTRY_RELEASE': JSON.stringify(process.env.SENTRY_RELEASE ?? ''),
+    // Empty outside CI release/preview builds, which turns Sentry off (see src/setup/sentry-release.ts).
+    'import.meta.env.VITE_SENTRY_RELEASE': JSON.stringify(sentryRelease),
   },
   server: {
     port: 5173,
@@ -200,7 +204,7 @@ export default defineConfig({
       project: 'dxrating-web',
       authToken: process.env.SENTRY_AUTH_TOKEN,
       release: {
-        name: process.env.SENTRY_RELEASE,
+        name: sentryRelease || undefined,
         // Injecting the release puts it at the top of every chunk, so each release rehashes the vendor chunks too.
         // Sentry.init sets the release from VITE_SENTRY_RELEASE instead; uploaded source maps match by debug ID.
         inject: false,

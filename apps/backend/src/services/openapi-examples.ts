@@ -209,6 +209,10 @@ export const publicApiOperationExamples = {
   'lxns.authorize': {
     response: { url: lxnsAuthorizationUrl },
   },
+  'lxns.complete': {
+    request: { code: 'example-authorization-code', state: '550e8400-e29b-41d4-a716-446655440000' },
+    response: { success: true },
+  },
   'lxns.status': {
     response: { connected: true },
   },
