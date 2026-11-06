@@ -161,7 +161,7 @@ const RenderToOneShotImageDialogContent: FC<{ onClose: () => void }> = ({ onClos
             <div className="mt-4">
               <ShareImageActions
                 blob={data}
-                filename="dxrating-b50.png"
+                filename={data.type === 'image/png' ? 'dxrating-b50.png' : 'dxrating-b50.jpg'}
                 shareTitle={t('rating-calculator:io.export.oneshot-image.dialog.title')}
               />
             </div>

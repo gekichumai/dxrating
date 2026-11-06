@@ -111,13 +111,14 @@ export function drawRoundedImage(
 
 export type ShareOutcome = 'shared' | 'cancelled' | 'failed'
 
-const pngFile = (blob: Blob, filename: string) => new File([blob], filename, { type: 'image/png' })
+/** The file keeps the blob's own type (the B50 renderer returns JPEG), defaulting to PNG for canvas output */
+const imageFile = (blob: Blob, filename: string) => new File([blob], filename, { type: blob.type || 'image/png' })
 
 /** Whether the system share sheet can take this PNG (mobile browsers, Safari, Edge on Windows) */
 export function canShareImageFile(blob: Blob, filename: string): boolean {
   if (typeof navigator === 'undefined' || typeof File === 'undefined') return false
   try {
-    return !!navigator.canShare?.({ files: [pngFile(blob, filename)] })
+    return !!navigator.canShare?.({ files: [imageFile(blob, filename)] })
   } catch {
     return false
   }
@@ -126,7 +127,7 @@ export function canShareImageFile(blob: Blob, filename: string): boolean {
 /** Opens the system share sheet with the PNG; call it only when `canShareImageFile` is true */
 export async function shareImageFile(blob: Blob, filename: string, title?: string): Promise<ShareOutcome> {
   try {
-    await navigator.share({ files: [pngFile(blob, filename)], title })
+    await navigator.share({ files: [imageFile(blob, filename)], title })
     return 'shared'
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') return 'cancelled'
@@ -150,7 +151,22 @@ export function downloadImage(blob: Blob, filename: string) {
 export const canCopyImage = () =>
   typeof navigator !== 'undefined' && typeof ClipboardItem !== 'undefined' && !!navigator.clipboard?.write
 
-/** Puts the PNG on the clipboard */
+/** Re-encodes a non-PNG image as PNG, the one image type every async clipboard accepts */
+async function toPng(blob: Blob): Promise<Blob> {
+  if (blob.type === 'image/png') return blob
+  const bitmap = await createImageBitmap(blob)
+  const canvas = document.createElement('canvas')
+  canvas.width = bitmap.width
+  canvas.height = bitmap.height
+  canvas.getContext('2d')?.drawImage(bitmap, 0, 0)
+  bitmap.close()
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((png) => (png ? resolve(png) : reject(new Error('PNG encoding failed'))), 'image/png')
+  })
+}
+
+/** Puts the image on the clipboard as PNG */
 export async function copyImage(blob: Blob) {
-  await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+  // A promise keeps Safari's user-activation window open while a JPEG is re-encoded
+  await navigator.clipboard.write([new ClipboardItem({ 'image/png': toPng(blob) })])
 }

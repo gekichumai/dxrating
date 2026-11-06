@@ -58,4 +58,24 @@ describe('copyImage', () => {
     expect(write).toHaveBeenCalledOnce()
     vi.unstubAllGlobals()
   })
+  it('re-encodes a JPEG as PNG for the clipboard', async () => {
+    const items: Record<string, Promise<Blob>>[] = []
+    vi.stubGlobal(
+      'ClipboardItem',
+      class {
+        constructor(entries: Record<string, Promise<Blob>>) {
+          items.push(entries)
+        }
+      },
+    )
+    vi.stubGlobal('createImageBitmap', async () => ({ width: 2, height: 2, close: () => {} }))
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage: () => {} } as never)
+    vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(function (callback) {
+      callback(new Blob(['png'], { type: 'image/png' }))
+    })
+    Object.defineProperty(navigator, 'clipboard', { value: { write: vi.fn(async () => {}) }, configurable: true })
+    await copyImage(new Blob(['jpg'], { type: 'image/jpeg' }))
+    expect((await items[0]?.['image/png'])?.type).toBe('image/png')
+    vi.unstubAllGlobals()
+  })
 })
