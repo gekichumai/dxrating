@@ -3,6 +3,7 @@ import { toToleranceNoteCounts } from '@gekichumai/maimai-domain'
 import { Chip, InputAdornment, TextField } from '@mui/material'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from '@tanstack/react-router'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import {
@@ -60,9 +61,20 @@ export const ToleranceCalculator: FC<{
   return (
     <MaterialSurface as="section" className="flex flex-col gap-3 p-4" aria-labelledby="tolerance-heading">
       <div className="flex flex-col gap-1">
-        <Heading id="tolerance-heading" className="m-0 text-lg font-bold">
-          {t('tools:tolerance.section-title')}
-        </Heading>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <Heading id="tolerance-heading" className="m-0 text-lg font-bold">
+            {t('tools:tolerance.section-title')}
+          </Heading>
+          {source === 'chart_page' && (
+            <Link
+              to="/songs/$songId/$type/$difficulty/tolerance"
+              params={{ songId: sheet.songId, type: sheet.type, difficulty: sheet.difficulty }}
+              className="link text-sm"
+            >
+              {t('tools:tolerance.open-page')} →
+            </Link>
+          )}
+        </div>
         <p className="m-0 text-xs text-secondary">{t('tools:tolerance.section-intro')}</p>
       </div>
 

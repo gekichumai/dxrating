@@ -472,9 +472,14 @@
     "terms.heading6": "Leaving the service",
     "terms.heading7": "Availability and changes",
     "legal.back": "Back",
+    "legal.toc": "On this page",
     "account-security.title": "Account security",
     "account-security.sign-in-description": "Sign in to manage your password, passkeys and signed-in devices.",
     "account-security.loading": "Loading your account",
+    "account-security.feature-password": "Change your password",
+    "account-security.feature-passkeys": "Add a passkey to sign in without a password",
+    "account-security.feature-devices": "See where you're signed in and sign out other devices",
+    "account-security.features-label": "What you can do here",
     "privacy.title": "Privacy Policy",
     "privacy.updated": "Last updated: October 30, 2026",
     "privacy.intro.heading": "Introduction",
@@ -535,6 +540,8 @@
     "table.headers.included-in": "Bucket",
     "table.headers.combo": "Combo",
     "table.headers.sync": "Sync",
+    "table.headers.internal-level": "Const.",
+    "table.headers.dx-score": "DX score",
     "table.headers.achievement-rate": "Achievement rate",
     "table.headers.rating": "Rating",
     "table.headers.actions": "Actions",
@@ -899,7 +906,11 @@
     "index.level-count-single": "{{count}} charts · {{value}}",
     "breadcrumb": "Internal level tables",
     "breadcrumb-label": "Breadcrumb",
-    "chart-link": "Lv.{{level}} internal level table"
+    "chart-link": "Lv.{{level}} internal level table",
+    "view.label": "View",
+    "view.grid": "Covers",
+    "view.table": "Table",
+    "jump-label": "Jump to an internal level"
   },
   "rating-explainer": {
     "title": "How maimai DX rating works",
@@ -950,8 +961,15 @@
   },
   "share": {
     "image.button": "Share image",
-    "image.downloaded": "Image saved",
-    "image.failed": "Unable to create the image. Try again."
+    "image.failed": "Unable to create the image. Try again.",
+    "image.viewer-title": "Share image",
+    "image.hint": "On a phone, press and hold the image to save or copy it. On a computer, right-click it or use the buttons above.",
+    "image.download": "Save image",
+    "image.copy": "Copy image",
+    "image.share": "Share…",
+    "image.copied": "Image copied",
+    "image.copy-failed": "Couldn't copy the image. Save it instead.",
+    "image.share-failed": "Couldn't open the share sheet. Save the image instead."
   },
   "plates": {
     "breadcrumb": "Plates",
@@ -1002,7 +1020,13 @@
     "condition-short.hasha": "Rank A clear",
     "other-plates": "Other plates",
     "share.title": "{{plate}} progress",
-    "share.remaining": "Still to clear"
+    "share.alt": "{{plate}} progress: the charts still to clear",
+    "share.subtitle": "{{versions}} · Needs {{condition}}",
+    "share.remaining-count": "Still to clear: {{count}} charts",
+    "share.order": "Closest first",
+    "share.unplayed": "Unplayed",
+    "share.more": "+{{count}} more songs",
+    "share.all-done": "Every chart cleared!"
   },
   "toplists": {
     "title": "Top records",
@@ -1032,6 +1056,13 @@
     "empty.dx_score": "Your saved scores have no DX scores. Import again from maimai DX NET, LXNS or Diving-Fish to add them.",
     "empty.import": "Import your scores",
     "rating-value": "Rating {{rating}}",
+    "columns.song": "Song",
+    "columns.chart": "Chart",
+    "columns.achievement": "Achievement",
+    "columns.rank": "Rank",
+    "columns.lamps": "Combo · Sync",
+    "columns.dx_score": "DX score",
+    "columns.rating": "Rating",
     "loading": "Loading your scores…",
     "entry-link": "Top records"
   },
@@ -1079,7 +1110,11 @@
     "rating.reverse.result": "Achievement needed",
     "rating.reverse.unreachable": "Out of reach",
     "rating.table.title": "Rating table",
-    "rating.table.description": "Ratings at each rank for the chosen internal level and its neighbours."
+    "rating.table.description": "Ratings at each rank for the chosen internal level and its neighbours.",
+    "tolerance.search-another": "Pick another chart",
+    "tolerance.open-page": "Open as a page",
+    "tolerance.sheet-seo-title": "{{title}} {{sheetLabel}} Tolerance Calculator",
+    "tolerance.sheet-seo-description": "How many GREAT, GOOD and MISS you can afford on {{title}} {{sheetLabel}} and still reach SSS+ or any target achievement, per note type, with BREAK 50 / 100 conversions."
   },
   "recommend": {
     "title": "Rating boosts",

@@ -472,9 +472,14 @@
     "terms.heading6": "利用の終了",
     "terms.heading7": "サービスの提供と変更",
     "legal.back": "戻る",
+    "legal.toc": "目次",
     "account-security.title": "アカウントのセキュリティ",
     "account-security.sign-in-description": "ログインすると、パスワード、パスキー、ログイン中のデバイスを管理できます。",
     "account-security.loading": "アカウントを読み込み中",
+    "account-security.feature-password": "パスワードを変更する",
+    "account-security.feature-passkeys": "パスキーを追加して、パスワードなしでログインする",
+    "account-security.feature-devices": "ログイン中のデバイスを確認し、他のデバイスをログアウトする",
+    "account-security.features-label": "このページでできること",
     "privacy.title": "プライバシーポリシー",
     "privacy.updated": "最終更新日：2026年10月30日",
     "privacy.intro.heading": "はじめに",
@@ -535,6 +540,8 @@
     "table.headers.included-in": "収録",
     "table.headers.combo": "コンボ",
     "table.headers.sync": "シンク",
+    "table.headers.internal-level": "定数",
+    "table.headers.dx-score": "DXスコア",
     "table.headers.achievement-rate": "達成率",
     "table.headers.rating": "レーティング",
     "table.headers.actions": "操作",
@@ -899,7 +906,11 @@
     "index.level-count-single": "{{count}} 譜面・{{value}}",
     "breadcrumb": "譜面定数表",
     "breadcrumb-label": "パンくずリスト",
-    "chart-link": "Lv.{{level}} 譜面定数表"
+    "chart-link": "Lv.{{level}} 譜面定数表",
+    "view.label": "表示",
+    "view.grid": "ジャケット",
+    "view.table": "表",
+    "jump-label": "譜面定数へ移動"
   },
   "rating-explainer": {
     "title": "maimai でらっくす のレーティングの仕組み",
@@ -950,8 +961,15 @@
   },
   "share": {
     "image.button": "画像で共有",
-    "image.downloaded": "画像を保存しました",
-    "image.failed": "画像を作成できませんでした。もう一度お試しください。"
+    "image.failed": "画像を作成できませんでした。もう一度お試しください。",
+    "image.viewer-title": "共有画像",
+    "image.hint": "スマートフォンでは画像を長押しして保存・コピーできます。パソコンでは右クリックするか、上のボタンを使ってください。",
+    "image.download": "画像を保存",
+    "image.copy": "画像をコピー",
+    "image.share": "共有…",
+    "image.copied": "画像をコピーしました",
+    "image.copy-failed": "画像をコピーできませんでした。保存してください。",
+    "image.share-failed": "共有シートを開けませんでした。画像を保存してください。"
   },
   "plates": {
     "breadcrumb": "称号プレート",
@@ -1002,7 +1020,13 @@
     "condition-short.hasha": "A ランクでクリア",
     "other-plates": "ほかのプレート",
     "share.title": "{{plate}} 達成状況",
-    "share.remaining": "未達成の譜面"
+    "share.alt": "{{plate}} の達成状況：未達成の譜面",
+    "share.subtitle": "{{versions}} · 条件 {{condition}}",
+    "share.remaining-count": "未達成 {{count}} 譜面",
+    "share.order": "達成に近い順",
+    "share.unplayed": "未プレイ",
+    "share.more": "ほか {{count}} 曲",
+    "share.all-done": "すべての譜面を達成しました！"
   },
   "toplists": {
     "title": "トップ記録",
@@ -1032,6 +1056,13 @@
     "empty.dx_score": "保存されたスコアにはでらっくスコアがありません。maimai でらっくす NET・LXNS・Diving-Fish から再度インポートすると追加されます。",
     "empty.import": "スコアをインポート",
     "rating-value": "レート {{rating}}",
+    "columns.song": "楽曲",
+    "columns.chart": "譜面",
+    "columns.achievement": "達成率",
+    "columns.rank": "ランク",
+    "columns.lamps": "コンボ・シンク",
+    "columns.dx_score": "でらっくスコア",
+    "columns.rating": "レート",
     "loading": "スコアを読み込み中…",
     "entry-link": "トップ記録"
   },
@@ -1079,7 +1110,11 @@
     "rating.reverse.result": "必要な達成率",
     "rating.reverse.unreachable": "届きません",
     "rating.table.title": "レート早見表",
-    "rating.table.description": "選んだ定数と前後の定数で、ランクごとのレートを一覧にしています。"
+    "rating.table.description": "選んだ定数と前後の定数で、ランクごとのレートを一覧にしています。",
+    "tolerance.search-another": "ほかの譜面を選ぶ",
+    "tolerance.open-page": "専用ページで開く",
+    "tolerance.sheet-seo-title": "{{title}} {{sheetLabel}} の許容ミス計算",
+    "tolerance.sheet-seo-description": "{{title}} {{sheetLabel}} で SSS+ などの目標達成率に届くために、GREAT・GOOD・MISS が何個まで許されるかをノーツ種別ごとに計算します。BREAK 50 / 100 落ちの換算にも対応。"
   },
   "recommend": {
     "title": "レート上げ候補",
